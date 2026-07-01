@@ -72,16 +72,18 @@ foreach($screens as $k=>$v) {
 	}
 }
 
-$screen->setVar('pages',serialize($pages));
-$screen->setVar('pagetitles',serialize($pagetitles));
-$screen->setVar('conditions',serialize($conditions));
-
-// need to strip out HTML chars from these textboxes so that the insert method behaves correctly (it assumes that there are no HTML chars, because that's how it would be if there were a real save coming from the save box on the text tab)
-$screen->setVar('introtext', undoAllHTMLChars($screen->getVar('introtext', "e")));
-$screen->setVar('thankstext', undoAllHTMLChars($screen->getVar('thankstext', "e")));
-
-if(!$screen_handler->insert($screen)) {
-  print "Error: could not save the screen properly: ".$xoopsDB->error();
+// delegate persistence to the shared upsert apparatus. We only own pages/pagetitles/conditions here;
+// introtext/thankstext are left out of $properties, and upsert normalizes them so they are not double-encoded
+// on this re-save (this replaces the manual undoAllHTMLChars() workaround that used to live here).
+$properties = array(
+    'pages' => $pages,
+    'pagetitles' => $pagetitles,
+    'conditions' => $conditions,
+);
+try {
+  formulizeHandler::upsertMultiPageScreen($properties, $sid);
+} catch (Exception $e) {
+  print "Error: could not save the screen properly: ".$e->getMessage();
 }
 
 // reload the page if the state has changed

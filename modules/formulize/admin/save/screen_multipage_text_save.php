@@ -53,11 +53,14 @@ if($formObject->getVar('lockedform')) {
 if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mid)) {
   return;
 }
-$screen->setVar('introtext', $screens['introtext']);
-$screen->setVar('thankstext', $screens['thankstext']);
-
-
-if(!$screen_handler->insert($screen)) {
-  print "Error: could not save the screen properly: ".$xoopsDB->error();
+// delegate persistence to the shared upsert apparatus (introtext/thankstext are passed raw; upsert/insert encode once)
+$properties = array(
+    'introtext' => $screens['introtext'],
+    'thankstext' => $screens['thankstext'],
+);
+try {
+  formulizeHandler::upsertMultiPageScreen($properties, $sid);
+} catch (Exception $e) {
+  print "Error: could not save the screen properly: ".$e->getMessage();
 }
 

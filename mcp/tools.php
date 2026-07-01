@@ -423,6 +423,127 @@ Correct example for linked elements:
 				]
 			];
 
+			// ----- Form screen (multi-page screen) tools: create_form_screen / update_form_screen / change_form_screen_page_order -----
+			// Appearance/settings properties shared by the create and update form screen tools (the pages property is
+			// added per-tool via formScreenPagesSchema(), because create defines pages while update patches them).
+			$formScreenSharedProps = [
+				'show_navigation_tabs' => [
+					'type' => 'boolean',
+					'description' => 'Optional. Show page-navigation tabs across the top of the form, one per page. Default is true. On an exceptionally long form with many pages, or a form where jumping to an arbitrary page is not desired, you may want to set this to false.'
+				],
+				'show_navigation_buttons' => [
+					'type' => 'boolean',
+					'description' => 'Optional. Show the page-navigation buttons at the bottom of the form. Default is false. On an exceptionally long form with many pages, or a form where jumping to an arbitrary page is not required, you may want to set this to true. This setting controls only the previous and next navigation buttons. It does NOT affect the Save button or the Close button, both of which always appear at the bottom of the form regardless of this setting; to hide the Save button or the Close button, set their label to an empty string via button_text.'
+				],
+				'show_page_indicator' => [
+					'type' => 'boolean',
+					'description' => "Optional. Show a 'page X of Y' indicator. Default is false."
+				],
+				'show_page_selector' => [
+					'type' => 'boolean',
+					'description' => 'Optional. Show a drop-down menu for jumping directly to a page. Default is false.'
+				],
+				'show_page_titles' => [
+					'type' => 'boolean',
+					'description' => 'Optional. Show each page title as a heading at the top of the page. Default is false. If navigation tabs are turned off, this is the only way for the user to see the page titles.'
+				],
+				'columns' => [
+					'type' => 'integer',
+					'enum' => [1, 2],
+					'description' => 'Optional. Lay out each page in one or two columns. In two-column layout the element captions go in column one and the inputs in column two, collapsing to one column on phones. Default is 2.'
+				],
+				'column1_width' => [
+					'type' => 'string',
+					'description' => "Optional. CSS width of the first column (eg '20%', '200px', 'auto'). In a one-column layout this is the width of the whole form and defaults to 'auto'. In a two-column layout it defaults to '20%'."
+				],
+				'column2_width' => [
+					'type' => 'string',
+					'description' => "Optional. CSS width of the second column in a two-column layout. Default is 'auto'."
+				],
+				'button_text' => [
+					'type' => 'object',
+					'description' => 'Optional. Custom labels for the form buttons. Only include the ones you want to change; the rest keep their existing/default labels. Hide buttons by setting an empty string as the value.',
+					'properties' => [
+						'previous_page' => [ 'type' => 'string', 'description' => 'Button to save and go back to the previous page. This is one of the page-navigation buttons, so it only appears when show_navigation_buttons is true. Default is "Save and Go Back".' ],
+						'next_page' => [ 'type' => 'string', 'description' => 'Button to save and go on to the next page. This is one of the page-navigation buttons, so it only appears when show_navigation_buttons is true. Default is "Save and Continue".' ],
+						'save' => [ 'type' => 'string', 'description' => 'Button to save without changing page or closing. Always shown at the bottom of the form (regardless of show_navigation_buttons) if the user can save; set to an empty string to hide it. Default is "Save".' ],
+						'close' => [ 'type' => 'string', 'description' => 'Button to close the screen without saving. Always shown at the bottom of the form (regardless of show_navigation_buttons); set to an empty string to hide it. Default is "Close".' ],
+						'save_and_close' => [ 'type' => 'string', 'description' => 'When show_navigation_buttons is true, this is the previous_page label when on the first page, and clicking it will save and close the form. When show_navigation_tabs is true, this text is used for a special leftmost tab which the user can click to save and close the form. Default is "Save and Close".' ],
+						'save_and_finish' => [ 'type' => 'string', 'description' => 'When show_navigation_buttons is true, this is the next_page label when on the last page. Used to save and finish (which will either close the screen, or take the user to the Thanks page if show_thanks_page is true). Default is "Save and Finish".' ],
+						'printable_view' => [ 'type' => 'string', 'description' => 'Button to open the printable version of the form. Default is "Printable Version".' ],
+						'thankyou_link' => [ 'type' => 'string', 'description' => 'Text of the link on the Thanks page that leaves the form. Default is "Leave this form and continue browsing the site".' ]
+					]
+				],
+				'show_thanks_page' => [
+					'type' => 'boolean',
+					'description' => 'Optional. When false (default), finishing the form is treated as done and no Thanks page is shown. When true, a Thanks page is shown after the user finishes.'
+				],
+				'thanks_text' => [
+					'type' => 'string',
+					'description' => 'Optional. The message shown to the user on the Thanks page after they finish the form (only used when show_thanks_page is true). May contain HTML markup.'
+				]
+			];
+
+			$this->tools['create_form_screen'] = [
+				'name' => 'create_form_screen',
+				'description' => 'Create a new form screen for an existing form. Forms are created with the create_form tool. Each form can have one or more form screens, which are different versions of the form that users interact with to create and edit entries. Form screens are organized into one or more pages of elements, with optional tabs, navigation buttons, and per-page display conditions. Use this tool to create a new form screen that presents form elements in a certain way. Use get_form_details to find the element handles to specify for the pages. To modify an existing screen use update_form_screen (which can add/remove individual elements on a page without redefining the whole screen). Use get_screen_details or list_screens to inspect screens.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => array_merge([
+						'form_id' => [
+							'type' => 'integer',
+							'description' => 'Required. The id of the form this screen belongs to.'
+						],
+						'title' => [
+							'type' => 'string',
+							'description' => 'Required. The name of the screen.'
+						],
+						'pages' => $this->formScreenPagesSchema('create')
+					], $formScreenSharedProps),
+					'required' => ['form_id', 'title', 'pages']
+				]
+			];
+
+			$this->tools['update_form_screen'] = [
+				'name' => 'update_form_screen',
+				'description' => 'Update an existing form screen (multi-page screen). Only the settings you provide are changed; anything you omit is left as-is. The "pages" property makes targeted changes: for each page you can add or remove individual elements, change its title, or replace its display conditions, and you can add new pages or delete pages - without having to redefine the whole screen. Pages you do not mention are untouched. Providing "button_text" updates only the button labels you include. To reorder pages, use change_form_screen_page_order. Use get_screen_details to see a screen\'s current pages and settings before updating it.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => array_merge([
+						'screen_id' => [
+							'type' => 'integer',
+							'description' => 'Required. The id (sid) of the form screen to update.'
+						],
+						'title' => [
+							'type' => 'string',
+							'description' => 'Optional. A new name for the screen.'
+						],
+						'pages' => $this->formScreenPagesSchema('update')
+					], $formScreenSharedProps),
+					'required' => ['screen_id']
+				]
+			];
+
+			$this->tools['change_form_screen_page_order'] = [
+				'name' => 'change_form_screen_page_order',
+				'description' => 'Reorder the pages of a form screen (multi-page screen). Page numbers are a critical part of the screen (elements and settings are attached to pages by their position), so reordering is handled by this dedicated tool rather than update_form_screen. Use get_screen_details to see the current pages and their order first.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'screen_id' => [
+							'type' => 'integer',
+							'description' => 'Required. The id (sid) of the form screen whose pages you want to reorder.'
+						],
+						'order' => [
+							'type' => 'object',
+							'description' => 'Required. A mapping from each current page number to its new page number, both 1-based. It must include every page exactly once and assign each a distinct new position. Example for a 4-page screen that swaps pages 2 and 3: {"1": 1, "2": 3, "3": 2, "4": 4}.',
+							'additionalProperties' => [ 'type' => 'integer' ]
+						]
+					],
+					'required' => ['screen_id', 'order']
+				]
+			];
+
 			foreach($this->buildFormElementTools() as $tool) {
 				$this->tools[$tool['name']] = $tool;
 			}
@@ -756,6 +877,370 @@ Correct example for linked elements:
 	}
 
 	/**
+	 * Create a new form screen (multi-page screen) for a form.
+	 * @param array $arguments The tool arguments (see the create_form_screen inputSchema).
+	 * @return array The created screen's details (from get_screen_details).
+	 */
+	private function create_form_screen($arguments) {
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				"Permission denied: Only webmasters can create form screens.",
+				'authentication_error',
+			);
+		}
+		$form_id = intval($arguments['form_id'] ?? 0);
+		$title = trim($arguments['title'] ?? '');
+		if(!$form_id) {
+			throw new FormulizeMCPException('form_id is required', 'invalid_data');
+		}
+		if($title === '') {
+			throw new FormulizeMCPException('title is required', 'invalid_data');
+		}
+		$properties = $this->buildFormScreenProperties($arguments, null);
+		$properties['fid'] = $form_id;
+		$properties['title'] = $title;
+		try {
+			// build the pages from scratch
+			if(isset($arguments['pages']) AND is_array($arguments['pages'])) {
+				list($properties['pages'], $properties['pagetitles'], $properties['conditions']) = formulizeHandler::buildPageStorageArrays($arguments['pages']);
+			}
+			$screen = formulizeHandler::upsertMultiPageScreen($properties, 0);
+		} catch (Exception $e) {
+			throw new FormulizeMCPException($e->getMessage(), 'invalid_data');
+		}
+		return $this->get_screen_details(['screen_id' => $screen->getVar('sid')]);
+	}
+
+	/**
+	 * Update an existing form screen (multi-page screen). Only provided settings are changed.
+	 * @param array $arguments The tool arguments (see the update_form_screen inputSchema).
+	 * @return array The updated screen's details (from get_screen_details).
+	 */
+	private function update_form_screen($arguments) {
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				"Permission denied: Only webmasters can update form screens.",
+				'authentication_error',
+			);
+		}
+		$screen_id = intval($arguments['screen_id'] ?? 0);
+		if(!$screen_id) {
+			throw new FormulizeMCPException('screen_id is required', 'invalid_data');
+		}
+		$screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+		$existingScreen = $screen_handler->get($screen_id);
+		if(!$existingScreen OR $existingScreen->getVar('type') != 'multiPage') {
+			throw new FormulizeMCPException("Form screen $screen_id was not found.", 'invalid_data');
+		}
+		$properties = $this->buildFormScreenProperties($arguments, $existingScreen);
+		if(isset($arguments['title'])) {
+			$title = trim($arguments['title']);
+			if($title !== '') {
+				$properties['title'] = $title;
+			}
+		}
+		try {
+			// apply the targeted page changes against the screen's current pages
+			if(isset($arguments['pages']) AND is_array($arguments['pages'])) {
+				list($properties['pages'], $properties['pagetitles'], $properties['conditions']) = formulizeHandler::applyPageChanges(
+					$existingScreen->getVar('pages'),
+					$existingScreen->getVar('pagetitles'),
+					$existingScreen->getVar('conditions'),
+					$arguments['pages']
+				);
+			}
+			$screen = formulizeHandler::upsertMultiPageScreen($properties, $screen_id);
+		} catch (Exception $e) {
+			throw new FormulizeMCPException($e->getMessage(), 'invalid_data');
+		}
+		return $this->get_screen_details(['screen_id' => $screen->getVar('sid')]);
+	}
+
+	/**
+	 * Reorder the pages of a form screen (multi-page screen).
+	 * @param array $arguments The tool arguments (see the change_form_screen_page_order inputSchema).
+	 * @return array The updated screen's details (from get_screen_details).
+	 */
+	private function change_form_screen_page_order($arguments) {
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				"Permission denied: Only webmasters can reorder form screen pages.",
+				'authentication_error',
+			);
+		}
+		$screen_id = intval($arguments['screen_id'] ?? 0);
+		if(!$screen_id) {
+			throw new FormulizeMCPException('screen_id is required', 'invalid_data');
+		}
+		if(!isset($arguments['order']) OR !is_array($arguments['order']) OR empty($arguments['order'])) {
+			throw new FormulizeMCPException('order is required and must map each current page number to a new page number', 'invalid_data');
+		}
+		$screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+		$existingScreen = $screen_handler->get($screen_id);
+		if(!$existingScreen OR $existingScreen->getVar('type') != 'multiPage') {
+			throw new FormulizeMCPException("Form screen $screen_id was not found.", 'invalid_data');
+		}
+		try {
+			list($pages, $pagetitles, $conditions) = formulizeHandler::reorderPageArrays(
+				$existingScreen->getVar('pages'),
+				$existingScreen->getVar('pagetitles'),
+				$existingScreen->getVar('conditions'),
+				$arguments['order']
+			);
+			$screen = formulizeHandler::upsertMultiPageScreen(array(
+				'pages' => $pages,
+				'pagetitles' => $pagetitles,
+				'conditions' => $conditions,
+			), $screen_id);
+		} catch (Exception $e) {
+			throw new FormulizeMCPException($e->getMessage(), 'invalid_data');
+		}
+		return $this->get_screen_details(['screen_id' => $screen->getVar('sid')]);
+	}
+
+	/**
+	 * Translate the friendly create_form_screen / update_form_screen arguments (the appearance / layout / button /
+	 * finish settings) into the internal object-var properties consumed by formulizeHandler::upsertMultiPageScreen().
+	 * Only keys actually present in $arguments are included, so this supports partial updates. The pages property is
+	 * handled separately by each tool method (create builds them, update patches them).
+	 * @param array $arguments The tool arguments.
+	 * @param formulizeMultiPageScreen|null $existingScreen The current screen when updating (used to recompute navstyle from partial input), or null when creating.
+	 * @return array The internal $properties array for the upsert method.
+	 */
+	private function buildFormScreenProperties($arguments, $existingScreen) {
+		$properties = array();
+
+		// Navigation appearance -> combined navstyle. Recompute only if a nav field was provided, preserving the
+		// other half from the existing screen (update) or the default (create: tabs on, buttons off => navstyle 1).
+		if(array_key_exists('show_navigation_tabs', $arguments) OR array_key_exists('show_navigation_buttons', $arguments)) {
+			if($existingScreen) {
+				$currentNavstyle = intval($existingScreen->getVar('navstyle'));
+				$tabs = in_array($currentNavstyle, array(1, 2));
+				$buttons = in_array($currentNavstyle, array(0, 2));
+			} else {
+				$tabs = true;
+				$buttons = false;
+			}
+			if(array_key_exists('show_navigation_tabs', $arguments)) {
+				$tabs = (bool) $arguments['show_navigation_tabs'];
+			}
+			if(array_key_exists('show_navigation_buttons', $arguments)) {
+				$buttons = (bool) $arguments['show_navigation_buttons'];
+			}
+			if($tabs AND $buttons) {
+				$properties['navstyle'] = 2;
+			} elseif($tabs AND !$buttons) {
+				$properties['navstyle'] = 1;
+			} elseif(!$tabs AND $buttons) {
+				$properties['navstyle'] = 0;
+			} else {
+				$properties['navstyle'] = 3;
+			}
+		}
+
+		// show_page_* booleans -> 1 (show) / 2 (hide)
+		$showMap = array(
+			'show_page_indicator' => 'showpageindicator',
+			'show_page_selector' => 'showpageselector',
+			'show_page_titles' => 'showpagetitles',
+		);
+		foreach($showMap as $arg => $col) {
+			if(array_key_exists($arg, $arguments)) {
+				$properties[$col] = $arguments[$arg] ? 1 : 2;
+			}
+		}
+
+		// Column layout + widths
+		if(array_key_exists('columns', $arguments)) {
+			$cols = intval($arguments['columns']) == 1 ? 1 : 2;
+			$properties['displaycolumns'] = $cols;
+			// In a one-column layout, default column one to 'auto' when the caller didn't specify a width (create only).
+			if($cols == 1 AND !array_key_exists('column1_width', $arguments) AND !$existingScreen) {
+				$properties['column1width'] = 'auto';
+			}
+		}
+		if(array_key_exists('column1_width', $arguments)) {
+			$properties['column1width'] = $arguments['column1_width'];
+		}
+		if(array_key_exists('column2_width', $arguments)) {
+			$properties['column2width'] = $arguments['column2_width'];
+		}
+
+		// Button labels -> internal buttontext keys (upsert merges these onto the existing/default labels)
+		if(isset($arguments['button_text']) AND is_array($arguments['button_text'])) {
+			$buttonMap = array(
+				'previous_page' => 'prevButtonText',
+				'next_page' => 'nextButtonText',
+				'save' => 'saveButtonText',
+				'save_and_finish' => 'finishButtonText',
+				'save_and_close' => 'leaveButtonText',
+				'close' => 'closeButtonText',
+				'printable_view' => 'printableViewButtonText',
+				'thankyou_link' => 'thankyoulinktext',
+			);
+			$buttontext = array();
+			foreach($buttonMap as $friendly => $internal) {
+				if(array_key_exists($friendly, $arguments['button_text'])) {
+					$buttontext[$internal] = $arguments['button_text'][$friendly];
+				}
+			}
+			if(!empty($buttontext)) {
+				$properties['buttontext'] = $buttontext;
+			}
+		}
+
+		// show_thanks_page is the inverse of the internal finishisdone flag:
+		// show_thanks_page true => show a Thanks page => finishisdone 0; false => finishing is done => finishisdone 1
+		if(array_key_exists('show_thanks_page', $arguments)) {
+			$properties['finishisdone'] = $arguments['show_thanks_page'] ? 0 : 1;
+		}
+		if(array_key_exists('thanks_text', $arguments)) {
+			$properties['thankstext'] = $arguments['thanks_text'];
+		}
+
+		return $properties;
+	}
+
+	/**
+	 * Build the JSON schema for the "pages" property of the form screen tools. The create tool defines pages from
+	 * scratch (each entry is a new page whose elements come from add_elements), while the update tool patches pages
+	 * (target an existing page by page_number to add_elements/remove_elements/change title/replace display_conditions
+	 * /delete, or omit page_number to append a new page). Keeping this in one helper means the two tools stay
+	 * consistent while presenting only the fields that make sense for each.
+	 * @param string $mode 'create' or 'update'.
+	 * @return array The JSON schema array for the pages property.
+	 */
+	private function formScreenPagesSchema($mode) {
+		$isUpdate = ($mode === 'update');
+		$sharedElementsClause = " Specify elements by their handle or id number. Elements can be from this form, and/or from a 'one-to-one' connected form, and/or from the 'one' form in a connection where this form is the 'many' form (ie: if 'Each Province has many Cities' then a screen on the Cities form can include elements from the Province form). Use get_form_details to find element handles.";
+		$itemProps = [];
+		if($isUpdate) {
+			$itemProps['page_number'] = [
+				'type' => 'integer',
+				'description' => 'Optional. The 1-based number of an existing page to modify or delete. Omit page_number to append a NEW page to the end of the screen. Page numbers reflect the current order of the pages, as shown by get_screen_details.'
+			];
+		}
+		$itemProps['title'] = [
+			'type' => 'string',
+			'description' => $isUpdate
+				? 'Optional. Set or change this page\'s title. For a new page (no page_number) this is the new page\'s title.'
+				: 'Required. The title of the page. Shown as the tab label and/or as a heading at the top of the page, depending on whether show_navigation_tabs and/or show_page_titles are enabled.'
+		];
+		$itemProps['content'] = [
+			'type' => 'string',
+			'enum' => ['elements', 'php', 'screen'],
+			'description' => "Optional. What the page contains: 'elements' (default) = a list of form elements; 'php' = a block of custom PHP code that renders the page (advanced); 'screen' = embeds the pages from another screen, specified by its id."
+				. ($isUpdate ? ' Only relevant when adding a new page (omit page_number to add a new page).' : '')
+		];
+		$itemProps['add_elements'] = [
+			'type' => 'array',
+			'items' => [ 'type' => ['string', 'integer'] ],
+			'description' => ($isUpdate
+				? 'Optional. Elements to add to this page.'.$sharedElementsClause.' Only applies to elements pages (not php or screen pages).'
+				: "Used when content is 'elements' (the default). The form elements to place on this page.".$sharedElementsClause)
+		];
+		if($isUpdate) {
+			$itemProps['remove_elements'] = [
+				'type' => 'array',
+				'items' => [ 'type' => ['string', 'integer'] ],
+				'description' => 'Optional. Elements (handle or id) to remove from this page. Only applies to elements pages.'
+			];
+		}
+		$itemProps['php_code'] = [
+			'type' => 'string',
+			'description' => "Used when content is 'php'. A block of PHP code that renders the page. Advanced use only."
+		];
+		$itemProps['screen_id'] = [
+			'type' => 'integer',
+			'description' => "Used when content is 'screen'. The id of another screen to embed at this page position. If that screen has multiple pages, multiple pages are inserted at this position."
+		];
+		$itemProps['display_conditions'] = $this->displayConditionsSchema('page', true, $isUpdate);
+		if($isUpdate) {
+			$itemProps['delete'] = [
+				'type' => 'boolean',
+				'description' => 'Optional. Set true, together with page_number, to delete that page entirely. The remaining pages keep their order and are renumbered.'
+			];
+		}
+		$item = [
+			'type' => 'object',
+			'properties' => $itemProps
+		];
+		if(!$isUpdate) {
+			$item['required'] = ['title'];
+		}
+		return [
+			'type' => 'array',
+			'description' => $isUpdate
+				? 'Optional. A list of targeted page changes. Only include the pages you want to modify or add - pages you do not mention are left unchanged. Target an existing page with a page_number to modify its settings (ie: add_elements, remove_elements, change its title, etc). Omit the page_number to append a new page. To change the order of pages, use the change_form_screen_page_order tool instead.'
+				: 'The ordered list of pages in the form screen. Users move between pages using tabs and/or navigation buttons. Most pages contain a list of form elements, but a page can instead contain custom PHP code or embed pages from another form screen. Each page can also have display conditions that control whether it is shown.',
+			'items' => $item
+		];
+	}
+
+	/**
+	 * Build the JSON schema for a "display_conditions" property. Formulize uses one display conditions system for
+	 * controlling whether an element is shown, and the same system for controlling whether a whole page of a form
+	 * screen is shown. This helper keeps the condition item schema (operator/value/type semantics) identical between
+	 * those tools so they cannot drift, while allowing the descriptions to be tailored to each context.
+	 * @param string $noun What the conditions govern the display of, eg 'element' or 'page'. Used in the description.
+	 * @param bool $crossForm Whether the conditions may reference elements in other (connected) forms. When true, the
+	 *        element field description notes that connected-form elements can be referenced; when false it does not.
+	 * @param bool $isUpdate Whether this is for an update tool (true) or a create tool (false). Adjusts the wording
+	 *        about omitting the property: on update, omitting leaves existing conditions unchanged; on create there
+	 *        are no existing conditions, so omitting simply means the item is always displayed.
+	 * @return array The JSON schema array for the display_conditions property.
+	 */
+	private function displayConditionsSchema($noun, $crossForm = false, $isUpdate = false) {
+		$description = "Optional. A given form entry must meet these conditions in order for this $noun to be displayed; otherwise it is not shown. Each condition includes an element, an operator, a value, and a 'type' flag indicating the logical set the condition belongs to: 'match-all' or 'match-one-or-more'. Multiple match-all conditions are joined with a logical AND operator, and multiple match-one-or-more conditions are joined with a logical OR operator. ";
+		$description .= $isUpdate
+			? "Only include this property when you intend to change the conditions: omit it entirely to leave any existing conditions unchanged; provide the list of conditions to set or replace them; or provide an empty array ([]) to remove all conditions so the $noun is always displayed. "
+			: "Provide a list of conditions to restrict when the $noun is displayed; if you omit this property (or provide an empty array) it has no conditions and is always displayed. ";
+		$description .= "When setting conditions based on linked elements, do _not_ use foreign keys as values, and instead use the readable value which this tool understands automatically. Use the special value \"{BLANK}\" (without quotes) to match blank values.";
+		$description .= "\n" . 'Examples:
+- [ { "element": "status", "operator": "=", "value": "Approved", "type": "match-all" } ]
+- [ { "element": "award_value", "operator": ">", "value": "500", "type": "match-all" }, { "element": "award_year", "operator": "=", "value": "2026", "type": "match-all" } ]
+Match size 40 pants OR green pants:
+- [ { "element": "pant_size", "operator": "=", "value": "40", "type": "match-one-or-more" }, { "element": "pant_color", "operator": "=", "value": "green", "type": "match-one-or-more" } ]
+Match incomplete orders that are due before today, and are going to either Canada or Mexico:
+- [ { "element": "order_state", "operator": "=", "value": "incomplete", "type": "match-all" }, { "element": "order_due_date", "operator": "<", "value": "{TODAY}", "type": "match-all" }, { "element": "order_destination", "operator": "=", "value": "Canada", "type": "match-one-or-more" }, { "element": "order_destination", "operator": "=", "value": "Mexico", "type": "match-one-or-more" } ]
+Do not use foreign key values with linked elements; use the readable value instead:
+- Incorrect: [ { "element": "assigned_judge", "operator": "LIKE", "value": "509", "type": "match-all" } ]
+- Correct: [ { "element": "assigned_judge", "operator": "LIKE", "value": "Wapner", "type": "match-all" } ]';
+		$elementDescription = 'The element whose value should be checked, provided as an element handle or id. Get handles from get_form_details.';
+		if($crossForm) {
+			$elementDescription .= " $noun display conditions can reference elements in this form or in other forms connected to it.";
+		}
+		return [
+			'type' => 'array',
+			'description' => $description,
+			'items' => [
+				'type' => 'object',
+				'properties' => [
+					'element' => [
+						'type' => ['string', 'integer'],
+						'description' => $elementDescription
+					],
+					'operator' => [
+						'type' => 'string',
+						'enum' => ['=', '>', '<', '>=', '<=', '!=', 'LIKE', 'NOT LIKE', 'IN'],
+						'description' => 'Comparison operator. Use LIKE for partial text matches.'
+					],
+					'value' => [
+						'type' => 'string',
+						'description' => 'The value to compare against. Do _not_ use foreign keys to filter linked elements, and instead use the readable value which this tool understands automatically. For dates use YYYY-MM-DD format, for times use hh:mm (24 hour) format, and for durations use minutes as an integer. Use the special value "{BLANK}" (without quotes) to match blank values. You can also use dynamic values such as {TODAY} for the current date, {TODAY+7} for a week from today, {NOW} for the current time, and {USER} for the current user (when comparing against a list of users). For the IN operator, provide a comma-separated list of values.'
+					],
+					'type' => [
+						'type' => 'string',
+						'enum' => ['match-all', 'match-one-or-more'],
+						'description' => 'Optional. Whether this condition is part of the match-all set (logical AND) or the match-one-or-more set (logical OR). Defaults to match-all if not specified.'
+					]
+				],
+				'required' => ['element', 'operator', 'value']
+			]
+		];
+	}
+
+	/**
 	 * Create a new form element in a form
 	 * Various tool names for different categories of elements, based on the getElementTypeReadableNames method
 	 * in the formulizeHandler class.
@@ -901,6 +1386,8 @@ Correct example for linked elements:
 			$type = $elementObject->getVar('ele_type');
 		}
 
+		$fid = $form_id ? $form_id : ($elementObject ? $elementObject->getVar('fid') : 0);
+
 		// validate that $data_type conforms to the element type's valid data types as specified in the tool schema
 		$validDataTypes = ['text', 'date', 'datetime', 'time'];
 		for($i=1; $i<=11; $i++) { $validDataTypes[] = "int($i)"; }
@@ -923,6 +1410,9 @@ Correct example for linked elements:
 			if(!($conditionElementObject = _getElementObject($condition['element']))) {
 				throw new FormulizeMCPException('Invalid display condition: element not found', 'invalid_data');
 			}
+			if($conditionElementObject->getVar('fid') != $fid) {
+				throw new FormulizeMCPException('Invalid display condition: element belongs to a different form', 'invalid_data');
+			}
 			if(!in_array($condition['operator'], ['=', '>', '<', '>=', '<=', '!=', 'LIKE', 'NOT LIKE', 'IN'])) {
 				throw new FormulizeMCPException('Invalid display condition: operator not valid. Valid operators are =, >, <, >=, <=, !=, LIKE, NOT LIKE, IN', 'invalid_data');
 			}
@@ -939,8 +1429,6 @@ Correct example for linked elements:
 
 		// put the passed in values into an array for passing to the upsert function
 		// corresponds to the fields in the formulizeElement object
-		$fid = $form_id ? $form_id : ($elementObject ? $elementObject->getVar('fid') : 0);
-
 		// resolve the order argument
 		$resolvedOrderArg = null;
 		if($order !== null) {
@@ -2070,51 +2558,11 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 				$creationDataElementPropertiesForThisCategory = $creationDataElementProperties;
 			}
 
-			$displayConditions = [
-				'display_conditions' => [
-					'type' => 'array',
-					'description' =>
-						'Optional. A given form entry must meet these conditions in order for this element to be displayed. IMPORTANT: only include this property when you intend to set or clear the conditions. To leave any existing conditions unchanged, do NOT include the property at all. To clear/remove all existing display conditions (so the element is always displayed), include the property as an empty array ([]). Each condition includes an element, an operator, a value, and a \'type\' flag indicating the logical set that the condition belongs to: \'match-all\' or \'match-one-or-more\'. Multiple match-all conditions are joined with a logical AND operator. Multiple match-one-or-more conditions are joined with a logical OR operator. When setting conditions based on linked elements, do _not_ use foreign keys as values, and instead use the readable value which this tool understands automatically. Use the special value "{BLANK}" (without quotes) to match blank values.
-						Clear all existing display conditions (element will always be displayed):
-						- []
-						Correct examples for regular elements:
-						- [ { "element": "status", "operator": "=", "value": "Approved", "type": "match-all" } ]
-						- [ { "element": "award_value", "operator": ">", "value": "500", "type": "match-all" }, { "element": "award_year", "operator": "=", "value": "2026", "type": "match-all" } ]
-						Match size 40 pants OR green pants:
-						- [ { "element": "pant_size", "operator": "=", "value": "40", "type": "match-one-or-more" }, { "element": "pant_color", "operator": "=", "value": "green", "type": "match-one-or-more" } ]
-						Match incomplete orders that are due before today, and are going to either Canada or Mexico:
-						- [ { "element": "order_state", "operator": "=", "value": "incomplete", "type": "match-all" }, {"element": "order_due_date", "operator": "<", "value": "{TODAY}", "type": "match-all" }, { "element": "order_destination", "operator": "=", "value": "Canada", "type": "match-one-or-more" }, { "element": "order_destination", "operator": "=", "value": "Mexico", "type": "match-one-or-more" } ]
-						Incorrect example (don\'t use foreign key values with linked elements):
-						- [ { "element": "assigned_judge", "operator": "LIKE", "value": "509", "type": "match-all" } ]
-						- [ { "element": "participating_country", "operator": "=", "value": "79", "type": "match-all" } ]
-						Correct example for linked elements:
-						- [ { "element": "assigned_judge", "operator": "LIKE", "value": "Wapner", "type": "match-all" } ]
-						- [ { "element": "participating_country", "operator": "=", "value": "Japan", "type": "match-all" } ]',
-					'items' => [
-						'type' => 'object',
-						'properties' => [
-							'element' => [
-								'type' => 'string',
-								'description' => 'Element handle to check the value against (get from get_form_details).'
-							],
-							'operator' => [
-								'type' => 'string',
-								'enum' => ['=', '>', '<', '>=', '<=', '!=', 'LIKE', 'NOT LIKE', 'IN'],
-								'description' => 'Comparison operator. Use LIKE for partial text matches.'
-							],
-							'value' => [
-								'type' => 'string',
-								'description' => 'Value to compare against. For dates use YYYY-MM-DD format. For times, use hh:mm format. For duration elements, use minutes as an integer. Do _not_ use foreign keys to filter linked elements, and instead use the readable value which this tool understands automatically. Use the special value "{BLANK}" (without quotes) to filter for blank values.'
-							],
-							'type' => [
-								'type' => 'string',
-								'enum' => ['match-all', 'match-one-or-more'],
-								'description' => 'Optional. Whether this condition is part of the match-all set (logical AND) or the match-one-or-more set (logical OR). Defaults to match-all if not specified.'
-							]
-						],
-						'required' => ['element', 'operator', 'value']
-					]
-				]
+			$displayConditionsCreate = [
+				'display_conditions' => $this->displayConditionsSchema('element', false, false)
+			];
+			$displayConditionsUpdate = [
+				'display_conditions' => $this->displayConditionsSchema('element', false, true)
 			];
 
 			$formElementTools[] = [
@@ -2141,7 +2589,7 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 								'description' => "Required. Additional configuration settings for the $singularCategoryName. The available properties depend on the element type. See the tool description for examples of what properties are needed for different element types.",
 								'additionalProperties' => true
 							],
-						] + $commonDataElementPropertiesForThisCategory + $creationDataElementPropertiesForThisCategory + $displayConditions + $orderProperty + $dataTypePropertyForThisCategory,
+						] + $commonDataElementPropertiesForThisCategory + $creationDataElementPropertiesForThisCategory + $displayConditionsCreate + $orderProperty + $dataTypePropertyForThisCategory,
 					'required' => ['form_id', 'type', 'caption', 'properties']
 				]
 			];
@@ -2184,7 +2632,7 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 							'type' => 'boolean',
 							'description' => "Optional. Whether the $singularCategoryName is displayed in the form or hidden. Default: true."
 						]
-					] + $displayConditions + $orderProperty + $dataTypePropertyForThisCategory,
+					] + $displayConditionsUpdate + $orderProperty + $dataTypePropertyForThisCategory,
 				'required' => ['element_identifier']
 				]
 			];

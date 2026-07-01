@@ -389,6 +389,397 @@ class formulizeHandler {
 	}
 
 	/**
+	 * Create or update a form screen (internally a multi-page screen).
+	 * This is the high-level upsert apparatus for form screens, analogous to upsertFormSchemaAndResources for forms.
+	 * It handles create-vs-update, seeding sensible defaults for new screens, permission/lock checks,
+	 * the screen_handle uniqueness two-pass insert, the multi-page insert() serialization quirk (array fields
+	 * must be set already-serialized), and the thankstext/introtext HTML encoding normalization.
+	 *
+	 * Callers (MCP tools, admin save handlers) pass INTERNAL object-var values as keys (e.g. navstyle,
+	 * showpagetitles as 1/2, buttontext as an array, etc.). The pages/pagetitles/conditions arrays should be
+	 * plain (unserialized) PHP arrays in internal format - use buildPageStorageArrays() to construct them from
+	 * a friendly page definition list.
+	 *
+	 * @param array $properties Associative array of screen object properties to set (partial update - only provided keys are changed). Must include 'fid' when creating a new screen (ie: when $sid is 0).
+	 * @param int $sid Optional. The screen id to update. If 0 (default) a new screen is created.
+	 * @throws Exception on invalid input, permission failure, locked form, or database error.
+	 * @return formulizeMultiPageScreen The saved screen object.
+	 */
+	public static function upsertMultiPageScreen($properties = array(), $sid = 0) {
+		global $xoopsDB, $xoopsUser;
+		$screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$gperm_handler = xoops_gethandler('groupperm');
+		$mid = getFormulizeModId();
+
+		$sid = intval($sid);
+		$screenIsNew = true;
+		$screen = false;
+		if($sid AND $screen = $screen_handler->get($sid)) {
+			if($screen->getVar('type') != 'multiPage') {
+				throw new Exception("Screen $sid is not a form (multi-page) screen and cannot be updated by this method.");
+			}
+			$screenIsNew = false;
+			$fid = intval($screen->getVar('fid'));
+		} else {
+			$sid = 0;
+			$fid = isset($properties['fid']) ? intval($properties['fid']) : 0;
+			if(!$fid OR !$newFormObject = $form_handler->get($fid)) {
+				throw new Exception("A valid form_id is required to create a new form screen.");
+			}
+			$screen = $screen_handler->create();
+			$screen_handler->setDefaultFormScreenVars($screen, $newFormObject);
+			$screen->setVar('type', 'multiPage');
+		}
+
+		// permission and lock checks against the form the screen belongs to
+		if(!$formObject = $form_handler->get($fid)) {
+			throw new Exception("Could not load the form ($fid) for this screen.");
+		}
+		if($formObject->getVar('lockedform')) {
+			throw new Exception("The form is locked and its screens cannot be modified.");
+		}
+		if(!$xoopsUser OR $gperm_handler->checkRight("edit_form", $fid, $xoopsUser->getGroups(), $mid) == false) {
+			throw new Exception("Permission denied: You don't have permission to edit this form's screens.");
+		}
+
+		// keys that this method sets explicitly below, so they are skipped by the generic scalar loop
+		$arrayFields = array('pages', 'pagetitles', 'conditions', 'elementdefaults');
+		$handledSpecially = array_merge($arrayFields, array('fid', 'sid', 'screen_handle', 'thankstext', 'introtext', 'buttontext'));
+
+		// apply plain scalar/text properties (partial update - only what was provided)
+		foreach($properties as $key => $value) {
+			if(in_array($key, $handledSpecially)) {
+				continue;
+			}
+			$screen->setVar($key, $value);
+		}
+		$screen->setVar('fid', $fid);
+
+		// array fields must be serialized before setVar, because the multi-page insert() does not call cleanVars
+		// and instead does serialize($screen->getVar('field')) - getVar unserializes, so the value must round-trip.
+		// Accept either a plain PHP array (from MCP / buildPageStorageArrays) or an already-serialized string
+		// (as some admin save handlers pass), and normalize to a serialized string.
+		foreach($arrayFields as $field) {
+			if(array_key_exists($field, $properties)) {
+				$value = $properties[$field];
+				$screen->setVar($field, is_string($value) ? $value : serialize($value));
+			}
+		}
+
+		// buttontext merges onto the current value (the defaults seeded for a new screen, or the existing labels on
+		// an update) so a partial set of button labels does not wipe the others. Accepts an array or serialized string.
+		if(array_key_exists('buttontext', $properties)) {
+			$incoming = is_string($properties['buttontext']) ? unserialize($properties['buttontext']) : $properties['buttontext'];
+			if(!is_array($incoming)) {
+				$incoming = array();
+			}
+			$current = $screen->getVar('buttontext');
+			if(!is_array($current)) {
+				$current = array();
+			}
+			$screen->setVar('buttontext', serialize(array_merge($current, $incoming)));
+		}
+
+		// HTML text fields: insert() applies getVar(key,'e') encoding and assumes the value on the object is raw.
+		// When a new value is provided, set it raw (insert encodes once). When not provided on an update, normalize
+		// the loaded (already-encoded) value back to raw to avoid double-encoding on re-save.
+		foreach(array('thankstext', 'introtext') as $textField) {
+			if(array_key_exists($textField, $properties)) {
+				$screen->setVar($textField, $properties[$textField]);
+			} elseif(!$screenIsNew) {
+				$screen->setVar($textField, undoAllHTMLChars($screen->getVar($textField, 'e')));
+			}
+		}
+
+		// screen_handle uniqueness (reuse the existing shared primitive)
+		$requestedHandle = array_key_exists('screen_handle', $properties) ? $properties['screen_handle'] : $screen->getVar('screen_handle');
+		if(strlen($requestedHandle)) {
+			$screen->setVar('screen_handle', $screen_handler->makeHandleUnique($requestedHandle, ($sid ? $sid : "")));
+		}
+
+		if(!$newSid = $screen_handler->insert($screen)) {
+			throw new Exception("Could not save the form screen properly: ".$xoopsDB->error());
+		}
+		$screen->assignVar('sid', $newSid);
+
+		// a brand new screen with a blank handle: default the handle to its new sid, then re-save
+		if(!strlen($screen->getVar('screen_handle'))) {
+			$screen->setVar('screen_handle', $screen_handler->makeHandleUnique($newSid, $newSid));
+			if(!$screen_handler->insert($screen)) {
+				throw new Exception("Could not finalize the new form screen handle: ".$xoopsDB->error());
+			}
+		}
+
+		return $screen;
+	}
+
+	/**
+	 * Translate a friendly list of page definitions into the internal parallel storage arrays used by
+	 * a multi-page screen: [pages, pagetitles, conditions]. This is the "define from scratch" path used when
+	 * creating a screen; each definition becomes a new page, in order. All element references (page elements
+	 * and condition elements) may be supplied as an ele_id or an element handle, and are resolved to integer
+	 * ele_ids - pages always store element IDs only.
+	 *
+	 * Each page definition is an associative array:
+	 *   - title (string)
+	 *   - content: 'elements' (default) | 'php' | 'screen'
+	 *   - add_elements: array of ele_id or handle  (when content is 'elements' - the elements on the page)
+	 *   - php_code: string                          (when content is 'php')
+	 *   - screen_id: int                            (when content is 'screen')
+	 *   - display_conditions: array of { element, operator, value, type: 'match-all'|'match-one-or-more' }
+	 *
+	 * @param array $pageDefinitions Ordered list of page definitions.
+	 * @throws Exception if an element or screen reference cannot be resolved.
+	 * @return array A 3-element array: array($pages, $pagetitles, $conditions), each keyed 0..n-1 parallel to the pages.
+	 */
+	public static function buildPageStorageArrays($pageDefinitions) {
+		$pages = array();
+		$pagetitles = array();
+		$conditions = array();
+		$i = 0;
+		foreach($pageDefinitions as $pageDef) {
+			list($pages[$i], $pagetitles[$i], $conditions[$i]) = self::buildSinglePageStorage($pageDef);
+			$i++;
+		}
+		return array($pages, $pagetitles, $conditions);
+	}
+
+	/**
+	 * Build the internal storage for a single new page from a page definition (see buildPageStorageArrays for the
+	 * definition shape). Used both when creating a screen and when appending a new page during an update.
+	 * @param array $pageDef The page definition.
+	 * @throws Exception if an element or screen reference cannot be resolved.
+	 * @return array array($pageContent, $pageTitle, $pageConditions)
+	 */
+	private static function buildSinglePageStorage($pageDef) {
+		$title = isset($pageDef['title']) ? $pageDef['title'] : '';
+		$content = isset($pageDef['content']) ? $pageDef['content'] : 'elements';
+		switch($content) {
+			case 'php':
+				$pageContent = array('PHP', isset($pageDef['php_code']) ? $pageDef['php_code'] : '');
+				break;
+			case 'screen':
+				$screenId = isset($pageDef['screen_id']) ? intval($pageDef['screen_id']) : 0;
+				if($screenId <= 0) {
+					throw new Exception("A page has content type 'screen' but no valid screen_id.");
+				}
+				$pageContent = array('sid:'.$screenId);
+				break;
+			case 'elements':
+			default:
+				$pageContent = array();
+				if(isset($pageDef['add_elements']) AND is_array($pageDef['add_elements'])) {
+					foreach($pageDef['add_elements'] as $eleRef) {
+						$pageContent[] = self::resolveElementId($eleRef);
+					}
+				}
+				break;
+		}
+		$conditions = self::buildConditionStorageArray(isset($pageDef['display_conditions']) ? $pageDef['display_conditions'] : array());
+		return array($pageContent, $title, $conditions);
+	}
+
+	/**
+	 * Normalize a screen's parallel page arrays to sequential 0-based keys, keeping titles and conditions aligned to
+	 * their page by the page's original key (titles/conditions may be stored sparsely, so a plain array_values on each
+	 * independently could misalign them from the pages).
+	 * @param mixed $pages Stored pages array.
+	 * @param mixed $pagetitles Stored page titles array.
+	 * @param mixed $conditions Stored conditions array.
+	 * @return array array($pages, $pagetitles, $conditions), each sequential 0..n-1 and mutually aligned.
+	 */
+	private static function normalizePageArrays($pages, $pagetitles, $conditions) {
+		$pages = (array) $pages;
+		$pagetitles = (array) $pagetitles;
+		$conditions = (array) $conditions;
+		$normPages = array();
+		$normTitles = array();
+		$normConditions = array();
+		$i = 0;
+		foreach($pages as $key => $pageContent) {
+			$normPages[$i] = $pageContent;
+			$normTitles[$i] = isset($pagetitles[$key]) ? $pagetitles[$key] : '';
+			$normConditions[$i] = isset($conditions[$key]) ? $conditions[$key] : array();
+			$i++;
+		}
+		return array($normPages, $normTitles, $normConditions);
+	}
+
+	/**
+	 * Apply a set of targeted page changes to a screen's existing page arrays, for the update path. Each change either
+	 * targets an existing page (by 1-based 'page_number') or, when 'page_number' is omitted, appends a new page.
+	 * Only the pages referenced by a change are affected; all other pages are left as-is.
+	 *
+	 * A change targeting an existing page may include:
+	 *   - delete: true                 => remove the page entirely (arrays are re-indexed afterwards)
+	 *   - title: string                => set the page title
+	 *   - add_elements: array          => append these elements (handle or id) if not already present
+	 *   - remove_elements: array       => remove these elements
+	 *   - display_conditions: array    => REPLACE the page's conditions (an empty array clears them); omit to leave unchanged
+	 * A change with no page_number is a new page and uses the same shape as buildPageStorageArrays definitions.
+	 *
+	 * @param array $pages Existing pages array.
+	 * @param array $pagetitles Existing page titles array.
+	 * @param array $conditions Existing conditions array.
+	 * @param array $pageChanges The list of change/definition entries.
+	 * @throws Exception on an invalid page_number, or an element/page-type mismatch.
+	 * @return array array($pages, $pagetitles, $conditions), re-indexed 0..n-1.
+	 */
+	public static function applyPageChanges($pages, $pagetitles, $conditions, $pageChanges) {
+		list($pages, $pagetitles, $conditions) = self::normalizePageArrays($pages, $pagetitles, $conditions);
+		$deleteIndices = array();
+		foreach($pageChanges as $change) {
+			$hasPageNumber = isset($change['page_number']) AND $change['page_number'] !== '' AND $change['page_number'] !== null;
+			if(!$hasPageNumber) {
+				if(!empty($change['delete'])) {
+					throw new Exception("A page change specifies delete but no page_number; deleting requires a page_number.");
+				}
+				// append a new page
+				list($newContent, $newTitle, $newConditions) = self::buildSinglePageStorage($change);
+				$pages[] = $newContent;
+				$pagetitles[] = $newTitle;
+				$conditions[] = $newConditions;
+				continue;
+			}
+			$idx = intval($change['page_number']) - 1;
+			if($idx < 0 OR $idx >= count($pages)) {
+				throw new Exception("page_number ".$change['page_number']." does not refer to an existing page (the screen has ".count($pages)." page(s)).");
+			}
+			if(!empty($change['delete'])) {
+				$deleteIndices[$idx] = true;
+				continue;
+			}
+			if(array_key_exists('title', $change)) {
+				$pagetitles[$idx] = $change['title'];
+			}
+			if(isset($change['add_elements']) OR isset($change['remove_elements'])) {
+				$pageContent = (array) $pages[$idx];
+				$firstItem = isset($pageContent[0]) ? $pageContent[0] : '';
+				$isElementsPage = !($firstItem === 'PHP' OR substr((string) $firstItem, 0, 4) === 'sid:');
+				if(!$isElementsPage) {
+					throw new Exception("Cannot add or remove elements on page ".$change['page_number']." because it is a PHP or screen page, not an elements page.");
+				}
+				$current = array_values(array_map('intval', $pageContent));
+				if(isset($change['remove_elements']) AND is_array($change['remove_elements'])) {
+					$removeIds = array();
+					foreach($change['remove_elements'] as $eleRef) {
+						$removeIds[] = self::resolveElementId($eleRef);
+					}
+					$current = array_values(array_filter($current, function($e) use ($removeIds) { return !in_array($e, $removeIds); }));
+				}
+				if(isset($change['add_elements']) AND is_array($change['add_elements'])) {
+					foreach($change['add_elements'] as $eleRef) {
+						$eid = self::resolveElementId($eleRef);
+						if(!in_array($eid, $current)) {
+							$current[] = $eid;
+						}
+					}
+				}
+				$pages[$idx] = $current;
+			}
+			if(array_key_exists('display_conditions', $change)) {
+				$conditions[$idx] = self::buildConditionStorageArray($change['display_conditions']);
+			}
+		}
+		if(!empty($deleteIndices)) {
+			foreach(array_keys($deleteIndices) as $di) {
+				unset($pages[$di], $pagetitles[$di], $conditions[$di]);
+			}
+			$pages = array_values($pages);
+			$pagetitles = array_values($pagetitles);
+			$conditions = array_values($conditions);
+		}
+		return array($pages, $pagetitles, $conditions);
+	}
+
+	/**
+	 * Reorder a screen's page arrays according to a mapping of current page number => new page number (both 1-based).
+	 * The mapping must be a complete permutation of the current pages (every current page 1..N mapped to a distinct
+	 * new position 1..N).
+	 * @param array $pages Existing pages array.
+	 * @param array $pagetitles Existing page titles array.
+	 * @param array $conditions Existing conditions array.
+	 * @param array $orderMap Associative array of currentPageNumber => newPageNumber (1-based).
+	 * @throws Exception if the mapping is not a valid complete permutation of the pages.
+	 * @return array array($pages, $pagetitles, $conditions) in the new order.
+	 */
+	public static function reorderPageArrays($pages, $pagetitles, $conditions, $orderMap) {
+		list($pages, $pagetitles, $conditions) = self::normalizePageArrays($pages, $pagetitles, $conditions);
+		$count = count($pages);
+		if(!is_array($orderMap) OR count($orderMap) != $count) {
+			throw new Exception("The page order must map every one of the screen's $count page(s) to a new position.");
+		}
+		$newPages = array();
+		$newTitles = array();
+		$newConditions = array();
+		$usedTargets = array();
+		foreach($orderMap as $currentNumber => $newNumber) {
+			$from = intval($currentNumber) - 1;
+			$to = intval($newNumber) - 1;
+			if($from < 0 OR $from >= $count OR $to < 0 OR $to >= $count) {
+				throw new Exception("The page order refers to a page number outside the range 1 to $count.");
+			}
+			if(isset($usedTargets[$to])) {
+				throw new Exception("The page order assigns more than one page to position ".$newNumber.".");
+			}
+			$usedTargets[$to] = true;
+			$newPages[$to] = $pages[$from];
+			$newTitles[$to] = $pagetitles[$from];
+			$newConditions[$to] = $conditions[$from];
+		}
+		ksort($newPages);
+		ksort($newTitles);
+		ksort($newConditions);
+		return array(array_values($newPages), array_values($newTitles), array_values($newConditions));
+	}
+
+	/**
+	 * Build the internal condition storage array (0=>elements, 1=>ops, 2=>terms, 3=>types) for one page from a
+	 * friendly list of rules. Element references are resolved to ele_ids (metadata field names are passed through).
+	 * Unlike page elements, condition elements are not restricted to the screen's own form - they may reference
+	 * elements in connected forms (the conditions are evaluated within the screen's relationship). The friendly
+	 * 'type' value 'match-one-or-more' maps to the internal 'oom' (OR); anything else maps to 'all' (AND).
+	 * @param array $rules List of { element, operator, value, type } rules.
+	 * @return array The 4 parallel arrays, or an empty array when there are no rules.
+	 */
+	private static function buildConditionStorageArray($rules) {
+		if(!is_array($rules) OR count($rules) == 0) {
+			return array();
+		}
+		$elements = array();
+		$ops = array();
+		$terms = array();
+		$types = array();
+		foreach($rules as $rule) {
+			$eleRef = isset($rule['element']) ? $rule['element'] : '';
+			if(isMetaDataField($eleRef)) {
+				$elements[] = $eleRef;
+			} else {
+				$elements[] = self::resolveElementId($eleRef);
+			}
+			$ops[] = isset($rule['operator']) ? $rule['operator'] : '=';
+			$terms[] = isset($rule['value']) ? $rule['value'] : '';
+			$types[] = (isset($rule['type']) AND $rule['type'] === 'match-one-or-more') ? 'oom' : 'all';
+		}
+		return array(0=>$elements, 1=>$ops, 2=>$terms, 3=>$types);
+	}
+
+	/**
+	 * Resolve a single element reference (ele_id or handle) to an integer ele_id, without restricting it to a
+	 * particular form. Used for condition elements, which may live in connected forms.
+	 * @param mixed $eleRef An element id or handle.
+	 * @throws Exception if the element cannot be found.
+	 * @return int The element id.
+	 */
+	private static function resolveElementId($eleRef) {
+		if(!$element = _getElementObject($eleRef)) {
+			throw new Exception("Element '".(is_scalar($eleRef) ? $eleRef : gettype($eleRef))."' could not be found.");
+		}
+		return intval($element->getVar('ele_id'));
+	}
+
+	/**
 	 * Check if a given entry is in an entries_are_users form and if so does the entry meet base conditions for user creation, if any?
 	 * @param int $formId The form ID to check
 	 * @param int $entryId The entry ID to check
