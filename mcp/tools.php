@@ -1281,6 +1281,9 @@ Do not use foreign key values with linked elements; use the readable value inste
 	private function create_selector_element($arguments) {
 		return $this->upsert_form_element($arguments, isCreate: true);
 	}
+	private function create_static_content_element($arguments) {
+		return $this->upsert_form_element($arguments, isCreate: true);
+	}
 	private function create_subform_interface($arguments) {
 		return $this->upsert_form_element($arguments, isCreate: true);
 	}
@@ -1323,6 +1326,9 @@ Do not use foreign key values with linked elements; use the readable value inste
 		return $this->upsert_form_element($arguments, isCreate: false);
 	}
 	private function update_selector_element($arguments) {
+		return $this->upsert_form_element($arguments, isCreate: false);
+	}
+	private function update_static_content_element($arguments) {
 		return $this->upsert_form_element($arguments, isCreate: false);
 	}
 	private function update_subform_interface($arguments) {
