@@ -63,6 +63,7 @@ class formulizeForm extends FormulizeObject {
 			$elementTypesAreSystemElements = array();
 			$elementTypesAreUserAccountElements = array();
 			$userAccountElements = array();
+			$systemElements = array();
 			$element_handler = xoops_getmodulehandler('elements', 'formulize');
 			$displayFilter = $includeAllElements ? "" : "AND ele_display != \"0\"";
 			$elementsq = q("SELECT ele_id, ele_caption, ele_colhead, ele_handle, ele_type, ele_encrypt FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=".intval($formq[0]['id_form'])." $displayFilter ORDER BY ele_order ASC");
