@@ -252,6 +252,12 @@ module Jekyll
 				'type' => 'admin_only',
 				'category' => 'tool'
 			}
+			admin_only_tools << {
+				'name' => 'create_static_content_element',
+      	'description' => 'Create a new static content element in a specified form, which shows information to users but is not editable',
+				'type' => 'admin_only',
+				'category' => 'tool'
+			}
     	admin_only_tools << {
 				'name' => 'create_subform_interface',
 				'description' => 'Create a new subform interface in a specified form, for displaying entries in a connected form.',
@@ -297,6 +303,12 @@ module Jekyll
 			admin_only_tools << {
 				'name' => 'update_table_of_elements',
       	'description' => 'Update an existing table of elements in a specified form, which allows related elements to be laid out together.',
+				'type' => 'admin_only',
+				'category' => 'tool'
+			}
+			admin_only_tools << {
+				'name' => 'update_static_content_element',
+      	'description' => 'Update an existing static content element in a specified form, which shows information to users but is not editable',
 				'type' => 'admin_only',
 				'category' => 'tool'
 			}
