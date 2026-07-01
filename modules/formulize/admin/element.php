@@ -285,11 +285,6 @@ $options['ele_uitext'] = $ele_uitext;
 $options['ele_uitextshow'] = $ele_uitextshow;
 $options['typetemplate'] = "db:admin/element_type_".$ele_type.".html";
 
-// setup various special things per element, including ele_value
-if ($ele_type=="ib") {
-  $options['ib_style_options']['head'] = "head";
-  $options['ib_style_options']['form-heading'] = "form-heading";
-}
 
 
 if(!isset($ele_value['snapshot'])) {

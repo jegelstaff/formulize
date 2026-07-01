@@ -2123,9 +2123,9 @@ function compileElements($fid, $form, $prevEntry, $entry_id, $groups, $elements_
 				unset($placeholderElement); // because addElement receives values by reference, we need to destroy it here, so if it is recreated in a subsequent iteration, we don't end up overwriting elements we've already assigned. Ack! Ugly!
 			}
 
-		// Option 2: element is a "text for display (two columns)"
+		// Option 2: element is a display-only "full width content" element (which renders as an array)
 		// or some other type of 'pass the markup' element... (like subforms, grids, etc)
-		} elseif($ele_type == "ib" OR is_string($form_ele) OR is_array($form_ele)) {
+		} elseif(is_string($form_ele) OR is_array($form_ele)) {
 			$className = (is_array($form_ele) AND isset($form_ele[1]) AND $form_ele[1]) ? $form_ele[1] : "head";
 			$contents = (is_array($form_ele) AND isset($form_ele[0])) ? $form_ele[0] : $form_ele;
 			$form->insertBreakFormulize(trans(stripslashes($contents)), $className, $renderedElementMarkupName, $elementObject->getVar("ele_handle"));

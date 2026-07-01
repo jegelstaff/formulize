@@ -139,7 +139,10 @@ class formulizeHandler {
 				'singular' => 'table of elements',
 				'plural' => 'tables of elements'
 			),
-			// WILL NEED TO BE FILLED IN FURTHER FOR 'LAYOUT' ELEMENTS WHEN THEY HAVE CLASSES
+			'layout' => array(
+				'singular' => 'static content element',
+				'plural' => 'static content elements'
+			),
 
 		);
 	}
@@ -179,8 +182,8 @@ class formulizeHandler {
 			'subformEditableRow',
 			'subformListings',
 			'grid',
-			'areamodif',
-			'ib'
+			'captionedContent',
+			'fullWidthContent'
 		);
 	}
 

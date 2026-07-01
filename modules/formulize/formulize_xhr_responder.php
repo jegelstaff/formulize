@@ -418,14 +418,11 @@ switch($op) {
         foreach($formObject->getVar('elementTypes') as $elementId=>$elementType) {
             $elementObject = $element_handler->get($elementId);
             $ele_value = $elementObject->getVar('ele_value');
-            // if it's derived, or it's text for display and the text for display has dynamic references, then render it and send it back
-            if($elementType == 'derived' OR (
-                (
-                    $elementType == 'areamodif' OR $elementType == 'ib') AND (
-                       strstr($ele_value[0], "\$value=") OR strstr($ele_value[0], "\$value =") OR (strstr($ele_value[0], "{") AND strstr($ele_value[0], "}"))
-                    )
-                )
-            ) {
+            // re-render the element if it is derived, or if it is a display element whose content has
+            // dynamic references (PHP code or {handle} references) that depend on other elements' values.
+            // The element type decides whether its content is dynamic, via requiresDynamicRerendering().
+            $elementTypeHandler = xoops_getmodulehandler($elementType.'Element', 'formulize');
+            if($elementType == 'derived' OR (method_exists($elementTypeHandler, 'requiresDynamicRerendering') AND $elementTypeHandler->requiresDynamicRerendering($ele_value))) {
                 if($html = renderElement($elementObject, $entryID, $frid, $screenObject)) {
                     $derivedValueMarkup[$elementId] = $html;
                 }
@@ -598,7 +595,7 @@ function renderElement($elementObject, $entryId, $frid, $screenObject) {
 		$renderedElementMarkupName = 'de_'.$elementObject->getVar('id_form').'_'.$entryForDEElements.'_'.$elementObject->getVar('ele_id');
 		$elementType = $elementObject->getVar('ele_type');
 
-		if($elementType == "ib" OR is_string($elementContents) OR is_array($elementContents)) {
+		if(is_string($elementContents) OR is_array($elementContents)) {
 			$breakClass = (is_array($elementContents) AND isset($elementContents[1]) AND $elementContents[1]) ? $elementContents[1] : "head";
 			$elementContents = (is_array($elementContents) AND isset($elementContents[0]) AND $elementContents[0]) ? $elementContents[0] : $elementContents;
 		}

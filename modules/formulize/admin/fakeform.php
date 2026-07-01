@@ -78,7 +78,7 @@ foreach($elementObjects as $elementObject) {
 		$form_ele = $deReturnValue;
 		$isDisabled = false;
 	}
-	if($elementObject->getVar('ele_type') == "ib" OR is_array($form_ele)) {
+	if(is_array($form_ele)) {
 		$fakeForm->insertBreakFormulize(trans(stripslashes($form_ele[0])), $form_ele[1], 'markup-name-moot', $elementObject->getVar("ele_handle"));
 	} elseif($form_ele !== false) {
 		$req = !$isDisabled ? intval($elementObject->getVar('ele_required')) : 0;
