@@ -505,7 +505,7 @@ test.describe('Surveys Elements', async () => {
 	})
 
 	test('Create Survey Intro', async ({ page }) => {
-		await addElementForm(page, ElementType.ib);
+		await addElementForm(page, ElementType.fullWidthContent);
 		await waitForAdminPageReady(page)
 		await page.locator('input[name="elements-ele_caption"]').fill('Thank you for visiting the Museum!');
 		await page.getByRole('link', { name: 'Options' }).click();

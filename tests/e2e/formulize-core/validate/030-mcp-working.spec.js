@@ -80,17 +80,19 @@ test.describe('Check that tools/list is responding', () => {
 		await expect(page.getByText('24: "name": "update_linked_list_element" "').first()).toBeVisible();
 		await expect(page.getByText('25: "name": "create_user_list_element" "').first()).toBeVisible();
 		await expect(page.getByText('26: "name": "update_user_list_element" "').first()).toBeVisible();
-		await expect(page.getByText('27: "name": "create_selector_element" "').first()).toBeVisible();
-		await expect(page.getByText('28: "name": "update_selector_element" "').first()).toBeVisible();
-		await expect(page.getByText('29: "name": "create_derived_value_element" "').first()).toBeVisible();
-		await expect(page.getByText('30: "name": "update_derived_value_element" "').first()).toBeVisible();
-		await expect(page.getByText('31: "name": "create_text_box_element" "').first()).toBeVisible();
-		await expect(page.getByText('32: "name": "update_text_box_element" "').first()).toBeVisible();
-		await expect(page.getByText('33: "name": "create_table_of_elements" "').first()).toBeVisible();
-		await expect(page.getByText('34: "name": "update_table_of_elements" "').first()).toBeVisible();
-		await expect(page.getByText('35: "name": "create_subform_interface" "').first()).toBeVisible();
-		await expect(page.getByText('36: "name": "update_subform_interface" "').first()).toBeVisible();
-		await expect(page.getByText('37: "name": "read_system_activity_log" "').first()).toBeVisible();
+		await expect(page.getByText('27: "name": "create_static_content_element" "').first()).toBeVisible();
+		await expect(page.getByText('28: "name": "update_static_content_element" "').first()).toBeVisible();
+		await expect(page.getByText('29: "name": "create_selector_element" "').first()).toBeVisible();
+		await expect(page.getByText('30: "name": "update_selector_element" "').first()).toBeVisible();
+		await expect(page.getByText('31: "name": "create_derived_value_element" "').first()).toBeVisible();
+		await expect(page.getByText('32: "name": "update_derived_value_element" "').first()).toBeVisible();
+		await expect(page.getByText('33: "name": "create_text_box_element" "').first()).toBeVisible();
+		await expect(page.getByText('34: "name": "update_text_box_element" "').first()).toBeVisible();
+		await expect(page.getByText('35: "name": "create_table_of_elements" "').first()).toBeVisible();
+		await expect(page.getByText('36: "name": "update_table_of_elements" "').first()).toBeVisible();
+		await expect(page.getByText('37: "name": "create_subform_interface" "').first()).toBeVisible();
+		await expect(page.getByText('38: "name": "update_subform_interface" "').first()).toBeVisible();
+		await expect(page.getByText('39: "name": "read_system_activity_log" "').first()).toBeVisible();
 
 		// --- Session auth (embedded AI assistant path) ---
 		// 401 for user not logged in
@@ -146,6 +148,6 @@ test.describe('Check that tools/list is responding', () => {
 		await expect(page.getByText('9: "name": "get_form_details" "').first()).toBeVisible();
 		await expect(page.getByText('15: "name": "test_connection" "').first()).toBeVisible();
 		await expect(page.getByText('19: "name": "query_the_database_directly" "').first()).toBeVisible();
-		await expect(page.getByText('37: "name": "read_system_activity_log" "').first()).toBeVisible();
+		await expect(page.getByText('39: "name": "read_system_activity_log" "').first()).toBeVisible();
 	})
 });
