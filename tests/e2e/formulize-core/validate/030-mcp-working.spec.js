@@ -29,7 +29,7 @@ test.describe('Check that tools/list is responding', () => {
 		await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 		// With MCP enabled, the preference description shows the external-assistant setup instructions.
 		// Confirming this text is visible verifies the setting was saved on.
-		await expect(page.getByText('See further setup instructions for external AI assistants')).toBeVisible();
+		await expect(page.getByText('for users to use an external AI assistant')).toBeVisible();
 		await expect(mcpServerEnabled).toBeChecked();
 		// Logging is under Settings → System.
 		await page.goto('/modules/formulize/admin/ui.php?page=settings&view=system');
@@ -74,25 +74,28 @@ test.describe('Check that tools/list is responding', () => {
 		await expect(page.getByText('15: "name": "test_connection" "').first()).toBeVisible();
 		await expect(page.getByText('19: "name": "query_the_database_directly" "').first()).toBeVisible();
 		await expect(page.getByText('20: "name": "create_form" "').first()).toBeVisible();
-		await expect(page.getByText('21: "name": "create_list_element" "').first()).toBeVisible();
-		await expect(page.getByText('22: "name": "update_list_element" "').first()).toBeVisible();
-		await expect(page.getByText('23: "name": "create_linked_list_element" "').first()).toBeVisible();
-		await expect(page.getByText('24: "name": "update_linked_list_element" "').first()).toBeVisible();
-		await expect(page.getByText('25: "name": "create_user_list_element" "').first()).toBeVisible();
-		await expect(page.getByText('26: "name": "update_user_list_element" "').first()).toBeVisible();
-		await expect(page.getByText('27: "name": "create_static_content_element" "').first()).toBeVisible();
-		await expect(page.getByText('28: "name": "update_static_content_element" "').first()).toBeVisible();
-		await expect(page.getByText('29: "name": "create_selector_element" "').first()).toBeVisible();
-		await expect(page.getByText('30: "name": "update_selector_element" "').first()).toBeVisible();
-		await expect(page.getByText('31: "name": "create_derived_value_element" "').first()).toBeVisible();
-		await expect(page.getByText('32: "name": "update_derived_value_element" "').first()).toBeVisible();
-		await expect(page.getByText('33: "name": "create_text_box_element" "').first()).toBeVisible();
-		await expect(page.getByText('34: "name": "update_text_box_element" "').first()).toBeVisible();
-		await expect(page.getByText('35: "name": "create_table_of_elements" "').first()).toBeVisible();
-		await expect(page.getByText('36: "name": "update_table_of_elements" "').first()).toBeVisible();
-		await expect(page.getByText('37: "name": "create_subform_interface" "').first()).toBeVisible();
-		await expect(page.getByText('38: "name": "update_subform_interface" "').first()).toBeVisible();
-		await expect(page.getByText('39: "name": "read_system_activity_log" "').first()).toBeVisible();
+		await expect(page.getByText('21: "name": "create_form_screen" "').first()).toBeVisible();
+		await expect(page.getByText('22: "name": "update_form_screen" "').first()).toBeVisible();
+		await expect(page.getByText('23: "name": "change_form_screen_page_order" "').first()).toBeVisible();
+		await expect(page.getByText('24: "name": "create_list_element" "').first()).toBeVisible();
+		await expect(page.getByText('25: "name": "update_list_element" "').first()).toBeVisible();
+		await expect(page.getByText('26: "name": "create_linked_list_element" "').first()).toBeVisible();
+		await expect(page.getByText('27: "name": "update_linked_list_element" "').first()).toBeVisible();
+		await expect(page.getByText('28: "name": "create_user_list_element" "').first()).toBeVisible();
+		await expect(page.getByText('29: "name": "update_user_list_element" "').first()).toBeVisible();
+		await expect(page.getByText('30: "name": "create_static_content_element" "').first()).toBeVisible();
+		await expect(page.getByText('31: "name": "update_static_content_element" "').first()).toBeVisible();
+		await expect(page.getByText('32: "name": "create_selector_element" "').first()).toBeVisible();
+		await expect(page.getByText('33: "name": "update_selector_element" "').first()).toBeVisible();
+		await expect(page.getByText('34: "name": "create_derived_value_element" "').first()).toBeVisible();
+		await expect(page.getByText('35: "name": "update_derived_value_element" "').first()).toBeVisible();
+		await expect(page.getByText('36: "name": "create_text_box_element" "').first()).toBeVisible();
+		await expect(page.getByText('37: "name": "update_text_box_element" "').first()).toBeVisible();
+		await expect(page.getByText('38: "name": "create_table_of_elements" "').first()).toBeVisible();
+		await expect(page.getByText('39: "name": "update_table_of_elements" "').first()).toBeVisible();
+		await expect(page.getByText('40: "name": "create_subform_interface" "').first()).toBeVisible();
+		await expect(page.getByText('41: "name": "update_subform_interface" "').first()).toBeVisible();
+		await expect(page.getByText('42: "name": "read_system_activity_log" "').first()).toBeVisible();
 
 		// --- Session auth (embedded AI assistant path) ---
 		// 401 for user not logged in
@@ -148,6 +151,6 @@ test.describe('Check that tools/list is responding', () => {
 		await expect(page.getByText('9: "name": "get_form_details" "').first()).toBeVisible();
 		await expect(page.getByText('15: "name": "test_connection" "').first()).toBeVisible();
 		await expect(page.getByText('19: "name": "query_the_database_directly" "').first()).toBeVisible();
-		await expect(page.getByText('39: "name": "read_system_activity_log" "').first()).toBeVisible();
+		await expect(page.getByText('42: "name": "read_system_activity_log" "').first()).toBeVisible();
 	})
 });
