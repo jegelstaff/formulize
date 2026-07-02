@@ -486,7 +486,7 @@ Correct example for linked elements:
 
 			$this->tools['create_form_screen'] = [
 				'name' => 'create_form_screen',
-				'description' => 'Create a new form screen for an existing form. Forms are created with the create_form tool. Each form can have one or more form screens, which are different versions of the form that users interact with to create and edit entries. Form screens are organized into one or more pages of elements, with optional tabs, navigation buttons, and per-page display conditions. Use this tool to create a new form screen that presents form elements in a certain way. Use get_form_details to find the element handles to specify for the pages. To modify an existing screen use update_form_screen (which can add/remove individual elements on a page without redefining the whole screen). Use get_screen_details or list_screens to inspect screens.',
+				'description' => 'Create a new form screen for an existing form. Forms are created with the create_form tool. Each form can have one or more form screens, which are different versions of the form that users interact with to create and edit entries. Form screens are organized into one or more pages of elements, with optional tabs, navigation buttons, and per-page display conditions. Use this tool to create a new form screen that presents form elements in a certain way. Use get_form_details to find the element handles to specify for the pages. The order of elements on the page is not controlled here; you must control element order using the \'placement\' parameter of the create element and update element tools. To modify an existing screen use update_form_screen (which can add/remove individual elements on a page without redefining the whole screen). Use get_screen_details or list_screens to inspect screens.',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => array_merge([
@@ -506,7 +506,7 @@ Correct example for linked elements:
 
 			$this->tools['update_form_screen'] = [
 				'name' => 'update_form_screen',
-				'description' => 'Update an existing form screen (multi-page screen). Only the settings you provide are changed; anything you omit is left as-is. The "pages" property makes targeted changes: for each page you can add or remove individual elements, change its title, or replace its display conditions, and you can add new pages or delete pages - without having to redefine the whole screen. Pages you do not mention are untouched. Providing "button_text" updates only the button labels you include. To reorder pages, use change_form_screen_page_order. Use get_screen_details to see a screen\'s current pages and settings before updating it.',
+				'description' => 'Update an existing form screen (multi-page screen). Only the settings you provide are changed; anything you omit is left as-is. The "pages" property makes targeted changes: for each page you can add or remove individual elements, change its title, or replace its display conditions, and you can add new pages or delete pages - without having to redefine the whole screen. Pages you do not mention are untouched. The order of elements on the page is not controlled here; you must control element order using the \'placement\' parameter of the create element and update element tools. Providing "button_text" updates only the button labels you include; button labels you do not include will remain unchanged. To reorder pages, use the change_form_screen_page_order tool. Use get_screen_details to see a screen\'s current pages and settings before updating it.',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => array_merge([
@@ -1136,14 +1136,14 @@ Correct example for linked elements:
 			'type' => 'array',
 			'items' => [ 'type' => ['string', 'integer'] ],
 			'description' => ($isUpdate
-				? 'Optional. Elements to add to this page.'.$sharedElementsClause.' Only applies to elements pages (not php or screen pages).'
+				? 'Optional. Elements to add to this page.'.$sharedElementsClause.' Only applies to elements pages (not php or screen pages). The add_elements parameter only adds elements to a page, it does not affect the order in which they appear. Element order is controlled through the \'placement\' parameter of the create element and update element tools.'
 				: "Used when content is 'elements' (the default). The form elements to place on this page.".$sharedElementsClause)
 		];
 		if($isUpdate) {
 			$itemProps['remove_elements'] = [
 				'type' => 'array',
 				'items' => [ 'type' => ['string', 'integer'] ],
-				'description' => 'Optional. Elements (handle or id) to remove from this page. Only applies to elements pages.'
+				'description' => 'Optional. Elements (handle or id) to remove from this page. Only applies to elements pages. The remove_elements parameter only removes elements from a page, it does not affect the order in which the remaining elements appear. Element order is controlled through the \'placement\' parameter of the create element and update element tools.'
 			];
 		}
 		$itemProps['php_code'] = [
@@ -1372,7 +1372,7 @@ Do not use foreign key values with linked elements; use the readable value inste
 			$display_conditions = $arguments['display_conditions'];
 		}
 		$disabled = isset($arguments['disabled']) ? ($arguments['disabled'] ? 1 : 0) : null;
-		$order = $arguments['order'] ?? null;
+		$order = $arguments['placement'] ?? null;
 
 		$makeSubformInterface = false;
 		$elementObject = null;
@@ -2499,7 +2499,7 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 
 		// for creating and updating — applies to all element categories
 		$orderProperty = [
-			'order' => [
+			'placement' => [
 				'oneOf' => [
 					[
 						'type' => 'string',
@@ -2507,7 +2507,7 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 					],
 					[
 						'type' => 'integer',
-						'description' => 'The element ID to place this element immediately after.'
+						'description' => 'The element being updated will appear immediately _after_ the element that is specified with this parameter. You can get a list of the existing elements, in their current order, with the get_form_details tool.'
 					]
 				]
 			]
