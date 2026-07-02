@@ -63,11 +63,12 @@ class formulizeSliderElement extends formulizeElement {
 - minValue (integer, the minimum value for the slider. Default is 0.)
 - maxValue (integer, the maximum value for the slider. Default is 100.)
 - stepValue (integer, the increments allowed for the slider. Default is 10.)
-- defaultValue (integer, the starting value for the slider. Default is 0.)
+- defaultValue (integer, the starting value for the slider. Default is 0. Special case: if set to 0 and minValue is greater than 0, the slider starts in a \"no value\" state — the knob is positioned at the minimum end but no value is stored until the user interacts with it. Once the user interacts with the slider, the value is set and cannot return to 0. This is useful when you want to avoid misleading data from users who never consciously chose a value.)
 **Examples:**
 - A range slider where the user can pick any number between 0 and 100, defaults to 50: { minValue: 0, maxValue: 100, stepValue: 1, defaultValue: 50 }
 - A range slider where the user can pick 10, 20, 30, 40, or 50. Default to 10: { minValue: 10, maxValue: 50, stepValue: 10, defaultValue: 10 }
-- A range slider where the user can pick any number from -10 to 10. Default will be 0 since it is not specified: { minValue: -10, maxValue: 10, stepValue: 1 }";
+- A range slider where the user can pick any number from -10 to 10. Default will be 0 since it is not specified: { minValue: -10, maxValue: 10, stepValue: 1 }
+- A range slider where the user rates satisfaction from 1 to 5, but starts with no value selected (user must interact to submit a rating): { minValue: 1, maxValue: 5, stepValue: 1, defaultValue: 0 }";
 	}
 
 }
@@ -103,7 +104,7 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
 			$ele_value[2] = $properties['stepValue'];
 		}
 		if(isset($properties['defaultValue']) AND is_numeric($properties['defaultValue'])) {
-			$ele_value[3] = $properties['defaultValue'];
+			$ele_value[3] = $properties['defaultValue']; // 0 is valid: triggers "no initial value" mode when minValue > 0
 		}
 		return [
 			'ele_value' => $ele_value
@@ -134,12 +135,7 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
 
         $formlink = createFieldList($ele_value[3], true);
         if (!$element) {
-            //Min Velue
-            $ele_value[0] = 0;
-            //Max Value
-            $ele_value[1] = 100;
-            //Step size
-            $ele_value[2] = 10;
+						$ele_value = $this->getDefaultEleValue();
         }
         return array('formlink'=>$formlink->render(), 'ele_value'=>$ele_value);
     }
@@ -188,52 +184,89 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
     // $entry_id is the ID number of the entry where this particular element comes from
     // $screen is the screen object that is in effect, if any (may be null)
     function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
-        $slider_html = "<input type=\"range\" ";
-        $slider_html .= "name=\"{$markupName}\"";
-        $slider_html .= "id=\"{$markupName}\"";
-        $slider_html .= "min=\"{$ele_value[0]}\" ";
-        $slider_html .= "max=\"{$ele_value[1]}\" ";
-        $slider_html .= "step=\"{$ele_value[2]}\" ";
-        $slider_html .= "value=\"{$ele_value[3]}\" ";
-        $slider_html .= "aria-describedby=\"{$markupName}-help-text\" ";
-        $slider_html .= "oninput=\"updateTextInput_{$markupName}(value);formulizechanged=1;\">";
-        $slider_html .= "</input>";
+        // Zero-default mode: default=0 with min>0 means "no value until user interacts".
+        // The slider renders with min=0 so the knob sits at the far left. On first
+        // click/tap/keypress the real minimum is locked in, preventing a return to 0.
+        $isZeroDefault = (intval($ele_value[3]) === 0 && intval($ele_value[0]) > 0);
+        $actualMin = intval($ele_value[0]);
 
-        $value_html = "<output id=\"rangeValue_{$markupName}\" type=\"text\" size=\"3\"";
-        $value_html.= "for=\"{$markupName}\"";
-        $value_html .= ">{$ele_value[3]}<output>";
-
-        $form_slider_value = new XoopsFormLabel($caption, $value_html);
-        $form_slider = new XoopsFormLabel($caption, $slider_html);
-
-        $update_script = "<script type=\"text/javascript\">";
-        $update_script .= "function updateTextInput_{$markupName}(val) {";
-        $update_script .= "document.getElementById('rangeValue_{$markupName}').value=val;\n";
-        $update_script .= "let event = new Event('change');\n";
-        $update_script .= "document.getElementById('{$markupName}').dispatchEvent(event);}\n";
-        $update_script .= "</script>";
-
-        if($isDisabled) {
+        if ($isDisabled) {
+            $numericValue = intval($ele_value[3]);
+            $value_html = "<output id=\"rangeValue_{$markupName}\" type=\"text\" size=\"3\" for=\"{$markupName}\">{$numericValue}</output>";
+            $form_slider_value = new XoopsFormLabel($caption, $value_html);
             $renderedValue = $form_slider_value->render();
-						$config_handler = xoops_gethandler('config');
-    				$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-						if(trim(strip_tags($renderedValue)) == 0 AND $formulizeConfig['show_empty_elements_when_read_only'] == false) {
-							$renderedValue = "";
-						}
-            $form_ele = new XoopsFormLabel($caption, "$renderedValue");
-        } else {
-            $renderedSlider = $form_slider->render();
-            $renderedValue = $form_slider_value->render();
-            $form_ele = new XoopsFormLabel($caption, "<nobr>$renderedSlider $renderedValue</nobr>$update_script");
+            $config_handler = xoops_gethandler('config');
+            $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+            if (trim(strip_tags($renderedValue)) == 0 AND $formulizeConfig['show_empty_elements_when_read_only'] == false) {
+                $renderedValue = "";
+            }
+            return new XoopsFormLabel($caption, "$renderedValue");
         }
 
-        return $form_ele;
+        $slider_html = "<input type=\"range\" ";
+        $slider_html .= "name=\"{$markupName}\" ";
+        $slider_html .= "id=\"{$markupName}\" ";
+        $slider_html .= "min=\"" . ($isZeroDefault ? 0 : $ele_value[0]) . "\" ";
+        $slider_html .= "max=\"{$ele_value[1]}\" ";
+        $slider_html .= "step=\"{$ele_value[2]}\" ";
+        $slider_html .= "value=\"" . ($isZeroDefault ? 0 : $ele_value[3]) . "\" ";
+        $slider_html .= "aria-describedby=\"{$markupName}-help-text\" ";
+        if ($isZeroDefault) {
+            $slider_html .= "onmousedown=\"formulizeSliderActivate_{$markupName}()\" ";
+            $slider_html .= "ontouchstart=\"formulizeSliderActivate_{$markupName}()\" ";
+        }
+        $slider_html .= "oninput=\"updateTextInput_{$markupName}(this.value)\">";
+        $slider_html .= "</input>";
+
+        $displayValue = $isZeroDefault ? "&mdash;" : $ele_value[3];
+        $value_html = "<output id=\"rangeValue_{$markupName}\" type=\"text\" size=\"3\" for=\"{$markupName}\">{$displayValue}</output>";
+
+        $form_slider = new XoopsFormLabel($caption, $slider_html);
+        $form_slider_value = new XoopsFormLabel($caption, $value_html);
+
+        $update_script = "<script type=\"text/javascript\">";
+        if ($isZeroDefault) {
+            // On first click/tap, lock the real minimum so the knob can't return to 0
+            $update_script .= "function formulizeSliderActivate_{$markupName}() {";
+						$update_script .= "console.log('slide');";
+            $update_script .= "var sl=document.getElementById('{$markupName}');";
+            $update_script .= "sl.setAttribute('min',{$actualMin});";
+            $update_script .= "if(parseFloat(sl.value)<{$actualMin}){sl.value={$actualMin};}";
+            $update_script .= "document.getElementById('rangeValue_{$markupName}').value=sl.value;";
+            $update_script .= "formulizechanged=1;}";
+        }
+        $update_script .= "function updateTextInput_{$markupName}(val) {";
+        if ($isZeroDefault) {
+            // oninput also locks the minimum, covering keyboard arrow-key navigation
+            $update_script .= "var sl=document.getElementById('{$markupName}');";
+            $update_script .= "if(parseFloat(sl.getAttribute('min'))<{$actualMin}){sl.setAttribute('min',{$actualMin});}";
+        }
+        $update_script .= "document.getElementById('rangeValue_{$markupName}').value=val;";
+        $update_script .= "let event=new Event('change');";
+        $update_script .= "document.getElementById('{$markupName}').dispatchEvent(event);";
+        $update_script .= "formulizechanged=1;}";
+        $update_script .= "</script>";
+
+        $renderedSlider = $form_slider->render();
+        $renderedValue = $form_slider_value->render();
+        return new XoopsFormLabel($caption, "<nobr>$renderedSlider $renderedValue</nobr>$update_script");
     }
 
     // Returns any custom validation code (javascript) to validate this element
     // 'myform' is a name enforced by convention to refer to the current form
     // adminCanMakeRequired/alwaysValidateInputs properties control usage
     function generateValidationCode($caption, $markupName, $element, $entry_id) {
+        $ele_value = $element->getVar('ele_value');
+        if (intval($ele_value[3]) === 0 && intval($ele_value[0]) > 0) {
+            // Zero-default mode: slider starts at 0 (untouched); fail required check if still 0
+            $eltmsg = empty($caption) ? sprintf(_FORM_ENTER, $markupName) : sprintf(_FORM_ENTER, strip_tags(htmlspecialchars_decode($caption, ENT_QUOTES)));
+            $eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
+            return [
+                "if ( myform.{$markupName} && myform.{$markupName}.value == '0' ) {\n",
+                "window.alert(\"{$eltmsg}\");\n return false;\n",
+                "}\n",
+            ];
+        }
     }
 
     // this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
