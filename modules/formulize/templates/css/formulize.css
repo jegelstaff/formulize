@@ -753,3 +753,20 @@ button.formulize-ai-tool-group-btn {
 button.formulize-ai-tool-util-btn {
 	min-width: 185px;
 }
+
+/* Textarea word/character limit counter */
+.fz-limit-counter {
+	font-size: 0.85em;
+	margin-top: 0.5em;
+	text-align: right;
+}
+.fz-limit-counter.fz-limit-green {
+	color: #2e7d32;
+}
+.fz-limit-counter.fz-limit-orange {
+	color: #e65100;
+}
+.fz-limit-counter.fz-limit-red {
+	color: #c62828;
+	font-weight: bold;
+}
