@@ -115,22 +115,10 @@ class formulizeMultiPageScreen extends formulizeScreen {
         return false;
     }
 
-    // this returns true/false for the UI options showpageselector, showpageindicator, showpagetitles
-    // takes into account nav style setting
+    // returns true/false for the UI options showpageselector, showpageindicator, showpagetitles
+    // 1 = on, 0 = off
     function getUIOption($option) {
-        $optionValue = $this->getVar($option);
-        if(!$optionValue) { // legacy, check navstyle and do whatever we used to do
-            switch($this->getVar('navstyle')) {
-                case 1: // tabs
-                    return false;
-                case 2; // tabs and buttons
-                    return false;
-                default: // buttons
-                    return true;
-            }
-        } else {
-            return ($optionValue == 1);
-        }
+        return ($this->getVar($option) == 1);
     }
 
 }

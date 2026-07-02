@@ -96,9 +96,9 @@ $properties = array(
     'displaycolumns' => isset($screens['displaycolumns']) ? $screens['displaycolumns'] : 2,
     'column1width' => $column1width,
     'column2width' => isset($screens['column2width']) ? $screens['column2width'] : null,
-    'showpagetitles' => $screens['showpagetitles'] ? 1 : 2,
-    'showpageindicator' => $screens['showpageindicator'] ? 1 : 2,
-    'showpageselector' => $screens['showpageselector'] ? 1 : 2,
+    'showpagetitles' => $screens['showpagetitles'] ? 1 : 0,
+    'showpageindicator' => $screens['showpageindicator'] ? 1 : 0,
+    'showpageselector' => $screens['showpageselector'] ? 1 : 0,
     'elementdefaults' => isset($screens['elementdefaults']) ? $screens['elementdefaults'] : "",
     'reloadblank' => $screens['reloadblank'],
 );

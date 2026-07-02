@@ -661,6 +661,25 @@ function formulize_run_schema_migrations($prev_dbversion, $required_dbversion) {
 						}
         }
 
+				// normalize showpagetitles/showpageindicator/showpageselector from old 1/2 encoding to 0/1
+				// guard: value 2 cannot exist after this runs, so the check is the idempotency sentinel
+				$uiFlagsCheck = $xoopsDB->query("SELECT COUNT(*) FROM ".$xoopsDB->prefix("formulize_screen_multipage")." WHERE showpagetitles = 2 OR showpageindicator = 2 OR showpageselector = 2");
+				$uiFlagsRow = $uiFlagsCheck ? $xoopsDB->fetchRow($uiFlagsCheck) : null;
+				if($uiFlagsRow && $uiFlagsRow[0] > 0) {
+					// value 2 = explicitly off; legacy 0 = derive from navstyle (tabs→off, buttons→on); 1 = already correct
+					$uiFlagsMigrateSql = "UPDATE ".$xoopsDB->prefix("formulize_screen_multipage")."
+						SET showpagetitles    = CASE WHEN showpagetitles    = 0 THEN IF(navstyle IN (1,2), 0, 1) WHEN showpagetitles    = 2 THEN 0 ELSE showpagetitles    END,
+						    showpageindicator = CASE WHEN showpageindicator = 0 THEN IF(navstyle IN (1,2), 0, 1) WHEN showpageindicator = 2 THEN 0 ELSE showpageindicator END,
+						    showpageselector  = CASE WHEN showpageselector  = 0 THEN IF(navstyle IN (1,2), 0, 1) WHEN showpageselector  = 2 THEN 0 ELSE showpageselector  END";
+					if($xoopsDB->queryF($uiFlagsMigrateSql)) {
+						print "Normalized multipage UI flags (showpagetitles/showpageindicator/showpageselector) to 0/1 encoding. result: OK<br>";
+					} else {
+						print "Error normalizing multipage UI flags. ".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.<br>";
+					}
+				} else {
+					print "Multipage UI flags already normalized. result: OK<br>";
+				}
+
 				// migrate singleentry values from scalar to per-group array (keyed by Registered Users group 2)
 				$migrateSingleSql = "SELECT id_form, singleentry FROM ".$xoopsDB->prefix("formulize_id");
 				if($migrateRes = $xoopsDB->query($migrateSingleSql)) {

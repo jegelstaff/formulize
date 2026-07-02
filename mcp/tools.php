@@ -1038,7 +1038,7 @@ Correct example for linked elements:
 			}
 		}
 
-		// show_page_* booleans -> 1 (show) / 2 (hide)
+		// show_page_* booleans -> 1 (show) / 0 (hide)
 		$showMap = array(
 			'show_page_indicator' => 'showpageindicator',
 			'show_page_selector' => 'showpageselector',
@@ -1046,7 +1046,7 @@ Correct example for linked elements:
 		);
 		foreach($showMap as $arg => $col) {
 			if(array_key_exists($arg, $arguments)) {
-				$properties[$col] = $arguments[$arg] ? 1 : 2;
+				$properties[$col] = $arguments[$arg] ? 1 : 0;
 			}
 		}
 

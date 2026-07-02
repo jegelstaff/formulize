@@ -396,7 +396,7 @@ class formulizeHandler {
 	 * must be set already-serialized), and the thankstext/introtext HTML encoding normalization.
 	 *
 	 * Callers (MCP tools, admin save handlers) pass INTERNAL object-var values as keys (e.g. navstyle,
-	 * showpagetitles as 1/2, buttontext as an array, etc.). The pages/pagetitles/conditions arrays should be
+	 * showpagetitles as 0/1 (0=off, 1=on), buttontext as an array, etc.). The pages/pagetitles/conditions arrays should be
 	 * plain (unserialized) PHP arrays in internal format - use buildPageStorageArrays() to construct them from
 	 * a friendly page definition list.
 	 *
