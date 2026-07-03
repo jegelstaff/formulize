@@ -36,8 +36,8 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
 class FormulizeObject extends XoopsObject {
 
 	static function sanitize_handle_name($handle_name) {
-		// strip non-alphanumeric characters from handles
-		return strtolower(preg_replace("/[^a-zA-Z0-9_-]+/", "", str_replace(" ", "_", $handle_name)));
+		// hyphens are illegal in PHP variable names and break formula evaluation; convert to underscores
+		return strtolower(preg_replace("/[^a-zA-Z0-9_]+/", "", str_replace(array(" ", "-"), "_", $handle_name)));
 	}
 
 	/**

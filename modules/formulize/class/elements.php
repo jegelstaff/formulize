@@ -893,10 +893,10 @@ class formulizeElementsHandler {
 	}
 
 	/**
-	 * Renames references to an element's handle in other elements, code files, and element definitions when the handle is changed.
-	 * NOT COMPLETE - still need to update references in various places.
-	 * @param object $elementObject The element object that was changed
-	 * @param string $original_handle The original handle of the element before it was changed
+	 * Renames all references to an element's handle when the handle is changed.
+	 * Called both from the admin UI save path and from the schema migration patch.
+	 * @param object $elementObject The element object with its new handle already set
+	 * @param string $original_handle The handle before the rename
 	 * @return void
 	 */
 	function renameElementResources($elementObject, $original_handle) {
@@ -915,7 +915,7 @@ class formulizeElementsHandler {
 				if(!$res = $xoopsDB->query($lsbHandleFormDefSQL)) {
 					print "Error:  update of linked selectbox element definitions failed.";
 				}
-				// rewrite references in derived values code
+				// rewrite $handle variable references in derived values code files
 				foreach((array)scandir(XOOPS_ROOT_PATH.'/modules/formulize/code/') as $file) {
 					if(strstr($file, 'derived_') !== false) {
 						$code = file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file);
@@ -926,30 +926,154 @@ class formulizeElementsHandler {
 						}
 					}
 				}
-				// rewrite references in text for display
+				// rewrite {handle} tokens inside captionedContent and fullWidthContent ele_value
 				$selectElementsSQL = "SELECT ele_id, ele_value FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_value LIKE '%".$original_handle."%' AND (ele_type = 'captionedContent' OR ele_type = 'fullWidthContent')";
 				if($res = $xoopsDB->query($selectElementsSQL)) {
-						while($row = $xoopsDB->fetchRow($res)) {
-								$thisEleId = $row[0];
-								$thisEleValue = $row[1];
-								$encapsulatingCharacter1 = '{';
-								$encapsulatingCharacter2 = '}';
-								$thisEleValue = unserialize($thisEleValue);
-								$eleValueZero = $thisEleValue[0];
-								$eleValueZero = str_replace($encapsulatingCharacter1.$original_handle.$encapsulatingCharacter2, $encapsulatingCharacter1.$ele_handle.$encapsulatingCharacter2, $eleValueZero);
-								$thisEleValue[0] = $eleValueZero;
-								$thisEleValue = serialize($thisEleValue);
-								$updateSQL = "UPDATE " . $xoopsDB->prefix("formulize") . " SET ele_value = '".formulize_db_escape($thisEleValue)."' WHERE ele_id = $thisEleId";
-								$xoopsDB->query($updateSQL);
-						}
+					while($row = $xoopsDB->fetchRow($res)) {
+						$thisEleId = $row[0];
+						$thisEleValue = unserialize($row[1]);
+						$thisEleValue[0] = str_replace('{' . $original_handle . '}', '{' . $ele_handle . '}', $thisEleValue[0]);
+						$thisEleValue = serialize($thisEleValue);
+						$xoopsDB->query("UPDATE " . $xoopsDB->prefix("formulize") . " SET ele_value = '".formulize_db_escape($thisEleValue)."' WHERE ele_id = $thisEleId");
+					}
 				}
-				// update element code file names
+				// rename element code files (fullWidthContent, captionedContent, text, textarea, derived)
+				// and purge stale derived-value cache files so they regenerate with the new handle
 				$elementTypes = array('fullWidthContent', 'captionedContent', 'text', 'textarea', 'derived');
 				foreach($elementTypes as $type) {
 					$oldFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$type.'_'.$original_handle.'.php';
 					$newFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$type.'_'.$ele_handle.'.php';
 					if(file_exists($oldFileName)) {
 						rename($oldFileName, $newFileName);
+					}
+				}
+				$cacheDir = XOOPS_ROOT_PATH . '/modules/formulize/cache/';
+				if(is_dir($cacheDir)) {
+					foreach((array)glob($cacheDir . 'Derived_value_formula_for_' . $original_handle . '*.php') as $cacheFile) {
+						@unlink($cacheFile);
+					}
+				}
+				// update {handle} tokens in ele_caption and ele_desc across all elements
+				$captionRes = $xoopsDB->query(
+					"SELECT ele_id, ele_caption, ele_desc FROM " . $xoopsDB->prefix('formulize')
+					. " WHERE ele_caption LIKE " . $xoopsDB->quoteString('%{' . $original_handle . '}%')
+					. " OR ele_desc LIKE "        . $xoopsDB->quoteString('%{' . $original_handle . '}%')
+				);
+				if($captionRes) {
+					while($row = $xoopsDB->fetchArray($captionRes)) {
+						$newCaption = str_replace('{' . $original_handle . '}', '{' . $ele_handle . '}', $row['ele_caption']);
+						$newDesc    = $row['ele_desc'] !== null
+							? str_replace('{' . $original_handle . '}', '{' . $ele_handle . '}', $row['ele_desc'])
+							: null;
+						$descSql = $newDesc !== null ? ", ele_desc = " . $xoopsDB->quoteString($newDesc) : "";
+						$xoopsDB->query(
+							"UPDATE " . $xoopsDB->prefix('formulize')
+							. " SET ele_caption = " . $xoopsDB->quoteString($newCaption) . $descSql
+							. " WHERE ele_id = " . intval($row['ele_id'])
+						);
+					}
+				}
+				// update handle references in formulize_screen_map (varchar columns and serialized columns array)
+				$mapTableRes = $xoopsDB->query("SHOW TABLES LIKE '" . $xoopsDB->prefix('formulize_screen_map') . "'");
+				if($mapTableRes && $xoopsDB->getRowsNum($mapTableRes) > 0) {
+					foreach(array('lat_element', 'lng_element', 'label_element', 'description_element') as $col) {
+						$xoopsDB->query(
+							"UPDATE " . $xoopsDB->prefix('formulize_screen_map')
+							. " SET `$col` = " . $xoopsDB->quoteString($ele_handle)
+							. " WHERE `$col` = " . $xoopsDB->quoteString($original_handle)
+						);
+					}
+					// columns is a serialized array of [$handle, $label, $searchtype] entries
+					$mapColsRes = $xoopsDB->query(
+						"SELECT sid, columns FROM " . $xoopsDB->prefix('formulize_screen_map')
+						. " WHERE columns LIKE " . $xoopsDB->quoteString('%' . $original_handle . '%')
+					);
+					if($mapColsRes) {
+						while($row = $xoopsDB->fetchArray($mapColsRes)) {
+							$cols = @unserialize($row['columns']);
+							if(!is_array($cols)) { continue; }
+							$modified = false;
+							foreach($cols as $i => $arr) {
+								if(isset($arr[0]) && $arr[0] === $original_handle) {
+									$cols[$i][0] = $ele_handle;
+									$modified = true;
+								}
+							}
+							if($modified) {
+								$xoopsDB->query(
+									"UPDATE " . $xoopsDB->prefix('formulize_screen_map')
+									. " SET columns = " . $xoopsDB->quoteString(serialize($cols))
+									. " WHERE sid = " . intval($row['sid'])
+								);
+							}
+						}
+					}
+				}
+				// update advanceview in formulize_screen_listofentries
+				// format: serialized array of [$handle, $searchValue, $sortDir, $searchType]
+				$advRes = $xoopsDB->query(
+					"SELECT sid, advanceview FROM " . $xoopsDB->prefix('formulize_screen_listofentries')
+					. " WHERE advanceview LIKE " . $xoopsDB->quoteString('%' . $original_handle . '%')
+				);
+				if($advRes) {
+					while($row = $xoopsDB->fetchArray($advRes)) {
+						$av = @unserialize($row['advanceview']);
+						if(!is_array($av)) { continue; }
+						$modified = false;
+						foreach($av as $i => $avEntry) {
+							if(is_array($avEntry) && isset($avEntry[0]) && $avEntry[0] === $original_handle) {
+								$av[$i][0] = $ele_handle;
+								$modified = true;
+							}
+						}
+						if($modified) {
+							$xoopsDB->query(
+								"UPDATE " . $xoopsDB->prefix('formulize_screen_listofentries')
+								. " SET advanceview = " . $xoopsDB->quoteString(serialize($av))
+								. " WHERE sid = " . intval($row['sid'])
+							);
+						}
+					}
+				}
+				// update sv_oldcols (comma-separated handles, some with hiddencolumn_ prefix) and sv_sort
+				$svRes = $xoopsDB->query(
+					"SELECT sv_id, sv_oldcols, sv_sort FROM " . $xoopsDB->prefix('formulize_saved_views')
+					. " WHERE sv_oldcols LIKE " . $xoopsDB->quoteString('%' . $original_handle . '%')
+					. " OR sv_sort = "          . $xoopsDB->quoteString($original_handle)
+				);
+				if($svRes) {
+					while($row = $xoopsDB->fetchArray($svRes)) {
+						$svId = intval($row['sv_id']);
+						if($row['sv_oldcols']) {
+							$parts    = explode(',', $row['sv_oldcols']);
+							$modified = false;
+							foreach($parts as $j => $part) {
+								$prefix = '';
+								$handle = $part;
+								if(strpos($part, 'hiddencolumn_') === 0) {
+									$prefix = 'hiddencolumn_';
+									$handle = substr($part, strlen('hiddencolumn_'));
+								}
+								if($handle === $original_handle) {
+									$parts[$j] = $prefix . $ele_handle;
+									$modified   = true;
+								}
+							}
+							if($modified) {
+								$xoopsDB->query(
+									"UPDATE " . $xoopsDB->prefix('formulize_saved_views')
+									. " SET sv_oldcols = " . $xoopsDB->quoteString(implode(',', $parts))
+									. " WHERE sv_id = " . $svId
+								);
+							}
+						}
+						if($row['sv_sort'] === $original_handle) {
+							$xoopsDB->query(
+								"UPDATE " . $xoopsDB->prefix('formulize_saved_views')
+								. " SET sv_sort = " . $xoopsDB->quoteString($ele_handle)
+								. " WHERE sv_id = " . $svId
+							);
+						}
 					}
 				}
 			}
