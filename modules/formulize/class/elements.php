@@ -886,8 +886,8 @@ class formulizeElementsHandler {
 			$form_handle = $formObject->getVar('form_handle');
 			$ele_handle = $form_handle.'_'.formulizeElement::sanitize_handle_name($element->getVar('ele_caption'));
 		}
+		$ele_handle = substr($ele_handle, 0, 59); // enforce max length of 64 characters... leave space for _f### or _x### if unique enforcement needs it
 		$ele_handle = formulizeHandler::enforceUniqueElementHandles($ele_handle, $element->getVar('ele_id'), $element->getVar('fid'));
-		$ele_handle = substr($ele_handle, 0, 64); // enforce max length of 64 characters
 		$element->setVar('ele_handle', $ele_handle);
 		return $ele_handle;
 	}

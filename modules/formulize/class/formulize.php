@@ -1959,7 +1959,6 @@ class formulizeHandler {
 	static function enforceUniqueElementHandles($element_handle_name, $elementIdentifer=null, $formIdentifier=null) {
 		$element_handle_name = formulizeElement::sanitize_handle_name($element_handle_name);
 		if (strlen($element_handle_name)) {
-			$firstUniqueCheck = true;
 			$element_handler = xoops_getmodulehandler('elements','formulize');
 			$form_handler = xoops_getmodulehandler('forms', 'formulize');
 			if($elementIdentifer AND $elementObject = $element_handler->get($elementIdentifer)) {
@@ -1970,13 +1969,16 @@ class formulizeHandler {
 			} else {
 				throw new Exception("Must provide either elementIdentifer or formIdentifier to enforce unique element handles");
 			}
+			$counter = 1;
+			$baseHandleName = $element_handle_name;
 			while (!$uniqueCheck = $form_handler->isElementHandleUnique($element_handle_name, $elementIdentifer, $formIdentifier)) {
-				if ($firstUniqueCheck) {
-						$element_handle_name = $element_handle_name . "_".$formId;
-						$firstUniqueCheck = false;
-				} else {
-						$element_handle_name = $element_handle_name . "_copy";
+				if($counter > 999) {
+					// only space for up to three digits, if we were at the max length for the base handle name in the first place (59 chars), so bail now, but seriously? 1,000 elements with the same base name??
+					throw new Exception("Could not generate a unique element handle name for this form. Already 1,000 elements with the same base name? Please try a different base name.");
 				}
+				$suffix = ($counter == 1 AND $formId < 1000) ? "_f".$formId : "_x$counter";
+				$element_handle_name = $baseHandleName . $suffix;
+				$counter++;
 			}
 		}
 		return $element_handle_name;
