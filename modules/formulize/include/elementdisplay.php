@@ -351,6 +351,22 @@ function elementIsAllowedForUserInEntry($elementObject, $entry_id, $groups = arr
 		$allowed = checkConditionsAgainstAnEntry($elementFilterSettings, $form_id, $entry_id, $elementObject);
 	}
 
+	// catalog the dependencies of derived value formulas for conditional purposes
+	if($allowed AND $elementObject->getVar('ele_type') == 'derived') {
+		$governingElements = array();
+		$derivedFormula = $elementObject->getVar('ele_value');
+		$formula = isset($derivedFormula[0]) ? $derivedFormula[0] : '';
+		if($formula) {
+			preg_match_all('/\$([a-zA-Z_][a-zA-Z0-9_]*)/', $formula, $formulaMatches);
+			foreach($formulaMatches[1] as $varName) {
+				if($varElementObject = _getElementObject($varName)) {
+					$governingElements[] = $varElementObject->getVar('ele_handle');
+				}
+			}
+		}
+		catalogConditionalElement($renderedElementMarkupName, array_unique($governingElements), $screen);
+	}
+
 	$isDisabled = false;
 	if(isset($GLOBALS['formulize_forceElementsDisabled']) AND $GLOBALS['formulize_forceElementsDisabled'] == true) {
 		$isDisabled = true;
