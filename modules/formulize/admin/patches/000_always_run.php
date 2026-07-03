@@ -112,7 +112,7 @@ function formulize_migrate_hyphenated_handles() {
             continue;
         }
         $element->setVar('ele_handle', $rename['new']);
-        if (!$element_handler->insert($element)) {
+        if (!$element_handler->insert($element, true)) {
             print "<p>Error renaming ele_id=" . intval($eleId) . ": " . htmlspecialchars($xoopsDB->error()) . "</p>";
             continue;
         }
