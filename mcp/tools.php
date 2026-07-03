@@ -1518,8 +1518,9 @@ Do not use foreign key values with linked elements; use the readable value inste
 			'description' => $elementObject->getVar('ele_desc'),
 			'required' => $elementObject->getVar('ele_required') ? true : false,
 			'properties' => $elementObject->getVar('ele_value'),
+			'display_conditions' => $this->tidyUpOldConditionsArrayFormat($elementObject->getVar('ele_filtersettings')),
 			'success' => true,
-			'message' => 'Element and related resources created successfully'
+			'message' => 'Element and related resources '.($isCreate ? 'created' : 'updated').' successfully'
 		];
 
 	}

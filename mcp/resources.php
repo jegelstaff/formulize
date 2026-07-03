@@ -423,7 +423,7 @@ trait resources {
 		}
 
 		// Get form elements
-		$elementsSql = "SELECT `ele_id`, `ele_type`, `ele_caption`, `ele_handle`, `ele_required`, `ele_value`, `ele_uitext`, `ele_display` FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
+		$elementsSql = "SELECT `ele_id`, `ele_type`, `ele_caption`, `ele_handle`, `ele_required`, `ele_value`, `ele_uitext`, `ele_display`, `ele_filtersettings` FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
 		$elementsResult = $this->db->query($elementsSql);
 
 		$serializedFields = FormulizeObject::serializedDBFields();
@@ -440,6 +440,9 @@ trait resources {
 					foreach($row as $field=>$value) {
 						if(in_array($field, $serializedFields['formulize'])) {
 							$row[$field] = unserialize($value);
+							if($field == 'ele_filtersettings') {
+								$row[$field] = $this->tidyUpOldConditionsArrayFormat($row[$field]);
+							}
 						}
 					}
 				}
@@ -885,9 +888,23 @@ trait resources {
 					$screenSQL = "SELECT * FROM ".$this->db->prefix('formulize_screen_'.strtolower($row['type']))." WHERE sid = ".$row['sid'];
 					$screenRes = $this->db->query($screenSQL);
 					$screenTypeData = $this->db->fetchArray($screenRes);
+					$processedFields = [];
 					if(isset($serializedFields['formulize_screen_'.strtolower($row['type'])])) {
 						foreach($serializedFields['formulize_screen_'.strtolower($row['type'])] as $field) {
 							$screenTypeData[$field] = unserialize($screenTypeData[$field]);
+							// tidy up the conditions array
+							if($row['type'] == 'multiPage' AND $field == 'conditions') {
+								foreach($screenTypeData[$field] as $pageOrdinal=>$pageConditions) {
+									$screenTypeData[$field][$pageOrdinal] = $this->tidyUpOldConditionsArrayFormat($pageConditions);
+								}
+							}
+							$processedFields[$field] = true;
+						}
+					}
+					foreach($screenTypeData as $field=>$value) {
+						if(!isset($processedFields[$field]) AND is_string($value)) {
+							$screenTypeData[$field] = undoAllHTMLChars($value);
+							$processedFields[$field] = true;
 						}
 					}
 					$screens[] = $row + $screenTypeData;
@@ -905,6 +922,34 @@ trait resources {
 			'screen_count' => count($screens)
 		];
 
+	}
+
+	/**
+	 * Tidy up the conditions array format for
+	 * Go from parallel arrays where the same key in each belongs together, to an array of arrays, where each item is a sub array with 'element', 'operator', 'value', and 'type' keys.
+	 * This is purely for AI readability
+	 * @param array $conditions The conditions array to tidy up
+	 * @return array The tidied up conditions array
+	 */
+	private function tidyUpOldConditionsArrayFormat($conditions) {
+		$tidiedConditions = [];
+		if(is_array($conditions) AND count($conditions) > 0 AND !empty($conditions[0])) {
+			$elements = $conditions[0];
+			$operators = $conditions[1];
+			$values = $conditions[2];
+			$types = $conditions[3];
+			$length = count($elements);
+			for($i = 0; $i < $length; $i++) {
+				$condition = [
+					'element' => $elements[$i],
+					'operator' => $operators[$i],
+					'value' => $values[$i],
+					'type' => ($types[$i] == 'all' ? 'match-all' : 'match-one-or-more')
+				];
+				$tidiedConditions[] = $condition;
+			}
+		}
+		return empty($tidiedConditions) ? $conditions : $tidiedConditions;
 	}
 
 	/**
