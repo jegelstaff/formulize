@@ -877,11 +877,48 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 						$profileSortSelect .= ", (SELECT pp.`" . formulize_db_escape($ppCol) . "` FROM " . $xoopsDB->prefix('profile_profile') . " AS pp WHERE pp.profileid = main.uid) AS $profileSortAlias";
 						$sortField = $profileSortAlias;
 					} elseif (isset($eauSortRegistry[$sortEauType]) && $eauSortRegistry[$sortEauType]['column'] !== null) {
-						// Real column on users table — sort directly via main.*
-						$sortField = $eauSortRegistry[$sortEauType]['column'];
-						// Falls through to standard sort path; $sortFid stays as $fid → $sortFidAlias = "main"
+						$col = $eauSortRegistry[$sortEauType]['column'];
+						$typeHandler = xoops_getmodulehandler($eauSortRegistry[$sortEauType]['eleType'] . 'Element', 'formulize');
+						if ($typeHandler && ($customExpr = $typeHandler->buildSortExpression('main')) !== null) {
+							$profileSortAlias = 'profile_sort_' . preg_replace('/[^a-z0-9]/i', '_', $sortEauType);
+							$profileSortSelect .= ", $customExpr AS $profileSortAlias";
+							$sortField = $profileSortAlias;
+						} else {
+							// Real column on users table — sort directly via main.*
+							$sortField = $col;
+							// Falls through to standard sort path; $sortFid stays as $fid → $sortFidAlias = "main"
+						}
 					} else {
 						continue; // unknown or non-sortable type, skip
+					}
+				} elseif (!$isUserTableForm && $formObject->getVar('entries_are_users') && strpos($sortField, 'formulize_user_account_') === 0) {
+					// EAU form (not system users table): resolve userAccount element to its backing column
+					// via subquery on the UID stored in the main form table, so this works with or without
+					// the eau_usertable_main join being present (e.g. in count/entryId sub-queries).
+					$sortEauFidStr = substr($sortField, strrpos($sortField, '_') + 1);
+					$sortEauType = substr($sortField, strlen('formulize_user_account_'), strlen($sortField) - strlen('formulize_user_account_') - strlen('_' . $sortEauFidStr));
+					require_once XOOPS_ROOT_PATH . '/modules/formulize/class/userAccountElement.php';
+					$eauSortRegistry = formulizeUserAccountElementHandler::getTypeRegistry();
+					$mainEauUidColumn = formulize_db_escape('formulize_user_account_uid_' . $fid);
+					if ($sortEauType === 'groupmembership') {
+						$profileSortAlias = 'profile_sort_groupmembership';
+						$profileSortSelect .= ", (SELECT GROUP_CONCAT(g.name ORDER BY g.name ASC SEPARATOR '*/-+,') FROM " . $xoopsDB->prefix('groups_users_link') . " AS gul JOIN " . $xoopsDB->prefix('groups') . " AS g ON g.groupid = gul.groupid WHERE gul.uid = main.`$mainEauUidColumn` AND gul.groupid NOT IN (" . XOOPS_GROUP_USERS . "," . XOOPS_GROUP_ANONYMOUS . ")) AS $profileSortAlias";
+						$sortField = $profileSortAlias;
+					} elseif (isset($eauSortRegistry[$sortEauType]) && $eauSortRegistry[$sortEauType]['profileColumn'] !== null) {
+						$ppCol = $eauSortRegistry[$sortEauType]['profileColumn'];
+						$profileSortAlias = 'profile_sort_' . preg_replace('/[^a-z0-9]/i', '_', $sortEauType);
+						$profileSortSelect .= ", (SELECT pp.`" . formulize_db_escape($ppCol) . "` FROM " . $xoopsDB->prefix('profile_profile') . " AS pp WHERE pp.profileid = main.`$mainEauUidColumn`) AS $profileSortAlias";
+						$sortField = $profileSortAlias;
+					} elseif (isset($eauSortRegistry[$sortEauType]) && $eauSortRegistry[$sortEauType]['column'] !== null) {
+						$col = $eauSortRegistry[$sortEauType]['column'];
+						$profileSortAlias = 'profile_sort_' . preg_replace('/[^a-z0-9]/i', '_', $sortEauType);
+						$typeHandler = xoops_getmodulehandler($eauSortRegistry[$sortEauType]['eleType'] . 'Element', 'formulize');
+						$customExpr = ($typeHandler) ? $typeHandler->buildSortExpression('u') : null;
+						$colExpr = ($customExpr !== null) ? $customExpr : "u.`" . formulize_db_escape($col) . "`";
+						$profileSortSelect .= ", (SELECT $colExpr FROM " . $xoopsDB->prefix('users') . " AS u WHERE u.uid = main.`$mainEauUidColumn`) AS $profileSortAlias";
+						$sortField = $profileSortAlias;
+					} else {
+						continue; // unknown or non-sortable EAU type, skip
 					}
 				} else {
 					// Check for alternate sort field (e.g., "Full Name" element configured to sort by "Last Name")
@@ -1754,10 +1791,11 @@ function processGetDataResults($resultData)
 						'2famethod'     => '2fa',
 					);
 					if($eauProperty === 'uname') {
-						$unameParts = explode(' ', $value ?? '', 2);
-						$masterResults[$masterIndexer][getFormHandle($eauCurFormId)][$entryIdIndex[$eauFormAlias]]['formulize_user_account_fullname_'  . $eauCurFormId] = $value ?? '';
-						$masterResults[$masterIndexer][getFormHandle($eauCurFormId)][$entryIdIndex[$eauFormAlias]]['formulize_user_account_firstname_' . $eauCurFormId] = $unameParts[0] ?? '';
-						$masterResults[$masterIndexer][getFormHandle($eauCurFormId)][$entryIdIndex[$eauFormAlias]]['formulize_user_account_lastname_'  . $eauCurFormId] = isset($unameParts[1]) ? $unameParts[1] : '';
+						$uname = $value ?? '';
+						$lastSpace = strrpos($uname, ' ');
+						$masterResults[$masterIndexer][getFormHandle($eauCurFormId)][$entryIdIndex[$eauFormAlias]]['formulize_user_account_fullname_'  . $eauCurFormId] = $uname;
+						$masterResults[$masterIndexer][getFormHandle($eauCurFormId)][$entryIdIndex[$eauFormAlias]]['formulize_user_account_firstname_' . $eauCurFormId] = ($lastSpace !== false) ? substr($uname, 0, $lastSpace) : $uname;
+						$masterResults[$masterIndexer][getFormHandle($eauCurFormId)][$entryIdIndex[$eauFormAlias]]['formulize_user_account_lastname_'  . $eauCurFormId] = ($lastSpace !== false) ? substr($uname, $lastSpace + 1) : '';
 					} elseif(isset($eauPropertyToType[$eauProperty])) {
 						$eauHandle = 'formulize_user_account_' . $eauPropertyToType[$eauProperty] . '_' . $eauCurFormId;
 						$masterResults[$masterIndexer][getFormHandle($eauCurFormId)][$entryIdIndex[$eauFormAlias]][$eauHandle] = $value;

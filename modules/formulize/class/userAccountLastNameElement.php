@@ -45,4 +45,14 @@ class formulizeUserAccountLastNameElementHandler extends formulizeUserAccountFir
 		return new formulizeUserAccountLastNameElement();
 	}
 
+	/**
+	 * Return a SQL expression to sort by the last-name portion of the uname column.
+	 *
+	 * @param string $tableAlias SQL alias for the row in the users table (e.g. 'main' or 'u')
+	 * @return string SQL expression
+	 */
+	public function buildSortExpression($tableAlias) {
+		return "SUBSTRING_INDEX(`{$tableAlias}`.uname, ' ', -1)";
+	}
+
 }

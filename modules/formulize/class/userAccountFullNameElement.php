@@ -52,4 +52,14 @@ class formulizeUserAccountFullNameElementHandler extends formulizeUserAccountEle
 		return new XoopsFormLabel($caption, $ele_value);
 	}
 
+	/**
+	 * Sort Full Name by last name (everything after the last space in uname).
+	 *
+	 * @param string $tableAlias SQL alias for the row in the users table (e.g. 'main' or 'u')
+	 * @return string SQL expression
+	 */
+	public function buildSortExpression($tableAlias) {
+		return "SUBSTRING_INDEX(`{$tableAlias}`.uname, ' ', -1)";
+	}
+
 }

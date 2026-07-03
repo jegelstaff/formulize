@@ -232,6 +232,18 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
     }
 
     /**
+     * Return a SQL expression for sorting by this element's value, or null to use the default
+     * column reference. Subclasses override this when the sort expression must differ from a
+     * plain column reference (e.g. extracting the last name from a combined uname field).
+     *
+     * @param string $tableAlias SQL alias for the row in the users/profile table
+     * @return string|null SQL expression, or null to fall back to the default column sort
+     */
+    public function buildSortExpression($tableAlias) {
+        return null;
+    }
+
+    /**
      * Prepare a submitted value for insertion into the form's data table (base: pass-through).
      *
      * Return {WRITEASNULL} to save a SQL NULL. $entry_id may be "new" for new entries or null

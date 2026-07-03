@@ -47,17 +47,19 @@ class formulizeUserAccountFirstNameElementHandler extends formulizeUserAccountEl
 	}
 
 	private function extractNamePart($value) {
-		$nameParts = explode(" ", trim($value));
+		$value = trim($value);
 		$elementTypeName = strtolower(str_ireplace(['formulizeUserAccount', 'ElementHandler'], "", static::class));
+		$lastSpace = strrpos($value, ' ');
+		if ($lastSpace === false) {
+			return $value;
+		}
 		if ($elementTypeName != 'lastname') {
-			return $nameParts[0];
-		} elseif (count($nameParts) > 1) {
-			unset($nameParts[0]);
-			return implode(" ", $nameParts);
+			return substr($value, 0, $lastSpace);  // first name = everything before the last space
 		} else {
-			return $nameParts[0];
+			return substr($value, $lastSpace + 1); // last name = everything after the last space
 		}
 	}
+
 
 	/**
 	 * Load the first-name portion of the uname field for this entry.
