@@ -6001,6 +6001,7 @@ function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceE
 function formulize_conditionsCleanOps($op) {
  $ops = array();
  $ops['='] = "=";
+ $ops['!='] = "NOT";
  $ops['NOT'] = "NOT";
  $ops['>'] = ">";
  $ops['<'] = "<";
@@ -6010,7 +6011,7 @@ function formulize_conditionsCleanOps($op) {
  $ops['NOT LIKE'] = "NOT LIKE";
  $ops['IN'] = 'IN';
  if(isset($ops[$op])) {
-    return $op;
+    return $ops[$op];
  } else {
     return "";
  }
