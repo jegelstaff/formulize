@@ -912,7 +912,7 @@ class formulizeElementsHandler {
 				$ele_handle_len = strlen($ele_handle) + 5 + strlen($fid);
 				$orig_handle_len = strlen($original_handle) + 5 + strlen($fid);
 				$lsbHandleFormDefSQL = "UPDATE " . $xoopsDB->prefix("formulize") . " SET ele_value = REPLACE(ele_value, 's:$orig_handle_len:\"$fid#*=:*$original_handle', 's:$ele_handle_len:\"$fid#*=:*$ele_handle') WHERE ele_value LIKE '%$fid#*=:*$original_handle%'"; // must include the cap lengths or else the unserialization of this info won't work right later, since ele_value is a serialized array!
-				if(!$res = $xoopsDB->query($lsbHandleFormDefSQL)) {
+				if(!$res = $xoopsDB->queryF($lsbHandleFormDefSQL)) {
 					print "Error:  update of linked selectbox element definitions failed.";
 				}
 				// rewrite $handle variable references in derived values code files
@@ -934,7 +934,7 @@ class formulizeElementsHandler {
 						$thisEleValue = unserialize($row[1]);
 						$thisEleValue[0] = str_replace('{' . $original_handle . '}', '{' . $ele_handle . '}', $thisEleValue[0]);
 						$thisEleValue = serialize($thisEleValue);
-						$xoopsDB->query("UPDATE " . $xoopsDB->prefix("formulize") . " SET ele_value = '".formulize_db_escape($thisEleValue)."' WHERE ele_id = $thisEleId");
+						$xoopsDB->queryF("UPDATE " . $xoopsDB->prefix("formulize") . " SET ele_value = '".formulize_db_escape($thisEleValue)."' WHERE ele_id = $thisEleId");
 					}
 				}
 				// rename element code files (fullWidthContent, captionedContent, text, textarea, derived)
@@ -966,7 +966,7 @@ class formulizeElementsHandler {
 							? str_replace('{' . $original_handle . '}', '{' . $ele_handle . '}', $row['ele_desc'])
 							: null;
 						$descSql = $newDesc !== null ? ", ele_desc = " . $xoopsDB->quoteString($newDesc) : "";
-						$xoopsDB->query(
+						$xoopsDB->queryF(
 							"UPDATE " . $xoopsDB->prefix('formulize')
 							. " SET ele_caption = " . $xoopsDB->quoteString($newCaption) . $descSql
 							. " WHERE ele_id = " . intval($row['ele_id'])
@@ -977,7 +977,7 @@ class formulizeElementsHandler {
 				$mapTableRes = $xoopsDB->query("SHOW TABLES LIKE '" . $xoopsDB->prefix('formulize_screen_map') . "'");
 				if($mapTableRes && $xoopsDB->getRowsNum($mapTableRes) > 0) {
 					foreach(array('lat_element', 'lng_element', 'label_element', 'description_element') as $col) {
-						$xoopsDB->query(
+						$xoopsDB->queryF(
 							"UPDATE " . $xoopsDB->prefix('formulize_screen_map')
 							. " SET `$col` = " . $xoopsDB->quoteString($ele_handle)
 							. " WHERE `$col` = " . $xoopsDB->quoteString($original_handle)
@@ -1000,7 +1000,7 @@ class formulizeElementsHandler {
 								}
 							}
 							if($modified) {
-								$xoopsDB->query(
+								$xoopsDB->queryF(
 									"UPDATE " . $xoopsDB->prefix('formulize_screen_map')
 									. " SET columns = " . $xoopsDB->quoteString(serialize($cols))
 									. " WHERE sid = " . intval($row['sid'])
@@ -1027,7 +1027,7 @@ class formulizeElementsHandler {
 							}
 						}
 						if($modified) {
-							$xoopsDB->query(
+							$xoopsDB->queryF(
 								"UPDATE " . $xoopsDB->prefix('formulize_screen_listofentries')
 								. " SET advanceview = " . $xoopsDB->quoteString(serialize($av))
 								. " WHERE sid = " . intval($row['sid'])
@@ -1060,7 +1060,7 @@ class formulizeElementsHandler {
 								}
 							}
 							if($modified) {
-								$xoopsDB->query(
+								$xoopsDB->queryF(
 									"UPDATE " . $xoopsDB->prefix('formulize_saved_views')
 									. " SET sv_oldcols = " . $xoopsDB->quoteString(implode(',', $parts))
 									. " WHERE sv_id = " . $svId
@@ -1068,7 +1068,7 @@ class formulizeElementsHandler {
 							}
 						}
 						if($row['sv_sort'] === $original_handle) {
-							$xoopsDB->query(
+							$xoopsDB->queryF(
 								"UPDATE " . $xoopsDB->prefix('formulize_saved_views')
 								. " SET sv_sort = " . $xoopsDB->quoteString($ele_handle)
 								. " WHERE sv_id = " . $svId
