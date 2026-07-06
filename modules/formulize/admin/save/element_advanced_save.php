@@ -130,10 +130,12 @@ if($ele_encrypt != $element->getVar('ele_encrypt') AND $databaseElement AND !$is
 
 // get the current datatype, if this element has been saved once already
 if($_POST['original_handle']) {
-    $dataTypeInfo = $element->getDataTypeInformation();
-    $dataTypeInfo = $dataTypeInfo['dataType'];
+    $dataTypeInfoArr = $element->getDataTypeInformation();
+    $dataTypeInfo = $dataTypeInfoArr['dataType'];
+    $dataTypeCompleteString = $dataTypeInfoArr['dataTypeCompleteString'];
 } else {
     $dataTypeInfo = false;
+    $dataTypeCompleteString = false;
 }
 
 if($databaseElement AND (!$_POST['original_handle'] OR $form_handler->elementFieldMissing($ele_id, $_POST['original_handle']))) {
@@ -167,11 +169,14 @@ if($databaseElement AND (!$_POST['original_handle'] OR $form_handler->elementFie
 } elseif(
     ($_POST['original_handle'] != $element->getVar('ele_handle') OR
     (isset($_POST['element_default_datatype']) AND $_POST['element_datatype'] != $_POST['element_default_datatype']) OR
-    ($ele_value['snapshot'] AND $dataTypeInfo != 'text')
+    ($ele_value['snapshot'] AND $dataTypeInfo != 'text') OR
+    (!$ele_encrypt AND $dataTypeCompleteString AND method_exists($element, 'getDefaultDataType') AND $element->getDefaultDataType() != $dataTypeCompleteString)
     ) AND $databaseElement) {
   // figure out if the datatype needs changing...
 	if($ele_encrypt) {
 		$dataType = false;
+	} elseif(!$ele_encrypt AND $dataTypeCompleteString AND method_exists($element, 'getDefaultDataType') AND $element->getDefaultDataType() != $dataTypeCompleteString) {
+		$dataType = $element->getDefaultDataType();
 	} elseif(isset($_POST['element_default_datatype']) AND $_POST['element_datatype'] != $_POST['element_default_datatype']) {
 		$dataType = getRequestedDataType();
     } elseif($ele_value['snapshot'] AND $dataTypeInfo != 'text') {

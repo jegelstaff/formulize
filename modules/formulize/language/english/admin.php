@@ -505,7 +505,7 @@ define("_AM_ELE_MAX_LENGTH","Maximum length");
 define("_AM_ELE_MAX_VALUE","Maximum value");
 define("_AM_ELE_MIN_VALUE","Minimum value");
 define("_AM_ELE_STEPSIZE","Slider step size");
-define("_AM_ELE_SLIDER_ZERO_DESC","If you set the default value to 0 and set a minimum value <b>greater than 0</b>, the slider will start with no value selected. The user will have to interact with the slider to set a value; once set, it cannot return to 0.");
+define("_AM_ELE_SLIDER_ZERO_DESC","If you set no default value then the slider will start with no value selected. The user will have to interact with the slider to set a value; once set, it cannot go below the minimum value.");
 define("_AM_ELE_ROWS","Rows");
 define("_AM_ELE_COLS","Columns");
 define("_AM_ELE_USERICHTEXT","Display this element using a Rich Text Editor");

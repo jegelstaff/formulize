@@ -39,11 +39,34 @@ class formulizeSliderElement extends formulizeElement {
 	function __construct() {
 			$this->name = "Range Slider";
 			$this->hasData = true;
-			$this->needsDataType = false; // should always take integer
-			$this->overrideDataType = 'int';
+			$this->needsDataType = false; // data type is auto-detected via getDefaultDataType()
+			$this->overrideDataType = 'int'; // fallback only; getDefaultDataType() takes priority
 			$this->adminCanMakeRequired = true;
 			$this->alwaysValidateInputs = false; // only validate when the admin says it's a required element
 			parent::__construct();
+	}
+
+	/**
+	 * Auto-detect the database column type from the configured min/max/step/default values.
+	 * Returns decimal(65,N) when any value has N decimal places, otherwise int.
+	 */
+	public function getDefaultDataType() {
+		$ele_value = $this->getVar('ele_value');
+		$maxDecimals = 0;
+		foreach ([0, 1, 2, 3] as $idx) {
+			if (!isset($ele_value[$idx]) || $ele_value[$idx] === '' || !is_numeric($ele_value[$idx])) {
+				continue;
+			}
+			$str = (string)$ele_value[$idx];
+			$dot = strpos($str, '.');
+			if ($dot !== false) {
+				$maxDecimals = max($maxDecimals, strlen($str) - $dot - 1);
+			}
+		}
+		if ($maxDecimals > 0) {
+			return 'decimal(65,' . min($maxDecimals, 30) . ')';
+		}
+		return 'int';
 	}
 
 	/**
@@ -60,10 +83,10 @@ class formulizeSliderElement extends formulizeElement {
 "**Element:** Range Slider (slider)
 **Description:** A line with a knob that can be dragged with a mouse (or with a finger on a touchscreen). The setting of the knob indicates a certain number. Range Sliders are useful for allowing users to pick a number from a range of numbers, without having to type in the number.
 **Properties:**
-- minValue (integer, the minimum value for the slider. Default is 0.)
-- maxValue (integer, the maximum value for the slider. Default is 100.)
-- stepValue (integer, the increments allowed for the slider. Default is 10.)
-- defaultValue (integer, the starting value for the slider. Default is 0. Special case: if set to 0 and minValue is greater than 0, the slider starts in a \"no value\" state — the knob is positioned at the minimum end but no value is stored until the user interacts with it. Once the user interacts with the slider, the value is set and cannot return to 0. This is useful when you want to avoid misleading data from users who never consciously chose a value.)
+- minValue (number, the minimum value for the slider. Default is 0. May be a decimal.)
+- maxValue (number, the maximum value for the slider. Default is 100. May be a decimal.)
+- stepValue (number, the increments allowed for the slider. Default is 10. Use a decimal to allow decimal values, e.g. 0.1 for one decimal place. The database column type is automatically set to decimal with as many places as needed when any of these four values contains a decimal point.)
+- defaultValue (number or empty string, the starting value for the slider. Default is 0. May be a decimal. Special cases: (1) if set to 0 and minValue is greater than 0, the slider starts in a \"no value\" state — the knob is positioned at the minimum end but no value is stored until the user interacts. Once set, the value cannot return to 0. (2) if set to \"\" (empty string), the slider starts in \"no value\" state for any minValue including 0 — NULL is stored until the user interacts. Use this when 0 is your minimum and you still want to require a conscious choice.)
 **Examples:**
 - A range slider where the user can pick any number between 0 and 100, defaults to 50: { minValue: 0, maxValue: 100, stepValue: 1, defaultValue: 50 }
 - A range slider where the user can pick 10, 20, 30, 40, or 50. Default to 10: { minValue: 10, maxValue: 50, stepValue: 10, defaultValue: 10 }
@@ -103,8 +126,8 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
 		if(isset($properties['stepValue']) AND is_numeric($properties['stepValue'])) {
 			$ele_value[2] = $properties['stepValue'];
 		}
-		if(isset($properties['defaultValue']) AND is_numeric($properties['defaultValue'])) {
-			$ele_value[3] = $properties['defaultValue']; // 0 is valid: triggers "no initial value" mode when minValue > 0
+		if(isset($properties['defaultValue']) AND (is_numeric($properties['defaultValue']) OR $properties['defaultValue'] === '')) {
+			$ele_value[3] = $properties['defaultValue']; // 0 or "" triggers "no initial value" mode; "" works for any minValue including 0
 		}
 		return [
 			'ele_value' => $ele_value
@@ -160,7 +183,11 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
 		 */
 		function getDefaultValue($element, $entry_id = 'new') {
 			$ele_value = $element->getVar('ele_value');
-			return intval($ele_value[3]);
+			$configuredDefault = isset($ele_value[3]) ? $ele_value[3] : null;
+			if ($configuredDefault === "") {
+				return ""; // empty-default mode: no initial value until user interacts
+			}
+			return is_numeric($configuredDefault) ? $configuredDefault + 0 : 0;
 		}
 
     // Reads current state of element, updates ele_value to a renderable state
@@ -184,14 +211,25 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
     // $entry_id is the ID number of the entry where this particular element comes from
     // $screen is the screen object that is in effect, if any (may be null)
     function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
+        $configEleValue = $element->getVar('ele_value');
+        $configuredDefault = isset($configEleValue[3]) ? $configEleValue[3] : null;
+        $currentValue = $ele_value[3];
+        $actualMin = (float)$ele_value[0];
+
         // Zero-default mode: default=0 with min>0 means "no value until user interacts".
         // The slider renders with min=0 so the knob sits at the far left. On first
         // click/tap/keypress the real minimum is locked in, preventing a return to 0.
-        $isZeroDefault = (intval($ele_value[3]) === 0 && intval($ele_value[0]) > 0);
-        $actualMin = intval($ele_value[0]);
+        $isZeroDefault = ($configuredDefault !== "" && (float)$currentValue == 0 && $actualMin > 0);
+
+        // Empty-default mode: default="" means "no value until user interacts", works for any min.
+        // Uses a hidden input as the actual submission field (empty until interaction).
+        // NULL is stored in the DB for untouched entries, so on reload the slider stays in no-value mode.
+        $isEmptyDefault = ($configuredDefault === "" && ($currentValue === "" || $currentValue === null));
+
+        $noValueMode = $isZeroDefault || $isEmptyDefault;
 
         if ($isDisabled) {
-            $numericValue = intval($ele_value[3]);
+            $numericValue = is_numeric($currentValue) ? $currentValue + 0 : 0;
             $value_html = "<output id=\"rangeValue_{$markupName}\" type=\"text\" size=\"3\" for=\"{$markupName}\">{$numericValue}</output>";
             $form_slider_value = new XoopsFormLabel($caption, $value_html);
             $renderedValue = $form_slider_value->render();
@@ -204,12 +242,23 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
         }
 
         $slider_html = "<input type=\"range\" ";
-        $slider_html .= "name=\"{$markupName}\" ";
-        $slider_html .= "id=\"{$markupName}\" ";
+        if ($isEmptyDefault) {
+            // Range input is display-only; hidden input carries the submitted value
+            $slider_html .= "id=\"{$markupName}_range\" ";
+        } else {
+            $slider_html .= "name=\"{$markupName}\" ";
+            $slider_html .= "id=\"{$markupName}\" ";
+        }
         $slider_html .= "min=\"" . ($isZeroDefault ? 0 : $ele_value[0]) . "\" ";
         $slider_html .= "max=\"{$ele_value[1]}\" ";
         $slider_html .= "step=\"{$ele_value[2]}\" ";
-        $slider_html .= "value=\"" . ($isZeroDefault ? 0 : $ele_value[3]) . "\" ";
+        if ($isZeroDefault) {
+            $slider_html .= "value=\"0\" ";
+        } elseif ($isEmptyDefault) {
+            $slider_html .= "value=\"{$actualMin}\" ";
+        } else {
+            $slider_html .= "value=\"{$currentValue}\" ";
+        }
         $slider_html .= "aria-describedby=\"{$markupName}-help-text\" ";
         if ($isZeroDefault) {
             $slider_html .= "onmousedown=\"formulizeSliderActivate_{$markupName}()\" ";
@@ -217,8 +266,11 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
         }
         $slider_html .= "oninput=\"updateTextInput_{$markupName}(this.value)\">";
         $slider_html .= "</input>";
+        if ($isEmptyDefault) {
+            $slider_html .= "<input type=\"hidden\" name=\"{$markupName}\" id=\"{$markupName}\" value=\"\">";
+        }
 
-        $displayValue = $isZeroDefault ? "&mdash;" : $ele_value[3];
+        $displayValue = $noValueMode ? "&mdash;" : $currentValue;
         $value_html = "<output id=\"rangeValue_{$markupName}\" type=\"text\" size=\"3\" for=\"{$markupName}\">{$displayValue}</output>";
 
         $form_slider = new XoopsFormLabel($caption, $slider_html);
@@ -228,7 +280,6 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
         if ($isZeroDefault) {
             // On first click/tap, lock the real minimum so the knob can't return to 0
             $update_script .= "function formulizeSliderActivate_{$markupName}() {";
-						$update_script .= "console.log('slide');";
             $update_script .= "var sl=document.getElementById('{$markupName}');";
             $update_script .= "sl.setAttribute('min',{$actualMin});";
             $update_script .= "if(parseFloat(sl.value)<{$actualMin}){sl.value={$actualMin};}";
@@ -240,6 +291,9 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
             // oninput also locks the minimum, covering keyboard arrow-key navigation
             $update_script .= "var sl=document.getElementById('{$markupName}');";
             $update_script .= "if(parseFloat(sl.getAttribute('min'))<{$actualMin}){sl.setAttribute('min',{$actualMin});}";
+        } elseif ($isEmptyDefault) {
+            // Write to hidden field so the submitted value is what the user chose
+            $update_script .= "document.getElementById('{$markupName}').value=val;";
         }
         $update_script .= "document.getElementById('rangeValue_{$markupName}').value=val;";
         $update_script .= "let event=new Event('change');";
@@ -257,10 +311,18 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
     // adminCanMakeRequired/alwaysValidateInputs properties control usage
     function generateValidationCode($caption, $markupName, $element, $entry_id) {
         $ele_value = $element->getVar('ele_value');
-        if (intval($ele_value[3]) === 0 && intval($ele_value[0]) > 0) {
+        $configuredDefault = isset($ele_value[3]) ? $ele_value[3] : null;
+        $eltmsg = empty($caption) ? sprintf(_FORM_ENTER, $markupName) : sprintf(_FORM_ENTER, strip_tags(htmlspecialchars_decode($caption, ENT_QUOTES)));
+        $eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
+        if ($configuredDefault === "") {
+            // Empty-default mode: hidden field is empty until the user moves the slider
+            return [
+                "if ( myform.{$markupName} && myform.{$markupName}.value === '' ) {\n",
+                "window.alert(\"{$eltmsg}\");\n return false;\n",
+                "}\n",
+            ];
+        } elseif ((float)$configuredDefault == 0 && (float)$ele_value[0] > 0) {
             // Zero-default mode: slider starts at 0 (untouched); fail required check if still 0
-            $eltmsg = empty($caption) ? sprintf(_FORM_ENTER, $markupName) : sprintf(_FORM_ENTER, strip_tags(htmlspecialchars_decode($caption, ENT_QUOTES)));
-            $eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
             return [
                 "if ( myform.{$markupName} && myform.{$markupName}.value == '0' ) {\n",
                 "window.alert(\"{$eltmsg}\");\n return false;\n",
@@ -276,6 +338,11 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
 	// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
 	// $subformBlankCounter is the counter for the subform blank entries, if applicable
 	function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
+        $ele_value = $element->getVar('ele_value');
+        $configuredDefault = isset($ele_value[3]) ? $ele_value[3] : null;
+        if ($configuredDefault === "" && ($value === "" || $value === null)) {
+            return '{WRITEASNULL}'; // empty-default mode: untouched slider → store NULL
+        }
         return formulize_db_escape($value);
     }
 
