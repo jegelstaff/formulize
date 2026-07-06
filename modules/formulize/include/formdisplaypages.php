@@ -440,10 +440,10 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 			'previousPage' => ($previousPage === "none" ? null : intval($previousPage)),
 			'nextPage'     => intval($nextPage),
 			'isThanksPage' => ($currentPage == $thanksPage),
-			'nextIsThanks' => pageIsThanksPageOrEquivalent($nextPage, $currentPage, $thanksPage, $pages, $conditions, $entry, $fid, $frid),
+			'nextIsThanks' => pageIsThanksPageOrEquivalent($nextPage, $currentPage, $thanksPage, $pages, $conditions, $entry_id, $fid, $frid),
 			'usersCanSave' => (bool) $usersCanSave,
 			'screenId'     => (is_object($screen) ? intval($screen->getVar('sid')) : 0),
-			'entryId'      => (is_numeric($entry) ? intval($entry) : 0),
+			'entryId'      => (is_numeric($entry_id) ? intval($entry_id) : 0),
 			'pageTitle'    => (isset($pageTitles[$currentPage]) ? trans($pageTitles[$currentPage]) : ''),
 		);
 		print "\n<script type=\"application/json\" class=\"fz-multipage-nav\">".json_encode($navMeta)."</script>\n";
