@@ -37,12 +37,15 @@ if($hasPrev) {
 // Split the leading label ("Page ") into its own span so it can be hidden on
 // small screens, leaving just "X of Y". The label is whatever precedes the first
 // placeholder in the language string.
+// On mobile the label is hidden; a separate "pg" abbreviation span is shown
+// instead so the number reads "pg 2 / 5" rather than a bare "2 / 5" that
+// could be mistaken for the result count.
 $pageStatusFormat = defined('_AM_FORMULIZE_LOE_PAGE_X_OF_Y') ? _AM_FORMULIZE_LOE_PAGE_X_OF_Y : 'Page %s of %s';
 $statusFirstPlaceholder = strpos($pageStatusFormat, '%s');
 $statusLabel = $statusFirstPlaceholder !== false ? substr($pageStatusFormat, 0, $statusFirstPlaceholder) : '';
 $statusNumbersFormat = $statusFirstPlaceholder !== false ? substr($pageStatusFormat, $statusFirstPlaceholder) : $pageStatusFormat;
 $statusNumbers = sprintf($statusNumbersFormat, $displayCurrentPage, $displayTotalPages);
-print "<span class='fz-pagination__status'><span class='fz-pagination__status-label'>$statusLabel</span>$statusNumbers</span>";
+print "<span class='fz-pagination__status'><span class='fz-pagination__status-label'>$statusLabel</span><span class='fz-pagination__status-pg'>pg </span>$statusNumbers</span>";
 
 if($hasNext) {
     print "<button type='button' class='fz-btn fz-btn--ghost fz-btn--icon fz-btn--sm' aria-label='"._AM_FORMULIZE_LOE_NEXT."' title='"._AM_FORMULIZE_LOE_NEXT."' onclick=\"$jsFunction('$nextStart');return false;\">$chevRight</button>";
