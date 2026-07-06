@@ -4259,10 +4259,10 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 		${$buttonName} = $buttonCode;
 	}
 	// setup the action button headings
-	$manageViewsTitle = ($selectAllButton OR $clearSelectButton) ? _formulize_MANAGE_VIEWS_TITLE : "";
-	$manageSelectionTitle = ($cloneButton OR $deleteButton OR $changeOwnerButton) ? _formulize_MANAGE_SELECTION_TITLE : "";
-	$manageActionsTitle = ($calcButton OR $proceduresButton OR $exportButton OR $importButton OR $notifButton) ? _formulize_MANAGE_ACTIONS_TITLE : "";
-	$manageOperationsTitle = ($saveViewButton OR $deleteViewButton OR $resetViewButton) ? _formulize_MANAGE_OPERATIONS_TITLE : "";
+	$manageSelectionTitle = ($selectAllButton OR $clearSelectButton) ? _formulize_MANAGE_SELECTION_TITLE : "";
+	$manageActionsTitle = ($cloneButton OR $deleteButton OR $changeOwnerButton) ? _formulize_MANAGE_ACTIONS_TITLE : "";
+	$manageOperationsTitle = ($calcButton OR $proceduresButton OR $exportButton OR $importButton OR $notifButton) ? _formulize_MANAGE_OPERATIONS_TITLE : "";
+	$manageViewsTitle = ($saveViewButton OR $deleteViewButton OR $resetViewButton) ? _formulize_MANAGE_VIEWS_TITLE : "";
 	// When only one button group is present, a heading adds no context — suppress them all.
 	$buttonGroupCount = (int)!!($selectAllButton OR $clearSelectButton)
 	                  + (int)!!($cloneButton OR $deleteButton OR $changeOwnerButton)
