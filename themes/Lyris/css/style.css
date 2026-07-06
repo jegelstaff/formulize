@@ -991,6 +991,11 @@ textarea {
   padding: 0 var(--s-1);
 }
 
+/* Mobile-only "pg" abbreviation — hidden on desktop where the full "Page" label shows. */
+.fz-pagination__status-pg {
+  display: none;
+}
+
 .fz-pagination__nav .fz-btn[disabled] {
   opacity: .4;
   cursor: default;
@@ -1492,11 +1497,17 @@ textarea {
 
   /* Trim the footer to fit a phone: drop the "Showing entries:" / "Page" labels
      (leaving just the numbers) and the hide-repeating-data toggle, so the entry
-     count and pagination stay on one line instead of wrapping. */
+     count and pagination stay on one line instead of wrapping. Show the short
+     "pg" abbreviation in place of the full "Page" label so the page number
+     (e.g. "pg 2 / 5") is clearly distinct from the result count. */
   .page-navigation-total__label,
   .fz-pagination__status-label,
   .fz-list__footer-start label[for="toggleRepeatData"] {
     display: none;
+  }
+
+  .fz-pagination__status-pg {
+    display: inline;
   }
 
   /* ---- Table: pan columns horizontally; the checkbox column and the
