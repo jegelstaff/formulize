@@ -84,11 +84,6 @@ if($sourceGroupId AND count($targetGroupIds)>0 AND $allOrFormulizeOnly) {
 }
 
 $adminPage['groups'] = $groupList;
-$adminPage['home_tabs'] = getHomeTabs('managepermissions');
-
-$breadcrumbtrail[1]['url'] = "page=home";
-$breadcrumbtrail[1]['text'] = "Home";
-$breadcrumbtrail[2]['text'] = "Copy Group Permissions";
 
 function commonFrontPart($groupId1, $groupId2) {
     return findMatchingPart($groupId1, $groupId2, 0);
@@ -139,5 +134,5 @@ function findMatchingPart($groupId1, $groupId2, $limit) {
         }
         $cachedParts[$limit][$groupId1][$groupId2] = $match;
     }
-    return (isset($cachedParts[$limit][$groupId1][$groupId2])) ? $cachedParts[$limit][$groupId1][$groupId2] : $cachedParts[$middle][$limit][$groupId2][$groupId1];
+    return (isset($cachedParts[$limit][$groupId1][$groupId2])) ? $cachedParts[$limit][$groupId1][$groupId2] : $cachedParts[$limit][$groupId2][$groupId1];
 }

@@ -249,8 +249,6 @@ if (isset($_GET['tab']) AND (!isset($_POST['tabs_selected']) OR $_POST['tabs_sel
 $adminPage['isSaveLocked'] = sendSaveLockPrefToTemplate();
 
 // retrieve the xoops_version info
-$module_handler = xoops_gethandler('module');
-$formulizeModule = $module_handler->getByDirname("formulize");
 $metadata = $formulizeModule->getInfo();
 $config_handler = xoops_gethandler('config');
 $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());

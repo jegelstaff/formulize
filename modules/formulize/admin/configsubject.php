@@ -63,8 +63,6 @@ if(isset($view['type']) AND $view['type'] === 'page') {
     $adminPage['settingsSaveFormId'] = 'formulize-config-settings-form';
 }
 
-// The subject handler owns the page chrome. Set these AFTER any included page
-// controller, so a relocated page's own getHomeTabs()/breadcrumb calls don't win.
 $adminPage['home_tabs'] = getHomeTabs($subjectSlug);
 
 $breadcrumbtrail = array();
