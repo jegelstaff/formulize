@@ -1250,7 +1250,7 @@ Do not use foreign key values with linked elements; use the readable value inste
 	 * - 'handle': The unique handle for the element. If omitted, a handle will be generated from the caption.
 	 * - 'caption': The caption (label) for the element (required).
 	 * - 'column_heading': Optional. The column heading for list views. If omitted, the caption will be used.
-	 * - 'description': Optional. A description for the element.
+	 * - 'help_text_for_users': Optional. A longer description or help text for the element, shown to users filling out the form. This is NOT an internal notes field, this content appears as part of the element.
 	 * - 'required': Optional. Whether the element is required. Defaults to false.
 	 * - 'properties': Optional. An array of properties for the given element type
 	 * - 'disabled': Optional. Whether the element is disabled (not editable) in forms
@@ -1296,7 +1296,7 @@ Do not use foreign key values with linked elements; use the readable value inste
 	 * - 'element_identifier': The ID or handle of the element to update (required).
 	 * - 'caption': The caption (label) for the element (required).
 	 * - 'column_heading': Optional. The column heading for list views. If omitted, the caption will be used.
-	 * - 'description': Optional. A description for the element.
+	 * - 'help_text_for_users': Optional. A longer description or help text for the element, shown to users filling out the form. This is NOT an internal notes field, this content appears as part of the element.
 	 * - 'required': Optional. Whether the element is required. Defaults to false.
 	 * - 'properties': Optional. An array of properties for the given element type
 	 * - 'display': Optional. Whether the element is displayed in forms. Defaults to true.
@@ -1353,7 +1353,7 @@ Do not use foreign key values with linked elements; use the readable value inste
 		$handle = trim($arguments['handle'] ?? '');
 		$caption = trim($arguments['caption'] ?? '');
 		$column_heading = trim($arguments['column_heading'] ?? '');
-		$description = trim($arguments['description'] ?? '');
+		$help_text_for_users = trim($arguments['help_text_for_users'] ?? '');
 		$required = isset($arguments['required']) ? ($arguments['required'] ? 1 : 0) : null;
 		$properties = $arguments['properties'] ?? [];
 		$pi = ($arguments['principal_identifier'] ?? false) ? true : false;
@@ -1469,7 +1469,7 @@ Do not use foreign key values with linked elements; use the readable value inste
 			'ele_handle' => $handle ? $handle : ($elementObject ? $elementObject->getVar('ele_handle') : ''),
 			'ele_caption' => $caption ? $caption : ($elementObject ? $elementObject->getVar('ele_caption') : ''),
 			'ele_colhead' => $column_heading ? $column_heading : ($elementObject ? $elementObject->getVar('ele_colhead') : ''),
-			'ele_desc' => $description ? $description : ($elementObject ? $elementObject->getVar('ele_desc') : ''),
+			'ele_desc' => $help_text_for_users ? $help_text_for_users : ($elementObject ? $elementObject->getVar('ele_desc') : ''),
 			'ele_required' => $required !== null ? $required : ($elementObject ? $elementObject->getVar('ele_required') : 0),
 			'ele_order' => $eleOrder,
 			'ele_display' => $display !== null ? $display : ($elementObject ? $elementObject->getVar('ele_display') : 1),
@@ -1515,7 +1515,7 @@ Do not use foreign key values with linked elements; use the readable value inste
 			'handle' => $elementObject->getVar('ele_handle'),
 			'caption' => $elementObject->getVar('ele_caption'),
 			'column_heading' => $elementObject->getVar('ele_colhead'),
-			'description' => $elementObject->getVar('ele_desc'),
+			'help_text_for_users' => $elementObject->getVar('ele_desc'),
 			'required' => $elementObject->getVar('ele_required') ? true : false,
 			'properties' => $elementObject->getVar('ele_value'),
 			'display_conditions' => $this->tidyUpOldConditionsArrayFormat($elementObject->getVar('ele_filtersettings'))
@@ -2480,9 +2480,9 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 				'type' => 'string',
 				'description' => 'Optional. The heading to use at the top of a column in lists of entries. If not specified, the caption will be used. Some captions are long and descriptive, and a shorter heading would be more appropriate for in a list of data.'
 			],
-			'description' => [
+			'help_text_for_users' => [
 				'type' => 'string',
-				'description' => 'Optional. A longer description or help text for the REPLACEWITHSINGLUARCATEGORYNAME, shown to users filling out the form.'
+				'description' => 'Optional. A longer description or help text for the REPLACEWITHSINGLUARCATEGORYNAME, shown to users filling out the form. This is NOT an internal notes field, this content appears as part of the element.'
 			],
 			'required' => [
 				'type' => 'boolean',
@@ -2558,9 +2558,9 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 			$creationDataElementPropertiesForThisCategory = [];
 			if($category == 'table') {
 				$commonDataElementPropertiesForThisCategory = [
-						'description' => [
+					'help_text_for_users' => [
 						'type' => 'string',
-						'description' => 'Optional. A longer description or help text for the '.$singularCategoryName.' shown to users filling out the form.'
+						'description' => 'Optional. A longer description or help text for the '.$singularCategoryName.', shown to users filling out the form. This is NOT an internal notes field, this content appears as part of the element.'
 					]
 				];
 			} elseif($category != 'subforms' AND $category != 'layout') {
