@@ -337,15 +337,34 @@ export async function saveAdminForm(page, type = 'regular', timeout = 120000) {
 		throw new Error('Unsupported accordion type: ' + accordionType);
 	}
 
-	let targetNumber = 0; // all menu and element accordions are closed by default
 	let linkClass = 'delete'+accordionType+'link';
 
-	// Check there's the expected number of links visible (menu starts empty)
-	await page.waitForFunction((targetNumber) => {
+	// The page may load with the first accordion already open (e.g., after a delete+reload
+	// the first remaining element's accordion opens automatically). If the target is already
+	// open, there's nothing to click.
+	const isTargetAlreadyOpen = () => page.evaluate(({ text, linkClass }) => {
+		const norm = str => str.replace(/\s+/g, '');
+		const headers = Array.from(document.querySelectorAll('h3'));
+		const h = headers.find(h => norm(h.textContent).includes(norm(text)));
+		if (!h) return false;
+		const panel = h.nextElementSibling;
+		const link = panel ? panel.querySelector('a.' + linkClass) : null;
+		return !!(link && link.offsetParent !== null);
+	}, { text: accordionHeaderText, linkClass });
+
+	if (await isTargetAlreadyOpen()) return;
+
+	// Wait for any open accordion to reach a stable state before clicking.
+	// Accept 0 (all closed) or 1 (one accordion fully open, animation done). If another
+	// accordion is open, jQuery UI will close it and open the target when we click.
+	await page.waitForFunction(() => {
 		const deleteLinks = Array.from(document.querySelectorAll('a'))
 			.filter(a => a.textContent.includes('Delete') && a.offsetParent !== null);
-		return deleteLinks.length === targetNumber;
-	}, targetNumber, { timeout });
+		return deleteLinks.length === 0 || deleteLinks.length === 1;
+	}, null, { timeout });
+
+	// Re-check in case the target opened while we were waiting
+	if (await isTargetAlreadyOpen()) return;
 
 	// click what we want to open
 	await page.getByRole('link', { name: accordionHeaderText }).click();
