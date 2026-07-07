@@ -1508,7 +1508,7 @@ Do not use foreign key values with linked elements; use the readable value inste
 
 		$elementObject = formulizeHandler::upsertElementSchemaAndResources($elementObjectProperties, dataType: $data_type, pi: $pi, makeSubformInterface: $makeSubformInterface);
 
-		return [
+		$returnValue =  [
 			'element_id' => $elementObject->getVar('ele_id'),
 			'form_id' => $elementObject->getVar('fid'),
 			'type' => $type,
@@ -1518,10 +1518,18 @@ Do not use foreign key values with linked elements; use the readable value inste
 			'description' => $elementObject->getVar('ele_desc'),
 			'required' => $elementObject->getVar('ele_required') ? true : false,
 			'properties' => $elementObject->getVar('ele_value'),
-			'display_conditions' => $this->tidyUpOldConditionsArrayFormat($elementObject->getVar('ele_filtersettings')),
-			'success' => true,
-			'message' => 'Element and related resources '.($isCreate ? 'created' : 'updated').' successfully'
+			'display_conditions' => $this->tidyUpOldConditionsArrayFormat($elementObject->getVar('ele_filtersettings'))
 		];
+
+		// add ui text if there is any
+		if(!empty($elementObject->getVar('ele_uitext'))) {
+			$returnValue['display_text_for_options'] = $elementObject->getVar('ele_uitext');
+		}
+
+		$returnValue['success'] = true;
+		$returnValue['message'] = 'Element and related resources '.($isCreate ? 'created' : 'updated').' successfully';
+
+		return $returnValue;
 
 	}
 
