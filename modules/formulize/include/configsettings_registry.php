@@ -213,6 +213,7 @@ return array(
                 'type' => 'settings',
                 'sections' => array(
                     _AM_CFG_SEC_EMAIL_DELIVERY => array(
+                        array('name' => 'adminmail', 'scope' => 'system'),
                         array('name' => 'mailmethod', 'scope' => 'mailer'),
                         array('name' => 'smtphost', 'scope' => 'mailer', 'showWhen' => array('name' => 'mailmethod', 'value' => array('smtp', 'smtpauth'))),
                         array('name' => 'smtpuser', 'scope' => 'mailer', 'showWhen' => array('name' => 'mailmethod', 'value' => array('smtpauth'))),
