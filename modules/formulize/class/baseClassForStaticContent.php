@@ -144,6 +144,7 @@ abstract class formulizeStaticContentElementHandler extends formulizeElementsHan
 	 */
 	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null) {
 		if(isset($properties['content'])) {
+			$properties['content'] = is_array($properties['content']) ? $properties['content'][array_key_first($properties['content'])] : $properties['content'];
 			$content = (string)$properties['content'];
 			if(strstr($content, '<?php') !== false OR strstr($content, '$value=') !== false OR strstr($content, '$value =') !== false) {
 				throw new FormulizeMCPException('PHP code is not supported in the content of a static content element via this tool. Use plain text or HTML, optionally with {element_handle} references to include values from the current entry.', 'invalid_data');
