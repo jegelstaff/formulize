@@ -1002,6 +1002,45 @@ textarea {
   pointer-events: none;
 }
 
+/* Desktop numbered page links — hidden on mobile (the compact "X of Y" status
+   is shown there instead), shown as a row of clickable page numbers on ≥769px. */
+.fz-pagination__pages {
+  display: none; /* hidden by default; enabled for desktop below */
+}
+
+@media (min-width: 769px) {
+  .fz-pagination__pages {
+    display: flex;
+    align-items: center;
+    gap: var(--s-1);
+  }
+
+  /* On desktop the numbered links replace the compact "Page X of Y" status. */
+  .fz-pagination__status {
+    display: none;
+  }
+
+  .fz-pagination__page {
+    min-width: 26px;
+    justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .fz-pagination__page--active {
+    background: var(--c-accent);
+    border-color: var(--c-accent);
+    color: var(--c-text-on-accent);
+    cursor: default;
+    pointer-events: none;
+  }
+
+  .fz-pagination__ellipsis {
+    padding: 0 var(--s-1);
+    color: var(--c-text-muted);
+    user-select: none;
+  }
+}
+
 /* ============================================================
    List body — scrollable table container
    ============================================================ */
