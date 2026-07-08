@@ -47,6 +47,48 @@ $statusNumbersFormat = $statusFirstPlaceholder !== false ? substr($pageStatusFor
 $statusNumbers = sprintf($statusNumbersFormat, $displayCurrentPage, $displayTotalPages);
 print "<span class='fz-pagination__status'><span class='fz-pagination__status-label'>$statusLabel</span><span class='fz-pagination__status-pg'>pg </span>$statusNumbers</span>";
 
+// Desktop-only numbered page links (Anari-style). Hidden on mobile via CSS
+// (.fz-pagination__pages is display:none below 769px), where the compact
+// "X of Y" status above is shown instead. Uses the pageStarts map
+// (page=>record offset) the backend already provides — no backend changes.
+if($totalPages > 1) {
+    // Build a windowed sequence of page numbers: first, last, and current ±2,
+    // with null markers standing in for gaps (rendered as an ellipsis). This
+    // keeps the row short even when there are many pages.
+    $window = 2;
+    $pages = array();
+    for($p = 1; $p <= $displayTotalPages; $p++) {
+        if($p == 1 || $p == $displayTotalPages || abs($p - $displayCurrentPage) <= $window) {
+            $pages[] = $p;
+        }
+    }
+    // Insert null between non-consecutive kept pages to signal an ellipsis gap.
+    $sequence = array();
+    $prev = null;
+    foreach($pages as $p) {
+        if($prev !== null && $p - $prev > 1) {
+            $sequence[] = null;
+        }
+        $sequence[] = $p;
+        $prev = $p;
+    }
+
+    print "<div class='fz-pagination__pages'>";
+    foreach($sequence as $p) {
+        if($p === null) {
+            print "<span class='fz-pagination__ellipsis' aria-hidden='true'>&hellip;</span>";
+            continue;
+        }
+        if($p == $displayCurrentPage) {
+            print "<span class='fz-btn fz-btn--sm fz-pagination__page fz-pagination__page--active' aria-current='page'>$p</span>";
+        } else {
+            $offset = isset($pageStarts[$p]) ? intval($pageStarts[$p]) : 0;
+            print "<button type='button' class='fz-btn fz-btn--ghost fz-btn--sm fz-pagination__page' aria-label='"._AM_FORMULIZE_LOE_ONPAGE." $p' onclick=\"$jsFunction('$offset');return false;\">$p</button>";
+        }
+    }
+    print "</div>"; // .fz-pagination__pages
+}
+
 if($hasNext) {
     print "<button type='button' class='fz-btn fz-btn--ghost fz-btn--icon fz-btn--sm' aria-label='"._AM_FORMULIZE_LOE_NEXT."' title='"._AM_FORMULIZE_LOE_NEXT."' onclick=\"$jsFunction('$nextStart');return false;\">$chevRight</button>";
 } else {
@@ -54,4 +96,5 @@ if($hasNext) {
 }
 
 print "</div>"; // .fz-pagination__nav
+
 print "</div>"; // .fz-pagination
