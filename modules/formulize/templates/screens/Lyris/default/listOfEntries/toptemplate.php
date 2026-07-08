@@ -31,27 +31,52 @@ if ($searchesShown) {
       </button>";
 }
 
-print "
+// Only render the "…" trigger and the action panel when there is at least one
+// actual item to show inside it. $moreActionsButton holds the trigger markup and
+// is effectively always truthy here, so gate on the panel's section contents.
+$hasEntriesSection = ($addMultiButton OR $addProxyButton OR $importButton OR $exportButton);
+$hasViewSection    = ($changeColsButton OR $saveViewButton OR $resetViewButton OR $deleteViewButton);
+$hasOtherSection   = ($calcButton OR $proceduresButton OR $notifButton);
+
+if ($moreActionsButton AND ($hasEntriesSection OR $hasViewSection OR $hasOtherSection)) {
+  print "
       <div class='fz-list__more-wrap'>
         $moreActionsButton
-        <div id='more-action-buttons' class='fz-list__action-panel fz-panel'>
+        <div id='more-action-buttons' class='fz-list__action-panel fz-panel'>";
+
+  if ($hasEntriesSection) {
+    print "
           <div class='fz-pop__group'>Entries</div>
           $addMultiButton
           $addProxyButton
           $importButton
-          $exportButton
-          <div class='fz-pop__sep'></div>
+          $exportButton";
+  }
+
+  if ($hasViewSection) {
+    if ($hasEntriesSection) { print "\n          <div class='fz-pop__sep'></div>"; }
+    print "
           <div class='fz-pop__group'>View</div>
           $changeColsButton
           $saveViewButton
           $resetViewButton
-          $deleteViewButton
-          <div class='fz-pop__sep'></div>
+          $deleteViewButton";
+  }
+
+  if ($hasOtherSection) {
+    if ($hasEntriesSection OR $hasViewSection) { print "\n          <div class='fz-pop__sep'></div>"; }
+    print "
           $calcButton
           $proceduresButton
-          $notifButton
+          $notifButton";
+  }
+
+  print "
         </div>
-      </div>
+      </div>";
+}
+
+print "
     </div>
   </div>
 
