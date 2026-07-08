@@ -149,6 +149,62 @@ print "<input type='hidden' name='formulize_entry_lock_token' value='".getEntryL
 
 print "</form>\n";
 
+// Rich-text (CKEditor) bootstrap. In a full page load formdisplay.php's drawJavascript()
+// loads the CKEditor library (via $xoTheme->addScript) and emits the initializeCKEditor /
+// updateCKEditors JS. In elements-only mode drawJavascript() is skipped and $xoTheme->addScript
+// only mutates the (never-rendered) theme head, so a rich-text textarea arrives in the drawer as
+// a plain <textarea> that never becomes an editor. Re-emit that bootstrap here so any rich-text
+// fields registered during render (in $GLOBALS['formulize_CKEditors']) initialise after injection.
+//
+// The library is emitted as a separate <script src> node so the host's fragment injector (see
+// themes/Lyris/js/script.js injectFragment) loads it before the following inline init runs — the
+// ordering a normal document gives for free but innerHTML/.load() do not.
+if(!empty($GLOBALS['formulize_CKEditors'])) {
+    $editorIds = array_values(array_unique((array) $GLOBALS['formulize_CKEditors']));
+
+    print "<script type='text/javascript' src='".XOOPS_URL."/editors/CKEditor/ckeditor.js'></script>\n";
+
+    $initCalls = '';
+    $updateBody = '';
+    foreach($editorIds as $editorID) {
+        $safeId = htmlspecialchars($editorID, ENT_QUOTES);
+        $initCalls  .= "        initializeCKEditor('".$safeId."');\n";
+        $updateBody .= "        if(jQuery('#".$safeId."').length > 0 && window.CKEditors['".$safeId."']) {\n";
+        $updateBody .= "            jQuery('#hidden_".$safeId."').val(window.CKEditors['".$safeId."'].getData().replace(\"'\", '&#039;'));\n";
+        $updateBody .= "        }\n";
+    }
+
+    print "<script type='text/javascript'>
+    // Guarded so repeated drawer opens (or a host page that already has editors) do not clobber
+    // existing instances. updateCKEditors() is redefined each open to target the current fields;
+    // the drawer's save/validate path calls it before submitting to flush editor content back into
+    // the hidden inputs Formulize reads.
+    window.CKEditors = window.CKEditors || {};
+    function initializeCKEditor(editorID) {
+        if(typeof ClassicEditor === 'undefined') { return; }
+        if(jQuery('#'+editorID).length > 0 && !window.CKEditors[editorID]) {
+            ClassicEditor
+                .create( document.querySelector( '#'+editorID ) )
+                .then( editor => {
+                    window.CKEditors[editorID] = editor;
+                    window.CKEditors[editorID].model.document.on('change:data', function() {
+                        window.formulizechanged = 1;
+                    });
+                    jQuery('#'+editorID).attr('name', 'useCKEditor');
+                    jQuery(\"<input type='hidden' value='' name='\"+editorID.replace('_tarea', '')+\"' id='hidden_\"+editorID+\"' />\").appendTo(jQuery('#'+editorID).parent());
+                })
+                .catch( error => {
+                    console.error( error );
+                } );
+        }
+    }
+    jQuery(document).ready(function () {
+".$initCalls."    });
+    window.updateCKEditors = function() {
+".$updateBody."    };
+</script>\n";
+}
+
 // validation + entry-lock cleanup helpers, keyed to this form's name so multiple
 // elements-only forms can coexist on a page.
 // NOTE: elements-only validation does not currently support unique value checks.
