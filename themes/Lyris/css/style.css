@@ -2108,16 +2108,157 @@ textarea.fz-control {
    (The prior pass targeted input[type=submit] / input[name=submit] which match
    NOTHING here — that is why the buttons rendered as unstyled browser default.)
    Style the bar like the design's sticky-actions row and give the buttons the
-   `.fz-btn` look: Save-family = accent primary, Close = bordered secondary. */
+   `.fz-btn` look: Save-family = accent primary, Close = bordered secondary.
+
+   Bottom-anchored action bar (issue #9): the `#multipage-controls` bar must sit
+   at the BOTTOM of the available viewport area on SHORT forms AND stay pinned
+   while a LONG form body scrolls — at any resolution.
+
+   The earlier fix used `position:sticky; bottom:0` alone. Sticky only pins an
+   element once its content would otherwise scroll out of view — i.e. only when
+   the form is TALLER than the scroll area (`.fz-main`). On a large/tall viewport
+   where the form is SHORTER than the screen, nothing scrolls, so the bar just
+   sat at its natural (mid-page) position — the reported large-resolution bug.
+
+   Fix: make the full-page form chain a flex column that fills `.fz-main`, then
+   let the bar's `margin-top:auto` push it to the bottom of the filled column on
+   short forms, while `position:sticky; bottom:0` keeps it pinned while long
+   forms scroll. Both cases hold at any resolution.
+
+   Scope: `:has()` limits the flex-fill to `.fz-main` instances that actually
+   contain a full-page form action bar (`#formulizeform ... .formulizeThemeForm
+   #multipage-controls`). List screens (no `#multipage-controls`) and the right
+   drawer (its body is a separate elements-only endpoint that never renders
+   `#multipage-controls`; it builds its own `.fz-drawer__foot`) are untouched.
+   `.fz-inline` (drawer-iframe context) is excluded — that `.fz-main` is
+   `overflow:visible` and lays out in normal page flow. */
+
+body:not(.fz-inline) .fz-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) {
+  display: flex;
+  flex-direction: column;
+}
+
+body:not(.fz-inline) .fz-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+body:not(.fz-inline) .fz-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform > .formulizeThemeForm {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- Horizontal gutter for form-screen content (review item B) ----------
+   `.fz-form-screen` (the form card) and `#pageNavTable` (the multipage page-nav
+   strip) are laid out full width inside `.fz-main`, so they butted flush against
+   the left/right container edges. Inset them by the same outer gutter (--s-5,
+   20px — the same horizontal gutter the list-screen title/footer bars use) so
+   they breathe from the container sides and stay visually aligned with each other.
+
+   Deliberately EXCLUDED: `#multipage-controls` (the bottom-anchored action bar).
+   Like the list-screen sticky footer (`.fz-list__footer`) and the drawer footer
+   (`.fz-drawer__foot`), that bar is meant to be full-bleed — it spans edge-to-edge
+   of `.fz-main` with its own inner `padding` (var(--s-4) var(--s-6)) providing the
+   content inset. Adding a side margin here gave it an unwanted gutter, so it is
+   left out of this rule.
+
+   Scoped to `body:not(.fz-inline) .fz-main` (the same guard the sticky action-bar
+   fix uses): list screens have no `.fz-form-screen`, and when a form renders in
+   the right drawer / inline iframe (`.fz-inline`, body padded by
+   `.fz-drawer__body { padding: --s-5 }`) we must NOT add a second gutter — so the
+   drawer and its `.fz-drawer__foot` are unaffected. */
+body:not(.fz-inline) .fz-main .fz-form-screen,
+body:not(.fz-inline) .fz-main #pageNavTable,
+body:not(.fz-inline) .fz-main .pageNavTable {
+  margin-left: var(--s-5, 20px);
+  margin-right: var(--s-5, 20px);
+}
 
 #multipage-controls {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--s-2, 8px);
-  padding-top: var(--s-4, 16px);
-  margin-top: var(--s-2, 8px);
+  padding: var(--s-4, 16px) var(--s-6, 24px);
+  /* Push the bar to the bottom of the flex-filled form column on short forms. */
+  margin-top: auto;
   border-top: 1px solid var(--c-border);
+  /* Keep it pinned while a long form body scrolls. */
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  background: var(--c-surface);
+  box-shadow: 0 -1px 0 var(--c-border), var(--sh-2);
+}
+
+/* Page meta inside the action bar: "Page X of Y" indicator and the jump-to
+   selector read as muted meta, not competing with the buttons. The indicator
+   gets an auto left margin so it (and the selector) sit to the right of the
+   button cluster on desktop. */
+#multipage-controls #page-indicator {
+  margin-left: auto;
+  font-size: var(--fs-13);
+  color: var(--c-text-muted);
+  font-feature-settings: "tnum";
+  white-space: nowrap;
+}
+
+#multipage-controls #page-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--fs-13);
+  color: var(--c-text-muted);
+  white-space: nowrap;
+}
+
+#multipage-controls #page-selector select {
+  height: 34px;
+}
+
+/* ---------- Multipage page-nav tabs (#pageNavTable.pill-tabs) ----------
+   The multipage toptemplate emits a `.pill-tabs` page-nav strip above the form
+   card; Lyris had no styling for it, so it rendered as bare underlined links
+   (part of the reported clutter). Give it a clean, tab-like Lyris treatment. */
+.pill-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1, 4px);
+  align-items: center;
+  margin-bottom: var(--s-3, 12px);
+}
+
+.pill-tabs__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1, 4px);
+  padding: var(--s-1, 4px) var(--s-3, 12px);
+  font-size: var(--fs-13);
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--c-text-muted);
+  text-decoration: none;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-full, 999px);
+  background: var(--c-surface);
+  transition: color var(--dur-1) var(--ease),
+              border-color var(--dur-1) var(--ease),
+              background-color var(--dur-1) var(--ease);
+}
+
+.pill-tabs__item:hover {
+  color: var(--c-text);
+  border-color: var(--c-border-strong);
+  background: var(--c-surface-2);
+}
+
+.pill-tabs__item--active {
+  color: var(--c-text-on-accent);
+  background: var(--c-accent);
+  border-color: var(--c-accent);
 }
 
 /* NOTE: Formulize core (modules/formulize/templates/css/formulize.css) styles
@@ -2559,5 +2700,52 @@ input[type="time"] { font-family: var(--font-sans); }
 
   .col2 {
     width: 100% !important;
+  }
+
+  /* ---------- Mobile multipage action bar (issue #9, clutter) ----------
+     On narrow screens the desktop bar wrapped buttons of assorted widths and
+     crammed the "Page X of Y" indicator against a button, with the jump-to
+     selector on a stray third line. Restructure into tidy full-width rows:
+     evenly-sized 44px tap-target buttons two-up, then the page indicator and
+     jump-to selector each on their own centered, legible full-width line. */
+  #multipage-controls {
+    padding: var(--s-4);
+    row-gap: var(--s-2);
+    column-gap: var(--s-2);
+  }
+
+  /* Buttons share the row evenly and are comfortable tap targets. */
+  #multipage-controls #prev,
+  #multipage-controls #next,
+  #multipage-controls .formulize-form-submit-button {
+    flex: 1 1 calc(50% - var(--s-2));
+    min-width: 0;
+    height: 44px !important;
+    padding: 0 var(--s-3);
+  }
+
+  /* Page indicator on its own centered line, clearly separated from buttons. */
+  #multipage-controls #page-indicator {
+    flex-basis: 100%;
+    order: 90;
+    margin-top: var(--s-1);
+    text-align: center;
+    font-size: var(--fs-13);
+    color: var(--c-text-muted);
+    font-feature-settings: "tnum";
+  }
+
+  /* Jump-to selector removed on mobile (review item A): on narrow screens it
+     took a full-width extra row and ate vertical space for little value. Desktop
+     keeps it (the desktop #page-selector rules above are untouched). The prev/
+     next buttons and the "Page X of Y" indicator remain the mobile page-nav. */
+  #multipage-controls #page-selector {
+    display: none;
+  }
+
+  /* With the selector gone, drop the indicator's top margin so the freed
+     vertical space is reclaimed and the bar stays compact. */
+  #multipage-controls #page-indicator {
+    margin-top: 0;
   }
 }
