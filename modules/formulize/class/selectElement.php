@@ -1222,7 +1222,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 		}
 
 		// put markup for autocomplete boxes here
-		$output = "<div class=\"formulize_autocomplete\"><input type='text' class='formulize_autocomplete $multipleClass' name='".$markupName."_user' id = '".$markupName."_user' autocomplete='off' value='".str_replace("'", "&#039;", $default_value_user)."' aria-describedby='".$markupName."-help-text' /></div><img src='".XOOPS_URL."/modules/formulize/images/magnifying_glass.png' class='autocomplete-icon'>\n";
+		$output = "<div class=\"formulize_autocomplete\"><input type='text' class='formulize_autocomplete $multipleClass' name='".$markupName."_user' id = '".$markupName."_user' autocomplete='off' value='".str_replace("'", "&#039;", $default_value_user)."' aria-describedby='".$markupName."-help-text' /><img src='".XOOPS_URL."/modules/formulize/images/magnifying_glass.png' class='autocomplete-icon'></div>\n";
 		$output .= "<div id='".$markupName."_defaults'>\n";
 		if(!$multiple) {
 				$output .= "<input type='hidden' name='".$markupName."' id = '".$markupName."' value='".(isset($default_value[0]) ? $default_value[0] : '')."' />\n";
