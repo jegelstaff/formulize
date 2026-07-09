@@ -1616,23 +1616,32 @@ function drawUsersAndGroupsMenuSection() {
 		'icon' => ''
 	);
 
-	// Sub-items
-	if ($isActive) {
-		$view = strpos($currentURL, '/modules/formulize/users.php') !== false ? 'users'
-		      : (strpos($currentURL, '/modules/formulize/groups.php') !== false ? 'groups' : '');
+	// Determine current view (users or groups)
+	$view = strpos($currentURL, '/modules/formulize/users.php') !== false ? 'users'
+	      : (strpos($currentURL, '/modules/formulize/groups.php') !== false ? 'groups' : '');
 
-		if ($canManageUsers) {
-			$usersActive = ($view == 'users') ? ' menuSubActive' : '';
+	// Sub-items (legacy HTML string mode: only if active)
+
+	if ($canManageUsers) {
+		$usersActive = ($view == 'users') ? ' menuSubActive' : '';
+		$subActive = ($view == 'users') ? 1 : 0;
+		$data['subs'][] = array('url' => $usersUrl, 'title' => 'Users', 'active' => $subActive, 'target' => '');
+		if ($isActive) {
 			$block .= "<a class=\"menuSub$usersActive\" href='$usersUrl'>Users</a>";
-			$data['subs'][] = array('url' => $usersUrl, 'title' => 'Users', 'active' => ($view == 'users' ? 1 : 0), 'target' => '');
-		}
-
-		if ($canManageGroups) {
-			$groupsActive = ($view == 'groups') ? ' menuSubActive' : '';
-			$block .= "<a class=\"menuSub$groupsActive\" href='$groupsUrl'>Groups</a>";
-			$data['subs'][] = array('url' => $groupsUrl, 'title' => 'Groups', 'active' => ($view == 'groups' ? 1 : 0), 'target' => '');
 		}
 	}
+
+	if ($canManageGroups) {
+		$groupsActive = ($view == 'groups') ? ' menuSubActive' : '';
+		$subActive = ($view == 'groups') ? 1 : 0;
+		$data['subs'][] = array('url' => $groupsUrl, 'title' => 'Groups', 'active' => $subActive, 'target' => '');
+		if ($isActive) {
+			$block .= "<a class=\"menuSub$groupsActive\" href='$groupsUrl'>Groups</a>";
+		}
+	}
+
+	// Set expanded state for template mode
+	$data['expanded'] = $isActive ? 1 : 0;
 
 	return array($block, $data);
 }

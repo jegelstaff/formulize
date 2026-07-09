@@ -1,28 +1,41 @@
 <ul id="mainmenu" class="main-menu">
 	<{foreach item=links from=$block.content}>
-		<li class="main-menu__item">
-			<a href="<{$links.url}>" target="<{$links.target}>" class="main-menu__item-link<{if $links.active}> main-menu__item-link--active<{/if}>">
-				<{if $links.icon}>
-					<span class="main-menu__item-link-icon" aria-hidden="true">
-						<{$links.icon}>
-					</span>
-				<{/if}>
-				<{$links.title}>
-			</a>
-		</li>
-		<{if isset($links.subs) AND is_array($links.subs)}>
-			<{foreach item=subs from=$links.subs}>
-			<li class="main-menu__item main-menu__subitem">
-				<a href="<{$subs.url}>" target="<{$subs.target}>" class="main-menu__item-link<{if $subs.active}> main-menu__item-link--active<{/if}>">
+		<{if isset($links.subs) AND is_array($links.subs) AND count($links.subs) > 0}>
+			<details class="main-menu__item main-menu__item--disclosure" <{if $links.expanded}>open<{/if}>>
+				<summary class="main-menu__item-link<{if $links.active}> main-menu__item-link--active<{/if}>">
 					<{if $links.icon}>
-						<span class="main-menu__item-link-icon">
-							<{$subs.icon}>
+						<span class="main-menu__item-link-icon" aria-hidden="true">
+							<{$links.icon}>
 						</span>
 					<{/if}>
-					<{$subs.title}>
+					<{$links.title}>
+				</summary>
+				<ul class="main-menu__subitems">
+					<{foreach item=subs from=$links.subs}>
+					<li class="main-menu__item main-menu__subitem">
+						<a href="<{$subs.url}>" target="<{$subs.target}>" class="main-menu__item-link<{if $subs.active}> main-menu__item-link--active<{/if}>">
+							<{if $links.icon}>
+								<span class="main-menu__item-link-icon">
+									<{$subs.icon}>
+								</span>
+							<{/if}>
+							<{$subs.title}>
+						</a>
+					</li>
+					<{/foreach}>
+				</ul>
+			</details>
+		<{else}>
+			<li class="main-menu__item">
+				<a href="<{$links.url}>" target="<{$links.target}>" class="main-menu__item-link<{if $links.active}> main-menu__item-link--active<{/if}>">
+					<{if $links.icon}>
+						<span class="main-menu__item-link-icon" aria-hidden="true">
+							<{$links.icon}>
+						</span>
+					<{/if}>
+					<{$links.title}>
 				</a>
 			</li>
-			<{/foreach}>
 		<{/if}>
 	<{/foreach}>
 	</ul>

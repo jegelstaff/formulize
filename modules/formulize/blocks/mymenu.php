@@ -186,8 +186,8 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
 		}
 	}
 
-	if(
-		$forceOpen
+	// Determine if this section should start expanded (legacy behavior, used for initial state)
+	$shouldShowSubs = ($forceOpen
 		OR (
 			isset($_GET['id'])
 			AND strstr(getCurrentURL(), "/modules/formulize/application.php")
@@ -197,30 +197,34 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
 			strstr(getCurrentURL(), "/modules/formulize/index.php?fid=")
 			AND in_array($getFid, $forms)
 			)
-		OR $isThisSubMenu
-	) { // if we're viewing this application or a form in this application, or this is the being forced open (only application)...
+		OR $isThisSubMenu);
 
-		foreach($menulinks as $menulink) {
-			$url = buildMenuLinkURL($menulink);
-			$suburl = resolveMenuLinkURL($menulink);
-			$target = (!$url OR strstr($url, XOOPS_URL)) ? "" : " target='_blank' ";
-			$menuSubActive="";
-			if(getCurrentURL() == XOOPS_URL.'/modules/formulize/index.php?'.$menulink->getVar("screen")
-				OR trim(getCurrentURL(), '/') == trim($suburl, '/')
-				OR getCurrentURL() == $url
-				OR trim(XOOPS_URL.'/'.$formulizeCanonicalURI, '/') == trim($url, '/')
-				OR (getCurrentURL() == XOOPS_URL.'/modules/formulize/'
-					AND (
-						$menulink->getVar("screen") == 'sid='.$defaultSid
-						OR $menulink->getVar("screen") == 'fid='.$defaultFid
-					))
-				){
-				$menuSubActive=" menuSubActive";
-			}
-			$text = $menulink->getVar("text");
+
+	foreach($menulinks as $menulink) {
+		$url = buildMenuLinkURL($menulink);
+		$suburl = resolveMenuLinkURL($menulink);
+		$target = (!$url OR strstr($url, XOOPS_URL)) ? "" : " target='_blank' ";
+		$menuSubActive="";
+		if(getCurrentURL() == XOOPS_URL.'/modules/formulize/index.php?'.$menulink->getVar("screen")
+			OR trim(getCurrentURL(), '/') == trim($suburl, '/')
+			OR getCurrentURL() == $url
+			OR trim(XOOPS_URL.'/'.$formulizeCanonicalURI, '/') == trim($url, '/')
+			OR (getCurrentURL() == XOOPS_URL.'/modules/formulize/'
+				AND (
+					$menulink->getVar("screen") == 'sid='.$defaultSid
+					OR $menulink->getVar("screen") == 'fid='.$defaultFid
+				))
+			){
+			$menuSubActive=" menuSubActive";
+		}
+		$text = $menulink->getVar("text");
+		$data['subs'][] = array('url'=>$suburl, 'title'=>$text, 'active'=>($menuSubActive ? 1 : 0), 'target'=>$target);
+		if($shouldShowSubs) { // Build legacy HTML-string output (for non-template mode)
 			$block .= "<a class=\"menuSub$menuSubActive\" $target href='$suburl'>".$text."</a>";
-			$data['subs'][] = array('url'=>$suburl, 'title'=>$text, 'active'=>($menuSubActive ? 1 : 0), 'target'=>$target);
 		}
 	}
+
+	$data['expanded'] = $shouldShowSubs ? 1 : 0;
+
 	return array($block, $data);
 }
