@@ -577,12 +577,27 @@ table:first-child div.applinks h1 {
     height: 1.75rem;
 }
 
-/* Expanded section heading: when its sub-items are showing (the next sibling is a sub-item),
-   the heading acts as an inert label and you navigate via the sub-items instead. Collapsed
-   headings stay normal links. Appearance is unchanged — only the clickable behaviour differs. */
-.main-menu__item:not(.main-menu__subitem):has(+ .main-menu__subitem) .main-menu__item-link {
-    cursor: default;
-    pointer-events: none;
+/* Native disclosure widget styling */
+.main-menu__item--disclosure {
+    display: block;
+    margin: 0;
+    padding: 0;
+}
+
+.main-menu__item--disclosure summary {
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+}
+
+.main-menu__item--disclosure summary::-webkit-details-marker {
+    display: none;
+}
+
+.main-menu__subitems {
+    list-style: none;
+    margin: 0;
+    padding: 0;
 }
 
 .hamburger-menu-icon {
