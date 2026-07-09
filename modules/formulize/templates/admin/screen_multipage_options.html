@@ -113,6 +113,21 @@
       <{/if}>
 	</fieldset>
 
+		<{if $content.formorder_list|@count gt 1}>
+    <fieldset>
+        <legend><{$smarty.const._AM_FORMULIZE_SCREEN_FORMORDER}></legend>
+        <div class="form-item">
+            <p><{$smarty.const._AM_FORMULIZE_SCREEN_FORMORDER_INTRO}></p>
+            <ul id="formorder-sortable" class="formorder-sortable">
+                <{foreach from=$content.formorder_list key=fid item=formTitle}>
+                <li id="formorderitem-<{$fid}>" class="formorder-item ui-corner-all"><{$formTitle}></li>
+                <{/foreach}>
+            </ul>
+            <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_FORMORDER_DESC}></div>
+        </div>
+    </fieldset>
+    <{/if}>
+
     <fieldset>
 		<legend>Element Defaults</legend>
 		<div class="form-item">
@@ -127,21 +142,6 @@
 			<div class="description">Defaults that you set for elements here, will take effect only on this screen. The elements will behave normally on other screens (if those screens do not have any defaults set of their own).</div>
 		</div>
 	</fieldset>
-
-    <{if $content.formorder_list|@count gt 1}>
-    <fieldset>
-        <legend><{$smarty.const._AM_FORMULIZE_SCREEN_FORMORDER}></legend>
-        <div class="form-item">
-            <p><{$smarty.const._AM_FORMULIZE_SCREEN_FORMORDER_INTRO}></p>
-            <ul id="formorder-sortable" class="formorder-sortable">
-                <{foreach from=$content.formorder_list key=fid item=formTitle}>
-                <li id="formorderitem-<{$fid}>" class="formorder-item"><{$formTitle}></li>
-                <{/foreach}>
-            </ul>
-            <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_FORMORDER_DESC}></div>
-        </div>
-    </fieldset>
-    <{/if}>
 
     <fieldset>
       <legend>Answers from a previous entry</legend>
@@ -215,14 +215,18 @@ if($("#formorder-sortable").length) {
         padding: 0;
         max-width: 400px;
     }
-    .formorder-item {
-        border: 1px solid #ccc;
-        background: #f6f6f6;
+    /* #xo-canvas-content li carries an ID selector (color: #000; background-color: inherit;) which outranks a
+       plain .formorder-item class on specificity alone, regardless of source order, so this rule must be scoped
+       under the #formorder-sortable id to win the cascade */
+    #formorder-sortable .formorder-item {
+        border: 1px solid #94daf2;
+        background-color: #0085b6;
+        color: #FFF;
+        opacity: 1;
         padding: 0.5em 0.75em;
         margin-bottom: 4px;
         cursor: move;
-    }
-    .formorder-item:hover {
-        background: #eee;
+        position: relative;
+        z-index: 1;
     }
 </style>
