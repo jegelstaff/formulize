@@ -130,15 +130,15 @@
 
     <{if $content.formorder_list|@count gt 1}>
     <fieldset>
-        <legend>Order of forms</legend>
+        <legend><{$smarty.const._AM_FORMULIZE_SCREEN_FORMORDER}></legend>
         <div class="form-item">
-            <p>This screen shows elements from more than one connected form. Click and drag to set the order the forms appear in:</p>
+            <p><{$smarty.const._AM_FORMULIZE_SCREEN_FORMORDER_INTRO}></p>
             <ul id="formorder-sortable" class="formorder-sortable">
                 <{foreach from=$content.formorder_list key=fid item=formTitle}>
                 <li id="formorderitem-<{$fid}>" class="formorder-item"><{$formTitle}></li>
                 <{/foreach}>
             </ul>
-            <div class="description">Elements within each form always appear in the form's own order. This setting only controls the order of the forms relative to each other.</div>
+            <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_FORMORDER_DESC}></div>
         </div>
     </fieldset>
     <{/if}>
