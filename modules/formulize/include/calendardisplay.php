@@ -501,7 +501,16 @@ function readScreenId($id, $fid) {
         unset($pages[0]); // get rid of the part we just unshifted, so the page count is correct
         foreach($screen->getVar('conditions') as $pageid=>$condata) {
             $pagenumber = $pageid+1;
-            $conditions[$pagenumber] = array(0=>$condata['details']['elements'], 1=>$condata['details']['ops'], 2=>$condata['details']['terms']);
+            if(!is_array($condata)) {
+                continue; // skip false/non-array (legacy empty placeholder)
+            }
+            if(isset($condata['details'])) {
+                // old format: details => array(elements, ops, terms)
+                $conditions[$pagenumber] = array(0=>$condata['details']['elements'], 1=>$condata['details']['ops'], 2=>$condata['details']['terms']);
+            } else {
+                // new format: already 0=>elements, 1=>ops, 2=>terms, 3=>types
+                $conditions[$pagenumber] = $condata;
+            }
         }
         $multiPageData = array();
         $multiPageData[$fid]['pages'] = $pages;

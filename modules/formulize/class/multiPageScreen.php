@@ -92,10 +92,12 @@ class formulizeMultiPageScreen extends formulizeScreen {
 			if(is_array($conditions)) {
 				foreach($conditions as $pageid=>$thisCondition) {
 					$pagenumber = $pageid+1;
-					if(isset($thisCondition['details'])) {
+					if(is_array($thisCondition) AND isset($thisCondition['details'])) {
 							$processedConditions[$pagenumber] = array(0=>$thisCondition['details']['elements'], 1=>$thisCondition['details']['ops'], 2=>$thisCondition['details']['terms']);
-					} else {
+					} elseif(is_array($thisCondition)) {
 							$processedConditions[$pagenumber] = $thisCondition;
+					} else {
+							$processedConditions[$pagenumber] = array(); // normalize false/non-array (legacy empty placeholder) to empty
 					}
 				}
 				ksort($processedConditions);

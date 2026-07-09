@@ -137,12 +137,12 @@ if ($_GET['ele_id'] != "new") {
     }
 
     $ele_filtersettings = $elementObject->getVar('ele_filtersettings');
-    $filterSettingsToSend = (count((array) $ele_filtersettings) > 0) ? $ele_filtersettings : "";
+    $filterSettingsToSend = (is_array($ele_filtersettings) AND count($ele_filtersettings) > 0) ? $ele_filtersettings : "";
     $display['filtersettings'] = formulize_createFilterUI($filterSettingsToSend, "elementfilter", $fid, "form-3");
 
     $ele_disabledconditions = $elementObject->getVar('ele_disabledconditions');
-    $disabledConditionsToSend = (count((array) $ele_disabledconditions) > 0) ? $ele_disabledconditions : "";
-    $display['disabledconditions'] = formulize_createFilterUI($ele_disabledconditions, "disabledconditions", $fid, "form-3");
+    $disabledConditionsToSend = (is_array($ele_disabledconditions) AND count($ele_disabledconditions) > 0) ? $ele_disabledconditions : "";
+    $display['disabledconditions'] = formulize_createFilterUI($disabledConditionsToSend, "disabledconditions", $fid, "form-3");
 
     $display['ele_forcehidden'] = $elementObject->getVar('ele_forcehidden') ? " checked" : "";
     $display['ele_private'] = $elementObject->getVar('ele_private') ? " checked" : "";

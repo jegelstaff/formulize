@@ -590,9 +590,12 @@ class formulizeHandler {
 	 * @return array array($pages, $pagetitles, $conditions), each sequential 0..n-1 and mutually aligned.
 	 */
 	private static function normalizePageArrays($pages, $pagetitles, $conditions) {
-		$pages = (array) $pages;
-		$pagetitles = (array) $pagetitles;
-		$conditions = (array) $conditions;
+		// Use is_array() rather than (array) cast to avoid (array) false = array(false),
+		// which would inject false into every page's conditions slot and later cause TypeError
+		// when code calls count() on it (PHP 8 makes count(false) a fatal TypeError).
+		$pages = is_array($pages) ? $pages : array();
+		$pagetitles = is_array($pagetitles) ? $pagetitles : array();
+		$conditions = is_array($conditions) ? $conditions : array();
 		$normPages = array();
 		$normTitles = array();
 		$normConditions = array();
@@ -600,7 +603,7 @@ class formulizeHandler {
 		foreach($pages as $key => $pageContent) {
 			$normPages[$i] = $pageContent;
 			$normTitles[$i] = isset($pagetitles[$key]) ? $pagetitles[$key] : '';
-			$normConditions[$i] = isset($conditions[$key]) ? $conditions[$key] : array();
+			$normConditions[$i] = (isset($conditions[$key]) AND is_array($conditions[$key])) ? $conditions[$key] : array();
 			$i++;
 		}
 		return array($normPages, $normTitles, $normConditions);
