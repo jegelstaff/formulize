@@ -1105,7 +1105,24 @@ textarea {
    table. Giving the cell wrapper width:0 removes it (and the controls inside) from
    the intrinsic column-width calculation entirely, while min-width:100% (ignored
    during intrinsic sizing, applied at layout) re-expands it to the final cell width.
-   Columns stay sized to the data, so toggling the filters produces no layout shift. */
+   Columns stay sized to the data, so toggling the filters produces no layout shift.
+
+   Sticky filter row: pin the filter cells just below the sticky column-header row
+   (which is 36px tall). Using position:sticky on the <td> cells keeps the filter
+   inputs visible while the data rows scroll. z-index:2 matches the header row so
+   they sit at the same stacking level; the solid background prevents data rows from
+   bleeding through. */
+.fz-search-row td {
+  position: sticky;
+  top: 36px;
+  z-index: 2;
+  background: var(--c-surface-2);
+  /* Vertical breathing room so the filter inputs aren't flush against the
+     row edges; keep the base horizontal --row-pad-x. */
+  padding-top: var(--s-2);
+  padding-bottom: var(--s-2);
+}
+
 .fz-search-row .main-cell-div {
   width: 0;
   min-width: 100%;
@@ -1578,6 +1595,18 @@ textarea {
   .fz-table thead .fz-cb,
   .fz-table thead .column0 {
     top: 0;
+    z-index: 3;
+  }
+
+  /* Filter row cells that are also left-pinned (fz-cb and column0) need
+     top:36px to clear the column-header row and z-index:3 to sit above
+     both the top-sticky filter row (z 2) and the left-sticky body cells
+     (z 1) — they're pinned in both axes simultaneously.
+     Specificity must beat .fz-table thead .fz-cb (3 selectors), so we
+     include .fz-table in the selector chain. */
+  .fz-table .fz-search-row .fz-cb,
+  .fz-table .fz-search-row .column0 {
+    top: 36px;
     z-index: 3;
   }
 }
