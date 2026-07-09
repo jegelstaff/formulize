@@ -1307,6 +1307,22 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 					}
 				}
 			}
+			// if this is a form (multipage) screen with a manually specified form order, honour it:
+			// list the forms in the saved order first (only those actually present), then append any remaining forms in their existing order (so forms added since the order was saved still render)
+			if(is_a($screen, "formulizeMultiPageScreen") AND is_array($savedFormOrder = $screen->getVar('formorder')) AND count($savedFormOrder) > 0) {
+				$orderedFidsToRender = array();
+				foreach($savedFormOrder as $orderedFid) {
+					if(isset($fidsToRender[$orderedFid])) {
+						$orderedFidsToRender[$orderedFid] = $fidsToRender[$orderedFid];
+					}
+				}
+				foreach($fidsToRender as $remainingFid) {
+					if(!isset($orderedFidsToRender[$remainingFid])) {
+						$orderedFidsToRender[$remainingFid] = $remainingFid;
+					}
+				}
+				$fidsToRender = $orderedFidsToRender;
+			}
 		}
 
 		// only loop through the fids that have elements we are going to show

@@ -7,6 +7,7 @@
 <{$securitytoken}>
 <input type="hidden" name="formulize_admin_handler" value="screen_multipage_options">
 <input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
+<input type="hidden" name="formorder" value="">
 
 
 <div class="panel-content content">
@@ -127,6 +128,21 @@
 		</div>
 	</fieldset>
 
+    <{if $content.formorder_list|@count gt 1}>
+    <fieldset>
+        <legend>Order of forms</legend>
+        <div class="form-item">
+            <p>This screen shows elements from more than one connected form. Click and drag to set the order the forms appear in:</p>
+            <ul id="formorder-sortable" class="formorder-sortable">
+                <{foreach from=$content.formorder_list key=fid item=formTitle}>
+                <li id="formorderitem-<{$fid}>" class="formorder-item"><{$formTitle}></li>
+                <{/foreach}>
+            </ul>
+            <div class="description">Elements within each form always appear in the form's own order. This setting only controls the order of the forms relative to each other.</div>
+        </div>
+    </fieldset>
+    <{/if}>
+
     <fieldset>
       <legend>Answers from a previous entry</legend>
 	  <div class="form-item">
@@ -174,6 +190,17 @@ function appendDefault(id, elementText, defaultText) {
     $('#addeddefaults').append('<input type="hidden" name="screens-elementdefaults['+id+']" id="hidden_'+id+'" value="'+defaultText+'"><span class="adefault" id="def_'+id+'">'+elementText+' >> '+defaultText+'<br></span>');
 }
 
+// form order drag-to-reorder (only present when the screen unifies more than one form)
+if($("#formorder-sortable").length) {
+    $("#formorder-sortable").sortable();
+    $("#formorder-sortable").bind("sortupdate", function(event, ui) {
+        setDisplay('savewarning','block');
+    });
+    $(".savebutton").click(function() {
+        $("[name=formorder]").val($("#formorder-sortable").sortable('serialize'));
+    });
+}
+
 </script>
 
 <style>
@@ -181,5 +208,21 @@ function appendDefault(id, elementText, defaultText) {
         color: red;
         text-decoration: line-through;
         cursor: pointer;
+    }
+    .formorder-sortable {
+        list-style: none;
+        margin: 0.5em 0;
+        padding: 0;
+        max-width: 400px;
+    }
+    .formorder-item {
+        border: 1px solid #ccc;
+        background: #f6f6f6;
+        padding: 0.5em 0.75em;
+        margin-bottom: 4px;
+        cursor: move;
+    }
+    .formorder-item:hover {
+        background: #eee;
     }
 </style>

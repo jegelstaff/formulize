@@ -84,6 +84,20 @@ if(isset($_POST['singlecolumn1width']) AND isset($screens['displaycolumns']) AND
     $column1width = $_POST['doublecolumn1width'];
 }
 
+// parse the drag-to-reorder form order (jQuery UI sortable serialize string, eg: formorderitem[]=3&formorderitem[]=5)
+// only present/relevant when the screen unifies more than one form; skip the property entirely when absent so we don't wipe an existing order
+$formorder = null;
+if(isset($_POST['formorder']) AND trim($_POST['formorder']) !== "") {
+    $formorderParts = explode("formorderitem[]=", str_replace("&", "", $_POST['formorder']));
+    unset($formorderParts[0]); // the piece before the first key is empty
+    $formorder = array();
+    foreach($formorderParts as $formorderFid) {
+        if(is_numeric($formorderFid)) {
+            $formorder[] = intval($formorderFid);
+        }
+    }
+}
+
 // delegate persistence to the shared upsert apparatus (handles the insert serialization quirk, handle uniqueness, etc.)
 $properties = array(
     'paraentryform' => $screens['paraentryform'],
@@ -102,6 +116,9 @@ $properties = array(
     'elementdefaults' => isset($screens['elementdefaults']) ? $screens['elementdefaults'] : "",
     'reloadblank' => $screens['reloadblank'],
 );
+if(is_array($formorder)) {
+    $properties['formorder'] = $formorder; // upsert serializes it (formorder is an array field)
+}
 try {
   formulizeHandler::upsertMultiPageScreen($properties, $sid);
 } catch (Exception $e) {

@@ -234,6 +234,7 @@ CREATE TABLE `formulize_screen_multipage` (
   `displayheading` tinyint(1) NOT NULL default 0,
   `reloadblank` tinyint(1) NOT NULL default 0,
   `elementdefaults` text NOT NULL,
+  `formorder` text NOT NULL,
   PRIMARY KEY (`multipageid`),
   INDEX i_sid (`sid`)
 ) ENGINE=InnoDB;

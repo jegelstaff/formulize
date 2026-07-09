@@ -66,7 +66,8 @@ class FormulizeObject extends XoopsObject {
 				'pages',
 				'pagetitles',
 				'conditions',
-				'elementdefaults'
+				'elementdefaults',
+				'formorder'
 			],
 			'formulize_screen_listofentries' => [
 				'limitviews',
@@ -444,7 +445,7 @@ class formulizeHandler {
 		}
 
 		// keys that this method sets explicitly below, so they are skipped by the generic scalar loop
-		$arrayFields = array('pages', 'pagetitles', 'conditions', 'elementdefaults');
+		$arrayFields = array('pages', 'pagetitles', 'conditions', 'elementdefaults', 'formorder');
 		$handledSpecially = array_merge($arrayFields, array('fid', 'sid', 'screen_handle', 'thankstext', 'introtext', 'buttontext'));
 
 		// apply plain scalar/text properties (partial update - only what was provided)

@@ -411,6 +411,35 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
     $multipageOptions['element_list'] = $element_list;
     $multipageOptions['elementdefaults'] = $screen->getVar('elementdefaults');
 
+    // build the list of forms for the manual form-order UI, only relevant when multiple related forms are unified into this screen
+    $multipageOptions['formorder_list'] = array();
+    if($frid) {
+        $framework_handler = xoops_getModuleHandler('frameworks', 'formulize');
+        $frameworkObject = $framework_handler->get($frid);
+        $unifiedFids = $frameworkObject->getUnifiedDisplayFids($form_id);
+        if(count($unifiedFids) > 1) {
+            // apply any saved order: saved fids first (those still valid), then any remaining forms in canonical order (so newly connected forms still appear)
+            $savedFormOrder = $screen->getVar('formorder');
+            $orderedFids = array();
+            if(is_array($savedFormOrder)) {
+                foreach($savedFormOrder as $savedFid) {
+                    if(in_array($savedFid, $unifiedFids) AND !in_array($savedFid, $orderedFids)) {
+                        $orderedFids[] = $savedFid;
+                    }
+                }
+            }
+            foreach($unifiedFids as $unifiedFid) {
+                if(!in_array($unifiedFid, $orderedFids)) {
+                    $orderedFids[] = $unifiedFid;
+                }
+            }
+            foreach($orderedFids as $orderedFid) {
+                $formObject = new formulizeForm($orderedFid);
+                $multipageOptions['formorder_list'][$orderedFid] = printSmart(trans(strip_tags($formObject->title)), 60);
+            }
+        }
+    }
+
 
 }
 
