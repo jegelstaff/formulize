@@ -832,3 +832,29 @@ export async function clearEntryLocks(page) {
 		}
 	});
 }
+
+/**
+ * Open the mobile flyout sidebar (which contains #mainmenu), but only if it isn't already
+ * open. The Anari theme pre-opens the sidebar (site-layout__sidebar--open) whenever the
+ * landing page URL is under /modules/formulize/application.php (theme.html:75-76) --
+ * webmasters commonly land there by default, unlike regular staff accounts which land on
+ * a specific form. Clicking the "open" trigger while the sidebar is already open hangs
+ * forever, because the trigger button ends up covered by the now-open sidebar.
+ *
+ * The open/closed state is checked via the site-layout__sidebar--open class, not
+ * page.locator('#mainmenu').isVisible() -- the sidebar is always technically "visible" by
+ * Playwright's definition (non-zero size, not display:none/visibility:hidden) even while
+ * closed, since closed is implemented via `transform: translateX(-338px)` (style.css:182-191),
+ * which moves it off-screen without changing its bounding box or display. isVisible() can't
+ * tell the two states apart, so it silently skips the click when the menu is actually closed
+ * off-screen, leaving later clicks inside it (e.g. on a menu item) to fail with "element is
+ * outside of the viewport".
+ */
+export async function ensureMainMenuOpen(page) {
+	const isOpen = await page.locator('.js-flyout-menu').evaluate(
+		el => el.classList.contains('site-layout__sidebar--open')
+	);
+	if (!isOpen) {
+		await page.locator('#burger-and-logo').getByRole('link').first().click();
+	}
+}

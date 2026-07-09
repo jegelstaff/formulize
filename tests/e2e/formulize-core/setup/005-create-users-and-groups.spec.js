@@ -18,6 +18,7 @@ import {
 	getFidFromFormAdminPage,
 	getFidFromListPage,
 	clearEntryLocks,
+	ensureMainMenuOpen,
 } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
@@ -794,7 +795,7 @@ test.describe('J. Frontend menu visibility for Users/Groups', () => {
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
 		// login() lands on a front-end module page (not users.php/groups.php), so the
 		// section is collapsed to start.
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await ensureMainMenuOpen(page);
 
 		const usersLink = page.locator('#mainmenu').getByRole('link', { name: 'Users', exact: true });
 		const groupsLink = page.locator('#mainmenu').getByRole('link', { name: 'Groups', exact: true });
@@ -818,7 +819,7 @@ test.describe('J. Frontend menu visibility for Users/Groups', () => {
 
 		// Now that we're on users.php, the section should already be expanded on load, with
 		// no click needed to reveal the sub-links again.
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await ensureMainMenuOpen(page);
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Users', exact: true })).toBeVisible();
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Groups', exact: true })).toBeVisible();
 	});
