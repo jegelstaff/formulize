@@ -782,4 +782,44 @@ test.describe('J. Frontend menu visibility for Users/Groups', () => {
 		await page.waitForLoadState('networkidle');
 		await expect(page).not.toHaveURL(/users\.php(?:[?#]|$)/);
 	});
+
+	// Covers the "Users and Groups" section of the front-end menu (drawUsersAndGroupsMenuSection()
+	// in usersAndGroups.php), rendered as a native <details>/<summary> disclosure by menu.html.
+	// Regression guard for two things: (1) clicking the section header expands it locally, with
+	// no page navigation, and (2) once you're actually on users.php/groups.php, the section is
+	// server-rendered already expanded (the "$data['expanded']" flag) rather than requiring another
+	// click — this is the exact bug class reported after the menu rearchitecture (a section not
+	// auto-opening while already on one of its own pages).
+	test('Users and Groups menu section expands on click without navigating, then auto-expands once on its own page', async ({ page }) => {
+		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+		// login() lands on a front-end module page (not users.php/groups.php), so the
+		// section is collapsed to start.
+		await page.locator('#burger-and-logo').getByRole('link').first().click();
+
+		const usersLink = page.locator('#mainmenu').getByRole('link', { name: 'Users', exact: true });
+		const groupsLink = page.locator('#mainmenu').getByRole('link', { name: 'Groups', exact: true });
+
+		// Collapsed by default: the sub-links exist in the DOM but aren't visible.
+		await expect(usersLink).not.toBeVisible();
+		await expect(groupsLink).not.toBeVisible();
+
+		// Clicking the section header expands it instantly, with no page reload.
+		const urlBeforeExpand = page.url();
+		await page.locator('#mainmenu').getByText('Users and Groups', { exact: true }).click();
+		await expect(usersLink).toBeVisible();
+		await expect(groupsLink).toBeVisible();
+		expect(page.url()).toBe(urlBeforeExpand);
+
+		// Clicking a sub-link navigates normally.
+		await usersLink.click();
+		await expect(page).toHaveURL(/users\.php/);
+		await expect(page.locator('#formulize_addButton')).toBeVisible();
+		await clearEntryLocks(page);
+
+		// Now that we're on users.php, the section should already be expanded on load, with
+		// no click needed to reveal the sub-links again.
+		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Users', exact: true })).toBeVisible();
+		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Groups', exact: true })).toBeVisible();
+	});
 });
