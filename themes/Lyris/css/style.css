@@ -2696,6 +2696,230 @@ input[type="date"].icms-date-box,
 input[type="time"] { font-family: var(--font-sans); }
 
 /* ============================================================
+   Kitchen-sink control types — second pass (choice inputs)
+   ------------------------------------------------------------
+   Brings the richer "Choice inputs" section of the design's
+   KitchenSink artboard up to the forms.css primitives:
+     • Autocomplete List  → .fz-combo chip-input + .fz-listbox menu
+     • Multi-select Listbox (<select multiple>) → .fz-listbox
+     • Native <select> dropdown wrapper polish (defeats <nobr>)
+   Scoped to the form-screen / drawer contexts so list-screen
+   filters and widgets are untouched.
+   ============================================================ */
+
+/* ---------- Native <select> dropdown: <nobr> wrapper polish ----------
+   Core wraps the single-select in `<nobr><select size="1">…</select></nobr>`.
+   The nobr is inline, so the select only stretches to its content width and
+   never fills the field. Make the wrapper a full-width block so the styled
+   select (chevron + 38px box, already set by the base `select` rule) spans
+   the field, matching the design's full-width `.fz-select-trigger`. */
+.fz-form-screen .fz-field__body > nobr:has(> select),
+.fz-drawer__body .col2 > nobr:has(> select) {
+  display: block;
+  width: 100%;
+}
+.fz-form-screen nobr > select,
+.fz-drawer__body nobr > select {
+  width: 100%;
+}
+
+/* ---------- Multi-select Listbox (<select multiple>) → .fz-listbox ----------
+   A `<select multiple size="N">` must show N rows; the shared single-select
+   rule forces `height: var(--field-h)` which clips it to one row and hides the
+   chevron background awkwardly. Restyle multi-selects as the design's scrollable
+   listbox surface: auto height, padded rows, accent-soft selected state. */
+.fz-form-screen select[multiple],
+.fz-drawer__body select[multiple] {
+  height: auto;
+  min-height: calc(var(--field-h) * 2.4);
+  max-height: 220px;
+  padding: 4px;
+  overflow-y: auto;
+  background-image: none;      /* no chevron on a multi-select */
+  cursor: default;
+  border-radius: var(--field-radius);
+  border: 1px solid var(--c-border-strong);
+  background-color: var(--c-surface);
+}
+.fz-form-screen select[multiple]:focus,
+.fz-drawer__body select[multiple]:focus {
+  border-color: var(--c-border-focus);
+  box-shadow: var(--sh-focus);
+  outline: none;
+}
+.fz-form-screen select[multiple] option,
+.fz-drawer__body select[multiple] option {
+  padding: 7px 10px;
+  border-radius: var(--r-1);
+  font-size: var(--field-text);
+  color: var(--c-text);
+}
+.fz-form-screen select[multiple] option:checked,
+.fz-drawer__body select[multiple] option:checked {
+  /* WebKit needs the background painted via box-shadow to override the UA
+     highlight; Firefox honours background directly. Belt-and-braces. */
+  background: var(--c-accent-soft) linear-gradient(var(--c-accent-soft), var(--c-accent-soft));
+  color: var(--c-text);
+  font-weight: 500;
+}
+
+/* ---------- Autocomplete List → .fz-combo chip-input ----------
+   Core renders:
+     <div class="formulize_autocomplete">
+       <input class="formulize_autocomplete [formulize_autocomplete_multiple] …">
+     </div>
+     <img class="autocomplete-icon">                      (magnifying glass)
+     <div id="…_defaults">…hidden inputs…</div>
+     <div class="formulize_autocomplete_selections">       (chip container)
+       <p class="auto_multi auto_multi_…" target="…">Label</p>   (one chip / value)
+     </div>
+   We wrap the text input + magnifier as a single bordered field that reads like
+   the design's `.fz-combo__tags`, and present each `.auto_multi` <p> as a
+   removable chip (`.fz-combo__tag`). Chips are clickable to remove (core JS). */
+
+/* The input wrapper (div.formulize_autocomplete) is the positioning context for
+   the magnifier. Core now renders the <img class="autocomplete-icon"> INSIDE this
+   wrapper (a child of the div, immediately after the input) so the icon can be
+   pinned as an absolute adornment over the input's right edge WITHOUT relying on
+   a :has() selector — :has() is unsupported on older engines, and when it fails
+   the icon falls back to normal flow and wraps onto its own line below the field
+   (the reported regression). Anchoring to this always-present relative wrapper is
+   robust across all engines. */
+.fz-form-screen .formulize_autocomplete:not(input),
+.fz-drawer__body .formulize_autocomplete:not(input) {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+/* The autocomplete text input → a clean full-width field, room for the icon. */
+.fz-form-screen input.formulize_autocomplete,
+.fz-drawer__body input.formulize_autocomplete {
+  width: 100%;
+  height: var(--field-h);
+  padding: 0 36px 0 var(--field-pad-x);
+  font: inherit;
+  font-size: var(--field-text);
+  color: var(--c-text);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--field-radius);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
+}
+.fz-form-screen input.formulize_autocomplete:hover,
+.fz-drawer__body input.formulize_autocomplete:hover { border-color: var(--c-text-muted); }
+.fz-form-screen input.formulize_autocomplete:focus,
+.fz-drawer__body input.formulize_autocomplete:focus {
+  border-color: var(--c-border-focus);
+  box-shadow: var(--sh-focus);
+}
+
+/* The magnifying-glass image → a muted icon pinned inside the field's right edge.
+   The icon is a child of the relatively-positioned div.formulize_autocomplete
+   wrapper, so absolute positioning resolves against that wrapper regardless of
+   :has() support. Centre it vertically over the input row and inset from the
+   right edge. Reset any width the native <img> would otherwise assume. */
+.fz-form-screen .formulize_autocomplete img.autocomplete-icon,
+.fz-drawer__body .formulize_autocomplete img.autocomplete-icon {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  opacity: 0.55;
+  pointer-events: none;
+  float: none;
+}
+
+/* The selected-values chip tray → design's chip row. */
+.fz-form-screen .formulize_autocomplete_selections,
+.fz-drawer__body .formulize_autocomplete_selections {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 0 !important;   /* defeat the inline padding-right:10px */
+}
+.fz-form-screen .formulize_autocomplete_selections:empty,
+.fz-drawer__body .formulize_autocomplete_selections:empty { display: none; }
+
+.fz-form-screen .formulize_autocomplete_selections .auto_multi,
+.fz-drawer__body .formulize_autocomplete_selections .auto_multi {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 13px;
+  background: var(--c-accent-soft);
+  border: 1px solid var(--c-accent-soft-2);
+  color: var(--c-text);
+  font-size: var(--fs-13);
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+}
+.fz-form-screen .formulize_autocomplete_selections .auto_multi:hover,
+.fz-drawer__body .formulize_autocomplete_selections .auto_multi:hover {
+  background: var(--c-surface-3);
+  border-color: var(--c-border-strong);
+}
+/* Trailing "×" affordance (chips are click-to-remove in core JS). */
+.fz-form-screen .formulize_autocomplete_selections .auto_multi::after,
+.fz-drawer__body .formulize_autocomplete_selections .auto_multi::after {
+  content: "\00d7";
+  font-size: 14px;
+  line-height: 1;
+  color: var(--c-text-muted);
+}
+.fz-form-screen .formulize_autocomplete_selections .auto_multi:hover::after,
+.fz-drawer__body .formulize_autocomplete_selections .auto_multi:hover::after {
+  color: var(--c-danger);
+}
+
+/* ---------- jQuery UI autocomplete menu → .fz-listbox surface ----------
+   The suggestions dropdown is appended to <body> by jQuery UI as
+   `ul.ui-autocomplete.ui-menu > li.ui-menu-item > div`. Re-skin it to the
+   design's listbox: bordered card, hover/active rows in accent-soft. */
+.ui-autocomplete.ui-menu {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 4px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--field-radius, var(--r-2));
+  box-shadow: var(--sh-2);
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 1200;
+  font-family: var(--font-sans);
+}
+.ui-autocomplete.ui-menu .ui-menu-item { margin: 0; }
+.ui-autocomplete.ui-menu .ui-menu-item-wrapper,
+.ui-autocomplete.ui-menu .ui-menu-item > a {
+  display: block;
+  padding: 7px 10px;
+  border-radius: var(--r-1);
+  font-size: var(--fs-14);
+  color: var(--c-text);
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+}
+.ui-autocomplete.ui-menu .ui-menu-item-wrapper.ui-state-active,
+.ui-autocomplete.ui-menu .ui-menu-item-wrapper:hover,
+.ui-autocomplete.ui-menu .ui-menu-item > a.ui-state-active,
+.ui-autocomplete.ui-menu .ui-menu-item > a:hover {
+  background: var(--c-accent-soft);
+  color: var(--c-text);
+}
+
+/* ============================================================
    Mobile — form screen adjustments
    ============================================================ */
 
@@ -2729,6 +2953,13 @@ input[type="time"] { font-family: var(--font-sans); }
 
   .col2 {
     width: 100% !important;
+  }
+
+  /* Autocomplete chips get a slightly taller tap target on touch screens. */
+  .fz-form-screen .formulize_autocomplete_selections .auto_multi,
+  .fz-drawer__body .formulize_autocomplete_selections .auto_multi {
+    height: 30px;
+    padding: 0 12px;
   }
 
   /* ---------- Mobile multipage action bar (issue #9, clutter) ----------
