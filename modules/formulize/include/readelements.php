@@ -282,7 +282,6 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
 					}
 				}
 
-				$oldPiValue = null;
 				$writtenEntryId = null;
         if(substr($currentEntry, 0 , 3) == "new") {
             // handle entries in the form that are new. if there is more than one new entry, they will be listed as new1, new2, new3, etc
@@ -304,15 +303,6 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
 									if($formulize_formObject->getVar('entries_are_users') AND $formulize_formObject->getVar('entries_are_users_user_is_owner') AND isset($userIdsForUserAccountElements[$elementFid][$currentEntry]) AND $userIdsForUserAccountElements[$elementFid][$currentEntry]) {
 										$creation_user = $userIdsForUserAccountElements[$elementFid][$currentEntry];
 									}
-										// capture old PI value for entries_are_groups forms before update
-										// TODO ensure forms with entries_are_groups always have a PI set!!
-										if ($formulize_formObject->getVar('entries_are_groups')
-											AND $piElementId = $formulize_formObject->getVar('pi')
-											AND $piElement = $element_handler->get($piElementId)
-										) {
-											$dataHandler = new formulizeDataHandler($elementFid);
-											$oldPiValue = $dataHandler->getElementValueInEntry($currentEntry, $piElementId);
-										}
 
 										if($writtenEntryId = formulize_writeEntry($values, $currentEntry, "", $creation_user, "", false)) { // last false causes setting ownership data to be skipped...it's more efficient for readelements to package up all the ownership info and write it all at once below.
                         if(isset($formulize_subformBlankCues[$elementFid])) {
@@ -368,7 +358,7 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
 				// WHAT ABOUT MCP?? OR OTHER SITUATIONS. IF AN ENTRIES-ARE-GROUPS RECORD IS CREATED/UPDATED, WE NEED TO DO THE SYNC AT THAT POINT TOO, NOT JUST HERE IN THE WEB APP LOGIC
 		    // create entry-specific groups if this form has entries_are_groups enabled
 				if ($formulize_formObject->getVar('entries_are_groups') AND $writtenEntryId) {
-						formulizeHandler::syncEntryGroups($elementFid, $writtenEntryId, $oldPiValue);
+						formulizeHandler::syncEntryGroups($elementFid, $writtenEntryId);
 				}
     }
 }
@@ -573,125 +563,8 @@ if($frid) {
 	}
 }
 
-// Process group memberships for entries_are_users forms.
-// This covers two scenarios:
-// 1. The entries_are_users form itself was saved. This includes saves that went
-//    through processUserAccountSubmission (user account elements in the submission) and saves that did not.
-// 2. A connected form was saved, and that form contains elements referenced in
-//    the EAU form's element_links for template group resolution. On-before-save,
-//    on-after-save, or derived value updates may all affect the linked values,
-//    so we re-evaluate whenever any entry is saved in a form that contains
-//    element_link elements, without checking which specific elements were modified.
-if(!empty($formulize_allWrittenEntryIds)) {
-	global $xoopsDB;
-	$eauFormsResult = $xoopsDB->query("SELECT id_form FROM " . $xoopsDB->prefix('formulize_id') . " WHERE entries_are_users = 1");
-	if($eauFormsResult) {
-		// For each EAU form, seed the pending list from any written entries, then find any additionally affected entries via framework traversal
-		$pendingGroupMembershipEntryUpdates = array(); // eauFormId => [entryId, ...]
-		include_once XOOPS_ROOT_PATH . '/modules/formulize/class/frameworks.php';
-		$frameworks_handler = new formulizeFrameworksHandler($xoopsDB);
-		while($eauRow = $xoopsDB->fetchArray($eauFormsResult)) {
-			$eauFormId = intval($eauRow['id_form']);
-			if(isset($formulize_allWrittenEntryIds[$eauFormId])) {
-				$pendingGroupMembershipEntryUpdates[$eauFormId] = $formulize_allWrittenEntryIds[$eauFormId];
-			}
-			$eauFormObject = $form_handler->get($eauFormId);
-			if(!$eauFormObject) {
-				continue;
-			}
-			$elementLinks = $eauFormObject->getVar('entries_are_users_default_groups_element_links');
-			if(!is_array($elementLinks) || empty($elementLinks)) {
-				continue;
-			}
-			// Find which connected forms contain the linked elements and were written to
-			$linkedElementForms = array(); // form ID => true
-			foreach($elementLinks as $gid => $eleIds) {
-				if(!is_array($eleIds)) {
-					continue;
-				}
-				foreach($eleIds as $eleId) {
-					$linkedElement = $element_handler->get(intval($eleId));
-					if($linkedElement) {
-						$linkedElementForms[intval($linkedElement->getVar('id_form'))] = true;
-					}
-				}
-			}
-			foreach(array_keys($linkedElementForms) as $linkedFid) {
-				if(!isset($formulize_allWrittenEntryIds[$linkedFid]) || $linkedFid == $eauFormId) {
-					continue; // skip if not written to, or if the element is in the EAU form itself (already added above)
-				}
-				// Find the framework connecting the linked form to the EAU form
-				$frameworks = $frameworks_handler->getFrameworksByForm($linkedFid, includePrimaryRelationship: true);
-				$targetFrid = null;
-				foreach($frameworks as $framework) {
-					$frameworkLinks = $framework->getVar('links');
-					foreach($frameworkLinks as $link) {
-						if(($link->getVar('form1') == $linkedFid && $link->getVar('form2') == $eauFormId) ||
-						   ($link->getVar('form2') == $linkedFid && $link->getVar('form1') == $eauFormId)) {
-							$targetFrid = $framework->getVar('frid');
-							break 2;
-						}
-					}
-				}
-				if(!$targetFrid) {
-					continue; // no framework connecting these forms
-				}
-				// Find connected EAU entries for each written entry in the linked form
-				foreach($formulize_allWrittenEntryIds[$linkedFid] as $writtenEntryId) {
-					$linkedResult = checkForLinks($targetFrid, array($linkedFid), $linkedFid, array($linkedFid => array($writtenEntryId)));
-					if(isset($linkedResult['entries'][$eauFormId])) {
-						foreach($linkedResult['entries'][$eauFormId] as $eauEntryId) {
-							$pendingGroupMembershipEntryUpdates[$eauFormId][] = $eauEntryId;
-						}
-					}
-					if(isset($linkedResult['sub_entries'][$eauFormId])) {
-						foreach($linkedResult['sub_entries'][$eauFormId] as $eauEntryId) {
-							$pendingGroupMembershipEntryUpdates[$eauFormId][] = $eauEntryId;
-						}
-					}
-				}
-			}
-		}
-
-		// Process all collected EAU entries; use the cached userId where available, otherwise look it up
-		foreach($pendingGroupMembershipEntryUpdates as $eauFormId => $entryIds) {
-			$eauDataHandler = null;
-			foreach(array_unique($entryIds) as $eauEntryId) {
-				if(isset($userIdsForUserAccountElements[$eauFormId]) AND isset($userIdsForUserAccountElements[$eauFormId][$eauEntryId]) && $userIdsForUserAccountElements[$eauFormId][$eauEntryId]) {
-					$userId = $userIdsForUserAccountElements[$eauFormId][$eauEntryId];
-				} else {
-					if(!$eauDataHandler) {
-						$eauDataHandler = new formulizeDataHandler($eauFormId);
-					}
-					$userId = intval($eauDataHandler->getElementValueInEntry($eauEntryId, 'formulize_user_account_uid_'.$eauFormId));
-				}
-				if($userId) {
-					formulizeElementsHandler::processUserGroupMemberships($userId, $eauFormId, $eauEntryId);
-				}
-			}
-		}
-	}
-}
-
-// Process group memberships for user account form submissions not covered above:
-// (1) System users forms never write Formulize entries, so they are
-//     never in formulize_allWrittenEntryIds.
-// (2) EAU forms where only group memberships were submitted and nothing else changed —
-//     nothing is written to the data table so the entry never appears in formulize_allWrittenEntryIds.
-if(!empty($userIdsForUserAccountElements)) {
-	$_groupMembershipAlreadyProcessed = isset($pendingGroupMembershipEntryUpdates) ? $pendingGroupMembershipEntryUpdates : array();
-	foreach($userIdsForUserAccountElements as $_gmFormId => $_gmEntryUserIds) {
-		foreach($_gmEntryUserIds as $_gmEntryId => $_gmUserId) {
-			if(!$_gmUserId) {
-				continue;
-			}
-			if(isset($_groupMembershipAlreadyProcessed[$_gmFormId]) && in_array($_gmEntryId, $_groupMembershipAlreadyProcessed[$_gmFormId])) {
-				continue;
-			}
-			formulizeElementsHandler::processUserGroupMemberships($_gmUserId, $_gmFormId, $_gmEntryId);
-		}
-	}
-}
+// Process EAU group memberships for all written entries (direct, connected-form, and fallback cases).
+formulizeHandler::processEauGroupMembershipsForWrittenEntries($formulize_allWrittenEntryIds, $userIdsForUserAccountElements);
 
 // send notifications
 foreach($notEntriesList as $notEvent=>$notDetails) {
