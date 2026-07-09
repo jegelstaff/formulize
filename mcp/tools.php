@@ -112,7 +112,7 @@ trait tools {
 			],
 			'get_screen_details' => [
 				'name' => 'get_screen_details',
-				'description' => "Get detailed information about a specific screen. Lookup screens by their ID number, also known as 'sid'",
+				'description' => "Get detailed information about a specific screen. Lookup screens by their ID number, also known as 'sid'. The 'pages' array is just a list of the elements on each page, it does not necessarily reflect the order in which the elements appear. Element order is controlled through the 'placement' parameter in the create element and update element tools.",
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
@@ -2509,16 +2509,8 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 		// for creating and updating — applies to all element categories
 		$orderProperty = [
 			'placement' => [
-				'oneOf' => [
-					[
-						'type' => 'string',
-						'description' => 'Use "top" to place first in the form, "bottom" to place last (default for new elements), or an element handle to place this element immediately after that element. Get handles from get_form_details. For updates, omit to leave the position unchanged.'
-					],
-					[
-						'type' => 'integer',
-						'description' => 'The element being updated will appear immediately _after_ the element that is specified with this parameter. You can get a list of the existing elements, in their current order, with the get_form_details tool.'
-					]
-				]
+				'type' => 'string',
+				'description' => 'The canonical position of the element in the form. This order is used on every form screen page that this element has been added to (newly created elements are automatically added to all pages that currently have all existing elements; to add an element to a page that has only some existing elements, use the update_form_screen tool). Use "top" to make this element the first element in the form, use "bottom" to make this element the last (which is the default for new elements), or use an element handle to place this element immediately after that element (based on the live state of the form at the time of this specific request; re-fetch get_form_details first if you need to see the current element order). On updates, omit this to leave the current position unchanged.'
 			]
 		];
 
@@ -2551,7 +2543,7 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 				$categoryCreationBaseDescriptions = "$pluralCategoryName $basePropertyDescriptions";
 				$categoryUpdateBaseDescriptions = "$pluralCategoryName $basePropertyDescriptions";
 			}
-			$creationDescription = "**Create a new $singularCategoryName in a Formulize form.**\n\n$categoryCreationBaseDescriptions".implode("\n\n", $creationElementDescriptions[$category]);
+			$creationDescription = "**Create a new $singularCategoryName in a Formulize form.**\n\nNewly created elements appear on the pages of form screens where all other elements in the form already appear. To add a newly created element to a form screen page which only has some existing elements, use the update_form_screen tool.\n\n$categoryCreationBaseDescriptions".implode("\n\n", $creationElementDescriptions[$category]);
 			$updateDescription = "**Update an existing $singularCategoryName in a Formulize form.**\n\n$categoryUpdateBaseDescriptions".implode("\n\n", $updateElementDescriptions[$category]);
 			$commonDataElementPropertiesForThisCategory = [];
 			$dataTypePropertyForThisCategory = [];
