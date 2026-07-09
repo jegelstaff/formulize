@@ -1352,8 +1352,8 @@ Do not use foreign key values with linked elements; use the readable value inste
 		$type = trim($arguments['type'] ?? '');
 		$handle = trim($arguments['handle'] ?? '');
 		$caption = trim($arguments['caption'] ?? '');
-		$column_heading = trim($arguments['column_heading'] ?? '');
-		$help_text_for_users = trim($arguments['help_text_for_users'] ?? '');
+		$column_heading = isset($arguments['column_heading']) ? trim($arguments['column_heading']) : null;
+		$help_text_for_users = isset($arguments['help_text_for_users']) ? trim($arguments['help_text_for_users']) : null;
 		$required = isset($arguments['required']) ? ($arguments['required'] ? 1 : 0) : null;
 		$properties = $arguments['properties'] ?? [];
 		$pi = ($arguments['principal_identifier'] ?? false) ? true : false;
@@ -1468,8 +1468,8 @@ Do not use foreign key values with linked elements; use the readable value inste
 			'ele_type' => $type,
 			'ele_handle' => $handle ? $handle : ($elementObject ? $elementObject->getVar('ele_handle') : ''),
 			'ele_caption' => $caption ? $caption : ($elementObject ? $elementObject->getVar('ele_caption') : ''),
-			'ele_colhead' => $column_heading ? $column_heading : ($elementObject ? $elementObject->getVar('ele_colhead') : ''),
-			'ele_desc' => $help_text_for_users ? $help_text_for_users : ($elementObject ? $elementObject->getVar('ele_desc') : ''),
+			'ele_colhead' => $column_heading !== null ? $column_heading : ($elementObject ? $elementObject->getVar('ele_colhead') : ''),
+			'ele_desc' => $help_text_for_users !== null ? $help_text_for_users : ($elementObject ? $elementObject->getVar('ele_desc') : ''),
 			'ele_required' => $required !== null ? $required : ($elementObject ? $elementObject->getVar('ele_required') : 0),
 			'ele_order' => $eleOrder,
 			'ele_display' => $display !== null ? $display : ($elementObject ? $elementObject->getVar('ele_display') : 1),
