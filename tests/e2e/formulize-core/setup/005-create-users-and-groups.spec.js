@@ -783,3 +783,76 @@ test.describe('J. Frontend menu visibility for Users/Groups', () => {
 		await expect(page).not.toHaveURL(/users\.php(?:[?#]|$)/);
 	});
 });
+
+// ============================================================
+// Block L — Entry group names track PI value renames (syncEntryGroups)
+// ============================================================
+// Verifies formulizeHandler::syncEntryGroups() renames an entry's groups when
+// the entry's PI value changes (the rename branch at formulize.php:1343-1348,
+// reached here via the web save path readelements.php -> syncEntryGroups).
+//
+// IMPORTANT — where we assert: this MUST be checked against the real group.name,
+// NOT the formulize groups.php Members/entries columns. Those columns build
+// their labels from the PI value in the entry's DATA table (viewEntryLink in
+// injectGroupMembersData/injectGroupEntriesData), so they would reflect a PI
+// change even if the group rename had silently failed. The XOOPS system groups
+// admin page renders each group's actual group.name via getVar('name'), so we
+// assert there. A webmaster sees every group on that page because its
+// checkRight('group_manager', ...) row-gate auto-passes when the webmaster
+// group (id 1) is among the checked groups.
+//
+// Uses a throwaway department "Astronmy" -> "Astronomy" (a unique typo->fix).
+// A unique name is deliberate: renaming onto an existing department's PI (e.g.
+// the real "Ancient History") would trip syncEntryGroups' cross-entry name
+// collision disambiguation and append a numeric suffix, muddying the assertion.
+// Placed last so the extra department cannot perturb the earlier blocks.
+test.describe('L. Entry group names follow PI renames', () => {
+
+	const CATEGORIES = ['All Users', 'Staff', 'Curators'];
+	const entryGroupNames = (piValue) => CATEGORIES.map((cat) => `${piValue} - ${cat}`);
+
+	// Assert, on the system groups admin page, which entry-group names exist.
+	// Group names render in <td class="head"> cells (system/admin/groups/groups.php).
+	async function assertEntryGroups(page, { present = [], absent = [] }) {
+		await page.goto('/modules/system/admin.php?fct=groups');
+		await page.waitForLoadState('domcontentloaded');
+		for (const name of present) {
+			await expect(page.locator('td.head').filter({ hasText: name })).toHaveCount(1);
+		}
+		for (const name of absent) {
+			await expect(page.locator('td.head').filter({ hasText: name })).toHaveCount(0);
+		}
+	}
+
+	test('Correcting an entry PI (Astronmy -> Astronomy) renames its entry groups', async ({ page }) => {
+		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+		expect(phase1.departmentsFid, 'Departments form must exist from Block A').toBeTruthy();
+
+		// 1. Create the department with the misspelled PI. Saving runs
+		//    readelements -> syncEntryGroups, which creates one group per category.
+		await page.goto(`/modules/formulize/master.php?fid=${phase1.departmentsFid}`);
+		await page.locator('#formulize_addButton').click();
+		await page.getByRole('textbox', { name: 'Name' }).fill('Astronmy');
+		await saveFormulizeForm(page, 'Save');
+		await clearEntryLocks(page);
+
+		// 2. The three misspelled entry groups now exist under their real names.
+		await assertEntryGroups(page, { present: entryGroupNames('Astronmy') });
+
+		// 3. Open the entry and correct the PI value.
+		await page.goto(`/modules/formulize/master.php?fid=${phase1.departmentsFid}`);
+		await page.getByRole('row', { name: /Astronmy/ }).getByRole('link').first().click();
+		const nameBox = page.getByRole('textbox', { name: 'Name' });
+		await expect(nameBox).toHaveValue('Astronmy');
+		await nameBox.fill('Astronomy');
+		await saveFormulizeForm(page, 'Save');
+		await clearEntryLocks(page);
+
+		// 4. The SAME groups now carry the corrected names, and the misspelled
+		//    names are gone — proving they were renamed in place, not duplicated.
+		await assertEntryGroups(page, {
+			present: entryGroupNames('Astronomy'),
+			absent: entryGroupNames('Astronmy'),
+		});
+	});
+});
