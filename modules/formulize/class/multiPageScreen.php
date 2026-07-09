@@ -66,6 +66,7 @@ class formulizeMultiPageScreen extends formulizeScreen {
 		$this->initVar('displayheading', XOBJ_DTYPE_INT);
 		$this->initVar('reloadblank', XOBJ_DTYPE_INT);
 		$this->initVar('elementdefaults', XOBJ_DTYPE_ARRAY);
+		$this->initVar('formorder', XOBJ_DTYPE_ARRAY); // ordered array of fids controlling the order that forms appear in when the screen unifies elements from multiple related forms
 	}
 
 	/**
@@ -154,7 +155,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 
 		// note: conditions is not written to the DB yet, since we're not gathering that info from the UI
 		if (!$update) {
-                 $sql = sprintf("INSERT INTO %s (sid, introtext, thankstext, donedest, buttontext, finishisdone, pages, pagetitles, conditions, printall, paraentryform, paraentryrelationship, navstyle, displaycolumns, column1width, column2width, showpagetitles, showpageindicator, showpageselector, displayheading, reloadblank, elementdefaults) VALUES (%u, %s, %s, %s, %s, %u, %s, %s, %s, %u, %u, %u, %u, %u, %s, %s, %u, %u, %u, %u, %u, %s)",
+                 $sql = sprintf("INSERT INTO %s (sid, introtext, thankstext, donedest, buttontext, finishisdone, pages, pagetitles, conditions, printall, paraentryform, paraentryrelationship, navstyle, displaycolumns, column1width, column2width, showpagetitles, showpageindicator, showpageselector, displayheading, reloadblank, elementdefaults, formorder) VALUES (%u, %s, %s, %s, %s, %u, %s, %s, %s, %u, %u, %u, %u, %u, %s, %s, %u, %u, %u, %u, %u, %s, %s)",
                     $this->db->prefix('formulize_screen_multipage'),
                     $screen->getVar('sid'),
                     $this->db->quoteString($screen->getVar('introtext', "e")),
@@ -177,11 +178,12 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
                     $screen->getVar('showpageselector'),
                     $screen->getVar('displayheading'),
                     $screen->getVar('reloadblank'),
-                    $this->db->quoteString(serialize($screen->getVar('elementdefaults')))
+                    $this->db->quoteString(serialize($screen->getVar('elementdefaults'))),
+                    $this->db->quoteString(serialize($screen->getVar('formorder')))
                     );
                     //nmc 2007.03.24 added 'printall' & fixed pagetitles
              } else {
-                 $sql = sprintf("UPDATE %s SET introtext = %s, thankstext = %s, donedest = %s, buttontext = %s, finishisdone = %u, pages = %s, pagetitles = %s, conditions = %s, printall = %u, paraentryform = %u, paraentryrelationship = %u, navstyle = %u, displaycolumns = %u, column1width = %s, column2width = %s, showpagetitles = %u, showpageindicator = %u, showpageselector = %u, displayheading = %u, reloadblank = %u, elementdefaults = %s WHERE sid = %u", $this->db->prefix('formulize_screen_multipage'), $this->db->quoteString($screen->getVar('introtext', "e")), $this->db->quoteString($screen->getVar('thankstext', "e")), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString(serialize($screen->getVar('buttontext'))), $screen->getVar('finishisdone'), $this->db->quoteString(serialize($screen->getVar('pages'))), $this->db->quoteString(serialize($screen->getVar('pagetitles'))), $this->db->quoteString(serialize($screen->getVar('conditions'))), $screen->getVar('printall'), $screen->getVar('paraentryform'), $screen->getVar('paraentryrelationship'), $screen->getVar('navstyle'),  $screen->getVar('displaycolumns'), $this->db->quoteString($screen->getVar('column1width')), $this->db->quoteString($screen->getVar('column2width')), $screen->getVar('showpagetitles'), $screen->getVar('showpageindicator'), $screen->getVar('showpageselector'), $screen->getVar('displayheading'), $screen->getVar('reloadblank'), $this->db->quoteString(serialize($screen->getVar('elementdefaults'))), $screen->getVar('sid')); //nmc 2007.03.24 added 'printall'
+                 $sql = sprintf("UPDATE %s SET introtext = %s, thankstext = %s, donedest = %s, buttontext = %s, finishisdone = %u, pages = %s, pagetitles = %s, conditions = %s, printall = %u, paraentryform = %u, paraentryrelationship = %u, navstyle = %u, displaycolumns = %u, column1width = %s, column2width = %s, showpagetitles = %u, showpageindicator = %u, showpageselector = %u, displayheading = %u, reloadblank = %u, elementdefaults = %s, formorder = %s WHERE sid = %u", $this->db->prefix('formulize_screen_multipage'), $this->db->quoteString($screen->getVar('introtext', "e")), $this->db->quoteString($screen->getVar('thankstext', "e")), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString(serialize($screen->getVar('buttontext'))), $screen->getVar('finishisdone'), $this->db->quoteString(serialize($screen->getVar('pages'))), $this->db->quoteString(serialize($screen->getVar('pagetitles'))), $this->db->quoteString(serialize($screen->getVar('conditions'))), $screen->getVar('printall'), $screen->getVar('paraentryform'), $screen->getVar('paraentryrelationship'), $screen->getVar('navstyle'),  $screen->getVar('displaycolumns'), $this->db->quoteString($screen->getVar('column1width')), $this->db->quoteString($screen->getVar('column2width')), $screen->getVar('showpagetitles'), $screen->getVar('showpageindicator'), $screen->getVar('showpageselector'), $screen->getVar('displayheading'), $screen->getVar('reloadblank'), $this->db->quoteString(serialize($screen->getVar('elementdefaults'))), $this->db->quoteString(serialize($screen->getVar('formorder'))), $screen->getVar('sid')); //nmc 2007.03.24 added 'printall'
              }
 					if($force) {
 						$result = $this->db->queryF($sql);
@@ -641,16 +643,13 @@ function multiPageScreen_addToOptionsList($fid, $frid=0) {
 		$options = multiPageScreen_addToOptionsListByFid($fid, $frid);
 		if($frid) {
 			// figure out which forms in the relationship we care about, and append them to the array
+			// getUnifiedDisplayFids returns $fid first followed by the connected forms that qualify, so skip the first one which we've already added
 			$framework_handler =& xoops_getModuleHandler('frameworks', 'formulize');
 			$frameworkObject = $framework_handler->get($frid);
-			foreach($frameworkObject->getVar("links") as $thisLinkObject) {
-					if ($thisLinkObject->getVar("unifiedDisplay") AND (( $thisLinkObject->getVar("relationship") == 1 AND ($thisLinkObject->getVar("form1") == $fid OR $thisLinkObject->getVar("form2") == $fid))
-						OR ($thisLinkObject->getVar("relationship") == 2 AND $thisLinkObject->getVar("form1") != $fid AND $thisLinkObject->getVar("form2") == $fid)
-						OR ($thisLinkObject->getVar("relationship") == 3 AND $thisLinkObject->getVar("form2") != $fid AND $thisLinkObject->getVar("form1") == $fid)
-							)) {
-								$thisFid = $thisLinkObject->getVar("form1") == $fid ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
-								$options = multiPageScreen_addToOptionsListByFid($thisFid, $frid, $options); // append to the array
-					}
+			$unifiedFids = $frameworkObject->getUnifiedDisplayFids($fid);
+			array_shift($unifiedFids); // drop $fid itself, already handled above
+			foreach($unifiedFids as $thisFid) {
+				$options = multiPageScreen_addToOptionsListByFid($thisFid, $frid, $options); // append to the array
 			}
 		}
 		return $options;

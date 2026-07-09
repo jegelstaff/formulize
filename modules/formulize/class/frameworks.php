@@ -125,6 +125,30 @@ class formulizeFramework extends XoopsObject {
 		return array($cachedHandles[$key],($mainformFid==$targetFid));
 	}
 
+	// this method returns an ordered array of form ids that should be unified into a single display anchored on $fid (ie: a form/multipage screen showing elements from multiple related forms)
+	// the first element is always $fid itself, followed by each connected form that qualifies, in the order its link appears in the framework
+	// for each link that has unifiedDisplay turned on, the form on the OTHER side of the link from $fid is added, but only when $fid's own role in that link is one of:
+	//   - a participant in a one-to-one relationship (the other form is then also part of the one-to-one), or
+	//   - the "many" side of a one-to-many relationship (the other form is then the "one" side)
+	// the conditions below are therefore all tests on $fid's role, not on the form being added
+	// (relationship codes: 1 = one-to-one; 2 = one-to-many with form1 as the "one" side and form2 as the "many" side; 3 = one-to-many with form1 as the "many" side and form2 as the "one" side)
+	// usage: $fids = $framework->getUnifiedDisplayFids($fid);
+	function getUnifiedDisplayFids($fid) {
+		$fids = array($fid);
+		foreach($this->getVar("links") as $thisLinkObject) {
+			if ($thisLinkObject->getVar("unifiedDisplay") AND (( $thisLinkObject->getVar("relationship") == 1 AND ($thisLinkObject->getVar("form1") == $fid OR $thisLinkObject->getVar("form2") == $fid))
+				OR ($thisLinkObject->getVar("relationship") == 2 AND $thisLinkObject->getVar("form1") != $fid AND $thisLinkObject->getVar("form2") == $fid)
+				OR ($thisLinkObject->getVar("relationship") == 3 AND $thisLinkObject->getVar("form2") != $fid AND $thisLinkObject->getVar("form1") == $fid)
+					)) {
+						$thisFid = $thisLinkObject->getVar("form1") == $fid ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
+						if(!in_array($thisFid, $fids)) {
+							$fids[] = $thisFid;
+						}
+			}
+		}
+		return $fids;
+	}
+
 
     function __get($name) {
         if (!isset($this->$name)) {

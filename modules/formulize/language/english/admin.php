@@ -866,6 +866,9 @@ define("_AM_FORMULIZE_SCREEN_PRINTALL", "Make the 'Printable Version - All Pages
 define("_AM_FORMULIZE_SCREEN_PRINTALL_Y", "Yes"); //nmc 2007.03.24
 define("_AM_FORMULIZE_SCREEN_PRINTALL_N", "No"); //nmc 2007.03.24
 define("_AM_FORMULIZE_SCREEN_PRINTALL_NONE", "No, and not the regular 'Printable Version' button either");
+define("_AM_FORMULIZE_SCREEN_FORMORDER", "Order of forms");
+define("_AM_FORMULIZE_SCREEN_FORMORDER_INTRO", "Click and drag the form names below to set the order in which the forms should be appear in the screen.");
+define("_AM_FORMULIZE_SCREEN_FORMORDER_DESC", "This setting only takes effect if you show elements from multiple forms on the same page. All the elements from one form will appear first, followed by the elements from the next, etc. The precise order of the elements within each form is controled in the form's own settings.");
 define("_AM_FORMULIZE_DELETE_THIS_PAGE", "Delete this page");
 define("_AM_FORMULIZE_CONFIRM_SCREEN_DELETE", "Are you sure you want to delete this screen?  Please confirm!");
 define("_AM_FORMULIZE_CONFIRM_SCREEN_DELETE_PAGE", "Are you sure you want to delete this page?  Please confirm!");

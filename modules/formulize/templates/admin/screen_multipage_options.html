@@ -7,6 +7,7 @@
 <{$securitytoken}>
 <input type="hidden" name="formulize_admin_handler" value="screen_multipage_options">
 <input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
+<input type="hidden" name="formorder" value="">
 
 
 <div class="panel-content content">
@@ -112,6 +113,21 @@
       <{/if}>
 	</fieldset>
 
+		<{if $content.formorder_list|@count gt 1}>
+    <fieldset>
+        <legend><{$smarty.const._AM_FORMULIZE_SCREEN_FORMORDER}></legend>
+        <div class="form-item">
+            <p><{$smarty.const._AM_FORMULIZE_SCREEN_FORMORDER_INTRO}></p>
+            <ul id="formorder-sortable" class="formorder-sortable">
+                <{foreach from=$content.formorder_list key=fid item=formTitle}>
+                <li id="formorderitem-<{$fid}>" class="formorder-item ui-corner-all"><{$formTitle}></li>
+                <{/foreach}>
+            </ul>
+            <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_FORMORDER_DESC}></div>
+        </div>
+    </fieldset>
+    <{/if}>
+
     <fieldset>
 		<legend>Element Defaults</legend>
 		<div class="form-item">
@@ -174,6 +190,17 @@ function appendDefault(id, elementText, defaultText) {
     $('#addeddefaults').append('<input type="hidden" name="screens-elementdefaults['+id+']" id="hidden_'+id+'" value="'+defaultText+'"><span class="adefault" id="def_'+id+'">'+elementText+' >> '+defaultText+'<br></span>');
 }
 
+// form order drag-to-reorder (only present when the screen unifies more than one form)
+if($("#formorder-sortable").length) {
+    $("#formorder-sortable").sortable();
+    $("#formorder-sortable").bind("sortupdate", function(event, ui) {
+        setDisplay('savewarning','block');
+    });
+    $(".savebutton").click(function() {
+        $("[name=formorder]").val($("#formorder-sortable").sortable('serialize'));
+    });
+}
+
 </script>
 
 <style>
@@ -181,5 +208,25 @@ function appendDefault(id, elementText, defaultText) {
         color: red;
         text-decoration: line-through;
         cursor: pointer;
+    }
+    .formorder-sortable {
+        list-style: none;
+        margin: 0.5em 0;
+        padding: 0;
+        max-width: 400px;
+    }
+    /* #xo-canvas-content li carries an ID selector (color: #000; background-color: inherit;) which outranks a
+       plain .formorder-item class on specificity alone, regardless of source order, so this rule must be scoped
+       under the #formorder-sortable id to win the cascade */
+    #formorder-sortable .formorder-item {
+        border: 1px solid #94daf2;
+        background-color: #0085b6;
+        color: #FFF;
+        opacity: 1;
+        padding: 0.5em 0.75em;
+        margin-bottom: 4px;
+        cursor: move;
+        position: relative;
+        z-index: 1;
     }
 </style>
