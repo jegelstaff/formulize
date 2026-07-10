@@ -502,6 +502,13 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			if (self::activeUserCanManageUsers()) {
 				return true;
 			}
+			// Self-registration: during the public signup flow (signup.php) an anonymous visitor may
+			// create their own brand-new account. Gated by formulize_selfRegistrationActive() and
+			// limited to a new entry; the resulting user is forced inactive (level 0) until they
+			// confirm ownership of their email/phone. See loadOrCreateUserContext().
+			if (formulize_selfRegistrationActive() && !is_numeric($entryId)) {
+				return true;
+			}
 			// Self-service: a logged-in user may edit their own account. For the system users
 			// form, entry_id IS the uid, so a tampered entry_id pointing at another user fails
 			// this equality check and falls through to the exception below.
@@ -561,7 +568,17 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			$profile = $profile_handler->create();
 			$userObject->setVar('user_avatar', 'blank.gif');
 			$userObject->setVar('theme', $xoopsConfig['theme_set']);
-			$userObject->setVar('level', 1);
+			// Sensible defaults for a freshly created account so the signup form doesn't have to
+			// collect timezone / notification preferences (they can be changed later in Edit Account).
+			$userObject->setVar('user_regdate', time());
+			$userObject->setVar('notify_method', 2); // email, matching the standard registration default
+			if(isset($xoopsConfig['default_TZ'])) {
+				$userObject->setVar('timezone_offset', $xoopsConfig['default_TZ']);
+			}
+			// Self-registered accounts start inactive (level 0) and are activated only once the person
+			// confirms the code we send to their email/phone. Admin-created users (users.php) stay
+			// active (level 1) as before.
+			$userObject->setVar('level', formulize_selfRegistrationActive() ? 0 : 1);
 			$old2faMethod = 0;
 			$old2faPhone = '';
 			$oldEmail = '';

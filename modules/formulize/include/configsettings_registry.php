@@ -141,9 +141,25 @@ return array(
                         ),
                     ),
                     _AM_CFG_SEC_NEW_USER_DEFAULTS => array(
+                        // Whether visitors may create their own accounts via the public signup page
+                        // (signup.php). Off by default; most sites stay closed. When on, an invitation
+                        // token in the signup URL can also grant group membership (Users → Tokens).
+                        array(
+                            'name' => 'allow_register',
+                            'scope' => 'user',
+                        ),
+                        // Require an invitation token to sign up. Only meaningful when self-registration
+                        // is enabled, so it hides unless allow_register is on. When on, signup.php will
+                        // not create an account without a valid token.
+                        array(
+                            'name' => 'requireTokenForSignup',
+                            'scope' => 'formulize',
+                            'showWhen' => array('name' => 'allow_register', 'scope' => 'user', 'value' => 1),
+                        ),
                         array(
                             'name' => 'default_TZ',
                             'scope' => 'system',
+                            'caption' => _AM_CFG_CAP_DEFAULT_TZ,
                         ),
                     ),
                 ),

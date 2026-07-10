@@ -90,7 +90,7 @@ function ensureUsersTableForm() {
 				array('handle' => 'tfa_method',       'typeForCaption' => 'userAccount2FA'),
 				array('handle' => 'timezone',         'typeForCaption' => 'userAccountTimezone'),
 				array('handle' => 'group_memberships','typeForCaption' => 'userAccountGroupMembership'),
-				array('handle' => 'password',         'typeForCaption' => 'userAccountPassword'),
+				array('handle' => 'password',         'typeForCaption' => 'userAccountPassword', 'description' => _formulize_USERACCOUNT_PWREPEATDESC),
 				array('handle' => 'masquerade',       'typeForCaption' => 'userAccountMasquerade', 'description' => _formulize_UA_MASQUERADE_HELP),
 				array('handle' => 'eau_type', 'caption' => 'Type', 'virtual' => true, 'type' => 'userEauType'),
 			),

@@ -13,6 +13,14 @@
 $xoopsOption['pagetype'] = 'user';
 
 include 'mainfile.php';
+// Formulize self-service signup (signup.php) is now the single account-creation flow, mirroring how
+// edituser.php became the single account-editing flow. Hand any legacy "Register" link off to it,
+// preserving an invitation token from the URL if present.
+if (file_exists(ICMS_ROOT_PATH . '/signup.php')) {
+	$signupToken = isset($_GET['token']) ? preg_replace('/[^A-Za-z0-9]/', '', $_GET['token']) : '';
+	header('Location: ' . ICMS_URL . '/signup.php' . ($signupToken !== '' ? '?token=' . urlencode($signupToken) : ''));
+	exit();
+}
 if (icms_get_module_status('profile') && file_exists(ICMS_MODULES_PATH . '/profile/register.php')) {
 	header('Location: ' . ICMS_MODULES_URL . '/profile/register.php');
 	exit();

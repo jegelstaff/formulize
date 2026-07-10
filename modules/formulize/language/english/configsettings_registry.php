@@ -32,7 +32,7 @@ define('_AM_CFG_VIEW_SETTINGS_PERMISSIONS', 'Copy Permissions');
 
 // --- Section headings: Users > Settings ---
 define('_AM_CFG_SEC_SIGNING_IN', 'Signing in');
-define('_AM_CFG_SEC_NEW_USER_DEFAULTS', 'New-user defaults');
+define('_AM_CFG_SEC_NEW_USER_DEFAULTS', 'New users');
 
 // --- Section headings: Settings > Elements ---
 define('_AM_CFG_SEC_TEXTBOX_DEFAULTS', 'Textbox defaults');
@@ -73,6 +73,7 @@ define('_AM_CFG_SEC_BASEMENT', "Basement (don't touch unless you really have to)
 // --- Caption overrides ---
 define('_AM_CFG_CAP_FROMUID', 'Sender of private messages');
 define('_AM_CFG_CAP_SERVER_TZ', 'Timezone used by the database server');
+define('_AM_CFG_CAP_DEFAULT_TZ', 'Default timezone for new users');
 
 // --- Description overrides ---
 define('_AM_CFG_DESC_SERVER_TZ', 'This is the timezone that would be reported by <i>SELECT @@global.time_zone;</i> in MariaDB');

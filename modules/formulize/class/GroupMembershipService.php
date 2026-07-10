@@ -228,6 +228,14 @@ class GroupMembershipService {
 				if($activeUserId && intval($entryId) === $activeUserId) {
 					return;
 				}
+				// Self-registration (signup.php): a brand-new account being created by an anonymous
+				// visitor. The signup flow itself assigns the Registered Users group plus any
+				// token-granted groups after the account is created, so there is nothing to do here.
+				// Guarded by formulize_selfRegistrationActive() so this can never be reached outside
+				// the signup page.
+				if(formulize_selfRegistrationActive() && !is_numeric($entryId)) {
+					return;
+				}
 				throw new Exception("You do not have permission to manage system users.");
 			}
 		} else {

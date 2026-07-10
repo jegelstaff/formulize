@@ -14,6 +14,15 @@
  */
 
 include_once '../../mainfile.php';
+
+// Formulize self-service signup (signup.php) is now the single account-creation flow. Hand any
+// direct link to this legacy profile-module registration off to it, preserving an invitation token.
+if (!icms::$user && file_exists(ICMS_ROOT_PATH . '/signup.php')) {
+	$signupToken = isset($_GET['token']) ? preg_replace('/[^A-Za-z0-9]/', '', $_GET['token']) : '';
+	header('Location: ' . ICMS_URL . '/signup.php' . ($signupToken !== '' ? '?token=' . urlencode($signupToken) : ''));
+	exit();
+}
+
 $xoopsOption['template_main'] = 'profile_register.html';
 include ICMS_ROOT_PATH.'/header.php';
 

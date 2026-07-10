@@ -71,6 +71,9 @@ define("_MI_formulize_LOE_limit_DESC", "If a dataset is very large, displaying a
 define("_MI_formulize_USETOKEN", "Use the security token system to validate form submissions?");
 define("_MI_formulize_USETOKENDESC", "By default, when a form is submitted, no data is saved unless Formulize can validate a unique token that was submitted with the form.  This is a partial defence against cross site scripting attacks, meant to ensure only people actually visiting your website can submit forms.  In some circumstances, depending on firewalls or other factors, the token cannot be validated even when it should be.  If this is happening to you repeatedly, you can turn off the token system for Formulize here.  <b>NOTE: you can override this global setting on a screen by screen basis.</b>");
 
+define("_MI_formulize_REQUIRETOKENFORSIGNUP", "Require account tokens for public sign-ups?");
+define("_MI_formulize_REQUIRETOKENFORSIGNUP_DESC", "When public sign-ups are enabled, this requires every new account to supply a valid invitation token before it can be created. Visitors without a valid token cannot sign up. Tokens are managed under <a href='ui.php?page=users&view=tokens'>Users &rarr; Account Tokens</a>, and can be shared directly or included in a sign-up link (signup.php?token=YOURTOKEN). Leave this off to let anyone sign up, with a token being optional.");
+
 define("_MI_formulize_NUMBER_DECIMALS", "Number of decimal places");
 define("_MI_formulize_NUMBER_DECIMALS_DESC", "Normally, leave this as 0, unless you want every number in all forms to have a certain number of decimal places.");
 define("_MI_formulize_NUMBER_PREFIX", "Symbol to show in front of numbers");
