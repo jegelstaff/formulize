@@ -239,6 +239,15 @@ body {
   background: var(--c-bg);
 }
 
+/* Simple / system pages (login, register, lostpass, ...) drop their raw
+   content straight into .fz-main with no wrapper, so it butts against the
+   viewport edge. Give those pages a horizontal (and top) gutter. Formulize
+   app/list screens (body#formulize) are full-bleed by design — the titlebar,
+   list body and pagination manage their own insets — so they're excluded. */
+body:not(#formulize) .fz-main {
+  padding: var(--s-6) var(--s-6) 0;
+}
+
 /* Inline / drawer-iframe mode — header and sidebar suppressed via theme.html */
 .fz-inline .fz-app {
   height: auto;
@@ -3018,4 +3027,183 @@ input[type="time"] { font-family: var(--font-sans); }
   #multipage-controls #page-indicator {
     margin-top: 0;
   }
+}
+
+/* ============================================================
+   Default buttons + login UI (issue #22)
+
+   Formulize/XOOPS core renders submit/reset/button controls with no
+   `.fz-*` class, so they fell back to raw browser chrome. Give those bare
+   controls the Lyris button look (mirrors the `.fz-btn` primitive above).
+   Elements that already carry an `.fz-*` / `.formulize_button` class, or
+   sit inside an already-themed container, keep their own styling because
+   those selectors are more specific and win the cascade.
+   ============================================================ */
+
+button:not([class*="fz-"]):not([class*="formulize_button"]),
+input[type="submit"]:not([class*="fz-"]),
+input[type="reset"]:not([class*="fz-"]),
+input[type="button"]:not([class*="fz-"]):not(.formulize_button) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 var(--s-3);
+  border-radius: var(--r-2);
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font: inherit;
+  font-size: var(--fs-13);
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: background var(--dur-1) var(--ease),
+              border-color var(--dur-1) var(--ease),
+              color var(--dur-1) var(--ease);
+}
+
+button:not([class*="fz-"]):not([class*="formulize_button"]):hover,
+input[type="submit"]:not([class*="fz-"]):hover,
+input[type="reset"]:not([class*="fz-"]):hover,
+input[type="button"]:not([class*="fz-"]):not(.formulize_button):hover {
+  background: var(--c-surface-3);
+  border-color: var(--c-text-muted);
+}
+
+button:not([class*="fz-"]):not([class*="formulize_button"]):focus-visible,
+input[type="submit"]:not([class*="fz-"]):focus-visible,
+input[type="reset"]:not([class*="fz-"]):focus-visible,
+input[type="button"]:not([class*="fz-"]):not(.formulize_button):focus-visible {
+  outline: none;
+  box-shadow: var(--sh-focus);
+}
+
+button:not([class*="fz-"]):disabled,
+input[type="submit"]:not([class*="fz-"]):disabled,
+input[type="reset"]:not([class*="fz-"]):disabled,
+input[type="button"]:not([class*="fz-"]):disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+/* ---------- Login block + login page ----------
+   The login block (#block_login_form, sidebar/drawer) and the login page
+   (#icms_block_login_form, the fieldset on user.php) share the same inner
+   markup: `.block_login_form--username/--password/--submit` rows, labels
+   (`.form-label`), inputs (already styled by the `.fz-input` primitive), an
+   `input.btn` submit, and a `#lostpass` link. Both are styled together. */
+
+#block_login_form,
+#icms_block_login_form {
+  color: var(--c-text);
+  font-size: var(--fs-14);
+}
+
+/* Generalized fieldset card. Any raw <fieldset> in the Lyris content area
+   (the login page's #icms_block_login_form, plus any other fieldset in the
+   end-user UI) gets the same card treatment: border, radius, padding,
+   surface background and a styled legend. Scoped to .fz-main so it only
+   touches theme content, not chrome. */
+.fz-main fieldset {
+  margin: var(--s-6) 0;
+  padding: var(--s-6);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-3);
+  background: var(--c-surface);
+  box-shadow: var(--sh-2);
+}
+
+/* The login fieldset stays a compact, single-column card. */
+fieldset#icms_block_login_form {
+  max-width: 380px;
+}
+
+.fz-main fieldset > legend {
+  padding: 0 var(--s-2);
+  font-size: var(--fs-16);
+  font-weight: 600;
+  color: var(--c-text);
+}
+
+/* Field rows — consistent vertical rhythm, stacked label + input. */
+#block_login_form .block_login_form--username,
+#block_login_form .block_login_form--password,
+#icms_block_login_form .block_login_form--username,
+#icms_block_login_form .block_login_form--password {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  margin-bottom: var(--s-3);
+}
+
+#block_login_form .form-label,
+#icms_block_login_form .form-label {
+  font-size: var(--fs-13);
+  font-weight: 500;
+  color: var(--c-text-muted);
+}
+
+/* Inputs already pick up the global `.fz-input` primitive; just make them
+   fill the login column so they line up as a tidy stacked form. */
+#block_login_form .form-input,
+#icms_block_login_form .form-input {
+  width: 100%;
+}
+
+#block_login_form .block_login_form--remember,
+#icms_block_login_form .block_login_form--remember {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  margin-bottom: var(--s-3);
+  font-size: var(--fs-13);
+  color: var(--c-text-muted);
+}
+
+/* Primary Login button — override the bare-button style above with the
+   accent treatment (`input.btn` carries the `btn` class only). */
+#block_login_form .block_login_form--submit,
+#icms_block_login_form .block_login_form--submit {
+  margin-top: var(--s-2);
+}
+
+#block_login_form input.btn[type="submit"],
+#icms_block_login_form input.btn[type="submit"] {
+  width: 100%;
+  height: 36px;
+  background: var(--c-accent);
+  color: var(--c-text-on-accent);
+  border-color: var(--c-accent);
+  font-size: var(--fs-14);
+}
+
+#block_login_form input.btn[type="submit"]:hover,
+#icms_block_login_form input.btn[type="submit"]:hover {
+  background: var(--c-accent-hover);
+  border-color: var(--c-accent-hover);
+}
+
+/* Secondary links — "Lost your account info?", register, OpenID/Okta. */
+#block_login_form #lostpass,
+#block_login_form a:not(.btn),
+#icms_block_login_form a:not(.btn) {
+  display: inline-block;
+  margin-top: var(--s-2);
+  color: var(--c-accent-fg);
+  font-size: var(--fs-13);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+#block_login_form #lostpass:hover,
+#block_login_form a:not(.btn):hover,
+#icms_block_login_form a:not(.btn):hover {
+  color: var(--c-accent-hover);
+  text-decoration: underline;
 }
