@@ -1128,6 +1128,16 @@ textarea {
   min-width: 100%;
 }
 
+/* Neutralize the inline style="text-align: right" that the element renderer
+   emits for numeric values (functions.php getHTMLForList). Table cells in the
+   Lyris list layout already inherit text-align: left from .fz-table td; the
+   inline style on the inner span/li was overriding that and forcing numbers
+   to the right. Use !important to beat the inline specificity. (closes #20) */
+.fz-table .main-cell-div span,
+.fz-table .main-cell-div li {
+  text-align: unset !important;
+}
+
 .fz-search-row input:not([type="checkbox"]):not([type="radio"]),
 .fz-search-row select,
 .fz-search-row textarea {
