@@ -7382,11 +7382,18 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
            $output .= '<div class="formulize-display-element-edit-icon"><a class="de-edit-icon" href="" onclick="renderElement(\''.$handle.'\', '.$cachedElementIds[$handle].', '.$thisEntryId.', '.$fid.',0,'.$deInstanceCounter.');return false;"></a></div><div class="formulize-display-element-contents">';
         }
 				if ("date" == $element_type) {
-					$time_value = strtotime($v);
-					global $xoopsUser;
-					$offset = ($handle == "mod_datetime" OR $handle == "creation_datetime") ? formulize_getUserServerOffsetSecs(timestamp: $time_value) : 0; // no hours/mins in plain dates, but for metadata, get user offset from server timezone which DB should have used to make the dates in question
-					$dateStringFormat = ($handle == "mod_datetime" OR $handle == "creation_datetime") ? _DATESTRING : _SHORTDATESTRING;
-					$v = (false === $time_value) ? "" : date($dateStringFormat, ($time_value)+$offset);
+					if ($handle == "mod_datetime" OR $handle == "creation_datetime") {
+						// metadata fields arrive as raw DB datetimes, get user offset from server timezone which DB should have used to make the dates in question
+						$time_value = strtotime($v);
+						global $xoopsUser;
+						$offset = formulize_getUserServerOffsetSecs(timestamp: $time_value);
+						$v = (false === $time_value) ? "" : date(_DATESTRING, ($time_value)+$offset);
+					} elseif ($v AND false === DateTime::createFromFormat(_SHORTDATESTRING, strval($v))) {
+						// date element values normally arrive already formatted by prepareDataForDataset, leave those alone,
+						// only format values that are not already in the display format, ie: raw dates or timestamps passed in by custom code
+						$time_value = is_numeric($v) ? intval($v) : strtotime($v);
+						$v = (false === $time_value) ? "" : date(_SHORTDATESTRING, $time_value);
+					}
 				}
         $tag = $useList ? 'li' : 'span';
 				$output .= '<'.$tag.' '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId)), $handle);
