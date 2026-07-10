@@ -1362,13 +1362,22 @@ textarea {
   background: var(--c-surface-3);
 }
 
-.main-menu__item-link--active {
+/* The boxed active treatment (surface + shadow) plus the vertical accent pipe
+   is only for the active *leaf link* you're currently on. Upstream's menu.html
+   also adds --active to a group's <summary> header when that group contains the
+   active item; a group header must stay a plain bold label (like an inactive
+   header), not a boxed pill with a rail, so the box/shadow/pipe are scoped to
+   <a> links only. This restores the original pre-upstream Lyris presentation:
+   the active item gets a clean rounded highlight with a flush vertical pipe on
+   its left edge. The pipe is flush (not a detached gutter bar) because the
+   nested <ul class="main-menu__subitems"> below is reset to no padding, so the
+   sub-item's left edge lines up with its .main-menu__item positioning origin. */
+a.main-menu__item-link--active {
   background: var(--c-surface);
-  font-weight: 600;
   box-shadow: var(--sh-1);
 }
 
-.main-menu__item-link--active::before {
+a.main-menu__item-link--active::before {
   content: '';
   position: absolute;
   left: -2px;
@@ -1377,6 +1386,12 @@ textarea {
   width: 2px;
   border-radius: var(--r-full);
   background: var(--c-accent);
+}
+
+/* Active state applied to any item (leaf link or group header) just gets the
+   bolder label weight. */
+.main-menu__item-link--active {
+  font-weight: 600;
 }
 
 .main-menu__item-link-icon {
@@ -1389,7 +1404,17 @@ textarea {
   color: var(--c-accent);
 }
 
-/* Sub-items */
+/* Sub-items. Upstream's menu.html wraps sub-items in a nested
+   <ul class="main-menu__subitems">, which by default reintroduces list
+   bullets and left padding. Reset both so there are no bullets and the
+   browser indent is removed; the intended indent is provided solely by
+   .main-menu__subitem's padding-left, keeping the active accent pipe flush. */
+.main-menu__subitems {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
 .main-menu__subitem {
   padding-left: var(--s-4);
 }
