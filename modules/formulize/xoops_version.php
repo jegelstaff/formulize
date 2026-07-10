@@ -39,7 +39,7 @@ $modversion = array(
 	'license' => "GPL-2.0",
 	'image' => "images/formulize.gif",
 	'dirname' => "formulize",
-	'dbversion' => 7,
+	'dbversion' => 8,
 	'onUpdate' => "include/on_update.php"
 );
 
@@ -1109,6 +1109,15 @@ $modversion['config'][] = array(
 	'formtype' => 'textsarea',
 	'valuetype' => 'text',
 	'default' => ''
+);
+// Public self-registration: require an invitation token to create an account via signup.php.
+$modversion['config'][] = array(
+	'name' => 'requireTokenForSignup',
+	'title' => '_MI_formulize_REQUIRETOKENFORSIGNUP',
+	'description' => '_MI_formulize_REQUIRETOKENFORSIGNUP_DESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 0,
 );
 // system config
 $modversion['config'][] = array(

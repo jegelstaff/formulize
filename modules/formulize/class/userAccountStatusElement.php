@@ -48,7 +48,7 @@ class formulizeUserAccountStatusElementHandler extends formulizeUserAccountEleme
 	 */
 	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main') {
 		$isNegative = (trim($operator) === 'NOT LIKE' || trim($operator) === '!=');
-		$options = array(1 => _formulize_UA_STATUS_ACTIVE, -1 => _formulize_UA_STATUS_DISABLED);
+		$options = array(1 => _formulize_UA_STATUS_ACTIVE, 0 => _formulize_UA_STATUS_PENDING, -1 => _formulize_UA_STATUS_DISABLED);
 		$terms = is_array($term) ? $term : array($term);
 		$matchingKeys = array();
 		foreach ($terms as $t) {
@@ -88,11 +88,17 @@ class formulizeUserAccountStatusElementHandler extends formulizeUserAccountEleme
 	 * @return XoopsFormElement
 	 */
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
+		// Pending (0) is the status of a self-registered account that has not yet confirmed its
+		// email/phone (see signup.php). Like Disabled (-1) it cannot log in (checklogin.php refuses
+		// level <= 0), but it is semantically distinct: awaiting the user, not blocked by an admin.
 		$options = array(
 			1  => _formulize_UA_STATUS_ACTIVE,
+			0  => _formulize_UA_STATUS_PENDING,
 			-1 => _formulize_UA_STATUS_DISABLED,
 		);
-		if (!$ele_value && $ele_value !== -1) {
+		// Distinguish a genuinely unset value (new account, nothing loaded yet → default Active) from
+		// an explicit 0 (a real Pending account), which must keep showing Pending.
+		if ($ele_value === null || $ele_value === '') {
 			$ele_value = 1; // new accounts default to Active
 		}
 		if ($isDisabled) {

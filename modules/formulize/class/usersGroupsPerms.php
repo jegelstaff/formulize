@@ -153,6 +153,19 @@ class formulizePermHandler {
         if (self::isUserOwnAccountEntry($form_id, $user_id, $entry_id)) {
             return true;
         }
+        // Self-registration: during the public signup flow (signup.php) an anonymous visitor may fill
+        // in and save a brand-new entry on the System Users form to create their own account. Gated by
+        // formulize_selfRegistrationActive() (signup flag + no logged-in user + site policy) and
+        // limited to a new entry on the system users form, so it can never grant edit rights to an
+        // existing user's record or on any other form.
+        if (!is_numeric($entry_id)
+            && function_exists('formulize_selfRegistrationActive')
+            && formulize_selfRegistrationActive()) {
+            $form_handler = xoops_getmodulehandler('forms', 'formulize');
+            if (($formObject = $form_handler->get($form_id)) && $formObject->isSystemUsersTableForm()) {
+                return true;
+            }
+        }
         return self::user_can_modify_entry("update", $form_id, $user_id, $entry_id);
     }
 

@@ -858,3 +858,163 @@ export async function ensureMainMenuOpen(page) {
 		await page.locator('#burger-and-logo').getByRole('link').first().click();
 	}
 }
+
+// ============================================================================
+// Direct database access (local Docker environment only)
+// ----------------------------------------------------------------------------
+// The e2e stack runs against the docker-compose environment (see docker-compose.yaml):
+// a MariaDB container reachable by `docker exec`. A few features cannot be exercised
+// end-to-end through the browser alone — most importantly self-registration, where the
+// confirmation code is normally delivered by email/SMS (which the docker box cannot
+// send). These helpers let a spec read that code straight from the database, and toggle
+// system settings that have no convenient UI, exactly as a human tester would.
+//
+// Container name and credentials match docker-compose.yaml; override via env if needed.
+// ============================================================================
+
+const { execSync } = require('child_process');
+
+const DB_CONTAINER = process.env.E2E_DB_CONTAINER || 'formulize-mariadb-1';
+const DB_ROOT_PASS = process.env.E2E_DB_ROOT_PASS || 'abc123';
+const DB_NAME = process.env.E2E_DB_NAME || 'formulize';
+
+/**
+ * Run a SQL statement against the test database and return the rows as an array of
+ * column-value arrays (tab-separated, no header). Values are raw strings.
+ * @param {string} sql
+ * @returns {string[][]}
+ */
+export function dbQuery(sql) {
+	// -N: skip column-name header. Pass the SQL via -e as a single shell-quoted arg.
+	const cmd = `docker exec ${DB_CONTAINER} mariadb -uroot -p${DB_ROOT_PASS} -N -e ${JSON.stringify(sql)} ${DB_NAME}`;
+	const out = execSync(cmd, { encoding: 'utf8' });
+	const trimmed = out.replace(/\n$/, '');
+	if (trimmed === '') return [];
+	return trimmed.split('\n').map(line => line.split('\t'));
+}
+
+let _dbPrefix = null;
+/**
+ * Discover the ImpressCMS table prefix for this install (it is randomized per install,
+ * so it must not be hardcoded). Derived from the unique `<prefix>_config` table.
+ * @returns {string}
+ */
+export function dbPrefix() {
+	if (_dbPrefix !== null) return _dbPrefix;
+	const rows = dbQuery('SHOW TABLES');
+	const cfg = rows.map(r => r[0]).find(t => t.endsWith('_config'));
+	if (!cfg) throw new Error('Could not determine DB table prefix (no *_config table found)');
+	_dbPrefix = cfg.replace(/_config$/, '');
+	return _dbPrefix;
+}
+
+/**
+ * Read the current value of a system config setting (icms_config), e.g. 'allow_register'.
+ * @param {string} name
+ * @returns {string|null}
+ */
+export function getSystemConfig(name) {
+	const rows = dbQuery(`SELECT conf_value FROM ${dbPrefix()}_config WHERE conf_name = '${name}' LIMIT 1`);
+	return rows.length ? rows[0][0] : null;
+}
+
+/**
+ * Set a system config setting (icms_config), e.g. toggle self-registration on/off.
+ * @param {string} name
+ * @param {string|number} value
+ */
+export function setSystemConfig(name, value) {
+	dbQuery(`UPDATE ${dbPrefix()}_config SET conf_value = '${value}' WHERE conf_name = '${name}'`);
+}
+
+/**
+ * Look up a user by login name. Returns { uid, level } or null.
+ * @param {string} loginName
+ * @returns {{uid:number, level:number}|null}
+ */
+export function getUserByLogin(loginName) {
+	const rows = dbQuery(`SELECT uid, level FROM ${dbPrefix()}_users WHERE login_name = '${loginName}' LIMIT 1`);
+	if (!rows.length) return null;
+	return { uid: parseInt(rows[0][0], 10), level: parseInt(rows[0][1], 10) };
+}
+
+/**
+ * Return the group ids a user belongs to.
+ * @param {number} uid
+ * @returns {number[]}
+ */
+export function getUserGroupIds(uid) {
+	const rows = dbQuery(`SELECT groupid FROM ${dbPrefix()}_groups_users_link WHERE uid = ${parseInt(uid, 10)}`);
+	return rows.map(r => parseInt(r[0], 10));
+}
+
+/**
+ * Read the pending (email/SMS) confirmation code most recently generated for a user.
+ * This is the code signup.php would have delivered; reading it here simulates the user
+ * receiving it. Only non-app codes (method != TFA_APP=3) are numeric one-time codes.
+ * @param {number} uid
+ * @returns {string|null}
+ */
+export function getPendingConfirmationCode(uid) {
+	const rows = dbQuery(
+		`SELECT code FROM ${dbPrefix()}_tfa_codes WHERE uid = ${parseInt(uid, 10)} AND method != 3 ORDER BY created DESC, code_id DESC LIMIT 1`
+	);
+	return rows.length ? rows[0][0] : null;
+}
+
+/**
+ * Create a throwaway user group and return its id. Used to give token tests a group to grant that
+ * does not depend on any particular pre-existing groups (so the test runs in any environment).
+ * @param {string} name
+ * @returns {number} the new group id
+ */
+export function createTestGroup(name) {
+	const p = dbPrefix();
+	dbQuery(`INSERT INTO ${p}_groups (name, description, group_type) VALUES ('${name.replace(/'/g, "''")}', '', 'User')`);
+	const rows = dbQuery(`SELECT groupid FROM ${p}_groups WHERE name = '${name.replace(/'/g, "''")}' ORDER BY groupid DESC LIMIT 1`);
+	return parseInt(rows[0][0], 10);
+}
+
+/**
+ * Delete a group and any of its user memberships.
+ * @param {number} groupId
+ */
+export function deleteTestGroup(groupId) {
+	const p = dbPrefix();
+	const id = parseInt(groupId, 10);
+	dbQuery(`DELETE FROM ${p}_groups_users_link WHERE groupid = ${id}`);
+	dbQuery(`DELETE FROM ${p}_groups WHERE groupid = ${id}`);
+}
+
+/**
+ * Create an account-creation token (formulize_tokens) granting the given group ids. Mirrors what the
+ * admin manage-tokens page stores: a space-separated group id list and a tokenkey.
+ * @param {string} key       Token value (alphanumeric)
+ * @param {number[]} groupIds Group ids the token grants
+ * @param {number} maxuses   0 = unlimited
+ */
+export function createToken(key, groupIds, maxuses = 0) {
+	const p = dbPrefix();
+	const groups = groupIds.map(g => parseInt(g, 10)).join(' ');
+	dbQuery(
+		`INSERT INTO ${p}_formulize_tokens (\`groups\`, tokenkey, expiry, maxuses, currentuses) VALUES ('${groups}', '${key.replace(/[^A-Za-z0-9]/g, '')}', NULL, ${parseInt(maxuses, 10)}, 0)`
+	);
+}
+
+/**
+ * Read a token's current use count (or null if the token no longer exists).
+ * @param {string} key
+ * @returns {number|null}
+ */
+export function getTokenUses(key) {
+	const rows = dbQuery(`SELECT currentuses FROM ${dbPrefix()}_formulize_tokens WHERE tokenkey = '${key.replace(/[^A-Za-z0-9]/g, '')}' LIMIT 1`);
+	return rows.length ? parseInt(rows[0][0], 10) : null;
+}
+
+/**
+ * Delete a token by its key.
+ * @param {string} key
+ */
+export function deleteToken(key) {
+	dbQuery(`DELETE FROM ${dbPrefix()}_formulize_tokens WHERE tokenkey = '${key.replace(/[^A-Za-z0-9]/g, '')}'`);
+}

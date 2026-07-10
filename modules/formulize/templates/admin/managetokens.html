@@ -1,12 +1,22 @@
 <div class="panel-content content">
 
     <h2>Manage Account Creation Tokens</h2>
-    <p>You can create tokens that can be used to allow new users to create a Formulize account on the first time that they login to the site with Google.</p>
+    <p>You can create tokens that let new users join specific groups when they create an account.
+    Share a token with the people you want to be able to join those groups. They can type it in on
+    the sign up page, or you can send them a sign up link with the token already included, for example:
+    <br><br>
+    <code><{$smarty.const.XOOPS_URL}>/signup.php?token=YOURTOKEN</code>
+    <br><br>
+    Everyone who signs up is always added to the Registered Users group. A token adds membership in the
+    additional group(s) you select below. A token can grant more than one group at a time.</p>
+    <{if $adminPage.error}>
+    <p style='color:#cc0000; font-weight:bold;'><{$adminPage.error}></p>
+    <{/if}>
     <br>
     <hr>
     <br>
     <form id='managetokens' name='managetokens' method='post'>
-    <p>Allow the user to join which groups?
+    <p>Which group(s) should this token let people join?
     <br>
     <br>
     <{foreach from=$adminPage.groups item=key}>
@@ -14,6 +24,11 @@
    <label for='<{$key.groupid}>'><{$key.name}></label>
    <br>
     <{/foreach}>
+    <br>
+    Custom token value (optional &mdash; letters and numbers only). Leave blank to have one generated for you:
+    <br>
+    <input type='text' name='customkey' value='' size='40' placeholder='e.g. SPRING2026'>
+    <br>
     <br>
     What is the maximum number of uses that this token should have?
  <select name='maxuses'>
@@ -27,14 +42,6 @@
         <option value='75'>75</option>
         <option value='100'>100</option>
         <option value='0'>Unlimited</option>
-    </select>
-    <br>
-    <br>
-    Select token length:
-     <select name='tokenlength'>
-        <option value='32'>32 bytes</option>
-        <option value='16'>16 bytes</option>
-        <option value='64'>64 bytes</option>
     </select>
     <br>
     <br>
@@ -53,21 +60,34 @@
         <option value='168'>in 1 week</option>
         <option value='336'>in 2 weeks</option>
         <option value='672'>in 4 weeks</option>
-        <option value='1344'>in 8 weeks</option>
+        <option value='1008'>in 6 weeks</option>
+				<option value='2184'>in 3 months</option>
         <option value='4368'>in 6 months</option>
         <option value='8760'>in 1 year</option>
-    </select> &nbsp;&nbsp;&nbsp;<input type='submit' name='save' value='Create'>
+    </select>
+    <br>
+    <br>
+    <div id='tokenlength_row'><div id='tokenlength_inner'>Select token length:
+     <select name='tokenlength'>
+        <option value='32'>32 bytes</option>
+        <option value='16'>16 bytes</option>
+        <option value='64'>64 bytes</option>
+    </select></div><br></div>
+    <input type='submit' name='save' value='Create'>
     </p>
     <input type='hidden' value='' id='deletekey' name='deletekey' />
     </form>
     <br/><hr><br/>
-    
-    <table style='max-width: 700px;'>
+
+    <table style='max-width: 900px;'>
+    <{if $adminPage.keys}>
+        <tr style='font-weight:bold; border-bottom:1px solid #ccc;'><td>&nbsp;</td><td>Token</td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td>Expires</td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td>Groups</td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td>Uses left</td></tr>
+    <{/if}>
     <{foreach from=$adminPage.keys item=key}>
-        <tr><td><a href='' onclick="setDelete('<{$key.key}>');return false;"><img src='../images/x.gif'/></a>&nbsp;<{$key.user}>&nbsp;&nbsp;&nbsp;<br/>&nbsp;</td><td><{$key.key}></td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td><{$key.expiry}></td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td><{$key.group}></td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td><{$key.usesleft}></td></tr>
+        <tr><td><a href='' onclick="setDelete('<{$key.key}>');return false;"><img src='../images/x.gif'/></a>&nbsp;</td><td><{$key.key}></td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td><{$key.expiry}></td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td><{$key.group}></td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td><{$key.usesleft}></td></tr>
     <{/foreach}>
     </table>
-    
+
 </div>
 
 <script>
@@ -75,4 +95,40 @@ function setDelete(key) {
     window.managetokens.deletekey.value = key;
     window.managetokens.submit();
 }
+
+// The "token length" (random bytes) option only applies when a token is generated for you. As soon
+// as a custom token value is typed, the length is ignored on submission (see token.php insert()), so
+// slide it out of view to avoid implying otherwise; clearing the box slides it back. This mirrors the
+// two-step reveal used for conditional settings on the registry-generated settings pages (open the
+// vertical space first, then fade the content in; reverse on hide). See
+// formulize_configSettingsScriptBlock() in modules/formulize/include/configsettings.php.
+(function($) {
+    var fzDur = 250; // ms per step, matching the settings-page animation
+    function fzShow($row) {
+        var $inner = $row.find('#tokenlength_inner');
+        $row.stop(true, true);
+        $inner.stop(true, true).css('opacity', 0);
+        $row.slideDown(fzDur, function() { $inner.animate({ opacity: 1 }, fzDur); });
+    }
+    function fzHide($row) {
+        var $inner = $row.find('#tokenlength_inner');
+        $row.stop(true, true);
+        $inner.stop(true, true).animate({ opacity: 0 }, fzDur, function() { $row.slideUp(fzDur); });
+    }
+    jQuery(document).ready(function() {
+        var $input = jQuery('#managetokens input[name=customkey]');
+        var $row = jQuery('#tokenlength_row');
+        if (!$input.length || !$row.length) { return; }
+        var visible = null; // unknown until the first sync
+        function sync(animate) {
+            var want = (jQuery.trim($input.val() || '').length === 0); // show only when there is no custom value
+            if (want === visible) { return; } // no change -> don't re-animate
+            visible = want;
+            if (!animate) { want ? $row.show() : $row.hide(); }
+            else { want ? fzShow($row) : fzHide($row); }
+        }
+        $input.bind('keyup change', function() { sync(true); });
+        sync(false); // set the initial state without animating (box starts empty -> length shown)
+    });
+})(jQuery);
 </script>

@@ -453,6 +453,16 @@ function formulize_systemManagedFormAccessCheck($formObject, $entry_id, $user_id
     if ($gperm_handler->checkRight('system_admin', XOOPS_SYSTEM_USER, $groups)) {
         return true;
     }
+    // Self-service account creation: during the dedicated signup flow (signup.php), an anonymous
+    // visitor may render and submit a NEW entry on the system users form so they can create their
+    // own account. Restricted to a brand-new entry (never an existing user's record) and gated by
+    // formulize_selfRegistrationActive(), which requires the signup flag, no logged-in user, and
+    // the site's self-registration policy to be enabled.
+    if (formulize_selfRegistrationActive()
+        AND $formObject->isSystemUsersTableForm()
+        AND ($entry_id === 'new' OR $entry_id === '' OR intval($entry_id) === 0)) {
+        return true;
+    }
     // Self-service: a logged-in user may view/edit their own record on the system users form,
     // where entry_id IS their uid.
     if ($user_id AND $formObject->isSystemUsersTableForm() AND intval($entry_id) === intval($user_id)) {
@@ -461,6 +471,32 @@ function formulize_systemManagedFormAccessCheck($formObject, $entry_id, $user_id
     return false;
 }
 
+
+/**
+ * Report whether we are in a legitimate self-registration (public account signup) context.
+ *
+ * The dedicated signup page (signup.php) sets $GLOBALS['formulize_selfRegistration'] only after it
+ * has confirmed the site allows self-registration and that nobody is logged in. This helper is the
+ * single gate every other piece of the signup flow consults before relaxing a permission check, so
+ * the relaxation can never happen outside that page. It intentionally re-verifies "no logged-in
+ * user" so a stray flag can never grant an authenticated user extra powers.
+ *
+ * @return bool True only during a valid anonymous signup request.
+ */
+function formulize_selfRegistrationActive() {
+    global $xoopsUser, $icmsConfigUser;
+    if (empty($GLOBALS['formulize_selfRegistration'])) {
+        return false;
+    }
+    if (is_object($xoopsUser)) {
+        return false; // never for an already authenticated user
+    }
+    // Defence in depth: honour the site policy switch even though signup.php checks it too.
+    if (isset($icmsConfigUser['allow_register']) AND !$icmsConfigUser['allow_register']) {
+        return false;
+    }
+    return true;
+}
 
 /**
  * Derive the secret key used to sign anonymous-entry cookies.

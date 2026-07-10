@@ -101,12 +101,31 @@ class formulizeTokenHandler {
         return false;
 	}
 
-	function insert($groups, $expiry=0, $tokenlength =32, $maxuses = 0) {
-        $candidateID = $this->_generateKey($tokenlength);
+	/**
+	 * Create a new token.
+	 *
+	 * @param string $groups     Space separated list of group ids the token grants access to.
+	 * @param int    $expiry      Hours until expiry, or 0 for no expiry.
+	 * @param int    $tokenlength Byte length used when generating a random key (ignored when $customKey is given).
+	 * @param int    $maxuses     Maximum number of uses, or 0 for unlimited.
+	 * @param string $customKey   Optional human friendly key to use instead of a random one. Only
+	 *                            alphanumeric characters are kept (to match get()/delete() which strip
+	 *                            everything else). If it collides with an existing token, insertion fails.
+	 * @return int|false The insert id on success, or false on failure (including a duplicate custom key).
+	 */
+	function insert($groups, $expiry=0, $tokenlength =32, $maxuses = 0, $customKey = '') {
+        if($customKey !== '') {
+            $candidateID = preg_replace("/[^A-Za-z0-9]/", "", str_replace(" ","",$customKey)); // keys must be only alphanumeric characters
+            if($candidateID === '' OR $this->get($candidateID)) {
+                return false; // empty after sanitizing, or already in use
+            }
+        } else {
+            $candidateID = $this->_generateKey($tokenlength);
+        }
         $currentuses = 0;
         $expiry = $expiry ? "'".date("Y-m-d H:i:s",time()+($expiry*3600))."'" : "NULL";
         global $xoopsDB;
-        $sql = "INSERT INTO ".$xoopsDB->prefix("formulize_tokens")." (`groups`, tokenkey, expiry, maxuses, currentuses) VALUES ('".$groups."','".$candidateID."',".$expiry.",".intval($maxuses).",".intval($currentuses).")";
+        $sql = "INSERT INTO ".$xoopsDB->prefix("formulize_tokens")." (`groups`, tokenkey, expiry, maxuses, currentuses) VALUES ('".formulize_db_escape($groups)."','".formulize_db_escape($candidateID)."',".$expiry.",".intval($maxuses).",".intval($currentuses).")";
         if(!$res = $xoopsDB->queryF($sql)) {
             print "Error: could not insert tokenkey with this SQL: $sql<br>".$xoopsDB->error();
             return false;
