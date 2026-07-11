@@ -4567,6 +4567,8 @@ function processClickedCustomButton($clickedElements, $clickedValues, $clickedAc
 		$config_handler = xoops_gethandler('config');
 		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 		$useOldCustomButtonEffectWriting = $formulizeConfig['useOldCustomButtonEffectWriting'];
+		$newEntriesToNotifyAbout = array();
+		$updatedEntriesToNotifyAbout = array();
 		foreach($caEntries as $id=>$thisEntry) { // loop through all the entries this button click applies to
 			$maxIdReq = 0;
 			$needToSetOwner = false;
@@ -4585,7 +4587,13 @@ function processClickedCustomButton($clickedElements, $clickedValues, $clickedAc
 				}
 			}
 			if(count($valuesToWrite)>0) {
-				$maxIdReq = $data_handler->writeEntry($thisEntry, $valuesToWrite);
+				if($maxIdReq = $data_handler->writeEntry($thisEntry, $valuesToWrite)) {
+					if($thisEntry == "new") {
+						$newEntriesToNotifyAbout[] = $maxIdReq;
+					} else {
+						$updatedEntriesToNotifyAbout[] = $maxIdReq;
+					}
+				}
 			}
 			if($maxIdReq) {
                 // NOTE: if there are derived values involving something other than the fid of the updated form, and the frid of the screen, then they won't be updated when this custom button is clicked!!
@@ -4596,6 +4604,12 @@ function processClickedCustomButton($clickedElements, $clickedValues, $clickedAc
         			$data_handler->setEntryOwnerGroups($newOwner, $maxIdReq);
 				}
             }
+		}
+		if(!empty($newEntriesToNotifyAbout)) {
+			sendNotifications($formId, 'new_entry', $newEntriesToNotifyAbout);
+		}
+		if(!empty($updatedEntriesToNotifyAbout)) {
+			sendNotifications($formId, 'update_entry', $updatedEntriesToNotifyAbout);
 		}
 	}
 	return $clickedMessageText;

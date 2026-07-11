@@ -2154,14 +2154,23 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 
 		// Step 3: Write the entry
 		// keys are entry ids when updating, or sequential integers when creating
+		$writtenEntryIds = [];
 		foreach($preparedData as $i => $entryData) {
 			$entryId = $operation == 'create' ? 'new' : $i;
-			$resultEntryId = formulize_writeEntry($entryData, $entryId); // writes data and manages ownership info
+			if($resultEntryId = formulize_writeEntry($entryData, $entryId)) {  // writes data and manages ownership info
+				$writtenEntryIds[] = $resultEntryId;
+			}
 			$finalEntryId = ($entryId === 'new') ? $resultEntryId : $entryId; // for updates, formulize_writeEntry can return null if no data actually changed from current DB state
 			// Step 4: Update derived values
 			formulize_updateDerivedValues($finalEntryId, $formId, $relationshipId);
 			// Lastly, put the entry id into the prepared data for reference
 			$preparedData[$i] = array_merge(array('entry_id' => $finalEntryId), $preparedData[$i]);
+		}
+
+		// Step 5: send notifications
+		if(!empty($writtenEntryIds)) {
+			$event = $operation == 'create' ? 'new_entry' : 'update_entry';
+			sendNotifications($formId, $event, $writtenEntryIds);
 		}
 
 		$response = [
