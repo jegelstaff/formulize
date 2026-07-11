@@ -1018,9 +1018,3 @@ export function getTokenUses(key) {
 export function deleteToken(key) {
 	dbQuery(`DELETE FROM ${dbPrefix()}_formulize_tokens WHERE tokenkey = '${key.replace(/[^A-Za-z0-9]/g, '')}'`);
 }
-
-export async function ensureMainMenuOpen(page) {
-	if (!(await page.locator('#mainmenu').isVisible())) {
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
-	}
-}
