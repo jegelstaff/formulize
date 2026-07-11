@@ -1971,6 +1971,31 @@ NEWVERSION;
             }
         }
 
+        // Rename the 'limit_type' key to 'counter_type' in textarea element ele_value blobs, since this
+        // setting now controls whether/what kind of counter is shown, not necessarily a hard limit
+        // ('limit_number', unrenamed, still controls whether there's an enforced maximum).
+        // Idempotent: once a row's 'limit_type' key is renamed away, the LIKE clause no longer matches it.
+        $counterTypeRenameSQL = "SELECT ele_id, ele_value FROM ".$xoopsDB->prefix("formulize")." WHERE ele_type = 'textarea' AND ele_value LIKE '%\"limit_type\"%'";
+        if($res = $xoopsDB->queryF($counterTypeRenameSQL)) {
+            $counterTypeRenameCount = 0;
+            while($record = $xoopsDB->fetchArray($res)) {
+                $ele_value = unserialize($record['ele_value']);
+                if(is_array($ele_value) AND array_key_exists('limit_type', $ele_value)) {
+                    $ele_value['counter_type'] = $ele_value['limit_type'];
+                    unset($ele_value['limit_type']);
+                    $updateSQL = "UPDATE ".$xoopsDB->prefix("formulize")." SET ele_value = ".$xoopsDB->quoteString(serialize($ele_value))." WHERE ele_id = ".intval($record['ele_id']);
+                    if($xoopsDB->queryF($updateSQL)) {
+                        $counterTypeRenameCount++;
+                    } else {
+                        print "Error: could not rename limit_type to counter_type for element ".intval($record['ele_id']).".<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
+                    }
+                }
+            }
+            if($counterTypeRenameCount > 0) {
+                print "Renamed 'limit_type' to 'counter_type' in $counterTypeRenameCount textarea element(s). result: OK<br>";
+            }
+        }
+
         print "DB updates completed.  result: OK";
 
 }

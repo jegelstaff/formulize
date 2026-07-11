@@ -38,20 +38,20 @@ define('ELE_VALUE_TEXTAREA_ROWS', 1);
 define('ELE_VALUE_TEXTAREA_COLS', 2);
 define('ELE_VALUE_TEXTAREA_ASSOCIATED_ELEMENT_ID', 3);
 define('ELE_VALUE_TEXTAREA_RICHTEXT', 'use_rich_text');
-define('ELE_VALUE_TEXTAREA_LIMIT_TYPE',   'limit_type');
+define('ELE_VALUE_TEXTAREA_COUNTER_TYPE', 'counter_type');
 define('ELE_VALUE_TEXTAREA_LIMIT_NUMBER', 'limit_number');
 
 require_once XOOPS_ROOT_PATH . "/class/xoopsform/formtextarea.php";
 
 class formulizeTextAreaWithCounter extends XoopsFormTextArea {
 
-	private $_limitType;
+	private $_counterType;
 	private $_limitNumber;
 	private $_markupName;
 
-	function __construct($caption, $markupName, $value, $rows, $cols, $limitType, $limitNumber) {
+	function __construct($caption, $markupName, $value, $rows, $cols, $counterType, $limitNumber) {
 		parent::__construct($caption, $markupName, $value, $rows, $cols);
-		$this->_limitType   = $limitType;
+		$this->_counterType   = $counterType;
 		$this->_limitNumber = intval($limitNumber);
 		$this->_markupName  = $markupName;
 	}
@@ -59,29 +59,37 @@ class formulizeTextAreaWithCounter extends XoopsFormTextArea {
 	function render() {
 		$html      = parent::render();
 		$limit     = $this->_limitNumber;
-		$typeLabel = ($this->_limitType === 'words') ? 'words' : 'characters';
+		$hasLimit  = $limit > 0;
+		$typeLabel = ($this->_counterType === 'words') ? 'words' : 'characters';
 		$counterId = 'fz-counter-' . preg_replace('/[^a-zA-Z0-9_-]/', '_', $this->_markupName);
 		$nameJs    = str_replace(["'", "\\"], ["\\'", "\\\\"], $this->_markupName);
 		$ctrIdJs   = str_replace(["'", "\\"], ["\\'", "\\\\"], $counterId);
-		$countFn   = $this->_limitType === 'words'
+		$countFn   = $this->_counterType === 'words'
 			? "function(t){return t.trim()===''?0:t.trim().split(/\\s+/).length;}"
 			: "function(t){return t.length;}";
+		$initialText = $hasLimit ? ($limit . ' ' . $typeLabel . ' remaining') : ('0 ' . $typeLabel);
 		$html .= '<div id="' . htmlspecialchars($counterId, ENT_QUOTES) . '" class="fz-limit-counter fz-limit-green">'
-		       . $limit . ' ' . $typeLabel . ' remaining</div>';
+		       . $initialText . '</div>';
 		$html .= "<script type='text/javascript'>"
 		       . "(function(){"
 		       . "var ta=document.getElementsByName('" . $nameJs . "')[0];"
 		       . "var ctr=document.getElementById('" . $ctrIdJs . "');"
 		       . "var limit=" . $limit . ";"
-		       . "var count=" . $countFn . ";"
-		       . "var red=Math.max(1,Math.floor(limit*0.10));"
-		       . "var orange=Math.max(2,Math.floor(limit*0.20));"
-		       . "function update(){if(!ta||!ctr)return;"
-		       . "var used=count(ta.value),rem=limit-used;"
-		       . "ctr.textContent=rem<0?('" . $typeLabel . " limit: '+(-rem)+' over the limit'):(rem+' " . $typeLabel . " remaining');"
-		       . "ctr.className='fz-limit-counter '+(rem<=red?'fz-limit-red':rem<=orange?'fz-limit-orange':'fz-limit-green');"
-		       . "}"
-		       . "if(ta){ta.addEventListener('input',update);update();}"
+		       . "var count=" . $countFn . ";";
+		if ($hasLimit) {
+			$html .= "var red=Math.max(1,Math.floor(limit*0.10));"
+			       . "var orange=Math.max(2,Math.floor(limit*0.20));"
+			       . "function update(){if(!ta||!ctr)return;"
+			       . "var used=count(ta.value),rem=limit-used;"
+			       . "ctr.textContent=rem<0?('" . $typeLabel . " limit: '+(-rem)+' over the limit'):(rem+' " . $typeLabel . " remaining');"
+			       . "ctr.className='fz-limit-counter '+(rem<=red?'fz-limit-red':rem<=orange?'fz-limit-orange':'fz-limit-green');"
+			       . "}";
+		} else {
+			$html .= "function update(){if(!ta||!ctr)return;"
+			       . "ctr.textContent=count(ta.value)+' " . $typeLabel . "';"
+			       . "}";
+		}
+		$html .= "if(ta){ta.addEventListener('input',update);update();}"
 		       . "})();</script>";
 		return $html;
 	}
@@ -113,13 +121,14 @@ class formulizeTextareaElement extends formulizeTextElement {
 **Properties:**
 - defaultValue (optional, string, default value for new entries)
 - useRichTextEditor (optional, a 1/0 indicating whether to provide a rich text editor for this field. Default is 0 (no editor). Set to 1 to provide an editor.)
-- limitType (optional, one of 'none', 'characters', or 'words'. Sets whether there is a character or word limit on the field. Default is 'none'. Not applicable when useRichTextEditor is 1.)
-- limitNumber (optional, positive integer. The maximum number of characters or words allowed. Required when limitType is 'characters' or 'words'. Set to 0 or omit for no limit.)
+- counterType (optional, one of 'none', 'characters', or 'words'. Sets whether a character or word counter is shown below the field. Default is 'none' (no counter). Not applicable when useRichTextEditor is 1.)
+- limitNumber (optional, non-negative integer. Only relevant when counterType is 'characters' or 'words'. If 0 or omitted, the counter counts up with no maximum. If greater than 0, it also acts as a hard limit that the user cannot exceed.)
 **Examples:**
 - A rich text editor box: { useRichTextEditor: 1 }
 - A multi-line text box for addresses in Toronto, ON: { defaultValue: 'Toronto, ON' }
-- A notes field limited to 200 characters: { limitType: 'characters', limitNumber: 200 }
-- A short essay field limited to 500 words: { limitType: 'words', limitNumber: 500 }";
+- A notes field with a character counter but no maximum: { counterType: 'characters' }
+- A notes field limited to 200 characters: { counterType: 'characters', limitNumber: 200 }
+- A short essay field limited to 500 words: { counterType: 'words', limitNumber: 500 }";
 	}
 
 }
@@ -146,7 +155,7 @@ class formulizeTextareaElementHandler extends formulizeTextElementHandler {
 		$ele_value[ELE_VALUE_TEXTAREA_COLS] = $formulizeConfig['ta_cols'];
 		$ele_value[ELE_VALUE_TEXTAREA_ASSOCIATED_ELEMENT_ID] = 0;
 		$ele_value[ELE_VALUE_TEXTAREA_RICHTEXT] = 0;
-		$ele_value[ELE_VALUE_TEXTAREA_LIMIT_TYPE] = 'none';
+		$ele_value[ELE_VALUE_TEXTAREA_COUNTER_TYPE] = 'none';
 		$ele_value[ELE_VALUE_TEXTAREA_LIMIT_NUMBER] = 0;
 		return $ele_value;
 	}
@@ -175,16 +184,16 @@ class formulizeTextareaElementHandler extends formulizeTextElementHandler {
 				);
 				$GLOBALS['formulize_CKEditors'][] = $markupName.'_tarea';
 			} else {
-				$limitType   = isset($ele_value[ELE_VALUE_TEXTAREA_LIMIT_TYPE])   ? $ele_value[ELE_VALUE_TEXTAREA_LIMIT_TYPE]   : 'none';
+				$counterType   = isset($ele_value[ELE_VALUE_TEXTAREA_COUNTER_TYPE])   ? $ele_value[ELE_VALUE_TEXTAREA_COUNTER_TYPE]   : 'none';
 				$limitNumber = isset($ele_value[ELE_VALUE_TEXTAREA_LIMIT_NUMBER]) ? intval($ele_value[ELE_VALUE_TEXTAREA_LIMIT_NUMBER]) : 0;
-				if ($limitType && $limitType !== 'none' && $limitNumber > 0) {
+				if ($counterType && $counterType !== 'none') {
 					$form_ele = new formulizeTextAreaWithCounter(
 						$caption,
 						$markupName,
 						$ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE],
 						$ele_value[ELE_VALUE_TEXTAREA_ROWS],
 						$ele_value[ELE_VALUE_TEXTAREA_COLS],
-						$limitType,
+						$counterType,
 						$limitNumber
 					);
 				} else {
@@ -219,17 +228,17 @@ class formulizeTextareaElementHandler extends formulizeTextElementHandler {
 			$validationCode[] = "window.alert(\"{$eltmsg}\");\n CKEditors['".$eltname."_tarea'].focus();\n return false;\n";
 			$validationCode[] = "}\n";
 		}
-		$limitType   = isset($ele_value[ELE_VALUE_TEXTAREA_LIMIT_TYPE])   ? $ele_value[ELE_VALUE_TEXTAREA_LIMIT_TYPE]   : 'none';
+		$counterType   = isset($ele_value[ELE_VALUE_TEXTAREA_COUNTER_TYPE])   ? $ele_value[ELE_VALUE_TEXTAREA_COUNTER_TYPE]   : 'none';
 		$limitNumber = isset($ele_value[ELE_VALUE_TEXTAREA_LIMIT_NUMBER]) ? intval($ele_value[ELE_VALUE_TEXTAREA_LIMIT_NUMBER]) : 0;
 		$isRichText  = isset($ele_value[ELE_VALUE_TEXTAREA_RICHTEXT]) && $ele_value[ELE_VALUE_TEXTAREA_RICHTEXT];
-		if (!strstr(getCurrentURL(), "printview.php") && $limitType && $limitType !== 'none' && $limitNumber > 0 && !$isRichText) {
-			$typeLabel = ($limitType === 'words') ? 'words' : 'characters';
+		if (!strstr(getCurrentURL(), "printview.php") && $counterType && $counterType !== 'none' && $limitNumber > 0 && !$isRichText) {
+			$typeLabel = ($counterType === 'words') ? 'words' : 'characters';
 			$alertMsg  = addslashes('Please reduce your ' . $typeLabel . ' to ' . $limitNumber . ' or fewer before submitting.');
 			$nameJs    = str_replace(["'", "\\"], ["\\'", "\\\\"], $markupName);
 			$safeVar   = preg_replace('/[^a-zA-Z0-9]/', '_', $markupName);
 			$validationCode[] = "var fzTa_{$safeVar}=document.getElementsByName('" . $nameJs . "')[0];";
 			$validationCode[] = "if(fzTa_{$safeVar}){";
-			if ($limitType === 'words') {
+			if ($counterType === 'words') {
 				$validationCode[] = "var fzC_{$safeVar}=fzTa_{$safeVar}.value.trim()===''?0:fzTa_{$safeVar}.value.trim().split(/\\s+/).length;";
 			} else {
 				$validationCode[] = "var fzC_{$safeVar}=fzTa_{$safeVar}.value.length;";
@@ -260,15 +269,15 @@ class formulizeTextareaElementHandler extends formulizeTextElementHandler {
 
 	function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
 		$ele_value   = $element->getVar('ele_value');
-		$limitType   = isset($ele_value[ELE_VALUE_TEXTAREA_LIMIT_TYPE])   ? $ele_value[ELE_VALUE_TEXTAREA_LIMIT_TYPE]   : 'none';
+		$counterType   = isset($ele_value[ELE_VALUE_TEXTAREA_COUNTER_TYPE])   ? $ele_value[ELE_VALUE_TEXTAREA_COUNTER_TYPE]   : 'none';
 		$limitNumber = isset($ele_value[ELE_VALUE_TEXTAREA_LIMIT_NUMBER]) ? intval($ele_value[ELE_VALUE_TEXTAREA_LIMIT_NUMBER]) : 0;
 		$isRichText  = isset($ele_value[ELE_VALUE_TEXTAREA_RICHTEXT]) && $ele_value[ELE_VALUE_TEXTAREA_RICHTEXT];
-		if (!$isRichText && $limitType && $limitType !== 'none' && $limitNumber > 0 && $value !== '' && $value !== '{WRITEASNULL}') {
-			if ($limitType === 'characters') {
+		if (!$isRichText && $counterType && $counterType !== 'none' && $limitNumber > 0 && $value !== '' && $value !== '{WRITEASNULL}') {
+			if ($counterType === 'characters') {
 				if (mb_strlen($value) > $limitNumber) {
 					$value = mb_substr($value, 0, $limitNumber);
 				}
-			} elseif ($limitType === 'words') {
+			} elseif ($counterType === 'words') {
 				$words = preg_split('/\s+/', trim($value), -1, PREG_SPLIT_NO_EMPTY);
 				if (count($words) > $limitNumber) {
 					$value = implode(' ', array_slice($words, 0, $limitNumber));
@@ -282,9 +291,9 @@ class formulizeTextareaElementHandler extends formulizeTextElementHandler {
 		$result    = parent::validateEleValuePublicAPIProperties($properties, $ele_value, $elementIdentifier);
 		$ele_value = $result['ele_value'];
 		$allowed   = ['none', 'characters', 'words'];
-		if (isset($properties['limitType'])) {
-			$limitType = trim($properties['limitType']);
-			$ele_value[ELE_VALUE_TEXTAREA_LIMIT_TYPE] = in_array($limitType, $allowed) ? $limitType : 'none';
+		if (isset($properties['counterType'])) {
+			$counterType = trim($properties['counterType']);
+			$ele_value[ELE_VALUE_TEXTAREA_COUNTER_TYPE] = in_array($counterType, $allowed) ? $counterType : 'none';
 		}
 		if (isset($properties['limitNumber'])) {
 			$limitNumber = intval($properties['limitNumber']);

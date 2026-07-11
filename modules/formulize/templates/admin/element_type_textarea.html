@@ -8,21 +8,21 @@
     </div>
 
     <div class="form-item">
-      <label for="elements-ele_value-limit-type"><{$smarty.const._AM_ELE_TEXTAREA_LIMIT_QUESTION}></label>
-      <select id="elements-ele_value-limit-type" name="elements-ele_value[limit_type]">
-        <option value="none" <{if !$content.ele_value.limit_type || $content.ele_value.limit_type == 'none'}>selected="selected"<{/if}>><{$smarty.const._AM_ELE_TEXTAREA_LIMIT_NONE}></option>
-        <option value="characters" <{if $content.ele_value.limit_type == 'characters'}>selected="selected"<{/if}>><{$smarty.const._AM_ELE_TEXTAREA_LIMIT_CHARS}></option>
-        <option value="words" <{if $content.ele_value.limit_type == 'words'}>selected="selected"<{/if}>><{$smarty.const._AM_ELE_TEXTAREA_LIMIT_WORDS}></option>
+      <label for="elements-ele_value-counter-type"><{$smarty.const._AM_ELE_TEXTAREA_LIMIT_QUESTION}></label>
+      <select id="elements-ele_value-counter-type" name="elements-ele_value[counter_type]">
+        <option value="none" <{if !$content.ele_value.counter_type || $content.ele_value.counter_type == 'none'}>selected="selected"<{/if}>><{$smarty.const._AM_ELE_TEXTAREA_LIMIT_NONE}></option>
+        <option value="characters" <{if $content.ele_value.counter_type == 'characters'}>selected="selected"<{/if}>><{$smarty.const._AM_ELE_TEXTAREA_LIMIT_CHARS}></option>
+        <option value="words" <{if $content.ele_value.counter_type == 'words'}>selected="selected"<{/if}>><{$smarty.const._AM_ELE_TEXTAREA_LIMIT_WORDS}></option>
       </select>
     </div>
 
-    <div class="form-item" id="fz-limit-number-row" <{if !$content.ele_value.limit_type || $content.ele_value.limit_type == 'none'}>style="display:none"<{/if}>>
+    <div class="form-item" id="fz-limit-number-row" <{if !$content.ele_value.counter_type || $content.ele_value.counter_type == 'none'}>style="display:none"<{/if}>>
       <label for="elements-ele_value-limit-number"><{$smarty.const._AM_ELE_TEXTAREA_LIMIT_NUMBER}></label>
       <input type="text" id="elements-ele_value-limit-number" name="elements-ele_value[limit_number]" value="<{$content.ele_value.limit_number|default:0}>" size="6" maxlength="6"/>
     </div>
 
     <script type="text/javascript">
-    $("#elements-ele_value-limit-type").change(function() {
+    $("#elements-ele_value-counter-type").change(function() {
       if ($(this).val() === "none") {
         $("#fz-limit-number-row").hide();
       } else {
