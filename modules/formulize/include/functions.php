@@ -3560,6 +3560,8 @@ function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $t
  */
 function sendNotifications($fid, $event, $entries) {
 
+		$entries = array_unique($entries);
+
     // don't send a notification twice, so we store what we have processed already and don't process again
     static $processedNotifications = array();
     $serializedEntries = serialize($entries);
