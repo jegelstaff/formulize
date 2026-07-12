@@ -1,6 +1,7 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_BASE_URL } from '../config';
 import {
+	login,
 	setSystemConfig,
 	getSystemConfig,
 	getUserByLogin,
@@ -8,7 +9,6 @@ import {
 	getPendingConfirmationCode,
 	createTestGroup,
 	deleteTestGroup,
-	createToken,
 	deleteToken,
 	getTokenUses,
 } from '../../utils';
@@ -30,10 +30,15 @@ test.use({ baseURL: E2E_TEST_BASE_URL });
 //     the user receiving it — exactly the manual step a human tester would take here.
 //   - On confirmation the account is activated (level 1) and the visitor is logged in automatically.
 //   - An invitation token (?token=) adds membership in the group(s) the token grants, on top of the
-//     Registered Users group everyone gets.
+//     Registered Users group everyone gets. Tokens are made by a webmaster on the admin Manage Tokens
+//     page (admin/ui.php?page=users&view=tokens), which this suite also covers: the token tests create
+//     their tokens through that page rather than seeding the database, so the whole round trip —
+//     admin creates a token, visitor redeems it — is exercised.
 //
-// Registered Users group id is the ImpressCMS constant XOOPS_GROUP_USERS = 2.
+// ImpressCMS built-in group ids (XOOPS_GROUP_* constants).
+const WEBMASTERS_GROUP = 1;
 const REGISTERED_USERS_GROUP = 2;
+const ANONYMOUS_GROUP = 3;
 
 // Remember the site's real allow_register value and restore it afterwards so this spec leaves the
 // system exactly as it found it (most importantly: closed to registration).
@@ -103,6 +108,43 @@ async function confirmSignup(page, uid) {
 		page.waitForURL(url => !/op=confirm/.test(url.href), { timeout: 60000 }),
 		page.getByRole('button', { name: 'Confirm' }).click(),
 	]);
+}
+
+const MANAGE_TOKENS_URL = '/modules/formulize/admin/ui.php?page=users&view=tokens';
+
+/**
+ * The row of the token list describing a given token, whatever else is in the table (other tests, and
+ * any tokens the site already had, list their tokens here too).
+ */
+function tokenRow(page, key) {
+	return page.getByRole('row').filter({ hasText: key });
+}
+
+/**
+ * Create an account-creation token the way a webmaster does: on the admin Manage Tokens page, with a
+ * custom token value so the caller knows the key without having to scrape it back out.
+ *
+ * The admin work happens in its own browser context because the caller's page must stay anonymous —
+ * signup.php is a public page, and a logged-in session would send it down a different path entirely.
+ */
+async function createTokenViaAdminUi(browser, { key, groupName, maxUses = 'Unlimited' }) {
+	const context = await browser.newContext({ baseURL: E2E_TEST_BASE_URL });
+	const adminPage = await context.newPage();
+	try {
+		await login(adminPage, 'admin');
+		await adminPage.goto(MANAGE_TOKENS_URL);
+
+		await adminPage.getByLabel(groupName, { exact: true }).check();
+		await adminPage.locator('input[name="customkey"]').fill(key);
+		await adminPage.locator('select[name="maxuses"]').selectOption({ label: String(maxUses) });
+		await adminPage.locator('select[name="expiry"]').selectOption({ label: 'Never' });
+		await adminPage.getByRole('button', { name: 'Create' }).click();
+
+		// The page comes back listing the new token against the group it grants.
+		await expect(tokenRow(adminPage, key)).toContainText(groupName);
+	} finally {
+		await context.close();
+	}
 }
 
 // ---- A. Registration disabled is respected (the safe default) --------------
@@ -198,17 +240,75 @@ test('a pending account cannot log in before it is confirmed', async ({ page }) 
 	await expect(page.locator('#formulizeform form')).toHaveCount(0);
 });
 
-// ---- E. Invitation token grants an extra group -----------------------------
+// ---- E. The admin Manage Tokens page ---------------------------------------
+// Where tokens come from. A webmaster picks the group(s) the token grants, optionally names the token
+// themselves, and gets it back in a list they can share from (or delete).
+test('the manage-tokens page creates, lists and deletes a token, and refuses a duplicate value', async ({ page }) => {
+	const suffix = Date.now();
+	const tokenValue = 'ADMINTOK' + suffix;
+	const grantableGroup = 'E2E Grantable Group ' + suffix;
+	const grantableGroupId = createTestGroup(grantableGroup);
+	// A template group: entries-are-groups forms derive per-entry groups from these, and no user is ever
+	// a direct member of one, so a token must not be able to grant it.
+	const templateGroup = 'E2E Template Group ' + suffix;
+	const templateGroupId = createTestGroup(templateGroup, true);
+
+	try {
+		await login(page, 'admin');
+		await page.goto(MANAGE_TOKENS_URL);
+
+		// Only groups a person can actually be a member of are offered. Granting Webmasters would let
+		// anyone who has the token take over the site; Anonymous/Registered Users and template groups are
+		// not things a token can meaningfully add someone to.
+		await expect(page.getByLabel(grantableGroup, { exact: true })).toBeVisible();
+		for (const excluded of [WEBMASTERS_GROUP, REGISTERED_USERS_GROUP, ANONYMOUS_GROUP, templateGroupId]) {
+			await expect(page.locator(`#managetokens input[name="${excluded}"]`)).toHaveCount(0);
+		}
+
+		// Create a token with a custom value, granting that group, usable any number of times.
+		await page.getByLabel(grantableGroup, { exact: true }).check();
+		await page.locator('input[name="customkey"]').fill(tokenValue);
+		await page.locator('select[name="maxuses"]').selectOption({ label: 'Unlimited' });
+		await page.locator('select[name="expiry"]').selectOption({ label: 'Never' });
+		await page.getByRole('button', { name: 'Create' }).click();
+
+		// It is listed: the value the webmaster chose, the group it grants, and its remaining uses.
+		const row = tokenRow(page, tokenValue);
+		await expect(row).toHaveCount(1);
+		await expect(row).toContainText(grantableGroup);
+		await expect(row).toContainText('Unlimited');
+		expect(getTokenUses(tokenValue)).toBe(0);
+
+		// The same custom value cannot be used twice: the second attempt is refused with an explanation,
+		// and does not create a second token.
+		await page.getByLabel(grantableGroup, { exact: true }).check();
+		await page.locator('input[name="customkey"]').fill(tokenValue);
+		await page.getByRole('button', { name: 'Create' }).click();
+		await expect(page.getByText('could not be used', { exact: false })).toBeVisible();
+		await expect(tokenRow(page, tokenValue)).toHaveCount(1);
+
+		// Deleting it from the list removes it for good.
+		await tokenRow(page, tokenValue).getByRole('link').click();
+		await expect(tokenRow(page, tokenValue)).toHaveCount(0);
+		expect(getTokenUses(tokenValue)).toBeNull();
+	} finally {
+		deleteToken(tokenValue);
+		deleteTestGroup(grantableGroupId);
+		deleteTestGroup(templateGroupId);
+	}
+});
+
+// ---- F. Invitation token grants an extra group -----------------------------
 // A token in the sign-up URL should add membership in the group(s) it grants, on top of Registered
-// Users. The token + a throwaway group are created directly in the DB (mirroring what the admin
-// manage-tokens page stores) so this test needs no admin login and runs in any environment. The
-// admin-facing token creation UI (custom token values) is exercised separately.
-test('an invitation token in the URL adds the granted group membership on signup', async ({ page }) => {
+// Users. The token is created through the admin page (as a webmaster would), against a throwaway group
+// so the test depends on no particular pre-existing groups and runs in any environment.
+test('an invitation token in the URL adds the granted group membership on signup', async ({ page, browser }) => {
 	setSystemConfig('allow_register', 1);
 	const suffix = Date.now();
 	const tokenValue = 'E2ETOKEN' + suffix;
-	const grantedGroupId = createTestGroup('E2E Signup Token Group ' + suffix);
-	createToken(tokenValue, [grantedGroupId]); // unlimited uses
+	const grantedGroup = 'E2E Signup Token Group ' + suffix;
+	const grantedGroupId = createTestGroup(grantedGroup);
+	await createTokenViaAdminUi(browser, { key: tokenValue, groupName: grantedGroup });
 
 	try {
 		const creds = {
@@ -240,9 +340,9 @@ test('an invitation token in the URL adds the granted group membership on signup
 	}
 });
 
-// ---- F. "Require account tokens for public sign-ups?" preference ------------
+// ---- G. "Require account tokens for public sign-ups?" preference ------------
 // When on, signup.php must not present (or create) an account without a valid token.
-test('requiring tokens blocks token-less signup and permits it with a valid token', async ({ page }) => {
+test('requiring tokens blocks token-less signup and permits it with a valid token', async ({ page, browser }) => {
 	setSystemConfig('allow_register', 1);
 	setSystemConfig('requireTokenForSignup', 1);
 
@@ -255,8 +355,9 @@ test('requiring tokens blocks token-less signup and permits it with a valid toke
 	// With a valid token in the URL: the form appears and signup completes normally.
 	const suffix = Date.now();
 	const tokenValue = 'REQTOK' + suffix;
-	const grantedGroupId = createTestGroup('E2E Req Token Group ' + suffix);
-	createToken(tokenValue, [grantedGroupId]);
+	const grantedGroup = 'E2E Req Token Group ' + suffix;
+	const grantedGroupId = createTestGroup(grantedGroup);
+	await createTokenViaAdminUi(browser, { key: tokenValue, groupName: grantedGroup });
 
 	try {
 		const creds = {

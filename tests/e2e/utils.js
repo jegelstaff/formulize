@@ -872,7 +872,7 @@ export async function ensureMainMenuOpen(page) {
 // Container name and credentials match docker-compose.yaml; override via env if needed.
 // ============================================================================
 
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
 
 const DB_CONTAINER = process.env.E2E_DB_CONTAINER || 'formulize-mariadb-1';
 const DB_ROOT_PASS = process.env.E2E_DB_ROOT_PASS || 'abc123';
@@ -885,9 +885,13 @@ const DB_NAME = process.env.E2E_DB_NAME || 'formulize';
  * @returns {string[][]}
  */
 export function dbQuery(sql) {
-	// -N: skip column-name header. Pass the SQL via -e as a single shell-quoted arg.
-	const cmd = `docker exec ${DB_CONTAINER} mariadb -uroot -p${DB_ROOT_PASS} -N -e ${JSON.stringify(sql)} ${DB_NAME}`;
-	const out = execSync(cmd, { encoding: 'utf8' });
+	// -N: skip column-name header. The SQL is passed as a single argv entry, never through a shell:
+	// a shell would treat backticks (MySQL identifier quotes, e.g. `groups`) as command substitution.
+	const out = execFileSync(
+		'docker',
+		['exec', DB_CONTAINER, 'mariadb', '-uroot', `-p${DB_ROOT_PASS}`, '-N', '-e', sql, DB_NAME],
+		{ encoding: 'utf8' }
+	);
 	const trimmed = out.replace(/\n$/, '');
 	if (trimmed === '') return [];
 	return trimmed.split('\n').map(line => line.split('\t'));
@@ -966,12 +970,17 @@ export function getPendingConfirmationCode(uid) {
  * Create a throwaway user group and return its id. Used to give token tests a group to grant that
  * does not depend on any particular pre-existing groups (so the test runs in any environment).
  * @param {string} name
+ * @param {boolean} isGroupTemplate Make it a template group (the kind entries-are-groups forms derive
+ *                                  per-entry groups from). No user is ever a direct member of one.
  * @returns {number} the new group id
  */
-export function createTestGroup(name) {
+export function createTestGroup(name, isGroupTemplate = false) {
 	const p = dbPrefix();
-	dbQuery(`INSERT INTO ${p}_groups (name, description, group_type) VALUES ('${name.replace(/'/g, "''")}', '', 'User')`);
-	const rows = dbQuery(`SELECT groupid FROM ${p}_groups WHERE name = '${name.replace(/'/g, "''")}' ORDER BY groupid DESC LIMIT 1`);
+	const safeName = name.replace(/'/g, "''");
+	dbQuery(
+		`INSERT INTO ${p}_groups (name, description, group_type, is_group_template) VALUES ('${safeName}', '', 'User', ${isGroupTemplate ? 1 : 0})`
+	);
+	const rows = dbQuery(`SELECT groupid FROM ${p}_groups WHERE name = '${safeName}' ORDER BY groupid DESC LIMIT 1`);
 	return parseInt(rows[0][0], 10);
 }
 
@@ -984,21 +993,6 @@ export function deleteTestGroup(groupId) {
 	const id = parseInt(groupId, 10);
 	dbQuery(`DELETE FROM ${p}_groups_users_link WHERE groupid = ${id}`);
 	dbQuery(`DELETE FROM ${p}_groups WHERE groupid = ${id}`);
-}
-
-/**
- * Create an account-creation token (formulize_tokens) granting the given group ids. Mirrors what the
- * admin manage-tokens page stores: a space-separated group id list and a tokenkey.
- * @param {string} key       Token value (alphanumeric)
- * @param {number[]} groupIds Group ids the token grants
- * @param {number} maxuses   0 = unlimited
- */
-export function createToken(key, groupIds, maxuses = 0) {
-	const p = dbPrefix();
-	const groups = groupIds.map(g => parseInt(g, 10)).join(' ');
-	dbQuery(
-		`INSERT INTO ${p}_formulize_tokens (\`groups\`, tokenkey, expiry, maxuses, currentuses) VALUES ('${groups}', '${key.replace(/[^A-Za-z0-9]/g, '')}', NULL, ${parseInt(maxuses, 10)}, 0)`
-	);
 }
 
 /**
