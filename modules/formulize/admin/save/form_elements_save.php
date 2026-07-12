@@ -120,6 +120,11 @@ foreach($elements as $element) {
 }
 
 // handle any operations
+// NOTE: conversion is deliberately keyed on exact built-in types (no subclass resolution).
+// Each branch below rearranges ele_value and migrates stored data based on the precise
+// structure of the source and target types. A custom type extending one of these may
+// repurpose ele_value or store data differently, so converting it as if it were its parent
+// could corrupt it. If element classes ever grow a conversion API, this should defer to it.
 if($_POST['convertelement']) {
   global $xoopsModuleConfig;
   $element =& $element_handler->get($_POST['convertelement']);
