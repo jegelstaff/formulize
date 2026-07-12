@@ -15,6 +15,14 @@ import {
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
 
+// These tests share mutable, site-wide state: the ImpressCMS "allow new user registration" setting and
+// the Formulize "require account tokens" preference. One test needs registration OFF while the rest
+// need it ON, so they cannot safely run at the same time as each other — and CI runs the validate
+// suite with `--workers=4 --fully-parallel`, which overrides the serial defaults in playwright.config.js.
+// Serial mode keeps this file in a single worker (which also keeps beforeAll/afterAll, and their
+// save/restore of those settings, from straddling a test still in flight).
+test.describe.configure({ mode: 'serial' });
+
 // ============================================================
 // Phase — /signup.php public self-service account registration
 // ============================================================

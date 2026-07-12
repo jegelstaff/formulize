@@ -2,6 +2,11 @@ const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
 import { login } from '../../utils';
 
+// The second test reads the API key created by the first one (td#key-1), so they must run in order, in
+// the same worker. CI runs the validate suite with `--workers=4 --fully-parallel`, which overrides the
+// serial defaults in playwright.config.js — without this, the two race and the key may not exist yet.
+test.describe.configure({ mode: 'serial' });
+
 test.describe('Check that tools/list is responding', () => {
 	test('Create API Key', async ({ page }) => {
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);

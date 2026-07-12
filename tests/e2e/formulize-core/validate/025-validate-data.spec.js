@@ -1,6 +1,25 @@
 const { test, expect } = require('@playwright/test');
 import { login, waitForWorkingMessage } from '../../utils';
 
+/**
+ * Submit the "Change columns" popup, applying the boxes ticked in it.
+ *
+ * The popup's own button hands the column list to the opener and then calls window.self.close()
+ * (see updateCols() in modules/formulize/include/changecols.php), so the page being clicked destroys
+ * itself as a direct result of the click. Playwright's post-click bookkeeping then races the window
+ * disappearing and can fail with "Target page, context or browser has been closed" — more often when
+ * the machine is busy, which under `--workers=4 --fully-parallel` it is. So: don't wait after the
+ * click, and treat the popup closing as the signal that the click landed.
+ *
+ * @param {import('@playwright/test').Page} popup The "Change columns" popup page
+ */
+async function applyColumnChanges(popup) {
+	await Promise.all([
+		popup.waitForEvent('close'),
+		popup.getByRole('button', { name: 'Change columns' }).click({ noWaitAfter: true }),
+	]);
+}
+
 test.describe('Validate Data', () => {
 	test('Check the Romain Coin record is complete', async ({ page }) => {
 		await login(page, 'curator1', '12345');
@@ -48,7 +67,7 @@ test.describe('Validate Data', () => {
 		await page3.getByRole('checkbox', { name: 'Exhibit' }).check();
 		await page3.getByRole('checkbox', { name: 'Favourite artifact' }).check();
 		await page3.getByRole('checkbox', { name: 'Rating' }).check();
-		await page3.getByRole('button', { name: 'Change columns' }).click();
+		await applyColumnChanges(page3);
 
 		await expect(page.locator('#celladdress_2_0')).toContainText('1');
 		await expect(page.locator('#celladdress_2_1')).toContainText('Ancient History Staff');
@@ -104,7 +123,7 @@ test.describe('Validate Data', () => {
   	await page3.getByRole('checkbox', { name: 'Full description' }).check();
 		await page3.getByRole('checkbox', { name: 'Width' }).check();
 		await page3.getByRole('group', { name: 'Collections up arrow' }).getByLabel('Name').check();
-		await page3.getByRole('button', { name: 'Change columns' }).click();
+		await applyColumnChanges(page3);
 
 		await page.locator('input[name="search_artifacts_full_description"]').fill('canoe');
 		await page.getByRole('link', { name: 'Full description' }).click();
@@ -234,7 +253,7 @@ test.describe('Validate Data', () => {
 		await page3.bringToFront();
 		await page3.getByRole('checkbox', { name: 'ID Number' }).check();
 		await page3.getByRole('checkbox', { name: 'Short name' }).check();
-		await page3.getByRole('button', { name: 'Change columns' }).click();
+		await applyColumnChanges(page3);
 		await waitForWorkingMessage(page);
 		await expect(page.locator('#celladdress_2_0')).toContainText('François-Marie Arouet');
 		await expect(page.locator('#celladdress_3_0')).toContainText('Emilie Du Châtelet');
