@@ -248,6 +248,11 @@ if ($_GET['fid'] != "new") {
         $elements[$i]['content']['ele_handle'] = $ele_handle;
 				$elements[$i]['content']['inLink'] = in_array($ele_id, $elementsInRelationshipLinks);
         $ele_type = $thisElement->getVar('ele_type');
+        // NOTE: element conversion is deliberately offered only for the exact built-in types below,
+        // not for custom types that extend them. Conversion depends on the precise ele_value
+        // structure and stored data format of both the source and target types, and a custom
+        // subclass may repurpose either, so offering conversion for subclasses could corrupt them.
+        // If element classes ever grow a conversion API of their own, this switch should defer to it.
         switch($ele_type) {
           case("text"):
             $converttext = _AM_ELE_CONVERT_ML;
