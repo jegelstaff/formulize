@@ -47,9 +47,10 @@ class formulizeUserEauTypeElementHandler extends formulizeVirtualElementHandler 
 	 *
 	 * Returns "Regular" plus one entry per EAU form (singular name, or form_title as fallback).
 	 *
+	 * @param object $element The element object (not needed - the options come from the EAU forms)
 	 * @return array Associative array of option value => display label
 	 */
-	function getFilterOptions() {
+	function getFilterOptions($element = null) {
 		global $xoopsDB;
 		$options    = array('Regular' => 'Regular');
 		$formsTable = $xoopsDB->prefix('formulize_id');

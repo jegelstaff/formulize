@@ -3408,7 +3408,7 @@ function _findLinkedEntries($targetFormKeySelf, $targetFormFid, $valuesToLookFor
         if($entries_to_return !== false) {
             $totalEntriesToReturn = array_unique(array_merge($entries_to_return, $totalEntriesToReturn));
         }
-        if($selfEleValue[1] OR $selfElement->getVar('ele_type') == 'checkbox' OR $selfElement->getVar('ele_type') == 'checkboxLinked') {
+        if($selfEleValue[1] OR anyCheckboxElementType($selfElement->getVar('ele_type'))) {
             if($selfElement->isLinked AND $selfEleValue['snapshot'] == false) {
                 $entries_to_return = $data_handler_target->findAllEntriesWithValue($targetFormKeySelf, '%,'.$valueToLookFor.',%', $all_users, $all_groups, 'LIKE');
                 if($entries_to_return !== false) {
@@ -4498,7 +4498,9 @@ function writeElementValue($formframe, $elementIdentifier, $entry, $value, $appe
             }
         } elseif ($append=="append") {
             $prevValue = q("SELECT `".$element->getVar('ele_handle')."` FROM ".$xoopsDB->prefix("formulize_".$elementFormObject->getVar('form_handle'))." WHERE entry_id=".intval($entry));
-						$switchEleType = anySelectElementType($element->getVar('ele_type')) ? "select" : $element->getVar('ele_type');
+						// resolve custom/derived element types to whichever of the types below they are based on,
+						// so that a subclass of the radio element, the text element, etc, is handled correctly
+						$switchEleType = formulize_resolveEleType($element->getVar('ele_type'), array("checkbox", "checkboxLinked", "select", "date", "radio", "text", "textarea"));
             switch ($switchEleType) {
                 case "checkbox":
 								case "checkboxLinked":
@@ -4513,9 +4515,8 @@ function writeElementValue($formframe, $elementIdentifier, $entry, $value, $appe
                     }
                     break;
 
-                case "yn": // cannot append to yn
                 case "date": // cannot append to date
-                case "radio": // cannot append to radios
+                case "radio": // cannot append to radios (and yn, and any other radio-based type)
                     $valueToWrite = $value;
                     break;
 
@@ -5240,48 +5241,18 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
         	$ele_uitext = array();
         	list($options, $useValue) = formulize_getMetadataFilterOptions($element_identifier, $metadataFid);
         } else {
-					$ele_value = $elementObject->getVar('ele_value');
+					// Ask the element type itself what its filter options are, rather than switching on
+					// the ele_type string here. That way custom element types that extend a built-in
+					// type inherit the right behaviour automatically, and types whose stored values are
+					// codes (yn) can return the human readable options they want users to search on.
+					$optionsHandler = xoops_getmodulehandler($elementObject->getVar('ele_type').'Element', 'formulize');
+					$ele_value = $optionsHandler ? $optionsHandler->normalizeEleValue($elementObject->getVar('ele_value')) : $elementObject->getVar('ele_value');
 					$ele_uitext = $elementObject->getVar('ele_uitext');
-					$switchEleType = anySelectElementType($elementObject->getVar('ele_type')) ? "select" : $elementObject->getVar('ele_type');
-					switch ($switchEleType) {
-							case "select":
-									$options = $ele_value[2];
-									break;
-							case "checkbox":
-							case "checkboxLinked":
-									$checkboxHandler = xoops_getmodulehandler("checkboxElement", "formulize");
-									$ele_value = $checkboxHandler->backwardsCompatibility($ele_value);
-									$options = $ele_value[2];
-									break;
-							case "radio":
-									$options = $ele_value;
-									break;
-							case "provinceList":
-							case "provinceRadio":
-									$provinceListHandler = xoops_getmodulehandler("provinceListElement", "formulize");
-									$options = array_flip($provinceListHandler->getProvinceList()); // values we want in the filter need to be the array keys!
-									break;
-							case "yn":
-									$options = array(_YES=>1, _NO=>2);
-									break;
-							default:
-									$options = array();
-					}
+					$options = $optionsHandler ? $optionsHandler->getFilterOptions($elementObject) : array();
 					if(is_array($options)) {
 						foreach($options as $checkThisKey=>$checkThisValue) {
 							if(strstr($checkThisKey, "{OTHER|")) {
 								unset($options[$checkThisKey]);
-							}
-						}
-					}
-					if (empty($options)) {
-						$eleTypeForOpts  = $elementObject->getVar('ele_type');
-						$classFileForOpts = XOOPS_ROOT_PATH . '/modules/formulize/class/' . $eleTypeForOpts . 'Element.php';
-						if (file_exists($classFileForOpts)) {
-							require_once $classFileForOpts;
-							$optsHandler = xoops_getmodulehandler($eleTypeForOpts . 'Element', 'formulize');
-							if ($optsHandler && method_exists($optsHandler, 'getFilterOptions')) {
-								$options = $optsHandler->getFilterOptions();
 							}
 						}
 					}
@@ -8677,7 +8648,7 @@ function formulize_parseSearchesIntoFilter($searches) {
 					if ($ele_value[1]) {
 						$allowsMulti = true;
 					}
-				} elseif ($ele_type == "checkbox" OR $ele_type == "checkboxLinked") {
+				} elseif (anyCheckboxElementType($ele_type)) {
 					$allowsMulti = true;
 				}
 				if ($allowsMulti) {

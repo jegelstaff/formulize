@@ -1204,6 +1204,43 @@ class formulizeElementsHandler {
 		}
 	}
 
+	/**
+	 * Return the options that users can choose from when filtering/searching on this element.
+	 *
+	 * The KEYS of the returned array are the values that get submitted by the filter UI and
+	 * matched against the data (they are passed through the handler's prepareLiteralTextForDB()
+	 * before hitting the database, so an element whose stored values are codes can return
+	 * human readable keys here and translate them there - the yn element does exactly that).
+	 * The array values are only used as labels when the caller sets its $useValue flag, which
+	 * it does for linked elements and user lists.
+	 *
+	 * Element types whose options cannot be enumerated should return an empty array; the
+	 * caller then falls back to finding the distinct values present in the data.
+	 *
+	 * A string may be returned for linked elements, whose ele_value[2] is a "fid#*=:*handle"
+	 * specification that the caller resolves against the source form.
+	 *
+	 * @param object $element The element object to return the filter options for
+	 * @return array|string Associative array of filter value => label, or a linked element spec
+	 */
+	function getFilterOptions($element = null) {
+		return array();
+	}
+
+	/**
+	 * Bring an element's raw ele_value up to the current structure for this element type.
+	 *
+	 * Most element types have always stored ele_value in its current shape, so this is a
+	 * no-op for them. Types that changed their ele_value structure over time (the checkbox
+	 * element, notably) override this to migrate legacy values on read.
+	 *
+	 * @param array $ele_value The raw ele_value from the element object
+	 * @return array The ele_value in the structure this element type expects
+	 */
+	function normalizeEleValue($ele_value) {
+		return $ele_value;
+	}
+
 	// this method is used by custom elements, to do final output from the "local" formatDataForList method, so the custom element developer can simply set booleans there, and they will be enforced here
 	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
 		global $myts;
@@ -1341,28 +1378,186 @@ function optionIsValidForElement($option, $elementHandleOrId) {
  * @return bool
  */
 function anySelectElementType($type) {
-	static $cachedTypes = array();
-	if(isset($cachedTypes[$type])) {
-		return $cachedTypes[$type];
+	// A "select type" is the select element itself, or any element whose class extends it -
+	// selectLinked, selectUsers, autocomplete/autocompleteLinked/autocompleteUsers,
+	// listbox/listboxLinked/listboxUsers, and any custom subclass of those. They are all
+	// subclasses of formulizeSelectElement, so this reduces to the generic parent test.
+	return ($type === "select") ? true : elementTypeHasOtherTypeAsParent($type, "select");
+}
+
+/**
+ * Determine whether an element type is a subclass of another element type: i.e. its element
+ * class descends from (but is not) the parent type's element class.
+ *
+ * This is the general form of the pattern that anySelectElementType() used to hardcode.
+ * Throughout the codebase there are switch/case and if statements keyed on literal ele_type
+ * strings (e.g. case "radio":). Those miss custom element types that extend a built-in type.
+ * Instead of naming every subclass in every switch, code can ask
+ * elementTypeHasOtherTypeAsParent($type, 'select') and get a true answer for every descendant
+ * of formulizeSelectElement.
+ *
+ * Note: this is a strict subclass test (like is_subclass_of), so it returns FALSE when $type
+ * IS $parentType. Callers that want "is this type X or a subclass of X" should OR in an exact
+ * match, as anySelectElementType() does.
+ *
+ * The element-class naming convention is relied upon: type "radio" -> class formulizeRadioElement,
+ * type "checkboxLinked" -> class formulizeCheckboxLinkedElement, etc. ("formulize" . ucfirst(type)
+ * . "Element").
+ *
+ * @param string|object $type The ele_type string to test, or an element object
+ * @param string $parentType The candidate parent ele_type, e.g. 'select', 'radio'
+ * @return bool True if $type's element class is a subclass of the parent type's element class
+ */
+function elementTypeHasOtherTypeAsParent($type, $parentType) {
+	if(is_object($type)) {
+		$type = $type->getVar('ele_type');
 	}
-	$baseTypes = array("select","autocomplete","listbox");
-	$subTypes = array("","Linked","Users");
-	foreach($baseTypes as $base) {
-		foreach($subTypes as $sub) {
-			if ($type == $base.$sub) {
-				$cachedTypes[$type] = true;
-				return true;
+	if($type === $parentType) {
+		return false; // a type is not a subclass of itself
+	}
+	// the ancestry is cached per type, so this is just an in_array over a very short array
+	return in_array($parentType, formulize_eleTypeAncestry($type), true);
+}
+
+/**
+ * Return the ancestry of an element type: the ele_types of every element class it extends, with
+ * the nearest ancestor first. The walk stops at formulizeElement, which every element extends and
+ * which therefore tells us nothing.
+ *
+ * For example: "listboxLinked" -> array("selectLinked", "select")
+ *              "pointsRedemptionRadio" -> array("radio")
+ *              "text" -> array()
+ *
+ * This is THE ONLY place that pays the cost of inspecting the class hierarchy, and it is cached
+ * per element type - one entry per type, computed at most once per request. Every type check in
+ * this file (anySelectElementType, anyRadioElementType, anyCheckboxElementType,
+ * elementTypeHasOtherTypeAsParent, formulize_resolveEleType) then reduces to an in_array over an
+ * array that is typically empty or one or two entries long. That matters because these checks
+ * replaced straight string comparisons in hot loops (importing a file walks every column of every
+ * row), so they must not do any real work on the repeat calls.
+ *
+ * @param string $type The ele_type whose ancestry we want
+ * @return array The ele_types this type descends from, nearest ancestor first (empty if none)
+ */
+function formulize_eleTypeAncestry($type) {
+	static $cachedAncestry = array();
+	if(isset($cachedAncestry[$type])) {
+		return $cachedAncestry[$type];
+	}
+	$ancestry = array();
+	if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$type."Element.php")) {
+		if($customTypeHandler = xoops_getmodulehandler($type."Element", 'formulize')) {
+			$className = get_class($customTypeHandler->create());
+			while($className = get_parent_class($className)) {
+				$ancestorType = formulize_eleTypeForClassName($className);
+				if($ancestorType === '') {
+					break; // reached formulizeElement (or something unconventionally named), so there is nothing more to learn
+				}
+				$ancestry[] = $ancestorType;
 			}
 		}
 	}
-	if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$type."Element.php")) {
-		$customTypeHandler = xoops_getmodulehandler($type."Element", 'formulize');
-		$element = $customTypeHandler->create();
-		$cachedTypes[$type] = is_a($element, 'formulizeSelectElement');
-		return $cachedTypes[$type];
-	}
-	return false;
+	$cachedAncestry[$type] = $ancestry; // cache the misses too, so a type with no class file is not looked up on disk again
+	return $ancestry;
 }
+
+/**
+ * Take a type string and return true if it is any type of element based on the Radio type
+ *
+ * This covers the radio element itself, the yes/no element, and any custom element type that
+ * extends the radio element. Where the behaviour of those types genuinely differs (the option
+ * labels of a yes/no element, for instance) the difference is handled by the element classes
+ * themselves - see formulizeRadioElementHandler::getOptionLabel(), getFilterOptions() and
+ * previousEntryOptionKey(), and the yn overrides of them - so generic code can safely treat
+ * every one of these as a radio.
+ *
+ * @param string $type
+ * @return bool
+ */
+function anyRadioElementType($type) {
+	return ($type === "radio") ? true : elementTypeHasOtherTypeAsParent($type, "radio");
+}
+
+/**
+ * Take a type string and return true if it is any type of element based on the Checkbox type
+ *
+ * This covers the checkbox element, the checkboxLinked element (which extends it), and any
+ * custom element type that extends either. Checkbox based elements can hold multiple values,
+ * which is what most callers are really asking about.
+ *
+ * @param string $type
+ * @return bool
+ */
+function anyCheckboxElementType($type) {
+	return ($type === "checkbox") ? true : elementTypeHasOtherTypeAsParent($type, "checkbox");
+}
+
+/**
+ * Convert an element class name back into its ele_type, relying on the naming convention
+ * (type "checkboxLinked" <-> class formulizeCheckboxLinkedElement).
+ *
+ * @param string $className The element class name
+ * @return string The ele_type, or an empty string if the class is not a conventionally named
+ *                element class (formulizeElement itself resolves to an empty string, which is
+ *                what stops the hierarchy walk in formulize_resolveEleType)
+ */
+function formulize_eleTypeForClassName($className) {
+	if(substr($className, 0, 9) !== 'formulize' OR substr($className, -7) !== 'Element') {
+		return '';
+	}
+	return lcfirst(substr($className, 9, strlen($className) - 16)); // strip the "formulize" prefix (9 chars) and the "Element" suffix (7 chars)
+}
+
+/**
+ * Resolve an element type to the nearest type that the caller actually knows how to handle.
+ *
+ * This is the general answer to a problem that recurs everywhere the codebase switches on
+ * ele_type: a custom element type that extends a built-in type (a subclass of the radio
+ * element, or of the checkbox element, or of anything else) will not match any case in the
+ * switch, and so silently falls through to the default - even though it should behave exactly
+ * like the type it extends.
+ *
+ * Rather than needing a central registry of "canonical" element types (which cannot be derived
+ * reliably, since custom types are just files in the class folder), each caller passes the set
+ * of types IT handles - which is simply the list of its own case labels. This function then
+ * walks up the element's class hierarchy and returns the first ancestor type that appears in
+ * that set.
+ *
+ * Exact matches always win, which is what keeps subclasses that need to stay distinct working:
+ * the yn element extends the radio element, so a switch that lists both "yn" and "radio" still
+ * gets "yn" for a yes/no element, while a switch that only lists "radio" gets "radio" for it.
+ *
+ * If no ancestor is known to the caller, the type is returned unchanged, so the caller's
+ * default case applies exactly as it does today.
+ *
+ * Example:
+ *   $switchEleType = formulize_resolveEleType($ele_type, array('select', 'checkbox', 'radio'));
+ *   switch($switchEleType) { case 'radio': ... }
+ *   // "pointsRedemptionRadio" and "yn" both resolve to "radio"
+ *   // "listboxLinked" and "autocomplete" both resolve to "select"
+ *   // a custom subclass of the checkbox element resolves to "checkbox"
+ *
+ * @param string $type The ele_type to resolve
+ * @param array $knownTypes The ele_types the caller handles (ie: the case labels of its switch)
+ * @return string The nearest type in $knownTypes, or $type unchanged if none of its ancestors are known
+ */
+function formulize_resolveEleType($type, $knownTypes) {
+	// An exact match always wins, so types that need to stay distinct do. This is also the fast
+	// path: for the built in types that these switches are written around, it is the only work done.
+	if(in_array($type, $knownTypes, true)) {
+		return $type;
+	}
+	// Otherwise walk the (cached) ancestry, nearest ancestor first, and take the first one the
+	// caller knows about. No caching is needed here beyond the ancestry itself - this is a couple
+	// of in_array calls over arrays that are only ever a few entries long.
+	foreach(formulize_eleTypeAncestry($type) as $ancestorType) {
+		if(in_array($ancestorType, $knownTypes, true)) {
+			return $ancestorType;
+		}
+	}
+	return $type; // no ancestor is known to the caller, so its default case applies, as it does today
+}
+
 
 /**
  * Extract the form id and element handle from the ele_value of a linked element

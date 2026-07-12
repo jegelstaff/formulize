@@ -60,12 +60,16 @@ print "<table width=100%><tr><td width=5%></td><td width=90%>";
   <?php
   $ele_value=unserialize($elementMetaData['ele_value']);
   $ele_uitext=unserialize($elementMetaData['ele_uitext']);
-  switch($elementMetaData['ele_type']) {
-    case "radio":
+  // radio buttons and everything that extends them (yn, and custom radio-based types) have a
+  // list of options we can show. Ask the element type for each option's label, since some types
+  // store sentinel tokens rather than display text in their ele_value keys (yn stores _YES/_NO).
+  if(anyRadioElementType($elementMetaData['ele_type'])) {
+      $moreInfoHandler = xoops_getmodulehandler($elementMetaData['ele_type']."Element", "formulize");
       print "<tr><td class=\"odd\"><p><b>"._formulize_DE_MOREINFO_OPTIONS."</b></p>\n";
       print "<ul>\n";
       foreach($ele_value as $option=>$selected) {
-        $optionText = isset($ele_uitext[$option]) ? trans($option) ." &mdash; ".trans($ele_uitext[$option]) : trans($option);
+        $optionLabel = $moreInfoHandler ? $moreInfoHandler->getOptionLabel($option, null) : $option;
+        $optionText = isset($ele_uitext[$option]) ? trans($optionLabel) ." &mdash; ".trans($ele_uitext[$option]) : trans($optionLabel);
         print "<li>$optionText</li>\n";
       }
       print "</ul></td></tr>\n";

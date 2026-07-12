@@ -3392,7 +3392,7 @@ function _compileGoverningElements($entries, $elementObject, $renderedMarkupName
 	$type = $elementObject->getVar('ele_type');
 	$ele_value = $elementObject->getVar('ele_value');
 	// This determination does not always (or usually?) end up being used in the keys for the elements! But we have compensated for this by gathering the right stuff at the time the JS is generated from all the gathered metadata. See markupNameAttr function and its use.
-	if($type == "checkbox" OR $type == "checkboxLinked" OR (anySelectElementType($type) AND $ele_value[1])) {
+	if(anyCheckboxElementType($type) OR (anySelectElementType($type) AND $ele_value[1])) {
 		$additionalNameParts = "[]"; // set things up with the right [] for multiple value elements
 	} else {
 		$additionalNameParts = "";

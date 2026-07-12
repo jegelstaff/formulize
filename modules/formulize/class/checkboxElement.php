@@ -102,6 +102,30 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
         return new formulizeCheckboxElement();
     }
 
+	/**
+	 * Return the filter options for a checkbox element (and checkboxLinked, which extends this).
+	 * The options live in key 2 of ele_value, once the legacy ele_value structure has been
+	 * brought up to date by backwardsCompatibility().
+	 * @param object $element The element object
+	 * @return array Associative array of filter value => label
+	 */
+	function getFilterOptions($element = null) {
+		if(!$element) {
+			return array();
+		}
+		$ele_value = $this->normalizeEleValue($element->getVar('ele_value'));
+		return isset($ele_value[2]) ? $ele_value[2] : array();
+	}
+
+	/**
+	 * The checkbox element's ele_value structure changed over time, so migrate legacy values.
+	 * @param array $ele_value The raw ele_value from the element object
+	 * @return array The ele_value in the current structure
+	 */
+	function normalizeEleValue($ele_value) {
+		return $this->backwardsCompatibility($ele_value);
+	}
+
 		public function getDefaultEleValue() {
 			$ele_value = array();
 			$ele_value[2] = array(); // an array of options for the select box

@@ -159,6 +159,22 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 		return new formulizeSelectElement();
 	}
 
+	/**
+	 * Return the filter options for a select-type element (select, listbox, autocomplete, and
+	 * their Linked/Users variants). By convention these elements keep their options in key 2
+	 * of ele_value. For linked elements that is not a list of options but a "fid#*=:*handle"
+	 * specification string, which the caller resolves against the source form.
+	 * @param object $element The element object
+	 * @return array|string Associative array of filter value => label, or a linked element spec
+	 */
+	function getFilterOptions($element = null) {
+		if(!$element) {
+			return array();
+		}
+		$ele_value = $element->getVar('ele_value');
+		return isset($ele_value[2]) ? $ele_value[2] : array();
+	}
+
 	public function getDefaultEleValue() {
 		$ele_value = array();
 		$ele_value[ELE_VALUE_SELECT_NUMROWS] = 1; // number of rows in list box, set 1 when multiple is disabled or when autocomplete
