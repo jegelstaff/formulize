@@ -208,7 +208,7 @@ if($element->getVar('ele_dynamicdefault_source') != intval($_POST['elements-ele_
 if(isset($_POST['exportoptions_onoff']) AND $_POST['exportoptions_onoff']) {
     // linked elements cannot have exportoptions_onoff set, so we assume that ele_value[2] is an array, or ele_value is an array in the case of a radio button element
     $ele_value = $element->getVar('ele_value');
-    if($element->getVar('ele_type')=='radio') {
+    if(anyRadioElementType($element->getVar('ele_type'))) { // radio based elements (including yn) keep their options in a flat ele_value, not in key 2
         $options = array_keys($ele_value);
     } else {
         $options = array_keys($ele_value[2]);

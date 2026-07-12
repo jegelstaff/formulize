@@ -167,7 +167,7 @@ function importCsvSetup(&$importSet, $pkColumn=false) {
                         $mapIndex = $element;
 
                         // links?
-												$switchEleType = anySelectElementType($form_elementsq[$element]["ele_type"]) ? "select" : $form_elementsq[$element]["ele_type"];
+												$switchEleType = formulize_resolveEleType($form_elementsq[$element]["ele_type"], array("select", "checkbox", "checkboxLinked"));
         								switch ($switchEleType) {
                             case "select":
 														case "checkbox":
@@ -335,7 +335,7 @@ function importCsvValidate(&$importSet, $regfid, $validateOverride=false) {
 												}
 
                         // check columns from form
-                        $switchEleType = anySelectElementType($element["ele_type"]) ? "select" : $element["ele_type"];
+                        $switchEleType = formulize_resolveEleType($element["ele_type"], array("select", "checkbox", "checkboxLinked", "date", "provinceList", "provinceRadio", "radio", "yn"));
         								switch ($switchEleType) {
                             case "select":
                                 $ele_value = unserialize($element["ele_value"]);
@@ -808,7 +808,7 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
                     }
 
                     if ($row_value != "") {
-                        $switchEleType = anySelectElementType($element["ele_type"]) ? "select" : $element["ele_type"];
+                        $switchEleType = formulize_resolveEleType($element["ele_type"], array("select", "checkbox", "checkboxLinked", "date", "derived", "provinceList", "provinceRadio", "radio", "text", "textarea", "yn"));
         								switch ($switchEleType) {
 
                             case "derived":
@@ -1336,7 +1336,7 @@ function importCsvDebug(& $importSet) {
                 $element["ele_type"];
             $output .= "<td>";
 
-            $switchEleType = anySelectElementType($element["ele_type"]) ? "select" : $element["ele_type"];
+            $switchEleType = formulize_resolveEleType($element["ele_type"], array("select", "checkbox", "checkboxLinked", "radio"));
         		switch ($switchEleType) {
                 case "select":
                     $ele_value = unserialize($element["ele_value"]);

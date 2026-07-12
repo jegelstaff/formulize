@@ -1523,7 +1523,9 @@ class formulizeDataHandler {
 		// we need to determine if this element allows multiple values and prepare to handle it
 		$ele_type = $element->getVar('ele_type');
 		$ele_value = $element->getVar('ele_value');
-		$testEleType = anySelectElementType($ele_type) ? "select" : $ele_type;
+		// resolve custom/derived element types to whichever of the types below they are based on,
+		// so that a subclass of the radio element, the checkbox element, etc, is handled correctly
+		$testEleType = formulize_resolveEleType($ele_type, array("radio", "checkbox", "checkboxLinked", "select"));
 		switch($testEleType) {
 			case "radio":
 				$oldValues = array_keys($ele_value);
@@ -1538,7 +1540,7 @@ class formulizeDataHandler {
 				$oldValues = array_keys($ele_value[2]);
 				break;
 		}
-		$prefix = ($ele_type == "checkbox" OR $ele_type == "checkboxLinked" OR (anySelectElementType($ele_type) AND $ele_value[1])) ? "*=+*:" : ""; // multiple selection possible? if so, setup prefix
+		$prefix = (anyCheckboxElementType($ele_type) OR (anySelectElementType($ele_type) AND $ele_value[1])) ? "*=+*:" : ""; // multiple selection possible? if so, setup prefix
 		$newValues = array_keys($newValues);
 		global $xoopsDB;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');

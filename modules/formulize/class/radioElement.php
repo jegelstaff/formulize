@@ -127,6 +127,42 @@ class formulizeRadioElementHandler extends formulizeBaseClassForListsElementHand
 		return $ele_value;
 	}
 
+	/**
+	 * Return the filter options for a radio element: its ele_value is a flat array of
+	 * option text => default flag, and the option text is what is stored in the database,
+	 * so the ele_value keys are exactly the values the filter needs to match on.
+	 * @param object $element The element object
+	 * @return array Associative array of filter value => label
+	 */
+	function getFilterOptions($element = null) {
+		return $element ? $element->getVar('ele_value') : array();
+	}
+
+	/**
+	 * Given a value from a previous entry, work out which option position it corresponds to, so
+	 * the "copy from previous entry" UI can check the right radio button. For a plain radio the
+	 * value stored in the database is the option text itself, so we find its position among the
+	 * options. Element types that store codes rather than the option text (yn) override this.
+	 * @param string $value The value from the previous entry (as prepared for a dataset)
+	 * @param array $prevEleValue The ele_value of the element in the previous form
+	 * @return int|bool The zero-based position of the matching option, or false if there is no match
+	 */
+	function previousEntryOptionKey($value, $prevEleValue) {
+		return array_search($value, array_keys((array) $prevEleValue));
+	}
+
+	/**
+	 * Convert one of this element's ele_value keys into the label to show beside the radio button.
+	 * For a plain radio the option key IS the label, so this is a passthrough. Element types whose
+	 * option keys are sentinel tokens rather than display text (yn) override this.
+	 * @param string $optionKey One of the keys of the element's ele_value
+	 * @param object $element The element object
+	 * @return string The label to display for this option
+	 */
+	function getOptionLabel($optionKey, $element) {
+		return $optionKey;
+	}
+
 	// this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
 	// it receives the element object and returns an array of data that will go to the admin UI template
 	// when dealing with new elements, $element might be FALSE
@@ -254,14 +290,7 @@ class formulizeRadioElementHandler extends formulizeBaseClassForListsElementHand
 		$opt_count = 1;
 		global $myts;
     foreach($ele_value as $iKey=>$iValue) {
-			// yn are translated at runtime since webmaster and user might be in different languages
-			if($element->getVar('ele_type')	== 'yn') {
-				if($iKey == "_YES") {
-					$iKey = _YES;
-				} elseif($iKey == "_NO") {
-					$iKey = _NO;
-				}
-			}
+			$iKey = $this->getOptionLabel($iKey, $element);
 		  $options[$opt_count] = $myts->displayTarea($iKey, 1); // 1 means allow HTML through
 			if( $iValue > 0 ){
 				$selected = $opt_count;

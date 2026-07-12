@@ -1504,7 +1504,7 @@ function makeJoinTextIfFormLinksToIntermediary($ele_value, $linkSideElementHandl
 function multipleValuesAllowedForElement($elementHandleOrId) {
 	$metaData = formulize_getElementMetaData($elementHandleOrId, !is_numeric($elementHandleOrId));
 	$ele_value = unserialize($metaData['ele_value']);
-	if ($metaData['ele_type'] == 'checkbox' OR $metaData['ele_type'] == 'checkboxLinked' OR (is_array($ele_value) AND isset($ele_value[1]) AND $ele_value[1])) {
+	if (anyCheckboxElementType($metaData['ele_type']) OR (is_array($ele_value) AND isset($ele_value[1]) AND $ele_value[1])) {
 		return true;
 	}
 	return false;
@@ -2604,7 +2604,7 @@ function formulize_mapFormFieldFilter($element_id, $formFieldFilterMap)
 			$formFieldFilterMap[$array['id_form']][$element_id]['islinked'] = false;
 		}
 		$formFieldFilterMap[$array['id_form']][$element_id]['isyn'] = $array['ele_type'] == "yn" ? true : false;
-		if (($array['ele_type'] == "radio" OR $array['ele_type'] == "checkbox" OR anySelectElementType($array['ele_type'])) AND strstr($array['ele_value'], "{OTHER|")) {
+		if ((anyRadioElementType($array['ele_type']) OR anyCheckboxElementType($array['ele_type']) OR anySelectElementType($array['ele_type'])) AND strstr($array['ele_value'], "{OTHER|")) {
 			$formFieldFilterMap[$array['id_form']][$element_id]['hasother'] = true;
 		} else {
 			$formFieldFilterMap[$array['id_form']][$element_id]['hasother'] = false;
@@ -2669,7 +2669,7 @@ function formulize_elementAllowsMultipleSelections($elementOrHandle, $isHandle =
 	static $cachedElements = array();
 	if (!isset($cachedElements[$elementOrHandle])) {
 		$evqRow = formulize_getElementMetaData($elementOrHandle, $isHandle);
-		if ($evqRow['ele_type'] == 'checkbox' OR $evqRow['ele_type'] == 'checkboxLinked') {
+		if (anyCheckboxElementType($evqRow['ele_type'])) {
 			$cachedElements[$elementOrHandle] = true;
 		} elseif (anySelectElementType($evqRow['ele_type'])) {
 			$ele_value = unserialize($evqRow['ele_value']);

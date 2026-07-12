@@ -102,6 +102,57 @@ class formulizeYnElementHandler extends formulizeRadioElementHandler {
 		);
 	}
 
+	/**
+	 * Return the filter options for a yes/no element.
+	 *
+	 * Unlike a plain radio element, this element's ele_value keys are the _YES/_NO sentinel
+	 * tokens, and the values stored in the database are the codes 1 (yes) and 2 (no). So the
+	 * filter options must be keyed on the translated Yes/No text that users actually see and
+	 * type - prepareLiteralTextForDB() below converts that text back into the 1/2 codes when
+	 * the filter is applied to the database.
+	 * @param object $element The element object
+	 * @return array Associative array of filter value => label
+	 */
+	function getFilterOptions($element = null) {
+		return array(_YES => 1, _NO => 2);
+	}
+
+	/**
+	 * A yes/no element's ele_value keys are the _YES/_NO sentinel tokens, and the value coming
+	 * from a previous entry has already been converted to the translated Yes/No text by
+	 * prepareDataForDataset(). So the option text match that the radio element does would never
+	 * succeed here - map the translated text onto the fixed option positions instead (Yes is
+	 * always the first option, No always the second).
+	 * @param string $value The value from the previous entry (as prepared for a dataset)
+	 * @param array $prevEleValue The ele_value of the element in the previous form (not needed)
+	 * @return int|bool The zero-based position of the matching option, or false if there is no match
+	 */
+	function previousEntryOptionKey($value, $prevEleValue) {
+		if($value == _formulize_TEMP_QYES) {
+			return 0;
+		} elseif($value == _formulize_TEMP_QNO) {
+			return 1;
+		}
+		return false;
+	}
+
+	/**
+	 * This element's ele_value keys are the _YES/_NO sentinel tokens, not display text, so swap
+	 * them for the Yes/No language constants. This is done at runtime rather than being baked
+	 * into ele_value, since the webmaster and the user might be in different languages.
+	 * @param string $optionKey One of the keys of the element's ele_value
+	 * @param object $element The element object
+	 * @return string The label to display for this option
+	 */
+	function getOptionLabel($optionKey, $element) {
+		if($optionKey == "_YES") {
+			return _YES;
+		} elseif($optionKey == "_NO") {
+			return _NO;
+		}
+		return $optionKey;
+	}
+
 	// this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
 	// it receives the element object and returns an array of data that will go to the admin UI template
 	// when dealing with new elements, $element might be FALSE

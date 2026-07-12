@@ -39,6 +39,7 @@ include_once XOOPS_ROOT_PATH . '/class/xoopsformloader.php';
 require_once XOOPS_ROOT_PATH . '/modules/system/constants.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/formulize.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/frameworks.php';
+include_once XOOPS_ROOT_PATH . '/modules/formulize/class/elements.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/elementrenderer.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/constants.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions.php';
