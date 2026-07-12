@@ -212,7 +212,7 @@ class formulizePermHandler {
             $member_handler =& xoops_gethandler('member');
             $groups = $user_id == 0 ? array(XOOPS_GROUP_ANONYMOUS) : $member_handler->getGroupsByUser($user_id);
 
-            if ("new" == $entry_id or "" == $entry_id) {
+            if (formulize_isNewEntryId($entry_id) or "" == $entry_id) {
                 if ("update" == $action) {
                     // user has permission to add new entries
                     self::$cached_permissions[$cache_key] = $gperm_handler->checkRight("add_own_entry", $form_id, $groups, self::$formulize_module_id);

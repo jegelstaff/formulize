@@ -470,7 +470,12 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 				$rawSubmitted2faMethod = $changes['rawSubmitted2faMethod'];
 				$passwordChanged = $changes['passwordChanged'];
 				$cleanupAppSecret = $changes['cleanupAppSecret'];
-				
+
+				// For new user accounts, validate required fields before writing anything
+				if(!$entryUserId) {
+					self::validateNewUserAccountVars($formId, $pendingUserVars, $pendingProfileVars);
+				}
+
 				// Validate 2FA transition if user is editing their own account
 				if(!self::validateOwnAccount2faTransition(
 					$entryUserId, $userObject, $profile, $pendingUserVars, $pendingProfileVars,
@@ -592,6 +597,96 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			'old2faPhone' => $old2faPhone,
 			'oldEmail' => $oldEmail
 		);
+	}
+
+	/**
+	 * Validate required fields for a new user account before writing.
+	 * Replicates the JS validation rules from each userAccount element type.
+	 * Only called when $entryUserId is falsy (creating a new user, not updating).
+	 * Throws Exception with a user-facing message if validation fails.
+	 *
+	 * @param int   $formId           The EAU form ID
+	 * @param array $pendingUserVars  Collected user-table changes (from collectPendingUserVars)
+	 * @param array $pendingProfileVars  Collected profile-table changes (from collectPendingUserVars)
+	 */
+	private static function validateNewUserAccountVars(int $formId, array $pendingUserVars, array $pendingProfileVars): void {
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+
+		// Username (login_name): required if the element exists on this form
+		$hasUsernameElement = (bool)$element_handler->get('formulize_user_account_username_'.$formId);
+		if($hasUsernameElement && empty($pendingUserVars['login_name'])) {
+			throw new Exception('A username is required to create a user account.');
+		}
+
+		// Username uniqueness
+		if(!empty($pendingUserVars['login_name'])) {
+			global $xoopsDB;
+			$result = $xoopsDB->query("SELECT uid FROM " . $xoopsDB->prefix('users') . " WHERE login_name = " . $xoopsDB->quoteString($pendingUserVars['login_name']));
+			if($xoopsDB->fetchArray($result)) {
+				throw new Exception('Username "' . htmlspecialchars($pendingUserVars['login_name'], ENT_QUOTES) . '" is already taken.');
+			}
+		}
+
+		// First and last name (both write to uname): required if either element exists
+		$hasFirstNameElement = (bool)$element_handler->get('formulize_user_account_firstname_'.$formId);
+		$hasLastNameElement  = (bool)$element_handler->get('formulize_user_account_lastname_'.$formId);
+		if(($hasFirstNameElement || $hasLastNameElement) && empty($pendingUserVars['uname'])) {
+			throw new Exception('A name is required to create a user account.');
+		}
+
+		// Password: required for new users if the element exists on this form
+		$hasPasswordElement = (bool)$element_handler->get('formulize_user_account_password_'.$formId);
+		if($hasPasswordElement && empty($pendingUserVars['pass'])) {
+			throw new Exception('A password is required to create a user account.');
+		}
+
+		// Email and phone: at least one required if either element exists on this form
+		$emailElement = $element_handler->get('formulize_user_account_email_'.$formId);
+		$phoneElement = $element_handler->get('formulize_user_account_phone_'.$formId);
+		$hasEmailElement = (bool)$emailElement;
+		$hasPhoneElement = (bool)$phoneElement;
+
+		$hasEmail = !empty($pendingUserVars['email']);
+		$hasPhone = !empty($pendingProfileVars['2faphone']);
+
+		if($hasEmailElement || $hasPhoneElement) {
+			if(!$hasEmail && !$hasPhone) {
+				if($hasEmailElement && $hasPhoneElement) {
+					throw new Exception('Please provide either an email address or a phone number.');
+				} elseif($hasEmailElement) {
+					throw new Exception('An email address is required to create a user account.');
+				} else {
+					throw new Exception('A phone number is required to create a user account.');
+				}
+			}
+		}
+
+		// Email format: must match the pattern enforced in the JS
+		if($hasEmail) {
+			if(!preg_match('/^\w+([\.\-]?\w+)*@\w+([\.\-]?\w+)*(\.\w{2,63})+$/', $pendingUserVars['email'])) {
+				throw new Exception('The email address "' . htmlspecialchars($pendingUserVars['email'], ENT_QUOTES) . '" is not valid.');
+			}
+		}
+
+		// Email uniqueness
+		if($hasEmail) {
+			global $xoopsDB;
+			$result = $xoopsDB->query("SELECT uid FROM " . $xoopsDB->prefix('users') . " WHERE email = " . $xoopsDB->quoteString($pendingUserVars['email']));
+			if($xoopsDB->fetchArray($result)) {
+				throw new Exception('The email address "' . htmlspecialchars($pendingUserVars['email'], ENT_QUOTES) . '" is already in use.');
+			}
+		}
+
+		// Phone digit count: must match the number of X's in the element's configured format
+		// (pendingProfileVars['2faphone'] is already digits-only after collectPendingUserVars strips formatting)
+		if($hasPhone && $phoneElement) {
+			$phoneOptions = $phoneElement->getVar('ele_value');
+			$format = is_array($phoneOptions) && isset($phoneOptions['format']) ? $phoneOptions['format'] : 'XXX-XXX-XXXX';
+			$requiredDigits = substr_count($format, 'X');
+			if($requiredDigits > 0 && strlen($pendingProfileVars['2faphone']) !== $requiredDigits) {
+				throw new Exception('Phone number must have exactly ' . $requiredDigits . ' digits (format: ' . $format . ').');
+			}
+		}
 	}
 
 	/**

@@ -310,6 +310,21 @@ class formulizeForm extends FormulizeObject {
         if ("custom_edit_check" == $key) {
             $this->cache_custom_edit_check_code();
         }
+        if ("pi" == $key AND intval($value) > 0 AND $this->getVar('entries_are_groups')) {
+            // On entries_are_groups forms the PI element must always be required: the entry-group
+            // names are built from the PI value, so every entry needs one. Limited to EAG forms on
+            // purpose — enforcing it for all forms would also make the auto-designated PI (the first
+            // data element on any form) required, which is too aggressive for regular forms.
+            // setVar('pi', ...) is the single chokepoint for designating a form's PI, so this covers
+            // every path (admin element names page, the upsert, MCP, relationship connection options).
+            // Object hydration from the database goes through assignVar(), not setVar(), so this never
+            // fires on load — only on an actual (re)designation, by which point the element exists.
+            $element_handler = xoops_getmodulehandler('elements', 'formulize');
+            if (($piElement = $element_handler->get(intval($value))) AND $piElement->getVar('ele_required', 'n') != 1) {
+                $piElement->setVar('ele_required', 1);
+                $element_handler->insert($piElement);
+            }
+        }
     }
 
     protected function on_before_save_function_name() {

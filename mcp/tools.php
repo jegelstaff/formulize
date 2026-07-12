@@ -1989,6 +1989,12 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 	 * Write entry data to a form (used by both create and update tools)
 	 * The form id is not actually required in the underlying formulize_writeEntry function, because the element references are globally unique and the form can be derived from them.
 	 * However, this method still validates that the form exists and that the elements are part of the form, which is useful since the AI assistant might have hallucinated elements!
+	 *
+	 * NOTE: Writing is NOT atomic. Entries are written one at a time in a loop with no surrounding
+	 * transaction, so a failure anywhere (a thrown validation error, a permission problem, a base
+	 * conditions failure, etc.) cancels the whole operation but leaves everything written up to that
+	 * point committed. A batch can therefore be partially applied when it throws.
+	 *
 	 * @param int $formId The ID of the form to write the entry to
 	 * @param string $operation Either 'create' or 'update'
 	 * @param array $data The data to write. Each value is an array of key-value pairs, representing the element handles and values of the data to store. If $operation is 'update', entry_id must be a key and the value is the entry ID to update.
@@ -2152,17 +2158,102 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 
 		}
 
-		// Step 3: Write the entry
+		// Load form object for EAU/EAG detection
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($formId);
+		$isEauForm = $formObject && $formObject->getVar('entries_are_users');
+		$isEagForm = $formObject && $formObject->getVar('entries_are_groups');
+		$isSystemUsersTableForm = $formObject && $formObject->isSystemUsersTableForm();
+
+		$allWrittenEntryIds = []; // Track written entry IDs for connected-form EAU processing
+		$userIdsFromSubmission = []; // entryId => userId for entries where processUserAccountSubmission ran
+
+		// Step 3: Write the entries
 		// keys are entry ids when updating, or sequential integers when creating
-		foreach($preparedData as $i => $entryData) {
+		foreach(array_keys($preparedData) as $i) {
 			$entryId = $operation == 'create' ? 'new' : $i;
-			$resultEntryId = formulize_writeEntry($entryData, $entryId); // writes data and manages ownership info
+			// For EAU creates, use a unique sentinel per iteration so the processUserAccountSubmission
+			// static cache (keyed on formId-entryId) doesn't collapse multiple creates into one result.
+			// intval('new_N') === 0, so loadOrCreateUserContext still treats it as a new user.
+			$postEntryId = $operation == 'create' ? 'new_'.$i : $i;
+			$userId = null;
+
+			// EAU: move user account element values from preparedData into $_POST, then call processUserAccountSubmission
+			if($isEauForm && !$isSystemUsersTableForm) {
+				$injectedPostKeys = [];
+				foreach($preparedData[$i] as $handle => $value) {
+					$elementObj = _getElementObject($handle);
+					if(!$elementObj || !$elementObj->isUserAccountElement) {
+						continue;
+					}
+					if($elementObj->readOnly) {
+						// UID element — cannot be set directly; it is set by processUserAccountSubmission
+						unset($preparedData[$i][$handle]);
+						continue;
+					}
+					$elementId = $elementObj->getVar('ele_id');
+					$_POST['decue_'.$formId.'_'.$postEntryId.'_'.$elementId] = 1;
+					$_POST['de_'.$formId.'_'.$postEntryId.'_'.$elementId] = $value;
+					$injectedPostKeys[] = 'decue_'.$formId.'_'.$postEntryId.'_'.$elementId;
+					$injectedPostKeys[] = 'de_'.$formId.'_'.$postEntryId.'_'.$elementId;
+					unset($preparedData[$i][$handle]);
+				}
+				if(!empty($injectedPostKeys)) {
+					$userId = formulizeElementsHandler::processUserAccountSubmission($formId, $postEntryId);
+					foreach($injectedPostKeys as $postKey) {
+						unset($_POST[$postKey]);
+					}
+					if($userId) {
+						$preparedData[$i]['formulize_user_account_uid_'.$formId] = $userId;
+					} else {
+						// No user id came back. Validation failures (missing/invalid fields, duplicate
+						// username/email) throw and surface via the dispatcher, so a falsy return here means
+						// the account was silently not created/updated — either the entry does not meet the
+						// form's base conditions, or the user/profile write failed. Surface it rather than
+						// reporting a misleading success with a null entry id.
+						$entryDescriptor = $entryId === 'new' ? 'the new entry' : "entry ID $entryId";
+						if(!formulizeHandler::entriesAreUsersEntryMeetsBaseConditions($formId, $postEntryId, cacheId: 'preWrite')) {
+							throw new FormulizeMCPException("$entryDescriptor does not meet the base conditions required to become a user account on form $formId, so no user account was created.", 'invalid_data');
+						}
+						throw new FormulizeMCPException("Failed to create or update the user account for $entryDescriptor on form $formId.", 'database_error');
+					}
+				}
+			}
+
+			// Write the entry
+			$resultEntryId = null;
+			if(!empty($preparedData[$i])) {
+				$resultEntryId = formulize_writeEntry($preparedData[$i], $entryId); // writes data and manages ownership info
+			}
 			$finalEntryId = ($entryId === 'new') ? $resultEntryId : $entryId; // for updates, formulize_writeEntry can return null if no data actually changed from current DB state
+
 			// Step 4: Update derived values
-			formulize_updateDerivedValues($finalEntryId, $formId, $relationshipId);
+			if($finalEntryId) {
+				formulize_updateDerivedValues($finalEntryId, $formId, $relationshipId);
+			}
+
+			// Track written entry IDs and user IDs for EAU/EAG post-processing
+			if($finalEntryId) {
+				$allWrittenEntryIds[] = $finalEntryId;
+				if($userId) {
+					$userIdsFromSubmission[$finalEntryId] = $userId; // re-key from 'new' to real entry ID
+				}
+			}
+
+			// EAG post-write: sync entry-specific groups
+			if($isEagForm && $finalEntryId) {
+				formulizeHandler::syncEntryGroups($formId, $finalEntryId);
+			}
+
 			// Lastly, put the entry id into the prepared data for reference
 			$preparedData[$i] = array_merge(array('entry_id' => $finalEntryId), $preparedData[$i]);
 		}
+
+		// EAU post-write: process group memberships for all written entries (direct, connected-form, and fallback)
+		formulizeHandler::processEauGroupMembershipsForWrittenEntries(
+			[$formId => $allWrittenEntryIds],
+			[$formId => $userIdsFromSubmission]
+		);
 
 		$response = [
 			'success' => true,

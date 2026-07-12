@@ -646,6 +646,27 @@ function formulize_anonHoldsEntry($form_id, $entry_id) {
 
 
 /**
+ * Determine whether an entry id represents a not-yet-saved (new) entry.
+ *
+ * The canonical sentinel for a new entry is the string "new". Some callers that create
+ * several entries in a single request need per-entry-unique sentinels so that caches keyed
+ * on the entry id do not collapse multiple creations together (e.g. the MCP write loop uses
+ * "new_0", "new_1", ...). Those suffixed sentinels are still logically "new", so permission
+ * and access checks must treat them the same as "new".
+ *
+ * Matches exactly "new" or "new_" followed by one or more digits. It deliberately does NOT
+ * match the subform new-entry patterns used elsewhere (e.g. "new1", "new1x5"), which are
+ * normalised to "new" before they ever reach the permission functions.
+ *
+ * @param mixed $entry_id The entry id to test
+ * @return bool True if the entry id is a new-entry sentinel
+ */
+function formulize_isNewEntryId($entry_id) {
+    return $entry_id === "new" || (is_string($entry_id) && preg_match('/^new_\d+$/', $entry_id) === 1);
+}
+
+
+/**
  * Perform security check for a form and entry
  *
  * Checks if a user has permission to access a specific form and entry.
@@ -727,7 +748,7 @@ function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups=
         return false;
     }
 
-    if ($entry_id == "new" AND !$gperm_handler->checkRight("add_own_entry", $form_id, $groups, $mid)) {
+    if (formulize_isNewEntryId($entry_id) AND !$gperm_handler->checkRight("add_own_entry", $form_id, $groups, $mid)) {
 				$cachedSecurityChecks[$form_id][$entry_id] = false;
         return false;
     }
@@ -737,7 +758,7 @@ function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups=
     // any entry if they have view_globalscope
     // other users in the appropriate group if they have view_groupscope
     // --report overrides added in here for display of entries in reports
-    if ($entry_id AND $entry_id != "new" AND $entry_id != "proxy") {
+    if ($entry_id AND !formulize_isNewEntryId($entry_id) AND $entry_id != "proxy") {
         $view_globalscope = $gperm_handler->checkRight("view_globalscope", $form_id, $groups, $mid);
         if (!$view_globalscope) {
 
@@ -10897,7 +10918,7 @@ function getSortTitleAndIcon($elementHandle) {
 function checkConditionsAgainstAnEntry($elementFilterSettings, $form_id, $entry_id, $elementObject = null, $frid = 0, $cacheId = "") {
 	// need to check if there's a condition on this element that is met or not
 	static $cachedEntries = array();
-	if($entry_id != "new") {
+	if(!formulize_isNewEntryId($entry_id)) {
 		$cacheKey = $form_id.'_'.$entry_id.'_'.$frid.$cacheId;
 		if(!isset($cachedEntries[$cacheKey])) {
 			$cachedEntries[$cacheKey] = gatherDataset($form_id, filter: $entry_id, frid: $frid, bypassCache: true);
@@ -11027,8 +11048,8 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 		if(substr($filterTerms[$i],0,1) == "{" AND substr($filterTerms[$i],-1)=="}") {
 			$handle_reference = substr($filterTerms[$i],1,-1);
 			if($filterElements[$i] != 'creation_uid' AND $filterElements[$i] != 'mod_uid') { // comparing to a regular element, get the db value
-				$filterTerms[$i] = $entry == 'new' ? '' : getValue($entryData[0], $handle_reference); // get blank, but we could try to get defaults like below
-			} elseif($entry != 'new') { // comparing to user metadata field, entry is not new
+				$filterTerms[$i] = formulize_isNewEntryId($entry) ? '' : getValue($entryData[0], $handle_reference); // get blank, but we could try to get defaults like below
+			} elseif(!formulize_isNewEntryId($entry)) { // comparing to user metadata field, entry is not new
 				// take a wild guess that the reference is to something that should be a uid in the db...
 				$element_handler = xoops_getmodulehandler('elements', 'formulize');
 				$form_handler = xoops_getmodulehandler('forms', 'formulize');
@@ -11047,7 +11068,7 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 		$entryKey = is_numeric($entry) ? intval($entry) : $entry;
 		if(isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entryKey]) AND array_key_exists($filterElements[$i], $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entryKey])) {
 			$compValue = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entryKey][$filterElements[$i]];
-		} elseif($entry == "new") {
+		} elseif(formulize_isNewEntryId($entry)) {
 			$elementObject = $element_handler->get($filterElements[$i]);
 			if(is_object($elementObject)) {
 				$defaultValueMap = getEntryDefaultsInDBFormat($elementObject);
