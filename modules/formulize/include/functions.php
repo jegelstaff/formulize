@@ -5245,8 +5245,11 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
 					// the ele_type string here. That way custom element types that extend a built-in
 					// type inherit the right behaviour automatically, and types whose stored values are
 					// codes (yn) can return the human readable options they want users to search on.
-					$optionsHandler = xoops_getmodulehandler($elementObject->getVar('ele_type').'Element', 'formulize');
-					$ele_value = $optionsHandler ? $optionsHandler->normalizeEleValue($elementObject->getVar('ele_value')) : $elementObject->getVar('ele_value');
+					// the true flag makes the handler optional: if the element type has no class file (a custom
+					// type that was removed, for instance) we get false back instead of a fatal error, and the
+					// fallbacks below apply
+					$optionsHandler = xoops_getmodulehandler($elementObject->getVar('ele_type').'Element', 'formulize', true);
+					$ele_value = $elementObject->getVar('ele_value'); // element classes present ele_value in its current structure, migrating legacy stored structures if necessary (see the checkbox element's getVar)
 					$ele_uitext = $elementObject->getVar('ele_uitext');
 					$options = $optionsHandler ? $optionsHandler->getFilterOptions($elementObject) : array();
 					if(is_array($options)) {

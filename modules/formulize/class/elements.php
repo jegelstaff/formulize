@@ -1227,20 +1227,6 @@ class formulizeElementsHandler {
 		return array();
 	}
 
-	/**
-	 * Bring an element's raw ele_value up to the current structure for this element type.
-	 *
-	 * Most element types have always stored ele_value in its current shape, so this is a
-	 * no-op for them. Types that changed their ele_value structure over time (the checkbox
-	 * element, notably) override this to migrate legacy values on read.
-	 *
-	 * @param array $ele_value The raw ele_value from the element object
-	 * @return array The ele_value in the structure this element type expects
-	 */
-	function normalizeEleValue($ele_value) {
-		return $ele_value;
-	}
-
 	// this method is used by custom elements, to do final output from the "local" formatDataForList method, so the custom element developer can simply set booleans there, and they will be enforced here
 	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
 		global $myts;
