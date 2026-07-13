@@ -3408,7 +3408,7 @@ function _findLinkedEntries($targetFormKeySelf, $targetFormFid, $valuesToLookFor
         if($entries_to_return !== false) {
             $totalEntriesToReturn = array_unique(array_merge($entries_to_return, $totalEntriesToReturn));
         }
-        if($selfEleValue[1] OR $selfElement->getVar('ele_type') == 'checkbox' OR $selfElement->getVar('ele_type') == 'checkboxLinked') {
+        if($selfEleValue[1] OR anyCheckboxElementType($selfElement->getVar('ele_type'))) {
             if($selfElement->isLinked AND $selfEleValue['snapshot'] == false) {
                 $entries_to_return = $data_handler_target->findAllEntriesWithValue($targetFormKeySelf, '%,'.$valueToLookFor.',%', $all_users, $all_groups, 'LIKE');
                 if($entries_to_return !== false) {
@@ -3560,15 +3560,19 @@ function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $t
  */
 function sendNotifications($fid, $event, $entries) {
 
-		$entries = array_unique($entries);
-
     // don't send a notification twice, so we store what we have processed already and don't process again
+		$entries = array_unique($entries);
     static $processedNotifications = array();
-    $serializedEntries = serialize($entries);
-    if (isset($processedNotifications[$fid][$event][$serializedEntries])) {
-        return;
-    }
-    $processedNotifications[$fid][$event][$serializedEntries] = true;
+		foreach($entries as $i => $entry_id) {
+			if (isset($processedNotifications[$fid][$event][$entry_id])) {
+				unset($entries[$i]);
+			} else {
+				$processedNotifications[$fid][$event][$entry_id] = true;
+			}
+		}
+		if(empty($entries)) {
+			return;
+		}
 
 		global $xoopsDB, $xoopsUser, $xoopsConfig, $renderedFormulizeScreen;
 
@@ -4378,20 +4382,21 @@ function writeElementValue($formframe, $elementIdentifier, $entry, $value, $appe
 		$element_id = $element->getVar('ele_id');
     $ele_value = $element->getVar('ele_value');
 
+    // yn elements (and any custom types based on them) store 1/2 codes, so let the element class
+    // convert Yes/No text into the codes, via its prepareLiteralTextForDB method
+    $ynTypeHandler = elementTypeIsOrExtends($element, "yn") ? xoops_getmodulehandler($element->getVar('ele_type')."Element", "formulize") : null;
     if (!is_array($value)) { // value can be an array of multiple values -- initially that only worked for linked selectboxes
-        if ($element->getVar('ele_type') == "yn") {
-            $value = strtoupper($value) == strtoupper(_formulize_TEMP_QYES) ? 1 : $value;
-            $value = strtoupper($value) == strtoupper(_formulize_TEMP_QNO) ? 2 : $value;
+        if ($ynTypeHandler) {
+            $value = $ynTypeHandler->prepareLiteralTextForDB($value, $element);
         } else {
             $value = $myts->htmlSpecialChars($value);
         }
     } else {
         foreach ($value as $id=>$thisValue) {
-            if ($element->getVar('ele_type') == "yn") {
-                $value[$id] = strtoupper($value[$id]) == strtoupper(_formulize_TEMP_QYES) ? 1 : $value[$id];
-                $value[$id] = strtoupper($value[$id]) == strtoupper(_formulize_TEMP_QNO) ? 2 : $value[$id];
+            if ($ynTypeHandler) {
+                $value[$id] = $ynTypeHandler->prepareLiteralTextForDB($thisValue, $element);
             } else {
-                $value[$id] = $myts->htmlSpecialChars($value[$id]);
+                $value[$id] = $myts->htmlSpecialChars($thisValue);
             }
         }
     }
@@ -4498,7 +4503,9 @@ function writeElementValue($formframe, $elementIdentifier, $entry, $value, $appe
             }
         } elseif ($append=="append") {
             $prevValue = q("SELECT `".$element->getVar('ele_handle')."` FROM ".$xoopsDB->prefix("formulize_".$elementFormObject->getVar('form_handle'))." WHERE entry_id=".intval($entry));
-						$switchEleType = anySelectElementType($element->getVar('ele_type')) ? "select" : $element->getVar('ele_type');
+						// resolve custom/derived element types to whichever of the types below they are based on,
+						// so that a subclass of the radio element, the text element, etc, is handled correctly
+						$switchEleType = formulize_resolveEleType($element->getVar('ele_type'), array("checkbox", "checkboxLinked", "select", "date", "radio", "text", "textarea"));
             switch ($switchEleType) {
                 case "checkbox":
 								case "checkboxLinked":
@@ -4513,9 +4520,8 @@ function writeElementValue($formframe, $elementIdentifier, $entry, $value, $appe
                     }
                     break;
 
-                case "yn": // cannot append to yn
                 case "date": // cannot append to date
-                case "radio": // cannot append to radios
+                case "radio": // cannot append to radios (and yn, and any other radio-based type)
                     $valueToWrite = $value;
                     break;
 
@@ -5240,48 +5246,21 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
         	$ele_uitext = array();
         	list($options, $useValue) = formulize_getMetadataFilterOptions($element_identifier, $metadataFid);
         } else {
-					$ele_value = $elementObject->getVar('ele_value');
+					// Ask the element type itself what its filter options are, rather than switching on
+					// the ele_type string here. That way custom element types that extend a built-in
+					// type inherit the right behaviour automatically, and types whose stored values are
+					// codes (yn) can return the human readable options they want users to search on.
+					// the true flag makes the handler optional: if the element type has no class file (a custom
+					// type that was removed, for instance) we get false back instead of a fatal error, and the
+					// fallbacks below apply
+					$optionsHandler = xoops_getmodulehandler($elementObject->getVar('ele_type').'Element', 'formulize', true);
+					$ele_value = $elementObject->getVar('ele_value'); // element classes present ele_value in its current structure, migrating legacy stored structures if necessary (see the checkbox element's getVar)
 					$ele_uitext = $elementObject->getVar('ele_uitext');
-					$switchEleType = anySelectElementType($elementObject->getVar('ele_type')) ? "select" : $elementObject->getVar('ele_type');
-					switch ($switchEleType) {
-							case "select":
-									$options = $ele_value[2];
-									break;
-							case "checkbox":
-							case "checkboxLinked":
-									$checkboxHandler = xoops_getmodulehandler("checkboxElement", "formulize");
-									$ele_value = $checkboxHandler->backwardsCompatibility($ele_value);
-									$options = $ele_value[2];
-									break;
-							case "radio":
-									$options = $ele_value;
-									break;
-							case "provinceList":
-							case "provinceRadio":
-									$provinceListHandler = xoops_getmodulehandler("provinceListElement", "formulize");
-									$options = array_flip($provinceListHandler->getProvinceList()); // values we want in the filter need to be the array keys!
-									break;
-							case "yn":
-									$options = array(_YES=>1, _NO=>2);
-									break;
-							default:
-									$options = array();
-					}
+					$options = ($optionsHandler AND method_exists($optionsHandler, 'getFilterOptions')) ? $optionsHandler->getFilterOptions($elementObject) : array();
 					if(is_array($options)) {
 						foreach($options as $checkThisKey=>$checkThisValue) {
 							if(strstr($checkThisKey, "{OTHER|")) {
 								unset($options[$checkThisKey]);
-							}
-						}
-					}
-					if (empty($options)) {
-						$eleTypeForOpts  = $elementObject->getVar('ele_type');
-						$classFileForOpts = XOOPS_ROOT_PATH . '/modules/formulize/class/' . $eleTypeForOpts . 'Element.php';
-						if (file_exists($classFileForOpts)) {
-							require_once $classFileForOpts;
-							$optsHandler = xoops_getmodulehandler($eleTypeForOpts . 'Element', 'formulize');
-							if ($optsHandler && method_exists($optsHandler, 'getFilterOptions')) {
-								$options = $optsHandler->getFilterOptions();
 							}
 						}
 					}
@@ -8677,7 +8656,7 @@ function formulize_parseSearchesIntoFilter($searches) {
 					if ($ele_value[1]) {
 						$allowsMulti = true;
 					}
-				} elseif ($ele_type == "checkbox" OR $ele_type == "checkboxLinked") {
+				} elseif (anyCheckboxElementType($ele_type)) {
 					$allowsMulti = true;
 				}
 				if ($allowsMulti) {
@@ -10981,8 +10960,7 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 	$evaluationCondition = "";
 
 	// convert the internal database representation to the displayed value, if this element has uitext that we're supposed to use
-	// translate yes/no choices for yes/no elements if French is active language
-	global $xoopsConfig;
+	// and normalize yes/no terms into the translated text that datasets contain, since the conditions are evaluated against dataset values
 	$element_handler = xoops_getmodulehandler('elements', 'formulize');
 
 	foreach ($filterElements as $key => $element) {
@@ -10997,9 +10975,17 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 			if($element_metadata['ele_uitextshow'] AND isset($element_metadata['ele_uitext'])) {
 				$filterTerms[$key] = formulize_swapUIText($filterTerms[$key], unserialize($element_metadata['ele_uitext']));
 			}
-			if($element_metadata['ele_type'] == 'yn' AND ($filterTerms[$key] == 'Yes' OR $filterTerms[$key] == 'No') AND $xoopsConfig['language'] == 'french') {
-				$filterTerms[$key] = $filterTerms[$key] == 'Yes' ? 'Oui' : $filterTerms[$key];
-				$filterTerms[$key] = $filterTerms[$key] == 'No' ? 'Non' : $filterTerms[$key];
+			// yn elements (and their subclasses) store codes but their dataset values are translated
+			// Yes/No text, so convert whatever the user typed into the standard readable value
+			// that datasets contain in the active language. Leave the term alone if it doesn't
+			// convert to anything, so an invalid term fails to match, rather than matching blanks.
+			if(elementTypeIsOrExtends($element_metadata['ele_type'], 'yn') AND $filterTerms[$key] !== '') {
+				$ynTypeHandler = xoops_getmodulehandler($element_metadata['ele_type']."Element", "formulize");
+				$dbValue = $ynTypeHandler->prepareLiteralTextForDB($filterTerms[$key], $filterElementObject);
+				$convertedTerm = $ynTypeHandler->prepareDataForDataset($dbValue, $filterElementObject->getVar('ele_handle'), 0);
+				if($convertedTerm !== "") {
+					$filterTerms[$key] = $convertedTerm;
+				}
 			}
 		}
 	}

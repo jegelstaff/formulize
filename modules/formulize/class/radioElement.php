@@ -69,6 +69,15 @@ class formulizeRadioElement extends formulizeElement {
 		return $descriptionAndExamples;
 	}
 
+	// return the set of options for this element, as an array of option text => selected flag. The option text is what is stored in the database.
+	// If a state array is passed in (an ele_value as prepared by loadValue, reflecting the current entry), the returned options carry that
+	// state's selection flags - and any out-of-range pseudo-options that loadValue appended - otherwise the configured defaults are returned.
+	// For a plain radio, the state array is already keyed by option text, so it can be returned as is. Subclasses whose ele_value keys are
+	// not display text (yn keys its ele_value by the database codes) override this to convert the keys.
+	function getListOptions($ele_value = null) {
+		return is_array($ele_value) ? $ele_value : $this->getVar('ele_value');
+	}
+
 	// returns true if the option is one of the values the user can choose from in this element
   // returns false if the element does not have options
 	function optionIsValid($option) {
@@ -125,6 +134,36 @@ class formulizeRadioElementHandler extends formulizeBaseClassForListsElementHand
 	public function getDefaultEleValue() {
 		$ele_value = array();
 		return $ele_value;
+	}
+
+	/**
+	 * Return the filter options for a radio element: its ele_value is a flat array of
+	 * option text => default flag, and the option text is what is stored in the database,
+	 * so the ele_value keys are exactly the values the filter needs to match on.
+	 * @param object $element The element object
+	 * @return array Associative array of filter value => label
+	 */
+	function getFilterOptions($element = null) {
+		return $element ? $element->getVar('ele_value') : array();
+	}
+
+	/**
+	 * Given a value from a previous entry, work out which option position it corresponds to, so
+	 * the "copy from previous entry" UI can check the right radio button. For a plain radio the
+	 * value stored in the database is the option text itself, so we find its position among the
+	 * options. Element types that store codes rather than the option text (yn) override this.
+	 *
+	 * NOTE: generic code calls this method on the handler of ANY element
+	 * type whose element class extends formulizeRadioElement. So if you write a custom
+	 * radio-based element, your handler class must extend formulizeRadioElementHandler (or the
+	 * handler of whichever radio-family class your element extends), so this method exists on
+	 * your handler. The element class hierarchy and the handler class hierarchy must be parallel.
+	 * @param string $value The value from the previous entry (as prepared for a dataset)
+	 * @param array $prevEleValue The ele_value of the element in the previous form
+	 * @return int|bool The zero-based position of the matching option, or false if there is no match
+	 */
+	function previousEntryOptionKey($value, $prevEleValue) {
+		return array_search($value, array_keys((array) $prevEleValue));
 	}
 
 	// this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
@@ -253,17 +292,12 @@ class formulizeRadioElementHandler extends formulizeBaseClassForListsElementHand
 		$options = array();
 		$opt_count = 1;
 		global $myts;
-    foreach($ele_value as $iKey=>$iValue) {
-			// yn are translated at runtime since webmaster and user might be in different languages
-			if($element->getVar('ele_type')	== 'yn') {
-				if($iKey == "_YES") {
-					$iKey = _YES;
-				} elseif($iKey == "_NO") {
-					$iKey = _NO;
-				}
-			}
+		// getListOptions converts the passed-in state into displayable options carrying the state's
+		// selection flags (necessary because some subclasses, like yn, key their state by database
+		// codes rather than display text)
+		foreach($element->getListOptions($ele_value) as $iKey=>$iValue) {
 		  $options[$opt_count] = $myts->displayTarea($iKey, 1); // 1 means allow HTML through
-			if( $iValue > 0 ){
+			if( $iValue > 0 ) {
 				$selected = $opt_count;
 			}
 			$opt_count++;

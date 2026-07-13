@@ -1,9 +1,10 @@
-<{if $content.type == "selectLinked" OR $content.type == "selectUsers" OR $content.type == "autocompleteLinked" OR $content.type == "autocompleteUsers" OR $content.type == "listboxLinked" OR $content.type == "listboxUsers"}>
+<{* the select family and the checkbox family store these two settings under different ele_value keys *}>
+<{if $content.typeIsSelect}>
 	<{assign var="ele_value_scopelimit_DOM" value="elements-ele_value[4]"}>
 	<{assign var="ele_value_scopelimit_SMARTY" value=$content.ele_value[4]}>
 	<{assign var="ele_value_anyorall_DOM" value="elements-ele_value[6]"}>
 	<{assign var="ele_value_anyorall_SMARTY" value=$content.ele_value[6]}>
-<{elseif $content.type == "checkbox" OR $content.type == "checkboxLinked"}>
+<{elseif $content.typeIsCheckbox}>
 	<{assign var="ele_value_scopelimit_DOM" value="elements-ele_value[checkbox_scopelimit]"}>
 	<{assign var="ele_value_scopelimit_SMARTY" value=$content.ele_value.checkbox_scopelimit}>
 	<{assign var="ele_value_anyorall_DOM" value="elements-ele_value[checkbox_formlink_anyorall]"}>

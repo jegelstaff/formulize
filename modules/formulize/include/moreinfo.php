@@ -38,9 +38,12 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/main.php";
 if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
   include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php";
-} 
+}
 
-$elementMetaData = formulize_getElementMetaData($_GET['col'], true);
+$element_handler = xoops_getmodulehandler('elements', 'formulize');
+if(!$elementObject = $element_handler->get($_GET['col'])) {
+	exit("Element not found");
+}
 
 print "<HTML>";
 print "<head>";
@@ -49,23 +52,24 @@ print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"" . XO
 $themecss = xoops_getcss();
 print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
 print "</head>";
-print "<body style=\"background: white; margin-top:20px;\"><center>"; 
+print "<body style=\"background: white; margin-top:20px;\"><center>";
 print "<table width=100%><tr><td width=5%></td><td width=90%>";
 ?>
 <br><br>
 <table class="outer">
   <tr><td class="head"><center><p>
-  <?php print _formulize_DE_MOREINFO_QUESTION."<br>".trans($elementMetaData['ele_caption']); ?>
+  <?php print _formulize_DE_MOREINFO_QUESTION."<br>".trans($elementObject->getVar('ele_caption')); ?>
   </p><center></td></tr>
   <?php
-  $ele_value=unserialize($elementMetaData['ele_value']);
-  $ele_uitext=unserialize($elementMetaData['ele_uitext']);
-  switch($elementMetaData['ele_type']) {
-    case "radio":
+  // radio buttons and everything that extends them (yn, and custom radio-based types) have a
+  // list of options we can show. getListOptions returns them keyed by display-ready text, since
+  // some types store codes rather than display text in their ele_value keys (yn stores 1/2).
+  if(anyRadioElementType($elementObject)) {
       print "<tr><td class=\"odd\"><p><b>"._formulize_DE_MOREINFO_OPTIONS."</b></p>\n";
       print "<ul>\n";
-      foreach($ele_value as $option=>$selected) {
-        $optionText = isset($ele_uitext[$option]) ? trans($option) ." &mdash; ".trans($ele_uitext[$option]) : trans($option);
+			$ele_uitext=$elementObject->getVar('ele_uitext');
+      foreach($elementObject->getListOptions() as $optionLabel=>$selected) {
+        $optionText = isset($ele_uitext[$optionLabel]) ? trans($optionLabel) ." &mdash; ".trans($ele_uitext[$optionLabel]) : trans($optionLabel);
         print "<li>$optionText</li>\n";
       }
       print "</ul></td></tr>\n";

@@ -5,36 +5,36 @@
 <{if isset($content.useroptions) AND $content.useroptions|is_array AND $content.useroptions|@count > 0}>
   <{foreach from=$content.useroptions key=text item=checked name=optionsloop}>
     <p class="useroptions" name="<{$smarty.foreach.optionsloop.index}>">
-    <{if $content.type == "radio" || $content.type == "select"}><input type="radio" name="defaultoption" value=<{$smarty.foreach.optionsloop.index}> <{if $checked}>checked<{/if}>></input>
+    <{if $content.canHaveMultipleValues == false}><input type="radio" name="defaultoption" value=<{$smarty.foreach.optionsloop.index}> <{if $checked}>checked<{/if}>></input>
     <{else}><input type="checkbox" name="defaultoption[<{$smarty.foreach.optionsloop.index}>]" value=<{$smarty.foreach.optionsloop.index}> <{if $checked}>checked<{/if}>></input>
     <{/if}>&nbsp;&nbsp;<input type="text" name="ele_value[<{$smarty.foreach.optionsloop.index}>]" value="<{$text|replace:'"':'&quot;'}>" onchange="checkForNames()"></input> <span class='sorthandle'>&equiv;</span></p>
   <{/foreach}>
 <{else}>
   <p class="useroptions" name="0">
-  <{if $content.type == "radio" || $content.type == "select"}><input type="radio" name="defaultoption" value=0></input>
+  <{if $content.canHaveMultipleValues == false}><input type="radio" name="defaultoption" value=0></input>
   <{else}><input type="checkbox" name="defaultoption[0]" value=0></input>
   <{/if}>&nbsp;&nbsp;<input type="text" name="ele_value[0]" onchange="checkForNames()"></input> <span class='sorthandle'>&equiv;</span></p>
 <{/if}>
 </div>
 
-<{if $content.type == "radio" || $content.type == "select"}>
+<{if $content.canHaveMultipleValues == false}>
 <p><input type="button" class="formButton" name="cleardef" value="<{$smarty.const._AM_CLEAR_DEFAULT}>"/></p>
 <{/if}>
 
 
 <div class="description">
-  <{if $content.type == "radio"}><p><{$smarty.const._AM_ELE_OPT_DESC2}></p><p><{$smarty.const._AM_ELE_OTHER}></p><{/if}>
-  <{if $content.type == "checkbox" || $content.type == "checkboxLinked"}><p><{$smarty.const._AM_ELE_OPT_DESC_CHECKBOXES}></p><p><{$smarty.const._AM_ELE_OTHER}></p><{/if}>
+  <{if $content.typeIsRadio}><p><{$smarty.const._AM_ELE_OPT_DESC2}></p><p><{$smarty.const._AM_ELE_OTHER}></p><{/if}>
+  <{if $content.typeIsCheckbox}><p><{$smarty.const._AM_ELE_OPT_DESC_CHECKBOXES}></p><p><{$smarty.const._AM_ELE_OTHER}></p><{/if}>
   <{if $content.typeIsSelect}><p><{$smarty.const._AM_ELE_OPT_DESC}><{$smarty.const._AM_ELE_OPT_DESC1}></p><{/if}>
   <p><{$smarty.const._AM_ELE_OPT_UITEXT}></p>
 </div>
 
-<{if $content.type != "radio" AND $content.type != "checkbox" AND $content.type != "checkboxLinked" AND $content.type != "select" AND $content.type != "selectLinked" AND $content.type != "selectUsers"}>
+<{if $content.adminCanAllowMultipleValues}>
 	Are multiple selections allowed?<br>
 	<{include file="db:admin/element_multiple_onoff.html"}>
 <{/if}>
 
-<{if $content.type == "autocomplete" OR $content.type == "autocompleteLinked"}>
+<{if $content.adminCanAllowNewValues}>
 	<br>
 	<{include file="db:admin/element_autocomplete_allownew.html"}>
 <{/if}>
@@ -64,7 +64,7 @@
   $("[name=addoption]").click(function (){
     number = $(".useroptions:last").attr('name');
     number = parseInt(number) + 1;
-    appendContents1 = '<{if $content.type == "radio" || $content.type == "select"}><input type="radio" name="defaultoption" value='+number+'></input><{else}><input type="checkbox" name="defaultoption['+number+']" value='+number+'></input><{/if}>';
+    appendContents1 = '<{if $content.canHaveMultipleValues == false}><input type="radio" name="defaultoption" value='+number+'></input><{else}><input type="checkbox" name="defaultoption['+number+']" value='+number+'></input><{/if}>';
     appendContents2 = '<input type="text" name="ele_value['+number+']"></input>';
     $(".optionlist").append('<p class="useroptions" name="'+number+'"></p>');
     $(".useroptions:last").append(appendContents1);
@@ -76,7 +76,7 @@
     $("#no").attr('checked',1);
   });
 
-  <{if $content.type == "radio" || $content.type == "select"}>
+  <{if $content.canHaveMultipleValues == false}>
   $("[name=cleardef]").click(function () {
     $("[name=defaultoption]").attr('checked',0);
     $("[name=cleardef]").blur();
@@ -89,10 +89,10 @@
 
   function checkForNames() {
     if ($("[name=ele_value[0]]").val() == "{USERNAMES}" || $("[name=ele_value[0]]").val() == "{FULLNAMES}"){
-      <{if $content.typeIsSelect}>disableForAutocomplete();<{/if}>
+      disableForAutocomplete();
 			$('div#linked-or-usernames-options').show(200);
     }else{
-      <{if $content.typeIsSelect}>enableForAutocomplete();<{/if}>
+      enableForAutocomplete();
 			$('div#linked-or-usernames-options').hide(200);
     }
   }

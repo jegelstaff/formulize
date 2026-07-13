@@ -71,6 +71,17 @@ class formulizeCheckboxElement extends formulizeElement {
 		return $descriptionAndExamples;
 	}
 
+	// The checkbox element's ele_value structure changed over time. Present the current structure
+	// to all callers, regardless of what is stored in the database, by migrating legacy values
+	// whenever ele_value is read
+	public function getVar($key, $format = 's') {
+		$value = parent::getVar($key, $format);
+		if($key == 'ele_value' AND is_array($value)) {
+			$value = formulizeCheckboxElementHandler::backwardsCompatibility($value);
+		}
+		return $value;
+	}
+
 	// returns true if the option is one of the values the user can choose from in this element
 	// does not support linked values!!
 	function optionIsValid($option) {
@@ -102,6 +113,21 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
         return new formulizeCheckboxElement();
     }
 
+	/**
+	 * Return the filter options for a checkbox element (and checkboxLinked, which extends this).
+	 * The options live in key 2 of ele_value (the element's getVar migrates any legacy ele_value
+	 * structure to the current one, so key 2 is reliable here).
+	 * @param object $element The element object
+	 * @return array Associative array of filter value => label
+	 */
+	function getFilterOptions($element = null) {
+		if(!$element) {
+			return array();
+		}
+		$ele_value = $element->getVar('ele_value');
+		return isset($ele_value[2]) ? $ele_value[2] : array();
+	}
+
 		public function getDefaultEleValue() {
 			$ele_value = array();
 			$ele_value[2] = array(); // an array of options for the select box
@@ -117,7 +143,7 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
         $dataToSendToTemplate = array();
 				$dataToSendToTemplate['subformInterfaceAdminUrl'] = "";
         if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
-					$ele_value = $this->backwardsCompatibility($element->getVar('ele_value'));
+					$ele_value = $element->getVar('ele_value'); // getVar migrates any legacy ele_value structure to the current one
           if(is_array($ele_value[2])) { // an array will be a set of hard coded options
             $ele_value[2] = formulize_mergeUIText($ele_value[2], $element->getVar('ele_uitext'));
 						$dataToSendToTemplate['islinked'] = 0;
@@ -337,7 +363,7 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 		// put the array into another array (clearing all default values)
 		// then we modify our place holder array and then reassign
 
-		$ele_value = $this->backwardsCompatibility($element->getVar('ele_value'));
+		$ele_value = $element->getVar('ele_value');
 
 		$temparray = $ele_value[2];
 
@@ -419,7 +445,10 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 	// $screen is the screen object that is in effect, if any (may be null)
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen=false, $owner=null) {
 
-		$ele_value = $this->backwardsCompatibility($ele_value);
+		// $ele_value normally originates from the element's getVar, which migrates legacy structures,
+		// but it arrives here as a parameter that could have been assembled by other pathways, so
+		// migrate defensively (the migration is idempotent - already-current structures pass through)
+		$ele_value = self::backwardsCompatibility($ele_value);
 
 		// if options are linked...
 		$element_ele_value = $element->getVar('ele_value');
@@ -643,7 +672,7 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 	// $subformBlankCounter is the instance of a blank subform entry we are saving. Multiple blank subform values can be saved on a given pageload and the counter differentiates the set of data belonging to each one prior to them being saved and getting an entry id of their own.
 	function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
 
-			$ele_value = $this->backwardsCompatibility($element->getVar('ele_value'));
+			$ele_value = $element->getVar('ele_value');
 
 			if(!is_array($ele_value[2]) AND strstr($ele_value[2], "#*=:*")) {
 					$filteredValues = array();
@@ -732,7 +761,7 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 			return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
 	}
 
-	function backwardsCompatibility($ele_value) {
+	static function backwardsCompatibility($ele_value) {
 		if(!is_numeric(key($ele_value)) OR (!isset($ele_value[2]) AND (!isset($ele_value[5]) OR (!is_array($ele_value[5]) AND !is_numeric($ele_value[5]))))) {
 			$ele_value = array(2=>$ele_value,5=>array());
 		}

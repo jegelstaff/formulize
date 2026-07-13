@@ -65,6 +65,25 @@ class formulizeProvinceListElementHandler extends formulizeElementsHandler {
         return new formulizeProvinceListElement();
     }
 
+	/**
+	 * Return the filter options for a province element (and provinceRadio, which extends this).
+	 * The database stores numeric codes, but the filter options are keyed on the province names,
+	 * because filter values are passed through prepareLiteralTextForDB() before they hit the
+	 * database, and that method converts a province name into its code.
+	 * @param object $element The element object
+	 * @return array Associative array of filter value => label
+	 */
+	function getFilterOptions($element = null) {
+
+		$provinceList = $this->getProvinceList();
+		$ele_value = $element ? $element->getVar('ele_value') : null;
+		if (is_array($ele_value) AND isset($ele_value[2]) AND $ele_value[2] != 1) {
+			// Sort provinces alphabetically
+			asort($provinceList);
+		}
+		return array_flip($provinceList);
+	}
+
     // this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
     // it receives the element object and returns an array of data that will go to the admin UI template
     // when dealing with new elements, $element might be FALSE

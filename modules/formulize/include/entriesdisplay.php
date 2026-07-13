@@ -3198,14 +3198,11 @@ function calcValuePlusText($value, $handle, $col, $calc, $groupingValue) {
   $uitexts = $element->getVar('ele_uitext');
   $value = formulize_handleRandomAndDateText(formulize_swapUIText($value, $uitexts));
   if(substr($value, 0, 6)=="{OTHER") { $value = _formulize_OPT_OTHER; }
-  if($element->getVar('ele_type')=='yn') {
-	if($value == "1") {
-			$value = _formulize_TEMP_QYES;
-		} elseif($value == "2") {
-			$value = _formulize_TEMP_QNO;
-		} else {
-			$value = "";
-		}
+  // yn elements (and any custom types based on them) store 1/2 codes, so let the element class
+  // convert the stored code into the Yes/No text users should see, via prepareDataForDataset
+  if(elementTypeIsOrExtends($element, 'yn')) {
+		$ynTypeHandler = xoops_getmodulehandler($element->getVar('ele_type')."Element", "formulize");
+		$value = $ynTypeHandler->prepareDataForDataset($value, $handle, 0);
   }
   return $value;
 }

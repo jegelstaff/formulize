@@ -43,9 +43,10 @@ class formulizeEagGroupTypeElementHandler extends formulizeVirtualElementHandler
 	/**
 	 * Return the available filter options for this element type.
 	 *
+	 * @param object $element The element object (not needed - the options are fixed)
 	 * @return array Associative array of option value => display label
 	 */
-	function getFilterOptions() {
+	function getFilterOptions($element = null) {
 		return array('Regular' => 'Regular', 'Form-based' => 'Form-based');
 	}
 

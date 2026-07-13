@@ -261,6 +261,8 @@ class formulizeElementRenderer{
 	}
 
 	function formulize_disableElement($element, $type) {
+		// resolve custom/derived element types to date or colorpick if they're based on those, so subclasses are disabled the same way
+		$type = formulize_resolveEleType($type, array("date", "colorpick"));
 		if($type == "date" OR $type == "colorpick") {
 			switch($type) {
 				case 'date':
@@ -336,22 +338,31 @@ class formulizeElementRenderer{
 		if(!$previousElementHandle) { return ""; }
 		$elementName = $de ? "de_".$fid."_".$entry_id."_".$element_id : "ele_".$element_id;
 		$previousElementId = formulize_getIdFromElementHandle($previousElementHandle); // function is in extract.php
+		// Radio buttons and everything that extends them (yn, and any custom radio-based type)
+		// are all set by checking the option at a given position, so they are handled together.
+		// Which position a given value corresponds to differs between them though - a plain
+		// radio matches on the option text, while a yes/no element stores codes - so that part
+		// is delegated to the element type, via previousEntryOptionKey().
+		$isRadioType = anyRadioElementType($type);
+		$typeHandler = $isRadioType ? xoops_getmodulehandler($type."Element", "formulize") : null;
+		// types that are simply given the previous value. Resolving means subclasses of the text
+		// element (textarea, number) are prefilled the same way the text element is.
+		$simpleValueType = formulize_resolveEleType($type, array("text", "date"));
+		$prevElement_ele_value = array();
+		$javascript = ""; // stays empty for element types that the previous entry UI does not support
 		// setup the javascript based on the type of question, and setup other data that is required
-		switch($type) {
-			case "text":
-			case "date":
-				$javascript = "onchange='javascript:this.form.".$elementName.".value=this.form.prev_".$element_id.".value;'";
-				break;
-			case "radio":
-				// need to get the options of the question so we know what to match
-				$prevElementMetaData = formulize_getElementMetaData($previousElementId); // use this function in extract instead of the get element method in handler, since this is guaranteed to be already be cached in memory
-				$prevElement_ele_value = unserialize($prevElementMetaData['ele_value']);
-				$prevElementOptions = array_keys($prevElement_ele_value);
-				$javascript = "onchange='javascript:if(this.form.prev_".$element_id.".value !== \"\") { this.form.".$elementName."[this.form.prev_".$element_id.".value].checked=true; }'";
-				break;
-			case "yn":
-				$javascript = "onchange='javascript:if(this.form.prev_".$element_id.".value !== \"\") { this.form.".$elementName."[this.form.prev_".$element_id.".value].checked=true; }'";
-				break;
+		if($isRadioType) {
+			// need to get the options of the question so we know what to match
+			$prevElementMetaData = formulize_getElementMetaData($previousElementId); // use this function in extract instead of the get element method in handler, since this is guaranteed to be already be cached in memory
+			$prevElement_ele_value = unserialize($prevElementMetaData['ele_value']);
+			$javascript = "onchange='javascript:if(this.form.prev_".$element_id.".value !== \"\") { this.form.".$elementName."[this.form.prev_".$element_id.".value].checked=true; }'";
+		} else {
+			switch($simpleValueType) {
+				case "text":
+				case "date":
+					$javascript = "onchange='javascript:this.form.".$elementName.".value=this.form.prev_".$element_id.".value;'";
+					break;
+			}
 		}
 		$previousOptions = array();
 		$prevOptionsExist = false;
@@ -362,25 +373,19 @@ class formulizeElementRenderer{
 			}
 			if(trim($value) === "" OR trim($value) == "0000-00-00") { continue; }
 			$prevOptionsExist = true;
-			switch($type) {
-				case "text":
-				case "date":
-					$previousOptions[$value] = $value;
-					break;
-				case "radio":
-					$prevElementPosition = array_search($value, $prevElementOptions); // need to figure out which option matches the text of the value
-					if($prevElementPosition !== false) {
-						$previousOptions[$prevElementPosition] = $value; // for radio buttons, we need to pass the position of the option
-					}
-					break;
-				case "yn":
-					if($value == _formulize_TEMP_QYES) {
-						$previousOptions[0] = $value;
-					} elseif($value == _formulize_TEMP_QNO) {
-						$previousOptions[1] = $value;
-					}
-					break;
-
+			if($isRadioType) {
+				// for radio buttons, we need to pass the position of the option, not the value
+				$prevElementPosition = $typeHandler->previousEntryOptionKey($value, $prevElement_ele_value);
+				if($prevElementPosition !== false) {
+					$previousOptions[$prevElementPosition] = $value;
+				}
+			} else {
+				switch($simpleValueType) {
+					case "text":
+					case "date":
+						$previousOptions[$value] = $value;
+						break;
+				}
 			}
 		}
 		if(!$prevOptionsExist) { return ""; }

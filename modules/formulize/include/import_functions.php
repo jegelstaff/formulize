@@ -167,7 +167,7 @@ function importCsvSetup(&$importSet, $pkColumn=false) {
                         $mapIndex = $element;
 
                         // links?
-												$switchEleType = anySelectElementType($form_elementsq[$element]["ele_type"]) ? "select" : $form_elementsq[$element]["ele_type"];
+												$switchEleType = formulize_resolveEleType($form_elementsq[$element]["ele_type"], array("select", "checkbox", "checkboxLinked"));
         								switch ($switchEleType) {
                             case "select":
 														case "checkbox":
@@ -335,7 +335,7 @@ function importCsvValidate(&$importSet, $regfid, $validateOverride=false) {
 												}
 
                         // check columns from form
-                        $switchEleType = anySelectElementType($element["ele_type"]) ? "select" : $element["ele_type"];
+                        $switchEleType = formulize_resolveEleType($element["ele_type"], array("select", "checkbox", "checkboxLinked", "date", "provinceList", "provinceRadio", "radio", "yn"));
         								switch ($switchEleType) {
                             case "select":
                                 $ele_value = unserialize($element["ele_value"]);
@@ -613,22 +613,22 @@ function importCsvValidate(&$importSet, $regfid, $validateOverride=false) {
 
 
                             case "yn":
+                            xoops_getmodulehandler('ynElement', 'formulize'); // make sure the yn class is loaded, so its constants are available
                             if (is_numeric($cell_value)) {
-                                if (!($cell_value == 1 || $cell_value == 2)) {
+                                if (!($cell_value == formulizeYnElement::YES_DB_VALUE || $cell_value == formulizeYnElement::NO_DB_VALUE)) {
                                     $errors[] = "<li>line " . $rowCount .
                                         ", column " . $importSet[3][$link] .
                                         ",<br> <b>found</b>: " . $cell_value .
-                                        ", <b>was expecting</b>: { 1, 2, " . _formulize_TEMP_QYES . ", " . _formulize_TEMP_QNO . " }</li>";
+                                        ", <b>was expecting</b>: { " . formulizeYnElement::YES_DB_VALUE . ", " . formulizeYnElement::NO_DB_VALUE . ", " . _YES . ", " . _NO . " }</li>";
                                 }
                             } else {
                                 $yn_value = strtoupper($cell_value);
 
-                                if (!($yn_value == strtoupper(_formulize_TEMP_QYES) || $yn_value == strtoupper(_formulize_TEMP_QNO))) {
-                                    // changed to use language constants, June 29, 2006 {
+                                if (!($yn_value == strtoupper(_YES) || $yn_value == strtoupper(_NO))) {
                                     $errors[] = "<li>line " . $rowCount .
                                         ", column " . $importSet[3][$link] .
                                         ",<br> <b>found</b>: " . $cell_value .
-                                        ", <b>was expecting</b>: { 1, 2, " . _formulize_TEMP_QYES . ", " . _formulize_TEMP_QNO . " }</li>";
+                                        ", <b>was expecting</b>: { " . formulizeYnElement::YES_DB_VALUE . ", " . formulizeYnElement::NO_DB_VALUE . ", " . _YES . ", " . _NO . " }</li>";
                                 }
                             }
                             break;
@@ -808,7 +808,7 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
                     }
 
                     if ($row_value != "") {
-                        $switchEleType = anySelectElementType($element["ele_type"]) ? "select" : $element["ele_type"];
+                        $switchEleType = formulize_resolveEleType($element["ele_type"], array("select", "checkbox", "checkboxLinked", "date", "derived", "provinceList", "provinceRadio", "radio", "text", "textarea", "yn"));
         								switch ($switchEleType) {
 
                             case "derived":
@@ -1093,12 +1093,9 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
 
                             case "yn":
                             if (!is_numeric($row_value)) {
-                                $yn_value = strtoupper($row_value);
-
-                                if ($yn_value == "YES")
-                                    $row_value = 1;
-                                else if ($yn_value == "NO")
-                                    $row_value = 2;
+                                // convert Yes/No text (in the active language, or English) into the database codes
+                                $ynElementHandler = xoops_getmodulehandler('ynElement', 'formulize');
+                                $row_value = $ynElementHandler->prepareLiteralTextForDB($row_value, null);
                             }
                             break;
 
@@ -1336,7 +1333,7 @@ function importCsvDebug(& $importSet) {
                 $element["ele_type"];
             $output .= "<td>";
 
-            $switchEleType = anySelectElementType($element["ele_type"]) ? "select" : $element["ele_type"];
+            $switchEleType = formulize_resolveEleType($element["ele_type"], array("select", "checkbox", "checkboxLinked", "radio"));
         		switch ($switchEleType) {
                 case "select":
                     $ele_value = unserialize($element["ele_value"]);

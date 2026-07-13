@@ -68,6 +68,8 @@ $firstElementOrder = "";
 $advanced['ele_index_show'] = false;
 
 $customTypeHandler = false;
+$customTypeObject = false;
+$elementObject = false;
 if ($_GET['ele_id'] != "new") {
     $ele_id = intval($_GET['ele_id']);
     $elementObject = $element_handler->get($ele_id);
@@ -177,7 +179,6 @@ if ($_GET['ele_id'] != "new") {
 	$elementName = "New element";
 	$defaultOrder = "bottom";
 	$defaultSort = "";
-	$elementObject = false;
 	$names['ele_caption'] = $elementName;
 	$ele_type = $_GET['type'];
 	if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
@@ -226,7 +227,7 @@ if ($_GET['ele_id'] != "new") {
 
 $advanced['ele_use_default_when_blank'] = $ele_use_default_when_blank;
 $advanced['datatypeui'] = createDataTypeUI($ele_type, $elementObject,$fid,$ele_encrypt);
-$advanced['advancedTypeTemplate'] = file_exists(XOOPS_ROOT_PATH."/modules/formulize/templates/admin/element_type_".$ele_type."_advanced.html") ? "db:admin/element_type_".$ele_type."_advanced.html" : "";
+$advanced['advancedTypeTemplate'] = formulize_elementTypeAdminTemplate($ele_type, "_advanced"); // falls back to an ancestor type's template for custom types that extend a built-in type
 
 list($dynamicDefaultElement, $dynamicDefaultSourceElementId) = createFieldList($advanced['ele_dynamicdefault_source'], false, false, "elements-ele_dynamicdefault_source", _NONE);
 $advanced['dynamicDefaultSourceList'] = $dynamicDefaultElement->render();
@@ -272,10 +273,32 @@ $common['fid'] = $fid;
 $common['formhandle']=$formHandle;
 $common['aid'] = $aid;
 $common['type'] = $ele_type;
-$common['typeIsSelect'] = anySelectElementType($ele_type);
 $common['uid'] = $xoopsUser->getVar('uid');
-$common['isSystemElement'] = $elementObject ? $elementObject->isSystemElement : false;
-$common['isUserAccountElement'] = $elementObject ? $elementObject->isUserAccountElement : false;
+
+// Everything the templates need to know about what kind of element this is, is worked out here, and passed to them
+// as plain true/false flags. Templates must never test the ele_type themselves: a custom element type that extends a
+// built-in type behaves like the type it extends, but its ele_type matches none of the names a template could list.
+// Two different questions are answered below, and they are easy to confuse:
+//   - which FAMILY the type belongs to (is it a radio button of some kind?), answered by the anyXElementType helpers
+//     in elements.php, which test the element class hierarchy
+//   - what the type is CAPABLE of, and what the webmaster is allowed to configure, answered by properties the element
+//     class sets on itself (canHaveMultipleValues, adminCanAllowMultipleValues, isLinked, and so on)
+$elementProperties = $elementObject ? $elementObject : $customTypeObject; // an existing element, or a blank one of the requested type when adding a new element
+$common['typeIsSelect'] = anySelectElementType($ele_type);
+$common['typeIsRadio'] = anyRadioElementType($ele_type);
+$common['typeIsCheckbox'] = anyCheckboxElementType($ele_type);
+$common['typeIsGrid'] = elementTypeIsOrExtends($ele_type, 'grid');
+$common['typeIsSubformFullForm'] = elementTypeIsOrExtends($ele_type, 'subformFullForm');
+$common['typeIsSubformEditableRow'] = elementTypeIsOrExtends($ele_type, 'subformEditableRow');
+$common['isSystemElement'] = $elementProperties ? (bool) $elementProperties->isSystemElement : false;
+$common['isUserAccountElement'] = $elementProperties ? (bool) $elementProperties->isUserAccountElement : false;
+$common['isLinkedType'] = $elementProperties ? (bool) $elementProperties->isLinked : false;
+$common['isUserList'] = $elementProperties ? (bool) $elementProperties->isUserList : false;
+// whether the element currently holds more than one value (which is what the default value UI has to match), versus
+// whether the webmaster is allowed to turn multiple values on and off (which is whether to offer that choice at all)
+$common['canHaveMultipleValues'] = $elementProperties ? (bool) $elementProperties->canHaveMultipleValues : false;
+$common['adminCanAllowMultipleValues'] = $elementProperties ? (bool) $elementProperties->adminCanAllowMultipleValues : false;
+$common['adminCanAllowNewValues'] = $elementProperties ? (bool) $elementProperties->adminCanAllowNewValues : false;
 
 $options = array();
 $options['ele_delim'] = $ele_delim;
@@ -283,7 +306,11 @@ $options['ele_delim_custom_value'] = $ele_delim_custom_value;
 $options['ele_delimit_space_numspaces_value'] = $ele_delim_space_numspaces_value;
 $options['ele_uitext'] = $ele_uitext;
 $options['ele_uitextshow'] = $ele_uitextshow;
-$options['typetemplate'] = "db:admin/element_type_".$ele_type.".html";
+// falls back to an ancestor type's template for custom types that extend a built-in type. If nothing is
+// found anywhere in the ancestry, pass the type's own template name, and the failure will be an obvious
+// missing-template error, rather than a mysteriously blank tab
+$typetemplate = formulize_elementTypeAdminTemplate($ele_type);
+$options['typetemplate'] = $typetemplate ? $typetemplate : "db:admin/element_type_".$ele_type.".html";
 
 
 

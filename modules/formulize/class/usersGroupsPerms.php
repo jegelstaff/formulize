@@ -642,7 +642,7 @@ class formulizePermHandler {
 		}
 
 		// Sync ele_value['formlink_scope'] for checkbox elements
-		if (($ele_type == "checkbox" || $ele_type == "checkboxLinked") && isset($ele_value['formlink_scope'])) {
+		if (anyCheckboxElementType($ele_type) && isset($ele_value['formlink_scope'])) {
 			list($newScope, $scopeChanged) = $syncCommaSeparated($ele_value['formlink_scope']);
 			if ($scopeChanged) {
 				$ele_value['formlink_scope'] = $newScope;

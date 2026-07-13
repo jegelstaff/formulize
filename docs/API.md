@@ -9,4 +9,4 @@ title: API
 * [The flow through the code](../API/code_flow)
 * [Classes](../API/classes)
 * [Functions](../API/functions)
-* [Making your own form elements](../API/custom_form_elements)
+* [Writing your own element classes](../API/custom_form_elements)

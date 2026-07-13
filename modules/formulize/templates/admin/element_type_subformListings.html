@@ -21,7 +21,7 @@
 	<fieldset>
 		<legend>User interface options</legend>
 
-		<{if $content.type == 'subformFullForm'}>
+		<{if $content.typeIsSubformFullForm}>
 		<div class="form-item">
 		 <div class="form-radios">
 		     <label for="elements-ele_value[8]-form"><input type="radio" id="elements-ele_value[8]-form" name="elements-ele_value[8]" value="form"<{if $content.ele_value[8] eq 'form'}> checked="checked"<{/if}>/><{$content.fullFormOption1}></label>
@@ -41,7 +41,7 @@
 		<{/if}>
 
 		<div class="form-item">
-			<p><{if $content.type == 'subformFullForm'}><{$smarty.const._AM_ELE_SUBFORM_ELEMENT_LIST_FORM}><{else}><{$smarty.const._AM_ELE_SUBFORM_ELEMENT_LIST_ROW}><{/if}></p>
+			<p><{if $content.typeIsSubformFullForm}><{$smarty.const._AM_ELE_SUBFORM_ELEMENT_LIST_FORM}><{else}><{$smarty.const._AM_ELE_SUBFORM_ELEMENT_LIST_ROW}><{/if}></p>
 			<select name="elements_ele_value_1[]" size="10" multiple>
 				<{html_options options=$content.subformelements selected=$content.ele_value[1]}>
 			</select>
@@ -90,7 +90,7 @@
 				<div class="form-item">
 					<br />
 
-				<{if $content.type != 'subformFullForm'}>
+				<{if !$content.typeIsSubformFullForm}>
 
                     <div class="form-item">
                         <p>Show <i>View</i> buttons, and view entries in a <b>dialog box</b></p>
@@ -110,7 +110,7 @@
                     </div>
 										<br />
 
-										<{if $content.type == 'subformEditableRow'}>
+										<{if $content.typeIsSubformEditableRow}>
                     <div class="form-item">
                         <div class="form-radios">
                             <p>Disable these elements in each row:</p>
