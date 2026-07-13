@@ -484,6 +484,13 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 		// so for the other styles (dropdowns) there is nothing posted, and multiple is always off
 		$ele_value[ELE_VALUE_SELECT_MULTIPLE] = $elementProperties->adminCanAllowMultipleValues ? $postedMultipleValue : 0;
 
+		// the chooser for the default option is drawn as radio buttons or as checkboxes depending on whether the element
+		// can hold more than one value (see element_optionlist.html), so when the webmaster changes that setting, the
+		// options tab has to be redrawn, or it would go on showing the chooser for the multiplicity we just moved away from
+		if($elementProperties->canHaveMultipleValues != (bool) $ele_value[ELE_VALUE_SELECT_MULTIPLE]) {
+			$_POST['reload_option_page'] = true;
+		}
+
 		switch($elementProperties->listStyle) {
 			case 'listbox':
 				$ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE] = 0;

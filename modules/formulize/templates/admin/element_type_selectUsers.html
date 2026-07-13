@@ -4,7 +4,7 @@
 			<{include file="db:admin/element_linkedandusernames_scopefilter.html"}>
 		</div>
 
-		<{if $content.canAllowMultipleValues}>
+		<{if $content.adminCanAllowMultipleValues}>
 			<div class="form-item">
 				<fieldset>
 					<legend>Are multiple selections allowed?</legend>
@@ -13,7 +13,7 @@
 			</div>
 		<{/if}>
 
-		<{if $content.canAllowNewValues}>
+		<{if $content.adminCanAllowNewValues}>
 			<br>
 			<{include file="db:admin/element_autocomplete_allownew.html"}>
 		<{/if}>

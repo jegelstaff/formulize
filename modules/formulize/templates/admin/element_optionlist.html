@@ -29,12 +29,12 @@
   <p><{$smarty.const._AM_ELE_OPT_UITEXT}></p>
 </div>
 
-<{if $content.canAllowMultipleValues}>
+<{if $content.adminCanAllowMultipleValues}>
 	Are multiple selections allowed?<br>
 	<{include file="db:admin/element_multiple_onoff.html"}>
 <{/if}>
 
-<{if $content.canAllowNewValues}>
+<{if $content.adminCanAllowNewValues}>
 	<br>
 	<{include file="db:admin/element_autocomplete_allownew.html"}>
 <{/if}>
