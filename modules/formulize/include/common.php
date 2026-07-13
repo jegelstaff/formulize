@@ -41,6 +41,10 @@ include_once XOOPS_ROOT_PATH . '/modules/formulize/class/formulize.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/frameworks.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/elements.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/elementrenderer.php';
+include_once XOOPS_ROOT_PATH . '/modules/formulize/class/usersGroupsPerms.php';
+include_once XOOPS_ROOT_PATH . '/modules/formulize/class/data.php';
+include_once XOOPS_ROOT_PATH . '/modules/formulize/class/screen.php';
+include_once XOOPS_ROOT_PATH . "/modules/formulize/class/ynElement.php"; // for the yn database value constants used in the yn mapping
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/constants.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/configsettings.php';
@@ -54,9 +58,6 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/include/mapdisplay.php";
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/extract.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/usersAndGroups.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/customCodeForApplications.php';
-include_once XOOPS_ROOT_PATH . '/modules/formulize/class/usersGroupsPerms.php';
-include_once XOOPS_ROOT_PATH . '/modules/formulize/class/data.php';
-include_once XOOPS_ROOT_PATH . '/modules/formulize/class/screen.php';
 
 // look up the form id and title of every form and create constants of the format {FORM_HANDLE}_FORM_ID with spaces converted to underscores
 global $xoopsDB;

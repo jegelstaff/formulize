@@ -93,8 +93,8 @@ class FormulizeConfigSyncElementValueProcessor
 		'associated_element_id' => 3,
 	];
 	private $ynradioMapping = [
-		'yes' => '_YES',
-		'no' => '_NO',
+		'yes' => formulizeYnElement::YES_DB_VALUE,
+		'no' => formulizeYnElement::NO_DB_VALUE,
 	];
 	private $dateMapping = [
 		'default' => 0

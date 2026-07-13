@@ -613,22 +613,22 @@ function importCsvValidate(&$importSet, $regfid, $validateOverride=false) {
 
 
                             case "yn":
+                            xoops_getmodulehandler('ynElement', 'formulize'); // make sure the yn class is loaded, so its constants are available
                             if (is_numeric($cell_value)) {
-                                if (!($cell_value == 1 || $cell_value == 2)) {
+                                if (!($cell_value == formulizeYnElement::YES_DB_VALUE || $cell_value == formulizeYnElement::NO_DB_VALUE)) {
                                     $errors[] = "<li>line " . $rowCount .
                                         ", column " . $importSet[3][$link] .
                                         ",<br> <b>found</b>: " . $cell_value .
-                                        ", <b>was expecting</b>: { 1, 2, " . _formulize_TEMP_QYES . ", " . _formulize_TEMP_QNO . " }</li>";
+                                        ", <b>was expecting</b>: { " . formulizeYnElement::YES_DB_VALUE . ", " . formulizeYnElement::NO_DB_VALUE . ", " . _YES . ", " . _NO . " }</li>";
                                 }
                             } else {
                                 $yn_value = strtoupper($cell_value);
 
-                                if (!($yn_value == strtoupper(_formulize_TEMP_QYES) || $yn_value == strtoupper(_formulize_TEMP_QNO))) {
-                                    // changed to use language constants, June 29, 2006 {
+                                if (!($yn_value == strtoupper(_YES) || $yn_value == strtoupper(_NO))) {
                                     $errors[] = "<li>line " . $rowCount .
                                         ", column " . $importSet[3][$link] .
                                         ",<br> <b>found</b>: " . $cell_value .
-                                        ", <b>was expecting</b>: { 1, 2, " . _formulize_TEMP_QYES . ", " . _formulize_TEMP_QNO . " }</li>";
+                                        ", <b>was expecting</b>: { " . formulizeYnElement::YES_DB_VALUE . ", " . formulizeYnElement::NO_DB_VALUE . ", " . _YES . ", " . _NO . " }</li>";
                                 }
                             }
                             break;
@@ -1093,12 +1093,9 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
 
                             case "yn":
                             if (!is_numeric($row_value)) {
-                                $yn_value = strtoupper($row_value);
-
-                                if ($yn_value == "YES")
-                                    $row_value = 1;
-                                else if ($yn_value == "NO")
-                                    $row_value = 2;
+                                // convert Yes/No text (in the active language, or English) into the database codes
+                                $ynElementHandler = xoops_getmodulehandler('ynElement', 'formulize');
+                                $row_value = $ynElementHandler->prepareLiteralTextForDB($row_value, null);
                             }
                             break;
 

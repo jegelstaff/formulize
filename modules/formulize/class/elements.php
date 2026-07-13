@@ -1359,16 +1359,72 @@ function optionIsValidForElement($option, $elementHandleOrId) {
 }
 
 /**
- * Take a type string and return true if it is any type of element based on the Select type
- * @param string $type
+ * Take a type string or an element object and return true if it is any type of element based on the Select type
+ *
+ * A "select type" is the select element itself, or any element whose class extends it -
+ * selectLinked, selectUsers, autocomplete/autocompleteLinked/autocompleteUsers,
+ * listbox/listboxLinked/listboxUsers, and any custom subclass of those. They are all
+ * subclasses of formulizeSelectElement, so this reduces to the generic is-or-extends test.
+ *
+ * @param string|object $type The ele_type string to test, or an element object
  * @return bool
  */
 function anySelectElementType($type) {
-	// A "select type" is the select element itself, or any element whose class extends it -
-	// selectLinked, selectUsers, autocomplete/autocompleteLinked/autocompleteUsers,
-	// listbox/listboxLinked/listboxUsers, and any custom subclass of those. They are all
-	// subclasses of formulizeSelectElement, so this reduces to the generic parent test.
-	return ($type === "select") ? true : elementTypeHasOtherTypeAsParent($type, "select");
+	return elementTypeIsOrExtends($type, "select");
+}
+
+/**
+ * Take a type string and return true if it is any type of element based on the Radio type
+ *
+ * This covers the radio element itself, the yes/no element, and any custom element type that
+ * extends the radio element. Where the behaviour of those types genuinely differs (the option
+ * labels of a yes/no element, for instance) the difference is handled by the element classes
+ * themselves - see formulizeRadioElementHandler::getFilterOptions() and
+ * previousEntryOptionKey(), and the yn overrides of them - so generic code can safely treat
+ * every one of these as a radio.
+ *
+ * NOTE: code gated by this function calls radio-family methods (previousEntryOptionKey) on
+ * the type's handler. This function tests the ELEMENT class hierarchy, so a custom radio-based
+ * element must have a handler that extends formulizeRadioElementHandler (or another radio-family
+ * handler) - the two hierarchies must be parallel, which is a requirement when writing any custom
+ * element class.
+ *
+ * @param string|object $type The ele_type string to test, or an element object
+ * @return bool
+ */
+function anyRadioElementType($type) {
+	return elementTypeIsOrExtends($type, "radio");
+}
+
+/**
+ * Take a type string and return true if it is any type of element based on the Checkbox type
+ *
+ * This covers the checkbox element, the checkboxLinked element (which extends it), and any
+ * custom element type that extends either. Checkbox based elements can hold multiple values,
+ * which is what most callers are really asking about.
+ *
+ * @param string|object $type The ele_type string to test, or an element object
+ * @return bool
+ */
+function anyCheckboxElementType($type) {
+	return elementTypeIsOrExtends($type, "checkbox");
+}
+
+/**
+ * Determine whether an element type IS another element type, or descends from it. This is the
+ * "family" test that most code wants: treat this element like an X, whether it is an X itself
+ * or a custom type that extends X. The anySelectElementType/anyRadioElementType/
+ * anyCheckboxElementType functions are just readable shorthands for the common families.
+ *
+ * @param string|object $type The ele_type string to test, or an element object
+ * @param string $parentType The ele_type of the family, e.g. 'select', 'radio', 'yn'
+ * @return bool True if $type is $parentType or a descendant of it
+ */
+function elementTypeIsOrExtends($type, $parentType) {
+	if(is_object($type)) {
+		$type = $type->getVar('ele_type');
+	}
+	return ($type === $parentType) ? true : elementTypeHasOtherTypeAsParent($type, $parentType);
 }
 
 /**
@@ -1383,8 +1439,8 @@ function anySelectElementType($type) {
  * of formulizeSelectElement.
  *
  * Note: this is a strict subclass test (like is_subclass_of), so it returns FALSE when $type
- * IS $parentType. Callers that want "is this type X or a subclass of X" should OR in an exact
- * match, as anySelectElementType() does.
+ * IS $parentType. Callers that want "is this type X or a subclass of X" should use
+ * elementTypeIsOrExtends() instead, which is what the anyXElementType functions do.
  *
  * The element-class naming convention is relied upon: type "radio" -> class formulizeRadioElement,
  * type "checkboxLinked" -> class formulizeCheckboxLinkedElement, etc. ("formulize" . ucfirst(type)
@@ -1432,7 +1488,10 @@ function formulize_eleTypeAncestry($type) {
 	}
 	$ancestry = array();
 	if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$type."Element.php")) {
-		if($customTypeHandler = xoops_getmodulehandler($type."Element", 'formulize')) {
+		// the true flag makes the handler optional: if the class file exists but does not define a
+		// conventionally named handler class, we get false back instead of a fatal error, and the
+		// type is simply treated as having no ancestry
+		if($customTypeHandler = xoops_getmodulehandler($type."Element", 'formulize', true)) {
 			$className = get_class($customTypeHandler->create());
 			while($className = get_parent_class($className)) {
 				$ancestorType = formulize_eleTypeForClassName($className);
@@ -1448,34 +1507,24 @@ function formulize_eleTypeAncestry($type) {
 }
 
 /**
- * Take a type string and return true if it is any type of element based on the Radio type
+ * Find the admin UI template for an element type, falling back up the element class ancestry.
  *
- * This covers the radio element itself, the yes/no element, and any custom element type that
- * extends the radio element. Where the behaviour of those types genuinely differs (the option
- * labels of a yes/no element, for instance) the difference is handled by the element classes
- * themselves - see formulizeRadioElementHandler::getOptionLabel(), getFilterOptions() and
- * previousEntryOptionKey(), and the yn overrides of them - so generic code can safely treat
- * every one of these as a radio.
+ * Custom element types that extend a built-in type usually have no admin template of their own -
+ * they inherit the parent type's adminPrepare/adminSave methods, so they should inherit the
+ * admin template those methods are written for, too. This looks for a template belonging to the
+ * type itself first, then to each ancestor type in turn.
  *
- * @param string $type
- * @return bool
+ * @param string $ele_type The element type
+ * @param string $suffix Optional suffix on the template name: "_advanced" for the Advanced tab template
+ * @return string The db: template reference for the nearest type that has one, or an empty string if none found
  */
-function anyRadioElementType($type) {
-	return ($type === "radio") ? true : elementTypeHasOtherTypeAsParent($type, "radio");
-}
-
-/**
- * Take a type string and return true if it is any type of element based on the Checkbox type
- *
- * This covers the checkbox element, the checkboxLinked element (which extends it), and any
- * custom element type that extends either. Checkbox based elements can hold multiple values,
- * which is what most callers are really asking about.
- *
- * @param string $type
- * @return bool
- */
-function anyCheckboxElementType($type) {
-	return ($type === "checkbox") ? true : elementTypeHasOtherTypeAsParent($type, "checkbox");
+function formulize_elementTypeAdminTemplate($ele_type, $suffix = "") {
+	foreach(array_merge(array($ele_type), formulize_eleTypeAncestry($ele_type)) as $candidateType) {
+		if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/templates/admin/element_type_".$candidateType.$suffix.".html")) {
+			return "db:admin/element_type_".$candidateType.$suffix.".html";
+		}
+	}
+	return "";
 }
 
 /**

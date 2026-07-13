@@ -187,6 +187,7 @@ define("_formulize_TEMP_ENTEREDBY", "Entered by: ");
 define("_formulize_TEMP_ENTEREDBYSINGLE", "Entered ");
 define("_formulize_TEMP_ON", "on");
 define("_formulize_TEMP_AT", "at");
+// The two _formulize_TEMP_Q constants below are DEPRECATED as of 2026 and no longer used by Formulize itself. The core _YES and _NO constants are used instead. These remain defined only in case custom code in templates or derived value formulas refers to them.
 define("_formulize_TEMP_QYES", "Yes");
 define("_formulize_TEMP_QNO", "No");
 define("_formulize_REPORT_ON", "Turn Report Writing Mode ON");

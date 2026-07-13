@@ -67,7 +67,9 @@ class formulizeProvinceListElementHandler extends formulizeElementsHandler {
 
 	/**
 	 * Return the filter options for a province element (and provinceRadio, which extends this).
-	 * The province names are what is stored in the data, so they need to be the array keys.
+	 * The database stores numeric codes, but the filter options are keyed on the province names,
+	 * because filter values are passed through prepareLiteralTextForDB() before they hit the
+	 * database, and that method converts a province name into its code.
 	 * @param object $element The element object
 	 * @return array Associative array of filter value => label
 	 */

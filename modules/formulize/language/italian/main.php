@@ -63,6 +63,7 @@ define("_FORM_GROUPSCOPE","Users can view entries made by everyone in their grou
 define("_formulize_TEMP_SELENTTITLE_GS", "All entries in '");
 define("_formulize_TEMP_NOENTRIES", "No entries yet.");
 define("_formulize_TEMP_ENTEREDBY", "Entered by: ");
+// The two _formulize_TEMP_Q constants below are DEPRECATED as of 2026 and no longer used by Formulize itself. The core _YES and _NO constants are used instead. These remain defined only in case custom code in templates or derived value formulas refers to them.
 define("_formulize_TEMP_QYES", "YES");
 define("_formulize_TEMP_QNO", "NO");
 

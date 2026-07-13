@@ -186,6 +186,7 @@ define("_formulize_TEMP_ENTEREDBY", "Entrada por: ");
 define("_formulize_TEMP_ENTEREDBYSINGLE", "Entrada ");
 define("_formulize_TEMP_ON", "em");
 define("_formulize_TEMP_AT", "em"); //GibaPhp 3.0
+// The two _formulize_TEMP_Q constants below are DEPRECATED as of 2026 and no longer used by Formulize itself. The core _YES and _NO constants are used instead. These remain defined only in case custom code in templates or derived value formulas refers to them.
 define("_formulize_TEMP_QYES", "Sim");
 define("_formulize_TEMP_QNO", "Não");
 define("_formulize_REPORT_ON", "Ativar Modo de Escrita de Relatório");
