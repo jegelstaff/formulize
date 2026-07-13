@@ -36,7 +36,7 @@ formulizeShuffledRadioElement       formulizeShuffledRadioElementHandler
     extends formulizeElement            extends formulizeElementsHandler
 ~~~
 
-This matters because Formulize discovers what "family" your element belongs to by examining the element class hierarchy, and then calls family-specific methods on your **handler**. For example, code that knows it is dealing with a radio-family element will call __getOptionLabel()__ and __previousEntryOptionKey()__ on your handler — methods that exist on __formulizeRadioElementHandler__. If your handler extended the base __formulizeElementsHandler__ instead, those calls would fail.
+This matters because Formulize discovers what "family" your element belongs to by examining the element class hierarchy, and then calls family-specific methods on your **handler**. For example, code that knows it is dealing with a radio-family element will call __previousEntryOptionKey()__ on your handler — a method that exists on __formulizeRadioElementHandler__. If your handler extended the base __formulizeElementsHandler__ instead, that call would fail. (Family-specific methods on the *element* class, like the radio family's __getListOptions()__, are inherited automatically since your element class extends the family's element class — the parallel-hierarchy rule is what extends that same guarantee to the handler side.)
 
 ## What you inherit when you extend an existing type
 
@@ -93,26 +93,37 @@ class formulizeShuffledRadioElementHandler extends formulizeRadioElementHandler 
 		// ele_value is the element-specific settings for the element
 		// in radio buttons it is the set of options (as keys), with the value indicating
 		// if it's the selected option, so 1 if it is selected, 0 if it is not
+		// example with bananas selected: ['apples' => 0, 'pears' => 0, 'bananas' => 1]
 		$selectedOption = "";
 		foreach($ele_value as $optionText=>$selected) {
 			if($selected > 0) {
 				$selectedOption = $optionText;
+				break;
 			}
 		}
 		// disabled elements just render as plain, non-interactable text
 		if($isDisabled) {
-			$disabledLabel = htmlspecialchars($selectedOption);
-			return new XoopsFormLabel($caption, $disabledLabel, $markupName);
+			return new XoopsFormLabel($caption, $selectedOption);
 		}
 
 		// gather the option texts, and shuffle them - the whole point of this element type!
 		$optionTexts = array_keys($ele_value);
 		shuffle($optionTexts);
-		$formElement = new XoopsFormRadio($caption, $markupName, $selectedOption, "<br />"); // separate with line breaks
-		$formElement->addOptionArray($optionTexts);
+
+		// construct the key-value pairs for rendering
+		// we're going with the literal option text (random order now), as value and as label
+		$keyValuePairs = array();
+		foreach($optionTexts as $optionText) {
+			$keyValuePairs[$optionText] = $optionText;
+		}
+
+		// create a radio button series with these key-value pairs, and the selectedOption
+		// separate with line breaks
+		$formElement = new XoopsFormRadio($caption, $markupName, $selectedOption, "<br />");
+		$formElement->addOptionArray($keyValuePairs);
 
 		// A lot of saving and validation behaviours depend on this global javascript value being set
-		// So we make sure to set it when there's a change in the selection
+		// So we make sure to add code to the element so this is set when there's a change in the selection
 		$formElement->setExtra("onchange=\"javascript:formulizechanged=1;\"");
 
 		return $formElement;
