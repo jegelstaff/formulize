@@ -286,7 +286,8 @@ $options['ele_uitextshow'] = $ele_uitextshow;
 // falls back to an ancestor type's template for custom types that extend a built-in type. If nothing is
 // found anywhere in the ancestry, pass the type's own template name, and the failure will be an obvious
 // missing-template error, rather than a mysteriously blank tab
-$options['typetemplate'] = formulize_elementTypeAdminTemplate($ele_type) ? formulize_elementTypeAdminTemplate($ele_type) : "db:admin/element_type_".$ele_type.".html";
+$typetemplate = formulize_elementTypeAdminTemplate($ele_type);
+$options['typetemplate'] = $typetemplate ? $typetemplate : "db:admin/element_type_".$ele_type.".html";
 
 
 
