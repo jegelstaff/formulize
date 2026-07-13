@@ -159,6 +159,13 @@ function getHomeTabs($activePage = 'home') {
         'active' => ($activePage == 'logviewer')
     );
 
+		  $tabs[] = array(
+        'name' => 'Theme Editor',
+        'url' => 'ui.php?page=themeeditor',
+        'template' => 'db:admin/themeeditor.html',
+        'active' => ($activePage == 'themeeditor')
+    );
+
     $tabs[] = array(
         'name' => 'Import/Export',
         'url' => 'ui.php?page=config-sync',
