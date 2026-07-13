@@ -370,7 +370,7 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 	}
 
 	// this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
-	// You can return {WRITEASNULL} to cause a null value to be saved in the database
+	// You can return null to cause a null value to be saved in the database
 	// $value is what the user submitted
 	// $element is the element object
 	// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
@@ -391,7 +391,7 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 		}
 		global $myts;
 		$value = $myts->htmlSpecialChars($value);
-		$value = (!is_numeric($value) AND $value == "") ? "{WRITEASNULL}" : $value;
+		$value = (!is_numeric($value) AND $value == "") ? null : $value;
 		return $value;
 	}
 

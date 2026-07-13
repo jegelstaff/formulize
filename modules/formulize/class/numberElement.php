@@ -291,14 +291,14 @@ class formulizeNumberElementHandler extends formulizeTextElementHandler {
 	}
 
 	// this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
-	// You can return {WRITEASNULL} to cause a null value to be saved in the database
+	// You can return null to cause a null value to be saved in the database
 	// $value is what the user submitted
 	// $element is the element object
 	// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
 	// $subformBlankCounter is the counter for the subform blank entries, if applicable
 	function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
 		$value = preg_replace ('/[^0-9.-]+/', '', trim($value));
-		$value = (!is_numeric($value) AND $value == "") ? "{WRITEASNULL}" : $value;
+		$value = (!is_numeric($value) AND $value == "") ? null : $value;
 		return $value;
 	}
 

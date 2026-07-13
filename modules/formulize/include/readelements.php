@@ -134,7 +134,7 @@ foreach($_POST as $k=>$v) {
 		$blankSubformCounter = $subformMetaDataParts[0];
 		$blankSubformElementId = $subformMetaDataParts[1];
     $v = prepDataForWrite($elementObject, $v, "new", $blankSubformCounter);
-		if(($v === "" OR $v === "{WRITEASNULL}") AND $elementMetaData[2] == "new") { continue; } // don't store blank values for new entries, we don't want to write those (if desubform is used only for blank defaults, then it will always be "new" but we'll keep this as is for now, can't hurt)
+		if(($v === "" OR $v === "{WRITEASNULL}" OR $v === null) AND $elementMetaData[2] == "new") { continue; } // don't store blank values for new entries, we don't want to write those (if desubform is used only for blank defaults, then it will always be "new" but we'll keep this as is for now, can't hurt)
 		$formulize_elementData[$elementMetaData[1]][$elementMetaData[2].$blankSubformCounter."x".$blankSubformElementId][$elementMetaData[3]] = $v;
 		if(!isset($formulize_subformBlankCues[$elementMetaData[1]])) {
 			$formulize_subformBlankCues[$elementMetaData[1]] = $elementMetaData[1]; // we will watch for entries being written to this form, and store the resulting entries in global space so we can synch them later
@@ -174,7 +174,7 @@ foreach($_POST as $k=>$v) {
 				$v = prepDataForWrite($elementObject, $_POST["de_".$elementMetaData[1]."_".$elementMetaData[2]."_".$elementMetaData[3]], $elementMetaData[2]);
 				$formulize_elementData[$elementMetaData[1]][$elementMetaData[2]][$elementMetaData[3]] = $v;
 			} elseif(is_numeric($elementMetaData[1]) AND $elementObject->isSystemElement == false) {
-				$formulize_elementData[$elementMetaData[1]][$elementMetaData[2]][$elementMetaData[3]] = "{WRITEASNULL}"; // no value returned for this element that was included (cue was found) so we write it as blank to the db
+				$formulize_elementData[$elementMetaData[1]][$elementMetaData[2]][$elementMetaData[3]] = null; // no value returned for this element that was included (cue was found) so we write it as blank to the db
 			}
 		}
 

@@ -143,7 +143,7 @@ class formulizeColorpickElementHandler extends formulizeElementsHandler {
 	}
 
 	// this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
-	// You can return {WRITEASNULL} to cause a null value to be saved in the database
+	// You can return null to cause a null value to be saved in the database
 	// $value is what the user submitted
 	// $element is the element object
 	// $subformBlankCounter is the counter for the subform blank entries, if applicable

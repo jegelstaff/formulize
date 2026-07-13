@@ -332,7 +332,7 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
     }
 
     // this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
-	// You can return {WRITEASNULL} to cause a null value to be saved in the database
+	// You can return null to cause a null value to be saved in the database
 	// $value is what the user submitted
 	// $element is the element object
 	// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
@@ -341,7 +341,7 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
         $ele_value = $element->getVar('ele_value');
         $configuredDefault = isset($ele_value[3]) ? $ele_value[3] : null;
         if ($configuredDefault === "" && ($value === "" || $value === null)) {
-            return '{WRITEASNULL}'; // empty-default mode: untouched slider → store NULL
+            return null; // empty-default mode: untouched slider → store NULL
         }
         return formulize_db_escape($value);
     }

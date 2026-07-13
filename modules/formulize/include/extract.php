@@ -2797,8 +2797,9 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
 						$derivedValue = $functionName($entry, $form_id, $primary_entry_id, $relationship_id);
 						// if the new value is the same as the previous one, then skip updating and saving
 						if ($derivedValue !== $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']]) {
+							$derivedValue = $derivedValue === '{WRITEASNULL}' ? null : $derivedValue; // legacy derived values might use old term
 							$dataToWrite[$thisMetaData['handle']] = $derivedValue;
-							$entry[$formHandle][$primary_entry_id][$thisMetaData['handle']] = $derivedValue === '{WRITEASNULL}' ? NULL : $derivedValue;
+							$entry[$formHandle][$primary_entry_id][$thisMetaData['handle']] = $derivedValue;
 						}
 					}
 					if (count((array) $dataToWrite) > 0) {
@@ -2806,7 +2807,7 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
 							if (isset($GLOBALS['formulize_cachedGetDataResults'][$staleCacheKey])) {
 								foreach (array_keys($masterIndexes) as $staleMasterIndex) {
 									foreach ($dataToWrite as $handle => $value) {
-										$GLOBALS['formulize_cachedGetDataResults'][$staleCacheKey][$staleMasterIndex][$formHandle][$primary_entry_id][$handle] = ($value === '{WRITEASNULL}') ? null : $value;
+										$GLOBALS['formulize_cachedGetDataResults'][$staleCacheKey][$staleMasterIndex][$formHandle][$primary_entry_id][$handle] = $value;
 									}
 								}
 							}

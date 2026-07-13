@@ -1410,7 +1410,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 	}
 
 	// this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
-	// You can return {WRITEASNULL} to cause a null value to be saved in the database
+	// You can return null to cause a null value to be saved in the database
 	// $value is what the user submitted
 	// $element is the element object
 	// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
@@ -1423,7 +1423,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 		$originalValue = $value;
 
 		if ($ele_value[ELE_VALUE_SELECT_NUMROWS] == 1 AND $value == "none") { // none is the flag for the "Choose an option" default value
-			return "{WRITEASNULL}"; // this flag is used to terminate processing of this value
+			return null; // this flag is used to terminate processing of this value
 		}
 
 		$checkForNewValues = !is_array($value) ? array($value) : $value;

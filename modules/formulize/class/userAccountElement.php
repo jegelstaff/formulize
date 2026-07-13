@@ -246,7 +246,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
     /**
      * Prepare a submitted value for insertion into the form's data table (base: pass-through).
      *
-     * Return {WRITEASNULL} to save a SQL NULL. $entry_id may be "new" for new entries or null
+     * Return null to save a SQL NULL. $entry_id may be "new" for new entries or null
      * for subform-blank entries.
      *
      * @param mixed     $value              The submitted value
@@ -462,7 +462,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 				$old2faMethod = $context['old2faMethod'];
 				$old2faPhone = $context['old2faPhone'];
 				$oldEmail = $context['oldEmail'];
-				
+
 				// Collect all pending changes from form submission
 				$changes = self::collectPendingUserVars($formId, $entryId, $userObject, $profile, $entryUserId, $old2faMethod);
 				$pendingUserVars = $changes['pendingUserVars'];
@@ -470,7 +470,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 				$rawSubmitted2faMethod = $changes['rawSubmitted2faMethod'];
 				$passwordChanged = $changes['passwordChanged'];
 				$cleanupAppSecret = $changes['cleanupAppSecret'];
-				
+
 				// Validate 2FA transition if user is editing their own account
 				if(!self::validateOwnAccount2faTransition(
 					$entryUserId, $userObject, $profile, $pendingUserVars, $pendingProfileVars,
@@ -478,11 +478,11 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 				)) {
 					return self::setTfaValidationError($results[$cacheKey]);
 				}
-				
+
 				// Apply all pending changes now that validation has passed
 				foreach($pendingProfileVars as $k => $v) { $profile->setVar($k, $v); }
 				foreach($pendingUserVars as $k => $v) { $userObject->setVar($k, $v); }
-				
+
 				// Persist to database
 				$userId = self::persistUserAndProfile($userObject, $profile, $entryUserId);
 				if($userId) {
@@ -552,7 +552,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 		$member_handler = xoops_gethandler('member');
 		$profile_handler = xoops_getmodulehandler('profile', 'profile');
 		$entryUserId = $formObject->getSystemUserIdFromEntry($entryId);
-		
+
 		if($entryUserId) {
 			$userObject = $member_handler->getUser($entryUserId);
 			if (!$userObject) {
@@ -583,7 +583,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			$old2faPhone = '';
 			$oldEmail = '';
 		}
-		
+
 		return array(
 			'userObject' => $userObject,
 			'profile' => $profile,
@@ -601,7 +601,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 	private static function collectPendingUserVars($formId, $entryId, $userObject, $profile, $entryUserId, $old2faMethod) {
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
-		
+
 		$pendingProfileVars = array();
 		$pendingUserVars = array();
 		$rawSubmitted2faMethod = null;
@@ -615,10 +615,10 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			if(!$accountElement) {
 				continue;
 			}
-			
+
 			$elementId = $accountElement->getVar('ele_id');
 			$userProperty = $accountElement->userProperty;
-			
+
 			if($accountElement->readOnly) {
 				continue; // system-managed property
 			}
@@ -628,9 +628,9 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			if(!isset($_POST['decue_'.$formId.'_'.$entryId.'_'.$elementId])) {
 				continue; // element not on this form/page
 			}
-			
+
 			$value = isset($_POST['de_'.$formId.'_'.$entryId.'_'.$elementId]) ? $_POST['de_'.$formId.'_'.$entryId.'_'.$elementId] : '';
-			
+
 			// Handle password encryption
 			if($userProperty == 'pass') {
 				if($value === '') {
@@ -645,7 +645,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 				$pendingUserVars['salt'] = $salt;
 				$pendingUserVars['enc_type'] = $enc_type;
 			}
-			
+
 			// Handle profile properties
 			if(substr($userProperty, 0, 8) == 'profile:') {
 				$property = substr($userProperty, 8);
@@ -680,7 +680,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 				$pendingUserVars[$userProperty] = $value;
 			}
 		}
-		
+
 		return array(
 			'pendingUserVars' => $pendingUserVars,
 			'pendingProfileVars' => $pendingProfileVars,
@@ -700,7 +700,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 		$criteria_2fagroups = new Criteria('conf_name', 'auth_2fa_groups');
 		$auth_2fa_groups_cfg = icms::handler('icms_config')->getConfigs($criteria_2fagroups);
 		$auth_2fa_groups = ($auth_2fa_groups_cfg) ? $auth_2fa_groups_cfg[0]->getConfValueForOutput() : array();
-		
+
 		// Get submitted phone to check SMS-without-phone case
 		$phoneEleForCheck = $element_handler->get('formulize_user_account_phone_'.$formId);
 		$submittedPhoneForCheck = '';
@@ -708,12 +708,12 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			$phoneEleIdForCheck = $phoneEleForCheck->getVar('ele_id');
 			$submittedPhoneForCheck = preg_replace('/[^0-9]/', '', isset($_POST['de_'.$formId.'_'.$entryId.'_'.$phoneEleIdForCheck]) ? $_POST['de_'.$formId.'_'.$entryId.'_'.$phoneEleIdForCheck] : '');
 		}
-		
+
 		if(($value == TFA_OFF && array_intersect($edituserGroups, (array)$auth_2fa_groups))
 		   || ($value == TFA_SMS && !$submittedPhoneForCheck)) {
 			return TFA_EMAIL;
 		}
-		
+
 		return $value;
 	}
 
@@ -726,7 +726,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 		if(!$entryUserId || !$xoopsUser || intval($entryUserId) != intval($xoopsUser->getVar('uid'))) {
 			return true; // Not editing own account
 		}
-		
+
 		$criteria_2fa_sv = new Criteria('conf_name', 'auth_2fa');
 		$is2faOn = false;
 		if($auth_2fa_sv = icms::handler('icms_config')->getConfigs($criteria_2fa_sv)) {
@@ -735,24 +735,24 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 		if(!$is2faOn) {
 			return true; // 2FA not enabled
 		}
-		
+
 		include_once XOOPS_ROOT_PATH . '/include/2fa/manage.php';
 		self::$submittedValues = $_POST;
 		$newEmail  = isset($pendingUserVars['email']) ? $pendingUserVars['email'] : $userObject->getVar('email');
 		$newPhone  = isset($pendingProfileVars['2faphone']) ? $pendingProfileVars['2faphone'] : $profile->getVar('2faphone');
 		$effectiveNewMethod = $rawSubmitted2faMethod !== null ? $rawSubmitted2faMethod : $old2faMethod;
-		
+
 		$needsValidation = (
 			($effectiveNewMethod != $old2faMethod) ||
 			(($old2faMethod == TFA_SMS || $effectiveNewMethod == TFA_SMS) && $newPhone != $old2faPhone) ||
 			(($old2faMethod == TFA_EMAIL || $old2faMethod == TFA_OFF || $effectiveNewMethod == TFA_EMAIL || $effectiveNewMethod == TFA_OFF) && $oldEmail && $newEmail != $oldEmail) ||
 			$passwordChanged
 		);
-		
+
 		if(!$needsValidation) {
 			return true;
 		}
-		
+
 		// Two-phase (verify the OLD contact, then the NEW contact) is required in three cases:
 		// 1. Staying on email, email is changing. Email is the default 2FA contact when no method
 		//    is set, so TFA_OFF is treated as email-ish here: changing your email while 2FA is off
@@ -766,7 +766,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			($old2faMethod == TFA_SMS && $effectiveNewMethod == TFA_SMS && $old2faPhone && $newPhone != $old2faPhone) ||
 			($rawSubmitted2faMethod !== null && $old2faMethod != TFA_OFF && $rawSubmitted2faMethod != TFA_OFF && $rawSubmitted2faMethod != $old2faMethod)
 		);
-		
+
 		if($contactChanging) {
 			$step1Token = isset($_POST['formulize_tfa_step1token']) ? trim($_POST['formulize_tfa_step1token']) : '';
 			if($rawSubmitted2faMethod == TFA_APP) {
@@ -796,19 +796,19 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 				return false;
 			}
 		}
-		
+
 		$submittedCode = isset($_POST['formulize_tfa_code']) ? trim($_POST['formulize_tfa_code']) : '';
 		if(!validateCode($submittedCode, intval($entryUserId))) {
 			return false;
 		}
-		
+
 		// Validation passed -- now safe to delete the app secret if switching away from app
 		if($cleanupAppSecret) {
 			global $xoopsDB;
 			$sql = 'DELETE FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($userObject->getVar('uid')).' AND method = '.TFA_APP;
 			$xoopsDB->queryF($sql);
 		}
-		
+
 		return true;
 	}
 
@@ -825,10 +825,10 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			}
 			$userObject->setVar('login_name', $altLoginName);
 		}
-		
+
 		$member_handler = xoops_gethandler('member');
 		$profile_handler = xoops_getmodulehandler('profile', 'profile');
-		
+
 		if($member_handler->insertUser($userObject)) {
 			$userId = $userObject->getVar('uid');
 			if(!$entryUserId) {
@@ -837,7 +837,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			$profile_handler->insert($profile);
 			return $userId;
 		}
-		
+
 		return false;
 	}
 
@@ -881,14 +881,14 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			trigger_error("Invalid profile column name: $column", E_USER_WARNING);
 			return "1=0"; // Return a clause that will never match
 		}
-		
+
 		// Validate operator against whitelist
 		$validOperators = array('=', '!=', '<', '>', '<=', '>=', 'LIKE', 'NOT LIKE');
 		if(!in_array($operator, $validOperators, true)) {
 			trigger_error("Invalid operator: $operator", E_USER_WARNING);
 			return "1=0";
 		}
-		
+
 		$safeTermClause = $operator . $quotes . $likebits . formulize_db_escape($term) . $likebits . $quotes;
 		return "EXISTS("
 			. "SELECT 1 FROM " . $xoopsDB->prefix('profile_profile') . " AS pp"
@@ -913,7 +913,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			trigger_error("Invalid user table column name: $column", E_USER_WARNING);
 			return "1=0"; // Return a clause that will never match
 		}
-		
+
 		// Validate operator against whitelist
 		$validOperators = array('=', '!=', '<', '>', '<=', '>=', 'LIKE', 'NOT LIKE');
 		if(!in_array($operator, $validOperators, true)) {

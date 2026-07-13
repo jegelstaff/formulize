@@ -258,7 +258,7 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 	}
 
 	// this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
-	// You can return {WRITEASNULL} to cause a null value to be saved in the database
+	// You can return null to cause a null value to be saved in the database
 	// $value is what the user submitted
 	// $element is the element object
 	// $subformBlankCounter is the counter for the subform blank entries, if applicable
@@ -267,7 +267,7 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 		if ($value != _DATE_DEFAULT AND $value != "" AND $timestamp !== false) { // $timestamp !== false should catch everything by itself? under some circumstance not yet figured out, the other checks could be useful?
 			$value = date("Y-m-d", $timestamp);
 		} else {
-			$value = "{WRITEASNULL}"; // forget about this date element and go on to the next element in the form
+			$value = null; // forget about this date element and go on to the next element in the form
 		}
 		return $value;
 	}

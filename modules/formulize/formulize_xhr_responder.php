@@ -319,7 +319,7 @@ switch($op) {
         $databaseReadyValue = 'new';
       } else {
         $databaseReadyValue = prepDataForWrite($passedElementObject, $v, $entryId);
-        $databaseReadyValue = $databaseReadyValue === "{WRITEASNULL}" ? NULL : $databaseReadyValue;
+        $databaseReadyValue = $databaseReadyValue === "{WRITEASNULL}" ? null : $databaseReadyValue;
       }
       $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$passedEntryId][$handle] = $databaseReadyValue;
       $apiFormatValue = prepvalues($databaseReadyValue, $handle, $passedEntryId); // will be an array
