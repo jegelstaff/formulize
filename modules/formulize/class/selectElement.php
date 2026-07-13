@@ -61,6 +61,11 @@ define('ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS', 'linkedSourceMappings'); // mappi
 class formulizeSelectElement extends formulizeElement {
 
 	var $defaultValueKey;
+	// how this list is rendered for users: 'select' (a dropdown), 'listbox' or 'autocomplete'. The three styles are
+	// stored in the same ele_value keys (NUMROWS and AUTOCOMPLETE), so the class has to say which style it is, rather
+	// than the ele_type being parsed to figure it out - a custom type that extends the listbox is still a listbox, and
+	// the linked/users variants of a style extend selectLinked/selectUsers rather than the style's own class
+	var $listStyle = 'select';
 	public static $category = "lists";
 
 	function __construct() {
@@ -104,7 +109,6 @@ class formulizeSelectElement extends formulizeElement {
 	 */
 	public function getDefaultDataType($defaultType = 'text') {
 		$ele_value = $this->getVar('ele_value');
-		$selectTypeName = strtolower(str_ireplace(['formulize', 'element', 'linked', 'users'], "", static::class));
 		if ($ele_value[ELE_VALUE_SELECT_MULTIPLE] == 0 AND $this->isLinked) {
 			if($ele_value[ELE_VALUE_SELECT_LINK_SNAPSHOT]) {
 				$dataType = 'text';
@@ -331,7 +335,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 			$options['multiple'] = 0;
 			$ele_value[ELE_VALUE_SELECT_NUMROWS] = 1;
 			$options['islinked'] = 0;
-			$options['usernameslist'] = substr($_GET['type'], -5) == 'users' ? true : false;
+			$options['usernameslist'] = $this->create()->isUserList; // ask the class, since a custom user list type will not have a type name we could test for
 			$options['formlink_scope'] = array(0=>'all');
 			$ele_value = array();
 			$ele_uitext = array();
@@ -465,32 +469,35 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 
 		$postedMultipleValue = isset($_POST['elements_multiple']) ? intval($_POST['elements_multiple']) : 0;
 
-		// for username lists, enforce the ancient convention of using {USERNAMES} as the only option
-		$elementTypeName = strtolower(str_ireplace(['formulize', 'elementhandler'], "", static::class));
-		$userNameList = strstr($elementTypeName, 'users') ? true : false; // is this a user list?
-		if($userNameList) {
+		// the element class is what says which kind of list this is, and what the webmaster is allowed to configure.
+		// Do not go by the class name or the ele_type: a custom element type that extends one of the list types is
+		// that kind of list too, and its name will match none of the names we could test for
+		$elementProperties = (is_object($element) AND is_a($element, 'formulizeElement')) ? $element : $this->create();
+
+		// for user lists, enforce the ancient convention of using {USERNAMES} as the only option
+		if($elementProperties->isUserList) {
 			unset($ele_value[ELE_VALUE_SELECT_OPTIONS]);
 			$ele_value[ELE_VALUE_SELECT_OPTIONS] = array('{USERNAMES}' => 0);
 		}
 
-		$selectTypeName = strtolower(str_ireplace(['formulize', 'elementhandler', 'linked', 'users'], "", static::class));
-		switch($selectTypeName) {
+		// multiple selections are only possible for the list styles where the webmaster is offered the choice,
+		// so for the other styles (dropdowns) there is nothing posted, and multiple is always off
+		$ele_value[ELE_VALUE_SELECT_MULTIPLE] = $elementProperties->adminCanAllowMultipleValues ? $postedMultipleValue : 0;
+
+		switch($elementProperties->listStyle) {
 			case 'listbox':
 				$ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE] = 0;
-				$ele_value[ELE_VALUE_SELECT_NUMROWS] = ($userNameList OR $element->isLinked) ? 10 : (count((array)$_POST['ele_value']) < 10 ? count($_POST['ele_value']) : 10);
+				$ele_value[ELE_VALUE_SELECT_NUMROWS] = ($elementProperties->isUserList OR $elementProperties->isLinked) ? 10 : (count((array)$_POST['ele_value']) < 10 ? count($_POST['ele_value']) : 10);
 				$ele_value[ELE_VALUE_SELECT_NUMROWS] = $ele_value[ELE_VALUE_SELECT_NUMROWS] < 1 ? 1 : $ele_value[ELE_VALUE_SELECT_NUMROWS]; // min of 1
-				$ele_value[ELE_VALUE_SELECT_MULTIPLE] = $postedMultipleValue;
 				break;
 			case 'autocomplete':
 				$ele_value[ELE_VALUE_SELECT_NUMROWS] = 1; // rows is 1
 				$ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE] = 1; // is autocomplete
-				$ele_value[ELE_VALUE_SELECT_MULTIPLE] = $postedMultipleValue;
 				break;
 			case 'select':
 			default:
 				$ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE] = 0;
 				$ele_value[ELE_VALUE_SELECT_NUMROWS] = 1;
-				$ele_value[ELE_VALUE_SELECT_MULTIPLE] = 0; // multiple selections not allowed for drop down lists
 				break;
 		}
 
@@ -538,12 +545,14 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 				list($_POST['ele_value'], $ele_uitext) = formulize_extractUIText($_POST['ele_value']);
 				foreach($_POST['ele_value'] as $id=>$text) {
 					if($text !== "") {
-						// For select elements, defaultoption is a single value (radio button)
-						// For other elements (listbox, autocomplete), it's an array (checkboxes)
-						if($selectTypeName == 'select') {
-							$ele_value[ELE_VALUE_SELECT_OPTIONS][$text] = (isset($_POST['defaultoption']) && $_POST['defaultoption'] == $id) ? 1 : 0;
-						} else {
+						// the default option chooser is rendered as radio buttons when the element can only hold one value,
+						// and as checkboxes when it can hold several (see element_optionlist.html), so a single value comes
+						// back in the first case and an array in the second. Read what was actually posted, so that this
+						// cannot fall out of step with the markup that produced it
+						if(is_array($_POST['defaultoption'])) {
 							$ele_value[ELE_VALUE_SELECT_OPTIONS][$text] = isset($_POST['defaultoption'][$id]) ? 1 : 0;
+						} else {
+							$ele_value[ELE_VALUE_SELECT_OPTIONS][$text] = (isset($_POST['defaultoption']) AND $_POST['defaultoption'] == $id) ? 1 : 0;
 						}
 					}
 				}
@@ -1719,9 +1728,10 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
 
 		// if this is a user list, we may need to convert from string to uid
-		$elementTypeName = strtolower(str_ireplace(['formulize', 'elementhandler'], "", static::class));
-		$userNameList = strstr($elementTypeName, 'users') ? true : false; // is this a user list?
-		if($userNameList) {
+		// the element class is what knows if its options are users - a custom type that extends one of the user
+		// list types is a user list too, and its class name will not contain anything we could test for
+		$elementProperties = (is_object($element) AND is_a($element, 'formulizeElement')) ? $element : $this->create();
+		if($elementProperties->isUserList) {
 			// if $value is not numeric, search the users table for a match on uname, taking $partialMatch into account
 			if(!is_numeric($value) AND $value !== '') {
 				global $xoopsDB;

@@ -43,6 +43,9 @@ class formulizeAutocompleteElement extends formulizeSelectElement {
 		$this->adminCanMakeRequired = true; // set to true if the webmaster should be able to toggle this element as required/not required
 		$this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
 		// $this->canHaveMultipleValues = false; // set by setCanHaveMultipleValues method in the parent class, which is called as part of 'get' operation (in _setElementProperties method in elements.php)
+		$this->listStyle = 'autocomplete'; // rendered as an autocomplete, rather than a dropdown or a listbox
+		$this->adminCanAllowMultipleValues = true; // the webmaster chooses whether users can select more than one option
+		$this->adminCanAllowNewValues = true; // the webmaster chooses whether users can save values that are not among the options
 		$this->hasMultipleOptions = true;
 		$this->isLinked = false; // set to true if this element can have linked values
 	}
