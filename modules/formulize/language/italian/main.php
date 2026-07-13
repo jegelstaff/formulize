@@ -3,8 +3,8 @@
 * --------------------------------------------------------------------
 *      Italian Translation by Luigi Massetti alias Gigiox
 *                     gigiox66 at libero dot it
-*    http://www.xoopsit.net the XOOPS Official Italian Support Site            
-* -------------------------------------------------------------------- 
+*    http://www.xoopsit.net the XOOPS Official Italian Support Site
+* --------------------------------------------------------------------
 */
 define("_formulize_FORM_TITLE", "Contattaci riempiendo questo modulo.");
 //define("_formulize_MSG_SUBJECT", $xoopsConfig['sitename'].' - Contact Us Form');
@@ -13,10 +13,10 @@ define("_formulize_MSG_FORM", ' Form : ');
 //next two lines added by jwe 7/23/04
 define("_formulize_INFO_RECEIVED", "Your information has been received.");
 define("_formulize_NO_PERMISSION", "You do not have permission to view this form.");
-define("_formulize_MSG_SENT", "Il tuo messaggio è stato inviato con successo!");
+define("_formulize_MSG_SENT", "Il tuo messaggio ï¿½ stato inviato con successo!");
 define("_formulize_MSG_THANK", "<br />Grazie per il tuo commento.");
 define("_formulize_MSG_SUP","<br /> Assicurati che siano stati cancellati i dati");
-define("_formulize_MSG_BIG","Il file da allegare è troppo grande.");
+define("_formulize_MSG_BIG","Il file da allegare ï¿½ troppo grande.");
 define("_formulize_MSG_UNSENT","Per favore allega un file con una dimensione fino a ");
 define("_formulize_MSG_UNTYPE","Tu non puoi allegare questo tipo di file.<br>Gli unici tipi di file autorizzati sono: ");
 
@@ -70,4 +70,5 @@ define("_formulize_TEMP_QNO", "NO");
 define("_AM_FORMUL","Form esistenti");
 define("_AM_FORM_SELECT","Seleziona un form");
 define("_MD_FILEERROR","Errore nell'invio del file");
-?>
+
+include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/main.php';

@@ -112,4 +112,17 @@ define("_AM_VERSION","2.8");
 define("_AM_REORD","Nuovo ordinamento");
 //added by f�lix <INBOX International> for sedonde (colorpicker feature)
 define("_AM_ELE_COLORPICK","Colore");
+
+// derived columns
+define("_AM_ELE_DERIVED", "Valore derivato da altri elementi");
+define("_AM_ELE_DERIVED_CAP", "Formula per generare valori in questo elemento");
+define("_AM_ELE_DERIVED_DESC", "Esempi:<br />\$value = \$profile_first_name . ' ' . \$profile_last_name; // per un Nome Completo<br>\$value = \$inventory_value * \$inventory_count; // per un Valore Totale<br><br>La formula è scritta in codice PHP e l'elemento utilizzerà il valore assegnato a <b>\$value</b> nel codice. Come codice PHP, puoi usare tutto ciò che trovi in <a href='https://formulize.org/developers/API/' target='_blank'>l'API Formulize</a>, ma per operazioni complesse, le <b>Procedure Prima del Salvataggio</b> e <b>Dopo il Salvataggio</b> sono consigliate al posto dei valori derivati.<br><br>Le variabili disponibili sono:<br><b>\$form_id</b> - il numero di identificazione del modulo principale nel set di dati corrente, solitamente il modulo a cui appartiene la schermata attiva<br><b>\$entry_id</b> - l'ID della voce del record nel database a cui questo valore appartiene in questo particolare modulo<br><b>\$relationship_id</b> - il numero di identificazione della relazione attiva, se presente. Per impostazione predefinita, la Relazione Principale è la relazione attiva, a meno che la schermata attiva non sia specificamente impostata per utilizzare qualcos'altro.<br><b>\$entry</b> - la voce a cui questo valore appartiene, come raccolto dalla funzione gatherDataset dal set di dati attivo. Adatto per essere passato alla funzione di visualizzazione, ma è consigliato fare riferimento agli elementi tramite le loro variabili di handle:<br><br>Puoi raccogliere qualsiasi valore dal set di dati attivo facendo riferimento agli handle degli elementi come variabili, ad esempio: \$activities_name. Questo ti fornirà il valore leggibile di quell'elemento nel set di dati attualmente attivo. Nota che lo stesso handle di elemento può restituirti cose diverse a seconda di come questo modulo è incluso nel set di dati corrente quando la voce viene salvata. Ad esempio, potresti fare riferimento a un elemento in un altro modulo, e quel modulo è il modulo principale del set di dati in alcuni contesti, ma altre volte quel modulo viene utilizzato come un sottomodulo. Il valore derivato riceverà dati diversi in momenti diversi, se calcolato in circostanze diverse. Quando ci sono più voci da un modulo nel set di dati, gli handle degli elementi su quel modulo restituiranno un array di valori da tutte le voci.");
+define("_AM_ELE_DERIVED_ADD", "Aggiungi alla formula");
+define("_AM_ELE_DERIVED_DONE","Aggiornamento dei valori completato!");
+define("_AM_ELE_DERIVED_UPDATE", "Aggiorna valori derivati");
+define("_AM_ELE_DERIVED_UPDATE_CAP", "Calcola i valori per questo elemento");
+define("_AM_ELE_DERIVED_UPDATE_DESC", "Potrebbe richiedere un po' a seconda di quanti record sono contenuti nel tuo modulo.");
+
+// fallback to English for any missing constants
+include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/admin.php';
 ?>
