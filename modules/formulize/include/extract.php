@@ -1502,10 +1502,6 @@ function makeJoinTextIfFormLinksToIntermediary($ele_value, $linkSideElementHandl
  */
 function multipleValuesAllowedForElement($elementHandleOrId) {
 	$element_handler = xoops_getmodulehandler('elements', 'formulize');
-	// canHaveMultipleValues is computed once per element, when it is loaded (see _setElementProperties
-	// in elements.php), and is correct for every element type - checkbox-family types set it true in
-	// their constructor, select-family types compute it from their multiple-selections setting via
-	// setCanHaveMultipleValues(), and any custom type gets whichever of those it inherits, or false
 	$element = $element_handler->get($elementHandleOrId);
 	return $element ? $element->canHaveMultipleValues : false;
 }
@@ -2334,7 +2330,15 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 							$queryElementMetaData = formulize_getElementMetaData($ifParts[0], true);
 							$ele_value = unserialize($queryElementMetaData['ele_value']);
 							$cleanSearchTerm = convertStringToUseSpecialCharsToMatchDB($ifParts[1]);
-							if (elementTypeIsOrExtends($formFieldFilterMap[$mappedForm][$element_id]['ele_type'], 'checkboxLinked') or (($ele_value[0] > 1 or $ele_value[8]) and $ele_value[1])) { // if checkbox (or any type based on checkboxLinked), or a selectbox where the element supports multiple selections [1], and number of rows is greater than 1 [0], or it is an autocomplete element [8]
+							// if any linked checkbox
+							// or if any select type (which will necessarily be only linked ones since we're in a linked if statement from above), that supports multiple selections [1], and (number of rows is greater than 1 [0] or it is an autocomplete element [8])
+							if (elementTypeIsOrExtends($formFieldFilterMap[$mappedForm][$element_id]['ele_type'], 'checkboxLinked')
+								OR (
+									elementTypeIsOrExtends($formFieldFilterMap[$mappedForm][$element_id]['ele_type'], 'select')
+									AND ($ele_value[0] > 1 OR $ele_value[8])
+									AND $ele_value[1]
+								)
+							) {
 								if (is_numeric($ifParts[1])) {
 									$operator = "=";
 									$quotes = "";

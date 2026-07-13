@@ -332,9 +332,15 @@ class formulizeYnElementHandler extends formulizeRadioElementHandler {
 			$value = formulizeYnElement::YES_DB_VALUE;
 		} elseif (($value AND strstr(strtoupper(_NO), strtoupper($value))) OR strtoupper($value) == "NO") {
 			$value = formulizeYnElement::NO_DB_VALUE;
-		} elseif(!is_numeric($value)) {
-			$value = "";
+		} elseif (
+			$value !== ""
+			AND $value !== null
+      AND $value != formulizeYnElement::YES_DB_VALUE
+      AND $value != formulizeYnElement::NO_DB_VALUE
+		) {
+			$value = false; // not a valid code, so there is no match
 		}
+
 		return $value;
 	}
 

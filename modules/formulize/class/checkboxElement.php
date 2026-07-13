@@ -363,7 +363,7 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 		// put the array into another array (clearing all default values)
 		// then we modify our place holder array and then reassign
 
-		$ele_value = $element->getVar('ele_value'); // getVar migrates any legacy ele_value structure to the current one
+		$ele_value = $element->getVar('ele_value');
 
 		$temparray = $ele_value[2];
 
@@ -672,7 +672,7 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 	// $subformBlankCounter is the instance of a blank subform entry we are saving. Multiple blank subform values can be saved on a given pageload and the counter differentiates the set of data belonging to each one prior to them being saved and getting an entry id of their own.
 	function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
 
-			$ele_value = $element->getVar('ele_value'); // getVar migrates any legacy ele_value structure to the current one
+			$ele_value = $element->getVar('ele_value');
 
 			if(!is_array($ele_value[2]) AND strstr($ele_value[2], "#*=:*")) {
 					$filteredValues = array();

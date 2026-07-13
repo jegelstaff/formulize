@@ -3560,15 +3560,19 @@ function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $t
  */
 function sendNotifications($fid, $event, $entries) {
 
-		$entries = array_unique($entries);
-
     // don't send a notification twice, so we store what we have processed already and don't process again
+		$entries = array_unique($entries);
     static $processedNotifications = array();
-    $serializedEntries = serialize($entries);
-    if (isset($processedNotifications[$fid][$event][$serializedEntries])) {
-        return;
-    }
-    $processedNotifications[$fid][$event][$serializedEntries] = true;
+		foreach($entries as $i => $entry_id) {
+			if (isset($processedNotifications[$fid][$event][$entry_id])) {
+				unset($entries[$i]);
+			} else {
+				$processedNotifications[$fid][$event][$entry_id] = true;
+			}
+		}
+		if(empty($entries)) {
+			return;
+		}
 
 		global $xoopsDB, $xoopsUser, $xoopsConfig, $renderedFormulizeScreen;
 
@@ -5252,7 +5256,7 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
 					$optionsHandler = xoops_getmodulehandler($elementObject->getVar('ele_type').'Element', 'formulize', true);
 					$ele_value = $elementObject->getVar('ele_value'); // element classes present ele_value in its current structure, migrating legacy stored structures if necessary (see the checkbox element's getVar)
 					$ele_uitext = $elementObject->getVar('ele_uitext');
-					$options = $optionsHandler ? $optionsHandler->getFilterOptions($elementObject) : array();
+					$options = ($optionsHandler AND method_exists($optionsHandler, 'getFilterOptions')) ? $optionsHandler->getFilterOptions($elementObject) : array();
 					if(is_array($options)) {
 						foreach($options as $checkThisKey=>$checkThisValue) {
 							if(strstr($checkThisKey, "{OTHER|")) {

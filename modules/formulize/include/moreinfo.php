@@ -61,14 +61,13 @@ print "<table width=100%><tr><td width=5%></td><td width=90%>";
   <?php print _formulize_DE_MOREINFO_QUESTION."<br>".trans($elementObject->getVar('ele_caption')); ?>
   </p><center></td></tr>
   <?php
-  $ele_value=$elementObject->getVar('ele_value'); // ele_value and ele_uitext are array properties, unserialized by getVar
-  $ele_uitext=$elementObject->getVar('ele_uitext');
   // radio buttons and everything that extends them (yn, and custom radio-based types) have a
   // list of options we can show. getListOptions returns them keyed by display-ready text, since
   // some types store codes rather than display text in their ele_value keys (yn stores 1/2).
   if(anyRadioElementType($elementObject)) {
       print "<tr><td class=\"odd\"><p><b>"._formulize_DE_MOREINFO_OPTIONS."</b></p>\n";
       print "<ul>\n";
+			$ele_uitext=$elementObject->getVar('ele_uitext');
       foreach($elementObject->getListOptions() as $optionLabel=>$selected) {
         $optionText = isset($ele_uitext[$optionLabel]) ? trans($optionLabel) ." &mdash; ".trans($ele_uitext[$optionLabel]) : trans($optionLabel);
         print "<li>$optionText</li>\n";
