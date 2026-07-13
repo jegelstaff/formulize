@@ -1205,7 +1205,7 @@ class formulizeDataHandler {
 		foreach($element_values as $evHandle=>$thisElementValue) {
 			$thisElementValue = correctStringIntFloatTypes($thisElementValue);
 			$clean_element_values[$evHandle] = $thisElementValue; // set the clean values to reflect any changes we made to the values for comparison purposes
-			$thisElementValue = $thisElementValue === "{WRITEASNULL}" ? NULL : $thisElementValue;
+			$thisElementValue = $thisElementValue === "{WRITEASNULL}" ? null : $thisElementValue; // on before save could have introduced legacy term for null
 			if(array_key_exists($evHandle, $existing_values) AND $existing_values[$evHandle] === $thisElementValue) {
 				unset($element_values[$evHandle]);
 			}

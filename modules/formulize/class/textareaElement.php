@@ -272,7 +272,7 @@ class formulizeTextareaElementHandler extends formulizeTextElementHandler {
 		$counterType   = isset($ele_value[ELE_VALUE_TEXTAREA_COUNTER_TYPE])   ? $ele_value[ELE_VALUE_TEXTAREA_COUNTER_TYPE]   : 'none';
 		$limitNumber = isset($ele_value[ELE_VALUE_TEXTAREA_LIMIT_NUMBER]) ? intval($ele_value[ELE_VALUE_TEXTAREA_LIMIT_NUMBER]) : 0;
 		$isRichText  = isset($ele_value[ELE_VALUE_TEXTAREA_RICHTEXT]) && $ele_value[ELE_VALUE_TEXTAREA_RICHTEXT];
-		if (!$isRichText && $counterType && $counterType !== 'none' && $limitNumber > 0 && $value !== '' && $value !== '{WRITEASNULL}') {
+		if (!$isRichText && $counterType && $counterType !== 'none' && $limitNumber > 0 && $value !== '' && $value !== null && $value !== '{WRITEASNULL}') {
 			if ($counterType === 'characters') {
 				if (mb_strlen($value) > $limitNumber) {
 					$value = mb_substr($value, 0, $limitNumber);
