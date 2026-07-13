@@ -297,8 +297,8 @@ $common['isUserList'] = $elementProperties ? (bool) $elementProperties->isUserLi
 // whether the element currently holds more than one value (which is what the default value UI has to match), versus
 // whether the webmaster is allowed to turn multiple values on and off (which is whether to offer that choice at all)
 $common['canHaveMultipleValues'] = $elementProperties ? (bool) $elementProperties->canHaveMultipleValues : false;
-$common['canAllowMultipleValues'] = $elementProperties ? (bool) $elementProperties->adminCanAllowMultipleValues : false;
-$common['canAllowNewValues'] = $elementProperties ? (bool) $elementProperties->adminCanAllowNewValues : false;
+$common['adminCanAllowMultipleValues'] = $elementProperties ? (bool) $elementProperties->adminCanAllowMultipleValues : false;
+$common['adminCanAllowNewValues'] = $elementProperties ? (bool) $elementProperties->adminCanAllowNewValues : false;
 
 $options = array();
 $options['ele_delim'] = $ele_delim;

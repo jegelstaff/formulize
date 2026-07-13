@@ -4,14 +4,14 @@
 		<div id="linkedSourceOptions">
 			<{$content.linkedoptions}>
 
-			<{if $content.canAllowMultipleValues}>
+			<{if $content.adminCanAllowMultipleValues}>
 				<br>
 				<br>
 				Are multiple selections allowed?<br>
 				<{include file="db:admin/element_multiple_onoff.html"}>
 			<{/if}>
 
-			<{if $content.canAllowNewValues}>
+			<{if $content.adminCanAllowNewValues}>
 				<br>
 				<{include file="db:admin/element_autocomplete_allownew.html"}>
 			<{/if}>
