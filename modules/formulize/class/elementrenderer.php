@@ -261,6 +261,8 @@ class formulizeElementRenderer{
 	}
 
 	function formulize_disableElement($element, $type) {
+		// resolve custom/derived element types to date or colorpick if they're based on those, so subclasses are disabled the same way
+		$type = formulize_resolveEleType($type, array("date", "colorpick"));
 		if($type == "date" OR $type == "colorpick") {
 			switch($type) {
 				case 'date':
@@ -347,6 +349,7 @@ class formulizeElementRenderer{
 		// element (textarea, number) are prefilled the same way the text element is.
 		$simpleValueType = formulize_resolveEleType($type, array("text", "date"));
 		$prevElement_ele_value = array();
+		$javascript = ""; // stays empty for element types that the previous entry UI does not support
 		// setup the javascript based on the type of question, and setup other data that is required
 		if($isRadioType) {
 			// need to get the options of the question so we know what to match

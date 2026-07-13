@@ -226,7 +226,7 @@ if ($_GET['ele_id'] != "new") {
 
 $advanced['ele_use_default_when_blank'] = $ele_use_default_when_blank;
 $advanced['datatypeui'] = createDataTypeUI($ele_type, $elementObject,$fid,$ele_encrypt);
-$advanced['advancedTypeTemplate'] = file_exists(XOOPS_ROOT_PATH."/modules/formulize/templates/admin/element_type_".$ele_type."_advanced.html") ? "db:admin/element_type_".$ele_type."_advanced.html" : "";
+$advanced['advancedTypeTemplate'] = formulize_elementTypeAdminTemplate($ele_type, "_advanced"); // falls back to an ancestor type's template for custom types that extend a built-in type
 
 list($dynamicDefaultElement, $dynamicDefaultSourceElementId) = createFieldList($advanced['ele_dynamicdefault_source'], false, false, "elements-ele_dynamicdefault_source", _NONE);
 $advanced['dynamicDefaultSourceList'] = $dynamicDefaultElement->render();
@@ -283,7 +283,10 @@ $options['ele_delim_custom_value'] = $ele_delim_custom_value;
 $options['ele_delimit_space_numspaces_value'] = $ele_delim_space_numspaces_value;
 $options['ele_uitext'] = $ele_uitext;
 $options['ele_uitextshow'] = $ele_uitextshow;
-$options['typetemplate'] = "db:admin/element_type_".$ele_type.".html";
+// falls back to an ancestor type's template for custom types that extend a built-in type. If nothing is
+// found anywhere in the ancestry, pass the type's own template name, and the failure will be an obvious
+// missing-template error, rather than a mysteriously blank tab
+$options['typetemplate'] = formulize_elementTypeAdminTemplate($ele_type) ? formulize_elementTypeAdminTemplate($ele_type) : "db:admin/element_type_".$ele_type.".html";
 
 
 

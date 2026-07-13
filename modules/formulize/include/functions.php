@@ -4378,20 +4378,21 @@ function writeElementValue($formframe, $elementIdentifier, $entry, $value, $appe
 		$element_id = $element->getVar('ele_id');
     $ele_value = $element->getVar('ele_value');
 
+    // yn elements (and any custom types based on them) store 1/2 codes, so let the element class
+    // convert Yes/No text into the codes, via its prepareLiteralTextForDB method
+    $ynTypeHandler = elementTypeIsOrExtends($element, "yn") ? xoops_getmodulehandler($element->getVar('ele_type')."Element", "formulize") : null;
     if (!is_array($value)) { // value can be an array of multiple values -- initially that only worked for linked selectboxes
-        if ($element->getVar('ele_type') == "yn") {
-            $value = strtoupper($value) == strtoupper(_formulize_TEMP_QYES) ? 1 : $value;
-            $value = strtoupper($value) == strtoupper(_formulize_TEMP_QNO) ? 2 : $value;
+        if ($ynTypeHandler) {
+            $value = $ynTypeHandler->prepareLiteralTextForDB($value, $element);
         } else {
             $value = $myts->htmlSpecialChars($value);
         }
     } else {
         foreach ($value as $id=>$thisValue) {
-            if ($element->getVar('ele_type') == "yn") {
-                $value[$id] = strtoupper($value[$id]) == strtoupper(_formulize_TEMP_QYES) ? 1 : $value[$id];
-                $value[$id] = strtoupper($value[$id]) == strtoupper(_formulize_TEMP_QNO) ? 2 : $value[$id];
+            if ($ynTypeHandler) {
+                $value[$id] = $ynTypeHandler->prepareLiteralTextForDB($thisValue, $element);
             } else {
-                $value[$id] = $myts->htmlSpecialChars($value[$id]);
+                $value[$id] = $myts->htmlSpecialChars($thisValue);
             }
         }
     }
@@ -10955,8 +10956,7 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 	$evaluationCondition = "";
 
 	// convert the internal database representation to the displayed value, if this element has uitext that we're supposed to use
-	// translate yes/no choices for yes/no elements if French is active language
-	global $xoopsConfig;
+	// and normalize yes/no terms into the translated text that datasets contain, since the conditions are evaluated against dataset values
 	$element_handler = xoops_getmodulehandler('elements', 'formulize');
 
 	foreach ($filterElements as $key => $element) {
@@ -10971,9 +10971,17 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 			if($element_metadata['ele_uitextshow'] AND isset($element_metadata['ele_uitext'])) {
 				$filterTerms[$key] = formulize_swapUIText($filterTerms[$key], unserialize($element_metadata['ele_uitext']));
 			}
-			if($element_metadata['ele_type'] == 'yn' AND ($filterTerms[$key] == 'Yes' OR $filterTerms[$key] == 'No') AND $xoopsConfig['language'] == 'french') {
-				$filterTerms[$key] = $filterTerms[$key] == 'Yes' ? 'Oui' : $filterTerms[$key];
-				$filterTerms[$key] = $filterTerms[$key] == 'No' ? 'Non' : $filterTerms[$key];
+			// yn elements (and their subclasses) store codes but their dataset values are translated
+			// Yes/No text, so convert whatever the user typed into the standard readable value
+			// that datasets contain in the active language. Leave the term alone if it doesn't
+			// convert to anything, so an invalid term fails to match, rather than matching blanks.
+			if(elementTypeIsOrExtends($element_metadata['ele_type'], 'yn') AND $filterTerms[$key] !== '') {
+				$ynTypeHandler = xoops_getmodulehandler($element_metadata['ele_type']."Element", "formulize");
+				$dbValue = $ynTypeHandler->prepareLiteralTextForDB($filterTerms[$key], $filterElementObject);
+				$convertedTerm = $ynTypeHandler->prepareDataForDataset($dbValue, $filterElementObject->getVar('ele_handle'), 0);
+				if($convertedTerm !== "") {
+					$filterTerms[$key] = $convertedTerm;
+				}
 			}
 		}
 	}

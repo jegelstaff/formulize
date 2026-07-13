@@ -221,7 +221,9 @@ if(isset($_POST['exportoptions_onoff']) AND $_POST['exportoptions_onoff']) {
 }
 
 // call the adminSave method. IT SHOULD SET ele_value ON THE ELEMENT OBJECT, AND MUST SET IT IF IT IS MAKING CHANGES.
-if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/templates/admin/element_type_".$ele_type."_advanced.html")) {
+// the template check falls back to ancestor types' templates, so custom types that extend a built-in type
+// get their advanced tab saved the same way it was rendered (with the ancestor's template and methods)
+if(formulize_elementTypeAdminTemplate($ele_type, "_advanced")) {
   $customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
   $changed = $customTypeHandler->adminSave($element, $element->getVar('ele_value'), advancedTab: true);
   if($changed) {

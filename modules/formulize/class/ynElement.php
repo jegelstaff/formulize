@@ -32,7 +32,29 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you n
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/radioElement.php";
 
+/**
+ * The Yes/No element speaks two vocabularies, and it is important to know which one any given
+ * value belongs to:
+ *
+ * 1. THE DATABASE CODES: YES_DB_VALUE (1) and NO_DB_VALUE (2). These language-independent codes
+ *    are what is stored in the data tables, and they are the keys of ele_value (following the
+ *    radio-family convention that ele_value keys are the values stored in the database). The
+ *    positions submitted by the rendered radio buttons also happen to coincide with the codes:
+ *    Yes is always the first option (position 1) and No the second (position 2).
+ *
+ * 2. THE TRANSLATED TEXT: the _YES and _NO language constants ("Yes"/"No", "Oui"/"Non", etc,
+ *    according to the active language). This is what users see and type, everywhere: rendered
+ *    options (getListOptions), dataset values (prepareDataForDataset), and filter options
+ *    (getFilterOptions). Text is converted back into the codes by prepareLiteralTextForDB.
+ *
+ * Conversions between the two vocabularies happen only in this file. Note that ele_value was
+ * historically keyed by the sentinel strings '_YES' and '_NO' instead of the codes - the getVar
+ * override below migrates that legacy structure whenever ele_value is read.
+ */
 class formulizeYnElement extends formulizeRadioElement {
+
+	const YES_DB_VALUE = 1; // the language-independent code stored in the database when Yes is selected
+	const NO_DB_VALUE = 2; // the language-independent code stored in the database when No is selected
 
 	var $defaultValueKey;
 	public static $category = "lists";
@@ -42,6 +64,18 @@ class formulizeYnElement extends formulizeRadioElement {
 		$this->name = "Yes/No Radio Buttons";
 		$this->needsDataType = false; // set to false if you're going force a specific datatype for this element using the overrideDataType
 		$this->overrideDataType = "tinyint"; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
+	}
+
+	// This element's ele_value structure changed over time (it used to be keyed by the sentinel
+	// strings '_YES'/'_NO' rather than the database codes). Present the current structure to all
+	// callers, regardless of what is stored in the database, by migrating legacy values whenever
+	// ele_value is read
+	public function getVar($key, $format = 's') {
+		$value = parent::getVar($key, $format);
+		if($key == 'ele_value' AND is_array($value)) {
+			$value = formulizeYnElementHandler::backwardsCompatibility($value);
+		}
+		return $value;
 	}
 
 	/**
@@ -63,12 +97,46 @@ class formulizeYnElement extends formulizeRadioElement {
 - A Yes/No radio button that defaults to Yes: { defaultvalue: 1 }";
 	}
 
+	// return the set of options for this element, as an array of translated Yes/No text => selected flag.
+	// If a state array is passed in (an ele_value as prepared by loadValue, reflecting the current entry),
+	// the returned options carry that state's selection flags; otherwise the configured defaults are returned.
+	function getListOptions($ele_value = null) {
+		$ele_value = is_array($ele_value) ? formulizeYnElementHandler::backwardsCompatibility($ele_value) : $this->getVar('ele_value');
+		$options = [_YES => 0, _NO => 0];
+		foreach($ele_value as $optionKey=>$selected) {
+			if($optionKey == self::YES_DB_VALUE) {
+				$options[_YES] = $selected;
+			} elseif($optionKey == self::NO_DB_VALUE) {
+				$options[_NO] = $selected;
+			}
+		}
+		return $options;
+	}
+
 }
 #[AllowDynamicProperties]
 class formulizeYnElementHandler extends formulizeRadioElementHandler {
 
 	function create() {
 		return new formulizeYnElement();
+	}
+
+	/**
+	 * Migrate a legacy ele_value structure to the current one. Historically, ele_value was keyed
+	 * by the sentinel strings '_YES' and '_NO'. The current structure is keyed by the database
+	 * codes (YES_DB_VALUE and NO_DB_VALUE), matching the radio-family convention that ele_value
+	 * keys are the values stored in the database. Idempotent - current structures pass through.
+	 * @param array $ele_value The raw ele_value
+	 * @return array The ele_value in the current structure
+	 */
+	static function backwardsCompatibility($ele_value) {
+		if(isset($ele_value['_YES']) OR isset($ele_value['_NO'])) {
+			$ele_value = array(
+				formulizeYnElement::YES_DB_VALUE => isset($ele_value['_YES']) ? $ele_value['_YES'] : 0,
+				formulizeYnElement::NO_DB_VALUE => isset($ele_value['_NO']) ? $ele_value['_NO'] : 0
+			);
+		}
+		return $ele_value;
 	}
 
 	/**
@@ -81,13 +149,14 @@ class formulizeYnElementHandler extends formulizeRadioElementHandler {
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
 	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null) {
+		$ele_value = self::backwardsCompatibility($ele_value); // make sure anything we write back out is in the current structure
 		if(isset($properties['defaultvalue'])) {
 			if($properties['defaultvalue']) {
-				$ele_value['_YES'] = 1;
-				$ele_value['_NO'] = 0;
+				$ele_value[formulizeYnElement::YES_DB_VALUE] = 1;
+				$ele_value[formulizeYnElement::NO_DB_VALUE] = 0;
 			} elseif(!$properties['defaultvalue']) {
-				$ele_value['_YES'] = 0;
-				$ele_value['_NO'] = 1;
+				$ele_value[formulizeYnElement::YES_DB_VALUE] = 0;
+				$ele_value[formulizeYnElement::NO_DB_VALUE] = 1;
 			}
 		}
 		return [
@@ -97,29 +166,28 @@ class formulizeYnElementHandler extends formulizeRadioElementHandler {
 
 	public function getDefaultEleValue() {
 		return array(
-			'_YES' => 0, // a 1/0 indicating if Yes is the default
-			'_NO' => 0 // a 1/0 indicating if No is the default
+			formulizeYnElement::YES_DB_VALUE => 0, // a 1/0 indicating if Yes is the default
+			formulizeYnElement::NO_DB_VALUE => 0 // a 1/0 indicating if No is the default
 		);
 	}
 
 	/**
 	 * Return the filter options for a yes/no element.
 	 *
-	 * Unlike a plain radio element, this element's ele_value keys are the _YES/_NO sentinel
-	 * tokens, and the values stored in the database are the codes 1 (yes) and 2 (no). So the
-	 * filter options must be keyed on the translated Yes/No text that users actually see and
-	 * type - prepareLiteralTextForDB() below converts that text back into the 1/2 codes when
-	 * the filter is applied to the database.
+	 * The values stored in the database are the language-independent codes, but users see and
+	 * type the translated Yes/No text, so the filter options are keyed on that text -
+	 * prepareLiteralTextForDB() below converts the text back into the codes when the filter is
+	 * applied to the database.
 	 * @param object $element The element object
 	 * @return array Associative array of filter value => label
 	 */
 	function getFilterOptions($element = null) {
-		return array(_YES => 1, _NO => 2);
+		return array(_YES => formulizeYnElement::YES_DB_VALUE, _NO => formulizeYnElement::NO_DB_VALUE);
 	}
 
 	/**
-	 * A yes/no element's ele_value keys are the _YES/_NO sentinel tokens, and the value coming
-	 * from a previous entry has already been converted to the translated Yes/No text by
+	 * A yes/no element's ele_value keys are the database codes, and the value coming from a
+	 * previous entry has already been converted to the translated Yes/No text by
 	 * prepareDataForDataset(). So the option text match that the radio element does would never
 	 * succeed here - map the translated text onto the fixed option positions instead (Yes is
 	 * always the first option, No always the second).
@@ -128,29 +196,12 @@ class formulizeYnElementHandler extends formulizeRadioElementHandler {
 	 * @return int|bool The zero-based position of the matching option, or false if there is no match
 	 */
 	function previousEntryOptionKey($value, $prevEleValue) {
-		if($value == _formulize_TEMP_QYES) {
+		if($value == _YES) {
 			return 0;
-		} elseif($value == _formulize_TEMP_QNO) {
+		} elseif($value == _NO) {
 			return 1;
 		}
 		return false;
-	}
-
-	/**
-	 * This element's ele_value keys are the _YES/_NO sentinel tokens, not display text, so swap
-	 * them for the Yes/No language constants. This is done at runtime rather than being baked
-	 * into ele_value, since the webmaster and the user might be in different languages.
-	 * @param string $optionKey One of the keys of the element's ele_value
-	 * @param object $element The element object
-	 * @return string The label to display for this option
-	 */
-	function getOptionLabel($optionKey, $element) {
-		if($optionKey == "_YES") {
-			return _YES;
-		} elseif($optionKey == "_NO") {
-			return _NO;
-		}
-		return $optionKey;
 	}
 
 	// this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
@@ -159,10 +210,13 @@ class formulizeYnElementHandler extends formulizeRadioElementHandler {
 	// can organize template data into two top level keys, advanced-tab-values and options-tab-values, if there are some options for the element type that appear on the Advanced tab in the admin UI. This requires an additional template file with _advanced.html as the end of the name. Text elements have an example.
 	function adminPrepare($element) {
 		$dataToSendToTemplate = array();
+		// send the database codes to the template, so the radio buttons there can submit them back to adminSave
+		$dataToSendToTemplate['yes_db_value'] = formulizeYnElement::YES_DB_VALUE;
+		$dataToSendToTemplate['no_db_value'] = formulizeYnElement::NO_DB_VALUE;
 		if($element != false) {
 			$ele_value = $element->getVar('ele_value');
-			$dataToSendToTemplate['ele_value_yes'] = $ele_value['_YES'];
-    	$dataToSendToTemplate['ele_value_no'] = $ele_value['_NO'];
+			$dataToSendToTemplate['ele_value_yes'] = $ele_value[formulizeYnElement::YES_DB_VALUE];
+    	$dataToSendToTemplate['ele_value_no'] = $ele_value[formulizeYnElement::NO_DB_VALUE];
 		}
 		return $dataToSendToTemplate;
 	}
@@ -177,15 +231,15 @@ class formulizeYnElementHandler extends formulizeRadioElementHandler {
 		$changed = false;
 		if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
 			$ele_value = array();
-			if($_POST['elements_ele_value'] == "_YES") {
-				$ele_value['_YES'] = 1;
-				$ele_value['_NO'] = 0;
-			} elseif($_POST['elements_ele_value'] == "_NO") {
-				$ele_value['_YES'] = 0;
-				$ele_value['_NO'] = 1;
+			if($_POST['elements_ele_value'] == formulizeYnElement::YES_DB_VALUE) {
+				$ele_value[formulizeYnElement::YES_DB_VALUE] = 1;
+				$ele_value[formulizeYnElement::NO_DB_VALUE] = 0;
+			} elseif($_POST['elements_ele_value'] == formulizeYnElement::NO_DB_VALUE) {
+				$ele_value[formulizeYnElement::YES_DB_VALUE] = 0;
+				$ele_value[formulizeYnElement::NO_DB_VALUE] = 1;
 			} else {
-				$ele_value['_YES'] = 0;
-				$ele_value['_NO'] = 0;
+				$ele_value[formulizeYnElement::YES_DB_VALUE] = 0;
+				$ele_value[formulizeYnElement::NO_DB_VALUE] = 0;
 			}
 			$element->setVar('ele_value', $ele_value);
 		}
@@ -202,10 +256,10 @@ class formulizeYnElementHandler extends formulizeRadioElementHandler {
 	function getDefaultValue($element, $entry_id = 'new') {
 		$ele_value = $element->getVar('ele_value');
 		$default = null; // no default configured (neither Yes nor No flagged)
-    if($ele_value["_YES"] == 1) {
-      $default = 1;
-    } elseif($ele_value["_NO"] == 1) {
-      $default = 2;
+    if($ele_value[formulizeYnElement::YES_DB_VALUE] == 1) {
+      $default = formulizeYnElement::YES_DB_VALUE;
+    } elseif($ele_value[formulizeYnElement::NO_DB_VALUE] == 1) {
+      $default = formulizeYnElement::NO_DB_VALUE;
     }
 		return $default;
 	}
@@ -216,17 +270,12 @@ class formulizeYnElementHandler extends formulizeRadioElementHandler {
 	// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
 	// $entry_id is the ID of the entry being loaded
 	function loadValue($element, $value, $entry_id) {
-		if($value == 1)
-		{
-			$ele_value = array('_YES'=>1, '_NO'=>0);
-		}
-		elseif($value == 2)
-		{
-			$ele_value = array('_YES'=>0, '_NO'=>1);
-		}
-		else
-		{
-			$ele_value = array('_YES'=>0, '_NO'=>0);
+		if($value == formulizeYnElement::YES_DB_VALUE) {
+			$ele_value = array(formulizeYnElement::YES_DB_VALUE=>1, formulizeYnElement::NO_DB_VALUE=>0);
+		} elseif($value == formulizeYnElement::NO_DB_VALUE) {
+			$ele_value = array(formulizeYnElement::YES_DB_VALUE=>0, formulizeYnElement::NO_DB_VALUE=>1);
+		} else {
+			$ele_value = array(formulizeYnElement::YES_DB_VALUE=>0, formulizeYnElement::NO_DB_VALUE=>0);
 		}
 		return $ele_value;
 	}
@@ -238,6 +287,10 @@ class formulizeYnElementHandler extends formulizeRadioElementHandler {
 	// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
 	// $subformBlankCounter is the counter for the subform blank entries, if applicable
 	function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
+		// the rendered radio buttons submit the position of the chosen option (see the radio
+		// element's render method), and the positions happen to coincide with the database codes:
+		// Yes is always the first option (position 1 = YES_DB_VALUE) and No the second
+		// (position 2 = NO_DB_VALUE), so the submitted value can be stored as is
 		return $value;
 	}
 
@@ -256,10 +309,10 @@ class formulizeYnElementHandler extends formulizeRadioElementHandler {
 	// $handle is the element handle for the field that we're retrieving this for
 	// $entry_id is the entry id of the entry in the form that we're retrieving this for
 	function prepareDataForDataset($value, $handle, $entry_id) {
-		if ($value == "1") {
-			$value = _formulize_TEMP_QYES;
-		} elseif ($value == "2") {
-			$value = _formulize_TEMP_QNO;
+		if ($value == formulizeYnElement::YES_DB_VALUE) {
+			$value = _YES;
+		} elseif ($value == formulizeYnElement::NO_DB_VALUE) {
+			$value = _NO;
 		} else {
 			$value = "";
 		}
@@ -275,10 +328,10 @@ class formulizeYnElementHandler extends formulizeRadioElementHandler {
 	// LINKED ELEMENTS AND UITEXT ARE RESOLVED PRIOR TO THIS METHOD BEING CALLED
 	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
 		// since we're matching based on even a single character match between the query and the yes/no language constants, if the current language has the same letters or letter combinations in yes and no, then sometimes only Yes may be searched for
-		if (($value AND strstr(strtoupper(_formulize_TEMP_QYES), strtoupper($value))) OR strtoupper($value) == "YES") {
-			$value = 1;
-		} elseif (($value AND strstr(strtoupper(_formulize_TEMP_QNO), strtoupper($value))) OR strtoupper($value) == "NO") {
-			$value = 2;
+		if (($value AND strstr(strtoupper(_YES), strtoupper($value))) OR strtoupper($value) == "YES") {
+			$value = formulizeYnElement::YES_DB_VALUE;
+		} elseif (($value AND strstr(strtoupper(_NO), strtoupper($value))) OR strtoupper($value) == "NO") {
+			$value = formulizeYnElement::NO_DB_VALUE;
 		} elseif(!is_numeric($value)) {
 			$value = "";
 		}

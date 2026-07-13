@@ -616,6 +616,7 @@ define("_formulize_TEMP_ENTEREDBY", "Saisie par : ");
 define("_formulize_TEMP_ENTEREDBYSINGLE", "Saisie ");
 define("_formulize_TEMP_NOENTRIES", "Aucune entrée.");
 define("_formulize_TEMP_ON", "sur");
+// The two _formulize_TEMP_Q constants below are DEPRECATED as of 2026 and no longer used by Formulize itself. The core _YES and _NO constants are used instead. These remain defined only in case custom code in templates or derived value formulas refers to them.
 define("_formulize_TEMP_QNO", "Non");
 define("_formulize_TEMP_QYES", "Oui");
 define("_formulize_TEMP_SELENTTITLE", "Votre entrée dans '");

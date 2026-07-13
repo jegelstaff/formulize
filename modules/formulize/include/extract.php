@@ -1497,17 +1497,17 @@ function makeJoinTextIfFormLinksToIntermediary($ele_value, $linkSideElementHandl
 
 /**
  * Determine if multiple values are allowed for an element
- * Crude! Only meant for use in the arcane parts of the extraction layer where things are heavily optimized to use cached metadata under controlled circumstances
  * @param string|int $elementHandleOrId The handle or id of the element to check
  * @return bool True if multiple values are allowed, false otherwise
  */
 function multipleValuesAllowedForElement($elementHandleOrId) {
-	$metaData = formulize_getElementMetaData($elementHandleOrId, !is_numeric($elementHandleOrId));
-	$ele_value = unserialize($metaData['ele_value']);
-	if (anyCheckboxElementType($metaData['ele_type']) OR (is_array($ele_value) AND isset($ele_value[1]) AND $ele_value[1])) {
-		return true;
-	}
-	return false;
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
+	// canHaveMultipleValues is computed once per element, when it is loaded (see _setElementProperties
+	// in elements.php), and is correct for every element type - checkbox-family types set it true in
+	// their constructor, select-family types compute it from their multiple-selections setting via
+	// setCanHaveMultipleValues(), and any custom type gets whichever of those it inherits, or false
+	$element = $element_handler->get($elementHandleOrId);
+	return $element ? $element->canHaveMultipleValues : false;
 }
 
 function entryHasChildrenInRecursiveRelationship($entry_id, $linkedElementId) {
@@ -2248,17 +2248,6 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 
 				list($ifParts[0], $formFieldFilterMap, $mappedForm, $element_id, $elementPrefix, $queryElement) = prepareElementMetaData($frid, $fid, $linkfids, $ifParts[0], $formFieldFilterMap);
 
-				// set query term for yes/no questions
-				if ($formFieldFilterMap[$mappedForm][$element_id]['isyn'] and $ifParts[1] !== "") {
-					if (strstr(strtoupper(_formulize_TEMP_QYES), strtoupper($ifParts[1])) or strtoupper($ifParts[1]) == "YES") { // since we're matching based on even a single character match between the query and the yes/no language constants, if the current language has the same letters or letter combinations in yes and no, then sometimes only Yes may be searched for
-						$ifParts[1] = 1;
-					} elseif (strstr(strtoupper(_formulize_TEMP_QNO), strtoupper($ifParts[1])) or strtoupper($ifParts[1]) == "NO") {
-						$ifParts[1] = 2;
-					} else {
-						continue; // search term is not valid for the yes/no column
-					}
-				}
-
 				// build the where clause....
 
 				// HANDLE 'OTHER' BOXES
@@ -2345,7 +2334,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 							$queryElementMetaData = formulize_getElementMetaData($ifParts[0], true);
 							$ele_value = unserialize($queryElementMetaData['ele_value']);
 							$cleanSearchTerm = convertStringToUseSpecialCharsToMatchDB($ifParts[1]);
-							if ($formFieldFilterMap[$mappedForm][$element_id]['ele_type'] == 'checkboxLinked' or (($ele_value[0] > 1 or $ele_value[8]) and $ele_value[1])) { // if checkbox, or a selectbox where the element supports multiple selections [1], and number of rows is greater than 1 [0], or it is an autocomplete element [8]
+							if (elementTypeIsOrExtends($formFieldFilterMap[$mappedForm][$element_id]['ele_type'], 'checkboxLinked') or (($ele_value[0] > 1 or $ele_value[8]) and $ele_value[1])) { // if checkbox (or any type based on checkboxLinked), or a selectbox where the element supports multiple selections [1], and number of rows is greater than 1 [0], or it is an autocomplete element [8]
 								if (is_numeric($ifParts[1])) {
 									$operator = "=";
 									$quotes = "";
@@ -2603,7 +2592,6 @@ function formulize_mapFormFieldFilter($element_id, $formFieldFilterMap)
 		} else {
 			$formFieldFilterMap[$array['id_form']][$element_id]['islinked'] = false;
 		}
-		$formFieldFilterMap[$array['id_form']][$element_id]['isyn'] = $array['ele_type'] == "yn" ? true : false;
 		if ((anyRadioElementType($array['ele_type']) OR anyCheckboxElementType($array['ele_type']) OR anySelectElementType($array['ele_type'])) AND strstr($array['ele_value'], "{OTHER|")) {
 			$formFieldFilterMap[$array['id_form']][$element_id]['hasother'] = true;
 		} else {
