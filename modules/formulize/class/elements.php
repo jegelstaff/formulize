@@ -49,7 +49,10 @@ class formulizeElement extends FormulizeObject {
 	var $name;
 	var $adminCanMakeRequired;
 	var $alwaysValidateInputs;
-	var $canHaveMultipleValues;
+	var $canHaveMultipleValues; // whether the element is CURRENTLY configured to hold more than one value at a time. For some types this is fixed (checkboxes always can, radio buttons never can) and for others it depends on the element's settings, in which case the class implements setCanHaveMultipleValues (see _setElementProperties)
+	var $adminCanAllowMultipleValues = false; // whether the webmaster can CHOOSE if this type holds more than one value at a time (listbox and autocomplete style lists can, dropdowns and radio buttons and checkboxes cannot - their multiplicity is inherent to the type). Not the same question as canHaveMultipleValues, which is the current state, not the capability
+	var $adminCanAllowNewValues = false; // whether the webmaster can choose to let users save values that are not among the element's options (autocomplete style lists)
+	var $isUserList = false; // whether the options for this element are the users of the site, instead of a list of options the webmaster defines
 	var $hasMultipleOptions;
 	var $isSystemElement; // only set to true in custom element class, if you want an element to exist in the form but be primarily managed by the system
 	var $readOnly = false; // set to true in element classes whose values should never be written back — treated as $isDisabled throughout the rendering pipeline

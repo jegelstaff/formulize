@@ -43,6 +43,8 @@ class formulizeListboxLinkedElement extends formulizeSelectLinkedElement {
 		$this->adminCanMakeRequired = true; // set to true if the webmaster should be able to toggle this element as required/not required
 		$this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
 		// $this->canHaveMultipleValues = false; // set by setCanHaveMultipleValues method in the parent class, which is called as part of 'get' operation (in _setElementProperties method in elements.php)
+		$this->listStyle = 'listbox'; // rendered as a listbox, rather than a dropdown or an autocomplete
+		$this->adminCanAllowMultipleValues = true; // the webmaster chooses whether users can select more than one option
 		$this->hasMultipleOptions = true;
 		$this->isLinked = true; // set to true if this element can have linked values
 	}

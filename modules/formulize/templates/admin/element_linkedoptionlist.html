@@ -4,14 +4,14 @@
 		<div id="linkedSourceOptions">
 			<{$content.linkedoptions}>
 
-			<{if $content.type == "listbox" OR $content.type == "listboxLinked" OR $content.type == "listboxUsers" OR $content.type == "autocomplete" OR $content.type == "autocompleteLinked" OR $content.type == "autocompleteUsers"}>
+			<{if $content.canAllowMultipleValues}>
 				<br>
 				<br>
 				Are multiple selections allowed?<br>
 				<{include file="db:admin/element_multiple_onoff.html"}>
 			<{/if}>
 
-			<{if $content.type == "autocomplete" OR $content.type == "autocompleteLinked"}>
+			<{if $content.canAllowNewValues}>
 				<br>
 				<{include file="db:admin/element_autocomplete_allownew.html"}>
 			<{/if}>
@@ -30,7 +30,7 @@
 					<p>For example, imagine an Activity Log that contains a linked list of all the activities in the log. When you're editing an entry, should the list contain the activity you're editing or not?</p>
 				</div>
 			</div>
-			<{if $content.type == "selectLinked" OR $content.type == "listboxLinked" OR $content.type == "autocompleteLinked" OR $content.type == "checkboxLinked"}>
+			<{if $content.isLinkedType}>
 				<div class="form-radios">
 				<{if $content.subformInterfaceAdminUrl}>
 					<p><a href="<{$content.subformInterfaceAdminUrl}>" target="_blank">Open the Configuration page for the Subform interface</a></p>
