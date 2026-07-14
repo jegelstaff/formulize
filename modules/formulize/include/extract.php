@@ -452,7 +452,7 @@ function getData(
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($form);
 		$isUserTableForm = $formObject && $formObject->isSystemUsersTableForm();
-		$tableform = $formObject ? $formObject->getVar('tableform', 'raw') : '';
+		$tableform = $formObject ? $formObject->getVar('tableform') : '';
 		$formHandle = $formObject ? $formObject->getVar('form_handle') : '';
 		// the userTableForm, ie: system managed users table reference, is handled like a regular query, not an old school data table extraction
 		$isTableForm = !$isUserTableForm && ($tableform != '');

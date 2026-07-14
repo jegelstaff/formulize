@@ -317,22 +317,26 @@ class formulizeElementsHandler {
 	 * Focuses on the non ele_value properties that are common to all element types
 	 * The ele_value options are handled in the child class, since they are element-type specific
 	 * @param array $properties The properties to set on the element object
+	 * @param object|null $existingElement The element object being updated, if there is one.
+	 *   The caller MUST only pass this if the operation is an update to an existing element.
+	 *   If this is a new element created as part of this page load, then do not pass anything,
+	 *   even if the new element object in fact exists in PHP memory presently.
+	 *   Any property not present in $properties falls back to the $existingElement's current value
+	 *   instead of a hardcoded default, so that incomplete $properties don't clobber values the
+	 *   caller didn't intend to touch on existing elements.
 	 * @return array The processed properties that are ready to set on the element object
 	 */
-	public function setupAndValidateElementProperties($properties) {
-
-		// KEY ASSUMPTION IS THAT THE PROPERTIES HAVE BEEN SET ALREADY BASED ON THE EXISTING ELEMENT OBJECT, IF THERE IS ONE
-		// SOME PROPERTIES NOT HANDLED BY THE MCP LAYER (UITEXTSHOW) AND WE'RE ESSENTIALLY FORCING THEM ALWAYS TO DEFAULTS HERE
-		// IF/WHEN THIS IS USED MORE WIDELY, WE WILL NEED TO MAKE SURE THAT ALL PROPERTIES ARE HANDLED APPROPRIATELY, ON NEW *AND* EXISTING ELEMENTS
+	public function setupAndValidateElementProperties($properties, $existingElement = null) {
 
 		$config_handler = xoops_gethandler('config');
 		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 
-		$properties['fid'] = intval($properties['fid']) ? intval($properties['fid']) : 0;
+		$properties['fid'] = isset($properties['fid']) ? intval($properties['fid']) : ($existingElement ? intval($existingElement->getVar('fid')) : 0);
 		if($properties['fid'] <= 0) {
 			throw new Exception("You must use a valid form when working with an element");
 		}
 		formulizeHandler::validateElementType($properties['ele_type']);
+		$properties['ele_caption'] = isset($properties['ele_caption']) ? $properties['ele_caption'] : ($existingElement ? $existingElement->getVar('ele_caption', 'n') : '');
 		$properties['ele_caption'] = trim($properties['ele_caption']);
 		if($properties['ele_caption'] == "") {
 			throw new Exception("You must use a caption when working with an element");
@@ -355,19 +359,25 @@ class formulizeElementsHandler {
 				// store element references as IDs, the canonical format used by the admin UI and import/export (conversion is idempotent if an ID was passed)
 				$properties['ele_filtersettings'][0][$i] = $conditionElementObject->getVar('ele_id');
 			}
+		} elseif(!isset($properties['ele_filtersettings']) AND $existingElement) {
+			$properties['ele_filtersettings'] = $existingElement->getVar('ele_filtersettings');
 		} else {
 			$properties['ele_filtersettings'] = "";
 		}
 
+		$properties['ele_colhead'] = isset($properties['ele_colhead']) ? $properties['ele_colhead'] : ($existingElement ? $existingElement->getVar('ele_colhead', 'n') : '');
 		$properties['ele_colhead'] = trim($properties['ele_colhead']);
+		$properties['ele_handle'] = isset($properties['ele_handle']) ? $properties['ele_handle'] : ($existingElement ? $existingElement->getVar('ele_handle', 'n') : '');
 		$properties['ele_handle'] = trim($properties['ele_handle']);
+		$properties['ele_desc'] = isset($properties['ele_desc']) ? $properties['ele_desc'] : ($existingElement ? $existingElement->getVar('ele_desc', 'n') : '');
 		$properties['ele_desc'] = trim($properties['ele_desc']);
-		$properties['ele_required']	= $properties['ele_required'] ? 1 : 0;
-		$properties['ele_delim'] = isset($properties['ele_delim']) ? $properties['ele_delim'] : $formulizeConfig['delimeter'];
-		$properties['ele_uitextshow'] = isset($properties['ele_uitextshow']) ? $properties['ele_uitextshow'] : 0;
-		$properties['ele_order'] = isset($properties['ele_order']) ? intval($properties['ele_order']) : figureOutOrder('bottom', fid: $properties['fid']);
-		$properties['ele_display'] = isset($properties['ele_display']) ? $properties['ele_display'] : 1;
-		$properties['ele_disabled'] = isset($properties['ele_disabled']) ? $properties['ele_disabled'] : 0;
+		$properties['ele_required'] = isset($properties['ele_required']) ? $properties['ele_required'] : ($existingElement ? $existingElement->getVar('ele_required') : 0);
+		$properties['ele_required'] = $properties['ele_required'] ? 1 : 0;
+		$properties['ele_delim'] = isset($properties['ele_delim']) ? $properties['ele_delim'] : ($existingElement ? $existingElement->getVar('ele_delim', 'n') : $formulizeConfig['delimeter']);
+		$properties['ele_uitextshow'] = isset($properties['ele_uitextshow']) ? $properties['ele_uitextshow'] : ($existingElement ? $existingElement->getVar('ele_uitextshow') : 0);
+		$properties['ele_order'] = isset($properties['ele_order']) ? intval($properties['ele_order']) : ($existingElement ? $existingElement->getVar('ele_order') : figureOutOrder('bottom', fid: $properties['fid']));
+		$properties['ele_display'] = isset($properties['ele_display']) ? $properties['ele_display'] : ($existingElement ? $existingElement->getVar('ele_display', 'n') : 1);
+		$properties['ele_disabled'] = isset($properties['ele_disabled']) ? $properties['ele_disabled'] : ($existingElement ? $existingElement->getVar('ele_disabled', 'n') : 0);
 		return $properties;
 	}
 
@@ -663,11 +673,12 @@ class formulizeElementsHandler {
 	 * Get an element object based on id or handle
 	 * Caches elements so that multiple calls for the same element do not hit the database more than once
 	 * @param mixed $id The element id (int) or handle (string)
+	 * @param bool $bypassCache If true, will not use the cached element and will always hit the database
 	 * @return mixed The element object, or false if not found
 	 */
-	function get($idOrHandle){
+	function get($idOrHandle, $bypassCache = false){
 		static $cachedElements = array();
-		if(isset($cachedElements[$idOrHandle])) {
+		if(!$bypassCache && isset($cachedElements[$idOrHandle])) {
 			return $cachedElements[$idOrHandle];
 		}
 		if (is_numeric($idOrHandle) AND $idOrHandle > 0) {

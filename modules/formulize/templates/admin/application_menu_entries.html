@@ -33,17 +33,43 @@
 		    <div>
                     <h3>Show this link to these groups:</h3>
                     <select name="addgroups" id="addgroups" size=10 multiple style="overflow-y: scroll;">
+                        <{if $content.hasFormBasedGroups}><optgroup label="Regular groups"><{/if}>
                         <{foreach from=$content.groups item=group}>
+                            <{if !$group.isFormBased}>
                             <option value=<{$group.id}><{$group.selected}>><{$group.name}></option>
+                            <{/if}>
                         <{/foreach}>
+                        <{if $content.hasFormBasedGroups}>
+                        </optgroup>
+                        <optgroup label="Form-based groups">
+                        <{foreach from=$content.groups item=group}>
+                            <{if $group.isFormBased}>
+                            <option value=<{$group.id}><{$group.selected}>><{$group.name}></option>
+                            <{/if}>
+                        <{/foreach}>
+                        </optgroup>
+                        <{/if}>
                     </select>
 		    </div>
                     <div id="defaultScreenSection">
 			<h3>Send these groups to this link right after they login:</h3>
 			<select name="defaultScreenGroups" id="addDefaultScreenGroups" size=10 multiple style="overflow-y: scroll;">
+			    <{if $content.hasFormBasedGroups}><optgroup label="Regular groups"><{/if}>
 			    <{foreach from=$content.groups item=group}>
+				<{if !$group.isFormBased}>
 				<option value=<{$group.id}><{$group.selected}>><{$group.name}></option>
+				<{/if}>
 			    <{/foreach}>
+			    <{if $content.hasFormBasedGroups}>
+			    </optgroup>
+			    <optgroup label="Form-based groups">
+			    <{foreach from=$content.groups item=group}>
+				<{if $group.isFormBased}>
+				<option value=<{$group.id}><{$group.selected}>><{$group.name}></option>
+				<{/if}>
+			    <{/foreach}>
+			    </optgroup>
+			    <{/if}>
 			</select>
                     </div>
 			<div class="description">

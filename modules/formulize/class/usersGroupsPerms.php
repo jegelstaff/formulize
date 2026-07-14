@@ -450,7 +450,7 @@ class formulizePermHandler {
 	}
 
 	/**
-	 * Copy group permissions, per-group filters, and groupscope from one group to another.
+	 * Copy group permissions, per-group filters, menu entry permissions, and groupscope from one group to another.
 	 * If $modid is specified, only permissions for that module are copied; otherwise all.
 	 * Groupscope targets are resolved using an optional mapping, so that relative references
 	 * between groups (e.g., template group A scoping template group B) are translated to
@@ -488,6 +488,18 @@ class formulizePermHandler {
 			"SELECT fid, $targetGroupId, filter " .
 			"FROM " . $xoopsDB->prefix("formulize_group_filters") .
 			" WHERE groupid = $sourceGroupId";
+		$xoopsDB->queryF($sql); // OK if no rows to copy
+
+		// Delete existing menu entry permissions for target group and copy from source
+		// (menu permissions are a Formulize-only concept, so always copied regardless of $modid)
+		$xoopsDB->queryF("DELETE FROM " . $xoopsDB->prefix("formulize_menu_permissions") .
+			" WHERE group_id = $targetGroupId");
+
+		$sql = "INSERT INTO " . $xoopsDB->prefix("formulize_menu_permissions") .
+			" (menu_id, group_id, default_screen) " .
+			"SELECT menu_id, $targetGroupId, default_screen " .
+			"FROM " . $xoopsDB->prefix("formulize_menu_permissions") .
+			" WHERE group_id = $sourceGroupId";
 		$xoopsDB->queryF($sql); // OK if no rows to copy
 
 		// Copy groupscope settings with relative mapping across all forms

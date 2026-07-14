@@ -53,9 +53,9 @@ class formulizeUserAccountPasswordElementHandler extends formulizeUserAccountEle
 	 * @param array $properties The properties to set on the element object
 	 * @return array The processed properties that are ready to set on the element object
 	 */
-	public function setupAndValidateElementProperties($properties) {
+	public function setupAndValidateElementProperties($properties, $existingElement = null) {
 
-		$properties = parent::setupAndValidateElementProperties($properties);
+		$properties = parent::setupAndValidateElementProperties($properties, $existingElement);
 		$properties['ele_desc']	= _formulize_USERACCOUNT_PWREPEATDESC;
 		return $properties;
 	}
