@@ -1,1 +1,174 @@
-<h1>Hello world</h1>
+ <div class="panel-content content themeeditor">
+
+        <{* Static placeholder options -- theme list and file list will be populated by the backend later *}>
+        <div class="form-item">
+            <label for="themeeditor-theme_select">Theme to edit:</label>
+            <select id="themeeditor-theme_select" name="themeeditor-theme_select" size="1">
+                <option value="">-- Select a theme --</option>
+                <option value="default" selected="selected">Default</option>
+                <option value="formulize_modern">Formulize Modern</option>
+                <option value="custom">Custom</option>
+            </select>
+            <div class="description">
+                <p>Choose which theme's files you want to edit.</p>
+            </div>
+        </div>
+
+        <div class="themeeditor-layout">
+
+            <div class="form-item themeeditor-editor">
+                <fieldset>
+                    <legend>File: Placeholder.file</legend>
+                    <textarea id="applications-custom_code"  name="applications-custom_code" class="code-textarea canValidate" rows="30"/>
+<{$content.custom_code}></textarea>
+						 </fieldset>
+            </div>
+
+            <div class="themeeditor-files">
+                <fieldset>
+                    <legend>Theme Files</legend>
+                    <ul class="themeeditor-filelist">
+                        <li class="active"><a href="#">style.css</a></li>
+                        <li><a href="#">functions.php</a></li>
+                        <li><a href="#">rtl.css</a></li>
+                        <li><a href="#">babel.config.js</a></li>
+                        <li><a href="#">webpack.config.js</a></li>
+                        <li><a href="#">README.md</a></li>
+                        <li><a href="#">changelog.md</a></li>
+                        <li><a href="#">404.php</a></li>
+                        <li><a href="#">500.php</a></li>
+                        <li><a href="#">comments.php</a></li>
+                        <li><a href="#">footer-pwa.php</a></li>
+                        <li><a href="#">footer.php</a></li>
+                        <li><a href="#">header-pwa.php</a></li>
+                        <li><a href="#">header.php</a></li>
+                        <li><a href="#">image.php</a></li>
+                        <li><a href="#">index.php</a></li>
+                        <li><a href="#">offline.php</a></li>
+                        <li><a href="#">page.php</a></li>
+                        <li><a href="#">search.php</a></li>
+                        <li><a href="#">searchform.php</a></li>
+                        <li><a href="#">sidebar-left.php</a></li>
+                        <li><a href="#">sidebar.php</a></li>
+                    </ul>
+                </fieldset>
+            </div>
+
+        </div>
+
+        <div class="themeeditor-actions">
+            <button type="button" class="themeeditor-save-btn">Save</button>
+        </div>
+
+    </div>
+
+<style>
+    .themeeditor-layout {
+        display: flex;
+        align-items: stretch;
+        height: 480px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        overflow: hidden;
+        background: white;
+    }
+    .themeeditor-editor {
+        flex: 1 1 auto;
+        min-width: 0;
+        display: flex;
+        border-right: 1px solid #ccc;
+    }
+    .themeeditor-editor fieldset {
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        margin: 0;
+        border: none;
+        border-radius: 0;
+    }
+    .themeeditor-editor textarea {
+        flex: 1 1 auto;
+        min-height: 0;
+        width: 100%;
+        box-sizing: border-box;
+        resize: none;
+        border: none;
+    }
+    .themeeditor-editor .CodeMirror {
+        flex: 1 1 auto;
+        min-height: 0;
+        height: auto;
+    }
+    .themeeditor-editor .CodeMirror-scroll {
+        height: 100%;
+    }
+    .themeeditor-editor .description {
+        flex: 0 0 auto;
+        margin: 0;
+    }
+    .themeeditor-files {
+        flex: 0 0 240px;
+        display: flex;
+        background: #fafafa;
+    }
+    .themeeditor-files fieldset {
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        margin: 0;
+        border: none;
+        border-radius: 0;
+        padding: 0 0.75em 0.75em;
+        box-sizing: border-box;
+    }
+    .themeeditor-filelist {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+    .themeeditor-filelist li {
+        border-bottom: 1px solid #ddd;
+    }
+    .themeeditor-filelist li:last-child {
+        border-bottom: none;
+    }
+    .themeeditor-filelist li a {
+        display: block;
+        padding: 0.5em 0.75em;
+        text-decoration: none;
+        color: inherit;
+        white-space: nowrap;
+    }
+    .themeeditor-filelist li a:hover {
+        background: #eee;
+    }
+    .themeeditor-filelist li.active a {
+        background: #2196F3;
+        color: white;
+    }
+    .themeeditor-actions {
+        margin-top: 1em;
+        text-align: left;
+    }
+    .themeeditor-save-btn {
+        padding: 8px 16px;
+        border: 2px solid #2196F3;
+        border-radius: 5px;
+        background: #2196F3;
+        color: white;
+        font-weight: bold;
+        font-size: 14px;
+        cursor: pointer;
+    }
+    .themeeditor-save-btn:hover {
+        background: #0b7dda;
+        border-color: #0b7dda;
+    }
+</style>
