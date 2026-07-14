@@ -32,6 +32,10 @@ async function getDerivedFormula(page) {
 }
 
 test('Renaming an element handle updates its $handle reference in derived value formulas', async ({ page }) => {
+	// This test does two full handle-rename cycles, each heavier than an ordinary admin save (see
+	// the comment on the saveAdminForm() call below), on top of the usual create-3-elements setup.
+	// The default per-test timeout doesn't leave enough headroom for that under load.
+	test.setTimeout(300000);
 	await login(page, 'admin');
 
 	// ── Create a dedicated "Handle Rename Tests" form in the Museum application ──
@@ -48,8 +52,18 @@ test('Renaming an element handle updates its $handle reference in derived value 
 	expect(fid).toBeGreaterThan(0);
 	createdFid = fid; // the delete test below removes this form again
 
+	// Repeatedly reopening the same element's Configure panel (Options -> save -> Options again)
+	// leaves an async tail (the admin UI's own follow-up XHR/redirect handling) that can still be
+	// in flight when the next step fires a fresh page.goto(), which Chromium then aborts
+	// (net::ERR_ABORTED) because a navigation was already superseding it. A settled network is
+	// not enough of a guarantee on its own, so retry once on a transient nav failure.
 	const gotoElementsTab = async () => {
-		await page.goto(`/modules/formulize/admin/ui.php?page=form&fid=${fid}&tab=elements`);
+		try {
+			await page.goto(`/modules/formulize/admin/ui.php?page=form&fid=${fid}&tab=elements`);
+		} catch (err) {
+			if (!/ERR_ABORTED/.test(err.message)) { throw err; }
+			await page.goto(`/modules/formulize/admin/ui.php?page=form&fid=${fid}&tab=elements`);
+		}
 		await waitForAdminPageReady(page);
 	};
 
@@ -91,7 +105,16 @@ test('Renaming an element handle updates its $handle reference in derived value 
 		await page.getByRole('link', { name: 'Configure' }).click();
 		await waitForAdminPageReady(page);
 		await page.locator('input[name="elements-ele_handle"]').fill(newHandle);
-		await saveAdminForm(page);
+		// Renaming a handle does more server-side work than an ordinary save (renameElementResources()
+		// scans and rewrites every derived-value code file, plus several extra DB updates), so give it
+		// more headroom than saveAdminForm()'s default before treating a slow admin-ui fade as a hang.
+		await saveAdminForm(page, 'regular', 180000);
+		// The save can kick off a trailing async redirect/reload (see runSaveEvent() in ui.html)
+		// that is not yet in flight when saveAdminForm() returns (it only waits for the admin-ui
+		// opacity to settle, not for that follow-up work). Let it finish before the caller fires
+		// off its own page.goto(), otherwise that navigation can race the tail end of this one and
+		// get cancelled with net::ERR_ABORTED.
+		await page.waitForLoadState('networkidle');
 	};
 
 	// Sanity check: the formula was stored as written.

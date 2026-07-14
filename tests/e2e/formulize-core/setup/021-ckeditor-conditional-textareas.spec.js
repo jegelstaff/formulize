@@ -40,7 +40,10 @@ test.describe('Donors rich text / plain textarea elements', () => {
 		await page.goto('/modules/formulize/admin/ui.php?page=home');
 		await waitForAdminPageReady(page);
 		await page.getByRole('link', { name: 'Application: Museum' }).click();
-		await page.getByRole('link', { name: 'Elements' }).nth(1).click(); // nth(1) = Donors, the 2nd form in the Museum app
+		// The form list under an application is alphabetical by form title (applications.php
+		// orders by forms.form_title), not creation order. With all 5 Museum forms present
+		// (Artifacts, Collections, Donors, Exhibits, Surveys), Donors is the 3rd, index 2.
+		await page.getByRole('link', { name: 'Elements' }).nth(2).click();
 	})
 
 	test('Create Is the donor anonymous Element', async ({ page }) => {
@@ -54,6 +57,13 @@ test.describe('Donors rich text / plain textarea elements', () => {
 		await page.locator('input[name="ele_value\\[0\\]"]').fill('Yes');
 		await page.locator('input[name="ele_value\\[0\\]"]').press('Tab');
 		await page.locator('input[name="ele_value\\[1\\]"]').fill('No');
+		// new elements are not automatically added to any existing screen's pages -- put this one
+		// on the Donor multiPage screen's first page (Profile), same as the rest of the form
+		await page.getByRole('link', { name: 'Display Settings' }).click();
+		// the checkboxTree plugin starts a screen's node collapsed (hiding its pages) until at
+		// least one page is checked, so it has to be expanded before the page checkbox is clickable
+		await page.locator('ul#multi-screen-tree > li').first().locator('> span').first().click();
+		await page.locator('ul#multi-screen-tree li.leaf').first().locator('input[type=checkbox]').check();
 		await saveAdminForm(page);
 		await expect(page.getByRole('heading')).toContainText('Is the donor anonymous?');
 	});
@@ -73,6 +83,10 @@ test.describe('Donors rich text / plain textarea elements', () => {
 		await page.getByRole('link', { name: 'Display Settings' }).click();
 		await page.locator('#new_elementfilter_element').selectOption('Is the donor anonymous?');
 		await page.locator('#new_elementfilter_term').fill('No');
+		// new elements are not automatically added to any existing screen's pages -- put this one
+		// on the Donor multiPage screen's first page (Profile), same as the rest of the form
+		await page.locator('ul#multi-screen-tree > li').first().locator('> span').first().click();
+		await page.locator('ul#multi-screen-tree li.leaf').first().locator('input[type=checkbox]').check();
 		await saveAdminForm(page);
 		await expect(page.getByRole('heading')).toContainText('Bio');
 	});
@@ -88,6 +102,10 @@ test.describe('Donors rich text / plain textarea elements', () => {
 		await page.getByRole('link', { name: 'Display Settings' }).click();
 		await page.locator('#new_elementfilter_element').selectOption('Type of donor');
 		await page.locator('#new_elementfilter_term').fill('Organization');
+		// new elements are not automatically added to any existing screen's pages -- put this one
+		// on the Donor multiPage screen's first page (Profile), same as the rest of the form
+		await page.locator('ul#multi-screen-tree > li').first().locator('> span').first().click();
+		await page.locator('ul#multi-screen-tree li.leaf').first().locator('input[type=checkbox]').check();
 		await saveAdminForm(page);
 		await expect(page.getByRole('heading')).toContainText('Organization background');
 	});
@@ -165,8 +183,12 @@ test.describe('CKEditor is only applied to rich text textareas', () => {
 		// ---- Reopen the saved entry: both values must have persisted, and on this load both
 		// elements are rendered normally (their conditions are met by the saved data) rather
 		// than injected by conditional.js.
+		await page.locator('#burger-and-logo').getByRole('link').first().click();
 		await page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true }).click();
-		await page.getByRole('link', { name: 'L. Warner Foundation' }).first().click();
+		// entry names in the list render as plain text, not as an anchor -- the actual "open this
+		// entry" link is the nameless <a href="...&ve=N"> in the row's first cell, next to the
+		// selection checkbox, so find the row by its text and click the link inside it
+		await page.locator('tr', { hasText: 'L. Warner Foundation' }).locator('a').first().click();
 
 		await expect(bio.locator('.ck-editor')).toBeVisible();
 		await expect(bio.locator('.ck-content')).toContainText('A distinguished patron of the museum.');
