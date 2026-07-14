@@ -759,6 +759,9 @@ button.formulize-ai-tool-util-btn {
 	font-size: 0.85em;
 	margin-top: 0.5em;
 	text-align: right;
+	width: 100%;
+	max-width: 300px;
+	box-sizing: border-box;
 }
 .fz-limit-counter.fz-limit-green {
 	color: #2e7d32;
@@ -769,4 +772,10 @@ button.formulize-ai-tool-util-btn {
 .fz-limit-counter.fz-limit-red {
 	color: #c62828;
 	font-weight: bold;
+}
+
+@media (min-width: 768px) {
+	.fz-limit-counter {
+		max-width: 700px;
+	}
 }
