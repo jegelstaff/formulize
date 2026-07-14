@@ -30,6 +30,24 @@ $adminPage['selected_theme'] = isset($adminPage['themes'][$requestedTheme]) ? $r
 // All the files inside the selected theme's folder, so the picklist and file list stay in sync
 $adminPage['theme_files'] = formulize_themeeditor_getThemeFiles(ICMS_THEME_PATH . '/' . $adminPage['selected_theme']);
 
+// Which file to show in the editor: whatever was picked in the file list, falling back to
+// index.html (every theme has one), falling back to the first file in the theme's folder
+$requestedFile = isset($_GET['file']) ? $_GET['file'] : (isset($_POST['file']) ? $_POST['file'] : '');
+if(in_array($requestedFile, $adminPage['theme_files'], true)) {
+    $adminPage['selected_file'] = $requestedFile;
+} elseif(in_array('theme.html', $adminPage['theme_files'], true)) {
+    $adminPage['selected_file'] = 'theme.html';
+} elseif(!empty($adminPage['theme_files'])) {
+    $adminPage['selected_file'] = $adminPage['theme_files'][0];
+} else {
+    $adminPage['selected_file'] = '';
+}
+
+// Contents of the selected file, for display in the editor
+$adminPage['selected_file_content'] = $adminPage['selected_file'] !== ''
+    ? file_get_contents(ICMS_THEME_PATH . '/' . $adminPage['selected_theme'] . '/' . $adminPage['selected_file'])
+    : '';
+
 /**
  * Recursively list every file inside a theme's folder
  * @param string themeDir - full filesystem path to the theme's folder

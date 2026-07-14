@@ -16,9 +16,9 @@
 
             <div class="form-item themeeditor-editor">
                 <fieldset>
-                    <legend>File: Placeholder.file</legend>
-                    <textarea id="applications-custom_code"  name="applications-custom_code" class="code-textarea canValidate" rows="30"/>
-<{$content.custom_code}></textarea>
+                    <legend id="themeeditor-current-file">File: <{$adminPage.selected_file}></legend>
+                    <textarea id="themeeditor-file_content" name="themeeditor-file_content" class="code-textarea canValidate" rows="30"/>
+<{$adminPage.selected_file_content}></textarea>
 						 </fieldset>
             </div>
 
@@ -26,8 +26,8 @@
                 <fieldset>
                     <legend>Theme Files</legend>
                     <ul class="themeeditor-filelist">
-                        <{foreach from=$adminPage.theme_files item=themeFile name=themeFilesLoop}>
-                            <li<{if $smarty.foreach.themeFilesLoop.first}> class="active"<{/if}>><a href="#"><{$themeFile}></a></li>
+                        <{foreach from=$adminPage.theme_files item=themeFile}>
+                            <li<{if $themeFile == $adminPage.selected_file}> class="active"<{/if}>><a href="ui.php?page=themeeditor&theme=<{$adminPage.selected_theme|escape:'url'}>&file=<{$themeFile|escape:'url'}>"><{$themeFile}></a></li>
                         <{foreachelse}>
                             <li>No files found in this theme's folder.</li>
                         <{/foreach}>
