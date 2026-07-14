@@ -206,7 +206,15 @@ test.describe('Set Menu Entries', () => {
 	// re-navigates and verifies the selection actually persisted (retrying on
 	// failure). This guards against the Playwright-vs-UI save race that silently
 	// dropped these selections for some menus when each test just saved once.
-	const museumMenuGroups = ['Webmasters', 'Ancient History - All Users', 'Modern History - All Users'];
+	//
+	// We grant to the "Departments - All Users" TEMPLATE group, not to the entry groups
+	// ("Ancient History - All Users", "Modern History - All Users") that derive from it. Entry
+	// groups are auto-managed and are not offered in the menu group list - they inherit menu
+	// permissions from their template group when the save propagates them. This matches how the
+	// form permissions above are granted. 020-data-entry then confirms that users who are only
+	// ever members of the entry groups (ahstaff, mhstaff, curator1) do see these menu links,
+	// which is the real assertion that the propagation worked.
+	const museumMenuGroups = ['Webmasters', 'Departments - All Users'];
 
 	test('Set Menu Entry for Artifacts', async ({ page }) => {
 		await setMenuEntryGroups(page, 'Museum', 'Artifacts', 'groups0', museumMenuGroups, { defaultScreenSelectId: 'defaultScreenGroups0' });

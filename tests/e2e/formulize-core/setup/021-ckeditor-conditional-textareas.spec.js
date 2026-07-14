@@ -40,7 +40,10 @@ test.describe('Donors rich text / plain textarea elements', () => {
 		await page.goto('/modules/formulize/admin/ui.php?page=home');
 		await waitForAdminPageReady(page);
 		await page.getByRole('link', { name: 'Application: Museum' }).click();
-		await page.getByRole('link', { name: 'Elements' }).nth(1).click(); // nth(1) = Donors, the 2nd form in the Museum app
+		// The form list under an application is alphabetical by form title (applications.php
+		// orders by forms.form_title), not creation order. With all 5 Museum forms present
+		// (Artifacts, Collections, Donors, Exhibits, Surveys), Donors is the 3rd, index 2.
+		await page.getByRole('link', { name: 'Elements' }).nth(2).click();
 	})
 
 	test('Create Is the donor anonymous Element', async ({ page }) => {

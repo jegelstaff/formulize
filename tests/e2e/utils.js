@@ -787,7 +787,9 @@ export async function getFidFromFormAdminPage(page) {
  * @param {string} appName Application name, e.g. 'Museum' (the "Application: <appName>" link)
  * @param {string} accordionName Menu entry accordion header, e.g. 'Donors'
  * @param {string} groupsSelectId id of the groups multiselect, e.g. 'groups1'
- * @param {string[]} groupLabels Option labels to select (e.g. ['Webmasters', 'Ancient History - All Users'])
+ * @param {string[]} groupLabels Option labels to select (e.g. ['Webmasters', 'Departments - All Users']).
+ *   Note the menu group list offers regular and template ("Form-based") groups only - entry groups are
+ *   auto-managed and inherit their menu permissions from their template group, so select the template.
  * @param {object} [opts] { defaultScreenSelectId?: string, retries?: number }
  */
 export async function setMenuEntryGroups(page, appName, accordionName, groupsSelectId, groupLabels, opts = {}) {
