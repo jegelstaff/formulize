@@ -160,6 +160,13 @@ class formulizeTextareaElementHandler extends formulizeTextElementHandler {
 		return $ele_value;
 	}
 
+	// this method reports whether an element with this ele_value will be rendered as a rich text (CKEditor) editor
+	// used both when rendering, and when cataloguing conditionally hidden elements that might be rendered later, so the page knows which textareas are supposed to become editors
+	// $ele_value is the options for this element
+	function usesRichTextEditor($ele_value) {
+		return (isset($ele_value[ELE_VALUE_TEXTAREA_RICHTEXT]) AND $ele_value[ELE_VALUE_TEXTAREA_RICHTEXT]) ? true : false;
+	}
+
 	// this method renders the element for display in a form
 	// the caption has been pre-prepared and passed in separately from the element object
 	// if the element is disabled, then the method must take that into account and return a non-interactable label with some version of the element's value in it
@@ -174,15 +181,18 @@ class formulizeTextareaElementHandler extends formulizeTextElementHandler {
 
 		$ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE] = (isset($ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE]) AND $ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE]) ? stripslashes($ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE]) : "";
 		$ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE] = interpretTextboxValue($element, $entry_id, $ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE]);
+		// catalogue this element as a rich text editor even when it is currently rendering as a disabled label, since a disabled condition can stop being met, and then the element gets re-rendered as a live editor by conditional.js, which will only initialize it if it is in the catalogue
+		if (!strstr(getCurrentURL(),"printview.php") AND $this->usesRichTextEditor($ele_value)) {
+			$GLOBALS['formulize_CKEditors'][] = $markupName.'_tarea';
+		}
 		if (!strstr(getCurrentURL(),"printview.php") AND !$isDisabled) {
-			if(isset($ele_value[ELE_VALUE_TEXTAREA_RICHTEXT]) AND $ele_value[ELE_VALUE_TEXTAREA_RICHTEXT]) {
+			if($this->usesRichTextEditor($ele_value)) {
 				include_once XOOPS_ROOT_PATH."/class/xoopsform/formeditor.php";
 				$form_ele = new XoopsFormEditor(
 					$caption,
 					'CKEditor',
 					array("name"=>$markupName, "value"=>$ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE])
 				);
-				$GLOBALS['formulize_CKEditors'][] = $markupName.'_tarea';
 			} else {
 				$counterType   = isset($ele_value[ELE_VALUE_TEXTAREA_COUNTER_TYPE])   ? $ele_value[ELE_VALUE_TEXTAREA_COUNTER_TYPE]   : 'none';
 				$limitNumber = isset($ele_value[ELE_VALUE_TEXTAREA_LIMIT_NUMBER]) ? intval($ele_value[ELE_VALUE_TEXTAREA_LIMIT_NUMBER]) : 0;
@@ -218,19 +228,22 @@ class formulizeTextareaElementHandler extends formulizeTextElementHandler {
 	function generateValidationCode($caption, $markupName, $element, $entry_id=false) {
 		$validationCode = array();
 		$ele_value = $element->getVar('ele_value');
-		if (!strstr(getCurrentURL(),"printview.php") AND isset($ele_value[ELE_VALUE_TEXTAREA_RICHTEXT]) AND $ele_value[ELE_VALUE_TEXTAREA_RICHTEXT] AND $element->getVar('ele_required')) {
+		if (!strstr(getCurrentURL(),"printview.php") AND $this->usesRichTextEditor($ele_value) AND $element->getVar('ele_required')) {
 			$eltname = $markupName;
 			$eltmsg = empty($caption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($caption, ENT_QUOTES)));
 			$eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
+			// the editor will not exist if the element is not on screen, ie: it is hidden by a condition, so only validate when we have an editor to read
+			$validationCode[] = "if(typeof CKEditors !== 'undefined' && CKEditors['".$eltname."_tarea']) {\n";
 			$validationCode[] = "var getText = CKEditors['".$eltname."_tarea'].getData();\n";
 			$validationCode[] = "var StripTag = getText.replace(/(<([^>]+)>)/ig,''); \n";
 			$validationCode[] = "if(StripTag=='' || StripTag=='&nbsp;') {\n";
 			$validationCode[] = "window.alert(\"{$eltmsg}\");\n CKEditors['".$eltname."_tarea'].focus();\n return false;\n";
 			$validationCode[] = "}\n";
+			$validationCode[] = "}\n";
 		}
 		$counterType   = isset($ele_value[ELE_VALUE_TEXTAREA_COUNTER_TYPE])   ? $ele_value[ELE_VALUE_TEXTAREA_COUNTER_TYPE]   : 'none';
 		$limitNumber = isset($ele_value[ELE_VALUE_TEXTAREA_LIMIT_NUMBER]) ? intval($ele_value[ELE_VALUE_TEXTAREA_LIMIT_NUMBER]) : 0;
-		$isRichText  = isset($ele_value[ELE_VALUE_TEXTAREA_RICHTEXT]) && $ele_value[ELE_VALUE_TEXTAREA_RICHTEXT];
+		$isRichText  = $this->usesRichTextEditor($ele_value);
 		if (!strstr(getCurrentURL(), "printview.php") && $counterType && $counterType !== 'none' && $limitNumber > 0 && !$isRichText) {
 			$typeLabel = ($counterType === 'words') ? 'words' : 'characters';
 			$alertMsg  = addslashes('Please reduce your ' . $typeLabel . ' to ' . $limitNumber . ' or fewer before submitting.');
@@ -271,7 +284,7 @@ class formulizeTextareaElementHandler extends formulizeTextElementHandler {
 		$ele_value   = $element->getVar('ele_value');
 		$counterType   = isset($ele_value[ELE_VALUE_TEXTAREA_COUNTER_TYPE])   ? $ele_value[ELE_VALUE_TEXTAREA_COUNTER_TYPE]   : 'none';
 		$limitNumber = isset($ele_value[ELE_VALUE_TEXTAREA_LIMIT_NUMBER]) ? intval($ele_value[ELE_VALUE_TEXTAREA_LIMIT_NUMBER]) : 0;
-		$isRichText  = isset($ele_value[ELE_VALUE_TEXTAREA_RICHTEXT]) && $ele_value[ELE_VALUE_TEXTAREA_RICHTEXT];
+		$isRichText  = $this->usesRichTextEditor($ele_value);
 		if (!$isRichText && $counterType && $counterType !== 'none' && $limitNumber > 0 && $value !== '' && $value !== null && $value !== '{WRITEASNULL}') {
 			if ($counterType === 'characters') {
 				if (mb_strlen($value) > $limitNumber) {

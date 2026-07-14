@@ -296,7 +296,7 @@ function ShowHideTableRow(handle, show, speed, empty = false)
     {
         // Only execute the callback on the last element.
         if (ubound == i && empty)
-            lastCallback = function() { jQuery('#formulize-'+handle).empty(); window.document.getElementById('formulize-'+handle).style.display = 'none'; }
+            lastCallback = function() { destroyCKEditor(handle+'_tarea'); jQuery('#formulize-'+handle).empty(); window.document.getElementById('formulize-'+handle).style.display = 'none'; }
 
         if (show)
         {
@@ -310,4 +310,13 @@ function ShowHideTableRow(handle, show, speed, empty = false)
             jQuery(this).fadeOut(speed, lastCallback);
         }
     });
+}
+
+// tear down the rich text editor for an element that is being removed from the page, otherwise the editor instance is leaked and a stale reference is left behind in CKEditors
+function destroyCKEditor(editorID)
+{
+    if(typeof CKEditors !== 'undefined' && CKEditors[editorID]) {
+        CKEditors[editorID].destroy().catch( error => { console.error( error ); } );
+        delete CKEditors[editorID];
+    }
 }

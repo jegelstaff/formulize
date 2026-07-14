@@ -2214,6 +2214,7 @@ function makePlaceholderForConditionalElement($elementObject, $entry_id, $prevEn
 	$renderedElementMarkupName = "de_{$elementObject->getVar('id_form')}_{$entry_id}_{$elementObject->getVar('ele_id')}";
 	if(isset($GLOBALS['formulize_renderedElementHasConditions'][$renderedElementMarkupName])) {
 		$placeholder = "{STARTHIDDEN}<<||>>".$renderedElementMarkupName."<<||>>".$elementObject->getVar('ele_handle');
+		catalogCKEditorForConditionalElement($elementObject, $entry_id, $prevEntry, $renderedElementMarkupName);
 		if(!isset($GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'])][$renderedElementMarkupName])) {
 			list($js, $markupName) = validationJSFromDisembodiedElementRender($elementObject, $entry_id, $prevEntry, $screen);
 			if($js) {
@@ -2223,6 +2224,30 @@ function makePlaceholderForConditionalElement($elementObject, $entry_id, $prevEn
 		}
 	}
 	return $placeholder;
+}
+
+/**
+ * Record a conditionally hidden element in the CKEditor catalogue, if it is an element that will use a rich text editor when it is rendered
+ * Conditionally hidden elements are only rendered later on, by XHR, so without this the page would have no way of knowing that they are supposed to become editors when they appear
+ * @param object $elementObject The formulize element object we're concerned about
+ * @param int|string $entry_id The entry id in which the element is being rendered, or 'new' for a new element not yet saved.
+ * @param array $prevEntry The values from the database for the elements in this entry.
+ * @param string $renderedElementMarkupName The name this element will have in the markup when it is rendered
+ * @return void
+ */
+function catalogCKEditorForConditionalElement($elementObject, $entry_id, $prevEntry, $renderedElementMarkupName) {
+	$ele_type = $elementObject->getVar('ele_type');
+	if(!file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+		return;
+	}
+	$elementTypeHandler = xoops_getmodulehandler($ele_type.'Element', 'formulize');
+	if(!is_object($elementTypeHandler) OR !method_exists($elementTypeHandler, 'usesRichTextEditor')) {
+		return;
+	}
+	$ele_value = $prevEntry ? loadValue($elementObject, $entry_id, $prevEntry) : $elementObject->getVar('ele_value');
+	if($elementTypeHandler->usesRichTextEditor($ele_value)) {
+		$GLOBALS['formulize_CKEditors'][] = $renderedElementMarkupName.'_tarea';
+	}
 }
 
 /**
@@ -2589,12 +2614,15 @@ if(isset($GLOBALS['formulize_fckEditors'])) {
 // on first load, turn on rich text editors -- conditional loads are handled elsewhere
 if(isset($GLOBALS['formulize_CKEditors'])) {
 
-    foreach($GLOBALS['formulize_CKEditors'] as $editorID) {
-        print "var CKEditors = {};\n";
-    }
+    // the catalogue includes elements that are currently hidden by conditions, and so are not in the page yet, since they may be rendered by XHR later on
+    $ckEditorIDs = array_values(array_unique($GLOBALS['formulize_CKEditors']));
+
+    print "var CKEditors = {};\n";
+    print "var formulizeCKEditorIDs = ".json_encode(array_fill_keys($ckEditorIDs, true), JSON_FORCE_OBJECT).";\n";
 
     print "
     function initializeCKEditor(editorID) {
+        if(!formulizeCKEditorIDs[editorID]) { return; } // this element does not use a rich text editor, ie: it's an ordinary textarea
         if(jQuery('#'+editorID).length > 0) {
             ClassicEditor
                 .create( document.querySelector( '#'+editorID ) )
@@ -2616,23 +2644,20 @@ if(isset($GLOBALS['formulize_CKEditors'])) {
     jQuery(document).ready(function () {
     ";
 
-    foreach($GLOBALS['formulize_CKEditors'] as $editorID) {
+    foreach($ckEditorIDs as $editorID) {
         print "initializeCKEditor('$editorID');\n";
     }
 
     print "
     });
 
-    function updateCKEditors() {";
-
-        foreach($GLOBALS['formulize_CKEditors'] as $editorID) {
-            print "
-            if(jQuery('#$editorID').length > 0) {
-                jQuery('#hidden_$editorID').val(CKEditors['$editorID'].getData().replace(\"'\", '&#039;'));
-            }";
+    // iterate over the editors that actually exist, so that editors created when a conditional element was revealed are included too
+    function updateCKEditors() {
+        for(var editorID in CKEditors) {
+            if(CKEditors[editorID] && jQuery('#'+editorID).length > 0) {
+                jQuery('#hidden_'+editorID).val(CKEditors[editorID].getData().replace(\"'\", '&#039;'));
+            }
         }
-
-    print "
     }\n";
 
 }
