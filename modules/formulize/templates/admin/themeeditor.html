@@ -1,11 +1,10 @@
  <div class="panel-content content themeeditor">
 
-        <{* File list below is still a static placeholder, to be populated by the backend later *}>
         <div class="form-item">
             <label for="themeeditor-theme_select">Theme to edit:</label>
-            <select id="themeeditor-theme_select" name="themeeditor-theme_select" size="1">
+            <select id="themeeditor-theme_select" name="theme" size="1" onchange="location.href='ui.php?page=themeeditor&theme='+encodeURIComponent(this.value);">
                 <{foreach from=$adminPage.themes key=themeDir item=themeName}>
-                    <option value="<{$themeDir}>" <{if $themeDir == $adminPage.default_theme}>selected="selected"<{/if}>><{$themeName}><{if $themeDir == $adminPage.default_theme}> (active)<{/if}></option>
+                    <option value="<{$themeDir}>" <{if $themeDir == $adminPage.selected_theme}>selected="selected"<{/if}>><{$themeName}><{if $themeDir == $adminPage.default_theme}> (active)<{/if}></option>
                 <{/foreach}>
             </select>
             <div class="description">
@@ -27,28 +26,11 @@
                 <fieldset>
                     <legend>Theme Files</legend>
                     <ul class="themeeditor-filelist">
-                        <li class="active"><a href="#">style.css</a></li>
-                        <li><a href="#">functions.php</a></li>
-                        <li><a href="#">rtl.css</a></li>
-                        <li><a href="#">babel.config.js</a></li>
-                        <li><a href="#">webpack.config.js</a></li>
-                        <li><a href="#">README.md</a></li>
-                        <li><a href="#">changelog.md</a></li>
-                        <li><a href="#">404.php</a></li>
-                        <li><a href="#">500.php</a></li>
-                        <li><a href="#">comments.php</a></li>
-                        <li><a href="#">footer-pwa.php</a></li>
-                        <li><a href="#">footer.php</a></li>
-                        <li><a href="#">header-pwa.php</a></li>
-                        <li><a href="#">header.php</a></li>
-                        <li><a href="#">image.php</a></li>
-                        <li><a href="#">index.php</a></li>
-                        <li><a href="#">offline.php</a></li>
-                        <li><a href="#">page.php</a></li>
-                        <li><a href="#">search.php</a></li>
-                        <li><a href="#">searchform.php</a></li>
-                        <li><a href="#">sidebar-left.php</a></li>
-                        <li><a href="#">sidebar.php</a></li>
+                        <{foreach from=$adminPage.theme_files item=themeFile name=themeFilesLoop}>
+                            <li<{if $smarty.foreach.themeFilesLoop.first}> class="active"<{/if}>><a href="#"><{$themeFile}></a></li>
+                        <{foreachelse}>
+                            <li>No files found in this theme's folder.</li>
+                        <{/foreach}>
                     </ul>
                 </fieldset>
             </div>
