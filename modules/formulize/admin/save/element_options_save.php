@@ -121,7 +121,7 @@ foreach($processedValues['elements'] as $property=>$value) {
 try {
 	formulizeHandler::upsertElementSchemaAndResources($elementObjectProperties);
 } catch (Exception $e) {
-	print "Error: could not save the options for element: " . $e->getMessage();
+	throw new Exception("Could not save the options for element: " . $e->getMessage());
 }
 
 if (!empty($_POST['apply_default_to_empty'])) {
@@ -129,7 +129,7 @@ if (!empty($_POST['apply_default_to_empty'])) {
     // reload the element so the default-value computation below sees the just-saved state,
     // not the pre-save object (upsertElementSchemaAndResources does its own internal load/save,
     // it never mutates $element here)
-    $element = $element_handler->get($ele_id);
+    $element = $element_handler->get($ele_id, bypassCache: true);
     // target specific entries if conditions were submitted, otherwise apply to the blank entries. The UI ensures the
     // conditions are only present when the "specific value" mode is chosen (it clears them otherwise), so we just
     // read whatever was submitted. The conditions are never persisted - they come straight from the submission.

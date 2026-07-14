@@ -48,15 +48,20 @@ global $xoopsDB;
 	    $this->initVar("note",XOBJ_DTYPE_TXTBOX,null,false,255);
         }
 
-        // override the parent's getVar, since we want to allow for abbreviated URLs in the UI, to avoid users having to type the current site URL into the system
-        function getVar($var, $raw=false) {
-            $value = parent::getVar($var, $raw);
-            if($var == 'url') {
-                if(!strstr($value,'://') AND (strstr($value, 'sid=') OR strstr($value, 'fid=')) AND !$raw) {
-                    $value = XOOPS_URL."/modules/formulize/index.php?".htmlspecialchars(strip_tags($value));
-                }
+        /**
+         * Get this link's URL, expanding an abbreviated internal reference into a full URL.
+         * Users are allowed to type just "sid=12" or "fid=3" instead of the whole site URL, so anywhere
+         * we need a URL that can actually be followed (an href, a redirect) we expand it here.
+         * The value is deliberately unescaped, since it is a URL and not HTML text - escape at the
+         * point of output if it is going into markup.
+         * @return string The URL to link to, or the stored value as-is if there is nothing to expand
+         */
+        public function getExpandedUrl() {
+            $url = $this->getVar('url', 'n');
+            if(!strstr($url, '://') AND (strstr($url, 'sid=') OR strstr($url, 'fid='))) {
+                $url = XOOPS_URL."/modules/formulize/index.php?".strip_tags($url);
             }
-            return $value;
+            return $url;
         }
 
     }
@@ -117,19 +122,21 @@ global $xoopsDB;
                 	$menulink->assignVar('default_screen',$resultArray['default_screen']);
             	}
 
-                $menutext =	$menulink->getVar('link_text');
+                // gather the text unescaped, since it is being assigned back onto the link object, and will be
+                // escaped when it is read out of the object again by whoever is displaying it
+                $menutext =	$menulink->getVar('link_text', 'n');
                 $screenidname= "";
                 if($menutext == ""){
                     $id = explode("=",$menulink->getVar('screen'));
 
                     if($menulink->getVar('screen')=="") {   //handle external url
-            			$menutext = $menulink->getVar('url');
+            			$menutext = $menulink->getExpandedUrl();
 
             		} elseif(strpos($menulink->getVar('screen'),"fid=") !== false ){
-                        $menutext = $form_handler->get($id[1])->getVar('title');
+                        $menutext = $form_handler->get($id[1])->getVar('title', 'n');
                         $screenidname = " - form ID: ".  $form_handler->get($id[1])->getVar('id_form');
                     }else{
-                        $menutext = $screen_handler->get($id[1])->getVar('title');
+                        $menutext = $screen_handler->get($id[1])->getVar('title', 'n');
                         $screenidname = " - screen ID: ".$screen_handler->get($id[1])->getVar('sid');
                     }
                 }
@@ -935,7 +942,7 @@ class formulizeApplicationsHandler {
 }
 
 function buildMenuLinkURL($menulink) {
-    $url = $menulink->getVar("url");
+    $url = $menulink->getExpandedUrl();
     if(strlen($url) > 0){
         if(substr($url, 0, 1)=="/") {
             $url = XOOPS_URL.$url;

@@ -66,7 +66,7 @@
 						$touchedMenuGroupIds = array_merge($touchedMenuGroupIds, $parseGroupIdString($menuLinkObjects[$linkValues[0]]->getVar('permissions')), $parseGroupIdString($menuLinkObjects[$linkValues[0]]->getVar('default_screen')));
 					}
 					$application_handler->updateMenuLink($appid, $menuitems);
-					if($menuLinkObjects[$linkValues[0]]->getVar('link_text') != $linkValues[1]) {
+					if($menuLinkObjects[$linkValues[0]]->getVar('link_text', 'n') != $linkValues[1]) { // unescaped, since we're comparing against the raw value the user submitted
 						$_POST['reload_settings'] = 1;
 					}
 				}

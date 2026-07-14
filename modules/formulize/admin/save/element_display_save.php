@@ -119,7 +119,7 @@ $screen_handler->addElementToScreenPagesFromUI($element, $multipageFormScreens, 
 try {
 	formulizeHandler::upsertElementSchemaAndResources($elementObjectProperties);
 } catch (Exception $e) {
-	print "Error: could not save the display settings for element: " . $e->getMessage();
+	throw new Exception("Could not save the display settings for element: " . $e->getMessage());
 }
 
 if($_POST['reload_element_pages']) {

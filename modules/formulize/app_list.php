@@ -59,7 +59,7 @@ foreach ($application_list as $application) {
             "appid" => $link->getVar("appid"),
             "screen" => $link->getVar("screen"),
             "rank" => $link->getVar("rank"),
-            "url" => $link->getVar("url"),
+            "url" => $link->getExpandedUrl(),
             "link_text" => $link->getVar("link_text"),
             "name" => $link->getVar("name"),
             "text" => $link->getVar("text"),

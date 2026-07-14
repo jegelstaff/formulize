@@ -59,7 +59,8 @@ if ($aid == 0) {
 $index = 0;
 foreach ($appLinks as $menulink) {
     $menulinks[$index]['menu_id'] = $menulink->getVar('menu_id'); //Oct 2013 W. R.
-    $menulinks[$index]['url'] = $menulink->getVar('url') ? $menulink->getVar('url') : "http://";
+    // the raw, unexpanded value, since this is the value the user typed and is editing here
+    $menulinks[$index]['url'] = $menulink->getVar('url', 'n') ? $menulink->getVar('url', 'e') : "http://";
     $menulinks[$index]['link_text'] = $menulink->getVar('link_text');
     $menulinks[$index]['screen'] = $menulink->getVar('screen');
     $menulinks[$index]['rank'] = $menulink->getVar('rank');
@@ -102,15 +103,18 @@ if (!isset($selectedGroups)) {
     $selectedGroups = isset($_POST['groups']) ? $_POST['groups'] : array();
 }
 $orderGroups = isset($_POST['order']) ? $_POST['order'] : "creation";
+$hasFormBasedGroups = false;
 foreach($allGroups as $thisGroup) {
     if ($thisGroup->getVar('entry_id') > 0) {
         continue; // auto-managed entry group, not manually configurable here
     }
     $groupid = $thisGroup->getVar('groupid');
+    $isFormBased = ($thisGroup->getVar('is_group_template') == 1);
+    $hasFormBasedGroups = $hasFormBasedGroups ? true : $isFormBased;
     $groups[$thisGroup->getVar('name')]['id'] = $groupid;
     $groups[$thisGroup->getVar('name')]['name'] = $thisGroup->getVar('name');
     $groups[$thisGroup->getVar('name')]['selected'] = in_array($groupid, $selectedGroups) ? " selected" : "";
-    $groups[$thisGroup->getVar('name')]['isTemplate'] = ($thisGroup->getVar('is_group_template') == 1);
+    $groups[$thisGroup->getVar('name')]['isFormBased'] = $isFormBased;
 }
 if ($orderGroups == "alpha") {
     ksort($groups);
@@ -249,6 +253,7 @@ $adminPage['tabs'][$i]['template'] = "db:admin/application_menu_entries.html";
 $adminPage['tabs'][$i]['content'] = $options + $common;
 $adminPage['tabs'][$i]['content']['links'] = $menulinks;
 $adminPage['tabs'][$i]['content']['groups'] = $groups;
+$adminPage['tabs'][$i]['content']['hasFormBasedGroups'] = $hasFormBasedGroups; // only split the group lists into sections when there are form-based groups to separate out
 $adminPage['tabs'][$i]['content']['groupsWithDefaultScreen'] = $groupsWithDefaultScreen;
 
 //this new part creates an object for application_code_save.php if user is allowed to use custom code

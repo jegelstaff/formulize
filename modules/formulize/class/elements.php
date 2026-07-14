@@ -673,11 +673,12 @@ class formulizeElementsHandler {
 	 * Get an element object based on id or handle
 	 * Caches elements so that multiple calls for the same element do not hit the database more than once
 	 * @param mixed $id The element id (int) or handle (string)
+	 * @param bool $bypassCache If true, will not use the cached element and will always hit the database
 	 * @return mixed The element object, or false if not found
 	 */
-	function get($idOrHandle){
+	function get($idOrHandle, $bypassCache = false){
 		static $cachedElements = array();
-		if(isset($cachedElements[$idOrHandle])) {
+		if(!$bypassCache && isset($cachedElements[$idOrHandle])) {
 			return $cachedElements[$idOrHandle];
 		}
 		if (is_numeric($idOrHandle) AND $idOrHandle > 0) {
