@@ -4,6 +4,63 @@
  * Admin page for viewing and editing theme files
  */
 
+// Ajax save request: the editor posts directly to this file (not through ui.php), so this
+// branch bootstraps the CMS itself and exits before the page-render logic below (which
+// assumes ui.php has already set up $xoopsUser, ICMS_THEME_PATH, etc.) ever runs.
+if (isset($_POST['themeeditor_save'])) {
+    include_once "../../../mainfile.php";
+    include_once XOOPS_ROOT_PATH . '/modules/formulize/include/common.php';
+
+    global $xoopsUser;
+    if (!$xoopsUser OR !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
+        print "Could not save: you do not have permission to save theme files.";
+        exit;
+    }
+    if (sendSaveLockPrefToTemplate()) {
+        print "Could not save: this system is locked.";
+        exit;
+    }
+
+    $theme = isset($_POST['theme']) ? $_POST['theme'] : '';
+    $file = isset($_POST['file']) ? $_POST['file'] : '';
+    $content = isset($_POST['file_content']) ? $_POST['file_content'] : '';
+
+    // Only themes actually installed in this Formulize installation may be targeted
+    $themes = icms_view_theme_Factory::getThemesList();
+    if ($theme === '' OR !isset($themes[$theme])) {
+        print "Could not save: unknown theme.";
+        exit;
+    }
+
+    $themeDir = realpath(ICMS_THEME_PATH . '/' . $theme);
+    if ($themeDir === false) {
+        print "Could not save: theme folder not found on the server.";
+        exit;
+    }
+
+    // Resolve the target file within the theme folder and refuse anything that escapes it
+    // (e.g. via ../) or that isn't a real, already-existing file there. The editor only
+    // ever offers files it already listed from that same folder, so a legitimate save
+    // always targets an existing file; this also means we never create new files here.
+    $targetPath = ($file !== '') ? realpath($themeDir . '/' . $file) : false;
+    if ($targetPath === false OR strpos($targetPath, $themeDir . DIRECTORY_SEPARATOR) !== 0 OR !is_file($targetPath)) {
+        print "Could not save: invalid file.";
+        exit;
+    }
+
+    if (!is_writable($targetPath)) {
+        print "Could not save: the file is not writable on the server.";
+        exit;
+    }
+
+    if (file_put_contents($targetPath, $content) === false) {
+        print "Could not save: the file could not be written on the server.";
+        exit;
+    }
+
+    exit; // empty body = success
+}
+
 // Only webmasters can access this page
 global $xoopsUser;
 if(!$xoopsUser OR !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
@@ -43,10 +100,21 @@ if(in_array($requestedFile, $adminPage['theme_files'], true)) {
     $adminPage['selected_file'] = '';
 }
 
+// Image files can't be sanely edited as text, so show a preview instead of dumping
+// raw binary bytes into the textarea
+$imageExtensions = array('png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'ico', 'bmp');
+$selectedExtension = strtolower(pathinfo($adminPage['selected_file'], PATHINFO_EXTENSION));
+$adminPage['selected_file_is_image'] = in_array($selectedExtension, $imageExtensions, true);
+
 // Contents of the selected file, for display in the editor
-$adminPage['selected_file_content'] = $adminPage['selected_file'] !== ''
-    ? file_get_contents(ICMS_THEME_PATH . '/' . $adminPage['selected_theme'] . '/' . $adminPage['selected_file'])
-    : '';
+if ($adminPage['selected_file_is_image']) {
+    $adminPage['selected_file_content'] = '';
+    $adminPage['selected_file_url'] = ICMS_THEME_URL . '/' . $adminPage['selected_theme'] . '/' . $adminPage['selected_file'];
+} else {
+    $adminPage['selected_file_content'] = $adminPage['selected_file'] !== ''
+        ? file_get_contents(ICMS_THEME_PATH . '/' . $adminPage['selected_theme'] . '/' . $adminPage['selected_file'])
+        : '';
+}
 
 /**
  * Recursively list every file inside a theme's folder

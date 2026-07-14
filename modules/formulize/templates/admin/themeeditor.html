@@ -1,8 +1,12 @@
  <div class="panel-content content themeeditor">
 
+    <form id="themeeditor-form">
+        <input type="hidden" name="themeeditor_save" value="1">
+        <input type="hidden" name="file" value="<{$adminPage.selected_file}>">
+
         <div class="form-item">
             <label for="themeeditor-theme_select">Theme to edit:</label>
-            <select id="themeeditor-theme_select" name="theme" size="1" onchange="location.href='ui.php?page=themeeditor&theme='+encodeURIComponent(this.value);">
+            <select id="themeeditor-theme_select" name="theme" size="1">
                 <{foreach from=$adminPage.themes key=themeDir item=themeName}>
                     <option value="<{$themeDir}>" <{if $themeDir == $adminPage.selected_theme}>selected="selected"<{/if}>><{$themeName}><{if $themeDir == $adminPage.default_theme}> (active)<{/if}></option>
                 <{/foreach}>
@@ -17,8 +21,17 @@
             <div class="form-item themeeditor-editor">
                 <fieldset>
                     <legend id="themeeditor-current-file">File: <{$adminPage.selected_file}></legend>
-                    <textarea id="themeeditor-file_content" name="themeeditor-file_content" class="code-textarea canValidate" rows="30"/>
+                    <{if $adminPage.selected_file_is_image}>
+                        <div class="themeeditor-image-preview">
+                            <img src="<{$adminPage.selected_file_url}>" alt="<{$adminPage.selected_file}>">
+                        </div>
+                        <div class="description">
+                            <p>Image files can't be edited here. This is a preview of the selected file.</p>
+                        </div>
+                    <{else}>
+                        <textarea id="themeeditor-file_content" name="file_content" class="code-textarea" rows="30" title="Contents of <{$adminPage.selected_file}>"/>
 <{$adminPage.selected_file_content}></textarea>
+                    <{/if}>
 						 </fieldset>
             </div>
 
@@ -38,8 +51,13 @@
         </div>
 
         <div class="themeeditor-actions">
+            <{if !$adminPage.selected_file_is_image}>
             <button type="button" class="themeeditor-save-btn">Save</button>
+            <span class="themeeditor-save-status"></span>
+            <{/if}>
         </div>
+
+    </form>
 
     </div>
 
@@ -152,4 +170,117 @@
         background: #0b7dda;
         border-color: #0b7dda;
     }
+    .themeeditor-save-btn:disabled {
+        background: #90caf9;
+        border-color: #90caf9;
+        cursor: default;
+    }
+    .themeeditor-save-status {
+        margin-left: 0.75em;
+        font-style: italic;
+        color: #555;
+    }
+    .themeeditor-image-preview {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: auto;
+        padding: 0.75em;
+        text-align: center;
+        background: #fafafa;
+    }
+    .themeeditor-image-preview img {
+        max-width: 100%;
+        height: auto;
+    }
 </style>
+
+<script type="text/javascript">
+(function($) {
+    var $form = $('#themeeditor-form');
+    var $textarea = $('#themeeditor-file_content');
+    var $saveBtn = $('.themeeditor-save-btn');
+    var $status = $('.themeeditor-save-status');
+    var savedContent = $textarea.length ? $textarea.val() : null;
+    var dirty = false;
+    var saving = false;
+
+    if ($textarea.length) {
+        // CodeMirror hides the real textarea and only writes edits back into its value
+        // when its own onChange handler calls instance.save() (see formulize-admin.js
+        // wiring in ui.html), so there's no reliable DOM event to hook here. Polling the
+        // textarea's value is a simple, ordering-independent way to detect edits whether
+        // or not CodeMirror has finished wrapping it yet.
+        setInterval(function() {
+            dirty = ($textarea.val() !== savedContent);
+        }, 500);
+    }
+
+    function confirmDiscardIfDirty() {
+        return !dirty || confirm('You have unsaved changes to this theme file. Leaving now will discard them. Continue?');
+    }
+
+    // beforeunload needs the browser's native return-value contract, which is safest
+    // done directly rather than through jQuery's event wrapper
+    window.onbeforeunload = function(e) {
+        if (dirty) {
+            var message = 'You have unsaved changes to this theme file. Leaving now will discard them.';
+            (e || window.event).returnValue = message;
+            return message;
+        }
+    };
+
+    // File list links and the theme picklist normally navigate away immediately;
+    // intercept them so unsaved edits aren't silently discarded.
+    $('.themeeditor-filelist a').bind('click', function(e) {
+        if (!confirmDiscardIfDirty()) {
+            e.preventDefault();
+        }
+    });
+
+    var $themeSelect = $('#themeeditor-theme_select').data('themeeditor-previous-value', $('#themeeditor-theme_select').val());
+    $themeSelect.bind('change', function() {
+        var $select = $(this);
+        if (!confirmDiscardIfDirty()) {
+            $select.val($select.data('themeeditor-previous-value'));
+            return;
+        }
+        location.href = 'ui.php?page=themeeditor&theme=' + encodeURIComponent($select.val());
+    });
+
+    $saveBtn.bind('click', function() {
+        if (saving || !$textarea.length) {
+            return;
+        }
+        saving = true;
+        $saveBtn.attr('disabled', 'disabled');
+        $status.text('Saving...');
+        $.ajax({
+            url: 'themeeditor.php',
+            type: 'POST',
+            data: $form.serialize(),
+            success: function(response) {
+                var trimmed = $.trim(response);
+                if (trimmed) {
+                    $status.text('');
+                    var strippedStyles = trimmed.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+                    var strippedHTML = strippedStyles.replace(/<\/?[^>]+(>|$)/g, '');
+                    alert(strippedHTML);
+                } else {
+                    savedContent = $textarea.val();
+                    dirty = false;
+                    $status.text('Saved.');
+                    setTimeout(function() { $status.text(''); }, 2000);
+                }
+                saving = false;
+                $saveBtn.removeAttr('disabled');
+            },
+            error: function() {
+                saving = false;
+                $saveBtn.removeAttr('disabled');
+                $status.text('');
+                alert('There was an error saving your changes. Please try again.');
+            }
+        });
+    });
+})(jQuery);
+</script>
