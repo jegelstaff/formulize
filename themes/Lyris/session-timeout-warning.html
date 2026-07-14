@@ -1,0 +1,43 @@
+<{php}>
+    global $icmsConfig;
+    if (ini_get('session.cookie_lifetime') OR ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '')) {
+<{/php}>
+
+<div id="session-timeout-warning">
+    <img class="session-timeout-warning-icon" src="<{$icms_url}>/modules/formulize/images/warning.png" alt="">
+    <img class="session-timeout-warning-close" src="<{$icms_url}>/modules/formulize/images/x.gif" alt="Dismiss">
+    <p><{$smarty.const._SESSION_TIMEOUT_AT}> <span id="timeout-time-here"></span></p>
+    <p><{$smarty.const._SESSION_TIMEOUT_UNSAVED_CHANGES}></p>
+</div>
+<script>
+(function () {
+    var warningEl = document.getElementById('session-timeout-warning');
+    var closeEl   = document.querySelector('.session-timeout-warning-close');
+
+    var sessionMs = <{php}>
+        $sessionMs = ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '')
+            ? $icmsConfig['session_expire'] * 60 * 1000
+            : ini_get('session.cookie_lifetime') * 1000;
+        echo $sessionMs;
+    <{/php}>;
+    var graceMs = 5 * 60 * 1000;
+
+    var timeoutTime = new Date(Date.now() + sessionMs);
+    document.getElementById('timeout-time-here').textContent = timeoutTime.toLocaleTimeString(undefined, {
+        hour: 'numeric',
+        minute: '2-digit'
+    });
+
+    setTimeout(function () {
+        warningEl.style.display = 'block';
+    }, sessionMs - graceMs);
+
+    closeEl.addEventListener('click', function () {
+        warningEl.style.display = 'none';
+    });
+}());
+</script>
+
+<{php}>
+    }
+<{/php}>

@@ -747,6 +747,7 @@ define("_AM_FORMULIZE_LOE_ONPAGE", "Page");
 define("_AM_FORMULIZE_LOE_PREVIOUS", "Previous");
 define("_AM_FORMULIZE_LOE_NEXT", "Next");
 define("_AM_FORMULIZE_LOE_TOTAL", "Showing entries: %d to %d of %d.");
+define("_AM_FORMULIZE_LOE_PAGE_X_OF_Y", "Page %s of %s");
 define("_AM_FORMULIZE_LOE_HIDE_REPEATS", "Hide repeating data:");
 
 define("_formulize_DE_LOE_LIMIT_REACHED1", "There are");

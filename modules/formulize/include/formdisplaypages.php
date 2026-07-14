@@ -429,6 +429,26 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 			$GLOBALS['formulize_displayingMultipageScreen']['templateVariables'] = $templateVariables;
 	}
 
+	// In elements-only mode (e.g. the list drawer) all the navigation chrome above is
+	// skipped, but the client still needs the paging state to build its own controls.
+	// Emit it as JSON here, where conditional page-skipping has already been resolved,
+	// so the client doesn't have to re-derive which page is next/last.
+	if($elements_only) {
+		$navMeta = array(
+			'currentPage'  => intval($currentPage),
+			'totalPages'   => count((array) $pages),
+			'previousPage' => ($previousPage === "none" ? null : intval($previousPage)),
+			'nextPage'     => intval($nextPage),
+			'isThanksPage' => ($currentPage == $thanksPage),
+			'nextIsThanks' => pageIsThanksPageOrEquivalent($nextPage, $currentPage, $thanksPage, $pages, $conditions, $entry_id, $fid, $frid),
+			'usersCanSave' => (bool) $usersCanSave,
+			'screenId'     => (is_object($screen) ? intval($screen->getVar('sid')) : 0),
+			'entryId'      => (is_numeric($entry_id) ? intval($entry_id) : 0),
+			'pageTitle'    => (isset($pageTitles[$currentPage]) ? trans($pageTitles[$currentPage]) : ''),
+		);
+		print "\n<script type=\"application/json\" class=\"fz-multipage-nav\">".json_encode($navMeta)."</script>\n";
+	}
+
 	writeToFormulizeLog(array(
 		'formulize_event'=>'rendering-form-screen-page',
 		'user_id'=>($xoopsUser ? $xoopsUser->getVar('uid') : 0),

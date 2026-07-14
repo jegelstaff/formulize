@@ -820,6 +820,9 @@ $modversion['templates'][] = array(
 $modversion['templates'][] = array(
 	'file' => 'admin/element_multiple_onoff.html',
 	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/appearance.html',
+	'description' => '');
 
 
 //	Module Configs
@@ -1226,6 +1229,23 @@ $modversion['config'][] = array(
 	'valuetype' => 'int',
 	'default' => '0',
 );
+
+// Appearance settings... edited on the Appearance page in the Formulize admin UI,
+// hidden formtype keeps them out of the system preferences form
+$appearanceConfigNames = array('appearance_primary', 'appearance_background', 'appearance_surface',
+	'appearance_text', 'appearance_border', 'appearance_success', 'appearance_warning',
+	'appearance_danger', 'appearance_info', 'appearance_font', 'appearance_customfont',
+	'appearance_logo');
+foreach($appearanceConfigNames as $appearanceConfigName) {
+	$modversion['config'][] = array(
+		'name' => $appearanceConfigName,
+		'title' => '_MI_formulize_APPEARANCE_SETTING',
+		'description' => '',
+		'formtype' => 'hidden',
+		'valuetype' => 'text',
+		'default' => '',
+	);
+}
 
 $modversion['blocks'][1] = array(
 	'file' => "mymenu.php",

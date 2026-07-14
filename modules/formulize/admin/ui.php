@@ -158,19 +158,23 @@ function getHomeTabs($activePage = 'home') {
         'template' => 'db:admin/logviewer.html',
         'active' => ($activePage == 'logviewer')
     );
-
     $tabs[] = array(
         'name' => 'Import/Export',
         'url' => 'ui.php?page=config-sync',
         'template' => 'db:admin/config_sync.html',
         'active' => ($activePage == 'config-sync')
     );
-
     $tabs[] = array(
         'name' => 'Synchronize',
         'url' => 'ui.php?page=synchronize',
         'template' => 'db:admin/synchronize.html',
         'active' => ($activePage == 'synchronize')
+    );
+		$tabs[] = array(
+        'name' => 'Appearance',
+        'url' => 'ui.php?page=appearance',
+        'template' => 'db:admin/appearance.html',
+        'active' => ($activePage == 'appearance')
     );
 
     // ui-tabs.html expects 1-based, contiguous keys (it computes tabselected = key - 1)

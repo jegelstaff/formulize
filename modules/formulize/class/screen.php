@@ -476,19 +476,38 @@ function getTemplateToRender($templateName, $screenOrScreenType="", $theme="") {
 	}
 }
 
-function getTemplatePath($screenOrScreenType, $templateName) {
+function getTemplatePath($screenOrScreenType, $templateName, $subdir = '') {
 	global $xoopsConfig;
 	$paths = array();
-	$type = $screenOrScreenType;
+	$type  = $screenOrScreenType;
+	$file  = ($subdir ? $subdir . '/' : '') . $templateName . '.php';
 	if(is_object($screenOrScreenType) AND is_a($screenOrScreenType, 'formulizeScreen')) {
-		$paths[] = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/".$screenOrScreenType->getVar('sid')."/".$templateName.".php";
+		$paths[] = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/".$screenOrScreenType->getVar('sid')."/".$file;
 		$type = $screenOrScreenType->getVar('type');
 	}
-	$paths[] = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/default/".$type."/".$templateName.".php";
-	$paths[] = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$type."/".$templateName.".php";
+	$paths[] = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/default/".$type."/".$file;
+	$paths[] = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$type."/".$file;
 	foreach($paths as $path) {
 		if(file_exists($path) AND filesize($path)) {
 			return $path;
 		}
 	}
+	return null;
+}
+
+// Shim for backward compatibility — prefer getTemplatePath($s, $name, 'variables') for new callers.
+function getVariableTemplatePath($screenOrScreenType, $variableName) {
+	return getTemplatePath($screenOrScreenType, $variableName, 'variables');
+}
+
+// Renders a variable sub-template, exposing $templateVars as local variables. Returns the rendered HTML or false if no template found.
+function renderVariableTemplate($variableName, $screenOrScreenType, $templateVars = array()) {
+	$path = getTemplatePath($screenOrScreenType, $variableName, 'variables');
+	if(!$path) {
+		return false;
+	}
+	extract($templateVars);
+	ob_start();
+	include $path;
+	return ob_get_clean();
 }

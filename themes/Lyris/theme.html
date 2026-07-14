@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="<{$icms_langcode}>">
+
+<head>
+    <{assign var=theme_name value=$xoTheme->folderName}>
+
+    <title><{if $xoops_pagetitle !=''}><{$xoops_pagetitle}> : <{/if}><{$icms_sitename}></title>
+    <meta http-equiv="content-type" content="text/html; charset=<{$icms_charset}>" />
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1" />
+    <meta name="robots" content="<{$icms_meta_robots}>" />
+    <meta name="keywords" content="<{$icms_meta_keywords}>" />
+    <meta name="description" content="<{$icms_meta_description}>" />
+    <meta name="rating" content="<{$icms_meta_rating}>" />
+    <meta name="author" content="<{$icms_meta_author}>" />
+    <meta name="copyright" content="<{$icms_meta_copyright}>" />
+    <meta name="generator" content="Formulize" />
+
+    <{$icms_module_header}>
+
+    <link rel="shortcut icon" type="image/ico" href="<{$icms_imageurl}>icons/favicon.ico" />
+    <link rel="icon" type="image/png" href="<{$icms_imageurl}>icons/icon.png" />
+
+    <{php}>
+    require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions.php';
+    require_once XOOPS_ROOT_PATH . '/modules/formulize/include/appearance.php';
+    $rtlPath = ($this->_tpl_vars['icms_rtl'] ?? false) ? 'rtl/' : '';
+    $cssVersion = formulize_get_file_version('/themes/Lyris/' . $rtlPath . 'css/style.css');
+    echo '<link rel="stylesheet" type="text/css" media="all" href="' . $this->_tpl_vars['icms_imageurl'] . $rtlPath . 'css/reset.css?v=' . $cssVersion . '" />';
+    echo '<link rel="stylesheet" type="text/css" media="all" href="' . $this->_tpl_vars['icms_imageurl'] . $rtlPath . 'css/style.css?v=' . $cssVersion . '" />';
+    // user-configured colours, font, and logo, from the Appearance page in the Formulize admin UI
+    echo formulize_renderAppearanceHead();
+    $appearanceLogoUrl = formulize_getAppearanceLogoUrl();
+    $this->assign('appearance_logo_url', $appearanceLogoUrl ? $appearanceLogoUrl : $this->_tpl_vars['icms_imageurl'] . 'images/logo.png');
+    <{/php}>
+</head>
+
+<body id="<{$icms_dirname}>" class="<{$icms_langcode}><{if isset($formulize_screen_id) && $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}><{if $smarty.get.fz_inline}> fz-inline<{/if}>">
+
+<{includeq file="$theme_name/session-timeout-warning.html"}>
+
+<{php}>
+global $xoopsUser;
+if ($xoopsUser) {
+    $profile_handler = xoops_getmodulehandler('profile', 'profile');
+    $profile = $profile_handler->get($xoopsUser->getVar('uid'));
+    if ($fontsize = $profile->getVar('fontsize')) {
+        print '<style>html { font-size: ' . $fontsize . '; }</style>';
+    }
+}
+<{/php}>
+
+<div class="fz-app" id="fz-app" data-sidebar-default="<{if $xoops_requesturi|strstr:'/modules/formulize/application.php'}>open<{else}>closed<{/if}>">
+
+  <script>
+  // Apply the saved sidebar state before first paint, so restoring a closed
+  // sidebar doesn't replay the closing animation on every page load.
+  // initSidebar() in script.js re-applies the same state later (no visual
+  // change) and handles aria-expanded and the toggle behaviour.
+  (function () {
+    try {
+      var app = document.getElementById('fz-app');
+      var saved = localStorage.getItem('fz-sidebar-closed');
+      var defaultOpen = app.getAttribute('data-sidebar-default') === 'open';
+      var closed = saved !== null ? saved === 'true' : !defaultOpen;
+      if (closed && window.innerWidth > 768) {
+        app.classList.add('fz-app--sidebar-closed');
+      }
+    } catch (e) { /* ignore */ }
+  })();
+  </script>
+
+  <!-- HEADER -->
+  <{if !$smarty.get.fz_inline}>
+  <header class="fz-header" role="banner">
+
+    <div class="fz-header__start">
+      <{if $xoBlocks.canvas_left}>
+      <button class="fz-btn fz-btn--ghost fz-btn--icon fz-header__nav-toggle js-sidebar-toggle"
+              aria-label="Toggle navigation"
+              aria-controls="fz-sidebar"
+              aria-expanded="false">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+      <{/if}>
+      <a class="fz-header__brand" href="<{$logo_url}>">
+        <img src="<{$appearance_logo_url}>" alt="<{$icms_sitename}>">
+      </a>
+    </div>
+
+    <div class="fz-header__end">
+      <{if $xoops_isadmin}>
+      <a class="fz-header__action-link" href="<{if isset($modifyScreenUrl) && $modifyScreenUrl}><{$modifyScreenUrl}><{else}><{$icms_url}>/modules/formulize/admin/ui.php<{/if}>">Admin</a>
+      <{/if}>
+      <{if $xoops_isuser}>
+        <{if $show_inbox_link}>
+        <a class="fz-header__action-link fz-header__inbox" href="<{$icms_url}>/viewpmsg.php"
+           aria-label="Inbox<{if $unread_pm_count > 0}>, <{$unread_pm_count}> unread<{/if}>">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+          <{if $unread_pm_count > 0}><span class="fz-header__badge" aria-hidden="true"></span><{/if}>
+        </a>
+        <{/if}>
+        <a class="fz-header__action-link" href="<{$icms_url}>/edituser.php">Account</a>
+        <a class="fz-header__action-link" href="<{$icms_url}>/user.php?op=logout">Sign out</a>
+      <{else}>
+        <a class="fz-header__action-link" href="<{$icms_url}><{$formulize_redirect}>">Sign in</a>
+      <{/if}>
+    </div>
+
+  </header>
+  <{/if}>
+
+  <!-- APP BODY (sidebar + main) -->
+  <div class="fz-app__body">
+
+    <{if $xoBlocks.canvas_left && !$smarty.get.fz_inline}>
+    <aside class="fz-sidebar" id="fz-sidebar" role="navigation" aria-label="Main navigation">
+      <{includeq file="$theme_name/blockszone.html" blocks=$xoBlocks.canvas_left
+          zoneClass='xo-canvas-column' zoneId='xo-canvas-leftcolumn'
+      }>
+    </aside>
+    <{/if}>
+
+    <main class="fz-main" role="main" id="fz-main">
+      <{$icms_contents}>
+    </main>
+
+  </div>
+
+  <{if !$smarty.get.fz_inline}>
+  <!-- RIGHT SLIDE-OUT DRAWER -->
+  <div class="fz-drawer-scrim js-drawer-scrim" aria-hidden="true" hidden></div>
+  <aside class="fz-drawer js-drawer" id="fz-drawer" role="dialog" aria-modal="true" aria-label="Detail panel" hidden>
+    <div class="fz-drawer__head">
+      <span class="fz-drawer__title js-drawer-title"></span>
+      <div class="fz-spacer"></div>
+      <button class="fz-btn fz-btn--ghost fz-btn--icon js-drawer-close" aria-label="Close panel">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="fz-drawer__body js-drawer-body"></div>
+    <div class="fz-drawer__foot js-drawer-foot"></div>
+  </aside>
+  <{/if}>
+
+</div>
+
+<script>
+  window.formulize = window.formulize || {};
+  window.formulize.xoopsUrl = '<{$smarty.const.XOOPS_URL}>';
+</script>
+<{php}>
+$jsVersion = formulize_get_file_version('/themes/Lyris/js/script.js');
+echo '<script src="' . $this->_tpl_vars['icms_imageurl'] . 'js/script.js?v=' . $jsVersion . '"></script>';
+<{/php}>
+
+<{if isset($masquerade_username) AND $masquerade_username}>
+<div id="formulize-masquerade-block">
+    Masquerading as <b><{$masquerade_username}></b>
+    <form method="post" action="<{$smarty.const.XOOPS_URL}>/modules/formulize/">
+        <input type="hidden" name="revert" value="1" />
+        <input type="hidden" name="op" value="masquerade" />
+        <input type="hidden" name="masquerade_end" value="1" />
+        <input type="submit" name="confirm_submit" value="Revert" />
+    </form>
+</div>
+<{/if}>
+
+<{if isset($formulize_customCodeForApplications) && $formulize_customCodeForApplications}>
+<{$formulize_customCodeForApplications}>
+<{/if}>
+
+</body>
+</html>

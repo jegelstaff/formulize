@@ -1,0 +1,3234 @@
+/* ============================================================
+   Lyris — base theme stylesheet
+   ============================================================ */
+
+/* ---- Design tokens ---- */
+
+:root {
+  /* Colors */
+  --c-bg:            #f7f7f5;
+  --c-surface:       #ffffff;
+  --c-surface-2:     #fafaf8;
+  --c-surface-3:     #f1f1ed;
+  --c-overlay:       rgba(15, 17, 21, 0.45);
+
+  --c-border:        #e6e6e1;
+  --c-border-strong: #d1d1cb;
+  --c-border-focus:  #1f2937;
+
+  --c-text:          #14161a;
+  --c-text-muted:    #5b6068;
+  --c-text-subtle:   #8a8e95;
+  --c-text-on-accent:#ffffff;
+
+  --c-accent:        #2e3340;
+  --c-accent-hover:  #1c2029;
+  --c-accent-soft:   #eef0f4;
+  --c-accent-soft-2: #dde1ea;
+  --c-accent-fg:     #2e3340;
+
+  --c-success:       #2a7a4f;
+  --c-success-soft:  #e6f1ea;
+  --c-warning:       #a86a14;
+  --c-warning-soft:  #fbecd2;
+  --c-danger:        #b3261e;
+  --c-danger-soft:   #f8e1de;
+  --c-info:          #2e5fa8;
+  --c-info-soft:     #e2ecf8;
+
+  /* Typography */
+  --font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --fs-11: 11px;
+  --fs-12: 12px;
+  --fs-13: 13px;
+  --fs-14: 14px;
+  --fs-15: 15px;
+  --fs-16: 16px;
+  --fs-18: 18px;
+  --fs-20: 20px;
+  --fs-24: 24px;
+  --fs-28: 28px;
+  --fs-32: 32px;
+
+  --lh-tight: 1.2;
+  --lh-snug:  1.35;
+  --lh-base:  1.5;
+
+  /* Spacing (4px scale) */
+  --s-1:  4px;
+  --s-2:  8px;
+  --s-3:  12px;
+  --s-4:  16px;
+  --s-5:  20px;
+  --s-6:  24px;
+  --s-7:  32px;
+  --s-8:  40px;
+  --s-9:  48px;
+  --s-10: 64px;
+
+  /* Radii */
+  --r-1: 4px;
+  --r-2: 6px;
+  --r-3: 8px;
+  --r-4: 10px;
+  --r-5: 12px;
+  --r-full: 999px;
+
+  /* Shadows */
+  --sh-1: 0 1px 0 rgba(15,17,21,.04);
+  --sh-2: 0 1px 2px rgba(15,17,21,.06), 0 1px 0 rgba(15,17,21,.04);
+  --sh-3: 0 4px 12px rgba(15,17,21,.08), 0 1px 2px rgba(15,17,21,.05);
+  --sh-4: 0 12px 32px rgba(15,17,21,.14), 0 2px 6px rgba(15,17,21,.06);
+  --sh-focus: 0 0 0 3px rgba(46,51,64,.15);
+
+  /* Density */
+  --row-h-compact:     32px;
+  --row-h-cozy:        40px;
+  --row-h-comfortable: 52px;
+  --row-pad-x: var(--s-3);
+
+  /* Motion */
+  --ease: cubic-bezier(.2,.7,.3,1);
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+
+  /* Layout */
+  --header-h: 48px;
+  --sidebar-w: 220px;
+}
+
+/* ============================================================
+   Base
+   ============================================================ */
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--fs-14);
+  line-height: var(--lh-base);
+  color: var(--c-text);
+  background: var(--c-bg);
+}
+
+/* ============================================================
+   App shell
+   ============================================================ */
+
+.fz-app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ---- Header ---- */
+
+.fz-header {
+  height: var(--header-h);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 0 var(--s-4);
+  background: var(--c-surface);
+  border-bottom: 1px solid var(--c-border);
+  z-index: 10;
+  position: relative;
+}
+
+.fz-header__start {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.fz-header__brand {
+  display: flex;
+  align-items: center;
+}
+
+.fz-header__brand img {
+  height: 28px;
+  width: auto;
+  display: block;
+}
+
+.fz-header__end {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin-left: auto;
+}
+
+.fz-header__action-link {
+  font-size: var(--fs-13);
+  font-weight: 500;
+  color: var(--c-text-muted);
+  text-decoration: none;
+  transition: color var(--dur-1) var(--ease);
+}
+
+.fz-header__action-link:hover {
+  color: var(--c-text);
+}
+
+.fz-header__inbox {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  color: var(--c-text-muted);
+}
+
+.fz-header__inbox:hover {
+  color: var(--c-text);
+}
+
+.fz-header__badge {
+  position: absolute;
+  top: -3px;
+  right: -4px;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--r-full);
+  background: var(--c-danger);
+  border: 1.5px solid var(--c-surface);
+}
+
+.fz-header__nav-toggle {
+  color: var(--c-text-muted);
+  flex-shrink: 0;
+}
+
+/* ---- App body ---- */
+
+.fz-app__body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ---- Sidebar ---- */
+
+.fz-sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--c-surface-2);
+  border-right: 1px solid var(--c-border);
+  transition: width var(--dur-2) var(--ease);
+}
+
+.fz-app--sidebar-closed .fz-sidebar {
+  width: 0;
+}
+
+/* ---- Main content ---- */
+
+.fz-main {
+  flex: 1;
+  overflow: auto;
+  min-width: 0;
+  background: var(--c-bg);
+}
+
+/* Simple / system pages (login, register, lostpass, ...) drop their raw
+   content straight into .fz-main with no wrapper, so it butts against the
+   viewport edge. Give those pages a horizontal (and top) gutter. Formulize
+   app/list screens (body#formulize) are full-bleed by design — the titlebar,
+   list body and pagination manage their own insets — so they're excluded. */
+body:not(#formulize) .fz-main {
+  padding: var(--s-6) var(--s-6) 0;
+}
+
+/* Inline / drawer-iframe mode — header and sidebar suppressed via theme.html */
+.fz-inline .fz-app {
+  height: auto;
+  min-height: 100vh;
+  overflow: visible;
+}
+
+.fz-inline .fz-app__body {
+  flex: 1;
+  overflow: visible;
+}
+
+.fz-inline .fz-main {
+  overflow: visible;
+}
+
+/* ============================================================
+   Right slide-out drawer
+   ============================================================ */
+
+.fz-drawer-scrim {
+  position: fixed;
+  inset: 0;
+  background: var(--c-overlay);
+  z-index: 30;
+}
+
+.fz-drawer-scrim[hidden] {
+  display: none;
+}
+
+.fz-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 480px;
+  max-width: 92vw;
+  background: var(--c-surface);
+  box-shadow: var(--sh-4);
+  z-index: 31;
+  display: flex;
+  flex-direction: column;
+  animation: fz-drawer-in var(--dur-2) var(--ease);
+}
+
+.fz-drawer[hidden] {
+  display: none;
+}
+
+@keyframes fz-drawer-in {
+  from { transform: translateX(16px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+.fz-drawer__head {
+  padding: var(--s-4) var(--s-5);
+  border-bottom: 1px solid var(--c-border);
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-shrink: 0;
+}
+
+.fz-drawer__title {
+  font-size: var(--fs-15);
+  font-weight: 600;
+}
+
+.fz-drawer__body {
+  flex: 1;
+  overflow: auto;
+  padding: var(--s-5);
+}
+
+.fz-drawer__loading {
+  padding: var(--s-6);
+  color: var(--c-text-muted);
+  text-align: center;
+}
+
+.fz-drawer__foot {
+  padding: var(--s-3) var(--s-5);
+  border-top: 1px solid var(--c-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s-2);
+  background: var(--c-surface-2);
+  flex-shrink: 0;
+}
+
+.fz-drawer__foot:empty {
+  display: none;
+}
+
+.fz-drawer__notice {
+  margin-right: auto;
+  align-self: center;
+  font-size: var(--fs-13);
+  color: var(--c-text-muted);
+}
+
+.fz-drawer__page-indicator {
+  align-self: center;
+  margin: 0 var(--s-1);
+  font-size: var(--fs-13);
+  color: var(--c-text-muted);
+  font-feature-settings: "tnum";
+  white-space: nowrap;
+}
+
+/* ============================================================
+   Loading overlay (list reloads via showLoading())
+   ============================================================ */
+
+/* #workingmessage is core Formulize markup: a div (inline display:none) holding a
+   working gif, flipped to display:block by showLoading(). We hide the gif and turn
+   the div into a full-screen, content-blocking overlay with a CSS spinner. Centering
+   uses absolute positioning rather than flex because showLoading() forces an inline
+   display:block that would override a CSS display:flex. */
+#workingmessage {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(255, 255, 255, 0.40);
+  backdrop-filter: blur(1px);
+}
+
+#workingmessage img {
+  display: none;
+}
+
+#workingmessage::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 42px;
+  height: 42px;
+  margin: -21px 0 0 -21px;
+  border: 3px solid var(--c-border);
+  border-top-color: var(--c-accent);
+  border-radius: 50%;
+  animation: fz-spin 0.7s linear infinite;
+}
+
+@keyframes fz-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #workingmessage::after {
+    animation-duration: 1.6s;
+  }
+}
+
+/* ============================================================
+   Utility components
+   ============================================================ */
+
+/* Button */
+.fz-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 var(--s-3);
+  border-radius: var(--r-2);
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font: inherit;
+  font-size: var(--fs-13);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: background var(--dur-1) var(--ease),
+              border-color var(--dur-1) var(--ease),
+              color var(--dur-1) var(--ease);
+}
+
+.fz-btn:hover { background: var(--c-surface-3); }
+.fz-btn:focus-visible { outline: none; box-shadow: var(--sh-focus); }
+
+.fz-btn--primary {
+  background: var(--c-accent);
+  color: var(--c-text-on-accent);
+  border-color: var(--c-accent);
+}
+.fz-btn--primary:hover {
+  background: var(--c-accent-hover);
+  border-color: var(--c-accent-hover);
+}
+
+.fz-btn--ghost {
+  border-color: transparent;
+  background: transparent;
+}
+.fz-btn--ghost:hover { background: var(--c-surface-3); }
+
+/* Filter toggle — highlight when filters are visible */
+#fz-filter-toggle[aria-pressed="true"] {
+  background: var(--c-accent-soft);
+  border-color: var(--c-accent-soft-2);
+  color: var(--c-accent);
+}
+
+.fz-btn--sm  { height: 26px; padding: 0 var(--s-2); font-size: var(--fs-12); }
+.fz-btn--lg  { height: 36px; padding: 0 14px; font-size: var(--fs-14); }
+.fz-btn--icon { width: 32px; padding: 0; }
+.fz-btn--icon.fz-btn--sm { width: 26px; }
+
+/* Chip — pill button used for filter chips and selection bar actions */
+.fz-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--r-full);
+  background: var(--c-accent-soft);
+  border: 1px solid var(--c-accent-soft-2);
+  color: var(--c-text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-13);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: default;
+  transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+}
+button.fz-chip { cursor: pointer; }
+button.fz-chip:hover { background: var(--c-accent-soft-2); }
+
+.fz-chip:has(.fz-chip__close) { padding-right: 4px; }
+
+.fz-chip__close {
+  width: 18px; height: 18px;
+  border-radius: var(--r-full);
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border: 0;
+  cursor: pointer; color: var(--c-text-muted);
+}
+.fz-chip__close:hover { background: rgba(0,0,0,.08); color: var(--c-text); }
+
+.fz-chip--ghost {
+  background: var(--c-surface);
+  border-color: var(--c-border-strong);
+  border-style: dashed;
+  color: var(--c-text-muted);
+  font-weight: 400;
+  cursor: pointer;
+}
+.fz-chip--ghost:hover { background: var(--c-surface-3); color: var(--c-text); }
+
+.fz-chip--dark {
+  background: rgba(255,255,255,.10);
+  border-color: rgba(255,255,255,.18);
+  color: #fff;
+}
+button.fz-chip--dark:hover { background: rgba(255,255,255,.18); border-color: rgba(255,255,255,.28); }
+
+.fz-chip--dark.fz-chip--danger {
+  background: rgba(255,90,90,.14);
+  border-color: rgba(255,120,120,.35);
+  color: #ffbaba;
+}
+button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); border-color: rgba(255,120,120,.5); }
+
+.fz-chip--outline {
+  background: transparent;
+  border-color: var(--c-border-strong);
+  color: var(--c-text-muted);
+}
+.fz-chip--dark.fz-chip--outline {
+  background: transparent;
+  border-color: rgba(255,255,255,.25);
+  color: rgba(255,255,255,.85);
+}
+
+/* Helpers */
+.fz-spacer  { flex: 1 1 auto; }
+.fz-divider { width: 1px; height: 20px; background: var(--c-border); }
+.fz-hstack  { display: flex; align-items: center; gap: var(--s-2); }
+.fz-vstack  { display: flex; flex-direction: column; gap: var(--s-2); }
+.fz-muted   { color: var(--c-text-muted); }
+.fz-subtle  { color: var(--c-text-subtle); }
+.fz-mono    { font-family: var(--font-mono); font-feature-settings: "tnum"; }
+
+/* ============================================================
+   Form controls — generalized input / select / textarea
+   ============================================================ */
+
+/* The design's .fz-input primitive, applied directly to the raw elements
+   Formulize core renders (they carry no classes), so the whole theme gets
+   consistent fields without per-element overrides. Buttons, checkboxes,
+   radios, and file inputs keep their own styling and are excluded here.
+   Width is intentionally left to the element/context (size attr, search-row,
+   etc.) rather than forced to 100%, so inline controls like the pagination
+   selector are not stretched. */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"],
+input[type="month"],
+input[type="week"],
+input:not([type]),
+select,
+textarea {
+  height: 32px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: var(--fs-13);
+  font-family: var(--font-sans);
+  color: var(--c-text);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-2);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease), background var(--dur-1) var(--ease);
+}
+
+input::placeholder,
+textarea::placeholder { color: var(--c-text-subtle); }
+
+input:hover:not(:disabled):not(:focus),
+select:hover:not(:disabled):not(:focus),
+textarea:hover:not(:disabled):not(:focus) { border-color: var(--c-text-muted); }
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--c-border-focus);
+  box-shadow: var(--sh-focus);
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled {
+  background: var(--c-surface-3);
+  color: var(--c-text-subtle);
+  cursor: not-allowed;
+}
+
+/* Native select: drop the OS chrome and draw our own chevron. */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 30px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235b6068' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+
+/* Multi-line / list controls grow with their content. */
+select[multiple],
+select[size]:not([size="1"]) {
+  height: auto;
+  padding: 6px 10px;
+  background-image: none;
+}
+
+textarea {
+  height: auto;
+  min-height: 76px;
+  width: 100%;
+  padding: 8px 10px;
+  line-height: var(--lh-base);
+  resize: vertical;
+}
+
+/* ============================================================
+   List screen
+   ============================================================ */
+
+/* The core list wrappers (#listofentries > form#controls) sit between .fz-main and
+   .fz-list-screen. They must carry the height through so the screen can fill the
+   main scroll area and pin its footer; otherwise height:100% resolves against an
+   auto-height parent and collapses to the content height. */
+#listofentries,
+#listofentries #controls {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.fz-list-screen {
+  display: flex;
+  flex-direction: column;
+  /* fill the main scroll area so the body scrolls internally and the titlebar /
+     footer stay pinned (the V2 app-chrome layout). The flex chain that makes this
+     work lives on .fz-list__body (flex:1; overflow:auto; min-height:0). */
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+}
+
+/* Embedded lists have no fixed-height ancestor, so let them flow naturally
+   instead of collapsing the body to zero height. */
+.fz-inline #listofentries,
+.fz-inline #listofentries #controls,
+.fz-inline .fz-list-screen { height: auto; display: block; }
+.fz-inline .fz-list__body  { overflow: visible; }
+
+/* Title bar */
+.fz-list__titlebar {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-5);
+  background: var(--c-surface);
+  border-bottom: 1px solid var(--c-border);
+  min-height: 56px;
+  flex-shrink: 0;
+}
+
+.fz-list__titlebar-start {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  flex: 1;
+  min-width: 0;
+}
+
+.fz-list__titlebar-end {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-shrink: 0;
+}
+
+/* Formulize-generated buttons in the titlebar styled as fz-btn */
+.fz-list__titlebar input[type="button"],
+.fz-list__titlebar .formulize_button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 var(--s-3);
+  border-radius: var(--r-2);
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font: inherit;
+  font-size: var(--fs-13);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+}
+.fz-list__titlebar input[type="button"]:hover,
+.fz-list__titlebar .formulize_button:hover { background: var(--c-surface-3); }
+
+/* Add entry — primary */
+.fz-list__titlebar #formulize_addButton {
+  background: var(--c-accent);
+  color: var(--c-text-on-accent);
+  border-color: var(--c-accent);
+}
+.fz-list__titlebar #formulize_addButton:hover {
+  background: var(--c-accent-hover);
+  border-color: var(--c-accent-hover);
+}
+
+/* More actions (...) — ghost icon button */
+.fz-list__titlebar #formulize_moreActionsButton {
+  width: 32px;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+}
+.fz-list__titlebar #formulize_moreActionsButton:hover { background: var(--c-surface-3); }
+
+.fz-list__title {
+  font-size: var(--fs-20);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: var(--lh-tight);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Total entry count beside the title */
+.fz-list__count {
+  font-family: var(--font-mono);
+  font-size: var(--fs-12);
+  font-feature-settings: "tnum";
+  color: var(--c-text-subtle);
+  flex-shrink: 0;
+}
+
+/* More-actions wrapper — anchors the dropdown to the "..." button */
+.fz-list__more-wrap {
+  position: relative;
+}
+
+/* More-actions dropdown */
+.fz-list__action-panel {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 200;
+  min-width: 220px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-3);
+  box-shadow: var(--sh-4);
+  padding: var(--s-1) 0;
+  flex-direction: column;
+}
+
+.fz-list__action-panel.open {
+  display: flex;
+}
+
+/* Formulize-generated buttons inside the dropdown styled as pop items */
+.fz-list__action-panel input[type="button"],
+.fz-list__action-panel input[type="submit"],
+.fz-list__action-panel .formulize_button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 30px;
+  padding: 0 var(--s-2);
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: var(--fs-13);
+  color: var(--c-text);
+  border-radius: var(--r-1);
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.fz-list__action-panel input[type="button"]:hover,
+.fz-list__action-panel input[type="submit"]:hover,
+.fz-list__action-panel .formulize_button:hover {
+  background: var(--c-surface-3);
+}
+
+/* Popover components (shared across dropdown contexts) */
+.fz-pop {
+  background: var(--c-surface);
+  border-radius: var(--r-3);
+  box-shadow: var(--sh-4);
+  border: 1px solid var(--c-border);
+  padding: var(--s-1);
+  min-width: 180px;
+}
+
+.fz-pop__item {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  min-height: 30px;
+  padding: 5px var(--s-2);
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: var(--fs-13);
+  color: var(--c-text);
+  border-radius: var(--r-1);
+  cursor: pointer;
+  text-align: left;
+  white-space: normal;
+  line-height: var(--lh-snug);
+}
+
+.fz-pop__item:hover { background: var(--c-surface-3); }
+.fz-pop__item--active { background: var(--c-accent-soft); color: var(--c-accent-fg); font-weight: 500; }
+.fz-pop__item--active:hover { background: var(--c-accent-soft-2); }
+.fz-pop__item--disabled { color: var(--c-text-subtle); cursor: default; pointer-events: none; }
+.fz-pop__item--danger { color: var(--c-danger); }
+.fz-pop__sep { height: 1px; background: var(--c-border); margin: 4px 2px; }
+.fz-pop__group { padding: 4px 8px; font-size: var(--fs-11); color: var(--c-text-subtle); text-transform: uppercase; letter-spacing: .04em; }
+
+/* View switcher — binoculars icon button + dropdown panel */
+.fz-view-switcher {
+  position: relative;
+}
+
+.fz-view-switcher__panel {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 200;
+  min-width: 240px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-3);
+  box-shadow: var(--sh-4);
+  padding: var(--s-1) 0;
+  flex-direction: column;
+}
+
+.fz-view-switcher__panel.open {
+  display: flex;
+}
+
+/* Selection bar (shown when rows are checked, overlays the titlebar) */
+.fz-selection-bar {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-5);
+  background: var(--c-text);
+  color: var(--c-bg);
+  border-bottom: 1px solid var(--c-text);
+  min-height: 56px;
+}
+
+.fz-selection-bar.is-active {
+  display: flex;
+}
+
+.fz-selection-bar__start {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-shrink: 0;
+}
+
+.fz-selection-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+}
+
+.js-selection-count {
+  font-size: var(--fs-14);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Buttons inside the dark selection bar — chip-dark style */
+.fz-selection-bar input[type="button"],
+.fz-selection-bar input[type="submit"],
+.fz-selection-bar .formulize_button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--r-full);
+  background: rgba(255,255,255,.10);
+  border: 1px solid rgba(255,255,255,.18);
+  color: #fff;
+  font: inherit;
+  font-size: var(--fs-13);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+}
+
+.fz-selection-bar input[type="button"]:hover,
+.fz-selection-bar input[type="submit"]:hover,
+.fz-selection-bar .formulize_button:hover {
+  background: rgba(255,255,255,.18);
+  border-color: rgba(255,255,255,.28);
+}
+
+/* Delete button — danger chip-dark */
+.fz-selection-bar #formulize_deleteButton {
+  background: rgba(255,90,90,.14);
+  border-color: rgba(255,120,120,.35);
+  color: #ffbaba;
+}
+.fz-selection-bar #formulize_deleteButton:hover {
+  background: rgba(255,90,90,.22);
+  border-color: rgba(255,120,120,.5);
+}
+
+/* Clear/select-all buttons — outlined chip-dark */
+.fz-selection-bar #formulize_clearSelectButton,
+.fz-selection-bar #formulize_selectAllButton {
+  background: transparent;
+  border-color: rgba(255,255,255,.25);
+  color: rgba(255,255,255,.85);
+}
+
+/* Footer (pagination) */
+.fz-list__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding: var(--s-3) var(--s-5);
+  background: var(--c-surface);
+  border-top: 1px solid var(--c-border);
+  font-size: var(--fs-13);
+  color: var(--c-text-muted);
+  flex-shrink: 0;
+}
+
+.fz-list__footer-start {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.fz-list__footer-end {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+/* Pagination (pageNavControls variable template): rows-per-page select +
+   chevron prev / "Page X of Y" / chevron next. */
+.fz-pagination {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.fz-pagination__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+.fz-pagination__status {
+  font-size: var(--fs-13);
+  color: var(--c-text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  padding: 0 var(--s-1);
+}
+
+/* Mobile-only "pg" abbreviation — hidden on desktop where the full "Page" label shows. */
+.fz-pagination__status-pg {
+  display: none;
+}
+
+.fz-pagination__nav .fz-btn[disabled] {
+  opacity: .4;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Desktop numbered page links — hidden on mobile (the compact "X of Y" status
+   is shown there instead), shown as a row of clickable page numbers on ≥769px. */
+.fz-pagination__pages {
+  display: none; /* hidden by default; enabled for desktop below */
+}
+
+@media (min-width: 769px) {
+  .fz-pagination__pages {
+    display: flex;
+    align-items: center;
+    gap: var(--s-1);
+  }
+
+  /* On desktop the numbered links replace the compact "Page X of Y" status. */
+  .fz-pagination__status {
+    display: none;
+  }
+
+  .fz-pagination__page {
+    min-width: 26px;
+    justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .fz-pagination__page--active {
+    background: var(--c-accent);
+    border-color: var(--c-accent);
+    color: var(--c-text-on-accent);
+    cursor: default;
+    pointer-events: none;
+  }
+
+  .fz-pagination__ellipsis {
+    padding: 0 var(--s-1);
+    color: var(--c-text-muted);
+    user-select: none;
+  }
+}
+
+/* ============================================================
+   List body — scrollable table container
+   ============================================================ */
+
+.fz-list__body {
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ============================================================
+   Table
+   ============================================================ */
+
+.fz-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--fs-13);
+  table-layout: auto;
+}
+
+.fz-table-empty {
+	padding: 10px;
+}
+
+.fz-table th,
+.fz-table td {
+  text-align: left;
+  vertical-align: middle;
+  padding: 0 var(--row-pad-x);
+  border-bottom: 1px solid var(--c-border);
+  background: var(--c-surface);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fz-table thead th {
+  height: 36px;
+  font-weight: 600;
+  font-size: var(--fs-12);
+  color: var(--c-text-muted);
+  background: var(--c-surface-2);
+  border-bottom-color: var(--c-border-strong);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.fz-table tbody tr:hover td { background: var(--c-surface-2); }
+.fz-table tbody tr[aria-selected="true"] td { background: var(--c-accent-soft); }
+
+.fz-table--compact     tbody td { height: var(--row-h-compact); }
+.fz-table--cozy        tbody td { height: var(--row-h-cozy); }
+.fz-table--comfortable tbody td { height: var(--row-h-comfortable); white-space: normal; line-height: var(--lh-snug); }
+
+/* Filter / search row.
+   The table uses auto layout, where a column's width is the widest content in any of
+   its cells. Left unstyled, the search controls render at their intrinsic widths and,
+   when the filter row is toggled on, force their columns wider — shifting the whole
+   table. Giving the cell wrapper width:0 removes it (and the controls inside) from
+   the intrinsic column-width calculation entirely, while min-width:100% (ignored
+   during intrinsic sizing, applied at layout) re-expands it to the final cell width.
+   Columns stay sized to the data, so toggling the filters produces no layout shift.
+
+   Sticky filter row: pin the filter cells just below the sticky column-header row
+   (which is 36px tall). Using position:sticky on the <td> cells keeps the filter
+   inputs visible while the data rows scroll. z-index:2 matches the header row so
+   they sit at the same stacking level; the solid background prevents data rows from
+   bleeding through. */
+.fz-search-row td {
+  position: sticky;
+  top: 36px;
+  z-index: 2;
+  background: var(--c-surface-2);
+  /* Vertical breathing room so the filter inputs aren't flush against the
+     row edges; keep the base horizontal --row-pad-x. */
+  padding-top: var(--s-2);
+  padding-bottom: var(--s-2);
+}
+
+.fz-search-row .main-cell-div {
+  width: 0;
+  min-width: 100%;
+}
+
+/* Neutralize the inline style="text-align: right" that the element renderer
+   emits for numeric values (functions.php getHTMLForList). Table cells in the
+   Lyris list layout already inherit text-align: left from .fz-table td; the
+   inline style on the inner span/li was overriding that and forcing numbers
+   to the right. Use !important to beat the inline specificity. (closes #20) */
+.fz-table .main-cell-div span,
+.fz-table .main-cell-div li {
+  text-align: unset !important;
+}
+
+.fz-search-row input:not([type="checkbox"]):not([type="radio"]),
+.fz-search-row select,
+.fz-search-row textarea {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Checkbox / controls column */
+.fz-table .fz-cb {
+  width: 52px;
+  padding: 0 var(--s-2);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.fz-table .fz-cb input[type="checkbox"] {
+  vertical-align: middle;
+}
+
+.fz-table .fz-cb .loe-edit-entry {
+  vertical-align: middle;
+  display: inline-block;
+  line-height: 1;
+}
+
+/* The pencil glyph comes from core formulize.css, which hardcodes white for its
+   own dark theme; recolour it like the other muted icons */
+.fz-table .loe-edit-entry::before {
+  color: var(--c-text-muted);
+}
+
+.fz-table a.loe-edit-entry:hover {
+  text-shadow: none;
+}
+
+.fz-table a.loe-edit-entry:hover::before {
+  color: var(--c-text);
+}
+
+/* Checkbox styling */
+.fz-checkbox {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  border: 1.5px solid var(--c-border-strong);
+  background: var(--c-surface);
+  cursor: pointer;
+  display: inline-block;
+  vertical-align: middle;
+  position: relative;
+  transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+}
+
+.fz-checkbox:checked {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+}
+
+.fz-checkbox:checked::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Formulize selection checkboxes get the same treatment as fz-checkbox */
+.fz-table .formulize_selection_checkbox {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  border: 1.5px solid var(--c-border-strong);
+  background: var(--c-surface);
+  cursor: pointer;
+  display: inline-block;
+  vertical-align: middle;
+  position: relative;
+  transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+}
+
+.fz-table .formulize_selection_checkbox:checked {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+}
+
+.fz-table .formulize_selection_checkbox:checked::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Sort link in column headers */
+.fz-th-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  user-select: none;
+  color: inherit;
+  text-decoration: none;
+}
+
+.fz-th-sort:hover { color: var(--c-text); }
+
+/* Sort indicator icon.
+   Unsorted columns show a faint neutral double-arrow that brightens on hover,
+   signalling the column is sortable. The active sort column shows a filled
+   accent triangle (up = ascending, down = descending) at full strength. */
+.fz-sort-ico {
+  display: inline-flex;
+  align-items: center;
+  color: var(--c-text-subtle);
+  opacity: 0;
+  transition: opacity var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+}
+
+.fz-sort-ico svg {
+  display: block;
+}
+
+.fz-th-sort:hover .fz-sort-ico {
+  opacity: 0.6;
+}
+
+.fz-sort-ico--active {
+  color: var(--c-accent);
+  opacity: 1;
+}
+
+.fz-th-sort:hover .fz-sort-ico--active {
+  opacity: 1;
+}
+
+/* Priority badge shown when more than one column is sorted */
+.fz-sort-badge {
+  margin-left: 2px;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--c-accent);
+  font-feature-settings: "tnum";
+}
+
+/* ============================================================
+   Sidebar nav content
+   ============================================================ */
+
+/* Container injected by blockszone.html */
+#xo-canvas-leftcolumn {
+  /* Scroll is handled by .fz-sidebar; don't add overflow here */
+}
+
+.xo-blockszone {
+  padding: var(--s-4) var(--s-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+/* Block title renders as a section label */
+.xo-blocktitle h3 {
+  padding: 0 var(--s-2) var(--s-2);
+  font-size: var(--fs-11);
+  font-weight: 600;
+  color: var(--c-text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: var(--lh-tight);
+}
+
+/* Nav menu (menu.html outputs .main-menu) */
+.main-menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.main-menu__item {
+  position: relative;
+}
+
+.main-menu__item-link {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 6px var(--s-2);
+  border-radius: var(--r-2);
+  font-size: var(--fs-13);
+  font-weight: 500;
+  color: var(--c-text);
+  text-decoration: none;
+  transition: background var(--dur-1) var(--ease);
+  line-height: var(--lh-snug);
+}
+
+.main-menu__item-link:hover {
+  background: var(--c-surface-3);
+}
+
+/* The boxed active treatment (surface + shadow) plus the vertical accent pipe
+   is only for the active *leaf link* you're currently on. Upstream's menu.html
+   also adds --active to a group's <summary> header when that group contains the
+   active item; a group header must stay a plain bold label (like an inactive
+   header), not a boxed pill with a rail, so the box/shadow/pipe are scoped to
+   <a> links only. This restores the original pre-upstream Lyris presentation:
+   the active item gets a clean rounded highlight with a flush vertical pipe on
+   its left edge. The pipe is flush (not a detached gutter bar) because the
+   nested <ul class="main-menu__subitems"> below is reset to no padding, so the
+   sub-item's left edge lines up with its .main-menu__item positioning origin. */
+a.main-menu__item-link--active {
+  background: var(--c-surface);
+  box-shadow: var(--sh-1);
+}
+
+a.main-menu__item-link--active::before {
+  content: '';
+  position: absolute;
+  left: -2px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  border-radius: var(--r-full);
+  background: var(--c-accent);
+}
+
+/* Active state applied to any item (leaf link or group header) just gets the
+   bolder label weight. */
+.main-menu__item-link--active {
+  font-weight: 600;
+}
+
+.main-menu__item-link-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--c-text-subtle);
+}
+
+.main-menu__item-link--active .main-menu__item-link-icon {
+  color: var(--c-accent);
+}
+
+/* Sub-items. Upstream's menu.html wraps sub-items in a nested
+   <ul class="main-menu__subitems">, which by default reintroduces list
+   bullets and left padding. Reset both so there are no bullets and the
+   browser indent is removed; the intended indent is provided solely by
+   .main-menu__subitem's padding-left, keeping the active accent pipe flush. */
+.main-menu__subitems {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.main-menu__subitem {
+  padding-left: var(--s-4);
+}
+
+.main-menu__subitem .main-menu__item-link {
+  font-size: var(--fs-12);
+  color: var(--c-text-muted);
+}
+
+.main-menu__subitem .main-menu__item-link:hover,
+.main-menu__subitem .main-menu__item-link--active {
+  color: var(--c-text);
+}
+
+/* ============================================================
+   Session timeout warning
+   ============================================================ */
+
+#session-timeout-warning {
+  position: fixed;
+  bottom: var(--s-5);
+  right: var(--s-5);
+  max-width: 340px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-3);
+  box-shadow: var(--sh-4);
+  padding: var(--s-4) var(--s-5);
+  z-index: 50;
+  font-size: var(--fs-13);
+  line-height: var(--lh-base);
+  display: none; /* shown via JS */
+}
+
+#session-timeout-warning p {
+  margin: var(--s-1) 0 0;
+  color: var(--c-text-muted);
+}
+
+.session-timeout-warning-icon {
+  width: 20px;
+  height: 20px;
+  float: left;
+  margin-right: var(--s-2);
+}
+
+.session-timeout-warning-close {
+  float: right;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity var(--dur-1) var(--ease);
+}
+
+.session-timeout-warning-close:hover {
+  opacity: 1;
+}
+
+/* ============================================================
+   Masquerade bar
+   ============================================================ */
+
+#formulize-masquerade-block {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--c-warning);
+  color: #fff;
+  padding: var(--s-2) var(--s-4);
+  font-size: var(--fs-13);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  z-index: 100;
+}
+
+#formulize-masquerade-block form {
+  display: inline;
+}
+
+/* ============================================================
+   Mobile
+   ============================================================ */
+
+@media (max-width: 768px) {
+
+  /* ---- Sidebar: off-canvas slide-in ---- */
+
+  .fz-sidebar {
+    position: fixed;
+    top: var(--header-h);
+    left: 0;
+    bottom: 0;
+    /* override the desktop collapsed state on mobile */
+    width: var(--sidebar-w) !important;
+    z-index: 20;
+    transform: translateX(-100%);
+    transition: transform var(--dur-2) var(--ease);
+    box-shadow: var(--sh-3);
+  }
+
+  .fz-app--sidebar-open .fz-sidebar {
+    transform: translateX(0);
+  }
+
+  .fz-app--sidebar-open::after {
+    content: '';
+    position: fixed;
+    inset: var(--header-h) 0 0 0;
+    background: var(--c-overlay);
+    z-index: 19;
+  }
+
+  /* ---- Header: tighter chrome ---- */
+
+  .fz-header {
+    padding: 0 var(--s-3);
+  }
+
+  .fz-header__end {
+    gap: var(--s-2);
+  }
+
+  .fz-header__brand img {
+    height: 24px;
+  }
+
+  /* ---- Right drawer fills the screen ---- */
+
+  .fz-drawer {
+    width: 100vw;
+    max-width: 100vw;
+  }
+
+  .fz-drawer__body {
+    padding: var(--s-4);
+  }
+
+  /* ---- List title bar: compact, actions wrap under the title ---- */
+
+  .fz-list__titlebar {
+    flex-wrap: wrap;
+    padding: var(--s-2) var(--s-3);
+    min-height: 48px;
+  }
+
+  .fz-list__title {
+    font-size: var(--fs-16);
+  }
+
+  /* count beside the title is a desktop affordance */
+  .fz-list__count {
+    display: none;
+  }
+
+  /* ---- Selection bar: one row, actions pan horizontally ---- */
+
+  .fz-selection-bar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: var(--s-2) var(--s-3);
+    min-height: 48px;
+  }
+
+  .fz-selection-bar__actions {
+    flex-wrap: nowrap;
+  }
+
+  /* ---- Footer / pagination: slim bar ---- */
+
+  .fz-list__footer {
+    flex-wrap: wrap;
+    gap: var(--s-2);
+    padding: var(--s-2) var(--s-3);
+    font-size: var(--fs-12);
+  }
+
+  /* Trim the footer to fit a phone: drop the "Showing entries:" / "Page" labels
+     (leaving just the numbers) and the hide-repeating-data toggle, so the entry
+     count and pagination stay on one line instead of wrapping. Show the short
+     "pg" abbreviation in place of the full "Page" label so the page number
+     (e.g. "pg 2 / 5") is clearly distinct from the result count. */
+  .page-navigation-total__label,
+  .fz-pagination__status-label,
+  .fz-list__footer-start label[for="toggleRepeatData"] {
+    display: none;
+  }
+
+  .fz-pagination__status-pg {
+    display: inline;
+  }
+
+  /* ---- Table: pan columns horizontally; the checkbox column and the
+     first data column stay pinned on the left so rows remain identifiable.
+     Horizontal scrolling comes from .fz-list__body (overflow: auto) once
+     the nowrap cells force the table wider than the viewport. ---- */
+
+  .fz-table .fz-cb,
+  .fz-table .column0 {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+  }
+
+  /* first data column sits after the 52px checkbox column when present */
+  .fz-table .fz-cb ~ .column0 {
+    left: 52px;
+  }
+
+  /* divider shadow marks the edge of the pinned columns; cap their width
+     so long first-column content can't eat the whole viewport */
+  .fz-table .column0 {
+    box-shadow: 1px 0 0 var(--c-border);
+    max-width: 45vw;
+  }
+
+  /* pinned header cells: sticky both ways, above row headers (z 2) and
+     pinned body cells (z 1) */
+  .fz-table thead .fz-cb,
+  .fz-table thead .column0 {
+    top: 0;
+    z-index: 3;
+  }
+
+  /* Filter row cells that are also left-pinned (fz-cb and column0) need
+     top:36px to clear the column-header row and z-index:3 to sit above
+     both the top-sticky filter row (z 2) and the left-sticky body cells
+     (z 1) — they're pinned in both axes simultaneously.
+     Specificity must beat .fz-table thead .fz-cb (3 selectors), so we
+     include .fz-table in the selector chain. */
+  .fz-table .fz-search-row .fz-cb,
+  .fz-table .fz-search-row .column0 {
+    top: 36px;
+    z-index: 3;
+  }
+}
+
+/* ============================================================
+   Form screen — field anatomy & .fz-control primitive
+   ============================================================
+
+   These styles apply only inside `.fz-form-screen` (a wrapper added by
+   toptemplate.php / the drawer body around Formulize form output).
+   They are additive: list-screen inputs and filters keep their
+   existing 32px `.fz-input`-equivalent baseline.
+
+   Design spec (forms.css):
+     --field-h:      38px    (.fz-form default)
+     --field-pad-x:  12px
+     --field-radius: 6px
+     --field-gap:    18px    vertical gap between field rows
+     --label-gap:    6px     label-to-field gap
+     --label-text:   13px
+
+   HTML anatomy output by Lyris form templates:
+     .card > .card__header + .card__body > .form-container
+       .form-row                          ← elementcontainero.php
+         .form-label (label)              ← elementtemplate1/2.php
+         [rendered element — raw input/select/textarea]
+         .form-help-text                  ← elementtemplate1/2.php
+   ============================================================ */
+
+/* ---------- Density tokens: .fz-form + modifiers ----------
+   Ported from the design system (forms.css). `.fz-form` carries the base
+   density vars; `.fz-form--compact` / `--comfy` are modifier classes set on
+   the form container (owner decision: default container = label-top + compact).
+   `.fz-form-screen` and `.fz-drawer__body` retain the same vars as additive
+   aliases so existing markup keeps the 38px form sizing. */
+
+.fz-form,
+.fz-form-screen {
+  /* 38px control height for dedicated entry-editing screens */
+  --field-h:        38px;
+  --field-pad-x:    12px;
+  --field-pad-y:    8px;
+  --field-radius:   var(--r-2);   /* 6px */
+  --field-gap:      18px;
+  --field-text:     var(--fs-14);
+  --label-text:     var(--fs-13);
+  --label-gap:      6px;
+  --label-col-w:    220px;
+  --help-text:      var(--fs-12);
+  --required-color: var(--c-danger);
+}
+
+.fz-form--compact {
+  --field-h:     32px;
+  --field-pad-x: 10px;
+  --field-gap:   12px;
+  --field-text:  var(--fs-13);
+  --label-text:  var(--fs-12);
+  --label-gap:   4px;
+  --label-col-w: 200px;
+  --help-text:   var(--fs-11, 11px);
+}
+
+.fz-form--comfy {
+  --field-h:     44px;
+  --field-pad-x: 14px;
+  --field-gap:   24px;
+  --field-text:  var(--fs-15);
+  --label-text:  var(--fs-14);
+  --label-gap:   8px;
+  --label-col-w: 240px;
+  --help-text:   var(--fs-13);
+}
+
+/* ---------- .fz-control primitive (38px) ----------
+   Can be applied directly to an input/select/textarea element, or used
+   as a wrapper (per forms.css intent). Here we apply it as a direct class
+   AND via the contextual selectors below so raw Formulize-rendered elements
+   inside .fz-form-screen automatically get the richer form-screen sizing. */
+
+.fz-control {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: var(--field-h, 38px);
+  padding: 0 var(--field-pad-x, 12px);
+  font: inherit;
+  font-size: var(--field-text, var(--fs-14));
+  font-family: var(--font-sans);
+  color: var(--c-text);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--field-radius, var(--r-2));
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color var(--dur-1) var(--ease),
+              box-shadow var(--dur-1) var(--ease),
+              background var(--dur-1) var(--ease);
+}
+
+.fz-control::placeholder { color: var(--c-text-subtle); }
+
+.fz-control:hover:not(:disabled):not(:focus) {
+  border-color: var(--c-text-muted);
+}
+
+.fz-control:focus,
+.fz-control:focus-visible {
+  border-color: var(--c-border-focus);
+  box-shadow: var(--sh-focus);
+}
+
+.fz-control:disabled {
+  background: var(--c-surface-3);
+  color: var(--c-text-subtle);
+  cursor: not-allowed;
+}
+
+/* select: custom chevron */
+select.fz-control {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 30px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235b6068' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+
+/* textarea: auto-height, no fixed row height */
+textarea.fz-control {
+  height: auto;
+  min-height: calc(var(--field-h, 38px) * 2.4);
+  padding: var(--field-pad-y, 8px) var(--field-pad-x, 12px);
+  line-height: var(--lh-base);
+  resize: vertical;
+}
+
+/* ---------- .fz-control variants (ported from forms.css) ----------
+   Available for future use / opt-in markup. Non-breaking: applied only when
+   the modifier class is present. */
+
+.fz-control--filled {
+  background: var(--c-surface-3);
+  border-color: transparent;
+}
+.fz-control--filled:hover:not(:disabled):not(:focus) {
+  background: var(--c-surface-2);
+  border-color: var(--c-border);
+}
+.fz-control--filled:focus { background: var(--c-surface); }
+
+.fz-control--underline {
+  border: 0;
+  border-bottom: 1px solid var(--c-border-strong);
+  border-radius: 0;
+  padding-left: 0;
+  padding-right: 0;
+  background: transparent;
+}
+.fz-control--underline:focus {
+  box-shadow: none;
+  border-bottom-color: var(--c-border-focus);
+  border-bottom-width: 2px;
+}
+
+.fz-control--multiline {
+  height: auto;
+  min-height: calc(var(--field-h, 38px) * 2.4);
+  padding: 10px var(--field-pad-x, 12px);
+  line-height: var(--lh-base);
+  resize: vertical;
+}
+
+/* Prefix/suffix affix wrapper */
+.fz-control-affix {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--field-radius, var(--r-2));
+  background: var(--c-surface);
+  height: var(--field-h, 38px);
+  overflow: hidden;
+  transition: border-color var(--dur-1) var(--ease),
+              box-shadow var(--dur-1) var(--ease);
+}
+.fz-control-affix:hover:not(:focus-within) { border-color: var(--c-text-muted); }
+.fz-control-affix:focus-within {
+  border-color: var(--c-border-focus);
+  box-shadow: var(--sh-focus);
+}
+.fz-control-affix .fz-control {
+  border: 0;
+  background: transparent;
+  height: 100%;
+  padding: 0 12px;
+}
+.fz-control-affix .fz-control:focus { box-shadow: none; }
+.fz-control-affix__lead,
+.fz-control-affix__trail {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  font-size: var(--field-text, var(--fs-14));
+  color: var(--c-text-subtle);
+  background: var(--c-surface-2);
+  border-right: 1px solid var(--c-border);
+  white-space: nowrap;
+  user-select: none;
+}
+.fz-control-affix__trail {
+  border-right: 0;
+  border-left: 1px solid var(--c-border);
+}
+
+/* ---------- Contextual override: raw form elements inside .fz-form-screen ----------
+   Formulize renders raw <input>, <select>, <textarea> with no class. Inside a form
+   screen these should use the 38px control sizing instead of the 32px list baseline.
+   We scope tightly so only elements directly inside form rows are affected. */
+
+.fz-form input[type="text"],
+.fz-form input[type="email"],
+.fz-form input[type="number"],
+.fz-form input[type="date"],
+.fz-form input[type="datetime-local"],
+.fz-form input[type="time"],
+.fz-form input[type="tel"],
+.fz-form input[type="url"],
+.fz-form input:not([type]),
+.fz-form select,
+.fz-form textarea,
+.fz-form-screen input[type="text"],
+.fz-form-screen input[type="email"],
+.fz-form-screen input[type="number"],
+.fz-form-screen input[type="date"],
+.fz-form-screen input[type="datetime-local"],
+.fz-form-screen input[type="time"],
+.fz-form-screen input[type="tel"],
+.fz-form-screen input[type="url"],
+.fz-form-screen input:not([type]),
+.fz-form-screen select,
+.fz-form-screen textarea {
+  height: var(--field-h);
+  padding: 0 var(--field-pad-x);
+  font-size: var(--field-text);
+  border-radius: var(--field-radius);
+  width: 100%;
+}
+
+.fz-form textarea,
+.fz-form-screen textarea {
+  height: auto;
+  min-height: calc(var(--field-h) * 2.4);
+  padding: var(--field-pad-y) var(--field-pad-x);
+}
+
+/* Selects: preserve the chevron background already set by the base rule */
+.fz-form select,
+.fz-form-screen select {
+  padding-right: 30px;
+}
+
+/* ---------- Form card surface ---------- */
+
+.card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-4);   /* 10px */
+  box-shadow: var(--sh-2);
+  margin-bottom: var(--s-4);
+}
+
+.card__header {
+  padding: var(--s-4) var(--s-6);
+  border-bottom: 1px solid var(--c-border);
+}
+
+.card__title {
+  font-size: var(--fs-15);
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.005em;
+  line-height: var(--lh-snug);
+}
+
+.card__body {
+  padding: var(--s-6);
+}
+
+/* ---------- Form container & field rows ---------- */
+
+.fz-form,
+.form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0; /* gap controlled by .fz-field margin-bottom */
+}
+
+/* ---------- Field wrapper: .fz-field (primitive) ----------
+   `.form-row` retained as an additive alias. */
+.fz-field,
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--label-gap, 6px);
+  margin-bottom: var(--field-gap, 18px);
+  position: relative;
+}
+
+.fz-field:last-child,
+.form-row:last-child {
+  margin-bottom: 0;
+}
+
+/* ---------- Label: .fz-field__label (primitive) ---------- */
+
+.fz-field__label,
+.form-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--label-text, var(--fs-13));
+  font-weight: 600;
+  color: var(--c-text);
+  line-height: var(--lh-snug);
+  /* label-to-control gap supplied by the .fz-field gap */
+}
+
+/* ---------- Required indicator: .fz-field__req asterisk (primitive) ---------- */
+
+.fz-field__req {
+  color: var(--required-color, var(--c-danger));
+  font-weight: 700;
+  font-size: 0.95em;
+}
+
+/* Legacy inline red asterisk (other contexts / core fallback) — normalise. */
+.form-label span[style*="color: red"],
+.form-label span[style*="color:red"] {
+  font-weight: 700;
+  font-size: 0.95em;
+  color: var(--required-color, var(--c-danger)) !important;
+}
+
+/* ---------- Body wrapper: .fz-field__body (primitive) ---------- */
+
+.fz-field__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* ---------- Help text: .fz-field__help (primitive) ---------- */
+
+.fz-field__help,
+.form-help-text {
+  font-size: var(--help-text, var(--fs-12));
+  color: var(--c-text-muted);
+  line-height: 1.45;
+  margin: 2px 0 0;
+}
+
+/* ---------- Label modes (set on the form container) ----------
+   Default = label-top (the natural column flow above). Left-label and float
+   are ported for completeness / opt-in via the container modifier class. */
+
+.fz-form--label-left .fz-field {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--s-6, 24px);
+}
+.fz-form--label-left .fz-field__label {
+  width: var(--label-col-w, 220px);
+  flex: none;
+  padding-top: calc((var(--field-h) - var(--label-text) * 1.35) / 2);
+  justify-content: flex-start;
+}
+.fz-form--label-left .fz-field__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* ---------- Two-column element template (elementtemplate2) → label-top ----------
+   elementtemplate2.php emits `.col1` (label) + `.col2` (field) with INLINE
+   `width:` styles intended for a side-by-side (label-left) layout. The owner
+   default is label-TOP, so we STACK the two columns: the row stays a flex
+   column (inherited from `.fz-field`/`.form-row`), and each column spans the
+   full width. `width: 100% !important` is required to defeat the inline
+   `width: 20%/auto` Formulize prints on the divs. */
+
+.form-row:has(.col1) {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--label-gap, 6px);
+}
+
+.col1 {
+  width: 100% !important;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.col1 .form-label {
+  margin: 0;
+}
+
+.col2 {
+  width: 100% !important;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* ---------- Radio / checkbox option groups (elementtemplate2 + others) ----------
+   Formulize emits bare `<input type=radio><label>` pairs separated by `<br>`,
+   directly inside `.col2` / `.fz-field__body`. That body is a `flex-direction:
+   column` container, so each bare input/label was being STRETCHED to the full
+   column width (radio glyph floated to centre, label dropped onto its own line)
+   — that was the mis-spacing the owner saw. Switch the body to normal block
+   flow for choice content so the `<input><label><br>` pairs read as inline
+   rows: control immediately left of its label, options stacked by the `<br>`.
+   Matches the design's `.fz-choice` / `.fz-choice-group`. */
+
+.fz-form-screen .fz-field__body:has(input[type="radio"]),
+.fz-form-screen .fz-field__body:has(input[type="checkbox"]),
+.fz-form-screen .col2:has(input[type="radio"]),
+.fz-form-screen .col2:has(input[type="checkbox"]),
+.fz-drawer__body .col2:has(input[type="radio"]),
+.fz-drawer__body .col2:has(input[type="checkbox"]) {
+  display: block;
+  line-height: 1.9;        /* vertical rhythm between <br>-separated options */
+}
+
+.fz-form-screen .col2 input[type="radio"],
+.fz-form-screen .col2 input[type="checkbox"],
+.fz-form-screen .fz-field__body input[type="radio"],
+.fz-form-screen .fz-field__body input[type="checkbox"],
+.fz-drawer__body .col2 input[type="radio"],
+.fz-drawer__body .col2 input[type="checkbox"] {
+  display: inline-block;
+  width: auto !important;
+  height: auto;
+  margin: 0 8px 0 0;       /* 8px gap between control and its label */
+  vertical-align: middle;
+  accent-color: var(--c-accent);
+  cursor: pointer;
+}
+
+/* The option label sits inline next to its control with comfortable spacing. */
+.fz-form-screen .col2 input[type="radio"] + label,
+.fz-form-screen .col2 input[type="checkbox"] + label,
+.fz-form-screen .fz-field__body input[type="radio"] + label,
+.fz-form-screen .fz-field__body input[type="checkbox"] + label,
+.fz-drawer__body .col2 input[type="radio"] + label,
+.fz-drawer__body .col2 input[type="checkbox"] + label {
+  display: inline;
+  font-weight: 400;
+  font-size: var(--field-text, var(--fs-14));
+  color: var(--c-text);
+  cursor: pointer;
+  margin-right: 20px;       /* gap before next inline option */
+  vertical-align: middle;
+}
+
+/* ---------- Drawer form body — apply form-screen context ----------
+   When Formulize renders a form inside the right-drawer (.fz-drawer__body),
+   it doesn't add a .fz-form-screen class automatically. We apply the same
+   density tokens here so drawer-embedded forms also get the 38px controls. */
+
+.fz-drawer__body .form-row,
+.fz-drawer__body .form-container {
+  /* inherit tokens from the .fz-form-screen vars defined above by re-declaring */
+  --field-h:      38px;
+  --field-pad-x:  12px;
+  --field-pad-y:  8px;
+  --field-radius: var(--r-2);
+  --field-gap:    18px;
+  --field-text:   var(--fs-14);
+  --label-text:   var(--fs-13);
+  --label-gap:    6px;
+  --help-text:    var(--fs-12);
+}
+
+.fz-drawer__body input[type="text"],
+.fz-drawer__body input[type="email"],
+.fz-drawer__body input[type="number"],
+.fz-drawer__body input[type="date"],
+.fz-drawer__body input[type="datetime-local"],
+.fz-drawer__body input[type="time"],
+.fz-drawer__body input[type="tel"],
+.fz-drawer__body input[type="url"],
+.fz-drawer__body input:not([type]),
+.fz-drawer__body select,
+.fz-drawer__body textarea {
+  height: var(--field-h);
+  padding: 0 var(--field-pad-x);
+  font-size: var(--field-text);
+  border-radius: var(--field-radius);
+  width: 100%;
+}
+
+.fz-drawer__body textarea {
+  height: auto;
+  min-height: calc(var(--field-h) * 2.4);
+  padding: var(--field-pad-y) var(--field-pad-x);
+}
+
+.fz-drawer__body select {
+  padding-right: 30px;
+}
+
+/* ---------- Form-screen submit / action row ---------- */
+
+.fz-form-screen .form-actions,
+.fz-drawer__body .form-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--c-border);
+  margin-top: var(--s-2);
+}
+
+/* ---------- Form-screen action buttons ----------
+   The real action bar is `#multipage-controls` holding
+   `<input type="button" class="formulize-form-submit-button" name="save|close|...">`.
+   (The prior pass targeted input[type=submit] / input[name=submit] which match
+   NOTHING here — that is why the buttons rendered as unstyled browser default.)
+   Style the bar like the design's sticky-actions row and give the buttons the
+   `.fz-btn` look: Save-family = accent primary, Close = bordered secondary.
+
+   Bottom-anchored action bar (issue #9): the `#multipage-controls` bar must sit
+   at the BOTTOM of the available viewport area on SHORT forms AND stay pinned
+   while a LONG form body scrolls — at any resolution.
+
+   The earlier fix used `position:sticky; bottom:0` alone. Sticky only pins an
+   element once its content would otherwise scroll out of view — i.e. only when
+   the form is TALLER than the scroll area (`.fz-main`). On a large/tall viewport
+   where the form is SHORTER than the screen, nothing scrolls, so the bar just
+   sat at its natural (mid-page) position — the reported large-resolution bug.
+
+   Fix: make the full-page form chain a flex column that fills `.fz-main`, then
+   let the bar's `margin-top:auto` push it to the bottom of the filled column on
+   short forms, while `position:sticky; bottom:0` keeps it pinned while long
+   forms scroll. Both cases hold at any resolution.
+
+   Scope: `:has()` limits the flex-fill to `.fz-main` instances that actually
+   contain a full-page form action bar (`#formulizeform ... .formulizeThemeForm
+   #multipage-controls`). List screens (no `#multipage-controls`) and the right
+   drawer (its body is a separate elements-only endpoint that never renders
+   `#multipage-controls`; it builds its own `.fz-drawer__foot`) are untouched.
+   `.fz-inline` (drawer-iframe context) is excluded — that `.fz-main` is
+   `overflow:visible` and lays out in normal page flow. */
+
+body:not(.fz-inline) .fz-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) {
+  display: flex;
+  flex-direction: column;
+}
+
+body:not(.fz-inline) .fz-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+body:not(.fz-inline) .fz-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform > .formulizeThemeForm {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- Horizontal gutter for form-screen content (review item B) ----------
+   `.fz-form-screen` (the form card) and `#pageNavTable` (the multipage page-nav
+   strip) are laid out full width inside `.fz-main`, so they butted flush against
+   the left/right container edges. Inset them by the same outer gutter (--s-5,
+   20px — the same horizontal gutter the list-screen title/footer bars use) so
+   they breathe from the container sides and stay visually aligned with each other.
+
+   Deliberately EXCLUDED: `#multipage-controls` (the bottom-anchored action bar).
+   Like the list-screen sticky footer (`.fz-list__footer`) and the drawer footer
+   (`.fz-drawer__foot`), that bar is meant to be full-bleed — it spans edge-to-edge
+   of `.fz-main` with its own inner `padding` (var(--s-4) var(--s-6)) providing the
+   content inset. Adding a side margin here gave it an unwanted gutter, so it is
+   left out of this rule.
+
+   Scoped to `body:not(.fz-inline) .fz-main` (the same guard the sticky action-bar
+   fix uses): list screens have no `.fz-form-screen`, and when a form renders in
+   the right drawer / inline iframe (`.fz-inline`, body padded by
+   `.fz-drawer__body { padding: --s-5 }`) we must NOT add a second gutter — so the
+   drawer and its `.fz-drawer__foot` are unaffected. */
+body:not(.fz-inline) .fz-main .fz-form-screen,
+body:not(.fz-inline) .fz-main #pageNavTable,
+body:not(.fz-inline) .fz-main .pageNavTable {
+  margin-left: var(--s-5, 20px);
+  margin-right: var(--s-5, 20px);
+}
+
+#multipage-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2, 8px);
+  padding: var(--s-4, 16px) var(--s-6, 24px);
+  /* Push the bar to the bottom of the flex-filled form column on short forms. */
+  margin-top: auto;
+  border-top: 1px solid var(--c-border);
+  /* Keep it pinned while a long form body scrolls. */
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  background: var(--c-surface);
+  box-shadow: 0 -1px 0 var(--c-border), var(--sh-2);
+}
+
+/* Page meta inside the action bar: "Page X of Y" indicator and the jump-to
+   selector read as muted meta, not competing with the buttons. The indicator
+   gets an auto left margin so it (and the selector) sit to the right of the
+   button cluster on desktop. */
+#multipage-controls #page-indicator {
+  margin-left: auto;
+  font-size: var(--fs-13);
+  color: var(--c-text-muted);
+  font-feature-settings: "tnum";
+  white-space: nowrap;
+}
+
+#multipage-controls #page-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--fs-13);
+  color: var(--c-text-muted);
+  white-space: nowrap;
+}
+
+#multipage-controls #page-selector select {
+  height: 34px;
+}
+
+/* ---------- Multipage page-nav tabs (#pageNavTable.pill-tabs) ----------
+   The multipage toptemplate emits a `.pill-tabs` page-nav strip above the form
+   card; Lyris had no styling for it, so it rendered as bare underlined links
+   (part of the reported clutter). Give it a clean, tab-like Lyris treatment. */
+.pill-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1, 4px);
+  align-items: center;
+  margin-bottom: var(--s-3, 12px);
+}
+
+.pill-tabs__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1, 4px);
+  padding: var(--s-1, 4px) var(--s-3, 12px);
+  font-size: var(--fs-13);
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--c-text-muted);
+  text-decoration: none;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-full, 999px);
+  background: var(--c-surface);
+  transition: color var(--dur-1) var(--ease),
+              border-color var(--dur-1) var(--ease),
+              background-color var(--dur-1) var(--ease);
+}
+
+.pill-tabs__item:hover {
+  color: var(--c-text);
+  border-color: var(--c-border-strong);
+  background: var(--c-surface-2);
+}
+
+.pill-tabs__item--active {
+  color: var(--c-text-on-accent);
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+}
+
+/* NOTE: Formulize core (modules/formulize/templates/css/formulize.css) styles
+   `.formulize-form-submit-button` with `background-color:#008CC4 !important`,
+   `color:white !important`, `min-width:185px` and `height:36px`. We must use
+   `!important` here to win against core without editing the core file (this is
+   a theme-scoped override). Default appearance = bordered SECONDARY (used by
+   "Close"); the Save-family override below paints them accent PRIMARY. */
+.formulizeThemeForm .formulize-form-submit-button,
+.fz-drawer__body .formulize-form-submit-button {
+  height: 34px !important;
+  min-width: 0 !important;
+  width: auto;
+  padding: 0 16px;
+  font-size: var(--fs-13);
+  font-weight: 500 !important;
+  line-height: 1;
+  border-radius: var(--r-2);
+  border: 1px solid var(--c-border-strong);
+  background-color: var(--c-surface) !important;
+  color: var(--c-text) !important;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color var(--dur-1) var(--ease),
+              border-color var(--dur-1) var(--ease),
+              color var(--dur-1) var(--ease);
+}
+
+.formulizeThemeForm .formulize-form-submit-button:hover,
+.fz-drawer__body .formulize-form-submit-button:hover {
+  background-color: var(--c-surface-3) !important;
+  border-color: var(--c-text-muted);
+}
+
+.formulizeThemeForm .formulize-form-submit-button:focus-visible,
+.fz-drawer__body .formulize-form-submit-button:focus-visible {
+  outline: none;
+  box-shadow: var(--sh-focus);
+}
+
+/* Primary (accent) — the Save-family actions:
+   name="save", "save_and_close", "save_and_finish" (any name beginning "save"). */
+.formulizeThemeForm .formulize-form-submit-button[name^="save"],
+.fz-drawer__body .formulize-form-submit-button[name^="save"] {
+  background-color: var(--c-accent) !important;
+  color: var(--c-text-on-accent) !important;
+  border-color: var(--c-accent);
+}
+
+.formulizeThemeForm .formulize-form-submit-button[name^="save"]:hover,
+.fz-drawer__body .formulize-form-submit-button[name^="save"]:hover {
+  background-color: var(--c-accent-hover) !important;
+  border-color: var(--c-accent-hover);
+}
+
+/* On multi-page forms the bar also holds #prev ("Save and Close") and #next
+   ("Save and Finish"). Core paints these via ID selectors with an arrow
+   background image, `color:#fff !important`, `text-indent`, `text-shadow` and a
+   fixed 185px width — which beat the class rules above and left them as broken
+   white-on-light buttons with a stray arrow. Override by id (inside the bar) so
+   they get the same clean secondary treatment as Close. */
+#multipage-controls #prev,
+#multipage-controls #next,
+#multipage-controls .formulize-form-submit-button {
+  background-image: none !important;
+  text-indent: 0 !important;
+  text-align: center !important;
+  text-shadow: none !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: 34px !important;
+  font-size: var(--fs-13) !important;
+  color: var(--c-text) !important;
+}
+/* Re-assert legible on-accent text for the Save-family primary after the reset. */
+#multipage-controls .formulize-form-submit-button[name^="save"] {
+  color: var(--c-text-on-accent) !important;
+}
+
+/* ---------- Admin-only "edit element" link ----------
+   Core prepends `<a class="formulize-element-edit-link">edit element</a>` as the
+   first child of every field. As a normal flow child of the (now full-width,
+   column) `.fz-field` it took its own row and inserted a large gap between every
+   field for admins/webmasters. Pull it out of flow and anchor it at the top-right
+   by the label, revealed on field hover (owner request) — so it stays out of the
+   way but is reachable where you'd look for it. */
+.fz-field { position: relative; }
+.fz-field > .formulize-element-edit-link {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+  font-size: var(--fs-11, 11px);
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--c-accent);
+  text-decoration: none;
+  background: var(--c-surface);
+  padding: 1px 6px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-2);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-1) var(--ease);
+}
+.fz-field:hover > .formulize-element-edit-link,
+.fz-field > .formulize-element-edit-link:focus {
+  opacity: 1;
+  pointer-events: auto;
+}
+.fz-field > .formulize-element-edit-link:hover { text-decoration: underline; }
+
+/* ============================================================
+   Rich form controls — kitchen-sink element types
+   ------------------------------------------------------------
+   The text/select/textarea/radio/checkbox primitives are handled
+   above. This block brings the remaining element types up to the
+   design's KitchenSink artboard: file upload (.fz-droparea look),
+   range slider (.fz-range look), color picker (.fz-colorpicker
+   look), duration tray, and the native date/time picker chrome.
+
+   Formulize core emits raw, mostly class-less controls, so these
+   rules target the actual rendered markup (input[type=range] /
+   [type=color] / [type=file], .formulize-fileupload-element,
+   .formulize-duration-element-input) and re-skin them to match the
+   design tokens used everywhere else. Scoped to the form-screen /
+   drawer contexts so list-screen widgets are untouched.
+   ============================================================ */
+
+.fz-form-screen,
+.fz-drawer__body {
+  --field-h:      38px;
+  --field-pad-x:  12px;
+  --field-radius: var(--r-2);
+}
+
+/* ---------- File upload → drop-area look (.fz-droparea) ----------
+   Core renders a bare `<input type="file">` inside
+   `#fileUploadUI_<name>`, preceded by a `.formulize-fileupload-element`
+   status line (existing file + delete link). We can't restructure the
+   markup, but we can style the native file control to read like the
+   design's dashed drop zone, and present the status line as a file
+   chip row beneath it. */
+.fz-form-screen input[type="file"],
+.fz-drawer__body input[type="file"] {
+  display: block;
+  width: 100%;
+  max-width: 520px;
+  min-height: 84px;
+  padding: 16px;
+  font-size: var(--fs-13);
+  color: var(--c-text-muted);
+  background: var(--c-surface-2);
+  border: 1.5px dashed var(--c-border-strong);
+  border-radius: var(--field-radius);
+  cursor: pointer;
+  transition: border-color var(--dur-1) var(--ease), background var(--dur-1) var(--ease);
+}
+.fz-form-screen input[type="file"]:hover,
+.fz-drawer__body input[type="file"]:hover {
+  border-color: var(--c-accent);
+  background: var(--c-accent-soft);
+}
+.fz-form-screen input[type="file"]:focus,
+.fz-drawer__body input[type="file"]:focus {
+  outline: none;
+  border-color: var(--c-border-focus);
+  box-shadow: var(--sh-focus);
+}
+/* The native "Choose File" button → a compact secondary .fz-btn look. */
+.fz-form-screen input[type="file"]::file-selector-button,
+.fz-drawer__body input[type="file"]::file-selector-button {
+  margin-right: 12px;
+  height: 28px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: var(--fs-13);
+  font-weight: 500;
+  color: var(--c-text);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-2);
+  cursor: pointer;
+  transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+}
+.fz-form-screen input[type="file"]::file-selector-button:hover,
+.fz-drawer__body input[type="file"]::file-selector-button:hover {
+  background: var(--c-surface-3);
+  border-color: var(--c-text-muted);
+}
+
+/* Existing-file status row → a file chip (matches .fz-fileitem). */
+.formulize-fileupload-element {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  font-size: var(--fs-13);
+  color: var(--c-text);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--field-radius);
+}
+.formulize-fileupload-element:empty {
+  display: none;       /* no border/box when there is no existing file */
+}
+.formulize-fileupload-element a {
+  color: var(--c-accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+.formulize-fileupload-element a:hover { text-decoration: underline; }
+.formulize-fileupload-element .formulize_fileUploadDeleteButton {
+  margin-left: auto;
+  color: var(--c-danger);
+  font-weight: 500;
+}
+
+/* ---------- Range slider → .fz-range look ----------
+   Core renders `<nobr><input type="range"> <output id="rangeValue_*">
+   </nobr>`. Style the native track + thumb to the design's accent
+   track/fill, and present the live value as a mono bubble. */
+.fz-form-screen input[type="range"],
+.fz-drawer__body input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  max-width: 420px;
+  height: 20px;
+  margin: 4px 0;
+  padding: 0;
+  vertical-align: middle;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+.fz-form-screen input[type="range"]:focus,
+.fz-drawer__body input[type="range"]:focus { outline: none; }
+/* Track */
+.fz-form-screen input[type="range"]::-webkit-slider-runnable-track,
+.fz-drawer__body input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--c-surface-3);
+}
+.fz-form-screen input[type="range"]::-moz-range-track,
+.fz-drawer__body input[type="range"]::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--c-surface-3);
+}
+.fz-form-screen input[type="range"]::-moz-range-progress,
+.fz-drawer__body input[type="range"]::-moz-range-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--c-accent);
+}
+/* Thumb */
+.fz-form-screen input[type="range"]::-webkit-slider-thumb,
+.fz-drawer__body input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  margin-top: -7px;          /* centre 20px thumb on 6px track */
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--c-surface);
+  border: 2px solid var(--c-accent);
+  box-shadow: var(--sh-2);
+  cursor: grab;
+  transition: box-shadow var(--dur-1) var(--ease);
+}
+.fz-form-screen input[type="range"]::-moz-range-thumb,
+.fz-drawer__body input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--c-surface);
+  border: 2px solid var(--c-accent);
+  box-shadow: var(--sh-2);
+  cursor: grab;
+}
+.fz-form-screen input[type="range"]:focus::-webkit-slider-thumb,
+.fz-drawer__body input[type="range"]:focus::-webkit-slider-thumb {
+  box-shadow: var(--sh-focus);
+}
+.fz-form-screen input[type="range"]:focus::-moz-range-thumb,
+.fz-drawer__body input[type="range"]:focus::-moz-range-thumb {
+  box-shadow: var(--sh-focus);
+}
+/* Live value readout (the <output> beside the slider) → mono bubble. */
+.fz-form-screen output[id^="rangeValue_"],
+.fz-drawer__body output[id^="rangeValue_"] {
+  display: inline-block;
+  margin-left: 12px;
+  min-width: 34px;
+  padding: 2px 8px;
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum";
+  font-size: var(--fs-12);
+  text-align: center;
+  color: var(--c-text);
+  background: var(--c-surface-3);
+  border-radius: var(--r-1);
+  vertical-align: middle;
+}
+/* In the narrow right drawer the slider is width:100% of the field and the
+   value bubble sits beside it inside a non-wrapping <nobr>, so the row
+   (slider + 12px + bubble) is wider than the field and overflows, scrolling
+   the whole drawer. Lay the nobr out as a flex row capped at the field width
+   and let the slider shrink (flex, min-width:0) so the bubble always fits. */
+.fz-drawer__body nobr:has(input[type="range"]) {
+  display: flex;
+  align-items: center;
+  max-width: 100%;
+}
+.fz-drawer__body nobr:has(input[type="range"]) input[type="range"] {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+}
+.fz-drawer__body nobr:has(input[type="range"]) output[id^="rangeValue_"] {
+  flex: 0 0 auto;
+}
+
+/* ---------- Color picker → .fz-colorpicker look ----------
+   Core renders `<input type="color">`. Browsers draw a chunky default
+   swatch button; normalise it to a clean rounded swatch sized to the
+   field height, matching the design's `.fz-colorpicker__swatch`. */
+.fz-form-screen input[type="color"],
+.fz-drawer__body input[type="color"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: var(--field-h);
+  height: var(--field-h);
+  padding: 3px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--field-radius);
+  cursor: pointer;
+  vertical-align: middle;
+  transition: border-color var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
+}
+.fz-form-screen input[type="color"]:hover,
+.fz-drawer__body input[type="color"]:hover { border-color: var(--c-text-muted); }
+.fz-form-screen input[type="color"]:focus,
+.fz-drawer__body input[type="color"]:focus {
+  outline: none;
+  border-color: var(--c-border-focus);
+  box-shadow: var(--sh-focus);
+}
+.fz-form-screen input[type="color"]::-webkit-color-swatch-wrapper,
+.fz-drawer__body input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.fz-form-screen input[type="color"]::-webkit-color-swatch,
+.fz-drawer__body input[type="color"]::-webkit-color-swatch {
+  border: 0;
+  border-radius: 3px;
+}
+.fz-form-screen input[type="color"]::-moz-color-swatch,
+.fz-drawer__body input[type="color"]::-moz-color-swatch {
+  border: 0;
+  border-radius: 3px;
+}
+
+/* ---------- Duration tray → single grouped control (.fz-duration) ----------
+   Core renders an XoopsFormElementTray of
+   `<input type="number" class="formulize-duration-element-input">`
+   segments, each prefixed by a small unit label. Pull the segment
+   inputs into a tight mono field-cluster that reads as one control. */
+.formulize-duration-element-input {
+  width: 64px !important;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum";
+}
+/* The tray renders each segment as a bare "Unit:&nbsp;<input>" pair with no
+   wrapper. The shared field rules make the inputs display:block inside the
+   field body's flex column, so the segments stack vertically. Lay the field
+   body containing them out as a horizontal, wrapping flex row and keep each
+   number input inline so every "label + input" pair reads as one group. */
+.fz-field__body:has(.formulize-duration-element-input) {
+  flex-flow: row wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+.formulize-duration-element-input {
+  display: inline-block;
+}
+
+/* ---------- Native date / time picker chrome ----------
+   Date/time inputs already pick up the shared text-field box rules
+   above; here we just tidy the native calendar/clock indicator. */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity var(--dur-1) var(--ease);
+}
+input[type="date"]:hover::-webkit-calendar-picker-indicator,
+input[type="time"]:hover::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]:hover::-webkit-calendar-picker-indicator { opacity: 0.85; }
+input[type="date"].icms-date-box,
+input[type="time"] { font-family: var(--font-sans); }
+
+/* ============================================================
+   Kitchen-sink control types — second pass (choice inputs)
+   ------------------------------------------------------------
+   Brings the richer "Choice inputs" section of the design's
+   KitchenSink artboard up to the forms.css primitives:
+     • Autocomplete List  → .fz-combo chip-input + .fz-listbox menu
+     • Multi-select Listbox (<select multiple>) → .fz-listbox
+     • Native <select> dropdown wrapper polish (defeats <nobr>)
+   Scoped to the form-screen / drawer contexts so list-screen
+   filters and widgets are untouched.
+   ============================================================ */
+
+/* ---------- Native <select> dropdown: <nobr> wrapper polish ----------
+   Core wraps the single-select in `<nobr><select size="1">…</select></nobr>`.
+   The nobr is inline, so the select only stretches to its content width and
+   never fills the field. Make the wrapper a full-width block so the styled
+   select (chevron + 38px box, already set by the base `select` rule) spans
+   the field, matching the design's full-width `.fz-select-trigger`. */
+.fz-form-screen .fz-field__body > nobr:has(> select),
+.fz-drawer__body .col2 > nobr:has(> select) {
+  display: block;
+  width: 100%;
+}
+.fz-form-screen nobr > select,
+.fz-drawer__body nobr > select {
+  width: 100%;
+}
+
+/* ---------- Multi-select Listbox (<select multiple>) → .fz-listbox ----------
+   A `<select multiple size="N">` must show N rows; the shared single-select
+   rule forces `height: var(--field-h)` which clips it to one row and hides the
+   chevron background awkwardly. Restyle multi-selects as the design's scrollable
+   listbox surface: auto height, padded rows, accent-soft selected state. */
+.fz-form-screen select[multiple],
+.fz-drawer__body select[multiple] {
+  height: auto;
+  min-height: calc(var(--field-h) * 2.4);
+  max-height: 220px;
+  padding: 4px;
+  overflow-y: auto;
+  background-image: none;      /* no chevron on a multi-select */
+  cursor: default;
+  border-radius: var(--field-radius);
+  border: 1px solid var(--c-border-strong);
+  background-color: var(--c-surface);
+}
+.fz-form-screen select[multiple]:focus,
+.fz-drawer__body select[multiple]:focus {
+  border-color: var(--c-border-focus);
+  box-shadow: var(--sh-focus);
+  outline: none;
+}
+.fz-form-screen select[multiple] option,
+.fz-drawer__body select[multiple] option {
+  padding: 7px 10px;
+  border-radius: var(--r-1);
+  font-size: var(--field-text);
+  color: var(--c-text);
+}
+.fz-form-screen select[multiple] option:checked,
+.fz-drawer__body select[multiple] option:checked {
+  /* WebKit needs the background painted via box-shadow to override the UA
+     highlight; Firefox honours background directly. Belt-and-braces. */
+  background: var(--c-accent-soft) linear-gradient(var(--c-accent-soft), var(--c-accent-soft));
+  color: var(--c-text);
+  font-weight: 500;
+}
+
+/* ---------- Autocomplete List → .fz-combo chip-input ----------
+   Core renders:
+     <div class="formulize_autocomplete">
+       <input class="formulize_autocomplete [formulize_autocomplete_multiple] …">
+     </div>
+     <img class="autocomplete-icon">                      (magnifying glass)
+     <div id="…_defaults">…hidden inputs…</div>
+     <div class="formulize_autocomplete_selections">       (chip container)
+       <p class="auto_multi auto_multi_…" target="…">Label</p>   (one chip / value)
+     </div>
+   We wrap the text input + magnifier as a single bordered field that reads like
+   the design's `.fz-combo__tags`, and present each `.auto_multi` <p> as a
+   removable chip (`.fz-combo__tag`). Chips are clickable to remove (core JS). */
+
+/* The input wrapper (div.formulize_autocomplete) is the positioning context for
+   the magnifier. Core now renders the <img class="autocomplete-icon"> INSIDE this
+   wrapper (a child of the div, immediately after the input) so the icon can be
+   pinned as an absolute adornment over the input's right edge WITHOUT relying on
+   a :has() selector — :has() is unsupported on older engines, and when it fails
+   the icon falls back to normal flow and wraps onto its own line below the field
+   (the reported regression). Anchoring to this always-present relative wrapper is
+   robust across all engines. */
+.fz-form-screen .formulize_autocomplete:not(input),
+.fz-drawer__body .formulize_autocomplete:not(input) {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+/* The autocomplete text input → a clean full-width field, room for the icon. */
+.fz-form-screen input.formulize_autocomplete,
+.fz-drawer__body input.formulize_autocomplete {
+  width: 100%;
+  height: var(--field-h);
+  padding: 0 36px 0 var(--field-pad-x);
+  font: inherit;
+  font-size: var(--field-text);
+  color: var(--c-text);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--field-radius);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
+}
+.fz-form-screen input.formulize_autocomplete:hover,
+.fz-drawer__body input.formulize_autocomplete:hover { border-color: var(--c-text-muted); }
+.fz-form-screen input.formulize_autocomplete:focus,
+.fz-drawer__body input.formulize_autocomplete:focus {
+  border-color: var(--c-border-focus);
+  box-shadow: var(--sh-focus);
+}
+
+/* The magnifying-glass image → a muted icon pinned inside the field's right edge.
+   The icon is a child of the relatively-positioned div.formulize_autocomplete
+   wrapper, so absolute positioning resolves against that wrapper regardless of
+   :has() support. Centre it vertically over the input row and inset from the
+   right edge. Reset any width the native <img> would otherwise assume. */
+.fz-form-screen .formulize_autocomplete img.autocomplete-icon,
+.fz-drawer__body .formulize_autocomplete img.autocomplete-icon {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  opacity: 0.55;
+  pointer-events: none;
+  float: none;
+}
+
+/* The selected-values chip tray → design's chip row. */
+.fz-form-screen .formulize_autocomplete_selections,
+.fz-drawer__body .formulize_autocomplete_selections {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 0 !important;   /* defeat the inline padding-right:10px */
+}
+.fz-form-screen .formulize_autocomplete_selections:empty,
+.fz-drawer__body .formulize_autocomplete_selections:empty { display: none; }
+
+.fz-form-screen .formulize_autocomplete_selections .auto_multi,
+.fz-drawer__body .formulize_autocomplete_selections .auto_multi {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 13px;
+  background: var(--c-accent-soft);
+  border: 1px solid var(--c-accent-soft-2);
+  color: var(--c-text);
+  font-size: var(--fs-13);
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+}
+.fz-form-screen .formulize_autocomplete_selections .auto_multi:hover,
+.fz-drawer__body .formulize_autocomplete_selections .auto_multi:hover {
+  background: var(--c-surface-3);
+  border-color: var(--c-border-strong);
+}
+/* Trailing "×" affordance (chips are click-to-remove in core JS). */
+.fz-form-screen .formulize_autocomplete_selections .auto_multi::after,
+.fz-drawer__body .formulize_autocomplete_selections .auto_multi::after {
+  content: "\00d7";
+  font-size: 14px;
+  line-height: 1;
+  color: var(--c-text-muted);
+}
+.fz-form-screen .formulize_autocomplete_selections .auto_multi:hover::after,
+.fz-drawer__body .formulize_autocomplete_selections .auto_multi:hover::after {
+  color: var(--c-danger);
+}
+
+/* ---------- jQuery UI autocomplete menu → .fz-listbox surface ----------
+   The suggestions dropdown is appended to <body> by jQuery UI as
+   `ul.ui-autocomplete.ui-menu > li.ui-menu-item > div`. Re-skin it to the
+   design's listbox: bordered card, hover/active rows in accent-soft. */
+.ui-autocomplete.ui-menu {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 4px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--field-radius, var(--r-2));
+  box-shadow: var(--sh-2);
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 1200;
+  font-family: var(--font-sans);
+}
+.ui-autocomplete.ui-menu .ui-menu-item { margin: 0; }
+.ui-autocomplete.ui-menu .ui-menu-item-wrapper,
+.ui-autocomplete.ui-menu .ui-menu-item > a {
+  display: block;
+  padding: 7px 10px;
+  border-radius: var(--r-1);
+  font-size: var(--fs-14);
+  color: var(--c-text);
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+}
+.ui-autocomplete.ui-menu .ui-menu-item-wrapper.ui-state-active,
+.ui-autocomplete.ui-menu .ui-menu-item-wrapper:hover,
+.ui-autocomplete.ui-menu .ui-menu-item > a.ui-state-active,
+.ui-autocomplete.ui-menu .ui-menu-item > a:hover {
+  background: var(--c-accent-soft);
+  color: var(--c-text);
+}
+
+/* ============================================================
+   Mobile — form screen adjustments
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .fz-form,
+  .fz-form-screen,
+  .fz-drawer__body {
+    --field-h:     44px;   /* iOS tap target */
+    --field-text:  16px;   /* prevent iOS auto-zoom */
+    --field-gap:   16px;
+  }
+
+  .card__body {
+    padding: var(--s-4);
+  }
+
+  .card__header {
+    padding: var(--s-3) var(--s-4);
+  }
+
+  /* Left-label layout collapses to stacked on narrow screens */
+  .form-row:has(.col1) {
+    flex-direction: column;
+    gap: var(--label-gap, 6px);
+  }
+
+  .col1 {
+    min-height: auto;
+    width: 100% !important;
+  }
+
+  .col2 {
+    width: 100% !important;
+  }
+
+  /* Autocomplete chips get a slightly taller tap target on touch screens. */
+  .fz-form-screen .formulize_autocomplete_selections .auto_multi,
+  .fz-drawer__body .formulize_autocomplete_selections .auto_multi {
+    height: 30px;
+    padding: 0 12px;
+  }
+
+  /* ---------- Mobile multipage action bar (issue #9, clutter) ----------
+     On narrow screens the desktop bar wrapped buttons of assorted widths and
+     crammed the "Page X of Y" indicator against a button, with the jump-to
+     selector on a stray third line. Restructure into tidy full-width rows:
+     evenly-sized 44px tap-target buttons two-up, then the page indicator and
+     jump-to selector each on their own centered, legible full-width line. */
+  #multipage-controls {
+    padding: var(--s-4);
+    row-gap: var(--s-2);
+    column-gap: var(--s-2);
+  }
+
+  /* Buttons share the row evenly and are comfortable tap targets. */
+  #multipage-controls #prev,
+  #multipage-controls #next,
+  #multipage-controls .formulize-form-submit-button {
+    flex: 1 1 calc(50% - var(--s-2));
+    min-width: 0;
+    height: 44px !important;
+    padding: 0 var(--s-3);
+  }
+
+  /* Page indicator on its own centered line, clearly separated from buttons. */
+  #multipage-controls #page-indicator {
+    flex-basis: 100%;
+    order: 90;
+    margin-top: var(--s-1);
+    text-align: center;
+    font-size: var(--fs-13);
+    color: var(--c-text-muted);
+    font-feature-settings: "tnum";
+  }
+
+  /* Jump-to selector removed on mobile (review item A): on narrow screens it
+     took a full-width extra row and ate vertical space for little value. Desktop
+     keeps it (the desktop #page-selector rules above are untouched). The prev/
+     next buttons and the "Page X of Y" indicator remain the mobile page-nav. */
+  #multipage-controls #page-selector {
+    display: none;
+  }
+
+  /* With the selector gone, drop the indicator's top margin so the freed
+     vertical space is reclaimed and the bar stays compact. */
+  #multipage-controls #page-indicator {
+    margin-top: 0;
+  }
+}
+
+/* ============================================================
+   Default buttons + login UI (issue #22)
+
+   Formulize/XOOPS core renders submit/reset/button controls with no
+   `.fz-*` class, so they fell back to raw browser chrome. Give those bare
+   controls the Lyris button look (mirrors the `.fz-btn` primitive above).
+   Elements that already carry an `.fz-*` / `.formulize_button` class, or
+   sit inside an already-themed container, keep their own styling because
+   those selectors are more specific and win the cascade.
+   ============================================================ */
+
+button:not([class*="fz-"]):not([class*="formulize_button"]),
+input[type="submit"]:not([class*="fz-"]),
+input[type="reset"]:not([class*="fz-"]),
+input[type="button"]:not([class*="fz-"]):not(.formulize_button) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 var(--s-3);
+  border-radius: var(--r-2);
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font: inherit;
+  font-size: var(--fs-13);
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: background var(--dur-1) var(--ease),
+              border-color var(--dur-1) var(--ease),
+              color var(--dur-1) var(--ease);
+}
+
+button:not([class*="fz-"]):not([class*="formulize_button"]):hover,
+input[type="submit"]:not([class*="fz-"]):hover,
+input[type="reset"]:not([class*="fz-"]):hover,
+input[type="button"]:not([class*="fz-"]):not(.formulize_button):hover {
+  background: var(--c-surface-3);
+  border-color: var(--c-text-muted);
+}
+
+button:not([class*="fz-"]):not([class*="formulize_button"]):focus-visible,
+input[type="submit"]:not([class*="fz-"]):focus-visible,
+input[type="reset"]:not([class*="fz-"]):focus-visible,
+input[type="button"]:not([class*="fz-"]):not(.formulize_button):focus-visible {
+  outline: none;
+  box-shadow: var(--sh-focus);
+}
+
+button:not([class*="fz-"]):disabled,
+input[type="submit"]:not([class*="fz-"]):disabled,
+input[type="reset"]:not([class*="fz-"]):disabled,
+input[type="button"]:not([class*="fz-"]):disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+/* ---------- Login block + login page ----------
+   The login block (#block_login_form, sidebar/drawer) and the login page
+   (#icms_block_login_form, the fieldset on user.php) share the same inner
+   markup: `.block_login_form--username/--password/--submit` rows, labels
+   (`.form-label`), inputs (already styled by the `.fz-input` primitive), an
+   `input.btn` submit, and a `#lostpass` link. Both are styled together. */
+
+#block_login_form,
+#icms_block_login_form {
+  color: var(--c-text);
+  font-size: var(--fs-14);
+}
+
+/* Generalized fieldset card. Any raw <fieldset> in the Lyris content area
+   (the login page's #icms_block_login_form, plus any other fieldset in the
+   end-user UI) gets the same card treatment: border, radius, padding,
+   surface background and a styled legend. Scoped to .fz-main so it only
+   touches theme content, not chrome. */
+.fz-main fieldset {
+  margin: var(--s-6) 0;
+  padding: var(--s-6);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-3);
+  background: var(--c-surface);
+  box-shadow: var(--sh-2);
+}
+
+/* The login fieldset stays a compact, single-column card. */
+fieldset#icms_block_login_form {
+  max-width: 380px;
+}
+
+.fz-main fieldset > legend {
+  padding: 0 var(--s-2);
+  font-size: var(--fs-16);
+  font-weight: 600;
+  color: var(--c-text);
+}
+
+/* Field rows — consistent vertical rhythm, stacked label + input. */
+#block_login_form .block_login_form--username,
+#block_login_form .block_login_form--password,
+#icms_block_login_form .block_login_form--username,
+#icms_block_login_form .block_login_form--password {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  margin-bottom: var(--s-3);
+}
+
+#block_login_form .form-label,
+#icms_block_login_form .form-label {
+  font-size: var(--fs-13);
+  font-weight: 500;
+  color: var(--c-text-muted);
+}
+
+/* Inputs already pick up the global `.fz-input` primitive; just make them
+   fill the login column so they line up as a tidy stacked form. */
+#block_login_form .form-input,
+#icms_block_login_form .form-input {
+  width: 100%;
+}
+
+#block_login_form .block_login_form--remember,
+#icms_block_login_form .block_login_form--remember {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  margin-bottom: var(--s-3);
+  font-size: var(--fs-13);
+  color: var(--c-text-muted);
+}
+
+/* Primary Login button — override the bare-button style above with the
+   accent treatment (`input.btn` carries the `btn` class only). */
+#block_login_form .block_login_form--submit,
+#icms_block_login_form .block_login_form--submit {
+  margin-top: var(--s-2);
+}
+
+#block_login_form input.btn[type="submit"],
+#icms_block_login_form input.btn[type="submit"] {
+  width: 100%;
+  height: 36px;
+  background: var(--c-accent);
+  color: var(--c-text-on-accent);
+  border-color: var(--c-accent);
+  font-size: var(--fs-14);
+}
+
+#block_login_form input.btn[type="submit"]:hover,
+#icms_block_login_form input.btn[type="submit"]:hover {
+  background: var(--c-accent-hover);
+  border-color: var(--c-accent-hover);
+}
+
+/* Secondary links — "Lost your account info?", register, OpenID/Okta. */
+#block_login_form #lostpass,
+#block_login_form a:not(.btn),
+#icms_block_login_form a:not(.btn) {
+  display: inline-block;
+  margin-top: var(--s-2);
+  color: var(--c-accent-fg);
+  font-size: var(--fs-13);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+#block_login_form #lostpass:hover,
+#block_login_form a:not(.btn):hover,
+#icms_block_login_form a:not(.btn):hover {
+  color: var(--c-accent-hover);
+  text-decoration: underline;
+}
