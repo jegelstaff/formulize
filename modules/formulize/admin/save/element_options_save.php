@@ -76,16 +76,28 @@ if($_POST['element_delimit']) {
   }
 }
 
+$elementObjectProperties = array('ele_id' => $ele_id);
+
 $ele_value_before_adminSave = "";
 $ele_value_after_adminSave = "";
 // call the adminSave method. IT SHOULD SET ele_value ON THE ELEMENT OBJECT, AND MUST SET IT IF IT IS MAKING CHANGES.
 if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
   $customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
   $ele_value_before_adminSave = serialize($element->getVar('ele_value'));
+  $elementVarsBeforeAdminSave = $element->vars; // snapshot every property before adminSave can mutate anything
   $changed = $customTypeHandler->adminSave($element, $processedValues['elements']['ele_value']); // cannot use getVar to retrieve ele_value from element, due to limitation of the base object class, when dealing with set values that are arrays and not being gathered directly from the database (it wants to unserialize them instead of treating them as literals)
   $ele_value_after_adminSave = is_array($element->vars['ele_value']['value']) ? serialize($element->vars['ele_value']['value']) : $element->vars['ele_value']['value']; // get raw value because it won't have been serialized yet since it hasn't been written to the DB...if we use getVar, it will try to unserialize it for us, but that won't work because it hasn't been serialized yet -- if this value is not an array, take it as is though, since then it is simply unchanged from when it was originally set as the serialized value we want
   if($ele_value_before_adminSave === $ele_value_after_adminSave) {
     unset($processedValues['elements']['ele_value']); // no change, so nothing to write below
+  }
+  // adminSave() implementations are free to mutate any property, not just ele_value (e.g. select/radio/checkbox
+  // also update ele_uitext) - carry forward everything adminSave changed, so those mutations aren't silently
+  // lost now that we build a separate properties array instead of inserting this same $element object directly.
+  // This mirrors the old behavior, where the whole (mutated) object was simply inserted.
+  foreach($element->vars as $property=>$varInfo) {
+    if(!array_key_exists($property, $elementVarsBeforeAdminSave) OR $elementVarsBeforeAdminSave[$property]['value'] !== $varInfo['value']) {
+      $elementObjectProperties[$property] = $varInfo['value'];
+    }
   }
   // user indicated we should reload the page due to a change
   if($changed) {
@@ -102,16 +114,22 @@ foreach($processedValues['elements'] as $property=>$value) {
   // so the user has to setVar in adminSave themselves!
 
   if($property != 'ele_value' OR $ele_value_after_adminSave === "") {
-  	$element->setVar($property, $value);
+  	$elementObjectProperties[$property] = $value;
   }
 }
 
-if(!$ele_id = $element_handler->insert($element)) {
-  print "Error: could not save the options for element: ".$xoopsDB->error();
+try {
+	formulizeHandler::upsertElementSchemaAndResources($elementObjectProperties);
+} catch (Exception $e) {
+	print "Error: could not save the options for element: " . $e->getMessage();
 }
 
 if (!empty($_POST['apply_default_to_empty'])) {
   if ($element->hasData) {
+    // reload the element so the default-value computation below sees the just-saved state,
+    // not the pre-save object (upsertElementSchemaAndResources does its own internal load/save,
+    // it never mutates $element here)
+    $element = $element_handler->get($ele_id);
     // target specific entries if conditions were submitted, otherwise apply to the blank entries. The UI ensures the
     // conditions are only present when the "specific value" mode is chosen (it clears them otherwise), so we just
     // read whatever was submitted. The conditions are never persisted - they come straight from the submission.
