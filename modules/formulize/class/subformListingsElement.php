@@ -461,18 +461,30 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 					$ele_value['show_clone_button'] = 0;
 			}
 
-			if(!isset($ele_value['edit_icon_style'])) {
-					$config_handler = xoops_gethandler('config');
-					$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-					$ele_value['edit_icon_style'] = isset($formulizeConfig['formulizeDefaultEditIconStyle']) ? $formulizeConfig['formulizeDefaultEditIconStyle'] : FORMULIZE_EDIT_ICON_STYLE_PEN;
+			// the "No / Pen icon / Magnifying glass icon" choice now controls whether View
+			// buttons are shown at all, folding in what used to be the separate "don't show
+			// View buttons" radio in the ele_value[3] set. If it's missing entirely (e.g. an
+			// element created/saved through something other than this admin form), fall back
+			// to the module-wide default rather than assuming it's off.
+			if(isset($_POST['elements-ele_value']['edit_icon_style'])) {
+				$editIconStyle = intval($_POST['elements-ele_value']['edit_icon_style']);
+			} else {
+				$config_handler = xoops_gethandler('config');
+				$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+				$editIconStyle = isset($formulizeConfig['formulizeDefaultEditIconStyle']) ? intval($formulizeConfig['formulizeDefaultEditIconStyle']) : FORMULIZE_EDIT_ICON_STYLE_PEN;
 			}
+			$ele_value['edit_icon_style'] = $editIconStyle;
 
 			if(!isset($ele_value['enforceFilterChanges'])) {
 					$ele_value['enforceFilterChanges'] = 0;
 			}
 
-			if(!$_POST['elements-ele_value'][3]) {
-				$ele_value[3] = 0;
+			if($editIconStyle == FORMULIZE_EDIT_ICON_STYLE_OFF) {
+				// View buttons are off, as if the old "don't show View buttons" radio had been
+				// clicked, regardless of whatever the now-hidden view-button-mode radios hold
+				$ele_value[3] = FORMULIZE_EDIT_ICON_STYLE_OFF;
+			} elseif(!$_POST['elements-ele_value'][3]) {
+				$ele_value[3] = 1; // safety net: icons are on, but no view-button-mode radio was submitted
 			}
 			// handle the "start" value, formerlly the blanks value (ele_value[2])
 			// $_POST['subform_start'] will be 'empty', 'blanks', or 'prepop'

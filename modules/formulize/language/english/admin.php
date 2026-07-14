@@ -619,7 +619,6 @@ define("_AM_ELE_SUBFORM_ADD_PARENT", "Yes, only if the user can add entries in t
 define("_AM_ELE_SUBFORM_EDITICONSTYLE", "Which icon should the <i>View</i> button use?");
 define("_AM_ELE_SUBFORM_EDITICONSTYLE_PEN", "Pen icon");
 define("_AM_ELE_SUBFORM_EDITICONSTYLE_MAGNIFIER", "Magnifying glass icon");
-define("_AM_ELE_SUBFORM_EDITICONSTYLE_DESC", "Only applies when <i>View</i> buttons are shown above.");
 
 
 // grids
