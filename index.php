@@ -34,17 +34,23 @@ if ((!isset($formulize_screen_id) OR !is_numeric($formulize_screen_id)) && $xoop
     unset($_idxModHandler, $_idxFormulize);
 }
 
-// See if they actually have a Formulize start page declared. If not, and they're anon, nullify the startpage since we have no where to take them and this way they can login.
+// See if they actually have a Formulize start page declared. If not, nullify the startpage since we have nowhere to take them.
 // Additionally, if there's a rewrite rule in effect for the start page, redirect to that URL (an alternative to rewriting the URL later with history API).
 if($icmsConfig['startpage'] == 'formulize') {
 	include_once XOOPS_ROOT_PATH."/modules/formulize/class/applications.php";
 	list($startFid,$startSid,$startURL) = formulizeApplicationMenuLinksHandler::getDefaultScreenForUser();
-	if(!$xoopsUser AND !$startFid AND !$startSid AND !$startURL) {
+	if(!$startSid AND $startFid) {
+		$startSid = determineScreenForUserFromFid($startFid);
+	}
+	if(!$startFid AND !$startSid AND !$startURL) {
+		$icmsConfig['startpage'] = '--';
+	} elseif(!$xoopsUser AND !$startSid AND !$startURL) {
+		// Anons can only be sent to a screen or an external URL (see the "must go through a screen"
+		// rule in modules/formulize/initialize.php). A raw form with no defaultform/defaultlist screen
+		// configured can't resolve to a screen, so falling through here would bounce them back to "/"
+		// and loop. Fall back to the normal home page instead.
 		$icmsConfig['startpage'] = '--';
 	} else {
-		if(!$startSid AND $startFid) {
-			$startSid = determineScreenForUserFromFid($startFid);
-		}
 		if($startSid) {
 			$screen_handler = xoops_getmodulehandler('screen', 'formulize');
 			if($screenObject = $screen_handler->get($startSid)) {

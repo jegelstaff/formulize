@@ -81,6 +81,12 @@ if( !$fid AND !$sid) {
 		header('Location: '.$defaultMenuLinkUrl);
 		exit();
 	}
+	// a default menu link can point directly at a raw form (fid) rather than a screen; resolve it to
+	// the form's assigned default list/form screen so it can render via the screen path below, which
+	// (unlike the raw fid path further down) is available to anons too
+	if(!$sid AND $fid) {
+		$sid = determineScreenForUserFromFid($fid);
+	}
 }
 
 $screen_handler = xoops_getmodulehandler('screen', 'formulize');
@@ -334,7 +340,7 @@ if (is_object($xoopsTpl)) {
 		$xoopsTpl->assign('modifyScreenUrl', $url);
 		$xoopsTpl->assign('formulize_screen_id', $renderedFormulizeScreen->getVar('sid'));
 	}
-	$xoopsTpl->assign('formulize_customCodeForApplications', (isset($GLOBALS['formulize_customCodeForApplications']) ? $formulize_customCodeForApplications : ''));
+	$xoopsTpl->assign('formulize_customCodeForApplications', (isset($GLOBALS['formulize_customCodeForApplications']) ? $GLOBALS['formulize_customCodeForApplications'] : ''));
 }
 // go back to the previous rendering flag, in case this operation was nested inside something else
 $GLOBALS['formulize_thisRendering'] = $prevRendering["$thisRendering"];
