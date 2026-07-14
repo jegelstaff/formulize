@@ -377,7 +377,7 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
 			$defaultListScreen->setVar('usesearchcalcmsgs', 1);
 			$defaultListScreen->setVar('usesearch', 1);
 			$defaultListScreen->setVar('columnwidth', 0);
-			$defaultListScreen->setVar('textwidth', 35);
+			$defaultListScreen->setVar('textwidth', 255);
 			$defaultListScreen->setVar('usecheckboxes', 0);
 			$defaultListScreen->setVar('useviewentrylinks', 1);
 			$defaultListScreen->setVar('desavetext', _formulize_SAVE);
