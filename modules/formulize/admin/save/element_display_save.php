@@ -60,40 +60,40 @@ if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
   return;
 }
 
+$elementObjectProperties = array('ele_id' => $ele_id);
+
 if($element->isSystemElement == false OR $element->isUserAccountElement == true) {
 
 	// do not need to serialize this when assigning, since the elements class calls cleanvars from the xoopsobject on all properties prior to insertion, and that intelligently serializes properties that have been declared as arrays
 	list($parsedFilterSettings, $filterSettingsChanged) = parseSubmittedConditions('elementfilter', 'display-conditionsdelete');
 	list($parsedDisabledConditions, $disabledConditionsChanged) = parseSubmittedConditions('disabledconditions', 'disabled-conditionsdelete');
 	$_POST['reload_element_pages'] = ($filterSettingsChanged OR $disabledConditionsChanged) ? true : false;
-	$element->setVar('ele_filtersettings', $parsedFilterSettings);
-	$element->setVar('ele_disabledconditions', $parsedDisabledConditions);
+	$elementObjectProperties['ele_filtersettings'] = $parsedFilterSettings;
+	$elementObjectProperties['ele_disabledconditions'] = $parsedDisabledConditions;
 
 	// check that the checkboxes have no values, and if so, set them to "" in the processedValues array
 	if(!isset($_POST['elements-ele_private'])) {
 			$processedValues['elements']['ele_private'] = "";
 	}
 	foreach($processedValues['elements'] as $property=>$value) {
-		$element->setVar($property, $value);
+		$elementObjectProperties[$property] = $value;
 	}
 
 	if($_POST['elements_ele_display'][0] == "all") {
-		$display = 1;
+		$elementObjectProperties['ele_display'] = 1;
 	} else if($_POST['elements_ele_display'][0] == "none") {
-		$display = 0;
+		$elementObjectProperties['ele_display'] = 0;
 	} else {
-		$display = "," . implode(",", $_POST['elements_ele_display']) . ",";
+		$elementObjectProperties['ele_display'] = "," . implode(",", $_POST['elements_ele_display']) . ",";
 	}
-	$element->setVar('ele_display', $display);
 
 	if($_POST['elements_ele_disabled'][0] == "none") {
-		$disabled = 0;
+		$elementObjectProperties['ele_disabled'] = 0;
 	} else if($_POST['elements_ele_disabled'][0] == "all"){
-		$disabled = 1;
+		$elementObjectProperties['ele_disabled'] = 1;
 	} else {
-		$disabled = "," . implode(",", $_POST['elements_ele_disabled']) . ",";
+		$elementObjectProperties['ele_disabled'] = "," . implode(",", $_POST['elements_ele_disabled']) . ",";
 	}
-	$element->setVar('ele_disabled', $disabled);
 
 }
 
@@ -116,8 +116,10 @@ if (is_array($multipageFormScreens)) {
 }
 $screen_handler->addElementToScreenPagesFromUI($element, $multipageFormScreens, $legacyFormScreens);
 
-if(!$ele_id = $element_handler->insert($element)) {
-  print "Error: could not save the display settings for element: ".$xoopsDB->error();
+try {
+	formulizeHandler::upsertElementSchemaAndResources($elementObjectProperties);
+} catch (Exception $e) {
+	print "Error: could not save the display settings for element: " . $e->getMessage();
 }
 
 if($_POST['reload_element_pages']) {

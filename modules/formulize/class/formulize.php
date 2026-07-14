@@ -1744,15 +1744,23 @@ class formulizeHandler {
 	 */
 	public static function upsertElementSchemaAndResources($elementObjectProperties, $screenIdsAndPagesForAdding = array(), $screenIdsAndPagesForRemoving = array(), $dataType = null, $pi = false, $makeSubformInterface = false) {
 
-		formulizeHandler::validateElementType($elementObjectProperties['ele_type']);
-
-		$form_handler = xoops_getmodulehandler('forms', 'formulize');
-		$element_handler = xoops_getmodulehandler($elementObjectProperties['ele_type'].'Element','formulize');
 		$element_id = 0;
 		// if ele_id is set in the properties array, use that to load the element object
 		if(isset($elementObjectProperties['ele_id'])) {
 			$element_id = intval($elementObjectProperties['ele_id']);
 		}
+		// if ele_type is not set, then try to get it from the element object, if we can load it
+		// otherwise, validate the ele_type that was passed in
+		if(!isset($elementObjectProperties['ele_type']) AND $element_id AND $elementObject = _getElementObject($element_id)) {
+			$elementObjectProperties['ele_type'] = $elementObject->getVar('ele_type');
+		} elseif(isset($elementObjectProperties['ele_type'])) {
+			formulizeHandler::validateElementType($elementObjectProperties['ele_type']);
+		} else {
+			throw new Exception('Missing or invalid element type on element creation or update');
+		}
+
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$element_handler = xoops_getmodulehandler($elementObjectProperties['ele_type'].'Element','formulize');
 
 		$originalElementNames = array(
 			'ele_handle' => '',
@@ -1790,7 +1798,7 @@ class formulizeHandler {
 			throw new Exception("Permission denied: You don't have permission to edit this form.");
 		}
 
-		$elementObjectProperties = $element_handler->setupAndValidateElementProperties($elementObjectProperties);
+		$elementObjectProperties = $element_handler->setupAndValidateElementProperties($elementObjectProperties, ($elementIsNew ? null : $elementObject));
 
 		// set all the properties that were passed in and validated
 		foreach($elementObjectProperties as $property=>$value) {
@@ -1885,7 +1893,7 @@ class formulizeHandler {
 				}
 			}
 		}
-		foreach($screenIdsAndPagesForRemoving as $screenId=>$pageOrdinal) {
+		foreach($screenIdsAndPagesForRemoving as $screenId=>$pageOrdinals) {
 			if($screenObject = $screen_handler->get($screenId)) {
 				$pages = $screenObject->getVar('pages');
 				foreach($pageOrdinals as $pageOrdinal) {

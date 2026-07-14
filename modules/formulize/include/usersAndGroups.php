@@ -321,7 +321,7 @@ function findUserEauEntry($uid) {
 		if (!$formObj) {
 			continue;
 		}
-		$formHandle = $formObj->getVar('form_handle', 'raw');
+		$formHandle = $formObj->getVar('form_handle', 'n');
 		$uidCol = 'formulize_user_account_uid_' . $fid;
 		$dataTable = $xoopsDB->prefix('formulize_' . $formHandle);
 		$sql = "SELECT entry_id FROM " . $dataTable . " WHERE `" . $uidCol . "` = " . $uid . " LIMIT 1";
@@ -886,7 +886,7 @@ function injectUserEauTypeData($data, $systemFormHandle, $systemFid) {
 		if (!$eauFormObj) {
 			continue;
 		}
-		$formHandle = $eauFormObj->getVar('form_handle', 'raw');
+		$formHandle = $eauFormObj->getVar('form_handle', 'n');
 		if (!preg_match('/^[a-z0-9_]+$/i', $formHandle)) {
 			continue;
 		}
@@ -1054,7 +1054,7 @@ function injectGroupMembersData($data, $systemFormHandle, $systemFid) {
 			if (!$formObject) {
 				continue;
 			}
-			$formHandle        = $formObject->getVar('form_handle', 'raw');
+			$formHandle        = $formObject->getVar('form_handle', 'n');
 			$defaultFormScreen = intval($formObject->getVar('defaultform'));
 			if (!preg_match('/^[a-z0-9_]+$/i', $formHandle)) {
 				continue;
@@ -1086,7 +1086,7 @@ function injectGroupMembersData($data, $systemFormHandle, $systemFid) {
 			$piElementId    = intval($formObject->getVar('pi'));
 			$entryItemsData = array();
 			if ($piElementId && ($piElement = $element_handler->get($piElementId))) {
-				$piHandle = formulize_db_escape($piElement->getVar('ele_handle', 'raw'));
+				$piHandle = formulize_db_escape($piElement->getVar('ele_handle', 'n'));
 				$piRes    = $xoopsDB->query(
 					"SELECT DISTINCT `$piHandle`, `entry_id` FROM `$dataTable`"
 					. " WHERE `$piHandle` IS NOT NULL AND `$piHandle` != '' ORDER BY `$piHandle`"
@@ -1290,7 +1290,7 @@ function injectGroupCategoriesData($data, $systemFormHandle, $systemFid) {
 			$name = $row['name'];
 			if (!isset($formTitlesByFormId[$fid2])) {
 				$formObject = $form_handler->get($fid2);
-				$formTitlesByFormId[$fid2] = $formObject ? $formObject->getVar('form_title', 'raw') : '';
+				$formTitlesByFormId[$fid2] = $formObject ? $formObject->getVar('form_title', 'n') : '';
 			}
 			$prefix = $formTitlesByFormId[$fid2] ? $formTitlesByFormId[$fid2] . ' - ' : '';
 			$categoryName = ($prefix && strpos($name, $prefix) === 0) ? substr($name, strlen($prefix)) : $name;
@@ -1388,13 +1388,13 @@ function injectGroupEntriesData($data, $systemFormHandle, $systemFid, $eagFids =
 				continue;
 			}
 			$piElementId = intval($formObject->getVar('pi'));
-			$formHandle  = $formObject->getVar('form_handle', 'raw');
+			$formHandle  = $formObject->getVar('form_handle', 'n');
 			$dataTable   = $xoopsDB->prefix('formulize_' . $formHandle);
 			if ($piElementId) {
 				// Query PI values from the data table.
 				$piElement = $element_handler->get($piElementId);
 				if ($piElement) {
-					$piHandle = formulize_db_escape($piElement->getVar('ele_handle', 'raw'));
+					$piHandle = formulize_db_escape($piElement->getVar('ele_handle', 'n'));
 					$sql = "SELECT DISTINCT `$piHandle`, `entry_id` FROM $dataTable WHERE `$piHandle` IS NOT NULL AND `$piHandle` != '' ORDER BY `$piHandle`";
 					$res = $xoopsDB->query($sql);
 					while ($res && ($piRow = $xoopsDB->fetchRow($res))) {

@@ -42,6 +42,13 @@
 		$menuLinkHandler = xoops_getmodulehandler('applicationMenuLinks', 'formulize');
 		$menuLinkObjects = $menuLinkHandler->get($appid, 'all');
 
+		// collect every group id whose menu permissions are touched by this save (old and new),
+		// so that template groups among them can propagate their settings to entry groups afterward
+		$touchedMenuGroupIds = array();
+		$parseGroupIdString = function($groupIdString) {
+			return array_filter(array_map('intval', explode(',', (string) $groupIdString)));
+		};
+
     foreach($setOfMenuItems as $menuitems) {
 			if(strlen($menuitems) > 0){
 				$linkValues = explode("::",$menuitems);
@@ -49,11 +56,15 @@
 					$linkValues[3] = '';
 					$menuitems = implode("::", $linkValues);
 				}
+				$touchedMenuGroupIds = array_merge($touchedMenuGroupIds, $parseGroupIdString($linkValues[4]), $parseGroupIdString($linkValues[5]));
 				if($linkValues[0] == "null"){
 					$application_handler->insertMenuLink($appid, $menuitems);
 					$_POST['reload_settings'] = 1;
 					$menuLinkAdded = true;
 				}	else {
+					if(isset($menuLinkObjects[$linkValues[0]])) {
+						$touchedMenuGroupIds = array_merge($touchedMenuGroupIds, $parseGroupIdString($menuLinkObjects[$linkValues[0]]->getVar('permissions')), $parseGroupIdString($menuLinkObjects[$linkValues[0]]->getVar('default_screen')));
+					}
 					$application_handler->updateMenuLink($appid, $menuitems);
 					if($menuLinkObjects[$linkValues[0]]->getVar('link_text') != $linkValues[1]) {
 						$_POST['reload_settings'] = 1;
@@ -98,9 +109,18 @@
     // added Oct 2013 W.R.
     if($_POST['deletemenuitem']) {
   		$menuitem = $_POST['deletemenuitem'];
+			if(isset($menuLinkObjects[$menuitem])) {
+				$touchedMenuGroupIds = array_merge($touchedMenuGroupIds, $parseGroupIdString($menuLinkObjects[$menuitem]->getVar('permissions')), $parseGroupIdString($menuLinkObjects[$menuitem]->getVar('default_screen')));
+			}
 			$application_handler->deleteMenuLink($appid, $menuitem);
 			$_POST['reload_settings'] = 1;
   	}
+
+    // propagate menu permission changes from any template groups touched by this save to their entry groups,
+    // mirroring how form_permissions_save.php propagates form permission changes
+    if(count($touchedMenuGroupIds) > 0) {
+        formulizeHandler::propagateTemplateGroupPermissions(array_unique($touchedMenuGroupIds));
+    }
 
     // if the form name was changed, then force a reload of the page...reload will be the application id
     if(isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) {

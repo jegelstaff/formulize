@@ -1,9 +1,5 @@
 <div class="panel-content content">
 
-    <p class="formulize-legacy-note">
-        <strong>Legacy feature.</strong> This tool is designed for systems that do not use forms that represent groups. In most modern Formulize systems you will not need it.
-    </p>
-
     <h2>Copy Group Permissions</h2>
     <p>You can copy permissions from one group to another group or groups.</p>
     <br>
@@ -13,7 +9,7 @@
     <p>Copy permissions from which group?
     <select id="managepermissions-source" name="managepermissions-source" size="1">
         <{foreach from=$adminPage.groups key=id item=name}>
-            <option label="<{$name}>" value="<{$id}>"><{$name}></option>           
+            <option label="<{$name}>" value="<{$id}>"><{$name}></option>
         <{/foreach}>
     </select>
     </p>
@@ -39,6 +35,6 @@ function confirmCopy() {
     jQuery('input[type="checkbox"]:checked').each(function() {
         targetGroupNames += "\n"+this.value;
     });
-    return confirm("Are you sure you want to copy the permissions from "+sourceGroupName+" to the group(s):\n"+targetGroupNames+"\n\nThis will REMOVE all permissions for the target group(s) and REPLACE them with the permissions from the source group.");    
+    return confirm("Are you sure you want to copy the permissions from "+sourceGroupName+" to the group(s):\n"+targetGroupNames+"\n\nThis will REMOVE all permissions for the target group(s) and REPLACE them with the permissions from the source group.");
 }
 </script>

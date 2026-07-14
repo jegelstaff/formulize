@@ -33,17 +33,39 @@
 		    <div>
                     <h3>Show this link to these groups:</h3>
                     <select name="addgroups" id="addgroups" size=10 multiple style="overflow-y: scroll;">
+                        <optgroup label="Groups">
                         <{foreach from=$content.groups item=group}>
+                            <{if !$group.isTemplate}>
                             <option value=<{$group.id}><{$group.selected}>><{$group.name}></option>
+                            <{/if}>
                         <{/foreach}>
+                        </optgroup>
+                        <optgroup label="Template Groups (auto-inherited by their entry groups)">
+                        <{foreach from=$content.groups item=group}>
+                            <{if $group.isTemplate}>
+                            <option value=<{$group.id}><{$group.selected}>><{$group.name}></option>
+                            <{/if}>
+                        <{/foreach}>
+                        </optgroup>
                     </select>
 		    </div>
                     <div id="defaultScreenSection">
 			<h3>Send these groups to this link right after they login:</h3>
 			<select name="defaultScreenGroups" id="addDefaultScreenGroups" size=10 multiple style="overflow-y: scroll;">
+			    <optgroup label="Groups">
 			    <{foreach from=$content.groups item=group}>
+				<{if !$group.isTemplate}>
 				<option value=<{$group.id}><{$group.selected}>><{$group.name}></option>
+				<{/if}>
 			    <{/foreach}>
+			    </optgroup>
+			    <optgroup label="Template Groups (auto-inherited by their entry groups)">
+			    <{foreach from=$content.groups item=group}>
+				<{if $group.isTemplate}>
+				<option value=<{$group.id}><{$group.selected}>><{$group.name}></option>
+				<{/if}>
+			    <{/foreach}>
+			    </optgroup>
 			</select>
                     </div>
 			<div class="description">

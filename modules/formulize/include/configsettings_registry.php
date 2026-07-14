@@ -169,6 +169,11 @@ return array(
                 'type' => 'page',
                 'page' => 'managetokens',
             ),
+						'permissions' => array(
+                'name' => _AM_CFG_VIEW_SETTINGS_PERMISSIONS,
+                'type' => 'page',
+                'page' => 'managepermissions',
+            ),
         ),
     ),
 
@@ -370,12 +375,6 @@ return array(
                         array('name' => 'customScope', 'scope' => 'formulize'),
                     ),
                 ),
-            ),
-
-            'permissions' => array(
-                'name' => _AM_CFG_VIEW_SETTINGS_PERMISSIONS,
-                'type' => 'page',
-                'page' => 'managepermissions',
             ),
 
         ),

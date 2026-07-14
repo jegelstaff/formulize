@@ -41,8 +41,8 @@ class formulizeUserAccountMasqueradeElementHandler extends formulizeUserAccountE
 	 * @param array $properties Element property array
 	 * @return array Updated property array
 	 */
-	public function setupAndValidateElementProperties($properties) {
-		$properties = parent::setupAndValidateElementProperties($properties);
+	public function setupAndValidateElementProperties($properties, $existingElement = null) {
+		$properties = parent::setupAndValidateElementProperties($properties, $existingElement);
 		$properties['ele_desc'] = _formulize_UA_MASQUERADE_HELP;
 		return $properties;
 	}

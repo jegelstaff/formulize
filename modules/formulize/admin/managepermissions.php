@@ -25,8 +25,7 @@ foreach($groupList as $id=>$groupName) {
 $sourceGroupId = intval($_POST['managepermissions-source']);
 $allOrFormulizeOnly = $_POST['formulize-or-all'] == 'formulize-perms' ? 'formulize' : 'all';
 
-// TODO: ADD MENU PERMISSIONS TO THIS!
-// AND LIST OF ENTRIES CUSTOMACTIONS FIELD
+// TODO: LIST OF ENTRIES CUSTOMACTIONS FIELD
 // AND SAVED VIEWS PUBGROUPS FIELD
 
 if($sourceGroupId AND count($targetGroupIds)>0 AND $allOrFormulizeOnly) {

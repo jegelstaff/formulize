@@ -720,7 +720,7 @@ EOF;
 	 */
 	public function isSystemUsersTableForm() {
 		global $xoopsDB;
-		return $this->isSystemManagedForm() && $this->getVar('tableform', 'raw') === $xoopsDB->prefix('users');
+		return $this->isSystemManagedForm() && $this->getVar('tableform') === $xoopsDB->prefix('users');
 	}
 
 	/**
@@ -730,7 +730,7 @@ EOF;
 	 */
 	public function isSystemGroupsTableForm() {
 		global $xoopsDB;
-		return $this->isSystemManagedForm() && $this->getVar('tableform', 'raw') === $xoopsDB->prefix('groups');
+		return $this->isSystemManagedForm() && $this->getVar('tableform') === $xoopsDB->prefix('groups');
 	}
 
 	/**
@@ -2168,8 +2168,17 @@ class formulizeFormsHandler {
 	// $newName can be used to override the current ele_handle value.  Introduced for handling the toggling of encryption on/off where we need to rename fields to something other than the ele_handle value.
 	function updateField($element, $oldName, $dataType=false, $newName="") {
 		if(!$element = _getElementObject($element)) {
-			return false;
+			throw new Exception("Could not load element object to update field name");
 		}
+
+		$newName = $newName ? $newName : $element->getVar('ele_handle');
+		$oldName = formulizeElement::sanitize_handle_name($oldName);
+		$newName = formulizeElement::sanitize_handle_name($newName);
+		// if the old name and new name are the same, and no data type is provided, then there's nothing to do
+		if($oldName === $newName AND !$dataType) {
+			return true;
+		}
+
 		global $xoopsDB;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($element->getVar('id_form'));
@@ -2177,23 +2186,19 @@ class formulizeFormsHandler {
 			// first get its current state:
 			$fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) ." LIKE '$oldName'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
 			if(!$fieldStateRes = $xoopsDB->queryF($fieldStateSQL)) {
-                print $xoopsDB->error();
-				return false;
+        throw new Exception("Could not retrieve field state for $oldName: " . $xoopsDB->error());
 			}
 			$fieldStateData = $xoopsDB->fetchArray($fieldStateRes);
 			$dataType = $fieldStateData['Type'];
 		}
-		$newName = $newName ? $newName : $element->getVar('ele_handle');
 		$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " CHANGE `$oldName` `$newName` ". $dataType;
 		if(!$updateFieldRes = $xoopsDB->queryF($updateFieldSQL)) {
-          print $xoopsDB->error();
-		  return false;
+      throw new Exception("Could not update field $oldName to $newName: " . $xoopsDB->error());
 		}
 		if($this->revisionsTableExists($element->getVar('id_form')) AND $this->elementFieldPresent($element, $oldName, revisionsTable: true)) {
 			$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " CHANGE `$oldName` `$newName` ". $dataType;
 			if(!$updateFieldRes = $xoopsDB->queryF($updateFieldSQL)) {
-			  print "Error: could not update the field name for $oldName in form ".$formObject->getVar('form_handle');
-			  return false;
+			  throw new Exception("Could not update the field $oldName in form ".$formObject->getVar('form_handle').": " . $xoopsDB->error());
 			}
 		}
 		return true;

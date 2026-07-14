@@ -59,7 +59,7 @@ if ($aid == 0) {
 $index = 0;
 foreach ($appLinks as $menulink) {
     $menulinks[$index]['menu_id'] = $menulink->getVar('menu_id'); //Oct 2013 W. R.
-    $menulinks[$index]['url'] = $menulink->getVar('url', 'raw') ? $menulink->getVar('url', 'raw') : "http://";
+    $menulinks[$index]['url'] = $menulink->getVar('url') ? $menulink->getVar('url') : "http://";
     $menulinks[$index]['link_text'] = $menulink->getVar('link_text');
     $menulinks[$index]['screen'] = $menulink->getVar('screen');
     $menulinks[$index]['rank'] = $menulink->getVar('rank');
@@ -92,7 +92,9 @@ $forms['url'] = "A URL";
 // get list of group ids that have no default screen set
 $groupsWithDefaultScreen = $application_handler->getGroupsWithDefaultScreen();
 
-// get the list of groups
+// get the list of groups, excluding auto-managed entry groups (they inherit menu permissions
+// from their template group - see formulizeHandler::propagateTemplateGroupPermissions), and
+// flagging template groups so the UI can label them
 $member_handler = xoops_gethandler('member');
 $allGroups = $member_handler->getGroups();
 $groups = array();
@@ -101,9 +103,14 @@ if (!isset($selectedGroups)) {
 }
 $orderGroups = isset($_POST['order']) ? $_POST['order'] : "creation";
 foreach($allGroups as $thisGroup) {
-    $groups[$thisGroup->getVar('name')]['id'] = $thisGroup->getVar('groupid');
+    if ($thisGroup->getVar('entry_id') > 0) {
+        continue; // auto-managed entry group, not manually configurable here
+    }
+    $groupid = $thisGroup->getVar('groupid');
+    $groups[$thisGroup->getVar('name')]['id'] = $groupid;
     $groups[$thisGroup->getVar('name')]['name'] = $thisGroup->getVar('name');
-    $groups[$thisGroup->getVar('name')]['selected'] = in_array($thisGroup->getVar('groupid'), $selectedGroups) ? " selected" : "";
+    $groups[$thisGroup->getVar('name')]['selected'] = in_array($groupid, $selectedGroups) ? " selected" : "";
+    $groups[$thisGroup->getVar('name')]['isTemplate'] = ($thisGroup->getVar('is_group_template') == 1);
 }
 if ($orderGroups == "alpha") {
     ksort($groups);

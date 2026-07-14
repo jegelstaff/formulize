@@ -21,19 +21,41 @@
         <input type="text" name="url" id="url<{$sectionNumber}>" value="<{$content.links[$sectionNumber].url}>">
         </div>
         <div>    
-        <h3>Show this link to these groups:</h3>                        
+        <h3>Show this link to these groups:</h3>
         <select name="groups" id="groups<{$sectionNumber}>" size=10 multiple style="overflow-y: scroll;">
+            <optgroup label="Groups">
             <{foreach from=$content.groups item=group}>
+                <{if !$group.isTemplate}>
                     <option value="<{$group.id}>"> <{$group.name}> </option>
+                <{/if}>
             <{/foreach}>
+            </optgroup>
+            <optgroup label="Template Groups (auto-inherited by their entry groups)">
+            <{foreach from=$content.groups item=group}>
+                <{if $group.isTemplate}>
+                    <option value="<{$group.id}>"> <{$group.name}> </option>
+                <{/if}>
+            <{/foreach}>
+            </optgroup>
         </select>
         </div>
-        <div id="defaultScreenSection<{$sectionNumber}>"> 
-            <h3>Send these groups to this link right after they login:</h3>                        
+        <div id="defaultScreenSection<{$sectionNumber}>">
+            <h3>Send these groups to this link right after they login:</h3>
             <select name="defaultScreenGroups" id="defaultScreenGroups<{$sectionNumber}>" size=10 multiple style="overflow-y: scroll;">
+            <optgroup label="Groups">
             <{foreach from=$content.groups item=group}>
+                <{if !$group.isTemplate}>
                     <option value="<{$group.id}>"> <{$group.name}> </option>
+                <{/if}>
             <{/foreach}>
+            </optgroup>
+            <optgroup label="Template Groups (auto-inherited by their entry groups)">
+            <{foreach from=$content.groups item=group}>
+                <{if $group.isTemplate}>
+                    <option value="<{$group.id}>"> <{$group.name}> </option>
+                <{/if}>
+            <{/foreach}>
+            </optgroup>
             </select>
        </div>
        <div class="description">
