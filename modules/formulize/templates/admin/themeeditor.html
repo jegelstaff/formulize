@@ -1,13 +1,12 @@
  <div class="panel-content content themeeditor">
 
-        <{* Static placeholder options -- theme list and file list will be populated by the backend later *}>
+        <{* File list below is still a static placeholder, to be populated by the backend later *}>
         <div class="form-item">
             <label for="themeeditor-theme_select">Theme to edit:</label>
             <select id="themeeditor-theme_select" name="themeeditor-theme_select" size="1">
-                <option value="">-- Select a theme --</option>
-                <option value="default" selected="selected">Default</option>
-                <option value="formulize_modern">Formulize Modern</option>
-                <option value="custom">Custom</option>
+                <{foreach from=$adminPage.themes key=themeDir item=themeName}>
+                    <option value="<{$themeDir}>" <{if $themeDir == $adminPage.default_theme}>selected="selected"<{/if}>><{$themeName}><{if $themeDir == $adminPage.default_theme}> (active)<{/if}></option>
+                <{/foreach}>
             </select>
             <div class="description">
                 <p>Choose which theme's files you want to edit.</p>

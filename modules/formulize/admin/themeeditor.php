@@ -15,7 +15,13 @@ $adminPage['home_tabs'] = getHomeTabs('themeeditor');
 $breadcrumbtrail[1]['url'] = "page=themeeditor";
 $breadcrumbtrail[1]['text'] = "Home";
 $breadcrumbtrail[2]['text'] = "Theme Editor";
-$adminPage['test'] = "Hello!";
+
+// Themes installed in this Formulize installation
+$adminPage['themes'] = icms_view_theme_Factory::getThemesList();
+
+// Site's current default theme
+global $xoopsConfig;
+$adminPage['default_theme'] = $xoopsConfig['theme_set'];
 
 
 
