@@ -461,6 +461,12 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 					$ele_value['show_clone_button'] = 0;
 			}
 
+			if(!isset($ele_value['edit_icon_style'])) {
+					$config_handler = xoops_gethandler('config');
+					$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+					$ele_value['edit_icon_style'] = isset($formulizeConfig['formulizeDefaultEditIconStyle']) ? $formulizeConfig['formulizeDefaultEditIconStyle'] : FORMULIZE_EDIT_ICON_STYLE_PEN;
+			}
+
 			if(!isset($ele_value['enforceFilterChanges'])) {
 					$ele_value['enforceFilterChanges'] = 0;
 			}
@@ -946,7 +952,11 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	$col_two .= $pageNav; // figured out above
 
 	if($rowsOrForms=="row" OR $rowsOrForms =='') {
-		$col_two .= "<div class='formulize-subform-table-scrollbox'><table id=\"formulize-subform-table-$subform_id\" class=\"formulize-subform-table\">";
+		$subformTableScopeId = "formulize-subform-table-scrollbox-$subform_id$subformElementId$subformInstance";
+		if($subform_element_object AND intval($subform_element_object->ele_value['edit_icon_style']) == FORMULIZE_EDIT_ICON_STYLE_MAGNIFIER) {
+			formulize_printIconStyleOverride("#$subformTableScopeId", '--formulize-loe-icon', 'f114'); // magnifying glass
+		}
+		$col_two .= "<div class='formulize-subform-table-scrollbox' id='$subformTableScopeId'><table id=\"formulize-subform-table-$subform_id\" class=\"formulize-subform-table\">";
 	} else {
 		$col_two .= "";
 		if(!strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {

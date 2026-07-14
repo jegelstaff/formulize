@@ -108,6 +108,19 @@
                         <label for="elements-ele_value[3]-0"><input type="radio" id="elements-ele_value[3]-0" name="elements-ele_value[3]" value="0"<{if !$content.ele_value[3] }> checked="checked"<{/if}>/><i>View</i> buttons are off </label>
                         </div>
                     </div>
+
+                    <div class="form-item" id="edit-icon-style-wrapper"<{if !$content.ele_value[3]}> style="display:none;"<{/if}>>
+                    <div class="edit-icon-style-inner">
+                        <label for="elements-ele_value[edit_icon_style]-1"><{$smarty.const._AM_ELE_SUBFORM_EDITICONSTYLE}></label>
+                        <div class="form-radios">
+                            <label for="elements-ele_value[edit_icon_style]-1"><input type="radio" id="elements-ele_value[edit_icon_style]-1" name="elements-ele_value[edit_icon_style]" value="<{$smarty.const.FORMULIZE_EDIT_ICON_STYLE_PEN}>"<{if $content.ele_value.edit_icon_style eq $smarty.const.FORMULIZE_EDIT_ICON_STYLE_PEN}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_EDITICONSTYLE_PEN}> <i class="icon-edit"></i></label>
+                        </div>
+                        <div class="form-radios">
+                            <label for="elements-ele_value[edit_icon_style]-2"><input type="radio" id="elements-ele_value[edit_icon_style]-2" name="elements-ele_value[edit_icon_style]" value="<{$smarty.const.FORMULIZE_EDIT_ICON_STYLE_MAGNIFIER}>"<{if $content.ele_value.edit_icon_style eq $smarty.const.FORMULIZE_EDIT_ICON_STYLE_MAGNIFIER}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_EDITICONSTYLE_MAGNIFIER}> <i class="icon-magnifier"></i></label>
+                        </div>
+                        <div class="description"><{$smarty.const._AM_ELE_SUBFORM_EDITICONSTYLE_DESC}></div>
+                    </div>
+                    </div>
 										<br />
 
 										<{if $content.typeIsSubformEditableRow}>
@@ -341,6 +354,36 @@
 				$("#rowsPerPage").show(200);
 			} else {
 				$("#rowsPerPage").hide(200);
+			}
+		});
+
+		// show/hide the icon choice depending on whether the View button is off or on
+		// (any of the modal/full-screen/new-row variants), animated the same way as the
+		// showWhen dependencies on the module's grouped Settings pages (see fzShow/fzHide
+		// in include/configsettings.php): slide open then fade in, or fade out then slide up.
+		var fzEditIconStyleDur = 250;
+		function fzEditIconStyleShow() {
+			var $wrapper = $("#edit-icon-style-wrapper");
+			var $inner = $wrapper.find(".edit-icon-style-inner");
+			$wrapper.stop(true, true);
+			$inner.stop(true, true).css("opacity", 0);
+			$wrapper.slideDown(fzEditIconStyleDur, function() {
+				$inner.animate({opacity: 1}, fzEditIconStyleDur);
+			});
+		}
+		function fzEditIconStyleHide() {
+			var $wrapper = $("#edit-icon-style-wrapper");
+			var $inner = $wrapper.find(".edit-icon-style-inner");
+			$wrapper.stop(true, true);
+			$inner.stop(true, true).animate({opacity: 0}, fzEditIconStyleDur, function() {
+				$wrapper.slideUp(fzEditIconStyleDur);
+			});
+		}
+		$("input[name=elements-ele_value\\[3\\]]").change(function() {
+			if($(this).val() == '0') {
+				fzEditIconStyleHide();
+			} else {
+				fzEditIconStyleShow();
 			}
 		});
 

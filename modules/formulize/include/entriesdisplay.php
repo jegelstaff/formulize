@@ -1816,6 +1816,16 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 		}
 	}
 
+	// icon choice overrides: magnifier differs from the formulize.css default (pen), so
+	// print a scoped inline style to switch the glyph just for this screen. Pen (or
+	// unset) matches the CSS default, nothing to do.
+	if($useViewEntryLinks == FORMULIZE_EDIT_ICON_STYLE_MAGNIFIER) {
+		formulize_printIconStyleOverride('#listofentries', '--formulize-loe-icon', 'f114'); // magnifying glass
+	}
+	if($displayIconsToActivateElements == FORMULIZE_EDIT_ICON_STYLE_MAGNIFIER) {
+		formulize_printIconStyleOverride('#listofentries', '--formulize-de-icon', 'f114'); // magnifying glass
+	}
+
 	// Prepare link for downloading calculations
 	$downloadCalculationsURL = "";
 	$downloadCalculationsText = "";
