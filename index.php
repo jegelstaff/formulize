@@ -57,6 +57,27 @@ if($icmsConfig['startpage'] == 'formulize') {
 	}
 }
 
+/**
+ * HTTP Security Headers
+ * Because below here we might be outputting stuff
+ */
+// HTTP Strict Transport Security (HSTS) - two years
+header("Strict-Transport-Security: max-age=63072000");
+// Content Security Policy (CSP) - starting with recommended locked down policy
+header("Content-Security-Policy: default-src 'none';
+	img-src 'self';
+	script-src 'self' ajax.googleapis.com use.fontawesome.com;
+	style-src 'self' fonts.googleapis.com ajax.googleapis.com use.fontawesome.com;
+	font-src fonts.gstatic.com;
+	connect-src 'self'"
+);
+// X-Frame-Options to prevent clickjacking
+header("X-Frame-Options: DENY");
+// Referrer Policy to prevent URL leakage
+header("Referrer-Policy: same-origin");
+// X-Content-Type-Options to prevent MIME sniffing
+header("X-Content-Type-Options: nosniff");
+
 if (isset($icmsConfig['startpage']) && $icmsConfig['startpage'] != "" && $icmsConfig['startpage'] != "--") {
 	$arr = explode('-', $icmsConfig['startpage']);
 	if (count($arr) > 1) {
