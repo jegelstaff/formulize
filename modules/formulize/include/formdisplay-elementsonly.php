@@ -205,6 +205,20 @@ if(!empty($GLOBALS['formulize_CKEditors'])) {
 </script>\n";
 }
 
+// "Office Use Only" toggle. On a full page load this function is defined by formdisplay.php's
+// drawJavascript(), which is skipped in elements-only mode. The ownership/proxy list (and its
+// Show/Hide 'Office Use Only' buttons) is still rendered here though, and those buttons call
+// officeUseOnlyToggle() via inline onclick. Without this re-emit the drawer button throws
+// "officeUseOnlyToggle is not defined". Defined on window so it survives the fragment injector
+// re-creating <script> nodes; harmless if the host page has already defined it.
+print "<script type='text/javascript'>
+window.officeUseOnlyToggle = function() {
+	jQuery('.formulize-office-use-only-toggle').toggle();
+	jQuery('.formulize-office-use-only-content').toggle(250);
+	return false;
+};
+</script>\n";
+
 // validation + entry-lock cleanup helpers, keyed to this form's name so multiple
 // elements-only forms can coexist on a page.
 // NOTE: elements-only validation does not currently support unique value checks.
