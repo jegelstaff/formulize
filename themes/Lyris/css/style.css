@@ -1670,7 +1670,7 @@ a.main-menu__item-link--active::before {
      --field-radius: 6px
      --field-gap:    18px    vertical gap between field rows
      --label-gap:    6px     label-to-field gap
-     --label-text:   13px
+     --label-text:   1rem (~16px, #32)
 
    HTML anatomy output by Lyris form templates:
      .card > .card__header + .card__body > .form-container
@@ -1696,7 +1696,7 @@ a.main-menu__item-link--active::before {
   --field-radius:   var(--r-2);   /* 6px */
   --field-gap:      18px;
   --field-text:     var(--fs-14);
-  --label-text:     var(--fs-13);
+  --label-text:     1rem; /* ~16px, scales with root font-size (#32) */
   --label-gap:      6px;
   --label-col-w:    220px;
   --help-text:      var(--fs-12);
@@ -1708,7 +1708,7 @@ a.main-menu__item-link--active::before {
   --field-pad-x: 10px;
   --field-gap:   12px;
   --field-text:  var(--fs-13);
-  --label-text:  var(--fs-12);
+  --label-text:  1rem; /* ~16px, scales with root font-size (#32) */
   --label-gap:   4px;
   --label-col-w: 200px;
   --help-text:   var(--fs-11, 11px);
@@ -1719,7 +1719,7 @@ a.main-menu__item-link--active::before {
   --field-pad-x: 14px;
   --field-gap:   24px;
   --field-text:  var(--fs-15);
-  --label-text:  var(--fs-14);
+  --label-text:  1.0625rem; /* ~17px, one step up from compact/default for comfy density */
   --label-gap:   8px;
   --label-col-w: 240px;
   --help-text:   var(--fs-13);
@@ -2130,7 +2130,7 @@ textarea.fz-control {
   --field-radius: var(--r-2);
   --field-gap:    18px;
   --field-text:   var(--fs-14);
-  --label-text:   var(--fs-13);
+  --label-text:   1rem; /* ~16px, scales with root font-size (#32) */
   --label-gap:    6px;
   --help-text:    var(--fs-12);
 }
