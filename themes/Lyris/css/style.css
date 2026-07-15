@@ -3117,6 +3117,83 @@ input[type="button"]:not([class*="fz-"]):disabled {
   cursor: not-allowed;
 }
 
+/* ---------- Core `.formulize_button` base (issue #34) ----------
+
+   Formulize core renders many controls as `input[type="button"]` with the
+   `.formulize_button` class (e.g. the list save/go buttons, change-owner,
+   etc.). The fallback above deliberately excludes `.formulize_button` so it
+   won't clobber the richer, container-specific treatments below (titlebar,
+   action panel, selection bar). But that left `.formulize_button` unstyled
+   anywhere those containers don't reach — most visibly the inline-edit list
+   save button in `.fz-list__footer`, which fell back to raw browser chrome.
+
+   Give every `.formulize_button` a base Lyris button look here (mirrors the
+   `.fz-btn` primitive). The container-specific rules and id selectors are more
+   specific, so they still win where they add accent/ghost/icon variants; this
+   just guarantees a sensible default everywhere else, and catches future core
+   buttons that land outside a themed container. */
+.formulize_button,
+input[type="button"].formulize_button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 var(--s-3);
+  border-radius: var(--r-2);
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font: inherit;
+  font-size: var(--fs-13);
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: background var(--dur-1) var(--ease),
+              border-color var(--dur-1) var(--ease),
+              color var(--dur-1) var(--ease);
+}
+
+.formulize_button:hover {
+  background: var(--c-surface-3);
+  border-color: var(--c-text-muted);
+}
+
+.formulize_button:focus-visible {
+  outline: none;
+  box-shadow: var(--sh-focus);
+}
+
+.formulize_button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+/* Formulize's base stylesheet hardcodes id-level backgrounds on the core
+   list buttons (e.g. `#formulize_saveButton { background-color: #61A6EE }` in
+   modules/formulize/templates/css/formulize.css). Those id selectors outrank
+   the class rule above, so the save/go buttons kept the raw blue chrome even
+   after the class rule landed. Reclaim them at matching id specificity so the
+   Lyris surface look wins. The titlebar/action-panel/selection-bar variants
+   already override their own ids, so this only affects the buttons that would
+   otherwise leak the core background (most notably the footer save button). */
+#formulize_saveButton.formulize_button,
+#formulize_goButton.formulize_button {
+  background: var(--c-surface);
+  color: var(--c-text);
+  border-color: var(--c-border-strong);
+  text-indent: 0;
+}
+#formulize_saveButton.formulize_button:hover,
+#formulize_goButton.formulize_button:hover {
+  background: var(--c-surface-3);
+  border-color: var(--c-text-muted);
+}
+
 /* ---------- Login block + login page ----------
    The login block (#block_login_form, sidebar/drawer) and the login page
    (#icms_block_login_form, the fieldset on user.php) share the same inner
