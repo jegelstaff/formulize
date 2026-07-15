@@ -283,15 +283,15 @@ class icms_member_Handler {
 
 		if ($email !== '') {
             $sql = icms::$xoopsDB->query("SELECT login_name, email FROM " . icms::$xoopsDB->prefix('users')
-					. " WHERE login_name = '" . @htmlspecialchars($email, ENT_QUOTES, _CHARSET) . "'");
+					. " WHERE login_name = '" . icms_core_DataFilter::addSlashes($email) . "'");
             list($uname, $email) = icms::$xoopsDB->fetchRow($sql);
             if(!$uname) {
                 if ($table->fieldExists('loginname')) {
                     $sql = icms::$xoopsDB->query("SELECT loginname, email FROM " . icms::$xoopsDB->prefix('users')
-                        . " WHERE email = '" . @htmlspecialchars($email, ENT_QUOTES, _CHARSET) . "'");
+                        . " WHERE email = '" . icms_core_DataFilter::addSlashes($email) . "'");
                 } elseif ($table->fieldExists('login_name')) {
                     $sql = icms::$xoopsDB->query("SELECT login_name, email FROM " . icms::$xoopsDB->prefix('users')
-                         . " WHERE email = '" . @htmlspecialchars($email, ENT_QUOTES, _CHARSET) . "'");
+                         . " WHERE email = '" . icms_core_DataFilter::addSlashes($email) . "'");
                 }
                 list($uname, $email) = icms::$xoopsDB->fetchRow($sql);
             }
