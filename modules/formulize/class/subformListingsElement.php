@@ -453,7 +453,8 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 		if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
 
 			// force row unless it's subformFullForm then we'll take whatever the user sent from UI
-			if($element->getVar('ele_type') != 'subformFullForm') {
+			$isSubformFullForm = $element->getVar('ele_type') == 'subformFullForm';
+			if(!$isSubformFullForm) {
 				$ele_value[8] = 'row';
 			}
 
@@ -469,7 +470,14 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 			// View buttons" radio in the ele_value[3] set. If it's missing entirely (e.g. an
 			// element created/saved through something other than this admin form), fall back
 			// to the module-wide default rather than assuming it's off.
-			if(isset($_POST['elements-ele_value']['edit_icon_style'])) {
+			// Full-form subforms never show this control (or the view-button-mode radios) in
+			// the admin UI at all -- entries always render inline in the accordion/flatform, so
+			// View buttons/icons and "open new entries in the full form" never apply. Force both
+			// off unconditionally, rather than falling through to a default meant for elements
+			// where these fields are just missing from an unrelated save path.
+			if($isSubformFullForm) {
+				$editIconStyle = FORMULIZE_EDIT_ICON_STYLE_OFF;
+			} elseif(isset($_POST['elements-ele_value']['edit_icon_style'])) {
 				$editIconStyle = intval($_POST['elements-ele_value']['edit_icon_style']);
 			} else {
 				$config_handler = xoops_gethandler('config');
@@ -482,7 +490,7 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 					$ele_value['enforceFilterChanges'] = 0;
 			}
 
-			if($editIconStyle == FORMULIZE_EDIT_ICON_STYLE_OFF) {
+			if($isSubformFullForm OR $editIconStyle == FORMULIZE_EDIT_ICON_STYLE_OFF) {
 				// View buttons are off, as if the old "don't show View buttons" radio had been
 				// clicked, regardless of whatever the now-hidden view-button-mode radios hold
 				$ele_value[3] = FORMULIZE_EDIT_ICON_STYLE_OFF;
