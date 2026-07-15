@@ -39,7 +39,7 @@ $modversion = array(
 	'license' => "GPL-2.0",
 	'image' => "images/formulize.gif",
 	'dirname' => "formulize",
-	'dbversion' => 9,
+	'dbversion' => 10,
 	'onUpdate' => "include/on_update.php"
 );
 
@@ -914,6 +914,16 @@ $modversion['config'][] = array(
 	'valuetype' => 'text',
 	'default' => '12',
 	'options' => array(_MI_formulize_TIME_FORMAT_12 => '12', _MI_formulize_TIME_FORMAT_24 => '24'),
+);
+
+$modversion['config'][] = array(
+	'name' => 'formulizeDefaultEditIconStyle',
+	'title' => '_MI_formulize_DEFAULTEDITICONSTYLE',
+	'description' => '_MI_formulize_DEFAULTEDITICONSTYLE_DESC',
+	'formtype' => 'select',
+	'valuetype' => 'int',
+	'default' => 1,
+	'options' => array(_MI_formulize_DEFAULTEDITICONSTYLE_PEN => 1, _MI_formulize_DEFAULTEDITICONSTYLE_MAGNIFIER => 2),
 );
 
 // Date/time display format strings (the _DATESTRING etc. constants that live in each

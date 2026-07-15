@@ -334,6 +334,9 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 			$ele_value['addButtonLimit'] = 0; // no limit on how many entries by default
 			$ele_value['UserFilterByElement'] = 0; // no element to filter entries on by default
 			$ele_value['FilterByElementStartState'] = 1; // Show entries normally. 0 means hide all entries until user applies filter.
+			$config_handler = xoops_gethandler('config');
+			$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+			$ele_value['edit_icon_style'] = isset($formulizeConfig['formulizeDefaultEditIconStyle']) ? intval($formulizeConfig['formulizeDefaultEditIconStyle']) : FORMULIZE_EDIT_ICON_STYLE_PEN;
 			return $ele_value;
 	}
 
@@ -461,12 +464,30 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 					$ele_value['show_clone_button'] = 0;
 			}
 
+			// the "No / Pen icon / Magnifying glass icon" choice now controls whether View
+			// buttons are shown at all, folding in what used to be the separate "don't show
+			// View buttons" radio in the ele_value[3] set. If it's missing entirely (e.g. an
+			// element created/saved through something other than this admin form), fall back
+			// to the module-wide default rather than assuming it's off.
+			if(isset($_POST['elements-ele_value']['edit_icon_style'])) {
+				$editIconStyle = intval($_POST['elements-ele_value']['edit_icon_style']);
+			} else {
+				$config_handler = xoops_gethandler('config');
+				$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+				$editIconStyle = isset($formulizeConfig['formulizeDefaultEditIconStyle']) ? intval($formulizeConfig['formulizeDefaultEditIconStyle']) : FORMULIZE_EDIT_ICON_STYLE_PEN;
+			}
+			$ele_value['edit_icon_style'] = $editIconStyle;
+
 			if(!isset($ele_value['enforceFilterChanges'])) {
 					$ele_value['enforceFilterChanges'] = 0;
 			}
 
-			if(!$_POST['elements-ele_value'][3]) {
-				$ele_value[3] = 0;
+			if($editIconStyle == FORMULIZE_EDIT_ICON_STYLE_OFF) {
+				// View buttons are off, as if the old "don't show View buttons" radio had been
+				// clicked, regardless of whatever the now-hidden view-button-mode radios hold
+				$ele_value[3] = FORMULIZE_EDIT_ICON_STYLE_OFF;
+			} elseif(!$_POST['elements-ele_value'][3]) {
+				$ele_value[3] = 1; // safety net: icons are on, but no view-button-mode radio was submitted
 			}
 			// handle the "start" value, formerlly the blanks value (ele_value[2])
 			// $_POST['subform_start'] will be 'empty', 'blanks', or 'prepop'
@@ -946,7 +967,11 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	$col_two .= $pageNav; // figured out above
 
 	if($rowsOrForms=="row" OR $rowsOrForms =='') {
-		$col_two .= "<div class='formulize-subform-table-scrollbox'><table id=\"formulize-subform-table-$subform_id\" class=\"formulize-subform-table\">";
+		$subformTableScopeId = "formulize-subform-table-scrollbox-$subform_id$subformElementId$subformInstance";
+		if($subform_element_object AND intval($subform_element_object->ele_value['edit_icon_style']) == FORMULIZE_EDIT_ICON_STYLE_MAGNIFIER) {
+			formulize_printIconStyleOverride("#$subformTableScopeId", '--formulize-loe-icon', 'f114'); // magnifying glass
+		}
+		$col_two .= "<div class='formulize-subform-table-scrollbox' id='$subformTableScopeId'><table id=\"formulize-subform-table-$subform_id\" class=\"formulize-subform-table\">";
 	} else {
 		$col_two .= "";
 		if(!strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {

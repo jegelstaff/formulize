@@ -88,6 +88,11 @@ define("_MI_formulize_TIME_FORMAT_DESC", "Controls how times are displayed in li
 define("_MI_formulize_TIME_FORMAT_12", "12-hour (e.g. 1:30pm)");
 define("_MI_formulize_TIME_FORMAT_24", "24-hour (e.g. 13:30)");
 
+define("_MI_formulize_DEFAULTEDITICONSTYLE", "Default view/edit entry icon");
+define("_MI_formulize_DEFAULTEDITICONSTYLE_DESC", "Controls which icon is selected by default on new list-of-entries screens and new subform elements, for the link that lets a user click through to view/edit an entry. This can still be changed per screen or per subform element afterwards.");
+define("_MI_formulize_DEFAULTEDITICONSTYLE_PEN", "Pen icon");
+define("_MI_formulize_DEFAULTEDITICONSTYLE_MAGNIFIER", "Magnifying glass icon");
+
 define('_MI_formulize_SHOW_EMPTY_ELEMENTS_WHEN_READ_ONLY', "Show empty form elements when displaying them as read-only?");
 define('_MI_formulize_SHOW_EMPTY_ELEMENTS_WHEN_READ_ONLY_DESC', "When form elements are rendered in read-only mode, and there is no value to display, the element is skipped by default and not shown. If you want to show all elements even empty ones when users cannot edit the entry, turn this setting on.");
 

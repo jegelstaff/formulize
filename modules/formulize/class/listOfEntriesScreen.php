@@ -379,7 +379,9 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
 			$defaultListScreen->setVar('columnwidth', 0);
 			$defaultListScreen->setVar('textwidth', 255);
 			$defaultListScreen->setVar('usecheckboxes', 0);
-			$defaultListScreen->setVar('useviewentrylinks', 1);
+			$config_handler = xoops_gethandler('config');
+			$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+			$defaultListScreen->setVar('useviewentrylinks', isset($formulizeConfig['formulizeDefaultEditIconStyle']) ? $formulizeConfig['formulizeDefaultEditIconStyle'] : FORMULIZE_EDIT_ICON_STYLE_PEN);
 			$defaultListScreen->setVar('desavetext', _formulize_SAVE);
 			// Buttons
 			// ********* when users-groups is merged in, need to change this to use effectivesingle on the registered users group!!!

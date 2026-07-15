@@ -10681,6 +10681,25 @@ function formulize_get_file_version($relativeFilePath) {
 	return 0;
 }
 
+// prints a scoped inline <style> block overriding one of the formulize icon CSS custom
+// properties (--formulize-loe-icon or --formulize-de-icon), so a single screen/subform
+// instance can use a different icon glyph than the shared formulize.css default, without
+// editing that heavily cached, sitewide file. Guarded so the same scope/variable pair is
+// only printed once per page, even if called multiple times (e.g. re-renders, ajax panels).
+// $glyphHex is the icon font codepoint's hex digits only (e.g. "f114"), matching the
+// "\f114" escape syntax already used for these glyphs in formulize.css.
+function formulize_printIconStyleOverride($cssSelector, $cssVar, $glyphHex) {
+	$guardKey = $cssSelector . '|' . $cssVar;
+	if (!empty($GLOBALS['formulize_iconStyleOverridesOutput'][$guardKey])) {
+		return;
+	}
+	$GLOBALS['formulize_iconStyleOverridesOutput'][$guardKey] = true;
+	if (!preg_match('/^[0-9a-fA-F]+$/', $glyphHex)) {
+		return;
+	}
+	print "<style>" . htmlspecialchars($cssSelector, ENT_QUOTES) . " { " . htmlspecialchars($cssVar, ENT_QUOTES) . ": \"\\" . $glyphHex . "\"; }</style>\n";
+}
+
 /**
  * Get list of candidate owners for form entries
  *

@@ -616,6 +616,9 @@ define("_AM_ELE_SUBFORM_UITYPE_FLATFORM", "Display each subform entry separated 
 define("_AM_ELE_SUBFORM_ADD_NONE", "No");
 define("_AM_ELE_SUBFORM_ADD_SUBFORM", "Yes, only if the user can add entries in the subform");
 define("_AM_ELE_SUBFORM_ADD_PARENT", "Yes, only if the user can add entries in the main form");
+define("_AM_ELE_SUBFORM_EDITICONSTYLE", "Which icon should the <i>View</i> button use?");
+define("_AM_ELE_SUBFORM_EDITICONSTYLE_PEN", "Pen icon");
+define("_AM_ELE_SUBFORM_EDITICONSTYLE_MAGNIFIER", "Magnifying glass icon");
 
 
 // grids
@@ -931,6 +934,10 @@ define("_AM_FORMULIZE_SCREEN_LOE_UCHALL", "Yes, show the checkboxes on all entri
 define("_AM_FORMULIZE_SCREEN_LOE_UCHNONE", "No, do not show the checkboxes");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_USECHECKBOXES", "If you use a custom List Item Template, this option will control whether the <i>\$selectionCheckbox</i> variable is set for each row in the list.");
 define("_AM_FORMULIZE_SCREEN_LOE_USEVIEWENTRYLINKS", "Should the icon to click through to the full entry details appear to the left of each entry?");
+define("_AM_FORMULIZE_SCREEN_LOE_USEVIEWENTRYLINKS_PEN", "Yes - use the pen icon");
+define("_AM_FORMULIZE_SCREEN_LOE_USEVIEWENTRYLINKS_MAGNIFIER", "Yes - use the magnifying glass icon");
+define("_AM_FORMULIZE_SCREEN_LOE_DEDISPLAY_PEN", "Display them when the user clicks a pen icon to activate them");
+define("_AM_FORMULIZE_SCREEN_LOE_DEDISPLAY_MAGNIFIER", "Display them when the user clicks a magnifying glass icon to activate them");
 define("_AM_FORMULIZE_SCREEN_LOE_HIDDENCOLUMNS", "Select any columns where you would like the current value from each entry to be included in the list as a hidden form element.");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_HIDDENCOLUMNS", "This option is useful if you need some text on the screen to be sent back in <i>\$_POST</i> as part of the next page load.  You can use <i>gatherHiddenValue('</i>handle<i>');</i> in a custom button access the values you receive.  Any columns you choose will still be displayed normally in the list, in addition to having the hidden form elements created.");
 define("_AM_FORMULIZE_SCREEN_LOE_DECOLUMNS", "Select any columns where you would like the data displayed as a form element, rather than as text:");

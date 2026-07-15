@@ -225,6 +225,7 @@ return array(
                     ),
                     _AM_CFG_SEC_LISTS => array(
                         array('name' => 'LOE_limit', 'scope' => 'formulize'),
+                        array('name' => 'formulizeDefaultEditIconStyle', 'scope' => 'formulize'),
                     ),
                 ),
             ),

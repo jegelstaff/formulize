@@ -112,10 +112,13 @@
     <div class="form-item">
       <label for="screens-useviewentrylinks"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USEVIEWENTRYLINKS}></label>
       <div class="form-radios">
-			  <label for="1"><input type="radio" id="screens-useviewentrylinks" name="screens-useviewentrylinks"<{if $content.useviewentrylinks eq 1}> checked="checked"<{/if}> value="1"/><{$smarty.const._YES}></label>
+			  <label for="1"><input type="radio" id="screens-useviewentrylinks" name="screens-useviewentrylinks"<{if $content.useviewentrylinks eq $smarty.const.FORMULIZE_EDIT_ICON_STYLE_PEN}> checked="checked"<{/if}> value="<{$smarty.const.FORMULIZE_EDIT_ICON_STYLE_PEN}>"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USEVIEWENTRYLINKS_PEN}> <i class="icon-edit"></i></label>
 		  </div>
 		  <div class="form-radios">
-			  <label for="0"><input type="radio" id="screens-useviewentrylinks" name="screens-useviewentrylinks"<{if $content.useviewentrylinks eq 0}> checked="checked"<{/if}> value="0"/><{$smarty.const._NO}></label>
+			  <label for="2"><input type="radio" id="screens-useviewentrylinks" name="screens-useviewentrylinks"<{if $content.useviewentrylinks eq $smarty.const.FORMULIZE_EDIT_ICON_STYLE_MAGNIFIER}> checked="checked"<{/if}> value="<{$smarty.const.FORMULIZE_EDIT_ICON_STYLE_MAGNIFIER}>"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USEVIEWENTRYLINKS_MAGNIFIER}> <i class="icon-magnifier"></i></label>
+		  </div>
+		  <div class="form-radios">
+			  <label for="0"><input type="radio" id="screens-useviewentrylinks" name="screens-useviewentrylinks"<{if $content.useviewentrylinks eq $smarty.const.FORMULIZE_EDIT_ICON_STYLE_OFF}> checked="checked"<{/if}> value="<{$smarty.const.FORMULIZE_EDIT_ICON_STYLE_OFF}>"/><{$smarty.const._NO}></label>
 		  </div>
       <div class="description"></div>
     </div>
@@ -137,10 +140,13 @@
     <div class="form-item">
       <label for="screens-dedisplay">How should the form elements be displayed?</label>
       <div class="form-radios">
-	      <label for="0"><input type="radio" id="screens-dedisplay" name="screens-dedisplay"<{if $content.dedisplay eq 0}> checked="checked"<{/if}> value="0"/>Display them all at once when the list loads</label>
+	      <label for="0"><input type="radio" id="screens-dedisplay" name="screens-dedisplay"<{if $content.dedisplay eq $smarty.const.FORMULIZE_EDIT_ICON_STYLE_OFF}> checked="checked"<{/if}> value="<{$smarty.const.FORMULIZE_EDIT_ICON_STYLE_OFF}>"/>Display them all at once when the list loads</label>
       </div>
       <div class="form-radios">
-	      <label for="1"><input type="radio" id="screens-dedisplay" name="screens-dedisplay"<{if $content.dedisplay eq 1}> checked="checked"<{/if}> value="1"/>Display them when the user clicks an icon to activate them</label>
+	      <label for="1"><input type="radio" id="screens-dedisplay" name="screens-dedisplay"<{if $content.dedisplay eq $smarty.const.FORMULIZE_EDIT_ICON_STYLE_PEN}> checked="checked"<{/if}> value="<{$smarty.const.FORMULIZE_EDIT_ICON_STYLE_PEN}>"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DEDISPLAY_PEN}> <i class="icon-edit"></i></label>
+      </div>
+      <div class="form-radios">
+	      <label for="2"><input type="radio" id="screens-dedisplay" name="screens-dedisplay"<{if $content.dedisplay eq $smarty.const.FORMULIZE_EDIT_ICON_STYLE_MAGNIFIER}> checked="checked"<{/if}> value="<{$smarty.const.FORMULIZE_EDIT_ICON_STYLE_MAGNIFIER}>"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DEDISPLAY_MAGNIFIER}> <i class="icon-magnifier"></i></label>
       </div>
       <div class="description"></div>
     </div>

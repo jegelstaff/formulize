@@ -496,10 +496,13 @@ a.de-edit-icon {
   margin-left: 0.5em;
   padding: 0.1em; }
 
-.loe-edit-entry:before,
+.loe-edit-entry:before {
+  color: #fff;
+  content: var(--formulize-loe-icon, "\f10d"); }
+
 .de-edit-icon:before {
   color: #fff;
-  content: "\f10d"; }
+  content: var(--formulize-de-icon, "\f10d"); }
 
 a.loe-edit-entry:hover,
 a.de-edit-icon:hover {

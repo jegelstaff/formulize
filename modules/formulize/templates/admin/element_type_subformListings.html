@@ -47,6 +47,7 @@
 			</select>
 		</div>
 
+				<br />
         <div class="form-item">
             <p>Show the button to add entries?</p>
             <div class="form-radios">
@@ -92,21 +93,33 @@
 
 				<{if !$content.typeIsSubformFullForm}>
 
+										<br />
                     <div class="form-item">
-                        <p>Show <i>View</i> buttons, and view entries in a <b>dialog box</b></p>
+                        <label for="elements-ele_value[edit_icon_style]-1"><{$smarty.const._AM_ELE_SUBFORM_EDITICONSTYLE}></label>
+                        <div class="form-radios">
+                            <label for="elements-ele_value[edit_icon_style]-0"><input type="radio" id="elements-ele_value[edit_icon_style]-0" name="elements-ele_value[edit_icon_style]" value="<{$smarty.const.FORMULIZE_EDIT_ICON_STYLE_OFF}>"<{if !$content.ele_value[3]}> checked="checked"<{/if}>/><{$smarty.const._NO}></label>
+                        </div>
+                        <div class="form-radios">
+                            <label for="elements-ele_value[edit_icon_style]-1"><input type="radio" id="elements-ele_value[edit_icon_style]-1" name="elements-ele_value[edit_icon_style]" value="<{$smarty.const.FORMULIZE_EDIT_ICON_STYLE_PEN}>"<{if $content.ele_value[3] AND $content.ele_value.edit_icon_style ne $smarty.const.FORMULIZE_EDIT_ICON_STYLE_MAGNIFIER}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_EDITICONSTYLE_PEN}> <i class="icon-edit"></i></label>
+                        </div>
+                        <div class="form-radios">
+                            <label for="elements-ele_value[edit_icon_style]-2"><input type="radio" id="elements-ele_value[edit_icon_style]-2" name="elements-ele_value[edit_icon_style]" value="<{$smarty.const.FORMULIZE_EDIT_ICON_STYLE_MAGNIFIER}>"<{if $content.ele_value[3] AND $content.ele_value.edit_icon_style eq $smarty.const.FORMULIZE_EDIT_ICON_STYLE_MAGNIFIER}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_EDITICONSTYLE_MAGNIFIER}> <i class="icon-magnifier"></i></label>
+                        </div>
+                    </div>
+
+                    <div class="form-item" id="view-button-mode-wrapper"<{if !$content.ele_value[3]}> style="display:none;"<{/if}>>
+                    <div class="view-button-mode-inner">
+                        <p>View entries in a <b>dialog box</b></p>
                         <div class="form-radios">
                             <label for="elements-ele_value[3]-2"><input type="radio" id="elements-ele_value[3]-2" name="elements-ele_value[3]" value="2"<{if $content.ele_value[3] == 2 }> checked="checked"<{/if}>/>New entries show up in the dialog</label><br>
                             <label for="elements-ele_value[3]-3"><input type="radio" id="elements-ele_value[3]-3" name="elements-ele_value[3]" value="3"<{if $content.ele_value[3] == 3 }> checked="checked"<{/if}>/>New entries show up as new rows</label>
                         </div>
-                        <p>Show <i>View</i> buttons, and view entries <b>full screen</b></p>
+                        <p>View entries <b>full screen</b></p>
                         <div class="form-radios">
-                            <label for="elements-ele_value[3]-1"><input type="radio" id="elements-ele_value[3]-1" name="elements-ele_value[3]" value="1"<{if $content.ele_value[3] == 1 }> checked="checked"<{/if}>/>New entries are displayed full screen</label><br>
+                            <label for="elements-ele_value[3]-1"><input type="radio" id="elements-ele_value[3]-1" name="elements-ele_value[3]" value="1"<{if $content.ele_value[3] == 1 OR !$content.ele_value[3]}> checked="checked"<{/if}>/>New entries are displayed full screen</label><br>
                             <label for="elements-ele_value[3]-4"><input type="radio" id="elements-ele_value[3]-4" name="elements-ele_value[3]" value="4"<{if $content.ele_value[3] == 4 }> checked="checked"<{/if}>/>New entries show up as new rows</label>
                         </div>
-                        <p>Do not show the <i>View</i> buttons</p>
-                         <div class="form-radios">
-                        <label for="elements-ele_value[3]-0"><input type="radio" id="elements-ele_value[3]-0" name="elements-ele_value[3]" value="0"<{if !$content.ele_value[3] }> checked="checked"<{/if}>/><i>View</i> buttons are off </label>
-                        </div>
+                    </div>
                     </div>
 										<br />
 
@@ -341,6 +354,36 @@
 				$("#rowsPerPage").show(200);
 			} else {
 				$("#rowsPerPage").hide(200);
+			}
+		});
+
+		// show/hide the old view-button-mode choices depending on whether the new
+		// No/Pen/Magnifying-glass choice is off or on, animated the same way as the
+		// showWhen dependencies on the module's grouped Settings pages (see fzShow/fzHide
+		// in include/configsettings.php): slide open then fade in, or fade out then slide up.
+		var fzEditIconStyleDur = 250;
+		function fzEditIconStyleShow() {
+			var $wrapper = $("#view-button-mode-wrapper");
+			var $inner = $wrapper.find(".view-button-mode-inner");
+			$wrapper.stop(true, true);
+			$inner.stop(true, true).css("opacity", 0);
+			$wrapper.slideDown(fzEditIconStyleDur, function() {
+				$inner.animate({opacity: 1}, fzEditIconStyleDur);
+			});
+		}
+		function fzEditIconStyleHide() {
+			var $wrapper = $("#view-button-mode-wrapper");
+			var $inner = $wrapper.find(".view-button-mode-inner");
+			$wrapper.stop(true, true);
+			$inner.stop(true, true).animate({opacity: 0}, fzEditIconStyleDur, function() {
+				$wrapper.slideUp(fzEditIconStyleDur);
+			});
+		}
+		$("input[name=elements-ele_value\\[edit_icon_style\\]]").change(function() {
+			if($(this).val() == '<{$smarty.const.FORMULIZE_EDIT_ICON_STYLE_OFF}>') {
+				fzEditIconStyleHide();
+			} else {
+				fzEditIconStyleShow();
 			}
 		});
 
