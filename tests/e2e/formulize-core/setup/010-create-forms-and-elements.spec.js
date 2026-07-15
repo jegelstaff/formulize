@@ -713,7 +713,7 @@ test.describe('Create/Update Subform Interfaces', async () => {
 		await page.locator('select[name="orderpref"]').selectOption('bottom');
 		await page.getByRole('link', { name: 'Options' }).click();
 		await waitForAdminPageReady(page); // had a timing issue here once? might need to wait for admin page ready after every tab click?? this is why we used to have retries 2.
-		await page.getByRole('radio', { name: 'No', exact: true }).check();
+		await page.locator('[id="elements-ele_value[6]-no"]').check(); // hideaddentries (Show the add button) = No
 		await page.getByRole('checkbox', { name: 'Show the Delete button' }).uncheck();
 		await page.getByRole('link', { name: 'Display Settings' }).click();
 		await page.locator('ul#multi-screen-tree li.leaf').first().locator('input[type=checkbox]').check();
@@ -802,11 +802,11 @@ test.describe('Create/Update Subform Interfaces', async () => {
 			{label: 'How would you rate the exhibit...'},
 			{label: 'Flagged to the staff'},
 			{label: 'Staff comments'}]);
-		await page.getByRole('radio', { name: 'No', exact: true }).check();
+		await page.locator('[id="elements-ele_value[6]-no"]').check(); // hideaddentries (Show the add button) = No
 		await page.locator('select[name="elements_ele_value_disabledelements[]"]').selectOption([
 			{label: 'Which was your favourite artifact?'},
 			{label: 'How would you rate the exhibit...'}]);
-		await page.getByRole('radio', { name: 'View buttons are off' }).check();
+		await page.locator('[id="elements-ele_value[edit_icon_style]-0"]').check(); // view buttons are off
 		await page.locator('input[name="elements-ele_value[SortingDirection]"]').nth(1).check();
 		await saveAdminForm(page);
 	});
