@@ -334,6 +334,9 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 			$ele_value['addButtonLimit'] = 0; // no limit on how many entries by default
 			$ele_value['UserFilterByElement'] = 0; // no element to filter entries on by default
 			$ele_value['FilterByElementStartState'] = 1; // Show entries normally. 0 means hide all entries until user applies filter.
+			$config_handler = xoops_gethandler('config');
+			$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+			$ele_value['edit_icon_style'] = isset($formulizeConfig['formulizeDefaultEditIconStyle']) ? intval($formulizeConfig['formulizeDefaultEditIconStyle']) : FORMULIZE_EDIT_ICON_STYLE_PEN;
 			return $ele_value;
 	}
 
