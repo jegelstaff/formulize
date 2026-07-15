@@ -29,7 +29,7 @@
                             <p>Image files can't be edited here. This is a preview of the selected file.</p>
                         </div>
                     <{else}>
-                        <textarea id="themeeditor-file_content" name="file_content" class="code-textarea" rows="30" title="Contents of <{$adminPage.selected_file}>"/>
+                        <textarea id="themeeditor-file_content" name="file_content" class="<{$adminPage.editorClass}>" rows="30" title="Contents of <{$adminPage.selected_file}>"/>
 <{$adminPage.selected_file_content}></textarea>
                     <{/if}>
 						 </fieldset>

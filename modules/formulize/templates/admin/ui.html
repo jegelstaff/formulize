@@ -433,21 +433,61 @@ $(document).ready(function() {
   $(document).ready(function() {
     $('.code-textarea').each(function() {
 			if (this.type !== 'textarea') {
-					return true; // continue
+				return true; // continue
 			}
 			cm = CodeMirror.fromTextArea(this, {
-					lineNumbers: true,
-					matchBrackets: true,
-					mode: "application/x-httpd-php",
-					indentUnit: 4,
-					indentWithTabs: true,
-					enterMode: "keep",
-					tabMode: "shift",
-					lineWrapping: true,
-					onChange: function(instance) {
-							setDisplay('savewarning','block');
-							instance.save(); // Call this to update the textarea value for the ajax post
-					}
+				lineNumbers: true,
+				matchBrackets: true,
+				mode: "application/x-httpd-php",
+				indentUnit: 2,
+				indentWithTabs: true,
+				enterMode: "keep",
+				tabMode: "shift",
+				lineWrapping: true,
+				onChange: function(instance) {
+					setDisplay('savewarning','block');
+					instance.save(); // Call this to update the textarea value for the ajax post
+				}
+			});
+			codemirrors.push(cm);
+		});
+		$('.code-textarea-js').each(function() {
+			if (this.type !== 'textarea') {
+				return true; // continue
+			}
+			cm = CodeMirror.fromTextArea(this, {
+				lineNumbers: true,
+				matchBrackets: true,
+				mode: "text/javascript",
+				indentUnit: 2,
+				indentWithTabs: true,
+				enterMode: "keep",
+				tabMode: "shift",
+				lineWrapping: true,
+				onChange: function(instance) {
+					setDisplay('savewarning','block');
+					instance.save(); // Call this to update the textarea value for the ajax post
+				}
+			});
+			codemirrors.push(cm);
+		});
+		$('.code-textarea-css').each(function() {
+			if (this.type !== 'textarea') {
+				return true; // continue
+			}
+			cm = CodeMirror.fromTextArea(this, {
+				lineNumbers: true,
+				matchBrackets: true,
+				mode: "text/css",
+				indentUnit: 2,
+				indentWithTabs: true,
+				enterMode: "keep",
+				tabMode: "shift",
+				lineWrapping: true,
+				onChange: function(instance) {
+					setDisplay('savewarning','block');
+					instance.save(); // Call this to update the textarea value for the ajax post
+				}
 			});
 			codemirrors.push(cm);
 		});

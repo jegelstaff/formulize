@@ -106,6 +106,14 @@ $imageExtensions = array('png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'ico', 'bmp
 $selectedExtension = strtolower(pathinfo($adminPage['selected_file'], PATHINFO_EXTENSION));
 $adminPage['selected_file_is_image'] = in_array($selectedExtension, $imageExtensions, true);
 
+if(substr($adminPage['selected_file'], -3) == '.js') {
+  $adminPage['editorClass']	= 'code-textarea-js';
+} elseif(substr($adminPage['selected_file'], -4) == '.css') {
+	$adminPage['editorClass']	= 'code-textarea-css';
+} else {
+	$adminPage['editorClass']	= 'code-textarea';
+}
+
 // Contents of the selected file, for display in the editor
 if ($adminPage['selected_file_is_image']) {
     $adminPage['selected_file_content'] = '';
