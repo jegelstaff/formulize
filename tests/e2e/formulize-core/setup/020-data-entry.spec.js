@@ -705,6 +705,7 @@ test.describe('New donation inside Donor record', () => {
 		await page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true }).click();
 		await page.getByRole('row', { name: 'François-Marie Arouet' }).getByRole('link').first().click();
 	  await page.getByRole('link', { name: 'Donated Artifacts', exact: true }).click();
+		await expect(page.getByText('Candide')).toBeVisible(); // check for something that is in the page, to make sure that the page has actually loaded... the not.toBeVisible() check below is not sufficient, because it will pass if the page hasn't totally finished loading yet and it's not visible just because of timing issues
 		await expect(page.getByText('Add new artifact')).not.toBeVisible();
 		await page.getByRole('link', { name: 'Admin' }).click();
 		await page.getByRole('link', { name: 'Museum' }).click();

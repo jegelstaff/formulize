@@ -94,7 +94,7 @@ test.describe('Validate Data', () => {
 		await expect(page.locator('#celladdress_2_25')).toContainText('François-Marie Arouet');
 		await expect(page.locator('#celladdress_2_26')).toContainText('169-422-1778');
 		await expect(page.locator('#celladdress_2_27')).toContainText('voltaire@enlightenment.org');
-		await expect(page.locator('#celladdress_2_28')).toContainText('Château de...');
+		await expect(page.locator('#celladdress_2_28')).toContainText('Château de Cirey');
 		await expect(page.locator('#celladdress_2_29')).toContainText('Quebec');
 		await expect(page.locator('#celladdress_2_30')).toContainText('G1A 0A2');
 		await expect(page.locator('#celladdress_2_31')).toContainText('#6c2d2d');
