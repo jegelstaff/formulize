@@ -42,13 +42,15 @@ if($icmsConfig['startpage'] == 'formulize') {
 	if(!$startSid AND $startFid) {
 		$startSid = determineScreenForUserFromFid($startFid);
 	}
-	if(!$startFid AND !$startSid AND !$startURL) {
-		$icmsConfig['startpage'] = '--';
-	} elseif(!$xoopsUser AND !$startSid AND !$startURL) {
+	if(!$xoopsUser AND !$startSid AND !$startURL) {
 		// Anons can only be sent to a screen or an external URL (see the "must go through a screen"
-		// rule in modules/formulize/initialize.php). A raw form with no defaultform/defaultlist screen
-		// configured can't resolve to a screen, so falling through here would bounce them back to "/"
-		// and loop. Fall back to the normal home page instead.
+		// rule in modules/formulize/initialize.php) - a raw form with no defaultform/defaultlist screen
+		// configured, or nothing configured at all, leaves nowhere Formulize-specific to send them, so
+		// fall back to the normal home page (where they can find the login box) instead of bouncing
+		// them into the module and looping.
+		// Logged-in users always proceed into the module below, even with nothing configured for them
+		// (they land on the general applications page) - that's the pre-existing behaviour and other
+		// code (e.g. the install flow) depends on it.
 		$icmsConfig['startpage'] = '--';
 	} else {
 		if($startSid) {
