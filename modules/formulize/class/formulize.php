@@ -1711,25 +1711,66 @@ class formulizeHandler {
 		return true;
 	}
 
-	// NOTE - ALL ELEMENT TYPES MUST HAVE THE mcpElementPropertiesDescriptionAndExamples STATIC METHOD OR ELSE THEY WON'T BE FOUND AS VALID, ONCE THE ADMIN UI USES THE UPSERT METHOD
+	/**
+	 * Validate that an element type has a corresponding class file, ie: that it is a genuinely implemented element type in Formulize.
+	 * This is a broader check than validateElementTypeForMCP() - it does not require MCP/AI-tool support (the mcpElementPropertiesDescriptionAndExamples
+	 * static method), just that the type is implemented. Use this for any general-purpose validation, eg: upsertElementSchemaAndResources()
+	 * and other places that must accept legacy/system types (fileUpload, userAccount*, eagGroupMembers, etc.) as well as MCP-discoverable ones.
+	 * @param string $elementType The element type to validate - passed by reference so we can correct the case if needed
+	 * @param bool $return Default is false. If true, the function will return instead of throwing an exception on invalid type
+	 * @throws Exception if the element type is not valid, if return is false.
+	 * @return bool Returns true if valid. If $return param is true, returns false if not valid, or throws the exception.
+	 */
+	public static function validateElementType(&$elementType, $return = false) {
+		$allValidElementTypes = formulizeHandler::discoverAllElementTypeFiles();
+		if(in_array($elementType, $allValidElementTypes)) {
+			return true;
+		}
+		// try correcting the case of the element type
+		foreach($allValidElementTypes as $validElementType) {
+			if(strtolower($validElementType) == strtolower($elementType)) {
+				$elementType = $validElementType;
+				return true;
+			}
+		}
+		if($return) {
+			return false;
+		} else {
+			throw new Exception("Element type '$elementType' is not valid. Valid element types are: ".implode(', ', $allValidElementTypes));
+		}
+	}
 
 	/**
-	 * Validate that the element type
+	 * Discover every element type that has a corresponding class file on disk, regardless of whether it supports MCP/AI tooling.
+	 * @return array Flat array of valid element type strings, eg: 'text', 'fileUpload', 'userAccountEmail', 'eagGroupMembers'...
+	 */
+	public static function discoverAllElementTypeFiles() {
+		static $allElementTypes = null;
+		if($allElementTypes === null) {
+			$allElementTypes = array();
+			$elementClassPath = XOOPS_ROOT_PATH . '/modules/formulize/class';
+			$elementFiles = glob($elementClassPath . '/*Element.php');
+			if($elementFiles === false) {
+				throw new FormulizeMCPException('No element class files found in ' . $elementClassPath, 'internal_formulize_error');
+			}
+			foreach ($elementFiles as $file) {
+				$allElementTypes[] = str_replace('Element.php', '', basename($file));
+			}
+		}
+		return $allElementTypes;
+	}
+
+	/**
+	 * Validate that an element type is supported via the MCP (AI) tools, ie: that it has the mcpElementPropertiesDescriptionAndExamples static method.
+	 * This is a narrower check than validateElementType() - not all valid element types are exposed to MCP/AI tooling (eg: fileUpload, userAccount*,
+	 * and other system elements are valid but not MCP-discoverable). Use this only when validating input that is coming from the MCP tools.
 	 * @param string $elementType The element type to validate - passed by reference so we can correct the case if needed
 	 * @param string|null $requestedCategory Optional. If provided, a case insensitive double check of elements with this static $category designation will be attempted
 	 * @param bool $return Default is false. If true, the function will return instead of throwing an exception on invalid type
 	 * @throws Exception if the element type is not valid, if return is false.
 	 * @return bool Returns true if valid. If $return param is true, returns false if not valid, or throws the exception.
 	 */
-	public static function validateElementType(&$elementType, $requestedCategory = null, $return = false) {
-		if(substr($elementType, 0, 11) == 'userAccount') {
-			// userAccount elements are valid (not discoverable for MCP, but valid for upsert)
-			return true;
-		}
-		if($elementType === 'eagGroupMembers') {
-			// eagGroupMembers is a system element added to entries-are-groups forms, not discoverable for MCP
-			return true;
-		}
+	public static function validateElementTypeForMCP(&$elementType, $requestedCategory = null, $return = false) {
 		list($elementTypes, $mcpElementDescriptions, $mcpSingleTypeDescriptions) = formulizeHandler::discoverElementTypes();
 		$allValidElementTypes = array();
 		foreach($elementTypes as $category=>$categoryTypes) {

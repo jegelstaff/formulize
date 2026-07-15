@@ -1391,7 +1391,7 @@ Do not use foreign key values with linked elements; use the readable value inste
 			if(empty($form_id) OR $form_id <= 0 OR empty($type) OR empty($caption)) {
 				throw new FormulizeMCPException('form_id and type and caption are required for creating elements', 'invalid_data');
 			}
-			formulizeHandler::validateElementType($type, $elementCategory);
+			formulizeHandler::validateElementTypeForMCP($type, $elementCategory);
 		}
 		if(!$isCreate) {
 			if(empty($element_identifier)) {
