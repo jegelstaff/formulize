@@ -175,14 +175,16 @@ if ($screen) {
         $screenAllowedForUser = false;
         $passCodeHandler = xoops_getmodulehandler('passcode', 'formulize');
         $passCode = isset($_SESSION['formulize_passCode_'.$screen->getVar('sid')]) ? $_SESSION['formulize_passCode_'.$screen->getVar('sid')] : '';
+        // a passcode can also be supplied via the URL (?passcode=...), same field name as the passcode form's POST field
+        $submittedPassCode = isset($_POST['passcode']) ? $_POST['passcode'] : (isset($_GET['passcode']) ? $_GET['passcode'] : '');
         // if no passcode in session and if we have not received a user's submitted passcode...
-        if (!$passCode AND (!isset($_POST['passcode']) OR isset($_SESSION['formulize_passcodeFailed']))) {
+        if (!$passCode AND (!$submittedPassCode OR isset($_SESSION['formulize_passcodeFailed']))) {
             unset($_SESSION['formulize_passcodeFailed']);
             $xoopsTpl->display("db:passcode.html");
             return;
         // if no passcode but we have received a user's submitted passcode then process it...
         } elseif(!$passCode) {
-            $passCode = $_POST['passcode'];
+            $passCode = $submittedPassCode;
         }
         // if a passcode has been determined, validate it...
         if($passCode) {
