@@ -733,7 +733,12 @@ table.formulize-grid td.head {
 	padding-left: 1em;
 }
 
-.formulize-office-use-only-start-hidden {
+/* `div.` raises specificity to 0,1,1 so this "start hidden" utility beats a theme's
+   `.fz-field`/`.form-row { display: flex }` (0,1,0) that loads after this stylesheet.
+   Without it the Office Use Only field/Hide button never start hidden under the Lyris
+   theme, so the toggle appears to do nothing. jQuery .toggle()/.show()/.hide() write an
+   inline display, which still overrides this rule, so the toggle keeps working. */
+div.formulize-office-use-only-start-hidden {
 		display: none;
 }
 
