@@ -902,7 +902,7 @@ Correct example for linked elements:
 		try {
 			// build the pages from scratch
 			if(isset($arguments['pages']) AND is_array($arguments['pages'])) {
-				list($properties['pages'], $properties['pagetitles'], $properties['conditions']) = formulizeHandler::buildPageStorageArrays($arguments['pages']);
+				list($properties['pages'], $properties['pagetitles'], $properties['conditions'], $properties['disabledpages']) = formulizeHandler::buildPageStorageArrays($arguments['pages']);
 			}
 			$screen = formulizeHandler::upsertMultiPageScreen($properties, 0);
 		} catch (Exception $e) {
@@ -942,10 +942,11 @@ Correct example for linked elements:
 		try {
 			// apply the targeted page changes against the screen's current pages
 			if(isset($arguments['pages']) AND is_array($arguments['pages'])) {
-				list($properties['pages'], $properties['pagetitles'], $properties['conditions']) = formulizeHandler::applyPageChanges(
+				list($properties['pages'], $properties['pagetitles'], $properties['conditions'], $properties['disabledpages']) = formulizeHandler::applyPageChanges(
 					$existingScreen->getVar('pages'),
 					$existingScreen->getVar('pagetitles'),
 					$existingScreen->getVar('conditions'),
+					$existingScreen->getVar('disabledpages'),
 					$arguments['pages']
 				);
 			}
@@ -981,16 +982,18 @@ Correct example for linked elements:
 			throw new FormulizeMCPException("Form screen $screen_id was not found.", 'invalid_data');
 		}
 		try {
-			list($pages, $pagetitles, $conditions) = formulizeHandler::reorderPageArrays(
+			list($pages, $pagetitles, $conditions, $disabledpages) = formulizeHandler::reorderPageArrays(
 				$existingScreen->getVar('pages'),
 				$existingScreen->getVar('pagetitles'),
 				$existingScreen->getVar('conditions'),
+				$existingScreen->getVar('disabledpages'),
 				$arguments['order']
 			);
 			$screen = formulizeHandler::upsertMultiPageScreen(array(
 				'pages' => $pages,
 				'pagetitles' => $pagetitles,
 				'conditions' => $conditions,
+				'disabledpages' => $disabledpages,
 			), $screen_id);
 		} catch (Exception $e) {
 			throw new FormulizeMCPException($e->getMessage(), 'invalid_data');
@@ -1155,6 +1158,13 @@ Correct example for linked elements:
 			'description' => "Used when content is 'screen'. The id of another screen to embed at this page position. If that screen has multiple pages, multiple pages are inserted at this position."
 		];
 		$itemProps['display_conditions'] = $this->displayConditionsSchema('page', true, $isUpdate);
+		$itemProps['disable_elements'] = [
+			'type' => 'boolean',
+			'description' => ($isUpdate
+				? 'Optional. When true, every element on this page is rendered read-only (disabled). Set false to make the page editable again.'
+				: 'Optional. When true, every element on this page is rendered read-only (disabled), default is false.')
+				. ' This only has an effect on pages whose content is \'elements\'; it is ignored on \'php\' and \'screen\' pages (and forced to false for them). It is appropriate for a confirmation page at the end of a form, where you include (via add_elements) elements that also appear on earlier pages, so the user can review what has been saved so far without being able to change it. The values are shown as plain text, not editable inputs, and are not re-saved when the page is submitted.'
+		];
 		if($isUpdate) {
 			$itemProps['delete'] = [
 				'type' => 'boolean',

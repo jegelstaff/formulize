@@ -465,6 +465,7 @@ function formulize_run_schema_migrations($prev_dbversion, $required_dbversion) {
 				$sql['add_tfa_created'] = "ALTER TABLE ".$xoopsDB->prefix("tfa_codes"). " ADD `created` int(11) unsigned NOT NULL default 0";
 				$sql['add_ele_handle_index'] = "ALTER TABLE ".$xoopsDB->prefix("formulize")." ADD INDEX i_ele_handle (`ele_handle`)";
 				$sql['form_screen_multipage_formorder'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_multipage") . " ADD `formorder` text NOT NULL";
+				$sql['form_screen_multipage_disabledpages'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_multipage") . " ADD `disabledpages` text NOT NULL";
 
         $needToSetSaveAndLeave = true;
         $needToSetPrintableView = true;
@@ -624,6 +625,8 @@ function formulize_run_schema_migrations($prev_dbversion, $required_dbversion) {
 									print "ele_handle index already added. result: OK<br>";
 								} elseif($key === "form_screen_multipage_formorder") {
 									print "formorder field already added. result: OK<br>";
+								} elseif($key === "form_screen_multipage_disabledpages") {
+									print "disabledpages field already added. result: OK<br>";
 								} else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }

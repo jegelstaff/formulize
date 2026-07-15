@@ -45,6 +45,12 @@
 				<textarea id="pit-custom-textarea" name="screensx-page<{$pageIndex}>[1]" class="code-textarea canValidate"><{if $pageElements[1] AND $pageElements[1]|is_numeric == false}><{$pageElements[1]}><{else}><?php
 <{/if}></textarea>
 			</div>
+
+			<div class="form-item" id="disable-elements-option">
+				<br>
+				<label for="screens-disableelements_<{$pageIndex}>"><input type="checkbox" id="screens-disableelements_<{$pageIndex}>" name="screens-disableelements_<{$pageIndex}>" value="1" <{if $pageDisableElements}>checked<{/if}>/> <{$smarty.const._AM_FORMULIZE_SCREEN_DISABLE_ELEMENTS}></label>
+				<div class="description"><p><{$smarty.const._AM_FORMULIZE_SCREEN_DISABLE_ELEMENTS_DESC}></p></div>
+			</div>
 		</div>
 
 		<div>
@@ -88,6 +94,7 @@
 		$('div.pit-contents').hide();
 		$('div#<{$pit}>-contents').show();
 		enablePitContents('<{$pit}>');
+		toggleDisableElementsOption('<{$pit}>');
 		$('input#<{$pit}>').attr('checked', true);
 		<{if $pit == 'pit-custom'}>
 		initializeMultipagePopupTextarea()
@@ -102,6 +109,31 @@
 		$('div#'+pit+'-contents [name^=screensx-page').each(function() {
 			$(this).attr('name', $(this).attr('name').replace('screensx-', 'screens-'));
 		})
+	}
+
+	// The "disable all elements" option only applies to pages that display form elements, so only show it for that
+	// page type. On screen or custom-code pages it has no effect (and the save handler forces it back to 0).
+	function toggleDisableElementsOption(pit) {
+		if(pit == 'pit-elements') {
+			$('#disable-elements-option').show();
+		} else {
+			$('#disable-elements-option').hide();
+		}
+	}
+
+	// Two-step reveal for the page-item-type contents, matching the show/hide animation used for conditional
+	// settings by the configregistry system (see include/configsettings.php): open the vertical space first with
+	// the content invisible, then fade it in; reverse on hide (fade out, then collapse the space).
+	var fzPitDur = 250; // duration of each step (slide, fade) in ms
+	function fzShowPit($el) {
+		$el.stop(true, true).css('opacity', 0).slideDown(fzPitDur, function() {
+			$el.animate({opacity: 1}, fzPitDur);
+		});
+	}
+	function fzHidePit($el) {
+		$el.stop(true, true).animate({opacity: 0}, fzPitDur, function() {
+			$el.slideUp(fzPitDur, function() { $el.css('opacity', 1); });
+		});
 	}
 
 	function initializeMultipagePopupTextarea() {
@@ -138,9 +170,16 @@
   });
 
 $('input[name=pageItemType]').click(function() {
-	$('div.pit-contents').hide();
-	$('div#'+$(this).attr('id')+'-contents').show();
+	var targetId = $(this).attr('id') + '-contents';
+	$('div.pit-contents').each(function() {
+		if(this.id === targetId) {
+			fzShowPit($(this));
+		} else if($(this).is(':visible')) {
+			fzHidePit($(this));
+		}
+	});
 	enablePitContents($(this).attr('id'));
+	toggleDisableElementsOption($(this).attr('id'));
 	if($(this).attr('id')=='pit-custom') {
 		initializeMultipagePopupTextarea();
 	}

@@ -56,6 +56,8 @@ if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mi
 $pages = $screen->getVar('pages');
 $pagetitles = $screen->getVar('pagetitles');
 $conditions = $screen->getVar('conditions');
+$disabledpages = $screen->getVar('disabledpages');
+$disabledpages = is_array($disabledpages) ? $disabledpages : array();
 $conditionsStateChanged = false;
 foreach($screens as $k=>$v) {
 	if(substr($k, 0, 10) == "pagetitle_") {
@@ -72,13 +74,24 @@ foreach($screens as $k=>$v) {
 	}
 }
 
-// delegate persistence to the shared upsert apparatus. We only own pages/pagetitles/conditions here;
+// this popup edits a single page, identified by $page_number from the (always-submitted) title field. An unchecked
+// checkbox submits nothing, so we cannot rely on the loop above to clear it - instead set the disabled flag explicitly
+// from whether the checkbox key is present for this page (order-independent). The "disable all elements" option only
+// applies to pages that display form elements; on a screen or custom-code page it has no effect, so force it to 0 there
+// as a safety net (the UI also hides the checkbox for those page types).
+if(isset($page_number)) {
+	$pageIsElements = (isset($pages[$page_number]) AND $screen->determinePageItemType($pages[$page_number]) == 'pit-elements');
+	$disabledpages[$page_number] = ($pageIsElements AND isset($screens['disableelements_'.$page_number])) ? 1 : 0;
+}
+
+// delegate persistence to the shared upsert apparatus. We only own pages/pagetitles/conditions/disabledpages here;
 // introtext/thankstext are left out of $properties, and upsert normalizes them so they are not double-encoded
 // on this re-save (this replaces the manual undoAllHTMLChars() workaround that used to live here).
 $properties = array(
     'pages' => $pages,
     'pagetitles' => $pagetitles,
     'conditions' => $conditions,
+    'disabledpages' => $disabledpages,
 );
 try {
   formulizeHandler::upsertMultiPageScreen($properties, $sid);

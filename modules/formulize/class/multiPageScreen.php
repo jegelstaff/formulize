@@ -50,6 +50,7 @@ class formulizeMultiPageScreen extends formulizeScreen {
 		$this->initVar("pages", XOBJ_DTYPE_ARRAY);
 		$this->initVar("pagetitles", XOBJ_DTYPE_ARRAY);
 		$this->initVar("conditions", XOBJ_DTYPE_ARRAY);
+		$this->initVar("disabledpages", XOBJ_DTYPE_ARRAY); // per-page 0/1 flag, parallel to pages/pagetitles/conditions; 1 = render all elements on that page as disabled (read-only)
 		$this->initVar("printall", XOBJ_DTYPE_INT); //nmc - 2007.03.24
 		$this->initVar("paraentryform", XOBJ_DTYPE_INT);
 		$this->initVar("paraentryrelationship", XOBJ_DTYPE_INT);
@@ -155,7 +156,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 
 		// note: conditions is not written to the DB yet, since we're not gathering that info from the UI
 		if (!$update) {
-                 $sql = sprintf("INSERT INTO %s (sid, introtext, thankstext, donedest, buttontext, finishisdone, pages, pagetitles, conditions, printall, paraentryform, paraentryrelationship, navstyle, displaycolumns, column1width, column2width, showpagetitles, showpageindicator, showpageselector, displayheading, reloadblank, elementdefaults, formorder) VALUES (%u, %s, %s, %s, %s, %u, %s, %s, %s, %u, %u, %u, %u, %u, %s, %s, %u, %u, %u, %u, %u, %s, %s)",
+                 $sql = sprintf("INSERT INTO %s (sid, introtext, thankstext, donedest, buttontext, finishisdone, pages, pagetitles, conditions, disabledpages, printall, paraentryform, paraentryrelationship, navstyle, displaycolumns, column1width, column2width, showpagetitles, showpageindicator, showpageselector, displayheading, reloadblank, elementdefaults, formorder) VALUES (%u, %s, %s, %s, %s, %u, %s, %s, %s, %s, %u, %u, %u, %u, %u, %s, %s, %u, %u, %u, %u, %u, %s, %s)",
                     $this->db->prefix('formulize_screen_multipage'),
                     $screen->getVar('sid'),
                     $this->db->quoteString($screen->getVar('introtext', "e")),
@@ -166,6 +167,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
                     $this->db->quoteString(serialize($screen->getVar('pages'))),
                     $this->db->quoteString(serialize($screen->getVar('pagetitles'))),
                     $this->db->quoteString(serialize($screen->getVar('conditions'))),
+                    $this->db->quoteString(serialize($screen->getVar('disabledpages'))),
                     $screen->getVar('printall'),
                     $screen->getVar('paraentryform'),
                     $screen->getVar('paraentryrelationship'),
@@ -183,7 +185,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
                     );
                     //nmc 2007.03.24 added 'printall' & fixed pagetitles
              } else {
-                 $sql = sprintf("UPDATE %s SET introtext = %s, thankstext = %s, donedest = %s, buttontext = %s, finishisdone = %u, pages = %s, pagetitles = %s, conditions = %s, printall = %u, paraentryform = %u, paraentryrelationship = %u, navstyle = %u, displaycolumns = %u, column1width = %s, column2width = %s, showpagetitles = %u, showpageindicator = %u, showpageselector = %u, displayheading = %u, reloadblank = %u, elementdefaults = %s, formorder = %s WHERE sid = %u", $this->db->prefix('formulize_screen_multipage'), $this->db->quoteString($screen->getVar('introtext', "e")), $this->db->quoteString($screen->getVar('thankstext', "e")), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString(serialize($screen->getVar('buttontext'))), $screen->getVar('finishisdone'), $this->db->quoteString(serialize($screen->getVar('pages'))), $this->db->quoteString(serialize($screen->getVar('pagetitles'))), $this->db->quoteString(serialize($screen->getVar('conditions'))), $screen->getVar('printall'), $screen->getVar('paraentryform'), $screen->getVar('paraentryrelationship'), $screen->getVar('navstyle'),  $screen->getVar('displaycolumns'), $this->db->quoteString($screen->getVar('column1width')), $this->db->quoteString($screen->getVar('column2width')), $screen->getVar('showpagetitles'), $screen->getVar('showpageindicator'), $screen->getVar('showpageselector'), $screen->getVar('displayheading'), $screen->getVar('reloadblank'), $this->db->quoteString(serialize($screen->getVar('elementdefaults'))), $this->db->quoteString(serialize($screen->getVar('formorder'))), $screen->getVar('sid')); //nmc 2007.03.24 added 'printall'
+                 $sql = sprintf("UPDATE %s SET introtext = %s, thankstext = %s, donedest = %s, buttontext = %s, finishisdone = %u, pages = %s, pagetitles = %s, conditions = %s, disabledpages = %s, printall = %u, paraentryform = %u, paraentryrelationship = %u, navstyle = %u, displaycolumns = %u, column1width = %s, column2width = %s, showpagetitles = %u, showpageindicator = %u, showpageselector = %u, displayheading = %u, reloadblank = %u, elementdefaults = %s, formorder = %s WHERE sid = %u", $this->db->prefix('formulize_screen_multipage'), $this->db->quoteString($screen->getVar('introtext', "e")), $this->db->quoteString($screen->getVar('thankstext', "e")), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString(serialize($screen->getVar('buttontext'))), $screen->getVar('finishisdone'), $this->db->quoteString(serialize($screen->getVar('pages'))), $this->db->quoteString(serialize($screen->getVar('pagetitles'))), $this->db->quoteString(serialize($screen->getVar('conditions'))), $this->db->quoteString(serialize($screen->getVar('disabledpages'))), $screen->getVar('printall'), $screen->getVar('paraentryform'), $screen->getVar('paraentryrelationship'), $screen->getVar('navstyle'),  $screen->getVar('displaycolumns'), $this->db->quoteString($screen->getVar('column1width')), $this->db->quoteString($screen->getVar('column2width')), $screen->getVar('showpagetitles'), $screen->getVar('showpageindicator'), $screen->getVar('showpageselector'), $screen->getVar('displayheading'), $screen->getVar('reloadblank'), $this->db->quoteString(serialize($screen->getVar('elementdefaults'))), $this->db->quoteString(serialize($screen->getVar('formorder'))), $screen->getVar('sid')); //nmc 2007.03.24 added 'printall'
              }
 					if($force) {
 						$result = $this->db->queryF($sql);
@@ -385,8 +387,9 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 
 		$formframe = $screen->getVar('frid') ? $screen->getVar('frid') : $screen->getVar('fid');
 		$mainform = $screen->getVar('frid') ? $screen->getVar('fid') : "";
-		list($pages, $pageTitles, $pageConditions) = $this->traverseScreenPages($screen);
+		list($pages, $pageTitles, $pageConditions, $disabledPages) = $this->traverseScreenPages($screen);
 		$pages['titles'] = $pageTitles; // silly convention that this named key in pages has the title. Handled in the start of displayFormPages function
+		$pages['disabled'] = $disabledPages; // same convention as titles: per-page disabled flags, extracted at the start of displayFormPages
 		$doneDest = $screen->getVar('donedest');
 		if(substr($doneDest, 0, 1)=='/') {
 		  $doneDest = XOOPS_URL.$doneDest;
@@ -415,11 +418,11 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 	 * @param array conditionsAppliedToAllPages - an array of conditions that should be applied to all pages in this screen. Happens when a page references another screen, and that page has conditions. Then that page's conditions are added to any conditions in the referenced screen.
 	 * @return array An array with three items, one is completePages, one is completePageTitles, one is completePageConditions
 	 */
-	function traverseScreenPages(formulizeMultiPageScreen $screen, array $completePages=array(), array $completePageTitles=array(), array $completePageConditions=array(), array $conditionsAppliedToAllPages=array()): array {
+	function traverseScreenPages(formulizeMultiPageScreen $screen, array $completePages=array(), array $completePageTitles=array(), array $completePageConditions=array(), array $conditionsAppliedToAllPages=array(), array $completeDisabledPages=array()): array {
 		static $screenCatalogue = array();
 		if(!isset($screenCatalogue[$screen->getVar('sid')])) { // avoid an infinite loop, don't redo a screen, until we're finished with that screen
 			$screenCatalogue[$screen->getVar('sid')] = true;
-			list($pages, $pageTitles) = $this->gatherPagesAndTitlesFromScreen($screen);
+			list($pages, $pageTitles, $disabledPages) = $this->gatherPagesAndTitlesFromScreen($screen);
 			$pageConditions = $screen->getConditions();
 			if(!empty($conditionsAppliedToAllPages)) { // add these conditions to each page in this screen
 				foreach($pages as $pageNumber=>$items) {
@@ -438,7 +441,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 				if(!is_numeric($firstItem) AND $firstItem != "PHP") {
 					$pageScreenId = substr($firstItem, 4);
 					if($pageScreenObject = $this->get($pageScreenId)) {
-						list($completePages, $completePageTitles, $completePageConditions) = $this->traverseScreenPages($pageScreenObject, $completePages, $completePageTitles, $completePageConditions, $pageConditions[$pageNumber]);
+						list($completePages, $completePageTitles, $completePageConditions, $completeDisabledPages) = $this->traverseScreenPages($pageScreenObject, $completePages, $completePageTitles, $completePageConditions, $pageConditions[$pageNumber], $completeDisabledPages);
 					} else {
 						error_log("Formulize Error: invalid screen reference on page ".$pageTitles[$pageNumber]." ($pageNumber) of screen ".$screen->getVar('title'));
 					}
@@ -447,28 +450,34 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 					$completePages[$completePageNumber] = $items;
 					$completePageTitles[$completePageNumber] = $pageTitles[$pageNumber];
 					$completePageConditions[$completePageNumber] = isset($pageConditions[$pageNumber]) ? $pageConditions[$pageNumber] : array();
+					$completeDisabledPages[$completePageNumber] = isset($disabledPages[$pageNumber]) ? $disabledPages[$pageNumber] : 0;
 				}
 			}
 			unset($screenCatalogue[$screen->getVar('sid')]); // we can revisit this screen now safely, since we're done traversing it.
 		}
-		return array($completePages, $completePageTitles, $completePageConditions);
+		return array($completePages, $completePageTitles, $completePageConditions, $completeDisabledPages);
 	}
 
 	/**
 	 * Gather the pages and page titles from a multipage screen object, ensuring the keys (page numbers) start with 1, and the pages are in the correct order
 	 * @param object screen - a multipage screen object
-	 * @return array An array where first value is the pages array, and second is the pageTitles array
+	 * @return array An array where first value is the pages array, second is the pageTitles array, and the third is the disabledPages array
 	 */
 	function gatherPagesAndTitlesFromScreen($screen) {
 		$pages = $screen->getVar('pages');
 		$pageTitles = $screen->getVar('pagetitles');
+		$disabledPages = $screen->getVar('disabledpages');
+		$disabledPages = is_array($disabledPages) ? $disabledPages : array();
 		ksort($pages); // make sure the arrays are sorted by key, ie: page number
 		ksort($pageTitles);
+		ksort($disabledPages);
 		array_unshift($pages, ""); // displayFormPages looks for the page array to start with [1] and not [0], for readability when manually using the API, so we bump up all the numbers by one by adding something to the front of the array
 		array_unshift($pageTitles, "");
+		array_unshift($disabledPages, "");
 		unset($pages[0]); // get rid of the part we just unshifted, so the page count is correct
 		unset($pageTitles[0]);
-		return array($pages, $pageTitles);
+		unset($disabledPages[0]);
+		return array($pages, $pageTitles, $disabledPages);
 	}
 
 	/**
@@ -481,12 +490,14 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		if(!is_array($elementIdOrIds)) {
 			$elementIdOrIds = array($elementIdOrIds);
 		}
-		$sql = "SELECT `sid`, `pages`, `pagetitles`, `conditions` FROM ".$this->db->prefix('formulize_screen_multipage')." WHERE `pages` LIKE '%".implode("%' OR `pages` LIKE '%", $elementIdOrIds)."%'";
+		$sql = "SELECT `sid`, `pages`, `pagetitles`, `conditions`, `disabledpages` FROM ".$this->db->prefix('formulize_screen_multipage')." WHERE `pages` LIKE '%".implode("%' OR `pages` LIKE '%", $elementIdOrIds)."%'";
 		if($result = $this->db->query($sql)) {
 			while($array = $this->db->fetchArray($result)) {
 				$pages = unserialize($array['pages']);
 				$pagetitles = unserialize($array['pagetitles']);
 				$pageconditions = unserialize($array['conditions']);
+				$disabledpages = unserialize($array['disabledpages']);
+				$disabledpages = is_array($disabledpages) ? $disabledpages : array();
 				$changed = false;
 				foreach($pages as $pageIndex=>$pageElements) {
 					$pageChanged = false;
@@ -504,9 +515,11 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 							unset($pages[$pageIndex]);
 							unset($pagetitles[$pageIndex]);
 							unset($pageconditions[$pageIndex]);
+							unset($disabledpages[$pageIndex]);
 							$pages = array_values($pages); // reindex the array
 							$pagetitles = array_values($pagetitles); // reindex the array
 							$pageconditions = array_values($pageconditions); // reindex the array
+							$disabledpages = array_values($disabledpages); // reindex the array
 						} else {
 							$pages[$pageIndex] = array_values($pages[$pageIndex]); // reindex the array
 						}
@@ -517,7 +530,8 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 					$sql = "UPDATE ".$this->db->prefix('formulize_screen_multipage')."
 						SET `pages` = ".$this->db->quoteString(serialize($pages)).",
 						`pagetitles` = ".$this->db->quoteString(serialize($pagetitles)).",
-						`conditions` = ".$this->db->quoteString(serialize($pageconditions))."
+						`conditions` = ".$this->db->quoteString(serialize($pageconditions)).",
+						`disabledpages` = ".$this->db->quoteString(serialize($disabledpages))."
 						WHERE `sid` = ".$array['sid'];
 					$this->db->queryF($sql);
 				}
@@ -558,6 +572,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		$defaultFormScreen->setVar('useToken', 1);
         $defaultFormScreen->setVar('pagetitles',serialize(array(0=>$formObject->getSingular())));
         $defaultFormScreen->setVar('pages', serialize(array(0=>array())));
+        $defaultFormScreen->setVar('disabledpages', serialize(array(0=>0)));
         $defaultFormScreen->setVar('navstyle', 1);
         $defaultFormScreen->setVar('buttontext', serialize(array(
             'thankyoulinktext'=>'',

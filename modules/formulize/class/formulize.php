@@ -66,6 +66,7 @@ class FormulizeObject extends XoopsObject {
 				'pages',
 				'pagetitles',
 				'conditions',
+				'disabledpages',
 				'elementdefaults',
 				'formorder'
 			],
@@ -445,7 +446,7 @@ class formulizeHandler {
 		}
 
 		// keys that this method sets explicitly below, so they are skipped by the generic scalar loop
-		$arrayFields = array('pages', 'pagetitles', 'conditions', 'elementdefaults', 'formorder');
+		$arrayFields = array('pages', 'pagetitles', 'conditions', 'disabledpages', 'elementdefaults', 'formorder');
 		$handledSpecially = array_merge($arrayFields, array('fid', 'sid', 'screen_handle', 'thankstext', 'introtext', 'buttontext'));
 
 		// apply plain scalar/text properties (partial update - only what was provided)
@@ -532,18 +533,19 @@ class formulizeHandler {
 	 *
 	 * @param array $pageDefinitions Ordered list of page definitions.
 	 * @throws Exception if an element or screen reference cannot be resolved.
-	 * @return array A 3-element array: array($pages, $pagetitles, $conditions), each keyed 0..n-1 parallel to the pages.
+	 * @return array A 4-element array: array($pages, $pagetitles, $conditions, $disabledpages), each keyed 0..n-1 parallel to the pages.
 	 */
 	public static function buildPageStorageArrays($pageDefinitions) {
 		$pages = array();
 		$pagetitles = array();
 		$conditions = array();
+		$disabledpages = array();
 		$i = 0;
 		foreach($pageDefinitions as $pageDef) {
-			list($pages[$i], $pagetitles[$i], $conditions[$i]) = self::buildSinglePageStorage($pageDef);
+			list($pages[$i], $pagetitles[$i], $conditions[$i], $disabledpages[$i]) = self::buildSinglePageStorage($pageDef);
 			$i++;
 		}
-		return array($pages, $pagetitles, $conditions);
+		return array($pages, $pagetitles, $conditions, $disabledpages);
 	}
 
 	/**
@@ -551,11 +553,13 @@ class formulizeHandler {
 	 * definition shape). Used both when creating a screen and when appending a new page during an update.
 	 * @param array $pageDef The page definition.
 	 * @throws Exception if an element or screen reference cannot be resolved.
-	 * @return array array($pageContent, $pageTitle, $pageConditions)
+	 * @return array array($pageContent, $pageTitle, $pageConditions, $pageDisabled)
 	 */
 	private static function buildSinglePageStorage($pageDef) {
 		$title = isset($pageDef['title']) ? $pageDef['title'] : '';
 		$content = isset($pageDef['content']) ? $pageDef['content'] : 'elements';
+		// the disable-all-elements flag only applies to elements pages; force it off for php/screen pages
+		$disabled = (!empty($pageDef['disable_elements']) AND $content == 'elements') ? 1 : 0;
 		switch($content) {
 			case 'php':
 				$pageContent = array('PHP', isset($pageDef['php_code']) ? $pageDef['php_code'] : '');
@@ -578,7 +582,7 @@ class formulizeHandler {
 				break;
 		}
 		$conditions = self::buildConditionStorageArray(isset($pageDef['display_conditions']) ? $pageDef['display_conditions'] : array());
-		return array($pageContent, $title, $conditions);
+		return array($pageContent, $title, $conditions, $disabled);
 	}
 
 	/**
@@ -588,26 +592,30 @@ class formulizeHandler {
 	 * @param mixed $pages Stored pages array.
 	 * @param mixed $pagetitles Stored page titles array.
 	 * @param mixed $conditions Stored conditions array.
-	 * @return array array($pages, $pagetitles, $conditions), each sequential 0..n-1 and mutually aligned.
+	 * @param mixed $disabledpages Stored per-page disabled flags array.
+	 * @return array array($pages, $pagetitles, $conditions, $disabledpages), each sequential 0..n-1 and mutually aligned.
 	 */
-	private static function normalizePageArrays($pages, $pagetitles, $conditions) {
+	private static function normalizePageArrays($pages, $pagetitles, $conditions, $disabledpages = array()) {
 		// Use is_array() rather than (array) cast to avoid (array) false = array(false),
 		// which would inject false into every page's conditions slot and later cause TypeError
 		// when code calls count() on it (PHP 8 makes count(false) a fatal TypeError).
 		$pages = is_array($pages) ? $pages : array();
 		$pagetitles = is_array($pagetitles) ? $pagetitles : array();
 		$conditions = is_array($conditions) ? $conditions : array();
+		$disabledpages = is_array($disabledpages) ? $disabledpages : array();
 		$normPages = array();
 		$normTitles = array();
 		$normConditions = array();
+		$normDisabled = array();
 		$i = 0;
 		foreach($pages as $key => $pageContent) {
 			$normPages[$i] = $pageContent;
 			$normTitles[$i] = isset($pagetitles[$key]) ? $pagetitles[$key] : '';
 			$normConditions[$i] = (isset($conditions[$key]) AND is_array($conditions[$key])) ? $conditions[$key] : array();
+			$normDisabled[$i] = !empty($disabledpages[$key]) ? 1 : 0;
 			$i++;
 		}
-		return array($normPages, $normTitles, $normConditions);
+		return array($normPages, $normTitles, $normConditions, $normDisabled);
 	}
 
 	/**
@@ -621,17 +629,19 @@ class formulizeHandler {
 	 *   - add_elements: array          => append these elements (handle or id) if not already present
 	 *   - remove_elements: array       => remove these elements
 	 *   - display_conditions: array    => REPLACE the page's conditions (an empty array clears them); omit to leave unchanged
+	 *   - disable_elements: bool       => set/clear the "disable all elements on this page" flag; omit to leave unchanged
 	 * A change with no page_number is a new page and uses the same shape as buildPageStorageArrays definitions.
 	 *
 	 * @param array $pages Existing pages array.
 	 * @param array $pagetitles Existing page titles array.
 	 * @param array $conditions Existing conditions array.
+	 * @param array $disabledpages Existing per-page disabled flags array.
 	 * @param array $pageChanges The list of change/definition entries.
 	 * @throws Exception on an invalid page_number, or an element/page-type mismatch.
-	 * @return array array($pages, $pagetitles, $conditions), re-indexed 0..n-1.
+	 * @return array array($pages, $pagetitles, $conditions, $disabledpages), re-indexed 0..n-1.
 	 */
-	public static function applyPageChanges($pages, $pagetitles, $conditions, $pageChanges) {
-		list($pages, $pagetitles, $conditions) = self::normalizePageArrays($pages, $pagetitles, $conditions);
+	public static function applyPageChanges($pages, $pagetitles, $conditions, $disabledpages, $pageChanges) {
+		list($pages, $pagetitles, $conditions, $disabledpages) = self::normalizePageArrays($pages, $pagetitles, $conditions, $disabledpages);
 		$deleteIndices = array();
 		foreach($pageChanges as $change) {
 			$hasPageNumber = isset($change['page_number']) AND $change['page_number'] !== '' AND $change['page_number'] !== null;
@@ -640,10 +650,11 @@ class formulizeHandler {
 					throw new Exception("A page change specifies delete but no page_number; deleting requires a page_number.");
 				}
 				// append a new page
-				list($newContent, $newTitle, $newConditions) = self::buildSinglePageStorage($change);
+				list($newContent, $newTitle, $newConditions, $newDisabled) = self::buildSinglePageStorage($change);
 				$pages[] = $newContent;
 				$pagetitles[] = $newTitle;
 				$conditions[] = $newConditions;
+				$disabledpages[] = $newDisabled;
 				continue;
 			}
 			$idx = intval($change['page_number']) - 1;
@@ -685,16 +696,23 @@ class formulizeHandler {
 			if(array_key_exists('display_conditions', $change)) {
 				$conditions[$idx] = self::buildConditionStorageArray($change['display_conditions']);
 			}
+			if(array_key_exists('disable_elements', $change)) {
+				// the disable-all-elements flag only applies to elements pages; force it off for php/screen pages
+				$disableFirstItem = isset($pages[$idx][0]) ? $pages[$idx][0] : '';
+				$disablePageIsElements = !($disableFirstItem === 'PHP' OR substr((string) $disableFirstItem, 0, 4) === 'sid:');
+				$disabledpages[$idx] = (!empty($change['disable_elements']) AND $disablePageIsElements) ? 1 : 0;
+			}
 		}
 		if(!empty($deleteIndices)) {
 			foreach(array_keys($deleteIndices) as $di) {
-				unset($pages[$di], $pagetitles[$di], $conditions[$di]);
+				unset($pages[$di], $pagetitles[$di], $conditions[$di], $disabledpages[$di]);
 			}
 			$pages = array_values($pages);
 			$pagetitles = array_values($pagetitles);
 			$conditions = array_values($conditions);
+			$disabledpages = array_values($disabledpages);
 		}
-		return array($pages, $pagetitles, $conditions);
+		return array($pages, $pagetitles, $conditions, $disabledpages);
 	}
 
 	/**
@@ -704,12 +722,13 @@ class formulizeHandler {
 	 * @param array $pages Existing pages array.
 	 * @param array $pagetitles Existing page titles array.
 	 * @param array $conditions Existing conditions array.
+	 * @param array $disabledpages Existing per-page disabled flags array.
 	 * @param array $orderMap Associative array of currentPageNumber => newPageNumber (1-based).
 	 * @throws Exception if the mapping is not a valid complete permutation of the pages.
-	 * @return array array($pages, $pagetitles, $conditions) in the new order.
+	 * @return array array($pages, $pagetitles, $conditions, $disabledpages) in the new order.
 	 */
-	public static function reorderPageArrays($pages, $pagetitles, $conditions, $orderMap) {
-		list($pages, $pagetitles, $conditions) = self::normalizePageArrays($pages, $pagetitles, $conditions);
+	public static function reorderPageArrays($pages, $pagetitles, $conditions, $disabledpages, $orderMap) {
+		list($pages, $pagetitles, $conditions, $disabledpages) = self::normalizePageArrays($pages, $pagetitles, $conditions, $disabledpages);
 		$count = count($pages);
 		if(!is_array($orderMap) OR count($orderMap) != $count) {
 			throw new Exception("The page order must map every one of the screen's $count page(s) to a new position.");
@@ -717,6 +736,7 @@ class formulizeHandler {
 		$newPages = array();
 		$newTitles = array();
 		$newConditions = array();
+		$newDisabled = array();
 		$usedTargets = array();
 		foreach($orderMap as $currentNumber => $newNumber) {
 			$from = intval($currentNumber) - 1;
@@ -731,11 +751,13 @@ class formulizeHandler {
 			$newPages[$to] = $pages[$from];
 			$newTitles[$to] = $pagetitles[$from];
 			$newConditions[$to] = $conditions[$from];
+			$newDisabled[$to] = $disabledpages[$from];
 		}
 		ksort($newPages);
 		ksort($newTitles);
 		ksort($newConditions);
-		return array(array_values($newPages), array_values($newTitles), array_values($newConditions));
+		ksort($newDisabled);
+		return array(array_values($newPages), array_values($newTitles), array_values($newConditions), array_values($newDisabled));
 	}
 
 	/**

@@ -48,6 +48,12 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 
     formulize_benchmark("Start of displayFormPages.");
 
+    // Record whether a caller already forced elements disabled, so the per-page "disable all elements" handling below
+    // never clobbers someone else's state and never leaks the flag out of this function to other forms/widgets/blocks
+    // that may be rendered on the same site page. See the set/restore around the displayForm() call, and the guaranteed
+    // cleanup at the end of this function.
+    $formulize_forceDisabledWasSetOnEntry = isset($GLOBALS['formulize_forceElementsDisabled']);
+
     global $xoopsUser;
     if(!isset($_POST['parent_entry']) AND !isset($_POST['parent_form']) AND !isset($_POST['parent_page']) AND !isset($_POST['parent_subformElementId'])
        AND isset($_POST['go_back_form']) AND $_POST['go_back_form'] AND isset($_POST['go_back_entry']) AND $_POST['go_back_entry'] AND (!isset($_POST['ventry']) OR !$_POST['ventry'])) {
@@ -107,6 +113,14 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 		}
 		$pageTitles = $pages['titles'];
 		unset($pages['titles']);
+	}
+
+	// extract the optional per-page "disable all elements" flags (parallel to titles, keyed from 1 by the same
+	// compiled page number as $pages), stashed into $pages['disabled'] by the multipage screen's render() method
+	$disabledPages = array();
+	if(isset($pages['disabled'])) {
+		$disabledPages = is_array($pages['disabled']) ? $pages['disabled'] : array();
+		unset($pages['disabled']);
 	}
 
     // $overrideMulti probably doesn't even need to be set, but for legacy compatibility, we'll keep this in for now
@@ -254,6 +268,9 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 	$currentPage = !$currentPage ? $thanksPage : $currentPage;
 	$previousPage = $currentPage > 1 ? $currentPage-1 : "none";
 	$nextPage = $currentPage+1;
+
+	// is the page we're about to render flagged to have all its elements disabled? (confirmation-page setting)
+	$thisPageDisabled = !empty($disabledPages[$currentPage]);
 
 	// done destination used in the multipage boilerplate included below
 	$originalDoneDest = $done_dest;
@@ -443,7 +460,11 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 		if(count((array) $forminfo['elements'])==0) {
 			print "Error: there are no form elements specified for page number $currentPage. Please contact the webmaster.";
 		} else {
+			// on a page flagged "disable all elements", force every element on this page to render read-only, tightly
+			// scoped to just this displayForm() call so the nav/boilerplate rendered afterward is unaffected
+			if($thisPageDisabled) { $GLOBALS['formulize_forceElementsDisabled'] = true; }
 			displayForm($forminfo, $entry_id, $mainform, "", $buttonArray, $settings, $titleOverride, $overrideValue, $overrideMulti, "", 0, $printall, $screen); // nmc 2007.03.24 - added empty params & '$printall'
+			if($thisPageDisabled AND !$formulize_forceDisabledWasSetOnEntry) { unset($GLOBALS['formulize_forceElementsDisabled']); }
 		}
 	}
 
@@ -451,6 +472,11 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 	if(!$elements_only AND !isset($GLOBALS['formulize_inlineSubformFrid']) AND !strstr(getCurrentURL(), 'subformdisplay-elementsonly.php')) {
 		include_once XOOPS_ROOT_PATH.'/modules/formulize/include/multipage_boilerplate.php';
 	}
+
+	// guaranteed cleanup: never let the "disable all elements" flag leak out of this function to anything else on the
+	// page. A no-op in the normal path (already restored right after displayForm above), but protects against any path
+	// within this function that set it. Only unset if this function did not inherit it from a caller.
+	if(!$formulize_forceDisabledWasSetOnEntry) { unset($GLOBALS['formulize_forceElementsDisabled']); }
 
     formulize_benchmark("End of displayFormPages.");
 } // end of the function!

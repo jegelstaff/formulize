@@ -886,6 +886,8 @@ define("_AM_FORMULIZE_SCREEN_CONS_NONE", "Always display this page");
 define("_AM_FORMULIZE_SCREEN_CONS_YES", "Only display when the following conditions are true:");
 define("_AM_FORMULIZE_SCREEN_CONS_ADDCON", "Add an another condition");
 define("_AM_FORMULIZE_SCREEN_CONS_HELP", "Conditions are useful if a page should only appear based on answers to questions in a previous page.  Select the questions from the previous page and specify the answers that should result in this page being displayed.");
+define("_AM_FORMULIZE_SCREEN_DISABLE_ELEMENTS", "Disable all elements on this page");
+define("_AM_FORMULIZE_SCREEN_DISABLE_ELEMENTS_DESC", "Useful for a confirmation page at the end of a form: include elements from earlier pages so the person can review what they have entered, shown as read-only text that cannot be changed.");
 
 // LIST OF ENTRIES SCREEN
 define("_AM_FORMULIZE_SCREEN_LOE_BUTTONINTRO", "Specify which buttons you want included on this screen:");

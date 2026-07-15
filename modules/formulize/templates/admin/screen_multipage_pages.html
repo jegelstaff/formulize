@@ -5,7 +5,7 @@
 
 <script type='text/javascript'>
   $(document).ready(function() {
-    $("#dialog-page-settings").dialog({ autoOpen: false, modal: true, width: 950, height: 500, close: function(event, ui) {
+    $("#dialog-page-settings").dialog({ autoOpen: false, modal: true, width: 950, height: 550, close: function(event, ui) {
 				var dialogEditingPage = $("[name=piforjquery]").val();
 				var newTitle = $("#screens-pagetitle_"+dialogEditingPage).val();
 				var saveWarningDisplay = $("#popupsavewarning").css("display");

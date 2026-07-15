@@ -73,10 +73,12 @@ $screenOptions = multiPageScreenMakeScreenOptionsList($fid, $frid, $sid);
 $pageTitles = $screen->getVar("pagetitles");
 $elements = $screen->getVar("pages");
 $conditions = $screen->getVar("conditions");
+$disabledPages = $screen->getVar("disabledpages");
 
 $pageTitle = $pageTitles[$pageIndex];
 $pageNumber = $pageIndex+1;
 $pageElements = $elements[$pageIndex];
+$pageDisableElements = (is_array($disabledPages) AND !empty($disabledPages[$pageIndex])) ? 1 : 0;
 
 $pit = $screen->determinePageItemType($pageElements);
 
@@ -101,6 +103,7 @@ $xoopsTpl->assign("pageTitle",$pageTitle);
 $xoopsTpl->assign("pageNumber",$pageNumber);
 $xoopsTpl->assign("pageIndex",$pageIndex);
 $xoopsTpl->assign("pageElements",$pageElements);
+$xoopsTpl->assign("pageDisableElements",$pageDisableElements);
 $xoopsTpl->assign("pageConditions",$pageConditions);
 $xoopsTpl->assign("pit", $pit);
 $xoopsTpl->assign("elementOptions",$elementOptions);

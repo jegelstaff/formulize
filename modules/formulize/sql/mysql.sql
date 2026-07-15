@@ -222,6 +222,7 @@ CREATE TABLE `formulize_screen_multipage` (
   `pages` text NOT NULL,
   `pagetitles` text NOT NULL,
   `conditions` text NOT NULL,
+  `disabledpages` text NOT NULL,
   `printall` tinyint(1) NOT NULL,
   `paraentryform` int(11) NOT NULL default 0,
   `paraentryrelationship` tinyint(1) NOT NULL default 0,
