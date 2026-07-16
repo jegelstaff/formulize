@@ -1595,7 +1595,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	}
 	$buttonCodeArray['pageNavControls'] = $pageNav; // put this unique UI element into the buttonCodeArray for use elsewhere if necessary
     $buttonCodeArray['numberOfEntries'] = (!$screen || $screen->getVar('usenumberofentries') != 0) ? $entryTotals : '';
-	$buttonCodeArray['toggleRepeatData'] = (!$screen || $screen->getVar('usetogglerepeatdata') != 0) ? ((!isset($_POST['hlist']) OR !$_POST['hlist']) ?'<label for="toggleRepeatData">'._AM_FORMULIZE_LOE_HIDE_REPEATS.' <input id="toggleRepeatData" type="checkbox"></label>' : '') : '';
+	$buttonCodeArray['toggleRepeatData'] = (!$screen || $screen->getVar('usetogglerepeatdata') != 0) ? ((!isset($_POST['hlist']) OR !$_POST['hlist']) ?'<label for="toggleRepeatData">'._AM_FORMULIZE_LOE_HIDE_REPEATS.' <input id="toggleRepeatData" type="checkbox" class="fz-toggle"></label>' : '') : '';
     $buttonCodeArray['entriesPerPageSelector'] = $entriesPerPageSelector;
 
 	$currentViewName = $settings['loadviewname'];
