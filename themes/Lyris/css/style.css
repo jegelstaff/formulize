@@ -2327,6 +2327,7 @@ body:not(.fz-inline) .fz-main #pageNavTable,
 body:not(.fz-inline) .fz-main .pageNavTable {
   margin-left: var(--s-5, 20px);
   margin-right: var(--s-5, 20px);
+	margin-bottom: 0;
 }
 
 #multipage-controls {
@@ -2381,6 +2382,79 @@ body:not(.fz-inline) .fz-main .pageNavTable {
   gap: var(--s-1, 4px);
   align-items: center;
   margin-bottom: var(--s-3, 12px);
+}
+
+/* ---------- Sticky page-nav tabs on long forms (issue #31) ----------
+   The page-nav strip (`#pageNavTable.pill-tabs`) is a flow child of the
+   `.formulizeThemeForm` column that scrolls inside `.fz-main` (the only
+   scroll container here — `overflow-y:auto`; the intermediate `#formulizeform`
+   / `.formulize_mainform` ancestors are `overflow:visible`, so they don't
+   defeat `position:sticky`). Pin the tabs to the top of that scroll area so
+   they stay reachable while a long form body scrolls.
+
+   `top:0`: `.fz-main` for a form screen (`body#formulize`) has no top padding,
+   and the app header lives OUTSIDE `.fz-main` (it is a sibling above
+   `.fz-app__body`), so 0 is flush with the top of the scroll viewport — no
+   fixed/sticky header sits above it inside this container.
+
+   `z-index:4`: above scrolling form fields (the admin "edit element" link is
+   z-index 2) but below the sticky bottom action bar `#multipage-controls`
+   (z-index 5), the drawer (z-index 31) and modals (z-index 2000). The top
+   tabs and the bottom action bar are pinned to opposite edges and never
+   overlap, so this ordering is purely defensive.
+
+   Visual separation (issue request): the bare strip is transparent, so
+   scrolling content would show through once pinned. Paint it with the page
+   background and reveal a hairline + soft shadow along its bottom edge as the
+   form scrolls underneath — a "separator that fades in on scroll". Where the
+   `scroll()` animation timeline is supported the shadow animates in as the
+   user scrolls; elsewhere it degrades to an always-present hairline (no JS).
+   Negative side margins on the ::after let the separator span the full width
+   of the scroll area even though the strip itself keeps the 20px content
+   gutter shared with the form card.
+
+   `padding-bottom` matches `padding-top` (review feedback on PR #41): without
+   it the pills butted directly against the sticky region's bottom edge (and
+   the ::after separator sitting at bottom:0) while pinned, so the tabs had
+   breathing room above but none below. The `::after` separator still anchors
+   to `bottom:0` of this box, i.e. below the added padding, so it continues to
+   mark the true bottom edge of the sticky region. */
+body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: var(--c-bg);
+  /* absorb the strip's own top margin into padding so the pinned bar sits
+     flush at top:0 without a gap of scrolled content peeking above it */
+  margin-top: 0;
+  padding-top: var(--s-3, 12px);
+  padding-bottom: var(--s-3, 12px);
+}
+
+/* Bottom separator that fades in as content scrolls under the pinned tabs. */
+body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs::after {
+  content: "";
+  position: absolute;
+  left: calc(-1 * var(--s-5, 20px));
+  right: calc(-1 * var(--s-5, 20px));
+  bottom: 0;
+  height: 1px;
+  background: var(--c-border);
+  box-shadow: var(--sh-2);
+  opacity: 1;
+}
+
+@supports (animation-timeline: scroll()) {
+  body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs::after {
+    opacity: 0;
+    animation: fz-tabs-separator-in linear both;
+    animation-timeline: scroll(nearest block);
+    animation-range: 0 24px;
+  }
+}
+
+@keyframes fz-tabs-separator-in {
+  to { opacity: 1; }
 }
 
 .pill-tabs__item {
