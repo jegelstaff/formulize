@@ -3462,3 +3462,246 @@ fieldset#icms_block_login_form {
   color: var(--c-accent-hover);
   text-decoration: underline;
 }
+
+/* ---------- jQuery-UI modals / dialogs ----------
+   Several flows open jQuery-UI dialogs (`.dialog()`): the login / lost-password
+   2FA dialogs (include/2fa/manage.php), the sub-entry dialog and sub-form
+   "all done" close (modules/formulize/include/formdisplay.php,
+   subformdisplay-elementsonly.php), the admin relationship dialogs
+   (formulize-admin-relationships.js) and the add-element dialog. They all share
+   jQuery-UI's `.ui-dialog` widget markup, which otherwise renders in the default
+   "smoothness / start" jQuery-UI theme and clashes with Lyris (see issue #28,
+   the forgot-password modal). The rules below re-skin the shared jQuery-UI
+   dialog chrome with Lyris design tokens. Everything is rooted at `.ui-dialog`
+   (or `.ui-widget-overlay` for the backdrop) so non-dialog jQuery-UI widgets
+   used elsewhere — autocomplete menus (`.ui-autocomplete`), datepickers, etc. —
+   are left untouched.
+
+   Specificity note: the default jQuery-UI stylesheet targets these elements
+   with single-class selectors, so `.ui-dialog.ui-widget` (two classes, both
+   present on the widget root) reliably wins without needing `!important`. */
+
+.ui-widget-overlay,
+.ui-front.ui-widget-overlay {
+  background: var(--c-overlay);
+  opacity: 1;
+}
+
+.ui-dialog.ui-widget {
+  padding: 0;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-4);
+  background: var(--c-surface);
+  box-shadow: var(--sh-4);
+  color: var(--c-text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-14);
+  /* Responsive: never wider than the viewport on small screens. jQuery-UI
+     sets an inline pixel width; cap it and let content wrap. */
+  max-width: calc(100vw - var(--s-6));
+  overflow: hidden;
+}
+
+/* Titlebar / header */
+.ui-dialog.ui-widget .ui-dialog-titlebar {
+  padding: var(--s-4) var(--s-5);
+  border: 0;
+  border-bottom: 1px solid var(--c-border);
+  border-radius: 0;
+  background: var(--c-surface-2);
+  color: var(--c-text);
+  font-family: var(--font-sans);
+}
+
+.ui-dialog.ui-widget .ui-dialog-title {
+  margin: 0;
+  font-size: var(--fs-16);
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--c-text);
+}
+
+/* Themed close button — replace the jQuery-UI icon sprite with a CSS glyph */
+.ui-dialog.ui-widget .ui-dialog-titlebar-close {
+  right: var(--s-4);
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0;
+  padding: 0;
+  top: 50%;
+  border: 1px solid transparent;
+  border-radius: var(--r-2);
+  background: transparent;
+  color: var(--c-text-muted);
+  transition: background var(--dur-1) var(--ease),
+              color var(--dur-1) var(--ease);
+}
+.ui-dialog.ui-widget .ui-dialog-titlebar-close:hover {
+  background: var(--c-surface-3);
+  border-color: var(--c-border);
+  color: var(--c-text);
+}
+.ui-dialog.ui-widget .ui-dialog-titlebar-close:focus-visible {
+  outline: none;
+  box-shadow: var(--sh-focus);
+}
+/* Hide the default sprite icon and draw an "×" glyph instead */
+.ui-dialog.ui-widget .ui-dialog-titlebar-close .ui-button-icon,
+.ui-dialog.ui-widget .ui-dialog-titlebar-close .ui-icon {
+  background-image: none !important;
+  text-indent: 0;
+  overflow: visible;
+}
+.ui-dialog.ui-widget .ui-dialog-titlebar-close .ui-button-icon::before,
+.ui-dialog.ui-widget .ui-dialog-titlebar-close .ui-icon::before {
+  content: "\00d7";
+  display: block;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  font-size: 18px;
+  line-height: 16px;
+  text-align: center;
+  color: inherit;
+}
+/* jQuery-UI 1.8 renders the close button as a text link with a positioned
+   .ui-icon span; older markup uses .ui-dialog-titlebar-close .ui-icon only. */
+.ui-dialog.ui-widget .ui-dialog-titlebar-close span.ui-button-text {
+  display: none;
+}
+
+/* Content body */
+.ui-dialog.ui-widget .ui-dialog-content {
+  padding: var(--s-5);
+  color: var(--c-text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-14);
+  line-height: 1.5;
+}
+.ui-dialog.ui-widget .ui-dialog-content p { margin: 0 0 var(--s-3); }
+.ui-dialog.ui-widget .ui-dialog-content p:last-child { margin-bottom: 0; }
+
+/* Form controls inside the dialog — match the Lyris .fz-input primitive */
+.ui-dialog.ui-widget .ui-dialog-content label {
+  display: inline-block;
+  margin-bottom: var(--s-1);
+  color: var(--c-text);
+  font-size: var(--fs-13);
+  font-weight: 500;
+}
+.ui-dialog.ui-widget .ui-dialog-content input[type="text"],
+.ui-dialog.ui-widget .ui-dialog-content input[type="password"],
+.ui-dialog.ui-widget .ui-dialog-content input[type="email"],
+.ui-dialog.ui-widget .ui-dialog-content input[type="tel"],
+.ui-dialog.ui-widget .ui-dialog-content input[type="number"],
+.ui-dialog.ui-widget .ui-dialog-content select,
+.ui-dialog.ui-widget .ui-dialog-content textarea {
+  width: 100%;
+  height: 38px;
+  padding: 0 var(--s-3);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-2);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-14);
+  box-sizing: border-box;
+}
+.ui-dialog.ui-widget .ui-dialog-content textarea {
+  height: auto;
+  min-height: 72px;
+  padding: var(--s-2) var(--s-3);
+  line-height: 1.5;
+}
+.ui-dialog.ui-widget .ui-dialog-content input[type="text"]:focus,
+.ui-dialog.ui-widget .ui-dialog-content input[type="password"]:focus,
+.ui-dialog.ui-widget .ui-dialog-content input[type="email"]:focus,
+.ui-dialog.ui-widget .ui-dialog-content input[type="tel"]:focus,
+.ui-dialog.ui-widget .ui-dialog-content input[type="number"]:focus,
+.ui-dialog.ui-widget .ui-dialog-content select:focus,
+.ui-dialog.ui-widget .ui-dialog-content textarea:focus {
+  outline: none;
+  border-color: var(--c-border-focus);
+  box-shadow: var(--sh-focus);
+}
+
+/* Button pane / footer */
+.ui-dialog.ui-widget .ui-dialog-buttonpane {
+  margin: 0;
+  padding: var(--s-4) var(--s-5);
+  border: 0;
+  border-top: 1px solid var(--c-border);
+  background: var(--c-surface-2);
+}
+.ui-dialog.ui-widget .ui-dialog-buttonpane .ui-dialog-buttonset {
+  display: flex;
+  gap: var(--s-2);
+  justify-content: flex-end;
+  float: none;
+}
+
+/* Dialog buttons → the Lyris .fz-btn look. Default = bordered secondary; the
+   first (primary/affirmative) button gets the accent treatment. */
+.ui-dialog.ui-widget .ui-dialog-buttonset .ui-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  margin: 0;
+  padding: 0 var(--s-3);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-2);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-13);
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--dur-1) var(--ease),
+              border-color var(--dur-1) var(--ease),
+              color var(--dur-1) var(--ease);
+}
+.ui-dialog.ui-widget .ui-dialog-buttonset .ui-button .ui-button-text {
+  padding: 0;
+  line-height: 1;
+}
+.ui-dialog.ui-widget .ui-dialog-buttonset .ui-button:hover {
+  background: var(--c-surface-3);
+  border-color: var(--c-border-strong);
+}
+.ui-dialog.ui-widget .ui-dialog-buttonset .ui-button:focus-visible {
+  outline: none;
+  box-shadow: var(--sh-focus);
+}
+/* Primary / affirmative button = the first one in the set */
+.ui-dialog.ui-widget .ui-dialog-buttonset .ui-button:first-child {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+  color: var(--c-text-on-accent);
+}
+.ui-dialog.ui-widget .ui-dialog-buttonset .ui-button:first-child:hover {
+  background: var(--c-accent-hover);
+  border-color: var(--c-accent-hover);
+}
+
+/* Responsive: on narrow viewports let the dialog fill the width and stack
+   its footer buttons full-width so they stay tappable. */
+@media (max-width: 480px) {
+  .ui-dialog.ui-widget {
+    left: var(--s-3) !important;
+    right: var(--s-3) !important;
+    width: auto !important;
+    max-width: none;
+  }
+  .ui-dialog.ui-widget .ui-dialog-buttonpane .ui-dialog-buttonset {
+    flex-direction: column-reverse;
+  }
+  .ui-dialog.ui-widget .ui-dialog-buttonset .ui-button {
+    width: 100%;
+  }
+}
