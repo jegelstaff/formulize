@@ -270,7 +270,11 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
             $this->logMissingMimeType($extension,$browserMimeType,$mime_types_map);
             if($fileExtensionOK) {
                 $ele_value = $element->getVar('ele_value');
-                $obscureFile = $ele_value[2] ? "" : microtime(true)."+---+";
+                $obscureFile = '';
+								for ($i = 0; $i < 20; $i++) {
+										$obscureFile .= mt_rand(0, 9);
+								}
+								$obscureFile = $ele_value[2] ? "" : $obscureFile."+---+";
                 // if it's a blank subform entry that we're saving, do things a bit differently...elements are named differently in markup in this case
                 if(strstr($value, "desubform")) {
                     $underscorePos = strpos($value, "_"); // everything after the first underscore is the normal identifier for the element
