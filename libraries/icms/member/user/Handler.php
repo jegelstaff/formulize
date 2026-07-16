@@ -440,7 +440,7 @@ class icms_member_user_Handler extends icms_core_ObjectHandler {
 		$db = icms_db_Factory::instance();
 		if ($email !== '') {
 			$sql = $db->query("SELECT uname, email FROM " . $db->prefix('users')
-				. " WHERE email = '" . icms_core_DataFilter::addSlashes($email)
+				. " WHERE email = '" . icms::$db->escape($email)
 				. "'");
 			list($uname, $email) = $db->fetchRow($sql);
 		} else {

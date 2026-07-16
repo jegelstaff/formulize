@@ -151,7 +151,7 @@ class mod_profile_TribesHandler extends icms_ipf_Handler {
 	 * @return array of mod_profile_Tribes objects
 	 */
 	public function searchTribes($title) {
-		$title = icms_core_DataFilter::addSlashes($title);
+		$title = icms::$db->escape($title);
 		$criteria = new icms_db_criteria_Compo();
 		$criteria->setSort('title');
 		$criteria->add(new icms_db_criteria_Item('title', '%'.$title.'%', 'LIKE'));

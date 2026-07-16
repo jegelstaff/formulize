@@ -666,7 +666,7 @@ class icms_ipf_view_Table {
 					if ($this->_filtersel2 != 'default') {
 						// SECURITY: _filtersel is guarded above (must be a defined filter key), but
 						// _filtersel2 is a raw request value — escape it before it reaches render().
-						$this->_criteria->add(new icms_db_criteria_Item($this->_filtersel, icms_core_DataFilter::addSlashes($this->_filtersel2)));
+						$this->_criteria->add(new icms_db_criteria_Item($this->_filtersel, icms::$db->escape($this->_filtersel2)));
 					}
 				}
 			}
@@ -675,7 +675,7 @@ class icms_ipf_view_Table {
 
 		if (isset($_POST['quicksearch_' . $this->_id]) && $_POST['quicksearch_' . $this->_id] != '') {
 			// SECURITY: escape the raw request value once before it reaches render() (LIKE, quoted but not escaped)
-			$quicksearch_value = icms_core_DataFilter::addSlashes($_POST['quicksearch_' . $this->_id]);
+			$quicksearch_value = icms::$db->escape($_POST['quicksearch_' . $this->_id]);
 			$quicksearch_criteria = new icms_db_criteria_Compo();
 			if (is_array($this->_quickSearch['fields'])) {
 				foreach ($this->_quickSearch['fields'] as $v) {

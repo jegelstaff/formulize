@@ -283,15 +283,15 @@ class icms_member_Handler {
 
 		if ($email !== '') {
             $sql = icms::$xoopsDB->query("SELECT login_name, email FROM " . icms::$xoopsDB->prefix('users')
-					. " WHERE login_name = '" . icms_core_DataFilter::addSlashes($email) . "'");
+					. " WHERE login_name = '" . icms::$db->escape($email) . "'");
             list($uname, $email) = icms::$xoopsDB->fetchRow($sql);
             if(!$uname) {
                 if ($table->fieldExists('loginname')) {
                     $sql = icms::$xoopsDB->query("SELECT loginname, email FROM " . icms::$xoopsDB->prefix('users')
-                        . " WHERE email = '" . icms_core_DataFilter::addSlashes($email) . "'");
+                        . " WHERE email = '" . icms::$db->escape($email) . "'");
                 } elseif ($table->fieldExists('login_name')) {
                     $sql = icms::$xoopsDB->query("SELECT login_name, email FROM " . icms::$xoopsDB->prefix('users')
-                         . " WHERE email = '" . icms_core_DataFilter::addSlashes($email) . "'");
+                         . " WHERE email = '" . icms::$db->escape($email) . "'");
                 }
                 list($uname, $email) = icms::$xoopsDB->fetchRow($sql);
             }
@@ -309,12 +309,12 @@ class icms_member_Handler {
 	 */
 	public function loginUser($uname, $pwd) {
 
-		$uname = $this->db->escape($uname);
 		$icmspass = new icms_core_Password();
 
 		if (strstr($uname, '@')) {
 			$uname = self::icms_getLoginFromUserEmail($uname);
 		}
+		$uname = $this->db->escape($uname);
 
 		$is_expired = $icmspass->passExpired($uname);
 		if ($is_expired == 1) {

@@ -229,7 +229,7 @@ if ($op == "form") {
 	}
 	if (!empty($_POST['user_url'])) {
 		$url = formatURL(trim($_POST['user_url']));
-		$criteria->add(new icms_db_criteria_Item('url', icms_core_DataFilter::addSlashes($url) . '%', 'LIKE'));
+		$criteria->add(new icms_db_criteria_Item('url', icms::$db->escape($url) . '%', 'LIKE'));
 	}
 	if (!empty($_POST['user_icq'])) {
 		$match = (!empty($_POST['user_icq_match'])) ? (int) $_POST['user_icq_match'] : XOOPS_MATCH_START;

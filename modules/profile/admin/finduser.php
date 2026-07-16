@@ -25,11 +25,11 @@ switch ($op) {
 		include_once ICMS_ROOT_PATH."/modules/".PROFILE_DIRNAME."/class/smartuser.php";
  		$fields = $profile_smartuser_handler->getFields();
 		$criteria = new icms_db_criteria_Compo();
-		if ($_REQUEST['uname'] != '') $criteria->add(new icms_db_criteria_Item('uname', '%'.icms_core_DataFilter::addSlashes($_REQUEST['uname']).'%', 'LIKE'));
-		if ($_REQUEST['email'] != '') $criteria->add(new icms_db_criteria_Item('email', '%'.icms_core_DataFilter::addSlashes($_REQUEST['email']).'%', 'LIKE'));
+		if ($_REQUEST['uname'] != '') $criteria->add(new icms_db_criteria_Item('uname', '%'.icms::$db->escape($_REQUEST['uname']).'%', 'LIKE'));
+		if ($_REQUEST['email'] != '') $criteria->add(new icms_db_criteria_Item('email', '%'.icms::$db->escape($_REQUEST['email']).'%', 'LIKE'));
 
 		foreach ($fields as $key =>$field){
-    		if (isset($_REQUEST[$key]) && $_REQUEST[$key] != '') $criteria->add(new icms_db_criteria_Item($key, '%'.icms_core_DataFilter::addSlashes($_REQUEST[$key]).'%', 'LIKE'));
+    		if (isset($_REQUEST[$key]) && $_REQUEST[$key] != '') $criteria->add(new icms_db_criteria_Item($key, '%'.icms::$db->escape($_REQUEST[$key]).'%', 'LIKE'));
     	}
 
 		icms_cp_header();
