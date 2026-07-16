@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveFormulizeForm, conditionalElementReady, openElementAccordion, saveAdminForm } from '../../utils';
+import { login, saveFormulizeForm, conditionalElementReady, openElementAccordion, saveAdminForm, applyColumnChanges } from '../../utils';
 
 test.describe('Validate menu entries', () => {
 	test('Validate menu entries for ahstaff', async ({ page }) => {
@@ -761,7 +761,7 @@ test.describe('Change entry owner', () => {
 		const page2 = await popupPromise;
 		await page2.bringToFront();
 		await page2.getByRole('checkbox', { name: 'User who made entry' }).check();
-		await page2.getByRole('button', { name: 'Change columns' }).click();
+		await applyColumnChanges(page2);
 		await expect(page.getByText('Curator One')).not.toHaveCount(0);
 		await expect(page.getByText('Curator Two')).not.toBeVisible();
 		await page.locator('input[name="search_donors_name"]').fill('Freeform Solutions');

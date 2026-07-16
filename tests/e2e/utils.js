@@ -268,6 +268,32 @@ export async function waitForWorkingMessage(page) {
 }
 
 /**
+ * Submit the "Change columns" popup, applying the boxes ticked in it.
+ *
+ * The popup's own button hands the column list to the opener and then calls window.self.close()
+ * (see updateCols() in modules/formulize/include/changecols.php), so the page being clicked
+ * destroys itself as a direct result of the click. Playwright's click is a protocol command that
+ * needs a response from the page, and the window can die before that response returns — more
+ * often when the machine is busy, which under `--workers=4 --fully-parallel` it is. When that
+ * race is lost, click() rejects with "Target page, context or browser has been closed" even
+ * though the click landed (the close IS the proof it landed). noWaitAfter narrows the window
+ * but cannot eliminate it, so: swallow that rejection whenever the popup did close, and only
+ * rethrow if the popup stayed open (a genuine click failure).
+ *
+ * @param {import('@playwright/test').Page} popup The "Change columns" popup page
+ */
+export async function applyColumnChanges(popup) {
+	const closed = popup.waitForEvent('close');
+	closed.catch(() => {}); // never let this reject unhandled if we rethrow below
+	try {
+		await popup.getByRole('button', { name: 'Change columns' }).click({ noWaitAfter: true });
+	} catch (error) {
+		if (!popup.isClosed()) throw error;
+	}
+	await closed; // popup closing is the signal that the column change was submitted
+}
+
+/**
  * Save changes on admin pages - handles both regular and popup saves
  * @param {*} page
  * @param {*} type

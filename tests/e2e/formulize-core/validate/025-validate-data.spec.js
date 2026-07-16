@@ -1,24 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, waitForWorkingMessage } from '../../utils';
-
-/**
- * Submit the "Change columns" popup, applying the boxes ticked in it.
- *
- * The popup's own button hands the column list to the opener and then calls window.self.close()
- * (see updateCols() in modules/formulize/include/changecols.php), so the page being clicked destroys
- * itself as a direct result of the click. Playwright's post-click bookkeeping then races the window
- * disappearing and can fail with "Target page, context or browser has been closed" — more often when
- * the machine is busy, which under `--workers=4 --fully-parallel` it is. So: don't wait after the
- * click, and treat the popup closing as the signal that the click landed.
- *
- * @param {import('@playwright/test').Page} popup The "Change columns" popup page
- */
-async function applyColumnChanges(popup) {
-	await Promise.all([
-		popup.waitForEvent('close'),
-		popup.getByRole('button', { name: 'Change columns' }).click({ noWaitAfter: true }),
-	]);
-}
+import { login, waitForWorkingMessage, applyColumnChanges } from '../../utils';
 
 test.describe('Validate Data', () => {
 	test('Check the Romain Coin record is complete', async ({ page }) => {
