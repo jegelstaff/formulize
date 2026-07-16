@@ -119,8 +119,27 @@
 		  </div>
       <div class="description"></div>
     </div>
+    <div class="form-item" id="editdestination-container"<{if $content.useviewentrylinks eq 0}> style="display: none;"<{/if}>>
+      <label for="screens-editdestination"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_EDITDESTINATION}></label>
+      <select id="screens-editdestination" name="screens-editdestination" size="1">
+        <{html_options options=$content.editdestinationoptions selected=$content.editdestination}>
+      </select>
+      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_EDITDESTINATION}></div>
+    </div>
   </fieldset>
 </div>
+
+<script type="text/javascript">
+  // Show the edit-destination option only when the detail/entry-link icon is enabled.
+  // Mirrors the yes/no radio -> slideDown/slideUp toggle pattern used in form_settings.html.
+  $("input[name='screens-useviewentrylinks']").change(function() {
+    if ($(this).val() == "1" && $(this).is(':checked')) {
+      $("#editdestination-container").slideDown();
+    } else if ($(this).val() == "0" && $(this).is(':checked')) {
+      $("#editdestination-container").slideUp();
+    }
+  });
+</script>
 
 <div class="panel-content content">
   <fieldset>

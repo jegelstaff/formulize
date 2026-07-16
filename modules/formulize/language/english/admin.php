@@ -916,6 +916,10 @@ define("_AM_FORMULIZE_SCREEN_LOE_REPEATHEADERS", "If you are using headings, how
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_REPEATHEADERS", "Repeating the headings makes it easier for users to know what column they are looking at when they scroll through the list.  Set to '0' to have headings only at the top of the list.");
 define("_AM_FORMULIZE_SCREEN_LOE_ENTRIESPERPAGE", "How many entries should appear on each page of the list?");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_ENTRIESPERPAGE", "Set to '0' to have all entries appear on one page.");
+define("_AM_FORMULIZE_SCREEN_LOE_EDITDESTINATION", "Where should the edit icon open the entry form?");
+define("_AM_FORMULIZE_SCREEN_LOE_EDITDESTINATION_DRAWER", "In the right-side drawer");
+define("_AM_FORMULIZE_SCREEN_LOE_EDITDESTINATION_SCREEN", "On the full form screen");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_EDITDESTINATION", "The drawer option only applies to themes that support the right-side drawer (such as Lyris). On other themes the edit icon always opens the full form screen.");
 define("_AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN", "What screen should be used to display individual entries when users click on them?");
 define("_AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN_DEFAULT", "Use the default version of this form");
 define("_AM_FORMULIZE_SCREEN_LOE_VIEWENTRYPAGEWORKS", "Pageworks page");

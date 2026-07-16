@@ -71,6 +71,8 @@ $screen->setVar('columnwidth',$screens['columnwidth']);
 $screen->setVar('textwidth',$screens['textwidth']);
 $screen->setVar('usecheckboxes',$screens['usecheckboxes']);
 $screen->setVar('useviewentrylinks',(array_key_exists('useviewentrylinks',$screens))?$screens['useviewentrylinks']:0);
+$editdestination = (isset($screens['editdestination']) AND $screens['editdestination'] === 'screen') ? 'screen' : 'drawer';
+$screen->setVar('editdestination', $editdestination);
 $screen->setVar('hiddencolumns',$screens['hiddencolumns']);
 $screen->setVar('decolumns',$screens['decolumns']);
 $screen->setVar('dedisplay',$screens['dedisplay']);
