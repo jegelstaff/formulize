@@ -1055,13 +1055,13 @@ class formulizeFormsHandler {
 					$multiPageScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 					$defaultFormScreen = $multiPageScreenHandler->create();
 					$multiPageScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $formObject);
-					if(!$defaultFormScreenId = $multiPageScreenHandler->insert($defaultFormScreen)) {
+					if(!$defaultFormScreenId = $multiPageScreenHandler->insert($defaultFormScreen, $force)) {
 						throw new Exception("Could not create default form screen");
 					}
 					$listScreenHandler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
 					$screen = $listScreenHandler->create();
 					$listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $formObject);
-					if(!$defaultListScreenId = $listScreenHandler->insert($screen)) {
+					if(!$defaultListScreenId = $listScreenHandler->insert($screen, $force)) {
 						throw new Exception("Could not create default list screen");
 					}
 					$defaultScreensSQL = "UPDATE ".$this->db->prefix("formulize_id") . " SET".
