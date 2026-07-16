@@ -667,14 +667,15 @@ function addElementToMultiPageScreens($fid, $elementIdentifier, $makeNewPageIfNo
 /**
  * Create a new form with the given name, including setting up default screens, etc, as if the user created it normally themselves
  * @param string name - The name to use for the form
- * @param int|string|object - activeFormIndentifier - the id, handle or object of the form that was active when this creation event was triggered
+ * @param int|string|object - activeFormIdentifier - the id, handle or object of the form that was active when this creation event was triggered
  * @return int|boolean Returns the new form id, or false if creation failed
  */
-function createNewFormWithName($name, $activeFormIndentifer) {
+function createNewFormWithName($name, $activeFormIdentifier) {
 	$result = false;
-	if($name AND $activeForm = _getElementObject($activeFormIndentifer)) {
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	$activeForm = is_a($activeFormIdentifier, 'formulizeForm') ? $activeFormIdentifier : $form_handler->get($activeFormIdentifier);
+	if($name AND $activeForm) {
 		global $xoopsDB;
-		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->create();
 		$handle = formulizeForm::sanitize_handle_name($name);
 		if (strlen($handle)) {
