@@ -67,32 +67,6 @@ function tfa_buildDialogMessage($scenario, $method, $contactDisplay, $codebox, $
 	return $msg;
 }
 
-function tfaDialogButtonStyles($buttonIds) {
-	$ids = (array)$buttonIds;
-	$selectors     = '#' . implode(', #', $ids);
-	$textSelectors = '#' . implode(' .ui-button-text, #', $ids) . ' .ui-button-text';
-	return "<style>
-$selectors {
-	background: var(--button-color, #0d7bbf) !important;
-	color: white !important;
-	font-weight: 600 !important;
-	font-size: 0.9rem !important;
-	line-height: 1.3 !important;
-	padding: 0 !important;
-	border: 0 !important;
-	border-radius: 10px !important;
-	min-width: 200px !important;
-	box-shadow: 0px 4px 10px 0px rgba(16, 156, 241, 0.24) !important;
-	height: auto !important;
-	width: auto !important;
-}
-$textSelectors {
-	padding: 12px 30px !important;
-	line-height: 1.3 !important;
-}
-</style>";
-}
-
 function validateCode($code, $uid=false) {
     // check if the user has a code on file
     // if not and we ignore when DB is empty, return true
@@ -305,9 +279,7 @@ function tfaLoginJS($id) {
 	$counter++;
 	$js = "
 	<div id='tfadialog-$id'><center>".$workingMessageGif."</center></div>
-    <div id='tfalostpassdialog-$id'><center>".$workingMessageGif."</center></div>"
-	. tfaDialogButtonStyles(array("tfa-login-ok-$counter", "tfa-login-cancel-$counter", "tfa-lostpass-ok-$counter", "tfa-lostpass-cancel-$counter")) .
-	"
+    <div id='tfalostpassdialog-$id'><center>".$workingMessageGif."</center></div>
 	<script type='text/javascript'>
 	var tfadialog$counter;
 	jQuery('document').ready(function() {
