@@ -205,6 +205,7 @@ CREATE TABLE `formulize_screen_listofentries` (
   `customactions` text NOT NULL,
   `entriesperpage` int(1) NOT NULL,
   `viewentryscreen` varchar(10) NOT NULL DEFAULT '',
+  `editdestination` varchar(10) NOT NULL DEFAULT 'drawer',
   `fundamental_filters` text NOT NULL,
   PRIMARY KEY (`listofentriesid`),
   INDEX i_sid (`sid`)

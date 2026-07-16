@@ -156,7 +156,22 @@ function fzSelectView(value, isStandard) {
         });
     }
 
+    // The list's edit-destination setting, emitted as a data attribute on
+    // .fz-list-screen: 'drawer' opens the entry form in the right-side drawer
+    // (current behaviour), 'screen' leaves Formulize's default goDetails/addNew
+    // in place so the edit icon navigates to the full form screen.
+    function editDestination() {
+        var screenEl = document.querySelector('.fz-list-screen');
+        return screenEl ? (screenEl.getAttribute('data-fz-editdest') || 'drawer') : 'drawer';
+    }
+
     function initRowDrawer() {
+        // When the list is set to open entries on the full form screen, do not
+        // override goDetails/addNew: Formulize's defaults handle the navigation.
+        if (editDestination() === 'screen') {
+            return;
+        }
+
         // Override Formulize's goDetails so the loe-edit-entry onclick opens the drawer
         window.goDetails = function (entryId, screen) {
             openEntry(entryId, screen || '');
