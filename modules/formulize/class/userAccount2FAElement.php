@@ -186,9 +186,7 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 		<div id='tfa-loading-{$safeId}' style='display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1100;'><center>{$workingGif}</center></div>
 		<input type='hidden' name='formulize_tfa_code' id='tfa-code-{$safeId}' value=''>
 		<input type='hidden' name='formulize_tfa_step1token' id='tfa-step1token-{$safeId}' value=''>
-	<input type='hidden' name='tfa_confirm_token' id='tfa-confirm-token-{$safeId}' value=''>"
-		. tfaDialogButtonStyles(array("tfa-btn-ok-{$safeId}", "tfa-btn-cancel-{$safeId}")) .
-		"
+	<input type='hidden' name='tfa_confirm_token' id='tfa-confirm-token-{$safeId}' value=''>
 		<script type='text/javascript'>
 	function tfa_recentreDialog_{$safeId}() {
 		var dlgWrap = jQuery('#tfa-dialog-{$safeId}').closest('.ui-dialog');
