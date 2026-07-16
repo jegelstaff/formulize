@@ -468,6 +468,12 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		$pageTitles = $screen->getVar('pagetitles');
 		$disabledPages = $screen->getVar('disabledpages');
 		$disabledPages = is_array($disabledPages) ? $disabledPages : array();
+		// make sure $disabledPages has all the pages represented
+		foreach($pages as $pageNumber=>$pageElements) {
+			if(!isset($disabledPages[$pageNumber])) {
+				$disabledPages[$pageNumber] = 0;
+			}
+		}
 		ksort($pages); // make sure the arrays are sorted by key, ie: page number
 		ksort($pageTitles);
 		ksort($disabledPages);
