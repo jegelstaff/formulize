@@ -12,16 +12,13 @@ include_once ICMS_ROOT_PATH . '/modules/profile/language/english/main.php';
 include_once ICMS_ROOT_PATH .'/language/english/user.php';
 include_once(XOOPS_ROOT_PATH.'/integration_api.php');
 
-//protect against an attempt to directly enter the url into the browser for this page. Don't want it to be too public.
-// SECURITY: require a non-empty session token and compare strictly + constant-time. A loose `==` here let
-// `?newuser=` (empty) match an unset/null $_SESSION['newuser'] ('' == null is true in PHP), bypassing the gate.
 if (isset($_GET['newuser']) && !empty($_SESSION['newuser']) && hash_equals((string) $_SESSION['newuser'], (string) $_GET['newuser'])) {
     //on first transition to the page we want to render the form, after submission deal with validation of values and attempt to create new user
-   if (!isset($_POST["token"])){  
+   if (!isset($_POST["token"])){
         renderRegForm();
     }else{
         //the condition where we know that we have submitted the form on this page and redirected
-        //need to validate the token aka fetch others and see if it matches any 
+        //need to validate the token aka fetch others and see if it matches any
         $submittedToken =$_POST["token"];
         $tokenHandler = xoops_getmodulehandler('token', 'formulize');
         $token = $tokenHandler->get($submittedToken);

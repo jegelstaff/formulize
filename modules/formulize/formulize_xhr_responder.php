@@ -264,7 +264,12 @@ switch($op) {
 		5 - deInstanceCounter
 		*/
     include_once XOOPS_ROOT_PATH."/modules/formulize/include/elementdisplay.php";
-    displayElement("", formulize_db_escape($_GET['param2']), intval($_GET['param3']));
+    include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php"; // security_check()
+    $gehElementId = formulize_db_escape($_GET['param2']);
+    $gehEntryId = intval($_GET['param3']);
+    $gehElement = xoops_getmodulehandler('elements','formulize')->get($gehElementId);
+    if (!is_object($gehElement) OR !security_check(intval($gehElement->getVar('id_form')), $gehEntryId)) { break; }
+    displayElement("", $gehElementId, $gehEntryId);
 		print "<input type='hidden' name='detoken_".intval($_GET['param4']).'_'.intval($_GET['param3']).'_'.intval($_GET['param2'])."' value=".$GLOBALS['xoopsSecurity']->createToken(0, 'formulize_display_element_token').">";
     break;
 
@@ -279,6 +284,7 @@ switch($op) {
     include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
     $element_handler = xoops_getmodulehandler('elements','formulize');
     $elementObject = $element_handler->get(formulize_db_escape($handle));
+    if (!is_object($elementObject) OR !security_check(intval($elementObject->getVar('id_form')), $entryId)) { break; }
     $data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
     $dbValue = $data_handler->getElementValueInEntry($entryId,$handle);
     $preppedValue = prepvalues($dbValue,$handle,$entryId);
