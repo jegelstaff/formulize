@@ -154,7 +154,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	if (isset($_POST['delconfirmed']) AND $_POST['delconfirmed'] AND $formulize_LOESecurityPassed) {
 		foreach($_POST as $k=>$v) {
 			if(substr($k, 0, 7) == "delete_" AND $v != "") {
-				$delete_entry_id = substr($k, 7);
+				$delete_entry_id = intval(substr($k, 7));
 				// confirm user has permission to delete this entry
 				if (formulizePermHandler::user_can_delete_entry($fid, $uid, $delete_entry_id)) {
 					$GLOBALS['formulize_deletionRequested'] = true;
@@ -239,9 +239,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	// handle deletion of view...reset currentView
 	if(isset($_POST['delview']) AND $_POST['delview'] AND $formulize_LOESecurityPassed) {
 		if(substr($_POST['delviewid_formulize'], 1, 4) == "old_") {
-			$delviewid_formulize = substr($_POST['delviewid_formulize'], 5);
+			$delviewid_formulize = intval(substr($_POST['delviewid_formulize'], 5));
 		} else {
-			$delviewid_formulize = substr($_POST['delviewid_formulize'], 1);
+			$delviewid_formulize = intval(substr($_POST['delviewid_formulize'], 1));
 		}
 
 		if($delete_other_reports OR $xoopsUser->getVar('uid') == getSavedViewOwner($delviewid_formulize)) { // "get saved view owner" only works with new saved view format in 2.0 or greater, but since that is 2.5 years old now, should be good to go!
@@ -448,7 +448,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 		// delete legacy report if necessary
 		if(strstr($saveid_formulize, "old_")) {
-			$dellegacysql = "DELETE FROM " . $xoopsDB->prefix("formulize_reports") . " WHERE report_id=\"" . substr($saveid_formulize, 5) . "\"";
+			$dellegacysql = "DELETE FROM " . $xoopsDB->prefix("formulize_reports") . " WHERE report_id=\"" . intval(substr($saveid_formulize, 5)) . "\"";
 			if(!$result = $xoopsDB->query($dellegacysql)) {
 				exit("Error:  unable to delete legacy report: " . substr($saveid_formulize, 5));
 			}
