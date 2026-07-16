@@ -244,6 +244,14 @@ class formulizeTextareaElementHandler extends formulizeTextElementHandler {
 		$counterType   = isset($ele_value[ELE_VALUE_TEXTAREA_COUNTER_TYPE])   ? $ele_value[ELE_VALUE_TEXTAREA_COUNTER_TYPE]   : 'none';
 		$limitNumber = isset($ele_value[ELE_VALUE_TEXTAREA_LIMIT_NUMBER]) ? intval($ele_value[ELE_VALUE_TEXTAREA_LIMIT_NUMBER]) : 0;
 		$isRichText  = $this->usesRichTextEditor($ele_value);
+		if (!strstr(getCurrentURL(), "printview.php") AND !$isRichText AND $element->getVar('ele_required')) { // need to manually handle required setting here too, since only one validation routine can run for an element, and the counter/limit check below (or alwaysValidateInputs) would otherwise take over and skip the generic required check
+			$eltname = $markupName;
+			$eltmsg = empty($caption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($caption, ENT_QUOTES)));
+			$eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
+			$validationCode[] = "if ( myform.{$eltname}.value == '' ) {\n";
+			$validationCode[] = "window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n";
+			$validationCode[] = "}\n";
+		}
 		if (!strstr(getCurrentURL(), "printview.php") && $counterType && $counterType !== 'none' && $limitNumber > 0 && !$isRichText) {
 			$typeLabel = ($counterType === 'words') ? 'words' : 'characters';
 			$alertMsg  = addslashes('Please reduce your ' . $typeLabel . ' to ' . $limitNumber . ' or fewer before submitting.');
