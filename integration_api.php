@@ -322,7 +322,7 @@ class Formulize {
 			}
 
 			//Get the unique IDs of the accessible forms as integers
-			$form_IDs = array_map(intval, array_unique($accessible_forms));
+			$form_IDs = array_map('intval', array_unique($accessible_forms));
 			$in_clause = implode(',', $form_IDs);
 
 			$sql =
