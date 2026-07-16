@@ -43,7 +43,7 @@ while(ob_get_level()) {
 
 // check that the user who sent this request is the same user we have a session for now, if not, bail
 $sentUid = intval($_GET['uid']);
-
+global $xoopsUser;
 if(($xoopsUser AND $sentUid != $xoopsUser->getVar('uid')) OR (!$xoopsUser AND $sentUid !== 0)) {
   exit();
 }
@@ -224,17 +224,21 @@ switch($op) {
     break;
 
   case 'delete_uploaded_file':
-    $folderName = $_GET['param1'];
-    $element_id = $_GET['param2'];
-    $entry_id = $_GET['param3'];
+    $folderName = basename((string) $_GET['param1']);
+    $element_id = intval($_GET['param2']);
+    $entry_id = intval($_GET['param3']);
     $element_handler = xoops_getmodulehandler('elements','formulize');
     $elementObject = $element_handler->get($element_id);
+    if (!is_object($elementObject)) { break; } // unknown element id
     $fid = $elementObject->getVar('id_form');
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/class/usersGroupsPerms.php";
+    $dufUid = $xoopsUser ? intval($xoopsUser->getVar('uid')) : 0;
+    if (!formulizePermHandler::user_can_edit_entry($fid, $dufUid, $entry_id)) { break; }
     include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
     $data_handler = new formulizeDataHandler($fid);
     $fileInfo = $data_handler->getElementValueInEntry($entry_id, $elementObject);
     $fileInfo = unserialize($fileInfo);
-    $filePath = XOOPS_ROOT_PATH."/uploads/$folderName/".$fileInfo['name'];
+    $filePath = XOOPS_ROOT_PATH."/uploads/$folderName/".basename((string) $fileInfo['name']);
     if (!file_exists($filePath) or unlink($filePath)) {
 				// erase any thumbnail associated with the file
 				$dotPos = strrpos($filePath, '.');
@@ -436,6 +440,10 @@ switch($op) {
 
 
   case "validate_php_code":
+        $vpcGroups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+        if (!$xoopsUser OR !xoops_gethandler('groupperm')->checkRight('system_admin', XOOPS_SYSTEM_GROUP, $vpcGroups)) {
+            break;
+        }
         echo formulize_validatePHPCode($_POST["the_code"]);
     break;
 
