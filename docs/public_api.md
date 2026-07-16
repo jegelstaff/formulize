@@ -25,5 +25,5 @@ RewriteCond %{REQUEST_URI} ^/formulize-public-api/ [NC]
 RewriteCond %{REQUEST_FILENAME} !-f<br>
 RewriteCond %{REQUEST_FILENAME} !-d<br>
 RewriteCond %{REQUEST_FILENAME} !-l<br>
-RewriteRule ^(.*)$ /modules/formulize/public_api/index.php?apiPath=$1 [L]
+RewriteRule ^(.*)$ /modules/formulize/public_api/index.php?apiPath=$1 [L,B]
 ```
