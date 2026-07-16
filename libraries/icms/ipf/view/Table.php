@@ -270,11 +270,6 @@ class icms_ipf_view_Table {
 		$this->_sortsel = isset($_GET[$this->_objectHandler->_itemname . '_' . 'sortsel']) ? $_GET[$this->_objectHandler->_itemname . '_' . 'sortsel'] : $this->getDefaultSort();
 		//$this->_sortsel = isset($_POST['sortsel']) ? $_POST['sortsel'] : $this->_sortsel;
 
-		// SECURITY: _sortsel (from $_GET, or the persisted cookie via getDefaultSort()) is interpolated
-		// raw as a column identifier into setSort() (ORDER BY) below. Whitelist it against this table's
-		// sortable columns (the only values ever emitted as sort links) and the object's declared fields.
-		// If it matches neither, fall back to the object's identifier (primary key) name, which is always
-		// a safe, developer-defined column. This validates every vector uniformly (GET + cookie + default).
 		$allowedSortKeys = array();
 		foreach ($this->_columns as $sortableColumn) {
 			if ($sortableColumn->isSortable()) {
@@ -664,8 +659,6 @@ class icms_ipf_view_Table {
 
 					icms_setCookieVar($_SERVER['PHP_SELF'] . '_filtersel2', $this->_filtersel2);
 					if ($this->_filtersel2 != 'default') {
-						// SECURITY: _filtersel is guarded above (must be a defined filter key), but
-						// _filtersel2 is a raw request value — escape it before it reaches render().
 						$this->_criteria->add(new icms_db_criteria_Item($this->_filtersel, icms::$db->escape($this->_filtersel2)));
 					}
 				}
@@ -674,7 +667,6 @@ class icms_ipf_view_Table {
 		// Check if we have a quicksearch
 
 		if (isset($_POST['quicksearch_' . $this->_id]) && $_POST['quicksearch_' . $this->_id] != '') {
-			// SECURITY: escape the raw request value once before it reaches render() (LIKE, quoted but not escaped)
 			$quicksearch_value = icms::$db->escape($_POST['quicksearch_' . $this->_id]);
 			$quicksearch_criteria = new icms_db_criteria_Compo();
 			if (is_array($this->_quickSearch['fields'])) {
