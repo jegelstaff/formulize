@@ -112,7 +112,7 @@
 			if(isset($menuLinkObjects[$menuitem])) {
 				$touchedMenuGroupIds = array_merge($touchedMenuGroupIds, $parseGroupIdString($menuLinkObjects[$menuitem]->getVar('permissions')), $parseGroupIdString($menuLinkObjects[$menuitem]->getVar('default_screen')));
 			}
-			$application_handler->deleteMenuLink($appid, $menuitem);
+			$application_handler->deleteMenuLinkById($menuitem);
 			$_POST['reload_settings'] = 1;
   	}
 

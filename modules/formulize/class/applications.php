@@ -446,28 +446,30 @@ class formulizeApplicationsHandler {
 	}
 
   function delete($appid) {
-    if(is_object($appid)) {
-			if(!get_class("formulizeApplication")) {
-				return false;
-			}
+    if(is_object($appid) AND get_class($appid) == "formulizeApplication") {
 			$appid = $appid->getVar('appid');
 		} elseif(!is_numeric($appid)) {
 			return false;
 		}
+
+		// delete menu links from the db too
+		$menuLinks = $this->getMenuLinksForApp($appid, 'all');
+		foreach($menuLinks as $thisMenuLink) {
+			$menuid = $thisMenuLink->getVar('menu_id');
+			$this->deleteMenuLinkById($menuid);
+		}
+
     global $xoopsDB;
-    $isError = false;
     $sql[] = "DELETE FROM ".$xoopsDB->prefix("formulize_applications")." WHERE appid=$appid";
     $sql[] = "DELETE FROM ".$xoopsDB->prefix("formulize_application_form_link")." WHERE appid=$appid";
     foreach($sql as $thisSql) {
       if(!$xoopsDB->query($thisSql)) {
-        print "Error: could not complete the deletion of application ".$appid;
-        $isError = true;
+        throw new Exception("Could not delete application. SQL dump:\n" . $thisSql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
       }
     }
-    return $isError ? false : true;
+    return true;
   }
     function getMenuLinksForApp($appid,$all=false){
-        global $xoopsDB;
         $links_handler = xoops_getmodulehandler('ApplicationMenuLinks', 'formulize');
         if(!is_array($appid)) {
             $appid = array($appid);
@@ -505,7 +507,7 @@ class formulizeApplicationsHandler {
 					$result = $xoopsDB->query($insertsql);
 				}
 		if(!$result) {
-			exit("Error inserting Menu Item. SQL dump:\n" . $insertsql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+			throw new Exception("Could not insert Menu Item. SQL dump:\n" . $insertsql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
 		}else{
 
 			$menuid = $xoopsDB->getInsertId();
@@ -527,27 +529,25 @@ class formulizeApplicationsHandler {
 						$result = $xoopsDB->query($permissionsql);
 					}
 					if(!$result) {
-						exit("Error inserting Menu Item permissions.".$linkValues[4]." SQL dump:\n" . $permissionsql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+						throw new Exception("Could not insert Menu Item permissions.".$linkValues[4]." SQL dump:\n" . $permissionsql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
 					}
-                    $defaultScreen = 0;
+          $defaultScreen = 0;
+					if($groupid == XOOPS_GROUP_ANONYMOUS) {
+						// set visibility on the menu block to include anonymous users since there is a menu item visible to them
+						$gperm_handler = xoops_gethandler('groupperm');
+						$formMenuBlockId = 24; // enforced by the override script in the installer
+						if(count($this->getAnonRightsToFormMenuBlock()) == 0) {
+							if($gperm_handler->addRight('block_read', $formMenuBlockId, XOOPS_GROUP_ANONYMOUS, 1) == false) {
+								throw new Exception("Could not add anonymous group permission for menu block. ".$xoopsDB->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+							}
+						}
+					}
 				}
 			}
 		}
 	}
     //end of insertMenuLink()
 
-
-    // modified Oct 2013 W.R.
-    function deleteMenuLink($appid,$menuitem ){
-        global $xoopsDB;
-        $deletemenuitems = "DELETE FROM `".$xoopsDB->prefix("formulize_menu_links")."` WHERE appid=".intval($appid)." AND menu_id=" .$menuitem .";";
-        $deletemenupermissions = "DELETE FROM `".$xoopsDB->prefix("formulize_menu_permissions")."` WHERE menu_id=" .$menuitem .";";
-        if(!$result = $xoopsDB->query($deletemenuitems)) {
-            echo("Delete menu link $menuitem failed.");
-        }else{
-            $xoopsDB->query($deletemenupermissions);
-        }
-    }
     //$screen should be something like "sid=1" or "fid=1" be careful when you use it
     //Added by Jinfu FEB 2015
     function deleteMenuLinkByScreen($screen){
@@ -556,8 +556,7 @@ class formulizeApplicationsHandler {
 	//error_log($sql);
 	$res=$xoopsDB->query($sql);
 	while($array=$xoopsDB->fetchArray($res)){
-	    $this->deleteMenuLink($array['appid'],$array['menu_id']);
-	    //error_log("ajslkjalkdjlas: ".$array['appid']." ".$array['menu_id']."\n");
+	    $this->deleteMenuLinkById($array['menu_id']);
 	}
     }
 
@@ -804,8 +803,43 @@ class formulizeApplicationsHandler {
 		if($menuId <= 0) {
 			return;
 		}
-		$xoopsDB->query("DELETE FROM ".$xoopsDB->prefix("formulize_menu_links")." WHERE menu_id = ".$menuId);
-		$xoopsDB->query("DELETE FROM ".$xoopsDB->prefix("formulize_menu_permissions")." WHERE menu_id = ".$menuId);
+		$sql= [
+			"DELETE FROM ".$xoopsDB->prefix("formulize_menu_links")." WHERE menu_id = ".$menuId,
+			"DELETE FROM ".$xoopsDB->prefix("formulize_menu_permissions")." WHERE menu_id = ".$menuId
+		];
+		foreach($sql as $query) {
+			if($xoopsDB->query($query) == false) {
+				throw new Exception("Error deleting menu link. SQL dump:\n" . $query . "\n".$xoopsDB->error());
+			}
+		}
+
+		// check if there are any menu items left that are visible to anonymous users. If not, set the menu block visibility to exclude anonymous users
+		$sql = "SELECT COUNT(*) AS anon_count FROM ".$xoopsDB->prefix("formulize_menu_permissions")." WHERE `group_id` = ".intval(XOOPS_GROUP_ANONYMOUS);
+		if($result = $xoopsDB->query($sql)) {
+			$row = $xoopsDB->fetchArray($result);
+			if(intval($row['anon_count']) === 0) {
+				if($anonRightsToFormMenuBlock = $this->getAnonRightsToFormMenuBlock()) {
+					$gperm_handler = xoops_gethandler('groupperm');
+					foreach($anonRightsToFormMenuBlock as $right) {
+						$gperm_handler->delete($right);
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Get the anonymous group permission objects for the menu block, if any exist
+	 * @return array An array of group permission objects for the menu block, or an empty array if none exist
+	 */
+	function getAnonRightsToFormMenuBlock() {
+		$gperm_handler = xoops_gethandler('groupperm');
+		$formMenuBlockId = 24; // enforced by the override script in the installer
+		$criteria = new icms_db_criteria_Compo(new icms_db_criteria_Item('gperm_itemid', $formMenuBlockId));
+		$criteria->add(new icms_db_criteria_Item('gperm_modid', 1));
+		$criteria->add(new icms_db_criteria_Item('gperm_name', 'block_read'));
+		$criteria->add(new icms_db_criteria_Item('gperm_groupid', XOOPS_GROUP_ANONYMOUS));
+		return $gperm_handler->getObjects($criteria);
 	}
 
 	// added Oct 2013 W.R.
