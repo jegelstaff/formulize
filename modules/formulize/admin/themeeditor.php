@@ -100,6 +100,12 @@ if(in_array($requestedFile, $adminPage['theme_files'], true)) {
     $adminPage['selected_file'] = '';
 }
 
+// Nested folder/file tree for the file browser, so files are grouped visually by the
+// folder they live in rather than shown as one flat alphabetical list
+$themeFileTree = formulize_themeeditor_buildFileTree($adminPage['theme_files']);
+formulize_themeeditor_sortFileTree($themeFileTree);
+$adminPage['theme_files_tree'] = formulize_themeeditor_renderFileTree($themeFileTree, $adminPage['selected_theme'], $adminPage['selected_file']);
+
 // Image files can't be sanely edited as text, so show a preview instead of dumping
 // raw binary bytes into the textarea
 $imageExtensions = array('png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'ico', 'bmp');
@@ -147,8 +153,81 @@ function formulize_themeeditor_getThemeFiles($themeDir) {
     return $files;
 }
 
+/**
+ * Turn a flat list of theme-relative file paths (e.g. "css/foo.css") into a nested
+ * associative tree of dir/file nodes, keyed by path segment at each level.
+ * @param array files - output of formulize_themeeditor_getThemeFiles()
+ * @return array Nested tree; each node is array('type' => 'dir'|'file', 'name' => ..., 'path' => ..., and 'children' => array() for dirs)
+ */
+function formulize_themeeditor_buildFileTree($files) {
+    $tree = array();
+    foreach ($files as $file) {
+        $parts = explode('/', $file);
+        $node = &$tree;
+        $pathSoFar = '';
+        foreach ($parts as $i => $part) {
+            $pathSoFar = ($pathSoFar === '') ? $part : $pathSoFar . '/' . $part;
+            $isFile = ($i === count($parts) - 1);
+            if ($isFile) {
+                $node[$part] = array('type' => 'file', 'name' => $part, 'path' => $pathSoFar);
+            } else {
+                if (!isset($node[$part]) OR $node[$part]['type'] !== 'dir') {
+                    $node[$part] = array('type' => 'dir', 'name' => $part, 'path' => $pathSoFar, 'children' => array());
+                }
+                $node = &$node[$part]['children'];
+            }
+        }
+        unset($node);
+    }
+    return $tree;
+}
 
+/**
+ * Recursively sort a file tree in place: folders before files, alphabetically within each group.
+ * @param array tree - reference to a tree node's children, as produced by formulize_themeeditor_buildFileTree()
+ */
+function formulize_themeeditor_sortFileTree(&$tree) {
+    uasort($tree, function($a, $b) {
+        if ($a['type'] !== $b['type']) {
+            return $a['type'] === 'dir' ? -1 : 1;
+        }
+        return strcasecmp($a['name'], $b['name']);
+    });
+    foreach ($tree as &$node) {
+        if ($node['type'] === 'dir') {
+            formulize_themeeditor_sortFileTree($node['children']);
+        }
+    }
+}
 
+/**
+ * Render a file tree as nested <ul> markup for the theme editor's file browser.
+ * Folders containing the selected file are marked "open" so its path is visible on load.
+ * @param array tree - a tree node's children, as produced by formulize_themeeditor_buildFileTree()
+ * @param string theme - theme directory name, for building file links
+ * @param string selectedFile - theme-relative path of the currently selected file
+ * @return string HTML markup
+ */
+function formulize_themeeditor_renderFileTree($tree, $theme, $selectedFile) {
+    $html = '<ul class="themeeditor-tree">';
+    foreach ($tree as $node) {
+        if ($node['type'] === 'dir') {
+            $isOpen = ($selectedFile !== '' AND strpos($selectedFile, $node['path'] . '/') === 0);
+            $html .= '<li class="themeeditor-tree-dir' . ($isOpen ? ' open' : '') . '">';
+            $html .= '<span class="themeeditor-tree-toggle">' . htmlspecialchars($node['name']) . '/</span>';
+            $html .= formulize_themeeditor_renderFileTree($node['children'], $theme, $selectedFile);
+            $html .= '</li>';
+        } else {
+            $isActive = ($node['path'] === $selectedFile);
+            $href = 'ui.php?page=themeeditor&theme=' . urlencode($theme) . '&file=' . urlencode($node['path']);
+            $html .= '<li class="themeeditor-tree-file' . ($isActive ? ' active' : '') . '">';
+            $html .= '<a href="' . htmlspecialchars($href) . '">' . htmlspecialchars($node['name']) . '</a>';
+            $html .= '</li>';
+        }
+    }
+    $html .= '</ul>';
+    return $html;
+}
 
 
 
