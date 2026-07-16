@@ -2757,7 +2757,17 @@ function authenticationURL($needAuth) {
 
 function setupAuthentication() {
 	//Google API PHP Library includes
-	require_once XOOPS_ROOT_PATH.'/libraries/googleapiclient/vendor/autoload.php';
+	// The Google API PHP client library is not bundled with this distribution any more. Without it we
+	// cannot process Google OAuth, so bail out gracefully rather than fataling: a missing require would
+	// otherwise throw a fatal (HTTP 500) on ANY request that merely carries a ?code= URL parameter
+	// (Session init calls this whenever ?code= is present). Every caller gates on this return value, so
+	// returning false cleanly disables the Google authentication path when the library is absent.
+	$googleAutoload = XOOPS_ROOT_PATH.'/libraries/googleapiclient/vendor/autoload.php';
+	if (!file_exists($googleAutoload)) {
+		error_log('setupAuthentication(): Google API PHP client library not present at '.$googleAutoload.'; Google authentication is disabled.');
+		return false;
+	}
+	require_once $googleAutoload;
 	//redirect uri for when google authentication is done and it comes back to formulize
 	$redirect_uri = XOOPS_URL;
     if(isset($_GET['xoops_redirect'])) {

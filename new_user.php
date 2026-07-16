@@ -13,7 +13,9 @@ include_once ICMS_ROOT_PATH .'/language/english/user.php';
 include_once(XOOPS_ROOT_PATH.'/integration_api.php');
 
 //protect against an attempt to directly enter the url into the browser for this page. Don't want it to be too public.
-if (isset($_GET['newuser']) && ($_GET['newuser'] == $_SESSION['newuser'])) {
+// SECURITY: require a non-empty session token and compare strictly + constant-time. A loose `==` here let
+// `?newuser=` (empty) match an unset/null $_SESSION['newuser'] ('' == null is true in PHP), bypassing the gate.
+if (isset($_GET['newuser']) && !empty($_SESSION['newuser']) && hash_equals((string) $_SESSION['newuser'], (string) $_GET['newuser'])) {
     //on first transition to the page we want to render the form, after submission deal with validation of values and attempt to create new user
    if (!isset($_POST["token"])){  
         renderRegForm();
