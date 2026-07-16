@@ -7333,10 +7333,32 @@ function formulize_javascriptForRemovingEntryLocks($unload=false) {
  * @return string HTML string
  */
 function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200, $localIds=array(), $fid=0, $row=0, $column=0, $deInstanceCounter=false) {
-    $output = "<div class='main-cell-div' id='cellcontents_".$row."_".$column."'>";
     if (!is_array($value)) {
         $value = array($value);
     }
+
+    // Build a native tooltip (title attribute) holding the FULL, untruncated text of
+    // the cell. List cells are truncated for a tidy layout (server-side character caps
+    // and/or the CSS text-overflow:ellipsis rule in narrow columns), which can hide the
+    // complete value from the user. Exposing the full plain-text here guarantees the
+    // data stays accessible on hover and to assistive technology, without altering the
+    // truncated layout. (closes #33)
+    $titleParts = array();
+    foreach ($value as $tv) {
+        if (is_array($tv)) {
+            continue;
+        }
+        $plain = trim(strip_tags(html_entity_decode((string) $tv, ENT_QUOTES)));
+        if ($plain !== '') {
+            $titleParts[] = $plain;
+        }
+    }
+    $titleAttr = '';
+    if (!empty($titleParts)) {
+        $titleAttr = " title='" . htmlspecialchars(implode(", ", $titleParts), ENT_QUOTES) . "'";
+    }
+
+    $output = "<div class='main-cell-div'".$titleAttr." id='cellcontents_".$row."_".$column."'>";
 
     if (!is_array($localIds)) {
         $localIds = array($localIds);
