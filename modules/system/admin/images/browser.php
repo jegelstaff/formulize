@@ -404,7 +404,7 @@ function imanager_listimg($imgcat_id, $start = 0) {
 	$image_handler = icms::handler('icms_image');
 	$criteria = new icms_db_criteria_Compo(new icms_db_criteria_Item('imgcat_id', $imgcat_id));
 	if (!is_null($query)) {
-		$criteria->add(new icms_db_criteria_Item('image_nicename', $query . '%', 'LIKE'));
+		$criteria->add(new icms_db_criteria_Item('image_nicename', icms_core_DataFilter::addSlashes($query) . '%', 'LIKE'));
 	}
 	$imgcount = $image_handler->getCount($criteria);
 	$criteria->setStart($start);

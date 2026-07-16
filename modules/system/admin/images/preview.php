@@ -40,7 +40,7 @@ if (isset($_GET['arg3'])) {
 $image_handler = icms::handler('icms_image');
 $imgcat_handler = icms::handler('icms_image_category');
 
-$image =& $image_handler->getObjects(new icms_db_criteria_Item('image_name', $file), FALSE, TRUE);
+$image =& $image_handler->getObjects(new icms_db_criteria_Item('image_name', icms_core_DataFilter::addSlashes($file)), FALSE, TRUE);
 $imagecategory =& $imgcat_handler->get($image[0]->getVar('imgcat_id'));
 
 $categ_path = $imgcat_handler->getCategFolder($imagecategory);

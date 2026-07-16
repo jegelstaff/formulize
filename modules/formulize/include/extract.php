@@ -459,8 +459,9 @@ function getData(
 	}
 
 	// handle old style sort and order values...
-	$sortOrder = ($sortOrder == "SORT_ASC" or $sortOrder == "ASC") ? "" : $sortOrder;
-	$sortOrder = ($sortOrder == "SORT_DESC") ? "DESC" : $sortOrder;
+	// SECURITY: strict whitelist — the order is interpolated raw into ORDER BY downstream, so anything
+	// that isn't an explicit DESC must collapse to ASC (""), never pass through as an arbitrary string.
+	$sortOrder = ($sortOrder == "SORT_DESC" or $sortOrder == "DESC") ? "DESC" : "";
 
 	if ($isTableForm) {
 		$result = dataExtractionTableForm($tableform, $formHandle, $form, $filter, $andor, $limitStart, $limitSize, $sortField, $sortOrder, $resultOnly);
@@ -822,9 +823,10 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			$primarySortIsOnMain = true;
 			foreach ($sortFields as $sfIndex => $sortField) {
 				// Normalize the per-field order value
+				// SECURITY: strict whitelist — order is interpolated raw into ORDER BY, so anything that
+				// isn't an explicit DESC collapses to ASC (""), never passing through as an arbitrary string.
 				$sortOrder = isset($sortOrders[$sfIndex]) ? $sortOrders[$sfIndex] : '';
-				$sortOrder = ($sortOrder == "SORT_ASC" or $sortOrder == "ASC" or $sortOrder == "") ? "" : $sortOrder;
-				$sortOrder = ($sortOrder == "SORT_DESC") ? "DESC" : $sortOrder;
+				$sortOrder = ($sortOrder == "SORT_DESC" or $sortOrder == "DESC") ? "DESC" : "";
 
 				$sortFid = $fid;
 				$sortIsOnMain = true;

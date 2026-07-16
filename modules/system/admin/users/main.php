@@ -242,7 +242,7 @@ switch ($op) {
 						}
 						if (!empty($groups_failed)) {
 							$group_names = $member_handler->getGroupList(
-									new icms_db_criteria_Item('groupid', "(".implode(", ", $groups_failed).")", 'IN'));
+									new icms_db_criteria_Item('groupid', "(".implode(",", array_map('intval', $groups_failed)).")", 'IN'));
 							$adduser_errormsg = sprintf(_AM_CNRNU2, implode(", ", $group_names));
 						} else {
 							/* Hack by marcan <INBOX>
