@@ -9762,6 +9762,12 @@ function formulize_handleHtaccessRewriteRule() {
 		$formulizeCanonicalURI = '';
 		$formulizeRemoveEntryIdentifier = false;
 		$trimedFormulizeRewriteRuleAddress = trim($_GET['formulizeRewriteRuleAddress'], '/');
+		// anything typed after a ? is a query string the user appended to the clean URL (eg: passcode=xyz), so pull it out before parsing the address segments, and turn it into ordinary GET params
+		$additionalQueryParams = array();
+		if(($queryStringPosition = strpos($trimedFormulizeRewriteRuleAddress, '?')) !== false) {
+			parse_str(substr($trimedFormulizeRewriteRuleAddress, $queryStringPosition + 1), $additionalQueryParams);
+			$trimedFormulizeRewriteRuleAddress = substr($trimedFormulizeRewriteRuleAddress, 0, $queryStringPosition);
+		}
 		$addressData = explode('/', $trimedFormulizeRewriteRuleAddress);
 		$address = $addressData[0];
 		$entryIdentifier = isset($addressData[1]) ? $addressData[1] : null;
@@ -9770,6 +9776,10 @@ function formulize_handleHtaccessRewriteRule() {
 			foreach($_GET as $k=>$v) {
 				unset($_REQUEST[$k]);
 				unset($_GET[$k]);
+			}
+			foreach($additionalQueryParams as $k=>$v) {
+				$_GET[$k] = $v;
+				$_REQUEST[$k] = $v;
 			}
 			$queryString = "sid=$sid";
 			if($entryIdentifier) {
