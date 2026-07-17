@@ -131,11 +131,14 @@ if ($adminPage['selected_file_is_image']) {
 }
 
 /**
- * Recursively list every file inside a theme's folder
+ * Recursively list every editable file inside a theme's folder. Images and any other
+ * non-editable file types are left out entirely, which also means folders that contain
+ * only images (e.g. an "images/" folder) never show up, since they end up with no files in them.
  * @param string themeDir - full filesystem path to the theme's folder
  * @return array Sorted list of file paths, relative to the theme's folder, using forward slashes
  */
 function formulize_themeeditor_getThemeFiles($themeDir) {
+    $editableExtensions = array('html', 'htm', 'css', 'js');
     $files = array();
     if(!is_dir($themeDir)) {
         return $files;
@@ -145,6 +148,10 @@ function formulize_themeeditor_getThemeFiles($themeDir) {
     );
     foreach($iterator as $fileInfo) {
         if($fileInfo->isFile()) {
+            $extension = strtolower($fileInfo->getExtension());
+            if(!in_array($extension, $editableExtensions, true)) {
+                continue;
+            }
             $relativePath = substr($fileInfo->getPathname(), strlen($themeDir) + 1);
             $files[] = str_replace('\\', '/', $relativePath);
         }
