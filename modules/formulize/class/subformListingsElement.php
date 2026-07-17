@@ -679,10 +679,10 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	}
 
 	// limit the sub_entries array to just the entries that match the conditions, if any
-	if(is_array($subformConditions) AND isset($sub_entries[$subform_id]) AND is_array($sub_entries[$subform_id])) {
+	if(is_array($subformConditions) AND isset($sub_entries[$subform_id]) AND is_array($sub_entries[$subform_id]) AND count($sub_entries[$subform_id]) > 0) {
 		list($conditionsFilter, $conditionsFilterOOM, $curlyBracketFormFrom) = buildConditionsFilterSQL($subformConditions, $subform_id, $entry, $mainFormOwner, $fid); // pass in mainFormOwner as the comparison ID for evaluating {USER} so that the included entries are consistent when an admin looks at a set of entries made by someone else.
 		$subformObject = $form_handler->get($subform_id);
-		$sql = "SELECT subform.entry_id FROM ".$xoopsDB->prefix("formulize_".$subformObject->getVar('form_handle'))." as subform $curlyBracketFormFrom WHERE subform.entry_id IN (".implode(", ", $sub_entries[$subform_id]).") $conditionsFilter $conditionsFilterOOM";
+		$sql = "SELECT subform.entry_id FROM ".$xoopsDB->prefix("formulize_".$subformObject->getVar('form_handle'))." as subform $curlyBracketFormFrom WHERE subform.entry_id IN (".implode(", ", array_map('intval', $sub_entries[$subform_id])).") $conditionsFilter $conditionsFilterOOM";
 		$sub_entries[$subform_id] = array();
 		if($res = $xoopsDB->query($sql)) {
 			while($array = $xoopsDB->fetchArray($res)) {
