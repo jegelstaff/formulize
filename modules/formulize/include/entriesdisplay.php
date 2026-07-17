@@ -4783,6 +4783,7 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 }
 
 // THIS FUNCTION HANDLES GATHERING A DATASET FOR DISPLAY IN THE LIST
+// $sort and $order are two separate parallel strings, optionally comma separated for multi column sorts
 function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fid, $scope, $screen=null, $currentURL="", $forcequery = 0) {
 
 	// If composite data mode is active (Users/Groups management), delegate to the composite function
