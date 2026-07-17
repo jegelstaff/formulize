@@ -80,7 +80,7 @@ function b_system_login_show() {
 		$block['lang_username'] = _USERNAME;
 		$block['unamevalue'] = "";
 		if (isset($_COOKIE[$icmsConfig['usercookie']])) {
-			$block['unamevalue'] = $_COOKIE[$icmsConfig['usercookie']];
+			$block['unamevalue'] = htmlspecialchars($_COOKIE[$icmsConfig['usercookie']]);
 		}
 		$block['lang_password'] = _PASSWORD;
 		$block['lang_login'] = _LOGIN;

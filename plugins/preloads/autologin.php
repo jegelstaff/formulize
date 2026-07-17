@@ -47,8 +47,18 @@ class icms_AutologinEventHandler {
 			$user = false ;
 		} else {
 			// V3
-			$uname4sql = addslashes($uname);
-			$criteria = new icms_db_criteria_Compo(new icms_db_criteria_Item('uname', $uname4sql));
+			$uname4sql = icms::$db->escape($uname);
+			// the login form's "remember me" cookie is set from login_name (see include/checklogin.php),
+			// so the lookup here must match that field, not uname - mirrors the fallback chain in
+			// icms_member_Handler::loginUser()
+			$table = new icms_db_legacy_updater_Table('users');
+			if ($table->fieldExists('loginname')) {
+				$criteria = new icms_db_criteria_Compo(new icms_db_criteria_Item('loginname', $uname4sql));
+			} elseif ($table->fieldExists('login_name')) {
+				$criteria = new icms_db_criteria_Compo(new icms_db_criteria_Item('login_name', $uname4sql));
+			} else {
+				$criteria = new icms_db_criteria_Compo(new icms_db_criteria_Item('uname', $uname4sql));
+			}
 			$user_handler = icms::handler('icms_member_user');
 			$users = $user_handler->getObjects($criteria, false);
 			if (empty($users) || count($users) != 1) {

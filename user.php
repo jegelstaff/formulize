@@ -14,20 +14,20 @@ include 'mainfile.php';
 include_once ICMS_ROOT_PATH . '/include/functions.php';
 
 $op = (isset($_GET['op']))
-	? trim(filter_input(INPUT_GET, 'op', FILTER_SANITIZE_STRING))
-	: ((isset($_POST['op'])) ? trim(filter_input(INPUT_POST, 'op', FILTER_SANITIZE_STRING)) : 'main');
+	? htmlspecialchars(trim($_GET['op']))
+	: ((isset($_POST['op'])) ? htmlspecialchars(trim($_POST['op'])) : 'main');
 
 switch ($op) {
 	default:
 	case 'main':
-	
+
 		if (!icms::$user) {
-            
+
             if($icmsConfigAuth['auth_googleonly']) {
                 header('Location: ' . authenticationURL($icmsConfigAuth['auth_openid']));
                 exit();
             }
-            
+
 			$xoopsOption['template_main'] = 'system_userform.html';
 			include 'header.php';
 			$redirect = FALSE;
@@ -44,7 +44,7 @@ switch ($op) {
 				}
 			}
 			icms_makeSmarty(array(
-	            'usercookie' => isset($_COOKIE[$icmsConfig['usercookie']]) ? $_COOKIE[$icmsConfig['usercookie']] : FALSE,
+	            'usercookie' => isset($_COOKIE[$icmsConfig['usercookie']]) ? htmlspecialchars($_COOKIE[$icmsConfig['usercookie']]) : FALSE,
 	            'lang_login' => _LOGIN,
 	            'lang_username' => _USERNAME,
 	            'redirect_page' => $redirect,
@@ -148,7 +148,7 @@ switch ($op) {
 		}
 		exit();
 		break;
-		
+
 	case 'delete':
 		if (!icms::$user || $icmsConfigUser['self_delete'] != 1) {
 			redirect_header('index.php',5,_US_NOPERMISS);

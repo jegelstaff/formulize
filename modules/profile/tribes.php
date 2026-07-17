@@ -401,8 +401,11 @@ if (in_array($clean_op,$valid_op,true)){
 				$tribes = array();
 				$tribes['search'] = $profile_tribes_handler->searchTribes($clean_tribes_title);
 				$icmsTpl->assign('profile_tribes', $tribes);
-				$icmsTpl->assign('lang_tribes_search_title', sprintf(_MD_PROFILE_TRIBES_SEARCH_TITLE, $clean_tribes_title));
-				if (count($tribes['search']) == 0) $icmsTpl->assign('lang_search_noresults', sprintf(_MD_PROFILE_TRIBES_SEARCH_NORESULTS, $clean_tribes_title));
+				// checkVar('str') only strips tags (naive bracket-matching, not real HTML parsing) - not
+				// sufficient on its own for direct template output, so htmlspecialchars() it here too
+				$safe_tribes_title = htmlspecialchars($clean_tribes_title);
+				$icmsTpl->assign('lang_tribes_search_title', sprintf(_MD_PROFILE_TRIBES_SEARCH_TITLE, $safe_tribes_title));
+				if (count($tribes['search']) == 0) $icmsTpl->assign('lang_search_noresults', sprintf(_MD_PROFILE_TRIBES_SEARCH_NORESULTS, $safe_tribes_title));
 				$icmsTpl->assign('profile_tribes_search', true);
 			} elseif ($clean_uid > 0 || $real_uid > 0) {
 				$uid = ($clean_uid > 0) ? $clean_uid : $real_uid;

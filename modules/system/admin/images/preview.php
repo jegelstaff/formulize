@@ -23,18 +23,18 @@ include_once ICMS_LIBRARIES_PATH . '/wideimage/lib/WideImage.php';
  * no POST variables
  * 
  */
-$file = filter_input(INPUT_GET, 'file', FILTER_SANITIZE_STRING);
+$file = basename((string) ($_GET['file'] ?? ''));
 $resize = isset($_GET['resize']) ? (int) $_GET['resize'] : 1;
-$filter = isset($_GET['filter']) ? filter_input(INPUT_GET, 'filter', FILTER_SANITIZE_STRING) : NULL;
+$filter = isset($_GET['filter']) ? $_GET['filter'] : NULL;
 $args = array();
 if (isset($_GET['arg1'])) {
-	$args[] = filter_input(INPUT_GET, 'arg1', FILTER_SANITIZE_STRING);
+	$args[] = (int) $_GET['arg1'];
 }
 if (isset($_GET['arg2'])) {
-	$args[] = filter_input(INPUT_GET, 'arg2', FILTER_SANITIZE_STRING);
+	$args[] = (int) $_GET['arg2'];
 }
 if (isset($_GET['arg3'])) {
-	$args[] = filter_input(INPUT_GET, 'arg3', FILTER_SANITIZE_STRING);
+	$args[] = (int) $_GET['arg3'];
 }
 
 $image_handler = icms::handler('icms_image');
