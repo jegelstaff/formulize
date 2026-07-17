@@ -7524,6 +7524,22 @@ function formulize_db_escape($value) {
 }
 
 /**
+ * Escape a value so it can be safely spliced into a PHP string literal (single- or double-quoted)
+ * that will subsequently be eval()'d. Used when substituting {element_handle} references with raw
+ * entry data into admin-authored PHP snippets (static content, help text, etc), so a value entered
+ * by a non-admin user cannot break out of the admin's string literal and inject arbitrary PHP.
+ * Escapes backslash first (so escaping added by the other replacements isn't itself re-escaped),
+ * then the two quote characters and $ (which triggers variable interpolation in double-quoted strings).
+ * @param string $value The raw value to make PHP-string-literal-safe
+ * @return string The escaped value
+ */
+function formulize_escapeForPHPStringLiteral($value) {
+    $value = str_replace('\\', '\\\\', (string)$value);
+    $value = str_replace(['"', "'", '$'], ['\\"', "\\'", '\\$'], $value);
+    return $value;
+}
+
+/**
  * Convert a date format to a strftime format
  *
  * Timezone conversion is done for unix. Windows users must exchange %z and %Z.

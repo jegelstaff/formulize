@@ -165,8 +165,14 @@ abstract class formulizeStaticContentElementHandler extends formulizeElementsHan
 		if($this->useCaptionAsContentFallback AND trim($ele_value[ELE_VALUE_STATICCONTENT_CONTENT]) == "") {
 			$ele_value[ELE_VALUE_STATICCONTENT_CONTENT] = $caption; // use the caption as the contents if no contents are specified
 		}
-		$ele_value[ELE_VALUE_STATICCONTENT_CONTENT] = $renderer->formulize_replaceReferencesAndVariables($ele_value[ELE_VALUE_STATICCONTENT_CONTENT], $entry_id, $id_form, $markupName, $screen);
-		if(strstr($ele_value[ELE_VALUE_STATICCONTENT_CONTENT], "\$value=") OR strstr($ele_value[ELE_VALUE_STATICCONTENT_CONTENT], "\$value =")) {
+		// decide whether this content is admin-authored PHP code BEFORE any {ref} substitution happens
+		// (using the raw, not-yet-substituted content), so a referenced field's stored value can never
+		// trigger eval() on its own just by happening to contain the literal text "$value=" - and so
+		// that any {ref} substituted into genuine admin PHP code is escaped for safe use inside a PHP
+		// string literal, and cannot break out of the admin's code (see formulize_escapeForPHPStringLiteral())
+		$isPHPCode = (strstr($ele_value[ELE_VALUE_STATICCONTENT_CONTENT], "\$value=") OR strstr($ele_value[ELE_VALUE_STATICCONTENT_CONTENT], "\$value ="));
+		$ele_value[ELE_VALUE_STATICCONTENT_CONTENT] = $renderer->formulize_replaceReferencesAndVariables($ele_value[ELE_VALUE_STATICCONTENT_CONTENT], $entry_id, $id_form, $markupName, $screen, $isPHPCode);
+		if($isPHPCode) {
 			$form_id = $id_form;
 			$entryData = gatherDataset($id_form, filter: $entry_id, frid: 0);
 			$entry = $entryData[0];

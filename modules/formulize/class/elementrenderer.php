@@ -99,8 +99,15 @@ class formulizeElementRenderer{
 
 		// ele_desc added June 6 2006 -- jwe
 		$ele_desc = $this->_ele->getVar('ele_desc', "f"); // the f causes no stupid reformatting by the ICMS core to take place
-		$helpText = $ele_desc != "" ? $this->formulize_replaceReferencesAndVariables($myts->makeClickable(html_entity_decode($ele_desc,ENT_QUOTES)), $entry_id, $id_form, $renderedElementMarkupName, $screen) : "";
-		$helpText = $this->evalPHPStrings($helpText);
+		$processedHelpText = $ele_desc != "" ? $myts->makeClickable(html_entity_decode($ele_desc,ENT_QUOTES)) : "";
+		// decide whether this help text is admin-authored PHP code BEFORE any {ref} substitution happens
+		// (using the raw, not-yet-substituted text), so a referenced field's stored value can never
+		// trigger evalPHPStrings() on its own just by happening to contain literal PHP open/close tags
+		// - and so that any {ref} substituted into genuine admin PHP code is escaped for safe use inside
+		// a PHP string literal, and cannot break out of the admin's code (see formulize_escapeForPHPStringLiteral())
+		$helpTextIsPHPCode = (strstr($processedHelpText, "<?php") !== false AND strstr($processedHelpText, "?>") !== false);
+		$helpText = $processedHelpText != "" ? $this->formulize_replaceReferencesAndVariables($processedHelpText, $entry_id, $id_form, $renderedElementMarkupName, $screen, $helpTextIsPHPCode) : "";
+		$helpText = $helpTextIsPHPCode ? $this->evalPHPStrings($helpText) : $helpText;
 
 		// determine the entry owner
 		if($entry_id != "new") {
@@ -216,16 +223,24 @@ class formulizeElementRenderer{
 	 * @param int $entry_id Entry ID to get values from
 	 * @param int $id_form Form ID to get values from
 	 * @param string $renderedElementMarkupName Name of the rendered element markup, if any
+	 * @param mixed $screen The screen object, if any
+	 * @param bool $escapeForPHPEval Set true when $text is about to be eval()'d as PHP code, so
+	 *   each substituted reference value is escaped to be safe inside a PHP string literal. Leave
+	 *   false (the default) for plain display substitutions, so display text is not corrupted with
+	 *   escape characters.
 	 * @return string Text with replacements made
 	 */
-	function formulize_replaceReferencesAndVariables($text, $entry_id, $id_form, $renderedElementMarkupName='', $screen=null) {
-		$text = $this->formulize_replaceCurlyBracketVariables($text, $entry_id, $id_form, $renderedElementMarkupName, $screen);
+	function formulize_replaceReferencesAndVariables($text, $entry_id, $id_form, $renderedElementMarkupName='', $screen=null, $escapeForPHPEval=false) {
+		$text = $this->formulize_replaceCurlyBracketVariables($text, $entry_id, $id_form, $renderedElementMarkupName, $screen, $escapeForPHPEval);
 		$text = formulize_handleRandomAndDateText($text);
 		return $text;
 	}
 
   // replace { } terms with element handle values from the current entry, if any exist
-	function formulize_replaceCurlyBracketVariables($text, $entry_id, $id_form, $renderedElementMarkupName='', $screen=null) {
+  // $escapeForPHPEval - set true when $text is about to be eval()'d as PHP, so substituted values
+  // are escaped to be safe inside a PHP string literal and cannot break out of the admin's code
+  // (see formulize_escapeForPHPStringLiteral() in include/functions.php)
+	function formulize_replaceCurlyBracketVariables($text, $entry_id, $id_form, $renderedElementMarkupName='', $screen=null, $escapeForPHPEval=false) {
 		if(strstr($text, "}") AND strstr($text, "{")) {
 			$entryData = gatherDataset($id_form, filter: $entry_id, frid: 0);
 			$entry = $entryData[0];
@@ -246,6 +261,9 @@ class formulizeElementRenderer{
 					// get the uitext value if necessary
 					$replacementTerm = formulize_swapUIText($replacementTerm, $elementObject->getVar('ele_uitext'));
 					$replacementTerm = formulize_numberFormat($replacementTerm, $term);
+					if($escapeForPHPEval) {
+						$replacementTerm = is_array($replacementTerm) ? array_map('formulize_escapeForPHPStringLiteral', $replacementTerm) : formulize_escapeForPHPStringLiteral($replacementTerm);
+					}
 					$text = str_replace("{".$term."}",$replacementTerm,$text);
 					$lookAhead = strlen($replacementTerm); // move ahead the length of what we replaced
 					if($renderedElementMarkupName) {
