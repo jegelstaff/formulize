@@ -680,7 +680,7 @@ class FormulizeUser {
                 }
                 Formulize::init();
                 if(Formulize::createResourceMapping(Formulize::USER_RESOURCE, $_SESSION['resouceMapKey'], $newid)){
-                    $location = isset($_GET['newuser']) ? XOOPS_URL."/?code=".$_GET['newuser']."&newcode=".$_GET['newuser'] : "";
+                    $location = isset($_GET['newuser']) ? XOOPS_URL."/?code=".urlencode($_GET['newuser'])."&newcode=".urlencode($_GET['newuser']) : "";
                     if($location) {
                         header("Location: ".$location);
                         exit();

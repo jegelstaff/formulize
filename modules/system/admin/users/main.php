@@ -161,10 +161,10 @@ switch ($op) {
 		} else {
 			$member_handler = icms::handler('icms_member');
 			// make sure the username doesnt exist yet
-			if ($member_handler->getUserCount(new icms_db_criteria_Item('uname', $username)) > 0
-				|| $member_handler->getUserCount(new icms_db_criteria_Item('login_name', $login_name)) > 0 ) {
+			if ($member_handler->getUserCount(new icms_db_criteria_Item('uname', icms::$db->escape($username))) > 0
+				|| $member_handler->getUserCount(new icms_db_criteria_Item('login_name', icms::$db->escape($login_name))) > 0 ) {
 				$adduser_errormsg = _AM_NICKNAME.' '.$username.' '._AM_ALREADY_EXISTS;
-			} elseif ($member_handler->getUserCount(new icms_db_criteria_Item('email', $email)) > 0) {
+			} elseif ($member_handler->getUserCount(new icms_db_criteria_Item('email', icms::$db->escape($email))) > 0) {
 				$adduser_errormsg = _AM_A_USER_WITH_THIS_EMAIL_ADDRESS.' "'.$email.'" '._AM_ALREADY_EXISTS;
 			} else {
 				$newuser =& $member_handler->createUser();
