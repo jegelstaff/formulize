@@ -825,10 +825,10 @@ class icms_ipf_Handler extends icms_core_ObjectHandler {
 					if ($i > 0) {
 						$whereclause .= ' AND ';
 					}
-					$whereclause .= $this->keyName[$i] . ' = ' . $obj->getVar($this->keyName[$i]);
+					$whereclause .= $this->keyName[$i] . ' = ' . $cleanvars[$this->keyName[$i]];
 				}
 			} else {
-				$whereclause = $this->keyName . ' = ' . $obj->getVar($this->keyName);
+				$whereclause = $this->keyName . ' = ' . $cleanvars[$this->keyName];
 			}
 			$sql .= ' WHERE ' . $whereclause;
 		}
