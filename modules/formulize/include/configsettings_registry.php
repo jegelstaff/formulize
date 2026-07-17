@@ -121,6 +121,20 @@ return array(
                                 array('name' => 'auth_2fa', 'value' => 1),
                             ),
                         ),
+                        // How long a "remember this device" choice keeps 2FA from
+                        // re-prompting on that device (days, clamped 1-365). Only
+                        // relevant when 2FA is on, so it shares 2FA's visibility rules.
+                        // This setting is Formulize-scoped, so the auth-scoped conditions
+                        // it depends on must name their scope explicitly.
+                        array(
+                            'name' => 'tfaRememberDeviceDays',
+                            'scope' => 'formulize',
+                            'showWhen' => array(
+                                array('name' => 'auth_openid', 'scope' => 'auth', 'value' => 0),
+                                array('name' => 'auth_okta', 'scope' => 'auth', 'value' => ''),
+                                array('name' => 'auth_2fa', 'scope' => 'auth', 'value' => 1),
+                            ),
+                        ),
                         // Alternative sign-in methods (less common, so below 2FA).
                         // Google is stored as 'auth_openid' (repurposed but never renamed).
                         array(

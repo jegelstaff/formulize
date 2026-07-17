@@ -359,10 +359,17 @@ define("_US_ENTER_CODE","Enter the Two-Factor Authentication Code from your ");
 define("_US_2FA_CODE","Code: ");
 define("_US_2FA_INVALID_CODE","Invalid code. Please try again.");
 define("_US_DONT_ASK_AGAIN", "Don't ask again on this device");
+// Checkbox label shown in the login 2FA dialog. %s is the window, e.g. "30 days" or
+// "3 months" (see tfa_formatWindow() in include/2fa/manage.php).
+define("_US_REMEMBER_DEVICE_FOR", "Remember this device for up to %s");
+define("_US_TFA_WINDOW_DAY", "1 day");
+define("_US_TFA_WINDOW_DAYS", "%s days");
+define("_US_TFA_WINDOW_MONTH", "1 month");
+define("_US_TFA_WINDOW_MONTHS", "%s months");
 define("_US_FORGET_DEVICES", "Forget all your remembered devices");
 define("_US_FORGET_DEVICES_BUTTON", "Forget Devices");
 define("_US_FORGET_DEVICES_DONE", "Your remembered devices have been reset");
-define("_US_FORGET_DEVICES_DESC", "If you have checked the <i>\""._US_DONT_ASK_AGAIN."\"</i> box when logging in, click this button to forget all those devices so you will be asked for a code next time. This is very important to do immediately if your password has been stolen!");
+define("_US_FORGET_DEVICES_DESC", "If you have checked the <i>\"Remember this device\"</i> box when logging in, click this button to forget all those devices so you will be asked for a code next time. This is very important to do immediately if your password has been stolen!");
 define("_US_TO_CHANGE_PASS","To change your password, please enter the Two-Factor Authentication code sent to %s.");
 define("_US_TO_CHANGE_PASS_APP","To change your password, please enter the Two-Factor Authentication code from your authenticator app.");
 define("_US_TO_CONFIRM_CHANGE","To confirm this change, please enter the code we sent to %s.");

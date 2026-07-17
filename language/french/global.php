@@ -314,10 +314,17 @@ define("_US_ENTER_CODE","Enter the Two-Factor Authentication Code from your ");
 define("_US_2FA_CODE","Code: ");
 define("_US_2FA_INVALID_CODE","Invalid code. Please try again.");
 define("_US_DONT_ASK_AGAIN", "Ne plus demander sur cet appareil");
+// Étiquette de la case à cocher dans la fenêtre 2FA de connexion. %s est la durée,
+// p. ex. « 30 jours » ou « 3 mois » (voir tfa_formatWindow() dans include/2fa/manage.php).
+define("_US_REMEMBER_DEVICE_FOR", "Se souvenir de cet appareil pendant au maximum %s");
+define("_US_TFA_WINDOW_DAY", "1 jour");
+define("_US_TFA_WINDOW_DAYS", "%s jours");
+define("_US_TFA_WINDOW_MONTH", "1 mois");
+define("_US_TFA_WINDOW_MONTHS", "%s mois");
 define("_US_FORGET_DEVICES", "Réinitialiser tous vos appareils mémorisés");
 define("_US_FORGET_DEVICES_BUTTON", "Reset");
 define("_US_FORGET_DEVICES_DONE", "Vos appareils mémorisés ont été réinitialisés");
-define("_US_FORGET_DEVICES_DESC", "Si vous avez coché la case <i>\""._US_DONT_ASK_AGAIN."\"</i> lors de la connexion, cliquez sur ce bouton pour oublier tous ces appareils afin qu'un code vous soit demandé la prochaine fois. Ceci est très important à faire immédiatement si votre mot de passe a été volé !");
+define("_US_FORGET_DEVICES_DESC", "Si vous avez coché la case <i>\"Se souvenir de cet appareil\"</i> lors de la connexion, cliquez sur ce bouton pour oublier tous ces appareils afin qu'un code vous soit demandé la prochaine fois. Ceci est très important à faire immédiatement si votre mot de passe a été volé !");
 define("_US_TO_CHANGE_PASS","Pour changer votre mot de passe, veuillez entrer le code d'authentification à deux facteurs envoyé à %s.");
 define("_US_TO_CHANGE_PASS_APP","Pour changer votre mot de passe, veuillez entrer le code d'authentification à deux facteurs depuis votre application d'authentification.");
 define("_US_TO_CONFIRM_CHANGE","Pour confirmer ce changement, veuillez entrer le code que nous avons envoyé à %s.");

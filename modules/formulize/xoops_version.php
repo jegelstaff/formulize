@@ -1090,6 +1090,17 @@ $modversion['config'][] = array(
 	'default' => 1,
 );
 
+// two-factor authentication: how long a "remember this device" trust token lasts.
+// Read (and clamped to 1-365) by tfa_rememberDeviceDays() in include/2fa/manage.php.
+$modversion['config'][] = array(
+	'name' => 'tfaRememberDeviceDays',
+	'title' => '_MI_formulize_TFA_REMEMBER_DEVICE_DAYS',
+	'description' => '_MI_formulize_TFA_REMEMBER_DEVICE_DAYS_DESC',
+	'formtype' => 'textbox',
+	'valuetype' => 'int',
+	'default' => 30,
+);
+
 // AI config
 $modversion['config'][] = array(
 	'name' => 'formulizeAIAssistantEnabled',
