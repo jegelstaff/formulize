@@ -73,6 +73,9 @@ jobs:
           docker compose up -d
         fi
 
+    - name: PHP logic tests (A4 password hashing)
+      run: docker exec formulize-web-1 php /var/www/html/tests/password_hashing_test.php
+
     - name: Install dependencies
       run: npm ci
       working-directory: tests/e2e
