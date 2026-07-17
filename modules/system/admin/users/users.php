@@ -9,8 +9,8 @@
  * @version		SVN: $Id: users.php 21133 2011-03-20 19:43:48Z m0nty_ $
  */
 
-if (!is_object(icms::$user) 
-	|| !is_object($icmsModule) 
+if (!is_object(icms::$user)
+	|| !is_object($icmsModule)
 	|| !icms::$user->isAdmin($icmsModule->getVar('mid'))
 	) {
 		exit('Access Denied');
@@ -18,7 +18,7 @@ if (!is_object(icms::$user)
 
 /**
  * Displays user information form
- * 
+ *
  */
 function displayUsers() {
 	global $icmsConfig, $icmsModule, $icmsConfigUser;
@@ -299,7 +299,7 @@ function updateUser($uid, $uname, $login_name, $name, $url, $email, $user_icq, $
 			$edituser->setVar('salt', $salt);
 			$edituser->setVar('enc_type', $enc_type);
 			$edituser->setVar('pass_expired', $pass_expired);
-			$pass = $icmspass->encryptPass($pass, $salt, $enc_type);
+			$pass = $icmspass->hashPassword($pass);
 			$edituser->setVar('pass', $pass);
 		}
 		if (!$member_handler->insertUser($edituser)) {

@@ -641,7 +641,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 				$icmspass = new icms_core_Password();
 				$salt = $icmspass->createSalt();
 				$enc_type = $icmsConfigUser['enc_type'];
-				$value = $icmspass->encryptPass($value, $salt, $enc_type);
+				$value = $icmspass->hashPassword($value);
 				$pendingUserVars['salt'] = $salt;
 				$pendingUserVars['enc_type'] = $enc_type;
 			}

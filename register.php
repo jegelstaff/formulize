@@ -2,7 +2,7 @@
 /**
  * Registration process for new users
  * Gathers required information and validates the new user
- *  
+ *
  * @copyright	http://www.impresscms.org/ The ImpressCMS Project
  * @license		http://www.gnu.org/licenses/old-licenses/gpl-2.0.html GNU General Public License (GPL)
  * @package		Member
@@ -82,21 +82,21 @@ switch ($op) {
 			}
 			$f_timezone = ($timezone_offset < 0) ? 'GMT ' . $timezone_offset : 'GMT +' . $timezone_offset;
 			echo _US_TIMEZONE . ": $f_timezone<br />";
-			echo "<form action='register.php' method='post'><input type='hidden' name='login_name' value='" 
-				. icms_core_DataFilter::htmlSpecialChars($login_name) 
-				. "' /><input type='hidden' name='uname' value='" . icms_core_DataFilter::htmlSpecialChars($uname) 
-				. "' /><input type='hidden' name='email' value='" . icms_core_DataFilter::htmlSpecialChars($email) 
-				. "' /><input type='hidden' name='user_viewemail' value='" . (int) $user_viewemail 
-				. "' /><input type='hidden' name='timezone_offset' value='" . $timezone_offset 
-				. "' /><input type='hidden' name='url' value='" . icms_core_DataFilter::htmlSpecialChars($url) 
-				. "' /><input type='hidden' name='pass' value='" . icms_core_DataFilter::htmlSpecialChars($pass) 
-				. "' /><input type='hidden' name='vpass' value='" . icms_core_DataFilter::htmlSpecialChars($vpass) 
-				. "' /><input type='hidden' name='user_mailok' value='" . (int) $user_mailok 
-				. "' /><input type='hidden' name='actkey' value='" . icms_core_DataFilter::htmlSpecialChars($actkey) 
-				. "' /><input type='hidden' name='salt' value='" . icms_core_DataFilter::htmlSpecialChars($salt) 
-				. "' /><input type='hidden' name='enc_type' value='". (int) $enc_type 
-				. "' /><input type='hidden' name='agree_disc' value='" . (int) $agree_disc 
-				. "' /><br /><br /><input type='hidden' name='op' value='finish' />" . icms::$security->getTokenHTML() 
+			echo "<form action='register.php' method='post'><input type='hidden' name='login_name' value='"
+				. icms_core_DataFilter::htmlSpecialChars($login_name)
+				. "' /><input type='hidden' name='uname' value='" . icms_core_DataFilter::htmlSpecialChars($uname)
+				. "' /><input type='hidden' name='email' value='" . icms_core_DataFilter::htmlSpecialChars($email)
+				. "' /><input type='hidden' name='user_viewemail' value='" . (int) $user_viewemail
+				. "' /><input type='hidden' name='timezone_offset' value='" . $timezone_offset
+				. "' /><input type='hidden' name='url' value='" . icms_core_DataFilter::htmlSpecialChars($url)
+				. "' /><input type='hidden' name='pass' value='" . icms_core_DataFilter::htmlSpecialChars($pass)
+				. "' /><input type='hidden' name='vpass' value='" . icms_core_DataFilter::htmlSpecialChars($vpass)
+				. "' /><input type='hidden' name='user_mailok' value='" . (int) $user_mailok
+				. "' /><input type='hidden' name='actkey' value='" . icms_core_DataFilter::htmlSpecialChars($actkey)
+				. "' /><input type='hidden' name='salt' value='" . icms_core_DataFilter::htmlSpecialChars($salt)
+				. "' /><input type='hidden' name='enc_type' value='". (int) $enc_type
+				. "' /><input type='hidden' name='agree_disc' value='" . (int) $agree_disc
+				. "' /><br /><br /><input type='hidden' name='op' value='finish' />" . icms::$security->getTokenHTML()
 				. "<input type='submit' value='". _US_FINISH ."' /></form>";
 		} else {
 			echo "<span style='color:#ff0000;'>$stop</span>";
@@ -106,7 +106,7 @@ switch ($op) {
 		$xoopsTpl->assign('icms_pagetitle', _US_USERREG);
 		include 'footer.php';
 		break;
-		
+
 	case 'finish':
 		include 'header.php';
 		$stop = $thisuser->userCheck($login_name, $uname, $email, $pass, $vpass);
@@ -146,7 +146,7 @@ switch ($op) {
 
 			$salt = $icmspass->createSalt();
 			$newuser->setVar('salt', $salt, TRUE);
-			$pass1 = $icmspass->encryptPass($pass, $salt, $enc_type);
+			$pass1 = $icmspass->hashPassword($pass);
 			$newuser->setVar('pass', $pass1, TRUE);
 			$newuser->setVar('timezone_offset', $timezone_offset, TRUE);
 			$newuser->setVar('user_regdate', time(), TRUE);
@@ -228,7 +228,7 @@ switch ($op) {
 		$xoopsTpl->assign('icms_pagetitle', _US_USERREG);
 		include 'footer.php';
 		break;
-		
+
 	case 'register':
 	default:
 		$invite_code = isset($_GET['code']) ? filter_input(INPUT_GET, 'code') : NULL;

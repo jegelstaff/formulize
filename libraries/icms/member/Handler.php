@@ -316,9 +316,12 @@ class icms_member_Handler {
 		}
 		$uname = $this->db->escape($uname);
 
-		$salt = $icmspass->getUserSalt($uname);
-		$pwd = $icmspass->encryptPass($pwd, $salt);
-
+		// Fetch the account by username only (NOT username+pass). Adaptive hashes
+		// (bcrypt/Argon2) embed a random per-hash salt, so the same password hashes
+		// to a different string every time - the old "hash the input, then match it
+		// in a WHERE pass = ... clause" approach cannot verify them. Instead we load
+		// the stored hash and verify it in PHP (icms_core_Password::verifyPassword),
+		// which supports both modern hashes and the legacy fast hashes still on disk.
 		$table = new icms_db_legacy_updater_Table('users');
 		if ($table->fieldExists('loginname')) {
 			$criteria = new icms_db_criteria_Compo(new icms_db_criteria_Item('loginname', $uname));
@@ -327,11 +330,28 @@ class icms_member_Handler {
 		} else {
 			$criteria = new icms_db_criteria_Compo(new icms_db_criteria_Item('uname', $uname));
 		}
-		$criteria->add(new icms_db_criteria_Item('pass', $pwd));
 		$user = $this->_uHandler->getObjects($criteria, false);
 		if (!$user || count($user) != 1) {
-			$user = false;
-			return $user;
+			// Spend comparable CPU time before returning so an unknown username is
+			// not distinguishable from a wrong password by response timing (A6).
+			$icmspass->wasteTimeVerifying($pwd);
+			return false;
+		}
+
+		$storedHash = $user[0]->getVar('pass', 'n');
+		$salt = $user[0]->getVar('salt', 'n');
+		if (!$icmspass->verifyPassword($pwd, $storedHash, $salt)) {
+			return false;
+		}
+
+		// Transparent upgrade: now that the plaintext is verified, re-hash it with
+		// the modern adaptive algorithm if the stored hash is a legacy fast hash (or
+		// an adaptive hash whose cost is out of date). Gradual migration on login,
+		// no mass reset, no user action. The self-contained adaptive hash does not
+		// use the salt/enc_type columns, so they are left untouched (harmless).
+		if ($icmspass->passwordNeedsUpgrade($storedHash)) {
+			$user[0]->setVar('pass', $icmspass->hashPassword($pwd), true);
+			$this->insertUser($user[0], true);
 		}
 
 		// Only branch on account-specific state (password expiry) AFTER the password has been

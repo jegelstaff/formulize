@@ -22,6 +22,27 @@ final class icms_core_Password {
 	private $pass, $salt, $mainSalt = XOOPS_DB_SALT, $uname;
 
 	/**
+	 * The adaptive algorithm and work factor for all new password hashes.
+	 * bcrypt is pinned explicitly (NOT PASSWORD_DEFAULT) because it is a PHP core
+	 * commodity guaranteed present on every build - PASSWORD_DEFAULT is documented
+	 * to change algorithm across PHP versions (e.g. to Argon2, which requires a
+	 * non-guaranteed build option). Pinning also keeps hashPassword() and
+	 * passwordNeedsUpgrade() in lockstep so upgrade-on-login never thrashes.
+	 * Bump BCRYPT_COST to raise strength; existing accounts re-hash on next login.
+	 */
+	const BCRYPT_ALGO = PASSWORD_BCRYPT;
+	const BCRYPT_COST = 12;
+
+	/**
+	 * A fixed, valid cost-12 bcrypt hash that matches no real password. Used only
+	 * by wasteTimeVerifying() to spend comparable CPU time on the "no such user"
+	 * login branch, so response timing does not reveal whether a username exists
+	 * (see icms_member_Handler::loginUser() ). Its cost must track BCRYPT_COST so
+	 * the dummy verify takes the same time as a real one.
+	 */
+	const DUMMY_HASH = '$2y$12$28P6Nb76Qoc7I5dnANYyt.YijpFCmeaZPKR9/tL23ilgrviF7HI3.';
+
+	/**
 	 * Constructor for the Password class
 	 */
 	public function __construct() {
@@ -277,6 +298,122 @@ final class icms_core_Password {
 	 */
 	public function encryptPass($pass, $salt, $enc_type = 0, $reset = 0) {
 		return self::priv_encryptPass($pass, $salt, $enc_type, $reset);
+	}
+
+	/**
+	 * Hash a plaintext password with the modern adaptive algorithm (bcrypt, pinned
+	 * via BCRYPT_ALGO/BCRYPT_COST). Use this for every NEW password write — registration,
+	 * password reset, admin-set, change-password, SSO/EAU provisioning. Unlike
+	 * encryptPass(), the result is self-describing: it carries its own algorithm id,
+	 * cost factor and random salt, so the separate `salt`/`enc_type` columns are not
+	 * consulted when verifying it later.
+	 *
+	 * The plaintext is peppered first (see applyPepper()), so the stored bcrypt hash
+	 * is worthless to an attacker who exfiltrates only the database and not the
+	 * out-of-DB pepper — preserving the protection the legacy scheme had via $mainSalt.
+	 * @copyright (c) 2026 Formulize security hardening (audit item A4)
+	 * @param     string  $pass   plaintext password to hash
+	 * @return    string  adaptive password hash (bcrypt = 60 chars; fits pass varchar(255))
+	 */
+	public function hashPassword($pass) {
+		return password_hash($this->applyPepper($pass), self::BCRYPT_ALGO, array('cost' => self::BCRYPT_COST));
+	}
+
+	/**
+	 * Verify a plaintext password against the account's stored hash, transparently
+	 * supporting BOTH the modern adaptive hashes written by hashPassword() and the
+	 * legacy fast-hash values (md5 / salted sha* / ripemd / haval) written by the
+	 * old encryptPass() path.
+	 *
+	 * Adaptive hashes are self-contained, so $salt is ignored for them; it is only
+	 * used to reproduce a legacy hash for comparison. The modern branch peppers the
+	 * plaintext exactly as hashPassword() did when writing it. The legacy branch
+	 * mirrors the exact computation the old login used (encryptPass() applies the
+	 * pepper via $mainSalt internally and forces the global enc_type when $reset !== 1),
+	 * so it is behaviour-preserving for not-yet-migrated accounts — and must NOT be
+	 * peppered again here or it would double-apply.
+	 * @copyright (c) 2026 Formulize security hardening (audit item A4)
+	 * @param     string  $pass        plaintext password as entered at login
+	 * @param     string  $storedHash  the hash currently stored for the account
+	 * @param     string  $salt        the account's stored salt (legacy hashes only)
+	 * @return    bool    true if the password matches
+	 */
+	public function verifyPassword($pass, $storedHash, $salt = '') {
+		if (self::isAdaptiveHash($storedHash)) {
+			return password_verify($this->applyPepper($pass), $storedHash);
+		}
+		$legacy = $this->encryptPass($pass, $salt);
+		return hash_equals((string) $storedHash, (string) $legacy);
+	}
+
+	/**
+	 * Whether a stored hash should be transparently re-hashed with the modern
+	 * algorithm on the next successful login: true for every legacy fast hash, and
+	 * also true for an adaptive hash whose parameters (e.g. cost) no longer match
+	 * the current PASSWORD_DEFAULT.
+	 * @copyright (c) 2026 Formulize security hardening (audit item A4)
+	 * @param     string  $storedHash  the hash currently stored for the account
+	 * @return    bool
+	 */
+	public function passwordNeedsUpgrade($storedHash) {
+		if (!self::isAdaptiveHash($storedHash)) {
+			return true;
+		}
+		return password_needs_rehash($storedHash, self::BCRYPT_ALGO, array('cost' => self::BCRYPT_COST));
+	}
+
+	/**
+	 * Spend roughly the same CPU time as a real adaptive verify, without any
+	 * account, and return false. Called on the "no such user" branch of loginUser()
+	 * so response timing does not distinguish an unknown username from a wrong
+	 * password. DUMMY_HASH is a valid bcrypt hash that matches no password.
+	 * @copyright (c) 2026 Formulize security hardening (audit item A4)
+	 * @param     string  $pass  the submitted plaintext (never matches)
+	 * @return    bool           always false
+	 */
+	public function wasteTimeVerifying($pass) {
+		password_verify((string) $pass, self::DUMMY_HASH);
+		return false;
+	}
+
+	/**
+	 * Is $hash one of PHP's adaptive password_hash() outputs (bcrypt/Argon2)?
+	 * password_get_info() reports a known algo for those, and an empty algo
+	 * (0 on PHP 7, null on PHP 8) for the legacy hex fast-hashes.
+	 * @param  string  $hash
+	 * @return bool
+	 */
+	private static function isAdaptiveHash($hash) {
+		if (!is_string($hash) || $hash === '') {
+			return false;
+		}
+		$info = password_get_info($hash);
+		return !empty($info['algo']);
+	}
+
+	/**
+	 * Apply the site pepper to a plaintext password before it is handed to bcrypt.
+	 * The pepper is XOOPS_DB_SALT (this->mainSalt) — a secret stored in the trust
+	 * folder OUTSIDE the database — so a database-only leak yields bcrypt hashes
+	 * that cannot be brute-forced at all without also stealing the pepper. This is
+	 * the same protection the legacy encryptPass() scheme provided by mixing
+	 * $mainSalt into its input, carried forward into the bcrypt path.
+	 *
+	 * HMAC-SHA256 (not plain concatenation) is used because it is the correct
+	 * construction for keying a value with a secret, and its fixed 64-char hex
+	 * output is a side benefit: it is always < bcrypt's 72-byte input limit and
+	 * contains no null byte, so neither bcrypt truncation footgun can ever bite,
+	 * regardless of the real password's length or bytes.
+	 *
+	 * Like the legacy $mainSalt before it, XOOPS_DB_SALT must never change once a
+	 * site is live (doing so invalidates every stored password) — the install
+	 * already documents exactly this constraint.
+	 * @copyright (c) 2026 Formulize security hardening (audit item A4)
+	 * @param     string  $pass  plaintext password
+	 * @return    string  64-char hex HMAC of the password keyed with the site pepper
+	 */
+	private function applyPepper($pass) {
+		return hash_hmac('sha256', (string) $pass, (string) $this->mainSalt);
 	}
 }
 

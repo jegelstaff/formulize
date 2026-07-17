@@ -48,7 +48,7 @@ if(isset($_POST['code']) AND
         $icmspass = new icms_core_Password();
         $salt = $icmspass->createSalt();
         $userObject->setVar('salt', $salt);
-        $pass1 = $icmspass->encryptPass($_POST['pass1'], $salt);
+        $pass1 = $icmspass->hashPassword($_POST['pass1']);
         $userObject->setVar('pass', $pass1);
         if(!$member_handler->insertUser($userObject, true)) {
             exit("Error: could not save new password to the database.");

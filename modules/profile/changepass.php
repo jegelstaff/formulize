@@ -49,7 +49,7 @@ if (!isset($_POST['submit'])) {
 	} else {
 		$icmspass = new icms_core_Password();
 		$salt = icms_core_Password::createSalt();
-		$pass = $icmspass->encryptPass($_POST['password'], $salt, $icmsConfigUser['enc_type']);
+		$pass = $icmspass->hashPassword($_POST['password']);
 		icms::$user->setVar('salt', $salt, true);
 		icms::$user->setVar('pass', $pass, true);
 		icms::$user->setVar('enc_type', $icmsConfigUser['enc_type'], true);

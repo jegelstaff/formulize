@@ -647,7 +647,7 @@ class FormulizeUser {
             $icmspass = new icms_core_Password();
             $salt = $icmspass->createSalt();
             $enc_type = $icmsConfigUser['enc_type'];
-            $pass1 = $icmspass->encryptPass($pass, $salt, $enc_type);
+            $pass1 = $icmspass->hashPassword($pass);
 
             $newuser = $member_handler->createUser();
             //attempt to create the user
