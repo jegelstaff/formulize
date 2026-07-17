@@ -82,10 +82,8 @@ div.center div.jGrowl-notification, div.center div.jGrowl-closer {
 
 div.jGrowl div.jGrowl-notification, div.jGrowl .ui-state-highlight, div.jGrowl div.jGrowl-closer {
 	border: 				none;
-	background: 			#000;
+	background: 			rgba(0, 0, 0, .85);
 	color: 					#fff;
-	opacity:				.75;
-	filter:					alpha(opacity=75);
 	zoom: 					1;
 	width: 					235px;
 	padding: 				10px;
