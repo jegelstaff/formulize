@@ -28,10 +28,23 @@ if (isset($_GET['newuser']) && !empty($_SESSION['newuser']) && hash_equals((stri
             if($tokenHandler->incrementUses($token)){
                 $tokenGroupsString = $token->getVar('groups');
                 $tokenGroups = explode(" ", $tokenGroupsString);
+                // Take the account email from the identity provider's verified value, never from the
+                // editable form field: this account is being bound to an IdP identity, so its email
+                // must be the one the IdP confirmed. Google supplies it in $_SESSION['email']; SAML
+                // uses the NameID (the resource-map key) which is an email when the IdP releases one.
+                // Only if no verified email is available (e.g. a SAML NameID that is an opaque id) do
+                // we fall back to what was submitted.
+                $verifiedEmail = '';
+                if(!empty($_SESSION['email']) && filter_var($_SESSION['email'], FILTER_VALIDATE_EMAIL)) {
+                    $verifiedEmail = $_SESSION['email'];
+                } elseif(!empty($_SESSION['resouceMapKey']) && filter_var($_SESSION['resouceMapKey'], FILTER_VALIDATE_EMAIL)) {
+                    $verifiedEmail = $_SESSION['resouceMapKey'];
+                }
+                $email = $verifiedEmail !== '' ? $verifiedEmail : (isset($_POST['email']) ? $_POST['email'] : '');
                 $newFormulizeUser = new FormulizeUser(array(
                    'login_name'=>preg_replace('/[^a-zA-Z0-9\_\-]/', '', $_POST['login_name']),
                    'uname'=>$_POST['uname'],
-                   'email'=>$_POST['email'],
+                   'email'=>$email,
                    'timezone_offset'=>$_POST['timezone_offset']
                 ));
                 if($newFormulizeUser->insertAndMapUser($tokenGroups)==false) {

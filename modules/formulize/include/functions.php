@@ -498,6 +498,101 @@ function formulize_selfRegistrationActive() {
     return true;
 }
 
+// Coarse per-IP rate limit for public self-registration. Blunts automated abuse: mass account
+// creation and, above all, flooding of confirmation codes by email/SMS (the SMS path costs real
+// money). At most FORMULIZE_SIGNUP_THROTTLE_MAX account creations are allowed per source IP per
+// FORMULIZE_SIGNUP_THROTTLE_WINDOW seconds. Backed by one small file per hashed IP under the cache
+// directory, so it needs no schema change and survives across requests (unlike session state, which
+// a bot simply discards). This is a throttle, not an authorization control — the real guardrails are
+// the level-0/confirm-code activation and the adminOnly field checks — but it caps the blast radius.
+//
+// The default (60/hour) is deliberately generous: a whole organisation can share one public IP behind
+// a NAT/firewall, so dozens of legitimate people may sign up from the "same" address during an
+// onboarding push. It still bounds a single-IP bot to 60 accounts (and 60 confirmation-code sends) an
+// hour. Both values are tunable constants — lower them on a site that expects only isolated home users.
+if (!defined('FORMULIZE_SIGNUP_THROTTLE_MAX')) {
+    define('FORMULIZE_SIGNUP_THROTTLE_MAX', 60);
+}
+if (!defined('FORMULIZE_SIGNUP_THROTTLE_WINDOW')) {
+    define('FORMULIZE_SIGNUP_THROTTLE_WINDOW', 3600); // one hour
+}
+
+/**
+ * @return string The throttle file path for the current source IP, or '' when there is no usable IP.
+ */
+function formulize_signupThrottleFile() {
+    $ip = isset($_SERVER['REMOTE_ADDR']) ? (string) $_SERVER['REMOTE_ADDR'] : '';
+    if ($ip === '') {
+        return ''; // nothing to key on (e.g. CLI) — cannot throttle
+    }
+    return XOOPS_ROOT_PATH . '/cache/formulize_signup_throttle_' . hash('sha256', $ip) . '.txt';
+}
+
+/**
+ * Count this IP's account creations inside the current window. Entries are appended in ascending time
+ * order (see formulize_signupThrottleRecord), so the newest are at the end — we walk backward and stop
+ * at the first entry older than the window rather than scanning the whole file from the front. Reads
+ * do not rewrite the file (that would write on every page load); pruning happens on write instead. The
+ * one exception is a file that is now entirely stale, which we delete here so abandoned per-IP files do
+ * not accumulate.
+ *
+ * @return int Number of creations recorded for this IP within the window.
+ */
+function formulize_signupThrottleCount() {
+    $file = formulize_signupThrottleFile();
+    if ($file === '' OR !is_readable($file)) {
+        return 0;
+    }
+    $lines = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if (!$lines) {
+        @unlink($file);
+        return 0;
+    }
+    $cutoff = time() - FORMULIZE_SIGNUP_THROTTLE_WINDOW;
+    $count = 0;
+    for ($i = count($lines) - 1; $i >= 0; $i--) {
+        if (intval($lines[$i]) >= $cutoff) {
+            $count++;
+        } else {
+            break; // ascending order: everything before this is older still
+        }
+    }
+    if ($count === 0) {
+        @unlink($file); // whole file is outside the window; clean it up
+    }
+    return $count;
+}
+
+/**
+ * @return bool True when this IP has reached its signup allowance and should be refused.
+ */
+function formulize_signupThrottleExceeded() {
+    return formulize_signupThrottleFile() !== '' AND formulize_signupThrottleCount() >= FORMULIZE_SIGNUP_THROTTLE_MAX;
+}
+
+/**
+ * Record one successful account creation against the current source IP, then prune anything now outside
+ * the window so the file stays small (bounded by the number of in-window creations).
+ *
+ * @return void
+ */
+function formulize_signupThrottleRecord() {
+    $file = formulize_signupThrottleFile();
+    if ($file === '') {
+        return;
+    }
+    $cutoff = time() - FORMULIZE_SIGNUP_THROTTLE_WINDOW;
+    $lines = is_readable($file) ? file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) : array();
+    $keep = array();
+    foreach ((array) $lines as $line) {
+        if (intval($line) >= $cutoff) {
+            $keep[] = intval($line);
+        }
+    }
+    $keep[] = time();
+    file_put_contents($file, implode("\n", $keep) . "\n", LOCK_EX);
+}
+
 /**
  * Derive the secret key used to sign anonymous-entry cookies.
  *

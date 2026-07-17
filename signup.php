@@ -100,9 +100,11 @@ if (!$sid) {
 // Process any submitted account form BEFORE rendering (save-before-display), exactly like
 // edituser.php / users.php. If the account form was submitted, this creates the (inactive) user.
 // When a required token is missing we skip this entirely, so an account can never be created by
-// forging a POST past the on-screen token gate.
+// forging a POST past the on-screen token gate. We also skip it when this source IP has exhausted
+// its signup allowance, so no account is created (and no confirmation code sent) while throttled.
 $newUserTableUserIds = array();
-if (!$tokenGateBlocks) {
+$signupThrottled = formulize_signupThrottleExceeded();
+if (!$tokenGateBlocks && !$signupThrottled) {
 	include_once XOOPS_ROOT_PATH . '/modules/formulize/include/readelements.php';
 }
 
@@ -111,6 +113,8 @@ if (!$tokenGateBlocks) {
 // readelements.php when the System Users form creates a user.
 if (!empty($newUserTableUserIds[$fid])) {
 	$newUid = intval($newUserTableUserIds[$fid]);
+	// Count this creation against the per-IP allowance before we spend a confirmation-code send.
+	formulize_signupThrottleRecord();
 	formulize_signupAssignGroups($newUid);
 
 	$maskedContact = '';
@@ -147,6 +151,21 @@ if ($xoTheme) {
 
 echo "<div class='formulize-signup'>";
 echo "<h1>" . _formulize_SIGNUP_TITLE . "</h1>";
+
+// If this IP has hit the signup rate limit, say so (and no account form was processed above).
+if ($signupThrottled) {
+	echo "<p style='color:#cc0000; font-weight:bold;'>" . _formulize_SIGNUP_THROTTLED . "</p>";
+}
+
+// If the just-attempted account creation was refused because a submitted field (email, username
+// or phone) is already in use, tell the visitor. The save was refused server-side regardless.
+// (Guarded by class_exists because the class is only loaded once a submission has been processed,
+// i.e. not on the token-gate-blocked path where no account creation is attempted.)
+if (class_exists('formulizeUserAccountElementHandler') && formulizeUserAccountElementHandler::$uniquenessError) {
+	echo "<p style='color:#cc0000; font-weight:bold;'>" .
+		sprintf(_formulize_SIGNUP_DUPLICATE, htmlspecialchars(formulizeUserAccountElementHandler::$uniquenessError, ENT_QUOTES)) .
+		"</p>";
+}
 
 // Invitation-code UI. If a token has already been accepted (from the URL or a prior submit) we show
 // a confirmation of it instead of the box. When a token is required, the box is presented as required.

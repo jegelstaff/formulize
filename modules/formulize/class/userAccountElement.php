@@ -68,6 +68,10 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
     static public $tfaValidationError = false;
     // POST values stored when 2FA validation fails so loadValue() can restore them.
     static public $submittedValues = null;
+    // Set to the human-readable name of the conflicting field (e.g. "email address") by
+    // processUserAccountSubmission() when a submitted account value collides with an existing
+    // account. Callers (e.g. signup.php) can display it; the save itself is refused regardless.
+    static public $uniquenessError = '';
 
     var $db;
     var $clickable; // used in formatDataForList
@@ -479,6 +483,16 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 					return self::setTfaValidationError($results[$cacheKey]);
 				}
 
+				// Enforce account-field uniqueness on the server. The form's JS/XHR checks the same
+				// thing, but a submission that bypasses the browser (a forged/scripted POST) must not
+				// be able to create a duplicate email/username/phone. login_name is additionally
+				// protected by a DB UNIQUE key, but email and phone are not, so this is their only
+				// backstop. Refuse the save (fail closed) if a conflict is found.
+				if($conflictField = self::accountFieldConflict($pendingUserVars, $pendingProfileVars, $entryUserId)) {
+					self::$uniquenessError = $conflictField;
+					return $results[$cacheKey];
+				}
+
 				// Apply all pending changes now that validation has passed
 				foreach($pendingProfileVars as $k => $v) { $profile->setVar($k, $v); }
 				foreach($pendingUserVars as $k => $v) { $userObject->setVar($k, $v); }
@@ -810,6 +824,51 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Check submitted account fields for collisions with an existing account (server-side
+	 * uniqueness enforcement, mirroring the form's client-side XHR check). Returns the
+	 * human-readable name of the first conflicting field, or '' when all submitted values are
+	 * unique. The account's own record is excluded (via $entryUserId) so that editing an account
+	 * without changing these fields is not flagged as a conflict.
+	 *
+	 * @param array $pendingUserVars    Pending users-table changes (may include email / login_name)
+	 * @param array $pendingProfileVars Pending profile-table changes (may include 2faphone)
+	 * @param int   $entryUserId        The uid of the account being edited, or 0 for a new account
+	 * @return string The conflicting field's label, or '' if there is no conflict
+	 */
+	private static function accountFieldConflict($pendingUserVars, $pendingProfileVars, $entryUserId) {
+		global $xoopsDB;
+		$entryUserId = intval($entryUserId);
+
+		// Each check: [table, column, id column used to exclude the account's own row, value, label]
+		$checks = array();
+		if(isset($pendingUserVars['email']) AND $pendingUserVars['email'] !== '') {
+			$checks[] = array('users', 'email', 'uid', $pendingUserVars['email'],
+				defined('_formulize_USERACCOUNTEMAIL') ? strtolower(_formulize_USERACCOUNTEMAIL) : 'email address');
+		}
+		if(isset($pendingUserVars['login_name']) AND $pendingUserVars['login_name'] !== '') {
+			$checks[] = array('users', 'login_name', 'uid', $pendingUserVars['login_name'],
+				defined('_formulize_USERACCOUNTUSERNAME') ? strtolower(_formulize_USERACCOUNTUSERNAME) : 'username');
+		}
+		if(isset($pendingProfileVars['2faphone']) AND $pendingProfileVars['2faphone'] !== '') {
+			$checks[] = array('profile_profile', '2faphone', 'profileid', $pendingProfileVars['2faphone'],
+				defined('_formulize_USERACCOUNTPHONE') ? strtolower(_formulize_USERACCOUNTPHONE) : 'phone number');
+		}
+
+		foreach($checks as $check) {
+			list($table, $column, $idColumn, $value, $label) = $check;
+			$exclude = $entryUserId ? " AND `$idColumn` != $entryUserId" : '';
+			$sql = "SELECT COUNT(*) AS count FROM ".$xoopsDB->prefix($table)." WHERE `$column` = '".formulize_db_escape($value)."'".$exclude;
+			if($res = $xoopsDB->query($sql)) {
+				$row = $xoopsDB->fetchArray($res);
+				if($row AND $row['count'] > 0) {
+					return $label;
+				}
+			}
+		}
+		return '';
 	}
 
 	/**

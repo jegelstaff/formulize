@@ -76,8 +76,12 @@ class icms_core_Session {
 				$_SESSION['email'] = $userData["email"];
 				$_SESSION['resouceMapKey'] = $userData["email"];
 				$_SESSION['name'] = $userData["name"];
-				$_SESSION['newuser'] = $_GET['code']; //add the google code to session and url and check this on the other end to make sure that they are equal
-				$url = XOOPS_URL."/new_user.php?newuser=".$_GET['code'];
+				// Nonce tying this session to the new_user.php request. Use a fresh CSPRNG value
+				// (matching the SAML path) rather than reusing the Google authorization code: that
+				// code has already been consumed by authenticate() above, and a dedicated random
+				// nonce keeps the value unpredictable and single-purpose.
+				$_SESSION['newuser'] = bin2hex(random_bytes(32));
+				$url = XOOPS_URL."/new_user.php?newuser=".$_SESSION['newuser'];
 				header("Location: ".$url);
 				exit;
 			}
@@ -100,21 +104,19 @@ class icms_core_Session {
 						if($internalUid = Formulize::getXoopsResourceID(Formulize::USER_RESOURCE, $auth->getNameId())) {
 								$externalUid = $auth->getNameId();
 						} else {
-								// check if there is a group specified in the SAML response?
-								$samlGroups = array();
-								if($uid = $newFormulizeUser->insertAndMapUser(array_keys($samlGroups))) {
-										header("Location: ".XOOPS_URL);
-										exit();
-								} else {
-										// No existing user, no group, need to send to new user page to gather token...
-										$_SESSION['resouceMapKey'] = $auth->getNameId();
-										$samlAttributes = $auth->getAttributes();
-										$_SESSION['name'] = $samlAttributes['firstName'][0].' '.$samlAttributes['lastName'][0]; //<<<<-MUST CONVERT TO SAML ATTRIBUTE FIRST NAME LAST NAME
-										$_SESSION['newuser'] = bin2hex(random_bytes(32)); // add a key to the session and URL and check this on the other end to make sure that they are equal
-										$url = XOOPS_URL."/new_user.php?newuser=".$_SESSION['newuser'];
-										header("Location: ".$url);
-										exit;
-								}
+								// No existing mapped user for this SAML assertion: send to the new-user page to
+								// gather an invitation token, which is what grants group membership.
+								//
+								// A fuller SAML/Okta implementation may identify an unmapped user account that
+								// aligns with the SAML response and choose to map it here with the insertAndMapUser
+								// method from the integration API.
+								$_SESSION['resouceMapKey'] = $auth->getNameId();
+								$samlAttributes = $auth->getAttributes();
+								$_SESSION['name'] = $samlAttributes['firstName'][0].' '.$samlAttributes['lastName'][0]; //<<<<-MUST CONVERT TO SAML ATTRIBUTE FIRST NAME LAST NAME
+								$_SESSION['newuser'] = bin2hex(random_bytes(32)); // add a key to the session and URL and check this on the other end to make sure that they are equal
+								$url = XOOPS_URL."/new_user.php?newuser=".$_SESSION['newuser'];
+								header("Location: ".$url);
+								exit;
 						}
 				}
 		}

@@ -871,6 +871,8 @@ define("_formulize_SIGNUP_RESEND_PROMPT", "Didn't get it? You can %s.");
 define("_formulize_SIGNUP_RESENT", "A new code has been sent.");
 define("_formulize_SIGNUP_SESSION_LOST", "Your signup session has expired. Please start again.");
 define("_formulize_SIGNUP_ALREADY_ACTIVE", "Your account is already active. Please log in.");
+define("_formulize_SIGNUP_DUPLICATE", "That %s is already in use. Please use a different one.");
+define("_formulize_SIGNUP_THROTTLED", "Too many accounts have been created from your location recently. Please wait a little while and try again.");
 
 define("_formulize_EAGGROUPMEMBERS", "Group Members");
 define("_formulize_GMM_SAVE_FIRST", "Save the group first to manage members.");
