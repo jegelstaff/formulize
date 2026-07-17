@@ -247,7 +247,9 @@ if (! empty( $_SESSION['redirect_message'] )) {
 					}
 				}
 				//sort arrays after loop
-				array_multisort($column, SORT_ASC, $navitem['menu']);
+				if(is_array($column) AND count($column) > 0) {
+					array_multisort($column, SORT_ASC, $navitem['menu']);
+				}
 			}
 			foreach ( $navitem['menu'] as $item ) {
 				foreach ($item['subs'] as $key => $subitem) {
