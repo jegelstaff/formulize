@@ -76,7 +76,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 	// Set some required variables
 	$mid = getFormulizeModId();
 	$fid="";
-	if(!$fid = $_GET['fid']) {
+	if(!$fid = intval($_GET['fid'] ?? 0)) {
 		$fid = intval($_POST['fid']);
 	}
 
