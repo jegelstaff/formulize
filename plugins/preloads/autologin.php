@@ -83,15 +83,30 @@ class icms_AutologinEventHandler {
 			$icms_cookie_path = '/';
 		}
 		if (false != $user && $user->getVar('level') > 0) {
+			global $icmsConfig;
 			// update time of last login
 			$user->setVar('last_login', time());
 			if (!icms::handler('icms_member')->insertUser($user, true)) {
+			}
+			// Regenerate the session id when autologin promotes an anonymous session to an
+			// authenticated one - mirrors the main login path (include/checklogin.php) so a
+			// session id fixed/known before autologin cannot survive elevation (session fixation).
+			session_regenerate_id(true);
+			if ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '') {
+				$session_secure = substr(ICMS_URL, 0, 5) == 'https';
+				setcookie($icmsConfig['session_name'], session_id(), array(
+					'expires' => time() + (60 * $icmsConfig['session_expire']),
+					'path' => '/',
+					'domain' => '',
+					'secure' => $session_secure,
+					'httponly' => true,
+					'samesite' => icms_core_Session::cookieSameSite($session_secure)
+				));
 			}
 			//$_SESSION = array();
 			$_SESSION['xoopsUserId'] = $user->getVar('uid');
 			$_SESSION['xoopsUserGroups'] = $user->getGroups();
 
-			global $icmsConfig;
 			$user_theme = $user->getVar('theme');
 			$user_language = $user->getVar('language');
 			if (in_array($user_theme, $icmsConfig['theme_set_allowed'])) {

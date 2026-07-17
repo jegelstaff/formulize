@@ -316,10 +316,6 @@ class icms_member_Handler {
 		}
 		$uname = $this->db->escape($uname);
 
-		$is_expired = $icmspass->passExpired($uname);
-		if ($is_expired == 1) {
-			redirect_header(ICMS_URL . '/user.php?op=resetpass&uname=' . $uname, 5, _US_PASSEXPIRED, false);
-		}
 		$salt = $icmspass->getUserSalt($uname);
 		$pwd = $icmspass->encryptPass($pwd, $salt);
 
@@ -336,6 +332,16 @@ class icms_member_Handler {
 		if (!$user || count($user) != 1) {
 			$user = false;
 			return $user;
+		}
+
+		// Only branch on account-specific state (password expiry) AFTER the password has been
+		// verified. Checking this pre-auth let an attacker distinguish existing (and specifically
+		// expired-password) accounts from unknown usernames/wrong passwords, without knowing the
+		// password - a username-enumeration + account-state-disclosure primitive. The failure path
+		// above is now identical for unknown-user and wrong-password.
+		$is_expired = $icmspass->passExpired($uname);
+		if ($is_expired == 1) {
+			redirect_header(ICMS_URL . '/user.php?op=resetpass&uname=' . $uname, 5, _US_PASSEXPIRED, false);
 		}
 		return $user[0];
 	}
