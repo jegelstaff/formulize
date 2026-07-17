@@ -252,7 +252,8 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                 $extension = strtolower(substr($_FILES[$fileKey]['name'],$dotPos+1));
                 $ele_value = $element->getVar('ele_value');
                 $allowedExtensions = str_replace(array(" ","."),"",strtolower(trim($ele_value[1])));
-                if(!$allowedExtensions OR in_array($extension,explode(",",$allowedExtensions))) {
+                $blockedExtensions = array('php','php3','php4','php5','php7','php8','phps','phtml','pht','phar','cgi','pl','py','jsp','jspx','asp','aspx','sh','htaccess','htpasswd');
+                if(!in_array($extension, $blockedExtensions) AND (!$allowedExtensions OR in_array($extension,explode(",",$allowedExtensions)))) {
                     $deducedMimeType = mime_content_type($_FILES[$fileKey]['tmp_name']);
                     $browserMimeType = $_FILES[$fileKey]['type'];
                     $extensionMimeType = isset($mime_types_map[$extension]) ? $mime_types_map[$extension] : false;
@@ -288,10 +289,11 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                     $folderExists = mkdir($folderLocation);
                 }
                 if($folderExists) {
-                    $moveResult = move_uploaded_file($_FILES[$fileKey]['tmp_name'],$folderLocation."/$obscureFile".$_FILES[$fileKey]['name']);
+                    $safeUploadName = basename($_FILES[$fileKey]['name']);
+                    $moveResult = move_uploaded_file($_FILES[$fileKey]['tmp_name'],$folderLocation."/$obscureFile".$safeUploadName);
                     if($moveResult) {
                         $value = array();
-                        $value['name'] = $obscureFile.$_FILES[$fileKey]['name'];
+                        $value['name'] = $obscureFile.$safeUploadName;
                         $value['isfile'] = true; // second array position will indicate that we have a real file here
                         $value['type'] = $_FILES[$fileKey]['type']; // save the mime type for later use
                         $value['size'] = $_FILES[$fileKey]['size']; // save the size for later use
