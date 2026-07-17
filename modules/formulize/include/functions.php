@@ -3093,9 +3093,11 @@ function interpretTextboxValue($elementIdentifier, $entry_id = 'new', $currentVa
 
 		$elementRenderer = new formulizeElementRenderer($elementObject);
 		$renderedElementMarkupName = "de_".$form_id."_".$entry_id."_".$elementObject->getVar('ele_id');
+		$configuredDefaultValue = ($elementObject->getVar('ele_type') == 'text') ? $ele_value[2] : $ele_value[0];
+		$textboxValueIsConfiguredDefault = ((string)$textboxValue === (string)$configuredDefaultValue OR (string)$textboxValue === stripslashes((string)$configuredDefaultValue));
 		$textboxValue = $elementRenderer->formulize_replaceReferencesAndVariables($textboxValue, $entry_id, $form_id, $renderedElementMarkupName);
 
-    if (strstr($textboxValue, "\$default")) { // php default value
+    if ($textboxValueIsConfiguredDefault AND strstr($textboxValue, "\$default")) { // php default value
 				$textboxValue = removeOpeningPHPTag($textboxValue);
 			  $default = '';
         eval(stripslashes($textboxValue));
