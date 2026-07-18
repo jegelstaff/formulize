@@ -180,7 +180,7 @@ class formulizeTextareaElementHandler extends formulizeTextElementHandler {
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen=false, $owner=null) {
 
 		$ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE] = (isset($ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE]) AND $ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE]) ? stripslashes($ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE]) : "";
-		$ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE] = interpretTextboxValue($element, $entry_id, $ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE]);
+		$ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE] = interpretTextboxValue($element, $entry_id, $ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE], $screen, catalogAsConditionalElement: true); // live render: pass the screen and catalogue {ref}s for conditional re-rendering
 		// catalogue this element as a rich text editor even when it is currently rendering as a disabled label, since a disabled condition can stop being met, and then the element gets re-rendered as a live editor by conditional.js, which will only initialize it if it is in the catalogue
 		if (!strstr(getCurrentURL(),"printview.php") AND $this->usesRichTextEditor($ele_value)) {
 			$GLOBALS['formulize_CKEditors'][] = $markupName.'_tarea';

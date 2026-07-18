@@ -3153,9 +3153,11 @@ function removeOpeningPHPTag($string) {
  * @param mixed $elementIdentifier The id number, handle, or object representing the element we're working with
  * @param int|string $entry_id Optional. Defaults to 'new'. The entry id number of the entry that we're working with, or 'new' for new entries not yet saved. Possibly referenced by eval'd code.
  * @param mixed $currentValue Optional. The current value of the element in the entry. More efficient to pass this in if known. If set to the string USEDEFAULTVALUEINSTEADOFCURRENTVALUE then the default value will be used instead of the current value. This is necessary when determining defaults for newly created subform entries, since they have an entry id in the database already.
+ * @param mixed $screen Optional. The screen object in effect (may be null), passed through to reference/variable substitution so conditional-element cataloguing records the correct screen. Only meaningful together with $catalogAsConditionalElement.
+ * @param bool $catalogAsConditionalElement Optional, default false. Set true ONLY when this is a live render of the element in a form/screen, so its {ref} references are catalogued for conditional re-rendering. Leave false for value-computation calls (e.g. getDefaultValue): those have no on-screen element and must NOT pollute the conditional-element catalogue.
  * @return mixed The default value that should be used for this element, or the actual value in the database if this is a specific entry, unless there is no value saved in which case the default from the element settings would be interpretted.
  */
-function interpretTextboxValue($elementIdentifier, $entry_id = 'new', $currentValue = null) {
+function interpretTextboxValue($elementIdentifier, $entry_id = 'new', $currentValue = null, $screen = null, $catalogAsConditionalElement = false) {
 
 		if(!$elementObject = _getElementObject($elementIdentifier)) {
 			return "";
@@ -3187,17 +3189,32 @@ function interpretTextboxValue($elementIdentifier, $entry_id = 'new', $currentVa
     global $xoopsUser;
 
 		$elementRenderer = new formulizeElementRenderer($elementObject);
-		$renderedElementMarkupName = "de_".$form_id."_".$entry_id."_".$elementObject->getVar('ele_id');
+		// Only build a markup name when this is a live render (it is the sole thing that drives conditional-
+		// element cataloguing inside formulize_replaceReferencesAndVariables). Value-computation callers
+		// (getDefaultValue, etc.) pass $catalogAsConditionalElement=false, so the empty name suppresses
+		// cataloguing entirely — there is no on-screen element and no screen for them to catalogue against.
+		$renderedElementMarkupName = $catalogAsConditionalElement ? ("de_".$form_id."_".$entry_id."_".$elementObject->getVar('ele_id')) : "";
 		$configuredDefaultValue = ($elementObject->getVar('ele_type') == 'text') ? $ele_value[2] : $ele_value[0];
 		$textboxValueIsConfiguredDefault = ((string)$textboxValue === (string)$configuredDefaultValue OR (string)$textboxValue === stripslashes((string)$configuredDefaultValue));
-		$textboxValue = $elementRenderer->formulize_replaceReferencesAndVariables($textboxValue, $entry_id, $form_id, $renderedElementMarkupName);
-
-    if ($textboxValueIsConfiguredDefault AND strstr($textboxValue, "\$default")) { // php default value
-				$textboxValue = removeOpeningPHPTag($textboxValue);
+		// Decide PHP-ness from the raw, admin-authored default (pre-substitution) — NOT the post-substitution
+		// string — so a user-controlled {ref} value can never introduce the $default trigger on its own.
+		// Mirrors the static content / help-text handling (see baseClassForStaticContent::render()).
+		$isPHPDefault = ($textboxValueIsConfiguredDefault AND strstr($configuredDefaultValue, "\$default"));
+    if ($isPHPDefault) { // php default value
+				// Eval the admin-authored default taken straight from the element object (it is provably the
+				// configured default here). Reverse any legacy storage-slashing of the admin CODE first, THEN
+				// substitute {ref} values with PHP-string-literal escaping (so the escaping is not undone by a
+				// stripslashes on the whole string) so a user-controlled referenced value cannot break out of
+				// the admin's PHP string literals and inject code. See formulize_escapeForPHPStringLiteral().
+				$textboxValue = stripslashes(removeOpeningPHPTag($configuredDefaultValue));
+				$textboxValue = $elementRenderer->formulize_replaceReferencesAndVariables($textboxValue, $entry_id, $form_id, $renderedElementMarkupName, $screen, escapeForPHPEval: true);
 			  $default = '';
-        eval(stripslashes($textboxValue));
+        eval($textboxValue);
         $textboxValue = $default;
-				$textboxValue = $elementRenderer->formulize_replaceReferencesAndVariables($textboxValue, $entry_id, $form_id, $renderedElementMarkupName); // in case PHP code generated some { } references
+				$textboxValue = $elementRenderer->formulize_replaceReferencesAndVariables($textboxValue, $entry_id, $form_id, $renderedElementMarkupName, $screen); // in case PHP code generated some { } references
+    } else {
+				// plain (non-PHP) default: substitute {ref} values unescaped, as before, for display
+				$textboxValue = $elementRenderer->formulize_replaceReferencesAndVariables($textboxValue, $entry_id, $form_id, $renderedElementMarkupName, $screen);
     }
 
 	  $foundTerms = array();

@@ -292,7 +292,7 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen=false, $owner=null) {
 
 		$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] = stripslashes($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE]);
-		$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] = interpretTextboxValue($element, $entry_id, $ele_value[ELE_VALUE_TEXT_DEFAULTVALUE]);
+		$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] = interpretTextboxValue($element, $entry_id, $ele_value[ELE_VALUE_TEXT_DEFAULTVALUE], $screen, catalogAsConditionalElement: true); // live render: pass the screen and catalogue {ref}s for conditional re-rendering
 		//if placeholder value is set
 		if($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE_AS_PLACEHOLDER] AND ($entry_id == 'new' OR $ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] === "")) { // always go straight to source for placeholder for new entries, or entries where there is no value
 			$rawEleValue = $element->getVar('ele_value');
