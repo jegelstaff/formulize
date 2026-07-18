@@ -512,6 +512,32 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			throw new Exception("You do not have permission to access this entry");
 		}
 		global $xoopsUser;
+
+		// Never let a non-webmaster modify a webmaster's account. Editing a user's account entry
+		// lets you change their password/email — i.e. take the account over — and would also enable
+		// masquerading "up" to an admin. Both gates below (EAU user_can_edit_entry, and system_admin
+		// on the users table) can be held by a non-webmaster, so this is the backstop that keeps
+		// those rights from reaching an admin's account. New entries have no target user yet
+		// (getSystemUserIdFromEntry / intval of a non-numeric entryId is 0), so account creation and
+		// self-registration are unaffected; a webmaster editing any account is unaffected.
+		if ($isUserTableForm) {
+			$targetUidForWebmasterCheck = intval($entryId);
+		} else {
+			$guardFormHandler = xoops_getmodulehandler('forms', 'formulize');
+			$guardFormObject = $guardFormHandler->get($formId);
+			$targetUidForWebmasterCheck = $guardFormObject ? intval($guardFormObject->getSystemUserIdFromEntry($entryId)) : 0;
+		}
+		if ($targetUidForWebmasterCheck) {
+			$activeIsWebmaster = $xoopsUser && in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups());
+			if (!$activeIsWebmaster) {
+				$guardMemberHandler = xoops_gethandler('member');
+				$targetUserObj = $guardMemberHandler->getUser($targetUidForWebmasterCheck);
+				if ($targetUserObj && in_array(XOOPS_GROUP_ADMIN, $targetUserObj->getGroups())) {
+					throw new Exception("You do not have permission to modify a webmaster account.");
+				}
+			}
+		}
+
 		if ($isUserTableForm) {
 			if (self::activeUserCanManageUsers()) {
 				return true;

@@ -175,7 +175,17 @@ function displayCalendar($formframes, $mainforms, $viewHandles, $dateHandles, $f
 
     // handle deletion if requested, added sept 18 2005
     if($_POST['delentry']) {
-        deleteEntry($_POST['delentry'], $_POST['delfrid'], $_POST['delfid']);
+        $delEntryId = intval($_POST['delentry']);
+        $delFid = intval($_POST['delfid']);
+        $delFrid = intval($_POST['delfrid']);
+        // Confirm the user actually has permission to delete this specific entry, on the form
+        // actually targeted by the POST (delfid) -- not merely view rights to the calendar's own
+        // forms (the security_check loop above is view_form-level, on $fids, and delfid is
+        // request-controlled and need not be one of them). deleteEntry() does no permission
+        // enforcement of its own, so the gate must live here, mirroring entriesdisplay.php.
+        if($delEntryId AND $delFid AND formulizePermHandler::user_can_delete_entry($delFid, $uid, $delEntryId)) {
+            deleteEntry($delEntryId, $delFrid, $delFid);
+        }
     }
 
     // get the data for all the fids

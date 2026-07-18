@@ -151,6 +151,7 @@ $pseudoScreen->setVar('decolumns', array(
 if (!empty($_POST['delconfirmed'])) {
 	$currentUid = $xoopsUser ? intval($xoopsUser->getVar('uid')) : 0;
 	$currentUserIsWebmaster = $xoopsUser && in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups());
+	$member_handler = xoops_gethandler('member');
 	foreach ($_POST as $key => $val) {
 		if (strpos($key, 'delete_') === 0) {
 			$uidToDelete = intval(substr($key, 7));
@@ -160,6 +161,14 @@ if (!empty($_POST['delconfirmed'])) {
 			// Webmasters can delete anyone; others must have edit rights on the
 			// EAU entry associated with the user being deleted.
 			if (!$currentUserIsWebmaster) {
+				// Never let a non-webmaster delete a webmaster: system_admin on the users
+				// item can be granted to a non-admin group, so a non-webmaster manager with
+				// EAU-edit rights on an admin's account entry must NOT be able to delete that
+				// admin. Mirrors the masquerade.php webmaster-target guard.
+				$targetUserObj = $member_handler->getUser($uidToDelete);
+				if ($targetUserObj && in_array(XOOPS_GROUP_ADMIN, $targetUserObj->getGroups())) {
+					continue;
+				}
 				$eauMatches = findUserEauEntry($uidToDelete);
 				$canDelete = false;
 				foreach ($eauMatches as $match) {

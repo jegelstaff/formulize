@@ -1037,6 +1037,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 	}
 
     if(isset($_POST['clonesubsflag']) AND $_POST['clonesubsflag']) { // if cloning of sub entries requested
+        $cloneSubFid = intval($_POST['clonesubsflag']);
         $subs_to_clone = array();
 		foreach($_POST as $k=>$v) {
 			if(strstr($k, "delbox") AND intval($v) > 0) {
@@ -1045,7 +1046,15 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		}
 		if(count((array) $subs_to_clone) > 0) {
             foreach($subs_to_clone as $entry_id) {
-                cloneEntry($entry_id, '', intval($_POST['clonesubsflag']));
+                // Gate the clone: the user must be able to view the source entry (otherwise cloning
+                // an entry they can't see into a new entry they own is a cross-form data-disclosure
+                // primitive) AND be permitted to create entries on the target form. cloneEntry()
+                // enforces nothing itself, and clonesubsflag/delbox are request-controlled. Mirrors
+                // the subform-delete gate directly above (which checks user_can_delete_entry).
+                if(security_check($cloneSubFid, intval($entry_id), $uid)
+                    AND formulizePermHandler::user_can_edit_entry($cloneSubFid, $uid, 'new')) {
+                    cloneEntry($entry_id, '', $cloneSubFid);
+                }
             }
         }
         unset($_POST['clonesubsflag']);
