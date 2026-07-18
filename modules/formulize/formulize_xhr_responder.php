@@ -319,7 +319,15 @@ switch($op) {
         $elementsToProcess[$k] = $v;
       }
     }
-    foreach($elementsToProcess as $k => $v) {
+    // normalize the request-supplied ids: fid is always numeric; the primary entry id is numeric
+    // except for the special 'new'/'proxy' markers, which must be preserved for security_check and rendering
+    $fid = intval($fid);
+    if($entryId !== 'new' AND $entryId !== 'proxy') {
+      $entryId = intval($entryId);
+    }
+
+    $entryAuthorized = security_check($fid, $entryId);
+    foreach($entryAuthorized ? $elementsToProcess : array() as $k => $v) {
       $keyParts = explode("_", $k); // ANY KEY PASSED THAT IS THE NAME OF A DE_ ELEMENT IN MARKUP, WILL GET UNPACKED AS A VALUE THAT CAN BE SUBBED IN WHEN DOING LOOKUPS LATER ON. This is because these elements are the elements that might determine how the conditionally rendered element behaves; it might be sensitive to these values.
       $passedEntryId = $keyParts[2];
       $passedElementId = trim($keyParts[3], "[]"); // in case it's an array element, strip the brackets
@@ -357,7 +365,7 @@ switch($op) {
     $json = '{ "elements" : [';
     foreach(explode(',',$elementId) as $thisElementId) {
       $elementObject = $element_handler->get($thisElementId);
-			if($entryId AND $entryId != 'new' AND $elementObject->getVar('ele_type') == "derived") {
+			if($entryAuthorized AND $entryId AND $entryId != 'new' AND $elementObject->getVar('ele_type') == "derived") {
 				// if it's a derived value, we need to do an update of the derived values based on this changed value... but not save it!!
 				// When the global formulize_asynchronousFormDataInAPIFormat has values in it, the derived value computation will put
 				// the values into asynch space to later be picked up when rendered. Does not write values to the database.
@@ -388,7 +396,7 @@ switch($op) {
       }
 			$html = "";
       $json .= $jsonSep.'{ "handle" : '.json_encode('de_'.$elementObject->getVar('id_form').'_'.$originalEntryIdInMarkup.'_'.$thisElementId); // have to reference the element markup name that was used when originally rendering the page, ugh.
-      if(security_check($fid, $entryIdToUse)) {
+      if($entryAuthorized AND security_check($fid, $entryIdToUse)) {
         $html = renderElement($elementObject, $entryIdToUse, $frid, $screenObject);
         $json .= ', "data" : '.json_encode($html);
       } else {
