@@ -15,6 +15,14 @@ $fid = intval($_GET['fid']);
 $subformElementId = intval($_GET['subformElementId']);
 $formulize_displayingSubform = true;
 
+// Defense in depth: this is a directly-reachable endpoint, so gate the requested entry here rather
+// than relying solely on displayForm/screen-render to refuse a forged entry_id downstream. For a
+// new/blank subform entry, entry_id is 0, which makes this a form-level view_form check.
+if(!security_check($fid, $entry_id)) {
+    print "<p>"._NO_PERM."</p>";
+    exit();
+}
+
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 $element_handler = xoops_getmodulehandler('elements', 'formulize');
 $subformObject = $form_handler->get($fid);
