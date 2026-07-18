@@ -25,6 +25,13 @@ include_once XOOPS_ROOT_PATH . '/modules/formulize/class/usersGroupsPerms.php';
 
 global $xoopsUser, $icmsConfig;
 
+// CSRF: require a valid single-use request token (appended to the masquerade link by
+// userAccountMasqueradeElement::render()).
+if (!icms::$security->check()) {
+	redirect_header(XOOPS_URL, 3, 'Invalid or expired request. Please return to the users list and try again.');
+	exit();
+}
+
 $currentGroups = $xoopsUser ? $xoopsUser->getGroups() : array();
 $currentUid    = $xoopsUser ? intval($xoopsUser->getVar('uid')) : 0;
 $targetUid     = isset($_GET['uid']) ? intval($_GET['uid']) : 0;

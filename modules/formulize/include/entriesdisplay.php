@@ -4567,6 +4567,7 @@ function processClickedCustomButton($clickedElements, $clickedValues, $clickedAc
 
 		// process changes to each entry
 		global $xoopsUser;
+		$customButtonUid = $xoopsUser ? intval($xoopsUser->getVar('uid')) : 0;
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
 		$elementObject = $element_handler->get($clickedElements[0]);
 		$formId = $elementObject->getVar('id_form');
@@ -4577,6 +4578,10 @@ function processClickedCustomButton($clickedElements, $clickedValues, $clickedAc
 		$newEntriesToNotifyAbout = array();
 		$updatedEntriesToNotifyAbout = array();
 		foreach($caEntries as $id=>$thisEntry) { // loop through all the entries this button click applies to
+			// Permission gate: the active user must be allowed to modify the entry this button affects
+			if(!formulizePermHandler::user_can_edit_entry($formId, $customButtonUid, $thisEntry)) {
+				continue;
+			}
 			$maxIdReq = 0;
 			$needToSetOwner = false;
 			$valuesToWrite = array();
