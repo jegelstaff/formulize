@@ -766,6 +766,14 @@ define("_SHOW_BLANKS", "Show Blanks");
 
 define("_formulize_ERROR_IN_LEFTRIGHT", "There appears to be an error in the PHP code that generates the text for this space.  Please notify the webmaster.");
 
+// Shown in place of the embedded PHP region in element help text when the code fails
+define("_formulize_ERROR_IN_PHP_CODE", "There is an error in your PHP code");
+
+// Shown in place of a default value when the PHP code that generates it fails. Only people who can
+// edit the form see this - everyone else gets a blank value - so it is addressed to the person who
+// is in a position to fix the code.
+define("_formulize_ERROR_IN_DEFAULT_VALUE_CODE", "There is an error in the PHP code that generates the default value for this field. The error has been logged. Only people who can edit this form see this message.");
+
 define("_formulize_GENERIC_FILTER_ALL", "No filter in effect (select this to clear existing filters)");
 define("_formulize_GENERIC_FILTER_CON", "Filter based on this/these conditions:");
 define("_formulize_GENERIC_FILTER_ADDBUTTON", "Add another condition");

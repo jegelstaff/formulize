@@ -3202,16 +3202,40 @@ function interpretTextboxValue($elementIdentifier, $entry_id = 'new', $currentVa
 		$isPHPDefault = ($textboxValueIsConfiguredDefault AND strstr($configuredDefaultValue, "\$default"));
     if ($isPHPDefault) { // php default value
 				// Eval the admin-authored default taken straight from the element object (it is provably the
-				// configured default here). Reverse any legacy storage-slashing of the admin CODE first, THEN
-				// substitute {ref} values with PHP-string-literal escaping (so the escaping is not undone by a
-				// stripslashes on the whole string) so a user-controlled referenced value cannot break out of
-				// the admin's PHP string literals and inject code. See formulize_escapeForPHPStringLiteral().
-				$textboxValue = stripslashes(removeOpeningPHPTag($configuredDefaultValue));
-				$textboxValue = $elementRenderer->formulize_replaceReferencesAndVariables($textboxValue, $entry_id, $form_id, $renderedElementMarkupName, $screen, escapeForPHPEval: true);
-			  $default = '';
-        eval($textboxValue);
-        $textboxValue = $default;
-				$textboxValue = $elementRenderer->formulize_replaceReferencesAndVariables($textboxValue, $entry_id, $form_id, $renderedElementMarkupName, $screen); // in case PHP code generated some { } references
+				// configured default here). Reverse any legacy storage-slashing of the admin CODE first, then
+				// hand it to the canonical evaluator, which binds the {ref} values to variables rather than
+				// substituting them into the code as text, so a user-controlled referenced value is supplied
+				// to the admin's code as data and can never alter the code's structure.
+				//
+				// $extraScope carries the element specific locals this code could previously see, back when
+				// the eval happened inline in this function. The entry context ($form_id, $entry_id, $entry,
+				// $entryData, $id_form, $creation_datetime, $xoopsUser) is supplied by the evaluator itself.
+				$extraScope = array(
+					'elementObject' => $elementObject,
+					'ele_value' => $ele_value,
+					'currentValue' => $currentValue
+				);
+				list($evaluatedDefault, $evalSucceeded) = $elementRenderer->evalAdminPHPWithReferences(
+					stripslashes(removeOpeningPHPTag($configuredDefaultValue)), $entry_id, $form_id, $renderedElementMarkupName, $screen, 'default', $extraScope);
+				if($evalSucceeded) {
+					$textboxValue = $evaluatedDefault;
+				} else {
+					// The failure has already been logged. Show it to the people who can actually fix it -
+					// anyone who can edit this form, which includes webmasters - so that a broken default is
+					// not silently indistinguishable from a legitimately empty one. Everyone else gets a
+					// blank value.
+					// This is deliberately limited to a live render ($catalogAsConditionalElement): the value
+					// returned by this function is also used as the database ready default (see
+					// textElement::getDefaultValue), and error text must never be stored as an entry's data.
+					$textboxValue = '';
+					if($catalogAsConditionalElement) {
+						$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+						$gperm_handler = xoops_gethandler('groupperm');
+						if($gperm_handler->checkRight("edit_form", $form_id, $groups, getFormulizeModId())) {
+							$textboxValue = _formulize_ERROR_IN_DEFAULT_VALUE_CODE;
+						}
+					}
+				}
     } else {
 				// plain (non-PHP) default: substitute {ref} values unescaped, as before, for display
 				$textboxValue = $elementRenderer->formulize_replaceReferencesAndVariables($textboxValue, $entry_id, $form_id, $renderedElementMarkupName, $screen);
@@ -7636,19 +7660,189 @@ function formulize_db_escape($value) {
 }
 
 /**
- * Escape a value so it can be safely spliced into a PHP string literal (single- or double-quoted)
- * that will subsequently be eval()'d. Used when substituting {element_handle} references with raw
- * entry data into admin-authored PHP snippets (static content, help text, etc), so a value entered
- * by a non-admin user cannot break out of the admin's string literal and inject arbitrary PHP.
- * Escapes backslash first (so escaping added by the other replacements isn't itself re-escaped),
- * then the two quote characters and $ (which triggers variable interpolation in double-quoted strings).
- * @param string $value The raw value to make PHP-string-literal-safe
- * @return string The escaped value
+ * Rewrite a single-quoted PHP string literal token that contains {element_handle} references into a
+ * parenthesized concatenation expression, so the references become bound variables.
+ *
+ * Single-quoted strings do not interpolate variables, so a reference inside one cannot simply be
+ * turned into $variable the way it can in a double-quoted string or in bare code. Converting the
+ * literal to a double-quoted string is NOT a safe alternative: single and double quoted strings
+ * treat $ and \ differently, so 'Cost was $total' would silently start interpolating $total, and any
+ * backslash sequences would change meaning. Concatenation preserves the single-quote semantics of
+ * every literal chunk exactly.
+ *
+ *   'Cost was $total, now {price}'  =>  ('Cost was $total, now ' . $__formulizeRef_price)
+ *
+ * Literal chunks are decoded from their single-quoted escaped form and re-encoded, so a backslash
+ * sitting immediately before a reference (eg: 'a\{price}') cannot leave a trailing \ that would
+ * escape the closing quote of the rebuilt chunk.
+ *
+ * @param string $tokenText The raw token text, including its surrounding single quotes and any
+ *   b/B binary prefix (a no-op marker in modern PHP, dropped from the rewritten expression)
+ * @param callable $isKnownHandle Given a handle, returns true if it is a real element reference
+ * @param callable $allocate Given a handle, returns the bound variable name (without the $) to use
+ * @return string The replacement PHP expression
  */
-function formulize_escapeForPHPStringLiteral($value) {
-    $value = str_replace('\\', '\\\\', (string)$value);
-    $value = str_replace(['"', "'", '$'], ['\\"', "\\'", '\\$'], $value);
-    return $value;
+function formulize_rewriteSingleQuotedStringWithRefs($tokenText, $isKnownHandle, $allocate) {
+    if(strtolower(substr($tokenText, 0, 1)) === 'b') {
+        $tokenText = substr($tokenText, 1); // drop the binary prefix so the quotes are at the edges
+    }
+    $inner = substr($tokenText, 1, -1); // strip the enclosing single quotes
+    $parts = preg_split('/(\{[^{}]+\})/', $inner, -1, PREG_SPLIT_DELIM_CAPTURE);
+    $pieces = array();
+    foreach($parts as $part) {
+        if($part === '') {
+            continue;
+        }
+        if(preg_match('/^\{([^{}]+)\}$/', $part, $matches) AND call_user_func($isKnownHandle, $matches[1])) {
+            $pieces[] = '$'.call_user_func($allocate, $matches[1]);
+        } else {
+            // decode the single-quoted escaping (\\ and \' are the only sequences), then re-encode,
+            // so each rebuilt chunk is independently valid regardless of where the split landed
+            $literal = preg_replace('/\\\\([\\\\\'])/', '$1', $part);
+            $pieces[] = "'".str_replace(array('\\', "'"), array('\\\\', "\\'"), $literal)."'";
+        }
+    }
+    if(empty($pieces)) {
+        return "''";
+    }
+    // parenthesized so the concatenation binds correctly wherever the original literal appeared
+    return '('.implode(' . ', $pieces).')';
+}
+
+/**
+ * Transform admin-authored PHP code so that {element_handle} references become references to bound
+ * variables, instead of having the referenced values spliced into the code as text.
+ *
+ * This is the same approach derived value formulas use (see formulize_includeDerivedValueFormulas in
+ * extract.php): the entry data never becomes part of the code that is eval()'d, it is supplied at
+ * runtime as a value. That removes, structurally, the possibility that a value entered by a
+ * non-admin user could break out of an admin's string literal and inject PHP - and it also makes a
+ * reference used in a bare context (eg: $default = {a} + {b};) safe, which escaping alone could not.
+ *
+ * The transform is token-aware, because whether a reference needs to become $variable or a
+ * concatenation depends on the PHP lexical context it sits in, and a plain string search cannot tell
+ * a string delimiter from a quote character that is merely part of another string's contents.
+ *   - bare code            {a}    =>  $__formulizeRef_a                    (direct substitution)
+ *   - double quoted     "x {a}"   =>  "x {$__formulizeRef_a}"              (curly interpolation - the
+ *                                     braces are required so that adjacent word characters, as in
+ *                                     "{a}kg" or "{a}_{b}", cannot merge into the variable name)
+ *   - single quoted     'x {a}'   =>  ('x ' . $__formulizeRef_a)           (concatenated)
+ * The same curly interpolation is used inside heredoc bodies and interpolating parts of strings.
+ * References in contexts where no variable could ever resolve - comments, inline HTML after a
+ * closing PHP tag, nowdoc bodies - are left untouched, and are not resolved or catalogued.
+ *
+ * @param string $code The admin-authored PHP code, with any opening <?php tag already removed
+ * @param callable $isKnownHandle Given a handle, returns true if it is a real element reference.
+ *   References that are not known elements are left untouched, matching the display substitution.
+ * @return array array($transformedCode, $bindings) where $bindings maps element handle => the
+ *   variable name (without the $) that the caller must assign that handle's value to
+ */
+function formulize_bindCurlyReferencesInPHPCode($code, $isKnownHandle) {
+    $bindings = array();
+    if(strpos($code, '{') === false OR strpos($code, '}') === false) {
+        return array($code, $bindings);
+    }
+    // Element handles are globally unique and are already sanitized to [a-z0-9_] when they are created
+    // (see formulizeElement::sanitize_handle_name), so the handle alone names the variable. The
+    // sanitizing here is a guard for any legacy or imported handle that predates that rule and would
+    // otherwise produce an invalid PHP identifier; in that case two handles could in principle sanitize
+    // to the same text, so a suffix is added to keep them distinct. The __formulizeRef_ prefix is what
+    // keeps these from colliding with a variable the admin wrote themselves.
+    $allocate = function($handle) use (&$bindings) {
+        if(!isset($bindings[$handle])) {
+            $variableName = '__formulizeRef_'.preg_replace('/[^a-zA-Z0-9_]/', '_', $handle);
+            if(in_array($variableName, $bindings)) { // only possible for a handle that needed sanitizing
+                $suffix = 2;
+                while(in_array($variableName.'_'.$suffix, $bindings)) {
+                    $suffix++;
+                }
+                $variableName .= '_'.$suffix;
+            }
+            $bindings[$handle] = $variableName;
+        }
+        return $bindings[$handle];
+    };
+    // Replace each known reference in interpolating string content ("..." and heredoc bodies) with
+    // curly interpolation syntax, which is delimiter-safe no matter what characters surround it
+    $interpolate = function($text) use ($isKnownHandle, $allocate) {
+        return preg_replace_callback('/\{([^{}]+)\}/', function($matches) use ($isKnownHandle, $allocate) {
+            if(!call_user_func($isKnownHandle, $matches[1])) {
+                return $matches[0];
+            }
+            return '{$'.call_user_func($allocate, $matches[1]).'}';
+        }, $text);
+    };
+    // Walk the token stream and rewrite each reference according to the lexical context it sits in.
+    // String and comment tokens are each handled (or deliberately left alone) as a unit, so their
+    // contents can never be confused with the code around them. Runs of ordinary code tokens are
+    // collected into segments, and the references in those are substituted directly as $variable at
+    // the end - a reference in bare code spans several tokens ('{', the handle, '}'), so it can only
+    // be recognized once the run is assembled.
+    $tokens = token_get_all('<?php '.$code);
+    $segments = array(); // each segment is array('text' => string, 'isCode' => bool)
+    $appendCode = function($text) use (&$segments) {
+        $last = count($segments) - 1;
+        if($last >= 0 AND $segments[$last]['isCode']) {
+            $segments[$last]['text'] .= $text;
+        } else {
+            $segments[] = array('text' => $text, 'isCode' => true);
+        }
+    };
+    $inNowdoc = false;
+    foreach($tokens as $index => $token) {
+        if($index === 0) {
+            continue; // drop the opening tag we added in order to tokenize
+        }
+        if(!is_array($token)) {
+            $appendCode($token);
+            continue;
+        }
+        list($tokenType, $tokenText) = $token;
+        // the quote character, looking past any b/B binary-string prefix
+        $quoteChar = strtolower(substr($tokenText, 0, 1)) === 'b' ? substr($tokenText, 1, 1) : substr($tokenText, 0, 1);
+        if($tokenType === T_START_HEREDOC) {
+            $inNowdoc = (strpos($tokenText, "'") !== false); // <<<'EOT' opens a nowdoc, which does not interpolate
+            $segments[] = array('text' => $tokenText, 'isCode' => false);
+        } elseif($tokenType === T_END_HEREDOC) {
+            $inNowdoc = false;
+            $segments[] = array('text' => $tokenText, 'isCode' => false);
+        } elseif($tokenType === T_CONSTANT_ENCAPSED_STRING AND strpos($tokenText, '{') !== false) {
+            $segments[] = array(
+                'text' => $quoteChar === "'"
+                    ? formulize_rewriteSingleQuotedStringWithRefs($tokenText, $isKnownHandle, $allocate)
+                    : call_user_func($interpolate, $tokenText),
+                'isCode' => false
+            );
+        } elseif($tokenType === T_ENCAPSED_AND_WHITESPACE) {
+            // literal content inside an interpolating context (a "..." string that already contains
+            // a variable, a heredoc body, a backtick expression) - or inside a nowdoc, where nothing
+            // can interpolate, so its references are left untouched
+            $segments[] = array('text' => $inNowdoc ? $tokenText : call_user_func($interpolate, $tokenText), 'isCode' => false);
+        } elseif($tokenType === T_COMMENT OR $tokenType === T_DOC_COMMENT OR $tokenType === T_INLINE_HTML
+            OR $tokenType === T_CONSTANT_ENCAPSED_STRING) {
+            // comments and inline HTML are not executable, so their references are not rewritten (or
+            // resolved, or catalogued); strings with no braces pass through, kept out of the code
+            // segments so their contents cannot take part in a match against surrounding code
+            $segments[] = array('text' => $tokenText, 'isCode' => false);
+        } else {
+            $appendCode($tokenText);
+        }
+    }
+    // references in bare code become the variable directly: $default = {a} + {b};
+    $reassembled = '';
+    foreach($segments as $segment) {
+        if($segment['isCode']) {
+            $reassembled .= preg_replace_callback('/\{([^{}]+)\}/', function($matches) use ($isKnownHandle, $allocate) {
+                if(!call_user_func($isKnownHandle, $matches[1])) {
+                    return $matches[0];
+                }
+                return '$'.call_user_func($allocate, $matches[1]);
+            }, $segment['text']);
+        } else {
+            $reassembled .= $segment['text'];
+        }
+    }
+    return array($reassembled, $bindings);
 }
 
 /**

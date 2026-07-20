@@ -100,14 +100,19 @@ class formulizeElementRenderer{
 		// ele_desc added June 6 2006 -- jwe
 		$ele_desc = $this->_ele->getVar('ele_desc', "f"); // the f causes no stupid reformatting by the ICMS core to take place
 		$processedHelpText = $ele_desc != "" ? $myts->makeClickable(html_entity_decode($ele_desc,ENT_QUOTES)) : "";
-		// decide whether this help text is admin-authored PHP code BEFORE any {ref} substitution happens
+		// decide whether this help text is admin-authored PHP code BEFORE any {ref} handling happens
 		// (using the raw, not-yet-substituted text), so a referenced field's stored value can never
 		// trigger evalPHPStrings() on its own just by happening to contain literal PHP open/close tags
-		// - and so that any {ref} substituted into genuine admin PHP code is escaped for safe use inside
-		// a PHP string literal, and cannot break out of the admin's code (see formulize_escapeForPHPStringLiteral())
 		$helpTextIsPHPCode = (strstr($processedHelpText, "<?php") !== false AND strstr($processedHelpText, "?>") !== false);
-		$helpText = $processedHelpText != "" ? $this->formulize_replaceReferencesAndVariables($processedHelpText, $entry_id, $id_form, $renderedElementMarkupName, $screen, $helpTextIsPHPCode) : "";
-		$helpText = $helpTextIsPHPCode ? $this->evalPHPStrings($helpText) : $helpText;
+		if($helpTextIsPHPCode) {
+			// Only the embedded PHP region is code - the text around it is ordinary display text.
+			// evalPHPStrings binds the references inside the code region, and the substitution afterwards
+			// handles the references in the surrounding display text as well as any the code itself produced.
+			$helpText = $this->evalPHPStrings($processedHelpText, $entry_id, $id_form, $renderedElementMarkupName, $screen);
+			$helpText = $this->formulize_replaceReferencesAndVariables($helpText, $entry_id, $id_form, $renderedElementMarkupName, $screen);
+		} else {
+			$helpText = $processedHelpText != "" ? $this->formulize_replaceReferencesAndVariables($processedHelpText, $entry_id, $id_form, $renderedElementMarkupName, $screen) : "";
+		}
 
 		// determine the entry owner
 		if($entry_id != "new") {
@@ -224,26 +229,61 @@ class formulizeElementRenderer{
 	 * @param int $id_form Form ID to get values from
 	 * @param string $renderedElementMarkupName Name of the rendered element markup, if any
 	 * @param mixed $screen The screen object, if any
-	 * @param bool $escapeForPHPEval Set true when $text is about to be eval()'d as PHP code, so
-	 *   each substituted reference value is escaped to be safe inside a PHP string literal. Leave
-	 *   false (the default) for plain display substitutions, so display text is not corrupted with
-	 *   escape characters.
 	 * @return string Text with replacements made
 	 */
-	function formulize_replaceReferencesAndVariables($text, $entry_id, $id_form, $renderedElementMarkupName='', $screen=null, $escapeForPHPEval=false) {
-		$text = $this->formulize_replaceCurlyBracketVariables($text, $entry_id, $id_form, $renderedElementMarkupName, $screen, $escapeForPHPEval);
+	function formulize_replaceReferencesAndVariables($text, $entry_id, $id_form, $renderedElementMarkupName='', $screen=null) {
+		$text = $this->formulize_replaceCurlyBracketVariables($text, $entry_id, $id_form, $renderedElementMarkupName, $screen);
 		$text = formulize_handleRandomAndDateText($text);
 		return $text;
 	}
 
+	/**
+	 * Resolve a single {element_handle} reference to the value that should stand in for it.
+	 *
+	 * Shared by the plain display substitution (formulize_replaceCurlyBracketVariables) and the
+	 * PHP binding path (bindReferencesForPHPEval), so a reference resolves to exactly the same value
+	 * whether it is being substituted into display text or bound to a variable for eval'd code.
+	 *
+	 * @param string $term The handle inside the curly brackets
+	 * @param array $entry The entry data to read the value from
+	 * @param int|string $entry_id The entry id in effect
+	 * @param string $renderedElementMarkupName Markup name, when this is a live render (drives cataloguing)
+	 * @param mixed $screen The screen object, if any
+	 * @param object $element_handler The elements handler
+	 * @return array array($found, $value) - $found is false when the term is not a real element
+	 */
+	protected function resolveReferenceValue($term, $entry, $entry_id, $renderedElementMarkupName, $screen, $element_handler) {
+		$elementObject = $element_handler->get($term);
+		if(!$elementObject) {
+			return array(false, null);
+		}
+		if(isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry_id][$term])) {
+			$replacementTerm = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry_id][$term];
+		} else {
+			$replacementTerm = getValue($entry, $term, localEntryId: $entry_id);
+		}
+		// get the uitext value if necessary
+		$replacementTerm = formulize_swapUIText($replacementTerm, $elementObject->getVar('ele_uitext'));
+		$replacementTerm = formulize_numberFormat($replacementTerm, $term);
+		if($renderedElementMarkupName) {
+			catalogConditionalElement($renderedElementMarkupName, array($elementObject->getVar('ele_handle')), $screen);
+		}
+		return array(true, $replacementTerm);
+	}
+
   // replace { } terms with element handle values from the current entry, if any exist
-  // $escapeForPHPEval - set true when $text is about to be eval()'d as PHP, so substituted values
-  // are escaped to be safe inside a PHP string literal and cannot break out of the admin's code
-  // (see formulize_escapeForPHPStringLiteral() in include/functions.php)
-	function formulize_replaceCurlyBracketVariables($text, $entry_id, $id_form, $renderedElementMarkupName='', $screen=null, $escapeForPHPEval=false) {
+  // NB: this is the plain display substitution. Code that is about to be eval()'d must NOT use this
+  // to put values into itself - use bindReferencesForPHPEval() instead, which supplies the values as
+  // runtime variables rather than as text spliced into the code.
+	function formulize_replaceCurlyBracketVariables($text, $entry_id, $id_form, $renderedElementMarkupName='', $screen=null) {
 		if(strstr($text, "}") AND strstr($text, "{")) {
-			$entryData = gatherDataset($id_form, filter: $entry_id, frid: 0);
-			$entry = $entryData[0];
+			// a new entry has no saved data to gather - its references resolve to '' (except async
+			// submitted values, which resolveReferenceValue reads from the global before the entry)
+			$entry = array();
+			if($entry_id AND $entry_id !== 'new') {
+				$entryData = gatherDataset($id_form, filter: $entry_id, frid: 0);
+				$entry = isset($entryData[0]) ? $entryData[0] : array();
+			}
       $element_handler = xoops_getmodulehandler('elements', 'formulize');
 			$bracketPos = 0;
 			$start = true; // flag used to force the loop to execute, even if the 0th position has the {
@@ -251,24 +291,16 @@ class formulizeElementRenderer{
 				$start = false;
         $endBracketPos = strpos($text, "}", $bracketPos+1);
 				$term = substr($text, $bracketPos+1, $endBracketPos-$bracketPos-1);
-				$elementObject = $element_handler->get($term);
-				if($elementObject) {
-					if(isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry_id][$term])) {
-						$replacementTerm = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry_id][$term];
-					} else {
-           	$replacementTerm = getValue($entry, $term, localEntryId: $entry_id);
-					}
-					// get the uitext value if necessary
-					$replacementTerm = formulize_swapUIText($replacementTerm, $elementObject->getVar('ele_uitext'));
-					$replacementTerm = formulize_numberFormat($replacementTerm, $term);
-					if($escapeForPHPEval) {
-						$replacementTerm = is_array($replacementTerm) ? array_map('formulize_escapeForPHPStringLiteral', $replacementTerm) : formulize_escapeForPHPStringLiteral($replacementTerm);
-					}
+				list($found, $replacementTerm) = $this->resolveReferenceValue($term, $entry, $entry_id, $renderedElementMarkupName, $screen, $element_handler);
+				if($found) {
+					// getValue returns an array when the element has more than one value in the entry (see
+					// getValue in extract.php). This is text being assembled for display, so the values are
+					// rendered as a list. The PHP binding path deliberately does not do this - code that
+					// references a multi-value element receives the actual array and can work with it.
+					// Highly unlikely there would be an array, but anyway...
+					$replacementTerm = is_array($replacementTerm) ? implode(", ", $replacementTerm) : (string)$replacementTerm;
 					$text = str_replace("{".$term."}",$replacementTerm,$text);
 					$lookAhead = strlen($replacementTerm); // move ahead the length of what we replaced
-					if($renderedElementMarkupName) {
-						catalogConditionalElement($renderedElementMarkupName,array($elementObject->getVar('ele_handle')), $screen);
-					}
 				} else {
 					$lookAhead = 1;
 				}
@@ -276,6 +308,164 @@ class formulizeElementRenderer{
 			}
 		}
 		return $text;
+	}
+
+	/**
+	 * Prepare admin-authored PHP code for eval() by binding its {element_handle} references to
+	 * variables, instead of splicing the referenced values into the code as text.
+	 *
+	 * The returned code opens with a preamble that assigns each referenced element's value to a
+	 * uniquely named variable, read out of the values array that is returned alongside it. The
+	 * caller must make that array available to the eval'd scope under the name $__formulizeRefValues.
+	 * Because the values travel as data and are never rendered into the code string, a value entered
+	 * by a non-admin user cannot alter the structure of the admin's code - the same property that
+	 * makes derived value formulas safe.
+	 *
+	 * @param string $code The admin-authored PHP code, with any opening PHP tag already removed
+	 * @param int|string $entry_id The entry id in effect
+	 * @param int $form_id The form id the references belong to
+	 * @param string $renderedElementMarkupName Markup name, when this is a live render (drives cataloguing)
+	 * @param mixed $screen The screen object, if any
+	 * @param array $entry Optional. The already gathered entry data, to save gathering it again
+	 * @return array array($codeToEval, $refValues) - pass $refValues into the eval'd scope as
+	 *   $__formulizeRefValues
+	 */
+	function bindReferencesForPHPEval($code, $entry_id, $form_id, $renderedElementMarkupName='', $screen=null, $entry=null) {
+		if(strpos($code, '{') === false OR strpos($code, '}') === false) {
+			return array($code, array());
+		}
+		if($entry === null) {
+			$entry = array();
+			if($entry_id AND $entry_id !== 'new') { // a new entry has no saved data to gather
+				$entryData = gatherDataset($form_id, filter: $entry_id, frid: 0);
+				$entry = isset($entryData[0]) ? $entryData[0] : array();
+			}
+		}
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		// resolve each reference once, the first time the transform asks whether it is a real element,
+		// so the values are ready to hand out and each element is only looked up and catalogued once
+		$resolved = array();
+		$isKnownHandle = function($handle) use (&$resolved, $entry, $entry_id, $renderedElementMarkupName, $screen, $element_handler) {
+			if(!array_key_exists($handle, $resolved)) {
+				list($found, $value) = $this->resolveReferenceValue($handle, $entry, $entry_id, $renderedElementMarkupName, $screen, $element_handler);
+				$resolved[$handle] = $found ? array($value) : false;
+			}
+			return $resolved[$handle] !== false;
+		};
+		list($codeToEval, $bindings) = formulize_bindCurlyReferencesInPHPCode($code, $isKnownHandle);
+		if(empty($bindings)) {
+			return array($codeToEval, array());
+		}
+		// build the preamble and the values array. Variable names are generated from [a-zA-Z0-9_] only
+		// (see formulize_bindCurlyReferencesInPHPCode), so using them as array keys in the generated
+		// code introduces no text that could alter the code's structure.
+		$refValues = array();
+		$preamble = '';
+		foreach($bindings as $handle => $variableName) {
+			$refValues[$variableName] = $resolved[$handle][0];
+			$preamble .= '$'.$variableName.' = $__formulizeRefValues[\''.$variableName.'\'];'."\n";
+		}
+		return array($preamble.$codeToEval, $refValues);
+	}
+
+	/**
+	 * Evaluate an admin-authored PHP snippet that may contain {element_handle} references.
+	 *
+	 * This is the canonical way to run admin-authored PHP - textbox default values, static content
+	 * elements, help text, and anything added later should all go through here rather than assembling
+	 * the sequence themselves. The steps have to happen in a particular order to be both correct and
+	 * safe, and every caller that builds its own sequence is somewhere for them to drift apart:
+	 *   - strip any opening PHP tag
+	 *   - resolve [random:...] and [date:...] tags in the admin's code. These produce dates and choose
+	 *     between admin-authored options, so unlike entry data they are not user input.
+	 *   - bind {element_handle} references to variables instead of splicing their values into the code
+	 *     as text, so entry data can never alter the code's structure (see bindReferencesForPHPEval)
+	 *   - make any extra context variables available to the code
+	 *   - evaluate it, then resolve any { } references the code itself produced
+	 *
+	 * The code is given the same entry context the previous hand-rolled versions of this made available:
+	 * $form_id, $entry_id, $entry, and the legacy aliases $id_form, $entryData and $creation_datetime.
+	 * Anything beyond that is passed in by the caller via $extraScope.
+	 *
+	 * @param string $code The admin-authored PHP code
+	 * @param int|string $entry_id The entry id in effect
+	 * @param int $form_id The form id the references belong to
+	 * @param string $markupName Markup name, when this is a live render (drives cataloguing)
+	 * @param mixed $screen The screen object, if any
+	 * @param string $resultVariable The name of the variable the code is expected to set (eg: 'default'
+	 *   or 'value'). Pass null to use the code's return value as the result instead.
+	 * @param array $extraScope Additional variables to make available to the code, keyed by variable
+	 *   name. Names must not begin with __formulize, which is reserved for this method's internals.
+	 * @param bool $substituteResultReferences Whether to resolve { } references the code itself produced.
+	 *   Pass false when the caller runs the result through a substitution pass of its own anyway, so the
+	 *   result is not processed twice.
+	 * @return array array($result, $succeeded) - $succeeded is false if the code could not be run, or
+	 *   signalled an error by returning false. $result is null when $succeeded is false, so callers
+	 *   can substitute whatever error text is appropriate for where the content appears.
+	 */
+	function evalAdminPHPWithReferences($code, $entry_id, $form_id, $markupName='', $screen=null, $resultVariable=null, $extraScope=array(), $substituteResultReferences=true) {
+		// everything this method needs after the eval is held in __formulize prefixed variables, so that
+		// a caller's extra scope cannot clobber it on its way into the eval'd code
+		$__formulizeEntryId = $entry_id;
+		$__formulizeFormId = $form_id;
+		$__formulizeMarkupName = $markupName;
+		$__formulizeScreen = $screen;
+		$__formulizeResultVariable = $resultVariable;
+		$__formulizeSubstituteResult = $substituteResultReferences;
+		$__formulizeCode = formulize_handleRandomAndDateText(removeOpeningPHPTag($code));
+		// gathered once here and handed to the binding, so the entry is only read from the database once.
+		// A new entry has no saved data, so nothing is gathered and its references resolve to ''
+		$entryData = array();
+		if($entry_id AND $entry_id !== 'new') {
+			$__formulizeGatheredData = gatherDataset($form_id, filter: $entry_id, frid: 0);
+			$entryData = isset($__formulizeGatheredData[0]) ? $__formulizeGatheredData[0] : array();
+		}
+		list($__formulizeCode, $__formulizeRefValues) = $this->bindReferencesForPHPEval($__formulizeCode, $entry_id, $form_id, $markupName, $screen, $entryData);
+		// the entry context the admin's code is entitled to expect
+		$creation_datetime = getValue($entryData, "creation_datetime");
+		$entry = $entryData; // legacy alias
+		$id_form = $form_id; // legacy alias
+		// textbox default code could always see $xoopsUser, because the eval used to happen inline in a
+		// function that had declared it global. Taken as a copy rather than with a global declaration, so
+		// that code reassigning $xoopsUser cannot write back over the real global.
+		$xoopsUser = isset($GLOBALS['xoopsUser']) ? $GLOBALS['xoopsUser'] : null;
+		if($__formulizeResultVariable !== null) {
+			$$__formulizeResultVariable = '';
+		}
+		foreach($extraScope as $__formulizeScopeName => $__formulizeScopeValue) {
+			$$__formulizeScopeName = $__formulizeScopeValue;
+		}
+		try {
+			// $__formulizeRefValues supplies the referenced values to the preamble the binding produced
+			$__formulizeEvalReturn = eval($__formulizeCode);
+		} catch (\Throwable $__formulizeError) {
+			// A parse or runtime error in the admin's code is logged and reported as a failure, rather than
+			// being left to take down the whole page with no record of what went wrong. The keys match the
+			// module's exception handler (formulize_exception_handler in include/common.php) so these sit
+			// alongside other PHP errors in the log, with the element, form and entry added so it is
+			// possible to tell which piece of admin code was responsible.
+			writeToFormulizeLog(array(
+				'formulize_event' => 'PHP-error-recorded',
+				'PHP_error_number' => $__formulizeError->getCode(),
+				'PHP_error_string' => 'Error in admin authored PHP code: '.$__formulizeError->getMessage(),
+				'PHP_error_file' => $__formulizeError->getFile(),
+				'PHP_error_errline' => $__formulizeError->getLine(),
+				'element_id' => $this->_ele ? $this->_ele->getVar('ele_id') : '',
+				'element_handle' => $this->_ele ? $this->_ele->getVar('ele_handle') : '',
+				'form_id' => $__formulizeFormId,
+				'entry_id' => $__formulizeEntryId,
+				'screen_id' => $__formulizeScreen ? $__formulizeScreen->getVar('sid') : '',
+			));
+			return array(null, false);
+		}
+		if($__formulizeEvalReturn === false) { // long standing convention: returning false signals an error
+			return array(null, false);
+		}
+		$__formulizeResult = $__formulizeResultVariable !== null ? $$__formulizeResultVariable : $__formulizeEvalReturn;
+		if($__formulizeSubstituteResult) { // the code may itself have produced { } references
+			$__formulizeResult = $this->formulize_replaceReferencesAndVariables($__formulizeResult, $__formulizeEntryId, $__formulizeFormId, $__formulizeMarkupName, $__formulizeScreen);
+		}
+		return array($__formulizeResult, true);
 	}
 
 	function formulize_disableElement($element, $type) {
@@ -416,15 +606,23 @@ class formulizeElementRenderer{
 
 	/**
 	 * Look for <?php ?> in a string and eval the PHP code within it
-	 * @param $string - the string we're resolving
-	 * @return string - the resolved string
+	 * @param string $string The text containing an embedded PHP region
+	 * @param int|string $entry_id The entry id in effect
+	 * @param int $form_id The form id the references belong to
+	 * @param string $renderedElementMarkupName Markup name, when this is a live render
+	 * @param mixed $screen The screen object, if any
+	 * @return string The text with the PHP region replaced by its result
 	 */
-	function evalPHPStrings($string) {
+	function evalPHPStrings($string, $entry_id, $form_id, $renderedElementMarkupName='', $screen=null) {
 		if(strstr($string, "<?php") !== false AND strstr($string, "?>")) {
+			// $phpCode is kept untouched, it is what locates the region to replace further below
 			$phpCode = substr($string, strpos($string, "<?php")+5, strpos($string, "?>") - strpos($string, "<?php") - 5);
-			$evalResult = eval($phpCode);
-			if($evalResult === false) {
-				$evalResult = "There is an error in your PHP code";
+			// substituteResultReferences is off because the caller substitutes across the whole string,
+			// surrounding text included, once this returns - so the result would otherwise be done twice
+			list($evalResult, $evalSucceeded) = $this->evalAdminPHPWithReferences($phpCode, $entry_id, $form_id,
+				$renderedElementMarkupName, $screen, null, array(), false);
+			if(!$evalSucceeded) {
+				$evalResult = _formulize_ERROR_IN_PHP_CODE;
 			}
 			$string = str_replace("<?php".$phpCode."?>", $evalResult, $string);
 		} else {
