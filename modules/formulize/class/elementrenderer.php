@@ -451,7 +451,6 @@ class formulizeElementRenderer{
 				'PHP_error_file' => $__formulizeError->getFile(),
 				'PHP_error_errline' => $__formulizeError->getLine(),
 				'element_id' => $this->_ele ? $this->_ele->getVar('ele_id') : '',
-				'element_handle' => $this->_ele ? $this->_ele->getVar('ele_handle') : '',
 				'form_id' => $__formulizeFormId,
 				'entry_id' => $__formulizeEntryId,
 				'screen_id' => $__formulizeScreen ? $__formulizeScreen->getVar('sid') : '',

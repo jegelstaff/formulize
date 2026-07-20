@@ -273,9 +273,12 @@ class formulizeElement extends FormulizeObject {
 class formulizeElementsHandler {
 
 	var $db;
-	var $clickable; // used in formatDataForList
-	var $striphtml; // used in formatDataForList
-	var $length; // used in formatDataForList
+	// The four properties below are set by an element type's formatDataForList() and enforced by the
+	// base formatDataForList(). See treatDataAsHtml() for the meaning of $dataIsHtml's three states.
+	var $clickable;         // used in formatDataForList
+	var $striphtml;         // DEPRECATED - superseded by $dataIsHtml, see treatDataAsHtml()
+	var $length;            // used in formatDataForList
+	var $dataIsHtml = null; // null = escape (unless legacy striphtml===false), false = escape, true = purify
 
 	function __construct(&$db) {
 		$this->db =& $db;
@@ -1242,23 +1245,88 @@ class formulizeElementsHandler {
 	}
 
 	// this method is used by custom elements, to do final output from the "local" formatDataForList method, so the custom element developer can simply set booleans there, and they will be enforced here
+	//
+	// ORDER OF OPERATIONS IS SECURITY-CRITICAL - do not reorder:
+	//   1. make the value safe (escape plain text, or purify markup)  <- the ONE canonical safety step
+	//   2. let the element compose its own markup AROUND the now-safe value
+	//   3. truncate (skipped for HTML - cutString is not tag-aware and would cut tags in half)
+	//   4. make URLs clickable (operates on already-safe text)
+	//
+	// Values arriving here are RAW: getValue() html-decodes on the way out of the dataset by design,
+	// and undoAllHTMLChars() strips arbitrarily many levels of encoding. Escaping applied when the
+	// value was SAVED is therefore not a defence and must never be relied on here.
 	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
 		global $myts;
 		$value = trans($value);
 		if(!$this->length AND $this->length !== 0 AND $this->length !== '0') {
 			$this->length = 35;
 		}
-		if($this->striphtml !== false) { // want to do this all the time, no matter what, unless the user specifically turns it off, because it's a security precaution
-			$value = $myts->htmlSpecialChars($value, ENT_QUOTES);
+
+		// 1. THE canonical safety step. Applies to every value, every element type, no opt-out.
+		if($this->treatDataAsHtml()) {
+			// intentional markup (derived values, rich text): allow-list filter rather than escape,
+			// so admin-authored formatting survives while script vectors do not
+			$value = formulize_purifyHtmlValue($value, $handle, $entry_id);
+		} else {
+			$value = $myts->htmlSpecialChars($value);
 		}
-		if($this->length > 0) {
+
+		// 2. the element wraps its (already safe) value in any markup of its own
+		$value = $this->composeMarkupForList($value, $handle, $entry_id);
+
+		// 3. truncation - never for HTML, since cutString() counts characters and would sever tags
+		if(!$this->treatDataAsHtml() AND $this->length > 0) {
 			$value = printSmart($value,$this->length);
 		}
+
+		// 4.
 		if($this->clickable) {
 			$value = formulize_text_to_hyperlink($value);
 		}
 		$value = formulize_handleRandomAndDateText($value);
 		return $value;
+	}
+
+	/**
+	 * Resolve whether this element's data is to be treated as intentional HTML (to be PURIFIED and
+	 * preserved) rather than plain text (to be ESCAPED).
+	 *
+	 * $dataIsHtml is a property of the DATA, not of the element's rendering style. Elements that merely
+	 * wrap their value in markup (a link, etc.) must leave it FALSE and build that markup in
+	 * composeMarkupForList(), which runs AFTER the value has been escaped. Its three states:
+	 *
+	 *   false -> plain text, HTML-ESCAPED (the safe default for a declared element)
+	 *   true  -> intentional markup: PURIFIED (allow-list) instead of escaped, and not truncated
+	 *            (truncation is not HTML-aware and would cut tags in half)
+	 *   null  -> not declared by this element type. Falls back to the legacy $striphtml signal:
+	 *            striphtml===false meant "this emits HTML", so it is PURIFIED (not passed through raw),
+	 *            keeping third-party/custom element types working while still filtering them. A brand
+	 *            new element that declares NEITHER property lands here with striphtml===null, so
+	 *            (null===false) is false and it ESCAPES - i.e. still secure by default.
+	 *
+	 * @return bool
+	 */
+	function treatDataAsHtml() {
+		if($this->dataIsHtml === null) {
+			return ($this->striphtml === false); // legacy signal from element types predating $dataIsHtml
+		}
+		return (bool) $this->dataIsHtml;
+	}
+
+	/**
+	 * Wrap the value in any markup this element type needs (a link, etc).
+	 *
+	 * IMPORTANT: $value has ALREADY been escaped/purified when this is called, so markup built here
+	 * is preserved as-is. Never escape $value again in here, and never build markup anywhere that
+	 * runs before this point - doing so is what allows user data into an href/attribute unescaped.
+	 *
+	 * @param string $value The escaped/purified value
+	 * @param string $handle The element handle
+	 * @param int $entry_id The entry the value belongs to
+	 * @return string The value, optionally wrapped in markup
+	 */
+	function composeMarkupForList($value, $handle="", $entry_id=0) {
+		return $value; // default: no markup of our own
 	}
 
 	    // determine if the element is disabled for the specified user

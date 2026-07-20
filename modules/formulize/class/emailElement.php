@@ -219,13 +219,20 @@ class formulizeEmailElementHandler extends formulizeElementsHandler {
     // for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
     function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
-        $this->clickable = true; // make urls clickable
-        $this->striphtml = false; // remove html tags as a security precaution
-        $this->length = 1000; // truncate to a maximum of 100 characters, and append ... on the end
-        if($value){
-          $value = '<a href="mailto:'.$value.'">'.$value.'</a>';
+        $this->clickable = false; // we build the mailto link ourselves in composeMarkupForList, below
+        $this->dataIsHtml = false; // an email address is plain text - it gets escaped
+        $this->length = 1000; // truncate to a maximum of 1000 characters, and append ... on the end
+        return parent::formatDataForList($value, $handle, $entry_id, $textWidth); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+    }
+
+    // wrap the address in a mailto link. $value is ALREADY escaped by the parent when we get here,
+    // which is the point - previously this markup was built BEFORE escaping, which put the raw
+    // submitted value inside an href and made "><script> a working injection.
+    function composeMarkupForList($value, $handle="", $entry_id=0) {
+        if($value === '' OR $value === null) {
+            return $value;
         }
-        return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+        return '<a href="mailto:'.$value.'">'.$value.'</a>';
     }
 
 }

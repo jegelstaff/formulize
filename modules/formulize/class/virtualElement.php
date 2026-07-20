@@ -78,7 +78,7 @@ class formulizeVirtualElementHandler extends formulizeElementsHandler {
 		if (is_array($value)) {
 			//$value = implode('<br>', $value);
 		}
-		$this->striphtml = false;
+		$this->dataIsHtml = false; // plain text value - gets HTML-escaped
 		$this->length    = 0;
 		$this->clickable = false;
 		return parent::formatDataForList($value, $handle, $entry_id, $textWidth);

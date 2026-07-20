@@ -275,17 +275,25 @@ class formulizeTextareaElementHandler extends formulizeTextElementHandler {
 	// Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
 	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
 		$this->clickable = true;
-		$this->striphtml = false;
 		$this->length = $textWidth;
 		$elementObject = $this->get($handle);
 		$ele_value = $elementObject->getVar('ele_value');
-		// for rich text with that we're going to cut down, simply remove the tags and return the shortened version
-		if($textWidth AND isset($ele_value[ELE_VALUE_TEXTAREA_RICHTEXT]) AND $ele_value[ELE_VALUE_TEXTAREA_RICHTEXT]) {
-			return printSmart(strip_tags(trans($value)), $textWidth); // handle this separately from non-rich text areas
-		// otherwise, go direct to plain element handler method
+		$isRichText = $this->usesRichTextEditor($ele_value);
+		if($isRichText AND $textWidth) {
+			// Truncated list column of rich text: reduce the markup to a plain-text snippet so the cell
+			// stays compact, then treat that snippet as PLAIN TEXT below. strip_tags here is only a
+			// display reduction, NOT the safety step (it is not a reliable filter) - the value still
+			// flows through the parent, whose escaping is what actually makes it safe.
+			$value = strip_tags(trans($value));
+			$this->dataIsHtml = false;
 		} else {
-			return formulizeElementsHandler::formatDataForList($value);
+			// Rich text at full width is intentional markup (purified); a plain textarea is text the user
+			// typed (escaped). Previously BOTH left striphtml false, so a plain textarea rendered
+			// submitted markup as live HTML whenever textWidth was 0 (the column was not truncated).
+			$this->dataIsHtml = $isRichText ? true : false;
 		}
+		// One consistent path: the parent escapes-or-purifies, truncates (plain text only), and linkifies.
+		return formulizeElementsHandler::formatDataForList($value, $handle, $entry_id, $textWidth);
 	}
 
 	function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {

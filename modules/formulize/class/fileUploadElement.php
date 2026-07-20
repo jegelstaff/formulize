@@ -387,12 +387,22 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
     function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
         // $value will be the url as determined in prepareDataForDataset above...or an error message, etc, if there's no valid file
-        $this->clickable = false; // make urls clickable
-        $this->striphtml = false; // remove html tags as a security precaution
+        $this->clickable = false; // we build the download link ourselves in composeMarkupForList, below
+        $this->dataIsHtml = false; // the value is a URL (or an error message) - plain text, so it gets escaped
         $this->length = 2000; // truncate to a maximum of 2000 characters, and append ... on the end
-        $displayName = $value ? $GLOBALS['formulize_fileUploadElementDisplayName'][$entry_id][$handle] : ''; // set aside in GLOBALS by the prepareDataForDataset method above
-        $value = strstr($value, 'http') ? $this->createDownloadLink($this->get($handle), $value, $displayName) : $value; // we make the clickable links manually here, since we don't just want the URL part to become a link, we want to wrap the display name in a link to the URL
-        return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+        return parent::formatDataForList($value, $handle, $entry_id, $textWidth); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+    }
+
+    // wrap the URL in a download link. $value (the URL) has ALREADY been escaped by the parent when we
+    // get here, so it is safe to place in the href; the display name is escaped separately below.
+    // We make the links manually rather than using the clickable flag, since we don't just want the URL
+    // part to become a link, we want to wrap the display name in a link to the URL.
+    function composeMarkupForList($value, $handle="", $entry_id=0) {
+        if(!strstr($value, 'http')) {
+            return $value; // not a valid file - an error message or similar, already escaped
+        }
+        $displayName = isset($GLOBALS['formulize_fileUploadElementDisplayName'][$entry_id][$handle]) ? $GLOBALS['formulize_fileUploadElementDisplayName'][$entry_id][$handle] : ''; // set aside in GLOBALS by the prepareDataForDataset method above
+        return $this->createDownloadLink($this->get($handle), $value, $displayName);
     }
 
 		/**

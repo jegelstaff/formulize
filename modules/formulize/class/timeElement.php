@@ -253,7 +253,7 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
     // For time elements, the value has already been converted to the correct format in prepareDataForDataset
     function formatDataForList($value, $handle="", $entry_id="", $textWidth=100) {
         $this->clickable = false;
-        $this->striphtml = false;
+        $this->dataIsHtml = false; // plain text value - gets HTML-escaped
         $this->length = 0;
         return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
     }

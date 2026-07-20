@@ -158,6 +158,7 @@ function writeToFormulizeLog($data) {
 		'form_id' => (isset($data['form_id']) ? $data['form_id'] : ''),
 		'screen_id' => (isset($data['screen_id']) ? $data['screen_id'] : ''),
 		'entry_id' => (isset($data['entry_id']) ? $data['entry_id'] : ''),
+		'element_id' => (isset($data['element_id']) ? $data['element_id'] : ''),
 		'form_screen_page_number' => (isset($data['form_screen_page_number']) ? $data['form_screen_page_number'] : ''),
 		'searches' => (isset($data['searches']) ? $data['searches'] : ''),
 		'sort' => (isset($data['sort']) ? $data['sort'] : ''),

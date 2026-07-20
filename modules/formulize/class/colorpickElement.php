@@ -186,10 +186,18 @@ class formulizeColorpickElementHandler extends formulizeElementsHandler {
 	// Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
 	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
 		$this->clickable = false;
-		$this->striphtml = false;
-		$this->length = 1000;
-		$textColorStyle = needsWhiteText($value) ? "color: white;" : "color: black;";
-		return "<div style='$textColorStyle max-width: 7em; padding: 0.5em; border: 1px solid black; text-align: center; background-color: ".preg_replace("/[^#a-fA-F0-9]/", "", $value).";'>$value</div>";
+		$this->dataIsHtml = false; // the colour value is plain text - escaped by the canonical path
+		$this->length = 0;         // the swatch is fixed-size markup; do not truncate it
+		return parent::formatDataForList($value, $handle, $entry_id, $textWidth);
+	}
+
+	// Render the colour value as a swatch. $value is ALREADY escaped by the parent when we get here, so
+	// it is safe as the swatch's text content. The colour is additionally hard-filtered to hex for the
+	// CSS, because escaping does not make a value safe inside a style attribute (CSS injection).
+	function composeMarkupForList($value, $handle="", $entry_id=0) {
+		$color = preg_replace("/[^#a-fA-F0-9]/", "", htmlspecialchars_decode($value, ENT_QUOTES));
+		$textColorStyle = needsWhiteText($color) ? "color: white;" : "color: black;";
+		return "<div style='$textColorStyle max-width: 7em; padding: 0.5em; border: 1px solid black; text-align: center; background-color: ".$color.";'>$value</div>";
 	}
 
 }

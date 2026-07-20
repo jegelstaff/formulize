@@ -362,9 +362,14 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 	// Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
 	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
 		$this->clickable = true;
-		$this->striphtml = false;
-		$this->length = $textWidth;
-		return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+		// Derived values are produced by admin-authored PHP which commonly formats information for
+		// display, so the markup is intentional and must survive. It is NOT simply trusted, though:
+		// the admin writes the markup but user-submitted data gets interpolated into it (eg.
+		// "<h1>Chef:</h1><ul><li>$name</li></ul>"), so the composed value is allow-list filtered
+		// rather than escaped. See formulize_purifyHtmlValue().
+		$this->dataIsHtml = true;
+		$this->length = $textWidth; // NB: not applied while dataIsHtml - truncation is not tag-aware
+		return parent::formatDataForList($value, $handle, $entry_id, $textWidth); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
 	}
 
 }

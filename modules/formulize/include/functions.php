@@ -3097,10 +3097,23 @@ function formatLinks($matchtext, $handle, $textWidth, $entryBeingFormatted) {
 		$textWidth = 35;
 	}
 
-	// if the value has HTML formatting, leave it alone
-	if($matchtext AND is_string($matchtext) AND strlen($matchtext) > strlen(strip_tags($matchtext))) {
-		return $matchtext;
-	}
+	// SECURITY: there used to be a short circuit here that returned $matchtext completely unprocessed
+	// whenever it contained anything that looked like a tag:
+	//
+	//     if($matchtext AND is_string($matchtext) AND strlen($matchtext) > strlen(strip_tags($matchtext))) {
+	//         return $matchtext;    // "if the value has HTML formatting, leave it alone"
+	//     }
+	//
+	// The intent was to preserve intentional markup (derived values, rich text) from being escaped and
+	// from being truncated mid-tag. The effect was that ANY value containing a tag skipped the whole
+	// pipeline below - formatDataForList was never called and nothing was ever escaped. Because the test
+	// is "does this contain a tag", it fired precisely on injected markup and passed everything harmless
+	// through, so a stored <script> in any list column was emitted raw.
+	//
+	// Both of the original intents are now handled properly, per element type, by the $dataIsHtml
+	// property in formulizeElementsHandler::formatDataForList() - which allow-list filters intentional
+	// markup instead of escaping it, and skips truncation for it. So this short circuit is redundant.
+	// DO NOT REINSTATE IT.
 
 	formulize_benchmark("start of formatlinks");
 	global $myts;
@@ -6501,6 +6514,120 @@ function undoAllHTMLChars($text,$quotes=ENT_QUOTES) {
         $text = html_entity_decode($text,$quotes);
     }
     return html_entity_decode($text,$quotes);
+}
+
+
+/**
+ * FORMULIZE_PURIFY_HTML_VALUES - true = ENFORCE purification, false = REPORT-ONLY (log, but display as-is).
+ *
+ * Why this exists: element types that declare their data is HTML (derived values, rich text) have their
+ * markup preserved rather than escaped. That markup is admin-authored, but the DATA interpolated into it
+ * is user-submitted - eg. $value = "<h1>Chef:</h1><ul><li>$name</li></ul>" where $name came from a text
+ * box - so "admin-authored therefore trusted" is false, and a payload in $name would be live.
+ *
+ * Purifying that output fixes it, but purification also REMOVES markup some sites legitimately rely on:
+ * <button>/onclick, <form>/<input>, <iframe>, <svg> are all stripped. Whether any given site depends on
+ * that is not knowable in advance and most sites have no test suite to discover it. So report-only mode
+ * runs the filter, logs which elements it WOULD change (identifiers only - see formulize_purifyHtmlValue),
+ * but outputs the original, letting a site be assessed before enforcement is turned on.
+ *
+ * Driven by the 'formulizeEnforceHtmlPurification' Advanced setting (Settings -> Advanced -> Debugging).
+ * Fresh installs default to enforce; existing installs are set to report-only by admin/patches/007 so an
+ * upgrade does not change how their data displays until an admin opts in. If the setting cannot be read
+ * for any reason we fail SECURE (enforce), consistent with the fail-closed behaviour in the purifier.
+ */
+if(!defined('FORMULIZE_PURIFY_HTML_VALUES')) {
+    $formulize_enforceHtmlPurification = true; // fail secure if the setting cannot be resolved
+    if(function_exists('getFormulizeModId') AND $formulize_purifyModId = getFormulizeModId()) {
+        $formulize_purifyConfig = xoops_gethandler('config')->getConfigsByCat(0, $formulize_purifyModId);
+        if(isset($formulize_purifyConfig['formulizeEnforceHtmlPurification'])) {
+            $formulize_enforceHtmlPurification = (bool) $formulize_purifyConfig['formulizeEnforceHtmlPurification'];
+        }
+    }
+    define('FORMULIZE_PURIFY_HTML_VALUES', $formulize_enforceHtmlPurification);
+}
+
+/**
+ * Make a value that is intentionally HTML safe for output, by allow-list filtering (HTML Purifier)
+ * rather than escaping - so admin-authored formatting survives while script vectors do not.
+ *
+ * Fails CLOSED: if purification is unavailable or turned off site-wide, the value is HTML-ESCAPED
+ * instead. Unpurified HTML is never returned. (This deliberately does not trust the enable_purifier
+ * preference to keep us safe - that setting exists for content filtering, not for this.)
+ *
+ * @param string $value The raw value, as it will appear in the page
+ * @param string $handle Optional. Element handle, used to tag the log events (never the value content)
+ * @param int $entry_id Optional. Entry id, used to tag the log events
+ * @return string The value, purified (or escaped, if purification was not possible)
+ */
+function formulize_purifyHtmlValue($value, $handle = '', $entry_id = 0) {
+
+    global $myts;
+    if(!is_string($value) OR $value === '') {
+        return $value;
+    }
+
+    $purifierAvailable = false;
+    $purified = null;
+    if(class_exists('icms_core_HTMLFilter')) {
+        $icmsConfigPurifier = icms::$config->getConfigsByCat(ICMS_CONF_PURIFIER);
+        // NB: loose comparison on purpose. The comparison in icms_core_HTMLFilter::filterHTML is a
+        // strict !== 0 against a value that arrives from the DB as a string, so it passes even when the
+        // setting is off. We do not want to inherit that accident in either direction, so we read the
+        // preference honestly here and fall back to escaping when it says purification is off.
+        if(!isset($icmsConfigPurifier['enable_purifier']) OR $icmsConfigPurifier['enable_purifier'] != 0) {
+            $purified = icms_core_HTMLFilter::filterHTML($value);
+            $purifierAvailable = is_string($purified);
+        }
+    }
+
+    if(!$purifierAvailable) {
+        // fail closed - escape rather than emit markup we could not filter
+        formulize_logPurifyEvent('html-purification-unavailable', $handle, $entry_id,
+            "Could not purify this HTML element value; it was escaped instead. Check that HTML Purifier is installed and that the purifier preferences are set.");
+        return $myts->htmlSpecialChars($value);
+    }
+
+    if($purified !== $value AND !FORMULIZE_PURIFY_HTML_VALUES) {
+        // Report-only: record WHERE purification would change something, so real installs can be assessed
+        // before enforcement is turned on. Deliberately logs NO value content - the value is potentially
+        // malicious markup, and the log viewer renders every field unescaped (Smarty autoescape is off
+        // site-wide), so logging it would turn viewing the log into a stored-XSS sink. The identifiers
+        // locate the element+entry precisely; inspect it in the app if the actual content is needed.
+        formulize_logPurifyEvent('html-purification-report', $handle, $entry_id,
+            "Purification WOULD alter this element's value, but it is being output unfiltered because FORMULIZE_PURIFY_HTML_VALUES is off.");
+    }
+
+    return FORMULIZE_PURIFY_HTML_VALUES ? $purified : $value;
+}
+
+/**
+ * Record an HTML-purification event to both the Formulize log and the PHP error log, tagged with as much
+ * structured element metadata as we can cheaply gather (form / element / entry identifiers).
+ *
+ * Deliberately logs NO value content: the value in question is potentially malicious markup, and both
+ * sinks are unsafe for it - the log viewer renders fields unescaped (Smarty autoescape off site-wide), and
+ * raw newlines would forge PHP-error-log lines. The identifiers are enough to locate the element+entry.
+ *
+ * @param string $event The formulize_event label
+ * @param string $handle The element handle - used to resolve form_id/element_id, and named in the error_log line
+ * @param int $entry_id The entry id the value belongs to
+ * @param string $info A human-readable description containing NO value content
+ */
+function formulize_logPurifyEvent($event, $handle, $entry_id, $info) {
+    $fields = array(
+        'formulize_event' => $event,
+        'entry_id' => $entry_id,
+        'additional_info' => $info,
+    );
+    // the element object is served from _getElementObject's cache here, so this is cheap. element_id is
+    // the structured identifier; the handle is only carried in the human-readable error_log line below.
+    if($handle !== '' AND $element = _getElementObject($handle)) {
+        $fields['form_id'] = $element->getVar('id_form');
+        $fields['element_id'] = $element->getVar('ele_id');
+    }
+    writeToFormulizeLog($fields);
+    error_log("Formulize: $event - element '$handle'".(isset($fields['form_id']) ? " (form ".$fields['form_id'].", entry $entry_id)" : " (entry $entry_id)").". $info");
 }
 
 

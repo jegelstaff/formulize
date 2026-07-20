@@ -640,7 +640,11 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 	// for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
 	// Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
 	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
-		return $value;
+		// Subforms never actually appear as list columns, so this is only a stub. It still routes through
+		// the canonical path (escaping the value) rather than returning it raw, so there is no bypass here
+		// should it ever be reached.
+		$this->dataIsHtml = false;
+		return parent::formatDataForList($value, $handle, $entry_id, $textWidth);
 	}
 
 }

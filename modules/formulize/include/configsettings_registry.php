@@ -393,6 +393,7 @@ return array(
                         array('name' => 'debugDerivedValues', 'scope' => 'formulize'),
                         array('name' => 'logProcedure', 'scope' => 'formulize'),
                         array('name' => 'validateCode', 'scope' => 'formulize'),
+                        array('name' => 'formulizeEnforceHtmlPurification', 'scope' => 'formulize'),
                     ),
                     _AM_CFG_SEC_BASEMENT => array(
                         array('name' => 'useToken', 'scope' => 'formulize'),
