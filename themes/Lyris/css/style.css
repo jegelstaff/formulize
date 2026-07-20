@@ -2242,6 +2242,26 @@ textarea.fz-control {
   padding-right: 30px;
 }
 
+/* ---------- Rich-text (CKEditor) field — contain in drawer (issue #44) ----------
+   The WYSIWYG element renders a CKEditor 5 instance whose toolbar buttons each
+   carry a decorative `.ck-tooltip` span. That span is `position:absolute`,
+   `visibility:hidden` and centered on its button, so the tooltip of the
+   RIGHTMOST toolbar button spills ~8px (desktop) / ~29px (mobile) past the
+   editor's box. Even while hidden it keeps its absolute layout footprint, which
+   propagated to `.fz-drawer__body`'s `scrollWidth` and produced a horizontal
+   scrollbar on the whole right drawer (the sole element exceeding the drawer
+   content box at both breakpoints).
+
+   Fix: clamp the editor to its content box and clip only the horizontal axis.
+   `overflow-x: clip` contains the tooltip's stray right edge without creating a
+   scroll container and leaves the vertical axis visible, so toolbar buttons and
+   the below-button tooltips still render on hover — nothing usable is clipped. */
+.fz-drawer__body .ck.ck-editor {
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: clip;
+}
+
 /* ---------- Form-screen submit / action row ---------- */
 
 .fz-form-screen .form-actions,
