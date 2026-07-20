@@ -872,6 +872,33 @@ textarea {
   background: var(--c-surface-3);
 }
 
+/* Issue #45: keep the more-actions dropdown items flat/borderless.
+   The core buttons in this panel render as
+   `input[type="button"].formulize_button` (see formulize_screenLOEButton).
+   The base `.formulize_button` rule added for the inline-edit save button
+   (issue #34, PR #38) selects them as `input[type="button"].formulize_button`
+   — specificity (0,2,1), the same as the `.fz-list__action-panel
+   input[type="button"]` reset above. Because the base rule is later in the
+   file it wins the tie and leaks its 1px border (plus surface/height/radius)
+   onto every menu item. Re-assert the flat menu-item look here at strictly
+   higher specificity (0,3,1) so it wins regardless of source order. Additive
+   and Lyris-scoped; the inline-edit save/go buttons live in
+   `.fz-list__footer`, not this panel, so they are untouched. */
+.fz-list__action-panel input[type="button"].formulize_button,
+.fz-list__action-panel input[type="submit"].formulize_button {
+  height: 30px;
+  padding: 0 var(--s-2);
+  border: 0;
+  border-radius: var(--r-1);
+  background: transparent;
+  font-weight: inherit;
+}
+.fz-list__action-panel input[type="button"].formulize_button:hover,
+.fz-list__action-panel input[type="submit"].formulize_button:hover {
+  background: var(--c-surface-3);
+  border-color: transparent;
+}
+
 /* Popover components (shared across dropdown contexts) */
 .fz-pop {
   background: var(--c-surface);
