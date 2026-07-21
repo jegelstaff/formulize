@@ -13,6 +13,7 @@ if (!defined('XOOPS_ROOT_PATH')) {
 
 // --- Subject tab names ---
 define('_AM_CFG_TAB_USERS', 'Users');
+define('_AM_CFG_TAB_APPEARANCE', 'Appearance');
 define('_AM_CFG_TAB_SETTINGS', 'Settings');
 
 // --- View names: Users tab ---
@@ -20,6 +21,9 @@ define('_AM_CFG_VIEW_USERS_SETTINGS', 'Settings');
 define('_AM_CFG_VIEW_USERS_EMAIL', 'Email Users');
 define('_AM_CFG_VIEW_USERS_APIKEYS', 'API Keys');
 define('_AM_CFG_VIEW_USERS_TOKENS', 'Account Tokens');
+
+// --- View names: Appearance tab ---
+define('_AM_CFG_VIEW_APPEARANCE_THEMEEDITOR', 'Theme Editor');
 
 // --- View names: Settings tab ---
 define('_AM_CFG_VIEW_SETTINGS_ELEMENTS', 'Elements');

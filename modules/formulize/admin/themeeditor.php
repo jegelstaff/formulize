@@ -66,12 +66,10 @@ global $xoopsUser;
 if(!$xoopsUser OR !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
     return;
 }
-// Set the page chrome up front, so the several early returns below (logging off,
-// no log dir, no files) still render with the admin tabs and breadcrumb.
-$adminPage['home_tabs'] = getHomeTabs('themeeditor');
-$breadcrumbtrail[1]['url'] = "page=themeeditor";
-$breadcrumbtrail[1]['text'] = "Home";
-$breadcrumbtrail[2]['text'] = "Theme Editor";
+// This page is a sub-view of the Appearance subject tab (see include/configsettings_registry.php),
+// so the shared subject handler (admin/configsubject.php) owns the tabs and the
+// Home > Appearance > Theme Editor breadcrumb. We only contribute the file-specific
+// final crumb via $adminPage['extra_breadcrumbs'], set once the selected file is known.
 
 // Themes installed in this Formulize installation
 $adminPage['themes'] = icms_view_theme_Factory::getThemesList();
@@ -120,6 +118,12 @@ if(substr($adminPage['selected_file'], -3) == '.js') {
 	$adminPage['editorClass']	= 'code-textarea';
 }
 
+// The file being edited becomes the final breadcrumb crumb (no url = current page),
+// which is why the editor no longer shows the filename as a title above the code box.
+if ($adminPage['selected_file'] !== '') {
+    $adminPage['extra_breadcrumbs'] = array(array('text' => $adminPage['selected_file']));
+}
+
 // Contents of the selected file, for display in the editor
 if ($adminPage['selected_file_is_image']) {
     $adminPage['selected_file_content'] = '';
@@ -152,8 +156,16 @@ function formulize_themeeditor_getThemeFiles($themeDir) {
             if(!in_array($extension, $editableExtensions, true)) {
                 continue;
             }
-            $relativePath = substr($fileInfo->getPathname(), strlen($themeDir) + 1);
-            $files[] = str_replace('\\', '/', $relativePath);
+            $relativePath = str_replace('\\', '/', substr($fileInfo->getPathname(), strlen($themeDir) + 1));
+            // Exclusions: index.html (in any folder) and theme_admin.html are boilerplate
+            // that shouldn't be edited here, and the entire admin/ folder holds the admin
+            // theme's own markup, which is out of scope for the Theme Editor.
+            $baseName = basename($relativePath);
+            $firstSegment = (strpos($relativePath, '/') !== false) ? substr($relativePath, 0, strpos($relativePath, '/')) : '';
+            if($baseName === 'index.html' OR $baseName === 'theme_admin.html' OR $firstSegment === 'admin') {
+                continue;
+            }
+            $files[] = $relativePath;
         }
     }
     sort($files, SORT_STRING);
@@ -226,7 +238,7 @@ function formulize_themeeditor_renderFileTree($tree, $theme, $selectedFile) {
             $html .= '</li>';
         } else {
             $isActive = ($node['path'] === $selectedFile);
-            $href = 'ui.php?page=themeeditor&theme=' . urlencode($theme) . '&file=' . urlencode($node['path']);
+            $href = 'ui.php?page=appearance&view=themeeditor&theme=' . urlencode($theme) . '&file=' . urlencode($node['path']);
             $html .= '<li class="themeeditor-tree-file' . ($isActive ? ' active' : '') . '">';
             $html .= '<a href="' . htmlspecialchars($href) . '">' . htmlspecialchars($node['name']) . '</a>';
             $html .= '</li>';
@@ -235,6 +247,4 @@ function formulize_themeeditor_renderFileTree($tree, $theme, $selectedFile) {
     $html .= '</ul>';
     return $html;
 }
-
-
 
