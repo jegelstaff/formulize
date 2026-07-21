@@ -71,3 +71,20 @@ $breadcrumbtrail[1]['text'] = "Home";
 $breadcrumbtrail[2]['url'] = "page=" . $subjectSlug;
 $breadcrumbtrail[2]['text'] = $subject['name'];
 $breadcrumbtrail[3]['text'] = $view['name'];
+
+// A 'page' sub-view can add its own trailing crumbs (e.g. the Theme Editor appends
+// the file currently being edited) by populating $adminPage['extra_breadcrumbs'] with
+// an array of array('text'=>..., 'url'=>optional) entries.
+if(!empty($adminPage['extra_breadcrumbs']) AND is_array($adminPage['extra_breadcrumbs'])) {
+    $crumbIndex = 3;
+    foreach($adminPage['extra_breadcrumbs'] as $extraCrumb) {
+        if(!isset($extraCrumb['text']) OR $extraCrumb['text'] === '') {
+            continue;
+        }
+        $crumbIndex++;
+        $breadcrumbtrail[$crumbIndex]['text'] = $extraCrumb['text'];
+        if(isset($extraCrumb['url']) AND $extraCrumb['url'] !== '') {
+            $breadcrumbtrail[$crumbIndex]['url'] = $extraCrumb['url'];
+        }
+    }
+}

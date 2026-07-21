@@ -1,0 +1,412 @@
+ <div class="panel-content content themeeditor">
+
+    <{if $adminPage.writability_problem}>
+        <{* Shown when the web server can't write the theme's files. Saving will fail until
+            this is fixed on the server, so the paths are listed as selectable text for the
+            admin to act on rather than being buried in a js alert(). *}>
+        <div class="themeeditor-warning" id="themeeditor-writability-warning">
+            <strong>&#9888; Saving is not going to work yet.</strong>
+            <p>
+                The web server does not have permission to write
+                <{if $adminPage.writability_selected_file_unwritable}>the file you are editing<{else}>some of this theme's files<{/if}>,
+                and it was not able to correct the permissions itself. Any changes you save will be rejected until the
+                paths below are made writable by the web server user on your server.
+            </p>
+            <ul class="themeeditor-warning-paths">
+                <{foreach from=$adminPage.writability_paths item=warningPath}>
+                    <li><{$warningPath|escape}></li>
+                <{/foreach}>
+            </ul>
+            <{if $adminPage.writability_extra_count > 0}>
+                <p class="themeeditor-warning-more">…and <{$adminPage.writability_extra_count}> more. Making the theme's folders writable will usually resolve all of them at once.</p>
+            <{/if}>
+        </div>
+    <{/if}>
+
+    <form id="themeeditor-form">
+        <input type="hidden" name="themeeditor_save" value="1">
+        <input type="hidden" name="file" value="<{$adminPage.selected_file}>">
+        <{* CSRF token for the ajax save. The save replies with a fresh token which the
+            script below writes back into this field, so repeated saves stay valid. *}>
+        <span id="themeeditor-token"><{$adminPage.csrf_token_html}></span>
+
+        <div class="themeeditor-layout">
+
+            <div class="form-item themeeditor-editor">
+                <fieldset>
+                    <{if $adminPage.selected_file_is_image}>
+                        <div class="themeeditor-image-preview">
+                            <img src="<{$adminPage.selected_file_url}>" alt="<{$adminPage.selected_file}>">
+                        </div>
+                        <div class="description">
+                            <p>Image files can't be edited here. This is a preview of the selected file.</p>
+                        </div>
+                    <{else}>
+                        <textarea id="themeeditor-file_content" name="file_content" class="<{$adminPage.editorClass}>" rows="30" title="Contents of <{$adminPage.selected_file}>"/>
+<{$adminPage.selected_file_content}></textarea>
+                    <{/if}>
+						 </fieldset>
+            </div>
+
+            <div class="themeeditor-files">
+                <fieldset>
+                    <div class="themeeditor-tree-wrapper">
+                        <{* The theme picker is the root of the tree: it's really a folder
+                            switcher, so the file tree below is shown nested beneath it. *}>
+                        <div class="themeeditor-tree-root">
+                            <label class="themeeditor-tree-root-label" for="themeeditor-theme_select">Theme:</label>
+                            <select id="themeeditor-theme_select" name="theme" size="1">
+                                <{foreach from=$adminPage.themes key=themeDir item=themeName}>
+                                    <option value="<{$themeDir}>" <{if $themeDir == $adminPage.selected_theme}>selected="selected"<{/if}>><{$themeName}><{if $themeDir == $adminPage.default_theme}> (active)<{/if}></option>
+                                <{/foreach}>
+                            </select>
+                        </div>
+                        <{if $adminPage.theme_files}>
+                            <{$adminPage.theme_files_tree}>
+                        <{else}>
+                            <p class="themeeditor-tree-empty">No files found in this theme's folder.</p>
+                        <{/if}>
+                    </div>
+                </fieldset>
+            </div>
+
+        </div>
+
+        <div class="themeeditor-actions">
+            <{if !$adminPage.selected_file_is_image}>
+            <button type="button" class="themeeditor-save-btn">Save</button>
+            <span class="themeeditor-save-status"></span>
+            <{/if}>
+        </div>
+
+    </form>
+
+    </div>
+
+<style>
+    .themeeditor-warning {
+        background: #ffe6e6;
+        border: 1px solid #cc0000;
+        padding: 10px;
+        margin-bottom: 20px;
+        border-radius: 4px;
+    }
+    .themeeditor-warning p {
+        margin: 0.5em 0;
+    }
+    .themeeditor-warning-paths {
+        margin: 0.5em 0;
+        padding-left: 1.5em;
+        max-height: 10em;
+        overflow-y: auto;
+        font-family: monospace;
+        font-size: 0.9em;
+        /* the paths are meant to be copied out and used on the server, so don't let long
+           ones get truncated or force the panel to scroll sideways */
+        word-break: break-all;
+    }
+    .themeeditor-warning-more {
+        font-style: italic;
+    }
+    .themeeditor-layout {
+        display: flex;
+        align-items: stretch;
+        height: 480px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        overflow: hidden;
+        background: white;
+				margin-top: 1em;
+    }
+    .themeeditor-editor {
+        flex: 1 1 auto;
+        min-width: 0;
+        display: flex;
+        border-right: 1px solid #ccc;
+    }
+    .themeeditor-editor fieldset {
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        margin: 0;
+        border: none;
+        border-radius: 0;
+    }
+    .themeeditor-editor textarea {
+        flex: 1 1 auto;
+        min-height: 0;
+        width: 100%;
+        box-sizing: border-box;
+        resize: none;
+        border: none;
+    }
+    .themeeditor-editor .CodeMirror {
+        flex: 1 1 auto;
+        min-height: 0;
+        height: auto;
+    }
+    .themeeditor-editor .CodeMirror-scroll {
+        height: 100%;
+    }
+    .themeeditor-editor .description {
+        flex: 0 0 auto;
+        margin: 0;
+    }
+    .themeeditor-files {
+        flex: 0 0 240px;
+        display: flex;
+        background: #fafafa;
+    }
+    .themeeditor-files fieldset {
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        margin: 0;
+        border: none;
+        border-radius: 0;
+        padding: 0 0.75em 0.75em;
+        box-sizing: border-box;
+    }
+    .themeeditor-tree-wrapper {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: auto;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+    .themeeditor-tree-root {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        padding: 0.4em 0.75em;
+        background: #f4f4f4;
+        border-bottom: 1px solid #ddd;
+    }
+    .themeeditor-tree-root-label {
+        display: block;
+        font-weight: bold;
+        font-size: 0.85em;
+        color: #666;
+        margin-bottom: 0.25em;
+    }
+    .themeeditor-tree-root select {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    /* Files sit visually nested under the theme root at the top of the tree. */
+    .themeeditor-tree-wrapper > .themeeditor-tree {
+        padding-left: 1.1em;
+    }
+    .themeeditor-tree-empty {
+        margin: 0;
+        padding: 0.5em 0.75em;
+    }
+    .themeeditor-tree, .themeeditor-tree ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+    .themeeditor-tree ul {
+        padding-left: 1.1em;
+        display: none;
+    }
+    .themeeditor-tree-dir.open > ul {
+        display: block;
+    }
+    .themeeditor-tree-toggle {
+        display: block;
+        padding: 0.4em 0.75em;
+        cursor: pointer;
+        -webkit-user-select: none;
+        user-select: none;
+        white-space: nowrap;
+        font-weight: bold;
+    }
+    .themeeditor-tree-toggle:hover {
+        background: #eee;
+    }
+    .themeeditor-tree-toggle::before {
+        content: '\25b8\a0';
+        display: inline-block;
+        width: 0.9em;
+    }
+    .themeeditor-tree-dir.open > .themeeditor-tree-toggle::before {
+        content: '\25be\a0';
+    }
+    .themeeditor-tree-file a {
+        display: block;
+        padding: 0.4em 0.75em;
+        text-decoration: none;
+        color: inherit;
+        white-space: nowrap;
+    }
+    .themeeditor-tree-file a:hover {
+        background: #eee;
+    }
+    .themeeditor-tree-file.active > a {
+        background: #2196F3;
+        color: white;
+    }
+    .themeeditor-actions {
+        margin-top: 1em;
+        text-align: left;
+    }
+    .themeeditor-save-btn {
+        padding: 8px 16px;
+        border: 2px solid #2196F3;
+        border-radius: 5px;
+        background: #2196F3;
+        color: white;
+        font-weight: bold;
+        font-size: 14px;
+        cursor: pointer;
+    }
+    .themeeditor-save-btn:hover {
+        background: #0b7dda;
+        border-color: #0b7dda;
+    }
+    .themeeditor-save-btn:disabled {
+        background: #90caf9;
+        border-color: #90caf9;
+        cursor: default;
+    }
+    .themeeditor-save-status {
+        margin-left: 0.75em;
+        font-style: italic;
+        color: #555;
+    }
+    .themeeditor-image-preview {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: auto;
+        padding: 0.75em;
+        text-align: center;
+        background: #fafafa;
+    }
+    .themeeditor-image-preview img {
+        max-width: 100%;
+        height: auto;
+    }
+</style>
+
+<script type="text/javascript">
+(function($) {
+    var $form = $('#themeeditor-form');
+    var $textarea = $('#themeeditor-file_content');
+    var $saveBtn = $('.themeeditor-save-btn');
+    var $status = $('.themeeditor-save-status');
+    var savedContent = $textarea.length ? $textarea.val() : null;
+    var dirty = false;
+    var saving = false;
+
+    if ($textarea.length) {
+        // CodeMirror hides the real textarea and only writes edits back into its value
+        // when its own onChange handler calls instance.save() (see formulize-admin.js
+        // wiring in ui.html), so there's no reliable DOM event to hook here. Polling the
+        // textarea's value is a simple, ordering-independent way to detect edits whether
+        // or not CodeMirror has finished wrapping it yet.
+        setInterval(function() {
+            dirty = ($textarea.val() !== savedContent);
+        }, 500);
+    }
+
+    function confirmDiscardIfDirty() {
+        return !dirty || confirm('You have unsaved changes to this theme file. Leaving now will discard them. Continue?');
+    }
+
+    // beforeunload needs the browser's native return-value contract, which is safest
+    // done directly rather than through jQuery's event wrapper
+    window.onbeforeunload = function(e) {
+        if (dirty) {
+            var message = 'You have unsaved changes to this theme file. Leaving now will discard them.';
+            (e || window.event).returnValue = message;
+            return message;
+        }
+    };
+
+    // File tree links and the theme picklist normally navigate away immediately;
+    // intercept them so unsaved edits aren't silently discarded.
+    $('.themeeditor-tree-file a').bind('click', function(e) {
+        if (!confirmDiscardIfDirty()) {
+            e.preventDefault();
+        }
+    });
+
+    // Folders start expanded only along the path to the selected file (rendered
+    // server-side); clicking a folder name toggles it open/closed.
+    $('.themeeditor-tree-toggle').bind('click', function() {
+        $(this).closest('.themeeditor-tree-dir').toggleClass('open');
+    });
+
+    var $themeSelect = $('#themeeditor-theme_select').data('themeeditor-previous-value', $('#themeeditor-theme_select').val());
+    $themeSelect.bind('change', function() {
+        var $select = $(this);
+        if (!confirmDiscardIfDirty()) {
+            $select.val($select.data('themeeditor-previous-value'));
+            return;
+        }
+        location.href = 'ui.php?page=appearance&view=themeeditor&theme=' + encodeURIComponent($select.val());
+    });
+
+    $saveBtn.bind('click', function() {
+        if (saving || !$textarea.length) {
+            return;
+        }
+        saving = true;
+        $saveBtn.attr('disabled', 'disabled');
+        $status.text('Saving...');
+        $.ajax({
+            url: 'themeeditor.php',
+            type: 'POST',
+            data: $form.serialize(),
+            success: function(response) {
+                var result = null;
+                // The save replies with JSON. jQuery may hand it back already parsed (it
+                // guesses from the Content-Type) or as a string, so handle both. Anything
+                // unparseable means something else printed into the response - typically a
+                // PHP notice - so fall back to showing that text, which is how the server's
+                // own error output stays visible instead of failing silently.
+                if (response && typeof response === 'object') {
+                    result = response;
+                } else {
+                    try {
+                        result = $.parseJSON($.trim(response));
+                    } catch (e) {
+                        result = null;
+                    }
+                }
+
+                if (!result) {
+                    $status.text('');
+                    var strippedStyles = $.trim(response).replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+                    var strippedHTML = strippedStyles.replace(/<\/?[^>]+(>|$)/g, '');
+                    alert(strippedHTML || 'There was an error saving your changes. Please try again.');
+                } else if (!result.success) {
+                    $status.text('');
+                    alert(result.error);
+                } else {
+                    // Swap in the token the server minted for the next save, so a long
+                    // editing session doesn't outlive the token it was rendered with.
+                    if (result.token) {
+                        $('#themeeditor-token input').val(result.token);
+                    }
+                    savedContent = $textarea.val();
+                    dirty = false;
+                    $status.text('Saved.');
+                    setTimeout(function() { $status.text(''); }, 2000);
+                }
+                saving = false;
+                $saveBtn.removeAttr('disabled');
+            },
+            error: function() {
+                saving = false;
+                $saveBtn.removeAttr('disabled');
+                $status.text('');
+                alert('There was an error saving your changes. Please try again.');
+            }
+        });
+    });
+})(jQuery);
+</script>

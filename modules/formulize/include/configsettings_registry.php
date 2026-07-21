@@ -178,6 +178,20 @@ return array(
     ),
 
     // =====================================================================
+    'appearance' => array(
+        'name' => _AM_CFG_TAB_APPEARANCE,
+        'views' => array(
+            // Theme Editor is the only view for now; more appearance settings are
+            // planned and will become the default (first-declared) view then.
+            'themeeditor' => array(
+                'name' => _AM_CFG_VIEW_APPEARANCE_THEMEEDITOR,
+                'type' => 'page',
+                'page' => 'themeeditor',
+            ),
+        ),
+    ),
+
+    // =====================================================================
     'settings' => array(
         'name' => _AM_CFG_TAB_SETTINGS,
         'views' => array(

@@ -39,7 +39,7 @@ $modversion = array(
 	'license' => "GPL-2.0",
 	'image' => "images/formulize.gif",
 	'dirname' => "formulize",
-	'dbversion' => 11,
+	'dbversion' => 12,
 	'onUpdate' => "include/on_update.php"
 );
 
@@ -726,6 +726,9 @@ $modversion['templates'][] = array(
 	'description' => '');
 $modversion['templates'][] = array(
 	'file' => 'admin/logviewer.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/themeeditor.html',
 	'description' => '');
 $modversion['templates'][] = array(
 	'file' => 'admin/element_options_delimiter_choice.html',

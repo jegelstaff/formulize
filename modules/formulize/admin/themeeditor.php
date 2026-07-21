@@ -1,0 +1,465 @@
+<?php
+/**
+ * Formulize Theme Editor
+ * Admin page for viewing and editing theme files
+ */
+
+// Ajax save request: the editor posts directly to this file (not through ui.php), so this
+// branch bootstraps the CMS itself and exits before the page-render logic below (which
+// assumes ui.php has already set up $xoopsUser, ICMS_THEME_PATH, etc.) ever runs.
+if (isset($_POST['themeeditor_save'])) {
+    include_once "../../../mainfile.php";
+    include_once XOOPS_ROOT_PATH . '/modules/formulize/include/common.php';
+
+    global $xoopsUser;
+    if (!$xoopsUser OR !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
+        formulize_themeeditor_sendSaveResponse("Could not save: you do not have permission to save theme files.");
+    }
+
+    // CSRF: the save must carry the token rendered into the editor page (see
+    // $adminPage['csrf_token_html'] below). Without this, any page a logged-in webmaster
+    // visits could silently post here, and since Formulize screen templates under the
+    // "screens/" root are eval'd PHP, that would be a path to running arbitrary code.
+    if (!$GLOBALS['xoopsSecurity']->check(true, false, 'formulize_themeeditor_token')) {
+        formulize_themeeditor_sendSaveResponse("Could not save: the security token for this page is missing or has expired. Please reload the page and try again.");
+    }
+
+    if (sendSaveLockPrefToTemplate()) {
+        formulize_themeeditor_sendSaveResponse("Could not save: this system is locked.");
+    }
+
+    $theme = isset($_POST['theme']) ? $_POST['theme'] : '';
+    $file = isset($_POST['file']) ? $_POST['file'] : '';
+    $content = isset($_POST['file_content']) ? $_POST['file_content'] : '';
+
+    // Only themes actually installed in this Formulize installation may be targeted
+    $themes = icms_view_theme_Factory::getThemesList();
+    if ($theme === '' OR !isset($themes[$theme])) {
+        formulize_themeeditor_sendSaveResponse("Could not save: unknown theme.");
+    }
+
+    // Whitelist: the file must be one that the file tree itself offered for this theme.
+    // formulize_themeeditor_getThemeFiles() is the exact same call the page load makes to
+    // build the tree, so what can be saved is by definition what can be browsed. This is
+    // also what enforces the per-root extension rules and the exclusions (index.html,
+    // theme_admin.html, admin/, screens/form/) on save - those rules live only in the
+    // listing, so without this check a hand-crafted post could write to any existing file
+    // inside a theme root regardless of its type.
+    if (!in_array($file, formulize_themeeditor_getThemeFiles($theme), true)) {
+        formulize_themeeditor_sendSaveResponse("Could not save: invalid file.");
+    }
+
+    // Belt and braces after the whitelist: resolve the virtual path to a real file and
+    // refuse anything that escapes its root (e.g. via ../) or isn't an already-existing
+    // file. The path may target the theme's own folder or, via the "screens/" prefix, the
+    // theme's Formulize screen-template folder; the resolver handles both. We never create
+    // new files here.
+    $resolved = formulize_themeeditor_resolveVirtualPath($theme, $file);
+    if ($resolved === false) {
+        formulize_themeeditor_sendSaveResponse("Could not save: invalid file.");
+    }
+    $targetPath = $resolved['full'];
+
+    // Same repair-first check the page load does, repeated here because permissions can
+    // change between loading the editor and saving, and because a save can be attempted
+    // without a page load in between.
+    if (!is_writable($targetPath) AND !formulize_themeeditor_makeWritable($targetPath, 0644)) {
+        formulize_themeeditor_sendSaveResponse("Could not save: the web server does not have permission to write this file (" . $targetPath . "). The permissions on this file need to be changed on your server.");
+    }
+
+    if (file_put_contents($targetPath, $content) === false) {
+        formulize_themeeditor_sendSaveResponse("Could not save: the file could not be written on the server.");
+    }
+
+    // Saved. Hand back a fresh token for the next save - see the note on token lifetime in
+    // formulize_themeeditor_sendSaveResponse().
+    formulize_themeeditor_sendSaveResponse('', $GLOBALS['xoopsSecurity']->createToken(0, 'formulize_themeeditor_token'));
+}
+
+// Only webmasters can access this page
+global $xoopsUser;
+if(!$xoopsUser OR !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
+    return;
+}
+// This page is a sub-view of the Appearance subject tab (see include/configsettings_registry.php),
+// so the shared subject handler (admin/configsubject.php) owns the tabs and the
+// Home > Appearance > Theme Editor breadcrumb. We only contribute the file-specific
+// final crumb via $adminPage['extra_breadcrumbs'], set once the selected file is known.
+
+// Themes installed in this Formulize installation
+$adminPage['themes'] = icms_view_theme_Factory::getThemesList();
+
+// Site's current default theme
+global $xoopsConfig;
+$adminPage['default_theme'] = $xoopsConfig['theme_set'];
+
+// Which theme's files to show: whatever was picked in the select, falling back to the site's default theme
+$requestedTheme = isset($_GET['theme']) ? $_GET['theme'] : (isset($_POST['theme']) ? $_POST['theme'] : '');
+$adminPage['selected_theme'] = isset($adminPage['themes'][$requestedTheme]) ? $requestedTheme : $adminPage['default_theme'];
+
+// All editable files across the selected theme's roots (its own folder plus its Formulize
+// screen-templates folder, exposed under "screens/"), so the tree and save stay in sync
+$adminPage['theme_files'] = formulize_themeeditor_getThemeFiles($adminPage['selected_theme']);
+
+// Which file to show in the editor: whatever was picked in the file list, falling back to
+// index.html (every theme has one), falling back to the first file in the theme's folder
+$requestedFile = isset($_GET['file']) ? $_GET['file'] : (isset($_POST['file']) ? $_POST['file'] : '');
+if(in_array($requestedFile, $adminPage['theme_files'], true)) {
+    $adminPage['selected_file'] = $requestedFile;
+} elseif(in_array('theme.html', $adminPage['theme_files'], true)) {
+    $adminPage['selected_file'] = 'theme.html';
+} elseif(!empty($adminPage['theme_files'])) {
+    $adminPage['selected_file'] = $adminPage['theme_files'][0];
+} else {
+    $adminPage['selected_file'] = '';
+}
+
+// Nested folder/file tree for the file browser, so files are grouped visually by the
+// folder they live in rather than shown as one flat alphabetical list
+$themeFileTree = formulize_themeeditor_buildFileTree($adminPage['theme_files']);
+formulize_themeeditor_sortFileTree($themeFileTree);
+$adminPage['theme_files_tree'] = formulize_themeeditor_renderFileTree($themeFileTree, $adminPage['selected_theme'], $adminPage['selected_file']);
+
+// Image files can't be sanely edited as text, so show a preview instead of dumping
+// raw binary bytes into the textarea
+$imageExtensions = array('png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'ico', 'bmp');
+$selectedExtension = strtolower(pathinfo($adminPage['selected_file'], PATHINFO_EXTENSION));
+$adminPage['selected_file_is_image'] = in_array($selectedExtension, $imageExtensions, true);
+
+if(substr($adminPage['selected_file'], -3) == '.js') {
+  $adminPage['editorClass']	= 'code-textarea-js';
+} elseif(substr($adminPage['selected_file'], -4) == '.css') {
+	$adminPage['editorClass']	= 'code-textarea-css';
+} else {
+	$adminPage['editorClass']	= 'code-textarea';
+}
+
+// The file being edited becomes the final breadcrumb crumb (no url = current page),
+// which is why the editor no longer shows the filename as a title above the code box.
+if ($adminPage['selected_file'] !== '') {
+    $adminPage['extra_breadcrumbs'] = array(array('text' => $adminPage['selected_file']));
+}
+
+// Saving writes straight to disk, so check up front that the web server can actually write
+// these files (repairing what it can) and warn if it can't - otherwise the first sign of
+// trouble is a failed save after the user has already made their edits. The selected file is
+// called out separately because that's the one the user is about to try to save.
+$writabilityProblems = formulize_themeeditor_checkWritability($adminPage['selected_theme'], $adminPage['theme_files']);
+$adminPage['writability_problem'] = !empty($writabilityProblems['paths']);
+$adminPage['writability_selected_file_unwritable'] = in_array($adminPage['selected_file'], $writabilityProblems['files'], true);
+// Only a sample of paths is listed: a theme whose whole folder is read-only produces one
+// entry per file, which is unreadable as a wall of text and doesn't tell the admin anything
+// the first few paths don't already say.
+$adminPage['writability_paths'] = array_slice($writabilityProblems['paths'], 0, 10);
+$adminPage['writability_extra_count'] = count($writabilityProblems['paths']) - count($adminPage['writability_paths']);
+
+// CSRF token for the ajax save. A dedicated token name (rather than the default _CORE_TOKEN)
+// scopes it to this editor, so a token minted for some other admin form can't be replayed
+// into a theme file write, or vice versa.
+$adminPage['csrf_token_html'] = $GLOBALS['xoopsSecurity']->getTokenHTML('formulize_themeeditor_token');
+
+// Contents of the selected file, for display in the editor
+if ($adminPage['selected_file_is_image']) {
+    $adminPage['selected_file_content'] = '';
+    $adminPage['selected_file_url'] = ICMS_THEME_URL . '/' . $adminPage['selected_theme'] . '/' . $adminPage['selected_file'];
+} else {
+    $resolvedSelected = ($adminPage['selected_file'] !== '')
+        ? formulize_themeeditor_resolveVirtualPath($adminPage['selected_theme'], $adminPage['selected_file'])
+        : false;
+    $adminPage['selected_file_content'] = $resolvedSelected ? file_get_contents($resolvedSelected['full']) : '';
+}
+
+/**
+ * Check that everything the editor might need to write for a theme is actually writable by
+ * the web server, repairing what it can. This mirrors the fix-first approach ui.php takes
+ * with the /tokens folder: try to correct the problem, and only warn about what's left.
+ *
+ * Themes off the site root are commonly deployed owned by a different user than the one
+ * Apache/PHP runs as, so the editor has to say so when it loads rather than letting the
+ * user write a file's worth of edits and only discover at save time that it can't be saved.
+ *
+ * Note that it's the FILES that must be writable, not just the folders. A save only ever
+ * overwrites a file that already exists (file_put_contents truncating it in place), and that
+ * needs write permission on the file itself - directory permission governs creating,
+ * deleting and renaming, which this editor never does. Directories are checked and reported
+ * anyway, because a read-only directory is usually the underlying cause an admin has to fix.
+ *
+ * @param string $theme      - theme directory name (already validated against installed themes)
+ * @param array  $themeFiles - the theme's virtual file list, as already built for the tree
+ * @return array array('paths'=>absolute paths still not writable, 'files'=>virtual paths of unwritable files)
+ */
+function formulize_themeeditor_checkWritability($theme, $themeFiles) {
+    $problems = array('paths' => array(), 'files' => array());
+    foreach (formulize_themeeditor_getRoots($theme) as $root) {
+        // A root that isn't on disk (e.g. a theme with no screen templates) isn't a problem,
+        // it just means that pseudo-folder doesn't appear in the tree.
+        if (!is_dir($root['dir'])) {
+            continue;
+        }
+        if (!is_writable($root['dir']) AND !formulize_themeeditor_makeWritable($root['dir'], 0755)) {
+            $problems['paths'][] = $root['dir'];
+        }
+    }
+    foreach ($themeFiles as $virtualPath) {
+        $resolved = formulize_themeeditor_resolveVirtualPath($theme, $virtualPath);
+        if ($resolved === false) {
+            continue;
+        }
+        if (!is_writable($resolved['full']) AND !formulize_themeeditor_makeWritable($resolved['full'], 0644)) {
+            $problems['paths'][] = $resolved['full'];
+            $problems['files'][] = $virtualPath;
+        }
+    }
+    return $problems;
+}
+
+/**
+ * Try to make a path writable by the web server, and report whether it worked. chmod only
+ * succeeds when the web server user owns the path (or is root), so returning false here is
+ * the ordinary outcome on a deployment where the theme files belong to someone else - that
+ * is exactly the case the caller needs to warn about, not an error worth surfacing itself,
+ * hence the silenced call.
+ * @param string $path - file or directory to repair
+ * @param int $mode - permissions to apply
+ * @return bool true if the path is writable afterwards
+ */
+function formulize_themeeditor_makeWritable($path, $mode) {
+    if (@chmod($path, $mode) === false) {
+        return false;
+    }
+    // is_writable() results are cached per request, so the recheck needs a fresh stat to
+    // reflect the chmod we just did.
+    clearstatcache(true, $path);
+    return is_writable($path);
+}
+
+/**
+ * Emit the ajax reply for a save attempt and end the request. Every exit from the save
+ * branch at the top of this file goes through here, so the editor always gets JSON:
+ *   {"success":true,"token":"..."}  - saved; token is the CSRF token to use for the next save
+ *   {"success":false,"error":"..."} - not saved; error is shown to the user
+ *
+ * On token lifetime: icms_core_Security::validateToken() deliberately does not consume a
+ * token on XMLHttpRequests (it only unlinks the token file on full page loads), so a single
+ * token already survives repeated saves. What it does not survive is its own timeout, which
+ * is the session expiry - so a long editing session could otherwise reach a point where
+ * saving silently starts failing. Returning a freshly minted token after each successful
+ * save slides that window forward, so the editor stays saveable for as long as it's in use.
+ * @param string $error - message to show the user, or '' on success
+ * @param string $token - fresh CSRF token to return on success
+ * @return void This function does not return; it ends the request.
+ */
+function formulize_themeeditor_sendSaveResponse($error = '', $token = '') {
+    if (!headers_sent()) {
+        header('Content-Type: application/json');
+    }
+    print json_encode(($error === '')
+        ? array('success' => true, 'token' => $token)
+        : array('success' => false, 'error' => $error));
+    exit;
+}
+
+/**
+ * The physical roots that make up a theme's editable file set, keyed by the virtual-path
+ * prefix each is exposed under in the file tree:
+ *   ''        => the theme's own folder (themes/<theme>)
+ *   'screens' => the theme's default Formulize screen templates
+ *                (modules/formulize/templates/screens/<theme>/default), which hold the
+ *                default list/form/map/multipage/etc. layouts for that theme
+ * Splitting the theme's files across two folders on disk is a quirk of how Formulize
+ * stores screen templates; merging them here lets the whole editable layout for a theme
+ * be browsed as one tree. A root that doesn't exist on disk (e.g. a theme with no custom
+ * screen templates) is skipped by callers, so its pseudo-folder simply won't appear.
+ * @param string $theme - theme directory name
+ * @return array Ordered map of prefix => absolute root directory
+ */
+function formulize_themeeditor_getRoots($theme) {
+    return array(
+        '' => array(
+            'dir' => ICMS_THEME_PATH . '/' . $theme,
+            // Theme folder: markup and assets only. PHP is deliberately excluded so a
+            // theme's own logic files aren't exposed as editable content.
+            'extensions' => array('html', 'htm', 'css', 'js'),
+        ),
+        'screens' => array(
+            // The theme's DEFAULT screen templates only: modules/formulize/templates/screens/<theme>/default,
+            // which holds the default layouts for each screen type (form, listOfEntries, map,
+            // multiPage, ...). The sibling screen-id folders (e.g. .../screens/<theme>/43) are
+            // per-screen overrides and deliberately left out.
+            'dir' => XOOPS_ROOT_PATH . '/modules/formulize/templates/screens/' . $theme . '/default',
+            // Formulize screen templates are PHP files (they hold eval'd template code),
+            // so PHP must be editable here for the layouts to be reachable at all.
+            'extensions' => array('html', 'htm', 'css', 'js', 'php'),
+        ),
+    );
+}
+
+/**
+ * Resolve a virtual file path (as listed by formulize_themeeditor_getThemeFiles) to a real
+ * file on disk, enforcing that it stays within its root. Prefixed roots (e.g. "screens/…")
+ * are matched first; anything else resolves against the theme's own folder.
+ * @param string $theme       - theme directory name (already validated against the installed themes)
+ * @param string $virtualPath - virtual path from the file tree
+ * @return array|false array('full'=>real path, 'root'=>real root dir, 'prefix'=>matched prefix), or false if invalid
+ */
+function formulize_themeeditor_resolveVirtualPath($theme, $virtualPath) {
+    if ($virtualPath === '') {
+        return false;
+    }
+    $roots = formulize_themeeditor_getRoots($theme);
+    // Check prefixed roots first; the '' (theme folder) root is the catch-all.
+    foreach ($roots as $prefix => $root) {
+        if ($prefix === '') {
+            continue;
+        }
+        if (strpos($virtualPath, $prefix . '/') === 0) {
+            return formulize_themeeditor_containedFile($root['dir'], substr($virtualPath, strlen($prefix) + 1), $prefix);
+        }
+    }
+    return formulize_themeeditor_containedFile($roots['']['dir'], $virtualPath, '');
+}
+
+/**
+ * Helper for formulize_themeeditor_resolveVirtualPath: realpath a relative file within a
+ * root directory and confirm it's a real, existing file that hasn't escaped the root
+ * (e.g. via ../).
+ * @param string $rootDir  - the root directory the file must live inside
+ * @param string $relative - path relative to that root
+ * @param string $prefix   - the virtual prefix this root is exposed under (for the return value)
+ * @return array|false
+ */
+function formulize_themeeditor_containedFile($rootDir, $relative, $prefix) {
+    $rootReal = realpath($rootDir);
+    if ($rootReal === false OR $relative === '') {
+        return false;
+    }
+    $full = realpath($rootDir . '/' . $relative);
+    if ($full === false OR strpos($full, $rootReal . DIRECTORY_SEPARATOR) !== 0 OR !is_file($full)) {
+        return false;
+    }
+    return array('full' => $full, 'root' => $rootReal, 'prefix' => $prefix);
+}
+
+/**
+ * Recursively list every editable file available for a theme, across all of its roots (see
+ * formulize_themeeditor_getRoots). Paths are returned as "virtual" paths: files from the
+ * theme folder keep their plain relative path (e.g. "css/foo.css"), while files from a
+ * prefixed root are prefixed (e.g. "screens/listOfEntries/foo.html"). Images and other
+ * non-editable file types are left out entirely, which also means folders that contain
+ * only images never show up, since they end up with no files in them.
+ * @param string $theme - theme directory name
+ * @return array Sorted list of virtual file paths, using forward slashes
+ */
+function formulize_themeeditor_getThemeFiles($theme) {
+    $files = array();
+    foreach (formulize_themeeditor_getRoots($theme) as $prefix => $root) {
+        $rootDir = $root['dir'];
+        $editableExtensions = $root['extensions'];
+        if (!is_dir($rootDir)) {
+            continue;
+        }
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($rootDir, FilesystemIterator::SKIP_DOTS)
+        );
+        foreach ($iterator as $fileInfo) {
+            if (!$fileInfo->isFile()) {
+                continue;
+            }
+            $extension = strtolower($fileInfo->getExtension());
+            if (!in_array($extension, $editableExtensions, true)) {
+                continue;
+            }
+            $relativePath = str_replace('\\', '/', substr($fileInfo->getPathname(), strlen($rootDir) + 1));
+            // Exclusions: index.html (in any folder) and theme_admin.html are boilerplate
+            // that shouldn't be edited here, and any admin/ folder holds admin-only markup
+            // that's out of scope for the Theme Editor. Under screens, the "form" folder is
+            // the legacy (deprecated) single-page form screen type, so it's left out too.
+            $baseName = basename($relativePath);
+            $firstSegment = (strpos($relativePath, '/') !== false) ? substr($relativePath, 0, strpos($relativePath, '/')) : '';
+            if ($baseName === 'index.html' OR $baseName === 'theme_admin.html' OR $firstSegment === 'admin'
+                OR ($prefix === 'screens' AND $firstSegment === 'form')) {
+                continue;
+            }
+            $files[] = ($prefix === '') ? $relativePath : $prefix . '/' . $relativePath;
+        }
+    }
+    sort($files, SORT_STRING);
+    return $files;
+}
+
+/**
+ * Turn a flat list of theme-relative file paths (e.g. "css/foo.css") into a nested
+ * associative tree of dir/file nodes, keyed by path segment at each level.
+ * @param array files - output of formulize_themeeditor_getThemeFiles()
+ * @return array Nested tree; each node is array('type' => 'dir'|'file', 'name' => ..., 'path' => ..., and 'children' => array() for dirs)
+ */
+function formulize_themeeditor_buildFileTree($files) {
+    $tree = array();
+    foreach ($files as $file) {
+        $parts = explode('/', $file);
+        $node = &$tree;
+        $pathSoFar = '';
+        foreach ($parts as $i => $part) {
+            $pathSoFar = ($pathSoFar === '') ? $part : $pathSoFar . '/' . $part;
+            $isFile = ($i === count($parts) - 1);
+            if ($isFile) {
+                $node[$part] = array('type' => 'file', 'name' => $part, 'path' => $pathSoFar);
+            } else {
+                if (!isset($node[$part]) OR $node[$part]['type'] !== 'dir') {
+                    $node[$part] = array('type' => 'dir', 'name' => $part, 'path' => $pathSoFar, 'children' => array());
+                }
+                $node = &$node[$part]['children'];
+            }
+        }
+        unset($node);
+    }
+    return $tree;
+}
+
+/**
+ * Recursively sort a file tree in place: folders before files, alphabetically within each group.
+ * @param array tree - reference to a tree node's children, as produced by formulize_themeeditor_buildFileTree()
+ */
+function formulize_themeeditor_sortFileTree(&$tree) {
+    uasort($tree, function($a, $b) {
+        if ($a['type'] !== $b['type']) {
+            return $a['type'] === 'dir' ? -1 : 1;
+        }
+        return strcasecmp($a['name'], $b['name']);
+    });
+    foreach ($tree as &$node) {
+        if ($node['type'] === 'dir') {
+            formulize_themeeditor_sortFileTree($node['children']);
+        }
+    }
+}
+
+/**
+ * Render a file tree as nested <ul> markup for the theme editor's file browser.
+ * Folders containing the selected file are marked "open" so its path is visible on load.
+ * @param array tree - a tree node's children, as produced by formulize_themeeditor_buildFileTree()
+ * @param string theme - theme directory name, for building file links
+ * @param string selectedFile - theme-relative path of the currently selected file
+ * @return string HTML markup
+ */
+function formulize_themeeditor_renderFileTree($tree, $theme, $selectedFile) {
+    $html = '<ul class="themeeditor-tree">';
+    foreach ($tree as $node) {
+        if ($node['type'] === 'dir') {
+            $isOpen = ($selectedFile !== '' AND strpos($selectedFile, $node['path'] . '/') === 0);
+            $html .= '<li class="themeeditor-tree-dir' . ($isOpen ? ' open' : '') . '">';
+            $html .= '<span class="themeeditor-tree-toggle">' . htmlspecialchars($node['name']) . '/</span>';
+            $html .= formulize_themeeditor_renderFileTree($node['children'], $theme, $selectedFile);
+            $html .= '</li>';
+        } else {
+            $isActive = ($node['path'] === $selectedFile);
+            $href = 'ui.php?page=appearance&view=themeeditor&theme=' . urlencode($theme) . '&file=' . urlencode($node['path']);
+            $html .= '<li class="themeeditor-tree-file' . ($isActive ? ' active' : '') . '">';
+            $html .= '<a href="' . htmlspecialchars($href) . '">' . htmlspecialchars($node['name']) . '</a>';
+            $html .= '</li>';
+        }
+    }
+    $html .= '</ul>';
+    return $html;
+}
+
