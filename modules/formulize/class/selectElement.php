@@ -1030,7 +1030,15 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 			$GLOBALS['formulize_lastRenderedElementOptions'] = $cachedSourceValuesQ[intval($ele_value[ELE_VALUE_SELECT_LINK_SNAPSHOT])][$sourceValuesQ];
 
 			if($isDisabled) {
-				$form_ele = new XoopsFormLabel($caption, implode(", ", $disabledOutputText), $markupName);
+				// Purify each option's text BEFORE joining, so the ", " separators we add are ours and are not
+			// themselves filtered. For a linked select this text comes from entries in the LINKED form, so
+			// it is user data, not admin-authored option labels. See makeValueSafeForReadOnlyDisplay().
+			$safeDisabledOutputText = array();
+			foreach($disabledOutputText as $disabledOutputTextValue) {
+				$safeDisabledOutputText[] = $this->makeValueSafeForReadOnlyDisplay(
+					$disabledOutputTextValue, $element->getVar('ele_handle'), $entry_id);
+			}
+			$form_ele = new XoopsFormLabel($caption, implode(", ", $safeDisabledOutputText), $markupName);
 			} elseif($ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE] == 0) {
 				// this is a hack because the size attribute is private and only has a getSize and not a setSize, setting the size can only be done through the constructor
 				$count = count((array)  $form_ele->getOptions() );

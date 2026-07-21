@@ -499,6 +499,31 @@ class formulizeElementRenderer{
 		if($__formulizeSubstituteResult) { // the code may itself have produced { } references
 			$__formulizeResult = $this->formulize_replaceReferencesAndVariables($__formulizeResult, $__formulizeEntryId, $__formulizeFormId, $__formulizeMarkupName, $__formulizeScreen, $__formulizeMakeValuesSafeForDisplay);
 		}
+		// Purify the code's OUTPUT.
+		//
+		// The substitution above is not enough on its own, and this is the subtle part: bindReferencesForPHPEval
+		// supplies referenced values to the code as real PHP VARIABLES rather than splicing them in as text
+		// (that is what stops entry data altering the code's structure). So admin code that does, in effect,
+		//     return "Hi " . $some_field;
+		// emits user data having performed NO { } substitution at all - $substitutionHappened is false, and
+		// the purification inside formulize_replaceCurlyBracketVariables never fires. Without this, that
+		// output reached the page raw.
+		//
+		// This is the same situation derived elements are in - admin-authored code composing markup around
+		// user-submitted data - and it gets the same answer: the composed result is allow-list filtered, so
+		// the admin's intended markup survives and any script vector in the interpolated data does not.
+		//
+		// Only when a reference was actually BOUND, which is the same rule the { } substitution path uses:
+		// untouched-by-user-data output is left alone. $__formulizeRefValues is empty when the code has no
+		// {reference} in it at all, and in that case its output is 100% admin-authored - so it keeps its
+		// markup intact, interactive elements included, exactly as an un-substituted caption does.
+		//
+		// Callers computing a VALUE rather than display text pass $makeValuesSafeForDisplay = false and are
+		// skipped here, exactly as they are for substitution - notably interpretTextboxValue(), whose return
+		// is written to the database as an entry's default.
+		if($__formulizeMakeValuesSafeForDisplay AND !empty($__formulizeRefValues)) {
+			$__formulizeResult = formulize_purifyHtmlValue($__formulizeResult, $__formulizeMarkupName, $__formulizeEntryId);
+		}
 		return array($__formulizeResult, true);
 	}
 
@@ -694,7 +719,12 @@ function optOther($s, $id, $entry_id, $counter, $checkbox=false, $isDisabled=fal
         $other_text = $otherq[0]['other_text'];
     }
     if(strstr($_SERVER['PHP_SELF'], "formulize/printview.php") OR $isDisabled) {
-        return $other_text;
+        // Read-only: this value is free text the user typed, and it is headed for a xoopsFormLabel (via
+        // the caller's $disabledOutputText), which renders whatever it is given as-is. Purify rather than
+        // escape - see formulizeElementsHandler::makeValueSafeForReadOnlyDisplay() for the rule.
+        // The editable branch below needs no such treatment: it goes through XoopsFormText, whose render()
+        // escapes, which is what an editable value wants so the user sees exactly what they typed.
+        return formulize_purifyHtmlValue($other_text, 'other_ele_'.$ele_id, $entry_id);
     }
     $s = explode('|', preg_replace('/[\{\}]/', '', $s));
     $len = !empty($s[1]) ? $s[1] : $xoopsModuleConfig['t_width'];

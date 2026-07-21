@@ -1345,6 +1345,41 @@ class formulizeElementsHandler {
 		return $value; // default: no markup of our own
 	}
 
+	/**
+	 * Make a value safe to display READ-ONLY in a form - ie. on its way into a xoopsFormLabel, which
+	 * renders whatever it is given as-is.
+	 *
+	 * THE RULE, and why read-only is purified rather than escaped:
+	 *
+	 *   EDITABLE  (an input's value attribute, a textarea's body) -> ESCAPE. The user has to be able to see
+	 *             and edit exactly what they typed, so markup must appear literally, as text.
+	 *             Handled at the core sinks - icms_form_elements_Text/Textarea::render().
+	 *   READ-ONLY (disabled elements, print view) -> PURIFY. Nothing is being edited here, so allow-list
+	 *             filtering is both safer and kinder: in the odd case where a user did type markup, they
+	 *             get safe markup rendered rather than a wall of escaped tags.
+	 *
+	 * Purifying (not escaping) also keeps a read-only element consistent with how the SAME value is shown
+	 * in a list, where formatDataForList() purifies anything whose data is HTML. Before this existed, the
+	 * disabled/print branches of text, select, checkbox and radio - and every {OTHER|n} value - passed raw
+	 * user data straight into a Label.
+	 *
+	 * IMPORTANT - pass the DATA, not markup this element has already composed. HTMLPurifier strips
+	 * <form>, <input>, <button> and <select> outright, so running a composed control through here would
+	 * delete it. Make the value safe first, then build markup around it (same order as
+	 * formatDataForList -> composeMarkupForList).
+	 *
+	 * @param string $value The value to display read-only
+	 * @param string $handle Optional. Element handle, for tagging purification log events
+	 * @param int $entry_id Optional. Entry id, for tagging purification log events
+	 * @return string The value, purified (or escaped, if purification was unavailable)
+	 */
+	function makeValueSafeForReadOnlyDisplay($value, $handle="", $entry_id=0) {
+		if(!is_string($value) OR $value === '') {
+			return $value;
+		}
+		return formulize_purifyHtmlValue($value, $handle, $entry_id);
+	}
+
 	    // determine if the element is disabled for the specified user
     function isElementDisabledForUser($elementIdOrObject, $userIdOrObject=0) {
         if(is_object($elementIdOrObject)) {

@@ -323,7 +323,12 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 			if(is_numeric($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE]) AND $ele_value[ELE_VALUE_TEXT_DEFAULTVALUE]) {
 				$value = formulize_numberFormat($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE], $element->getVar('ele_handle'));
 			}
-			$form_ele = new XoopsFormLabel ($caption, formulize_text_to_hyperlink($value), $markupName);
+			// read-only: purify rather than escape - see makeValueSafeForReadOnlyDisplay() for the rule.
+			// This is also the sink for interpretTextboxValue()'s value, which is deliberately NOT made
+			// safe at substitution time because its return is also stored as the entry's default.
+			$form_ele = new XoopsFormLabel ($caption, formulize_text_to_hyperlink(
+				$this->makeValueSafeForReadOnlyDisplay($value, $element->getVar('ele_handle'), $entry_id)
+			), $markupName);
 		}
 		return $form_ele;
 	}

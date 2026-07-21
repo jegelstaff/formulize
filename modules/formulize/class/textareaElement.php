@@ -224,13 +224,16 @@ class formulizeTextareaElementHandler extends formulizeTextElementHandler {
 			// raw in the other.
 			$textareaValue = $ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE];
 			if($this->usesRichTextEditor($ele_value)) {
-				// rich text is intentional markup: allow-list filter it, do not escape it
-				$safeValue = formulize_purifyHtmlValue($textareaValue, $element->getVar('ele_handle'), $entry_id);
+				// rich text is already markup - hand it straight to the read-only funnel
+				$safeValue = $this->makeValueSafeForReadOnlyDisplay($textareaValue, $element->getVar('ele_handle'), $entry_id);
 			} else {
-				// a plain textarea holds text the user typed, not markup. Normalize then escape, and only
-				// then substitute in our own <br> so the line breaks we add are not escaped along with it.
-				$safeValue = str_replace("\n", "<br>",
-					icms_core_DataFilter::htmlSpecialChars(undoAllHTMLChars($textareaValue, ENT_QUOTES)));
+				// A plain textarea holds text the user typed, in which line breaks are significant. Purify
+				// alone would collapse them, so normalize and convert the breaks to <br> FIRST, then run the
+				// result through the funnel - which keeps those <br> (they are ordinary formatting) while
+				// filtering anything the user typed that looks like markup.
+				$safeValue = $this->makeValueSafeForReadOnlyDisplay(
+					str_replace("\n", "<br>", undoAllHTMLChars($textareaValue, ENT_QUOTES)),
+					$element->getVar('ele_handle'), $entry_id);
 			}
 			$form_ele = new XoopsFormLabel ($caption, formulize_text_to_hyperlink($safeValue), $markupName);	// nmc 2007.03.24 - added
 		}

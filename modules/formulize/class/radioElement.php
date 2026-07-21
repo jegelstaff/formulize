@@ -384,7 +384,10 @@ class formulizeRadioElementHandler extends formulizeBaseClassForListsElementHand
 				}
 			}
 			if($isDisabled) {
-				$renderedElement = $disabledOutputText; // just text for disabled elements
+				// just text for disabled elements - but that text can be an {OTHER|n} value the user typed,
+				// so it is purified on the way out. See makeValueSafeForReadOnlyDisplay().
+				$renderedElement = $this->makeValueSafeForReadOnlyDisplay(
+					$disabledOutputText, $element->getVar('ele_handle'), $entry_id);
 			} else {
 				$renderedElement = $form_ele1->render();
 			}
