@@ -3695,6 +3695,10 @@ form[name='metachoiceform'] td p {
 	margin-bottom: 20px;
 }
 
+div#block_login_form div {
+	margin-top: 1.5em;
+}
+
 /** Duration Element **/
 input.formulize-duration-element-input[type="number"] {
 	min-width: 50px;

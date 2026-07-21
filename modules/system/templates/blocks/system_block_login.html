@@ -31,9 +31,13 @@
 		<{if $block.auth_okta}>
 			<div style="text-align: <{$smarty.const._GLOBAL_LEFT}>;"><a href="<{$block.auth_okta}>"><{$smarty.const._MB_SYSTEM_OKTA_LOGIN}></a></div>
 		<{/if}>
-		<a id='lostpass' href='#' title="<{$block.lang_lostpass}>"><{$block.lang_lostpass}></a>
+		<div style="text-align: <{$smarty.const._GLOBAL_LEFT}>;">
+			<a id='lostpass' href='#' title="<{$block.lang_lostpass}>"><{$block.lang_lostpass}></a>
+		</div>
 		<{if $block.registration }>
-			<a href="<{$xoops_url}>/register.php" title="<{$block.lang_registernow}>"><{$block.lang_registernow}></a>
+		<div style="text-align: <{$smarty.const._GLOBAL_LEFT}>;">
+			<br><a href="<{$xoops_url}>/register.php" title="<{$block.lang_registernow}>"><{$block.lang_registernow}></a>
+		</div>
 		<{/if}>
 	<{else}>
 		<div class='google-only-login-div' style="text-align: <{$smarty.const._GLOBAL_LEFT}>;">

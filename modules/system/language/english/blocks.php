@@ -2,7 +2,7 @@
 // $Id: blocks.php 9347 2009-09-06 19:25:40Z Phoenyx $
 // Blocks
 define("_MB_SYSTEM_ADMENU","Administration Menu");
-define("_MB_SYSTEM_RNOW","Register now!");
+define("_MB_SYSTEM_RNOW","Create an account");
 define("_MB_SYSTEM_LPASS","Lost your account info?"); // ALTERED BY FREEFORM SOLUTIONS FOR THE FORMULIZE STANDALONE RELEASE
 define("_MB_SYSTEM_SEARCH","Search");
 define("_MB_SYSTEM_ADVS","Advanced Search");
