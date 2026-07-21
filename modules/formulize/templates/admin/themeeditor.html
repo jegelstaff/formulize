@@ -3,6 +3,9 @@
     <form id="themeeditor-form">
         <input type="hidden" name="themeeditor_save" value="1">
         <input type="hidden" name="file" value="<{$adminPage.selected_file}>">
+        <{* CSRF token for the ajax save. The save replies with a fresh token which the
+            script below writes back into this field, so repeated saves stay valid. *}>
+        <span id="themeeditor-token"><{$adminPage.csrf_token_html}></span>
 
         <div class="themeeditor-layout">
 
@@ -312,13 +315,36 @@
             type: 'POST',
             data: $form.serialize(),
             success: function(response) {
-                var trimmed = $.trim(response);
-                if (trimmed) {
-                    $status.text('');
-                    var strippedStyles = trimmed.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
-                    var strippedHTML = strippedStyles.replace(/<\/?[^>]+(>|$)/g, '');
-                    alert(strippedHTML);
+                var result = null;
+                // The save replies with JSON. jQuery may hand it back already parsed (it
+                // guesses from the Content-Type) or as a string, so handle both. Anything
+                // unparseable means something else printed into the response - typically a
+                // PHP notice - so fall back to showing that text, which is how the server's
+                // own error output stays visible instead of failing silently.
+                if (response && typeof response === 'object') {
+                    result = response;
                 } else {
+                    try {
+                        result = $.parseJSON($.trim(response));
+                    } catch (e) {
+                        result = null;
+                    }
+                }
+
+                if (!result) {
+                    $status.text('');
+                    var strippedStyles = $.trim(response).replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+                    var strippedHTML = strippedStyles.replace(/<\/?[^>]+(>|$)/g, '');
+                    alert(strippedHTML || 'There was an error saving your changes. Please try again.');
+                } else if (!result.success) {
+                    $status.text('');
+                    alert(result.error);
+                } else {
+                    // Swap in the token the server minted for the next save, so a long
+                    // editing session doesn't outlive the token it was rendered with.
+                    if (result.token) {
+                        $('#themeeditor-token input').val(result.token);
+                    }
                     savedContent = $textarea.val();
                     dirty = false;
                     $status.text('Saved.');

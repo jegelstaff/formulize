@@ -13,12 +13,19 @@ if (isset($_POST['themeeditor_save'])) {
 
     global $xoopsUser;
     if (!$xoopsUser OR !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
-        print "Could not save: you do not have permission to save theme files.";
-        exit;
+        formulize_themeeditor_sendSaveResponse("Could not save: you do not have permission to save theme files.");
     }
+
+    // CSRF: the save must carry the token rendered into the editor page (see
+    // $adminPage['csrf_token_html'] below). Without this, any page a logged-in webmaster
+    // visits could silently post here, and since Formulize screen templates under the
+    // "screens/" root are eval'd PHP, that would be a path to running arbitrary code.
+    if (!$GLOBALS['xoopsSecurity']->check(true, false, 'formulize_themeeditor_token')) {
+        formulize_themeeditor_sendSaveResponse("Could not save: the security token for this page is missing or has expired. Please reload the page and try again.");
+    }
+
     if (sendSaveLockPrefToTemplate()) {
-        print "Could not save: this system is locked.";
-        exit;
+        formulize_themeeditor_sendSaveResponse("Could not save: this system is locked.");
     }
 
     $theme = isset($_POST['theme']) ? $_POST['theme'] : '';
@@ -28,34 +35,42 @@ if (isset($_POST['themeeditor_save'])) {
     // Only themes actually installed in this Formulize installation may be targeted
     $themes = icms_view_theme_Factory::getThemesList();
     if ($theme === '' OR !isset($themes[$theme])) {
-        print "Could not save: unknown theme.";
-        exit;
+        formulize_themeeditor_sendSaveResponse("Could not save: unknown theme.");
     }
 
-    // Resolve the virtual path to a real file and refuse anything that escapes its root
-    // (e.g. via ../) or isn't an already-existing file. The path may target the theme's own
-    // folder or, via the "screens/" prefix, the theme's Formulize screen-template folder;
-    // the resolver handles both. The editor only ever offers files it already listed from
-    // those roots, so a legitimate save always targets an existing file - we never create
+    // Whitelist: the file must be one that the file tree itself offered for this theme.
+    // formulize_themeeditor_getThemeFiles() is the exact same call the page load makes to
+    // build the tree, so what can be saved is by definition what can be browsed. This is
+    // also what enforces the per-root extension rules and the exclusions (index.html,
+    // theme_admin.html, admin/, screens/form/) on save - those rules live only in the
+    // listing, so without this check a hand-crafted post could write to any existing file
+    // inside a theme root regardless of its type.
+    if (!in_array($file, formulize_themeeditor_getThemeFiles($theme), true)) {
+        formulize_themeeditor_sendSaveResponse("Could not save: invalid file.");
+    }
+
+    // Belt and braces after the whitelist: resolve the virtual path to a real file and
+    // refuse anything that escapes its root (e.g. via ../) or isn't an already-existing
+    // file. The path may target the theme's own folder or, via the "screens/" prefix, the
+    // theme's Formulize screen-template folder; the resolver handles both. We never create
     // new files here.
     $resolved = formulize_themeeditor_resolveVirtualPath($theme, $file);
     if ($resolved === false) {
-        print "Could not save: invalid file.";
-        exit;
+        formulize_themeeditor_sendSaveResponse("Could not save: invalid file.");
     }
     $targetPath = $resolved['full'];
 
     if (!is_writable($targetPath)) {
-        print "Could not save: the file is not writable on the server.";
-        exit;
+        formulize_themeeditor_sendSaveResponse("Could not save: the file is not writable on the server.");
     }
 
     if (file_put_contents($targetPath, $content) === false) {
-        print "Could not save: the file could not be written on the server.";
-        exit;
+        formulize_themeeditor_sendSaveResponse("Could not save: the file could not be written on the server.");
     }
 
-    exit; // empty body = success
+    // Saved. Hand back a fresh token for the next save - see the note on token lifetime in
+    // formulize_themeeditor_sendSaveResponse().
+    formulize_themeeditor_sendSaveResponse('', $GLOBALS['xoopsSecurity']->createToken(0, 'formulize_themeeditor_token'));
 }
 
 // Only webmasters can access this page
@@ -122,6 +137,11 @@ if ($adminPage['selected_file'] !== '') {
     $adminPage['extra_breadcrumbs'] = array(array('text' => $adminPage['selected_file']));
 }
 
+// CSRF token for the ajax save. A dedicated token name (rather than the default _CORE_TOKEN)
+// scopes it to this editor, so a token minted for some other admin form can't be replayed
+// into a theme file write, or vice versa.
+$adminPage['csrf_token_html'] = $GLOBALS['xoopsSecurity']->getTokenHTML('formulize_themeeditor_token');
+
 // Contents of the selected file, for display in the editor
 if ($adminPage['selected_file_is_image']) {
     $adminPage['selected_file_content'] = '';
@@ -131,6 +151,32 @@ if ($adminPage['selected_file_is_image']) {
         ? formulize_themeeditor_resolveVirtualPath($adminPage['selected_theme'], $adminPage['selected_file'])
         : false;
     $adminPage['selected_file_content'] = $resolvedSelected ? file_get_contents($resolvedSelected['full']) : '';
+}
+
+/**
+ * Emit the ajax reply for a save attempt and end the request. Every exit from the save
+ * branch at the top of this file goes through here, so the editor always gets JSON:
+ *   {"success":true,"token":"..."}  - saved; token is the CSRF token to use for the next save
+ *   {"success":false,"error":"..."} - not saved; error is shown to the user
+ *
+ * On token lifetime: icms_core_Security::validateToken() deliberately does not consume a
+ * token on XMLHttpRequests (it only unlinks the token file on full page loads), so a single
+ * token already survives repeated saves. What it does not survive is its own timeout, which
+ * is the session expiry - so a long editing session could otherwise reach a point where
+ * saving silently starts failing. Returning a freshly minted token after each successful
+ * save slides that window forward, so the editor stays saveable for as long as it's in use.
+ * @param string $error - message to show the user, or '' on success
+ * @param string $token - fresh CSRF token to return on success
+ * @return void This function does not return; it ends the request.
+ */
+function formulize_themeeditor_sendSaveResponse($error = '', $token = '') {
+    if (!headers_sent()) {
+        header('Content-Type: application/json');
+    }
+    print json_encode(($error === '')
+        ? array('success' => true, 'token' => $token)
+        : array('success' => false, 'error' => $error));
+    exit;
 }
 
 /**
