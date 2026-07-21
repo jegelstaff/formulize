@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, getFidFromFormAdminPage, applyColumnChanges } from '../../utils';
+import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, applyColumnChanges, createMuseumForm, deleteMuseumForm } from '../../utils';
 
 /**
  * T2 (list pipeline) - comprehensive XSS filtering on a purpose-built, throwaway form.
@@ -40,16 +40,7 @@ test.describe.serial('T2 - XSS filtering on a dedicated form', () => {
 		// Create the form INSIDE the existing Museum application (created by the setup specs), the same way
 		// 029 does - so the cleanup test can find it under "Application: Museum" and delete it. Creating it
 		// via the aid=0 URL instead leaves it unassigned, where the delete navigation cannot reach it.
-		await page.goto('/modules/formulize/admin/ui.php?page=home');
-		await waitForAdminPageReady(page);
-		await page.getByRole('link', { name: 'Application: Museum' }).click();
-		await page.getByRole('link', { name: 'Create a new form' }).click();
-		await waitForAdminPageReady(page);
-		await expect(page.locator('input[name="forms-form_title"]')).toBeVisible();
-		await page.getByRole('textbox', { name: 'Form title:' }).fill('XSS Filter Test');
-		await page.locator('input[name="pi_new_caption"]').fill('ID');
-		await saveAdminForm(page);
-		testFid = await getFidFromFormAdminPage(page);
+		testFid = await createMuseumForm(page, 'XSS Filter Test', 'ID');
 		expect(testFid).toBeGreaterThan(0);
 
 		// Add elements by navigating straight to the "new element" admin URL for each type - more robust
@@ -139,18 +130,6 @@ test.describe.serial('T2 - XSS filtering on a dedicated form', () => {
 	test('cleanup: delete the throwaway form', async ({ page }) => {
 		expect(testFid, 'the build test must have run first').toBeGreaterThan(0);
 		await login(page, 'admin');
-		await page.goto('/modules/formulize/admin/ui.php?page=home');
-		await waitForAdminPageReady(page);
-		await page.getByRole('link', { name: 'Application: Museum' }).click();
-		await waitForAdminPageReady(page);
-		const formBox = page.locator(`div.form-listing-box[formid="${testFid}"]`);
-		await expect(formBox).toBeVisible();
-		await formBox.locator('.form-name-text').click();
-		const deleteLink = page.locator(`a.deleteformlink[target="${testFid}"]`);
-		await expect(deleteLink).toBeVisible();
-		page.once('dialog', async dialog => { await dialog.accept(); });
-		await deleteLink.click();
-		await waitForAdminPageReady(page);
-		await expect(page.locator(`div.form-listing-box[formid="${testFid}"]`)).toHaveCount(0);
+		await deleteMuseumForm(page, testFid);
 	});
 });

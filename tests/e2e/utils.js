@@ -799,6 +799,85 @@ export async function getFidFromFormAdminPage(page) {
 }
 
 /**
+ * Create a form inside the Museum application (the shared throwaway-form pattern used by the
+ * XSS/handle-rename validate specs), returning its fid.
+ *
+ * @param {object} page Playwright page
+ * @param {string} title Form title
+ * @param {string} [piCaption] Caption for the primary identifier field; left unset if omitted
+ * @returns {Promise<number>}
+ */
+export async function createMuseumForm(page, title, piCaption = null) {
+	await page.goto('/modules/formulize/admin/ui.php?page=home');
+	await waitForAdminPageReady(page);
+	await page.getByRole('link', { name: 'Application: Museum' }).click();
+	await page.getByRole('link', { name: 'Create a new form' }).click();
+	await waitForAdminPageReady(page);
+	await expect(page.locator('input[name="forms-form_title"]')).toBeVisible();
+	await page.getByRole('textbox', { name: 'Form title:' }).fill(title);
+	if (piCaption) {
+		await page.locator('input[name="pi_new_caption"]').fill(piCaption);
+	}
+	await saveAdminForm(page);
+	return await getFidFromFormAdminPage(page);
+}
+
+/**
+ * Delete a form from the Museum application's form list (open its panel, click Delete, accept the
+ * confirm() warning). This also exercises form deletion from the application's form list itself.
+ *
+ * @param {object} page Playwright page
+ * @param {number} fid The form to delete
+ * @param {{expectDialogMessage?: string, formTitleText?: string}} [opts]
+ *   expectDialogMessage: if given, assert the confirm() dialog's text contains this
+ *   formTitleText: if given, assert this text is gone from the page after deletion
+ */
+export async function deleteMuseumForm(page, fid, opts = {}) {
+	const { expectDialogMessage = null, formTitleText = null } = opts;
+
+	await page.goto('/modules/formulize/admin/ui.php?page=home');
+	await waitForAdminPageReady(page);
+	await page.getByRole('link', { name: 'Application: Museum' }).click();
+	await waitForAdminPageReady(page);
+
+	// The Delete link is in the DOM for every form, but it lives inside the form's details panel, which
+	// is hidden until the form's box in the listing is clicked (clickFormDetails() in
+	// templates/js/formulize-admin-organize-forms.js). Click the form's name to open its panel — the
+	// name, not the box itself, because the box's centre may land on the Elements/Screens links inside
+	// it, which would navigate away instead of opening the panel.
+	const formBox = page.locator(`div.form-listing-box[formid="${fid}"]`);
+	await expect(formBox).toBeVisible();
+	await formBox.locator('.form-name-text').click();
+
+	// Each form's Delete link carries its fid in the target attribute, so this addresses exactly the
+	// form we made and not any other form in the Museum application.
+	const deleteLink = page.locator(`a.deleteformlink[target="${fid}"]`);
+	await expect(deleteLink).toBeVisible();
+
+	// The click raises a confirm() dialog warning that the data will be lost. Playwright dismisses
+	// dialogs by default (which would cancel the delete), so accept it explicitly.
+	let dialogMessage = null;
+	page.once('dialog', async dialog => {
+		dialogMessage = dialog.message();
+		await dialog.accept();
+	});
+	await deleteLink.click();
+
+	if (expectDialogMessage) {
+		await expect.poll(() => dialogMessage).toContain(expectDialogMessage);
+	}
+
+	// The form is gone from the listing. Assert on the form's box, not just its Delete link: the link is
+	// hidden until its panel is opened, so a hidden-but-present link would still satisfy toHaveCount(0)
+	// for the wrong reason.
+	await waitForAdminPageReady(page);
+	await expect(formBox).toHaveCount(0);
+	if (formTitleText) {
+		await expect(page.getByText(formTitleText)).toHaveCount(0);
+	}
+}
+
+/**
  * Robustly set the "show this link to these groups" selection for an application
  * menu entry, working around the Playwright-vs-browser-UI save race.
  *
