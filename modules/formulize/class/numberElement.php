@@ -189,7 +189,7 @@ class formulizeNumberElementHandler extends formulizeTextElementHandler {
 		if(array_key_exists('max', $properties)) {
 			$ele_value[ELE_VALUE_TEXT_MAX] = $properties['max'];
 		}
-		if(array_key_exists(ELE_VALUE_TEXT_MAX, $ele_value) AND array_key_exists(ELE_VALUE_TEXT_MIN, $ele_value) AND $ele_value[ELE_VALUE_TEXT_MAX] < $ele_value[ELE_VALUE_TEXT_MIN]) {
+		if(isset($ele_value[ELE_VALUE_TEXT_MAX]) AND isset($ele_value[ELE_VALUE_TEXT_MIN]) AND $ele_value[ELE_VALUE_TEXT_MAX] < $ele_value[ELE_VALUE_TEXT_MIN]) {
 			$ele_value[ELE_VALUE_TEXT_MAX] = $ele_value[ELE_VALUE_TEXT_MIN];
 		}
 		return [
