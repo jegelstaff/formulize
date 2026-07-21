@@ -1,5 +1,28 @@
  <div class="panel-content content themeeditor">
 
+    <{if $adminPage.writability_problem}>
+        <{* Shown when the web server can't write the theme's files. Saving will fail until
+            this is fixed on the server, so the paths are listed as selectable text for the
+            admin to act on rather than being buried in a js alert(). *}>
+        <div class="themeeditor-warning" id="themeeditor-writability-warning">
+            <strong>&#9888; Saving is not going to work yet.</strong>
+            <p>
+                The web server does not have permission to write
+                <{if $adminPage.writability_selected_file_unwritable}>the file you are editing<{else}>some of this theme's files<{/if}>,
+                and it was not able to correct the permissions itself. Any changes you save will be rejected until the
+                paths below are made writable by the web server user on your server.
+            </p>
+            <ul class="themeeditor-warning-paths">
+                <{foreach from=$adminPage.writability_paths item=warningPath}>
+                    <li><{$warningPath|escape}></li>
+                <{/foreach}>
+            </ul>
+            <{if $adminPage.writability_extra_count > 0}>
+                <p class="themeeditor-warning-more">…and <{$adminPage.writability_extra_count}> more. Making the theme's folders writable will usually resolve all of them at once.</p>
+            <{/if}>
+        </div>
+    <{/if}>
+
     <form id="themeeditor-form">
         <input type="hidden" name="themeeditor_save" value="1">
         <input type="hidden" name="file" value="<{$adminPage.selected_file}>">
@@ -61,6 +84,30 @@
     </div>
 
 <style>
+    .themeeditor-warning {
+        background: #ffe6e6;
+        border: 1px solid #cc0000;
+        padding: 10px;
+        margin-bottom: 20px;
+        border-radius: 4px;
+    }
+    .themeeditor-warning p {
+        margin: 0.5em 0;
+    }
+    .themeeditor-warning-paths {
+        margin: 0.5em 0;
+        padding-left: 1.5em;
+        max-height: 10em;
+        overflow-y: auto;
+        font-family: monospace;
+        font-size: 0.9em;
+        /* the paths are meant to be copied out and used on the server, so don't let long
+           ones get truncated or force the panel to scroll sideways */
+        word-break: break-all;
+    }
+    .themeeditor-warning-more {
+        font-style: italic;
+    }
     .themeeditor-layout {
         display: flex;
         align-items: stretch;

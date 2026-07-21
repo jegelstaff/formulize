@@ -60,8 +60,11 @@ if (isset($_POST['themeeditor_save'])) {
     }
     $targetPath = $resolved['full'];
 
-    if (!is_writable($targetPath)) {
-        formulize_themeeditor_sendSaveResponse("Could not save: the file is not writable on the server.");
+    // Same repair-first check the page load does, repeated here because permissions can
+    // change between loading the editor and saving, and because a save can be attempted
+    // without a page load in between.
+    if (!is_writable($targetPath) AND !formulize_themeeditor_makeWritable($targetPath, 0644)) {
+        formulize_themeeditor_sendSaveResponse("Could not save: the web server does not have permission to write this file (" . $targetPath . "). The permissions on this file need to be changed on your server.");
     }
 
     if (file_put_contents($targetPath, $content) === false) {
@@ -137,6 +140,19 @@ if ($adminPage['selected_file'] !== '') {
     $adminPage['extra_breadcrumbs'] = array(array('text' => $adminPage['selected_file']));
 }
 
+// Saving writes straight to disk, so check up front that the web server can actually write
+// these files (repairing what it can) and warn if it can't - otherwise the first sign of
+// trouble is a failed save after the user has already made their edits. The selected file is
+// called out separately because that's the one the user is about to try to save.
+$writabilityProblems = formulize_themeeditor_checkWritability($adminPage['selected_theme'], $adminPage['theme_files']);
+$adminPage['writability_problem'] = !empty($writabilityProblems['paths']);
+$adminPage['writability_selected_file_unwritable'] = in_array($adminPage['selected_file'], $writabilityProblems['files'], true);
+// Only a sample of paths is listed: a theme whose whole folder is read-only produces one
+// entry per file, which is unreadable as a wall of text and doesn't tell the admin anything
+// the first few paths don't already say.
+$adminPage['writability_paths'] = array_slice($writabilityProblems['paths'], 0, 10);
+$adminPage['writability_extra_count'] = count($writabilityProblems['paths']) - count($adminPage['writability_paths']);
+
 // CSRF token for the ajax save. A dedicated token name (rather than the default _CORE_TOKEN)
 // scopes it to this editor, so a token minted for some other admin form can't be replayed
 // into a theme file write, or vice versa.
@@ -151,6 +167,70 @@ if ($adminPage['selected_file_is_image']) {
         ? formulize_themeeditor_resolveVirtualPath($adminPage['selected_theme'], $adminPage['selected_file'])
         : false;
     $adminPage['selected_file_content'] = $resolvedSelected ? file_get_contents($resolvedSelected['full']) : '';
+}
+
+/**
+ * Check that everything the editor might need to write for a theme is actually writable by
+ * the web server, repairing what it can. This mirrors the fix-first approach ui.php takes
+ * with the /tokens folder: try to correct the problem, and only warn about what's left.
+ *
+ * Themes off the site root are commonly deployed owned by a different user than the one
+ * Apache/PHP runs as, so the editor has to say so when it loads rather than letting the
+ * user write a file's worth of edits and only discover at save time that it can't be saved.
+ *
+ * Note that it's the FILES that must be writable, not just the folders. A save only ever
+ * overwrites a file that already exists (file_put_contents truncating it in place), and that
+ * needs write permission on the file itself - directory permission governs creating,
+ * deleting and renaming, which this editor never does. Directories are checked and reported
+ * anyway, because a read-only directory is usually the underlying cause an admin has to fix.
+ *
+ * @param string $theme      - theme directory name (already validated against installed themes)
+ * @param array  $themeFiles - the theme's virtual file list, as already built for the tree
+ * @return array array('paths'=>absolute paths still not writable, 'files'=>virtual paths of unwritable files)
+ */
+function formulize_themeeditor_checkWritability($theme, $themeFiles) {
+    $problems = array('paths' => array(), 'files' => array());
+    foreach (formulize_themeeditor_getRoots($theme) as $root) {
+        // A root that isn't on disk (e.g. a theme with no screen templates) isn't a problem,
+        // it just means that pseudo-folder doesn't appear in the tree.
+        if (!is_dir($root['dir'])) {
+            continue;
+        }
+        if (!is_writable($root['dir']) AND !formulize_themeeditor_makeWritable($root['dir'], 0755)) {
+            $problems['paths'][] = $root['dir'];
+        }
+    }
+    foreach ($themeFiles as $virtualPath) {
+        $resolved = formulize_themeeditor_resolveVirtualPath($theme, $virtualPath);
+        if ($resolved === false) {
+            continue;
+        }
+        if (!is_writable($resolved['full']) AND !formulize_themeeditor_makeWritable($resolved['full'], 0644)) {
+            $problems['paths'][] = $resolved['full'];
+            $problems['files'][] = $virtualPath;
+        }
+    }
+    return $problems;
+}
+
+/**
+ * Try to make a path writable by the web server, and report whether it worked. chmod only
+ * succeeds when the web server user owns the path (or is root), so returning false here is
+ * the ordinary outcome on a deployment where the theme files belong to someone else - that
+ * is exactly the case the caller needs to warn about, not an error worth surfacing itself,
+ * hence the silenced call.
+ * @param string $path - file or directory to repair
+ * @param int $mode - permissions to apply
+ * @return bool true if the path is writable afterwards
+ */
+function formulize_themeeditor_makeWritable($path, $mode) {
+    if (@chmod($path, $mode) === false) {
+        return false;
+    }
+    // is_writable() results are cached per request, so the recheck needs a fresh stat to
+    // reflect the chmod we just did.
+    clearstatcache(true, $path);
+    return is_writable($path);
 }
 
 /**
