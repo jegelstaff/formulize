@@ -501,6 +501,7 @@ define("_AM_ELE_TYPE_NUMBER","Numbers Only");
 
 
 define("_AM_ELE_SIZE","Size");
+define("_AM_ELE_SIZE_DESC", "The maximum number of characters that the user can type in the box, including a decimal point and a negative sign (ie: -123.45 is 7 characters).");
 define("_AM_ELE_MAX_LENGTH","Maximum length");
 define("_AM_ELE_MAX_VALUE","Maximum value");
 define("_AM_ELE_MIN_VALUE","Minimum value");
