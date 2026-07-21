@@ -4,14 +4,13 @@ if (!defined('XOOPS_ROOT_PATH')) {
 }
 
 // Provisions the 'formulizeEnforceHtmlPurification' Formulize module preference (Settings -> Advanced ->
-// Debugging) on existing installs. Fresh installs get it from xoops_version.php with a default of 1
-// (ENFORCE - filter unsafe HTML before display). Existing installs are deliberately provisioned with 0
-// (REPORT-ONLY - display data as-is, but log which elements would be filtered), so that upgrading does
-// NOT suddenly change how an established site's data displays. The admin can review the log (Log Viewer)
-// to see which elements would be affected, then turn enforcement on when ready.
-//
-// Idempotent: skips if the config item already exists. Gated to run once, when the stored dbversion is
-// below 13 (the version that introduced this setting).
+// Debugging) on existing installs, with a value of 1 (ENFORCE - filter unsafe HTML before display), which
+// is the same default fresh installs get from xoops_version.php.
+// If content IS affected switch the setting to report-only, then use the Log Viewer to see exactly
+// which elements/entries would be filtered and fix them, before switching enforcement back on.
+// Purification strips <button>/onclick, <form>/<input>, <iframe> and <svg>, so interactive markup
+// produced by derived elements or template screens is the content most likely to need attention.
+
 function formulize_patch_007_html_purification_setting($prev_dbversion, $required_dbversion) {
     global $xoopsDB;
 
@@ -41,14 +40,14 @@ function formulize_patch_007_html_purification_setting($prev_dbversion, $require
     $orderRow = $orderRes ? $xoopsDB->fetchArray($orderRes) : null;
     $confOrder = ($orderRow && $orderRow['m'] !== null) ? intval($orderRow['m']) + 1 : 0;
 
-    // conf_value is '0' (report-only) for existing installs - see the note at the top of this file.
+    // conf_value is '1' (ENFORCE) - matching the fresh-install default, see the note at the top of this file.
     // conf_title / conf_desc store the language-constant NAMES (resolved via constant() at display time),
     // matching how every other module config item is stored.
     $sql = "INSERT INTO $configTable (conf_modid, conf_catid, conf_name, conf_title, conf_value, conf_desc, conf_formtype, conf_valuetype, conf_order) VALUES ("
         . $modid . ", 0, "
         . $xoopsDB->quoteString('formulizeEnforceHtmlPurification') . ", "
         . $xoopsDB->quoteString('_MI_formulize_ENFORCEHTMLPURIFICATION') . ", "
-        . $xoopsDB->quoteString('0') . ", "
+        . $xoopsDB->quoteString('1') . ", "
         . $xoopsDB->quoteString('_MI_formulize_ENFORCEHTMLPURIFICATION_DESC') . ", "
         . $xoopsDB->quoteString('yesno') . ", "
         . $xoopsDB->quoteString('int') . ", "
@@ -60,6 +59,6 @@ function formulize_patch_007_html_purification_setting($prev_dbversion, $require
         return false;
     }
 
-    echo '<p>Added the "Filter unsafe HTML from displayed data?" setting (Settings &rarr; Advanced &rarr; Debugging), set to report-only for this existing install. Review the Log Viewer to see which elements would be filtered, then turn it on when ready.</p>';
+    echo '<p>Added the "Filter unsafe HTML from displayed data?" setting (Settings &rarr; Advanced &rarr; Debugging), turned ON. If any of your content breaks, switch this setting to off - it then runs in report-only mode, and the Log Viewer will show you exactly which elements and entries are affected so you can fix them and turn it back on.</p>';
     return true;
 }

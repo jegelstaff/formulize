@@ -3228,8 +3228,10 @@ function interpretTextboxValue($elementIdentifier, $entry_id = 'new', $currentVa
 					'ele_value' => $ele_value,
 					'currentValue' => $currentValue
 				);
+				// $makeValuesSafeForDisplay=false for the same reason as the plain-default branch below: this
+				// return value is also stored as the entry's default, and its display sink escapes already.
 				list($evaluatedDefault, $evalSucceeded) = $elementRenderer->evalAdminPHPWithReferences(
-					stripslashes(removeOpeningPHPTag($configuredDefaultValue)), $entry_id, $form_id, $renderedElementMarkupName, $screen, 'default', $extraScope);
+					stripslashes(removeOpeningPHPTag($configuredDefaultValue)), $entry_id, $form_id, $renderedElementMarkupName, $screen, 'default', $extraScope, true, false);
 				if($evalSucceeded) {
 					$textboxValue = $evaluatedDefault;
 				} else {
@@ -3250,8 +3252,12 @@ function interpretTextboxValue($elementIdentifier, $entry_id = 'new', $currentVa
 					}
 				}
     } else {
-				// plain (non-PHP) default: substitute {ref} values unescaped, as before, for display
-				$textboxValue = $elementRenderer->formulize_replaceReferencesAndVariables($textboxValue, $entry_id, $form_id, $renderedElementMarkupName, $screen);
+				// plain (non-PHP) default: substitute {ref} values UNESCAPED. Unlike captions/help text/static
+				// content, what this function returns is not only displayed - textElement::getDefaultValue()
+				// also writes it to the database as the entry's stored value, so escaping here would persist
+				// HTML entities as data. Display safety for this value is handled at its sink instead:
+				// icms_form_elements_Text::render() normalizes and escapes whatever it is given.
+				$textboxValue = $elementRenderer->formulize_replaceReferencesAndVariables($textboxValue, $entry_id, $form_id, $renderedElementMarkupName, $screen, false);
     }
 
 	  $foundTerms = array();
@@ -6599,6 +6605,70 @@ function formulize_purifyHtmlValue($value, $handle = '', $entry_id = 0) {
     }
 
     return FORMULIZE_PURIFY_HTML_VALUES ? $purified : $value;
+}
+
+/**
+ * Make a value that is about to be substituted into admin-authored display text safe to render.
+ *
+ * The text a {reference} gets substituted into - an element caption, help text, static content, a grid
+ * heading - is authored by someone who can edit the form, and it deliberately supports HTML so that
+ * formatting and layout in captions work. That authored markup is trusted and is left exactly as written.
+ * The SUBSTITUTED VALUE is the part that is not trusted: it is user-submitted entry data, and getValue()
+ * has already decoded it back to its raw form by the time it arrives here. So the value alone is filtered.
+ *
+ * PURIFY rather than escape, because a referenced element may legitimately hold markup (a derived value,
+ * a rich text field), and escaping would render that as visible tags. Allow-list filtering keeps the
+ * formatting and drops the script/event/URI vectors. For a plain-text field the practical effect of
+ * purifying instead of escaping is only that benign markup survives, which is harmless in this context.
+ *
+ * NB: whether purification actually enforces or only reports is governed by FORMULIZE_PURIFY_HTML_VALUES,
+ * exactly as on the list path. formulize_purifyHtmlValue() falls back to escaping if the purifier is not
+ * available, so this never returns unfiltered markup.
+ *
+ * DISPLAY PATH ONLY. A value about to be used in logic - a comparison, a calculation, a variable bound
+ * for eval'd code - must stay clean and must NOT be passed through here.
+ *
+ * @param string $value The resolved value, as it will appear in the page
+ * @param string $handle Optional. Element handle, for tagging purification log events
+ * @param int $entry_id Optional. Entry id, for tagging purification log events
+ * @return string The value, purified (or escaped, if purification was not possible)
+ */
+function formulize_makeValueSafeForDisplay($value, $handle = '', $entry_id = 0, $insideHtmlTag = false) {
+    global $myts;
+    if(!is_string($value) OR $value === '') {
+        return $value;
+    }
+    if($insideHtmlTag) {
+        // The reference sits INSIDE a tag the author wrote - eg. <div title="{name}"> or <a href="{url}">.
+        // Purification cannot help here: it filters the value as a standalone chunk of HTML, with no idea
+        // it is about to become attribute content, so it leaves quotes intact and the value can close the
+        // attribute and add an event handler of its own. Escape instead, which is what attribute content
+        // needs. Markup in the value is meaningless in this position anyway.
+        return $myts->htmlSpecialChars($value);
+    }
+    return formulize_purifyHtmlValue($value, $handle, $entry_id);
+}
+
+/**
+ * Is $position inside an HTML tag (ie. between a < and its >) rather than in element content?
+ *
+ * Used to tell an attribute-context substitution from a body-text one, so each can be made safe the way
+ * its context requires. Deliberately simple: scan back for the nearest < and >, and report whether the
+ * nearest opener is still unclosed. Errs toward reporting "inside a tag" for malformed markup, which is
+ * the safe direction - it escapes rather than purifies.
+ *
+ * @param string $text The full text being substituted into
+ * @param int $position Offset of the reference within $text
+ * @return bool
+ */
+function formulize_positionIsInsideHtmlTag($text, $position) {
+    $before = substr($text, 0, $position);
+    $lastOpen = strrpos($before, '<');
+    if($lastOpen === false) {
+        return false;
+    }
+    $lastClose = strrpos($before, '>');
+    return ($lastClose === false OR $lastClose < $lastOpen);
 }
 
 /**

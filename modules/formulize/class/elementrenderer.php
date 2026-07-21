@@ -231,8 +231,14 @@ class formulizeElementRenderer{
 	 * @param mixed $screen The screen object, if any
 	 * @return string Text with replacements made
 	 */
-	function formulize_replaceReferencesAndVariables($text, $entry_id, $id_form, $renderedElementMarkupName='', $screen=null) {
-		$text = $this->formulize_replaceCurlyBracketVariables($text, $entry_id, $id_form, $renderedElementMarkupName, $screen);
+	/**
+	 * @param bool $makeValuesSafeForDisplay Whether the substituted values are being put into text that is
+	 *        headed for the screen as HTML (the normal case - captions, help text, static content, grid
+	 *        headings). Pass FALSE only for value-computation callers, where the result is stored or is
+	 *        consumed as data rather than rendered; see formulize_replaceCurlyBracketVariables().
+	 */
+	function formulize_replaceReferencesAndVariables($text, $entry_id, $id_form, $renderedElementMarkupName='', $screen=null, $makeValuesSafeForDisplay=true) {
+		$text = $this->formulize_replaceCurlyBracketVariables($text, $entry_id, $id_form, $renderedElementMarkupName, $screen, $makeValuesSafeForDisplay);
 		$text = formulize_handleRandomAndDateText($text);
 		return $text;
 	}
@@ -268,6 +274,7 @@ class formulizeElementRenderer{
 		if($renderedElementMarkupName) {
 			catalogConditionalElement($renderedElementMarkupName, array($elementObject->getVar('ele_handle')), $screen);
 		}
+
 		return array(true, $replacementTerm);
 	}
 
@@ -275,7 +282,12 @@ class formulizeElementRenderer{
   // NB: this is the plain display substitution. Code that is about to be eval()'d must NOT use this
   // to put values into itself - use bindReferencesForPHPEval() instead, which supplies the values as
   // runtime variables rather than as text spliced into the code.
-	function formulize_replaceCurlyBracketVariables($text, $entry_id, $id_form, $renderedElementMarkupName='', $screen=null) {
+	// $makeValuesSafeForDisplay defaults to TRUE because almost every caller is putting the result on the
+	// screen as HTML, and a substituted value is user data. Callers that are computing a VALUE rather than
+	// display text - notably interpretTextboxValue(), whose return is also written to the database as an
+	// entry's default - must pass FALSE, or escaped markup ends up stored as data. Such callers are
+	// responsible for their own output safety at whatever sink they eventually reach.
+	function formulize_replaceCurlyBracketVariables($text, $entry_id, $id_form, $renderedElementMarkupName='', $screen=null, $makeValuesSafeForDisplay=true) {
 		if(strstr($text, "}") AND strstr($text, "{")) {
 			// a new entry has no saved data to gather - its references resolve to '' (except async
 			// submitted values, which resolveReferenceValue reads from the global before the entry)
@@ -299,6 +311,17 @@ class formulizeElementRenderer{
 					// references a multi-value element receives the actual array and can work with it.
 					// Highly unlikely there would be an array, but anyway...
 					$replacementTerm = is_array($replacementTerm) ? implode(", ", $replacementTerm) : (string)$replacementTerm;
+					// $text is about to be rendered as HTML, and it is never escaped as a whole - captions and
+					// other display text deliberately support the markup their author wrote. The author can
+					// edit the form, so that markup is trusted. The SUBSTITUTED VALUE is not: it is user
+					// data, and getValue() has already decoded it back to its raw form. Filter the value only;
+					// the admin's markup around the {reference} is left exactly as authored.
+					if($makeValuesSafeForDisplay) {
+						// how the value has to be made safe depends on where in the authored markup it lands:
+						// attribute content needs escaping, body content gets purified so markup survives
+						$replacementTerm = formulize_makeValueSafeForDisplay($replacementTerm, $term, $entry_id,
+							formulize_positionIsInsideHtmlTag($text, $bracketPos));
+					}
 					$text = str_replace("{".$term."}",$replacementTerm,$text);
 					$lookAhead = strlen($replacementTerm); // move ahead the length of what we replaced
 				} else {
@@ -403,7 +426,7 @@ class formulizeElementRenderer{
 	 *   signalled an error by returning false. $result is null when $succeeded is false, so callers
 	 *   can substitute whatever error text is appropriate for where the content appears.
 	 */
-	function evalAdminPHPWithReferences($code, $entry_id, $form_id, $markupName='', $screen=null, $resultVariable=null, $extraScope=array(), $substituteResultReferences=true) {
+	function evalAdminPHPWithReferences($code, $entry_id, $form_id, $markupName='', $screen=null, $resultVariable=null, $extraScope=array(), $substituteResultReferences=true, $makeValuesSafeForDisplay=true) {
 		// everything this method needs after the eval is held in __formulize prefixed variables, so that
 		// a caller's extra scope cannot clobber it on its way into the eval'd code
 		$__formulizeEntryId = $entry_id;
@@ -412,6 +435,7 @@ class formulizeElementRenderer{
 		$__formulizeScreen = $screen;
 		$__formulizeResultVariable = $resultVariable;
 		$__formulizeSubstituteResult = $substituteResultReferences;
+		$__formulizeMakeValuesSafeForDisplay = $makeValuesSafeForDisplay;
 		$__formulizeCode = formulize_handleRandomAndDateText(removeOpeningPHPTag($code));
 		// gathered once here and handed to the binding, so the entry is only read from the database once.
 		// A new entry has no saved data, so nothing is gathered and its references resolve to ''
@@ -462,7 +486,7 @@ class formulizeElementRenderer{
 		}
 		$__formulizeResult = $__formulizeResultVariable !== null ? $$__formulizeResultVariable : $__formulizeEvalReturn;
 		if($__formulizeSubstituteResult) { // the code may itself have produced { } references
-			$__formulizeResult = $this->formulize_replaceReferencesAndVariables($__formulizeResult, $__formulizeEntryId, $__formulizeFormId, $__formulizeMarkupName, $__formulizeScreen);
+			$__formulizeResult = $this->formulize_replaceReferencesAndVariables($__formulizeResult, $__formulizeEntryId, $__formulizeFormId, $__formulizeMarkupName, $__formulizeScreen, $__formulizeMakeValuesSafeForDisplay);
 		}
 		return array($__formulizeResult, true);
 	}
