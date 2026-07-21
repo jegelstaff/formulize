@@ -475,7 +475,7 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
     // wrap each URL in a download link. $value (the comma separated URL list, set by
     // prepareDataForDataset) has ALREADY been escaped by the parent when we get here, so the URLs are
     // safe to place in an href.
-    function composeMarkupForList($value, $handle="", $entry_id=0) {
+    function composeMarkupForList($value, $handle="", $entry_id=0, $rawValue=null, $textWidth=100) {
         if($value === '' OR $value === null) {
             return $value;
         }

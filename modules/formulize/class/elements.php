@@ -1262,6 +1262,12 @@ class formulizeElementsHandler {
 			$this->length = 35;
 		}
 
+		// The raw (unescaped) value is handed to composeMarkupForList so an element that needs the
+		// original text - to look something up, or to build an href - does not have to decode the escaped
+		// value back. It is entry-specific and passed as an argument, never stored on the (singleton)
+		// handler, since one handler renders many entries per page.
+		$rawValue = $value;
+
 		// 1. THE canonical safety step. Applies to every value, every element type, no opt-out.
 		if($this->treatDataAsHtml()) {
 			// intentional markup (derived values, rich text): allow-list filter rather than escape,
@@ -1271,8 +1277,10 @@ class formulizeElementsHandler {
 			$value = $myts->htmlSpecialChars($value);
 		}
 
-		// 2. the element wraps its (already safe) value in any markup of its own
-		$value = $this->composeMarkupForList($value, $handle, $entry_id);
+		// 2. the element wraps its (already safe) value in any markup of its own. It receives the raw
+		// value and the column width too, so a markup-composer that truncates its own display text (and
+		// sets length=0 so step 3 does not then truncate the markup it built) has what it needs.
+		$value = $this->composeMarkupForList($value, $handle, $entry_id, $rawValue, $textWidth);
 
 		// 3. truncation - never for HTML, since cutString() counts characters and would sever tags
 		if(!$this->treatDataAsHtml() AND $this->length > 0) {
@@ -1320,12 +1328,20 @@ class formulizeElementsHandler {
 	 * is preserved as-is. Never escape $value again in here, and never build markup anywhere that
 	 * runs before this point - doing so is what allows user data into an href/attribute unescaped.
 	 *
-	 * @param string $value The escaped/purified value
+	 * Any entry-specific state this needs (eg. a lookup keyed off the raw value + entry_id) must be
+	 * derived here, per call, NOT stored on the handler between formatDataForList() and here - the handler
+	 * is a singleton that renders many entries per page, so a property set for one entry would leak to the
+	 * next. Function-static caches/counters (keyed by entry) are fine and are how it is done today.
+	 *
+	 * @param string $value The escaped/purified value (safe to place in HTML as-is)
 	 * @param string $handle The element handle
 	 * @param int $entry_id The entry the value belongs to
+	 * @param string|null $rawValue The value BEFORE escaping - use for lookups / hrefs, never output it raw
+	 * @param int $textWidth The list column width; if this composer truncates its own display text it
+	 *                       should do so here and set $this->length=0 so step 3 does not truncate the markup
 	 * @return string The value, optionally wrapped in markup
 	 */
-	function composeMarkupForList($value, $handle="", $entry_id=0) {
+	function composeMarkupForList($value, $handle="", $entry_id=0, $rawValue=null, $textWidth=100) {
 		return $value; // default: no markup of our own
 	}
 

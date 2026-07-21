@@ -228,7 +228,7 @@ class formulizeEmailElementHandler extends formulizeElementsHandler {
     // wrap the address in a mailto link. $value is ALREADY escaped by the parent when we get here,
     // which is the point - previously this markup was built BEFORE escaping, which put the raw
     // submitted value inside an href and made "><script> a working injection.
-    function composeMarkupForList($value, $handle="", $entry_id=0) {
+    function composeMarkupForList($value, $handle="", $entry_id=0, $rawValue=null, $textWidth=100) {
         if($value === '' OR $value === null) {
             return $value;
         }

@@ -428,18 +428,39 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 	// for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
 	// Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
 	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
-		$this->clickable = true;
-		$this->striphtml = true;
-		$this->length = $textWidth;
+		$this->dataIsHtml = false; // a text value is plain text - it gets HTML-escaped by the canonical path
 		$elementObject = $this->get($handle);
 		$ele_value = $elementObject->getVar('ele_value');
-		if(isset($ele_value[$this->associatedElementKey])
-			AND $ele_value[$this->associatedElementKey]
-			AND $associatedElementMatchingText = $this->getAssociatedElementMatchingText($value, $ele_value[$this->associatedElementKey], $textWidth)) {
-				return $associatedElementMatchingText;
+		// "Associated element" linking is a per-element CONFIG (same for every entry). When it is on,
+		// composeMarkupForList does the per-entry match+link build AND the no-match plain-text fallback
+		// (truncate + linkify) itself - so turn off the parent's truncate/linkify to avoid cutting or
+		// double-processing the markup it returns.
+		if(isset($ele_value[$this->associatedElementKey]) AND $ele_value[$this->associatedElementKey]) {
+			$this->clickable = false;
+			$this->length = 0;
+		} else {
+			$this->clickable = true;
+			$this->length = $textWidth;
 		}
-		$value = formulize_handleRandomAndDateText($value);
-		return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+		// Always through the canonical path: the value is escaped there, then handed to composeMarkupForList.
+		return parent::formatDataForList($value, $handle, $entry_id, $textWidth);
+	}
+
+	// For elements configured with an "associated element", link occurrences of the value that match an
+	// entry in the associated form. $value is ALREADY escaped; $rawValue is the raw value, used only for
+	// the DB match. When not associated, the value is returned untouched (the parent handles it).
+	function composeMarkupForList($value, $handle="", $entry_id=0, $rawValue=null, $textWidth=100) {
+		$elementObject = $this->get($handle);
+		$ele_value = $elementObject->getVar('ele_value');
+		if(!isset($ele_value[$this->associatedElementKey]) OR !$ele_value[$this->associatedElementKey]) {
+			return $value; // not associated - leave the escaped value for the parent to truncate/linkify
+		}
+		$associatedElementMatchingText = $this->getAssociatedElementMatchingText((string) $rawValue, $ele_value[$this->associatedElementKey], $textWidth);
+		if($associatedElementMatchingText !== false) {
+			return $associatedElementMatchingText; // at least one match - self-contained, escaped+truncated links
+		}
+		// no match -> plain text display, done here since the parent's truncate/linkify were switched off
+		return formulize_text_to_hyperlink(printSmart($value, $textWidth));
 	}
 
 	/**

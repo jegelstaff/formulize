@@ -193,9 +193,9 @@ class formulizeColorpickElementHandler extends formulizeElementsHandler {
 
 	// Render the colour value as a swatch. $value is ALREADY escaped by the parent when we get here, so
 	// it is safe as the swatch's text content. The colour is additionally hard-filtered to hex for the
-	// CSS, because escaping does not make a value safe inside a style attribute (CSS injection).
-	function composeMarkupForList($value, $handle="", $entry_id=0) {
-		$color = preg_replace("/[^#a-fA-F0-9]/", "", htmlspecialchars_decode($value, ENT_QUOTES));
+	// CSS from the RAW value (escaping does not make a value safe inside a style attribute - CSS injection).
+	function composeMarkupForList($value, $handle="", $entry_id=0, $rawValue=null, $textWidth=100) {
+		$color = preg_replace("/[^#a-fA-F0-9]/", "", (string) $rawValue);
 		$textColorStyle = needsWhiteText($color) ? "color: white;" : "color: black;";
 		return "<div style='$textColorStyle max-width: 7em; padding: 0.5em; border: 1px solid black; text-align: center; background-color: ".$color.";'>$value</div>";
 	}

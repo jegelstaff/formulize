@@ -397,7 +397,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
     // get here, so it is safe to place in the href; the display name is escaped separately below.
     // We make the links manually rather than using the clickable flag, since we don't just want the URL
     // part to become a link, we want to wrap the display name in a link to the URL.
-    function composeMarkupForList($value, $handle="", $entry_id=0) {
+    function composeMarkupForList($value, $handle="", $entry_id=0, $rawValue=null, $textWidth=100) {
         if(!strstr($value, 'http')) {
             return $value; // not a valid file - an error message or similar, already escaped
         }
