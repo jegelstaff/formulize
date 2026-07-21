@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, addElementForm, applyColumnChanges, ElementType, createMuseumForm, deleteMuseumForm } from '../../utils';
+import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, applyColumnChanges, createMuseumForm, deleteMuseumForm } from '../../utils';
 
 /**
  * T2.10 - a clickable-in-list linked select must render its value as an escaped <a> pointing at the right
@@ -53,12 +53,12 @@ test.describe.serial('T2.10 - clickable linked select renders an escaped link', 
 		targetFid = await createMuseumForm(page, 'XSS Link Target', 'ID');
 		expect(targetFid).toBeGreaterThan(0);
 
-		await page.goto(`/modules/formulize/admin/ui.php?page=home`);
-		await waitForAdminPageReady(page);
-		await page.getByRole('link', { name: 'Application: Museum' }).click();
-		await page.getByText('XSS Link Target').first().click();
-		await page.getByRole('link', { name: 'Elements' }).first().click();
-		await addElementForm(page, ElementType.selectLinked);
+		// Navigate straight to the "new element" admin URL rather than clicking through the app/form
+		// listing: every form's "Elements" link is present in that page's DOM at once (form_listing.html
+		// loops over ALL forms in the app), so a bare .first() always lands on whichever form sorts first
+		// alphabetically ("Artifacts") instead of the one just clicked - silently creating the element on
+		// the wrong form. See 034's use of the same direct-URL approach.
+		await page.goto(`/modules/formulize/admin/ui.php?page=element&ele_id=new&fid=${targetFid}&aid=0&type=selectLinked`);
 		await waitForAdminPageReady(page);
 		await page.locator('input[name="elements-ele_caption"]').fill('Linked Value');
 		await page.locator('input[name="elements-ele_handle"]').fill('xss_linked_value');
@@ -85,6 +85,12 @@ test.describe.serial('T2.10 - clickable linked select renders an escaped link', 
 		await page.getByLabel('Linked Value').selectOption({ index: 1 });
 		await saveFormulizeForm(page);
 		await page.getByRole('link', { name: 'Save and Close' }).click();
+		// "Save and Close" releases the entry lock via async AJAX and then navigates itself (a POST-based
+		// screen reload, not a plain redirect) - both in flight after the click resolves. Unlike 034/036,
+		// which end their test right here and let the next test start a fresh page, this test keeps going
+		// on the SAME page - so the explicit goto below can fire while that navigation is still in progress
+		// and get net::ERR_ABORTED when the click's own navigation wins the race. Let it settle first.
+		await page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {});
 
 		// view the target list, reveal the linked column
 		await page.goto(`/modules/formulize/index.php?fid=${targetFid}`);

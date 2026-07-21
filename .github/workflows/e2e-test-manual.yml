@@ -79,6 +79,9 @@ jobs:
     - name: PHP logic tests ({element_handle} reference binding)
       run: docker exec formulize-web-1 php /var/www/html/tests/reference_binding_test.php
 
+    - name: PHP logic tests (T3.1' normalize-then-escape form sinks)
+      run: docker exec formulize-web-1 php /var/www/html/tests/normalize_then_escape_test.php
+
     - name: Install dependencies
       run: npm ci
       working-directory: tests/e2e
