@@ -8,12 +8,17 @@ import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, applyCo
  * with real payloads, asserts on the rendered DOM (never a text search of the page source), then deletes
  * the form so nothing is left behind:
  *
- *   - a plain TEXT element        -> the value must be ESCAPED (inert text)
- *   - a RICH-TEXT textarea        -> the value is intentional HTML, so it is PURIFIED: script/event
- *                                    vectors stripped, ordinary formatting kept
+ *   - a plain TEXT element        -> the value must be ESCAPED (inert text, no markup of any kind)
+ *   - a RICH-TEXT textarea        -> the value is intentional HTML, so it is PURIFIED: an allow-list
+ *                                    filter that strips script/event vectors (on* handlers, javascript:
+ *                                    URIs) but keeps ordinary formatting tags/attributes - including
+ *                                    <img>, which is why a purified payload can still contain a (harmless,
+ *                                    handler-stripped) <img> tag; that is not a vulnerability
  *   - a DERIVED element whose formula wraps the text field's value in admin-authored HTML
  *     (`<div class=...><b>..</b> $text</div>`) -> the X17 case: admin markup is TRUSTED and survives,
- *     but the user data interpolated into it is NOT, so its payload is stripped
+ *     and the user data interpolated into it goes through the same purification as rich text - any
+ *     script vector in it is stripped, but harmless formatting tags (like the <img> from the TEXT
+ *     payload, reused here since it's the same underlying entry value) can still appear
  *
  * Requires enforcement to be ON (formulizeEnforceHtmlPurification = 1), which is the fresh-install
  * default the suite runs under. Runs after the setup specs so the Museum application exists to host it.
@@ -118,18 +123,47 @@ test.describe.serial('T2 - XSS filtering on a dedicated form', () => {
 		await expect(page.locator('body')).toContainText(RICH_MARKER);   // rich text round-tripped (as plain snippet)
 		await expect(page.locator(`div.${DERIVED_WRAPPER}`)).toHaveCount(1); // derived admin markup survives (X17)
 
-		// NEGATIVE (safety) assertions - safe now that the page is confirmed loaded. Nothing the user
-		// submitted can execute: no probe rendered as a live element, and no on* handler attribute exists
-		// on the user data interpolated into the trusted derived wrapper (an absent attribute cannot fire).
-		await expect(page.locator(`img.${TEXT_PROBE}`)).toHaveCount(0); // text escaped -> not a live element
-		await expect(page.locator(`img.${RICH_PROBE}`)).toHaveCount(0); // rich stripped -> not a live element
-		await expect(page.locator(`div.${DERIVED_WRAPPER} [onerror]`)).toHaveCount(0); // handlers stripped
+		// NEGATIVE (safety) assertions - safe now that the page is confirmed loaded.
+		//
+		// The actual XSS-safety invariant is "no event-handler attribute survives on the CONTENT DERIVED
+		// FROM USER DATA", NOT "no <img> tag survives" and NOT "no on* attribute anywhere on the page" -
+		// the list chrome itself is full of legitimate onclick handlers with nothing to do with entry data
+		// (e.g. getHTMLForList's own per-cell edit icon: `onclick="renderElement(...)"`), so a page-wide
+		// check is not a meaningful signal and was over-broad. Purification (rich text, derived) is an
+		// ALLOW-LIST filter: it deliberately keeps ordinary formatting tags like <img> - rich content is
+		// allowed to include real images, that is what "ordinary formatting kept" means - while stripping
+		// every script vector (on* handlers, javascript: URIs, <script> tags). An <img> with no event
+		// handler cannot execute anything, so its mere presence is not a vulnerability. Asserting
+		// `img.PROBE toHaveCount(0)` for the rich-text/derived paths would fail against HTML Purifier's
+		// correct, intended output (verified directly: purifying these exact payloads strips
+		// onerror/onclick but keeps the <img> tag). So each check below is scoped to the specific cell
+		// that holds the payload in question, via the `main-cell-div` wrapper every list cell gets.
+		const richCell = page.locator('div.main-cell-div', { hasText: RICH_MARKER });
+		await expect(richCell).toHaveCount(1); // exactly one cell carries the rich-text payload
+		await expect(richCell.locator('[onerror]')).toHaveCount(0); // rich text: handler stripped
+		await expect(richCell.locator('[onclick]')).toHaveCount(0);
+		await expect(page.locator(`div.${DERIVED_WRAPPER} [onerror]`)).toHaveCount(0); // derived: handler stripped
 		await expect(page.locator(`div.${DERIVED_WRAPPER} [onclick]`)).toHaveCount(0);
+
+		// The plain TEXT field is the one path that must produce NO markup at all - it is escaped, not
+		// purified, so its payload is inert text with no child elements. The only place `img.${TEXT_PROBE}`
+		// can legitimately appear is inside the DERIVED wrapper: the admin's formula re-embeds this same raw
+		// entry value there, and THAT copy goes through purification (img kept, handler stripped) - the X17
+		// case this form exists to exercise, not a failure of the text field's own escaping.
+		await expect(page.locator(`img.${TEXT_PROBE}`)).toHaveCount(1); // exactly the expected derived-wrapper echo
+		await expect(page.locator(`div.${DERIVED_WRAPPER} img.${TEXT_PROBE}`)).toHaveCount(1); // ...and only there
 	});
 
-	test('cleanup: delete the throwaway form', async ({ page }) => {
-		expect(testFid, 'the build test must have run first').toBeGreaterThan(0);
+	// Cleanup lives in afterAll, not a trailing test(), because test.describe.serial SKIPS every
+	// remaining test once one fails - a trailing 'cleanup' test would never run, leaving the throwaway
+	// form behind forever. afterAll runs regardless of pass/fail (that is its whole purpose here), so
+	// the form is always removed. It needs its own page: afterAll is worker-scoped and cannot use the
+	// test-scoped `page` fixture, whose browser context is already gone by the time this runs.
+	test.afterAll(async ({ browser }) => {
+		if (!testFid) { return; } // the build step never got far enough to create a form
+		const page = await browser.newPage();
 		await login(page, 'admin');
 		await deleteMuseumForm(page, testFid);
+		await page.close();
 	});
 });
