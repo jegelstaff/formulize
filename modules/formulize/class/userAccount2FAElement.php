@@ -124,6 +124,11 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 		// (Browser POST order means an enabled radio selected after it wins, so the admin
 		// can still switch the user away from TFA_APP to another method.)
 		$adminEditingOtherUser = $entryUserId && $xoopsUser && intval($entryUserId) !== intval($xoopsUser->getVar('uid'));
+		// "Forget remembered devices" only makes sense for the account holder: forget.php always
+		// acts on the currently logged-in browser session's own profile (global $xoopsUser), so
+		// showing it to an admin editing someone else's entry would clear the admin's own devices,
+		// not the target user's.
+		$isOwnAccount = $entryUserId && $xoopsUser && intval($entryUserId) === intval($xoopsUser->getVar('uid'));
 		$disabledOptions2fa = $adminEditingOtherUser ? array(TFA_APP) : array();
 		$tfaAppHidden = ($adminEditingOtherUser && $ele_value == TFA_APP)
 			? "<input type='hidden' name='" . htmlspecialchars($markupName, ENT_QUOTES) . "' value='" . intval(TFA_APP) . "'>"
@@ -135,6 +140,7 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 
 		// Add the confirmation dialog UI when the element is editable
 		$dialogHtml = '';
+		$forgetDevicesHtml = '';
 		if(!$isDisabled) {
 			global $xoopsConfig, $xoopsUser;
 			if(file_exists(XOOPS_ROOT_PATH.'/modules/formulize/images/working-'.$xoopsConfig['language'].'.gif')) {
@@ -180,6 +186,29 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 
 			// Dialog title — use the existing _US_2FA constant if loaded, else a plain fallback
 			$dialogTitle = defined('_US_2FA') ? addslashes(_US_2FA) : 'Two-Factor Authentication';
+
+			// "Forget remembered devices" button, restored from the pre-Formulize-form profile
+			// edit page (modules/profile/include/forms.php), which stopped rendering once account
+			// editing moved to a Formulize userAccount element. Own-account only — see $isOwnAccount.
+			if($isOwnAccount) {
+				$forgetButtonId = "tfa-forget-devices-{$safeId}";
+				$forgetDevicesHtml = "
+		<div class='formulize-tfa-forget-devices' style='margin-top:1em;'>
+			<input type='button' id='{$forgetButtonId}' value='".htmlspecialchars(_US_FORGET_DEVICES_BUTTON)."'>
+			<p style='font-size:0.85em;color:#666;'>"._US_FORGET_DEVICES_DESC."</p>
+		</div>
+		<script type='text/javascript'>
+		jQuery(document).ready(function() {
+			jQuery('#{$forgetButtonId}').on('click', function() {
+				jQuery.post(".json_encode(XOOPS_URL.'/include/2fa/forget.php').", function(data) {
+					if(data == 1) {
+						alert(".json_encode(_US_FORGET_DEVICES_DONE).");
+					}
+				});
+			});
+		});
+		</script>";
+			}
 
 			$dialogHtml = "
 		<div id='tfa-dialog-{$safeId}'></div>
@@ -337,7 +366,7 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 		</script>" . $autoReopenScript;
 		}
 
-		return new XoopsFormLabel($caption, $radioHtml . $dialogHtml, $markupName);
+		return new XoopsFormLabel($caption, $radioHtml . $dialogHtml . $forgetDevicesHtml, $markupName);
 	}
 
 
