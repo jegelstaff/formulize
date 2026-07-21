@@ -1031,7 +1031,9 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			$ele_value = "";
 		}
 		if($isDisabled) {
-			return new XoopsFormLabel($caption, $ele_value);
+			// No $element/$entry_id in this shared helper's signature - they are only used to TAG
+			// purification log events, so they are simply omitted rather than plumbed in.
+			return new XoopsFormLabel($caption, $this->makeValueSafeForReadOnlyDisplay($ele_value));
 		}
 		$config_handler = xoops_gethandler('config');
 		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());

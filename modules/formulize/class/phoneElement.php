@@ -153,7 +153,7 @@ class formulizePhoneElementHandler extends formulizeElementsHandler {
     function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
         // dummy element is rendered as a textboxes, with the values set by the user in the admin side smushed together as the default value for the textbox
         if($isDisabled) {
-            $formElement = new xoopsFormLabel($caption, $ele_value['number']);
+            $formElement = new xoopsFormLabel($caption, $this->makeValueSafeForReadOnlyDisplay($ele_value['number'], $element->getVar('ele_handle'), $entry_id));
         } else {
             $formElement = new xoopsFormText($caption, $markupName, 15, 255, $ele_value['number']); // caption, markup name, size, maxlength, default value, according to the xoops form class
             $formElement->setExtra('placeholder="'.$ele_value['format'].'"');

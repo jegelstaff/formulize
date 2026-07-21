@@ -144,7 +144,7 @@ class formulizeProvinceListElementHandler extends formulizeElementsHandler {
 		$provinceList = $this->getProvinceList();
 
 		if($isDisabled) {
-		  return new xoopsFormLabel($caption, $provinceList[$ele_value[0]]);
+		  return new xoopsFormLabel($caption, $this->makeValueSafeForReadOnlyDisplay($provinceList[$ele_value[0]], $element->getVar('ele_handle'), $entry_id));
 		}
 
 		if ($ele_value[2] != 1){

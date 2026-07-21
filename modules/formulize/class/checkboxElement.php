@@ -644,15 +644,11 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 		}
 
 		if($isDisabled) {
-			// Purify each entry BEFORE joining, so our own <br> separators are not filtered along with the
-			// content. An {OTHER|n} entry in here is free text the user typed - see
-			// makeValueSafeForReadOnlyDisplay() for why read-only display purifies rather than escapes.
-			$safeDisabledOutputText = array();
-			foreach($disabledOutputText as $disabledOutputTextValue) {
-				$safeDisabledOutputText[] = $this->makeValueSafeForReadOnlyDisplay(
-					$disabledOutputTextValue, $element->getVar('ele_handle'), $entry_id);
-			}
-			$renderedElement = implode("<br>", $safeDisabledOutputText);
+			// An {OTHER|n} entry in here is free text the user typed. Passing the array (rather than a
+			// pre-joined string) lets the funnel make each entry safe and add our <br> separators
+			// afterwards, so they are not filtered as though they were content.
+			$renderedElement = $this->makeValueSafeForReadOnlyDisplay(
+				$disabledOutputText, $element->getVar('ele_handle'), $entry_id, "<br>");
 		} else {
 			$renderedElement = $form_ele1->render();
 		}

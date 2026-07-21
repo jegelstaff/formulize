@@ -147,7 +147,7 @@ class formulizeEmailElementHandler extends formulizeElementsHandler {
     function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
 			  $ele_value = (is_array($ele_value) AND count($ele_value) == 0) ? "" : $ele_value; // default ele_value for new entries, will be an empty array, so just make a string in that case, otherwise, go with loaded value (ie: existing value in DB)
         if($isDisabled) {
-            $formElement = new xoopsFormLabel($caption, $ele_value);
+            $formElement = new xoopsFormLabel($caption, $this->makeValueSafeForReadOnlyDisplay($ele_value, $element->getVar('ele_handle'), $entry_id));
         } else {
             $formElement = new xoopsFormText($caption, $markupName, 20, 255, $ele_value); // caption, markup name, size, maxlength, default value, according to the xoops form class
         }

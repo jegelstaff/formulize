@@ -1368,12 +1368,28 @@ class formulizeElementsHandler {
 	 * delete it. Make the value safe first, then build markup around it (same order as
 	 * formatDataForList -> composeMarkupForList).
 	 *
-	 * @param string $value The value to display read-only
+	 * Multi-value elements (checkbox, multi-select) pass an ARRAY plus the $joiner they want between the
+	 * parts. Each part is made safe individually and the joiner is added afterwards, so the joiner itself -
+	 * which is ours, not the user's - is never filtered as though it were content. Callers must NOT
+	 * pre-join and pass a single string for this reason.
+	 *
+	 * @param string|array $value The value(s) to display read-only
 	 * @param string $handle Optional. Element handle, for tagging purification log events
 	 * @param int $entry_id Optional. Entry id, for tagging purification log events
+	 * @param string|null $joiner Optional. When $value is an array, the separator to join the safe parts
+	 *                            with (eg. ", " for a select, "<br>" for a checkbox). Defaults to ", ".
 	 * @return string The value, purified (or escaped, if purification was unavailable)
 	 */
-	function makeValueSafeForReadOnlyDisplay($value, $handle="", $entry_id=0) {
+	function makeValueSafeForReadOnlyDisplay($value, $handle="", $entry_id=0, $joiner=null) {
+		if(is_array($value)) {
+			$safeParts = array();
+			foreach($value as $part) {
+				$safeParts[] = $this->makeValueSafeForReadOnlyDisplay($part, $handle, $entry_id);
+			}
+			return implode($joiner === null ? ", " : $joiner, $safeParts);
+		}
+		// Numbers and other non-strings cannot carry markup - return them untouched rather than coercing,
+		// so an element that hands over an int still gets an int back.
 		if(!is_string($value) OR $value === '') {
 			return $value;
 		}

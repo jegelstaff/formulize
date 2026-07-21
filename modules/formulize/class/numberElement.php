@@ -313,7 +313,7 @@ class formulizeNumberElementHandler extends formulizeTextElementHandler {
 				)) {
 				$value = formulize_numberFormat($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE], $element->getVar('ele_handle'));
 			}
-			$form_ele = new XoopsFormLabel ($caption, $value, $markupName);
+			$form_ele = new XoopsFormLabel ($caption, $this->makeValueSafeForReadOnlyDisplay($value, $element->getVar('ele_handle'), $entry_id), $markupName);
 		}
 		return $form_ele;
 	}

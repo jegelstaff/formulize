@@ -210,7 +210,9 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 
 		if($isDisabled) {
 
-			$form_ele = new XoopsFormLabel($caption, (($ele_value[0] AND $ele_value[0] != _DATE_DEFAULT) ? $this->prepareDataForDataset($ele_value[0], $element->getVar('ele_handle'), $entry_id) : ""));
+			$form_ele = new XoopsFormLabel($caption, $this->makeValueSafeForReadOnlyDisplay(
+				(($ele_value[0] AND $ele_value[0] != _DATE_DEFAULT) ? $this->prepareDataForDataset($ele_value[0], $element->getVar('ele_handle'), $entry_id) : ""),
+				$element->getVar('ele_handle'), $entry_id));
 
 		} else {
 

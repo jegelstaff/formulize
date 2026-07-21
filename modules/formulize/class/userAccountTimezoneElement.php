@@ -98,7 +98,7 @@ class formulizeUserAccountTimezoneElementHandler extends formulizeUserAccountEle
 			$ele_value = formulize_getIANATimezone($xoopsConfig['default_TZ']);
 		}
 		if($isDisabled) {
-			return new XoopsFormLabel($caption, $ele_value, $markupName);
+			return new XoopsFormLabel($caption, $this->makeValueSafeForReadOnlyDisplay($ele_value, $element->getVar('ele_handle'), $entry_id), $markupName);
 		}
 		$timezones = formulize_getTimezoneList();
 		$html = '<select name="'.$markupName.'" id="'.$markupName.'" onchange="javascript:formulizechanged=1;">';

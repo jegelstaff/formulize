@@ -107,7 +107,7 @@ class formulizeUserAccountPhoneElementHandler extends formulizeUserAccountElemen
 	 */
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
 		if($isDisabled) {
-			$formElement = new xoopsFormLabel($caption, $ele_value['number']);
+			$formElement = new xoopsFormLabel($caption, $this->makeValueSafeForReadOnlyDisplay($ele_value['number'], $element->getVar('ele_handle'), $entry_id));
 		} else {
 			$ele_value['format'] = (isset($ele_value['format']) AND $ele_value['format']) ? $ele_value['format'] : 'XXX-XXX-XXXX';
 			$formElement = new xoopsFormText($caption, $markupName, 15, 255, $ele_value['number']); // caption, markup name, size, maxlength, default value, according to the xoops form class

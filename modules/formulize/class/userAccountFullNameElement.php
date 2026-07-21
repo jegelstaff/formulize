@@ -49,7 +49,7 @@ class formulizeUserAccountFullNameElementHandler extends formulizeUserAccountEle
 		if (is_array($ele_value)) {
 			$ele_value = "";
 		}
-		return new XoopsFormLabel($caption, $ele_value);
+		return new XoopsFormLabel($caption, $this->makeValueSafeForReadOnlyDisplay($ele_value, $element->getVar('ele_handle'), $entry_id));
 	}
 
 	/**
