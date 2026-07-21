@@ -58,6 +58,18 @@ class icms_form_elements_Text extends icms_form_Element {
 	private $_decimals = 0;
 
 	/**
+	 * Maximum value (only used if type is 'number')
+	 * @var		int|float|null
+	 */
+	private $_max;
+
+	/**
+	 * Minimum value (only used if type is 'number')
+	 * @var		int|float|null
+	 */
+	private $_min;
+
+	/**
 	 * Constructor
 	 *
 	 * @param	string	$caption	Caption
@@ -68,8 +80,10 @@ class icms_form_elements_Text extends icms_form_Element {
 	 * @param	bool	$autocomplete	Whether to use autocomplete functionality in browser.
 	 * @param	mixed	$type	Either 'text', 'number', or 'time'.
 	 * @param	int		$decimals	Number of decimal places (only used if $type is 'number')
+	 * @param	int|float|null	$min	Minimum value (only used if $type is 'number')
+	 * @param	int|float|null	$max	Maximum value (only used if $type is 'number')
 	 */
-	public function __construct($caption, $name, $size, $maxlength, $value = '', $autocomplete = false, $type = 'text', $decimals = 0) {
+	public function __construct($caption, $name, $size, $maxlength, $value = '', $autocomplete = false, $type = 'text', $decimals = 0, $min = null, $max = null) {
 		$this->setCaption($caption);
 		$this->setName($name);
 		$this->_size = (int) $size;
@@ -78,6 +92,8 @@ class icms_form_elements_Text extends icms_form_Element {
 		$this->autocomplete = !empty($autocomplete);
 		$this->type = ($type === true ? 'number' : $type); // legacy, used to be boolean for number
 		$this->_decimals = $decimals;
+		$this->setMin($min);
+		$this->setMax($max);
 	}
 
 	/**
@@ -127,6 +143,42 @@ class icms_form_elements_Text extends icms_form_Element {
 	}
 
 	/**
+	 * Set minimum value (only used if type is 'number')
+	 *
+	 * @param	int|float|null	$min
+	 */
+	public function setMin($min) {
+		$this->_min = $this->getType() == 'number' ? $min : null;
+	}
+
+	/**
+	 * Get minimum value (only used if type is 'number')
+	 *
+	 * @return	int|float|null
+	 */
+	public function getMin() {
+		return $this->_min = $this->_min;
+	}
+
+	/**
+	 * Set maximum value (only used if type is 'number')
+	 *
+	 * @param	int|float|null	$max
+	 */
+	public function setMax($max) {
+		$this->_max = $this->getType() == 'number' ? $max : null;
+	}
+
+	/**
+	 * Get maximum value (only used if type is 'number')
+	 *
+	 * @return	int|float|null
+	 */
+	public function getMax() {
+		return $this->_max = $this->_max;
+	}
+
+	/**
 	 * Prepare HTML for output
 	 *
 	 * @return	string  HTML
@@ -134,21 +186,32 @@ class icms_form_elements_Text extends icms_form_Element {
 	public function render() {
 		$type = $this->getType();
 		$step = "";
-		if($type == 'number' AND $this->_decimals > 0) {
-			// ensure default value has the correct number of decimal places, with zeros to fill in the right number if necessary
-			// and set the step increment accordingly
-			if($this->getValue() OR $this->getValue() === 0 OR $this->getValue() === 0.0) {
-				$this->setValue(number_format((float)$this->getValue(), $this->_decimals, '.', '')); // HTML spec says to use dot as decimal separator for the value attribute regardless of locale
+		$min = "";
+		$max = "";
+		if($type == 'number') {
+			if($this->_decimals > 0) {
+				// ensure default value has the correct number of decimal places, with zeros to fill in the right number if necessary
+				// and set the step increment accordingly
+				if($this->getValue() OR $this->getValue() === 0 OR $this->getValue() === 0.0) {
+					$this->setValue(number_format((float)$this->getValue(), $this->_decimals, '.', '')); // HTML spec says to use dot as decimal separator for the value attribute regardless of locale
+				}
+				$step = " step='0." . ($this->_decimals > 1 ? str_repeat('0', $this->_decimals - 1) : '') . "1'";
 			}
-			$step = " step='0." . ($this->_decimals > 1 ? str_repeat('0', $this->_decimals - 1) : '') . "1'";
+			if($this->getMin() !== null) {
+				$min = " min='" . $this->getMin() . "'";
+			}
+			if($this->getMax() !== null) {
+				$max = " max='" . $this->getMax() . "'";
+			}
 		}
+
 		return "<input type='$type' name='" . $this->getName()
 			. "' id='" . $this->getName()
 			. "' size='" . $this->getSize()
 			. "' maxlength='" . $this->getMaxlength()
 			. "' aria-describedby='" . $this->getName() . "-help-text"
-			. "' value='" . $this->getValue() . "'" . $this->getExtra() . " " . ($this->autoComplete ? "" : "autocomplete='off' ")
-			. $step
+			. "' value='" . $this->getValue() . "'" . $this->getExtra() . " " . ($this->autocomplete ? "" : "autocomplete='off' ")
+			. $step . $min . $max
 			. " />";
 	}
 }

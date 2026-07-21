@@ -48,10 +48,12 @@ class XoopsFormText extends icms_form_elements_Text
  	 * @param	bool	$autocomplete	Whether to use autocomplete functionality in browser. Seems to have no effect in render method.
 	 * @param	string	$type	Whether to treat it as a number or time when rendering
 	 * @param	int		$decimals	Number of decimal places (only used if $type is 'number')
+	 * @param	int|float|null	$min	Minimum value (only used if $type is 'number')
+	 * @param	int|float|null	$max	Maximum value (only used if $type is 'number')
 	 */
-	function __construct($caption, $name, $size, $maxlength, $value = '', $autocomplete = false, $type = 'text', $decimals = 0)
+	function __construct($caption, $name, $size, $maxlength, $value = '', $autocomplete = false, $type = 'text', $decimals = 0, $min = null, $max = null)
 	{
-		parent::__construct($caption, $name, $size, $maxlength, $value, $autocomplete, $type, $decimals);
+		parent::__construct($caption, $name, $size, $maxlength, $value, $autocomplete, $type, $decimals, $min, $max);
 		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Text', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 }

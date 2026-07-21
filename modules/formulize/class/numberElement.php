@@ -32,6 +32,9 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you n
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/textElement.php"; // we extend the text element class
 
+define('ELE_VALUE_TEXT_MIN', 'number_box_minimum_value');
+define('ELE_VALUE_TEXT_MAX', 'number_box_maximum_value');
+
 class formulizeNumberElement extends formulizeTextElement {
 
 	var $defaultValueKey;
@@ -67,13 +70,15 @@ class formulizeNumberElement extends formulizeTextElement {
 - size (int, width of the box in characters, default is ".$formulizeConfig['t_width'].")
 - defaultValue (int or float, default value for new entries)
 - decimals (int, number of decimal places to allow, default is ".$formulizeConfig['number_decimals']."),
+- min (int, lowest value allowed, default is null, no minimum),
+- max (int, highest value allowed, default is null, no maximum),
 - prefix (string, text to show before the number, default is '".$formulizeConfig['number_prefix']."'),
 - decimalsSeparator (string, character to use as the decimal separator, default is '".$formulizeConfig['number_decimalsep']."')
 - thousandsSeparator (string, character to use as the thousands separator, default is '".$formulizeConfig['number_sep']."')
 - suffix (string, text to show after the number, default is '".$formulizeConfig['number_suffix']."')
 **Examples:**
 - A basic number box requires no properties, system defaults will be used
-- A number box for recording values between 0 and 99: { size: 2 }
+- A number box for recording values between 0 and 99: { size: 2, min: 0, max: 99 }
 - A three digit number box with a default value of 100: { size: 3, defaultValue: 100 }
 - A number box for recording prices up to $999,999.99: { size: 9, defaultValue: 0, decimals: 2, prefix: '$', thousandsSeparator: ',', decimalsSeparator: '.' }";
 	}
@@ -139,6 +144,10 @@ class formulizeNumberElementHandler extends formulizeTextElementHandler {
 						$properties[$key] = 0;
 					}
 					break;
+				case 'min':
+				case 'max':
+					$properties[$key] = is_numeric($value) ? $value + 0 : null; // force to int or float, or null if not numeric
+					break;
 				case 'defaultValue':
 					$properties[$key] = is_numeric($value) ? $value + 0 : 0; // force to int or float
 					break;
@@ -152,27 +161,36 @@ class formulizeNumberElementHandler extends formulizeTextElementHandler {
 					unset($properties[$key]); // remove anything we don't recognize
 			}
 		}
-		if(isset($properties['size'])) {
+		if(array_key_exists('size', $properties)) {
 			$ele_value[ELE_VALUE_TEXT_WIDTH] = $properties['size'];
 			$ele_value[ELE_VALUE_TEXT_MAXCHARS] = $properties['size'];
 		}
-		if(isset($properties['defaultValue'])) {
+		if(array_key_exists('defaultValue', $properties)) {
 			$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] = $properties['defaultValue'];
 		}
-		if(isset($properties['decimals'])) {
+		if(array_key_exists('decimals', $properties)) {
 			$ele_value[ELE_VALUE_TEXT_DECIMALS] = $properties['decimals'];
 		}
-		if(isset($properties['prefix'])) {
+		if(array_key_exists('prefix', $properties)) {
 			$ele_value[ELE_VALUE_TEXT_PREFIX] = $properties['prefix'];
 		}
-		if(isset($properties['decimalsSeparator'])) {
+		if(array_key_exists('decimalsSeparator', $properties)) {
 			$ele_value[ELE_VALUE_TEXT_DECIMALS_SEPARATOR] = $properties['decimalsSeparator'];
 		}
-		if(isset($properties['thousandsSeparator'])) {
+		if(array_key_exists('thousandsSeparator', $properties)) {
 			$ele_value[ELE_VALUE_TEXT_THOUSANDS_SEPARATOR] = $properties['thousandsSeparator'];
 		}
-		if(isset($properties['suffix'])) {
+		if(array_key_exists('suffix', $properties)) {
 			$ele_value[ELE_VALUE_TEXT_SUFFIX] = $properties['suffix'];
+		}
+		if(array_key_exists('min', $properties)) {
+			$ele_value[ELE_VALUE_TEXT_MIN] = $properties['min'];
+		}
+		if(array_key_exists('max', $properties)) {
+			$ele_value[ELE_VALUE_TEXT_MAX] = $properties['max'];
+		}
+		if(array_key_exists(ELE_VALUE_TEXT_MAX, $ele_value) AND array_key_exists(ELE_VALUE_TEXT_MIN, $ele_value) AND $ele_value[ELE_VALUE_TEXT_MAX] < $ele_value[ELE_VALUE_TEXT_MIN]) {
+			$ele_value[ELE_VALUE_TEXT_MAX] = $ele_value[ELE_VALUE_TEXT_MIN];
 		}
 		return [
 			'ele_value' => $ele_value
@@ -192,6 +210,9 @@ class formulizeNumberElementHandler extends formulizeTextElementHandler {
 		$ele_value[ELE_VALUE_TEXT_THOUSANDS_SEPARATOR] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
 		$ele_value[ELE_VALUE_TEXT_SUFFIX] = isset($formulizeConfig['number_suffix']) ? $formulizeConfig['number_suffix'] : '';
 		$ele_value[ELE_VALUE_TEXT_TRIM_VALUE] = 1;
+		$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] = 0;
+		$ele_value[ELE_VALUE_TEXT_MIN] = null;
+		$ele_value[ELE_VALUE_TEXT_MAX] = null;
 		return $ele_value;
 	}
 
@@ -222,6 +243,11 @@ class formulizeNumberElementHandler extends formulizeTextElementHandler {
 			$ele_value[ELE_VALUE_TEXT_MAXCHARS] = $ele_value[ELE_VALUE_TEXT_WIDTH];
 			$ele_value[ELE_VALUE_TEXT_NUMBERSONLY] = 1;
 			$ele_value[ELE_VALUE_TEXT_TRIM_VALUE] = 1;
+			$ele_value[ELE_VALUE_TEXT_MIN] = isset($ele_value[ELE_VALUE_TEXT_MIN]) ? (is_numeric($ele_value[ELE_VALUE_TEXT_MIN]) ? $ele_value[ELE_VALUE_TEXT_MIN] + 0 : null) : null;
+			$ele_value[ELE_VALUE_TEXT_MAX] = isset($ele_value[ELE_VALUE_TEXT_MAX]) ? (is_numeric($ele_value[ELE_VALUE_TEXT_MAX]) ? $ele_value[ELE_VALUE_TEXT_MAX] + 0 : null) : null;
+			if($ele_value[ELE_VALUE_TEXT_MAX] < $ele_value[ELE_VALUE_TEXT_MIN]) {
+				$ele_value[ELE_VALUE_TEXT_MAX] = $ele_value[ELE_VALUE_TEXT_MIN];
+			}
 			$element->setVar('ele_value', $ele_value);
 		}
 		return $changed;
@@ -271,7 +297,9 @@ class formulizeNumberElementHandler extends formulizeTextElementHandler {
 				$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE],	//	value
 				false,					// autocomplete in browser
 				'number', // numbers only flag
-				$ele_value[ELE_VALUE_TEXT_DECIMALS]		// number of decimal places
+				$ele_value[ELE_VALUE_TEXT_DECIMALS],		// number of decimal places
+				$ele_value[ELE_VALUE_TEXT_MIN],	// minimum value
+				$ele_value[ELE_VALUE_TEXT_MAX]	// maximum value
 			);
 			$form_ele->setExtra("class='numbers-only-textbox'");
 		} else {
@@ -299,6 +327,17 @@ class formulizeNumberElementHandler extends formulizeTextElementHandler {
 	function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
 		$value = preg_replace ('/[^0-9.-]+/', '', trim($value));
 		$value = (!is_numeric($value) AND $value == "") ? null : $value;
+		$ele_value = $element->getVar('ele_value');
+		$min = isset($ele_value[ELE_VALUE_TEXT_MIN]) ? $ele_value[ELE_VALUE_TEXT_MIN] : null;
+		$max = isset($ele_value[ELE_VALUE_TEXT_MAX]) ? $ele_value[ELE_VALUE_TEXT_MAX] : null;
+		if(is_numeric($value)) {
+			if($min !== null AND $value < $min) {
+				$value = $min;
+			}
+			if($max !== null AND $value > $max) {
+				$value = $max;
+			}
+		}
 		return $value;
 	}
 
