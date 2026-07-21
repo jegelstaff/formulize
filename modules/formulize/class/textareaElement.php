@@ -217,7 +217,22 @@ class formulizeTextareaElementHandler extends formulizeTextElementHandler {
 				}
 			}
 		} else {
-			$form_ele = new XoopsFormLabel ($caption, formulize_text_to_hyperlink(str_replace("\n", "<br>", undoAllHTMLChars($ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE], ENT_QUOTES))), $markupName);	// nmc 2007.03.24 - added
+			// Read-only / print view. This used to undoAllHTMLChars() the value and emit it raw through
+			// xoopsFormLabel, which renders its value as-is - so the intake escaping was deliberately
+			// stripped and whatever the user typed became live markup. Now it gets the SAME verdict the
+			// list path reaches in formatDataForList(), so an element cannot be filtered in one view and
+			// raw in the other.
+			$textareaValue = $ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE];
+			if($this->usesRichTextEditor($ele_value)) {
+				// rich text is intentional markup: allow-list filter it, do not escape it
+				$safeValue = formulize_purifyHtmlValue($textareaValue, $element->getVar('ele_handle'), $entry_id);
+			} else {
+				// a plain textarea holds text the user typed, not markup. Normalize then escape, and only
+				// then substitute in our own <br> so the line breaks we add are not escaped along with it.
+				$safeValue = str_replace("\n", "<br>",
+					icms_core_DataFilter::htmlSpecialChars(undoAllHTMLChars($textareaValue, ENT_QUOTES)));
+			}
+			$form_ele = new XoopsFormLabel ($caption, formulize_text_to_hyperlink($safeValue), $markupName);	// nmc 2007.03.24 - added
 		}
 		return $form_ele;
 	}

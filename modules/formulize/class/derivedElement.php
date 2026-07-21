@@ -306,7 +306,9 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen=false, $owner=null) {
 
 		if($entry_id != "new") {
-			$form_ele = new xoopsFormLabel($caption, formulize_numberFormat($ele_value[15], $element->getVar('ele_id')), $markupName);
+			$form_ele = new xoopsFormLabel($caption, formulize_purifyHtmlValue(
+				formulize_numberFormat($ele_value[15], $element->getVar('ele_id')),
+				$element->getVar('ele_handle'), $entry_id), $markupName);
 		} else {
 			$form_ele = new xoopsFormLabel($caption, _formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE, $markupName);
 		}

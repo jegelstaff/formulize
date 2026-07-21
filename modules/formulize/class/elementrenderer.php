@@ -298,6 +298,7 @@ class formulizeElementRenderer{
 			}
       $element_handler = xoops_getmodulehandler('elements', 'formulize');
 			$bracketPos = 0;
+			$substitutionHappened = false; // drives the purification below - see the note at the end of the loop
 			$start = true; // flag used to force the loop to execute, even if the 0th position has the {
 			while($bracketPos <= strlen($text) AND $bracketPos = strpos($text, "{", $bracketPos) OR $start == true) {
 				$start = false;
@@ -311,23 +312,33 @@ class formulizeElementRenderer{
 					// references a multi-value element receives the actual array and can work with it.
 					// Highly unlikely there would be an array, but anyway...
 					$replacementTerm = is_array($replacementTerm) ? implode(", ", $replacementTerm) : (string)$replacementTerm;
-					// $text is about to be rendered as HTML, and it is never escaped as a whole - captions and
-					// other display text deliberately support the markup their author wrote. The author can
-					// edit the form, so that markup is trusted. The SUBSTITUTED VALUE is not: it is user
-					// data, and getValue() has already decoded it back to its raw form. Filter the value only;
-					// the admin's markup around the {reference} is left exactly as authored.
-					if($makeValuesSafeForDisplay) {
-						// how the value has to be made safe depends on where in the authored markup it lands:
-						// attribute content needs escaping, body content gets purified so markup survives
-						$replacementTerm = formulize_makeValueSafeForDisplay($replacementTerm, $term, $entry_id,
-							formulize_positionIsInsideHtmlTag($text, $bracketPos));
-					}
+					$substitutionHappened = true;
 					$text = str_replace("{".$term."}",$replacementTerm,$text);
 					$lookAhead = strlen($replacementTerm); // move ahead the length of what we replaced
 				} else {
 					$lookAhead = 1;
 				}
 				$bracketPos = $bracketPos + $lookAhead;
+			}
+			// Purify the COMPOSED result, and only when a reference was actually substituted into it.
+			//
+			// Text with no {reference} in it is left completely alone: it is entirely admin-authored, the
+			// author can edit the form, and captions/help text/static content deliberately support markup.
+			// The moment a reference IS spliced in, the string is no longer purely admin-authored - it now
+			// contains user-submitted data that getValue() has already decoded back to its raw form - so the
+			// composed whole gets allow-list filtered.
+			//
+			// Purifying the COMPOSED STRING rather than each value individually is deliberate, and is
+			// stronger: HTMLPurifier parses the actual resulting HTML, so it catches a payload that only
+			// becomes dangerous once spliced - a value landing inside an attribute the author opened
+			// (<div title="{ref}">) is seen as the attribute it really is and stripped if it is an event
+			// handler, whether or not the author quoted it. Filtering values in isolation cannot do that,
+			// because in isolation the value is just a string with no knowledge of where it will land.
+			//
+			// Enforcement follows FORMULIZE_PURIFY_HTML_VALUES like every other purification site, and
+			// formulize_purifyHtmlValue() falls back to escaping if the purifier is unavailable.
+			if($substitutionHappened AND $makeValuesSafeForDisplay) {
+				$text = formulize_purifyHtmlValue($text, $renderedElementMarkupName, $entry_id);
 			}
 		}
 		return $text;
