@@ -4,23 +4,10 @@
         <input type="hidden" name="themeeditor_save" value="1">
         <input type="hidden" name="file" value="<{$adminPage.selected_file}>">
 
-        <div class="form-item">
-            <label for="themeeditor-theme_select">Theme to edit:</label>
-            <select id="themeeditor-theme_select" name="theme" size="1">
-                <{foreach from=$adminPage.themes key=themeDir item=themeName}>
-                    <option value="<{$themeDir}>" <{if $themeDir == $adminPage.selected_theme}>selected="selected"<{/if}>><{$themeName}><{if $themeDir == $adminPage.default_theme}> (active)<{/if}></option>
-                <{/foreach}>
-            </select>
-            <div class="description">
-                <p>Choose which theme's files you want to edit.</p>
-            </div>
-        </div>
-
         <div class="themeeditor-layout">
 
             <div class="form-item themeeditor-editor">
                 <fieldset>
-                    <legend id="themeeditor-current-file">File: <{$adminPage.selected_file}></legend>
                     <{if $adminPage.selected_file_is_image}>
                         <div class="themeeditor-image-preview">
                             <img src="<{$adminPage.selected_file_url}>" alt="<{$adminPage.selected_file}>">
@@ -37,8 +24,17 @@
 
             <div class="themeeditor-files">
                 <fieldset>
-                    <legend>Theme Files</legend>
                     <div class="themeeditor-tree-wrapper">
+                        <{* The theme picker is the root of the tree: it's really a folder
+                            switcher, so the file tree below is shown nested beneath it. *}>
+                        <div class="themeeditor-tree-root">
+                            <label class="themeeditor-tree-root-label" for="themeeditor-theme_select">Theme:</label>
+                            <select id="themeeditor-theme_select" name="theme" size="1">
+                                <{foreach from=$adminPage.themes key=themeDir item=themeName}>
+                                    <option value="<{$themeDir}>" <{if $themeDir == $adminPage.selected_theme}>selected="selected"<{/if}>><{$themeName}><{if $themeDir == $adminPage.default_theme}> (active)<{/if}></option>
+                                <{/foreach}>
+                            </select>
+                        </div>
                         <{if $adminPage.theme_files}>
                             <{$adminPage.theme_files_tree}>
                         <{else}>
@@ -70,6 +66,7 @@
         border-radius: 5px;
         overflow: hidden;
         background: white;
+				margin-top: 1em;
     }
     .themeeditor-editor {
         flex: 1 1 auto;
@@ -128,6 +125,29 @@
         overflow: auto;
         border: 1px solid #ddd;
         border-radius: 5px;
+    }
+    .themeeditor-tree-root {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        padding: 0.4em 0.75em;
+        background: #f4f4f4;
+        border-bottom: 1px solid #ddd;
+    }
+    .themeeditor-tree-root-label {
+        display: block;
+        font-weight: bold;
+        font-size: 0.85em;
+        color: #666;
+        margin-bottom: 0.25em;
+    }
+    .themeeditor-tree-root select {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    /* Files sit visually nested under the theme root at the top of the tree. */
+    .themeeditor-tree-wrapper > .themeeditor-tree {
+        padding-left: 1.1em;
     }
     .themeeditor-tree-empty {
         margin: 0;
@@ -277,7 +297,7 @@
             $select.val($select.data('themeeditor-previous-value'));
             return;
         }
-        location.href = 'ui.php?page=themeeditor&theme=' + encodeURIComponent($select.val());
+        location.href = 'ui.php?page=appearance&view=themeeditor&theme=' + encodeURIComponent($select.val());
     });
 
     $saveBtn.bind('click', function() {

@@ -32,21 +32,18 @@ if (isset($_POST['themeeditor_save'])) {
         exit;
     }
 
-    $themeDir = realpath(ICMS_THEME_PATH . '/' . $theme);
-    if ($themeDir === false) {
-        print "Could not save: theme folder not found on the server.";
-        exit;
-    }
-
-    // Resolve the target file within the theme folder and refuse anything that escapes it
-    // (e.g. via ../) or that isn't a real, already-existing file there. The editor only
-    // ever offers files it already listed from that same folder, so a legitimate save
-    // always targets an existing file; this also means we never create new files here.
-    $targetPath = ($file !== '') ? realpath($themeDir . '/' . $file) : false;
-    if ($targetPath === false OR strpos($targetPath, $themeDir . DIRECTORY_SEPARATOR) !== 0 OR !is_file($targetPath)) {
+    // Resolve the virtual path to a real file and refuse anything that escapes its root
+    // (e.g. via ../) or isn't an already-existing file. The path may target the theme's own
+    // folder or, via the "screens/" prefix, the theme's Formulize screen-template folder;
+    // the resolver handles both. The editor only ever offers files it already listed from
+    // those roots, so a legitimate save always targets an existing file - we never create
+    // new files here.
+    $resolved = formulize_themeeditor_resolveVirtualPath($theme, $file);
+    if ($resolved === false) {
         print "Could not save: invalid file.";
         exit;
     }
+    $targetPath = $resolved['full'];
 
     if (!is_writable($targetPath)) {
         print "Could not save: the file is not writable on the server.";
@@ -82,8 +79,9 @@ $adminPage['default_theme'] = $xoopsConfig['theme_set'];
 $requestedTheme = isset($_GET['theme']) ? $_GET['theme'] : (isset($_POST['theme']) ? $_POST['theme'] : '');
 $adminPage['selected_theme'] = isset($adminPage['themes'][$requestedTheme]) ? $requestedTheme : $adminPage['default_theme'];
 
-// All the files inside the selected theme's folder, so the picklist and file list stay in sync
-$adminPage['theme_files'] = formulize_themeeditor_getThemeFiles(ICMS_THEME_PATH . '/' . $adminPage['selected_theme']);
+// All editable files across the selected theme's roots (its own folder plus its Formulize
+// screen-templates folder, exposed under "screens/"), so the tree and save stay in sync
+$adminPage['theme_files'] = formulize_themeeditor_getThemeFiles($adminPage['selected_theme']);
 
 // Which file to show in the editor: whatever was picked in the file list, falling back to
 // index.html (every theme has one), falling back to the first file in the theme's folder
@@ -129,43 +127,134 @@ if ($adminPage['selected_file_is_image']) {
     $adminPage['selected_file_content'] = '';
     $adminPage['selected_file_url'] = ICMS_THEME_URL . '/' . $adminPage['selected_theme'] . '/' . $adminPage['selected_file'];
 } else {
-    $adminPage['selected_file_content'] = $adminPage['selected_file'] !== ''
-        ? file_get_contents(ICMS_THEME_PATH . '/' . $adminPage['selected_theme'] . '/' . $adminPage['selected_file'])
-        : '';
+    $resolvedSelected = ($adminPage['selected_file'] !== '')
+        ? formulize_themeeditor_resolveVirtualPath($adminPage['selected_theme'], $adminPage['selected_file'])
+        : false;
+    $adminPage['selected_file_content'] = $resolvedSelected ? file_get_contents($resolvedSelected['full']) : '';
 }
 
 /**
- * Recursively list every editable file inside a theme's folder. Images and any other
- * non-editable file types are left out entirely, which also means folders that contain
- * only images (e.g. an "images/" folder) never show up, since they end up with no files in them.
- * @param string themeDir - full filesystem path to the theme's folder
- * @return array Sorted list of file paths, relative to the theme's folder, using forward slashes
+ * The physical roots that make up a theme's editable file set, keyed by the virtual-path
+ * prefix each is exposed under in the file tree:
+ *   ''        => the theme's own folder (themes/<theme>)
+ *   'screens' => the theme's default Formulize screen templates
+ *                (modules/formulize/templates/screens/<theme>/default), which hold the
+ *                default list/form/map/multipage/etc. layouts for that theme
+ * Splitting the theme's files across two folders on disk is a quirk of how Formulize
+ * stores screen templates; merging them here lets the whole editable layout for a theme
+ * be browsed as one tree. A root that doesn't exist on disk (e.g. a theme with no custom
+ * screen templates) is skipped by callers, so its pseudo-folder simply won't appear.
+ * @param string $theme - theme directory name
+ * @return array Ordered map of prefix => absolute root directory
  */
-function formulize_themeeditor_getThemeFiles($themeDir) {
-    $editableExtensions = array('html', 'htm', 'css', 'js');
-    $files = array();
-    if(!is_dir($themeDir)) {
-        return $files;
-    }
-    $iterator = new RecursiveIteratorIterator(
-        new RecursiveDirectoryIterator($themeDir, FilesystemIterator::SKIP_DOTS)
+function formulize_themeeditor_getRoots($theme) {
+    return array(
+        '' => array(
+            'dir' => ICMS_THEME_PATH . '/' . $theme,
+            // Theme folder: markup and assets only. PHP is deliberately excluded so a
+            // theme's own logic files aren't exposed as editable content.
+            'extensions' => array('html', 'htm', 'css', 'js'),
+        ),
+        'screens' => array(
+            // The theme's DEFAULT screen templates only: modules/formulize/templates/screens/<theme>/default,
+            // which holds the default layouts for each screen type (form, listOfEntries, map,
+            // multiPage, ...). The sibling screen-id folders (e.g. .../screens/<theme>/43) are
+            // per-screen overrides and deliberately left out.
+            'dir' => XOOPS_ROOT_PATH . '/modules/formulize/templates/screens/' . $theme . '/default',
+            // Formulize screen templates are PHP files (they hold eval'd template code),
+            // so PHP must be editable here for the layouts to be reachable at all.
+            'extensions' => array('html', 'htm', 'css', 'js', 'php'),
+        ),
     );
-    foreach($iterator as $fileInfo) {
-        if($fileInfo->isFile()) {
-            $extension = strtolower($fileInfo->getExtension());
-            if(!in_array($extension, $editableExtensions, true)) {
+}
+
+/**
+ * Resolve a virtual file path (as listed by formulize_themeeditor_getThemeFiles) to a real
+ * file on disk, enforcing that it stays within its root. Prefixed roots (e.g. "screens/…")
+ * are matched first; anything else resolves against the theme's own folder.
+ * @param string $theme       - theme directory name (already validated against the installed themes)
+ * @param string $virtualPath - virtual path from the file tree
+ * @return array|false array('full'=>real path, 'root'=>real root dir, 'prefix'=>matched prefix), or false if invalid
+ */
+function formulize_themeeditor_resolveVirtualPath($theme, $virtualPath) {
+    if ($virtualPath === '') {
+        return false;
+    }
+    $roots = formulize_themeeditor_getRoots($theme);
+    // Check prefixed roots first; the '' (theme folder) root is the catch-all.
+    foreach ($roots as $prefix => $root) {
+        if ($prefix === '') {
+            continue;
+        }
+        if (strpos($virtualPath, $prefix . '/') === 0) {
+            return formulize_themeeditor_containedFile($root['dir'], substr($virtualPath, strlen($prefix) + 1), $prefix);
+        }
+    }
+    return formulize_themeeditor_containedFile($roots['']['dir'], $virtualPath, '');
+}
+
+/**
+ * Helper for formulize_themeeditor_resolveVirtualPath: realpath a relative file within a
+ * root directory and confirm it's a real, existing file that hasn't escaped the root
+ * (e.g. via ../).
+ * @param string $rootDir  - the root directory the file must live inside
+ * @param string $relative - path relative to that root
+ * @param string $prefix   - the virtual prefix this root is exposed under (for the return value)
+ * @return array|false
+ */
+function formulize_themeeditor_containedFile($rootDir, $relative, $prefix) {
+    $rootReal = realpath($rootDir);
+    if ($rootReal === false OR $relative === '') {
+        return false;
+    }
+    $full = realpath($rootDir . '/' . $relative);
+    if ($full === false OR strpos($full, $rootReal . DIRECTORY_SEPARATOR) !== 0 OR !is_file($full)) {
+        return false;
+    }
+    return array('full' => $full, 'root' => $rootReal, 'prefix' => $prefix);
+}
+
+/**
+ * Recursively list every editable file available for a theme, across all of its roots (see
+ * formulize_themeeditor_getRoots). Paths are returned as "virtual" paths: files from the
+ * theme folder keep their plain relative path (e.g. "css/foo.css"), while files from a
+ * prefixed root are prefixed (e.g. "screens/listOfEntries/foo.html"). Images and other
+ * non-editable file types are left out entirely, which also means folders that contain
+ * only images never show up, since they end up with no files in them.
+ * @param string $theme - theme directory name
+ * @return array Sorted list of virtual file paths, using forward slashes
+ */
+function formulize_themeeditor_getThemeFiles($theme) {
+    $files = array();
+    foreach (formulize_themeeditor_getRoots($theme) as $prefix => $root) {
+        $rootDir = $root['dir'];
+        $editableExtensions = $root['extensions'];
+        if (!is_dir($rootDir)) {
+            continue;
+        }
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($rootDir, FilesystemIterator::SKIP_DOTS)
+        );
+        foreach ($iterator as $fileInfo) {
+            if (!$fileInfo->isFile()) {
                 continue;
             }
-            $relativePath = str_replace('\\', '/', substr($fileInfo->getPathname(), strlen($themeDir) + 1));
+            $extension = strtolower($fileInfo->getExtension());
+            if (!in_array($extension, $editableExtensions, true)) {
+                continue;
+            }
+            $relativePath = str_replace('\\', '/', substr($fileInfo->getPathname(), strlen($rootDir) + 1));
             // Exclusions: index.html (in any folder) and theme_admin.html are boilerplate
-            // that shouldn't be edited here, and the entire admin/ folder holds the admin
-            // theme's own markup, which is out of scope for the Theme Editor.
+            // that shouldn't be edited here, and any admin/ folder holds admin-only markup
+            // that's out of scope for the Theme Editor. Under screens, the "form" folder is
+            // the legacy (deprecated) single-page form screen type, so it's left out too.
             $baseName = basename($relativePath);
             $firstSegment = (strpos($relativePath, '/') !== false) ? substr($relativePath, 0, strpos($relativePath, '/')) : '';
-            if($baseName === 'index.html' OR $baseName === 'theme_admin.html' OR $firstSegment === 'admin') {
+            if ($baseName === 'index.html' OR $baseName === 'theme_admin.html' OR $firstSegment === 'admin'
+                OR ($prefix === 'screens' AND $firstSegment === 'form')) {
                 continue;
             }
-            $files[] = $relativePath;
+            $files[] = ($prefix === '') ? $relativePath : $prefix . '/' . $relativePath;
         }
     }
     sort($files, SORT_STRING);
