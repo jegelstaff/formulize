@@ -20,7 +20,7 @@ tests/e2e/test-report
 tests/e2e/node_modules
 modules/formulize/language/english/mail_template/error_report_*
 mail_template/tempmailbody.tpl
-
+libraries/htmlpurifier/standalone/HTMLPurifier/DefinitionCache/*
 
 # Playwright
 node_modules/
