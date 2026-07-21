@@ -210,7 +210,7 @@ class formulizeNumberElementHandler extends formulizeTextElementHandler {
 		$ele_value[ELE_VALUE_TEXT_THOUSANDS_SEPARATOR] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
 		$ele_value[ELE_VALUE_TEXT_SUFFIX] = isset($formulizeConfig['number_suffix']) ? $formulizeConfig['number_suffix'] : '';
 		$ele_value[ELE_VALUE_TEXT_TRIM_VALUE] = 1;
-		$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] = 0;
+		$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] = null;
 		$ele_value[ELE_VALUE_TEXT_MIN] = null;
 		$ele_value[ELE_VALUE_TEXT_MAX] = null;
 		return $ele_value;
