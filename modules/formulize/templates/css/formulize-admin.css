@@ -2219,6 +2219,7 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 	clear: both;
   text-align: center;
   transform: scale(150%);
+	margin: 2em;
 }
 
 #admin-breadcrumbs {
