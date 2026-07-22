@@ -382,10 +382,27 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
 
         if(count((array) $ele_value['files'])>0) {
             foreach($ele_value['files'] as $file) {
-                $interactiveMarkup = $isDisabled ? "" : "<a href=\"\" onclick=\"warnAboutGoogleDelete$eleId('".$file['id']."', '".str_replace('"','\"',htmlspecialchars_decode($file['name'], ENT_QUOTES))."', '".$markupName."');return false;\"><img src=\"".XOOPS_URL."/modules/formulize/images/x.gif\" /></a><input type=\"hidden\" name=\"".$markupName."[]\" value=\"".str_replace('"','\"',htmlspecialchars_decode($file['name'], ENT_QUOTES))."<{()}>".$file['url']."<{()}>".$file['id']."<{()}>".$file['iconUrl']."\" />";
-                $interactiveId = $isDisabled ? "" : "id=\"googlefile_".$markupName."_".$file['id']."\"";
+                // Untrusted: prepareDataForSaving() below builds this array by exploding a POSTed string
+                // on a delimiter with no validation, so 'url'/'iconUrl'/'id' can be literally anything a
+                // submitter chooses - not limited to what the Google Picker API would actually return.
+                // 'name' is stored htmlspecialchars-escaped (see prepareDataForSaving), so decode it first
+                // to avoid double-encoding, then escape per context - same normalize-then-escape pattern
+                // used elsewhere. The previous code here decoded 'name' and only backslash-escaped '"',
+                // which is a JS-string idiom, not an HTML escape - a literal '"' (or "'", "<", ">") still
+                // terminated the attribute/tag it landed in. 'url'/'iconUrl'/'id' were not escaped at all.
+                $rawName = htmlspecialchars_decode($file['name'], ENT_QUOTES);
+                $htmlName = htmlspecialchars($rawName, ENT_QUOTES, 'UTF-8'); // for HTML attribute/text use
+                $jsName = json_encode($rawName, JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP); // for the JS string literal in onclick
+                $safeUrl = htmlspecialchars($file['url'], ENT_QUOTES, 'UTF-8');
+                $safeIconUrl = htmlspecialchars($file['iconUrl'], ENT_QUOTES, 'UTF-8');
+                $safeId = htmlspecialchars($file['id'], ENT_QUOTES, 'UTF-8');
+                $jsId = json_encode((string) $file['id'], JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP);
+                // Browsers HTML-decode attribute values on submit, so escaping what goes into value="..."
+                // here does not change what prepareDataForSaving() reads back from $_POST.
+                $interactiveMarkup = $isDisabled ? "" : "<a href=\"\" onclick=\"warnAboutGoogleDelete$eleId(".$jsId.", ".$jsName.", '".$markupName."');return false;\"><img src=\"".XOOPS_URL."/modules/formulize/images/x.gif\" /></a><input type=\"hidden\" name=\"".$markupName."[]\" value=\"".$htmlName."<{()}>".$safeUrl."<{()}>".$safeId."<{()}>".$safeIconUrl."\" />";
+                $interactiveId = $isDisabled ? "" : "id=\"googlefile_".$markupName."_".$safeId."\"";
                 $picker .= "
-                <div class=\"googlefile googlefile_$eleId\" $interactiveId><img src=\"".$file['iconUrl']."\" /> <a href=\"".$file['url']."\" target=\"_blank\">".str_replace('"','\"',htmlspecialchars_decode($file['name'], ENT_QUOTES))."</a> ".$interactiveMarkup."</div>";
+                <div class=\"googlefile googlefile_$eleId\" $interactiveId><img src=\"".$safeIconUrl."\" /> <a href=\"".$safeUrl."\" target=\"_blank\">".$htmlName."</a> ".$interactiveMarkup."</div>";
             }
         }
 
