@@ -34,6 +34,12 @@
  * Configuration as code synchronization admin screen
  */
 
+// only webmasters can interact with this page!
+global $xoopsUser;
+if(!$xoopsUser OR !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
+    return;
+}
+
 // Operations may require additional memory and time to perform
 ini_set('memory_limit', '1024M');
 ini_set('max_execution_time', '600');

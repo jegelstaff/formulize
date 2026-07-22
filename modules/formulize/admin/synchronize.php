@@ -5,6 +5,12 @@
  * Date: 2016-01-16
  */
 
+// only webmasters can interact with this page!
+global $xoopsUser;
+if(!$xoopsUser OR !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
+    return;
+}
+
 // exporting the entire DB can take a lot of memory and time!!
 ini_set('memory_limit', '1024M');
 ini_set('max_execution_time', '600');
