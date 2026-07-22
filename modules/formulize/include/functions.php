@@ -2808,7 +2808,9 @@ function getSingle($fid, $uid, $groups=null, $member_handler=null, $gperm_handle
 		global $xoopsUser;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$data_handler = new formulizeDataHandler($fid);
-    $formObject = $form_handler->get($fid);
+    if(!$formObject = $form_handler->get($fid)) {
+			throw new Exception("Form with id $fid not found when determining Single setting.");
+		}
     $effectiveSingle = resolveEffectiveSingle($formObject->getVar('single'), $groups);
 
 		// default, not single, no entry
