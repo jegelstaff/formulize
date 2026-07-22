@@ -137,6 +137,13 @@ class icms_module_Object extends icms_core_Object {
 		$this->setVar('modname', isset($this->modinfo['modname']) ? $this->modinfo['modname'] : "", true);
 		$ipf = (isset($this->modinfo['object_items']) && is_array($this->modinfo['object_items'])) ? 1 : 0;
 		$this->setVar('ipf', $ipf);
+		// IPF modules manage dbversion themselves via icmsDatabaseUpdater::moduleUpgrade()/updateModuleDBVersion(),
+		// driven by a {DIRNAME}_DB_VERSION constant and numbered _db_upgrade_N() functions, not this version-file
+		// field. Priming dbversion here for an IPF module would make that upgrade loop think earlier steps already
+		// ran and skip them. Non-IPF modules have no such mechanism, so this is their only source of dbversion.
+		if (!$ipf && isset($this->modinfo['dbversion'])) {
+			$this->setVar('dbversion', (int) $this->modinfo['dbversion']);
+		}
 	}
 
 	/**
