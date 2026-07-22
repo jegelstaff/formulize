@@ -11,8 +11,14 @@ if (isset($_POST['themeeditor_save'])) {
     include_once "../../../mainfile.php";
     include_once XOOPS_ROOT_PATH . '/modules/formulize/include/common.php';
 
+    // Anyone with admin rights on the Formulize module may edit theme files, not just
+    // webmasters. isAdmin() checks the module_admin permission for the given module, and
+    // group 1 (webmasters) short-circuits to true inside checkRight(), so webmasters keep
+    // access without needing the permission granted explicitly. The module id is passed
+    // explicitly because this branch is posted to directly, so $xoopsModule (which isAdmin()
+    // would otherwise fall back to) isn't set up here.
     global $xoopsUser;
-    if (!$xoopsUser OR !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
+    if (!$xoopsUser OR !$xoopsUser->isAdmin(getFormulizeModId())) {
         formulize_themeeditor_sendSaveResponse("Could not save: you do not have permission to save theme files.");
     }
 
@@ -76,9 +82,10 @@ if (isset($_POST['themeeditor_save'])) {
     formulize_themeeditor_sendSaveResponse('', $GLOBALS['xoopsSecurity']->createToken(0, 'formulize_themeeditor_token'));
 }
 
-// Only webmasters can access this page
+// Only users with admin rights on the Formulize module can access this page (webmasters
+// included - see the note on the matching check in the save branch above).
 global $xoopsUser;
-if(!$xoopsUser OR !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
+if(!$xoopsUser OR !$xoopsUser->isAdmin(getFormulizeModId())) {
     return;
 }
 // This page is a sub-view of the Appearance subject tab (see include/configsettings_registry.php),
