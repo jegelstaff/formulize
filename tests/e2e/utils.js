@@ -781,21 +781,78 @@ export async function getFidFromListPage(page) {
 }
 
 /**
- * After saving a brand-new form, the form-settings page renders with the
- * new fid in the URL (or in a hidden field). Returns it as an integer.
+ * Determine the fid of the form the admin UI is currently editing, as an integer.
+ *
+ * ALWAYS pass expectedTitle when you know it (form creation does). With a title this resolves the fid
+ * from the database, which is deterministic and immune to the save-is-AJAX race; without one it falls
+ * back to scraping the page, which is only a hint. Either way the result is verified to be a real form
+ * before it is returned, and this throws rather than returning an id it could not confirm.
  *
  * @param {object} page Playwright page
+ * @param {string|null} [expectedTitle] The form's title, if known - the deterministic route
  * @returns {Promise<number>}
+ * @throws if no fid can be determined, if the scraped id is not a real form, or if the title is ambiguous
  */
-export async function getFidFromFormAdminPage(page) {
-	// Try URL first.
+export async function getFidFromFormAdminPage(page, expectedTitle = null) {
+	// Every id this scrapes off the page is VERIFIED against the database before it is returned, and an
+	// unverifiable one throws. That matters more than it looks: both scraping routes below can produce a
+	// plausible-but-wrong number, and an unchecked wrong fid does not fail here - it fails much later, as
+	// something unrecognisable. A CI run lost a spec to exactly that, surfacing as
+	// "Call to a member function getVar() on bool" from getSingle() on a form that did not exist, a hundred
+	// lines away from the helper that invented the id. Two ways the scrape goes wrong:
+	//
+	//   - saveAdminForm() is pure AJAX and never navigates, so page.url() is the PRE-save URL. On a newly
+	//     created form that URL is `ui.php?page=form&tab=settings&fid=new&aid=N` - `fid=new` cannot match
+	//     the \d+ below, so creation ALWAYS depends on the formulize_admin_key fallback.
+	//   - formulize_admin_key is a GENERIC per-panel key, not a form id: it carries ele_id on element
+	//     panels, aid on application panels, fid on form panels (see templates/admin/*.html). `.first()`
+	//     takes whatever comes first in the DOM, which is not guaranteed to be a form panel.
+	//
+	// So prefer the unambiguous route whenever the caller can tell us the title, and treat the scrape as a
+	// hint to be checked rather than an answer.
+	const prefix = dbPrefix();
+
+	if (expectedTitle) {
+		// Deterministic: ask the database which form has this title. No DOM, no race. Polled because the
+		// save is AJAX - saveAdminForm waits for networkidle, so the row is normally already there, and
+		// this returns on the first attempt.
+		let rows = [];
+		await expect.poll(
+			() => {
+				rows = dbQuery(`SELECT id_form FROM ${prefix}_formulize_id WHERE form_title = '${sqlEscape(expectedTitle)}'`);
+				return rows.length;
+			},
+			{ message: `no form titled "${expectedTitle}" appeared in the database after saving`, timeout: 15000 }
+		).toBeGreaterThan(0);
+		if (rows.length > 1) {
+			// Ambiguous: a leftover from an aborted run is still around, so "the" fid is not well defined.
+			// Say so here rather than silently picking one and failing somewhere unrelated later.
+			throw new Error(
+				`Ambiguous fid: ${rows.length} forms are titled "${expectedTitle}" (ids ${rows.map(r => r[0]).join(', ')}). ` +
+				`A previous run probably left one behind - the spec's self-heal step should have removed it.`
+			);
+		}
+		return parseInt(rows[0][0], 10);
+	}
+
+	// No title to go on, so fall back to scraping - but verify whatever comes out of it.
 	const url = page.url();
 	const urlMatch = url.match(/[?&]fid=(\d+)/);
-	if (urlMatch) return parseInt(urlMatch[1], 10);
-	// Fallback: read the hidden formulize_admin_key on the form settings panel
-	const key = await page.locator('input[name="formulize_admin_key"]').first().inputValue();
-	if (/^\d+$/.test(key)) return parseInt(key, 10);
-	throw new Error('Could not determine fid for the current admin page');
+	const key = await page.locator('input[name="formulize_admin_key"]').first().inputValue().catch(() => '');
+	const candidate = urlMatch ? urlMatch[1] : (/^\d+$/.test(key) ? key : null);
+	if (candidate === null) {
+		throw new Error('Could not determine fid for the current admin page (no numeric fid in the URL, no numeric formulize_admin_key)');
+	}
+	const exists = dbQuery(`SELECT id_form FROM ${prefix}_formulize_id WHERE id_form = ${parseInt(candidate, 10)}`);
+	if (exists.length === 0) {
+		throw new Error(
+			`Scraped fid ${candidate} does not exist as a form. This is the known failure mode: page.url() is the ` +
+			`pre-save URL (saveAdminForm is AJAX), and formulize_admin_key holds whichever entity the first panel ` +
+			`on the page belongs to - an element or application id, not necessarily a form id. ` +
+			`Pass expectedTitle to resolve it from the database instead.`
+		);
+	}
+	return parseInt(candidate, 10);
 }
 
 /**
@@ -819,7 +876,9 @@ export async function createMuseumForm(page, title, piCaption = null) {
 		await page.locator('input[name="pi_new_caption"]').fill(piCaption);
 	}
 	await saveAdminForm(page);
-	return await getFidFromFormAdminPage(page);
+	// Resolved from the database by title, not scraped off the page - see getFidFromFormAdminPage for why
+	// the scrape can return a plausible but wrong id, and what that cost a CI run.
+	return await getFidFromFormAdminPage(page, title);
 }
 
 /**
@@ -1002,6 +1061,18 @@ export function dbQuery(sql) {
 	const trimmed = out.replace(/\n$/, '');
 	if (trimmed === '') return [];
 	return trimmed.split('\n').map(line => line.split('\t'));
+}
+
+/**
+ * Escape a value for use inside a single-quoted SQL string literal. Test-grade, not a general-purpose
+ * escaper: it covers the backslash and single quote that would break out of the literal, which is all
+ * the fixture data here (form titles, handles) can contain. Do not reach for this to build queries out
+ * of arbitrary input - use it for the literals this file already constructs.
+ * @param {string} value
+ * @returns {string}
+ */
+export function sqlEscape(value) {
+	return String(value).replace(/\\/g, '\\\\').replace(/'/g, "''");
 }
 
 let _dbPrefix = null;

@@ -82,7 +82,7 @@ test.describe('A. Create Departments form (EAG)', () => {
 
 		await saveAdminForm(page);
 
-		phase1.departmentsFid = await getFidFromFormAdminPage(page);
+		phase1.departmentsFid = await getFidFromFormAdminPage(page, 'Departments');
 		expect(phase1.departmentsFid).toBeGreaterThan(0);
 	});
 
@@ -205,7 +205,7 @@ test.describe('D. Create Staff EAU form and its custom elements', () => {
 		await enableEntriesAreUsers(page);
 		await saveAdminForm(page);
 
-		phase1.staffFid = await getFidFromFormAdminPage(page);
+		phase1.staffFid = await getFidFromFormAdminPage(page, 'Staff');
 		expect(phase1.staffFid).toBeGreaterThan(0);
 	});
 
