@@ -235,12 +235,12 @@ if (! empty( $_SESSION['redirect_message'] )) {
 			if ($adminmenuorder == 1) {
 				foreach ( $navitem ['menu'] as $k => $sortarray ) {
 					$column[] = $sortarray['title'];
-					if (isset($sortarray['subs']) && count($sortarray['subs']) > 0 && $adminsubmenuorder) {
+					if (isset($sortarray['subs']) && is_array($sortarray['subs']) && count($sortarray['subs']) > 0 && $adminsubmenuorder) {
 						asort($navitem['menu'][$k]['subs']);
 					}
-					if (isset($sortarray['subs']) && count($sortarray['subs']) > 0) {
+					if (isset($sortarray['subs']) && is_array($sortarray['subs']) && count($sortarray['subs']) > 0) {
 						foreach ($sortarray['subs'] as $k2 => $sortarray2) {
-							if (isset($sortarray2['subs']) && count($sortarray2['subs']) > 0 && $adminsubsubmenuorder) {
+							if (isset($sortarray2['subs']) && is_array($sortarray2['subs']) && count($sortarray2['subs']) > 0 && $adminsubsubmenuorder) {
 								asort($navitem['menu'][$k]['subs'][$k2]['subs']); //Sorting submenus of preferences
 							}
 						}
@@ -259,7 +259,7 @@ if (! empty( $_SESSION['redirect_message'] )) {
 					}
 				}
 				// only add the item (first layer: groups) if it has subitems
-				if (count($item['subs']) > 0) $perm_itens[] = $item;
+				if (is_array($item['subs']) && count($item['subs']) > 0) $perm_itens[] = $item;
 			}
 			//Getting array of allowed system prefs
 			$navitem['menu'] = $sysprefs = $perm_itens;
@@ -267,12 +267,12 @@ if (! empty( $_SESSION['redirect_message'] )) {
 		$icmsAdminTpl->append('navitems', $navitem);
 	}
 
-	if (count($sysprefs) > 0) {
+	if (is_array($sysprefs) && count($sysprefs) > 0) {
 		$icmsAdminTpl->assign('systemadm', 1);
 	} else {
 		$icmsAdminTpl->assign('systemadm', 0);
 	}
-	if (count($mods) > 0) {
+	if (is_array($mods) && count($mods) > 0) {
 		$icmsAdminTpl->assign('modulesadm', 1);
 	} else {
 		$icmsAdminTpl->assign('modulesadm', 0);
@@ -283,7 +283,7 @@ if (! empty( $_SESSION['redirect_message'] )) {
 	 */
 	if ($icmsModule) {
 		if ($icmsModule->getVar('dirname') == 'system') {
-			if (isset($sysprefs) && count($sysprefs) > 0) {
+			if (isset($sysprefs) && is_array($sysprefs) && count($sysprefs) > 0) {
 				// remove the grouping for the system module preferences (first layer)
 				$sysprefs_tmp = array();
 				foreach ($sysprefs as $pref) {
@@ -291,19 +291,18 @@ if (! empty( $_SESSION['redirect_message'] )) {
 				}
 				$sysprefs = $sysprefs_tmp;
 				unset($sysprefs_tmp);
-				for ($i = count($sysprefs) - 1; $i >= 0; $i = $i - 1) {
-					if (isset($sysprefs [$i])) {
-						$reversed_sysprefs[] = $sysprefs[$i];
+				if (is_array($sysprefs) && count($sysprefs) > 0) {
+					for ($i = count($sysprefs) - 1; $i >= 0; $i = $i - 1) {
+						if (isset($sysprefs [$i])) {
+							$icmsAdminTpl->append(
+								'mod_options',
+								array(
+									'title' => $sysprefs[$i]['title'], 'link' => $sysprefs[$i]['link'],
+									'icon' => (isset($sysprefs[$i]['icon']) && $sysprefs[$i]['icon'] != '' ? $sysprefs[$i]['icon'] : '')
+								)
+							);
+						}
 					}
-				}
-				foreach ( $reversed_sysprefs as $k ) {
-					$icmsAdminTpl->append(
-						'mod_options',
-						array(
-							'title' => $k ['title'], 'link' => $k ['link'],
-							'icon' => (isset($k['icon']) && $k['icon'] != '' ? $k['icon'] : '')
-						)
-					);
 				}
 			}
 		} else {
@@ -313,19 +312,15 @@ if (! empty( $_SESSION['redirect_message'] )) {
 					break;
 				}
 			}
-			if (isset($m['subs']) && count($m['subs']) > 0) {
+			if (isset($m['subs']) && is_array($m['subs']) && count($m['subs']) > 0) {
 				for($i = count($m['subs']) - 1; $i >= 0; $i = $i - 1) {
 					if (isset($m['subs'][$i])) {
-						$reversed_module_admin_menu[] = $m['subs'][$i];
-					}
-				}
-				foreach ( $reversed_module_admin_menu as $k ) {
-					$icmsAdminTpl->append(
+						$icmsAdminTpl->append(
 						'mod_options',
-						array('title' => $k ['title'], 'link' => $k ['link'],
-							'icon' => (isset($k['icon']) && $k['icon'] != '' ? $k['icon'] : '')
-						)
-					);
+						array('title' => $m['subs'][$i]['title'], 'link' => $m['subs'][$i]['link'],
+							'icon' => (isset($m['subs'][$i]['icon']) && $m['subs'][$i]['icon'] != '' ? $m['subs'][$i]['icon'] : '')
+						));
+					}
 				}
 			}
 		}
@@ -699,8 +694,8 @@ function impresscms_get_adminmenu() {
 			);
 			$rtn['subs'][] = $subs;
 		}
-		$rtn['hassubs'] = (count($rtn ['subs']) > 0) ? 1 : 0;
-		if ($rtn['hassubs'] == 0) unset($rtn ['subs']);
+		$rtn['hassubs'] = (is_array($rtn['subs']) && count($rtn['subs']) > 0) ? 1 : 0;
+		if ($rtn['hassubs'] == 0) unset($rtn['subs']);
 		if ($module->getVar('dirname') == 'system') {
 			$systemadm = true;
 		}
