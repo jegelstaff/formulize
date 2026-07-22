@@ -1565,6 +1565,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 
 				// not a linked element...
 				} else {
+					$newValue = htmlspecialchars($newValue);
 					if(!is_array($ele_value[ELE_VALUE_SELECT_OPTIONS]) OR !isset($ele_value[ELE_VALUE_SELECT_OPTIONS][$newValue])) {
 						$ele_value[ELE_VALUE_SELECT_OPTIONS][$newValue] = 0; // create new key in ele_value[2] for this new option, set to 0 to indicate it's not selected by default in new entries
 						$element->setVar('ele_value', $ele_value);
