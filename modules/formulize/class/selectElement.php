@@ -1307,7 +1307,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 				source: function(request, response) {
 				var excludeCurrentSelection = jQuery('input[name=\"".$markupName."[]\"]').map(function () { return $(this).val(); }).get().join(',');
 				jQuery.get('".XOOPS_URL."/modules/formulize/include/formulize_quickselect.php?cache=".$cachedLinkedOptionsFilename."&allow_new_values=".$allow_new_values."&term='+encodeURIComponent(request.term)+'&current='+encodeURIComponent(excludeCurrentSelection), function(data) {
-					response(eval(data));
+					response(JSON.parse(data));
 				})},
 				minLength: 1,
 				delay: 0,
@@ -1364,7 +1364,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 								i = parseInt(jQuery('#".$markupName."_defaults').children().last().attr('target')) + 1;
 							}
 							jQuery('#".$markupName."_defaults').append(\"<input type='hidden' name='".$markupName."[]' jquerytag='".$markupName."' id='".$markupName."_\"+i+\"' target='\"+i+\"' value='\"+value+\"' />\");
-							jQuery('#".$markupName."_formulize_autocomplete_selections').append(\"<p class='auto_multi auto_multi_".$markupName."' target='\"+value+\"'>\"+label+\"</p>\");
+							jQuery('<p></p>').addClass('auto_multi auto_multi_".$markupName."').attr('target', value).text(label).appendTo('#".$markupName."_formulize_autocomplete_selections');
 							jQuery('#".$markupName."_user').val('');
 							jQuery('#last_selected_".$markupName."').val('');
 							triggerChangeOnMultiValueAutocomplete('".$markupName."');
