@@ -129,16 +129,14 @@ switch($op) {
 			exit();
 		}
 
-		$screens = array();
 		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
 		$criteria_object = new Criteria('type','multiPage');
 		$multiPageFormScreens = $screen_handler->getObjects($criteria_object, $fid);
 		$screens = array();
 		foreach($multiPageFormScreens as $screen) {
-			$screens[] = '{ "sid" : '.$screen->getVar('sid').', "title" : "'.$screen->getVar('title').'"}';
+			$screens[] = array('sid' => intval($screen->getVar('sid')), 'title' => $screen->getVar('title'));
 		}
-		$screens = '{ "screens" : ['.implode(",",$screens).']}';
-		print $screens;
+		print json_encode(array('screens' => $screens));
 		break;
 
   case 'check_for_unique_value':
