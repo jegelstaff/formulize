@@ -288,12 +288,9 @@ class icms_core_DataFilter {
 				break;
 
 				case 'str':
-					$valid_options1 = array('noencode', 'striplow', 'striphigh', 'encodelow', 'encodehigh', 'encodeamp');
+					// 'str' takes no options (it just strips tags); ignore anything passed in.
+					$options1 = '';
 					$options2 = '';
-
-					if (!isset($options1) || $options1 == '' || !in_array($options1, $valid_options1)) {
-						$options1 = '';
-					}
 				break;
 
 				case 'special':
@@ -960,41 +957,6 @@ class icms_core_DataFilter {
 // -------- Private Functions --------
 
 	/*
-	* Replicates the behaviour of the FILTER_SANITIZE_STRING filter (deprecated in PHP 8.1, removed in
-	* PHP 8.4): strips tags, then optionally strips/encodes low (0x00-0x1F) or high (0x7F-0xFF) bytes,
-	* optionally encodes ampersands, and by default encodes quote characters (unless suppressed).
-	*
-	* @param string $data
-	* @param int $flags bitmask of FILTER_FLAG_* constants matching the old filter's flag semantics
-	* @return string
-	*/
-	static private function sanitizeStringLegacy($data, $flags = 0) {
-		$data = str_replace("\0", '', (string) $data);
-		$data = strip_tags($data);
-		if ($flags & FILTER_FLAG_STRIP_LOW) {
-			$data = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', $data);
-		} elseif ($flags & FILTER_FLAG_ENCODE_LOW) {
-			$data = preg_replace_callback('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', function ($m) {
-				return '&#' . ord($m[0]) . ';';
-			}, $data);
-		}
-		if ($flags & FILTER_FLAG_STRIP_HIGH) {
-			$data = preg_replace('/[\x7F-\xFF]/', '', $data);
-		} elseif ($flags & FILTER_FLAG_ENCODE_HIGH) {
-			$data = preg_replace_callback('/[\x7F-\xFF]/', function ($m) {
-				return '&#' . ord($m[0]) . ';';
-			}, $data);
-		}
-		if ($flags & FILTER_FLAG_ENCODE_AMP) {
-			$data = str_replace('&', '&#38;', $data);
-		}
-		if (!($flags & FILTER_FLAG_NO_ENCODE_QUOTES)) {
-			$data = str_replace(array("'", '"'), array('&#39;', '&#34;'), $data);
-		}
-		return $data;
-	}
-
-	/*
 	* Private Function checks & Validates Data
 	*
 	* @copyright The ImpressCMS Project <http://www.impresscms.org>
@@ -1088,36 +1050,11 @@ class icms_core_DataFilter {
 				}
 			break;
 
-			case 'str': // returns $string
-				switch ($options1) {
-					case "noencode":
-						return self::sanitizeStringLegacy($data, FILTER_FLAG_NO_ENCODE_QUOTES);
-					break;
-
-					case "striplow":
-						return self::sanitizeStringLegacy($data, FILTER_FLAG_STRIP_LOW);
-					break;
-
-					case "striphigh":
-						return self::sanitizeStringLegacy($data, FILTER_FLAG_STRIP_HIGH);
-					break;
-
-					case "encodelow":
-						return self::sanitizeStringLegacy($data, FILTER_FLAG_ENCODE_LOW);
-					break;
-
-					case "encodehigh":
-						return self::sanitizeStringLegacy($data, FILTER_FLAG_ENCODE_HIGH);
-					break;
-
-					case "encodeamp":
-						return self::sanitizeStringLegacy($data, FILTER_FLAG_ENCODE_AMP);
-					break;
-
-					default:
-						return self::sanitizeStringLegacy($data);
-					break;
-				}
+			case 'str': // returns the string with HTML/PHP tags stripped
+				// Tag removal only, NOT output escaping - callers that emit the result into a page must
+				// still escape it at the sink (htmlspecialchars). This was a hand-rolled stand-in for the
+				// removed FILTER_SANITIZE_STRING; no caller ever used its options, so it is just strip_tags now.
+				return strip_tags((string) $data);
 			break;
 
 			case "int": // returns $int, returns FALSE if $opt1 & 2 set & $data is not inbetween values of $opt1 & 2
