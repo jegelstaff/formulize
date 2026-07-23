@@ -341,6 +341,9 @@ class icms_member_Handler {
 		$storedHash = $user[0]->getVar('pass', 'n');
 		$salt = $user[0]->getVar('salt', 'n');
 		if (!$icmspass->verifyPassword($pwd, $storedHash, $salt)) {
+			if ($icmspass->passwordNeedsUpgrade($storedHash)) {
+				$icmspass->wasteTimeVerifying($pwd);
+			}
 			return false;
 		}
 
