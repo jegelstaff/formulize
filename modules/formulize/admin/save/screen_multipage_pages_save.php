@@ -66,6 +66,19 @@ $pagetitles = $screen->getVar('pagetitles');
 
 $conditions = $screen->getVar('conditions');
 
+$disabledpages = $screen->getVar('disabledpages');
+$disabledpages = is_array($disabledpages) ? $disabledpages : array();
+// disabledpages is a newer setting, so existing screens may hold a sparse or empty array (the per-page
+// settings popup only writes the key for the page being edited). The reorder loop and the add/delete
+// splices below all work positionally, so make sure there is an entry for every page first, defaulting
+// to 0 (not disabled) - this mirrors the normalization in gatherPagesAndTitlesFromScreen but stays
+// 0-based to match how these arrays are stored (that method rebases to 1 for display and must not be
+// used here). $pages is the authoritative list of pages.
+foreach($pages as $pageNumber=>$pageElements) {
+	if(!isset($disabledpages[$pageNumber])) {
+		$disabledpages[$pageNumber] = 0;
+	}
+}
 
 // get the new order of the elements...
 $newOrder = explode("drawer-5[]=", str_replace("&", "", $_POST['pageorder']));
@@ -87,6 +100,7 @@ if(count((array) $newOrder) != count((array) $pagetitles)) {
 $newpages = array();
 $newpagetitles = array();
 $newconditions = array();
+$newdisabled = array();
 $pagesHaveBeenReordered = false;
 foreach($pagetitles as $oldOrderNumber=>$values) {
 	$newOrderNumber = array_search($oldOrderNumber,$newOrder);
@@ -94,6 +108,7 @@ foreach($pagetitles as $oldOrderNumber=>$values) {
 	$newpages[$newOrderNumberKey] = $pages[$oldOrderNumber];
 	$newpagetitles[$newOrderNumberKey] = $pagetitles[$oldOrderNumber];
 	$newconditions[$newOrderNumberKey] = $conditions[$oldOrderNumber];
+	$newdisabled[$newOrderNumberKey] = isset($disabledpages[$oldOrderNumber]) ? $disabledpages[$oldOrderNumber] : 0;
 	if(($newOrderNumber - 1) != $oldOrderNumber) {
 		$pagesHaveBeenReordered = true;
 		$_POST['reload_multipage_pages'] = 1;
@@ -104,6 +119,7 @@ if($pagesHaveBeenReordered) {
 	$pages = $newpages;
 	$pagetitles = $newpagetitles;
 	$conditions = $newconditions;
+	$disabledpages = $newdisabled;
 	// change the deletion index so we get the page at its new position!!
 
 	$index = array_search($index,$newOrder);
@@ -118,6 +134,7 @@ switch ($op) {
     $pages[]=array();
     $pagetitles[]='New page';
     $conditions[]=array();
+    $disabledpages[]=0;
 		break;
 	case "delpage":
 		ksort($pages);
@@ -126,15 +143,19 @@ switch ($op) {
 
 		ksort($conditions);
 
+		ksort($disabledpages);
+
     array_splice($pages, $index, 1);
     array_splice($pagetitles, $index, 1);
     array_splice($conditions, $index, 1);
+    array_splice($disabledpages, $index, 1);
 		break;
 }
 
 $screen->setVar('pages',serialize($pages));
 $screen->setVar('pagetitles',serialize($pagetitles));
 $screen->setVar('conditions',serialize($conditions));
+$screen->setVar('disabledpages',serialize($disabledpages));
 
 
 if(!$screen_handler->insert($screen)) {

@@ -58,6 +58,15 @@ $pagetitles = $screen->getVar('pagetitles');
 $conditions = $screen->getVar('conditions');
 $disabledpages = $screen->getVar('disabledpages');
 $disabledpages = is_array($disabledpages) ? $disabledpages : array();
+// disabledpages is a newer setting, so an existing screen may hold a sparse or empty array. We only set the
+// one page's key below, so make sure every page has an entry (defaulting to 0, not disabled) before saving, to
+// keep the stored array complete and parallel to pages. Reads also normalize (gatherPagesAndTitlesFromScreen),
+// but doing it here on this page-editing path keeps the stored data clean. Stays 0-based to match storage.
+foreach($pages as $pageNumber=>$pageElements) {
+	if(!isset($disabledpages[$pageNumber])) {
+		$disabledpages[$pageNumber] = 0;
+	}
+}
 $conditionsStateChanged = false;
 foreach($screens as $k=>$v) {
 	if(substr($k, 0, 10) == "pagetitle_") {
