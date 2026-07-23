@@ -68,9 +68,10 @@ class icms_AutologinEventHandler {
 				$user = $users[0] ;
 				$old_limit = time() - (defined('ICMS_AUTOLOGIN_LIFETIME') ? ICMS_AUTOLOGIN_LIFETIME : 604800);
 				list($old_Ynj, $old_encpass) = explode(':', $pass);
-				if (strtotime($old_Ynj) < $old_limit || md5($user->getVar('pass') .
-						ICMS_DB_PASS . ICMS_DB_PREFIX . $old_Ynj) != $old_encpass)
-				{
+				if (
+					strtotime($old_Ynj) < $old_limit
+					OR hash_equals(md5($user->getVar('pass') . ICMS_DB_PASS . ICMS_DB_PREFIX . $old_Ynj), (string) $old_encpass) == false
+				) {
 					$user = false;
 				}
 				// V3.1 end

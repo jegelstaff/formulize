@@ -1237,7 +1237,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 						// normalize-then-escape: undoAllHTMLChars decodes any entities already in the stored/intake-escaped
 						// value so we don't double-encode, but the result is then RAW entry data (user-submitted, not
 						// admin-authored), so it must be escaped before going into $col_two below. Do not drop this call.
-						$headerValues[] = htmlspecialchars(undoAllHTMLChars($value), ENT_QUOTES, 'UTF-8');
+						$headerValues[] = htmlspecialchars(undoAllHTMLChars($value));
 					}
 					$headerToWrite = implode(" &mdash; ", $headerValues);
 					if(str_replace(" &mdash; ", "", $headerToWrite) == "") {

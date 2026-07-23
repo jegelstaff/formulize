@@ -1825,12 +1825,12 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 			return $value; // not a clickable-in-list element - leave the escaped value as-is
 		}
 		$rawValue = (string) $rawValue;
-		$displayText = printSmart($value, $textWidth); // $value already escaped; truncate the visible text
+		$displayText = printSmart(trans($value), $textWidth); // $value already escaped; truncate the visible text
 
 		// --- link into the source form of a linked selectbox ---
 		if(is_string($ele_value[ELE_VALUE_SELECT_OPTIONS]) AND strstr($ele_value[ELE_VALUE_SELECT_OPTIONS], "#*=:*")) {
 			$boxproperties = explode("#*=:*", $ele_value[ELE_VALUE_SELECT_OPTIONS]);
-			$target_fid = $boxproperties[0];
+			$target_fid = intval($boxproperties[0]);
 			if(!security_check($target_fid)) {
 				return $displayText; // no access to the target form -> plain text, no link
 			}
@@ -1864,7 +1864,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 			if($id_req AND $fid == $target_fid) {
 				return viewEntryLink($displayText, $id_req);
 			} elseif($id_req) {
-				return "<a href='" . XOOPS_URL . "/modules/formulize/index.php?fid=$target_fid&ve=$id_req' target='_blank'>" . $displayText . "</a>";
+				return "<a href='" . XOOPS_URL . "/modules/formulize/index.php?fid=$target_fid&ve=".intval($id_req)."' target=\"_blank\">$displayText</a>";
 			}
 			return $displayText; // no target entry found -> plain text
 		}
@@ -1879,7 +1879,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 			$cachedUidResults[$rawValue] = $uids;
 		}
 		if(count((array) $uids) == 1) {
-			return "<a href='" . XOOPS_URL . "/userinfo.php?uid=" . $uids[0]['uid'] . "' target=_blank>" . $displayText . "</a>";
+			return "<a href='" . XOOPS_URL . "/userinfo.php?uid=" . $uids[0]['uid'] . "' target=\"_blank\">$displayText</a>";
 		}
 		return $displayText;
 	}

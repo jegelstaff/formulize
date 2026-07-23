@@ -210,7 +210,7 @@ class icms_form_elements_Text extends icms_form_Element {
 			. "' size='" . $this->getSize()
 			. "' maxlength='" . $this->getMaxlength()
 			. "' aria-describedby='" . $this->getName() . "-help-text"
-			. "' value='" . icms_core_DataFilter::htmlSpecialChars(undoAllHTMLChars($this->getValue())) . "'" . $this->getExtra() . " " . ($this->autoComplete ? "" : "autocomplete='off' ")
+			. "' value='" . icms_core_DataFilter::htmlSpecialChars(undoAllHTMLChars($this->getValue())) . "'" . $this->getExtra() . " " . ($this->autocomplete ? "" : "autocomplete='off' ")
 			. $step . $min . $max
 			. " />";
 	}

@@ -209,7 +209,7 @@ Z - timezone offset en secondes (i.e. "-43200" to "43200")
 
 
 //Param�tres sp�cifiques  de la langue fran�aise
-define('_CHARSET', 'utf-8');
+define('_CHARSET', 'UTF-8');
 define('_LANGCODE', 'fr');
 
 // changez le 0 en 1, si cette langue est en multi-octets (exemple: la langue asiatique)

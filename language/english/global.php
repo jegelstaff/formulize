@@ -208,7 +208,7 @@ if (!defined("_SHORTTIMESTRING")) define("_SHORTTIMESTRING","g:ia");
  */
 
 //%%%%%		LANGUAGE SPECIFIC SETTINGS   %%%%%
-define('_CHARSET', 'utf-8');
+define('_CHARSET', 'UTF-8');
 define('_LANGCODE', 'en');
 
 // change 0 to 1 if this language is a multi-bytes language

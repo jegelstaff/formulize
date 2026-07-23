@@ -117,10 +117,22 @@ switch($op) {
 		break;
 
 	case 'get_form_screens_for_form':
+
+		$fid = intval($_GET['fid']);
+
+		// the user must be allowed to edit this form in order to build filters against its data
+		$gperm_handler = xoops_gethandler('groupperm');
+		$module_handler = xoops_gethandler('module');
+		$formulizeModule = $module_handler->getByDirname('formulize');
+		$filterGroups = is_object($xoopsUser) ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+		if(!$gperm_handler->checkRight("edit_form", $fid, $filterGroups, $formulizeModule->getVar('mid'))) {
+			exit();
+		}
+
 		$screens = array();
 		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
 		$criteria_object = new Criteria('type','multiPage');
-		$multiPageFormScreens = $screen_handler->getObjects($criteria_object,intval($_GET['fid']));
+		$multiPageFormScreens = $screen_handler->getObjects($criteria_object, $fid);
 		$screens = array();
 		foreach($multiPageFormScreens as $screen) {
 			$screens[] = '{ "sid" : '.$screen->getVar('sid').', "title" : "'.$screen->getVar('title').'"}';

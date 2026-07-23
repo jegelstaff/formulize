@@ -3099,24 +3099,6 @@ function formatLinks($matchtext, $handle, $textWidth, $entryBeingFormatted) {
 		$textWidth = 35;
 	}
 
-	// SECURITY: there used to be a short circuit here that returned $matchtext completely unprocessed
-	// whenever it contained anything that looked like a tag:
-	//
-	//     if($matchtext AND is_string($matchtext) AND strlen($matchtext) > strlen(strip_tags($matchtext))) {
-	//         return $matchtext;    // "if the value has HTML formatting, leave it alone"
-	//     }
-	//
-	// The intent was to preserve intentional markup (derived values, rich text) from being escaped and
-	// from being truncated mid-tag. The effect was that ANY value containing a tag skipped the whole
-	// pipeline below - formatDataForList was never called and nothing was ever escaped. Because the test
-	// is "does this contain a tag", it fired precisely on injected markup and passed everything harmless
-	// through, so a stored <script> in any list column was emitted raw.
-	//
-	// Both of the original intents are now handled properly, per element type, by the $dataIsHtml
-	// property in formulizeElementsHandler::formatDataForList() - which allow-list filters intentional
-	// markup instead of escaping it, and skips truncation for it. So this short circuit is redundant.
-	// DO NOT REINSTATE IT.
-
 	formulize_benchmark("start of formatlinks");
 	global $myts;
 	$matchtext = $myts->undoHtmlSpecialChars($matchtext);
@@ -6540,9 +6522,8 @@ function undoAllHTMLChars($text,$quotes=ENT_QUOTES) {
  * but outputs the original, letting a site be assessed before enforcement is turned on.
  *
  * Driven by the 'formulizeEnforceHtmlPurification' Advanced setting (Settings -> Advanced -> Debugging).
- * Fresh installs default to enforce; existing installs are set to report-only by admin/patches/007 so an
- * upgrade does not change how their data displays until an admin opts in. If the setting cannot be read
- * for any reason we fail SECURE (enforce), consistent with the fail-closed behaviour in the purifier.
+ * If the setting cannot be read for any reason we fail SECURE (enforce), consistent with the fail-closed
+ * behaviour in the purifier.
  */
 if(!defined('FORMULIZE_PURIFY_HTML_VALUES')) {
     $formulize_enforceHtmlPurification = true; // fail secure if the setting cannot be resolved

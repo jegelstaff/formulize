@@ -96,9 +96,8 @@ class icms_core_DataFilter {
 	* @return   string
 	*/
 	static public function htmlSpecialChars($text) {
-        $charset = defined('_CHARSET') ? _CHARSET : 'utf-8';
-		return preg_replace(array("/&amp;/i", "/&nbsp;/i"), array('&', '&amp;nbsp;'),
-			@htmlspecialchars($text, ENT_QUOTES, $charset));
+    $charset = defined('_CHARSET') ? _CHARSET : 'UTF-8';
+		return preg_replace(array("/&amp;/i", "/&nbsp;/i"), array('&', '&amp;nbsp;'), @htmlspecialchars($text, encoding: $charset));
 	}
 
 	/**
@@ -108,16 +107,16 @@ class icms_core_DataFilter {
 	* @return  string
 	*/
 	static public function undoHtmlSpecialChars($text) {
-		return ($text AND is_string($text)) ? htmlspecialchars_decode($text, ENT_QUOTES) : $text;
+		return ($text AND is_string($text)) ? htmlspecialchars_decode($text) : $text;
 	}
 
 	/**
 	 *
-	 * @param unknown_type $text
+	 * @param string $text
 	 */
 	static public function htmlEntities($text) {
 		return preg_replace(array("/&amp;/i", "/&nbsp;/i"), array('&', '&amp;nbsp;'),
-				@htmlentities($text, ENT_QUOTES, _CHARSET));
+				@htmlentities($text, encoding: _CHARSET));
 	}
 
 	/**

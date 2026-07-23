@@ -390,12 +390,12 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
                 // used elsewhere. The previous code here decoded 'name' and only backslash-escaped '"',
                 // which is a JS-string idiom, not an HTML escape - a literal '"' (or "'", "<", ">") still
                 // terminated the attribute/tag it landed in. 'url'/'iconUrl'/'id' were not escaped at all.
-                $rawName = htmlspecialchars_decode($file['name'], ENT_QUOTES);
-                $htmlName = htmlspecialchars($rawName, ENT_QUOTES, 'UTF-8'); // for HTML attribute/text use
+                $rawName = htmlspecialchars_decode($file['name']);
+                $htmlName = htmlspecialchars($rawName);
                 $jsName = json_encode($rawName, JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP); // for the JS string literal in onclick
-                $safeUrl = htmlspecialchars($file['url'], ENT_QUOTES, 'UTF-8');
-                $safeIconUrl = htmlspecialchars($file['iconUrl'], ENT_QUOTES, 'UTF-8');
-                $safeId = htmlspecialchars($file['id'], ENT_QUOTES, 'UTF-8');
+                $safeUrl = htmlspecialchars($file['url']);
+                $safeIconUrl = htmlspecialchars($file['iconUrl']);
+                $safeId = htmlspecialchars($file['id']);
                 $jsId = json_encode((string) $file['id'], JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP);
                 // Browsers HTML-decode attribute values on submit, so escaping what goes into value="..."
                 // here does not change what prepareDataForSaving() reads back from $_POST.
@@ -509,12 +509,12 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
     function createDownloadLink($url) {
         // NB: the display name is keyed by the RAW url, but $url is escaped by the time it reaches us,
         // so undo that for the lookup only - the escaped $url is still what goes into the markup.
-        $lookupKey = htmlspecialchars_decode($url, ENT_QUOTES);
+        $lookupKey = htmlspecialchars_decode($url);
         $displayName = isset($GLOBALS['formulize_googleFileUploadElementDisplayName'][$lookupKey]) ? $GLOBALS['formulize_googleFileUploadElementDisplayName'][$lookupKey] : $lookupKey; // set aside in prepareDataForDataset above
         // previously this did str_replace('"','\"', htmlspecialchars_decode($displayName)) which was a
         // no-op in HTML - backslash escaping is a JavaScript idiom, and \" still terminates an HTML
         // attribute - so the decoded file name went into the link text unprotected
-        return "<a href=\"".$url."\" target=\"_blank\">".htmlspecialchars(strip_tags($displayName), ENT_QUOTES)."</a>";
+        return "<a href=\"".$url."\" target=\"_blank\">".htmlspecialchars(strip_tags($displayName))."</a>";
     }
 
 }

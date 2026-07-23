@@ -361,7 +361,7 @@ class icms_member_Handler {
 		// above is now identical for unknown-user and wrong-password.
 		$is_expired = $icmspass->passExpired($uname);
 		if ($is_expired == 1) {
-			redirect_header(ICMS_URL . '/user.php?op=resetpass&uname=' . $uname, 5, _US_PASSEXPIRED, false);
+			redirect_header(ICMS_URL . '/user.php?op=resetpass&uname=' . urlencode($uname), 5, _US_PASSEXPIRED, false);
 		}
 		return $user[0];
 	}
