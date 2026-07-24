@@ -6508,7 +6508,8 @@ function undoAllHTMLChars($text,$quotes=ENT_QUOTES) {
 
 
 /**
- * FORMULIZE_PURIFY_HTML_VALUES - true = ENFORCE purification, false = REPORT-ONLY (log, but display as-is).
+ * Whether HTML purification is ENFORCED (true) or REPORT-ONLY (false = log which values it WOULD change,
+ * but display them unfiltered).
  *
  * Why this exists: element types that declare their data is HTML (derived values, rich text) have their
  * markup preserved rather than escaped. That markup is admin-authored, but the DATA interpolated into it
@@ -6522,18 +6523,22 @@ function undoAllHTMLChars($text,$quotes=ENT_QUOTES) {
  * but outputs the original, letting a site be assessed before enforcement is turned on.
  *
  * Driven by the 'formulizeEnforceHtmlPurification' Advanced setting (Settings -> Advanced -> Debugging).
- * If the setting cannot be read for any reason we fail SECURE (enforce), consistent with the fail-closed
- * behaviour in the purifier.
+ * Resolved once per request and cached. Fails SECURE (enforce) if the setting cannot be read - eg. before
+ * the module update that registers it has run, or if the config handler is unavailable - consistent with
+ * the fail-closed behaviour in the purifier.
+ *
+ * @return bool true to enforce purification, false for report-only
  */
-if(!defined('FORMULIZE_PURIFY_HTML_VALUES')) {
-    $formulize_enforceHtmlPurification = true; // fail secure if the setting cannot be resolved
-    if(function_exists('getFormulizeModId') AND $formulize_purifyModId = getFormulizeModId()) {
-        $formulize_purifyConfig = xoops_gethandler('config')->getConfigsByCat(0, $formulize_purifyModId);
-        if(isset($formulize_purifyConfig['formulizeEnforceHtmlPurification'])) {
-            $formulize_enforceHtmlPurification = (bool) $formulize_purifyConfig['formulizeEnforceHtmlPurification'];
-        }
+function formulize_enforceHtmlPurification() {
+    static $enforce = null;
+    if($enforce === null) {
+        $enforce = true; // fail secure if the setting cannot be resolved
+				$formulize_purifyConfig = xoops_gethandler('config')->getConfigsByCat(0, getFormulizeModId());
+				if(is_array($formulize_purifyConfig) AND isset($formulize_purifyConfig['formulizeEnforceHtmlPurification'])) {
+					$enforce = (bool) $formulize_purifyConfig['formulizeEnforceHtmlPurification'];
+				}
     }
-    define('FORMULIZE_PURIFY_HTML_VALUES', $formulize_enforceHtmlPurification);
+    return $enforce;
 }
 
 /**
@@ -6577,17 +6582,17 @@ function formulize_purifyHtmlValue($value, $handle = '', $entry_id = 0) {
         return $myts->htmlSpecialChars($value);
     }
 
-    if($purified !== $value AND !FORMULIZE_PURIFY_HTML_VALUES) {
+    if($purified !== $value AND !formulize_enforceHtmlPurification()) {
         // Report-only: record WHERE purification would change something, so real installs can be assessed
         // before enforcement is turned on. Deliberately logs NO value content - the value is potentially
         // malicious markup, and the log viewer renders every field unescaped (Smarty autoescape is off
         // site-wide), so logging it would turn viewing the log into a stored-XSS sink. The identifiers
         // locate the element+entry precisely; inspect it in the app if the actual content is needed.
         formulize_logPurifyEvent('html-purification-report', $handle, $entry_id,
-            "Purification WOULD alter this element's value, but it is being output unfiltered because FORMULIZE_PURIFY_HTML_VALUES is off.");
+            "Purification WOULD alter this element's value, but it is being output unfiltered because HTML purification enforcement is off (report-only mode).");
     }
 
-    return FORMULIZE_PURIFY_HTML_VALUES ? $purified : $value;
+    return formulize_enforceHtmlPurification() ? $purified : $value;
 }
 
 

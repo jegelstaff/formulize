@@ -335,8 +335,8 @@ class formulizeElementRenderer{
 			// handler, whether or not the author quoted it. Filtering values in isolation cannot do that,
 			// because in isolation the value is just a string with no knowledge of where it will land.
 			//
-			// Enforcement follows FORMULIZE_PURIFY_HTML_VALUES like every other purification site, and
-			// formulize_purifyHtmlValue() falls back to escaping if the purifier is unavailable.
+			// Enforcement follows formulize_enforceHtmlPurification() like every other purification site,
+			// and formulize_purifyHtmlValue() falls back to escaping if the purifier is unavailable.
 			if($substitutionHappened AND $makeValuesSafeForDisplay) {
 				$text = formulize_purifyHtmlValue($text, $renderedElementMarkupName, $entry_id);
 			}
