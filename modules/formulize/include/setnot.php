@@ -108,6 +108,15 @@ if($_POST['new_term']) {
 	$_POST['terms'][] = $_POST['new_term'];
 }
 
+// Whitelist the condition operators before they are stored (and before they are re-rendered into the
+// hidden fields that get resubmitted).
+if(isset($_POST['ops']) AND is_array($_POST['ops'])) {
+	foreach($_POST['ops'] as $opKey => $opValue) {
+		$cleanOp = is_string($opValue) ? formulize_conditionsCleanOps($opValue) : "";
+		$_POST['ops'][$opKey] = ($cleanOp !== "") ? $cleanOp : "=";
+	}
+}
+
 if(substr($_POST['template'], -4) == ".tpl") {
 	$_POST['template'] = substr($_POST['template'], 0, -4);
 }

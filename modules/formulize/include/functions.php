@@ -6371,6 +6371,14 @@ function parseSubmittedConditions($filter_key, $delete_key = 'conditionsdelete',
 		$reloadFlag = true;
 	}
 
+	// Enforce the operator whitelist at this write boundary.
+	if (isset($_POST[$filter_key."_ops"]) AND is_array($_POST[$filter_key."_ops"])) {
+		foreach ($_POST[$filter_key."_ops"] as $opKey => $opValue) {
+			$cleanOp = is_string($opValue) ? formulize_conditionsCleanOps($opValue) : "";
+			$_POST[$filter_key."_ops"][$opKey] = ($cleanOp !== "") ? $cleanOp : "=";
+		}
+	}
+
 	$returnValues = array();
 	if (count((array) $_POST[$filter_key."_elements"]) > 0){
 		$returnValues[0] = $_POST[$filter_key."_elements"];
@@ -6819,6 +6827,13 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
         }
     }
     $filterOps = $conditions[1];
+    // Whitelist the operators before any of them reach the SQL.
+    if(is_array($filterOps)) {
+        foreach($filterOps as $filterOpKey => $filterOpValue) {
+            $cleanFilterOp = is_string($filterOpValue) ? formulize_conditionsCleanOps($filterOpValue) : "";
+            $filterOps[$filterOpKey] = ($cleanFilterOp !== "") ? $cleanFilterOp : "=";
+        }
+    }
     $filterTerms = $conditions[2];
     $filterTypes = $conditions[3];
     $targetFormObject = "";
@@ -11535,7 +11550,7 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 		} elseif($thisOp == "IN") {
 			$cleanTerms = array();
 			foreach(explode(',',$rawFilterTerms) as $ft) {
-				$cleanTerms[] = str_replace("'", "\'", trim(htmlspecialchars_decode($ft, ENT_QUOTES), " \n\r\t\v\x00\"'"));
+				$cleanTerms[] = addslashes(trim(htmlspecialchars_decode($ft, ENT_QUOTES), " \n\r\t\v\x00\"'"));
 			}
 			$evaluationCondition .= "in_array(".$compValueQuoted.", array('".implode("','",$cleanTerms)."'))";
 		} else {
