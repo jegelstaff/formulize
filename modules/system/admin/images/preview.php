@@ -23,24 +23,24 @@ include_once ICMS_LIBRARIES_PATH . '/wideimage/lib/WideImage.php';
  * no POST variables
  * 
  */
-$file = filter_input(INPUT_GET, 'file', FILTER_SANITIZE_STRING);
+$file = basename((string) ($_GET['file'] ?? ''));
 $resize = isset($_GET['resize']) ? (int) $_GET['resize'] : 1;
-$filter = isset($_GET['filter']) ? filter_input(INPUT_GET, 'filter', FILTER_SANITIZE_STRING) : NULL;
+$filter = isset($_GET['filter']) ? $_GET['filter'] : NULL;
 $args = array();
 if (isset($_GET['arg1'])) {
-	$args[] = filter_input(INPUT_GET, 'arg1', FILTER_SANITIZE_STRING);
+	$args[] = (int) $_GET['arg1'];
 }
 if (isset($_GET['arg2'])) {
-	$args[] = filter_input(INPUT_GET, 'arg2', FILTER_SANITIZE_STRING);
+	$args[] = (int) $_GET['arg2'];
 }
 if (isset($_GET['arg3'])) {
-	$args[] = filter_input(INPUT_GET, 'arg3', FILTER_SANITIZE_STRING);
+	$args[] = (int) $_GET['arg3'];
 }
 
 $image_handler = icms::handler('icms_image');
 $imgcat_handler = icms::handler('icms_image_category');
 
-$image =& $image_handler->getObjects(new icms_db_criteria_Item('image_name', $file), FALSE, TRUE);
+$image =& $image_handler->getObjects(new icms_db_criteria_Item('image_name', icms::$db->escape($file)), FALSE, TRUE);
 $imagecategory =& $imgcat_handler->get($image[0]->getVar('imgcat_id'));
 
 $categ_path = $imgcat_handler->getCategFolder($imagecategory);

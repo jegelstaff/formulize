@@ -691,4 +691,7 @@ define("_formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE","Este valor será calcul
 
 define("_formulize_QSF_DefaultText", "Procurar por:"); //GibaPhp 3.0
 
-?>
+// Pick up the English text for any constant this translation does not define, the same way the other
+// language packs do. Without this, a constant added since this file was last translated is simply
+// undefined here, which is a fatal error in PHP 8 rather than an untranslated string.
+include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/main.php';

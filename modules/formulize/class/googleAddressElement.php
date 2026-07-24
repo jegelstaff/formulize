@@ -183,7 +183,7 @@ class formulizeGoogleAddressElementHandler extends formulizeElementsHandler {
         // if there is a place saved, set that as the initial value
         if($ele_value['address']) {
             $js .= "
-            jQuery(this).val(\"".str_replace('"', "&quot;", $this->readableAddress($ele_value))."\");
+            jQuery(this).val(".json_encode($this->readableAddress($ele_value), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP).");
 ";
             // interesting technique for getting a place result in the background, but not necessary.
             // note the reference to a div that doesn't exist right now, in order to create the dummy map for finding the place
@@ -268,7 +268,7 @@ $js.='
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
     function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
         $this->clickable = true; // make urls clickable
-        $this->striphtml = false; // remove html tags as a security precaution
+        $this->dataIsHtml = false; // plain text value - gets HTML-escaped
         $this->length = 1000; // truncate to a maximum of 100 characters, and append ... on the end
 
         return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)

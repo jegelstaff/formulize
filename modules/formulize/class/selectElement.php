@@ -946,7 +946,11 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 						}
 						if(count((array) $linked_column_values)>0) {
 							$leoIndex = $ele_value[ELE_VALUE_SELECT_LINK_SNAPSHOT] ? implode(" | ", $linked_column_values) : $rowlinkedvaluesq[0];
-							$linkedElementOptions[$leoIndex] = implode(" | ", $linked_column_values);
+							// These option-text values come from ANOTHER form's entries (ie. user-supplied
+							// data) and XoopsFormSelect::render() does NOT escape option display text, so escape
+							// here. Normalize-then-escape (decode any existing encoding, then escape once) so a
+							// value that is stored escaped is not double-escaped.
+							$linkedElementOptions[$leoIndex] = $myts->htmlSpecialChars(undoAllHTMLChars(implode(" | ", $linked_column_values)));
 						}
 					}
 				}
@@ -1026,7 +1030,11 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 			$GLOBALS['formulize_lastRenderedElementOptions'] = $cachedSourceValuesQ[intval($ele_value[ELE_VALUE_SELECT_LINK_SNAPSHOT])][$sourceValuesQ];
 
 			if($isDisabled) {
-				$form_ele = new XoopsFormLabel($caption, implode(", ", $disabledOutputText), $markupName);
+				// For a linked select this text comes from entries in the LINKED form, so it is user data, not
+			// admin-authored option labels. Passing the array (rather than a pre-joined string) lets the
+			// funnel make each option safe and add our ", " separators afterwards.
+			$form_ele = new XoopsFormLabel($caption, $this->makeValueSafeForReadOnlyDisplay(
+				$disabledOutputText, $element->getVar('ele_handle'), $entry_id, ", "), $markupName);
 			} elseif($ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE] == 0) {
 				// this is a hack because the size attribute is private and only has a getSize and not a setSize, setting the size can only be done through the constructor
 				$count = count((array)  $form_ele->getOptions() );
@@ -1299,7 +1307,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 				source: function(request, response) {
 				var excludeCurrentSelection = jQuery('input[name=\"".$markupName."[]\"]').map(function () { return $(this).val(); }).get().join(',');
 				jQuery.get('".XOOPS_URL."/modules/formulize/include/formulize_quickselect.php?cache=".$cachedLinkedOptionsFilename."&allow_new_values=".$allow_new_values."&term='+encodeURIComponent(request.term)+'&current='+encodeURIComponent(excludeCurrentSelection), function(data) {
-					response(eval(data));
+					response(JSON.parse(data));
 				})},
 				minLength: 1,
 				delay: 0,
@@ -1356,7 +1364,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 								i = parseInt(jQuery('#".$markupName."_defaults').children().last().attr('target')) + 1;
 							}
 							jQuery('#".$markupName."_defaults').append(\"<input type='hidden' name='".$markupName."[]' jquerytag='".$markupName."' id='".$markupName."_\"+i+\"' target='\"+i+\"' value='\"+value+\"' />\");
-							jQuery('#".$markupName."_formulize_autocomplete_selections').append(\"<p class='auto_multi auto_multi_".$markupName."' target='\"+value+\"'>\"+label+\"</p>\");
+							jQuery('<p></p>').addClass('auto_multi auto_multi_".$markupName."').attr('target', value).text(label).appendTo('#".$markupName."_formulize_autocomplete_selections');
 							jQuery('#".$markupName."_user').val('');
 							jQuery('#last_selected_".$markupName."').val('');
 							triggerChangeOnMultiValueAutocomplete('".$markupName."');
@@ -1557,6 +1565,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 
 				// not a linked element...
 				} else {
+					$newValue = htmlspecialchars($newValue);
 					if(!is_array($ele_value[ELE_VALUE_SELECT_OPTIONS]) OR !isset($ele_value[ELE_VALUE_SELECT_OPTIONS][$newValue])) {
 						$ele_value[ELE_VALUE_SELECT_OPTIONS][$newValue] = 0; // create new key in ele_value[2] for this new option, set to 0 to indicate it's not selected by default in new entries
 						$element->setVar('ele_value', $ele_value);
@@ -1768,78 +1777,111 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 	// this method will format a dataset value for display on screen when a list of entries is prepared
 	// for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
 	// Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
-	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
-		$this->clickable = true;
-		$this->striphtml = true;
-		$this->length = $textWidth;
+	// Whether this element renders its value as a clickable link in a list. This is CONFIG (from
+	// ele_value) - the same for every entry - so it is safe to read here and again in composeMarkupForList.
+	// The two link modes are: a link into the source form of a linked selectbox, or a link to the user
+	// info page for a {USERNAMES}/{FULLNAMES} list.
+	protected function isClickableInList($ele_value) {
+		if(!isset($ele_value[ELE_VALUE_SELECT_LINK_CLICKABLEINLIST]) OR $ele_value[ELE_VALUE_SELECT_LINK_CLICKABLEINLIST] != 1) {
+			return false;
+		}
+		$linkedClickable = (is_string($ele_value[ELE_VALUE_SELECT_OPTIONS]) AND strstr($ele_value[ELE_VALUE_SELECT_OPTIONS], "#*=:*"));
+		$userClickable = (isset($ele_value[ELE_VALUE_SELECT_OPTIONS]['{USERNAMES}']) OR isset($ele_value[ELE_VALUE_SELECT_OPTIONS]['{FULLNAMES}']));
+		return ($linkedClickable OR $userClickable);
+	}
 
-		global $myts, $xoopsDB;
+	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
+		$this->dataIsHtml = false; // a select value is plain text - it gets HTML-escaped by the canonical path
 		$element = $this->get($handle);
 		$ele_value = $element->getVar('ele_value');
-		$fid = $element->getVar('fid');
 
-		if(is_string($ele_value[ELE_VALUE_SELECT_OPTIONS]) AND strstr($ele_value[ELE_VALUE_SELECT_OPTIONS], "#*=:*") AND $ele_value[ELE_VALUE_SELECT_LINK_CLICKABLEINLIST] == 1) {
-      $boxproperties = explode("#*=:*", $ele_value[ELE_VALUE_SELECT_OPTIONS]);
-      $target_fid = $boxproperties[0];
-      if ($target_allowed = security_check($target_fid)) {
-				// wild caching and static stuff going on here
-				// if multiple sub entries are being formatted in a list
-				// the value in the DB could be a comma separated list of foreign keys
-				// but for each sub entry, we want only one specific key in the list to be used
-				// so we keep a counter of which values we've done and where we are in the set of ids
-				// so that we can return the correct one this time and the next time we're formatting the value for display
-        static $cachedQueryResults = array();
-				static $multiValueCounter = array();
-				if(!isset($multiValueCounter[$entry_id])) {
-					$multiValueCounter[$entry_id] = 0;
-				} else {
-					$multiValueCounter[$entry_id]++;
-				}
-        if (isset($cachedQueryResults[$boxproperties[0]][$boxproperties[1]][$entry_id][$handle])) {
-          $id_req = $cachedQueryResults[$boxproperties[0]][$boxproperties[1]][$entry_id][$handle];
-        } else {
-          // get the targetEntry by checking in the entry we're processing, for the actual value recorded in the DB for the entry id we're pointing to
-          if($ele_value[ELE_VALUE_SELECT_LINK_SNAPSHOT]) {
-						// lookup the first item that matches the saved text, in the source form... only get the first value when there are multiple, as per the logic below for non-snapshotted elements, but we should probably smartly get them all and build links properly in multiselect cases
-						$id_req = findMatchingIdReq($boxproperties[1], $boxproperties[0], $value);
-						$cachedQueryResults[$boxproperties[0]][$boxproperties[1]][$entry_id][$handle] = $id_req;
-          } else {
-						$currentFormId = $element->getVar('fid');
-						$data_handler = new formulizeDataHandler($currentFormId);
-						$id_req_list = explode(",", trim($data_handler->getElementValueInEntry($entry_id, $handle), ","));
-						$id_req_list = array_values(array_filter($id_req_list, fn($item) => ($item !== 0 AND $item !== "0")));
-						$id_req = $id_req_list[$multiValueCounter[$entry_id]];
-					}
-        }
-				$clickableText = printSmart(trans($myts->htmlSpecialChars($value)), $textWidth);
-				// if this goes to the same form as the one we're displaying, use viewEntryLink to make the link so the user keeps their place -- it's equivalent to drilling into an entry in the list
-				if($id_req AND $fid == $target_fid) {
-					return viewEntryLink($clickableText,$id_req);
-				// otherwise, make a link to a new window/tab
-				} elseif ($id_req) {
-					return "<a href='" . XOOPS_URL . "/modules/formulize/index.php?fid=$target_fid&ve=$id_req' target='_blank'>" . $clickableText . "</a>";
-				}
-				// no id_req (entry) found
-				return $clickableText;
+		if($this->isClickableInList($ele_value)) {
+			// composeMarkupForList builds the <a> from the (escaped) value plus a per-entry lookup, and
+			// truncates its own display text. Turn off the parent's clickable + truncation so it does not
+			// linkify or cut the markup we build (which would sever the <a>).
+			$this->clickable = false;
+			$this->length = 0;
+		} else {
+			$this->clickable = true;
+			$this->length = $textWidth;
+			// legacy UI-text swap (non-clickable path only, as before)
+			if($element->getVar('ele_uitextshow')) {
+				$value = formulize_handleRandomAndDateText(formulize_swapUIText($value, $element->getVar('ele_uitext')));
 			}
-    } elseif ((isset($ele_value[ELE_VALUE_SELECT_OPTIONS]['{USERNAMES}']) OR isset($ele_value[ELE_VALUE_SELECT_OPTIONS]['{FULLNAMES}'])) AND $ele_value[ELE_VALUE_SELECT_LINK_CLICKABLEINLIST] == 1) {
-			$nametype = isset($ele_value[ELE_VALUE_SELECT_OPTIONS]['{USERNAMES}']) ? "uname" : "name";
-			static $cachedUidResults = array();
-			if (isset($cachedUidResults[$value])) {
-				$uids = $cachedUidResults[$value];
-			} else {
-				$uids = q("SELECT uid FROM " . $xoopsDB->prefix("users") . " WHERE $nametype = '" . formulize_db_escape($value) . "' ");
-				$cachedUidResults[$value] = $uids;
-			}
-			if (count((array) $uids) == 1) {
-				return "<a href='" . XOOPS_URL . "/userinfo.php?uid=" . $uids[0]['uid'] . "' target=_blank>" . printSmart(trans($myts->htmlSpecialChars($value)), $textWidth) . "</a>";
-			} else {
-				return printSmart(trans($myts->htmlSpecialChars($value)), $textWidth);
-			}
-		} elseif($element->getVar('ele_uitextshow')) {
-			$value = formulize_handleRandomAndDateText(formulize_swapUIText($value, $element->getVar('ele_uitext')));
 		}
-		return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+		// Always through the canonical path: the value is escaped there, then handed to composeMarkupForList.
+		return parent::formatDataForList($value, $handle, $entry_id, $textWidth);
+	}
+
+	// Wrap a clickable-in-list select value in its link. $value is ALREADY escaped; $rawValue is the raw
+	// value, used only for the DB lookups (never output). The per-entry id lookup lives here - with the
+	// counter/caches as function-statics keyed by entry - so no entry-specific state is stored on the
+	// (singleton) handler between formatDataForList() and here.
+	function composeMarkupForList($value, $handle="", $entry_id=0, $rawValue=null, $textWidth=100) {
+		global $xoopsDB;
+		$element = $this->get($handle);
+		$ele_value = $element->getVar('ele_value');
+		if(!$this->isClickableInList($ele_value)) {
+			return $value; // not a clickable-in-list element - leave the escaped value as-is
+		}
+		$rawValue = (string) $rawValue;
+		$displayText = printSmart(trans($value), $textWidth); // $value already escaped; truncate the visible text
+
+		// --- link into the source form of a linked selectbox ---
+		if(is_string($ele_value[ELE_VALUE_SELECT_OPTIONS]) AND strstr($ele_value[ELE_VALUE_SELECT_OPTIONS], "#*=:*")) {
+			$boxproperties = explode("#*=:*", $ele_value[ELE_VALUE_SELECT_OPTIONS]);
+			$target_fid = intval($boxproperties[0]);
+			if(!security_check($target_fid)) {
+				return $displayText; // no access to the target form -> plain text, no link
+			}
+			$fid = $element->getVar('fid');
+			// If multiple sub-entries are being formatted in a list, the value in the DB could be a comma
+			// separated list of foreign keys, but for each sub-entry we want one specific key. The counter
+			// tracks which one we are on across successive calls for the same entry.
+			static $cachedQueryResults = array();
+			static $multiValueCounter = array();
+			if(!isset($multiValueCounter[$entry_id])) {
+				$multiValueCounter[$entry_id] = 0;
+			} else {
+				$multiValueCounter[$entry_id]++;
+			}
+			if(isset($cachedQueryResults[$boxproperties[0]][$boxproperties[1]][$entry_id][$handle])) {
+				$id_req = $cachedQueryResults[$boxproperties[0]][$boxproperties[1]][$entry_id][$handle];
+			} else {
+				if($ele_value[ELE_VALUE_SELECT_LINK_SNAPSHOT]) {
+					// lookup the first item that matches the saved text, in the source form (raw value, to
+					// match the DB) - only the first value in multiselect cases, as with the non-snapshot branch
+					$id_req = findMatchingIdReq($boxproperties[1], $boxproperties[0], $rawValue);
+					$cachedQueryResults[$boxproperties[0]][$boxproperties[1]][$entry_id][$handle] = $id_req;
+				} else {
+					$data_handler = new formulizeDataHandler($fid);
+					$id_req_list = explode(",", trim($data_handler->getElementValueInEntry($entry_id, $handle), ","));
+					$id_req_list = array_values(array_filter($id_req_list, fn($item) => ($item !== 0 AND $item !== "0")));
+					$id_req = $id_req_list[$multiValueCounter[$entry_id]];
+				}
+			}
+			// same form -> viewEntryLink keeps the user's place (equivalent to drilling into an entry)
+			if($id_req AND $fid == $target_fid) {
+				return viewEntryLink($displayText, $id_req);
+			} elseif($id_req) {
+				return "<a href='" . XOOPS_URL . "/modules/formulize/index.php?fid=$target_fid&ve=".intval($id_req)."' target=\"_blank\">$displayText</a>";
+			}
+			return $displayText; // no target entry found -> plain text
+		}
+
+		// --- link to the user info page for a {USERNAMES}/{FULLNAMES} list ---
+		$nametype = isset($ele_value[ELE_VALUE_SELECT_OPTIONS]['{USERNAMES}']) ? "uname" : "name";
+		static $cachedUidResults = array();
+		if(isset($cachedUidResults[$rawValue])) {
+			$uids = $cachedUidResults[$rawValue];
+		} else {
+			$uids = q("SELECT uid FROM " . $xoopsDB->prefix("users") . " WHERE $nametype = '" . formulize_db_escape($rawValue) . "' ");
+			$cachedUidResults[$rawValue] = $uids;
+		}
+		if(count((array) $uids) == 1) {
+			return "<a href='" . XOOPS_URL . "/userinfo.php?uid=" . $uids[0]['uid'] . "' target=\"_blank\">$displayText</a>";
+		}
+		return $displayText;
 	}
 
 }

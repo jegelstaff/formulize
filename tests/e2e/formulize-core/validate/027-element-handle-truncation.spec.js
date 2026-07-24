@@ -19,8 +19,8 @@ test('Element handles are truncated to 59 chars and made unique with _f<fid> and
 	await page.getByRole('textbox', { name: 'Form title:' }).fill('Handle Tests');
 	await saveAdminForm(page);
 
-	// form_settings_save.php redirects to ui.php?page=form&aid=X&fid=Y after saving
-	const fid = await getFidFromFormAdminPage(page);
+	// Resolved from the database by title rather than scraped off the page - see getFidFromFormAdminPage.
+	const fid = await getFidFromFormAdminPage(page, 'Handle Tests');
 	expect(fid).toBeGreaterThan(0);
 
 	const gotoElementsTab = async () => {

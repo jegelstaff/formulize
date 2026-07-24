@@ -313,7 +313,7 @@ class formulizeNumberElementHandler extends formulizeTextElementHandler {
 				)) {
 				$value = formulize_numberFormat($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE], $element->getVar('ele_handle'));
 			}
-			$form_ele = new XoopsFormLabel ($caption, $value, $markupName);
+			$form_ele = new XoopsFormLabel ($caption, $this->makeValueSafeForReadOnlyDisplay($value, $element->getVar('ele_handle'), $entry_id), $markupName);
 		}
 		return $form_ele;
 	}
@@ -346,14 +346,22 @@ class formulizeNumberElementHandler extends formulizeTextElementHandler {
 	// Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
 	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
 		$this->clickable = false;
-		$this->striphtml = false;
+		$this->dataIsHtml = false; // plain text value - gets HTML-escaped by the canonical path
 		$this->length = 100;
-		if(strpos($value, '.') !== false) {
-			$value = floatval(trim($value));
+		// A number element only ever holds a number, so coerce to one (0 if somehow not) - this keeps
+		// any unexpected content from flowing through, while preserving decimals when present.
+		// formulize_numberFormat then applies the element's own decimal/separator/prefix config.
+		$value = trim((string) $value);
+		if(!is_numeric($value)) {
+			$value = 0;
+		} elseif(strpos($value, '.') !== false) {
+			$value = floatval($value);
 		} else {
-			$value = intval(trim($value));
+			$value = intval($value);
 		}
-		return formulize_numberFormat($value, $handle);
+		// Route through the canonical base method (not textElement's, whose property/associated-element
+		// logic is not wanted for numbers) so the formatted value is escaped/truncated like everything else.
+		return formulizeElementsHandler::formatDataForList(formulize_numberFormat($value, $handle), $handle, $entry_id, $textWidth);
 	}
 
 }

@@ -39,7 +39,7 @@ $modversion = array(
 	'license' => "GPL-2.0",
 	'image' => "images/formulize.gif",
 	'dirname' => "formulize",
-	'dbversion' => 12,
+	'dbversion' => 13,
 	'onUpdate' => "include/on_update.php"
 );
 
@@ -1090,6 +1090,17 @@ $modversion['config'][] = array(
 	'default' => 1,
 );
 
+// two-factor authentication: how long a "remember this device" trust token lasts.
+// Read (and clamped to 1-365) by tfa_rememberDeviceDays() in include/2fa/manage.php.
+$modversion['config'][] = array(
+	'name' => 'tfaRememberDeviceDays',
+	'title' => '_MI_formulize_TFA_REMEMBER_DEVICE_DAYS',
+	'description' => '_MI_formulize_TFA_REMEMBER_DEVICE_DAYS_DESC',
+	'formtype' => 'textbox',
+	'valuetype' => 'int',
+	'default' => 30,
+);
+
 // AI config
 $modversion['config'][] = array(
 	'name' => 'formulizeAIAssistantEnabled',
@@ -1145,6 +1156,16 @@ $modversion['config'][] = array(
 	'name' => 'validateCode',
 	'title' => '_MI_formulize_VALIDATECODE',
 	'description' => '_MI_formulize_VALIDATECODE_DESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 1,
+);
+// Fresh installs default to 1 (enforce). Existing installs are provisioned with 0 (report-only) by the
+// admin/patches/007 patch, so an upgrade does not suddenly alter how their data displays - see that patch.
+$modversion['config'][] = array(
+	'name' => 'formulizeEnforceHtmlPurification',
+	'title' => '_MI_formulize_ENFORCEHTMLPURIFICATION',
+	'description' => '_MI_formulize_ENFORCEHTMLPURIFICATION_DESC',
 	'formtype' => 'yesno',
 	'valuetype' => 'int',
 	'default' => 1,

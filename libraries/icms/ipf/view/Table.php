@@ -270,6 +270,16 @@ class icms_ipf_view_Table {
 		$this->_sortsel = isset($_GET[$this->_objectHandler->_itemname . '_' . 'sortsel']) ? $_GET[$this->_objectHandler->_itemname . '_' . 'sortsel'] : $this->getDefaultSort();
 		//$this->_sortsel = isset($_POST['sortsel']) ? $_POST['sortsel'] : $this->_sortsel;
 
+		$allowedSortKeys = array();
+		foreach ($this->_columns as $sortableColumn) {
+			if ($sortableColumn->isSortable()) {
+				$allowedSortKeys[] = $sortableColumn->getKeyName();
+			}
+		}
+		if (!in_array($this->_sortsel, $allowedSortKeys, true) && !isset($this->_tempObject->vars[$this->_sortsel])) {
+			$this->_sortsel = $this->_objectHandler->identifierName;
+		}
+
 		icms_setCookieVar($_SERVER['PHP_SELF'] . '_' . $this->_id . '_sortsel', $this->_sortsel);
 		$fieldsForSorting = $this->_tempObject->getFieldsForSorting($this->_sortsel);
 
@@ -649,7 +659,7 @@ class icms_ipf_view_Table {
 
 					icms_setCookieVar($_SERVER['PHP_SELF'] . '_filtersel2', $this->_filtersel2);
 					if ($this->_filtersel2 != 'default') {
-						$this->_criteria->add(new icms_db_criteria_Item($this->_filtersel, $this->_filtersel2));
+						$this->_criteria->add(new icms_db_criteria_Item($this->_filtersel, icms::$db->escape($this->_filtersel2)));
 					}
 				}
 			}
@@ -657,13 +667,14 @@ class icms_ipf_view_Table {
 		// Check if we have a quicksearch
 
 		if (isset($_POST['quicksearch_' . $this->_id]) && $_POST['quicksearch_' . $this->_id] != '') {
+			$quicksearch_value = icms::$db->escape($_POST['quicksearch_' . $this->_id]);
 			$quicksearch_criteria = new icms_db_criteria_Compo();
 			if (is_array($this->_quickSearch['fields'])) {
 				foreach ($this->_quickSearch['fields'] as $v) {
-					$quicksearch_criteria->add(new icms_db_criteria_Item($v, '%' . $_POST['quicksearch_' . $this->_id] . '%', 'LIKE'), 'OR');
+					$quicksearch_criteria->add(new icms_db_criteria_Item($v, '%' . $quicksearch_value . '%', 'LIKE'), 'OR');
 				}
 			} else {
-				$quicksearch_criteria->add(new icms_db_criteria_Item($this->_quickSearch['fields'], '%' . $_POST['quicksearch_' . $this->_id] . '%', 'LIKE'));
+				$quicksearch_criteria->add(new icms_db_criteria_Item($this->_quickSearch['fields'], '%' . $quicksearch_value . '%', 'LIKE'));
 			}
 			$this->_criteria->add($quicksearch_criteria);
 		}

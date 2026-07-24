@@ -25,6 +25,13 @@ include_once XOOPS_ROOT_PATH . '/modules/formulize/class/usersGroupsPerms.php';
 
 global $xoopsUser, $icmsConfig;
 
+// CSRF: require a valid single-use request token (appended to the masquerade link by
+// userAccountMasqueradeElement::render()).
+if (!icms::$security->check()) {
+	redirect_header(XOOPS_URL, 3, 'Invalid or expired request. Please return to the users list and try again.');
+	exit();
+}
+
 $currentGroups = $xoopsUser ? $xoopsUser->getGroups() : array();
 $currentUid    = $xoopsUser ? intval($xoopsUser->getVar('uid')) : 0;
 $targetUid     = isset($_GET['uid']) ? intval($_GET['uid']) : 0;
@@ -35,10 +42,24 @@ if (!$targetUid || $targetUid === $currentUid) {
 	exit();
 }
 
+$member_handler = xoops_gethandler('member');
+$targetUser = $member_handler->getUser($targetUid);
+
+if (!$targetUser) {
+	redirect_header(XOOPS_URL . '/modules/formulize/users.php', 3, 'User not found.');
+	exit();
+}
+
+// Never allow a non-webmaster to masquerade as a webmaster -- that would be a straight
+// privilege escalation (a manager with edit_other_entries on an entries-are-users form can
+// edit an admin's EAU record, so EAU-edit rights alone must NOT be sufficient to become an
+// admin). Only a webmaster may masquerade as another webmaster.
+$targetIsWebmaster = in_array(XOOPS_GROUP_ADMIN, $targetUser->getGroups());
+
 // Permission check: webmasters always allowed; others need edit access on
 // the target user's EAU entry in at least one entries-are-users form.
 $allowed = $isWebmaster;
-if (!$allowed) {
+if (!$allowed && !$targetIsWebmaster) {
 	$eauMatches = findUserEauEntry($targetUid);
 	foreach ($eauMatches as $match) {
 		if (formulizePermHandler::user_can_edit_entry($match['fid'], $currentUid, $match['entry_id'])) {
@@ -50,14 +71,6 @@ if (!$allowed) {
 
 if (!$allowed) {
 	redirect_header(XOOPS_URL . '/', 3, 'You do not have permission to masquerade as this user.');
-	exit();
-}
-
-$member_handler = xoops_gethandler('member');
-$targetUser = $member_handler->getUser($targetUid);
-
-if (!$targetUser) {
-	redirect_header(XOOPS_URL . '/modules/formulize/users.php', 3, 'User not found.');
 	exit();
 }
 

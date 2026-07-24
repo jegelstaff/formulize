@@ -42,7 +42,7 @@ class mod_profile_TribeuserHandler extends icms_ipf_Handler {
 		if ($tribeuser_id) $criteria->add(new icms_db_criteria_Item('tribeusers_id', (int)$tribeuser_id));
 		if ($tribe_id) {
 			if (!is_array($tribe_id)) $tribe_id = array($tribe_id);
-			$tribe_id = '('.implode(',', $tribe_id).')';
+			$tribe_id = '('.implode(',', array_map('intval', $tribe_id)).')';
 			$criteria->add(new icms_db_criteria_Item('tribe_id', $tribe_id, 'IN'));
 		}
 		if ($user_id) $criteria->add(new icms_db_criteria_Item('user_id', (int)$user_id, $condition));

@@ -2692,8 +2692,7 @@ function icms_getUnameFromUserEmail($email = '')
 	$db = icms_db_Factory::instance();
 	if($email !== '')
 	{
-		$sql = $db->query("SELECT uname, email FROM ".$db->prefix('users')." WHERE email = '".@htmlspecialchars($email,
-		ENT_QUOTES, _CHARSET)."'");
+		$sql = $db->query("SELECT uname, email FROM ".$db->prefix('users')." WHERE email = '".icms::$db->escape($email)."'");
 		list($uname, $email) = $db->fetchRow($sql);
 	}
 	else
@@ -2757,8 +2756,13 @@ function authenticationURL($needAuth) {
  */
 
 function setupAuthentication() {
-	//Google API PHP Library includes
-	require_once XOOPS_ROOT_PATH.'/libraries/googleapiclient/vendor/autoload.php';
+	//Google API PHP Library includes (optional — may not be installed in this distribution)
+	$googleAutoload = XOOPS_ROOT_PATH.'/libraries/googleapiclient/vendor/autoload.php';
+	if (!file_exists($googleAutoload)) {
+		error_log('setupAuthentication(): Google API PHP client library not present at '.$googleAutoload.'; Google authentication is disabled.');
+		return false;
+	}
+	require_once $googleAutoload;
 	//redirect uri for when google authentication is done and it comes back to formulize
 	$redirect_uri = XOOPS_URL;
     if(isset($_GET['xoops_redirect'])) {

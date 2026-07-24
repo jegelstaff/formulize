@@ -9,8 +9,8 @@
  * @version		SVN: $Id: users.php 21133 2011-03-20 19:43:48Z m0nty_ $
  */
 
-if (!is_object(icms::$user) 
-	|| !is_object($icmsModule) 
+if (!is_object(icms::$user)
+	|| !is_object($icmsModule)
 	|| !icms::$user->isAdmin($icmsModule->getVar('mid'))
 	) {
 		exit('Access Denied');
@@ -18,7 +18,7 @@ if (!is_object(icms::$user)
 
 /**
  * Displays user information form
- * 
+ *
  */
 function displayUsers() {
 	global $icmsConfig, $icmsModule, $icmsConfigUser;
@@ -242,7 +242,7 @@ function updateUser($uid, $uname, $login_name, $name, $url, $email, $user_icq, $
 	global $icmsConfig, $icmsModule, $icmsConfigUser;
 	$member_handler = icms::handler('icms_member');
 	$edituser =& $member_handler->getUser($uid);
-	if ($edituser->getVar('uname') != $uname && $member_handler->getUserCount(new icms_db_criteria_Item('uname', $uname)) > 0 || $edituser->getVar('login_name') != $login_name && $member_handler->getUserCount(new icms_db_criteria_Item('login_name', $login_name)) > 0) {
+	if ($edituser->getVar('uname') != $uname && $member_handler->getUserCount(new icms_db_criteria_Item('uname', icms::$db->escape($uname))) > 0 || $edituser->getVar('login_name') != $login_name && $member_handler->getUserCount(new icms_db_criteria_Item('login_name', icms::$db->escape($login_name))) > 0) {
 		icms_cp_header();
 		echo '<div class="CPbigTitle" style="background-image: url(' . ICMS_MODULES_URL . '/system/admin/users/images/users_big.png)">' . _MD_AM_USER . '</div><br />';
 		echo _AM_UNAME . ' ' . $uname . ' ' . _AM_ALREADY_EXISTS;
@@ -299,7 +299,7 @@ function updateUser($uid, $uname, $login_name, $name, $url, $email, $user_icq, $
 			$edituser->setVar('salt', $salt);
 			$edituser->setVar('enc_type', $enc_type);
 			$edituser->setVar('pass_expired', $pass_expired);
-			$pass = $icmspass->encryptPass($pass, $salt, $enc_type);
+			$pass = $icmspass->hashPassword($pass);
 			$edituser->setVar('pass', $pass);
 		}
 		if (!$member_handler->insertUser($edituser)) {

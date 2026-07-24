@@ -275,7 +275,7 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 	// $entry_id is the ID of the entry being loaded
 	function loadValue($element, $value, $entry_id) {
 		$ele_value = $element->getVar('ele_value');
-		$ele_value[$this->defaultValueKey] = ($value AND strpos($value, "'") !== false) ? str_replace("'", "&#039;", $value) : $value;
+		$ele_value[$this->defaultValueKey] = $value;
 		return $ele_value;
 	}
 
@@ -292,7 +292,7 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen=false, $owner=null) {
 
 		$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] = stripslashes($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE]);
-		$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] = interpretTextboxValue($element, $entry_id, $ele_value[ELE_VALUE_TEXT_DEFAULTVALUE]);
+		$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] = interpretTextboxValue($element, $entry_id, $ele_value[ELE_VALUE_TEXT_DEFAULTVALUE], $screen, catalogAsConditionalElement: true); // live render: pass the screen and catalogue {ref}s for conditional re-rendering
 		//if placeholder value is set
 		if($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE_AS_PLACEHOLDER] AND ($entry_id == 'new' OR $ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] === "")) { // always go straight to source for placeholder for new entries, or entries where there is no value
 			$rawEleValue = $element->getVar('ele_value');
@@ -323,7 +323,12 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 			if(is_numeric($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE]) AND $ele_value[ELE_VALUE_TEXT_DEFAULTVALUE]) {
 				$value = formulize_numberFormat($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE], $element->getVar('ele_handle'));
 			}
-			$form_ele = new XoopsFormLabel ($caption, formulize_text_to_hyperlink($value), $markupName);
+			// read-only: purify rather than escape - see makeValueSafeForReadOnlyDisplay() for the rule.
+			// This is also the sink for interpretTextboxValue()'s value, which is deliberately NOT made
+			// safe at substitution time because its return is also stored as the entry's default.
+			$form_ele = new XoopsFormLabel ($caption, formulize_text_to_hyperlink(
+				$this->makeValueSafeForReadOnlyDisplay($value, $element->getVar('ele_handle'), $entry_id)
+			), $markupName);
 		}
 		return $form_ele;
 	}
@@ -428,18 +433,39 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 	// for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
 	// Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
 	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
-		$this->clickable = true;
-		$this->striphtml = true;
-		$this->length = $textWidth;
+		$this->dataIsHtml = false; // a text value is plain text - it gets HTML-escaped by the canonical path
 		$elementObject = $this->get($handle);
 		$ele_value = $elementObject->getVar('ele_value');
-		if(isset($ele_value[$this->associatedElementKey])
-			AND $ele_value[$this->associatedElementKey]
-			AND $associatedElementMatchingText = $this->getAssociatedElementMatchingText($value, $ele_value[$this->associatedElementKey], $textWidth)) {
-				return $associatedElementMatchingText;
+		// "Associated element" linking is a per-element CONFIG (same for every entry). When it is on,
+		// composeMarkupForList does the per-entry match+link build AND the no-match plain-text fallback
+		// (truncate + linkify) itself - so turn off the parent's truncate/linkify to avoid cutting or
+		// double-processing the markup it returns.
+		if(isset($ele_value[$this->associatedElementKey]) AND $ele_value[$this->associatedElementKey]) {
+			$this->clickable = false;
+			$this->length = 0;
+		} else {
+			$this->clickable = true;
+			$this->length = $textWidth;
 		}
-		$value = formulize_handleRandomAndDateText($value);
-		return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+		// Always through the canonical path: the value is escaped there, then handed to composeMarkupForList.
+		return parent::formatDataForList($value, $handle, $entry_id, $textWidth);
+	}
+
+	// For elements configured with an "associated element", link occurrences of the value that match an
+	// entry in the associated form. $value is ALREADY escaped; $rawValue is the raw value, used only for
+	// the DB match. When not associated, the value is returned untouched (the parent handles it).
+	function composeMarkupForList($value, $handle="", $entry_id=0, $rawValue=null, $textWidth=100) {
+		$elementObject = $this->get($handle);
+		$ele_value = $elementObject->getVar('ele_value');
+		if(!isset($ele_value[$this->associatedElementKey]) OR !$ele_value[$this->associatedElementKey]) {
+			return $value; // not associated - leave the escaped value for the parent to truncate/linkify
+		}
+		$associatedElementMatchingText = $this->getAssociatedElementMatchingText((string) $rawValue, $ele_value[$this->associatedElementKey], $textWidth);
+		if($associatedElementMatchingText !== false) {
+			return $associatedElementMatchingText; // at least one match - self-contained, escaped+truncated links
+		}
+		// no match -> plain text display, done here since the parent's truncate/linkify were switched off
+		return formulize_text_to_hyperlink(printSmart($value, $textWidth));
 	}
 
 	/**
@@ -467,7 +493,7 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 					}
 					if ($id_req = findMatchingIdReq($target_element, $target_fid, convertStringToUseSpecialCharsToMatchDB($thistext))) {
 						$foundAssociatedMatch = true;
-						$associatedText .= "<a href='" . XOOPS_URL . "/modules/formulize/index.php?fid=$target_fid&ve=$id_req' target='_blank'>" . printSmart(trans($myts->htmlSpecialChars($thistext)), $textWidth) . "</a>";
+						$associatedText .= "<a href='" . XOOPS_URL . "/modules/formulize/index.php?fid=$target_fid&ve=".intval($id_req)."' target='_blank'>" . printSmart(trans($myts->htmlSpecialChars($thistext)), $textWidth) . "</a>";
 					} else {
 						$associatedText .= $myts->htmlSpecialChars($thistext);
 					}

@@ -43,7 +43,7 @@ while(ob_get_level()) {
 
 // check that the user who sent this request is the same user we have a session for now, if not, bail
 $sentUid = intval($_GET['uid']);
-
+global $xoopsUser;
 if(($xoopsUser AND $sentUid != $xoopsUser->getVar('uid')) OR (!$xoopsUser AND $sentUid !== 0)) {
   exit();
 }
@@ -117,16 +117,26 @@ switch($op) {
 		break;
 
 	case 'get_form_screens_for_form':
-		$screens = array();
+
+		$fid = intval($_GET['fid']);
+
+		// the user must be allowed to edit this form in order to build filters against its data
+		$gperm_handler = xoops_gethandler('groupperm');
+		$module_handler = xoops_gethandler('module');
+		$formulizeModule = $module_handler->getByDirname('formulize');
+		$filterGroups = is_object($xoopsUser) ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+		if(!$gperm_handler->checkRight("edit_form", $fid, $filterGroups, $formulizeModule->getVar('mid'))) {
+			exit();
+		}
+
 		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
 		$criteria_object = new Criteria('type','multiPage');
-		$multiPageFormScreens = $screen_handler->getObjects($criteria_object,intval($_GET['fid']));
+		$multiPageFormScreens = $screen_handler->getObjects($criteria_object, $fid);
 		$screens = array();
 		foreach($multiPageFormScreens as $screen) {
-			$screens[] = '{ "sid" : '.$screen->getVar('sid').', "title" : "'.$screen->getVar('title').'"}';
+			$screens[] = array('sid' => intval($screen->getVar('sid')), 'title' => $screen->getVar('title'));
 		}
-		$screens = '{ "screens" : ['.implode(",",$screens).']}';
-		print $screens;
+		print json_encode(array('screens' => $screens));
 		break;
 
   case 'check_for_unique_value':
@@ -224,17 +234,21 @@ switch($op) {
     break;
 
   case 'delete_uploaded_file':
-    $folderName = $_GET['param1'];
-    $element_id = $_GET['param2'];
-    $entry_id = $_GET['param3'];
+    $folderName = basename((string) $_GET['param1']);
+    $element_id = intval($_GET['param2']);
+    $entry_id = intval($_GET['param3']);
     $element_handler = xoops_getmodulehandler('elements','formulize');
     $elementObject = $element_handler->get($element_id);
+    if (!is_object($elementObject)) { break; } // unknown element id
     $fid = $elementObject->getVar('id_form');
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/class/usersGroupsPerms.php";
+    $dufUid = $xoopsUser ? intval($xoopsUser->getVar('uid')) : 0;
+    if (!formulizePermHandler::user_can_edit_entry($fid, $dufUid, $entry_id)) { break; }
     include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
     $data_handler = new formulizeDataHandler($fid);
     $fileInfo = $data_handler->getElementValueInEntry($entry_id, $elementObject);
     $fileInfo = unserialize($fileInfo);
-    $filePath = XOOPS_ROOT_PATH."/uploads/$folderName/".$fileInfo['name'];
+    $filePath = XOOPS_ROOT_PATH."/uploads/$folderName/".basename((string) $fileInfo['name']);
     if (!file_exists($filePath) or unlink($filePath)) {
 				// erase any thumbnail associated with the file
 				$dotPos = strrpos($filePath, '.');
@@ -260,7 +274,12 @@ switch($op) {
 		5 - deInstanceCounter
 		*/
     include_once XOOPS_ROOT_PATH."/modules/formulize/include/elementdisplay.php";
-    displayElement("", formulize_db_escape($_GET['param2']), intval($_GET['param3']));
+    include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php"; // security_check()
+    $gehElementId = formulize_db_escape($_GET['param2']);
+    $gehEntryId = intval($_GET['param3']);
+    $gehElement = xoops_getmodulehandler('elements','formulize')->get($gehElementId);
+    if (!is_object($gehElement) OR !security_check(intval($gehElement->getVar('id_form')), $gehEntryId)) { break; }
+    displayElement("", $gehElementId, $gehEntryId);
 		print "<input type='hidden' name='detoken_".intval($_GET['param4']).'_'.intval($_GET['param3']).'_'.intval($_GET['param2'])."' value=".$GLOBALS['xoopsSecurity']->createToken(0, 'formulize_display_element_token').">";
     break;
 
@@ -275,6 +294,7 @@ switch($op) {
     include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
     $element_handler = xoops_getmodulehandler('elements','formulize');
     $elementObject = $element_handler->get(formulize_db_escape($handle));
+    if (!is_object($elementObject) OR !security_check(intval($elementObject->getVar('id_form')), $entryId)) { break; }
     $data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
     $dbValue = $data_handler->getElementValueInEntry($entryId,$handle);
     $preppedValue = prepvalues($dbValue,$handle,$entryId);
@@ -309,7 +329,15 @@ switch($op) {
         $elementsToProcess[$k] = $v;
       }
     }
-    foreach($elementsToProcess as $k => $v) {
+    // normalize the request-supplied ids: fid is always numeric; the primary entry id is numeric
+    // except for the special 'new'/'proxy' markers, which must be preserved for security_check and rendering
+    $fid = intval($fid);
+    if($entryId !== 'new' AND $entryId !== 'proxy') {
+      $entryId = intval($entryId);
+    }
+
+    $entryAuthorized = security_check($fid, $entryId);
+    foreach($entryAuthorized ? $elementsToProcess : array() as $k => $v) {
       $keyParts = explode("_", $k); // ANY KEY PASSED THAT IS THE NAME OF A DE_ ELEMENT IN MARKUP, WILL GET UNPACKED AS A VALUE THAT CAN BE SUBBED IN WHEN DOING LOOKUPS LATER ON. This is because these elements are the elements that might determine how the conditionally rendered element behaves; it might be sensitive to these values.
       $passedEntryId = $keyParts[2];
       $passedElementId = trim($keyParts[3], "[]"); // in case it's an array element, strip the brackets
@@ -347,7 +375,7 @@ switch($op) {
     $json = '{ "elements" : [';
     foreach(explode(',',$elementId) as $thisElementId) {
       $elementObject = $element_handler->get($thisElementId);
-			if($entryId AND $entryId != 'new' AND $elementObject->getVar('ele_type') == "derived") {
+			if($entryAuthorized AND $entryId AND $entryId != 'new' AND $elementObject->getVar('ele_type') == "derived") {
 				// if it's a derived value, we need to do an update of the derived values based on this changed value... but not save it!!
 				// When the global formulize_asynchronousFormDataInAPIFormat has values in it, the derived value computation will put
 				// the values into asynch space to later be picked up when rendered. Does not write values to the database.
@@ -378,7 +406,7 @@ switch($op) {
       }
 			$html = "";
       $json .= $jsonSep.'{ "handle" : '.json_encode('de_'.$elementObject->getVar('id_form').'_'.$originalEntryIdInMarkup.'_'.$thisElementId); // have to reference the element markup name that was used when originally rendering the page, ugh.
-      if(security_check($fid, $entryIdToUse)) {
+      if($entryAuthorized AND security_check($fid, $entryIdToUse)) {
         $html = renderElement($elementObject, $entryIdToUse, $frid, $screenObject);
         $json .= ', "data" : '.json_encode($html);
       } else {
@@ -436,6 +464,10 @@ switch($op) {
 
 
   case "validate_php_code":
+        $vpcGroups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+        if (!$xoopsUser OR !xoops_gethandler('groupperm')->checkRight('system_admin', XOOPS_SYSTEM_GROUP, $vpcGroups)) {
+            break;
+        }
         echo formulize_validatePHPCode($_POST["the_code"]);
     break;
 

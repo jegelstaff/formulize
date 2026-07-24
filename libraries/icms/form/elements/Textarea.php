@@ -105,7 +105,7 @@ class icms_form_elements_Textarea extends icms_form_Element {
 			. "' cols='" . $this->getCols()
 			. "' aria-describedby='" . $this->getName() . "-help-text"
 			. "'" . $this->getExtra() . ">"
-			. $this->getValue()
+			. icms_core_DataFilter::htmlSpecialChars(undoAllHTMLChars($this->getValue()))
 			. "</textarea>";
 	}
 }

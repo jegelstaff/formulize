@@ -180,7 +180,7 @@ class formulizeTextareaElementHandler extends formulizeTextElementHandler {
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen=false, $owner=null) {
 
 		$ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE] = (isset($ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE]) AND $ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE]) ? stripslashes($ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE]) : "";
-		$ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE] = interpretTextboxValue($element, $entry_id, $ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE]);
+		$ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE] = interpretTextboxValue($element, $entry_id, $ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE], $screen, catalogAsConditionalElement: true); // live render: pass the screen and catalogue {ref}s for conditional re-rendering
 		// catalogue this element as a rich text editor even when it is currently rendering as a disabled label, since a disabled condition can stop being met, and then the element gets re-rendered as a live editor by conditional.js, which will only initialize it if it is in the catalogue
 		if (!strstr(getCurrentURL(),"printview.php") AND $this->usesRichTextEditor($ele_value)) {
 			$GLOBALS['formulize_CKEditors'][] = $markupName.'_tarea';
@@ -217,7 +217,25 @@ class formulizeTextareaElementHandler extends formulizeTextElementHandler {
 				}
 			}
 		} else {
-			$form_ele = new XoopsFormLabel ($caption, formulize_text_to_hyperlink(str_replace("\n", "<br>", undoAllHTMLChars($ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE], ENT_QUOTES))), $markupName);	// nmc 2007.03.24 - added
+			// Read-only / print view. This used to undoAllHTMLChars() the value and emit it raw through
+			// xoopsFormLabel, which renders its value as-is - so the intake escaping was deliberately
+			// stripped and whatever the user typed became live markup. Now it gets the SAME verdict the
+			// list path reaches in formatDataForList(), so an element cannot be filtered in one view and
+			// raw in the other.
+			$textareaValue = $ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE];
+			if($this->usesRichTextEditor($ele_value)) {
+				// rich text is already markup - hand it straight to the read-only funnel
+				$safeValue = $this->makeValueSafeForReadOnlyDisplay($textareaValue, $element->getVar('ele_handle'), $entry_id);
+			} else {
+				// A plain textarea holds text the user typed, in which line breaks are significant. Purify
+				// alone would collapse them, so normalize and convert the breaks to <br> FIRST, then run the
+				// result through the funnel - which keeps those <br> (they are ordinary formatting) while
+				// filtering anything the user typed that looks like markup.
+				$safeValue = $this->makeValueSafeForReadOnlyDisplay(
+					str_replace("\n", "<br>", undoAllHTMLChars($textareaValue, ENT_QUOTES)),
+					$element->getVar('ele_handle'), $entry_id);
+			}
+			$form_ele = new XoopsFormLabel ($caption, formulize_text_to_hyperlink($safeValue), $markupName);	// nmc 2007.03.24 - added
 		}
 		return $form_ele;
 	}
@@ -275,17 +293,25 @@ class formulizeTextareaElementHandler extends formulizeTextElementHandler {
 	// Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
 	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
 		$this->clickable = true;
-		$this->striphtml = false;
 		$this->length = $textWidth;
 		$elementObject = $this->get($handle);
 		$ele_value = $elementObject->getVar('ele_value');
-		// for rich text with that we're going to cut down, simply remove the tags and return the shortened version
-		if($textWidth AND isset($ele_value[ELE_VALUE_TEXTAREA_RICHTEXT]) AND $ele_value[ELE_VALUE_TEXTAREA_RICHTEXT]) {
-			return printSmart(strip_tags(trans($value)), $textWidth); // handle this separately from non-rich text areas
-		// otherwise, go direct to plain element handler method
+		$isRichText = $this->usesRichTextEditor($ele_value);
+		if($isRichText AND $textWidth) {
+			// Truncated list column of rich text: reduce the markup to a plain-text snippet so the cell
+			// stays compact, then treat that snippet as PLAIN TEXT below. strip_tags here is only a
+			// display reduction, NOT the safety step (it is not a reliable filter) - the value still
+			// flows through the parent, whose escaping is what actually makes it safe.
+			$value = strip_tags(trans($value));
+			$this->dataIsHtml = false;
 		} else {
-			return formulizeElementsHandler::formatDataForList($value);
+			// Rich text at full width is intentional markup (purified); a plain textarea is text the user
+			// typed (escaped). Previously BOTH left striphtml false, so a plain textarea rendered
+			// submitted markup as live HTML whenever textWidth was 0 (the column was not truncated).
+			$this->dataIsHtml = $isRichText ? true : false;
 		}
+		// One consistent path: the parent escapes-or-purifies, truncates (plain text only), and linkifies.
+		return formulizeElementsHandler::formatDataForList($value, $handle, $entry_id, $textWidth);
 	}
 
 	function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {

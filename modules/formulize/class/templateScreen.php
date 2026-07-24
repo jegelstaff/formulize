@@ -86,10 +86,10 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 
         if (!$update) {
             $sql = sprintf("INSERT INTO %s (sid, custom_code, template, donedest, savebuttontext, donebuttontext, viewentryscreen) VALUES (%u, %s, %s, %s, %s, %s, %s)", $this->db->prefix('formulize_screen_template'),
-                $screen->getVar('sid'), $this->db->quoteString(formulize_db_escape($screen->getVar('custom_code'))), $this->db->quoteString(formulize_db_escape($screen->getVar('template'))), $this->db->quoteString(formulize_db_escape($screen->getVar('donedest'))), $this->db->quoteString(formulize_db_escape($screen->getVar('savebuttontext'))), $this->db->quoteString(formulize_db_escape($screen->getVar('donebuttontext'))), $this->db->quoteString(formulize_db_escape($screen->getVar('viewentryscreen'))));
+                $screen->getVar('sid'), $this->db->quoteString($screen->getVar('custom_code')), $this->db->quoteString($screen->getVar('template')), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('savebuttontext')), $this->db->quoteString($screen->getVar('donebuttontext')), $this->db->quoteString($screen->getVar('viewentryscreen')));
         } else {
             $sql = sprintf("UPDATE %s SET custom_code = %s, template = %s, donedest = %s, savebuttontext = %s, donebuttontext = %s, viewentryscreen = %s WHERE sid = %u", $this->db->prefix('formulize_screen_template'),
-                $this->db->quoteString(formulize_db_escape($screen->getVar('custom_code'))), $this->db->quoteString(formulize_db_escape($screen->getVar('template'))), $this->db->quoteString(formulize_db_escape($screen->getVar('donedest'))), $this->db->quoteString(formulize_db_escape($screen->getVar('savebuttontext'))), $this->db->quoteString(formulize_db_escape($screen->getVar('donebuttontext'))), $this->db->quoteString(formulize_db_escape($screen->getVar('viewentryscreen'))), $sid);
+                $this->db->quoteString($screen->getVar('custom_code')), $this->db->quoteString($screen->getVar('template')), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('savebuttontext')), $this->db->quoteString($screen->getVar('donebuttontext')), $this->db->quoteString($screen->getVar('viewentryscreen')), $sid);
         }
         $result = $this->db->query($sql);
         if (!$result) {
@@ -263,6 +263,37 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
             $doneDest = XOOPS_URL."$doneDest";
         }
 
+        // Element-handle values are exposed to the admin-authored template code as $<handle> variables and
+        // ALSO reach the Smarty template layer via get_defined_vars() below. Two ideas are kept separate:
+        //  1. The PHP code sees the values we prepared: the list-formatted (already-safe) value for single
+        //     scalars, and the original for arrays / multi-record values. We do NOT mangle what it sees.
+        //  2. Whatever a value holds after the code runs is what reaches the template. For a value the
+        //     code did NOT change that is still our raw prepared data, and a raw array / multi-record value
+        //     is an unescaped HTML sink there. So after the code runs we purify the Smarty-bound COPY of
+        //     each unchanged value that formatDataForList did not already make safe. A value the code DID
+        //     change is its own output and is left as-is - the admin owns it.
+        // Plus two reserved-name protections while building the $<handle> variables:
+        //  - entry data must never clobber a local this method still relies on. The list below is only the
+        //    names that are READ after a $$thisHandle assignment could overwrite them - either later in the
+        //    handle loop (loop-carried state) or after it, through to the return. The critical one is
+        //    $code_filename, the include target below: clobbering it would turn user data into a control
+        //    path. Deliberately NOT listed: locals used only BEFORE the loop ($screen, $settings,
+        //    $saveButton, ...) - a handle cannot reach back and affect them - and locals that are
+        //    reassigned before their next read ($formObject, $thisFid, $entry, $snapshotEntry, $vars,
+        //    $wasFormatted, $elementHandlerType), which self-heal. Add a name here only if you add a read
+        //    of another local after the point the handle loop could overwrite it.
+        //  - separately, the element-handler lookup is guarded with is_object() so a handle colliding with
+        //    a "<type>Element" variable cannot turn a later method call into a fatal.
+        $formulize_reservedTemplateVars = array(
+            'code_filename',                                          // include target below (the LFI guard)
+            'templateScreenData', 'form_handler',                    // read after the loop / next outer pass
+            'elementTypes', 'internalRecordIds', 'i', 'thisHandle',  // loop-carried, read after the assignment
+            'preparedForTemplate', 'preparedWasFormatted', 'entry_id', // consumed by the purify pass below
+            'formulize_reservedTemplateVars',                        // so a handle cannot disable this guard
+        );
+        $preparedForTemplate = array();  // handle => value we prepared (to detect code changes afterwards)
+        $preparedWasFormatted = array(); // handle => true if formatDataForList already made it safe
+
         // make this a configuration option on the Templates tab!!!
         if (!empty($entry_id)) {
             $templateScreenData = gatherDataset($screen->getVar('fid'), filter: $entry_id, frid: $screen->getVar('frid'));
@@ -281,24 +312,61 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 							$elementTypes = $formObject->getVar('elementTypes');
 							$internalRecordIds = getEntryIds($templateScreenData[0], $thisFid);
 							foreach($formObject->getVar('elementHandles') as $i=>$thisHandle) {
+								// never let entry data overwrite this method's own control-flow locals (see note above)
+								if(in_array($thisHandle, $formulize_reservedTemplateVars, true)) {
+									continue;
+								}
 								$$thisHandle = getValue($templateScreenData[0], $thisHandle);
+								$wasFormatted = false;
 								// if we've got a single value from the mainform, or a one to one form, or a single entry in a subform, format it for display as if in a list
 								if(count($internalRecordIds) == 1) {
 									$elementHandlerType = $elementTypes[$i]."Element";
 									if(!isset($$elementHandlerType) AND file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$elementHandlerType.".php")) {
 										$$elementHandlerType = xoops_getmodulehandler($elementHandlerType, 'formulize');
 									}
-									if(!is_array($$thisHandle) AND isset($$elementHandlerType)) {
+									if(!is_array($$thisHandle) AND isset($$elementHandlerType) AND is_object($$elementHandlerType)) {
 										$$thisHandle = $$elementHandlerType->formatDataForList($$thisHandle, $thisHandle, $internalRecordIds[0], 0);
+										$wasFormatted = true;
 									}
 								}
+								$preparedForTemplate[$thisHandle] = $$thisHandle;
+								$preparedWasFormatted[$thisHandle] = $wasFormatted;
 							}
 						}
             $entry = $templateScreenData[0];
+            $snapshotEntry = $entry;
         }
 
         include_once($code_filename);
-        return get_defined_vars();
+
+        $vars = get_defined_vars();
+
+        // Purify the Smarty-bound copies of prepared values the template code did not change and that
+        // formatDataForList did not already make safe (the raw arrays / multi-record values, plus any
+        // single value with no element handler to format it). A value the code reassigned is its own
+        // output and is left alone.
+        foreach($preparedForTemplate as $purifyHandle => $purifyValue) {
+            if(empty($preparedWasFormatted[$purifyHandle])
+                AND array_key_exists($purifyHandle, $vars)
+                AND $vars[$purifyHandle] === $purifyValue) {
+                $vars[$purifyHandle] = formulize_purifyHtmlValueDeep($purifyValue, $purifyHandle, $entry_id);
+            }
+        }
+        // $entry and $templateScreenData expose the same raw entry data to the template by another door
+        // (eg: {$entry.handle}), bypassing the per-handle treatment above - so purify their copies too,
+        // unless the template code replaced them.
+        if(isset($snapshotEntry) AND array_key_exists('entry', $vars) AND $vars['entry'] === $snapshotEntry) {
+            $vars['entry'] = formulize_purifyHtmlValueDeep($vars['entry'], '', $entry_id);
+        }
+        if(isset($templateScreenData) AND array_key_exists('templateScreenData', $vars) AND $vars['templateScreenData'] === $templateScreenData) {
+            $vars['templateScreenData'] = formulize_purifyHtmlValueDeep($vars['templateScreenData'], '', $entry_id);
+        }
+
+        // keep this method's bookkeeping locals out of the template namespace
+        unset($vars['formulize_reservedTemplateVars'], $vars['preparedForTemplate'], $vars['preparedWasFormatted'],
+            $vars['wasFormatted'], $vars['snapshotEntry']);
+
+        return $vars;
     }
 
     // Returns a cache folder name of shape "{ROOT_PATH}/modules/formulize/templates/screens/default/{$sid}/

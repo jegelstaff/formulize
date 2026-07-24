@@ -17,6 +17,8 @@ if($xoopsUser) {
     $profile = $profile_handler->get($xoopsUser->getVar('uid'));
 	$profile->setVar('2fadevices', '');
 	if($profile_handler->insert($profile)) {
+        require_once __DIR__ . "/constants.php";
+        setcookie(TFA_REMEMBER_DEVICE_COOKIE, '', time() - 3600, '/');
         print 1;
     }
 }

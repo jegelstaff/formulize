@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, waitForAdminPageReady, openElementAccordion, saveAdminForm, addElementForm, ElementType, getFidFromFormAdminPage } from '../../utils';
+import { login, waitForAdminPageReady, openElementAccordion, saveAdminForm, addElementForm, ElementType, createMuseumForm, deleteMuseumForm } from '../../utils';
 
 // This spec builds its own throwaway form rather than renaming a handle on the shared Artifacts form,
 // and deletes it again at the end.
@@ -39,16 +39,7 @@ test('Renaming an element handle updates its $handle reference in derived value 
 	await login(page, 'admin');
 
 	// ── Create a dedicated "Handle Rename Tests" form in the Museum application ──
-	await page.goto('/modules/formulize/admin/ui.php?page=home');
-	await waitForAdminPageReady(page);
-	await page.getByRole('link', { name: 'Application: Museum' }).click();
-	await page.getByRole('link', { name: 'Create a new form' }).click();
-	await waitForAdminPageReady(page);
-	await expect(page.locator('input[name="forms-form_title"]')).toBeVisible();
-	await page.getByRole('textbox', { name: 'Form title:' }).fill('Handle Rename Tests');
-	await saveAdminForm(page);
-
-	const fid = await getFidFromFormAdminPage(page);
+	const fid = await createMuseumForm(page, 'Handle Rename Tests');
 	expect(fid).toBeGreaterThan(0);
 	createdFid = fid; // the delete test below removes this form again
 
@@ -148,43 +139,12 @@ test('Deleting a form from the application form list removes it, after confirmin
 	expect(createdFid, 'the form-creation test must have run first').toBeGreaterThan(0);
 
 	await login(page, 'admin');
-	await page.goto('/modules/formulize/admin/ui.php?page=home');
-	await waitForAdminPageReady(page);
-	await page.getByRole('link', { name: 'Application: Museum' }).click();
-	await waitForAdminPageReady(page);
-
-	// The Delete link is in the DOM for every form, but it lives inside the form's details panel, which
-	// is hidden until the form's box in the listing is clicked (clickFormDetails() in
-	// templates/js/formulize-admin-organize-forms.js). Click the form's name to open its panel — the
-	// name, not the box itself, because the box's centre may land on the Elements/Screens links inside
-	// it, which would navigate away instead of opening the panel.
-	const formBox = page.locator(`div.form-listing-box[formid="${createdFid}"]`);
-	await expect(formBox).toBeVisible();
-	await formBox.locator('.form-name-text').click();
-
-	// Each form's Delete link carries its fid in the target attribute, so this addresses exactly the
-	// form we made and not any other form in the Museum application.
-	const deleteLink = page.locator(`a.deleteformlink[target="${createdFid}"]`);
-	await expect(deleteLink).toBeVisible();
-
-	// The click raises a confirm() dialog warning that the data will be lost. Playwright dismisses
-	// dialogs by default (which would cancel the delete), so accept it explicitly — and check the
-	// warning is actually the one we expect, since accepting a dialog blind would hide a changed prompt.
-	let dialogMessage = null;
-	page.once('dialog', async dialog => {
-		dialogMessage = dialog.message();
-		await dialog.accept();
+	// The dialog message assertion checks the warning is actually the one we expect, since accepting a
+	// dialog blind would hide a changed prompt.
+	await deleteMuseumForm(page, createdFid, {
+		expectDialogMessage: 'Are you sure you want to delete this form?',
+		formTitleText: 'Handle Rename Tests',
 	});
-	await deleteLink.click();
-
-	await expect.poll(() => dialogMessage).toContain('Are you sure you want to delete this form?');
-
-	// The form is gone from the listing. Assert on the form's box, not just its Delete link: the link is
-	// hidden until its panel is opened, so a hidden-but-present link would still satisfy toHaveCount(0)
-	// for the wrong reason.
-	await waitForAdminPageReady(page);
-	await expect(formBox).toHaveCount(0);
-	await expect(page.getByText('Handle Rename Tests')).toHaveCount(0);
 
 	// And it stays gone on a fresh load of the application page, so this is a real delete rather than
 	// the listing merely re-rendering without it.

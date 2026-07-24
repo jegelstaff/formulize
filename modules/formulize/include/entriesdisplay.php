@@ -154,7 +154,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	if (isset($_POST['delconfirmed']) AND $_POST['delconfirmed'] AND $formulize_LOESecurityPassed) {
 		foreach($_POST as $k=>$v) {
 			if(substr($k, 0, 7) == "delete_" AND $v != "") {
-				$delete_entry_id = substr($k, 7);
+				$delete_entry_id = intval(substr($k, 7));
 				// confirm user has permission to delete this entry
 				if (formulizePermHandler::user_can_delete_entry($fid, $uid, $delete_entry_id)) {
 					$GLOBALS['formulize_deletionRequested'] = true;
@@ -239,9 +239,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	// handle deletion of view...reset currentView
 	if(isset($_POST['delview']) AND $_POST['delview'] AND $formulize_LOESecurityPassed) {
 		if(substr($_POST['delviewid_formulize'], 1, 4) == "old_") {
-			$delviewid_formulize = substr($_POST['delviewid_formulize'], 5);
+			$delviewid_formulize = intval(substr($_POST['delviewid_formulize'], 5));
 		} else {
-			$delviewid_formulize = substr($_POST['delviewid_formulize'], 1);
+			$delviewid_formulize = intval(substr($_POST['delviewid_formulize'], 1));
 		}
 
 		if($delete_other_reports OR $xoopsUser->getVar('uid') == getSavedViewOwner($delviewid_formulize)) { // "get saved view owner" only works with new saved view format in 2.0 or greater, but since that is 2.5 years old now, should be good to go!
@@ -448,7 +448,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 		// delete legacy report if necessary
 		if(strstr($saveid_formulize, "old_")) {
-			$dellegacysql = "DELETE FROM " . $xoopsDB->prefix("formulize_reports") . " WHERE report_id=\"" . substr($saveid_formulize, 5) . "\"";
+			$dellegacysql = "DELETE FROM " . $xoopsDB->prefix("formulize_reports") . " WHERE report_id=\"" . intval(substr($saveid_formulize, 5)) . "\"";
 			if(!$result = $xoopsDB->query($dellegacysql)) {
 				exit("Error:  unable to delete legacy report: " . substr($saveid_formulize, 5));
 			}
@@ -2335,7 +2335,7 @@ function createQuickSearches($searches, $settings, $hiddenQuickSearches=array(),
 	$cols = $settings['columns'];
 
 	for($i=0;$i<count((array) $cols);$i++) {
-		$search_text = isset($searches[$cols[$i]]) ? strip_tags(htmlspecialchars($searches[$cols[$i]]), ENT_QUOTES) : "";
+		$search_text = isset($searches[$cols[$i]]) ? strip_tags(htmlspecialchars($searches[$cols[$i]])) : "";
 		$boxid = "";
 		$clear_help_javascript = "";
 		if($i==0) {
@@ -2347,7 +2347,7 @@ function createQuickSearches($searches, $settings, $hiddenQuickSearches=array(),
 
 	$hiddenQuickSearchesToMake = array_merge($hiddenQuickSearches, $pubfilters); // include the published filters/searches that the user may have assigned to this screen
 	foreach($hiddenQuickSearchesToMake as $thisHQS) {
-		$search_text = isset($searches[$thisHQS]) ? strip_tags(htmlspecialchars($searches[$thisHQS], ENT_QUOTES)) : ""; // striping tags after htmlspecialchars is probably unnecessary, but can't hurt(?)
+		$search_text = isset($searches[$thisHQS]) ? strip_tags(htmlspecialchars($searches[$thisHQS])) : ""; // striping tags after htmlspecialchars is probably unnecessary, but can't hurt(?)
 		$quickSearches[$thisHQS] = packageSearches($thisHQS, $search_text, $filtersRequired, fid: $fid);
 	}
 
@@ -2357,7 +2357,9 @@ function createQuickSearches($searches, $settings, $hiddenQuickSearches=array(),
 // go make all the necessary searches/filters for a given element
 function packageSearches($handle, $search_text, $filtersRequired=true, $boxid="", $clear_help_javascript="", $fid=0) {
 	$quickSearches = array();
-	$quickSearches['search'] = "<input type=text $boxid enterkeyhint='search' name='search_$handle' value=\"$search_text\" $clear_help_javascript onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>\n";
+	global $myts;
+	$box_search_text = $myts->htmlSpecialChars(undoAllHTMLChars((string) $search_text));
+	$quickSearches['search'] = "<input type=text $boxid enterkeyhint='search' name='search_$handle' value=\"$box_search_text\" $clear_help_javascript onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>\n";
 	if($filtersRequired === true OR (is_array($filtersRequired) AND in_array($handle, $filtersRequired))) {
 		$quickSearches['filter'] = formulize_buildQSFilter($handle, $search_text, false, false, $fid);
 		$quickSearches['negativeFilter'] = formulize_buildQSFilter($handle, $search_text, negativeFilter: true, fid: $fid);
@@ -2471,7 +2473,7 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
                 });
                 </script>";
             }
-            return '<div>'._formulize_FROM.' <div style="display: flex;">'.$startDateElement->render(). "</div><br>"._formulize_TO . " <div style='display: flex;'>" . $endDateElement->render() . "</div><br>\n<input type=button style='display: none;' id='formulize_daterange_button_".$handle."' class='formulize-small-button' name=qdrGoButton value='" . _formulize_SUBMITTEXT . "' onclick=\"javascript:showLoading();\"></input>\n<input type='hidden' id='formulize_hidden_daterange_".$handle."' name='search_".$handle."' value='".$search_text."' ></input></div>\n$js";
+            return '<div>'._formulize_FROM.' <div style="display: flex;">'.$startDateElement->render(). "</div><br>"._formulize_TO . " <div style='display: flex;'>" . $endDateElement->render() . "</div><br>\n<input type=button style='display: none;' id='formulize_daterange_button_".$handle."' class='formulize-small-button' name=qdrGoButton value='" . _formulize_SUBMITTEXT . "' onclick=\"javascript:showLoading();\"></input>\n<input type='hidden' id='formulize_hidden_daterange_".$handle."' name='search_".$handle."' value='".htmlspecialchars($search_text)."' ></input></div>\n$js";
         }
     }
     return "";
@@ -4567,6 +4569,7 @@ function processClickedCustomButton($clickedElements, $clickedValues, $clickedAc
 
 		// process changes to each entry
 		global $xoopsUser;
+		$customButtonUid = $xoopsUser ? intval($xoopsUser->getVar('uid')) : 0;
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
 		$elementObject = $element_handler->get($clickedElements[0]);
 		$formId = $elementObject->getVar('id_form');
@@ -4577,6 +4580,10 @@ function processClickedCustomButton($clickedElements, $clickedValues, $clickedAc
 		$newEntriesToNotifyAbout = array();
 		$updatedEntriesToNotifyAbout = array();
 		foreach($caEntries as $id=>$thisEntry) { // loop through all the entries this button click applies to
+			// Permission gate: the active user must be allowed to modify the entry this button affects
+			if(!formulizePermHandler::user_can_edit_entry($formId, $customButtonUid, $thisEntry)) {
+				continue;
+			}
 			$maxIdReq = 0;
 			$needToSetOwner = false;
 			$valuesToWrite = array();
@@ -4783,6 +4790,7 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 }
 
 // THIS FUNCTION HANDLES GATHERING A DATASET FOR DISPLAY IN THE LIST
+// $sort and $order are two separate parallel strings, optionally comma separated for multi column sorts
 function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fid, $scope, $screen=null, $currentURL="", $forcequery = 0) {
 
 	// If composite data mode is active (Users/Groups management), delegate to the composite function

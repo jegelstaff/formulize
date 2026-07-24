@@ -382,10 +382,27 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
 
         if(count((array) $ele_value['files'])>0) {
             foreach($ele_value['files'] as $file) {
-                $interactiveMarkup = $isDisabled ? "" : "<a href=\"\" onclick=\"warnAboutGoogleDelete$eleId('".$file['id']."', '".str_replace('"','\"',htmlspecialchars_decode($file['name'], ENT_QUOTES))."', '".$markupName."');return false;\"><img src=\"".XOOPS_URL."/modules/formulize/images/x.gif\" /></a><input type=\"hidden\" name=\"".$markupName."[]\" value=\"".str_replace('"','\"',htmlspecialchars_decode($file['name'], ENT_QUOTES))."<{()}>".$file['url']."<{()}>".$file['id']."<{()}>".$file['iconUrl']."\" />";
-                $interactiveId = $isDisabled ? "" : "id=\"googlefile_".$markupName."_".$file['id']."\"";
+                // Untrusted: prepareDataForSaving() below builds this array by exploding a POSTed string
+                // on a delimiter with no validation, so 'url'/'iconUrl'/'id' can be literally anything a
+                // submitter chooses - not limited to what the Google Picker API would actually return.
+                // 'name' is stored htmlspecialchars-escaped (see prepareDataForSaving), so decode it first
+                // to avoid double-encoding, then escape per context - same normalize-then-escape pattern
+                // used elsewhere. The previous code here decoded 'name' and only backslash-escaped '"',
+                // which is a JS-string idiom, not an HTML escape - a literal '"' (or "'", "<", ">") still
+                // terminated the attribute/tag it landed in. 'url'/'iconUrl'/'id' were not escaped at all.
+                $rawName = htmlspecialchars_decode($file['name']);
+                $htmlName = htmlspecialchars($rawName);
+                $jsName = json_encode($rawName, JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP); // for the JS string literal in onclick
+                $safeUrl = htmlspecialchars($file['url']);
+                $safeIconUrl = htmlspecialchars($file['iconUrl']);
+                $safeId = htmlspecialchars($file['id']);
+                $jsId = json_encode((string) $file['id'], JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP);
+                // Browsers HTML-decode attribute values on submit, so escaping what goes into value="..."
+                // here does not change what prepareDataForSaving() reads back from $_POST.
+                $interactiveMarkup = $isDisabled ? "" : "<a href=\"\" onclick=\"warnAboutGoogleDelete$eleId(".$jsId.", ".$jsName.", '".$markupName."');return false;\"><img src=\"".XOOPS_URL."/modules/formulize/images/x.gif\" /></a><input type=\"hidden\" name=\"".$markupName."[]\" value=\"".$htmlName."<{()}>".$safeUrl."<{()}>".$safeId."<{()}>".$safeIconUrl."\" />";
+                $interactiveId = $isDisabled ? "" : "id=\"googlefile_".$markupName."_".$safeId."\"";
                 $picker .= "
-                <div class=\"googlefile googlefile_$eleId\" $interactiveId><img src=\"".$file['iconUrl']."\" /> <a href=\"".$file['url']."\" target=\"_blank\">".str_replace('"','\"',htmlspecialchars_decode($file['name'], ENT_QUOTES))."</a> ".$interactiveMarkup."</div>";
+                <div class=\"googlefile googlefile_$eleId\" $interactiveId><img src=\"".$safeIconUrl."\" /> <a href=\"".$safeUrl."\" target=\"_blank\">".$htmlName."</a> ".$interactiveMarkup."</div>";
             }
         }
 
@@ -466,21 +483,38 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
     // for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
     function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
-        $this->clickable = false; // make urls clickable
-        $this->striphtml = false; // remove html tags as a security precaution
-        $this->length = 100000; // truncate to a maximum of 2000 characters, and append ... on the end
-        // value set to array of URLs by prepareDataForDataset
+        $this->clickable = false; // we build the download links ourselves in composeMarkupForList, below
+        $this->dataIsHtml = false; // the value is a comma separated list of URLs - plain text, so it gets escaped
+        $this->length = 100000; // truncate to a maximum of 100000 characters, and append ... on the end
+        return parent::formatDataForList($value, $handle, $entry_id, $textWidth); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+    }
+
+    // wrap each URL in a download link. $value (the comma separated URL list, set by
+    // prepareDataForDataset) has ALREADY been escaped by the parent when we get here, so the URLs are
+    // safe to place in an href.
+    function composeMarkupForList($value, $handle="", $entry_id=0, $rawValue=null, $textWidth=100) {
+        if($value === '' OR $value === null) {
+            return $value;
+        }
         $links = array();
         foreach(explode(',',$value) as $url) {
             $links[] = $this->createDownloadLink($url);
         }
-        return parent::formatDataForList(implode('<br />',$links)); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+        return implode('<br />',$links);
     }
 
     // this method is for the google file upload element only.  It will return a href that links to the actual file.
+    // $url arrives already escaped (see composeMarkupForList). The display name is looked up here and must
+    // be escaped on its own - it is user-influenced (it is the file name) and goes into the link text.
     function createDownloadLink($url) {
-        $displayName = $GLOBALS['formulize_googleFileUploadElementDisplayName'][$url]; // set aside in prepareDataForDataset above
-        return "<a href=\"".$url."\" target=\"_blank\">".str_replace('"','\"',htmlspecialchars_decode($displayName, ENT_QUOTES))."</a>";
+        // NB: the display name is keyed by the RAW url, but $url is escaped by the time it reaches us,
+        // so undo that for the lookup only - the escaped $url is still what goes into the markup.
+        $lookupKey = htmlspecialchars_decode($url);
+        $displayName = isset($GLOBALS['formulize_googleFileUploadElementDisplayName'][$lookupKey]) ? $GLOBALS['formulize_googleFileUploadElementDisplayName'][$lookupKey] : $lookupKey; // set aside in prepareDataForDataset above
+        // previously this did str_replace('"','\"', htmlspecialchars_decode($displayName)) which was a
+        // no-op in HTML - backslash escaping is a JavaScript idiom, and \" still terminates an HTML
+        // attribute - so the decoded file name went into the link text unprotected
+        return "<a href=\"".$url."\" target=\"_blank\">".htmlspecialchars(strip_tags($displayName))."</a>";
     }
 
 }

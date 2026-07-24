@@ -59,7 +59,7 @@ if(!defined("XOOPS_MAINFILE_INCLUDED")) {
             if(!isset($email)) {
                 $email = $array['email'];
             }
-            $criteria = new Criteria('email', formulize_db_esacpe($email));
+            $criteria = new Criteria('email', formulize_db_escape($email));
             $targetUsers = $memberHandler->getUsers($criteria);
             $targetUser = $targetUsers[0];
             $fid = $array['fid'];

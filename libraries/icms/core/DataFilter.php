@@ -96,9 +96,8 @@ class icms_core_DataFilter {
 	* @return   string
 	*/
 	static public function htmlSpecialChars($text) {
-        $charset = defined('_CHARSET') ? _CHARSET : 'utf-8';
-		return preg_replace(array("/&amp;/i", "/&nbsp;/i"), array('&', '&amp;nbsp;'),
-			@htmlspecialchars($text, ENT_QUOTES, $charset));
+    $charset = defined('_CHARSET') ? _CHARSET : 'UTF-8';
+		return preg_replace(array("/&amp;/i", "/&nbsp;/i"), array('&', '&amp;nbsp;'), @htmlspecialchars($text, encoding: $charset));
 	}
 
 	/**
@@ -108,16 +107,16 @@ class icms_core_DataFilter {
 	* @return  string
 	*/
 	static public function undoHtmlSpecialChars($text) {
-		return ($text AND is_string($text)) ? htmlspecialchars_decode($text, ENT_QUOTES) : $text;
+		return ($text AND is_string($text)) ? htmlspecialchars_decode($text) : $text;
 	}
 
 	/**
 	 *
-	 * @param unknown_type $text
+	 * @param string $text
 	 */
 	static public function htmlEntities($text) {
 		return preg_replace(array("/&amp;/i", "/&nbsp;/i"), array('&', '&amp;nbsp;'),
-				@htmlentities($text, ENT_QUOTES, _CHARSET));
+				@htmlentities($text, encoding: _CHARSET));
 	}
 
 	/**
@@ -289,12 +288,9 @@ class icms_core_DataFilter {
 				break;
 
 				case 'str':
-					$valid_options1 = array('noencode', 'striplow', 'striphigh', 'encodelow', 'encodehigh', 'encodeamp');
+					// 'str' takes no options (it just strips tags); ignore anything passed in.
+					$options1 = '';
 					$options2 = '';
-
-					if (!isset($options1) || $options1 == '' || !in_array($options1, $valid_options1)) {
-						$options1 = '';
-					}
 				break;
 
 				case 'special':
@@ -1054,36 +1050,11 @@ class icms_core_DataFilter {
 				}
 			break;
 
-			case 'str': // returns $string
-				switch ($options1) {
-					case "noencode":
-						return filter_var($data, FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES);
-					break;
-
-					case "striplow":
-						return filter_var($data, FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW);
-					break;
-
-					case "striphigh":
-						return filter_var($data, FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_HIGH);
-					break;
-
-					case "encodelow":
-						return filter_var($data, FILTER_SANITIZE_STRING, FILTER_FLAG_ENCODE_LOW);
-					break;
-
-					case "encodehigh":
-						return filter_var($data, FILTER_SANITIZE_STRING, FILTER_FLAG_ENCODE_HIGH);
-					break;
-
-					case "encodeamp":
-						return filter_var($data, FILTER_SANITIZE_STRING, FILTER_FLAG_ENCODE_AMP);
-					break;
-
-					default:
-						return filter_var($data, FILTER_SANITIZE_STRING);
-					break;
-				}
+			case 'str': // returns the string with HTML/PHP tags stripped
+				// Tag removal only, NOT output escaping - callers that emit the result into a page must
+				// still escape it at the sink (htmlspecialchars). This was a hand-rolled stand-in for the
+				// removed FILTER_SANITIZE_STRING; no caller ever used its options, so it is just strip_tags now.
+				return strip_tags((string) $data);
 			break;
 
 			case "int": // returns $int, returns FALSE if $opt1 & 2 set & $data is not inbetween values of $opt1 & 2

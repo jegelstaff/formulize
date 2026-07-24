@@ -161,10 +161,10 @@ switch ($op) {
 		} else {
 			$member_handler = icms::handler('icms_member');
 			// make sure the username doesnt exist yet
-			if ($member_handler->getUserCount(new icms_db_criteria_Item('uname', $username)) > 0
-				|| $member_handler->getUserCount(new icms_db_criteria_Item('login_name', $login_name)) > 0 ) {
+			if ($member_handler->getUserCount(new icms_db_criteria_Item('uname', icms::$db->escape($username))) > 0
+				|| $member_handler->getUserCount(new icms_db_criteria_Item('login_name', icms::$db->escape($login_name))) > 0 ) {
 				$adduser_errormsg = _AM_NICKNAME.' '.$username.' '._AM_ALREADY_EXISTS;
-			} elseif ($member_handler->getUserCount(new icms_db_criteria_Item('email', $email)) > 0) {
+			} elseif ($member_handler->getUserCount(new icms_db_criteria_Item('email', icms::$db->escape($email))) > 0) {
 				$adduser_errormsg = _AM_A_USER_WITH_THIS_EMAIL_ADDRESS.' "'.$email.'" '._AM_ALREADY_EXISTS;
 			} else {
 				$newuser =& $member_handler->createUser();
@@ -205,11 +205,11 @@ switch ($op) {
 						icms_cp_footer();
 						exit();
 					}
-					
+
 					$icmspass = new icms_core_Password();
 					$newuser->setVar('salt', $salt);
 					$newuser->setVar('enc_type', $enc_type);
-					$password = $icmspass->encryptPass($password, $salt, $enc_type);
+					$password = $icmspass->hashPassword($password);
 					$newuser->setVar('pass', $password);
 				}
 				$newuser->setVar('timezone_offset', $timezone_offset);
@@ -242,7 +242,7 @@ switch ($op) {
 						}
 						if (!empty($groups_failed)) {
 							$group_names = $member_handler->getGroupList(
-									new icms_db_criteria_Item('groupid', "(".implode(", ", $groups_failed).")", 'IN'));
+									new icms_db_criteria_Item('groupid', "(".implode(",", array_map('intval', $groups_failed)).")", 'IN'));
 							$adduser_errormsg = sprintf(_AM_CNRNU2, implode(", ", $group_names));
 						} else {
 							/* Hack by marcan <INBOX>

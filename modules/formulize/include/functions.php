@@ -498,6 +498,101 @@ function formulize_selfRegistrationActive() {
     return true;
 }
 
+// Coarse per-IP rate limit for public self-registration. Blunts automated abuse: mass account
+// creation and, above all, flooding of confirmation codes by email/SMS (the SMS path costs real
+// money). At most FORMULIZE_SIGNUP_THROTTLE_MAX account creations are allowed per source IP per
+// FORMULIZE_SIGNUP_THROTTLE_WINDOW seconds. Backed by one small file per hashed IP under the cache
+// directory, so it needs no schema change and survives across requests (unlike session state, which
+// a bot simply discards). This is a throttle, not an authorization control — the real guardrails are
+// the level-0/confirm-code activation and the adminOnly field checks — but it caps the blast radius.
+//
+// The default (60/hour) is deliberately generous: a whole organisation can share one public IP behind
+// a NAT/firewall, so dozens of legitimate people may sign up from the "same" address during an
+// onboarding push. It still bounds a single-IP bot to 60 accounts (and 60 confirmation-code sends) an
+// hour. Both values are tunable constants — lower them on a site that expects only isolated home users.
+if (!defined('FORMULIZE_SIGNUP_THROTTLE_MAX')) {
+    define('FORMULIZE_SIGNUP_THROTTLE_MAX', 60);
+}
+if (!defined('FORMULIZE_SIGNUP_THROTTLE_WINDOW')) {
+    define('FORMULIZE_SIGNUP_THROTTLE_WINDOW', 3600); // one hour
+}
+
+/**
+ * @return string The throttle file path for the current source IP, or '' when there is no usable IP.
+ */
+function formulize_signupThrottleFile() {
+    $ip = isset($_SERVER['REMOTE_ADDR']) ? (string) $_SERVER['REMOTE_ADDR'] : '';
+    if ($ip === '') {
+        return ''; // nothing to key on (e.g. CLI) — cannot throttle
+    }
+    return XOOPS_ROOT_PATH . '/cache/formulize_signup_throttle_' . hash('sha256', $ip) . '.txt';
+}
+
+/**
+ * Count this IP's account creations inside the current window. Entries are appended in ascending time
+ * order (see formulize_signupThrottleRecord), so the newest are at the end — we walk backward and stop
+ * at the first entry older than the window rather than scanning the whole file from the front. Reads
+ * do not rewrite the file (that would write on every page load); pruning happens on write instead. The
+ * one exception is a file that is now entirely stale, which we delete here so abandoned per-IP files do
+ * not accumulate.
+ *
+ * @return int Number of creations recorded for this IP within the window.
+ */
+function formulize_signupThrottleCount() {
+    $file = formulize_signupThrottleFile();
+    if ($file === '' OR !is_readable($file)) {
+        return 0;
+    }
+    $lines = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if (!$lines) {
+        @unlink($file);
+        return 0;
+    }
+    $cutoff = time() - FORMULIZE_SIGNUP_THROTTLE_WINDOW;
+    $count = 0;
+    for ($i = count($lines) - 1; $i >= 0; $i--) {
+        if (intval($lines[$i]) >= $cutoff) {
+            $count++;
+        } else {
+            break; // ascending order: everything before this is older still
+        }
+    }
+    if ($count === 0) {
+        @unlink($file); // whole file is outside the window; clean it up
+    }
+    return $count;
+}
+
+/**
+ * @return bool True when this IP has reached its signup allowance and should be refused.
+ */
+function formulize_signupThrottleExceeded() {
+    return formulize_signupThrottleFile() !== '' AND formulize_signupThrottleCount() >= FORMULIZE_SIGNUP_THROTTLE_MAX;
+}
+
+/**
+ * Record one successful account creation against the current source IP, then prune anything now outside
+ * the window so the file stays small (bounded by the number of in-window creations).
+ *
+ * @return void
+ */
+function formulize_signupThrottleRecord() {
+    $file = formulize_signupThrottleFile();
+    if ($file === '') {
+        return;
+    }
+    $cutoff = time() - FORMULIZE_SIGNUP_THROTTLE_WINDOW;
+    $lines = is_readable($file) ? file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) : array();
+    $keep = array();
+    foreach ((array) $lines as $line) {
+        if (intval($line) >= $cutoff) {
+            $keep[] = intval($line);
+        }
+    }
+    $keep[] = time();
+    file_put_contents($file, implode("\n", $keep) . "\n", LOCK_EX);
+}
+
 /**
  * Derive the secret key used to sign anonymous-entry cookies.
  *
@@ -2713,7 +2808,9 @@ function getSingle($fid, $uid, $groups=null, $member_handler=null, $gperm_handle
 		global $xoopsUser;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$data_handler = new formulizeDataHandler($fid);
-    $formObject = $form_handler->get($fid);
+    if(!$formObject = $form_handler->get($fid)) {
+			throw new Exception("Form with id $fid not found when determining Single setting.");
+		}
     $effectiveSingle = resolveEffectiveSingle($formObject->getVar('single'), $groups);
 
 		// default, not single, no entry
@@ -3002,11 +3099,6 @@ function formatLinks($matchtext, $handle, $textWidth, $entryBeingFormatted) {
 		$textWidth = 35;
 	}
 
-	// if the value has HTML formatting, leave it alone
-	if($matchtext AND is_string($matchtext) AND strlen($matchtext) > strlen(strip_tags($matchtext))) {
-		return $matchtext;
-	}
-
 	formulize_benchmark("start of formatlinks");
 	global $myts;
 	$matchtext = $myts->undoHtmlSpecialChars($matchtext);
@@ -3058,9 +3150,11 @@ function removeOpeningPHPTag($string) {
  * @param mixed $elementIdentifier The id number, handle, or object representing the element we're working with
  * @param int|string $entry_id Optional. Defaults to 'new'. The entry id number of the entry that we're working with, or 'new' for new entries not yet saved. Possibly referenced by eval'd code.
  * @param mixed $currentValue Optional. The current value of the element in the entry. More efficient to pass this in if known. If set to the string USEDEFAULTVALUEINSTEADOFCURRENTVALUE then the default value will be used instead of the current value. This is necessary when determining defaults for newly created subform entries, since they have an entry id in the database already.
+ * @param mixed $screen Optional. The screen object in effect (may be null), passed through to reference/variable substitution so conditional-element cataloguing records the correct screen. Only meaningful together with $catalogAsConditionalElement.
+ * @param bool $catalogAsConditionalElement Optional, default false. Set true ONLY when this is a live render of the element in a form/screen, so its {ref} references are catalogued for conditional re-rendering. Leave false for value-computation calls (e.g. getDefaultValue): those have no on-screen element and must NOT pollute the conditional-element catalogue.
  * @return mixed The default value that should be used for this element, or the actual value in the database if this is a specific entry, unless there is no value saved in which case the default from the element settings would be interpretted.
  */
-function interpretTextboxValue($elementIdentifier, $entry_id = 'new', $currentValue = null) {
+function interpretTextboxValue($elementIdentifier, $entry_id = 'new', $currentValue = null, $screen = null, $catalogAsConditionalElement = false) {
 
 		if(!$elementObject = _getElementObject($elementIdentifier)) {
 			return "";
@@ -3092,17 +3186,62 @@ function interpretTextboxValue($elementIdentifier, $entry_id = 'new', $currentVa
     global $xoopsUser;
 
 		$elementRenderer = new formulizeElementRenderer($elementObject);
-		$renderedElementMarkupName = "de_".$form_id."_".$entry_id."_".$elementObject->getVar('ele_id');
+		// Only build a markup name when this is a live render (it is the sole thing that drives conditional-
+		// element cataloguing inside formulize_replaceReferencesAndVariables). Value-computation callers
+		// (getDefaultValue, etc.) pass $catalogAsConditionalElement=false, so the empty name suppresses
+		// cataloguing entirely — there is no on-screen element and no screen for them to catalogue against.
+		$renderedElementMarkupName = $catalogAsConditionalElement ? ("de_".$form_id."_".$entry_id."_".$elementObject->getVar('ele_id')) : "";
 		$configuredDefaultValue = ($elementObject->getVar('ele_type') == 'text') ? $ele_value[2] : $ele_value[0];
 		$textboxValueIsConfiguredDefault = ((string)$textboxValue === (string)$configuredDefaultValue OR (string)$textboxValue === stripslashes((string)$configuredDefaultValue));
-		$textboxValue = $elementRenderer->formulize_replaceReferencesAndVariables($textboxValue, $entry_id, $form_id, $renderedElementMarkupName);
-
-    if ($textboxValueIsConfiguredDefault AND strstr($textboxValue, "\$default")) { // php default value
-				$textboxValue = removeOpeningPHPTag($textboxValue);
-			  $default = '';
-        eval(stripslashes($textboxValue));
-        $textboxValue = $default;
-				$textboxValue = $elementRenderer->formulize_replaceReferencesAndVariables($textboxValue, $entry_id, $form_id, $renderedElementMarkupName); // in case PHP code generated some { } references
+		// Decide PHP-ness from the raw, admin-authored default (pre-substitution) — NOT the post-substitution
+		// string — so a user-controlled {ref} value can never introduce the $default trigger on its own.
+		// Mirrors the static content / help-text handling (see baseClassForStaticContent::render()).
+		$isPHPDefault = ($textboxValueIsConfiguredDefault AND strstr($configuredDefaultValue, "\$default"));
+    if ($isPHPDefault) { // php default value
+				// Eval the admin-authored default taken straight from the element object (it is provably the
+				// configured default here). Reverse any legacy storage-slashing of the admin CODE first, then
+				// hand it to the canonical evaluator, which binds the {ref} values to variables rather than
+				// substituting them into the code as text, so a user-controlled referenced value is supplied
+				// to the admin's code as data and can never alter the code's structure.
+				//
+				// $extraScope carries the element specific locals this code could previously see, back when
+				// the eval happened inline in this function. The entry context ($form_id, $entry_id, $entry,
+				// $entryData, $id_form, $creation_datetime, $xoopsUser) is supplied by the evaluator itself.
+				$extraScope = array(
+					'elementObject' => $elementObject,
+					'ele_value' => $ele_value,
+					'currentValue' => $currentValue
+				);
+				// $makeValuesSafeForDisplay=false for the same reason as the plain-default branch below: this
+				// return value is also stored as the entry's default, and its display sink escapes already.
+				list($evaluatedDefault, $evalSucceeded) = $elementRenderer->evalAdminPHPWithReferences(
+					stripslashes(removeOpeningPHPTag($configuredDefaultValue)), $entry_id, $form_id, $renderedElementMarkupName, $screen, 'default', $extraScope, true, false);
+				if($evalSucceeded) {
+					$textboxValue = $evaluatedDefault;
+				} else {
+					// The failure has already been logged. Show it to the people who can actually fix it -
+					// anyone who can edit this form, which includes webmasters - so that a broken default is
+					// not silently indistinguishable from a legitimately empty one. Everyone else gets a
+					// blank value.
+					// This is deliberately limited to a live render ($catalogAsConditionalElement): the value
+					// returned by this function is also used as the database ready default (see
+					// textElement::getDefaultValue), and error text must never be stored as an entry's data.
+					$textboxValue = '';
+					if($catalogAsConditionalElement) {
+						$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+						$gperm_handler = xoops_gethandler('groupperm');
+						if($gperm_handler->checkRight("edit_form", $form_id, $groups, getFormulizeModId())) {
+							$textboxValue = _formulize_ERROR_IN_DEFAULT_VALUE_CODE;
+						}
+					}
+				}
+    } else {
+				// plain (non-PHP) default: substitute {ref} values UNESCAPED. Unlike captions/help text/static
+				// content, what this function returns is not only displayed - textElement::getDefaultValue()
+				// also writes it to the database as the entry's stored value, so escaping here would persist
+				// HTML entities as data. Display safety for this value is handled at its sink instead:
+				// icms_form_elements_Text::render() normalizes and escapes whatever it is given.
+				$textboxValue = $elementRenderer->formulize_replaceReferencesAndVariables($textboxValue, $entry_id, $form_id, $renderedElementMarkupName, $screen, false);
     }
 
 	  $foundTerms = array();
@@ -6232,6 +6371,14 @@ function parseSubmittedConditions($filter_key, $delete_key = 'conditionsdelete',
 		$reloadFlag = true;
 	}
 
+	// Enforce the operator whitelist at this write boundary.
+	if (isset($_POST[$filter_key."_ops"]) AND is_array($_POST[$filter_key."_ops"])) {
+		foreach ($_POST[$filter_key."_ops"] as $opKey => $opValue) {
+			$cleanOp = is_string($opValue) ? formulize_conditionsCleanOps($opValue) : "";
+			$_POST[$filter_key."_ops"][$opKey] = ($cleanOp !== "") ? $cleanOp : "=";
+		}
+	}
+
 	$returnValues = array();
 	if (count((array) $_POST[$filter_key."_elements"]) > 0){
 		$returnValues[0] = $_POST[$filter_key."_elements"];
@@ -6365,6 +6512,147 @@ function undoAllHTMLChars($text,$quotes=ENT_QUOTES) {
         $text = html_entity_decode($text,$quotes);
     }
     return html_entity_decode($text,$quotes);
+}
+
+
+/**
+ * Whether HTML purification is ENFORCED (true) or REPORT-ONLY (false = log which values it WOULD change,
+ * but display them unfiltered).
+ *
+ * Why this exists: element types that declare their data is HTML (derived values, rich text) have their
+ * markup preserved rather than escaped. That markup is admin-authored, but the DATA interpolated into it
+ * is user-submitted - eg. $value = "<h1>Chef:</h1><ul><li>$name</li></ul>" where $name came from a text
+ * box - so "admin-authored therefore trusted" is false, and a payload in $name would be live.
+ *
+ * Purifying that output fixes it, but purification also REMOVES markup some sites legitimately rely on:
+ * <button>/onclick, <form>/<input>, <iframe>, <svg> are all stripped. Whether any given site depends on
+ * that is not knowable in advance and most sites have no test suite to discover it. So report-only mode
+ * runs the filter, logs which elements it WOULD change (identifiers only - see formulize_purifyHtmlValue),
+ * but outputs the original, letting a site be assessed before enforcement is turned on.
+ *
+ * Driven by the 'formulizeEnforceHtmlPurification' Advanced setting (Settings -> Advanced -> Debugging).
+ * Resolved once per request and cached. Fails SECURE (enforce) if the setting cannot be read - eg. before
+ * the module update that registers it has run, or if the config handler is unavailable - consistent with
+ * the fail-closed behaviour in the purifier.
+ *
+ * @return bool true to enforce purification, false for report-only
+ */
+function formulize_enforceHtmlPurification() {
+    static $enforce = null;
+    if($enforce === null) {
+        $enforce = true; // fail secure if the setting cannot be resolved
+				$formulize_purifyConfig = xoops_gethandler('config')->getConfigsByCat(0, getFormulizeModId());
+				if(is_array($formulize_purifyConfig) AND isset($formulize_purifyConfig['formulizeEnforceHtmlPurification'])) {
+					$enforce = (bool) $formulize_purifyConfig['formulizeEnforceHtmlPurification'];
+				}
+    }
+    return $enforce;
+}
+
+/**
+ * Make a value that is intentionally HTML safe for output, by allow-list filtering (HTML Purifier)
+ * rather than escaping - so admin-authored formatting survives while script vectors do not.
+ *
+ * Fails CLOSED: if purification is unavailable or turned off site-wide, the value is HTML-ESCAPED
+ * instead. Unpurified HTML is never returned. (This deliberately does not trust the enable_purifier
+ * preference to keep us safe - that setting exists for content filtering, not for this.)
+ *
+ * @param string $value The raw value, as it will appear in the page
+ * @param string $handle Optional. Element handle, used to tag the log events (never the value content)
+ * @param int $entry_id Optional. Entry id, used to tag the log events
+ * @return string The value, purified (or escaped, if purification was not possible)
+ */
+function formulize_purifyHtmlValue($value, $handle = '', $entry_id = 0) {
+
+    global $myts;
+    if(!is_string($value) OR $value === '') {
+        return $value;
+    }
+
+    $purifierAvailable = false;
+    $purified = null;
+    if(class_exists('icms_core_HTMLFilter')) {
+        $icmsConfigPurifier = icms::$config->getConfigsByCat(ICMS_CONF_PURIFIER);
+        // NB: loose comparison on purpose. The comparison in icms_core_HTMLFilter::filterHTML is a
+        // strict !== 0 against a value that arrives from the DB as a string, so it passes even when the
+        // setting is off. We do not want to inherit that accident in either direction, so we read the
+        // preference honestly here and fall back to escaping when it says purification is off.
+        if(!isset($icmsConfigPurifier['enable_purifier']) OR $icmsConfigPurifier['enable_purifier'] != 0) {
+            $purified = icms_core_HTMLFilter::filterHTML($value);
+            $purifierAvailable = is_string($purified);
+        }
+    }
+
+    if(!$purifierAvailable) {
+        // fail closed - escape rather than emit markup we could not filter
+        formulize_logPurifyEvent('html-purification-unavailable', $handle, $entry_id,
+            "Could not purify this HTML element value; it was escaped instead. Check that HTML Purifier is installed and that the purifier preferences are set.");
+        return $myts->htmlSpecialChars($value);
+    }
+
+    if($purified !== $value AND !formulize_enforceHtmlPurification()) {
+        // Report-only: record WHERE purification would change something, so real installs can be assessed
+        // before enforcement is turned on. Deliberately logs NO value content - the value is potentially
+        // malicious markup, and the log viewer renders every field unescaped (Smarty autoescape is off
+        // site-wide), so logging it would turn viewing the log into a stored-XSS sink. The identifiers
+        // locate the element+entry precisely; inspect it in the app if the actual content is needed.
+        formulize_logPurifyEvent('html-purification-report', $handle, $entry_id,
+            "Purification WOULD alter this element's value, but it is being output unfiltered because HTML purification enforcement is off (report-only mode).");
+    }
+
+    return formulize_enforceHtmlPurification() ? $purified : $value;
+}
+
+
+/**
+ * Purify a value that may be a (possibly nested) array of strings, preserving the array shape.
+ * Scalars are handed to formulize_purifyHtmlValue (which returns non-strings untouched). Used where
+ * entry data is exposed to a template layer as raw arrays - eg: template screens hand element-handle
+ * values, and the whole $entry/$templateScreenData dataset, to admin-authored templates - so that every
+ * string leaf is allow-list filtered before it can reach an HTML sink.
+ * @param mixed $value A string, or an arbitrarily nested array of them
+ * @param string $handle Optional element handle, for purify logging
+ * @param int $entry_id Optional entry id, for purify logging
+ * @return mixed The value with every string leaf purified; array structure preserved
+ */
+function formulize_purifyHtmlValueDeep($value, $handle = '', $entry_id = 0) {
+    if(is_array($value)) {
+        foreach($value as $k => $v) {
+            $value[$k] = formulize_purifyHtmlValueDeep($v, $handle, $entry_id);
+        }
+        return $value;
+    }
+    return formulize_purifyHtmlValue($value, $handle, $entry_id);
+}
+
+
+/**
+ * Record an HTML-purification event to both the Formulize log and the PHP error log, tagged with as much
+ * structured element metadata as we can cheaply gather (form / element / entry identifiers).
+ *
+ * Deliberately logs NO value content: the value in question is potentially malicious markup, and both
+ * sinks are unsafe for it - the log viewer renders fields unescaped (Smarty autoescape off site-wide), and
+ * raw newlines would forge PHP-error-log lines. The identifiers are enough to locate the element+entry.
+ *
+ * @param string $event The formulize_event label
+ * @param string $handle The element handle - used to resolve form_id/element_id, and named in the error_log line
+ * @param int $entry_id The entry id the value belongs to
+ * @param string $info A human-readable description containing NO value content
+ */
+function formulize_logPurifyEvent($event, $handle, $entry_id, $info) {
+    $fields = array(
+        'formulize_event' => $event,
+        'entry_id' => $entry_id,
+        'additional_info' => $info,
+    );
+    // the element object is served from _getElementObject's cache here, so this is cheap. element_id is
+    // the structured identifier; the handle is only carried in the human-readable error_log line below.
+    if($handle !== '' AND $element = _getElementObject($handle)) {
+        $fields['form_id'] = $element->getVar('id_form');
+        $fields['element_id'] = $element->getVar('ele_id');
+    }
+    writeToFormulizeLog($fields);
+    error_log("Formulize: $event - element '$handle'".(isset($fields['form_id']) ? " (form ".$fields['form_id'].", entry $entry_id)" : " (entry $entry_id)").". $info");
 }
 
 
@@ -6561,6 +6849,13 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
         }
     }
     $filterOps = $conditions[1];
+    // Whitelist the operators before any of them reach the SQL.
+    if(is_array($filterOps)) {
+        foreach($filterOps as $filterOpKey => $filterOpValue) {
+            $cleanFilterOp = is_string($filterOpValue) ? formulize_conditionsCleanOps($filterOpValue) : "";
+            $filterOps[$filterOpKey] = ($cleanFilterOp !== "") ? $cleanFilterOp : "=";
+        }
+    }
     $filterTerms = $conditions[2];
     $filterTypes = $conditions[3];
     $targetFormObject = "";
@@ -7521,6 +7816,192 @@ function formulize_db_escape($value) {
   global $xoopsDB;
   $value = $xoopsDB->quote($value);
   return substr($value, 1,-1);
+}
+
+/**
+ * Rewrite a single-quoted PHP string literal token that contains {element_handle} references into a
+ * parenthesized concatenation expression, so the references become bound variables.
+ *
+ * Single-quoted strings do not interpolate variables, so a reference inside one cannot simply be
+ * turned into $variable the way it can in a double-quoted string or in bare code. Converting the
+ * literal to a double-quoted string is NOT a safe alternative: single and double quoted strings
+ * treat $ and \ differently, so 'Cost was $total' would silently start interpolating $total, and any
+ * backslash sequences would change meaning. Concatenation preserves the single-quote semantics of
+ * every literal chunk exactly.
+ *
+ *   'Cost was $total, now {price}'  =>  ('Cost was $total, now ' . $__formulizeRef_price)
+ *
+ * Literal chunks are decoded from their single-quoted escaped form and re-encoded, so a backslash
+ * sitting immediately before a reference (eg: 'a\{price}') cannot leave a trailing \ that would
+ * escape the closing quote of the rebuilt chunk.
+ *
+ * @param string $tokenText The raw token text, including its surrounding single quotes and any
+ *   b/B binary prefix (a no-op marker in modern PHP, dropped from the rewritten expression)
+ * @param callable $isKnownHandle Given a handle, returns true if it is a real element reference
+ * @param callable $allocate Given a handle, returns the bound variable name (without the $) to use
+ * @return string The replacement PHP expression
+ */
+function formulize_rewriteSingleQuotedStringWithRefs($tokenText, $isKnownHandle, $allocate) {
+    if(strtolower(substr($tokenText, 0, 1)) === 'b') {
+        $tokenText = substr($tokenText, 1); // drop the binary prefix so the quotes are at the edges
+    }
+    $inner = substr($tokenText, 1, -1); // strip the enclosing single quotes
+    $parts = preg_split('/(\{[^{}]+\})/', $inner, -1, PREG_SPLIT_DELIM_CAPTURE);
+    $pieces = array();
+    foreach($parts as $part) {
+        if($part === '') {
+            continue;
+        }
+        if(preg_match('/^\{([^{}]+)\}$/', $part, $matches) AND call_user_func($isKnownHandle, $matches[1])) {
+            $pieces[] = '$'.call_user_func($allocate, $matches[1]);
+        } else {
+            // decode the single-quoted escaping (\\ and \' are the only sequences), then re-encode,
+            // so each rebuilt chunk is independently valid regardless of where the split landed
+            $literal = preg_replace('/\\\\([\\\\\'])/', '$1', $part);
+            $pieces[] = "'".str_replace(array('\\', "'"), array('\\\\', "\\'"), $literal)."'";
+        }
+    }
+    if(empty($pieces)) {
+        return "''";
+    }
+    // parenthesized so the concatenation binds correctly wherever the original literal appeared
+    return '('.implode(' . ', $pieces).')';
+}
+
+/**
+ * Transform admin-authored PHP code so that {element_handle} references become references to bound
+ * variables, instead of having the referenced values spliced into the code as text.
+ *
+ * This is the same approach derived value formulas use (see formulize_includeDerivedValueFormulas in
+ * extract.php): the entry data never becomes part of the code that is eval()'d, it is supplied at
+ * runtime as a value. That removes, structurally, the possibility that a value entered by a
+ * non-admin user could break out of an admin's string literal and inject PHP - and it also makes a
+ * reference used in a bare context (eg: $default = {a} + {b};) safe, which escaping alone could not.
+ *
+ * The transform is token-aware, because whether a reference needs to become $variable or a
+ * concatenation depends on the PHP lexical context it sits in, and a plain string search cannot tell
+ * a string delimiter from a quote character that is merely part of another string's contents.
+ *   - bare code            {a}    =>  $__formulizeRef_a                    (direct substitution)
+ *   - double quoted     "x {a}"   =>  "x {$__formulizeRef_a}"              (curly interpolation - the
+ *                                     braces are required so that adjacent word characters, as in
+ *                                     "{a}kg" or "{a}_{b}", cannot merge into the variable name)
+ *   - single quoted     'x {a}'   =>  ('x ' . $__formulizeRef_a)           (concatenated)
+ * The same curly interpolation is used inside heredoc bodies and interpolating parts of strings.
+ * References in contexts where no variable could ever resolve - comments, inline HTML after a
+ * closing PHP tag, nowdoc bodies - are left untouched, and are not resolved or catalogued.
+ *
+ * @param string $code The admin-authored PHP code, with any opening <?php tag already removed
+ * @param callable $isKnownHandle Given a handle, returns true if it is a real element reference.
+ *   References that are not known elements are left untouched, matching the display substitution.
+ * @return array array($transformedCode, $bindings) where $bindings maps element handle => the
+ *   variable name (without the $) that the caller must assign that handle's value to
+ */
+function formulize_bindCurlyReferencesInPHPCode($code, $isKnownHandle) {
+    $bindings = array();
+    if(strpos($code, '{') === false OR strpos($code, '}') === false) {
+        return array($code, $bindings);
+    }
+    // Element handles are globally unique and are already sanitized to [a-z0-9_] when they are created
+    // (see formulizeElement::sanitize_handle_name), so the handle alone names the variable. The
+    // sanitizing here is a guard for any legacy or imported handle that predates that rule and would
+    // otherwise produce an invalid PHP identifier; in that case two handles could in principle sanitize
+    // to the same text, so a suffix is added to keep them distinct. The __formulizeRef_ prefix is what
+    // keeps these from colliding with a variable the admin wrote themselves.
+    $allocate = function($handle) use (&$bindings) {
+        if(!isset($bindings[$handle])) {
+            $variableName = '__formulizeRef_'.preg_replace('/[^a-zA-Z0-9_]/', '_', $handle);
+            if(in_array($variableName, $bindings)) { // only possible for a handle that needed sanitizing
+                $suffix = 2;
+                while(in_array($variableName.'_'.$suffix, $bindings)) {
+                    $suffix++;
+                }
+                $variableName .= '_'.$suffix;
+            }
+            $bindings[$handle] = $variableName;
+        }
+        return $bindings[$handle];
+    };
+    // Replace each known reference in interpolating string content ("..." and heredoc bodies) with
+    // curly interpolation syntax, which is delimiter-safe no matter what characters surround it
+    $interpolate = function($text) use ($isKnownHandle, $allocate) {
+        return preg_replace_callback('/\{([^{}]+)\}/', function($matches) use ($isKnownHandle, $allocate) {
+            if(!call_user_func($isKnownHandle, $matches[1])) {
+                return $matches[0];
+            }
+            return '{$'.call_user_func($allocate, $matches[1]).'}';
+        }, $text);
+    };
+    // Walk the token stream and rewrite each reference according to the lexical context it sits in.
+    // String and comment tokens are each handled (or deliberately left alone) as a unit, so their
+    // contents can never be confused with the code around them. Runs of ordinary code tokens are
+    // collected into segments, and the references in those are substituted directly as $variable at
+    // the end - a reference in bare code spans several tokens ('{', the handle, '}'), so it can only
+    // be recognized once the run is assembled.
+    $tokens = token_get_all('<?php '.$code);
+    $segments = array(); // each segment is array('text' => string, 'isCode' => bool)
+    $appendCode = function($text) use (&$segments) {
+        $last = count($segments) - 1;
+        if($last >= 0 AND $segments[$last]['isCode']) {
+            $segments[$last]['text'] .= $text;
+        } else {
+            $segments[] = array('text' => $text, 'isCode' => true);
+        }
+    };
+    $inNowdoc = false;
+    foreach($tokens as $index => $token) {
+        if($index === 0) {
+            continue; // drop the opening tag we added in order to tokenize
+        }
+        if(!is_array($token)) {
+            $appendCode($token);
+            continue;
+        }
+        list($tokenType, $tokenText) = $token;
+        // the quote character, looking past any b/B binary-string prefix
+        $quoteChar = strtolower(substr($tokenText, 0, 1)) === 'b' ? substr($tokenText, 1, 1) : substr($tokenText, 0, 1);
+        if($tokenType === T_START_HEREDOC) {
+            $inNowdoc = (strpos($tokenText, "'") !== false); // <<<'EOT' opens a nowdoc, which does not interpolate
+            $segments[] = array('text' => $tokenText, 'isCode' => false);
+        } elseif($tokenType === T_END_HEREDOC) {
+            $inNowdoc = false;
+            $segments[] = array('text' => $tokenText, 'isCode' => false);
+        } elseif($tokenType === T_CONSTANT_ENCAPSED_STRING AND strpos($tokenText, '{') !== false) {
+            $segments[] = array(
+                'text' => $quoteChar === "'"
+                    ? formulize_rewriteSingleQuotedStringWithRefs($tokenText, $isKnownHandle, $allocate)
+                    : call_user_func($interpolate, $tokenText),
+                'isCode' => false
+            );
+        } elseif($tokenType === T_ENCAPSED_AND_WHITESPACE) {
+            // literal content inside an interpolating context (a "..." string that already contains
+            // a variable, a heredoc body, a backtick expression) - or inside a nowdoc, where nothing
+            // can interpolate, so its references are left untouched
+            $segments[] = array('text' => $inNowdoc ? $tokenText : call_user_func($interpolate, $tokenText), 'isCode' => false);
+        } elseif($tokenType === T_COMMENT OR $tokenType === T_DOC_COMMENT OR $tokenType === T_INLINE_HTML
+            OR $tokenType === T_CONSTANT_ENCAPSED_STRING) {
+            // comments and inline HTML are not executable, so their references are not rewritten (or
+            // resolved, or catalogued); strings with no braces pass through, kept out of the code
+            // segments so their contents cannot take part in a match against surrounding code
+            $segments[] = array('text' => $tokenText, 'isCode' => false);
+        } else {
+            $appendCode($tokenText);
+        }
+    }
+    // references in bare code become the variable directly: $default = {a} + {b};
+    $reassembled = '';
+    foreach($segments as $segment) {
+        if($segment['isCode']) {
+            $reassembled .= preg_replace_callback('/\{([^{}]+)\}/', function($matches) use ($isKnownHandle, $allocate) {
+                if(!call_user_func($isKnownHandle, $matches[1])) {
+                    return $matches[0];
+                }
+                return '$'.call_user_func($allocate, $matches[1]);
+            }, $segment['text']);
+        } else {
+            $reassembled .= $segment['text'];
+        }
+    }
+    return array($reassembled, $bindings);
 }
 
 /**
@@ -11091,7 +11572,7 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 		} elseif($thisOp == "IN") {
 			$cleanTerms = array();
 			foreach(explode(',',$rawFilterTerms) as $ft) {
-				$cleanTerms[] = str_replace("'", "\'", trim(htmlspecialchars_decode($ft, ENT_QUOTES), " \n\r\t\v\x00\"'"));
+				$cleanTerms[] = addslashes(trim(htmlspecialchars_decode($ft, ENT_QUOTES), " \n\r\t\v\x00\"'"));
 			}
 			$evaluationCondition .= "in_array(".$compValueQuoted.", array('".implode("','",$cleanTerms)."'))";
 		} else {

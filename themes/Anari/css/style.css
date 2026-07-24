@@ -1316,6 +1316,13 @@ table.outer textarea,
     #formulize_modal input[type="range"] {
       max-width: 673px;
     }
+
+		.formulize-tfa-forget-devices {
+			max-width: 700px;
+		}
+		.formulize-tfa-forget-devices input[type=button] {
+			margin-bottom: 1em;
+		}
 }
 
 @media print {

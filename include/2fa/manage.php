@@ -447,8 +447,80 @@ function tfaLoginJS($id) {
 
 }
 
-function getDeviceFingerprint() {
-	return md5($_SERVER['HTTP_USER_AGENT'].$_SERVER['REMOTE_ADDR']);
+/**
+ * Decode the profile 2fadevices field. Stored as JSON going forward (map of
+ * sha256(token) => expiry timestamp). Falls back to unserialize() with
+ * allowed_classes=false for rows written before this format existed, so old data
+ * can't instantiate PHP objects (object-injection) even transiently - the legacy
+ * fingerprint-keyed entries it might contain don't match the token-hash lookups
+ * below anyway, so no explicit migration of old rows is needed.
+ */
+function tfa_decodeDevices($raw) {
+	if (!is_string($raw) || $raw === '') {
+		return array();
+	}
+	$devices = json_decode($raw, true);
+	if (!is_array($devices)) {
+		$devices = @unserialize($raw, array('allowed_classes' => false));
+	}
+	return is_array($devices) ? $devices : array();
+}
+
+/**
+ * Compute the stored device-trust key for a raw cookie token, binding it to the
+ * request's source IP. Because the IP ($_SERVER['REMOTE_ADDR'] - the server's view
+ * of the TCP peer, not anything the client can set) is folded into the hash, a valid
+ * token replayed from a different IP produces a different key and simply won't match,
+ * so a cookie stolen and used from another network is rejected. The raw token is the
+ * only secret in the cookie; the IP is never stored separately, only mixed into the
+ * one-way hash. Defined as a single helper so the write (rememberDevice) and read
+ * (userRemembersDevice) sites can never compute the formula differently.
+ */
+function tfa_deviceTokenHash($token) {
+	$ip = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '';
+	return hash('sha256', $token . '|' . $ip);
+}
+
+/**
+ * The "remember this device" window, in days. Read from the Formulize module
+ * preference tfaRememberDeviceDays (Users -> Settings -> Signing in) and clamped to
+ * [TFA_REMEMBER_DEVICE_MIN_DAYS, TFA_REMEMBER_DEVICE_MAX_DAYS]. The clamp is the
+ * authoritative bound - the admin textbox does not enforce a range - so any stored/
+ * tampered value is corrected here. Falls back to the default if the preference is
+ * unset (e.g. before the module update that registers it has run) or non-numeric.
+ */
+function tfa_rememberDeviceDays() {
+	$days = TFA_REMEMBER_DEVICE_DEFAULT_DAYS;
+	if (function_exists('getFormulizeModId') && $config_handler = xoops_gethandler('config')) {
+		$cfg = $config_handler->getConfigsByCat(0, getFormulizeModId());
+		if (isset($cfg['tfaRememberDeviceDays']) && is_numeric($cfg['tfaRememberDeviceDays'])) {
+			$days = (int) $cfg['tfaRememberDeviceDays'];
+		}
+	}
+	if ($days < TFA_REMEMBER_DEVICE_MIN_DAYS) { $days = TFA_REMEMBER_DEVICE_MIN_DAYS; }
+	if ($days > TFA_REMEMBER_DEVICE_MAX_DAYS) { $days = TFA_REMEMBER_DEVICE_MAX_DAYS; }
+	return $days;
+}
+
+/**
+ * The remember-device window expressed in seconds, for computing a token's expiry.
+ */
+function tfa_rememberDeviceSeconds() {
+	return tfa_rememberDeviceDays() * 86400;
+}
+
+/**
+ * Human-readable form of a day count for the login dialog: whole months when the
+ * value is within ~3 days of a 30-day-month multiple (so 90 -> "3 months",
+ * 30 -> "1 month"), otherwise a plain day count (so 45 -> "45 days", 365 -> "365 days").
+ */
+function tfa_formatWindow($days) {
+	$days = (int) $days;
+	$months = (int) round($days / 30);
+	if ($months >= 1 && abs($days - ($months * 30)) <= 3) {
+		return ($months == 1) ? _US_TFA_WINDOW_MONTH : sprintf(_US_TFA_WINDOW_MONTHS, $months);
+	}
+	return ($days == 1) ? _US_TFA_WINDOW_DAY : sprintf(_US_TFA_WINDOW_DAYS, $days);
 }
 
 function rememberDevice($user=null) {
@@ -457,14 +529,35 @@ function rememberDevice($user=null) {
 		$user = $xoopsUser;
 	}
 	if($user) {
-		$fingerprint = getDeviceFingerprint();
+		// High-entropy random token, not a UA+IP fingerprint (which is attacker-guessable/
+		// forgeable - UA is sent by the client and IP is often shared/known). Only a hash of
+		// the token (bound to the source IP - see tfa_deviceTokenHash) is stored server-side;
+		// the raw token lives only in the cookie.
+		$token = bin2hex(random_bytes(32));
+		$tokenHash = tfa_deviceTokenHash($token);
+		$expires = time() + tfa_rememberDeviceSeconds();
+
 		$profile_handler = xoops_getmodulehandler('profile', 'profile');
 		$profile = $profile_handler->get($user->getVar('uid'));
-		$devices = unserialize($profile->getVar('2fadevices','n')); // 'n' necessary to do no htmlspecialchars magic or anything on the value, just return raw
-		$devices = is_array($devices) ? $devices : array();
-		$devices[$fingerprint] = true;
-		$profile->setVar('2fadevices', serialize($devices));
+		$devices = tfa_decodeDevices($profile->getVar('2fadevices','n')); // 'n' necessary to do no htmlspecialchars magic or anything on the value, just return raw
+		foreach ($devices as $hash => $exp) {
+			if (!is_int($exp) || $exp < time()) {
+				unset($devices[$hash]); // prune expired/legacy entries so the list doesn't grow forever
+			}
+		}
+		$devices[$tokenHash] = $expires;
+		$profile->setVar('2fadevices', json_encode($devices));
 		$profile_handler->insert($profile);
+
+		$secure = substr(ICMS_URL, 0, 5) == 'https';
+		setcookie(TFA_REMEMBER_DEVICE_COOKIE, $token, array(
+			'expires' => $expires,
+			'path' => '/',
+			'domain' => '',
+			'secure' => $secure,
+			'httponly' => true,
+			'samesite' => icms_core_Session::cookieSameSite($secure)
+		));
 	}
 }
 
@@ -473,12 +566,16 @@ function userRemembersDevice($user=null) {
 		global $xoopsUser;
 		$user = $xoopsUser;
 	}
-	if($user) {
-		$fingerprint = getDeviceFingerprint();
+	// is_string guard: a crafted cookie like tfa_remember_device[]=x arrives as an array, which
+	// would make hash() throw a TypeError (fatal) on PHP 8 during the login challenge.
+	if($user && !empty($_COOKIE[TFA_REMEMBER_DEVICE_COOKIE]) && is_string($_COOKIE[TFA_REMEMBER_DEVICE_COOKIE])) {
+		// Recompute the IP-bound hash from the cookie token + current request IP; a mismatch
+		// on either the token or the source IP means no stored key matches -> 2FA is prompted.
+		$tokenHash = tfa_deviceTokenHash($_COOKIE[TFA_REMEMBER_DEVICE_COOKIE]);
 		$profile_handler = xoops_getmodulehandler('profile', 'profile');
 		$profile = $profile_handler->get($user->getVar('uid'));
-		$devices = unserialize($profile->getVar('2fadevices','n')); // 'n' necessary to do no htmlspecialchars magic or anything on the value, just return raw
-		if(isset($devices[$fingerprint])) {
+		$devices = tfa_decodeDevices($profile->getVar('2fadevices','n')); // 'n' necessary to do no htmlspecialchars magic or anything on the value, just return raw
+		if(isset($devices[$tokenHash]) && is_int($devices[$tokenHash]) && $devices[$tokenHash] >= time()) {
 			return true;
 		}
 	}

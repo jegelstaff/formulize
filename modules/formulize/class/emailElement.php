@@ -147,7 +147,7 @@ class formulizeEmailElementHandler extends formulizeElementsHandler {
     function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
 			  $ele_value = (is_array($ele_value) AND count($ele_value) == 0) ? "" : $ele_value; // default ele_value for new entries, will be an empty array, so just make a string in that case, otherwise, go with loaded value (ie: existing value in DB)
         if($isDisabled) {
-            $formElement = new xoopsFormLabel($caption, $ele_value);
+            $formElement = new xoopsFormLabel($caption, $this->makeValueSafeForReadOnlyDisplay($ele_value, $element->getVar('ele_handle'), $entry_id));
         } else {
             $formElement = new xoopsFormText($caption, $markupName, 20, 255, $ele_value); // caption, markup name, size, maxlength, default value, according to the xoops form class
         }
@@ -219,13 +219,20 @@ class formulizeEmailElementHandler extends formulizeElementsHandler {
     // for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
     function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
-        $this->clickable = true; // make urls clickable
-        $this->striphtml = false; // remove html tags as a security precaution
-        $this->length = 1000; // truncate to a maximum of 100 characters, and append ... on the end
-        if($value){
-          $value = '<a href="mailto:'.$value.'">'.$value.'</a>';
+        $this->clickable = false; // we build the mailto link ourselves in composeMarkupForList, below
+        $this->dataIsHtml = false; // an email address is plain text - it gets escaped
+        $this->length = 1000; // truncate to a maximum of 1000 characters, and append ... on the end
+        return parent::formatDataForList($value, $handle, $entry_id, $textWidth); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+    }
+
+    // wrap the address in a mailto link. $value is ALREADY escaped by the parent when we get here,
+    // which is the point - previously this markup was built BEFORE escaping, which put the raw
+    // submitted value inside an href and made "><script> a working injection.
+    function composeMarkupForList($value, $handle="", $entry_id=0, $rawValue=null, $textWidth=100) {
+        if($value === '' OR $value === null) {
+            return $value;
         }
-        return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+        return '<a href="mailto:'.$value.'">'.$value.'</a>';
     }
 
 }

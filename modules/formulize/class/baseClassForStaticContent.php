@@ -160,27 +160,51 @@ abstract class formulizeStaticContentElementHandler extends formulizeElementsHan
 	 * element representation (an insert-break array, or a captioned label, etc).
 	 */
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen=false, $owner=null) {
-		$id_form = $element->getVar('id_form');
+		$form_id = $element->getVar('fid');
 		$renderer = new formulizeElementRenderer($element);
 		if($this->useCaptionAsContentFallback AND trim($ele_value[ELE_VALUE_STATICCONTENT_CONTENT]) == "") {
 			$ele_value[ELE_VALUE_STATICCONTENT_CONTENT] = $caption; // use the caption as the contents if no contents are specified
 		}
-		$ele_value[ELE_VALUE_STATICCONTENT_CONTENT] = $renderer->formulize_replaceReferencesAndVariables($ele_value[ELE_VALUE_STATICCONTENT_CONTENT], $entry_id, $id_form, $markupName, $screen);
-		if(strstr($ele_value[ELE_VALUE_STATICCONTENT_CONTENT], "\$value=") OR strstr($ele_value[ELE_VALUE_STATICCONTENT_CONTENT], "\$value =")) {
-			$form_id = $id_form;
-			$entryData = gatherDataset($id_form, filter: $entry_id, frid: 0);
-			$entry = $entryData[0];
-			$creation_datetime = getValue($entry, "creation_datetime");
-			$entryData = $entry; // alternate variable name for backwards compatibility
-			$ele_value[ELE_VALUE_STATICCONTENT_CONTENT] = removeOpeningPHPTag($ele_value[ELE_VALUE_STATICCONTENT_CONTENT]);
-			$value = ""; // will be set in the eval'd code
-			$evalResult = eval($ele_value[ELE_VALUE_STATICCONTENT_CONTENT]);
-			if($evalResult === false) {
-				$ele_value[ELE_VALUE_STATICCONTENT_CONTENT] = _formulize_ERROR_IN_LEFTRIGHT;
+		// decide whether this content is admin-authored PHP code BEFORE any {ref} handling happens
+		// (using the raw, not-yet-substituted content), so a referenced field's stored value can never
+		// trigger eval() on its own just by happening to contain the literal text "$value="
+		$isPHPCode = (strstr($ele_value[ELE_VALUE_STATICCONTENT_CONTENT], "\$value=") OR strstr($ele_value[ELE_VALUE_STATICCONTENT_CONTENT], "\$value ="));
+		if($isPHPCode) {
+			// The canonical evaluator supplies the entry context this code has always been able to use
+			// ($form_id, $entry_id, $entry, and the legacy $id_form, $entryData and $creation_datetime), and
+			// binds the {ref} values to variables rather than substituting them into the code as text, so a
+			// user-controlled referenced value is supplied to the admin's code as data and can never alter
+			// the code's structure.
+			// $extraScope preserves the locals this code could see back when the eval happened inline in
+			// this method.
+			$extraScope = array(
+				'element' => $element,
+				'ele_value' => $ele_value,
+				'caption' => $caption,
+				'markupName' => $markupName,
+				'isDisabled' => $isDisabled,
+				'owner' => $owner
+			);
+			list($evaluatedContent, $evalSucceeded) = $renderer->evalAdminPHPWithReferences(
+				$ele_value[ELE_VALUE_STATICCONTENT_CONTENT], $entry_id, $form_id, $markupName, $screen, 'value', $extraScope);
+			if($evalSucceeded) {
+				$ele_value[ELE_VALUE_STATICCONTENT_CONTENT] = $evaluatedContent;
 			} else {
-				$ele_value[ELE_VALUE_STATICCONTENT_CONTENT] = $value; // value is supposed to be the thing set in the eval'd code
-				$ele_value[ELE_VALUE_STATICCONTENT_CONTENT] = $renderer->formulize_replaceReferencesAndVariables($ele_value[ELE_VALUE_STATICCONTENT_CONTENT], $entry_id, $id_form, $markupName, $screen); // in case the PHP code generated some { } references
+				// The failure has already been logged. Show it to the people who can actually fix it -
+				// anyone who can edit this form, which includes webmasters - so a broken element is not
+				// silently indistinguishable from one that produced no content. Everyone else sees nothing.
+				$ele_value[ELE_VALUE_STATICCONTENT_CONTENT] = '';
+				global $xoopsUser;
+				$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+				$gperm_handler = xoops_gethandler('groupperm');
+				if($gperm_handler->checkRight("edit_form", $form_id, $groups, getFormulizeModId())) {
+					$ele_value[ELE_VALUE_STATICCONTENT_CONTENT] = _formulize_ERROR_IN_LEFTRIGHT;
+				}
 			}
+		} else {
+			// plain text/HTML content: substitute the {ref} values into the content for display. Nothing is
+			// eval'd on this path, so there is no code for a referenced value to interfere with.
+			$ele_value[ELE_VALUE_STATICCONTENT_CONTENT] = $renderer->formulize_replaceReferencesAndVariables($ele_value[ELE_VALUE_STATICCONTENT_CONTENT], $entry_id, $form_id, $markupName, $screen);
 		}
 		return $this->wrapResolvedContent($ele_value, $caption, $markupName);
 	}

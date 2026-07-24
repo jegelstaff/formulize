@@ -341,8 +341,8 @@ function microtime_float()
  * @param array|string scope - Optional. An array of group ids, which define the scope of which entries should included in the dataset, based on the group ownership recorded when the entries were created. If not defined, all entries from all groups are included. You can use the buildScope function to create a valid $scope variable to pass into gatherDataset. Alternatively, this can be a snippet of SQL code that will be escaped and appended to the where clause of the query with: AND ( $scope )
  * @param int limitStart - Optional. The ordinal number of the record in the database that the dataset should start with, as used in a MySQL/MariaDB LIMIT clause.
  * @param int limitSize - Optional. The number of records after the limitStart that should be included in the dataset as used in a MySQL/MariaDB LIMIT clause.
- * @param string sortField - Optional. The element that should be used to sort the entries in the dataset.
- * @param string sortOrder - Optional. Either ASC or DESC to indicate the direction in which the entries should be sorted. Defaults to ASC.
+ * @param string sortField - Optional. The element that should be used to sort the entries in the dataset. To sort by more than one field, pass a comma-separated list of elements, in priority order, eg: "year,price". Each entry is a form element handle/id (or a special key such as entry_id, creation_datetime, creator_email, owner_groups, etc).
+ * @param string sortOrder - Optional. The direction in which the entries should be sorted: ASC/SORT_ASC or DESC/SORT_DESC (anything not recognised as descending is treated as ASC). Defaults to ASC. For a multi-field sortField, pass a comma-separated list of directions that lines up position-by-position with sortField, eg: "SORT_ASC,SORT_DESC" to sort year ascending then price descending. sortField and sortOrder are two separate parallel strings zipped back together by index during extraction - sortOrder never contains element references, only direction tokens.
  * @param int frid - Optional. The form relationship id, that defines the set of connections, as defined in the Formulize admin UI, that should be taken into account when gathering the dataset. Defaults to the Primary Relationship, which includes all connections between all forms. Only forms directly connected to the main form are included in the dataset. Set to zero to only include data from the main form itself, no connections.
  * @param bool bypassCache - Optional. If set to true, any previously cached result will be ignored and the data will always be fetched fresh from the database. This is useful if, for example, derived values or another process are changing data between calls to gatherDataset on the same page load.
  * @return array Returns the dataset as an array. You can use the functions getValue and getEntryIds to work with the resulting dataset
@@ -458,9 +458,14 @@ function getData(
 		$isTableForm = !$isUserTableForm && ($tableform != '');
 	}
 
-	// handle old style sort and order values...
-	$sortOrder = ($sortOrder == "SORT_ASC" or $sortOrder == "ASC") ? "" : $sortOrder;
-	$sortOrder = ($sortOrder == "SORT_DESC") ? "DESC" : $sortOrder;
+	// handle old style sort and order values, normalizing each field of a comma-separated
+	// multi-sort string (e.g. "SORT_ASC,SORT_DESC"). Whitelisting every component down to
+	// "DESC" or "" keeps this safe from SQL injection (the tableform path below uses $sortOrder
+	// unescaped) while preserving per-field direction for the multi-sort loop in dataExtraction().
+	$sortOrder = implode(',', array_map(function ($order) {
+		$order = trim($order);
+		return ($order == "SORT_DESC" or $order == "DESC") ? "DESC" : "";
+	}, explode(',', (string) $sortOrder)));
 
 	if ($isTableForm) {
 		$result = dataExtractionTableForm($tableform, $formHandle, $form, $filter, $andor, $limitStart, $limitSize, $sortField, $sortOrder, $resultOnly);
@@ -823,8 +828,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			foreach ($sortFields as $sfIndex => $sortField) {
 				// Normalize the per-field order value
 				$sortOrder = isset($sortOrders[$sfIndex]) ? $sortOrders[$sfIndex] : '';
-				$sortOrder = ($sortOrder == "SORT_ASC" or $sortOrder == "ASC" or $sortOrder == "") ? "" : $sortOrder;
-				$sortOrder = ($sortOrder == "SORT_DESC") ? "DESC" : $sortOrder;
+				$sortOrder = ($sortOrder == "SORT_DESC" or $sortOrder == "DESC") ? "DESC" : "";
 
 				$sortFid = $fid;
 				$sortIsOnMain = true;

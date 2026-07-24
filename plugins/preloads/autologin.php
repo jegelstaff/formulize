@@ -47,8 +47,18 @@ class icms_AutologinEventHandler {
 			$user = false ;
 		} else {
 			// V3
-			$uname4sql = addslashes($uname);
-			$criteria = new icms_db_criteria_Compo(new icms_db_criteria_Item('uname', $uname4sql));
+			$uname4sql = icms::$db->escape($uname);
+			// the login form's "remember me" cookie is set from login_name (see include/checklogin.php),
+			// so the lookup here must match that field, not uname - mirrors the fallback chain in
+			// icms_member_Handler::loginUser()
+			$table = new icms_db_legacy_updater_Table('users');
+			if ($table->fieldExists('loginname')) {
+				$criteria = new icms_db_criteria_Compo(new icms_db_criteria_Item('loginname', $uname4sql));
+			} elseif ($table->fieldExists('login_name')) {
+				$criteria = new icms_db_criteria_Compo(new icms_db_criteria_Item('login_name', $uname4sql));
+			} else {
+				$criteria = new icms_db_criteria_Compo(new icms_db_criteria_Item('uname', $uname4sql));
+			}
 			$user_handler = icms::handler('icms_member_user');
 			$users = $user_handler->getObjects($criteria, false);
 			if (empty($users) || count($users) != 1) {
@@ -58,9 +68,10 @@ class icms_AutologinEventHandler {
 				$user = $users[0] ;
 				$old_limit = time() - (defined('ICMS_AUTOLOGIN_LIFETIME') ? ICMS_AUTOLOGIN_LIFETIME : 604800);
 				list($old_Ynj, $old_encpass) = explode(':', $pass);
-				if (strtotime($old_Ynj) < $old_limit || md5($user->getVar('pass') .
-						ICMS_DB_PASS . ICMS_DB_PREFIX . $old_Ynj) != $old_encpass)
-				{
+				if (
+					strtotime($old_Ynj) < $old_limit
+					OR hash_equals(md5($user->getVar('pass') . ICMS_DB_PASS . ICMS_DB_PREFIX . $old_Ynj), (string) $old_encpass) == false
+				) {
 					$user = false;
 				}
 				// V3.1 end
@@ -73,15 +84,30 @@ class icms_AutologinEventHandler {
 			$icms_cookie_path = '/';
 		}
 		if (false != $user && $user->getVar('level') > 0) {
+			global $icmsConfig;
 			// update time of last login
 			$user->setVar('last_login', time());
 			if (!icms::handler('icms_member')->insertUser($user, true)) {
+			}
+			// Regenerate the session id when autologin promotes an anonymous session to an
+			// authenticated one - mirrors the main login path (include/checklogin.php) so a
+			// session id fixed/known before autologin cannot survive elevation (session fixation).
+			session_regenerate_id(true);
+			if ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '') {
+				$session_secure = substr(ICMS_URL, 0, 5) == 'https';
+				setcookie($icmsConfig['session_name'], session_id(), array(
+					'expires' => time() + (60 * $icmsConfig['session_expire']),
+					'path' => '/',
+					'domain' => '',
+					'secure' => $session_secure,
+					'httponly' => true,
+					'samesite' => icms_core_Session::cookieSameSite($session_secure)
+				));
 			}
 			//$_SESSION = array();
 			$_SESSION['xoopsUserId'] = $user->getVar('uid');
 			$_SESSION['xoopsUserGroups'] = $user->getGroups();
 
-			global $icmsConfig;
 			$user_theme = $user->getVar('theme');
 			$user_language = $user->getVar('language');
 			if (in_array($user_theme, $icmsConfig['theme_set_allowed'])) {

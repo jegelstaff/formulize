@@ -640,7 +640,11 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 	// for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
 	// Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
 	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
-		return $value;
+		// Subforms never actually appear as list columns, so this is only a stub. It still routes through
+		// the canonical path (escaping the value) rather than returning it raw, so there is no bypass here
+		// should it ever be reached.
+		$this->dataIsHtml = false;
+		return parent::formatDataForList($value, $handle, $entry_id, $textWidth);
 	}
 
 }
@@ -679,10 +683,10 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	}
 
 	// limit the sub_entries array to just the entries that match the conditions, if any
-	if(is_array($subformConditions) AND isset($sub_entries[$subform_id]) AND is_array($sub_entries[$subform_id])) {
+	if(is_array($subformConditions) AND isset($sub_entries[$subform_id]) AND is_array($sub_entries[$subform_id]) AND count($sub_entries[$subform_id]) > 0) {
 		list($conditionsFilter, $conditionsFilterOOM, $curlyBracketFormFrom) = buildConditionsFilterSQL($subformConditions, $subform_id, $entry, $mainFormOwner, $fid); // pass in mainFormOwner as the comparison ID for evaluating {USER} so that the included entries are consistent when an admin looks at a set of entries made by someone else.
 		$subformObject = $form_handler->get($subform_id);
-		$sql = "SELECT subform.entry_id FROM ".$xoopsDB->prefix("formulize_".$subformObject->getVar('form_handle'))." as subform $curlyBracketFormFrom WHERE subform.entry_id IN (".implode(", ", $sub_entries[$subform_id]).") $conditionsFilter $conditionsFilterOOM";
+		$sql = "SELECT subform.entry_id FROM ".$xoopsDB->prefix("formulize_".$subformObject->getVar('form_handle'))." as subform $curlyBracketFormFrom WHERE subform.entry_id IN (".implode(", ", array_map('intval', $sub_entries[$subform_id])).") $conditionsFilter $conditionsFilterOOM";
 		$sub_entries[$subform_id] = array();
 		if($res = $xoopsDB->query($sql)) {
 			while($array = $xoopsDB->fetchArray($res)) {
@@ -1230,7 +1234,10 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 						$value = prepvalues($value, $element_object->getVar("ele_handle"), $sub_ent);
 						if (is_array($value))
 							$value = implode(" - ", $value); // may be an array if the element allows multiple selections (checkboxes, multiselect list boxes, etc)
-						$headerValues[] = undoAllHTMLChars($value);
+						// normalize-then-escape: undoAllHTMLChars decodes any entities already in the stored/intake-escaped
+						// value so we don't double-encode, but the result is then RAW entry data (user-submitted, not
+						// admin-authored), so it must be escaped before going into $col_two below. Do not drop this call.
+						$headerValues[] = htmlspecialchars(undoAllHTMLChars($value));
 					}
 					$headerToWrite = implode(" &mdash; ", $headerValues);
 					if(str_replace(" &mdash; ", "", $headerToWrite) == "") {

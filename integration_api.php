@@ -322,7 +322,7 @@ class Formulize {
 			}
 
 			//Get the unique IDs of the accessible forms as integers
-			$form_IDs = array_map(intval, array_unique($accessible_forms));
+			$form_IDs = array_map('intval', array_unique($accessible_forms));
 			$in_clause = implode(',', $form_IDs);
 
 			$sql =
@@ -647,7 +647,7 @@ class FormulizeUser {
             $icmspass = new icms_core_Password();
             $salt = $icmspass->createSalt();
             $enc_type = $icmsConfigUser['enc_type'];
-            $pass1 = $icmspass->encryptPass($pass, $salt, $enc_type);
+            $pass1 = $icmspass->hashPassword($pass);
 
             $newuser = $member_handler->createUser();
             //attempt to create the user
@@ -680,7 +680,7 @@ class FormulizeUser {
                 }
                 Formulize::init();
                 if(Formulize::createResourceMapping(Formulize::USER_RESOURCE, $_SESSION['resouceMapKey'], $newid)){
-                    $location = isset($_GET['newuser']) ? XOOPS_URL."/?code=".$_GET['newuser']."&newcode=".$_GET['newuser'] : "";
+                    $location = isset($_GET['newuser']) ? XOOPS_URL."/?code=".urlencode($_GET['newuser'])."&newcode=".urlencode($_GET['newuser']) : "";
                     if($location) {
                         header("Location: ".$location);
                         exit();

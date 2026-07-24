@@ -384,7 +384,10 @@ class formulizeRadioElementHandler extends formulizeBaseClassForListsElementHand
 				}
 			}
 			if($isDisabled) {
-				$renderedElement = $disabledOutputText; // just text for disabled elements
+				// just text for disabled elements - but that text can be an {OTHER|n} value the user typed,
+				// so it is purified on the way out. See makeValueSafeForReadOnlyDisplay().
+				$renderedElement = $this->makeValueSafeForReadOnlyDisplay(
+					$disabledOutputText, $element->getVar('ele_handle'), $entry_id);
 			} else {
 				$renderedElement = $form_ele1->render();
 			}
@@ -487,7 +490,7 @@ class formulizeRadioElementHandler extends formulizeBaseClassForListsElementHand
 	// Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
 	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
 		$this->clickable = false;
-		$this->striphtml = false;
+		$this->dataIsHtml = false; // plain text value - gets HTML-escaped
 		$this->length = $textWidth;
 		return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
 	}

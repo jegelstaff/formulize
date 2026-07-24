@@ -62,11 +62,11 @@ class icms_db_criteria_Item extends icms_db_criteria_Element {
 				return '';
 			}
 			if (!in_array(strtoupper($this->_operator), array('IN', 'NOT IN'))) {
-				if (( substr($value, 0, 1) != '`' ) && ( substr($value, -1) != '`' )) {
-					$value = "'$value'";
-				} elseif (!preg_match('/^[a-zA-Z0-9_\.\-`]*$/', $value)) {
-					$value = '``';
+				if($needBackticks = ( substr($value, 0, 1) == '`' AND substr($value, -1) == '`' )) {
+					$value = substr($value, 1, -1);
+					$value = preg_match('/^[a-zA-Z0-9_\.\-`]*$/', $value) == false ? '' : $value;
 				}
+				$value = $needBackticks ? "`$value`" : "'$value'";
 			}
 			$clause .= " {$this->_operator} $value";
 		}

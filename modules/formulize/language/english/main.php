@@ -766,6 +766,14 @@ define("_SHOW_BLANKS", "Show Blanks");
 
 define("_formulize_ERROR_IN_LEFTRIGHT", "There appears to be an error in the PHP code that generates the text for this space.  Please notify the webmaster.");
 
+// Shown in place of the embedded PHP region in element help text when the code fails
+define("_formulize_ERROR_IN_PHP_CODE", "There is an error in your PHP code");
+
+// Shown in place of a default value when the PHP code that generates it fails. Only people who can
+// edit the form see this - everyone else gets a blank value - so it is addressed to the person who
+// is in a position to fix the code.
+define("_formulize_ERROR_IN_DEFAULT_VALUE_CODE", "There is an error in the PHP code that generates the default value for this field. The error has been logged. Only people who can edit this form see this message.");
+
 define("_formulize_GENERIC_FILTER_ALL", "No filter in effect (select this to clear existing filters)");
 define("_formulize_GENERIC_FILTER_CON", "Filter based on this/these conditions:");
 define("_formulize_GENERIC_FILTER_ADDBUTTON", "Add another condition");
@@ -871,6 +879,8 @@ define("_formulize_SIGNUP_RESEND_PROMPT", "Didn't get it? You can %s.");
 define("_formulize_SIGNUP_RESENT", "A new code has been sent.");
 define("_formulize_SIGNUP_SESSION_LOST", "Your signup session has expired. Please start again.");
 define("_formulize_SIGNUP_ALREADY_ACTIVE", "Your account is already active. Please log in.");
+define("_formulize_SIGNUP_DUPLICATE", "That %s is already in use. Please use a different one.");
+define("_formulize_SIGNUP_THROTTLED", "Too many accounts have been created from your location recently. Please wait a little while and try again.");
 
 define("_formulize_EAGGROUPMEMBERS", "Group Members");
 define("_formulize_GMM_SAVE_FIRST", "Save the group first to manage members.");

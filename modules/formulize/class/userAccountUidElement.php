@@ -64,7 +64,7 @@ class formulizeUserAccountUidElementHandler extends formulizeUserAccountElementH
 	 * @return XoopsFormLabel
 	 */
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
-		$formElement = new xoopsFormLabel($caption, $ele_value);
+		$formElement = new xoopsFormLabel($caption, $this->makeValueSafeForReadOnlyDisplay($ele_value, $element->getVar('ele_handle'), $entry_id));
 		return $formElement;
 	}
 

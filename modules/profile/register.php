@@ -85,7 +85,7 @@ switch ($op) {
 
 			$icmspass = new icms_core_Password();
 			$salt = icms_core_Password::createSalt();
-			$enc_pass = $icmspass->encryptPass($pass, $salt, $icmsConfigUser['enc_type']);
+			$enc_pass = $icmspass->hashPassword($pass);
 
 			if ($icmsConfigUser['use_captcha'] == 1) {
 				$icmsCaptcha = icms_form_elements_captcha_Object::instance();

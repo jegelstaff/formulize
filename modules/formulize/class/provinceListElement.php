@@ -144,7 +144,7 @@ class formulizeProvinceListElementHandler extends formulizeElementsHandler {
 		$provinceList = $this->getProvinceList();
 
 		if($isDisabled) {
-		  return new xoopsFormLabel($caption, $provinceList[$ele_value[0]]);
+		  return new xoopsFormLabel($caption, $this->makeValueSafeForReadOnlyDisplay($provinceList[$ele_value[0]], $element->getVar('ele_handle'), $entry_id));
 		}
 
 		if ($ele_value[2] != 1){
@@ -249,7 +249,7 @@ class formulizeProvinceListElementHandler extends formulizeElementsHandler {
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
     function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
 			$this->clickable = false;
-      $this->striphtml = false;
+      $this->dataIsHtml = false; // plain text value - gets HTML-escaped
       $this->length = 0;
       return parent::formatDataForList($value);
     }

@@ -88,7 +88,11 @@ class formulizeUserAccountMasqueradeElementHandler extends formulizeUserAccountE
 		if (!$targetUid || $targetUid === $currentUid) {
 			return new XoopsFormLabel($caption, '', $markupName);
 		}
-		$url = htmlspecialchars(XOOPS_URL . '/modules/formulize/masquerade.php?uid=' . $targetUid, ENT_QUOTES);
+		static $masqueradeToken = null;
+		if ($masqueradeToken === null) {
+			$masqueradeToken = icms::$security->createToken();
+		}
+		$url = htmlspecialchars(XOOPS_URL . '/modules/formulize/masquerade.php?uid=' . $targetUid . '&' . _CORE_TOKEN . '_REQUEST=' . urlencode($masqueradeToken), ENT_QUOTES);
 		$label = htmlspecialchars(_formulize_UA_MASQUERADE_BUTTON, ENT_QUOTES);
 		$button = '<a href="' . $url . '" class="btn btn--primary">' . $label . '</a>';
 		return new XoopsFormLabel($caption, $button, $markupName);

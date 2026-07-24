@@ -445,6 +445,8 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 	// $screen is the screen object that is in effect, if any (may be null)
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen=false, $owner=null) {
 
+		global $myts; // declared up here because the linked-options block below escapes with it too
+
 		// $ele_value normally originates from the element's getVar, which migrates legacy structures,
 		// but it arrives here as a parameter that could have been assembled by other pathways, so
 		// migrate defensively (the migration is idempotent - already-current structures pass through)
@@ -525,7 +527,15 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 						}
 					}
 					$ele_value[2][$resultArray['entry_id']] = in_array($resultArray['entry_id'],$sourceEntryIds) ? 1 : 0;
-					$ele_uitext[$resultArray['entry_id']] = $optionText;
+					// These option-text values come from ANOTHER form's entries (ie. user-supplied data) and
+					// XoopsFormCheckBox::render() does NOT escape option display text - it escapes the option
+					// VALUE but emits the label as "...$name</label>" - so escape here. Normalize-then-escape
+					// (decode any existing encoding, then escape once) so a value that is stored escaped is not
+					// double-escaped. Same treatment linked selectboxes get; see selectElement.php.
+					// Escaped rather than purified because this label slot legitimately carries markup in other
+					// cases (an {OTHER|n} box is a whole rendered <input> put in the label), so only the DATA
+					// portion is made safe here, and markup composed around it later is left alone.
+					$ele_uitext[$resultArray['entry_id']] = $myts->htmlSpecialChars(undoAllHTMLChars($optionText));
 				}
 			} else {
 				$ele_uitext = $element->getVar('ele_uitext');
@@ -534,7 +544,6 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 			$ele_uitext = $element->getVar('ele_uitext');
 		}
 
-		global $myts;
 		$selected = array();
 		$options = array();
 		$disabledOutputText = array();
@@ -635,7 +644,11 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 		}
 
 		if($isDisabled) {
-			$renderedElement = implode("<br>", $disabledOutputText);
+			// An {OTHER|n} entry in here is free text the user typed. Passing the array (rather than a
+			// pre-joined string) lets the funnel make each entry safe and add our <br> separators
+			// afterwards, so they are not filtered as though they were content.
+			$renderedElement = $this->makeValueSafeForReadOnlyDisplay(
+				$disabledOutputText, $element->getVar('ele_handle'), $entry_id, "<br>");
 		} else {
 			$renderedElement = $form_ele1->render();
 		}

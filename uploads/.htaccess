@@ -1,0 +1,33 @@
+# Uploaded files are user content and must never be executed as server-side scripts.
+# The primary control below is an access denial (works on any PHP SAPI: mod_php, CGI, FastCGI, PHP-FPM).
+# The php_admin_flag lines are wrapped in <IfModule> guards on purpose: php_flag / php_value / php_admin_*
+# directives are only valid when PHP runs as an Apache module (mod_php). On FastCGI/FPM/CGI they raise a
+# 500 "Invalid command" — the guards make them a no-op there instead. Do not un-guard them.
+
+# 1) Deny direct web access to server-side script types (matches double extensions too, e.g. x.php.jpg).
+<FilesMatch "(?i)\.(php|php3|php4|php5|php7|php8|phps|phtml|pht|phar|cgi|pl|py|jsp|jspx|asp|aspx|sh|htaccess|htpasswd)($|\.)">
+	<IfModule mod_authz_core.c>
+		Require all denied
+	</IfModule>
+	<IfModule !mod_authz_core.c>
+		Order allow,deny
+		Deny from all
+	</IfModule>
+</FilesMatch>
+
+# 2) Belt-and-suspenders: if PHP is running as mod_php, turn its engine off for this directory.
+<IfModule mod_php.c>
+	php_admin_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+	php_admin_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+	php_admin_flag engine off
+</IfModule>
+
+# 3) Strip any handler/type mapping that could route these extensions to an interpreter.
+<IfModule mod_mime.c>
+	RemoveHandler .php .php3 .php4 .php5 .php7 .php8 .phps .phtml .pht .phar .cgi .pl .py
+	RemoveType .php .php3 .php4 .php5 .php7 .php8 .phps .phtml .pht .phar .cgi .pl .py
+</IfModule>
