@@ -314,13 +314,14 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 
 		} else {
 			$customPageContents = "";
+			$thisCustomCode = $pages[$currentPage][1];
 			ob_start();
 			// PHP
 			if($pages[$currentPage][0] === "PHP") {
-					eval(removeOpeningPHPTag($pages[$currentPage][1]));
+					eval(removeOpeningPHPTag($thisCustomCode));
 			// HTML
 			} else {
-					print undoAllHTMLChars($pages[$currentPage][1]);
+					print undoAllHTMLChars($thisCustomCode);
 			}
 			$customPageContents = ob_get_clean();
 			$forminfo['elements'] = array($customPageContents);
