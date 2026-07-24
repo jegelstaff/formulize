@@ -781,78 +781,48 @@ export async function getFidFromListPage(page) {
 }
 
 /**
- * Determine the fid of the form the admin UI is currently editing, as an integer.
+ * Determine the fid of the form whose settings panel the admin UI has just saved and re-rendered, by
+ * reading the form's HANDLE off the panel and looking that handle up in the database.
+ * MUST be called AFTER saveAdminForm() has re-rendered the settings panel (every caller creates a form
+ * then calls this straight away), while the test still has that page visible, because the handle is
+ * only settled once the save has run, it might be altered by the save routine, and this function needs
+ * to read it off the re-rendered panel. The handle is unique, so this is a reliable way to resolve the
+ * fid of the form that was just saved.
  *
- * ALWAYS pass expectedTitle when you know it (form creation does). With a title this resolves the fid
- * from the database, which is deterministic and immune to the save-is-AJAX race; without one it falls
- * back to scraping the page, which is only a hint. Either way the result is verified to be a real form
- * before it is returned, and this throws rather than returning an id it could not confirm.
- *
- * @param {object} page Playwright page
- * @param {string|null} [expectedTitle] The form's title, if known - the deterministic route
+ * @param {object} page Playwright page sitting on a just-saved form settings panel
  * @returns {Promise<number>}
- * @throws if no fid can be determined, if the scraped id is not a real form, or if the title is ambiguous
+ * @throws if the handle never appears, no form matches it, or (impossibly) more than one does
  */
-export async function getFidFromFormAdminPage(page, expectedTitle = null) {
-	// Every id this scrapes off the page is VERIFIED against the database before it is returned, and an
-	// unverifiable one throws. That matters more than it looks: both scraping routes below can produce a
-	// plausible-but-wrong number, and an unchecked wrong fid does not fail here - it fails much later, as
-	// something unrecognisable. A CI run lost a spec to exactly that, surfacing as
-	// "Call to a member function getVar() on bool" from getSingle() on a form that did not exist, a hundred
-	// lines away from the helper that invented the id. Two ways the scrape goes wrong:
-	//
-	//   - saveAdminForm() is pure AJAX and never navigates, so page.url() is the PRE-save URL. On a newly
-	//     created form that URL is `ui.php?page=form&tab=settings&fid=new&aid=N` - `fid=new` cannot match
-	//     the \d+ below, so creation ALWAYS depends on the formulize_admin_key fallback.
-	//   - formulize_admin_key is a GENERIC per-panel key, not a form id: it carries ele_id on element
-	//     panels, aid on application panels, fid on form panels (see templates/admin/*.html). `.first()`
-	//     takes whatever comes first in the DOM, which is not guaranteed to be a form panel.
-	//
-	// So prefer the unambiguous route whenever the caller can tell us the title, and treat the scrape as a
-	// hint to be checked rather than an answer.
+export async function getFidFromFormAdminPage(page) {
+	const handleInput = page.locator('input[name="forms-form_handle"]');
+	await expect(handleInput).toBeVisible();
+
+	// Read the final, deduplicated handle off the re-rendered panel. Poll so we never read an empty box
+	// before the panel has settled.
+	let handle = '';
+	await expect.poll(
+		async () => { handle = (await handleInput.inputValue()).trim(); return handle; },
+		{ message: 'form handle never appeared on the settings panel after saving', timeout: 15000 }
+	).not.toBe('');
+
 	const prefix = dbPrefix();
-
-	if (expectedTitle) {
-		// Deterministic: ask the database which form has this title. No DOM, no race. Polled because the
-		// save is AJAX - saveAdminForm waits for networkidle, so the row is normally already there, and
-		// this returns on the first attempt.
-		let rows = [];
-		await expect.poll(
-			() => {
-				rows = dbQuery(`SELECT id_form FROM ${prefix}_formulize_id WHERE form_title = '${sqlEscape(expectedTitle)}'`);
-				return rows.length;
-			},
-			{ message: `no form titled "${expectedTitle}" appeared in the database after saving`, timeout: 15000 }
-		).toBeGreaterThan(0);
-		if (rows.length > 1) {
-			// Ambiguous: a leftover from an aborted run is still around, so "the" fid is not well defined.
-			// Say so here rather than silently picking one and failing somewhere unrelated later.
-			throw new Error(
-				`Ambiguous fid: ${rows.length} forms are titled "${expectedTitle}" (ids ${rows.map(r => r[0]).join(', ')}). ` +
-				`A previous run probably left one behind - the spec's self-heal step should have removed it.`
-			);
-		}
-		return parseInt(rows[0][0], 10);
-	}
-
-	// No title to go on, so fall back to scraping - but verify whatever comes out of it.
-	const url = page.url();
-	const urlMatch = url.match(/[?&]fid=(\d+)/);
-	const key = await page.locator('input[name="formulize_admin_key"]').first().inputValue().catch(() => '');
-	const candidate = urlMatch ? urlMatch[1] : (/^\d+$/.test(key) ? key : null);
-	if (candidate === null) {
-		throw new Error('Could not determine fid for the current admin page (no numeric fid in the URL, no numeric formulize_admin_key)');
-	}
-	const exists = dbQuery(`SELECT id_form FROM ${prefix}_formulize_id WHERE id_form = ${parseInt(candidate, 10)}`);
-	if (exists.length === 0) {
+	let rows = [];
+	await expect.poll(
+		() => {
+			rows = dbQuery(`SELECT id_form FROM ${prefix}_formulize_id WHERE form_handle = '${sqlEscape(handle)}'`);
+			return rows.length;
+		},
+		{ message: `no form with handle "${handle}" appeared in the database after saving`, timeout: 15000 }
+	).toBeGreaterThan(0);
+	if (rows.length > 1) {
+		// Handles are unique by construction, so this should be unreachable - assert it anyway so a
+		// surprise duplicate fails loudly here rather than as something unrecognisable downstream.
 		throw new Error(
-			`Scraped fid ${candidate} does not exist as a form. This is the known failure mode: page.url() is the ` +
-			`pre-save URL (saveAdminForm is AJAX), and formulize_admin_key holds whichever entity the first panel ` +
-			`on the page belongs to - an element or application id, not necessarily a form id. ` +
-			`Pass expectedTitle to resolve it from the database instead.`
+			`Handle "${handle}" matched ${rows.length} forms (ids ${rows.map(r => r[0]).join(', ')}); ` +
+			`form handles are supposed to be unique.`
 		);
 	}
-	return parseInt(candidate, 10);
+	return parseInt(rows[0][0], 10);
 }
 
 /**
@@ -876,9 +846,10 @@ export async function createMuseumForm(page, title, piCaption = null) {
 		await page.locator('input[name="pi_new_caption"]').fill(piCaption);
 	}
 	await saveAdminForm(page);
-	// Resolved from the database by title, not scraped off the page - see getFidFromFormAdminPage for why
-	// the scrape can return a plausible but wrong id, and what that cost a CI run.
-	return await getFidFromFormAdminPage(page, title);
+	// Resolve by the form's HANDLE, read back off the re-rendered settings panel - see
+	// getFidFromFormAdminPage for why the handle (system-unique, only known post-save) is immune to the
+	// same-titled-leftover mis-resolution the old title lookup suffered, and the CI failure that motivated it.
+	return await getFidFromFormAdminPage(page);
 }
 
 /**
