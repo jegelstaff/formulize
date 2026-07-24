@@ -202,11 +202,10 @@ function ensureGroupsTableForm() {
 			'extraElements' => array(
 				array('handle' => 'eag_type',         'caption' => 'Type',       'virtual' => true, 'type' => 'eagGroupType'),
 				array('handle' => 'group_categories', 'caption' => 'Categories', 'virtual' => true, 'type' => 'eagGroupCategories'),
-				array('handle' => 'group_entries',    'caption' => 'Instances',  'virtual' => true, 'type' => 'eagGroupEntries'),
 				array('handle' => 'group_members',    'caption' => 'Members',    'virtual' => true, 'type' => 'eagGroupMembers'),
 			),
 			// Default visible columns; others accessible via Change Columns.
-			'defaultColumns' => array('name', 'group_members', 'group_categories', 'group_entries'),
+			'defaultColumns' => array('name', 'group_members', 'group_categories'),
 		)
 	);
 	// Ensure a persisted multiPageScreen exists as the defaultform for this form.
@@ -1042,9 +1041,10 @@ function injectGroupMembersData($data, $systemFormHandle, $systemFid) {
 		}
 	}
 
-	// For template groups: build per-entry "link (N members)" lists.
-	// Each bullet is "viewEntryLink (N Members)"; overflow: "and X more (Y total members)".
-	$templateGroupData = array(); // gid => array of formatted strings
+	// For template groups: build per-entry lists, one bullet per entry in the EAG form.
+	// Each bullet is "{entry name} — N members"; overflow: "and X more — Y members".
+	$templateGroupData    = array(); // gid => array of formatted strings
+	$templateGroupTargets = array(); // gid => array of link targets, parallel to $templateGroupData
 	if (!empty($templateGroupFormIds)) {
 		$form_handler    = xoops_getmodulehandler('forms', 'formulize');
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
@@ -1081,8 +1081,12 @@ function injectGroupMembersData($data, $systemFormHandle, $systemFid) {
 				}
 			}
 
-			// Build "viewEntryLink (members: N)" strings using PI values in PI order.
-			// entryItemsData tracks [text, entry_id] so overflow entry_ids can be queried.
+			// Collect the entry names, in PI order. The value is ONLY the name - plain, and holding
+			// user-entered text, so it is HTML-escaped on the way out. Both the link around it and
+			// the " — N members" suffix after it are added by the element's composeMarkupForList(),
+			// which runs after that escape and is the only point where markup may be added safely.
+			// The member count rides along in the registered target rather than in the value, so
+			// that the count is NOT part of the clickable link text.
 			$piElementId    = intval($formObject->getVar('pi'));
 			$entryItemsData = array();
 			if ($piElementId && ($piElement = $element_handler->get($piElementId))) {
@@ -1094,16 +1098,60 @@ function injectGroupMembersData($data, $systemFormHandle, $systemFid) {
 				while ($piRes && ($piRow = $xoopsDB->fetchRow($piRes))) {
 					$entryId          = intval($piRow[1]);
 					$cnt              = isset($memberCountsByEntryId[$entryId]) ? $memberCountsByEntryId[$entryId] : 0;
-					$link             = viewEntryLink($piRow[0], $entryId, override_screen_id: $defaultFormScreen);
-					$entryItemsData[] = array('text' => $link . ' &mdash; ' . $cnt . ' members', 'entry_id' => $entryId);
+					$entryItemsData[] = array('text' => $piRow[0], 'entry_id' => $entryId, 'member_count' => $cnt);
 				}
 			}
 			if (empty($entryItemsData)) {
-				// Fallback when no PI element is set: use entry_id as label.
-				foreach ($memberCountsByEntryId as $entryId => $cnt) {
-					$link             = viewEntryLink('Entry ' . $entryId, $entryId, override_screen_id: $defaultFormScreen);
-					$entryItemsData[] = array('text' => $link . ' &mdash; ' . $cnt . ' members', 'entry_id' => intval($entryId));
+				// Fallback when the form has no PI element, so entries have no natural name: recover
+				// one from the entry groups themselves. Entry groups are named "{PI value} - {category}"
+				// and their template groups "{form plural} - {category}" (see syncEntryGroups() in
+				// formulize.php), so the bare category name has to be recovered from the template group
+				// name first, and stripping THAT off an entry group name leaves the entry's own name.
+				$categorySuffixes = array();
+				$templatePrefix   = $formObject->getPlural() . ' - ';
+				$catRes = $xoopsDB->query(
+					"SELECT name FROM `$groupsTable`"
+					. " WHERE form_id = " . intval($eagFid) . " AND is_group_template = 1"
+				);
+				while ($catRes && ($catRow = $xoopsDB->fetchArray($catRes))) {
+					$categorySuffixes[] = ' - ' . (strpos($catRow['name'], $templatePrefix) === 0
+						? substr($catRow['name'], strlen($templatePrefix))
+						: $catRow['name']);
 				}
+				// Longest first, so a category "Staff Leads" is matched before "Staff".
+				usort($categorySuffixes, function($a, $b) { return strlen($b) - strlen($a); });
+
+				// One name per ENTRY, not per entry group - an entry has one group per category and
+				// they all reduce to the same name.
+				$namesByEntryId = array();
+				$egRes = $xoopsDB->query(
+					"SELECT name, entry_id FROM `$groupsTable`"
+					. " WHERE form_id = " . intval($eagFid) . " AND is_group_template = 0 AND entry_id > 0"
+				);
+				while ($egRes && ($egRow = $xoopsDB->fetchArray($egRes))) {
+					$thisEntryId = intval($egRow['entry_id']);
+					if (isset($namesByEntryId[$thisEntryId])) {
+						continue;
+					}
+					$entryName = $egRow['name'];
+					foreach ($categorySuffixes as $suffix) {
+						if (substr($entryName, -strlen($suffix)) === $suffix) {
+							$entryName = substr($entryName, 0, -strlen($suffix));
+							break;
+						}
+					}
+					$namesByEntryId[$thisEntryId] = $entryName;
+				}
+
+				foreach ($memberCountsByEntryId as $entryId => $cnt) {
+					$entryItemsData[] = array(
+						'text'         => isset($namesByEntryId[$entryId]) ? $namesByEntryId[$entryId] : 'Entry ' . $entryId,
+						'entry_id'     => intval($entryId),
+						'member_count' => $cnt,
+					);
+				}
+				// Match the PI path, which lists entries in name order.
+				usort($entryItemsData, function($a, $b) { return strcasecmp($a['text'], $b['text']); });
 			}
 
 			$totalEntries = count($entryItemsData);
@@ -1128,14 +1176,29 @@ function injectGroupMembersData($data, $systemFormHandle, $systemFid) {
 						$overflowMemberCount = intval($oRow['cnt']);
 					}
 				}
-				$entryItemsData[] = array('text' => 'and ' . $moreCount . ' more &mdash; ' . $overflowMemberCount . ' members', 'entry_id' => 0);
+				// entry_id 0 marks the summary line, which is not a link to anywhere - but it still
+				// carries a count, so it still gets the " — N members" suffix.
+				$entryItemsData[] = array('text' => 'and ' . $moreCount . ' more', 'entry_id' => 0, 'member_count' => $overflowMemberCount);
 			}
 			$entryItems = array_column($entryItemsData, 'text');
+
+			// Targets, parallel to $entryItems. Every item carries its member count; only the ones
+			// with an entry_id get linked.
+			$entryTargets = array();
+			foreach ($entryItemsData as $item) {
+				$target = array('member_count' => $item['member_count']);
+				if ($item['entry_id']) {
+					$target['entry_id']  = $item['entry_id'];
+					$target['screen_id'] = $defaultFormScreen;
+				}
+				$entryTargets[] = $target;
+			}
 
 			// Map the result to each template group gid that references this form.
 			foreach ($templateGroupFormIds as $gid => $fid) {
 				if ($fid === $eagFid) {
-					$templateGroupData[$gid] = $entryItems;
+					$templateGroupData[$gid]    = $entryItems;
+					$templateGroupTargets[$gid] = $entryTargets;
 				}
 			}
 		}
@@ -1168,6 +1231,7 @@ function injectGroupMembersData($data, $systemFormHandle, $systemFid) {
 	}
 
 	// Inject into each row.
+	require_once XOOPS_ROOT_PATH . "/modules/formulize/class/virtualElement.php";
 	foreach ($data as $index => $entry) {
 		if (!isset($entry[$systemFormHandle])) {
 			continue;
@@ -1181,6 +1245,11 @@ function injectGroupMembersData($data, $systemFormHandle, $systemFid) {
 				$names = array($total . ' total');
 			} elseif (isset($templateGroupFormIds[$gid])) {
 				$names = isset($templateGroupData[$gid]) ? $templateGroupData[$gid] : array();
+				// Register where each name links to. Keyed by $pkValue because that is the local id
+				// the dataset carries for this row, and so the entry_id composeMarkupForList() is given.
+				if (isset($templateGroupTargets[$gid])) {
+					formulizeVirtualElementHandler::registerLinkTargets($membersHandle, $pkValue, $templateGroupTargets[$gid]);
+				}
 			} else {
 				$total = isset($countsByGid[$gid]) ? $countsByGid[$gid] : 0;
 				$names = isset($namesByGid[$gid]) ? $namesByGid[$gid] : array();
@@ -1212,14 +1281,11 @@ function mergeGroupsCompositeData($data) {
 
 	$systemFormHandle = '__system_groups';
 
-	$eagFids = getEntriesAreGroupsForms();
-
 	// Inject virtual columns into all remaining rows (plain groups get empty arrays;
 	// template groups get their categories and entry names).
 	$fid  = ensureGroupsTableForm();
 	$data = injectGroupTypeData($data, $systemFormHandle, $fid);
 	$data = injectGroupCategoriesData($data, $systemFormHandle, $fid);
-	$data = injectGroupEntriesData($data, $systemFormHandle, $fid, $eagFids);
 	$data = injectGroupMembersData($data, $systemFormHandle, $fid);
 
 	return $data;
@@ -1318,155 +1384,6 @@ function injectGroupCategoriesData($data, $systemFormHandle, $systemFid) {
 			if ($isTemplate && $formId && isset($formTitlesByFormId[$formId])) {
 				$data[$index][$systemFormHandle][$pkValue]['formulize_group_name_' . $systemFid] = array($formTitlesByFormId[$formId]);
 			}
-		}
-	}
-
-	return $data;
-}
-
-/**
- * Inject "Entries" (PI values from the EAG form data table) into template group rows.
- *
- * Queries the EAG form's data table using the form's PI element to get entry names.
- * Falls back to stripping the category suffix from entry group names if no PI element is set.
- * Plain/non-template group rows receive an empty array.
- *
- * @param array      $data             Standard getData result keyed by system form handle
- * @param string     $systemFormHandle Handle of the system groups form ('__system_groups')
- * @param int        $systemFid        The ad hoc groups form ID
- * @param int[]|null $eagFids          Optional pre-fetched EAG form IDs (unused; kept for signature compat)
- * @return array Updated data array
- */
-function injectGroupEntriesData($data, $systemFormHandle, $systemFid, $eagFids = null) {
-	if (!is_array($data) || count($data) == 0) {
-		return $data;
-	}
-
-	global $xoopsDB;
-
-	// Find the virtual entries element handle.
-	$res = $xoopsDB->query(
-		"SELECT ele_handle FROM " . $xoopsDB->prefix("formulize") .
-		" WHERE id_form = " . intval($systemFid) . " AND ele_handle = 'group_entries'"
-	);
-	if (!$res || $xoopsDB->getRowsNum($res) == 0) {
-		return $data;
-	}
-	$row = $xoopsDB->fetchArray($res);
-	$entriesHandle = $row['ele_handle'];
-
-	// Collect the unique EAG form_ids referenced by template group rows.
-	$templateFormIds = array();
-	foreach ($data as $entry) {
-		if (!isset($entry[$systemFormHandle])) {
-			continue;
-		}
-		foreach ($entry[$systemFormHandle] as $elements) {
-			$isTemplate = (int)(is_array($elements['is_group_template'] ?? null)
-				? ($elements['is_group_template'][0] ?? 0)
-				: ($elements['is_group_template'] ?? 0));
-			$formId = (int)(is_array($elements['form_id'] ?? null)
-				? ($elements['form_id'][0] ?? 0)
-				: ($elements['form_id'] ?? 0));
-			if ($isTemplate && $formId) {
-				$templateFormIds[$formId] = $formId;
-			}
-		}
-	}
-
-	// For each EAG form, retrieve entry names via the form's PI element.
-	$displayLimit       = 15;
-	$entriesByFormId    = array(); // form_id => [pi_value, ...]
-	$formPluralsByFormId = array(); // form_id => plural label
-	if (!empty($templateFormIds)) {
-		$form_handler    = xoops_getmodulehandler('forms', 'formulize');
-		$element_handler = xoops_getmodulehandler('elements', 'formulize');
-		foreach ($templateFormIds as $eagFid) {
-			$formObject  = $form_handler->get($eagFid);
-			$formPluralsByFormId[$eagFid] = $formObject ? $formObject->getPlural() : 'entries';
-			if (!$formObject) {
-				continue;
-			}
-			$piElementId = intval($formObject->getVar('pi'));
-			$formHandle  = $formObject->getVar('form_handle', 'n');
-			$dataTable   = $xoopsDB->prefix('formulize_' . $formHandle);
-			if ($piElementId) {
-				// Query PI values from the data table.
-				$piElement = $element_handler->get($piElementId);
-				if ($piElement) {
-					$piHandle = formulize_db_escape($piElement->getVar('ele_handle', 'n'));
-					$sql = "SELECT DISTINCT `$piHandle`, `entry_id` FROM $dataTable WHERE `$piHandle` IS NOT NULL AND `$piHandle` != '' ORDER BY `$piHandle`";
-					$res = $xoopsDB->query($sql);
-					while ($res && ($piRow = $xoopsDB->fetchRow($res))) {
-						$entriesByFormId[$eagFid][] = viewEntryLink($piRow[0], $piRow[1], override_screen_id: $formObject->getVar('defaultform'));
-					}
-					continue;
-				}
-			}
-			// Fallback: derive entry names by stripping category suffixes from entry group names.
-			// Entry groups follow the format "{PI value} - {Category name}".
-			// Collect all category names for this form from the groups table.
-			$catNames = array();
-			$catRes   = $xoopsDB->query(
-				"SELECT name FROM " . $xoopsDB->prefix('groups') .
-				" WHERE form_id = " . intval($eagFid) . " AND is_group_template = 1"
-			);
-			while ($catRes && ($catRow = $xoopsDB->fetchArray($catRes))) {
-				$catNames[] = $catRow['name'];
-			}
-			if (empty($catNames)) {
-				continue;
-			}
-			// Sort by length descending so longer suffixes are matched first (avoids partial stripping).
-			usort($catNames, function($a, $b) { return strlen($b) - strlen($a); });
-			$piValues = array();
-			$entryGroupRes = $xoopsDB->query(
-				"SELECT name, entry_id FROM " . $xoopsDB->prefix('groups') .
-				" WHERE form_id = " . intval($eagFid) . " AND is_group_template = 0 AND entry_id > 0"
-			);
-			while ($entryGroupRes && ($egRow = $xoopsDB->fetchArray($entryGroupRes))) {
-				$entryName = $egRow['name'];
-				$entryId	 = $egRow['entry_id'];
-				foreach ($catNames as $cat) {
-					$suffix = ' - ' . $cat;
-					if (substr($entryName, -strlen($suffix)) === $suffix) {
-						$entryName = substr($entryName, 0, -strlen($suffix));
-						break;
-					}
-				}
-				$piValues[$entryName] = viewEntryLink($entryName, $entryId, override_screen_id: $formObject->getVar('defaultform'));
-			}
-			ksort($piValues);
-			$entriesByFormId[$eagFid] = array_values($piValues);
-		}
-	}
-
-	// Apply display limit; append overflow summary using the form's plural label.
-	foreach ($entriesByFormId as $eagFid => $entries) {
-		$total = count($entries);
-		if ($total > $displayLimit) {
-			$entriesByFormId[$eagFid] = array_slice($entries, 0, $displayLimit);
-			$entriesByFormId[$eagFid][] = '...and more. (' . $total . ' total)';
-		}
-	}
-
-	// Inject into each template group row.
-	foreach ($data as $index => $entry) {
-		if (!isset($entry[$systemFormHandle])) {
-			continue;
-		}
-		foreach (array_keys($entry[$systemFormHandle]) as $pkValue) {
-			$elements   = $entry[$systemFormHandle][$pkValue];
-			$isTemplate = (int)(is_array($elements['is_group_template'] ?? null)
-				? ($elements['is_group_template'][0] ?? 0)
-				: ($elements['is_group_template'] ?? 0));
-			$formId = (int)(is_array($elements['form_id'] ?? null)
-				? ($elements['form_id'][0] ?? 0)
-				: ($elements['form_id'] ?? 0));
-			$entries = ($isTemplate && $formId && isset($entriesByFormId[$formId]))
-				? $entriesByFormId[$formId]
-				: array();
-			$data[$index][$systemFormHandle][$pkValue][$entriesHandle] = $entries;
 		}
 	}
 

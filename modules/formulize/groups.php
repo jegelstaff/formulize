@@ -87,7 +87,7 @@ $pseudoScreen->setVar('useselectall', '');
 $pseudoScreen->setVar('useclearall', '');
 
 // Set advanceview: name, members, then Type (conditional, last).
-// Categories and instances are injected but embedded inside other columns, not shown separately.
+// Categories are injected but embedded inside the name column, not shown separately.
 $advanceViewArray = array(
 	array('formulize_group_name_' . $fidInt, '', 'ASC', 'Box'),
 	array('group_members', '', 0, 'Box'),

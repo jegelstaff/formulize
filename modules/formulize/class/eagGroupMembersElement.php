@@ -49,6 +49,42 @@ class formulizeEagGroupMembersElementHandler extends formulizeVirtualElementHand
 	}
 
 	/**
+	 * Build the " — N members" suffix shown after an entry name in this column.
+	 *
+	 * A literal em dash, not the &mdash; entity: this is plain text placed after the link, and an
+	 * entity would show as its own source.
+	 *
+	 * @param int $count The number of members
+	 * @return string The suffix, with the count and the correctly pluralised label
+	 */
+	static function memberCountSuffix($count) {
+		$count = intval($count);
+		return ' — ' . $count . ' ' . ($count === 1 ? _formulize_GMM_MEMBER : _formulize_GMM_MEMBERS);
+	}
+
+	/**
+	 * Link ONLY the entry name, then append the member count as plain text.
+	 *
+	 * The cell reads "{entry name} — N members" but just the name is clickable, so the count is not
+	 * part of the link text. The count travels in the registered target (see registerLinkTargets)
+	 * rather than in the injected value, so the value stays purely the entry name - which is what
+	 * gets escaped and then linked.
+	 *
+	 * The summary row ("and 3 more") has no entry_id in its target, so the parent leaves it as plain
+	 * text while the count suffix is still appended.
+	 *
+	 * @param string $value The escaped entry name - safe to place in HTML as-is
+	 * @param array|null $target The resolved target, carrying entry_id/screen_id and member_count
+	 * @return string The linked name followed by the plain-text member count
+	 */
+	protected function composeValueWithTarget($value, $target) {
+		$suffix = isset($target['member_count'])
+			? htmlspecialchars(self::memberCountSuffix($target['member_count']))
+			: '';
+		return parent::composeValueWithTarget($value, $target) . $suffix;
+	}
+
+	/**
 	 * No DB column to read — the widget populates itself via AJAX on load.
 	 *
 	 * @param object $element  The element object
