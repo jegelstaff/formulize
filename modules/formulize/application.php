@@ -103,7 +103,11 @@ function getNavDataForForms($links) {
     $formsToSend = array();
     $i = 0;
     foreach($links as $link) {
-        $formsToSend[$i]['url'] = resolveMenuLinkURL($link);
+        $url = resolveMenuLinkURL($link);
+        if($url === false) { // link points to a form that no longer exists - omit it from the menu
+            continue;
+        }
+        $formsToSend[$i]['url'] = $url;
         $formsToSend[$i]['title'] = $link->getVar("text");
         $i++;
     }

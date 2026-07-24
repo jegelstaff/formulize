@@ -203,6 +203,9 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
 	foreach($menulinks as $menulink) {
 		$url = buildMenuLinkURL($menulink);
 		$suburl = resolveMenuLinkURL($menulink);
+		if($suburl === false) { // link points to a form that no longer exists - omit it from the menu
+			continue;
+		}
 		$target = (!$url OR strstr($url, XOOPS_URL)) ? "" : " target='_blank' ";
 		$menuSubActive="";
 		if(getCurrentURL() == XOOPS_URL.'/modules/formulize/index.php?'.$menulink->getVar("screen")
