@@ -6605,6 +6605,28 @@ function formulize_purifyHtmlValue($value, $handle = '', $entry_id = 0) {
 
 
 /**
+ * Purify a value that may be a (possibly nested) array of strings, preserving the array shape.
+ * Scalars are handed to formulize_purifyHtmlValue (which returns non-strings untouched). Used where
+ * entry data is exposed to a template layer as raw arrays - eg: template screens hand element-handle
+ * values, and the whole $entry/$templateScreenData dataset, to admin-authored templates - so that every
+ * string leaf is allow-list filtered before it can reach an HTML sink.
+ * @param mixed $value A string, or an arbitrarily nested array of them
+ * @param string $handle Optional element handle, for purify logging
+ * @param int $entry_id Optional entry id, for purify logging
+ * @return mixed The value with every string leaf purified; array structure preserved
+ */
+function formulize_purifyHtmlValueDeep($value, $handle = '', $entry_id = 0) {
+    if(is_array($value)) {
+        foreach($value as $k => $v) {
+            $value[$k] = formulize_purifyHtmlValueDeep($v, $handle, $entry_id);
+        }
+        return $value;
+    }
+    return formulize_purifyHtmlValue($value, $handle, $entry_id);
+}
+
+
+/**
  * Record an HTML-purification event to both the Formulize log and the PHP error log, tagged with as much
  * structured element metadata as we can cheaply gather (form / element / entry identifiers).
  *

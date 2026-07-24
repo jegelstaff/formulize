@@ -2335,7 +2335,7 @@ function createQuickSearches($searches, $settings, $hiddenQuickSearches=array(),
 	$cols = $settings['columns'];
 
 	for($i=0;$i<count((array) $cols);$i++) {
-		$search_text = isset($searches[$cols[$i]]) ? strip_tags(htmlspecialchars($searches[$cols[$i]]), ENT_QUOTES) : "";
+		$search_text = isset($searches[$cols[$i]]) ? strip_tags(htmlspecialchars($searches[$cols[$i]])) : "";
 		$boxid = "";
 		$clear_help_javascript = "";
 		if($i==0) {
@@ -2347,7 +2347,7 @@ function createQuickSearches($searches, $settings, $hiddenQuickSearches=array(),
 
 	$hiddenQuickSearchesToMake = array_merge($hiddenQuickSearches, $pubfilters); // include the published filters/searches that the user may have assigned to this screen
 	foreach($hiddenQuickSearchesToMake as $thisHQS) {
-		$search_text = isset($searches[$thisHQS]) ? strip_tags(htmlspecialchars($searches[$thisHQS], ENT_QUOTES)) : ""; // striping tags after htmlspecialchars is probably unnecessary, but can't hurt(?)
+		$search_text = isset($searches[$thisHQS]) ? strip_tags(htmlspecialchars($searches[$thisHQS])) : ""; // striping tags after htmlspecialchars is probably unnecessary, but can't hurt(?)
 		$quickSearches[$thisHQS] = packageSearches($thisHQS, $search_text, $filtersRequired, fid: $fid);
 	}
 
@@ -2357,7 +2357,9 @@ function createQuickSearches($searches, $settings, $hiddenQuickSearches=array(),
 // go make all the necessary searches/filters for a given element
 function packageSearches($handle, $search_text, $filtersRequired=true, $boxid="", $clear_help_javascript="", $fid=0) {
 	$quickSearches = array();
-	$quickSearches['search'] = "<input type=text $boxid enterkeyhint='search' name='search_$handle' value=\"$search_text\" $clear_help_javascript onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>\n";
+	global $myts;
+	$box_search_text = $myts->htmlSpecialChars(undoAllHTMLChars((string) $search_text));
+	$quickSearches['search'] = "<input type=text $boxid enterkeyhint='search' name='search_$handle' value=\"$box_search_text\" $clear_help_javascript onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>\n";
 	if($filtersRequired === true OR (is_array($filtersRequired) AND in_array($handle, $filtersRequired))) {
 		$quickSearches['filter'] = formulize_buildQSFilter($handle, $search_text, false, false, $fid);
 		$quickSearches['negativeFilter'] = formulize_buildQSFilter($handle, $search_text, negativeFilter: true, fid: $fid);
@@ -2471,7 +2473,7 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
                 });
                 </script>";
             }
-            return '<div>'._formulize_FROM.' <div style="display: flex;">'.$startDateElement->render(). "</div><br>"._formulize_TO . " <div style='display: flex;'>" . $endDateElement->render() . "</div><br>\n<input type=button style='display: none;' id='formulize_daterange_button_".$handle."' class='formulize-small-button' name=qdrGoButton value='" . _formulize_SUBMITTEXT . "' onclick=\"javascript:showLoading();\"></input>\n<input type='hidden' id='formulize_hidden_daterange_".$handle."' name='search_".$handle."' value='".$search_text."' ></input></div>\n$js";
+            return '<div>'._formulize_FROM.' <div style="display: flex;">'.$startDateElement->render(). "</div><br>"._formulize_TO . " <div style='display: flex;'>" . $endDateElement->render() . "</div><br>\n<input type=button style='display: none;' id='formulize_daterange_button_".$handle."' class='formulize-small-button' name=qdrGoButton value='" . _formulize_SUBMITTEXT . "' onclick=\"javascript:showLoading();\"></input>\n<input type='hidden' id='formulize_hidden_daterange_".$handle."' name='search_".$handle."' value='".htmlspecialchars($search_text)."' ></input></div>\n$js";
         }
     }
     return "";

@@ -195,8 +195,14 @@ function displayMap($frid = 0, $fid = 0, $screen = null) {
 
         // Build popup HTML: label heading, optional description paragraph, optional View Entry link
         $popup_html = '<h3>' . htmlspecialchars($label, ENT_QUOTES) . '</h3>';
-        if ($description_element AND $desc = displayPara($entry, $description_element)) {
-          $popup_html .= $desc;
+        // The description is user-authored entry content that Leaflet injects into the marker popup as
+        // innerHTML (bindPopup below), so it must be made safe.
+        if ($description_element) {
+          $descValue = getValue($entry, $description_element);
+          $descValue = formulize_purifyHtmlValueDeep($descValue, $description_element, $entry_id);
+          if ($desc = makePara($descValue)) {
+            $popup_html .= $desc;
+          }
         }
         if ($show_view_entry_link AND $viewentryscreen AND is_numeric($viewentryscreen) AND intval($viewentryscreen) > 0) {
           $popup_html .= '<p><a class="formulize-map-view-entry" href="#" onclick="formulizeMapViewEntry(' . intval($entry_id) . '); return false;">View Entry</a></p>';
