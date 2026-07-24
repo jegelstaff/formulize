@@ -197,7 +197,11 @@ if(!defined("XOOPS_MAINFILE_INCLUDED")) {
         }
         $mailSubject = $xoopsConfig['sitename']." "._formulize_DE_NOT_DIGEST_SUBJECT." - ".date(_SHORTDATESTRING);
         file_put_contents(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/mail_template/digestTemplate.tpl", $mailTemplate);
-        sendNotificationToEmail($email, "", "", $mailSubject, 'digestTemplate.tpl');
+        // Don't send the digest if the address belongs to a disabled/pending account. Addresses with
+        // no matching account (e.g. an admin-configured notification email) are still sent to.
+        if (!$targetUser || $targetUser->isActive()) {
+            sendNotificationToEmail($email, "", "", $mailSubject, 'digestTemplate.tpl');
+        }
         unset($email);
         if(count((array) $ids)>0) {
             $sql = "DELETE FROM ".$xoopsDB->prefix("formulize_digest_data")." WHERE digest_id IN (".implode(",",$ids).")";

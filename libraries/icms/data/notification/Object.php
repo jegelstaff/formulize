@@ -61,6 +61,11 @@ class icms_data_notification_Object extends icms_core_Object {
 		if (!is_object($user)) {
 			return true;
 		}
+		// Disabled/pending accounts (level <= 0, same gate as checklogin.php) must not receive
+		// notifications through any module, not just Formulize's.
+		if (!$user->isActive()) {
+			return true;
+		}
 		$method = $user->getVar('notify_method');
 
 		$xoopsMailer = new icms_messaging_Handler();

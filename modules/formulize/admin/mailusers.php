@@ -21,7 +21,9 @@ if(isset($_POST['body']) AND
 			foreach($_POST['groups'] as $group_id) {
 				$users = $member_handler->getUsersByGroup($group_id, true); // true returns users as objects
 				foreach($users as $user) {
-					$uids_to_notify[] = $user->getVar('uid');
+					if($user->isActive()) { // don't mail disabled/pending accounts
+						$uids_to_notify[] = $user->getVar('uid');
+					}
 				}
 			}
 		} else {
@@ -29,7 +31,9 @@ if(isset($_POST['body']) AND
 				$groupUsers = array();
 				$users = $member_handler->getUsersByGroup($group_id, true); // true returns users as objects
 				foreach($users as $user) {
-						$groupUsers[] = $user->getVar('uid');
+						if($user->isActive()) { // don't mail disabled/pending accounts
+							$groupUsers[] = $user->getVar('uid');
+						}
 				}
 				if($i==0) { $uids_to_notify = $groupUsers; } // seed it with values from first group
 				$uids_to_notify = array_intersect($uids_to_notify, $groupUsers); // retain previous values only if they are present in this group
