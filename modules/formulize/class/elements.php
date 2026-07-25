@@ -1259,7 +1259,7 @@ class formulizeElementsHandler {
 		global $myts;
 		$value = trans($value);
 		if(!$this->length AND $this->length !== 0 AND $this->length !== '0') {
-			$this->length = 35;
+			$this->length = 255;
 		}
 
 		// The raw (unescaped) value is handed to composeMarkupForList so an element that needs the

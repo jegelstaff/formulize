@@ -3085,36 +3085,36 @@ function findMatchingIdReq($elementIdentifier, $fid, $value) {
 
 /**
  * Format values for display in lists, with links resolved to clickable anchor tags, if appropriate.
- * Relies on the underlying formatDataForList method of element type handlers.
+ * Relies on the underlying formatDataForList method of element type handlers,
+ * which may do other operations to format the text, and will do escaping/purifying
+ * as required.
  *
- * @param string $matchtext The string that we are preparing for output
+ * @param string $text The string that we are preparing for output
  * @param string $handle The element handle for the element that the value belongs to
  * @param int $textWidth The max number of characters that should be displayed, after which an elipses will be appended and text cut off
  * @param int $entryBeingFormatted The entry ID that the value belongs to
  * @return string Formatted text with links resolved to clickable anchor tags, etc
  */
-function formatLinks($matchtext, $handle, $textWidth, $entryBeingFormatted) {
+function formatDataForList($text, $handle, $textWidth, $entryBeingFormatted) {
 
 	if(!$textWidth AND $textWidth !== 0 AND $textWidth !== "0") {
-		$textWidth = 35;
+		$textWidth = 255;
 	}
 
 	formulize_benchmark("start of formatlinks");
 	global $myts;
-	$matchtext = $myts->undoHtmlSpecialChars($matchtext);
+	$text = $myts->undoHtmlSpecialChars($text);
 	if (isMetaDataField($handle)) {
-		return printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth);
+		return printSmart(trans($myts->htmlSpecialChars($text)), $textWidth);
 	}
-	$elementMetaData = formulize_getElementMetaData($handle, true);
-	$ele_type = $elementMetaData['ele_type'];
-	// DOES EVERYTHING THAT SHOWS UP IN LISTS HAVE A CLASS FILE??
-	if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
-    $elementTypeHandler = xoops_getmodulehandler($ele_type."Element", "formulize");
-		$matchtext = $elementTypeHandler->formatDataForList($matchtext, $handle, $entryBeingFormatted, $textWidth);
-		return $matchtext;
-  } else {
-    return formulize_text_to_hyperlink($myts->htmlSpecialChars($matchtext), $textWidth);
-  }
+	$elementObject = _getElementObject($handle);
+	$ele_type = $elementObject->getVar('ele_type');
+	$elementTypeHandler = xoops_getmodulehandler($ele_type."Element", "formulize");
+	$text = $elementTypeHandler->formatDataForList($text, $handle, $entryBeingFormatted, $textWidth);
+	if($elementTypeHandler->treatDataAsHtml() == false) {
+		$text = str_replace("\n", "<br>", $text); // convert newlines to <br> for display in lists, since we don't want to treat the data as HTML, but we do want to show newlines
+	}
+	return formulize_numberFormat($text, $handle);
 }
 
 /**
@@ -7710,8 +7710,7 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
 					}
 				}
         $tag = $useList ? 'li' : 'span';
-				$output .= '<'.$tag.' '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId)), $handle);
-        $output .= '</'.$tag.'>';
+				$output .= '<'.$tag.' '.$elstyle.'>' . formatDataForList($v, $handle, $textWidth, $thisEntryId) . '</'.$tag.'>';
         $counter++;
     }
     if ($useList) {
