@@ -40,6 +40,10 @@ class FormulizeObject extends XoopsObject {
 		return strtolower(preg_replace("/[^a-zA-Z0-9_]+/", "", str_replace(array(" ", "-"), "_", $handle_name)));
 	}
 
+	static function sanitize_rewrite_address($handle_name) {
+		return strtolower(preg_replace("/[^a-zA-Z0-9_-]+/", "", str_replace(" ", "-", $handle_name)));
+	}
+
 	/**
 	 * Keep a list of the field names that are serialized arrays in the DB
 	 * Eventually this is redundant because we will convert them to JSON, or a more normalized structure

@@ -121,7 +121,7 @@ $screen->setVar('fid',$fid);
 $screen->setVar('type',$screens['type']);
 $screen->setVar('useToken',$screens['useToken']);
 $screen->setVar('anonNeedsPasscode',$screens['anonNeedsPasscode']);
-$screen->setVar('rewriteruleAddress',formulizeScreen::sanitize_handle_name($screens['rewriteruleAddress']));
+$screen->setVar('rewriteruleAddress',formulizeScreen::sanitize_rewrite_address($screens['rewriteruleAddress']));
 $screen->setVar('rewriteruleElement', intval($screens['rewriteruleElement']));
 
 if(!$sid = $screen_handler->insert($screen)) {
