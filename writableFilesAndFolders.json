@@ -4,6 +4,7 @@
 		"cache",
 		"modules",
 		"templates_c",
+		"themes",
 		"tokens",
 		"uploads",
 		"modules/formulize/cache",
