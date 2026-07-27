@@ -1115,7 +1115,9 @@ class formulizeElementsHandler {
 		} else {
 			$typeElementHandler = xoops_getmodulehandler('elements', 'formulize');
 		}
-		if($result0 = $typeElementHandler->deleteAssociatedDataAndResources($elementObject, entryScope: 'all') === false) {
+		$deletedFilePaths = $typeElementHandler->deleteAssociatedDataAndResources($elementObject, entryScope: 'all');
+		$result0 = ($deletedFilePaths !== false);
+		if(!$result0) {
 			print "Error: pre-delete processing for element ".htmlspecialchars(strip_tags($elementObject->getVar('ele_id')))." failed";
 		}
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
@@ -1126,8 +1128,9 @@ class formulizeElementsHandler {
 			$result1 = $this->db->query($sql);
 		}
 		$result2 = deleteElementConnectionsInRelationships($elementObject->getVar('fid'), $elementObject->getVar('ele_id'));
+		$result3 = true;
 		if($elementObject->hasData) {
-			if(!$result3 = $form_handler->deleteElementField($elementObject->getVar('ele_id'))) {
+			if(!$result3 = $form_handler->deleteElementField($elementObject)) {
 				print "Error: could not drop field from data table";
 			}
     }
