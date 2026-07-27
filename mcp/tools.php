@@ -441,7 +441,7 @@ It is worth filling in \'entry_description\', \'usage_notes\' and \'data_convent
 				'name' => 'update_form',
 				'description' => 'Change the settings of an existing form. Only the settings you provide are changed; anything you leave out stays exactly as it is.
 
-Use get_form_details first to see the form\'s current settings. This tool does not change the elements in the form - use the create and update element tools for that, and delete_element to remove one. Changing what a form\'s entries represent (ordinary records, user accounts, or groups) is not yet available through the tools, so that has to be done by an administrator in the Formulize admin interface.',
+Use get_form_details first to see the form\'s current settings. This tool does not change the elements in the form - use the create and update element tools for that, and delete_element to remove one.',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => array_merge([
@@ -701,8 +701,6 @@ This tool takes two calls. Call it first with just the element, and it will NOT 
 	 * The form settings that both the create and update form tools accept, so the two cannot drift apart.
 	 * Only 'title' differs between them: it is required when creating and optional when updating, which
 	 * the calling tool expresses through its own 'required' list rather than here.
-	 * Does not include the setting for what a form's entries represent (ordinary records, user accounts or
-	 * groups) - changing that has large side effects and is handled separately.
 	 * @return array The shared JSON schema properties
 	 */
 	private function formPropertiesSchema() {
