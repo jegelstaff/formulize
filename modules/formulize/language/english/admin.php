@@ -289,6 +289,18 @@ define("_AM_SETTINGS_FORM_CREATE_ENTRIES_PROXY_LABEL","Record new entries as cre
 define("_AM_SETTINGS_FORM_CREATE_ENTRIES_PROXY_ME","Me");
 define("_AM_SETTINGS_FORM_CREATE_ENTRIES_PROXY_SELF","The users themselves");
 define("_AM_SETTINGS_FORM_CREATE_ENTRIES_PROXY_SPECIFIC","A specific user");
+define("_AM_SETTINGS_FORM_NOTES","Notes");
+define("_AM_SETTINGS_FORM_NOTES_DESC","Private notes for you and other webmasters. Not shown to users, and not given to AI assistants.");
+// "How this form works" - the answers to these questions are given to AI assistants through the MCP get_form_details tool
+define("_AM_SETTINGS_FORM_AI_TITLE","How this form works &mdash; details for AI");
+define("_AM_SETTINGS_FORM_AI_DESC","These three questions describe what the form <i>means</i>, which is not always obvious from the elements alone. The answers you write are given to AI assistants working with this form, so that they can better understand how to work with the form and its entries. They are also a useful record for whoever else maintains this system.");
+define("_AM_SETTINGS_FORM_AI_EXAMPLE_INTRO","An example, for a Workshop Booking form:");
+define("_AM_SETTINGS_FORM_AI_ENTRY_DESCRIPTION","What does one entry in this form represent?");
+define("_AM_SETTINGS_FORM_AI_ENTRY_DESCRIPTION_EXAMPLE","\"One booking, by one person, for one workshop on a given date (the workshops are entries in the Workshops form).\"");
+define("_AM_SETTINGS_FORM_AI_USAGE_NOTES","Who uses this form, when, and for what purpose?");
+define("_AM_SETTINGS_FORM_AI_USAGE_NOTES_EXAMPLE","\"Public users visit the form and select a workshop to book. Managers look at the bookings to make decisions about workshop scheduling and room assignments.\"");
+define("_AM_SETTINGS_FORM_AI_DATA_CONVENTIONS","What rules or expectations apply to the data, that the form itself might not show?");
+define("_AM_SETTINGS_FORM_AI_DATA_CONVENTIONS_EXAMPLE","\"There are a limited number of spaces in a workshop, and new bookings trigger an update of the 'available spaces' value for the selected workshop in the Workshops form. Once a workshop has no available spaces it does not show up in the bookings form anymore.\"");
 define("_AM_SETTINGS_NEW_CONNECTION_COMMON", "A new element, common value with<br>%s");
 define("_AM_SETTINGS_NEW_CONNECTION_COMMON_PARALLEL", "A new element, same settings as<br>%s");
 define("_AM_SETTINGS_NEW_CONNECTION_REGULAR", "A new element, linked to<br>%s");

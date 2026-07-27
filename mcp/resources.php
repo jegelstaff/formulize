@@ -408,12 +408,9 @@ trait resources {
 			);
 		}
 		// Get form details
-		$formSql = "SELECT `id_form`, `form_title`, `form_handle`, `pi` FROM " . $this->db->prefix('formulize_id') . " WHERE id_form = " . intval($formId);
+		$formSql = "SELECT `id_form`, `form_title`, `form_handle`, `pi`, `singleentry`, `entry_description`, `usage_notes`, `data_conventions` FROM " . $this->db->prefix('formulize_id') . " WHERE id_form = " . intval($formId);
 		$formResult = $this->db->query($formSql);
 		$formData = $this->db->fetchArray($formResult);
-		// rename pi to principal_identifying_element for clarity
-		$formData['principal_identifying_element'] = $formData['pi'];
-		unset($formData['pi']);
 
 		if (!$formData) {
 			throw new FormulizeMCPException(
@@ -422,11 +419,26 @@ trait resources {
 			);
 		}
 
-		// Get form elements
-		$elementsSql = "SELECT `ele_id`, `ele_type`, `ele_caption`, `ele_handle`, `ele_required`, `ele_value`, `ele_uitext`, `ele_display`, `ele_filtersettings` FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
+		// rename pi to principal_identifying_element for clarity
+		$formData['principal_identifying_element'] = $formData['pi'];
+		unset($formData['pi']);
+
+		// report the entry limit the same way the create/update form tools accept it
+		$formData['limit_entries'] = $this->readableLimitEntries($formData['singleentry']);
+		unset($formData['singleentry']);
+
+		// these are stored raw (escaping happens on output via getVar, not on the way in), so they are
+		// passed through as-is - just normalize a NULL column to an empty string
+		foreach(array('entry_description', 'usage_notes', 'data_conventions') as $descriptionField) {
+			$formData[$descriptionField] = $formData[$descriptionField] ?? '';
+		}
+
+		// Get form elements. Only the identifying properties of each element are included here, so that forms
+		// with a large number of elements do not overwhelm the context of the AI assistant reading this.
+		// Use the get_element_details tool to get the full settings of specific elements.
+		$elementsSql = "SELECT `ele_id`, `ele_type`, `ele_caption`, `ele_handle`, `ele_display` FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
 		$elementsResult = $this->db->query($elementsSql);
 
-		$serializedFields = FormulizeObject::serializedDBFields();
 		$elements = $this->metadataFields();
 		while ($row = $this->db->fetchArray($elementsResult)) {
 			// if user can see the element or is a webmaster
@@ -436,23 +448,12 @@ trait resources {
 					strstr($row['ele_display'], ",")
 					AND array_intersect($this->userGroups, explode(",", $row['ele_display']))
 				)) {
-				if(isset($serializedFields['formulize'])) {
-					foreach($row as $field=>$value) {
-						if(in_array($field, $serializedFields['formulize'])) {
-							$row[$field] = unserialize($value);
-							if($field == 'ele_filtersettings') {
-								$row[$field] = $this->tidyUpOldConditionsArrayFormat($row[$field]);
-							}
-						}
-					}
-				}
-				$additionalFields = [
-					'element_id' => $row['ele_id'],
-					'database_field_name' => $row['ele_handle']
+				$elements[] = [
+					'element_id' => $row['ele_id'], // since the database has the ancient shortform name ele_id, use 'element_id' explicitly
+					'ele_handle' => $row['ele_handle'],
+					'ele_caption' => $row['ele_caption'],
+					'ele_type' => $row['ele_type']
 				];
-				unset($row['ele_id']); // since the database has this ancient shortform name, remove it and use 'element_id' explicitly
-				$row = $additionalFields + $row;
-				$elements[] = $row;
 			}
 		}
 
@@ -465,12 +466,61 @@ trait resources {
 			'form' => $formData,
 			'database_table_name' => $this->db->prefix('formulize_' . $formData['form_handle']),
 			'entry_count' => $entryCount,
+			'custom_code_present' => $this->customCodePresent($formData['form_handle']),
 			'elements' => $elements,
 			'element_count' => count($elements),
 		]
 		+ $this->screens_list($formId, simple: true)
 		+ $this->form_connections_list($formId);
 
+	}
+
+	/**
+	 * Render the stored per-group entry limit in the same shape the create/update form tools accept,
+	 * so that what an AI assistant reads can be handed straight back when writing.
+	 *
+	 * Internally this is an array of groupid => value where the value stored under the Registered Users
+	 * group is the base - the default for everybody, including anonymous visitors, whenever no group they
+	 * belong to has its own setting. Almost every form only has that base value, so in that case a plain
+	 * value is reported and the caller never has to know about the group keying. Only when a form actually
+	 * has group-specific limits is the full map reported.
+	 * See buildLimitEntriesArray() in tools.php for the write side of this.
+	 *
+	 * @param string|array $storedValue The raw singleentry column (normally a serialized array), or the already unserialized array from the form object
+	 * @return string|array A plain value, or a map of group id => value when there are group-specific limits
+	 */
+	private function readableLimitEntries($storedValue) {
+		if(is_array($storedValue)) {
+			$limits = $storedValue;
+		} else {
+			// legacy rows can hold a bare value instead of an array
+			$limits = (strpos((string)$storedValue, 'a:') === 0) ? unserialize($storedValue) : array(XOOPS_GROUP_USERS => $storedValue);
+		}
+		if(!is_array($limits)) {
+			$limits = array();
+		}
+		$base = $limits[XOOPS_GROUP_USERS] ?? 'off';
+		unset($limits[XOOPS_GROUP_USERS]);
+		if(empty($limits)) {
+			return $base ?: 'off';
+		}
+		return array(XOOPS_GROUP_USERS => $base ?: 'off') + $limits;
+	}
+
+	/**
+	 * Report which of a form's custom code procedures have code written for them.
+	 * The code itself is not included, since it can be long and is rarely what the caller is after.
+	 * Mirrors the file naming used by formulizeForm::getVar() when it reads these procedures off disk.
+	 * @param string $formHandle The handle of the form
+	 * @return array Map of procedure name => bool
+	 */
+	private function customCodePresent($formHandle) {
+		$present = [];
+		foreach(array('on_before_save', 'on_after_save', 'on_delete', 'custom_edit_check') as $procedure) {
+			$fileName = XOOPS_ROOT_PATH."/modules/formulize/code/".$procedure."_".$formHandle.".php";
+			$present[$procedure] = file_exists($fileName);
+		}
+		return $present;
 	}
 
 	/**
@@ -846,6 +896,27 @@ trait resources {
 	}
 
 	/**
+	 * Convert the internal screen type stored in the database into the name used with AI assistants.
+	 * The internal names are historical and would be misleading on their own: a 'multiPage' screen is
+	 * simply what a user calls a form. The old single page 'form' screen type is reported separately as
+	 * 'legacy_form' rather than being folded in with the others, because it only exists on a couple of
+	 * systems and the form screen tools do not operate on it.
+	 * @param string $internalType The type as stored in the formulize_screen table
+	 * @return string The name to use when talking to an AI assistant
+	 */
+	private function friendlyScreenType($internalType) {
+		$types = [
+			'multiPage' => 'form',
+			'form' => 'legacy_form',
+			'listOfEntries' => 'list',
+			'calendar' => 'calendar',
+			'map' => 'map',
+			'template' => 'template'
+		];
+		return $types[$internalType] ?? $internalType;
+	}
+
+	/**
 	 * List the info about screens, or a single screen
 	 * Optionally filtered by a formId. Naturally limits to screens on forms the user has access to.
 	 * Optionally get a simple list of just the ids and titles
@@ -882,7 +953,8 @@ trait resources {
 				if($simple) {
 					$screens[] = [
 						'screen_id' => $row['sid'],
-						'screen_title' => $row['title']
+						'screen_title' => $row['title'],
+						'screen_type' => $this->friendlyScreenType($row['type'])
 					];
 				} else {
 					$screenSQL = "SELECT * FROM ".$this->db->prefix('formulize_screen_'.strtolower($row['type']))." WHERE sid = ".$row['sid'];
@@ -907,7 +979,7 @@ trait resources {
 							$processedFields[$field] = true;
 						}
 					}
-					$screens[] = $row + $screenTypeData;
+					$screens[] = ['screen_type' => $this->friendlyScreenType($row['type'])] + $row + $screenTypeData;
 				}
 			}
 		}

@@ -542,7 +542,9 @@ class FormulizeMCP
 
 
 	/**
-	 * Return an array of metadata fields, all keyed with 'element_handle' so that we can start the elements lists that way when appropriate
+	 * Return an array of metadata fields, in the same shape as the element entries they are listed alongside,
+	 * so that we can start the elements lists that way when appropriate. Metadata fields are not real elements,
+	 * so they have no element id, and their type is reported as 'metadata'.
 	 *
 	 * @return array The array of metadata fields found in the database (creator_email and owner_groups are removed)
 	 */
@@ -552,7 +554,8 @@ class FormulizeMCP
 		foreach($dataHandler->metadataFields as $metadataField) {
 			if($metadataField != 'creator_email' AND $metadataField != 'owner_groups') {
 				$metadataFields[] = array(
-					'element_handle' => $metadataField
+					'ele_handle' => $metadataField,
+					'ele_type' => 'metadata'
 				);
 			}
 		}

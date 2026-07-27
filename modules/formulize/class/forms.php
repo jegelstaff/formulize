@@ -164,6 +164,12 @@ class formulizeForm extends FormulizeObject {
 		$this->initVar("on_delete", XOBJ_DTYPE_TXTAREA, $this->getVar('on_delete'));
 		$this->initVar("custom_edit_check", XOBJ_DTYPE_TXTAREA, $this->getVar('custom_edit_check'));
 		$this->initVar("note", XOBJ_DTYPE_TXTAREA, $formq[0]['note']);
+		// Semantic/workflow descriptions of the form. Unlike 'note' (an internal webmaster scratchpad) these
+		// describe what the form means and how it is meant to be used, and are exposed to AI assistants
+		// through the MCP get_form_details tool.
+		$this->initVar("entry_description", XOBJ_DTYPE_TXTAREA, $formq[0]['entry_description']);
+		$this->initVar("usage_notes", XOBJ_DTYPE_TXTAREA, $formq[0]['usage_notes']);
+		$this->initVar("data_conventions", XOBJ_DTYPE_TXTAREA, $formq[0]['data_conventions']);
 		$this->initVar("send_digests", XOBJ_DTYPE_INT, $formq[0]['send_digests']);
 		$this->initVar("pi", XOBJ_DTYPE_INT, $formq[0]['pi']);
 		$this->initVar("entries_are_users", XOBJ_DTYPE_INT, $formq[0]['entries_are_users']);
@@ -988,7 +994,7 @@ class formulizeFormsHandler {
 					}
 
 					$sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`form_title`, `singular`, `plural`, `singleentry`, `tableform`, ".
-							"`menutext`, `form_handle`, `store_revisions`, `note`, `send_digests`, `pi`, `entries_are_users`, `entries_are_users_conditions`, `entries_are_users_default_groups`, `entries_are_users_default_groups_element_links`, `entries_are_users_user_is_owner`, `entries_are_groups`, `group_categories`, `parent_perm_fid`) VALUES (".
+							"`menutext`, `form_handle`, `store_revisions`, `note`, `entry_description`, `usage_notes`, `data_conventions`, `send_digests`, `pi`, `entries_are_users`, `entries_are_users_conditions`, `entries_are_users_default_groups`, `entries_are_users_default_groups_element_links`, `entries_are_users_user_is_owner`, `entries_are_groups`, `group_categories`, `parent_perm_fid`) VALUES (".
 							$this->db->quoteString($form_title).", ".
 							$this->db->quoteString($singular).", ".
 							$this->db->quoteString($plural).", ".
@@ -998,6 +1004,9 @@ class formulizeFormsHandler {
 							$this->db->quoteString($form_handle).", ".
 							intval($store_revisions).", ".
 							$this->db->quoteString($note).", ".
+							$this->db->quoteString($entry_description).", ".
+							$this->db->quoteString($usage_notes).", ".
+							$this->db->quoteString($data_conventions).", ".
 							intval($send_digests).", ".
 							intval($pi).", ".
 							intval($entries_are_users).", ".
@@ -1021,6 +1030,9 @@ class formulizeFormsHandler {
 							", `form_handle` = ".$this->db->quoteString($form_handle).
 							", `store_revisions` = ".intval($store_revisions).
 							", `note` = ".$this->db->quoteString($note).
+							", `entry_description` = ".$this->db->quoteString($entry_description).
+							", `usage_notes` = ".$this->db->quoteString($usage_notes).
+							", `data_conventions` = ".$this->db->quoteString($data_conventions).
 							", `send_digests` = ".intval($send_digests).
 							", `pi` = ".intval($pi).
 							", `entries_are_users` = ".intval($entries_are_users).

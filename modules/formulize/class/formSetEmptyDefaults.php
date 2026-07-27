@@ -30,3 +30,6 @@ $formq[0]['form_handle'] = "";
 $formq[0]['send_digests'] = 0;
 $formq[0]['store_revisions'] = 0;
 $formq[0]['note'] = '';
+$formq[0]['entry_description'] = '';
+$formq[0]['usage_notes'] = '';
+$formq[0]['data_conventions'] = '';

@@ -460,6 +460,9 @@ function formulize_run_schema_migrations($prev_dbversion, $required_dbversion) {
 				$sql['widen_groups_name'] = "ALTER TABLE ".$xoopsDB->prefix("groups"). " CHANGE `name` `name` varchar(255) NOT NULL default ''";
 				$sql['singleentry_to_text'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " CHANGE `singleentry` `singleentry` text NULL";
 				$sql['add_parent_perm_fid'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `parent_perm_fid` int(5) NOT NULL default 0";
+				$sql['add_entry_description'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `entry_description` text NULL";
+				$sql['add_usage_notes'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `usage_notes` text NULL";
+				$sql['add_data_conventions'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `data_conventions` text NULL";
 				$sql['add_tfa_attempts'] = "ALTER TABLE ".$xoopsDB->prefix("tfa_codes"). " ADD `attempts` smallint(5) unsigned NOT NULL default 0";
 				$sql['add_tfa_last_attempt'] = "ALTER TABLE ".$xoopsDB->prefix("tfa_codes"). " ADD `last_attempt` int(11) unsigned NOT NULL default 0";
 				$sql['add_tfa_created'] = "ALTER TABLE ".$xoopsDB->prefix("tfa_codes"). " ADD `created` int(11) unsigned NOT NULL default 0";
@@ -619,6 +622,8 @@ function formulize_run_schema_migrations($prev_dbversion, $required_dbversion) {
 									print "singleentry column already converted to text. result: OK<br>";
 								} elseif($key === "add_parent_perm_fid") {
 									print "parent_perm_fid field already added to formulize_id table. result: OK<br>";
+								} elseif($key === "add_entry_description" OR $key === "add_usage_notes" OR $key === "add_data_conventions") {
+									print "Form description fields already added to formulize_id table. result: OK<br>";
 								} elseif($key === "add_tfa_attempts" OR $key === "add_tfa_last_attempt" OR $key === "add_tfa_created") {
 									print "2FA attempt-limiting fields already added. result: OK<br>";
 								} elseif($key === "add_ele_handle_index") {
