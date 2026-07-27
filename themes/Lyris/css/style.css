@@ -2140,25 +2140,35 @@ textarea.fz-control {
   min-width: 0;
 }
 
-/* ---------- Two-column element template (elementtemplate2) → label-top ----------
-   elementtemplate2.php emits `.col1` (label) + `.col2` (field) with INLINE
-   `width:` styles intended for a side-by-side (label-left) layout. The owner
-   default is label-TOP, so we STACK the two columns: the row stays a flex
-   column (inherited from `.fz-field`/`.form-row`), and each column spans the
-   full width. `width: 100% !important` is required to defeat the inline
-   `width: 20%/auto` Formulize prints on the divs. */
+/* ---------- Two-column element template (elementtemplate2) → label-LEFT ----------
+   Formulize's two-column display mode (screen setting `displaycolumns == 2`)
+   renders each field through elementtemplate2.php, which emits `.col1` (label)
+   + `.col2` (field) with INLINE `width:` styles (col1 defaults to 20%, col2 to
+   auto). That is the SAME markup contract the Anari theme keys off to place the
+   label to the LEFT and the element to the RIGHT (issue #48).
+
+   Lay the row out as two side-by-side columns on desktop: the label column
+   honours its inline width (`flex: 0 0 auto` lets the printed `width: 20%`
+   govern the basis) and the field column fills the rest. Labels top-align with
+   their control (align-items: flex-start) so mixed control heights — text
+   input, select, textarea, radio/checkbox group — stay tidy. A small top pad
+   nudges the label onto the control's first text line.
+
+   The ≤768px breakpoint (see the mobile block further down) collapses this back
+   to a stacked single-column layout (label above, full width). */
 
 .form-row:has(.col1) {
-  flex-direction: column;
-  align-items: stretch;
-  gap: var(--label-gap, 6px);
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--s-6, 24px);
 }
 
 .col1 {
-  width: 100% !important;
+  flex: 0 0 auto;        /* respect the inline `width: 20%` (or admin override) */
   min-width: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  padding-top: var(--field-pad-y, 8px); /* align label with control's text line */
 }
 
 .col1 .form-label {
@@ -2166,8 +2176,7 @@ textarea.fz-control {
 }
 
 .col2 {
-  width: 100% !important;
-  flex: 1 1 auto;
+  flex: 1 1 auto;        /* fill the remaining width (ignore inline `width: auto`) */
   min-width: 0;
 }
 
@@ -3184,15 +3193,19 @@ input[type="time"] { font-family: var(--font-sans); }
     padding: var(--s-3) var(--s-4);
   }
 
-  /* Left-label layout collapses to stacked on narrow screens */
+  /* Left-label two-column layout collapses to stacked single-column (label
+     above field, full width) on narrow screens — the responsive requirement
+     from issue #48. */
   .form-row:has(.col1) {
     flex-direction: column;
+    align-items: stretch;
     gap: var(--label-gap, 6px);
   }
 
   .col1 {
     min-height: auto;
     width: 100% !important;
+    padding-top: 0; /* no left-label top nudge when stacked */
   }
 
   .col2 {
