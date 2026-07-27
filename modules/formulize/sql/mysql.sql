@@ -382,7 +382,6 @@ CREATE TABLE formulize_id (
   lockedform tinyint(1) NULL default NULL,
   defaultform int(11) NOT NULL default 0,
   defaultlist int(11) NOT NULL default 0,
-  menutext varchar(255) default NULL,
   form_handle varchar(255) NOT NULL default '',
   store_revisions tinyint(1) NOT NULL default '0',
   note text,

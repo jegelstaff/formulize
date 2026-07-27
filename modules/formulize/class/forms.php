@@ -156,7 +156,6 @@ class formulizeForm extends FormulizeObject {
 		$this->initVar("headerlist", XOBJ_DTYPE_TXTAREA, $headerlist);
 		$this->initVar("defaultform", XOBJ_DTYPE_INT, $defaultform);
 		$this->initVar("defaultlist", XOBJ_DTYPE_INT, $defaultlist);
-		$this->initVar("menutext", XOBJ_DTYPE_TXTBOX, $formq[0]['menutext'], false, 255);
 		$this->initVar("form_handle", XOBJ_DTYPE_TXTBOX, $formq[0]['form_handle'], false, 255);
 		$this->initVar("store_revisions", XOBJ_DTYPE_INT, (formulizeRevisionsForAllFormsIsOn() ? 1 : $formq[0]['store_revisions']), true); // override based on module preference
 		$this->initVar("on_before_save", XOBJ_DTYPE_TXTAREA, $this->getVar('on_before_save'));
@@ -994,13 +993,12 @@ class formulizeFormsHandler {
 					}
 
 					$sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`form_title`, `singular`, `plural`, `singleentry`, `tableform`, ".
-							"`menutext`, `form_handle`, `store_revisions`, `note`, `entry_description`, `usage_notes`, `data_conventions`, `send_digests`, `pi`, `entries_are_users`, `entries_are_users_conditions`, `entries_are_users_default_groups`, `entries_are_users_default_groups_element_links`, `entries_are_users_user_is_owner`, `entries_are_groups`, `group_categories`, `parent_perm_fid`) VALUES (".
+							"`form_handle`, `store_revisions`, `note`, `entry_description`, `usage_notes`, `data_conventions`, `send_digests`, `pi`, `entries_are_users`, `entries_are_users_conditions`, `entries_are_users_default_groups`, `entries_are_users_default_groups_element_links`, `entries_are_users_user_is_owner`, `entries_are_groups`, `group_categories`, `parent_perm_fid`) VALUES (".
 							$this->db->quoteString($form_title).", ".
 							$this->db->quoteString($singular).", ".
 							$this->db->quoteString($plural).", ".
 							$this->db->quoteString($single).", ".
 							$this->db->quoteString($tableform).", ".
-							$this->db->quoteString($menutext).", ".
 							$this->db->quoteString($form_handle).", ".
 							intval($store_revisions).", ".
 							$this->db->quoteString($note).", ".
@@ -1026,7 +1024,6 @@ class formulizeFormsHandler {
 							", `headerlist` = ".$this->db->quoteString($headerlist).
 							", `defaultform` = ".intval($defaultform).
 							", `defaultlist` = ".intval($defaultlist).
-							", `menutext` = ".$this->db->quoteString($menutext).
 							", `form_handle` = ".$this->db->quoteString($form_handle).
 							", `store_revisions` = ".intval($store_revisions).
 							", `note` = ".$this->db->quoteString($note).

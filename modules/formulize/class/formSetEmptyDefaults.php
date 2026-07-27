@@ -25,7 +25,6 @@ $viewNames = array();
 $viewFrids = array();
 $viewPublished = array();
 $filterSettings = array();
-$formq[0]['menutext'] = "";
 $formq[0]['form_handle'] = "";
 $formq[0]['send_digests'] = 0;
 $formq[0]['store_revisions'] = 0;
