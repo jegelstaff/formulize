@@ -114,6 +114,34 @@ The form may also include \'entry_description\', \'usage_notes\' and \'data_conv
 					'required' => ['form_id']
 				]
 			],
+			'get_element_details' => [
+				'name' => 'get_element_details',
+				'description' => 'Get the full settings of one or more specific elements in a form. Use this after get_form_details, which lists every element in a form but only gives you their id, handle, caption and type. This tool gives you everything else about the elements you name: the options in a list, the alternative text shown for those options, whether the element is required, which groups can see it, the conditions that control when it is displayed or disabled, and the type-specific settings that vary from one kind of element to another.
+
+Ask for several elements in one call rather than one at a time. If some of the elements you ask for cannot be found, the ones that were found are still returned, and the ones that were not are reported back to you so you can correct them.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'elements' => [
+							'type' => 'array',
+							'description' => 'Required. The elements you want the details of. Each item is either an element handle (a string) or an element id (a number). You can mix the two in one request. Get handles and ids from the get_form_details tool.',
+							'items' => [
+								'type' => ['string', 'integer']
+							],
+							'examples' => [
+								'["artifacts_condition", "artifacts_era"]',
+								'[92, 58]',
+								'["artifacts_condition", 58]'
+							]
+						],
+						'form_id' => [
+							'type' => 'integer',
+							'description' => 'Optional. Restrict the lookup to a single form. Element handles are unique across the whole system, so this is not usually needed, but it does confirm that the elements you asked for really do belong to the form you expect.'
+						]
+					],
+					'required' => ['elements']
+				]
+			],
 			'get_screen_details' => [
 				'name' => 'get_screen_details',
 				'description' => "Get detailed information about a specific screen. Lookup screens by their ID number, also known as 'sid'. The 'pages' array is just a list of the elements on each page, it does not necessarily reflect the order in which the elements appear. Element order is controlled through the 'placement' parameter in the create element and update element tools.",
@@ -391,35 +419,42 @@ Correct example for linked elements:
 				]
 			];
 
+			$formProperties = $this->formPropertiesSchema();
+
 			$this->tools['create_form'] = [
 				'name' => 'create_form',
-				'description' => 'Create a new form in Formulize. This creates the form, including default screens and setting basic permissions and menu entries. After creating a form, there are other tools you can use to add user interface elements to the form, such as create_text_box_element, create_list_element, create_linked_list_element, create_user_list_element, create_derived_value_element, create_selector_element, etc. Also, you can use create_subform_interface to provide a way to interact with data from connected forms. See the tool descriptions for more information.',
+				'description' => 'Create a new form in Formulize. This creates the form, including default screens and setting basic permissions and menu entries. After creating a form, there are other tools you can use to add user interface elements to the form, such as create_text_box_element, create_list_element, create_linked_list_element, create_user_list_element, create_derived_value_element, create_selector_element, etc. Also, you can use create_subform_interface to provide a way to interact with data from connected forms. See the tool descriptions for more information. To change a form after it exists, use update_form.
+
+It is worth filling in \'entry_description\', \'usage_notes\' and \'data_conventions\' when you know the answers, because they are what a future AI assistant will read to understand what the form is for. If you are not sure, leave them out rather than guessing, and ask the person you are working with.',
 				'inputSchema' => [
 					'type' => 'object',
-					'properties' => [
-						'title' => [
-							'type' => 'string',
-							'description' => 'Required. The name of the form as it will appear in Formulize to users.'
-						],
-						'notes' => [
-							'type' => 'string',
-							'description' => 'Optional. Internal notes about the form for use by webmasters, not visible to end users.'
-						],
-						'limit_entries' => $this->limitEntriesSchema(),
-						'application_id_or_name' => [
-							'oneOf' => [
-      				  [
-									'type' => 'string',
-									'description' => 'Optional. If omitted, the form will not be part of a specific application. If this is a string, it is used as the name of a new application which this form should be part of, and the new application will be created automatically by this tool.'
-								],
-				        [
-									'type' => 'integer',
-									'description' => 'Optional. If omitted, the form will not be part of a specific application. If this is a number, it is treated as the ID of an application that this form should belong to. Use the list_applications tool to find the existing applications.'
-								]
-    					]
-						]
-					],
+					'properties' => array_merge($formProperties, [
+						'title' => array_merge($formProperties['title'], [
+							'description' => 'Required. '.$formProperties['title']['description']
+						])
+					]),
 					'required' => ['title']
+				]
+			];
+
+			$this->tools['update_form'] = [
+				'name' => 'update_form',
+				'description' => 'Change the settings of an existing form. Only the settings you provide are changed; anything you leave out stays exactly as it is.
+
+Use get_form_details first to see the form\'s current settings. This tool does not change the elements in the form - use the create and update element tools for that, and delete_element to remove one. Changing what a form\'s entries represent (ordinary records, user accounts, or groups) is not yet available through the tools, so that has to be done by an administrator in the Formulize admin interface.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => array_merge([
+						'form_id' => [
+							'type' => 'integer',
+							'description' => 'Required. The id of the form to update. Use list_forms or get_form_details to find it.'
+						]
+					], $formProperties, [
+						'title' => array_merge($formProperties['title'], [
+							'description' => 'Optional. A new name for the form. '.$formProperties['title']['description']
+						])
+					]),
+					'required' => ['form_id']
 				]
 			];
 
@@ -544,6 +579,39 @@ Correct example for linked elements:
 				]
 			];
 
+			$this->tools['delete_element'] = [
+				'name' => 'delete_element',
+				'description' => 'Permanently delete an element from a form.
+
+**This destroys data and cannot be undone.** Deleting an element drops its column from the form\'s data table, so every value that every entry holds in that element is gone for good. There is no undo, and no backup is taken.
+
+Use this only when the person you are working with has specifically asked for this element to be removed. Do not use it to tidy up a form, to fix a mistake you made while building something, or because an element looks unused - an element with no data today may still be part of how the application works. If the aim is only to stop people seeing or using the element, hide it instead: set its \'display\' property to false with the update tool for that kind of element (ie: update_text_box_element or update_list_element, etc). Setting \'display\' to false takes it out of the form while keeping the data and leaving anything that refers to it still working.
+
+This tool takes two calls. Call it first with just the element, and it will NOT delete anything: it returns a report of what would be lost and what would be left broken, along with a confirmation_token. Show that report to the person you are working with and get their agreement. Then call the tool again with the same element and the confirmation token to carry out the deletion. The token only works for that element, for you, and only for a few minutes.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'element_identifier' => [
+							'oneOf' => [
+								[
+									'type' => 'string',
+									'description' => 'Required. The handle of the element to delete. Get handles from the get_form_details tool.'
+								],
+								[
+									'type' => 'integer',
+									'description' => 'Required. The id of the element to delete. Get element ids from the get_form_details tool.'
+								]
+							]
+						],
+						'confirmation_token' => [
+							'type' => 'string',
+							'description' => 'Optional. Leave this out on the first call to receive the impact report and a token. Send the token back on a second call to actually delete the element. Do not send a token unless the person you are working with has seen the impact report and agreed to the deletion.'
+						]
+					],
+					'required' => ['element_identifier']
+				]
+			];
+
 			foreach($this->buildFormElementTools() as $tool) {
 				$this->tools[$tool['name']] = $tool;
 			}
@@ -580,6 +648,280 @@ Correct example for linked elements:
 			}
 		}
 
+	}
+
+	/**
+	 * The key used to sign element deletion confirmation tokens.
+	 *
+	 * Deleting an element destroys data, so it takes two calls: the first returns an impact report and a
+	 * token, the second presents the token back to actually delete. Signing the token means that guarantee
+	 * needs no server side state to store, expire or clean up - a delete simply cannot happen unless the
+	 * matching preview happened first, recently, for that element, by that user.
+	 * Domain separated from the anonymous entry tokens so the two keys are not interchangeable.
+	 * @return string A binary HMAC key
+	 */
+	private function elementDeletionToken_secret() {
+		$base = defined('XOOPS_DB_SALT') ? XOOPS_DB_SALT : (defined('XOOPS_DB_PASS') ? XOOPS_DB_PASS : 'formulize_mcp_element_deletion_fallback');
+		return hash_hmac('sha256', 'formulize_mcp_element_deletion_token_v1', $base, true);
+	}
+
+	/**
+	 * Build the signed confirmation token for deleting an element: "<expires>.<signature>".
+	 * The user id and element id are part of the signed payload, so a token issued to one user for one
+	 * element cannot be replayed by another user or against another element.
+	 * @param int $elementId The element the token authorises deletion of
+	 * @param int $expires Unix timestamp after which the token stops working
+	 * @return string
+	 */
+	private function signElementDeletionToken($elementId, $expires) {
+		$payload = intval($this->authenticatedUid).':'.intval($elementId).':'.intval($expires);
+		return $expires.'.'.hash_hmac('sha256', $payload, $this->elementDeletionToken_secret());
+	}
+
+	/**
+	 * Verify a confirmation token presented for deleting an element.
+	 * @param string $token The token the caller sent back
+	 * @param int $elementId The element being deleted
+	 * @return bool True only if the token is well formed, unexpired, and validly signed for this user and element
+	 */
+	private function verifyElementDeletionToken($token, $elementId) {
+		$parts = explode('.', (string) $token);
+		if(count($parts) !== 2) {
+			return false;
+		}
+		list($expires, $signature) = $parts;
+		if(!is_numeric($expires) OR time() > intval($expires)) {
+			return false; // the lifetime is enforced here, server side
+		}
+		$expected = $this->signElementDeletionToken($elementId, intval($expires));
+		return hash_equals($expected, $expires.'.'.$signature);
+	}
+
+	/**
+	 * The form settings that both the create and update form tools accept, so the two cannot drift apart.
+	 * Only 'title' differs between them: it is required when creating and optional when updating, which
+	 * the calling tool expresses through its own 'required' list rather than here.
+	 * Does not include the setting for what a form's entries represent (ordinary records, user accounts or
+	 * groups) - changing that has large side effects and is handled separately.
+	 * @return array The shared JSON schema properties
+	 */
+	private function formPropertiesSchema() {
+		return [
+			'title' => [
+				'type' => 'string',
+				'description' => 'The name of the form as it will appear to users.'
+			],
+			'singular' => [
+				'type' => 'string',
+				'description' => "Optional. The word for one entry in this form, used in button labels and messages, for example 'Artifact'. If you leave this out, Formulize works it out from the title."
+			],
+			'plural' => [
+				'type' => 'string',
+				'description' => "Optional. The word for several entries in this form, for example 'Artifacts'. If you leave this out, Formulize works it out from the title."
+			],
+			'entry_description' => [
+				'type' => 'string',
+				'description' => "Optional. What one entry in this form represents, in plain language. An example, for a Workshop Booking form: 'One booking, by one person, for one workshop on a given date (the workshops are entries in the Workshops form).' This is read by AI assistants working with the form, so it should describe the meaning of an entry rather than restate the element list."
+			],
+			'usage_notes' => [
+				'type' => 'string',
+				'description' => "Optional. Who uses this form, when, and for what purpose. An example, for a Workshop Booking form: 'Public users visit the form and select a workshop to book. Managers look at the bookings to make decisions about workshop scheduling and room assignments.'"
+			],
+			'data_conventions' => [
+				'type' => 'string',
+				'description' => "Optional. Rules and expectations the data follows that are not visible in the elements themselves. An example, for a Workshop Booking form: 'There are a limited number of spaces in a workshop, and new bookings trigger an update of the available spaces value for the selected workshop in the Workshops form. Once a workshop has no available spaces it does not show up in the bookings form anymore.' This is often the most valuable of the three, because it describes things no amount of looking at the schema would reveal."
+			],
+			'limit_entries' => $this->limitEntriesSchema(),
+			'store_revisions' => [
+				'type' => 'boolean',
+				'description' => 'Optional. Keep a revision history of every change made to entries in this form. This is off by default and should only be turned on at the user\'s request.'
+			],
+			'send_digests' => [
+				'type' => 'boolean',
+				'description' => 'Optional. Send notification emails about activity in this form once a day as a digest, instead of immediately. This is off by default and should only be turned on at the user\'s request.'
+			],
+			'principal_identifier' => [
+				// description sits alongside oneOf rather than being repeated inside each branch: it is an
+				// annotation, valid at any level of a schema, and clients show the parent description too
+				'description' => "Optional. The element that distinguishes one entry from another. ie: a name, an order number, etc. Not all forms have a natural principal identifier. If a form does have one, Formulize usually shows it when it needs to refer to a single entry. Give either the element's handle or its id. To clear it, send the number 0 - that is the only value that clears it, so that leaving the setting out, or sending an empty value, cannot remove it by accident.",
+				'oneOf' => [
+					[ 'type' => 'string' ],
+					[ 'type' => 'integer' ]
+				]
+			],
+			'application_id_or_name' => [
+				'oneOf' => [
+					[
+						'type' => 'string',
+						'description' => 'Optional. The name of a new application to create, which this form will belong to.'
+					],
+					[
+						'type' => 'integer',
+						'description' => 'Optional. The id of an existing application this form should belong to. Use the list_applications tool to find them.'
+					],
+					[
+						'type' => 'array',
+						'items' => [ 'type' => 'integer' ],
+						'description' => 'Optional. The ids of all the applications this form should belong to. This replaces the current set, so include every application the form should be in, not just the ones you are adding.'
+					]
+				]
+			]
+		];
+	}
+
+	/**
+	 * Refuse to modify forms that the tools have no business touching.
+	 *
+	 * Two cases. A locked form is not editable through the admin interface either, so the tools must not be
+	 * a way around that. A "table form" is a Formulize form pointed at an existing database table rather
+	 * than at a data table Formulize owns - the System Users and System Groups forms behind the users and
+	 * groups pages are the built in examples. Those are checked separately from the lock, because although
+	 * the built in ones are created already locked, an administrator can point a form at a table by hand and
+	 * that one would not be. Writing to a table Formulize does not own is out of scope for the tools.
+	 *
+	 * Accepts either a form id or a form object. Given an id it loads the form and throws if there is no
+	 * such form, so callers do not have to fetch the object purely in order to run this check - and so that
+	 * an unknown form id cannot quietly skip the check, which is what happens when a caller guards the call
+	 * with "if the form loaded". The resolved form object is returned for callers that need it anyway.
+	 *
+	 * @param object|int $form The form about to be modified, as an object or an id
+	 * @param bool $allowTableForms Set true for things that are legitimate on a table form. A table form's
+	 *   element list comes from the columns of the underlying table and so must not be edited, but screens
+	 *   are Formulize's own and can reasonably be built for one.
+	 * @throws FormulizeMCPException if the form does not exist, or must not be modified through the tools
+	 * @return object The form object
+	 */
+	private function assertFormIsEditableByTools($form, $allowTableForms = false) {
+		if(is_object($form)) {
+			$formObject = $form;
+		} else {
+			$formId = intval($form);
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+			if(!$formId OR !$formObject = $form_handler->get($formId)) {
+				throw new FormulizeMCPException(
+					"Form not found: $formId",
+					'form_not_found',
+					context: [ 'hint' => 'Use the list_forms tool to see the forms in this system.' ]
+				);
+			}
+		}
+		$formId = intval($formObject->getVar('fid'));
+		if(!$allowTableForms AND $formObject->getVar('tableform')) {
+			throw new FormulizeMCPException(
+				"Form $formId points at the database table '".$formObject->getVar('tableform')."' rather than at a table Formulize created. Its elements come from the columns of that table, so neither the form nor its elements can be changed with these tools. Forms like this are set up and maintained by an administrator in the Formulize admin interface.",
+				'permission_denied',
+			);
+		}
+		if($formObject->getVar('lockedform')) {
+			throw new FormulizeMCPException(
+				"Form $formId is locked, so it cannot be changed - that covers its settings, its elements and its screens."
+					.($formObject->getVar('lockedform') == FORMULIZE_LOCKEDFORM_SYSTEM_MANAGED ? ' This form is managed by Formulize itself.' : ''),
+				'permission_denied',
+			);
+		}
+		return $formObject;
+	}
+
+	/**
+	 * Translate the friendly form arguments accepted by the create and update form tools into the internal
+	 * property names the form object uses, following the same partial update discipline as the screen tools:
+	 * only properties actually supplied by the caller are included, so anything omitted is left alone.
+	 * @param array $arguments The tool arguments
+	 * @param object|false $existingForm The form being updated, or false when creating
+	 * @return array Properties keyed by form object var name
+	 * @throws FormulizeMCPException if the principal identifier cannot be resolved
+	 */
+	private function buildFormProperties($arguments, $existingForm = false) {
+
+		$properties = [];
+		$simpleMappings = [
+			'title' => 'form_title',
+			'singular' => 'singular',
+			'plural' => 'plural',
+			'entry_description' => 'entry_description',
+			'usage_notes' => 'usage_notes',
+			'data_conventions' => 'data_conventions',
+		];
+		foreach($simpleMappings as $argument => $property) {
+			if(array_key_exists($argument, $arguments)) {
+				$properties[$property] = trim((string) $arguments[$argument]);
+			}
+		}
+
+		foreach(array('store_revisions' => 'store_revisions', 'send_digests' => 'send_digests') as $argument => $property) {
+			if(array_key_exists($argument, $arguments)) {
+				$properties[$property] = $arguments[$argument] ? 1 : 0;
+			}
+		}
+
+		if(array_key_exists('limit_entries', $arguments)) {
+			// merge into what the form already has, so per-group settings made in the admin UI survive an
+			// update that only means to change the ordinary case
+			$existing = $existingForm ? $existingForm->getVar('single') : array();
+			$properties['single'] = $this->buildLimitEntriesArray($arguments['limit_entries'], is_array($existing) ? $existing : array());
+		}
+
+		if(array_key_exists('principal_identifier', $arguments)) {
+			$pi = $arguments['principal_identifier'];
+			if($pi === null OR $pi === '') {
+				// Deliberately treated as "nothing was said", not as "clear it". Leaving the property out
+				// already means leave it alone, and null is what many clients send for an optional field
+				// they have no opinion about - so honouring it here would silently wipe a form's principal
+				// identifier on a call that only meant to change something else. Clearing takes an explicit
+				// 0, which nothing sends by accident and which is the value actually stored for "none".
+			} elseif($pi === 0 OR $pi === '0') {
+				$properties['pi'] = 0;
+			} else {
+				if(!$piElement = _getElementObject($pi)) {
+					throw new FormulizeMCPException(
+						'Could not find the element to use as the principal identifier: '.(is_scalar($pi) ? $pi : gettype($pi)),
+						'unknown_element',
+						context: [ 'hint' => 'The principal identifier must be an element in this form. Use get_form_details to find its handle or id.' ]
+					);
+				}
+				if($existingForm AND intval($piElement->getVar('fid')) !== intval($existingForm->getVar('fid'))) {
+					throw new FormulizeMCPException(
+						"The element '".$piElement->getVar('ele_handle')."' is in form ".intval($piElement->getVar('fid')).", so it cannot be the principal identifier of form ".intval($existingForm->getVar('fid')).".",
+						'invalid_data'
+					);
+				}
+				$properties['pi'] = intval($piElement->getVar('ele_id'));
+			}
+		}
+
+		return $properties;
+	}
+
+	/**
+	 * Work out which applications a form should belong to, from the application_id_or_name argument.
+	 * Returns null when the caller did not mention applications at all, which tells
+	 * upsertFormSchemaAndResources to leave the form's application assignments alone.
+	 * @param array $arguments The tool arguments
+	 * @return array|null Application ids, or null to leave assignments untouched
+	 * @throws FormulizeMCPException if a new application cannot be created
+	 */
+	private function resolveApplicationIds($arguments) {
+		if(!array_key_exists('application_id_or_name', $arguments)) {
+			return null;
+		}
+		$value = $arguments['application_id_or_name'];
+		if(is_array($value)) {
+			return array_map('intval', $value);
+		}
+		if(is_numeric($value)) {
+			return array(intval($value));
+		}
+		if(is_string($value) AND trim($value) !== '') {
+			$application_handler = xoops_getmodulehandler('applications','formulize');
+			$newAppObject = $application_handler->create();
+			$newAppObject->setVar('name', trim($value));
+			if(!$application_handler->insert($newAppObject)) {
+				global $xoopsDB;
+				throw new FormulizeMCPException('Could not create new application. '.$xoopsDB->error(), 'database_error');
+			}
+			return array($newAppObject->getVar('appid'));
+		}
+		return null;
 	}
 
 	/**
@@ -897,59 +1239,111 @@ Correct example for linked elements:
 			);
 		}
 
-		$title = trim($arguments['title'] ?? '');
-		$notes = trim($arguments['notes'] ?? '');
-		$limit_entries = $arguments['limit_entries'] ?? 'off';
-		$application_id_or_name = $arguments['application_id_or_name'] ?? '';
-
-		if(empty($title)) {
+		if(empty(trim($arguments['title'] ?? ''))) {
 			throw new FormulizeMCPException('title is required', 'invalid_data');
 		}
 
-		// the form object stores this as a per-group array, so a plain value has to be converted, not passed through
-		$limit_entries = $this->buildLimitEntriesArray($limit_entries);
-
-		// prepare application data
-		$applicationIds = [0]; // default to no application
-		if(is_numeric($application_id_or_name)) {
-			$applicationIds = array(intval($application_id_or_name));
-		} elseif(is_string($application_id_or_name) AND !empty($application_id_or_name)) {
-			$application_handler = xoops_getmodulehandler('applications','formulize');
-			$newAppObject = $application_handler->create();
-			$newAppObject->setVar('name', $application_id_or_name);
-			if(!$application_handler->insert($newAppObject)) {
-					global $xoopsDB;
-					throw new FormulizeMCPException('Could not create new application. '.$xoopsDB->error(), 'database_error');
-			} else {
-				$applicationIds = array($newAppObject->getVar('appid'));
-			}
+		$formData = $this->buildFormProperties($arguments, false);
+		// a new form always needs an entry limit set, since there is no existing value to leave alone
+		if(!isset($formData['single'])) {
+			$formData['single'] = $this->buildLimitEntriesArray('off');
 		}
 
-		// prepare form data, keys consistent with the formulizeForm object
-		$formData = [
-			'form_title' => $title,
-			'single' => $limit_entries,
-			'note' => $notes
-		];
+		// applications default to none for a new form, rather than being left untouched as they are on update
+		$applicationIds = $this->resolveApplicationIds($arguments);
+		if($applicationIds === null) {
+			$applicationIds = [0];
+		}
 
 		$groupsThatCanEdit = array(XOOPS_GROUP_ADMIN);
-		$formObject = formulizeHandler::upsertFormSchemaAndResources($formData, $groupsThatCanEdit, $applicationIds);
+		try {
+			$formObject = formulizeHandler::upsertFormSchemaAndResources($formData, $groupsThatCanEdit, $applicationIds);
+		} catch (Exception $e) {
+			throw new FormulizeMCPException($e->getMessage(), 'invalid_data');
+		}
 
-		// could/should reuse get_form_details ??
-		return [
+		return $this->formToolResponse($formObject, $applicationIds, 'Form and related resources created successfully');
+	}
+
+	/**
+	 * Update the settings of an existing form. Partial by design: only the properties the caller supplied
+	 * are changed, so a tool call that means to alter one setting cannot quietly revert the others.
+	 * @param array $arguments 'form_id' (required) plus any of the shared form properties
+	 * @return array The resulting form settings
+	 * @throws FormulizeMCPException on permission failure, a locked form, or invalid input
+	 */
+	private function update_form($arguments) {
+
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				"Permission denied: Only webmasters can change form settings.",
+				'authentication_error',
+			);
+		}
+
+		$formId = intval($arguments['form_id'] ?? 0);
+		if(!$formId) {
+			throw new FormulizeMCPException('form_id is required', 'invalid_data');
+		}
+		// resolves the form, confirms it exists, and confirms the tools are allowed to change it
+		$formObject = $this->assertFormIsEditableByTools($formId);
+
+		$formData = $this->buildFormProperties($arguments, $formObject);
+		if(empty($formData) AND !array_key_exists('application_id_or_name', $arguments)) {
+			throw new FormulizeMCPException(
+				'No settings were provided to change.',
+				'invalid_data',
+				context: [ 'hint' => 'Supply at least one setting to change, such as title, entry_description, usage_notes, data_conventions or limit_entries.' ]
+			);
+		}
+		$formData['fid'] = $formId; // this is what makes upsertFormSchemaAndResources update rather than create
+
+		// null leaves the form's application assignments untouched
+		$applicationIds = $this->resolveApplicationIds($arguments);
+
+		try {
+			$formObject = formulizeHandler::upsertFormSchemaAndResources($formData, array(), $applicationIds);
+		} catch (Exception $e) {
+			throw new FormulizeMCPException($e->getMessage(), 'invalid_data');
+		}
+
+		return $this->formToolResponse($formObject, $applicationIds, 'Form settings updated successfully');
+	}
+
+	/**
+	 * The response both form tools return, so what a caller sees after creating a form and after updating
+	 * one has the same shape.
+	 * @param object $formObject The saved form
+	 * @param array|null $applicationIds The applications that were assigned, or null if they were left alone
+	 * @param string $message
+	 * @return array
+	 */
+	private function formToolResponse($formObject, $applicationIds, $message) {
+		$response = [
 			'form_id' => $formObject->getVar('fid'),
 			'title' => $formObject->getVar('title'),
 			'singular' => $formObject->getSingular(),
 			'plural' => $formObject->getPlural(),
 			'form_handle' => $formObject->getVar('form_handle'),
+			// cast the text fields, because an empty or NULL text column comes back from getVar as false
+			// rather than as an empty string, which would be reported as a meaningless "false" value
+			// note: the form's 'note' field is deliberately not reported - it is private to webmasters
+			'entry_description' => (string) $formObject->getVar('entry_description'),
+			'usage_notes' => (string) $formObject->getVar('usage_notes'),
+			'data_conventions' => (string) $formObject->getVar('data_conventions'),
 			'limit_entries' => $this->readableLimitEntries($formObject->getVar('single')),
+			'store_revisions' => (bool) $formObject->getVar('store_revisions'),
+			'send_digests' => (bool) $formObject->getVar('send_digests'),
+			'principal_identifier' => intval($formObject->getVar('pi')),
 			'default_form_screen_id' => $formObject->getVar('defaultform'),
 			'default_list_screen_id' => $formObject->getVar('defaultlist'),
-			'application_ids' => $applicationIds,
-			'success' => true,
-			'message' => 'Form and related resources created successfully'
 		];
-
+		if($applicationIds !== null) {
+			$response['application_ids'] = $applicationIds;
+		}
+		$response['success'] = true;
+		$response['message'] = $message;
+		return $response;
 	}
 
 	/**
@@ -972,6 +1366,9 @@ Correct example for linked elements:
 		if($title === '') {
 			throw new FormulizeMCPException('title is required', 'invalid_data');
 		}
+		// table forms are allowed here: their element list is fixed by the underlying table, but the
+		// screens that present them are Formulize's own and are reasonable to build
+		$this->assertFormIsEditableByTools($form_id, allowTableForms: true);
 		$properties = $this->buildFormScreenProperties($arguments, null);
 		$properties['fid'] = $form_id;
 		$properties['title'] = $title;
@@ -1008,6 +1405,8 @@ Correct example for linked elements:
 		if(!$existingScreen OR $existingScreen->getVar('type') != 'multiPage') {
 			throw new FormulizeMCPException("Form screen $screen_id was not found.", 'invalid_data');
 		}
+		// as with create_form_screen, a table form's screens are fair game even though its elements are not
+		$this->assertFormIsEditableByTools($existingScreen->getVar('fid'), allowTableForms: true);
 		$properties = $this->buildFormScreenProperties($arguments, $existingScreen);
 		if(isset($arguments['title'])) {
 			$title = trim($arguments['title']);
@@ -1479,6 +1878,11 @@ Do not use foreign key values with linked elements; use the readable value inste
 		}
 
 		$fid = $form_id ? $form_id : ($elementObject ? $elementObject->getVar('fid') : 0);
+
+		// A locked form must not have its elements changed, and a table form's elements are dictated by the
+		// columns of the table it points at, so they are not ours to add to or alter. upsertElementSchemaAndResources
+		// checks edit_form permission but neither of these, so the check belongs here.
+		$this->assertFormIsEditableByTools($fid);
 
 		// validate that $data_type conforms to the element type's valid data types as specified in the tool schema
 		$validDataTypes = ['text', 'date', 'datetime', 'time'];
@@ -2040,6 +2444,133 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 	/**
 	 * Get the details about a single screen
 	 */
+	/**
+	 * Get the full settings of specific elements. This is the companion to get_form_details, which lists
+	 * elements by identity only so that large forms do not overwhelm the AI assistant's context.
+	 * @param array $arguments 'elements' (required, handles and/or ids), 'form_id' (optional)
+	 * @return array The elements, and any identifiers that could not be found
+	 * @throws FormulizeMCPException if no usable identifiers were given, or none could be found
+	 */
+	private function get_element_details($arguments) {
+		$elements = $arguments['elements'] ?? [];
+		if(!is_array($elements)) {
+			$elements = [$elements]; // tolerate a single identifier sent on its own
+		}
+		if(empty($elements)) {
+			throw new FormulizeMCPException(
+				'The elements parameter is required, and must contain at least one element handle or id.',
+				'invalid_data'
+			);
+		}
+		return $this->element_details($elements, $arguments['form_id'] ?? 0);
+	}
+
+	/**
+	 * Delete an element, in two steps: a preview call that destroys nothing and issues a signed token,
+	 * then a confirming call that presents the token back and performs the deletion.
+	 * @param array $arguments 'element_identifier' (required), 'confirmation_token' (optional)
+	 * @return array Either the impact report and a token, or the result of the deletion
+	 * @throws FormulizeMCPException on permission failure, unknown element, or a bad token
+	 */
+	private function delete_element($arguments) {
+
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				"Permission denied: Only webmasters can delete elements.",
+				'authentication_error',
+			);
+		}
+
+		$identifier = $arguments['element_identifier'] ?? '';
+		if($identifier === '' OR $identifier === null) {
+			throw new FormulizeMCPException('element_identifier is required', 'invalid_data');
+		}
+
+		if(!$elementObject = _getElementObject($identifier)) {
+			throw new FormulizeMCPException(
+				'Element not found: '.(is_scalar($identifier) ? $identifier : gettype($identifier)),
+				'unknown_element',
+				context: [ 'hint' => 'Use get_form_details to find the elements in a form, by handle or by id.' ]
+			);
+		}
+
+		$elementId = intval($elementObject->getVar('ele_id'));
+		$formId = intval($elementObject->getVar('fid'));
+		$handle = $elementObject->getVar('ele_handle');
+
+		// the same check the admin UI makes before letting anyone delete an element
+		global $xoopsUser;
+		$gperm_handler = xoops_gethandler('groupperm');
+		if(!$xoopsUser OR !$gperm_handler->checkRight("edit_form", $formId, $xoopsUser->getGroups(), getFormulizeModId())) {
+			throw new FormulizeMCPException(
+				"Permission denied: you do not have permission to edit form $formId, so you cannot delete elements from it.",
+				'permission_denied',
+			);
+		}
+		$this->assertFormIsEditableByTools($formId);
+
+		// no token: report what would happen and issue a token, but change nothing
+		if(empty($arguments['confirmation_token'])) {
+			$expires = time() + 300; // five minutes is long enough to show a person the report and get an answer
+			return [
+				'deleted' => false,
+				'message' => 'Nothing has been deleted. This is a preview of what deleting this element would do. Show this to the person you are working with, and if they agree, call delete_element again with the same element and the confirmation_token below.',
+				'impact' => $this->elementDeletionImpact($elementObject),
+				'confirmation_token' => $this->signElementDeletionToken($elementId, $expires),
+				'confirmation_token_expires' => date('c', $expires)
+			];
+		}
+
+		// a token was sent, so it has to be valid for this user and this element, and still be in date
+		if(!$this->verifyElementDeletionToken($arguments['confirmation_token'], $elementId)) {
+			return [
+				'deleted' => false,
+				'message' => 'That confirmation token is not valid for this element, or it has expired. Nothing has been deleted. Here is a fresh impact report and a new token.',
+				'impact' => $this->elementDeletionImpact($elementObject),
+				'confirmation_token' => $this->signElementDeletionToken($elementId, time() + 300),
+				'confirmation_token_expires' => date('c', time() + 300)
+			];
+		}
+
+		// keep the report so the response can say what was actually lost
+		$impact = $this->elementDeletionImpact($elementObject);
+
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		try {
+			$element_handler->delete($elementObject);
+		} catch (Exception $e) {
+			throw new FormulizeMCPException($e->getMessage(), 'invalid_data');
+		}
+
+		// confirm by looking at the actual state rather than trusting the handler's return value, which
+		// reports false for elements that hold no data even when the deletion succeeded
+		$checkSql = "SELECT COUNT(*) AS c FROM ".$this->db->prefix('formulize')." WHERE ele_id = $elementId";
+		$stillThere = true;
+		if($checkResult = $this->db->query($checkSql)) {
+			$checkRow = $this->db->fetchArray($checkResult);
+			$stillThere = (intval($checkRow['c']) > 0);
+		}
+		if($stillThere) {
+			throw new FormulizeMCPException(
+				"The element could not be deleted. It still exists in form $formId.",
+				'database_error'
+			);
+		}
+
+		return [
+			'deleted' => true,
+			'element_id' => $elementId,
+			'element_handle' => $handle,
+			'form_id' => $formId,
+			'what_was_lost' => $impact,
+			'success' => true,
+			'message' => "Element '$handle' has been permanently deleted from form $formId"
+				.($impact['stores_data']
+					? ", along with the ".$impact['entries_with_a_value_in_this_element']." value(s) that entries held in it."
+					: ". It held no data of its own.")
+		];
+	}
+
 	private function get_screen_details($arguments) {
 		$screen_id = $arguments['screen_id'];
 		$screens_list = $this->screens_list(screenId: $screen_id);

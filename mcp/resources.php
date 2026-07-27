@@ -441,13 +441,7 @@ trait resources {
 
 		$elements = $this->metadataFields();
 		while ($row = $this->db->fetchArray($elementsResult)) {
-			// if user can see the element or is a webmaster
-			if($row['ele_display'] == 1
-				OR in_array(XOOPS_GROUP_ADMIN, $this->userGroups)
-				OR (
-					strstr($row['ele_display'], ",")
-					AND array_intersect($this->userGroups, explode(",", $row['ele_display']))
-				)) {
+			if($this->userCanSeeElement($row['ele_display'])) {
 				$elements[] = [
 					'element_id' => $row['ele_id'], // since the database has the ancient shortform name ele_id, use 'element_id' explicitly
 					'ele_handle' => $row['ele_handle'],
@@ -505,6 +499,305 @@ trait resources {
 			return $base ?: 'off';
 		}
 		return array(XOOPS_GROUP_USERS => $base ?: 'off') + $limits;
+	}
+
+	/**
+	 * Look up the full settings of specific elements, identified by handle and/or id.
+	 *
+	 * Only elements the authenticated user is allowed to see are returned: the form has to pass
+	 * security_check, and the element's ele_display group list has to include one of the user's groups
+	 * (webmasters see everything). Anything the caller asked for that could not be returned - because it
+	 * does not exist, is in a form they cannot access, is hidden from their groups, or is in a different
+	 * form than the one they named - is reported back rather than silently omitted.
+	 *
+	 * @param array $identifiers Element handles (strings) and/or element ids (integers)
+	 * @param int $formId Optional. Restrict the lookup to this form, and validate that the elements belong to it.
+	 * @return array 'elements', 'element_count', and 'elements_not_found' when applicable
+	 */
+	private function element_details($identifiers, $formId = 0) {
+
+		$formId = intval($formId);
+		if($formId AND !security_check($formId)) {
+			throw new FormulizeMCPException(
+				'Permission denied: user does not have access to form ' . $formId,
+				'permission_denied',
+			);
+		}
+
+		$ids = [];
+		$handles = [];
+		foreach($identifiers as $identifier) {
+			if(is_numeric($identifier)) {
+				$ids[] = intval($identifier);
+			} elseif(is_string($identifier) AND trim($identifier) !== '') {
+				$handles[] = $this->db->quoteString(trim($identifier));
+			}
+		}
+		if(empty($ids) AND empty($handles)) {
+			throw new FormulizeMCPException(
+				'No valid element handles or ids were provided.',
+				'invalid_data',
+				context: [ 'hint' => 'Each item in the elements array must be an element handle (string) or an element id (number). Use get_form_details to find them.' ]
+			);
+		}
+
+		$matchClauses = [];
+		if(!empty($ids)) { $matchClauses[] = "ele_id IN (".implode(',', $ids).")"; }
+		if(!empty($handles)) { $matchClauses[] = "ele_handle IN (".implode(',', $handles).")"; }
+		$formClause = $formId ? " AND id_form = $formId" : "";
+		$sql = "SELECT * FROM ".$this->db->prefix('formulize')." WHERE (".implode(' OR ', $matchClauses).")$formClause ORDER BY id_form, ele_order";
+
+		if(!$result = $this->db->query($sql)) {
+			throw new FormulizeMCPException(
+				'Failed to look up element data. '.$this->db->error(),
+				'database_error'
+			);
+		}
+
+		// the list of fields that are stored serialized is declared in one place in the codebase, so read it
+		// from there rather than repeating it here - that way a newly added serialized field is handled
+		// automatically instead of being returned to the AI assistant as a raw serialized blob
+		$serializedFields = FormulizeObject::serializedDBFields();
+		$serializedElementFields = $serializedFields['formulize'] ?? [];
+
+		$elements = [];
+		$found = [];
+		while($row = $this->db->fetchArray($result)) {
+			if(!security_check($row['id_form'])) {
+				continue; // a form this user has no access to
+			}
+			if(!$this->userCanSeeElement($row['ele_display'])) {
+				continue;
+			}
+			$found[strtolower($row['ele_handle'])] = true;
+			$found[$row['ele_id']] = true;
+			$elements[] = $this->prepareElementRow($row, $serializedElementFields);
+		}
+
+		$notFound = [];
+		foreach($identifiers as $identifier) {
+			$key = is_numeric($identifier) ? intval($identifier) : strtolower(trim((string)$identifier));
+			if(!isset($found[$key])) {
+				$notFound[] = $identifier;
+			}
+		}
+
+		if(empty($elements)) {
+			throw new FormulizeMCPException(
+				'None of the requested elements could be found: '.implode(', ', $notFound),
+				'unknown_element',
+				context: array_filter([
+					'requested' => $identifiers,
+					'valid_element_handles' => $formId ? $this->elementHandlesForForm($formId) : null,
+					'hint' => 'Use get_form_details to see the elements in a form.'
+				])
+			);
+		}
+
+		$response = [
+			'elements' => $elements,
+			'element_count' => count($elements)
+		];
+		if(!empty($notFound)) {
+			// a partial result is more useful than an error, so report the misses alongside the hits
+			$response['elements_not_found'] = $notFound;
+			if($formId) {
+				$response['valid_element_handles'] = $this->elementHandlesForForm($formId);
+			}
+		}
+		return $response;
+	}
+
+	/**
+	 * Turn a raw row from the elements table into the shape reported to an AI assistant:
+	 * serialized fields unserialized, condition fields converted to readable condition lists, and the
+	 * ancient ele_id column name reported explicitly as element_id.
+	 * @param array $row A row from the formulize elements table
+	 * @param array $serializedElementFields The fields on that table which are stored serialized
+	 * @return array The prepared element
+	 */
+	private function prepareElementRow($row, $serializedElementFields) {
+		foreach($serializedElementFields as $field) {
+			if(!isset($row[$field])) {
+				continue;
+			}
+			$row[$field] = ($row[$field] === '' OR $row[$field] === null) ? [] : unserialize($row[$field]);
+			// both of these are built by parseSubmittedConditions(), so both are stored as parallel arrays
+			// and both need converting into something readable
+			if($field == 'ele_filtersettings' OR $field == 'ele_disabledconditions') {
+				$row[$field] = $this->tidyUpOldConditionsArrayFormat($row[$field]);
+			}
+		}
+		$additionalFields = [
+			'element_id' => $row['ele_id'],
+			'form_id' => $row['id_form']
+		];
+		unset($row['ele_id'], $row['id_form']);
+		return $additionalFields + $row;
+	}
+
+	/**
+	 * Whether the authenticated user is allowed to see an element, based on its ele_display setting.
+	 * Webmasters always can. Otherwise ele_display is either 1 (everyone) or a comma separated group list.
+	 * @param string $eleDisplay The element's ele_display value
+	 * @return bool
+	 */
+	private function userCanSeeElement($eleDisplay) {
+		return ($eleDisplay == 1
+			OR in_array(XOOPS_GROUP_ADMIN, $this->userGroups)
+			OR (
+				strstr($eleDisplay, ",")
+				AND array_intersect($this->userGroups, explode(",", $eleDisplay))
+			));
+	}
+
+	/**
+	 * The handles of the elements in a form, for putting into an error response so the AI assistant can
+	 * correct a bad identifier without having to make another call.
+	 * @param int $formId
+	 * @return array
+	 */
+	private function elementHandlesForForm($formId) {
+		$handles = [];
+		$sql = "SELECT ele_handle, ele_display FROM ".$this->db->prefix('formulize')." WHERE id_form = ".intval($formId)." ORDER BY ele_order";
+		if($result = $this->db->query($sql)) {
+			while($row = $this->db->fetchArray($result)) {
+				if($this->userCanSeeElement($row['ele_display'])) {
+					$handles[] = $row['ele_handle'];
+				}
+			}
+		}
+		return $handles;
+	}
+
+	/**
+	 * Work out what would be lost or broken by deleting an element, so the impact can be reported before
+	 * anything is destroyed.
+	 *
+	 * Two different kinds of consequence are reported, and the distinction matters. Some things the delete
+	 * handles itself: the data column is dropped, the element is removed from form screen pages, and the
+	 * form's principal identifier is reset if it was this element. Other things are NOT cleaned up, and are
+	 * simply left pointing at an element that no longer exists - list screen columns, derived value formulas,
+	 * and custom code that names the handle. Those are the references that will actually break.
+	 *
+	 * @param object $elementObject The element being considered for deletion
+	 * @return array The impact report
+	 */
+	private function elementDeletionImpact($elementObject) {
+
+		$elementId = intval($elementObject->getVar('ele_id'));
+		$formId = intval($elementObject->getVar('fid'));
+		$handle = $elementObject->getVar('ele_handle');
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($formId);
+
+		$impact = [
+			'element_id' => $elementId,
+			'element_handle' => $handle,
+			'element_caption' => $elementObject->getVar('ele_caption'),
+			'element_type' => $elementObject->getVar('ele_type'),
+			'form_id' => $formId,
+			'form_title' => $formObject ? $formObject->getVar('form_title') : null,
+		];
+
+		// how much data would be destroyed
+		$impact['stores_data'] = (bool) $elementObject->hasData;
+		$impact['entries_with_a_value_in_this_element'] = 0;
+		if($elementObject->hasData AND $formObject) {
+			$dataTable = $this->db->prefix('formulize_'.$formObject->getVar('form_handle'));
+			$countSql = "SELECT COUNT(*) AS c FROM `$dataTable` WHERE `".formulize_db_escape($handle)."` IS NOT NULL AND `".formulize_db_escape($handle)."` != ''";
+			if($countResult = $this->db->query($countSql)) {
+				$countRow = $this->db->fetchArray($countResult);
+				$impact['entries_with_a_value_in_this_element'] = intval($countRow['c']);
+			}
+		}
+
+		// the form's principal identifier is reset to nothing if this element was it
+		$impact['is_the_principal_identifier'] = ($formObject AND intval($formObject->getVar('pi')) === $elementId);
+
+		// form screens the element will be removed from automatically
+		$impact['removed_from_form_screens'] = [];
+		$screenSql = "SELECT s.sid, s.title, m.pages FROM ".$this->db->prefix('formulize_screen')." s
+			INNER JOIN ".$this->db->prefix('formulize_screen_multipage')." m ON m.sid = s.sid
+			WHERE s.fid = $formId";
+		if($screenResult = $this->db->query($screenSql)) {
+			while($screenRow = $this->db->fetchArray($screenResult)) {
+				$pages = @unserialize($screenRow['pages']);
+				if(!is_array($pages)) { continue; }
+				foreach($pages as $pageElements) {
+					if(is_array($pageElements) AND in_array($elementId, array_map('intval', $pageElements))) {
+						$impact['removed_from_form_screens'][] = ['screen_id' => intval($screenRow['sid']), 'screen_title' => $screenRow['title']];
+						break;
+					}
+				}
+			}
+		}
+
+		// references that are NOT cleaned up, and so will be left broken
+		$broken = [];
+
+		// list screen columns, hidden columns and inline editable columns
+		$listSql = "SELECT s.sid, s.title, l.advanceview, l.hiddencolumns, l.decolumns FROM ".$this->db->prefix('formulize_screen')." s
+			INNER JOIN ".$this->db->prefix('formulize_screen_listofentries')." l ON l.sid = s.sid";
+		if($listResult = $this->db->query($listSql)) {
+			while($listRow = $this->db->fetchArray($listResult)) {
+				$referenced = false;
+				$advanceview = @unserialize($listRow['advanceview']);
+				if(is_array($advanceview)) {
+					foreach($advanceview as $column) {
+						if(is_array($column) AND isset($column[0]) AND $column[0] === $handle) { $referenced = true; }
+					}
+				}
+				foreach(array('hiddencolumns', 'decolumns') as $columnSetting) {
+					$columnList = @unserialize($listRow[$columnSetting]);
+					if(is_array($columnList) AND (in_array($elementId, array_map('intval', $columnList)) OR in_array($handle, $columnList))) {
+						$referenced = true;
+					}
+				}
+				if($referenced) {
+					$broken[] = "list screen ".intval($listRow['sid'])." (".$listRow['title'].") uses this element as a column";
+				}
+			}
+		}
+
+		// Other elements that name this one. There are two ways a handle gets referenced: as a PHP variable
+		// in derived value code ($some_handle), and in curly braces in the default value of a text or
+		// textarea element and in the content of a static content element ({some_handle}).
+		// The SQL is only a coarse filter - it is deliberately loose, because an underscore is a single
+		// character wildcard in LIKE and handles are full of them. The precise test happens in PHP, where a
+		// trailing name character can be excluded so that $artifacts_year does not match $artifacts_year_era.
+		// The excluded set is PHP's own grammar for what may continue a variable name,
+		// [a-zA-Z0-9_\x80-\xff], which includes the high bytes that let variable names hold accented and
+		// other non-ASCII characters. No /u modifier: that grammar is defined in bytes, and a multibyte
+		// character is a sequence of bytes that are all inside the excluded range anyway.
+		$continuesAName = '(?![A-Za-z0-9_\x80-\xff])';
+		$referencePattern = '/(\$'.preg_quote($handle, '/').$continuesAName.'|\{'.preg_quote($handle, '/').'\})/';
+		$referenceSql = "SELECT ele_id, ele_handle, ele_type, id_form, ele_value FROM ".$this->db->prefix('formulize')."
+			WHERE ele_value LIKE ".$this->db->quoteString('%'.$handle.'%');
+		if($referenceResult = $this->db->query($referenceSql)) {
+			while($referenceRow = $this->db->fetchArray($referenceResult)) {
+				if(intval($referenceRow['ele_id']) === $elementId) { continue; }
+				if(preg_match($referencePattern, (string) $referenceRow['ele_value'])) {
+					$broken[] = "the ".$referenceRow['ele_type']." element '".$referenceRow['ele_handle']."' (form ".intval($referenceRow['id_form']).") refers to this element by name in its settings";
+				}
+			}
+		}
+
+		// custom code files that name the handle, including the code files written for derived value and
+		// static content elements, which live in the same folder
+		$codeDir = XOOPS_ROOT_PATH.'/modules/formulize/code/';
+		if(is_dir($codeDir)) {
+			foreach((array) glob($codeDir.'*.php') as $codeFile) {
+				$contents = file_get_contents($codeFile);
+				if($contents !== false AND preg_match($referencePattern, $contents)) {
+					$broken[] = "custom code file '".basename($codeFile)."' refers to this element by name";
+				}
+			}
+		}
+
+		$impact['references_that_will_be_left_broken'] = $broken;
+
+		return $impact;
 	}
 
 	/**
