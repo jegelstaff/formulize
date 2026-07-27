@@ -384,8 +384,12 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
 			$defaultListScreen->setVar('useviewentrylinks', isset($formulizeConfig['formulizeDefaultEditIconStyle']) ? $formulizeConfig['formulizeDefaultEditIconStyle'] : FORMULIZE_EDIT_ICON_STYLE_PEN);
 			$defaultListScreen->setVar('desavetext', _formulize_SAVE);
 			// Buttons
-			// ********* when users-groups is merged in, need to change this to use effectivesingle on the registered users group!!!
-			if($formObject->getVar('single') != 'group' AND $formObject->getVar('single') != 'user') {
+			// 'single' is a per-group array, so it has to be resolved before it can be compared. This is a
+			// default screen being set up rather than something being rendered for a particular user, so it
+			// is resolved from the point of view of the Registered Users group, which gives the base value
+			// that applies to anyone without a group specific setting.
+			$effectiveSingle = resolveEffectiveSingle($formObject->getVar('single'), array(XOOPS_GROUP_USERS));
+			if($effectiveSingle != 'group' AND $effectiveSingle != 'user') {
 				$addUpdateText = ($formObject->getVar('singular') ? sprintf(_formulize_DE_ADDSINGULAR, $formObject->getVar('singular')) : _formulize_DE_ADDENTRY);
 			} else {
 				$addUpdateText = ($formObject->getVar('singular') ? sprintf(_formulize_DE_UPDATESINGULAR, $formObject->getVar('singular')) : _formulize_DE_UPDATEENTRY);

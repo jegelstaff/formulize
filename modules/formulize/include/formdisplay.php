@@ -1975,8 +1975,10 @@ function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid,
 		$entryOwnerName = null;
 		// check if this is a single entry form, and if so, if the user has an entry already, in which case we show the proxy list by default since they have to pick someone as the owner when saving the form
 		if($xoopsUser) {
-			if(($formObject->getVar('single') == "user" AND $data_handler->findFirstEntryForUsers($xoopsUser))
-				OR ($formObject->getVar('single') == "group" AND $data_handler->findFirstEntryForGroups($xoopsUser->getGroups()))) {
+			// 'single' is a per-group array, so it has to be resolved for this user before it can be compared
+			$effectiveSingle = resolveEffectiveSingle($formObject->getVar('single'), $xoopsUser->getGroups());
+			if(($effectiveSingle == "user" AND $data_handler->findFirstEntryForUsers($xoopsUser))
+				OR ($effectiveSingle == "group" AND $data_handler->findFirstEntryForGroups($xoopsUser->getGroups()))) {
 				$startOfficeUseOnlyHidden = false;
 			}
 		}
