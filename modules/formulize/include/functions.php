@@ -3146,6 +3146,30 @@ function removeOpeningPHPTag($string) {
 }
 
 /**
+ * Add an opening PHP tag to a block of code if it does not already start with one.
+ *
+ * Custom code is stored without any requirement to include the tag, and Formulize strips it before
+ * compiling anyway, so it makes no difference to how the code runs. It does matter for editing: the code
+ * editor in the admin UI highlights with CodeMirror's application/x-httpd-php mode, which treats content
+ * as HTML until it meets an opening tag, so code without one is displayed with no PHP highlighting at all.
+ * Use this when putting code into an editor, so what the person sees is highlighted properly.
+ *
+ * An empty editor is seeded with just the tag, matching what some of the other code editing templates
+ * already do, so that highlighting works from the first thing typed. A block containing nothing but the
+ * tag is treated as empty when saved, so seeding it does not create code where there was none.
+ *
+ * @param string $string The code to display
+ * @return string The code, guaranteed to start with an opening PHP tag
+ */
+function ensureOpeningPHPTag($string) {
+	$string = trim($string);
+	if(substr($string, 0, 5) == '<?php') {
+		return $string;
+	}
+	return $string === '' ? "<?php\n\n" : "<?php\n\n".$string;
+}
+
+/**
  * Interpret the value for a textbox or textarea, return the actual string we should display or should save in the DB
  * @param mixed $elementIdentifier The id number, handle, or object representing the element we're working with
  * @param int|string $entry_id Optional. Defaults to 'new'. The entry id number of the entry that we're working with, or 'new' for new entries not yet saved. Possibly referenced by eval'd code.

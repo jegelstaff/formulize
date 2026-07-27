@@ -913,6 +913,11 @@ $common['defaultform'] = $defaultform;
 $common['defaultlist'] = $defaultlist;
 $common['form_object'] = $formObject;
 $common['note'] = $note;
+// the code editor highlights with CodeMirror's PHP mode, which needs an opening tag before it will treat
+// the content as PHP at all, so make sure one is there for editing. The code itself is stored either way.
+foreach(array('on_before_save', 'on_after_save', 'on_delete', 'custom_edit_check') as $procedure) {
+    $common[$procedure] = ($fid != "new" AND isset($formObject)) ? ensureOpeningPHPTag($formObject->getVar($procedure)) : '';
+}
 $common['entry_description'] = $entry_description ?? '';
 $common['usage_notes'] = $usage_notes ?? '';
 $common['data_conventions'] = $data_conventions ?? '';

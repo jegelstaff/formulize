@@ -1179,11 +1179,20 @@ trait resources {
 		];
 	}
 
+	/**
+	 * Assemble one application for the applications list.
+	 * Reports whether the application has custom code the same way form_schemas() reports it for a form,
+	 * because otherwise there is nothing to tell an AI assistant that the code exists: an application can
+	 * carry code that runs on every page, and without this the only way to find it would be to guess and
+	 * call get_custom_code on the off chance.
+	 * @return array The application
+	 */
 	private function assignAppDataToApplicationsArray($id, $name, $desc, $forms) {
 		return [
 			'id' => $id,
 			'name' => $name,
 			'description' => $desc,
+			'custom_code_present' => file_exists(XOOPS_ROOT_PATH.'/modules/formulize/code/application_custom_code_'.intval($id).'.php'),
 			'forms' => $forms
 		];
 	}

@@ -262,6 +262,9 @@ if (is_object($appObject)){
     $adminPage['tabs'][$i]['name'] = "Code";
     $adminPage['tabs'][$i]['template'] = "db:admin/application_code.html";
     $adminPage['tabs'][$i]['content'] = $variableHelp + $common;
+    // Not passed through ensureOpeningPHPTag, unlike the form procedures. What goes in this box is
+    // include()d and its output captured, so it is legitimately either PHP or plain markup such as a style
+    // override. Forcing an opening tag onto markup would turn it into a syntax error.
     $adminPage['tabs'][$i]['content']['custom_code'] = $appObject->getVar("custom_code");
 }
 

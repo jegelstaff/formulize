@@ -30,7 +30,7 @@ trait tools {
 			],
 			'list_applications' => [
 				'name' => 'list_applications',
-				'description' => "List all the applications and the forms that are part of each one. This tool provides an overview of the organizational structure of the forms within the system, helping to understand how forms are grouped together for different purposes. The same form can exist in multiple applications.",
+				'description' => "List all the applications and the forms that are part of each one. This tool provides an overview of the organizational structure of the forms within the system, helping to understand how forms are grouped together for different purposes. The same form can exist in multiple applications. Each application also reports whether it has custom code, which is PHP that runs on every page of that application and can affect how things behave; read it with the get_custom_code tool.",
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => (object)[]
@@ -579,6 +579,101 @@ Use get_form_details first to see the form\'s current settings. This tool does n
 				]
 			];
 
+			$this->tools['get_custom_code'] = [
+				'name' => 'get_custom_code',
+				'description' => 'Read the custom PHP code attached to a form or to an application.
+
+Formulize runs custom code at certain moments: when an entry is about to be saved, after it has been saved, when it is deleted, and when it is deciding whether someone may edit an entry. An application can also hold a library of shared code that is available in every request. None of this is visible in a form\'s elements; the get_form_details tool only reports which pieces of custom code exist in a form. The list_applications tool only reports which applications have custom code libraries. This tool will show you the actual code.
+
+Read the code before changing it. The tools that write it - update_form_code for a form\'s procedures, and update_application_code for an application\'s shared library - each replace the code entirely rather than adding to it.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'code_type' => [
+							'type' => 'string',
+							'enum' => $this->customCodeTypes(),
+							'description' => "Optional. Which piece of code. The four 'form_' types belong to a single form and need form_id. 'application_code' belongs to an application and needs application_id. Leave this out to get every piece of code for whichever id you supply."
+						],
+						'form_id' => [
+							'type' => 'integer',
+							'description' => "Required when code_type is one of the 'form_' types. The id of the form the code belongs to."
+						],
+						'application_id' => [
+							'type' => 'integer',
+							'description' => "Required when code_type is 'application_code'. The id of the application. Use the list_applications tool to find application ids."
+						]
+					]
+				]
+			];
+
+			$this->tools['update_form_code'] = [
+				'name' => 'update_form_code',
+				'description' => 'Write one of the four procedures that Formulize runs at moments in the life of an entry in a form. To write the shared code library that belongs to an application rather than to a form, use update_application_code instead.
+
+**The code you send replaces that procedure completely.** It is not added to what is there. Call get_custom_code first, and if you are adding to existing logic, include the existing code in what you send. **Sending an empty string removes the procedure altogether.**
+
+**Your code is placed inside a function that Formulize generates**, so write the statements only - do not write a function declaration.
+
+**In the three save and delete procedures, the entry\'s values arrive as variables named after the element handles**: the value to be saved in an element with the handle \'artifacts_year\' is available as $artifacts_year. This does not apply to form_custom_edit_check, which is about permission rather than about data and receives no element values.
+
+**The $currentValues array is how you tell what changed.** In the save procedures the values that were in the database before this save operation started, are available as $currentValues[\'handle_name\']. For example, this lets you compare $currentValues[\'artifacts_year\'] with $artifacts_year to see whether what\'s in the database now is different from what is being/has been saved.
+
+**The values of the element handle variables, and of the $currentValues array, are all formatted for storage in the database**. For example, a linked element\'s value will be the entry_id of the selected entry or entries, not the human readable value the user selected. **This is the opposite of how the other tools work.** create_entries and update_entries accept readable values and convert them for you, and get_entries_from_form lets you filter on readable values too. Custom code has no such conversion in either direction: you read the stored values and you write the stored values, so you have to know how the data is actually held. For complete details of the database storage formats for elements, consult the Formulize Method guide [INSERT TOOL NAME HERE WHEN KNOWN].
+
+What each procedure receives, and what it should do:
+
+- **form_on_before_save** - runs before the entry is written. Variables: the element handle variables and the $currentValues array (see above), $form_id, and $entry_id which is the string \'new\' when the entry does not exist yet. Assign to the element handle variables to change what gets written, for example to force a certain value for one element based on the value of another element. Return false to stop the save from happening at all.
+- **form_on_after_save** - runs after the entry is written. Variables: the element handle variables and $currentValues (see above), $form_id, $entry_id which is always the actual saved entry id (never \'new\') since the save operation has completed now, and $newEntry which is a boolean that will be true if this was the first time the entry was saved, and false otherwise for existing entries being resaved. Use this procedure for any bookkeeping or updates that need to happen in the system after a successful save.
+- **form_on_delete** - runs when an entry is deleted. Variables: $entry_id, $form_id, and the element handle variables holding the values that were in the database before the deletion. There is no $currentValues array here.
+- **form_custom_edit_check** - decides whether someone may edit an entry. Variables: $form_id, $entry_id, $user_id, and $allow_editing, which is a boolean indicating whether the user would normally be able to edit the entry, based on the Formulize permission settings. Alter $allow_editing to control whether the user will actually be able to edit the entry; its value at the end of the code will be respected. No element values are available here.
+
+There is no syntax checking when you save. A mistake will not be reported here - it will surface when someone next uses the form, so re-read what you wrote before finishing.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'code_type' => [
+							'type' => 'string',
+							'enum' => array_keys($this->formCodeProcedures()),
+							'description' => 'Required. Which of the form\'s four procedures to write.'
+						],
+						'form_id' => [
+							'type' => 'integer',
+							'description' => 'Required. The id of the form the procedure belongs to.'
+						],
+						'code' => [
+							'type' => 'string',
+							'description' => 'Required. The PHP statements, with no function declaration. Send an empty string to remove the procedure.'
+						]
+					],
+					'required' => ['code_type', 'form_id', 'code']
+				]
+			];
+
+			$this->tools['update_application_code'] = [
+				'name' => 'update_application_code',
+				'description' => 'Write the shared code library that belongs to an application. To write one of the procedures that run at moments in the life of an entry in a form, use update_form_code instead.
+
+**The code you send replaces the library completely.** It is not added to what is there. Call get_custom_code first and if you are adding to existing logic, include the existing code in what you send. **Sending an empty string removes the library altogether.**
+
+This code is not wrapped in anything. The file is included as it stands on every page of the application, so **begin it with a `<?php` tag**. This file is usually nothing but function declarations - helpers that the form procedures call, or that derived value elements reference in their formulas, etc. This provides a common place for shared application logic to exist. Anything that this file prints out / echos to screen, is included in the DOM as is, so in extreme cases it can be useful for special scripts or style overrides, but use that capability sparingly!
+
+There is no syntax checking when you save, and an error here affects every page of the application rather than one form, so re-read what you wrote before finishing.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'application_id' => [
+							'type' => 'integer',
+							'description' => 'Required. The id of the application. Use the list_applications tool to find application ids.'
+						],
+						'code' => [
+							'type' => 'string',
+							'description' => 'Required. The PHP for the library, beginning with a `<?php` tag. Send an empty string to remove it.'
+						]
+					],
+					'required' => ['application_id', 'code']
+				]
+			];
+
 			$this->tools['delete_element'] = [
 				'name' => 'delete_element',
 				'description' => 'Permanently delete an element from a form.
@@ -648,6 +743,93 @@ This tool takes two calls. Call it first with just the element, and it will NOT 
 			}
 		}
 
+	}
+
+	/**
+	 * The four procedures a form can have, mapped to the form object property each is stored in.
+	 * This is what update_form_code works with. A trait cannot hold a constant before PHP 8.2, so it is
+	 * a method.
+	 * @return array code_type => form object property
+	 */
+	private function formCodeProcedures() {
+		return [
+			'form_on_before_save' => 'on_before_save',
+			'form_on_after_save' => 'on_after_save',
+			'form_on_delete' => 'on_delete',
+			'form_custom_edit_check' => 'custom_edit_check',
+		];
+	}
+
+	/**
+	 * Every kind of code get_custom_code can read: a form's four procedures plus an application's shared
+	 * library. Only the read tool spans both, since writing them is different enough to be two tools.
+	 * @return array A list of code_type values
+	 */
+	private function customCodeTypes() {
+		return array_merge(array_keys($this->formCodeProcedures()), ['application_code']);
+	}
+
+	/**
+	 * Work out which form or application a custom code read is aimed at, and check the caller may see it.
+	 * Only used for reading; the two write tools resolve their own single kind of target.
+	 * @param array $arguments The tool arguments
+	 * @return array [$codeType, $formObject|null, $appObject|null]
+	 * @throws FormulizeMCPException if the target is missing or unknown
+	 */
+	private function resolveCustomCodeTarget($arguments) {
+		$codeType = $arguments['code_type'] ?? null;
+		$validTypes = $this->customCodeTypes();
+		if($codeType !== null AND !in_array($codeType, $validTypes, true)) {
+			throw new FormulizeMCPException(
+				"Unknown code_type: $codeType",
+				'invalid_data',
+				context: [ 'valid_code_types' => $validTypes ]
+			);
+		}
+
+		$isApplicationCode = ($codeType === 'application_code');
+		// with no code_type, decide from whichever id was given
+		if($codeType === null) {
+			$isApplicationCode = (!isset($arguments['form_id']) AND isset($arguments['application_id']));
+		}
+
+		if($isApplicationCode) {
+			$appId = intval($arguments['application_id'] ?? 0);
+			if(!$appId) {
+				throw new FormulizeMCPException(
+					"application_id is required for application_code.",
+					'invalid_data',
+					context: [ 'hint' => 'Use the list_applications tool to find application ids.' ]
+				);
+			}
+			$application_handler = xoops_getmodulehandler('applications', 'formulize');
+			if(!$appObject = $application_handler->get($appId)) {
+				throw new FormulizeMCPException(
+					"Application not found: $appId",
+					'invalid_data',
+					context: [ 'hint' => 'Use the list_applications tool to see the applications in this system.' ]
+				);
+			}
+			return [$codeType, null, $appObject];
+		}
+
+		$formId = intval($arguments['form_id'] ?? 0);
+		if(!$formId) {
+			throw new FormulizeMCPException(
+				"form_id is required for the form level kinds of code.",
+				'invalid_data',
+				context: [ 'valid_code_types' => $validTypes ]
+			);
+		}
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		if(!$formObject = $form_handler->get($formId)) {
+			throw new FormulizeMCPException(
+				"Form not found: $formId",
+				'form_not_found',
+				context: [ 'hint' => 'Use the list_forms tool to see the forms in this system.' ]
+			);
+		}
+		return [$codeType, $formObject, null];
 	}
 
 	/**
@@ -2461,6 +2643,186 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 			);
 		}
 		return $this->element_details($elements, $arguments['form_id'] ?? 0);
+	}
+
+	/**
+	 * Read the custom code attached to a form or an application.
+	 * Always reports code as a map keyed by code_type, whether one piece was asked for or all of them, so
+	 * the shape of the response does not change depending on the request.
+	 * @param array $arguments 'code_type' (optional), plus 'form_id' or 'application_id'
+	 * @return array The code, and which form or application it belongs to
+	 */
+	private function get_custom_code($arguments) {
+
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				"Permission denied: Only webmasters can read custom code.",
+				'authentication_error',
+			);
+		}
+
+		list($codeType, $formObject, $appObject) = $this->resolveCustomCodeTarget($arguments);
+
+		if($appObject) {
+			return [
+				'application_id' => intval($appObject->getVar('appid')),
+				'application_name' => $appObject->getVar('name'),
+				'code' => [ 'application_code' => (string) $appObject->getVar('custom_code') ]
+			];
+		}
+
+		$code = [];
+		foreach($this->formCodeProcedures() as $type => $property) {
+			if($codeType !== null AND $codeType !== $type) { continue; }
+			$code[$type] = (string) $formObject->getVar($property);
+		}
+
+		return [
+			'form_id' => intval($formObject->getVar('fid')),
+			'form_title' => $formObject->getVar('form_title'),
+			'code' => $code
+		];
+	}
+
+	/**
+	 * Write one of a form's four procedures.
+	 *
+	 * Goes through the form object: setVar regenerates the compiled version in the cache, and insert()
+	 * writes the source file into modules/formulize/code/, or removes it when the code is emptied.
+	 *
+	 * @param array $arguments 'code_type', 'form_id' and 'code', all required
+	 * @return array What was written
+	 * @throws FormulizeMCPException on permission failure or invalid input
+	 */
+	private function update_form_code($arguments) {
+
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				"Permission denied: Only webmasters can change custom code.",
+				'authentication_error',
+			);
+		}
+
+		if(!array_key_exists('code', $arguments)) {
+			throw new FormulizeMCPException(
+				'code is required. Send an empty string to remove the procedure.',
+				'invalid_data'
+			);
+		}
+		$formProcedures = $this->formCodeProcedures();
+		$codeType = $arguments['code_type'] ?? '';
+		if(!isset($formProcedures[$codeType])) {
+			throw new FormulizeMCPException(
+				$codeType === '' ? 'code_type is required.' : "Unknown code_type for a form: $codeType",
+				'invalid_data',
+				context: [
+					'valid_code_types' => array_keys($formProcedures),
+					'hint' => 'To write an application\'s shared code library, use the update_application_code tool.'
+				]
+			);
+		}
+		$code = (string) $arguments['code'];
+
+		$formId = intval($arguments['form_id'] ?? 0);
+		if(!$formId) {
+			throw new FormulizeMCPException('form_id is required', 'invalid_data');
+		}
+		// a locked form must not gain new logic through the tools. Table forms are allowed: their elements
+		// belong to the underlying table, but their procedures are Formulize's own.
+		$formObject = $this->assertFormIsEditableByTools($formId, allowTableForms: true);
+
+		$property = $formProcedures[$codeType];
+		$formObject->setVar($property, $code);
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		if(!$form_handler->insert($formObject, true)) {
+			global $xoopsDB;
+			throw new FormulizeMCPException(
+				'Could not save the code for the form. '.$xoopsDB->error(),
+				'database_error'
+			);
+		}
+
+		// read it back off disk rather than echoing the argument, so the response shows what is really there
+		$savedForm = $form_handler->get($formId, false, true);
+		return [
+			'form_id' => $formId,
+			'code_type' => $codeType,
+			'code' => (string) $savedForm->getVar($property),
+			'success' => true,
+			'message' => trim($code) === ''
+				? "The $codeType procedure has been removed from this form."
+				: "The $codeType procedure has been saved. It is not syntax checked, so confirm it behaves as you expect."
+		];
+	}
+
+	/**
+	 * Write an application's shared code library.
+	 *
+	 * Written straight to the file, which is what the admin save handler does, because the application
+	 * object reads custom_code from disk but has no write path of its own.
+	 *
+	 * @param array $arguments 'application_id' and 'code', both required
+	 * @return array What was written
+	 * @throws FormulizeMCPException on permission failure or invalid input
+	 */
+	private function update_application_code($arguments) {
+
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				"Permission denied: Only webmasters can change custom code.",
+				'authentication_error',
+			);
+		}
+
+		if(!array_key_exists('code', $arguments)) {
+			throw new FormulizeMCPException(
+				'code is required. Send an empty string to remove the library.',
+				'invalid_data'
+			);
+		}
+		$code = (string) $arguments['code'];
+
+		$appId = intval($arguments['application_id'] ?? 0);
+		if(!$appId) {
+			throw new FormulizeMCPException(
+				'application_id is required',
+				'invalid_data',
+				context: [ 'hint' => 'Use the list_applications tool to find application ids.' ]
+			);
+		}
+		$application_handler = xoops_getmodulehandler('applications', 'formulize');
+		if(!$appObject = $application_handler->get($appId)) {
+			throw new FormulizeMCPException(
+				"Application not found: $appId",
+				'invalid_data',
+				context: [ 'hint' => 'Use the list_applications tool to see the applications in this system.' ]
+			);
+		}
+
+		$fileName = 'application_custom_code_'.$appId.'.php';
+		$filePath = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$fileName;
+		// Deliberately stored exactly as sent. This file is include()d directly and whatever it outputs is
+		// captured, so content without an opening PHP tag is emitted as page output - which is a supported
+		// use of this box, for things like a style override. Adding a tag would turn that into a syntax
+		// error, so the caller decides, and the tool description explains what to write.
+		if(trim($code) === '') {
+			if(file_exists($filePath)) { unlink($filePath); }
+		} elseif(formulize_writeCodeToFile($fileName, $code) === false) {
+			throw new FormulizeMCPException(
+				"Could not write the code file for application $appId.",
+				'database_error'
+			);
+		}
+
+		return [
+			'application_id' => $appId,
+			'application_name' => $appObject->getVar('name'),
+			'code' => file_exists($filePath) ? (string) file_get_contents($filePath) : '',
+			'success' => true,
+			'message' => trim($code) === ''
+				? "The shared code library has been removed from this application."
+				: "The shared code library has been saved. It is not syntax checked and it runs on every page of the application, so confirm it behaves as you expect."
+		];
 	}
 
 	/**
