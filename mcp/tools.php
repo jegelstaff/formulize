@@ -62,7 +62,9 @@ trait tools {
 			],
 			'list_group_members' => [
 				'name' => 'list_group_members',
-				'description' => "List all the users who are members of a specific group. Use the list_groups tool to get the ID numbers of all the groups in the system.",
+				'description' => "List all the users who are members of a specific group. Use the list_groups tool to get the ID numbers of all the groups in the system.
+
+Form-based template groups have no members of their own. However, asking for the members of one is not a dead end: alongside the empty member list, the response names the entry groups associated with the template group, and how many members each of those groups has. Permissions assigned to the template group will automatically be applied to all its entry groups.",
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
@@ -696,7 +698,42 @@ The form itself: edit_form (change the form\'s structure, elements and settings)
 
 Creating a group gives it no permissions and no members. Use set_form_permissions to say what it can do, and update_group_members to put people in it.';
 
-			$userGroupsDescription = 'Optional. The complete list of groups this user should belong to, replacing whatever they belong to now. Leave it out to leave their groups alone; an empty array removes them from everything except the groups the system requires. Use list_groups to find group ids. Use list_a_users_groups to see what groups a user currently belongs to.';
+			$userGroupsDescription = 'Optional. The complete list of groups this user should belong to, replacing whatever they belong to now. Leave it out to leave their groups alone; an empty array removes them from everything except the groups the system requires. Use list_groups to find group ids. Use list_a_users_groups to see what groups a user currently belongs to.
+
+Giving the complete list is safe here because a person belongs to only a few groups. The update_group_members tool deliberately works the other way round, naming the individual users to add or remove, because a group can have thousands of members.';
+
+			$this->tools['update_group_members'] = [
+				'name' => 'update_group_members',
+				'description' => 'Add users to a group, or remove them from it. Use list_group_members to see who is in it now.
+
+This takes additions and removals rather than a complete list of who should be in the group. Nobody is added or removed here unless you name them. That is deliberately the other way round from the update_users tool, which takes a user\'s whole list of groups. This is because a person belongs to only a few groups, but a group can have thousands of members.
+
+All permissions in the system are assigned to groups; users receive permissions by virtue of the groups they are members of. Use get_form_permissions_by_group to see which permissions a group provides.
+
+Some memberships are required and cannot be removed. This tool reports each such user individually, while completing the operation for the others.
+
+Some groups are associated with the entries in forms (form-based entry groups). Such groups can have members like any other group. There are also form-based template groups, associated with a form itself. These cannot have members, because they simply represent the pattern that the entry groups follow.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'group_id' => [
+							'type' => 'integer',
+							'description' => 'Required. The group to change the membership of. Use list_groups to find group ids.'
+						],
+						'add_users' => [
+							'type' => 'array',
+							'items' => [ 'type' => 'integer' ],
+							'description' => 'Optional. User ids to add. Users already in the group are left alone rather than treated as an error. Use list_users to find user ids.'
+						],
+						'remove_users' => [
+							'type' => 'array',
+							'items' => [ 'type' => 'integer' ],
+							'description' => 'Optional. User ids to remove. Users not in the group are ignored. Nobody is removed except those named here.'
+						]
+					],
+					'required' => ['group_id']
+				]
+			];
 
 			$this->tools['create_users'] = [
 				'name' => 'create_users',
@@ -3090,6 +3127,160 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 			$response['about_inheritance'] = 'These forms inherit their permissions from this one, so they have been updated to match.';
 		}
 		$response['groups_not_named_were_left_alone'] = 'Only the groups you listed were changed. Call get_form_permissions_by_group to see the form\'s permissions as they now stand.';
+		return $response;
+	}
+
+	/**
+	 * Add users to a group, or remove them from it.
+	 *
+	 * Deltas rather than a complete membership list, unlike the user side of the same relationship. The
+	 * asymmetry is the point: replacing one user's three groups by omission is recoverable and visible,
+	 * while replacing one group's membership by omission could drop thousands of people with no error and
+	 * nothing to indicate it happened.
+	 *
+	 * @param array $arguments 'group_id' (required), 'add_users' and/or 'remove_users'
+	 * @return array What changed, what was refused, and the resulting membership count
+	 * @throws FormulizeMCPException on permission failure, an unknown group or user, or a template group
+	 */
+	private function update_group_members($arguments) {
+
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				'Permission denied: Only webmasters can change who is in a group.',
+				'authentication_error',
+			);
+		}
+		$groupId = intval($arguments['group_id'] ?? 0);
+		if(!$groupId) {
+			throw new FormulizeMCPException('group_id is required', 'invalid_data');
+		}
+
+		$member_handler = xoops_gethandler('member');
+		if(!$groupObject = $member_handler->getGroup($groupId)) {
+			throw new FormulizeMCPException(
+				"There is no group with the id $groupId.",
+				'invalid_data',
+				context: [ 'hint' => 'Use the list_groups tool to see the groups in this system.' ]
+			);
+		}
+		// a template group has no members by design; adding one would be quietly meaningless rather than
+		// an error, so say what the caller probably meant to do instead
+		if($groupObject->getVar('is_group_template')) {
+			throw new FormulizeMCPException(
+				"The group '".$groupObject->getVar('name')."' is a form-based template group and cannot have members of its own.",
+				'invalid_data',
+				context: [ 'hint' => 'Did you mean to add someone to one of the entry groups based on this template group? Use list_group_members on this group to see those entry groups, and add users to one of them.' ]
+			);
+		}
+
+		$addUsers = array_values(array_unique(array_filter(array_map('intval', (array) ($arguments['add_users'] ?? [])))));
+		$removeUsers = array_values(array_unique(array_filter(array_map('intval', (array) ($arguments['remove_users'] ?? [])))));
+		if(!$addUsers AND !$removeUsers) {
+			throw new FormulizeMCPException(
+				'Nothing to change. Supply add_users, or remove_users, or both.',
+				'invalid_data'
+			);
+		}
+		if($overlap = array_intersect($addUsers, $removeUsers)) {
+			throw new FormulizeMCPException(
+				'The same user cannot be added and removed in one call.',
+				'invalid_data',
+				context: [ 'users_in_both_lists' => array_values($overlap) ]
+			);
+		}
+		foreach(array_merge($addUsers, $removeUsers) as $uid) {
+			if(!$member_handler->getUser($uid)) {
+				throw new FormulizeMCPException(
+					"There is no user with the id $uid.",
+					'invalid_data',
+					context: [ 'hint' => 'Use the list_users tool to find user ids.' ]
+				);
+			}
+		}
+
+		// Two rules about the system groups that GroupMembershipService::enforceSystemGroupRules() applies
+		// elsewhere, but which cannot be reused here: that method takes a user's complete list of groups and
+		// corrects it, whereas this tool works in additions and removals and never assembles such a list. The
+		// rules are therefore restated rather than delegated, and they are checked here because both would
+		// otherwise go through applyMembershipChanges(), which enforces nothing on removal.
+		if($removeUsers AND $groupId == intval(XOOPS_GROUP_USERS)) {
+			throw new FormulizeMCPException(
+				'Nobody can be removed from the Registered Users group.',
+				'invalid_data',
+				context: [ 'hint' => 'Every account belongs to Registered Users; it is what distinguishes someone with an account from an anonymous visitor. To stop someone using the site, set active to false with update_users instead.' ]
+			);
+		}
+		if($addUsers AND $groupId == intval(XOOPS_GROUP_ANONYMOUS)) {
+			throw new FormulizeMCPException(
+				'Nobody can be added to the Anonymous Users group.',
+				'invalid_data',
+				context: [ 'hint' => 'Anonymous Users is everyone browsing without logging in, so it has no specific members by design. Permissions given to it apply to visitors who are not signed in.' ]
+			);
+		}
+
+		include_once XOOPS_ROOT_PATH.'/modules/formulize/class/GroupMembershipService.php';
+		$currentMembers = array_map('intval', (array) $member_handler->getUsersByGroup($groupId));
+
+		// already-members and already-absent are not errors: the caller asked for an end state and it
+		// already holds for those users
+		$actuallyAdded = array_values(array_diff($addUsers, $currentMembers));
+		$candidatesForRemoval = array_values(array_intersect($removeUsers, $currentMembers));
+
+		// Emptying the Webmasters group cannot be undone from here or anywhere else: granting that group
+		// requires already being in it, so the last webmaster to leave takes administration of the site with
+		// them. enforceSystemGroupRules() does not cover this - its webmaster clauses all guard against a
+		// non-webmaster acting, and this tool only ever runs for a webmaster, who is exactly who can do it.
+		if($candidatesForRemoval AND $groupId == intval(XOOPS_GROUP_ADMIN)
+			AND !array_diff($currentMembers, $candidatesForRemoval)) {
+			throw new FormulizeMCPException(
+				'That would remove the last '.(count($currentMembers) == 1 ? 'member' : 'members').' of the Webmasters group, leaving the site with no administrator.',
+				'invalid_data',
+				context: [
+					'webmasters_now' => $currentMembers,
+					'hint' => 'Only a webmaster can put someone into the Webmasters group, so once it is empty nobody can refill it and every administrative function becomes unreachable. Add the replacement webmaster first, then remove the outgoing one.'
+				]
+			);
+		}
+
+		$permittedToRemove = [];
+		$refused = [];
+		if($candidatesForRemoval) {
+			$survivors = array_map('intval', (array) GroupMembershipService::filterMandatoryMemberships($candidatesForRemoval, $groupId));
+			foreach($candidatesForRemoval as $uid) {
+				if(in_array($uid, $survivors)) {
+					$permittedToRemove[] = $uid;
+				} else {
+					$refused[] = $uid;
+				}
+			}
+		}
+
+		foreach($actuallyAdded as $uid) {
+			GroupMembershipService::applyMembershipChanges($uid, [$groupId], []);
+		}
+		foreach($permittedToRemove as $uid) {
+			GroupMembershipService::applyMembershipChanges($uid, [], [$groupId]);
+		}
+
+		$response = [
+			'success' => true,
+			'group_id' => $groupId,
+			'group_name' => $groupObject->getVar('name'),
+			'users_added' => $actuallyAdded,
+			'users_removed' => $permittedToRemove,
+			'member_count' => count((array) $member_handler->getUsersByGroup($groupId)),
+		];
+		if($alreadyIn = array_values(array_intersect($addUsers, $currentMembers))) {
+			$response['already_in_the_group'] = $alreadyIn;
+		}
+		if($notIn = array_values(array_diff($removeUsers, $currentMembers))) {
+			$response['were_not_in_the_group'] = $notIn;
+		}
+		if($refused) {
+			$response['could_not_be_removed'] = $refused;
+			$response['about_the_refusals'] = 'This group is required for these users and they were kept. A group can be mandatory if the user is associated with an entry in a form, and the rules for that form require the user to be in certain groups.';
+		}
+		$response['about_what_changed'] = 'Only the users named were affected. Everyone else in the group is untouched.';
 		return $response;
 	}
 
