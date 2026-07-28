@@ -54,10 +54,27 @@ trait tools {
 			],
 			'list_groups' => [
 				'name' => 'list_groups',
-				'description' => "List all the groups in the system. Use the list_group_members tool to get the users who are members of an individual group.",
+				'description' => "List the groups in the system. Use the list_group_members tool to get the users who are members of an individual group.
+
+Groups generated from the entries in a form are not listed. A form with the entries-are-groups setting produces a set of groups for every entry it holds, so a form with a few hundred entries produces a few hundred groups, and they would be almost the whole of this response while telling you the least. What is listed instead is the template group each set comes from, with a count of the entries in that form. Every generated group is named after the entry it comes from, followed by the category. Looking at that form's entries (get_entries_from_form tool) and the categories defined for that form (get_form_details tool) tells you which groups exist.
+
+You can still get one of them directly: ask by id or by name and it will be returned, because that is a request for something specific rather than a listing.
+
+Supplying both group_ids and names returns anything matching either, not only groups matching both.",
 				'inputSchema' => [
 					'type' => 'object',
-					'properties' => (object)[]
+					'properties' => [
+						'group_ids' => [
+							'type' => 'array',
+							'items' => [ 'type' => 'integer' ],
+							'description' => 'Optional. Return only these groups. Groups generated from a form\'s entries are returned when asked for this way.'
+						],
+						'names' => [
+							'type' => 'array',
+							'items' => [ 'type' => 'string' ],
+							'description' => 'Optional. Return groups whose name contains any one of these, matched anywhere in the name and ignoring case. Several entries are an "or": ["Curator", "Manager"] returns groups matching either. Groups generated from a form\'s entries are returned when they match.'
+						]
+					]
 				]
 			],
 			'list_group_members' => [
@@ -2880,8 +2897,11 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 	/**
 	 * List all the groups - tool version of the resource
 	 */
-	private function list_groups() {
-		return $this->groups_list();
+	private function list_groups($arguments = []) {
+		return $this->groups_list(
+			groupIds: $arguments['group_ids'] ?? [],
+			names: $arguments['names'] ?? []
+		);
 	}
 
 	/**

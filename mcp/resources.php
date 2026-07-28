@@ -406,7 +406,7 @@ trait resources {
 			);
 		}
 		// Get form details
-		$formSql = "SELECT `id_form`, `form_title`, `form_handle`, `pi`, `singleentry`, `entry_description`, `usage_notes`, `data_conventions`, `entries_are_users`, `entries_are_groups`, `defaultform`, `defaultlist` FROM " . $this->db->prefix('formulize_id') . " WHERE id_form = " . intval($formId);
+		$formSql = "SELECT `id_form`, `form_title`, `form_handle`, `pi`, `singleentry`, `entry_description`, `usage_notes`, `data_conventions`, `entries_are_users`, `entries_are_groups`, `group_categories`, `defaultform`, `defaultlist` FROM " . $this->db->prefix('formulize_id') . " WHERE id_form = " . intval($formId);
 		$formResult = $this->db->query($formSql);
 		$formData = $this->db->fetchArray($formResult);
 
@@ -442,7 +442,25 @@ trait resources {
 			$formData['about_entries_are_users'] = 'Each entry in this form has a corresponding user account. Creating an entry will also create an account that can log in; updating an entry can alter that account too. The account details are not stored in this form - the entry holds only a link to the account - so they are the same details the create_users and update_users tools reach, and editing them here or there comes to the same thing. Use this form rather than those tools when the form\'s own fields are involved too.';
 		}
 		if($formData['entries_are_groups']) {
-			$formData['about_entries_are_groups'] = 'Each entry in this form generates its own group, or set of groups, named after the entry. There is always an "All Users" group created for the entry. Optionally, a webmaster can create additional categories, that will spawn additional groups. For example, on a Movie Studios form, a webmaster might create additional categories called Directors, Actors and Producers. In that case, creating a new entry in the form for "Disney" would spawn four groups: "Disney - All Users", "Disney - Directors", "Disney - Actors", and "Disney - Producers". Creating an entry creates those groups, with the name based on the value for the principal identifier element in the entry; changing the value of the principal identifier element in the entry causes the related groups to be renamed too. Groups are what permissions are given to, so an entry here is the beginning of a set of permissions rather than only a record. Use list_groups to see the template groups the sets are made from. Use the get_form_permissions_by_group tool to see what permissions the groups have.';
+			// The categories this form actually uses, so that the general explanation below can be read
+			// against the real thing. Stored as a serialized map of template group id to category name; the
+			// template group id is reported alongside each name because that is what list_groups and
+			// get_form_permissions_by_group identify these by.
+			$storedCategories = @unserialize((string) $formData['group_categories']);
+			$formData['group_categories'] = [];
+			if(is_array($storedCategories)) {
+				foreach($storedCategories as $templateGroupId => $categoryName) {
+					$formData['group_categories'][] = [
+						'category' => trans((string) $categoryName),
+						'template_group_id' => intval($templateGroupId)
+					];
+				}
+			}
+			$formData['about_entries_are_groups'] = 'Each entry in this form generates its own group, or set of groups, named after the entry. There is always an "All Users" group created for the entry. Optionally, a webmaster can create additional categories, that will spawn additional groups. The categories this particular form actually uses are listed in the group_categories property, and they are what determine the groups created for each entry in this form. Example: on a Movie Studios form, a webmaster might create additional categories called Directors, Actors and Producers. In that case, creating a new entry in the form for "Disney" would spawn four groups: "Disney - All Users", "Disney - Directors", "Disney - Actors", and "Disney - Producers". Creating an entry creates the groups automatically, with the names based on the value for the principal identifier element in the entry; changing the value of the principal identifier element in the entry causes the related groups to be renamed too. Groups are what permissions are given to, so an entry here is the beginning of a set of permissions rather than only a record. Use list_groups to see the template groups the sets are made from. Use the get_form_permissions_by_group tool to see what permissions the groups have.';
+		} else {
+			// only meaningful on an entries-are-groups form, so it is left out entirely elsewhere rather than
+			// reported as empty, which would invite the question of what it would mean if it were set
+			unset($formData['group_categories']);
 		}
 
 		// The screens Formulize falls back to when something points at the form itself rather than at a
@@ -1292,7 +1310,7 @@ One arrangement you will see is a series of groups related to a single entity, s
 	 * Get groups that the user is a member of, or all groups if the user is a webmaster
 	 * @return array Returns an array with 'groups' (list of groups) and 'group_count' (number of groups). Each group is an associative array with 'groupid', 'name', and 'description.
 	 */
-	private function groups_list($group_id = 0, $user_id = 0)
+	private function groups_list($group_id = 0, $user_id = 0, $groupIds = [], $names = [])
 	{
 
 		$group_id = intval($group_id);
@@ -1317,24 +1335,63 @@ One arrangement you will see is a series of groups related to a single entity, s
 			);
 		}
 
-		// Get groups
+		// Caller-supplied filters, on top of whatever the permission check above already restricts to.
+		// The two are combined with OR, not AND: both of them mean "groups I am asking for", and a group
+		// that is both one of the named ids and a name match is a coincidence rather than an intent, so
+		// ANDing them would almost always return nothing.
+		$askedForSpecificGroups = false;
+		$wantedClauses = [];
+		if(!empty($groupIds)) {
+			$askedForSpecificGroups = true;
+			$wanted = array_filter(array_map('intval', (array) $groupIds));
+			$wantedClauses[] = "groupid IN (".($wanted ? implode(',', $wanted) : '0').")";
+		}
+		if(!empty($names)) {
+			$askedForSpecificGroups = true;
+			foreach((array) $names as $name) {
+				if(trim((string) $name) !== '') {
+					$wantedClauses[] = "name LIKE ".$this->db->quoteString('%'.formulize_db_escape(trim((string) $name)).'%');
+				}
+			}
+		}
+		if($askedForSpecificGroups) {
+			$groupLimitWhereClause .= ($groupLimitWhereClause ? " AND" : "WHERE")." (".($wantedClauses ? implode(' OR ', $wantedClauses) : '0').")";
+		}
+
 		$groupsSql = "SELECT groupid, name, description, is_group_template, form_id, entry_id
 			FROM " . $this->db->prefix('groups') . " $groupLimitWhereClause ORDER BY name";
 		$groups = [];
 		$formBasedGroupsPresent = false;
+		$entryGroupsByForm = []; // form id => how many were left out
 		if($groupsResult = $this->db->query($groupsSql)) {
 			while ($row = $this->db->fetchArray($groupsResult)) {
+				$kind = $this->groupKind($row);
+				// Entry groups are left out of a general listing on purpose. There is one per entry per
+				// category, so a form with a hundred entries produces hundreds of them, and they are all
+				// derivable from the template groups plus that form's entries - the name is the entry's
+				// principal identifier followed by the category. Listing them would be the largest part of
+				// the response and the least informative part of it. A caller that asks for one by id or by
+				// name gets it, because that is an explicit request rather than a general listing.
+				if($kind === 'form_based_entry' AND !$askedForSpecificGroups) {
+					$formBasedGroupsPresent = true;
+					$formId = intval($row['form_id']);
+					$entryGroupsByForm[$formId] = ($entryGroupsByForm[$formId] ?? 0) + 1;
+					continue;
+				}
 				$group = [
 					'groupid' => $row['groupid'],
 					'name' => $row['name'],
 					'description' => $row['description'],
-					'group_kind' => $this->groupKind($row),
+					'group_kind' => $kind,
 				];
-				if($group['group_kind'] !== 'regular') {
+				if($kind !== 'regular') {
 					$formBasedGroupsPresent = true;
 					$group['comes_from_form'] = intval($row['form_id']);
-					if($group['group_kind'] === 'form_based_entry') {
+					if($kind === 'form_based_entry') {
 						$group['comes_from_entry'] = intval($row['entry_id']);
+					}
+					if($kind === 'form_based_template') {
+						$group['entries_in_that_form'] = $this->entryCountForForm(intval($row['form_id']));
 					}
 				}
 				$groups[] = $group;
@@ -1345,12 +1402,42 @@ One arrangement you will see is a series of groups related to a single entity, s
 			'groups' => $groups,
 			'group_count' => count($groups),
 		];
+		if($entryGroupsByForm) {
+			$response['form_based_entry_groups_not_listed'] = [];
+			foreach($entryGroupsByForm as $formId => $count) {
+				$response['form_based_entry_groups_not_listed'][] = [
+					'comes_from_form' => $formId,
+					'group_count' => $count,
+				];
+			}
+			$response['about_the_groups_not_listed'] = 'Groups generated from the entries in a form are left out of this list, because there is one per entry per category and they would be most of the response. Each is named after the entry it comes from, followed by the category - so to know which exist, look at the entries in the form with get_entries_from_form, and at the template groups listed above for the categories. To work with one directly, ask for it here by name or by id and it will be returned.';
+		}
 		// only worth explaining when this system actually has them, and stated once rather than against
 		// every group, since a system can have hundreds of generated ones
 		if($formBasedGroupsPresent) {
-			$response['about_form_based_groups'] = "Some groups here are marked form_based_template or form_based_entry, meaning they come from the entries in a form rather than being created by hand.\n\n".$this->describeFormBasedGroups();
+			$response['about_form_based_groups'] = $this->describeFormBasedGroups();
 		}
 		return $response;
+	}
+
+	/**
+	 * How many entries a form holds, for reporting how many groups a template stands for.
+	 * The count is what makes a template group's reach legible: one row saying a template covers a form
+	 * with 400 entries carries what 400 listed groups would have, at a fraction of the size.
+	 * @param int $formId
+	 * @return int|null Null when the form or its data table cannot be read
+	 */
+	private function entryCountForForm($formId) {
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		if(!$formObject = $form_handler->get(intval($formId))) {
+			return null;
+		}
+		$table = $this->db->prefix('formulize_'.$formObject->getVar('form_handle'));
+		if(!$result = $this->db->query("SELECT COUNT(*) AS entry_count FROM $table")) {
+			return null;
+		}
+		$row = $this->db->fetchArray($result);
+		return $row ? intval($row['entry_count']) : null;
 	}
 
 	/**
