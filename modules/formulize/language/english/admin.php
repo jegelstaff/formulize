@@ -335,6 +335,8 @@ define("_AM_PERMISSIONS_SELECT_GROUP","Select some groups to see their permissio
 define("_AM_PERMISSIONS_DEFINE_ACCESS","Access:");
 define("_AM_PERMISSIONS_DEFINE_BASIC","Operations:");
 define("_AM_PERMISSIONS_DEFINE_VIEWFORM","View the form and entries");
+define("_AM_PERMISSIONS_DEFINE_VIEWFORM_EXPLAIN","Gives group members access to this form, and makes this group one of <b>their groups</b> for updating, deleting, and viewing entries.");
+define("_AM_PERMISSIONS_GROUPSCOPE_USE_DEFAULT","[Use default]");
 define("_AM_PERMISSIONS_DEFINE_CREATEOWNENTRIES","Create their own entries");
 define("_AM_PERMISSIONS_DEFINE_UPDATE_ENTRIES_HEADER","Update entries belonging to:");
 define("_AM_PERMISSIONS_DEFINE_UPDATEOWNENTRIES","Update entries <i>made by themselves</i>");

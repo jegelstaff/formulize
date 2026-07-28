@@ -159,6 +159,8 @@ define("_AM_PERMISSIONS_SELECT_GROUP","Sélectionnez des groupes pour voir leurs
 define("_AM_PERMISSIONS_DEFINE_ACCESS","Accès:");
 define("_AM_PERMISSIONS_DEFINE_BASIC","Opérations:");
 define("_AM_PERMISSIONS_DEFINE_VIEWFORM","Voir le formulaire et les entrées");
+define("_AM_PERMISSIONS_DEFINE_VIEWFORM_EXPLAIN","Donne aux membres du groupe l'accès à ce formulaire, et fait de ce groupe l'un de <b>leurs groupes</b> pour la mise à jour, la suppression et la consultation des entrées.");
+define("_AM_PERMISSIONS_GROUPSCOPE_USE_DEFAULT","[Utiliser la valeur par défaut]");
 define("_AM_PERMISSIONS_DEFINE_CREATEOWNENTRIES","Créer sa propre entrée");
 define("_AM_PERMISSIONS_DEFINE_UPDATE_ENTRIES_HEADER","Mettre à jour les entrées appartenant à :");
 define("_AM_PERMISSIONS_DEFINE_UPDATEOWNENTRIES","Mettre à jour <i>ses entrées</i>");

@@ -4,7 +4,7 @@
         <legend><label class="question"><{$groupperm.name}></label></legend>
         <p><b><{$smarty.const._AM_PERMISSIONS_DEFINE_ACCESS}></b></p>
         <div class="permissiongroup">
-            <input type="checkbox" <{if $groupperm.id == 1}>disabled="disabled"<{/if}> name="<{$content.fid}>_<{$groupperm.id}>_view_form" value=1 <{$groupperm.view_form}> id="<{$content.fid}>_<{$groupperm.id}>_view_form">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_view_form"><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEWFORM}><br /><em style="font-size:.85em;">Gives group members access to this form, and makes this group one of <b>their groups</b> for updating, deleting, and viewing entries.</em></label>
+            <input type="checkbox" <{if $groupperm.id == 1}>disabled="disabled"<{/if}> name="<{$content.fid}>_<{$groupperm.id}>_view_form" value=1 <{$groupperm.view_form}> id="<{$content.fid}>_<{$groupperm.id}>_view_form">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_view_form"><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEWFORM}><br /><em style="font-size:.85em;"><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEWFORM_EXPLAIN}></em></label>
         </div>
         <p><b><{$smarty.const._AM_PERMISSIONS_DEFINE_BASIC}></b></p>
         <div class="permissiongroup">
@@ -32,7 +32,7 @@
                         <option value=<{$groupid}><{$groupperm.groupscope_choice.$groupid}>><{$group.name}></option>
                         <{/foreach}>
                     </select>
-                    <br><a href="#" onclick="formulize_hideGroupScope('<{$content.fid}>','<{$groupperm.id}>'); return false;" style="font-size:.85em">[Use default]</a>
+                    <br><a href="#" onclick="formulize_hideGroupScope('<{$content.fid}>','<{$groupperm.id}>'); return false;" style="font-size:.85em"><{$smarty.const._AM_PERMISSIONS_GROUPSCOPE_USE_DEFAULT}></a>
                 </div></div>
             <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_view_globalscope" value=1 <{$groupperm.view_globalscope}> id="<{$content.fid}>_<{$groupperm.id}>_view_globalscope">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_view_globalscope"><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWALL}></label><br />
             <div style="margin-top:0.7em"><input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_filterentries" value=1 <{$groupperm.hasgroupfilter}> <{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_DISABLED}> id="<{$content.fid}>_<{$groupperm.id}>_filterentries">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_filterentries"><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_CONDITIONS}></label>
