@@ -858,6 +858,19 @@ trait resources {
 			$byGroup[$groupId]['permissions'][] = $row['permission'];
 		}
 
+		// which of these groups are generated from a form's entries, so a template group is not mistaken
+		// for an unused one: it has no members, but its permissions are copied to every group made from it
+		$groupKinds = [];
+		if(!empty($byGroup)) {
+			$kindSql = "SELECT groupid, is_group_template, form_id, entry_id FROM ".$this->db->prefix('groups')."
+				WHERE groupid IN (".implode(',', array_map('intval', array_keys($byGroup))).")";
+			if($kindResult = $this->db->query($kindSql)) {
+				while($kindRow = $this->db->fetchArray($kindResult)) {
+					$groupKinds[intval($kindRow['groupid'])] = $this->groupKind($kindRow);
+				}
+			}
+		}
+
 		// custom groupscope targets, and any visibility conditions
 		$groupScope = $this->groupScopeTargetsForForm($formId);
 		$visibilityConditions = $this->visibilityConditionsForForm($formId);
@@ -908,7 +921,11 @@ trait resources {
 			}
 			$sets[$key]['group_count']++;
 			if(count($sets[$key]['groups']) < 15) { // enough to recognise the family without listing hundreds
-				$sets[$key]['groups'][] = [ 'group_id' => $groupId, 'name' => $groupData['name'] ];
+				$group = [ 'group_id' => $groupId, 'name' => $groupData['name'] ];
+				if(($groupKinds[$groupId] ?? 'regular') !== 'regular') {
+					$group['group_kind'] = $groupKinds[$groupId];
+				}
+				$sets[$key]['groups'][] = $group;
 			}
 		}
 		foreach($sets as $key => $set) {
@@ -943,6 +960,9 @@ trait resources {
 		];
 		if($parentId) {
 			$response['note_about_inheritance'] = "These permissions are inherited from form $parentId and are maintained there. They cannot be changed on this form.";
+		}
+		if(in_array('form_based_template', $groupKinds)) {
+			$response['about_form_based_groups'] = "Some of the groups above are marked form_based_template.\n\n".$this->describeFormBasedGroups();
 		}
 		// an empty list reads as "nobody can use this form", which is wrong in both directions: webmasters
 		// always can, and a narrowed report says nothing about the groups that were left out of it
@@ -1275,18 +1295,94 @@ One arrangement you will see is a series of groups related to a single entity, s
 		}
 
 		// Get groups
-		$groupsSql = "SELECT groupid, name, description FROM " . $this->db->prefix('groups') . " $groupLimitWhereClause ORDER BY name";
+		$groupsSql = "SELECT groupid, name, description, is_group_template, form_id, entry_id
+			FROM " . $this->db->prefix('groups') . " $groupLimitWhereClause ORDER BY name";
 		$groups = [];
+		$formBasedGroupsPresent = false;
 		if($groupsResult = $this->db->query($groupsSql)) {
 			while ($row = $this->db->fetchArray($groupsResult)) {
-				$groups[] = $row;
+				$group = [
+					'groupid' => $row['groupid'],
+					'name' => $row['name'],
+					'description' => $row['description'],
+					'group_kind' => $this->groupKind($row),
+				];
+				if($group['group_kind'] !== 'regular') {
+					$formBasedGroupsPresent = true;
+					$group['comes_from_form'] = intval($row['form_id']);
+					if($group['group_kind'] === 'form_based_entry') {
+						$group['comes_from_entry'] = intval($row['entry_id']);
+					}
+				}
+				$groups[] = $group;
 			}
 		}
 
-		return [
+		$response = [
 			'groups' => $groups,
 			'group_count' => count($groups),
 		];
+		// only worth explaining when this system actually has them, and stated once rather than against
+		// every group, since a system can have hundreds of generated ones
+		if($formBasedGroupsPresent) {
+			$response['about_form_based_groups'] = "Some groups here are marked form_based_template or form_based_entry, meaning they come from the entries in a form rather than being created by hand.\n\n".$this->describeFormBasedGroups();
+		}
+		return $response;
+	}
+
+	/**
+	 * Explain form-based groups, for any tool whose results contain them.
+	 *
+	 * Shared rather than written twice: the same explanation is owed by the group list and by the
+	 * permission report, and two copies of a nine-hundred-word concept drift apart quietly.
+	 *
+	 * Delivered in the response rather than left to the guide on purpose. A pull-based guide only helps an
+	 * assistant that knows it has something to learn, and the failure this prevents is the opposite - one
+	 * assistant, shown a template group with no members, confidently concluded that setting permissions on
+	 * it would achieve nothing and declined to do it. Nothing about that state prompts a question. So the
+	 * decision-critical part has to arrive unbidden, and it only costs anything on calls that return a
+	 * form-based group at all.
+	 *
+	 * SPLIT THIS AT STEP 24 (the guide): the background - how entries-are-groups is enabled, how categories
+	 * are created, how entry groups are kept in sync - belongs in the guide, where someone reads it
+	 * deliberately. What must stay here is the part that stops the wrong conclusion: a template looks empty
+	 * and is not unused, and it is where permissions should be set.
+	 *
+	 * @return string
+	 */
+	private function describeFormBasedGroups() {
+		return 'A form-based template group is a group associated with a form that has the entries-are-groups setting enabled. Whenever an entry is made in such a form, a form-based entry group is created, and it inherits all its permissions from the corresponding form-based template group. There can be several template groups arising from a single form, each representing a different category of users. There is always at least one, known as "All Users", and a webmaster can create as many additional categories as they wish.
+
+For example, a Departments form with entries-are-groups enabled will automatically generate a form-based template group called "Departments - All Users". A webmaster might choose to add the categories "Managers" and "Staff". Then, when entries such as HR and Legal are created in the Departments form, three groups are created for each entry: HR - All Users, HR - Managers, HR - Staff, and Legal - All Users, Legal - Managers, Legal - Staff. Additional categories are not mandatory, but they are often useful.
+
+A form-based template group has no members of its own, so its membership will look empty, but it is not unused: each form-based entry group automatically receives the permissions its template group has, both when the entry group is created and whenever the template group\'s permissions are changed.
+
+That makes the template groups the right place to set and change permissions that should apply to a given role for every entry group arising from the form. Setting permissions on the form-based entry groups directly is far more fragile: those settings are likely to drift out of sync, and to be overwritten by the template group\'s permissions eventually.';
+	}
+
+	/**
+	 * Which of the three kinds of group this row is.
+	 *
+	 * Reported as one value rather than as the two raw columns, because the distinction only makes sense
+	 * as a combination - a template has a form and no entry, an entry group has both, and a regular group
+	 * has neither - and asking a reader to derive that from two nullable columns is how the distinction
+	 * gets missed.
+	 *
+	 * Both form-based kinds carry the "form_based" prefix on purpose. The admin interface calls these
+	 * "Form-based" groups, but it applies that label to a whole row covering the template, its categories
+	 * and the groups arising from entries - so the term names the family there, not one member of it.
+	 * Naming only the template "form-based" here would quietly narrow a word the administrator reads more
+	 * broadly, and the two would then disagree while appearing to match. "Regular" matches the label the
+	 * admin interface uses for everything else.
+	 *
+	 * @param array $row A row from the groups table
+	 * @return string 'regular', 'form_based_template' or 'form_based_entry'
+	 */
+	private function groupKind($row) {
+		if(!empty($row['is_group_template'])) {
+			return 'form_based_template';
+		}
+		return !empty($row['entry_id']) ? 'form_based_entry' : 'regular';
 	}
 
 	/**

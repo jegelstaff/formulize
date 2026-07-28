@@ -2850,9 +2850,20 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 
 		// a template group's permissions are copied down to the entry groups generated from its form, and
 		// an inheriting form's permissions are copied from here, so both have to be refreshed or they keep
-		// the permissions that were in place before this call
+		// the permissions that were in place before this call. Template propagation runs first, so the
+		// inheritance copy carries the already-propagated entry groups down to the child forms.
 		formulizeHandler::propagateTemplateGroupPermissions(array_keys($requested));
 		$updatedForms = formulizePermHandler::propagatePermissionsToInheritingForms($formId);
+
+		// report the template fan-out, because a template group has no members of its own and so looks
+		// like a group where setting permissions would achieve nothing. Worked out here rather than
+		// returned by the propagation, so that method's contract is left alone.
+		$templateFanOut = [];
+		foreach(array_keys($requested) as $groupId) {
+			if($entryGroupIds = formulizeHandler::getTemplateToEntryGroupMap($groupId)) {
+				$templateFanOut[$groupId] = array_values(array_map('intval', (array) $entryGroupIds));
+			}
+		}
 
 		$response = [
 			'success' => true,
@@ -2868,6 +2879,10 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 			}, $requested)),
 			'always_on_for_every_group' => ['view_their_own_entries', 'manage_own'],
 		];
+		if(!empty($templateFanOut)) {
+			$response['entry_groups_updated_from_templates'] = $templateFanOut;
+			$response['about_form_based_groups'] = 'One or more of the groups you set is a form-based template group. Every form-based entry group belonging to it has received the permissions you set. The affected form-based entry groups are all listed above. Any entry groups arising from the form later, will receive the permissions set on the template group at that time.';
+		}
 		if(!empty($updatedForms)) {
 			$response['forms_updated_by_inheritance'] = $updatedForms;
 			$response['about_inheritance'] = 'These forms inherit their permissions from this one, so they have been updated to match.';
