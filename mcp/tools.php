@@ -872,6 +872,37 @@ Order matters beyond appearance. If a user has multiple menu items that are set 
 				]
 			];
 
+			$this->tools['update_application_forms'] = [
+				'name' => 'update_application_forms',
+				'description' => 'Put forms into an application, or take them out. Use get_application_details to see what is in it now.
+
+An application does not own its forms. A form can belong to several applications at once, and a form belonging to none still works and is still reachable by anyone whose permissions allow it. So this changes how a form is found, not whether it exists or who may use it.
+
+This takes forms to add and forms to remove rather than a complete list of what the application should contain, which is the opposite of update_form, where a form states all of its applications at once. The asymmetry is deliberate: a form belongs to few applications, so listing them all is bounded, whereas an application can hold many forms and a complete list supplied from memory would quietly drop anything missed by mistake.
+
+Menu items follow the form. Taking a form out of an application moves its menu items to wherever the form went - to another application if you are adding it to one, or to the "forms with no application" area if it now belongs to none.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'application_id' => [
+							'type' => 'integer',
+							'description' => 'Required. The application to change. Use list_applications to find application ids.'
+						],
+						'add_forms' => [
+							'type' => 'array',
+							'items' => [ 'type' => 'integer' ],
+							'description' => 'Optional. Form ids to put into this application. A form already in it is left alone rather than treated as an error. Use list_forms to find form ids.'
+						],
+						'remove_forms' => [
+							'type' => 'array',
+							'items' => [ 'type' => 'integer' ],
+							'description' => 'Optional. Form ids to take out of this application. A form that is not in it is left alone rather than treated as an error.'
+						]
+					],
+					'required' => ['application_id']
+				]
+			];
+
 			$this->tools['create_users'] = [
 				'name' => 'create_users',
 				'description' => 'Create user accounts.
@@ -3349,6 +3380,133 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 		}
 		if($response['custom_code_present']) {
 			$response['about_the_custom_code'] = 'This application carries PHP that is included on every page load. Read it with get_custom_code before changing anything of the code, since it can affect pages well beyond this application.';
+		}
+		return $response;
+	}
+
+	/**
+	 * Put forms into an application, or take them out.
+	 *
+	 * Deltas from the application's side, where update_form takes a complete list from the form's side. The
+	 * asymmetry follows the blast radius of an omission, exactly as it does between update_users and
+	 * update_group_members.
+	 *
+	 * Each form is written by handing formulizeHandler::assignFormToApplications() that form's whole new list
+	 * of applications, rather than by writing the link rows here. That method also relocates the form's menu
+	 * items to follow it, and reimplementing the delta at this level would leave that behind.
+	 *
+	 * @param array $arguments 'application_id' required, 'add_forms' and/or 'remove_forms'
+	 * @return array What changed, and what the application holds now
+	 * @throws FormulizeMCPException on permission failure, an unknown application or form, or a form that the
+	 *                               tools must not modify
+	 */
+	private function update_application_forms($arguments) {
+
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				'Permission denied: Only webmasters can change which forms are in an application.',
+				'authentication_error',
+			);
+		}
+
+		global $xoopsDB;
+		$applicationId = intval($arguments['application_id'] ?? 0);
+		if(!$applicationId) {
+			throw new FormulizeMCPException('application_id is required', 'invalid_data');
+		}
+		$applicationSql = "SELECT appid, name FROM ".$xoopsDB->prefix('formulize_applications')." WHERE appid = $applicationId";
+		if(!$applicationResult = $xoopsDB->query($applicationSql) OR !$applicationRow = $xoopsDB->fetchArray($applicationResult)) {
+			throw new FormulizeMCPException(
+				"There is no application with the id $applicationId.",
+				'invalid_data',
+				context: [ 'hint' => 'Use the list_applications tool to see the applications in this system.' ]
+			);
+		}
+
+		$addForms = array_values(array_unique(array_filter(array_map('intval', (array) ($arguments['add_forms'] ?? [])))));
+		$removeForms = array_values(array_unique(array_filter(array_map('intval', (array) ($arguments['remove_forms'] ?? [])))));
+		if(!$addForms AND !$removeForms) {
+			throw new FormulizeMCPException(
+				'Nothing to do: supply add_forms, remove_forms, or both.',
+				'invalid_data'
+			);
+		}
+		if($inBoth = array_intersect($addForms, $removeForms)) {
+			throw new FormulizeMCPException(
+				'These forms are in both add_forms and remove_forms: '.implode(', ', $inBoth).'.',
+				'invalid_data',
+				context: [ 'hint' => 'A form can be added or removed, not both. Decide which it should be.' ]
+			);
+		}
+
+		// check every form before writing any of them, so a bad id cannot leave the change half applied
+		foreach(array_merge($addForms, $removeForms) as $formId) {
+			$this->assertFormIsEditableByTools($formId);
+		}
+
+		$application_handler = xoops_getmodulehandler('applications', 'formulize');
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		include_once XOOPS_ROOT_PATH.'/modules/formulize/class/formulize.php';
+
+		$added = [];
+		$removed = [];
+		$unchanged = [];
+		foreach([['add', $addForms], ['remove', $removeForms]] as list($operation, $formIds)) {
+			foreach($formIds as $formId) {
+				$formObject = $form_handler->get($formId);
+				// straight from the link table rather than through getApplicationsByForm(), so that what is
+				// read is what is stored right now. This loop writes between iterations, and a form can appear
+				// in both lists across a single call.
+				$currentAppIds = [];
+				$currentAppSql = "SELECT appid FROM ".$xoopsDB->prefix('formulize_application_form_link')." WHERE fid = ".intval($formId);
+				if($currentAppResult = $xoopsDB->query($currentAppSql)) {
+					while($currentAppRow = $xoopsDB->fetchArray($currentAppResult)) {
+						$currentAppIds[] = intval($currentAppRow['appid']);
+					}
+				}
+				$alreadyIn = in_array($applicationId, $currentAppIds);
+				if(($operation == 'add' AND $alreadyIn) OR ($operation == 'remove' AND !$alreadyIn)) {
+					$unchanged[] = [
+						'form_id' => $formId,
+						'form_title' => trans($formObject->getVar('title', 'n')),
+						'why' => $operation == 'add' ? 'already in this application' : 'not in this application',
+					];
+					continue;
+				}
+				$newAppIds = $operation == 'add'
+					? array_merge(array_filter($currentAppIds), [$applicationId])
+					: array_values(array_diff($currentAppIds, [$applicationId]));
+				// appid 0 is the "forms with no application" container rather than an absence, and an empty
+				// list makes assignFormToApplications do nothing at all - so a form leaving its last
+				// application has to be handed that container explicitly or the removal silently would not happen
+				if(!$newAppIds) {
+					$newAppIds = [0];
+				}
+				formulizeHandler::assignFormToApplications($formObject, array_values(array_unique($newAppIds)));
+				$record = [ 'form_id' => $formId, 'form_title' => trans($formObject->getVar('title', 'n')) ];
+				if($operation == 'add') {
+					$added[] = $record;
+				} else {
+					$record['now_belongs_to_applications'] = array_values(array_filter($newAppIds));
+					$removed[] = $record;
+				}
+			}
+		}
+
+		$response = [
+			'success' => true,
+			'message' => 'Added '.count($added).' and removed '.count($removed).' form'.((count($added) + count($removed)) == 1 ? '' : 's').' in "'.trans($applicationRow['name']).'".',
+			'added' => $added,
+			'removed' => $removed,
+		];
+		if($unchanged) {
+			$response['left_alone'] = $unchanged;
+		}
+		$response['application_now_holds'] = $this->get_application_details(['application_id' => $applicationId])['forms'];
+		if($formsWithNoApplication = array_filter($removed, fn($record) => empty($record['now_belongs_to_applications']))) {
+			$response['forms_now_in_no_application'] = 'These forms no longer belong to any application: '
+				.implode(', ', array_map(fn($record) => $record['form_title'], $formsWithNoApplication))
+				.'. They still work and their data is untouched; they are reachable directly and appear under "forms with no application", and their menu items moved there with them.';
 		}
 		return $response;
 	}
