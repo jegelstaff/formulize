@@ -635,7 +635,7 @@ A group can also have visibility conditions, which restrict its members to entri
 
 Only the groups you name are changed. What you supply replaces that group\'s current permissions rather than adding to them, so include everything the group should end up with.
 
-A form can also be set to inherit its permissions from another form, in which case they are maintained on that other form and copied to this one, and this tool will refuse to change them here and tell you which form to go to instead. Setting up, changing or removing that arrangement is done in the Formulize admin interface; there is no tool for it.',
+A form can also be set to inherit its permissions from another form, in which case they are maintained on that other form and copied to this one, and this tool will refuse to change them and tell you which form to go to instead. Setting up, changing or removing that arrangement is done in the Formulize admin interface; there is no tool for it.',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
