@@ -3567,7 +3567,8 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 		$isEagForm = $formObject && $formObject->getVar('entries_are_groups');
 		$isSystemUsersTableForm = $formObject && $formObject->isSystemUsersTableForm();
 
-		$allWrittenEntryIds = []; // Track written entry IDs for connected-form EAU processing
+		$allWrittenEntryIds = []; // every entry touched, for connected-form EAU processing
+		$changedEntryIds = []; // only entries whose data actually changed, for notifications
 		$userIdsFromSubmission = []; // entryId => userId for entries where processUserAccountSubmission ran
 
 		// Step 3: Write the entries
@@ -3634,7 +3635,16 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 				formulize_updateDerivedValues($finalEntryId, $formId, $relationshipId);
 			}
 
-			// Track written entry IDs and user IDs for EAU/EAG post-processing
+			// Two lists, because notifications and the EAU post-processing are asking different questions.
+			// Notifications want entries whose data actually changed, which is what formulize_writeEntry
+			// reports by returning the entry id, or nothing when the submitted values already match what is
+			// stored. The EAU processing wants every entry that was touched, including one where only the
+			// user account fields changed: those are handled by processUserAccountSubmission before the
+			// write, leaving nothing for formulize_writeEntry to do, so guarding both on the same value
+			// would silently skip group membership changes.
+			if($resultEntryId) {
+				$changedEntryIds[] = $resultEntryId;
+			}
 			if($finalEntryId) {
 				$allWrittenEntryIds[] = $finalEntryId;
 				if($userId) {
@@ -3651,10 +3661,10 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 			$preparedData[$i] = array_merge(array('entry_id' => $finalEntryId), $preparedData[$i]);
 		}
 
-		// Step 5: send notifications
-		if(!empty($allWrittenEntryIds)) {
+		// Step 5: send notifications, only for entries whose data actually changed
+		if(!empty($changedEntryIds)) {
 			$event = $operation == 'create' ? 'new_entry' : 'update_entry';
-			sendNotifications($formId, $event, $allWrittenEntryIds);
+			sendNotifications($formId, $event, $changedEntryIds);
 		}
 		// EAU post-write: process group memberships for all written entries (direct, connected-form, and fallback)
 		formulizeHandler::processEauGroupMembershipsForWrittenEntries(
