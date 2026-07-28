@@ -586,11 +586,13 @@ Use get_form_details first to see the form\'s current settings. This tool does n
 			// on describeHowToInterpretPermissions(), which carries the third copy of the same advice.
 			$this->tools['get_form_permissions_by_group'] = [
 				'name' => 'get_form_permissions_by_group',
-				'description' => 'See how a form\'s permissions are configured: which groups can reach it, who can create, change and delete entries, and crucially whose entries each group is able to see. If a group has visibility conditions, which further restrict which entries its members see, those are reported too.
+				'description' => 'See how a form\'s permissions are configured: which groups grant access to it, and what abilities group members have: creating, updating, and deleting entries, and which entries they are able to see. If a group has visibility conditions, which further restrict which entries its members see, those are reported too.
 
 Permissions are configured per group, but users can be members of more than one group, and users receive all the permissions from all their groups. So this report shows group configuration, not necessarily what any particular user can do.
 
 To find out what a user can do, look up their groups with the list_a_users_groups tool, and pass those ids to this tool in the group_ids parameter. The report then covers exactly that combination of groups: what that user can do, and equally anyone else belonging to the same set of groups.
+
+Permissions come in two flavours, and are reported as two fields. Access, reported as \'grants_access\', allows group members to reach the form, and it also makes that group count as one of "their groups" - which is what the group-scoped permissions (view_groupscope, update_group_entries, delete_group_entries) resolve against. Abilities, reported as \'abilities\', are everything else: what members may do and see once they are in. So a group can grant access and abilities, or only one, or only the other. Defining abilities once on a broad group while narrower groups grant the access is how a site makes each user see only their own department, region or client.
 
 If the form inherits its permissions from another form, they are maintained on that other form and cannot be changed here.',
 				'inputSchema' => [

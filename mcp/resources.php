@@ -879,13 +879,22 @@ trait resources {
 			$scope = $groupScope[$groupId] ?? [];
 			sort($scope);
 			$conditions = $visibilityConditions[$groupId] ?? [];
-			$key = md5(serialize([$groupData['permissions'], $scope, $conditions]));
+			// Permissions come in two flavours and are reported as two fields. Access decides whether members
+			// can reach the form at all, and makes this group one of "their groups" for any group-scoped
+			// permission its members hold, from any group - no other permission has that second effect.
+			// Abilities are everything else: what members may do and see once they are in. A group can
+			// legitimately grant access and no abilities, or abilities and no access, and both read as
+			// deliberate in this shape where a single flat list of names does not.
+			$grantsAccess = in_array('view_form', $groupData['permissions']);
+			$abilities = array_values(array_diff($groupData['permissions'], ['view_form']));
+			$key = md5(serialize([$grantsAccess, $abilities, $scope, $conditions]));
 			if(!isset($sets[$key])) {
 				$sets[$key] = [
 					'groups' => [],
 					'group_count' => 0,
-					'permissions' => $groupData['permissions'],
-					'what_this_set_grants' => $this->describeVisibility($groupData['permissions'], $scope),
+					'grants_access' => $grantsAccess,
+					'abilities' => $abilities,
+					'what_this_set_provides' => $this->describeVisibility($groupData['permissions'], $scope),
 				];
 				if(!empty($conditions)) {
 					$sets[$key]['visibility_conditions'] = $conditions;
@@ -967,7 +976,7 @@ trait resources {
 '
 			: 'To see what one user gets, look up their groups with the list_a_users_groups tool, then call this tool again passing those group ids in the group_ids parameter. The report is then narrowed to that user\'s combination, and describes what they can do - and what anyone else in the same combination of groups can do. Doing that once for a real user is also the quickest way to learn about the organization of groups in this system, which is worth knowing before drawing conclusions from any single group\'s permissions: membership patterns are usually just conventional, and are not necessarily recorded or enforced anywhere.
 
-A common arrangement is a series of groups related to a single entity, subdividing users by role or function - Eastern Managers, Eastern Staff, Eastern Clients, Western Managers, Western Staff, Western Clients - often alongside higher level groups covering everyone of a given type: All Managers, All Staff, All Clients.
+One arrangement you will see is a series of groups related to a single entity, subdividing users by role or function - Eastern Managers, Eastern Staff, Eastern Clients, Western Managers, Western Staff, Western Clients - often alongside higher level groups covering everyone of a given type: All Managers, All Staff, All Clients. How the permissions are then distributed across those groups varies: each group may grant access and abilities, or the abilities may be defined once on a higher level group while the narrower groups grant access and thereby determine which groups count as "their groups" for group members with group-level abilities (update_group_entries, delete_group_entries, view_groupscope). Several arrangements are properly supported, so none of them is unusual, and the one in front of you was chosen deliberately. Work out which is in use and extend it consistently rather than reshaping it toward any particular style.
 
 ';
 		$explanation .= 'A group that appears to grant nothing does not mean its members lack access - they very often reach the form through another group they also belong to. Groups are containers for permissions, not descriptions of users.';
@@ -1035,14 +1044,21 @@ A common arrangement is a series of groups related to a single entity, subdividi
 	 */
 	private function describeVisibility($permissions, $scopeTargets) {
 		if(!in_array('view_form', $permissions)) {
-			return "No access to the form from this set. Anyone in these groups reaches the form only if another group they belong to grants it.";
+			// abilities held without view_form are not inert - they apply once the user reaches the form
+			// through some other group, which is how a broad group can carry the abilities for a site while
+			// narrow groups carry only view_form and thereby define who sees whose entries
+			$abilities = array_diff($permissions, ['view_their_own_entries', 'manage_own']);
+			if(!empty($abilities)) {
+				return "No access to the form from this set on its own, but these permissions are not inactive: a user can be a member of another group that grants access to the form. A broad group that holds abilities and a narrower group that grants access, is a deliberate and common arrangement - the narrower groups are then what decide which groups are \"their groups\" for the purposes of group-level permissions (update_group_entries, delete_group_entries, view_groupscope).";
+			}
+			return "No access to the form from this set. Anyone in these groups reaches the form only if another group they belong to grants access to it.";
 		}
 		if(in_array('view_globalscope', $permissions)) {
 			return "Access to the form, and every entry in it made by anyone.";
 		}
 		if(in_array('view_groupscope', $permissions)) {
 			return empty($scopeTargets)
-				? "Access to the form, their own entries, and entries made by members of any group they belong to that also has view_form on this form."
+				? "Access to the form, and entries belonging to members of their groups (including their own entries). \"Their groups\" means every group they belong to that **also** grants access to this form. A user can be a member of multiple groups, and some might not grant access to this form, so \"their groups\" are limited to only the ones that do."
 				: "Access to the form, their own entries, and entries made by members of these specific groups: ".implode(', ', $scopeTargets).".";
 		}
 		return "Access to the form, and only the entries they made themselves.";
