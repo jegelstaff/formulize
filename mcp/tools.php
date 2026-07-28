@@ -754,8 +754,6 @@ Some groups are associated with the entries in forms (form-based entry groups). 
 				]
 			];
 
-			// REVISIT WHEN create_menu_item EXISTS: the about_the_menu text in the response still says menu
-			// items can only be changed in the admin interface, which is true only until that tool exists.
 			$this->tools['get_application_details'] = [
 				'name' => 'get_application_details',
 				'description' => 'Look at one application: the forms in it, the menu people use to reach them, and whether it carries custom code.
@@ -802,6 +800,55 @@ Menu items are shown in rank order, which is the order they appear on screen.',
 				]
 			];
 
+			$menuGroupsDescription = 'groups_that_can_see and groups_using_as_start_page are replaced by what you supply, not added to, so send the complete list every time. Leave the property out to keep the item\'s current groups.
+
+Groups generated from the entries in a form cannot be given menu permissions directly. Instead, give the form-based template group visibility over the menu item. The form-based entry groups will inherit the menu visibility from their corresponding template group.';
+
+			$this->tools['create_menu_item'] = [
+				'name' => 'create_menu_item',
+				'description' => 'Add an item to an application\'s menu. Menu items are grouped by application. New items go to the bottom; use change_menu_item_order to move them.
+
+A menu item gives users an easy way to reach a form. When selecting the groups that should see the menu item, take into account which groups have permission to interact with the form. The menu item itself does not affect user permissions in any way, it only provides a convenient link in the user interface. Use get_form_permissions_by_group if you need to learn who can actually use the form.
+
+When forms are created, they automatically get a menu item leading to the form, visible to whichever groups were given permission to edit the form - usually just Webmasters - and one such item in each application the form belongs to. Use list_menu_items with the form_id to find the form\'s menu item if you want to change its wording or visibility or destination.
+
+Often it is useful to make common menu items, that everyone should be able to reach, visible to the Registered Users group. Even if there are multiple narrower groups in the system, each one providing specialized access to only certain entries in a form, those behaviours will be handled by the form when users reach it; the menu item can be given to everyone. By using the Registered Users group, you avoid the need to update the visibility settings of the menu item later if new groups are created.
+
+A menu item can also be set as a group\'s start page, meaning members of that group land on it right after they log in.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => array_merge(
+						[ 'application_id' => [
+							'type' => 'integer',
+							'description' => 'Required. The application whose menu this item is added to. Use list_applications to find application ids.'
+						] ],
+						$this->menuItemProperties('create', $menuGroupsDescription)
+					),
+					'required' => ['application_id', 'link_text', 'target', 'groups_that_can_see']
+				]
+			];
+
+			$this->tools['update_menu_item'] = [
+				'name' => 'update_menu_item',
+				'description' => 'Change a menu item, or delete it. Only the properties you supply are changed. Use list_menu_items to find menu ids and see what an item has now.
+
+Deleting a menu item removes the link in the user interface only; the form or screen is untouched and is still reachable by anyone whose permissions allow it; only this route to it goes away.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => array_merge(
+						[ 'menu_id' => [
+							'type' => 'integer',
+							'description' => 'Required. The menu item to change. Use list_menu_items to find menu ids.'
+						] ],
+						$this->menuItemProperties('update', $menuGroupsDescription),
+						[ 'delete' => [
+							'type' => 'boolean',
+							'description' => 'Optional. Set true to delete this menu item. Nothing else is needed, and any other properties supplied are ignored.'
+						] ]
+					),
+					'required' => ['menu_id']
+				]
+			];
 			$this->tools['create_users'] = [
 				'name' => 'create_users',
 				'description' => 'Create user accounts.
@@ -3284,6 +3331,403 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 	}
 
 	/**
+	 * Add an item to an application's menu.
+	 *
+	 * @param array $arguments 'application_id', 'link_text' and 'target' required; groups and note optional
+	 * @return array The created item
+	 * @throws FormulizeMCPException on permission failure or invalid input
+	 */
+	private function create_menu_item($arguments) {
+
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				'Permission denied: Only webmasters can change a menu.',
+				'authentication_error',
+			);
+		}
+
+		global $xoopsDB;
+		$applicationId = intval($arguments['application_id'] ?? 0);
+		if(!$applicationId) {
+			throw new FormulizeMCPException('application_id is required', 'invalid_data');
+		}
+		$applicationSql = "SELECT appid FROM ".$xoopsDB->prefix('formulize_applications')." WHERE appid = $applicationId";
+		if(!$applicationResult = $xoopsDB->query($applicationSql) OR !$xoopsDB->fetchArray($applicationResult)) {
+			throw new FormulizeMCPException(
+				"There is no application with the id $applicationId.",
+				'invalid_data',
+				context: [ 'hint' => 'Use the list_applications tool to see the applications in this system.' ]
+			);
+		}
+
+		$linkText = $this->menuItemTextValue($arguments['link_text'] ?? '', 'link_text');
+		if($linkText === '') {
+			throw new FormulizeMCPException('link_text is required, and cannot be empty.', 'invalid_data');
+		}
+		if(!isset($arguments['target'])) {
+			throw new FormulizeMCPException(
+				'target is required.',
+				'invalid_data',
+				context: [ 'hint' => 'Give exactly one of form_id, screen_id or url, so that the item has somewhere to go.' ]
+			);
+		}
+		list($screen, $url) = $this->menuItemTarget($arguments['target']);
+		// Required rather than defaulted to nobody. Formulize itself will store an item with no groups, but
+		// such an item is invisible to everyone - there is no webmaster exception, since menu items are
+		// filtered by group membership directly rather than through checkRight() - so creating one is never
+		// what was intended, and silently making one is worse than refusing.
+		if(!array_key_exists('groups_that_can_see', $arguments)) {
+			throw new FormulizeMCPException(
+				'groups_that_can_see is required.',
+				'invalid_data',
+				context: [ 'hint' => 'A menu item with no groups is shown to nobody at all, webmasters included. Name the groups that should see it, or use the Registered Users group (group 2) for something everyone with an account should reach.' ]
+			);
+		}
+		$note = $this->menuItemTextValue($arguments['note'] ?? '', 'note');
+		list($seeGroups, $startPageGroups) = $this->menuItemGroupArguments($arguments, [], []);
+
+		$application_handler = xoops_getmodulehandler('applications', 'formulize');
+		$application_handler->insertMenuLink($applicationId, $this->menuItemDelimitedString('null', $linkText, $screen, $url, $seeGroups, $startPageGroups, $note));
+
+		// the new item is the highest menu id, since the column is auto-incrementing
+		$newIdSql = "SELECT MAX(menu_id) AS menu_id FROM ".$xoopsDB->prefix('formulize_menu_links')." WHERE appid = $applicationId";
+		$newMenuId = 0;
+		if($newIdResult = $xoopsDB->query($newIdSql) AND $newIdRow = $xoopsDB->fetchArray($newIdResult)) {
+			$newMenuId = intval($newIdRow['menu_id']);
+		}
+		$this->propagateMenuGroupChanges(array_merge($seeGroups, $startPageGroups));
+
+		return [
+			'success' => true,
+			'message' => 'Added "'.$linkText.'" to the menu.',
+			'menu_item' => $this->menuItemById($newMenuId),
+			'where_it_went' => 'New items go to the bottom of the menu. Use change_menu_item_order to move it.',
+		];
+	}
+
+	/**
+	 * Change a menu item, or delete it.
+	 *
+	 * Partial update, which the underlying handler does not do on its own: updateMenuLink() replaces every
+	 * column and deletes every permission row before writing the ones it is given, so anything the caller
+	 * left out has to be read back and passed in again unchanged.
+	 *
+	 * @param array $arguments 'menu_id' required; any property to change, or 'delete'
+	 * @return array The updated item, or confirmation of the deletion
+	 * @throws FormulizeMCPException on permission failure or invalid input
+	 */
+	private function update_menu_item($arguments) {
+
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				'Permission denied: Only webmasters can change a menu.',
+				'authentication_error',
+			);
+		}
+
+		global $xoopsDB;
+		$menuId = intval($arguments['menu_id'] ?? 0);
+		if(!$menuId) {
+			throw new FormulizeMCPException('menu_id is required', 'invalid_data');
+		}
+		$currentSql = "SELECT menu_id, appid, screen, url, link_text, note FROM ".$xoopsDB->prefix('formulize_menu_links')." WHERE menu_id = $menuId";
+		if(!$currentResult = $xoopsDB->query($currentSql) OR !$current = $xoopsDB->fetchArray($currentResult)) {
+			throw new FormulizeMCPException(
+				"There is no menu item with the id $menuId.",
+				'invalid_data',
+				context: [ 'hint' => 'Use the list_menu_items tool to find menu ids.' ]
+			);
+		}
+		$applicationId = intval($current['appid']);
+
+		// the groups the item has now, needed whether they are being changed (to propagate away from the old
+		// ones) or left alone (to write them back unchanged)
+		$currentSeeGroups = array_map(fn($group) => $group['group_id'], $this->menuItemGroups($menuId, false));
+		$currentStartPageGroups = array_map(fn($group) => $group['group_id'], $this->menuItemGroups($menuId, true));
+
+		$application_handler = xoops_getmodulehandler('applications', 'formulize');
+
+		if(!empty($arguments['delete'])) {
+			$describedItem = $this->menuItemById($menuId);
+			$application_handler->deleteMenuLinkById($menuId);
+			$this->propagateMenuGroupChanges(array_merge($currentSeeGroups, $currentStartPageGroups));
+			return [
+				'success' => true,
+				'message' => 'Deleted the menu item "'.($describedItem['link_text'] ?? $menuId).'".',
+				'what_was_deleted' => $describedItem,
+				'what_was_not_deleted' => 'Only the menu link was removed. Whatever it pointed at still exists and is still reachable by anyone whose permissions allow it.',
+			];
+		}
+
+		$linkText = array_key_exists('link_text', $arguments)
+			? $this->menuItemTextValue($arguments['link_text'], 'link_text')
+			: (string) $current['link_text'];
+		if(array_key_exists('target', $arguments)) {
+			list($screen, $url) = $this->menuItemTarget($arguments['target']);
+		} else {
+			$screen = (string) $current['screen'];
+			$url = (string) $current['url'];
+		}
+		$note = array_key_exists('note', $arguments)
+			? $this->menuItemTextValue($arguments['note'], 'note')
+			: (string) $current['note'];
+		list($seeGroups, $startPageGroups) = $this->menuItemGroupArguments($arguments, $currentSeeGroups, $currentStartPageGroups);
+
+		$application_handler->updateMenuLink($applicationId, $this->menuItemDelimitedString($menuId, $linkText, $screen, $url, $seeGroups, $startPageGroups, $note));
+
+		// both the groups that had permissions and the groups that have them now, since a template group
+		// dropped from the item has to push that removal down to its entry groups as well
+		$this->propagateMenuGroupChanges(array_merge($currentSeeGroups, $currentStartPageGroups, $seeGroups, $startPageGroups));
+
+		return [
+			'success' => true,
+			'message' => 'Updated the menu item "'.$linkText.'".',
+			'menu_item' => $this->menuItemById($menuId),
+		];
+	}
+
+	/**
+	 * Check a value that has to survive the "::" delimited format menu items are written in.
+	 *
+	 * insertMenuLink() and updateMenuLink() take one string with the parts separated by "::", so a value
+	 * containing that sequence would silently split into the wrong fields. Rejecting it is the honest
+	 * answer; stripping it would quietly change what the caller asked for.
+	 *
+	 * @param mixed $value
+	 * @param string $propertyName For the error message
+	 * @return string
+	 * @throws FormulizeMCPException when the value contains the delimiter
+	 */
+	private function menuItemTextValue($value, $propertyName) {
+		$value = trim((string) $value);
+		if(strpos($value, '::') !== false) {
+			throw new FormulizeMCPException(
+				"$propertyName cannot contain \"::\".",
+				'invalid_data',
+				context: [ 'hint' => 'Formulize separates the parts of a menu item with "::" internally, so a value containing it would be split into the wrong fields.' ]
+			);
+		}
+		return $value;
+	}
+
+	/**
+	 * Turn a target into the screen and url columns Formulize stores.
+	 *
+	 * A form or screen is stored in the screen column as "fid=N" or "sid=N"; an address is stored in the url
+	 * column with the literal string "url" in the screen column, which is what the admin interface writes.
+	 *
+	 * @param mixed $target
+	 * @return array The screen value and the url value
+	 * @throws FormulizeMCPException when the target does not name exactly one destination
+	 */
+	private function menuItemTarget($target) {
+		if(!is_array($target)) {
+			throw new FormulizeMCPException('target must be an object naming where the item goes.', 'invalid_data');
+		}
+		$given = array_values(array_filter(['form_id', 'screen_id', 'url'], function($key) use ($target) {
+			return isset($target[$key]) AND trim((string) $target[$key]) !== '';
+		}));
+		if(count($given) != 1) {
+			throw new FormulizeMCPException(
+				count($given) ? 'target named more than one destination: '.implode(', ', $given).'.' : 'target did not name a destination.',
+				'invalid_data',
+				context: [ 'hint' => 'Give exactly one of form_id, screen_id or url. An item goes to one place.' ]
+			);
+		}
+		if($given[0] == 'form_id') {
+			$formId = intval($target['form_id']);
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+			if(!$form_handler->get($formId)) {
+				throw new FormulizeMCPException(
+					"There is no form with the id $formId.",
+					'invalid_data',
+					context: [ 'hint' => 'Use the list_forms tool to find form ids.' ]
+				);
+			}
+			return ['fid='.$formId, ''];
+		}
+		if($given[0] == 'screen_id') {
+			$screenId = intval($target['screen_id']);
+			$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+			if(!$screen_handler->get($screenId)) {
+				throw new FormulizeMCPException(
+					"There is no screen with the id $screenId.",
+					'invalid_data',
+					context: [ 'hint' => 'Use the list_screens tool to find screen ids.' ]
+				);
+			}
+			return ['sid='.$screenId, ''];
+		}
+		return ['url', $this->menuItemTextValue($target['url'], 'target url')];
+	}
+
+	/**
+	 * Work out the two group lists for a menu item, validating them together.
+	 *
+	 * @param array $arguments The tool arguments
+	 * @param array $currentSeeGroups The groups the item is shown to now
+	 * @param array $currentStartPageGroups The groups using it as a start page now
+	 * @return array The groups that can see it, and the groups using it as a start page
+	 * @throws FormulizeMCPException on an unknown group, an entry group, or a start page group that cannot see the item
+	 */
+	private function menuItemGroupArguments($arguments, $currentSeeGroups, $currentStartPageGroups) {
+		$seeGroups = array_key_exists('groups_that_can_see', $arguments)
+			? $this->validatedMenuGroupIds($arguments['groups_that_can_see'], 'groups_that_can_see')
+			: $currentSeeGroups;
+		$startPageGroups = array_key_exists('groups_using_as_start_page', $arguments)
+			? $this->validatedMenuGroupIds($arguments['groups_using_as_start_page'], 'groups_using_as_start_page')
+			: $currentStartPageGroups;
+
+		// a group cannot start on a page it is never shown. This can arise without either list being wrong on
+		// its own - changing only the visible groups can strand a start page group that was already there -
+		// so it is checked after both have been resolved rather than as each is read.
+		if($stranded = array_diff($startPageGroups, $seeGroups)) {
+			throw new FormulizeMCPException(
+				'These groups are set to start on this item but are not shown it: '.implode(', ', $stranded).'.',
+				'invalid_data',
+				context: [
+					'groups_that_can_see' => array_values($seeGroups),
+					'groups_using_as_start_page' => array_values($startPageGroups),
+					'hint' => 'Every group in groups_using_as_start_page must also be in groups_that_can_see. If you narrowed who can see this item, narrow the start page groups to match, or add these groups back to groups_that_can_see.'
+				]
+			);
+		}
+		return [array_values($seeGroups), array_values($startPageGroups)];
+	}
+
+	/**
+	 * Check that a list of group ids can be given menu permissions.
+	 *
+	 * @param mixed $groupIds
+	 * @param string $propertyName For the error messages
+	 * @return array The group ids as integers
+	 * @throws FormulizeMCPException on an unknown group or a form-based entry group
+	 */
+	private function validatedMenuGroupIds($groupIds, $propertyName) {
+		global $xoopsDB;
+		$validated = [];
+		foreach((array) $groupIds as $groupId) {
+			$groupId = intval($groupId);
+			if(!$groupId) {
+				continue;
+			}
+			$groupSql = "SELECT groupid, name, is_group_template, form_id, entry_id FROM ".$xoopsDB->prefix('groups')." WHERE groupid = $groupId";
+			if(!$groupResult = $xoopsDB->query($groupSql) OR !$groupRow = $xoopsDB->fetchArray($groupResult)) {
+				throw new FormulizeMCPException(
+					"$propertyName names a group that does not exist: $groupId.",
+					'invalid_data',
+					context: [ 'hint' => 'Use the list_groups tool to find group ids.' ]
+				);
+			}
+			if($this->groupKind($groupRow) == 'form_based_entry') {
+				throw new FormulizeMCPException(
+					'"'.trans($groupRow['name']).'" (group '.$groupId.') comes from an entry in a form, so it cannot be given menu permissions of its own.',
+					'invalid_data',
+					context: [ 'hint' => 'Give the permission to the template group these entry groups belong to, and they will all follow it. Use list_groups to find the template group.' ]
+				);
+			}
+			$validated[$groupId] = $groupId;
+		}
+		return array_values($validated);
+	}
+
+	/**
+	 * Build the "::" delimited string insertMenuLink() and updateMenuLink() expect.
+	 *
+	 * The empty lists are written as the literal string "null" because that is what those methods test for
+	 * before touching permissions; an empty string would reach the insert and fail there.
+	 *
+	 * @param string|int $menuId 'null' when creating
+	 * @param string $linkText
+	 * @param string $screen
+	 * @param string $url
+	 * @param array $seeGroups
+	 * @param array $startPageGroups
+	 * @param string $note
+	 * @return string
+	 */
+	private function menuItemDelimitedString($menuId, $linkText, $screen, $url, $seeGroups, $startPageGroups, $note) {
+		return implode('::', [
+			$menuId,
+			$linkText,
+			$screen,
+			$url,
+			$seeGroups ? implode(',', $seeGroups) : 'null',
+			$startPageGroups ? implode(',', $startPageGroups) : 'null',
+			$note
+		]);
+	}
+
+	/**
+	 * Push menu permission changes from any template groups involved down to their entry groups, as the
+	 * admin interface does after saving a menu.
+	 *
+	 * @param array $groupIds Every group whose menu permissions were touched, old and new
+	 * @return void
+	 */
+	private function propagateMenuGroupChanges($groupIds) {
+		$groupIds = array_values(array_unique(array_filter(array_map('intval', $groupIds))));
+		if($groupIds) {
+			include_once XOOPS_ROOT_PATH.'/modules/formulize/class/formulize.php';
+			formulizeHandler::propagateTemplateGroupPermissions($groupIds);
+		}
+	}
+
+	/**
+	 * The properties create_menu_item and update_menu_item share.
+	 *
+	 * One builder for both, so the two tools cannot come to describe the same property differently. The only
+	 * difference between the modes is whether a property must be supplied, which the tools state through
+	 * their own 'required' lists, so the wording differs only where "leave it out" means something.
+	 *
+	 * @param string $mode 'create' or 'update'
+	 * @param string $groupsDescription The shared explanation of how the group lists behave
+	 * @return array
+	 */
+	private function menuItemProperties($mode, $groupsDescription) {
+		$creating = ($mode == 'create');
+		$keepOrOmit = $creating ? 'Optional.' : 'Optional. Leave it out to keep what the item has now.';
+		return [
+			'link_text' => [
+				'type' => 'string',
+				'description' => ($creating ? 'Required.' : $keepOrOmit).' The words people see in the menu.'
+			],
+			'target' => [
+				'type' => 'object',
+				'description' => ($creating ? 'Required.' : $keepOrOmit).' Where the item goes. Give exactly one of form_id, screen_id or url.',
+				'properties' => [
+					'form_id' => [
+						'type' => 'integer',
+						'description' => 'Go to this form, showing the user the default list screen, or the default form screen if the user can only interact with a single entry in the form.'
+					],
+					'screen_id' => [
+						'type' => 'integer',
+						'description' => 'Go to this particular screen. Use this rather than form_id when a form has several screens and the menu should lead to a specific one. Use list_screens to find screen ids.'
+					],
+					'url' => [
+						'type' => 'string',
+						'description' => 'Go to an address instead of a form or screen. A full address for somewhere outside this site, or one beginning with "/" for a page within it.'
+					]
+				]
+			],
+			'groups_that_can_see' => [
+				'type' => 'array',
+				'items' => [ 'type' => 'integer' ],
+				'description' => ($creating ? 'Required.' : $keepOrOmit).' The groups this item is shown to. '.$groupsDescription
+			],
+			'groups_using_as_start_page' => [
+				'type' => 'array',
+				'items' => [ 'type' => 'integer' ],
+				'description' => ($creating ? 'Optional.' : $keepOrOmit).' The groups that land on this item when they log in. Every group named here must also be in groups_that_can_see, since a person cannot start on a page they are not shown. Where somebody belongs to several groups with different start pages, the one highest in the menu order wins.'
+			],
+			'note' => [
+				'type' => 'string',
+				'description' => ($creating ? 'Optional.' : $keepOrOmit.' Supply an empty string to clear it.').' A reminder for whoever maintains this menu. Not shown to anyone using the site.'
+			]
+		];
+	}
+
+	/**
 	 * Every menu item in the system, grouped by application, optionally narrowed to what an item leads to.
 	 *
 	 * Deliberately does not take an application id. Reading a single application's menu is what
@@ -3385,27 +3829,53 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 	private function menuItemsForApplication($applicationId) {
 		global $xoopsDB;
 		$menuItems = [];
-		$menuSql = "SELECT menu_id, screen, url, link_text, `rank`, note
+		$menuSql = "SELECT menu_id, appid, screen, url, link_text, `rank`, note
 			FROM ".$xoopsDB->prefix('formulize_menu_links')."
 			WHERE appid = ".intval($applicationId)." ORDER BY `rank`, menu_id";
 		if($menuResult = $xoopsDB->query($menuSql)) {
 			while($menuRow = $xoopsDB->fetchArray($menuResult)) {
-				$menuItem = [
-					'menu_id' => intval($menuRow['menu_id']),
-					'link_text' => $this->menuItemLinkText($menuRow),
-					'goes_to' => $this->describeMenuTarget($menuRow['screen'], $menuRow['url']),
-					'shown_to_groups' => $this->menuItemGroups(intval($menuRow['menu_id']), false),
-					'start_page_for_groups' => $this->menuItemGroups(intval($menuRow['menu_id']), true),
-				];
-				// the note is a webmaster's own reminder about the item, so it is only worth reporting when
-				// one was actually written
-				if(trim((string) $menuRow['note']) !== '') {
-					$menuItem['note'] = trans($menuRow['note']);
-				}
-				$menuItems[] = $menuItem;
+				$menuItems[] = $this->menuItemFromRow($menuRow);
 			}
 		}
 		return $menuItems;
+	}
+
+	/**
+	 * One menu item, reported the same way the listing reports it.
+	 *
+	 * @param int $menuId
+	 * @return array|null The item, or null when there is no such menu item
+	 */
+	private function menuItemById($menuId) {
+		global $xoopsDB;
+		$menuSql = "SELECT menu_id, appid, screen, url, link_text, `rank`, note
+			FROM ".$xoopsDB->prefix('formulize_menu_links')." WHERE menu_id = ".intval($menuId);
+		if($menuResult = $xoopsDB->query($menuSql) AND $menuRow = $xoopsDB->fetchArray($menuResult)) {
+			return $this->menuItemFromRow($menuRow);
+		}
+		return null;
+	}
+
+	/**
+	 * Turn a formulize_menu_links row into the shape every menu-reporting tool uses.
+	 *
+	 * @param array $menuRow
+	 * @return array
+	 */
+	private function menuItemFromRow($menuRow) {
+		$menuItem = [
+			'menu_id' => intval($menuRow['menu_id']),
+			'link_text' => $this->menuItemLinkText($menuRow),
+			'goes_to' => $this->describeMenuTarget($menuRow['screen'], $menuRow['url']),
+			'shown_to_groups' => $this->menuItemGroups(intval($menuRow['menu_id']), false),
+			'start_page_for_groups' => $this->menuItemGroups(intval($menuRow['menu_id']), true),
+		];
+		// the note is a webmaster's own reminder about the item, so it is only worth reporting when one was
+		// actually written
+		if(trim((string) $menuRow['note']) !== '') {
+			$menuItem['note'] = trans($menuRow['note']);
+		}
+		return $menuItem;
 	}
 
 	/**
