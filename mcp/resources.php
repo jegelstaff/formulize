@@ -1626,6 +1626,7 @@ That makes the template groups the right place to set and change permissions tha
 				'database_error'
 			);
 		}
+		$menuItemCounts = $this->menuItemCountsByApplication();
 		$prevApp = 0;
 		$applications = [];
 		$forms = [];
@@ -1634,7 +1635,7 @@ That makes the template groups the right place to set and change permissions tha
 		$desc = '';
 		while($row = $this->db->fetchArray($res)) {
 			if($prevApp AND $prevApp != $row['appid']) {
-				$applications[] = $this->assignAppDataToApplicationsArray($id, $name, $desc, $forms);
+				$applications[] = $this->assignAppDataToApplicationsArray($id, $name, $desc, $forms, $menuItemCounts[intval($id)] ?? 0);
 				$forms = [];
 			}
 			$id = $row['appid'];
@@ -1648,7 +1649,7 @@ That makes the template groups the right place to set and change permissions tha
 			}
 			$prevApp = $id;
 		}
-		$applications[] = $this->assignAppDataToApplicationsArray($id, $name, $desc, $forms);
+		$applications[] = $this->assignAppDataToApplicationsArray($id, $name, $desc, $forms, $menuItemCounts[intval($id)] ?? 0);
 		return [
 			'applications' => $applications,
 			'application_count' => count($applications)
@@ -1663,14 +1664,38 @@ That makes the template groups the right place to set and change permissions tha
 	 * call get_custom_code on the off chance.
 	 * @return array The application
 	 */
-	private function assignAppDataToApplicationsArray($id, $name, $desc, $forms) {
+	private function assignAppDataToApplicationsArray($id, $name, $desc, $forms, $menuItemCount = 0) {
 		return [
 			'id' => $id,
 			'name' => $name,
 			'description' => $desc,
-			'custom_code_present' => file_exists(XOOPS_ROOT_PATH.'/modules/formulize/code/application_custom_code_'.intval($id).'.php'),
-			'forms' => $forms
+			// the shared check, rather than a file_exists() of its own: an empty code file exists but runs
+			// nothing, and reporting it as present sends the reader to get_custom_code for an empty answer.
+			// get_application_details reports the same fact, so the two must not decide it differently.
+			'custom_code_present' => $this->applicationCustomCodePresent($id),
+			'forms' => $forms,
+			'menu_item_count' => intval($menuItemCount)
 		];
+	}
+
+	/**
+	 * How many menu items each application has, keyed by application id.
+	 *
+	 * Counted in its own query rather than joined into the applications query, because that one joins
+	 * applications to forms and so returns a row per form - a menu count joined there would be multiplied by
+	 * the number of forms, and the surrounding loop depends on that query's exact shape and ordering.
+	 *
+	 * @return array appid => number of menu items
+	 */
+	private function menuItemCountsByApplication() {
+		$counts = [];
+		$sql = "SELECT appid, COUNT(*) AS menu_item_count FROM ".$this->db->prefix('formulize_menu_links')." GROUP BY appid";
+		if($result = $this->db->query($sql)) {
+			while($row = $this->db->fetchArray($result)) {
+				$counts[intval($row['appid'])] = intval($row['menu_item_count']);
+			}
+		}
+		return $counts;
 	}
 
 	/**

@@ -30,7 +30,9 @@ trait tools {
 			],
 			'list_applications' => [
 				'name' => 'list_applications',
-				'description' => "List all the applications and the forms that are part of each one. This tool provides an overview of the organizational structure of the forms within the system, helping to understand how forms are grouped together for different purposes. The same form can exist in multiple applications. Each application also reports whether it has custom code, which is PHP that runs on every page of that application and can affect how things behave; read it with the get_custom_code tool.",
+				'description' => "List all the applications and the forms that are part of each one. This tool provides an overview of the organizational structure of the forms within the system, helping to understand how forms are grouped together for different purposes. The same form can exist in multiple applications. Each application also reports whether it has custom code, which is PHP that runs on every page of that application and can affect how things behave; read it with the get_custom_code tool.
+
+Each application reports how many menu items it has, but not what they are. The menu is how people actually reach the forms, so an application with no menu items is one nothing links to. Use get_application_details to look closely at one application, including its menu, or list_menu_items to read menus across the whole system - useful for finding which item leads to a particular form or screen.",
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => (object)[]
@@ -752,8 +754,8 @@ Some groups are associated with the entries in forms (form-based entry groups). 
 				]
 			];
 
-			// REVISIT WHEN list_menu_items EXISTS: the description and the menu_items section below both say
-			// menu items are only visible in the admin interface, which is true only until that tool exists.
+			// REVISIT WHEN create_menu_item EXISTS: the about_the_menu text in the response still says menu
+			// items can only be changed in the admin interface, which is true only until that tool exists.
 			$this->tools['get_application_details'] = [
 				'name' => 'get_application_details',
 				'description' => 'Look at one application: the forms in it, the menu people use to reach them, and whether it carries custom code.
@@ -772,6 +774,31 @@ Use list_applications for a list of every application in the system; this tool i
 						]
 					],
 					'required' => ['application_id']
+				]
+			];
+
+			$this->tools['list_menu_items'] = [
+				'name' => 'list_menu_items',
+				'description' => 'Read the menus of this system: what each item is called, where it goes, who can see it, and who lands on it when they log in. Called with no arguments it returns every menu item in the system, grouped by application. Give a form_id or a screen_id to get only the items pointing there.
+
+Menu items are grouped by application. To read one application\'s menu, use get_application_details instead - it returns that application\'s menu along with the application\'s forms.
+
+A menu is not one list that everybody sees. Each item is shown only to the groups named against it, so what any person actually sees is the items visible to the groups they belong to. Reading a menu therefore tells you what exists, not what any particular user sees.
+
+Menu items are shown in rank order, which is the order they appear on screen.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'form_id' => [
+							'type' => 'integer',
+							'description' => 'Optional. Only items leading to this form. That includes items pointing at the form itself and items pointing at any of its screens, since both land the user in the same form. Use list_forms to find form ids.'
+						],
+						'screen_id' => [
+							'type' => 'integer',
+							'description' => 'Optional. Only items pointing at this particular screen. Use list_screens to find screen ids. You do not need to provide a form_id if you are providing a screen_id.'
+						]
+					],
+					'required' => []
 				]
 			];
 
@@ -3229,20 +3256,7 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 		}
 
 		// the menu, which is what most people actually see of an application
-		$menuItems = [];
-		$menuSql = "SELECT menu_id, screen, url, link_text, rank, note
-			FROM ".$xoopsDB->prefix('formulize_menu_links')." WHERE appid = $applicationId ORDER BY rank, menu_id";
-		if($menuResult = $xoopsDB->query($menuSql)) {
-			while($menuRow = $xoopsDB->fetchArray($menuResult)) {
-				$menuItems[] = [
-					'menu_id' => intval($menuRow['menu_id']),
-					'link_text' => trans($menuRow['link_text']),
-					'goes_to' => $this->describeMenuTarget($menuRow['screen'], $menuRow['url']),
-					'shown_to_groups' => $this->menuItemGroups(intval($menuRow['menu_id']), false),
-					'start_page_for_groups' => $this->menuItemGroups(intval($menuRow['menu_id']), true),
-				];
-			}
-		}
+		$menuItems = $this->menuItemsForApplication($applicationId);
 
 		$response = [
 			'application_id' => intval($appRow['appid']),
@@ -3267,6 +3281,161 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 			$response['about_the_custom_code'] = 'This application carries PHP that is included on every page load. Read it with get_custom_code before changing anything of the code, since it can affect pages well beyond this application.';
 		}
 		return $response;
+	}
+
+	/**
+	 * Every menu item in the system, grouped by application, optionally narrowed to what an item leads to.
+	 *
+	 * Deliberately does not take an application id. Reading a single application's menu is what
+	 * get_application_details already does, so that would have been a second route to the same answer rather
+	 * than a capability of its own. The filters here narrow by destination instead, which is the question
+	 * this tool exists to answer and the one nothing else can: what leads to this form or screen.
+	 *
+	 * @param array $arguments 'form_id' and/or 'screen_id', both optional
+	 * @return array The applications and their menu items
+	 * @throws FormulizeMCPException on permission failure, or an unknown form or screen
+	 */
+	private function list_menu_items($arguments) {
+
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				'Permission denied: Only webmasters can review the menus in this system.',
+				'authentication_error',
+			);
+		}
+
+		global $xoopsDB;
+		// Validate the filters before running anything, so that "nothing points there" is only ever reported
+		// about a form or screen that actually exists - otherwise a typo in an id reads as a real finding.
+		$formId = intval($arguments['form_id'] ?? 0);
+		$screenId = intval($arguments['screen_id'] ?? 0);
+		if($formId) {
+			$this->assertFormExists($formId, 'form_id');
+		}
+		if($screenId) {
+			$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+			if(!$screen_handler->get($screenId)) {
+				throw new FormulizeMCPException(
+					"There is no screen with the id $screenId.",
+					'invalid_data',
+					context: [ 'hint' => 'Use the list_screens tool to find screen ids.' ]
+				);
+			}
+		}
+
+		// Grouped by application rather than returned as one flat list, because an item's application is what
+		// determines where it appears, and a flat list would leave that out.
+		$applications = [];
+		$totalItems = 0;
+		$applicationSql = "SELECT appid, name FROM ".$xoopsDB->prefix('formulize_applications')." ORDER BY name";
+		if($applicationResult = $xoopsDB->query($applicationSql)) {
+			while($applicationRow = $xoopsDB->fetchArray($applicationResult)) {
+				$menuItems = $this->menuItemsForApplication(intval($applicationRow['appid']));
+				if($formId OR $screenId) {
+					$menuItems = array_values(array_filter($menuItems, function($menuItem) use ($formId, $screenId) {
+						// goes_to carries form_id for an item pointing at a form AND for one pointing at a
+						// screen, since a screen belongs to a form - so filtering by form catches both ways of
+						// reaching it, which is what someone asking "what leads to this form" means.
+						$target = $menuItem['goes_to'];
+						if($formId AND intval($target['form_id'] ?? 0) != $formId) {
+							return false;
+						}
+						if($screenId AND intval($target['screen_id'] ?? 0) != $screenId) {
+							return false;
+						}
+						return true;
+					}));
+					// an application contributing nothing to a filtered result is noise, not information
+					if(!$menuItems) {
+						continue;
+					}
+				}
+				$totalItems += count($menuItems);
+				$applications[] = [
+					'application_id' => intval($applicationRow['appid']),
+					'name' => trans($applicationRow['name']),
+					'menu_items' => $menuItems,
+					'menu_item_count' => count($menuItems),
+				];
+			}
+		}
+
+		$response = [
+			'applications' => $applications,
+			'menu_item_count' => $totalItems,
+		];
+		$response['how_to_read_the_menus'] = 'Every item is shown only to the groups listed against it, so what any one person sees is the items whose groups they belong to, which may be none of them. That means there is no single "the menu" to read: two people can open the same application and be looking at completely different lists. An item that is a start page for a group is where members of that group land when they log in, and the first such item in rank order wins for someone in more than one of those groups.';
+		if(!$totalItems) {
+			$response['about_the_empty_result'] = ($formId OR $screenId)
+				? 'Nothing in any menu leads there. That is a real answer rather than a missing one: the '.($screenId ? 'screen' : 'form').' exists, and people reach it by a direct link or not at all. Removing or renaming it would break no menu item.'
+				: 'No application in this system has any menu items. Forms are still reachable directly by anyone whose permissions allow it.';
+		}
+		return $response;
+	}
+
+	/**
+	 * The menu items of one application, in the order they appear on screen.
+	 *
+	 * Shared by get_application_details and list_menu_items so that the two cannot come to describe the
+	 * same menu differently.
+	 *
+	 * @param int $applicationId
+	 * @return array One entry per menu item, in rank order
+	 */
+	private function menuItemsForApplication($applicationId) {
+		global $xoopsDB;
+		$menuItems = [];
+		$menuSql = "SELECT menu_id, screen, url, link_text, `rank`, note
+			FROM ".$xoopsDB->prefix('formulize_menu_links')."
+			WHERE appid = ".intval($applicationId)." ORDER BY `rank`, menu_id";
+		if($menuResult = $xoopsDB->query($menuSql)) {
+			while($menuRow = $xoopsDB->fetchArray($menuResult)) {
+				$menuItem = [
+					'menu_id' => intval($menuRow['menu_id']),
+					'link_text' => $this->menuItemLinkText($menuRow),
+					'goes_to' => $this->describeMenuTarget($menuRow['screen'], $menuRow['url']),
+					'shown_to_groups' => $this->menuItemGroups(intval($menuRow['menu_id']), false),
+					'start_page_for_groups' => $this->menuItemGroups(intval($menuRow['menu_id']), true),
+				];
+				// the note is a webmaster's own reminder about the item, so it is only worth reporting when
+				// one was actually written
+				if(trim((string) $menuRow['note']) !== '') {
+					$menuItem['note'] = trans($menuRow['note']);
+				}
+				$menuItems[] = $menuItem;
+			}
+		}
+		return $menuItems;
+	}
+
+	/**
+	 * The words a menu item actually shows.
+	 *
+	 * An item with no link text of its own is not blank on screen: Formulize falls back to the title of
+	 * whatever the item points at. Reporting the stored empty string would describe a menu entry that does
+	 * not exist, so the same fallback is applied here.
+	 *
+	 * @param array $menuRow A row from formulize_menu_links
+	 * @return string
+	 */
+	private function menuItemLinkText($menuRow) {
+		$linkText = trim((string) $menuRow['link_text']);
+		if($linkText !== '') {
+			return trans($linkText);
+		}
+		$screen = trim((string) $menuRow['screen']);
+		if(preg_match('/^fid=(\d+)$/', $screen, $matches)) {
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+			if($formObject = $form_handler->get(intval($matches[1]))) {
+				return trans($formObject->getVar('form_title', 'n'));
+			}
+		} elseif(preg_match('/^sid=(\d+)$/', $screen, $matches)) {
+			$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+			if($screenObject = $screen_handler->get(intval($matches[1]))) {
+				return trans($screenObject->getVar('title', 'n'));
+			}
+		}
+		return trim((string) $menuRow['url']);
 	}
 
 	/**
@@ -3308,8 +3477,11 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 	private function menuItemGroups($menuId, $startPageOnly) {
 		global $xoopsDB;
 		$groups = [];
+		// INNER JOIN, so a permission row left behind by a deleted group is not reported. Deleting a group
+		// does not remove its menu permission rows, and such a row grants nothing at all - the group has no
+		// members - so listing it would make an item look more widely visible than it is.
 		$sql = "SELECT p.group_id, g.name FROM ".$xoopsDB->prefix('formulize_menu_permissions')." p
-			LEFT JOIN ".$xoopsDB->prefix('groups')." g ON g.groupid = p.group_id
+			INNER JOIN ".$xoopsDB->prefix('groups')." g ON g.groupid = p.group_id
 			WHERE p.menu_id = ".intval($menuId).($startPageOnly ? " AND p.default_screen = 1" : "")."
 			ORDER BY g.name";
 		if($result = $xoopsDB->query($sql)) {
@@ -3319,6 +3491,7 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 		}
 		return $groups;
 	}
+
 
 	/**
 	 * Whether an application has custom code, matching how list_applications reports it.
