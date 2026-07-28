@@ -2667,15 +2667,48 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 			throw new FormulizeMCPException('Permission denied: You must be a webmaster or a member of the group to list its members.', 'authentication_error');
 		}
 		$limitBy = " INNER JOIN ".$this->db->prefix('groups_users_link')." as l ON l.uid = u.uid WHERE l.groupid = ".intval($group_id);
-		$groupMemberData = [];
 		$groupData = $this->groups_list($group_id);
-		$groupMemberData['group_details'] = $groupData['groups'][0] ?? [];
+		$groupMemberData = [
+			'group_details' => $groupData['groups'][0] ?? [],
+			'members' => [], // always present, so an empty group is an empty list rather than a missing key
+		];
 		if($result = $this->getUserDetails(limitBy: $limitBy)) {
-			if($result) {
-				while($row = $this->db->fetchArray($result)) {
-					$groupMemberData['members'][] = $this->formatTimestamps($row);
+			while($row = $this->db->fetchArray($result)) {
+				$groupMemberData['members'][] = $this->formatTimestamps($row);
+			}
+		}
+		$groupMemberData['member_count'] = count($groupMemberData['members']);
+
+		// A form-based template group never has members of its own, so an empty list here is not the
+		// answer to "who does this affect?" - the people are in the entry groups that belong to it. Left
+		// unexplained, an empty result reads as an unused group, which is the conclusion that has already
+		// caused an assistant to refuse to set permissions on one.
+		if(($groupMemberData['group_details']['group_kind'] ?? '') === 'form_based_template') {
+			$entryGroups = [];
+			if($entryGroupIds = formulizeHandler::getTemplateToEntryGroupMap($group_id)) {
+				$entryGroupIds = array_filter(array_map('intval', (array) $entryGroupIds));
+				if($entryGroupIds) {
+					$sql = "SELECT g.groupid, g.name, COUNT(l.uid) AS member_count
+						FROM ".$this->db->prefix('groups')." g
+						LEFT JOIN ".$this->db->prefix('groups_users_link')." l ON l.groupid = g.groupid
+						WHERE g.groupid IN (".implode(',', $entryGroupIds).")
+						GROUP BY g.groupid, g.name ORDER BY g.name";
+					if($egResult = $this->db->query($sql)) {
+						while($egRow = $this->db->fetchArray($egResult)) {
+							$entryGroups[] = [
+								'group_id' => intval($egRow['groupid']),
+								'name' => $egRow['name'],
+								'member_count' => intval($egRow['member_count'])
+							];
+						}
+					}
 				}
 			}
+			$groupMemberData['entry_groups_holding_the_members'] = $entryGroups;
+			// Only what answers the question that was asked. The full account of form-based groups - how
+			// they are set up, categories, how permissions propagate - lives on list_groups and on
+			// get_form_permissions_by_group, where that is what the caller is actually asking about.
+			$groupMemberData['why_the_member_list_is_empty'] = 'This is a form-based template group, and template groups never have members of their own. That does not make it unused or safe to ignore. The people it governs are the members of the entry groups listed above, and the permissions you give this template group are what those entry groups receive. Use list_groups for a fuller account of how form-based groups work.';
 		}
 		return $groupMemberData;
 	}
