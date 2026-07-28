@@ -849,6 +849,29 @@ Deleting a menu item removes the link in the user interface only; the form or sc
 					'required' => ['menu_id']
 				]
 			];
+
+			$this->tools['change_menu_item_order'] = [
+				'name' => 'change_menu_item_order',
+				'description' => 'Set the order of the items in an application\'s menu, top to bottom. Use list_menu_items to see the current order.
+
+Order matters beyond appearance. If a user has multiple menu items that are set to be their start page, the one highest in this order wins.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'application_id' => [
+							'type' => 'integer',
+							'description' => 'Required. The application whose menu is being reordered. Use list_applications to find application ids.'
+						],
+						'order' => [
+							'type' => 'array',
+							'items' => [ 'type' => 'integer' ],
+							'description' => 'Required. Every menu id in this application, once each, in the order they should appear from top to bottom. The whole menu is listed rather than only what moved, so that the result does not depend on what the order happened to be beforehand. Leaving an item out is refused rather than guessed at.'
+						]
+					],
+					'required' => ['application_id', 'order']
+				]
+			];
+
 			$this->tools['create_users'] = [
 				'name' => 'create_users',
 				'description' => 'Create user accounts.
@@ -3328,6 +3351,106 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 			$response['about_the_custom_code'] = 'This application carries PHP that is included on every page load. Read it with get_custom_code before changing anything of the code, since it can affect pages well beyond this application.';
 		}
 		return $response;
+	}
+
+	/**
+	 * Set the top-to-bottom order of an application's menu.
+	 *
+	 * The payload is a plain list of menu ids, unlike change_form_screen_page_order which takes an old-to-new
+	 * number map. The difference is deliberate: form screen pages have no identity of their own and can only
+	 * be referred to by position, whereas menu items have stable ids, so naming them directly is both simpler
+	 * and impossible to misread.
+	 *
+	 * @param array $arguments 'application_id' and 'order'
+	 * @return array The menu in its new order
+	 * @throws FormulizeMCPException on permission failure, an unknown application, or an order that is not
+	 *                               exactly the application's menu items
+	 */
+	private function change_menu_item_order($arguments) {
+
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				'Permission denied: Only webmasters can change a menu.',
+				'authentication_error',
+			);
+		}
+
+		global $xoopsDB;
+		$applicationId = intval($arguments['application_id'] ?? 0);
+		if(!$applicationId) {
+			throw new FormulizeMCPException('application_id is required', 'invalid_data');
+		}
+		$applicationSql = "SELECT appid FROM ".$xoopsDB->prefix('formulize_applications')." WHERE appid = $applicationId";
+		if(!$applicationResult = $xoopsDB->query($applicationSql) OR !$xoopsDB->fetchArray($applicationResult)) {
+			throw new FormulizeMCPException(
+				"There is no application with the id $applicationId.",
+				'invalid_data',
+				context: [ 'hint' => 'Use the list_applications tool to see the applications in this system.' ]
+			);
+		}
+		if(!isset($arguments['order']) OR !is_array($arguments['order'])) {
+			throw new FormulizeMCPException('order is required, and must be a list of menu ids.', 'invalid_data');
+		}
+		$requestedOrder = array_map('intval', array_values($arguments['order']));
+
+		// the menu as it stands, which is what the requested order has to account for exactly
+		$currentIds = [];
+		$currentSql = "SELECT menu_id FROM ".$xoopsDB->prefix('formulize_menu_links')." WHERE appid = $applicationId ORDER BY `rank`, menu_id";
+		if($currentResult = $xoopsDB->query($currentSql)) {
+			while($currentRow = $xoopsDB->fetchArray($currentResult)) {
+				$currentIds[] = intval($currentRow['menu_id']);
+			}
+		}
+		if(!$currentIds) {
+			throw new FormulizeMCPException(
+				"Application $applicationId has no menu items, so there is nothing to reorder.",
+				'invalid_data',
+				context: [ 'hint' => 'Use create_menu_item to add menu items.' ]
+			);
+		}
+
+		// Report every way the list is wrong at once, rather than stopping at the first, since an assistant
+		// assembling this list has to get all of it right and a single correction at a time would mean a
+		// round trip for each mistake.
+		$missing = array_values(array_diff($currentIds, $requestedOrder));
+		$notInThisMenu = array_values(array_diff($requestedOrder, $currentIds));
+		$duplicated = array_values(array_unique(array_diff_assoc($requestedOrder, array_unique($requestedOrder))));
+		if($missing OR $notInThisMenu OR $duplicated) {
+			$problems = [];
+			if($missing) {
+				$problems[] = count($missing).' left out ('.implode(', ', $missing).')';
+			}
+			if($notInThisMenu) {
+				$problems[] = count($notInThisMenu).' not in this application\'s menu ('.implode(', ', $notInThisMenu).')';
+			}
+			if($duplicated) {
+				$problems[] = count($duplicated).' listed more than once ('.implode(', ', $duplicated).')';
+			}
+			throw new FormulizeMCPException(
+				'order must list every menu item in this application exactly once: '.implode('; ', $problems).'.',
+				'invalid_data',
+				context: [
+					'menu_items_in_this_application' => $currentIds,
+					'hint' => 'Use list_menu_items to see this application\'s menu, then send all of those ids in the order you want them.'
+				]
+			);
+		}
+
+		$application_handler = xoops_getmodulehandler('applications', 'formulize');
+		$links = $application_handler->getMenuLinksForApp($applicationId, 'all');
+		$ranks = array_flip($requestedOrder);
+		foreach($links as $link) {
+			// assignVar rather than setVar, because updateSorting writes the rank straight to the database
+			// itself rather than going through the handler's insert
+			$link->assignVar('rank', $ranks[intval($link->getVar('menu_id'))]);
+		}
+		$application_handler->updateSorting($links);
+
+		return [
+			'success' => true,
+			'message' => 'Reordered the '.count($requestedOrder).' items in this menu.',
+			'menu_items' => $this->menuItemsForApplication($applicationId),
+		];
 	}
 
 	/**
