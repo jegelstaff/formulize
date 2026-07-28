@@ -579,6 +579,39 @@ Use get_form_details first to see the form\'s current settings. This tool does n
 				]
 			];
 
+			// REVISIT WHEN get_form_permissions_for_user EXISTS: the description below, and the group_ids
+			// description further down, both teach looking up a user's groups and passing them here as the
+			// way to find out what someone can do. That is the best available route only while there is no
+			// per-user tool; once there is one, both should point at it instead. Same note in resources.php
+			// on describeHowToInterpretPermissions(), which carries the third copy of the same advice.
+			$this->tools['get_form_permissions_by_group'] = [
+				'name' => 'get_form_permissions_by_group',
+				'description' => 'See how a form\'s permissions are configured: which groups can reach it, who can create, change and delete entries, and crucially whose entries each group is able to see. If a group has visibility conditions, which further restrict which entries its members see, those are reported too.
+
+Permissions are configured per group, but users can be members of more than one group, and users receive all the permissions from all their groups. So this report shows group configuration, not necessarily what any particular user can do.
+
+To find out what a user can do, look up their groups with the list_a_users_groups tool, and pass those ids to this tool in the group_ids parameter. The report then covers exactly that combination of groups: what that user can do, and equally anyone else belonging to the same set of groups.
+
+If the form inherits its permissions from another form, they are maintained on that other form and cannot be changed here.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'form_id' => [
+							'type' => 'integer',
+							'description' => 'Required. The id of the form. Use list_forms to find form ids.'
+						],
+						'group_ids' => [
+							'type' => 'array',
+							'items' => [ 'type' => 'integer' ],
+							'description' => 'Optional. Report only on these groups. Leave this out to see every group that has any permission on the form. Use the list_groups tool to find group ids.
+
+The most useful way to use this is to pass all the groups one user belongs to, which you can get from the list_a_users_groups tool. The report then covers exactly that user\'s combination of groups, which together are what determines what they can do - and what anyone else in the same combination can do.'
+						]
+					],
+					'required' => ['form_id']
+				]
+			];
+
 			$this->tools['get_custom_code'] = [
 				'name' => 'get_custom_code',
 				'description' => 'Read the custom PHP code attached to a form or to an application.
@@ -2643,6 +2676,32 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 			);
 		}
 		return $this->element_details($elements, $arguments['form_id'] ?? 0);
+	}
+
+	/**
+	 * Report how a form's permissions are configured, group by group, collapsing groups whose permissions
+	 * are identical. Named for the axis it reports on: permissions are only ever set on groups, but the
+	 * question people usually have is about a user, and the two are not the same because users combine the
+	 * permissions of every group they belong to. Passing that user's group ids narrows the report to their
+	 * combination, which is the closest this tool gets to answering the per-user question.
+	 * @param array $arguments 'form_id' (required), 'group_ids' (optional)
+	 * @return array The permission report
+	 * @throws FormulizeMCPException on permission failure or an unknown form
+	 */
+	private function get_form_permissions_by_group($arguments) {
+
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				"Permission denied: Only webmasters can review a form's permissions.",
+				'authentication_error',
+			);
+		}
+
+		$formId = intval($arguments['form_id'] ?? 0);
+		if(!$formId) {
+			throw new FormulizeMCPException('form_id is required', 'invalid_data');
+		}
+		return $this->form_permissions_report($formId, $arguments['group_ids'] ?? []);
 	}
 
 	/**

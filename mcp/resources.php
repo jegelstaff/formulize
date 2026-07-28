@@ -29,14 +29,14 @@ trait resources {
 		$this->resources['groups_list'] = [
 			'uri' => 'formulize://system/groups_list.json',
 			'name' => 'List of Groups',
-			'description' => 'All the groups in the system. Groups are collections of users. Each group can have its own permissions to access a form, such as viewing the form, updating entries by other people in the same group, seeing entries by anyone in any group, etc.',
+			'description' => 'All the groups in the system. Groups are collections of users. Each group can have its own permissions to access a form, such as viewing the form, updating entries by other users in the same group, seeing entries by anyone in any group, etc.',
 			'mimeType' => 'application/json'
 		];
 
 		$this->resources['users_list'] = [
 			'uri' => 'formulize://system/users_list.json',
 			'name' => 'List of Users',
-			'description' => 'All the users in the system. Users are collected into groups. Users can be members of multiple groups. Permissions are assigned to groups, and users inherit all the permissions from all the groups they are a member of. Permissions include things like viewing a form, creating entries in a form, updating entries created by other people in the same group, seeing entries by anyone in any group, etc.',
+			'description' => 'All the users in the system. Users are collected into groups. Users can be members of multiple groups. Permissions are assigned to groups, and users inherit all the permissions from all the groups they are a member of. Permissions include things like viewing a form, creating entries in a form, updating entries created by other users in the same group, seeing entries by anyone in any group, etc.',
 			'mimeType' => 'application/json'
 		];
 
@@ -86,18 +86,16 @@ trait resources {
 		}
 		$this->resources = $this->resources + $groupPermsForFormResources;
 		// resources for each groups permissions across all forms
-		foreach($this->groups_list() as $groupData) {
-			foreach($groupData as $thisGroupData) {
-				$groupId = $thisGroupData['groupid'];
-				$groupName = trans($thisGroupData['name']);
-				$sanitizedGroupName = formulizeObject::sanitize_handle_name($groupName);
-				$this->resources["form_permissions_for_group_$groupId"] = [
-					'uri' => "formulize://permissions/form_perms_for_$sanitizedGroupName"."_(group_$groupId).json",
-					'name' => "Perms for $groupName (group $groupId)",
-					'description' => "All the permissions for $groupName (group $groupId) all the forms in the system that they have access to.",
-					'mimeType' => 'application/json'
-				];
-			}
+		foreach($this->groups_list()['groups'] as $thisGroupData) {
+			$groupId = $thisGroupData['groupid'];
+			$groupName = trans($thisGroupData['name']);
+			$sanitizedGroupName = formulizeObject::sanitize_handle_name($groupName);
+			$this->resources["form_permissions_for_group_$groupId"] = [
+				'uri' => "formulize://permissions/form_perms_for_$sanitizedGroupName"."_(group_$groupId).json",
+				'name' => "Perms for $groupName (group $groupId)",
+				'description' => "All the permissions for $groupName (group $groupId) all the forms in the system that they have access to.",
+				'mimeType' => 'application/json'
+			];
 		}
 
 	}
@@ -801,6 +799,256 @@ trait resources {
 	}
 
 	/**
+	 * Report who can do what with a form.
+	 *
+	 * Reported as a list of permission SETS rather than a row per group, because a system that uses
+	 * form-based groups can easily have hundreds of groups whose permissions are byte identical - entry
+	 * groups have theirs copied from their template group - and listing them individually would be almost
+	 * entirely repetition. Groups whose grants match are therefore reported together, and the enumerated
+	 * names are capped so that a very large family stays readable.
+	 *
+	 * Two things beyond the permissions themselves are reported because without them the answer would be
+	 * misleading: whether the form's permissions are inherited from another form (in which case they cannot
+	 * be edited here at all), and whether a group has visibility conditions, which further restrict which
+	 * entries its members see in a way no permission name reveals.
+	 *
+	 * @param int $formId The form to report on
+	 * @param array $groupIds Optional. Restrict the report to these groups.
+	 * @return array The permission report
+	 */
+	private function form_permissions_report($formId, $groupIds = []) {
+
+		$formId = intval($formId);
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		if(!$formObject = $form_handler->get($formId)) {
+			throw new FormulizeMCPException(
+				"Form not found: $formId",
+				'form_not_found',
+				context: [ 'hint' => 'Use the list_forms tool to see the forms in this system.' ]
+			);
+		}
+		$moduleId = getFormulizeModId();
+
+		$groupLimit = '';
+		if(!empty($groupIds)) {
+			$groupIds = array_filter(array_map('intval', (array) $groupIds));
+			if(!empty($groupIds)) {
+				$groupLimit = ' AND p.gperm_groupid IN ('.implode(',', $groupIds).')';
+			}
+		}
+
+		// every grant on this form in one query, with the group names alongside
+		$sql = "SELECT p.gperm_groupid AS group_id, g.name AS group_name, p.gperm_name AS permission
+			FROM ".$this->db->prefix('group_permission')." p
+			LEFT JOIN ".$this->db->prefix('groups')." g ON g.groupid = p.gperm_groupid
+			WHERE p.gperm_itemid = $formId AND p.gperm_modid = ".intval($moduleId)."$groupLimit
+			ORDER BY p.gperm_groupid, p.gperm_name";
+		if(!$result = $this->db->query($sql)) {
+			throw new FormulizeMCPException(
+				'Failed to look up the permissions for this form. '.$this->db->error(),
+				'database_error'
+			);
+		}
+		$byGroup = [];
+		while($row = $this->db->fetchArray($result)) {
+			$groupId = intval($row['group_id']);
+			if(!isset($byGroup[$groupId])) {
+				$byGroup[$groupId] = [ 'name' => $row['group_name'], 'permissions' => [] ];
+			}
+			$byGroup[$groupId]['permissions'][] = $row['permission'];
+		}
+
+		// custom groupscope targets, and any visibility conditions
+		$groupScope = $this->groupScopeTargetsForForm($formId);
+		$visibilityConditions = $this->visibilityConditionsForForm($formId);
+
+		// collapse groups whose grants are identical in every respect
+		$sets = [];
+		foreach($byGroup as $groupId => $groupData) {
+			// The webmaster group is left out entirely. icms_member_groupperm_Handler::checkRight() short
+			// circuits to true whenever that group is among the ones being tested, so whatever is recorded
+			// against it means nothing - the Artifacts form stores only view_form and edit_form for
+			// webmasters, who can nonetheless do everything. Reporting those rows would describe a limit
+			// that does not exist, so the fact is stated once on the response instead.
+			// Loose comparison on purpose: the group constants are defined as strings in mainfile.php
+			// ('1', '2', '3'), so a strict comparison against an integer group id never matches.
+			if($groupId == XOOPS_GROUP_ADMIN) {
+				continue;
+			}
+			sort($groupData['permissions']);
+			$scope = $groupScope[$groupId] ?? [];
+			sort($scope);
+			$conditions = $visibilityConditions[$groupId] ?? [];
+			$key = md5(serialize([$groupData['permissions'], $scope, $conditions]));
+			if(!isset($sets[$key])) {
+				$sets[$key] = [
+					'groups' => [],
+					'group_count' => 0,
+					'permissions' => $groupData['permissions'],
+					'what_this_set_grants' => $this->describeVisibility($groupData['permissions'], $scope),
+				];
+				if(!empty($conditions)) {
+					$sets[$key]['visibility_conditions'] = $conditions;
+					$sets[$key]['about_these_conditions'] = 'Members of these groups only see entries matching these conditions. This applies to anyone in the group, including users who get their access to the form from a different group.';
+				}
+			}
+			$sets[$key]['group_count']++;
+			if(count($sets[$key]['groups']) < 15) { // enough to recognise the family without listing hundreds
+				$sets[$key]['groups'][] = [ 'group_id' => $groupId, 'name' => $groupData['name'] ];
+			}
+		}
+		foreach($sets as $key => $set) {
+			if($set['group_count'] > count($set['groups'])) {
+				$sets[$key]['groups_not_listed'] = $set['group_count'] - count($set['groups']);
+			}
+		}
+
+		// which forms this one's permissions are tied to, in either direction
+		$childIds = [];
+		$childSql = "SELECT id_form FROM ".$this->db->prefix('formulize_id')." WHERE parent_perm_fid = $formId";
+		if($childResult = $this->db->query($childSql)) {
+			while($childRow = $this->db->fetchArray($childResult)) {
+				$childIds[] = intval($childRow['id_form']);
+			}
+		}
+		$parentId = intval($formObject->getVar('parent_perm_fid'));
+
+		$response = [
+			'form_id' => $formId,
+			'form_title' => $formObject->getVar('form_title'),
+			// deliberately before the data: two different AI assistants have read a per-group report of
+			// this shape and concluded that a group granting nothing means its members have no access,
+			// when in practice those same people hold access through another group they also belong to
+			'how_to_interpret_group_permissions' => $this->describeHowToInterpretPermissions(!empty($groupIds)),
+			'inherits_permissions_from_form' => $parentId ?: null,
+			'forms_inheriting_permissions_from_this_form' => $childIds,
+			'permission_sets' => array_values($sets),
+			'permission_set_count' => count($sets),
+			'about_webmasters' => 'Members of the Webmasters group can do anything on every form and can see every entry, no matter what permissions are set, so that group is not listed above.',
+		];
+		if($parentId) {
+			$response['note_about_inheritance'] = "These permissions are inherited from form $parentId and are maintained there. They cannot be changed on this form.";
+		}
+		// an empty list reads as "nobody can use this form", which is wrong in both directions: webmasters
+		// always can, and a narrowed report says nothing about the groups that were left out of it
+		if(empty($sets)) {
+			$response['note_about_the_empty_result'] = !empty($groupIds)
+				? 'None of the groups you asked about have any permissions on this form. That does not tell you the form is unused - other groups may have full access to it, and this report was narrowed to the groups you named. Call again without group_ids to see every group.'
+				: 'No group has been given any permissions on this form, so only webmasters can reach it. That is normal for a form that exists to support other forms - holding a list of options that are chosen from elsewhere, for example - rather than being worked with directly.';
+		}
+		return $response;
+	}
+
+	/**
+	 * Explain how to read a per-group permission report, and say so before the data rather than after it.
+	 *
+	 * Worth the words: two different AI assistants, shown a report of this shape, both concluded that a
+	 * group holding nothing meant its members had no access - when those same people in fact reached the
+	 * form through another group they also belonged to. The advice is deliberately concrete rather than
+	 * conceptual, because "combine the permissions across a user's groups" is a mental operation an
+	 * assistant can get wrong, whereas re-calling this tool with that user's group ids is a request the
+	 * tool answers itself.
+	 *
+	 * REVISIT WHEN get_form_permissions_for_user EXISTS: the unscoped branch below tells the caller to look
+	 * up a user's groups and call again with those ids, which is the best available route only while there
+	 * is no per-user tool. Two more copies of that advice live in tools.php, on this tool's description and
+	 * on its group_ids parameter. The opening paragraph and the scoped branch stay correct either way.
+	 *
+	 * @param bool $scopedToRequestedGroups Whether the caller narrowed the report with group_ids
+	 * @return string
+	 */
+	private function describeHowToInterpretPermissions($scopedToRequestedGroups) {
+		$explanation = 'These are the permissions configured on each group. They are not necessarily what any particular user can do: users can be members of more than one group, and receive all the permissions from all their groups.
+
+';
+		$explanation .= $scopedToRequestedGroups
+			? 'This report covers only the groups you asked about. If those are the groups a single user belongs to, then everything shown here applies all together to that user, and equally to anyone else who belongs to the same combination of groups.
+
+'
+			: 'To see what one user gets, look up their groups with the list_a_users_groups tool, then call this tool again passing those group ids in the group_ids parameter. The report is then narrowed to that user\'s combination, and describes what they can do - and what anyone else in the same combination of groups can do. Doing that once for a real user is also the quickest way to learn about the organization of groups in this system, which is worth knowing before drawing conclusions from any single group\'s permissions: membership patterns are usually just conventional, and are not necessarily recorded or enforced anywhere.
+
+A common arrangement is a series of groups related to a single entity, subdividing users by role or function - Eastern Managers, Eastern Staff, Eastern Clients, Western Managers, Western Staff, Western Clients - often alongside higher level groups covering everyone of a given type: All Managers, All Staff, All Clients.
+
+';
+		$explanation .= 'A group that appears to grant nothing does not mean its members lack access - they very often reach the form through another group they also belong to. Groups are containers for permissions, not descriptions of users.';
+		return $explanation;
+	}
+
+	/**
+	 * The custom groupscope targets set on a form, as groupid => array of target group ids.
+	 * An absent entry means the group uses the default, which is every group the user belongs to that can
+	 * view this form. Only rows with a real target group are stored, so absence is the normal case.
+	 * @param int $formId
+	 * @return array
+	 */
+	private function groupScopeTargetsForForm($formId) {
+		$targets = [];
+		$sql = "SELECT groupid, view_groupid FROM ".$this->db->prefix('formulize_groupscope_settings')."
+			WHERE fid = ".intval($formId)." AND view_groupid > 0";
+		if($result = $this->db->query($sql)) {
+			while($row = $this->db->fetchArray($result)) {
+				$targets[intval($row['groupid'])][] = intval($row['view_groupid']);
+			}
+		}
+		return $targets;
+	}
+
+	/**
+	 * The visibility conditions set on a form, as groupid => readable list of conditions.
+	 *
+	 * These restrict which entries a group's members may see, over and above the permissions, and nothing
+	 * in the permission names reveals them, so they have to be reported alongside. A row is commonly
+	 * present with an empty conditions array - the admin UI writes one whenever the panel is saved - so
+	 * only rows that actually hold conditions are returned. Reporting an empty row as "this group has
+	 * visibility conditions" would be wrong, and would make an unrestricted group look restricted.
+	 *
+	 * @param int $formId
+	 * @return array groupid => conditions, in the readable form used elsewhere
+	 */
+	private function visibilityConditionsForForm($formId) {
+		$conditions = [];
+		$sql = "SELECT groupid, filter FROM ".$this->db->prefix('formulize_group_filters')." WHERE fid = ".intval($formId);
+		if($result = $this->db->query($sql)) {
+			while($row = $this->db->fetchArray($result)) {
+				$filter = @unserialize($row['filter']);
+				if(!is_array($filter) OR empty($filter) OR empty($filter[0])) {
+					continue; // a row with no conditions in it is the same as having none
+				}
+				$conditions[intval($row['groupid'])] = $this->tidyUpOldConditionsArrayFormat($filter);
+			}
+		}
+		return $conditions;
+	}
+
+	/**
+	 * Put what a permission set grants into a sentence, because working it out from three permission names
+	 * is exactly the part of Formulize permissions that people get wrong.
+	 *
+	 * Phrased as what the SET grants, never as what the group's members can do. People are usually in
+	 * several groups and receive the combination of everything all of those groups grant, so a set that
+	 * grants nothing does not mean its members have no access - they may well reach the form through
+	 * another group entirely.
+	 *
+	 * @param array $permissions The permissions in this set
+	 * @param array $scopeTargets Custom groupscope targets, if any
+	 * @return string
+	 */
+	private function describeVisibility($permissions, $scopeTargets) {
+		if(!in_array('view_form', $permissions)) {
+			return "No access to the form from this set. Anyone in these groups reaches the form only if another group they belong to grants it.";
+		}
+		if(in_array('view_globalscope', $permissions)) {
+			return "Access to the form, and every entry in it made by anyone.";
+		}
+		if(in_array('view_groupscope', $permissions)) {
+			return empty($scopeTargets)
+				? "Access to the form, their own entries, and entries made by members of any group they belong to that also has view_form on this form."
+				: "Access to the form, their own entries, and entries made by members of these specific groups: ".implode(', ', $scopeTargets).".";
+		}
+		return "Access to the form, and only the entries they made themselves.";
+	}
+
+	/**
 	 * Report which of a form's custom code procedures have code written for them.
 	 * The code itself is not included, since it can be long and is rarely what the caller is after.
 	 * Mirrors the file naming used by formulizeForm::getVar() when it reads these procedures off disk.
@@ -1315,7 +1563,7 @@ trait resources {
 			$length = count($elements);
 			for($i = 0; $i < $length; $i++) {
 				$condition = [
-					'element' => $elements[$i],
+					'element' => $this->elementHandleFromId($elements[$i]),
 					'operator' => $operators[$i],
 					'value' => $values[$i],
 					'type' => ($types[$i] == 'all' ? 'match-all' : 'match-one-or-more')
@@ -1324,6 +1572,36 @@ trait resources {
 			}
 		}
 		return empty($tidiedConditions) ? $conditions : $tidiedConditions;
+	}
+
+	/**
+	 * Conditions normally store the element as an id, but every tool that accepts conditions asks for a
+	 * handle ("provided as an element handle or id"), so reporting the stored value back verbatim means the
+	 * read and write vocabularies disagree. That matters because reading conditions, changing one and
+	 * writing the set back is the supported way to edit them - conditions are a single property, so a write
+	 * replaces the whole set. Translating here keeps every consumer consistent, since they all come through
+	 * tidyUpOldConditionsArrayFormat().
+	 *
+	 * Older conditions may hold a handle rather than an id: saving rewrites them as ids, so anything that
+	 * has not been saved in a long time can still be in the original form. This resolves through the element
+	 * handler, which already takes an id or a handle, so both forms arrive at the same answer without us
+	 * having to tell them apart. That also validates the reference - a condition naming an element that no
+	 * longer exists resolves to nothing and is returned unchanged, rather than being reported as some other
+	 * element or as a bare id with no indication that it is stale.
+	 *
+	 * @param mixed $elementIdOrHandle The element reference held in the conditions array
+	 * @return mixed The element handle, or the original value if it cannot be resolved
+	 */
+	private function elementHandleFromId($elementIdOrHandle) {
+		static $element_handler = null;
+		if($element_handler === null) {
+			$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		}
+		// the handler caches its lookups, so repeated references to the same element cost nothing
+		if($elementObject = $element_handler->get($elementIdOrHandle)) {
+			return $elementObject->getVar('ele_handle');
+		}
+		return $elementIdOrHandle;
 	}
 
 	/**
