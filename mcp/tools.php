@@ -614,6 +614,9 @@ The most useful way to use this is to pass all the groups one user belongs to, w
 				]
 			];
 
+			// REVISIT WHEN set_form_permission_inheritance EXISTS: the last paragraph of the description
+			// below says inheritance can only be set up in the admin interface, which is true only while
+			// there is no tool for it. Point it at that tool instead once there is one.
 			$this->tools['set_form_permissions'] = [
 				'name' => 'set_form_permissions',
 				'description' => 'Set which groups can use a form, and what their members can do with it. Read the current permissions with get_form_permissions_by_group first, so you extend the arrangement already in place instead of replacing it with a different one.
@@ -630,7 +633,9 @@ Two permissions are always on for every group and cannot be set here: viewing th
 
 A group can also have visibility conditions, which restrict its members to entries matching those conditions. get_form_permissions_by_group reports them, but they cannot be set through these tools; they are configured in the Formulize admin interface. Changing a group\'s permissions here leaves its conditions untouched.
 
-Only the groups you name are changed. What you supply replaces that group\'s current permissions rather than adding to them, so include everything the group should end up with.',
+Only the groups you name are changed. What you supply replaces that group\'s current permissions rather than adding to them, so include everything the group should end up with.
+
+A form can also be set to inherit its permissions from another form, in which case they are maintained on that other form and copied down, and this tool will refuse to change them here and tell you which form to go to instead. Setting up, changing or removing that arrangement is done in the Formulize admin interface; there is no tool for it.',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [

@@ -21,6 +21,12 @@ class formulizeUserAccountFullNameElement extends formulizeUserAccountElement {
 		parent::__construct();
 		$this->name = "User Account Full Name";
 		$this->userProperty = "uname";
+		// Display only: render() returns a label rather than an input, so the web app never submits a
+		// value for it. First Name and Last Name write to uname and this element shows the result.
+		// The flag makes that explicit, because anything writing to a form without going through the
+		// rendered page has no way to tell from render() alone - and a caller that does submit a value
+		// here appends it to uname on top of first and last name, producing a duplicated name.
+		$this->readOnly = true;
 	}
 
 }
