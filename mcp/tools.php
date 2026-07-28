@@ -735,6 +735,29 @@ Some groups are associated with the entries in forms (form-based entry groups). 
 				]
 			];
 
+			// REVISIT WHEN list_menu_items EXISTS: the description and the menu_items section below both say
+			// menu items are only visible in the admin interface, which is true only until that tool exists.
+			$this->tools['get_application_details'] = [
+				'name' => 'get_application_details',
+				'description' => 'Look at one application: the forms in it, the menu people use to reach them, and whether it carries custom code.
+
+An application is how a set of forms is presented to the people who use it. It is not a container that owns the forms - a form can appear in more than one application, and a form in no application still works - so removing something from an application changes how it is reached, not whether it exists.
+
+The menu is the part worth understanding, because it is what most users actually see. Each menu item points at a form or a screen, is shown only to particular groups, and can be the page a group lands on when they log in. So two people can be looking at the same application and see entirely different menus, and someone with no permission on any of the forms sees nothing at all.
+
+Use list_applications for a list of every application in the system; this tool is for looking closely at one of them.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'application_id' => [
+							'type' => 'integer',
+							'description' => 'Required. The application to look at. Use list_applications to find application ids.'
+						]
+					],
+					'required' => ['application_id']
+				]
+			];
+
 			$this->tools['create_users'] = [
 				'name' => 'create_users',
 				'description' => 'Create user accounts.
@@ -3128,6 +3151,163 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 		}
 		$response['groups_not_named_were_left_alone'] = 'Only the groups you listed were changed. Call get_form_permissions_by_group to see the form\'s permissions as they now stand.';
 		return $response;
+	}
+
+	/**
+	 * Look at one application in detail: its forms, its menu, and whether it has custom code.
+	 *
+	 * The menu is the substance here. list_applications already reports the name, description and forms,
+	 * so a details tool that only repeated those would earn nothing; what it adds is how the application
+	 * is actually reached, which is per-group and therefore not visible from any single form.
+	 *
+	 * @param array $arguments 'application_id' (required)
+	 * @return array The application, its forms and its menu
+	 * @throws FormulizeMCPException on permission failure or an unknown application
+	 */
+	private function get_application_details($arguments) {
+
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				'Permission denied: Only webmasters can review an application.',
+				'authentication_error',
+			);
+		}
+		$applicationId = intval($arguments['application_id'] ?? 0);
+		if(!$applicationId) {
+			throw new FormulizeMCPException('application_id is required', 'invalid_data');
+		}
+
+		global $xoopsDB;
+		$appSql = "SELECT appid, name, description FROM ".$xoopsDB->prefix('formulize_applications')." WHERE appid = $applicationId";
+		if(!$appResult = $xoopsDB->query($appSql) OR !$appRow = $xoopsDB->fetchArray($appResult)) {
+			throw new FormulizeMCPException(
+				"There is no application with the id $applicationId.",
+				'invalid_data',
+				context: [ 'hint' => 'Use the list_applications tool to see the applications in this system.' ]
+			);
+		}
+
+		// the forms in the application, with enough about each to decide whether to look closer
+		$forms = [];
+		$formSql = "SELECT f.id_form, f.form_title, f.form_handle,
+				(SELECT COUNT(*) FROM ".$xoopsDB->prefix('formulize_screen')." s WHERE s.fid = f.id_form) AS screen_count
+			FROM ".$xoopsDB->prefix('formulize_application_form_link')." l
+			INNER JOIN ".$xoopsDB->prefix('formulize_id')." f ON f.id_form = l.fid
+			WHERE l.appid = $applicationId ORDER BY f.form_title";
+		if($formResult = $xoopsDB->query($formSql)) {
+			while($formRow = $xoopsDB->fetchArray($formResult)) {
+				if(!security_check($formRow['id_form'])) {
+					continue;
+				}
+				$forms[] = [
+					'form_id' => intval($formRow['id_form']),
+					'form_title' => trans($formRow['form_title']),
+					'form_handle' => $formRow['form_handle'],
+					'screen_count' => intval($formRow['screen_count']),
+				];
+			}
+		}
+
+		// the menu, which is what most people actually see of an application
+		$menuItems = [];
+		$menuSql = "SELECT menu_id, screen, url, link_text, rank, note
+			FROM ".$xoopsDB->prefix('formulize_menu_links')." WHERE appid = $applicationId ORDER BY rank, menu_id";
+		if($menuResult = $xoopsDB->query($menuSql)) {
+			while($menuRow = $xoopsDB->fetchArray($menuResult)) {
+				$menuItems[] = [
+					'menu_id' => intval($menuRow['menu_id']),
+					'link_text' => trans($menuRow['link_text']),
+					'goes_to' => $this->describeMenuTarget($menuRow['screen'], $menuRow['url']),
+					'shown_to_groups' => $this->menuItemGroups(intval($menuRow['menu_id']), false),
+					'start_page_for_groups' => $this->menuItemGroups(intval($menuRow['menu_id']), true),
+				];
+			}
+		}
+
+		$response = [
+			'application_id' => intval($appRow['appid']),
+			'name' => trans($appRow['name']),
+			'description' => trans((string) $appRow['description']),
+			'forms' => $forms,
+			'form_count' => count($forms),
+			'menu_items' => $menuItems,
+			'menu_item_count' => count($menuItems),
+			'custom_code_present' => $this->applicationCustomCodePresent($applicationId),
+		];
+		$response['about_the_menu'] = $menuItems
+			? 'Each item is shown only to the groups listed against it. An individual user sees the menu items available to all the groups the user is a member of, which could result in all, some, or none of the menu items in a particular application. Different groups might have their own menu items pointing to different screens on the same form. An item that is set as a start page for a group is where members of that group land when they log in.'
+			: 'This application has no menu items, so nothing links to its forms from the site navigation. Its forms are still reachable directly via URL, for anyone whose permissions allow it.';
+		// An item pointing at a form does not name the screen it opens; Formulize resolves that per user as
+		// they arrive. Worth saying only when such an item is actually present, since otherwise it explains
+		// a case this application does not have.
+		if($formTargetedItems = array_filter($menuItems, fn($menuItem) => ($menuItem['goes_to']['kind'] ?? '') == 'form')) {
+			$response['about_the_items_that_point_at_a_form'] = count($formTargetedItems).' of these items point at a form rather than at a particular screen. Those do not lead to one fixed place: Formulize chooses a screen for each person as they arrive, showing the form\'s default list screen to someone who can see more than their own single entry, and its default form screen to someone limited to a single entry. So one menu item can open a list of everything for one person and a single form for another, and neither is a misconfiguration. Use get_form_details on the form to see which screens those defaults are.';
+		}
+		if($response['custom_code_present']) {
+			$response['about_the_custom_code'] = 'This application carries PHP that is included on every page load. Read it with get_custom_code before changing anything of the code, since it can affect pages well beyond this application.';
+		}
+		return $response;
+	}
+
+	/**
+	 * Say where a menu item goes, in place of the raw stored value.
+	 * The screen column holds either "fid=N" or "sid=N"; a url is used instead when the item points
+	 * somewhere outside Formulize.
+	 * @param string $screen
+	 * @param string $url
+	 * @return array
+	 */
+	private function describeMenuTarget($screen, $url) {
+		$screen = trim((string) $screen);
+		if(preg_match('/^sid=(\d+)$/', $screen, $matches)) {
+			$screen_id = intval($matches[1]);
+			$result = [ 'kind' => 'screen', 'screen_id' => $screen_id ];
+			// note the form the screen belongs to as well, so that a menu item pointing at a screen can be
+			// related back to its form without a second lookup
+			$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+			if($screenObject = $screen_handler->get($screen_id)) {
+				$result['form_id'] = intval($screenObject->getVar('fid'));
+			}
+			return $result;
+		}
+		if(preg_match('/^fid=(\d+)$/', $screen, $matches)) {
+			return [ 'kind' => 'form', 'form_id' => intval($matches[1]) ];
+		}
+		if(trim((string) $url) !== '') {
+			return [ 'kind' => 'url', 'url' => trim((string) $url) ];
+		}
+		return [ 'kind' => 'nothing', 'note' => 'This item has no destination set, so it will not lead anywhere.' ];
+	}
+
+	/**
+	 * The groups a menu item is shown to, or the groups it is the start page for.
+	 * @param int $menuId
+	 * @param bool $startPageOnly
+	 * @return array Group id and name pairs
+	 */
+	private function menuItemGroups($menuId, $startPageOnly) {
+		global $xoopsDB;
+		$groups = [];
+		$sql = "SELECT p.group_id, g.name FROM ".$xoopsDB->prefix('formulize_menu_permissions')." p
+			LEFT JOIN ".$xoopsDB->prefix('groups')." g ON g.groupid = p.group_id
+			WHERE p.menu_id = ".intval($menuId).($startPageOnly ? " AND p.default_screen = 1" : "")."
+			ORDER BY g.name";
+		if($result = $xoopsDB->query($sql)) {
+			while($row = $xoopsDB->fetchArray($result)) {
+				$groups[] = [ 'group_id' => intval($row['group_id']), 'name' => trans((string) $row['name']) ];
+			}
+		}
+		return $groups;
+	}
+
+	/**
+	 * Whether an application has custom code, matching how list_applications reports it.
+	 * @param int $applicationId
+	 * @return bool
+	 */
+	private function applicationCustomCodePresent($applicationId) {
+		$fileName = XOOPS_ROOT_PATH."/modules/formulize/code/application_custom_code_".intval($applicationId).".php";
+		return file_exists($fileName) AND strlen(trim((string) file_get_contents($fileName))) > 0;
 	}
 
 	/**

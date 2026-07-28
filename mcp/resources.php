@@ -406,7 +406,7 @@ trait resources {
 			);
 		}
 		// Get form details
-		$formSql = "SELECT `id_form`, `form_title`, `form_handle`, `pi`, `singleentry`, `entry_description`, `usage_notes`, `data_conventions`, `entries_are_users`, `entries_are_groups` FROM " . $this->db->prefix('formulize_id') . " WHERE id_form = " . intval($formId);
+		$formSql = "SELECT `id_form`, `form_title`, `form_handle`, `pi`, `singleentry`, `entry_description`, `usage_notes`, `data_conventions`, `entries_are_users`, `entries_are_groups`, `defaultform`, `defaultlist` FROM " . $this->db->prefix('formulize_id') . " WHERE id_form = " . intval($formId);
 		$formResult = $this->db->query($formSql);
 		$formData = $this->db->fetchArray($formResult);
 
@@ -444,6 +444,15 @@ trait resources {
 		if($formData['entries_are_groups']) {
 			$formData['about_entries_are_groups'] = 'Each entry in this form generates its own group, or set of groups, named after the entry. There is always an "All Users" group created for the entry. Optionally, a webmaster can create additional categories, that will spawn additional groups. For example, on a Movie Studios form, a webmaster might create additional categories called Directors, Actors and Producers. In that case, creating a new entry in the form for "Disney" would spawn four groups: "Disney - All Users", "Disney - Directors", "Disney - Actors", and "Disney - Producers". Creating an entry creates those groups, with the name based on the value for the principal identifier element in the entry; changing the value of the principal identifier element in the entry causes the related groups to be renamed too. Groups are what permissions are given to, so an entry here is the beginning of a set of permissions rather than only a record. Use list_groups to see the template groups the sets are made from. Use the get_form_permissions_by_group tool to see what permissions the groups have.';
 		}
+
+		// The screens Formulize falls back to when something points at the form itself rather than at a
+		// particular screen - a menu item written as a form, or a link with no screen in it. Which of the two
+		// is used is decided per user at the time, so both are reported rather than one "default screen".
+		$formData['default_form_screen'] = intval($formData['defaultform']) ?: null;
+		$formData['default_list_screen'] = intval($formData['defaultlist']) ?: null;
+		unset($formData['defaultform'], $formData['defaultlist']);
+		$formData['about_the_default_screens'] = 'These are the screens used when a URL leads to this form without specifying a screen. Formulize picks which default to show based on whether the user has access to more than one entry or not. In most cases, users will see the list, but if a user\'s permissions are restricted to seeing only their own entries in a form, **and** that form has the limit_entries setting turned on for that user, then they effectively have access to only a single entry so they will see the form instead of the list. Anonymous visitors also see the form rather than the list, unless they have permission to see entries made by their group or by everyone.'
+			.(($formData['default_form_screen'] AND $formData['default_list_screen']) ? '' : ' Where one of these is not set, Formulize still shows a list or a form, but it will be generic rather than a screen anyone configured.');
 
 		// Get form elements. Only the identifying properties of each element are included here, so that forms
 		// with a large number of elements do not overwhelm the context of the AI assistant reading this.
