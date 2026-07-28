@@ -15,14 +15,35 @@ if (!defined('XOOPS_ROOT_PATH')) {
 // AFTER 001_schema_migrations (so an 001 abort prevents it from starting at all), and once it completes
 // successfully dbversion advances to 2 and it never runs again. Files that could not be written are
 // reported for manual migration rather than triggering a destructive retry.
-function formulize_patch_002_derived_value_formula_migration($prev_dbversion, $required_dbversion) {
+//
+// If a run times out partway through (the HTTP request can die while the PHP process keeps executing
+// server-side, silently continuing to rewrite files with no confirmation reaching the browser),
+// dbversion never advances, so a plain retry would restart from the top of the file list and re-corrupt
+// every file already migrated. $startFrom is the escape hatch for that: glob() returns derived_*.php
+// files in alphabetical order, so passing the last-known-processed filename resumes from that same
+// point (inclusive — reprocessing it is harmless if it turns out to need no changes, as confirmed by
+// checking the file by hand) instead of redoing everything before it.
+//
+// IMPORTANT: once every file has been confirmed migrated (possibly across several resumed requests),
+// do NOT run a final unfiltered patchDB-only pass to advance dbversion — with $prev_dbversion still < 2,
+// that would re-enter this function's file loop from the very top and re-corrupt everything already
+// fixed. Instead, use the admin's manual "set database version" tool to advance dbversion directly once
+// you've confirmed every file is done.
+function formulize_patch_002_derived_value_formula_migration($prev_dbversion, $required_dbversion, $startFrom = '') {
     if ($prev_dbversion >= 2) {
         return true; // already applied; nothing to do
     }
     global $xoopsDB;
 
     $derivedCodeDir = XOOPS_ROOT_PATH . '/modules/formulize/code';
-    $derivedFiles = glob($derivedCodeDir . '/derived_*.php');
+    $derivedFiles = glob($derivedCodeDir . '/derived_*.php'); // sorted alphabetically by default
+    if ($startFrom !== '') {
+        $startFromName = basename($startFrom, '.php');
+        $derivedFiles = array_filter($derivedFiles, function ($f) use ($startFromName) {
+            return strcasecmp(basename($f, '.php'), $startFromName) >= 0;
+        });
+        echo '<p>Derived value migration resuming from: ' . htmlspecialchars(basename($startFrom)) . '</p>';
+    }
     if (empty($derivedFiles)) {
         return true; // no derived value formula files to migrate
     }

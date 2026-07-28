@@ -108,7 +108,12 @@ $formulizeNeedsDBPatch = (
 
 // If an update is needed and no other op is in progress, route through the patchDB op
 // so op.php shows the warning panel. The warning HTML lives in op.php in one place.
-if ($formulizeNeedsDBPatch) {
+if ($formulizeNeedsDBPatch
+	AND (
+		!isset($_GET['op'])
+		OR ($_GET['op'] !== 'patchDB-only' AND $_GET['op'] !== 'setDBVersion')
+	)
+) {
     $_GET['op'] = 'patchDB';
 }
 
