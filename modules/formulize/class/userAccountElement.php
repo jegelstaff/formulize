@@ -611,15 +611,9 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			global $xoopsConfig;
 			$userObject = $member_handler->createUser();
 			$profile = $profile_handler->create();
-			$userObject->setVar('user_avatar', 'blank.gif');
-			$userObject->setVar('theme', $xoopsConfig['theme_set']);
 			// Sensible defaults for a freshly created account so the signup form doesn't have to
 			// collect timezone / notification preferences (they can be changed later in Edit Account).
-			$userObject->setVar('user_regdate', time());
-			$userObject->setVar('notify_method', 2); // email, matching the standard registration default
-			if(isset($xoopsConfig['default_TZ'])) {
-				$userObject->setVar('timezone_offset', $xoopsConfig['default_TZ']);
-			}
+			self::applyNewUserDefaults($userObject);
 			// Self-registered accounts start inactive (level 0) and are activated only once the person
 			// confirms the code we send to their email/phone. Admin-created users (users.php) stay
 			// active (level 1) as before.
@@ -772,13 +766,10 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 					continue; // don't change password if no value entered
 				}
 				$passwordChanged = true;
-				global $icmsConfigUser;
-				$icmspass = new icms_core_Password();
-				$salt = $icmspass->createSalt();
-				$enc_type = $icmsConfigUser['enc_type'];
-				$value = $icmspass->hashPassword($value);
-				$pendingUserVars['salt'] = $salt;
-				$pendingUserVars['enc_type'] = $enc_type;
+				$hashed = self::hashPasswordForStorage($value);
+				$value = $hashed['pass'];
+				$pendingUserVars['salt'] = $hashed['salt'];
+				$pendingUserVars['enc_type'] = $hashed['enc_type'];
 			}
 
 			// Handle profile properties
@@ -959,7 +950,55 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 	 * @param int   $entryUserId        The uid of the account being edited, or 0 for a new account
 	 * @return string The conflicting field's label, or '' if there is no conflict
 	 */
-	private static function accountFieldConflict($pendingUserVars, $pendingProfileVars, $entryUserId) {
+	/**
+	 * Turn a plaintext password into the three values that have to be stored together.
+	 *
+	 * A password is not one column. The hash is meaningless without the salt it was made with, and the
+	 * encryption type records how it was made, so writing any of the three without the others produces an
+	 * account that exists and cannot log in. Kept in one place so that anything setting a password gets all
+	 * three, and so that changing how passwords are hashed changes it everywhere at once.
+	 *
+	 * The encryption type is the site-wide setting rather than anything per-user: priv_encryptPass()
+	 * overrides whatever it is passed with $icmsConfigUser['enc_type'] except on a password reset.
+	 *
+	 * @param string $plaintext
+	 * @return array 'pass', 'salt' and 'enc_type', ready to write to the users table
+	 */
+	private static function hashPasswordForStorage($plaintext) {
+		global $icmsConfigUser;
+		$icmspass = new icms_core_Password();
+		return array(
+			'salt' => $icmspass->createSalt(),
+			'enc_type' => $icmsConfigUser['enc_type'],
+			'pass' => $icmspass->hashPassword($plaintext),
+		);
+	}
+
+	/**
+	 * Set the properties a newly created user account needs in order to behave like any other.
+	 *
+	 * None of these are things a caller thinks to supply, and an account missing them is subtly wrong
+	 * rather than obviously broken - no avatar, no theme, no registration date, notifications going
+	 * nowhere. Shared so that an account made through a form and an account made any other way come out
+	 * the same.
+	 *
+	 * The active/inactive level is deliberately not set here. It differs by context: a self-registered
+	 * account may need to wait for confirmation, while one created by an administrator does not, so the
+	 * caller decides.
+	 *
+	 * @param object $userObject A newly created user object, modified in place
+	 * @return void
+	 */
+	private static function applyNewUserDefaults($userObject) {
+		global $icmsConfig;
+		$userObject->setVar('user_avatar', 'blank.gif');
+		$userObject->setVar('theme', $icmsConfig['theme_set']);
+		$userObject->setVar('user_regdate', time());
+		$userObject->setVar('notify_method', 2); // email, matching the standard registration default
+		$userObject->setVar('timezone_offset', $icmsConfig['default_TZ']);
+	}
+
+	public static function accountFieldConflict($pendingUserVars, $pendingProfileVars, $entryUserId) {
 		global $xoopsDB;
 		$entryUserId = intval($entryUserId);
 
@@ -996,7 +1035,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 	 * Persist user and profile objects to database
 	 * @return int|false The user ID on success, false on failure
 	 */
-	private static function persistUserAndProfile($userObject, $profile, $entryUserId) {
+	public static function persistUserAndProfile($userObject, $profile, $entryUserId) {
 		// login name cannot be empty, set to email if available, or timestamp to attempt to guarantee uniqueness
 		if($userObject->getVar('login_name') == '') {
 			$altLoginName = $userObject->getVar('email');

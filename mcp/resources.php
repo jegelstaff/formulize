@@ -406,7 +406,7 @@ trait resources {
 			);
 		}
 		// Get form details
-		$formSql = "SELECT `id_form`, `form_title`, `form_handle`, `pi`, `singleentry`, `entry_description`, `usage_notes`, `data_conventions` FROM " . $this->db->prefix('formulize_id') . " WHERE id_form = " . intval($formId);
+		$formSql = "SELECT `id_form`, `form_title`, `form_handle`, `pi`, `singleentry`, `entry_description`, `usage_notes`, `data_conventions`, `entries_are_users`, `entries_are_groups` FROM " . $this->db->prefix('formulize_id') . " WHERE id_form = " . intval($formId);
 		$formResult = $this->db->query($formSql);
 		$formData = $this->db->fetchArray($formResult);
 
@@ -429,6 +429,20 @@ trait resources {
 		// passed through as-is - just normalize a NULL column to an empty string
 		foreach(array('entry_description', 'usage_notes', 'data_conventions') as $descriptionField) {
 			$formData[$descriptionField] = $formData[$descriptionField] ?? '';
+		}
+
+		// Whether the entries in this form are user accounts or groups. Reported because it changes what
+		// writing an entry means: an entry here is not only a row, it is a person who can log in, or a set
+		// of groups other permissions are given to. Nothing else about the form reveals that, and an
+		// assistant that treats such a form as ordinary data will create accounts or groups without
+		// realising it.
+		$formData['entries_are_users'] = (bool) $formData['entries_are_users'];
+		$formData['entries_are_groups'] = (bool) $formData['entries_are_groups'];
+		if($formData['entries_are_users']) {
+			$formData['about_entries_are_users'] = 'Each entry in this form has a corresponding user account. Creating an entry will also create an account that can log in; updating an entry can alter that account too. The account details are not stored in this form - the entry holds only a link to the account - so they are the same details the create_users and update_users tools reach, and editing them here or there comes to the same thing. Use this form rather than those tools when the form\'s own fields are involved too.';
+		}
+		if($formData['entries_are_groups']) {
+			$formData['about_entries_are_groups'] = 'Each entry in this form generates its own group, or set of groups, named after the entry. There is always an "All Users" group created for the entry. Optionally, a webmaster can create additional categories, that will spawn additional groups. For example, on a Movie Studios form, a webmaster might create additional categories called Directors, Actors and Producers. In that case, creating a new entry in the form for "Disney" would spawn four groups: "Disney - All Users", "Disney - Directors", "Disney - Actors", and "Disney - Producers". Creating an entry creates those groups, with the name based on the value for the principal identifier element in the entry; changing the value of the principal identifier element in the entry causes the related groups to be renamed too. Groups are what permissions are given to, so an entry here is the beginning of a set of permissions rather than only a record. Use list_groups to see the template groups the sets are made from. Use the get_form_permissions_by_group tool to see what permissions the groups have.';
 		}
 
 		// Get form elements. Only the identifying properties of each element are included here, so that forms

@@ -696,6 +696,77 @@ The form itself: edit_form (change the form\'s structure, elements and settings)
 
 Creating a group gives it no permissions and no members. Use set_form_permissions to say what it can do, and update_group_members to put people in it.';
 
+			$userGroupsDescription = 'Optional. The complete list of groups this user should belong to, replacing whatever they belong to now. Leave it out to leave their groups alone; an empty array removes them from everything except the groups the system requires. Use list_groups to find group ids. Use list_a_users_groups to see what groups a user currently belongs to.';
+
+			$this->tools['create_users'] = [
+				'name' => 'create_users',
+				'description' => 'Create user accounts.
+
+A user account is what someone logs in with. Permissions are not given to users directly: they are given to groups, and a user gets a combination of permissions from all the groups they belong to. So a new account with no groups can log in and do almost nothing, unless the Registered Users group (group 2), which all accounts are members of, has been given various permissions.
+
+If you need to create an account associated with an entries-are-users form, you should not use this tool and you should make an entry in that form instead. A user account will be created automatically when the entry is created in that form.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'users' => [
+							'type' => 'array',
+							'description' => 'Required. The accounts to create.',
+							'items' => [
+								'type' => 'object',
+								'properties' => [
+									'username' => [ 'type' => 'string', 'description' => 'Required. What the person types to log in. Must be unique across the system.' ],
+									'full_name' => [ 'type' => 'string', 'description' => 'Required. The person\'s name as it will be displayed throughout the site.' ],
+									'email' => [ 'type' => 'string', 'description' => 'An email address or a phone number is required; either one on its own is enough, and the other can be left out. Must be unique where supplied. Formulize uses whichever is present to reach the account, for notifications and for confirming who is signing in.' ],
+									'password' => [ 'type' => 'string', 'description' => 'Optional. Supply a strong password, or leave it out and have the person use the password reset link. It is stored hashed and cannot be read back by any tool.' ],
+									'phone' => [ 'type' => 'string', 'description' => 'An email address or a phone number is required; either one on its own is enough, and the other can be left out. Must be unique where supplied. Used for codes sent by text message.' ],
+									'timezone' => [ 'type' => 'number', 'description' => 'Optional. Hours offset from GMT, for example -5. Defaults to the site setting.' ],
+									'active' => [ 'type' => 'boolean', 'description' => 'Optional, defaults to true. An inactive account exists but cannot log in.' ],
+									'groups' => [ 'type' => 'array', 'items' => [ 'type' => 'integer' ], 'description' => 'Optional. The groups this user should belong to. Without any, the account can do almost nothing. Use list_groups to find group ids.' ]
+								],
+								'required' => ['username', 'full_name']
+							]
+						]
+					],
+					'required' => ['users']
+				]
+			];
+
+			$this->tools['update_users'] = [
+				'name' => 'update_users',
+				'description' => 'Change existing user accounts. Only the properties you supply are changed.
+
+Changing what someone can do is done by changing their groups, either here or with update_group_members, not by changing the account itself.
+
+Two things to be careful of. Setting a password here replaces the existing one without the person being told, so they will be locked out until you tell them; the password reset link is usually the better route. Setting active to false stops the account logging in immediately, but leaves everything they created untouched and still visible.
+
+You can use this tool to update a user who\'s account is associated with an entry in an entries-are-users form, but only the user account fields will be available. If you use the update_entries tool to update the entry in the form that their account is associated with, you can update their user account fields and the form elements at the same time. Nothing gets out of step either way: an entry in such a form holds only a link to the account, not a copy of it, so the account details live in one place whichever route writes them.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'users' => [
+							'type' => 'array',
+							'description' => 'Required. The accounts to change, and what to change about each.',
+							'items' => [
+								'type' => 'object',
+								'properties' => [
+									'user_id' => [ 'type' => 'integer', 'description' => 'Required. The account to change. Use list_users to find user ids.' ],
+									'username' => [ 'type' => 'string', 'description' => 'Optional. A new login name. Must be unique.' ],
+									'full_name' => [ 'type' => 'string', 'description' => 'Optional. A new display name.' ],
+									'email' => [ 'type' => 'string', 'description' => 'Optional. Must be unique.' ],
+									'password' => [ 'type' => 'string', 'description' => 'Optional. Replaces the current password silently. The person is not notified and will be locked out until told.' ],
+									'phone' => [ 'type' => 'string', 'description' => 'Optional. Must be unique where supplied.' ],
+									'timezone' => [ 'type' => 'number', 'description' => 'Optional. Hours offset from GMT, for example -5.' ],
+									'active' => [ 'type' => 'boolean', 'description' => 'Optional. False stops the account logging in, without removing anything it created.' ],
+									'groups' => [ 'type' => 'array', 'items' => [ 'type' => 'integer' ], 'description' => $userGroupsDescription ]
+								],
+								'required' => ['user_id']
+							]
+						]
+					],
+					'required' => ['users']
+				]
+			];
+
 			$this->tools['create_groups'] = [
 				'name' => 'create_groups',
 				'description' => 'Create one or more groups.
@@ -3023,6 +3094,210 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 	}
 
 	/**
+	 * Create user accounts.
+	 * @param array $arguments 'users' (required)
+	 * @return array The accounts created
+	 * @throws FormulizeMCPException on permission failure, invalid input, or a duplicate username/email/phone
+	 */
+	private function create_users($arguments) {
+		return $this->writeUsers($arguments, 'create');
+	}
+
+	/**
+	 * Change existing user accounts.
+	 * @param array $arguments 'users' (required)
+	 * @return array The accounts changed
+	 * @throws FormulizeMCPException on permission failure, an unknown user, or a duplicate value
+	 */
+	private function update_users($arguments) {
+		return $this->writeUsers($arguments, 'update');
+	}
+
+
+	/**
+	 * Shared implementation for create_users and update_users.
+	 *
+	 * Mirrors what the user account elements do when a form is saved, rather than writing the users table
+	 * directly: a user row without its matching profile row is a half-made account that behaves oddly
+	 * later, and the pairing is easy to forget.
+	 *
+	 * @param array $arguments
+	 * @param string $operation 'create' or 'update'
+	 * @return array
+	 * @throws FormulizeMCPException
+	 */
+	private function writeUsers($arguments, $operation) {
+
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				"Permission denied: Only webmasters can $operation user accounts.",
+				'authentication_error',
+			);
+		}
+		if(empty($arguments['users']) OR !is_array($arguments['users'])) {
+			throw new FormulizeMCPException('users is required, and must list at least one account.', 'invalid_data');
+		}
+
+		include_once XOOPS_ROOT_PATH.'/modules/formulize/include/usersAndGroups.php';
+		include_once XOOPS_ROOT_PATH.'/modules/formulize/class/userAccountElement.php';
+		$member_handler = xoops_gethandler('member');
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+
+		// Accounts are written by the same code that writes them when a form is saved, rather than by
+		// assembling a user object here. That code lives behind the user account elements and takes its
+		// values from POST, so the values are put where it looks for them and it is called. Doing it any
+		// other way means a second implementation of password hashing, uniqueness, account defaults and
+		// group membership, and a second implementation is free to drift from the first.
+		//
+		// It needs a form to work against, because the account elements belong to one. The form used is
+		// the system users form, which Formulize maintains for its own users page. It is an internal
+		// detail here and is never named in any tool description: these tools take plain properties, and
+		// the tools that operate on forms continue to refuse it like every other table form.
+		$fid = ensureUsersTableForm();
+
+		// tool property => the account element that writes it
+		$propertyElements = [
+			'username' => 'formulize_user_account_username_'.$fid,
+			'full_name' => 'formulize_user_account_firstname_'.$fid,
+			'email' => 'formulize_user_account_email_'.$fid,
+			'password' => 'formulize_user_account_password_'.$fid,
+			'phone' => 'formulize_user_account_phone_'.$fid,
+			'timezone' => 'formulize_user_account_timezone_'.$fid,
+			'active' => 'formulize_user_account_status_'.$fid,
+		];
+
+		// resolve the whole batch before writing any of it, so a bad entry cannot leave half of it applied
+		$resolved = [];
+		foreach(array_values($arguments['users']) as $position => $entry) {
+			$label = 'users entry '.($position + 1);
+			if($operation == 'create') {
+				foreach(['username', 'full_name'] as $required) {
+					if(trim((string) ($entry[$required] ?? '')) === '') {
+						throw new FormulizeMCPException("$label needs a $required.", 'invalid_data');
+					}
+				}
+				if(trim((string) ($entry['email'] ?? '')) === '' AND trim((string) ($entry['phone'] ?? '')) === '') {
+					throw new FormulizeMCPException(
+						"$label needs an email address or a phone number.",
+						'invalid_data',
+						context: [ 'hint' => 'Either one on its own is enough. Formulize uses whichever is present to reach the account, so an account with neither cannot be notified, cannot confirm a sign in, and cannot recover its own password.' ]
+					);
+				}
+				// A unique sentinel per entry, not a bare 'new'. processUserAccountSubmission caches its
+				// result against formId-entryId, so several creates in one call would otherwise collapse
+				// into the first one's result. intval('new_2') is 0, so it still reads as a new account.
+				$entryId = 'new_'.$position;
+				$uid = 0;
+			} else {
+				$uid = intval($entry['user_id'] ?? 0);
+				if(!$uid) {
+					throw new FormulizeMCPException("$label needs a user_id.", 'invalid_data');
+				}
+				if(!$member_handler->getUser($uid)) {
+					throw new FormulizeMCPException(
+						"There is no user with the id $uid.",
+						'invalid_data',
+						context: [ 'hint' => 'Use the list_users tool to find user ids.' ]
+					);
+				}
+				// on the system users form an entry IS a user, so the entry id is the uid
+				$entryId = $uid;
+			}
+			$resolved[] = [ 'entry' => $entry, 'label' => $label, 'entryId' => $entryId, 'uid' => $uid ];
+		}
+
+		$written = [];
+		foreach($resolved as $item) {
+			$entry = $item['entry'];
+			$entryId = $item['entryId'];
+			$injectedKeys = [];
+
+			foreach($propertyElements as $property => $handle) {
+				if(!array_key_exists($property, $entry)) {
+					continue;
+				}
+				if(!$elementObject = $element_handler->get($handle)) {
+					continue; // an install whose system users form lacks this element simply cannot set it
+				}
+				$value = $entry[$property];
+				if($property == 'active') {
+					// the status element writes straight to the users table level column, where 1 is an
+					// account that can log in and -1 is one that has been disabled. Level 0 is neither of
+					// those: it means a self-registered account still waiting to confirm a code, which is
+					// not a state an administrator creating an account is asking for.
+					$value = $value ? 1 : -1;
+				}
+				$eleId = $elementObject->getVar('ele_id');
+				$_POST['decue_'.$fid.'_'.$entryId.'_'.$eleId] = 1;
+				$_POST['de_'.$fid.'_'.$entryId.'_'.$eleId] = $value;
+				$injectedKeys[] = 'decue_'.$fid.'_'.$entryId.'_'.$eleId;
+				$injectedKeys[] = 'de_'.$fid.'_'.$entryId.'_'.$eleId;
+			}
+
+			// Group membership is read from POST by GroupMembershipService rather than by the account
+			// submission, so it is supplied the same way and applied afterwards. Leaving the key out
+			// entirely means the account's groups are left alone, which is what omitting the property
+			// should do.
+			$membershipElement = null;
+			if(array_key_exists('groups', $entry) AND $membershipElement = $element_handler->get('formulize_user_account_groupmembership_'.$fid)) {
+				$membershipKey = 'de_'.$fid.'_'.$entryId.'_'.$membershipElement->getVar('ele_id');
+				$_POST[$membershipKey] = array_values(array_filter(array_map('intval', (array) $entry['groups'])));
+				$injectedKeys[] = $membershipKey;
+			}
+
+			try {
+				$userId = formulizeElementsHandler::processUserAccountSubmission($fid, $entryId);
+				if($userId AND $membershipElement) {
+					// entryId is the uid for an update; for a create it was a sentinel, so the membership
+					// key has to be moved to the new uid before the service goes looking for it
+					if($item['uid'] == 0) {
+						$newKey = 'de_'.$fid.'_'.$userId.'_'.$membershipElement->getVar('ele_id');
+						$_POST[$newKey] = $_POST[$membershipKey];
+						$injectedKeys[] = $newKey;
+					}
+					formulizeElementsHandler::processUserGroupMemberships($userId, $fid, $userId);
+				}
+			} finally {
+				foreach($injectedKeys as $key) {
+					unset($_POST[$key]);
+				}
+			}
+
+			if(!$userId) {
+				throw new FormulizeMCPException(
+					"The account for ".htmlspecialchars((string) ($entry['username'] ?? $entry['user_id'] ?? '?'))." could not be saved ($label).",
+					'database_error',
+					context: [ 'hint' => 'Nothing was reported as invalid, so this is a write that did not take rather than a value that was refused.' ]
+				);
+			}
+
+			$userObject = $member_handler->getUser($userId, true);
+			$record = [
+				'user_id' => intval($userId),
+				'username' => $userObject->getVar('login_name'),
+				'full_name' => $userObject->getVar('uname'),
+				'email' => (string) $userObject->getVar('email'),
+				'active' => intval($userObject->getVar('level')) == 1,
+			];
+			if(array_key_exists('groups', $entry)) {
+				$record['now_belongs_to_groups'] = array_map('intval', (array) $member_handler->getGroupsByUser($userId));
+			}
+			$written[] = $record;
+		}
+
+		$response = [
+			'success' => true,
+			'message' => ($operation == 'create' ? 'Created ' : 'Updated ').count($written).' user account'.(count($written) == 1 ? '' : 's').'.',
+			'users' => $written,
+		];
+		if($operation == 'create') {
+			$response['what_these_accounts_can_do'] = 'Whatever their groups allow, and nothing otherwise. An account with no groups can log in and reach almost nothing beyond whatever the Registered Users group has been given. Use list_a_users_groups to check, and get_form_permissions_by_group to see what a group actually grants.';
+		}
+		return $response;
+	}
+
+
+	/**
 	 * Confirm a group exists and that the tools are allowed to change it.
 	 *
 	 * Two kinds are refused. Groups generated from a form's entries are maintained by Formulize - their
@@ -3895,12 +4170,12 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 		}
 		$relationshipId = intval($relationshipId);
 
-		// Validate form exists
-		$formSql = "SELECT id_form FROM " . $this->db->prefix('formulize_id') . " WHERE id_form = " . intval($formId);
-		$formResult = $this->db->query($formSql);
-		if(!$formData = $this->db->fetchArray($formResult)) {
-			throw new FormulizeMCPException('Form not found: ' . $formId, 'form_not_found');
-		}
+		// Validate the form exists and that the tools are allowed to write entries to it. Table forms are
+		// refused here as they are everywhere else: their rows belong to a table Formulize did not create
+		// and does not own, and some of them - the System Users form is one - have no Formulize data table
+		// at all, so writing an entry attempts an INSERT into a table that does not exist and fails with a
+		// database error rather than an explanation.
+		$this->assertFormIsEditableByTools($formId);
 
 		// Get form elements to validate handles
 		$validHandles = [];
