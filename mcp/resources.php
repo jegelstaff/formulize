@@ -886,7 +886,12 @@ trait resources {
 			// legitimately grant access and no abilities, or abilities and no access, and both read as
 			// deliberate in this shape where a single flat list of names does not.
 			$grantsAccess = in_array('view_form', $groupData['permissions']);
-			$abilities = array_values(array_diff($groupData['permissions'], ['view_form']));
+			// view_their_own_entries and manage_own are written for every group the admin interface touches,
+			// whatever was ticked, so they distinguish nothing and are stated once on the response instead.
+			// set_form_permissions refuses them as input for the same reason, and reporting what the write
+			// tool will not accept is the read/write mismatch worth avoiding. Leaving them in also made a
+			// group with no real abilities look as though it had two.
+			$abilities = array_values(array_diff($groupData['permissions'], ['view_form', 'view_their_own_entries', 'manage_own']));
 			$key = md5(serialize([$grantsAccess, $abilities, $scope, $conditions]));
 			if(!isset($sets[$key])) {
 				$sets[$key] = [
@@ -933,6 +938,7 @@ trait resources {
 			'forms_inheriting_permissions_from_this_form' => $childIds,
 			'permission_sets' => array_values($sets),
 			'permission_set_count' => count($sets),
+			'always_on_for_every_group' => ['view_their_own_entries', 'manage_own'],
 			'about_webmasters' => 'Members of the Webmasters group can do anything on every form and can see every entry, no matter what permissions are set, so that group is not listed above.',
 		];
 		if($parentId) {

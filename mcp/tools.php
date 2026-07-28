@@ -614,6 +614,82 @@ The most useful way to use this is to pass all the groups one user belongs to, w
 				]
 			];
 
+			$this->tools['set_form_permissions'] = [
+				'name' => 'set_form_permissions',
+				'description' => 'Set which groups can use a form, and what their members can do with it. Read the current permissions with get_form_permissions_by_group first, so you extend the arrangement already in place instead of replacing it with a different one.
+
+Permissions come in two flavours: Access and Abilities. Access lets group members reach the form, and also makes that group count as one of "their groups", for the purposes of the group-level abilities. Abilities are everything else: what members may do and see once they are in. Nothing works without access somewhere - a group with abilities and no access grants nothing on its own, though its abilities do apply to members who reach the form through another group.
+
+There are three group-level abilities: view_groupscope, update_group_entries, and delete_group_entries, which let people see, update and delete entries belonging to "their groups". Which groups are "their groups" is worked out per user: it means every group that user belongs to which also grants access to this form. Because permissions add up across all of a user\'s groups, the group granting view_groupscope does not have to be one of the groups that grants access. That is what makes this arrangement possible:
+
+All Staff grants view_groupscope but no access. HR and Legal each grant access. Someone in All Staff and HR sees entries made by HR\'s members. Someone in All Staff and Legal sees entries made by Legal\'s members. The scope ability lives on All Staff; what it resolves to comes from HR or Legal.
+
+Sites are arranged in different ways and Formulize supports many possible permission configurations; there is no standard arrangement to aim for. Simple sites have a few groups each with a full set of access and abilities permissions. More complex sites could simply have more groups, or multi-level arrangements with broad groups for abilities (All Managers, All Staff, All Clients) and narrow groups for access (HR, Legal, Accounting). Work out which arrangement this form uses and extend it. Never "tidy up" a group that grants access and nothing else, or abilities and no access: both are deliberate positions.
+
+Two permissions are always on for every group and cannot be set here: viewing the entries they made themselves, and managing their own saved views.
+
+A group can also have visibility conditions, which restrict its members to entries matching those conditions. get_form_permissions_by_group reports them, but they cannot be set through these tools; they are configured in the Formulize admin interface. Changing a group\'s permissions here leaves its conditions untouched.
+
+Only the groups you name are changed. What you supply replaces that group\'s current permissions rather than adding to them, so include everything the group should end up with.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'form_id' => [
+							'type' => 'integer',
+							'description' => 'Required. The id of the form. Use list_forms to find form ids.'
+						],
+						'groups' => [
+							'type' => 'array',
+							'description' => 'Required. The groups to change, and what each should end up with. Groups you leave out keep whatever they have now.',
+							'items' => [
+								'type' => 'object',
+								'properties' => [
+									'group_id' => [
+										'type' => 'integer',
+										'description' => 'Required. The group to set permissions for. Use list_groups to find group ids.'
+									],
+									'preset' => [
+										'type' => 'string',
+										'enum' => ['none', 'own_only', 'group_member', 'group_admin', 'global_member', 'global_admin'],
+										'description' => 'Optional. A ready-made combination, instead of setting grants_access and abilities yourself. Use group_* where the site divides users into parallel groups (one per department, region or client) so each group sees its own entries, and global_* where everyone should see everything. Which is right depends on how this site organises its groups, not on the job title of the people involved.
+
+  none          - no access and no abilities. Revokes everything.
+  own_only      - access; create, update and delete their own entries; sees only their own.
+  group_member  - own_only, plus sees their groups\' entries (view_groupscope) and can update them (update_group_entries).
+  group_admin   - group_member, plus delete_group_entries, add_proxy_entries, update_entry_ownership, view_private_elements, publish_reports.
+  global_member - own_only, plus sees every entry (view_globalscope) and can update any of them (update_other_entries).
+  global_admin  - global_member, plus delete_other_entries, add_proxy_entries, update_entry_ownership, view_private_elements, publish_reports, publish_globalscope.
+
+No preset includes edit_form or delete_form, which change the form itself rather than its data. Grant those deliberately through the abilities list. No preset can express an arrangement where access and abilities live on different groups, because a preset applies to one group and an access/abilities split necessarily involves multiple groups - use \'grants_access\' and \'abilities\' for those.'
+									],
+									'grants_access' => [
+										'type' => 'boolean',
+										'description' => 'Optional. Whether this group lets its members reach the form, and counts as one of "their groups". Ignored if a preset is given.'
+									],
+									'abilities' => [
+										'type' => 'array',
+										'items' => [
+											'type' => 'string',
+											'enum' => ['add_own_entry', 'update_own_entry', 'delete_own_entry', 'update_group_entries', 'delete_group_entries', 'update_other_entries', 'delete_other_entries', 'view_groupscope', 'view_globalscope', 'add_proxy_entries', 'update_entry_ownership', 'view_private_elements', 'ignore_editing_lock', 'import_data', 'set_notifications_for_others', 'publish_reports', 'publish_globalscope', 'update_other_reports', 'delete_other_reports', 'edit_form', 'delete_form']
+										],
+										'description' => 'Optional. Everything this group can do apart from reaching the form. Replaces the group\'s current abilities, so list everything it should end up with; an empty array removes them all. Ignored if a preset is given.
+
+Editing entries: add_own_entry / update_own_entry / update_group_entries / update_other_entries to change entries made by themselves / by their groups / by anyone.
+Deleting entries: delete_own_entry / delete_group_entries / delete_other_entries to delete entries made by themselves / by their groups / by anyone.
+Seeing entries: their own is always on. view_groupscope for entries made by their groups, view_globalscope for entries made by anyone.
+Saved views: managing their own is always on. publish_reports to publish views for their groups, publish_globalscope for any group, update_other_reports and delete_other_reports to manage views made by other people.
+Other: add_proxy_entries (create entries on behalf of someone else), update_entry_ownership (change the user that an entry belongs to, and thereby which groups it belongs to), view_private_elements (see fields hidden from most users), ignore_editing_lock, import_data, set_notifications_for_others.
+The form itself: edit_form (change the form\'s structure, elements and settings) and delete_form. These are not about entries at all, and deleting a form cannot be undone.'
+									]
+								],
+								'required' => ['group_id']
+							]
+						]
+					],
+					'required' => ['form_id', 'groups']
+				]
+			];
+
 			$this->tools['get_custom_code'] = [
 				'name' => 'get_custom_code',
 				'description' => 'Read the custom PHP code attached to a form or to an application.
@@ -2678,6 +2754,246 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 			);
 		}
 		return $this->element_details($elements, $arguments['form_id'] ?? 0);
+	}
+
+	/**
+	 * Set the permissions several groups have on a form.
+	 *
+	 * Only the named groups are touched, and each one's permissions are replaced rather than added to,
+	 * matching how the admin interface saves a group's panel. Two permissions are written for every group
+	 * regardless of what was asked for - view_their_own_entries and manage_own - because the admin
+	 * interface does the same, and a group missing them behaves differently from every group created
+	 * through the UI.
+	 *
+	 * @param array $arguments 'form_id' (required), 'groups' (required)
+	 * @return array What each group ended up with, plus anything that had to be updated as a consequence
+	 * @throws FormulizeMCPException on permission failure, an unknown form or group, or a form that
+	 *         inherits its permissions from elsewhere
+	 */
+	private function set_form_permissions($arguments) {
+
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				"Permission denied: Only webmasters can change a form's permissions.",
+				'authentication_error',
+			);
+		}
+
+		$formId = intval($arguments['form_id'] ?? 0);
+		if(!$formId) {
+			throw new FormulizeMCPException('form_id is required', 'invalid_data');
+		}
+		// table forms are allowed: their permissions are Formulize's own, even though their columns are not
+		$formObject = $this->assertFormIsEditableByTools($formId, true);
+
+		// a form that inherits has its permissions maintained on the parent and overwritten from there, so
+		// writing here would be undone the next time the parent is saved
+		if($parentId = intval($formObject->getVar('parent_perm_fid'))) {
+			throw new FormulizeMCPException(
+				"This form inherits its permissions from form $parentId, so they cannot be changed here.",
+				'invalid_data',
+				context: [
+					'inherits_permissions_from_form' => $parentId,
+					'hint' => "Set the permissions on form $parentId instead. Every form inheriting from it, including this one, is updated to match."
+				]
+			);
+		}
+
+		if(empty($arguments['groups']) OR !is_array($arguments['groups'])) {
+			throw new FormulizeMCPException(
+				'groups is required, and must list at least one group to change.',
+				'invalid_data',
+				context: [ 'hint' => 'Each entry needs a group_id, plus either a preset or grants_access and abilities.' ]
+			);
+		}
+
+		// resolve everything before writing anything, so a bad entry cannot leave the form half changed
+		$requested = [];
+		foreach(array_values($arguments['groups']) as $position => $groupEntry) {
+			$resolved = $this->resolveRequestedPermissions($groupEntry, $position);
+			$requested[$resolved['group_id']] = $resolved;
+		}
+
+		global $xoopsDB;
+		$moduleId = getFormulizeModId();
+		$permTable = $xoopsDB->prefix('group_permission');
+		$permHandler = new formulizePermHandler($formId);
+		foreach($requested as $groupId => $settings) {
+			$names = $settings['abilities'];
+			if($settings['grants_access']) {
+				$names[] = 'view_form';
+			}
+			// written for every group whatever was asked for, as the admin interface does
+			$names[] = 'view_their_own_entries';
+			$names[] = 'manage_own';
+
+			if(!$xoopsDB->queryF("DELETE FROM $permTable WHERE gperm_groupid = $groupId AND gperm_itemid = $formId AND gperm_modid = $moduleId")) {
+				throw new FormulizeMCPException(
+					"Could not clear the existing permissions for group $groupId. ".$xoopsDB->error(),
+					'database_error'
+				);
+			}
+			$values = [];
+			foreach(array_unique($names) as $name) {
+				$values[] = "($groupId, $formId, $moduleId, '".formulize_db_escape($name)."')";
+			}
+			if(!$xoopsDB->queryF("INSERT INTO $permTable (`gperm_groupid`, `gperm_itemid`, `gperm_modid`, `gperm_name`) VALUES ".implode(', ', $values))) {
+				throw new FormulizeMCPException(
+					"Could not set the permissions for group $groupId. ".$xoopsDB->error(),
+					'database_error'
+				);
+			}
+			// custom groupscope target lists are an admin interface feature; the tools always leave a group
+			// on the default, which is every group the user belongs to that grants access to this form
+			$permHandler->setGroupScopeGroups($groupId, array());
+		}
+
+		// a template group's permissions are copied down to the entry groups generated from its form, and
+		// an inheriting form's permissions are copied from here, so both have to be refreshed or they keep
+		// the permissions that were in place before this call
+		formulizeHandler::propagateTemplateGroupPermissions(array_keys($requested));
+		$updatedForms = formulizePermHandler::propagatePermissionsToInheritingForms($formId);
+
+		$response = [
+			'success' => true,
+			'message' => 'Permissions updated for '.count($requested).' group'.(count($requested) == 1 ? '' : 's').'.',
+			'form_id' => $formId,
+			'form_title' => $formObject->getVar('form_title'),
+			'groups_changed' => array_values(array_map(function($settings) {
+				return [
+					'group_id' => $settings['group_id'],
+					'grants_access' => $settings['grants_access'],
+					'abilities' => $settings['abilities']
+				];
+			}, $requested)),
+			'always_on_for_every_group' => ['view_their_own_entries', 'manage_own'],
+		];
+		if(!empty($updatedForms)) {
+			$response['forms_updated_by_inheritance'] = $updatedForms;
+			$response['about_inheritance'] = 'These forms inherit their permissions from this one, so they have been updated to match.';
+		}
+		$response['groups_not_named_were_left_alone'] = 'Only the groups you listed were changed. Call get_form_permissions_by_group to see the form\'s permissions as they now stand.';
+		return $response;
+	}
+
+	/**
+	 * The ready-made permission combinations set_form_permissions accepts instead of an explicit list.
+	 *
+	 * Organised on two axes, scope and authority, rather than as a single ladder from least to most
+	 * powerful. A ladder would have to assume whether someone senior sees their group's entries or
+	 * everyone's, and that depends on how the site divides its groups rather than on the role, so the
+	 * assumption would be wrong about half the time. Deletion of other people's entries is the line
+	 * between member and admin at both scopes, since that is usually where sites draw it.
+	 *
+	 * Nothing here includes edit_form or delete_form: those are authority over the form's structure rather
+	 * than its data, so they are granted deliberately through the abilities list instead.
+	 *
+	 * @return array preset name => ['grants_access' => bool, 'abilities' => array]
+	 */
+	private function permissionPresets() {
+		$own = ['add_own_entry', 'update_own_entry', 'delete_own_entry'];
+		// the same step up at either scope, so what "admin" means stays predictable
+		$adminExtras = ['add_proxy_entries', 'update_entry_ownership', 'view_private_elements', 'publish_reports'];
+		$groupMember = array_merge($own, ['view_groupscope', 'update_group_entries']);
+		$globalMember = array_merge($own, ['view_globalscope', 'update_other_entries']);
+		return [
+			'none' => ['grants_access' => false, 'abilities' => []],
+			'own_only' => ['grants_access' => true, 'abilities' => $own],
+			'group_member' => ['grants_access' => true, 'abilities' => $groupMember],
+			'group_admin' => ['grants_access' => true, 'abilities' => array_merge($groupMember, ['delete_group_entries'], $adminExtras)],
+			'global_member' => ['grants_access' => true, 'abilities' => $globalMember],
+			'global_admin' => ['grants_access' => true, 'abilities' => array_merge($globalMember, ['delete_other_entries'], $adminExtras, ['publish_globalscope'])],
+		];
+	}
+
+	/**
+	 * Work out what one entry in the groups list is asking for, as grants_access plus a list of abilities.
+	 *
+	 * A preset wins outright if one is given, rather than being merged with anything supplied alongside it,
+	 * because a preset that quietly means something different depending on what accompanies it would be
+	 * worse than no preset at all.
+	 *
+	 * @param array $groupEntry One item from the tool's groups array
+	 * @param int $position Its index, so an error can say which entry was wrong
+	 * @return array ['group_id' => int, 'grants_access' => bool, 'abilities' => array]
+	 * @throws FormulizeMCPException on an unknown group, preset or permission name
+	 */
+	private function resolveRequestedPermissions($groupEntry, $position) {
+		$label = "groups entry ".($position + 1);
+		$groupId = intval($groupEntry['group_id'] ?? 0);
+		if(!$groupId) {
+			throw new FormulizeMCPException(
+				"$label is missing a group_id.",
+				'invalid_data',
+				context: [ 'hint' => 'Every entry in the groups list needs a group_id. Use the list_groups tool to find group ids.' ]
+			);
+		}
+		$member_handler = xoops_gethandler('member');
+		if(!$groupObject = $member_handler->getGroup($groupId)) {
+			throw new FormulizeMCPException(
+				"There is no group with the id $groupId.",
+				'invalid_data',
+				context: [ 'hint' => 'Use the list_groups tool to find the groups in this system.' ]
+			);
+		}
+
+		$presets = $this->permissionPresets();
+		if(isset($groupEntry['preset'])) {
+			$preset = $groupEntry['preset'];
+			if(!isset($presets[$preset])) {
+				throw new FormulizeMCPException(
+					"'$preset' is not a preset ($label).",
+					'invalid_data',
+					context: [ 'valid_presets' => array_keys($presets) ]
+				);
+			}
+			return array_merge(['group_id' => $groupId], $presets[$preset]);
+		}
+
+		if(!array_key_exists('grants_access', $groupEntry) AND !array_key_exists('abilities', $groupEntry)) {
+			throw new FormulizeMCPException(
+				"$label does not say what to set. Supply a preset, or grants_access, or abilities.",
+				'invalid_data',
+				context: [
+					'hint' => 'To remove a group\'s permissions entirely, use the preset "none", or grants_access false with an empty abilities list.',
+					'valid_presets' => array_keys($presets)
+				]
+			);
+		}
+
+		$abilities = [];
+		$settable = array_values(array_diff(formulizePermHandler::getPermissionList(), ['view_form']));
+		foreach((array) ($groupEntry['abilities'] ?? []) as $ability) {
+			if($ability === 'view_form') {
+				throw new FormulizeMCPException(
+					"Put view_form in grants_access rather than in abilities ($label).",
+					'invalid_data',
+					context: [ 'hint' => 'Access is set with the grants_access flag, which is true or false. The abilities list holds everything else.' ]
+				);
+			}
+			// the two implicit permissions are written for every group no matter what, so accepting them as
+			// input would suggest they were optional
+			if(in_array($ability, ['view_their_own_entries', 'manage_own'])) {
+				throw new FormulizeMCPException(
+					"'$ability' is always on for every group and cannot be set ($label).",
+					'invalid_data',
+					context: [ 'hint' => 'Every user can always see their own entries, and manage their own saved views.' ]
+				);
+			}
+			if(!in_array($ability, $settable)) {
+				throw new FormulizeMCPException(
+					"'$ability' is not a permission ($label).",
+					'invalid_data',
+					context: [ 'valid_abilities' => $settable ]
+				);
+			}
+			$abilities[$ability] = $ability;
+		}
+		return [
+			'group_id' => $groupId,
+			'grants_access' => (bool) ($groupEntry['grants_access'] ?? false),
+			'abilities' => array_values($abilities)
+		];
 	}
 
 	/**
