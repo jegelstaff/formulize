@@ -190,15 +190,8 @@ if (!$filters_only) {
 }
 
 // --- Handle parent_perm_fid (this form inherits permissions from another form) ---
-$old_parent_perm_fid = intval($formObject->getVar('parent_perm_fid', 'n'));
-if ($submitted_parent_perm_fid !== $old_parent_perm_fid) {
-    $formObject->setVar('parent_perm_fid', $submitted_parent_perm_fid);
-    $form_handler->insert($formObject, true);
-}
-// If a parent is set, copy permissions from the parent to this form
-if ($submitted_parent_perm_fid > 0) {
-    formulizePermHandler::copyFormPermissions($submitted_parent_perm_fid, $form_id);
-}
+// writes parent_perm_fid and, when a parent is set, copies its permissions down to this form
+formulizePermHandler::setPermissionParent($form_id, $submitted_parent_perm_fid);
 
 if (!$filters_only) {
   // --- Handle child_perm_fids[] (this form is the parent of other forms) ---

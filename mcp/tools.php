@@ -614,9 +614,6 @@ The most useful way to use this is to pass all the groups one user belongs to, w
 				]
 			];
 
-			// REVISIT WHEN set_form_permission_inheritance EXISTS: the last paragraph of the description
-			// below says inheritance can only be set up in the admin interface, which is true only while
-			// there is no tool for it. Point it at that tool instead once there is one.
 			$this->tools['set_form_permissions'] = [
 				'name' => 'set_form_permissions',
 				'description' => 'Set which groups can use a form, and what their members can do with it. Read the current permissions with get_form_permissions_by_group first, so you extend the arrangement already in place instead of replacing it with a different one.
@@ -635,7 +632,7 @@ A group can also have visibility conditions, which restrict its members to entri
 
 Only the groups you name are changed. What you supply replaces that group\'s current permissions rather than adding to them, so include everything the group should end up with.
 
-A form can also be set to inherit its permissions from another form, in which case they are maintained on that other form and copied to this one, and this tool will refuse to change them and tell you which form to go to instead. Setting up, changing or removing that arrangement is done in the Formulize admin interface; there is no tool for it.',
+A form can also be set to inherit its permissions from another form, in which case they are maintained on that other form and copied to this one, and this tool will refuse to change them here and tell you which form to go to instead. Setting up, changing or removing that arrangement is done with set_form_permission_inheritance.',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
@@ -692,6 +689,40 @@ The form itself: edit_form (change the form\'s structure, elements and settings)
 						]
 					],
 					'required' => ['form_id', 'groups']
+				]
+			];
+
+			$this->tools['set_form_permission_inheritance'] = [
+				'name' => 'set_form_permission_inheritance',
+				'description' => 'Make one form take its permissions from another, or stop it doing so. Use get_form_permissions_by_group first to see what each form currently has, because of what follows.
+
+This is not a way to copy permissions once. A form that inherits keeps no permissions of its own: whatever it had is replaced by a copy of the other form\'s, and it is replaced again every time the other form\'s permissions change. set_form_permissions will refuse to work on it while the arrangement is in place.
+
+The replacement is immediate and cannot be undone. There is no record kept of what the inheriting form had before, and clearing the arrangement later does not bring it back - the form simply keeps the permissions it inherited and becomes editable again. This tool reports what each affected form held beforehand so you have a record; if you might want those permissions back, save them somewhere before calling it.
+
+Use it where several forms genuinely belong to one another and should always be reachable by the same people - the forms behind a single application, say - so that granting a group access once covers all of them. Do not use it to give a form the same permissions as another form as a starting point, because the copy is permanent and continues.
+
+Visibility conditions are not copied. They reference elements, and the elements differ between forms, so an inheriting form keeps its own conditions and needs them set up separately.
+
+Inheritance is one level deep. A form that inherits cannot also be inherited from, so chains are refused.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'form_id' => [
+							'type' => 'integer',
+							'description' => 'Required. The form whose inheritance arrangement you are changing. Use list_forms to find form ids.'
+						],
+						'inherits_from_form_id' => [
+							'type' => 'integer',
+							'description' => 'Optional. The form that form_id should take its permissions from. Give 0 to stop it inheriting, which leaves it holding whatever it last inherited and makes its permissions editable again. Setting this replaces form_id\'s permissions entirely.'
+						],
+						'forms_that_inherit_from_this' => [
+							'type' => 'array',
+							'items' => [ 'type' => 'integer' ],
+							'description' => 'Optional. The complete list of forms that should take their permissions from form_id. This replaces the current list rather than adding to it: a form that inherits today and is not in the list stops inheriting, and an empty array detaches all of them. Each newly listed form has its permissions replaced by a copy of form_id\'s.'
+						]
+					],
+					'required' => ['form_id']
 				]
 			];
 
@@ -1088,19 +1119,7 @@ This tool takes two calls. Call it first with just the element, and it will NOT 
 	 * @return object The form object
 	 */
 	private function assertFormIsEditableByTools($form, $allowTableForms = false) {
-		if(is_object($form)) {
-			$formObject = $form;
-		} else {
-			$formId = intval($form);
-			$form_handler = xoops_getmodulehandler('forms', 'formulize');
-			if(!$formId OR !$formObject = $form_handler->get($formId)) {
-				throw new FormulizeMCPException(
-					"Form not found: $formId",
-					'form_not_found',
-					context: [ 'hint' => 'Use the list_forms tool to see the forms in this system.' ]
-				);
-			}
-		}
+		$formObject = is_object($form) ? $form : $this->assertFormExists($form);
 		$formId = intval($formObject->getVar('fid'));
 		if(!$allowTableForms AND $formObject->getVar('tableform')) {
 			throw new FormulizeMCPException(
@@ -2926,6 +2945,210 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 			$response['about_inheritance'] = 'These forms inherit their permissions from this one, so they have been updated to match.';
 		}
 		$response['groups_not_named_were_left_alone'] = 'Only the groups you listed were changed. Call get_form_permissions_by_group to see the form\'s permissions as they now stand.';
+		return $response;
+	}
+
+	/**
+	 * A short summary of what a form's permissions look like right now, for reporting what an operation
+	 * is about to overwrite. Enough to recognise what was there, not enough to restore it - the tool says
+	 * as much, because pretending otherwise would be worse than saying nothing.
+	 * @param int $formId
+	 * @return array group id => list of permission names
+	 */
+	private function permissionSnapshotForForm($formId) {
+		global $xoopsDB;
+		$snapshot = [];
+		$sql = "SELECT gperm_groupid, gperm_name FROM ".$xoopsDB->prefix('group_permission')."
+			WHERE gperm_itemid = ".intval($formId)." AND gperm_modid = ".intval(getFormulizeModId())."
+			ORDER BY gperm_groupid, gperm_name";
+		if($result = $xoopsDB->query($sql)) {
+			while($row = $xoopsDB->fetchArray($result)) {
+				$snapshot[intval($row['gperm_groupid'])][] = $row['gperm_name'];
+			}
+		}
+		return $snapshot;
+	}
+
+	/**
+	 * Load a form, or refuse with a message naming the id that was not found.
+	 *
+	 * The check itself is trivial, but it was written out separately everywhere a tool needed a form, so
+	 * the wording and the hint drifted between them. One place to change means a caller that supplies a
+	 * bad id gets the same answer whichever tool it called.
+	 *
+	 * @param int $formId
+	 * @param string $context Which parameter the id came from, when a tool takes more than one form id and
+	 *                        "there is no form with that id" would otherwise not say which one was wrong
+	 * @return formulizeForm
+	 * @throws FormulizeMCPException
+	 */
+	private function assertFormExists($formId, $context = '') {
+		$formId = intval($formId);
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		if(!$formId OR !$formObject = $form_handler->get($formId)) {
+			throw new FormulizeMCPException(
+				"There is no form with the id $formId".($context ? " ($context)" : "").".",
+				'form_not_found',
+				context: [ 'hint' => 'Use the list_forms tool to see the forms in this system.' ]
+			);
+		}
+		return $formObject;
+	}
+
+	/**
+	 * The forms that currently inherit from a given form.
+	 * @param int $formId
+	 * @return array Form ids
+	 */
+	private function formsInheritingFrom($formId) {
+		global $xoopsDB;
+		$ids = [];
+		$sql = "SELECT id_form FROM ".$xoopsDB->prefix('formulize_id')." WHERE parent_perm_fid = ".intval($formId)." ORDER BY id_form";
+		if($result = $xoopsDB->query($sql)) {
+			while($row = $xoopsDB->fetchArray($result)) {
+				$ids[] = intval($row['id_form']);
+			}
+		}
+		return $ids;
+	}
+
+	/**
+	 * Set up or remove permission inheritance between forms.
+	 *
+	 * Kept apart from set_form_permissions because its effect lands on forms other than the one named, and
+	 * because it destroys what those forms held rather than adding to it. Those are different enough from
+	 * "change this group's permissions" to deserve a separate decision by the caller.
+	 *
+	 * @param array $arguments 'form_id' (required), 'inherits_from_form_id' and/or 'forms_that_inherit_from_this'
+	 * @return array What changed, and what each affected form held beforehand
+	 * @throws FormulizeMCPException on permission failure, an unknown form, or an attempted chain
+	 */
+	private function set_form_permission_inheritance($arguments) {
+
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				"Permission denied: Only webmasters can change how a form's permissions are inherited.",
+				'authentication_error',
+			);
+		}
+
+		$formId = intval($arguments['form_id'] ?? 0);
+		if(!$formId) {
+			throw new FormulizeMCPException('form_id is required', 'invalid_data');
+		}
+		$formObject = $this->assertFormIsEditableByTools($formId, true);
+
+		$settingParent = array_key_exists('inherits_from_form_id', $arguments);
+		$settingChildren = array_key_exists('forms_that_inherit_from_this', $arguments);
+		if(!$settingParent AND !$settingChildren) {
+			throw new FormulizeMCPException(
+				'Nothing to change. Supply inherits_from_form_id, or forms_that_inherit_from_this, or both.',
+				'invalid_data',
+				context: [ 'hint' => 'inherits_from_form_id makes this form take its permissions from another one. forms_that_inherit_from_this makes other forms take theirs from this one.' ]
+			);
+		}
+
+		$parentFid = $settingParent ? intval($arguments['inherits_from_form_id']) : null;
+		$childFids = [];
+		if($settingChildren) {
+			foreach((array) $arguments['forms_that_inherit_from_this'] as $childFid) {
+				if($childFid = intval($childFid)) {
+					$childFids[$childFid] = $childFid;
+				}
+			}
+			$childFids = array_values($childFids);
+		}
+
+		// Inheritance is one level deep, which the admin interface enforces by not offering the
+		// combinations that would build a chain. Refuse them here rather than allowing the tools to create
+		// a shape the rest of the system does not expect: a form that inherits never propagates to its own
+		// children, so a grandchild would silently keep whatever it had.
+		$existingChildren = $this->formsInheritingFrom($formId);
+		if($parentFid) {
+			if($parentFid === $formId) {
+				throw new FormulizeMCPException('A form cannot inherit its permissions from itself.', 'invalid_data');
+			}
+			$parentObject = $this->assertFormExists($parentFid, 'inherits_from_form_id');
+			if(intval($parentObject->getVar('parent_perm_fid'))) {
+				throw new FormulizeMCPException(
+					"Form $parentFid takes its permissions from another form, so this form cannot inherit from it. Inheritance is only one level deep.",
+					'invalid_data',
+					context: [ 'form_'.$parentFid.'_inherits_from' => intval($parentObject->getVar('parent_perm_fid')) ]
+				);
+			}
+			if($existingChildren) {
+				throw new FormulizeMCPException(
+					"Forms already take their permissions from form $formId, so it cannot itself inherit from another form. Inheritance is only one level deep.",
+					'invalid_data',
+					context: [
+						'forms_inheriting_from_this_form' => $existingChildren,
+						'hint' => 'Detach those forms first with forms_that_inherit_from_this set to an empty array, if this form really should inherit instead.'
+					]
+				);
+			}
+		}
+		if($settingChildren AND $childFids) {
+			if(intval($formObject->getVar('parent_perm_fid')) AND !($settingParent AND !$parentFid)) {
+				throw new FormulizeMCPException(
+					"Form $formId takes its permissions from another form, so other forms cannot inherit from it. Inheritance is only one level deep.",
+					'invalid_data',
+					context: [
+						'this_form_inherits_from' => intval($formObject->getVar('parent_perm_fid')),
+						'hint' => 'Pass inherits_from_form_id 0 in the same call to stop this form inheriting, if it should be the parent instead.'
+					]
+				);
+			}
+			foreach($childFids as $childFid) {
+				if($childFid === $formId) {
+					throw new FormulizeMCPException('A form cannot inherit its permissions from itself.', 'invalid_data');
+				}
+				// a child has its permissions replaced, so it has to be a form the tools may change - unlike
+				// the parent above, which is only read from. Table forms are allowed because their
+				// permissions are Formulize's own even though their columns are not.
+				$this->assertFormIsEditableByTools($childFid, true);
+				if($grandchildren = $this->formsInheritingFrom($childFid)) {
+					throw new FormulizeMCPException(
+						"Forms already take their permissions from form $childFid, so it cannot itself inherit from form $formId. Inheritance is only one level deep.",
+						'invalid_data',
+						context: [ 'forms_inheriting_from_form_'.$childFid => $grandchildren ]
+					);
+				}
+			}
+		}
+
+		// what each form holds now, captured before anything is overwritten
+		$replaced = [];
+		$response = [ 'success' => true, 'form_id' => $formId, 'form_title' => $formObject->getVar('form_title') ];
+
+		if($settingParent) {
+			if($parentFid) {
+				$replaced[$formId] = $this->permissionSnapshotForForm($formId);
+			}
+			formulizePermHandler::setPermissionParent($formId, $parentFid);
+			$response['inherits_permissions_from_form'] = $parentFid ?: null;
+			$response['about_this_form'] = $parentFid
+				? "This form now takes its permissions from form $parentFid, and they have been replaced with a copy of that form's. They cannot be changed directly while this is in place."
+				: "This form no longer inherits its permissions. It keeps the ones it last inherited, and they can be changed directly again with set_form_permissions.";
+		}
+
+		if($settingChildren) {
+			$newlyInheriting = array_values(array_diff($childFids, $existingChildren));
+			foreach($newlyInheriting as $childFid) {
+				$replaced[$childFid] = $this->permissionSnapshotForForm($childFid);
+			}
+			$result = formulizePermHandler::setInheritingForms($formId, $childFids);
+			$response['forms_inheriting_permissions_from_this_form'] = $this->formsInheritingFrom($formId);
+			$response['forms_that_started_inheriting'] = $result['added'];
+			$response['forms_that_stopped_inheriting'] = $result['removed'];
+			if($result['removed']) {
+				$response['about_the_forms_that_stopped'] = 'These forms keep the permissions they last inherited, and can now be changed directly again.';
+			}
+		}
+
+		if($replaced) {
+			$response['permissions_replaced_on_these_forms'] = $replaced;
+			$response['about_what_was_replaced'] = 'This is what those forms held immediately before this call, listed as group id to permission names. It is a record only - nothing restores it, and clearing the inheritance later will not. If any of it was wanted, put it back with set_form_permissions after detaching the form.';
+		}
 		return $response;
 	}
 

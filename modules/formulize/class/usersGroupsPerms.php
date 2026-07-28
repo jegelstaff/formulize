@@ -595,6 +595,47 @@ class formulizePermHandler {
 	}
 
 	/**
+	 * Declare which form a given form inherits its permissions from, and bring it into line.
+	 *
+	 * The counterpart to setInheritingForms(): that one says "these forms inherit from me", this one says
+	 * "I inherit from that one". Both are needed because the relationship is declared from either end in
+	 * the admin interface, and both write the same parent_perm_fid column from opposite directions.
+	 *
+	 * Setting a parent replaces the form's entire permission set with a copy of the parent's, which is why
+	 * the copy happens here rather than being left to the caller: a form marked as inheriting but still
+	 * holding its own old permissions would be lying about where its permissions come from, and nothing
+	 * would reveal the discrepancy until the parent was next saved.
+	 *
+	 * Clearing the parent (passing 0) does not restore anything. There is nothing to restore to - the old
+	 * permissions were overwritten when the parent was set. The form simply keeps whatever it inherited
+	 * and becomes free to have them edited directly again.
+	 *
+	 * @param int $formId The form that will inherit
+	 * @param int $parentFid The form to inherit from, or 0 to stop inheriting
+	 * @return bool True if the form's permissions were replaced by a copy from the parent
+	 */
+	static function setPermissionParent($formId, $parentFid) {
+		$formId = intval($formId);
+		$parentFid = intval($parentFid);
+		if (!$formId OR $formId === $parentFid) { // a form inheriting from itself is not a relationship
+			return false;
+		}
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		if (!$formObject = $form_handler->get($formId)) {
+			return false;
+		}
+		if (intval($formObject->getVar('parent_perm_fid')) !== $parentFid) {
+			$formObject->setVar('parent_perm_fid', $parentFid);
+			$form_handler->insert($formObject, true);
+		}
+		if ($parentFid > 0) {
+			self::copyFormPermissions($parentFid, $formId);
+			return true;
+		}
+		return false;
+	}
+
+	/**
 	 * Declare which forms inherit their permissions from a given form, and bring them into line.
 	 *
 	 * Takes the complete list of forms that should inherit, rather than additions and removals, because
