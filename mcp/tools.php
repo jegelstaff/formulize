@@ -406,7 +406,7 @@ Correct example for linked elements:
 
 			$this->tools['query_the_database_directly'] = [
 				'name' => 'query_the_database_directly',
-				'description' => "Query the database with a SELECT statement. The database is {$dbVersionData['version']} and queries are written in SQL. If you don't know the database schema for the form, use the get_form_details tool to look up the form\'s database table name, and the field names are the element handles.",
+				'description' => "Query the database with a SELECT statement. The database is {$dbVersionData['version']} and queries are written in SQL. If you don't know the database schema for the form, use the get_form_details tool to look up the form's database table name, and the field names are the element handles.",
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
@@ -689,6 +689,80 @@ The form itself: edit_form (change the form\'s structure, elements and settings)
 						]
 					],
 					'required' => ['form_id', 'groups']
+				]
+			];
+
+			$groupPropertiesDescription = 'Groups are what permissions are given to; users can belong to one or more groups. All users with accounts are members of the Registered Users group (group 2). Before creating a group, check with list_groups whether something suitable already exists. Do not create new groups when the existing ones would meet the need.
+
+Creating a group gives it no permissions and no members. Use set_form_permissions to say what it can do, and update_group_members to put people in it.';
+
+			$this->tools['create_groups'] = [
+				'name' => 'create_groups',
+				'description' => 'Create one or more groups.
+
+'.$groupPropertiesDescription.'
+
+Some groups come from the entries in a form (form-based entry groups). Such groups are not created here, they appear automatically when entries are created in a form that has the entries-are-groups setting, and they are named after the entry. Even if a system is using form-based entry groups, there may still be a need to manually create groups for other purposes, such as an "All Outfielders" group in a system with form-based entry groups for each baseball team. Or a "Registration Approvers" group if approving registrations is a special permission that only a few users have, independent of the rest of the group membership structure.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'groups' => [
+							'type' => 'array',
+							'description' => 'Required. The groups to create.',
+							'items' => [
+								'type' => 'object',
+								'properties' => [
+									'name' => [
+										'type' => 'string',
+										'description' => 'Required. The name of the group, as administrators will see it. Where a system has parallel groups for departments, regions or clients, a consistent shape such as "Toronto - Managers" and "Ottawa - Managers" makes the arrangement legible; check list_groups for the convention already in use.'
+									],
+									'description' => [
+										'type' => 'string',
+										'description' => 'Optional. What this group is for, and who should be in it. Worth writing: nothing else in the system records why a group exists, and anyone reading the permissions later sees only the name and id, so being able to lookup a meaningful description makes a difference.'
+									]
+								],
+								'required' => ['name']
+							]
+						]
+					],
+					'required' => ['groups']
+				]
+			];
+
+			$this->tools['update_groups'] = [
+				'name' => 'update_groups',
+				'description' => 'Change the name or description of one or more groups. Only the properties you supply are changed.
+
+Renaming a group does not affect its permissions or its members; it is the same group with a different label. Use set_form_permissions to change what it can do, and update_group_members to change who is in it.
+
+Two kinds of group cannot be renamed here. Groups generated from the entries in a form take their names from the entry, and are renamed automatically when that entry changes, so a name set by hand would be overwritten; change the entry instead. The three groups the system relies on - Webmasters (group 1), Registered Users (group 2) and Anonymous Users (group 3) - cannot be renamed at all.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'groups' => [
+							'type' => 'array',
+							'description' => 'Required. The groups to change, and what to change about each.',
+							'items' => [
+								'type' => 'object',
+								'properties' => [
+									'group_id' => [
+										'type' => 'integer',
+										'description' => 'Required. The group to change. Use list_groups to find group ids.'
+									],
+									'name' => [
+										'type' => 'string',
+										'description' => 'Optional. A new name for the group. Leave it out to keep the current one.'
+									],
+									'description' => [
+										'type' => 'string',
+										'description' => 'Optional. A new description. Leave it out to keep the current one; supply an empty string to clear it.'
+									]
+								],
+								'required' => ['group_id']
+							]
+						]
+					],
+					'required' => ['groups']
 				]
 			];
 
@@ -2945,6 +3019,172 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 			$response['about_inheritance'] = 'These forms inherit their permissions from this one, so they have been updated to match.';
 		}
 		$response['groups_not_named_were_left_alone'] = 'Only the groups you listed were changed. Call get_form_permissions_by_group to see the form\'s permissions as they now stand.';
+		return $response;
+	}
+
+	/**
+	 * Confirm a group exists and that the tools are allowed to change it.
+	 *
+	 * Two kinds are refused. Groups generated from a form's entries are maintained by Formulize - their
+	 * names come from the entry and their permissions are copied from a template group - so an edit here
+	 * would be overwritten the next time that entry is saved, silently and possibly much later. The three
+	 * system groups are refused because other code identifies them by id and assumes they are what their
+	 * names say.
+	 *
+	 * The message says what to do instead, because "you cannot change this" without a route forward leaves
+	 * a caller with a reasonable goal and nowhere to go.
+	 *
+	 * @param int $groupId
+	 * @param string $action What is being attempted, for the error message
+	 * @return XoopsGroup
+	 * @throws FormulizeMCPException
+	 */
+	private function assertGroupIsEditableByTools($groupId, $action = 'changed') {
+		$member_handler = xoops_gethandler('member');
+		if(!$groupObject = $member_handler->getGroup($groupId)) {
+			throw new FormulizeMCPException(
+				"There is no group with the id $groupId.",
+				'invalid_data',
+				context: [ 'hint' => 'Use the list_groups tool to see the groups in this system.' ]
+			);
+		}
+		// loose comparison: the group constants are strings in mainfile.php
+		if($groupId == XOOPS_GROUP_ADMIN OR $groupId == XOOPS_GROUP_USERS OR $groupId == XOOPS_GROUP_ANONYMOUS) {
+			throw new FormulizeMCPException(
+				"The group '".$groupObject->getVar('name')."' is one of the groups the system relies on, and cannot be $action.",
+				'invalid_data',
+				context: [ 'hint' => 'These three have fixed meanings that Formulize and these tools rely on when explaining anything about permissions: every account is in Registered Users, everyone not logged in is Anonymous Users, and Webmasters bypass permission checks entirely. Renaming one does would not change how it behaves, but it does make every explanation of that behaviour wrong. An administrator can still rename them in the Formulize admin interface if a site really needs different names.' ]
+			);
+		}
+		if($groupObject->getVar('is_group_template') OR $groupObject->getVar('entry_id')) {
+			$formId = intval($groupObject->getVar('form_id'));
+			throw new FormulizeMCPException(
+				"The group '".$groupObject->getVar('name')."' comes from the entries in form $formId, and cannot be $action here.",
+				'invalid_data',
+				context: [
+					'group_kind' => $groupObject->getVar('is_group_template') ? 'form_based_template' : 'form_based_entry',
+					'comes_from_form' => $formId,
+					'hint' => $groupObject->getVar('entry_id')
+						? "This group is generated from an entry in form $formId and is maintained automatically, so a change made here would be overwritten. Change the entry it comes from, or change its template group's permissions with set_form_permissions."
+						: "This is the template for the groups generated from form $formId. Its permissions can be set with set_form_permissions, which copies them to every group made from it, but its name and description are managed by Formulize."
+				]
+			);
+		}
+		return $groupObject;
+	}
+
+	/**
+	 * Create groups.
+	 * @param array $arguments 'groups' (required)
+	 * @return array The groups that were created
+	 * @throws FormulizeMCPException on permission failure or invalid input
+	 */
+	private function create_groups($arguments) {
+		return $this->writeGroups($arguments, 'create');
+	}
+
+	/**
+	 * Change the name or description of existing groups.
+	 * @param array $arguments 'groups' (required)
+	 * @return array The groups that were changed
+	 * @throws FormulizeMCPException on permission failure, an unknown group, or an auto-managed group
+	 */
+	private function update_groups($arguments) {
+		return $this->writeGroups($arguments, 'update');
+	}
+
+	/**
+	 * Shared implementation for create_groups and update_groups, so the validation and the refusals cannot
+	 * differ between them.
+	 * @param array $arguments
+	 * @param string $operation 'create' or 'update'
+	 * @return array
+	 * @throws FormulizeMCPException
+	 */
+	private function writeGroups($arguments, $operation) {
+
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				"Permission denied: Only webmasters can $operation groups.",
+				'authentication_error',
+			);
+		}
+		if(empty($arguments['groups']) OR !is_array($arguments['groups'])) {
+			throw new FormulizeMCPException(
+				'groups is required, and must list at least one group.',
+				'invalid_data'
+			);
+		}
+
+		$member_handler = xoops_gethandler('member');
+		$group_handler = xoops_gethandler('group'); // the member handler can insert a group but not make one
+		// resolve and validate everything before writing, so a bad entry cannot leave half the batch applied
+		$resolved = [];
+		foreach(array_values($arguments['groups']) as $position => $groupEntry) {
+			$label = 'groups entry '.($position + 1);
+			if($operation == 'create') {
+				$name = trim((string) ($groupEntry['name'] ?? ''));
+				if($name === '') {
+					throw new FormulizeMCPException(
+						"$label needs a name.",
+						'invalid_data'
+					);
+				}
+				$resolved[] = [ 'object' => $group_handler->create(), 'name' => $name, 'description' => $groupEntry['description'] ?? null ];
+			} else {
+				$groupId = intval($groupEntry['group_id'] ?? 0);
+				if(!$groupId) {
+					throw new FormulizeMCPException("$label needs a group_id.", 'invalid_data');
+				}
+				$groupObject = $this->assertGroupIsEditableByTools($groupId, 'changed');
+				if(!array_key_exists('name', $groupEntry) AND !array_key_exists('description', $groupEntry)) {
+					throw new FormulizeMCPException(
+						"$label does not say what to change. Supply a name, or a description, or both.",
+						'invalid_data'
+					);
+				}
+				$name = array_key_exists('name', $groupEntry) ? trim((string) $groupEntry['name']) : null;
+				if($name === '') {
+					throw new FormulizeMCPException("$label cannot set an empty name.", 'invalid_data');
+				}
+				$resolved[] = [ 'object' => $groupObject, 'name' => $name, 'description' => array_key_exists('description', $groupEntry) ? $groupEntry['description'] : null ];
+			}
+		}
+
+		$written = [];
+		foreach($resolved as $item) {
+			$groupObject = $item['object'];
+			if($item['name'] !== null) {
+				$groupObject->setVar('name', $item['name']);
+			}
+			if($item['description'] !== null) {
+				$groupObject->setVar('description', $item['description']);
+			}
+			if($operation == 'create') {
+				$groupObject->setVar('group_type', 'User'); // an ordinary group, not one of the system three
+			}
+			if(!$member_handler->insertGroup($groupObject)) {
+				throw new FormulizeMCPException(
+					"Could not $operation the group '".$item['name']."'.",
+					'database_error'
+				);
+			}
+			$written[] = [
+				'group_id' => intval($groupObject->getVar('groupid')),
+				'name' => $groupObject->getVar('name'),
+				// an unset description comes back as false, which reads as a value rather than an absence
+				'description' => (string) $groupObject->getVar('description'),
+			];
+		}
+
+		$response = [
+			'success' => true,
+			'message' => ($operation == 'create' ? 'Created ' : 'Updated ').count($written).' group'.(count($written) == 1 ? '' : 's').'.',
+			'groups' => $written,
+		];
+		if($operation == 'create') {
+			$response['what_these_groups_can_do'] = 'Nothing yet. A new group has no permissions on any form and no members. Use set_form_permissions to give it permissions, and update_group_members to put users in it.';
+		}
 		return $response;
 	}
 
