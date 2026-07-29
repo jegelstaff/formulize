@@ -40,3 +40,20 @@ mariadb --user user --password=password
 
 ROOT PASSWORD FOR MARIADB
 The root password for accessing MariaDB is abc123 (as specified in the docker-compose.yml file)
+
+SWITCHING PHP VERSIONS LOCALLY
+The web service PHP version is configurable with an env var in the root .env file.
+Start by copying .env.example to .env.
+
+Default:
+- FORMULIZE_PHP_VERSION= (blank, uses the published PHP 8.3 image)
+
+To test another PHP version locally, set FORMULIZE_PHP_VERSION (for example, 8.1)
+and run:
+
+docker compose up -d --build --force-recreate web
+
+To go back to the published default image:
+
+docker compose pull web
+docker compose up -d --force-recreate web

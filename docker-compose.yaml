@@ -1,6 +1,10 @@
 services:
   web:
-    image: "formulize/php-dev:latest"
+    image: "formulize/php-dev:${FORMULIZE_PHP_VERSION:-latest}"
+    build:
+      context: ./docker/php
+      args:
+        PHP_BASE_IMAGE: "php:${FORMULIZE_PHP_VERSION:-8.3}-apache"
     restart: "unless-stopped"
     depends_on:
       mariadb:

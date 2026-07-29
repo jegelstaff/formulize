@@ -28,5 +28,7 @@ jobs:
         with:
           context: ./docker/php
           platforms: linux/amd64,linux/arm64
+          build-args: |
+            PHP_BASE_IMAGE=php:8.3-apache
           push: true
           tags: formulize/php-dev:latest

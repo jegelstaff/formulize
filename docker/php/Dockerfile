@@ -1,4 +1,5 @@
-FROM php:8.1-apache
+ARG PHP_BASE_IMAGE=php:8.3-apache
+FROM ${PHP_BASE_IMAGE}
 RUN apt-get update && apt-get install -y libpng-dev libjpeg-dev libzip-dev zip libfreetype6-dev libicu-dev
 RUN docker-php-ext-configure intl
 RUN docker-php-ext-configure gd --with-jpeg=/usr/include/ --with-freetype=/usr/include/

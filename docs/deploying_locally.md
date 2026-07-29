@@ -21,6 +21,8 @@ git checkout -b my-formulize-branch monastery
 docker compose up
 ```
 
+The published `latest` image is based on PHP 8.3. See [Switching PHP Versions](#switching-php-versions) below if you need to test against a different version.
+
 Browse to [http://localhost:8080](http://localhost:8080) to access Formulize. Login with:
 - username: _admin_
 - password: _admin_
@@ -105,11 +107,13 @@ include_once XOOPS_TRUST_PATH . '/r87678sd908asdf48ffecfbfd223af293d.php' ;
 
 1. There is a ```docker-compose.yaml``` file in the root of the respository.
 
-2. There is a ```docker``` folder that contains a ```Dockerfile```, and a ```php``` folder with ```.ini``` files in it, and a ```mariadb``` folder with the database in it. The database persists between Docker sessions.
+2. There is a ```docker``` folder that contains the build recipe at ```docker/php/Dockerfile```, and a ```php``` folder with ```.ini``` files in it, and a ```mariadb``` folder with the database in it. The database persists between Docker sessions.
 
-3. The ```docker/mariadb/seed``` folder can contain ```.sql``` files which Docker will execute when it first sets up the database. If there is an existing database, the ```docker/mariadb/seed``` folder is ignored. __It can take a little while for the ```.sql``` files to be processed, depending on their size and the speed of your computer!__
+3. There is a ```.env.example``` file in the root of the repository with a local Docker variable you can copy into ```.env``` to control which PHP version the web service uses.
 
-4. The URL for accessing the Docker container is [http://localhost:8080](http://localhost:8080)
+4. The ```docker/mariadb/seed``` folder can contain ```.sql``` files which Docker will execute when it first sets up the database. If there is an existing database, the ```docker/mariadb/seed``` folder is ignored. __It can take a little while for the ```.sql``` files to be processed, depending on their size and the speed of your computer!__
+
+5. The URL for accessing the Docker container is [http://localhost:8080](http://localhost:8080)
 
 ## Database files in Docker
 
@@ -120,3 +124,39 @@ The database is stored in the `FOLDERNAME_mariadb_data` volume (Where FOLDERNAME
 ### Deleting the maraidb volume
 
 In order to purge your volume perform a `docker compose down -v` to ensure volumes are deleted as well containers
+
+## <a name='switching-php-versions'></a>Switching PHP Versions
+
+The published `latest` image is based on PHP 8.3. The web service's PHP version is configurable with the `FORMULIZE_PHP_VERSION` env var.
+
+### Using a `.env` file (recommended)
+
+Create a `.env` file from `.env.example`, then set `FORMULIZE_PHP_VERSION` there (for example, `8.1`). Docker Compose reads `.env` automatically, so once it's set there you don't need to repeat it on the command line — just rebuild the `web` image:
+
+```bash
+docker compose up -d --build --force-recreate web
+```
+
+### Without a `.env` file
+
+You can also set the variable inline for a one-off test, without creating or editing `.env`:
+
+```bash
+FORMULIZE_PHP_VERSION=8.1 docker compose up -d --build --force-recreate web
+```
+
+PowerShell (Windows) equivalent:
+
+```powershell
+$env:FORMULIZE_PHP_VERSION="8.1"
+docker compose up -d --build --force-recreate web
+```
+
+### Switching back to the default image
+
+If you're using an `.env` file, set `FORMULIZE_PHP_VERSION` back to blank (or delete the `.env` file). Then run:
+
+```bash
+docker compose pull web
+docker compose up -d --force-recreate web
+```
