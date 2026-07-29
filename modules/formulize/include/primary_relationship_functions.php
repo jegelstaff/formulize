@@ -593,18 +593,19 @@ function addElementToMultiPageScreens($fid, $elementIdentifier, $makeNewPageIfNo
 		$screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 		$criteria_object = new CriteriaCompo(new Criteria('type','multiPage'));
 		$screens = $screen_handler->getObjects($criteria_object,intval($fid));
+		$candidatePages = array();
+		$candidateScreensForNewPages = array();
 		foreach($screens as $screen) {
 			$sid = $screen->getVar('sid');
 			$screenObject = $screen_handler->get($sid); // strangely getting over again, but getObjects returns plain screen objects and we need to get the whole screen with all metadata, so must be getted again :(
 			$pages = $screenObject->getVar('pages');
 			// find the pages that contain all elements in this form
-			$candidatePages = array();
-			$candidateScreensForNewPages = array();
 		  ksort($pages);
 			foreach($pages as $i=>$page) {
 				// are we dealing with a regular page with element ids?
-				$firstItem = $page[array_key_first($page)];
-				if(is_numeric($firstItem)) {
+				// an empty page only counts when it is the screen's one and only page, since that is the brand new state of the default screen on a new form, and the element belongs on it. An empty page alongside other pages is not a page we should be putting elements on.
+				$firstItem = empty($page) ? null : $page[array_key_first($page)];
+				if(is_numeric($firstItem) OR ($firstItem === null AND count($pages) == 1)) {
 					// element is in this page already, stop looking, element has already been managed on screens
 					if(in_array($elementId, $page)) {
 						return false;
