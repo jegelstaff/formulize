@@ -1293,6 +1293,132 @@ textarea {
   color: var(--c-text);
 }
 
+/* ============================================================
+   Inline-edit ("de") controls on list views (issue #49)
+   Core formulize markup hardcodes a white pencil glyph (view mode)
+   and drops old colourful gif save/cancel icons onto a new line
+   (edit mode). Recolour + realign for Lyris and swap the legacy
+   gifs for clean theme glyphs. All rules are additive and scoped to
+   .fz-table so other themes keep the core defaults. The deDiv/pencil
+   is only emitted for columns that are inline-editable, so these
+   selectors never touch ordinary cells.
+   ============================================================ */
+
+/* View mode: put the pencil on the same line as the cell text and
+   drop the float/2em-indent layout that pushed it out of alignment. */
+.fz-table .main-cell-div:has(> .formulize-display-element-edit-icon) {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4em;
+}
+
+.fz-table .main-cell-div > .formulize-display-element-edit-icon {
+  float: none;
+  margin: 0;
+}
+
+.fz-table .main-cell-div > .formulize-display-element-contents {
+  padding-left: 0;
+}
+
+/* Pencil glyph: core hardcodes white; use the muted icon colour and
+   keep it dark (visible) on hover instead of turning white. */
+.fz-table .de-edit-icon::before {
+  color: var(--c-text-muted);
+}
+
+.fz-table a.de-edit-icon:hover {
+  text-shadow: none;
+}
+
+.fz-table a.de-edit-icon:hover::before {
+  color: var(--c-text);
+}
+
+/* Edit mode: keep the field and its save/cancel controls on one row,
+   vertically centred, instead of dropping the icons onto a new line. */
+.fz-table [id^="deDiv_"]:has(> a > img[src$="check.gif"]),
+.fz-table [id^="deDiv_"]:has(> a > img[src$="x-wide.gif"]) {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.35em;
+}
+
+.fz-table [id^="deDiv_"] > br {
+  display: none;
+}
+
+/* Let the edit field flex so the field + both controls always share
+   one row (icons keep their size, the field takes the slack). The core
+   markup hardcodes size="30" on text inputs, whose intrinsic ~30ch width
+   would otherwise become the column's preferred width and reflow the
+   auto-layout table much wider on entering edit mode. Zero the flex-basis
+   and width so the field contributes ~nothing to the column's preferred
+   size (no reflow when there is already room), while flex-grow makes it
+   fill the space the cell already has. */
+.fz-table [id^="deDiv_"] > input,
+.fz-table [id^="deDiv_"] > select,
+.fz-table [id^="deDiv_"] > textarea {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 0;
+  max-width: 100%;
+}
+
+.fz-table [id^="deDiv_"] > a:has(> img[src$="check.gif"]),
+.fz-table [id^="deDiv_"] > a:has(> img[src$="x-wide.gif"]) {
+  flex: 0 0 auto;
+}
+
+/* Replace the legacy colourful gif icons with clean Lyris glyphs:
+   hide the <img> and draw a glyph on its anchor. */
+.fz-table [id^="deDiv_"] > a > img[src$="check.gif"],
+.fz-table [id^="deDiv_"] > a > img[src$="x-wide.gif"] {
+  display: none;
+}
+
+.fz-table [id^="deDiv_"] > a:has(> img[src$="check.gif"]),
+.fz-table [id^="deDiv_"] > a:has(> img[src$="x-wide.gif"]) {
+  /* Core emits inline style="display: inline-block;" on these anchors,
+     which beats a plain stylesheet rule and drops the glyphs out of the
+     flex row (one sits higher than the other). Force inline-flex with
+     !important so they participate in the flex row and baseline-align. */
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 1.6em;
+  height: 1.6em;
+  border-radius: 4px;
+  line-height: 1;
+  font-size: 1rem;
+  text-decoration: none;
+  transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+}
+
+.fz-table [id^="deDiv_"] > a:has(> img[src$="check.gif"])::before {
+  content: "\2713"; /* save */
+  color: var(--c-success);
+  font-weight: 600;
+}
+
+.fz-table [id^="deDiv_"] > a:has(> img[src$="x-wide.gif"])::before {
+  content: "\2715"; /* cancel */
+  color: var(--c-text-muted);
+}
+
+.fz-table [id^="deDiv_"] > a:has(> img[src$="check.gif"]):hover {
+  background: var(--c-success-soft);
+}
+
+.fz-table [id^="deDiv_"] > a:has(> img[src$="x-wide.gif"]):hover {
+  background: var(--c-surface-3);
+}
+
+.fz-table [id^="deDiv_"] > a:has(> img[src$="x-wide.gif"]):hover::before {
+  color: var(--c-danger);
+}
+
 /* Checkbox styling */
 .fz-checkbox {
   appearance: none;
