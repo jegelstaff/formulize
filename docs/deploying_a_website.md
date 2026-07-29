@@ -56,6 +56,14 @@ Regardless of how you get the files on your server, the next steps are the same:
 
 - Open a web browser and go to the location where you put Formulize. The installer will appear. [Follow the steps for using the installer](../deploying_a_website/installing_formulize)
 
+## If you're using git, use .htaccess or other means to make the .git folder inaccessible
+
+Git creates a .git folder in the root of the website. This folder should __never__ be publically accessible. On an Apache server you can make it inaccessible with this command in an ```.htaccess``` file:
+
+```
+RedirectMatch 404 /\.git
+```
+
 ## If you're using git, commit changes regularly to your branch
 
 As you use Formulize, some configuration changes are stored in files on the server. These files will show up in ```git``` as changes.
