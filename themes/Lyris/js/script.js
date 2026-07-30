@@ -67,6 +67,7 @@ function initDrawer() {
   const scrim = document.querySelector('.js-drawer-scrim');
   const drawer = document.querySelector('.js-drawer');
   const closeBtn = document.querySelector('.js-drawer-close');
+  const backBtn = document.querySelector('.js-drawer-back');
   if (!drawer) return;
 
   const titleEl  = drawer.querySelector('.js-drawer-title');
@@ -96,6 +97,15 @@ function initDrawer() {
   // fz-multipage-nav metadata the endpoint emits; null for single-page forms.
   let currentEntryNav = null;
 
+  // Subform drill-down state: the drawer shows one entry at a time, but a subform
+  // element lets the user descend into a sub entry (and its subs, recursively).
+  // currentFrame describes the entry loaded now; drawerStack holds its ancestors,
+  // deepest last, so Back can restore each parent (re-fetched, so subform tables
+  // reflect edits made below them).
+  // frame: { params: {sid, fid, frid, entryId, subformElementId}, page, title }
+  let drawerStack = [];
+  let currentFrame = null;
+
   function moduleBase() {
     return (window.formulize && window.formulize.xoopsUrl) || '';
   }
@@ -109,27 +119,30 @@ function initDrawer() {
     try { return JSON.parse(el.textContent); } catch (e) { return null; }
   }
 
-  // Load a Formulize form/entry into the drawer as an editable, elements-only form.
-  // opts: { fid, frid, entryId, sid }. The form submits in the standard Formulize
-  // manner (POST to readelements.php) rather than navigating a full page.
-  function openEntryInDrawer(opts) {
-    if (typeof jQuery === 'undefined') return;
-    opts = opts || {};
-
+  // Build an endpoint URL from frame params (+ optional page for multi-page forms).
+  function buildEntryUrl(p, page) {
     var params = [];
-    if (opts.fid)     params.push('fid=' + encodeURIComponent(opts.fid));
-    if (opts.frid)    params.push('frid=' + encodeURIComponent(opts.frid));
-    if (opts.sid)     params.push('sid=' + encodeURIComponent(opts.sid));
-    if (opts.entryId) params.push('entry_id=' + encodeURIComponent(opts.entryId));
+    if (p.fid)     params.push('fid=' + encodeURIComponent(p.fid));
+    if (p.frid)    params.push('frid=' + encodeURIComponent(p.frid));
+    if (p.sid)     params.push('sid=' + encodeURIComponent(p.sid));
+    if (p.entryId) params.push('entry_id=' + encodeURIComponent(p.entryId));
+    if (p.subformElementId) params.push('subformElementId=' + encodeURIComponent(p.subformElementId));
+    if (page)      params.push('page=' + encodeURIComponent(page));
     params.push('formname=' + FORM_NAME);
+    return moduleBase() + ENDPOINT + '?' + params.join('&');
+  }
 
-    var url = moduleBase() + ENDPOINT + '?' + params.join('&');
-
-    openDrawer({ title: opts.title || '' });
-    if (!bodyEl) return;
-
+  // Fetch an entry form into the drawer body and re-sync all per-form state
+  // (change flag, paging metadata, title, current-frame bookkeeping, footer, Back
+  // control). Every drawer load — open, page turn, subform descend, back — funnels
+  // through here. Returns a promise of the fz-drawer-meta object (null on failure).
+  function fetchIntoDrawer(url, fetchOpts) {
+    if (!bodyEl) return Promise.resolve(null);
     bodyEl.innerHTML = '<div class="fz-drawer__loading">Loading…</div>';
-    fetch(url, { credentials: 'same-origin' })
+    pruneDeadEditors();
+    var opts = fetchOpts || {};
+    opts.credentials = 'same-origin';
+    return fetch(url, opts)
       .then(function (r) { return r.text(); })
       .then(function (html) { return injectFragment(bodyEl, html); })
       .then(function () {
@@ -138,12 +151,36 @@ function initDrawer() {
         // left over from a previous drawer session.
         window.formulizechanged = 0;
         currentEntryNav = readNavMeta();
-        applyDrawerMeta();
+        var meta = readDrawerMeta();
+        if (meta && typeof meta.title === 'string' && titleEl) titleEl.textContent = meta.title;
+        if (meta && currentFrame) {
+          // sync what the server actually rendered (it resolves screens/new ids itself)
+          if (meta.fid) currentFrame.params.fid = meta.fid;
+          if (meta.entryId && meta.entryId !== 'new') currentFrame.params.entryId = meta.entryId;
+        }
+        if (currentFrame) currentFrame.page = currentEntryNav ? currentEntryNav.currentPage : 0;
         renderEntryFooter();
+        updateBackButton();
+        bodyEl.scrollTop = 0;
+        return meta;
       })
       .catch(function () {
         bodyEl.innerHTML = '<div class="fz-drawer__loading">Could not load form.</div>';
+        return null;
       });
+  }
+
+  // Load a Formulize form/entry into the drawer as an editable, elements-only form.
+  // opts: { fid, frid, entryId, sid }. The form submits in the standard Formulize
+  // manner (POST to readelements.php) rather than navigating a full page.
+  function openEntryInDrawer(opts) {
+    if (typeof jQuery === 'undefined') return;
+    opts = opts || {};
+    drawerStack = [];
+    currentFrame = { params: { fid: opts.fid, frid: opts.frid, sid: opts.sid, entryId: opts.entryId }, page: 0 };
+    openDrawer({ title: opts.title || '' });
+    updateBackButton();
+    fetchIntoDrawer(buildEntryUrl(currentFrame.params));
   }
 
   // Inject an HTML fragment and execute its <script> tags in document order,
@@ -152,17 +189,29 @@ function initDrawer() {
   // dependencies like conditional.js are defined before the inline init code that
   // populates their globals runs — the ordering a real document gives for free,
   // but which jQuery .load() / innerHTML do not.
+  // External libraries already executed for an earlier fragment (e.g. ckeditor.js
+  // when descending through several rich-text forms) must not run twice — CKEditor
+  // hard-errors on duplicate module registration — so remember executed srcs and
+  // skip them; their globals persist even though the old script node was wiped.
+  const executedFragmentScripts = new Set();
+
   function injectFragment(container, html) {
     container.innerHTML = html;
     var scripts = Array.prototype.slice.call(container.querySelectorAll('script'));
     return scripts.reduce(function (chain, oldScript) {
       return chain.then(function () {
         return new Promise(function (resolve) {
+          if (oldScript.src && executedFragmentScripts.has(oldScript.src)) {
+            oldScript.parentNode.removeChild(oldScript);
+            resolve();
+            return;
+          }
           var s = document.createElement('script');
           for (var a = 0; a < oldScript.attributes.length; a++) {
             s.setAttribute(oldScript.attributes[a].name, oldScript.attributes[a].value);
           }
           if (oldScript.src) {
+            executedFragmentScripts.add(oldScript.src);
             s.addEventListener('load', resolve);
             s.addEventListener('error', resolve);
             oldScript.parentNode.replaceChild(s, oldScript);
@@ -191,7 +240,11 @@ function initDrawer() {
     var multiPage = nav && nav.totalPages > 1;
 
     if (!multiPage) {
-      footEl.appendChild(makeButton('Cancel', 'fz-btn fz-btn--ghost', closeEntryDrawer));
+      if (drawerStack.length) {
+        footEl.appendChild(makeButton('‹ Back', 'fz-btn fz-btn--ghost', goBack));
+      } else {
+        footEl.appendChild(makeButton('Cancel', 'fz-btn fz-btn--ghost', closeEntryDrawer));
+      }
       footEl.appendChild(makeButton('Save', 'fz-btn fz-btn--primary', saveEntryFromDrawer));
       return;
     }
@@ -261,15 +314,36 @@ function initDrawer() {
     return ok;
   }
 
-  // Set the drawer header from the title metadata the endpoint emits.
-  function applyDrawerMeta() {
-    if (!bodyEl || !titleEl) return;
+  // Read the metadata the endpoint emits alongside each form (title, rendered
+  // fid/entryId, and — for the subform add flow — the resolved parent entry id).
+  function readDrawerMeta() {
+    if (!bodyEl) return null;
     var el = bodyEl.querySelector('script.fz-drawer-meta');
-    if (!el) return;
-    try {
-      var meta = JSON.parse(el.textContent);
-      if (meta && typeof meta.title === 'string') titleEl.textContent = meta.title;
-    } catch (e) { /* ignore */ }
+    if (!el) return null;
+    try { return JSON.parse(el.textContent); } catch (e) { return null; }
+  }
+
+  // The header Back control is only shown while descended into a sub entry.
+  function updateBackButton() {
+    if (backBtn) backBtn.hidden = drawerStack.length === 0;
+  }
+
+  // Drop CKEditor instances whose textarea was removed with the previous fragment.
+  // The endpoint's init code skips ids already present in window.CKEditors, so a dead
+  // instance would otherwise block the editor from initialising when the same entry
+  // is loaded again (e.g. descend into a sub entry, go back, descend again).
+  function pruneDeadEditors() {
+    if (!window.CKEditors) return;
+    Object.keys(window.CKEditors).forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el || !document.body.contains(el)) {
+        try {
+          var destroyed = window.CKEditors[id].destroy();
+          if (destroyed && typeof destroyed.catch === 'function') destroyed.catch(function () {});
+        } catch (_) { /* already gone */ }
+        delete window.CKEditors[id];
+      }
+    });
   }
 
   // POST the current page's fields to readelements.php to persist them. Returns the
@@ -295,22 +369,43 @@ function initDrawer() {
     releaseEntryLocks();
     closeDrawer();
     currentEntryNav = null;
+    drawerStack = [];
+    currentFrame = null;
+    updateBackButton();
     if (typeof window.formulize.onEntrySaved === 'function') {
       window.formulize.onEntrySaved();
     }
   }
 
-  // Save a single-page entry, then close and refresh.
+  // Return to the parent entry (re-fetched, so its subform table reflects whatever
+  // happened below it). Assumes any saving/validation has already been handled.
+  function popToParent() {
+    if (!drawerStack.length) { closeAndRefresh(); return; }
+    releaseEntryLocks();
+    currentFrame = drawerStack.pop();
+    fetchIntoDrawer(buildEntryUrl(currentFrame.params, currentFrame.page > 1 ? currentFrame.page : 0));
+  }
+
+  // Back control: leave the sub entry without saving (warn if it has changes).
+  function goBack() {
+    if (!drawerStack.length) return;
+    if (formHasChanges() && !window.confirm('Discard unsaved changes to this entry?')) return;
+    popToParent();
+  }
+
+  // Save a single-page entry. At the top level this closes the drawer and refreshes
+  // the list; in a sub entry it returns to the parent instead.
   function saveEntryFromDrawer() {
     if (typeof jQuery === 'undefined') return;
     var form = bodyEl ? bodyEl.querySelector('form') : null;
     if (!form) return;
     if (!formHasChanges()) {
+      if (drawerStack.length) { popToParent(); return; } // nothing to save; act as "done"
       showDrawerNotice('No changes to save.');
       return;
     }
     if (!validateCurrentForm(form)) return;
-    saveCurrentPage(form).then(closeAndRefresh);
+    saveCurrentPage(form).then(drawerStack.length ? popToParent : closeAndRefresh);
   }
 
   // Navigate to another page of a multi-page entry form. Navigation (forwards or
@@ -325,50 +420,35 @@ function initDrawer() {
     if (!form || !validateCurrentForm(form)) return;
 
     var changed = formHasChanges();
-    var url = moduleBase() + ENDPOINT +
-      '?sid='      + encodeURIComponent(currentEntryNav.screenId) +
-      '&fid='      + encodeURIComponent(form.getAttribute('data-fid') || '') +
-      '&frid='     + encodeURIComponent(form.getAttribute('data-frid') || 0) +
-      '&entry_id=' + encodeURIComponent(currentEntryNav.entryId || '') +
-      '&page='     + encodeURIComponent(targetPage) +
-      '&prevpage=' + encodeURIComponent(currentEntryNav.currentPage) +
-      '&formname=' + FORM_NAME;
+    var url = buildEntryUrl({
+      sid:     currentEntryNav.screenId,
+      fid:     form.getAttribute('data-fid') || '',
+      frid:    form.getAttribute('data-frid') || 0,
+      entryId: currentEntryNav.entryId || ''
+    }, targetPage) + '&prevpage=' + encodeURIComponent(currentEntryNav.currentPage);
 
-    var opts = { credentials: 'same-origin' };
+    var opts = null;
     if (changed) {
       form.querySelectorAll('input[type="hidden"]').forEach(function (i) { i.disabled = false; });
       var fd = new FormData(form);
       fd.append('formulize_save', '1');
-      opts.method = 'POST';
-      opts.body = fd;
+      opts = { method: 'POST', body: fd };
     }
 
     releaseEntryLocks(); // release the current page's locks before swapping it out
-    bodyEl.innerHTML = '<div class="fz-drawer__loading">Loading…</div>';
-
-    fetch(url, opts)
-      .then(function (r) { return r.text(); })
-      .then(function (html) { return injectFragment(bodyEl, html); })
-      .then(function () {
-        window.formulizechanged = 0;
-        currentEntryNav = readNavMeta();
-        applyDrawerMeta();
-        renderEntryFooter();
-        if (bodyEl) bodyEl.scrollTop = 0;
-      })
-      .catch(function () {
-        bodyEl.innerHTML = '<div class="fz-drawer__loading">Could not load page.</div>';
-      });
+    fetchIntoDrawer(url, opts);
   }
 
-  // Finish a multi-page entry: save the final page (if changed) then close and refresh.
-  // The thanks page is never requested — in elements-only mode it renders empty — so
-  // finishing is just a save-and-close on the last real page.
+  // Finish a multi-page entry: save the final page (if changed) then close and refresh
+  // (or, in a sub entry, return to the parent). The thanks page is never requested —
+  // in elements-only mode it renders empty — so finishing is just a save-and-done on
+  // the last real page.
   function finishDrawer() {
     var form = bodyEl ? bodyEl.querySelector('form') : null;
-    if (!form || !formHasChanges()) { closeAndRefresh(); return; }
+    var done = drawerStack.length ? popToParent : closeAndRefresh;
+    if (!form || !formHasChanges()) { done(); return; }
     if (!validateCurrentForm(form)) return;
-    saveCurrentPage(form).then(closeAndRefresh);
+    saveCurrentPage(form).then(done);
   }
 
   // Release any entry locks acquired by the loaded form (defined by the endpoint).
@@ -378,14 +458,121 @@ function initDrawer() {
     }
   }
 
+  // ---- Subform actions --------------------------------------------------------
+  // The subform element's markup calls core's add_sub/goSub/sub_del/sub_clone. In
+  // the drawer those are stubs (emitted by the endpoint) that delegate here, and the
+  // drawer plays the role core's jQuery-UI modal plays on full page loads: the sub
+  // entry is swapped in as the drawer's current form, with Back returning to the
+  // parent. Server-side linking/deleting/cloning is the same core code either way.
+  function subformAction(action, args) {
+    if (typeof jQuery === 'undefined' || !bodyEl) return;
+    var form = bodyEl.querySelector('form');
+    if (!form) return;
+
+    if (action === 'edit') {
+      // core saves the parent when drilling into a sub; mirror that so parent
+      // changes aren't lost, but skip the round trip when nothing changed
+      if (formHasChanges()) {
+        if (!validateCurrentForm(form)) return;
+        saveCurrentPage(form).then(function () { descendToSub(args); });
+      } else {
+        descendToSub(args);
+      }
+      return;
+    }
+
+    if (action === 'add') {
+      if (!validateCurrentForm(form)) return;
+      addSubEntry(form, args);
+      return;
+    }
+
+    if (action === 'delete' || action === 'clone') {
+      if (!bodyEl.querySelectorAll('.delbox:checked').length) return;
+      var msg = action === 'delete'
+        ? 'Are you sure you want to delete the checked entries?'
+        : 'Are you sure you want to duplicate the checked entries?';
+      if (!window.confirm(msg)) return;
+      subDeleteClone(form, action, args);
+    }
+  }
+
+  // Snapshot the current entry onto the stack before loading a sub entry over it.
+  function pushCurrentFrame() {
+    if (!currentFrame) return;
+    currentFrame.title = titleEl ? titleEl.textContent : '';
+    drawerStack.push(currentFrame);
+  }
+
+  // Open an existing sub entry as the drawer's current form. The endpoint resolves
+  // the subform element's configured display screen from subformElementId.
+  function descendToSub(args) {
+    releaseEntryLocks();
+    pushCurrentFrame();
+    currentFrame = { params: { fid: args.subFid, entryId: args.entryId, subformElementId: args.subformElementId }, page: 0 };
+    fetchIntoDrawer(buildEntryUrl(currentFrame.params));
+  }
+
+  // "Add new" on a subform element: one request that saves the parent's page (when
+  // changed, and always for a brand-new parent — it must exist to be linked to),
+  // creates the linked sub entries server-side, and returns the first new sub entry's
+  // form, which becomes the drawer's current form.
+  function addSubEntry(form, args) {
+    form.querySelectorAll('input[type="hidden"]').forEach(function (i) { i.disabled = false; });
+    var fd = new FormData(form);
+    var parentFid  = form.getAttribute('data-fid')  || args.parentFid || '';
+    var parentFrid = form.getAttribute('data-frid') || args.frid      || 0;
+    var parentEntryId = (currentFrame && currentFrame.params.entryId) ? currentFrame.params.entryId : '';
+    fd.set('target_sub', args.subFid);
+    fd.set('target_sub_fid', parentFid);
+    fd.set('target_sub_frid', parentFrid);
+    fd.set('target_sub_mainformentry', parentEntryId);
+    fd.set('target_sub_subformelement', args.subformElementId);
+    fd.set('numsubents', args.numEntries || 1);
+    if (formHasChanges() || !parentEntryId) fd.set('formulize_save', '1');
+
+    var url = moduleBase() + ENDPOINT +
+      '?fid=' + encodeURIComponent(parentFid) +
+      '&frid=' + encodeURIComponent(parentFrid) +
+      '&formname=' + FORM_NAME;
+
+    releaseEntryLocks();
+    var parentFrame = currentFrame;
+    pushCurrentFrame();
+    currentFrame = { params: { fid: args.subFid, entryId: '', subformElementId: args.subformElementId }, page: 0 };
+    fetchIntoDrawer(url, { method: 'POST', body: fd }).then(function (meta) {
+      // a brand-new parent was saved as part of this request; record its real id so
+      // Back reloads the saved entry rather than a blank form
+      if (meta && meta.parentEntryId && parentFrame) parentFrame.params.entryId = meta.parentEntryId;
+    });
+  }
+
+  // Delete or clone the checked sub entries: re-fetch the parent with the core flag
+  // set; displayForm processes the flag (permission-checked) during the re-render, so
+  // the response is the parent with its subform table updated. Stack is unchanged.
+  function subDeleteClone(form, action, args) {
+    form.querySelectorAll('input[type="hidden"]').forEach(function (i) { i.disabled = false; });
+    var fd = new FormData(form); // includes the checked delbox values
+    fd.set(action === 'delete' ? 'deletesubsflag' : 'clonesubsflag', args.subFid);
+    if (formHasChanges()) fd.set('formulize_save', '1');
+    var p = currentFrame ? currentFrame.params : {};
+    var page = (currentFrame && currentFrame.page > 1) ? currentFrame.page : 0;
+    releaseEntryLocks();
+    fetchIntoDrawer(buildEntryUrl(p, page), { method: 'POST', body: fd });
+  }
+
   function closeEntryDrawer() {
     releaseEntryLocks();
     if (footEl) footEl.innerHTML = '';
     currentEntryNav = null;
+    drawerStack = [];
+    currentFrame = null;
+    updateBackButton();
     closeDrawer();
   }
 
   if (closeBtn) closeBtn.addEventListener('click', closeEntryDrawer);
+  if (backBtn)  backBtn.addEventListener('click', goBack);
   if (scrim)    scrim.addEventListener('click', closeEntryDrawer);
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !drawer.hasAttribute('hidden')) closeEntryDrawer();
@@ -396,7 +583,8 @@ function initDrawer() {
     open: openDrawer,
     close: closeEntryDrawer,
     openEntry: openEntryInDrawer,
-    saveEntry: saveEntryFromDrawer
+    saveEntry: saveEntryFromDrawer,
+    subformAction: subformAction
   };
 }
 

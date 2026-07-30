@@ -13,6 +13,19 @@
 //   sid       - screen id to render (optional). When present, fid/frid come from the screen.
 //   formname  - DOM id for the wrapping <form> and the validation function suffix
 //               (sanitized; defaults to 'formulize_drawer')
+//   subformElementId - when loading a sub entry from a subform element (fid = the sub's
+//               form id), resolves the screen configured on that element
+//               (get_display_screen_for_subform) instead of the form's default screen.
+//
+// Subform actions (POST, mirroring the flags core's full-page flow uses):
+//   target_sub / target_sub_fid / target_sub_frid / target_sub_mainformentry /
+//   target_sub_subformelement / numsubents
+//             - after the optional formulize_save, create new sub entries linked to the
+//               parent entry (same core helpers the full-page flow uses), then render the
+//               first new sub entry through the subform's display screen. The host swaps
+//               this response in as the current form (drawer "Add" flow).
+//   deletesubsflag / clonesubsflag + delbox* checkboxes
+//             - handled inside displayForm() during the re-render; no code here.
 
 require_once '../../../mainfile.php';
 require_once 'formdisplay.php';
@@ -33,6 +46,40 @@ if(!$formname) {
     $formname = 'formulize_drawer';
 }
 
+// Resolve a screen id to a renderable screen object, deriving fid/frid from the
+// screen's own configuration (so the host saves against the right form). Used for
+// the initial render and again when a subform action switches the render target.
+function formulize_elementsOnly_resolveScreen($sid, &$fid, &$frid, &$renderHandler) {
+    $screen = null;
+    if($sid) {
+        $screen_handler = xoops_getmodulehandler('screen', 'formulize');
+        if($screenMeta = $screen_handler->get($sid)) {
+            $fid  = $screenMeta->getVar('fid')  ? $screenMeta->getVar('fid')  : $fid;
+            $frid = $screenMeta->getVar('frid') ? $screenMeta->getVar('frid') : $frid;
+            $renderHandler = xoops_getmodulehandler($screenMeta->getVar('type').'Screen', 'formulize');
+            $screen = $renderHandler->get($screenMeta->getVar('sid'));
+        }
+    }
+    return $screen;
+}
+
+// Loading a sub entry (drawer edit-sub flow): resolve the screen configured on the
+// subform element, the same way the subform modal endpoint does. Gate the requested
+// entry since this is a directly-reachable endpoint (mirrors subformdisplay-elementsonly.php).
+$subformElementId = isset($_GET['subformElementId']) ? intval($_GET['subformElementId']) : 0;
+if(!$sid AND $fid AND $subformElementId) {
+    if(!security_check($fid, $entry_id)) {
+        print "<p>"._NO_PERM."</p>";
+        exit();
+    }
+    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+    if($subformElementObject = $element_handler->get($subformElementId)) {
+        if($resolvedSid = get_display_screen_for_subform($subformElementObject)) {
+            $sid = intval($resolvedSid);
+        }
+    }
+}
+
 // When no screen is supplied, fall back to the form's default form screen so the
 // entry renders through that screen's templates (via renderHandler) rather than the
 // plain displayForm() output. Callers like the list drawer only pass fid, so this
@@ -45,17 +92,8 @@ if(!$sid AND $fid) {
     }
 }
 
-$screen = null;
-if($sid) {
-    $screen_handler = xoops_getmodulehandler('screen', 'formulize');
-    if($screenMeta = $screen_handler->get($sid)) {
-        // derive the form ids from the screen so the host saves against the right form
-        $fid  = $screenMeta->getVar('fid')  ? $screenMeta->getVar('fid')  : $fid;
-        $frid = $screenMeta->getVar('frid') ? $screenMeta->getVar('frid') : $frid;
-        $renderHandler = xoops_getmodulehandler($screenMeta->getVar('type').'Screen', 'formulize');
-        $screen = $renderHandler->get($screenMeta->getVar('sid'));
-    }
-}
+$renderHandler = null;
+$screen = formulize_elementsOnly_resolveScreen($sid, $fid, $frid, $renderHandler);
 
 // Multi-page navigation: the drawer drives paging through this endpoint. `page` is the
 // page to render and `prevpage` is the page being left, which we encode as "page-sid"
@@ -67,8 +105,60 @@ if($sid) {
 $targetPage = isset($_REQUEST['page'])     ? intval($_REQUEST['page'])     : 0;
 $prevPage   = isset($_REQUEST['prevpage']) ? intval($_REQUEST['prevpage']) : 0;
 
-if($screen AND isset($_POST['formulize_save']) AND $_POST['formulize_save']) {
+if(isset($_POST['formulize_save']) AND $_POST['formulize_save']) {
     include XOOPS_ROOT_PATH.'/modules/formulize/include/readelements.php'; // saves the posted page, sets the saved/new entry id globals
+}
+
+// Subform add-new (drawer "Add" flow): create the requested linked sub entries with the
+// same core helpers the full-page flow uses (see the target_sub block in formdisplay.php,
+// which is skipped for elements-only renders), then switch the render target to the first
+// new sub entry so the host can swap it in as the current form.
+$parentEntryResolved = 0;
+$targetSub = (isset($_POST['target_sub']) AND intval($_POST['target_sub'])) ? intval($_POST['target_sub']) : 0;
+if($targetSub) {
+    global $xoopsUser;
+    $actionUid = $xoopsUser ? intval($xoopsUser->getVar('uid')) : 0;
+    $parentFid  = isset($_POST['target_sub_fid'])  ? intval($_POST['target_sub_fid'])  : $fid;
+    $parentFrid = isset($_POST['target_sub_frid']) ? intval($_POST['target_sub_frid']) : $frid;
+    // the parent may have been created by the readelements save just above, in which case
+    // the client only knows it as 'new' — resolve the real id from the save's globals
+    $parentEntryResolved = (isset($_POST['target_sub_mainformentry']) AND is_numeric($_POST['target_sub_mainformentry'])) ? intval($_POST['target_sub_mainformentry']) : 0;
+    if(!$parentEntryResolved AND isset($GLOBALS['formulize_newEntryIds'][$parentFid][0])) {
+        $parentEntryResolved = intval($GLOBALS['formulize_newEntryIds'][$parentFid][0]);
+    }
+    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+    $subformElementObject = $element_handler->get(intval($_POST['target_sub_subformelement']));
+    $newSubEntryId = 0;
+    // directly-reachable endpoint: require view access to the parent entry and
+    // permission to create entries on the target subform (writeNewEntry checks nothing)
+    if($parentEntryResolved AND $subformElementObject
+        AND security_check($parentFid, $parentEntryResolved, $actionUid)
+        AND formulizePermHandler::user_can_edit_entry($targetSub, $actionUid, 'new')) {
+        list($elementq, $element_to_write, $value_to_write, $value_source, $value_source_form, $alt_element_to_write) =
+            formulize_subformSave_determineElementToWrite($parentFrid, $parentFid, $parentEntryResolved, $targetSub);
+        $subformElementEleValue = $subformElementObject->getVar('ele_value');
+        $numSubEnts = max(1, min(99, intval($_POST['numsubents'])));
+        list($subEntryNew, $subEntriesWritten) = formulize_subformSave_writeNewEntry(
+            $element_to_write, $value_to_write, $parentFid, $parentFrid, $targetSub, $parentEntryResolved,
+            $subformElementEleValue[7], $subformElementEleValue[5], getEntryOwner($parentEntryResolved, $parentFid), $numSubEnts);
+        if(count((array) $subEntriesWritten)) {
+            $newSubEntryId = intval($subEntriesWritten[0]);
+        }
+    }
+    // switch the render target to the new sub entry (blank new entry in the uid-link
+    // case where writeNewEntry creates nothing — linking then happens on save, as core does)
+    $fid = $targetSub;
+    $entry_id = $newSubEntryId ? $newSubEntryId : "";
+    $sid = 0;
+    if($subformElementObject AND $resolvedSid = get_display_screen_for_subform($subformElementObject)) {
+        $sid = intval($resolvedSid);
+    }
+    $renderHandler = null;
+    $screen = formulize_elementsOnly_resolveScreen($sid, $fid, $frid, $renderHandler);
+    // page state posted along with the parent's fields belongs to the parent, not the sub
+    unset($_POST['formulize_currentPage'], $_POST['formulize_prevPage']);
+    $targetPage = 0;
+    $prevPage = 0;
 }
 
 if($screen AND $targetPage > 0) {
@@ -127,7 +217,56 @@ if($screen) {
         $drawerTitle = trans($titleFormObject->getVar('title'));
     }
 }
-print "<script type=\"application/json\" class=\"fz-drawer-meta\">".json_encode(array('title' => $drawerTitle))."</script>\n";
+// entryId/fid let the host track what is actually loaded (the add-new flow renders a
+// just-created sub entry the client has never seen); parentEntryId reports the resolved
+// parent id so a host that opened a brand-new parent can fix up its navigation state.
+print "<script type=\"application/json\" class=\"fz-drawer-meta\">".json_encode(array(
+    'title' => $drawerTitle,
+    'fid' => intval($fid),
+    'entryId' => $entry_id ? intval($entry_id) : 'new',
+    'parentEntryId' => $parentEntryResolved ? $parentEntryResolved : null,
+))."</script>\n";
+
+// Subform interaction stubs. The subform element's markup hardcodes onclick calls to
+// add_sub/goSub/goSubModal/sub_del/sub_clone, which are defined by drawJavascript() on
+// full page loads but skipped in elements-only mode. Define guarded delegates that hand
+// the action to the host (window.formulize.drawer.subformAction) so the host can drive
+// its own UI (the Lyris drawer swaps the sub entry in, in place of the modal). No-ops
+// when no host hook is present, rather than throwing reference errors.
+print "<script type='text/javascript'>
+(function() {
+    var subformHook = function(action, args) {
+        if(window.formulize && window.formulize.drawer && typeof window.formulize.drawer.subformAction === 'function') {
+            window.formulize.drawer.subformAction(action, args || {});
+        }
+    };
+    if(typeof window.add_sub === 'undefined') {
+        window.add_sub = function(sfid, numents, instance_id, frid, fid, mainformentry, subformelement, modal, parent_subformelement) {
+            subformHook('add', { subFid: sfid, numEntries: numents, frid: frid, parentFid: fid, parentEntryId: mainformentry, subformElementId: subformelement });
+        };
+    }
+    if(typeof window.goSub === 'undefined') {
+        window.goSub = function(ent, fid, subformElementId) {
+            subformHook('edit', { entryId: ent, subFid: fid, subformElementId: subformElementId });
+        };
+    }
+    if(typeof window.goSubModal === 'undefined') {
+        window.goSubModal = function(ent, fid, frid, mainformFid, mainformEntryId, subformElementId, modalScroll) {
+            subformHook('edit', { entryId: ent, subFid: fid, subformElementId: subformElementId });
+        };
+    }
+    if(typeof window.sub_del === 'undefined') {
+        window.sub_del = function(sfid, type, parentSubformElement, fid, entry) {
+            subformHook('delete', { subFid: sfid });
+        };
+    }
+    if(typeof window.sub_clone === 'undefined') {
+        window.sub_clone = function(sfid, type, parentSubformElement, fid, entry) {
+            subformHook('clone', { subFid: sfid });
+        };
+    }
+})();
+</script>\n";
 
 print "<form id='".htmlspecialchars($formname, ENT_QUOTES)."' data-fid='".intval($fid)."' data-frid='".intval($frid)."'>\n";
 
