@@ -1380,7 +1380,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 			});
 		}
 
-		jQuery(window).load(formulize_initializeAutocomplete".$markupName."());
+		formulize_initializeAutocomplete".$markupName."();
 		jQuery(document).ready(function() { checkForChrome(); });
 		";
 

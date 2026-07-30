@@ -115,12 +115,11 @@ if($fid AND !$view_form = $gperm_handler->checkRight("view_form", $fid, $groups,
         $nopermission = $xoopsUser ? "op=nopermission&" : ""; // no permission flag will bump the user to the All Applications page since they don't have perm for this page. If no user, they will be prompted for login.
         redirect_header(XOOPS_URL . "/user.php?".$nopermission."xoops_redirect=".urlencode($currentURL), 3, _formulize_NO_PERMISSION, false);
     } else { // if formulize is just being included elsewhere, then simply show error and end script
-        global $user;
-        if(isset($GLOBALS['formulizeHostSystemUserId']) AND is_object($user) AND is_array($user->roles) AND !$xoopsUser) {
-            // Drupal user is not logged in
-            $slashPosition = strpos($currentURL,"/",10);
-            $afterSlashLocation = substr($currentURL,$slashPosition+1);
-            redirect_header("/user?destination=".$afterSlashLocation, 0, _formulize_NO_PERMISSION);
+        // A host system (ie: Drupal) can set formulizeHostSystemLoginUrl so we can offer its login page
+        // to a visitor who is not logged in. We print a link rather than redirecting: the host has
+        // already begun composing its response, so a redirect here would truncate it.
+        if(isset($GLOBALS['formulizeHostSystemLoginUrl']) AND $GLOBALS['formulizeHostSystemLoginUrl'] AND !$xoopsUser) {
+            print "<p>"._formulize_NO_PERMISSION." <a href=\"".htmlspecialchars($GLOBALS['formulizeHostSystemLoginUrl'], ENT_QUOTES)."\">"._LOGIN."</a></p>\n";
         } else {
             print "<p>"._formulize_NO_PERMISSION."</p>\n";
         }
@@ -321,9 +320,20 @@ if (!$rendered AND $uid) {
         }
     }
 } elseif(!$rendered AND !$xoopsUser) {
-	// boot the user to the homepage. Anons will be able to login there.
-	header("location: ".XOOPS_URL);
-	exit();
+	// When Formulize is embedded in a host system (ie: Drupal) we must not redirect or exit: the host
+	// has already begun composing its response, so either one would truncate the page. Show the message
+	// and hand control back instead, with a link to the host's login page if it gave us one.
+	if(isset($formulize_screen_id) OR isset($GLOBALS['formulizeHostSystemUserId'])) {
+		if(isset($GLOBALS['formulizeHostSystemLoginUrl']) AND $GLOBALS['formulizeHostSystemLoginUrl']) {
+			print "<p>"._formulize_NO_PERMISSION." <a href=\"".htmlspecialchars($GLOBALS['formulizeHostSystemLoginUrl'], ENT_QUOTES)."\">"._LOGIN."</a></p>\n";
+		} else {
+			print "<p>"._formulize_NO_PERMISSION."</p>\n";
+		}
+	} else {
+		// boot the user to the homepage. Anons will be able to login there.
+		header("location: ".XOOPS_URL);
+		exit();
+	}
 }
 
 if (is_object($xoopsTpl)) {

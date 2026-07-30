@@ -114,7 +114,7 @@ class formulizeUserAccountPasswordElementHandler extends formulizeUserAccountEle
 				$form_handler = xoops_getmodulehandler('forms', 'formulize');
 				$formObject = $form_handler->get($fid);
 				$userExists = $formObject ? ($formObject->getSystemUserIdFromEntry($entry_id) > 0) : false;
-				$hideRequiredAsteriskJS = $userExists ? "<script>jQuery(window).load(function() { var reqSpan = document.querySelector('label[for=\"{$markupName}\"] span');\n if(reqSpan) { reqSpan.style.display = 'none'; } });</script>" : "";
+				$hideRequiredAsteriskJS = $userExists ? "<script>jQuery(window).on('load', function() { var reqSpan = document.querySelector('label[for=\"{$markupName}\"] span');\n if(reqSpan) { reqSpan.style.display = 'none'; } });</script>" : "";
 			}
 
 			$form_ele = new XoopsFormLabel(

@@ -3942,7 +3942,7 @@ function forceQ() {
 
 var formulize_entriesPerPageSelection = '';
 // make page selectors all work in sync if there are multiple per page
-jQuery(window).load(function() {
+jQuery(window).on('load', function() {
 	jQuery('select[name=\"formulize_entriesPerPage\"]').each(function() {
 		jQuery(this).on('change', function() {
 			formulize_entriesPerPageSelection = jQuery(this).val();
@@ -3985,7 +3985,7 @@ function pageJump(page) {
 	showLoading();
 }
 
-jQuery(window).load(function() {
+jQuery(window).on('load', function() {
 
 	<?php
 	// set the scroll position when first loading, but only if it still applies to the page we're rendering (see $restoreScrollPosition where interfaceJavascript is called)
