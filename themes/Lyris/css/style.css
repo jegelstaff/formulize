@@ -1279,17 +1279,32 @@ textarea {
   line-height: 1;
 }
 
-/* The pencil glyph comes from core formulize.css, which hardcodes white for its
-   own dark theme; recolour it like the other muted icons */
-.fz-table .loe-edit-entry::before {
+/* ============================================================
+   Edit-icon glyph colour — GLOBAL (issue #61)
+   Core formulize.css hardcodes the pencil glyphs white
+   (`.loe-edit-entry:before` / `.de-edit-icon:before { color:#fff }`)
+   for its own dark theme, so on Lyris' light surfaces they were
+   invisible until each context patched the colour individually (list
+   view #49, drawer subform #58) — and any context without a patch
+   (e.g. a subform viewed on its own full-page screen) still showed a
+   white, invisible pencil. This single pair of rules recolours every
+   edit-icon glyph wherever it appears under Lyris, superseding the
+   per-context colour overrides. `a.<class>::before` (specificity
+   0,1,2) outranks core's `.<class>:before` (0,1,1) regardless of load
+   order. Colour only — per-context LAYOUT rules (float/flex/indent)
+   stay where they are. */
+a.loe-edit-entry::before,
+a.de-edit-icon::before {
   color: var(--c-text-muted);
 }
 
-.fz-table a.loe-edit-entry:hover {
+a.loe-edit-entry:hover,
+a.de-edit-icon:hover {
   text-shadow: none;
 }
 
-.fz-table a.loe-edit-entry:hover::before {
+a.loe-edit-entry:hover::before,
+a.de-edit-icon:hover::before {
   color: var(--c-text);
 }
 
@@ -1321,19 +1336,8 @@ textarea {
   padding-left: 0;
 }
 
-/* Pencil glyph: core hardcodes white; use the muted icon colour and
-   keep it dark (visible) on hover instead of turning white. */
-.fz-table .de-edit-icon::before {
-  color: var(--c-text-muted);
-}
-
-.fz-table a.de-edit-icon:hover {
-  text-shadow: none;
-}
-
-.fz-table a.de-edit-icon:hover::before {
-  color: var(--c-text);
-}
+/* Pencil glyph colour is handled globally now (issue #61) — see the
+   `a.loe-edit-entry::before, a.de-edit-icon::before` block above. */
 
 /* Edit mode: keep the field and its save/cancel controls on one row,
    vertically centred, instead of dropping the icons onto a new line. */
@@ -3976,21 +3980,9 @@ fieldset#icms_block_login_form {
   white-space: nowrap;
 }
 
-/* core hardcodes the pencil glyph white (its own dark rows); recolour like the
-   list-view pencils, darkening on hover */
-.fz-drawer .formulize-subform-table .loe-edit-entry::before {
-  color: var(--c-text-muted);
-}
-
+/* Pencil glyph colour is handled globally now (issue #61) — see the
+   `a.loe-edit-entry::before` block earlier. Only layout remains here. */
 .fz-drawer .formulize-subform-table a.loe-edit-entry {
   display: inline-block;
   line-height: 1;
-}
-
-.fz-drawer .formulize-subform-table a.loe-edit-entry:hover {
-  text-shadow: none;
-}
-
-.fz-drawer .formulize-subform-table a.loe-edit-entry:hover::before {
-  color: var(--c-text);
 }
