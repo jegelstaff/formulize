@@ -194,7 +194,7 @@ if($xoopsUser) {
 
   <script type='text/javascript'>
     jQuery(document).ready(function() {
-        jQuery(window).load(function() {
+        jQuery(window).on('load', function() {
             jQuery('body').show(200, function() {
                 var formulize_pageShown = new CustomEvent('formulize_pageShown');
                 window.dispatchEvent(formulize_pageShown);

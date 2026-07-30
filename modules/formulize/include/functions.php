@@ -10471,7 +10471,7 @@ function updateAlternateURLIdentifierCode($screen, $entry_id, $settings=array())
 			}
 		}
 		$code = "window.history.replaceState(null, '', ".json_encode(trans($initialURL.$URLAddOn)).");
-		jQuery(window).load(function() {
+		jQuery(window).on('load', function() {
 			jQuery('a.navtab:not(:first)').each(function() {
 				jQuery(this).attr('href', '../' + jQuery(this).text());
 			});

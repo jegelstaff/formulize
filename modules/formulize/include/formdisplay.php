@@ -228,7 +228,7 @@ class formulize_themeForm extends XoopsThemeForm {
 
         // after document ready is done then call window load
         // calling window load outside document ready means window load might complete before document ready is done
-        $js .= "    jQuery(window).load(function() {\n";
+        $js .= "    jQuery(window).on('load', function() {\n";
         $js .= "        jQuery('.formulizeThemeForm').each(function() {\n";
         $js .= "            jQuery(this).show();\n";
         $js .= "        });\n";
@@ -2718,7 +2718,7 @@ if($entryId != 'new' AND isset($_POST['yposition']) AND
     } else {
         print "
         jQuery(document).ready(function () {
-            jQuery(window).load(function() {";
+            jQuery(window).on('load', function() {";
             // if the yposition is negative, then it's an offset of the formulizeform element so...
             // get the parents of the formulizeform div, and presumably only one of them is scrollable! And set the scroll position based on the current "top" value of formulizeform, plus the previous offset of formulize form which was sent in POST
             if(intval($_POST['yposition'])<0) {

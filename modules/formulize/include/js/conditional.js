@@ -250,7 +250,7 @@ function elementHasValue(handle) {
 	if(value === undefined || value === null || value === '') {
 		return false;
 	}
-	if(jQuery.isArray(value)) {
+	if(Array.isArray(value)) {
 		// For arrays, check if there's at least one non-empty value
 		for(var i = 0; i < value.length; i++) {
 			if(value[i] !== '' && value[i] !== null && value[i] !== undefined) {
@@ -273,7 +273,7 @@ function getRelevantElementValues(markupHandle, oneToOne=false) {
 		var formulize_selectedItems = getElementValue(handle);
 
 		if(formulize_selectedItems !== undefined) {
-			if(jQuery.isArray(formulize_selectedItems)) {
+			if(Array.isArray(formulize_selectedItems)) {
 				for(var k in formulize_selectedItems) {
 					ret = ret + '&'+handle+'='+encodeURIComponent(formulize_selectedItems[k]);
 				}

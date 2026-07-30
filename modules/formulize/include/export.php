@@ -54,7 +54,7 @@ if (!isset($_POST['metachoice']) AND !isset($formulize_doingManualExport)) {
     print "<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-1.4.2.min.js'></script>\n";
     ?>
     <script type='text/javascript'>
-        jQuery(window).load(function() {
+        jQuery(window).on('load', function() {
             jQuery('#show_hide_advanced').click(function() {
                 if (jQuery('#advanced_options').css('display') == 'none') {
                     jQuery('#advanced_options').animate({height:'toggle'}, 400);

@@ -350,7 +350,21 @@ class Formulize {
 		return $options;
 	}
 
-	static function renderScreen ($screenID) {
+	/**
+	 * Render a screen and return its markup, along with the assets Formulize registered while
+	 * rendering it.
+	 *
+	 * The assets are handed back instead of being emitted because an embedded render deliberately
+	 * skips footer.php, and footer.php is what would normally output everything that header.php and
+	 * the module registered on the theme object. A host system (ie: Drupal) has already sent its own
+	 * document head by this point, so it needs to add these to its page itself. Returning them,
+	 * rather than having the host hardcode a list, means the host automatically tracks whatever
+	 * header.php declares - including the jQuery and jQuery UI versions.
+	 *
+	 * @param   int     $screenID   The ID of the screen to render
+	 * @return  array   'html' => the screen markup, 'assets' => see harvestThemeAssets()
+	 */
+	static function getScreenHtml ($screenID) {
 		self::init();
 		//Set the screen ID
 		$formulize_screen_id = $screenID;
@@ -358,12 +372,13 @@ class Formulize {
 		//Include our header file in order to set up xoTheme
 		include XOOPS_ROOT_PATH . '/header.php';
 
+		global $icmsTheme;
+
 		//If we have a xoTheme, then we will be able to dupe the Formulize system into thinking we are in icms, in order
 		//to set up an icmsTheme object. The icmsTheme object is required by a number of elements that should work in 3rd
 		//party sites (i.e. datebox). We thus mimic what occurs in icms and set up our theme object accordingly.
 		if($xoTheme)
 		{
-			global $icmsTheme;
 			$icmsTheme = $xoTheme;
 		}
 
@@ -373,6 +388,8 @@ class Formulize {
 		include XOOPS_ROOT_PATH . '/modules/formulize/index.php';
 		//Content now contains our buffered contents.
 		$formulizeContent = ob_get_clean();
+
+		$restOfContent = '';
 
 		//Checks icmsTheme is initialized. If this is so, it will drop into further conditionals to check those
 		//dependencies relying on library JS files from Formulize stand-alone directory.
@@ -393,7 +410,11 @@ class Formulize {
 
 				//In order to append our stylesheet, and ensure that no matter the load and buffer order of our page, we shall be including
 				//the style sheet via a JS call that appends the link tag to the head section on load.
-                // Do the same for jQuery and jQuery UI if they are not already loaded, since the calendar element requires them
+                // jQuery and jQuery UI are deliberately NOT loaded here. header.php registers them on the theme
+                // object, and harvestThemeAssets() returns them for the host system to put in its page head. That
+                // keeps one answer to "which jQuery" - previously this block pulled the copies bundled in
+                // libraries/jquery (jQuery 1.11.1, UI 1.12.1) which are NOT the versions header.php uses
+                // (1.12.4, 1.11.4), so a calendar element could end up loading a second, different jQuery.
 				$restOfContent .=
 				"
 					<script type='text/javascript'>
@@ -405,26 +426,6 @@ function fetchCSS(href)
     newNode.href = href;
     document.head.appendChild(newNode);
 }
-
-function fetchJS(src) {
-    var newNode = document.createElement('script');
-    newNode.type = 'text/javascript';
-    newNode.src = src;
-    document.head.appendChild(newNode);
-}
-
-document.addEventListener('DOMContentLoaded', function(event) {
-    if(jQuery === undefined) {
-        fetchJS('".XOOPS_URL."/libraries/jquery/jquery.js');
-        fetchJS('".XOOPS_URL."/libraries/jquery/jquery-migrate-1.2.1.min.js');
-        fetchJS('".XOOPS_URL."/libraries/jquery/ui/ui.min.js');
-        fetchCSS('".XOOPS_URL."/libraries/jquery/ui/css/ui-smoothness/ui.css');
-    } else if(jQuery.datepicker === undefined) {
-        fetchJS('".XOOPS_URL."/libraries/jquery/jquery-migrate-1.2.1.min.js');
-        fetchJS('".XOOPS_URL."/libraries/jquery/ui/ui.min.js');
-        fetchCSS('".XOOPS_URL."/libraries/jquery/ui/css/ui-smoothness/ui.css');
-    }
-});
                     ";
 					foreach($GLOBALS['formulize_calendarFileRequired']['stylesheets'] as $thisSheet) {
 						$restOfContent .= " fetchCSS('" . $thisSheet ."'); ";
@@ -438,7 +439,72 @@ document.addEventListener('DOMContentLoaded', function(event) {
 
 
         //Declare a formulize div to contain our injected content, with ID formulize_form
-		echo "<div id=formulize_form>\n".$restOfContent.$formulizeContent."\n</div>\n";
+		return array(
+			'html' => "<div id=formulize_form>\n".$restOfContent.$formulizeContent."\n</div>\n",
+			'assets' => self::harvestThemeAssets(isset($xoTheme) ? $xoTheme : null)
+		);
+	}
+
+	/**
+	 * Collect the stylesheets, scripts, links and inline head strings that were registered on the
+	 * theme object during a screen render, in a form a host system can add to its own page head.
+	 *
+	 * icms_view_theme_Object::$metas holds one entry per asset. Each entry is a hash of HTML
+	 * attributes in which src/href have already been resolved to absolute URLs. An entry registered
+	 * with an empty src is inline code instead, carried in the '_' key. That is normalised to
+	 * 'content' here so the returned structure documents itself.
+	 *
+	 * @param   object  $theme  The theme object ($xoTheme), or null if there isn't one
+	 * @return  array   'stylesheet', 'script' and 'link' lists of attribute hashes, plus 'head'
+	 *                  which is a list of raw strings destined for the document head
+	 */
+	static function harvestThemeAssets ($theme) {
+		$assets = array('stylesheet' => array(), 'script' => array(), 'link' => array(), 'head' => array());
+		if (!is_object($theme)) {
+			return $assets;
+		}
+		foreach (array('stylesheet', 'script', 'link') as $type) {
+			if (!isset($theme->metas[$type]) OR !is_array($theme->metas[$type])) {
+				continue;
+			}
+			foreach ($theme->metas[$type] as $key => $attributes) {
+				if (!is_array($attributes)) {
+					continue;
+				}
+				if (isset($attributes['_'])) {
+					$attributes['content'] = $attributes['_'];
+					unset($attributes['_']);
+				}
+				// A <link> is registered keyed by its rel, which is not repeated in the attributes,
+				// so put it back. Stylesheets and scripts are keyed by their src, which is already
+				// in the attributes as href/src, so nothing is lost there.
+				if ($type == 'link' AND !is_numeric($key) AND !isset($attributes['rel'])) {
+					$attributes['rel'] = $key;
+				}
+				// skip entries that are neither a reference to a file nor inline code
+				if (!isset($attributes['src']) AND !isset($attributes['href']) AND !isset($attributes['content'])) {
+					continue;
+				}
+				$assets[$type][] = $attributes;
+			}
+		}
+		if (isset($theme->htmlHeadStrings) AND is_array($theme->htmlHeadStrings)) {
+			$assets['head'] = array_values($theme->htmlHeadStrings);
+		}
+		return $assets;
+	}
+
+	/**
+	 * Render a screen, printing its markup.
+	 *
+	 * Anything embedding Formulize in another system should call getScreenHtml() instead, so it can
+	 * also pick up the assets that need to go in the host system's document head.
+	 *
+	 * @param   int     $screenID   The ID of the screen to render
+	 */
+	static function renderScreen ($screenID) {
+		$screen = self::getScreenHtml($screenID);
+		echo $screen['html'];
 	}
 
 	/**

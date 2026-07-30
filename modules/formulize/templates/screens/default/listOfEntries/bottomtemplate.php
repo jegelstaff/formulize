@@ -73,9 +73,9 @@ function setScrollDisplay(element) {
 	}
 }
 
-jQuery(window).load(function() {
+jQuery(window).on('load', function() {
 
-	jQuery('.lockcolumn').live("click", function() {
+	jQuery(document).on("click", '.lockcolumn', function() {
 		var lockData = jQuery(this).attr('id').split('_');
 		var column = lockData[1];
 		if(floatingContents[column] == true) {
