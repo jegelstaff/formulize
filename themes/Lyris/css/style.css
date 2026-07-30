@@ -2320,8 +2320,8 @@ textarea.fz-control {
 .fz-form-screen .fz-field__body:has(input[type="checkbox"]),
 .fz-form-screen .col2:has(input[type="radio"]),
 .fz-form-screen .col2:has(input[type="checkbox"]),
-.fz-drawer__body .col2:has(input[type="radio"]),
-.fz-drawer__body .col2:has(input[type="checkbox"]) {
+.fz-drawer__body .fz-field__body:has(input[type="radio"]),
+.fz-drawer__body .fz-field__body:has(input[type="checkbox"]) {
   display: block;
   line-height: 1.9;        /* vertical rhythm between <br>-separated options */
 }
@@ -2330,8 +2330,8 @@ textarea.fz-control {
 .fz-form-screen .col2 input[type="checkbox"],
 .fz-form-screen .fz-field__body input[type="radio"],
 .fz-form-screen .fz-field__body input[type="checkbox"],
-.fz-drawer__body .col2 input[type="radio"],
-.fz-drawer__body .col2 input[type="checkbox"] {
+.fz-drawer__body .fz-field__body input[type="radio"],
+.fz-drawer__body .fz-field__body input[type="checkbox"] {
   display: inline-block;
   width: auto !important;
   height: auto;
@@ -2346,8 +2346,8 @@ textarea.fz-control {
 .fz-form-screen .col2 input[type="checkbox"] + label,
 .fz-form-screen .fz-field__body input[type="radio"] + label,
 .fz-form-screen .fz-field__body input[type="checkbox"] + label,
-.fz-drawer__body .col2 input[type="radio"] + label,
-.fz-drawer__body .col2 input[type="checkbox"] + label {
+.fz-drawer__body .fz-field__body input[type="radio"] + label,
+.fz-drawer__body .fz-field__body input[type="checkbox"] + label {
   display: inline;
   font-weight: 400;
   font-size: var(--field-text, var(--fs-14));
