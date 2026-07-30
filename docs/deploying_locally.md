@@ -254,18 +254,3 @@ If the two folders happen to have the *same* name, Compose treats them as the sa
 ```
 COMPOSE_PROJECT_NAME=formulize-experiment
 ```
-
-### Running the tests
-
-There is nothing to set up. The end-to-end tests read `FORMULIZE_WEB_PORT` from the same `.env` file Docker does, so they follow whichever port this copy of Formulize is on:
-
-```bash
-cd tests/e2e
-npm test
-```
-
-For a one-off run against a different port, without editing `.env`, set `FORMULIZE_WEB_PORT` on the command line — an environment variable takes precedence over the file:
-
-```bash
-FORMULIZE_WEB_PORT=8082 npm test
-```
