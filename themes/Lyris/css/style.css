@@ -3891,3 +3891,106 @@ fieldset#icms_block_login_form {
     width: 100%;
   }
 }
+
+/* ---------- Subform elements inside the drawer (issue #57) ----------
+   A subform element (e.g. Artifacts on the Collection form) renders core markup:
+   a caption, an add button, and a .formulize-subform-table of sub entries whose
+   controls (pencil, delete checkboxes, delete/clone buttons) arrive unstyled —
+   and the core pencil glyph is hardcoded white, invisible on the drawer surface.
+   Scoped under .fz-drawer: the same markup on non-Lyris pages is untouched. */
+
+/* .fz-btn's display would otherwise override the [hidden] attribute the JS toggles */
+.fz-drawer__back[hidden] {
+  display: none;
+}
+
+.fz-drawer .subform-caption {
+  margin: 0 0 var(--s-2);
+  font-size: var(--fs-13);
+}
+
+/* add / delete-checked / clone-checked buttons: match the secondary fz-btn look */
+.fz-drawer .subform_button_controls input[type="button"] {
+  height: 28px;
+  padding: 0 var(--s-3);
+  margin: 0 var(--s-2) var(--s-2) 0;
+  border-radius: var(--r-2);
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font: inherit;
+  font-size: var(--fs-13);
+  font-weight: 500;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+}
+
+.fz-drawer .subform_button_controls input[type="button"]:hover {
+  background: var(--c-surface-2);
+  border-color: var(--c-text-subtle);
+}
+
+.fz-drawer .formulize-subform-table-scrollbox {
+  overflow-x: auto;
+  margin-top: var(--s-2);
+}
+
+.fz-drawer .formulize-subform-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-2);
+  font-size: var(--fs-13);
+}
+
+.fz-drawer .formulize-subform-table > tbody > tr > th,
+.fz-drawer .formulize-subform-table > tbody > tr > td {
+  padding: var(--s-2) var(--s-3);
+  border: none;
+  border-bottom: 1px solid var(--c-border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.fz-drawer .formulize-subform-table > tbody > tr:last-child > td {
+  border-bottom: none;
+}
+
+.fz-drawer .formulize-subform-table > tbody > tr > th {
+  background: var(--c-surface-2);
+  color: var(--c-text-muted);
+  font-weight: 500;
+}
+
+.fz-drawer .formulize-subform-table > tbody > tr > th p,
+.fz-drawer .formulize-subform-table > tbody > tr > td p {
+  margin: 0;
+}
+
+/* pencil + delete checkbox columns hug their content */
+.fz-drawer .formulize-subform-table .subentry-view-cell,
+.fz-drawer .formulize-subform-table .subentry-delete-cell {
+  width: 1%;
+  white-space: nowrap;
+}
+
+/* core hardcodes the pencil glyph white (its own dark rows); recolour like the
+   list-view pencils, darkening on hover */
+.fz-drawer .formulize-subform-table .loe-edit-entry::before {
+  color: var(--c-text-muted);
+}
+
+.fz-drawer .formulize-subform-table a.loe-edit-entry {
+  display: inline-block;
+  line-height: 1;
+}
+
+.fz-drawer .formulize-subform-table a.loe-edit-entry:hover {
+  text-shadow: none;
+}
+
+.fz-drawer .formulize-subform-table a.loe-edit-entry:hover::before {
+  color: var(--c-text);
+}
