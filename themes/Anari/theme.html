@@ -194,12 +194,27 @@ if($xoopsUser) {
 
   <script type='text/javascript'>
     jQuery(document).ready(function() {
-        jQuery(window).on('load', function() {
+        // The body is hidden inline (see the body tag near the top of this file) and revealed here once
+        // the window has loaded, so the page appears in one piece rather than assembling visibly.
+        //
+        // The window load event does not replay: a handler registered after load has already fired will
+        // never run. document.ready does replay, so this callback can be reached after load - and if it
+        // is, the body would stay hidden and the whole page would render blank, with nothing thrown to
+        // explain it. formulize_pageShown would not fire either, so the listeners that restore scroll
+        // position (formdisplay.php, entriesdisplay.php, mapdisplay.php) would silently never run.
+        //
+        // So ask the document whether load has already happened instead of assuming it has not.
+        var formulizeShowPage = function() {
             jQuery('body').show(200, function() {
                 var formulize_pageShown = new CustomEvent('formulize_pageShown');
                 window.dispatchEvent(formulize_pageShown);
             });
-        });
+        };
+        if (document.readyState === 'complete') {
+            formulizeShowPage();
+        } else {
+            jQuery(window).on('load', formulizeShowPage);
+        }
     });
   </script>
 

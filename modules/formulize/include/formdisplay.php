@@ -226,13 +226,29 @@ class formulize_themeForm extends XoopsThemeForm {
             $js .= "    });\n";
         }
 
-        // after document ready is done then call window load
-        // calling window load outside document ready means window load might complete before document ready is done
-        $js .= "    jQuery(window).on('load', function() {\n";
+        // The form is rendered with an inline display:none (see the $displayStyle above) and revealed
+        // here, once the window has loaded, so images and layout have settled before it appears.
+        //
+        // Waiting for window load has to be done carefully. document.ready replays: if the DOM is
+        // already ready, jQuery runs the callback anyway. The window load event does NOT replay, so a
+        // handler registered after load has already fired never runs at all. When that happens the form
+        // stays hidden permanently, and because nothing throws, there is no error to point at it.
+        // That is reachable whenever the ready callback is reached late: aggregated or deferred scripts,
+        // or markup that arrives after load, which is the normal situation when Formulize is embedded in
+        // a host system such as Drupal.
+        //
+        // So ask the document whether load has already happened rather than assuming it has not.
+        // document.readyState and .on() both behave the same on every jQuery from 1.7 to 4.x.
+        $js .= "    var formulizeShowForms = function() {\n";
         $js .= "        jQuery('.formulizeThemeForm').each(function() {\n";
         $js .= "            jQuery(this).show();\n";
         $js .= "        });\n";
-        $js .= "    });\n";
+        $js .= "    };\n";
+        $js .= "    if (document.readyState === 'complete') {\n";
+        $js .= "        formulizeShowForms();\n";
+        $js .= "    } else {\n";
+        $js .= "        jQuery(window).on('load', formulizeShowForms);\n";
+        $js .= "    }\n";
 
         foreach($GLOBALS['formulize_startHiddenElements'] as $markupName) {
             $js .= "    jQuery('#formulize-".$markupName."').hide();\n";
