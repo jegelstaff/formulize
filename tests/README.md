@@ -22,7 +22,7 @@ e2e tests are automatically run in CI with a merge to the master branch. The tes
 * Docker (optional)
 
 #### Steps
-1. Get a local instance of the application set up which is accessible at `http://localhost:8080`. We recommend using the included docker-compose file to quickly spin up an environment using docker.
+1. Get a local instance of the application set up and running in your browser (`http://localhost:8080` by default). We recommend using the included docker-compose file to quickly spin up an environment using docker.
 2. Navigate to the tests folder `/tests/e2e` and perform an `npm install`
 3. Install playwright browsers `npx playwright install --with-deps`
 4. While still in the `/tests/e2e` directory run the test with `npm t` This will run the tests in headless mode. If you'd like to have the browser load to watch the progress use `npm run test:debug`.
