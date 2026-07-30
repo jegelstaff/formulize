@@ -34,7 +34,7 @@
     <link rel="shortcut icon" type="image/ico" href="<{$icms_imageurl}>icons/favicon.ico" />
     <link rel="icon" type="image/png" href="<{$icms_imageurl}>icons/icon.png" />
 
-    <!-- CSS -->
+    <!-- CSS: must come after icms_module_header -->
     <{php}>
     require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions.php';
     $rtlPath = ($this->_tpl_vars['icms_rtl'] ?? false) ? 'rtl/' : '';

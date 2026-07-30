@@ -14,8 +14,21 @@
  * so scoping them would leave every dialog and datepicker unstyled. The host system loads those
  * as-is instead.
  *
- * Run from the command line after changing any source stylesheet:
+ * The generated file is per theme and lives in the module cache, not next to the sources:
+ *
+ *   modules/formulize/cache/drupal-{theme}.css
+ *
+ * That keeps templates/css read only in a deployment, lets several themes coexist without regenerating
+ * when the active theme changes, and puts the output somewhere already gitignored and writable.
+ *
+ * It regenerates itself. A machine readable header records the modification time of every source, so
+ * formulize_drupalCssIsStale() can tell whether the file still matches them. The Drupal integration
+ * module calls that on each screen render and rebuilds only when something has actually changed, which
+ * means a new theme, or an edit to a theme's stylesheet, is picked up with no manual step.
+ *
+ * Run from the command line to force a rebuild, optionally naming a theme:
  *   php modules/formulize/templates/css/build-drupal-css.php
+ *   php modules/formulize/templates/css/build-drupal-css.php Anari
  *
  * @package Formulize
  */
@@ -23,59 +36,204 @@
 // Selector that everything gets scoped to. Matches the div emitted by Formulize::getScreenHtml().
 define('SCOPE', '#formulize_form');
 
-$here = __DIR__;
-$root = realpath($here . '/../../../..'); // Formulize root
+// Marks the header line that records what the file was built from. Kept on one line so staleness can be
+// decided by reading the first few KB rather than parsing the whole stylesheet.
+define('SOURCES_MARKER', 'formulize-embed-sources:');
 
-if (!$root or !is_file($root . '/mainfile.php')) {
-    fwrite(STDERR, "Could not locate the Formulize root from " . $here . "\n");
-    exit(1);
+/**
+ * Locate the Formulize root from this file's position.
+ *
+ * @return  string|false
+ */
+function formulize_drupalCssRoot() {
+    $root = realpath(__DIR__ . '/../../../..');
+    return ($root and is_file($root . '/mainfile.php')) ? $root : false;
 }
 
-// Source stylesheets in the same cascade order a live screen page loads them, so that later rules win
-// here exactly as they do there. The order is set by the theme template, not by guesswork:
-//
-//   themes/Anari/theme.html:31  <{$icms_module_header}>  emits everything registered on $xoTheme,
-//                                                        which is icms.css (header.php) and then
-//                                                        formulize.css (modules/formulize/index.php)
-//   themes/Anari/theme.html:42  echoes the theme's own style.css
-//
-// So the theme stylesheet comes LAST and overrides the module's. That matters concretely: formulize.css
-// paints the list edit/view glyphs white (.loe-edit-entry:before { color: #fff }) and gives them a dark
-// text-shadow on hover, and Anari is what makes them visible again with color: inherit plus a coloured
-// anchor. Put formulize.css last and those icons render white on white - invisible until hovered, when
-// the shadow shows as a faint outline.
-$sources = array(
-    'icms.css',
-    'modules/formulize/templates/css/formulize.css',
-    'themes/Anari/css/style.css',
-);
-
-$output = "/*\n"
-    . " * GENERATED FILE - DO NOT EDIT.\n"
-    . " *\n"
-    . " * Produced by modules/formulize/templates/css/build-drupal-css.php from:\n";
-foreach ($sources as $source) {
-    $output .= " *   " . $source . "\n";
-}
-$output .= " *\n"
-    . " * Every selector has been scoped to " . SCOPE . " so that these styles apply only to Formulize\n"
-    . " * screen markup when Formulize is embedded in another system, and cannot leak onto the host page.\n"
-    . " * Re-run the generator after changing any source stylesheet.\n"
-    . " */\n";
-
-foreach ($sources as $source) {
-    $path = $root . '/' . $source;
-    if (!is_file($path)) {
-        fwrite(STDERR, "Missing source stylesheet: " . $path . "\n");
-        exit(1);
+/**
+ * The theme whose stylesheets should be baked in.
+ *
+ * Inside a request that has already booted Formulize - which is the case whenever the Drupal module
+ * calls this - the answer is free. From the command line it is read straight out of the config table,
+ * using mainfile.php's nocommon mode to get the credentials without booting the CMS.
+ *
+ * @param   string  $root   Formulize root
+ * @return  string|false    Theme name, or false if it could not be determined
+ */
+function formulize_drupalCssActiveTheme($root) {
+    if (!empty($GLOBALS['icmsConfig']['theme_set'])) {
+        return $GLOBALS['icmsConfig']['theme_set'];
     }
-    $css = file_get_contents($path);
-    $css = rewriteUrls($css, dirname($path), $here);
-    $output .= "\n\n/* ==========================================================================\n"
-        . "   " . $source . "\n"
-        . "   ========================================================================== */\n\n"
-        . scopeCss($css);
+    if (!defined('XOOPS_DB_NAME')) {
+        // mainfile.php is included in this function's scope, so it reads a local $xoopsOption. Declaring
+        // it global first is what actually suppresses the CMS boot; setting $GLOBALS['xoopsOption']
+        // alone leaves the local undefined and common.php loads anyway.
+        global $xoopsOption;
+        $xoopsOption['nocommon'] = true;
+        include_once $root . '/mainfile.php';
+    }
+    if (!defined('XOOPS_DB_NAME')) {
+        return false;
+    }
+    try {
+        $pdo = new PDO(
+            'mysql:host=' . XOOPS_DB_HOST . ';dbname=' . XOOPS_DB_NAME . ';charset=utf8mb4',
+            XOOPS_DB_USER, XOOPS_DB_PASS, array(PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION)
+        );
+        $statement = $pdo->query("SELECT conf_value FROM " . XOOPS_DB_PREFIX . "_config WHERE conf_name = 'theme_set' LIMIT 1");
+        $theme = $statement ? $statement->fetchColumn() : false;
+    } catch (Exception $e) {
+        return false;
+    }
+    return $theme ? $theme : false;
 }
+
+/**
+ * Where the generated stylesheet for a theme lives.
+ *
+ * @param   string  $root   Formulize root
+ * @param   string  $theme  Theme name
+ * @return  string
+ */
+function formulize_drupalCssPath($root, $theme) {
+    return $root . '/modules/formulize/cache/drupal-' . preg_replace('/[^A-Za-z0-9_.-]/', '', $theme) . '.css';
+}
+
+/**
+ * The source stylesheets, in the cascade order a live screen page loads them.
+ *
+ * ORDER IS LOAD BEARING, and it is dictated by the theme template rather than chosen here:
+ *
+ *   theme.html  <{$icms_module_header}>  emits everything registered on $xoTheme, which is icms.css
+ *                                        (header.php) and then formulize.css (modules/formulize/index.php)
+ *   theme.html  ...later...              the theme echoes its own stylesheets
+ *
+ * So the theme's stylesheets come LAST and override the module's, and every theme must be built that
+ * way. Concretely: formulize.css paints the list edit/view glyphs white
+ * (.loe-edit-entry:before { color: #fff }) and darkens them via text-shadow on hover, and it is the
+ * theme that makes them visible again with color: inherit on a coloured anchor. Reverse the order and
+ * those icons render white on white - invisible until hovered, when the shadow shows as a faint outline.
+ *
+ * Every .css file in the theme's css folder is included, sorted by name, since a theme may split its
+ * styles across several files.
+ *
+ * @param   string  $root   Formulize root
+ * @param   string  $theme  Theme name
+ * @return  array           Paths relative to the Formulize root
+ */
+function formulize_drupalCssSources($root, $theme) {
+    $sources = array(
+        'icms.css',
+        'modules/formulize/templates/css/formulize.css',
+    );
+    $themeCssDir = $root . '/themes/' . $theme . '/css';
+    $found = is_dir($themeCssDir) ? glob($themeCssDir . '/*.css') : array();
+    if ($found === false) {
+        $found = array();
+    }
+    sort($found, SORT_STRING);
+    foreach ($found as $path) {
+        $sources[] = 'themes/' . $theme . '/css/' . basename($path);
+    }
+    return $sources;
+}
+
+/**
+ * Whether the generated stylesheet is missing, or no longer matches its sources.
+ *
+ * Compares the modification times recorded in the generated file's header against the sources as they
+ * are now. A source being added or removed counts as stale too, so a theme gaining a stylesheet is
+ * picked up as well as one being edited.
+ *
+ * @param   string  $root   Formulize root
+ * @param   string  $theme  Theme name
+ * @return  bool
+ */
+function formulize_drupalCssIsStale($root, $theme) {
+    $target = formulize_drupalCssPath($root, $theme);
+    if (!is_file($target)) {
+        return true;
+    }
+    $handle = @fopen($target, 'r');
+    if (!$handle) {
+        return true;
+    }
+    $head = fread($handle, 8192);
+    fclose($handle);
+    if (!preg_match('/' . preg_quote(SOURCES_MARKER, '/') . '\s*(\{.*?\})\s*\*\//s', $head, $matches)) {
+        return true; // no header, so it predates this scheme
+    }
+    $recorded = json_decode($matches[1], true);
+    if (!is_array($recorded)) {
+        return true;
+    }
+    $current = array();
+    foreach (formulize_drupalCssSources($root, $theme) as $source) {
+        $path = $root . '/' . $source;
+        $current[$source] = is_file($path) ? filemtime($path) : 0;
+    }
+    ksort($recorded);
+    ksort($current);
+    return $recorded != $current;
+}
+
+/**
+ * Build the scoped stylesheet for a theme.
+ *
+ * Never exits and never throws: the Drupal module calls this mid request, where dying would take the
+ * page with it. A failure returns ok => false with a reason, and the caller carries on with whatever
+ * file is already there.
+ *
+ * @param   string  $root   Formulize root
+ * @param   string  $theme  Theme name
+ * @return  array           ok (bool), path (string), message (string), bytes (int)
+ */
+function formulize_buildDrupalCss($root, $theme) {
+    $target = formulize_drupalCssPath($root, $theme);
+    $targetDir = dirname($target);
+    $sources = formulize_drupalCssSources($root, $theme);
+
+    if (!is_dir($targetDir)) {
+        return array('ok' => false, 'path' => $target, 'message' => 'Cache directory is missing: ' . $targetDir, 'bytes' => 0);
+    }
+    if (!is_writable($targetDir)) {
+        return array('ok' => false, 'path' => $target, 'message' => 'Cache directory is not writable: ' . $targetDir, 'bytes' => 0);
+    }
+
+    // Record what this was built from, so staleness can be decided without re-reading the sources.
+    $stamps = array();
+    foreach ($sources as $source) {
+        $path = $root . '/' . $source;
+        if (!is_file($path)) {
+            return array('ok' => false, 'path' => $target, 'message' => 'Missing source stylesheet: ' . $path, 'bytes' => 0);
+        }
+        $stamps[$source] = filemtime($path);
+    }
+    ksort($stamps);
+
+    $output = "/*\n"
+        . " * GENERATED FILE - DO NOT EDIT. Rebuild with build-drupal-css.php, or just edit a source\n"
+        . " * stylesheet: the Drupal integration module regenerates this whenever the sources change.\n"
+        . " *\n"
+        . " * Theme: " . $theme . "\n"
+        . " *\n"
+        . " * Every selector has been scoped to " . SCOPE . " so that these styles apply only to Formulize\n"
+        . " * screen markup when Formulize is embedded in another system, and cannot leak onto the host page.\n"
+        . " *\n"
+        . " * " . SOURCES_MARKER . " " . json_encode($stamps) . "\n"
+        . " */\n";
+
+    foreach ($sources as $source) {
+        $path = $root . '/' . $source;
+        $css = file_get_contents($path);
+        // Relative url() references are relative to the stylesheet they came from, and this file lives
+        // somewhere else entirely, so they have to be recalculated against the cache directory.
+        $css = rewriteUrls($css, dirname($path), $targetDir);
+        $output .= "\n\n/* ==========================================================================\n"
+            . "   " . $source . "\n"
+            . "   ========================================================================== */\n\n"
+            . scopeCss($css);
+    }
 
 // Anari's rules assume they own the page width. Inside a host system's content column they do not, so
 // wide screens (list tables, subforms, the pagination controls) spill out of whatever container they
@@ -97,30 +255,106 @@ $output .= "\n\n/* =============================================================
     . "  height: auto;\n"
     . "}\n";
 
-$target = $here . '/drupal.css';
-if (false === file_put_contents($target, $output)) {
-    fwrite(STDERR, "Could not write " . $target . "\n");
-    exit(1);
+    // Check our own work rather than trusting it. A selector that escaped scoping would silently
+    // restyle the host system's whole page, which is exactly the failure this file exists to prevent.
+    $problems = verifyScoped($output);
+    if (count($problems)) {
+        $shown = array_slice($problems, 0, 10);
+        return array(
+            'ok' => false,
+            'path' => $target,
+            'bytes' => 0,
+            'message' => count($problems) . ' selector(s) are not scoped to ' . SCOPE . ': '
+                . implode(' | ', $shown) . (count($problems) > 10 ? ' ...' : ''),
+        );
+    }
+
+    // A rewritten url() that points nowhere would show as a missing icon font or image, which is easy
+    // to miss by eye, so confirm each one resolves before publishing the file.
+    $broken = verifyUrls($output, $targetDir);
+    if (count($broken)) {
+        return array(
+            'ok' => false,
+            'path' => $target,
+            'bytes' => 0,
+            'message' => count($broken) . ' url() reference(s) do not resolve: ' . implode(' | ', array_slice($broken, 0, 10)),
+        );
+    }
+
+    // Write to a temporary file in the same directory and rename over the target. Renaming within one
+    // filesystem is atomic, so a request reading the stylesheet never sees a half written one, and two
+    // requests regenerating at once cannot interleave.
+    $temporary = tempnam($targetDir, 'fzcss');
+    if ($temporary === false or false === file_put_contents($temporary, $output)) {
+        if ($temporary !== false) {
+            @unlink($temporary);
+        }
+        return array('ok' => false, 'path' => $target, 'message' => 'Could not write to ' . $targetDir, 'bytes' => 0);
+    }
+    @chmod($temporary, 0644); // tempnam creates 0600, and a web server has to serve this
+    if (!rename($temporary, $target)) {
+        @unlink($temporary);
+        return array('ok' => false, 'path' => $target, 'message' => 'Could not replace ' . $target, 'bytes' => 0);
+    }
+
+    return array('ok' => true, 'path' => $target, 'message' => '', 'bytes' => strlen($output));
 }
 
-print "Wrote " . $target . " (" . number_format(strlen($output)) . " bytes, "
-    . number_format(substr_count($output, "\n") + 1) . " lines)\n";
-
-// Check our own work rather than trusting it. A selector that escaped scoping would silently restyle
-// the host system's whole page, which is exactly the failure this file exists to prevent.
-$problems = verifyScoped($output);
-if (count($problems)) {
-    fwrite(STDERR, "\nFAILED: " . count($problems) . " selector(s) are not scoped to " . SCOPE . ":\n");
-    foreach (array_slice($problems, 0, 20) as $problem) {
-        fwrite(STDERR, "  " . $problem . "\n");
+/**
+ * Confirm every relative url() in the generated stylesheet resolves to a file that exists.
+ *
+ * @param   string  $css        The generated stylesheet
+ * @param   string  $targetDir  Directory the generated file lives in
+ * @return  array               Descriptions of any references that do not resolve
+ */
+function verifyUrls($css, $targetDir) {
+    $broken = array();
+    if (!preg_match_all('/url\(\s*([\'"]?)([^\'")]+)\1\s*\)/i', $css, $matches)) {
+        return $broken;
     }
-    if (count($problems) > 20) {
-        fwrite(STDERR, "  ... and " . (count($problems) - 20) . " more\n");
+    foreach (array_unique($matches[2]) as $url) {
+        $url = trim($url);
+        // absolute URLs, protocol relative URLs, root relative paths and data URIs are not ours to check
+        if ($url === '' or preg_match('#^(?:[a-z][a-z0-9+.-]*:|//|/|\#)#i', $url)) {
+            continue;
+        }
+        $path = $targetDir . '/' . preg_replace('/[?#].*$/', '', $url); // drop ?query and #fragment
+        if (!file_exists($path)) {
+            $broken[] = $url;
+        }
     }
-    exit(1);
+    return $broken;
 }
-print "Verified: every selector is scoped to " . SCOPE . ".\n";
-exit(0);
+
+// ---------------------------------------------------------------------------------------------------
+// Command line entry point. Guarded so the Drupal integration module can include this file purely for
+// its functions without anything running.
+// ---------------------------------------------------------------------------------------------------
+if (PHP_SAPI === 'cli' and isset($argv) and realpath($argv[0]) === realpath(__FILE__)) {
+    $root = formulize_drupalCssRoot();
+    if (!$root) {
+        fwrite(STDERR, "Could not locate the Formulize root from " . __DIR__ . "\n");
+        exit(1);
+    }
+    $theme = isset($argv[1]) ? $argv[1] : formulize_drupalCssActiveTheme($root);
+    if (!$theme) {
+        fwrite(STDERR, "Could not determine the active theme. Pass one as an argument.\n");
+        exit(1);
+    }
+    $sources = formulize_drupalCssSources($root, $theme);
+    print "Theme: " . $theme . "\n";
+    foreach ($sources as $source) {
+        print "  source: " . $source . "\n";
+    }
+    $result = formulize_buildDrupalCss($root, $theme);
+    if (!$result['ok']) {
+        fwrite(STDERR, "FAILED: " . $result['message'] . "\n");
+        exit(1);
+    }
+    print "Wrote " . $result['path'] . " (" . number_format($result['bytes']) . " bytes)\n";
+    print "Verified: every selector is scoped to " . SCOPE . ", and every url() resolves.\n";
+    exit(0);
+}
 
 /**
  * Confirm every style rule in the generated stylesheet is scoped.
