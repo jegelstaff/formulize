@@ -360,15 +360,21 @@ body:not(#formulize) .fz-main {
 }
 
 /* ============================================================
-   Loading overlay (list reloads via showLoading())
+   Loading overlay (list reloads + full-page form/subform saves)
    ============================================================ */
 
-/* #workingmessage is core Formulize markup: a div (inline display:none) holding a
-   working gif, flipped to display:block by showLoading(). We hide the gif and turn
-   the div into a full-screen, content-blocking overlay with a CSS spinner. Centering
-   uses absolute positioning rather than flex because showLoading() forces an inline
-   display:block that would override a CSS display:flex. */
-#workingmessage {
+/* #workingmessage and #savingmessage are core Formulize markup: divs (inline
+   display:none) each holding a legacy animated gif — the working gif, flipped to
+   display:block by showLoading() on list reloads (entriesdisplay.php); and the
+   saving gif, flipped to display:flex by showSavingGraphic() when a full-page
+   form/subform is submitted (formdisplay.php). Both are the old default-Formulize
+   animations. We hide the gif and turn each div into a full-screen,
+   content-blocking overlay with the same CSS spinner, so every on-screen loading
+   state uses the Lyris animation (issue #60). Centering uses absolute positioning
+   rather than flex because the core show functions force an inline display that
+   would override a CSS display:flex. */
+#workingmessage,
+#savingmessage {
   position: fixed;
   inset: 0;
   z-index: 2000;
@@ -376,11 +382,13 @@ body:not(#formulize) .fz-main {
   backdrop-filter: blur(1px);
 }
 
-#workingmessage img {
+#workingmessage img,
+#savingmessage img {
   display: none;
 }
 
-#workingmessage::after {
+#workingmessage::after,
+#savingmessage::after {
   content: "";
   position: absolute;
   top: 50%;
@@ -399,7 +407,8 @@ body:not(#formulize) .fz-main {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #workingmessage::after {
+  #workingmessage::after,
+  #savingmessage::after {
     animation-duration: 1.6s;
   }
 }
