@@ -29,6 +29,8 @@ Remember that .sql files in the /docker/mariadb/seed/ folder will also be parsed
 CONNECTING TO MARIADB DIRECTLY
 From outside Docker, you can connect directly to MariaDB through localhost:3306 but if you are connecting from the web container in Docker, then you need to use mariadb:3306
 
+Note that 3306 is only the default host port. If you are running more than one copy of Formulize at once, the second one will be on a different host port (see Running Several Copies below). Check FORMULIZE_DB_PORT in the .env file, or run "docker compose port mariadb 3306" to see which port this copy is using. The port inside Docker is always 3306.
+
 GETTING TO THE COMMAND LINE ON A DOCKER CONTAINER
 You can bring up the command line on any container by refencing the container name in a command like this:
 
@@ -57,3 +59,19 @@ To go back to the published default image:
 
 docker compose pull web
 docker compose up -d --force-recreate web
+
+RUNNING SEVERAL COPIES AT ONCE
+Only one thing at a time can hold a host port, so two copies of Formulize cannot both use 8080 and 3306. To run more than one at a time, start up with the launcher script instead of "docker compose up". It finds free ports and records them in .env, so a second copy lands on 8081/3307, a third on 8082/3308, and so on.
+
+There is one launcher, written twice: once for PowerShell and once for the shells used on macOS and Linux. Run whichever matches your computer, from the root of the repository. They do the same thing, so you only need one of them:
+
+.\docker\up.ps1      (Windows, in PowerShell)
+bash docker/up.sh    (macOS or Linux)
+
+It replaces "docker compose up" rather than being run alongside it, and passes any extra arguments straight through, so ".\docker\up.ps1 -d" works as expected. Add -PortsOnly (PowerShell) or --ports-only (bash) to work out the ports without starting anything.
+
+The launcher creates the .env file if you don't have one, starting from .env.example so the comments come with it. Because the ports end up recorded there, each copy keeps the same ports every time it starts, and plain "docker compose up" works from then on. You can also set FORMULIZE_WEB_PORT and FORMULIZE_DB_PORT in .env yourself; the launcher only fills in blanks.
+
+One other setting in .env is worth knowing about: COMPOSE_PROJECT_NAME. It matters if two checkouts are in folders with the same name, because Compose names containers and the database volume after the folder, so same-named folders would otherwise share one database.
+
+The end-to-end tests need no port setting of their own. They read FORMULIZE_WEB_PORT from the same .env file Docker does, so they follow whichever port this copy of Formulize is on.

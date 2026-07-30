@@ -113,7 +113,11 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
 			AND $config->getVar('conf_value') == 1
 			AND function_exists('curl_version')) {
 
-			$correctXOOP_URL = (XOOPS_URL == 'http://localhost:8080' AND file_exists('/.dockerenv')) ? 'http://localhost' : XOOPS_URL; // when inside Docker, discard the mapped port, so that these requests will be answered by this server inside Docker. The 8080 is the mapping from host to container, which will not work when requests are being routed from the container itself.
+			// when inside Docker, discard the mapped port, so that these requests will be answered by this server inside Docker. The port in XOOPS_URL is the mapping from host to container (8080 by default, but configurable so that several copies of Formulize can run at once), which will not work when requests are being routed from the container itself.
+			$correctXOOP_URL = XOOPS_URL;
+			if(file_exists('/.dockerenv') AND preg_match('~^(https?://(?:localhost|127\.0\.0\.1)):\d+(.*)$~', XOOPS_URL, $urlParts)) {
+				$correctXOOP_URL = $urlParts[1].$urlParts[2];
+			}
 			switch($config->getVar('conf_name')) {
 				case 'formulizeRewriteRulesEnabled':
 					$url = $correctXOOP_URL.'/formulize-check-if-alternate-urls-are-properly-enabled-please'; // will resolve based on DNS available to server, so Docker gets confused by localhost!

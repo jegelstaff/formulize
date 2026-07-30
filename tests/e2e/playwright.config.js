@@ -1,5 +1,6 @@
 // @ts-check
 const { defineConfig, devices } = require('@playwright/test');
+const { resolveBaseUrl } = require('./base-url');
 
 /**
  * Read environment variables from file.
@@ -32,8 +33,9 @@ module.exports = defineConfig({
   retries: 0,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: 'http://localhost:8080',
+    /* Base URL to use in actions like `await page.goto('/')`. Follows the port
+       Docker published the site on. See base-url.js. */
+    baseURL: resolveBaseUrl(),
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'retain-on-failure',

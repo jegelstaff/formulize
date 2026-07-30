@@ -23,6 +23,8 @@ docker compose up
 
 The published `latest` image is based on PHP 8.3. See [Switching PHP Versions](#switching-php-versions) below if you need to test against a different version.
 
+If you want to run more than one copy of Formulize at the same time, see [Running Several Copies At Once](#running-several-copies) below.
+
 Browse to [http://localhost:8080](http://localhost:8080) to access Formulize. Login with:
 - username: _admin_
 - password: _admin_
@@ -109,11 +111,13 @@ include_once XOOPS_TRUST_PATH . '/r87678sd908asdf48ffecfbfd223af293d.php' ;
 
 2. There is a ```docker``` folder that contains the build recipe at ```docker/php/Dockerfile```, and a ```php``` folder with ```.ini``` files in it, and a ```mariadb``` folder with the database in it. The database persists between Docker sessions.
 
-3. There is a ```.env.example``` file in the root of the repository with a local Docker variable you can copy into ```.env``` to control which PHP version the web service uses.
+3. There is a ```.env.example``` file in the root of the repository with local Docker variables you can copy into ```.env``` to control which PHP version the web service uses, and which host ports the containers use.
 
-4. The ```docker/mariadb/seed``` folder can contain ```.sql``` files which Docker will execute when it first sets up the database. If there is an existing database, the ```docker/mariadb/seed``` folder is ignored. __It can take a little while for the ```.sql``` files to be processed, depending on their size and the speed of your computer!__
+4. There are launcher scripts at ```docker/up.ps1``` (Windows) and ```docker/up.sh``` (macOS/Linux) which pick free ports for you before starting Docker. See [Running Several Copies At Once](#running-several-copies).
 
-5. The URL for accessing the Docker container is [http://localhost:8080](http://localhost:8080)
+5. The ```docker/mariadb/seed``` folder can contain ```.sql``` files which Docker will execute when it first sets up the database. If there is an existing database, the ```docker/mariadb/seed``` folder is ignored. __It can take a little while for the ```.sql``` files to be processed, depending on their size and the speed of your computer!__
+
+6. The URL for accessing the Docker container is [http://localhost:8080](http://localhost:8080) by default
 
 ## Database files in Docker
 
@@ -159,4 +163,109 @@ If you're using an `.env` file, set `FORMULIZE_PHP_VERSION` back to blank (or de
 ```bash
 docker compose pull web
 docker compose up -d --force-recreate web
+```
+
+## <a name='running-several-copies'></a>Running Several Copies At Once
+
+By default the web container is published on host port 8080 and the database container on 3306. Only one thing at a time can hold a port, so if you have Formulize checked out in two folders and you run `docker compose up` in both, the second one fails to start.
+
+The fix is to give each copy its own ports. You don't have to pick them yourself — use the launcher script, which finds free ports for you.
+
+### The command to run
+
+There is one launcher, written twice: once for PowerShell and once for the shells used on macOS and Linux. **Run the one that matches your computer.**
+
+On **Windows**, in PowerShell, from the root of the repository:
+
+```powershell
+.\docker\up.ps1
+```
+
+On **macOS or Linux**, in a terminal, from the root of the repository:
+
+```bash
+bash docker/up.sh
+```
+
+That is a replacement for `docker compose up` — you run it *instead of* that command, not as well as it. It:
+
+1. Checks whether ports 8080 and 3306 are free, counting upwards until it finds ones that are. A second copy of Formulize lands on 8081/3307, a third on 8082/3308, and so on.
+2. Writes the ports it chose into a `.env` file at the root of the repository, creating that file if you don't already have one.
+3. Prints the URL to browse to.
+4. Starts Docker, exactly as `docker compose up` would.
+
+Anything extra you type is passed straight through to `docker compose up`, so this starts in the background as usual:
+
+```powershell
+.\docker\up.ps1 -d
+```
+
+To work out the ports without starting anything, add `-PortsOnly` in PowerShell, or `--ports-only` in bash.
+
+### You do not need to create .env yourself
+
+The launcher creates `.env` on its first run. If you have a `.env.example` file it starts from that, so the comments explaining every setting come along too.
+
+`.env` is ignored by git, so it stays local to that one folder and doesn't follow you into a commit.
+
+### The ports are chosen once, not on every start
+
+Because the ports are written to `.env`, each copy of Formulize keeps the same ports for good: your bookmarks keep working, your database client keeps pointing at the right port, and the test suite keeps finding the site.
+
+It also means that after the first run you can go back to using plain `docker compose up` in that folder if you prefer, and it will come up on the same ports — Docker Compose reads `.env` on its own.
+
+The launcher only fills in blanks, so it will never move a copy of Formulize that is already running onto a different port. If you want it to choose again, blank out `FORMULIZE_WEB_PORT` and `FORMULIZE_DB_PORT` in `.env` and run it again.
+
+### If PowerShell refuses to run the script
+
+If you get *"cannot be loaded"* or *"is not digitally signed"*, Windows has marked the file as coming from the internet, which happens if you downloaded the repository as a ZIP rather than cloning it with git. Either unblock the file:
+
+```powershell
+Unblock-File .\docker\up.ps1
+```
+
+or run it without changing anything permanently:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\docker\up.ps1
+```
+
+### Setting the ports yourself
+
+You can skip the launcher entirely and set the ports by hand in `.env`:
+
+```
+FORMULIZE_WEB_PORT=8081
+FORMULIZE_DB_PORT=3307
+```
+
+Anything you set yourself is left alone by the launcher — it only fills in blanks. As with any Compose variable, you can also set them inline for a one-off run:
+
+```bash
+FORMULIZE_WEB_PORT=8081 FORMULIZE_DB_PORT=3307 docker compose up
+```
+
+### Two folders with the same name
+
+Compose names its containers and its database volume after the folder the project is in. If your two checkouts are in folders with *different* names (say `formulize` and `formulize2`) they are separate projects and each gets its own database, which is what you want.
+
+If the two folders happen to have the *same* name, Compose treats them as the same project and they will share a database. To keep them apart, set a distinct project name in one of them, in the same `.env` file:
+
+```
+COMPOSE_PROJECT_NAME=formulize-experiment
+```
+
+### Running the tests
+
+There is nothing to set up. The end-to-end tests read `FORMULIZE_WEB_PORT` from the same `.env` file Docker does, so they follow whichever port this copy of Formulize is on:
+
+```bash
+cd tests/e2e
+npm test
+```
+
+For a one-off run against a different port, without editing `.env`, set `FORMULIZE_WEB_PORT` on the command line — an environment variable takes precedence over the file:
+
+```bash
+FORMULIZE_WEB_PORT=8082 npm test
 ```
