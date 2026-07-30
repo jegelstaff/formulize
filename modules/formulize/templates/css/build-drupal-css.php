@@ -31,12 +31,23 @@ if (!$root or !is_file($root . '/mainfile.php')) {
     exit(1);
 }
 
-// Source stylesheets, in cascade order: ICMS base styles, then the theme, then the Formulize module.
-// The order matches what a live screen page loads, so later rules win here as they do there.
+// Source stylesheets in the same cascade order a live screen page loads them, so that later rules win
+// here exactly as they do there. The order is set by the theme template, not by guesswork:
+//
+//   themes/Anari/theme.html:31  <{$icms_module_header}>  emits everything registered on $xoTheme,
+//                                                        which is icms.css (header.php) and then
+//                                                        formulize.css (modules/formulize/index.php)
+//   themes/Anari/theme.html:42  echoes the theme's own style.css
+//
+// So the theme stylesheet comes LAST and overrides the module's. That matters concretely: formulize.css
+// paints the list edit/view glyphs white (.loe-edit-entry:before { color: #fff }) and gives them a dark
+// text-shadow on hover, and Anari is what makes them visible again with color: inherit plus a coloured
+// anchor. Put formulize.css last and those icons render white on white - invisible until hovered, when
+// the shadow shows as a faint outline.
 $sources = array(
     'icms.css',
-    'themes/Anari/css/style.css',
     'modules/formulize/templates/css/formulize.css',
+    'themes/Anari/css/style.css',
 );
 
 $output = "/*\n"

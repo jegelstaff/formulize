@@ -3,8 +3,8 @@
  *
  * Produced by modules/formulize/templates/css/build-drupal-css.php from:
  *   icms.css
- *   themes/Anari/css/style.css
  *   modules/formulize/templates/css/formulize.css
+ *   themes/Anari/css/style.css
  *
  * Every selector has been scoped to #formulize_form so that these styles apply only to Formulize
  * screen markup when Formulize is embedded in another system, and cannot leak onto the host page.
@@ -384,6 +384,750 @@
 #formulize_form form#pref_form label {
 	display: inline-block;
 }
+
+/* ==========================================================================
+   modules/formulize/templates/css/formulize.css
+   ========================================================================== */
+
+/*
+  Icon Font: formulize-icons
+*/
+@font-face {
+  font-family: "formulize-icons";
+  src: url("./formulize-icons/formulize-icons.eot");
+  src: url("./formulize-icons/formulize-icons.eot?#iefix") format("embedded-opentype"), url("./formulize-icons/formulize-icons.woff") format("woff"), url("./formulize-icons/formulize-icons.ttf") format("truetype"), url("./formulize-icons/formulize-icons.svg#formulize-icons") format("svg");
+  font-weight: normal;
+  font-style: normal; }
+#formulize_form [data-icon]:before {
+  content: attr(data-icon); }
+
+#formulize_form [data-icon]:before, #formulize_form .icon-add:before, #formulize_form .icon-application:before, #formulize_form .icon-arrow-backward:before, #formulize_form .icon-arrow-forward:before, #formulize_form .icon-calculator:before, #formulize_form .icon-check-all:before, #formulize_form .icon-check-mark:before, #formulize_form .icon-check-none:before, #formulize_form .icon-config:before, #formulize_form .icon-connection:before, #formulize_form .icon-copy:before, #formulize_form .icon-delete:before, #formulize_form .icon-download:before, #formulize_form .icon-edit:before, #formulize_form .icon-form-mini:before, #formulize_form .icon-form:before, #formulize_form .icon-help:before, #formulize_form .icon-home:before, #formulize_form .icon-lock-unlocked:before, #formulize_form .icon-lock:before, #formulize_form .icon-magnifier:before, #formulize_form .icon-menu:before, #formulize_form .icon-permission:before, #formulize_form .icon-piechart:before, #formulize_form .icon-print:before, #formulize_form .icon-relationship:before, #formulize_form .icon-screen-form:before, #formulize_form .icon-screen-list:before, #formulize_form .icon-screen:before, #formulize_form .icon-table:before, #formulize_form .icon-trash:before, #formulize_form .icon-view:before {
+  font-family: "formulize-icons";
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  display: inline-block;
+  text-decoration: inherit; }
+
+#formulize_form .icon-add:before {
+  content: "\f100"; }
+
+#formulize_form .icon-application:before {
+  content: "\f101"; }
+
+#formulize_form .icon-arrow-backward:before {
+  content: "\f102"; }
+
+#formulize_form .icon-arrow-forward:before {
+  content: "\f103"; }
+
+#formulize_form .icon-calculator:before {
+  content: "\f104"; }
+
+#formulize_form .icon-check-all:before {
+  content: "\f105"; }
+
+#formulize_form .icon-check-mark:before {
+  content: "\f106"; }
+
+#formulize_form .icon-check-none:before {
+  content: "\f107"; }
+
+#formulize_form .icon-config:before {
+  content: "\f108"; }
+
+#formulize_form .icon-connection:before {
+  content: "\f109"; }
+
+#formulize_form .icon-copy:before {
+  content: "\f10a"; }
+
+#formulize_form .icon-delete:before {
+  content: "\f10b"; }
+
+#formulize_form .icon-download:before {
+  content: "\f10c"; }
+
+#formulize_form .icon-edit:before {
+  content: "\f10d"; }
+
+#formulize_form .icon-form-mini:before {
+  content: "\f10e"; }
+
+#formulize_form .icon-form:before {
+  content: "\f10f"; }
+
+#formulize_form .icon-help:before {
+  content: "\f110"; }
+
+#formulize_form .icon-home:before {
+  content: "\f111"; }
+
+#formulize_form .icon-lock-unlocked:before {
+  content: "\f112"; }
+
+#formulize_form .icon-lock:before {
+  content: "\f113"; }
+
+#formulize_form .icon-magnifier:before {
+  content: "\f114"; }
+
+#formulize_form .icon-menu:before {
+  content: "\f115"; }
+
+#formulize_form .icon-permission:before {
+  content: "\f116"; }
+
+#formulize_form .icon-piechart:before {
+  content: "\f117"; }
+
+#formulize_form .icon-print:before {
+  content: "\f118"; }
+
+#formulize_form .icon-relationship:before {
+  content: "\f119"; }
+
+#formulize_form .icon-screen-form:before {
+  content: "\f11a"; }
+
+#formulize_form .icon-screen-list:before {
+  content: "\f11b"; }
+
+#formulize_form .icon-screen:before {
+  content: "\f11c"; }
+
+#formulize_form .icon-table:before {
+  content: "\f11d"; }
+
+#formulize_form .icon-trash:before {
+  content: "\f11e"; }
+
+#formulize_form .icon-view:before {
+  content: "\f11f"; }
+
+
+
+#formulize_form .formulize_button {
+  text-indent: 30px;
+  border-color: #0076a3;
+  color: #fff !important;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+  font-size: 15px;
+  font-weight: bold;
+  height: 36px;
+  width: 185px !important; }
+
+#formulize_form .formulize_button.formulize_button_dialog {
+  text-indent: 0;
+  width: auto !important;
+  padding: 0 15px;
+  cursor: pointer; }
+
+#formulize_form #prev {
+  background: #008CC4 url("../../images/prev.png") no-repeat 10px;
+  text-indent: 40px;
+  height: 36px;
+  color: #fff !important;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+  font-size: 15px; }
+
+#formulize_form #next {
+  background: #008CC4 url("../../images/next.png") no-repeat 140px;
+  text-align: left;
+  width: 185px;
+  height: 36px;
+  color: #fff !important;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+  font-size: 15px; }
+
+#formulize_form .formulize-form-submit-button {
+    background-color: #008CC4 !important;
+    text-indent: 0;
+    font-weight: normal;
+    min-width: 185px;
+    height: 36px;
+    color: white !important;
+}
+
+#formulize_form #page-indicator, #formulize_form #page-selector {
+    display: inline-block;
+}
+
+#formulize_form .formulize-page-navigation {
+  display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	margin: 1em 1em 1em 0;
+  padding: 0.6em;
+  background-color: #f7f7f7;
+  border-radius: 4px; }
+
+#formulize_form .page-navigation-label {
+  margin-right: 1em; }
+
+#formulize_form .formulize-page-navigation a, #formulize_form .formulize-page-navigation span {
+  margin: 0 0.1em;
+  padding: 0.4em 0.5em;
+  font-weight: normal; }
+
+#formulize_form .formulize-page-navigation a.page-navigation-active {
+  background-color: #fff;
+  border: 1px solid #70b640;
+  border-radius: 4px; }
+
+#formulize_form .page-navigation-total, #formulize_form label[for="toggleRepeatData"] {
+  color: #555;
+  white-space: nowrap; }
+
+#formulize_form a.tooltip {
+  font-family: "formulize-icons";
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  -webkit-font-smoothing: antialiased;
+  text-decoration: inherit;
+  font-size: 1.6rem;
+  cursor: help;
+  position: relative;
+  background: transparent;
+  background-color: transparent; }
+
+#formulize_form a.tooltip:before {
+  content: "\f110";
+  font-size: 1.6rem;
+  color: #59a7d4; }
+
+#formulize_form a.tooltip > span {
+  display: none;
+  font-family: Verdana, Arial, sans-serif;
+  }
+
+#formulize_form a.tooltip:hover {
+  background: transparent;
+  background-color: transparent; }
+
+#formulize_form a.tooltip:hover > span {
+  position: absolute;
+  top: 2em;
+  left: -5em;
+  width: 25em;
+  display: block;
+  background-color: #ffffff;
+  color: #000;
+  padding: 1.5em;
+  line-height: 1.5em;
+  opacity: 0.95;
+  border: 2px solid #59a7d4;
+  border-radius: 6px;
+  -moz-border-radius: 6px;
+  -webkit-border-radius: 6px;
+  box-shadow: 3px 3px 15px rgba(0, 0, 0, 0.3); }
+
+#formulize_form a.formulize-open-close-link {
+  cursor: pointer; }
+
+#formulize_form .icms_checkboxoption {
+  clear: both; }
+
+#formulize_form #floating-list-of-entries-save-button {
+  padding: 0.5em 1.5em;
+  margin: 1em 0;
+  background-color: #FFF; }
+
+#formulize_form #floating-list-of-entries-save-button.save_button_fixed {
+  position: fixed;
+  bottom: 0;
+  z-index: 100;
+  margin-top: 0;
+  margin-bottom: 0;
+  border-top: solid 1px #1D65A5;
+  border-left: solid 1px #1D65A5;
+  border-right: solid 1px #1D65A5;
+  border-radius: 5px 5px 0 0; }
+
+#formulize_form .floating-column {
+  position: fixed;
+  border: 1px solid white;
+  display: none;
+  padding: 0px !important; }
+
+#formulize_form .floating-column .main-cell-div {
+  float: left;
+  border: 1px solid white;
+  padding: 5px; }
+
+#formulize_form #currentview {
+  width: 350px;
+  font-size: 1.2em; }
+
+#formulize_form .subform-textarea-element {
+    white-space: normal;
+}
+
+#formulize_form .formulize-subform-table {
+  width: auto;
+  border-collapse: collapse;
+  white-space: nowrap;
+}
+
+#formulize_form .formulize-subform-table > tbody > tr > th {
+  background-color: transparent !important;
+  color: black !important;
+  text-align: center;
+  border-bottom: 1px solid #d1d1df; }
+
+#formulize_form .formulize-subform-table > tbody > tr > td {
+  padding: 0.5em;
+  border-bottom: 1px dotted #d1d1df;
+  border-left: 1px dotted #d1d1df;
+  border-right: 1px dotted #d1d1df;
+}
+
+/*=== Formulize Boutons by Francois T ===*/
+#formulize_form button, #formulize_form input[type='submit'], #formulize_form input[type='button'], #formulize_form input[type='reset'] {
+  background-color: #F4F9FE;
+  -webkit-border-radius: 5px;
+  color: #2F85DC;
+  border: 1px solid;
+  border-color: #ccc; }
+
+#formulize_form button:hover, #formulize_form .xo-formbuttons:hover, #formulize_form .formButton:hover {
+  cursor: pointer; }
+
+#formulize_form button:focus, #formulize_form input[type='submit']:focus, #formulize_form input[type='button']:focus, #formulize_form input[type='reset']:focus, #formulize_form .xo-formbuttons:focus, #formulize_form .formButton:focus {
+  background-color: #f4f4f4;
+  border-color: #333; }
+
+/*=== Formulize Boutons by Francois T ===*/
+#formulize_form #formulize_addButton, #formulize_form #formulize_addProxyButton {
+  text-indent: 45px;
+  background: #2F85DC url("../../images/contact-new.png") no-repeat 10px;
+  width: 210px !important; }
+
+#formulize_form #formulize_addMultiButton {
+  text-indent: 45px;
+  background: #2F85DC url("../../images/multi.png") no-repeat 10px;
+  width: 210px !important; }
+
+#formulize_form #formulize_changeColsButton {
+  background: #61A6EE url("../../images/table.png") no-repeat 10px; }
+
+#formulize_form #formulize_exportButton {
+  background: #2F85DC url("../../images/math.png") no-repeat 10px; }
+
+#formulize_form #formulize_exportCalcsButton {
+  background: #2F85DC url("../../images/math.png") no-repeat 10px; }
+
+#formulize_form #formulize_importButton {
+  background: #2F85DC url("../../images/import.png") no-repeat 10px; }
+
+#formulize_form #formulize_calcButton, #formulize_form #formulize_proceduresButton, #formulize_form #formulize_advSearchButton {
+  border-color: #8E8E8E;
+  background: #A3A3A3 url("../../images/calculator.png") no-repeat 10px; }
+
+#formulize_form #formulize_selectAllButton {
+  background: #3CA683 url("../../images/select.png") no-repeat 10px; }
+
+#formulize_form #formulize_clearSelectButton {
+  background: #3CA683 url("../../images/unselect.png") no-repeat 10px; }
+
+#formulize_form #formulize_deleteButton {
+  background: #3CA683 url("../../images/delete.png") no-repeat 10px; }
+
+#formulize_form #formulize_cloneButton {
+  background: #3CA683 url("../../images/clone.png") no-repeat 10px; }
+
+#formulize_form #formulize_notifButton {
+  background: #5450A5 url("../../images/notif.png") no-repeat 10px; }
+
+#formulize_form #formulize_resetViewButton {
+  background: #61A6EE url("../../images/find.png") no-repeat 10px; }
+
+#formulize_form #formulize_saveViewButton {
+  background: #61A6EE url("../../images/findsave.png") no-repeat 10px; }
+
+#formulize_form #formulize_deleteViewButton {
+  background: #61A6EE url("../../images/finddel.png") no-repeat 10px; }
+
+#formulize_form #formulize_saveButton {
+  background-color: #61A6EE;
+  text-indent: 0px; }
+
+/*=== End of Formulize Boutons ===*/
+#formulize_form .formulize_autocomplete {
+  display: inline-block; }
+
+#formulize_form .formulize-element-edit-link {
+  font-weight: normal;
+  border: 1px solid #b3b3b3;
+  padding: 0.1em 0.5em;
+  border-radius: 1em;
+  -moz-border-radius: 1em;
+  -webkit-border-radius: 1em;
+  opacity: 0.0;
+  float: right;
+}
+#formulize_form td.even:hover .formulize-element-edit-link, #formulize_form td.odd:hover .formulize-element-edit-link, #formulize_form td.head:hover .formulize-element-edit-link, #formulize_form .form-row:hover .formulize-element-edit-link {
+  -webkit-transition: opacity 400ms linear;
+  transition: opacity 400ms linear;
+  opacity: 0.3;
+}
+#formulize_form td.even .formulize-element-edit-link:hover, #formulize_form td.odd .formulize-element-edit-link:hover, #formulize_form td.head .formulize-element-edit-link:hover, #formulize_form .form-row .formulize-element-edit-link:hover {
+  -webkit-transition: opacity 400ms linear;
+  transition: opacity 400ms linear;
+  opacity: 1.0;
+}
+
+#formulize_form #formulize-entry-lock-message {
+  font-size: 80%;
+  margin-bottom: 1em;
+  padding: 0.7em 0.7em 0.7em 0em;
+  color: #855;
+  border: 1px solid #855;
+  border-radius: 6px;
+  -moz-border-radius: 6px;
+  -webkit-border-radius: 6px; }
+  #formulize_form #formulize-entry-lock-message #formulize-entry-lock-icon {
+    float: left;
+    font-size: 200%;
+    position: relative;
+    top: -0.2em }
+
+#formulize_form td a.heading-locked, #formulize_form td a.heading-unlocked {
+  font-family: "formulize-icons";
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  -webkit-font-smoothing: antialiased;
+  text-decoration: inherit;
+  font-size: 11pt;
+  float: right;
+  margin-left: 0.3em;
+  color: #aad2e9; }
+
+#formulize_form td a.heading-locked {
+  color: #d3e7f3; }
+
+#formulize_form .heading-locked:before {
+  content: "\f113"; }
+
+#formulize_form .heading-unlocked:before {
+  content: "\f112"; }
+
+#formulize_form td a.header-info-link {
+  font-family: "formulize-icons";
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  -webkit-font-smoothing: antialiased;
+  text-decoration: inherit;
+  font-size: 16pt;
+  position: relative;
+  left: -2.5px;
+  color: #aad2e9; }
+
+#formulize_form .header-info-link:before {
+  content: "\f110";
+  color: #59626a;
+}
+
+#formulize_form .heading-locked:hover, #formulize_form .heading-unlocked:hover, #formulize_form .header-info-link:hover {
+  text-shadow: 0px 0px 2px #1e5676; }
+
+#formulize_form a.loe-edit-entry, #formulize_form a.de-edit-icon {
+  font-family: "formulize-icons";
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  -webkit-font-smoothing: antialiased;
+  text-decoration: inherit;
+  font-size: 1rem;
+  margin: 0;
+  margin-left: 0.5em;
+  padding: 0.1em; }
+
+#formulize_form .loe-edit-entry:before {
+  color: #fff;
+  content: var(--formulize-loe-icon, "\f10d"); }
+
+#formulize_form .de-edit-icon:before {
+  color: #fff;
+  content: var(--formulize-de-icon, "\f10d"); }
+
+#formulize_form a.loe-edit-entry:hover, #formulize_form a.de-edit-icon:hover {
+  text-shadow: 0px 0px 2px #14384d; }
+
+#formulize_form td.formulize-controls {
+  white-space: nowrap;
+  width: 1%; }
+
+#formulize_form .xoops-form-element-help {
+  color: #edfcff; }
+
+#formulize_form form#formulize td.even, #formulize_form form#formulize td.odd {
+  width: 70%; }
+
+#formulize_form form#formulize td.even textarea, #formulize_form form#formulize td.odd textarea {
+  width: 99%; }
+
+#formulize_form #listofentries div.main-cell-div input {
+  width: 80%; }
+
+#formulize_form #pageNavTable, #formulize_form #pageNavTableBottom {
+  margin: 1em 0; }
+
+#formulize_form .scrollbox {
+    overflow: auto;
+}
+
+#formulize_form .formulize_autocomplete_search_label {
+    font-weight: bold;
+}
+
+#formulize_form td.head div.xoops-form-element-caption, #formulize_form td.head div.xoops-form-element-caption-required {
+    font-weight: bold;
+}
+
+#formulize_form #formulizeform td.head {
+    font-weight: normal;
+}
+
+#formulize_form div#formulize-printpreview div.formulize-subform-table-scrollbox {
+		overflow-y: visible !important;
+}
+
+#formulize_form div#formulize-printpreview div#multipage-controls {
+	display: none !important
+}
+
+@media print {
+
+  #formulize_form {
+    font-size: 10pt; }
+
+  #formulize_form #xo-header {
+    display: none; }
+
+  #formulize_form #xo-canvas-leftcolumn {
+    display: none; }
+
+  #formulize_form #xo-canvas.leftcolumn-layout #xo-canvas-columns, #formulize_form #xo-canvas.threecolumns-layout #xo-canvas-columns {
+    padding-left: 0 !important; }
+
+  #formulize_form #xo-content {
+    width: 100%; }
+
+  #formulize_form #formulizeform {
+    width: 100%; }
+
+  #formulize_form #xo-footer {
+    display: none; }
+
+  #formulize_form .no-print {
+    display: none; }
+
+  #formulize_form input, #formulize_form textarea {
+    border: none; }
+
+  #formulize_form select {
+    -moz-appearance: none;
+    -webkit-appearance: none;
+    appearance: none;
+    border: none; }
+
+  #formulize_form h1.formulize-form-title {
+    font-weight: normal; }
+
+  #formulize_form td.head h2 {
+    color: #222;
+    font-size: 12pt;
+    font-weight: normal; }
+
+  #formulize_form td.head span.caption-text {
+    color: #333;
+    font-weight: normal; }
+
+  #formulize_form td.head div.xoops-form-element-help {
+    color: #ddd;
+    font-size: 8pt;
+    font-weight: normal; }
+
+  #formulize_form td.even {
+    font-size: 10pt; }
+
+  #formulize_form tr, #formulize_form td {
+    page-break-inside: avoid; }
+
+  #formulize_form #pageNavTable, #formulize_form #pageNavTableBottom #bottomPageNumber, #formulize_form #bottom-save-block {
+    display: none; }
+
+  #formulize_form .ui-accordion .ui-accordion-content {
+    display: block !important; }
+
+  #formulize_form .ui-accordion .ui-accordion-content table.outer {
+    border: none; }
+
+  #formulize_form .ui-accordion .ui-accordion-content table.outer td {
+    border-bottom: 1px solid #ddd; }
+
+  #formulize_form #formulize-entry-lock-message {
+    display: none; }
+
+  #formulize_form .formulize-element-edit-link {
+    display: none; }
+
+}
+
+#formulize_form .appcatspacer {
+    width: 25%;
+}
+
+#formulize_form .auto_multi {
+    margin: 0.2em;
+    display: table-row;
+}
+
+#formulize_form .auto_multi:hover {
+    cursor: pointer;
+    text-decoration: line-through;
+    color: red;
+}
+
+#formulize_form .right-align-text {
+    text-align: right;
+}
+
+#formulize_form .formulize-spacer-column {
+    width: auto;
+}
+
+#formulize_form span.formulize-filter-value {
+    display: none;
+}
+
+#formulize_form #formulize-button-controls input {
+    margin: 1em;
+}
+
+#formulize_form div[id^=cellcontents_1_] {
+    display: flex;
+}
+#formulize_form div[id^=cellcontents_1_] label {
+    white-space: nowrap;
+}
+
+#formulize_form .formulize-display-element-edit-icon {
+	float: left; margin-right: 5px; margin-bottom: 5px;
+}
+
+#formulize_form .formulize-display-element-contents {
+	padding-left: 2em;
+}
+
+#formulize_form .formulize-uploaded-image-thumbnail {
+  max-width: 200px;
+  display: inline;
+  border: 1px solid black;
+}
+
+#formulize_form table.formulize-grid td.head {
+  padding-bottom: 0.5em;
+}
+
+#formulize_form .formulize-grid td {
+	padding-right: 1em;
+	vertical-align: bottom;
+}
+
+#formulize_form #listofentries div.main-cell-div > span, #formulize_form #listofentries div.formulize-display-element-contents > span {
+	display: block;
+	padding-bottom: 0.3em;
+}
+
+#formulize_form #listofentries div.main-cell-div ul.main-cell-list > li, #formulize_form #listofentries div.formulize-display-element-contents ul.main-cell-list > li {
+	display: list-item;
+	padding-bottom: 0.3em;
+}
+
+#formulize_form #listofentries div.main-cell-div ul.main-cell-list, #formulize_form #listofentries div.formulize-display-element-contents ul.main-cell-list {
+	list-style: disc;
+	padding-left: 1.2em;
+	margin: 0;
+}
+
+#formulize_form .formulize-text-for-display p, #formulize_form .formulize-text-for-display h1, #formulize_form .formulize-text-for-display h2, #formulize_form .formulize-text-for-display h3, #formulize_form .formulize-text-for-display h4, #formulize_form .formulize-text-for-display h5, #formulize_form .formulize-text-for-display h6, #formulize_form .formulize-text-for-display blockquote, #formulize_form .formulize-text-for-display li {
+	margin-bottom: 0.5em;
+}
+#formulize_form .formulize-text-for-display blockquote {
+	margin-left: 1.0em;
+	padding-left: 0.7em;
+	border-left: 3px solid #ccc;
+}
+#formulize_form .formulize-text-for-display ol {
+	list-style: decimal;
+}
+#formulize_form .formulize-text-for-display ul {
+	list-style: disc;
+}
+#formulize_form .formulize-text-for-display ul, #formulize_form .formulize-text-for-display ol {
+	list-style-position: outside;
+	margin-left: 1.0em;
+	padding-left: 1em;
+}
+
+#formulize_form .formulize-office-use-only-start-hidden {
+		display: none;
+}
+
+#formulize_form .subform-filter-search {
+	margin-bottom: 0.5em;
+	margin-top: 0.5em;
+}
+#formulize_form div.subform_button_controls div.subform-filter-search input[type=text] {
+	width: 10em;
+}
+
+/* AI Chat tool selection preset buttons */
+#formulize_form button.formulize-ai-tool-group-btn {
+	min-width: 185px;
+}
+#formulize_form button.formulize-ai-tool-util-btn {
+	min-width: 185px;
+}
+
+/* Textarea word/character limit counter */
+#formulize_form .fz-limit-counter {
+	font-size: 0.85em;
+	margin-top: 0.5em;
+	text-align: right;
+	width: 100%;
+	max-width: 300px;
+	box-sizing: border-box;
+}
+#formulize_form .fz-limit-counter.fz-limit-green {
+	color: #2e7d32;
+}
+#formulize_form .fz-limit-counter.fz-limit-orange {
+	color: #e65100;
+}
+#formulize_form .fz-limit-counter.fz-limit-red {
+	color: #c62828;
+	font-weight: bold;
+}
+
+@media (min-width: 768px) {
+	#formulize_form .fz-limit-counter {
+		max-width: 700px;
+	}
+}
+
 
 /* ==========================================================================
    themes/Anari/css/style.css
@@ -4098,750 +4842,6 @@
 
 #formulize_form .formulize-map-filters input[type="text"], #formulize_form .formulize-map-filters select {
     min-width: 120px;
-}
-
-
-/* ==========================================================================
-   modules/formulize/templates/css/formulize.css
-   ========================================================================== */
-
-/*
-  Icon Font: formulize-icons
-*/
-@font-face {
-  font-family: "formulize-icons";
-  src: url("./formulize-icons/formulize-icons.eot");
-  src: url("./formulize-icons/formulize-icons.eot?#iefix") format("embedded-opentype"), url("./formulize-icons/formulize-icons.woff") format("woff"), url("./formulize-icons/formulize-icons.ttf") format("truetype"), url("./formulize-icons/formulize-icons.svg#formulize-icons") format("svg");
-  font-weight: normal;
-  font-style: normal; }
-#formulize_form [data-icon]:before {
-  content: attr(data-icon); }
-
-#formulize_form [data-icon]:before, #formulize_form .icon-add:before, #formulize_form .icon-application:before, #formulize_form .icon-arrow-backward:before, #formulize_form .icon-arrow-forward:before, #formulize_form .icon-calculator:before, #formulize_form .icon-check-all:before, #formulize_form .icon-check-mark:before, #formulize_form .icon-check-none:before, #formulize_form .icon-config:before, #formulize_form .icon-connection:before, #formulize_form .icon-copy:before, #formulize_form .icon-delete:before, #formulize_form .icon-download:before, #formulize_form .icon-edit:before, #formulize_form .icon-form-mini:before, #formulize_form .icon-form:before, #formulize_form .icon-help:before, #formulize_form .icon-home:before, #formulize_form .icon-lock-unlocked:before, #formulize_form .icon-lock:before, #formulize_form .icon-magnifier:before, #formulize_form .icon-menu:before, #formulize_form .icon-permission:before, #formulize_form .icon-piechart:before, #formulize_form .icon-print:before, #formulize_form .icon-relationship:before, #formulize_form .icon-screen-form:before, #formulize_form .icon-screen-list:before, #formulize_form .icon-screen:before, #formulize_form .icon-table:before, #formulize_form .icon-trash:before, #formulize_form .icon-view:before {
-  font-family: "formulize-icons";
-  font-style: normal;
-  font-weight: normal;
-  font-variant: normal;
-  text-transform: none;
-  line-height: 1;
-  -webkit-font-smoothing: antialiased;
-  display: inline-block;
-  text-decoration: inherit; }
-
-#formulize_form .icon-add:before {
-  content: "\f100"; }
-
-#formulize_form .icon-application:before {
-  content: "\f101"; }
-
-#formulize_form .icon-arrow-backward:before {
-  content: "\f102"; }
-
-#formulize_form .icon-arrow-forward:before {
-  content: "\f103"; }
-
-#formulize_form .icon-calculator:before {
-  content: "\f104"; }
-
-#formulize_form .icon-check-all:before {
-  content: "\f105"; }
-
-#formulize_form .icon-check-mark:before {
-  content: "\f106"; }
-
-#formulize_form .icon-check-none:before {
-  content: "\f107"; }
-
-#formulize_form .icon-config:before {
-  content: "\f108"; }
-
-#formulize_form .icon-connection:before {
-  content: "\f109"; }
-
-#formulize_form .icon-copy:before {
-  content: "\f10a"; }
-
-#formulize_form .icon-delete:before {
-  content: "\f10b"; }
-
-#formulize_form .icon-download:before {
-  content: "\f10c"; }
-
-#formulize_form .icon-edit:before {
-  content: "\f10d"; }
-
-#formulize_form .icon-form-mini:before {
-  content: "\f10e"; }
-
-#formulize_form .icon-form:before {
-  content: "\f10f"; }
-
-#formulize_form .icon-help:before {
-  content: "\f110"; }
-
-#formulize_form .icon-home:before {
-  content: "\f111"; }
-
-#formulize_form .icon-lock-unlocked:before {
-  content: "\f112"; }
-
-#formulize_form .icon-lock:before {
-  content: "\f113"; }
-
-#formulize_form .icon-magnifier:before {
-  content: "\f114"; }
-
-#formulize_form .icon-menu:before {
-  content: "\f115"; }
-
-#formulize_form .icon-permission:before {
-  content: "\f116"; }
-
-#formulize_form .icon-piechart:before {
-  content: "\f117"; }
-
-#formulize_form .icon-print:before {
-  content: "\f118"; }
-
-#formulize_form .icon-relationship:before {
-  content: "\f119"; }
-
-#formulize_form .icon-screen-form:before {
-  content: "\f11a"; }
-
-#formulize_form .icon-screen-list:before {
-  content: "\f11b"; }
-
-#formulize_form .icon-screen:before {
-  content: "\f11c"; }
-
-#formulize_form .icon-table:before {
-  content: "\f11d"; }
-
-#formulize_form .icon-trash:before {
-  content: "\f11e"; }
-
-#formulize_form .icon-view:before {
-  content: "\f11f"; }
-
-
-
-#formulize_form .formulize_button {
-  text-indent: 30px;
-  border-color: #0076a3;
-  color: #fff !important;
-  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
-  font-size: 15px;
-  font-weight: bold;
-  height: 36px;
-  width: 185px !important; }
-
-#formulize_form .formulize_button.formulize_button_dialog {
-  text-indent: 0;
-  width: auto !important;
-  padding: 0 15px;
-  cursor: pointer; }
-
-#formulize_form #prev {
-  background: #008CC4 url("../../images/prev.png") no-repeat 10px;
-  text-indent: 40px;
-  height: 36px;
-  color: #fff !important;
-  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
-  font-size: 15px; }
-
-#formulize_form #next {
-  background: #008CC4 url("../../images/next.png") no-repeat 140px;
-  text-align: left;
-  width: 185px;
-  height: 36px;
-  color: #fff !important;
-  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
-  font-size: 15px; }
-
-#formulize_form .formulize-form-submit-button {
-    background-color: #008CC4 !important;
-    text-indent: 0;
-    font-weight: normal;
-    min-width: 185px;
-    height: 36px;
-    color: white !important;
-}
-
-#formulize_form #page-indicator, #formulize_form #page-selector {
-    display: inline-block;
-}
-
-#formulize_form .formulize-page-navigation {
-  display: inline-flex;
-	flex-wrap: wrap;
-	align-items: center;
-	margin: 1em 1em 1em 0;
-  padding: 0.6em;
-  background-color: #f7f7f7;
-  border-radius: 4px; }
-
-#formulize_form .page-navigation-label {
-  margin-right: 1em; }
-
-#formulize_form .formulize-page-navigation a, #formulize_form .formulize-page-navigation span {
-  margin: 0 0.1em;
-  padding: 0.4em 0.5em;
-  font-weight: normal; }
-
-#formulize_form .formulize-page-navigation a.page-navigation-active {
-  background-color: #fff;
-  border: 1px solid #70b640;
-  border-radius: 4px; }
-
-#formulize_form .page-navigation-total, #formulize_form label[for="toggleRepeatData"] {
-  color: #555;
-  white-space: nowrap; }
-
-#formulize_form a.tooltip {
-  font-family: "formulize-icons";
-  font-style: normal;
-  font-weight: normal;
-  font-variant: normal;
-  text-transform: none;
-  -webkit-font-smoothing: antialiased;
-  text-decoration: inherit;
-  font-size: 1.6rem;
-  cursor: help;
-  position: relative;
-  background: transparent;
-  background-color: transparent; }
-
-#formulize_form a.tooltip:before {
-  content: "\f110";
-  font-size: 1.6rem;
-  color: #59a7d4; }
-
-#formulize_form a.tooltip > span {
-  display: none;
-  font-family: Verdana, Arial, sans-serif;
-  }
-
-#formulize_form a.tooltip:hover {
-  background: transparent;
-  background-color: transparent; }
-
-#formulize_form a.tooltip:hover > span {
-  position: absolute;
-  top: 2em;
-  left: -5em;
-  width: 25em;
-  display: block;
-  background-color: #ffffff;
-  color: #000;
-  padding: 1.5em;
-  line-height: 1.5em;
-  opacity: 0.95;
-  border: 2px solid #59a7d4;
-  border-radius: 6px;
-  -moz-border-radius: 6px;
-  -webkit-border-radius: 6px;
-  box-shadow: 3px 3px 15px rgba(0, 0, 0, 0.3); }
-
-#formulize_form a.formulize-open-close-link {
-  cursor: pointer; }
-
-#formulize_form .icms_checkboxoption {
-  clear: both; }
-
-#formulize_form #floating-list-of-entries-save-button {
-  padding: 0.5em 1.5em;
-  margin: 1em 0;
-  background-color: #FFF; }
-
-#formulize_form #floating-list-of-entries-save-button.save_button_fixed {
-  position: fixed;
-  bottom: 0;
-  z-index: 100;
-  margin-top: 0;
-  margin-bottom: 0;
-  border-top: solid 1px #1D65A5;
-  border-left: solid 1px #1D65A5;
-  border-right: solid 1px #1D65A5;
-  border-radius: 5px 5px 0 0; }
-
-#formulize_form .floating-column {
-  position: fixed;
-  border: 1px solid white;
-  display: none;
-  padding: 0px !important; }
-
-#formulize_form .floating-column .main-cell-div {
-  float: left;
-  border: 1px solid white;
-  padding: 5px; }
-
-#formulize_form #currentview {
-  width: 350px;
-  font-size: 1.2em; }
-
-#formulize_form .subform-textarea-element {
-    white-space: normal;
-}
-
-#formulize_form .formulize-subform-table {
-  width: auto;
-  border-collapse: collapse;
-  white-space: nowrap;
-}
-
-#formulize_form .formulize-subform-table > tbody > tr > th {
-  background-color: transparent !important;
-  color: black !important;
-  text-align: center;
-  border-bottom: 1px solid #d1d1df; }
-
-#formulize_form .formulize-subform-table > tbody > tr > td {
-  padding: 0.5em;
-  border-bottom: 1px dotted #d1d1df;
-  border-left: 1px dotted #d1d1df;
-  border-right: 1px dotted #d1d1df;
-}
-
-/*=== Formulize Boutons by Francois T ===*/
-#formulize_form button, #formulize_form input[type='submit'], #formulize_form input[type='button'], #formulize_form input[type='reset'] {
-  background-color: #F4F9FE;
-  -webkit-border-radius: 5px;
-  color: #2F85DC;
-  border: 1px solid;
-  border-color: #ccc; }
-
-#formulize_form button:hover, #formulize_form .xo-formbuttons:hover, #formulize_form .formButton:hover {
-  cursor: pointer; }
-
-#formulize_form button:focus, #formulize_form input[type='submit']:focus, #formulize_form input[type='button']:focus, #formulize_form input[type='reset']:focus, #formulize_form .xo-formbuttons:focus, #formulize_form .formButton:focus {
-  background-color: #f4f4f4;
-  border-color: #333; }
-
-/*=== Formulize Boutons by Francois T ===*/
-#formulize_form #formulize_addButton, #formulize_form #formulize_addProxyButton {
-  text-indent: 45px;
-  background: #2F85DC url("../../images/contact-new.png") no-repeat 10px;
-  width: 210px !important; }
-
-#formulize_form #formulize_addMultiButton {
-  text-indent: 45px;
-  background: #2F85DC url("../../images/multi.png") no-repeat 10px;
-  width: 210px !important; }
-
-#formulize_form #formulize_changeColsButton {
-  background: #61A6EE url("../../images/table.png") no-repeat 10px; }
-
-#formulize_form #formulize_exportButton {
-  background: #2F85DC url("../../images/math.png") no-repeat 10px; }
-
-#formulize_form #formulize_exportCalcsButton {
-  background: #2F85DC url("../../images/math.png") no-repeat 10px; }
-
-#formulize_form #formulize_importButton {
-  background: #2F85DC url("../../images/import.png") no-repeat 10px; }
-
-#formulize_form #formulize_calcButton, #formulize_form #formulize_proceduresButton, #formulize_form #formulize_advSearchButton {
-  border-color: #8E8E8E;
-  background: #A3A3A3 url("../../images/calculator.png") no-repeat 10px; }
-
-#formulize_form #formulize_selectAllButton {
-  background: #3CA683 url("../../images/select.png") no-repeat 10px; }
-
-#formulize_form #formulize_clearSelectButton {
-  background: #3CA683 url("../../images/unselect.png") no-repeat 10px; }
-
-#formulize_form #formulize_deleteButton {
-  background: #3CA683 url("../../images/delete.png") no-repeat 10px; }
-
-#formulize_form #formulize_cloneButton {
-  background: #3CA683 url("../../images/clone.png") no-repeat 10px; }
-
-#formulize_form #formulize_notifButton {
-  background: #5450A5 url("../../images/notif.png") no-repeat 10px; }
-
-#formulize_form #formulize_resetViewButton {
-  background: #61A6EE url("../../images/find.png") no-repeat 10px; }
-
-#formulize_form #formulize_saveViewButton {
-  background: #61A6EE url("../../images/findsave.png") no-repeat 10px; }
-
-#formulize_form #formulize_deleteViewButton {
-  background: #61A6EE url("../../images/finddel.png") no-repeat 10px; }
-
-#formulize_form #formulize_saveButton {
-  background-color: #61A6EE;
-  text-indent: 0px; }
-
-/*=== End of Formulize Boutons ===*/
-#formulize_form .formulize_autocomplete {
-  display: inline-block; }
-
-#formulize_form .formulize-element-edit-link {
-  font-weight: normal;
-  border: 1px solid #b3b3b3;
-  padding: 0.1em 0.5em;
-  border-radius: 1em;
-  -moz-border-radius: 1em;
-  -webkit-border-radius: 1em;
-  opacity: 0.0;
-  float: right;
-}
-#formulize_form td.even:hover .formulize-element-edit-link, #formulize_form td.odd:hover .formulize-element-edit-link, #formulize_form td.head:hover .formulize-element-edit-link, #formulize_form .form-row:hover .formulize-element-edit-link {
-  -webkit-transition: opacity 400ms linear;
-  transition: opacity 400ms linear;
-  opacity: 0.3;
-}
-#formulize_form td.even .formulize-element-edit-link:hover, #formulize_form td.odd .formulize-element-edit-link:hover, #formulize_form td.head .formulize-element-edit-link:hover, #formulize_form .form-row .formulize-element-edit-link:hover {
-  -webkit-transition: opacity 400ms linear;
-  transition: opacity 400ms linear;
-  opacity: 1.0;
-}
-
-#formulize_form #formulize-entry-lock-message {
-  font-size: 80%;
-  margin-bottom: 1em;
-  padding: 0.7em 0.7em 0.7em 0em;
-  color: #855;
-  border: 1px solid #855;
-  border-radius: 6px;
-  -moz-border-radius: 6px;
-  -webkit-border-radius: 6px; }
-  #formulize_form #formulize-entry-lock-message #formulize-entry-lock-icon {
-    float: left;
-    font-size: 200%;
-    position: relative;
-    top: -0.2em }
-
-#formulize_form td a.heading-locked, #formulize_form td a.heading-unlocked {
-  font-family: "formulize-icons";
-  font-style: normal;
-  font-weight: normal;
-  font-variant: normal;
-  text-transform: none;
-  -webkit-font-smoothing: antialiased;
-  text-decoration: inherit;
-  font-size: 11pt;
-  float: right;
-  margin-left: 0.3em;
-  color: #aad2e9; }
-
-#formulize_form td a.heading-locked {
-  color: #d3e7f3; }
-
-#formulize_form .heading-locked:before {
-  content: "\f113"; }
-
-#formulize_form .heading-unlocked:before {
-  content: "\f112"; }
-
-#formulize_form td a.header-info-link {
-  font-family: "formulize-icons";
-  font-style: normal;
-  font-weight: normal;
-  font-variant: normal;
-  text-transform: none;
-  -webkit-font-smoothing: antialiased;
-  text-decoration: inherit;
-  font-size: 16pt;
-  position: relative;
-  left: -2.5px;
-  color: #aad2e9; }
-
-#formulize_form .header-info-link:before {
-  content: "\f110";
-  color: #59626a;
-}
-
-#formulize_form .heading-locked:hover, #formulize_form .heading-unlocked:hover, #formulize_form .header-info-link:hover {
-  text-shadow: 0px 0px 2px #1e5676; }
-
-#formulize_form a.loe-edit-entry, #formulize_form a.de-edit-icon {
-  font-family: "formulize-icons";
-  font-style: normal;
-  font-weight: normal;
-  font-variant: normal;
-  text-transform: none;
-  -webkit-font-smoothing: antialiased;
-  text-decoration: inherit;
-  font-size: 1rem;
-  margin: 0;
-  margin-left: 0.5em;
-  padding: 0.1em; }
-
-#formulize_form .loe-edit-entry:before {
-  color: #fff;
-  content: var(--formulize-loe-icon, "\f10d"); }
-
-#formulize_form .de-edit-icon:before {
-  color: #fff;
-  content: var(--formulize-de-icon, "\f10d"); }
-
-#formulize_form a.loe-edit-entry:hover, #formulize_form a.de-edit-icon:hover {
-  text-shadow: 0px 0px 2px #14384d; }
-
-#formulize_form td.formulize-controls {
-  white-space: nowrap;
-  width: 1%; }
-
-#formulize_form .xoops-form-element-help {
-  color: #edfcff; }
-
-#formulize_form form#formulize td.even, #formulize_form form#formulize td.odd {
-  width: 70%; }
-
-#formulize_form form#formulize td.even textarea, #formulize_form form#formulize td.odd textarea {
-  width: 99%; }
-
-#formulize_form #listofentries div.main-cell-div input {
-  width: 80%; }
-
-#formulize_form #pageNavTable, #formulize_form #pageNavTableBottom {
-  margin: 1em 0; }
-
-#formulize_form .scrollbox {
-    overflow: auto;
-}
-
-#formulize_form .formulize_autocomplete_search_label {
-    font-weight: bold;
-}
-
-#formulize_form td.head div.xoops-form-element-caption, #formulize_form td.head div.xoops-form-element-caption-required {
-    font-weight: bold;
-}
-
-#formulize_form #formulizeform td.head {
-    font-weight: normal;
-}
-
-#formulize_form div#formulize-printpreview div.formulize-subform-table-scrollbox {
-		overflow-y: visible !important;
-}
-
-#formulize_form div#formulize-printpreview div#multipage-controls {
-	display: none !important
-}
-
-@media print {
-
-  #formulize_form {
-    font-size: 10pt; }
-
-  #formulize_form #xo-header {
-    display: none; }
-
-  #formulize_form #xo-canvas-leftcolumn {
-    display: none; }
-
-  #formulize_form #xo-canvas.leftcolumn-layout #xo-canvas-columns, #formulize_form #xo-canvas.threecolumns-layout #xo-canvas-columns {
-    padding-left: 0 !important; }
-
-  #formulize_form #xo-content {
-    width: 100%; }
-
-  #formulize_form #formulizeform {
-    width: 100%; }
-
-  #formulize_form #xo-footer {
-    display: none; }
-
-  #formulize_form .no-print {
-    display: none; }
-
-  #formulize_form input, #formulize_form textarea {
-    border: none; }
-
-  #formulize_form select {
-    -moz-appearance: none;
-    -webkit-appearance: none;
-    appearance: none;
-    border: none; }
-
-  #formulize_form h1.formulize-form-title {
-    font-weight: normal; }
-
-  #formulize_form td.head h2 {
-    color: #222;
-    font-size: 12pt;
-    font-weight: normal; }
-
-  #formulize_form td.head span.caption-text {
-    color: #333;
-    font-weight: normal; }
-
-  #formulize_form td.head div.xoops-form-element-help {
-    color: #ddd;
-    font-size: 8pt;
-    font-weight: normal; }
-
-  #formulize_form td.even {
-    font-size: 10pt; }
-
-  #formulize_form tr, #formulize_form td {
-    page-break-inside: avoid; }
-
-  #formulize_form #pageNavTable, #formulize_form #pageNavTableBottom #bottomPageNumber, #formulize_form #bottom-save-block {
-    display: none; }
-
-  #formulize_form .ui-accordion .ui-accordion-content {
-    display: block !important; }
-
-  #formulize_form .ui-accordion .ui-accordion-content table.outer {
-    border: none; }
-
-  #formulize_form .ui-accordion .ui-accordion-content table.outer td {
-    border-bottom: 1px solid #ddd; }
-
-  #formulize_form #formulize-entry-lock-message {
-    display: none; }
-
-  #formulize_form .formulize-element-edit-link {
-    display: none; }
-
-}
-
-#formulize_form .appcatspacer {
-    width: 25%;
-}
-
-#formulize_form .auto_multi {
-    margin: 0.2em;
-    display: table-row;
-}
-
-#formulize_form .auto_multi:hover {
-    cursor: pointer;
-    text-decoration: line-through;
-    color: red;
-}
-
-#formulize_form .right-align-text {
-    text-align: right;
-}
-
-#formulize_form .formulize-spacer-column {
-    width: auto;
-}
-
-#formulize_form span.formulize-filter-value {
-    display: none;
-}
-
-#formulize_form #formulize-button-controls input {
-    margin: 1em;
-}
-
-#formulize_form div[id^=cellcontents_1_] {
-    display: flex;
-}
-#formulize_form div[id^=cellcontents_1_] label {
-    white-space: nowrap;
-}
-
-#formulize_form .formulize-display-element-edit-icon {
-	float: left; margin-right: 5px; margin-bottom: 5px;
-}
-
-#formulize_form .formulize-display-element-contents {
-	padding-left: 2em;
-}
-
-#formulize_form .formulize-uploaded-image-thumbnail {
-  max-width: 200px;
-  display: inline;
-  border: 1px solid black;
-}
-
-#formulize_form table.formulize-grid td.head {
-  padding-bottom: 0.5em;
-}
-
-#formulize_form .formulize-grid td {
-	padding-right: 1em;
-	vertical-align: bottom;
-}
-
-#formulize_form #listofentries div.main-cell-div > span, #formulize_form #listofentries div.formulize-display-element-contents > span {
-	display: block;
-	padding-bottom: 0.3em;
-}
-
-#formulize_form #listofentries div.main-cell-div ul.main-cell-list > li, #formulize_form #listofentries div.formulize-display-element-contents ul.main-cell-list > li {
-	display: list-item;
-	padding-bottom: 0.3em;
-}
-
-#formulize_form #listofentries div.main-cell-div ul.main-cell-list, #formulize_form #listofentries div.formulize-display-element-contents ul.main-cell-list {
-	list-style: disc;
-	padding-left: 1.2em;
-	margin: 0;
-}
-
-#formulize_form .formulize-text-for-display p, #formulize_form .formulize-text-for-display h1, #formulize_form .formulize-text-for-display h2, #formulize_form .formulize-text-for-display h3, #formulize_form .formulize-text-for-display h4, #formulize_form .formulize-text-for-display h5, #formulize_form .formulize-text-for-display h6, #formulize_form .formulize-text-for-display blockquote, #formulize_form .formulize-text-for-display li {
-	margin-bottom: 0.5em;
-}
-#formulize_form .formulize-text-for-display blockquote {
-	margin-left: 1.0em;
-	padding-left: 0.7em;
-	border-left: 3px solid #ccc;
-}
-#formulize_form .formulize-text-for-display ol {
-	list-style: decimal;
-}
-#formulize_form .formulize-text-for-display ul {
-	list-style: disc;
-}
-#formulize_form .formulize-text-for-display ul, #formulize_form .formulize-text-for-display ol {
-	list-style-position: outside;
-	margin-left: 1.0em;
-	padding-left: 1em;
-}
-
-#formulize_form .formulize-office-use-only-start-hidden {
-		display: none;
-}
-
-#formulize_form .subform-filter-search {
-	margin-bottom: 0.5em;
-	margin-top: 0.5em;
-}
-#formulize_form div.subform_button_controls div.subform-filter-search input[type=text] {
-	width: 10em;
-}
-
-/* AI Chat tool selection preset buttons */
-#formulize_form button.formulize-ai-tool-group-btn {
-	min-width: 185px;
-}
-#formulize_form button.formulize-ai-tool-util-btn {
-	min-width: 185px;
-}
-
-/* Textarea word/character limit counter */
-#formulize_form .fz-limit-counter {
-	font-size: 0.85em;
-	margin-top: 0.5em;
-	text-align: right;
-	width: 100%;
-	max-width: 300px;
-	box-sizing: border-box;
-}
-#formulize_form .fz-limit-counter.fz-limit-green {
-	color: #2e7d32;
-}
-#formulize_form .fz-limit-counter.fz-limit-orange {
-	color: #e65100;
-}
-#formulize_form .fz-limit-counter.fz-limit-red {
-	color: #c62828;
-	font-weight: bold;
-}
-
-@media (min-width: 768px) {
-	#formulize_form .fz-limit-counter {
-		max-width: 700px;
-	}
 }
 
 
