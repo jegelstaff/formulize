@@ -175,12 +175,11 @@ function getHomeTabs($activePage = 'home') {
         'template' => 'db:admin/synchronize.html',
         'active' => ($activePage == 'synchronize')
     );
-		$tabs[] = array(
-        'name' => 'Appearance',
-        'url' => 'ui.php?page=appearance',
-        'template' => 'db:admin/appearance.html',
-        'active' => ($activePage == 'appearance')
-    );
+    // Appearance is a registry-declared subject tab (see the foreach above); its
+    // Theme Settings (colours/font/logo) and Theme Editor sub-views live under it.
+    // It used to also be duplicated here as a standalone tab pointing at
+    // appearance.html — removed so it appears once, with page=appearance routing to
+    // the subject handler (issue #66).
 
     // ui-tabs.html expects 1-based, contiguous keys (it computes tabselected = key - 1)
     return array_combine(range(1, count($tabs)), array_values($tabs));
