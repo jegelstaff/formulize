@@ -176,7 +176,7 @@ if (isset($xoopsOption['theme_use_smarty']) && $xoopsOption['theme_use_smarty'] 
 	// The client-side tracker skips front-end pages entirely; the server is the sole authority.
 	if (!empty($serverPageviewInfo)) {
 		$serverPageviewJson = json_encode($serverPageviewInfo);
-		$siteName = json_encode(isset($icmsConfig['sitename']) ? $icmsConfig['sitename'] : '');
+		$siteName = json_encode(trans(isset($icmsConfig['sitename']) ? $icmsConfig['sitename'] : ''));
 		$xoTheme->addScript('', array('type' => 'text/javascript'), '
 (function(){
 	var info = ' . $serverPageviewJson . ';
