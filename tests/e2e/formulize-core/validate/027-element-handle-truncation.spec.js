@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, saveAdminForm, waitForAdminPageReady, addElementForm, ElementType, openElementAccordion, getFidFromFormAdminPage } from '../../utils';
+import { login, saveAdminForm, waitForAdminPageReady, addElementForm, ElementType, deleteElement, getFidFromFormAdminPage } from '../../utils';
 
 // A handle input that is exactly 60 characters (one over the 59-char limit)
 const LONG_HANDLE_INPUT = 'this_handle_is_way_too_long_for_formulize_to_accept_as_is_xy';
@@ -83,9 +83,8 @@ test('Element handles are truncated to 59 chars and made unique with _f<fid> and
 		'Long Handle Three Text Box',
 		'Invalid Chars Test Text Box',
 	]) {
-		await openElementAccordion(page, caption);
-		page.once('dialog', dialog => dialog.accept().catch(() => {}));
-		await page.getByRole('link', { name: 'Delete' }).click();
-		await waitForAdminPageReady(page);
+		// Nothing refers to these throwaway elements, so the usage report the delete dialog shows is
+		// the short "nothing else uses this" one — deleteElement waits for it either way.
+		await deleteElement(page, caption);
 	}
 });

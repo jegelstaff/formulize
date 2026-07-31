@@ -564,6 +564,54 @@ export async function addElementForm(page, type) {
 	await expect(page.getByRole('heading')).toContainText(heading);
 }
 
+/**
+ * Delete an element from a form's Elements tab.
+ *
+ * Delete no longer raises a native confirm(). It opens the element usage dialog (the markup and
+ * the click handlers are in templates/admin/form_elements.html), which fetches a report from
+ * admin/element_usage.php saying where the element is used and what deleting it would cost —
+ * screens it appears on, other elements that depend on it, references in code — and only offers
+ * the button that carries the deletion out once that report has arrived. So a delete is now:
+ * open the element's accordion, click Delete, wait for the report, then confirm.
+ *
+ * The dialog is also reachable from the Usage link beside Delete, which shows the same report
+ * with no delete button; this helper only drives the delete path.
+ *
+ * @param {object} page Playwright page, on a form's Elements tab
+ * @param {string} accordionHeaderText Text in the header of the element's accordion, as passed to
+ *   openElementAccordion (a leading portion of the header is enough)
+ * @param {object} [opts]
+ * @param {(string|RegExp)[]} [opts.expectInReport] Text the usage report must contain, asserted
+ *   before the deletion is confirmed
+ * @param {number} [opts.timeout] How long to allow for the report to arrive and for the element to
+ *   disappear afterwards (default 30000ms)
+ */
+export async function deleteElement(page, accordionHeaderText, opts = {}) {
+	const { expectInReport = [], timeout = 30000 } = opts;
+
+	await openElementAccordion(page, accordionHeaderText);
+	await page.getByRole('link', { name: 'Delete' }).click();
+
+	const dialog = page.getByRole('dialog', { name: 'Delete this element?' });
+	await expect(dialog).toBeVisible();
+
+	// While the report is being fetched the dialog says so and offers only a Close button; the
+	// confirm button is added when the report comes back, so waiting for it is what waits for the
+	// report. If the fetch fails the dialog says that instead and this is where the test stops.
+	const confirmButton = dialog.getByRole('button', { name: 'Delete this element' });
+	await expect(confirmButton).toBeVisible({ timeout });
+
+	for (const expected of expectInReport) {
+		await expect(dialog).toContainText(expected);
+	}
+
+	// Confirming hands off to the admin form's save button, which posts the deletion and reloads the
+	// element list — so the element's accordion going away is the signal that the delete went through.
+	await confirmButton.click();
+	await expect(page.getByRole('link', { name: accordionHeaderText })).not.toBeVisible({ timeout });
+	await waitForAdminPageReady(page);
+}
+
 // =============================================================================
 // EAU / EAG helpers (Phase 1 — see plan: the-current-branch-adds-luminous-catmull.md)
 // =============================================================================

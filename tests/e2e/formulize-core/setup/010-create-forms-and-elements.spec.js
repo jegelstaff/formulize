@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveAdminForm, waitForAdminPageReady, addElementForm, ElementType, openElementAccordion } from '../../utils';
+import { login, saveAdminForm, waitForAdminPageReady, addElementForm, ElementType, openElementAccordion, deleteElement } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
 
@@ -782,13 +782,17 @@ test.describe('Create/Update Subform Interfaces', async () => {
 	test('Create Surveys Subform Interface in Exhibits', async ({ page }) => {
 		await page.getByRole('link', { name: 'Museum' }).click();
 	  await page.getByRole('link', { name: 'Elements' }).nth(3).click();
-		await openElementAccordion(page, 'Surveys Embeded Form (list');
-		page.once('dialog', dialog => {
-			console.log(`Dialog message: ${dialog.message()}`);
-			dialog.accept().catch(() => {});
+		// Deleting reports where the element is used before it goes: this one is on the Exhibit screen
+		// and is the only element on page 2 of the Artifacts subform screen, so the report says so and
+		// says those screens are cleaned up automatically. Assert on that, so the report is covered by
+		// a test that has a real element with real dependencies in front of it.
+		await deleteElement(page, 'Surveys Embeded Form (list', {
+			expectInReport: [
+				'On these form screens',
+				'Exhibit (screen',
+				'These are updated automatically if you delete the element.',
+			],
 		});
-		await page.getByRole('link', { name: 'Delete' }).click();
-		await waitForAdminPageReady(page);
 		await expect(page.getByRole('link', { name: 'Surveys Embeded Form (list' })).not.toBeVisible();
 		await addElementForm(page, ElementType.subformEditableRow);
 		await waitForAdminPageReady(page);
