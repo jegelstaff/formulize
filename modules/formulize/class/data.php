@@ -1134,6 +1134,20 @@ class formulizeDataHandler {
 			}
 		}
 
+		// entries_are_groups forms build their entry-group names as "{PI value} - {Category}", so a
+		// hyphen in the PI value would collide with the " - " separator. Recast hyphens in the PI value
+		// to underscores (silently) before storing. $values may be keyed by element id or by handle,
+		// so cover whichever key addresses the PI element.
+		if($formObject AND $formObject->getVar('entries_are_groups') AND ($piEleId = intval($formObject->getVar('pi')))) {
+			$piElementObj = xoops_getmodulehandler('elements', 'formulize')->get($piEleId);
+			$piHandle = $piElementObj ? $piElementObj->getVar('ele_handle') : null;
+			foreach(array($piEleId, $piHandle) as $piKey) {
+				if($piKey !== null AND isset($values[$piKey]) AND is_string($values[$piKey])) {
+					$values[$piKey] = str_replace('-', '_', $values[$piKey]);
+				}
+			}
+		}
+
     $encrypt_element_handles = array(); // array of element handles which should be encrypted
 
 		// get handle/id equivalents directly from database in one query, since we'll need them later

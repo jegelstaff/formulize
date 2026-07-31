@@ -9,7 +9,7 @@
             <fieldset>
                 <legend>Code Template</legend>
                 <textarea id="applications-custom_code"  name="applications-custom_code" class="code-textarea canValidate" rows="20"/>
-<{$content.custom_code}></textarea>
+<{$content.custom_code|htmlspecialchars}></textarea>
                 <div class="description">
                     <p>PHP code you enter here is included in every Formulize page.</p>
                 </div>

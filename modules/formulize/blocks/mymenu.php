@@ -102,18 +102,6 @@ function block_formulizeMENU_show() {
 	return $block;
 }
 
-function getMenuTextsForForms($forms, $form_handler) {
-				$menuTexts = array();
-				foreach($forms as $thisForm) {
-								$thisFormObject = $form_handler->get($thisForm);
-								if($menuText = $thisFormObject->getVar('menutext')) {
-												$menuTexts[$thisFormObject->getVar('id_form')] = html_entity_decode($menuText, ENT_QUOTES) == "Use the form's title" ? $thisFormObject->getVar('title') : $menuText;
-								}
-
-				}
-				return $menuTexts;
-}
-
 function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
 
 	global $formulizeCanonicalURI, $xoopsUser;

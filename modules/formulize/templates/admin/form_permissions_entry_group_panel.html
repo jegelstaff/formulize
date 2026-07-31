@@ -11,9 +11,9 @@
         <p><b><{$smarty.const._AM_PERMISSIONS_DEFINE_ACCESS}></b></p>
         <div class="permissiongroup">
             <{if $groupperm.view_form_inherited}>
-                <input type="checkbox" disabled="disabled" checked="checked" id="<{$content.fid}>_<{$groupperm.id}>_view_form">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_view_form"><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEWFORM}><br /><em style="font-size:.85em;">Gives group members access to this form, and makes this group one of <b>their groups</b> for updating, deleting, and viewing entries.</em></label>
+                <input type="checkbox" disabled="disabled" checked="checked" id="<{$content.fid}>_<{$groupperm.id}>_view_form">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_view_form"><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEWFORM}><br /><em style="font-size:.85em;"><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEWFORM_EXPLAIN}></em></label>
             <{else}>
-                <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_view_form" value=1 <{$groupperm.view_form}> id="<{$content.fid}>_<{$groupperm.id}>_view_form">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_view_form"><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEWFORM}><br /><em style="font-size:.85em;">Gives group members access to this form, and makes this group one of <b>their groups</b> for updating, deleting, and viewing entries.</em></label>
+                <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_view_form" value=1 <{$groupperm.view_form}> id="<{$content.fid}>_<{$groupperm.id}>_view_form">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_view_form"><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEWFORM}><br /><em style="font-size:.85em;"><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEWFORM_EXPLAIN}></em></label>
             <{/if}>
         </div>
 

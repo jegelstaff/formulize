@@ -475,6 +475,11 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 				$passwordChanged = $changes['passwordChanged'];
 				$cleanupAppSecret = $changes['cleanupAppSecret'];
 
+				// For new user accounts, validate required fields before writing anything
+				if(!$entryUserId) {
+					self::validateNewUserAccountVars($formId, $pendingUserVars, $pendingProfileVars);
+				}
+
 				// Validate 2FA transition if user is editing their own account
 				if(!self::validateOwnAccount2faTransition(
 					$entryUserId, $userObject, $profile, $pendingUserVars, $pendingProfileVars,
@@ -606,15 +611,9 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			global $xoopsConfig;
 			$userObject = $member_handler->createUser();
 			$profile = $profile_handler->create();
-			$userObject->setVar('user_avatar', 'blank.gif');
-			$userObject->setVar('theme', $xoopsConfig['theme_set']);
 			// Sensible defaults for a freshly created account so the signup form doesn't have to
 			// collect timezone / notification preferences (they can be changed later in Edit Account).
-			$userObject->setVar('user_regdate', time());
-			$userObject->setVar('notify_method', 2); // email, matching the standard registration default
-			if(isset($xoopsConfig['default_TZ'])) {
-				$userObject->setVar('timezone_offset', $xoopsConfig['default_TZ']);
-			}
+			self::applyNewUserDefaults($userObject);
 			// Self-registered accounts start inactive (level 0) and are activated only once the person
 			// confirms the code we send to their email/phone. Admin-created users (users.php) stay
 			// active (level 1) as before.
@@ -632,6 +631,96 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			'old2faPhone' => $old2faPhone,
 			'oldEmail' => $oldEmail
 		);
+	}
+
+	/**
+	 * Validate required fields for a new user account before writing.
+	 * Replicates the JS validation rules from each userAccount element type.
+	 * Only called when $entryUserId is falsy (creating a new user, not updating).
+	 * Throws Exception with a user-facing message if validation fails.
+	 *
+	 * @param int   $formId           The EAU form ID
+	 * @param array $pendingUserVars  Collected user-table changes (from collectPendingUserVars)
+	 * @param array $pendingProfileVars  Collected profile-table changes (from collectPendingUserVars)
+	 */
+	private static function validateNewUserAccountVars(int $formId, array $pendingUserVars, array $pendingProfileVars): void {
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+
+		// Username (login_name): required if the element exists on this form
+		$hasUsernameElement = (bool)$element_handler->get('formulize_user_account_username_'.$formId);
+		if($hasUsernameElement && empty($pendingUserVars['login_name'])) {
+			throw new Exception('A username is required to create a user account.');
+		}
+
+		// Username uniqueness
+		if(!empty($pendingUserVars['login_name'])) {
+			global $xoopsDB;
+			$result = $xoopsDB->query("SELECT uid FROM " . $xoopsDB->prefix('users') . " WHERE login_name = " . $xoopsDB->quoteString($pendingUserVars['login_name']));
+			if($xoopsDB->fetchArray($result)) {
+				throw new Exception('Username "' . htmlspecialchars($pendingUserVars['login_name'], ENT_QUOTES) . '" is already taken.');
+			}
+		}
+
+		// First and last name (both write to uname): required if either element exists
+		$hasFirstNameElement = (bool)$element_handler->get('formulize_user_account_firstname_'.$formId);
+		$hasLastNameElement  = (bool)$element_handler->get('formulize_user_account_lastname_'.$formId);
+		if(($hasFirstNameElement || $hasLastNameElement) && empty($pendingUserVars['uname'])) {
+			throw new Exception('A name is required to create a user account.');
+		}
+
+		// Password: required for new users if the element exists on this form
+		$hasPasswordElement = (bool)$element_handler->get('formulize_user_account_password_'.$formId);
+		if($hasPasswordElement && empty($pendingUserVars['pass'])) {
+			throw new Exception('A password is required to create a user account.');
+		}
+
+		// Email and phone: at least one required if either element exists on this form
+		$emailElement = $element_handler->get('formulize_user_account_email_'.$formId);
+		$phoneElement = $element_handler->get('formulize_user_account_phone_'.$formId);
+		$hasEmailElement = (bool)$emailElement;
+		$hasPhoneElement = (bool)$phoneElement;
+
+		$hasEmail = !empty($pendingUserVars['email']);
+		$hasPhone = !empty($pendingProfileVars['2faphone']);
+
+		if($hasEmailElement || $hasPhoneElement) {
+			if(!$hasEmail && !$hasPhone) {
+				if($hasEmailElement && $hasPhoneElement) {
+					throw new Exception('Please provide either an email address or a phone number.');
+				} elseif($hasEmailElement) {
+					throw new Exception('An email address is required to create a user account.');
+				} else {
+					throw new Exception('A phone number is required to create a user account.');
+				}
+			}
+		}
+
+		// Email format: must match the pattern enforced in the JS
+		if($hasEmail) {
+			if(!preg_match('/^\w+([\.\-]?\w+)*@\w+([\.\-]?\w+)*(\.\w{2,63})+$/', $pendingUserVars['email'])) {
+				throw new Exception('The email address "' . htmlspecialchars($pendingUserVars['email'], ENT_QUOTES) . '" is not valid.');
+			}
+		}
+
+		// Email uniqueness
+		if($hasEmail) {
+			global $xoopsDB;
+			$result = $xoopsDB->query("SELECT uid FROM " . $xoopsDB->prefix('users') . " WHERE email = " . $xoopsDB->quoteString($pendingUserVars['email']));
+			if($xoopsDB->fetchArray($result)) {
+				throw new Exception('The email address "' . htmlspecialchars($pendingUserVars['email'], ENT_QUOTES) . '" is already in use.');
+			}
+		}
+
+		// Phone digit count: must match the number of X's in the element's configured format
+		// (pendingProfileVars['2faphone'] is already digits-only after collectPendingUserVars strips formatting)
+		if($hasPhone && $phoneElement) {
+			$phoneOptions = $phoneElement->getVar('ele_value');
+			$format = is_array($phoneOptions) && isset($phoneOptions['format']) ? $phoneOptions['format'] : 'XXX-XXX-XXXX';
+			$requiredDigits = substr_count($format, 'X');
+			if($requiredDigits > 0 && strlen($pendingProfileVars['2faphone']) !== $requiredDigits) {
+				throw new Exception('Phone number must have exactly ' . $requiredDigits . ' digits (format: ' . $format . ').');
+			}
+		}
 	}
 
 	/**
@@ -677,13 +766,10 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 					continue; // don't change password if no value entered
 				}
 				$passwordChanged = true;
-				global $icmsConfigUser;
-				$icmspass = new icms_core_Password();
-				$salt = $icmspass->createSalt();
-				$enc_type = $icmsConfigUser['enc_type'];
-				$value = $icmspass->hashPassword($value);
-				$pendingUserVars['salt'] = $salt;
-				$pendingUserVars['enc_type'] = $enc_type;
+				$hashed = self::hashPasswordForStorage($value);
+				$value = $hashed['pass'];
+				$pendingUserVars['salt'] = $hashed['salt'];
+				$pendingUserVars['enc_type'] = $hashed['enc_type'];
 			}
 
 			// Handle profile properties
@@ -864,7 +950,55 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 	 * @param int   $entryUserId        The uid of the account being edited, or 0 for a new account
 	 * @return string The conflicting field's label, or '' if there is no conflict
 	 */
-	private static function accountFieldConflict($pendingUserVars, $pendingProfileVars, $entryUserId) {
+	/**
+	 * Turn a plaintext password into the three values that have to be stored together.
+	 *
+	 * A password is not one column. The hash is meaningless without the salt it was made with, and the
+	 * encryption type records how it was made, so writing any of the three without the others produces an
+	 * account that exists and cannot log in. Kept in one place so that anything setting a password gets all
+	 * three, and so that changing how passwords are hashed changes it everywhere at once.
+	 *
+	 * The encryption type is the site-wide setting rather than anything per-user: priv_encryptPass()
+	 * overrides whatever it is passed with $icmsConfigUser['enc_type'] except on a password reset.
+	 *
+	 * @param string $plaintext
+	 * @return array 'pass', 'salt' and 'enc_type', ready to write to the users table
+	 */
+	private static function hashPasswordForStorage($plaintext) {
+		global $icmsConfigUser;
+		$icmspass = new icms_core_Password();
+		return array(
+			'salt' => $icmspass->createSalt(),
+			'enc_type' => $icmsConfigUser['enc_type'],
+			'pass' => $icmspass->hashPassword($plaintext),
+		);
+	}
+
+	/**
+	 * Set the properties a newly created user account needs in order to behave like any other.
+	 *
+	 * None of these are things a caller thinks to supply, and an account missing them is subtly wrong
+	 * rather than obviously broken - no avatar, no theme, no registration date, notifications going
+	 * nowhere. Shared so that an account made through a form and an account made any other way come out
+	 * the same.
+	 *
+	 * The active/inactive level is deliberately not set here. It differs by context: a self-registered
+	 * account may need to wait for confirmation, while one created by an administrator does not, so the
+	 * caller decides.
+	 *
+	 * @param object $userObject A newly created user object, modified in place
+	 * @return void
+	 */
+	private static function applyNewUserDefaults($userObject) {
+		global $icmsConfig;
+		$userObject->setVar('user_avatar', 'blank.gif');
+		$userObject->setVar('theme', $icmsConfig['theme_set']);
+		$userObject->setVar('user_regdate', time());
+		$userObject->setVar('notify_method', 2); // email, matching the standard registration default
+		$userObject->setVar('timezone_offset', $icmsConfig['default_TZ']);
+	}
+
+	public static function accountFieldConflict($pendingUserVars, $pendingProfileVars, $entryUserId) {
 		global $xoopsDB;
 		$entryUserId = intval($entryUserId);
 
@@ -901,7 +1035,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 	 * Persist user and profile objects to database
 	 * @return int|false The user ID on success, false on failure
 	 */
-	private static function persistUserAndProfile($userObject, $profile, $entryUserId) {
+	public static function persistUserAndProfile($userObject, $profile, $entryUserId) {
 		// login name cannot be empty, set to email if available, or timestamp to attempt to guarantee uniqueness
 		if($userObject->getVar('login_name') == '') {
 			$altLoginName = $userObject->getVar('email');

@@ -239,6 +239,13 @@ class formulizeApplication extends XoopsObject {
 #[AllowDynamicProperties]
 class formulizeApplicationsHandler {
   var $db;
+
+  // Applications retrieved so far in this request, keyed by appid, plus the key 'all' for the complete list.
+  // A class property rather than a static local inside get(), so that insert() can clear it when it changes
+  // what is stored - otherwise anything reading applications after a write in the same request gets the
+  // state from before it.
+  private static $cachedApps = array();
+
 	function __construct(&$db) {
 		$this->db =& $db;
 	}
@@ -247,8 +254,18 @@ class formulizeApplicationsHandler {
 		return new formulizeApplication();
 	}
 
+  /**
+   * Forget everything cached about applications.
+   * Called after any write that changes which forms are in an application, or an application's own
+   * properties, so that later reads in the same request see the change.
+   * @return void
+   */
+  public static function clearApplicationCache() {
+    self::$cachedApps = array();
+  }
+
   function get($ids, $fid=0) { // takes a single ID or an array of ids, or the keyword 'all', Plus, if $fid is greater than 0, limit applications retrieved to ones where that form is involved
-    static $cachedApps = array();
+    $cachedApps =& self::$cachedApps;
     global $xoopsDB;
     $idsArray = array();
     if(is_array($ids)) {
@@ -336,7 +353,13 @@ class formulizeApplicationsHandler {
     }
     // fill in any holes in the $foundApps array if for some reason any items were missed
     if($ids === 'all') {
-      $cachedApps['all'] = $foundApps;
+      // only cache under 'all' when this really is all the applications. When a form id was supplied the
+      // result is the applications containing that one form, and storing that under 'all' would make the
+      // next request for every application return only those - and a request for a different form return
+      // the wrong ones, since the cached list is filtered again rather than re-read.
+      if(!$fid) {
+        $cachedApps['all'] = $foundApps;
+      }
       return $foundApps;
     }
     if(is_array($ids)) {
@@ -437,6 +460,10 @@ class formulizeApplicationsHandler {
 			  $result2 = $this->db->query($removalSQL);
 			}
 		}
+    // this application's own properties and its list of forms have both potentially changed, so anything
+    // cached about applications is now out of date
+    self::clearApplicationCache();
+
     if(($insertSQL AND !$result) OR ($removalSQL AND !$result2)) {
       print "Error: this application could not be saved in the database.  SQL: $removalSQL<br>$insertSQL<br>";
 			return false;

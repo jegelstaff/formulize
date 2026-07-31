@@ -36,6 +36,10 @@
 
 </div> <!-- end of mgmt ui -->
 
+<{* Shared by the Usage link and the Delete link. The report is fetched on demand, because it reads every
+screen, every element's settings and every custom code file - far too much to run for each row on page load. *}>
+<div id="elementUsageDialog" style="display:none;"></div>
+
 <div id="cloneElementFormChoice" style="display:none;">
 	<{html_options name="cloneformselect" options=$content.allFormTitles selected=$content.fid}><br>
 	<button type="button" style="float: right;" onclick="$('[name=clonefid]').val($('[name=cloneformselect]').val());$('.savebutton').click();$('div#cloneElementFormChoice').dialog('destroy');"><{$smarty.const._AM_ELE_CLONE_TO_FORM_BUTTON}></button>
@@ -80,7 +84,7 @@ function cloneLinkSteps(target) {
 		width: 400,
 		show: 200,
 		hide: 200,
-		title: "<{$smarty.const._AM_ELE_CLONE_TO_FORM}>",
+		title: "<{$smarty.const._AM_ELE_CLONE_TO_FORM|escape:"javascript"}>",
 		close: function( event, ui ) {
 			$("[name=cloneelement]").val(0);
 			$(this).dialog('destroy');
@@ -93,27 +97,150 @@ $(".clonelink").click(function () {
 	return cloneLinkSteps($(this).attr('target'));
 });
 
-function deleteLinkSteps(target, inlink) {
-	if(inlink) {
-		var message = "<{$smarty.const._AM_ELE_CONFIRM_DELETE_INLINK}>";
-	} else {
-		var message = "<{$smarty.const._AM_ELE_CONFIRM_DELETE}>";
-	}
-	var answer = confirm(message);
-	if(answer) {
-		$("[name=deleteelement]").val(target);
-		$("[name=reload_elements]").val(1);
-		$(".savebutton").click();
-	}
-	return false;
+function formulizeUsageEscape(text) {
+	return $('<div/>').text(text === null || text === undefined ? '' : text).html();
 }
 
+<{* Every one of these is written through escape:'javascript', without exception, because these are language
+constants being pasted into Javascript string literals and one apostrophe in one of them is a syntax error
+that takes down this entire script block - and with it the click handlers for Usage, Delete, Clone and the
+type conversions, all of which then silently fall back to following their href and reloading the page.
+The report's own text does not come through here at all: it arrives as data inside the JSON, where an
+apostrophe is just an apostrophe. *}>
+var formulizeUsageText = {
+	holdsData: '<{$smarty.const._AM_ELE_USAGE_HOLDS_DATA|escape:"javascript"}>',
+	noData: '<{$smarty.const._AM_ELE_USAGE_NO_DATA|escape:"javascript"}>',
+	noDataColumn: '<{$smarty.const._AM_ELE_USAGE_NO_DATA_COLUMN|escape:"javascript"}>',
+	isPi: '<{$smarty.const._AM_ELE_USAGE_IS_PI|escape:"javascript"}>',
+	handled: '<{$smarty.const._AM_ELE_USAGE_HANDLED|escape:"javascript"}>',
+	code: '<{$smarty.const._AM_ELE_USAGE_CODE|escape:"javascript"}>',
+	codeIntro: '<{$smarty.const._AM_ELE_USAGE_CODE_INTRO|escape:"javascript"}>',
+	nothing: '<{$smarty.const._AM_ELE_USAGE_NOTHING|escape:"javascript"}>',
+	loading: '<{$smarty.const._AM_ELE_USAGE_LOADING|escape:"javascript"}>',
+	failed: '<{$smarty.const._AM_ELE_USAGE_FAILED|escape:"javascript"}>',
+	title: '<{$smarty.const._AM_ELE_USAGE_TITLE|escape:"javascript"}>',
+	deleteTitle: '<{$smarty.const._AM_ELE_USAGE_DELETE_TITLE|escape:"javascript"}>',
+	deleteButton: '<{$smarty.const._AM_ELE_USAGE_DELETE_BUTTON|escape:"javascript"}>',
+	close: '<{$smarty.const._AM_ELE_USAGE_CLOSE|escape:"javascript"}>',
+	cancel: '<{$smarty.const._AM_ELE_USAGE_CANCEL|escape:"javascript"}>',
+	confirmDelete: '<{$smarty.const._AM_ELE_CONFIRM_DELETE|escape:"javascript"}>',
+	confirmDeleteInlink: '<{$smarty.const._AM_ELE_CONFIRM_DELETE_INLINK|escape:"javascript"}>'
+};
+
+// Turn the usage report into the dialog's contents. The sections come from the report itself, already
+// filtered down to the places this element is actually used - somewhere it is not used is left out entirely
+// rather than listed as empty, so an element nothing refers to gets a one line answer instead of a wall of
+// headings, which is the common case and the one where a delete should stay quick.
+function formulizeUsageMarkup(report) {
+	var html = '';
+	var used = false;
+
+	if(report.stores_data) {
+		html += '<p>' + formulizeUsageEscape(report.entries_with_a_value_in_this_element > 0
+			? formulizeUsageText.holdsData.replace('%s', report.entries_with_a_value_in_this_element)
+			: formulizeUsageText.noData) + '</p>';
+	} else {
+		html += '<p>' + formulizeUsageEscape(formulizeUsageText.noDataColumn) + '</p>';
+	}
+	if(report.is_the_principal_identifier) {
+		html += '<h4 style="margin-top:1em">' + formulizeUsageEscape(formulizeUsageText.isPi) + '</h4>';
+		used = true;
+	}
+
+	if(report.cleaned_up_automatically && report.cleaned_up_automatically.length) {
+		used = true;
+		$.each(report.cleaned_up_automatically, function(i, section) {
+			html += '<h4 style="margin-top:1em">' + formulizeUsageEscape(section.what) + '</h4><ul>';
+			$.each(section.items, function(j, item) {
+				html += '<li>' + formulizeUsageEscape(item) + '</li>';
+			});
+			html += '</ul>';
+		});
+	}
+	if(used) {
+		html += '<p><i>' + formulizeUsageEscape(formulizeUsageText.handled) + '</i></p>';
+	}
+
+	var code = report.references_in_code_that_you_will_need_to_fix;
+	if(code && code.length) {
+		used = true;
+		html += '<h4 style="margin-top:1em">' + formulizeUsageEscape(formulizeUsageText.code) + '</h4>';
+		html += '<p>' + formulizeUsageEscape(formulizeUsageText.codeIntro) + '</p><ul>';
+		$.each(code, function(i, reference) {
+			html += '<li>' + formulizeUsageEscape(reference) + '</li>';
+		});
+		html += '</ul>';
+	}
+
+	if(!used) {
+		html += '<p>' + formulizeUsageEscape(formulizeUsageText.nothing) + '</p>';
+	}
+	return html;
+}
+
+// One dialog, two entry points. Usage just reports; Delete adds the warning and the button that carries the
+// deletion out, so a person sees the same facts either way and the delete is the report plus a decision.
+function formulizeShowElementUsage(target, forDeletion, inlink) {
+	var dialog = $("#elementUsageDialog");
+	dialog.html('<p>' + formulizeUsageEscape(formulizeUsageText.loading) + '</p>');
+	var buttons = {};
+	buttons[formulizeUsageText.close] = function() { $(this).dialog('destroy'); };
+	dialog.dialog({
+		modal: true,
+		width: 560,
+		title: forDeletion ? formulizeUsageText.deleteTitle : formulizeUsageText.title,
+		buttons: buttons
+	});
+	<{* $.ajax with an error callback, not $.getJSON(...).error() - this admin UI runs jQuery 1.4.2, where
+	an ajax call returns a bare XMLHttpRequest and the deferred methods do not exist yet. *}>
+	$.ajax({
+	url: 'element_usage.php',
+	dataType: 'json',
+	data: { ele_id: target },
+	error: function() {
+		dialog.html('<p>' + formulizeUsageEscape(formulizeUsageText.failed) + '</p>');
+	},
+	success: function(report) {
+		if(!report || report.error) {
+			dialog.html('<p>' + formulizeUsageEscape(report && report.error ? report.error : formulizeUsageText.failed) + '</p>');
+			return;
+		}
+		var html = '<h4 style="margin-top:0">' + formulizeUsageEscape(report.element_caption) + ' ('
+			+ formulizeUsageEscape(report.element_handle) + ')</h4>';
+		html += formulizeUsageMarkup(report);
+		if(forDeletion) {
+			html += '<hr><h4 style="margin-top:1em">' + formulizeUsageEscape(inlink
+				? formulizeUsageText.confirmDeleteInlink
+				: formulizeUsageText.confirmDelete) + '</h4>';
+		}
+		dialog.html(html);
+		if(forDeletion) {
+			var deleteButtons = {};
+			deleteButtons[formulizeUsageText.deleteButton] = function() {
+				$("[name=deleteelement]").val(target);
+				$("[name=reload_elements]").val(1);
+				$(this).dialog('destroy');
+				$(".savebutton").click();
+			};
+			deleteButtons[formulizeUsageText.cancel] = function() { $(this).dialog('destroy'); };
+			dialog.dialog('option', 'buttons', deleteButtons);
+		}
+	}
+	});
+}
+
+$(".elementusagelink").click(function () {
+	formulizeShowElementUsage($(this).attr('target'), false, false);
+	return false;
+});
+
 $(".deleteelementlink").click(function () {
-	return deleteLinkSteps($(this).attr('target'), $(this).attr('inlink'));
+	formulizeShowElementUsage($(this).attr('target'), true, $(this).attr('inlink'));
+	return false;
 });
 
 $(".converttotextarea").click(function () {
-	var answer = confirm("<{$smarty.const._AM_CONVERTTEXT_HELP}>");
+	var answer = confirm("<{$smarty.const._AM_CONVERTTEXT_HELP|escape:"javascript"}>");
 	if(answer) {
 		$("[name=convertelement]").val($(this).attr('target'));
 		$("[name=reload_elements]").val(1);
@@ -123,7 +250,7 @@ $(".converttotextarea").click(function () {
 });
 
 $(".converttotext").click(function () {
-	var answer = confirm("<{$smarty.const._AM_CONVERTTEXTAREA_HELP}>");
+	var answer = confirm("<{$smarty.const._AM_CONVERTTEXTAREA_HELP|escape:"javascript"}>");
 	if(answer) {
 		$("[name=convertelement]").val($(this).attr('target'));
 		$("[name=reload_elements]").val(1);
@@ -132,7 +259,7 @@ $(".converttotext").click(function () {
 	return false;
 });
 $(".converttocheckbox").click(function () {
-	var answer = confirm("<{$smarty.const._AM_CONVERT_RB_CB}>");
+	var answer = confirm("<{$smarty.const._AM_CONVERT_RB_CB|escape:"javascript"}>");
 	if(answer) {
 		$("[name=convertelement]").val($(this).attr('target'));
 		$("[name=reload_elements]").val(1);
@@ -142,7 +269,7 @@ $(".converttocheckbox").click(function () {
 });
 
 $(".converttocheckboxfromsb").click(function () {
-	var answer = confirm("<{$smarty.const._AM_CONVERT_SB_CB}> WARNING: existing submissions from users will not be preserved!!");
+	var answer = confirm("<{$smarty.const._AM_CONVERT_SB_CB|escape:"javascript"}> WARNING: existing submissions from users will not be preserved!!");
 	if(answer) {
 		$("[name=convertelement]").val($(this).attr('target'));
 		$("[name=reload_elements]").val(1);
@@ -152,7 +279,7 @@ $(".converttocheckboxfromsb").click(function () {
 });
 
 $(".converttoradio").click(function () {
-	var answer = confirm("<{$smarty.const._AM_CONVERT_CB_RB}>");
+	var answer = confirm("<{$smarty.const._AM_CONVERT_CB_RB|escape:"javascript"}>");
 	if(answer) {
 		$("[name=convertelement]").val($(this).attr('target'));
 		$("[name=reload_elements]").val(1);

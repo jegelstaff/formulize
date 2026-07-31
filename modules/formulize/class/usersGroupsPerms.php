@@ -212,7 +212,7 @@ class formulizePermHandler {
             $member_handler =& xoops_gethandler('member');
             $groups = $user_id == 0 ? array(XOOPS_GROUP_ANONYMOUS) : $member_handler->getGroupsByUser($user_id);
 
-            if ("new" == $entry_id or "" == $entry_id) {
+            if (formulize_isNewEntryId($entry_id) or "" == $entry_id) {
                 if ("update" == $action) {
                     // user has permission to add new entries
                     self::$cached_permissions[$cache_key] = $gperm_handler->checkRight("add_own_entry", $form_id, $groups, self::$formulize_module_id);
@@ -554,6 +554,147 @@ class formulizePermHandler {
 			. "SELECT groupid, $targetFid, view_groupid FROM " . $xoopsDB->prefix("formulize_groupscope_settings") . " WHERE fid = $sourceFid");
 
 		return true;
+	}
+
+	/**
+	 * Push a form's permissions out to every form that inherits from it.
+	 *
+	 * Inheritance is not maintained anywhere in the permission writing itself - the core groupperm handler
+	 * knows nothing about forms or parent_perm_fid - so whenever a form's permissions change, this has to
+	 * be called or the inheriting forms silently keep the old permissions, with nothing in either form's
+	 * settings to reveal the drift. Any caller that writes permissions is responsible for calling it.
+	 *
+	 * Every current child is refreshed, not only newly added ones, because a parent's permissions can
+	 * change without its list of children changing at all. That is safe to repeat: copyFormPermissions()
+	 * replaces rather than merges, deleting the target's rows before copying, so running this repeatedly
+	 * converges on the same result.
+	 *
+	 * Only direct children are handled. Chains cannot be created through the admin interface - a form that
+	 * inherits cannot itself be declared a parent - so there are no grandchildren to reach.
+	 *
+	 * @param int $formId The form whose permissions have just changed
+	 * @return array The ids of the forms that were updated, in ascending order
+	 */
+	static function propagatePermissionsToInheritingForms($formId) {
+		global $xoopsDB;
+		$formId = intval($formId);
+		if (!$formId) {
+			return array();
+		}
+		$childIds = array();
+		$sql = "SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE parent_perm_fid = $formId ORDER BY id_form";
+		if ($result = $xoopsDB->query($sql)) {
+			while ($row = $xoopsDB->fetchArray($result)) {
+				$childIds[] = intval($row['id_form']);
+			}
+		}
+		foreach ($childIds as $childFid) {
+			self::copyFormPermissions($formId, $childFid);
+		}
+		return $childIds;
+	}
+
+	/**
+	 * Declare which form a given form inherits its permissions from, and bring it into line.
+	 *
+	 * The counterpart to setInheritingForms(): that one says "these forms inherit from me", this one says
+	 * "I inherit from that one". Both are needed because the relationship is declared from either end in
+	 * the admin interface, and both write the same parent_perm_fid column from opposite directions.
+	 *
+	 * Setting a parent replaces the form's entire permission set with a copy of the parent's, which is why
+	 * the copy happens here rather than being left to the caller: a form marked as inheriting but still
+	 * holding its own old permissions would be lying about where its permissions come from, and nothing
+	 * would reveal the discrepancy until the parent was next saved.
+	 *
+	 * Clearing the parent (passing 0) does not restore anything. There is nothing to restore to - the old
+	 * permissions were overwritten when the parent was set. The form simply keeps whatever it inherited
+	 * and becomes free to have them edited directly again.
+	 *
+	 * @param int $formId The form that will inherit
+	 * @param int $parentFid The form to inherit from, or 0 to stop inheriting
+	 * @return bool True if the form's permissions were replaced by a copy from the parent
+	 */
+	static function setPermissionParent($formId, $parentFid) {
+		$formId = intval($formId);
+		$parentFid = intval($parentFid);
+		if (!$formId OR $formId === $parentFid) { // a form inheriting from itself is not a relationship
+			return false;
+		}
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		if (!$formObject = $form_handler->get($formId)) {
+			return false;
+		}
+		if (intval($formObject->getVar('parent_perm_fid')) !== $parentFid) {
+			$formObject->setVar('parent_perm_fid', $parentFid);
+			$form_handler->insert($formObject, true);
+		}
+		if ($parentFid > 0) {
+			self::copyFormPermissions($parentFid, $formId);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Declare which forms inherit their permissions from a given form, and bring them into line.
+	 *
+	 * Takes the complete list of forms that should inherit, rather than additions and removals, because
+	 * that is what the admin interface submits and what a caller can reason about: a form that currently
+	 * inherits but is absent from the list stops inheriting. An empty list therefore detaches every child,
+	 * which is intended - it is how the admin interface clears the last checkbox.
+	 *
+	 * Propagation runs at the end rather than being left to the caller, since changing the relationships
+	 * without refreshing the permissions leaves the inheriting forms silently stale, and that is precisely
+	 * the step that is easy to forget.
+	 *
+	 * @param int $parentFid The form whose permissions are inherited
+	 * @param array $childFids The complete list of form ids that should inherit from it
+	 * @return array 'added', 'removed' and 'propagated_to', each a list of form ids
+	 */
+	static function setInheritingForms($parentFid, $childFids) {
+		global $xoopsDB;
+		$parentFid = intval($parentFid);
+		$result = array('added' => array(), 'removed' => array(), 'propagated_to' => array());
+		if (!$parentFid) {
+			return $result;
+		}
+
+		$requested = array();
+		foreach ((array) $childFids as $childFid) {
+			$childFid = intval($childFid);
+			if ($childFid AND $childFid !== $parentFid) { // a form inheriting from itself is not a relationship
+				$requested[$childFid] = $childFid;
+			}
+		}
+
+		$current = array();
+		$sql = "SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE parent_perm_fid = $parentFid";
+		if ($currentResult = $xoopsDB->query($sql)) {
+			while ($row = $xoopsDB->fetchArray($currentResult)) {
+				$current[intval($row['id_form'])] = intval($row['id_form']);
+			}
+		}
+
+		// a form that does not exist is skipped rather than recorded, so the returned lists describe
+		// what actually changed
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		foreach (array_diff_key($requested, $current) as $childFid) {
+			if ($childForm = $form_handler->get($childFid)) {
+				$childForm->setVar('parent_perm_fid', $parentFid);
+				$form_handler->insert($childForm, true);
+				$result['added'][] = $childFid;
+			}
+		}
+		foreach (array_diff_key($current, $requested) as $childFid) {
+			if ($childForm = $form_handler->get($childFid)) {
+				$childForm->setVar('parent_perm_fid', 0);
+				$form_handler->insert($childForm, true);
+				$result['removed'][] = $childFid;
+			}
+		}
+
+		$result['propagated_to'] = self::propagatePermissionsToInheritingForms($parentFid);
+		return $result;
 	}
 
 	/**

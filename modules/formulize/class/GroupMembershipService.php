@@ -1,11 +1,11 @@
 <?php
 /**
  * GroupMembershipService - Service class for managing group memberships
- * 
+ *
  * Consolidates logic for processing user-to-group membership changes
- * that was previously duplicated in userAccountGroupMembershipElement 
+ * that was previously duplicated in userAccountGroupMembershipElement
  * and groupTableElement classes.
- * 
+ *
  * @package formulize
  * @subpackage classes
  */
@@ -21,7 +21,7 @@ class GroupMembershipService {
 		if(empty($input) || $input === '[]') {
 			return array();
 		}
-		
+
 		if(is_string($input)) {
 			$decoded = json_decode($input, true);
 			if(!is_array($decoded)) {
@@ -29,14 +29,14 @@ class GroupMembershipService {
 			}
 			$input = $decoded;
 		}
-		
+
 		if(!is_array($input)) {
 			return array();
 		}
-		
+
 		// Filter to positive integers only
-		return array_values(array_filter(array_map('intval', $input), function($uid) { 
-			return $uid > 0; 
+		return array_values(array_filter(array_map('intval', $input), function($uid) {
+			return $uid > 0;
 		}));
 	}
 
@@ -51,27 +51,27 @@ class GroupMembershipService {
 		if(!in_array(XOOPS_GROUP_USERS, $groupIds)) {
 			$groupIds[] = XOOPS_GROUP_USERS;
 		}
-		
+
 		// Never allow user to be in Anonymous Users group
 		$anonGroupKey = array_search(XOOPS_GROUP_ANONYMOUS, $groupIds);
 		if($anonGroupKey !== false) {
 			unset($groupIds[$anonGroupKey]);
 		}
-		
+
 		// Only webmasters can assign to the webmasters group
 		$webmastersGroupKey = array_search(XOOPS_GROUP_ADMIN, $groupIds);
 		if($webmastersGroupKey !== false && !in_array(XOOPS_GROUP_ADMIN, $currentUserGroups)) {
 			unset($groupIds[$webmastersGroupKey]);
 		}
-		
+
 		// If target user is a webmaster, non-webmasters cannot remove them from that group
-		if(!empty($targetUserCurrentGroups) 
+		if(!empty($targetUserCurrentGroups)
 			&& in_array(XOOPS_GROUP_ADMIN, $targetUserCurrentGroups)
 			&& !in_array(XOOPS_GROUP_ADMIN, $groupIds)
 			&& !in_array(XOOPS_GROUP_ADMIN, $currentUserGroups)) {
 			$groupIds[] = XOOPS_GROUP_ADMIN;
 		}
-		
+
 		// Re-index array after unset operations
 		$groupIds = array_values($groupIds);
 	}
@@ -88,28 +88,28 @@ class GroupMembershipService {
 		if(!is_array($defaultGroups) || empty($defaultGroups)) {
 			return;
 		}
-		
+
 		$allConditions = $formObject->getVar('entries_are_users_conditions');
 		if(!is_array($allConditions)) {
 			$allConditions = array();
 		}
-		
+
 		$elementLinks = $formObject->getVar('entries_are_users_default_groups_element_links');
 		if(!is_array($elementLinks)) {
 			$elementLinks = array();
 		}
-		
+
 		foreach($defaultGroups as $defaultGroupId) {
 			$defaultGroupId = intval($defaultGroupId);
-			
+
 			// Resolve template group to entry groups, if necessary
 			$resolvedGroupIds = formulizeHandler::resolveDefaultGroupId($defaultGroupId, $formId, $entryId, $elementLinks);
-			
+
 			// If there's a family of entry groups for a template, remove all from that family first
 			if($templateFamilyGroups = formulizeHandler::getAllGroupsForTemplateCategory($defaultGroupId)) {
 				$submittedGroupIds = array_diff($submittedGroupIds, $templateFamilyGroups);
 			}
-			
+
 			// Check conditions if they exist for this group
 			if(isset($allConditions[$defaultGroupId]) && !empty($allConditions[$defaultGroupId])) {
 				$conditionsMet = checkConditionsAgainstAnEntry($allConditions[$defaultGroupId], $formId, $entryId, null, -1);
@@ -119,7 +119,7 @@ class GroupMembershipService {
 					continue;
 				}
 			}
-			
+
 			// Add the resolved groups
 			$submittedGroupIds = array_unique(array_merge($submittedGroupIds, $resolvedGroupIds));
 		}
@@ -135,7 +135,7 @@ class GroupMembershipService {
 		// Normalize to integers
 		$submittedGroupIds = array_map('intval', array_unique($submittedGroupIds));
 		$currentGroupIds = array_map('intval', array_unique($currentGroupIds));
-		
+
 		return array(
 			'toAdd' => array_diff($submittedGroupIds, $currentGroupIds),
 			'toRemove' => array_diff($currentGroupIds, $submittedGroupIds),
@@ -152,7 +152,7 @@ class GroupMembershipService {
 	public static function applyMembershipChanges($userId, $toAdd, $toRemove) {
 		$member_handler = xoops_gethandler('member');
 		$validGroupIds = array_keys($member_handler->getGroups(id_as_key: true));
-		
+
 		// Add user to new groups
 		foreach($toAdd as $groupId) {
 			if(in_array($groupId, $validGroupIds)) {
@@ -161,7 +161,7 @@ class GroupMembershipService {
 				}
 			}
 		}
-		
+
 		// Remove user from groups
 		foreach($toRemove as $groupId) {
 			if($member_handler->removeUsersFromGroup($groupId, array($userId)) === false) {
@@ -188,6 +188,7 @@ class GroupMembershipService {
 	 * @return array Filtered array of user IDs that can actually be removed
 	 */
 	public static function filterMandatoryMemberships($uids, $groupId) {
+		require_once XOOPS_ROOT_PATH . "/modules/formulize/class/userAccountGroupMembershipElement.php";
 		return array_values(array_filter($uids, function($uid) use ($groupId) {
 			return !formulizeUserAccountGroupMembershipElementHandler::isGroupMandatoryForUser($uid, $groupId);
 		}));
@@ -203,14 +204,14 @@ class GroupMembershipService {
 	 */
 	public static function processUserGroupMemberships($userId, $formId, $entryId, $formObject = null) {
 		global $xoopsUser;
-		
+
 		if(!$formObject) {
 			$form_handler = xoops_getmodulehandler('forms', 'formulize');
 			if(!$formObject = $form_handler->get($formId)) {
 				throw new Exception("Could not retrieve form object for form ID $formId");
 			}
 		}
-		
+
 		// Permission checks
 		$isUserTableForm = $formObject->isSystemUsersTableForm();
 		$gperm_handler = xoops_gethandler('groupperm');
@@ -243,17 +244,17 @@ class GroupMembershipService {
 				throw new Exception("You do not have permission to edit this entry");
 			}
 		}
-		
+
 		// Check base conditions for entries-are-users
 		if(!$isUserTableForm && !formulizeHandler::entriesAreUsersEntryMeetsBaseConditions($formId, $entryId)) {
 			return; // Entry doesn't represent a user
 		}
-		
+
 		// Get current and submitted group memberships
 		$member_handler = xoops_gethandler('member');
 		$currentGroupIds = $member_handler->getGroupsByUser($userId);
 		$submittedGroupIds = $currentGroupIds; // default to current
-		
+
 		// Check if group membership element was submitted. The group membership element is
 		// adminOnly, so only honour a submitted value when the active user can manage users; for
 		// everyone else the submitted value is ignored and only condition-driven default groups
@@ -269,18 +270,18 @@ class GroupMembershipService {
 				}
 			}
 		}
-		
+
 		// Apply system group rules
 		self::enforceSystemGroupRules($submittedGroupIds, $xoopsUser->getGroups(), $currentGroupIds);
-		
+
 		// Apply default groups and their conditions
 		self::applyDefaultGroupsAndConditions($formObject, $formId, $entryId, $submittedGroupIds);
-		
+
 		// Check if any changes are needed
 		if(!self::hasMembershipChanges($submittedGroupIds, $currentGroupIds)) {
 			return;
 		}
-		
+
 		// Apply the changes
 		$diff = self::diffMemberships($submittedGroupIds, $currentGroupIds);
 		self::applyMembershipChanges($userId, $diff['toAdd'], $diff['toRemove']);
@@ -295,10 +296,10 @@ class GroupMembershipService {
 	 */
 	public static function processGroupMembershipWidget($groupId, $formId, $entryId) {
 		global $xoopsDB;
-		
+
 		$addKey = 'group_members_add_' . $formId . '_' . $entryId . '_' . $groupId;
 		$removeKey = 'group_members_remove_' . $formId . '_' . $entryId . '_' . $groupId;
-		
+
 		// Parse UIDs from POST
 		$addUids = array();
 		$removeUids = array();
@@ -308,12 +309,12 @@ class GroupMembershipService {
 		if(isset($_POST[$removeKey])) {
 			$removeUids = self::parseUidList($_POST[$removeKey]);
 		}
-		
+
 		// Filter out users with mandatory membership
 		if(!empty($removeUids)) {
 			$removeUids = self::filterMandatoryMemberships($removeUids, $groupId);
 		}
-		
+
 		// Apply removals
 		$gulTable = $xoopsDB->prefix('groups_users_link');
 		if(!empty($removeUids)) {
@@ -322,7 +323,7 @@ class GroupMembershipService {
 				"DELETE FROM `$gulTable` WHERE groupid = $groupId AND uid IN ($removeList)"
 			);
 		}
-		
+
 		// Apply additions (check for existing memberships first)
 		if(!empty($addUids)) {
 			$existRes = $xoopsDB->query(

@@ -75,10 +75,12 @@ if ($_GET['fid'] != "new") {
     $headerlistArray = explode("*=+*:",trim($headerlist,"*=+*:"));
     $defaultform = $formObject->getVar('defaultform');
     $defaultlist = $formObject->getVar('defaultlist');
-    $menutext = $formObject->getVar('menutext');
     $form_handle = $formObject->getVar('form_handle');
     $store_revisions = $formObject->getVar('store_revisions');
     $note = $formObject->getVar('note');
+    $entry_description = $formObject->getVar('entry_description');
+    $usage_notes = $formObject->getVar('usage_notes');
+    $data_conventions = $formObject->getVar('data_conventions');
     $send_digests = $formObject->getVar('send_digests');
 		$defaultpi = $formObject->getVar('pi');
 		$pioptions = array();
@@ -840,7 +842,6 @@ function egsCancelAdd(tgid,gid){
     $singleentry_groups = array(array('id' => 2, 'name' => $regGroupObj ? $regGroupObj->getVar('name') : 'Registered Users', 'value' => 'off'));
     $defaultform = 0;
     $defaultlist = 0;
-    $menutext = _AM_APP_USETITLE;
     $form_handle = "";
     $store_revisions = 0;
 		$send_digests = 0;
@@ -912,6 +913,14 @@ $common['defaultform'] = $defaultform;
 $common['defaultlist'] = $defaultlist;
 $common['form_object'] = $formObject;
 $common['note'] = $note;
+// the code editor highlights with CodeMirror's PHP mode, which needs an opening tag before it will treat
+// the content as PHP at all, so make sure one is there for editing. The code itself is stored either way.
+foreach(array('on_before_save', 'on_after_save', 'on_delete', 'custom_edit_check') as $procedure) {
+    $common[$procedure] = ($fid != "new" AND isset($formObject)) ? ensureOpeningPHPTag($formObject->getVar($procedure)) : '';
+}
+$common['entry_description'] = $entry_description ?? '';
+$common['usage_notes'] = $usage_notes ?? '';
+$common['data_conventions'] = $data_conventions ?? '';
 $common['defaultpi'] = $defaultpi;
 $common['pioptions'] = $pioptions;
 $common['formTitle'] = "this form"; // used to refer to the form in the primary identifier selection UI
@@ -976,7 +985,6 @@ $settings = array();
 $settings['singleentry'] = $singleentry;
 $settings['singleentry_groups'] = $singleentry_groups;
 $settings['singleentry_group_autocomplete_ui'] = formulize_renderSingleentryGroupsUI();
-$settings['menutext'] = $menutext;
 $settings['form_handle'] = $form_handle;
 $settings['send_digests'] = $send_digests;
 $settings['store_revisions'] = $store_revisions;

@@ -62,14 +62,13 @@ trait formulizeAdHocTableFormTrait {
 		}
 
 		// Create the form record directly (bypassing normal insert which creates data tables and screens we don't need)
-		$sql = "INSERT INTO " . $xoopsDB->prefix("formulize_id") . " (`form_title`, `singular`, `plural`, `singleentry`, `tableform`, `lockedform`, `menutext`, `form_handle`, `store_revisions`, `note`, `send_digests`, `pi`, `entries_are_users`, `entries_are_groups`, `parent_perm_fid`) VALUES (" .
+		$sql = "INSERT INTO " . $xoopsDB->prefix("formulize_id") . " (`form_title`, `singular`, `plural`, `singleentry`, `tableform`, `lockedform`, `form_handle`, `store_revisions`, `note`, `send_digests`, `pi`, `entries_are_users`, `entries_are_groups`, `parent_perm_fid`) VALUES (" .
 			$xoopsDB->quoteString($formTitle) . ", " .
 			$xoopsDB->quoteString($formTitle) . ", " .
 			$xoopsDB->quoteString($formTitle) . ", " .
 			"'off', " .
 			$xoopsDB->quoteString($tableName) . ", " .
 			FORMULIZE_LOCKEDFORM_SYSTEM_MANAGED . ", " . // system-managed ad hoc table form
-			"'', " .
 			$xoopsDB->quoteString($formHandle) . ", " .
 			"0, '', 0, 0, 0, 0, 0)";
 

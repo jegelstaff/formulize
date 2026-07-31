@@ -289,6 +289,18 @@ define("_AM_SETTINGS_FORM_CREATE_ENTRIES_PROXY_LABEL","Record new entries as cre
 define("_AM_SETTINGS_FORM_CREATE_ENTRIES_PROXY_ME","Me");
 define("_AM_SETTINGS_FORM_CREATE_ENTRIES_PROXY_SELF","The users themselves");
 define("_AM_SETTINGS_FORM_CREATE_ENTRIES_PROXY_SPECIFIC","A specific user");
+define("_AM_SETTINGS_FORM_NOTES","Notes");
+define("_AM_SETTINGS_FORM_NOTES_DESC","Private notes for you and other webmasters. Not shown to users, and not given to AI assistants.");
+// "How this form works" - the answers to these questions are given to AI assistants through the MCP get_form_details tool
+define("_AM_SETTINGS_FORM_AI_TITLE","How this form works &mdash; details for AI");
+define("_AM_SETTINGS_FORM_AI_DESC","These three questions describe what the form <i>means</i>, which is not always obvious from the elements alone. The answers you write are given to AI assistants working with this form, so that they can better understand how to work with the form and its entries. They are also a useful record for whoever else maintains this system.");
+define("_AM_SETTINGS_FORM_AI_EXAMPLE_INTRO","An example, for a Workshop Booking form:");
+define("_AM_SETTINGS_FORM_AI_ENTRY_DESCRIPTION","What does one entry in this form represent?");
+define("_AM_SETTINGS_FORM_AI_ENTRY_DESCRIPTION_EXAMPLE","\"One booking, by one person, for one workshop on a given date (the workshops are entries in the Workshops form).\"");
+define("_AM_SETTINGS_FORM_AI_USAGE_NOTES","Who uses this form, when, and for what purpose?");
+define("_AM_SETTINGS_FORM_AI_USAGE_NOTES_EXAMPLE","\"Public users visit the form and select a workshop to book. Managers look at the bookings to make decisions about workshop scheduling and room assignments.\"");
+define("_AM_SETTINGS_FORM_AI_DATA_CONVENTIONS","What rules or expectations apply to the data, that the form itself might not show?");
+define("_AM_SETTINGS_FORM_AI_DATA_CONVENTIONS_EXAMPLE","\"There are a limited number of spaces in a workshop, and new bookings trigger an update of the 'available spaces' value for the selected workshop in the Workshops form. Once a workshop has no available spaces it does not show up in the bookings form anymore.\"");
 define("_AM_SETTINGS_NEW_CONNECTION_COMMON", "A new element, common value with<br>%s");
 define("_AM_SETTINGS_NEW_CONNECTION_COMMON_PARALLEL", "A new element, same settings as<br>%s");
 define("_AM_SETTINGS_NEW_CONNECTION_REGULAR", "A new element, linked to<br>%s");
@@ -323,6 +335,8 @@ define("_AM_PERMISSIONS_SELECT_GROUP","Select some groups to see their permissio
 define("_AM_PERMISSIONS_DEFINE_ACCESS","Access:");
 define("_AM_PERMISSIONS_DEFINE_BASIC","Operations:");
 define("_AM_PERMISSIONS_DEFINE_VIEWFORM","View the form and entries");
+define("_AM_PERMISSIONS_DEFINE_VIEWFORM_EXPLAIN","Gives group members access to this form, and makes this group one of <b>their groups</b> for updating, deleting, and viewing entries.");
+define("_AM_PERMISSIONS_GROUPSCOPE_USE_DEFAULT","[Use default]");
 define("_AM_PERMISSIONS_DEFINE_CREATEOWNENTRIES","Create their own entries");
 define("_AM_PERMISSIONS_DEFINE_UPDATE_ENTRIES_HEADER","Update entries belonging to:");
 define("_AM_PERMISSIONS_DEFINE_UPDATEOWNENTRIES","Update entries <i>made by themselves</i>");
@@ -654,6 +668,41 @@ define("_AM_ELE_DERIVED_UPDATE_DESC", "This may take a while depending on how ma
 define("_AM_ELE_SELECT_NONE","No element selected");
 define("_AM_ELE_CONFIRM_DELETE","Are you sure you want to delete this form element? All data anyone has ever entered into this form element will be deleted as well.");
 define("_AM_ELE_CONFIRM_DELETE_INLINK","THIS FORM ELEMENT IS PART OF RELATIONSHIPS WITH OTHER FORMS! Are you sure you want to delete this form element? The relationships will break, and all data anyone has ever entered into this form element will be deleted as well.");
+
+// Element usage report (the Usage link, and the dialog shown before deleting)
+define("_AM_ELE_USAGE_LINK","Usage");
+define("_AM_ELE_USAGE_TITLE","Where this element is used");
+define("_AM_ELE_USAGE_DELETE_TITLE","Delete this element?");
+define("_AM_ELE_USAGE_LOADING","Checking where this element is used...");
+define("_AM_ELE_USAGE_FAILED","Could not work out where this element is used.");
+define("_AM_ELE_USAGE_ERROR_LOGIN","You are not logged in.");
+define("_AM_ELE_USAGE_ERROR_NOELEMENT","No such element.");
+define("_AM_ELE_USAGE_ERROR_PERMISSION","You do not have permission to see this form's elements.");
+define("_AM_ELE_USAGE_NOTHING","Nothing else in the system refers to this element.");
+define("_AM_ELE_USAGE_HOLDS_DATA","%s entries have a value in this element. Deleting it deletes those values.");
+define("_AM_ELE_USAGE_NO_DATA","No entries have a value in this element.");
+define("_AM_ELE_USAGE_NO_DATA_COLUMN","This element does not store data of its own.");
+define("_AM_ELE_USAGE_IS_PI","This is the form's principal identifier. Deleting it leaves the form without one.");
+define("_AM_ELE_USAGE_HANDLED","These are updated automatically if you delete the element.");
+
+// Headings for the sections of the usage report. These are read by the report in PHP and travel to the
+// dialog inside the JSON, rather than being written into the dialog's Javascript, so that an apostrophe in
+// one of them cannot break the script it would otherwise have been pasted into.
+define("_AM_ELE_USAGE_SECTION_FORM_SCREENS","On these form screens");
+define("_AM_ELE_USAGE_SECTION_LIST_SCREENS","On these list screens");
+define("_AM_ELE_USAGE_SECTION_MAP_SCREENS","On these map screens");
+define("_AM_ELE_USAGE_SECTION_CALENDAR_SCREENS","On these calendar screens");
+define("_AM_ELE_USAGE_SECTION_SCREEN_ADDRESSES","Used to identify entries in the address of these screens");
+define("_AM_ELE_USAGE_SECTION_OTHER_ELEMENTS","Other elements set up to depend on this one");
+define("_AM_ELE_USAGE_SECTION_GROUP_FILTERS","Used in what these groups are allowed to see");
+define("_AM_ELE_USAGE_SECTION_SAVED_VIEWS","In these saved views");
+define("_AM_ELE_USAGE_SECTION_FORM_SETTINGS","In these form settings");
+define("_AM_ELE_USAGE_SECTION_RELATIONSHIPS","Connects these forms together");
+define("_AM_ELE_USAGE_CODE","Named in code, which you would need to fix yourself");
+define("_AM_ELE_USAGE_CODE_INTRO","Deleting the element clears it out of every setting above. It cannot change code somebody wrote, so these are left as they are:");
+define("_AM_ELE_USAGE_CLOSE","Close");
+define("_AM_ELE_USAGE_DELETE_BUTTON","Delete this element");
+define("_AM_ELE_USAGE_CANCEL","Cancel");
 
 // Duration
 define("_AM_ELE_DURATION", "Duration");

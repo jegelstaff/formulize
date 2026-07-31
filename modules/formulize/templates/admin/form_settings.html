@@ -939,10 +939,41 @@
 
 <div class="form-item">
 	<fieldset>
-		<legend><label class="question">Notes</label></legend>
-		<textarea id="forms-note" name="forms-note"><{$content.note}></textarea>
+		<legend><{$smarty.const._AM_SETTINGS_FORM_AI_TITLE}></legend>
+		<div class="description">
+			<p><{$smarty.const._AM_SETTINGS_FORM_AI_DESC}></p>
+		</div>
+
+		<p><label for="forms-entry_description" class="question"><b><{$smarty.const._AM_SETTINGS_FORM_AI_ENTRY_DESCRIPTION}></b></label></p>
+		<textarea id="forms-entry_description" name="forms-entry_description"><{$content.entry_description}></textarea>
+		<div class="description">
+			<p><span style='font-style: normal;'><{$smarty.const._AM_SETTINGS_FORM_AI_EXAMPLE_INTRO}></span> <{$smarty.const._AM_SETTINGS_FORM_AI_ENTRY_DESCRIPTION_EXAMPLE}></p>
+		</div>
+
+		<p style="margin-top:1.5em;"><label for="forms-usage_notes" class="question"><b><{$smarty.const._AM_SETTINGS_FORM_AI_USAGE_NOTES}></b></label></p>
+		<textarea id="forms-usage_notes" name="forms-usage_notes"><{$content.usage_notes}></textarea>
+		<div class="description">
+			<p><span style='font-style: normal;'><{$smarty.const._AM_SETTINGS_FORM_AI_EXAMPLE_INTRO}></span> <{$smarty.const._AM_SETTINGS_FORM_AI_USAGE_NOTES_EXAMPLE}></p>
+		</div>
+
+		<p style="margin-top:1.5em;"><label for="forms-data_conventions" class="question"><b><{$smarty.const._AM_SETTINGS_FORM_AI_DATA_CONVENTIONS}></b></label></p>
+		<textarea id="forms-data_conventions" name="forms-data_conventions"><{$content.data_conventions}></textarea>
+		<div class="description">
+			<p><span style='font-style: normal;'><{$smarty.const._AM_SETTINGS_FORM_AI_EXAMPLE_INTRO}></span> <{$smarty.const._AM_SETTINGS_FORM_AI_DATA_CONVENTIONS_EXAMPLE}></p>
+		</div>
 	</fieldset>
 </div>
+
+<div class="form-item">
+	<fieldset>
+		<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_NOTES}></label></legend>
+		<textarea id="forms-note" name="forms-note"><{$content.note}></textarea>
+		<div class="description">
+			<p><{$smarty.const._AM_SETTINGS_FORM_NOTES_DESC}></p>
+		</div>
+	</fieldset>
+</div>
+
 
 </form>
 <!-- Thanks to https://github.com/plurals/pluralize/ !! -->
@@ -986,7 +1017,7 @@
 		var str=$("[name=forms-form_title]").val();
 		if ("<{$content.fid}>" == "new") {
 			handle=str.toLowerCase().replace(new RegExp("[^a-z0-9]","gm"),"_");
-			handle=handle.replace(new RegExp("_{2,}","gm"),"_").substring(0,20);
+			handle=handle.replace(new RegExp("_{2,}","gm"),"_").substring(0,40);
 			$("[name=forms-form_handle]").val(handle);
 		}
 		const suffixes = ["form", "data"];

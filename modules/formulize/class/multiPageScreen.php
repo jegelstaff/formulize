@@ -437,6 +437,9 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 				}
 			}
 			foreach($pages as $pageNumber=>$items) {
+				if(!is_array($items) OR !$items) {
+					continue;
+				}
 				$firstItem = $items[array_key_first($items)];
 				if(!is_numeric($firstItem) AND $firstItem != "PHP") {
 					$pageScreenId = substr($firstItem, 4);
@@ -496,41 +499,64 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		if(!is_array($elementIdOrIds)) {
 			$elementIdOrIds = array($elementIdOrIds);
 		}
+		$elementIdOrIds = array_filter(array_map('intval', $elementIdOrIds));
+		if(!$elementIdOrIds) {
+			return;
+		}
+		// the LIKE is a coarse filter on the serialized pages, so it can match rows that do not really hold
+		// these ids - the exact test is the in_array below
 		$sql = "SELECT `sid`, `pages`, `pagetitles`, `conditions`, `disabledpages` FROM ".$this->db->prefix('formulize_screen_multipage')." WHERE `pages` LIKE '%".implode("%' OR `pages` LIKE '%", $elementIdOrIds)."%'";
 		if($result = $this->db->query($sql)) {
 			while($array = $this->db->fetchArray($result)) {
 				$pages = unserialize($array['pages']);
+				if(!is_array($pages)) {
+					continue;
+				}
 				$pagetitles = unserialize($array['pagetitles']);
+				$pagetitles = is_array($pagetitles) ? $pagetitles : array();
 				$pageconditions = unserialize($array['conditions']);
+				$pageconditions = is_array($pageconditions) ? $pageconditions : array();
 				$disabledpages = unserialize($array['disabledpages']);
 				$disabledpages = is_array($disabledpages) ? $disabledpages : array();
 				$changed = false;
+				$emptiedPages = array();
 				foreach($pages as $pageIndex=>$pageElements) {
+					if(!is_array($pageElements) OR !$pageElements) {
+						continue;
+					}
+					// a page holds element ids, but it can instead hold a reference to another screen, which
+					// is not something to search for element ids in. Every item is checked rather than only
+					// the first, so a page cannot keep an element just because of what happens to lead it.
 					$pageChanged = false;
-					$firstItem = $pageElements[array_key_first($pageElements)];
-					if(is_numeric($firstItem)) {
-						foreach($elementIdOrIds as $elementId) {
-							if(($key = array_search($elementId, $pageElements)) !== false) {
-								unset($pages[$pageIndex][$key]);
-								$pageChanged = true;
-							}
+					foreach($pageElements as $key=>$pageElement) {
+						if(is_numeric($pageElement) AND in_array($pageElement, $elementIdOrIds)) {
+							unset($pages[$pageIndex][$key]);
+							$pageChanged = true;
 						}
 					}
 					if($pageChanged) {
 						if(count($pages[$pageIndex]) == 0 AND $removeEmptyPages) {
-							unset($pages[$pageIndex]);
-							unset($pagetitles[$pageIndex]);
-							unset($pageconditions[$pageIndex]);
-							unset($disabledpages[$pageIndex]);
-							$pages = array_values($pages); // reindex the array
-							$pagetitles = array_values($pagetitles); // reindex the array
-							$pageconditions = array_values($pageconditions); // reindex the array
-							$disabledpages = array_values($disabledpages); // reindex the array
+							// collected and dealt with after the loop: reindexing here would renumber the
+							// pages while the loop is still walking the numbering it started with
+							$emptiedPages[] = $pageIndex;
 						} else {
 							$pages[$pageIndex] = array_values($pages[$pageIndex]); // reindex the array
 						}
 						$changed = true;
 					}
+				}
+				foreach($emptiedPages as $pageIndex) {
+					unset($pages[$pageIndex]);
+					unset($pagetitles[$pageIndex]);
+					unset($pageconditions[$pageIndex]);
+					unset($disabledpages[$pageIndex]);
+				}
+				if($emptiedPages) {
+					// the four run parallel to each other by page number, so they are renumbered together
+					$pages = array_values($pages);
+					$pagetitles = array_values($pagetitles);
+					$pageconditions = array_values($pageconditions);
+					$disabledpages = array_values($disabledpages);
 				}
 				if($changed) {
 					$sql = "UPDATE ".$this->db->prefix('formulize_screen_multipage')."
@@ -538,7 +564,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 						`pagetitles` = ".$this->db->quoteString(serialize($pagetitles)).",
 						`conditions` = ".$this->db->quoteString(serialize($pageconditions)).",
 						`disabledpages` = ".$this->db->quoteString(serialize($disabledpages))."
-						WHERE `sid` = ".$array['sid'];
+						WHERE `sid` = ".intval($array['sid']);
 					$this->db->queryF($sql);
 				}
 			}
@@ -569,6 +595,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
         global $xoopsConfig;
         $defaultFormScreen->setVar('theme', $xoopsConfig['theme_set']);
         $defaultFormScreen->setVar('title', $formObject->getSingular());
+				$defaultFormScreen->setVar('screen_handle', $this->makeHandleUnique($formObject->getSingular()));
         $defaultFormScreen->setVar('displayheading', 0);
 		$defaultFormScreen->setVar('reloadblank', 0);
         $defaultFormScreen->setVar('finishisdone', 1);

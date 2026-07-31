@@ -1457,10 +1457,23 @@ function getDeletableGroupIds() {
 }
 
 /**
- * Delete a group by ID.
+ * Delete a group by ID, and everything that only existed to point at it.
  *
- * Cleans up groups_users_link, group_permission, and formulize_entry_owner_groups
- * in addition to removing the groups table row.
+ * Every row removed here is one whose entire purpose is to associate something with this group - a
+ * membership, a permission, a filter, a menu entry's visibility. Such a row left behind is not merely
+ * untidy: it still reads as a grant. A menu permission row naming a deleted group looks exactly like a
+ * row naming a live one, so anything reporting "who can see this" counts it and overstates the answer,
+ * even though a deleted group has no members and therefore grants nothing at all.
+ *
+ * Deliberately NOT touched:
+ *  - formulize_notification_conditions.not_cons_groupid. That row is a whole notification rule - subject,
+ *    template, conditions - and the group is only one of several ways it can choose recipients. Deleting
+ *    the row would discard a rule that may still notify people by other means, and zeroing the column
+ *    would quietly change who a live rule reaches. A dangling id there selects nobody, which is harmless.
+ *  - Group ids embedded in delimited or serialized settings (element ele_display, the per-group
+ *    limit_entries array, saved view publish groups, entries-are-users default groups, and so on). Those
+ *    need parsing per format rather than a DELETE, and are a larger piece of work - see the note in the
+ *    Formulize MCP plan. A stale id in those places also selects nobody, so it is inert rather than wrong.
  *
  * @param int $groupId The group ID to delete
  * @return bool True on success, false if $groupId is 0 or invalid
@@ -1471,15 +1484,24 @@ function deleteGroupById($groupId) {
 	if (!$groupId) {
 		return false;
 	}
-	$gulTable   = $xoopsDB->prefix('groups_users_link');
-	$gpermTable = $xoopsDB->prefix('group_permission');
-	$eogTable   = $xoopsDB->prefix('formulize_entry_owner_groups');
-	$groupsTable = $xoopsDB->prefix('groups');
+	$gulTable        = $xoopsDB->prefix('groups_users_link');
+	$gpermTable      = $xoopsDB->prefix('group_permission');
+	$eogTable        = $xoopsDB->prefix('formulize_entry_owner_groups');
+	$menuPermTable   = $xoopsDB->prefix('formulize_menu_permissions');
+	$groupFilterTable = $xoopsDB->prefix('formulize_group_filters');
+	$groupscopeTable = $xoopsDB->prefix('formulize_groupscope_settings');
+	$groupsTable     = $xoopsDB->prefix('groups');
 
-	$xoopsDB->queryF("DELETE FROM `$gulTable`   WHERE groupid = $groupId");
-	$xoopsDB->queryF("DELETE FROM `$gpermTable` WHERE gperm_groupid = $groupId");
-	$xoopsDB->queryF("DELETE FROM `$eogTable`   WHERE groupid = $groupId");
-	$xoopsDB->queryF("DELETE FROM `$groupsTable` WHERE groupid = $groupId");
+	$xoopsDB->queryF("DELETE FROM `$gulTable`         WHERE groupid = $groupId");
+	$xoopsDB->queryF("DELETE FROM `$gpermTable`       WHERE gperm_groupid = $groupId");
+	$xoopsDB->queryF("DELETE FROM `$eogTable`         WHERE groupid = $groupId");
+	$xoopsDB->queryF("DELETE FROM `$menuPermTable`    WHERE group_id = $groupId");
+	$xoopsDB->queryF("DELETE FROM `$groupFilterTable` WHERE groupid = $groupId");
+	// Both columns: groupid is this group's own scope setting, view_groupid is some OTHER group's scope
+	// pointing AT this one. Removing only the first would leave that other group scoped to a group that no
+	// longer exists, which resolves to no entries and looks like a permissions bug rather than a leftover.
+	$xoopsDB->queryF("DELETE FROM `$groupscopeTable`  WHERE groupid = $groupId OR view_groupid = $groupId");
+	$xoopsDB->queryF("DELETE FROM `$groupsTable`      WHERE groupid = $groupId");
 	return true;
 }
 

@@ -362,7 +362,7 @@ function formulize_run_schema_migrations($prev_dbversion, $required_dbversion) {
         $sql['sep_to_areamodif'] = "UPDATE ". $xoopsDB->prefix("formulize") ." SET ele_type='areamodif' WHERE ele_type='sep'";
         $sql['add_defaultform'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `defaultform` int(11) NOT NULL default 0";
         $sql['add_defaultlist'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `defaultlist` int(11) NOT NULL default 0";
-        $sql['add_menutext'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `menutext` varchar(255) default 'Use the form\'s title'";
+        $sql['drop_menutext'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " DROP `menutext`";
         $sql['add_useadvcalcs'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " ADD `useadvcalcs` varchar(255) NOT NULL default ''";
         $sql['add_not_elementemail'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_notification_conditions") . " ADD `not_cons_elementemail` smallint(5) NOT NULL default 0";
         $sql['add_form_handle'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `form_handle` varchar(255) NOT NULL";
@@ -460,6 +460,9 @@ function formulize_run_schema_migrations($prev_dbversion, $required_dbversion) {
 				$sql['widen_groups_name'] = "ALTER TABLE ".$xoopsDB->prefix("groups"). " CHANGE `name` `name` varchar(255) NOT NULL default ''";
 				$sql['singleentry_to_text'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " CHANGE `singleentry` `singleentry` text NULL";
 				$sql['add_parent_perm_fid'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `parent_perm_fid` int(5) NOT NULL default 0";
+				$sql['add_entry_description'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `entry_description` text NULL";
+				$sql['add_usage_notes'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `usage_notes` text NULL";
+				$sql['add_data_conventions'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `data_conventions` text NULL";
 				$sql['add_tfa_attempts'] = "ALTER TABLE ".$xoopsDB->prefix("tfa_codes"). " ADD `attempts` smallint(5) unsigned NOT NULL default 0";
 				$sql['add_tfa_last_attempt'] = "ALTER TABLE ".$xoopsDB->prefix("tfa_codes"). " ADD `last_attempt` int(11) unsigned NOT NULL default 0";
 				$sql['add_tfa_created'] = "ALTER TABLE ".$xoopsDB->prefix("tfa_codes"). " ADD `created` int(11) unsigned NOT NULL default 0";
@@ -483,8 +486,8 @@ function formulize_run_schema_migrations($prev_dbversion, $required_dbversion) {
                     print "defaultform field already added.  result: OK<br>";
                 } elseif ($key === "add_defaultlist") {
                     print "defaultlist field already added.  result: OK<br>";
-                } elseif ($key === "add_menutext") {
-                    print "menutext field already added.  result: OK<br>";
+                } elseif ($key === "drop_menutext") {
+                    print "menutext field already removed.  result: OK<br>";
                 } elseif ($key === "add_useadvcalcs") {
                     print "useadvcalcs field already added.  result: OK<br>";
                 } elseif ($key === "add_not_elementemail") {
@@ -619,6 +622,8 @@ function formulize_run_schema_migrations($prev_dbversion, $required_dbversion) {
 									print "singleentry column already converted to text. result: OK<br>";
 								} elseif($key === "add_parent_perm_fid") {
 									print "parent_perm_fid field already added to formulize_id table. result: OK<br>";
+								} elseif($key === "add_entry_description" OR $key === "add_usage_notes" OR $key === "add_data_conventions") {
+									print "Form description fields already added to formulize_id table. result: OK<br>";
 								} elseif($key === "add_tfa_attempts" OR $key === "add_tfa_last_attempt" OR $key === "add_tfa_created") {
 									print "2FA attempt-limiting fields already added. result: OK<br>";
 								} elseif($key === "add_ele_handle_index") {
@@ -1660,33 +1665,9 @@ NEWVERSION;
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
             }
-            // populate new menus tables with existing menu entries
-            $application_handler = xoops_getmodulehandler('applications', 'formulize');
-
-            $form_handler = xoops_getmodulehandler('forms', 'formulize');
-            $allApplications = $application_handler->getAllApplications();
-            $menuTexts = array();
-            $i = 0;
-            foreach($allApplications as $thisApplication) {
-                $forms = $thisApplication->getVar('forms');
-                foreach($forms as $thisForm) {
-                    $thisFormObject = $form_handler->get($thisForm);
-                    if ($menuText = $thisFormObject->getVar('menutext')) {
-                saveMenuEntryAndPermissionsSQL($thisFormObject->getVar('id_form'),$thisApplication->getVar("appid"),$i,$menuText);
-                    }
-                    $i++;
-                }
-                $i=0;
-            }
-
-            $formsWithNoApplication = $form_handler->getFormsByApplication(0,true); // true forces ids not objects to be returned
-            foreach($formsWithNoApplication as $thisForm) {
-                $thisFormObject = $form_handler->get($thisForm);
-                if ($menuText = $thisFormObject->getVar('menutext')) {
-                saveMenuEntryAndPermissionsSQL($thisFormObject->getVar('id_form'),0,$i,$menuText);
-                }
-                $i++;
-            }
+            // Menu entries used to be populated here from the old per-form menutext column. That migration
+            // dates from long before the current menu system and is no longer carried: menu text lives in
+            // formulize_menu_links.link_text, and the menutext column has been removed from the codebase.
         }
 
         // need to update multiple select boxes for new data structure

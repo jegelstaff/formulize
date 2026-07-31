@@ -127,6 +127,18 @@ define("_AM_SETTINGS_FORM_USER_MAPPING_SYNC_NOTE","Une synchronisation unique de
 define("_AM_SETTINGS_FORM_SHOWING_LIST","Quand la liste des entrées s'affiche pour ce formulaire, quels éléments souhaitez vous afficher par défaut?");
 define("_AM_SETTINGS_FORM_APP_PART","De quel regroupement ce formulaire fait-il parti?");
 define("_AM_SETTINGS_FORM_APPNEW","Créer un nouveau regroupement dont ce formulaire fera parti?");
+define("_AM_SETTINGS_FORM_NOTES","Notes");
+define("_AM_SETTINGS_FORM_NOTES_DESC","Notes privées pour vous et les autres webmestres. Elles ne sont pas montrées aux utilisateurs, ni transmises aux assistants IA.");
+// « Comment ce formulaire fonctionne » - les réponses à ces questions sont transmises aux assistants IA par l'outil MCP get_form_details
+define("_AM_SETTINGS_FORM_AI_TITLE","Comment ce formulaire fonctionne &mdash; détails pour l'IA");
+define("_AM_SETTINGS_FORM_AI_DESC","Ces trois questions décrivent ce que le formulaire <i>signifie</i>, ce qui n'est pas toujours évident à partir des éléments seuls. Les réponses que vous écrivez sont transmises aux assistants IA qui travaillent avec ce formulaire, afin qu'ils comprennent mieux comment utiliser le formulaire et ses entrées. Elles constituent aussi un précieux aide-mémoire pour quiconque entretiendra ce système par la suite.");
+define("_AM_SETTINGS_FORM_AI_EXAMPLE_INTRO","Un exemple, pour un formulaire d'Inscription aux ateliers :");
+define("_AM_SETTINGS_FORM_AI_ENTRY_DESCRIPTION","Que représente une entrée dans ce formulaire?");
+define("_AM_SETTINGS_FORM_AI_ENTRY_DESCRIPTION_EXAMPLE","« Une inscription, par une personne, à un atelier à une date donnée (les ateliers sont des entrées dans le formulaire Ateliers). »");
+define("_AM_SETTINGS_FORM_AI_USAGE_NOTES","Qui utilise ce formulaire, quand, et dans quel but?");
+define("_AM_SETTINGS_FORM_AI_USAGE_NOTES_EXAMPLE","« Le public visite le formulaire et choisit un atelier auquel s'inscrire. Les gestionnaires consultent les inscriptions pour prendre des décisions sur l'horaire des ateliers et l'attribution des salles. »");
+define("_AM_SETTINGS_FORM_AI_DATA_CONVENTIONS","Quelles règles ou attentes s'appliquent aux données, que le formulaire lui-même pourrait ne pas montrer?");
+define("_AM_SETTINGS_FORM_AI_DATA_CONVENTIONS_EXAMPLE","« Le nombre de places dans un atelier est limité, et chaque nouvelle inscription déclenche la mise à jour de la valeur « places disponibles » de l'atelier choisi dans le formulaire Ateliers. Lorsqu'un atelier n'a plus de places disponibles, il n'apparaît plus dans le formulaire d'inscription. »");
 
 
 
@@ -147,6 +159,8 @@ define("_AM_PERMISSIONS_SELECT_GROUP","Sélectionnez des groupes pour voir leurs
 define("_AM_PERMISSIONS_DEFINE_ACCESS","Accès:");
 define("_AM_PERMISSIONS_DEFINE_BASIC","Opérations:");
 define("_AM_PERMISSIONS_DEFINE_VIEWFORM","Voir le formulaire et les entrées");
+define("_AM_PERMISSIONS_DEFINE_VIEWFORM_EXPLAIN","Donne aux membres du groupe l'accès à ce formulaire, et fait de ce groupe l'un de <b>leurs groupes</b> pour la mise à jour, la suppression et la consultation des entrées.");
+define("_AM_PERMISSIONS_GROUPSCOPE_USE_DEFAULT","[Utiliser la valeur par défaut]");
 define("_AM_PERMISSIONS_DEFINE_CREATEOWNENTRIES","Créer sa propre entrée");
 define("_AM_PERMISSIONS_DEFINE_UPDATE_ENTRIES_HEADER","Mettre à jour les entrées appartenant à :");
 define("_AM_PERMISSIONS_DEFINE_UPDATEOWNENTRIES","Mettre à jour <i>ses entrées</i>");

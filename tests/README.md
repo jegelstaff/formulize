@@ -1,5 +1,33 @@
 # Testing
 
+## PHP tests
+
+Plain PHP scripts in this folder, run with `php tests/<name>.php`. They exit non-zero on failure and are
+run by CI. There are two kinds, and the difference is when they run:
+
+**Standalone logic tests** need nothing but PHP - they load the code under test directly and check its
+behaviour. CI runs them *before* the e2e suite, since they have nothing to wait for.
+
+* `password_hashing_test.php`
+* `reference_binding_test.php`
+* `normalize_then_escape_test.php`
+
+**Integrity tests against a built system** boot the application and read the live database, so CI runs
+them *after* the e2e suite, when the setup specs have finished building the museum system.
+
+* `element_reference_integrity_test.php` - what deleting an element would disturb, and what deleting it
+  actually changes, across every screen, element, saved view and form on the system. Where the museum
+  system has no example of a given kind of reference (map screens, calendars, saved views with searches
+  and calculations, dynamic default values), it builds fixtures and cleans them up for real, inside a
+  transaction it rolls back. It asserts invariants rather than counts, so adding screens or elements to
+  the setup suite does not break it.
+
+To run one against a local docker environment:
+
+```
+docker exec formulize-web-1 php /var/www/html/tests/element_reference_integrity_test.php
+```
+
 ## End to end (e2e) testings
 
 We use the [Playwright](https://playwright.dev/) framework for configuring and executing e2e tests across browsers.

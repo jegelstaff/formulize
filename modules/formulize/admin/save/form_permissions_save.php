@@ -190,59 +190,20 @@ if (!$filters_only) {
 }
 
 // --- Handle parent_perm_fid (this form inherits permissions from another form) ---
-$old_parent_perm_fid = intval($formObject->getVar('parent_perm_fid', 'n'));
-if ($submitted_parent_perm_fid !== $old_parent_perm_fid) {
-    $formObject->setVar('parent_perm_fid', $submitted_parent_perm_fid);
-    $form_handler->insert($formObject, true);
-}
-// If a parent is set, copy permissions from the parent to this form
-if ($submitted_parent_perm_fid > 0) {
-    formulizePermHandler::copyFormPermissions($submitted_parent_perm_fid, $form_id);
-}
+// writes parent_perm_fid and, when a parent is set, copies its permissions down to this form
+formulizePermHandler::setPermissionParent($form_id, $submitted_parent_perm_fid);
 
 if (!$filters_only) {
   // --- Handle child_perm_fids[] (this form is the parent of other forms) ---
-  $currentChildrenSql = "SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE parent_perm_fid = " . intval($form_id);
-  $currentChildIds = array();
-  if ($currentChildRes = $xoopsDB->query($currentChildrenSql)) {
-      while ($row = $xoopsDB->fetchArray($currentChildRes)) {
-          $currentChildIds[] = intval($row['id_form']);
-      }
-  }
-
+  // An unchecked list submits nothing, which correctly means "no form inherits from this one any more".
   $submittedChildIds = array();
   if (isset($_POST['child_perm_fids']) && is_array($_POST['child_perm_fids'])) {
       foreach ($_POST['child_perm_fids'] as $cid) {
           $submittedChildIds[] = intval($cid);
       }
   }
-
-  // Add newly declared children: set their parent_perm_fid to this form
-  $newChildIds = array_diff($submittedChildIds, $currentChildIds);
-  foreach ($newChildIds as $childFid) {
-      $childForm = $form_handler->get($childFid);
-      if ($childForm) {
-          $childForm->setVar('parent_perm_fid', $form_id);
-          $form_handler->insert($childForm, true);
-      }
-  }
-
-  // Remove children no longer declared: clear their parent_perm_fid
-  $removedChildIds = array_diff($currentChildIds, $submittedChildIds);
-  foreach ($removedChildIds as $childFid) {
-      $childForm = $form_handler->get($childFid);
-      if ($childForm) {
-          $childForm->setVar('parent_perm_fid', 0);
-          $form_handler->insert($childForm, true);
-      }
-  }
-
-  // Propagate this form's permissions to all current children (newly added + existing minus removed)
-  $allChildIds = array_unique(array_merge($currentChildIds, $newChildIds));
-  $allChildIds = array_diff($allChildIds, $removedChildIds);
-  foreach ($allChildIds as $childFid) {
-      formulizePermHandler::copyFormPermissions($form_id, $childFid);
-  }
+  // updates parent_perm_fid in both directions and refreshes every inheriting form's permissions
+  formulizePermHandler::setInheritingForms($form_id, $submittedChildIds);
 }
 
 $formNum = intval($_POST['form_number']);

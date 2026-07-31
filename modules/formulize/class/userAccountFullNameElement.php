@@ -21,6 +21,7 @@ class formulizeUserAccountFullNameElement extends formulizeUserAccountElement {
 		parent::__construct();
 		$this->name = "User Account Full Name";
 		$this->userProperty = "uname";
+		$this->readOnly = true;
 	}
 
 }
