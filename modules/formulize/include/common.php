@@ -159,9 +159,13 @@ function formulize_exception_handler($exception) {
 	while(ob_get_level()) {
 		ob_end_clean();
 	}
-	// if we're in the admin interface, or doing an asynch derived value update, just print a simple message
-	if(strstr(getCurrentURL(), "/modules/formulize/admin/save.php") OR strstr(getCurrentURL(), "op=update_derived_value")) {
-		print strip_tags($errorMessage);
+	// if we're in the admin interface, or doing an asynch derived value update,
+	// Or we're doing a direct call to readelements.php, then just print the error message and exit, don't create a themed page
+	if(strstr(getCurrentURL(), "/modules/formulize/admin/save.php")
+		OR strstr(getCurrentURL(), "op=update_derived_value")
+		OR strstr(getCurrentURL(), "/modules/formulize/include/readelements.php")
+	) {
+		print $errorMessage ? strip_tags($errorMessage) : _formulize_ERRORTITLE;
 		exit();
 	}
 	// otherwise, create a themed error page, with feedback options
