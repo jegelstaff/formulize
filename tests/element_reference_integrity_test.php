@@ -25,10 +25,12 @@
  *
  * 2. THE PLACES THE MUSEUM SYSTEM DOES NOT HAPPEN TO HAVE. Map screens, calendar screens, single page
  *    form screens, saved views with searches and calculations, dynamic default values, screens naming an
- *    entry in the address bar, and page conditions in the format that predates the current one. These are
- *    built as fixtures, cleaned up for real, and checked - all inside a transaction that is rolled back,
- *    so the database is exactly as it was when the test finishes. The fixtures hang off an element this
- *    test creates, so no real row is touched.
+ *    entry in the address bar, page conditions in the format that predates the current one, and the
+ *    element-type settings buried in ele_value - a linked list sorting its options by another element, a
+ *    grid taking its initial values from one, a subform showing one. These are built as fixtures, cleaned
+ *    up for real, and checked - all inside a transaction that is rolled back, so the database is exactly
+ *    as it was when the test finishes. Every fixture, including the elements that point at the one being
+ *    deleted, is created by this test, so no row it did not make is ever written to.
  *
  * 3. THE MULTIPAGE PAGE THAT EMPTIES. Deleting the last element on a page leaves the page in place, and
  *    traverseScreenPages() does not carry an empty page through to the form.
@@ -69,6 +71,7 @@ if (!is_file($root . '/mainfile.php')) {
 include $root . '/mainfile.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/common.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/calendarScreen.php';
+include_once XOOPS_ROOT_PATH . '/modules/formulize/class/selectElement.php'; // for the ELE_VALUE_SELECT_* keys
 
 global $xoopsDB;
 $element_handler = xoops_getmodulehandler('elements', 'formulize');
@@ -78,10 +81,10 @@ if (!$element_handler) {
     exit(2);
 }
 
-// scanElementReferences() is private: the report and the cleanup are its only callers by design. The test
+// findReferencesToElement() is private: the report and the cleanup are its only callers by design. The test
 // reaches in because what it needs to check is the change that would be written, which neither of those
 // two exposes - the report describes it in words, and the cleanup applies it and moves on.
-$scan = new ReflectionMethod('formulizeElementsHandler', 'scanElementReferences');
+$scan = new ReflectionMethod('formulizeElementsHandler', 'findReferencesToElement');
 $scan->setAccessible(true);
 
 $GLOBALS['__pass'] = 0;
@@ -171,6 +174,23 @@ while ($row = $xoopsDB->fetchArray($result)) {
 }
 ok('the system has elements to check', count($elementIds) > 0, 'found ' . count($elementIds));
 
+// What the configuration-as-code system says each element depends on, asked once. The scan uses the same
+// routine to decide what counts as a reference, and this is here so that it goes on doing so: if anyone
+// ever gives the scan its own idea of what a reference is, the two drift apart silently, and the way that
+// shows up is a deletion quietly leaving something behind. Built from the same properties the scan reads.
+$dependenciesOfElement = array();
+$dependencyResult = $xoopsDB->query("SELECT ele_id, ele_type, ele_filtersettings, ele_disabledconditions,
+    ele_dynamicdefault_conditions, ele_dynamicdefault_source, ele_value FROM " . prefix('formulize'));
+while ($dependencyRow = $xoopsDB->fetchArray($dependencyResult)) {
+    $id = intval($dependencyRow['ele_id']);
+    unset($dependencyRow['ele_id']);
+    try {
+        $dependenciesOfElement[$id] = $element_handler->getElementDependencies($dependencyRow);
+    } catch (Throwable $t) {
+        $dependenciesOfElement[$id] = array(); // an element naming something that no longer exists
+    }
+}
+
 $started = microtime(true);
 $elementsWithReferences = 0;
 $totalReferences = 0;
@@ -204,6 +224,24 @@ foreach ($elementIds as $elementId) {
         $elementsWithReferences++;
     }
     $totalReferences += count($references);
+
+    // Everything the configuration-as-code system believes refers to this element has to turn up in the
+    // report. Not necessarily as something that gets rewritten - some references are reported and left for
+    // a person - but it must be named, because being told is the whole point.
+    $reportedElementIds = array();
+    foreach ($references as $reference) {
+        if ($reference['section'] === _AM_ELE_USAGE_SECTION_OTHER_ELEMENTS) {
+            $reportedElementIds[intval($reference['key_value'])] = true;
+        }
+    }
+    foreach ($dependenciesOfElement as $otherId => $handles) {
+        if ($otherId === $elementId || !in_array($report['element_handle'], $handles)) {
+            continue;
+        }
+        ok("element $elementId: element $otherId depends on it, so the report says so",
+            isset($reportedElementIds[$otherId]),
+            'getElementDependencies() names it, the usage report does not');
+    }
 
     foreach ($references as $reference) {
         $sectionCounts[$reference['section']] = (isset($sectionCounts[$reference['section']]) ? $sectionCounts[$reference['section']] : 0) + 1;
@@ -282,9 +320,7 @@ echo "=====================================================================\n";
 echo " PART 2 - the kinds of reference this system does not happen to have\n";
 echo "=====================================================================\n";
 
-// Declared out here so the rollback check at the end can see them even if the fixtures throw part way
-// through. $borrowedRowBefore stays null until a real row has actually been written to.
-$borrowedRowBefore = null;
+// Declared out here so the checks at the end can see them even if the fixtures throw part way through.
 $otherElementId = 0;
 $elementId = 0;
 
@@ -370,14 +406,34 @@ try {
         " . $xoopsDB->quoteString(serialize($legacyConditions)) . ", 'a:0:{}',
         " . $xoopsDB->quoteString(serialize(array($elementId => 'default', 999997 => 'keep'))) . ")");
 
-    // Another element whose dynamic default value is read out of this one. This is the one place the test
-    // borrows a row it did not create - it needs an element that points AT the fixture, and inventing a
-    // second element would not exercise anything the first one does not. Its original values are kept so
-    // that the rollback can be checked properly at the end rather than taken on trust.
-    $otherRow = fetchOne("SELECT ele_id, ele_dynamicdefault_source, ele_dynamicdefault_conditions
-        FROM " . prefix('formulize') . " WHERE ele_id != $elementId ORDER BY ele_id DESC LIMIT 1");
-    $otherElementId = intval($otherRow['ele_id']);
-    $borrowedRowBefore = $otherRow;
+    // Elements of other types whose own settings point at this one. These references live inside ele_value,
+    // and are found by getElementDependencies() like every other kind. What is type specific is putting
+    // ele_value back together without them, which each type does in removeElementFromEleValue() - nothing
+    // outside the type knows that key 12 of a linked list is a single element you blank while key 10 is a
+    // list you splice.
+    $newElement = function ($type, $handle, $eleValue) use ($xoopsDB, $fixtureFid) {
+        $xoopsDB->queryF("INSERT INTO " . prefix('formulize') . "
+            (id_form, ele_type, ele_caption, ele_handle, ele_order, ele_display, ele_value)
+            VALUES ($fixtureFid, '$type', '$handle', '$handle', 9999, 1, " . $xoopsDB->quoteString(serialize($eleValue)) . ")");
+        return intval($xoopsDB->getInsertId());
+    };
+
+    $linkedId = $newElement('selectLinked', 'zz_fixture_linked', array(
+        ELE_VALUE_SELECT_LINK_SORT => $elementId,                           // a single reference, cleared
+        ELE_VALUE_SELECT_LINK_ALTLISTELEMENTS => array(999991, $elementId),  // a list, the entry removed
+        ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS => array(                       // half a pair, reported only
+            array('thisForm' => '{' . $handle . '}', 'sourceForm' => '999990'),
+        ),
+    ));
+    $gridId = $newElement('grid', 'zz_fixture_grid', array(4 => $elementId));
+    $subformId = $newElement('subformListings', 'zz_fixture_subform', array(
+        1 => '999992,' . $elementId, // stored as a comma separated string rather than an array
+        7 => array(0 => array($elementId, 'keep_me'), 1 => array('=', '='), 2 => array('a', 'b'), 3 => array('all', 'all')),
+        'SortingElement' => $elementId,
+    ));
+
+    // another element whose dynamic default value is read out of this one
+    $otherElementId = $newElement('text', 'zz_fixture_dependent', array());
     $xoopsDB->queryF("UPDATE " . prefix('formulize') . " SET ele_dynamicdefault_source = $elementId,
         ele_dynamicdefault_conditions = " . $xoopsDB->quoteString(serialize(array(
             0 => array($elementId), 1 => array('='), 2 => array('v'), 3 => array('all')))) . "
@@ -393,6 +449,15 @@ try {
     ok('the report mentions the calendar screen', isset($sections[_AM_ELE_USAGE_SECTION_CALENDAR_SCREENS]));
     ok('the report mentions the address bar screen', isset($sections[_AM_ELE_USAGE_SECTION_SCREEN_ADDRESSES]));
     ok('the report mentions the element depending on this one', isset($sections[_AM_ELE_USAGE_SECTION_OTHER_ELEMENTS]));
+    $otherElements = isset($sections[_AM_ELE_USAGE_SECTION_OTHER_ELEMENTS]) ? $sections[_AM_ELE_USAGE_SECTION_OTHER_ELEMENTS] : array();
+    ok('the report mentions the linked list that sorts by it',
+        count(preg_grep('/zz_fixture_linked.*sorted by/', $otherElements)) === 1, implode(' | ', $otherElements));
+    ok('the report mentions the grid that takes its initial values from it',
+        count(preg_grep('/zz_fixture_grid.*initial values/', $otherElements)) === 1, implode(' | ', $otherElements));
+    ok('the report mentions the subform that shows it',
+        count(preg_grep('/zz_fixture_subform.*one of the elements it shows/', $otherElements)) === 1, implode(' | ', $otherElements));
+    ok('the report says the source mapping is being left alone',
+        count(preg_grep('/left in place for you to sort out/', $otherElements)) === 1, implode(' | ', $otherElements));
     check('the report mentions both saved views', count(isset($sections[_AM_ELE_USAGE_SECTION_SAVED_VIEWS]) ? $sections[_AM_ELE_USAGE_SECTION_SAVED_VIEWS] : array()), 2);
     ok('the report warns that a form screen will be left showing nothing',
         isset($sections[_AM_ELE_USAGE_SECTION_FORM_SCREENS])
@@ -450,6 +515,30 @@ try {
     $dependent = fetchOne("SELECT ele_dynamicdefault_source, ele_dynamicdefault_conditions FROM " . prefix('formulize') . " WHERE ele_id = $otherElementId");
     check('dynamic default: the source is cleared', intval($dependent['ele_dynamicdefault_source']), 0);
     check('dynamic default: its conditions go with it', unserialize($dependent['ele_dynamicdefault_conditions']), array());
+
+    $eleValueOf = function ($id) {
+        $row = fetchOne("SELECT ele_value FROM " . prefix('formulize') . " WHERE ele_id = " . intval($id));
+        return unserialize($row['ele_value']);
+    };
+
+    $linked = $eleValueOf($linkedId);
+    check('linked list: the element it sorted by is set to none, the value the editor writes for nothing chosen',
+        $linked[ELE_VALUE_SELECT_LINK_SORT], 'none');
+    check('linked list: it is taken out of the alternate list elements, and the other one is left',
+        $linked[ELE_VALUE_SELECT_LINK_ALTLISTELEMENTS], array(999991));
+    check('linked list: the source mapping is left exactly as it was, because half a mapping is not a decision this can make',
+        $linked[ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS],
+        array(array('thisForm' => '{' . $handle . '}', 'sourceForm' => '999990')));
+
+    $grid = $eleValueOf($gridId);
+    check('grid: the element it took its initial values from is cleared', $grid[4], 'none');
+
+    $subform = $eleValueOf($subformId);
+    check('subform: removed from the comma separated list of elements it shows, still a comma separated string',
+        $subform[1], '999992');
+    check('subform: taken out of the conditions deciding which entries it shows',
+        $subform[7], array(0 => array('keep_me'), 1 => array('='), 2 => array('b'), 3 => array('all')));
+    check('subform: the element it sorted by is cleared', $subform['SortingElement'], 'none');
 
     echo "\n";
     echo "=====================================================================\n";
@@ -515,23 +604,18 @@ echo " the database is as it was\n";
 echo "=====================================================================\n";
 
 // If this does not hold then everything above wrote to a real system, so it is checked rather than assumed.
-$leftovers = fetchOne("SELECT COUNT(*) AS c FROM " . prefix('formulize') . " WHERE ele_handle = 'zz_reference_integrity_fixture'");
-check('the fixture element is gone', intval($leftovers['c']), 0);
+$leftovers = fetchOne("SELECT COUNT(*) AS c FROM " . prefix('formulize') . " WHERE ele_handle LIKE 'zz_fixture%' OR ele_handle = 'zz_reference_integrity_fixture'");
+check('the fixture elements are gone', intval($leftovers['c']), 0);
 $leftovers = fetchOne("SELECT COUNT(*) AS c FROM " . prefix('formulize_screen') . " WHERE screen_handle LIKE 'zzfix%'");
 check('the fixture screens are gone', intval($leftovers['c']), 0);
 $leftovers = fetchOne("SELECT COUNT(*) AS c FROM " . prefix('formulize_saved_views') . " WHERE sv_name LIKE 'reference integrity%'");
 check('the fixture saved views are gone', intval($leftovers['c']), 0);
-// The one real row the test writes to. Checking that nothing points at the fixture any more would prove
-// nothing here - the cleanup sets that pointer to 0 itself, so it reads as clean whether the rollback
-// happened or not. The original values are what has to come back.
-if ($borrowedRowBefore) {
-    $borrowedRowAfter = fetchOne("SELECT ele_dynamicdefault_source, ele_dynamicdefault_conditions
-        FROM " . prefix('formulize') . " WHERE ele_id = " . intval($otherElementId));
-    check('the element whose dynamic default was borrowed has its source back',
-        (string) $borrowedRowAfter['ele_dynamicdefault_source'], (string) $borrowedRowBefore['ele_dynamicdefault_source']);
-    check('and its conditions back',
-        (string) $borrowedRowAfter['ele_dynamicdefault_conditions'], (string) $borrowedRowBefore['ele_dynamicdefault_conditions']);
-}
+// Nothing above wrote to a row this test did not create, so there is no borrowed state to restore - the
+// three checks above cover it. Anything still pointing at the fixture element would mean both that the
+// rollback did not take and that a real row had been reached, so it is worth asking even so.
+$leftovers = fetchOne("SELECT COUNT(*) AS c FROM " . prefix('formulize') . "
+    WHERE ele_dynamicdefault_source = " . intval($elementId));
+check('nothing anywhere is left pointing at the fixture element', intval($leftovers['c']), 0);
 
 echo "\n";
 printf("RESULT: %d passed, %d failed\n", $GLOBALS['__pass'], $GLOBALS['__fail']);

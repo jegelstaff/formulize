@@ -57,6 +57,13 @@ class FormulizeObject extends XoopsObject {
 				'ele_filtersettings',
 				'ele_disabledconditions',
 				'ele_exportoptions',
+				'ele_dynamicdefault_conditions',
+			],
+			'formulize_id' => [
+				'entries_are_users_conditions',
+				'entries_are_users_default_groups',
+				'entries_are_users_default_groups_element_links',
+				'group_categories',
 			],
 			'formulize_notification_conditions' => [
 				'not_cons_con'
@@ -83,6 +90,10 @@ class FormulizeObject extends XoopsObject {
 				'customactions',
 				'fundamental_filters'
 			],
+			'formulize_screen_map' => [
+				'columns',
+				'fundamental_filters'
+			],
 			'formulize_screen_calendar' => [
 				'datasets'
 			],
@@ -97,9 +108,6 @@ class FormulizeObject extends XoopsObject {
 			],
 			'formulize_digest_data' => [
 				'extra_tags'
-			],
-			'formulize_screen_calendar' => [
-				'datasets'
 			]
 		];
 	}

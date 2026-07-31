@@ -850,10 +850,12 @@ EOF;
 }
 
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/adHocTableFormTrait.php';
+include_once XOOPS_ROOT_PATH . '/modules/formulize/class/elementReferenceScanTrait.php';
 
 #[AllowDynamicProperties]
 class formulizeFormsHandler {
 	use formulizeAdHocTableFormTrait;
+	use formulizeElementReferenceScanTrait;
 
 	var $db;
 	function __construct(&$db) {
@@ -2318,6 +2320,120 @@ class formulizeFormsHandler {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Where does a form refer to an element, and what do those settings look like once the element is gone?
+	 *
+	 * Two places, both owned by this class: the per group filters that decide which entries of a form a group
+	 * may see, written by setPerGroupFilters() just below and read by getPerGroupFilterWhereClause(), and the
+	 * entries-are-users settings declared by initVar() in formulizeForm at the top of this file.
+	 *
+	 * Called by formulizeElementsHandler::findReferencesToElement(), which turns the result into the usage
+	 * report and applies the updates when an element is deleted.
+	 *
+	 * @param object $elementObject The element being asked about.
+	 * @return array The references found.
+	 */
+	public function scanForElementReferences($elementObject) {
+		return array_merge(
+			$this->scanGroupFiltersForElementReferences($elementObject),
+			$this->scanFormSettingsForElementReferences($elementObject)
+		);
+	}
+
+	/**
+	 * The per group filters that decide which entries of a form a group is allowed to see.
+	 * @param object $elementObject The element being asked about.
+	 * @return array The references found.
+	 */
+	private function scanGroupFiltersForElementReferences($elementObject) {
+		list($elementId, $handle) = $this->elementIdAndHandle($elementObject);
+		$references = array();
+		$sql = "SELECT gf.filterid, gf.filter, gf.groupid, g.name AS group_name, f.form_title
+			FROM ".$this->db->prefix('formulize_group_filters')." gf
+			LEFT JOIN ".$this->db->prefix('groups')." g ON g.groupid = gf.groupid
+			LEFT JOIN ".$this->db->prefix('formulize_id')." f ON f.id_form = gf.fid";
+		if(!$result = $this->db->query($sql)) {
+			return $references;
+		}
+		while($row = $this->db->fetchArray($result)) {
+			$newFilter = $this->removeElementFromConditions(@unserialize((string) $row['filter']), $elementId, $handle);
+			if($newFilter === false) {
+				continue;
+			}
+			$references[] = $this->elementReference(
+				_AM_ELE_USAGE_SECTION_GROUP_FILTERS,
+				$this->describeById($row['group_name'], 'group', $row['groupid'])
+					.' - which entries of '.trim(strip_tags((string) $row['form_title'])).' they can see',
+				'formulize_group_filters', 'filterid', $row['filterid'],
+				array('filter' => serialize($newFilter))
+			);
+		}
+		return $references;
+	}
+
+	/**
+	 * Settings on a form itself: the conditions that decide whether entries become user accounts, and the
+	 * elements that connect a template group to the entry the real group comes from.
+	 * @param object $elementObject The element being asked about.
+	 * @return array The references found.
+	 */
+	private function scanFormSettingsForElementReferences($elementObject) {
+		list($elementId, $handle) = $this->elementIdAndHandle($elementObject);
+		$references = array();
+		$sql = "SELECT id_form, form_title, entries_are_users_conditions, entries_are_users_default_groups_element_links
+			FROM ".$this->db->prefix('formulize_id');
+		if(!$result = $this->db->query($sql)) {
+			return $references;
+		}
+		while($row = $this->db->fetchArray($result)) {
+			$updates = array();
+			$usedAs = array();
+
+			// key 0 holds the conditions that apply generally, and every other key is a group id holding the
+			// conditions for that group, so the keys are kept as they are and only the contents change
+			$conditions = @unserialize((string) $row['entries_are_users_conditions']);
+			if(is_array($conditions)) {
+				$changed = false;
+				foreach($conditions as $groupId => $groupConditions) {
+					$newConditions = $this->removeElementFromConditions($groupConditions, $elementId, $handle);
+					if($newConditions !== false) {
+						$conditions[$groupId] = $newConditions;
+						$changed = true;
+					}
+				}
+				if($changed) {
+					$updates['entries_are_users_conditions'] = serialize($conditions);
+					$usedAs[] = 'in the conditions that decide whether an entry becomes a user account';
+				}
+			}
+
+			$links = @unserialize((string) $row['entries_are_users_default_groups_element_links']);
+			if(is_array($links)) {
+				$changed = false;
+				foreach($links as $groupId => $linkedElements) {
+					$newLinks = $this->removeElementFromList($linkedElements, $elementId, $handle);
+					if($newLinks !== false) {
+						$links[$groupId] = $newLinks;
+						$changed = true;
+					}
+				}
+				if($changed) {
+					$updates['entries_are_users_default_groups_element_links'] = serialize($links);
+					$usedAs[] = 'as what connects a group to the entry that decides who is in it';
+				}
+			}
+
+			if($usedAs) {
+				$references[] = $this->elementReference(
+					_AM_ELE_USAGE_SECTION_FORM_SETTINGS,
+					$this->describeById($row['form_title'], 'form', $row['id_form']).' - '.implode(', ', $usedAs),
+					'formulize_id', 'id_form', $row['id_form'], $updates
+				);
+			}
+		}
+		return $references;
 	}
 
 	// this function updates the per group filter settings for a form

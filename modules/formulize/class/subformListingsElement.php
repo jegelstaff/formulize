@@ -267,6 +267,56 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 	}
 
 	/**
+	 * What does this subform's ele_value look like once an element it refers to is deleted?
+	 *
+	 * NOT a detector - getElementDependencies() has already established that the reference is here, by way
+	 * of getEleValueDependencies() below, which reads the same keys. This knows what that cannot say: which
+	 * setting the reference sits in, and what that setting is allowed to look like without it. The elements
+	 * to show are a comma separated string or an array depending on how they were saved; the filters are a
+	 * conditions set; the three sorting and filtering settings name one element each.
+	 *
+	 * @param array $eleValue The ele_value array of the element being examined.
+	 * @param int $elementId The id of the element being deleted.
+	 * @param string $handle The handle of the element being deleted.
+	 * @return array|false array('ele_value' => new array or null, 'used_as' => descriptions), or false.
+	 */
+	public function removeElementFromEleValue($eleValue, $elementId, $handle) {
+		$usedAs = array();
+
+		// key 1 is the elements to show in the subform, 'disabledelements' the ones shown but not editable.
+		// Either can be a real array or a comma separated string of ids, so both shapes are accepted.
+		foreach(array(
+			1 => 'one of the elements it shows',
+			'disabledelements' => 'one of the elements it shows without allowing edits'
+		) as $key => $description) {
+			if(isset($eleValue[$key]) AND ($new = $this->removeElementFromList($eleValue[$key], $elementId, $handle)) !== false) {
+				$eleValue[$key] = $new;
+				$usedAs[] = $description;
+			}
+		}
+
+		// key 7 is the filter conditions deciding which entries the subform shows
+		if(isset($eleValue[7]) AND ($new = $this->removeElementFromConditions($eleValue[7], $elementId, $handle)) !== false) {
+			$eleValue[7] = $new;
+			$usedAs[] = 'in the conditions that decide which entries it shows';
+		}
+
+		// settings that name one element each
+		foreach(array(
+			'subform_prepop_element' => 'the element it prepopulates new entries from',
+			'SortingElement' => 'the element its entries are sorted by',
+			'UserFilterByElement' => 'the element its entries are filtered by for the current user'
+		) as $key => $description) {
+			if(isset($eleValue[$key]) AND ($new = $this->clearReferenceToElement($eleValue[$key], $elementId, $handle)) !== false) {
+				$eleValue[$key] = $new;
+				$usedAs[] = $description;
+			}
+		}
+
+		return $usedAs ? array('ele_value' => $eleValue, 'used_as' => $usedAs) : false;
+	}
+
+	/**
 	 * Check an array, structured as ele_value would be structured, and return an array of elements that the element depends on
 	 * @param array $values The ele_value array to check for dependencies - numeric element refs ought to have been replaced with handles, when this data was created
 	 * @return array An array of element handles that this element depends on

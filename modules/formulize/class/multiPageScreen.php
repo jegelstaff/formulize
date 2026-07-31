@@ -490,6 +490,99 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 	}
 
 	/**
+	 * Where does a multipage screen refer to an element, and what does the setting look like once the element
+	 * is gone? The pages it sits on, the conditions that decide whether a page is shown, and any default
+	 * value the screen sets for it - all declared by initVar() at the top of this file, alongside
+	 * removeElementsFromScreens() below, which is what actually rewrites the pages.
+	 *
+	 * Called by formulizeElementsHandler::findReferencesToElement().
+	 *
+	 * @param object $elementObject The element being asked about.
+	 * @return array The references found.
+	 */
+	public function scanForElementReferences($elementObject) {
+		list($elementId, $handle) = $this->elementIdAndHandle($elementObject);
+		$references = array();
+		$sql = "SELECT s.sid, s.title, m.pages, m.conditions, m.elementdefaults
+			FROM ".$this->db->prefix('formulize_screen')." s
+			INNER JOIN ".$this->db->prefix('formulize_screen_multipage')." m ON m.sid = s.sid";
+		if(!$result = $this->db->query($sql)) {
+			return $references;
+		}
+		while($row = $this->db->fetchArray($result)) {
+			$updates = array();
+			$usedAs = array();
+
+			// the pages themselves are rewritten by removeElementsFromScreens(), which delete() calls
+			// alongside this, so they are reported here but not written here. A page that would have
+			// nothing left on it is called out separately, because that page stops appearing in the form
+			// even though it is still on the screen - see the comment in formulizeElementsHandler::delete().
+			$pageNumbers = array();
+			$emptiedPageNumbers = array();
+			$pages = @unserialize((string) $row['pages']);
+			if(is_array($pages)) {
+				foreach($pages as $pageIndex => $pageElements) {
+					if(!is_array($pageElements)) { continue; }
+					$found = false;
+					$remaining = 0;
+					foreach($pageElements as $pageElement) {
+						if($this->referencePointsAtElement($pageElement, $elementId, $handle)) {
+							$found = true;
+						} else {
+							$remaining++;
+						}
+					}
+					if($found) {
+						if($remaining) { $pageNumbers[] = intval($pageIndex) + 1; }
+						else { $emptiedPageNumbers[] = intval($pageIndex) + 1; }
+					}
+				}
+			}
+			if($pageNumbers) {
+				$usedAs[] = (count($pageNumbers) > 1 ? 'on pages ' : 'on page ').implode(', ', $pageNumbers);
+			}
+			if($emptiedPageNumbers) {
+				$usedAs[] = 'the only element on '
+					.(count($emptiedPageNumbers) > 1 ? 'pages ' : 'page ').implode(', ', $emptiedPageNumbers)
+					.', so '.(count($emptiedPageNumbers) > 1 ? 'those pages will be empty' : 'that page will be empty')
+					.' and will stop appearing in the form until something is put on '
+					.(count($emptiedPageNumbers) > 1 ? 'them' : 'it');
+			}
+
+			$conditions = @unserialize((string) $row['conditions']);
+			if(is_array($conditions)) {
+				$changed = false;
+				foreach($conditions as $page => $pageConditions) {
+					$newConditions = $this->removeElementFromConditions($pageConditions, $elementId, $handle);
+					if($newConditions !== false) {
+						$conditions[$page] = $newConditions; // the keys are page numbers, so they stay as they are
+						$changed = true;
+					}
+				}
+				if($changed) {
+					$updates['conditions'] = serialize($conditions);
+					$usedAs[] = 'in the conditions that decide whether a page is shown';
+				}
+			}
+
+			$newDefaults = $this->removeElementFromDefaults(@unserialize((string) $row['elementdefaults']), $elementId, $handle);
+			if($newDefaults !== false) {
+				$updates['elementdefaults'] = serialize($newDefaults);
+				$usedAs[] = 'given a default value by the screen';
+			}
+
+			if($usedAs) {
+				$references[] = $this->elementReference(
+					_AM_ELE_USAGE_SECTION_FORM_SCREENS,
+					$this->describeById($row['title'], 'screen', $row['sid']).' - '.implode(', ', $usedAs),
+					'formulize_screen_multipage', 'sid', $row['sid'], $updates
+				);
+			}
+		}
+		return $references;
+	}
+
+	/**
 	 * Remove a given element or elements from multipage screens
 	 * @param mixed $elementIdOrIds - either a single element id, or an array of element ids to remove from multipage screens
 	 * @param boolean $removeEmptyPages - Optional. Whether to remove pages that become empty after removing the elements. Defaults to false.
