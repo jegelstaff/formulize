@@ -474,7 +474,7 @@ Use get_form_details first to see the form\'s current settings. This tool does n
 						'title' => array_merge($formProperties['title'], [
 							'description' => 'Optional. A new name for the form. '.$formProperties['title']['description']
 						])
-					]),
+					], $this->defaultScreenProperties()),
 					'required' => ['form_id']
 				]
 			];
@@ -553,7 +553,8 @@ Use get_form_details first to see the form\'s current settings. This tool does n
 						'title' => [
 							'type' => 'string',
 							'description' => 'Required. The name of the screen.'
-						],
+						]
+					], $this->screenBaseSchema('create'), $this->defaultScreenFlagSchema('form'), [
 						'pages' => $this->formScreenPagesSchema('create')
 					], $formScreenSharedProps),
 					'required' => ['form_id', 'title', 'pages']
@@ -573,7 +574,8 @@ Use get_form_details first to see the form\'s current settings. This tool does n
 						'title' => [
 							'type' => 'string',
 							'description' => 'Optional. A new name for the screen.'
-						],
+						]
+					], $this->screenBaseSchema('update'), $this->defaultScreenFlagSchema('form', operation: 'update'), [
 						'pages' => $this->formScreenPagesSchema('update')
 					], $formScreenSharedProps),
 					'required' => ['screen_id']
@@ -597,6 +599,64 @@ Use get_form_details first to see the form\'s current settings. This tool does n
 						]
 					],
 					'required' => ['screen_id', 'order']
+				]
+			];
+
+			// ----- List screen tools: create_list_screen / update_list_screen -----
+			// A list screen is what users spend most of their time looking at: the table of entries in a form,
+			// with its columns, Quicksearch controls, buttons and views. Both tools share one set of settings
+			// properties, built by listScreenSharedProperties(), which differ between create and update only in
+			// how they describe defaults versus "left unchanged".
+			$this->tools['create_list_screen'] = [
+				'name' => 'create_list_screen',
+				'description' => 'Create a new list screen for an existing form. A list screen shows the entries in a form as a list, which is the main way users find, search and open the entries they are interested in. Each form can have several list screens, showing different columns, filtered down to different sets of entries, or offering different buttons, etc.
+
+The point of different screens is to support different workflow operations. You generally do **not** need to create different screens just because there are different groups of users in the system. Formulize will take the different permissions for each group into account, so that the same screen will behave differently for each group.
+
+For example, consider an organization with different groups of users organized by location, and the users at each location need to review recent entries, but only the ones for their location. Instead of creating one screen per location, each with its own filter, you can create a single screen and set the default_view for the Registered Users group (group 2) to "their_groups_entries". You would use the Registered Users group to ensure the setting applied to everyone who used the screen.
+
+Furthermore, if it were important to make sure that users at each location can only see the entries for their location, **and no others**, then you would also use the set_form_permissions tool to restrict each group to seeing "their group\'s" entries. Formulize enforces permissions throughout the system, so users can only see and do what they\'re supposed to, no matter how any given screen is configured.
+
+Specify the columns you want, in the order you want them, using the "columns" property; each column can also have a Quicksearch control and a starting sort direction. Use get_form_details to find the element handles. You can include columns from any form directly connected to the form this screen belongs to.
+
+Use fundamental_filters to permanently restrict a screen to a subset of entries (eg: a screen that only ever shows this year\'s orders). Fundamental filters apply only to the screen you are creating, so users may still be able to access the excluded entries elsewhere, depending on their own permissions.
+
+Use update_list_screen to change a screen later, and get_screen_details or list_screens to inspect screens.
+',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => array_merge([
+						'form_id' => [
+							'type' => 'integer',
+							'description' => 'Required. The id of the form this screen belongs to.'
+						],
+						'title' => [
+							'type' => 'string',
+							'description' => 'Required. The name of the screen.'
+						]
+					], $this->screenBaseSchema('create'), $this->defaultScreenFlagSchema('list'), $this->listScreenSharedProperties('create')),
+					'required' => ['form_id', 'title']
+				]
+			];
+
+			$this->tools['update_list_screen'] = [
+				'name' => 'update_list_screen',
+				'description' => 'Update an existing list screen. Only the settings you provide are changed; anything you omit is left exactly as it is.
+
+Note that the list-like properties (columns, editable_columns, available_views, default_view, fundamental_filters) are REPLACED in full when you provide them, rather than being added to. Use get_screen_details first to see what the screen currently has, then send the complete new list. Providing "buttons" changes only the button labels you include; buttons that you do not include will keep their current labels.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => array_merge([
+						'screen_id' => [
+							'type' => 'integer',
+							'description' => 'Required. The id of the list screen to update.'
+						],
+						'title' => [
+							'type' => 'string',
+							'description' => 'Optional. A new name for the screen.'
+						]
+					], $this->screenBaseSchema('update'), $this->defaultScreenFlagSchema('list', operation: 'update'), $this->listScreenSharedProperties('update')),
+					'required' => ['screen_id']
 				]
 			];
 
@@ -1179,7 +1239,7 @@ There is no syntax checking when you save, and an error here affects every page 
 
 Use this only when the person you are working with has specifically asked for this element to be removed. Do not use it to tidy up a form, to fix a mistake you made while building something, or because an element looks unused - an element with no data today may still be part of how the application works. If the aim is only to stop people seeing or using the element, hide it instead: set its \'display\' property to false with the update tool for that kind of element (ie: update_text_box_element or update_list_element, etc). Setting \'display\' to false takes it out of the form while keeping the data and leaving anything that refers to it still working.
 
-This tool takes two calls. Call it first with just the element, and it will NOT delete anything: it returns a report of what would be lost and what would be left broken, along with a confirmation_token. Show that report to the person you are working with and get their agreement. Then call the tool again with the same element and the confirmation token to carry out the deletion. The token only works for that element, for you, and only for a few minutes.',
+This tool takes two calls. Call it first with just the element, and it will NOT delete anything: it returns a report of what would be lost, along with a confirmation_token. The report covers shows where the element is referenced, and which derived value elements and other code-based parts of the system will break if the element is removed. Show that report to the person you are working with and get their agreement. Then call the tool again with the same element and the confirmation token to carry out the deletion. The token only works for that element, for you, and only for a few minutes.',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
@@ -1447,6 +1507,52 @@ This tool takes two calls. Call it first with just the element, and it will NOT 
 	}
 
 	/**
+	 * The two "default screen" properties of a form. They are offered by update_form but deliberately not by
+	 * create_form: a form being created has no screens for them to point at (create_form makes its starting
+	 * screens itself), so they can only be set meaningfully once the screens exist.
+	 *
+	 * The same two settings can be reached from the screen's own side, with the is_default_form_screen /
+	 * is_default_list_screen property of the screen tools. Two routes to one pair of columns, which is why both
+	 * descriptions name the other.
+	 *
+	 * @return array The JSON schema properties array.
+	 */
+	private function defaultScreenProperties() {
+		return [
+			'default_form_screen_id' => [
+				'type' => 'integer',
+				'description' => 'Optional. The screen id of the form screen that should be shown by default. When a menu item or URL leads to the form without naming a screen, _and the user is limited to only interacting with a single entry in the form_, Formulize will default to showing this screen. The default form screen is also used by most list screens when users click on entries to display or edit them. Send 0 to clear this setting, which means Formulize will fall back to a generic _form_ instead, without any custom configuration settings.'
+			],
+			'default_list_screen_id' => [
+				'type' => 'integer',
+				'description' => 'Optional. The screen id of the list screen that should be shown by default. When a menu item or URL leads to the form without naming a screen, _and the user has permission to interact with multiple entries in the form_, Formulize will default to showing this screen. Send 0 to clear this setting, which means Formulize will fall back to a generic _list_ instead, without any custom configuration settings.'
+			]
+		];
+	}
+
+	/**
+	 * The "is this screen the form's default" flag, for the screen tools. The form screen tools and the list
+	 * screen tools get differently named properties - is_default_form_screen and is_default_list_screen -
+	 * rather than one shared is_default_screen, because a form holds both at once and a single name would
+	 * suggest that setting one releases the other. It does not; they are separate slots.
+	 *
+	 * @param string $kind 'form' or 'list'.
+	 * @return array The JSON schema properties array, ready to merge into a screen tool's properties.
+	 */
+	private function defaultScreenFlagSchema($kind, $operation = 'create') {
+		$formScenario = "_and the user is limited to only interacting with a single entry in the form_, Formulize will default to showing this screen. The default form screen is also used by most list screens when users click on entries to display or edit them.";
+		$listScenario = "_and the user has permission to interact with multiple entries in the form_, Formulize will default to showing this screen.";
+		$kindScenario = ($kind === 'form') ? $formScenario : $listScenario;
+		$updateScenario = "If you are updating, setting false will remove the default '.$kind.' screen, but only if this screen is currently the one holding it; on any other screen false does nothing, so it cannot displace a different screen by accident.";
+		return [
+			'is_default_'.$kind.'_screen' => [
+				'type' => 'boolean',
+				'description' => 'Optional. Make this the default '.$kind.' screen. When a menu item or URL leads to the form without naming a screen, '.$kindScenario.' Setting true replaces whatever '.$kind.' screen held the position before - a form only has one default '.$kind.' screen at a time. '.$updateScenario
+			]
+		];
+	}
+
+	/**
 	 * Refuse to modify forms that the tools have no business touching.
 	 *
 	 * Two cases. A locked form is not editable through the admin interface either, so the tools must not be
@@ -1554,7 +1660,98 @@ This tool takes two calls. Call it first with just the element, and it will NOT 
 			}
 		}
 
+		// the screens a link to the form falls back to. Only offered on update, since the screens have to exist
+		// first (see defaultScreenProperties), so there is nothing to do when creating.
+		if($existingForm) {
+			foreach(['default_form_screen_id' => ['defaultform', 'multiPage'], 'default_list_screen_id' => ['defaultlist', 'listOfEntries']] as $argument => $screenData) {
+				list($property, $requiredType) = $screenData;
+				if(!array_key_exists($argument, $arguments) OR $arguments[$argument] === null OR $arguments[$argument] === '') {
+					continue; // as with principal_identifier, only an explicit 0 clears the setting
+				}
+				$properties[$property] = $this->validatedDefaultScreen($arguments[$argument], $argument, $requiredType, $existingForm);
+			}
+		}
+
 		return $properties;
+	}
+
+	/**
+	 * Confirm a screen can hold one of a form's default screen positions: it has to exist, be the kind of
+	 * screen that position takes, and belong to that form, since a default screen is what Formulize falls back
+	 * to for this form in particular.
+	 * @param mixed $screenId The screen id given by the caller, or 0 to clear the position.
+	 * @param string $argument The argument name, used in the error messages.
+	 * @param string $requiredType The internal screen type the position takes.
+	 * @param object $formObject The form being updated.
+	 * @return int The screen id, or 0.
+	 * @throws FormulizeMCPException if the screen does not exist, is the wrong type, or belongs to another form.
+	 */
+	private function validatedDefaultScreen($screenId, $argument, $requiredType, $formObject) {
+		$screenId = intval($screenId);
+		if(!$screenId) {
+			return 0;
+		}
+		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+		if(!$screenObject = $screen_handler->get($screenId)) {
+			throw new FormulizeMCPException("Screen $screenId, given as the $argument, does not exist.", 'invalid_data');
+		}
+		if($screenObject->getVar('type') != $requiredType) {
+			throw new FormulizeMCPException(
+				"Screen $screenId is a ".$this->friendlyScreenType($screenObject->getVar('type'))." screen, so it cannot be the $argument. That setting takes a ".$this->friendlyScreenType($requiredType)." screen.",
+				'invalid_data'
+			);
+		}
+		if(intval($screenObject->getVar('fid')) !== intval($formObject->getVar('fid'))) {
+			throw new FormulizeMCPException(
+				"Screen $screenId belongs to form ".intval($screenObject->getVar('fid')).", so it cannot be a default screen for form ".intval($formObject->getVar('fid')).".",
+				'invalid_data'
+			);
+		}
+		return $screenId;
+	}
+
+	/**
+	 * Apply the is_default_form_screen / is_default_list_screen flag of the screen tools, after the screen has
+	 * been saved. It runs afterwards rather than as part of the upsert because a screen being created has no id
+	 * until it has been written, and the id is what the form stores.
+	 *
+	 * True claims the position for this screen, displacing whatever screen held it. False releases it, but only
+	 * when this screen is the one holding it - on any other screen false is a no-op, so that a routine update
+	 * mentioning the flag cannot clear a different screen's position.
+	 *
+	 * @param array $arguments The tool arguments.
+	 * @param object $screenObject The saved screen.
+	 * @param string $argumentName 'is_default_form_screen' or 'is_default_list_screen'.
+	 * @param string $formProperty 'defaultform' or 'defaultlist'.
+	 * @throws FormulizeMCPException if the form cannot be loaded or saved.
+	 * @return void
+	 */
+	private function applyDefaultScreenFlag($arguments, $screenObject, $argumentName, $formProperty) {
+		if(!array_key_exists($argumentName, $arguments)) {
+			return;
+		}
+		$formId = intval($screenObject->getVar('fid'));
+		$screenId = intval($screenObject->getVar('sid'));
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		if(!$formObject = $form_handler->get($formId)) {
+			throw new FormulizeMCPException("Could not load form $formId to set its $argumentName.", 'invalid_data');
+		}
+		$currentDefault = intval($formObject->getVar($formProperty));
+		if($arguments[$argumentName]) {
+			if($currentDefault === $screenId) {
+				return;
+			}
+			$formObject->setVar($formProperty, $screenId);
+		} else {
+			if($currentDefault !== $screenId) {
+				return; // false only releases the position when this screen is the one holding it
+			}
+			$formObject->setVar($formProperty, 0);
+		}
+		if(!$form_handler->insert($formObject)) {
+			global $xoopsDB;
+			throw new FormulizeMCPException("Could not save the form's $argumentName setting: ".$xoopsDB->error(), 'database_error');
+		}
 	}
 
 	/**
@@ -2034,7 +2231,7 @@ This tool takes two calls. Call it first with just the element, and it will NOT 
 		// table forms are allowed here: their element list is fixed by the underlying table, but the
 		// screens that present them are Formulize's own and are reasonable to build
 		$this->assertFormIsEditableByTools($form_id, allowTableForms: true);
-		$properties = $this->buildFormScreenProperties($arguments, null);
+		$properties = $this->buildFormScreenProperties($arguments, null) + $this->buildScreenBaseProperties($arguments);
 		$properties['fid'] = $form_id;
 		$properties['title'] = $title;
 		try {
@@ -2046,6 +2243,7 @@ This tool takes two calls. Call it first with just the element, and it will NOT 
 		} catch (Exception $e) {
 			throw new FormulizeMCPException($e->getMessage(), 'invalid_data');
 		}
+		$this->applyDefaultScreenFlag($arguments, $screen, 'is_default_form_screen', 'defaultform');
 		return $this->get_screen_details(['screen_id' => $screen->getVar('sid')]);
 	}
 
@@ -2072,7 +2270,7 @@ This tool takes two calls. Call it first with just the element, and it will NOT 
 		}
 		// as with create_form_screen, a table form's screens are fair game even though its elements are not
 		$this->assertFormIsEditableByTools($existingScreen->getVar('fid'), allowTableForms: true);
-		$properties = $this->buildFormScreenProperties($arguments, $existingScreen);
+		$properties = $this->buildFormScreenProperties($arguments, $existingScreen) + $this->buildScreenBaseProperties($arguments);
 		if(isset($arguments['title'])) {
 			$title = trim($arguments['title']);
 			if($title !== '') {
@@ -2094,6 +2292,7 @@ This tool takes two calls. Call it first with just the element, and it will NOT 
 		} catch (Exception $e) {
 			throw new FormulizeMCPException($e->getMessage(), 'invalid_data');
 		}
+		$this->applyDefaultScreenFlag($arguments, $screen, 'is_default_form_screen', 'defaultform');
 		return $this->get_screen_details(['screen_id' => $screen->getVar('sid')]);
 	}
 
@@ -2139,6 +2338,98 @@ This tool takes two calls. Call it first with just the element, and it will NOT 
 			throw new FormulizeMCPException($e->getMessage(), 'invalid_data');
 		}
 		return $this->get_screen_details(['screen_id' => $screen->getVar('sid')]);
+	}
+
+	/**
+	 * Build the JSON schema for the properties every screen has, whatever its type. They come from
+	 * formulizeScreen itself (class/screen.php), so a form screen, a list screen, a calendar and the rest all
+	 * carry the same set - which is why they live in one builder rather than being written out per tool.
+	 *
+	 * 'title' is deliberately NOT here. Each tool states its own rules for it (required when creating, optional
+	 * when updating, and worded for what that kind of screen is), and folding it in would take that away.
+	 *
+	 * The alternate URL pair is only included when the site has the alternate URL feature switched on, matching
+	 * the admin interface, which only shows those fields under the same condition (admin/screen.php). An
+	 * assistant should not be offered a setting that would do nothing on this system.
+	 *
+	 * @param string $mode 'create' or 'update'. Only changes the wording about what omitting a property means.
+	 * @return array The JSON schema properties array.
+	 */
+	private function screenBaseSchema($mode) {
+		$isUpdate = ($mode === 'update');
+		$omitted = $isUpdate ? 'Optional. Left unchanged if omitted.' : 'Optional.';
+		$properties = [
+			'handle' => [
+				'type' => 'string',
+				'description' => $omitted." A short name for this screen, unique across every screen in the system. Spaces and hyphens become underscores, anything else that is not a letter, number or underscore is stripped, and capitals are lowered. If the name you ask for is already in use by another screen, it is adjusted until it is unique."
+					.($isUpdate
+						? " Changing it breaks anything that refers to the screen by the old handle."
+						: " Leave it out and the handle is made from the screen's title, which is usually what you want.")
+			],
+			'anonymous_access_needs_passcode' => [
+				'type' => 'boolean',
+				'description' => $omitted.' When anonymous visitors can reach this screen, require them to enter a passcode that they will have received prior, in order to open a particular entry. On by default. Turning it off means anyone with the link can open the entry, so only do it for truly public access situations. The Anonymous Users group (group 3) will also need permission for the form, use the set_form_permissions tool to do that.'
+			]
+		];
+		// alternate URLs are a site-wide feature that can be switched off, in which case these settings have no
+		// effect at all, so the properties are simply not offered
+		$config_handler = xoops_gethandler('config');
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+		if(!empty($formulizeConfig['formulizeRewriteRulesEnabled'])) {
+			$properties['alternate_url'] = [
+				'type' => 'string',
+				'description' => $omitted.' A readable web address for this screen, used instead of a URL with id numbers in it. Setting "artifacts" gives a link ending /artifacts/. Letters, numbers, hyphens and underscores only; spaces become hyphens and anything else is stripped. Set an empty string to turn off. The id-based URL always remains valid, whether this is on or not.'
+			];
+			$properties['alternate_url_element'] = [
+				'type' => ['string', 'integer'],
+				'description' => $omitted.' The element whose value will be used in the URL to _uniquely_ identify a single entry (never set this to an element where the value entered would not uniquely identify each entry). Example: with this set to a catalogue number element, and "artifacts" as the alternate_url, a valid URL for an entry would look like this: /artifacts/1997-4412/ This settings defaults to the entry id number. Set this to 0 to clear any existing setting and return to using the entry id number. This has no effect unless alternate_url is set.'
+			];
+		}
+		return $properties;
+	}
+
+	/**
+	 * Translate the friendly screenBaseSchema() arguments into the internal object-var properties that the
+	 * screen upsert methods take. Same partial-update discipline as everywhere else: a property that was not
+	 * supplied does not appear in the result, so it is left alone.
+	 *
+	 * The alternate URL pair is translated whenever it is supplied, without re-checking the site setting.
+	 * Registration already decides whether the properties are offered; refusing them again here would turn a
+	 * setting that is merely dormant into an error, and the stored values are meant to survive the feature
+	 * being switched off and back on.
+	 *
+	 * @param array $arguments The tool arguments.
+	 * @return array Properties keyed by screen object var name.
+	 * @throws FormulizeMCPException if the alternate URL element cannot be found.
+	 */
+	private function buildScreenBaseProperties($arguments) {
+		$properties = [];
+		if(array_key_exists('handle', $arguments)) {
+			// the upsert methods run this through makeHandleUnique(); sanitizing here is what makes the
+			// stored handle match what the admin interface would have produced from the same text
+			$properties['screen_handle'] = FormulizeObject::sanitize_handle_name($arguments['handle']);
+		}
+		if(array_key_exists('anonymous_access_needs_passcode', $arguments)) {
+			$properties['anonNeedsPasscode'] = $arguments['anonymous_access_needs_passcode'] ? 1 : 0;
+		}
+		if(array_key_exists('alternate_url', $arguments)) {
+			$properties['rewriteruleAddress'] = FormulizeObject::sanitize_rewrite_address($arguments['alternate_url']);
+		}
+		if(array_key_exists('alternate_url_element', $arguments)) {
+			$element = $arguments['alternate_url_element'];
+			if($element === 0 OR $element === '0' OR $element === '') {
+				$properties['rewriteruleElement'] = 0;
+			} elseif(!$elementObject = _getElementObject($element)) {
+				throw new FormulizeMCPException(
+					"Could not find the element given as alternate_url_element: ".(is_scalar($element) ? $element : gettype($element)),
+					'unknown_element',
+					context: [ 'hint' => 'Give an element handle or id from this screen\'s form. Use get_form_details to find them, or send 0 to identify entries by their id number.' ]
+				);
+			} else {
+				$properties['rewriteruleElement'] = intval($elementObject->getVar('ele_id'));
+			}
+		}
+		return $properties;
 	}
 
 	/**
@@ -2325,6 +2616,616 @@ This tool takes two calls. Call it first with just the element, and it will NOT 
 				: 'The ordered list of pages in the form screen. Users move between pages using tabs and/or navigation buttons. Most pages contain a list of form elements, but a page can instead contain custom PHP code or embed pages from another form screen. Each page can also have display conditions that control whether it is shown.',
 			'items' => $item
 		];
+	}
+
+	/**
+	 * Create a new list screen on a form.
+	 * @param array $arguments The tool arguments (see the create_list_screen inputSchema).
+	 * @return array The created screen's details (from get_screen_details).
+	 */
+	private function create_list_screen($arguments) {
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				"Permission denied: Only webmasters can create list screens.",
+				'authentication_error',
+			);
+		}
+		$form_id = intval($arguments['form_id'] ?? 0);
+		$title = trim($arguments['title'] ?? '');
+		if(!$form_id) {
+			throw new FormulizeMCPException('form_id is required', 'invalid_data');
+		}
+		if($title === '') {
+			throw new FormulizeMCPException('title is required', 'invalid_data');
+		}
+		// as with form screens, table forms are allowed: their elements are fixed by the underlying table, but
+		// the screens that present them are Formulize's own and are reasonable to build
+		$this->assertFormIsEditableByTools($form_id, allowTableForms: true);
+		$properties = $this->buildListScreenProperties($arguments, null) + $this->buildScreenBaseProperties($arguments);
+		$properties['fid'] = $form_id;
+		$properties['title'] = $title;
+		try {
+			$screen = formulizeHandler::upsertListScreen($properties, 0);
+		} catch (Exception $e) {
+			throw new FormulizeMCPException($e->getMessage(), 'invalid_data');
+		}
+		$this->applyDefaultScreenFlag($arguments, $screen, 'is_default_list_screen', 'defaultlist');
+		return $this->get_screen_details(['screen_id' => $screen->getVar('sid')]);
+	}
+
+	/**
+	 * Update an existing list screen. Only provided settings are changed.
+	 * @param array $arguments The tool arguments (see the update_list_screen inputSchema).
+	 * @return array The updated screen's details (from get_screen_details).
+	 */
+	private function update_list_screen($arguments) {
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				"Permission denied: Only webmasters can update list screens.",
+				'authentication_error',
+			);
+		}
+		$screen_id = intval($arguments['screen_id'] ?? 0);
+		if(!$screen_id) {
+			throw new FormulizeMCPException('screen_id is required', 'invalid_data');
+		}
+		$screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
+		$existingScreen = $screen_handler->get($screen_id);
+		if(!$existingScreen OR $existingScreen->getVar('type') != 'listOfEntries') {
+			throw new FormulizeMCPException("List screen $screen_id was not found.", 'invalid_data');
+		}
+		$this->assertFormIsEditableByTools($existingScreen->getVar('fid'), allowTableForms: true);
+		$properties = $this->buildListScreenProperties($arguments, $existingScreen) + $this->buildScreenBaseProperties($arguments);
+		if(isset($arguments['title'])) {
+			$title = trim($arguments['title']);
+			if($title !== '') {
+				$properties['title'] = $title;
+			}
+		}
+		try {
+			$screen = formulizeHandler::upsertListScreen($properties, $screen_id);
+		} catch (Exception $e) {
+			throw new FormulizeMCPException($e->getMessage(), 'invalid_data');
+		}
+		$this->applyDefaultScreenFlag($arguments, $screen, 'is_default_list_screen', 'defaultlist');
+		return $this->get_screen_details(['screen_id' => $screen->getVar('sid')]);
+	}
+
+	/**
+	 * The buttons that can appear on a list screen, as a map of the friendly name used in the tools to the
+	 * internal object-var that holds that button's label. A list screen button is turned on by giving it a
+	 * label and turned off by giving it an empty label, so one string per button covers both.
+	 * Shared by the tool schema, the argument translation, and the screen details reporting, so that all three
+	 * use the same vocabulary.
+	 * @return array friendlyName => internalVarName
+	 */
+	private function listScreenButtonMap() {
+		return [
+			'add_entry' => 'useaddupdate',
+			'add_multiple_entries' => 'useaddmultiple',
+			'proxy_entry' => 'useaddproxy',
+			'clone_selected' => 'useclone',
+			'delete_selected' => 'usedelete',
+			'change_owner' => 'usechangeowner',
+			'select_all' => 'useselectall',
+			'clear_selection' => 'useclearall',
+			'change_columns' => 'usechangecols',
+			'calculations' => 'usecalcs',
+			'export' => 'useexport',
+			'export_calculations' => 'useexportcalcs',
+			'import' => 'useimport',
+			'notifications' => 'usenotifications',
+			'save_view' => 'usesave',
+			'reset_view' => 'usereset',
+			'delete_view' => 'usedeleteview'
+		];
+	}
+
+	/**
+	 * A one line explanation of each list screen button, for the tool schema. Kept beside the map above so a
+	 * button cannot be added in one place and go undescribed in the other.
+	 * @return array friendlyName => description
+	 */
+	private function listScreenButtonDescriptions() {
+		return [
+			'add_entry' => 'Starts a new entry (or opens the user\'s own entry, on a form where each user has only one). Default is "Add <the form\'s singular name>".',
+			'add_multiple_entries' => 'Starts a new entry, and reloads the form blank after saving, so another new entry can be created. Useful for forms where people make more than one entry at once often. This button is off by default. Suggested text would be "Add <the form\'s plural name>".',
+			'proxy_entry' => 'Starts a new entry on behalf of another user. Only ever shown to users who have permission to do that, and no permission to create entries of their own.',
+			'clone_selected' => 'Duplicates the entries the user has checked off.',
+			'delete_selected' => 'Deletes the entries the user has checked off.',
+			'change_owner' => 'Changes who owns the entries the user has checked off. This alters the groups the entries are associated with, and so may change who can see the entries.',
+			'select_all' => 'Checks off every entry visible on the current page of the list.',
+			'clear_selection' => 'Unchecks every entry visible on the current page of the list.',
+			'change_columns' => 'Opens the interface for choosing which columns the list shows.',
+			'calculations' => 'Opens the interface for totals, averages and other calculations on the columns.',
+			'export' => 'Exports all entries matching the current search terms and visibility scope to a csv file. Only includes the currently selected columns.',
+			'export_calculations' => 'Exports the results of the calculations to a file.',
+			'import' => 'Opens the import interface for creating entries from a csv file.',
+			'notifications' => 'Opens the interface where users can choose when to be notified of new or updated or deleted entries. A User with the set_notifications_for_others permission can configure notifications that will go to other users besides themself.',
+			'save_view' => 'Saves the current columns, searches, sorting, and visibility scope as a view that can be returned to later. Users with the publish_reports permission can publish views to their groups. Users with the publish_globalscope permission can publish views to anyone',
+			'reset_view' => 'Puts the list back to it\'s initial state, clearing any changes the user might have made to the searches, column choices, sorting order, or visibility scope.',
+			'delete_view' => 'Deletes the saved view the user is currently looking at. Users can always delete their own saved views. Users with delete_other_reports permission can delete views published by others.'
+		];
+	}
+
+	/**
+	 * The vocabulary for referring to a view of the entries in a form. Three of these are the standard views
+	 * that every form has (which entries the user sees is decided by their permissions), and any other value is
+	 * the id of a saved view that someone has published on the form.
+	 * @param bool $includeBlank Whether to include 'blank', which is only meaningful as a default view: it starts
+	 *        the screen off showing no entries at all, so the user has to search for what they want first.
+	 * @param bool $includeAll Whether to include 'every_view', which is only meaningful in available_views.
+	 * @return array The enum values.
+	 */
+	private function listScreenViewVocabulary($includeBlank = false, $includeAll = false) {
+		$values = [];
+		if($includeAll) {
+			$values[] = 'every_view';
+		}
+		if($includeBlank) {
+			$values[] = 'blank';
+		}
+		return array_merge($values, ['their_own_entries', 'their_groups_entries', 'all_entries']);
+	}
+
+	/**
+	 * Translate a friendly view name into the value stored inside a list screen's limitviews/defaultview.
+	 * Saved views are referred to by their id number, and pass through as an integer. Only the names the calling
+	 * property actually accepts are allowed, so that eg: 'blank' is rejected in available_views, where starting
+	 * the menu off with nothing in it is not a thing a screen can do.
+	 * @param mixed $view A friendly view name, or a saved view id.
+	 * @param string $propertyName The property being translated, used in the error message.
+	 * @param array $allowedNames The friendly view names this property accepts (from listScreenViewVocabulary).
+	 * @return string|int The internal value.
+	 * @throws FormulizeMCPException if the value is not one of the allowed view names or a positive id number.
+	 */
+	private function listScreenViewValue($view, $propertyName, $allowedNames) {
+		$map = [
+			'every_view' => 'allviews',
+			'blank' => 'blank',
+			'their_own_entries' => FORMULIZE_QUERY_SCOPE_MINE,
+			'their_groups_entries' => FORMULIZE_QUERY_SCOPE_GROUP,
+			'all_entries' => FORMULIZE_QUERY_SCOPE_GLOBAL
+		];
+		if(is_string($view) AND isset($map[$view]) AND in_array($view, $allowedNames)) {
+			return $map[$view];
+		}
+		if(is_numeric($view) AND intval($view) > 0) {
+			return intval($view);
+		}
+		throw new FormulizeMCPException(
+			"'".(is_scalar($view) ? $view : gettype($view))."' is not a valid entry in $propertyName. Use one of: ".implode(', ', $allowedNames).", or the id of a saved view.",
+			'invalid_data'
+		);
+	}
+
+	/**
+	 * Build the settings properties shared by create_list_screen and update_list_screen. The two tools take the
+	 * same settings; only the wording differs, since on create an omitted setting takes a default while on
+	 * update it is left alone. Keeping them in one place means the two tools cannot drift apart.
+	 * @param string $mode 'create' or 'update'.
+	 * @return array The JSON schema properties array.
+	 */
+	private function listScreenSharedProperties($mode) {
+		$isUpdate = ($mode === 'update');
+		// what happens when a property is left out
+		$omitted = $isUpdate ? 'Optional. Left unchanged if omitted.' : 'Optional.';
+
+		$buttonProperties = [];
+		$buttonDescriptions = $this->listScreenButtonDescriptions();
+		foreach(array_keys($this->listScreenButtonMap()) as $friendly) {
+			$buttonProperties[$friendly] = [
+				'type' => 'string',
+				'description' => $buttonDescriptions[$friendly].' Set an empty string to remove this button from the screen.'
+			];
+		}
+
+		return [
+			'columns' => [
+				'type' => 'array',
+				'description' => ($isUpdate
+					? 'Optional. The columns of the list, in the order they appear. Columns can be from this screen\'s form, and also any form directly connected to this screen\'s form. Providing this property will REPLACE the screen\'s current columns, so include every column you want the screen to have, not just the new ones. Omit it to leave the columns as they are.'
+					: 'Optional. The columns of the list, in the order they appear. If you leave this out, the list starts out with the form\'s own default columns, which on most forms is just the element that identifies an entry, so it is usually worth naming the columns you want.')
+					.' Users can change which columns they see (with the change_columns button) and save their own views; these columns are what the screen starts out with. Each column may also carry a Quicksearch control and a starting sort direction.',
+				'items' => [
+					'type' => 'object',
+					'properties' => [
+						'element' => [
+							'type' => ['string', 'integer'],
+							'description' => 'Required. The element to show in this column, as a handle or id. Get handles from get_form_details. Elements from forms connected to this one can be used too - use list_form_connections to see which forms those are. You can also use the metadata fields that every entry has: entry_id, creation_datetime (when it was made), creation_uid (who made it), creator_email, mod_datetime (when it was last changed), mod_uid (who last changed it), and owner_groups.'
+						],
+						'search_type' => [
+							'type' => 'string',
+							'enum' => ['search_box', 'dropdown', 'dropdown_exclude', 'checkboxes', 'date_range'],
+							'description' => "Optional. The kind of Quicksearch control at the top of this column. Only has an effect when show_search_boxes is on.Valid options are: 'search_box' (default) = type in some text to match; 'dropdown' = pick one of the values present in the entries; 'dropdown_exclude' = pick a value to leave out; 'checkboxes' = check off any number of values to include; 'date_range' = a from/to pair of dates."
+						],
+						'sort_direction' => [
+							'type' => 'string',
+							'enum' => ['ASC', 'DESC', 'off'],
+							'description' => "Optional. Whether the list starts out sorted by this column or not. Default is 'off'. Use 'ASC' for lowest to highest, 'DESC' highest to lowest. Users can re-sort by clicking a column heading; this is only where the list starts. If more than one column is set to sort, they are applied in the order the columns are listed, so the first is the main sort and then second, third, etc, in order."
+						],
+						'default_search_value' => [
+							'type' => 'string',
+							'description' => 'Optional. A value to put in this column\'s Quicksearch box when the screen loads, so the list starts out filtered by it. The user can clear or change it. Use "{BLANK}" to start out showing only entries with nothing in this column. If you need to restrict the list to certain entries **and you don\'t want the users to be able to change it**, use fundamental_filters instead.'
+						]
+					],
+					'required' => ['element']
+				]
+			],
+			'fundamental_filters' => array_merge($this->displayConditionsSchema('list screen', true, $isUpdate), [
+				'description' => 'Optional. Conditions that permanently restrict which entries this screen can ever show. Unlike a search, the user cannot see or undo them, and they apply to every view on the screen, so they are the way to make a screen that is only ever about a subset of the entries (eg: only this year\'s orders, or only the records assigned to the person looking at the screen). This setting applies only to this screen; users may be able to access other screens that show more entries. Conversely, permissions set with the set_form_permissions tool apply system wide.'
+					.($isUpdate
+						? 'Providing this REPLACES the screen\'s current filters; provide an empty array ([]) to remove them all so the screen can show every entry the user has permission to see. Omit it to leave them unchanged. '
+						: 'Omit it (or provide an empty array) for a screen that shows every entry the user has permission to see. ')
+					.'Each condition has an element, an operator, a value, and a \'type\' flag of \'match-all\' (combined with AND) or \'match-one-or-more\' (combined with OR). Conditions can reference elements in this form or in connected forms. Do not use foreign keys as values for linked elements; use the readable value, which this tool understands automatically. Use "{BLANK}" to match blank values, and dynamic values such as {TODAY}, {TODAY+7}, {NOW} and {USER} (the user looking at the screen).'
+			]),
+			'entries_per_page' => [
+				'type' => 'integer',
+				'description' => $omitted.' How many entries appear on each page of the list. Use 0 to put every entry on one page, which is only sensible for lists that will always be short. The default is 10.'
+			],
+			'view_entry_screen' => [
+				'type' => ['integer', 'string'],
+				'description' => $omitted." Which form screen opens when a user clicks through to an individual entry. The default is the default form screen for this form. Use a specific screen id to set this to a different form screen, on this form or on a connected form. Use the string 'default' to reset to the default."
+			],
+			'buttons' => [
+				'type' => 'object',
+				'description' => 'Optional. The buttons on the screen, and the text on them. To turn off a button, set its text to an empty string (buttons with no text do not appear).'
+					.($isUpdate
+						? 'Only the buttons you include are changed; the rest keep their current labels.'
+						: 'Buttons you do not mention get sensible default labels, which means most of them will be present. For any that you do not want, set them to an empty string.')
+					.' A button only ever appears for users whose permissions allow the action behind it. For example, if can include the Delete Entries button, and it will only show up on the screen for users who have permission to delete entries. Use the set_form_permissions tool to update permissions for users.',
+				'properties' => $buttonProperties
+			],
+			'custom_buttons' => $this->listScreenCustomButtonsSchema($mode),
+			'visibility_scope_label' => [
+				'type' => 'string',
+				'description' => $omitted.' The text that introduces the visibility scope options interface. The default text is "Showing:" The basic options are \'Entries by me\', \'Entries by my groups\', \'Entries by all users\'. In addition, there is an option for users to select an arbitrary set of groups (from among the groups they are a member of). If the user has access to any saved views, they will be selectable in this interface as well. Set an empty string to turn off the interface.'
+			],
+			'available_views' => [
+				'type' => 'array',
+				'description' => ($isUpdate
+					? 'Optional. Which views the visibility scope interface offers. Providing this REPLACES the current list. Omit it to leave it unchanged.'
+					: 'Optional. Which views the visibility scope interface offers. Defaults to every view.')
+					.' Use [\'every_view\'] for no restriction. The three standard views are their_own_entries, their_groups_entries and all_entries. Regardless of this setting, what a given user actually sees will always depend on their permissions. Set user permissions with the set_form_permissions tool. '
+					. ($isUpdate ? 'Any other values here will be the ids of published saved views on this form.' : ''),
+				'items' => [
+					'type' => ['string', 'integer'],
+					'enum' => $this->listScreenViewVocabulary(includeBlank: false, includeAll: true)
+				]
+			],
+			'default_view' => [
+				'type' => 'array',
+				'description' => ($isUpdate
+					? 'Optional. Which view each group of users starts out on. Providing this REPLACES the current settings, so include every group you want a setting for. Omit it to leave them unchanged. All users are members of Registered Users (group 2).'
+					: 'Optional. Which view each group of users starts out on. Defaults to all_entries for Registered Users, however a given user will only ever see the entries that their permissions on the form allow. Set user permissions with the set_form_permissions tool.')
+					.' If there are default_view values specified for multiple groups, a user who is a member of more than one will get the view that comes first in the array. Use list_groups to find group ids.',
+				'items' => [
+					'type' => 'object',
+					'properties' => [
+						'group_id' => [
+							'type' => 'integer',
+							'description' => 'Required. The group this setting is for. If default_view is not specified, this will default to Registered Users (group 2).'
+						],
+						'view' => [
+							'type' => ['string', 'integer'],
+							'enum' => $this->listScreenViewVocabulary(includeBlank: true, includeAll: false),
+							'description' => "Required. The view that members of this group start out on: one of the three standard views, the id of a saved view, or 'blank' to start with no entries shown. If default_view is not specified, this will default to all_entries."
+						]
+					],
+					'required' => ['group_id', 'view']
+				]
+			],
+			'show_column_headings' => [
+				'type' => 'boolean',
+				'description' => $omitted.' Show a heading at the top of each column. Default is true. Headings are also what users click to sort the list, so turning them off removes the ability to sort.'
+			],
+			'show_search_boxes' => [
+				'type' => 'string',
+				'enum' => ['shown', 'hidden', 'off'],
+				'description' => $omitted." Whether the Quicksearch boxes appear under the column headings: 'shown' (the default) puts them on screen; 'hidden' keeps them out of the way until the user clicks to open them; 'off' removes them."
+			],
+			'show_entry_count' => [
+				'type' => 'boolean',
+				'description' => $omitted." Show the count at the bottom of the list, eg: 'Showing entries 1 to 10 of 55'. Default is true."
+			],
+			'show_hide_repeating_data_switch' => [
+				'type' => 'boolean',
+				'description' => $omitted." Show the 'Hide repeating data' switch, which lets users blank out values that repeat from the row above. Default is true. This is useful if the list will include a lot of the same values over and over, and then the user can flip the switch to isolate the relevant data."
+			],
+			'show_checkboxes' => [
+				'type' => 'string',
+				'enum' => ['based_on_delete_permission', 'all_entries', 'none'],
+				'description' => $omitted." Whether a checkbox appears beside each entry, so users can select entries to act on: 'based_on_delete_permission' (the default) shows one only where the user can delete the entry; 'all_entries' shows one on every entry, which is what you want when the workflow might involve users doing something other than deleting entries; 'none' removes the checkboxes for everyone, regardless of permission."
+			],
+			'entry_link_icon_style' => [
+				'type' => 'string',
+				'enum' => ['pen', 'magnifying_glass', 'none'],
+				'description' => $omitted." The icon at the left of each entry that opens the full entry: 'pen' suggests editing, 'magnifying_glass' suggests looking, and 'none' results in no icon, which means users have no way to open an entry from this screen."
+			],
+			'show_working_message' => [
+				'type' => 'boolean',
+				'description' => $omitted." Show the 'Working' message while the page reloads. Default is true."
+			],
+			'max_characters_per_cell' => [
+				'type' => 'integer',
+				'description' => $omitted.' Truncate the text shown in any cell to this many characters, so one long value cannot stretch the list. Use 0 for no limit. New screens use 255.'
+			],
+			'editable_columns' => [
+				'type' => 'array',
+				'items' => [ 'type' => ['string', 'integer'] ],
+				'description' => ($isUpdate
+					? 'Optional. The columns whose values are shown as editable form inputs right in the list, instead of as text, so users can change many entries without opening them. Providing this REPLACES the current set; provide an empty array ([]) for none. Omit it to leave it unchanged.'
+					: 'Optional. The columns whose values are shown as editable form inputs right in the list, instead of as text, so users can change many entries without opening them.')
+					.' Specify elements by handle or id. This setting does not cause the element to appear in the screen, do that with the columns property. A column that is not initially in the screen, will appear in an editable form if the user changes columns to include it.'
+			],
+			'editable_columns_show_option' => [
+				'type' => 'string',
+				'enum' => ['immediately', 'pen', 'magnifying_glass'],
+				'description' => $omitted." When should the values in editable columns turn into inputs: 'immediately' (the default) makes all values editable as soon as the list loads; 'pen' or 'magnifying_glass' makes each cell editable only after the user clicks the icon on it."
+			],
+			'editable_columns_save_button_text' => [
+				'type' => 'string',
+				'description' => $omitted.' The text on the button below the list that saves changes the user made in the editable columns. Only relevant when editable_columns is in use, and editable_columns_show_option is set to \'immediately\' (otherwise each cell has its own save button). Default is \"Save\".'
+			]
+
+		];
+	}
+
+	/**
+	 * Build the JSON schema for the "custom_buttons" property of the list screen tools. A custom button is one
+	 * an application builder adds to a list screen to do a job the standard buttons do not - it appears on each
+	 * row and, when clicked, changes values in that entry.
+	 *
+	 * Shaped like the "pages" property of the form screen tools: each entry either targets an existing button
+	 * by id (to change it or delete it) or, with no id, adds a new one. Buttons not mentioned are untouched.
+	 *
+	 * @param string $mode 'create' or 'update'.
+	 * @return array The JSON schema array for the custom_buttons property.
+	 */
+	private function listScreenCustomButtonsSchema($mode) {
+		$isUpdate = ($mode === 'update');
+		$itemProps = [];
+		if($isUpdate) {
+			$itemProps['button_id'] = [
+				'type' => ['string', 'integer'],
+				'description' => 'Optional. The id of an existing custom button on this screen, to change it or delete it. Omit it to add a new button. Get the ids from get_screen_details.'
+			];
+		}
+		$itemProps['label'] = [
+			'type' => 'string',
+			'description' => 'The text on the button. '.($isUpdate ? 'Required for a new button, optional when changing one. ' : 'Required.')
+		];
+		$itemProps['confirm_text'] = [
+			'type' => 'string',
+			'description' => 'Optional. A question shown in a popup that the user must confirm before the button acts, eg: "Mark this order as shipped?". Leave it out, or set an empty string, for a button that acts immediately. Worth setting on anything the user would not want to do by accident.'
+		];
+		$itemProps['message_text'] = [
+			'type' => 'string',
+			'description' => 'Optional. A message shown at the top of the screen after the button effects have been applied. If whatever changed would not be obvious to the user on screen, it may be useful to set a message. eg: "The order has been marked as shipped." Leave it out, or set an empty string, for no message.'
+		];
+		$itemProps['groups'] = [
+			'type' => 'array',
+			'items' => [ 'type' => 'integer' ],
+			'description' => 'Optional. The ids of the groups whose members see this button. '
+				.($isUpdate ? 'Providing this REPLACES the current list. ' : '')
+				.'An empty list means nobody sees it, so a button with no groups is switched off rather than open to everyone. Use list_groups to find group ids. Set to 2 (Registered Users group) to show the button to everyone with an account, who has permission to access the form. Note this only controls who sees the button - what it does when clicked is still subject to that user\'s permissions on the entries.'
+		];
+		$itemProps['effects'] = [
+			'type' => 'array',
+			'description' => 'The changes this button makes to the entry on its row, applied in order. '
+				.($isUpdate ? 'Providing this REPLACES the button\'s current effects; providing an empty array ([]) will cause a button to have no effect. ' : '')
+				.'A button can affect one or more elements in a form, eg: set status to \'shipped\' and the date shipped to today.',
+			'items' => [
+				'type' => 'object',
+				'properties' => [
+					'element' => [
+						'type' => ['string', 'integer'],
+						'description' => 'Required. The element whose value changes, as a handle or id. Get handles and ids from get_form_details.'
+					],
+					'value' => [
+						'type' => 'string',
+						'description' => 'Required. The value to put in the element, replacing whatever is there. The value is passed directly to the database with no processing, so use entry ids instead of readable value for linked elements, do not use dynamic values like {TODAY}, etc. If the value contains the string \'$value\' then it will be evaluated as PHP code and the final value of $value will be sent to the database. For example, to set today\'s date you can do this: $value = date(\'Y-m-d\'); The affected entry id is available as $entry_id. All the functions and methods of the internal Formulize API are in scope when the string is evaluated.'
+					]
+				],
+				'required' => ['element', 'value']
+			]
+		];
+		if($isUpdate) {
+			$itemProps['delete'] = [
+				'type' => 'boolean',
+				'description' => 'Optional. Set true, together with button_id, to remove that button from the screen.'
+			];
+		}
+		$item = [ 'type' => 'object', 'properties' => $itemProps ];
+		if(!$isUpdate) {
+			$item['required'] = ['label', 'effects'];
+		}
+		return [
+			'type' => 'array',
+			'description' => ($isUpdate
+				? 'Optional. Changes to this screen\'s custom buttons. Only include the buttons you want to change, add or delete - buttons you do not mention are left alone. Target one by button_id, or omit button_id to add a new one.'
+				: 'Optional. Custom buttons to put on the screen. A custom button appears on every row of the list and changes values in that row\'s entry when clicked - the usual reason to add one is to let a user alter an entry with a single click, without having to open it and edit it. For example, update a status, approve something, etc')
+				.' These tools only configure the in-row kind of button. There are other kinds of custom buttons in Formulize that can have other effects, but they must be set in the administration interface. A button on this screen that does one of those things cannot be changed here and will be left exactly as it is.',
+			'items' => $item
+		];
+	}
+
+	/**
+	 * Translate the friendly create_list_screen / update_list_screen arguments into the internal object-var
+	 * properties consumed by formulizeHandler::upsertListScreen(). Only keys actually present in
+	 * $arguments are included, so this supports partial updates.
+	 * @param array $arguments The tool arguments.
+	 * @param formulizeListOfEntriesScreen|null $existingScreen The screen being updated, or null when creating.
+	 *        Only the custom buttons need it, because they are patched against what the screen already has.
+	 * @return array The internal $properties array for the upsert method.
+	 * @throws FormulizeMCPException on a value that is not valid for the setting it was given for.
+	 */
+	private function buildListScreenProperties($arguments, $existingScreen) {
+		$properties = array();
+
+		// plain numeric settings, and the booleans that are stored as 1/0
+		$numericMap = array(
+			'entries_per_page' => 'entriesperpage',
+			'max_characters_per_cell' => 'textwidth'
+		);
+		foreach($numericMap as $arg => $col) {
+			if(array_key_exists($arg, $arguments)) {
+				$properties[$col] = max(0, intval($arguments[$arg]));
+			}
+		}
+		$booleanMap = array(
+			'show_column_headings' => 'useheadings',
+			'show_entry_count' => 'usenumberofentries',
+			'show_hide_repeating_data_switch' => 'usetogglerepeatdata',
+			'show_working_message' => 'useworkingmsg'
+		);
+		foreach($booleanMap as $arg => $col) {
+			if(array_key_exists($arg, $arguments)) {
+				$properties[$col] = $arguments[$arg] ? 1 : 0;
+			}
+		}
+
+		// settings stored as a number that stands for one of a few choices
+		$choiceMap = array(
+			'show_search_boxes' => array('usesearch', array('shown' => 1, 'hidden' => 2, 'off' => 0)),
+			'show_checkboxes' => array('usecheckboxes', array('based_on_delete_permission' => 0, 'all_entries' => 1, 'none' => 2)),
+			'entry_link_icon_style' => array('useviewentrylinks', array('pen' => FORMULIZE_EDIT_ICON_STYLE_PEN, 'magnifying_glass' => FORMULIZE_EDIT_ICON_STYLE_MAGNIFIER, 'none' => FORMULIZE_EDIT_ICON_STYLE_OFF)),
+			'editable_columns_show_option' => array('dedisplay', array('immediately' => FORMULIZE_EDIT_ICON_STYLE_OFF, 'pen' => FORMULIZE_EDIT_ICON_STYLE_PEN, 'magnifying_glass' => FORMULIZE_EDIT_ICON_STYLE_MAGNIFIER))
+		);
+		foreach($choiceMap as $arg => $choiceData) {
+			list($col, $choices) = $choiceData;
+			if(array_key_exists($arg, $arguments)) {
+				$value = $arguments[$arg];
+				if(!is_string($value) OR !array_key_exists($value, $choices)) {
+					throw new FormulizeMCPException(
+						"'".(is_scalar($value) ? $value : gettype($value))."' is not a valid value for $arg. Use one of: ".implode(', ', array_keys($choices)).".",
+						'invalid_data'
+					);
+				}
+				$properties[$col] = $choices[$value];
+			}
+		}
+
+		// plain text settings
+		$textMap = array(
+			'visibility_scope_label' => 'usecurrentviewlist',
+			'editable_columns_save_button_text' => 'desavetext'
+		);
+		foreach($textMap as $arg => $col) {
+			if(array_key_exists($arg, $arguments)) {
+				$properties[$col] = $arguments[$arg];
+			}
+		}
+
+		// the screen used when a user clicks through to a single entry. 'default', 'none' and 0 all mean
+		// "let Formulize decide", which is stored as the string 'none'.
+		if(array_key_exists('view_entry_screen', $arguments)) {
+			$viewEntryScreen = $arguments['view_entry_screen'];
+			if(is_numeric($viewEntryScreen) AND intval($viewEntryScreen) > 0) {
+				$properties['viewentryscreen'] = $this->validatedViewEntryScreen(intval($viewEntryScreen));
+			} elseif(in_array($viewEntryScreen, array('default', 'none', '', 0, '0'), true)) {
+				$properties['viewentryscreen'] = 'none';
+			} else {
+				throw new FormulizeMCPException(
+					"'".(is_scalar($viewEntryScreen) ? $viewEntryScreen : gettype($viewEntryScreen))."' is not a valid view_entry_screen. Use the id of a form screen, or 'default'.",
+					'invalid_data'
+				);
+			}
+		}
+
+		// buttons: only the labels that were provided are changed, so the rest keep what they have
+		if(isset($arguments['buttons']) AND is_array($arguments['buttons'])) {
+			foreach($this->listScreenButtonMap() as $friendly => $internal) {
+				if(array_key_exists($friendly, $arguments['buttons'])) {
+					$properties[$internal] = (string) $arguments['buttons'][$friendly];
+				}
+			}
+		}
+
+		// columns, and the two lists of columns that get special treatment
+		try {
+			if(array_key_exists('columns', $arguments)) {
+				$properties['advanceview'] = formulizeHandler::buildListScreenColumns($arguments['columns']);
+			}
+			if(array_key_exists('editable_columns', $arguments)) {
+				$properties['decolumns'] = formulizeHandler::buildListScreenColumnHandles($arguments['editable_columns']);
+			}
+			if(array_key_exists('fundamental_filters', $arguments)) {
+				$properties['fundamental_filters'] = formulizeHandler::buildConditionStorageArray($arguments['fundamental_filters']);
+			}
+			if(array_key_exists('custom_buttons', $arguments)) {
+				$properties['customactions'] = formulizeHandler::applyListScreenCustomButtonChanges(
+					$existingScreen ? $existingScreen->getVar('customactions') : array(),
+					$arguments['custom_buttons']
+				);
+			}
+		} catch (Exception $e) {
+			throw new FormulizeMCPException($e->getMessage(), 'invalid_data');
+		}
+
+		// views
+		if(array_key_exists('available_views', $arguments)) {
+			$limitviews = array();
+			$allowedNames = $this->listScreenViewVocabulary(includeBlank: false, includeAll: true);
+			foreach((array) $arguments['available_views'] as $view) {
+				$limitviews[] = $this->listScreenViewValue($view, 'available_views', $allowedNames);
+			}
+			// an empty list would leave the menu with nothing in it, which is not a state the screen can
+			// usefully be in, so treat it the same as asking for no restriction
+			$properties['limitviews'] = $limitviews ?: array('allviews');
+		}
+		if(array_key_exists('default_view', $arguments)) {
+			$defaultview = array();
+			$allowedNames = $this->listScreenViewVocabulary(includeBlank: true, includeAll: false);
+			foreach((array) $arguments['default_view'] as $groupDefault) {
+				if(!is_array($groupDefault) OR !isset($groupDefault['group_id']) OR !isset($groupDefault['view'])) {
+					throw new FormulizeMCPException('Each default_view entry must include a group_id and a view.', 'invalid_data');
+				}
+				$groupId = intval($groupDefault['group_id']);
+				if(!$this->groupExists($groupId)) {
+					throw new FormulizeMCPException("Group $groupId, referenced in default_view, does not exist.", 'invalid_data');
+				}
+				$defaultview[$groupId] = $this->listScreenViewValue($groupDefault['view'], 'default_view', $allowedNames);
+			}
+			$properties['defaultview'] = $defaultview;
+		}
+
+		return $properties;
+	}
+
+	/**
+	 * Confirm that a screen id can be used as a list screen's view_entry_screen, ie: that it is a screen users
+	 * can look at an individual entry through. List screens and calendars are not, since they present many
+	 * entries rather than one.
+	 * @param int $screenId The screen id to check.
+	 * @return string The screen id, as the string the setting is stored as.
+	 * @throws FormulizeMCPException if the screen does not exist or is not a screen that shows a single entry.
+	 */
+	private function validatedViewEntryScreen($screenId) {
+		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+		if(!$screenObject = $screen_handler->get($screenId)) {
+			throw new FormulizeMCPException("Screen $screenId, given as the view_entry_screen, does not exist.", 'invalid_data');
+		}
+		$singleEntryTypes = array('multiPage', 'form', 'template');
+		if(!in_array($screenObject->getVar('type'), $singleEntryTypes)) {
+			throw new FormulizeMCPException(
+				"Screen $screenId is a ".$this->friendlyScreenType($screenObject->getVar('type'))." screen, which shows many entries at once, so it cannot be the view_entry_screen. Use a form screen instead.",
+				'invalid_data'
+			);
+		}
+		return (string) $screenId;
+	}
+
+	/**
+	 * Does a group with this id exist? Used where a tool takes a group id as a plain reference and only needs to
+	 * know that it is real, as opposed to the places that also have something to say about what kind of group it
+	 * is (see validatedMenuGroupIds and assertGroupIsEditableByTools).
+	 * @param int $groupId The group id.
+	 * @return bool
+	 */
+	private function groupExists($groupId) {
+		$member_handler = xoops_gethandler('member');
+		return (bool) $member_handler->getGroup(intval($groupId));
 	}
 
 	/**
@@ -5358,7 +6259,7 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 			return [
 				'deleted' => false,
 				'message' => 'Nothing has been deleted. This is a preview of what deleting this element would do. Show this to the person you are working with, and if they agree, call delete_element again with the same element and the confirmation_token below.',
-				'impact' => $this->elementDeletionImpact($elementObject),
+				'impact' => xoops_getmodulehandler('elements', 'formulize')->elementUsageReport($elementObject),
 				'confirmation_token' => $this->signElementDeletionToken($elementId, $expires),
 				'confirmation_token_expires' => date('c', $expires)
 			];
@@ -5369,14 +6270,14 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 			return [
 				'deleted' => false,
 				'message' => 'That confirmation token is not valid for this element, or it has expired. Nothing has been deleted. Here is a fresh impact report and a new token.',
-				'impact' => $this->elementDeletionImpact($elementObject),
+				'impact' => xoops_getmodulehandler('elements', 'formulize')->elementUsageReport($elementObject),
 				'confirmation_token' => $this->signElementDeletionToken($elementId, time() + 300),
 				'confirmation_token_expires' => date('c', time() + 300)
 			];
 		}
 
 		// keep the report so the response can say what was actually lost
-		$impact = $this->elementDeletionImpact($elementObject);
+		$impact = xoops_getmodulehandler('elements', 'formulize')->elementUsageReport($elementObject);
 
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
 		try {

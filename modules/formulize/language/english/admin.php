@@ -669,6 +669,41 @@ define("_AM_ELE_SELECT_NONE","No element selected");
 define("_AM_ELE_CONFIRM_DELETE","Are you sure you want to delete this form element? All data anyone has ever entered into this form element will be deleted as well.");
 define("_AM_ELE_CONFIRM_DELETE_INLINK","THIS FORM ELEMENT IS PART OF RELATIONSHIPS WITH OTHER FORMS! Are you sure you want to delete this form element? The relationships will break, and all data anyone has ever entered into this form element will be deleted as well.");
 
+// Element usage report (the Usage link, and the dialog shown before deleting)
+define("_AM_ELE_USAGE_LINK","Usage");
+define("_AM_ELE_USAGE_TITLE","Where this element is used");
+define("_AM_ELE_USAGE_DELETE_TITLE","Delete this element?");
+define("_AM_ELE_USAGE_LOADING","Checking where this element is used...");
+define("_AM_ELE_USAGE_FAILED","Could not work out where this element is used.");
+define("_AM_ELE_USAGE_ERROR_LOGIN","You are not logged in.");
+define("_AM_ELE_USAGE_ERROR_NOELEMENT","No such element.");
+define("_AM_ELE_USAGE_ERROR_PERMISSION","You do not have permission to see this form's elements.");
+define("_AM_ELE_USAGE_NOTHING","Nothing else in the system refers to this element.");
+define("_AM_ELE_USAGE_HOLDS_DATA","%s entries have a value in this element. Deleting it deletes those values.");
+define("_AM_ELE_USAGE_NO_DATA","No entries have a value in this element.");
+define("_AM_ELE_USAGE_NO_DATA_COLUMN","This element does not store data of its own.");
+define("_AM_ELE_USAGE_IS_PI","This is the form's principal identifier. Deleting it leaves the form without one.");
+define("_AM_ELE_USAGE_HANDLED","These are updated automatically if you delete the element.");
+
+// Headings for the sections of the usage report. These are read by the report in PHP and travel to the
+// dialog inside the JSON, rather than being written into the dialog's Javascript, so that an apostrophe in
+// one of them cannot break the script it would otherwise have been pasted into.
+define("_AM_ELE_USAGE_SECTION_FORM_SCREENS","On these form screens");
+define("_AM_ELE_USAGE_SECTION_LIST_SCREENS","On these list screens");
+define("_AM_ELE_USAGE_SECTION_MAP_SCREENS","On these map screens");
+define("_AM_ELE_USAGE_SECTION_CALENDAR_SCREENS","On these calendar screens");
+define("_AM_ELE_USAGE_SECTION_SCREEN_ADDRESSES","Used to identify entries in the address of these screens");
+define("_AM_ELE_USAGE_SECTION_OTHER_ELEMENTS","Other elements set up to depend on this one");
+define("_AM_ELE_USAGE_SECTION_GROUP_FILTERS","Used in what these groups are allowed to see");
+define("_AM_ELE_USAGE_SECTION_SAVED_VIEWS","In these saved views");
+define("_AM_ELE_USAGE_SECTION_FORM_SETTINGS","In these form settings");
+define("_AM_ELE_USAGE_SECTION_RELATIONSHIPS","Connects these forms together");
+define("_AM_ELE_USAGE_CODE","Named in code, which you would need to fix yourself");
+define("_AM_ELE_USAGE_CODE_INTRO","Deleting the element clears it out of every setting above. It cannot change code somebody wrote, so these are left as they are:");
+define("_AM_ELE_USAGE_CLOSE","Close");
+define("_AM_ELE_USAGE_DELETE_BUTTON","Delete this element");
+define("_AM_ELE_USAGE_CANCEL","Cancel");
+
 // Duration
 define("_AM_ELE_DURATION", "Duration");
 define("_AM_ELE_DURATION_SHOW_UNITS", "Show units");

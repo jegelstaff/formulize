@@ -398,7 +398,7 @@ class formulizeHandler {
 	 * Create or update a form screen (internally a multi-page screen).
 	 * This is the high-level upsert apparatus for form screens, analogous to upsertFormSchemaAndResources for forms.
 	 * It handles create-vs-update, seeding sensible defaults for new screens, permission/lock checks,
-	 * the screen_handle uniqueness two-pass insert, the multi-page insert() serialization quirk (array fields
+	 * the screen_handle a new screen ends up with, the multi-page insert() serialization quirk (array fields
 	 * must be set already-serialized), and the thankstext/introtext HTML encoding normalization.
 	 *
 	 * Callers (MCP tools, admin save handlers) pass INTERNAL object-var values as keys (e.g. navstyle,
@@ -498,24 +498,14 @@ class formulizeHandler {
 			}
 		}
 
-		// screen_handle uniqueness (reuse the existing shared primitive)
-		$requestedHandle = array_key_exists('screen_handle', $properties) ? $properties['screen_handle'] : $screen->getVar('screen_handle');
-		if(strlen($requestedHandle)) {
-			$screen->setVar('screen_handle', $screen_handler->makeHandleUnique($requestedHandle, ($sid ? $sid : "")));
-		}
+		// The handle: whatever was asked for, and otherwise settled by the screen handler from the title, or
+		// from the screen's new sid once insert() has one. See formulizeScreenHandler::settleHandle().
+		$screen_handler->settleHandle($screen, array_key_exists('screen_handle', $properties) ? $properties['screen_handle'] : '');
 
 		if(!$newSid = $screen_handler->insert($screen)) {
 			throw new Exception("Could not save the form screen properly: ".$xoopsDB->error());
 		}
 		$screen->assignVar('sid', $newSid);
-
-		// a brand new screen with a blank handle: default the handle to its new sid, then re-save
-		if(!strlen($screen->getVar('screen_handle'))) {
-			$screen->setVar('screen_handle', $screen_handler->makeHandleUnique($newSid, $newSid));
-			if(!$screen_handler->insert($screen)) {
-				throw new Exception("Could not finalize the new form screen handle: ".$xoopsDB->error());
-			}
-		}
 
 		return $screen;
 	}
@@ -765,15 +755,20 @@ class formulizeHandler {
 	}
 
 	/**
-	 * Build the internal condition storage array (0=>elements, 1=>ops, 2=>terms, 3=>types) for one page from a
-	 * friendly list of rules. Element references are resolved to ele_ids (metadata field names are passed through).
-	 * Unlike page elements, condition elements are not restricted to the screen's own form - they may reference
-	 * elements in connected forms (the conditions are evaluated within the screen's relationship). The friendly
-	 * 'type' value 'match-one-or-more' maps to the internal 'oom' (OR); anything else maps to 'all' (AND).
+	 * Build the internal condition storage array (0=>elements, 1=>ops, 2=>terms, 3=>types) from a friendly list
+	 * of rules. This is the one translation for every condition-shaped setting Formulize has - form screen page
+	 * display conditions, list screen fundamental filters, and anything else that adopts the same schema - so
+	 * that they cannot come to store the same idea differently. It is the write-side counterpart of
+	 * tidyUpOldConditionsArrayFormat() in mcp/resources.php, which reads the format back.
+	 *
+	 * Element references are resolved to ele_ids (metadata field names are passed through). Condition elements
+	 * are not restricted to one form - they may reference elements in connected forms, since conditions are
+	 * evaluated within the screen's relationship. The friendly 'type' value 'match-one-or-more' maps to the
+	 * internal 'oom' (OR); anything else maps to 'all' (AND).
 	 * @param array $rules List of { element, operator, value, type } rules.
 	 * @return array The 4 parallel arrays, or an empty array when there are no rules.
 	 */
-	private static function buildConditionStorageArray($rules) {
+	public static function buildConditionStorageArray($rules) {
 		if(!is_array($rules) OR count($rules) == 0) {
 			return array();
 		}
@@ -799,14 +794,424 @@ class formulizeHandler {
 	 * Resolve a single element reference (ele_id or handle) to an integer ele_id, without restricting it to a
 	 * particular form. Used for condition elements, which may live in connected forms.
 	 * @param mixed $eleRef An element id or handle.
-	 * @throws Exception if the element cannot be found.
 	 * @return int The element id.
 	 */
-	private static function resolveElementId($eleRef) {
+	public static function resolveElementId($eleRef) {
+		return self::resolveElementHandleOrId($eleRef, returnId: true);
+	}
+
+	/**
+	 * Resolve an element reference to a handle for a WRITE
+	 * @param mixed $eleRef An element id or handle, or a metadata field name.
+	 * @return string The element handle, or the metadata field name.
+	 */
+	public static function resolveElementHandle($eleRef) {
+		return self::resolveElementHandleOrId($eleRef, returnId: false);
+	}
+
+  /**
+	 * Resolve an element reference to either a handle or an id, depending on the $returnId flag.
+	 * @param mixed $eleRef An element id or handle, or a metadata field name.
+	 * @param bool $returnId If true, return the element id; if false, return the element handle.
+	 * @throws Exception if the element cannot be found.
+	 * @return mixed The element id or handle, or the metadata field name.
+	 */
+	private static function resolveElementHandleOrId($eleRef, $returnId = false) {
+		if(isMetaDataField($eleRef)) {
+			return $eleRef;
+		}
 		if(!$element = _getElementObject($eleRef)) {
 			throw new Exception("Element '".(is_scalar($eleRef) ? $eleRef : gettype($eleRef))."' could not be found.");
 		}
-		return intval($element->getVar('ele_id'));
+		return $returnId ? intval($element->getVar('ele_id')) : $element->getVar('ele_handle');
+	}
+
+	/**
+	 * The text properties of a list screen that need decoding before a re-save, derived from the object rather
+	 * than listed here, so that adding a property to formulizeListOfEntriesScreen is enough and there is no
+	 * second place to remember.
+	 *
+	 * Why they need it: formulizeListOfEntriesScreenHandler::insert() writes these columns as
+	 * $screen->getVar($key) with the default 's' format, which HTML encodes on the way to the database. A value
+	 * read back off a saved screen is therefore already encoded once, and re-saving it without decoding first
+	 * would encode it again, and again on every subsequent save.
+	 *
+	 * Why the predicate is "TXTBOX declared by the subclass" rather than just "TXTBOX": the base screen's own
+	 * text vars (screen_handle, title, type, theme, rewriteruleAddress) are written by formulizeScreenHandler's
+	 * insert() from cleanVars, which does not HTML encode, so decoding those would corrupt them instead of
+	 * protecting them. The class split is exactly the same split as which insert() writes which column, so
+	 * diffing the two constructors is the meaning of the rule and not merely a convenient way to get the list.
+	 *
+	 * @return array The property names.
+	 */
+	private static function listOfEntriesScreenTextProperties() {
+		static $properties = null;
+		if($properties === null) {
+			// getting the handler first also guarantees screen.php is loaded, for formulizeScreen below
+			$listScreen = xoops_getmodulehandler('listOfEntriesScreen', 'formulize')->create();
+			$baseScreen = new formulizeScreen();
+			$properties = array();
+			foreach($listScreen->vars as $key => $var) {
+				if($var['data_type'] == XOBJ_DTYPE_TXTBOX AND !isset($baseScreen->vars[$key])) {
+					$properties[] = $key;
+				}
+			}
+		}
+		return $properties;
+	}
+
+	/**
+	 * Create or update a list screen (internally a "listOfEntries" screen). This is the counterpart of
+	 * upsertMultiPageScreen, and works the same way: create-vs-update, sensible defaults seeded on new screens,
+	 * permission and lock checks against the form, the screen_handle a new screen ends up with, and the
+	 * insert() serialization quirk where array fields must be set already-serialized.
+	 *
+	 * Callers (MCP tools, admin save handlers) pass INTERNAL object-var values as keys (eg: usesearch as 0/1/2,
+	 * advanceview as the parallel column array, etc). Array-typed properties may be passed as plain PHP arrays
+	 * (they are serialized here) or as already-serialized strings, as some admin save handlers do.
+	 *
+	 * @param array $properties Associative array of screen object properties to set (partial update - only provided keys are changed). Must include 'fid' when creating a new screen (ie: when $sid is 0).
+	 * @param int $sid Optional. The screen id to update. If 0 (default) a new screen is created.
+	 * @throws Exception on invalid input, permission failure, locked form, or database error.
+	 * @return formulizeListOfEntriesScreen The saved screen object.
+	 */
+	public static function upsertListScreen($properties = array(), $sid = 0) {
+		global $xoopsDB, $xoopsUser;
+		$screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$gperm_handler = xoops_gethandler('groupperm');
+		$mid = getFormulizeModId();
+
+		$sid = intval($sid);
+		$screenIsNew = true;
+		$screen = false;
+		if($sid AND $screen = $screen_handler->get($sid)) {
+			if($screen->getVar('type') != 'listOfEntries') {
+				throw new Exception("Screen $sid is not a list screen and cannot be updated by this method.");
+			}
+			$screenIsNew = false;
+			$fid = intval($screen->getVar('fid'));
+		} else {
+			$sid = 0;
+			$fid = isset($properties['fid']) ? intval($properties['fid']) : 0;
+			if(!$fid OR !$newFormObject = $form_handler->get($fid)) {
+				throw new Exception("A valid form_id is required to create a new list screen.");
+			}
+			$screen = $screen_handler->create();
+			// 'none' means no specific screen is used to display an individual entry, which is the right
+			// starting point for a screen made through this method - the caller can point it at one after.
+			// setDefaultListScreenVars also seeds the title, theme and type, so only the type is restated
+			// here, as the one thing this method is not willing to have come out any other way.
+			$screen_handler->setDefaultListScreenVars($screen, 'none', $newFormObject);
+			$screen->setVar('type', 'listOfEntries');
+		}
+
+		// permission and lock checks against the form the screen belongs to
+		if(!$formObject = $form_handler->get($fid)) {
+			throw new Exception("Could not load the form ($fid) for this screen.");
+		}
+		if($formObject->getVar('lockedform')) {
+			throw new Exception("The form is locked and its screens cannot be modified.");
+		}
+		if(!$xoopsUser OR $gperm_handler->checkRight("edit_form", $fid, $xoopsUser->getGroups(), $mid) == false) {
+			throw new Exception("Permission denied: You don't have permission to edit this form's screens.");
+		}
+
+		// keys that this method sets explicitly below, so they are skipped by the generic scalar loop
+		$arrayFields = array('limitviews', 'defaultview', 'advanceview', 'hiddencolumns', 'decolumns', 'customactions', 'fundamental_filters');
+		$textFields = self::listOfEntriesScreenTextProperties();
+		$handledSpecially = array_merge($arrayFields, $textFields, array('fid', 'sid', 'screen_handle'));
+
+		// apply plain scalar properties (partial update - only what was provided)
+		foreach($properties as $key => $value) {
+			if(in_array($key, $handledSpecially)) {
+				continue;
+			}
+			$screen->setVar($key, $value);
+		}
+		$screen->setVar('fid', $fid);
+
+		// array fields must be serialized before setVar, because the list screen's insert() does not use the
+		// cleaned vars for them and instead does serialize($screen->getVar('field')) - getVar unserializes, so
+		// the value has to round-trip. Accept either a plain PHP array or an already-serialized string.
+		foreach($arrayFields as $field) {
+			if(array_key_exists($field, $properties)) {
+				$value = $properties[$field];
+				$screen->setVar($field, is_string($value) ? $value : serialize($value));
+			}
+		}
+
+		// text fields: insert() HTML encodes on the way to the database (see listOfEntriesScreenTextProperties).
+		// A provided value is set raw so insert() encodes it exactly once; a value that was not provided is
+		// decoded back to raw on an update, so that re-saving an untouched label does not encode it a second time.
+		foreach($textFields as $textField) {
+			if(array_key_exists($textField, $properties)) {
+				$screen->setVar($textField, $properties[$textField]);
+			} elseif(!$screenIsNew) {
+				$screen->setVar($textField, undoAllHTMLChars($screen->getVar($textField, 'n')));
+			}
+		}
+
+		// The handle: whatever was asked for, and otherwise settled by the screen handler from the title, or
+		// from the screen's new sid once insert() has one. See formulizeScreenHandler::settleHandle().
+		$screen_handler->settleHandle($screen, array_key_exists('screen_handle', $properties) ? $properties['screen_handle'] : '');
+
+		if(!$newSid = $screen_handler->insert($screen)) {
+			throw new Exception("Could not save the list screen properly: ".$xoopsDB->error());
+		}
+		$screen->assignVar('sid', $newSid);
+
+		return $screen;
+	}
+
+	/**
+	 * Translate a friendly list of column definitions into the internal "advanceview" storage array of a list
+	 * screen: an ordered list of array($handle, $searchValue, $sortDirection, $searchInterface). The advanceview
+	 * is what decides which columns the list starts out showing, in what order, sorted how, and what kind of
+	 * Quicksearch control sits at the top of each one.
+	 *
+	 * Columns are stored as element HANDLES (not ids), because that is what the list rendering, the saved views
+	 * and the handle-rename maintenance code all expect. Metadata field names (creation_uid, mod_datetime, etc)
+	 * are valid column references and pass through unchanged.
+	 *
+	 * Each column definition is an associative array:
+	 *   - element (required): an ele_id, an element handle, or a metadata field name
+	 *   - search_type: 'search_box' (default) | 'dropdown' | 'dropdown_exclude' | 'checkboxes' | 'date_range'
+	 *   - sort_direction: 'ASC' | 'DESC' | 'off' (the default - the list does not start out sorted by this column)
+	 *   - default_search_value: a value to pre-fill this column's Quicksearch with, so the list starts out filtered
+	 *
+	 * @param array $columnDefinitions Ordered list of column definitions.
+	 * @throws Exception if an element reference cannot be resolved, or a search type / sort value is not recognized.
+	 * @return array The advanceview storage array.
+	 */
+	public static function buildListScreenColumns($columnDefinitions) {
+		$searchTypes = self::listScreenSearchTypes();
+		// 'off' is the third state and the default: this column is one the list is not sorted by. It is a
+		// value rather than an omission so that the setting reads the same way whether it is being set or
+		// reported, and so that turning a sort off is something a caller can say rather than imply.
+		$sorts = array('ASC' => 'ASC', 'DESC' => 'DESC', 'off' => 0, '' => 0);
+		$advanceview = array();
+		if(!is_array($columnDefinitions)) {
+			return $advanceview;
+		}
+		foreach($columnDefinitions as $columnDef) {
+			if(!is_array($columnDef)) {
+				$columnDef = array('element' => $columnDef); // tolerate a bare element reference
+			}
+			if(!isset($columnDef['element']) OR $columnDef['element'] === '') {
+				throw new Exception("Every column must specify an element.");
+			}
+			$handle = self::resolveElementHandle($columnDef['element']);
+			$searchTypeKey = isset($columnDef['search_type']) ? $columnDef['search_type'] : 'search_box';
+			if(!isset($searchTypes[$searchTypeKey])) {
+				throw new Exception("'$searchTypeKey' is not a valid search_type. Use one of: ".implode(', ', array_keys($searchTypes)).".");
+			}
+			$sortKey = isset($columnDef['sort_direction']) ? $columnDef['sort_direction'] : 'off';
+			if(!array_key_exists($sortKey, $sorts)) {
+				throw new Exception("'$sortKey' is not a valid sort_direction. Use ASC, DESC or off.");
+			}
+			$advanceview[] = array(
+				$handle,
+				isset($columnDef['default_search_value']) ? $columnDef['default_search_value'] : '',
+				$sorts[$sortKey],
+				$searchTypes[$searchTypeKey]
+			);
+		}
+		return $advanceview;
+	}
+
+	/**
+	 * The Quicksearch widget a list screen column can carry, as a map of the name used at the tool boundary to
+	 * the value stored in the advanceview. Shared by the builder above and by the MCP read side, so a column
+	 * cannot be reported in one vocabulary and accepted in another.
+	 * @return array friendlyName => storedValue
+	 */
+	public static function listScreenSearchTypes() {
+		return array(
+			'search_box' => 'Box',
+			'dropdown' => 'Filter',
+			'dropdown_exclude' => 'NegativeFilter',
+			'checkboxes' => 'MultiFilter',
+			'date_range' => 'DateRange'
+		);
+	}
+
+	/**
+	 * Translate a friendly list of element references into the internal storage used by a list screen's
+	 * hiddencolumns and decolumns settings: a flat list of element handles.
+	 * @param array $elementReferences Element ids, handles, or metadata field names.
+	 * @throws Exception if an element reference cannot be resolved.
+	 * @return array The list of handles.
+	 */
+	public static function buildListScreenColumnHandles($elementReferences) {
+		$handles = array();
+		if(!is_array($elementReferences)) {
+			return $handles;
+		}
+		foreach($elementReferences as $elementReference) {
+			$handles[] = self::resolveElementHandle($elementReference);
+		}
+		return $handles;
+	}
+
+	/**
+	 * The 'applyto' values a custom button can hold that this class is willing to write. A custom button can do
+	 * several other things - run PHP for each entry, render HTML, create entries in this or another form - and
+	 * all of those either write code files to disk under modules/formulize/code/ or need a form chosen alongside
+	 * the action. Those are set up in the admin interface; everything here is the in-row case, which changes
+	 * values in the entry the button sits on.
+	 * @return array The supported applyto values.
+	 */
+	public static function listScreenCustomButtonSupportedApplyTo() {
+		return array('inline');
+	}
+
+	/**
+	 * Apply a set of targeted custom button changes to a list screen's existing customactions array, for both
+	 * the create and update paths. Each change either targets an existing button (by 'button_id') or, when
+	 * 'button_id' is omitted, adds a new one. Only the buttons referenced by a change are affected.
+	 *
+	 * A change targeting an existing button may include:
+	 *   - delete: true      => remove the button entirely
+	 *   - label             => the text on the button
+	 *   - confirm_text      => text shown in a confirmation popup before the button acts ('' for no popup)
+	 *   - message_text      => text shown at the top of the screen after the button has acted
+	 *   - groups            => the group ids that see the button (REPLACES the current list)
+	 *   - effects           => array of { element, value } (REPLACES the current set; the stored action is always 'replace')
+	 *
+	 * Buttons whose stored applyto is not one this class writes are left strictly alone, and targeting one is
+	 * an error rather than a silent conversion - rewriting such a button as an in-row button would quietly
+	 * change what it does and orphan any code file it owns.
+	 *
+	 * @param mixed $customactions The screen's existing customactions value.
+	 * @param array $buttonChanges The list of change/definition entries.
+	 * @throws Exception on an unknown button_id, a button this class does not write, or an unresolvable element.
+	 * @return array The new customactions array.
+	 */
+	public static function applyListScreenCustomButtonChanges($customactions, $buttonChanges) {
+		$buttons = is_array($customactions) ? $customactions : array();
+		$supportedApplyTo = self::listScreenCustomButtonSupportedApplyTo();
+		foreach($buttonChanges as $change) {
+			if(!is_array($change)) {
+				throw new Exception("Each entry in custom_buttons must be an object describing one button.");
+			}
+			$hasButtonId = isset($change['button_id']) AND $change['button_id'] !== '' AND $change['button_id'] !== null;
+			if($hasButtonId) {
+				$buttonId = $change['button_id'];
+				if(!isset($buttons[$buttonId])) {
+					throw new Exception("This screen has no custom button with the id '".(is_scalar($buttonId) ? $buttonId : gettype($buttonId))."'.");
+				}
+				$existingApplyTo = isset($buttons[$buttonId]['applyto']) ? $buttons[$buttonId]['applyto'] : '';
+				if(!in_array($existingApplyTo, $supportedApplyTo)) {
+					throw new Exception("Custom button '".(isset($buttons[$buttonId]['handle']) ? $buttons[$buttonId]['handle'] : $buttonId)."' does something these tools do not configure (it is set to '".$existingApplyTo."'), so it can only be changed in the admin interface. Leave it out of custom_buttons and it will be left as it is.");
+				}
+				if(!empty($change['delete'])) {
+					unset($buttons[$buttonId]);
+					continue;
+				}
+				$buttons[$buttonId] = self::buildListScreenCustomButton($change, $buttons[$buttonId]);
+			} else {
+				if(!empty($change['delete'])) {
+					throw new Exception("A custom button change asks for a deletion but does not say which button, so button_id is required alongside delete.");
+				}
+				// new buttons take the next free key rather than a count, so a key freed by a deletion is not
+				// handed to a second button while an effect file or a saved reference still names the first
+				$numericIds = array_filter(array_keys($buttons), 'is_numeric');
+				$buttonId = $numericIds ? (max(array_map('intval', $numericIds)) + 1) : 1;
+				$buttons[$buttonId] = self::buildListScreenCustomButton($change, array());
+			}
+		}
+		// handles name a button in custom code and in the file names of any code an admin later attaches to it,
+		// so two buttons on one screen sharing a handle would make those references ambiguous
+		$usedHandles = array();
+		foreach($buttons as $buttonId => $button) {
+			$handle = isset($button['handle']) ? $button['handle'] : '';
+			if($handle === '') {
+				continue;
+			}
+			if(isset($usedHandles[$handle])) {
+				$suffix = 2;
+				while(isset($usedHandles[$handle.'_'.$suffix])) {
+					$suffix++;
+				}
+				$handle = $handle.'_'.$suffix;
+				$buttons[$buttonId]['handle'] = $handle;
+			}
+			$usedHandles[$handle] = true;
+		}
+		return $buttons;
+	}
+
+	/**
+	 * Build the stored form of one custom button, from a change and whatever the button already held.
+	 * @param array $change The change/definition entry.
+	 * @param array $existing The button's current stored data, or an empty array for a new button.
+	 * @throws Exception if a new button has no label, an effect is malformed, or an element cannot be resolved.
+	 * @return array The button's stored data.
+	 */
+	private static function buildListScreenCustomButton($change, $existing) {
+		$button = $existing;
+		// the in-row case is the whole of what these tools write, so both of these are set rather than accepted
+		$button['appearinline'] = 1;
+		$button['applyto'] = 'inline';
+		foreach(array('label' => 'buttontext', 'confirm_text' => 'popuptext', 'message_text' => 'messagetext') as $argument => $property) {
+			if(array_key_exists($argument, $change)) {
+				$button[$property] = (string) $change[$argument];
+			} elseif(!isset($button[$property])) {
+				$button[$property] = '';
+			}
+		}
+		if($button['buttontext'] === '') {
+			throw new Exception("A custom button needs a label - that is the text the user sees on it.");
+		}
+		// the handle is how effect storage and any custom code name this button; it follows the label unless
+		// the button already has one, so that renaming a button does not break references to it
+		if(!isset($button['handle']) OR $button['handle'] === '') {
+			$button['handle'] = FormulizeObject::sanitize_handle_name($button['buttontext']);
+			if($button['handle'] === '') {
+				$button['handle'] = 'custom_button'; // a label of nothing but punctuation sanitizes away to nothing
+			}
+		}
+		if(array_key_exists('groups', $change)) {
+			$groups = array();
+			foreach((array) $change['groups'] as $groupId) {
+				$groups[] = intval($groupId);
+			}
+			$button['groups'] = $groups;
+		} elseif(!isset($button['groups'])) {
+			$button['groups'] = array();
+		}
+		if(array_key_exists('effects', $change)) {
+			// effects live under numeric keys alongside the button's own properties, so the old ones have to be
+			// cleared out by key rather than by assigning a fresh list
+			foreach(array_keys($button) as $key) {
+				if(is_numeric($key)) {
+					unset($button[$key]);
+				}
+			}
+			$effectId = 1;
+			foreach((array) $change['effects'] as $effect) {
+				if(!is_array($effect) OR !isset($effect['element']) OR !isset($effect['value'])) {
+					throw new Exception("Each effect must say which element to change, and what value to put in it.");
+				}
+				// The stored format also has 'append' and 'remove' actions, which are not written here.
+				// Replacing covers both: an empty value clears the element, and appending is a subtlety that
+				// only applies to multi-value elements and is better set up in the admin interface.
+				$action = 'replace';
+				// effects store the element as an ID, not a handle. Both work at render time, because
+				// processCustomButton() resolves the stored value through formulizeElementsHandler::get(),
+				// which takes either - but the admin interface's effect dropdown is keyed by element id
+				// ($elementOptionsFid in generateTemplateElementHandleHelp.php), so a handle stored here
+				// leaves that dropdown showing nothing selected and the next admin save would blank it.
+				$button[$effectId] = array(
+					'element' => self::resolveElementId($effect['element']),
+					'action' => $action,
+					'value' => $effect['value']
+				);
+				$effectId++;
+			}
+		}
+		return $button;
 	}
 
 	/**

@@ -1017,7 +1017,7 @@
 		var str=$("[name=forms-form_title]").val();
 		if ("<{$content.fid}>" == "new") {
 			handle=str.toLowerCase().replace(new RegExp("[^a-z0-9]","gm"),"_");
-			handle=handle.replace(new RegExp("_{2,}","gm"),"_").substring(0,20);
+			handle=handle.replace(new RegExp("_{2,}","gm"),"_").substring(0,40);
 			$("[name=forms-form_handle]").val(handle);
 		}
 		const suffixes = ["form", "data"];

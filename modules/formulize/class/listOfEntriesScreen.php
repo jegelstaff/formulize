@@ -102,6 +102,104 @@ class formulizeListOfEntriesScreen extends formulizeScreen {
         $this->initVar("fundamental_filters", XOBJ_DTYPE_ARRAY);
     }
 
+    /**
+     * The column settings that name elements, and are STORED as element ids while being READ as handles.
+     *
+     * Storing ids is what keeps them out of the handle-rename maintenance: an id does not change when an
+     * element is renamed, so there is nothing to keep in step. Handles are what everything that consumes
+     * these settings works in, though - the list rendering, saved views, and the tools all speak handles -
+     * so the translation happens in the accessors below rather than at each of those places.
+     *
+     * advanceview holds the element in position 0 of each column entry; the other two are flat lists.
+     * @return array setting name => true if the setting is a flat list, false if it is an advanceview
+     */
+    private function elementColumnSettings() {
+        return array('advanceview' => false, 'hiddencolumns' => true, 'decolumns' => true);
+    }
+
+    /**
+     * Read a column setting with its elements as handles, whatever is stored.
+     * Values from before this became id-based are already handles and pass straight through, since the
+     * conversion leaves anything that is not an element id alone - which also covers the metadata field
+     * names (creation_uid, mod_datetime, etc) that are valid columns everywhere an element handle is.
+     * Pass the 'n' format to get what is actually stored; insert() uses that to write ids back.
+     */
+    public function getVar($key, $format = 's') {
+        $value = parent::getVar($key, $format);
+        $settings = $this->elementColumnSettings();
+        if(!isset($settings[$key]) OR $format == 'n' OR !is_array($value)) {
+            return $value;
+        }
+        if($settings[$key]) {
+            foreach($value as $index => $reference) {
+                $value[$index] = $this->columnReferenceAsHandle($reference);
+            }
+            return $value;
+        }
+        foreach($value as $index => $column) {
+            if(is_array($column) AND isset($column[0])) {
+                $value[$index][0] = $this->columnReferenceAsHandle($column[0]);
+            }
+        }
+        return $value;
+    }
+
+    /**
+     * Turn one stored column reference into a handle.
+     *
+     * Deliberately not convertElementIdsToElementHandles(): that one works out a single form id from the
+     * first entry and converts the whole set within it, which is wrong here on two counts. A list screen's
+     * columns can come from several forms when a relationship is in effect, and the first column is often a
+     * metadata field, which it cannot resolve a form from - it throws in that case.
+     *
+     * An id that no longer resolves is returned as it is rather than raising. This runs while a list is being
+     * rendered, so one column left over from a deleted element must not take the whole screen down; it simply
+     * will not match a column and is ignored downstream.
+     *
+     * @param mixed $reference An element id, an element handle, or a metadata field name.
+     * @return mixed The handle, or the reference unchanged.
+     */
+    private function columnReferenceAsHandle($reference) {
+        if(!is_numeric($reference)) {
+            return $reference; // already a handle, or a metadata field name
+        }
+        static $handles = array();
+        $reference = intval($reference);
+        if(!isset($handles[$reference])) {
+            $element_handler = xoops_getmodulehandler('elements', 'formulize');
+            $elementObject = $element_handler->get($reference);
+            $handles[$reference] = $elementObject ? $elementObject->getVar('ele_handle') : $reference;
+        }
+        return $handles[$reference];
+    }
+
+    /**
+     * Write a column setting, converting any handles it names to element ids so that ids are what is stored.
+     * Accepts the value as an array or as an already-serialized string, because the admin save handlers pass
+     * one and the upsert apparatus passes the other.
+     */
+    public function setVar($key, $value, $not_gpc = false) {
+        $settings = $this->elementColumnSettings();
+        if(isset($settings[$key])) {
+            $wasSerialized = is_string($value);
+            $columns = $wasSerialized ? @unserialize($value) : $value;
+            if(is_array($columns)) {
+                if($settings[$key]) {
+                    $columns = convertElementHandlesToElementIds($columns);
+                } else {
+                    foreach($columns as $index => $column) {
+                        if(is_array($column) AND isset($column[0])) {
+                            $converted = convertElementHandlesToElementIds(array($column[0]));
+                            $columns[$index][0] = $converted[0];
+                        }
+                    }
+                }
+                $value = $wasSerialized ? serialize($columns) : $columns;
+            }
+        }
+        parent::setVar($key, $value, $not_gpc);
+    }
+
 }
 
 #[AllowDynamicProperties]
@@ -229,7 +327,7 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
                 $this->db->quoteString($screen->getVar('usecurrentviewlist')),
                 $this->db->quoteString(serialize($screen->getVar('limitviews'))),
                 $this->db->quoteString(serialize($screen->getVar('defaultview'))),
-                $this->db->quoteString(serialize($screen->getVar('advanceview'))),
+                $this->db->quoteString(serialize($screen->getVar('advanceview', 'n'))),
                 $this->db->quoteString($screen->getVar('usechangecols')),
                 $this->db->quoteString($screen->getVar('usecalcs')),
                 $this->db->quoteString($screen->getVar('useadvcalcs')),
@@ -254,8 +352,8 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
                 $screen->getVar('useviewentrylinks'),
                 $screen->getVar('usescrollbox'),
                 $screen->getVar('usesearchcalcmsgs'),
-                $this->db->quoteString(serialize($screen->getVar('hiddencolumns'))),
-                $this->db->quoteString(serialize($screen->getVar('decolumns'))),
+                $this->db->quoteString(serialize($screen->getVar('hiddencolumns', 'n'))),
+                $this->db->quoteString(serialize($screen->getVar('decolumns', 'n'))),
                 $this->db->quoteString($screen->getVar('desavetext')),
                 $screen->getVar('columnwidth'), $screen->getVar('textwidth'),
                 $this->db->quoteString(serialize($screen->getVar('customactions'))),
@@ -265,7 +363,7 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
                 $this->db->quoteString(serialize($screen->getVar('fundamental_filters')))
                 );
         } else {
-            $sql = sprintf("UPDATE %s SET useworkingmsg = %u, repeatheaders = %u, useaddupdate = %s, useaddmultiple = %s, useaddproxy = %s, usecurrentviewlist = %s, limitviews = %s, defaultview = %s, advanceview = %s, usechangecols = %s, usecalcs = %s, useadvcalcs = %s, useadvsearch = %s, useexport = %s, useexportcalcs = %s, useimport = %s, useclone = %s, usedelete = %s, useselectall = %s, useclearall = %s, usenotifications = %s, usereset = %s, usesave = %s, usedeleteview = %s, usechangeowner = %s, useheadings = %u, usenumberofentries = %u, usetogglerepeatdata = %u, usesearch = %u, usecheckboxes = %u, useviewentrylinks = %u, usescrollbox = %u, usesearchcalcmsgs = %u, hiddencolumns = %s, decolumns = %s, desavetext = %s, columnwidth = %u, textwidth = %u, customactions = %s, entriesperpage = %u, viewentryscreen = %s, dedisplay = %u, fundamental_filters = %s WHERE sid = %u", $this->db->prefix('formulize_screen_listofentries'), $screen->getVar('useworkingmsg'), $screen->getVar('repeatheaders'), $this->db->quoteString($screen->getVar('useaddupdate')), $this->db->quoteString($screen->getVar('useaddmultiple')), $this->db->quoteString($screen->getVar('useaddproxy')), $this->db->quoteString($screen->getVar('usecurrentviewlist')), $this->db->quoteString(serialize($screen->getVar('limitviews'))), $this->db->quoteString(serialize($screen->getVar('defaultview'))), $this->db->quoteString(serialize($screen->getVar('advanceview'))), $this->db->quoteString($screen->getVar('usechangecols')), $this->db->quoteString($screen->getVar('usecalcs')), $this->db->quoteString($screen->getVar('useadvcalcs')), $this->db->quoteString($screen->getVar('useadvsearch')), $this->db->quoteString($screen->getVar('useexport')), $this->db->quoteString($screen->getVar('useexportcalcs')), $this->db->quoteString($screen->getVar('useimport')), $this->db->quoteString($screen->getVar('useclone')), $this->db->quoteString($screen->getVar('usedelete')), $this->db->quoteString($screen->getVar('useselectall')), $this->db->quoteString($screen->getVar('useclearall')), $this->db->quoteString($screen->getVar('usenotifications')), $this->db->quoteString($screen->getVar('usereset')), $this->db->quoteString($screen->getVar('usesave')), $this->db->quoteString($screen->getVar('usedeleteview')), $this->db->quoteString($screen->getVar('usechangeowner')), $screen->getVar('useheadings'), $screen->getVar('usenumberofentries'), $screen->getVar('usetogglerepeatdata'), $screen->getVar('usesearch'), $screen->getVar('usecheckboxes'), $screen->getVar('useviewentrylinks'), $screen->getVar('usescrollbox'), $screen->getVar('usesearchcalcmsgs'), $this->db->quoteString(serialize($screen->getVar('hiddencolumns'))), $this->db->quoteString(serialize($screen->getVar('decolumns'))), $this->db->quoteString($screen->getVar('desavetext')), $screen->getVar('columnwidth'), $screen->getVar('textwidth'), $this->db->quoteString(serialize($screen->getVar('customactions'))), $screen->getVar('entriesperpage'), $this->db->quoteString($screen->getVar('viewentryscreen')), $screen->getVar('dedisplay'), $this->db->quoteString(serialize($screen->getVar('fundamental_filters'))), $screen->getVar('sid'));
+            $sql = sprintf("UPDATE %s SET useworkingmsg = %u, repeatheaders = %u, useaddupdate = %s, useaddmultiple = %s, useaddproxy = %s, usecurrentviewlist = %s, limitviews = %s, defaultview = %s, advanceview = %s, usechangecols = %s, usecalcs = %s, useadvcalcs = %s, useadvsearch = %s, useexport = %s, useexportcalcs = %s, useimport = %s, useclone = %s, usedelete = %s, useselectall = %s, useclearall = %s, usenotifications = %s, usereset = %s, usesave = %s, usedeleteview = %s, usechangeowner = %s, useheadings = %u, usenumberofentries = %u, usetogglerepeatdata = %u, usesearch = %u, usecheckboxes = %u, useviewentrylinks = %u, usescrollbox = %u, usesearchcalcmsgs = %u, hiddencolumns = %s, decolumns = %s, desavetext = %s, columnwidth = %u, textwidth = %u, customactions = %s, entriesperpage = %u, viewentryscreen = %s, dedisplay = %u, fundamental_filters = %s WHERE sid = %u", $this->db->prefix('formulize_screen_listofentries'), $screen->getVar('useworkingmsg'), $screen->getVar('repeatheaders'), $this->db->quoteString($screen->getVar('useaddupdate')), $this->db->quoteString($screen->getVar('useaddmultiple')), $this->db->quoteString($screen->getVar('useaddproxy')), $this->db->quoteString($screen->getVar('usecurrentviewlist')), $this->db->quoteString(serialize($screen->getVar('limitviews'))), $this->db->quoteString(serialize($screen->getVar('defaultview'))), $this->db->quoteString(serialize($screen->getVar('advanceview', 'n'))), $this->db->quoteString($screen->getVar('usechangecols')), $this->db->quoteString($screen->getVar('usecalcs')), $this->db->quoteString($screen->getVar('useadvcalcs')), $this->db->quoteString($screen->getVar('useadvsearch')), $this->db->quoteString($screen->getVar('useexport')), $this->db->quoteString($screen->getVar('useexportcalcs')), $this->db->quoteString($screen->getVar('useimport')), $this->db->quoteString($screen->getVar('useclone')), $this->db->quoteString($screen->getVar('usedelete')), $this->db->quoteString($screen->getVar('useselectall')), $this->db->quoteString($screen->getVar('useclearall')), $this->db->quoteString($screen->getVar('usenotifications')), $this->db->quoteString($screen->getVar('usereset')), $this->db->quoteString($screen->getVar('usesave')), $this->db->quoteString($screen->getVar('usedeleteview')), $this->db->quoteString($screen->getVar('usechangeowner')), $screen->getVar('useheadings'), $screen->getVar('usenumberofentries'), $screen->getVar('usetogglerepeatdata'), $screen->getVar('usesearch'), $screen->getVar('usecheckboxes'), $screen->getVar('useviewentrylinks'), $screen->getVar('usescrollbox'), $screen->getVar('usesearchcalcmsgs'), $this->db->quoteString(serialize($screen->getVar('hiddencolumns', 'n'))), $this->db->quoteString(serialize($screen->getVar('decolumns', 'n'))), $this->db->quoteString($screen->getVar('desavetext')), $screen->getVar('columnwidth'), $screen->getVar('textwidth'), $this->db->quoteString(serialize($screen->getVar('customactions'))), $screen->getVar('entriesperpage'), $this->db->quoteString($screen->getVar('viewentryscreen')), $screen->getVar('dedisplay'), $this->db->quoteString(serialize($screen->getVar('fundamental_filters'))), $screen->getVar('sid'));
         }
 				if($force) {
 					$result = $this->db->queryF($sql);
@@ -414,6 +512,7 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
 			$defaultListScreen->setVar('usedeleteview', _formulize_DE_DELETE);
 			$defaultListScreen->setVar('usechangeowner', _formulize_DE_CHANGEOWNER);
 			$defaultListScreen->setVar('title', $formObject->getPlural());
+			$defaultListScreen->setVar('screen_handle', $this->makeHandleUnique($formObject->getPlural()));
 			$defaultListScreen->setVar('fid', $formObject->getVar('fid'));
 			$defaultListScreen->setVar('frid', -1);
 			$defaultListScreen->setVar('type', 'listOfEntries');

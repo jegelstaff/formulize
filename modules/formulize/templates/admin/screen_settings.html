@@ -142,7 +142,7 @@ include "<{$smarty.const.XOOPS_ROOT_PATH}>/modules/formulize/index.php";</blockq
 			if ("<{$content.sid}>" == "new") {
 				var str=$("[name=screens-title]").val();
 				str=str.toLowerCase().replace(new RegExp("[^a-z0-9]","gm"),"_");
-				str=str.replace(new RegExp("_{2,}","gm"),"_").substring(0,20);
+				str=str.replace(new RegExp("_{2,}","gm"),"_").substring(0,40);
 				$("[name=screens-screen_handle]").val(str);
 			}
 		}

@@ -16,6 +16,16 @@ function formulize_patch_000_always_run($prev_dbversion, $required_dbversion) {
 		}
 	}
 
+	// Clear the generated wrappers for form custom code, so they are rebuilt from whatever source is on
+	// disk now. The wrappers are content-addressed (see formulizeForm::procedure_cache_filename), so a
+	// stale one cannot be used in the ordinary course of things - this is here for the update itself, to
+	// sweep away the accumulated files of every earlier version in one go, including any left by the fixed
+	// -name scheme that came before. Deleting is always safe: a missing wrapper is regenerated on demand.
+	foreach((array) glob(ICMS_CACHE_PATH.'/form_*_on_before_save*.php') as $cacheFile) { @unlink($cacheFile); }
+	foreach((array) glob(ICMS_CACHE_PATH.'/form_*_on_after_save*.php') as $cacheFile) { @unlink($cacheFile); }
+	foreach((array) glob(ICMS_CACHE_PATH.'/form_*_on_delete*.php') as $cacheFile) { @unlink($cacheFile); }
+	foreach((array) glob(ICMS_CACHE_PATH.'/form_*_custom_edit_check*.php') as $cacheFile) { @unlink($cacheFile); }
+
 	// ensure that use_mysession is set to 1 if session_name is set
 	$configTable = $xoopsDB->prefix('config');
 	$result = $xoopsDB->queryF("SELECT conf_value FROM $configTable WHERE conf_modid = 0 AND conf_name = 'session_name'");

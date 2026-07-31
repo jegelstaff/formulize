@@ -932,24 +932,28 @@ class formulizeElementsHandler {
 				if(!$res = $xoopsDB->queryF($lsbHandleFormDefSQL)) {
 					print "Error:  update of linked selectbox element definitions failed.";
 				}
-				// rewrite $handle variable references in derived values code files
-				foreach((array)scandir(XOOPS_ROOT_PATH.'/modules/formulize/code/') as $file) {
-					if(strstr($file, 'derived_') !== false) {
-						$code = file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file);
-						$pattern = '/\$' . preg_quote($original_handle, '/') . '(?![a-zA-Z0-9_])/';
-						$newCode = preg_replace($pattern, '\\$' . $ele_handle, $code);
-						if($newCode != $code) {
-							formulize_writeCodeToFile($file, $newCode);
-						}
-					}
-				}
-				// rewrite {handle} tokens inside captionedContent and fullWidthContent ele_value
-				$selectElementsSQL = "SELECT ele_id, ele_value FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_value LIKE '%".$original_handle."%' AND (ele_type = 'captionedContent' OR ele_type = 'fullWidthContent')";
+				// rewrite handle references inside the code files that genuinely hold them - $handle in derived
+				// values and the three save/delete procedures, {handle} in static content and default values.
+				// Files where a matching name is not a reference to this element are left alone; see
+				// codeFilesThatReferenceHandles().
+				$this->renameHandleInCodeFiles($original_handle, $ele_handle);
+				// rewrite {handle} tokens stored in ele_value. Not restricted by element type: a {handle} token is
+				// substituted in static content and in the default value of a text or textarea element, and the
+				// default value key differs between those two, so every string in the array is rewritten rather
+				// than a known index. The token syntax is distinctive enough that this cannot hit anything else.
+				// Note this only reaches content held in the database - content that is PHP lives in a code file
+				// instead (setVar moves it there and blanks ele_value), and renameHandleInCodeFiles covers that.
+				$selectElementsSQL = "SELECT ele_id, ele_value FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_value LIKE " . $xoopsDB->quoteString('%{' . $original_handle . '}%');
 				if($res = $xoopsDB->query($selectElementsSQL)) {
 					while($row = $xoopsDB->fetchRow($res)) {
 						$thisEleId = $row[0];
 						$thisEleValue = unserialize($row[1]);
-						$thisEleValue[0] = str_replace('{' . $original_handle . '}', '{' . $ele_handle . '}', $thisEleValue[0]);
+						if(!is_array($thisEleValue)) { continue; }
+						foreach($thisEleValue as $valueKey => $valuePart) {
+							if(is_string($valuePart)) {
+								$thisEleValue[$valueKey] = str_replace('{' . $original_handle . '}', '{' . $ele_handle . '}', $valuePart);
+							}
+						}
 						$thisEleValue = serialize($thisEleValue);
 						$xoopsDB->queryF("UPDATE " . $xoopsDB->prefix("formulize") . " SET ele_value = '".formulize_db_escape($thisEleValue)."' WHERE ele_id = $thisEleId");
 					}
@@ -1027,6 +1031,12 @@ class formulizeElementsHandler {
 					}
 				}
 				// update advanceview in formulize_screen_listofentries
+				// LEGACY ONLY. advanceview stores element IDs now, which a rename cannot invalidate, so this
+				// pass exists purely for rows written before that change and not re-saved since. Saving a
+				// screen converts it (formulizeListOfEntriesScreen::setVar), so these rows disappear over
+				// time; a one-time migration of the column would let this block go entirely, along with the
+				// equivalent worry for hiddencolumns and decolumns, which were never maintained here at all
+				// and are ID-based now for the same reason.
 				// format: serialized array of [$handle, $searchValue, $sortDir, $searchType]
 				$advRes = $xoopsDB->query(
 					"SELECT sid, advanceview FROM " . $xoopsDB->prefix('formulize_screen_listofentries')
@@ -1108,6 +1118,1104 @@ class formulizeElementsHandler {
 	 * @param bool             $force         True to use queryF (bypass transaction handling)
 	 * @return bool True if all cleanup steps succeeded, false if any failed
 	 */
+	/**
+	 * The regular expression that matches a reference to an element handle in code.
+	 *
+	 * One definition, because there are two callers with opposite appetites and they had already drifted: the
+	 * rename rewrites what it matches, and the usage report only reports it. The part that must not differ is
+	 * what counts as a character continuing a name, which is PHP's own variable-name grammar,
+	 * [a-zA-Z0-9_\x80-\xff]. The high bytes matter: they are what let a variable name hold accented and other
+	 * non-ASCII characters, and leaving them out means $artifacts_year matches inside $artifacts_yeare-acute
+	 * and a rename silently corrupts it. No /u modifier - that grammar is defined in bytes, and a multibyte
+	 * character is a sequence of bytes all inside the excluded range anyway.
+	 *
+	 * @param string $handle The element handle.
+	 * @param string $form Which reference syntax to match: 'variable' for $handle, 'token' for {handle},
+	 *        or 'either' for both.
+	 * @return string The regular expression.
+	 */
+	public static function handleReferencePattern($handle, $form = 'either') {
+		$quoted = preg_quote($handle, '/');
+		$continuesAName = '(?![A-Za-z0-9_\x80-\xff])';
+		$variable = '\$'.$quoted.$continuesAName;
+		$token = '\{'.$quoted.'\}';
+		switch($form) {
+			case 'variable': return '/'.$variable.'/';
+			case 'token': return '/'.$token.'/';
+			default: return '/('.$variable.'|'.$token.')/';
+		}
+	}
+
+	/**
+	 * Which code files reference an element handle in which syntax, and therefore which files a rename may
+	 * rewrite. The prefix decides, and it is not a formality: only the three save/delete procedures have the
+	 * entry's values exploded into variables named after the handles (see the generated wrappers in
+	 * forms.php), so only there is $handle a reference to this element. In custom_edit_check, application code
+	 * and custom button code nothing is injected, so a variable of that name is somebody's own and renaming it
+	 * would be editing unrelated logic - and could collide with a variable already called by the new name,
+	 * which the global uniqueness of handles does nothing to prevent.
+	 *
+	 * The content and default-value files are the mirror image: their references are {handle} tokens that
+	 * Formulize substitutes, and their $value / $default variables are outputs rather than element references.
+	 *
+	 * @return array filename prefix => reference syntax used in that kind of file
+	 */
+	public static function codeFilesThatReferenceHandles() {
+		return array(
+			'derived_' => 'variable',
+			'on_before_save_' => 'variable',
+			'on_after_save_' => 'variable',
+			'on_delete_' => 'variable',
+			'fullWidthContent_' => 'token',
+			'captionedContent_' => 'token',
+			'text_' => 'token',
+			'textarea_' => 'token',
+		);
+	}
+
+	/**
+	 * Rewrite references to an element handle inside the code files that genuinely contain them, when the
+	 * handle changes. See codeFilesThatReferenceHandles() for which files those are and why the rest are
+	 * deliberately left alone.
+	 * @param string $originalHandle The handle as it was.
+	 * @param string $newHandle The handle as it now is.
+	 * @return void
+	 */
+	public function renameHandleInCodeFiles($originalHandle, $newHandle) {
+		$codeDir = XOOPS_ROOT_PATH.'/modules/formulize/code/';
+		$prefixes = self::codeFilesThatReferenceHandles();
+		foreach((array) scandir($codeDir) as $file) {
+			if(substr($file, -4) != '.php') {
+				continue;
+			}
+			$syntax = false;
+			foreach($prefixes as $prefix => $prefixSyntax) {
+				if(strpos($file, $prefix) === 0) {
+					$syntax = $prefixSyntax;
+					break;
+				}
+			}
+			if(!$syntax) {
+				continue; // a kind of file where a name matching the handle is not a reference to it
+			}
+			$code = file_get_contents($codeDir.$file);
+			if($code === false) {
+				continue;
+			}
+			$replacement = ($syntax == 'variable') ? '\$'.$newHandle : '{'.$newHandle.'}';
+			$newCode = preg_replace(self::handleReferencePattern($originalHandle, $syntax), $replacement, $code);
+			if($newCode !== null AND $newCode != $code) {
+				formulize_writeCodeToFile($file, $newCode);
+			}
+		}
+	}
+
+	/**
+	 * Does a stored element reference point at this element? A reference can be an id or a handle, because
+	 * different settings store different ones and some hold legacy values from before a format changed, so
+	 * both are accepted everywhere rather than per setting.
+	 * @param mixed $reference The stored reference.
+	 * @param int $elementId The element's id.
+	 * @param string $handle The element's handle.
+	 * @return bool
+	 */
+	private function referencePointsAtElement($reference, $elementId, $handle) {
+		if(is_array($reference) OR is_object($reference) OR $reference === '' OR $reference === null) {
+			return false;
+		}
+		return (is_numeric($reference) AND intval($reference) === $elementId) OR ((string) $reference === (string) $handle);
+	}
+
+	/**
+	 * Drop any condition naming this element out of a stored conditions array.
+	 *
+	 * The current format is four parallel arrays (0=>elements, 1=>operators, 2=>values, 3=>types) whose keys
+	 * line up, so a condition is removed from all four at once and the result is re-indexed to keep them
+	 * aligned. That alignment is load bearing: buildConditionsFilterSQL() walks $conditions[0] and reads the
+	 * other three at the same key.
+	 *
+	 * Multipage screens can still hold the format that predates that one, where a page's conditions are
+	 * array('pagecons'=>..., 'details'=>array('elements'=>..., 'ops'=>..., 'terms'=>...)).
+	 * formulizeMultiPageScreen::getConditions() still reads it, so it is still live data and is handled here
+	 * rather than being quietly passed over.
+	 *
+	 * @param mixed $conditions The stored conditions value.
+	 * @param int $elementId The element's id.
+	 * @param string $handle The element's handle.
+	 * @return array|false The new conditions array, or false if nothing referenced the element.
+	 */
+	private function removeElementFromConditions($conditions, $elementId, $handle) {
+		if(!is_array($conditions)) {
+			return false;
+		}
+
+		// the format that predates the parallel arrays
+		if(!isset($conditions[0]) AND isset($conditions['details']) AND is_array($conditions['details'])
+			AND isset($conditions['details']['elements']) AND is_array($conditions['details']['elements'])) {
+			$keep = $this->conditionsToKeep($conditions['details']['elements'], $elementId, $handle);
+			if($keep === false) {
+				return false;
+			}
+			$new = array('elements'=>array(), 'ops'=>array(), 'terms'=>array());
+			foreach($keep as $index) {
+				foreach($new as $part => $unused) {
+					$new[$part][] = isset($conditions['details'][$part][$index])
+						? $conditions['details'][$part][$index]
+						: ($part == 'ops' ? '=' : '');
+				}
+			}
+			if(!$new['elements']) {
+				return array(); // nothing left, which is how "no conditions" is stored everywhere else
+			}
+			$conditions['details'] = $new;
+			return $conditions;
+		}
+
+		if(!isset($conditions[0]) OR !is_array($conditions[0])) {
+			return false;
+		}
+		$keep = $this->conditionsToKeep($conditions[0], $elementId, $handle);
+		if($keep === false) {
+			return false;
+		}
+		$new = array(0=>array(), 1=>array(), 2=>array(), 3=>array());
+		foreach($keep as $index) {
+			for($part = 0; $part <= 3; $part++) {
+				// part 1 is the operator, and a blank operator makes broken SQL further down, so a condition
+				// that has somehow lost its operator gets the same default that parseSubmittedConditions
+				// applies when it cannot make sense of a submitted one
+				$new[$part][] = isset($conditions[$part][$index])
+					? $conditions[$part][$index]
+					: ($part === 1 ? '=' : '');
+			}
+		}
+		// a conditions set with nothing left in it is stored as an empty array, which is what "no conditions"
+		// looks like everywhere else - keeping four empty arrays would read as a set that exists but is blank
+		return $new[0] ? $new : array();
+	}
+
+	/**
+	 * Which keys of a conditions set's element list survive the removal of this element?
+	 * @return array|false The keys to keep, or false if nothing referenced the element.
+	 */
+	private function conditionsToKeep($conditionElements, $elementId, $handle) {
+		$keep = array();
+		foreach($conditionElements as $index => $reference) {
+			if(!$this->referencePointsAtElement($reference, $elementId, $handle)) {
+				$keep[] = $index;
+			}
+		}
+		return count($keep) === count($conditionElements) ? false : $keep;
+	}
+
+	/**
+	 * Drop this element out of a stored flat list of element references, re-indexing what is left.
+	 * @param mixed $list The stored list.
+	 * @param int $elementId The element's id.
+	 * @param string $handle The element's handle.
+	 * @return array|false The new list, or false if nothing referenced the element.
+	 */
+	private function removeElementFromList($list, $elementId, $handle) {
+		if(!is_array($list)) {
+			return false;
+		}
+		$new = array();
+		foreach($list as $reference) {
+			if(!$this->referencePointsAtElement($reference, $elementId, $handle)) {
+				$new[] = $reference;
+			}
+		}
+		return count($new) === count($list) ? false : $new;
+	}
+
+	/**
+	 * Drop this element out of a stored list of column rows, where each row holds the element it is about in
+	 * position 0 and its own settings after that. List screen advanceviews and map screen columns are both
+	 * stored this way, and both rely on their rows staying parallel to each other, so a row goes as a whole.
+	 * @param mixed $rows The stored rows.
+	 * @param int $elementId The element's id.
+	 * @param string $handle The element's handle.
+	 * @return array|false The new rows, or false if nothing referenced the element.
+	 */
+	private function removeElementFromColumnRows($rows, $elementId, $handle) {
+		if(!is_array($rows)) {
+			return false;
+		}
+		$new = array();
+		foreach($rows as $row) {
+			if(is_array($row) AND isset($row[0]) AND $this->referencePointsAtElement($row[0], $elementId, $handle)) {
+				continue;
+			}
+			$new[] = $row;
+		}
+		return count($new) === count($rows) ? false : $new;
+	}
+
+	/**
+	 * Drop this element out of a delimited list, and say which positions went.
+	 *
+	 * The positions are the point of this: a saved view stores several lists that are parallel to each other
+	 * by position and nothing else - the searches line up with the columns, the calculations line up with the
+	 * columns they are calculated on. Removing an entry from one list without removing the same position from
+	 * the others silently shifts every later entry onto the wrong column.
+	 *
+	 * @param mixed $value The stored list.
+	 * @param string $delimiter What separates the entries.
+	 * @param int $elementId The element's id.
+	 * @param string $handle The element's handle.
+	 * @param string $prefix Optional prefix an entry may carry that is not part of the reference.
+	 * @return array|false array($newValue, array of removed positions), or false if nothing referenced it.
+	 */
+	private function removeElementFromDelimitedList($value, $delimiter, $elementId, $handle, $prefix = '') {
+		$items = explode($delimiter, (string) $value);
+		$kept = array();
+		$removed = array();
+		foreach($items as $index => $item) {
+			$bare = ($prefix !== '' AND strpos($item, $prefix) === 0) ? substr($item, strlen($prefix)) : $item;
+			if($this->referencePointsAtElement($bare, $elementId, $handle)) {
+				$removed[] = $index;
+			} else {
+				$kept[] = $item;
+			}
+		}
+		return $removed ? array(implode($delimiter, $kept), $removed) : false;
+	}
+
+	/**
+	 * Drop the given positions out of a delimited list, for the lists that run parallel to one that has just
+	 * had entries removed by removeElementFromDelimitedList().
+	 * @param mixed $value The stored list.
+	 * @param string $delimiter What separates the entries.
+	 * @param array $positions The positions to remove.
+	 * @return string The new list.
+	 */
+	private function removePositionsFromDelimitedList($value, $delimiter, $positions) {
+		$items = explode($delimiter, (string) $value);
+		foreach($positions as $position) {
+			unset($items[$position]);
+		}
+		return implode($delimiter, $items);
+	}
+
+	/**
+	 * Name something the way the usage report refers to it: what it is called, and what its id is.
+	 * @param string $name The thing's name, which may be blank or carry markup.
+	 * @param string $idLabel What its id is called.
+	 * @param int $id The id.
+	 * @return string
+	 */
+	private function describeById($name, $idLabel, $id) {
+		$name = trim(strip_tags((string) $name));
+		return ($name === '' ? '(untitled)' : $name).' ('.$idLabel.' '.intval($id).')';
+	}
+
+	/**
+	 * One place an element is referenced from.
+	 *
+	 * @param string $section The report heading this is grouped under.
+	 * @param string $description What a person reads.
+	 * @param string $table The unprefixed table holding the reference, or '' when the reference is cleaned
+	 *                      up by something other than removeElementReferences() and this is a report entry.
+	 * @param string $keyColumn The primary key column of that table.
+	 * @param int $keyValue The row's primary key.
+	 * @param array $updates column => the exact literal to write. Empty means there is nothing to write.
+	 * @return array
+	 */
+	private function elementReference($section, $description, $table, $keyColumn, $keyValue, $updates = array()) {
+		return array(
+			'section' => $section,
+			'description' => $description,
+			'table' => $table,
+			'key_column' => $keyColumn,
+			'key_value' => intval($keyValue),
+			'updates' => $updates
+		);
+	}
+
+	/**
+	 * Remove every stored reference to an element from the settings that hold one, so that deleting an element
+	 * does not leave configuration pointing at something that no longer exists.
+	 *
+	 * The places are found by scanElementReferences(), which the usage report reads too, so what the report
+	 * promises to clean up and what is actually cleaned up cannot drift apart.
+	 *
+	 * This covers the references that are DATA - columns, conditions, effects, sort settings. It cannot cover
+	 * the two that are CODE: a derived value formula naming $handle, and a custom code file doing the same.
+	 * Rewriting someone's PHP to remove a term is not a transformation this can make safely, so those are
+	 * reported instead and are a decision for a person.
+	 *
+	 * Called from delete(), so it applies to every route an element is deleted through, not only the tools.
+	 *
+	 * @param object $elementObject The element being deleted.
+	 * @return void
+	 */
+	public function removeElementReferences($elementObject) {
+		foreach($this->scanElementReferences($elementObject) as $reference) {
+			if(!$reference['table'] OR !$reference['updates']) {
+				continue; // reported so a person knows, but cleaned up elsewhere - see the scan that found it
+			}
+			$sets = array();
+			foreach($reference['updates'] as $column => $value) {
+				$sets[] = "`$column` = ".$this->db->quoteString((string) $value);
+			}
+			// queryF rather than query: a proxy database connection refuses anything but a SELECT through query()
+			$this->db->queryF("UPDATE ".$this->db->prefix($reference['table'])." SET ".implode(', ', $sets)
+				." WHERE `".$reference['key_column']."` = ".$reference['key_value']);
+		}
+	}
+
+	/**
+	 * Every stored reference to an element, found in one pass.
+	 *
+	 * This exists so that the usage report and the cleanup cannot disagree. A report that promises to tidy
+	 * something up and a cleanup that misses it is worse than either problem alone, and the only way to be
+	 * sure they match is for both to be the same piece of work: the report groups these by section and prints
+	 * the descriptions, and removeElementReferences() runs the updates.
+	 *
+	 * Not covered here, deliberately:
+	 * - the element's own column in the form's data table, and the form's principal identifier, which delete()
+	 *   handles directly and the report accounts for on its own
+	 * - anything a person wrote in code, which cannot be rewritten safely - see codeReferencesToElement()
+	 *
+	 * @param object $elementObject The element being asked about.
+	 * @return array The references, in report order.
+	 */
+	private function scanElementReferences($elementObject) {
+		$elementId = intval($elementObject->getVar('ele_id'));
+		$handle = $elementObject->getVar('ele_handle');
+		$formId = intval($elementObject->getVar('fid'));
+		if(!$elementId OR !strlen($handle)) {
+			return array();
+		}
+		return array_merge(
+			$this->scanFormScreensForElement($elementId, $handle),
+			$this->scanListScreensForElement($elementId, $handle),
+			$this->scanMapScreensForElement($elementId, $handle),
+			$this->scanCalendarScreensForElement($elementId, $handle),
+			$this->scanScreenAddressesForElement($elementId),
+			$this->scanElementsForElement($elementId, $handle),
+			$this->scanGroupFiltersForElement($elementId, $handle),
+			$this->scanSavedViewsForElement($elementId, $handle),
+			$this->scanFormSettingsForElement($elementId, $handle),
+			$this->scanRelationshipsForElement($elementId, $formId)
+		);
+	}
+
+	/**
+	 * Form screens: the multipage ones, and the single page ones that predate them.
+	 * @return array
+	 */
+	private function scanFormScreensForElement($elementId, $handle) {
+		$references = array();
+
+		// multipage screens: the pages the element sits on, the conditions that decide whether a page is
+		// shown, and any default value the screen sets for the element
+		$sql = "SELECT s.sid, s.title, m.pages, m.conditions, m.elementdefaults
+			FROM ".$this->db->prefix('formulize_screen')." s
+			INNER JOIN ".$this->db->prefix('formulize_screen_multipage')." m ON m.sid = s.sid";
+		if($result = $this->db->query($sql)) {
+			while($row = $this->db->fetchArray($result)) {
+				$updates = array();
+				$usedAs = array();
+
+				// the pages themselves are rewritten by removeElementsFromScreens(), which delete() calls
+				// alongside this, so they are reported here but not written here. A page that would have
+				// nothing left on it is called out separately, because that page stops appearing in the form
+				// even though it is still on the screen - see the comment in delete().
+				$pageNumbers = array();
+				$emptiedPageNumbers = array();
+				$pages = @unserialize((string) $row['pages']);
+				if(is_array($pages)) {
+					foreach($pages as $pageIndex => $pageElements) {
+						if(!is_array($pageElements)) { continue; }
+						$found = false;
+						$remaining = 0;
+						foreach($pageElements as $pageElement) {
+							if($this->referencePointsAtElement($pageElement, $elementId, $handle)) {
+								$found = true;
+							} else {
+								$remaining++;
+							}
+						}
+						if($found) {
+							if($remaining) { $pageNumbers[] = intval($pageIndex) + 1; }
+							else { $emptiedPageNumbers[] = intval($pageIndex) + 1; }
+						}
+					}
+				}
+				if($pageNumbers) {
+					$usedAs[] = (count($pageNumbers) > 1 ? 'on pages ' : 'on page ').implode(', ', $pageNumbers);
+				}
+				if($emptiedPageNumbers) {
+					$usedAs[] = 'the only element on '
+						.(count($emptiedPageNumbers) > 1 ? 'pages ' : 'page ').implode(', ', $emptiedPageNumbers)
+						.', so '.(count($emptiedPageNumbers) > 1 ? 'those pages will be empty' : 'that page will be empty')
+						.' and will stop appearing in the form until something is put on '
+						.(count($emptiedPageNumbers) > 1 ? 'them' : 'it');
+				}
+
+				$conditions = @unserialize((string) $row['conditions']);
+				if(is_array($conditions)) {
+					$changed = false;
+					foreach($conditions as $page => $pageConditions) {
+						$newConditions = $this->removeElementFromConditions($pageConditions, $elementId, $handle);
+						if($newConditions !== false) {
+							$conditions[$page] = $newConditions; // the keys are page numbers, so they stay as they are
+							$changed = true;
+						}
+					}
+					if($changed) {
+						$updates['conditions'] = serialize($conditions);
+						$usedAs[] = 'in the conditions that decide whether a page is shown';
+					}
+				}
+
+				$newDefaults = $this->removeElementFromDefaults(@unserialize((string) $row['elementdefaults']), $elementId, $handle);
+				if($newDefaults !== false) {
+					$updates['elementdefaults'] = serialize($newDefaults);
+					$usedAs[] = 'given a default value by the screen';
+				}
+
+				if($usedAs) {
+					$references[] = $this->elementReference(
+						_AM_ELE_USAGE_SECTION_FORM_SCREENS,
+						$this->describeById($row['title'], 'screen', $row['sid']).' - '.implode(', ', $usedAs),
+						'formulize_screen_multipage', 'sid', $row['sid'], $updates
+					);
+				}
+			}
+		}
+
+		// single page form screens: the elements chosen to appear, and any default value set for one
+		$sql = "SELECT s.sid, s.title, f.formelements, f.elementdefaults
+			FROM ".$this->db->prefix('formulize_screen')." s
+			INNER JOIN ".$this->db->prefix('formulize_screen_form')." f ON f.sid = s.sid";
+		if($result = $this->db->query($sql)) {
+			while($row = $this->db->fetchArray($result)) {
+				$updates = array();
+				$usedAs = array();
+
+				$newFormElements = $this->removeElementFromList(@unserialize((string) $row['formelements']), $elementId, $handle);
+				if($newFormElements !== false) {
+					if($newFormElements) {
+						$updates['formelements'] = serialize($newFormElements);
+						$usedAs[] = 'one of the elements chosen to appear';
+					} else {
+						// an empty list means "show every element on the form", so a screen set up to show only
+						// this one must not be emptied - that would widen it to everything rather than narrowing
+						// it to nothing, and could put fields in front of people that were deliberately left off.
+						// The now dead id is left alone, which keeps the screen showing what it shows today.
+						$usedAs[] = 'the only element chosen to appear, so the screen will show nothing until another is chosen';
+					}
+				}
+
+				$newDefaults = $this->removeElementFromDefaults(@unserialize((string) $row['elementdefaults']), $elementId, $handle);
+				if($newDefaults !== false) {
+					$updates['elementdefaults'] = serialize($newDefaults);
+					$usedAs[] = 'given a default value by the screen';
+				}
+
+				if($usedAs) {
+					$references[] = $this->elementReference(
+						_AM_ELE_USAGE_SECTION_FORM_SCREENS,
+						$this->describeById($row['title'], 'screen', $row['sid']).' - '.implode(', ', $usedAs),
+						'formulize_screen_form', 'sid', $row['sid'], $updates
+					);
+				}
+			}
+		}
+
+		return $references;
+	}
+
+	/**
+	 * List screens: starting columns, hidden value columns, inline editable columns, the fundamental filters,
+	 * and the effects of any custom button.
+	 * @return array
+	 */
+	private function scanListScreensForElement($elementId, $handle) {
+		$references = array();
+		$sql = "SELECT s.sid, s.title, l.advanceview, l.hiddencolumns, l.decolumns, l.customactions, l.fundamental_filters
+			FROM ".$this->db->prefix('formulize_screen')." s
+			INNER JOIN ".$this->db->prefix('formulize_screen_listofentries')." l ON l.sid = s.sid";
+		if(!$result = $this->db->query($sql)) {
+			return $references;
+		}
+		while($row = $this->db->fetchArray($result)) {
+			$updates = array();
+			$usedAs = array();
+
+			// advanceview is a row per column: the element, then its search value, sort and search type
+			$newAdvanceview = $this->removeElementFromColumnRows(@unserialize((string) $row['advanceview']), $elementId, $handle);
+			if($newAdvanceview !== false) {
+				$updates['advanceview'] = serialize($newAdvanceview);
+				$usedAs[] = 'a column';
+			}
+
+			foreach(array('hiddencolumns' => 'a hidden value column', 'decolumns' => 'an inline editable column') as $columnSetting => $description) {
+				$newList = $this->removeElementFromList(@unserialize((string) $row[$columnSetting]), $elementId, $handle);
+				if($newList !== false) {
+					$updates[$columnSetting] = serialize($newList);
+					$usedAs[] = $description;
+				}
+			}
+
+			$newFilters = $this->removeElementFromConditions(@unserialize((string) $row['fundamental_filters']), $elementId, $handle);
+			if($newFilters !== false) {
+				$updates['fundamental_filters'] = serialize($newFilters);
+				$usedAs[] = 'a fundamental filter';
+			}
+
+			// custom button effects sit under numeric keys alongside each button's own properties. An effect
+			// naming this element is dropped; the button itself is left, because removing someone's button is
+			// a bigger decision than removing the effect that can no longer run.
+			$customactions = @unserialize((string) $row['customactions']);
+			if(is_array($customactions)) {
+				$changed = false;
+				foreach($customactions as $buttonId => $button) {
+					if(!is_array($button)) { continue; }
+					foreach($button as $key => $effect) {
+						if(is_numeric($key) AND is_array($effect) AND isset($effect['element'])
+							AND $this->referencePointsAtElement($effect['element'], $elementId, $handle)) {
+							unset($customactions[$buttonId][$key]);
+							$changed = true;
+						}
+					}
+				}
+				if($changed) {
+					$updates['customactions'] = serialize($customactions);
+					$usedAs[] = 'the effect of a custom button';
+				}
+			}
+
+			if($usedAs) {
+				$references[] = $this->elementReference(
+					_AM_ELE_USAGE_SECTION_LIST_SCREENS,
+					$this->describeById($row['title'], 'screen', $row['sid']).' - '.implode(', ', $usedAs),
+					'formulize_screen_listofentries', 'sid', $row['sid'], $updates
+				);
+			}
+		}
+		return $references;
+	}
+
+	/**
+	 * Map screens: the four elements a map is plotted and labelled from, the columns shown beside it, and the
+	 * fundamental filters.
+	 * @return array
+	 */
+	private function scanMapScreensForElement($elementId, $handle) {
+		$references = array();
+		$sql = "SELECT s.sid, s.title, m.lat_element, m.lng_element, m.label_element, m.description_element,
+			m.columns, m.fundamental_filters
+			FROM ".$this->db->prefix('formulize_screen')." s
+			INNER JOIN ".$this->db->prefix('formulize_screen_map')." m ON m.sid = s.sid";
+		if(!$result = $this->db->query($sql)) {
+			return $references;
+		}
+		while($row = $this->db->fetchArray($result)) {
+			$updates = array();
+			$usedAs = array();
+
+			// a map cannot be drawn without somewhere to put the pins, so losing either coordinate stops the
+			// screen working until a person picks another element. Say so rather than leaving them to find out.
+			foreach(array(
+				'lat_element' => 'the latitude, which the screen cannot be drawn without',
+				'lng_element' => 'the longitude, which the screen cannot be drawn without',
+				'label_element' => 'the label on each pin',
+				'description_element' => 'the description on each pin'
+			) as $column => $description) {
+				if($this->referencePointsAtElement($row[$column], $elementId, $handle)) {
+					$updates[$column] = '';
+					$usedAs[] = $description;
+				}
+			}
+
+			$newColumns = $this->removeElementFromColumnRows(@unserialize((string) $row['columns']), $elementId, $handle);
+			if($newColumns !== false) {
+				$updates['columns'] = serialize($newColumns);
+				$usedAs[] = 'a column';
+			}
+
+			$newFilters = $this->removeElementFromConditions(@unserialize((string) $row['fundamental_filters']), $elementId, $handle);
+			if($newFilters !== false) {
+				$updates['fundamental_filters'] = serialize($newFilters);
+				$usedAs[] = 'a fundamental filter';
+			}
+
+			if($usedAs) {
+				$references[] = $this->elementReference(
+					_AM_ELE_USAGE_SECTION_MAP_SCREENS,
+					$this->describeById($row['title'], 'screen', $row['sid']).' - '.implode(', ', $usedAs),
+					'formulize_screen_map', 'sid', $row['sid'], $updates
+				);
+			}
+		}
+		return $references;
+	}
+
+	/**
+	 * Calendar screens: the element holding the date each dataset is plotted on.
+	 *
+	 * A calendar's datasets are stored as serialized objects rather than plain arrays, so the class has to be
+	 * loaded before they can be read back, and a row whose datasets do not come back as those objects is
+	 * reported but left alone - rewriting a structure that could not be read properly would do more harm than
+	 * the dangling reference does.
+	 *
+	 * @return array
+	 */
+	private function scanCalendarScreensForElement($elementId, $handle) {
+		$references = array();
+		include_once XOOPS_ROOT_PATH."/modules/formulize/class/calendarScreen.php";
+		$sql = "SELECT s.sid, s.title, c.datasets
+			FROM ".$this->db->prefix('formulize_screen')." s
+			INNER JOIN ".$this->db->prefix('formulize_screen_calendar')." c ON c.sid = s.sid";
+		if(!$result = $this->db->query($sql)) {
+			return $references;
+		}
+		while($row = $this->db->fetchArray($result)) {
+			$description = $this->describeById($row['title'], 'screen', $row['sid'])
+				.' - the date the entries are placed on, which the screen cannot be drawn without';
+
+			$datasets = @unserialize((string) $row['datasets']);
+			$readable = is_array($datasets) AND $datasets;
+			if($readable) {
+				foreach($datasets as $dataset) {
+					if(!($dataset instanceof formulizeCalendarScreenDataset)) {
+						$readable = false;
+						break;
+					}
+				}
+			}
+
+			// a screen whose datasets did not come back as the objects they are stored as cannot be rewritten
+			// safely, so fall back to asking whether the handle appears anywhere in the stored text at all.
+			// That is a loose question and it may say yes when the answer is no, but the alternative is
+			// staying silent about a screen that may well be about to break.
+			if(!$readable) {
+				if(strpos((string) $row['datasets'], $handle) !== false) {
+					$references[] = $this->elementReference(
+						_AM_ELE_USAGE_SECTION_CALENDAR_SCREENS,
+						$description.' (this screen could not be read properly, so check it and change it yourself)',
+						'', 'sid', $row['sid']
+					);
+				}
+				continue;
+			}
+
+			$changed = false;
+			foreach($datasets as $dataset) {
+				if($this->referencePointsAtElement($dataset->getVar('datehandle'), $elementId, $handle)) {
+					$dataset->setVar('datehandle', '');
+					$changed = true;
+				}
+			}
+			if($changed) {
+				$references[] = $this->elementReference(
+					_AM_ELE_USAGE_SECTION_CALENDAR_SCREENS, $description,
+					'formulize_screen_calendar', 'sid', $row['sid'],
+					array('datasets' => serialize($datasets))
+				);
+			}
+		}
+		return $references;
+	}
+
+	/**
+	 * Screens that identify their entries in the address bar by this element's value rather than the entry id.
+	 * @return array
+	 */
+	private function scanScreenAddressesForElement($elementId) {
+		$references = array();
+		// this setting only ever holds an id, never a handle, so there is nothing else to match on
+		$sql = "SELECT sid, title FROM ".$this->db->prefix('formulize_screen')." WHERE rewriteruleElement = ".intval($elementId);
+		if(!$result = $this->db->query($sql)) {
+			return $references;
+		}
+		while($row = $this->db->fetchArray($result)) {
+			$references[] = $this->elementReference(
+				_AM_ELE_USAGE_SECTION_SCREEN_ADDRESSES,
+				$this->describeById($row['title'], 'screen', $row['sid']).' - the address will go back to using the entry id',
+				'formulize_screen', 'sid', $row['sid'], array('rewriteruleElement' => 0)
+			);
+		}
+		return $references;
+	}
+
+	/**
+	 * Other elements set up to depend on this one: whether they are shown, whether they are read only, and
+	 * where their dynamic default value is read from.
+	 * @return array
+	 */
+	private function scanElementsForElement($elementId, $handle) {
+		$references = array();
+		$sql = "SELECT ele_id, ele_handle, ele_type, id_form, ele_filtersettings, ele_disabledconditions,
+			ele_dynamicdefault_source, ele_dynamicdefault_conditions
+			FROM ".formulize_TABLE." WHERE ele_id != ".intval($elementId);
+		if(!$result = $this->db->query($sql)) {
+			return $references;
+		}
+		while($row = $this->db->fetchArray($result)) {
+			$updates = array();
+			$usedAs = array();
+
+			foreach(array(
+				'ele_filtersettings' => 'in the conditions that decide whether it is shown',
+				'ele_disabledconditions' => 'in the conditions that decide whether it is read only',
+				'ele_dynamicdefault_conditions' => 'in the conditions on its dynamic default value'
+			) as $column => $description) {
+				$newConditions = $this->removeElementFromConditions(@unserialize((string) $row[$column]), $elementId, $handle);
+				if($newConditions !== false) {
+					$updates[$column] = serialize($newConditions);
+					$usedAs[] = $description;
+				}
+			}
+
+			// a dynamic default reads its value out of another element, so once that element is gone there is
+			// nothing left to read. The conditions that went with it go too, which is what the element editor
+			// does when the source is set back to none.
+			if(intval($row['ele_dynamicdefault_source']) === intval($elementId)) {
+				$updates['ele_dynamicdefault_source'] = 0;
+				$updates['ele_dynamicdefault_conditions'] = serialize(array());
+				$usedAs[] = 'as the source of its dynamic default value';
+			}
+
+			if($usedAs) {
+				$references[] = $this->elementReference(
+					_AM_ELE_USAGE_SECTION_OTHER_ELEMENTS,
+					"the ".$row['ele_type']." element '".$row['ele_handle']."' (form ".intval($row['id_form']).") - ".implode(', ', $usedAs),
+					'formulize', 'ele_id', $row['ele_id'], $updates
+				);
+			}
+		}
+		return $references;
+	}
+
+	/**
+	 * The per group filters that decide which entries of a form a group is allowed to see.
+	 * @return array
+	 */
+	private function scanGroupFiltersForElement($elementId, $handle) {
+		$references = array();
+		$sql = "SELECT gf.filterid, gf.filter, gf.groupid, g.name AS group_name, f.form_title
+			FROM ".$this->db->prefix('formulize_group_filters')." gf
+			LEFT JOIN ".$this->db->prefix('groups')." g ON g.groupid = gf.groupid
+			LEFT JOIN ".$this->db->prefix('formulize_id')." f ON f.id_form = gf.fid";
+		if(!$result = $this->db->query($sql)) {
+			return $references;
+		}
+		while($row = $this->db->fetchArray($result)) {
+			$newFilter = $this->removeElementFromConditions(@unserialize((string) $row['filter']), $elementId, $handle);
+			if($newFilter === false) {
+				continue;
+			}
+			$references[] = $this->elementReference(
+				_AM_ELE_USAGE_SECTION_GROUP_FILTERS,
+				$this->describeById($row['group_name'], 'group', $row['groupid'])
+					.' - which entries of '.trim(strip_tags((string) $row['form_title'])).' they can see',
+				'formulize_group_filters', 'filterid', $row['filterid'],
+				array('filter' => serialize($newFilter))
+			);
+		}
+		return $references;
+	}
+
+	/**
+	 * Saved views: the columns someone chose, the searches on them, the calculations, and the sort column.
+	 * @return array
+	 */
+	private function scanSavedViewsForElement($elementId, $handle) {
+		$references = array();
+		// the LIKE clauses are a coarse filter only. An underscore is a single character wildcard in LIKE and
+		// handles are full of them, so this deliberately catches more rows than it needs to and the precise
+		// test happens below.
+		$sql = "SELECT sv_id, sv_name, sv_oldcols, sv_quicksearches, sv_sort, sv_calc_cols, sv_calc_calcs,
+			sv_calc_blanks, sv_calc_grouping FROM ".$this->db->prefix('formulize_saved_views')."
+			WHERE sv_oldcols LIKE ".$this->db->quoteString('%'.$handle.'%')."
+			OR sv_calc_cols LIKE ".$this->db->quoteString('%'.intval($elementId).'%')."
+			OR sv_sort = ".$this->db->quoteString($handle);
+		if(!$result = $this->db->query($sql)) {
+			return $references;
+		}
+		while($row = $this->db->fetchArray($result)) {
+			$updates = array();
+			$usedAs = array();
+
+			// the columns of the view, one of which can carry a hiddencolumn_ prefix when it was included for
+			// the sake of a persistent search without being shown. The searches are stored one per column in
+			// the same order, so the positions that come out of the columns come out of the searches too.
+			if($columns = $this->removeElementFromDelimitedList($row['sv_oldcols'], ',', $elementId, $handle, 'hiddencolumn_')) {
+				list($newColumns, $removedPositions) = $columns;
+				$updates['sv_oldcols'] = $newColumns;
+				$updates['sv_quicksearches'] = $this->removePositionsFromDelimitedList($row['sv_quicksearches'], '&*=%4#', $removedPositions);
+				$usedAs[] = 'a column';
+			}
+
+			// the calculations, which name their column by element id, and which run parallel to the three
+			// settings saying what is calculated, how blanks are treated and how results are grouped
+			if($calculations = $this->removeElementFromDelimitedList($row['sv_calc_cols'], '/', $elementId, $handle)) {
+				list($newCalcCols, $removedPositions) = $calculations;
+				$updates['sv_calc_cols'] = $newCalcCols;
+				foreach(array('sv_calc_calcs', 'sv_calc_blanks', 'sv_calc_grouping') as $parallelSetting) {
+					$updates[$parallelSetting] = $this->removePositionsFromDelimitedList($row[$parallelSetting], '/', $removedPositions);
+				}
+				$usedAs[] = 'a calculation';
+			}
+
+			if((string) $row['sv_sort'] === (string) $handle) {
+				$updates['sv_sort'] = ''; // the list falls back to its default order
+				$usedAs[] = 'the column it is sorted by';
+			}
+
+			if($usedAs) {
+				$references[] = $this->elementReference(
+					_AM_ELE_USAGE_SECTION_SAVED_VIEWS,
+					$this->describeById($row['sv_name'], 'view', $row['sv_id']).' - '.implode(', ', $usedAs),
+					'formulize_saved_views', 'sv_id', $row['sv_id'], $updates
+				);
+			}
+		}
+		return $references;
+	}
+
+	/**
+	 * Settings on a form itself: the conditions that decide whether entries become user accounts, and the
+	 * elements that connect a template group to the entry the real group comes from.
+	 * @return array
+	 */
+	private function scanFormSettingsForElement($elementId, $handle) {
+		$references = array();
+		$sql = "SELECT id_form, form_title, entries_are_users_conditions, entries_are_users_default_groups_element_links
+			FROM ".$this->db->prefix('formulize_id');
+		if(!$result = $this->db->query($sql)) {
+			return $references;
+		}
+		while($row = $this->db->fetchArray($result)) {
+			$updates = array();
+			$usedAs = array();
+
+			// key 0 holds the conditions that apply generally, and every other key is a group id holding the
+			// conditions for that group, so the keys are kept as they are and only the contents change
+			$conditions = @unserialize((string) $row['entries_are_users_conditions']);
+			if(is_array($conditions)) {
+				$changed = false;
+				foreach($conditions as $groupId => $groupConditions) {
+					$newConditions = $this->removeElementFromConditions($groupConditions, $elementId, $handle);
+					if($newConditions !== false) {
+						$conditions[$groupId] = $newConditions;
+						$changed = true;
+					}
+				}
+				if($changed) {
+					$updates['entries_are_users_conditions'] = serialize($conditions);
+					$usedAs[] = 'in the conditions that decide whether an entry becomes a user account';
+				}
+			}
+
+			$links = @unserialize((string) $row['entries_are_users_default_groups_element_links']);
+			if(is_array($links)) {
+				$changed = false;
+				foreach($links as $groupId => $linkedElements) {
+					$newLinks = $this->removeElementFromList($linkedElements, $elementId, $handle);
+					if($newLinks !== false) {
+						$links[$groupId] = $newLinks;
+						$changed = true;
+					}
+				}
+				if($changed) {
+					$updates['entries_are_users_default_groups_element_links'] = serialize($links);
+					$usedAs[] = 'as what connects a group to the entry that decides who is in it';
+				}
+			}
+
+			if($usedAs) {
+				$references[] = $this->elementReference(
+					_AM_ELE_USAGE_SECTION_FORM_SETTINGS,
+					$this->describeById($row['form_title'], 'form', $row['id_form']).' - '.implode(', ', $usedAs),
+					'formulize_id', 'id_form', $row['id_form'], $updates
+				);
+			}
+		}
+		return $references;
+	}
+
+	/**
+	 * Relationships between forms that are made through this element. The links are removed by
+	 * deleteElementConnectionsInRelationships(), which delete() calls, so these are reported only - but they
+	 * matter more than most of what is on this list, because a relationship is how two forms find each other.
+	 * @return array
+	 */
+	private function scanRelationshipsForElement($elementId, $formId) {
+		$references = array();
+		if(!$formId) {
+			return $references;
+		}
+		$sql = "SELECT l.fl_id, l.fl_form1_id, l.fl_form2_id, r.frame_name, f1.form_title AS form1_title,
+			f2.form_title AS form2_title
+			FROM ".$this->db->prefix('formulize_framework_links')." l
+			LEFT JOIN ".$this->db->prefix('formulize_frameworks')." r ON r.frame_id = l.fl_frame_id
+			LEFT JOIN ".$this->db->prefix('formulize_id')." f1 ON f1.id_form = l.fl_form1_id
+			LEFT JOIN ".$this->db->prefix('formulize_id')." f2 ON f2.id_form = l.fl_form2_id
+			WHERE (l.fl_form1_id = ".intval($formId)." AND l.fl_key1 = ".intval($elementId).")
+			OR (l.fl_form2_id = ".intval($formId)." AND l.fl_key2 = ".intval($elementId).")";
+		if(!$result = $this->db->query($sql)) {
+			return $references;
+		}
+		while($row = $this->db->fetchArray($result)) {
+			$relationshipName = trim(strip_tags((string) $row['frame_name']));
+			$joins = 'joins '.$this->describeById($row['form1_title'], 'form', $row['fl_form1_id'])
+				.' to '.$this->describeById($row['form2_title'], 'form', $row['fl_form2_id']);
+			$references[] = $this->elementReference(
+				_AM_ELE_USAGE_SECTION_RELATIONSHIPS,
+				($relationshipName === '' ? 'a relationship that '.$joins : $relationshipName.' - '.$joins),
+				'', 'fl_id', $row['fl_id']
+			);
+		}
+		return $references;
+	}
+
+	/**
+	 * Drop this element out of a screen's element defaults, which are keyed by the element they are for.
+	 * @param mixed $defaults The stored defaults.
+	 * @param int $elementId The element's id.
+	 * @param string $handle The element's handle.
+	 * @return array|false The new defaults, or false if nothing referenced the element.
+	 */
+	private function removeElementFromDefaults($defaults, $elementId, $handle) {
+		if(!is_array($defaults)) {
+			return false;
+		}
+		$new = array();
+		foreach($defaults as $reference => $value) {
+			if(!$this->referencePointsAtElement($reference, $elementId, $handle)) {
+				$new[$reference] = $value; // keyed by element, so the keys have to be kept as they are
+			}
+		}
+		return count($new) === count($defaults) ? false : $new;
+	}
+
+	/**
+	 * Where is this element used, and what would deleting it cost?
+	 *
+	 * One report, two audiences: the admin interface shows it when someone asks where an element is used and
+	 * again before they delete it, and the MCP delete tool returns it as its preview. It lives here rather
+	 * than in either of those so the answer cannot differ between them, and it reads the same
+	 * scanElementReferences() that removeElementReferences() acts on, so the report cannot promise a tidy up
+	 * that does not happen or stay quiet about one that does.
+	 *
+	 * The distinction the report draws is between what deletion handles for you and the one thing it cannot:
+	 * a person's own code naming the handle. See removeElementReferences() for why.
+	 *
+	 * Places the element is not used are left out entirely rather than listed as empty. Someone reading this
+	 * wants to know what deleting will disturb, and a wall of headings saying "none" buries that.
+	 *
+	 * @param object $elementObject The element being asked about
+	 * @return array The usage report
+	 */
+	public function elementUsageReport($elementObject) {
+
+		$elementId = intval($elementObject->getVar('ele_id'));
+		$formId = intval($elementObject->getVar('fid'));
+		$handle = $elementObject->getVar('ele_handle');
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($formId);
+
+		$impact = [
+			'element_id' => $elementId,
+			'element_handle' => $handle,
+			'element_caption' => $elementObject->getVar('ele_caption'),
+			'element_type' => $elementObject->getVar('ele_type'),
+			'form_id' => $formId,
+			'form_title' => $formObject ? $formObject->getVar('form_title') : null,
+		];
+
+		// how much data would be destroyed
+		$impact['stores_data'] = (bool) $elementObject->hasData;
+		$impact['entries_with_a_value_in_this_element'] = 0;
+		if($elementObject->hasData AND $formObject) {
+			$dataTable = $this->db->prefix('formulize_'.$formObject->getVar('form_handle'));
+			$countSql = "SELECT COUNT(*) AS c FROM `$dataTable` WHERE `".formulize_db_escape($handle)."` IS NOT NULL AND `".formulize_db_escape($handle)."` != ''";
+			if($countResult = $this->db->query($countSql)) {
+				$countRow = $this->db->fetchArray($countResult);
+				$impact['entries_with_a_value_in_this_element'] = intval($countRow['c']);
+			}
+		}
+
+		// the form's principal identifier is reset to nothing if this element was it
+		$impact['is_the_principal_identifier'] = ($formObject AND intval($formObject->getVar('pi')) === $elementId);
+
+		// everywhere else the element is referenced from, grouped under the heading each belongs to. The
+		// order the sections come out in is the order the scan finds them, which puts the screens people
+		// look at first and the bookkeeping last.
+		$sections = [];
+		foreach($this->scanElementReferences($elementObject) as $reference) {
+			$sections[$reference['section']][] = $reference['description'];
+		}
+		$impact['cleaned_up_automatically'] = [];
+		foreach($sections as $what => $items) {
+			$impact['cleaned_up_automatically'][] = ['what' => $what, 'items' => $items];
+		}
+
+		// references that cannot be cleaned up automatically, because they are code rather than configuration
+		if($broken = $this->codeReferencesToElement($elementId, $handle)) {
+			$impact['references_in_code_that_you_will_need_to_fix'] = $broken;
+			$impact['about_those_references'] = "Deleting an element clears it out of every setting that stores it as configuration - form screen pages and defaults, list screen columns and filters, map and calendar screen settings, custom button effects, display and read only conditions on other elements, dynamic default values, group visibility filters, entries-are-users settings, saved views, and any screen identifying entries by it in the address bar. The references above are different: they are places a person wrote this element's name into code, either a formula on another element or a custom code file. Removing a term from someone's code is not a change that can be made safely without knowing what the code is for, so these are left alone and are yours to fix.";
+		}
+
+		return $impact;
+	}
+
+	/**
+	 * The places a person has written this element's handle into code, which deleting the element cannot fix.
+	 *
+	 * There are two ways a handle gets referenced: as a PHP variable in derived value code ($some_handle),
+	 * and in curly braces in the default value of a text or textarea element and in the content of a static
+	 * content element ({some_handle}).
+	 *
+	 * The SQL is only a coarse filter - it is deliberately loose, because an underscore is a single character
+	 * wildcard in LIKE and handles are full of them. The precise test happens in PHP, where a trailing name
+	 * character can be excluded so that $artifacts_year does not match $artifacts_year_era. The excluded set
+	 * is PHP's own grammar for what may continue a variable name, [a-zA-Z0-9_\x80-\xff], which includes the
+	 * high bytes that let variable names hold accented and other non-ASCII characters. No /u modifier: that
+	 * grammar is defined in bytes, and a multibyte character is a sequence of bytes that are all inside the
+	 * excluded range anyway.
+	 *
+	 * @param int $elementId The element's id.
+	 * @param string $handle The element's handle.
+	 * @return array The references, described for a person.
+	 */
+	private function codeReferencesToElement($elementId, $handle) {
+		$broken = [];
+		$continuesAName = '(?![A-Za-z0-9_\x80-\xff])';
+		$referencePattern = '/(\$'.preg_quote($handle, '/').$continuesAName.'|\{'.preg_quote($handle, '/').'\})/';
+
+		// other elements naming this one in their settings
+		$referenceSql = "SELECT ele_id, ele_handle, ele_type, id_form, ele_value FROM ".$this->db->prefix('formulize')."
+			WHERE ele_value LIKE ".$this->db->quoteString('%'.$handle.'%');
+		if($referenceResult = $this->db->query($referenceSql)) {
+			while($referenceRow = $this->db->fetchArray($referenceResult)) {
+				if(intval($referenceRow['ele_id']) === $elementId) { continue; }
+				if(preg_match($referencePattern, (string) $referenceRow['ele_value'])) {
+					$broken[] = "the ".$referenceRow['ele_type']." element '".$referenceRow['ele_handle']."' (form ".intval($referenceRow['id_form']).") refers to this element by name in its settings";
+				}
+			}
+		}
+
+		// custom code files that name the handle, including the code files written for derived value and
+		// static content elements, which live in the same folder
+		$codeDir = XOOPS_ROOT_PATH.'/modules/formulize/code/';
+		if(is_dir($codeDir)) {
+			foreach((array) glob($codeDir.'*.php') as $codeFile) {
+				$contents = file_get_contents($codeFile);
+				if($contents !== false AND preg_match($referencePattern, $contents)) {
+					$broken[] = "custom code file '".basename($codeFile)."' refers to this element by name";
+				}
+			}
+		}
+
+		return $broken;
+	}
+
 	function delete($elementObject, $force = false){
 		$elementType = $elementObject->getVar('ele_type');
 		if(file_exists(XOOPS_ROOT_PATH . "/modules/formulize/class/".$elementType."Element.php")) {
@@ -1142,8 +2250,17 @@ class formulizeElementsHandler {
 			}
 		}
 
+		// a page left with nothing on it is kept rather than removed. traverseScreenPages() does not carry an
+		// empty page through to displayFormPages(), so it does not appear in the form either way, and keeping
+		// it means the page a person built - its title, its conditions, its read only flag - is still there
+		// for them to put something else on. Deleting an element should not delete their page as well.
 		$screenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 		$screenHandler->removeElementsFromScreens($elementObject->getVar('ele_id'));
+
+		// every other stored reference: screen columns, filters and defaults of every screen type, custom
+		// button effects, page and group conditions, conditions and dynamic defaults on other elements,
+		// entries-are-users settings, saved views, and a screen identifying entries by this element in its URL
+		$this->removeElementReferences($elementObject);
 
 		return ($result0 AND $result1 AND $result2 AND $result3 AND $result4) ? true : false;
 	}

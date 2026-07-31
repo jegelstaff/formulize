@@ -352,25 +352,102 @@ class formulizeForm extends FormulizeObject {
 			return "form_".$this->id_form."_custom_edit_check";
 		}
 
-    protected function on_before_save_filename() {
+    /**
+     * The generated wrapper for a procedure is cached in a file whose name carries a hash of the SOURCE it
+     * was built from, eg: form_5_on_before_save_a1b2c3d4.php. That makes a stale cache impossible rather
+     * than something to be detected: change the source and the name changes with it, so the old file is
+     * simply never asked for again.
+     *
+     * This matters because the source of truth is a file on disk (modules/formulize/code/), and files
+     * arrive by routes that have nothing to do with Formulize - a git deploy, an rsync, a restored
+     * snapshot, someone editing in place. The previous scheme used a fixed name and regenerated only when
+     * that file was MISSING, so a source change that came in any of those ways was invisible for good, and
+     * the symptom was the old code continuing to run, or a fatal for a function the new source no longer
+     * defines. An mtime comparison would not have covered it either, since the copy tools that preserve
+     * timestamps are exactly the ones people restore snapshots with.
+     *
+     * The function name is deliberately NOT hashed - it is called by name, so it has to stay stable.
+     *
+     * @param string $procedure on_before_save, on_after_save, on_delete or custom_edit_check
+     * @param string $source The procedure's source code, ie: what the wrapper will be built around
+     * @return string Full path to the cache file for this exact source
+     */
+    protected function procedure_cache_filename($procedure, $source) {
         // save the code in the icms cache folder (because it is known to be writeable)
-        return ICMS_CACHE_PATH."/{$this->on_before_save_function_name}.php";
+        $functionName = $this->{$procedure.'_function_name'};
+        // Hash a canonical form of the source, not the source as given. cache_*_code() rewrites the
+        // procedure's own property through removeOpeningPHPTag() before it builds the wrapper, and that
+        // function is NOT idempotent - it trims first, so a second pass eats the newline the first one left
+        // behind. Hashing the raw value would therefore produce one name before the write and a different
+        // one after it. trim(removeOpeningPHPTag(...)) is stable under repeated application, so the name is
+        // the same whichever side of that rewrite it is asked for.
+        $canonicalSource = trim(removeOpeningPHPTag((string) $source));
+        return ICMS_CACHE_PATH."/".$functionName."_".substr(sha1($canonicalSource), 0, 12).".php";
+    }
+
+    /**
+     * Write a generated wrapper to its content-addressed file, and clear away the files left behind by
+     * earlier versions of the same procedure.
+     *
+     * Written to a temporary file and renamed into place, because rename is atomic: another request that is
+     * including this file at the same moment sees either the old file or the complete new one, never a
+     * half-written one. Concurrent writers of the SAME source write identical bytes to the same target, so
+     * they cannot conflict with each other either.
+     *
+     * @param string $procedure on_before_save, on_after_save, on_delete or custom_edit_check
+     * @param string $filename Full path to the cache file to write
+     * @param string $code The generated wrapper
+     * @return bool Whether the wrapper is now on disk
+     */
+    protected function write_procedure_cache_file($procedure, $filename, $code) {
+        $temporaryFile = $filename.'.'.getmypid().'.tmp';
+        if(false === file_put_contents($temporaryFile, $code)) {
+            return false;
+        }
+        if(!rename($temporaryFile, $filename)) {
+            @unlink($temporaryFile);
+            return false;
+        }
+        $this->clear_procedure_cache_files($procedure, $filename);
+        return true;
+    }
+
+    /**
+     * Remove the cache files of previous versions of a procedure, so the folder does not accumulate one
+     * file per edit forever.
+     * @param string $procedure on_before_save, on_after_save, on_delete or custom_edit_check
+     * @param string $keepFilename Full path to the file to keep, or '' to remove every version
+     * @return void
+     */
+    protected function clear_procedure_cache_files($procedure, $keepFilename = '') {
+        $functionName = $this->{$procedure.'_function_name'};
+        foreach((array) glob(ICMS_CACHE_PATH."/".$functionName."_*.php") as $existingFile) {
+            if($existingFile !== $keepFilename) {
+                @unlink($existingFile);
+            }
+        }
+        // the fixed name this used before the cache became content-addressed
+        $legacyFile = ICMS_CACHE_PATH."/".$functionName.".php";
+        if(file_exists($legacyFile)) {
+            @unlink($legacyFile);
+        }
+    }
+
+    protected function on_before_save_filename() {
+        return $this->procedure_cache_filename('on_before_save', $this->on_before_save);
     }
 
     protected function on_after_save_filename() {
-        // save the code in the icms cache folder (because it is known to be writeable)
-        return ICMS_CACHE_PATH."/{$this->on_after_save_function_name}.php";
+        return $this->procedure_cache_filename('on_after_save', $this->on_after_save);
     }
 
     protected function on_delete_filename() {
-			// save the code in the icms cache folder (because it is known to be writeable)
-			return ICMS_CACHE_PATH."/{$this->on_delete_function_name}.php";
-		}
+        return $this->procedure_cache_filename('on_delete', $this->on_delete);
+    }
 
-		protected function custom_edit_check_filename() {
-				// save the code in the icms cache folder (because it is known to be writeable)
-				return ICMS_CACHE_PATH."/{$this->custom_edit_check_function_name}.php";
-		}
+    protected function custom_edit_check_filename() {
+        return $this->procedure_cache_filename('custom_edit_check', $this->custom_edit_check);
+    }
 
 		public function on_before_save() {
 				// this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
@@ -424,11 +501,9 @@ function form_{$this->id_form}_on_before_save(\$entry_id, \$formulize_element_va
 
 EOF;
             // todo: there is a way to validate php files on disk, so do that and report any syntax errors
-            return (false !== file_put_contents($this->on_before_save_filename, $on_before_save_code));
+            return $this->write_procedure_cache_file('on_before_save', $this->on_before_save_filename, $on_before_save_code);
         } else {
-            if (file_exists($this->on_before_save_filename)) {
-                unlink($this->on_before_save_filename);
-            }
+            $this->clear_procedure_cache_files('on_before_save');
             return true;
         }
     }
@@ -455,11 +530,9 @@ foreach(\$formulize_element_values as \$formulize_element_key=>\$formulize_eleme
 
 EOF;
             // todo: there is a way to validate php files on disk, so do that and report any syntax errors
-            return (false !== file_put_contents($this->on_after_save_filename, $on_after_save_code));
+            return $this->write_procedure_cache_file('on_after_save', $this->on_after_save_filename, $on_after_save_code);
         } else {
-            if (file_exists($this->on_after_save_filename)) {
-                unlink($this->on_after_save_filename);
-            }
+            $this->clear_procedure_cache_files('on_after_save');
             return true;
         }
     }
@@ -487,11 +560,9 @@ function form_{$this->id_form}_on_delete(\$entry_id, \$formulize_element_values,
 
 EOF;
 						// todo: there is a way to validate php files on disk, so do that and report any syntax errors
-						return (false !== file_put_contents($this->on_delete_filename, $on_delete_code));
+						return $this->write_procedure_cache_file('on_delete', $this->on_delete_filename, $on_delete_code);
 				} else {
-						if (file_exists($this->on_delete_filename)) {
-								unlink($this->on_delete_filename);
-						}
+						$this->clear_procedure_cache_files('on_delete');
 						return true;
 				}
 		}
@@ -512,11 +583,9 @@ return \$allow_editing; // this will pass the result of the custom operation int
 
 EOF;
             // todo: there is a way to validate php files on disk, so do that and report any syntax errors
-            return (false !== file_put_contents($this->custom_edit_check_filename, $custom_edit_check_code));
+            return $this->write_procedure_cache_file('custom_edit_check', $this->custom_edit_check_filename, $custom_edit_check_code);
         } else {
-            if (file_exists($this->custom_edit_check_filename)) {
-                unlink($this->custom_edit_check_filename);
-            }
+            $this->clear_procedure_cache_files('custom_edit_check');
             return true;
         }
     }

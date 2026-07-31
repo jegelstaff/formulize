@@ -152,6 +152,11 @@ class formulizeScreen extends FormulizeObject {
 
 #[AllowDynamicProperties]
 class formulizeScreenHandler {
+
+	// marks the stand-in handle settleHandle gives a new screen that has nothing usable to make one from, so
+	// that insert() can recognize it and swap in a handle made from the sid the database has just assigned
+	const TEMPORARY_HANDLE_PREFIX = 'temporary_screen_handle_';
+
 	var $db;
 	function __construct(&$db) {
 		$this->db =& $db;
@@ -169,7 +174,7 @@ class formulizeScreenHandler {
 
 
 	// check to see if a handle is unique within a form
-	function isScreenHandleUnique($handle, $screen_id="") {
+	function isScreenHandleUnique($handle, $screen_id = 0) {
 		$handle = formulizeScreen::sanitize_handle_name($handle);
 		global $xoopsDB;
 		$screen_id_condition = $screen_id ? " AND sid != " . intval($screen_id) : "";
@@ -186,7 +191,7 @@ class formulizeScreenHandler {
 		}
 	}
 
-	function makeHandleUnique($handle, $sid) {
+	function makeHandleUnique($handle, $sid = 0) {
 		$firstUniqueCheck = true;
 		$handle = formulizeScreen::sanitize_handle_name($handle);
 		while (!$uniqueCheck = $this->isScreenHandleUnique($handle, $sid)) {
@@ -198,6 +203,50 @@ class formulizeScreenHandler {
 			}
 		}
 		return $handle;
+	}
+
+	/**
+	 * Settle the handle a screen is going to be saved with, and put it on the object, sanitized and unique.
+	 *
+	 * The handle is whatever was asked for, and otherwise made from the handle the screen already has or from
+	 * its title. Whichever one is used goes through makeHandleUnique, so the handle left on the object is
+	 * always sanitized: nothing a caller supplies reaches the database as it was typed. If none of the
+	 * candidates has anything usable in it, the last resort is the screen's own sid, and for a screen that
+	 * does not have one yet, a temporary handle that insert() replaces with the sid once the database has
+	 * assigned it. A screen can never be left without a handle: screen_handle is a required var, so a screen
+	 * with an empty handle fails cleanVars() and cannot be saved at all.
+	 *
+	 * insert() calls this itself, so callers only need to call it when a handle was explicitly asked for and
+	 * has to win over the screen's title.
+	 *
+	 * @param formulizeScreen $screen The screen object, updated in place.
+	 * @param string $requestedHandle Optional. The handle that was explicitly asked for, if any.
+	 * @return void
+	 */
+	function settleHandle($screen, $requestedHandle = '') {
+		$sid = intval($screen->getVar('sid'));
+		// The candidates, in order of preference: whatever was asked for, then the handle the screen already
+		// has, except that a new screen tries its title first. That matches the admin interface, where the
+		// handle field is filled in from the title as it is typed, and it means a new screen prefers its title
+		// over a handle seeded by setDefaultFormScreenVars/setDefaultListScreenVars from the form's singular
+		// or plural name: those defaults are for the screens a form is created with, which have no title of
+		// their own to work from, whereas a screen made deliberately has been given one.
+		// 'n' because these are being sanitized, not displayed: the default escaping would turn the apostrophe
+		// in a title like "Bob's Screen" into &#039; first, and the handle would come out as bob039s_screen
+		$currentHandle = $screen->getVar('screen_handle', 'n');
+		$candidates = $sid ? array($requestedHandle, $currentHandle) : array($requestedHandle, $screen->getVar('title', 'n'), $currentHandle);
+		// the screen's sid is the last resort, and a temporary handle stands in for it until insert() has one
+		$candidates[] = $sid ? $sid : self::TEMPORARY_HANDLE_PREFIX.uniqid();
+		foreach($candidates as $candidate) {
+			// a candidate has to sanitize to at least one letter or digit, not merely to a non-empty result:
+			// sanitize_handle_name turns spaces into underscores before stripping, so a title of "!!! ???"
+			// sanitizes to "__" rather than to nothing, and that would be taken as a usable handle and stop
+			// the fallbacks behind it from ever being reached
+			if(preg_match('/[a-z0-9]/', formulizeScreen::sanitize_handle_name($candidate))) {
+				$screen->setVar('screen_handle', $this->makeHandleUnique($candidate, $sid));
+				return;
+			}
+		}
 	}
 
 	// returns an array of screen objects
@@ -320,6 +369,11 @@ class formulizeScreenHandler {
 		if (!is_a($screen, 'formulizeScreen')) {
             return false;
         }
+        // No handle reaches the database unsanitized or duplicated, whichever caller put it on the object:
+        // the handle the screen is carrying is what this insert is asking for, and settleHandle sanitizes it
+        // and makes it unique. A screen with nothing usable in its handle falls back to its title, and after
+        // that to a temporary handle that becomes its sid below.
+        $this->settleHandle($screen, $screen->getVar('screen_handle', 'n'));
         if (!$screen->cleanVars()) {
             return false;
         }
@@ -342,6 +396,23 @@ class formulizeScreenHandler {
         }
         if (!$sid) {
             $sid = $this->db->getInsertId();
+            $screen->assignVar('sid', $sid);
+        }
+        // The screen had nothing usable for a handle in what it was given or in its title, so it went into the
+        // database under the temporary handle settleHandle gave it, and now that it has a sid it can have the
+        // handle it should have had. Only the one column needs to go back, so this is a targeted update.
+        if (strpos($screen_handle, self::TEMPORARY_HANDLE_PREFIX) === 0) {
+            $screen->setVar('screen_handle', $this->makeHandleUnique($sid, $sid));
+            $handleSql = sprintf("UPDATE %s SET screen_handle = %s WHERE sid = %u", $this->db->prefix('formulize_screen'), $this->db->quoteString($screen->getVar('screen_handle', 'n')), $sid);
+            if ($force) {
+                $handleResult = $this->db->queryF($handleSql);
+            } else {
+                $handleResult = $this->db->query($handleSql);
+            }
+            if (!$handleResult) {
+                print 'DB error: '.$this->db->error() . '<br>'.$handleSql.'<br>';
+                return false;
+            }
         }
         return $sid;
 	}

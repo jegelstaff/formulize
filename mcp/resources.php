@@ -466,11 +466,12 @@ trait resources {
 		// The screens Formulize falls back to when something points at the form itself rather than at a
 		// particular screen - a menu item written as a form, or a link with no screen in it. Which of the two
 		// is used is decided per user at the time, so both are reported rather than one "default screen".
-		$formData['default_form_screen'] = intval($formData['defaultform']) ?: null;
-		$formData['default_list_screen'] = intval($formData['defaultlist']) ?: null;
+		$formData['default_form_screen_id'] = intval($formData['defaultform']) ?: null;
+		$formData['default_list_screen_id'] = intval($formData['defaultlist']) ?: null;
 		unset($formData['defaultform'], $formData['defaultlist']);
 		$formData['about_the_default_screens'] = 'These are the screens used when a URL leads to this form without specifying a screen. Formulize picks which default to show based on whether the user has access to more than one entry or not. In most cases, users will see the list, but if a user\'s permissions are restricted to seeing only their own entries in a form, **and** that form has the limit_entries setting turned on for that user, then they effectively have access to only a single entry so they will see the form instead of the list. Anonymous visitors also see the form rather than the list, unless they have permission to see entries made by their group or by everyone.'
-			.(($formData['default_form_screen'] AND $formData['default_list_screen']) ? '' : ' Where one of these is not set, Formulize still shows a list or a form, but it will be generic rather than a screen anyone configured.');
+			.(($formData['default_form_screen_id'] AND $formData['default_list_screen_id']) ? '' : ' Where one of these is not set, Formulize still shows a list or a form, but it will be generic rather than a screen anyone configured.')
+			.' Both can be set with update_form, or from the screen\'s own side with the is_default_form_screen / is_default_list_screen property of the screen tools.';
 
 		// Get form elements. Only the identifying properties of each element are included here, so that forms
 		// with a large number of elements do not overwhelm the context of the AI assistant reading this.
@@ -709,135 +710,6 @@ trait resources {
 		return $handles;
 	}
 
-	/**
-	 * Work out what would be lost or broken by deleting an element, so the impact can be reported before
-	 * anything is destroyed.
-	 *
-	 * Two different kinds of consequence are reported, and the distinction matters. Some things the delete
-	 * handles itself: the data column is dropped, the element is removed from form screen pages, and the
-	 * form's principal identifier is reset if it was this element. Other things are NOT cleaned up, and are
-	 * simply left pointing at an element that no longer exists - list screen columns, derived value formulas,
-	 * and custom code that names the handle. Those are the references that will actually break.
-	 *
-	 * @param object $elementObject The element being considered for deletion
-	 * @return array The impact report
-	 */
-	private function elementDeletionImpact($elementObject) {
-
-		$elementId = intval($elementObject->getVar('ele_id'));
-		$formId = intval($elementObject->getVar('fid'));
-		$handle = $elementObject->getVar('ele_handle');
-		$form_handler = xoops_getmodulehandler('forms', 'formulize');
-		$formObject = $form_handler->get($formId);
-
-		$impact = [
-			'element_id' => $elementId,
-			'element_handle' => $handle,
-			'element_caption' => $elementObject->getVar('ele_caption'),
-			'element_type' => $elementObject->getVar('ele_type'),
-			'form_id' => $formId,
-			'form_title' => $formObject ? $formObject->getVar('form_title') : null,
-		];
-
-		// how much data would be destroyed
-		$impact['stores_data'] = (bool) $elementObject->hasData;
-		$impact['entries_with_a_value_in_this_element'] = 0;
-		if($elementObject->hasData AND $formObject) {
-			$dataTable = $this->db->prefix('formulize_'.$formObject->getVar('form_handle'));
-			$countSql = "SELECT COUNT(*) AS c FROM `$dataTable` WHERE `".formulize_db_escape($handle)."` IS NOT NULL AND `".formulize_db_escape($handle)."` != ''";
-			if($countResult = $this->db->query($countSql)) {
-				$countRow = $this->db->fetchArray($countResult);
-				$impact['entries_with_a_value_in_this_element'] = intval($countRow['c']);
-			}
-		}
-
-		// the form's principal identifier is reset to nothing if this element was it
-		$impact['is_the_principal_identifier'] = ($formObject AND intval($formObject->getVar('pi')) === $elementId);
-
-		// form screens the element will be removed from automatically
-		$impact['removed_from_form_screens'] = [];
-		$screenSql = "SELECT s.sid, s.title, m.pages FROM ".$this->db->prefix('formulize_screen')." s
-			INNER JOIN ".$this->db->prefix('formulize_screen_multipage')." m ON m.sid = s.sid
-			WHERE s.fid = $formId";
-		if($screenResult = $this->db->query($screenSql)) {
-			while($screenRow = $this->db->fetchArray($screenResult)) {
-				$pages = @unserialize($screenRow['pages']);
-				if(!is_array($pages)) { continue; }
-				foreach($pages as $pageElements) {
-					if(is_array($pageElements) AND in_array($elementId, array_map('intval', $pageElements))) {
-						$impact['removed_from_form_screens'][] = ['screen_id' => intval($screenRow['sid']), 'screen_title' => $screenRow['title']];
-						break;
-					}
-				}
-			}
-		}
-
-		// references that are NOT cleaned up, and so will be left broken
-		$broken = [];
-
-		// list screen columns, hidden columns and inline editable columns
-		$listSql = "SELECT s.sid, s.title, l.advanceview, l.hiddencolumns, l.decolumns FROM ".$this->db->prefix('formulize_screen')." s
-			INNER JOIN ".$this->db->prefix('formulize_screen_listofentries')." l ON l.sid = s.sid";
-		if($listResult = $this->db->query($listSql)) {
-			while($listRow = $this->db->fetchArray($listResult)) {
-				$referenced = false;
-				$advanceview = @unserialize($listRow['advanceview']);
-				if(is_array($advanceview)) {
-					foreach($advanceview as $column) {
-						if(is_array($column) AND isset($column[0]) AND $column[0] === $handle) { $referenced = true; }
-					}
-				}
-				foreach(array('hiddencolumns', 'decolumns') as $columnSetting) {
-					$columnList = @unserialize($listRow[$columnSetting]);
-					if(is_array($columnList) AND (in_array($elementId, array_map('intval', $columnList)) OR in_array($handle, $columnList))) {
-						$referenced = true;
-					}
-				}
-				if($referenced) {
-					$broken[] = "list screen ".intval($listRow['sid'])." (".$listRow['title'].") uses this element as a column";
-				}
-			}
-		}
-
-		// Other elements that name this one. There are two ways a handle gets referenced: as a PHP variable
-		// in derived value code ($some_handle), and in curly braces in the default value of a text or
-		// textarea element and in the content of a static content element ({some_handle}).
-		// The SQL is only a coarse filter - it is deliberately loose, because an underscore is a single
-		// character wildcard in LIKE and handles are full of them. The precise test happens in PHP, where a
-		// trailing name character can be excluded so that $artifacts_year does not match $artifacts_year_era.
-		// The excluded set is PHP's own grammar for what may continue a variable name,
-		// [a-zA-Z0-9_\x80-\xff], which includes the high bytes that let variable names hold accented and
-		// other non-ASCII characters. No /u modifier: that grammar is defined in bytes, and a multibyte
-		// character is a sequence of bytes that are all inside the excluded range anyway.
-		$continuesAName = '(?![A-Za-z0-9_\x80-\xff])';
-		$referencePattern = '/(\$'.preg_quote($handle, '/').$continuesAName.'|\{'.preg_quote($handle, '/').'\})/';
-		$referenceSql = "SELECT ele_id, ele_handle, ele_type, id_form, ele_value FROM ".$this->db->prefix('formulize')."
-			WHERE ele_value LIKE ".$this->db->quoteString('%'.$handle.'%');
-		if($referenceResult = $this->db->query($referenceSql)) {
-			while($referenceRow = $this->db->fetchArray($referenceResult)) {
-				if(intval($referenceRow['ele_id']) === $elementId) { continue; }
-				if(preg_match($referencePattern, (string) $referenceRow['ele_value'])) {
-					$broken[] = "the ".$referenceRow['ele_type']." element '".$referenceRow['ele_handle']."' (form ".intval($referenceRow['id_form']).") refers to this element by name in its settings";
-				}
-			}
-		}
-
-		// custom code files that name the handle, including the code files written for derived value and
-		// static content elements, which live in the same folder
-		$codeDir = XOOPS_ROOT_PATH.'/modules/formulize/code/';
-		if(is_dir($codeDir)) {
-			foreach((array) glob($codeDir.'*.php') as $codeFile) {
-				$contents = file_get_contents($codeFile);
-				if($contents !== false AND preg_match($referencePattern, $contents)) {
-					$broken[] = "custom code file '".basename($codeFile)."' refers to this element by name";
-				}
-			}
-		}
-
-		$impact['references_that_will_be_left_broken'] = $broken;
-
-		return $impact;
-	}
 
 	/**
 	 * Report who can do what with a form.
@@ -1759,7 +1631,52 @@ That makes the template groups the right place to set and change permissions tha
 						'screen_title' => $row['title'],
 						'screen_type' => $this->friendlyScreenType($row['type'])
 					];
+				} elseif($screenId) {
+					// asked for one screen by id: a failure is about the thing that was asked for, so it is
+					// raised rather than summarised
+					$screens[] = $this->screenDetails($row, $serializedFields);
 				} else {
+					// listing many screens: one screen that cannot be read must not take the others with it.
+					// The usual cause is a setting still naming an element that has been deleted, which is a
+					// fault in that one screen and says nothing about the rest, so it is reported in place.
+					try {
+						$screens[] = $this->screenDetails($row, $serializedFields);
+					} catch (Exception $e) {
+						$screens[] = [
+							'screen_type' => $this->friendlyScreenType($row['type']),
+							'screen_id' => intval($row['sid']),
+							'screen_title' => $row['title'],
+							'form_id' => intval($row['fid']),
+							'could_not_be_read' => $e->getMessage(),
+							'about_this_screen' => 'This screen holds a setting that could not be resolved, so its details are not included here. The rest of the screens in this response are unaffected. Call get_screen_details on this screen id to see the error on its own.'
+						];
+					}
+				}
+			}
+		}
+		if($screenId AND empty($screens)) {
+			throw new FormulizeMCPException(
+				"Permission denied: user does not have access to the screen $screenId.",
+				'permission_denied',
+			);
+		}
+		return [
+			'screens' => $screens,
+			'screen_count' => count($screens)
+		];
+
+	}
+
+	/**
+	 * Build the full details of one screen, from its formulize_screen row.
+	 * Split out of screens_list() so that the two call sites can differ in how they treat a failure: asking
+	 * for one screen surfaces it, listing many catches it per screen.
+	 * @param array $row The row from formulize_screen.
+	 * @param array $serializedFields The registry from FormulizeObject::serializedDBFields().
+	 * @return array The screen details.
+	 */
+	private function screenDetails($row, $serializedFields) {
+				{
 					$screenSQL = "SELECT * FROM ".$this->db->prefix('formulize_screen_'.strtolower($row['type']))." WHERE sid = ".$row['sid'];
 					$screenRes = $this->db->query($screenSQL);
 					$screenTypeData = $this->db->fetchArray($screenRes);
@@ -1782,21 +1699,261 @@ That makes the template groups the right place to set and change permissions tha
 							$processedFields[$field] = true;
 						}
 					}
-					$screens[] = ['screen_type' => $this->friendlyScreenType($row['type'])] + $row + $screenTypeData;
+					if($row['type'] == 'listOfEntries') {
+						return $this->listScreenDetails($row, $screenTypeData);
+					}
+					$screen = ['screen_type' => $this->friendlyScreenType($row['type'])] + $row + $screenTypeData;
+					// the only friendly key on an otherwise raw report, because it is the one thing here that
+					// a tool can write, and a boolean nobody can read back is a setting nobody can verify
+					if($row['type'] == 'multiPage') {
+						$screen['is_default_form_screen'] = $this->screenIsTheFormsDefault($row, 'defaultform');
+					}
+					return $screen;
 				}
+	}
+
+	/**
+	 * Report a list screen in the same vocabulary the create_list_screen and update_list_screen tools accept.
+	 *
+	 * The raw columns of formulize_screen_listofentries would otherwise come back as things like
+	 * "usesearch": 2 and "advanceview": [["handle","",0,"Box"]], which say nothing about what they do and do
+	 * not match anything a caller can write. Since a list screen is updated by reading it, changing something
+	 * and writing the whole property back (columns, filters and the view settings are all replaced rather than
+	 * merged), the read side has to speak the same language as the write side or the round trip does not work.
+	 *
+	 * @param array $screenRow The row from formulize_screen.
+	 * @param array $screenTypeData The row from formulize_screen_listofentries, with its serialized fields already unserialized and its text fields already decoded.
+	 * @return array The screen, described in tool vocabulary.
+	 */
+	private function listScreenDetails($screenRow, $screenTypeData) {
+		$value = function($key) use ($screenTypeData) {
+			return isset($screenTypeData[$key]) ? $screenTypeData[$key] : null;
+		};
+		// the inverse of each of the translations buildListScreenProperties() does on the way in. The search
+		// types come from the same map the write side uses, flipped, so the two cannot drift.
+		$searchTypes = array_flip(formulizeHandler::listScreenSearchTypes());
+		$quicksearch = [1 => 'shown', 2 => 'hidden', 0 => 'off'];
+		$checkboxes = [0 => 'based_on_delete_permission', 1 => 'all_entries', 2 => 'none'];
+		$iconStyles = [FORMULIZE_EDIT_ICON_STYLE_PEN => 'pen', FORMULIZE_EDIT_ICON_STYLE_MAGNIFIER => 'magnifying_glass', FORMULIZE_EDIT_ICON_STYLE_OFF => 'none'];
+		$editableShown = [FORMULIZE_EDIT_ICON_STYLE_OFF => 'immediately', FORMULIZE_EDIT_ICON_STYLE_PEN => 'pen', FORMULIZE_EDIT_ICON_STYLE_MAGNIFIER => 'magnifying_glass'];
+
+		$columns = [];
+		foreach((array) $value('advanceview') as $column) {
+			if(!is_array($column) OR !isset($column[0])) {
+				continue;
 			}
+			$sort = isset($column[2]) ? $column[2] : 0;
+			// the row is read straight from the table here rather than through the screen object, so the
+			// id-to-handle translation the object does in its accessors has to be repeated
+			$reportedColumn = [
+				'element' => formulizeHandler::resolveElementHandle($column[0]),
+				'search_type' => $searchTypes[$column[3] ?? 'Box'] ?? 'search_box'
+			];
+			// 1 is a legacy way of saying ascending, from before the direction was stored as a word.
+			// Always reported, including 'off', so the shape matches what the write side accepts.
+			if($sort === 'DESC') {
+				$reportedColumn['sort_direction'] = 'DESC';
+			} elseif($sort === 'ASC' OR $sort === 1 OR $sort === '1') {
+				$reportedColumn['sort_direction'] = 'ASC';
+			} else {
+				$reportedColumn['sort_direction'] = 'off';
+			}
+			if(isset($column[1]) AND $column[1] !== '') {
+				$reportedColumn['default_search_value'] = $column[1];
+			}
+			$columns[] = $reportedColumn;
 		}
-		if($screenId AND empty($screens)) {
-			throw new FormulizeMCPException(
-				"Permission denied: user does not have access to the screen $screenId.",
-				'permission_denied',
-			);
+
+		$buttons = [];
+		foreach($this->listScreenButtonMap() as $friendly => $internal) {
+			$buttons[$friendly] = (string) $value($internal);
 		}
-		return [
-			'screens' => $screens,
-			'screen_count' => count($screens)
+
+		$viewEntryScreen = $value('viewentryscreen');
+		$screen = $this->screenBaseDetails($screenRow) + [
+			'is_default_list_screen' => $this->screenIsTheFormsDefault($screenRow, 'defaultlist'),
+			'columns' => $columns,
+			'fundamental_filters' => $this->tidyUpOldConditionsArrayFormat($value('fundamental_filters')),
+			'entries_per_page' => intval($value('entriesperpage')),
+			'view_entry_screen' => (is_numeric($viewEntryScreen) AND intval($viewEntryScreen) > 0) ? intval($viewEntryScreen) : 'default',
+			'buttons' => $buttons,
+			'custom_buttons' => $this->listScreenCustomButtons((array) $value('customactions')),
+			'visibility_scope_label' => (string) $value('usecurrentviewlist'),
+			'available_views' => $this->listScreenViewNames((array) $value('limitviews')),
+			'default_view' => $this->listScreenDefaultViewsByGroup($value('defaultview')),
+			'show_column_headings' => (bool) $value('useheadings'),
+			'show_search_boxes' => $quicksearch[intval($value('usesearch'))] ?? 'off',
+			'show_entry_count' => (bool) $value('usenumberofentries'),
+			'show_hide_repeating_data_switch' => (bool) $value('usetogglerepeatdata'),
+			'show_checkboxes' => $checkboxes[intval($value('usecheckboxes'))] ?? 'based_on_delete_permission',
+			'entry_link_icon_style' => $iconStyles[intval($value('useviewentrylinks'))] ?? 'none',
+			'show_working_message' => (bool) $value('useworkingmsg'),
+			'max_characters_per_cell' => intval($value('textwidth')),
+			'editable_columns' => array_map(['formulizeHandler', 'resolveElementHandle'], array_values((array) $value('decolumns'))),
+			'editable_columns_show_option' => $editableShown[intval($value('dedisplay'))] ?? 'immediately',
+			'editable_columns_save_button_text' => (string) $value('desavetext')
 		];
 
+		return $screen;
+	}
+
+	/**
+	 * Is this screen the one its form falls back to when a link leads to the form without naming a screen?
+	 *
+	 * A form holds two of these at once - one form screen and one list screen - and which of the two a given
+	 * user gets is decided at request time. So this answers only "is this screen the one in its own slot", and
+	 * a screen reporting false says nothing about the other slot.
+	 *
+	 * @param array $screenRow The row from formulize_screen.
+	 * @param string $formProperty 'defaultform' or 'defaultlist', ie: the slot this kind of screen occupies.
+	 * @return bool
+	 */
+	private function screenIsTheFormsDefault($screenRow, $formProperty) {
+		static $defaults = [];
+		$formId = intval($screenRow['fid']);
+		if(!isset($defaults[$formId])) {
+			// one lookup per form, because a screens list can hold many screens from the same form
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+			$formObject = $form_handler->get($formId);
+			$defaults[$formId] = [
+				'defaultform' => $formObject ? intval($formObject->getVar('defaultform')) : 0,
+				'defaultlist' => $formObject ? intval($formObject->getVar('defaultlist')) : 0
+			];
+		}
+		return $defaults[$formId][$formProperty] === intval($screenRow['sid']);
+	}
+
+	/**
+	 * Report the properties every screen has, in the vocabulary screenBaseSchema() accepts, so that the base
+	 * settings can be read and written back the same way the rest of a screen can.
+	 * The alternate URL pair is only reported when the site has that feature switched on, matching the write
+	 * side, which only offers those properties under the same condition.
+	 * @param array $screenRow The row from formulize_screen.
+	 * @return array The base properties.
+	 */
+	private function screenBaseDetails($screenRow) {
+		$base = [
+			'screen_type' => $this->friendlyScreenType($screenRow['type']),
+			'screen_id' => intval($screenRow['sid']),
+			'title' => $screenRow['title'],
+			'form_id' => intval($screenRow['fid']),
+			'handle' => $screenRow['screen_handle'],
+			'anonymous_access_needs_passcode' => (bool) $screenRow['anonNeedsPasscode']
+		];
+		$config_handler = xoops_gethandler('config');
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+		if(!empty($formulizeConfig['formulizeRewriteRulesEnabled'])) {
+			$base['alternate_url'] = (string) $screenRow['rewriteruleAddress'];
+			$base['alternate_url_element'] = intval($screenRow['rewriteruleElement'])
+				? formulizeHandler::resolveElementHandle($screenRow['rewriteruleElement'])
+				: 0;
+		}
+		return $base;
+	}
+
+	/**
+	 * Report a list screen's custom buttons in the shape the list screen tools accept, so one can be read,
+	 * changed and written back the way the rest of the screen can.
+	 *
+	 * Buttons that do something the tools do not configure are still reported - they are a large part of what a
+	 * screen does, and leaving them out would make the screen look simpler than it is - but they carry
+	 * 'configured_in_admin_interface' instead of the writable fields, so an assistant can see that the button
+	 * exists without being invited to send it back as though it were an in-row button.
+	 *
+	 * @param array $customActions The screen's stored customactions.
+	 * @return array The buttons.
+	 */
+	private function listScreenCustomButtons($customActions) {
+		$supportedApplyTo = formulizeHandler::listScreenCustomButtonSupportedApplyTo();
+		$buttons = [];
+		foreach($customActions as $buttonId => $customAction) {
+			if(!is_array($customAction)) {
+				continue;
+			}
+			$button = [
+				'button_id' => $buttonId,
+				'label' => undoAllHTMLChars((string) ($customAction['buttontext'] ?? '')),
+				'handle' => $customAction['handle'] ?? ''
+			];
+			if(!in_array($customAction['applyto'] ?? '', $supportedApplyTo)) {
+				$button['configured_in_admin_interface'] = 'This button is set to "'.($customAction['applyto'] ?? '').'", which the list screen tools do not configure. Leave it out of custom_buttons and it stays as it is; naming it there is an error rather than a change.';
+				$buttons[] = $button;
+				continue;
+			}
+			$button['confirm_text'] = undoAllHTMLChars((string) ($customAction['popuptext'] ?? ''));
+			$button['message_text'] = undoAllHTMLChars((string) ($customAction['messagetext'] ?? ''));
+			// groups have been stored both as a plain array and as a serialized string over the years, which is
+			// why processCustomButton() copes with both; the same tolerance is needed here
+			$groups = $customAction['groups'] ?? [];
+			if(is_string($groups)) {
+				$groups = @unserialize($groups);
+			}
+			$button['groups'] = array_map('intval', is_array($groups) ? $groups : []);
+			$button['effects'] = [];
+			foreach($customAction as $key => $effect) {
+				if(!is_numeric($key) OR !is_array($effect)) {
+					continue; // the button's own properties sit alongside its effects; only effects are numbered
+				}
+				// stored as an element id; reported as a handle, because that is the vocabulary every tool
+				// that accepts an element uses. Same translation, and the same reason, as conditions.
+				// 'action' is not reported: the tools only ever write 'replace', so it is not a field a caller
+				// can send back, and reporting it would put something in the read shape that the write shape
+				// does not accept. A button an administrator set to append or remove keeps that action until
+				// its effects are rewritten here - see applyListScreenCustomButtonChanges().
+				$button['effects'][] = [
+					'element' => formulizeHandler::resolveElementHandle($effect['element'] ?? ''),
+					'value' => $effect['value'] ?? ''
+				];
+			}
+			$buttons[] = $button;
+		}
+		return $buttons;
+	}
+
+	/**
+	 * Translate the stored view references of a list screen (limitviews) into the names the list screen tools
+	 * use. Anything that is not one of the standard views is the id of a saved view, and is reported as an id.
+	 * @param array $views The stored values.
+	 * @return array The friendly names and/or saved view ids.
+	 */
+	private function listScreenViewNames($views) {
+		$names = [
+			'allviews' => 'every_view',
+			'blank' => 'blank',
+			FORMULIZE_QUERY_SCOPE_MINE => 'their_own_entries',
+			FORMULIZE_QUERY_SCOPE_GROUP => 'their_groups_entries',
+			FORMULIZE_QUERY_SCOPE_GLOBAL => 'all_entries'
+		];
+		$translated = [];
+		foreach($views as $view) {
+			$translated[] = isset($names[$view]) ? $names[$view] : (is_numeric($view) ? intval($view) : $view);
+		}
+		return $translated;
+	}
+
+	/**
+	 * Translate a list screen's stored defaultview (a map of group id => view) into the list of
+	 * { group_id, group_name, view } objects the tools take, with the group names added so that the
+	 * per-group settings can be understood without a second lookup.
+	 * @param mixed $defaultView The stored defaultview value.
+	 * @return array The per-group default views.
+	 */
+	private function listScreenDefaultViewsByGroup($defaultView) {
+		if(!is_array($defaultView)) {
+			return [];
+		}
+		$member_handler = xoops_gethandler('member');
+		$defaults = [];
+		foreach($defaultView as $groupId => $view) {
+			$groupObject = $member_handler->getGroup(intval($groupId));
+			$translated = $this->listScreenViewNames([$view]);
+			$defaults[] = [
+				'group_id' => intval($groupId),
+				'group_name' => $groupObject ? trans($groupObject->getVar('name')) : 'This group no longer exists',
+				'view' => $translated[0]
+			];
+		}
+		return $defaults;
 	}
 
 	/**
@@ -1816,7 +1973,7 @@ That makes the template groups the right place to set and change permissions tha
 			$length = count($elements);
 			for($i = 0; $i < $length; $i++) {
 				$condition = [
-					'element' => $this->elementHandleFromId($elements[$i]),
+					'element' => formulizeHandler::resolveElementHandle($elements[$i]),
 					'operator' => $operators[$i],
 					'value' => $values[$i],
 					'type' => ($types[$i] == 'all' ? 'match-all' : 'match-one-or-more')
@@ -1825,36 +1982,6 @@ That makes the template groups the right place to set and change permissions tha
 			}
 		}
 		return empty($tidiedConditions) ? $conditions : $tidiedConditions;
-	}
-
-	/**
-	 * Conditions normally store the element as an id, but every tool that accepts conditions asks for a
-	 * handle ("provided as an element handle or id"), so reporting the stored value back verbatim means the
-	 * read and write vocabularies disagree. That matters because reading conditions, changing one and
-	 * writing the set back is the supported way to edit them - conditions are a single property, so a write
-	 * replaces the whole set. Translating here keeps every consumer consistent, since they all come through
-	 * tidyUpOldConditionsArrayFormat().
-	 *
-	 * Older conditions may hold a handle rather than an id: saving rewrites them as ids, so anything that
-	 * has not been saved in a long time can still be in the original form. This resolves through the element
-	 * handler, which already takes an id or a handle, so both forms arrive at the same answer without us
-	 * having to tell them apart. That also validates the reference - a condition naming an element that no
-	 * longer exists resolves to nothing and is returned unchanged, rather than being reported as some other
-	 * element or as a bare id with no indication that it is stale.
-	 *
-	 * @param mixed $elementIdOrHandle The element reference held in the conditions array
-	 * @return mixed The element handle, or the original value if it cannot be resolved
-	 */
-	private function elementHandleFromId($elementIdOrHandle) {
-		static $element_handler = null;
-		if($element_handler === null) {
-			$element_handler = xoops_getmodulehandler('elements', 'formulize');
-		}
-		// the handler caches its lookups, so repeated references to the same element cost nothing
-		if($elementObject = $element_handler->get($elementIdOrHandle)) {
-			return $elementObject->getVar('ele_handle');
-		}
-		return $elementIdOrHandle;
 	}
 
 	/**

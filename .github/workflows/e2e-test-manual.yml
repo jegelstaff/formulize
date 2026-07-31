@@ -105,6 +105,16 @@ jobs:
       run: npx playwright test formulize-core/validate --workers=4 --fully-parallel
       working-directory: tests/e2e
 
+    # This one runs after the suite rather than before it, unlike the PHP tests above: it checks what
+    # deleting an element would disturb across every screen, element, saved view and form on the system,
+    # so it wants the finished museum system to look at. It builds its own fixtures for the kinds of
+    # reference the museum system does not happen to contain, inside a transaction it rolls back, so the
+    # dump taken in the next step is unaffected. Skipped alongside the validate suite when a filter is in
+    # use, because a partly built system is not the system it is asking about.
+    - name: PHP integrity tests (element reference scan, against the built system)
+      if: ${{ !inputs.test_filter }}
+      run: docker exec formulize-web-1 php /var/www/html/tests/element_reference_integrity_test.php
+
     - name: Create database dump and collect files
       if: always()
       run: |
