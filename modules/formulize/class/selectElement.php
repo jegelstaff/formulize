@@ -261,6 +261,108 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 	}
 
 	/**
+	 * What does this linked list element's ele_value look like once an element it refers to is deleted?
+	 *
+	 * NOT a detector. Whether an element refers to another is answered once, by getElementDependencies(),
+	 * which hands ele_value to getEleValueDependencies() below - there is one definition of what counts as a
+	 * reference and this is not it. By the time this runs, the reference is known to be here. What is left
+	 * is the part a list of handles cannot express: which setting it sits in, and what that setting is
+	 * allowed to look like without it. Key 12 is a single element you blank; key 10 is a list you splice;
+	 * the filters are a conditions set with its own rules. That is why this sits beside
+	 * getEleValueDependencies() - the two together are the only places in the system that have to know how a
+	 * linked list stores an element reference.
+	 *
+	 * Two of the settings below are rewritten by nobody and only described. They are re-tested here, which
+	 * does repeat detection, and they earn it by turning "somewhere in its settings" into a sentence that
+	 * says what will actually break. Drop them and the reference is still reported, just vaguely.
+	 *
+	 * @param array $eleValue The ele_value array of the element being examined.
+	 * @param int $elementId The id of the element being deleted.
+	 * @param string $handle The handle of the element being deleted.
+	 * @return array|false array('ele_value' => new array or null, 'used_as' => descriptions), or false.
+	 */
+	public function removeElementFromEleValue($eleValue, $elementId, $handle) {
+		$usedAs = array();
+		$changed = false;
+
+		// DESCRIBED ONLY. The source element - the one whose values ARE the options, stored as
+		// "fid#*=:*handle". Left alone because there is no such thing as a linked list with no source:
+		// blanking it would leave "7#*=:*" behind, which says less than the dead handle does about what this
+		// was meant to point at. A person has to choose a new source, or delete the element.
+		if(isset($eleValue[ELE_VALUE_SELECT_OPTIONS]) AND is_string($eleValue[ELE_VALUE_SELECT_OPTIONS])) {
+			$sourceParts = explode("#*=:*", $eleValue[ELE_VALUE_SELECT_OPTIONS]);
+			if(count($sourceParts) == 2 AND $this->referencePointsAtElement(trim($sourceParts[1]), $elementId, $handle)) {
+				$usedAs[] = 'the element its options come from, which it cannot work without - it needs a new source or it needs deleting';
+			}
+		}
+
+		// settings that name one element each
+		foreach(array(
+			ELE_VALUE_SELECT_LINK_SORT => 'the element its options are sorted by',
+			ELE_VALUE_SELECT_LINK_LIMITBYELEMENT => 'the element its options are limited by'
+		) as $key => $description) {
+			if(isset($eleValue[$key]) AND ($new = $this->clearReferenceToElement($eleValue[$key], $elementId, $handle)) !== false) {
+				$eleValue[$key] = $new;
+				$usedAs[] = $description;
+				$changed = true;
+			}
+		}
+
+		// settings that name several elements each
+		foreach(array(
+			ELE_VALUE_SELECT_LINK_ALTLISTELEMENTS => 'one of the elements shown in place of its options in lists',
+			ELE_VALUE_SELECT_LINK_ALTFORMELEMENTS => 'one of the elements shown in place of its options in forms',
+			ELE_VALUE_SELECT_LINK_ALTEXPORTELEMENTS => 'one of the elements shown in place of its options in exports'
+		) as $key => $description) {
+			if(isset($eleValue[$key]) AND ($new = $this->removeElementFromList($eleValue[$key], $elementId, $handle)) !== false) {
+				$eleValue[$key] = $new;
+				$usedAs[] = $description;
+				$changed = true;
+			}
+		}
+
+		// conditions sets, which follow the same rules as conditions anywhere else
+		foreach(array(
+			ELE_VALUE_SELECT_LINK_FILTERS => 'in the conditions that decide which options it offers',
+			ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER => 'in the conditions that pick the entry its options are limited by'
+		) as $key => $description) {
+			if(isset($eleValue[$key]) AND ($new = $this->removeElementFromConditions($eleValue[$key], $elementId, $handle)) !== false) {
+				$eleValue[$key] = $new;
+				$usedAs[] = $description;
+				$changed = true;
+			}
+		}
+
+		// DESCRIBED ONLY. Source mappings pair an element in this form with one in the source form, so half a
+		// mapping means nothing. Removing one silently changes what gets copied into an entry, which is a
+		// bigger decision than this can make - so it is left for a person, the same way a form screen showing
+		// only the deleted element is left alone rather than quietly widened.
+		if(isset($eleValue[ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS]) AND is_array($eleValue[ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS])) {
+			foreach($eleValue[ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS] as $mapping) {
+				if(!is_array($mapping)) { continue; }
+				foreach(array('thisForm', 'sourceForm') as $mappingKey) {
+					if(!isset($mapping[$mappingKey])) { continue; }
+					$reference = $mapping[$mappingKey];
+					// mappings can hold the handle wrapped in curly brackets, to tell a reference apart from
+					// a literal value that happens to look like one
+					if(is_string($reference) AND substr($reference, 0, 1) == '{' AND substr($reference, -1) == '}') {
+						$reference = substr($reference, 1, -1);
+					}
+					if($this->referencePointsAtElement($reference, $elementId, $handle)) {
+						$usedAs[] = 'one half of a source mapping, which is left in place for you to sort out';
+						break 2;
+					}
+				}
+			}
+		}
+
+		if(!$usedAs) {
+			return false;
+		}
+		return array('ele_value' => ($changed ? $eleValue : null), 'used_as' => $usedAs);
+	}
+
+	/**
 	 * Check an array, structured as ele_value would be structured, and return an array of elements that the element depends on
 	 * @param array $values The ele_value array to check for dependencies - numeric element refs ought to have been replaced with handles, when this data was created
 	 * @return array An array of element handles that this element depends on

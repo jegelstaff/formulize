@@ -115,6 +115,10 @@ jobs:
       if: ${{ !inputs.test_filter }}
       run: docker exec formulize-web-1 php /var/www/html/tests/element_reference_integrity_test.php
 
+    - name: PHP integrity tests (saved views round trip)
+      if: ${{ !inputs.test_filter }}
+      run: docker exec formulize-web-1 php /var/www/html/tests/saved_views_test.php
+
     - name: Create database dump and collect files
       if: always()
       run: |

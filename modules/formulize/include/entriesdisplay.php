@@ -55,6 +55,7 @@ global $xoopsConfig;
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/class/usersGroupsPerms.php";
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
+include_once XOOPS_ROOT_PATH.'/modules/formulize/class/savedViews.php';
 
 // main function
 // $screen will be a screen object if present
@@ -73,6 +74,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	list($fid, $frid) = getFormFramework($formframe, $mainform);
 	$gperm_handler =& xoops_gethandler('groupperm');
 	$member_handler =& xoops_gethandler('member');
+	$savedViews_handler = xoops_getmodulehandler('savedViews', 'formulize');
 	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
 	$couldLoadAdvanceView = false; // default to not loading the 'advance view' (screen settings for cols, searches, etc) -- but turn this on when initially loading views, in case they are just partial views and we need to layer in missing features
@@ -244,13 +246,14 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			$delviewid_formulize = intval(substr($_POST['delviewid_formulize'], 1));
 		}
 
-		if($delete_other_reports OR $xoopsUser->getVar('uid') == getSavedViewOwner($delviewid_formulize)) { // "get saved view owner" only works with new saved view format in 2.0 or greater, but since that is 2.5 years old now, should be good to go!
+		if($delete_other_reports OR ($xoopsUser AND $xoopsUser->getVar('uid') == $savedViews_handler->getOwner($delviewid_formulize))) { // only works with the 2.0 saved view format, not 1.6 or earlier
 			if(substr($_POST['delviewid_formulize'], 1, 4) == "old_") {
 				$sql = "DELETE FROM " . $xoopsDB->prefix("formulize_reports") . " WHERE report_id='" . $delviewid_formulize . "'";
+				$deleted = $xoopsDB->query($sql);
 			} else {
-				$sql = "DELETE FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id='" . $delviewid_formulize . "'";
+				$deleted = $savedViews_handler->delete($delviewid_formulize);
 			}
-			if(!$res = $xoopsDB->query($sql)) {
+			if(!$deleted) {
 				exit("Error deleting report: " . $_POST['delviewid_formulize']);
 			}
 			unset($_POST['currentview']);
@@ -278,7 +281,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	// handle saving of the view if that has been requested
 	// only do this if there's a saveid_formulize and they passed the security check, and any one of these:  they can update other reports, or this is a "new" view, or this is not a new view, and it belongs to them and they have update own reports permission
-	if(isset($_POST['saveid_formulize']) AND $_POST['saveid_formulize'] AND $formulize_LOESecurityPassed AND ($update_other_reports OR ((is_numeric($_POST['saveid_formulize']) AND ($update_own_reports AND $xoopsUser->getVar('uid') == getSavedViewOwner($_POST['saveid_formulize']))) OR $_POST['saveid_formulize'] == "new"))) {
+	if(isset($_POST['saveid_formulize']) AND $_POST['saveid_formulize'] AND $formulize_LOESecurityPassed AND ($update_other_reports OR ((is_numeric($_POST['saveid_formulize']) AND ($update_own_reports AND $xoopsUser->getVar('uid') == $savedViews_handler->getOwner($_POST['saveid_formulize']))) OR $_POST['saveid_formulize'] == "new"))) {
 		// gather all values
 		//$_POST['currentview'] -- from save (they might have updated/changed the scope)
 		//possible situations:
@@ -308,8 +311,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		// put name into loadview
 		if($saveid_formulize != "new") {
 			if(!strstr($saveid_formulize, "old_")) { // if it's not a legacy report...
-				$sname = q("SELECT sv_name, sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id = \"" . substr($saveid_formulize, 1) . "\"");
-				if($sname[0]['sv_owner_uid'] == $uid) {
+				if($savedViews_handler->getOwner(substr($saveid_formulize, 1)) == $uid) {
 					$loadedView = $saveid_formulize;
 				} else {
 					$loadedView =  "p" . substr($saveid_formulize, 1);
@@ -335,7 +337,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			}
 		}
 
-		$qsearches = implode("&*=%4#", $allquicksearches);
+		$qsearches = implode(formulizeSavedViewsHandler::SEARCH_DELIMITER, $allquicksearches);
 
 		if($frid) {
 			$saveformframe = $frid;
@@ -345,104 +347,55 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			$savemainform = "";
 		}
 
-		if($saveid_formulize == "new" OR strstr($saveid_formulize, "old_")) {
+		// The settings that make up a view, gathered out of what the page sent. What belongs here is knowing
+		// where the page puts things - the chosen columns in oldcols, the searches on them in search_<column>
+		// - and nothing about how a view is stored. Writing it is formulizeSavedViewsHandler::save(), which
+		// takes the columns rather than a fixed argument list, so a column added to the table later is a
+		// change to this list and to nothing else.
+		$viewValues = array(
+			'sv_name' => $savename,
+			'sv_pubgroups' => $savegroups,
+			'sv_mod_uid' => $uid,
+			'sv_lockcontrols' => $_POST['savelock'],
+			'sv_hidelist' => intval($_POST['hlist']),
+			'sv_hidecalc' => intval($_POST['hcalc']),
+			'sv_sort' => $_POST['sort'],
+			'sv_order' => $_POST['order'],
+			'sv_oldcols' => $_POST['oldcols'],
+			'sv_currentview' => $_POST['savescope'],
+			'sv_calc_cols' => $_POST['calc_cols'],
+			'sv_calc_calcs' => $_POST['calc_calcs'],
+			'sv_calc_blanks' => $_POST['calc_blanks'],
+			'sv_calc_grouping' => $_POST['calc_grouping'],
+			'sv_quicksearches' => $qsearches,
+			'sv_global_search' => $_POST['global_search'],
+			'sv_pubfilters' => $_POST['pubfilters'],
+			'sv_entriesperpage' => (isset($_POST['formulize_entriesPerPage']) AND $_POST['formulize_entriesPerPage'] !== "") ? intval($_POST['formulize_entriesPerPage']) : "",
+			'sv_use_features' => $_POST['sv_use_features'],
+			'sv_searches_are_fundamental' => intval($_POST['searches_are_fundamental'])
+		);
+
+		$savingANewView = ($saveid_formulize == "new" OR strstr($saveid_formulize, "old_"));
+		if($savingANewView) {
 			if ($saveid_formulize == "new") {
 				$owneruid = $uid;
-				$moduid = $uid;
 			} else {
 				// get existing uid
 				$olduid = q("SELECT report_uid FROM " . $xoopsDB->prefix("formulize_reports") . " WHERE report_id = '" . substr($saveid_formulize, 5) . "'");
 				$owneruid = $olduid[0]['report_uid'];
-				$moduid = $uid;
 			}
-			$savesql =
-				"INSERT INTO " . $xoopsDB->prefix("formulize_saved_views") . " (" .
-					"sv_name, " .
-					"sv_pubgroups, " .
-					"sv_owner_uid, " .
-					"sv_mod_uid, " .
-					"sv_formframe, " .
-					"sv_mainform, " .
-					"sv_lockcontrols, " .
-					"sv_hidelist, " .
-					"sv_hidecalc, " .
-					"sv_sort, " .
-					"sv_order, " .
-					"sv_oldcols, " .
-					"sv_currentview, " .
-					"sv_calc_cols, " .
-					"sv_calc_calcs, " .
-					"sv_calc_blanks, " .
-					"sv_calc_grouping, " .
-					"sv_quicksearches, " .
-					"sv_global_search, " .
-					"sv_pubfilters, " .
-          "sv_entriesperpage, " .
-					"sv_use_features, " .
-					"sv_searches_are_fundamental" .
-				") VALUES (" .
-					"'".formulize_db_escape($savename)					."', ".
-					"'".formulize_db_escape($savegroups)				."', ".
-					"'".formulize_db_escape($owneruid)					."', ".
-					"'".formulize_db_escape($moduid)					."', ".
-					"'".formulize_db_escape($saveformframe)			."', ".
-					"'".formulize_db_escape($savemainform)				."', ".
-					"'".formulize_db_escape($_POST['savelock'])		."', ".
-					intval($_POST['hlist'])                             .", ".
-					intval($_POST['hcalc'])			                    .", ".
-					"'".formulize_db_escape($_POST['sort'])			."', ".
-					"'".formulize_db_escape($_POST['order'])			."', ".
-					"'".formulize_db_escape($_POST['oldcols'])			."', ".
-					"'".formulize_db_escape($_POST['savescope'])		."', ".
-					"'".formulize_db_escape($_POST['calc_cols'])		."', ".
-					"'".formulize_db_escape($_POST['calc_calcs'])		."', ".
-					"'".formulize_db_escape($_POST['calc_blanks'])		."', ".
-					"'".formulize_db_escape($_POST['calc_grouping'])	."', ".
-					"'".formulize_db_escape($qsearches)				."', ".
-					"'".formulize_db_escape($_POST['global_search'])	."', ".
-					"'".formulize_db_escape($_POST['pubfilters'])      ."', ".
-          "'".((isset($_POST['formulize_entriesPerPage']) AND $_POST['formulize_entriesPerPage'] !== "") ? intval($_POST['formulize_entriesPerPage']) : ""). "', ".
-					"'".formulize_db_escape($_POST['sv_use_features'])      ."', ".
-					intval($_POST['searches_are_fundamental']).
-				")";
-		} else {
-			$savesql =
-				"UPDATE " . $xoopsDB->prefix("formulize_saved_views") .
-				" SET " .
-					"sv_name 			= '".formulize_db_escape($savename) 				."', ".
-					"sv_pubgroups 		= '".formulize_db_escape($savegroups) 				."', ".
-					"sv_mod_uid 		= '".formulize_db_escape($uid) 					."', ".
-					"sv_lockcontrols 	= '".formulize_db_escape($_POST['savelock'])		."', ".
-					"sv_hidelist 		= ".intval($_POST['hlist'])                         .", ".
-					"sv_hidecalc 		= ".intval($_POST['hcalc']) 			            .", ".
-					"sv_sort 			= '".formulize_db_escape($_POST['sort']) 			."', ".
-					"sv_order 			= '".formulize_db_escape($_POST['order']) 			."', ".
-					"sv_oldcols 		= '".formulize_db_escape($_POST['oldcols']) 		."', ".
-					"sv_currentview 	= '".formulize_db_escape($_POST['savescope']) 		."', ".
-					"sv_calc_cols 		= '".formulize_db_escape($_POST['calc_cols']) 		."', ".
-					"sv_calc_calcs 		= '".formulize_db_escape($_POST['calc_calcs']) 	."', ".
-					"sv_calc_blanks 	= '".formulize_db_escape($_POST['calc_blanks']) 	."', ".
-					"sv_calc_grouping 	= '".formulize_db_escape($_POST['calc_grouping']) 	."', ".
-					"sv_quicksearches 	= '".formulize_db_escape($qsearches) 				."', ".
-					"sv_global_search   = '".formulize_db_escape($_POST['global_search'])	."', ".
-					"sv_pubfilters      = '".formulize_db_escape($_POST['pubfilters'])	    ."', ".
-          "sv_entriesperpage  = '".((isset($_POST['formulize_entriesPerPage']) AND $_POST['formulize_entriesPerPage'] !== "") ? intval($_POST['formulize_entriesPerPage']) : "")."', ".
-					"sv_use_features      = '".formulize_db_escape($_POST['sv_use_features'])	    ."', ".
-					"sv_searches_are_fundamental = ".intval($_POST['searches_are_fundamental']).
-				" WHERE " .
-					"sv_id = '" . substr($saveid_formulize, 1) . "'";
+			// only set when the view is created: which form and relationship it belongs to, and whose it is
+			$viewValues['sv_owner_uid'] = $owneruid;
+			$viewValues['sv_formframe'] = $saveformframe;
+			$viewValues['sv_mainform'] = $savemainform;
 		}
 
 		// save the report
-		if(!$result = $xoopsDB->query($savesql)) {
-			exit("Error:  unable to save the current view settings.  SQL dump: $savesql");
+		if(!$savedViewId = $savedViews_handler->save($viewValues, $savingANewView ? 0 : substr($saveid_formulize, 1))) {
+			throw new Exception("Unable to save the current view settings.");
 		}
-		if($saveid_formulize == "new" OR strstr($saveid_formulize, "old_")) {
-			if($owneruid == $uid) {
-				$loadedView = "s" . $xoopsDB->getInsertId();
-			} else {
-				$loadedView = "p" . $xoopsDB->getInsertId();
-			}
+		if($savingANewView) {
+			$loadedView = ($owneruid == $uid ? "s" : "p") . $savedViewId;
 		}
 		$settings['loadedview'] = $loadedView;
 
@@ -450,7 +403,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		if(strstr($saveid_formulize, "old_")) {
 			$dellegacysql = "DELETE FROM " . $xoopsDB->prefix("formulize_reports") . " WHERE report_id=\"" . intval(substr($saveid_formulize, 5)) . "\"";
 			if(!$result = $xoopsDB->query($dellegacysql)) {
-				exit("Error:  unable to delete legacy report: " . substr($saveid_formulize, 5));
+				throw new Exception("Unable to delete legacy report: " . substr($saveid_formulize, 5));
 			}
 		}
 	}
@@ -485,9 +438,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		OR (isset($_POST['userClickedReset']) AND $_POST['userClickedReset']))) {
 		if(is_numeric($loadview)) { // new view id
 			$loadview = "p" . $loadview;
-		} else { // new view name -- loading view by name -- note if two reports have the same name, then the first one created will be returned
-			$viewnameq = q("SELECT sv_id FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_name='$loadview' ORDER BY sv_id");
-			$loadview = "p" . $viewnameq[0]['sv_id'];
+		} else { // new view name -- loading view by name, within this form. If two views in this form have the same name, the first one created is returned
+			$viewByName = $savedViews_handler->get($loadview, $fid, $frid);
+			$loadview = "p" . ($viewByName ? $viewByName['sv_id'] : '');
 		}
 		$_POST['currentview'] = $loadview;
 		$_POST['loadreport'] = 1;
@@ -621,7 +574,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				$screen = enforceSearchesAsFundamentalFilters($loadedView, $screen);
 			} elseif(in_array('searches', $features_loaded_from_saved_view)){
 				// explode quicksearches into the search_ values
-				$allqsearches = explode("&*=%4#", $quicksearches);
+				$allqsearches = explode(formulizeSavedViewsHandler::SEARCH_DELIMITER, $quicksearches);
 				$colsforsearches = explode(",", $columnKeyForQuickSearches); // cols and searches arrays are parallel in the saved view data
 				killQuickSearches();
 				for($i=0;$i<count((array) $allqsearches);$i++) {
@@ -754,13 +707,10 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	// clear quick searches for any columns not included now
 	// also, convert any { } terms to literal values for users who can't update other reports, if the last loaded report doesn't belong to them (they're presumably just report consumers, so they don't need to preserve the abstract terms)
 	$hiddenQuickSearches = array(); // array used to indicate quick searches that should be present even if the column is not displayed to the user
-	$ownerOfLastLoadedView = 0;
+	$ownerOfLastLoadedView = false;
 	$activeViewId = (isset($settings['lastloaded']) AND strlen($settings['lastloaded']) > 1) ? substr($settings['lastloaded'], 1) : null; // will have a p in front of the number, to show it's a published view (or an s, but that's unlikely to ever happen in this case)
 	if($activeViewId) {
-		$ownerOfLastLoadedViewData = q("SELECT sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id=".intval($activeViewId));
-		if(!empty($ownerOfLastLoadedViewData)) {
-			$ownerOfLastLoadedView = $ownerOfLastLoadedViewData[0]['sv_owner_uid'];
-		}
+		$ownerOfLastLoadedView = $savedViews_handler->getOwner($activeViewId);
 	}
 	foreach($_POST as $k=>$v) {
 
@@ -793,7 +743,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		{
 			$requestKeyToUse = substr($valueToCheck,1,-1);
 			if(!strstr($requestKeyToUse,"}") AND !strstr($requestKeyToUse, "{")) { // double check that there's no other { } in the term!
-				if(!$update_other_reports AND $uid != $ownerOfLastLoadedView) {
+				if(!$update_other_reports AND ($uid != $ownerOfLastLoadedView OR $ownerOfLastLoadedView === false)) {
 					$filterValue = convertVariableSearchToLiteral($v, $requestKeyToUse); // returns updated value, or false to kill value, or true to do nothing
 					if(!is_bool($filterValue)) {
 						$_POST[$k] = $operatorToPutBack.$filterValue;
@@ -1206,7 +1156,7 @@ function enforceSearchesAsFundamentalFilters($savedViewIndentifier, $screen) {
 			$features_loaded_from_saved_view = explode(',',$savedViewSettings[LR_USE_FEATURES]);
 			if(in_array('searches', $features_loaded_from_saved_view) AND $savedViewSettings[LR_SEARCHES_ARE_FUNDAMENTAL]) {
 				$mockFundamentalFilters = array();
-				$searches = explode("&*=%4#", $savedViewSettings[LR_SEARCHES]);
+				$searches = explode(formulizeSavedViewsHandler::SEARCH_DELIMITER, $savedViewSettings[LR_SEARCHES]);
 				$cols = explode(",", $savedViewSettings[LR_COLS]);
 				foreach($cols as $i=>$col) {
 					$col = str_replace("hiddencolumn_", "", $col); // use all columns, whether hidden or not
@@ -4103,21 +4053,14 @@ function plainJSDialog($markup, $name) {
 
 // THIS FUNCTION LOADS A SAVED VIEW
 // fid and frid are only used if a report is being asked for by name
+// Reading it out of the database is formulizeSavedViewsHandler::get(). What this adds is the shape the
+// display code wants it in: a positional array the callers pull apart with list(), addressed by the LR_
+// constants below. That mapping is a contract between this function and the code that shows a view, so it
+// stays here with them rather than going into the handler.
 function loadReport($id, $fid, $frid) {
-	global $xoopsDB;
-  if(is_numeric($id)) {
-	$thisview = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id='$id'");
-  } else {
-	if($frid) {
-	  $formframe = intval($frid);
-	  $mainform = intval($fid);
-	} else {
-	  $formframe = intval($fid);
-	  $mainform = "''";
-	}
-	$thisview = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_name='".formulize_db_escape($id)."' AND sv_formframe = $formframe AND sv_mainform = $mainform");
-  }
-  if(!isset($thisview[0]['sv_currentview'])) {
+	$savedViewsHandler = xoops_getmodulehandler('savedViews', 'formulize');
+	$thisview = $savedViewsHandler->get($id, $fid, $frid);
+  if(!isset($thisview['sv_currentview'])) {
 	print "Error: could not load the specified saved view: '".strip_tags(htmlspecialchars($id))."'";
 	return false;
   }
@@ -4130,23 +4073,23 @@ function loadReport($id, $fid, $frid) {
 		define('LR_SEARCHES_ARE_FUNDAMENTAL', 16);
 	}
 
-	$to_return[0] = $thisview[0]['sv_currentview'];
-	$to_return[1] = $thisview[0]['sv_oldcols'];
-	$to_return[2] = $thisview[0]['sv_calc_cols'];
-	$to_return[3] = $thisview[0]['sv_calc_calcs'];
-	$to_return[4] = $thisview[0]['sv_calc_blanks'];
-	$to_return[5] = $thisview[0]['sv_calc_grouping'];
-	$to_return[6] = $thisview[0]['sv_sort'];
-	$to_return[7] = $thisview[0]['sv_order'];
-	$to_return[8] = $thisview[0]['sv_hidelist'];
-	$to_return[9] = $thisview[0]['sv_hidecalc'];
-	$to_return[10] = $thisview[0]['sv_lockcontrols'];
-	$to_return[11] = $thisview[0]['sv_quicksearches'];
-	$to_return[12] = $thisview[0]['sv_global_search'];
-	$to_return[13] = $thisview[0]['sv_pubfilters'];
-  $to_return[14] = $thisview[0]['sv_entriesperpage'];
-	$to_return[15] = $thisview[0]['sv_use_features'];
-	$to_return[16] = $thisview[0]['sv_searches_are_fundamental'];
+	$to_return[0] = $thisview['sv_currentview'];
+	$to_return[1] = $thisview['sv_oldcols'];
+	$to_return[2] = $thisview['sv_calc_cols'];
+	$to_return[3] = $thisview['sv_calc_calcs'];
+	$to_return[4] = $thisview['sv_calc_blanks'];
+	$to_return[5] = $thisview['sv_calc_grouping'];
+	$to_return[6] = $thisview['sv_sort'];
+	$to_return[7] = $thisview['sv_order'];
+	$to_return[8] = $thisview['sv_hidelist'];
+	$to_return[9] = $thisview['sv_hidecalc'];
+	$to_return[10] = $thisview['sv_lockcontrols'];
+	$to_return[11] = $thisview['sv_quicksearches'];
+	$to_return[12] = $thisview['sv_global_search'];
+	$to_return[13] = $thisview['sv_pubfilters'];
+  $to_return[14] = $thisview['sv_entriesperpage'];
+	$to_return[15] = $thisview['sv_use_features'];
+	$to_return[16] = $thisview['sv_searches_are_fundamental'];
 	return $to_return;
 }
 

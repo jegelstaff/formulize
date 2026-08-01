@@ -33,6 +33,7 @@
 ###############################################################################
 
 require_once XOOPS_ROOT_PATH.'/kernel/object.php';
+require_once XOOPS_ROOT_PATH.'/modules/formulize/class/elementReferenceScanTrait.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 class formulizeFramework extends XoopsObject {
@@ -382,9 +383,54 @@ class formulizeFrameworkLink extends XoopsObject {
 
 #[AllowDynamicProperties]
 class formulizeFrameworksHandler {
+	use formulizeElementReferenceScanTrait;
+
 	var $db;
 	function __construct(&$db) {
 		$this->db =& $db;
+	}
+
+	/**
+	 * Which relationships between forms are made through this element?
+	 *
+	 * Reported only, not rewritten: the links are deleted by deleteElementConnectionsInRelationships() at
+	 * the bottom of this file, which formulizeElementsHandler::delete() calls directly. These matter more
+	 * than most of what the usage report lists, because a relationship is how two forms find each other.
+	 *
+	 * Called by formulizeElementsHandler::findReferencesToElement().
+	 *
+	 * @param object $elementObject The element being asked about.
+	 * @return array The references found.
+	 */
+	public function scanForElementReferences($elementObject) {
+		$elementId = intval($elementObject->getVar('ele_id'));
+		$formId = intval($elementObject->getVar('fid'));
+		$references = array();
+		if(!$formId) {
+			return $references;
+		}
+		$sql = "SELECT l.fl_id, l.fl_form1_id, l.fl_form2_id, r.frame_name, f1.form_title AS form1_title,
+			f2.form_title AS form2_title
+			FROM ".$this->db->prefix('formulize_framework_links')." l
+			LEFT JOIN ".$this->db->prefix('formulize_frameworks')." r ON r.frame_id = l.fl_frame_id
+			LEFT JOIN ".$this->db->prefix('formulize_id')." f1 ON f1.id_form = l.fl_form1_id
+			LEFT JOIN ".$this->db->prefix('formulize_id')." f2 ON f2.id_form = l.fl_form2_id
+			WHERE (l.fl_form1_id = $formId AND l.fl_key1 = $elementId)
+			OR (l.fl_form2_id = $formId AND l.fl_key2 = $elementId)";
+		if(!$result = $this->db->query($sql)) {
+			return $references;
+		}
+		while($row = $this->db->fetchArray($result)) {
+			$relationshipName = trim(strip_tags((string) $row['frame_name']));
+			$joins = 'joins '.$this->describeById($row['form1_title'], 'form', $row['fl_form1_id'])
+				.' to '.$this->describeById($row['form2_title'], 'form', $row['fl_form2_id']);
+			$references[] = $this->elementReference(
+				_AM_ELE_USAGE_SECTION_RELATIONSHIPS,
+				($relationshipName === '' ? 'a relationship that '.$joins : $relationshipName.' - '.$joins),
+				'', 'fl_id', $row['fl_id']
+			);
+		}
+		return $references;
 	}
 	function &getInstance(&$db) {
 		static $instance;

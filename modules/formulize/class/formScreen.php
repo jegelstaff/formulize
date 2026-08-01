@@ -352,5 +352,62 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
         }
     }
 
+	/**
+	 * Where does a single page form screen refer to an element, and what does the setting look like once the
+	 * element is gone? The elements chosen to appear, and any default value set for one of them.
+	 *
+	 * This is the screen type where an empty list of elements does not mean "show nothing", it means "show
+	 * everything" - see formulizeFormScreen::elementIsPartOfScreen() a few lines up this file, which is the
+	 * rule being honoured below. That is precisely the sort of thing that goes wrong when the scan lives in
+	 * another file from the rule.
+	 *
+	 * Called by formulizeElementsHandler::findReferencesToElement().
+	 *
+	 * @param object $elementObject The element being asked about.
+	 * @return array The references found.
+	 */
+	public function scanForElementReferences($elementObject) {
+		list($elementId, $handle) = $this->elementIdAndHandle($elementObject);
+		$references = array();
+		$sql = "SELECT s.sid, s.title, f.formelements, f.elementdefaults
+			FROM ".$this->db->prefix('formulize_screen')." s
+			INNER JOIN ".$this->db->prefix('formulize_screen_form')." f ON f.sid = s.sid";
+		if(!$result = $this->db->query($sql)) {
+			return $references;
+		}
+		while($row = $this->db->fetchArray($result)) {
+			$updates = array();
+			$usedAs = array();
+
+			$newFormElements = $this->removeElementFromList(@unserialize((string) $row['formelements']), $elementId, $handle);
+			if($newFormElements !== false) {
+				if($newFormElements) {
+					$updates['formelements'] = serialize($newFormElements);
+					$usedAs[] = 'one of the elements chosen to appear';
+				} else {
+					// an empty list means "show every element on the form", so a screen set up to show only
+					// this one must not be emptied - that would widen it to everything rather than narrowing
+					// it to nothing, and could put fields in front of people that were deliberately left off.
+					// The now dead id is left alone, which keeps the screen showing what it shows today.
+					$usedAs[] = 'the only element chosen to appear, so the screen will show nothing until another is chosen';
+				}
+			}
+
+			$newDefaults = $this->removeElementFromDefaults(@unserialize((string) $row['elementdefaults']), $elementId, $handle);
+			if($newDefaults !== false) {
+				$updates['elementdefaults'] = serialize($newDefaults);
+				$usedAs[] = 'given a default value by the screen';
+			}
+
+			if($usedAs) {
+				$references[] = $this->elementReference(
+					_AM_ELE_USAGE_SECTION_FORM_SCREENS,
+					$this->describeById($row['title'], 'screen', $row['sid']).' - '.implode(', ', $usedAs),
+					'formulize_screen_form', 'sid', $row['sid'], $updates
+				);
+			}
+		}
+		return $references;
+	}
 
 }

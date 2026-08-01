@@ -35,6 +35,7 @@ if (!defined("XOOPS_ROOT_PATH")) {
 }
 
 require_once XOOPS_ROOT_PATH.'/kernel/object.php';
+require_once XOOPS_ROOT_PATH.'/modules/formulize/class/elementReferenceScanTrait.php';
 class formulizeScreen extends FormulizeObject {
 
 	function __construct() {
@@ -152,6 +153,11 @@ class formulizeScreen extends FormulizeObject {
 
 #[AllowDynamicProperties]
 class formulizeScreenHandler {
+
+	// every screen type handler extends this one, so putting the trait here gives them all the shared
+	// vocabulary for working out what refers to an element - each type then declares its own
+	// scanForElementReferences() covering the columns it is the owner of
+	use formulizeElementReferenceScanTrait;
 
 	// marks the stand-in handle settleHandle gives a new screen that has nothing usable to make one from, so
 	// that insert() can recognize it and swap in a handle made from the sid the database has just assigned
@@ -508,6 +514,37 @@ class formulizeScreenHandler {
         }
         return $result;
     }
+
+	/**
+	 * Where does an element get referenced in the columns every screen has, whatever its type?
+	 *
+	 * Only rewriteruleElement, which names the element a screen puts in the address bar instead of the entry
+	 * id. The per-type settings are each type handler's own scanForElementReferences().
+	 *
+	 * Deliberately not called scanForElementReferences(): every screen type handler extends this class, so a
+	 * shared name would be inherited by all of them and this row would be reported once per type.
+	 * formulizeElementsHandler::findReferencesToElement() calls this once, on this handler.
+	 *
+	 * @param object $elementObject The element being asked about.
+	 * @return array The references found.
+	 */
+	public function scanScreenTableForElementReferences($elementObject) {
+		list($elementId, $handle) = $this->elementIdAndHandle($elementObject);
+		$references = array();
+		// this setting only ever holds an id, never a handle, so there is nothing else to match on
+		$sql = "SELECT sid, title FROM ".$this->db->prefix('formulize_screen')." WHERE rewriteruleElement = ".intval($elementId);
+		if(!$result = $this->db->query($sql)) {
+			return $references;
+		}
+		while($row = $this->db->fetchArray($result)) {
+			$references[] = $this->elementReference(
+				_AM_ELE_USAGE_SECTION_SCREEN_ADDRESSES,
+				$this->describeById($row['title'], 'screen', $row['sid']).' - the address will go back to using the entry id',
+				'formulize_screen', 'sid', $row['sid'], array('rewriteruleElement' => 0)
+			);
+		}
+		return $references;
+	}
 
 }
 

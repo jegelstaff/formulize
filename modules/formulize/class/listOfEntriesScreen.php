@@ -526,6 +526,84 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
 			$defaultListScreen->setVar('customactions', serialize(array()));
 			$defaultListScreen->setVar('fundamental_filters', serialize(array()));
     }
+
+	/**
+	 * Where does a list screen refer to an element, and what does the setting look like once the element is
+	 * gone? Every column this reads is declared by initVar() at the top of this file, which is the reason
+	 * this method lives here: change how one of them is stored, and this is in the same file as the change.
+	 *
+	 * Called by formulizeElementsHandler::findReferencesToElement(), which turns the result into the usage
+	 * report and applies the updates when an element is deleted.
+	 *
+	 * @param object $elementObject The element being asked about.
+	 * @return array The references found.
+	 */
+	public function scanForElementReferences($elementObject) {
+		list($elementId, $handle) = $this->elementIdAndHandle($elementObject);
+		$references = array();
+		$sql = "SELECT s.sid, s.title, l.advanceview, l.hiddencolumns, l.decolumns, l.customactions, l.fundamental_filters
+			FROM ".$this->db->prefix('formulize_screen')." s
+			INNER JOIN ".$this->db->prefix('formulize_screen_listofentries')." l ON l.sid = s.sid";
+		if(!$result = $this->db->query($sql)) {
+			return $references;
+		}
+		while($row = $this->db->fetchArray($result)) {
+			$updates = array();
+			$usedAs = array();
+
+			// advanceview is a row per column: the element, then its search value, sort and search type
+			$newAdvanceview = $this->removeElementFromColumnRows(@unserialize((string) $row['advanceview']), $elementId, $handle);
+			if($newAdvanceview !== false) {
+				$updates['advanceview'] = serialize($newAdvanceview);
+				$usedAs[] = 'a column';
+			}
+
+			foreach(array('hiddencolumns' => 'a hidden value column', 'decolumns' => 'an inline editable column') as $columnSetting => $description) {
+				$newList = $this->removeElementFromList(@unserialize((string) $row[$columnSetting]), $elementId, $handle);
+				if($newList !== false) {
+					$updates[$columnSetting] = serialize($newList);
+					$usedAs[] = $description;
+				}
+			}
+
+			$newFilters = $this->removeElementFromConditions(@unserialize((string) $row['fundamental_filters']), $elementId, $handle);
+			if($newFilters !== false) {
+				$updates['fundamental_filters'] = serialize($newFilters);
+				$usedAs[] = 'a fundamental filter';
+			}
+
+			// custom button effects sit under numeric keys alongside each button's own properties. An effect
+			// naming this element is dropped; the button itself is left, because removing someone's button is
+			// a bigger decision than removing the effect that can no longer run.
+			$customactions = @unserialize((string) $row['customactions']);
+			if(is_array($customactions)) {
+				$changed = false;
+				foreach($customactions as $buttonId => $button) {
+					if(!is_array($button)) { continue; }
+					foreach($button as $key => $effect) {
+						if(is_numeric($key) AND is_array($effect) AND isset($effect['element'])
+							AND $this->referencePointsAtElement($effect['element'], $elementId, $handle)) {
+							unset($customactions[$buttonId][$key]);
+							$changed = true;
+						}
+					}
+				}
+				if($changed) {
+					$updates['customactions'] = serialize($customactions);
+					$usedAs[] = 'the effect of a custom button';
+				}
+			}
+
+			if($usedAs) {
+				$references[] = $this->elementReference(
+					_AM_ELE_USAGE_SECTION_LIST_SCREENS,
+					$this->describeById($row['title'], 'screen', $row['sid']).' - '.implode(', ', $usedAs),
+					'formulize_screen_listofentries', 'sid', $row['sid'], $updates
+				);
+			}
+		}
+		return $references;
+	}
 }
 
 

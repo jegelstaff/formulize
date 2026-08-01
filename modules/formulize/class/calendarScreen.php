@@ -227,5 +227,75 @@ class formulizeCalendarScreenHandler extends formulizeScreenHandler {
         }
     }
 
+	/**
+	 * Where does a calendar screen refer to an element, and what does the setting look like once the element
+	 * is gone? The element holding the date each dataset is plotted on.
+	 *
+	 * A calendar's datasets are stored as serialized formulizeCalendarScreenDataset objects rather than
+	 * plain arrays - which is declared a few lines up this file, and is exactly why this scan belongs here.
+	 * A row whose datasets do not come back as those objects is reported but left alone: rewriting a
+	 * structure that could not be read properly would do more harm than the dangling reference does.
+	 *
+	 * Called by formulizeElementsHandler::findReferencesToElement().
+	 *
+	 * @param object $elementObject The element being asked about.
+	 * @return array The references found.
+	 */
+	public function scanForElementReferences($elementObject) {
+		list($elementId, $handle) = $this->elementIdAndHandle($elementObject);
+		$references = array();
+		$sql = "SELECT s.sid, s.title, c.datasets
+			FROM ".$this->db->prefix('formulize_screen')." s
+			INNER JOIN ".$this->db->prefix('formulize_screen_calendar')." c ON c.sid = s.sid";
+		if(!$result = $this->db->query($sql)) {
+			return $references;
+		}
+		while($row = $this->db->fetchArray($result)) {
+			$description = $this->describeById($row['title'], 'screen', $row['sid'])
+				.' - the date the entries are placed on, which the screen cannot be drawn without';
+
+			$datasets = @unserialize((string) $row['datasets']);
+			$readable = is_array($datasets) AND $datasets;
+			if($readable) {
+				foreach($datasets as $dataset) {
+					if(!($dataset instanceof formulizeCalendarScreenDataset)) {
+						$readable = false;
+						break;
+					}
+				}
+			}
+
+			// a screen whose datasets did not come back as the objects they are stored as cannot be rewritten
+			// safely, so fall back to asking whether the handle appears anywhere in the stored text at all.
+			// That is a loose question and it may say yes when the answer is no, but the alternative is
+			// staying silent about a screen that may well be about to break.
+			if(!$readable) {
+				if(strpos((string) $row['datasets'], $handle) !== false) {
+					$references[] = $this->elementReference(
+						_AM_ELE_USAGE_SECTION_CALENDAR_SCREENS,
+						$description.' (this screen could not be read properly, so check it and change it yourself)',
+						'', 'sid', $row['sid']
+					);
+				}
+				continue;
+			}
+
+			$changed = false;
+			foreach($datasets as $dataset) {
+				if($this->referencePointsAtElement($dataset->getVar('datehandle'), $elementId, $handle)) {
+					$dataset->setVar('datehandle', '');
+					$changed = true;
+				}
+			}
+			if($changed) {
+				$references[] = $this->elementReference(
+					_AM_ELE_USAGE_SECTION_CALENDAR_SCREENS, $description,
+					'formulize_screen_calendar', 'sid', $row['sid'],
+					array('datasets' => serialize($datasets))
+				);
+			}
+		}
+		return $references;
+	}
+
 }
-?>
