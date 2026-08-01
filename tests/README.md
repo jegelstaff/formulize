@@ -21,6 +21,10 @@ them *after* the e2e suite, when the setup specs have finished building the muse
   and calculations, dynamic default values), it builds fixtures and cleans them up for real, inside a
   transaction it rolls back. It asserts invariants rather than counts, so adding screens or elements to
   the setup suite does not break it.
+* `saved_views_test.php` - a saved view written, read back by id and by name, changed and deleted through
+  `formulizeSavedViewsHandler`. Saved views hold several lists tied to each other only by position, and
+  names people typed, so the checks are that everything survives the trip verbatim and in step. Also
+  transactional.
 
 To run one against a local docker environment:
 

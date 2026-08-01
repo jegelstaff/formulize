@@ -71,6 +71,101 @@ class formulizeSavedViewsHandler {
 	}
 
 	/**
+	 * Read one saved view.
+	 *
+	 * By id, or by name within a form. A name is only unique within the form (and relationship) the view was
+	 * saved against, so a form has to be given to look one up that way. Asking by name alone is refused
+	 * rather than answered: names repeat across forms, so the answer would be whichever view happened to be
+	 * created first anywhere in the system, and loading its columns and searches into a list belonging to a
+	 * different form is not a useful thing to do quietly.
+	 *
+	 * @param int|string $idOrName The sv_id, or the sv_name.
+	 * @param int $fid The form the view belongs to. Required when looking up by name.
+	 * @param int $frid The relationship the view belongs to, if there is one.
+	 * @return array|false The row, or false if there is no such view.
+	 * @throws Exception if asked for a name with no form, or if the query fails.
+	 */
+	public function get($idOrName, $fid = 0, $frid = 0) {
+		$table = $this->db->prefix('formulize_saved_views');
+		if(is_numeric($idOrName)) {
+			$sql = "SELECT * FROM $table WHERE sv_id = ".intval($idOrName);
+		} elseif($fid OR $frid) {
+			// a view records the form and relationship that were in effect when it was saved, and when there
+			// is no relationship the mainform is stored blank rather than as the form's own id
+			$formframe = $frid ? intval($frid) : intval($fid);
+			$mainform = $frid ? intval($fid) : "''";
+			$sql = "SELECT * FROM $table WHERE sv_name = ".$this->db->quoteString($idOrName)."
+				AND sv_formframe = $formframe AND sv_mainform = $mainform ORDER BY sv_id";
+		} else {
+			throw new Exception("A saved view can only be looked up by name within a form. No form was given for: '".strip_tags(htmlspecialchars($idOrName))."'");
+		}
+		if(!$result = $this->db->query($sql)) {
+			throw new Exception("Could not load the specified saved view: '".strip_tags(htmlspecialchars($idOrName))."'");
+		}
+		$row = $this->db->fetchArray($result);
+		return $row ? $row : false;
+	}
+
+	/**
+	 * Write a saved view, and say which one it was.
+	 *
+	 * Takes the columns to write rather than a fixed argument list, so that a column added to the table
+	 * later is a change to the caller assembling the values and to nothing here.
+	 *
+	 * @param array $values Column name => value. Values are written as given, so anything that has to be a
+	 *                      number should already be one.
+	 * @param int $svId The view to update, or 0 to create a new one.
+	 * @return int|false The view's id, or false if it could not be written.
+	 */
+	public function save($values, $svId = 0) {
+		if(!is_array($values) OR !$values) {
+			return false;
+		}
+		$sets = array();
+		foreach($values as $column => $value) {
+			$sets[] = "`$column` = ".$this->db->quoteString((string) $value);
+		}
+		$table = $this->db->prefix('formulize_saved_views');
+		if($svId = intval($svId)) {
+			return $this->db->query("UPDATE $table SET ".implode(', ', $sets)." WHERE sv_id = $svId") ? $svId : false;
+		}
+		if(!$this->db->query("INSERT INTO $table SET ".implode(', ', $sets))) {
+			return false;
+		}
+		return intval($this->db->getInsertId());
+	}
+
+	/**
+	 * Delete a saved view.
+	 * @param int $svId
+	 * @return bool
+	 */
+	public function delete($svId) {
+		$table = $this->db->prefix('formulize_saved_views');
+		return (bool) $this->db->query("DELETE FROM $table WHERE sv_id = ".intval($svId));
+	}
+
+	/**
+	 * Who owns a saved view? Cached, because whether a person may change or delete a view is asked about the
+	 * same view several times over a single page load.
+	 * @param int $svId
+	 * @return int|false The owner's uid, or false if there is no such view.
+	 */
+	public function getOwner($svId) {
+		static $owners = array();
+		$svId = intval($svId);
+		if(!isset($owners[$svId])) {
+			$table = $this->db->prefix('formulize_saved_views');
+			$owners[$svId] = false;
+			if($result = $this->db->query("SELECT sv_owner_uid FROM $table WHERE sv_id = $svId")) {
+				$row = $this->db->fetchArray($result);
+				$owners[$svId] = ($row AND intval($row['sv_owner_uid']) > 0) ? intval($row['sv_owner_uid']) : false;
+			}
+		}
+		return array_key_exists($svId, $owners) ? $owners[$svId] : false;
+	}
+
+	/**
 	 * Where does a saved view refer to an element, and what does the view look like once the element is
 	 * gone? The columns someone chose, the searches on them, the calculations, and the sort column.
 	 *

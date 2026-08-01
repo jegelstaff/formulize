@@ -56,7 +56,7 @@ if (PHP_SAPI !== 'cli') {
 }
 
 // The bootstrap reads these. Running from the command line there is no request to read them from.
-$_SERVER['REQUEST_METHOD'] = 'GET';
+$_SERVER['REQUEST_METHOD'] = 'POST'; // writes reach the database only on POST - see icms_core_Security::service(), which defines XOOPS_DB_PROXY on anything else and makes query() refuse to write
 $_SERVER['HTTP_HOST'] = 'localhost';
 $_SERVER['SERVER_PORT'] = '80';
 $_SERVER['SERVER_NAME'] = 'localhost';

@@ -1248,8 +1248,9 @@ class formulizeElementsHandler {
 			foreach($reference['updates'] as $column => $value) {
 				$sets[] = "`$column` = ".$this->db->quoteString((string) $value);
 			}
-			// queryF rather than query: a proxy database connection refuses anything but a SELECT through query()
-			$this->db->queryF("UPDATE ".$this->db->prefix($reference['table'])." SET ".implode(', ', $sets)
+			// query() rather than queryF(), matching the DELETE in delete() that this accompanies - whatever
+			// stops one from running should stop the other, or an element survives with its references gone
+			$this->db->query("UPDATE ".$this->db->prefix($reference['table'])." SET ".implode(', ', $sets)
 				." WHERE `".$reference['key_column']."` = ".$reference['key_value']);
 		}
 	}

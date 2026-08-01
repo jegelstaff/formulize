@@ -312,28 +312,6 @@ function groupNameList($list, $obeyMemberOnlyFlag = true) {
 }
 
 /**
- * Get the owner of a saved view
- *
- * Returns the user ID of the owner of a given saved view.
- * Only checks based on 2.0 saved view format, not 1.6 or earlier format.
- *
- * @param int $vid The saved view ID
- * @return int|bool The owner's user ID or false if not found
- */
-function getSavedViewOwner($vid) {
-	static $cachedOwners = array();
-	$vid = intval($vid);
-	if (!isset($cachedOwners[$vid])) {
-		global $xoopsDB;
-		$sql = "SELECT sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id = $vid";
-		$result = $xoopsDB->query($sql);
-		$array = $xoopsDB->fetchArray($result);
-		$cachedOwners[$vid] = intval($array['sv_owner_uid']) > 0 ? intval($array['sv_owner_uid']) : false; // record "false" if sql failed
-	}
-	return $cachedOwners[$vid];
-}
-
-/**
  * Get available reports for a user
  *
  * Returns an array of reports the user is allowed to see, both saved and published
