@@ -38,6 +38,30 @@ Each application reports how many menu items it has, but not what they are. The 
 					'properties' => (object)[]
 				]
 			],
+			'list_menu_items' => [
+				'name' => 'list_menu_items',
+				'description' => 'Read the menus of this system: what each item is called, where it goes, who can see it, and who lands on it when they log in. Called with no arguments it returns every menu item in the system, grouped by application. Give a form_id or a screen_id to get only the items pointing there.
+
+Menu items are grouped by application. To read one application\'s menu, use get_application_details instead - it returns that application\'s menu along with the application\'s forms.
+
+A menu is not one list that everybody sees. Each item is shown only to the groups named against it, so what any person actually sees is the items visible to the groups they belong to. A webmaster calling this tool gets the full picture regardless of groups, which is what makes it useful for auditing the whole menu. Anyone else gets exactly what they would see live: only items shown to their own groups, and only for forms they have permission on.
+
+Menu items are shown in rank order, which is the order they appear on screen.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'form_id' => [
+							'type' => 'integer',
+							'description' => 'Optional. Only items leading to this form. That includes items pointing at the form itself and items pointing at any of its screens, since both land the user in the same form. Use list_forms to find form ids.'
+						],
+						'screen_id' => [
+							'type' => 'integer',
+							'description' => 'Optional. Only items pointing at this particular screen. Use list_screens to find screen ids. You do not need to provide a form_id if you are providing a screen_id.'
+						]
+					],
+					'required' => []
+				]
+			],
 			'list_form_connections' => [
 				'name' => 'list_form_connections',
 				'description' => "List all the connections between forms, which can explain how forms are related to one another. Connection are based pairs of elements, one in each form, that have matching values. Entries in the forms are connected when they have the same value in the paired elements, or when one element is 'linked' to the other, in which case the values in the linked element will be entry_ids in the other form (foreign keys).",
@@ -175,6 +199,26 @@ Ask for several elements in one call rather than one at a time. If some of the e
 						]
 					],
 					'required' => ['screen_id']
+				]
+			],
+			'get_application_details' => [
+				'name' => 'get_application_details',
+				'description' => 'Look at one application: the forms in it, the menu people use to reach them, and whether it carries custom code.
+
+An application is how a set of forms is presented to the people who use it. It is not a container that owns the forms - a form can appear in more than one application, and a form in no application still works - so removing something from an application changes how it is reached, not whether it exists.
+
+The menu is the part worth understanding, because it is what most users actually see. Each menu item points at a form or a screen, is shown only to particular groups, and can be the page a group lands on when they log in. So two people can be looking at the same application and see entirely different menus, and someone with no permission on any of the forms sees nothing at all.
+
+Use list_applications for a list of every application in the system; this tool is for looking closely at one of them.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'application_id' => [
+							'type' => 'integer',
+							'description' => 'Required. The application to look at. Use list_applications to find application ids.'
+						]
+					],
+					'required' => ['application_id']
 				]
 			],
 			'create_entries' => [
@@ -427,7 +471,7 @@ Correct example for linked elements:
 
 			$this->tools['query_the_database_directly'] = [
 				'name' => 'query_the_database_directly',
-				'description' => "Query the database with a SELECT statement. The database is {$dbVersionData['version']} and queries are written in SQL. If you don't know the database schema for the form, use the get_form_details tool to look up the form's database table name, and the field names are the element handles.",
+				'description' => "Query the database with a SELECT statement. Consider this a last resort. Using another tool is almost always a better option. The database is {$dbVersionData['version']} and queries are written in SQL. If you don't know the database schema for the form, use the get_form_details tool to look up the form's database table name, and the field names are the element handles.",
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
@@ -476,6 +520,43 @@ Use get_form_details first to see the form\'s current settings. This tool does n
 						])
 					], $this->defaultScreenProperties()),
 					'required' => ['form_id']
+				]
+			];
+
+			foreach($this->buildFormElementTools() as $tool) {
+				$this->tools[$tool['name']] = $tool;
+			}
+
+			$this->tools['delete_element'] = [
+				'name' => 'delete_element',
+				'description' => 'Permanently delete an element from a form.
+
+**This destroys data and cannot be undone.** Deleting an element drops its column from the form\'s data table, so every value that every entry holds in that element is gone for good. There is no undo, and no backup is taken.
+
+Use this only when the person you are working with has specifically asked for this element to be removed. Do not use it to tidy up a form, to fix a mistake you made while building something, or because an element looks unused - an element with no data today may still be part of how the application works. If the aim is only to stop people seeing or using the element, hide it instead: set its \'display\' property to false with the update tool for that kind of element (ie: update_text_box_element or update_list_element, etc). Setting \'display\' to false takes it out of the form while keeping the data and leaving anything that refers to it still working.
+
+This tool takes two calls. Call it first with just the element, and it will NOT delete anything: it returns a report of what would be lost, along with a confirmation_token. The report covers shows where the element is referenced, and which derived value elements and other code-based parts of the system will break if the element is removed. Show that report to the person you are working with and get their agreement. Then call the tool again with the same element and the confirmation token to carry out the deletion. The token only works for that element, for you, and only for a few minutes.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'element_identifier' => [
+							'oneOf' => [
+								[
+									'type' => 'string',
+									'description' => 'Required. The handle of the element to delete. Get handles from the get_form_details tool.'
+								],
+								[
+									'type' => 'integer',
+									'description' => 'Required. The id of the element to delete. Get element ids from the get_form_details tool.'
+								]
+							]
+						],
+						'confirmation_token' => [
+							'type' => 'string',
+							'description' => 'Optional. Leave this out on the first call to receive the impact report and a token. Send the token back on a second call to actually delete the element. Do not send a token unless the person you are working with has seen the impact report and agreed to the deletion.'
+						]
+					],
+					'required' => ['element_identifier']
 				]
 			];
 
@@ -660,119 +741,6 @@ Note that the list-like properties (columns, editable_columns, available_views, 
 				]
 			];
 
-			// REVISIT WHEN get_form_permissions_for_user EXISTS: the description below, and the group_ids
-			// description further down, both teach looking up a user's groups and passing them here as the
-			// way to find out what someone can do. That is the best available route only while there is no
-			// per-user tool; once there is one, both should point at it instead. Same note in resources.php
-			// on describeHowToInterpretPermissions(), which carries the third copy of the same advice.
-			$this->tools['get_form_permissions_by_group'] = [
-				'name' => 'get_form_permissions_by_group',
-				'description' => 'See how a form\'s permissions are configured: which groups grant access to it, and what abilities group members have: creating, updating, and deleting entries, and which entries they are able to see. If a group has visibility conditions, which further restrict which entries its members see, those are reported too.
-
-Permissions are configured per group, but users can be members of more than one group, and users receive all the permissions from all their groups. So this report shows group configuration, not necessarily what any particular user can do.
-
-To find out what a user can do, look up their groups with the list_a_users_groups tool, and pass those ids to this tool in the group_ids parameter. The report then covers exactly that combination of groups: what that user can do, and equally anyone else belonging to the same set of groups.
-
-Permissions come in two flavours, and are reported as two fields. Access, reported as \'grants_access\', allows group members to reach the form, and it also makes that group count as one of "their groups" - which is what the group-scoped permissions (view_groupscope, update_group_entries, delete_group_entries) resolve against. Abilities, reported as \'abilities\', are everything else: what members may do and see once they are in. So a group can grant access and abilities, or only one, or only the other. Defining abilities once on a broad group while narrower groups grant the access is how a site makes each user see only their own department, region or client.
-
-If the form inherits its permissions from another form, they are maintained on that other form and cannot be changed here.',
-				'inputSchema' => [
-					'type' => 'object',
-					'properties' => [
-						'form_id' => [
-							'type' => 'integer',
-							'description' => 'Required. The id of the form. Use list_forms to find form ids.'
-						],
-						'group_ids' => [
-							'type' => 'array',
-							'items' => [ 'type' => 'integer' ],
-							'description' => 'Optional. Report only on these groups. Leave this out to see every group that has any permission on the form. Use the list_groups tool to find group ids.
-
-The most useful way to use this is to pass all the groups one user belongs to, which you can get from the list_a_users_groups tool. The report then covers exactly that user\'s combination of groups, which together are what determines what they can do - and what anyone else in the same combination can do.'
-						]
-					],
-					'required' => ['form_id']
-				]
-			];
-
-			$this->tools['set_form_permissions'] = [
-				'name' => 'set_form_permissions',
-				'description' => 'Set which groups can use a form, and what their members can do with it. Read the current permissions with get_form_permissions_by_group first, so you extend the arrangement already in place instead of replacing it with a different one.
-
-Permissions come in two flavours: Access and Abilities. Access lets group members reach the form, and also makes that group count as one of "their groups", for the purposes of the group-level abilities. Abilities are everything else: what members may do and see once they are in. Nothing works without access somewhere - a group with abilities and no access grants nothing on its own, though its abilities do apply to members who reach the form through another group.
-
-There are three group-level abilities: view_groupscope, update_group_entries, and delete_group_entries, which let people see, update and delete entries belonging to "their groups". Which groups are "their groups" is worked out per user: it means every group that user belongs to which also grants access to this form. Because permissions add up across all of a user\'s groups, the group granting view_groupscope does not have to be one of the groups that grants access. That is what makes this arrangement possible:
-
-All Staff grants view_groupscope but no access. HR and Legal each grant access. Someone in All Staff and HR sees entries made by HR\'s members. Someone in All Staff and Legal sees entries made by Legal\'s members. The scope ability lives on All Staff; what it resolves to comes from HR or Legal.
-
-Sites are arranged in different ways and Formulize supports many possible permission configurations; there is no standard arrangement to aim for. Simple sites have a few groups each with a full set of access and abilities permissions. More complex sites could simply have more groups, or multi-level arrangements with broad groups for abilities (All Managers, All Staff, All Clients) and narrow groups for access (HR, Legal, Accounting). Work out which arrangement this form uses and extend it. Never "tidy up" a group that grants access and nothing else, or abilities and no access: both are deliberate positions.
-
-Two permissions are always on for every group and cannot be set here: viewing the entries they made themselves, and managing their own saved views.
-
-A group can also have visibility conditions, which restrict its members to entries matching those conditions. get_form_permissions_by_group reports them, but they cannot be set through these tools; they are configured in the Formulize admin interface. Changing a group\'s permissions here leaves its conditions untouched.
-
-Only the groups you name are changed. What you supply replaces that group\'s current permissions rather than adding to them, so include everything the group should end up with.
-
-A form can also be set to inherit its permissions from another form, in which case they are maintained on that other form and copied to this one, and this tool will refuse to change them here and tell you which form to go to instead. Setting up, changing or removing that arrangement is done with set_form_permission_inheritance.',
-				'inputSchema' => [
-					'type' => 'object',
-					'properties' => [
-						'form_id' => [
-							'type' => 'integer',
-							'description' => 'Required. The id of the form. Use list_forms to find form ids.'
-						],
-						'groups' => [
-							'type' => 'array',
-							'description' => 'Required. The groups to change, and what each should end up with. Groups you leave out keep whatever they have now.',
-							'items' => [
-								'type' => 'object',
-								'properties' => [
-									'group_id' => [
-										'type' => 'integer',
-										'description' => 'Required. The group to set permissions for. Use list_groups to find group ids.'
-									],
-									'preset' => [
-										'type' => 'string',
-										'enum' => ['none', 'own_only', 'group_member', 'group_admin', 'global_member', 'global_admin'],
-										'description' => 'Optional. A ready-made combination, instead of setting grants_access and abilities yourself. Use group_* where the site divides users into parallel groups (one per department, region or client) so each group sees its own entries, and global_* where everyone should see everything. Which is right depends on how this site organises its groups, not on the job title of the people involved.
-
-  none          - no access and no abilities. Revokes everything.
-  own_only      - access; create, update and delete their own entries; sees only their own.
-  group_member  - own_only, plus sees their groups\' entries (view_groupscope) and can update them (update_group_entries).
-  group_admin   - group_member, plus delete_group_entries, add_proxy_entries, update_entry_ownership, view_private_elements, publish_reports.
-  global_member - own_only, plus sees every entry (view_globalscope) and can update any of them (update_other_entries).
-  global_admin  - global_member, plus delete_other_entries, add_proxy_entries, update_entry_ownership, view_private_elements, publish_reports, publish_globalscope.
-
-No preset includes edit_form or delete_form, which change the form itself rather than its data. Grant those deliberately through the abilities list. No preset can express an arrangement where access and abilities live on different groups, because a preset applies to one group and an access/abilities split necessarily involves multiple groups - use \'grants_access\' and \'abilities\' for those.'
-									],
-									'grants_access' => [
-										'type' => 'boolean',
-										'description' => 'Optional. Whether this group lets its members reach the form, and counts as one of "their groups". Ignored if a preset is given.'
-									],
-									'abilities' => [
-										'type' => 'array',
-										'items' => [
-											'type' => 'string',
-											'enum' => ['add_own_entry', 'update_own_entry', 'delete_own_entry', 'update_group_entries', 'delete_group_entries', 'update_other_entries', 'delete_other_entries', 'view_groupscope', 'view_globalscope', 'add_proxy_entries', 'update_entry_ownership', 'view_private_elements', 'ignore_editing_lock', 'import_data', 'set_notifications_for_others', 'publish_reports', 'publish_globalscope', 'update_other_reports', 'delete_other_reports', 'edit_form', 'delete_form']
-										],
-										'description' => 'Optional. Everything this group can do apart from reaching the form. Replaces the group\'s current abilities, so list everything it should end up with; an empty array removes them all. Ignored if a preset is given.
-
-Editing entries: add_own_entry / update_own_entry / update_group_entries / update_other_entries to change entries made by themselves / by their groups / by anyone.
-Deleting entries: delete_own_entry / delete_group_entries / delete_other_entries to delete entries made by themselves / by their groups / by anyone.
-Seeing entries: their own is always on. view_groupscope for entries made by their groups, view_globalscope for entries made by anyone.
-Saved views: managing their own is always on. publish_reports to publish views for their groups, publish_globalscope for any group, update_other_reports and delete_other_reports to manage views made by other people.
-Other: add_proxy_entries (create entries on behalf of someone else), update_entry_ownership (change the user that an entry belongs to, and thereby which groups it belongs to), view_private_elements (see fields hidden from most users), ignore_editing_lock, import_data, set_notifications_for_others.
-The form itself: edit_form (change the form\'s structure, elements and settings) and delete_form. These are not about entries at all, and deleting a form cannot be undone.'
-									]
-								],
-								'required' => ['group_id']
-							]
-						]
-					],
-					'required' => ['form_id', 'groups']
-				]
-			];
-
 			$groupPropertiesDescription = 'Groups are what permissions are given to; users can belong to one or more groups. All users with accounts are members of the Registered Users group (group 2). Before creating a group, check with list_groups whether something suitable already exists. Do not create new groups when the existing ones would meet the need.
 
 Creating a group gives it no permissions and no members. Use set_form_permissions to say what it can do, and update_group_members to put people in it.';
@@ -780,85 +748,6 @@ Creating a group gives it no permissions and no members. Use set_form_permission
 			$userGroupsDescription = 'Optional. The complete list of groups this user should belong to, replacing whatever they belong to now. Leave it out to leave their groups alone; an empty array removes them from everything except the groups the system requires. Use list_groups to find group ids. Use list_a_users_groups to see what groups a user currently belongs to.
 
 Giving the complete list is safe here because a person belongs to only a few groups. The update_group_members tool deliberately works the other way round, naming the individual users to add or remove, because a group can have thousands of members.';
-
-			$this->tools['update_group_members'] = [
-				'name' => 'update_group_members',
-				'description' => 'Add users to a group, or remove them from it. Use list_group_members to see who is in it now.
-
-This takes additions and removals rather than a complete list of who should be in the group. Nobody is added or removed here unless you name them. That is deliberately the other way round from the update_users tool, which takes a user\'s whole list of groups. This is because a person belongs to only a few groups, but a group can have thousands of members.
-
-All permissions in the system are assigned to groups; users receive permissions by virtue of the groups they are members of. Use get_form_permissions_by_group to see which permissions a group provides.
-
-Some memberships are required and cannot be removed. This tool reports each such user individually, while completing the operation for the others.
-
-Some groups are associated with the entries in forms (form-based entry groups). Such groups can have members like any other group. There are also form-based template groups, associated with a form itself. These cannot have members, because they simply represent the pattern that the entry groups follow.',
-				'inputSchema' => [
-					'type' => 'object',
-					'properties' => [
-						'group_id' => [
-							'type' => 'integer',
-							'description' => 'Required. The group to change the membership of. Use list_groups to find group ids.'
-						],
-						'add_users' => [
-							'type' => 'array',
-							'items' => [ 'type' => 'integer' ],
-							'description' => 'Optional. User ids to add. Users already in the group are left alone rather than treated as an error. Use list_users to find user ids.'
-						],
-						'remove_users' => [
-							'type' => 'array',
-							'items' => [ 'type' => 'integer' ],
-							'description' => 'Optional. User ids to remove. Users not in the group are ignored. Nobody is removed except those named here.'
-						]
-					],
-					'required' => ['group_id']
-				]
-			];
-
-			$this->tools['get_application_details'] = [
-				'name' => 'get_application_details',
-				'description' => 'Look at one application: the forms in it, the menu people use to reach them, and whether it carries custom code.
-
-An application is how a set of forms is presented to the people who use it. It is not a container that owns the forms - a form can appear in more than one application, and a form in no application still works - so removing something from an application changes how it is reached, not whether it exists.
-
-The menu is the part worth understanding, because it is what most users actually see. Each menu item points at a form or a screen, is shown only to particular groups, and can be the page a group lands on when they log in. So two people can be looking at the same application and see entirely different menus, and someone with no permission on any of the forms sees nothing at all.
-
-Use list_applications for a list of every application in the system; this tool is for looking closely at one of them.',
-				'inputSchema' => [
-					'type' => 'object',
-					'properties' => [
-						'application_id' => [
-							'type' => 'integer',
-							'description' => 'Required. The application to look at. Use list_applications to find application ids.'
-						]
-					],
-					'required' => ['application_id']
-				]
-			];
-
-			$this->tools['list_menu_items'] = [
-				'name' => 'list_menu_items',
-				'description' => 'Read the menus of this system: what each item is called, where it goes, who can see it, and who lands on it when they log in. Called with no arguments it returns every menu item in the system, grouped by application. Give a form_id or a screen_id to get only the items pointing there.
-
-Menu items are grouped by application. To read one application\'s menu, use get_application_details instead - it returns that application\'s menu along with the application\'s forms.
-
-A menu is not one list that everybody sees. Each item is shown only to the groups named against it, so what any person actually sees is the items visible to the groups they belong to. Reading a menu therefore tells you what exists, not what any particular user sees.
-
-Menu items are shown in rank order, which is the order they appear on screen.',
-				'inputSchema' => [
-					'type' => 'object',
-					'properties' => [
-						'form_id' => [
-							'type' => 'integer',
-							'description' => 'Optional. Only items leading to this form. That includes items pointing at the form itself and items pointing at any of its screens, since both land the user in the same form. Use list_forms to find form ids.'
-						],
-						'screen_id' => [
-							'type' => 'integer',
-							'description' => 'Optional. Only items pointing at this particular screen. Use list_screens to find screen ids. You do not need to provide a form_id if you are providing a screen_id.'
-						]
-					],
-					'required' => []
-				]
-			];
 
 			$menuGroupsDescription = 'groups_that_can_see and groups_using_as_start_page are replaced by what you supply, not added to, so send the complete list every time. Leave the property out to keep the item\'s current groups.
 
@@ -1102,6 +991,152 @@ Two kinds of group cannot be renamed here. Groups generated from the entries in 
 				]
 			];
 
+			$this->tools['update_group_members'] = [
+				'name' => 'update_group_members',
+				'description' => 'Add users to a group, or remove them from it. Use list_group_members to see who is in it now.
+
+This takes additions and removals rather than a complete list of who should be in the group. Nobody is added or removed here unless you name them. That is deliberately the other way round from the update_users tool, which takes a user\'s whole list of groups. This is because a person belongs to only a few groups, but a group can have thousands of members.
+
+All permissions in the system are assigned to groups; users receive permissions by virtue of the groups they are members of. Use get_form_permissions_by_group to see which permissions a group provides.
+
+Some memberships are required and cannot be removed. This tool reports each such user individually, while completing the operation for the others.
+
+Some groups are associated with the entries in forms (form-based entry groups). Such groups can have members like any other group. There are also form-based template groups, associated with a form itself. These cannot have members, because they simply represent the pattern that the entry groups follow.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'group_id' => [
+							'type' => 'integer',
+							'description' => 'Required. The group to change the membership of. Use list_groups to find group ids.'
+						],
+						'add_users' => [
+							'type' => 'array',
+							'items' => [ 'type' => 'integer' ],
+							'description' => 'Optional. User ids to add. Users already in the group are left alone rather than treated as an error. Use list_users to find user ids.'
+						],
+						'remove_users' => [
+							'type' => 'array',
+							'items' => [ 'type' => 'integer' ],
+							'description' => 'Optional. User ids to remove. Users not in the group are ignored. Nobody is removed except those named here.'
+						]
+					],
+					'required' => ['group_id']
+				]
+			];
+
+			// REVISIT WHEN get_form_permissions_for_user EXISTS: the description below, and the group_ids
+			// description further down, both teach looking up a user's groups and passing them here as the
+			// way to find out what someone can do. That is the best available route only while there is no
+			// per-user tool; once there is one, both should point at it instead. Same note in resources.php
+			// on describeHowToInterpretPermissions(), which carries the third copy of the same advice.
+			$this->tools['get_form_permissions_by_group'] = [
+				'name' => 'get_form_permissions_by_group',
+				'description' => 'See how a form\'s permissions are configured: which groups grant access to it, and what abilities group members have: creating, updating, and deleting entries, and which entries they are able to see. If a group has visibility conditions, which further restrict which entries its members see, those are reported too.
+
+Permissions are configured per group, but users can be members of more than one group, and users receive all the permissions from all their groups. So this report shows group configuration, not necessarily what any particular user can do.
+
+To find out what a user can do, look up their groups with the list_a_users_groups tool, and pass those ids to this tool in the group_ids parameter. The report then covers exactly that combination of groups: what that user can do, and equally anyone else belonging to the same set of groups.
+
+Permissions come in two flavours, and are reported as two fields. Access, reported as \'grants_access\', allows group members to reach the form, and it also makes that group count as one of "their groups" - which is what the group-scoped permissions (view_groupscope, update_group_entries, delete_group_entries) resolve against. Abilities, reported as \'abilities\', are everything else: what members may do and see once they are in. So a group can grant access and abilities, or only one, or only the other. Defining abilities once on a broad group while narrower groups grant the access is how a site makes each user see only their own department, region or client.
+
+If the form inherits its permissions from another form, they are maintained on that other form and cannot be changed here.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'form_id' => [
+							'type' => 'integer',
+							'description' => 'Required. The id of the form. Use list_forms to find form ids.'
+						],
+						'group_ids' => [
+							'type' => 'array',
+							'items' => [ 'type' => 'integer' ],
+							'description' => 'Optional. Report only on these groups. Leave this out to see every group that has any permission on the form. Use the list_groups tool to find group ids.
+
+The most useful way to use this is to pass all the groups one user belongs to, which you can get from the list_a_users_groups tool. The report then covers exactly that user\'s combination of groups, which together are what determines what they can do - and what anyone else in the same combination can do.'
+						]
+					],
+					'required' => ['form_id']
+				]
+			];
+
+			$this->tools['set_form_permissions'] = [
+				'name' => 'set_form_permissions',
+				'description' => 'Set which groups can use a form, and what their members can do with it. Read the current permissions with get_form_permissions_by_group first, so you extend the arrangement already in place instead of replacing it with a different one.
+
+Permissions come in two flavours: Access and Abilities. Access lets group members reach the form, and also makes that group count as one of "their groups", for the purposes of the group-level abilities. Abilities are everything else: what members may do and see once they are in. Nothing works without access somewhere - a group with abilities and no access grants nothing on its own, though its abilities do apply to members who reach the form through another group.
+
+There are three group-level abilities: view_groupscope, update_group_entries, and delete_group_entries, which let people see, update and delete entries belonging to "their groups". Which groups are "their groups" is worked out per user: it means every group that user belongs to which also grants access to this form. Because permissions add up across all of a user\'s groups, the group granting view_groupscope does not have to be one of the groups that grants access. That is what makes this arrangement possible:
+
+All Staff grants view_groupscope but no access. HR and Legal each grant access. Someone in All Staff and HR sees entries made by HR\'s members. Someone in All Staff and Legal sees entries made by Legal\'s members. The scope ability lives on All Staff; what it resolves to comes from HR or Legal.
+
+Sites are arranged in different ways and Formulize supports many possible permission configurations; there is no standard arrangement to aim for. Simple sites have a few groups each with a full set of access and abilities permissions. More complex sites could simply have more groups, or multi-level arrangements with broad groups for abilities (All Managers, All Staff, All Clients) and narrow groups for access (HR, Legal, Accounting). Work out which arrangement this form uses and extend it. Never "tidy up" a group that grants access and nothing else, or abilities and no access: both are deliberate positions.
+
+Two permissions are always on for every group and cannot be set here: viewing the entries they made themselves, and managing their own saved views.
+
+A group can also have visibility conditions, which restrict its members to entries matching those conditions. get_form_permissions_by_group reports them, but they cannot be set through these tools; they are configured in the Formulize admin interface. Changing a group\'s permissions here leaves its conditions untouched.
+
+Only the groups you name are changed. What you supply replaces that group\'s current permissions rather than adding to them, so include everything the group should end up with.
+
+A form can also be set to inherit its permissions from another form, in which case they are maintained on that other form and copied to this one, and this tool will refuse to change them here and tell you which form to go to instead. Setting up, changing or removing that arrangement is done with set_form_permission_inheritance.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'form_id' => [
+							'type' => 'integer',
+							'description' => 'Required. The id of the form. Use list_forms to find form ids.'
+						],
+						'groups' => [
+							'type' => 'array',
+							'description' => 'Required. The groups to change, and what each should end up with. Groups you leave out keep whatever they have now.',
+							'items' => [
+								'type' => 'object',
+								'properties' => [
+									'group_id' => [
+										'type' => 'integer',
+										'description' => 'Required. The group to set permissions for. Use list_groups to find group ids.'
+									],
+									'preset' => [
+										'type' => 'string',
+										'enum' => ['none', 'own_only', 'group_member', 'group_admin', 'global_member', 'global_admin'],
+										'description' => 'Optional. A ready-made combination, instead of setting grants_access and abilities yourself. Use group_* where the site divides users into parallel groups (one per department, region or client) so each group sees its own entries, and global_* where everyone should see everything. Which is right depends on how this site organises its groups, not on the job title of the people involved.
+
+  none          - no access and no abilities. Revokes everything.
+  own_only      - access; create, update and delete their own entries; sees only their own.
+  group_member  - own_only, plus sees their groups\' entries (view_groupscope) and can update them (update_group_entries).
+  group_admin   - group_member, plus delete_group_entries, add_proxy_entries, update_entry_ownership, view_private_elements, publish_reports.
+  global_member - own_only, plus sees every entry (view_globalscope) and can update any of them (update_other_entries).
+  global_admin  - global_member, plus delete_other_entries, add_proxy_entries, update_entry_ownership, view_private_elements, publish_reports, publish_globalscope.
+
+No preset includes edit_form or delete_form, which change the form itself rather than its data. Grant those deliberately through the abilities list. No preset can express an arrangement where access and abilities live on different groups, because a preset applies to one group and an access/abilities split necessarily involves multiple groups - use \'grants_access\' and \'abilities\' for those.'
+									],
+									'grants_access' => [
+										'type' => 'boolean',
+										'description' => 'Optional. Whether this group lets its members reach the form, and counts as one of "their groups". Ignored if a preset is given.'
+									],
+									'abilities' => [
+										'type' => 'array',
+										'items' => [
+											'type' => 'string',
+											'enum' => ['add_own_entry', 'update_own_entry', 'delete_own_entry', 'update_group_entries', 'delete_group_entries', 'update_other_entries', 'delete_other_entries', 'view_groupscope', 'view_globalscope', 'add_proxy_entries', 'update_entry_ownership', 'view_private_elements', 'ignore_editing_lock', 'import_data', 'set_notifications_for_others', 'publish_reports', 'publish_globalscope', 'update_other_reports', 'delete_other_reports', 'edit_form', 'delete_form']
+										],
+										'description' => 'Optional. Everything this group can do apart from reaching the form. Replaces the group\'s current abilities, so list everything it should end up with; an empty array removes them all. Ignored if a preset is given.
+
+Editing entries: add_own_entry / update_own_entry / update_group_entries / update_other_entries to change entries made by themselves / by their groups / by anyone.
+Deleting entries: delete_own_entry / delete_group_entries / delete_other_entries to delete entries made by themselves / by their groups / by anyone.
+Seeing entries: their own is always on. view_groupscope for entries made by their groups, view_globalscope for entries made by anyone.
+Saved views: managing their own is always on. publish_reports to publish views for their groups, publish_globalscope for any group, update_other_reports and delete_other_reports to manage views made by other people.
+Other: add_proxy_entries (create entries on behalf of someone else), update_entry_ownership (change the user that an entry belongs to, and thereby which groups it belongs to), view_private_elements (see fields hidden from most users), ignore_editing_lock, import_data, set_notifications_for_others.
+The form itself: edit_form (change the form\'s structure, elements and settings) and delete_form. These are not about entries at all, and deleting a form cannot be undone.'
+									]
+								],
+								'required' => ['group_id']
+							]
+						]
+					],
+					'required' => ['form_id', 'groups']
+				]
+			];
+
 			$this->tools['set_form_permission_inheritance'] = [
 				'name' => 'set_form_permission_inheritance',
 				'description' => 'Make one form take its permissions from another, or stop it doing so. Use get_form_permissions_by_group first to see what each form currently has, because of what follows.
@@ -1230,43 +1265,6 @@ There is no syntax checking when you save, and an error here affects every page 
 					'required' => ['application_id', 'code']
 				]
 			];
-
-			$this->tools['delete_element'] = [
-				'name' => 'delete_element',
-				'description' => 'Permanently delete an element from a form.
-
-**This destroys data and cannot be undone.** Deleting an element drops its column from the form\'s data table, so every value that every entry holds in that element is gone for good. There is no undo, and no backup is taken.
-
-Use this only when the person you are working with has specifically asked for this element to be removed. Do not use it to tidy up a form, to fix a mistake you made while building something, or because an element looks unused - an element with no data today may still be part of how the application works. If the aim is only to stop people seeing or using the element, hide it instead: set its \'display\' property to false with the update tool for that kind of element (ie: update_text_box_element or update_list_element, etc). Setting \'display\' to false takes it out of the form while keeping the data and leaving anything that refers to it still working.
-
-This tool takes two calls. Call it first with just the element, and it will NOT delete anything: it returns a report of what would be lost, along with a confirmation_token. The report covers shows where the element is referenced, and which derived value elements and other code-based parts of the system will break if the element is removed. Show that report to the person you are working with and get their agreement. Then call the tool again with the same element and the confirmation token to carry out the deletion. The token only works for that element, for you, and only for a few minutes.',
-				'inputSchema' => [
-					'type' => 'object',
-					'properties' => [
-						'element_identifier' => [
-							'oneOf' => [
-								[
-									'type' => 'string',
-									'description' => 'Required. The handle of the element to delete. Get handles from the get_form_details tool.'
-								],
-								[
-									'type' => 'integer',
-									'description' => 'Required. The id of the element to delete. Get element ids from the get_form_details tool.'
-								]
-							]
-						],
-						'confirmation_token' => [
-							'type' => 'string',
-							'description' => 'Optional. Leave this out on the first call to receive the impact report and a token. Send the token back on a second call to actually delete the element. Do not send a token unless the person you are working with has seen the impact report and agreed to the deletion.'
-						]
-					],
-					'required' => ['element_identifier']
-				]
-			];
-
-			foreach($this->buildFormElementTools() as $tool) {
-				$this->tools[$tool['name']] = $tool;
-			}
 
 			// Logging tool only available if logging is enabled
 			$config_handler = xoops_gethandler('config');
@@ -4215,12 +4213,6 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 	 */
 	private function get_application_details($arguments) {
 
-		if (!$this->isUserAWebmaster()) {
-			throw new FormulizeMCPException(
-				'Permission denied: Only webmasters can review an application.',
-				'authentication_error',
-			);
-		}
 		$applicationId = intval($arguments['application_id'] ?? 0);
 		if(!$applicationId) {
 			throw new FormulizeMCPException('application_id is required', 'invalid_data');
@@ -4238,11 +4230,12 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 
 		// the forms in the application, with enough about each to decide whether to look closer
 		$forms = [];
+		$limitAppsSQL = $this->getLimitAppsSQLForSession();
 		$formSql = "SELECT f.id_form, f.form_title, f.form_handle,
 				(SELECT COUNT(*) FROM ".$xoopsDB->prefix('formulize_screen')." s WHERE s.fid = f.id_form) AS screen_count
-			FROM ".$xoopsDB->prefix('formulize_application_form_link')." l
-			INNER JOIN ".$xoopsDB->prefix('formulize_id')." f ON f.id_form = l.fid
-			WHERE l.appid = $applicationId ORDER BY f.form_title";
+			FROM ".$xoopsDB->prefix('formulize_application_form_link')." afl
+			INNER JOIN ".$xoopsDB->prefix('formulize_id')." f ON f.id_form = afl.fid
+			WHERE afl.appid = $applicationId $limitAppsSQL ORDER BY f.form_title";
 		if($formResult = $xoopsDB->query($formSql)) {
 			while($formRow = $xoopsDB->fetchArray($formResult)) {
 				if(!security_check($formRow['id_form'])) {
@@ -4255,6 +4248,14 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 					'screen_count' => intval($formRow['screen_count']),
 				];
 			}
+		}
+
+		if(empty($forms)) {
+			throw new FormulizeMCPException(
+				"There are no forms in this application, or you do not have permission to access any of them.",
+				'invalid_data',
+				context: [ 'hint' => 'Did you use the right application id? Use the list_applications tool to see the available applications.' ]
+			);
 		}
 
 		// the menu, which is what most people actually see of an application
@@ -4271,8 +4272,10 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 			'custom_code_present' => $this->applicationCustomCodePresent($applicationId),
 		];
 		$response['about_the_menu'] = $menuItems
-			? 'Each item is shown only to the groups listed against it. An individual user sees the menu items available to all the groups the user is a member of, which could result in all, some, or none of the menu items in a particular application. Different groups might have their own menu items pointing to different screens on the same form. An item that is set as a start page for a group is where members of that group land when they log in.'
-			: 'This application has no menu items, so nothing links to its forms from the site navigation. Its forms are still reachable directly via URL, for anyone whose permissions allow it.';
+			? 'Each item is shown only to the groups listed against it. An individual user sees the menu items available to all the groups the user is a member of, which could result in all, some, or none of the menu items in a particular application. Different groups might have their own menu items pointing to different screens on the same form. An item that is set as a start page for a group is where members of that group land when they log in. A webmaster calling this tool sees every item in the application regardless of groups; anyone else sees only what is actually shown to them.'
+			: ($this->isUserAWebmaster()
+				? 'This application has no menu items, so nothing links to its forms from the site navigation. Its forms are still reachable directly via URL, for anyone whose permissions allow it.'
+				: 'No menu item here is currently visible to you. That may mean the application genuinely has none, or that its items exist but are shown only to groups you are not in, or point to forms you do not have permission on. A webmaster can confirm which.');
 		// An item pointing at a form does not name the screen it opens; Formulize resolves that per user as
 		// they arrive. Worth saying only when such an item is actually present, since otherwise it explains
 		// a case this application does not have.
@@ -4923,13 +4926,6 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 	 */
 	private function list_menu_items($arguments) {
 
-		if (!$this->isUserAWebmaster()) {
-			throw new FormulizeMCPException(
-				'Permission denied: Only webmasters can review the menus in this system.',
-				'authentication_error',
-			);
-		}
-
 		global $xoopsDB;
 		// Validate the filters before running anything, so that "nothing points there" is only ever reported
 		// about a form or screen that actually exists - otherwise a typo in an id reads as a real finding.
@@ -4949,11 +4945,19 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 			}
 		}
 
+		$limitApplicationsSQL = "";
+		if(!$this->isUserAWebmaster()) {
+			$permittedApplications = $this->applications_list();
+			$permittedApplications = isset($permittedApplications['applications']) ? $permittedApplications['applications'] : [];
+			$validApplicationIds = array_filter(array_map('intval', array_column($permittedApplications, 'id')));
+			$limitApplicationsSQL = count($validApplicationIds) > 0 ? "WHERE a.appid IN (".implode(',', $validApplicationIds).")" : "WHERE a.appid = 0"; // no valid applications, so return nothing
+		}
+
 		// Grouped by application rather than returned as one flat list, because an item's application is what
 		// determines where it appears, and a flat list would leave that out.
 		$applications = [];
 		$totalItems = 0;
-		$applicationSql = "SELECT appid, name FROM ".$xoopsDB->prefix('formulize_applications')." ORDER BY name";
+		$applicationSql = "SELECT a.appid, a.name FROM ".$xoopsDB->prefix('formulize_applications')." AS a $limitApplicationsSQL ORDER BY a.name";
 		if($applicationResult = $xoopsDB->query($applicationSql)) {
 			while($applicationRow = $xoopsDB->fetchArray($applicationResult)) {
 				$menuItems = $this->menuItemsForApplication(intval($applicationRow['appid']));
@@ -4990,11 +4994,15 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 			'applications' => $applications,
 			'menu_item_count' => $totalItems,
 		];
-		$response['how_to_read_the_menus'] = 'Every item is shown only to the groups listed against it, so what any one person sees is the items whose groups they belong to, which may be none of them. That means there is no single "the menu" to read: two people can open the same application and be looking at completely different lists. An item that is a start page for a group is where members of that group land when they log in, and the first such item in rank order wins for someone in more than one of those groups.';
+		$response['how_to_read_the_menus'] = 'Every item is shown only to the groups listed against it, so what any one person sees is the items whose groups they belong to, which may be none of them. That means there is no single "the menu" to read: two people can open the same application and be looking at completely different lists. An item that is a start page for a group is where members of that group land when they log in, and the first such item in rank order wins for someone in more than one of those groups. A webmaster calling this tool sees every item in the system regardless of groups; anyone else sees only what is actually shown to them.';
 		if(!$totalItems) {
-			$response['about_the_empty_result'] = ($formId OR $screenId)
-				? 'Nothing in any menu leads there. That is a real answer rather than a missing one: the '.($screenId ? 'screen' : 'form').' exists, and people reach it by a direct link or not at all. Removing or renaming it would break no menu item.'
-				: 'No application in this system has any menu items. Forms are still reachable directly by anyone whose permissions allow it.';
+			$response['about_the_empty_result'] = $this->isUserAWebmaster()
+				? (($formId OR $screenId)
+					? 'Nothing in any menu leads there. That is a real answer rather than a missing one: the '.($screenId ? 'screen' : 'form').' exists, and people reach it by a direct link or not at all. Removing or renaming it would break no menu item.'
+					: 'No application in this system has any menu items. Forms are still reachable directly by anyone whose permissions allow it.')
+				: (($formId OR $screenId)
+					? 'Nothing that leads there is currently visible to you. That may mean nothing genuinely points there, or that the items which do are shown only to groups you are not in, or point to a screen on that form you do not have permission on. A webmaster can confirm which.'
+					: 'No menu item is currently visible to you. That may mean this system genuinely has none, or that its items exist but are shown only to groups you are not in, or point to forms you do not have permission on. A webmaster can confirm which.');
 		}
 		return $response;
 	}
@@ -5004,6 +5012,13 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 	 *
 	 * Shared by get_application_details and list_menu_items so that the two cannot come to describe the
 	 * same menu differently.
+	 *
+	 * For a webmaster this returns every item, same as always - webmasters need the full picture to manage
+	 * the menu, and that is also why the two tools are careful to say this reads what exists rather than
+	 * what any one person sees. For anyone else it is filtered down to the items that person would actually
+	 * see live: the target form has to be one they have permission on (an item can point at a form nobody
+	 * told them about), and the item itself has to be shown to one of their groups (a menu item is only ever
+	 * shown to the groups named against it, regardless of what its target form permissions allow).
 	 *
 	 * @param int $applicationId
 	 * @return array One entry per menu item, in rank order
@@ -5018,6 +5033,16 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 			while($menuRow = $xoopsDB->fetchArray($menuResult)) {
 				$menuItems[] = $this->menuItemFromRow($menuRow);
 			}
+		}
+		if(!$this->isUserAWebmaster()) {
+			$menuItems = array_values(array_filter($menuItems, function($menuItem) {
+				$targetFormId = $menuItem['goes_to']['form_id'] ?? null;
+				if($targetFormId !== null AND !security_check($targetFormId)) {
+					return false;
+				}
+				$shownToGroupIds = array_column($menuItem['shown_to_groups'], 'group_id');
+				return (bool) array_intersect($shownToGroupIds, $this->userGroups);
+			}));
 		}
 		return $menuItems;
 	}

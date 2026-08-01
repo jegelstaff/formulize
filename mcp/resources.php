@@ -1472,17 +1472,26 @@ That makes the template groups the right place to set and change permissions tha
 	}
 
 	/**
-	 * List the applications
+	 * Get SQL for limiting applications based on the forms the user has access to
+	 * application_form_link table must be aliased as afl in the query!
+	 * @return string SQL snippet for limiting applications based on the user's accessible forms, or empty string if the user is a webmaster
 	 */
-	private function applications_list() {
-		$limitAppsSQL = "";
-		$formIds = [];
-		if(!in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
+	private function getLimitAppsSQLForSession() {
+		$limitAppsSQL = '';
+		if($this->isUserAWebmaster() == false) {
 			$formsList = $this->forms_list();
 			$forms = isset($formsList['forms']) ? $formsList['forms'] : [];
 			$formIds = array_column($forms, 'id_form');
-			$limitAppsSQL = 'AND afl.fid IN ('.implode(',', array_filter($formIds, 'is_numeric')).')';
+			$limitAppsSQL = (!is_array($formIds) OR empty($formIds)) ? 'AND afl.fid = 0' : 'AND afl.fid IN ('.implode(',', array_filter($formIds, 'is_numeric')).')';
 		}
+		return $limitAppsSQL;
+	}
+
+	/**
+	 * List the applications
+	 */
+	private function applications_list() {
+		$limitAppsSQL = $this->getLimitAppsSQLForSession();
 		// get the application and form data, in order! Proper order is required for the collection of data below to work
 		$sql = "SELECT a.appid as appid, a.name as `name`, a.description as `desc`, f.id_form as form_id, f.form_title as form_title
 			FROM ".$this->db->prefix("formulize_application_form_link")." AS afl
@@ -1553,18 +1562,25 @@ That makes the template groups the right place to set and change permissions tha
 	/**
 	 * How many menu items each application has, keyed by application id.
 	 *
-	 * Counted in its own query rather than joined into the applications query, because that one joins
+	 * Counted in its own loop rather than joined into the applications query, because that one joins
 	 * applications to forms and so returns a row per form - a menu count joined there would be multiplied by
 	 * the number of forms, and the surrounding loop depends on that query's exact shape and ordering.
+	 *
+	 * Goes through menuItemsForApplication() per application, rather than a single COUNT(*) ... GROUP BY,
+	 * so that the count a webmaster sees agrees with what a webmaster gets back from list_menu_items or
+	 * get_application_details, and the (usually smaller) count anyone else sees agrees with what they get
+	 * back from those same tools - both read the same permission- and group-filtered list this way, at the
+	 * cost of more queries than a single aggregate would take.
 	 *
 	 * @return array appid => number of menu items
 	 */
 	private function menuItemCountsByApplication() {
 		$counts = [];
-		$sql = "SELECT appid, COUNT(*) AS menu_item_count FROM ".$this->db->prefix('formulize_menu_links')." GROUP BY appid";
-		if($result = $this->db->query($sql)) {
+		$appIdSql = "SELECT appid FROM ".$this->db->prefix('formulize_applications');
+		if($result = $this->db->query($appIdSql)) {
 			while($row = $this->db->fetchArray($result)) {
-				$counts[intval($row['appid'])] = intval($row['menu_item_count']);
+				$appId = intval($row['appid']);
+				$counts[$appId] = count($this->menuItemsForApplication($appId));
 			}
 		}
 		return $counts;
