@@ -115,14 +115,15 @@ module Jekyll
       tools = []
       admin_only_tools = []
 
-      # Find the registerTools method
-      register_match = content.match(/private\s+function\s+registerTools\(\)\s*\{(.*?)\n\s*\}/m)
+      # Find the registerTools method body using brace-counting (not a naive
+      # regex) because the method contains nested if/foreach blocks whose own
+      # closing braces would otherwise be mistaken for the method's end,
+      # silently truncating everything declared after them.
+      method_content = extract_balanced_method_body(content, 'registerTools')
 
-      unless register_match
+      unless method_content
         return { 'items' => [], 'error' => 'registerTools method not found' }
       end
-
-      method_content = register_match[1]
 
       # Extract the main tools array assignment
       array_match = method_content.match(/\$this->tools\s*=\s*\[(.*?)\];/m)
@@ -190,134 +191,19 @@ module Jekyll
         }
 
 
-      # Extract admin-only tools
+      # Extract admin-only tools, walking the remaining source in document
+      # order. The create/update element tools are generated at runtime by
+      # buildFormElementTools() and can't be read as static text (the PHP
+      # assigns them via `$this->tools[$tool['name']] = $tool;` inside a
+      # foreach loop, not a literal quoted key), so they are spliced in at
+      # the point that call actually occurs instead of always being appended
+      # at the end. That keeps their position correct if the surrounding
+      # tools get reordered, and keeps every tool declared after that point
+      # from being dropped.
       main_array_end = array_match.end(0)
       remaining_content = method_content[main_array_end..-1]
 
-      admin_tool_matches = remaining_content.scan(/\$this->tools\['([^']+)'\]\s*=\s*\[(.*?)\];/m)
-
-      admin_tool_matches.each do |tool_name, tool_config|
-        description = extract_description(tool_config)
-        description = description.gsub(/\{\$dbVersionData\['version'\]\}/, 'MariaDB/MySQL')
-
-        tool_type = tool_name == 'read_system_activity_log' ? 'admin_conditional' : 'admin_only'
-
-        admin_only_tools << {
-          'name' => tool_name,
-          'description' => description,
-          'type' => tool_type,
-          'category' => 'tool'
-        }
-      end
-
-			admin_only_tools << {
-				'name' => 'create_text_box_element',
-				'description' => 'Create a new text box element (field) in a specified form.',
-				'type' => 'admin_only',
-				'category' => 'tool'
-			}
-    	admin_only_tools << {
-				'name' => 'create_list_element',
-      	'description' => 'Create a new list element (field) in a specified form.',
-				'type' => 'admin_only',
-				'category' => 'tool'
-			}
-    	admin_only_tools << {
-				'name' => 'create_linked_list_element',
-				'description' => 'Create a new list element (field) in a specified form, with options linked to entries in another form.',
-				'type' => 'admin_only',
-				'category' => 'tool'
-			}
-    	admin_only_tools << {
-				'name' => 'create_user_list_element',
-				'description' => 'Create a new list element (field) in a specified form, with options based on user accounts in the system.',
-				'type' => 'admin_only',
-				'category' => 'tool'
-			}
-    	admin_only_tools << {
-				'name' => 'create_selector_element',
-      	'description' => 'Create a new selector element (field) in a specified form, such as date selector, time selector, etc.',
-				'type' => 'admin_only',
-				'category' => 'tool'
-			}
-			admin_only_tools << {
-				'name' => 'create_derived_value_element',
-      	'description' => 'Create a new derived value element (field) in a specified form, where the value will be based on the values of other elements in the entry.',
-				'type' => 'admin_only',
-				'category' => 'tool'
-			}
-			admin_only_tools << {
-				'name' => 'create_table_of_elements',
-      	'description' => 'Create a new table of elements in a specified form, which will allow related elements to be laid out together.',
-				'type' => 'admin_only',
-				'category' => 'tool'
-			}
-			admin_only_tools << {
-				'name' => 'create_static_content_element',
-      	'description' => 'Create a new static content element in a specified form, which shows information to users but is not editable',
-				'type' => 'admin_only',
-				'category' => 'tool'
-			}
-    	admin_only_tools << {
-				'name' => 'create_subform_interface',
-				'description' => 'Create a new subform interface in a specified form, for displaying entries in a connected form.',
-				'type' => 'admin_only',
-				'category' => 'tool'
-			}
-    	admin_only_tools << {
-				'name' => 'update_text_box_element',
-				'description' => 'Update an existing text box element (field) in a specified form.',
-				'type' => 'admin_only',
-				'category' => 'tool'
-			}
-    	admin_only_tools << {
-				'name' => 'update_list_element',
-				'description' => 'Update an existing list element (field) in a specified form.',
-				'type' => 'admin_only',
-				'category' => 'tool'
-			}
-    	admin_only_tools << {
-				'name' => 'update_linked_list_element',
-				'description' => 'Update an existing linked list element (field) in a specified form, with options linked to entries in another form.',
-				'type' => 'admin_only',
-				'category' => 'tool'
-			}
-    	admin_only_tools << {
-				'name' => 'update_user_list_element',
-				'description' => 'Update an existing user list element (field) in a specified form, with options based on user accounts in the system.',
-				'type' => 'admin_only',
-				'category' => 'tool'
-			}
-    	admin_only_tools << {
-				'name' => 'update_selector_element',
-				'description' => 'Update an existing selector element (field) in a specified form, such as date selector, time selector, etc.',
-				'type' => 'admin_only',
-				'category' => 'tool'
-			}
-			admin_only_tools << {
-				'name' => 'update_derived_value_element',
-      	'description' => 'Update an existing derived value element (field) in a specified form, where the value is based on the values of other elements in the entry.',
-				'type' => 'admin_only',
-				'category' => 'tool'
-			}
-			admin_only_tools << {
-				'name' => 'update_table_of_elements',
-      	'description' => 'Update an existing table of elements in a specified form, which allows related elements to be laid out together.',
-				'type' => 'admin_only',
-				'category' => 'tool'
-			}
-			admin_only_tools << {
-				'name' => 'update_static_content_element',
-      	'description' => 'Update an existing static content element in a specified form, which shows information to users but is not editable',
-				'type' => 'admin_only',
-				'category' => 'tool'
-			}
-    	admin_only_tools << {
-				'name' => 'update_subform_interface',
-      	'description' => 'Update an existing subform interface in a specified form, for displaying entries in a connected form.',
-				'type' => 'admin_only',
-				'category' => 'tool'
-			}
+      admin_only_tools = extract_admin_tools_in_order(remaining_content)
 
       all_tools = (tools + admin_only_tools)
 
@@ -331,17 +217,176 @@ module Jekyll
       }
     end
 
+    # Scans the PHP source after the main tools array for individual
+    # `$this->tools['name'] = [...];` assignments (bracket-counted, so nested
+    # arrays inside a tool's config don't confuse it), in the order they
+    # appear. When it reaches the `buildFormElementTools()` call - the point
+    # where the real PHP dynamically adds the create/update element tools -
+    # it splices in the hardcoded placeholders for those tools right there,
+    # then keeps scanning for whatever is declared afterward.
+    def extract_admin_tools_in_order(remaining_content)
+      admin_only_tools = []
+      current_pos = 0
+      element_tools_inserted = false
+
+      loop do
+        assign_match = remaining_content.match(/\$this->tools\['([^']+)'\]\s*=\s*\[/, current_pos)
+        dynamic_match = remaining_content.match(/\$this->buildFormElementTools\(\)/, current_pos)
+
+        assign_pos = assign_match && assign_match.begin(0)
+        dynamic_pos = dynamic_match && dynamic_match.begin(0)
+
+        break if assign_pos.nil? && dynamic_pos.nil?
+
+        if dynamic_pos && (assign_pos.nil? || dynamic_pos <= assign_pos)
+          admin_only_tools.concat(dynamic_element_tool_placeholders) unless element_tools_inserted
+          element_tools_inserted = true
+          current_pos = dynamic_match.end(0)
+          next
+        end
+
+        tool_name = assign_match[1]
+        config_start = assign_match.end(0) - 1  # Position of opening [
+
+        bracket_count = 0
+        config_end = config_start
+
+        (config_start...remaining_content.length).each do |i|
+          char = remaining_content[i]
+          if char == '['
+            bracket_count += 1
+          elsif char == ']'
+            bracket_count -= 1
+            if bracket_count == 0
+              config_end = i
+              break
+            end
+          end
+        end
+
+        tool_config = remaining_content[config_start + 1...config_end]
+        description = extract_description(tool_config)
+        description = description.gsub(/\{\$dbVersionData\['version'\]\}/, 'MariaDB/MySQL')
+
+        tool_type = tool_name == 'read_system_activity_log' ? 'admin_conditional' : 'admin_only'
+
+        admin_only_tools << {
+          'name' => tool_name,
+          'description' => description,
+          'type' => tool_type,
+          'category' => 'tool'
+        }
+
+        current_pos = config_end + 1
+      end
+
+      # Safety net: if buildFormElementTools() is ever renamed so the marker
+      # above stops matching, still include the element tools rather than
+      # silently dropping them from the docs.
+      admin_only_tools.concat(dynamic_element_tool_placeholders) unless element_tools_inserted
+
+      admin_only_tools
+    end
+
+    # Placeholders for the create/update element tools, which the PHP builds
+    # dynamically at runtime (one pair per element category, via
+    # buildFormElementTools()) rather than declaring as static text that this
+    # extractor could read directly.
+    def dynamic_element_tool_placeholders
+      [
+        { 'name' => 'create_text_box_element', 'description' => 'Create a new text box element (field) in a specified form.', 'type' => 'admin_only', 'category' => 'tool' },
+        { 'name' => 'create_list_element', 'description' => 'Create a new list element (field) in a specified form.', 'type' => 'admin_only', 'category' => 'tool' },
+        { 'name' => 'create_linked_list_element', 'description' => 'Create a new list element (field) in a specified form, with options linked to entries in another form.', 'type' => 'admin_only', 'category' => 'tool' },
+        { 'name' => 'create_user_list_element', 'description' => 'Create a new list element (field) in a specified form, with options based on user accounts in the system.', 'type' => 'admin_only', 'category' => 'tool' },
+        { 'name' => 'create_selector_element', 'description' => 'Create a new selector element (field) in a specified form, such as date selector, time selector, etc.', 'type' => 'admin_only', 'category' => 'tool' },
+        { 'name' => 'create_derived_value_element', 'description' => 'Create a new derived value element (field) in a specified form, where the value will be based on the values of other elements in the entry.', 'type' => 'admin_only', 'category' => 'tool' },
+        { 'name' => 'create_table_of_elements', 'description' => 'Create a new table of elements in a specified form, which will allow related elements to be laid out together.', 'type' => 'admin_only', 'category' => 'tool' },
+        { 'name' => 'create_static_content_element', 'description' => 'Create a new static content element in a specified form, which shows information to users but is not editable', 'type' => 'admin_only', 'category' => 'tool' },
+        { 'name' => 'create_subform_interface', 'description' => 'Create a new subform interface in a specified form, for displaying entries in a connected form.', 'type' => 'admin_only', 'category' => 'tool' },
+        { 'name' => 'update_text_box_element', 'description' => 'Update an existing text box element (field) in a specified form.', 'type' => 'admin_only', 'category' => 'tool' },
+        { 'name' => 'update_list_element', 'description' => 'Update an existing list element (field) in a specified form.', 'type' => 'admin_only', 'category' => 'tool' },
+        { 'name' => 'update_linked_list_element', 'description' => 'Update an existing linked list element (field) in a specified form, with options linked to entries in another form.', 'type' => 'admin_only', 'category' => 'tool' },
+        { 'name' => 'update_user_list_element', 'description' => 'Update an existing user list element (field) in a specified form, with options based on user accounts in the system.', 'type' => 'admin_only', 'category' => 'tool' },
+        { 'name' => 'update_selector_element', 'description' => 'Update an existing selector element (field) in a specified form, such as date selector, time selector, etc.', 'type' => 'admin_only', 'category' => 'tool' },
+        { 'name' => 'update_derived_value_element', 'description' => 'Update an existing derived value element (field) in a specified form, where the value is based on the values of other elements in the entry.', 'type' => 'admin_only', 'category' => 'tool' },
+        { 'name' => 'update_table_of_elements', 'description' => 'Update an existing table of elements in a specified form, which allows related elements to be laid out together.', 'type' => 'admin_only', 'category' => 'tool' },
+        { 'name' => 'update_static_content_element', 'description' => 'Update an existing static content element in a specified form, which shows information to users but is not editable', 'type' => 'admin_only', 'category' => 'tool' },
+        { 'name' => 'update_subform_interface', 'description' => 'Update an existing subform interface in a specified form, for displaying entries in a connected form.', 'type' => 'admin_only', 'category' => 'tool' }
+      ]
+    end
+
+    # Finds a `private function <method_name>() { ... }` body using
+    # brace-counting rather than a lazy regex. A regex like
+    # `\{(.*?)\n\s*\}` stops at the FIRST closing brace on its own line,
+    # which is very likely to be a nested if/foreach block inside the
+    # method rather than the method's own end - silently truncating
+    # everything declared after it. Quotes are tracked so that braces
+    # embedded in strings (eg PHP interpolation like "{$var}") don't throw
+    # off the count.
+    def extract_balanced_method_body(content, method_name)
+      start_match = content.match(/private\s+function\s+#{Regexp.escape(method_name)}\s*\(\)\s*\{/)
+      return nil unless start_match
+
+      open_brace_pos = start_match.end(0) - 1
+      close_brace_pos = find_matching_brace(content, open_brace_pos)
+      return nil unless close_brace_pos
+
+      content[(open_brace_pos + 1)...close_brace_pos]
+    end
+
+    # Returns the index of the '}' that closes the '{' at open_brace_pos.
+    def find_matching_brace(content, open_brace_pos)
+      depth = 0
+      in_single = false
+      in_double = false
+      escaped = false
+
+      (open_brace_pos...content.length).each do |i|
+        char = content[i]
+
+        if escaped
+          escaped = false
+          next
+        end
+
+        if char == '\\' && (in_single || in_double)
+          escaped = true
+          next
+        end
+
+        if char == "'" && !in_double
+          in_single = !in_single
+          next
+        end
+
+        if char == '"' && !in_single
+          in_double = !in_double
+          next
+        end
+
+        next if in_single || in_double
+
+        if char == '{'
+          depth += 1
+        elsif char == '}'
+          depth -= 1
+          return i if depth == 0
+        end
+      end
+
+      nil
+    end
+
     def extract_resources_from_php(content)
       resources = []
 
-      # Find the registerResources method
-      register_match = content.match(/private\s+function\s+registerResources\(\)\s*\{(.*?)\n\s*\}/m)
+      # Find the registerResources method body (brace-counted; see comment on
+      # extract_balanced_method_body for why a lazy regex isn't safe here)
+      method_content = extract_balanced_method_body(content, 'registerResources')
 
-      unless register_match
+      unless method_content
         return { 'items' => [], 'error' => 'registerResources method not found' }
       end
-
-      method_content = register_match[1]
 
       # Extract direct assignments to $this->resources
       resource_pattern = /\$this->resources\['([^']+)'\]\s*=\s*\[(.*?)\];/m
@@ -404,14 +449,13 @@ module Jekyll
 			prompts = []
 			admin_prompts = []
 
-			# Find the registerPrompts method
-			register_match = content.match(/private\s+function\s+registerPrompts\(\)\s*\{(.*?)\n\s*\}/m)
+			# Find the registerPrompts method body (brace-counted; see comment on
+			# extract_balanced_method_body for why a lazy regex isn't safe here)
+			method_content = extract_balanced_method_body(content, 'registerPrompts')
 
-			unless register_match
+			unless method_content
 				return { 'items' => [], 'error' => 'registerPrompts method not found' }
 			end
-
-			method_content = register_match[1]
 
 			# Extract the main prompts array assignment
 			array_match = method_content.match(/\$this->prompts\s*=\s*\[(.*?)\];/m)
