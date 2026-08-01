@@ -35,31 +35,32 @@ module Jekyll
       Jekyll.logger.info "MCP extractor", "Found MCP directory at: #{mcp_dir}"
 
       begin
-        # Extract all MCP items
+        # Extract MCP items. Tools are NOT handled here - they're generated
+        # from docs/_data/mcp_tools.json (a real dump of registerTools()'s
+        # output, produced by mcp/dump_tools_for_docs.php) by
+        # docs/_plugins/mcp_tool_pages.rb instead, because most tool schemas
+        # are assembled at runtime from PHP variables/function calls that
+        # can't be reconstructed by scraping the source text. Resources and
+        # prompts don't have that problem (their schemas are static text), so
+        # they stay on this scraper.
         all_items = {
-          'tools' => extract_from_file(File.join(mcp_dir, 'tools.php'), 'tools'),
           'resources' => extract_from_file(File.join(mcp_dir, 'resources.php'), 'resources'),
           'prompts' => extract_from_file(File.join(mcp_dir, 'prompts.php'), 'prompts')
         }
 
         # Calculate totals
-        tools_data = all_items['tools']
         resources_data = all_items['resources']
         prompts_data = all_items['prompts']
 
         # Combine all data
         combined_data = {
-          'tools' => tools_data['items'] || [],
           'resources' => resources_data['items'] || [],
           'prompts' => prompts_data['items'] || [],
-          'tools_standard' => tools_data['standard_items'] || [],
-          'tools_admin' => tools_data['admin_items'] || [],
           'resources_standard' => resources_data['standard_items'] || [],
           'resources_admin' => resources_data['admin_items'] || [],
           'prompts_standard' => prompts_data['standard_items'] || [],
           'prompts_admin' => prompts_data['admin_items'] || [],
-          'total_count' => (tools_data['total_count'] || 0) + (resources_data['total_count'] || 0) + (prompts_data['total_count'] || 0),
-          'tools_count' => tools_data['total_count'] || 0,
+          'total_count' => (resources_data['total_count'] || 0) + (prompts_data['total_count'] || 0),
           'resources_count' => resources_data['total_count'] || 0,
           'prompts_count' => prompts_data['total_count'] || 0,
           'extracted_at' => Time.now.strftime('%Y-%m-%d %H:%M:%S %Z'),
@@ -67,7 +68,6 @@ module Jekyll
           'debug_info' => {
             'jekyll_source' => site.source,
             'mcp_directory' => mcp_dir,
-            'tools_file_size' => File.exist?(File.join(mcp_dir, 'tools.php')) ? File.size(File.join(mcp_dir, 'tools.php')) : 0,
             'resources_file_size' => File.exist?(File.join(mcp_dir, 'resources.php')) ? File.size(File.join(mcp_dir, 'resources.php')) : 0,
             'prompts_file_size' => File.exist?(File.join(mcp_dir, 'prompts.php')) ? File.size(File.join(mcp_dir, 'prompts.php')) : 0
           }
@@ -75,7 +75,6 @@ module Jekyll
 
         # Add any errors
         errors = []
-        errors << tools_data['error'] if tools_data['error']
         errors << resources_data['error'] if resources_data['error']
         errors << prompts_data['error'] if prompts_data['error']
         combined_data['errors'] = errors unless errors.empty?
@@ -83,7 +82,7 @@ module Jekyll
         # Store in Jekyll's data for use in templates
         site.data['mcp_items'] = combined_data
 
-        Jekyll.logger.info "MCP extractor", "Extracted #{combined_data['total_count']} MCP items (#{combined_data['tools_count']} tools, #{combined_data['resources_count']} resources, #{combined_data['prompts_count']} prompts)"
+        Jekyll.logger.info "MCP extractor", "Extracted #{combined_data['total_count']} MCP items (#{combined_data['resources_count']} resources, #{combined_data['prompts_count']} prompts)"
       rescue => e
         Jekyll.logger.error "MCP extractor", "Error processing MCP files: #{e.message}"
         site.data['mcp_items'] = { 'error' => e.message }
@@ -100,8 +99,6 @@ module Jekyll
       content = File.read(file_path, encoding: 'UTF-8')
 
       case item_type
-      when 'tools'
-        extract_tools_from_php(content)
       when 'resources'
         extract_resources_from_php(content)
       when 'prompts'
@@ -109,210 +106,6 @@ module Jekyll
       else
         { 'items' => [], 'error' => "Unknown item type: #{item_type}" }
       end
-    end
-
-    def extract_tools_from_php(content)
-      tools = []
-      admin_only_tools = []
-
-      # Find the registerTools method body using brace-counting (not a naive
-      # regex) because the method contains nested if/foreach blocks whose own
-      # closing braces would otherwise be mistaken for the method's end,
-      # silently truncating everything declared after them.
-      method_content = extract_balanced_method_body(content, 'registerTools')
-
-      unless method_content
-        return { 'items' => [], 'error' => 'registerTools method not found' }
-      end
-
-      # Extract the main tools array assignment
-      array_match = method_content.match(/\$this->tools\s*=\s*\[(.*?)\];/m)
-
-      unless array_match
-        return { 'items' => [], 'error' => 'tools array assignment not found' }
-      end
-
-      array_content = array_match[1]
-			skip_tools = ['dynamic_server_name', 'locate_captain_picard', 'open_the_pod_bay_doors_hal', 'lets_play_global_thermonuclear_war']
-			# Replace the tool_pattern scanning with bracket-counting approach
-			current_pos = 0
-			while current_pos < array_content.length
-				# Find next tool definition
-				tool_match = array_content.match(/(?:'([^']+)'|\$this->mcpRequest\['localServerName'\])\s*=>\s*\[/, current_pos)
-				break unless tool_match
-
-				tool_name = tool_match[1] || "dynamic_server_name"
-				config_start = tool_match.end(0) - 1  # Position of opening [
-
-				# Count brackets to find the matching closing bracket
-				bracket_count = 0
-				config_end = config_start
-
-				(config_start...array_content.length).each do |i|
-					char = array_content[i]
-					if char == '['
-						bracket_count += 1
-					elsif char == ']'
-						bracket_count -= 1
-						if bracket_count == 0
-							config_end = i
-							break
-						end
-					end
-				end
-
-				# Extract the complete tool configuration
-				tool_config = array_content[config_start + 1...config_end]
-				description = extract_description(tool_config)
-
-				if !skip_tools.include?(tool_name)
-					tools << {
-						'name' => tool_name,
-						'description' => description,
-						'type' => 'standard',
-						'category' => 'tool'
-					}
-				end
-
-				current_pos = config_end + 1
-			end
-
-			tools << {
-          'name' => 'cache_stats',
-          'description' => 'The local MCP server caches information to reduce network traffic and the load on the Formulize system. Use this tool to see the status of the cache.',
-          'type' => 'standard',
-          'category' => 'tool'
-        }
-			tools << {
-          'name' => 'cache_refresh',
-          'description' => 'The local MCP server caches information to reduce network traffic and the load on the Formulize system. Use this tool to clear the cache.',
-          'type' => 'standard',
-          'category' => 'tool'
-        }
-
-
-      # Extract admin-only tools, walking the remaining source in document
-      # order. The create/update element tools are generated at runtime by
-      # buildFormElementTools() and can't be read as static text (the PHP
-      # assigns them via `$this->tools[$tool['name']] = $tool;` inside a
-      # foreach loop, not a literal quoted key), so they are spliced in at
-      # the point that call actually occurs instead of always being appended
-      # at the end. That keeps their position correct if the surrounding
-      # tools get reordered, and keeps every tool declared after that point
-      # from being dropped.
-      main_array_end = array_match.end(0)
-      remaining_content = method_content[main_array_end..-1]
-
-      admin_only_tools = extract_admin_tools_in_order(remaining_content)
-
-      all_tools = (tools + admin_only_tools)
-
-      {
-        'items' => all_tools,
-        'standard_items' => tools,
-        'admin_items' => admin_only_tools,
-        'total_count' => all_tools.length,
-        'standard_count' => tools.length,
-        'admin_count' => admin_only_tools.length
-      }
-    end
-
-    # Scans the PHP source after the main tools array for individual
-    # `$this->tools['name'] = [...];` assignments (bracket-counted, so nested
-    # arrays inside a tool's config don't confuse it), in the order they
-    # appear. When it reaches the `buildFormElementTools()` call - the point
-    # where the real PHP dynamically adds the create/update element tools -
-    # it splices in the hardcoded placeholders for those tools right there,
-    # then keeps scanning for whatever is declared afterward.
-    def extract_admin_tools_in_order(remaining_content)
-      admin_only_tools = []
-      current_pos = 0
-      element_tools_inserted = false
-
-      loop do
-        assign_match = remaining_content.match(/\$this->tools\['([^']+)'\]\s*=\s*\[/, current_pos)
-        dynamic_match = remaining_content.match(/\$this->buildFormElementTools\(\)/, current_pos)
-
-        assign_pos = assign_match && assign_match.begin(0)
-        dynamic_pos = dynamic_match && dynamic_match.begin(0)
-
-        break if assign_pos.nil? && dynamic_pos.nil?
-
-        if dynamic_pos && (assign_pos.nil? || dynamic_pos <= assign_pos)
-          admin_only_tools.concat(dynamic_element_tool_placeholders) unless element_tools_inserted
-          element_tools_inserted = true
-          current_pos = dynamic_match.end(0)
-          next
-        end
-
-        tool_name = assign_match[1]
-        config_start = assign_match.end(0) - 1  # Position of opening [
-
-        bracket_count = 0
-        config_end = config_start
-
-        (config_start...remaining_content.length).each do |i|
-          char = remaining_content[i]
-          if char == '['
-            bracket_count += 1
-          elsif char == ']'
-            bracket_count -= 1
-            if bracket_count == 0
-              config_end = i
-              break
-            end
-          end
-        end
-
-        tool_config = remaining_content[config_start + 1...config_end]
-        description = extract_description(tool_config)
-        description = description.gsub(/\{\$dbVersionData\['version'\]\}/, 'MariaDB/MySQL')
-
-        tool_type = tool_name == 'read_system_activity_log' ? 'admin_conditional' : 'admin_only'
-
-        admin_only_tools << {
-          'name' => tool_name,
-          'description' => description,
-          'type' => tool_type,
-          'category' => 'tool'
-        }
-
-        current_pos = config_end + 1
-      end
-
-      # Safety net: if buildFormElementTools() is ever renamed so the marker
-      # above stops matching, still include the element tools rather than
-      # silently dropping them from the docs.
-      admin_only_tools.concat(dynamic_element_tool_placeholders) unless element_tools_inserted
-
-      admin_only_tools
-    end
-
-    # Placeholders for the create/update element tools, which the PHP builds
-    # dynamically at runtime (one pair per element category, via
-    # buildFormElementTools()) rather than declaring as static text that this
-    # extractor could read directly.
-    def dynamic_element_tool_placeholders
-      [
-        { 'name' => 'create_text_box_element', 'description' => 'Create a new text box element (field) in a specified form.', 'type' => 'admin_only', 'category' => 'tool' },
-        { 'name' => 'create_list_element', 'description' => 'Create a new list element (field) in a specified form.', 'type' => 'admin_only', 'category' => 'tool' },
-        { 'name' => 'create_linked_list_element', 'description' => 'Create a new list element (field) in a specified form, with options linked to entries in another form.', 'type' => 'admin_only', 'category' => 'tool' },
-        { 'name' => 'create_user_list_element', 'description' => 'Create a new list element (field) in a specified form, with options based on user accounts in the system.', 'type' => 'admin_only', 'category' => 'tool' },
-        { 'name' => 'create_selector_element', 'description' => 'Create a new selector element (field) in a specified form, such as date selector, time selector, etc.', 'type' => 'admin_only', 'category' => 'tool' },
-        { 'name' => 'create_derived_value_element', 'description' => 'Create a new derived value element (field) in a specified form, where the value will be based on the values of other elements in the entry.', 'type' => 'admin_only', 'category' => 'tool' },
-        { 'name' => 'create_table_of_elements', 'description' => 'Create a new table of elements in a specified form, which will allow related elements to be laid out together.', 'type' => 'admin_only', 'category' => 'tool' },
-        { 'name' => 'create_static_content_element', 'description' => 'Create a new static content element in a specified form, which shows information to users but is not editable', 'type' => 'admin_only', 'category' => 'tool' },
-        { 'name' => 'create_subform_interface', 'description' => 'Create a new subform interface in a specified form, for displaying entries in a connected form.', 'type' => 'admin_only', 'category' => 'tool' },
-        { 'name' => 'update_text_box_element', 'description' => 'Update an existing text box element (field) in a specified form.', 'type' => 'admin_only', 'category' => 'tool' },
-        { 'name' => 'update_list_element', 'description' => 'Update an existing list element (field) in a specified form.', 'type' => 'admin_only', 'category' => 'tool' },
-        { 'name' => 'update_linked_list_element', 'description' => 'Update an existing linked list element (field) in a specified form, with options linked to entries in another form.', 'type' => 'admin_only', 'category' => 'tool' },
-        { 'name' => 'update_user_list_element', 'description' => 'Update an existing user list element (field) in a specified form, with options based on user accounts in the system.', 'type' => 'admin_only', 'category' => 'tool' },
-        { 'name' => 'update_selector_element', 'description' => 'Update an existing selector element (field) in a specified form, such as date selector, time selector, etc.', 'type' => 'admin_only', 'category' => 'tool' },
-        { 'name' => 'update_derived_value_element', 'description' => 'Update an existing derived value element (field) in a specified form, where the value is based on the values of other elements in the entry.', 'type' => 'admin_only', 'category' => 'tool' },
-        { 'name' => 'update_table_of_elements', 'description' => 'Update an existing table of elements in a specified form, which allows related elements to be laid out together.', 'type' => 'admin_only', 'category' => 'tool' },
-        { 'name' => 'update_static_content_element', 'description' => 'Update an existing static content element in a specified form, which shows information to users but is not editable', 'type' => 'admin_only', 'category' => 'tool' },
-        { 'name' => 'update_subform_interface', 'description' => 'Update an existing subform interface in a specified form, for displaying entries in a connected form.', 'type' => 'admin_only', 'category' => 'tool' }
-      ]
     end
 
     # Finds a `private function <method_name>() { ... }` body using
@@ -541,35 +334,6 @@ module Jekyll
 				'standard_count' => prompts.length,
 				'admin_count' => admin_prompts.length
 			}
-		end
-
-		def extract_description(config)
-			# Try standard format first
-			description_match = config.match(/'description'\s*=>\s*'([\s\S]*?)',/m)
-
-			# If that doesn't work, try the newline format
-			if !description_match
-				description_match = config.match(/'description'\s*=>\s*\n'([\s\S]*?)',/m)
-			end
-
-			# If still no match, try quoted format
-			if !description_match
-				description_match = config.match(/'description'\s*=>\s*"([\s\S]*?)",/m)
-			end
-
-			description = description_match ? description_match[1] : ''
-			description = description.gsub(/\\'/, "'").gsub(/\\"/, '"')
-
-			# Split on blank lines and take only the first part BEFORE cleaning whitespace
-			if description.include?("\n\n")
-				description_parts = description.split("\n\n")
-				description = description_parts[0] || description
-			end
-
-			# Clean up whitespace AFTER splitting
-			description = description.gsub(/\n\s*/, ' ').strip
-
-			return description
 		end
 
     def extract_field_value(config, field_name)

@@ -143,6 +143,9 @@ h4 {
 code, pre {
 	font-size: 9pt;
 }
+h1 code {
+	font-size: 1em;
+}
 
 @media print, screen and (max-width: 1024px) {
 	div.hero {

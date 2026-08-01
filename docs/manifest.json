@@ -34,7 +34,7 @@ layout: null
       }
     }
   },
-  "tools": [{% for tool in site.data.mcp_items.tools %}
+  "tools": [{% for tool in site.data.mcp_tools_list.all %}
 		{
 			"name": {{ tool.name | jsonify }},
 			"description": {{ tool.description | jsonify }}

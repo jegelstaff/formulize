@@ -60,7 +60,7 @@ class formulizeTimeElement extends formulizeElement {
 "**Element:** Time Selector (time)
 **Description:** A time selector, the user interface is provided by the browser.
 **Properties:**
-- - defaultValue (string, a time in 24H format including colon, or '{NOW}' to show the current time, or '{NOW+60}' for an offset in minutes from the current time.)
+- defaultValue (string, a time in 24H format including colon, or '{NOW}' to show the current time, or '{NOW+60}' for an offset in minutes from the current time.)
 **Examples:**
 - A time selector that defaults to the current time: { defaultValue: \"{NOW}\" }
 - A time selector that defaults to 7pm: { defaultValue: \"19:00\" }

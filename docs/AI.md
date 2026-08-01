@@ -126,7 +126,7 @@ _Resources are only available when using an external AI assistant via MCP_
 Prompts are activated by you, the user. Not all AI assistants support prompts, and how you access them varies from assistant to assistant.\
 _Prompts are only available when using an external AI assistant via MCP_
 
-[Complete Formulize AI Reference](../ai/mcp-reference/) - Descriptions of all {{ site.data.mcp_items.total_count }} tools, resources, and prompts available in Formulize.
+[Complete Formulize AI Reference](../ai/mcp-reference/) - Descriptions of all {{ site.data.mcp_items.total_count | plus: site.data.mcp_tools_list.all.size }} tools, resources, and prompts available in Formulize.
 
 #### More about prompts
 

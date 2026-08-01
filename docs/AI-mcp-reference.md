@@ -43,8 +43,8 @@ This page provides a comprehensive reference for all available MCP (Model Contex
 
 ## Summary
 
-- **Total MCP Items:** {{ site.data.mcp_items.total_count }}
-- **Tools:** {{ site.data.mcp_items.tools_count }}
+- **Total MCP Items:** {{ site.data.mcp_items.total_count | plus: site.data.mcp_tools_list.all.size }}
+- **Tools:** {{ site.data.mcp_tools_list.all.size }}
 - **Resources:** {{ site.data.mcp_items.resources_count }}
 - **Prompts:** {{ site.data.mcp_items.prompts_count }}
 
@@ -52,24 +52,22 @@ This page provides a comprehensive reference for all available MCP (Model Contex
 
 ## Available Tools
 
-Tools are functions that AI assistants can call to perform actions in Formulize.
+Tools are functions that AI assistants can call to perform actions in Formulize. Click a tool for its full description and properties.
 
-### Standard Tools ({{ site.data.mcp_items.tools_standard.size }})
+### Standard Tools ({{ site.data.mcp_tools_list.standard.size }})
 
 These tools are available to all authenticated users:
 
-{% for tool in site.data.mcp_items.tools_standard %}
-#### {{ tool.name }}
-{{ tool.description }}
+{% for tool in site.data.mcp_tools_list.standard %}
+- [{{ tool.name }}]({{ tool.url | relative_url }})
 {% endfor %}
 
-### Admin-Only Tools ({{ site.data.mcp_items.tools_admin.size }})
+### Admin-Only Tools ({{ site.data.mcp_tools_list.admin.size }})
 
 These tools are only available to webmaster users:
 
-{% for tool in site.data.mcp_items.tools_admin %}
-#### {{ tool.name }}
-{{ tool.description }}
+{% for tool in site.data.mcp_tools_list.admin %}
+- [{{ tool.name }}]({{ tool.url | relative_url }})
 {% endfor %}
 
 ---

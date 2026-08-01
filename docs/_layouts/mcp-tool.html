@@ -1,0 +1,40 @@
+---
+layout: default
+---
+
+<h1><code>{{ page.tool.name }}</code></h1>
+
+<p><em>{{ page.tool.visibility | replace: '_', '-' | capitalize }} MCP tool.</em></p>
+
+<div class="mcp-tool-description">
+{{ page.tool.description_html }}
+</div>
+
+{% if page.tool.properties_table.size > 0 %}
+<h2>Properties</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th>Type</th>
+      <th>Required?</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in page.tool.properties_table %}
+    <tr>
+      <td style="vertical-align: top; padding-left: {{ row.depth | times: 1.5 | plus: 0.5 }}em">{{ row.name }}</td>
+      <td style="vertical-align: top">{{ row.type_label }}</td>
+      <td style="vertical-align: top">{% if row.required %}Required{% else %}Optional{% endif %}</td>
+      <td style="vertical-align: top">{{ row.description_html }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p><em>This tool takes no arguments.</em></p>
+{% endif %}
+
+<p><a href="{{ '/ai/mcp-reference/' | relative_url }}">&larr; Back to the MCP reference</a></p>

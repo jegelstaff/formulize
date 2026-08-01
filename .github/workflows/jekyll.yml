@@ -106,6 +106,95 @@ jobs:
               {key: "v90",  version: "9.0", milestone: $ms7[0],  open: $open7[0],  done: $done7[0]},
               {key: "v91",  version: "9.1", milestone: $ms10[0], open: $open10[0], done: $done10[0]}
             ]' > "$DATADIR/roadmap_issues.json"
+      - name: Set file/directory permissions
+        working-directory: /home/runner/work/formulize/formulize
+        run: |
+          chmod 777 trust uploads modules templates_c cache themes tokens logs modules/formulize/cache modules/formulize/code modules/formulize/export modules/formulize/language/english/mail_template modules/formulize/queue modules/formulize/temp modules/formulize/templates/screens modules/formulize/upload mainfile.php ~/work/formulize/formulize
+      - name: Stop existing containers (if any)
+        working-directory: /home/runner/work/formulize/formulize
+        run: docker compose down --remove-orphans || true
+      - name: Start Formulize (for dumping real MCP tool schemas)
+        working-directory: /home/runner/work/formulize/formulize
+        run: docker compose up -d --build
+      # A fresh checkout's database has no schema at all until the installer runs -
+      # the seed SQL under docker/mariadb/seed/ is developer-local only (gitignored,
+      # multiple hundred-MB DB dumps), so CI's mariadb container boots genuinely
+      # empty. Reuse the e2e suite's own install test (the same one
+      # e2e-test-manual.yml relies on) to bring the site up to a normal installed,
+      # open state before asking it for its tool schemas. If any of this fails, the
+      # dump step below still falls back to the committed docs/_data/mcp_tools.json
+      # rather than failing the whole docs deploy.
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        continue-on-error: true
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: tests/e2e/package-lock.json
+      - name: Install e2e test dependencies
+        working-directory: /home/runner/work/formulize/formulize/tests/e2e
+        continue-on-error: true
+        run: npm ci
+      - name: Install Playwright Browsers
+        working-directory: /home/runner/work/formulize/formulize/tests/e2e
+        continue-on-error: true
+        run: npx playwright install chromium --with-deps
+      - name: Install Formulize (Playwright)
+        working-directory: /home/runner/work/formulize/formulize/tests/e2e
+        continue-on-error: true
+        run: npx playwright test formulize-core/setup/001-install-formulize.spec.js
+      - name: Dump MCP tool schemas from PHP
+        # Runs the real registerTools() code (see mcp/dump_tools_for_docs.php) so
+        # tool docs reflect actual resolved schemas - including the create/update
+        # element tools, which are built entirely at runtime and can't be read as
+        # static text. Never lets a failure here fail the docs deploy: if the app
+        # doesn't boot cleanly in CI for some unrelated reason, we fall back to
+        # the already-committed docs/_data/mcp_tools.json (slightly stale tool
+        # docs beat a broken deploy).
+        working-directory: /home/runner/work/formulize/formulize
+        run: |
+          # A cold `--build` container can restart once shortly after coming
+          # up (observed: formulize-web-1 created, then auto-restarted by its
+          # `restart: unless-stopped` policy within ~11s, before this step's
+          # first attempt got a chance to run against a stable process) - so
+          # this retries a few times with a short delay rather than treating
+          # one bad attempt as a hard failure.
+          DUMP_OK=0
+          for attempt in 1 2 3 4 5; do
+            set +e
+            docker exec formulize-web-1 php /var/www/html/mcp/dump_tools_for_docs.php > /tmp/mcp_tools.json 2>/tmp/mcp_tools_stderr.log
+            DUMP_EXIT=$?
+            set -e
+
+            echo "Attempt $attempt: docker exec exit code $DUMP_EXIT, dump size $(wc -c < /tmp/mcp_tools.json) bytes"
+
+            # jq empty accepts a completely empty file as trivially valid (no
+            # JSON value to reject), so it can't be used alone to detect a
+            # silently empty dump - jq -e on 'length > 0' fails correctly in
+            # that case (no output to be truthy), as well as on a genuine but
+            # empty `[]`.
+            if [ "$DUMP_EXIT" -eq 0 ] && jq -e 'length > 0' /tmp/mcp_tools.json > /dev/null 2>&1; then
+              DUMP_OK=1
+              break
+            fi
+
+            echo "Attempt $attempt did not produce a usable dump, retrying in 5s..."
+            sleep 5
+          done
+
+          if [ "$DUMP_OK" -eq 1 ]; then
+            cp /tmp/mcp_tools.json docs/_data/mcp_tools.json
+            echo "Dumped $(jq 'length' /tmp/mcp_tools.json) tools from the running app on attempt $attempt."
+          else
+            echo "::warning::Failed to dump MCP tool schemas from the running app after $attempt attempts (last exit $DUMP_EXIT) - keeping the committed docs/_data/mcp_tools.json (tool docs may be slightly stale)."
+            echo "--- stderr from dump_tools_for_docs.php (last attempt) ---"
+            cat /tmp/mcp_tools_stderr.log || true
+            echo "--- container status ---"
+            docker ps -a || true
+          fi
+      - name: Stop Formulize
+        working-directory: /home/runner/work/formulize/formulize
+        run: docker compose down --remove-orphans
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v6

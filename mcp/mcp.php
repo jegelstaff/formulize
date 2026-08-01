@@ -39,8 +39,28 @@ class FormulizeMCP
 	public $baseUrl;
 	private $mcpRequest = array();
 
-	public function __construct($config = null)
+	public function __construct($config = null, bool $forDocsCli = false, array $userGroupsOverride = [])
 	{
+		// CLI-only bypass used by mcp/dump_tools_for_docs.php to dump the real
+		// tool registry (including the dynamically-built create/update element
+		// tools) for the formulize.org docs site, without an HTTP request to
+		// authenticate against. Never reachable over HTTP - the caller controls
+		// this flag and dump_tools_for_docs.php refuses to run outside PHP_SAPI
+		// 'cli'.
+		if ($forDocsCli) {
+			$this->db = $this->getFormulizeDatabase();
+			$this->userGroups = $userGroupsOverride;
+			$this->mcpRequest = [
+				'id' => null,
+				'method' => '',
+				'params' => [],
+				'localServerName' => 'formulize'
+			];
+			$this->enabled = true;
+			$this->registerTools();
+			return;
+		}
+
 		// Authenticate the request
 		$path = $_SERVER['REQUEST_URI'];
 		$method = $_SERVER['REQUEST_METHOD'];
