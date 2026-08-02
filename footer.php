@@ -18,9 +18,9 @@ if (defined("XOOPS_FOOTER_INCLUDED")) exit();
 
 global $xoopsOption, $icmsConfigMetaFooter, $xoopsTpl, $icmsModule, $xoopsUser, $icmsConfig;
 
+$logoURL = XOOPS_URL;
 if(is_object($xoopsTpl) AND $icmsConfig['startpage'] == 'formulize') {
 	include_once XOOPS_ROOT_PATH."/modules/formulize/class/applications.php";
-	$logoURL = XOOPS_URL;
 	list($startFid,$startSid,$startURL) = formulizeApplicationMenuLinksHandler::getDefaultScreenForUser();
 	if(!$xoopsUser AND !$startFid AND !$startSid AND !$startURL) {
 		$icmsConfig['startpage'] = '--';
@@ -43,8 +43,8 @@ if(is_object($xoopsTpl) AND $icmsConfig['startpage'] == 'formulize') {
 			$logoURL = XOOPS_URL.'/modules/formulize/index.php?fid='.$startFid;
 		}
 	}
-	$xoopsTpl->assign('logo_url', $logoURL);
 }
+$xoopsTpl->assign('logo_url', $logoURL);
 
 // Check for unread private messages (for inbox link indicator)
 $unread_pm_count = 0;
