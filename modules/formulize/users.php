@@ -127,6 +127,7 @@ $advanceViewArray = array(
 	array('formulize_user_account_username_'   . $fidInt, '', 0, 'Box'),
 	array('formulize_user_account_email_'      . $fidInt, '', 0, 'Box'),
 	array('formulize_user_account_phone_'      . $fidInt, '', 0, 'Box'),
+	array('formulize_user_account_groupmembership_' . $fidInt, '', 0, 'Box'),
 );
 $advanceViewArray[] = array('formulize_user_account_status_'     . $fidInt, '', 0, 'Box');
 $advanceViewArray[] = array('formulize_user_account_masquerade_' . $fidInt, '', 0, 'Box');

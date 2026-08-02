@@ -95,7 +95,7 @@ function ensureUsersTableForm() {
 				array('handle' => 'eau_type', 'caption' => 'Type', 'virtual' => true, 'type' => 'userEauType'),
 			),
 			// Default visible columns for use if/when for is displayed without defined columns from a screen
-			'defaultColumns' => array('uname', 'login_name', 'email', 'phone', 'eau_type', 'level'),
+			'defaultColumns' => array('uname', 'login_name', 'email', 'phone', 'group_memberships', 'eau_type', 'level'),
 		)
 	);
 	// Ensure a persisted multiPageScreen exists as the defaultform for this form.
