@@ -2000,7 +2000,7 @@ function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid,
 		}
 	}
 
-	$proxylist->addOptionArray(getListOfCandidateOwnersForFormEntries($fid));
+	$proxylist->addOptionArray(getListOfCandidateOwnersForFormEntries($fid, ($entry_id AND $entry_id != 'new') ? 'update' : 'add'));
 	if(!$entry_id) {
 		$proxylist->setValue('noproxy');
 	} else {

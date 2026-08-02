@@ -65,7 +65,6 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
 global $xoopsConfig, $xoopsUser;
 $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS); // for some reason, even though this is set in pageworks index.php file, depending on how/when this file gets executed, it can have no value (in cases where there are pageworks blocks on pageworks pages, for instance?!)
 $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
-$uid = isset($GLOBALS['userprofile_uid']) ? $GLOBALS['userprofile_uid'] : $uid; // if the userprofile form is in play and a new user has been set, then use that uid
 
 // load the formulize language constants if they haven't been loaded already
 if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
@@ -101,6 +100,8 @@ $formulize_subformBlankCues = array();
 $userIdsForUserAccountElements = array();
 $groupIdsForGroupTableElements = array();
 $newUserTableUserIds = array(); // this is where we will store the new user IDs created from user account elements in the case of a system users table form, because those UIDs are not stored in formulize entry rows like they are for regular EAU forms, but we still need to keep track of them so we can assign them to the correct entries in the case of subforms, and also so we can return them at the end of this process for use in the UI if needed (e.g. to log in as a newly created user right after creating them)
+$updateOwnerEntryId = null;
+$updateOwnerNewOwnerId = null;
 
 // loop through POST and catalogue everything that we need to do something with
 foreach($_POST as $k=>$v) {
@@ -230,7 +231,7 @@ if(count((array) $formulize_elementData) > 0 ) { // do security check if it look
 	$module_handler =& xoops_gethandler('module');
 	$config_handler =& xoops_gethandler('config');
   $formulizeModule =& $module_handler->getByDirname("formulize");
-  $formulizeConfig =& $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
+  $formulizeConfig =& $config_handler->getConfigsByCat(0, $mid);
   $modulePrefUseToken = $formulizeConfig['useToken'];
 	$useToken = (isset($screen) AND $screen) ? $screen->getVar('useToken') : $modulePrefUseToken;
 	if(isset($GLOBALS['xoopsSecurity']) AND $useToken) { // avoid security check for versions of XOOPS that don't have that feature, or for when it's turned off
@@ -298,6 +299,14 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
                 $currentEntry = "new";
             }
 			foreach($creation_users as $creation_user) {
+								if($creation_user != $uid
+									AND (
+										!$gperm_handler->checkRight("add_proxy_entries", $elementFid, $groups, $mid)
+										OR !in_array($creation_user, array_keys(getListOfCandidateOwnersForFormEntries($elementFid, 'add')))
+									)
+								) {
+									$creation_user = $uid;
+								}
                 if (formulizePermHandler::user_can_edit_entry($elementFid, $creation_user, $currentEntry)) {
 									// if form entries are user accounts, and the user account is supposed to be owner of the entry, then override the creation_user
 									if($formulize_formObject->getVar('entries_are_users') AND $formulize_formObject->getVar('entries_are_users_user_is_owner') AND isset($userIdsForUserAccountElements[$elementFid][$currentEntry]) AND $userIdsForUserAccountElements[$elementFid][$currentEntry]) {
@@ -415,8 +424,7 @@ foreach($formulize_newEntryIds as $newEntryFid=>$entries){
 }
 
 // reassign entry ownership for an entry if the user requested that, and has permission
-if(isset($updateOwnerFid) AND $gperm_handler->checkRight("update_entry_ownership", $updateOwnerFid, $groups, $mid)) {
-	updateOwnerForFormEntry($updateOwnerFid, $updateOwnerNewOwnerId, $updateOwnerEntryId);
+if(isset($updateOwnerFid) AND	updateOwnerForFormEntry($updateOwnerFid, $updateOwnerNewOwnerId, $updateOwnerEntryId)) {
 
     // check if any other form that was submitted, is used in a subform element where the subform entries are supposed to be owned by the owner of the mainform entry
     // if so, reassign the submitted entries from that form too
@@ -602,11 +610,3 @@ function afterSavingLogic($values,$entry_id) {
 	}
 }
 
-// THIS FUNCTION UPDATES THE OWNERSHIP INFORMATION ON A GIVEN FORM ENTRY
-function updateOwnerForFormEntry($updateOwnerFid, $updateOwnerNewOwnerId, $updateOwnerEntryId) {
-    $data_handler_for_owner_updating = new formulizeDataHandler($updateOwnerFid);
-	if(!$data_handler_for_owner_updating->setEntryOwnerGroups($updateOwnerNewOwnerId, $updateOwnerEntryId, true)) { // final true causes an update, instead of a normal setting of the groups from scratch.  Entry's creation user is updated too.
-		print "<b>Error: could not update the entry ownership information.  Please report this to the webmaster right away, including which entry you were trying to update.</b>";
-	}
-	$data_handler_for_owner_updating->updateCaches($updateOwnerEntryId);
-}

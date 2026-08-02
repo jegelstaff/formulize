@@ -11205,15 +11205,28 @@ function formulize_printIconStyleOverride($cssSelector, $cssVar, $glyphHex) {
  * Get list of candidate owners for form entries
  *
  * @param int $fid Form ID.
+ * @param string $permRequired The type of permission required to get back a list. Used by callers to verify the user should be doing this operation. Valid values are 'add' or 'update' (or, more specifically, anything including 'add' and anything not including 'add' in the string)
  * @return array List of names keyed by user id
  */
-function getListOfCandidateOwnersForFormEntries($fid) {
+function getListOfCandidateOwnersForFormEntries($fid, $permRequired = 'add') {
 
 	global $xoopsDB, $xoopsUser;
 	$mid = getFormulizeModId();
 	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
 	$member_handler = xoops_gethandler('member');
 	$gperm_handler = xoops_gethandler('groupperm');
+	static $namesForForms = array();
+
+	// if user can't add proxy entries or update entry ownership, then return empty array
+	$permRequired = strstr($permRequired, 'add') !== false ? 'add_proxy_entries' : 'update_entry_ownership';
+	if(!$gperm_handler->checkRight($permRequired, $fid, $groups, $mid)) {
+		return array();
+	}
+
+	// return from cache early
+	if(isset($namesForForms[$fid])) {
+		return $namesForForms[$fid];
+	}
 
 	$add_groups = $gperm_handler->getGroupIds("add_own_entry", $fid, $mid);
 	// May 5, 2006 -- limit to the user's own groups unless the user has global scope
@@ -11251,7 +11264,37 @@ function getListOfCandidateOwnersForFormEntries($fid) {
 		}
 	}
 	asort($names);
+	$namesForForms[$fid] = $names; // cache for future calls
 	return $names;
+}
+
+/**
+ * Update the ownership information on a given form entry, if the current user has permission to do so.
+ * Silently does nothing if the user lacks the update_entry_ownership permission, or if the new owner is
+ * not a valid candidate owner for the form (per getListOfCandidateOwnersForFormEntries).
+ *
+ * @param int $updateOwnerFid Form ID that the entry belongs to.
+ * @param int $updateOwnerNewOwnerId User ID of the new owner.
+ * @param int $updateOwnerEntryId Entry ID to reassign.
+ * @return bool True if the user has permission and the operation succeeded, false otherwise
+ * @throws Exception If the underlying database write fails.
+ */
+function updateOwnerForFormEntry($updateOwnerFid, $updateOwnerNewOwnerId, $updateOwnerEntryId) {
+	global $xoopsUser;
+	$gperm_handler = xoops_gethandler('groupperm');
+	$mid = getFormulizeModId();
+	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+	if($gperm_handler->checkRight("update_entry_ownership", $updateOwnerFid, $groups, $mid)
+		AND array_key_exists($updateOwnerNewOwnerId, getListOfCandidateOwnersForFormEntries($updateOwnerFid, 'update'))
+	) {
+		$data_handler_for_owner_updating = new formulizeDataHandler($updateOwnerFid);
+		if(!$data_handler_for_owner_updating->setEntryOwnerGroups($updateOwnerNewOwnerId, $updateOwnerEntryId, true)) { // final true causes an update, instead of a normal setting of the groups from scratch.  Entry's creation user is updated too.
+			throw new Exception("Could not update the entry ownership information.  Please report this to the webmaster right away, including which entry you were trying to update.");
+		}
+		$data_handler_for_owner_updating->updateCaches($updateOwnerEntryId);
+		return true;
+	}
+	return false;
 }
 
 /**

@@ -245,9 +245,9 @@ Use list_applications for a list of every application in the system; this tool i
 								'[{"order_date": "2023-05-09", "product_selection_checkbox": ["123","456","789"], "total_amount": "150.75"}]'
 							]
 						],
-						'relationship_id' => [
+						'proxy_user_id' => [
 							'type' => 'integer',
-							'description' => 'Optional. Relationship context for derived value calculations. Use -1 for Primary Relationship (includes all connected forms), 0 for no relationship. Default: -1'
+							'description' => 'Optional. Create the entry/entries on behalf of another user, so that user becomes the owner instead of you. Normally, all entries you create are owned by your active user account, and thereby those entries belong to your groups. Setting a proxy user makes the entry belong to the other user and their groups. This is relevant for determining who sees which data, when the view_groupscope permission is used, and determining which entries can be updated and deleted when the update_group_entries and delete_group_entries permissions are in effect.'
 						]
 					],
 					'required' => ['form_id', 'data']
@@ -276,9 +276,9 @@ Use list_applications for a list of every application in the system; this tool i
 								'[{"entry_id": 35, "product_price": "32.99", "product_quantity": "1000" }, {"entry_id": 36, "product_price": "95.25", "product_quantity": "497"}]'
 							]
 						],
-						'relationship_id' => [
+						'proxy_user_id' => [
 							'type' => 'integer',
-							'description' => 'Optional. Relationship context for derived value calculations. Default: -1 (Primary Relationship)'
+							'description' => 'Optional. Change the owner of the entry, and thereby the groups that the entry belongs to, by providing a user id here. Changing the entry owner can change who can see this data, depending on the way permissions are set for this form. Use get_form_permissions_by_group and list_a_users_groups to check who can access which entries in the given form.'
 						]
 					],
 					'required' => ['form_id', 'data']
@@ -6351,11 +6351,11 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 	 * @param array $arguments An associative array containing the parameters for creating the entry.
 	 * - 'form_id': The ID of the form to create an entry in.
 	 * - 'data': An array of associative arrays of key-value pairs where keys are element handles and values are the data to store.
-	 * - 'relationship_id': Optional. The ID of the relationship to use for derived value calculations. Defaults to -1 for the Primary Relationship which includes all connected forms.
+	 * - 'proxy_user_id': Optional. Create the entry/entries on behalf of another user.
 	 * @return array An associative array with the result of the create operation, including success status, form ID, entry ID, action performed, and any additional information such as new entry ID if created.
 	 */
 	private function create_entries($arguments) {
-		return $this->writeFormEntries(intval($arguments['form_id']), 'create', $arguments['data'] ?? [], intval($arguments['relationship_id'] ?? -1));
+		return $this->writeFormEntries(intval($arguments['form_id']), 'create', $arguments['data'] ?? [], -1, $arguments['proxy_user_id'] ?? null);
 	}
 
 	/**
@@ -6364,11 +6364,11 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 	 * - 'form_id': The ID of the form to create an entry in.
 	 * - 'entry_id': The ID of the entry to update.
 	 * - 'data': An array of associative arrays of key-value pairs where keys are element handles and values are the data to store. Each associative array must include "entry_id".
-	 * - 'relationship_id': Optional. The ID of the relationship to use for derived value calculations. Defaults to -1 for the Primary Relationship which includes all connected forms.
+	 * - 'proxy_user_id': Optional. Update the owner of the entries.
 	 * @return array An associative array with the result of the create operation, including success status, form ID, entry ID, action performed, and any additional information such as new entry ID if created.
 	 */
 	private function update_entries($arguments) {
-		return $this->writeFormEntries(intval($arguments['form_id']), 'update', $arguments['data'] ?? [], intval($arguments['relationship_id'] ?? -1));
+		return $this->writeFormEntries(intval($arguments['form_id']), 'update', $arguments['data'] ?? [], -1, $arguments['proxy_user_id'] ?? null);
 	}
 
 	/**
@@ -6385,10 +6385,11 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 	 * @param string $operation Either 'create' or 'update'
 	 * @param array $data The data to write. Each value is an array of key-value pairs, representing the element handles and values of the data to store. If $operation is 'update', entry_id must be a key and the value is the entry ID to update.
 	 * @param int $relationshipId The ID of the relationship to use for derived value calculations. Defaults to -1 for the Primary Relationship, which includes all connected forms.
+	 * @param int|null $proxyUserId Optional. Write the entry/entries on behalf of this user id instead of the currently authenticated user. Must be a candidate owner for the form, per getListOfCandidateOwnersForFormEntries; otherwise an invalid_data exception is thrown.
 	 * @return array An associative array with the result of the write operation, including success status.
 	 * @throws Exception If there is an error during the write operation, such as permission issues, form not found, invalid element handles, or failure to prepare data for storage.
 	 */
-	private function writeFormEntries($formId, $operation, $data, $relationshipId = -1)
+	private function writeFormEntries($formId, $operation, $data, $relationshipId = -1, $proxyUserId = null)
 	{
 
 		// Validate data
@@ -6410,6 +6411,22 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 			throw new FormulizeMCPException('Relationship ID must be a positive integer or -1 for the Primary Relationship that includes all connections.', 'invalid_data');
 		}
 		$relationshipId = intval($relationshipId);
+
+		// Validate proxy user ID, if provided. Must be one of the users the authenticated user is allowed
+		// to make entries on behalf of for this form.
+		if ($proxyUserId !== null) {
+			if (!is_numeric($proxyUserId) || $proxyUserId <= 0) {
+				throw new FormulizeMCPException('Proxy user ID must be a positive integer', 'invalid_data');
+			}
+			$proxyUserId = intval($proxyUserId);
+			$candidateOwners = getListOfCandidateOwnersForFormEntries($formId, $operation == 'create' ? 'add' : 'update');
+			if (!array_key_exists($proxyUserId, $candidateOwners)) {
+				throw new FormulizeMCPException(
+					"You don't have permission to make entries on behalf of that user in this form. Use get_form_permissions_by_group to see permissions and list_a_users_groups to get more information.",
+					'invalid_data'
+				);
+			}
+		}
 
 		// Validate the form exists and that the tools are allowed to write entries to it. Table forms are
 		// refused here as they are everywhere else: their rows belong to a table Formulize did not create
@@ -6610,9 +6627,12 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 			// Write the entry
 			$resultEntryId = null;
 			if(!empty($preparedData[$i])) {
-				$resultEntryId = formulize_writeEntry($preparedData[$i], $entryId); // writes data and manages ownership info
+				$resultEntryId = formulize_writeEntry($preparedData[$i], $entryId, "replace", $proxyUserId !== null ? $proxyUserId : false); // writes data and manages ownership info
 			}
 			$finalEntryId = ($entryId === 'new') ? $resultEntryId : $entryId; // for updates, formulize_writeEntry can return null if no data actually changed from current DB state
+			if($finalEntryId && $proxyUserId !== null && $operation == 'update') {
+				updateOwnerForFormEntry($formId, $proxyUserId, $finalEntryId);
+			}
 
 			// Step 4: Update derived values
 			if($finalEntryId) {

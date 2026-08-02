@@ -190,11 +190,11 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	// if a change of entry owner was requested, then do so for the selected entries
 	if(isset($_POST['changeowner_uid'])
+		AND $update_entry_ownership
 		AND $changeownerUid = intval($_POST['changeowner_uid'])
 		AND $changeOwnerUserObject = $member_handler->getUser($changeownerUid)
 		AND $gperm_handler->checkRight("add_own_entry", $fid, $changeOwnerUserObject->getGroups(), $mid)
 		AND $formulize_LOESecurityPassed
-		AND $update_entry_ownership
 	) {
 		$entriesToChangeOwnershipOn = array();
 		foreach($_POST as $k=>$v) {
@@ -214,6 +214,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				foreach($entriesToChangeOwnershipOn as $thisEntryId) {
 					$linkResults = checkForLinks($frid, array($fid), $fid, array($fid=>$entriesToChangeOwnershipOn));
 					foreach(array_unique($linkResults['fids']) as $fidToChange) {
+						if(!in_array($changeownerUid, array_keys(getListOfCandidateOwnersForFormEntries($fidToChange, 'update')))) { // has to be a someone the current user can make a proxy on behalf of
+							continue;
+						}
 						if(in_array($fidToChange, $fidsToChange) AND $fidToChange != $fid AND is_array($linkResults['entries'][$fidToChange]) AND count($linkResults['entries'][$fidToChange]) > 0) {
 							$entriesToChange = array_diff($linkResults['entries'][$fidToChange], $entriesChanged[$fidToChange]);
 							$dataHandlers[$fidToChange]->setEntryOwnerGroups(array_fill(0, count($entriesToChange), $changeownerUid), $entriesToChange);
@@ -221,6 +224,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 						}
 					}
 					foreach(array_unique($linkResults['sub_fids']) as $fidToChange) {
+						if(!in_array($changeownerUid, array_keys(getListOfCandidateOwnersForFormEntries($fidToChange, 'update')))) { // has to be a someone the current user can make a proxy on behalf of
+							continue;
+						}
 						if(in_array($fidToChange, $fidsToChange) AND $fidToChange != $fid AND is_array($linkResults['sub_entries'][$fidToChange]) AND count($linkResults['sub_entries'][$fidToChange]) > 0) {
 							$entriesToChange = array_diff($linkResults['sub_entries'][$fidToChange], $entriesChanged[$fidToChange]);
 							$dataHandlers[$fidToChange]->setEntryOwnerGroups(array_fill(0, count($entriesToChange), $changeownerUid), $entriesToChange);
@@ -3686,7 +3692,7 @@ function selectOwner() {
 		$markup .= "<select id=\"changeowner_selected_uid\" style=\"width:100%;margin:8px 0;\">
 			<option value=\"\">"._formulize_DE_CHANGEOWNER_SELECT_NEW_OWNER."</option>
 		";
-		foreach(getListOfCandidateOwnersForFormEntries($fid) as $ownerId => $ownerName) {
+		foreach(getListOfCandidateOwnersForFormEntries($fid, 'update') as $ownerId => $ownerName) {
 			$escapedName = addslashes(htmlspecialchars($ownerName, ENT_QUOTES));
 			$markup .= "<option value=\"$ownerId\">$escapedName</option>\n";
 		}
