@@ -6630,7 +6630,7 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 				$resultEntryId = formulize_writeEntry($preparedData[$i], $entryId, "replace", $proxyUserId !== null ? $proxyUserId : false); // writes data and manages ownership info
 			}
 			$finalEntryId = ($entryId === 'new') ? $resultEntryId : $entryId; // for updates, formulize_writeEntry can return null if no data actually changed from current DB state
-			if($finalEntryId && $proxyUserId !== null && $operation == 'update') {
+			if($proxyUserId !== null && $operation == 'update') {
 				updateOwnerForFormEntry($formId, $proxyUserId, $finalEntryId);
 			}
 
