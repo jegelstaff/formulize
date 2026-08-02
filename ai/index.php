@@ -281,23 +281,40 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
     // The PHP MCP server registers this tool using the local server name, which defaults to 'formulize'.
     const INIT_TOOLS = ['formulize'];
 
-    // Tools that create/update form structure (Manage forms group)
+    // Tools that create/update/administer form, screen, element, permission, user, group,
+    // menu/application and custom-code structure (Manage forms group)
     const FORM_MGMT_TOOLS = new Set([
-        'change_form_screen_page_order',
+        'change_form_screen_page_order', 'change_menu_item_order',
         'create_derived_value_element', 'create_form', 'create_form_screen',
-        'create_linked_list_element', 'create_list_element', 'create_selector_element',
+        'create_groups', 'create_linked_list_element', 'create_list_element',
+        'create_list_screen', 'create_menu_item', 'create_selector_element',
         'create_static_content_element', 'create_subform_interface',
         'create_table_of_elements', 'create_text_box_element', 'create_user_list_element',
+        'create_users',
+        'delete_element',
+        'get_custom_code', 'get_element_details', 'get_form_permissions_by_group',
         'get_screen_details',
-        'update_derived_value_element', 'update_form_screen', 'update_linked_list_element',
-        'update_list_element', 'update_selector_element', 'update_static_content_element',
+        'list_form_connections', 'list_group_members', 'list_groups', 'list_screens',
+        'list_a_users_groups', 'list_users',
+        'query_the_database_directly',
+        'read_system_activity_log',
+        'set_form_permission_inheritance', 'set_form_permissions',
+        'update_application_code', 'update_application_forms',
+        'update_derived_value_element', 'update_form', 'update_form_code',
+        'update_form_screen', 'update_group_members', 'update_groups',
+        'update_linked_list_element', 'update_list_element', 'update_list_screen',
+        'update_menu_item', 'update_selector_element', 'update_static_content_element',
         'update_subform_interface', 'update_table_of_elements',
-        'update_text_box_element', 'update_user_list_element'
+        'update_text_box_element', 'update_user_list_element', 'update_users'
     ]);
 
-    // Tools included in every preset group — the AI needs to know what forms exist and their
-    // field/element structure regardless of whether it's reading data, writing data, or managing forms
-    const FORM_INSPECT_TOOLS = new Set(['get_form_details', 'list_forms']);
+    // Tools included in every preset group — the AI needs to know what forms/applications exist and their
+    // field/element/menu structure regardless of whether it's reading data, writing data, or managing forms
+    const FORM_INSPECT_TOOLS = new Set([
+        'get_application_details', 'get_entries_from_form', 'get_form_details',
+        'list_applications', 'list_forms', 'list_menu_items',
+        'prepare_database_values_for_human_readability', 'test_connection'
+    ]);
 
     // Tools that write entry data (add to Read data to get Write data)
     const ENTRY_WRITE_TOOLS = new Set(['create_entries', 'update_entries']);
