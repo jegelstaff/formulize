@@ -5753,6 +5753,9 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
 /**
  * Sort out [random:text/text/text] sets and also possibly nested [date:formatstring/date-as-string] within a passed in string
  * If timestamp is not present use current time
+ * EXTENSIONS TO THIS FUNCTION MUST BE OUTPUT-SAFE AND NOT DO ANY PROCESSING THAT CAN INTRODUCE DANGEROUS CHARACTERS
+ * This function is called after sanitizing and purifying of user inputs, so if new features are added to this code that transform
+ * the inputs in ways that can produced dangerous characters, it would become an XSS vulnerability.
  * @param string $text
  * @return string The string with a random text chosen, and a date formatted according to the string
  */
