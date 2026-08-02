@@ -2685,7 +2685,7 @@ function prepareLiteralTextForDB($elementObjectOrIdentifier, $value, $curlyBrack
 			// does not handle links to links!
 			$dataHandler = new formulizeDataHandler($sourceFidOfElement);
 			$operator = $partialMatch ? 'LIKE' : '=';
-			$value = $dataHandler->findAllEntriesWithValue($sourceHandleOfElement, $value, operator: $operator);
+			$value = $dataHandler->findAllEntriesWithValue($sourceHandleOfElement, convertStringToUseSpecialCharsToMatchDB($value), operator: $operator);
 			$value = (is_array($value) AND count($value) == 1) ? $value[0] : $value;
 		} elseif($value != "{BLANK}") {
 			$foundValue = checkUITextForValue($value, $elementObject, $partialMatch);

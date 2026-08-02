@@ -1855,9 +1855,9 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 				global $xoopsDB;
 				$sql = "SELECT uid FROM ".$xoopsDB->prefix("users")." WHERE ";
 				if($partialMatch) {
-					$sql .= "uname LIKE '%".formulize_db_escape($value)."%'";
+					$sql .= "uname LIKE '%".formulize_db_escape($value)."%' OR login_name LIKE '%".formulize_db_escape($value)."%'";
 				} else {
-					$sql .= "uname='".formulize_db_escape($value)."'";
+					$sql .= "uname='".formulize_db_escape($value)."' OR login_name='".formulize_db_escape($value)."'";
 				}
 				$result = $xoopsDB->query($sql);
 				$uids = array();
