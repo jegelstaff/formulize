@@ -54,7 +54,7 @@ switch($op) {
 				$form->display();
 				echo "<br />\n";
 			}
-	
+
 	case 'new':
 		icms_loadLanguageFile(basename(dirname(dirname(__FILE__))), 'main');
 		if (!$adminMenuIncluded) icms::$module->displayAdminMenu(0, _MI_PROFILE_USERS);
@@ -245,11 +245,13 @@ switch($op) {
         *  to revert the masqerading effect [formulize\footer.php]
         */
 
+				$masquerade_location = SITE_BASE_URL . "/";
         // Revert masquerade effect
         if (isset($_SESSION['masquerade_end']) && $_SESSION['masquerade_end'] == 1) {
             $masqueradeUser = new icms_member_user_Object($_SESSION['masquerade_xoopsUserId']);
             unset($_SESSION['masquerade_xoopsUserId']);
             unset($_SESSION['masquerade_end']);
+						$masquerade_location .= 'modules/formulize/users.php';
         } else {
             $masqueradeUser = new icms_member_user_Object($_REQUEST['id']);
             // Save UserId of the actual user
@@ -266,13 +268,13 @@ switch($op) {
         if (isset($_SESSION['XOOPS_TOKEN_SESSION'])) unset($_SESSION['XOOPS_TOKEN_SESSION']);
 
         $xoops_user_theme = $masqueradeUser->getVar('theme');
-        if (in_array($xoops_user_theme, $icmsConfig['theme_set_allowed'])) 
+        if (in_array($xoops_user_theme, $icmsConfig['theme_set_allowed']))
             $_SESSION['xoopsUserTheme'] = $xoops_user_theme;
         elseif (isset($_SESSION['xoopsUserTheme']))
             unset($_SESSION['xoopsUserTheme']);
 
         // Redirect user
-        header('Location: ' . SITE_BASE_URL . "/");
+        header('Location: ' . $masquerade_location );
         die;
         break;
 }
