@@ -3006,7 +3006,7 @@ There is no syntax checking when you save, and an error here affects every page 
 			'items' => [ 'type' => 'integer' ],
 			'description' => 'Optional. The ids of the groups whose members see this button. '
 				.($isUpdate ? 'Providing this REPLACES the current list. ' : '')
-				.'An empty list means nobody sees it, so a button with no groups is switched off rather than open to everyone. Use list_groups to find group ids. Set to 2 (Registered Users group) to show the button to everyone with an account, who has permission to access the form. Note this only controls who sees the button - what it does when clicked is still subject to that user\'s permissions on the entries.'
+				.'Set to 2 (Registered Users group) to show the button to everyone with an account, who has permission to access the form. An empty groups list means **nobody** sees the button, so a button with no groups is switched off rather than open to everyone. Note this only controls who sees the button - what it does when clicked is still subject to that user\'s permissions on the entries. Use list_groups to find group ids.'
 		];
 		$itemProps['effects'] = [
 			'type' => 'array',
