@@ -625,7 +625,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		// PARSE THE FILTER THAT HAS BEEN PASSED IN, INTO WHERE CLAUSE AND OTHER RELATED CLAUSES WE WILL NEED
 		// parsing the filter MUST come early in the process, because other things rely on it!
 		formulize_getElementMetaData("", false, $fid); // initialize the element metadata for this form...serious performance gain from this
-		list($formFieldFilterMap, $whereClause, $orderByClause, $oneSideFilters, $otherPerGroupFilterJoins, $otherPerGroupFilterWhereClause) = formulize_parseFilter($filter, $andor, $linkformids, $fid, $frid, $scope, $isUserTableForm);
+		list($formFieldFilterMap, $whereClause, $orderByClause, $oneSideFilters, $otherPerGroupFilterJoins, $otherPerGroupFilterWhereClause, $missingEntrySatisfiesSearch) = formulize_parseFilter($filter, $andor, $linkformids, $fid, $frid, $scope, $isUserTableForm);
 
 		// ***********************
 		// NOTE:  the oneSideFilters are divided into two sections, the AND filters and OR filters for a given form
@@ -725,7 +725,8 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 					formulize_getElementMetaData("", false, $linkedFid); // initialize the element metadata for this form...serious performance gain from this
 					$linkSelectIndex[$formAliasId] = "f$formAliasId.entry_id AS f" . $formAliasId . "_entry_id, f$formAliasId.creation_uid AS f" . $formAliasId . "_creation_uid, f$formAliasId.mod_uid AS f" . $formAliasId . "_mod_uid, f$formAliasId.creation_datetime AS f" . $formAliasId . "_creation_datetime, f$formAliasId.mod_datetime AS f" . $formAliasId . "_mod_datetime, f$formAliasId.*";
 					$linkSelect .= ", ".$linkSelectIndex[$formAliasId];
-					$joinType = isset($formFieldFilterMap[$linkedFid]) ? "INNER" : "LEFT";
+					// when a main form entry with no connected entry would satisfy the search on this form, stay with a LEFT JOIN so those entries survive the join, and then get matched by the "IS NULL" terms in the where clause
+					$joinType = (isset($formFieldFilterMap[$linkedFid]) AND !isset($missingEntrySatisfiesSearch[$linkedFid])) ? "INNER" : "LEFT";
 					$linkedFormObject = $form_handler->get($linkedFid);
 					if($linkedFormObject->getVar('entries_are_users')) {
 						$linkedEauUidColumn = 'formulize_user_account_uid_' . $linkedFid;
@@ -762,13 +763,20 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 								$existsEauJoins = $eauLinkedJoinTextIndex[$linkedFid];
 							}
 						}
-						$existsOpener = ($existsJoinText ? " $andor " : "") . " EXISTS(SELECT 1 FROM " . DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$formAliasId $existsEauJoins WHERE ";
-						$existsJoinText .= $existsOpener . $newJoinText;
+						$existsBoolean = $existsJoinText ? " $andor " : "";
+						$existsFromAndAlias = DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$formAliasId";
+						$thisExists = " EXISTS(SELECT 1 FROM $existsFromAndAlias $existsEauJoins WHERE " . $newJoinText;
 						foreach ($oneSideFilters[$linkedFid] as $thisOneSideFilter) {
 							$thisLinkedFidPerGroupFilter = isset($perGroupFiltersPerForms[$linkedFid]) ? $perGroupFiltersPerForms[$linkedFid] : "";
-							$existsJoinText .= " AND ( $thisOneSideFilter $thisLinkedFidPerGroupFilter) ";
+							$thisExists .= " AND ( $thisOneSideFilter $thisLinkedFidPerGroupFilter) ";
 						}
-						$existsJoinText .= ") "; // close the exists clause itself
+						$thisExists .= ") "; // close the exists clause itself
+						// the exists clause on its own throws away main form entries that have nothing connected to them at all, so when those entries would satisfy the search, allow for them explicitly.
+						// Note $newJoinText already has this form's per group filter on the end of it, so a connected entry the user isn't allowed to see counts as no connected entry, which is what we want.
+						if (isset($missingEntrySatisfiesSearch[$linkedFid])) {
+							$thisExists = " ( $thisExists OR NOT EXISTS(SELECT 1 FROM $existsFromAndAlias $existsEauJoins WHERE $newJoinText) ) ";
+						}
+						$existsJoinText .= $existsBoolean . $thisExists;
 					}
 				}
 			}
@@ -2004,7 +2012,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 {
 	global $xoopsDB;
 	if ($filtertemp == "") {
-		return array(array(), "", "", array(), "", "");
+		return array(array(), "", "", array(), "", "", array());
 	}
 
 	$formFieldFilterMap = array();
@@ -2012,6 +2020,8 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 	$orderByClause = "";
 	$otherPerGroupFilterJoins = "";
 	$otherPerGroupFilterWhereClause = "";
+
+	$missingEntryTermCounts = array(); // per connected form, per local and/or, per search expression: how many terms there are, and how many of them a main form entry with no connected entry at all would satisfy. Used further down to work out whether such entries need to be included in the results
 
 	$oneSideFiltersTemp = array(); // we need to capture each filter individually, just in case we need to apply them individually to each part of the query for calculations.  Filters for calculations will not work right if the combination of filter terms is excessively complex, ie: includes OR'd terms across different forms in a framework, certain other complicated types of bracketing
 
@@ -2465,6 +2475,24 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 				$oneSideFiltersTemp[$mappedForm][strtolower(trim($filterParts[0]))][$numSeachExps] .= " " . $filterParts[0] . " $newWhereClause ";
 			}
 
+			// Would a main form entry with no connected entry at all satisfy this term? Only if the term is true when the column is NULL, which in practice means a bare "IS NULL" comparison.
+			// Note the "= ''" half of a {BLANK} search does NOT qualify, since NULL = '' is NULL, not true. Only the "IS NULL" half of the pair does.
+			// Read the clause we just generated rather than the operator, because several element types rewrite their own SQL above, and because the branches have been free to alter $operator by this point.
+			$collapsedClause = strtoupper(preg_replace('/\s+/', ' ', trim($newWhereClause)));
+			$termMatchesMissingEntry = (substr($collapsedClause, -7) === 'IS NULL'); // "IS NOT NULL" ends in "OT NULL", so it does not match
+
+			// tally the terms per connected form, keeping the same grouping the oneSideFilters use, so we can reason about the booleans between them further down (only connected forms matter, the main form is never suppressed by a join)
+			if (isset($mappedForm) AND $mappedForm != $fid AND is_array($linkfids) AND in_array($mappedForm, $linkfids)) {
+				$localAndOr = strtolower(trim($filterParts[0]));
+				if (!isset($missingEntryTermCounts[$mappedForm][$localAndOr][$numSeachExps])) {
+					$missingEntryTermCounts[$mappedForm][$localAndOr][$numSeachExps] = array('total' => 0, 'matching' => 0);
+				}
+				$missingEntryTermCounts[$mappedForm][$localAndOr][$numSeachExps]['total']++;
+				if ($termMatchesMissingEntry) {
+					$missingEntryTermCounts[$mappedForm][$localAndOr][$numSeachExps]['matching']++;
+				}
+			}
+
 			$whereClause .= ")";
 			$numIndivFilters++;
 		}
@@ -2486,6 +2514,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 	}
 
 	$basicOneSideFilter = ''; // possibly this needs to be initialized inside a loop, so that it resets for each iteration?
+	$fundamentalFilterForms = array(); // forms that have fundamental filters applied to them. Those filters are not parsed by the loop above, so we can't tell if they are blank searches or not
 	if (count((array) $fundamental_filters) > 0) {
 		// parse the fundamental filters
 		// apply to the whereClause
@@ -2505,6 +2534,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 		unset($conditionsfilter_oom[0]);
 		// loop through individual filters and assign them to the oneSideFilters arrays
 		foreach ($conditionsfilter as $form_id => $theseFilters) {
+			$fundamentalFilterForms[$form_id] = true;
 			foreach ($theseFilters as $thisFilter) {
 				if(!isset($oneSideFilters[$form_id])) {
 					$oneSideFilters[$form_id] = array('and'=>'');
@@ -2513,6 +2543,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 			}
 		}
 		foreach ($conditionsfilter_oom as $form_id => $theseFilters) {
+			$fundamentalFilterForms[$form_id] = true;
 			foreach ($theseFilters as $thisFilter) {
 				$basicOneSideFilter .= $basicOneSideFilter ? " or ( $thisFilter ) " : " ( $thisFilter ) ";
 			}
@@ -2527,9 +2558,37 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 		}
 	}
 
+	// Identify the connected forms that are being searched in a way that a main form entry with no connected entry at all would satisfy.
+	// Those entries have to be included in the results, but they only survive the query if the join to the connected form is left open, so the caller needs to know about them.
+	// Work through the same boolean structure the filters themselves are assembled in: terms inside one search expression are joined by the local and/or, the search expressions are joined by the global and/or, and then the whole lot for a form gets AND'd together by the code that consumes the oneSideFilters.
+	// Where the global and/or is "or" this is stricter than the where clause actually is, because the where clause ORs the search expressions together while the oneSideFilters AND the local and/or groups. That divergence is longstanding (see the note above about OR filters spread across forms) and being stricter here just means we leave those queries alone.
+	$globalAndOr = strtolower(trim($andor));
+	$missingEntrySatisfiesSearch = array();
+	foreach ($missingEntryTermCounts as $thisForm => $localAndOrGroups) {
+		if (isset($fundamentalFilterForms[$thisForm])) {
+			continue; // fundamental filters on this form were never examined term by term, so we can't say what a missing entry would do to them
+		}
+		$formIsSatisfied = true;
+		foreach ($localAndOrGroups as $localAndOr => $searchExpressions) {
+			$groupIsSatisfied = ($globalAndOr == 'or') ? false : true;
+			foreach ($searchExpressions as $counts) {
+				$expressionIsSatisfied = ($localAndOr == 'or')
+					? ($counts['matching'] > 0)                     // any one term being satisfied is enough
+					: ($counts['matching'] == $counts['total']);    // every term has to be satisfied
+				$groupIsSatisfied = ($globalAndOr == 'or')
+					? ($groupIsSatisfied OR $expressionIsSatisfied)
+					: ($groupIsSatisfied AND $expressionIsSatisfied);
+			}
+			$formIsSatisfied = ($formIsSatisfied AND $groupIsSatisfied); // brackets matter, AND binds looser than = does
+		}
+		if ($formIsSatisfied) {
+			$missingEntrySatisfiesSearch[$thisForm] = true;
+		}
+	}
+
 	$otherPerGroupFilterJoins = is_array($otherPerGroupFilterJoins) ? implode(" ", $otherPerGroupFilterJoins) : "";
 	$otherPerGroupFilterWhereClause = is_array($otherPerGroupFilterWhereClause) ? implode(" ", $otherPerGroupFilterWhereClause) : "";
-	return array(0 => $formFieldFilterMap, 1 => $whereClause, 2 => $orderByClause, 3 => $oneSideFilters, 4 => $otherPerGroupFilterJoins, 5 => $otherPerGroupFilterWhereClause);
+	return array(0 => $formFieldFilterMap, 1 => $whereClause, 2 => $orderByClause, 3 => $oneSideFilters, 4 => $otherPerGroupFilterJoins, 5 => $otherPerGroupFilterWhereClause, 6 => $missingEntrySatisfiesSearch);
 }
 
 
