@@ -1927,21 +1927,9 @@ NEWVERSION;
 					}
         }
 
-        // Check for legacy SMS credentials that need migration
-        // Only show migration message if new config doesn't exist AND legacy credentials are present
-        if (!defined('SMS_ACCOUNT_SID') && checkLegacySmsCredentials()) {
-            print "<script>
-                alert('IMPORTANT: SMS Provider Migration Required\\n\\n' +
-                      'Your system has legacy SMS credentials in the sendSMS.php file.\\n\\n' +
-                      'You need to migrate these credentials to your trust folder.\\n\\n' +
-                      'For detailed instructions, see:\\n' +
-                      '". XOOPS_URL . "/libraries/icms/messaging/sms/README.html\\n\\n' +
-                      'Required constants:\\n' +
-                      '- SMS_ACCOUNT_SID\\n' +
-                      '- SMS_AUTH_TOKEN\\n' +
-                      '- SMS_FROM_NUMBER');
-            </script>";
-        }
+        // NOTE: legacy SMS credentials (trust-folder constants, or the old include/2fa/sendSMS.php file)
+        // are migrated into the managed config settings by 003_sms_settings.php, which is where those
+        // settings are defined. There is nothing for the administrator to do, so nothing is reported here.
 
         // Strip non-numeric characters from phone numbers stored in profile_profile.2faphone
         // This is safe to run multiple times since already-clean values won't be affected
@@ -2259,46 +2247,6 @@ function codeInNeedOfConversion() {
 		}
 	}
 	return false;
-}
-
-/**
- * Check for legacy SMS credentials in sendSMS.php that need migration
- *
- * Reads the include/2fa/sendSMS.php file and checks if any Twilio credentials
- * are defined (non-empty strings). This indicates the user has legacy credentials
- * that should be migrated to the trust folder.
- *
- * @return bool True if legacy credentials found, false otherwise
- */
-function checkLegacySmsCredentials() {
-	$sendSmsFile = XOOPS_ROOT_PATH . '/include/2fa/sendSMS.php';
-
-	// If file doesn't exist, no legacy credentials to migrate
-	if (!file_exists($sendSmsFile)) {
-		return false;
-	}
-
-	// Read the file contents
-	$contents = file_get_contents($sendSmsFile);
-
-	// Look for the three credential variables with non-empty values
-	// Pattern matches: $id = "something"; where something is not empty
-	$patterns = array(
-		'/\$id\s*=\s*"([^"]+)";/',      // $id = "something";
-		'/\$token\s*=\s*"([^"]+)";/',   // $token = "something";
-		'/\$from\s*=\s*"([^"]+)";/'     // $from = "something";
-	);
-
-	foreach ($patterns as $pattern) {
-		if (preg_match($pattern, $contents, $matches)) {
-			// Check if the captured value is not empty
-			if (!empty(trim($matches[1]))) {
-				return true;  // Found a non-empty credential
-			}
-		}
-	}
-
-	return false;  // No non-empty credentials found
 }
 
 // Auto-discovery entry point: called by xoops_module_update_formulize() via the patches loop.
