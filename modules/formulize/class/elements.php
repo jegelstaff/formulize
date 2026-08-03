@@ -2112,14 +2112,23 @@ function anyCheckboxElementType($type) {
  * anyCheckboxElementType functions are just readable shorthands for the common families.
  *
  * @param string|object $type The ele_type string to test, or an element object
- * @param string $parentType The ele_type of the family, e.g. 'select', 'radio', 'yn'
+ * @param string|array $parentType The ele_type of the family, e.g. 'select', 'radio', 'yn', as a string or an array of types. If an array, returns true if $type is any of the listed types or a descendant of any of them.
  * @return bool True if $type is $parentType or a descendant of it
  */
 function elementTypeIsOrExtends($type, $parentType) {
 	if(is_object($type)) {
 		$type = $type->getVar('ele_type');
 	}
-	return ($type === $parentType) ? true : elementTypeHasOtherTypeAsParent($type, $parentType);
+	if(is_array($parentType)) {
+		foreach($parentType as $pt) {
+			if($type === $pt || elementTypeHasOtherTypeAsParent($type, $pt)) {
+				return true;
+			}
+		}
+		return false;
+	} else {
+		return ($type === $parentType) ? true : elementTypeHasOtherTypeAsParent($type, $parentType);
+	}
 }
 
 /**

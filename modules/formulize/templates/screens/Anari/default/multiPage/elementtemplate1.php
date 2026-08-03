@@ -3,7 +3,7 @@
 $required = $elementIsRequired ? "<span style='color: red;'>*</span>" : "";
 
 if(trim($elementCaption) AND $elementCaption != '&nbsp;') {
-	$elementCaption = "<label for='$elementName' class='form-label $labelClass'>$elementCaption&nbsp;$required</label>";
+	$elementCaption = "<label for='$elementLabelFor' class='form-label $labelClass'>$elementCaption&nbsp;$required</label>";
 }
 
 if(trim($elementHelpText)) {

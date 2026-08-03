@@ -493,6 +493,7 @@ class formulize_themeForm extends XoopsThemeForm {
 		}
 
 		$templateVariables['elementName'] = $element_name;
+		$templateVariables['elementLabelFor'] = (isset($ele->formulize_element) AND elementTypeIsOrExtends($ele->formulize_element, ['autocomplete', 'autocompleteLinked', 'autocompleteUsers'])) ? $element_name.'_user' : $element_name;
 		$templateVariables['elementContainerId'] = 'formulize-'.$element_name;
 		$templateVariables['elementCaption'] = $ele->getCaption();
 		$templateVariables['elementHelpText'] = $ele->getDescription();
