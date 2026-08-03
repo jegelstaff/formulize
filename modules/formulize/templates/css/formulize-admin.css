@@ -2396,6 +2396,76 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 	line-height: 1.7;
 }
 
+/* Site-wide AI API key field (formtype 'aikey'). The key itself is never rendered;
+   these style the status line, the remove-it checkbox and the save error. */
+.formulize-config-settings .formulize-config-aikey-status {
+	margin-top: 0.4em;
+	font-size: 0.9em;
+	color: #777;
+}
+.formulize-config-settings .formulize-config-aikey-clear {
+	display: block;
+	margin-top: 0.4em;
+	font-size: 0.9em;
+	cursor: pointer;
+}
+.formulize-config-settings .formulize-config-aikey-clear input {
+	margin-right: 0.35em;
+}
+.formulize-config-settings .formulize-config-aikey-error {
+	margin-top: 0.5em;
+	padding: 0.5em 0.7em;
+	border-left: 3px solid #c0392b;
+	background: #fdf3f2;
+	color: #c0392b;
+	font-size: 0.9em;
+}
+
+/* AI tool picker (formtype 'aitools'). The whole setting row is what slides open and
+   shut, so the grid gets a fixed maximum height and scrolls internally - otherwise
+   animating ~60 rows as a single block looks broken. */
+.formulize-config-settings .formulize-config-aitools-actions {
+	margin-bottom: 0.5em;
+	font-size: 0.9em;
+}
+.formulize-config-settings .formulize-config-aitools-actions button {
+	margin-right: 0.3em;
+}
+.formulize-config-settings .formulize-config-aitools-count {
+	margin-left: 0.6em;
+	color: #777;
+}
+.formulize-config-settings .formulize-config-aitools-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+	gap: 0.1em 1.2em;
+	max-height: 320px;
+	overflow-y: auto;
+	padding: 0.5em 0.7em;
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	background: #fcfcfc;
+}
+.formulize-config-settings .formulize-config-aitools-item {
+	display: flex;
+	align-items: baseline;
+	gap: 0.4em;
+	font-size: 0.85em;
+	font-family: monospace;
+	cursor: pointer;
+	overflow: hidden;
+}
+.formulize-config-settings .formulize-config-aitools-item span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.formulize-config-settings .formulize-config-aitools-empty {
+	font-size: 0.9em;
+	color: #777;
+	font-style: italic;
+}
+
 /* Legacy-feature note banner (e.g. Copy Permissions page). */
 .formulize-legacy-note {
 	padding: 0.75em 1em;

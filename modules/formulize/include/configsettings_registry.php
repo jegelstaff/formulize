@@ -53,12 +53,15 @@
  *
  * caption/description: omit to fall back to the setting's own (system) text.
  *
- * showWhen (visibility dependencies) — equality only, deliberately not a language:
+ * showWhen (visibility dependencies) — equality and its negation, deliberately not a language:
  *   array('name'=>'auth_openid', 'value'=>1)                  // show when == 1
  *   array('name'=>'x', 'value'=>array('a','b'))               // "is one of" (OR within one condition)
+ *   array('name'=>'x', 'op'=>'!=', 'value'=>'none')           // show when != 'none' (with an
+ *                                                             // array of values: none of them match)
  *   array( array('name'=>..), array('name'=>..) )             // all must hold (AND)
  *   array('op'=>'any', 'conditions'=>array(...))              // at least one must hold (OR between conditions)
  *   A condition's 'scope' defaults to the setting's own scope.
+ *   AND lists and the OR wrapper do not nest.
  *
  * Saving is delegated to the system preferences handler, so every side-effect and
  * validation still fires exactly as on the legacy preferences page.
@@ -305,6 +308,63 @@ return array(
                                     array('name' => 'formulizeAIAssistantEnabled', 'value' => 1),
                                     array('name' => 'formulizeMCPServerEnabled', 'value' => 1),
                                 ),
+                            ),
+                        ),
+                    ),
+
+                    // Everything below only makes sense once the embedded assistant is on,
+                    // so every condition here is ANDed with formulizeAIAssistantEnabled.
+                    _AM_CFG_SEC_AI_ADMIN_CONTROL => array(
+                        '_section_help' => _AM_CFG_SEC_AI_ADMIN_CONTROL_HELP,
+                        array(
+                            'name' => 'formulizeAIProvider',
+                            'scope' => 'formulize',
+                            'showWhen' => array('name' => 'formulizeAIAssistantEnabled', 'value' => 1),
+                        ),
+                        array(
+                            'name' => 'formulizeAIModel',
+                            'scope' => 'formulize',
+                            'showWhen' => array(
+                                array('name' => 'formulizeAIAssistantEnabled', 'value' => 1),
+                                array('name' => 'formulizeAIProvider', 'op' => '!=', 'value' => 'userspecified'),
+                            ),
+                        ),
+                        array(
+                            'name' => 'formulizeAIApiKey',
+                            'scope' => 'formulize',
+                            'showWhen' => array(
+                                array('name' => 'formulizeAIAssistantEnabled', 'value' => 1),
+                                // Ollama needs no key
+                                array('name' => 'formulizeAIProvider', 'value' => array('claude', 'gemini', 'openai')),
+                            ),
+                        ),
+                        array(
+                            'name' => 'formulizeAIOllamaBaseUrl',
+                            'scope' => 'formulize',
+                            'showWhen' => array(
+                                array('name' => 'formulizeAIAssistantEnabled', 'value' => 1),
+                                array('name' => 'formulizeAIProvider', 'value' => 'ollama'),
+                            ),
+                        ),
+                        array(
+                            'name' => 'formulizeAIContextLimit',
+                            'scope' => 'formulize',
+                            'showWhen' => array(
+                                array('name' => 'formulizeAIAssistantEnabled', 'value' => 1),
+                                array('name' => 'formulizeAIProvider', 'op' => '!=', 'value' => 'userspecified'),
+                            ),
+                        ),
+                        array(
+                            'name' => 'formulizeAIToolAccess',
+                            'scope' => 'formulize',
+                            'showWhen' => array('name' => 'formulizeAIAssistantEnabled', 'value' => 1),
+                        ),
+                        array(
+                            'name' => 'formulizeAIToolList',
+                            'scope' => 'formulize',
+                            'showWhen' => array(
+                                array('name' => 'formulizeAIAssistantEnabled', 'value' => 1),
+                                array('name' => 'formulizeAIToolAccess', 'value' => 'custom'),
                             ),
                         ),
                     ),

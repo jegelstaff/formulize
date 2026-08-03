@@ -11,6 +11,7 @@
  */
 
 include_once "../mainfile.php";
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/aiadminconfig.php";
 if (isset(icms::$logger)) {
     icms::$logger->disableLogger();
 }
@@ -55,30 +56,19 @@ if (!$fileData) {
     exit();
 }
 
-// Load OpenAI API key from DB
-$apiKey = '';
-if (defined('XOOPS_DB_SALT') && XOOPS_DB_SALT) {
-    $uid    = (int)$xoopsUser->getVar('uid');
-    $table  = $xoopsDB->prefix('formulize_ai_keys');
-    $result = @$xoopsDB->query("SELECT encrypted_key FROM $table WHERE uid = $uid AND provider = 'openai'");
-    if ($result && ($row = $xoopsDB->fetchArray($result))) {
-        $raw = base64_decode($row['encrypted_key']);
-        if (strlen($raw) >= 17) {
-            $dec = openssl_decrypt(
-                substr($raw, 16),
-                'AES-256-CBC',
-                hash('sha256', XOOPS_DB_SALT, true),
-                0,
-                substr($raw, 0, 16)
-            );
-            if ($dec !== false) $apiKey = $dec;
-        }
-    }
-}
+// The site-wide key when an administrator chose the provider, otherwise this person's
+// own. Same rule the proxy applies, so an upload cannot end up billed differently from
+// the conversation it belongs to.
+$_aiAdminConfig = formulizeAI_adminConfig();
+$apiKey = $_aiAdminConfig['providerLocked']
+    ? formulizeAI_loadKey(FORMULIZE_AI_SYSTEM_UID, 'openai')
+    : formulizeAI_loadKey((int)$xoopsUser->getVar('uid'), 'openai');
 
 if (!$apiKey) {
     http_response_code(400);
-    echo json_encode(['error' => 'No OpenAI API key configured. Please save your settings first.']);
+    echo json_encode(['error' => $_aiAdminConfig['providerLocked']
+        ? 'Your administrator has not saved an OpenAI API key.'
+        : 'No OpenAI API key configured. Please save your settings first.']);
     exit();
 }
 

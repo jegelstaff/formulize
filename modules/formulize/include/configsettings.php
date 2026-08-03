@@ -153,6 +153,12 @@ function formulize_configFormElementHtml($config) {
 
     switch ($formtype) {
 
+        case 'aikey':
+            return formulize_configAiKeyFieldHtml($name);
+
+        case 'aitools':
+            return formulize_configAiToolsFieldHtml($name, $value);
+
         case 'yesno':
             $ele = new icms_form_elements_Radioyn('', $name, $value, _YES, _NO);
             break;
@@ -250,6 +256,117 @@ function formulize_configFormElementHtml($config) {
 }
 
 /**
+ * Render the site-wide AI API key field.
+ *
+ * The key is never in the config table and never in this page. conf_value holds only the
+ * marker 'set' or '', and is re-derived here from formulize_ai_keys on every render so it
+ * cannot drift. The key itself is written by a separate request to ai/ai_keys.php (see
+ * the submit handler in formulize_configSettingsScriptBlock), because the settings form
+ * posts to the core preferences handler, which would put whatever it received straight
+ * into config.conf_value - and from there into the binlog and any replica.
+ *
+ * Three inputs are emitted, but only the hidden marker carries the registered conf_name;
+ * the core handler discards the other two, which is exactly what we want.
+ *
+ * @param string $name The conf_name (formulizeAIApiKey)
+ * @return string HTML for the control
+ */
+function formulize_configAiKeyFieldHtml($name) {
+    include_once XOOPS_ROOT_PATH . '/modules/formulize/include/aiadminconfig.php';
+    // Including the registry is what defines the _AM_CFG_* strings used below. It is
+    // statically cached, and in practice already loaded by the time any field renders,
+    // but this does not rely on the caller having got there first.
+    formulize_configSettingsRegistry();
+
+    $safeName = htmlspecialchars($name, ENT_QUOTES);
+
+    // Which providers already have a site key, so the status line can follow the
+    // provider select without a page reload.
+    $keyed = array();
+    foreach (formulizeAI_providers() as $provider) {
+        $keyed[$provider] = formulizeAI_hasKey(FORMULIZE_AI_SYSTEM_UID, $provider);
+    }
+    $currentProvider = formulizeAI_preference('formulizeAIProvider', 'userspecified');
+    $hasKeyNow = !empty($keyed[$currentProvider]);
+
+    $html = "<input type='password' name='{$safeName}_new' id='{$safeName}_new' class='formulize-config-aikey-input'"
+        . " autocomplete='new-password' size='50' placeholder='"
+        . htmlspecialchars($hasKeyNow ? _AM_CFG_AIKEY_PLACEHOLDER_REPLACE : _AM_CFG_AIKEY_PLACEHOLDER_NEW, ENT_QUOTES) . "'>";
+
+    // The registered setting: a marker only, never the key.
+    $html .= "<input type='hidden' name='$safeName' id='$safeName' value='" . ($hasKeyNow ? 'set' : '') . "'>";
+
+    $html .= "<div class='formulize-config-aikey-status' data-keyed='"
+        . htmlspecialchars(json_encode($keyed), ENT_QUOTES) . "'"
+        . " data-msg-saved='" . htmlspecialchars(_AM_CFG_AIKEY_SAVED, ENT_QUOTES) . "'"
+        . " data-msg-none='" . htmlspecialchars(_AM_CFG_AIKEY_NONE, ENT_QUOTES) . "'>"
+        . ($hasKeyNow ? _AM_CFG_AIKEY_SAVED : _AM_CFG_AIKEY_NONE)
+        . "</div>";
+
+    // Only worth offering when there is something to remove.
+    $clearStyle = $hasKeyNow ? '' : " style='display:none'";
+    $html .= "<label class='formulize-config-aikey-clear'$clearStyle>"
+        . "<input type='checkbox' name='{$safeName}_clear' id='{$safeName}_clear'> "
+        . _AM_CFG_AIKEY_CLEAR . "</label>";
+
+    $html .= "<div class='formulize-config-aikey-error' id='{$safeName}_error' style='display:none'></div>";
+
+    return $html;
+}
+
+/**
+ * Render the administrator's per-tool checkbox grid.
+ *
+ * The tool names come from the live MCP registry (see formulizeAI_allToolNames), so the
+ * grid cannot fall behind the tools the system actually has.
+ *
+ * Note the empty hidden input before the grid. The core preferences handler does
+ * `$new_value = & ${$conf_name}`, which turns a setting that posted nothing into NULL
+ * rather than skipping it, and an 'array' valuetype then stores array('') instead of
+ * array(). Always posting at least one (empty) value keeps that path from ever running;
+ * formulizeAI_adminConfig() filters the empty back out when reading.
+ *
+ * @param string $name The conf_name (formulizeAIToolList)
+ * @param mixed $value The stored selection
+ * @return string HTML for the control
+ */
+function formulize_configAiToolsFieldHtml($name, $value) {
+    include_once XOOPS_ROOT_PATH . '/modules/formulize/include/aiadminconfig.php';
+    formulize_configSettingsRegistry(); // defines the _AM_CFG_* strings used below
+
+    $safeName = htmlspecialchars($name, ENT_QUOTES);
+    $selected = array_filter((array) $value, 'strlen');
+    $allTools = formulizeAI_allToolNames();
+
+    if (empty($allTools)) {
+        return "<div class='formulize-config-aitools-empty'>" . _AM_CFG_AITOOLS_NONE_FOUND . "</div>";
+    }
+
+    // See the docblock: guarantees the setting always posts an array.
+    $html = "<input type='hidden' name='{$safeName}[]' value=''>";
+
+    $html .= "<div class='formulize-config-aitools-actions'>"
+        . "<button type='button' class='formulize-config-aitools-all'>" . _AM_CFG_AITOOLS_ALL . "</button> "
+        . "<button type='button' class='formulize-config-aitools-none'>" . _AM_CFG_AITOOLS_NONE . "</button>"
+        . "<span class='formulize-config-aitools-count'></span>"
+        . "</div>";
+
+    // Capped height with its own scrollbar: the whole setting row is what slides open
+    // and closed, and animating a grid this tall as one block looks broken.
+    $html .= "<div class='formulize-config-aitools-grid'>";
+    foreach ($allTools as $tool) {
+        $safeTool = htmlspecialchars($tool, ENT_QUOTES);
+        $checked = in_array($tool, $selected) ? " checked='checked'" : '';
+        $html .= "<label class='formulize-config-aitools-item'>"
+            . "<input type='checkbox' name='{$safeName}[]' value='$safeTool'$checked> "
+            . "<span>$safeTool</span></label>";
+    }
+    $html .= "</div>";
+
+    return $html;
+}
+
+/**
  * The settings registry. The actual data lives in the data-only file
  * include/configsettings_registry.php, so tabs/settings can be mixed and matched
  * without editing any code. Loaded once per request.
@@ -323,17 +440,19 @@ function formulize_resolveConfigView($subject, $requestedView) {
  * Normalize a descriptor's optional 'showWhen' into a conditions wrapper.
  *
  * Returns array('op'=>'all'|'any', 'conditions'=>[...]), or array() when there
- * are no conditions. 'op' controls how the list is evaluated: 'all' means every
- * condition must hold (AND); 'any' means at least one must hold (OR). Within a
- * single condition, the controlling setting matching ANY of its listed values
- * counts as holding. This is intentionally limited to equality so the registry
- * stays declarative rather than becoming a language.
+ * are no conditions. The wrapper's 'op' controls how the list is evaluated: 'all'
+ * means every condition must hold (AND); 'any' means at least one must hold (OR).
+ * Within a single condition, the controlling setting matching ANY of its listed
+ * values counts as holding. This is intentionally limited to equality and its
+ * negation, so the registry stays declarative rather than becoming a language.
  *
  * Input forms:
  *   single condition  — assoc array with a 'name' key
  *   AND list          — indexed array of conditions (default, op='all')
  *   OR wrapper        — array('op'=>'any', 'conditions'=>[...])
- * Each condition's 'value' may be a scalar or an array.
+ * Each condition's 'value' may be a scalar or an array. A condition may also carry
+ * its own 'op' of '=' (the default) or '!=', which inverts that one condition:
+ * with an array of values, '!=' means none of them match.
  *
  * @param mixed  $showWhen     The descriptor's 'showWhen' value (or null)
  * @param string $defaultScope Scope to assume for a condition that omits its own
@@ -343,14 +462,18 @@ function formulize_normalizeConfigConditions($showWhen, $defaultScope) {
     if (empty($showWhen) || !is_array($showWhen)) {
         return array();
     }
-    if (isset($showWhen['op'])) {
-        // OR/ANY wrapper: array('op'=>'any', 'conditions'=>[...])
-        $op = ($showWhen['op'] === 'any') ? 'any' : 'all';
-        $rawList = isset($showWhen['conditions']) ? $showWhen['conditions'] : array();
-    } elseif (isset($showWhen['name'])) {
+    // Test for 'name' first: a wrapper never carries one, but a single condition using
+    // its own 'op' (e.g. array('name'=>'x','op'=>'!=','value'=>'y')) does. Testing 'op'
+    // first would read that as a wrapper with no conditions, and the setting would
+    // silently become permanently visible.
+    if (isset($showWhen['name'])) {
         // single condition
         $op = 'all';
         $rawList = array($showWhen);
+    } elseif (isset($showWhen['op'])) {
+        // OR/ANY wrapper: array('op'=>'any', 'conditions'=>[...])
+        $op = ($showWhen['op'] === 'any') ? 'any' : 'all';
+        $rawList = isset($showWhen['conditions']) ? $showWhen['conditions'] : array();
     } else {
         // indexed list of conditions — AND by default
         $op = 'all';
@@ -369,6 +492,7 @@ function formulize_normalizeConfigConditions($showWhen, $defaultScope) {
             'name' => $cond['name'],
             'scope' => isset($cond['scope']) ? $cond['scope'] : $defaultScope,
             'values' => array_map('strval', $values),
+            'negate' => (isset($cond['op']) && $cond['op'] === '!='),
         );
     }
     if (empty($conditions)) {
@@ -404,6 +528,9 @@ function formulize_configConditionsPass($wrapper) {
             }
         } else {
             $hit = in_array((string) $current, $cond['values'], true);
+        }
+        if (!empty($cond['negate'])) {
+            $hit = !$hit;
         }
         if ($anyMode && $hit) {
             return true;
@@ -488,6 +615,14 @@ function formulize_configSettingsScriptBlock() {
         return '';
     }
     $emitted = true;
+
+    // Values the script needs from PHP. json_encode gives correctly quoted and escaped
+    // JavaScript literals, so these interpolate as complete expressions.
+    $keysUrlJs = json_encode(XOOPS_URL . '/ai/ai_keys.php');
+    $tokenField = _CORE_TOKEN . '_REQUEST';
+    $keySaveFailedJs = json_encode(defined('_AM_CFG_AIKEY_SAVE_FAILED') ? _AM_CFG_AIKEY_SAVE_FAILED : 'The API key could not be saved, so nothing else was saved either:');
+    $toolsCountJs = json_encode(defined('_AM_CFG_AITOOLS_COUNT') ? _AM_CFG_AITOOLS_COUNT : '%s of %s selected');
+
     return <<<JS
 <script type="text/javascript">
 (function($){
@@ -517,6 +652,8 @@ function formulize_configSettingsScriptBlock() {
                     if(String(current) === String(values[c])){ hit = true; break; }
                 }
             }
+            // condition-level '!=' — must match formulize_configConditionsPass()
+            if(cond.negate){ hit = !hit; }
             if(anyMode && hit){ return true; }
             if(!anyMode && !hit){ return false; }
         }
@@ -625,12 +762,131 @@ function formulize_configSettingsScriptBlock() {
         });
 
         // preserve the vertical scroll position across the save reload: append the
-        // current scroll offset to the redirect URL the system save handler returns to
+        // current scroll offset to the redirect URL the system save handler returns to.
+        // Only once: the AI key handler below can cancel a submit and re-fire it, and
+        // appending a second scrollx would corrupt the redirect URL.
         $('#formulize-config-settings-form').bind('submit', function(){
             var r = $(this).find('input[name=redirect]');
-            if(r.length){ r.val(r.val() + '&scrollx=' + $(window).scrollTop()); }
+            if(r.length && r.val().indexOf('&scrollx=') === -1){
+                r.val(r.val() + '&scrollx=' + $(window).scrollTop());
+            }
         });
+
+        fzInitAiKeyField();
+        fzInitAiToolsField();
     });
+
+    // --- Site-wide AI API key ---
+    //
+    // The key cannot ride along with the rest of the form: that posts to the core
+    // preferences handler, which would write whatever it received into config.conf_value
+    // in the clear. So on submit we send the key to ai/ai_keys.php first, and only let
+    // the form go once that has succeeded.
+    function fzInitAiKeyField(){
+        var \$input = $('#formulizeAIApiKey_new');
+        if(!\$input.length){ return; }
+        var \$marker = $('#formulizeAIApiKey');
+        var \$clear  = $('#formulizeAIApiKey_clear');
+        var \$status = $('.formulize-config-aikey-status');
+        var \$error  = $('#formulizeAIApiKey_error');
+        var \$form   = $('#formulize-config-settings-form');
+        var keyed    = {};
+        try { keyed = $.parseJSON(\$status.attr('data-keyed')) || {}; } catch(e){ keyed = {}; }
+        var saving = false;
+
+        function currentProvider(){
+            return $('#formulizeAIProvider').val() || '';
+        }
+        // Keep the status line honest as the provider select changes, without a reload
+        function refreshStatus(){
+            var has = !!keyed[currentProvider()];
+            \$status.text(has ? \$status.attr('data-msg-saved') : \$status.attr('data-msg-none'));
+            \$marker.val(has ? 'set' : '');
+            if(has){ \$clear.closest('label').show(); }
+            else { \$clear.closest('label').hide(); \$clear.removeAttr('checked'); }
+        }
+        $('#formulizeAIProvider').bind('change', refreshStatus);
+        refreshStatus();
+
+        \$form.bind('submit', function(e){
+            if(saving){ return true; } // second pass, after the key was stored
+            var typed = $.trim(\$input.val());
+            var clearing = \$clear.is(':checked');
+            if(!typed && !clearing){ return true; } // nothing to do about the key
+            var provider = currentProvider();
+            if(provider === '' || provider === 'userspecified' || provider === 'ollama'){
+                return true; // no key applies to this provider
+            }
+
+            e.preventDefault();
+            \$error.hide().text('');
+
+            var payload = {
+                scope: 'system',
+                provider: provider,
+                op: clearing ? 'clear' : 'save',
+                key: clearing ? '' : typed
+            };
+            payload[$tokenField] = $('#formulize-config-settings-form input[name=$tokenField]').val();
+
+            $.ajax({
+                url: $keysUrlJs,
+                type: 'POST',
+                data: payload,
+                dataType: 'json',
+                // icms::\$security->check() leaves the token in place for XMLHttpRequests
+                // only, and the form still needs it for the submit that follows.
+                beforeSend: function(xhr){ xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest'); },
+                success: function(data){
+                    if(!data || !data.ok){
+                        showKeyError((data && data.error) ? data.error : '');
+                        return;
+                    }
+                    keyed[provider] = !!data.keyPresent;
+                    \$input.val('');
+                    \$clear.removeAttr('checked');
+                    refreshStatus();
+                    saving = true;
+                    \$form.submit();
+                },
+                error: function(xhr){
+                    var msg = '';
+                    try { msg = ($.parseJSON(xhr.responseText) || {}).error || ''; } catch(err){ msg = ''; }
+                    showKeyError(msg);
+                }
+            });
+            return false;
+        });
+
+        // Never fail silently: the rest of the settings are not saved either, and the
+        // administrator would otherwise be left believing the key went in.
+        function showKeyError(msg){
+            \$error.text($keySaveFailedJs + (msg ? ' ' + msg : '')).show();
+            \$input.focus();
+        }
+    }
+
+    // --- AI tool picker ---
+    function fzInitAiToolsField(){
+        var \$grid = $('.formulize-config-aitools-grid');
+        if(!\$grid.length){ return; }
+        var \$boxes = \$grid.find('input[type=checkbox]');
+        var \$count = $('.formulize-config-aitools-count');
+
+        function refreshCount(){
+            \$count.text($toolsCountJs
+                .replace('%s', \$boxes.filter(':checked').length)
+                .replace('%s', \$boxes.length));
+        }
+        \$boxes.bind('change', refreshCount);
+        $('.formulize-config-aitools-all').bind('click', function(){
+            \$boxes.attr('checked', 'checked'); refreshCount();
+        });
+        $('.formulize-config-aitools-none').bind('click', function(){
+            \$boxes.removeAttr('checked'); refreshCount();
+        });
+        refreshCount();
+    }
 })(jQuery);
 </script>
 

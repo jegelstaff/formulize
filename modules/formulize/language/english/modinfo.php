@@ -179,18 +179,13 @@ foreach($formulizeConfig as $thisConfig=>$thisConfigValue) {
 define("_MI_formulize_PUBLICAPIENABLED", "Enable the Public API");
 define("_MI_formulize_PUBLICAPIENABLED_DESC", "When this is enabled, you can use the Public API documented at https://formulize.org/developers/public-api/".$publicAPIInstructions);
 
-// Hide the System Specific Instructions setting unless at least one AI pathway is enabled
-// Hide the embedded AI groups unless the embedded assistant is enabled
+// Conditional visibility of the AI settings is handled declaratively by 'showWhen' in
+// include/configsettings_registry.php, which sets the initial state server-side and
+// toggles live client-side. There used to be jQuery blobs concatenated onto the caption
+// strings here to do the same job; they targeted the <tr> markup of the old core
+// preferences page, which the Formulize settings page does not produce, so they only
+// ever rendered as literal <script> tags inside the caption <label>.
 $mcpEnabled = !empty($formulizeConfig['formulizeMCPServerEnabled']);
-$aiAssistantEnabled = !empty($formulizeConfig['formulizeAIAssistantEnabled']);
-$hideSystemSpecificInstructions = '';
-$hideEmbeddedAIGroups = '';
-if(!$mcpEnabled AND !$aiAssistantEnabled) {
-	$hideSystemSpecificInstructions = "<script>jQuery(window).load(function() { jQuery(\"span:contains('System Specific Instructions for the AI Assistant')\").closest('tr').hide(); } );</script>";
-}
-if(!$aiAssistantEnabled) {
-	$hideEmbeddedAIGroups = "<script>jQuery(window).load(function() { jQuery(\"span:contains('Groups that can use the embedded AI assistant')\").closest('tr').hide(); } );</script>";
-}
 
 if(!$mcpEnabled) {
 	$mcpServerInstructions = "<br><br>If saving this setting has no effect, you need to adjust your server configuration. See <a href='https://formulize.org/ai/setup-mcp' target='_blank'>formulize.org/ai/setup-mcp</a> for more details.";
@@ -201,7 +196,7 @@ if(!$mcpEnabled) {
 define("_MI_formulize_AIASSISTANTENABLED",  "Enable the Embedded AI Assistant, inside Formulize");
 define("_MI_formulize_AIASSISTANTENABLED_DESC", "Enable an embedded AI Assistant, so that you can use AI right inside this Formulize system without Claude Desktop or any other external tool. When this is on, a <i>Use AI</i> link appears in the Formulize menu.<br><br>To use AI in this way, you will need an API key <i>from an AI provider</i>, or you will need to have a local model available through Ollama.<br><br>Learn more: <a href='https://formulize.org/ai/setup-embedded' target='_blank'>https://formulize.org/ai/setup-embedded</a>");
 
-define("_MI_formulize_AIASSISTANTGROUPS", "Groups that can use the embedded AI assistant".$hideEmbeddedAIGroups);
+define("_MI_formulize_AIASSISTANTGROUPS", "Groups that can use the embedded AI assistant");
 define("_MI_formulize_AIASSISTANTGROUPS_DESC", "Select which groups of users are allowed to use the embedded AI assistant. If no groups are selected, no one will be able to use it.");
 
 define("_MI_formulize_MCPSERVERENABLED", "Enable AI integration via MCP, for external AI Assistants");
@@ -212,6 +207,40 @@ define("_MI_formulize_SYSTEM_SPECIFIC_INSTRUCTIONS_DESC", "You can provide speci
 	#xo-canvas-content ul.mcp-bullets > li { margin-bottom: 0.6em; font-weight: normal; list-style: disc;}
 	#xo-canvas-content span.helptext ul.mcp-bullets > li { color: white; }
 </style><br>Examples:<ul class='mcp-bullets'><li><b>HR System:</b> <span style='font-weight: normal;'>This system manages employee records, time tracking, and performance reviews. Managers have access to see all their employees' records.</span></li><li><b>Research Lab:</b> <span style='font-weight: normal;'>Scientists use this system to track experiments, log results, and manage equipment reservations. Reports are automatically generated based on the logged data.</span></li><li><b>Event Management:</b> <span style='font-weight: normal;'>This system handles event registrations, venue bookings, and attendee communications. Regular users see only their own events, admins see all events.</span></li><li><b>Project Management:</b> <span style='font-weight: normal;'>Teams use this system to track project milestones, resource allocation, and client communications. Notifications go out regularly about deadlines, new tasks, etc.</span></li><li><b>Student Management:</b> <span style='font-weight: normal;'>This Formulize system is used for managing student registrations and course enrollments. Forms are used to collect student information, course preferences, and payment details. The system is integrated with a payment gateway for processing fees.</span></li></ul><b>Note:</b> You can use <a href='https://www.markdownguide.org/cheat-sheet/' target='_blank'>Markdown formatting</a> in this field to make it easier to read.");
+
+// Administrator-specified AI assistant configuration. Every one of these defaults to
+// "user specified", which is how the assistant behaved before they existed.
+define("_MI_formulize_AIPROVIDER", "Who chooses the AI provider");
+define("_MI_formulize_AIPROVIDER_DESC", "By default, each person chooses their own AI provider and enters their own API key in the assistant. Choose a provider here instead, and everyone will use it with the key you supply below. They will not be able to see the key, or change any of these choices - the provider, model and key settings disappear from the assistant for everyone.");
+define("_MI_formulize_AIPROVIDER_USERSPECIFIED", "User Specified");
+define("_MI_formulize_AIPROVIDER_CLAUDE", "Claude (Anthropic)");
+define("_MI_formulize_AIPROVIDER_GEMINI", "Gemini (Google)");
+define("_MI_formulize_AIPROVIDER_OPENAI", "OpenAI");
+define("_MI_formulize_AIPROVIDER_OLLAMA", "Ollama (local model)");
+
+define("_MI_formulize_AIMODEL", "Model");
+define("_MI_formulize_AIMODEL_DESC", "The exact model name to use, as the provider writes it - for example <i>claude-sonnet-4-6</i>, <i>gemini-2.0-flash</i>, <i>gpt-4o</i>, or <i>llama3.2</i>. Leave this blank to use a sensible default for the provider you chose.");
+
+define("_MI_formulize_AIAPIKEY", "API key");
+define("_MI_formulize_AIAPIKEY_DESC", "The API key for the provider you chose. It is encrypted before it is stored, is never sent to anyone's browser, and cannot be read back out here - so if you lose it, replace it rather than looking it up. Ollama needs no key.");
+
+define("_MI_formulize_AICONTEXTLIMIT", "History limit (characters)");
+define("_MI_formulize_AICONTEXTLIMIT_DESC", "How much of the conversation is sent back to the AI on each message. Older messages are dropped once the conversation grows past this. Leave it at 0 to use a limit suited to the provider you chose. Note that this is a limit applied as the assistant builds each request, so it controls cost and context size rather than acting as a security boundary.");
+
+define("_MI_formulize_AIOLLAMABASEURL", "Ollama address");
+define("_MI_formulize_AIOLLAMABASEURL_DESC", "Where Ollama is running, as seen <i>from this Formulize server</i> - not from the browser. The default of http://localhost:11434 means Ollama is installed on the same machine as Formulize.");
+
+define("_MI_formulize_AITOOLACCESS", "Who chooses the AI's tools");
+define("_MI_formulize_AITOOLACCESS_DESC", "Tools are the actions the AI can take in Formulize. By default each person picks their own from the assistant. Choose a set here instead and everyone gets exactly that set - the tool picker disappears from the assistant, and the tools you leave out cannot be used even by a request made outside the assistant.");
+define("_MI_formulize_AITOOLACCESS_USERSPECIFIED", "User Specified");
+define("_MI_formulize_AITOOLACCESS_READ", "Read data");
+define("_MI_formulize_AITOOLACCESS_WRITE", "Read and write data");
+define("_MI_formulize_AITOOLACCESS_MANAGE", "Manage forms");
+define("_MI_formulize_AITOOLACCESS_ALL", "All tools");
+define("_MI_formulize_AITOOLACCESS_CUSTOM", "Choose individual tools...");
+
+define("_MI_formulize_AITOOLLIST", "Tools people can use");
+define("_MI_formulize_AITOOLLIST_DESC", "Tick the tools the AI is allowed to use. This list is read from the AI tools this system actually has, so it stays current as tools are added. People still only get the tools their own permissions allow - ticking a tool here does not grant anyone access they would not otherwise have.");
 
 define("_MI_formulize_REVISIONSFORALLFORMS", "Turn on revision history for all forms");
 define("_MI_formulize_REVISIONSFORALLFORMS_DESC", "Normally, you can turn on revision history for each form as you see fit. If you want to turn it on for all forms always, turn this preference on, and the option will be disabled in each form's settings.");

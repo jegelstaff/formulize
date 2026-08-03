@@ -6,9 +6,20 @@
  */
 
 // CRITICAL: Disable debug output
-icms::$logger->disableLogger();
-while (ob_get_level()) {
-	ob_end_clean();
+//
+// Both of these are right for an HTTP request that is going to emit a bare JSON body and
+// nothing else, and fatal for anything else: the admin settings page includes this file
+// to read the tool registry, and discarding every output buffer there would throw away
+// the gzip handler opened in include/common.php and truncate the page. Callers that only
+// want the registry define FORMULIZE_MCP_REGISTRY_ONLY to opt out.
+//
+// Deliberately not reusing FORMULIZE_MCP_REQUEST (defined by mcp/index.php) as the guard:
+// mcp/docs.php also includes this file without it and does rely on the logger being off.
+if (!defined('FORMULIZE_MCP_REGISTRY_ONLY')) {
+	icms::$logger->disableLogger();
+	while (ob_get_level()) {
+		ob_end_clean();
+	}
 }
 
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/common.php';
@@ -39,15 +50,20 @@ class FormulizeMCP
 	public $baseUrl;
 	private $mcpRequest = array();
 
-	public function __construct($config = null, bool $forDocsCli = false, array $userGroupsOverride = [])
+	public function __construct($config = null, bool $registryOnly = false, array $userGroupsOverride = [])
 	{
-		// CLI-only bypass used by mcp/dump_tools_for_docs.php to dump the real
-		// tool registry (including the dynamically-built create/update element
-		// tools) for the formulize.org docs site, without an HTTP request to
-		// authenticate against. Never reachable over HTTP - the caller controls
-		// this flag and dump_tools_for_docs.php refuses to run outside PHP_SAPI
-		// 'cli'.
-		if ($forDocsCli) {
+		// Registry-only mode: build the real tool registry (including the dynamically
+		// built create/update element tools) without an HTTP request to authenticate
+		// against, and without serving anything. No request is answered in this mode -
+		// the caller just reads $this->tools - so it grants no access on its own; the
+		// caller is responsible for deciding who may see the result.
+		//
+		// Two callers use it, both trusted:
+		//   - mcp/dump_tools_for_docs.php, dumping every tool for the formulize.org docs
+		//     site (that file refuses to run outside PHP_SAPI 'cli')
+		//   - formulizeAI_allToolNames(), listing tool names for the webmaster-only AI
+		//     settings page so an administrator can choose which tools people may use
+		if ($registryOnly) {
 			$this->db = $this->getFormulizeDatabase();
 			$this->userGroups = $userGroupsOverride;
 			$this->mcpRequest = [
@@ -104,6 +120,19 @@ class FormulizeMCP
 		// Register tools, resources, and prompts
 		if($this->enabled) {
 			$this->registerTools();
+			// An administrator can pin which tools the embedded assistant may use. Applying
+			// that here, to $this->tools, covers every surface at once: tools/list and
+			// /capabilities read this array, and handleToolCall() rejects anything not in
+			// it, so a request crafted outside the assistant gets 'unknown tool' rather
+			// than the tool.
+			//
+			// Session callers only. API-key callers are external MCP clients, governed by
+			// the separate MCP Server preference and its own API key permissions - this
+			// setting is about the embedded assistant and must not touch them.
+			if($this->authViaSession) {
+				include_once XOOPS_ROOT_PATH . '/modules/formulize/include/aiadminconfig.php';
+				$this->tools = formulizeAI_filterToolsForSession($this->tools);
+			}
 			$this->registerResources();
 			$this->registerPrompts();
 		}
