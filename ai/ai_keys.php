@@ -2,12 +2,21 @@
 /**
  * API key storage endpoint for the Formulize AI Assistant.
  *
- * POST {provider, key} — encrypt and store. Empty key is a no-op (key can only be replaced, never deleted).
- * Keys are encrypted with AES-256-CBC using XOOPS_DB_SALT as the secret.
- * The decrypted key is only ever returned to ai/index.php server-side, never via this endpoint.
+ * The signed-in person's own key for a provider, saved from the assistant's settings
+ * panel. A key can be replaced but not deleted, and the field is always blank on load, so
+ * an empty key means "keep what is there".
+ *
+ * The site-wide administrator key (Settings -> AI) does not go through here - it is saved
+ * through the ordinary settings save, encrypted server-side by a hack in
+ * icms_config_Item_Handler::insert() (see modules/formulize/include/aiadminconfig.php's
+ * formulizeAI_prepareApiKeyForConfigStorage()).
+ *
+ * Keys are encrypted before storage and are never returned by this endpoint. See
+ * modules/formulize/include/aiadminconfig.php for the storage helpers.
  */
 
 include_once "../mainfile.php";
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/aiadminconfig.php";
 if (isset(icms::$logger)) {
     icms::$logger->disableLogger();
 }
@@ -17,55 +26,53 @@ while (ob_get_level()) {
 
 header('Content-Type: application/json');
 
-if (!$xoopsUser) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
+function formulizeAI_keysFail($code, $message) {
+    http_response_code($code);
+    echo json_encode(array('error' => $message));
     exit();
+}
+
+if (!$xoopsUser) {
+    formulizeAI_keysFail(401, 'Not authenticated');
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['error' => 'Method not allowed']);
-    exit();
+    formulizeAI_keysFail(405, 'Method not allowed');
 }
 
 $body = json_decode(file_get_contents('php://input'), true);
+if (!is_array($body)) {
+    $body = array();
+}
+
 $provider = isset($body['provider']) ? preg_replace('/[^a-z]/', '', (string)$body['provider']) : '';
-$key      = isset($body['key'])      ? trim((string)$body['key'])                                 : '';
+$key      = isset($body['key']) ? trim((string)$body['key']) : '';
 
-if (!in_array($provider, ['claude', 'gemini', 'openai'])) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid provider']);
-    exit();
+// Ollama takes no key, so it is not accepted here.
+if (!in_array($provider, array('claude', 'gemini', 'openai'))) {
+    formulizeAI_keysFail(400, 'Invalid provider');
 }
 
-if (!defined('XOOPS_DB_SALT') || !XOOPS_DB_SALT) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Server not configured for key storage (XOOPS_DB_SALT missing)']);
-    exit();
+if (formulizeAI_encryptionSecret() === false) {
+    formulizeAI_keysFail(500, 'Server not configured for key storage (XOOPS_DB_SALT missing)');
 }
 
-$uid   = (int)$xoopsUser->getVar('uid');
-$table = $xoopsDB->prefix('formulize_ai_keys');
+// When an administrator has chosen the provider for everyone, personal keys are not used
+// for anything, so accepting one would only invite people to think theirs was in play.
+$adminConfig = formulizeAI_adminConfig();
+if ($adminConfig['providerLocked']) {
+    formulizeAI_keysFail(403, 'Your administrator has configured the AI provider for this site, so personal API keys are not used.');
+}
 
 if ($key === '') {
-    // Empty key box means "keep existing key" — the field is always blank after first save.
-    // There is deliberately no delete path: a stored key can only be replaced with a new one.
-    echo json_encode(['ok' => true]);
+    // Empty key box means "keep existing key" - the field is always blank on load.
+    // There is deliberately no delete path here: a stored key can only be replaced.
+    echo json_encode(array('ok' => true));
     exit();
 }
 
-$iv        = random_bytes(16);
-$encrypted = base64_encode($iv . openssl_encrypt(
-    $key, 'AES-256-CBC', hash('sha256', XOOPS_DB_SALT, true), 0, $iv
-));
-$encrypted = $xoopsDB->quoteString($encrypted);
-$existing  = $xoopsDB->query("SELECT uid FROM $table WHERE uid = $uid AND provider = '$provider'");
-if ($xoopsDB->fetchArray($existing)) {
-    $xoopsDB->query("UPDATE $table SET encrypted_key = $encrypted WHERE uid = $uid AND provider = '$provider'");
-} else {
-    $xoopsDB->query("INSERT INTO $table (uid, provider, encrypted_key) VALUES ($uid, '$provider', $encrypted)");
+if (!formulizeAI_storeKey((int)$xoopsUser->getVar('uid'), $provider, $key)) {
+    formulizeAI_keysFail(500, 'Could not store the key');
 }
 
-echo json_encode(['ok' => true]);
-
+echo json_encode(array('ok' => true));

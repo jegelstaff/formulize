@@ -31,31 +31,18 @@ if (!$xoopsUser) {
 // enforces this too (session callers require the AI Assistant pref), but guard the page
 // itself so a disabled assistant doesn't present a chat UI whose tool calls would fail.
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/aiadminconfig.php";
 if (!isAIAssistantEnabled()) {
     echo "<div class='errorMsg'>" . _MD_FORMULIZE_AI_NOT_ENABLED . "</div>";
     include "../footer.php";
     exit();
 }
 
-// Load stored API keys for this user — decrypted server-side, injected into JS memory at page load.
-// Keys are never written to localStorage or returned via an endpoint; they only exist in this page's JS.
-$_aiServerKeys = [];
-if (defined('XOOPS_DB_SALT') && XOOPS_DB_SALT) {
-    $_aiKeysTable = $xoopsDB->prefix('formulize_ai_keys');
-    $_aiUid       = (int)$xoopsUser->getVar('uid');
-    $_aiResult    = @$xoopsDB->query("SELECT provider, encrypted_key FROM $_aiKeysTable WHERE uid = $_aiUid");
-    if ($_aiResult) {
-        while ($_aiRow = $xoopsDB->fetchArray($_aiResult)) {
-            $_raw = base64_decode($_aiRow['encrypted_key']);
-            if (strlen($_raw) >= 17) {
-                $_dec = openssl_decrypt(substr($_raw, 16), 'AES-256-CBC', hash('sha256', XOOPS_DB_SALT, true), 0, substr($_raw, 0, 16));
-                if ($_dec !== false) {
-                    $_aiServerKeys[$_aiRow['provider']] = $_dec;
-                }
-            }
-        }
-    }
-}
+// API keys are deliberately NOT loaded here. This page used to decrypt every key the
+// user had and print them into the HTML, where they were readable in view-source, in the
+// browser's network log, and by any third-party script on the page. Every provider is
+// now reached through ai_proxy.php, which loads the key server-side, so the browser only
+// ever needs to know whether a key exists - see formulizeAI_adminConfigForClient().
 ?>
 
 <style>
@@ -79,7 +66,13 @@ if (defined('XOOPS_DB_SALT') && XOOPS_DB_SALT) {
     </div>
 
     <div id="settings-panel" style="background: #f8f9fa; border: 1px solid #ddd; border-top: none; padding: 15px; display: none; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
-        <div style="display: flex; flex-direction: column; gap: 3px;">
+        <!-- Shown instead of the editable fields when an administrator has configured the
+             assistant. Filled in by applyAdminConfigToUI(). -->
+        <div id="admin-readonly" style="display: none; flex: 0 0 100%; flex-direction: column; gap: 6px;">
+            <div style="font-size: 0.85em; color: #555;"><?php echo _MD_FORMULIZE_AI_SET_BY_ADMIN; ?></div>
+            <div id="admin-readonly-rows" style="display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 0.9em;"></div>
+        </div>
+        <div id="provider-field" style="display: flex; flex-direction: column; gap: 3px;">
             <label for="provider-select" style="font-weight: bold; font-size: 0.85em;"><?php echo _MD_FORMULIZE_AI_PROVIDER_LABEL; ?></label>
             <select id="provider-select" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
                 <option value="claude"><?php echo _MD_FORMULIZE_AI_PROVIDER_CLAUDE; ?></option>
@@ -88,15 +81,15 @@ if (defined('XOOPS_DB_SALT') && XOOPS_DB_SALT) {
                 <option value="ollama"><?php echo _MD_FORMULIZE_AI_PROVIDER_OLLAMA; ?></option>
             </select>
         </div>
-        <div style="display: flex; flex-direction: column; gap: 3px; flex: 2; min-width: 180px;">
+        <div id="model-field" style="display: flex; flex-direction: column; gap: 3px; flex: 2; min-width: 180px;">
             <label for="model-name" style="font-weight: bold; font-size: 0.85em;"><?php echo _MD_FORMULIZE_AI_MODEL_LABEL; ?></label>
             <select id="model-name" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"></select>
         </div>
-        <div style="display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 140px;">
+        <div id="apikey-field" style="display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 140px;">
             <label for="ai-api-key" style="font-weight: bold; font-size: 0.85em;"><?php echo _MD_FORMULIZE_AI_API_KEY_LABEL; ?></label>
             <input type="password" id="ai-api-key" placeholder="<?php echo _MD_FORMULIZE_AI_API_KEY_PLACEHOLDER; ?>" autocomplete="new-password" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
         </div>
-        <div style="display: flex; flex-direction: column; gap: 3px;">
+        <div id="context-limit-field" style="display: flex; flex-direction: column; gap: 3px;">
             <label for="context-limit" style="font-weight: bold; font-size: 0.85em;"><?php echo _MD_FORMULIZE_AI_HISTORY_LIMIT_LABEL; ?></label>
             <input type="number" id="context-limit" min="4000" step="1000"
                    title="<?php echo htmlspecialchars(_MD_FORMULIZE_AI_HISTORY_LIMIT_TITLE, ENT_QUOTES); ?>"
@@ -105,7 +98,7 @@ if (defined('XOOPS_DB_SALT') && XOOPS_DB_SALT) {
         <div id="tool-selection-panel" style="display: none; flex: 0 0 100%; border-top: 1px solid #ddd; padding-top: 10px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
                 <span style="font-weight: bold; font-size: 0.85em;"><?php echo _MD_FORMULIZE_AI_ACTIVE_TOOLS_LABEL; ?> <span id="tool-selection-count"></span></span>
-                <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                <div id="tool-buttons" style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
                     <button id="tool-group-read" class="formulize-ai-tool-group-btn" style="padding: 3px 8px; font-size: 0.8em; background: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_TOOLS_READ_DATA; ?></button>
                     <button id="tool-group-write" class="formulize-ai-tool-group-btn" style="padding: 3px 8px; font-size: 0.8em; background: #fd7e14; color: white; border: none; border-radius: 3px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_TOOLS_WRITE_DATA; ?></button>
                     <button id="tool-group-manage" class="formulize-ai-tool-group-btn" style="padding: 3px 8px; font-size: 0.8em; background: #6f42c1; color: white; border: none; border-radius: 3px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_TOOLS_MANAGE_FORMS; ?></button>
@@ -116,7 +109,7 @@ if (defined('XOOPS_DB_SALT') && XOOPS_DB_SALT) {
             </div>
             <div id="tool-selection-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(185px, 1fr)); gap: 2px 16px;"></div>
         </div>
-        <div style="flex: 0 0 100%; border-top: 1px solid #ddd; padding-top: 10px; display: flex; gap: 8px; align-items: center;">
+        <div id="settings-buttons" style="flex: 0 0 100%; border-top: 1px solid #ddd; padding-top: 10px; display: flex; gap: 8px; align-items: center;">
             <button id="save-settings" style="padding: 8px 15px; background: #007cba; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;"><?php echo _MD_FORMULIZE_AI_SAVE_SETTINGS_BTN; ?></button>
             <button id="close-settings" style="padding: 8px 15px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_SETTINGS_CLOSE; ?></button>
         </div>
@@ -176,6 +169,15 @@ window.formulizeAI.strings = {
     settingsSaved:     <?php echo json_encode(_MD_FORMULIZE_AI_SETTINGS_SAVED); ?>,
     activeToolsStatus: <?php echo json_encode(_MD_FORMULIZE_AI_ACTIVE_TOOLS_STATUS); ?>,
     modelStatus:       <?php echo json_encode(_MD_FORMULIZE_AI_MODEL_STATUS); ?>,
+    lockedToolsStatus: <?php echo json_encode(_MD_FORMULIZE_AI_LOCKED_TOOLS_STATUS); ?>,
+    setByAdmin:        <?php echo json_encode(_MD_FORMULIZE_AI_SET_BY_ADMIN); ?>,
+    setByAdminTitle:   <?php echo json_encode(_MD_FORMULIZE_AI_SET_BY_ADMIN_TITLE); ?>,
+    roProvider:        <?php echo json_encode(_MD_FORMULIZE_AI_READONLY_PROVIDER); ?>,
+    roModel:           <?php echo json_encode(_MD_FORMULIZE_AI_READONLY_MODEL); ?>,
+    roHistory:         <?php echo json_encode(_MD_FORMULIZE_AI_READONLY_HISTORY); ?>,
+    roHistoryUnit:     <?php echo json_encode(_MD_FORMULIZE_AI_READONLY_HISTORY_UNIT); ?>,
+    roTools:           <?php echo json_encode(_MD_FORMULIZE_AI_READONLY_TOOLS); ?>,
+    noAdminKey:        <?php echo json_encode(_MD_FORMULIZE_AI_NO_ADMIN_KEY); ?>,
     saveFirst:         <?php echo json_encode(_MD_FORMULIZE_AI_SAVE_FIRST); ?>,
     geminiSaveFirst:   <?php echo json_encode(_MD_FORMULIZE_AI_GEMINI_SAVE_FIRST); ?>,
     failedInit:        <?php echo json_encode(_MD_FORMULIZE_AI_FAILED_INIT); ?>,
@@ -228,22 +230,29 @@ window.formulizeAI.strings = {
     stoppedMsg:        <?php echo json_encode(_MD_FORMULIZE_AI_STOPPED_MSG); ?>,
     systemPrompt:      <?php echo json_encode(_MD_FORMULIZE_AI_SYSTEM_PROMPT); ?>
 };
-window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
-</script>
-<script type="importmap">
-  {
-    "imports": {
-      "@google/generative-ai": "https://esm.run/@google/generative-ai"
-    }
-  }
+// Administrator configuration plus the tool category sets and per-provider defaults.
+// Resolved in PHP because the MCP server enforces the tool list server-side; this is
+// the same data, handed to the browser so the UI agrees with what is actually allowed.
+window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigForClient((int)$xoopsUser->getVar('uid'))); ?>;
 </script>
 
 <script type="module">
-    import { GoogleGenerativeAI } from "@google/generative-ai";
-
     const S = window.formulizeAI.strings;
-    // API keys injected server-side — live in JS memory only, never in localStorage.
-    const serverKeys = window.formulizeAI.serverKeys || {};
+
+    // Administrator configuration, resolved server-side. Also carries the tool category
+    // sets and per-provider defaults, which are defined in PHP because the MCP server has
+    // to enforce an admin-specified tool list — hiding a tool here would not deny it.
+    // See modules/formulize/include/aiadminconfig.php.
+    const adminConfig = window.formulizeAI.adminConfig || {};
+    const TOOL_SETS = adminConfig.toolSets || {};
+
+    // Whether a key is stored for each provider. Not the key itself — no API key ever
+    // reaches this page. Updated in place when one is saved, so the UI reflects it
+    // without a reload.
+    const keyPresent = Object.assign({}, adminConfig.keyPresent || {});
+    function hasStoredKey(provider) {
+        return provider === 'ollama' || !!keyPresent[provider];
+    }
 
     // Replace {token} placeholders in a string with values from a vars object
     function t(str, vars) {
@@ -271,63 +280,48 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
     const SYSTEM_PROMPT = S.systemPrompt;
 
     // Tool names that should never appear in the UI or be sent to the AI
-    const EASTER_EGGS = new Set([
-        'locate_captain_picard',
-        'open_the_pod_bay_doors_hal',
-        'lets_play_global_thermonuclear_war'
-    ]);
+    const EASTER_EGGS = new Set(TOOL_SETS.easterEggs || []);
 
     // Tools whose output is embedded in the system prompt; removed from the tool list.
     // The PHP MCP server registers this tool using the local server name, which defaults to 'formulize'.
-    const INIT_TOOLS = ['formulize'];
+    const INIT_TOOLS = TOOL_SETS.initTools || [];
 
     // Tools that create/update/administer form, screen, element, permission, user, group,
     // menu/application and custom-code structure (Manage forms group)
-    const FORM_MGMT_TOOLS = new Set([
-        'change_form_screen_page_order', 'change_menu_item_order',
-        'create_derived_value_element', 'create_form', 'create_form_screen',
-        'create_groups', 'create_linked_list_element', 'create_list_element',
-        'create_list_screen', 'create_menu_item', 'create_selector_element',
-        'create_static_content_element', 'create_subform_interface',
-        'create_table_of_elements', 'create_text_box_element', 'create_user_list_element',
-        'create_users',
-        'delete_element',
-        'get_custom_code', 'get_element_details', 'get_form_permissions_by_group',
-        'get_screen_details',
-        'list_form_connections', 'list_group_members', 'list_groups', 'list_screens',
-        'list_a_users_groups', 'list_users',
-        'query_the_database_directly',
-        'read_system_activity_log',
-        'set_form_permission_inheritance', 'set_form_permissions',
-        'update_application_code', 'update_application_forms',
-        'update_derived_value_element', 'update_form', 'update_form_code',
-        'update_form_screen', 'update_group_members', 'update_groups',
-        'update_linked_list_element', 'update_list_element', 'update_list_screen',
-        'update_menu_item', 'update_selector_element', 'update_static_content_element',
-        'update_subform_interface', 'update_table_of_elements',
-        'update_text_box_element', 'update_user_list_element', 'update_users'
-    ]);
+    const FORM_MGMT_TOOLS = new Set(TOOL_SETS.formMgmt || []);
 
     // Tools included in every preset group — the AI needs to know what forms/applications exist and their
     // field/element/menu structure regardless of whether it's reading data, writing data, or managing forms
-    const FORM_INSPECT_TOOLS = new Set([
-        'get_application_details', 'get_entries_from_form', 'get_form_details',
-        'list_applications', 'list_forms', 'list_menu_items',
-        'prepare_database_values_for_human_readability', 'test_connection'
-    ]);
+    const FORM_INSPECT_TOOLS = new Set(TOOL_SETS.formInspect || []);
 
     // Tools that write entry data (add to Read data to get Write data)
-    const ENTRY_WRITE_TOOLS = new Set(['create_entries', 'update_entries']);
+    const ENTRY_WRITE_TOOLS = new Set(TOOL_SETS.entryWrite || []);
 
     // Default history character limits per provider (conversation history only, not system prompt/tools).
     // Set near each model's actual context window, leaving headroom for system prompt + tool definitions.
     // Claude 200K tokens → 600K chars; gpt-4o 128K tokens → 400K chars; Ollama varies by model/RAM.
-    const CONTEXT_WINDOW_DEFAULTS = { claude: 600000, gemini: 2000000, openai: 400000, ollama: 128000 };
+    // Used as the fallback when a model's own context window isn't known (see modelContextWindows below -
+    // Gemini's models endpoint reports a real one per model; the other providers' do not).
+    const CONTEXT_WINDOW_DEFAULTS = adminConfig.contextWindowDefaults || {};
+
+    // id -> context window (characters), for whichever models the last discovery reported one for.
+    // Rebuilt on every discoverModels() call (see populateModelSelect), so it always reflects the
+    // currently selected provider's models, never a stale provider's.
+    let modelContextWindows = {};
+
+    function defaultContextLimitFor(provider, model) {
+        return modelContextWindows[model] || CONTEXT_WINDOW_DEFAULTS[provider];
+    }
 
     function getContextLimit() {
         const provider = providerSelect.value;
+        // An administrator's limit wins outright, and the personal one is not even read,
+        // so it survives untouched if the lock is later removed.
+        if (adminConfig.providerLocked && adminConfig.contextLimit) {
+            return adminConfig.contextLimit;
+        }
         const saved = localStorage.getItem(`ai_context_limit_${provider}`);
-        return saved ? parseInt(saved, 10) : CONTEXT_WINDOW_DEFAULTS[provider];
+        return saved ? parseInt(saved, 10) : defaultContextLimitFor(provider, modelNameInput.value.trim());
     }
 
     function slideDown(el) {
@@ -339,22 +333,82 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
     function updateInputState() {
         if (isSending) return;
         const provider = providerSelect.value;
-        const apiKey = settingsForProvider(provider).key || apiKeyInput.value.trim();
         const model = modelNameInput.value.trim();
-        // For Ollama (keyless), gate on ai_settings_saved to confirm setup was done.
-        // For key-based providers, an API key present in DB (serverKeys) or typed is enough.
-        const credentialsReady = provider === 'ollama'
-            ? !!localStorage.getItem('ai_settings_saved')
-            : !!apiKey;
+        // When an administrator configured the assistant, the only question is whether
+        // they finished the job by saving a key. Otherwise: for Ollama (keyless), gate on
+        // ai_settings_saved to confirm setup was done; for the rest, a stored key or one
+        // just typed is enough.
+        let credentialsReady;
+        if (adminConfig.providerLocked) {
+            credentialsReady = hasStoredKey(provider);
+        } else if (provider === 'ollama') {
+            credentialsReady = !!localStorage.getItem('ai_settings_saved');
+        } else {
+            credentialsReady = hasStoredKey(provider) || !!apiKeyInput.value.trim();
+        }
         const ready = credentialsReady && !!model;
         userInput.disabled = !ready;
         sendBtn.disabled = !ready;
         sendBtn.style.opacity = ready ? '' : '0.5';
     }
 
+    // Reshape the settings panel to match what an administrator has locked down. Anything
+    // they chose stops being editable and becomes a plain statement of what is in force —
+    // which is also how somebody finds out exactly which tools they have.
+    function applyAdminConfigToUI() {
+        const locked = adminConfig.providerLocked;
+        const toolsLocked = adminConfig.toolsLocked;
+        if (!locked && !toolsLocked) return;
+
+        const rows = [];
+        if (locked) {
+            ['provider-field', 'model-field', 'apikey-field', 'context-limit-field'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = 'none';
+            });
+            rows.push([S.roProvider, adminConfig.provider]);
+            rows.push([S.roModel, adminConfig.model || '—']);
+            if (adminConfig.contextLimit) {
+                rows.push([S.roHistory, t(S.roHistoryUnit, { limit: adminConfig.contextLimit.toLocaleString() })]);
+            }
+        }
+        if (toolsLocked) {
+            const buttons = document.getElementById('tool-buttons');
+            if (buttons) buttons.style.display = 'none';
+        }
+
+        const readonly = document.getElementById('admin-readonly');
+        const rowsEl = document.getElementById('admin-readonly-rows');
+        if (rows.length > 0) {
+            rowsEl.innerHTML = '';
+            rows.forEach(([label, value]) => {
+                const row = document.createElement('div');
+                const strong = document.createElement('strong');
+                strong.innerText = label + ': ';
+                row.appendChild(strong);
+                row.appendChild(document.createTextNode(value));
+                rowsEl.appendChild(row);
+            });
+            readonly.style.display = 'flex';
+        }
+
+        // With nothing left to change, a Save button would be a lie.
+        if (locked && toolsLocked) {
+            const save = document.getElementById('save-settings');
+            if (save) save.style.display = 'none';
+        }
+
+        // An administrator can pick a provider and forget the key. Without this the page
+        // is simply dead, with no indication why.
+        if (locked && !hasStoredKey(adminConfig.provider)) {
+            addMessage(S.senderSystem, S.noAdminKey, 'system');
+        }
+    }
+
     function refreshSettingsUI() {
         const provider = providerSelect.value;
-        const returning = !!(serverKeys[provider] || (provider === 'ollama' && localStorage.getItem('ai_settings_saved')));
+        const returning = adminConfig.providerLocked
+            || !!(keyPresent[provider] || (provider === 'ollama' && localStorage.getItem('ai_settings_saved')));
 
         const saveBtn = document.getElementById('save-settings');
         const closeBtn = document.getElementById('close-settings');
@@ -369,8 +423,8 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
 
     // Update the visual context-window cutoff marker in the chat DOM.
     // messagesForApi is the trimmed array actually sent to the API.
-    // firstOriginalContent is claudeHistory[0] or ollamaHistory[0].content (the very first message ever sent).
-    function updateContextCutoffMarker(messagesForApi, firstOriginalContent) {
+    // firstOriginalTurn is the very first turn ever sent, in that provider's own shape.
+    function updateContextCutoffMarker(messagesForApi, firstOriginalTurn) {
         // Reset all message opacity
         for (const el of chatWindow.children) {
             if (el.id !== 'context-cutoff-marker') el.style.opacity = '';
@@ -378,10 +432,21 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
         const existing = document.getElementById('context-cutoff-marker');
         if (existing) existing.remove();
 
+        // The plain text of a turn, whichever provider's shape it is in
+        const turnText = (turn) => {
+            if (!turn) return null;
+            if (typeof turn.content === 'string') return turn.content;
+            if (Array.isArray(turn.parts)) {
+                const texts = turn.parts.filter(p => p.text).map(p => p.text);
+                return texts.length ? texts.join('\n') : null;
+            }
+            return null;
+        };
+
         // No trimming if the first in-context message is still the original first message
-        const firstContent = messagesForApi[0]?.content;
-        if (!firstContent || typeof firstContent !== 'string') return;
-        if (firstContent === firstOriginalContent) return;
+        const firstContent = turnText(messagesForApi[0]);
+        if (!firstContent) return;
+        if (firstContent === turnText(firstOriginalTurn)) return;
 
         // Find the DOM element for the first in-context user message via text search
         const searchText = firstContent.slice(0, 100);
@@ -417,33 +482,44 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
         chatWindow.insertBefore(marker, cutoffEl);
     }
 
+    // The size of a message, for providers that carry their text in .content
+    // (Claude, OpenAI, Ollama). Gemini passes its own, since its turns use .parts.
+    function defaultTurnSize(msg) {
+        return (typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content)).length;
+    }
+
+    // A turn that answers a tool call. Gemini sends these with role 'user', so the
+    // "start on a user turn" rule alone would happily leave one stranded at the front
+    // with nothing to answer — which the API rejects.
+    function isToolResponseTurn(msg) {
+        return Array.isArray(msg.parts) && msg.parts.some(p => p.functionResponse);
+    }
+
     // Trim message history to fit within maxChars. Always keeps at least the last message.
     // Drops from the front in whole messages, ensuring history still starts with a user turn.
-    function trimHistoryToLimit(messages, maxChars) {
-        let total = messages.reduce((sum, msg) => {
-            const c = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
-            return sum + c.length;
-        }, 0);
+    function trimHistoryToLimit(messages, maxChars, sizeOf = defaultTurnSize) {
+        let total = messages.reduce((sum, msg) => sum + sizeOf(msg), 0);
         if (total <= maxChars) return messages;
         const result = [...messages];
         while (result.length > 1 && total > maxChars) {
-            const removed = result.shift();
-            total -= (typeof removed.content === 'string' ? removed.content : JSON.stringify(removed.content)).length;
-            // Keep history starting on a user message (required by Claude; good practice for Ollama)
-            while (result.length > 1 && result[0].role !== 'user') {
-                const r = result.shift();
-                total -= (typeof r.content === 'string' ? r.content : JSON.stringify(r.content)).length;
+            total -= sizeOf(result.shift());
+            // Keep history starting on a real user message: role 'user' (required by
+            // Claude, good practice for Ollama) and not a dangling tool response.
+            while (result.length > 1 && (result[0].role !== 'user' || isToolResponseTurn(result[0]))) {
+                total -= sizeOf(result.shift());
             }
         }
         return result;
     }
 
-    // Returns the names of tools in the named preset group
+    // Returns the names of tools in the named preset group.
+    // Mirrors formulizeAI_toolCategoryNames() in modules/formulize/include/aiadminconfig.php,
+    // which is the copy the MCP server enforces with. Keep the two in step.
     function getToolGroupNames(group) {
         const all = availableTools.map(t => t.name);
-        if (group === 'readData')    return all.filter(n => (!FORM_MGMT_TOOLS.has(n) && !ENTRY_WRITE_TOOLS.has(n)) || FORM_INSPECT_TOOLS.has(n));
-        if (group === 'writeData')   return all.filter(n => !FORM_MGMT_TOOLS.has(n) || FORM_INSPECT_TOOLS.has(n));
-        if (group === 'manageForms') return all.filter(n => FORM_MGMT_TOOLS.has(n) || FORM_INSPECT_TOOLS.has(n));
+        if (group === 'readData')    return all.filter(n => FORM_INSPECT_TOOLS.has(n));
+        if (group === 'writeData')   return all.filter(n => FORM_INSPECT_TOOLS.has(n) || ENTRY_WRITE_TOOLS.has(n));
+        if (group === 'manageForms') return all.filter(n => FORM_MGMT_TOOLS.has(n) || n === 'test_connection');
         return [];
     }
 
@@ -621,27 +697,37 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
 
     let availableTools = []; // Raw MCP tools (full list from server)
     let selectedToolNames = new Set(); // Which tools are currently active
-    let geminiChat = null;   // Gemini stateful chat object (rebuilt on Save Settings / Refresh)
-    let geminiHistory = [];  // Gemini clean conversation history (bare text, no activity context)
+    // Gemini history in its own wire shape: {role:'user'|'model', parts:[...]}.
+    // It used to be held inside a stateful SDK chat object, which meant the history could
+    // not be trimmed and had to be rebuilt from scratch in three places whenever anything
+    // changed. Keeping it here makes Gemini behave like the other providers.
+    let geminiHistory = [];
     let lastGeminiActivityCount = 0; // How many deduplicated activity events Gemini has already seen
     let claudeHistory = [];  // Claude explicit conversation history
     let openaiHistory = [];  // OpenAI explicit conversation history
     let ollamaHistory = [];  // Ollama explicit conversation history
 
-    // Load settings from localStorage
-    const savedProvider = localStorage.getItem('ai_provider') || 'claude';
+    // Load settings from localStorage — unless an administrator has chosen for everyone,
+    // in which case their choice wins and the stored preference is left untouched, so it
+    // comes back if the lock is ever removed.
+    const savedProvider = adminConfig.providerLocked
+        ? adminConfig.provider
+        : (localStorage.getItem('ai_provider') || 'claude');
     providerSelect.value = savedProvider;
 
     function settingsForProvider(p) {
-        return {
-            key:   serverKeys[p] || '',
-            model: localStorage.getItem(`ai_model_${p}`) || ''
-        };
+        if (adminConfig.providerLocked) {
+            return { model: adminConfig.model || '' };
+        }
+        return { model: localStorage.getItem(`ai_model_${p}`) || '' };
     }
 
     function saveSettingsForProvider(p, key, model) {
+        // Nothing here applies when an administrator has configured the assistant: their
+        // key is the one in use, and the panel offers no way to change any of this.
+        if (adminConfig.providerLocked) return;
         if (key && p !== 'ollama') {
-            serverKeys[p] = key; // update in-memory immediately
+            keyPresent[p] = true; // reflect it immediately; the key itself stays server-side
             fetch('ai_keys.php', {  // persist to server in background — no need to await
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -651,9 +737,14 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
         if (model) localStorage.setItem(`ai_model_${p}`, model);
     }
 
-    const MODEL_DEFAULTS = { claude: 'claude-sonnet-4-6', gemini: 'gemini-2.0-flash', openai: 'gpt-4o', ollama: 'llama3.2' };
+    const MODEL_DEFAULTS = adminConfig.modelDefaults || {};
 
     function populateModelSelect(models, preferredId) {
+        modelContextWindows = {};
+        models.forEach(m => {
+            if (m.contextWindow) modelContextWindows[m.id] = m.contextWindow;
+        });
+
         modelNameInput.innerHTML = '';
         models.forEach(m => {
             const opt = document.createElement('option');
@@ -664,11 +755,17 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
         if (preferredId) modelNameInput.value = preferredId;
         if (!modelNameInput.value && models.length > 0) modelNameInput.value = models[0].id;
         updateToolCount();
+        // Refresh with the now-current model's real context window (if the provider
+        // reported one) or the provider default - a no-op when the person has an
+        // explicit saved override, which updateContextLimitDisplay() still honours.
+        updateContextLimitDisplay();
     }
 
+    // Every provider's model list comes back through the proxy in one shape,
+    // {models:[{id,name}]}, so there is nothing provider-specific left to do here.
+    // Talking to providers directly is what used to require the key in the browser.
     async function discoverModels() {
         const provider = providerSelect.value;
-        const apiKey = apiKeyInput.value.trim() || settingsForProvider(provider).key;
         const savedModel = settingsForProvider(provider).model || MODEL_DEFAULTS[provider] || '';
 
         // Seed the select immediately with saved/default so the rest of the page can read a value
@@ -676,51 +773,23 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
         modelNameInput.disabled = true;
 
         try {
-            let models = [];
-
-            if (provider === 'claude' && apiKey) {
-                // Only send the key in the header when the user has typed a new key not yet
-                // saved to the DB. For established users the proxy loads the key itself.
-                const discoverHeaders = {};
-                const typedKey = apiKeyInput.value.trim();
-                if (typedKey && !serverKeys[provider]) discoverHeaders['X-API-Key'] = typedKey;
-                const resp = await fetch('ai_proxy.php', { headers: discoverHeaders });
-                if (resp.ok) {
-                    const data = await resp.json();
-                    models = (data.data || []).map(m => ({ id: m.id, name: m.display_name || m.id }));
-                }
-            } else if (provider === 'gemini' && apiKey) {
-                const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-                if (resp.ok) {
-                    const data = await resp.json();
-                    models = (data.models || [])
-                        .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
-                        .map(m => ({ id: m.name.replace('models/', ''), name: m.displayName || m.name.replace('models/', '') }));
-                }
-            } else if (provider === 'openai' && apiKey) {
-                const resp = await fetch('https://api.openai.com/v1/models', {
-                    headers: { 'Authorization': `Bearer ${apiKey}` }
-                });
-                if (resp.ok) {
-                    const data = await resp.json();
-                    models = (data.data || [])
-                        .filter(m => !/(embedding|whisper|tts|dall|moderation|instruct|audio|realtime)/i.test(m.id))
-                        .sort((a, b) => b.created - a.created)
-                        .map(m => ({ id: m.id, name: m.id }));
-                }
-            } else if (provider === 'ollama') {
-                // Direct browser→Ollama fetch. Requires OLLAMA_ORIGINS to include the
-                // Formulize server origin (e.g. OLLAMA_ORIGINS=https://your-server.com).
-                const resp = await fetch('http://localhost:11434/api/tags');
-                if (resp.ok) {
-                    const data = await resp.json();
-                    models = (data.models || []).map(m => ({ id: m.name, name: m.name }));
-                } else {
-                    console.error('Ollama /api/tags returned', resp.status);
-                }
+            // The one case where a key is sent from the browser: the very first setup,
+            // before any key has been stored for the proxy to find. The proxy accepts it
+            // for listing models and nothing else.
+            const discoverHeaders = {};
+            const typedKey = apiKeyInput.value.trim();
+            if (typedKey && !hasStoredKey(provider) && !adminConfig.providerLocked) {
+                discoverHeaders['X-API-Key'] = typedKey;
             }
 
-            if (models.length > 0) populateModelSelect(models, savedModel);
+            const resp = await fetch(`ai_proxy.php?provider=${encodeURIComponent(provider)}&op=models`, {
+                headers: discoverHeaders
+            });
+            if (resp.ok) {
+                const data = await resp.json();
+                const models = data.models || [];
+                if (models.length > 0) populateModelSelect(models, savedModel);
+            }
         } catch (e) {
             console.error('Model discovery error:', e);
         }
@@ -733,14 +802,14 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
         const provider = providerSelect.value;
         const saved = localStorage.getItem(`ai_context_limit_${provider}`);
         const el = document.getElementById('context-limit');
-        el.value = saved ? parseInt(saved, 10) : CONTEXT_WINDOW_DEFAULTS[provider];
+        el.value = saved ? parseInt(saved, 10) : defaultContextLimitFor(provider, modelNameInput.value.trim());
         el.title = provider === 'ollama' ? S.historyLimitTitleOllama : S.historyLimitTitle;
     }
 
     function updateProviderHints() {
         const p = providerSelect.value;
         const isOllama = p === 'ollama';
-        const hasSavedKey = !!serverKeys[p];
+        const hasSavedKey = !!keyPresent[p];
         apiKeyInput.placeholder = isOllama ? S.apiKeyOllama : (hasSavedKey ? S.apiKeySaved : S.apiKeyPlaceholder);
         apiKeyInput.value = ''; // actual key lives server-side only, never in the field
         apiKeyInput.disabled = isOllama;
@@ -765,7 +834,11 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
             setTimeout(() => alert(S.historyLimitConfirm), 0);
         }
     });
-    modelNameInput.addEventListener('change', updateToolCount);
+    modelNameInput.addEventListener('change', () => {
+        updateToolCount();
+        updateContextLimitDisplay();
+    });
+    applyAdminConfigToUI(); // before the first discovery, so hidden fields never flash
     updateProviderHints(); // Apply on load — also triggers initial model discovery
 
     document.getElementById('settings-toggle').addEventListener('click', () => {
@@ -778,9 +851,10 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
         }
     });
 
-    const savedKey = settingsForProvider(savedProvider).key;
+    // When an administrator has set the assistant up there is nothing for the person to
+    // configure, so there is no first-visit setup step either — go straight to ready.
     const ollamaReady = savedProvider === 'ollama' && !!localStorage.getItem('ai_settings_saved');
-    if (savedKey || ollamaReady) {
+    if (adminConfig.providerLocked || hasStoredKey(savedProvider) || ollamaReady) {
         initializeMCP();
     } else {
         // First visit: open settings panel and show welcome, but still pre-fetch tools in background
@@ -793,43 +867,32 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
     }
 
     saveSettingsBtn.addEventListener('click', () => {
+        // Nothing in this panel is the person's to change once an administrator has set
+        // both. The button is hidden in that case; this is the belt to that braces.
+        if (adminConfig.providerLocked && adminConfig.toolsLocked) return;
         const key = apiKeyInput.value.trim();
         const modelName = modelNameInput.value.trim();
         const provider = providerSelect.value;
         // Allow saving when: a new key is typed, or a key already exists server-side, or Ollama (no key needed)
-        const hasKey = key || serverKeys[provider] || provider === 'ollama';
+        const hasKey = key || hasStoredKey(provider);
         if (modelName && hasKey) {
             saveSettingsForProvider(provider, key, modelName);  // fire-and-forget server save; in-memory update is synchronous
             localStorage.setItem('ai_provider', provider);
             localStorage.setItem('ai_settings_saved', '1');
             const limitVal = parseInt(document.getElementById('context-limit').value, 10);
-            if (limitVal && limitVal !== CONTEXT_WINDOW_DEFAULTS[provider]) {
+            if (limitVal && limitVal !== defaultContextLimitFor(provider, modelName)) {
                 localStorage.setItem(`ai_context_limit_${provider}`, limitVal);
             } else {
                 localStorage.removeItem(`ai_context_limit_${provider}`);
             }
-            claudeHistory = [];
-            openaiHistory = [];
-            ollamaHistory = [];
-            geminiHistory = [];
-            lastGeminiActivityCount = 0;
-            // Tools were already fetched at page load — no need to re-fetch.
-            // For Gemini we do need to (re-)initialize the chat object with the key+tools.
-            if (provider === 'gemini') {
-                const geminiKey = serverKeys['gemini'] || apiKeyInput.value.trim();
-                if (geminiKey && availableTools.length > 0) {
-                    const functionDeclarations = getActiveTools().map(tool => ({
-                        name: tool.name,
-                        description: tool.description,
-                        parameters: { type: 'object', properties: tool.inputSchema?.properties || {}, required: tool.inputSchema?.required || [] }
-                    }));
-                    const modelConfig = { model: modelName, systemInstruction: dynamicSystemPrompt };
-                    if (functionDeclarations.length > 0) modelConfig.tools = [{ functionDeclarations }];
-                    geminiChat = new GoogleGenerativeAI(geminiKey).getGenerativeModel(modelConfig).startChat();
-                }
-            } else {
-                geminiChat = null;
-            }
+            // Tools were already fetched at page load — no need to re-fetch, and no
+            // per-provider chat object to rebuild: every provider now reads the current
+            // tool selection at the moment it sends. Saving settings does not touch the
+            // conversation - each provider keeps its own history array already, so there
+            // is nothing to reconcile, and silently discarding it here (while the visible
+            // transcript stayed on screen) used to leave the model with no memory of a
+            // conversation the person could still see. "New Conversation" is the
+            // deliberate way to clear history - see startNewConversation().
             renderToolPanel(); // data was pre-fetched; panel appears instantly
             updateInputState();
             updateProviderHints(); // refresh placeholder to reflect newly stored key
@@ -845,14 +908,28 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
     }
 
     function saveToolSelection() {
+        // Never overwrite the personal selection while an administrator's choice is in
+        // force — it is what comes back if the lock is lifted.
+        if (adminConfig.toolsLocked) return;
         localStorage.setItem('ai_selected_tools', JSON.stringify([...selectedToolNames]));
     }
 
     function updateToolCount() {
         const active = selectedToolNames.size;
         const total = availableTools.length;
-        document.getElementById('tool-selection-count').innerText = `${active} / ${total}`;
         const model = modelNameInput.value.trim() || '—';
+        const countEl = document.getElementById('tool-selection-count');
+
+        // With the tools chosen for everyone, the list is already exactly what is allowed
+        // (the server filtered it), so a "12 of 12" reads as noise.
+        if (adminConfig.toolsLocked) {
+            countEl.innerText = `(${total})`;
+            mcpStatus.innerText = t(S.lockedToolsStatus, { total, model });
+            document.getElementById('settings-toggle').title = S.setByAdminTitle;
+            return;
+        }
+
+        countEl.innerText = `${active} / ${total}`;
         mcpStatus.innerText = total > 0
             ? t(S.activeToolsStatus, { active, total, model })
             : t(S.modelStatus, { model });
@@ -864,6 +941,26 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
 
         if (availableTools.length === 0) {
             panel.style.display = 'none';
+            return;
+        }
+
+        // When an administrator has chosen the tools, availableTools IS the allowed set —
+        // the MCP server filtered it before we ever saw it — so everything in the list is
+        // in use and the panel becomes a readout rather than a picker. The saved personal
+        // selection is left in localStorage untouched, so it returns if the lock is lifted.
+        if (adminConfig.toolsLocked) {
+            selectedToolNames = new Set(availableTools.map(t => t.name));
+            list.innerHTML = '';
+            availableTools.forEach(tool => {
+                const item = document.createElement('div');
+                item.innerText = tool.name;
+                item.title = tool.description || tool.name;
+                item.style.cssText = 'padding: 2px 0; font-size: 0.82em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
+                list.appendChild(item);
+            });
+            panel.style.display = 'block';
+            slideDown(panel);
+            updateToolCount();
             return;
         }
 
@@ -979,35 +1076,6 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
                 if (availableTools.length === 0) mcpStatus.innerText = S.noToolsFound;
             }
 
-            // Gemini needs a chat object initialized with the tool list
-            if (provider === 'gemini') {
-                // Use key from server injection (serverKeys) for returning users; fall back to
-                // typed value for the first-save case where the key just entered.
-                const apiKey = settingsForProvider('gemini').key || apiKeyInput.value.trim();
-                if (!apiKey) return;
-
-                const genAI = new GoogleGenerativeAI(apiKey);
-                const modelName = modelNameInput.value.trim() || 'gemini-2.0-flash';
-
-                const functionDeclarations = getActiveTools().map(tool => ({
-                    name: tool.name,
-                    description: tool.description,
-                    parameters: {
-                        type: "object",
-                        properties: tool.inputSchema?.properties || {},
-                        required: tool.inputSchema?.required || []
-                    }
-                }));
-
-                const modelConfig = { model: modelName, systemInstruction: dynamicSystemPrompt };
-                if (functionDeclarations.length > 0) {
-                    modelConfig.tools = [{ functionDeclarations }];
-                }
-
-                geminiChat = genAI.getGenerativeModel(modelConfig).startChat();
-                lastGeminiActivityCount = 0;
-            }
-
             if (renderPanel) refreshSettingsUI();
         } catch (error) {
             console.error('MCP init error:', error);
@@ -1022,23 +1090,6 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
         ollamaHistory = [];
         geminiHistory = [];
         lastGeminiActivityCount = 0;
-
-        // Gemini SDK holds history internally — rebuild the chat object to truly reset it
-        if (geminiChat) {
-            const apiKey = settingsForProvider('gemini').key;
-            if (apiKey) {
-                const genAI = new GoogleGenerativeAI(apiKey);
-                const modelName = modelNameInput.value.trim() || 'gemini-2.0-flash';
-                const functionDeclarations = getActiveTools().map(tool => ({
-                    name: tool.name,
-                    description: tool.description,
-                    parameters: { type: 'object', properties: tool.inputSchema?.properties || {}, required: tool.inputSchema?.required || [] }
-                }));
-                const modelConfig = { model: modelName, systemInstruction: dynamicSystemPrompt };
-                if (functionDeclarations.length > 0) modelConfig.tools = [{ functionDeclarations }];
-                geminiChat = genAI.getGenerativeModel(modelConfig).startChat();
-            }
-        }
 
         chatWindow.innerHTML = '';
         addMessage(S.senderSystem, S.newConversationMsg, 'system');
@@ -1104,9 +1155,9 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
         if (!text) return;
 
         const provider = providerSelect.value;
-        const apiKey = settingsForProvider(provider).key;
-        if (provider !== 'ollama' && !apiKey) {
-            addMessage(S.senderError, S.saveFirst, 'error');
+        // The key lives server-side; all this needs to know is whether one exists.
+        if (!hasStoredKey(provider)) {
+            addMessage(S.senderError, adminConfig.providerLocked ? S.noAdminKey : S.saveFirst, 'error');
             return;
         }
 
@@ -1174,15 +1225,51 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
 
     // --- Gemini path ---
 
-    async function sendGeminiMessage(text, loadingMsg, attachments = []) {
-        if (!geminiChat) {
-            loadingMsg.remove();
-            addMessage(S.senderError, S.geminiSaveFirst, 'error');
-            return;
+    // Gemini's tool declarations. Its schema is close to, but not the same as, the one
+    // the other providers take, so it is built from the MCP schema rather than passed on.
+    function buildGeminiTools() {
+        const functionDeclarations = getActiveTools().map(tool => ({
+            name: tool.name,
+            description: tool.description,
+            parameters: {
+                type: 'object',
+                properties: tool.inputSchema?.properties || {},
+                required: tool.inputSchema?.required || []
+            }
+        }));
+        return functionDeclarations.length > 0 ? [{ functionDeclarations }] : null;
+    }
+
+    // The text of a Gemini turn, for measuring it against the history limit.
+    function geminiTurnSize(turn) {
+        return JSON.stringify(turn.parts || '').length;
+    }
+
+    async function callGemini(contents) {
+        const body = {
+            contents,
+            systemInstruction: { parts: [{ text: dynamicSystemPrompt }] }
+        };
+        const tools = buildGeminiTools();
+        if (tools) body.tools = tools;
+        // The model rides in the query string; the proxy puts it in the URL path, which
+        // is where Gemini wants it.
+        body.model = modelNameInput.value.trim() || 'gemini-2.0-flash';
+
+        const response = await fetch('ai_proxy.php?provider=gemini&op=chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+            signal: currentAbortController?.signal
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error?.message || `HTTP ${response.status}`);
         }
+        return data;
+    }
 
-        geminiHistory.push({ role: 'user', content: text });
-
+    async function sendGeminiMessage(text, loadingMsg, attachments = []) {
         const allEvents = getDeduplicatedLog();
         const newEvents = allEvents.slice(lastGeminiActivityCount);
         const prevActivityCount = lastGeminiActivityCount;
@@ -1193,39 +1280,48 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
             activityContext = `${S.contextHeader}\n${lines.join('\n')}\n]`;
         }
 
-        try {
-            const geminiText = activityContext ? text + '\n\n' + activityContext : text;
-            let result;
-            if (attachments.length > 0) {
-                const parts = attachments
-                    .filter(a => a.type.startsWith('image/') || a.type === 'application/pdf')
-                    .map(a => ({ inlineData: { data: a.data, mimeType: a.type } }));
-                parts.push({ text: geminiText });
-                result = await geminiChat.sendMessage(parts);
-            } else {
-                result = await geminiChat.sendMessage(geminiText);
-            }
-            if (userStopped) throw new DOMException('User stopped', 'AbortError');
-            let response = result.response;
+        const geminiText = activityContext ? text + '\n\n' + activityContext : text;
+        const userParts = attachments
+            .filter(a => a.type.startsWith('image/') || a.type === 'application/pdf')
+            .map(a => ({ inlineData: { data: a.data, mimeType: a.type } }));
+        userParts.push({ text: geminiText });
+        geminiHistory.push({ role: 'user', parts: userParts });
 
-            while (response.functionCalls && response.functionCalls()) {
-                const calls = response.functionCalls();
-                const toolResponses = [];
-                for (const call of calls) {
-                    const toolBlock = addToolRequest(call.name, call.args);
-                    const toolResult = await executeTool(call.name, call.args);
+        const historyLength = geminiHistory.length;
+        try {
+            let contents = trimHistoryToLimit(geminiHistory, getContextLimit(), geminiTurnSize);
+            let data = await callGemini(contents);
+            if (userStopped) throw new DOMException('User stopped', 'AbortError');
+
+            let parts = data.candidates?.[0]?.content?.parts || [];
+            let calls = parts.filter(p => p.functionCall);
+
+            while (calls.length > 0) {
+                // Keep the model's turn verbatim: a functionResponse is only valid
+                // immediately after the functionCall it answers.
+                geminiHistory.push({ role: 'model', parts });
+
+                const responseParts = [];
+                for (const part of calls) {
+                    const call = part.functionCall;
+                    const toolBlock = addToolRequest(call.name, call.args || {});
+                    const toolResult = await executeTool(call.name, call.args || {});
                     addToolResponse(toolBlock, toolResult.raw);
-                    toolResponses.push({
+                    responseParts.push({
                         functionResponse: { name: call.name, response: { content: toolResult.text } }
                     });
                 }
-                result = await geminiChat.sendMessage(toolResponses);
+                geminiHistory.push({ role: 'user', parts: responseParts });
+
+                contents = trimHistoryToLimit(geminiHistory, getContextLimit(), geminiTurnSize);
+                data = await callGemini(contents);
                 if (userStopped) throw new DOMException('User stopped', 'AbortError');
-                response = result.response;
+                parts = data.candidates?.[0]?.content?.parts || [];
+                calls = parts.filter(p => p.functionCall);
             }
 
-            const finalText = response.text();
-            geminiHistory.push({ role: 'assistant', content: finalText });
+            const finalText = parts.filter(p => p.text).map(p => p.text).join('\n');
+            geminiHistory.push({ role: 'model', parts });
 
             loadingMsg.remove();
             const scrollBeforeGemini = chatWindow.scrollTop;
@@ -1233,8 +1329,11 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
             const geminiMsg = addMessage(S.senderAI, S.thinking + '...', 'ai');
             chatWindow.scrollTop = scrollBeforeGemini + (chatWindow.scrollHeight - heightBeforeGemini);
             await typewriterEffect(geminiMsg.querySelector('.ai-markdown') || geminiMsg.lastElementChild, finalText);
+            updateContextCutoffMarker(contents, geminiHistory[0]);
         } catch (error) {
-            geminiHistory.pop();
+            // Roll back every turn this message added, not just the first one — the tool
+            // loop may have pushed several before failing.
+            geminiHistory.length = historyLength - 1;
             lastGeminiActivityCount = prevActivityCount;
             throw error;
         }
@@ -1310,7 +1409,7 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
             const claudeMsg = addMessage(S.senderAI, S.thinking + '...', 'ai');
             chatWindow.scrollTop = scrollBeforeClaude + (chatWindow.scrollHeight - heightBeforeClaude);
             await typewriterEffect(claudeMsg.querySelector('.ai-markdown') || claudeMsg.lastElementChild, textContent);
-            updateContextCutoffMarker(messagesForApi, claudeHistory[0]?.content);
+            updateContextCutoffMarker(messagesForApi, claudeHistory[0]);
         } catch (error) {
             claudeHistory.pop();
             throw error;
@@ -1354,7 +1453,9 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
                         // Decode base64 → Blob via data URL fetch (efficient, no manual char loop)
                         const blob = await fetch('data:' + block.source.media_type + ';base64,' + block.source.data).then(r => r.blob());
                         fd.append(ref, blob, ref);
-                        return { type: block.type, source: { type: 'file_ref', ref, media_type: block.source.media_type } };
+                        // file_ref (not ref) - formulizeAI_expandFileRefs() in ai_providers.php
+                        // matches placeholders by that exact property name.
+                        return { type: block.type, source: { type: 'file_ref', file_ref: ref, media_type: block.source.media_type } };
                     }
                     return block;
                 }));
@@ -1374,7 +1475,7 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
         }
 
         // No key header — the proxy loads the key server-side from the DB.
-        const response = await fetch('ai_proxy.php', fetchInit);
+        const response = await fetch('ai_proxy.php?provider=claude&op=chat', fetchInit);
 
         let data;
         try {
@@ -1391,7 +1492,9 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
     // --- OpenAI-compatible providers (Ollama, OpenAI) ---
 
     // Shared HTTP call for any OpenAI-compatible /v1/chat/completions endpoint.
-    async function callOpenAICompat(messages, { url, apiKey, defaultModel, timeoutMs, timeoutMsg }) {
+    // Both go through the proxy, so no key is involved here: OpenAI's is loaded
+    // server-side, and Ollama's address is the server's, not the browser's.
+    async function callOpenAICompat(messages, { provider, defaultModel, timeoutMs, timeoutMsg }) {
         const modelName = modelNameInput.value.trim() || defaultModel;
 
         const tools = getActiveTools().map(tool => ({
@@ -1404,7 +1507,7 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
         }));
 
         const headers = { 'Content-Type': 'application/json' };
-        if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
+        const url = `ai_proxy.php?provider=${encodeURIComponent(provider)}&op=chat`;
 
         const messagesWithSystem = [{ role: 'system', content: dynamicSystemPrompt }, ...messages];
         const body = { model: modelName, messages: messagesWithSystem, stream: false };
@@ -1513,7 +1616,7 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
             const aiMsg = addMessage(S.senderAI, S.thinking + '...', 'ai');
             chatWindow.scrollTop = scrollBeforeOAI + (chatWindow.scrollHeight - heightBeforeOAI);
             await typewriterEffect(aiMsg.querySelector('.ai-markdown') || aiMsg.lastElementChild, message.content || '(no response)');
-            updateContextCutoffMarker(messagesForApi, history[0]?.content);
+            updateContextCutoffMarker(messagesForApi, history[0]);
         } catch (error) {
             history.pop();
             throw error;
@@ -1524,8 +1627,7 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
 
     function callOllama(messages) {
         return callOpenAICompat(messages, {
-            url: 'http://localhost:11434/v1/chat/completions',
-            apiKey: null,
+            provider: 'ollama',
             defaultModel: 'llama3.2',
             timeoutMs: 300000,
             timeoutMsg: S.ollamaTimeout
@@ -1545,8 +1647,7 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
 
     function callOpenAI(messages) {
         return callOpenAICompat(messages, {
-            url: 'https://api.openai.com/v1/chat/completions',
-            apiKey: settingsForProvider('openai').key,
+            provider: 'openai',
             defaultModel: 'gpt-4o',
             timeoutMs: 60000,
             timeoutMsg: S.openaiTimeout

@@ -54,6 +54,19 @@ define('_MD_FORMULIZE_AI_MCP_ERROR',              'MCP: Error');
 define('_MD_FORMULIZE_AI_SETTINGS_SAVED',         'Settings saved. Provider: {provider}, Model: {model}');
 define('_MD_FORMULIZE_AI_ACTIVE_TOOLS_STATUS',    'Active tools: {active}/{total}  ·  Model: {model}');
 define('_MD_FORMULIZE_AI_MODEL_STATUS',           'Model: {model}');
+// When an administrator has chosen the tools, every available tool is in use, so
+// "{active}/{total}" would only ever read as "n/n".
+define('_MD_FORMULIZE_AI_LOCKED_TOOLS_STATUS',    '🔒 {total} tools  ·  Model: {model}');
+
+// Read-only settings panel, shown when an administrator has configured the assistant
+define('_MD_FORMULIZE_AI_SET_BY_ADMIN',           'These settings were chosen by your administrator.');
+define('_MD_FORMULIZE_AI_SET_BY_ADMIN_TITLE',     'Configured by your administrator');
+define('_MD_FORMULIZE_AI_READONLY_PROVIDER',      'Provider');
+define('_MD_FORMULIZE_AI_READONLY_MODEL',         'Model');
+define('_MD_FORMULIZE_AI_READONLY_HISTORY',       'History limit');
+define('_MD_FORMULIZE_AI_READONLY_HISTORY_UNIT',  '{limit} characters');
+define('_MD_FORMULIZE_AI_READONLY_TOOLS',         'Tools you can use ({total})');
+define('_MD_FORMULIZE_AI_NO_ADMIN_KEY',           'Your administrator has chosen the AI provider for this site but has not saved an API key yet, so the assistant cannot be used. Please let them know.');
 
 // Error / prompt messages
 define('_MD_FORMULIZE_AI_SAVE_FIRST',             'Please save your settings first.');

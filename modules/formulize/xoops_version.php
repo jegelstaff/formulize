@@ -39,7 +39,7 @@ $modversion = array(
 	'license' => "GPL-2.0",
 	'image' => "images/formulize.gif",
 	'dirname' => "formulize",
-	'dbversion' => 16,
+	'dbversion' => 17,
 	'onUpdate' => "include/on_update.php"
 );
 
@@ -1133,6 +1133,87 @@ $modversion['config'][] = array(
 	'formtype' => 'textsarea',
 	'valuetype' => 'text',
 	'default' => ''
+);
+
+// Administrator-specified AI assistant configuration.
+// Each defaults to "user specified", which is the behaviour the assistant had before
+// these settings existed: every user picks their own provider, key, model and tools.
+// Choosing anything else locks that choice site-wide and removes it from the
+// assistant's own settings panel. See modules/formulize/include/aiadminconfig.php.
+$modversion['config'][] = array(
+	'name' => 'formulizeAIProvider',
+	'title' => '_MI_formulize_AIPROVIDER',
+	'description' => '_MI_formulize_AIPROVIDER_DESC',
+	'formtype' => 'select',
+	'valuetype' => 'text',
+	'default' => 'userspecified',
+	'options' => array(
+		_MI_formulize_AIPROVIDER_USERSPECIFIED => 'userspecified',
+		_MI_formulize_AIPROVIDER_CLAUDE => 'claude',
+		_MI_formulize_AIPROVIDER_GEMINI => 'gemini',
+		_MI_formulize_AIPROVIDER_OPENAI => 'openai',
+		_MI_formulize_AIPROVIDER_OLLAMA => 'ollama',
+	),
+);
+$modversion['config'][] = array(
+	'name' => 'formulizeAIModel',
+	'title' => '_MI_formulize_AIMODEL',
+	'description' => '_MI_formulize_AIMODEL_DESC',
+	'formtype' => 'textbox',
+	'valuetype' => 'text',
+	'default' => '',
+);
+// Rendered by a Formulize-specific formtype that never writes the key into the page or
+// the config table - it is stored encrypted in formulize_ai_keys under uid -1.
+$modversion['config'][] = array(
+	'name' => 'formulizeAIApiKey',
+	'title' => '_MI_formulize_AIAPIKEY',
+	'description' => '_MI_formulize_AIAPIKEY_DESC',
+	'formtype' => 'aikey',
+	'valuetype' => 'text',
+	'default' => '',
+);
+$modversion['config'][] = array(
+	'name' => 'formulizeAIContextLimit',
+	'title' => '_MI_formulize_AICONTEXTLIMIT',
+	'description' => '_MI_formulize_AICONTEXTLIMIT_DESC',
+	'formtype' => 'textbox',
+	'valuetype' => 'int',
+	'default' => 0,
+);
+$modversion['config'][] = array(
+	'name' => 'formulizeAIOllamaBaseUrl',
+	'title' => '_MI_formulize_AIOLLAMABASEURL',
+	'description' => '_MI_formulize_AIOLLAMABASEURL_DESC',
+	'formtype' => 'textbox',
+	'valuetype' => 'text',
+	'default' => 'http://localhost:11434',
+);
+$modversion['config'][] = array(
+	'name' => 'formulizeAIToolAccess',
+	'title' => '_MI_formulize_AITOOLACCESS',
+	'description' => '_MI_formulize_AITOOLACCESS_DESC',
+	'formtype' => 'select',
+	'valuetype' => 'text',
+	'default' => 'userspecified',
+	'options' => array(
+		_MI_formulize_AITOOLACCESS_USERSPECIFIED => 'userspecified',
+		_MI_formulize_AITOOLACCESS_READ => 'read',
+		_MI_formulize_AITOOLACCESS_WRITE => 'write',
+		_MI_formulize_AITOOLACCESS_MANAGE => 'manage',
+		_MI_formulize_AITOOLACCESS_ALL => 'all',
+		_MI_formulize_AITOOLACCESS_CUSTOM => 'custom',
+	),
+);
+// Rendered by a Formulize-specific formtype that builds its checkboxes from the live
+// MCP tool registry, so the list cannot go stale as tools are added.
+$modversion['config'][] = array(
+	'name' => 'formulizeAIToolList',
+	'title' => '_MI_formulize_AITOOLLIST',
+	'description' => '_MI_formulize_AITOOLLIST_DESC',
+	'formtype' => 'aitools',
+	'valuetype' => 'array',
+	'default' => array(),
 );
 // Public self-registration: require an invitation token to create an account via signup.php.
 $modversion['config'][] = array(

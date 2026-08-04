@@ -88,5 +88,23 @@ define('_AM_CFG_DESC_FOOTER', 'Content for the footer of every page, if your the
 define('_AM_CFG_DESC_FOOTADM', 'Content for the footer of every admin page, if your theme supports this. HTML is allowed.');
 define('_AM_CFG_DESC_SESSION_NAME', 'The name of the session cookie');
 
+// --- The site-wide AI API key field (formulizeAIApiKey) ---
+define('_AM_CFG_AIKEY_PLACEHOLDER_NEW', 'Paste the API key here');
+define('_AM_CFG_AIKEY_PLACEHOLDER_REPLACE', 'Paste a new key here to replace the saved one');
+define('_AM_CFG_AIKEY_SAVED', 'A key is saved for this provider. It cannot be shown again - to change it, paste a new one above.');
+define('_AM_CFG_AIKEY_NONE', 'No key is saved for this provider yet. Nobody can use the assistant until you add one.');
+define('_AM_CFG_AIKEY_CLEAR', 'Remove the saved key');
+
+// --- The AI tool picker (formtype 'aitools') ---
+define('_AM_CFG_AITOOLS_ALL', 'Select all');
+define('_AM_CFG_AITOOLS_NONE', 'Select none');
+define('_AM_CFG_AITOOLS_COUNT', '%s of %s selected');
+define('_AM_CFG_AITOOLS_NONE_FOUND', 'No AI tools could be read from this system, so there is nothing to choose from.');
+
+// --- The AI model picker (formulizeAIModel, rendered by name rather than formtype) ---
+define('_AM_CFG_AIMODEL_LOADING', 'Loading models...');
+define('_AM_CFG_AIMODEL_NONE_FOUND', 'No models were returned for this key.');
+define('_AM_CFG_AIMODEL_FAILED', 'Could not load the list of models:');
+
 // --- Section help HTML: date/time format reference ---
 define('_AM_CFG_HELP_DATE_TIME_FORMATS', "<details class='formulize-config-help'><summary>Show date/time format codes</summary><div class='formulize-config-help-codes'><b>Year:</b> Y=2026, y=26<br><b>Month:</b> m=06, n=6, M=Jun, F=June<br><b>Day:</b> d=05, j=5, D=Thu, l=Thursday<br><b>Hour:</b> H=14, G=14 (no leading zero), h=02, g=2 (12-hour)<br><b>Minutes:</b> i=05 &nbsp;&nbsp; <b>Seconds:</b> s=09<br><b>AM/PM:</b> a=pm, A=PM</div></details>");

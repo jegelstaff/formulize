@@ -23,7 +23,7 @@
  */
 
 // Command-line / CI only. Refuse to run over the web: this bypasses normal
-// MCP authentication (see FormulizeMCP::__construct's $forDocsCli branch) to
+// MCP authentication (see FormulizeMCP::__construct's $registryOnly branch) to
 // force a webmaster view of the tool registry, so it must never be reachable
 // as an HTTP endpoint.
 if (PHP_SAPI !== 'cli') {
