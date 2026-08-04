@@ -307,13 +307,19 @@ function mirrorRelationship($relationship) {
  * Maintains a static array of all links added to the primary relationship this way, so that when first creating the Primary Relationship, we don't create duplicates.
  * Maintains a global array of all forms involved in links this page load, in case we want to do something with them later, may be relevant in migrations to F8.
  * Will create duplicates if passed duplicate settings, after the initial creation of the Primary Relationship! So use linkExistsInPrimaryRelationship function to determine if you should call this!
+ *
+ * Only ever inserts. A link that is already in the Primary Relationship is left exactly as it is,
+ * including its unified delete setting, because once a Primary Relationship exists an admin's choices
+ * in the relationships interface are the authority on it. We set these values when a link first
+ * arrives, and never again.
+ *
  * @param int cv - 1 or 0 depending if the link is based on a common value
  * @param int rel - a number representing the relationship type, 1 for one to one, 2 for one to many, 3 for many to one
  * @param int f1 - the id number of form 1 in the link
  * @param int f2 - the id number of form 2 in the link
  * @param int k1 - the id number of the element in form 1 used in the link
  * @param int k2 - the id number of the element in form 2 used in the link
- * @param int del - 1 or 0 indicating if a entries should be deleted from one form when deleted from the other. Defaults to 0.
+ * @param int del - 1 or 0 indicating if entries should be deleted from one form when deleted from the other. Defaults to 0. This is a request, not the final say: deletion is turned on only if this is 1 AND formPairEnforcesDeletion() agrees that every other connection between these two forms also asks for it.
  * @param int con - 1 or 0 indicating if a one to one connection should trigger conditional behaviour when forms displayed together. Defaults to 1.
  * @param int book - 1 or 0 indicating if a one to one connection should trigger creation of entries in one form when an entry is saved in the other. Defaults to 1.
  * @return boolean|string - Returns boolean true on success, including if the link already exists, or false if insert failed. Prints out error text.
@@ -329,6 +335,21 @@ function insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2, $del=0
 		$linkPairs[$cv][$rel][$k1][$k2] = true;
 		$linkForms[] = $f1;
 		$linkForms[] = $f2;
+		// Deleting entries in step with each other is a property of the two forms, not of any one link
+		// between them, so the caller's request only stands if every other connection between the forms
+		// agrees with it. Because formPairEnforcesDeletion looks at all the links joining the two forms,
+		// rather than at this one, every link that goes through this calculation for a given pair of
+		// forms during a run gets the same answer.
+		//
+		// Two links between the same forms CAN still end up differing, because the linked element pass in
+		// populatePrimaryRelationship does not go through this calculation at all: it passes no $del, so
+		// the condition below is false and the link is created with deletion off. That is deliberate and
+		// harmless. Deletion is driven by whichever links have it on - checkForLinks adds
+		// "AND fl_unified_delete = 1" when it gathers connected entries - so a link with deletion off
+		// simply takes no part, and the configured link still deletes exactly what it was set up to
+		// delete. Making the linked element pass agree instead would be the harmful option, since it
+		// would extend deletion along a connection nobody configured for it.
+		$del = (intval($del) == 1 AND formPairEnforcesDeletion($f1, $f2)) ? 1 : 0;
 		$sql = "INSERT INTO ".$xoopsDB->prefix('formulize_framework_links').
 			"(`fl_frame_id`,
 			`fl_form1_id`,
@@ -370,25 +391,79 @@ function insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2, $del=0
 				}
 			}
 		}
-	} elseif(intval($del) == 0) {
-		// Already created the primary relationship entry for this link, but need to validate the del option
-		// (ie: already created this page load, but we don't make more than one link per request in normal operation)
-		// If this version of the link has del off, then we must update the PR to have del off. Only want to apply
-		// the delete behaviour in the specific circumstances it was requested for. PR will inherit that only if
-		// there is only one link that connects the forms and del is on for that one link, implying they should
-		// always use that behaviour.
-		$sql = "UPDATE ".$xoopsDB->prefix('formulize_framework_links')."
-			SET fl_unified_delete = 0
-			WHERE `fl_common_value` = ".intval($cv)."
-			AND ((`fl_key1` = ".intval($k1)."
-			AND `fl_key2` = ".intval($k2)."
-			AND `fl_relationship` = ".intval($rel).")
-			OR (`fl_key1` = ".intval($k2)."
-			AND `fl_key2` = ".intval($k1)."
-			AND `fl_relationship` = $mrel))";
-		$xoopsDB->queryF($sql);
 	}
 	return $result;
+}
+
+/**
+ * Decide whether a link about to be added to the Primary Relationship between two forms should make
+ * their entries be deleted in step with each other.
+ *
+ * Deletion is a property of the two forms, not of a particular pairing of elements, so the answer is
+ * worked out by looking at every connection between the forms rather than at the link being made. It
+ * is yes only when all of the following hold:
+ *
+ * 1. Nothing already in the Primary Relationship for these two forms has deletion turned off. Once a
+ *    pair of forms is settled in the Primary Relationship, a new link joining them a second way must
+ *    not introduce deletion that was not there before, and an admin may have turned it off deliberately.
+ * 2. Every link in every other relationship that joins these two forms has deletion turned on.
+ * 3. There is at least one such link, since otherwise nothing has asked for deletion at all.
+ *
+ * Links whose elements no longer exist, or which claim a connection the elements do not actually have,
+ * are ignored: they are not connections, so a stale one cannot suppress deletion. "User who made the
+ * entries" links, where both keys are 0, are ignored too, because the Primary Relationship has no way
+ * to represent that kind of connection and so cannot honour whatever it asks for.
+ *
+ * Linked elements do not get a vote. A linked element only appears in the links table as a Primary
+ * Relationship row, never as a row in another relationship, so it is invisible to the second query
+ * below. That is deliberate: such a connection is created with deletion off by default, and a default
+ * is not an opinion. Where a linked element pair has also been saved as a real link in some other
+ * relationship, that link votes normally.
+ *
+ * Deliberately not memoised. Each answer is read fresh so it is always authoritative, even if something
+ * else in the same request has just changed a link. This costs one or two queries per link inserted.
+ *
+ * @param int f1 - the id number of one of the forms
+ * @param int f2 - the id number of the other form
+ * @return boolean True if deletion should be enforced between these two forms, false otherwise
+ */
+function formPairEnforcesDeletion($f1, $f2) {
+	global $xoopsDB;
+	$f1 = intval($f1);
+	$f2 = intval($f2);
+	$formPairClause = "((`fl_form1_id` = $f1 AND `fl_form2_id` = $f2) OR (`fl_form1_id` = $f2 AND `fl_form2_id` = $f1))";
+
+	// 1. anything already in the Primary Relationship for this pair of forms has the final say, if del is 0
+	$sql = "SELECT `fl_unified_delete` FROM ".$xoopsDB->prefix('formulize_framework_links')."
+		WHERE `fl_frame_id` = -1 AND $formPairClause";
+	if(!$res = $xoopsDB->query($sql)) {
+		return false; // cannot confirm, so do not turn deletion on
+	}
+	while($row = $xoopsDB->fetchArray($res)) {
+		if(intval($row['fl_unified_delete']) == 0) {
+			return false;
+		}
+	}
+
+	// 2 and 3. every connection between the forms that some other relationship defines must ask for it
+	// if del is 0 somewhere, we go with that
+	$sql = "SELECT `fl_key1`, `fl_key2`, `fl_common_value`, `fl_unified_delete` FROM ".$xoopsDB->prefix('formulize_framework_links')."
+		WHERE `fl_frame_id` != -1 AND $formPairClause";
+	if(!$res = $xoopsDB->query($sql)) {
+		return false;
+	}
+	$connections = 0;
+	while($row = $xoopsDB->fetchArray($res)) {
+		$k1 = $row['fl_key1'];
+		$k2 = $row['fl_key2'];
+		if(!$k1 OR !$k2) { continue; }
+		if(!elementExists($k1) OR !elementExists($k2) OR ($row['fl_common_value'] != 1 AND !elementsAreLinked($k1, $k2))) { continue; }
+		if(intval($row['fl_unified_delete']) == 0) {
+			return false;
+		}
+		$connections++;
+	}
+	return $connections > 0; // if there all connections between forms have del on, then we go with that
 }
 
 /**
