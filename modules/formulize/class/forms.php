@@ -2561,7 +2561,11 @@ class formulizeFormsHandler {
 			$perGroupFilterOR = $this->buildPerGroupFilterWhereClause("OR",$filterOOM,$filterSettings,$uid,$formAlias);
 
 			if( $perGroupFilterAND || $perGroupFilterOR ) {
+				if( $perGroupFilter ) {
+					$perGroupFilter .= ") OR ("; // join multiple filters from different groups with ) OR ( so that any of the groups' filters will allow access
+				} else {
 					$perGroupFilter = " AND (";
+				}
 			}
 
 			$perGroupFilter .= $perGroupFilterAND;
