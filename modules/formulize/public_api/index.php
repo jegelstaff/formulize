@@ -64,7 +64,9 @@ $id = FormulizeObject::sanitize_handle_name($apiPathParts[3]);
 $method = FormulizeObject::sanitize_handle_name($apiPathParts[4]);
 $config_handler = $config_handler = xoops_gethandler('config');
 $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-if($formulizeConfig['formulizePublicAPIEnabled'] OR ($objectOrAction == 'status' AND $id == 'formulize-check-if-public-api-is-properly-enabled-please')) {
+$formulize_publicApiGateResult = ($formulizeConfig['formulizePublicAPIEnabled'] OR ($objectOrAction == 'status' AND $id == 'formulize_check_if_public_api_is_properly_enabled_please'));
+
+if($formulize_publicApiGateResult) {
     define('FORMULIZE_PUBLIC_API_REQUEST', 1);
     $apiFilePath = XOOPS_ROOT_PATH."/modules/formulize/public_api/$version/$objectOrAction.php";
     if(file_exists($apiFilePath)) {
