@@ -245,7 +245,7 @@ switch($op) {
         *  to revert the masqerading effect [formulize\footer.php]
         */
 
-				$masquerade_location = SITE_BASE_URL . "/";
+				$masquerade_location = XOOPS_URL . "/";
         // Revert masquerade effect
         if (isset($_SESSION['masquerade_end']) && $_SESSION['masquerade_end'] == 1) {
             $masqueradeUser = new icms_member_user_Object($_SESSION['masquerade_xoopsUserId']);
