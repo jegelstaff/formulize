@@ -45,7 +45,111 @@ function formulize_patch_000_always_run($prev_dbversion, $required_dbversion) {
 	// This is idempotent: handles without hyphens are untouched on repeat runs.
 	formulize_migrate_hyphenated_handles();
 
+	// Add to the Primary Relationship any connection between forms that is missing from it.
+	// Runs on every update, because a Primary Relationship can be left incomplete by an earlier
+	// version and there is otherwise nothing that would ever notice.
+	if (!formulize_repair_primary_relationship()) {
+		return false;
+	}
+
   return true;
+}
+
+/**
+ * Add to the Primary Relationship every connection between forms that is missing from it.
+ *
+ * The Primary Relationship is built once, by createPrimaryRelationship(), when a site is upgraded to
+ * the version that introduced it. Nothing has ever revisited that result afterwards, so a site whose
+ * Primary Relationship came out incomplete stays that way forever, and the symptoms are indirect and
+ * hard to attribute: relationships that quietly resolve against the wrong form, derived value formulas
+ * that cannot see elements in their own form, screens that cannot reach data they should be able to.
+ *
+ * It could come out incomplete for more than one reason. Versions before the fix in
+ * populatePrimaryRelationship deleted an invalid link while still reading the list of links, which
+ * overwrote the result handle being read and abandoned the rest of the list, so a single stale link
+ * early in the table stopped every later link from being considered. The set of element types that
+ * count as linked elements has also grown since, so a site built before that grew is missing whatever
+ * the newer types would have contributed.
+ *
+ * Rather than try to detect any particular cause, this simply asks for the whole Primary Relationship
+ * to be worked out again and adds whatever is not already there. It is safe to run on every update:
+ * populatePrimaryRelationship is idempotent once the existing links have been declared to it via
+ * primePrimaryRelationshipLinkPairs(), and on a site with a complete Primary Relationship it adds
+ * nothing and prints nothing.
+ *
+ * Two deliberate differences from building a Primary Relationship from scratch:
+ * - Invalid links found along the way are reported, not deleted. Deleting them is reasonable while
+ *   setting up the Primary Relationship in the first place; quietly deleting relationship links on a
+ *   live system during a routine update is not.
+ * - A connection that is already present keeps its current unified delete setting unless one of the
+ *   links feeding it says that setting should be off, in which case it is turned off. So a repair can
+ *   turn cascading deletion off, matching the rule that it only applies when every link connecting the
+ *   two forms asks for it, but it will never turn cascading deletion on.
+ *
+ * @return boolean False only if the Primary Relationship could not be read or rebuilt, which should
+ *   stop the update; true otherwise, including when there was nothing to do.
+ */
+function formulize_repair_primary_relationship() {
+	global $linkForms;
+
+	// No Primary Relationship yet means there is nothing to repair. On a site old enough not to have
+	// one, 001_schema_migrations creates it from scratch, and it runs after this patch.
+	if (!primaryRelationshipExists()) {
+		return true;
+	}
+
+	// insertLinkIntoPrimaryRelationship() collects the forms it touches in this global
+	if (!isset($linkForms) OR !is_array($linkForms)) {
+		$linkForms = array();
+	}
+
+	// Declare the links that already exist, so they are not inserted a second time
+	if (!primePrimaryRelationshipLinkPairs()) {
+		echo '<p>Error: could not read the existing Primary Relationship links. Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.</p>';
+		return false;
+	}
+
+	$report = populatePrimaryRelationship(false);
+
+	if ($report['error']) {
+		echo '<p>Error: could not check the Primary Relationship for missing connections: ' . $report['error']
+			. '<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.</p>';
+		return false;
+	}
+
+	if ($report['added']) {
+		echo '<h3>Connections added to the Primary Relationship:</h3>';
+		echo '<p>Your Primary Relationship was missing ' . count($report['added'])
+			. (count($report['added']) == 1 ? ' connection' : ' connections')
+			. ' that should have been in it. ' . (count($report['added']) == 1 ? 'It has' : 'They have')
+			. ' been added. Forms connected this way can now find each other in derived value formulas,'
+			. ' screens, and anywhere else the Primary Relationship is used.</p><ul>';
+		foreach ($report['added'] as $line) {
+			echo '<li>' . htmlspecialchars($line) . '</li>';
+		}
+		echo '</ul>';
+	}
+
+	if ($report['invalid']) {
+		echo '<h3>Invalid relationship links found:</h3>';
+		echo '<p>These links refer to elements that no longer exist, or claim a connection that the'
+			. ' elements do not actually have. They have been left alone, and are not part of the Primary'
+			. ' Relationship. You can delete them in the relationships area of the admin interface.</p><ul>';
+		foreach ($report['invalid'] as $line) {
+			echo '<li>' . htmlspecialchars($line) . '</li>';
+		}
+		echo '</ul>';
+	}
+
+	if ($report['problems']) {
+		echo '<h3>Problems encountered while checking the Primary Relationship:</h3><ul>';
+		foreach ($report['problems'] as $line) {
+			echo '<li>' . htmlspecialchars($line) . '</li>';
+		}
+		echo '</ul>';
+	}
+
+	return true;
 }
 
 /**

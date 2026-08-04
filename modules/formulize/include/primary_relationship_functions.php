@@ -62,64 +62,9 @@ function createPrimaryRelationship() {
 		$primaryRelationshipError .= '<br>Could not set all links to unified display';
 	}
 
-	$sql = "SELECT * FROM ".$xoopsDB->prefix('formulize_framework_links');
-	if(!$primaryRelationshipError AND !$res = $xoopsDB->query($sql)) {
-		$primaryRelationshipError .= '<br>Could not check existing links';
-	}
-
-	while(!$primaryRelationshipError AND $row = $xoopsDB->fetchArray($res)) {
-		$f1 = $row['fl_form1_id'];
-		$f2 = $row['fl_form2_id'];
-		$k1 = $row['fl_key1'];
-		$k2 = $row['fl_key2'];
-		$rel = $row['fl_relationship'];
-		$cv = $row['fl_common_value'];
-		$del = $row['fl_unified_delete'];
-		$con = $row['fl_one2one_conditional'];
-		$book = $row['fl_one2one_bookkeeping'];
-		// 0 and 0 would indicate a "user who made the entries" relationship. Primary relationship doesn't support this initially, since it is dynamically responding to links between forms primarily. But could be added. Can also always be manually created by webmaster in old UI if really necessary.
-		if($k1 AND $k2) {
-			// validate that the elements are real and are common value or link to each other
-			if(elementExists($k1) AND elementExists($k2) AND ($cv == 1 OR elementsAreLinked($k1, $k2))) {
-				if(!$result = insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2, $del, $con, $book)) {
-					$primaryRelationshipError .= "<br>Error inserting existing relationship link into primary relationship";
-				}
-			} else {
-				// linkage is not involving real elements, or they are not linked together properly, so remove the linkage
-					$sql = "DELETE FROM ".$xoopsDB->prefix('formulize_framework_links')." WHERE fl_id = ".intval($row['fl_id']);
-					if(!$res = $xoopsDB->queryF($sql)) {
-						print "<br>Warning: could not delete invalid link from relationship ".intval($row['fl_frame_id']);
-					}
-			}
-		}
-	}
-
-	// lookup all other linked elements not already in a relationship, add them to the Primary Relationship
-	$sql = "SELECT id_form, ele_id, ele_value FROM ".$xoopsDB->prefix('formulize')." WHERE ele_type IN ('select', 'checkbox', 'selectLinked', 'checkboxLinked', 'listboxLinked', 'autocompleteLinked') AND ele_value LIKE '%#*=:*%'";
-	if(!$primaryRelationshipError AND !$res = $xoopsDB->query($sql)) {
-		$primaryRelationshipError .= '<br>Could not collate list of existing linked elements';
-	}
-
-	while(!$primaryRelationshipError AND $row = $xoopsDB->fetchArray($res)) {
-		$f2 = $row['id_form'];
-		$k2 = $row['ele_id'];
-		$ele_value = unserialize($row['ele_value']);
-		$boxproperties = explode("#*=:*", $ele_value[2]);
-		$sourceElementHandle = $boxproperties[1];
-		$sourceFormLookup = "SELECT id_form, ele_id FROM ".$xoopsDB->prefix('formulize')." WHERE ele_handle = '".formulize_db_escape($sourceElementHandle)."'";
-		if(!$sourceFormLookupResult = $xoopsDB->query($sourceFormLookup)) {
-			$primaryRelationshipError .= "<br>Could not lookup source details of linked form element with this SQL:<br>$sourceFormLookup";
-		}
-		$sourceFormLookupRow = $xoopsDB->fetchArray($sourceFormLookupResult);
-		$k1 = $sourceFormLookupRow['ele_id'];
-		$f1 = $sourceFormLookupRow['id_form'];
-		$rel = 2;
-		$cv = 0;
-		if(!$primaryRelationshipError AND elementExists($k1) AND elementExists($k2)) {
-			if(!$result = insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2)) {
-				$primaryRelationshipError .= "<br>Error inserting non-relationship link into primary relationship";
-			}
-		}
+	if(!$primaryRelationshipError) {
+		$report = populatePrimaryRelationship(true);
+		$primaryRelationshipError .= $report['error'];
 	}
 
 	if(!$primaryRelationshipError) {
@@ -150,6 +95,181 @@ function createPrimaryRelationship() {
 	}*/
 
 	return $primaryRelationshipError;
+}
+
+/**
+ * Walks every form-to-form connection that ought to be represented in the Primary Relationship, and
+ * hands each one to insertLinkIntoPrimaryRelationship.
+ *
+ * There are two sources of connections:
+ * 1. Every link in every other relationship.
+ * 2. Every linked element, whose form is thereby connected to the form it draws its values from.
+ *
+ * Deciding whether a connection is already present, and reconciling the unified delete setting when
+ * several links join the same pair of forms, is entirely insertLinkIntoPrimaryRelationship's job -
+ * see the long comment in its second branch. Every connection found here is therefore passed to it
+ * unconditionally. It is asked beforehand whether the link already exists, but only so that the report
+ * can say what was actually new; that answer must never be used to skip the call, or the reconciliation
+ * is skipped with it. When calling this to repair an existing Primary Relationship rather than build a
+ * new one, call primePrimaryRelationshipLinkPairs() first so that the links already in the Primary
+ * Relationship are known to that logic.
+ *
+ * @param bool $deleteInvalidLinks - when true, a link whose elements no longer exist (or which claims
+ *   a connection the elements do not actually have) is deleted from its relationship, which is what we
+ *   want while building the Primary Relationship for the first time. Pass false to leave such links
+ *   alone and merely report them, which is what we want for a repair run on a live system.
+ * @return array - 'error' is a string, empty when everything succeeded, in the same format
+ *   createPrimaryRelationship returns. 'added', 'invalid' and 'problems' are arrays of description
+ *   strings suitable for reporting to whoever triggered this.
+ */
+function populatePrimaryRelationship($deleteInvalidLinks) {
+	global $xoopsDB;
+	$report = array('error' => '', 'added' => array(), 'invalid' => array(), 'problems' => array());
+
+	// SOURCE 1: all the links in all the other relationships.
+	$sql = "SELECT * FROM ".$xoopsDB->prefix('formulize_framework_links')." WHERE fl_frame_id != -1";
+	if(!$res = $xoopsDB->query($sql)) {
+		$report['error'] .= '<br>Could not check existing links';
+		return $report;
+	}
+	// Read every row before touching the table. Writing to a table while a result set from that same
+	// table is still being read is what silently truncated this pass on earlier versions: the DELETE
+	// below overwrote the result handle being iterated, so the loop ended at the first invalid link and
+	// every link after it was never considered.
+	$existingLinks = array();
+	while($row = $xoopsDB->fetchArray($res)) {
+		$existingLinks[] = $row;
+	}
+
+	$invalidLinkIds = array();
+	foreach($existingLinks as $row) {
+		if($report['error']) { break; }
+		$f1 = $row['fl_form1_id'];
+		$f2 = $row['fl_form2_id'];
+		$k1 = $row['fl_key1'];
+		$k2 = $row['fl_key2'];
+		$rel = $row['fl_relationship'];
+		$cv = $row['fl_common_value'];
+		$del = $row['fl_unified_delete'];
+		$con = $row['fl_one2one_conditional'];
+		$book = $row['fl_one2one_bookkeeping'];
+		// 0 and 0 would indicate a "user who made the entries" relationship. Primary relationship doesn't support this initially, since it is dynamically responding to links between forms primarily. But could be added. Can also always be manually created by webmaster in old UI if really necessary.
+		if(!$k1 OR !$k2) { continue; }
+		// validate that the elements are real and are common value or link to each other
+		if(elementExists($k1) AND elementExists($k2) AND ($cv == 1 OR elementsAreLinked($k1, $k2))) {
+			$description = 'forms '.intval($f1).' and '.intval($f2).', using elements '.intval($k1).' and '.intval($k2).', from relationship '.intval($row['fl_frame_id']);
+			$alreadyPresent = linkExistsInPrimaryRelationship($cv, $rel, $k1, $k2);
+			try {
+				if(!$result = insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2, $del, $con, $book)) {
+					$report['error'] .= "<br>Error inserting existing relationship link into primary relationship";
+				} elseif(!$alreadyPresent) {
+					$report['added'][] = $description;
+				}
+			} catch (Throwable $e) {
+				// insertLinkIntoPrimaryRelationship throws only after the link itself was written, when it
+				// cannot load the element objects to index them. The link is good; the index is missing.
+				$report['problems'][] = 'Added the link for '.$description.', but could not create indexes on the elements: '.$e->getMessage();
+			}
+		} else {
+			// linkage is not involving real elements, or they are not linked together properly
+			$invalidLinkIds[] = intval($row['fl_id']);
+			$report['invalid'][] = 'link '.intval($row['fl_id']).' in relationship '.intval($row['fl_frame_id']).', which joins forms '.intval($f1).' and '.intval($f2).' using elements '.intval($k1).' and '.intval($k2);
+		}
+	}
+
+	if($deleteInvalidLinks AND !$report['error'] AND $invalidLinkIds) {
+		// safe to write now that the result set above has been fully read
+		$sql = "DELETE FROM ".$xoopsDB->prefix('formulize_framework_links')." WHERE fl_id IN (".implode(', ', $invalidLinkIds).")";
+		if(!$xoopsDB->queryF($sql)) {
+			print "<br>Warning: could not delete invalid links from their relationships";
+		}
+	}
+
+	// SOURCE 2: all the linked elements, which connect their form to the form they draw values from.
+	$sql = "SELECT id_form, ele_id, ele_value FROM ".$xoopsDB->prefix('formulize')." WHERE ele_type IN ('select', 'checkbox', 'selectLinked', 'checkboxLinked', 'listboxLinked', 'autocompleteLinked') AND ele_value LIKE '%#*=:*%'";
+	if(!$report['error'] AND !$res = $xoopsDB->query($sql)) {
+		$report['error'] .= '<br>Could not collate list of existing linked elements';
+	}
+	// read these up front too, since each one is then looked up against this same table below
+	$linkedElements = array();
+	while(!$report['error'] AND $row = $xoopsDB->fetchArray($res)) {
+		$linkedElements[] = $row;
+	}
+
+	foreach($linkedElements as $row) {
+		if($report['error']) { break; }
+		$f2 = $row['id_form'];
+		$k2 = $row['ele_id'];
+		$ele_value = @unserialize($row['ele_value']);
+		if(!is_array($ele_value) OR !isset($ele_value[2]) OR !is_string($ele_value[2]) OR !strstr($ele_value[2], "#*=:*")) {
+			continue; // matched the LIKE on some other part of the serialized value, so there is no link here
+		}
+		$boxproperties = explode("#*=:*", $ele_value[2]);
+		$sourceElementHandle = isset($boxproperties[1]) ? $boxproperties[1] : '';
+		if($sourceElementHandle === '') { continue; }
+		$sourceFormLookup = "SELECT id_form, ele_id FROM ".$xoopsDB->prefix('formulize')." WHERE ele_handle = '".formulize_db_escape($sourceElementHandle)."'";
+		if(!$sourceFormLookupResult = $xoopsDB->query($sourceFormLookup)) {
+			$report['error'] .= "<br>Could not lookup source details of linked form element with this SQL:<br>$sourceFormLookup";
+			break;
+		}
+		if(!$sourceFormLookupRow = $xoopsDB->fetchArray($sourceFormLookupResult)) {
+			$report['problems'][] = 'Element '.intval($k2).' in form '.intval($f2).' draws its values from "'.$sourceElementHandle.'", which is not an element in any form, so no connection could be made for it.';
+			continue;
+		}
+		$k1 = $sourceFormLookupRow['ele_id'];
+		$f1 = $sourceFormLookupRow['id_form'];
+		$rel = 2;
+		$cv = 0;
+		if(elementExists($k1) AND elementExists($k2)) {
+			$description = 'forms '.intval($f1).' and '.intval($f2).', using elements '.intval($k1).' and '.intval($k2).', from a linked element';
+			$alreadyPresent = linkExistsInPrimaryRelationship($cv, $rel, $k1, $k2);
+			try {
+				if(!$result = insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2)) {
+					$report['error'] .= "<br>Error inserting non-relationship link into primary relationship";
+				} elseif(!$alreadyPresent) {
+					$report['added'][] = $description;
+				}
+			} catch (Throwable $e) {
+				$report['problems'][] = 'Added the link for '.$description.', but could not create indexes on the elements: '.$e->getMessage();
+			}
+		}
+	}
+
+	return $report;
+}
+
+/**
+ * Load the links already in the Primary Relationship into the registry of links that
+ * insertLinkIntoPrimaryRelationship uses to avoid making duplicates.
+ *
+ * Only needed when adding to a Primary Relationship that already exists. When one is being built from
+ * scratch the registry starts empty and fills as the links are made, which is exactly right. For a
+ * repair run the links already in the database have to be declared up front, otherwise every one of
+ * them gets inserted a second time.
+ *
+ * @return boolean True if the registry was primed, false if the links could not be read
+ */
+function primePrimaryRelationshipLinkPairs() {
+	global $xoopsDB;
+	$linkPairs = &_primaryRelationshipLinkPairs();
+	$sql = "SELECT `fl_key1`, `fl_key2`, `fl_relationship`, `fl_common_value` FROM ".$xoopsDB->prefix('formulize_framework_links')." WHERE fl_frame_id = -1";
+	if(!$res = $xoopsDB->query($sql)) {
+		return false;
+	}
+	while($row = $xoopsDB->fetchArray($res)) {
+		$linkPairs[intval($row['fl_common_value'])][intval($row['fl_relationship'])][intval($row['fl_key1'])][intval($row['fl_key2'])] = true;
+	}
+	return true;
+}
+
+/**
+ * The registry of links that have been established in the Primary Relationship, held here rather than
+ * as a static inside insertLinkIntoPrimaryRelationship so that it can also be primed from the database.
+ * @return array Returned by reference, so callers can add to it
+ */
+function &_primaryRelationshipLinkPairs() {
+	static $linkPairs = array();
+	return $linkPairs;
 }
 
 /**
@@ -200,7 +320,9 @@ function mirrorRelationship($relationship) {
  */
 function insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2, $del=0, $con=1, $book=1) {
 	global $xoopsDB, $linkForms;
-	static $linkPairs = array();
+	// held outside this function so that a repair run can declare the links that are already in the
+	// database before calling here - see primePrimaryRelationshipLinkPairs()
+	$linkPairs = &_primaryRelationshipLinkPairs();
 	$result = true;
 	$mrel = mirrorRelationship(intval($rel));
 	if(!isset($linkPairs[intval($cv)][intval($rel)][intval($k1)][intval($k2)]) AND !isset($linkPairs[intval($cv)][$mrel][intval($k2)][intval($k1)])) {
