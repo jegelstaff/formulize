@@ -1252,6 +1252,11 @@ textarea {
   min-width: 100%;
 }
 
+.fz-table .main-cell-div {
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+}
+
 /* Neutralize the inline style="text-align: right" that the element renderer
    emits for numeric values (functions.php getHTMLForList). Table cells in the
    Lyris list layout already inherit text-align: left from .fz-table td; the
@@ -1601,6 +1606,7 @@ a.de-edit-icon:hover::before {
   text-decoration: none;
   transition: background var(--dur-1) var(--ease);
   line-height: var(--lh-snug);
+	cursor: pointer;
 }
 
 .main-menu__item-link:hover {
