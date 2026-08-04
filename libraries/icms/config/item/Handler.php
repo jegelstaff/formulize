@@ -105,6 +105,36 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
 			return false;
 		}
 		/**
+		 * MAJOR HACK: encrypt the site-wide AI API key before it is ever written to
+		 * conf_value. This is the one place every save path funnels through - this
+		 * settings page's own delegated save, and the legacy system preferences page it
+		 * delegates through - so it is where the plaintext gets swapped for its encrypted
+		 * form. formulizeAIApiKey's own posted value is a meaningless constant (see
+		 * formulize_configAiKeyFieldHtml() in modules/formulize/include/configsettings.php)
+		 * used only so this config item is always treated as "changed" and reaches here;
+		 * the values that matter - formulizeAIApiKey_new, formulizeAIApiKey_clear,
+		 * formulizeAIProvider - travel as ordinary, unregistered POST fields the save loop
+		 * above never looks at, but that PHP's extract($_POST) (also above) still turns
+		 * into globals we can read here.
+		 */
+		if ($config->getVar('conf_name') == 'formulizeAIApiKey') {
+			include_once XOOPS_ROOT_PATH . '/modules/formulize/include/aiadminconfig.php';
+			if (function_exists('formulizeAI_prepareApiKeyForConfigStorage')) {
+				global $formulizeAIApiKey_new, $formulizeAIApiKey_clear, $formulizeAIProvider;
+				$config->setVar('conf_value', formulizeAI_prepareApiKeyForConfigStorage(
+					$config->getVar('conf_value'),
+					isset($formulizeAIApiKey_new) ? $formulizeAIApiKey_new : '',
+					!empty($formulizeAIApiKey_clear),
+					isset($formulizeAIProvider) ? $formulizeAIProvider : ''
+				));
+				$config->cleanVars();
+			}
+		}
+		/**
+		 * END OF FORMULIZE AI KEY HACK
+		 */
+
+		/**
 		 * MAJOR HACK TO VERIFY IF FORMULIZE REWRITE URL SETTING, PUBLIC API, OR MCP SERVER IS CAPABLE OF BEING ENABLED
 		 */
 		if(($config->getVar('conf_name') == 'formulizeRewriteRulesEnabled'

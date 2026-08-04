@@ -151,6 +151,15 @@ function formulize_configFormElementHtml($config) {
     $formtype = $config->getVar('conf_formtype');
     $value = $config->getConfValueForOutput();
 
+    // Rendered as a live-populated <select> (models discovered from the provider itself -
+    // see formulize_configAiModelFieldHtml and fzInitAiModelField), keyed off the setting's
+    // name rather than its stored conf_formtype. conf_formtype stays 'textbox', exactly as
+    // it has always been, so no database migration is needed for sites that already have
+    // this config item.
+    if ($name === 'formulizeAIModel') {
+        return formulize_configAiModelFieldHtml($name, $value);
+    }
+
     switch ($formtype) {
 
         case 'aikey':
@@ -258,15 +267,19 @@ function formulize_configFormElementHtml($config) {
 /**
  * Render the site-wide AI API key field.
  *
- * The key is never in the config table and never in this page. conf_value holds only the
- * marker 'set' or '', and is re-derived here from formulize_ai_keys on every render so it
- * cannot drift. The key itself is written by a separate request to ai/ai_keys.php (see
- * the submit handler in formulize_configSettingsScriptBlock), because the settings form
- * posts to the core preferences handler, which would put whatever it received straight
- * into config.conf_value - and from there into the binlog and any replica.
+ * Saving goes through the ordinary settings save, exactly like every other field on this
+ * page - the encryption happens server-side in the one place every save path funnels
+ * through, icms_config_Item_Handler::insert() (see the hack there, and
+ * formulizeAI_prepareApiKeyForConfigStorage() in aiadminconfig.php). The plaintext never
+ * exists anywhere except in that one request's memory.
  *
- * Three inputs are emitted, but only the hidden marker carries the registered conf_name;
- * the core handler discards the other two, which is exactly what we want.
+ * formulizeAIApiKey itself (the hidden, registered field) always posts the same constant
+ * value - it carries no information. Its only job is to make sure this config item is
+ * always treated as "changed" by the save loop in modules/system/admin/preferences/main.php,
+ * so the encryption hack always gets a chance to run. What actually matters -
+ * formulizeAIApiKey_new (typed key) and formulizeAIApiKey_clear (the checkbox below) -
+ * travel as ordinary unregistered fields the core save loop ignores but the hack can
+ * still see via PHP's extract($_POST).
  *
  * @param string $name The conf_name (formulizeAIApiKey)
  * @return string HTML for the control
@@ -293,8 +306,8 @@ function formulize_configAiKeyFieldHtml($name) {
         . " autocomplete='new-password' size='50' placeholder='"
         . htmlspecialchars($hasKeyNow ? _AM_CFG_AIKEY_PLACEHOLDER_REPLACE : _AM_CFG_AIKEY_PLACEHOLDER_NEW, ENT_QUOTES) . "'>";
 
-    // The registered setting: a marker only, never the key.
-    $html .= "<input type='hidden' name='$safeName' id='$safeName' value='" . ($hasKeyNow ? 'set' : '') . "'>";
+    // See the docblock: a constant, meaningless-by-design value.
+    $html .= "<input type='hidden' name='$safeName' id='$safeName' value='touch'>";
 
     $html .= "<div class='formulize-config-aikey-status' data-keyed='"
         . htmlspecialchars(json_encode($keyed), ENT_QUOTES) . "'"
@@ -309,7 +322,35 @@ function formulize_configAiKeyFieldHtml($name) {
         . "<input type='checkbox' name='{$safeName}_clear' id='{$safeName}_clear'> "
         . _AM_CFG_AIKEY_CLEAR . "</label>";
 
-    $html .= "<div class='formulize-config-aikey-error' id='{$safeName}_error' style='display:none'></div>";
+    return $html;
+}
+
+/**
+ * Render the site-wide AI model field as a <select>, populated live by fzInitAiModelField()
+ * from the provider's own models endpoint (via ai_proxy.php?scope=system), the same way the
+ * assistant itself discovers models for a person's own key. See ai_proxy.php for the
+ * server-side gate that makes this available to an administrator here even before the
+ * embedded assistant is turned on.
+ *
+ * Seeded with the currently saved value (if any) so it is never lost - both before
+ * discovery has run, and if the provider's current list no longer includes it (e.g. a
+ * retired model).
+ *
+ * @param string $name The conf_name (formulizeAIModel)
+ * @param string $value The stored model id
+ * @return string HTML for the control
+ */
+function formulize_configAiModelFieldHtml($name, $value) {
+    $safeName = htmlspecialchars($name, ENT_QUOTES);
+    $value = (string) $value;
+
+    $html = "<select name='{$safeName}' id='{$safeName}' class='formulize-config-aimodel-select'>";
+    if ($value !== '') {
+        $safeValue = htmlspecialchars($value, ENT_QUOTES);
+        $html .= "<option value='{$safeValue}'>{$safeValue}</option>";
+    }
+    $html .= "</select>";
+    $html .= "<div class='formulize-config-aimodel-status' id='{$safeName}_status'></div>";
 
     return $html;
 }
@@ -618,10 +659,13 @@ function formulize_configSettingsScriptBlock() {
 
     // Values the script needs from PHP. json_encode gives correctly quoted and escaped
     // JavaScript literals, so these interpolate as complete expressions.
-    $keysUrlJs = json_encode(XOOPS_URL . '/ai/ai_keys.php');
-    $tokenField = _CORE_TOKEN . '_REQUEST';
-    $keySaveFailedJs = json_encode(defined('_AM_CFG_AIKEY_SAVE_FAILED') ? _AM_CFG_AIKEY_SAVE_FAILED : 'The API key could not be saved, so nothing else was saved either:');
+    $proxyUrlJs = json_encode(XOOPS_URL . '/ai/ai_proxy.php');
     $toolsCountJs = json_encode(defined('_AM_CFG_AITOOLS_COUNT') ? _AM_CFG_AITOOLS_COUNT : '%s of %s selected');
+    $modelLoadingJs = json_encode(defined('_AM_CFG_AIMODEL_LOADING') ? _AM_CFG_AIMODEL_LOADING : 'Loading models...');
+    $modelNoneFoundJs = json_encode(defined('_AM_CFG_AIMODEL_NONE_FOUND') ? _AM_CFG_AIMODEL_NONE_FOUND : 'No models were returned for this key.');
+    $modelFailedJs = json_encode(defined('_AM_CFG_AIMODEL_FAILED') ? _AM_CFG_AIMODEL_FAILED : 'Could not load the list of models:');
+    include_once XOOPS_ROOT_PATH . '/modules/formulize/include/aiadminconfig.php';
+    $contextDefaultsJs = json_encode(formulizeAI_contextWindowDefaults());
 
     return <<<JS
 <script type="text/javascript">
@@ -774,96 +818,32 @@ function formulize_configSettingsScriptBlock() {
 
         fzInitAiKeyField();
         fzInitAiToolsField();
+        fzInitAiModelField();
     });
 
-    // --- Site-wide AI API key ---
+    // --- Site-wide AI API key: live status line ---
     //
-    // The key cannot ride along with the rest of the form: that posts to the core
-    // preferences handler, which would write whatever it received into config.conf_value
-    // in the clear. So on submit we send the key to ai/ai_keys.php first, and only let
-    // the form go once that has succeeded.
+    // Saving the key itself needs no JS at all - it posts and saves exactly like any
+    // other field on this page (see formulize_configAiKeyFieldHtml() and the encryption
+    // hack in icms_config_Item_Handler::insert()). This only keeps the "already saved" /
+    // "no key yet" status line, and the visibility of the "remove it" checkbox, honest as
+    // the provider select changes - without that, both would only ever reflect whichever
+    // provider was selected at the moment the page loaded.
     function fzInitAiKeyField(){
-        var \$input = $('#formulizeAIApiKey_new');
-        if(!\$input.length){ return; }
-        var \$marker = $('#formulizeAIApiKey');
-        var \$clear  = $('#formulizeAIApiKey_clear');
         var \$status = $('.formulize-config-aikey-status');
-        var \$error  = $('#formulizeAIApiKey_error');
-        var \$form   = $('#formulize-config-settings-form');
-        var keyed    = {};
+        if(!\$status.length){ return; }
+        var \$clear = $('#formulizeAIApiKey_clear');
+        var keyed   = {};
         try { keyed = $.parseJSON(\$status.attr('data-keyed')) || {}; } catch(e){ keyed = {}; }
-        var saving = false;
 
-        function currentProvider(){
-            return $('#formulizeAIProvider').val() || '';
-        }
-        // Keep the status line honest as the provider select changes, without a reload
         function refreshStatus(){
-            var has = !!keyed[currentProvider()];
+            var has = !!keyed[$('#formulizeAIProvider').val() || ''];
             \$status.text(has ? \$status.attr('data-msg-saved') : \$status.attr('data-msg-none'));
-            \$marker.val(has ? 'set' : '');
             if(has){ \$clear.closest('label').show(); }
             else { \$clear.closest('label').hide(); \$clear.removeAttr('checked'); }
         }
         $('#formulizeAIProvider').bind('change', refreshStatus);
         refreshStatus();
-
-        \$form.bind('submit', function(e){
-            if(saving){ return true; } // second pass, after the key was stored
-            var typed = $.trim(\$input.val());
-            var clearing = \$clear.is(':checked');
-            if(!typed && !clearing){ return true; } // nothing to do about the key
-            var provider = currentProvider();
-            if(provider === '' || provider === 'userspecified' || provider === 'ollama'){
-                return true; // no key applies to this provider
-            }
-
-            e.preventDefault();
-            \$error.hide().text('');
-
-            var payload = {
-                scope: 'system',
-                provider: provider,
-                op: clearing ? 'clear' : 'save',
-                key: clearing ? '' : typed
-            };
-            payload[$tokenField] = $('#formulize-config-settings-form input[name=$tokenField]').val();
-
-            $.ajax({
-                url: $keysUrlJs,
-                type: 'POST',
-                data: payload,
-                dataType: 'json',
-                // icms::\$security->check() leaves the token in place for XMLHttpRequests
-                // only, and the form still needs it for the submit that follows.
-                beforeSend: function(xhr){ xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest'); },
-                success: function(data){
-                    if(!data || !data.ok){
-                        showKeyError((data && data.error) ? data.error : '');
-                        return;
-                    }
-                    keyed[provider] = !!data.keyPresent;
-                    \$input.val('');
-                    \$clear.removeAttr('checked');
-                    refreshStatus();
-                    saving = true;
-                    \$form.submit();
-                },
-                error: function(xhr){
-                    var msg = '';
-                    try { msg = ($.parseJSON(xhr.responseText) || {}).error || ''; } catch(err){ msg = ''; }
-                    showKeyError(msg);
-                }
-            });
-            return false;
-        });
-
-        // Never fail silently: the rest of the settings are not saved either, and the
-        // administrator would otherwise be left believing the key went in.
-        function showKeyError(msg){
-            \$error.text($keySaveFailedJs + (msg ? ' ' + msg : '')).show();
-            \$input.focus();
-        }
     }
 
     // --- AI tool picker ---
@@ -886,6 +866,138 @@ function formulize_configSettingsScriptBlock() {
             \$boxes.removeAttr('checked'); refreshCount();
         });
         refreshCount();
+    }
+
+    // --- AI model discovery ---
+    //
+    // Populates the model <select> from the provider's own models endpoint, the same way
+    // the assistant discovers models for a person's own key (see discoverModels() in
+    // ai/index.php). Goes through ai_proxy.php?scope=system, which is gated on
+    // XOOPS_GROUP_ADMIN rather than the assistant's own enabled/group check - see that
+    // file's own comments - so this works even before the embedded assistant is turned on.
+    function fzInitAiModelField(){
+        var \$select = $('#formulizeAIModel');
+        if(!\$select.length){ return; }
+        var \$status   = $('#formulizeAIModel_status');
+        var \$provider = $('#formulizeAIProvider');
+        var \$keyInput = $('#formulizeAIApiKey_new');
+        var \$baseUrl  = $('#formulizeAIOllamaBaseUrl');
+        var \$context  = $('#formulizeAIContextLimit');
+        var contextDefaults = $contextDefaultsJs;
+        var debounceTimer = null;
+        var modelContext = {}; // this discovery's model id -> context window (chars), where the provider reports one
+        // On page load, a saved non-zero limit is left alone - it may be a deliberate
+        // choice, and there is no way to tell that apart from an old auto-filled value
+        // just by looking at the number. Once the administrator actively changes the
+        // provider or model in this session, the field is refreshed every time instead:
+        // whatever was there applied to a *different* model, so showing the new model's
+        // real default is more useful than silently keeping a now-stale number.
+        var liveEditing = false;
+
+        function applyContextDefault(){
+            if(!\$context.length){ return; }
+            var cw = modelContext[\$select.val()] || contextDefaults[\$provider.val()];
+            if(!cw){ return; }
+            var current = $.trim(\$context.val());
+            if(liveEditing || current === '' || current === '0'){
+                \$context.val(cw);
+            }
+        }
+
+        function populate(models, preferred){
+            modelContext = {};
+            $.each(models, function(i, m){
+                if(m.contextWindow){ modelContext[m.id] = m.contextWindow; }
+            });
+            var want = preferred || \$select.val() || '';
+            \$select.empty();
+            $.each(models, function(i, m){
+                \$select.append($('<option></option>').attr('value', m.id).text(m.name));
+            });
+            if(want){
+                var found = false;
+                \$select.find('option').each(function(){
+                    if($(this).attr('value') === want){ found = true; }
+                });
+                if(!found){ \$select.prepend($('<option></option>').attr('value', want).text(want)); }
+                \$select.val(want);
+            }
+            applyContextDefault();
+        }
+
+        function discover(){
+            var provider = \$provider.val();
+            var assistantOn = (fzGetSettingValue('formulizeAIAssistantEnabled') === '1');
+            if(!provider || provider === 'userspecified' || !assistantOn){ \$status.text(''); return; }
+
+            var params = { provider: provider, op: 'models', scope: 'system' };
+            var headerKey = '';
+            if(provider === 'ollama'){
+                var bu = $.trim(\$baseUrl.val());
+                if(bu){ params.baseUrl = bu; }
+            } else {
+                var typed = $.trim(\$keyInput.val());
+                if(typed){ headerKey = typed; }
+            }
+
+            var preferred = \$select.val();
+            \$status.text($modelLoadingJs);
+            \$select.attr('disabled', 'disabled');
+
+            $.ajax({
+                url: $proxyUrlJs,
+                type: 'GET',
+                data: params,
+                dataType: 'json',
+                beforeSend: function(xhr){
+                    if(headerKey){ xhr.setRequestHeader('X-API-Key', headerKey); }
+                },
+                success: function(data){
+                    var models = (data && data.models) ? data.models : [];
+                    populate(models, preferred);
+                    \$status.text(models.length ? '' : $modelNoneFoundJs);
+                },
+                error: function(xhr){
+                    var msg = '';
+                    try {
+                        var parsed = $.parseJSON(xhr.responseText);
+                        msg = (parsed && parsed.error && parsed.error.message) ? parsed.error.message : '';
+                    } catch(e){ msg = ''; }
+                    \$status.text($modelFailedJs + (msg ? ' ' + msg : ''));
+                    // Discovery failed, but a provider-level default is still worth
+                    // offering for the history limit.
+                    modelContext = {};
+                    applyContextDefault();
+                },
+                complete: function(){
+                    \$select.removeAttr('disabled');
+                }
+            });
+        }
+
+        function debouncedDiscover(){
+            if(debounceTimer){ clearTimeout(debounceTimer); }
+            debounceTimer = setTimeout(discover, 600);
+        }
+
+        \$select.bind('change', function(){ liveEditing = true; applyContextDefault(); });
+        \$provider.bind('change', function(){
+            liveEditing = true;
+            // A model id means nothing under a different provider (Claude's and OpenAI's
+            // ids do not even share a naming scheme), so the old provider's options -
+            // including whatever was selected - are cleared immediately rather than left
+            // on screen (and possibly re-added by populate()'s "keep it if not found in
+            // the new list" fallback, which exists for a genuinely stale/retired model
+            // within the *same* provider, not a foreign one) until the new list arrives.
+            \$select.empty();
+            modelContext = {};
+            discover();
+        });
+        \$keyInput.bind('keyup', debouncedDiscover);
+        \$baseUrl.bind('keyup change', debouncedDiscover);
+        $('.formulize-config-settings input[name=formulizeAIAssistantEnabled]').bind('change', discover);
+
+        discover(); // initial load: uses whatever key/base URL is already saved, if any
     }
 })(jQuery);
 </script>

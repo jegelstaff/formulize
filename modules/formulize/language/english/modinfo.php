@@ -210,8 +210,8 @@ define("_MI_formulize_SYSTEM_SPECIFIC_INSTRUCTIONS_DESC", "You can provide speci
 
 // Administrator-specified AI assistant configuration. Every one of these defaults to
 // "user specified", which is how the assistant behaved before they existed.
-define("_MI_formulize_AIPROVIDER", "Who chooses the AI provider");
-define("_MI_formulize_AIPROVIDER_DESC", "By default, each person chooses their own AI provider and enters their own API key in the assistant. Choose a provider here instead, and everyone will use it with the key you supply below. They will not be able to see the key, or change any of these choices - the provider, model and key settings disappear from the assistant for everyone.");
+define("_MI_formulize_AIPROVIDER", "AI provider choice");
+define("_MI_formulize_AIPROVIDER_DESC", "By default, each person chooses their own AI provider and enters their own API key in the assistant. Choose a provider here instead, and select a model below and provide a key if necessary, and everyone will use that instead.");
 define("_MI_formulize_AIPROVIDER_USERSPECIFIED", "User Specified");
 define("_MI_formulize_AIPROVIDER_CLAUDE", "Claude (Anthropic)");
 define("_MI_formulize_AIPROVIDER_GEMINI", "Gemini (Google)");
@@ -225,13 +225,13 @@ define("_MI_formulize_AIAPIKEY", "API key");
 define("_MI_formulize_AIAPIKEY_DESC", "The API key for the provider you chose. It is encrypted before it is stored, is never sent to anyone's browser, and cannot be read back out here - so if you lose it, replace it rather than looking it up. Ollama needs no key.");
 
 define("_MI_formulize_AICONTEXTLIMIT", "History limit (characters)");
-define("_MI_formulize_AICONTEXTLIMIT_DESC", "How much of the conversation is sent back to the AI on each message. Older messages are dropped once the conversation grows past this. Leave it at 0 to use a limit suited to the provider you chose. Note that this is a limit applied as the assistant builds each request, so it controls cost and context size rather than acting as a security boundary.");
+define("_MI_formulize_AICONTEXTLIMIT_DESC", "How much of the conversation is sent back to the AI on each message. Older messages are dropped once the conversation grows past this. This is filled in automatically with a limit suited to the model you choose above. A higher limit uses up context more quickly.");
 
 define("_MI_formulize_AIOLLAMABASEURL", "Ollama address");
-define("_MI_formulize_AIOLLAMABASEURL_DESC", "Where Ollama is running, as seen <i>from this Formulize server</i> - not from the browser. The default of http://localhost:11434 means Ollama is installed on the same machine as Formulize.");
+define("_MI_formulize_AIOLLAMABASEURL_DESC", "The location where Ollama is running, as seen <i>from this Formulize server</i> - not from the browser. The default of http://localhost:11434 means Ollama is installed on the same machine as Formulize.");
 
-define("_MI_formulize_AITOOLACCESS", "Who chooses the AI's tools");
-define("_MI_formulize_AITOOLACCESS_DESC", "Tools are the actions the AI can take in Formulize. By default each person picks their own from the assistant. Choose a set here instead and everyone gets exactly that set - the tool picker disappears from the assistant, and the tools you leave out cannot be used even by a request made outside the assistant.");
+define("_MI_formulize_AITOOLACCESS", "Available tools");
+define("_MI_formulize_AITOOLACCESS_DESC", "Tools are the actions the AI can take in Formulize. By default each person picks their own in the assistant. Choose a set here instead and everyone gets exactly that set - the tool picker disappears from the assistant. Including more tools than you need will waste context.");
 define("_MI_formulize_AITOOLACCESS_USERSPECIFIED", "User Specified");
 define("_MI_formulize_AITOOLACCESS_READ", "Read data");
 define("_MI_formulize_AITOOLACCESS_WRITE", "Read and write data");

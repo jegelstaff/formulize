@@ -2396,8 +2396,8 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 	line-height: 1.7;
 }
 
-/* Site-wide AI API key field (formtype 'aikey'). The key itself is never rendered;
-   these style the status line, the remove-it checkbox and the save error. */
+/* Site-wide AI API key field (formulizeAIApiKey). The key itself is never rendered;
+   these style the status line and the remove-it checkbox. */
 .formulize-config-settings .formulize-config-aikey-status {
 	margin-top: 0.4em;
 	font-size: 0.9em;
@@ -2411,14 +2411,6 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 }
 .formulize-config-settings .formulize-config-aikey-clear input {
 	margin-right: 0.35em;
-}
-.formulize-config-settings .formulize-config-aikey-error {
-	margin-top: 0.5em;
-	padding: 0.5em 0.7em;
-	border-left: 3px solid #c0392b;
-	background: #fdf3f2;
-	color: #c0392b;
-	font-size: 0.9em;
 }
 
 /* AI tool picker (formtype 'aitools'). The whole setting row is what slides open and
@@ -2464,6 +2456,14 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 	font-size: 0.9em;
 	color: #777;
 	font-style: italic;
+}
+
+/* AI model picker (formulizeAIModel): a <select> populated live from the provider's own
+   models endpoint, so the status line below it reports the discovery call itself. */
+.formulize-config-settings .formulize-config-aimodel-status {
+	margin-top: 0.4em;
+	font-size: 0.9em;
+	color: #777;
 }
 
 /* Legacy-feature note banner (e.g. Copy Permissions page). */

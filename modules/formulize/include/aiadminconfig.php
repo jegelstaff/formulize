@@ -66,9 +66,18 @@ function formulizeAI_contextWindowDefaults() {
 // API key storage
 //
 // Keys are encrypted with AES-256-CBC using XOOPS_DB_SALT as the secret, with a
-// random IV prepended to the ciphertext before base64 encoding. Both user keys and
-// the site-wide administrator key live in formulize_ai_keys, distinguished only by
-// uid (see FORMULIZE_AI_SYSTEM_UID).
+// random IV prepended to the ciphertext before base64 encoding.
+//
+// Two different homes, for two different kinds of key:
+//   - A person's own key (ai/index.php's own settings panel) lives in
+//     formulize_ai_keys, one row per (uid, provider) - there is no per-user slot in
+//     the config table, so a real table is the only place this can live.
+//   - The site-wide administrator key (Settings -> AI) lives in the ordinary
+//     formulizeAIApiKey config item, alongside every other Formulize preference, as a
+//     provider => encrypted-ciphertext JSON map. It is written by the encryption hack
+//     in icms_config_Item_Handler::insert() (see formulizeAI_prepareApiKeyForConfigStorage
+//     below) rather than through these functions directly - the plaintext never reaches
+//     PHP anywhere outside that one save path.
 //
 // Writes use queryF() rather than query(). icms_core_Security::service() defines
 // XOOPS_DB_PROXY on any non-POST request, and query() then refuses every statement
@@ -127,9 +136,12 @@ function formulizeAI_decryptKey($encrypted) {
 }
 
 /**
- * Store (or replace) an API key.
+ * Store (or replace) a person's own API key.
  *
- * @param int $uid The owning user, or FORMULIZE_AI_SYSTEM_UID for the site-wide key
+ * Personal keys only - the site-wide key is written exclusively through the config
+ * save hack (see formulizeAI_prepareApiKeyForConfigStorage), never through this.
+ *
+ * @param int $uid The owning user
  * @param string $provider One of formulizeAI_providers()
  * @param string $plain The API key
  * @return bool Success
@@ -155,6 +167,59 @@ function formulizeAI_storeKey($uid, $provider, $plain) {
 }
 
 /**
+ * Decode the site-wide key config item's stored value into a provider => ciphertext map.
+ * Anything that isn't valid JSON for an array (including '', and the old 'set'/''
+ * marker values a site may still have from before keys moved into this config item)
+ * decodes to an empty map, so a bad/legacy value never breaks reading - it just reads
+ * as "no keys yet".
+ *
+ * @param mixed $raw The config item's raw conf_value
+ * @return array provider => base64 ciphertext (as written by formulizeAI_encryptKey)
+ */
+function formulizeAI_decodeSiteKeyMap($raw) {
+    if (!is_string($raw) || $raw === '') {
+        return array();
+    }
+    $map = json_decode($raw, true);
+    return is_array($map) ? $map : array();
+}
+
+/**
+ * Build the new conf_value for the site-wide key config item (formulizeAIApiKey), from
+ * whatever was posted alongside it, merged with what's already stored.
+ *
+ * Called from the encryption hack in icms_config_Item_Handler::insert() - see that file
+ * for why it has to happen there. Never receives or returns the plaintext except in
+ * memory, for the duration of this call.
+ *
+ * @param mixed  $existingRawConfValue The config item's current (pre-save) conf_value
+ * @param string $typedKey             Raw value of formulizeAIApiKey_new ('' = keep as-is)
+ * @param bool   $clearing             Whether formulizeAIApiKey_clear was checked
+ * @param string $provider             The provider currently selected (formulizeAIProvider)
+ * @return string The new conf_value (JSON-encoded provider => ciphertext map)
+ */
+function formulizeAI_prepareApiKeyForConfigStorage($existingRawConfValue, $typedKey, $clearing, $provider) {
+    $map = formulizeAI_decodeSiteKeyMap($existingRawConfValue);
+
+    if (!in_array($provider, formulizeAI_providers()) || $provider === 'ollama') {
+        return json_encode($map); // no key applies to this provider; leave the map untouched
+    }
+    if ($clearing) {
+        unset($map[$provider]);
+        return json_encode($map);
+    }
+    $typedKey = trim((string) $typedKey);
+    if ($typedKey === '') {
+        return json_encode($map); // nothing typed - keep whatever is already stored
+    }
+    $encrypted = formulizeAI_encryptKey($typedKey);
+    if ($encrypted !== false) {
+        $map[$provider] = $encrypted;
+    }
+    return json_encode($map);
+}
+
+/**
  * Load and decrypt an API key.
  *
  * @param int $uid The owning user, or FORMULIZE_AI_SYSTEM_UID for the site-wide key
@@ -162,10 +227,18 @@ function formulizeAI_storeKey($uid, $provider, $plain) {
  * @return string The API key, or '' when there is none
  */
 function formulizeAI_loadKey($uid, $provider) {
-    global $xoopsDB;
     if (!in_array($provider, formulizeAI_providers())) {
         return '';
     }
+    if ((int) $uid === FORMULIZE_AI_SYSTEM_UID) {
+        $map = formulizeAI_decodeSiteKeyMap(formulizeAI_preference('formulizeAIApiKey', ''));
+        if (empty($map[$provider])) {
+            return '';
+        }
+        $decrypted = formulizeAI_decryptKey($map[$provider]);
+        return $decrypted === false ? '' : $decrypted;
+    }
+    global $xoopsDB;
     $uid = intval($uid);
     $table = $xoopsDB->prefix('formulize_ai_keys');
     $provider = $xoopsDB->quoteString($provider);
@@ -190,37 +263,19 @@ function formulizeAI_loadKey($uid, $provider) {
  * @return bool
  */
 function formulizeAI_hasKey($uid, $provider) {
-    global $xoopsDB;
     if (!in_array($provider, formulizeAI_providers())) {
         return false;
     }
+    if ((int) $uid === FORMULIZE_AI_SYSTEM_UID) {
+        $map = formulizeAI_decodeSiteKeyMap(formulizeAI_preference('formulizeAIApiKey', ''));
+        return !empty($map[$provider]);
+    }
+    global $xoopsDB;
     $uid = intval($uid);
     $table = $xoopsDB->prefix('formulize_ai_keys');
     $provider = $xoopsDB->quoteString($provider);
     $result = @$xoopsDB->query("SELECT uid FROM $table WHERE uid = $uid AND provider = $provider");
     return ($result && $xoopsDB->fetchArray($result)) ? true : false;
-}
-
-/**
- * Delete a stored API key.
- *
- * User keys deliberately have no delete path in the assistant UI (a key can only be
- * replaced), but an administrator must be able to remove the site-wide key outright,
- * which is what this exists for.
- *
- * @param int $uid The owning user, or FORMULIZE_AI_SYSTEM_UID for the site-wide key
- * @param string $provider One of formulizeAI_providers()
- * @return bool Success
- */
-function formulizeAI_deleteKey($uid, $provider) {
-    global $xoopsDB;
-    if (!in_array($provider, formulizeAI_providers())) {
-        return false;
-    }
-    $uid = intval($uid);
-    $table = $xoopsDB->prefix('formulize_ai_keys');
-    $provider = $xoopsDB->quoteString($provider);
-    return (bool) $xoopsDB->queryF("DELETE FROM $table WHERE uid = $uid AND provider = $provider");
 }
 
 // --------------------------------------------------------------------------
@@ -239,8 +294,11 @@ function formulizeAI_deleteKey($uid, $provider) {
 function formulizeAI_toolSets() {
     return array(
 
-        // Tools that create/update/administer form, screen, element, permission, user,
-        // group, menu/application and custom-code structure (the Manage forms category)
+        // Everything the MCP registry defines *after* test_connection (see the
+        // registration order in mcp/tools.php) - the Manage forms category. Read-only
+        // lookup/inspection tools live in formInspect below instead, even when they read
+        // form/screen/group/user structure rather than entry data, because Manage forms
+        // is meant to be additive to Read/Write, not a grab-bag of "everything else".
         'formMgmt' => array(
             'change_form_screen_page_order', 'change_menu_item_order',
             'create_derived_value_element', 'create_form', 'create_form_screen',
@@ -250,10 +308,7 @@ function formulizeAI_toolSets() {
             'create_table_of_elements', 'create_text_box_element', 'create_user_list_element',
             'create_users',
             'delete_element',
-            'get_custom_code', 'get_element_details', 'get_form_permissions_by_group',
-            'get_screen_details',
-            'list_form_connections', 'list_group_members', 'list_groups', 'list_screens',
-            'list_a_users_groups', 'list_users',
+            'get_custom_code', 'get_form_permissions_by_group',
             'query_the_database_directly',
             'read_system_activity_log',
             'set_form_permission_inheritance', 'set_form_permissions',
@@ -266,12 +321,17 @@ function formulizeAI_toolSets() {
             'update_text_box_element', 'update_user_list_element', 'update_users',
         ),
 
-        // Tools included in every category - the AI needs to know what forms and
-        // applications exist and their field/element/menu structure regardless of
-        // whether it is reading data, writing data, or managing forms
+        // Everything the MCP registry defines *up to and including* test_connection (see
+        // the registration order in mcp/tools.php), other than the two entry-writing
+        // tools in that same range (entryWrite, below). Included in Read and Write;
+        // Manage forms gets only test_connection itself out of this set - see
+        // formulizeAI_toolCategoryNames().
         'formInspect' => array(
-            'get_application_details', 'get_entries_from_form', 'get_form_details',
-            'list_applications', 'list_forms', 'list_menu_items',
+            'get_application_details', 'get_element_details', 'get_entries_from_form',
+            'get_form_details', 'get_screen_details',
+            'list_a_users_groups', 'list_applications', 'list_form_connections',
+            'list_forms', 'list_group_members', 'list_groups', 'list_menu_items',
+            'list_screens', 'list_users',
             'prepare_database_values_for_human_readability', 'test_connection',
         ),
 
@@ -313,20 +373,19 @@ function formulizeAI_toolCategoryNames($category, $allToolNames, $customList = a
 
         case 'read':
             $selected = array_filter($allToolNames, function($name) use ($sets) {
-                return (!in_array($name, $sets['formMgmt']) && !in_array($name, $sets['entryWrite']))
-                    || in_array($name, $sets['formInspect']);
+                return in_array($name, $sets['formInspect']);
             });
             break;
 
         case 'write':
             $selected = array_filter($allToolNames, function($name) use ($sets) {
-                return !in_array($name, $sets['formMgmt']) || in_array($name, $sets['formInspect']);
+                return in_array($name, $sets['formInspect']) || in_array($name, $sets['entryWrite']);
             });
             break;
 
         case 'manage':
             $selected = array_filter($allToolNames, function($name) use ($sets) {
-                return in_array($name, $sets['formMgmt']) || in_array($name, $sets['formInspect']);
+                return in_array($name, $sets['formMgmt']) || $name === 'test_connection';
             });
             break;
 

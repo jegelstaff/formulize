@@ -50,12 +50,6 @@ function formulizeAI_proxyFail($code, $message) {
 if (!$xoopsUser) {
     formulizeAI_proxyFail(401, 'Not authenticated');
 }
-if (!isAIAssistantEnabled()) {
-    formulizeAI_proxyFail(403, 'The AI assistant is not enabled for you');
-}
-
-$uid = (int)$xoopsUser->getVar('uid');
-$adminConfig = formulizeAI_adminConfig();
 
 // op defaults by method so the shape of a request stays obvious
 $isPost = ($_SERVER['REQUEST_METHOD'] === 'POST');
@@ -64,10 +58,32 @@ if (!in_array($op, array('models', 'chat'))) {
     formulizeAI_proxyFail(400, 'Unknown operation');
 }
 
-// An administrator's choice of provider is not negotiable. Ignoring the parameter rather
-// than rejecting the request means a client that asks for something else simply gets the
-// configured provider, instead of being handed a way to probe the configuration.
-if ($adminConfig['providerLocked']) {
+// scope=system: the admin settings page (Settings -> AI) previewing which models a
+// candidate site-wide key/provider actually has access to, while configuring it - which
+// can happen before formulizeAIAssistantEnabled is even on, and regardless of whether
+// this administrator is in formulizeAIAssistantGroups. Only meaningful for op=models; a
+// chat turn always goes through the real, saved assistant configuration. Gate matches
+// ai_keys.php's own scope=system (XOOPS_GROUP_ADMIN), not the assistant's enabled/group
+// check, since this is the person setting that configuration up in the first place.
+$systemScope = ($op === 'models' && isset($_GET['scope']) && $_GET['scope'] === 'system');
+
+if ($systemScope) {
+    if (!in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
+        formulizeAI_proxyFail(403, 'Only webmasters can preview models for the site-wide key');
+    }
+} elseif (!isAIAssistantEnabled()) {
+    formulizeAI_proxyFail(403, 'The AI assistant is not enabled for you');
+}
+
+$uid = (int)$xoopsUser->getVar('uid');
+$adminConfig = formulizeAI_adminConfig();
+
+// An administrator's choice of provider is not negotiable for the assistant itself.
+// Ignoring the parameter rather than rejecting the request means a client that asks for
+// something else simply gets the configured provider, instead of being handed a way to
+// probe the configuration. In system scope there is nothing to lock against yet - the
+// provider parameter IS the setting being configured - so it is always taken as given.
+if (!$systemScope && $adminConfig['providerLocked']) {
     $provider = $adminConfig['provider'];
 } else {
     $provider = isset($_GET['provider']) ? preg_replace('/[^a-z]/', '', $_GET['provider']) : 'claude';
@@ -77,32 +93,45 @@ if (!$adapter) {
     formulizeAI_proxyFail(400, 'Unknown provider');
 }
 
-// The site's own Ollama address, which is deliberately never sent to the browser.
-$ollamaBaseUrl = $adminConfig['ollamaBaseUrl'];
+// The site's own Ollama address, which is deliberately never sent to the browser. In
+// system scope the settings page may be previewing a not-yet-saved address, so a
+// same-origin query param can override the stored one (never trusted for anything beyond
+// this GET-only, admin-gated model listing).
+$ollamaBaseUrl = ($systemScope && isset($_GET['baseUrl']) && $_GET['baseUrl'] !== '')
+    ? trim($_GET['baseUrl'])
+    : $adminConfig['ollamaBaseUrl'];
 
 // --- the API key ---
 //
-// Ollama has none. Otherwise it is the site-wide key when an administrator chose the
-// provider, and the person's own key when they did.
+// Ollama has none. Otherwise, in system scope it is always the site-wide key (that is the
+// key being configured); elsewhere it is the site-wide key when an administrator chose
+// the provider, and the person's own key when they did.
 $apiKey = '';
 if ($provider !== 'ollama') {
-    $apiKey = $adminConfig['providerLocked']
-        ? formulizeAI_loadKey(FORMULIZE_AI_SYSTEM_UID, $provider)
-        : formulizeAI_loadKey($uid, $provider);
+    if ($systemScope) {
+        $apiKey = formulizeAI_loadKey(FORMULIZE_AI_SYSTEM_UID, $provider);
+    } else {
+        $apiKey = $adminConfig['providerLocked']
+            ? formulizeAI_loadKey(FORMULIZE_AI_SYSTEM_UID, $provider)
+            : formulizeAI_loadKey($uid, $provider);
+    }
 
-    // Before a key has ever been saved there is nothing to look up, and the assistant
-    // still needs to list models so the person can finish setting themselves up. Only
-    // then, and only for that: a chat turn always uses a stored key, so a header can
-    // never be used to drive the proxy with an arbitrary key.
-    if (!$apiKey && $op === 'models' && !$adminConfig['providerLocked']
+    // Before a key has ever been saved there is nothing to look up, and both the
+    // assistant's own first-time setup and the admin settings page still need to list
+    // models so the key being typed can be previewed before it is saved. Only then, and
+    // only for that: a chat turn always uses a stored key, so a header can never be used
+    // to drive the proxy with an arbitrary key.
+    if (!$apiKey && $op === 'models' && ($systemScope || !$adminConfig['providerLocked'])
         && isset($_SERVER['HTTP_X_API_KEY'])) {
         $apiKey = trim($_SERVER['HTTP_X_API_KEY']);
     }
 
     if (!$apiKey) {
-        formulizeAI_proxyFail(400, $adminConfig['providerLocked']
-            ? 'Your administrator has not finished setting up the AI assistant: no API key has been saved.'
-            : 'No API key configured. Please save your settings first.');
+        formulizeAI_proxyFail(400, $systemScope
+            ? 'Enter an API key to preview the available models.'
+            : ($adminConfig['providerLocked']
+                ? 'Your administrator has not finished setting up the AI assistant: no API key has been saved.'
+                : 'No API key configured. Please save your settings first.'));
     }
 }
 

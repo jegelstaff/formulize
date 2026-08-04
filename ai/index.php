@@ -300,7 +300,18 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
     // Default history character limits per provider (conversation history only, not system prompt/tools).
     // Set near each model's actual context window, leaving headroom for system prompt + tool definitions.
     // Claude 200K tokens → 600K chars; gpt-4o 128K tokens → 400K chars; Ollama varies by model/RAM.
+    // Used as the fallback when a model's own context window isn't known (see modelContextWindows below -
+    // Gemini's models endpoint reports a real one per model; the other providers' do not).
     const CONTEXT_WINDOW_DEFAULTS = adminConfig.contextWindowDefaults || {};
+
+    // id -> context window (characters), for whichever models the last discovery reported one for.
+    // Rebuilt on every discoverModels() call (see populateModelSelect), so it always reflects the
+    // currently selected provider's models, never a stale provider's.
+    let modelContextWindows = {};
+
+    function defaultContextLimitFor(provider, model) {
+        return modelContextWindows[model] || CONTEXT_WINDOW_DEFAULTS[provider];
+    }
 
     function getContextLimit() {
         const provider = providerSelect.value;
@@ -310,7 +321,7 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
             return adminConfig.contextLimit;
         }
         const saved = localStorage.getItem(`ai_context_limit_${provider}`);
-        return saved ? parseInt(saved, 10) : CONTEXT_WINDOW_DEFAULTS[provider];
+        return saved ? parseInt(saved, 10) : defaultContextLimitFor(provider, modelNameInput.value.trim());
     }
 
     function slideDown(el) {
@@ -506,9 +517,9 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
     // which is the copy the MCP server enforces with. Keep the two in step.
     function getToolGroupNames(group) {
         const all = availableTools.map(t => t.name);
-        if (group === 'readData')    return all.filter(n => (!FORM_MGMT_TOOLS.has(n) && !ENTRY_WRITE_TOOLS.has(n)) || FORM_INSPECT_TOOLS.has(n));
-        if (group === 'writeData')   return all.filter(n => !FORM_MGMT_TOOLS.has(n) || FORM_INSPECT_TOOLS.has(n));
-        if (group === 'manageForms') return all.filter(n => FORM_MGMT_TOOLS.has(n) || FORM_INSPECT_TOOLS.has(n));
+        if (group === 'readData')    return all.filter(n => FORM_INSPECT_TOOLS.has(n));
+        if (group === 'writeData')   return all.filter(n => FORM_INSPECT_TOOLS.has(n) || ENTRY_WRITE_TOOLS.has(n));
+        if (group === 'manageForms') return all.filter(n => FORM_MGMT_TOOLS.has(n) || n === 'test_connection');
         return [];
     }
 
@@ -729,6 +740,11 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
     const MODEL_DEFAULTS = adminConfig.modelDefaults || {};
 
     function populateModelSelect(models, preferredId) {
+        modelContextWindows = {};
+        models.forEach(m => {
+            if (m.contextWindow) modelContextWindows[m.id] = m.contextWindow;
+        });
+
         modelNameInput.innerHTML = '';
         models.forEach(m => {
             const opt = document.createElement('option');
@@ -739,6 +755,10 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
         if (preferredId) modelNameInput.value = preferredId;
         if (!modelNameInput.value && models.length > 0) modelNameInput.value = models[0].id;
         updateToolCount();
+        // Refresh with the now-current model's real context window (if the provider
+        // reported one) or the provider default - a no-op when the person has an
+        // explicit saved override, which updateContextLimitDisplay() still honours.
+        updateContextLimitDisplay();
     }
 
     // Every provider's model list comes back through the proxy in one shape,
@@ -782,7 +802,7 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
         const provider = providerSelect.value;
         const saved = localStorage.getItem(`ai_context_limit_${provider}`);
         const el = document.getElementById('context-limit');
-        el.value = saved ? parseInt(saved, 10) : CONTEXT_WINDOW_DEFAULTS[provider];
+        el.value = saved ? parseInt(saved, 10) : defaultContextLimitFor(provider, modelNameInput.value.trim());
         el.title = provider === 'ollama' ? S.historyLimitTitleOllama : S.historyLimitTitle;
     }
 
@@ -814,7 +834,10 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
             setTimeout(() => alert(S.historyLimitConfirm), 0);
         }
     });
-    modelNameInput.addEventListener('change', updateToolCount);
+    modelNameInput.addEventListener('change', () => {
+        updateToolCount();
+        updateContextLimitDisplay();
+    });
     applyAdminConfigToUI(); // before the first discovery, so hidden fields never flash
     updateProviderHints(); // Apply on load — also triggers initial model discovery
 
@@ -857,19 +880,19 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
             localStorage.setItem('ai_provider', provider);
             localStorage.setItem('ai_settings_saved', '1');
             const limitVal = parseInt(document.getElementById('context-limit').value, 10);
-            if (limitVal && limitVal !== CONTEXT_WINDOW_DEFAULTS[provider]) {
+            if (limitVal && limitVal !== defaultContextLimitFor(provider, modelName)) {
                 localStorage.setItem(`ai_context_limit_${provider}`, limitVal);
             } else {
                 localStorage.removeItem(`ai_context_limit_${provider}`);
             }
-            claudeHistory = [];
-            openaiHistory = [];
-            ollamaHistory = [];
-            geminiHistory = [];
-            lastGeminiActivityCount = 0;
             // Tools were already fetched at page load — no need to re-fetch, and no
             // per-provider chat object to rebuild: every provider now reads the current
-            // tool selection at the moment it sends.
+            // tool selection at the moment it sends. Saving settings does not touch the
+            // conversation - each provider keeps its own history array already, so there
+            // is nothing to reconcile, and silently discarding it here (while the visible
+            // transcript stayed on screen) used to leave the model with no memory of a
+            // conversation the person could still see. "New Conversation" is the
+            // deliberate way to clear history - see startNewConversation().
             renderToolPanel(); // data was pre-fetched; panel appears instantly
             updateInputState();
             updateProviderHints(); // refresh placeholder to reflect newly stored key
@@ -1430,7 +1453,9 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
                         // Decode base64 → Blob via data URL fetch (efficient, no manual char loop)
                         const blob = await fetch('data:' + block.source.media_type + ';base64,' + block.source.data).then(r => r.blob());
                         fd.append(ref, blob, ref);
-                        return { type: block.type, source: { type: 'file_ref', ref, media_type: block.source.media_type } };
+                        // file_ref (not ref) - formulizeAI_expandFileRefs() in ai_providers.php
+                        // matches placeholders by that exact property name.
+                        return { type: block.type, source: { type: 'file_ref', file_ref: ref, media_type: block.source.media_type } };
                     }
                     return block;
                 }));

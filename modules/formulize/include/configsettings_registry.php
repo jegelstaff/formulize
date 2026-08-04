@@ -291,43 +291,30 @@ return array(
                 'name' => _AM_CFG_VIEW_SETTINGS_AI,
                 'type' => 'settings',
                 'sections' => array(
+                    // A single section: with only one, the heading is suppressed (see
+                    // formulize_renderConfigSettingsForm's $showHeadings), which is what we
+                    // want here since MCP and the embedded assistant are both "AI" and don't
+                    // need to be visually split up.
                     _AM_CFG_SEC_AI => array(
+                        // MCP first: it is a simple on/off with no configuration of its own
+                        // beyond the shared instructions field at the bottom.
+                        array('name' => 'formulizeMCPServerEnabled', 'scope' => 'formulize'),
+
                         array('name' => 'formulizeAIAssistantEnabled', 'scope' => 'formulize'),
                         array(
                             'name' => 'formulizeAIAssistantGroups',
                             'scope' => 'formulize',
                             'showWhen' => array('name' => 'formulizeAIAssistantEnabled', 'value' => 1),
                         ),
-                        array('name' => 'formulizeMCPServerEnabled', 'scope' => 'formulize'),
-                        array(
-                            'name' => 'system_specific_instructions',
-                            'scope' => 'formulize',
-                            'showWhen' => array(
-                                'op' => 'any',
-                                'conditions' => array(
-                                    array('name' => 'formulizeAIAssistantEnabled', 'value' => 1),
-                                    array('name' => 'formulizeMCPServerEnabled', 'value' => 1),
-                                ),
-                            ),
-                        ),
-                    ),
 
-                    // Everything below only makes sense once the embedded assistant is on,
-                    // so every condition here is ANDed with formulizeAIAssistantEnabled.
-                    _AM_CFG_SEC_AI_ADMIN_CONTROL => array(
-                        '_section_help' => _AM_CFG_SEC_AI_ADMIN_CONTROL_HELP,
+                        // Site-wide admin control over the embedded assistant. Only makes
+                        // sense once it's on, so every condition here is ANDed with
+                        // formulizeAIAssistantEnabled. formulizeAIProvider's own description
+                        // explains what these settings do, so no extra heading/help is needed.
                         array(
                             'name' => 'formulizeAIProvider',
                             'scope' => 'formulize',
                             'showWhen' => array('name' => 'formulizeAIAssistantEnabled', 'value' => 1),
-                        ),
-                        array(
-                            'name' => 'formulizeAIModel',
-                            'scope' => 'formulize',
-                            'showWhen' => array(
-                                array('name' => 'formulizeAIAssistantEnabled', 'value' => 1),
-                                array('name' => 'formulizeAIProvider', 'op' => '!=', 'value' => 'userspecified'),
-                            ),
                         ),
                         array(
                             'name' => 'formulizeAIApiKey',
@@ -338,12 +325,20 @@ return array(
                                 array('name' => 'formulizeAIProvider', 'value' => array('claude', 'gemini', 'openai')),
                             ),
                         ),
-                        array(
+												array(
                             'name' => 'formulizeAIOllamaBaseUrl',
                             'scope' => 'formulize',
                             'showWhen' => array(
                                 array('name' => 'formulizeAIAssistantEnabled', 'value' => 1),
                                 array('name' => 'formulizeAIProvider', 'value' => 'ollama'),
+                            ),
+                        ),
+												array(
+                            'name' => 'formulizeAIModel',
+                            'scope' => 'formulize',
+                            'showWhen' => array(
+                                array('name' => 'formulizeAIAssistantEnabled', 'value' => 1),
+                                array('name' => 'formulizeAIProvider', 'op' => '!=', 'value' => 'userspecified'),
                             ),
                         ),
                         array(
@@ -365,6 +360,19 @@ return array(
                             'showWhen' => array(
                                 array('name' => 'formulizeAIAssistantEnabled', 'value' => 1),
                                 array('name' => 'formulizeAIToolAccess', 'value' => 'custom'),
+                            ),
+                        ),
+
+                        // Shared between MCP and the embedded assistant, so it goes last.
+                        array(
+                            'name' => 'system_specific_instructions',
+                            'scope' => 'formulize',
+                            'showWhen' => array(
+                                'op' => 'any',
+                                'conditions' => array(
+                                    array('name' => 'formulizeAIAssistantEnabled', 'value' => 1),
+                                    array('name' => 'formulizeMCPServerEnabled', 'value' => 1),
+                                ),
                             ),
                         ),
                     ),

@@ -165,10 +165,18 @@ function formulizeAI_normalizeGeminiModels($data) {
             continue;
         }
         $id = preg_replace('/^models\//', '', $m['name']);
-        $models[] = array(
+        $model = array(
             'id' => $id,
             'name' => isset($m['displayName']) ? $m['displayName'] : $id,
         );
+        // Gemini is the one provider whose models endpoint reports an actual context size
+        // (in tokens, via inputTokenLimit). Everywhere else in the assistant works in
+        // characters (see formulizeAI_contextWindowDefaults), so convert with the same
+        // ~3 chars/token approximation used for every provider's hand-set default.
+        if (isset($m['inputTokenLimit']) && is_numeric($m['inputTokenLimit'])) {
+            $model['contextWindow'] = (int) $m['inputTokenLimit'] * 3;
+        }
+        $models[] = $model;
     }
     return $models;
 }
