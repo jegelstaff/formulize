@@ -59,7 +59,7 @@ class formulizeDerivedElement extends formulizeElement {
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
 		$descriptionAndExamples =
 "**Element:** Derived Value (derived)
-**Description:** An element that derives its value from other elements using custom PHP code. This element allows for calculations or data manipulations based on the values of other form elements.
+**Description:** An element that derives its value from other elements using custom PHP code. This element allows for calculations or data manipulations based on the values of other form elements. Derived values are recomputed when entries are saved, and in most situations they are also recomputed when connected entries are saved. For example if you have a Workshops form connected to a Bookings form, and the Workshops form has a derived value to keep track of the number of spaces available, then when new bookings are saved, the derived value in the Workshops form will be triggered.
 **Examples:**
 - A derived value element that puts the first name and last name together: { code: \"\$value = \$profile_first_name.' '.\$profile_last_name;\" }
 - A derived value element that calculates a 10% tax on a subtotal field: { code: \"\$value = \$order_subtotal * 0.10;\", decimals: \"2\", prefix: \"$\" }";
