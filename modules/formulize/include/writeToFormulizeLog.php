@@ -93,6 +93,135 @@ function formulize_enqueue_ai_context($data) {
 	if (count($GLOBALS['formulize_ai_context_queue']) > 30) {
 		array_shift($GLOBALS['formulize_ai_context_queue']);
 	}
+
+	// Also park it in the session, because the request that queued an event is often not
+	// the one that can deliver it. Saving from the Lyris drawer posts to readelements.php,
+	// which renders nothing a script could ride along in — and whose response body cannot
+	// be used either, since the inline-edit caller in entriesdisplay.php alerts any
+	// non-empty response as an error. Parked events go out with the next render.
+	if (session_status() === PHP_SESSION_ACTIVE) {
+		if (!isset($_SESSION['formulize_ai_context_pending'])) {
+			$_SESSION['formulize_ai_context_pending'] = array();
+		}
+		$_SESSION['formulize_ai_context_pending'][] = $entry;
+		if (count($_SESSION['formulize_ai_context_pending']) > 30) {
+			array_shift($_SESSION['formulize_ai_context_pending']);
+		}
+	}
+}
+
+/**
+ * The JavaScript that moves this request's queued events into the browser's activity log
+ * (localStorage 'formulize_activity_log'), which is what the AI chat reads for context.
+ *
+ * This used to live inline in footer.php, which meant a request that renders no footer
+ * silently dropped everything it had queued. That is every AJAX endpoint — including the
+ * two the Lyris drawer runs on (formdisplay-elementsonly.php to view an entry,
+ * readelements.php to save one), so in that theme the AI never learned which entry you
+ * were looking at or that you had saved it. Those endpoints now emit this themselves.
+ *
+ * Consumes the queue, so it returns something only once per request.
+ *
+ * @param string|null $explicitTitle What to call the pageview. Pass this whenever
+ *                    document.title does not describe what was rendered — anything
+ *                    injected into a host page, where the title still belongs to the host.
+ * @return string JavaScript (no <script> tags), or '' when there is nothing to report.
+ */
+function formulize_activityLogJs($explicitTitle = null) {
+
+	global $icmsConfig;
+
+	// Mirrors the constants in modules/formulize/js/activity-tracker.js
+	$boilerplate = '
+	var STORAGE_KEY = "formulize_activity_log";
+	var MAX_EVENTS = 60, MAX_AGE_MS = 30 * 60 * 1000, cutoff = Date.now() - MAX_AGE_MS;
+	var log = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");';
+
+	$trimAndStore = '
+	log = log.filter(function(e){ return e.ts > cutoff; });
+	if (log.length > MAX_EVENTS) log = log.slice(log.length - MAX_EVENTS);
+	localStorage.setItem(STORAGE_KEY, JSON.stringify(log));';
+
+	// Collect the pageview info before the queue is drained.
+	// Form views: the rendering events carry the authoritative sid/fid/entry.
+	// List views: fall back to the gathering-data event's sid/fid.
+	$serverPageviewInfo = null;
+	if (!empty($GLOBALS['formulize_rendered_form_info'])) {
+		$serverPageviewInfo = $GLOBALS['formulize_rendered_form_info'];
+		unset($GLOBALS['formulize_rendered_form_info']);
+	} elseif (!empty($GLOBALS['formulize_ai_context_queue'])) {
+		foreach ($GLOBALS['formulize_ai_context_queue'] as $_qEvt) {
+			if (isset($_qEvt['event']) && $_qEvt['event'] === 'gathering-data-for-list-of-entries') {
+				$serverPageviewInfo = array_filter(array(
+					'fid' => isset($_qEvt['fid']) ? $_qEvt['fid'] : null,
+					'sid' => isset($_qEvt['sid']) ? $_qEvt['sid'] : null,
+				));
+				break;
+			}
+		}
+	}
+
+	// Deliver everything still undelivered, not merely what this request queued: the
+	// session copy is the superset, and includes events from requests that had no way to
+	// emit anything themselves. Note the pageview derivation above deliberately reads the
+	// per-request queue instead, so a stale event from an earlier request can never
+	// mislabel this render.
+	$pending = array();
+	if (session_status() === PHP_SESSION_ACTIVE && !empty($_SESSION['formulize_ai_context_pending'])) {
+		$pending = $_SESSION['formulize_ai_context_pending'];
+		unset($_SESSION['formulize_ai_context_pending']);
+	} elseif (!empty($GLOBALS['formulize_ai_context_queue'])) {
+		$pending = $GLOBALS['formulize_ai_context_queue'];
+	}
+	unset($GLOBALS['formulize_ai_context_queue']);
+
+	$js = '';
+
+	if (!empty($pending)) {
+		$queueJson = json_encode(array_values($pending));
+		$js .= '
+(function(){
+	var events = ' . $queueJson . ';
+	try {' . $boilerplate . '
+		for (var i = 0; i < events.length; i++) { log.push(events[i]); }' . $trimAndStore . '
+	} catch(e) {}
+}());
+';
+	}
+
+	// A server-authoritative pageview for Formulize front-end pages. The client-side
+	// tracker skips those entirely, so the server is the sole authority here.
+	if (!empty($serverPageviewInfo)) {
+		$infoJson = json_encode($serverPageviewInfo);
+		$siteName = json_encode(trans(isset($icmsConfig['sitename']) ? $icmsConfig['sitename'] : ''));
+		$titleJs = $explicitTitle === null
+			// Strip the " : Site Name" suffix the theme appends, to leave the page's own title.
+			? 'var rawTitle = document.title;
+		var siteName = ' . $siteName . ';
+		var suffix = siteName ? " : " + siteName : "";
+		var title = (suffix && rawTitle.length > suffix.length && rawTitle.slice(-suffix.length) === suffix) ? rawTitle.slice(0, -suffix.length) : rawTitle;'
+			: 'var title = ' . json_encode($explicitTitle) . ';';
+		// Injected content leaves the address bar on the host page, so a URL read from
+		// location would name the wrong thing. Identify it by title alone in that case.
+		$urlJs = $explicitTitle === null
+			? 'window.location.pathname + window.location.search'
+			: 'null';
+		$js .= '
+(function(){
+	var info = ' . $infoJson . ';
+	try {' . $boilerplate . '
+		' . $titleJs . '
+		var evt = { type: "pageview", url: ' . $urlJs . ', title: title, ts: Date.now() };
+		if (info.sid !== undefined) evt.sid = info.sid;
+		if (info.fid !== undefined) evt.fid = info.fid;
+		if (info.entry !== undefined) evt.entry = info.entry;
+		log.push(evt);' . $trimAndStore . '
+	} catch(e) {}
+}());
+';
+	}
+
+	return $js;
 }
 
 /**
