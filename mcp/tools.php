@@ -1210,7 +1210,7 @@ Read the code before changing it. The tools that write it - update_form_code for
 
 **The $currentValues array is how you tell what changed.** In the save procedures the values that were in the database before this save operation started, are available as $currentValues[\'handle_name\']. For example, this lets you compare $currentValues[\'artifacts_year\'] with $artifacts_year to see whether what\'s in the database now is different from what is being/has been saved.
 
-**The values of the element handle variables, and of the $currentValues array, are all formatted for storage in the database**. For example, a linked element\'s value will be the entry_id of the selected entry or entries, not the human readable value the user selected. **This is the opposite of how the other tools work.** create_entries and update_entries accept readable values and convert them for you, and get_entries_from_form lets you filter on readable values too. Custom code has no such conversion in either direction: you read the stored values and you write the stored values, so you have to know how the data is actually held. For complete details of the database storage formats for elements, consult the Formulize Method guide [INSERT TOOL NAME HERE WHEN KNOWN].
+**The values of the element handle variables, and of the $currentValues array, are all formatted for storage in the database**. For example, a linked element\'s value will be the entry_id of the selected entry or entries, not the human readable value the user selected. **This is the opposite of how the other tools work.** create_entries and update_entries accept readable values and convert them for you, and get_entries_from_form lets you filter on readable values too. Custom code has no such conversion in either direction: you read the stored values and you write the stored values, so you have to know how the data is actually held. For complete details of the database storage formats for elements and the functions and formulizeDataHandler methods available to this code, use the get_documentation tool, if it is available.
 
 What each procedure receives, and what it should do:
 
@@ -1265,6 +1265,28 @@ There is no syntax checking when you save, and an error here affects every page 
 					'required' => ['application_id', 'code']
 				]
 			];
+
+			// Documentation tool: only available where there is something to serve, and only alongside the
+			// tools that write custom code, since reading the reference is what it exists to support.
+			$documentationTopics = $this->availableDocumentationTopics();
+			if ((isset($this->tools['update_form_code']) OR isset($this->tools['update_application_code'])) AND $documentationTopics) {
+				$this->tools['get_documentation'] = [
+					'name' => 'get_documentation',
+					'description' => 'Read Formulize\'s reference documentation for the PHP functions and the formulizeDataHandler class and its methods, available to custom code (see update_form_code and update_application_code) - what each one does, its parameters, its return value, and examples. This covers the storage formats and data access patterns that update_form_code and update_application_code describe as "consult the reference documentation" for.
+
+Call with no arguments to get the list of topics, each with a one-line summary. Call again with \'topic\' set to one of those names to get its full reference page.',
+					'inputSchema' => [
+						'type' => 'object',
+						'properties' => [
+							'topic' => [
+								'type' => 'string',
+								'enum' => array_keys($documentationTopics),
+								'description' => 'Optional. The name of a function or formulizeDataHandler method to read the documentation for. Leave this out to get the list of available topics instead.'
+							]
+						]
+					]
+				];
+			}
 
 			// Logging tool only available if logging is enabled
 			$config_handler = xoops_gethandler('config');
@@ -1400,6 +1422,70 @@ There is no syntax checking when you save, and an error here affects every page 
 			);
 		}
 		return [$codeType, $formObject, null];
+	}
+
+	/**
+	 * The functions and formulizeDataHandler methods get_documentation is willing to serve, mapped to the
+	 * /docs page for each. This is a deliberate subset of what actually exists in /docs - the pages most
+	 * relevant to someone writing custom code via update_form_code/update_application_code - not every
+	 * page the docs site has.
+	 * @return array topic name => docs filename, in the 'docs' directory
+	 */
+	private function documentationCatalog() {
+		return [
+			'formulizeDataHandler' => 'data_handler.md',
+			'formulize_updateDerivedValues' => 'function-formulize_updateDerivedValues.md',
+			'formulize_writeEntry' => 'function-formulize_writeEntry.md',
+			'gatherDataset' => 'function-gatherDataset.md',
+			'getCurrentURL' => 'function-getCurrentURL.md',
+			'getEntryIds' => 'function-getEntryIds.md',
+			'getValue' => 'function-getValue.md',
+			'security_check' => 'function-security_check.md',
+			'elementHasValueInEntry' => 'data-elementHasValueInEntry.md',
+			'findAllEntriesWithAllValues' => 'data-findAllEntriesWithAllValues.md',
+			'findAllEntriesWithValue' => 'data-findAllEntriesWithValue.md',
+			'findAllValuesForField' => 'data-findAllValuesForField.md',
+			'findFirstEntryWithAllValues' => 'data-findFirstEntryWithAllValues.md',
+			'findFirstEntryWithValue' => 'data-findFirstEntryWithValue.md',
+			'findLastEntryWithValue' => 'data-findLastEntryWithValue.md',
+			'getElementValueInEntry' => 'data-getElementValueInEntry.md',
+			'getEntryMeta' => 'data-getEntryMeta.md',
+			'getEntryOwnerGroups' => 'data-getEntryOwnerGroups.md',
+			'setEntryOwnerGroups' => 'data-setEntryOwnerGroups.md',
+		];
+	}
+
+	/**
+	 * documentationCatalog() filtered down to the topics whose docs page actually exists on this server -
+	 * an installation may not have the /docs folder at all, or may have an older copy of it that is missing
+	 * some pages.
+	 * @return array topic name => docs filename, only for files that exist
+	 */
+	private function availableDocumentationTopics() {
+		$topics = [];
+		foreach ($this->documentationCatalog() as $topic => $file) {
+			if (is_file(XOOPS_ROOT_PATH.'/docs/'.$file)) {
+				$topics[$topic] = $file;
+			}
+		}
+		return $topics;
+	}
+
+	/**
+	 * Pull a one-line summary out of a docs page, for the topic list get_documentation returns when called
+	 * with no arguments. Each page has a '## Description' section; this takes its first paragraph.
+	 * @param string $filePath Full path to the docs markdown file
+	 * @return string The summary, or an empty string if the file couldn't be read or has no such section
+	 */
+	private function documentationSummaryFromFile($filePath) {
+		$content = file_get_contents($filePath);
+		if ($content === false) {
+			return '';
+		}
+		if (preg_match('/##\s*Description\s*\r?\n+(.+?)(\r?\n\r?\n|\r?\n##|\z)/s', $content, $matches)) {
+			return trim(preg_replace('/\s+/', ' ', $matches[1]));
+		}
+		return '';
 	}
 
 	/**
@@ -6105,6 +6191,68 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 			'form_id' => intval($formObject->getVar('fid')),
 			'form_title' => $formObject->getVar('form_title'),
 			'code' => $code
+		];
+	}
+
+	/**
+	 * Read the reference documentation for a function or formulizeDataHandler method, or list what's
+	 * available. This tool is only registered at all when there is at least one topic to serve - see
+	 * availableDocumentationTopics() - so an empty catalog here would mean the /docs folder changed under
+	 * us mid-request, which is not worth a special error for.
+	 * @param array $arguments Optional 'topic'
+	 * @return array The topic list, or one topic's full documentation
+	 * @throws FormulizeMCPException if 'topic' is given but not recognized
+	 */
+	private function get_documentation($arguments) {
+
+		$topics = $this->availableDocumentationTopics();
+		$topic = trim((string) ($arguments['topic'] ?? ''));
+
+		if ($topic === '') {
+			$list = [];
+			foreach ($topics as $name => $file) {
+				$list[] = [
+					'name' => $name,
+					'summary' => $this->documentationSummaryFromFile(XOOPS_ROOT_PATH.'/docs/'.$file)
+				];
+			}
+			return [
+				'topics' => $list,
+				'hint' => "Call get_documentation again with 'topic' set to one of these names to get its full reference page."
+			];
+		}
+
+		$match = null;
+		foreach ($topics as $name => $file) {
+			if (strcasecmp($name, $topic) === 0) {
+				$match = $name;
+				break;
+			}
+		}
+		if ($match === null) {
+			throw new FormulizeMCPException(
+				"No documentation found for '$topic'.",
+				'invalid_data',
+				context: [
+					'valid_topics' => array_keys($topics),
+					'hint' => 'Call get_documentation with no arguments to see the list of available topics.'
+				]
+			);
+		}
+
+		$content = file_get_contents(XOOPS_ROOT_PATH.'/docs/'.$topics[$match]);
+		// strip the Jekyll frontmatter block - it's only needed by the docs site, and the page's own
+		// heading already repeats the title it carries.
+		$content = preg_replace('/^---\r?\n.*?\r?\n---\r?\n/s', '', $content, 1);
+		// some overview pages (e.g. data_handler.md) use Liquid templating to auto-generate a method
+		// list at build time. That syntax means nothing outside a Jekyll build, so drop any line
+		// containing it - the topic list from a topic-less call to this tool covers the same ground.
+		$content = preg_replace('/^.*(\{%.*?%\}|\{\{.*?\}\}).*\r?\n?/m', '', $content);
+		$content = preg_replace('/\n{3,}/', "\n\n", $content);
+
+		return [
+			'topic' => $match,
+			'documentation' => trim($content)
 		];
 	}
 

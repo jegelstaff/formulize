@@ -18,7 +18,7 @@ Updates all the derived values in the specified entry in the specified form. Opt
 
 __$entry_id_or_filter__ - either an entry id number, or a valid filter for the getData function, as specified in [older Formulize documentation](../../../../files/Using_Formulize-Pageworks_to_Make_Custom_Applications.pdf). If a filter is specified, the derived values will be updated on all entries found by the filter.<br>
 __$fid__ - the form id of the form the entry belongs to<br>
-__$frid__ - Optional - the form relationship id that represents the dataset within which the derived values should be updated. If not specified, only data from the entry itself will be available and in scope when the derived values are updated. If a relationship is specified then all the data from connected forms will be in scope when the derived values are updated.
+__$frid__ - Optional - the form relationship id that represents the dataset within which the derived values should be updated. If not specified, only data from the entry itself will be available and in scope when the derived values are updated. If a relationship is specified then all the data from connected forms will be in scope when the derived values are updated. Use -1 to include all the connected forms, based on the _Primary Relationship_, which is a special relationship that Formulize automatically maintains to represent all the connections in the system.
 
 ## Return Values
 

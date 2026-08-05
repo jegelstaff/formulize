@@ -308,7 +308,7 @@ function formulizeAI_toolSets() {
             'create_table_of_elements', 'create_text_box_element', 'create_user_list_element',
             'create_users',
             'delete_element',
-            'get_custom_code', 'get_form_permissions_by_group',
+            'get_custom_code', 'get_documentation', 'get_form_permissions_by_group',
             'query_the_database_directly',
             'read_system_activity_log',
             'set_form_permission_inheritance', 'set_form_permissions',
