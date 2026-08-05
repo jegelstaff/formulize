@@ -1210,7 +1210,7 @@ Read the code before changing it. The tools that write it - update_form_code for
 
 **The $currentValues array is how you tell what changed.** In the save procedures the values that were in the database before this save operation started, are available as $currentValues[\'handle_name\']. For example, this lets you compare $currentValues[\'artifacts_year\'] with $artifacts_year to see whether what\'s in the database now is different from what is being/has been saved.
 
-**The values of the element handle variables, and of the $currentValues array, are all formatted for storage in the database**. For example, a linked element\'s value will be the entry_id of the selected entry or entries, not the human readable value the user selected. **This is the opposite of how the other tools work.** create_entries and update_entries accept readable values and convert them for you, and get_entries_from_form lets you filter on readable values too. Custom code has no such conversion in either direction: you read the stored values and you write the stored values, so you have to know how the data is actually held. For complete details of the database storage formats for elements and the functions and formulizeDataHandler methods available to this code, use the get_documentation tool, if it is available.
+**The values of the element handle variables, and of the $currentValues array, are all formatted for storage in the database**. For example, a linked element\'s value will be the entry_id of the selected entry or entries, not the human readable value the user selected. **This is the opposite of how the other tools work.** create_entries and update_entries accept readable values and convert them for you, and get_entries_from_form lets you filter on readable values too. Custom code has no such conversion in either direction: you read the stored values and you write the stored values, so you have to know how the data is actually held. For complete details of the functions and formulizeDataHandler methods available to this code, use the get_documentation tool, if it is available.
 
 What each procedure receives, and what it should do:
 
@@ -1248,6 +1248,8 @@ There is no syntax checking when you save. A mistake will not be reported here -
 **The code you send replaces the library completely.** It is not added to what is there. Call get_custom_code first and if you are adding to existing logic, include the existing code in what you send. **Sending an empty string removes the library altogether.**
 
 This code is not wrapped in anything. The file is included as it stands on every page of the application, so **begin it with a `<?php` tag**. This file is usually nothing but function declarations - helpers that the form procedures call, or that derived value elements reference in their formulas, etc. This provides a common place for shared application logic to exist. Anything that this file prints out / echos to screen, is included in the DOM as is, so in extreme cases it can be useful for special scripts or style overrides, but use that capability sparingly!
+
+For details of the functions and formulizeDataHandler methods available to this code, use the get_documentation tool, if it is available.
 
 There is no syntax checking when you save, and an error here affects every page of the application rather than one form, so re-read what you wrote before finishing.',
 				'inputSchema' => [
