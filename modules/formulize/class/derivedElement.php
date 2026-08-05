@@ -59,20 +59,20 @@ class formulizeDerivedElement extends formulizeElement {
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
 		$descriptionAndExamples =
 "**Element:** Derived Value (derived)
-**Description:** An element that derives its value from other elements using custom PHP code. This element allows for calculations or data manipulations based on the values of other form elements. Derived values are recomputed when entries are saved, and in most situations they are also recomputed when connected entries are saved. For example if you have a Workshops form connected to a Bookings form, and the Workshops form has a derived value to keep track of the number of spaces available, then when new bookings are saved, the derived value in the Workshops form will be triggered.
+**Description:** An element that derives its value from other elements using custom PHP code. This element allows for calculations or data manipulations based on the values of other form elements. Derived values are automatically recomputed when entries are saved, and in most situations they are also automatically recomputed when connected entries are saved. For example if you have a Workshops form connected to a Bookings form, and the Workshops form has a derived value to keep track of the number of spaces available. The derived value will be updated whenever the Workshop entry is saved, and also whenever connected entries in the Bookings form are created or updated.
 
-The data available when a derived value is triggered, depends on which form is doing the triggering. The dataset will have the form being saved as the 'main form', plus all its connected forms too. Considering the previous example, if the Workshops form is saved, then the dataset will have the Workshops form as the main form, and the dataset will consist of the Workshop entry, plus all the connected Bookings entries. If an entry in the Bookings form is saved, then the dataset will have the Bookings form as the main form, and the dataset will consist of that one Bookings form entry plus its connected Workshop entry.
+When derived values are recomputed, a dataset will be made available to the code in the derived value element. The dataset will contain all the data in the entry being saved, plus all the data from connected entries in other forms. To access this data, use PHP variables named after the element handles, ie: \$workshop_name, \$booking_date, etc. These variables will resolve to the value(s) of that element in the current dataset. There may be multiple values for a given element in the dataset. In that case, the variable will resolve to an array of values; otherwise it will be a scalar. Use is_array() to detect whether an element has multiple values at present or not.
 
-Element handles are available as variables in the code for a derived value. These variables will resolve to the value(s) of that element in the current dataset. Considering the previous example again, if the Workshops form was saved, then it is the 'main form' and variables referring to elements in the Workshop form will generally have a single value from the entry being saved (unless the element itself has multiple values, such as checkboxes). Variables referring to the Bookings form will be arrays of multiple values if there are multiple booking entries, or single values if there is only one booking entry.
-
-Whereas if the Bookings form was saved then it is the 'main form' and variables referring to elements in the Bookings form will generally have a single value from the entry being saved, and variables referring to the Workshop form will also have single values (assuming there is only one workshop per booking).
-
-This system is designed to give you the data you most likely need, when you most likely need it. But depending on the particulars of the workflow and semantics in your system, you may occasionally need to lookup more data inside the derived value formula, if the dataset would not always include all the data you are looking for.
-
-For more details on the structure of datasets, use the get_documentation tool with the topic 'gatherDataset' which is the function that builds the datasets used in derived value processing. You can also use the get_documentation tool to read about other functions and methods that can work with data in code.
+For more details on the internal Formulize API functions and methods you can use in this code, use the get_documentation tool.
 **Examples:**
 - A derived value element that puts the first name and last name together: { code: \"\$value = \$profile_first_name.' '.\$profile_last_name;\" }
-- A derived value element that calculates a 10% tax on a subtotal field: { code: \"\$value = \$order_subtotal * 0.10;\", decimals: \"2\", prefix: \"$\" }";
+- A derived value element that calculates a 10% tax on a subtotal field: { code: \"\$value = \$order_subtotal * 0.10;\", decimals: \"2\", prefix: \"$\" }
+- A derived value element that calculates the spaces remaining in a workshop based on the number of bookings: { code: \" \$numberOfBookings = 0;
+if(!empty(\$bookings_name)) {
+	\$numberOfBookings = is_array(\$bookings_name) ? count(\$bookings_name) : 1;
+}
+\$value = \$workshop_max_spaces - \$numberOfBookings; \"
+}";
 		return $descriptionAndExamples;
 	}
 
