@@ -2894,44 +2894,43 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
 	// loop through the formulas, process them, and write them to the file
 	foreach ($metadata as $formulaNumber => $thisMetaData) {
 		$formula = $thisMetaData['formula'];
-		// search for all $variables in the formula
-		$formula = preg_replace_callback(
-			'/\$([a-zA-Z_][a-zA-Z0-9_]*)/',
-			function($matches) use ($frid, $fid, $thisMetaData) {
-				$varName = $matches[1];
-				// skip reserved variable names
-				if (in_array($varName, ['value', 'entry', 'form_id', 'entry_id', 'relationship_id'])) {
-					return $matches[0];
-				}
-				// check if the variable corresponds to an element handle
-				$elementMetaData = formulize_getElementMetaData($varName, true);
+		// find all $variables in the formula, and build an assignment statement for each one, to be prepended
+		// before the formula runs.
+		preg_match_all('/\$([a-zA-Z_][a-zA-Z0-9_]*)/', $formula, $matches);
+		$variableAssignments = [];
+		foreach ($matches[1] as $varName) {
+			// skip reserved variable names, and variables we've already generated an assignment for
+			if (in_array($varName, ['value', 'entry', 'form_id', 'entry_id', 'relationship_id']) OR isset($variableAssignments[$varName])) {
+				continue;
+			}
+			// check if the variable corresponds to an element handle
+			$elementMetaData = formulize_getElementMetaData($varName, true);
 
-				// if it does, set the form id
-				if (!empty($elementMetaData)) {
-					$termFid = $elementMetaData['id_form'];
+			// if it does, set the form id
+			if (!empty($elementMetaData)) {
+				$termFid = $elementMetaData['id_form'];
 
-				// if it doesn't but it's a metadata field, use the active fid
-				} elseif (in_array($varName, ['uid', 'proxyid', 'creation_date', 'mod_date', 'creator_email',
-				                              'owner_groups', 'creation_uid', 'mod_uid', 'creation_datetime', 'mod_datetime'])) {
-					$termFid = $fid;
+			// if it doesn't but it's a metadata field, use the active fid
+			} elseif (in_array($varName, ['uid', 'proxyid', 'creation_date', 'mod_date', 'creator_email',
+			                              'owner_groups', 'creation_uid', 'mod_uid', 'creation_datetime', 'mod_datetime'])) {
+				$termFid = $fid;
 
-				// if it isn't an element handle or a metadata field, just return it as is
-				} else {
-					return $matches[0];
-				}
+			// if it isn't an element handle or a metadata field, it's just a regular PHP variable in the formula -- leave it alone
+			} else {
+				continue;
+			}
 
-				// if the variable's element is in the same form as this derived value formula, and that form is NOT the main form in the relationship, pass the "localEntryId" so getValue retrieves data for this entry only rather than all entries in this form that are connected to the main form
-				if ($frid AND $termFid == $thisMetaData['form_id'] AND $thisMetaData['form_id'] != $fid) {
-					$replacement = "getValue(\$entry, '$varName', localEntryId: \$entry_id)";
-				} else {
-					$replacement = "getValue(\$entry, '$varName')";
-				}
+			// if the variable's element is in the same form as this derived value formula, and that form is NOT the main form in the relationship, pass the "localEntryId" so getValue retrieves data for this entry only rather than all entries in this form that are connected to the main form
+			if ($frid AND $termFid == $thisMetaData['form_id'] AND $thisMetaData['form_id'] != $fid) {
+				$replacement = "getValue(\$entry, '$varName', localEntryId: \$entry_id)";
+			} else {
+				$replacement = "getValue(\$entry, '$varName')";
+			}
 
-				// if we're in an asynchronous call context and there's an override value for this variable, then use that instead (because it represents the pending state of the variable if/when the entry would be saved... used with conditional element logic to evaluate what a derived value would become if the current form values on screen were saved)
-				return "(isset(\$GLOBALS['formulize_asynchronousFormDataInAPIFormat'][\$entry_id]['$varName']) ? \$GLOBALS['formulize_asynchronousFormDataInAPIFormat'][\$entry_id]['$varName'] : $replacement)";
-			},
-			$formula
-		);
+			// if we're in an asynchronous call context and there's an override value for this variable, then use that instead (because it represents the pending state of the variable if/when the entry would be saved... used with conditional element logic to evaluate what a derived value would become if the current form values on screen were saved)
+			$variableAssignments[$varName] = "\$$varName = (isset(\$GLOBALS['formulize_asynchronousFormDataInAPIFormat'][\$entry_id]['$varName']) ? \$GLOBALS['formulize_asynchronousFormDataInAPIFormat'][\$entry_id]['$varName'] : $replacement);";
+		}
+		$variableAssignmentsCode = implode("\n        ", $variableAssignments);
 		$addSemiColons = strstr($formula, ";") ? false : true; // only add if we found none in the formula.
 		if ($addSemiColons) {
 			$formulaLines = explode("\n", $formula);    // \n may be a linux specific character and other OSs may require a different split
@@ -2952,6 +2951,7 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
 		file_put_contents($fileName, "<?php
     function derivedValueFormula_" . str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "�", ",", ")", "(", "[", "]"), "_", trans($formHandle, 'en')) . "_" . $fridForName . "_" . $fid . "_" . $formulaNumber . "(\$entry, \$form_id, \$entry_id, \$relationship_id) {
 				$openingValue
+        $variableAssignmentsCode
         $formula
         return \$value;
     }\r\n");
