@@ -716,8 +716,11 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
         $defaultFormScreen->setVar('showpagetitles', 0);
         $defaultFormScreen->setVar('showpageindicator', 0);
         $defaultFormScreen->setVar('showpageselector', 0);
-        $defaultFormScreen->setVar('displaycolumns', 2);
-        $defaultFormScreen->setVar('column1width', '20%');
+				// WE NEED TO ADD IN PER-SCREEN DEFAULTS AND THINGS LIKE THE COLUMNS NEED TO RESPECT THE DEFAULT PROVIDED BY THE SCREEN
+				// WE CAN PROBABLY JUST REUSE THE SETTINGS SYSTEM, STORE THE SETTINGS ASSOCIATED WITH EACH THEM, AND LOAD THE VALUES
+				// BASED ON THE THEME THAT IS ACTIVE
+        $defaultFormScreen->setVar('displaycolumns', 1);
+        $defaultFormScreen->setVar('column1width', 'auto');
         $defaultFormScreen->setVar('column2width', 'auto');
 				$defaultFormScreen->setVar('anonNeedsPasscode', 1);
     }
