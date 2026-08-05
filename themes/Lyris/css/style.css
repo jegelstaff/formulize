@@ -359,6 +359,21 @@ body:not(#formulize) .fz-main {
   padding: var(--s-5);
 }
 
+/* The AI assistant's own panel. It brings its own padding and its own internal
+   scrolling (the chat log scrolls, the input row stays put), so unlike the entry
+   body this one neither pads nor scrolls - it just hands its full height over. */
+.fz-drawer__body--ai {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* display:flex above would otherwise beat the UA's [hidden] rule */
+.fz-drawer__body--ai[hidden] {
+  display: none;
+}
+
 .fz-drawer__loading {
   padding: var(--s-6);
   color: var(--c-text-muted);
