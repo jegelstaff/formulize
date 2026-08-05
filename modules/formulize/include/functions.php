@@ -2681,12 +2681,17 @@ function prepareLiteralTextForDB($elementObjectOrIdentifier, $value, $curlyBrack
 		$ele_value = $elementObject->getVar('ele_value');
 		if($value != "{BLANK}" AND $elementObject->isLinked AND (!isset($ele_value['snapshot']) OR $ele_value['snapshot'] != 1) AND (substr($value,0,1) != "{" OR substr($value,-1) != "}" OR _getElementObject(substr($value, 1, -1)) === false)) {
 			list($sourceFidOfElement, $sourceHandleOfElement) = getLinkedOptionsSourceForm($elementObject);
-			// get the entry id of the value in the linked source of the elementObject selectbox
-			// does not handle links to links!
-			$dataHandler = new formulizeDataHandler($sourceFidOfElement);
 			$operator = $partialMatch ? 'LIKE' : '=';
-			$value = $dataHandler->findAllEntriesWithValue($sourceHandleOfElement, convertStringToUseSpecialCharsToMatchDB($value), operator: $operator);
-			$value = (is_array($value) AND count($value) == 1) ? $value[0] : $value;
+			if($sourceElementObject = _getElementObject($sourceHandleOfElement)) {
+				// if the value is itself pointing at something else, let's go take a look there
+				// this would need modification for looking more than one level deep, because it's the first level's id that we want, but we have to validate that against the ultimate value an arbitrary number of levels down... yikes
+				if($sourceElementObject->isLinked OR $sourceElementObject->isUserList) {
+					$value = prepareLiteralTextForDB($sourceElementObject, $value, $curlyBracketEntryId, $userComparisonId, $partialMatch);
+				}
+				$dataHandler = new formulizeDataHandler($sourceFidOfElement);
+				$value = $dataHandler->findAllEntriesWithValue($sourceHandleOfElement, convertStringToUseSpecialCharsToMatchDB($value), operator: $operator);
+				$value = (is_array($value) AND count($value) == 1) ? $value[0] : $value;
+			}
 		} elseif($value != "{BLANK}") {
 			$foundValue = checkUITextForValue($value, $elementObject, $partialMatch);
 			$value = ($value === "" AND $foundValue === false) ? "" : $foundValue; // if a "blank" was searched for, and nothing found, we still want to be searching for the blank, not boolean false
@@ -7673,10 +7678,32 @@ function formulize_javascriptForRemovingEntryLocks($unload=false) {
  * @return string HTML string
  */
 function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200, $localIds=array(), $fid=0, $row=0, $column=0, $deInstanceCounter=false) {
-    $output = "<div class='main-cell-div' id='cellcontents_".$row."_".$column."'>";
     if (!is_array($value)) {
         $value = array($value);
     }
+
+    // Build a native tooltip (title attribute) holding the FULL, untruncated text of
+    // the cell. List cells are truncated for a tidy layout (server-side character caps
+    // and/or the CSS text-overflow:ellipsis rule in narrow columns), which can hide the
+    // complete value from the user. Exposing the full plain-text here guarantees the
+    // data stays accessible on hover and to assistive technology, without altering the
+    // truncated layout. (closes #33)
+    $titleParts = array();
+    foreach ($value as $tv) {
+        if (is_array($tv)) {
+            continue;
+        }
+        $plain = trim(strip_tags(html_entity_decode((string) $tv, ENT_QUOTES)));
+        if ($plain !== '') {
+            $titleParts[] = $plain;
+        }
+    }
+    $titleAttr = '';
+    if (!empty($titleParts)) {
+        $titleAttr = " title='" . htmlspecialchars(implode(", ", $titleParts), ENT_QUOTES) . "'";
+    }
+
+    $output = "<div class='main-cell-div'".$titleAttr." id='cellcontents_".$row."_".$column."'>";
 
     if (!is_array($localIds)) {
         $localIds = array($localIds);
@@ -11658,9 +11685,17 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
  * Returns both an HTML string (for non-template menu mode) and a structured data array
  * (for template menu mode). Returns array(false, false) if the AI Assistant is not enabled.
  *
+ * Lyris has no menu item at all: it puts AI in the theme's top bar instead, and opens the
+ * assistant in the right slide-out drawer rather than navigating to /ai/ as a full page.
+ * See themes/Lyris/theme.html and themes/Lyris/js/script.js.
+ *
  * @return array Two-element array: [string|false $htmlContent, array|false $dataArray]
  */
 function drawAIAssistantMenuSection() {
+	global $xoopsConfig;
+	if ($xoopsConfig['theme_set'] == 'Lyris') {
+		return array(false, false);
+	}
 	if (!isAIAssistantEnabled()) {
 		return array(false, false);
 	}
