@@ -236,7 +236,7 @@ Use list_applications for a list of every application in the system; this tool i
 							'description' => 'Required. An array of data to use for the entry or entries. Each item in the array is the data for one entry.',
 							'items' => [
 								'type' => 'object',
-								'description' => 'Required. Data to save as key-value pairs. Keys must be valid element handles from the form. Use get_form_details to find valid handles and data types. This tool will automatically create default values for any elements that are not specified, if they have default values defined in the Formulize configuration. Date elements store data in YYYY-MM-DD format. Time elements store data in 24 hour format (hh:mm). Duration elements store data in minutes. Elements that allow multiple selections, such as checkboxes and autocomplete lists configured to allow more than one value, store data as an array of values.',
+								'description' => $this->createUpdateEntriesDataItemsDescription('create'),
 								'additionalProperties' => true
 							],
 							'examples' => [
@@ -268,7 +268,7 @@ Use list_applications for a list of every application in the system; this tool i
 							'description' => 'Required. An array where each item is a key-value pair of data to update in an entry. The key-value pairs must include the key "entry_id" paired with the ID of the entry to update.',
 							'items' => [
 								'type' => 'object',
-								'description' => 'Required. Data to update as key-value pairs. Keys must be valid element handles from the form, and must include "entry_id". Use get_form_details to find valid handles and data types. Only specified elements will be updated; others remain unchanged. Date elements store data in YYYY-MM-DD format. Time elements store data in 24 hour format (hh:mm). Duration elements store data in minutes.',
+								'description' => $this->createUpdateEntriesDataItemsDescription('update'),
 								'additionalProperties' => true
 							],
 							'examples' => [
@@ -1298,6 +1298,21 @@ There is no syntax checking when you save, and an error here affects every page 
 			}
 		}
 
+	}
+
+	/**
+	 * Generate the description for the create_entries and update_entries tools, for the items key in the data property
+	 * @param string $operation 'create' or 'update'
+	 * @return string The description text
+	 */
+	private function createUpdateEntriesDataItemsDescription($operation) {
+		$operation = $operation == "create" ? "save" : "update";
+		$text = "Data to $operation as key-value pairs. Keys must be valid element handles from the form";
+		$text .= $operation == "update" ? " and must include 'entry_id'. " : ". ";
+		$text .= "Use get_form_details to find valid handles. ";
+		$text .= $operation == "update" ? "Only specified elements will be updated; others remain unchanged. " : "This tool will automatically create default values for any elements that are not specified, if they have default values defined in the Formulize configuration. ";
+		$text .= "Date elements store data in YYYY-MM-DD format. Time elements store data in 24 hour format (hh:mm). Duration elements store data in minutes. Elements that allow multiple selections, such as checkboxes and autocomplete lists configured to allow more than one value, store data as an array of values. For linked elements and user list elements, this tool will convert readable values to their internal ids; you DO NOT need to figure out the internal ids yourself.";
+		return $text;
 	}
 
 	/**
