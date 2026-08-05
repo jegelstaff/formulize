@@ -349,7 +349,7 @@ body:not(#formulize) .fz-main {
 }
 
 .fz-drawer__title {
-  font-size: var(--fs-15);
+  font-size: var(--fs-20);
   font-weight: 600;
 }
 
@@ -2002,7 +2002,7 @@ a.main-menu__item-link--active::before {
   --field-radius:   var(--r-2);   /* 6px */
   --field-gap:      18px;
   --field-text:     var(--fs-14);
-  --label-text:     1rem; /* ~16px, scales with root font-size (#32) */
+  --label-text:     1.1rem; /* ~16px, scales with root font-size (#32) */
   --label-gap:      6px;
   --label-col-w:    220px;
   --help-text:      var(--fs-12);
@@ -2457,7 +2457,7 @@ textarea.fz-control {
   --field-radius: var(--r-2);
   --field-gap:    18px;
   --field-text:   var(--fs-14);
-  --label-text:   1rem; /* ~16px, scales with root font-size (#32) */
+  --label-text:   1.1rem; /* ~16px, scales with root font-size (#32) */
   --label-gap:    6px;
   --help-text:    var(--fs-12);
 }
