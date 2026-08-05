@@ -20,7 +20,7 @@ test.describe('Check that tools/list is responding', () => {
 		await expect(page.locator('td[id=key-1]')).toBeVisible();
 	}),
 	test('Run tools list with API key and session auth', async ({ page }) => {
-		// The tool catalog has grown to 65 tools with large per-tool descriptions, so the rendered
+		// The tool catalog has grown to 66 tools with large per-tool descriptions, so the rendered
 		// response tree is huge; each getByText(...).toBeVisible() below has to scan all of it, and
 		// there are ~80 of them across both auth modes. The default per-test timeout doesn't leave
 		// enough headroom for that under load.
@@ -127,7 +127,8 @@ test.describe('Check that tools/list is responding', () => {
 		await expect(page.getByText('61: "name": "get_custom_code" "').first()).toBeVisible();
 		await expect(page.getByText('62: "name": "update_form_code" "').first()).toBeVisible();
 		await expect(page.getByText('63: "name": "update_application_code" "').first()).toBeVisible();
-		await expect(page.getByText('64: "name": "read_system_activity_log" "').first()).toBeVisible();
+		await expect(page.getByText('64: "name": "get_documentation" "').first()).toBeVisible();
+		await expect(page.getByText('65: "name": "read_system_activity_log" "').first()).toBeVisible();
 
 		// --- Session auth (embedded AI assistant path) ---
 		// 401 for user not logged in
@@ -184,6 +185,7 @@ test.describe('Check that tools/list is responding', () => {
 		await expect(page.getByText('10: "name": "get_form_details" "').first()).toBeVisible();
 		await expect(page.getByText('18: "name": "test_connection" "').first()).toBeVisible();
 		await expect(page.getByText('22: "name": "query_the_database_directly" "').first()).toBeVisible();
-		await expect(page.getByText('64: "name": "read_system_activity_log" "').first()).toBeVisible();
+		await expect(page.getByText('64: "name": "get_documentation" "').first()).toBeVisible();
+		await expect(page.getByText('65: "name": "read_system_activity_log" "').first()).toBeVisible();
 	})
 });
