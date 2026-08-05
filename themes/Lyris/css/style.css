@@ -285,6 +285,7 @@ body:not(#formulize) .fz-main {
   right: 0;
   bottom: 0;
   width: 480px;
+  min-width: 320px;
   max-width: 92vw;
   background: var(--c-surface);
   box-shadow: var(--sh-4);
@@ -296,6 +297,41 @@ body:not(#formulize) .fz-main {
 
 .fz-drawer[hidden] {
   display: none;
+}
+
+/* Custom resize handle on the left edge, dragged via JS (script.js).
+   Native CSS `resize` was tried first but dropped: its hit target is a
+   near-invisible ~13px corner icon flush against the viewport edge (Firefox
+   paints no icon there at all), and that corner sits under
+   #formulize-masquerade-block (z-index:100) whenever masquerading, blocking
+   it entirely. A dedicated strip is visible on hover and always reachable. */
+.fz-drawer__resize-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -4px;
+  width: 8px;
+  cursor: ew-resize;
+  z-index: 1;
+}
+
+/* The hit area above stays wide for an easy grab; the visible line drawn here
+   is a slim 4px bar so it reads as a crisp divider rather than a thick block.
+   No transition: a color fade over a couple of px reads as the edge going
+   soft/out-of-focus rather than a hover state — it should just snap on. */
+.fz-drawer__resize-handle::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 2px;
+  width: 3px;
+  background: transparent;
+}
+
+.fz-drawer__resize-handle:hover::after,
+.fz-drawer__resize-handle--active::after {
+  background-color: var(--c-border-strong);
 }
 
 @keyframes fz-drawer-in {
@@ -1801,6 +1837,10 @@ a.main-menu__item-link--active::before {
   .fz-drawer {
     width: 100vw;
     max-width: 100vw;
+  }
+
+  .fz-drawer__resize-handle {
+    display: none;
   }
 
   .fz-drawer__body {

@@ -74,6 +74,65 @@ function initDrawer() {
   const bodyEl   = drawer.querySelector('.js-drawer-body');
   const footEl   = drawer.querySelector('.js-drawer-foot');
 
+  // Persist the user's drag-resized drawer width across reloads. Desktop only —
+  // below the 768px breakpoint the drawer is forced full-width and must not carry
+  // a stale inline width into that layout, so the stored value is only
+  // applied/observed there.
+  const WIDTH_STORAGE_KEY = 'fz-drawer-width';
+  const MIN_WIDTH = 320; // matches .fz-drawer min-width in style.css
+  const isMobileDrawer = () => window.innerWidth <= 768;
+  const maxDrawerWidth = () => window.innerWidth * 0.92; // matches .fz-drawer max-width: 92vw
+
+  function applyStoredDrawerWidth() {
+    if (isMobileDrawer()) {
+      drawer.style.width = '';
+      return;
+    }
+    try {
+      const saved = localStorage.getItem(WIDTH_STORAGE_KEY);
+      if (saved) drawer.style.width = saved;
+    } catch (_) { /* ignore */ }
+  }
+
+  applyStoredDrawerWidth();
+  window.addEventListener('resize', applyStoredDrawerWidth);
+
+  // Drag-resize via the visible handle on the drawer's left edge. (Native CSS
+  // `resize` was tried and dropped — see the comment on .fz-drawer__resize-handle
+  // in style.css for why.)
+  const resizeHandle = drawer.querySelector('.js-drawer-resize-handle');
+  if (resizeHandle) {
+    let startX = 0;
+    let startWidth = 0;
+
+    function onResizePointerMove(e) {
+      const delta = startX - e.clientX; // dragging toward screen center widens the drawer
+      const width = Math.min(Math.max(startWidth + delta, MIN_WIDTH), maxDrawerWidth());
+      drawer.style.width = width + 'px';
+    }
+
+    function onResizePointerUp() {
+      document.removeEventListener('pointermove', onResizePointerMove);
+      document.removeEventListener('pointerup', onResizePointerUp);
+      resizeHandle.classList.remove('fz-drawer__resize-handle--active');
+      document.body.style.removeProperty('cursor');
+      document.body.style.removeProperty('user-select');
+      try { localStorage.setItem(WIDTH_STORAGE_KEY, drawer.style.width); } catch (_) { /* ignore */ }
+    }
+
+    resizeHandle.addEventListener('pointerdown', (e) => {
+      if (isMobileDrawer()) return;
+      e.preventDefault();
+      startX = e.clientX;
+      startWidth = drawer.getBoundingClientRect().width;
+      resizeHandle.classList.add('fz-drawer__resize-handle--active');
+      document.body.style.cursor = 'ew-resize';
+      document.body.style.userSelect = 'none';
+      document.addEventListener('pointermove', onResizePointerMove);
+      document.addEventListener('pointerup', onResizePointerUp);
+    });
+  }
+
   function openDrawer({ title = '', html = '', footerHtml = '' } = {}) {
     if (titleEl) titleEl.textContent = title;
     if (bodyEl)  bodyEl.innerHTML = html;
