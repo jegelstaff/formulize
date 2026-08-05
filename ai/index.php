@@ -7,13 +7,44 @@
  */
 
 include_once "../mainfile.php";
+
+// Drawer mode renders this page as a bare HTML fragment for injection into a host page
+// (the Lyris theme's right slide-out drawer fetches it), instead of a full themed page.
+// Same approach as modules/formulize/include/formdisplay-elementsonly.php: header.php
+// still runs, because the theme object has to exist, but the buffered page it started is
+// thrown away and footer.php - which is what triggers the theme render - is never reached.
+$aiDrawerMode = !empty($_GET['drawer']);
+
 include "../header.php";
 
+if ($aiDrawerMode) {
+    icms::$logger->disableLogger();
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+}
+
+$_aiCssFull = XOOPS_ROOT_PATH . '/modules/formulize/templates/css/formulize.css';
+$_aiCssVer  = file_exists($_aiCssFull) ? filemtime($_aiCssFull) : 0;
+$_aiCssHref = XOOPS_URL . '/modules/formulize/templates/css/formulize.css?v=' . $_aiCssVer;
 global $xoTheme;
-if ($xoTheme) {
-    $_aiCssFull = XOOPS_ROOT_PATH . '/modules/formulize/templates/css/formulize.css';
-    $_aiCssVer  = file_exists($_aiCssFull) ? filemtime($_aiCssFull) : 0;
+if ($aiDrawerMode) {
+    // No <head> to add to in fragment mode, and the host page may not be a Formulize
+    // page at all, so ship the stylesheet with the fragment.
+    print '<link rel="stylesheet" type="text/css" href="' . htmlspecialchars($_aiCssHref, ENT_QUOTES) . '">' . "\n";
+} elseif ($xoTheme) {
     $xoTheme->addStylesheet('/modules/formulize/templates/css/formulize.css?v=' . $_aiCssVer);
+}
+
+/**
+ * End the page the way this request needs it ended: the theme render for a normal page
+ * load, nothing at all for a drawer fragment.
+ */
+function aiPageFooter() {
+    global $aiDrawerMode;
+    if (!$aiDrawerMode) {
+        include XOOPS_ROOT_PATH . "/footer.php";
+    }
 }
 
 $_aiChatLang = isset($icmsConfig['language']) ? $icmsConfig['language'] : 'english';
@@ -23,7 +54,7 @@ include_once (file_exists($_aiChatLangFile) ? $_aiChatLangFile : XOOPS_ROOT_PATH
 // Ensure the user is logged in for the PoC to work with session auth
 if (!$xoopsUser) {
     echo "<div class='errorMsg'>" . _MD_FORMULIZE_MUST_BE_LOGGED_IN . "</div>";
-    include "../footer.php";
+    aiPageFooter();
     exit();
 }
 
@@ -34,7 +65,7 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/aiadminconfig.php";
 if (!isAIAssistantEnabled()) {
     echo "<div class='errorMsg'>" . _MD_FORMULIZE_AI_NOT_ENABLED . "</div>";
-    include "../footer.php";
+    aiPageFooter();
     exit();
 }
 
@@ -51,9 +82,23 @@ if (!isAIAssistantEnabled()) {
     to   { opacity: 1; transform: translateY(0)     scaleY(1);    transform-origin: top; }
 }
 .fz-roll-down { animation: fz-roll-down 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
+
+/* In the drawer the panel is the page: fill it rather than centring a fixed-width
+   column, and lose the rounded corners that only made sense floating on a page. */
+.ai-in-drawer > div:first-child { border-radius: 0; }
+.ai-in-drawer #activity-panel,
+.ai-in-drawer #activity-toggle-bar { border-radius: 0; }
 </style>
 
-<div id="ai-assistant-container" style="max-width: 1000px; margin: 20px auto; font-family: sans-serif; display: flex; flex-direction: column;">
+<?php
+// On a normal page the chat is a centred fixed-width column; in the drawer it fills the
+// panel. The difference has to be in the inline style, since an inline rule would beat
+// anything the ai-in-drawer class could say.
+$_aiBoxStyle = $aiDrawerMode
+    ? 'height: 100%;'
+    : 'max-width: 1000px; margin: 20px auto;';
+?>
+<div id="ai-assistant-container"<?php if ($aiDrawerMode) { echo ' class="ai-in-drawer"'; } ?> style="<?php echo $_aiBoxStyle; ?> font-family: sans-serif; display: flex; flex-direction: column;">
     <div style="background: #007cba; color: white; padding: 15px; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
         <h2 style="margin: 0; color: white;"><?php echo _MD_FORMULIZE_AI_PAGE_TITLE; ?></h2>
         <div style="display: flex; gap: 8px; align-items: center;">
@@ -234,6 +279,16 @@ window.formulizeAI.strings = {
 // Resolved in PHP because the MCP server enforces the tool list server-side; this is
 // the same data, handed to the browser so the UI agrees with what is actually allowed.
 window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigForClient((int)$xoopsUser->getVar('uid'))); ?>;
+// Absolute, because in drawer mode this script runs inside whatever page the drawer was
+// opened from - relative paths would resolve against that page's directory, not /ai/.
+window.formulizeAI.urls = {
+    base: <?php echo json_encode(XOOPS_URL . '/ai/'); ?>,
+    mcp:  <?php echo json_encode(XOOPS_URL . '/mcp/index.php'); ?>
+};
+window.formulizeAI.inDrawer = <?php echo $aiDrawerMode ? 'true' : 'false'; ?>;
+// Scopes the saved conversation to this user, so a shared browser never restores one
+// person's chat into another's session.
+window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
 </script>
 
 <script type="module">
@@ -244,6 +299,13 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
     // to enforce an admin-specified tool list — hiding a tool here would not deny it.
     // See modules/formulize/include/aiadminconfig.php.
     const adminConfig = window.formulizeAI.adminConfig || {};
+
+    // Endpoints, absolute (see the note where these are emitted). AI_URL/MCP_URL are the
+    // only way this file should build a server URL.
+    const URLS = window.formulizeAI.urls || {};
+    const AI_URL  = (path) => (URLS.base || '') + path;
+    const MCP_URL = (path) => (URLS.mcp  || '') + path;
+    const IN_DRAWER = !!window.formulizeAI.inDrawer;
     const TOOL_SETS = adminConfig.toolSets || {};
 
     // Whether a key is stored for each provider. Not the key itself — no API key ever
@@ -707,6 +769,113 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
     let openaiHistory = [];  // OpenAI explicit conversation history
     let ollamaHistory = [];  // Ollama explicit conversation history
 
+    // ---- Conversation persistence ------------------------------------------------
+    // The conversation has to survive a page reload. Plenty of ordinary Formulize
+    // actions reload the page, and in the Lyris drawer the assistant sits alongside
+    // work that causes exactly that, so a chat that reset every time would be useless.
+    //
+    // Two things are saved: the visible transcript, and each provider's own history
+    // array — the latter is what actually gives the model its memory, so restoring the
+    // bubbles alone would produce an assistant that appears to remember but does not.
+    //
+    // Not saved: the expandable tool-call detail blocks. Those are DOM the tool loop
+    // builds directly rather than part of the transcript model, so a restored
+    // conversation shows the messages without the per-tool expanders.
+    const CONVERSATION_KEY = 'formulize_ai_conversation_' + (window.formulizeAI.uid || 0);
+    const CONVERSATION_MAX_CHARS = 2000000; // localStorage is ~5MB total; leave room for the rest
+
+    let transcript = []; // [{ sender, text, type }], in the order addMessage rendered them
+
+    function recordMessage(sender, text, type) {
+        transcript.push({ sender: sender, text: text, type: type });
+    }
+
+    // Attachments travel inside history turns as base64 and are worth megabytes each,
+    // while contributing nothing to a restored thread's meaning. Drop just those fields,
+    // whichever shape the provider wraps them in: Claude's source.data, Gemini's
+    // inlineData.data, OpenAI's image_url.url. Matching on the key rather than on string
+    // length is what keeps a genuinely long reply intact.
+    function stripBinaryPayloads(value) {
+        if (Array.isArray(value)) return value.map(stripBinaryPayloads);
+        if (value && typeof value === 'object') {
+            const out = {};
+            for (const k of Object.keys(value)) {
+                const v = value[k];
+                const isBinary = typeof v === 'string'
+                    && (k === 'data' || (k === 'url' && v.slice(0, 5) === 'data:'));
+                out[k] = isBinary ? '[attachment omitted]' : stripBinaryPayloads(v);
+            }
+            return out;
+        }
+        return value;
+    }
+
+    function persistConversation() {
+        try {
+            const record = {
+                v: 1,
+                provider: providerSelect.value,
+                transcript: transcript,
+                histories: {
+                    claude: stripBinaryPayloads(claudeHistory),
+                    openai: stripBinaryPayloads(openaiHistory),
+                    ollama: stripBinaryPayloads(ollamaHistory),
+                    gemini: stripBinaryPayloads(geminiHistory)
+                },
+                lastGeminiActivityCount: lastGeminiActivityCount,
+                ts: Date.now()
+            };
+            let json = JSON.stringify(record);
+            if (json.length > CONVERSATION_MAX_CHARS) {
+                // Trim with the same rules a send would apply, so what comes back is
+                // still a history the APIs will accept (starts on a user turn, no
+                // stranded tool response) rather than an arbitrary slice.
+                const budget = Math.floor(CONVERSATION_MAX_CHARS / 8);
+                record.histories.claude = trimHistoryToLimit(record.histories.claude, budget);
+                record.histories.openai = trimHistoryToLimit(record.histories.openai, budget);
+                record.histories.ollama = trimHistoryToLimit(record.histories.ollama, budget);
+                record.histories.gemini = trimHistoryToLimit(record.histories.gemini, budget, geminiTurnSize);
+                record.transcript = transcript.slice(-100);
+                json = JSON.stringify(record);
+            }
+            localStorage.setItem(CONVERSATION_KEY, json);
+        } catch (e) {
+            // Out of quota, or something unserialisable. The chat still works, it just
+            // is not saved — this must never throw into the send path.
+            console.warn('Could not save the conversation:', e);
+        }
+    }
+
+    function restoreConversation() {
+        let record = null;
+        try {
+            const raw = localStorage.getItem(CONVERSATION_KEY);
+            if (!raw) return false;
+            record = JSON.parse(raw);
+        } catch (e) {
+            return false;
+        }
+        if (!record || record.v !== 1) return false;
+
+        const h = record.histories || {};
+        claudeHistory = Array.isArray(h.claude) ? h.claude : [];
+        openaiHistory = Array.isArray(h.openai) ? h.openai : [];
+        ollamaHistory = Array.isArray(h.ollama) ? h.ollama : [];
+        geminiHistory = Array.isArray(h.gemini) ? h.gemini : [];
+        lastGeminiActivityCount = record.lastGeminiActivityCount || 0;
+        transcript = Array.isArray(record.transcript) ? record.transcript : [];
+
+        // Replayed through addMessage so markdown rendering and bubble styling stay in
+        // one place rather than being reimplemented here.
+        transcript.forEach(m => addMessage(m.sender, m.text, m.type));
+        return transcript.length > 0;
+    }
+
+    function clearStoredConversation() {
+        transcript = [];
+        try { localStorage.removeItem(CONVERSATION_KEY); } catch (e) { /* nothing to do */ }
+    }
+
     // Load settings from localStorage — unless an administrator has chosen for everyone,
     // in which case their choice wins and the stored preference is left untouched, so it
     // comes back if the lock is ever removed.
@@ -728,7 +897,7 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
         if (adminConfig.providerLocked) return;
         if (key && p !== 'ollama') {
             keyPresent[p] = true; // reflect it immediately; the key itself stays server-side
-            fetch('ai_keys.php', {  // persist to server in background — no need to await
+            fetch(AI_URL('ai_keys.php'), {  // persist to server in background — no need to await
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ provider: p, key })
@@ -782,7 +951,7 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
                 discoverHeaders['X-API-Key'] = typedKey;
             }
 
-            const resp = await fetch(`ai_proxy.php?provider=${encodeURIComponent(provider)}&op=models`, {
+            const resp = await fetch(AI_URL(`ai_proxy.php?provider=${encodeURIComponent(provider)}&op=models`), {
                 headers: discoverHeaders
             });
             if (resp.ok) {
@@ -850,6 +1019,11 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
             panel.style.display = 'none';
         }
     });
+
+    // Bring back the conversation this user left behind, if any. Done before the setup
+    // branch below so a restored thread is on screen from the first paint, and so the
+    // welcome message lands underneath it rather than pretending this is a fresh start.
+    restoreConversation();
 
     // When an administrator has set the assistant up there is nothing for the person to
     // configure, so there is no first-visit setup step either — go straight to ready.
@@ -1042,7 +1216,7 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
         try {
             if (renderPanel) mcpStatus.innerText = S.fetchingTools;
 
-            const response = await fetch('../mcp/index.php/capabilities');
+            const response = await fetch(MCP_URL('/capabilities'));
             const data = await response.json();
 
             const capabilities = data.result?.capabilities || data.capabilities;
@@ -1090,6 +1264,7 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
         ollamaHistory = [];
         geminiHistory = [];
         lastGeminiActivityCount = 0;
+        clearStoredConversation(); // otherwise the next reload brings the old thread back
 
         chatWindow.innerHTML = '';
         addMessage(S.senderSystem, S.newConversationMsg, 'system');
@@ -1173,6 +1348,7 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
         userInput.disabled = true;
 
         const userBubble = addMessage(S.senderYou, text, 'user');
+        recordMessage(S.senderYou, text, 'user');
         if (attachments.length > 0) {
             const attNote = document.createElement('div');
             attNote.style.cssText = 'margin-top: 4px; font-size: 0.8em; opacity: 0.8;';
@@ -1220,6 +1396,9 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
             stopBtn.style.display = 'none';
             updateInputState();
             if (!userInput.disabled) userInput.focus();
+            // One save per turn, whatever happened: on success it captures the reply, and
+            // on failure it still keeps the user's message and the rolled-back history.
+            persistConversation();
         }
     }
 
@@ -1256,7 +1435,7 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
         // is where Gemini wants it.
         body.model = modelNameInput.value.trim() || 'gemini-2.0-flash';
 
-        const response = await fetch('ai_proxy.php?provider=gemini&op=chat', {
+        const response = await fetch(AI_URL('ai_proxy.php?provider=gemini&op=chat'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
@@ -1329,6 +1508,7 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
             const geminiMsg = addMessage(S.senderAI, S.thinking + '...', 'ai');
             chatWindow.scrollTop = scrollBeforeGemini + (chatWindow.scrollHeight - heightBeforeGemini);
             await typewriterEffect(geminiMsg.querySelector('.ai-markdown') || geminiMsg.lastElementChild, finalText);
+            recordMessage(S.senderAI, finalText, 'ai');
             updateContextCutoffMarker(contents, geminiHistory[0]);
         } catch (error) {
             // Roll back every turn this message added, not just the first one — the tool
@@ -1409,6 +1589,7 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
             const claudeMsg = addMessage(S.senderAI, S.thinking + '...', 'ai');
             chatWindow.scrollTop = scrollBeforeClaude + (chatWindow.scrollHeight - heightBeforeClaude);
             await typewriterEffect(claudeMsg.querySelector('.ai-markdown') || claudeMsg.lastElementChild, textContent);
+            recordMessage(S.senderAI, textContent, 'ai');
             updateContextCutoffMarker(messagesForApi, claudeHistory[0]);
         } catch (error) {
             claudeHistory.pop();
@@ -1475,7 +1656,7 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
         }
 
         // No key header — the proxy loads the key server-side from the DB.
-        const response = await fetch('ai_proxy.php?provider=claude&op=chat', fetchInit);
+        const response = await fetch(AI_URL('ai_proxy.php?provider=claude&op=chat'), fetchInit);
 
         let data;
         try {
@@ -1507,7 +1688,7 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
         }));
 
         const headers = { 'Content-Type': 'application/json' };
-        const url = `ai_proxy.php?provider=${encodeURIComponent(provider)}&op=chat`;
+        const url = AI_URL(`ai_proxy.php?provider=${encodeURIComponent(provider)}&op=chat`);
 
         const messagesWithSystem = [{ role: 'system', content: dynamicSystemPrompt }, ...messages];
         const body = { model: modelName, messages: messagesWithSystem, stream: false };
@@ -1616,6 +1797,7 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
             const aiMsg = addMessage(S.senderAI, S.thinking + '...', 'ai');
             chatWindow.scrollTop = scrollBeforeOAI + (chatWindow.scrollHeight - heightBeforeOAI);
             await typewriterEffect(aiMsg.querySelector('.ai-markdown') || aiMsg.lastElementChild, message.content || '(no response)');
+            recordMessage(S.senderAI, message.content || '(no response)', 'ai');
             updateContextCutoffMarker(messagesForApi, history[0]);
         } catch (error) {
             history.pop();
@@ -1656,7 +1838,7 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
 
     async function uploadToOpenAI(att) {
         try {
-            const res = await fetch('ai_upload.php', {
+            const res = await fetch(AI_URL('ai_upload.php'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ file_data: att.data, file_name: att.name, file_type: att.type })
@@ -1692,7 +1874,7 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
 
     async function executeTool(name, args) {
         try {
-            const response = await fetch('../mcp/index.php/mcp', {
+            const response = await fetch(MCP_URL('/mcp'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1915,19 +2097,25 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
         }
     });
 
-    function fitChatToViewport() {
-        const container = document.getElementById('ai-assistant-container');
-        const topOffset = container.getBoundingClientRect().top;
-        container.style.height = (window.innerHeight - topOffset - 20) + 'px';
-    }
-    window.addEventListener('resize', fitChatToViewport);
-    jQuery(document).ready(function() {
-        jQuery(window).load(function() {
-            fitChatToViewport();
+    // Sizing the chat to the viewport is a full-page concern. In the drawer the panel
+    // already gives the container its height (height:100% into a flex column), and the
+    // jQuery window-load hook below would never fire anyway, because the fragment is
+    // injected long after the host page finished loading.
+    if (!IN_DRAWER) {
+        const fitChatToViewport = function() {
+            const container = document.getElementById('ai-assistant-container');
+            const topOffset = container.getBoundingClientRect().top;
+            container.style.height = (window.innerHeight - topOffset - 20) + 'px';
+        };
+        window.addEventListener('resize', fitChatToViewport);
+        jQuery(document).ready(function() {
+            jQuery(window).load(function() {
+                fitChatToViewport();
+            });
         });
-    });
+    }
 </script>
 
 <?php
-include "../footer.php";
+aiPageFooter();
 ?>

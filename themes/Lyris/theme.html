@@ -31,6 +31,9 @@
     echo formulize_renderAppearanceHead();
     $appearanceLogoUrl = formulize_getAppearanceLogoUrl();
     $this->assign('appearance_logo_url', $appearanceLogoUrl ? $appearanceLogoUrl : $this->_tpl_vars['icms_imageurl'] . 'images/logo.png');
+    // The embedded AI assistant lives in the top bar in this theme (Anari puts it in the menu
+    // block instead - see drawAIAssistantMenuSection() in modules/formulize/include/functions.php)
+    $this->assign('show_ai_link', function_exists('isAIAssistantEnabled') && isAIAssistantEnabled());
     <{/php}>
 </head>
 
@@ -92,6 +95,9 @@ if ($xoopsUser) {
     </div>
 
     <div class="fz-header__end">
+      <{if $xoops_isuser && $show_ai_link}>
+      <a class="fz-header__action-link js-open-ai" href="<{$icms_url}>/ai/">AI</a>
+      <{/if}>
       <{if $xoops_isadmin}>
       <a class="fz-header__action-link" href="<{if isset($modifyScreenUrl) && $modifyScreenUrl}><{$modifyScreenUrl}><{else}><{$icms_url}>/modules/formulize/admin/ui.php<{/if}>">Admin</a>
       <{/if}>
@@ -154,6 +160,9 @@ if ($xoopsUser) {
       </button>
     </div>
     <div class="fz-drawer__body js-drawer-body"></div>
+    <!-- The AI assistant gets its own body so viewing an entry doesn't destroy the
+         conversation: both panels persist, and the drawer shows one or the other. -->
+    <div class="fz-drawer__body fz-drawer__body--ai js-drawer-ai-body" hidden></div>
     <div class="fz-drawer__foot js-drawer-foot"></div>
   </aside>
   <{/if}>
