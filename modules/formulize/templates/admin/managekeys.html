@@ -57,7 +57,14 @@
 
     <table style='max-width: 700px;'>
     <{foreach from=$adminPage.keys item=key}>
-        <tr><td><a href='' onclick="setDelete('<{$key.key}>');return false;"><img src='../images/x.gif'/></a>&nbsp;<{$key.user}>&nbsp;&nbsp;&nbsp;<br/>&nbsp;</td><td id="key-<{$key.ordinal}>"><{$key.key}></td><td>&nbsp;&nbsp;&nbsp;<{$key.expiry}></td></tr>
+        <tr><td><a href='' onclick="setDelete('<{$key.key}>');return false;"><img src='../images/x.gif'/></a>&nbsp;<{$key.user}>&nbsp;&nbsp;&nbsp;<br/>&nbsp;</td><td id="key-<{$key.ordinal}>">
+        <{if $key.isNew}>
+            <b><{$key.key}></b> <span style='color:#cc0000;'>(copy this now &mdash; it won't be shown again)</span>
+        <{else}>
+            <span class='key-masked'>&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</span>
+            <a href='' class='key-copy' data-key="<{$key.key}>" onclick="return copyKey(this);" title='Copy key to clipboard'>&#128203;</a>
+        <{/if}>
+        </td><td>&nbsp;&nbsp;&nbsp;<{$key.expiry}></td></tr>
     <{/foreach}>
     </table>
 </div>
@@ -66,5 +73,28 @@
 function setDelete(key) {
     window.managekeys.deletekey.value = key;
     window.managekeys.submit();
+}
+
+function copyKey(link) {
+    var key = link.getAttribute('data-key');
+    var restoreText = link.title;
+    function showCopied() {
+        link.title = 'Copied!';
+        setTimeout(function() { link.title = restoreText; }, 2000);
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(key).then(showCopied);
+    } else {
+        var temp = document.createElement('textarea');
+        temp.value = key;
+        temp.style.position = 'fixed';
+        temp.style.opacity = '0';
+        document.body.appendChild(temp);
+        temp.select();
+        document.execCommand('copy');
+        document.body.removeChild(temp);
+        showCopied();
+    }
+    return false;
 }
 </script>

@@ -106,7 +106,7 @@ class formulizeAPIKeyHandler {
             print "Error: could not insert apikey with this SQL: $sql<br>".$xoopsDB->error();
             return false;
         }
-    	return $xoopsDB->getInsertId();
+    	return $candidateID;
 	}
 
 	function delete($key="all") {

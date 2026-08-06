@@ -18,19 +18,21 @@ $deleteKey = (isset($_POST['deletekey']) AND $_POST['deletekey']) ? $_POST['dele
 $apiKeyHandler->delete($deleteKey);
 
 // create any new keys requested
+$newKey = "";
 if(isset($_POST['uid']) AND isset($_POST['save'])) {
-    $apiKeyHandler->insert(intval($_POST['uid']),intval($_POST['expiry']));
+    $newKey = $apiKeyHandler->insert(intval($_POST['uid']),intval($_POST['expiry']));
 }
 
 $member_handler = xoops_gethandler('member');
 
 // gather all keys and send to screen
+// keys are only shown in full immediately after creation; on later loads they're masked in the template, revealed via copy-to-clipboard
 $allKeys = array();
 $ordinal = 1;
 foreach($apiKeyHandler->get() as $key) {
     $userObject = $member_handler->getUser($key->getVar('uid'));
     $uid = $userObject ? $userObject->getVar('login_name') : 0;
-    $allKeys[] = array('ordinal'=>$ordinal,'user'=>$uid,'key'=>$key->getVar('key'),'expiry'=>$key->getVar('expiry'));
+    $allKeys[] = array('ordinal'=>$ordinal,'user'=>$uid,'key'=>$key->getVar('key'),'expiry'=>$key->getVar('expiry'),'isNew'=>($newKey AND $key->getVar('key')===$newKey));
     $ordinal++;
 }
 
