@@ -5605,6 +5605,14 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 						$_POST[$newKey] = $_POST[$membershipKey];
 						$injectedKeys[] = $newKey;
 					}
+				}
+				// GroupMembershipService::enforceSystemGroupRules() is what puts an account in the
+				// Registered Users group (and keeps it out of Anonymous); nothing else does. It only
+				// runs as part of processUserGroupMemberships, so a brand new account needs that call
+				// even when the caller supplied no 'groups' property at all, otherwise it is created
+				// with no groups whatsoever. Updates keep the "omitted means leave alone" behaviour
+				// from above and only trigger this when the caller actually supplied groups.
+				if($userId AND ($membershipElement OR $item['uid'] == 0)) {
 					formulizeElementsHandler::processUserGroupMemberships($userId, $fid, $userId);
 				}
 			} finally {
