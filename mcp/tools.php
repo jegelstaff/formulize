@@ -852,13 +852,17 @@ Menu items follow the form. Taking a form out of an application moves its menu i
 				]
 			];
 
+			$menuPermissionHelp = "Just because a user has the right to use a form, that does not necessarily mean they need to see it in the menu. The user might access it through the screens of another form, for example. Don\'t forget to give users access to the menu items they need, using create_menu_item or update_menu_item.";
+
 			$this->tools['create_users'] = [
 				'name' => 'create_users',
 				'description' => 'Create user accounts.
 
 A user account is what someone logs in with. Permissions are not given to users directly: they are given to groups, and a user gets a combination of permissions from all the groups they belong to. So a new account with no groups can log in and do almost nothing, unless the Registered Users group (group 2), which all accounts are members of, has been given various permissions.
 
-If you need to create an account associated with an entries-are-users form, you should not use this tool and you should make an entry in that form instead. A user account will be created automatically when the entry is created in that form.',
+If you need to create an account associated with an entries-are-users form, you should not use this tool and you should make an entry in that form instead. A user account will be created automatically when the entry is created in that form.
+
+Access to menu entries is handled separately from permissions. '.$menuPermissionHelp,
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
@@ -1077,7 +1081,9 @@ A group can also have visibility conditions, which restrict its members to entri
 
 Only the groups you name are changed. What you supply replaces that group\'s current permissions rather than adding to them, so include everything the group should end up with.
 
-A form can also be set to inherit its permissions from another form, in which case they are maintained on that other form and copied to this one, and this tool will refuse to change them here and tell you which form to go to instead. Setting up, changing or removing that arrangement is done with set_form_permission_inheritance.',
+A form can also be set to inherit its permissions from another form, in which case they are maintained on that other form and copied to this one, and this tool will refuse to change them here and tell you which form to go to instead. Setting up, changing or removing that arrangement is done with set_form_permission_inheritance.
+
+Giving a user permission to access a form does _not_ make it automatically show up in the menu. '.$menuPermissionHelp,
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
