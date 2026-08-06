@@ -818,7 +818,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
         $subtitle = $customCaption;
 	}
     $helpText = ($subform_element_object AND $subform_element_object->getVar('ele_desc')) ? '<p class="subform-helptext">'.html_entity_decode($subform_element_object->getVar('ele_desc'),ENT_QUOTES).'</p>' : '';
-    $col_one = "<p id=\"subform-caption-f$fid-sf$subform_id\" class=\"subform-caption form-label\"><b>" . trans($subtitle) . "</b></p>$helpText"; // <p style=\"font-weight: normal;\">" . _formulize_ADD_HELP;
+    $col_one = "<label id=\"subform-caption-f$fid-sf$subform_id\" class=\"subform-caption form-label\">" . trans($subtitle) . "</label>$helpText"; // <p style=\"font-weight: normal;\">" . _formulize_ADD_HELP;
 
 	// preopulate entries, if there are no sub_entries yet, and prepop options is selected.
     // prepop will be based on the options in an element in the subform, and should also take into account the non OOM conditional filter choices where = is the operator.
