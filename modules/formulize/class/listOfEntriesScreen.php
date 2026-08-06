@@ -100,10 +100,10 @@ class formulizeListOfEntriesScreen extends formulizeScreen {
         $this->initVar("entriesperpage", XOBJ_DTYPE_INT);
         $this->initVar("viewentryscreen", XOBJ_DTYPE_TXTBOX, NULL, false, 10);
         $this->initVar("fundamental_filters", XOBJ_DTYPE_ARRAY);
-        // where the edit icon opens the entry form: 'drawer' (right-side drawer, current
-        // behaviour for drawer-capable themes) or 'screen' (navigate to the full edit form).
-        // Defaults to 'drawer' so existing lists keep their current behaviour.
-        $this->initVar("editdestination", XOBJ_DTYPE_TXTBOX, 'drawer', false, 10);
+        // where the edit icon opens the entry form: 'drawer' (right-side drawer) or 'screen'
+        // (navigate to the full edit form). Defaults to 'screen' (full form screen) so new
+        // lists, and any list with no explicit value, open the edit form on the full screen.
+        $this->initVar("editdestination", XOBJ_DTYPE_TXTBOX, 'screen', false, 10);
     }
 
     /**
