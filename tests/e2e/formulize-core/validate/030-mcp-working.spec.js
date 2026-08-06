@@ -48,10 +48,11 @@ test.describe('Check that tools/list is responding', () => {
 		await loggingEnabled.check();
 		await page.getByRole('button', { name: 'Save your changes' }).click();
 		await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
-		// API Keys are under Users → API Keys.
+		// API Keys are under Users → API Keys. This is a fresh page load (not right after creation), so
+		// the key is masked on screen and only available via the data-key attribute on its copy icon.
 		await page.goto('/modules/formulize/admin/ui.php?page=users&view=apikeys');
 		await page.locator('.admin-ui').waitFor({ state: 'visible' });
-		const apiKey = await page.locator('td[id=key-1]').innerText();
+		const apiKey = await page.locator('td[id=key-1] .key-copy').getAttribute('data-key');
 		await page.goto('/user.php?op=logout');
 		await page.goto('/mcp/test.html');
 
