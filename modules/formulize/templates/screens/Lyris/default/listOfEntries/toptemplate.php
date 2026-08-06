@@ -4,8 +4,9 @@ $listFid  = (isset($screen) AND is_object($screen)) ? intval($screen->getVar('fi
 $listFrid = (isset($screen) AND is_object($screen) AND $screen->getVar('frid')) ? intval($screen->getVar('frid')) : 0;
 $listSid  = (isset($screen) AND is_object($screen)) ? intval($screen->getVar('sid')) : 0;
 // Where the edit icon opens the entry form: 'drawer' (right-side drawer) or 'screen'
-// (navigate to the full edit form). Defaults to 'drawer' for existing lists.
-$listEditDest = (isset($screen) AND is_object($screen) AND $screen->getVar('editdestination') === 'screen') ? 'screen' : 'drawer';
+// (navigate to the full edit form). Defaults to 'screen' (full form screen) when no
+// explicit value is stored; only an explicit 'drawer' choice opens the drawer.
+$listEditDest = (isset($screen) AND is_object($screen) AND $screen->getVar('editdestination') === 'drawer') ? 'drawer' : 'screen';
 
 // total entries in the list across all pages, shown beside the title
 $listTotalCount = isset($GLOBALS['formulize_countMasterResultsForPageNumbers']) ? intval($GLOBALS['formulize_countMasterResultsForPageNumbers']) : 0;

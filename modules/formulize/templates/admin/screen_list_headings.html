@@ -126,10 +126,10 @@
     <div class="form-item">
       <label for="screens-editdestination"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_EDITDESTINATION}></label>
       <div class="form-radios">
-			  <label for="drawer"><input type="radio" id="screens-editdestination" name="screens-editdestination"<{if $content.editdestination eq 'drawer'}> checked="checked"<{/if}> value="drawer"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_EDITDESTINATION_DRAWER}></label>
+			  <label for="screen"><input type="radio" id="screens-editdestination" name="screens-editdestination"<{if $content.editdestination eq 'screen' or $content.editdestination eq ''}> checked="checked"<{/if}> value="screen"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_EDITDESTINATION_SCREEN}></label>
 		  </div>
 		  <div class="form-radios">
-			  <label for="screen"><input type="radio" id="screens-editdestination" name="screens-editdestination"<{if $content.editdestination eq 'screen'}> checked="checked"<{/if}> value="screen"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_EDITDESTINATION_SCREEN}></label>
+			  <label for="drawer"><input type="radio" id="screens-editdestination" name="screens-editdestination"<{if $content.editdestination eq 'drawer'}> checked="checked"<{/if}> value="drawer"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_EDITDESTINATION_DRAWER}></label>
 		  </div>
       <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_EDITDESTINATION}></div>
     </div>

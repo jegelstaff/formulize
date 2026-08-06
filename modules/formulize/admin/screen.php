@@ -246,7 +246,7 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $headings['textwidth'] = $screen->getVar('textwidth');
   $headings['usecheckboxes'] = $screen->getVar('usecheckboxes');
   $headings['useviewentrylinks'] = $screen->getVar('useviewentrylinks');
-  $headings['editdestination'] = $screen->getVar('editdestination') ? $screen->getVar('editdestination') : 'drawer';
+  $headings['editdestination'] = $screen->getVar('editdestination') ? $screen->getVar('editdestination') : 'screen';
   $headings['elementoptions'] = $elementOptions;
   $headings['hiddencolumns'] = $screen->getVar('hiddencolumns');
   $headings['decolumns'] = $screen->getVar('decolumns');
