@@ -6,7 +6,7 @@ title: Embedded AI Assistant Setup
 
 # Embedded AI Assistant Setup
 
-To use the embedded AI assistant with a commercial AI provider, users will need _an API key from the AI provider_.
+To use the embedded AI assistant with a commercial AI provider, you will need _an API key from the AI provider_.
 
 The embedded AI assistant can also be used with local language models, via <a href="https://ollama.com" target="_blank">Ollama</a>. In this case, you do not need any API keys.
 
@@ -16,7 +16,9 @@ The embedded AI assistant can also be used with local language models, via <a hr
 
 3. **Write some introductory notes for the AI.** When AI is enabled in Formulize, there is an additional preference called _System Specific Instructions for the AI Assistant_. This is a very useful and powerful feature! Everything you type in this preference, will be communicated to the AI every time it connects to your Formulize system. This is your chance to give it any unique background info it might need in order to understand your system, what it's for, and how it works. Include details. The AI loves details.
 
-4. **Open the assistant and save your settings.** Go to the front page of your Formulize site and open the menu. Click _Use AI_ at the bottom of the menu. When the assistant opens, you will need to specify these things:
+4. **Specify a provider, API key, model, and tools.** You can fill in these settings to control what all users will use, or you can allow users to specify their own within the assistant. _If you provide this info, all users will use these system settings, and you will be paying for their usage if you are using a commercial provider._
+
+5. **If the provider, API key, and model are _User Specified_, open the assistant and save your settings.** Go to the front page of your Formulize site and open the menu. Click _Use AI_ at the bottom of the menu. When the assistant opens, you will need to specify these things:
 
     * _The AI provider:_ Anthropic, Google, OpenAI, or <a href="https://ollama.com" target="_blank">Ollama</a> (for local language models)
     * _The language model:_ available models are shown, based on your provider and API key
