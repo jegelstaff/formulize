@@ -250,7 +250,7 @@ print ".caption-marker { display: none; }\n";
 print "</style>\n";
 
 print "</head>";
-print "<body style=\"background: white; margin-top:20px;\"><center>";
+print "<body class=\"formulize-popup\" style=\"background: white; margin-top:20px;\"><center>";
 print "<table width=100%><tr><td width=5%></td><td width=90%>";
 
 
