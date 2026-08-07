@@ -3,11 +3,22 @@
     if (ini_get('session.cookie_lifetime') OR ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '')) {
 <{/php}>
 
-<div id="session-timeout-warning">
-    <img class="session-timeout-warning-icon" src="<{$icms_url}>/modules/formulize/images/warning.png" alt="">
-    <img class="session-timeout-warning-close" src="<{$icms_url}>/modules/formulize/images/x.gif" alt="Dismiss">
-    <p><{$smarty.const._SESSION_TIMEOUT_AT}> <span id="timeout-time-here"></span></p>
-    <p><{$smarty.const._SESSION_TIMEOUT_UNSAVED_CHANGES}></p>
+<div id="session-timeout-warning" role="alert">
+    <button type="button" class="session-timeout-warning-close" aria-label="Dismiss">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M18 6 6 18"/>
+            <path d="m6 6 12 12"/>
+        </svg>
+    </button>
+    <div class="session-timeout-warning-body">
+        <svg class="session-timeout-warning-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+            <path d="M12 9v4"/>
+            <path d="M12 17h.01"/>
+        </svg>
+        <p><{$smarty.const._SESSION_TIMEOUT_AT}> <span id="timeout-time-here"></span></p>
+        <p><{$smarty.const._SESSION_TIMEOUT_UNSAVED_CHANGES}></p>
+    </div>
 </div>
 <script>
 (function () {
