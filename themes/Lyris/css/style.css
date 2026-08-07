@@ -3920,6 +3920,40 @@ fieldset#icms_block_login_form {
   }
 }
 
+/* ---------- List-view popup windows (issue #68) ----------
+   The list screens open several helper pages in a separate browser window via
+   showPop() -> window.open() (see modules/formulize/include/entriesdisplay.php):
+   Save view (save.php), calculations (pickcalcs.php / pickadvcalcs.php),
+   notifications (setnot.php), change columns (changecols.php), change scope
+   (changescope.php), plus import.php / export.php. Each of these renders as a
+   standalone document that loads ONLY the theme stylesheet, not the Lyris page
+   chrome. Each popup emits `<body class="formulize-popup">` so these rules target
+   that class directly instead of the fragile inline-style attribute selector.
+
+   Their content is a standard xoopsThemeForm (`.xo-theme-form > table.outer`
+   with `td.head` label cells and `td.even` field cells) which Lyris otherwise
+   leaves unstyled, so under the new theme the rows sit flush against each other
+   and the whole form hugs the window edges. The rules below add page padding
+   plus per-row vertical rhythm and a gap between the label and field columns. */
+body.formulize-popup {
+  padding: var(--s-6) var(--s-7) var(--s-8);
+  box-sizing: border-box;
+}
+body.formulize-popup .xo-theme-form table.outer > tbody > tr > th,
+body.formulize-popup .xo-theme-form table.outer > tbody > tr > td {
+  padding: var(--s-3) var(--s-4);
+  vertical-align: top;
+}
+/* A little more separation between the label column and its field. */
+body.formulize-popup .xo-theme-form table.outer > tbody > tr > td.head {
+  padding-right: var(--s-6);
+}
+/* Give the form title a touch more room beneath it. */
+body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
+  padding-bottom: var(--s-4);
+  text-align: center;
+}
+
 /* ---------- Subform elements inside the drawer (issue #57) ----------
    A subform element (e.g. Artifacts on the Collection form) renders core markup:
    a caption, an add button, and a .formulize-subform-table of sub entries whose
