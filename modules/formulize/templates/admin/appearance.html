@@ -1,0 +1,94 @@
+<div class="panel-content content">
+
+    <h2>Appearance</h2>
+    <blockquote>
+    <p>Customize the colours, font, and logo of the end-user interface. These settings apply to themes that support Formulize appearance settings, such as Lyris. Variations of each colour (hover states, soft backgrounds, muted text) are derived automatically, so the interface always stays coherent.</p>
+    </blockquote>
+
+    <{if $adminPage.configsMissing}>
+    <p style="color: #b3261e; font-weight: bold;">The appearance settings are not registered in the database yet. Please update the Formulize module in the System Admin, then return to this page.</p>
+    <{/if}>
+
+    <{if $adminPage.saved}>
+    <p style="color: #2a7a4f; font-weight: bold;">Appearance settings saved.</p>
+    <{/if}>
+
+    <{foreach from=$adminPage.errors item=error}>
+    <p style="color: #b3261e; font-weight: bold;"><{$error}></p>
+    <{/foreach}>
+
+    <form id="appearance" name="appearance" method="post" enctype="multipart/form-data">
+
+    <h3>Colours</h3>
+    <table style="max-width: 700px;">
+    <{foreach from=$adminPage.colours item=colour}>
+        <tr>
+            <td style="padding: 6px 12px 6px 0; white-space: nowrap; vertical-align: top;">
+                <label for="appearance_<{$colour.key}>"><b><{$colour.label}></b></label><br/>
+                <span style="font-size: smaller;"><{$colour.description}></span>
+            </td>
+            <td style="padding: 6px 0; vertical-align: top; white-space: nowrap;">
+                <input type="color" id="appearance_<{$colour.key}>" name="appearance_<{$colour.key}>" value="<{$colour.value}>" data-default="<{$colour.default}>" oninput="appearanceSyncResetLinks();" />
+                <a href="#" class="appearance-reset" style="font-size: smaller;" onclick="document.getElementById('appearance_<{$colour.key}>').value = '<{$colour.default}>'; appearanceSyncResetLinks(); return false;">Reset to default (<{$colour.default}>)</a>
+            </td>
+        </tr>
+    <{/foreach}>
+    </table>
+
+    <br/><hr/><br/>
+
+    <h3>Font</h3>
+    <p>
+        <select name="appearance_font" id="appearance_font" onchange="appearanceToggleCustomFont();">
+        <{foreach from=$adminPage.fonts key=fontKey item=fontLabel}>
+            <option value="<{$fontKey}>" <{if $adminPage.currentFont == $fontKey}>selected="selected"<{/if}>><{$fontLabel}></option>
+        <{/foreach}>
+        </select>
+    </p>
+    <p id="appearance_customfont_row">
+        Google Font name: <input type="text" name="appearance_customfont" value="<{$adminPage.currentCustomFont}>" placeholder="e.g. Roboto" />
+        <br/><span style="font-size: smaller;">Enter the exact font name as it appears on <a href="https://fonts.google.com" target="_blank">fonts.google.com</a>. The font will be loaded from Google Fonts.</span>
+    </p>
+
+    <br/><hr/><br/>
+
+    <h3>Logo</h3>
+    <{if $adminPage.logoUrl}>
+    <p>Current logo:<br/><img src="<{$adminPage.logoUrl}>" alt="Current logo" style="max-height: 60px; background: #f1f1ed; padding: 8px; border-radius: 4px;" /></p>
+    <p><label><input type="checkbox" name="appearance_logo_remove" value="1" /> Remove the custom logo and use the theme's default logo</label></p>
+    <p>Replace logo: <input type="file" name="appearance_logo_file" accept="image/png,image/jpeg,image/gif,image/svg+xml,image/webp" /></p>
+    <{else}>
+    <p>The theme's default logo is in use. Upload an image to replace it (PNG, JPEG, GIF, SVG, or WebP):</p>
+    <p><input type="file" name="appearance_logo_file" accept="image/png,image/jpeg,image/gif,image/svg+xml,image/webp" /></p>
+    <{/if}>
+
+    <br/><hr/><br/>
+
+    <p>
+        <input type="submit" name="appearance_save" value="Save Appearance" />
+        &nbsp;&nbsp;
+        <input type="submit" name="appearance_reset" value="Reset Everything to Defaults" onclick="return confirm('Reset all appearance settings to their defaults? This will also remove any uploaded logo.');" />
+    </p>
+
+    </form>
+
+</div>
+
+<script>
+function appearanceToggleCustomFont() {
+    var fontSelect = document.getElementById('appearance_font');
+    document.getElementById('appearance_customfont_row').style.display = (fontSelect.value == 'custom') ? '' : 'none';
+}
+appearanceToggleCustomFont();
+
+// show each colour's reset link only when the picker differs from the default
+function appearanceSyncResetLinks() {
+    document.querySelectorAll('#appearance input[type=color][data-default]').forEach(function (input) {
+        var link = input.parentNode.querySelector('.appearance-reset');
+        if (!link) return;
+        var isDefault = input.value.toLowerCase() == input.getAttribute('data-default').toLowerCase();
+        link.style.visibility = isDefault ? 'hidden' : 'visible';
+    });
+}
+appearanceSyncResetLinks();
+</script>
