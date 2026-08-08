@@ -2328,7 +2328,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 									$concatColumns[] = $linkedSourceHandle ? "source.`$linkedSourceHandle`" : formulize_noSearchableColumn($element_id);
 								}
 								$search_column = "CONCAT_WS('', " . implode(", ", $concatColumns) . ")";
-								$operator = 'LIKE';
+								$operator = formulize_substringSearchOperator($operator); // comparing the search term to all these columns concatenated together only makes sense as a substring match, but the user's negation, if any, has to survive that switch
 								$quotes = "'";
 								$likebits = "%";
 							} elseif(!is_array($sourceMeta[1])) {
@@ -2337,7 +2337,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 							} elseif(count($altSearchSubqueries) > 1) {
 								// every alternate column was itself a linked element, so the search space is made up entirely of subqueries
 								$search_column = "CONCAT_WS('', $altSearchSubqueriesImploded)";
-								$operator = 'LIKE';
+								$operator = formulize_substringSearchOperator($operator); // as above, a substring match is the only thing that makes sense against the concatenated subqueries, and it has to keep the user's negation
 								$quotes = "'";
 								$likebits = "%";
 							} elseif(count($altSearchSubqueries) == 1) {
@@ -2358,7 +2358,8 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 								)
 							) {
 								if (is_numeric($ifParts[1])) {
-									$operator = "=";
+									// a numeric term on a multiple selection box is an entry id in the source form, so compare it against the source entry id instead of the label columns. Same as above, an excluding search has to stay excluding when the operator is forced
+									$operator = formulize_operatorIsNegation($operator) ? " != " : " = ";
 									$quotes = "";
 									$likebits = "";
 									$search_column = "source.`entry_id`";
@@ -2593,6 +2594,33 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 	$otherPerGroupFilterJoins = !empty($otherPerGroupFilterJoins) ? implode(" ", $otherPerGroupFilterJoins) : "";
 	$otherPerGroupFilterWhereClause = !empty($otherPerGroupFilterWhereClause) ? implode(" ", $otherPerGroupFilterWhereClause) : "";
 	return array(0 => $formFieldFilterMap, 1 => $whereClause, 2 => $orderByClause, 3 => $oneSideFilters, 4 => $otherPerGroupFilterJoins, 5 => $otherPerGroupFilterWhereClause, 6 => $missingEntrySatisfiesSearch);
+}
+
+/**
+ * Is a search operator a negation, ie: is the user asking for the entries that do NOT match their term?
+ * Operators reach the filter code with and without surrounding whitespace, and in mixed case, depending on where in the pipeline they came from, so normalize before comparing.
+ * @param string $operator The operator to examine
+ * @return bool True if the operator excludes matches, false if it includes them
+ */
+function formulize_operatorIsNegation($operator) {
+	$operator = strtoupper(trim($operator));
+	return in_array($operator, array('!=', '<>', 'NOT', 'NOT LIKE', 'NOT IN', 'IS NOT NULL'), true);
+}
+
+/**
+ * Return the operator to use when a search has to degrade to a substring match.
+ * This happens when the search space is several columns concatenated together: a linked element that displays more than one column from its source form, or that has alternate search columns. The user is searching for the contents of one of those columns, so an exact comparison against the concatenation of all of them would never match, and the comparison has to become a substring match instead.
+ * The negation has to be carried across when that happens. If it is not, an excluding search silently turns into an including one, and comes back with precisely the entries the user asked to leave out.
+ * IN and NOT IN are deliberately both returned as a positive LIKE. Their search term is a parenthesized list of values rather than a single value, so it cannot match anything sensible once it is dropped into a LIKE pattern, in either direction. Leaving them positive means such a search matches nothing, which is the safe failure - the same reasoning as formulize_noSearchableColumn - whereas a NOT LIKE against the text of the list would match every entry in the form, and list screens might run destructive bulk actions on whatever is in the result set.
+ * @param string $operator The operator the user's search arrived with
+ * @return string ' LIKE ' or ' NOT LIKE ', spaced so it can be concatenated directly into the query
+ */
+function formulize_substringSearchOperator($operator) {
+	$normalizedOperator = strtoupper(trim($operator));
+	if ($normalizedOperator === 'IN' OR $normalizedOperator === 'NOT IN') {
+		return ' LIKE ';
+	}
+	return formulize_operatorIsNegation($normalizedOperator) ? ' NOT LIKE ' : ' LIKE ';
 }
 
 /**
