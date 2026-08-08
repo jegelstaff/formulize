@@ -87,6 +87,8 @@ define('_MD_FORMULIZE_AI_TOOL_NO_OUTPUT',         'Aucun résultat');
 define('_MD_FORMULIZE_AI_TOOL_RESPONSE_ERROR',    'Erreur :');
 define('_MD_FORMULIZE_AI_TOOL_NET_ERROR',         'Erreur réseau : ');
 define('_MD_FORMULIZE_AI_TOOL_CALL_ERROR',        'Erreur : ');
+define('_MD_FORMULIZE_AI_COPY_BTN_TITLE',         'Copier dans le presse-papiers');
+define('_MD_FORMULIZE_AI_COPY_BTN_LABEL',         'Copier');
 
 // Descriptions des événements d'activité
 define('_MD_FORMULIZE_AI_EVENT_SAVED_NEW',        'Nouvelle entrée enregistrée');

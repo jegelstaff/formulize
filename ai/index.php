@@ -199,6 +199,8 @@ window.formulizeAI.strings = {
     toolNoOutput:      <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_NO_OUTPUT); ?>,
     toolResponseError: <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_RESPONSE_ERROR); ?>,
     toolNetError:      <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_NET_ERROR); ?>,
+    copyBtnTitle:      <?php echo json_encode(_MD_FORMULIZE_AI_COPY_BTN_TITLE); ?>,
+    copyLabel:         <?php echo json_encode(_MD_FORMULIZE_AI_COPY_BTN_LABEL); ?>,
     evtSavedNew:       <?php echo json_encode(_MD_FORMULIZE_AI_EVENT_SAVED_NEW); ?>,
     evtSaved:          <?php echo json_encode(_MD_FORMULIZE_AI_EVENT_SAVED); ?>,
     evtDeleted:        <?php echo json_encode(_MD_FORMULIZE_AI_EVENT_DELETED); ?>,
@@ -1711,6 +1713,32 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
         }
     }
 
+    // A small icon+label button that copies whatever getText() returns at click time (not
+    // at creation time), so it stays correct after addToolResponse() later fills in the pre.
+    // Sizing/spacing lives in formulize.css (.formulize-ai-copy-btn) rather than inline
+    // styles, since themes (e.g. Anari) set a `min-width` on bare <button> elements that
+    // inline styles here don't touch.
+    function makeCopyButton(getText) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'formulize-ai-copy-btn';
+        btn.title = S.copyBtnTitle;
+
+        const icon = document.createElement('span');
+        icon.innerText = '📋';
+        btn.appendChild(icon);
+        btn.appendChild(document.createTextNode(' ' + S.copyLabel));
+
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation(); // don't toggle the collapsible header
+            navigator.clipboard.writeText(getText()).then(() => {
+                icon.innerText = '✓';
+                setTimeout(() => { icon.innerText = '📋'; }, 1200);
+            }).catch(() => {});
+        });
+        return btn;
+    }
+
     function addToolRequest(name, args) {
         const msgDiv = document.createElement('div');
         msgDiv.style.cssText = 'align-self: stretch; background: #f0f7ff; border: 1px solid #c8dff7; border-radius: 8px; font-size: 0.82em;';
@@ -1734,21 +1762,27 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
         body.style.display = 'none';
         body.style.cssText = 'display: none; padding: 8px 12px; font-family: monospace;';
 
-        const paramsLabel = document.createElement('div');
-        paramsLabel.style.cssText = 'font-weight: bold; margin-bottom: 4px; color: #444;';
-        paramsLabel.innerText = S.toolParamsLabel;
-
         const paramsPre = document.createElement('pre');
         paramsPre.style.cssText = 'background: #f8f9fa; padding: 6px 8px; border-radius: 4px; white-space: pre-wrap; word-break: break-word; margin: 0 0 10px 0; font-size: 1em;';
         paramsPre.textContent = args && Object.keys(args).length > 0 ? JSON.stringify(args, null, 2) : S.toolNoParams;
 
-        const responseLabel = document.createElement('div');
-        responseLabel.style.cssText = 'font-weight: bold; margin-bottom: 4px; color: #555;';
-        responseLabel.innerText = S.toolResponseLabel;
+        const paramsLabel = document.createElement('div');
+        paramsLabel.style.cssText = 'font-weight: bold; margin-bottom: 4px; color: #444; display: flex; justify-content: space-between; align-items: center;';
+        const paramsLabelText = document.createElement('span');
+        paramsLabelText.innerText = S.toolParamsLabel;
+        paramsLabel.appendChild(paramsLabelText);
+        paramsLabel.appendChild(makeCopyButton(() => paramsPre.textContent));
 
         const responsePre = document.createElement('pre');
         responsePre.style.cssText = 'background: #f8f9fa; padding: 6px 8px; border-radius: 4px; white-space: pre-wrap; word-break: break-word; margin: 0; font-size: 1em; color: #888;';
         responsePre.textContent = S.toolWaiting;
+
+        const responseLabel = document.createElement('div');
+        responseLabel.style.cssText = 'font-weight: bold; margin-bottom: 4px; color: #555; display: flex; justify-content: space-between; align-items: center;';
+        const responseLabelText = document.createElement('span');
+        responseLabelText.innerText = S.toolResponseLabel;
+        responseLabel.appendChild(responseLabelText);
+        responseLabel.appendChild(makeCopyButton(() => responsePre.textContent));
 
         body.appendChild(paramsLabel);
         body.appendChild(paramsPre);
@@ -1758,6 +1792,7 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
         msgDiv._header = header;
         msgDiv._titleSpan = titleSpan;
         msgDiv._responseLabel = responseLabel;
+        msgDiv._responseLabelText = responseLabelText;
         msgDiv._responsePre = responsePre;
 
         header.addEventListener('click', () => {
@@ -1785,7 +1820,7 @@ window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigF
 
         // Update response section
         msgDiv._responseLabel.style.color = hasError ? '#721c24' : '#155724';
-        msgDiv._responseLabel.innerText = hasError ? S.toolResponseError : S.toolResponseLabel;
+        msgDiv._responseLabelText.innerText = hasError ? S.toolResponseError : S.toolResponseLabel;
 
         const responsePre = msgDiv._responsePre;
         responsePre.style.background = hasError ? '#f8d7da' : '#d4edda';

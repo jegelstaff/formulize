@@ -757,6 +757,30 @@ button.formulize-ai-tool-util-btn {
 	min-width: 185px;
 }
 
+/* AI Chat tool readout copy buttons (Parameters/Response sections) - sized to their
+   content, not the theme's default button min-width (e.g. Anari sets 200px). The
+   :hover/:focus/:active variants are listed explicitly (not just inherited from the base
+   rule) so their specificity matches the theme's own button:hover/:focus/:active rules
+   (e.g. Anari swaps in a dark background on focus) - otherwise which one wins is down to
+   stylesheet order rather than intent. */
+button.formulize-ai-copy-btn,
+button.formulize-ai-copy-btn:hover,
+button.formulize-ai-copy-btn:focus,
+button.formulize-ai-copy-btn:active {
+	min-width: 0;
+	width: auto;
+	padding: 2px 8px;
+	font-size: 0.82em;
+	font-weight: normal;
+	line-height: 1.4;
+	border-radius: 3px;
+	color: #555;
+	background: none;
+	border: 1px solid #c8dff7;
+	box-shadow: none;
+	cursor: pointer;
+}
+
 /* Textarea word/character limit counter */
 .fz-limit-counter {
 	font-size: 0.85em;

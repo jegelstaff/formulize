@@ -100,6 +100,8 @@ define('_MD_FORMULIZE_AI_TOOL_NO_OUTPUT',         'No output');
 define('_MD_FORMULIZE_AI_TOOL_RESPONSE_ERROR',    'Error:');
 define('_MD_FORMULIZE_AI_TOOL_NET_ERROR',         'Network error: ');
 define('_MD_FORMULIZE_AI_TOOL_CALL_ERROR',        'Error: ');
+define('_MD_FORMULIZE_AI_COPY_BTN_TITLE',         'Copy to clipboard');
+define('_MD_FORMULIZE_AI_COPY_BTN_LABEL',         'Copy');
 
 // Activity describeEvent strings
 define('_MD_FORMULIZE_AI_EVENT_SAVED_NEW',        'Saved new entry');
