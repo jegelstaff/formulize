@@ -465,16 +465,14 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 			$sourceFormObject = $form_handler->get($sourceFid);
 
 			$linked_columns = array();
-			if (is_array($ele_value[EV_MULTIPLE_FORM_COLUMNS]) AND 0 != count((array) $ele_value[EV_MULTIPLE_FORM_COLUMNS]) AND $ele_value[EV_MULTIPLE_FORM_COLUMNS][0] != 'none') {
+			if (formulize_altColumnsAreInEffect($ele_value[EV_MULTIPLE_FORM_COLUMNS] ?? null)) {
 				$linked_columns = convertElementIdsToElementHandles($ele_value[EV_MULTIPLE_FORM_COLUMNS], $sourceFormObject->getVar('id_form'));
-				// remove empty entries, which can happen if the "use the linked field selected above" option is selected
-				$linked_columns = array_filter($linked_columns);
-				if (is_array($linked_columns)) {
-					$sourceHandle = implode("`, t1.`", $linked_columns);
-				} else {
-					$sourceHandle = $linked_columns;	// in this case, it's just one linked column
-				}
+				// remove empty entries, which can happen if an element referenced here no longer exists
+				$linked_columns = array_values(array_filter($linked_columns));
 			}
+			if (!empty($linked_columns)) {
+				$sourceHandle = implode("`, t1.`", $linked_columns);
+			} // otherwise sourceHandle stays as the linked element's own source column, which is what we display when no alternate columns are in effect, or when none of the ones that are still exist
 
 			$form_handler = xoops_getmodulehandler('forms', 'formulize');
 			$formObject = $form_handler->get($element->getVar('id_form'));

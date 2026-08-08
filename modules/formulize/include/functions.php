@@ -5025,6 +5025,24 @@ function convertElementHandlesToElementIds($handles) {
 }
 
 /**
+ * Determine whether a set of alternate columns chosen for a linked element is in effect
+ * Admins choose these columns from a multiselect field list (see createFieldList) and that list always starts with an opt-out option whose value is 'none'. When that option is part of the selection, the other selections are ignored and the caller falls back to its own default.
+ * We look for 'none' anywhere just to be safe.
+ * NOTE: what "fall back to its own default" means is the caller's business, not ours, because the opt-out option is labelled differently depending on which setting it belongs to.
+ * For EV_MULTIPLE_LIST_COLUMNS and EV_MULTIPLE_FORM_COLUMNS it is _AM_ELE_LINKSELECTEDABOVE ("Use the linked field selected above"), so the fallback is the linked element's own source column.
+ * For EV_MULTIPLE_SPREADSHEET_COLUMNS it is _AM_ELE_VALUEINLIST ("Use the value displayed in the list"), so the fallback is the list columns, which in turn fall back to the source column.
+ * That cascade is implemented in convertForeignKeysToReadableValues in extract.php - it is deliberate, not a missing condition.
+ * @param mixed $altColumns The alternate columns value from ele_value, normally an array of element ids, but it can also be a string, or not set at all
+ * @return bool True if the alternate columns should be used, false if the caller should fall back to its own default
+ */
+function formulize_altColumnsAreInEffect($altColumns) {
+	if (!is_array($altColumns)) {
+		return (bool) $altColumns AND $altColumns != 'none';
+	}
+	return count($altColumns) > 0 AND !in_array('none', $altColumns);
+}
+
+/**
  * Convert element IDs to element handles
  *
  * This function converts element IDs to their corresponding element handles.
@@ -5511,13 +5529,16 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
 
 							// if no extra elements are selected for display as a form element, then display the linked element
 							$linked_columns = array($boxproperties[1]);
-							if (is_array($ele_value[EV_MULTIPLE_FORM_COLUMNS]) AND count((array) $ele_value[EV_MULTIPLE_FORM_COLUMNS]) > 0 AND $ele_value[EV_MULTIPLE_FORM_COLUMNS][0] != 'none') {
+							if (formulize_altColumnsAreInEffect($ele_value[EV_MULTIPLE_FORM_COLUMNS] ?? null)) {
 									if($sourceElementObject = $element_handler->get($source_element_handle)) {
 											$form_handler = xoops_getmodulehandler('forms', 'formulize');
 											$sourceFormObject = $form_handler->get($sourceElementObject->getVar('id_form'));
-											$linked_columns = convertElementIdsToElementHandles($ele_value[EV_MULTIPLE_FORM_COLUMNS], $sourceFormObject->getVar('id_form'));
-											// remove empty entries, which can happen if the "use the linked field selected above" option is selected
-											$linked_columns = array_filter($linked_columns);
+											$altColumns = convertElementIdsToElementHandles($ele_value[EV_MULTIPLE_FORM_COLUMNS], $sourceFormObject->getVar('id_form'));
+											// remove empty entries, which can happen if an element referenced here no longer exists, and reindex, because the columns are read back positionally below
+											$altColumns = array_values(array_filter($altColumns));
+											if(!empty($altColumns)) { // if none of the alternate columns still exist, leave linked_columns as the linked element's own source column
+													$linked_columns = $altColumns;
+											}
 									}
 							}
 
