@@ -5025,6 +5025,20 @@ function convertElementHandlesToElementIds($handles) {
 }
 
 /**
+ * Determine whether a set of alternate columns chosen for a linked element is in effect
+ * Admins choose these columns from a multiselect field list, and that list always includes a "use the linked field selected above" option, whose value is 'none'. When that option is part of the selection, the linked element's own source column is what gets displayed and searched, and any other selections are ignored.
+ * We look for 'none' anywhere in the array rather than only in the first position. The browser will submit it first, since it is the first option in the list, but that ordering is not something to rely on once the value has been through saving, storage, retrieval, imports, and whatever else may write these settings in future.
+ * @param mixed $altColumns The alternate columns value from ele_value, normally an array of element ids, but it can also be a string, or not set at all
+ * @return bool True if the alternate columns should be used in place of the linked element's own source column
+ */
+function formulize_altColumnsAreInEffect($altColumns) {
+	if (!is_array($altColumns)) {
+		return (bool) $altColumns AND $altColumns != 'none';
+	}
+	return count($altColumns) > 0 AND !in_array('none', $altColumns);
+}
+
+/**
  * Convert element IDs to element handles
  *
  * This function converts element IDs to their corresponding element handles.
@@ -5511,12 +5525,12 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
 
 							// if no extra elements are selected for display as a form element, then display the linked element
 							$linked_columns = array($boxproperties[1]);
-							if (is_array($ele_value[EV_MULTIPLE_FORM_COLUMNS]) AND count((array) $ele_value[EV_MULTIPLE_FORM_COLUMNS]) > 0 AND $ele_value[EV_MULTIPLE_FORM_COLUMNS][0] != 'none') {
+							if (formulize_altColumnsAreInEffect($ele_value[EV_MULTIPLE_FORM_COLUMNS] ?? null)) {
 									if($sourceElementObject = $element_handler->get($source_element_handle)) {
 											$form_handler = xoops_getmodulehandler('forms', 'formulize');
 											$sourceFormObject = $form_handler->get($sourceElementObject->getVar('id_form'));
 											$linked_columns = convertElementIdsToElementHandles($ele_value[EV_MULTIPLE_FORM_COLUMNS], $sourceFormObject->getVar('id_form'));
-											// remove empty entries, which can happen if the "use the linked field selected above" option is selected
+											// remove empty entries, which can happen if an element referenced here no longer exists
 											$linked_columns = array_filter($linked_columns);
 									}
 							}

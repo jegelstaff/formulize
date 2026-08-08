@@ -196,15 +196,15 @@ function convertForeignKeysToReadableValues($value, $handle, $entry_id) {
 					// save the value before convertElementIdsToElementHandles()
 					$before_conversion = $sourceMeta[1];
 					$altFieldSource = "";
-					if (isset($GLOBALS['formulize_doingExport']) AND $GLOBALS['formulize_doingExport'] AND isset($source_ele_value[11]) AND $source_ele_value[11] != "none") {
-						$altFieldSource = $source_ele_value[11];
-					} elseif (isset($source_ele_value[EV_MULTIPLE_LIST_COLUMNS]) AND $source_ele_value[EV_MULTIPLE_LIST_COLUMNS] != "none") {
+					if (isset($GLOBALS['formulize_doingExport']) AND $GLOBALS['formulize_doingExport'] AND formulize_altColumnsAreInEffect($source_ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS] ?? null)) {
+						$altFieldSource = $source_ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS];
+					} elseif (formulize_altColumnsAreInEffect($source_ele_value[EV_MULTIPLE_LIST_COLUMNS] ?? null)) {
 						$altFieldSource = $source_ele_value[EV_MULTIPLE_LIST_COLUMNS];
 					}
 					if ($altFieldSource) {
 						$altFieldSource = is_array($altFieldSource) ? $altFieldSource : array($altFieldSource);
 						$sourceMeta[1] = convertElementIdsToElementHandles($altFieldSource, $sourceMeta[0]);
-						// remove empty entries, which can happen if the "use the linked field selected above" option is selected
+						// remove empty entries, which can happen if an element referenced here no longer exists
 						$sourceMeta[1] = array_filter($sourceMeta[1]);
 						// unfortunately, sometimes sourceMeta[1] seems to be saved as element handles rather than element IDs, and in that case,
 						// convertElementIdsToElementHandles() returns array(0 => 'none') which causes an error in the query below.
@@ -2121,6 +2121,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 				continue;
 			}
 
+			$altSearchSubqueries = array(); // must be reset for every filter term, since the subqueries are read for all linked element terms, but only assigned for terms that have alternate search columns
 			$newWhereClause = ""; // tracks just the current iteration of this loop, so we can capture this filter and add it to the record of filters for this form lower down
 
 			if ($operator == "LIKE" or $operator == "NOT LIKE") {
@@ -2279,31 +2280,20 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 							unset($GLOBALS['formulize_linkedNumericValueIsLiteral'][trim($ifParts[0], '`')]);
 						}
 						// need to check if an alternative value field has been defined for use in lists or data sets and search on that field *in addition* to the underlying data value
-						if (
-							isset($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10])
-							and (
-								(is_array($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]) and $formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10][0] != 'none')
-								or
-								(!is_array($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]) and $formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10] != "none")
-							)
-						) {
+						if (formulize_altColumnsAreInEffect($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10] ?? null)) {
 							list($altSearchColumn) = convertElementIdsToElementHandles(array($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]), $sourceMeta[0]); // ele_value 10 is the alternate field to use for datasets and in lists
+							// a second line of defence behind formulize_altColumnsAreInEffect above, in case anything ever puts a 'none' into the list after that check
 							if (is_array($altSearchColumn) and array_search('none', $altSearchColumn) !== false) {
 								$altSearchColumn = "";
 							}
 							// create an array of the fields that make up the combined total search space...this means we really shouldn't use = to search when there's an alternate field!
-							if (is_array($sourceMeta[1])) { // AND ((is_array($altSearchColumn) AND $altSearchColumn[0] == 'none') OR (!is_array($altSearchColumn) AND $altSearchColumn != 'none'))) {
-								if (is_array($altSearchColumn)) {
-									$sourceMeta[1] = array_merge($sourceMeta[1], $altSearchColumn);
-								} elseif ($altSearchColumn) {
-									$sourceMeta[1][] = $altSearchColumn;
-								}
-							} else {
-								if (is_array($altSearchColumn)) {
-									$sourceMeta[1] = array_merge(array($sourceMeta[1]), $altSearchColumn);
-								} elseif ($altSearchColumn) {
-									$sourceMeta[1] = array($sourceMeta[1], $altSearchColumn);
-								}
+							// also setup subqueries for any linked alternate search columns
+							// resolveLinkedAltSearchColumnsToSubquery will remove any linked alternate search columns from the list of columns to search, and return a subquery for them to use in the WHERE clause
+							$altSearchColumns = array_filter(is_array($altSearchColumn) ? $altSearchColumn : array($altSearchColumn));
+							$altSearchSubqueries = resolveLinkedAltSearchColumnsToSubquery($altSearchColumns);
+							// the alternate columns are shown in place of the linked element's own source column when this element appears in lists, so they replace it as the search space too, rather than being added to it. Only replace if we have something to replace it with, so that a misconfigured alternate column list falls back to the source column, the same way the display code falls back to it
+							if(!empty($altSearchColumns) OR !empty($altSearchSubqueries)) {
+								$sourceMeta[1] = $altSearchColumns;
 							}
 						}
 						$sourceFormObject = $form_handler->get($sourceMeta[0]);
@@ -2324,22 +2314,28 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 							//  and a CONCAT in the subquery, failed in various conditions.  IN did not work with multiple selection boxes
 							//  and LIKE did not work with search terms too general to return only one match in the source form.
 							// Exists works in all cases.  :-)
-							if (is_array($sourceMeta[1])) {
-								// when searching a linked box which presents multiple columns, concat the columns to search
-								if (1 == count((array) $sourceMeta[1]) and "none" == $sourceMeta[1][0]) {
-									// no columns were selected for display, so search all of them
-									$search_column = convertElementIdsToElementHandles($sourceFormObject->getVar('elements'), $sourceMeta[0]);
-									$search_column = "CONCAT_WS('', source.`" . implode("`, source.`", $search_column) . "`)";
-								} else {
-									// search in the columns which were selected for display
-									$search_column = convertElementIdsToElementHandles($sourceMeta[1], $sourceMeta[0]);
-									$search_column = "CONCAT_WS('', source.`" . implode("`, source.`", $search_column) . "`)";
-								}
+							// when searching a linked box which presents multiple columns, concat the columns to search
+							$altSearchSubqueriesImploded = implode(", ", $altSearchSubqueries);
+							if (is_array($sourceMeta[1]) AND !empty($sourceMeta[1])) {
+								$search_column = convertElementIdsToElementHandles($sourceMeta[1], $sourceMeta[0]);
+								$altSearchSubqueriesForConcat = $altSearchSubqueriesImploded ? ", " . $altSearchSubqueriesImploded : ""; // needs a leading separator when the subqueries come after other columns in a CONCAT_WS
+								$search_column = "CONCAT_WS('', source.`" . implode("`, source.`", $search_column) . "`$altSearchSubqueriesForConcat)";
 								$operator = 'LIKE';
 								$quotes = "'";
 								$likebits = "%";
-							} else {
+							} elseif(!is_array($sourceMeta[1])) {
+								// no alternate columns are in effect, so the linked element's own source column is the label, and it is the whole search space
 								$search_column = "source.`" . $sourceMeta[1] . "`";
+							} elseif(count($altSearchSubqueries) > 1) {
+								// every alternate column was itself a linked element, so the search space is made up entirely of subqueries
+								$search_column = "CONCAT_WS('', $altSearchSubqueriesImploded)";
+								$operator = 'LIKE';
+								$quotes = "'";
+								$likebits = "%";
+							} elseif(count($altSearchSubqueries) == 1) {
+								$search_column = $altSearchSubqueriesImploded;
+							} else { // no valid alt columns and no linked element choice??
+								throw new Exception("Linked element, id ". intval($element_id) . ", with no valid source element to display. This should never happen, but it could if the linked element is misconfigured.");
 							}
 							$queryElementMetaData = formulize_getElementMetaData($ifParts[0], true);
 							$ele_value = unserialize($queryElementMetaData['ele_value']);
@@ -2591,6 +2587,37 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 	return array(0 => $formFieldFilterMap, 1 => $whereClause, 2 => $orderByClause, 3 => $oneSideFilters, 4 => $otherPerGroupFilterJoins, 5 => $otherPerGroupFilterWhereClause, 6 => $missingEntrySatisfiesSearch);
 }
 
+/**
+ * Check for alternate search columns that are themselves linked elements, remove them from the list and return subqueries for them to use in the WHERE clause
+ * The alternate search columns are elements in the source form of the linked element being searched, ie: the form that is aliased as "source" in the EXISTS clause that the subqueries returned here are embedded in, so that is what the subqueries correlate against
+ * @param array $altSearchColumns The list of alternate search columns to check for linked forms, passed by reference so that linked columns can be removed from the list
+ * @return array An array of subqueries for the linked alternate search columns
+ */
+function resolveLinkedAltSearchColumnsToSubquery(&$altSearchColumns) {
+	static $sqNum = 0;
+	$subqueries = array();
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	foreach ($altSearchColumns as $idx => $altSearchColumn) {
+		// does the alt search column exist?
+		if(!$altSearchElementObject = _getElementObject($altSearchColumn)) {
+			continue;
+		}
+		// is it a linked element pointing elsewhere, with valid link metadata? if not, then it is searched directly as a column, so leave it in the list
+		if(!$sourceReference = getSourceFormAndElementForLinkedElement($altSearchElementObject)) {
+			continue;
+		}
+		list($sourceFormId, $sourceElementHandle) = $sourceReference;
+		if(!$formObject = $form_handler->get($sourceFormId)) {
+			throw new Exception("Could not find source form for linked alternate search column ".htmlspecialchars(strip_tags((string) $altSearchColumn)));
+		}
+		unset($altSearchColumns[$idx]); // remove the linked column from the list of columns to search, since we are using a subquery for it
+		$sqNum++;
+		$sourceFormHandle = $formObject->getVar('form_handle');
+		// prepare a subquery to look up the value that the linked alternate search column is pointing to, correlating on the "source" alias of the enclosing EXISTS clause, since the alt search column is a column in that form
+		$subqueries[] = "(SELECT source$sqNum.`" . $sourceElementHandle . "` FROM " . DBPRE . "formulize_" . $sourceFormHandle . " AS source$sqNum WHERE source$sqNum.entry_id = source.`" . $altSearchElementObject->getVar('ele_handle') . "`)";
+	}
+	return $subqueries;
+}
 
 // THIS FUNCTION TAKES INPUTS ABOUT AND ELEMENT, AND RETURNS A SET OF INFORMATION THAT IS NECESSARY WHEN BUILDING VARIOUS PARTS OF THE WHERE CLAUSE
 function prepareElementMetaData($frid, $fid, $linkfids, $ifPartsZero, $formFieldFilterMap)

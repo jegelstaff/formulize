@@ -465,9 +465,9 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 			$sourceFormObject = $form_handler->get($sourceFid);
 
 			$linked_columns = array();
-			if (is_array($ele_value[EV_MULTIPLE_FORM_COLUMNS]) AND 0 != count((array) $ele_value[EV_MULTIPLE_FORM_COLUMNS]) AND $ele_value[EV_MULTIPLE_FORM_COLUMNS][0] != 'none') {
+			if (formulize_altColumnsAreInEffect($ele_value[EV_MULTIPLE_FORM_COLUMNS] ?? null)) {
 				$linked_columns = convertElementIdsToElementHandles($ele_value[EV_MULTIPLE_FORM_COLUMNS], $sourceFormObject->getVar('id_form'));
-				// remove empty entries, which can happen if the "use the linked field selected above" option is selected
+				// remove empty entries, which can happen if an element referenced here no longer exists
 				$linked_columns = array_filter($linked_columns);
 				if (is_array($linked_columns)) {
 					$sourceHandle = implode("`, t1.`", $linked_columns);
