@@ -193,10 +193,14 @@ function convertForeignKeysToReadableValues($value, $handle, $entry_id) {
 				foreach($values as $value) {
 					$value = is_string($value) ? intval(trim($value)) : intval($value);
 					// need to check if an alternative value field has been defined, or if we're in an export and an alterative field for exports has been defined
+					// These two settings cascade, because that is what the admin UI promises. The opt-out option on the export columns setting is labelled
+					// _AM_ELE_VALUEINLIST ("Use the value displayed in the list"), so an export with no export columns of its own falls back to the list columns.
+					// The opt-out option on the list columns setting is labelled _AM_ELE_LINKSELECTEDABOVE ("Use the linked field selected above"), so if those are
+					// not set either, we end up on the linked element's own source column, which is what altFieldSource staying empty gives us below.
 					// save the value before convertElementIdsToElementHandles()
 					$before_conversion = $sourceMeta[1];
 					$altFieldSource = "";
-					if (isset($GLOBALS['formulize_doingExport']) AND $GLOBALS['formulize_doingExport'] AND formulize_altColumnsAreInEffect($source_ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS] ?? null)) {
+					if (!empty($GLOBALS['formulize_doingExport']) AND formulize_altColumnsAreInEffect($source_ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS] ?? null)) {
 						$altFieldSource = $source_ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS];
 					} elseif (formulize_altColumnsAreInEffect($source_ele_value[EV_MULTIPLE_LIST_COLUMNS] ?? null)) {
 						$altFieldSource = $source_ele_value[EV_MULTIPLE_LIST_COLUMNS];
@@ -2018,8 +2022,8 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 	$formFieldFilterMap = array();
 	$whereClause = "";
 	$orderByClause = "";
-	$otherPerGroupFilterJoins = "";
-	$otherPerGroupFilterWhereClause = "";
+	$otherPerGroupFilterJoins = array();
+	$otherPerGroupFilterWhereClause = array();
 
 	$missingEntryTermCounts = array(); // per connected form, per local and/or, per search expression: how many terms there are, and how many of them a main form entry with no connected entry at all would satisfy. Used further down to work out whether such entries need to be included in the results
 
@@ -2279,13 +2283,10 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 						if (isset($GLOBALS['formulize_linkedNumericValueIsLiteral'][trim($ifParts[0], '`')])) {
 							unset($GLOBALS['formulize_linkedNumericValueIsLiteral'][trim($ifParts[0], '`')]);
 						}
+						$linkedSourceHandle = $sourceMeta[1]; // the linked element's own source column. Kept aside because sourceMeta[1] can be replaced by alternate columns below, and we need to be able to fall back to this if none of those alternate columns turn out to be usable
 						// need to check if an alternative value field has been defined for use in lists or data sets and search on that field *in addition* to the underlying data value
 						if (formulize_altColumnsAreInEffect($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10] ?? null)) {
-							list($altSearchColumn) = convertElementIdsToElementHandles(array($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]), $sourceMeta[0]); // ele_value 10 is the alternate field to use for datasets and in lists
-							// a second line of defence behind formulize_altColumnsAreInEffect above, in case anything ever puts a 'none' into the list after that check
-							if (is_array($altSearchColumn) and array_search('none', $altSearchColumn) !== false) {
-								$altSearchColumn = "";
-							}
+							$altSearchColumn = $formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]; // ele_value 10 is the alternate field to use for datasets and in lists
 							// create an array of the fields that make up the combined total search space...this means we really shouldn't use = to search when there's an alternate field!
 							// also setup subqueries for any linked alternate search columns
 							// resolveLinkedAltSearchColumnsToSubquery will remove any linked alternate search columns from the list of columns to search, and return a subquery for them to use in the WHERE clause
@@ -2317,9 +2318,16 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 							// when searching a linked box which presents multiple columns, concat the columns to search
 							$altSearchSubqueriesImploded = implode(", ", $altSearchSubqueries);
 							if (is_array($sourceMeta[1]) AND !empty($sourceMeta[1])) {
-								$search_column = convertElementIdsToElementHandles($sourceMeta[1], $sourceMeta[0]);
-								$altSearchSubqueriesForConcat = $altSearchSubqueriesImploded ? ", " . $altSearchSubqueriesImploded : ""; // needs a leading separator when the subqueries come after other columns in a CONCAT_WS
-								$search_column = "CONCAT_WS('', source.`" . implode("`, source.`", $search_column) . "`$altSearchSubqueriesForConcat)";
+								$concatColumns = array();
+								foreach (array_filter(convertElementIdsToElementHandles($sourceMeta[1], $sourceMeta[0])) as $concatColumn) { // filter out the empty values that come back for any element that no longer exists
+									$concatColumns[] = "source.`$concatColumn`";
+								}
+								$concatColumns = array_merge($concatColumns, $altSearchSubqueries); // the subqueries come after the other columns in the CONCAT_WS
+								if (empty($concatColumns)) {
+									// none of the alternate columns still exist, so fall back to the linked element's own source column, the same way the display code falls back to it
+									$concatColumns[] = "source.`$linkedSourceHandle`";
+								}
+								$search_column = "CONCAT_WS('', " . implode(", ", $concatColumns) . ")";
 								$operator = 'LIKE';
 								$quotes = "'";
 								$likebits = "%";
@@ -2582,8 +2590,8 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 		}
 	}
 
-	$otherPerGroupFilterJoins = is_array($otherPerGroupFilterJoins) ? implode(" ", $otherPerGroupFilterJoins) : "";
-	$otherPerGroupFilterWhereClause = is_array($otherPerGroupFilterWhereClause) ? implode(" ", $otherPerGroupFilterWhereClause) : "";
+	$otherPerGroupFilterJoins = !empty($otherPerGroupFilterJoins) ? implode(" ", $otherPerGroupFilterJoins) : "";
+	$otherPerGroupFilterWhereClause = !empty($otherPerGroupFilterWhereClause) ? implode(" ", $otherPerGroupFilterWhereClause) : "";
 	return array(0 => $formFieldFilterMap, 1 => $whereClause, 2 => $orderByClause, 3 => $oneSideFilters, 4 => $otherPerGroupFilterJoins, 5 => $otherPerGroupFilterWhereClause, 6 => $missingEntrySatisfiesSearch);
 }
 
@@ -2604,6 +2612,12 @@ function resolveLinkedAltSearchColumnsToSubquery(&$altSearchColumns) {
 		}
 		// is it a linked element pointing elsewhere, with valid link metadata? if not, then it is searched directly as a column, so leave it in the list
 		if(!$sourceReference = getSourceFormAndElementForLinkedElement($altSearchElementObject)) {
+			continue;
+		}
+		// snapshot elements are linked, but they store the literal label text in their own column instead of an entry id, so they are searched directly as a column too.
+		// this is the same exclusion that formulize_isLinkedElement and formulize_mapFormFieldFilter make, and it has to be made here as well, because getSourceFormAndElementForLinkedElement does not make it
+		$altSearchEleValue = $altSearchElementObject->getVar('ele_value');
+		if(is_array($altSearchEleValue) AND !empty($altSearchEleValue['snapshot'])) {
 			continue;
 		}
 		list($sourceFormId, $sourceElementHandle) = $sourceReference;

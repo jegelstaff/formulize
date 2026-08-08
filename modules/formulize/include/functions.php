@@ -5026,10 +5026,14 @@ function convertElementHandlesToElementIds($handles) {
 
 /**
  * Determine whether a set of alternate columns chosen for a linked element is in effect
- * Admins choose these columns from a multiselect field list, and that list always includes a "use the linked field selected above" option, whose value is 'none'. When that option is part of the selection, the linked element's own source column is what gets displayed and searched, and any other selections are ignored.
- * We look for 'none' anywhere in the array rather than only in the first position. The browser will submit it first, since it is the first option in the list, but that ordering is not something to rely on once the value has been through saving, storage, retrieval, imports, and whatever else may write these settings in future.
+ * Admins choose these columns from a multiselect field list (see createFieldList) and that list always starts with an opt-out option whose value is 'none'. When that option is part of the selection, the other selections are ignored and the caller falls back to its own default.
+ * We look for 'none' anywhere just to be safe.
+ * NOTE: what "fall back to its own default" means is the caller's business, not ours, because the opt-out option is labelled differently depending on which setting it belongs to.
+ * For EV_MULTIPLE_LIST_COLUMNS and EV_MULTIPLE_FORM_COLUMNS it is _AM_ELE_LINKSELECTEDABOVE ("Use the linked field selected above"), so the fallback is the linked element's own source column.
+ * For EV_MULTIPLE_SPREADSHEET_COLUMNS it is _AM_ELE_VALUEINLIST ("Use the value displayed in the list"), so the fallback is the list columns, which in turn fall back to the source column.
+ * That cascade is implemented in convertForeignKeysToReadableValues in extract.php - it is deliberate, not a missing condition.
  * @param mixed $altColumns The alternate columns value from ele_value, normally an array of element ids, but it can also be a string, or not set at all
- * @return bool True if the alternate columns should be used in place of the linked element's own source column
+ * @return bool True if the alternate columns should be used, false if the caller should fall back to its own default
  */
 function formulize_altColumnsAreInEffect($altColumns) {
 	if (!is_array($altColumns)) {
@@ -5529,9 +5533,12 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
 									if($sourceElementObject = $element_handler->get($source_element_handle)) {
 											$form_handler = xoops_getmodulehandler('forms', 'formulize');
 											$sourceFormObject = $form_handler->get($sourceElementObject->getVar('id_form'));
-											$linked_columns = convertElementIdsToElementHandles($ele_value[EV_MULTIPLE_FORM_COLUMNS], $sourceFormObject->getVar('id_form'));
-											// remove empty entries, which can happen if an element referenced here no longer exists
-											$linked_columns = array_filter($linked_columns);
+											$altColumns = convertElementIdsToElementHandles($ele_value[EV_MULTIPLE_FORM_COLUMNS], $sourceFormObject->getVar('id_form'));
+											// remove empty entries, which can happen if an element referenced here no longer exists, and reindex, because the columns are read back positionally below
+											$altColumns = array_values(array_filter($altColumns));
+											if(!empty($altColumns)) { // if none of the alternate columns still exist, leave linked_columns as the linked element's own source column
+													$linked_columns = $altColumns;
+											}
 									}
 							}
 

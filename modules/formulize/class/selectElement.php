@@ -946,11 +946,14 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 			}
 
 			// if no extra elements are selected for display as a form element, then display the linked element
+			$linked_columns = array();
 			if (formulize_altColumnsAreInEffect($ele_value[ELE_VALUE_SELECT_LINK_ALTFORMELEMENTS] ?? null)) {
 				$linked_columns = convertElementIdsToElementHandles($ele_value[ELE_VALUE_SELECT_LINK_ALTFORMELEMENTS], $sourceFormObject->getVar('id_form'));
-				$linked_columns = array_filter($linked_columns); // remove empty entries, which can happen if an element referenced here no longer exists
-			} else {
-				$linked_columns = array($boxproperties[1]);
+				// remove empty entries, which can happen if an element referenced here no longer exists, and reindex, because the columns are read back positionally when the options are gathered below
+				$linked_columns = array_values(array_filter($linked_columns));
+			}
+			if (empty($linked_columns)) {
+				$linked_columns = array($boxproperties[1]); // no alternate columns are in effect, or none of the ones that are still exist, so display the linked element's own source column
 			}
 			if (is_array($linked_columns)) {
 					$select_column = "t1.`".implode("`, t1.`", $linked_columns)."`";
