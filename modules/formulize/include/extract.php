@@ -2325,7 +2325,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 								$concatColumns = array_merge($concatColumns, $altSearchSubqueries); // the subqueries come after the other columns in the CONCAT_WS
 								if (empty($concatColumns)) {
 									// none of the alternate columns still exist, so fall back to the linked element's own source column, the same way the display code falls back to it
-									$concatColumns[] = "source.`$linkedSourceHandle`";
+									$concatColumns[] = $linkedSourceHandle ? "source.`$linkedSourceHandle`" : formulize_noSearchableColumn($element_id);
 								}
 								$search_column = "CONCAT_WS('', " . implode(", ", $concatColumns) . ")";
 								$operator = 'LIKE';
@@ -2333,7 +2333,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 								$likebits = "%";
 							} elseif(!is_array($sourceMeta[1])) {
 								// no alternate columns are in effect, so the linked element's own source column is the label, and it is the whole search space
-								$search_column = "source.`" . $sourceMeta[1] . "`";
+								$search_column = $sourceMeta[1] ? "source.`" . $sourceMeta[1] . "`" : formulize_noSearchableColumn($element_id);
 							} elseif(count($altSearchSubqueries) > 1) {
 								// every alternate column was itself a linked element, so the search space is made up entirely of subqueries
 								$search_column = "CONCAT_WS('', $altSearchSubqueriesImploded)";
@@ -2593,6 +2593,37 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 	$otherPerGroupFilterJoins = !empty($otherPerGroupFilterJoins) ? implode(" ", $otherPerGroupFilterJoins) : "";
 	$otherPerGroupFilterWhereClause = !empty($otherPerGroupFilterWhereClause) ? implode(" ", $otherPerGroupFilterWhereClause) : "";
 	return array(0 => $formFieldFilterMap, 1 => $whereClause, 2 => $orderByClause, 3 => $oneSideFilters, 4 => $otherPerGroupFilterJoins, 5 => $otherPerGroupFilterWhereClause, 6 => $missingEntrySatisfiesSearch);
+}
+
+/**
+ * Return an expression to search in, for a linked element that has turned out to have no searchable column at all.
+ * That means the element is misconfigured - every alternate column it names has been deleted, and its own source column is missing from its link metadata - so there is nothing in the database to compare the user's search term against.
+ * We return an empty string literal, so the comparison in the enclosing EXISTS clause is false and the search matches nothing.
+ * Matching nothing is the safe failure here. Ignoring the search instead would hand back every entry in the form, presented to the user as if it were a filtered result, and list screens have destructive bulk actions on whatever is in the result set.
+ * A literal is used rather than a "no rows" condition on the main table, because it stays inside the EXISTS subquery and so cannot interact with the AND/OR grouping of the other search terms, or with the table aliases in a framework query.
+ * The search silently returning zero rows is indistinguishable from a legitimate no-match as far as the user is concerned, so the log entry is the only signal an admin gets that the element needs repairing.
+ * @param int $element_id The id of the misconfigured element, for the log entry
+ * @return string An SQL expression to use in place of the column to search
+ */
+function formulize_noSearchableColumn($element_id) {
+	static $alreadyLogged = array(); // a single pageload can put the same element through here once per search term, and the message is the same every time
+	if (!isset($alreadyLogged[$element_id])) {
+		$alreadyLogged[$element_id] = true;
+		$message = 'Linked element has no searchable column - its alternate columns no longer exist and its own source element is missing from its link settings. Searches on this element will not match anything until it is repaired.';
+		$logData = array(
+			'formulize_event' => 'element-has-no-searchable-column',
+			'element_id' => $element_id,
+			'additional_info' => $message
+		);
+		// the element object is served from _getElementObject's cache here, so this is cheap
+		if ($element = _getElementObject($element_id)) {
+			$logData['form_id'] = $element->getVar('id_form');
+		}
+		writeToFormulizeLog($logData);
+		// also written to the PHP error log, because the Formulize log is a per site preference that can be switched off, and this is the only signal that the element is broken
+		error_log("Formulize error: element $element_id".(isset($logData['form_id']) ? " (form ".$logData['form_id'].")" : "").". $message");
+	}
+	return "''";
 }
 
 /**
