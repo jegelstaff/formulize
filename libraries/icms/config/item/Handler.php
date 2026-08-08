@@ -116,13 +116,27 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
 		 * formulizeAIProvider - travel as ordinary, unregistered POST fields the save loop
 		 * above never looks at, but that PHP's extract($_POST) (also above) still turns
 		 * into globals we can read here.
+		 *
+		 * $config->getVar('conf_value') cannot be used to find out what is currently
+		 * stored: the save loop above already called setConfValueForInput() on $config
+		 * with the meaningless 'touch' placeholder before insert() was ever reached, so
+		 * the in-memory copy no longer reflects the database. Reading it here (as an
+		 * earlier version of this hack did) makes formulizeAI_prepareApiKeyForConfigStorage()
+		 * treat 'touch' as the existing key map, which fails to decode as JSON and reads
+		 * as empty - so every save of this settings page, not only ones where a new key
+		 * was typed, silently erased whatever key was already stored. Read the real,
+		 * still-current value straight from the database instead.
 		 */
 		if ($config->getVar('conf_name') == 'formulizeAIApiKey') {
 			include_once XOOPS_ROOT_PATH . '/modules/formulize/include/aiadminconfig.php';
 			if (function_exists('formulizeAI_prepareApiKeyForConfigStorage')) {
 				global $formulizeAIApiKey_new, $formulizeAIApiKey_clear, $formulizeAIProvider;
+				$currentRow = false;
+				if ($result = $this->db->query("SELECT conf_value FROM " . $this->db->prefix('config') . " WHERE conf_id = '" . (int) $config->getVar('conf_id') . "'")) {
+					$currentRow = $this->db->fetchArray($result);
+				}
 				$config->setVar('conf_value', formulizeAI_prepareApiKeyForConfigStorage(
-					$config->getVar('conf_value'),
+					$currentRow ? $currentRow['conf_value'] : '',
 					isset($formulizeAIApiKey_new) ? $formulizeAIApiKey_new : '',
 					!empty($formulizeAIApiKey_clear),
 					isset($formulizeAIProvider) ? $formulizeAIProvider : ''
