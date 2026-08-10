@@ -797,9 +797,9 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 							}
 						}
 						// bracket the clauses for this form when there is more than one of them, so the global and/or between forms cannot bind into the middle of the set
-						$existsJoinText .= $existsBoolean . (count($existsClausesForThisForm) > 1
-							? " ( " . implode(" AND ", $existsClausesForThisForm) . " ) "
-							: implode("", $existsClausesForThisForm));
+						if ($existsClausesForThisForm) {
+					    $existsJoinText .= $existsBoolean . " ( " . implode(" AND ", $existsClausesForThisForm) . " ) ";
+						}
 					}
 				}
 			}
@@ -2002,6 +2002,7 @@ function formulize_tryDelegatedSearchWhere($eleType, $term, $operator, $quotes, 
 
 	$typeHandler = xoops_getmodulehandler($eleType . 'Element', 'formulize');
 	if ($typeHandler && method_exists($typeHandler, 'buildSearchWhereClause')) {
+		$rawTerm = $term; // kept aside for handlers (currently just dateElement) that need the term as originally typed, before it is collapsed below
 		$isPartial = ($normalizedOperator === 'LIKE' || $normalizedOperator === 'NOT LIKE');
 		$term = $typeHandler->prepareLiteralTextForDB($term, null, $isPartial);
 
@@ -2023,9 +2024,9 @@ function formulize_tryDelegatedSearchWhere($eleType, $term, $operator, $quotes, 
 			$likebits = '';
 			$quotes = $quotes === '' ? '' : "'";
 		}
-		// $queryElement is the fully qualified column this term is searching, for the element types whose column varies
-		// from form to form. Handlers with a fixed column of their own simply do not declare the parameter.
-		return $typeHandler->buildSearchWhereClause($term, $normalizedOperator, $quotes, $likebits, $fid, $tableAlias, $queryElement);
+		// $queryElement and $rawTerm are only declared by handlers that need them (currently just dateElement, for the
+		// fully qualified column and the pre-collapse term respectively) - every other handler simply ignores the extra args.
+		return $typeHandler->buildSearchWhereClause($term, $normalizedOperator, $quotes, $likebits, $fid, $tableAlias, $queryElement, $rawTerm);
 	}
 	return false;
 }
@@ -2312,11 +2313,15 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 					// key held in one of those alternate columns rather than a reference to this element's own target. Work that out before the
 					// shortcut below, because it decides whether the number is compared to this element or looked up inside the source form.
 					$altColumnFKTargets = formulize_altColumnFKTargetsForSearch($formFieldFilterMap[$mappedForm][$element_id], $ifParts, $operator);
+					// Loaded once here rather than inside the elseif below, so its failure can also be checked by the first branch: if the form
+					// this element supposedly links to cannot be loaded, the FK subquery below has nothing to query, and the safe fallback is
+					// the direct comparison every other unresolvable case already takes, not the substring text search two branches down.
+					$fkSourceFormObject = $altColumnFKTargets ? $form_handler->get($sourceMeta[0]) : false;
 
 					// check if user is searching for blank values, and if so, then query this element directly, rather than looking in the source
 					// ALSO do this if the user is searching for a numeric value with an = operator, unless that number belongs to an alternate column (see above)
 					// Note that $ifParts[0] gets surrounded by `` when going through prepareElementMetaData (?!)
-					if (($ifParts[1] === '' OR trim($operator) == 'IS NULL' OR trim($operator) == 'IS NOT NULL' OR (is_numeric($ifParts[1]) AND trim($operator) == '=' AND !$altColumnFKTargets)) AND !isset($GLOBALS['formulize_linkedNumericValueIsLiteral'][trim($ifParts[0], '`')])) {
+					if (($ifParts[1] === '' OR trim($operator) == 'IS NULL' OR trim($operator) == 'IS NOT NULL' OR (is_numeric($ifParts[1]) AND trim($operator) == '=' AND (!$altColumnFKTargets OR !$fkSourceFormObject))) AND !isset($GLOBALS['formulize_linkedNumericValueIsLiteral'][trim($ifParts[0], '`')])) {
 						$newWhereClause = " $queryElement $operator $quotes$likebits" . formulize_db_escape($ifParts[1]) . "$likebits$quotes ";
 
 					// A numeric equals search that belongs to one or more linked alternate columns. Compare it to those columns' foreign keys directly,
@@ -2328,14 +2333,18 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 					// quickfilter dropdowns emit for a linked column and reinterpreting it would change every saved view and screen that uses one.
 					// Callers that have declared the number is a literal label rather than a key are left alone too, and fall through to the text search.
 					} elseif ($altColumnFKTargets
-						AND !isset($GLOBALS['formulize_linkedNumericValueIsLiteral'][trim($ifParts[0], '`')])
-						AND $fkSourceFormObject = $form_handler->get($sourceMeta[0])) {
+						AND $fkSourceFormObject
+						AND !isset($GLOBALS['formulize_linkedNumericValueIsLiteral'][trim($ifParts[0], '`')])) {
 						$fkComparisons = array();
 						$fkValue = intval($ifParts[1]);
 						foreach ($altColumnFKTargets as $fkTargetHandle) {
-							$safeFKHandle = formulize_db_escape($fkTargetHandle);
+							// this is a column identifier going in unquoted backticks, not a string literal, so it is validated against
+							// a whitelist rather than escaped - the same rule formulize_tryDelegatedSearchWhere() applies to $tableAlias
+							if (!formulizeDataHandler::validateSqlIdentifier($fkTargetHandle)) {
+								continue;
+							}
 							// the alternate column can itself hold multiple values, in which case it stores a comma wrapped list rather than a single entry id
-							$fkComparisons[] = "(source.`$safeFKHandle` = $fkValue OR source.`$safeFKHandle` LIKE '%,$fkValue,%')";
+							$fkComparisons[] = "(source.`$fkTargetHandle` = $fkValue OR source.`$fkTargetHandle` LIKE '%,$fkValue,%')";
 						}
 						// correlate to the source form the same way the text searches below do, so that a linked element holding multiple values still matches
 						$newWhereClause = " EXISTS (SELECT 1 FROM " . DBPRE . "formulize_" . $fkSourceFormObject->getVar('form_handle') . " AS source WHERE ($queryElement = source.entry_id OR $queryElement LIKE CONCAT('%,',source.entry_id,',%')) AND (" . implode(" OR ", $fkComparisons) . ")) ";
@@ -2750,6 +2759,39 @@ function formulize_noSearchableColumn($element_id) {
 }
 
 /**
+ * Resolve an element (id or handle) to its own handle and, if it is a linked element with somewhere valid to point,
+ * the form and element it points at - using the bulk element metadata cache (formulize_getElementMetaData(), via
+ * formulize_isLinkedElement()) rather than a fresh per-element query.
+ *
+ * This is the operation resolveLinkedAltSearchColumnsToSubquery() and formulize_altColumnFKTargetsForSearch() both need,
+ * for two different roles (an alternate display column, and the column a search value was borrowed from) that turn out
+ * to be the same question: is this element linked, and if so where. Sharing it means the bulk cache seeded once per
+ * form in dataExtraction() actually gets used here too, instead of each caller re-fetching the same element by hand.
+ *
+ * @param mixed $elementIdOrHandle An element id or handle
+ * @return array|false ['handle' => this element's own ele_handle, 'sourceFormId' => int, 'sourceElementHandle' => string],
+ *   or false when the element does not exist, is not linked, or is a snapshot (which holds its label as literal text
+ *   in its own column, not a foreign key, so there is nothing to resolve)
+ */
+function formulize_resolveLinkedElementCached($elementIdOrHandle) {
+	$isHandle = !is_numeric($elementIdOrHandle);
+	$metadata = formulize_getElementMetaData($elementIdOrHandle, $isHandle);
+	if (empty($metadata)) {
+		return false;
+	}
+	// formulize_isLinkedElement() already excludes snapshots (which store their label as literal text, not a foreign
+	// key) and returns the unserialized ele_value on success, whose [2] slot is "sourceFormId#*=:*sourceElementHandle".
+	if (!$linkedEleValue = formulize_isLinkedElement($elementIdOrHandle)) {
+		return false;
+	}
+	list($sourceFormId, $sourceElementHandle) = explode("#*=:*", $linkedEleValue[2]);
+	if (!$sourceFormId OR !$sourceElementHandle) {
+		return false;
+	}
+	return array('handle' => $metadata['ele_handle'], 'sourceFormId' => intval($sourceFormId), 'sourceElementHandle' => $sourceElementHandle);
+}
+
+/**
  * Check for alternate search columns that are themselves linked elements, remove them from the list and return subqueries for them to use in the WHERE clause
  * The alternate search columns are elements in the source form of the linked element being searched, ie: the form that is aliased as "source" in the EXISTS clause that the subqueries returned here are embedded in, so that is what the subqueries correlate against
  * @param array $altSearchColumns The list of alternate search columns to check for linked forms, passed by reference so that linked columns can be removed from the list
@@ -2760,29 +2802,20 @@ function resolveLinkedAltSearchColumnsToSubquery(&$altSearchColumns) {
 	$subqueries = array();
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
 	foreach ($altSearchColumns as $idx => $altSearchColumn) {
-		// does the alt search column exist?
-		if(!$altSearchElementObject = _getElementObject($altSearchColumn)) {
+		// does the alt search column exist, is it a linked element pointing elsewhere, and is it not a snapshot (which
+		// holds its label as literal text in its own column instead of an entry id)? If any of that is not true, it is
+		// searched directly as a column, so leave it in the list.
+		if(!$resolved = formulize_resolveLinkedElementCached($altSearchColumn)) {
 			continue;
 		}
-		// is it a linked element pointing elsewhere, with valid link metadata? if not, then it is searched directly as a column, so leave it in the list
-		if(!$sourceReference = getSourceFormAndElementForLinkedElement($altSearchElementObject)) {
-			continue;
-		}
-		// snapshot elements are linked, but they store the literal label text in their own column instead of an entry id, so they are searched directly as a column too.
-		// this is the same exclusion that formulize_isLinkedElement and formulize_mapFormFieldFilter make, and it has to be made here as well, because getSourceFormAndElementForLinkedElement does not make it
-		$altSearchEleValue = $altSearchElementObject->getVar('ele_value');
-		if(is_array($altSearchEleValue) AND !empty($altSearchEleValue['snapshot'])) {
-			continue;
-		}
-		list($sourceFormId, $sourceElementHandle) = $sourceReference;
-		if(!$formObject = $form_handler->get($sourceFormId)) {
+		if(!$formObject = $form_handler->get($resolved['sourceFormId'])) {
 			throw new Exception("Could not find source form for linked alternate search column ".htmlspecialchars(strip_tags((string) $altSearchColumn)));
 		}
 		unset($altSearchColumns[$idx]); // remove the linked column from the list of columns to search, since we are using a subquery for it
 		$sqNum++;
 		$sourceFormHandle = $formObject->getVar('form_handle');
 		// prepare a subquery to look up the value that the linked alternate search column is pointing to, correlating on the "source" alias of the enclosing EXISTS clause, since the alt search column is a column in that form
-		$subqueries[] = "(SELECT source$sqNum.`" . $sourceElementHandle . "` FROM " . DBPRE . "formulize_" . $sourceFormHandle . " AS source$sqNum WHERE source$sqNum.entry_id = source.`" . $altSearchElementObject->getVar('ele_handle') . "`)";
+		$subqueries[] = "(SELECT source$sqNum.`" . $resolved['sourceElementHandle'] . "` FROM " . DBPRE . "formulize_" . $sourceFormHandle . " AS source$sqNum WHERE source$sqNum.entry_id = source.`" . $resolved['handle'] . "`)";
 	}
 	return $subqueries;
 }
@@ -2815,23 +2848,25 @@ function formulize_extractEmptySetConditions($fundamental_filters, $filter) {
 	}
 
 	$emptySetTerms = array(); // keyed by the group key from the prefix, so that EMPTYSET1: and EMPTYSET2: stay separate sets
-	$remaining = array(0 => array(), 1 => array(), 2 => array(), 3 => array());
+	$emptySetIndexes = array(); // indexes of the rows pulled out below, so they can be dropped from the remaining filters afterward
 	$sawEmptySetCondition = false;
 
 	foreach ($fundamental_filters[0] as $i => $conditionElementId) {
 
+		// normalize this row's operator and type now, so a gap in a ragged fundamental_filters array can't produce an undefined
+		// index later - whether or not this row turns out to be an empty set.
+		$fundamental_filters[1][$i] = isset($fundamental_filters[1][$i]) ? $fundamental_filters[1][$i] : "=";
 		$term = isset($fundamental_filters[2][$i]) ? $fundamental_filters[2][$i] : "";
+		$fundamental_filters[3][$i] = isset($fundamental_filters[3][$i]) ? $fundamental_filters[3][$i] : "all";
+
 		$groupPrefix = formulize_extractSearchGroupPrefix($term);
 		if ($groupPrefix['group'] !== 'emptyset') {
-			$remaining[0][] = $conditionElementId;
-			$remaining[1][] = isset($fundamental_filters[1][$i]) ? $fundamental_filters[1][$i] : "=";
-			$remaining[2][] = $term;
-			$remaining[3][] = isset($fundamental_filters[3][$i]) ? $fundamental_filters[3][$i] : "all";
 			continue;
 		}
 
 		// this row is an empty set whatever happens to its term below. Note it now, so that a term we end up dropping still gets taken
 		// out of the fundamental filters - left behind, the prefix would be read as part of a literal search value and match nothing.
+		$emptySetIndexes[] = $i;
 		$sawEmptySetCondition = true;
 
 		// resolve a reference to another column's search box. This also reports which column the value came from, which the
@@ -2857,8 +2892,7 @@ function formulize_extractEmptySetConditions($fundamental_filters, $filter) {
 			}
 		}
 
-		$operator = isset($fundamental_filters[1][$i]) ? $fundamental_filters[1][$i] : "=";
-		$operator = ($operator == 'NOT') ? '!=' : $operator; // the same conversion buildConditionsFilterSQL makes, to avoid a syntax error
+		$operator = ($fundamental_filters[1][$i] == 'NOT') ? '!=' : $fundamental_filters[1][$i]; // the same conversion buildConditionsFilterSQL makes, to avoid a syntax error
 
 		$thisTerm = $conditionElementId . "/**/" . $value . "/**/" . $operator;
 		if ($provenanceHandle) {
@@ -2873,6 +2907,13 @@ function formulize_extractEmptySetConditions($fundamental_filters, $filter) {
 
 	foreach ($emptySetTerms as $theseTerms) {
 		$filter[] = array(0 => 'and', 1 => implode("][", $theseTerms), 2 => 'none'); // every condition in one set has to be true of the same connected entry
+	}
+
+	// drop the rows pulled out above, keeping the four parallel arrays in step with each other
+	$dropIndexes = array_flip($emptySetIndexes);
+	$remaining = array();
+	foreach (array(0, 1, 2, 3) as $col) {
+		$remaining[$col] = array_values(array_diff_key($fundamental_filters[$col], $dropIndexes));
 	}
 
 	// a set of parallel arrays that are all empty still counts as four elements, so hand back a genuinely empty array when nothing is left,
@@ -2928,47 +2969,29 @@ function formulize_altColumnFKTargetsForSearch($elementFilterMapEntry, $ifParts,
 		return array();
 	}
 
-	// which of the alternate columns are linked elements, and what form does each of them point at?
+	// which of the alternate columns are linked elements, and what form does each of them point at? (snapshot alt
+	// columns, which hold literal label text rather than a foreign key, are excluded inside the helper itself.)
 	$candidates = array();
 	foreach (array_filter(is_array($ele_value[10]) ? $ele_value[10] : array($ele_value[10])) as $altSearchColumn) {
-		if (!$altSearchElementObject = _getElementObject($altSearchColumn)) {
-			continue;
+		if ($resolved = formulize_resolveLinkedElementCached($altSearchColumn)) {
+			$candidates[] = $resolved;
 		}
-		if (!$sourceReference = getSourceFormAndElementForLinkedElement($altSearchElementObject)) {
-			continue;
-		}
-		// snapshot elements are linked, but they store the literal label text in their own column, so they hold no foreign key to compare.
-		// Same exclusion resolveLinkedAltSearchColumnsToSubquery makes, for the same reason.
-		$altSearchEleValue = $altSearchElementObject->getVar('ele_value');
-		if (is_array($altSearchEleValue) AND !empty($altSearchEleValue['snapshot'])) {
-			continue;
-		}
-		$candidates[] = array('handle' => $altSearchElementObject->getVar('ele_handle'), 'sourceFormId' => $sourceReference[0]);
 	}
 	if (!$candidates) {
 		return array();
 	}
 
 	// if the value came out of another column's search box, and that column points at the same form as exactly one of the candidates, that is the one
-	if (!empty($ifParts[3]) AND $provenanceElementObject = _getElementObject($ifParts[3])) {
-		if ($provenanceReference = getSourceFormAndElementForLinkedElement($provenanceElementObject)) {
-			$provenanceMatches = array();
-			foreach ($candidates as $candidate) {
-				if ($candidate['sourceFormId'] == $provenanceReference[0]) {
-					$provenanceMatches[] = $candidate['handle'];
-				}
-			}
-			if (count($provenanceMatches) == 1) {
-				return $provenanceMatches;
-			}
+	if (!empty($ifParts[3]) AND $provenanceResolved = formulize_resolveLinkedElementCached($ifParts[3])) {
+		$provenanceMatches = array_filter($candidates, function($candidate) use ($provenanceResolved) {
+			return $candidate['sourceFormId'] == $provenanceResolved['sourceFormId'];
+		});
+		if (count($provenanceMatches) == 1) {
+			return array_column($provenanceMatches, 'handle');
 		}
 	}
 
-	$handles = array();
-	foreach ($candidates as $candidate) {
-		$handles[] = $candidate['handle'];
-	}
-	return $handles;
+	return array_column($candidates, 'handle');
 }
 
 // THIS FUNCTION TAKES INPUTS ABOUT AND ELEMENT, AND RETURNS A SET OF INFORMATION THAT IS NECESSARY WHEN BUILDING VARIOUS PARTS OF THE WHERE CLAUSE

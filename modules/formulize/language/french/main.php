@@ -183,6 +183,23 @@ define("_formulize_CAL_MONTH_09", "Septembre");
 define("_formulize_CAL_MONTH_10", "Octobre");
 define("_formulize_CAL_MONTH_11", "Novembre");
 define("_formulize_CAL_MONTH_12", "Décembre");
+
+// Used by the list search "Octobre" / "2026-10" period search, in addition to the full names above. Juin and Juillet
+// deliberately have no 3 letter form - both would abbreviate to "jui", and a person searching that would not get the
+// month they meant. Juillet does have an unambiguous 4 letter form, "Juil"; Juin doesn't need one since Juin is
+// itself only 4 letters, so its full name already matches. Every other month is unambiguous at 3 letters.
+define("_formulize_CAL_MONTH_01_3ABRV", "Jan");
+define("_formulize_CAL_MONTH_02_3ABRV", "Fév");
+define("_formulize_CAL_MONTH_03_3ABRV", "Mar");
+define("_formulize_CAL_MONTH_04_3ABRV", "Avr");
+define("_formulize_CAL_MONTH_05_3ABRV", "Mai");
+define("_formulize_CAL_MONTH_07_4ABRV", "Juil");
+define("_formulize_CAL_MONTH_08_3ABRV", "Aoû");
+define("_formulize_CAL_MONTH_09_3ABRV", "Sep");
+define("_formulize_CAL_MONTH_10_3ABRV", "Oct");
+define("_formulize_CAL_MONTH_11_3ABRV", "Nov");
+define("_formulize_CAL_MONTH_12_3ABRV", "Déc");
+
 define("_formulize_CAL_RETURNFROMMULTI", "Retourner au calendrier");
 define("_formulize_CAL_WEEK_1", "Dimanche");
 define("_formulize_CAL_WEEK_1_3ABRV", "Dim");

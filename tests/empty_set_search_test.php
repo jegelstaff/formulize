@@ -9,21 +9,22 @@
  * WHAT THIS COVERS
  * An EMPTYSET term asks "no connected entry matches these conditions", which the extraction layer renders as a
  * NOT EXISTS instead of a row level comparison. Getting a term from a search box or a screen's conditions into that
- * shape is pure string work, done by four functions this exercises directly, using the REAL source lifted out of the
+ * shape is pure string work, done by five functions this exercises directly, using the REAL source lifted out of the
  * shipped files rather than a reimplementation:
  *
  *   formulize_extractSearchGroupPrefix()    which group a term belongs to, and what that group means
  *   formulize_unwrapSearchBoxValue()        the value inside whatever wrapper a search box was holding
  *   splitUpSearchStringIntoSearchTerms()    how "X AND Y" in one box becomes separate terms
  *   formulize_extractEmptySetConditions()   turning a screen's EMPTYSET conditions into filter expressions
+ *   formulize_buildEmptySetFilterRows()     turning a search box's EMPTYSET groups into filter rows, {BLANK} included
  *
  * Two properties matter most here, and both are the reason for the case lists below rather than a happy path check.
  *
  * BACKWARD COMPATIBILITY. The prefix parser took over parsing that ORSET and OR had been doing for years, including
  * a no-delimiter ORSET syntax that consumes exactly one character as the group key. Existing saved views hold those
- * strings, so the legacy forms have to keep resolving identically. The ORANGE case is deliberate: it documents a
- * long standing quirk (a search for "ORANGE" is read as an OR search for "ANGE") that we preserve rather than fix,
- * because fixing it would change what existing saved views return.
+ * strings, so the legacy forms have to keep resolving identically. The ORANGE case is the deliberate exception: a
+ * long standing quirk (a search for "ORANGE" was read as an OR search for "ANGE") is fixed rather than preserved,
+ * because a term with no lowercase in it at all is something a person wrote to search for that word, not an OR.
  *
  * FAILING CLOSED. Every uncertain case here has to drop the term rather than search for something approximate.
  * An EMPTYSET search that quietly matches the wrong thing removes entries from a list, and nobody notices a row
@@ -103,9 +104,11 @@ $toLoad = array(
     'convertStringToUseSpecialCharsToMatchDB' => $functionsSource,
     'convertDynamicFilterTerms'            => $functionsSource,
     'formulize_unwrapSearchBoxValue'       => $functionsSource,
+    'formulize_extractKeyedGroupPrefix'    => $functionsSource,
     'formulize_extractSearchGroupPrefix'   => $functionsSource,
     'splitUpSearchStringIntoSearchTerms'   => $functionsSource,
     'formulize_extractEmptySetConditions'  => $extractSource,
+    'formulize_buildEmptySetFilterRows'    => $functionsSource,
 );
 foreach ($toLoad as $name => $source) {
     $code = extractFunctionSource($source, $name);
@@ -284,6 +287,42 @@ $got = translate(array(0 => array(42), 1 => array('='), 2 => array('active'), 3 
     array(0 => array(0 => 'and', 1 => 'x/**/y/**/=')));
 check('conditions unchanged',  $got['conditions'],  '[[42],["="],["active"],["all"]]');
 check('filter unchanged',      $got['expressions'], 'and|x/**/y/**/=|-');
+
+echo "\nSEARCH BOX EMPTYSET GROUPS - {BLANK} inside a group, and the rows a search box's groups resolve to:\n";
+// {BLANK} expands into two parts that have to be OR'd with each other ("= '' OR IS NULL"), which formulize_parseSearchesIntoFilter
+// collects separately from the plain AND'd terms in the same group (see formulize_buildEmptySetFilterRows()'s own doc comment for
+// why: the term-string format has no way to nest an OR inside an otherwise AND'd clause). These exercise every shape that produces.
+function rowsOf($emptySetSearches) {
+    $rows = formulize_buildEmptySetFilterRows($emptySetSearches);
+    if (!$rows) { return '(none)'; }
+    $out = array();
+    foreach ($rows as $row) { $out[] = $row[0] . '|' . $row[1] . '|' . $row[2]; }
+    return implode(' ~ ', $out);
+}
+check('ordinary group, and-only',
+    rowsOf(array('k' => array('andTerms' => array('88/**/Apples/**/=', '89/**/active/**/=')))),
+    'and|88/**/Apples/**/=][89/**/active/**/=|none');
+check('lone {BLANK}, or-only, one term',
+    rowsOf(array('k1' => array('orTerms' => array('88/**//**/=][88/**//**/ IS NULL ')))),
+    'or|88/**//**/=][88/**//**/ IS NULL |none');
+check('{BLANK} alongside an ordinary term in the same group is dropped, not built wrong',
+    rowsOf(array('k1' => array(
+        'andTerms' => array('89/**/active/**/='),
+        'orTerms'  => array('88/**//**/=][88/**//**/ IS NULL '),
+    ))),
+    '(none)');
+check('two {BLANK}s in the same group is also dropped, for the same reason',
+    rowsOf(array('k1' => array('orTerms' => array(
+        '88/**//**/=][88/**//**/ IS NULL ',
+        '90/**//**/=][90/**//**/ IS NULL ',
+    )))),
+    '(none)');
+check('groups are independent - one dropped group does not affect another',
+    rowsOf(array(
+        'k1' => array('andTerms' => array('89/**/active/**/='), 'orTerms' => array('88/**//**/=][88/**//**/ IS NULL ')),
+        'k2' => array('andTerms' => array('90/**/red/**/=')),
+    )),
+    'and|90/**/red/**/=|none');
 
 echo "\n";
 printf("RESULT: %d passed, %d failed\n", $GLOBALS['__pass'], $GLOBALS['__fail']);
