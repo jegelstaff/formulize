@@ -1173,10 +1173,26 @@ function enforceSearchesAsFundamentalFilters($savedViewIndentifier, $screen) {
 							if(substr($searchTerm, 0, 1) == "!" AND substr($searchTerm, -1) == "!") {
 								$searchTerm = substr($searchTerm, 1, -1);
 							}
+							// Route through the same prefix parser a live search box uses, rather than the old bare substr(term,0,2)=="OR"
+							// check, so a saved search that happens to read as an OR (an all-capitals value like "ORANGE" or "ORDERS")
+							// is read the same way here as it now is everywhere else: as a literal search, not an OR for its tail end.
+							//
+							// CHANGE FROM USER INTENT, DOCUMENTED DELIBERATELY: fundamental_filters (the structure this function feeds)
+							// only has one 'oom' bucket - unlike a live search, there is no way for this structure to keep several
+							// distinct ORSET groups apart, or to represent EMPTYSET's "must match no connected entry" semantics at all
+							// as a plain oom/all row. ORSET1:a and ORSET2:b, meant as two separate OR sets combined with AND ("(a) AND
+							// (b)", each an OR of its own group's terms), collapse into a single combined OR: "(a OR b)". That changes
+							// what the search means, it is not just a compatibility shim. Representing multiple named OR sets (or
+							// EMPTYSET) correctly here would need fundamental_filters itself extended to carry that information - a
+							// larger structural change to the conditions filter system, out of scope for this fix.
+							// EMPTYSET is unaffected by that limitation here: its own prefix is deliberately left in $searchTerm
+							// untouched below (group !== 'or'/'orset'), because formulize_extractEmptySetConditions() downstream
+							// re-parses the raw term for exactly this prefix and already resolves it correctly on its own.
 							$oomAll = 'all';
-							if(substr($searchTerm, 0, 2) == "OR") {
+							$groupPrefix = formulize_extractSearchGroupPrefix($searchTerm);
+							if ($groupPrefix['group'] === 'or' OR $groupPrefix['group'] === 'orset') {
 								$oomAll = 'oom';
-								$searchTerm = substr($searchTerm, 2);
+								$searchTerm = $groupPrefix['term'];
 							}
 							$operator = extractOperatorFromString($searchTerm);
 							$searchTerm = substr($searchTerm, strlen($operator));
@@ -4764,10 +4780,12 @@ function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fi
 	$showcols = explode(",", $settings['oldcols']);
 	if ($settings['global_search']) {
 		foreach($showcols as $column) {
+			// OR: rather than bare OR, since this constructs the OR group syntax programmatically and an all-capitals global
+			// search term (a country code, an acronym) must still be read as an OR search rather than a literal search.
 			if ($searches[$column]) {
-				$searches[$column] .= "//OR" . $settings['global_search'];
+				$searches[$column] .= "//OR:" . $settings['global_search'];
 			} else {
-				$searches[$column] = "OR" . $settings['global_search'];
+				$searches[$column] = "OR:" . $settings['global_search'];
 			}
 		}
 	}

@@ -11,6 +11,8 @@ behaviour. CI runs them *before* the e2e suite, since they have nothing to wait 
 * `password_hashing_test.php`
 * `reference_binding_test.php`
 * `normalize_then_escape_test.php`
+* `date_search_test.php`
+* `empty_set_search_test.php`
 
 **Integrity tests against a built system** boot the application and read the live database, so CI runs
 them *after* the e2e suite, when the setup specs have finished building the museum system.

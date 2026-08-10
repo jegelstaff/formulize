@@ -474,10 +474,12 @@ function formulize_gatherCompositeDataSet($settings, $searches, $sort, $order, $
 	$showcols = explode(",", $settings['oldcols']);
 	if ($settings['global_search']) {
 		foreach ($showcols as $column) {
+			// OR: rather than bare OR, since this constructs the OR group syntax programmatically and an all-capitals global
+			// search term (a country code, an acronym) must still be read as an OR search rather than a literal search.
 			if (isset($searches[$column]) && $searches[$column]) {
-				$searches[$column] .= "//OR" . $settings['global_search'];
+				$searches[$column] .= "//OR:" . $settings['global_search'];
 			} else {
-				$searches[$column] = "OR" . $settings['global_search'];
+				$searches[$column] = "OR:" . $settings['global_search'];
 			}
 		}
 	}

@@ -612,6 +612,23 @@ define("_formulize_CAL_MONTH_10", "October");
 define("_formulize_CAL_MONTH_11", "November");
 define("_formulize_CAL_MONTH_12", "December");
 
+// Used by the list search "October" / "2026-10" period search, in addition to the full names above. Kept to 3 letters like the
+// week day abbreviations below - if a language's abbreviations collide (two months sharing a short form), leave the colliding
+// ones undefined rather than guessing; the full month name still works for those.
+define("_formulize_CAL_MONTH_01_3ABRV", "Jan");
+define("_formulize_CAL_MONTH_02_3ABRV", "Feb");
+define("_formulize_CAL_MONTH_03_3ABRV", "Mar");
+define("_formulize_CAL_MONTH_04_3ABRV", "Apr");
+define("_formulize_CAL_MONTH_05_3ABRV", "May");
+define("_formulize_CAL_MONTH_06_3ABRV", "Jun");
+define("_formulize_CAL_MONTH_07_3ABRV", "Jul");
+define("_formulize_CAL_MONTH_08_3ABRV", "Aug");
+define("_formulize_CAL_MONTH_09_3ABRV", "Sep");
+define("_formulize_CAL_MONTH_09_4ABRV", "Sept");
+define("_formulize_CAL_MONTH_10_3ABRV", "Oct");
+define("_formulize_CAL_MONTH_11_3ABRV", "Nov");
+define("_formulize_CAL_MONTH_12_3ABRV", "Dec");
+
 define("_formulize_CAL_WEEK_1", "Sunday");
 define("_formulize_CAL_WEEK_2", "Monday");
 define("_formulize_CAL_WEEK_3", "Tuesday");

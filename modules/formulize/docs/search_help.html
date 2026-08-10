@@ -273,6 +273,7 @@
 						<a name="Dates"/>
 						Dates
 				</h3>
+				<p class="Standard">Dates don't have to be typed in the YYYY-MM-DD form the database stores them in.  Write one the way you would say it and it will be worked out for you, so “Jan 1 2009”, “last Thursday” and “2009-01-01” are all fine.  The operators in the table below work with any of them.</p>
 				<div style="text-align:left">
 						<table
 								border="0"
@@ -328,39 +329,108 @@
 								</tr>
 								<tr class="Table81">
 										<td style="text-align:left;width:2.4569in; " class="Table8A2">
-												<p class="P14">&lt;2009-01//&gt;2007-12</p>
+												<p class="P14">Jan 1 2009<br>1 January 2009</p>
 										</td>
 										<td style="text-align:left;width:1.8764in; " class="Table8A2">
-												<p class="P14">find dates in the year 2008 (see below for more info on using two terms at once)</p>
+												<p class="P14">the same day, written the way you would say it</p>
 										</td>
 										<td style="text-align:left;width:2.1701in; " class="Table8C2">
-												<p class="P14">Any date starting with 2008</p>
+												<p class="P14">2009-01-01</p>
 										</td>
 								</tr>
 								<tr class="Table81">
 										<td style="text-align:left;width:2.4569in; " class="Table8A2">
-												<p class="P14">&gt;=2008-10-01//&lt;=2008-10-31</p>
+												<p class="P14">July 25<br>25 July</p>
 										</td>
 										<td style="text-align:left;width:1.8764in; " class="Table8A2">
-												<p class="P14">find dates in October 2008 (see below for more info on using two terms at once)</p>
+												<p class="P14">leave the year off and this year is filled in for you</p>
 										</td>
 										<td style="text-align:left;width:2.1701in; " class="Table8C2">
-												<p class="P14">Any date starting with 2008-10</p>
+												<p class="P14">July 25 of the current year</p>
 										</td>
 								</tr>
 								<tr class="Table81">
 										<td style="text-align:left;width:2.4569in; " class="Table8A2">
-												<p class="P14">2008-10</p>
+												<p class="P14">yesterday<br>last Thursday<br>next Monday<br>1 week ago</p>
+										</td>
+										<td style="text-align:left;width:1.8764in; " class="Table8A2">
+												<p class="P14">dates described in relation to today</p>
+										</td>
+										<td style="text-align:left;width:2.1701in; " class="Table8C2">
+												<p class="P14">the one day each of these works out to.  “last Thursday” is a single date, not everything since then.</p>
+										</td>
+								</tr>
+								<tr class="Table81">
+										<td style="text-align:left;width:2.4569in; " class="Table8A2">
+												<p class="P14">&gt;=July 1 AND &lt;=July 31</p>
+										</td>
+										<td style="text-align:left;width:1.8764in; " class="Table8A2">
+												<p class="P14">find dates in July of this year (see below for more info on using two terms at once)</p>
+										</td>
+										<td style="text-align:left;width:2.1701in; " class="Table8C2">
+												<p class="P14">every date in July</p>
+										</td>
+								</tr>
+								<tr class="Table81">
+										<td style="text-align:left;width:2.4569in; " class="Table8A2">
+												<p class="P14">&gt;=2008-10-01 AND &lt;=2008-10-31</p>
 										</td>
 										<td style="text-align:left;width:1.8764in; " class="Table8A2">
 												<p class="P14">find dates in October 2008</p>
 										</td>
 										<td style="text-align:left;width:2.1701in; " class="Table8C2">
-												<p class="P14">Any date starting with 2008-10 (same as the previous, more complex search)</p>
+												<p class="P14">every date in October 2008</p>
+										</td>
+								</tr>
+								<tr class="Table81">
+										<td style="text-align:left;width:2.4569in; " class="Table8A2">
+												<p class="P14">between 2008-10-01 and 2008-10-31</p>
+										</td>
+										<td style="text-align:left;width:1.8764in; " class="Table8A2">
+												<p class="P14">the same search, said more plainly.  This one only understands dates written as YYYY-MM-DD.</p>
+										</td>
+										<td style="text-align:left;width:2.1701in; " class="Table8C2">
+												<p class="P14">every date in October 2008</p>
+										</td>
+								</tr>
+								<tr class="Table81">
+										<td style="text-align:left;width:2.4569in; " class="Table8A2">
+												<p class="P14">October<br>Oct<br>Octobre</p>
+										</td>
+										<td style="text-align:left;width:1.8764in; " class="Table8A2">
+												<p class="P14">find every date in that month of this year</p>
+										</td>
+										<td style="text-align:left;width:2.1701in; " class="Table8C2">
+												<p class="P14">every date in October</p>
+										</td>
+								</tr>
+								<tr class="Table81">
+										<td style="text-align:left;width:2.4569in; " class="Table8A2">
+												<p class="P14">Oct 2008<br>2008-10</p>
+										</td>
+										<td style="text-align:left;width:1.8764in; " class="Table8A2">
+												<p class="P14">the same month in a year you name</p>
+										</td>
+										<td style="text-align:left;width:2.1701in; " class="Table8C2">
+												<p class="P14">every date in October 2008</p>
+										</td>
+								</tr>
+								<tr class="Table81">
+										<td style="text-align:left;width:2.4569in; " class="Table8A2">
+												<p class="P14">2008</p>
+										</td>
+										<td style="text-align:left;width:1.8764in; " class="Table8A2">
+												<p class="P14">find every date in that year</p>
+										</td>
+										<td style="text-align:left;width:2.1701in; " class="Table8C2">
+												<p class="P14">every date in 2008</p>
 										</td>
 								</tr>
 						</table>
 				</div>
+				<p class="Standard">Naming a month or a year, rather than a day, searches the whole of it.  “October” finds every day in October this year, “Oct 2008” finds all of October 2008, and “2008” finds the whole year.  Months can be written out or shortened, in English or in the language you are reading the page in, so “Octobre” and “oct” work too.</p>
+				<p class="Standard">The operators work on the whole period as well, which is usually what you would expect:  &gt;=October means on or after the 1st, and &gt;October means after the month has finished.</p>
+				<p class="Standard">If what you type isn't a date that can be worked out then that column is left out of the search rather than finding nothing at all.</p>
 				<h3 class="P6">
 					<a name="Duration"/>
 						Duration
@@ -412,7 +482,7 @@
 								</tr>
 								<tr class="Table81">
 										<td style="text-align:left;width:2.4569in; " class="Table8A2">
-												<p class="P14">&lt;5h//&gt;10m</p>
+												<p class="P14">&lt;5h AND &gt;10m</p>
 										</td>
 										<td style="text-align:left;width:1.8764in; " class="Table8A2">
 												<p class="P14">Find a duraction greater than 10 minutes and less than 300 minutes</p>
@@ -427,6 +497,7 @@
 						<a name="More_than_one_search_on_the_same_column"/>
 						More than one search on the same column
 				</h3>
+				<p class="Standard">You can put several search terms in one box, joined by AND or by OR.  Type them in capitals, with a space on either side.</p>
 				<div style="text-align:left">
 						<table
 								border="0"
@@ -452,7 +523,7 @@
 								</tr>
 								<tr class="Table31">
 										<td style="text-align:left;width:2.4556in; " class="Table3A2">
-												<p class="P14">&gt;10//&lt;100</p>
+												<p class="P14">&gt;10 AND &lt;100</p>
 										</td>
 										<td style="text-align:left;width:2.2153in; " class="Table3A2">
 												<p class="P14">find numbers between 11 and 99</p>
@@ -463,7 +534,7 @@
 								</tr>
 								<tr class="Table31">
 										<td style="text-align:left;width:2.4556in; " class="Table3A2">
-												<p class="P14">&gt;10//&lt;10</p>
+												<p class="P14">&gt;10 AND &lt;10</p>
 										</td>
 										<td style="text-align:left;width:2.2153in; " class="Table3A2">
 												<p class="P14">find entries that are both greater than 10 and less than 10</p>
@@ -474,7 +545,7 @@
 								</tr>
 								<tr class="Table31">
 										<td style="text-align:left;width:2.4556in; " class="Table3A2">
-												<p class="P14">santa//!monica</p>
+												<p class="P14">santa AND !monica</p>
 										</td>
 										<td style="text-align:left;width:2.2153in; " class="Table3A2">
 												<p class="P14">find entries that contain “santa” and not “monica”</p>
@@ -491,7 +562,7 @@
 								</tr>
 								<tr class="Table31">
 										<td style="text-align:left;width:2.4556in; " class="Table3A2">
-												<p class="P11">&gt;=2008-10-01//&lt;=2008-10-31</p>
+												<p class="P11">&gt;=2008-10-01 AND &lt;=2008-10-31</p>
 										</td>
 										<td style="text-align:left;width:2.2153in; " class="Table3A2">
 												<p class="P14">find dates within October 2008</p>
@@ -506,7 +577,7 @@
 								</tr>
 								<tr class="Table31">
 										<td style="text-align:left;width:2.4556in; " class="Table3A2">
-												<p class="P11">red//orange//blue</p>
+												<p class="P11">red AND orange AND blue</p>
 										</td>
 										<td style="text-align:left;width:2.2153in; " class="Table3A2">
 												<p class="P15">find those three values.  You can have as many terms as you want in a single column.</p>
@@ -515,8 +586,84 @@
 												<p class="P15">Searches like this will usually only find matches if the field you're searching accepts multiple selections (ie: checkboxes), and red, orange and blue were three of the options.</p>
 										</td>
 								</tr>
+								<tr class="Table31">
+										<td style="text-align:left;width:2.4556in; " class="Table3A2">
+												<p class="P14">red OR blue</p>
+										</td>
+										<td style="text-align:left;width:2.2153in; " class="Table3A2">
+												<p class="P14">find entries that match either one. Terms joined by OR only need one of them to match.</p>
+										</td>
+										<td style="text-align:left;width:1.8306in; " class="Table3C2">
+												<p class="P14">
+														red
+														<br>
+														blue
+												</p>
+										</td>
+								</tr>
 						</table>
 				</div>
+				<p class="Standard">If you use OR in more than one column at a time, all of those terms end up in a single group, so an entry only has to match one of them.  See “OR searches on multiple columns” below for how that works, and how to make more than one separate group.</p>
+				<h3 class="P5">
+						<a name="Using_AND_and_OR_in_the_same_column"/>
+						Using AND and OR in the same column
+				</h3>
+				<p class="Standard">Writing AND and OR between terms in the same box does not work &mdash; there is no way to tell which part of “red OR blue AND green” you meant to group together, so the whole thing is searched for as plain text and finds nothing.</p>
+				<p class="Standard">To do it, join every term with AND, and put OR: on the front of the ones that should only need one match.  The OR: terms become a group of their own, and that group is then one of the things that has to be matched.</p>
+				<div style="text-align:left">
+						<table
+								border="0"
+								cellspacing="0"
+								cellpadding="0"
+								class="Table3"
+						>
+								<colgroup>
+										<col width="273">
+										<col width="246">
+										<col width="203">
+								</colgroup>
+								<tr class="Table31">
+										<td style="text-align:left;width:2.4556in; " class="Table3A1">
+												<p class="P9">This search term:</p>
+										</td>
+										<td style="text-align:left;width:2.2153in; " class="Table3A1">
+												<p class="P9">Means this:</p>
+										</td>
+										<td style="text-align:left;width:1.8306in; " class="Table3C1">
+												<p class="P9">It will find:</p>
+										</td>
+								</tr>
+								<tr class="Table31">
+										<td style="text-align:left;width:2.4556in; " class="Table3A2">
+												<p class="P14">santa AND OR:cruz AND OR:claus</p>
+										</td>
+										<td style="text-align:left;width:2.2153in; " class="Table3A2">
+												<p class="P14">santa has to match, and then either cruz or claus</p>
+										</td>
+										<td style="text-align:left;width:1.8306in; " class="Table3C2">
+												<p class="P14">
+														Santa Cruz
+														<br>
+														Santa Claus
+														<br>
+														(it won't find Santa Fe)
+												</p>
+										</td>
+								</tr>
+								<tr class="Table31">
+										<td style="text-align:left;width:2.4556in; " class="Table3A2">
+												<p class="P14">ORSET1:red AND ORSET1:blue AND ORSET2:small AND ORSET2:large</p>
+										</td>
+										<td style="text-align:left;width:2.2153in; " class="Table3A2">
+												<p class="P14">two separate groups, each needing only one match.  Use this when a plain OR: group isn't enough, the same way it works across columns.</p>
+										</td>
+										<td style="text-align:left;width:1.8306in; " class="Table3C2">
+												<p class="P14">entries that are (red or blue), and that are also (small or large)</p>
+										</td>
+								</tr>
+						</table>
+				</div>
+				<p class="Standard">Remember that plain OR: terms all join one group no matter which column they are in, so if you are already using OR: on another column, use the numbered ORSET form here to keep the two sets of terms apart.</p>
 				<h3 class="P6">
 						<a name="Wildcard_terms__7BTODAY_7D_and__7BUSER_7D"/>
 						Wildcard terms {TODAY}, {USER} and {BLANK}
@@ -568,7 +715,7 @@
 								</tr>
 								<tr class="Table41">
 										<td style="text-align:left;width:1.6618in; " class="Table4A2">
-												<p class="P14">&gt;={TODAY+30}//&lt;={TODAY}</p>
+												<p class="P14">&gt;={TODAY-30} AND &lt;={TODAY}</p>
 										</td>
 										<td style="text-align:left;width:2.6715in; " class="Table4A2">
 												<p class="P14">find dates between 30 days ago and today</p>
@@ -616,6 +763,7 @@
 						<a name="_E2_80_9COR_E2_80_9D_searches_on_multiple_columns"/>
 						“OR” searches on multiple columns
 				</h3>
+				<p class="Standard">The OR you type between two terms only joins terms inside that one box.  To make an OR search that spans two different columns, put OR on the front of the term in each of them instead.</p>
 				<div style="text-align:left">
 						<table
 								border="0"
@@ -644,11 +792,11 @@
 												<p class="P14">
 														<span class="T2">on the fruit column:</span>
 														<br>
-														ORapples
+														OR:apples
 														<br>
 														<span class="T2">and at the same time on the vegetable column:</span>
 														<br>
-														ORcarrots
+														OR:carrots
 												</p>
 										</td>
 										<td style="text-align:left;width:2.1667in; " class="Table5A2">
@@ -695,8 +843,127 @@
 												<p class="P13"></p>
 										</td>
 								</tr>
+								<tr class="Table51">
+										<td style="text-align:left;width:2.1667in; " class="Table5A2">
+												<p class="P14">
+														<span class="T2">on the fruit column:</span>
+														<br>
+														ORSET1:apples
+														<br>
+														<span class="T2">on the vegetable column:</span>
+														<br>
+														ORSET1:carrots
+														<br>
+														<span class="T2">on the colour column:</span>
+														<br>
+														ORSET2:red
+														<br>
+														<span class="T2">on the size column:</span>
+														<br>
+														ORSET2:large
+												</p>
+										</td>
+										<td style="text-align:left;width:2.1667in; " class="Table5A2">
+												<p class="P14">Make more than one separate “OR” group.  All the plain OR terms join together into a single group, but sometimes you need to ask two independent questions.  Terms with the same number are OR'd together, and then every group has to be matched.</p>
+										</td>
+										<td style="text-align:left;width:2.1681in; " class="Table5C2">
+												<p class="P14">entries that have (apples or carrots), and that also have (red or large)</p>
+										</td>
+								</tr>
 						</table>
 				</div>
+				<h3 class="P6">
+						<a name="Finding_entries_with_nothing_matching_in_a_connected_form"/>
+						Finding entries that have nothing matching in a connected form
+				</h3>
+				<p class="Standard">Some lists show information from more than one form at once. A list of customers might also show each customer's orders, for example. In a list like that, a single customer might have multiple orders showing.</p>
+				<p class="Standard">Searching for what is <i>missing</i> in a list like that needs a special search term. If you search the product column for “!shoes” (not shoes), you will find customers who have at least one order that isn't shoes. That includes customers who have an order for shoes, and an order for socks (because “socks” matches “not shoes”). Usually that isn't the question you meant to ask.</p>
+				<p class="Standard">EMPTYSET: asks it a different way.  Instead of looking at each order (row) on its own, it looks at all of one customer's orders together, and finds the customers where <i>none</i> of them match.</p>
+				<div style="text-align:left">
+						<table
+								border="0"
+								cellspacing="0"
+								cellpadding="0"
+								class="Table5"
+						>
+								<colgroup>
+										<col width="241">
+										<col width="241">
+										<col width="241">
+								</colgroup>
+								<tr class="Table51">
+										<td style="text-align:left;width:2.1667in; " class="Table5A1">
+												<p class="P9">This search term:</p>
+										</td>
+										<td style="text-align:left;width:2.1667in; " class="Table5A1">
+												<p class="P9">Means this:</p>
+										</td>
+										<td style="text-align:left;width:2.1681in; " class="Table5C1">
+												<p class="P9">It will find:</p>
+										</td>
+								</tr>
+								<tr class="Table51">
+										<td style="text-align:left;width:2.1667in; " class="Table5A2">
+												<p class="P14">
+														<span class="T2">on the product column:</span>
+														<br>
+														EMPTYSET:shoes
+												</p>
+										</td>
+										<td style="text-align:left;width:2.1667in; " class="Table5A2">
+												<p class="P14">Find the customers who have never ordered shoes</p>
+										</td>
+										<td style="text-align:left;width:2.1681in; " class="Table5C2">
+												<p class="P14">Customers with no shoe order at all, including customers who have never ordered anything</p>
+										</td>
+								</tr>
+								<tr class="Table51">
+										<td style="text-align:left;width:2.1667in; " class="Table5A2">
+												<p class="P14">
+														<span class="T2">on the product column:</span>
+														<br>
+														EMPTYSET:shoes
+														<br>
+														<span class="T2">and at the same time on the status column:</span>
+														<br>
+														EMPTYSET:cancelled
+												</p>
+										</td>
+										<td style="text-align:left;width:2.1667in; " class="Table5A2">
+												<p class="P14">Find the customers who have no cancelled orders for shoes. When you put EMPTYSET: on more than one column, each record is matched against all of those conditions together.</p>
+										</td>
+										<td style="text-align:left;width:2.1681in; " class="Table5C2">
+												<p class="P14">Customers with no cancelled shoe order.  A customer who cancelled a sock order is found. A customer who ordered shoes and kept them, is found.</p>
+										</td>
+								</tr>
+								<tr class="Table51">
+										<td style="text-align:left;width:2.1667in; " class="Table5A2">
+												<p class="P14">
+														<span class="T2">on the product column:</span>
+														<br>
+														EMPTYSET1:shoes
+														<br>
+														<span class="T2">and at the same time on the status column:</span>
+														<br>
+														EMPTYSET2:cancelled
+												</p>
+										</td>
+										<td style="text-align:left;width:2.1667in; " class="Table5A2">
+												<p class="P14">Ask two separate questions instead of one.  Adding a number makes a separate group, the same way ORSET does above, so these become two independent conditions rather than a description of one order.</p>
+										</td>
+										<td style="text-align:left;width:2.1681in; " class="Table5C2">
+												<p class="P14">customers who have never ordered shoes, and who have also never cancelled anything</p>
+										</td>
+								</tr>
+						</table>
+				</div>
+				<p class="Standard">A few things to know about EMPTYSET:</p>
+				<ul>
+						<li><p class="Standard">It only works on columns that come from a connected form. In the example above, EMPTYSET: belongs on Order form columns, not on Customer Profile form columns.</p></li>
+						<li><p class="Standard">Entries with nothing connected to them at all are always found. A customer who has never placed an order would be included, regardless of the search term.</p></li>
+						<li><p class="Standard">You can search for anything you would normally type, not just plain words.  EMPTYSET:&gt;100 on an Amount column finds the entries with no connected record with an amount over 100.</p></li>
+						<li><p class="Standard">EMPTYSET terms are always combined with “and”.</p></li>
+				</ul>
 				<h3 class="P6">
 						<a name="Advanced_developer-focused_search_terms"/>
 						Advanced developer-focused search terms
@@ -746,10 +1013,10 @@
 								</tr>
 								<tr class="Table61">
 										<td style="text-align:left;width:1.5792in; " class="Table6A2">
-												<p class="P14">!!monica!//!santa!</p>
+												<p class="P14">!!monica! AND !santa!</p>
 										</td>
 										<td style="text-align:left;width:4.9222in; " class="Table6B2">
-												<p class="P14">When persisting a search that includes multiple terms, put the ! ! at the beginning and end of each term.  Don't get confused by “not” operators (!) that may be part of the terms (as in “not monica” at the beginning of this set of terms).</p>
+												<p class="P14">When persisting a search that includes multiple terms, put the ! ! around each term separately, not around the whole thing.  Don't get confused by “not” operators (!) that may be part of the terms (as in “not monica” at the beginning of this set of terms).</p>
 										</td>
 								</tr>
 						</table>
