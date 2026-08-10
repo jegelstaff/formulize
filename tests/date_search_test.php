@@ -10,12 +10,14 @@
  * Date searches are run through strtotime, which always produces one particular day. That quietly does the wrong thing
  * for a term that describes a period: "2026-10" becomes the 1st, and "October" becomes today's date in October, so
  * ">=October" meant "on or after October 9th" rather than "on or after October 1st". Two pieces fix that, and this
- * exercises both, using the REAL source lifted out of the shipped files rather than a reimplementation:
+ * exercises both, along with the step that runs ahead of them, using the REAL source lifted out of the shipped files
+ * rather than a reimplementation:
  *
  *   formulize_parseDatePeriodSearchTerm()   is this term a whole month or year, and which days does it span
  *   formulizeDateElementHandler::buildSearchWhereClause()   the range comparison that replaces the single date
+ *   formulizeDateElementHandler::prepareLiteralTextForDB()  turning what was typed into the one date that gets compared
  *
- * Three properties matter, and each is why a whole section exists below rather than a couple of happy path checks.
+ * Four properties matter, and each is why a whole section exists below rather than a couple of happy path checks.
  *
  * PRECISION, NOT PARSING. date_parse() cannot be used on its own to decide this, because "2026-10" reports day=1 rather
  * than day=false, making it indistinguishable from "2026-10-01". So the shapes that mean a period are matched
@@ -33,6 +35,12 @@
  * OPERATORS. Naming a period changes what the comparison operators should mean: after October is after all of it, before
  * October is before any of it. That matrix is checked in full, because getting one of them backwards would return
  * results that look plausible.
+ *
+ * BLANK IS NOT A DATE. The same conversion has to leave an empty search value alone. strtotime("") is false and date()
+ * reads false as timestamp 0, so a blank used to come back as 1970-01-01 - which turned {BLANK} on a date column into a
+ * search for the epoch, and additionally cost the connected form its LEFT join, so entries with nothing connected to
+ * them stopped being found too. Neither symptom looks like a date conversion problem from the outside, so the blank
+ * cases are pinned here next to the conversion that caused them.
  *
  * WHAT THIS DOES NOT COVER
  * Whether the clause is reached at all. That depends on formulize_tryDelegatedSearchWhere() finding the handler and on
@@ -113,15 +121,20 @@ foreach (array('formulize_normalizeMonthNameForSearch', 'formulize_monthNamesFor
     eval($code);
 }
 
-// The real buildSearchWhereClause, wrapped in a bare class so it can be called without the module bootstrap. It reads no
-// properties of its own - everything it needs arrives as an argument - so the class has nothing to declare beyond the
-// method itself; if that ever stops being true, this stops compiling rather than quietly testing something different.
-$clauseSource = extractFunctionSource(file_get_contents($dateFile), 'buildSearchWhereClause');
-if ($clauseSource === false) {
-    fwrite(STDERR, "Could not extract buildSearchWhereClause() from $dateFile\n");
-    exit(2);
+// The real methods, wrapped in a bare class so they can be called without the module bootstrap. Neither reads any
+// property of its own - everything they need arrives as an argument - so the class has nothing to declare beyond the
+// methods themselves; if that ever stops being true, this stops compiling rather than quietly testing something different.
+$dateSource = file_get_contents($dateFile);
+$methodSources = '';
+foreach (array('buildSearchWhereClause', 'prepareLiteralTextForDB') as $name) {
+    $code = extractFunctionSource($dateSource, $name);
+    if ($code === false) {
+        fwrite(STDERR, "Could not extract $name() from $dateFile\n");
+        exit(2);
+    }
+    $methodSources .= $code . "\n";
 }
-eval('class DateHandlerUnderTest { ' . $clauseSource . ' }');
+eval('class DateHandlerUnderTest { ' . $methodSources . ' }');
 
 // Dates contain nothing that needs escaping, so this stands in faithfully for the real one.
 function formulize_db_escape($value) { return addslashes($value); }
@@ -267,6 +280,30 @@ echo "\nOPERATORS - anything that is not a period is handed back to the ordinary
 check('no period recorded',   clauseFor($handler, 'LIKE', 'not a period'), false);
 check('no column to compare', $handler->buildSearchWhereClause('x', 'LIKE', "'", '', 1, 'main', '', 'October 2026'), false);
 check('an operator with no meaning here', clauseFor($handler, 'IN'), false);
+
+echo "\nPREPARING A TYPED VALUE - what a term becomes before any of the above is reached:\n";
+// Every date search passes through here first. A term naming a period arrives at buildSearchWhereClause already
+// collapsed to a single day by this method, which is precisely why that method has to read the period back out of
+// $rawTerm rather than out of $term.
+check('a single date is unchanged',       $handler->prepareLiteralTextForDB('2026-03-05', null),   '2026-03-05');
+check('a month collapses to day one',     $handler->prepareLiteralTextForDB('October 2026', null), '2026-10-01');
+check('so does a numeric month',          $handler->prepareLiteralTextForDB('2026-10', null),      '2026-10-01');
+check('an operator prefix is left alone', $handler->prepareLiteralTextForDB('>=2026-01-01', null), '>=2026-01-01');
+check('so is a negation prefix',          $handler->prepareLiteralTextForDB('!2026-01-01', null),  '!2026-01-01');
+
+echo "\nPREPARING A TYPED VALUE - blank has to stay blank, so {BLANK} can find empty dates:\n";
+// strtotime("") is false and date() reads false as timestamp 0, so without the guard in this method a blank comes back
+// as 1970-01-01. Nothing about that symptom points at a date conversion, which is why it is pinned here: it turned
+// {BLANK} on a date column into a search for the epoch, and left the clause no longer ending in "IS NULL", which is how
+// the extraction layer recognises that entries with nothing connected to them should still be found - so the connected
+// form was given an INNER join and those entries disappeared from the results as well.
+check('empty stays empty',                $handler->prepareLiteralTextForDB('', null),    '');
+check('whitespace only stays as it is',   $handler->prepareLiteralTextForDB('   ', null), '   ');
+// A term that is not a date at all still becomes the epoch. That is left alone deliberately rather than overlooked:
+// returning false would be the honest answer ("nothing can match", which the extraction layer already understands), but
+// this method has callers that do not check for false, so it is a separate change. The quick search path never gets
+// here with junk anyway - it drops unparseable dates before the filter is built.
+check('known quirk: junk is the epoch',   $handler->prepareLiteralTextForDB('bread', null), '1970-01-01');
 
 echo "\n";
 printf("RESULT: %d passed, %d failed\n", $GLOBALS['__pass'], $GLOBALS['__fail']);

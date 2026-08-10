@@ -2163,6 +2163,23 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 			$altSearchSubqueries = array(); // must be reset for every filter term, since the subqueries are read for all linked element terms, but only assigned for terms that have alternate search columns
 			$newWhereClause = ""; // tracks just the current iteration of this loop, so we can capture this filter and add it to the record of filters for this form lower down
 
+			// a term of {element_handle} compares this column against another column in the query, instead of against a literal value.
+			// IN and NOT IN are excluded, since a single column is not a list of values.
+			$dynamicRef = (trim($operator) === 'IN' or trim($operator) === 'NOT IN')
+				? false
+				: formulize_resolveDynamicColumnReference($ifParts[1], $fid, $linkfids);
+
+			// a reference we cannot turn into a column here is dropped, rather than left to become a literal search for the braces
+			// text, which would match nothing and look like the search was simply wrong. Two ways that happens: the element named
+			// belongs to a form that is not part of this query, or the column being searched is one of the special fields that
+			// resolve through subqueries against other tables, where comparing to a column of this form has no meaning.
+			if ($dynamicRef and ($dynamicRef['alias'] === false
+				or $ifParts[0] == "creator_email"
+				or $ifParts[0] == "owner_groups"
+				or strpos($ifParts[0], 'formulize_user_account_') === 0)) {
+				continue;
+			}
+
 			if ($operator == "LIKE" or $operator == "NOT LIKE") {
 				if (strlen($ifParts[1]) > 1 and (substr($ifParts[1], 0, 1) == "%" or substr($ifParts[1], -1) == "%")) { // if the query term includes % at the front or back (or both), then we let that work as the "likebits" and don't put in any ourselves
 					$likebits = "";
@@ -2186,12 +2203,34 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 			}
 			$quotes = ((is_numeric($ifParts[1]) and !strstr(trim(strtoupper($operator)), "LIKE")) or strstr(strtoupper($operator), "NULL") or trim($operator) == 'IN' or trim($operator) == 'NOT IN')  ? "" : "'"; // don't put quotes around numeric queries, unless they're part of a LIKE query.  Don't use quotes on the special IS NULL query either
 
+			// a column reference is an identifier, not a value, so it is never quoted and never wrapped in the LIKE wildcards directly.
+			// LIKE keeps its "contains" meaning, which is what a term with no operator typed in front of it gets, by building the pattern out of the referenced column.
+			if ($dynamicRef) {
+				$quotes = "";
+				$likebits = "";
+				if (trim($operator) == "LIKE" or trim($operator) == "NOT LIKE") {
+					$dynamicRef['sql'] = "CONCAT('%', " . $dynamicRef['sql'] . ", '%')";
+				}
+			}
+
 			$formFieldFilterMap['creator_email'] = false; // can be set to true lower down, need to initalize it properly here
 
 			// FIRST: NUMERIC FILTERS ARE INTERPRETTED AS ENTRY IDS IN THE MAIN FORM
 			if (is_numeric($ifParts[0]) and $ifParts[0] == $indivFilter) {
 				// if this is a numeric value, then we must treat it specially
 				$newWhereClause = "main.entry_id=" . intval($ifParts[0]);
+				$mappedForm = $fid;
+
+				// A COLUMN REFERENCE COMPARED AGAINST A METADATA COLUMN. Handled ahead of the metadata branches below so the reference never reaches
+				// the escaping and the user name subquery in them, which are all about interpretting text the user typed.
+			} elseif ($dynamicRef and in_array($ifParts[0], array('entry_id', 'revision_id', 'creation_uid', 'mod_uid', 'creation_datetime', 'mod_datetime'))) {
+				if ($dynamicRef['alias'] !== "main") {
+					continue; // metadata columns only exist on the main form, so only a column on the main form can be compared to them
+				}
+				if ($ifParts[0] == "entry_id" or $ifParts[0] == "revision_id") {
+					$formFieldFilterMap[$ifParts[0]] = true; // same flag the plain entry_id and revision_id branches below set
+				}
+				$newWhereClause = " main." . $ifParts[0] . " $operator " . $dynamicRef['sql'] . " ";
 				$mappedForm = $fid;
 
 				// SECOND: HANDLE ANY METADATA FILTER TERMS
@@ -2300,9 +2339,22 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 
 				// build the where clause....
 
-				// HANDLE 'OTHER' BOXES
-				// instead of doing a subquery, this could probably be redone similarly to creator_email and then we would have the "other" value in the raw query result, and then the process in prepValues would not need to requery the other table
-				if ($formFieldFilterMap[$mappedForm][$element_id]['hasother']) {
+				// HANDLE A COLUMN REFERENCE. Comes first, and applies to every element type, because the comparison is between the two columns
+				// as they are stored. All the interpretation the branches below do is about mapping text the user typed onto stored values, and
+				// there is no typed text here. For a linked element or a user list, the stored value is the id being held, which is the only
+				// thing about it that can be meaningfully compared to another column anyway.
+				if ($dynamicRef) {
+					// the clause built here is also re-rendered into the EXISTS subqueries for connected forms, and into the count and entry id
+					// queries, which have no connected forms joined at all. An alias that is out of scope in any of those would either be a SQL
+					// error or, worse, a count that disagreed with the rows returned, so those references are dropped rather than built.
+					if ($dynamicRef['alias'] !== "main" and $dynamicRef['alias'] !== $elementPrefix) {
+						continue;
+					}
+					$newWhereClause = " $queryElement $operator " . $dynamicRef['sql'] . " ";
+
+					// HANDLE 'OTHER' BOXES
+					// instead of doing a subquery, this could probably be redone similarly to creator_email and then we would have the "other" value in the raw query result, and then the process in prepValues would not need to requery the other table
+				} elseif ($formFieldFilterMap[$mappedForm][$element_id]['hasother']) {
 					$subquery = "(SELECT id_req FROM " . DBPRE . "formulize_other WHERE ele_id=" . intval($element_id) . " AND other_text " . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . ")";
 					$newWhereClause = "(($elementPrefix.entry_id = ANY $subquery)OR($queryElement $operator $quotes$likebits" . formulize_db_escape($ifParts[1]) . "$likebits$quotes))"; // need to look in the other box and the main field, and return values that match in either case
 
@@ -2992,6 +3044,45 @@ function formulize_altColumnFKTargetsForSearch($elementFilterMapEntry, $ifParts,
 	}
 
 	return array_column($candidates, 'handle');
+}
+
+// A SEARCH TERM OF {element_handle} IS A REFERENCE TO ANOTHER COLUMN IN THIS SAME QUERY, RATHER THAN A LITERAL VALUE TO COMPARE AGAINST
+// ie: typing >{attendance_buyers} in the search box for the attendance_sellers column means "more sellers than buyers" in each entry.
+// Returns the alias, form id and SQL fragment naming that column, or false when the term is not a reference to an element that is part of this query.
+// Note that { } terms are matched against $_POST and $_GET first, upstream in convertDynamicFilterTerms, so a request value always wins over a column of the same name.
+function formulize_resolveDynamicColumnReference($term, $fid, $linkfids)
+{
+	$term = trim((string) $term);
+	if (substr($term, 0, 1) !== "{" or substr($term, -1) !== "}") {
+		return false;
+	}
+	// element handles are sanitized when they are created, so sanitizing again here cannot alter a handle that names a real element, but it does guarantee nothing else can reach the SQL below
+	$handle = FormulizeObject::sanitize_handle_name(substr($term, 1, -1));
+	if ($handle === "") {
+		return false;
+	}
+	$metaData = formulize_getElementMetaData($handle, true);
+	if (!$metaData or !isset($metaData['id_form'])) {
+		return false;
+	}
+	// the alias is derived the same way prepareElementMetaData derives it for the column being searched.
+	// An element whose form is not part of this query has no column here to compare against, and is reported with a false alias
+	// rather than as "not a reference at all", so the caller drops the term instead of searching for the literal braces text.
+	if ($metaData['id_form'] == $fid) {
+		$alias = "main";
+	} elseif (is_array($linkfids) and ($linkKey = array_search($metaData['id_form'], $linkfids)) !== false) {
+		$alias = "f" . $linkKey;
+	} else {
+		$alias = false;
+	}
+	// use the handle as it is stored, rather than what the caller typed, so the authoritative spelling is what lands in the SQL
+	$column = "$alias.`" . $metaData['ele_handle'] . "`";
+	return array(
+		'alias' => $alias,
+		'formId' => $metaData['id_form'],
+		'handle' => $metaData['ele_handle'],
+		'sql' => $alias === false ? "" : ($metaData['ele_encrypt'] ? "AES_DECRYPT($column, '" . getAESPassword() . "')" : $column)
+	);
 }
 
 // THIS FUNCTION TAKES INPUTS ABOUT AND ELEMENT, AND RETURNS A SET OF INFORMATION THAT IS NECESSARY WHEN BUILDING VARIOUS PARTS OF THE WHERE CLAUSE

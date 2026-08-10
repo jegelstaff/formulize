@@ -666,7 +666,7 @@
 				<p class="Standard">Remember that plain OR: terms all join one group no matter which column they are in, so if you are already using OR: on another column, use the numbered ORSET form here to keep the two sets of terms apart.</p>
 				<h3 class="P6">
 						<a name="Wildcard_terms__7BTODAY_7D_and__7BUSER_7D"/>
-						Wildcard terms {TODAY}, {USER} and {BLANK}
+						Wildcard terms {TODAY}, {USER}, {BLANK}, and {element_handle}
 				</h3>
 				<div style="text-align:left">
 						<table
@@ -757,8 +757,48 @@
 												<p class="P14"></p>
 										</td>
 								</tr>
+								<tr class="Table41">
+										<td style="text-align:left;width:1.6618in; " class="Table4A2">
+												<p class="P14">&gt;{attendance_buyers}</p>
+										</td>
+										<td style="text-align:left;width:2.6715in; " class="Table4A2">
+												<p class="P14">Compare against the value in another column, instead of against a value you type.  What goes in the braces is an element handle.  Typed into the attendance_sellers column, this finds the entries where the value in attendance_sellers is greater than the value in attendance_buyers.</p>
+										</td>
+										<td style="text-align:left;width:2.1681in; " class="Table4C2">
+												<p class="P14">An entry with attendance_buyers 12 and attendance_sellers 15</p>
+										</td>
+								</tr>
+								<tr class="Table41">
+										<td style="text-align:left;width:1.6618in; " class="Table4A2">
+												<p class="P14">={attendance_buyers}</p>
+										</td>
+										<td style="text-align:left;width:2.6715in; " class="Table4A2">
+												<p class="P14">Find entries where the two columns hold exactly the same value.  Every operator works this way, so &lt;, &gt;=, != and the rest all compare the two values.</p>
+										</td>
+										<td style="text-align:left;width:2.1681in; " class="Table4C2">
+												<p class="P14">An entry with attendance_buyers 12 and attendance_sellers 12</p>
+										</td>
+								</tr>
+								<tr class="Table41">
+										<td style="text-align:left;width:1.6618in; " class="Table4A2">
+												<p class="P14">{attendance_buyers}</p>
+										</td>
+										<td style="text-align:left;width:2.6715in; " class="Table4A2">
+												<p class="P14">With no operator in front, it means "contains", the same as any other search term.  So this finds entries where the value in attendance_sellers contains the value in attendance_buyers.</p>
+										</td>
+										<td style="text-align:left;width:2.1681in; " class="Table4C2">
+												<p class="P14">An entry with attendance_buyers 12 and attendance_sellers 120</p>
+										</td>
+								</tr>
 						</table>
 				</div>
+				<p class="Standard">The name inside the braces is an <b>element handle</b> - the handle of the element whose column you want to compare against, exactly as it appears in the form editor.  The search does not look for that text.  It reads the value held in that column and compares this column against it, and it does that for each entry using that entry's own two values, so every entry is measured against itself rather than against any other entry.</p>
+				<p class="Standard">A few other things to know about comparing two columns:</p>
+				<ul>
+						<li><p class="Standard">The element you name has to be on the same form as the column you are searching, or on the main form of the list.  A reference to an element on any other form is ignored.</p></li>
+						<li><p class="Standard">The comparison follows the kind of column it is.  Two number columns compare as numbers, and two date columns compare as dates, but two ordinary text columns compare as text, where "9" is bigger than "10" because it starts with a bigger character.</p></li>
+						<li><p class="Standard">If the name in the braces is not an element handle, and is not being filled in from the page address, the search term is ignored.</p></li>
+				</ul>
 				<h3 class="P6">
 						<a name="_E2_80_9COR_E2_80_9D_searches_on_multiple_columns"/>
 						“OR” searches on multiple columns
@@ -992,7 +1032,7 @@
 												<p class="P14">{order}</p>
 										</td>
 										<td style="text-align:left;width:4.9222in; " class="Table6B2">
-												<p class="P14">Find entries that match whatever is in $_POST['order'] or if that's empty, $_GET['order'].  This is meant for use in a complex application where a certain screen might need to show different things at different times.  You can save one view with this kind of search term and then make some kind of architecture (with javascript maybe?) to populate $_POST or $_GET with the values you need at the right time.</p>
+												<p class="P14">Find entries that match whatever is in $_POST['order'] or if that's empty, $_GET['order'].  This is meant for use in a complex application where a certain screen might need to show different things at different times.  You can save one view with this kind of search term and then make some kind of architecture (with javascript maybe?) to populate $_POST or $_GET with the values you need at the right time.  If there is no value to find, the search term is ignored.  A name that is both a request value and an element handle is taken as the request value, so a request value always wins over the column comparison described above.</p>
 										</td>
 								</tr>
 								<tr class="Table61">

@@ -300,6 +300,16 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 	// if literal text that users type can be used as is to interact with the database, simply return the $value
 	// LINKED ELEMENTS AND UITEXT ARE RESOLVED PRIOR TO THIS METHOD BEING CALLED
 	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
+		// An empty value is the absence of a date, not a date, so it has to come back out empty.
+		// strtotime("") is false, and date() reads false as the timestamp 0, so without this a search for blank dates
+		// silently becomes a search for 1970-01-01. That breaks {BLANK} on a date column two ways: the "= ''" half of the
+		// pair looks for the epoch, and the "IS NULL" half becomes the malformed "IS NULL 1970-01-01". The second of those
+		// also stops the clause ending in IS NULL, which is how the extraction layer recognises that a main form entry with
+		// no connected entry at all should still be found, so the connected form gets an INNER join and those entries are
+		// dropped from the results.
+		if(trim((string) $value) === "") {
+			return $value;
+		}
 		$firstChar = substr($value, 0, 1);
 		$operators = array("=", "!", ">", "<");
 		if(!in_array($firstChar, $operators)) {

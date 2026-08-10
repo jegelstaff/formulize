@@ -8469,6 +8469,8 @@ function convertVariableSearchToLiteral($v, $requestKeyToUse) {
         return htmlspecialchars(strip_tags(trim($_GET[$requestKeyToUse])));
     } elseif($v == "{USER}" AND $xoopsUser) {
         return $xoopsUser->getVar('name') ? $xoopsUser->getVar('name') : $xoopsUser->getVar('uname');
+    } elseif(formulize_searchTermIsColumnReference($requestKeyToUse)) {
+        return true; // a reference to another column in the query, which is resolved when the SQL is built, so it must survive intact for everyone, not just users who can edit views
     } elseif(!strstr($v, "{BLANK}") AND !strstr($v, "{TODAY") AND !strstr($v, "{PERGROUPFILTER}") AND !strstr($v, "{USER")) {
         return false; // clear terms where no match was found, because this term is not active on the current page, so don't confuse users by showing it
     }
@@ -9093,6 +9095,26 @@ function convertDynamicFilterTerms($term, &$resolvedFromHandle = null) {
 }
 
 /**
+ * Does the inside of a { } search term name an element, rather than a $_POST/$_GET key?
+ *
+ * A term like {attendance_buyers} that names a real element is a reference to that column in the query, which cannot be
+ * resolved until the SQL is being built and the table aliases are known. Callers use this to tell such a term apart from
+ * a $_POST/$_GET reference that came up empty, which is discarded instead. Note that request values are always checked
+ * first (see convertDynamicFilterTerms) so a request key always takes precedence over a column of the same name.
+ *
+ * @param string $handle The text from between the braces
+ * @return bool True when the text names an element
+ */
+function formulize_searchTermIsColumnReference($handle) {
+    $handle = FormulizeObject::sanitize_handle_name($handle); // handles are sanitized when elements are created, so this cannot alter a real one
+    if($handle === "") {
+        return false;
+    }
+    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+    return is_object($element_handler->get($handle));
+}
+
+/**
  * Take what users have typed into a search box, and standardize it into an array of classic search terms.
  * Users can type all kinds of things, including "between date1 and date2" and also "X OR Y" etc
  * They can also separate multiple terms with // such as "apples//oranges" which means apples and oranges (which would only match a multi value field)
@@ -9106,6 +9128,18 @@ function convertDynamicFilterTerms($term, &$resolvedFromHandle = null) {
  */
 function standardizeUserTypedSearchTerms($searchString, $elementIdentifier, &$resolvedFromHandle = null) {
 
+	// A box holding nothing but whitespace means nothing was typed, whatever kind of element it belongs to, so it becomes
+	// empty here and is then discarded by splitUpSearchStringIntoSearchTerms below, the same as a box left blank. Without
+	// this the term survives as a search for a literal space, and with the default LIKE operator that builds "LIKE '%%'",
+	// which matches every entry - so a stray space in a search box would silently switch the filter off.
+	//
+	// This deliberately does NOT strip the space around a term that has other characters in it. Whether that space matters
+	// depends on the element: a leading space is a legitimate way to search a text box for " Smith" without also matching
+	// "Blacksmith", while on a date or a number it can only be a typo. That call belongs to the element handler's
+	// prepareLiteralTextForDB(), which knows the type, and not to this function, which handles every type the same way.
+	if (trim($searchString) === "") {
+		$searchString = "";
+	}
 	$searchString = parseBetweenDatesSyntaxInSearchStrings($searchString);
 	$searchString = convertDynamicFilterTerms($searchString, $resolvedFromHandle);
 	return splitUpSearchStringIntoSearchTerms($searchString, $elementIdentifier);
@@ -9578,8 +9612,12 @@ function formulize_parseSearchesIntoFilter($searches) {
 				} elseif ($searchgetkey == "PERGROUPFILTER") {
 					$one_search = $searchgetkey;
 					$operator = "";
-				} elseif ($searchgetkey) { // we were supposed to find something above, but did not, so there is a user defined search term, which has no value, ergo disregard this search term
-					continue;
+				} elseif ($searchgetkey) {
+					// A reference to another column in this query is left alone, braces and all, to be resolved in formulize_parseFilter
+					// once the table aliases are known. Anything else is a user defined search term which has no value, ergo disregard it.
+					if (!formulize_searchTermIsColumnReference($searchgetkey)) {
+						continue;
+					}
 				} else {
 					$one_search = "";
 					$operator = "";
