@@ -9057,7 +9057,7 @@ function prepareLinkedElementExtraClause($pgroupsfilter, $parentFormFrom, $sourc
  * @param string $term The filter term to convert
  * @return string The converted filter term
  */
-function convertDynamicFilterTerms($term) {
+function convertDynamicFilterTerms($term, &$resolvedFromHandle = null) {
 
     // check for starting and ending ! ! and put them back at the end if necessary
     $needPreserveHiddenMarkers = false;
@@ -9078,6 +9078,11 @@ function convertDynamicFilterTerms($term) {
                 $term = "";
             }
             $term = $operatorToPutBack.$term;
+            // record which column this value came from. A reference to another column's search box is written as {search_handle},
+            // so strip the prefix the list UI uses for its search inputs and report the element handle itself. The extraction layer
+            // uses this to figure out which of a linked element's alternate columns a numeric search term is a foreign key for.
+            $resolvedFromHandle = (substr($searchgetkey, 0, 7) == "search_") ? substr($searchgetkey, 7) : $searchgetkey;
+            $resolvedFromHandle = preg_replace('/[^A-Za-z0-9_]/', '', $resolvedFromHandle); // the key came from whatever the user typed, and it travels inside a filter string that is split on /**/ and ][
         }
     }
 
@@ -9096,12 +9101,13 @@ function convertDynamicFilterTerms($term) {
  *
  * @param string $searchString The string we are parsing
  * @param mixed $elementIdentifier An element object, id number, or handle. Represents the element that this search string is searching against.
+ * @param string $resolvedFromHandle Set by reference to the handle of the column a {reference} pulled this value out of, when the string was one
  * @return array $searchArray An array of all search terms deduced from the string, even if only one.
  */
-function standardizeUserTypedSearchTerms($searchString, $elementIdentifier) {
+function standardizeUserTypedSearchTerms($searchString, $elementIdentifier, &$resolvedFromHandle = null) {
 
 	$searchString = parseBetweenDatesSyntaxInSearchStrings($searchString);
-	$searchString = convertDynamicFilterTerms($searchString);
+	$searchString = convertDynamicFilterTerms($searchString, $resolvedFromHandle);
 	return splitUpSearchStringIntoSearchTerms($searchString, $elementIdentifier);
 }
 
@@ -9149,6 +9155,160 @@ function splitUpSearchStringIntoSearchTerms($searchString, $elementIdentifier) {
 
 
 /**
+ * Reduce a month name to a form that can be compared regardless of how it was typed or stored.
+ *
+ * The language files hold names as HTML entities (F&eacute;vrier), and people type accents inconsistently or not at all,
+ * so both sides of the comparison go through here: entities decoded, lowercased, accents removed, any trailing dot dropped.
+ *
+ * @param string $name A month name, typed by a user or read out of a language file
+ * @return string The name in comparable form
+ */
+function formulize_normalizeMonthNameForSearch($name) {
+	$name = html_entity_decode((string) $name, ENT_QUOTES, 'UTF-8');
+	$name = function_exists('mb_strtolower') ? mb_strtolower($name, 'UTF-8') : strtolower($name);
+	// Both cases are listed, because without mbstring the lowercasing above only reaches ASCII, so an accented capital
+	// would survive it. Doing the folding here rather than relying on iconv//TRANSLIT keeps this independent of locale.
+	$name = strtr($name, array(
+		'à'=>'a', 'â'=>'a', 'ä'=>'a', 'ç'=>'c', 'é'=>'e', 'è'=>'e', 'ê'=>'e', 'ë'=>'e',
+		'î'=>'i', 'ï'=>'i', 'ô'=>'o', 'ö'=>'o', 'ù'=>'u', 'û'=>'u', 'ü'=>'u',
+		'À'=>'a', 'Â'=>'a', 'Ä'=>'a', 'Ç'=>'c', 'É'=>'e', 'È'=>'e', 'Ê'=>'e', 'Ë'=>'e',
+		'Î'=>'i', 'Ï'=>'i', 'Ô'=>'o', 'Ö'=>'o', 'Ù'=>'u', 'Û'=>'u', 'Ü'=>'u',
+	));
+	return rtrim(trim(strtolower($name)), '.');
+}
+
+/**
+ * The month names a search will recognise, as a normalized name => month number map.
+ *
+ * Three sources, so that a month typed in the language the page is being read in is understood no matter how the site is
+ * set up. English is always accepted, since people mix languages when typing and it costs nothing. The language being
+ * displayed right now is added on top of that, which matters because a ?lang= override changes the language of the page
+ * without reloading the site's language files. And finally whatever the loaded language files themselves call the months,
+ * so a site running in a language not listed here still works without any code change.
+ *
+ * Short forms are generated rather than listed, and a short form that would point at two different months is dropped
+ * instead of guessing - "jui" could be juin or juillet, so French users type juin or juil.
+ *
+ * @return array Normalized month name => month number (1-12)
+ */
+function formulize_monthNamesForSearch() {
+
+	static $cache = array();
+	global $easiestml_lang;
+	$lang = isset($_GET['lang']) ? $_GET['lang'] : $easiestml_lang;
+	$lang = preg_replace('/[^a-z]/', '', strtolower((string) $lang));
+	if (isset($cache[$lang])) {
+		return $cache[$lang];
+	}
+
+	$builtIn = array(
+		'en' => array('january','february','march','april','may','june','july','august','september','october','november','december'),
+		'fr' => array('janvier','fevrier','mars','avril','mai','juin','juillet','aout','septembre','octobre','novembre','decembre'),
+	);
+	$languagesToUse = array('en');
+	if ($lang AND isset($builtIn[$lang]) AND $lang != 'en') {
+		$languagesToUse[] = $lang;
+	}
+
+	$lookup = array();
+	// note the abbreviations are deliberately added after all the full names, so that a full name always wins a collision
+	$abbreviations = array();
+	foreach ($languagesToUse as $useLang) {
+		foreach ($builtIn[$useLang] as $index => $name) {
+			$lookup[$name] = $index + 1;
+			foreach (array(3, 4) as $length) {
+				$short = substr($name, 0, $length);
+				if ($short === $name) {
+					continue;
+				}
+				$abbreviations[$short] = (isset($abbreviations[$short]) AND $abbreviations[$short] != $index + 1) ? false : $index + 1;
+			}
+		}
+	}
+	foreach ($abbreviations as $short => $month) {
+		if ($month AND !isset($lookup[$short])) {
+			$lookup[$short] = $month;
+		}
+	}
+
+	// whatever the loaded language files call the months, long and short
+	$longConstants  = array('JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER');
+	$shortConstants = array('JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC');
+	foreach ($longConstants as $index => $constantName) {
+		foreach (array($constantName, $shortConstants[$index]) as $thisConstant) {
+			if (defined('_CAL_' . $thisConstant)) {
+				$fromLanguageFile = formulize_normalizeMonthNameForSearch(constant('_CAL_' . $thisConstant));
+				if ($fromLanguageFile !== '') {
+					$lookup[$fromLanguageFile] = $index + 1;
+				}
+			}
+		}
+	}
+
+	$cache[$lang] = $lookup;
+	return $lookup;
+}
+
+/**
+ * The first and last day of a given month.
+ *
+ * @param int $year Four digit year
+ * @param int $month Month number, 1-12
+ * @return array start and end, both as YYYY-MM-DD
+ */
+function formulize_datePeriodForMonth($year, $month) {
+	return array(
+		'start' => sprintf('%04d-%02d-01', $year, $month),
+		'end'   => sprintf('%04d-%02d-%02d', $year, $month, (int) date('t', mktime(0, 0, 0, $month, 1, $year))),
+	);
+}
+
+/**
+ * Work out whether a date search names a whole month or a whole year rather than one particular day.
+ *
+ * Dates typed into a search box are run through strtotime, which always produces a single day: "2026-10" becomes the 1st
+ * and "October" becomes today's date in October, neither of which is what anyone meant. This spots the terms that describe
+ * a period, so the search can be turned into a range instead. Anything more specific returns false and is left alone.
+ *
+ * Recognised: 2026, 2026-10, 2026-1, and a month by name with an optional year - October, Oct, Octobre 2026, oct. 2026.
+ *
+ * @param string $value The search term, with any operator already removed
+ * @return array|false start and end as YYYY-MM-DD, or false when the term is not a whole month or year
+ */
+function formulize_parseDatePeriodSearchTerm($value) {
+
+	if (!is_string($value)) {
+		return false;
+	}
+	$value = trim($value);
+	if ($value === '') {
+		return false;
+	}
+
+	// a whole year, or a year and a month
+	if (preg_match('/^(\d{4})(?:-(\d{1,2}))?$/', $value, $matches)) {
+		$year = (int) $matches[1];
+		if (!isset($matches[2]) OR $matches[2] === '') {
+			return array('start' => sprintf('%04d-01-01', $year), 'end' => sprintf('%04d-12-31', $year));
+		}
+		$month = (int) $matches[2];
+		return ($month >= 1 AND $month <= 12) ? formulize_datePeriodForMonth($year, $month) : false;
+	}
+
+	// a month by name, with or without a year. The letter class has to be unicode aware for names like Février.
+	if (preg_match('/^(\p{L}{3,10})\.?(?:\s*,?\s*(\d{4}))?$/u', $value, $matches)) {
+		$months = formulize_monthNamesForSearch();
+		$name = formulize_normalizeMonthNameForSearch($matches[1]);
+		if (!empty($months[$name])) {
+			$year = (isset($matches[2]) AND $matches[2] !== '') ? (int) $matches[2] : (int) date('Y');
+			return formulize_datePeriodForMonth($year, $months[$name]);
+		}
+	}
+
+	return false;
+}
+
+/**
  * Convert "between 2001-01-01 and 2002-02-02" to a normal date filter with two dates
  *
  * @param string $searchString The string we are parsing
@@ -9160,6 +9320,92 @@ function parseBetweenDatesSyntaxInSearchStrings($searchString) {
 		$searchString = ">={$matches[1]}//<={$matches[2]}";
 	}
 	return $searchString;
+}
+
+/**
+ * Unwrap a value taken straight out of a list screen's search box.
+ *
+ * A search box does not always hold the value itself. A quickfilter dropdown stores its selection wrapped as qsf_<n>_<value>, because the
+ * option list needs to tell its entries apart. Anything that borrows another column's search box has to unwrap that before it has a value
+ * it can search on, and this is the one place that knows the wrapper format, so that borrowing code does not have to.
+ *
+ * @param string $value The raw contents of a search box
+ * @return string The value itself, returned unchanged when it was not wrapped
+ */
+function formulize_unwrapSearchBoxValue($value) {
+
+	if (!is_string($value)) {
+		return $value;
+	}
+	// take everything after the counter rather than exploding on underscores, so that a value containing an underscore survives intact
+	if (preg_match('/^qsf_\d+_(.*)$/s', $value, $matches)) {
+		return $matches[1];
+	}
+	return $value;
+}
+
+/**
+ * Pull any group prefix off the front of a user typed search term.
+ *
+ * A search term can declare which group of conditions it belongs to, and what that group means:
+ *   OR      / OR:term        the term joins the single set of OR'd conditions
+ *   ORSET1: / ORSETxterm     the term joins a named set of OR'd conditions
+ *   EMPTYSET: / EMPTYSET1:   the term joins a set of conditions that must match NO connected entry
+ *
+ * With a colon, the key can be any number of digits, and no key at all means the implicit 0th set. The legacy ORSET syntax
+ * has no delimiter and takes exactly one character as the key, which is why the colon form was added: ORSETterm silently
+ * consumes the "t". EMPTYSET is new so it only supports the colon form for keys, and reads everything after a bare
+ * EMPTYSET as the search term.
+ *
+ * @param string $one_search The search term, possibly carrying a group prefix
+ * @return array The term with any prefix removed, the kind of group it belongs to ('', 'or', 'orset' or 'emptyset'), and the group key
+ */
+function formulize_extractSearchGroupPrefix($one_search) {
+
+	$noPrefix = array('term' => $one_search, 'group' => '', 'key' => '');
+
+	if (substr($one_search, 0, 8) == "EMPTYSET") {
+		$rest = substr($one_search, 8);
+		if (preg_match('/^(\d*):(.*)$/s', $rest, $matches)) {
+			return array('term' => $matches[2], 'group' => 'emptyset', 'key' => $matches[1]);
+		}
+		return array('term' => $rest, 'group' => 'emptyset', 'key' => ''); // no colon means no key, and all of the remainder is the search term
+	}
+
+	if (substr($one_search, 0, 5) == "ORSET") {
+		$rest = substr($one_search, 5);
+		if (preg_match('/^(\d*):(.*)$/s', $rest, $matches)) {
+			return array('term' => $matches[2], 'group' => 'orset', 'key' => $matches[1]);
+		}
+		if ($rest !== "") {
+			return array('term' => substr($rest, 1), 'group' => 'orset', 'key' => substr($rest, 0, 1)); // legacy: exactly one character of key, no delimiter
+		}
+		return array('term' => '', 'group' => 'orset', 'key' => ''); // bare ORSET, which the legacy parse also treated as a group with an empty term
+	}
+
+	if (substr($one_search, 0, 2) == "OR" and strlen($one_search) > 2) {
+		$rest = substr($one_search, 2);
+		$colonWasUsed = (substr($rest, 0, 1) == ":");
+		if ($colonWasUsed) {
+			$rest = substr($rest, 1);
+		}
+		// The inline "X OR Y" syntax works by splitting the string and prepending OR to each piece, so a piece that already carried a group
+		// prefix of its own arrives here as OREMPTYSET:x or ORORSET1:x. Re-read the remainder instead of swallowing that prefix into the
+		// search value, which would turn it into a literal search for text like "EMPTYSET:red" and quietly match nothing.
+		// A term can only belong to one group, and the prefix the user wrote wins over the OR the splitter added.
+		if (substr($rest, 0, 8) == "EMPTYSET" OR substr($rest, 0, 5) == "ORSET") {
+			return formulize_extractSearchGroupPrefix($rest);
+		}
+		// Without a colon, a term written entirely in capitals is a search for that word rather than an OR search: ORANGE finds "orange",
+		// it is not an OR search for "ANGE". People write an OR search against the value they are looking for, so ORapples and ORSmith are
+		// unaffected - only a term with no lowercase in it at all is read this way. Use OR: to OR search for a value that is itself capitals.
+		if (!$colonWasUsed AND preg_match('/[A-Z]/', $rest) AND !preg_match('/[a-z]/', $rest)) {
+			return $noPrefix;
+		}
+		return array('term' => $rest, 'group' => 'or', 'key' => '');
+	}
+
+	return $noPrefix;
 }
 
 /**
@@ -9176,11 +9422,13 @@ function formulize_parseSearchesIntoFilter($searches) {
 	$ORstart = 1;
 	$ORfilter = "";
 	$individualORSearches = array();
+	$emptySetSearches = array(); // sets of conditions that must match NO connected entry, keyed the same way the individual OR searches are
   $element_handler = xoops_getmodulehandler('elements','formulize');
 	global $xoopsUser, $xoopsConfig;
 	foreach($searches as $key => $master_one_search) { // $key is the element handle
 
-		$searchArray = standardizeUserTypedSearchTerms($master_one_search, $key);
+		$searchProvenance = null;
+		$searchArray = standardizeUserTypedSearchTerms($master_one_search, $key, $searchProvenance);
 
 		foreach ($searchArray as $one_search) {
 			// used for trapping the {BLANK} keywords into their own space so they don't interfere with each other, or other filters
@@ -9201,9 +9449,42 @@ function formulize_parseSearchesIntoFilter($searches) {
 			}
 
 			$addToORFilter = false; // flag to indicate if we need to apply the current search term to a set of "OR'd" terms
+			$addToEmptySetFilter = false; // flag to indicate that this term belongs to a set of conditions that must match NO connected entry
+			$ownEmptySetFilterKey = "";
 			$operator = "";
+			$provenanceHandle = $searchProvenance; // the column that a dynamic reference pulled this value out of, if any
 
-			// remove the qsf_ parts to make the quickfilter searches work
+			// strip out any starting and ending ! that indicate that the column should not be stripped
+			if (substr($one_search, 0, 1) == "!" and substr($one_search, -1) == "!") {
+				$one_search = substr($one_search, 1, -1);
+			}
+
+			// look for group prefixes (OR, ORSET, EMPTYSET) and strip them off, recording which group this term belongs to.
+			// This has to happen before the dynamic filter terms are resolved below, because a {reference} is only unpacked when it
+			// is the entire value, so a prefix sitting in front of one would stop it from ever resolving.
+			$groupPrefix = formulize_extractSearchGroupPrefix($one_search);
+			$one_search = $groupPrefix['term'];
+			switch ($groupPrefix['group']) {
+				case 'emptyset':
+					$addToEmptySetFilter = true;
+					$ownEmptySetFilterKey = $groupPrefix['key'];
+					break;
+				case 'orset':
+					$addToItsOwnORFilter = true;
+					$ownORFilterKey = $groupPrefix['key'];
+					break;
+				case 'or':
+					$addToORFilter = true;
+					break;
+			}
+
+			$one_search = convertDynamicFilterTerms($one_search, $provenanceHandle); // probably don't need to do this again?? Except what we unpacked first time might have nested { } terms in it? If it did, we would need to do this, however rare that might be
+			if ($one_search === "") {
+				continue;
+			}
+
+			// remove the qsf_ parts to make the quickfilter searches work.
+			// Runs after the dynamic filter terms are resolved, since a reference to another column's search box hands us that column's raw quickfilter value to unpack.
 			if (substr($one_search, 0, 4) == "qsf_") {
 				$qsfparts = explode("_", $one_search);
 				$allowsMulti = false;
@@ -9227,28 +9508,6 @@ function formulize_parseSearchesIntoFilter($searches) {
 					$addToORFilter = true;
 					$one_search = substr($qsfparts[2], 1)."/**/!=][$key/**//**/=][$key/**/";
 					$operator = "IS NULL"; // will get tacked on the end, yuck
-				}
-			}
-
-			// strip out any starting and ending ! that indicate that the column should not be stripped
-			if (substr($one_search, 0, 1) == "!" and substr($one_search, -1) == "!") {
-				$one_search = substr($one_search, 1, -1);
-			}
-
-			$one_search = convertDynamicFilterTerms($one_search); // probably don't need to do this again?? Except what we unpacked first time might have nested { } terms in it? If it did, we would need to do this, however rare that might be
-			if ($one_search === "") {
-				continue;
-			}
-
-			// look for OR indicators...if all caps OR is at the front, then that means that this search is to put put into a separate set of OR filters that gets appended as a set to the main set of AND filters
-			if (substr($one_search, 0, 2) == "OR" and strlen($one_search) > 2) {
-				if (substr($one_search, 2, 3) == "SET") {
-					$addToItsOwnORFilter = true;
-					$ownORFilterKey = substr($one_search, 2, 4);
-					$one_search = substr($one_search, 6);
-				} else {
-					$addToORFilter = true;
-					$one_search = substr($one_search, 2);
 				}
 			}
 
@@ -9344,8 +9603,26 @@ function formulize_parseSearchesIntoFilter($searches) {
 			}
 			if ($operator) {
 				$one_search = $one_search . "/**/" . $operator;
+				// record the column a dynamic reference pulled this value out of, in the fourth slot of the term.
+				// Only meaningful alongside an explicit operator, which is also the only case the extraction layer consults it in.
+				if ($provenanceHandle) {
+					$one_search = $one_search . "/**/" . $provenanceHandle;
+				}
 			}
-			if ($addToItsOwnORFilter) {
+			if ($addToEmptySetFilter) {
+				if ($addToItsOwnORFilter OR $addToORFilter) {
+					// some terms expand into a self contained construction whose parts have to be OR'd together, {BLANK} being the common one
+					// ("= '' OR IS NULL"). Those get a set of their own, because the conditions in a normal empty set are AND'd.
+					$emptySetSearches[] = array('andor' => 'or', 'terms' => $key . "/**/$one_search");
+				} else {
+					$emptySetKey = "k" . $ownEmptySetFilterKey; // an unkeyed EMPTYSET is the implicit 0th set, and all of its terms accumulate together
+					if (!isset($emptySetSearches[$emptySetKey])) {
+						$emptySetSearches[$emptySetKey] = array('andor' => 'and', 'terms' => $key . "/**/$one_search");
+					} else {
+						$emptySetSearches[$emptySetKey]['terms'] .= "][" . $key . "/**/$one_search";
+					}
+				}
+			} elseif ($addToItsOwnORFilter) {
 				if ($ownORFilterKey) {
 					if (!isset($individualORSearches[$ownORFilterKey])) {
 						$individualORSearches[$ownORFilterKey] = $key . "/**/$one_search";
@@ -9370,8 +9647,9 @@ function formulize_parseSearchesIntoFilter($searches) {
 			}
 		}
 	}
-	// if there's a set of options that have been OR'd, then we need to construction a more complex filter
-	if($ORfilter OR count((array) $individualORSearches)>0) {
+	// if there's a set of options that have been OR'd, or a set that has to match no connected entry, then we need to construction a more complex filter
+	if($ORfilter OR count((array) $individualORSearches)>0 OR count((array) $emptySetSearches)>0) {
+		$arrayFilter = array();
 		$filterIndex = 0;
         if($filter) {
     		$arrayFilter[$filterIndex][0] = "and";
@@ -9387,6 +9665,18 @@ function formulize_parseSearchesIntoFilter($searches) {
 				$filterIndex++;
 				$arrayFilter[$filterIndex][0] = "or";
 				$arrayFilter[$filterIndex][1] = $thisORfilter;
+			}
+		}
+		// Empty set expressions carry a quantifier in the third slot. It tells the extraction layer that these conditions describe
+		// connected entries that must NOT exist for a main form entry to qualify, rather than conditions the returned rows satisfy.
+		// A set whose terms all failed to resolve never got created above, which is what we want: an empty set of conditions would
+		// mean "no connected entry at all", which is a completely different search from the one that was asked for.
+		if(count((array) $emptySetSearches)>0) {
+			foreach($emptySetSearches as $thisEmptySet) {
+				$filterIndex++;
+				$arrayFilter[$filterIndex][0] = $thisEmptySet['andor']; // normally "and", since every condition in one empty set has to be true of the same connected entry
+				$arrayFilter[$filterIndex][1] = $thisEmptySet['terms'];
+				$arrayFilter[$filterIndex][2] = "none";
 			}
 		}
 		$filter = $arrayFilter;

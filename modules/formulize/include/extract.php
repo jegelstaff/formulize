@@ -629,7 +629,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		// PARSE THE FILTER THAT HAS BEEN PASSED IN, INTO WHERE CLAUSE AND OTHER RELATED CLAUSES WE WILL NEED
 		// parsing the filter MUST come early in the process, because other things rely on it!
 		formulize_getElementMetaData("", false, $fid); // initialize the element metadata for this form...serious performance gain from this
-		list($formFieldFilterMap, $whereClause, $orderByClause, $oneSideFilters, $otherPerGroupFilterJoins, $otherPerGroupFilterWhereClause, $missingEntrySatisfiesSearch) = formulize_parseFilter($filter, $andor, $linkformids, $fid, $frid, $scope, $isUserTableForm);
+		list($formFieldFilterMap, $whereClause, $orderByClause, $oneSideFilters, $otherPerGroupFilterJoins, $otherPerGroupFilterWhereClause, $missingEntrySatisfiesSearch, $emptySetFilters) = formulize_parseFilter($filter, $andor, $linkformids, $fid, $frid, $scope, $isUserTableForm);
 
 		// ***********************
 		// NOTE:  the oneSideFilters are divided into two sections, the AND filters and OR filters for a given form
@@ -730,7 +730,8 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 					$linkSelectIndex[$formAliasId] = "f$formAliasId.entry_id AS f" . $formAliasId . "_entry_id, f$formAliasId.creation_uid AS f" . $formAliasId . "_creation_uid, f$formAliasId.mod_uid AS f" . $formAliasId . "_mod_uid, f$formAliasId.creation_datetime AS f" . $formAliasId . "_creation_datetime, f$formAliasId.mod_datetime AS f" . $formAliasId . "_mod_datetime, f$formAliasId.*";
 					$linkSelect .= ", ".$linkSelectIndex[$formAliasId];
 					// when a main form entry with no connected entry would satisfy the search on this form, stay with a LEFT JOIN so those entries survive the join, and then get matched by the "IS NULL" terms in the where clause
-					$joinType = (isset($formFieldFilterMap[$linkedFid]) AND !isset($missingEntrySatisfiesSearch[$linkedFid])) ? "INNER" : "LEFT";
+					// an empty set expression on this form does the same thing for a different reason: an entry with nothing connected to it satisfies "no connected entry matches this" by definition, so it has to survive the join to be tested
+					$joinType = (isset($formFieldFilterMap[$linkedFid]) AND !isset($missingEntrySatisfiesSearch[$linkedFid]) AND !isset($emptySetFilters[$linkedFid])) ? "INNER" : "LEFT";
 					$linkedFormObject = $form_handler->get($linkedFid);
 					if($linkedFormObject->getVar('entries_are_users')) {
 						$linkedEauUidColumn = 'formulize_user_account_uid_' . $linkedFid;
@@ -755,32 +756,50 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 					}
 					$joinTextIndex["f" . $formAliasId] = $newJoinText;
 					$joinText .= $newJoinText;
-					if (isset($oneSideFilters[$linkedFid]) AND is_array($oneSideFilters[$linkedFid]) AND count($oneSideFilters[$linkedFid]) > 0) { // only setup the existsJoinText when there is a where clause that applies to this form...otherwise, we don't care, this form is not relevant to the query that the calculations will do (except maybe when the mainform is not the one-side form...but that's another story)
+					$hasOneSideFilters = (isset($oneSideFilters[$linkedFid]) AND is_array($oneSideFilters[$linkedFid]) AND count($oneSideFilters[$linkedFid]) > 0);
+					$hasEmptySetFilters = (isset($emptySetFilters[$linkedFid]) AND is_array($emptySetFilters[$linkedFid]) AND count($emptySetFilters[$linkedFid]) > 0);
+					if ($hasOneSideFilters OR $hasEmptySetFilters) { // only setup the existsJoinText when there is a where clause that applies to this form...otherwise, we don't care, this form is not relevant to the query that the calculations will do (except maybe when the mainform is not the one-side form...but that's another story)
 						// If this linked form is entries_are_users and any filter references its EAU table aliases,
 						// inject those joins inside the EXISTS subquery (before the WHERE).
 						$existsEauJoins = "";
 						if (isset($eauLinkedJoinTextIndex[$linkedFid])) {
-							$linkedFilterContent = implode(' ', $oneSideFilters[$linkedFid]);
+							$linkedFilterContent = implode(' ', ($hasOneSideFilters ? $oneSideFilters[$linkedFid] : array()))
+								. ' ' . implode(' ', ($hasEmptySetFilters ? $emptySetFilters[$linkedFid] : array()));
 							$eauAlias = "f$formAliasId";
 							if (strpos($linkedFilterContent, "eau_usertable_{$eauAlias}") !== false ||
 								strpos($linkedFilterContent, "eau_profile_{$eauAlias}") !== false) {
 								$existsEauJoins = $eauLinkedJoinTextIndex[$linkedFid];
 							}
 						}
+						$thisLinkedFidPerGroupFilter = isset($perGroupFiltersPerForms[$linkedFid]) ? $perGroupFiltersPerForms[$linkedFid] : "";
 						$existsBoolean = $existsJoinText ? " $andor " : "";
 						$existsFromAndAlias = DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$formAliasId";
-						$thisExists = " EXISTS(SELECT 1 FROM $existsFromAndAlias $existsEauJoins WHERE " . $newJoinText;
-						foreach ($oneSideFilters[$linkedFid] as $thisOneSideFilter) {
-							$thisLinkedFidPerGroupFilter = isset($perGroupFiltersPerForms[$linkedFid]) ? $perGroupFiltersPerForms[$linkedFid] : "";
-							$thisExists .= " AND ( $thisOneSideFilter $thisLinkedFidPerGroupFilter) ";
+						$existsClausesForThisForm = array();
+						if ($hasOneSideFilters) {
+							$thisExists = " EXISTS(SELECT 1 FROM $existsFromAndAlias $existsEauJoins WHERE " . $newJoinText;
+							foreach ($oneSideFilters[$linkedFid] as $thisOneSideFilter) {
+								$thisExists .= " AND ( $thisOneSideFilter $thisLinkedFidPerGroupFilter) ";
+							}
+							$thisExists .= ") "; // close the exists clause itself
+							// the exists clause on its own throws away main form entries that have nothing connected to them at all, so when those entries would satisfy the search, allow for them explicitly.
+							// Note $newJoinText already has this form's per group filter on the end of it, so a connected entry the user isn't allowed to see counts as no connected entry, which is what we want.
+							if (isset($missingEntrySatisfiesSearch[$linkedFid])) {
+								$thisExists = " ( $thisExists OR NOT EXISTS(SELECT 1 FROM $existsFromAndAlias $existsEauJoins WHERE $newJoinText) ) ";
+							}
+							$existsClausesForThisForm[] = $thisExists;
 						}
-						$thisExists .= ") "; // close the exists clause itself
-						// the exists clause on its own throws away main form entries that have nothing connected to them at all, so when those entries would satisfy the search, allow for them explicitly.
-						// Note $newJoinText already has this form's per group filter on the end of it, so a connected entry the user isn't allowed to see counts as no connected entry, which is what we want.
-						if (isset($missingEntrySatisfiesSearch[$linkedFid])) {
-							$thisExists = " ( $thisExists OR NOT EXISTS(SELECT 1 FROM $existsFromAndAlias $existsEauJoins WHERE $newJoinText) ) ";
+						// Empty set expressions are the mirror image: the main form entry qualifies only when no connected entry matches the conditions.
+						// Each expression is its own clause, and they are always AND'd, since each one names a connected entry that must not be there.
+						// An entry with nothing connected to it passes these automatically, which is the behaviour we want and why the join is left open.
+						if ($hasEmptySetFilters) {
+							foreach ($emptySetFilters[$linkedFid] as $thisEmptySetFilter) {
+								$existsClausesForThisForm[] = " NOT EXISTS(SELECT 1 FROM $existsFromAndAlias $existsEauJoins WHERE " . $newJoinText . " AND ( $thisEmptySetFilter $thisLinkedFidPerGroupFilter) ) ";
+							}
 						}
-						$existsJoinText .= $existsBoolean . $thisExists;
+						// bracket the clauses for this form when there is more than one of them, so the global and/or between forms cannot bind into the middle of the set
+						$existsJoinText .= $existsBoolean . (count($existsClausesForThisForm) > 1
+							? " ( " . implode(" AND ", $existsClausesForThisForm) . " ) "
+							: implode("", $existsClausesForThisForm));
 					}
 				}
 			}
@@ -1965,7 +1984,7 @@ function gatherDerivedValueFieldMetadata($fid, $linkformids)
 // Returns the WHERE clause string if the handler implements buildSearchWhereClause(), or false otherwise.
 // This allows element types that require complex subqueries (e.g., group_memberships) to encapsulate
 // their own SQL generation rather than embedding it in the monolithic formulize_parseFilter function.
-function formulize_tryDelegatedSearchWhere($eleType, $term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main')
+function formulize_tryDelegatedSearchWhere($eleType, $term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main', $queryElement = '')
 {
 	$classFile = XOOPS_ROOT_PATH . '/modules/formulize/class/' . $eleType . 'Element.php';
 	if (!file_exists($classFile)) {
@@ -2004,7 +2023,9 @@ function formulize_tryDelegatedSearchWhere($eleType, $term, $operator, $quotes, 
 			$likebits = '';
 			$quotes = $quotes === '' ? '' : "'";
 		}
-		return $typeHandler->buildSearchWhereClause($term, $normalizedOperator, $quotes, $likebits, $fid, $tableAlias);
+		// $queryElement is the fully qualified column this term is searching, for the element types whose column varies
+		// from form to form. Handlers with a fixed column of their own simply do not declare the parameter.
+		return $typeHandler->buildSearchWhereClause($term, $normalizedOperator, $quotes, $likebits, $fid, $tableAlias, $queryElement);
 	}
 	return false;
 }
@@ -2016,7 +2037,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 {
 	global $xoopsDB;
 	if ($filtertemp == "") {
-		return array(array(), "", "", array(), "", "", array());
+		return array(array(), "", "", array(), "", "", array(), array());
 	}
 
 	$formFieldFilterMap = array();
@@ -2026,6 +2047,8 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 	$otherPerGroupFilterWhereClause = array();
 
 	$missingEntryTermCounts = array(); // per connected form, per local and/or, per search expression: how many terms there are, and how many of them a main form entry with no connected entry at all would satisfy. Used further down to work out whether such entries need to be included in the results
+
+	$emptySetFiltersTemp = array(); // per connected form, per search expression: conditions that must match NO connected entry. Rendered as NOT EXISTS clauses by the caller, and never part of the row level where clause
 
 	$oneSideFiltersTemp = array(); // we need to capture each filter individually, just in case we need to apply them individually to each part of the query for calculations.  Filters for calculations will not work right if the combination of filter terms is excessively complex, ie: includes OR'd terms across different forms in a framework, certain other complicated types of bracketing
 
@@ -2045,6 +2068,10 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 	} else {
 		$filter = $filtertemp;
 	}
+
+	// conditions written with an EMPTYSET: prefix are lifted out of the fundamental filters and turned into ordinary search expressions here,
+	// so that the loop below handles them the same way it handles one typed into a search box
+	list($fundamental_filters, $filter) = formulize_extractEmptySetConditions($fundamental_filters, $filter);
 
 	// When user is anon, add anon passcodes if any to the fundamental filters, if the passed in scope is uid=0 or [3], which would both mean "view all entries by the anon user".
 	global $xoopsUser;
@@ -2085,10 +2112,17 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 			continue;
 		} // ignore filters that are empty...can happen if only OR filters are specified, and maybe at other times too
 
-		if ($numSeachExps > 0) {
-			$whereClause .= $andor;
+		// An expression can carry a quantifier in its third slot. "none" means its conditions describe connected entries that must NOT
+		// exist for a main form entry to qualify. Those terms never go into the row level where clause, because the entries we are looking
+		// for are precisely the ones with no such row to compare against. They only go into the EXISTS layer, negated, further down.
+		$expressionIsEmptySet = (isset($filterParts[2]) AND $filterParts[2] === 'none');
+
+		if (!$expressionIsEmptySet) {
+			if ($numSeachExps > 0) {
+				$whereClause .= $andor;
+			}
+			$whereClause .= "(";
 		}
-		$whereClause .= "(";
 
 		$numIndivFilters = 0;
 		foreach (explode("][", $filterParts[1]) as $indivFilter) {
@@ -2274,11 +2308,37 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 					// HANDLE LINKED ELEMENTS
 				} elseif ($sourceMeta = $formFieldFilterMap[$mappedForm][$element_id]['islinked']) {
 
+					// When this element's alternate display columns include linked elements of their own, a numeric equals search can be a foreign
+					// key held in one of those alternate columns rather than a reference to this element's own target. Work that out before the
+					// shortcut below, because it decides whether the number is compared to this element or looked up inside the source form.
+					$altColumnFKTargets = formulize_altColumnFKTargetsForSearch($formFieldFilterMap[$mappedForm][$element_id], $ifParts, $operator);
+
 					// check if user is searching for blank values, and if so, then query this element directly, rather than looking in the source
-					// ALSO do this if the user is searching for a numeric value with an = operator
+					// ALSO do this if the user is searching for a numeric value with an = operator, unless that number belongs to an alternate column (see above)
 					// Note that $ifParts[0] gets surrounded by `` when going through prepareElementMetaData (?!)
-					if (($ifParts[1] === '' OR trim($operator) == 'IS NULL' OR trim($operator) == 'IS NOT NULL' OR (is_numeric($ifParts[1]) AND trim($operator) == '=')) AND !isset($GLOBALS['formulize_linkedNumericValueIsLiteral'][trim($ifParts[0], '`')])) {
+					if (($ifParts[1] === '' OR trim($operator) == 'IS NULL' OR trim($operator) == 'IS NOT NULL' OR (is_numeric($ifParts[1]) AND trim($operator) == '=' AND !$altColumnFKTargets)) AND !isset($GLOBALS['formulize_linkedNumericValueIsLiteral'][trim($ifParts[0], '`')])) {
 						$newWhereClause = " $queryElement $operator $quotes$likebits" . formulize_db_escape($ifParts[1]) . "$likebits$quotes ";
+
+					// A numeric equals search that belongs to one or more linked alternate columns. Compare it to those columns' foreign keys directly,
+					// instead of resolving them to their readable values and substring matching the concatenated text, which would match far too much.
+					// Over matching is especially destructive inside an empty set expression, where it silently removes main form entries from the results.
+					//
+					// This only applies when the value arrived through a {reference} to another column, which is what $ifParts[3] records. A bare
+					// numeric equals on this column keeps its existing meaning of "this element's own target entry id", because that is what the
+					// quickfilter dropdowns emit for a linked column and reinterpreting it would change every saved view and screen that uses one.
+					// Callers that have declared the number is a literal label rather than a key are left alone too, and fall through to the text search.
+					} elseif ($altColumnFKTargets
+						AND !isset($GLOBALS['formulize_linkedNumericValueIsLiteral'][trim($ifParts[0], '`')])
+						AND $fkSourceFormObject = $form_handler->get($sourceMeta[0])) {
+						$fkComparisons = array();
+						$fkValue = intval($ifParts[1]);
+						foreach ($altColumnFKTargets as $fkTargetHandle) {
+							$safeFKHandle = formulize_db_escape($fkTargetHandle);
+							// the alternate column can itself hold multiple values, in which case it stores a comma wrapped list rather than a single entry id
+							$fkComparisons[] = "(source.`$safeFKHandle` = $fkValue OR source.`$safeFKHandle` LIKE '%,$fkValue,%')";
+						}
+						// correlate to the source form the same way the text searches below do, so that a linked element holding multiple values still matches
+						$newWhereClause = " EXISTS (SELECT 1 FROM " . DBPRE . "formulize_" . $fkSourceFormObject->getVar('form_handle') . " AS source WHERE ($queryElement = source.entry_id OR $queryElement LIKE CONCAT('%,',source.entry_id,',%')) AND (" . implode(" OR ", $fkComparisons) . ")) ";
 					} else {
 						if (isset($GLOBALS['formulize_linkedNumericValueIsLiteral'][trim($ifParts[0], '`')])) {
 							unset($GLOBALS['formulize_linkedNumericValueIsLiteral'][trim($ifParts[0], '`')]);
@@ -2403,7 +2463,10 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 					}
 
 					// HANDLE ELEMENT TYPES THAT IMPLEMENT THEIR OWN buildSearchWhereClause
-				} elseif ($delegatedWhereClause = formulize_tryDelegatedSearchWhere($formFieldFilterMap[$mappedForm][$element_id]['ele_type'], $ifParts[1], $operator, $quotes, $likebits, $fid)) {
+				// $elementPrefix is the alias of the table this element actually lives in - "main", or "f0", "f1" and so on when
+				// the element belongs to a connected form. Handlers that build a clause against a fixed column of their own
+				// need it to name the right table, and $queryElement is already qualified with it for the ones that do not.
+				} elseif ($delegatedWhereClause = formulize_tryDelegatedSearchWhere($formFieldFilterMap[$mappedForm][$element_id]['ele_type'], $ifParts[1], $operator, $quotes, $likebits, $fid, $elementPrefix, $queryElement)) {
 					$newWhereClause = $delegatedWhereClause;
 
 					// HANDLE IN / NOT IN ON A PLAIN ELEMENT
@@ -2468,6 +2531,22 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 				}
 			}
 
+			// terms in an empty set expression are collected separately, for rendering as a NOT EXISTS against the connected form they belong to.
+			// They are only meaningful against a connected form, since a term on the main form has no set of entries to quantify over.
+			// (That also excludes recursive relationships, where the connected form is the main form, and the terms cannot be told apart. Out of scope for now.)
+			if ($expressionIsEmptySet) {
+				if (!isset($mappedForm) OR $mappedForm == $fid OR !is_array($linkfids) OR !in_array($mappedForm, $linkfids)) {
+					continue;
+				}
+				if (!isset($emptySetFiltersTemp[$mappedForm][$numSeachExps])) {
+					$emptySetFiltersTemp[$mappedForm][$numSeachExps] = " $newWhereClause "; // don't add the local andor on the first term for a form
+				} else {
+					$emptySetFiltersTemp[$mappedForm][$numSeachExps] .= " " . $filterParts[0] . " $newWhereClause ";
+				}
+				$numIndivFilters++;
+				continue;
+			}
+
 			if ($numIndivFilters > 0) {
 				$whereClause .= $filterParts[0]; // apply local andor setting
 			}
@@ -2502,10 +2581,12 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 			$numIndivFilters++;
 		}
 
-		if ($whereClause == "(") { // if no contents for the whereclause where generated...make a fake contents (should only happen if the only filter term passed in is a newest operator)
-			$whereClause .= "main.entry_id>0";
+		if (!$expressionIsEmptySet) {
+			if ($whereClause == "(") { // if no contents for the whereclause where generated...make a fake contents (should only happen if the only filter term passed in is a newest operator)
+				$whereClause .= "main.entry_id>0";
+			}
+			$whereClause .= ")";
 		}
-		$whereClause .= ")";
 		$numSeachExps++;
 	}
 
@@ -2515,6 +2596,15 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 	foreach ($oneSideFiltersTemp as $mappedForm => $oneSideParts) {
 		foreach ($oneSideParts as $type => $expressions) {
 			$oneSideFilters[$mappedForm][$type] = " ( ".implode(" ) $andor ( ", $expressions)." ) ";
+		}
+	}
+
+	// Each empty set expression becomes its own clause, because each one describes a separate connected entry that must not exist.
+	// Two of them on the same form are two different NOT EXISTS clauses, not one clause with both sets of conditions in it.
+	$emptySetFilters = array();
+	foreach ($emptySetFiltersTemp as $mappedForm => $expressions) {
+		foreach ($expressions as $thisExpression) {
+			$emptySetFilters[$mappedForm][] = " ( $thisExpression ) ";
 		}
 	}
 
@@ -2591,9 +2681,14 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 		}
 	}
 
+	// Note we deliberately do NOT add the forms carrying empty set expressions to $missingEntrySatisfiesSearch. They do need the join left
+	// open, but that flag also widens the positive EXISTS clause with an "OR NOT EXISTS(join)", and applying that here would let a main form
+	// entry with nothing connected to it satisfy the positive half of the search as well. The caller keys the join type off the empty set
+	// filters themselves instead, which gets the open join without touching what the positive terms mean.
+
 	$otherPerGroupFilterJoins = !empty($otherPerGroupFilterJoins) ? implode(" ", $otherPerGroupFilterJoins) : "";
 	$otherPerGroupFilterWhereClause = !empty($otherPerGroupFilterWhereClause) ? implode(" ", $otherPerGroupFilterWhereClause) : "";
-	return array(0 => $formFieldFilterMap, 1 => $whereClause, 2 => $orderByClause, 3 => $oneSideFilters, 4 => $otherPerGroupFilterJoins, 5 => $otherPerGroupFilterWhereClause, 6 => $missingEntrySatisfiesSearch);
+	return array(0 => $formFieldFilterMap, 1 => $whereClause, 2 => $orderByClause, 3 => $oneSideFilters, 4 => $otherPerGroupFilterJoins, 5 => $otherPerGroupFilterWhereClause, 6 => $missingEntrySatisfiesSearch, 7 => $emptySetFilters);
 }
 
 /**
@@ -2690,6 +2785,190 @@ function resolveLinkedAltSearchColumnsToSubquery(&$altSearchColumns) {
 		$subqueries[] = "(SELECT source$sqNum.`" . $sourceElementHandle . "` FROM " . DBPRE . "formulize_" . $sourceFormHandle . " AS source$sqNum WHERE source$sqNum.entry_id = source.`" . $altSearchElementObject->getVar('ele_handle') . "`)";
 	}
 	return $subqueries;
+}
+
+/**
+ * Pull any EMPTYSET conditions out of a screen's fundamental filters and turn them into ordinary filter expressions.
+ *
+ * The conditions UI has no way to say "no connected entry matches this", so the intent is written into the condition's term as an
+ * EMPTYSET: prefix, which is the same vocabulary the list search boxes use. Translating it here, as the filters are unpacked, means
+ * everything downstream sees a normal search expression carrying the "none" quantifier in its third slot, and nothing else has to know
+ * these conditions came from the admin UI rather than from a search box.
+ *
+ * The point of doing it this way rather than teaching buildConditionsFilterSQL about empty sets is that these conditions then go through
+ * exactly the same term building as every other search, so linked elements, foreign key references, encrypted fields and everything else
+ * behave identically. The trade is that they give up the extra vocabulary buildConditionsFilterSQL supports, notably curly bracket
+ * references to another form, and {BLANK}. A term that cannot be resolved is dropped, and a group left with no terms is never created,
+ * which is what we want: an empty set of conditions would mean "no connected entry at all", a completely different search.
+ *
+ * A term is one value, the same as it is for every other condition. Several conditions in one empty set are written as several rows
+ * sharing a group key (EMPTYSET1: on each of them), not as a compound term on a single row.
+ *
+ * @param array $fundamental_filters The screen's conditions: parallel arrays of element ids, operators, terms and types
+ * @param array $filter The filter expressions parsed so far, which any extracted conditions are appended to
+ * @return array The fundamental filters with the extracted conditions removed, and the filter expressions with them added
+ */
+function formulize_extractEmptySetConditions($fundamental_filters, $filter) {
+
+	if (!isset($fundamental_filters[0]) OR !is_array($fundamental_filters[0]) OR empty($fundamental_filters[0])) {
+		return array($fundamental_filters, $filter);
+	}
+
+	$emptySetTerms = array(); // keyed by the group key from the prefix, so that EMPTYSET1: and EMPTYSET2: stay separate sets
+	$remaining = array(0 => array(), 1 => array(), 2 => array(), 3 => array());
+	$sawEmptySetCondition = false;
+
+	foreach ($fundamental_filters[0] as $i => $conditionElementId) {
+
+		$term = isset($fundamental_filters[2][$i]) ? $fundamental_filters[2][$i] : "";
+		$groupPrefix = formulize_extractSearchGroupPrefix($term);
+		if ($groupPrefix['group'] !== 'emptyset') {
+			$remaining[0][] = $conditionElementId;
+			$remaining[1][] = isset($fundamental_filters[1][$i]) ? $fundamental_filters[1][$i] : "=";
+			$remaining[2][] = $term;
+			$remaining[3][] = isset($fundamental_filters[3][$i]) ? $fundamental_filters[3][$i] : "all";
+			continue;
+		}
+
+		// this row is an empty set whatever happens to its term below. Note it now, so that a term we end up dropping still gets taken
+		// out of the fundamental filters - left behind, the prefix would be read as part of a literal search value and match nothing.
+		$sawEmptySetCondition = true;
+
+		// resolve a reference to another column's search box. This also reports which column the value came from, which the
+		// extraction layer uses to tell which of a linked element's alternate columns a numeric term is a foreign key for.
+		$provenanceHandle = null;
+		$value = convertDynamicFilterTerms($groupPrefix['term'], $provenanceHandle);
+		$value = formulize_unwrapSearchBoxValue($value); // a borrowed value arrives however the search box was holding it
+
+		// Anything still carrying { } did not resolve to a value we can search on. That covers a reference to a column with no search on
+		// it, and it covers a compound term like "{a} AND {b} AND apples", which is not something a condition can express - several
+		// conditions in one empty set are written as several rows sharing a group key. Drop the term rather than search for it literally,
+		// which would silently match nothing. A term that never mentioned a reference at all, like a plain "apples", passes through here.
+		if ($value === "" OR preg_match('/\{[^}]*\}/', $value)) {
+			continue;
+		}
+
+		// a search box can carry its own operator on the front of the value. The condition author chose the operator for this row, and the
+		// reference is only there to supply which value to look for, so strip the sigil off rather than letting it override the condition.
+		if ($valueOperator = extractOperatorFromString($value)) {
+			$value = substr($value, strlen($valueOperator));
+			if ($value === "") {
+				continue;
+			}
+		}
+
+		$operator = isset($fundamental_filters[1][$i]) ? $fundamental_filters[1][$i] : "=";
+		$operator = ($operator == 'NOT') ? '!=' : $operator; // the same conversion buildConditionsFilterSQL makes, to avoid a syntax error
+
+		$thisTerm = $conditionElementId . "/**/" . $value . "/**/" . $operator;
+		if ($provenanceHandle) {
+			$thisTerm .= "/**/" . $provenanceHandle;
+		}
+		$emptySetTerms[$groupPrefix['key']][] = $thisTerm;
+	}
+
+	if (!$sawEmptySetCondition) {
+		return array($fundamental_filters, $filter); // nothing to translate, so hand the conditions back exactly as they arrived
+	}
+
+	foreach ($emptySetTerms as $theseTerms) {
+		$filter[] = array(0 => 'and', 1 => implode("][", $theseTerms), 2 => 'none'); // every condition in one set has to be true of the same connected entry
+	}
+
+	// a set of parallel arrays that are all empty still counts as four elements, so hand back a genuinely empty array when nothing is left,
+	// otherwise the caller's count() check would send buildConditionsFilterSQL a filter with nothing in it
+	$fundamental_filters = empty($remaining[0]) ? array() : $remaining;
+
+	return array($fundamental_filters, $filter);
+}
+
+/**
+ * Work out whether a search term is a foreign key held in one of a linked element's alternate display columns.
+ *
+ * A linked element that shows alternate columns is normally searched by concatenating those columns and matching a substring, because the
+ * user is searching the readable text they can see. But when the term is a number and the operator is =, and one or more of the alternate
+ * columns is itself a linked element, the number is an entry id in whatever form those alternate columns point at, and it should be compared
+ * to them directly. Substring matching a number against concatenated text matches far too much, and inside an empty set expression that
+ * silently drops main form entries out of the results, which is the worst direction for it to be wrong in.
+ *
+ * This is deliberately limited to values that arrived through a {reference} to another column, which is what the fourth part of the filter term
+ * records. A bare numeric equals typed against this column, or selected from its own quickfilter dropdown, keeps its existing meaning of "this
+ * element's own target entry id" - the quickfilter dropdowns emit exactly that for a linked column, so widening the rule would silently change
+ * every saved view and screen that has one. The reference tells us the number was chosen somewhere else and is not about this column's own target.
+ *
+ * Where the referencing column is a linked element pointing at the same form as one of the alternate columns, the ambiguity disappears completely:
+ * that is the column the number is for. Otherwise every linked alternate column is a candidate and they are compared as a set, which can collide
+ * if two of them point at forms that both happen to have an entry with this id.
+ *
+ * Elements holding multiple values are fine here. They store a comma wrapped list rather than a single entry id, and the caller correlates and
+ * compares in the form that matches either shape.
+ *
+ * @param array $elementFilterMapEntry This element's entry in the form field filter map, which carries its type and its ele_value
+ * @param array $ifParts The parts of the filter term: handle, value, operator, and the column a dynamic reference resolved the value from
+ * @param string $operator The normalized operator for this term
+ * @return array The handles of the alternate columns to compare the number to. Empty when this rule does not apply.
+ */
+function formulize_altColumnFKTargetsForSearch($elementFilterMapEntry, $ifParts, $operator) {
+
+	// LIKE counts as well as =, because the quickfilter dropdowns leave the operator off for an element that holds multiple values, so a term
+	// borrowed from one of those arrives here as a bare number. A number that came out of a linked column's dropdown is an entry id either way.
+	// Negations are excluded, since "not this key" is a different question from the one this rule answers.
+	$normalizedOperator = trim($operator);
+	if (!isset($ifParts[1]) OR !is_numeric($ifParts[1]) OR ($normalizedOperator != '=' AND $normalizedOperator != 'LIKE')) {
+		return array();
+	}
+
+	// only values pulled out of another column's search box get reinterpreted, so that existing searches on this column are untouched
+	if (empty($ifParts[3])) {
+		return array();
+	}
+
+	$ele_value = isset($elementFilterMapEntry['ele_value']) ? $elementFilterMapEntry['ele_value'] : null;
+	if (!is_array($ele_value) OR !formulize_altColumnsAreInEffect($ele_value[10] ?? null)) {
+		return array();
+	}
+
+	// which of the alternate columns are linked elements, and what form does each of them point at?
+	$candidates = array();
+	foreach (array_filter(is_array($ele_value[10]) ? $ele_value[10] : array($ele_value[10])) as $altSearchColumn) {
+		if (!$altSearchElementObject = _getElementObject($altSearchColumn)) {
+			continue;
+		}
+		if (!$sourceReference = getSourceFormAndElementForLinkedElement($altSearchElementObject)) {
+			continue;
+		}
+		// snapshot elements are linked, but they store the literal label text in their own column, so they hold no foreign key to compare.
+		// Same exclusion resolveLinkedAltSearchColumnsToSubquery makes, for the same reason.
+		$altSearchEleValue = $altSearchElementObject->getVar('ele_value');
+		if (is_array($altSearchEleValue) AND !empty($altSearchEleValue['snapshot'])) {
+			continue;
+		}
+		$candidates[] = array('handle' => $altSearchElementObject->getVar('ele_handle'), 'sourceFormId' => $sourceReference[0]);
+	}
+	if (!$candidates) {
+		return array();
+	}
+
+	// if the value came out of another column's search box, and that column points at the same form as exactly one of the candidates, that is the one
+	if (!empty($ifParts[3]) AND $provenanceElementObject = _getElementObject($ifParts[3])) {
+		if ($provenanceReference = getSourceFormAndElementForLinkedElement($provenanceElementObject)) {
+			$provenanceMatches = array();
+			foreach ($candidates as $candidate) {
+				if ($candidate['sourceFormId'] == $provenanceReference[0]) {
+					$provenanceMatches[] = $candidate['handle'];
+				}
+			}
+			if (count($provenanceMatches) == 1) {
+				return $provenanceMatches;
+			}
+		}
+	}
+
+	$handles = array();
+	foreach ($candidates as $candidate) {
+		$handles[] = $candidate['handle'];
+	}
+	return $handles;
 }
 
 // THIS FUNCTION TAKES INPUTS ABOUT AND ELEMENT, AND RETURNS A SET OF INFORMATION THAT IS NECESSARY WHEN BUILDING VARIOUS PARTS OF THE WHERE CLAUSE

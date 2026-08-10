@@ -84,6 +84,7 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 	var $clickable; // used in formatDataForList
 	var $striphtml; // used in formatDataForList
 	var $length; // used in formatDataForList
+	var $searchPeriod = false; // set by prepareLiteralTextForDB, read by buildSearchWhereClause
 
 	function __construct($db) {
 		$this->db =& $db;
@@ -300,12 +301,63 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 	// if literal text that users type can be used as is to interact with the database, simply return the $value
 	// LINKED ELEMENTS AND UITEXT ARE RESOLVED PRIOR TO THIS METHOD BEING CALLED
 	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
+		// Note whether this term names a whole month or year instead of one day, so buildSearchWhereClause can turn it into
+		// a range. Recorded on every call, including when there is no period, so that one search term's period cannot
+		// linger into the next term's clause. The value itself is still collapsed to a single date below, because every
+		// other caller of this method wants one date and only the search path knows what to do with a range.
+		$this->searchPeriod = formulize_parseDatePeriodSearchTerm($value);
 		$firstChar = substr($value, 0, 1);
 		$operators = array("=", "!", ">", "<");
 		if(!in_array($firstChar, $operators)) {
 			$value = date('Y-m-d', strtotime($value));
 		}
 		return $value;
+	}
+
+	/**
+	 * Turn a search for a whole month or year into a range, so that "October" finds every day in October rather than the
+	 * one day strtotime would collapse it to (which is today's date in October - not a reading anybody intends).
+	 *
+	 * Only partial dates are handled here. Anything else returns false, which sends the term back to the ordinary date
+	 * handling in the extraction layer completely untouched.
+	 *
+	 * @param string $term The search term, already passed through prepareLiteralTextForDB by the caller
+	 * @param string $operator The normalized operator
+	 * @param string $quotes Unused here, the range is quoted as dates regardless
+	 * @param string $likebits Unused here, a range is never a substring match
+	 * @param int $fid The form id
+	 * @param string $tableAlias Unused here, the column reference below is already qualified
+	 * @param string $queryElement The fully qualified column being searched
+	 * @return string|false The where clause, or false to leave this term to the ordinary handling
+	 */
+	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main', $queryElement = '') {
+
+		if (!$this->searchPeriod OR !$queryElement) {
+			return false;
+		}
+		$start = "'" . formulize_db_escape($this->searchPeriod['start']) . "'";
+		$end   = "'" . formulize_db_escape($this->searchPeriod['end']) . "'";
+
+		// The comparisons people expect when they have named a period rather than a day: after October means after all of
+		// it, before October means before any of it, and a plain search for October means anywhere inside it.
+		switch (trim($operator)) {
+			case '>=':
+				return " $queryElement >= $start ";
+			case '>':
+				return " $queryElement > $end ";
+			case '<=':
+				return " $queryElement <= $end ";
+			case '<':
+				return " $queryElement < $start ";
+			case '!=':
+			case '<>':
+			case 'NOT LIKE':
+				return " ( $queryElement < $start OR $queryElement > $end ) ";
+			case '=':
+			case 'LIKE':
+				return " ( $queryElement >= $start AND $queryElement <= $end ) ";
+		}
+		return false;
 	}
 
 	// this method will format a dataset value for display on screen when a list of entries is prepared
