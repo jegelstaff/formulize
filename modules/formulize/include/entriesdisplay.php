@@ -1108,17 +1108,25 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	print "<div id='hidden_quick_searches' style='display: none;'>\n";
 
+	$searchTypeKeys = array_column(formulize_quickSearchTypeNames(), 'key'); // 'search' first, so a plain box is what gets preserved when nothing more specific was built
 	foreach($formulize_buttonCodeArray['quickSearches'] as $handle=>$qsCode) {
-		if( (isset($searches[$handle]) AND ($searches[$handle] OR is_numeric($searches[$handle])) AND !strstr($listOfEntriesBufferContents, $qsCode['search']))
-			AND (!isset($qsCode['filter']) OR !strstr($listOfEntriesBufferContents, $qsCode['filter']))
-			AND (!isset($qsCode['multiFilter']) OR !strstr($listOfEntriesBufferContents, $qsCode['multiFilter']))
-			AND (!isset($qsCode['negativeFilter']) OR !strstr($listOfEntriesBufferContents, $qsCode['negativeFilter']))
-			AND (!isset($qsCode['dateRange']) OR !strstr($listOfEntriesBufferContents, $qsCode['dateRange'])) ) {
-			foreach(array('search', 'filter', 'negativeFilter', 'multiFilter', 'dateRange') as $searchType) {
-					if(isset($qsCode[$searchType])) {
-							print $qsCode[$searchType]."\n";
-							break;
-					}
+		if(!isset($searches[$handle]) OR (!$searches[$handle] AND !is_numeric($searches[$handle]))) {
+			continue; // nothing was searched for in this column, so there is nothing to preserve
+		}
+		$alreadyOnThePage = false;
+		foreach($searchTypeKeys as $searchTypeKey) {
+			if(isset($qsCode[$searchTypeKey]) AND strstr($listOfEntriesBufferContents, $qsCode[$searchTypeKey])) {
+				$alreadyOnThePage = true;
+				break;
+			}
+		}
+		if($alreadyOnThePage) {
+			continue;
+		}
+		foreach($searchTypeKeys as $searchTypeKey) {
+			if(isset($qsCode[$searchTypeKey])) {
+				print $qsCode[$searchTypeKey]."\n";
+				break;
 			}
 		}
 	}
@@ -1572,7 +1580,16 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		print "<input type=hidden name=currentview id=currentview value=\"$currentview\"></input>\n";
 	}
 
-	$filterTypes = array('\$quickDateRange', '\$quickFilter', '\$quickNegativeFilter', '\$quickMultiFilter', '\$quickSearchFilter_', '\$quickSearchNegativeFilter_', '\$quickSearchMultiFilter_', '\$quickSearchDateRange_');
+	// every type except the plain box: every column gets one of those anyway, and its 'quickSearch' prefix would swallow
+	// the start of every long form name ('quickSearchFilter_x' would be read as the box for a column called 'Filter_x')
+	$filterTypes = array();
+	foreach(formulize_quickSearchTypeNames() as $storedValue=>$typeNames) {
+		if($storedValue != 'Box') {
+			foreach($typeNames['prefixes'] as $prefix) {
+				$filterTypes[] = '\$'.$prefix;
+			}
+		}
+	}
 	$screenOrScreenType = $screen ? $screen : 'listOfEntries';
 	$filterHandles = extractHandles($filterTypes, getTemplateToRender('toptemplate', $screenOrScreenType));
 	$filterHandles = array_merge($filterHandles, extractHandles($filterTypes, getTemplateToRender('listtemplate', $screenOrScreenType)));
@@ -1592,37 +1609,16 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 
 	$quickSearches = createQuickSearches($searches, $settings, $hiddenQuickSearches, $filterHandles, $fid);
 
+	// set the template variables for whichever kinds of search UI this screen actually asks for, under both names each kind goes by
 	foreach($quickSearches as $handle=>$qsCode) {
 		$handle = str_replace("-","_",$handle);
-		if(screenUsesSearchStringWithHandle(
-            $screenOrScreenType, array('quickSearch', 'quickSearchBox_'), $handle)
-            OR in_array($handle, $settings['pubfilters'])) {
-				$buttonCodeArray['quickSearch' . $handle] = $qsCode['search']; // set variables for use in the template
-				$buttonCodeArray['quickSearchBox_'.$handle] = $qsCode['search'];
-		}
-		if(screenUsesSearchStringWithHandle(
-            $screenOrScreenType, array('quickFilter', 'quickSearchFilter_'), $handle)
-            OR in_array($handle, $settings['pubfilters'])) {
-				$buttonCodeArray['quickFilter' . $handle] = $qsCode['filter']; // set variables for use in the template
-				$buttonCodeArray['quickSearchFilter_'.$handle] = $qsCode['filter'];
-		}
-		if(screenUsesSearchStringWithHandle(
-			$screenOrScreenType, array('quickNegativeFilter', 'quickSearchNegativeFilter_'), $handle)
-			OR in_array($handle, $settings['pubfilters'])) {
-			$buttonCodeArray['quickNegativeFilter' . $handle] = $qsCode['negativeFilter']; // set variables for use in the template
-			$buttonCodeArray['quickSearchNegativeFilter_'.$handle] = $qsCode['negativeFilter'];
-		}
-		if(screenUsesSearchStringWithHandle(
-            $screenOrScreenType, array('quickMultiFilter', 'quickSearchMultiFilter_'), $handle)
-            OR in_array($handle, $settings['pubfilters'])) {
-				$buttonCodeArray['quickMultiFilter' . $handle] = $qsCode['multiFilter']; // set variables for use in the template
-				$buttonCodeArray['quickSearchMultiFilter_'.$handle] = $qsCode['multiFilter'];
-		}
-		if(screenUsesSearchStringWithHandle(
-            $screenOrScreenType, array('quickDateRange', 'quickSearchDateRange_'), $handle)
-            OR in_array($handle, $settings['pubfilters'])) {
-				$buttonCodeArray['quickDateRange' . $handle] = $qsCode['dateRange']; // set variables for use in the template
-				$buttonCodeArray['quickSearchDateRange_'.$handle] = $qsCode['dateRange'];
+		foreach(formulize_quickSearchTypeNames() as $typeNames) {
+			if(screenUsesSearchStringWithHandle($screenOrScreenType, $typeNames['prefixes'], $handle)
+				OR in_array($handle, $settings['pubfilters'])) {
+				foreach($typeNames['prefixes'] as $prefix) {
+					$buttonCodeArray[$prefix.$handle] = $qsCode[$typeNames['key']] ?? '';
+				}
+			}
 		}
 	}
 
@@ -1719,6 +1715,30 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$GLOBALS['formulize_buttonCodeArray'] = $buttonCodeArray; // made a global just because? Maybe it is used in some external code somewhere?
 
 	return $buttonCodeArray;
+}
+
+/**
+ * The names every quicksearch type goes by, derived from the one canonical list of types.
+ *
+ * A type shows up under three different names: the value stored in a screen's advanceview ('DateRange'), the key it is
+ * packaged under in a column's quickSearches array ('dateRange'), and the template variable prefixes a webmaster writes
+ * ('$quickDateRange<handle>' and '$quickSearchDateRange_<handle>'). All of it follows from the stored value, so adding a
+ * type means adding it to formulizeHandler::listScreenSearchTypes() and building it in packageSearches(), nowhere else.
+ *
+ * @return array storedValue => array('key' => quickSearches key, 'prefixes' => array(short, long) template variable prefixes)
+ */
+function formulize_quickSearchTypeNames() {
+    static $typeNames = null;
+    if($typeNames === null) {
+        $typeNames = array();
+        foreach(formulizeHandler::listScreenSearchTypes() as $storedValue) {
+            // the plain search box predates the convention the other types follow, so it keeps the names it has always had
+            $typeNames[$storedValue] = ($storedValue == 'Box')
+                ? array('key' => 'search', 'prefixes' => array('quickSearch', 'quickSearchBox_'))
+                : array('key' => lcfirst($storedValue), 'prefixes' => array('quick'.$storedValue, 'quickSearch'.$storedValue.'_'));
+        }
+    }
+    return $typeNames;
 }
 
 // check for a handle being used in a quickSearch variable anywhere in relevant templates
@@ -1901,14 +1921,16 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 
 	// add all search boxes to the available set of variables
     // and the specified filter type if there's a declared type in the advanceview
+	$typeNames = formulize_quickSearchTypeNames();
 	foreach($buttonCodeArray['quickSearches'] as $handle=>$qsCode) {
 		if(!isset($buttonCodeArray['quickSearch'.$handle])) {
 			$buttonCodeArray['quickSearch'.$handle] = $qsCode['search'];
 			$buttonCodeArray['quickSearchBox_'.$handle] = $qsCode['search']; // new naming convention that applies to other types also, see above
 		}
-        if(isset($searchTypes[$handle]) AND $searchTypes[$handle] != 'Box') {
-            $buttonCodeArray['quick'.$searchTypes[$handle].$handle] = $qsCode[lcfirst($searchTypes[$handle])];
-            $buttonCodeArray['quickSearch'.$searchTypes[$handle].'_'.$handle] = $qsCode[lcfirst($searchTypes[$handle])];
+        if(isset($searchTypes[$handle]) AND $searchTypes[$handle] != 'Box' AND isset($typeNames[$searchTypes[$handle]])) {
+            foreach($typeNames[$searchTypes[$handle]]['prefixes'] as $prefix) {
+                $buttonCodeArray[$prefix.$handle] = $qsCode[$typeNames[$searchTypes[$handle]]['key']] ?? '';
+            }
         }
 	}
 
@@ -2327,6 +2349,8 @@ function createQuickSearches($searches, $settings, $hiddenQuickSearches=array(),
 }
 
 // go make all the necessary searches/filters for a given element
+// the keys used here are the ones formulize_quickSearchTypeNames() derives from formulizeHandler::listScreenSearchTypes(),
+// so a new type needs a line here and an entry there, and the rest of the file picks it up on its own
 function packageSearches($handle, $search_text, $filtersRequired=true, $boxid="", $clear_help_javascript="", $fid=0) {
 	$quickSearches = array();
 	global $myts;
@@ -2336,6 +2360,8 @@ function packageSearches($handle, $search_text, $filtersRequired=true, $boxid=""
 		$quickSearches['filter'] = formulize_buildQSFilter($handle, $search_text, false, false, $fid);
 		$quickSearches['negativeFilter'] = formulize_buildQSFilter($handle, $search_text, negativeFilter: true, fid: $fid);
 		$quickSearches['dateRange'] = formulize_buildDateRangeFilter($handle, $search_text);
+		$quickSearches['monthCurrentYear'] = formulize_buildMonthSelectionFilter($handle, $search_text, false);
+		$quickSearches['monthLast12Months'] = formulize_buildMonthSelectionFilter($handle, $search_text, true);
 		$quickSearches['multiFilter'] = formulize_buildQSFilterMulti($handle, $search_text, $fid);
 	}
 	return $quickSearches;
@@ -2449,6 +2475,73 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
         }
     }
     return "";
+}
+
+/**
+ * Is this column a date, and so a candidate for the date oriented quicksearch filters?
+ *
+ * @param string $handle An element handle, or one of the date metadata field names
+ * @return bool
+ */
+function formulize_handleIsDateColumn($handle) {
+    if($handle == 'creation_datetime' OR $handle == 'mod_datetime') {
+        return true;
+    }
+    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+    if(!$elementObject = $element_handler->get($handle)) {
+        return false;
+    }
+    $typeInfo = $elementObject->getDataTypeInformation();
+    return (isset($typeInfo['dataType']) AND ($typeInfo['dataType'] == 'date' OR $typeInfo['dataType'] == 'datetime'));
+}
+
+/**
+ * THIS FUNCTION CREATES THE HTML FOR A MONTH SELECTION FILTER
+ *
+ * A dropdown of whole months. Picking one puts a YYYY-MM search term in the column's search box, which the search
+ * parser already reads as "any date in that month", so nothing downstream needs to know this control exists.
+ *
+ * The months on offer are worked out in the searching user's own timezone, so someone on the other side of the
+ * dateline from the server does not see the wrong month at the top of the list.
+ *
+ * @param string $handle The handle of the column the filter is for
+ * @param string $search_text The current contents of the column's search box
+ * @param bool $rollingTwelveMonths True for the current month and the eleven before it, false for the months of the current calendar year
+ * @return string HTML markup for the dropdown, or an empty string when the column does not hold dates
+ */
+function formulize_buildMonthSelectionFilter($handle, $search_text, $rollingTwelveMonths=false) {
+    $search_text = ($search_text === "" AND isset($_POST['search_'.$handle])) ? $_POST['search_'.$handle] : $search_text;
+    if(!formulize_handleIsDateColumn($handle)) {
+        return "";
+    }
+    $userNow = time() + formulize_getUserUTCOffsetSecs();
+    $currentYear = (int) date('Y', $userNow);
+    $currentMonth = (int) date('n', $userNow);
+    $months = array(); // each entry is array(year, month)
+    if($rollingTwelveMonths) { // the current month first, then backwards to the month after it a year ago
+        $year = $currentYear;
+        $month = $currentMonth;
+        for($i=0; $i<12; $i++) {
+            $months[] = array($year, $month);
+            if(--$month < 1) {
+                $month = 12;
+                $year--;
+            }
+        }
+    } else { // January to December of the year the user is currently in
+        for($month=1; $month<=12; $month++) {
+            $months[] = array($currentYear, $month);
+        }
+    }
+    $selected = trim(htmlspecialchars_decode((string) $search_text));
+    $options = "<option value=''>"._formulize_QSF_DefaultText."</option>\n";
+    foreach($months as list($year, $month)) {
+        $value = sprintf('%04d-%02d', $year, $month);
+        $monthNameConstant = '_formulize_CAL_MONTH_'.sprintf('%02d', $month);
+        $label = defined($monthNameConstant) ? constant($monthNameConstant) : date('F', mktime(0, 0, 0, $month, 1, $year));
+        $options .= "<option value=\"$value\"".($selected === $value ? " selected" : "").">".htmlspecialchars($label.' '.$year)."</option>\n";
+    }
+    return "<select name=\"search_$handle\" id=\"search_$handle\" onchange='javascript:showLoading();'>\n$options</select>\n";
 }
 
 // THIS FUNCTION RETURNS THE ELEMENT HANDLE AND FORM ALIAS IN THE CURRENT GETDATA QUERY, WHEN GIVEN THE ELEMENT ID NUMBER

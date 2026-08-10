@@ -2943,8 +2943,8 @@ Call with no arguments to get the list of topics, each with a one-line summary. 
 						],
 						'search_type' => [
 							'type' => 'string',
-							'enum' => ['search_box', 'dropdown', 'dropdown_exclude', 'checkboxes', 'date_range'],
-							'description' => "Optional. The kind of Quicksearch control at the top of this column. Only has an effect when show_search_boxes is on.Valid options are: 'search_box' (default) = type in some text to match; 'dropdown' = pick one of the values present in the entries; 'dropdown_exclude' = pick a value to leave out; 'checkboxes' = check off any number of values to include; 'date_range' = a from/to pair of dates."
+							'enum' => ['search_box', 'dropdown', 'dropdown_exclude', 'checkboxes', 'date_range', 'month_current_year', 'month_last_12_months'],
+							'description' => "Optional. The kind of Quicksearch control at the top of this column. Only has an effect when show_search_boxes is on.Valid options are: 'search_box' (default) = type in some text to match; 'dropdown' = pick one of the values present in the entries; 'dropdown_exclude' = pick a value to leave out; 'checkboxes' = check off any number of values to include; 'date_range' = a from/to pair of dates; 'month_current_year' = pick a whole month from January to December of the current year; 'month_last_12_months' = pick a whole month from the last twelve, starting with the current one. The last three only work on a column that holds dates."
 						],
 						'sort_direction' => [
 							'type' => 'string',

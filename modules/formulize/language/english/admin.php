@@ -1042,6 +1042,8 @@ define("_AM_FORMULIZE_SCREEN_LOE_TEMPLATEINTRO2", "<span style=\"font-weight: no
 <li>Use quickSearchNegativeFilter_<i>handle</i> for a dropdown filter that excludes values, ie: \$quickSearchNegativeFilter_profile_dept</li>
 <li>Use quickSearchMultiFilter_<i>handle</i> for a checkbox filter where the user selects multiple values, ie: \$quickSearchMultiFilter_profile_dept</li>
 <li>Use quickSearchDateRange_<i>handle</i> for a date range filter (only on Date elements), ie: \$quickSearchDateRange_profile_dept</li>
+<li>Use quickSearchMonthCurrentYear_<i>handle</i> for a dropdown of the months of the current year (only on Date elements), ie: \$quickSearchMonthCurrentYear_startdate</li>
+<li>Use quickSearchMonthLast12Months_<i>handle</i> for a dropdown of the last twelve months (only on Date elements), ie: \$quickSearchMonthLast12Months_startdate</li>
 </ul>
 <p><b>Note:</b> you must turn off the Quick Search Boxes at the top of the columns, in the settings for this list, before you can use them in a top template.</p>\n
 <p><b>Note:</b> Quick Searches will only work for columns you have included in this screen. If a column would not be visible if the screen loaded normally (without a custom template), then the quicksearch box will not function.</p>\n

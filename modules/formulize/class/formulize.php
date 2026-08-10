@@ -986,7 +986,7 @@ class formulizeHandler {
 	 *
 	 * Each column definition is an associative array:
 	 *   - element (required): an ele_id, an element handle, or a metadata field name
-	 *   - search_type: 'search_box' (default) | 'dropdown' | 'dropdown_exclude' | 'checkboxes' | 'date_range'
+	 *   - search_type: 'search_box' (default) | 'dropdown' | 'dropdown_exclude' | 'checkboxes' | 'date_range' | 'month_current_year' | 'month_last_12_months'
 	 *   - sort_direction: 'ASC' | 'DESC' | 'off' (the default - the list does not start out sorted by this column)
 	 *   - default_search_value: a value to pre-fill this column's Quicksearch with, so the list starts out filtered
 	 *
@@ -1042,7 +1042,9 @@ class formulizeHandler {
 			'dropdown' => 'Filter',
 			'dropdown_exclude' => 'NegativeFilter',
 			'checkboxes' => 'MultiFilter',
-			'date_range' => 'DateRange'
+			'date_range' => 'DateRange',
+			'month_current_year' => 'MonthCurrentYear',
+			'month_last_12_months' => 'MonthLast12Months'
 		);
 	}
 
