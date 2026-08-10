@@ -3706,7 +3706,7 @@ function confirmClone() {
 	$cloneFids = $GLOBALS['formulize_LOErendering_fidsInUse'];
 	if(!is_array($cloneFids) OR count($cloneFids) <= 1) {
 		// Only one form in use, no need to ask which forms to clone
-		$clone_forms_value = is_array($cloneFids) ? $cloneFids[0] : $fid;
+		$clone_forms_value = (is_array($cloneFids) AND array_key_exists(0, $cloneFids)) ? $cloneFids[0] : $fid;
 		?>
 		var clonenumber = prompt("<?php print _formulize_DE_CLONE_PROMPT; ?>", "1");
 		if(parseInt(clonenumber) > 0) {
