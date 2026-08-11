@@ -20,21 +20,27 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA //
 // ------------------------------------------------------------------------- //
 
-function block_formulizeMENU_show() {
-	global $xoopsDB, $xoopsUser, $xoopsModule, $myts;
-	$myts = MyTextSanitizer::getInstance();
-
-	if (!defined('_AM_NOFORMS_AVAIL')) {
-		include_once XOOPS_ROOT_PATH . '/modules/formulize/language/english/main.php';
-	}
-
-	$block = array();
-	$block['title'] = "";
+/**
+ * Build the site menu for the current user, in both forms it can be consumed in.
+ *
+ * Returns array($html, $data) where:
+ *  - $html is the legacy HTML-string menu, used when the f7MenuTemplate preference is off
+ *  - $data is the structured array consumed by the Smarty menu template (templates/blocks/menu.html)
+ *    and by the mobile app, which renders it as a native drawer
+ *
+ * Each entry of $data looks like:
+ *   array('url', 'title', 'active', 'target', 'icon', 'expanded', 'subs' => array(array('url', 'title', 'active', 'target')))
+ *
+ * The website sidebar block and the app bridge endpoint (modules/formulize/app/menu.php) both call
+ * this, so the menu a user sees in the app can never drift from the one the website shows them --
+ * including the permission filtering, which happens inside the handlers and section builders here.
+ *
+ * Returns array('', array()) when the user has no menu entries at all; callers decide what to
+ * display in that case.
+ */
+function formulize_buildMenuData() {
 
 	include_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions.php';
-
-	$id_form = ((isset($_GET['fid'])) AND is_numeric($_GET['fid'])) ? intval($_GET['fid']) : "";
-	$id_form = ((isset($_POST['fid'])) AND is_numeric($_POST['fid'])) ? intval($_POST['fid']) : $id_form;
 
 	$application_handler = xoops_getmodulehandler('applications', 'formulize');
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
@@ -59,39 +65,49 @@ function block_formulizeMENU_show() {
 	list($ugContent, $ugData) = drawUsersAndGroupsMenuSection();
 	list($aiContent, $aiData) = drawAIAssistantMenuSection();
 
-	$hasMenuEntries = count((array)$menuTexts) > 0;
-	$hasUgSection = ($ugContent !== false);
-	$hasAiSection = ($aiContent !== false);
+	$innerContent = "";
+	$menuData = array();
 
-	if ($hasMenuEntries || $hasUgSection || $hasAiSection) {
-		$innerContent = "";
-		$menuData = array();
-
-		if ($hasMenuEntries) {
-			$forceOpen = count((array)$menuTexts) == 1;
-			foreach ($menuTexts as $thisMenuData) {
-				list($content, $data) = drawMenuSection($thisMenuData['application'], $thisMenuData['links'], $forceOpen, $form_handler);
-				$innerContent .= $content;
-				$menuData[] = $data;
-			}
+	if (count((array)$menuTexts) > 0) {
+		$forceOpen = count((array)$menuTexts) == 1;
+		foreach ($menuTexts as $thisMenuData) {
+			list($content, $data) = drawMenuSection($thisMenuData['application'], $thisMenuData['links'], $forceOpen, $form_handler);
+			$innerContent .= $content;
+			$menuData[] = $data;
 		}
+	}
 
-		if ($hasUgSection) {
-			$innerContent .= $ugContent;
-			$menuData[] = $ugData;
-		}
+	if ($ugContent !== false) {
+		$innerContent .= $ugContent;
+		$menuData[] = $ugData;
+	}
 
-		if ($hasAiSection) {
-			$innerContent .= $aiContent;
-			$menuData[] = $aiData;
-		}
+	if ($aiContent !== false) {
+		$innerContent .= $aiContent;
+		$menuData[] = $aiData;
+	}
 
+	return array($innerContent, $menuData);
+}
+
+function block_formulizeMENU_show() {
+	global $myts;
+	$myts = MyTextSanitizer::getInstance();
+
+	if (!defined('_AM_NOFORMS_AVAIL')) {
+		include_once XOOPS_ROOT_PATH . '/modules/formulize/language/english/main.php';
+	}
+
+	$block = array();
+	$block['title'] = "";
+
+	list($innerContent, $menuData) = formulize_buildMenuData();
+
+	if (count($menuData) > 0) {
 		$block['content'] = "<table cellspacing='0' border='0'><tr><td id=\"mainmenu\">" . $innerContent . "</td></tr></table>";
 
-		$module_handler = xoops_gethandler('module');
 		$config_handler = xoops_gethandler('config');
-		$formulizeModule = $module_handler->getByDirname("formulize");
-		$formulizeConfig = $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 		if ($formulizeConfig['f7MenuTemplate']) {
 			$block['content'] = $menuData;
 		}

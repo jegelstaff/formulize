@@ -104,7 +104,23 @@ function validateCode($code, $uid=false) {
     }
     $uid = $uid ? $uid : $xoopsUser->getVar('uid');
     //$sql = 'SELECT method, AES_DECRYPT(code, UNHEX(SHA2("'.XOOPS_DB_PASS.XOOPS_DB_PREFIX.'",512))) as code FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($uid);
-    $sql = 'SELECT code_id, method, code, attempts, last_attempt FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($uid);
+
+    // Expired one-time codes are excluded here rather than being fetched and then skipped, so an
+    // expired code cannot even consume a failed-attempt slot.
+    //
+    // THE method != TFA_APP CONDITION IS LOAD-BEARING. For email and SMS, `code` is a one-time
+    // number and `created` is when it was sent, so an age test is exactly right. For TFA_APP,
+    // `code` holds the user's permanent TOTP secret, which must keep working forever - and on any
+    // secret enrolled before the `created` column was added, `created` is 0. Applying the age test
+    // to TFA_APP rows would therefore stop every authenticator-app user from signing in, starting
+    // with the oldest accounts.
+    //
+    // Legacy email/SMS rows also have created = 0, and those SHOULD be rejected: a code with no
+    // recorded send time is, by any reading, too old to still be trusted.
+    $codeCutoff = time() - TFA_CODE_LIFETIME;
+    $sql = 'SELECT code_id, method, code, attempts, last_attempt FROM '.$xoopsDB->prefix('tfa_codes')
+        .' WHERE uid = '.intval($uid)
+        .' AND (method = '.TFA_APP.' OR created > '.intval($codeCutoff).')';
     $res = $xoopsDB->query($sql);
     while($data = $xoopsDB->fetchArray($res)) {
 
@@ -131,8 +147,16 @@ function validateCode($code, $uid=false) {
                 // persistent seed: clear the failed-attempt counter on success
                 $xoopsDB->queryF('UPDATE '.$xoopsDB->prefix('tfa_codes').' SET attempts = 0, last_attempt = 0 WHERE code_id = '.intval($data['code_id']));
             } else {
-                // single-use code: remove it (which also clears its counter)
-                $xoopsDB->queryF('DELETE FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($uid));
+                // Single-use code: remove it (which also clears its counter), along with any other
+                // one-time codes on file for this user.
+                //
+                // The method != TFA_APP condition is essential and was missing. Without it, this
+                // DELETE removed EVERY row for the user - including the permanent TOTP secret that
+                // TFA_APP rows hold. Any user with an authenticator app who then completed a login
+                // with an email or SMS code (a password reset through lostpass.php, say, or an
+                // admin-assisted sign-in) would silently lose their enrolment and be unable to
+                // produce a valid code afterwards, with nothing to indicate why.
+                $xoopsDB->queryF('DELETE FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($uid).' AND method != '.TFA_APP);
             }
             return true;
         }

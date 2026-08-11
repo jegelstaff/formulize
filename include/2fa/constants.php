@@ -33,6 +33,15 @@ if (!defined('TFA_LOCKOUT_SECONDS')) {
 if (!defined('TFA_RESEND_INTERVAL')) {
 	define('TFA_RESEND_INTERVAL', 90); // minimum gap before another email/SMS code is sent to a user's on-file contact, in seconds
 }
+// How long an emailed or texted code stays valid, in seconds. Enforced in validateCode(), which
+// until this was added checked only the failed-attempt lockout and never how old a code was - so a
+// code that was sent and then never used remained a valid second factor indefinitely.
+//
+// Does NOT apply to TFA_APP, whose stored value is a permanent TOTP secret rather than a one-time
+// code. That exemption is load-bearing: see validateCode().
+if (!defined('TFA_CODE_LIFETIME')) {
+	define('TFA_CODE_LIFETIME', 600); // 10 minutes
+}
 // How long a "remember this device" trust token lasts. The actual window is the
 // Formulize module preference `tfaRememberDeviceDays` (Users -> Settings -> Signing in),
 // read and clamped by tfa_rememberDeviceDays() in manage.php; these are the default and

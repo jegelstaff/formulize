@@ -32,6 +32,28 @@ $GLOBALS['xoTheme'] = $xoTheme;
 $xoopsTpl = $icmsTpl =& $xoTheme->template;
 $GLOBALS['xoopsTpl'] = $xoopsTpl;
 $GLOBALS['icmsTpl'] = $icmsTpl;
+
+// APP MODE: swap the whole page wrapper when this session belongs to the Formulize mobile app.
+//
+// The app draws the site menu and the account links as native mobile UI, so the page it loads in
+// its WebView must not repeat them. icms_view_theme_Object::render() finishes by displaying
+// $this->path . '/' . $this->canvasTemplate, so replacing canvasTemplate here swaps the entire
+// wrapper - header, sidebar and all - while leaving the page contents, the theme's CSS and every
+// module template completely untouched. That is the point: the app shows the site's own screens,
+// styled by the site's own theme, minus the furniture the app itself provides.
+//
+// A theme opts in by shipping a theme_app.html next to its theme.html. Themes that have not (a
+// site's own custom theme, for instance) fall back to a generic minimal wrapper in the Formulize
+// module, so the app works everywhere from day one and a theme can be tailored later. The fallback
+// is a relative path because canvasTemplate is concatenated onto the theme folder path - it looks
+// odd, and it is intentional.
+include_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions.php';
+if (function_exists('formulize_isAppSession') AND formulize_isAppSession()) {
+    $xoopsTpl->assign('formulize_app_mode', true);
+    $xoTheme->canvasTemplate = file_exists($xoTheme->path . '/theme_app.html')
+        ? 'theme_app.html'
+        : '../../modules/formulize/templates/theme_app_generic.html';
+}
 if ($icmsConfigMetaFooter['use_google_analytics'] === TRUE
 	&& isset($icmsConfigMetaFooter['google_analytics']) && $icmsConfigMetaFooter['google_analytics'] != '') {
 	/* Legacy GA urchin code */

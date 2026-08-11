@@ -39,7 +39,7 @@ $modversion = array(
 	'license' => "GPL-2.0",
 	'image' => "images/formulize.gif",
 	'dirname' => "formulize",
-	'dbversion' => 17,
+	'dbversion' => 18,
 	'onUpdate' => "include/on_update.php"
 );
 

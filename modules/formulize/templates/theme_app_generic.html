@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xml:lang="<{$icms_langcode}>">
+
+<{*
+    Generic page wrapper for the Formulize mobile app.
+
+    header.php falls back to this when the site's current theme does not ship a theme_app.html of
+    its own. It means a site running a custom theme works in the app immediately, without anybody
+    having to touch that theme first - and a tailored theme_app.html can be added later whenever
+    it is worth doing.
+
+    It is deliberately theme-agnostic: it pulls in the current theme's stylesheet by asking
+    xoops_getcss() rather than hard-coding a path, and it makes no assumptions about that theme's
+    class names or layout. The trade-off is that a theme whose page styling depends on wrapper
+    markup in its own theme.html will look plainer here than it does on the website. That is the
+    signal to write a theme_app.html for it, using themes/Anari/theme_app.html as the model.
+
+    ABOUT formulize_pageShown: this wrapper dispatches that event on load because module screens
+    (formdisplay.php, entriesdisplay.php, mapdisplay.php) listen for it to restore scroll position
+    and silently do nothing if it never fires. The event is a Formulize-level contract, honoured by
+    every theme - Anari fires it after revealing a hidden body, Lyris fires it from its own
+    script.js. This wrapper does NOT copy either of those mechanisms, only the contract, because it
+    does not load any theme's JavaScript and must not depend on one being present.
+*}>
+
+<head>
+
+    <title><{if $xoops_pagetitle !=''}><{$xoops_pagetitle}> : <{/if}><{$icms_sitename}></title>
+    <meta http-equiv="content-type" content="text/html; charset=<{$icms_charset}>" />
+    <meta name="generator" content="Formulize" />
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, viewport-fit=cover">
+
+    <!-- Module Header -->
+    <{$icms_module_header}>
+
+    <{* The current theme's stylesheet, resolved the same way include/functions.php does it, so this
+        wrapper stays correct whatever theme the site is running. *}>
+    <{php}>
+    global $icmsConfig;
+    if ($themecss = xoops_getcss($icmsConfig['theme_set'])) {
+        echo '<link rel="stylesheet" type="text/css" media="all" href="' . $themecss . '" />';
+    }
+    <{/php}>
+
+    <style>
+        .formulize-app-main {
+            padding: 16px;
+            padding-left: calc(16px + env(safe-area-inset-left));
+            padding-right: calc(16px + env(safe-area-inset-right));
+            padding-bottom: 60px; /* room to scroll clear of the on-screen keyboard and home indicator */
+        }
+    </style>
+
+</head>
+
+<{* No hidden-then-revealed body here, unlike themes/Anari/theme_app.html. Hiding the body is how
+    Anari avoids showing a page assembling itself, and it is safe there because Anari's own script
+    reveals it. This wrapper is used on themes nobody has adapted yet, so if anything went wrong
+    the page would stay blank forever with nothing to explain why. Rendering plainly is the safer
+    default for a fallback. *}>
+<body id="<{$icms_dirname}>" class="<{$icms_langcode}> formulize-app<{if isset($formulize_screen_id) && $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}>">
+
+  <div class="formulize-app-main">
+
+    <{$icms_contents}>
+
+  </div>
+
+  <script type='text/javascript'>
+    // Plain JavaScript, no jQuery: this wrapper is used for themes nobody has adapted yet, so it
+    // must assume nothing about what libraries they load.
+    (function () {
+        // Asking the document whether load has already happened, rather than simply binding to
+        // window load, because a load handler registered after load has fired never runs - and the
+        // listeners that restore scroll position would then silently never run either.
+        var announcePageShown = function () {
+            window.dispatchEvent(new CustomEvent('formulize_pageShown'));
+        };
+        if (document.readyState === 'complete') {
+            announcePageShown();
+        } else {
+            window.addEventListener('load', announcePageShown);
+        }
+    })();
+  </script>
+
+    <{ if isset($masquerade_username) AND $masquerade_username }>
+        <div id="formulize-masquerade-block">
+            Masquerading as <b><{$masquerade_username}></b>
+            <form method="post" action="<{$smarty.const.XOOPS_URL}>/modules/formulize/">
+                <input type="hidden" name="revert" value="1" />
+                <input type="hidden" name="op" value="masquerade" />
+                <input type="hidden" name="masquerade_end" value="1" />
+                <input type="submit" name="confirm_submit" value="Revert" />
+            </form>
+        </div>
+        <div style="clear:both;"></div>
+    <{ /if }>
+
+	<{if isset($formulize_customCodeForApplications) && $formulize_customCodeForApplications}>
+		<{$formulize_customCodeForApplications}>
+	<{/if}>
+</body>
+
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html xml:lang="<{$icms_langcode}>">
+
+<{*
+    Anari page wrapper for the Formulize mobile app.
+
+    This is theme.html with the furniture removed. It is selected by header.php when the session
+    was established by the app (see formulize_isAppSession()), and it exists because the app draws
+    the site menu, the account links and the page header itself, as native mobile UI. Rendering
+    them again inside the WebView would duplicate them.
+
+    WHAT IS DELIBERATELY GONE, relative to theme.html:
+      - the whole .site-layout sidebar, including the menu block and the logo
+      - the .site-header bar with its burger icon, Admin / Inbox / Edit Account / Logout links
+      - the session timeout warning (the app silently re-establishes an expired session from its
+        device token, so warning the user about something they will never notice is just noise)
+
+    WHAT MUST STAY, and why:
+      - everything in <head>, so pages are styled and behave exactly as they do on the website
+      - the body-reveal script and the formulize_pageShown event. Several screens (formdisplay.php,
+        entriesdisplay.php, mapdisplay.php) listen for that event to restore scroll position, and
+        if it never fires they silently do nothing. The document.readyState check is not optional
+        either - see the comment on it below.
+      - the masquerade banner, so an administrator acting as another user can always tell
+
+    LAYOUT NOTE: theme.html puts contents inside .site-layout__main > .main-content, which are
+    sized to fill the space left by the header (height: 81.5vh, overflow: auto). Without a header
+    those would leave dead space and create a scrolling box inside the WebView, which already
+    scrolls. So app mode uses its own minimal wrapper and lets the document scroll normally. The
+    .container class is reused because it only supplies horizontal padding.
+*}>
+
+<head>
+
+    <{assign var=theme_name value=$xoTheme->folderName}>
+
+    <title><{if $xoops_pagetitle !=''}><{$xoops_pagetitle}> : <{/if}><{$icms_sitename}></title>
+    <meta http-equiv="content-type" content="text/html; charset=<{$icms_charset}>" />
+    <meta name="generator" content="Formulize" />
+
+    <{* viewport-fit=cover plus the safe-area padding below keeps content clear of the notch and
+        the home indicator on phones that have them *}>
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, viewport-fit=cover">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Module Header -->
+    <{$icms_module_header}>
+
+    <!-- CSS: must come after icms_module_header -->
+    <{php}>
+    require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions.php';
+    $rtlPath = ($this->_tpl_vars['icms_rtl'] ?? false) ? 'rtl/' : '';
+    $cssVersion = formulize_get_file_version('/themes/Anari/' . $rtlPath . 'css/style.css');
+    echo '<link rel="stylesheet" type="text/css" media="all" href="' . $this->_tpl_vars['icms_imageurl'] . $rtlPath . 'css/style.css?v=' . $cssVersion . '" />';
+    <{/php}>
+
+    <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+
+    <style>
+        /* The app supplies the page header, so content starts at the top of the WebView. */
+        .formulize-app-main {
+            padding-top: 16px;
+            padding-bottom: 60px; /* room to scroll clear of the on-screen keyboard and home indicator */
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+        }
+    </style>
+
+</head>
+
+<{* No overflow:hidden on the body here, unlike theme.html: that rule exists so the sidebar and
+    .main-content can manage their own scrolling, and keeping it in app mode would stop the page
+    scrolling at all. *}>
+<body id="<{$icms_dirname}>" class="<{$icms_langcode}> formulize-app<{if isset($formulize_screen_id) && $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}>" style='display: none;'>
+
+<{php}>
+// set the base font size if the user has adjusted it in their profile
+global $xoopsUser;
+if($xoopsUser) {
+    $profile_handler = xoops_getmodulehandler('profile', 'profile');
+    $profile = $profile_handler->get($xoopsUser->getVar('uid'));
+    if($fontsize = $profile->getVar('fontsize')) {
+        print "<style>html { font-size: ".$fontsize."; }</style>";
+    }
+}
+<{/php}>
+
+  <div class="formulize-app-main">
+    <div class="container">
+
+      <{$icms_contents}>
+
+    </div>
+  </div>
+
+  <{php}>
+  $jsVersion = formulize_get_file_version('/themes/Anari/js/script.js');
+  echo '<script src="' . $this->_tpl_vars['icms_imageurl'] . 'js/script.js?v=' . $jsVersion . '"></script>';
+  <{/php}>
+
+  <script type='text/javascript'>
+    jQuery(document).ready(function() {
+        // The body is hidden inline (see the body tag above) and revealed here once the window has
+        // loaded, so the page appears in one piece rather than assembling visibly.
+        //
+        // The window load event does not replay: a handler registered after load has already fired
+        // will never run. document.ready does replay, so this callback can be reached after load -
+        // and if it is, the body would stay hidden and the whole page would render blank, with
+        // nothing thrown to explain it. formulize_pageShown would not fire either, so the listeners
+        // that restore scroll position (formdisplay.php, entriesdisplay.php, mapdisplay.php) would
+        // silently never run.
+        //
+        // So ask the document whether load has already happened instead of assuming it has not.
+        var formulizeShowPage = function() {
+            jQuery('body').show(200, function() {
+                var formulize_pageShown = new CustomEvent('formulize_pageShown');
+                window.dispatchEvent(formulize_pageShown);
+            });
+        };
+        if (document.readyState === 'complete') {
+            formulizeShowPage();
+        } else {
+            jQuery(window).on('load', formulizeShowPage);
+        }
+    });
+  </script>
+
+    <{ if isset($masquerade_username) AND $masquerade_username }>
+        <div id="formulize-masquerade-block">
+            Masquerading as <b><{$masquerade_username}></b>
+            <form method="post" action="<{$smarty.const.XOOPS_URL}>/modules/formulize/">
+                <input type="hidden" name="revert" value="1" />
+                <input type="hidden" name="op" value="masquerade" />
+                <input type="hidden" name="masquerade_end" value="1" />
+                <input type="submit" name="confirm_submit" value="Revert" />
+            </form>
+        </div>
+        <div style="clear:both;"></div>
+    <{ /if }>
+
+	<{if isset($formulize_customCodeForApplications) && $formulize_customCodeForApplications}>
+		<{$formulize_customCodeForApplications}>
+	<{/if}>
+</body>
+
+</html>

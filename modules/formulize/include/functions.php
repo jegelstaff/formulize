@@ -678,6 +678,24 @@ function formulize_verifyAnonEntryCookie($fid) {
 }
 
 /**
+ * Is this request being made by the Formulize mobile app?
+ *
+ * The flag is set once, in modules/formulize/app/session.php, when the app exchanges its device
+ * token for a session. Everything that behaves differently in the app - most importantly the
+ * stripped-down page wrapper chosen in header.php - keys off this.
+ *
+ * WHY A SESSION FLAG RATHER THAN A REQUEST HEADER OR USER-AGENT SNIFF: react-native-webview
+ * applies custom headers only to the first request of a page load, not to the navigations, form
+ * posts, redirects and XHR that follow, so a header would be present on some requests and absent
+ * on others and the chrome would flicker in and out. The session cookie is sent with all of them.
+ *
+ * @return bool True if the current session was established by the mobile app
+ */
+function formulize_isAppSession() {
+    return isset($_SESSION['formulize_app_session']) && $_SESSION['formulize_app_session'];
+}
+
+/**
  * Determine whether the current anonymous visitor legitimately holds a given entry.
  *
  * This is the single authority for anonymous access to an entry, used by both the read
