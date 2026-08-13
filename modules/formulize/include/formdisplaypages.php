@@ -345,34 +345,15 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 			$showPageTitles = ($screen AND $screen->getUIOption('showpagetitles')) ? true : false;
 			$titleOverride = (isset($pageTitles[$currentPage]) AND $showPageTitles) ? trans($pageTitles[$currentPage]) : "all"; // we can pass in any text value as the titleOverride, and it will have the same effect as "all", but the alternate text will be used as the title for the form
 
-			if(!is_array($saveAndContinueButtonText)) {
-					$saveAndContinueButtonText = array();
-					$saveAndContinueButtonText['prevButtonText'] = trans(_formulize_DMULTI_PREV);
-					$saveAndContinueButtonText['leaveButtonText'] = trans(_formulize_SAVE_AND_LEAVE);
-					$saveAndContinueButtonText['saveButtonText'] = trans(_formulize_SAVE);
-					$saveAndContinueButtonText['finishButtonText'] =  trans(_formulize_DMULTI_SAVE);
-					$saveAndContinueButtonText['nextButtonText'] = trans(_formulize_DMULTI_NEXT);
-					$saveAndContinueButtonText['printableViewButtonText'] = trans(_formulize_PRINTVIEW);
-					$saveAndContinueButtonText['closeButtonText'] = trans(_formulize_DONE);
-			}
+			$saveAndContinueButtonText = formulizeMultipageButtonText($saveAndContinueButtonText);
 
 			if(!$usersCanSave AND $saveAndContinueButtonText['leaveButtonText'] == trans(_formulize_SAVE_AND_LEAVE)) {
 				$saveAndContinueButtonText['leaveButtonText'] = trans(_formulize_DONE);
 			}
 
-			if($currentPage != 1) {
-					// previousButtonText used to be valid... backwards compatibility
-					$previousButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['previousButtonText'])) ? $saveAndContinueButtonText['previousButtonText'] : '';
-					$previousButtonText = (!$previousButtonText AND is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['prevButtonText'])) ? $saveAndContinueButtonText['prevButtonText'] : '';
-			} else {
-					$previousButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['leaveButtonText'])) ? $saveAndContinueButtonText['leaveButtonText'] : '';
-			}
+			$previousButtonText = formulizeMultipagePreviousButtonText($saveAndContinueButtonText, $currentPage);
 			$saveButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['saveButtonText'])) ? $saveAndContinueButtonText['saveButtonText'] : '';
-			if($usersCanSave AND pageIsThanksPageOrEquivalent($nextPage, $currentPage, $thanksPage, $pages, $conditions, $entry_id, $fid, $frid)) {
-					$nextButtonText = (is_array($saveAndContinueButtonText) AND $saveAndContinueButtonText['finishButtonText']) ? $saveAndContinueButtonText['finishButtonText'] :  '';
-			} else {
-					$nextButtonText = (is_array($saveAndContinueButtonText) AND $saveAndContinueButtonText['nextButtonText']) ? $saveAndContinueButtonText['nextButtonText'] : '';
-			}
+			$nextButtonText = formulizeMultipageNextButtonText($saveAndContinueButtonText, $usersCanSave, pageIsThanksPageOrEquivalent($nextPage, $currentPage, $thanksPage, $pages, $conditions, $entry_id, $fid, $frid));
 			$closeButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['closeButtonText'])) ? $saveAndContinueButtonText['closeButtonText'] : '';
 			$previousPageButton = generatePrevNextButtonMarkup("prev", $previousButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
 			$nextPageButton = generatePrevNextButtonMarkup("next", $nextButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
@@ -452,17 +433,29 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 	// Emit it as JSON here, where conditional page-skipping has already been resolved,
 	// so the client doesn't have to re-derive which page is next/last.
 	if($elements_only) {
+		$nextIsThanks = pageIsThanksPageOrEquivalent($nextPage, $currentPage, $thanksPage, $pages, $conditions, $entry_id, $fid, $frid);
+		// Resolve the navigation button labels with the same precedence the full-page
+		// rendering uses (the screen's configured button text, falling back to the
+		// standard language constants) so the client-side controls read identically.
+		// An empty label means "no button", exactly as generatePrevNextButtonMarkup treats it.
+		$navButtonText = formulizeMultipageButtonText($saveAndContinueButtonText);
+		$navPreviousButtonText = trans(formulizeMultipagePreviousButtonText($navButtonText, $currentPage));
+		$navNextButtonText = trans(formulizeMultipageNextButtonText($navButtonText, $usersCanSave, $nextIsThanks));
 		$navMeta = array(
 			'currentPage'  => intval($currentPage),
 			'totalPages'   => count((array) $pages),
 			'previousPage' => ($previousPage === "none" ? null : intval($previousPage)),
 			'nextPage'     => intval($nextPage),
 			'isThanksPage' => ($currentPage == $thanksPage),
-			'nextIsThanks' => pageIsThanksPageOrEquivalent($nextPage, $currentPage, $thanksPage, $pages, $conditions, $entry_id, $fid, $frid),
+			'nextIsThanks' => $nextIsThanks,
 			'usersCanSave' => (bool) $usersCanSave,
 			'screenId'     => (is_object($screen) ? intval($screen->getVar('sid')) : 0),
 			'entryId'      => (is_numeric($entry_id) ? intval($entry_id) : 0),
 			'pageTitle'    => (isset($pageTitles[$currentPage]) ? trans($pageTitles[$currentPage]) : ''),
+			'previousButtonText' => $navPreviousButtonText,
+			'nextButtonText'     => $navNextButtonText,
+			'pageWord'           => _formulize_DMULTI_PAGE,
+			'ofWord'             => _formulize_DMULTI_OF,
 		);
 		print "\n<script type=\"application/json\" class=\"fz-multipage-nav\">".json_encode($navMeta)."</script>\n";
 	}
@@ -545,6 +538,47 @@ function pageIsThanksPageOrEquivalent($pageNumber, $activePageNumber, $thanksPag
 	}
 	// whatever page we've landed on, check if it's the thanks page
 	return $pageNumber == $thanksPageNumber ? true : false;
+}
+
+// Resolve the multipage screen's button text settings, falling back to the standard
+// language constants when the screen has no configured button text at all.
+// Note the all-or-nothing fallback is deliberate and matches the historical behaviour:
+// once a screen has a button text array, an empty value in it means "no button".
+function formulizeMultipageButtonText($saveAndContinueButtonText) {
+    if(is_array($saveAndContinueButtonText)) {
+        return $saveAndContinueButtonText;
+    }
+    return array(
+        'prevButtonText' => trans(_formulize_DMULTI_PREV),
+        'leaveButtonText' => trans(_formulize_SAVE_AND_LEAVE),
+        'saveButtonText' => trans(_formulize_SAVE),
+        'finishButtonText' => trans(_formulize_DMULTI_SAVE),
+        'nextButtonText' => trans(_formulize_DMULTI_NEXT),
+        'printableViewButtonText' => trans(_formulize_PRINTVIEW),
+        'closeButtonText' => trans(_formulize_DONE),
+    );
+}
+
+// The text for the "previous" control on a multipage screen. On the first page the
+// control is the leave button instead of a page-back button.
+function formulizeMultipagePreviousButtonText($buttonText, $currentPage) {
+    if(!is_array($buttonText)) { return ''; }
+    if($currentPage == 1) {
+        return isset($buttonText['leaveButtonText']) ? $buttonText['leaveButtonText'] : '';
+    }
+    // previousButtonText used to be valid... backwards compatibility.
+    // Kept verbatim from the original inline logic so the full page rendering is unchanged.
+    $previousButtonText = isset($buttonText['previousButtonText']) ? $buttonText['previousButtonText'] : '';
+    $previousButtonText = (!$previousButtonText AND isset($buttonText['prevButtonText'])) ? $buttonText['prevButtonText'] : '';
+    return $previousButtonText;
+}
+
+// The text for the "next" control on a multipage screen. It becomes the finish button
+// when the page after this one is the thanks page (or resolves to it).
+function formulizeMultipageNextButtonText($buttonText, $usersCanSave, $nextIsThanksPage) {
+    if(!is_array($buttonText)) { return ''; }
+    $key = ($usersCanSave AND $nextIsThanksPage) ? 'finishButtonText' : 'nextButtonText';
+    return (isset($buttonText[$key]) AND $buttonText[$key]) ? $buttonText[$key] : '';
 }
 
 // THIS FUNCTION GENERATES THE MARKUP FOR THE PREVIOUS AND NEXT BUTTONS
