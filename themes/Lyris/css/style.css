@@ -285,6 +285,7 @@ body:not(#formulize) .fz-main {
   right: 0;
   bottom: 0;
   width: 480px;
+  min-width: 320px;
   max-width: 92vw;
   background: var(--c-surface);
   box-shadow: var(--sh-4);
@@ -296,6 +297,41 @@ body:not(#formulize) .fz-main {
 
 .fz-drawer[hidden] {
   display: none;
+}
+
+/* Custom resize handle on the left edge, dragged via JS (script.js).
+   Native CSS `resize` was tried first but dropped: its hit target is a
+   near-invisible ~13px corner icon flush against the viewport edge (Firefox
+   paints no icon there at all), and that corner sits under
+   #formulize-masquerade-block (z-index:100) whenever masquerading, blocking
+   it entirely. A dedicated strip is visible on hover and always reachable. */
+.fz-drawer__resize-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -4px;
+  width: 8px;
+  cursor: ew-resize;
+  z-index: 1;
+}
+
+/* The hit area above stays wide for an easy grab; the visible line drawn here
+   is a slim 4px bar so it reads as a crisp divider rather than a thick block.
+   No transition: a color fade over a couple of px reads as the edge going
+   soft/out-of-focus rather than a hover state — it should just snap on. */
+.fz-drawer__resize-handle::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 2px;
+  width: 3px;
+  background: transparent;
+}
+
+.fz-drawer__resize-handle:hover::after,
+.fz-drawer__resize-handle--active::after {
+  background-color: var(--c-border-strong);
 }
 
 @keyframes fz-drawer-in {
@@ -313,7 +349,7 @@ body:not(#formulize) .fz-main {
 }
 
 .fz-drawer__title {
-  font-size: var(--fs-15);
+  font-size: var(--fs-20);
   font-weight: 600;
 }
 
@@ -321,6 +357,21 @@ body:not(#formulize) .fz-main {
   flex: 1;
   overflow: auto;
   padding: var(--s-5);
+}
+
+/* The AI assistant's own panel. It brings its own padding and its own internal
+   scrolling (the chat log scrolls, the input row stays put), so unlike the entry
+   body this one neither pads nor scrolls - it just hands its full height over. */
+.fz-drawer__body--ai {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* display:flex above would otherwise beat the UA's [hidden] rule */
+.fz-drawer__body--ai[hidden] {
+  display: none;
 }
 
 .fz-drawer__loading {
@@ -1252,6 +1303,11 @@ textarea {
   min-width: 100%;
 }
 
+.fz-table .main-cell-div {
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+}
+
 /* Neutralize the inline style="text-align: right" that the element renderer
    emits for numeric values (functions.php getHTMLForList). Table cells in the
    Lyris list layout already inherit text-align: left from .fz-table td; the
@@ -1601,6 +1657,7 @@ a.de-edit-icon:hover::before {
   text-decoration: none;
   transition: background var(--dur-1) var(--ease);
   line-height: var(--lh-snug);
+	cursor: pointer;
 }
 
 .main-menu__item-link:hover {
@@ -1812,6 +1869,10 @@ a.main-menu__item-link--active::before {
     max-width: 100vw;
   }
 
+  .fz-drawer__resize-handle {
+    display: none;
+  }
+
   .fz-drawer__body {
     padding: var(--s-4);
   }
@@ -1956,7 +2017,7 @@ a.main-menu__item-link--active::before {
   --field-radius:   var(--r-2);   /* 6px */
   --field-gap:      18px;
   --field-text:     var(--fs-14);
-  --label-text:     1rem; /* ~16px, scales with root font-size (#32) */
+  --label-text:     1.1rem; /* ~16px, scales with root font-size (#32) */
   --label-gap:      6px;
   --label-col-w:    220px;
   --help-text:      var(--fs-12);
@@ -2411,7 +2472,7 @@ textarea.fz-control {
   --field-radius: var(--r-2);
   --field-gap:    18px;
   --field-text:   var(--fs-14);
-  --label-text:   1rem; /* ~16px, scales with root font-size (#32) */
+  --label-text:   1.1rem; /* ~16px, scales with root font-size (#32) */
   --label-gap:    6px;
   --help-text:    var(--fs-12);
 }

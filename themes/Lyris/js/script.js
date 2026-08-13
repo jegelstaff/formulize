@@ -72,15 +72,108 @@ function initDrawer() {
 
   const titleEl  = drawer.querySelector('.js-drawer-title');
   const bodyEl   = drawer.querySelector('.js-drawer-body');
+  const aiBodyEl = drawer.querySelector('.js-drawer-ai-body');
   const footEl   = drawer.querySelector('.js-drawer-foot');
 
-  function openDrawer({ title = '', html = '', footerHtml = '' } = {}) {
-    if (titleEl) titleEl.textContent = title;
-    if (bodyEl)  bodyEl.innerHTML = html;
-    if (footEl)  footEl.innerHTML = footerHtml;
+  // What the drawer is currently showing: 'entry' (a Formulize entry form, the
+  // original and still the common case) or 'ai' (the embedded AI assistant). The two
+  // have their own body elements and never share state, so most of the entry
+  // machinery below has to stay out of the AI panel's way.
+  let drawerMode = 'entry';
+
+  // Persist the user's drag-resized drawer width across reloads. Desktop only —
+  // below the 768px breakpoint the drawer is forced full-width and must not carry
+  // a stale inline width into that layout, so the stored value is only
+  // applied/observed there.
+  // Entry forms and the chat want very different widths, so each remembers its own
+  // and resizing one never moves the other.
+  const WIDTH_STORAGE_KEY = 'fz-drawer-width';
+  const AI_WIDTH_STORAGE_KEY = 'fz-drawer-width-ai';
+  const AI_DEFAULT_WIDTH = '640px'; // chat needs more room than the 480px form default
+  const MIN_WIDTH = 320; // matches .fz-drawer min-width in style.css
+  const isMobileDrawer = () => window.innerWidth <= 768;
+  const maxDrawerWidth = () => window.innerWidth * 0.92; // matches .fz-drawer max-width: 92vw
+  const widthStorageKey = () => (drawerMode === 'ai' ? AI_WIDTH_STORAGE_KEY : WIDTH_STORAGE_KEY);
+
+  function applyStoredDrawerWidth() {
+    if (isMobileDrawer()) {
+      drawer.style.width = '';
+      return;
+    }
+    let saved = null;
+    try {
+      saved = localStorage.getItem(widthStorageKey());
+    } catch (_) { /* ignore */ }
+    if (saved) {
+      drawer.style.width = saved;
+    } else if (drawerMode === 'ai') {
+      drawer.style.width = AI_DEFAULT_WIDTH;
+    } else {
+      drawer.style.width = ''; // fall back to the stylesheet's default
+    }
+  }
+
+  applyStoredDrawerWidth();
+  window.addEventListener('resize', applyStoredDrawerWidth);
+
+  // Drag-resize via the visible handle on the drawer's left edge. (Native CSS
+  // `resize` was tried and dropped — see the comment on .fz-drawer__resize-handle
+  // in style.css for why.)
+  const resizeHandle = drawer.querySelector('.js-drawer-resize-handle');
+  if (resizeHandle) {
+    let startX = 0;
+    let startWidth = 0;
+
+    function onResizePointerMove(e) {
+      const delta = startX - e.clientX; // dragging toward screen center widens the drawer
+      const width = Math.min(Math.max(startWidth + delta, MIN_WIDTH), maxDrawerWidth());
+      drawer.style.width = width + 'px';
+    }
+
+    function onResizePointerUp() {
+      document.removeEventListener('pointermove', onResizePointerMove);
+      document.removeEventListener('pointerup', onResizePointerUp);
+      resizeHandle.classList.remove('fz-drawer__resize-handle--active');
+      document.body.style.removeProperty('cursor');
+      document.body.style.removeProperty('user-select');
+      try { localStorage.setItem(widthStorageKey(), drawer.style.width); } catch (_) { /* ignore */ }
+    }
+
+    resizeHandle.addEventListener('pointerdown', (e) => {
+      if (isMobileDrawer()) return;
+      e.preventDefault();
+      startX = e.clientX;
+      startWidth = drawer.getBoundingClientRect().width;
+      resizeHandle.classList.add('fz-drawer__resize-handle--active');
+      document.body.style.cursor = 'ew-resize';
+      document.body.style.userSelect = 'none';
+      document.addEventListener('pointermove', onResizePointerMove);
+      document.addEventListener('pointerup', onResizePointerUp);
+    });
+  }
+
+  // Show one of the two body panels and set the mode. The hidden panel keeps its DOM,
+  // which is the whole point for AI: an in-progress conversation survives a detour
+  // through an entry form.
+  function setDrawerMode(mode) {
+    drawerMode = mode;
+    if (bodyEl)   bodyEl.hidden   = (mode === 'ai');
+    if (aiBodyEl) aiBodyEl.hidden = (mode !== 'ai');
+    applyStoredDrawerWidth(); // each mode has its own remembered width
+  }
+
+  function revealDrawer() {
     drawer.removeAttribute('hidden');
     if (scrim) scrim.removeAttribute('hidden');
     document.documentElement.style.overflow = 'hidden';
+  }
+
+  function openDrawer({ title = '', html = '', footerHtml = '' } = {}) {
+    setDrawerMode('entry');
+    if (titleEl) titleEl.textContent = title;
+    if (bodyEl)  bodyEl.innerHTML = html;
+    if (footEl)  footEl.innerHTML = footerHtml;
+    revealDrawer();
   }
 
   function closeDrawer() {
@@ -92,6 +185,9 @@ function initDrawer() {
   const ENDPOINT = '/modules/formulize/include/formdisplay-elementsonly.php';
   const SAVE_ENDPOINT = '/modules/formulize/include/readelements.php';
   const FORM_NAME = 'formulize_drawer';
+  // drawer=1 makes the AI page render as a bare fragment (no theme, no header/footer)
+  const AI_ENDPOINT = '/ai/?drawer=1';
+  const AI_DRAWER_TITLE = 'AI Assistant';
 
   // Paging state for the currently loaded entry form. Populated from the
   // fz-multipage-nav metadata the endpoint emits; null for single-page forms.
@@ -136,15 +232,27 @@ function initDrawer() {
   // (change flag, paging metadata, title, current-frame bookkeeping, footer, Back
   // control). Every drawer load — open, page turn, subform descend, back — funnels
   // through here. Returns a promise of the fz-drawer-meta object (null on failure).
-  function fetchIntoDrawer(url, fetchOpts) {
-    if (!bodyEl) return Promise.resolve(null);
-    bodyEl.innerHTML = '<div class="fz-drawer__loading">Loading…</div>';
-    pruneDeadEditors();
+  // Fetch a server-rendered fragment into a drawer panel and run its scripts. The
+  // panel-agnostic half of loading: both the entry form and the AI assistant use it,
+  // and each layers its own bookkeeping on top. Rejects if the load failed, having
+  // already put a message in the panel.
+  function loadFragmentInto(targetEl, url, fetchOpts, failureMessage) {
+    targetEl.innerHTML = '<div class="fz-drawer__loading">Loading…</div>';
     var opts = fetchOpts || {};
     opts.credentials = 'same-origin';
     return fetch(url, opts)
       .then(function (r) { return r.text(); })
-      .then(function (html) { return injectFragment(bodyEl, html); })
+      .then(function (html) { return injectFragment(targetEl, html); })
+      .catch(function (e) {
+        targetEl.innerHTML = '<div class="fz-drawer__loading">' + failureMessage + '</div>';
+        throw e;
+      });
+  }
+
+  function fetchIntoDrawer(url, fetchOpts) {
+    if (!bodyEl) return Promise.resolve(null);
+    pruneDeadEditors();
+    return loadFragmentInto(bodyEl, url, fetchOpts, 'Could not load form.')
       .then(function () {
         // Each freshly loaded form starts as unchanged. The endpoint only defines
         // formulizechanged when it is undefined, so reset it here to clear any value
@@ -165,7 +273,8 @@ function initDrawer() {
         return meta;
       })
       .catch(function () {
-        bodyEl.innerHTML = '<div class="fz-drawer__loading">Could not load form.</div>';
+        // loadFragmentInto has already put the failure message in the panel; callers
+        // just need the null.
         return null;
       });
   }
@@ -181,6 +290,28 @@ function initDrawer() {
     openDrawer({ title: opts.title || '' });
     updateBackButton();
     fetchIntoDrawer(buildEntryUrl(currentFrame.params));
+  }
+
+  // Show the embedded AI assistant in the drawer. Unlike an entry, the chat is loaded
+  // once and then kept: reopening just reveals the panel again, so the conversation and
+  // any half-typed message are exactly where they were left. (Across a page reload it is
+  // localStorage in ai/index.php that restores the conversation, not this.)
+  // The assistant brings its own send controls, so the drawer footer stays empty.
+  let aiLoaded = false;
+
+  function openAIInDrawer() {
+    if (!aiBodyEl) return;
+    setDrawerMode('ai');
+    if (titleEl) titleEl.textContent = AI_DRAWER_TITLE;
+    if (footEl) footEl.innerHTML = '';
+    if (backBtn) backBtn.hidden = true;
+    revealDrawer();
+    if (aiLoaded) return;
+    aiLoaded = true;
+    loadFragmentInto(aiBodyEl, moduleBase() + AI_ENDPOINT, null, 'Could not load the AI assistant.')
+      .catch(function () {
+        aiLoaded = false; // let the next open retry rather than showing the error forever
+      });
   }
 
   // Inject an HTML fragment and execute its <script> tags in document order,
@@ -229,7 +360,7 @@ function initDrawer() {
   // Cancel + Save; multi-page forms (per the fz-multipage-nav metadata) get Previous, a
   // "Page X of Y" indicator, and Next or Finish (when the next step is the thanks page).
   function renderEntryFooter() {
-    if (!footEl) return;
+    if (!footEl || drawerMode === 'ai') return; // the AI panel has its own controls
     footEl.innerHTML = '';
 
     var notice = document.createElement('span');
@@ -576,18 +707,45 @@ function initDrawer() {
     closeDrawer();
   }
 
-  if (closeBtn) closeBtn.addEventListener('click', closeEntryDrawer);
-  if (backBtn)  backBtn.addEventListener('click', goBack);
-  if (scrim)    scrim.addEventListener('click', closeEntryDrawer);
+  // Closing the AI panel must leave it intact — no lock release (it holds none) and no
+  // teardown of the entry state, which belongs to the other panel and is still valid.
+  function closeCurrentDrawer() {
+    if (drawerMode === 'ai') {
+      closeDrawer();
+      return;
+    }
+    closeEntryDrawer();
+  }
+
+  // Back only ever means "up one subform level", which is an entry-panel notion.
+  function handleBack() {
+    if (drawerMode === 'ai') return;
+    goBack();
+  }
+
+  if (closeBtn) closeBtn.addEventListener('click', closeCurrentDrawer);
+  if (backBtn)  backBtn.addEventListener('click', handleBack);
+  if (scrim)    scrim.addEventListener('click', closeCurrentDrawer);
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !drawer.hasAttribute('hidden')) closeEntryDrawer();
+    if (e.key === 'Escape' && !drawer.hasAttribute('hidden')) closeCurrentDrawer();
   });
+
+  // The theme's top-bar AI link. It keeps a real href to /ai/ so it still works as a
+  // full page without JS; here we intercept it and use the drawer instead.
+  var aiLink = document.querySelector('.js-open-ai');
+  if (aiLink) {
+    aiLink.addEventListener('click', function (e) {
+      e.preventDefault();
+      openAIInDrawer();
+    });
+  }
 
   window.formulize = window.formulize || {};
   window.formulize.drawer = {
     open: openDrawer,
-    close: closeEntryDrawer,
+    close: closeCurrentDrawer,
     openEntry: openEntryInDrawer,
+    openAI: openAIInDrawer,
     saveEntry: saveEntryFromDrawer,
     subformAction: subformAction
   };
