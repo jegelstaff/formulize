@@ -1061,10 +1061,25 @@ textarea {
   white-space: nowrap;
 }
 
-/* Buttons inside the dark selection bar — chip-dark style */
+/* Buttons inside the dark selection bar — chip-dark style
+   (mirrors the `.fz-chip--dark` / `--danger` / `--outline` primitives above;
+   core renders these as bare `input[type=button].formulize_button` so the
+   classes cannot be applied to the markup).
+
+   The `input[type="button"].formulize_button` selectors are load-bearing, for
+   the same reason as in `.fz-list__action-panel` above (issue #34, PR #38):
+   the base `.formulize_button` rule near the end of this file also matches as
+   `input[type="button"].formulize_button` — specificity (0,2,1), tying the
+   `.fz-selection-bar input[type="button"]` reset here and winning on source
+   order. That is what made "Clone selected" / "Change owner" render as light
+   surface pills with `color: var(--c-text)` on the dark bar, and then keep
+   near-black text on hover (issue #82). Matching at (0,3,1) reclaims them
+   regardless of source order. */
 .fz-selection-bar input[type="button"],
 .fz-selection-bar input[type="submit"],
-.fz-selection-bar .formulize_button {
+.fz-selection-bar .formulize_button,
+.fz-selection-bar input[type="button"].formulize_button,
+.fz-selection-bar input[type="submit"].formulize_button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1079,17 +1094,37 @@ textarea {
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
-  transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+  transition: background var(--dur-1) var(--ease),
+              border-color var(--dur-1) var(--ease),
+              color var(--dur-1) var(--ease);
 }
 
 .fz-selection-bar input[type="button"]:hover,
 .fz-selection-bar input[type="submit"]:hover,
-.fz-selection-bar .formulize_button:hover {
+.fz-selection-bar .formulize_button:hover,
+.fz-selection-bar input[type="button"].formulize_button:hover,
+.fz-selection-bar input[type="submit"].formulize_button:hover {
   background: rgba(255,255,255,.18);
   border-color: rgba(255,255,255,.28);
+  color: #fff;
 }
 
-/* Delete button — danger chip-dark */
+/* Keyboard focus. The theme's button primitives all use
+   `outline: none; box-shadow: var(--sh-focus)`, but `--sh-focus` is a dark
+   slate ring meant for light surfaces and is invisible on this bar. Keep the
+   same ring geometry and invert it into the bar's white-alpha family. */
+.fz-selection-bar input[type="button"]:focus-visible,
+.fz-selection-bar input[type="submit"]:focus-visible,
+.fz-selection-bar .formulize_button:focus-visible,
+.fz-selection-bar input[type="button"].formulize_button:focus-visible,
+.fz-selection-bar input[type="submit"].formulize_button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255,255,255,.35);
+}
+
+/* Delete button — danger chip-dark. Hover also lifts the text to full white:
+   the background step alone (.14 -> .22 over a near-black bar) is barely
+   perceptible, which is why this button read as having no hover state. */
 .fz-selection-bar #formulize_deleteButton {
   background: rgba(255,90,90,.14);
   border-color: rgba(255,120,120,.35);
@@ -1098,14 +1133,26 @@ textarea {
 .fz-selection-bar #formulize_deleteButton:hover {
   background: rgba(255,90,90,.22);
   border-color: rgba(255,120,120,.5);
+  color: #fff;
 }
 
-/* Clear/select-all buttons — outlined chip-dark */
+/* Clear/select-all buttons — outlined chip-dark. These id selectors (1,1,0)
+   outrank the class-level `:hover` above (0,3,1), so without a matching
+   `:hover` here their background/border/colour were pinned and the buttons had
+   no hover state at all (issue #82). Hover fills them with the chip-dark rest
+   background and lifts the text to full white — the same ghost -> filled move
+   `.fz-chip--ghost:hover` makes on light surfaces. */
 .fz-selection-bar #formulize_clearSelectButton,
 .fz-selection-bar #formulize_selectAllButton {
   background: transparent;
   border-color: rgba(255,255,255,.25);
   color: rgba(255,255,255,.85);
+}
+.fz-selection-bar #formulize_clearSelectButton:hover,
+.fz-selection-bar #formulize_selectAllButton:hover {
+  background: rgba(255,255,255,.10);
+  border-color: rgba(255,255,255,.45);
+  color: #fff;
 }
 
 /* Footer (pagination) */
