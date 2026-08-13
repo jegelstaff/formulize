@@ -23,8 +23,9 @@ define('_AM_CFG_VIEW_USERS_APIKEYS', 'API Keys');
 define('_AM_CFG_VIEW_USERS_TOKENS', 'Account Tokens');
 
 // --- View names: Appearance tab ---
-define('_AM_CFG_VIEW_APPEARANCE_THEMESETTINGS', 'Theme Settings');
+define('_AM_CFG_VIEW_APPEARANCE_STYLESCOLORS', 'Styles and Colors');
 define('_AM_CFG_VIEW_APPEARANCE_THEMEEDITOR', 'Theme Editor');
+define('_AM_CFG_VIEW_APPEARANCE_SETTINGS', 'Settings');
 
 // --- View names: Settings tab ---
 define('_AM_CFG_VIEW_SETTINGS_ELEMENTS', 'Elements');
@@ -66,8 +67,10 @@ define('_AM_CFG_SEC_LOGGING', 'Logging');
 define('_AM_CFG_SEC_DATABASE', 'Database');
 define('_AM_CFG_SEC_DATE_TIME_FORMATS', 'Date & time formats');
 define('_AM_CFG_SEC_SEO', 'Search engines (SEO)');
-define('_AM_CFG_SEC_APPEARANCE', 'Appearance');
 define('_AM_CFG_SEC_AVAILABILITY', 'Availability');
+
+// --- Section headings: Appearance > Settings ---
+define('_AM_CFG_SEC_APPEARANCE', 'Appearance');
 
 // --- Section headings: Settings > Advanced ---
 define('_AM_CFG_SEC_PUBLIC_API', 'Public API');

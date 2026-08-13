@@ -198,11 +198,11 @@ return array(
     'appearance' => array(
         'name' => _AM_CFG_TAB_APPEARANCE,
         'views' => array(
-            // Theme Settings (site colours/font/logo) is the default view; it was
+            // Styles and Colors (site colours/font/logo) is the default view; it was
             // previously its own primary "Appearance" tab and is now relocated here
             // as a sub-view alongside the Theme Editor (issue #66).
-            'themesettings' => array(
-                'name' => _AM_CFG_VIEW_APPEARANCE_THEMESETTINGS,
+            'stylescolors' => array(
+                'name' => _AM_CFG_VIEW_APPEARANCE_STYLESCOLORS,
                 'type' => 'page',
                 'page' => 'appearance',
             ),
@@ -210,6 +210,18 @@ return array(
                 'name' => _AM_CFG_VIEW_APPEARANCE_THEMEEDITOR,
                 'type' => 'page',
                 'page' => 'themeeditor',
+            ),
+            'settings' => array(
+                'name' => _AM_CFG_VIEW_APPEARANCE_SETTINGS,
+                'type' => 'settings',
+                'sections' => array(
+                    _AM_CFG_SEC_APPEARANCE => array(
+                        array('name' => 'theme_set', 'scope' => 'system'),
+                        array('name' => 'theme_admin_set', 'scope' => 'system'),
+                        array('name' => 'footer', 'scope' => 'metafooter', 'description' => _AM_CFG_DESC_FOOTER),
+                        array('name' => 'footadm', 'scope' => 'metafooter', 'description' => _AM_CFG_DESC_FOOTADM),
+                    ),
+                ),
             ),
         ),
     ),
@@ -426,12 +438,6 @@ return array(
                     _AM_CFG_SEC_SEO => array(
                         array('name' => 'meta_description', 'scope' => 'metafooter'),
                         array('name' => 'meta_robots', 'scope' => 'metafooter'),
-                    ),
-                    _AM_CFG_SEC_APPEARANCE => array(
-                        array('name' => 'theme_set', 'scope' => 'system'),
-                        array('name' => 'theme_admin_set', 'scope' => 'system'),
-                        array('name' => 'footer', 'scope' => 'metafooter', 'description' => _AM_CFG_DESC_FOOTER),
-                        array('name' => 'footadm', 'scope' => 'metafooter', 'description' => _AM_CFG_DESC_FOOTADM),
                     ),
                     _AM_CFG_SEC_AVAILABILITY => array(
                         array('name' => 'closesite', 'scope' => 'system'),

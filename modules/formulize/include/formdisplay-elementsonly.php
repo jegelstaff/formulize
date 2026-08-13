@@ -376,3 +376,15 @@ jQuery(window).on('unload', function() {
     ".formulize_javascriptForRemovingEntryLocks('unload')."
 });
 </script>";
+
+// This request renders no footer, so nothing else would ever hand the browser the events
+// it queued. Without this the AI has no idea which entry the person is looking at in the
+// drawer — the thing the assistant most needs to know while it is open.
+//
+// It has to come after the render above, because that is what queues the rendering-form
+// event and records which form/entry was actually shown. The drawer title is passed
+// explicitly, since document.title still names the host page, not this fragment.
+require_once XOOPS_ROOT_PATH.'/modules/formulize/include/writeToFormulizeLog.php';
+if($activityLogJs = formulize_activityLogJs($drawerTitle)) {
+    print "\n<script type=\"text/javascript\">".$activityLogJs."</script>\n";
+}
