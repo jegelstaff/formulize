@@ -249,23 +249,28 @@ function initDrawer() {
       return;
     }
 
-    if (nav.previousPage) {
-      footEl.appendChild(makeButton('‹ Previous', 'fz-btn fz-btn--ghost', function () {
+    // Labels come from the endpoint, which resolves the screen's configured button text
+    // and falls back to the standard Formulize language constants — the same precedence
+    // the full page rendering uses. An empty label means the screen has that button
+    // switched off, so we render nothing (matching core).
+    if (nav.previousPage && nav.previousButtonText) {
+      footEl.appendChild(makeButton('‹ ' + nav.previousButtonText, 'fz-btn fz-btn--ghost', function () {
         goToPage(nav.previousPage);
       }));
     }
 
     var indicator = document.createElement('span');
     indicator.className = 'fz-drawer__page-indicator';
-    indicator.textContent = 'Page ' + nav.currentPage + ' of ' + nav.totalPages;
+    indicator.textContent = (nav.pageWord || 'Page') + ' ' + nav.currentPage + ' ' +
+                            (nav.ofWord || 'of') + ' ' + nav.totalPages;
     footEl.appendChild(indicator);
 
-    if (nav.nextIsThanks) {
-      footEl.appendChild(makeButton('Finish', 'fz-btn fz-btn--primary', finishDrawer));
-    } else {
-      footEl.appendChild(makeButton('Next ›', 'fz-btn fz-btn--primary', function () {
-        goToPage(nav.nextPage);
-      }));
+    if (nav.nextButtonText) {
+      footEl.appendChild(makeButton(
+        nav.nextIsThanks ? nav.nextButtonText : nav.nextButtonText + ' ›',
+        'fz-btn fz-btn--primary',
+        nav.nextIsThanks ? finishDrawer : function () { goToPage(nav.nextPage); }
+      ));
     }
   }
 
