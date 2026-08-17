@@ -27,6 +27,21 @@ them *after* the e2e suite, when the setup specs have finished building the muse
   `formulizeSavedViewsHandler`. Saved views hold several lists tied to each other only by position, and
   names people typed, so the checks are that everything survives the trip verbatim and in step. Also
   transactional.
+* `element_code_files_test.php` - the code files that captionedContent, fullWidthContent, text, number,
+  textarea and derived elements keep in `modules/formulize/code/`. Saving an element sets `ele_value`
+  twice, so each type is checked for both halves of the contract: the file on disk is right, *and* the
+  object is still carrying the value it was given rather than a blank the second pass would read as "the
+  admin removed the code". Also that removing the code removes the file, that a caller setting other keys
+  of `ele_value` does not, and that `getVar` prefers the file over the stored value even when the file
+  changes on disk between reads. Also the other side of it - `insert()` strips the code out of the copy it
+  writes, so the database never holds a second copy, including the hand off the generic elements handler
+  makes to the element type's own handler (nearly every `insert()` call site uses the generic one, so
+  without that hand off an element would store one thing saved from one place and another saved from
+  elsewhere) - and that it only does so once the file is there and has something in it, since an element
+  whose code is still only in the database would otherwise be emptied by a save that never touched its
+  content. It needs the application booted (element objects cannot be built without
+  it) but nothing the museum system contains, and it reads and writes no data of its own - every element
+  is in memory, and the only files it touches are named for a handle no real element uses.
 
 To run one against a local docker environment:
 

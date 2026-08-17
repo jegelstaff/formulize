@@ -433,6 +433,45 @@ export async function saveAdminForm(page, type = 'regular', timeout = 120000) {
  * @param {string} accordionHeaderText - Text in the header of the accordion we're going to open
  * @param {number} timeout - Maximum time to wait for animation completion (default 2000ms)
  */
+/**
+ * Set the contents of a CodeMirror-backed code box (any .code-textarea), replacing whatever is in it.
+ *
+ * Every code box in the admin UI is one of these: templates/admin/ui.html runs CodeMirror.fromTextArea()
+ * over each .code-textarea on load, which leaves the real textarea display:none behind an editor widget.
+ * Filling that textarea directly therefore waits forever on an element that will never become visible.
+ * What CodeMirror does expose is its own input box, inside the wrapper it inserts directly after the
+ * textarea it took over - which is what the selector below walks to.
+ *
+ * The select-all is not optional. CodeMirror applies input by replacing the current SELECTION, so filling
+ * a box that already holds something lands the new text ALONGSIDE the old rather than replacing it. On an
+ * empty box selecting all is a harmless no-op, so this is right in both cases and there is no second
+ * variant to pick between. Pressing on the box also focuses it, so no click is needed first.
+ *
+ * The wait at the end is doing real work. This CodeMirror (2.34) reads its input box on a timer rather
+ * than on the event, and only when it notices does its onChange call save() to copy the text into the
+ * textarea that actually gets posted. Returning earlier leaves the caller racing that - a save that lands
+ * first posts the OLD content, silently and without failing anything.
+ *
+ * @param {object} page Playwright page
+ * @param {string} boxSelector CSS selecting the box's own (hidden) textarea - the name attribute is the
+ *   stable way to say which box, and is the only way to be specific on the pages that have several
+ *   (the form procedures tab has four). E.g. 'textarea[name="forms-on_before_save"]'.
+ * @param {string} value The text to put in the box
+ */
+export async function setCodeMirrorValue(page, boxSelector, value) {
+	const underlying = page.locator(boxSelector);
+	const editor = page.locator(`${boxSelector} + .CodeMirror`);
+	// No editor is a genuine failure, not something to work around by filling the raw textarea - but say so
+	// here, otherwise it surfaces as a timeout on the input box INSIDE an editor that was never created.
+	// ui.html makes one for every .code-textarea on load; a few are made later by their own page's script
+	// (the multipage page-settings popup builds its one when it opens), so the panel may need opening first.
+	await expect(editor, `no CodeMirror editor next to ${boxSelector}`).toBeVisible({ timeout: 15000 });
+	const input = editor.getByRole('textbox');
+	await input.press('ControlOrMeta+a'); // focuses the box, and selects what is in it so the fill replaces it
+	await input.fill(value);
+	await expect(underlying).toHaveValue(value, { timeout: 15000 });
+}
+
 export async function openElementAccordion(page, accordionHeaderText, timeout = 2000) {
 	await openAccordion(page, 'element', accordionHeaderText, timeout);
 }

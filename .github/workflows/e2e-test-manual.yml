@@ -125,6 +125,14 @@ jobs:
       if: ${{ !inputs.test_filter }}
       run: docker exec formulize-web-1 php /var/www/html/tests/saved_views_test.php
 
+    # Also after the suite rather than before it, but for a different reason than the two above: it needs
+    # nothing the museum system contains, but it does need the application booted to build element
+    # objects at all, and the install happens in the setup specs. It reads and writes no data - every
+    # element is in memory, and the only files it touches are its own, which it removes again.
+    - name: PHP integrity tests (element code files, setVar/getVar)
+      if: ${{ !inputs.test_filter }}
+      run: docker exec formulize-web-1 php /var/www/html/tests/element_code_files_test.php
+
     - name: Create database dump and collect files
       if: always()
       run: |

@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, waitForAdminPageReady, openElementAccordion, saveAdminForm, addElementForm, ElementType, createMuseumForm, deleteMuseumForm } from '../../utils';
+import { login, waitForAdminPageReady, openElementAccordion, saveAdminForm, addElementForm, ElementType, createMuseumForm, deleteMuseumForm, setCodeMirrorValue } from '../../utils';
 
 // This spec builds its own throwaway form rather than renaming a handle on the shared Artifacts form,
 // and deletes it again at the end.
@@ -77,8 +77,7 @@ test('Renaming an element handle updates its $handle reference in derived value 
 	await page.locator('input[name="elements-ele_caption"]').fill('Rename Combined');
 	await page.locator('input[name="elements-ele_handle"]').fill('hr_year_era');
 	await page.getByRole('link', { name: 'Options' }).click();
-	await page.locator('div:nth-child(5) > pre:nth-child(2)').click();
-	await page.getByRole('group', { name: 'Formula for generating values' }).getByRole('textbox').fill('$value = $hr_year.$hr_era;');
+	await setCodeMirrorValue(page, 'textarea[name="elements-ele_value[0]"]', '$value = $hr_year.$hr_era;');
 	await saveAdminForm(page);
 
 	const openCombinedOptions = async () => {

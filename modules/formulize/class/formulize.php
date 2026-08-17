@@ -2478,7 +2478,10 @@ class formulizeHandler {
 
 			// rename element resources if necessary
 			if($originalElementNames['ele_handle'] != $elementObject->getVar('ele_handle')) {
-				$element_handler->renameElementResources($elementObject, $originalElementNames['ele_handle']);
+				// ele_value being part of this save means the element's code file has already been written or
+				// deleted under the new handle, up in the property loop, so the old one must not be moved over it
+				$element_handler->renameElementResources($elementObject, $originalElementNames['ele_handle'],
+					eleValueWasSavedWithThisChange: isset($elementObjectProperties['ele_value']));
 			}
 
 			// rename the field in the data table if necessary

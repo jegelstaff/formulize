@@ -56,17 +56,22 @@ abstract class formulizeStaticContentElement extends formulizeElement {
 
 	// write code to a file, when the content is PHP code authored via the admin UI (content containing $value).
 	// The code file is named from the element's ele_type, so each concrete type gets its own naming (eg: fullWidthContent_handle.php).
+	// The content is written to the file and left in the object as well: the object always holds the value it was
+	// given, so anything reading it back (including a second setVar in the same save, which is what the admin save
+	// path does) sees the real content and not a blank that would be mistaken for the code having been removed.
 	public function setVar($key, $value, $not_gpc = false) {
 		if($key == 'ele_value') {
 			$valueToWrite = is_array($value) ? $value : unserialize($value);
-			$filename = $this->getVar('ele_type').'_'.$this->getVar('ele_handle').'.php';
-			if(strstr((string)$valueToWrite[ELE_VALUE_STATICCONTENT_CONTENT], "\$value")) {
-				formulize_writeCodeToFile($filename, $valueToWrite[ELE_VALUE_STATICCONTENT_CONTENT]);
-				$valueToWrite[ELE_VALUE_STATICCONTENT_CONTENT] = '';
-				$value = is_array($value) ? $valueToWrite : serialize($valueToWrite);
-			// delete the code file if it exists but the value no longer contains code (these elements can hold code or plain text/HTML)
-			} elseif(file_exists(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename)) {
-				unlink(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename);
+			// only act when the content is actually part of what we were handed, so a caller setting other keys
+			// in ele_value cannot delete the code file by omission
+			if(isset($valueToWrite[ELE_VALUE_STATICCONTENT_CONTENT])) {
+				$filename = $this->getVar('ele_type').'_'.$this->getVar('ele_handle').'.php';
+				if(strstr((string)$valueToWrite[ELE_VALUE_STATICCONTENT_CONTENT], "\$value")) {
+					formulize_writeCodeToFile($filename, $valueToWrite[ELE_VALUE_STATICCONTENT_CONTENT]);
+				// delete the code file if it exists but the value no longer contains code (these elements can hold code or plain text/HTML)
+				} elseif(file_exists(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename)) {
+					unlink(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename);
+				}
 			}
 		}
 		parent::setVar($key, $value, $not_gpc);
@@ -97,6 +102,29 @@ abstract class formulizeStaticContentElementHandler extends formulizeElementsHan
 
 	function __construct($db) {
 		$this->db =& $db;
+	}
+
+	/**
+	 * A method to remove values from the ele_value array prior to insert into the database, so we don't have any duplication of the stored values.
+	 * File is the only source of truth. Object is a convenience in code.
+	 * @param array|string ele_value - the ele_value property of the element
+	 * @param object|null element - the element being written. Needed to name the code file that has to be holding the content before it can be taken out of the database copy.
+	 * @return array|string The modified ele_value without the content that would have been written to a file already, in the same form it arrived in
+	 */
+	protected function clearEleValueFileKeysForInsert($ele_value, $element = null) {
+		$valueToWrite = is_array($ele_value) ? $ele_value : @unserialize((string)$ele_value);
+		if(!is_array($valueToWrite)) {
+			return $ele_value; // nothing we can read, so nothing to strip - leave it exactly as it arrived
+		}
+		if(isset($valueToWrite[ELE_VALUE_STATICCONTENT_CONTENT])) {
+			// only take it out of the database copy once the file is there to hold it - see codeFileHasContentForElement()
+			if(strstr((string)$valueToWrite[ELE_VALUE_STATICCONTENT_CONTENT], "\$value") // the same condition setVar writes the file on
+				AND $this->codeFileHasContentForElement($element)) {
+					$valueToWrite[ELE_VALUE_STATICCONTENT_CONTENT] = "";
+			}
+		}
+		// hand it back the way it came: insert() passes this straight to quoteString()
+		return is_array($ele_value) ? $valueToWrite : serialize($valueToWrite);
 	}
 
 	// Prepare data for the admin Options tab. The content (ele_value[0]) is supplied to the template

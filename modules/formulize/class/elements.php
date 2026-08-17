@@ -236,33 +236,18 @@ class formulizeElement extends FormulizeObject {
 			if("fid" == $key) {
 				parent::setVar("id_form", $value, $not_gpc);
 			}
-			// NB: the fullWidthContent and captionedContent display element types handle their own
-			// code-file read/write in their own classes (formulize{FullWidthContent,CaptionedContent}Element).
-			if($key == 'ele_value') {
-				$ele_type = $this->getVar('ele_type');
-				$valueToWrite = is_array($value) ? $value : unserialize($value);
-				$filename = $ele_type.'_'.$this->getVar('ele_handle').'.php';
-
-				// check if the value is a code block, and if so write to file instead of assigning to property of object
-				if($ele_type == 'textarea' AND strstr((string)$valueToWrite[0], "\$default")) {
-					formulize_writeCodeToFile($filename, $valueToWrite[0]);
-					$valueToWrite[0] = '';
-					$value = is_array($value) ? $valueToWrite : serialize($valueToWrite);
-
-				// delete the file if it exists but the value no longer contains code, since these elements can have code or plain text values, and plain text is not written as a file
-				} elseif($ele_type == 'textarea' AND strstr((string)$valueToWrite[0], "\$default") === false
-					AND file_exists(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename)) {
-						unlink(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename);
-				}
-			}
+			// NB: element types whose ele_value can hold PHP code write and delete their own code files in their
+			// own classes: formulize{Text,Textarea,Number}Element, formulizeDerivedElement, and
+			// formulize{FullWidthContent,CaptionedContent}Element. There is deliberately nothing here, so the
+			// code file is only ever written by the class that knows which key of ele_value the code lives in.
 			parent::setVar($key, $value, $not_gpc);
 		}
 
 		public function getVar($key, $format = 's') {
 			$format = $key == "ele_value" ? "f" : $format;
 			$value = parent::getVar($key, $format);
-			// NB: the fullWidthContent and captionedContent display element types read their own
-			// code-file contents back in their own classes (formulize{FullWidthContent,CaptionedContent}Element).
+			// NB: the element types listed in setVar above read their own code-file contents back in their own
+			// classes, where the file wins over the stored value so that code edited on disk is picked up.
 			return $value;
 		}
 
@@ -302,6 +287,80 @@ class formulizeElementsHandler {
 	}
 	function create() {
 		return new formulizeElement();
+	}
+
+	/**
+	 * A method to remove values from the ele_value array prior to insert into the database,
+	 * so we don't have any duplication of the stored values. File is the only source of truth.
+	 * Overridden by element classes that store things in files.
+	 *
+	 * insert() calls this on the local copy of ele_value it is about to write, so the element object keeps
+	 * the value it was given either way - only the copy going to the database is stripped.
+	 *
+	 * MUST be protected, not private: insert() calls it as $this->clearEleValueFileKeysForInsert(), and PHP
+	 * resolves a private method non-virtually, so a private one here would silently run instead of the
+	 * override on the element type's own handler.
+	 *
+	 * @param array|string $ele_value The ele_value about to be written, in whatever form cleanVars produced -
+	 * a serialized string when the property was changed, the array itself when it was not
+	 * @param object|null $element The element being written. Used to find the element type's handler, since
+	 * the generic handler has no other way of knowing what kind of element it has been asked to write.
+	 * @return array|string The ele_value to write, in the same form it arrived in. insert() passes it
+	 * straight to quoteString(), so an array handed back where a string arrived would be written as "Array".
+	 */
+	protected function clearEleValueFileKeysForInsert($ele_value, $element = null) {
+		// Called on the generic elements handler, hand off to the element type's own handler. insert() is
+		// called on the generic handler nearly everywhere in the system (the element save pages, element
+		// conversions, cloning, the ad hoc table forms) and only through upsertElementSchemaAndResources()
+		// on the type's own handler, so without this the same element would store one thing when saved from
+		// one place and something else when saved from another.
+		//
+		// Only the generic handler hands off: a type handler that does not override this inherits this copy,
+		// and handing off from there would call itself forever.
+		if(get_class($this) !== 'formulizeElementsHandler' OR !is_object($element)) {
+			return $ele_value;
+		}
+		$ele_type = $element->getVar('ele_type');
+		if($ele_type AND file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+			if($typeHandler = xoops_getmodulehandler($ele_type.'Element', 'formulize')
+				AND get_class($typeHandler) !== 'formulizeElementsHandler') {
+					return $typeHandler->clearEleValueFileKeysForInsert($ele_value, $element);
+			}
+		}
+		return $ele_value;
+	}
+
+	/**
+	 * Whether the code file that holds this element's ele_value content exists and has something in it.
+	 *
+	 * The overrides of clearEleValueFileKeysForInsert must only blank a key when this is true. Blanking it
+	 * when the file is not there would destroy the only copy of the code: what insert() is handed is
+	 * whatever cleanVars() produced, which is the stored value when ele_value was NOT the property that
+	 * changed, so a save that never touched the content at all (the Display tab, a reorder) would empty it.
+	 * Code can legitimately be in ele_value with no file yet - patch 001 wrote the files but left the
+	 * database copies in place, cloneForm() copies element rows with raw SQL and no files, and an install
+	 * whose modules/formulize/code/ did not survive a deploy is in the same position.
+	 *
+	 * All six types that keep code in files name it for the element's type and handle: the text, textarea
+	 * and number classes derive that name from their class name (which is the element's type, since the
+	 * handler builds the object from the type), derived hardcodes its own type, and the static content
+	 * types read ele_type directly. It is the same name deleteAssociatedDataAndResources() cleans up.
+	 *
+	 * @param object|null $element The element being written
+	 * @return bool True only if the code file is there to hold the content
+	 */
+	protected function codeFileHasContentForElement($element) {
+		if(!is_object($element)) {
+			return false; // no element, no way to name the file, so nothing can be shown to hold the content
+		}
+		$ele_type = $element->getVar('ele_type');
+		$ele_handle = $element->getVar('ele_handle');
+		if(!$ele_type OR !$ele_handle) {
+			return false;
+		}
+		$path = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$ele_type.'_'.$ele_handle.'.php';
+		clearstatcache(true, $path); // setVar wrote this file moments ago, in this same request
+		return (is_file($path) AND filesize($path) > 0);
 	}
 
 	/**
@@ -757,6 +816,7 @@ class formulizeElementsHandler {
 				}
 
 				$ele_handle = $this->validateElementHandle($element);
+				$ele_value = $this->clearEleValueFileKeysForInsert($ele_value, $element);
 
    		if( $element->isNew() || !$ele_id ) { // isNew is never set on the element object or parent??
 				$sql = sprintf("INSERT INTO %s (
@@ -926,9 +986,13 @@ class formulizeElementsHandler {
 	 * Called both from the admin UI save path and from the schema migration patch.
 	 * @param object $elementObject The element object with its new handle already set
 	 * @param string $original_handle The handle before the rename
+	 * @param bool $eleValueWasSavedWithThisChange Whether the save that changed the handle also set ele_value.
+	 *   When it did, setVar has already written or deleted the element's code file under the new handle, and
+	 *   the file under the old handle is a spent copy that is removed rather than renamed over it. Only the
+	 *   caller knows this - see the code file loop below for why it cannot be worked out from the content.
 	 * @return void
 	 */
-	function renameElementResources($elementObject, $original_handle) {
+	function renameElementResources($elementObject, $original_handle, $eleValueWasSavedWithThisChange = false) {
 		if($original_handle) {
 			if(!$elementObject = _getElementObject($elementObject)) {
 				throw new Exception("Invalid element object passed to renameElementResources");
@@ -970,13 +1034,40 @@ class formulizeElementsHandler {
 						$xoopsDB->queryF("UPDATE " . $xoopsDB->prefix("formulize") . " SET ele_value = '".formulize_db_escape($thisEleValue)."' WHERE ele_id = $thisEleId");
 					}
 				}
-				// rename element code files (fullWidthContent, captionedContent, text, textarea, derived)
+				// rename element code files (fullWidthContent, captionedContent, text, textarea, number, derived)
 				// and purge stale derived-value cache files so they regenerate with the new handle
-				$elementTypes = array('fullWidthContent', 'captionedContent', 'text', 'textarea', 'derived');
+				//
+				// The old file is only carried across when it is still the truth. It is not, when the same save
+				// also set ele_value: this runs after insert(), which runs after the properties were set, so
+				// setVar has already put the file for the NEW handle into whatever state the content calls for -
+				// written when the content is code, deleted when it is not. Renaming the old file over that
+				// would put back content the admin had just changed, or restore code they had just removed.
+				// Every caller that sets ele_value sets the whole array (the admin Options tab posts it, and
+				// the MCP tools seed it from the element's current ele_value before overwriting the keys they
+				// were given), so ele_value being part of the save does mean setVar acted on the file.
+				//
+				// It cannot be decided by looking at the content instead. A handle-only rename reads exactly the
+				// same as a cleared one at this moment: the stored value was blanked by an earlier save and the
+				// file under the new handle does not exist yet, so the content reads back empty either way.
+				//
+				// A stale file is deleted rather than left behind. These names are per handle, so one sitting
+				// in the code directory under a handle nothing uses is picked up in full by the next element
+				// created with that handle - the file wins over the stored value on read - which is a worse
+				// outcome than not having it.
+				$currentType = $elementObject->getVar('ele_type');
+				$elementTypes = array('fullWidthContent', 'captionedContent', 'text', 'textarea', 'number', 'derived');
 				foreach($elementTypes as $type) {
 					$oldFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$type.'_'.$original_handle.'.php';
 					$newFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$type.'_'.$ele_handle.'.php';
-					if(file_exists($oldFileName)) {
+					if(!file_exists($oldFileName)) { continue; }
+					// This element's own type is the one setVar wrote on this save, so the new-handle file is
+					// already right and the old one is spent. A file named for one of the other types is left
+					// over from a type conversion, which setVar knows nothing about, so that one still moves.
+					// A file already sitting under the new name is the live one either way - the backstop for
+					// callers that do not know whether ele_value was part of the save.
+					if(($eleValueWasSavedWithThisChange AND $type === $currentType) OR file_exists($newFileName)) {
+						unlink($oldFileName);
+					} else {
 						rename($oldFileName, $newFileName);
 					}
 				}
@@ -1614,6 +1705,7 @@ class formulizeElementsHandler {
 		$referencePattern = '/(\$'.preg_quote($handle, '/').$continuesAName.'|\{'.preg_quote($handle, '/').'\})/';
 
 		// other elements naming this one in their settings
+		$elementCodeFilesAlreadyReported = array();
 		$referenceSql = "SELECT ele_id, ele_handle, ele_type, id_form, ele_value FROM ".$this->db->prefix('formulize')."
 			WHERE ele_value LIKE ".$this->db->quoteString('%'.$handle.'%');
 		if($referenceResult = $this->db->query($referenceSql)) {
@@ -1621,6 +1713,10 @@ class formulizeElementsHandler {
 				if(intval($referenceRow['ele_id']) === $elementId) { continue; }
 				if(preg_match($referencePattern, (string) $referenceRow['ele_value'])) {
 					$broken[] = "the ".$referenceRow['ele_type']." element '".$referenceRow['ele_handle']."' (form ".intval($referenceRow['id_form']).") refers to this element by name in its settings";
+					// an element that keeps code in ele_value also has that code in a file of its own, named for
+					// its type and handle. It is the same reference seen twice, so the file is not reported again
+					// below - the element it belongs to has already been named, which is the more useful of the two.
+					$elementCodeFilesAlreadyReported[$referenceRow['ele_type'].'_'.$referenceRow['ele_handle'].'.php'] = true;
 				}
 			}
 		}
@@ -1630,6 +1726,7 @@ class formulizeElementsHandler {
 		$codeDir = XOOPS_ROOT_PATH.'/modules/formulize/code/';
 		if(is_dir($codeDir)) {
 			foreach((array) glob($codeDir.'*.php') as $codeFile) {
+				if(isset($elementCodeFilesAlreadyReported[basename($codeFile)])) { continue; }
 				$contents = file_get_contents($codeFile);
 				if($contents !== false AND preg_match($referencePattern, $contents)) {
 					$broken[] = "custom code file '".basename($codeFile)."' refers to this element by name";

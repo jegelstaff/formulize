@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveAdminForm, waitForAdminPageReady, addElementForm, ElementType, openElementAccordion, deleteElement } from '../../utils';
+import { login, saveAdminForm, waitForAdminPageReady, addElementForm, ElementType, openElementAccordion, deleteElement, setCodeMirrorValue } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
 
@@ -175,8 +175,7 @@ test.describe('Artifacts Elements', async () => {
   	await page.locator('input[name="elements-ele_caption"]').fill('Year-Era');
 		await page.locator('input[name="elements-ele_handle"]').fill('artifacts_year_era');
   	await page.getByRole('link', { name: 'Options' }).click();
-  	await page.locator('div:nth-child(5) > pre:nth-child(2)').click();
-  	await page.getByRole('group', { name: 'Formula for generating values' }).getByRole('textbox').fill('$value = $artifacts_year.$artifacts_era;');
+  	await setCodeMirrorValue(page, 'textarea[name="elements-ele_value[0]"]', '$value = $artifacts_year.$artifacts_era;');
 		await saveAdminForm(page);
 		await expect(page.getByRole('heading')).toContainText('Year-Era');
 	});
@@ -280,8 +279,7 @@ test.describe('Donors Elements', async () => {
   	await page.locator('input[name="elements-ele_caption"]').fill('Name');
 		await page.locator('input[name="elements-ele_handle"]').fill('donors_name');
    	await page.getByRole('link', { name: 'Options' }).click();
-   	await page.locator('.CodeMirror-scroll').click();
-   	await page.getByRole('group', { name: 'Formula for generating values' }).getByRole('textbox').fill('if($donors_type_of_donor == \'Individual\') {\n$value = $donors_first_name.\' \'.$donors_last_name;\n} else {\n$value = $donors_organization_name;\n}');
+   	await setCodeMirrorValue(page, 'textarea[name="elements-ele_value[0]"]', 'if($donors_type_of_donor == \'Individual\') {\n$value = $donors_first_name.\' \'.$donors_last_name;\n} else {\n$value = $donors_organization_name;\n}');
 		await page.getByRole('link', { name: 'Name & Settings' }).click();
 	  await page.getByRole('radio', { name: 'Yes' }).check();
 		await saveAdminForm(page);
@@ -509,7 +507,7 @@ test.describe('Surveys Elements', async () => {
 		await waitForAdminPageReady(page)
 		await page.locator('input[name="elements-ele_caption"]').fill('Thank you for visiting the Museum!');
 		await page.getByRole('link', { name: 'Options' }).click();
-  	await page.getByRole('group', { name: 'Single text spanning the form' }).getByRole('textbox').fill('<h1>Thank you for visiting the Museum!</h1>');
+  	await setCodeMirrorValue(page, 'textarea[name="elements-ele_value[0]"]', '<h1>Thank you for visiting the Museum!</h1>');
 		await saveAdminForm(page);
 		await expect(page.getByRole('heading')).toContainText('Thank you for visiting the...');
 	});

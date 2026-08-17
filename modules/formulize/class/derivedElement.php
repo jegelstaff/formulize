@@ -114,13 +114,23 @@ if(!empty(\$bookings_name)) {
 		];
 	}
 
+	// write the code to a file, and leave it in the object as well: the object always holds the value it was
+	// given, so anything reading it back (including a second setVar in the same save, which is what the admin
+	// save path does) sees the real code and not a blank that would be mistaken for the code having been removed.
 	function setVar($key, $value, $not_gpc = false) {
 		if($key == 'ele_value') {
 			$valueToWrite = is_array($value) ? $value : unserialize($value);
-			$filename = 'derived_'.$this->getVar('ele_handle').'.php';
-			formulize_writeCodeToFile($filename, $valueToWrite[0]);
-			$valueToWrite[0] = '';
-			$value = is_array($value) ? $valueToWrite : serialize($valueToWrite);
+			// only act when the code is actually part of what we were handed, so a caller setting other keys
+			// in ele_value cannot delete the code file by omission
+			if(isset($valueToWrite[0])) {
+				$filename = 'derived_'.$this->getVar('ele_handle').'.php';
+				if(trim((string)$valueToWrite[0]) != '') {
+					formulize_writeCodeToFile($filename, $valueToWrite[0]);
+				// delete the code file if it exists but the code has been cleared out
+				} elseif(file_exists(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename)) {
+					unlink(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename);
+				}
+			}
 		}
 		parent::setVar($key, $value, $not_gpc);
 	}
@@ -128,14 +138,16 @@ if(!empty(\$bookings_name)) {
 	function getVar($key, $format = 's') {
 		$format = $key == "ele_value" ? "f" : $format;
 		$value = parent::getVar($key, $format);
-		if($key == 'ele_value') {
+		// key 0 is not necessarily present: setVar leaves an ele_value that arrived without it alone, rather
+		// than creating the key so it can blank it, so fall back to an empty formula rather than an undefined key
+		if($key == 'ele_value' AND is_array($value)) {
 			$filename = 'derived_'.$this->getVar('ele_handle').'.php';
 			$filePath = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename;
 			$fileValue = "";
 			if(file_exists($filePath)) {
 				$fileValue = strval(file_get_contents($filePath));
 			}
-			$value[0] = $fileValue ? $fileValue : $value[0];
+			$value[0] = $fileValue ? $fileValue : ($value[0] ?? '');
 		}
 		return $value;
 	}
@@ -156,6 +168,30 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 
 	function create() {
 		return new formulizeDerivedElement();
+	}
+
+	/**
+	 * A method to remove values from the ele_value array prior to insert into the database, so we don't have any duplication of the stored values.
+	 * File is the only source of truth. Object is a convenience in code.
+	 * A derived element's ele_value[0] is always code, so whatever setVar wrote to the file is stripped here.
+	 * @param array|string ele_value - the ele_value property of the element
+	 * @param object|null element - the element being written. Needed to name the code file that has to be holding the formula before it can be taken out of the database copy.
+	 * @return array|string The modified ele_value without the formula that would have been written to a file already, in the same form it arrived in
+	 */
+	protected function clearEleValueFileKeysForInsert($ele_value, $element = null) {
+		$valueToWrite = is_array($ele_value) ? $ele_value : @unserialize((string)$ele_value);
+		if(!is_array($valueToWrite)) {
+			return $ele_value; // nothing we can read, so nothing to strip - leave it exactly as it arrived
+		}
+		if(isset($valueToWrite[0])) {
+			// only take it out of the database copy once the file is there to hold it - see codeFileHasContentForElement()
+			if(trim((string)$valueToWrite[0]) != '' // the same condition setVar writes the file on
+				AND $this->codeFileHasContentForElement($element)) {
+					$valueToWrite[0] = "";
+			}
+		}
+		// hand it back the way it came: insert() passes this straight to quoteString()
+		return is_array($ele_value) ? $valueToWrite : serialize($valueToWrite);
 	}
 
 	/**

@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, applyColumnChanges, createMuseumForm, deleteMuseumForm } from '../../utils';
+import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, applyColumnChanges, createMuseumForm, deleteMuseumForm, setCodeMirrorValue } from '../../utils';
 
 /**
  * T2 (list pipeline) - comprehensive XSS filtering on a purpose-built, throwaway form.
@@ -74,10 +74,7 @@ test.describe.serial('T2 - XSS filtering on a dedicated form', () => {
 		await page.locator('input[name="elements-ele_caption"]').fill('Derived Wrap');
 		await page.locator('input[name="elements-ele_handle"]').fill('xss_derived');
 		await page.getByRole('link', { name: 'Options' }).click();
-		// Same pattern as 010: click the CodeMirror area to focus it, then fill the underlying textbox.
-		await page.locator('div:nth-child(5) > pre:nth-child(2)').click();
-		await page.getByRole('group', { name: 'Formula for generating values' }).getByRole('textbox')
-			.fill(`$value = "<div class='${DERIVED_WRAPPER}'><b>Wrapped:</b> ".$xss_text."</div>";`);
+		await setCodeMirrorValue(page, 'textarea[name="elements-ele_value[0]"]', `$value = "<div class='${DERIVED_WRAPPER}'><b>Wrapped:</b> ".$xss_text."</div>";`);
 		await saveAdminForm(page);
 	});
 

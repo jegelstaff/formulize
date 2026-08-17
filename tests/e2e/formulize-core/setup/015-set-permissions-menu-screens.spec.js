@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveAdminForm, openMenuAccordion, openElementAccordion, waitForAdminPageReady, setMenuEntryGroups, selectAutocompleteOption } from '../../utils';
+import { login, saveAdminForm, openMenuAccordion, openElementAccordion, waitForAdminPageReady, setMenuEntryGroups, selectAutocompleteOption, setCodeMirrorValue } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
 
@@ -451,11 +451,9 @@ test.describe('Set columns and elements for screens', () => {
 		await page.getByText('Artifacts').first().click();
 		await page.getByRole('link', { name: 'Procedures' }).click();
 		await page.getByRole('group', { name: 'Before Saving' }).locator('span').first().click();
-  	await page.getByRole('group', { name: 'Before Saving' }).getByRole('textbox').press('ControlOrMeta+a');
-   	await page.getByRole('group', { name: 'Before Saving' }).getByRole('textbox').fill('<?php\n\n// If there\'s a donor, mark as donated\nif($artifacts_donor) {\n\t$artifacts_donated_to_museum = 1; // yes is 1 in the database\n}\n');
+   	await setCodeMirrorValue(page, 'textarea[name="forms-on_before_save"]', '<?php\n\n// If there\'s a donor, mark as donated\nif($artifacts_donor) {\n\t$artifacts_donated_to_museum = 1; // yes is 1 in the database\n}\n');
 		await page.getByRole('group', { name: 'After Saving' }).locator('span').first().click();
-  	await page.getByRole('group', { name: 'After Saving' }).getByRole('textbox').press('ControlOrMeta+a');
-   	await page.getByRole('group', { name: 'After Saving' }).getByRole('textbox').fill('<?php\n\n// standardize the artifacts ID numbers\nif(!$artifacts_id_number || !preg_match(\'/^M\d{3}$/\', $artifacts_id_number)) {\n\t$idLength = strlen($entry_id);\n\t$zeros = 3 - $idLength;\n\t$zeros = $zeros < 0 ? 0 : $zeros;\n\t$artifacts_id_number = "M";\n\tfor($i=1;$i<=$zeros;$i++) {\n\t\t$artifacts_id_number .= "0";\n\t}\n\t$artifacts_id_number .= $entry_id;\n\tformulize_writeEntry([\'artifacts_id_number\' => $artifacts_id_number], $entry_id);\n}');
+   	await setCodeMirrorValue(page, 'textarea[name="forms-on_after_save"]', '<?php\n\n// standardize the artifacts ID numbers\nif(!$artifacts_id_number || !preg_match(\'/^M\d{3}$/\', $artifacts_id_number)) {\n\t$idLength = strlen($entry_id);\n\t$zeros = 3 - $idLength;\n\t$zeros = $zeros < 0 ? 0 : $zeros;\n\t$artifacts_id_number = "M";\n\tfor($i=1;$i<=$zeros;$i++) {\n\t\t$artifacts_id_number .= "0";\n\t}\n\t$artifacts_id_number .= $entry_id;\n\tformulize_writeEntry([\'artifacts_id_number\' => $artifacts_id_number], $entry_id);\n}');
 		await saveAdminForm(page);
 	})
 
