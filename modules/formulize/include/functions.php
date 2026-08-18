@@ -11224,8 +11224,9 @@ function sourceHandleForElement($elementIdentifier) {
 			AND (!isset($ele_value['snapshot']) OR !$ele_value['snapshot'])) {
         $boxproperties = explode("#*=:*", $ele_value[2]);
         $element_handler = xoops_getmodulehandler('elements','formulize');
-        $sourceElement = $element_handler->get($boxproperties[1]);
-        $sourceHandle = $sourceElement->getVar('ele_handle');
+        if($sourceElement = $element_handler->get($boxproperties[1])) {
+        	$sourceHandle = $sourceElement->getVar('ele_handle');
+				}
     }
 	}
   return $sourceHandle;
