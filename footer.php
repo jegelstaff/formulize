@@ -134,71 +134,16 @@ if (isset($xoopsOption['theme_use_smarty']) && $xoopsOption['theme_use_smarty'] 
 	// Formulize AI chat context: activity tracker (admin page/form events) + session queue flush (server-side action events)
 	$xoTheme->addScript(XOOPS_URL . '/modules/formulize/js/activity-tracker.js', array('type' => 'text/javascript'));
 
-	// Collect server pageview info before the queue is flushed.
-	// Form views: rendering events supply the correct sid/fid/entry.
-	// List views: fall back to the gathering-data event's sid/fid.
-	$serverPageviewInfo = null;
-	if (!empty($GLOBALS['formulize_rendered_form_info'])) {
-		$serverPageviewInfo = $GLOBALS['formulize_rendered_form_info'];
-		unset($GLOBALS['formulize_rendered_form_info']);
-	} elseif (!empty($GLOBALS['formulize_ai_context_queue'])) {
-		foreach ($GLOBALS['formulize_ai_context_queue'] as $_qEvt) {
-			if (isset($_qEvt['event']) && $_qEvt['event'] === 'gathering-data-for-list-of-entries') {
-				$serverPageviewInfo = array_filter(array(
-					'fid' => isset($_qEvt['fid']) ? $_qEvt['fid'] : null,
-					'sid' => isset($_qEvt['sid']) ? $_qEvt['sid'] : null,
-				));
-				break;
-			}
+	// Server-side action events and the authoritative pageview. The code that builds
+	// this lives with the queue it drains, so AJAX endpoints that render no footer (the
+	// Lyris drawer's, for instance) can emit the same thing for themselves.
+	if (!empty($GLOBALS['formulize_ai_context_queue'])
+		|| !empty($GLOBALS['formulize_rendered_form_info'])
+		|| !empty($_SESSION['formulize_ai_context_pending'])) {
+		include_once XOOPS_ROOT_PATH . '/modules/formulize/include/writeToFormulizeLog.php';
+		if ($activityLogJs = formulize_activityLogJs()) {
+			$xoTheme->addScript('', array('type' => 'text/javascript'), $activityLogJs);
 		}
-	}
-
-	if (!empty($GLOBALS['formulize_ai_context_queue'])) {
-		$aiContextQueue = json_encode($GLOBALS['formulize_ai_context_queue']);
-		unset($GLOBALS['formulize_ai_context_queue']);
-		$xoTheme->addScript('', array('type' => 'text/javascript'), '
-(function(){
-	var events = ' . $aiContextQueue . ';
-	var STORAGE_KEY = "formulize_activity_log";
-	var MAX_EVENTS = 60, MAX_AGE_MS = 30 * 60 * 1000, cutoff = Date.now() - MAX_AGE_MS;
-	try {
-		var log = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-		for (var i = 0; i < events.length; i++) { log.push(events[i]); }
-		log = log.filter(function(e){ return e.ts > cutoff; });
-		if (log.length > MAX_EVENTS) log = log.slice(log.length - MAX_EVENTS);
-		localStorage.setItem(STORAGE_KEY, JSON.stringify(log));
-	} catch(e) {}
-}());
-');
-	}
-
-	// Emit a server-authoritative pageview for Formulize front-end pages.
-	// The client-side tracker skips front-end pages entirely; the server is the sole authority.
-	if (!empty($serverPageviewInfo)) {
-		$serverPageviewJson = json_encode($serverPageviewInfo);
-		$siteName = json_encode(trans(isset($icmsConfig['sitename']) ? $icmsConfig['sitename'] : ''));
-		$xoTheme->addScript('', array('type' => 'text/javascript'), '
-(function(){
-	var info = ' . $serverPageviewJson . ';
-	var STORAGE_KEY = "formulize_activity_log";
-	var MAX_EVENTS = 60, MAX_AGE_MS = 30 * 60 * 1000, cutoff = Date.now() - MAX_AGE_MS;
-	try {
-		var log = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-		var rawTitle = document.title;
-		var siteName = ' . $siteName . ';
-		var suffix = siteName ? " : " + siteName : "";
-		var title = (suffix && rawTitle.length > suffix.length && rawTitle.slice(-suffix.length) === suffix) ? rawTitle.slice(0, -suffix.length) : rawTitle;
-		var evt = { type: "pageview", url: window.location.pathname + window.location.search, title: title, ts: Date.now() };
-		if (info.sid !== undefined) evt.sid = info.sid;
-		if (info.fid !== undefined) evt.fid = info.fid;
-		if (info.entry !== undefined) evt.entry = info.entry;
-		log.push(evt);
-		log = log.filter(function(e){ return e.ts > cutoff; });
-		if (log.length > MAX_EVENTS) log = log.slice(log.length - MAX_EVENTS);
-		localStorage.setItem(STORAGE_KEY, JSON.stringify(log));
-	} catch(e) {}
-}());
-');
 	}
 
     $xoTheme->render();

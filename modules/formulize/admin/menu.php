@@ -91,3 +91,6 @@ $adminmenu[] = array(
 $adminmenu[] = array(
 	'title'	=> _MI_formulize_SYNCHRONIZE,
 	'link'	=> 'admin/ui.php?page=synchronize');
+$adminmenu[] = array(
+	'title'	=> _MI_formulize_APPEARANCE,
+	'link'	=> 'admin/ui.php?page=appearance');
