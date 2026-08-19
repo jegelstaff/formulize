@@ -263,13 +263,13 @@ function catalogueGridElement($elementId, $entry_id, $containingGridElementIdOrO
 	// or setup validation JS from the object we just rendered
 	} elseif(is_object($formObjectPreppedForRender)) {
 		if($js = $formObjectPreppedForRender->renderValidationJS()) {
-			$GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'])][$elementInGridMarkupName] = $js;
+			$GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'])][$elementInGridMarkupName] = wrapValidationJSInPresenceCheck($js, $elementInGridMarkupName, $elementId);
 		}
 	// or if there isn't an object just rendered, then do a disembodied render
 	} else {
 		list($js, $markupName) = validationJSFromDisembodiedElementRender($elementInGridObject, $entry_id, $prevEntry, $screen);
 		if($js) {
-			$GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'])][$elementInGridMarkupName] = $js;
+			$GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'])][$elementInGridMarkupName] = wrapValidationJSInPresenceCheck($js, $markupName, $elementId);
 		}
 	}
 	// catalogue the containing grid as conditional, if this element has disabled conditions, so that the grid will re-render if the disabled conditions for this element change
@@ -347,8 +347,10 @@ function renderGrid($elementObject, $entry_id = 'new', $prevEntry = null, $scree
 	$gridContents = displayGrid($fid, $entry_id, $grid_row_caps, $grid_col_caps, $grid_title, $grid_background, $grid_start, "", "", true, $screen, $headingAtSide, $elementObject, $prevEntry); // also sets the $GLOBALS['elementsInGridsAndTheirContainers'] which references the elements that were rendered into the grid
 	if($headingAtSide) { // grid contents is the two bits for the xoopsformlabel when heading is at side, otherwise, it's just the contents for the break
 		$gridElement = new XoopsFormLabel($gridContents[0], $gridContents[1], $renderedElementMarkupName);
-		// if any of the elements in the grid are required, mark as required so we get the asterisk
-		if(gridHasRequiredElements($grid_start, $fid, $grid_count)) {
+		// if any of the elements in the grid are required, mark as required so we get the asterisk - but only
+		// counting the ones the user can actually fill in. An asterisk beside a read-only cell is a promise the
+		// form cannot keep, and on a grid whose elements are all disabled it is pure noise.
+		if(gridHasRequiredElements($grid_start, $fid, $grid_count, $entry_id, $screen)) {
 			$gridElement->setRequired();
 		}
 		$gridElement->formulize_element = $elementObject;
@@ -392,14 +394,29 @@ function elementsInGrid($startID, $fid, $gridCount = 0, $requiredOnly = false) {
 
 /**
  * This function checks elements from the start through the count, and returns true if any are required
+ *
+ * An element that renders read-only is not counted: it cannot be filled in, so it must not make the grid
+ * display a required marker.
+ *
  * @param int $startID The starting element ID (could be some other legacy format too, yuck)
  * @param int $grid_count The number of elements that will be included in the grid
  * @param int $fid The form id number
- * @return boolean Returns true if any of the elements to be included are required. Otherwise, false.
+ * @param int|string $entry_id Optional. The entry the grid is being rendered in, or 'new'. Needed to work out whether each element is disabled.
+ * @param object $screen Optional. The screen the grid is being rendered in, if any.
+ * @return boolean Returns true if any of the elements to be included are required and interactive. Otherwise, false.
  */
-function gridHasRequiredElements($startID, $fid, $grid_count) {
+function gridHasRequiredElements($startID, $fid, $grid_count, $entry_id = 'new', $screen = null) {
 	$requiredElements = true;
-	return (count(elementsInGrid($startID, $fid, $grid_count, $requiredElements)) > 0);
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
+	foreach(elementsInGrid($startID, $fid, $grid_count, $requiredElements) as $requiredElementId) {
+		if(!$elementObject = $element_handler->get($requiredElementId)) {
+			continue;
+		}
+		if(!elementIsDisabledForUserInEntry($elementObject, $entry_id, "de_{$fid}_{$entry_id}_{$requiredElementId}", false, $screen)) {
+			return true; // at least one required element in this grid can actually be filled in
+		}
+	}
+	return false;
 }
 
 function nonNullGridRowCaps($var) {

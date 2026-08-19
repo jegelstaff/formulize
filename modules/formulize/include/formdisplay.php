@@ -2229,6 +2229,27 @@ function compileElements($fid, $form, $prevEntry, $entry_id, $groups, $elements_
 }
 
 /**
+ * Wrap a snippet of validation javascript in a runtime check that the element is on the page and visible.
+ *
+ * Everything stored in $GLOBALS['formulize_renderedElementsValidationJS'] is emitted through a single hidden
+ * carrier element named 'validation'. Because that name does not start with 'de_', _drawValidationJS() cannot
+ * tell which element any of it belongs to, and wraps the whole lot in nothing more than a formulizechanged
+ * check. So every snippet put into that catalogue has to carry its own presence check, or it will run against
+ * an element that may not be in the DOM at all - which throws, and takes the form submission down with it.
+ *
+ * @param string $js The validation javascript for the element
+ * @param string $markupName The name the element has when rendered as a form control
+ * @param int $elementId The element's id, used to find its containing grid if it is in one
+ * @return string The javascript, wrapped
+ */
+function wrapValidationJSInPresenceCheck($js, $markupName, $elementId) {
+	// Elements inside a grid have no container div of their own - they are cells in the grid's markup - so the
+	// thing that gets shown and hidden, and therefore the thing to test, is the containing grid.
+	$containerId = isset($GLOBALS['elementsInGridsAndTheirContainers'][$elementId]) ? $GLOBALS['elementsInGridsAndTheirContainers'][$elementId] : $markupName;
+	return "if(jQuery('[name^=".$markupName."]').length && window.document.getElementById('formulize-".$containerId."').style.display != 'none') {\n".$js."\n}\n";
+}
+
+/**
  * If an element was put into the conditional element catalogue, then make a placeholder element for it, in case it will show up later when the user does something in the form
  * Also record any validation javascript that goes with this element, so we can pick that up when rendering the form
  * @param object $elementObject The formulize element object we're concerned about
@@ -2246,8 +2267,7 @@ function makePlaceholderForConditionalElement($elementObject, $entry_id, $prevEn
 		if(!isset($GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'])][$renderedElementMarkupName])) {
 			list($js, $markupName) = validationJSFromDisembodiedElementRender($elementObject, $entry_id, $prevEntry, $screen);
 			if($js) {
-				$containerId = isset($GLOBALS['elementsInGridsAndTheirContainers'][$elementObject->getVar('ele_id')]) ? $GLOBALS['elementsInGridsAndTheirContainers'][$elementObject->getVar('ele_id')] : $markupName;
-				$GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'])][$renderedElementMarkupName] = "if(jQuery('[name^=".$markupName."]').length && window.document.getElementById('formulize-".$containerId."').style.display != 'none') {\n".$js."\n}\n";
+				$GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'])][$renderedElementMarkupName] = wrapValidationJSInPresenceCheck($js, $markupName, $elementObject->getVar('ele_id'));
 			}
 		}
 	}
@@ -2288,6 +2308,20 @@ function catalogCKEditorForConditionalElement($elementObject, $entry_id, $prevEn
  */
 function validationJSFromDisembodiedElementRender($elementObject, $entry_id, $prevEntry, $screen) {
 	$renderedElementMarkupName = "de_{$elementObject->getVar('id_form')}_{$entry_id}_{$elementObject->getVar('ele_id')}";
+	// A disembodied render constructs the element as if it were interactive, since that is the only way to get
+	// at its validation code - which means the javascript it produces is shaped for the editable form of the
+	// element, even when the element actually rendered read-only. Running that against a read-only element is
+	// wrong at best, and for types whose validation reaches into the element's DOM shape (a select's
+	// .options, say) it throws, which takes the whole form submission down with it.
+	//
+	// Being read-only right now is not on its own a reason to drop the javascript: this function is called for
+	// elements that are not on the page yet, and what it produces is what will validate them if they are
+	// swapped in later - nothing regenerates it at that point. So it is only dropped when the element cannot
+	// become editable before the next page load.
+	if(elementIsDisabledForUserInEntry($elementObject, $entry_id, $renderedElementMarkupName, false, $screen)
+		AND !elementDisabledStateCouldChange($elementObject)) {
+		return false;
+	}
 	$ele_value = $elementObject->getVar('ele_value');
 	// get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
 	if($prevEntry) {

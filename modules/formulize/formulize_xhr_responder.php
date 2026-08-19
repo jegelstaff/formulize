@@ -612,10 +612,13 @@ function renderElement($elementObject, $entryId, $frid, $screenObject) {
 	// element is allowed, so prep some stuff for rendering...
 	if(is_array($deReturnValue)) {
 		$form_ele = $deReturnValue[0];
-		if($elementObject->getVar('ele_required') AND is_object($form_ele)) {
+		$isDisabled = $deReturnValue[1];
+		// only an element the user can actually type into is marked required - a read-only element renders as
+		// text, so flagging it required would put a required marker, and the validation that goes with it, on
+		// something there is no way to fill in
+		if(!$isDisabled AND $elementObject->getVar('ele_required') AND is_object($form_ele)) {
 				$form_ele->setRequired();
 		}
-		$isDisabled = $deReturnValue[1];
 		$elementContents = $form_ele;
 
 		// prepare empty form object just for rendering element

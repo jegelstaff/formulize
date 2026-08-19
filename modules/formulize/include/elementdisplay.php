@@ -367,28 +367,68 @@ function elementIsAllowedForUserInEntry($elementObject, $entry_id, $groups = arr
 		catalogConditionalElement($renderedElementMarkupName, array_unique($governingElements), $screen);
 	}
 
-	$isDisabled = false;
-	if(isset($GLOBALS['formulize_forceElementsDisabled']) AND $GLOBALS['formulize_forceElementsDisabled'] == true) {
-		$isDisabled = true;
-	} else {
-		$element_handler = xoops_getmodulehandler('elements', 'formulize');
-		$isDisabled = $element_handler->isElementDisabledForUser($elementObject, $xoopsUser) ? true : false;
-		if($isDisabled) {
-			$disabledConditions = $elementObject->getVar('ele_disabledconditions');
-			if(is_array($disabledConditions[0]) AND count((array) $disabledConditions[0]) > 0) {
-				$isDisabled = checkConditionsAgainstAnEntry($disabledConditions, $form_id, $entry_id, $elementObject);
-				// Also, catalogue the governing elements so that dynamic conditional behaviour will work.
-				// Only if it's not a new entry, because there's no point in having elements in a new entry, with no values yet, and then be disabling them. Need to enter some information first??? This is especially necessary if elements should disable after they're NOT blank, because dynamic re-rendering would then disable them before you had saved the value you entered! The NOT Blank condition will kick in on next page load when the entry is no longer 'new'.
-				if($entry_id != 'new' AND !$subformCreateEntry) {
-					catalogConditionalElement($renderedElementMarkupName, array_unique($disabledConditions[0]), $screen);
-				}
-			}
-		}
-	}
+	$isDisabled = elementIsDisabledForUserInEntry($elementObject, $entry_id, $renderedElementMarkupName, $subformCreateEntry, $screen);
 
 	$allowed = $allowed ? true : false;
 	$isDisabled = $isDisabled ? true : false;
 	return array($allowed, $isDisabled);
+}
+
+/**
+ * Determines whether an element renders read-only (disabled) for the current user in a given entry.
+ *
+ * Factored out of elementIsAllowedForUserInEntry() so that code which needs to know whether an element will
+ * be interactive - in particular the disembodied renders that exist only to harvest validation javascript -
+ * gets its answer from the same place the live render does, instead of from a copy that can drift.
+ *
+ * Note this does NOT include the further ways displayElement() can disable an element once it is being
+ * rendered (no edit permission on the entry, or the entry being locked for editing elsewhere).
+ *
+ * @param object $elementObject The formulize element object
+ * @param int|string $entry_id The entry being considered, or 'new'
+ * @param string $renderedElementMarkupName Optional. The markup handle, ie: de_FID_ENTRYID_ELEMENTID
+ * @param boolean $subformCreateEntry Optional. True when building elements for fake new subform entries
+ * @param object $screen Optional. The screen the element is being rendered in
+ * @return boolean True if the element is disabled for this user in this entry
+ */
+function elementIsDisabledForUserInEntry($elementObject, $entry_id, $renderedElementMarkupName = null, $subformCreateEntry = false, $screen = null) {
+	global $xoopsUser;
+	if(isset($GLOBALS['formulize_forceElementsDisabled']) AND $GLOBALS['formulize_forceElementsDisabled'] == true) {
+		return true;
+	}
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
+	$isDisabled = $element_handler->isElementDisabledForUser($elementObject, $xoopsUser) ? true : false;
+	if($isDisabled) {
+		$disabledConditions = $elementObject->getVar('ele_disabledconditions');
+		if(is_array($disabledConditions[0]) AND count((array) $disabledConditions[0]) > 0) {
+			$isDisabled = checkConditionsAgainstAnEntry($disabledConditions, $elementObject->getVar('id_form'), $entry_id, $elementObject);
+			// Also, catalogue the governing elements so that dynamic conditional behaviour will work.
+			// Only if it's not a new entry, because there's no point in having elements in a new entry, with no values yet, and then be disabling them. Need to enter some information first??? This is especially necessary if elements should disable after they're NOT blank, because dynamic re-rendering would then disable them before you had saved the value you entered! The NOT Blank condition will kick in on next page load when the entry is no longer 'new'.
+			if($entry_id != 'new' AND !$subformCreateEntry) {
+				catalogConditionalElement($renderedElementMarkupName, array_unique($disabledConditions[0]), $screen);
+			}
+		}
+	}
+	return $isDisabled ? true : false;
+}
+
+/**
+ * Determines whether an element's disabled state could change before the page is reloaded.
+ *
+ * Only the element's own disabled CONDITIONS can flip while the page is open - they are re-evaluated whenever
+ * the element is re-rendered in response to a governing element changing. The whole-page override and the
+ * disabled-for-these-groups setting are both settled for the life of the page.
+ *
+ * This is what decides whether validation javascript may be dropped for an element that is not interactive
+ * right now: an element that could become editable still needs its javascript in the page, because nothing
+ * generates it later - it is emitted once, at render time.
+ *
+ * @param object $elementObject The formulize element object
+ * @return boolean True if the element could become editable before the next page load
+ */
+function elementDisabledStateCouldChange($elementObject) {
+	$disabledConditions = $elementObject->getVar('ele_disabledconditions');
+	return (isset($disabledConditions[0]) AND is_array($disabledConditions[0]) AND count((array) $disabledConditions[0]) > 0);
 }
 
 /**

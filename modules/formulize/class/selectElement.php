@@ -1025,7 +1025,6 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 					$form_ele->addOption("none", _AM_FORMLINK_PICK);
 				}
 			} else {
-				$disabledHiddenValue = array();
 				$disabledOutputText = array();
 			}
 
@@ -1154,8 +1153,6 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 			$selected = array();
 			$options = array();
 			$disabledOutputText	= array();
-			$disabledHiddenValue = array();
-			$disabledHiddenValues = "";
 			$hiddenOutOfRangeValuesToWrite = array();
 
 			// add the initial default entry, singular or plural based on whether the box is one line or not.
@@ -1280,19 +1277,20 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 			$form_ele1->addOptionArray($options);
 			$GLOBALS['formulize_lastRenderedElementOptions'] = $options;
 
+			// A read-only element must not post its value back. The disabled render used to emit a hidden input
+			// carrying the element's own name, which was never read on save - readelements.php only picks up a
+			// de_ value when the matching decue_ cue is present, and the cue is deliberately suppressed for
+			// disabled elements (see elementrenderer.php). So it did nothing except put a control into the DOM
+			// under the element's name, which made '[name^=...]' presence checks believe the element was there
+			// to be interacted with - and validation javascript shaped for a real <select> then ran against an
+			// <input>, where .options is undefined.
 			if($selected) {
 				if(is_array($selected)) {
-					$hiddenElementName = $ele_value[ELE_VALUE_SELECT_MULTIPLE] ? $form_ele1->getName()."[]" : $form_ele1->getName();
 					foreach($selected as $thisSelected) {
 						$disabledOutputText[] = isset($options[$thisSelected]) ? $options[$thisSelected] : "";
-						$disabledHiddenValue[] = "<input type=hidden name=\"$hiddenElementName\" value=\"$thisSelected\">";
 					}
-				} elseif($ele_value[ELE_VALUE_SELECT_MULTIPLE]) { // need to keep [] in the hidden element name if multiple values are expected, even if only one is chosen
-					$disabledOutputText[] = $options[$selected];
-					$disabledHiddenValue[] = "<input type=hidden name=\"".$form_ele1->getName()."[]\" value=\"$selected\">";
 				} else {
 					$disabledOutputText[] = $options[$selected];
-					$disabledHiddenValue[] = "<input type=hidden name=\"".$form_ele1->getName()."\" value=\"$selected\">";
 				}
 			}
 
@@ -1306,7 +1304,6 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 			}
 
 			if($isDisabled) {
-				$disabledHiddenValues = implode("\n", $disabledHiddenValue); // glue the individual value elements together into a set of values
 				$renderedElement = implode(", ", $disabledOutputText);
 			} elseif($ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE] == 1) {
 				// autocomplete construction: make sure that $renderedElement is the final output of this chunk of code
@@ -1340,9 +1337,13 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 				$renderedElement = $form_ele1->render();
 			}
 
+			// The out-of-range hidden values exist so that prepareDataForSaving() can map a posted ordinal back
+			// to a value that is no longer in the option list. A read-only element posts no ordinal, and carries
+			// no decue_ cue, so prepareDataForSaving() is never called for it - nothing would ever read these.
+			// Like the value itself, they are left out rather than posted back for no reason.
 			$form_ele = new XoopsFormLabel(
 				$caption,
-				"<nobr>$renderedElement</nobr>\n$renderedHoorvs\n$disabledHiddenValues\n",
+				"<nobr>$renderedElement</nobr>\n".($isDisabled ? "" : $renderedHoorvs."\n"),
 				$markupName
 			);
 
