@@ -9430,11 +9430,12 @@ function formulize_extractSearchGroupPrefix($one_search) {
 			return formulize_extractSearchGroupPrefix($rest);
 		}
 
-		// CASE 2: without a colon, a term written entirely in capitals is a search for that word rather than an OR search: ORANGE
-		// finds "orange", it is not an OR search for "ANGE". People write an OR search against the value they are looking for, so
-		// ORapples and ORSmith are unaffected - only a term with no lowercase in it at all is read this way. Use OR: to OR search
-		// for a value that is itself capitals.
-		$looksLikeAnAllCapitalsWord = (!$colonWasUsed AND preg_match('/[A-Z]/', $rest) AND !preg_match('/[a-z]/', $rest));
+		// CASE 2: without a colon, a term that is nothing but capital letters is a search for that word rather than an OR search:
+		// ORANGE finds "orange", it is not an OR search for "ANGE". People write an OR search against the value they are looking
+		// for, so ORapples and ORSmith are unaffected. The whole remainder has to be capital letters and nothing else, so anything
+		// carrying punctuation, digits or spaces is still an OR search: OR{BLANK} ORs on the special {BLANK} term, and OR=1 ORs on
+		// the value =1. Use OR: to OR search for a value that really is a single capitalized word.
+		$looksLikeAnAllCapitalsWord = (!$colonWasUsed AND preg_match('/^[A-Z]+$/', $rest));
 		if ($looksLikeAnAllCapitalsWord) {
 			return $noPrefix;
 		}
