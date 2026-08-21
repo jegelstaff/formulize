@@ -1,0 +1,50 @@
+---
+layout: default
+title: News &amp; articles
+full_width: true
+description: News, articles and release notes from the Formulize project.
+---
+
+<div class="band-head" style="max-width: 68ch;">
+  <h1>News &amp; articles</h1>
+  <p>What we are building, where we have been talking about it, and what is worth knowing if you use Formulize.</p>
+</div>
+
+<div class="post-list">
+  {% for post in paginator.posts %}
+    <article class="post-teaser{% unless post.image %} no-image{% endunless %}">
+      {% if post.image %}
+        <div class="post-teaser-thumb">
+          <a href="{{ post.url | relative_url }}"><img class="washed" src="{{ post.image | relative_url }}" alt=""></a>
+        </div>
+      {% endif %}
+      <div>
+        <p class="post-meta">
+          <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%-d %B %Y" }}</time>
+          {% for cat in post.categories %}<span class="tag tag-accent">{{ cat }}</span>{% endfor %}
+        </p>
+        <h2><a href="{{ post.url | relative_url }}">{{ post.title }}</a></h2>
+        <p class="post-excerpt">{{ post.description | default: post.excerpt | strip_html | truncatewords: 40 }}</p>
+        <a class="btn btn-secondary btn-sm" href="{{ post.url | relative_url }}">Read it</a>
+      </div>
+    </article>
+  {% endfor %}
+</div>
+
+{% if paginator.total_pages > 1 %}
+  <nav class="pagination" aria-label="Pagination">
+    {% if paginator.previous_page %}
+      <a class="btn btn-secondary" href="{{ paginator.previous_page_path | relative_url }}">&larr; Newer</a>
+    {% else %}
+      <span class="btn btn-secondary" aria-disabled="true" style="opacity: 0.45;">&larr; Newer</span>
+    {% endif %}
+
+    <span class="pagination-status">Page {{ paginator.page }} of {{ paginator.total_pages }}</span>
+
+    {% if paginator.next_page %}
+      <a class="btn btn-secondary" href="{{ paginator.next_page_path | relative_url }}">Older &rarr;</a>
+    {% else %}
+      <span class="btn btn-secondary" aria-disabled="true" style="opacity: 0.45;">Older &rarr;</span>
+    {% endif %}
+  </nav>
+{% endif %}

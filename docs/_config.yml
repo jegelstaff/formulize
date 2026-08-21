@@ -6,10 +6,34 @@ baseurl: /
 url: https://formulize.org/
 permalink: /:title/
 repository: jegelstaff/formulize
+author: The Formulize Project
+
+# Where the sign-up / hosting calls to action point. Currently the general
+# formulize.net site; swap in per-plan sign-up URLs when they exist.
+signup_url: https://formulize.net
+
+# News / articles
+paginate: 6
+paginate_path: "/news/page:num/"
+
 plugins:
   - breadcrumbs
   - jekyll-github-metadata
   - jekyll-redirect-from
+  - jekyll-paginate
+  - jekyll-feed
+
+feed:
+  path: /news/feed.xml
+
+defaults:
+  - scope:
+      path: ""
+      type: posts
+    values:
+      layout: post
+      permalink: /news/:title/
+
 breadcrumbs:
   root:
     hide: false  # show breadcrumbs on root/home page
