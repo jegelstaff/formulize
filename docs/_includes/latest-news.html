@@ -1,0 +1,12 @@
+{% comment %} Headline list of the most recent posts. Set include.limit to change the count. {% endcomment %}
+{% assign limit = include.limit | default: 5 %}
+<ul class="news-list">
+  {% for post in site.posts limit: limit %}
+    <li>
+      <a href="{{ post.url | relative_url }}">
+        <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%-d %b %Y" }}</time>
+        <span class="news-title">{{ post.title }}</span>
+      </a>
+    </li>
+  {% endfor %}
+</ul>

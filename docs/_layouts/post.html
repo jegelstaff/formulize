@@ -1,14 +1,32 @@
 ---
 layout: default
+full_width: true
+hide_breadcrumbs: true
 ---
 
-<small>{{ page.date | date: "%-d %B %Y" }}</small>
-<h1>{{ page.title }}</h1>
+<article class="post-body">
+  <header class="post-header">
+    <p class="post-meta">
+      <time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: "%-d %B %Y" }}</time>
+      {% if page.categories %}{% for cat in page.categories %}<span class="tag tag-accent">{{ cat }}</span>{% endfor %}{% endif %}
+    </p>
+    <h1>{{ page.title }}</h1>
+    {% if page.author or site.author %}<p class="text-muted">by {{ page.author | default: site.author }}</p>{% endif %}
+  </header>
 
-<p class="view">by {{ page.author | default: site.author }}</p>
+  {% if page.image %}
+    <p><img class="washed" src="{{ page.image | relative_url }}" alt="{{ page.image_alt | default: page.title }}" style="border-radius: var(--radius-lg);"></p>
+  {% endif %}
 
-{{content}}
+  <div class="prose">
+    {{ content }}
+  </div>
 
-{% if page.tags %}
-  <small>tags: <em>{{ page.tags | join: "</em> - <em>" }}</em></small>
-{% endif %}
+  <hr>
+
+  <nav class="btn-row">
+    <a class="btn btn-secondary" href="{{ "/news/" | relative_url }}">&larr; All news</a>
+    {% if page.previous %}<a class="btn btn-ghost" href="{{ page.previous.url | relative_url }}">Previous: {{ page.previous.title | truncate: 40 }}</a>{% endif %}
+    {% if page.next %}<a class="btn btn-ghost" href="{{ page.next.url | relative_url }}">Next: {{ page.next.title | truncate: 40 }}</a>{% endif %}
+  </nav>
+</article>
