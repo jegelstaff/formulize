@@ -1,0 +1,23 @@
+{% comment %} The download / GitHub / Ko-fi / community strip, kept from the previous site. {% endcomment %}
+<div class="action-strip">
+  <a class="action-strip-item" href="{{ site.github.repository_url }}/zipball/{{ site.github.latest_release.tag_name }}" target="_blank" rel="noopener">
+    <span class="action-strip-icons"><img src="{{ "/assets/img/zip-icon.png" | relative_url }}" alt=""></span>
+    <span>Download <strong>{{ site.github.latest_release.tag_name | default: "Formulize" }}</strong></span>
+  </a>
+  <a class="action-strip-item" href="{{ site.github.repository_url }}" target="_blank" rel="noopener">
+    <span class="action-strip-icons"><img src="{{ "/assets/img/octocat-icon.png" | relative_url }}" alt=""></span>
+    <span>Participate on <strong>GitHub</strong></span>
+  </a>
+  <a class="action-strip-item" href="https://ko-fi.com/formulize/" target="_blank" rel="noopener">
+    <span class="action-strip-icons"><img src="{{ "/assets/img/cup-border.png" | relative_url }}" alt=""></span>
+    <span>Donate on <strong>Ko-fi</strong></span>
+  </a>
+  <a class="action-strip-item" href="{{ "/connect" | relative_url }}">
+    <span class="action-strip-icons">
+      <img src="{{ "/assets/img/bluesky.png" | relative_url }}" alt="">
+      <img src="{{ "/assets/img/slack-icon.png" | relative_url }}" alt="">
+      <img src="{{ "/assets/img/discord-icon.png" | relative_url }}" alt="">
+    </span>
+    <span>Connect on <strong>Bluesky, Slack, Discord</strong></span>
+  </a>
+</div>

@@ -1,0 +1,106 @@
+---
+layout: default
+permalink: download/
+title: Download Formulize
+full_width: true
+description: Download the latest release of Formulize, free and open source under GPL-2.0, and install it on any PHP and MySQL or MariaDB host.
+---
+
+<div class="band-head" style="max-width: 68ch;">
+  <h1>Download Formulize</h1>
+  <p>Free, unlimited, and fully open source under GPL-2.0. The master branch is always stable and ready to install, so you do not have to wait for a formal release to get new features.</p>
+</div>
+
+<section class="band">
+  <div class="download-grid">
+    <a class="download-card" href="{{ site.github.repository_url }}/zipball/{{ site.github.latest_release.tag_name }}" target="_blank" rel="noopener">
+      <img src="{{ "/assets/img/zip-icon.png" | relative_url }}" alt="">
+      <span>
+        <strong>Latest release &mdash; .zip</strong>
+        <span>{{ site.github.latest_release.tag_name | default: "Current release" }}{% if site.github.latest_release.published_at %}, published {{ site.github.latest_release.published_at | date: "%-d %B %Y" }}{% endif %}</span>
+      </span>
+    </a>
+    <a class="download-card" href="{{ site.github.repository_url }}/tarball/{{ site.github.latest_release.tag_name }}" target="_blank" rel="noopener">
+      <img src="{{ "/assets/img/tar-gz-icon.png" | relative_url }}" alt="">
+      <span>
+        <strong>Latest release &mdash; .tar.gz</strong>
+        <span>The same files, for anyone who prefers tar</span>
+      </span>
+    </a>
+    <a class="download-card" href="{{ site.github.repository_url }}" target="_blank" rel="noopener">
+      <img src="{{ "/assets/img/octocat-icon.png" | relative_url }}" alt="">
+      <span>
+        <strong>Clone from GitHub</strong>
+        <span>Track the master branch, or contribute a change back</span>
+      </span>
+    </a>
+    <a class="download-card" href="{{ "/pricing/" | relative_url }}" style="background: var(--color-accent-100);">
+      <img src="{{ "/assets/img/cup-border.png" | relative_url }}" alt="">
+      <span>
+        <strong>Rather not run a server?</strong>
+        <span>We will host it for you, from $19/month</span>
+      </span>
+    </a>
+  </div>
+</section>
+
+<section class="band">
+  <div class="band-head">
+    <h2>What you need</h2>
+  </div>
+  <div class="triad">
+    <div class="card">
+      <span class="card-kicker">Server</span>
+      <h3 class="card-title">PHP</h3>
+      <p class="card-body">Any standard PHP hosting account will do. Shared hosting, a VPS, or a container.</p>
+    </div>
+    <div class="card">
+      <span class="card-kicker">Database</span>
+      <h3 class="card-title">MySQL or MariaDB</h3>
+      <p class="card-body">One database, and a user that can create tables in it.</p>
+    </div>
+    <div class="card">
+      <span class="card-kicker">Time</span>
+      <h3 class="card-title">About twenty minutes</h3>
+      <p class="card-body">The installer walks through the rest, step by step, with screenshots in the guide.</p>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="band-head">
+    <h2>Installing and upgrading</h2>
+  </div>
+  <div class="triad">
+    <a class="card-link" href="{{ "/deploying_a_website" | relative_url }}">
+      <div class="card" style="background: var(--color-surface);">
+        <h3 class="card-title">Deploy to your website</h3>
+        <p class="card-body">The full installation walkthrough, including writable folders and the installer screens.</p>
+      </div>
+    </a>
+    <a class="card-link" href="{{ "/deploying_a_website/updating_formulize" | relative_url }}">
+      <div class="card" style="background: var(--color-surface);">
+        <h3 class="card-title">Update an existing site</h3>
+        <p class="card-body">How to move an existing Formulize installation to a newer version safely.</p>
+      </div>
+    </a>
+    <a class="card-link" href="{{ "/developers/deploying_locally" | relative_url }}">
+      <div class="card" style="background: var(--color-surface);">
+        <h3 class="card-title">Local development environment</h3>
+        <p class="card-body">Run Formulize on your own machine with Docker and VS Code.</p>
+      </div>
+    </a>
+  </div>
+</section>
+
+<section class="band">
+  <div class="band-head">
+    <h2>Guides in PDF</h2>
+  </div>
+  <ul class="news-list">
+    <li><a href="{{ "/files/Formulize_4.0_Final_Getting_Started_Guide.pdf" | relative_url }}"><span class="news-title">Getting Started Guide</span></a></li>
+    <li><a href="{{ "/files/How_to_Design_a_Formulize_Application.pdf" | relative_url }}"><span class="news-title">How to Design a Formulize Application</span></a></li>
+    <li><a href="{{ "/files/Inside_Formulize-a_Developers_Guide.pdf" | relative_url }}"><span class="news-title">Inside Formulize &mdash; a Developer's Guide</span></a></li>
+    <li><a href="{{ "/files/Using_Formulize-Pageworks_to_Make_Custom_Applications.pdf" | relative_url }}"><span class="news-title">Using Formulize Pageworks to Make Custom Applications</span></a></li>
+  </ul>
+</section>

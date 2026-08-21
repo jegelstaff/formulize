@@ -3,77 +3,35 @@
   <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-		<meta content="width=device-width, initial-scale=1" name="viewport" />
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <meta name="description" content="{{ page.description | default: site.description }}">
 
-		<!-- { % seo % } Should sort out bypassing this when running locally for testing, so we can leverage in live -->
+    <link rel="stylesheet" href="{{ "/assets/css/formulize.css" | relative_url }}">
     <link rel="stylesheet" href="{{ "/assets/css/style.css?v=" | append: site.github.build_revision | relative_url }}">
-    <!--[if lt IE 9]>
-    	<script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js"></script>
-    <![endif]-->
+    <link rel="icon" href="{{ "/favicon.ico" | relative_url }}">
 
     {% include head-custom.html %}
 
-		<title>Formulize{% if page.title %} | {{ page.title }}{% endif %}</title>
-
+    <title>{% if page.title %}{{ page.title }} | Formulize{% else %}Formulize{% endif %}</title>
   </head>
   <body {% if page.custom_id %}id="{{ page.custom_id }}"{% endif %} {% if page.class %}class="{{ page.class }}"{% endif %}>
-    <div class="wrapper">
-			<header>
-				<div class="header-logo">
-					<a href="{{ site.url }}"><img src="{{site.logo | relative_url}}" alt="Logo" /></a>
-					<div class="header-logo-text">{{ site.title | default: site.github.repository_name }}</div>
-				</div>
 
-				<div class="downloads">
-					<a class="downloads-icon-link" href="{{ site.github.repository_url }}/zipball/{{ site.github.latest_release.tag_name }}" target="_BLANK">
-						<span class="downloads-icon-link-icon">
-							<img src="/assets/img/zip-icon.png" alt="Download Icon" />
-						</span>
-						<span class="downloads-icon-link-text">Download <strong>{{ site.github.latest_release.tag_name }}</strong></span>
-					</a>
-					<a class="downloads-icon-link" href="{{ site.github.repository_url }}" target="_BLANK">
-						<span class="downloads-icon-link-icon">
-							<img class="downloads-icon-link-icon" src="/assets/img/octocat-icon.png" alt="Github Icon" />
-						</span>
-						<span class="downloads-icon-link-text">Participate on <strong>GitHub</strong></span>
-					</a>
-					<a class="downloads-icon-link" href="https://ko-fi.com/formulize/" target="_BLANK">
-						<span class="downloads-icon-link-icon">
-							<img class="downloads-icon-link-icon" src="/assets/img/cup-border.png" alt="Ko-fi Icon" />
-						</span>
-						<span class="downloads-icon-link-text">Donate on <strong>Ko-fi</strong></span>
-					</a>
-					<a class="downloads-icon-link" href="/connect" target="_BLANK">
-						<div>						<span class="downloads-icon-link-icon">
-							<img src="/assets/img/bluesky.png" alt="Bluesky Icon" />
-						</span>
-												<span class="downloads-icon-link-icon">
-							<img src="/assets/img/slack-icon.png" alt="Slack Icon" />
-						</span>
-												<span class="downloads-icon-link-icon">
-							<img src="/assets/img/discord-icon.png" alt="Discord Icon" />
-						</span>
-						</div>
-						<span class="downloads-icon-link-text">Connect on <strong>Bluesky, Slack, Discord</strong></span>
-					</a>
-				</div>
-				{% include links.html %}
-			</header>
+    {% include nav.html %}
 
-      <section>
-				 {% include nav-breadcrumbs.html %}
+    <main class="site-main">
+      <div class="page">
+        {% unless page.hide_breadcrumbs %}{% include nav-breadcrumbs.html %}{% endunless %}
 
-				{{ content }}
+        {% if page.full_width %}
+          {{ content }}
+        {% else %}
+          <div class="prose">
+            {{ content }}
+          </div>
+        {% endif %}
+      </div>
+    </main>
 
-				{% include links.html %}
-      </section>
-    </div>
-		<footer>
-			<p>
-				<small>
-					Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist/minimal" target="_BLANK">orderedlist</a> &mdash; maintained by <a href="{{ site.github.repository_url }}" target="_BLANK">The Formulize Project</a>
-				</small>
-			</p>
-		</footer>
+    {% include site-footer.html %}
   </body>
 </html>
