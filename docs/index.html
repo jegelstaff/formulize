@@ -2,49 +2,175 @@
 layout: default
 custom_id: home
 title: Home
+full_width: true
+hide_breadcrumbs: true
+description: Formulize is open source software for collecting and organizing your data — web forms, workflows and reports, with no code required. Self-host it free, or let us host it for you.
 ---
 
 <div class="hero">
-	<div class="hero-text">
-		<h1>Easily collect and organize your data &mdash; no code required</h1>
-		<p>With Formulize, you can create web-based forms, connect them together to make unique apps, and publish the data with interactive reports.</p>
-		<p>Formulize is quickly configured, and reconfigured, so it adapts as your needs change and your data grows. Watch the intro video to learn more.</p>
-	</div>
-	<div class="hero-thumbnail">
-		<a href="https://youtu.be/LDsF91eUi28" target="_BLANK">
-			<img src="/assets/img/intro-to-formulize-plus-ai.webp">
-		</a>
-	</div>
+  <div class="hero-text">
+    <h1>Easily collect and organize your data &mdash; no code required</h1>
+    <p>With Formulize, you can create web-based forms, connect them together to make unique apps, and publish the data with interactive reports.</p>
+    <p>Formulize is quickly configured, and reconfigured, so it adapts as your needs change and your data grows.</p>
+    <div class="hero-actions btn-row">
+      <a class="btn btn-on-dark" href="{{ site.signup_url }}" target="_blank" rel="noopener">Get Formulize hosted</a>
+      <a class="btn btn-outline-light" href="{{ "/download/" | relative_url }}">Download and self-host</a>
+    </div>
+  </div>
+  <div class="hero-thumbnail">
+    <a href="https://youtu.be/LDsF91eUi28" target="_BLANK">
+      <img src="{{ "/assets/img/intro-to-formulize-plus-ai.webp" | relative_url }}" alt="Watch the 7 minute intro to Formulize">
+    </a>
+  </div>
 </div>
 
-<h2 class="mobile-title">Open Source Developer of Year!</h2>
+<section class="band">
+  <div class="band-head">
+    <h2>Two ways to start</h2>
+    <p>Formulize is the same software either way &mdash; the whole thing, no feature gates. The only question is who runs the server.</p>
+  </div>
+  <div class="onramp">
+    <div class="card elev-sm">
+      <span class="onramp-num">1</span>
+      <h3 class="card-title">Let us host it</h3>
+      <p class="card-body">Your own Formulize at <em>yoursite.formulize.net</em>, running within a day. Updates, backups and monitoring are ours to worry about.</p>
+      <ul>
+        <li>From $19/month</li>
+        <li>Nightly backups, 24/7 monitoring</li>
+        <li>Optional training and support from the people who build it</li>
+      </ul>
+      <div class="btn-row">
+        <a class="btn btn-primary" href="{{ site.signup_url }}" target="_blank" rel="noopener">See hosting plans</a>
+        <a class="btn btn-ghost" href="{{ "/pricing/" | relative_url }}">Compare everything</a>
+      </div>
+    </div>
+    <div class="card elev-sm">
+      <span class="onramp-num">2</span>
+      <h3 class="card-title">Run it yourself</h3>
+      <p class="card-body">Download it, put it on any PHP and MySQL/MariaDB host, and it is yours. Free forever, GPL-2.0, no strings.</p>
+      <ul>
+        <li>Free, unlimited forms, users and data</li>
+        <li>Installer walks you through setup</li>
+        <li>Community support on GitHub, Slack and Discord</li>
+      </ul>
+      <div class="btn-row">
+        <a class="btn btn-secondary" href="{{ "/download/" | relative_url }}">Download Formulize</a>
+        <a class="btn btn-ghost" href="{{ "/deploying_a_website" | relative_url }}">Installation guide</a>
+      </div>
+    </div>
+  </div>
+</section>
 
-<div class='page-pic'><a href='/open-source-developer-of-the-year'><img class='small-pic'src="/assets/img/open-source-developer-of-the-year.jpg" alt="The PHP Elephants are so proud of the Open Source Developer of the Year award!" title="The PHP Elephants are so proud of the Open Source Developer of the Year award!"></a></div>
+<section class="band">
+  <div class="band-head-row">
+    <h2>Hosting plans</h2>
+    <a class="btn btn-secondary btn-sm" href="{{ "/pricing/" | relative_url }}">All plans and services</a>
+  </div>
+  <div class="tier-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+    <div class="tier">
+      <h3 class="tier-name">Open Source</h3>
+      <p class="tier-blurb">The DIY option. Everything Formulize does, on your own server.</p>
+      <div class="tier-price">Free<span>&nbsp;forever</span></div>
+      <ul>
+        <li>Unlimited forms, users and data</li>
+        <li>AI integration included</li>
+        <li>Community tech support</li>
+        <li class="no">You run the server</li>
+      </ul>
+      <a class="btn btn-secondary btn-block" href="{{ "/download/" | relative_url }}">Download</a>
+    </div>
+    <div class="tier">
+      <h3 class="tier-name">Solo</h3>
+      <p class="tier-blurb">One form, hosted by us. The simplest way to get going.</p>
+      <div class="tier-price">$19<span>&nbsp;/month</span></div>
+      <ul>
+        <li>Hosted at yoursite.formulize.net</li>
+        <li>Updates, backups, monitoring</li>
+        <li>AI integration included</li>
+        <li class="no">One form only</li>
+      </ul>
+      <a class="btn btn-secondary btn-block" href="{{ site.signup_url }}" target="_blank" rel="noopener">Sign up</a>
+    </div>
+    <div class="tier tier-featured">
+      <span class="tier-flag">Most popular</span>
+      <h3 class="tier-name">Bronze</h3>
+      <p class="tier-blurb">Unlimited forms, hosted by us. Room for a real application.</p>
+      <div class="tier-price">$199<span>&nbsp;/month</span></div>
+      <ul>
+        <li>Unlimited forms, users and data</li>
+        <li>Updates, backups, monitoring</li>
+        <li>Custom URL available</li>
+        <li>Add training or support any time</li>
+      </ul>
+      <a class="btn btn-primary btn-block" href="{{ site.signup_url }}" target="_blank" rel="noopener">Sign up</a>
+    </div>
+  </div>
+</section>
 
-<h2 class="desktop-title">Open Source Developer of Year!</h2>
+<section class="band">
+  <div class="band-head">
+    <h2>Improvise. Organize. Customize.</h2>
+    <p>Formulize is 100% configuration based, so the thing you build on Monday can be a different thing by Friday.</p>
+  </div>
+  <div class="triad">
+    <div class="card">
+      <h3 class="card-title">Improvise</h3>
+      <ul>
+        <li>Create any kind of database application</li>
+        <li>1 form, 10 forms, 100 forms, <em>no limits</em></li>
+        <li>Browse your data with flexible search, sorting and reporting</li>
+        <li>Import from, and export to Google Sheets, Excel&hellip;</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 class="card-title">Organize</h3>
+      <ul>
+        <li>Join your forms together into custom workflows</li>
+        <li>Control who can interact with which forms and which data</li>
+        <li>Publish customized, searchable reports to some or all of your users</li>
+        <li>Do it all with your mouse, <em>no programming required</em></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 class="card-title">Customize</h3>
+      <ul>
+        <li>Extensible with custom form elements, events, templates&hellip;</li>
+        <li>An API for working under the hood, and connecting other tools</li>
+        <li>Runs on PHP and MySQL/MariaDB</li>
+        <li><em>Completely free</em>, and <em>fully open source</em> (GPL-2.0)</li>
+      </ul>
+    </div>
+  </div>
+</section>
 
-<p>Formulize Lead Developer, Julian Egelstaff, won the <a href='/open-source-developer-of-the-year' class='readmore'>Open Source Developer of the Year award at Confoo</a> this year!</p>
+<section class="band">
+  <div class="band-head-row">
+    <h2>See it work</h2>
+    <a class="btn btn-secondary btn-sm" href="{{ "/videos" | relative_url }}">All videos</a>
+  </div>
+  <div class="video-row">
+    <a class="video-card" href="https://youtu.be/Cm6yR5cMn7Y" target="_BLANK">
+      <img class="washed" src="{{ "/assets/img/formulize-confoo-ai.webp" | relative_url }}" alt="">
+      <span class="video-card-title">Watch AI make a complete database</span>
+      <span class="text-muted">A conference management system for Confoo &middot; 7 mins</span>
+    </a>
+    <a class="video-card" href="https://youtu.be/gaL1z8Tomcw" target="_BLANK">
+      <img class="washed" src="{{ "/assets/img/formulize-coffee-system.webp" | relative_url }}" alt="">
+      <span class="video-card-title">Order coffee with Formulize</span>
+      <span class="text-muted">Step by step, a super easy ordering system &middot; 7 mins</span>
+    </a>
+    <a class="video-card" href="https://www.youtube.com/watch?v=JeI2u_LZUJg" target="_BLANK">
+      <img class="washed" src="{{ "/assets/img/thumbnail-700.webp" | relative_url }}" alt="">
+      <span class="video-card-title">Formulize from zero to sixty</span>
+      <span class="text-muted">The complete setup of the demo Museum database &middot; 30 mins</span>
+    </a>
+  </div>
+</section>
 
-<hr>
-
-<h2>Improvise</h2>
-<ul>
-		<li>Create any kind of database application</li>
-		<li>1 form, 10 forms, 100 forms, <i>no limits</i></li>
-		<li>Browse your data using a flexible search, sorting and reporting interface</li>
-		<li>Import from, and export to Google Sheets, Excel...</li>
-</ul>
-<h2>Organize</h2>
-<ul>
-		<li>Join your forms together into custom workflows</li>
-		<li>Control who can interact with which forms and which data</li>
-		<li>Publish customized, searchable reports, to some or all of your users</li>
-		<li>Do it all with your mouse, <i>no programming required</i></li>
-</ul>
-<h2>Customize</h2>
-<ul>
-		<li>Extensible with custom form elements, events, templates...</li>
-		<li>An API for working under the hood, and connecting with other tools</li>
-		<li>Runs on PHP and MySQL/MariaDB</li>
-		<li><i>Completely free</i>, and <i>fully open source</i> (GPL-2.0)</li>
-</ul>
+<section class="band">
+  <div class="band-head-row">
+    <h2>Latest news</h2>
+    <a class="btn btn-secondary btn-sm" href="{{ "/news/" | relative_url }}">All news &amp; articles</a>
+  </div>
+  {% include latest-news.html limit=5 %}
+</section>

@@ -1,0 +1,53 @@
+<div class="page">
+  {% include action-strip.html %}
+</div>
+
+<footer class="site-footer">
+  <div class="page">
+    <div class="footer-cols">
+      <div class="footer-brand">
+        <img class="brand-logo" src="{{ "/assets/img/formulize-wordmark.png" | relative_url }}" alt="Formulize">
+        <p>{{ site.description }}</p>
+        <p><a href="{{ site.signup_url }}" target="_blank" rel="noopener">Hosting on formulize.net &rarr;</a></p>
+      </div>
+
+      <div>
+        <h3>Get started</h3>
+        <ul>
+          <li><a href="{{ "/features/" | relative_url }}">What Formulize does</a></li>
+          <li><a href="{{ "/pricing/" | relative_url }}">Pricing &amp; hosting</a></li>
+          <li><a href="{{ "/download/" | relative_url }}">Download &amp; install</a></li>
+          <li><a href="{{ "/deploying_a_website" | relative_url }}">Deploy to your own server</a></li>
+          <li><a href="{{ "/developers/deploying_locally" | relative_url }}">Local dev environment</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h3>Learn</h3>
+        <ul>
+          <li><a href="{{ "/videos" | relative_url }}">Videos &amp; tutorials</a></li>
+          <li><a href="{{ "/ai" | relative_url }}">Formulize and AI</a></li>
+          <li><a href="{{ "/developers" | relative_url }}">Technical documentation</a></li>
+          <li><a href="{{ "/searching" | relative_url }}">Search terms cheat sheet</a></li>
+          <li><a href="{{ "/files/How_to_Design_a_Formulize_Application.pdf" | relative_url }}">Designing an application (PDF)</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h3>Community</h3>
+        <ul>
+          <li><a href="{{ "/news/" | relative_url }}">News &amp; articles</a></li>
+          <li><a href="{{ "/roadmap" | relative_url }}">Roadmap</a></li>
+          <li><a href="{{ site.github.repository_url }}/discussions/new?category=tech-support" target="_blank" rel="noopener">Ask a question on GitHub</a></li>
+          <li><a href="{{ "/connect" | relative_url }}">Bluesky, Slack, Discord</a></li>
+          <li><a href="https://ko-fi.com/formulize/" target="_blank" rel="noopener">Support the project</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>Formulize is free and fully open source, GPL-2.0. Maintained by <a href="{{ site.github.repository_url }}" target="_blank" rel="noopener">The Formulize Project</a>.</span>
+      <span>Hosted on GitHub Pages</span>
+    </div>
+  </div>
+</footer>

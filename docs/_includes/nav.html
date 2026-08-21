@@ -1,0 +1,33 @@
+{% comment %}
+  Main site menu. Flat top bar, one entry per key user activity.
+  Add or reorder items here and every page picks up the change.
+{% endcomment %}
+{% assign menu = "Features,/features/|Pricing,/pricing/|Download,/download/|Videos,/videos/|News,/news/|AI,/ai/|Community,/connect" | split: "|" %}
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <a class="brand" href="{{ "/" | relative_url }}">
+      <img class="brand-logo" src="{{ "/assets/img/formulize-wordmark.png" | relative_url }}" alt="Formulize">
+      <span class="brand-tagline">{{ site.title }}</span>
+    </a>
+
+    <input class="nav-toggle" type="checkbox" id="nav-toggle">
+    <label class="nav-toggle-label" for="nav-toggle"><span class="bars"></span> Menu</label>
+
+    <nav class="main-nav" aria-label="Main menu">
+      <ul>
+        {% for entry in menu %}
+          {% assign parts = entry | split: "," %}
+          {% assign label = parts[0] %}
+          {% assign href = parts[1] %}
+          <li><a href="{{ href | relative_url }}"{% if page.url contains href %} aria-current="page"{% endif %}>{{ label }}</a></li>
+        {% endfor %}
+      </ul>
+    </nav>
+
+    <div class="header-cta">
+      <a class="btn btn-secondary btn-sm" href="{{ site.github.repository_url }}" target="_blank" rel="noopener">GitHub</a>
+      <a class="btn btn-primary btn-sm" href="{{ site.signup_url }}" target="_blank" rel="noopener">Get hosted</a>
+    </div>
+  </div>
+</header>
