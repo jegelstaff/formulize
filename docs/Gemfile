@@ -8,4 +8,6 @@ group :jekyll_plugins do
   gem "breadcrumbs"
 	gem "jekyll-github-metadata"
 	gem "jekyll-redirect-from"
+	gem "jekyll-paginate"
+	gem "jekyll-feed"
 end
