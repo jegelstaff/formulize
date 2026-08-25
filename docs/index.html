@@ -25,86 +25,21 @@ description: Formulize is open source software for collecting and organizing you
 </div>
 
 <section class="band">
-  <div class="band-head">
-    <h2>Two ways to start</h2>
-    <p>Formulize is the same software either way &mdash; the whole thing, no feature gates. The only question is who runs the server.</p>
-  </div>
-  <div class="onramp">
-    <div class="card elev-sm">
-      <span class="onramp-num">1</span>
-      <h3 class="card-title">Let us host it</h3>
-      <p class="card-body">Your own Formulize at <em>yoursite.formulize.net</em>, running within a day. Updates, backups and monitoring are ours to worry about.</p>
-      <ul>
-        <li>From $19/month</li>
-        <li>Nightly backups, 24/7 monitoring</li>
-        <li>Optional training and support from the people who build it</li>
-      </ul>
-      <div class="btn-row">
-        <a class="btn btn-primary" href="{{ site.signup_url }}" target="_blank" rel="noopener">See hosting plans</a>
-        <a class="btn btn-ghost" href="{{ "/pricing/" | relative_url }}">Compare everything</a>
-      </div>
-    </div>
-    <div class="card elev-sm">
-      <span class="onramp-num">2</span>
-      <h3 class="card-title">Run it yourself</h3>
-      <p class="card-body">Download it, put it on any PHP and MySQL/MariaDB host, and it is yours. Free forever, GPL-2.0, no strings.</p>
-      <ul>
-        <li>Free, unlimited forms, users and data</li>
-        <li>Installer walks you through setup</li>
-        <li>Community support on GitHub, Slack and Discord</li>
-      </ul>
-      <div class="btn-row">
-        <a class="btn btn-secondary" href="{{ "/download/" | relative_url }}">Download Formulize</a>
-        <a class="btn btn-ghost" href="{{ "/deploying_a_website" | relative_url }}">Installation guide</a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="band">
   <div class="band-head-row">
-    <h2>Hosting plans</h2>
-    <a class="btn btn-secondary btn-sm" href="{{ "/pricing/" | relative_url }}">All plans and services</a>
+    <h2>How to get started</h2>
+    <a class="btn btn-secondary btn-sm" href="{{ "/pricing/" | relative_url }}">Compare in detail</a>
   </div>
-  <div class="tier-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
-    <div class="tier">
-      <h3 class="tier-name">Open Source</h3>
-      <p class="tier-blurb">The DIY option. Everything Formulize does, on your own server.</p>
-      <div class="tier-price">Free<span>&nbsp;forever</span></div>
-      <ul>
-        <li>Unlimited forms, users and data</li>
-        <li>AI integration included</li>
-        <li>Community tech support</li>
-        <li class="no">You run the server</li>
-      </ul>
-      <a class="btn btn-secondary btn-block" href="{{ "/download/" | relative_url }}">Download</a>
-    </div>
-    <div class="tier">
-      <h3 class="tier-name">Solo</h3>
-      <p class="tier-blurb">One form, hosted by us. The simplest way to get going.</p>
-      <div class="tier-price">$19<span>&nbsp;/month</span></div>
-      <ul>
-        <li>Hosted at yoursite.formulize.net</li>
-        <li>Updates, backups, monitoring</li>
-        <li>AI integration included</li>
-        <li class="no">One form only</li>
-      </ul>
-      <a class="btn btn-secondary btn-block" href="{{ site.signup_url }}" target="_blank" rel="noopener">Sign up</a>
-    </div>
-    <div class="tier tier-featured">
-      <span class="tier-flag">Most popular</span>
-      <h3 class="tier-name">Bronze</h3>
-      <p class="tier-blurb">Unlimited forms, hosted by us. Room for a real application.</p>
-      <div class="tier-price">$199<span>&nbsp;/month</span></div>
-      <ul>
-        <li>Unlimited forms, users and data</li>
-        <li>Updates, backups, monitoring</li>
-        <li>Custom URL available</li>
-        <li>Add training or support any time</li>
-      </ul>
-      <a class="btn btn-primary btn-block" href="{{ site.signup_url }}" target="_blank" rel="noopener">Sign up</a>
-    </div>
-  </div>
+
+  <p class="lede-promise"><strong>Every plan includes every Formulize feature!</strong> The only thing that changes is how much help you get with making the most of it.</p>
+
+  {% include start-rail.html %}
+
+  <hr>
+
+  <h3 style="margin-top: var(--space-8);">Alternate layout, for comparison</h3>
+  <p class="text-muted" style="font-size: 14px; margin-bottom: var(--space-4);">Same six offerings, same seven things &mdash; but each row label appears once, in a frozen left column, instead of six times across six cards. Scroll sideways to move through the levels.</p>
+
+  {% include start-table.html %}
 </section>
 
 <section class="band">
