@@ -52,6 +52,7 @@
   --color-brand: #3da1c5;
   --color-brand-600: #2b87a9;
   --color-brand-700: #246b85;
+  --color-brand-200: #cfe8f1;
   --color-brand-100: #e4f2f7;
 
   --font-heading: "Caprasimo", system-ui, sans-serif;
@@ -157,6 +158,15 @@ blockquote {
 .visually-hidden {
   position: absolute; width: 1px; height: 1px; overflow: hidden;
   clip-path: inset(50%); white-space: nowrap;
+}
+.bold {
+	font-weight: bold;
+}
+.italic {
+	font-style: italic;
+}
+.underline {
+	text-decoration: underline;
 }
 
 /* ── layout ─────────────────────────────────────────────────────────────── */
@@ -542,6 +552,37 @@ blockquote {
   letter-spacing: 0;
 }
 .tier-note { font-size: 11px; color: var(--color-neutral-600); margin: 0; }
+
+/* Level 5's "and also" block: three things that were otherwise three more rows
+   showing an X on five cards out of six. */
+.tier-plus {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-accent-2-100);
+  border: 1px solid var(--color-accent-2-300);
+  border-radius: var(--radius-sm);
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--color-accent-2-800);
+}
+.tier-plus strong { color: var(--color-accent-2-700); }
+
+/* Day-count flag for the managed levels. Sage rather than terracotta so it does
+   not read as another "Most popular" recommendation -- it is a quantity. */
+.tier-flag-days {
+  background: var(--color-accent-2-600);
+  color: #fff;
+  letter-spacing: 0.04em;
+}
+
+.rail-addendum {
+  margin: var(--space-4) 0 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-neutral-200);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  color: var(--color-neutral-800);
+}
 .tier ul {
   list-style: none;
   margin: 0;
@@ -566,6 +607,168 @@ blockquote {
 
 .tier-grid-services .tier { background: var(--color-accent-2-100); border-color: var(--color-accent-2-300); }
 .tier-grid-services .tier-price { font-size: 28px; }
+
+/* uniform check / cross feature rows, used in the getting-started rail */
+.tier-feats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-size: 12.5px;
+  line-height: 1.35;
+  flex: 1;
+}
+.tier ul.tier-feats li { margin: 0; padding-left: 1.55em; position: relative; }
+/* Only rows carrying a <small> get the reserved second line, so rows that are a
+   single label sit on the list's normal gap instead of floating in dead space. */
+.tier ul.tier-feats li:has(small) { min-height: 2.55em; }
+.tier ul.tier-feats li::before {
+  content: "\2713";
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-weight: 700;
+  color: var(--color-accent-2-700);
+}
+.tier ul.tier-feats li.no { color: var(--color-neutral-600); }
+.tier ul.tier-feats li.maybe { color: var(--color-neutral-600); }
+.tier ul.tier-feats li.no::before { content: "\2715"; color: var(--color-accent-500); }
+.tier ul.tier-feats li.maybe::before { content: "?"; color: var(--color-accent-500); padding-left: 0.15em; }
+.tier-feats small {
+  display: block;
+  font-size: 11px;
+  color: var(--color-neutral-600);
+  margin-top: 1px;
+}
+
+/* ── getting-started rail ───────────────────────────────────────────────── */
+
+.rail-wrap { position: relative; }
+.rail {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-4);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  padding: var(--space-4) var(--space-1) var(--space-2);
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-neutral-400) transparent;
+}
+.rail:focus-visible { outline-offset: -2px; }
+
+.rail-group {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: calc(var(--radius-lg) * 1.15);
+  background: var(--color-neutral-200);
+  scroll-snap-align: start;
+}
+.rail-group-diy { background: var(--color-accent-2-200); }
+.rail-group-hosted { background: var(--color-brand-200); }
+.rail-group-team { background: var(--color-brand-700); }
+.rail-group-team .rail-legend strong { color: #fff; }
+.rail-group-team .rail-legend span { color: rgba(255, 255, 255, 0.78); }
+
+.rail-legend {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+  padding: 0 var(--space-2);
+}
+.rail-legend strong {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 16px;
+  letter-spacing: -0.01em;
+}
+.rail-legend span { font-size: 11.5px; color: var(--color-neutral-700); }
+
+.rail-cards { display: flex; align-items: stretch; gap: var(--space-3); }
+.rail-cards .tier {
+  width: 252px;
+  flex: none;
+  padding: var(--space-4);
+  gap: var(--space-2);
+  background: var(--color-neutral-100);
+  border-color: transparent;
+  scroll-snap-align: start;
+}
+.rail-cards .tier-featured { background: #fff; border-color: var(--color-accent-400); }
+.rail-cards .tier-name {
+  font-size: 20px;
+  line-height: 1.18;
+  margin: 0;
+}
+.rail-cards .tier-name span {
+  display: block;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 14.5px;
+  color: var(--color-accent-700);
+  white-space: nowrap;
+  margin-top: 3px;
+}
+.rail-cards .tier-feats { margin-top: var(--space-1); }
+.rail-cards .tier-flag { top: calc(var(--space-3) * -1); left: var(--space-4); }
+.rail-cards .btn { margin-top: var(--space-1); }
+
+.rail-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 4;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 1px solid var(--color-divider);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: var(--shadow-md);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease, background-color 120ms ease;
+}
+.rail-wrap:hover .rail-arrow,
+.rail-wrap:focus-within .rail-arrow { opacity: 1; pointer-events: auto; }
+.rail-arrow:hover { background: #fff; color: var(--color-accent-700); }
+.rail-arrow:disabled { opacity: 0 !important; pointer-events: none; }
+.rail-prev { left: calc(var(--space-4) * -1); }
+.rail-next { right: calc(var(--space-4) * -1); }
+@media (hover: none) {
+  .rail-arrow { display: none; }
+}
+
+.rail-hint {
+  font-size: 12.5px;
+  color: var(--color-neutral-700);
+  margin: var(--space-3) 0 0;
+}
+
+/* The one promise the tier cards must never contradict: same software everywhere. */
+.lede-promise {
+  margin: var(--space-4) 0 0;
+  padding: var(--space-4) var(--space-4) var(--space-4) var(--space-6);
+  border-left: 3px solid var(--color-brand-600);
+  background: var(--color-brand-100);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+  font-size: 15px;
+  line-height: 1.55;
+}
 
 .addon-grid {
   display: grid;
@@ -633,7 +836,7 @@ blockquote {
   color: var(--color-accent-800);
 }
 .yes { color: var(--color-accent-2-700); font-weight: 700; }
-.no { color: var(--color-neutral-500); }
+.no, .maybe { color: var(--color-neutral-500); }
 .compare small { display: block; font-size: 11px; color: var(--color-neutral-600); }
 
 .footnotes { font-size: 12px; color: var(--color-neutral-700); }
@@ -917,6 +1120,7 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
 
 @media (max-width: 560px) {
   .page { padding: 0 var(--space-4); }
+  .rail-cards .tier { width: 212px; }
   .news-list a { flex-direction: column; gap: var(--space-1); }
   .news-list time { flex: none; }
   .tier-grid { grid-template-columns: minmax(0, 1fr); }
@@ -927,4 +1131,84 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
 @media print {
   .site-header, .site-footer, .action-strip { display: none; }
   body { background: #fff; }
+}
+
+/* ── alternate comparison layout: frozen row labels, scroll the levels ────── */
+
+.cmp-wrap {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  background: var(--color-neutral-100);
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-neutral-400) transparent;
+}
+
+.cmp { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 900px; margin: 0; font-size: 13px; }
+
+.cmp th, .cmp td { text-align: left; vertical-align: top; padding: var(--space-3) var(--space-4); }
+
+/* the frozen left column */
+.cmp th[scope="row"], .cmp .cmp-corner {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  width: 210px;
+  min-width: 210px;
+  background: var(--color-neutral-200);
+  border-right: 1px solid var(--color-divider);
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1.3;
+}
+.cmp thead th { position: sticky; top: 0; z-index: 1; background: var(--color-neutral-200); }
+.cmp .cmp-corner { z-index: 3; }
+
+.cmp thead th:not(.cmp-corner) { border-bottom: 2px solid var(--color-divider); }
+.cmp-tier {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 17px;
+  line-height: 1.15;
+}
+.cmp-tier em {
+  display: inline-block;
+  font-family: var(--font-body);
+  font-style: normal;
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: var(--color-accent);
+  color: var(--color-bg);
+  padding: 1px 6px;
+  border-radius: 999px;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+.cmp-price { display: block; font-weight: 600; font-size: 13px; color: var(--color-accent-700); margin-top: 2px; }
+.cmp-grp { display: block; font-weight: 400; font-size: 11px; color: var(--color-neutral-600); margin-top: 3px; }
+
+.cmp tbody tr + tr th, .cmp tbody tr + tr td { border-top: 1px solid var(--color-divider); }
+.cmp tbody td { color: var(--color-neutral-800); line-height: 1.4; }
+.cmp tbody td b { font-weight: 700; color: var(--color-text); }
+
+/* value markers, matching the card rail's vocabulary */
+.cmp td.y::before, .cmp td.n::before, .cmp td.m::before {
+  font-weight: 700;
+  margin-right: 0.45em;
+}
+.cmp td.y::before { content: "\2713"; color: var(--color-accent-2-700); }
+.cmp td.n::before { content: "\2715"; color: var(--color-accent-500); }
+.cmp td.m::before { content: "?"; color: var(--color-accent-500); }
+.cmp td.n, .cmp td.m { color: var(--color-neutral-600); }
+
+.cmp .cmp-featured { background: var(--color-accent-100); }
+.cmp tbody td:nth-child(5) { background: color-mix(in srgb, var(--color-accent-100) 55%, transparent); }
+
+.cmp-plus-row td:not(.y) { background: transparent; }
+.cmp-cta td { padding-top: var(--space-4); padding-bottom: var(--space-4); }
+
+@media (max-width: 700px) {
+  .cmp th[scope="row"], .cmp .cmp-corner { width: 150px; min-width: 150px; }
 }
