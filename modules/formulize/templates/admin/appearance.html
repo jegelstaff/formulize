@@ -2,11 +2,25 @@
 
     <h2>Appearance</h2>
     <blockquote>
-    <p>Customize the colours, font, and logo of the end-user interface. These settings apply to themes that support Formulize appearance settings, such as Lyris. Variations of each colour (hover states, soft backgrounds, muted text) are derived automatically, so the interface always stays coherent.</p>
+    <p>Customize the colours, font, and logo of the end-user interface. Each theme has its own settings, so pick the theme you want to change below. Variations of each colour (hover states, soft backgrounds, muted text) are derived automatically, so the interface always stays coherent.</p>
     </blockquote>
 
-    <{if $adminPage.configsMissing}>
-    <p style="color: #b3261e; font-weight: bold;">The appearance settings are not registered in the database yet. Please update the Formulize module in the System Admin, then return to this page.</p>
+    <p>
+        <label for="appearance_theme_select"><b>Theme:</b></label>
+        <select id="appearance_theme_select" size="1">
+        <{foreach from=$adminPage.themes key=themeDir item=themeName}>
+            <option value="<{$themeDir}>" <{if $themeDir == $adminPage.selected_theme}>selected="selected"<{/if}>><{$themeName}><{if $themeDir == $adminPage.active_theme}> (active)<{/if}></option>
+        <{/foreach}>
+        </select>
+        <span style="font-size: smaller;">Each theme's settings are kept in the stylesheet generated for it, <{$adminPage.appearance_css}>. Delete that file to put this theme back to the defaults.</span>
+    </p>
+
+    <{if !$adminPage.theme_supports_appearance}>
+    <p style="color: #a86a14; font-weight: bold;">The <{$adminPage.selected_theme}> theme does not use the Formulize appearance settings, so anything saved here will be kept but won't change how that theme looks. A theme opts in by calling formulize_renderAppearanceHead() in its theme.html.</p>
+    <{/if}>
+
+    <{if !$adminPage.appearance_dir_writable}>
+    <p style="color: #b3261e; font-weight: bold;">The web server cannot write to <{$adminPage.appearance_dir}>, and was not able to correct the permissions itself. This theme's settings are kept in the stylesheet generated in that folder, so nothing can be saved for it until that folder is made writable on your server.</p>
     <{/if}>
 
     <{if $adminPage.saved}>
@@ -18,6 +32,9 @@
     <{/foreach}>
 
     <form id="appearance" name="appearance" method="post" enctype="multipart/form-data">
+
+    <{* keeps a save on the theme that is being edited, whichever one that is *}>
+    <input type="hidden" name="appearance_theme" value="<{$adminPage.selected_theme}>" />
 
     <h3>Colours</h3>
     <table style="max-width: 700px;">
@@ -67,7 +84,7 @@
     <p>
         <input type="submit" name="appearance_save" value="Save Appearance" />
         &nbsp;&nbsp;
-        <input type="submit" name="appearance_reset" value="Reset Everything to Defaults" onclick="return confirm('Reset all appearance settings to their defaults? This will also remove any uploaded logo.');" />
+        <input type="submit" name="appearance_reset" value="Reset Everything to Defaults" onclick="return confirm('Reset all appearance settings for the <{$adminPage.selected_theme}> theme to their defaults? This will also remove any logo uploaded for it.');" />
     </p>
 
     </form>
@@ -75,6 +92,13 @@
 </div>
 
 <script>
+// Switching theme reloads this page for that theme, the same way the Theme Editor's
+// theme picker does. Unsaved edits belong to the theme that is being left, so they
+// are not carried across.
+document.getElementById('appearance_theme_select').onchange = function () {
+    location.href = 'ui.php?page=appearance&view=stylescolors&theme=' + encodeURIComponent(this.value);
+};
+
 function appearanceToggleCustomFont() {
     var fontSelect = document.getElementById('appearance_font');
     document.getElementById('appearance_customfont_row').style.display = (fontSelect.value == 'custom') ? '' : 'none';
