@@ -250,8 +250,17 @@ body {
    content straight into .fz-main with no wrapper, so it butts against the
    viewport edge. Give those pages a horizontal (and top) gutter. Formulize
    app/list screens (body#formulize) are full-bleed by design — the titlebar,
-   list body and pagination manage their own insets — so they're excluded. */
-body:not(#formulize) .fz-main {
+   list body and pagination manage their own insets — so they're excluded.
+
+   `.formulize-screen` is excluded for the same reason. A page can render a bare
+   Formulize screen while living outside the module — edituser.php is one, and its
+   body id is "system" — and that content manages its own insets too
+   (`.fz-form-screen` takes a --s-5 side margin, `#multipage-controls` is
+   deliberately full-bleed). The body class is the theme's existing "this content
+   is a Formulize screen" signal, so keying off it covers those pages whatever
+   their body id is. Pages that merely embed a screen inside their own wrapper and
+   chrome (signup.php) never set the signal, so they keep the gutter. */
+body:not(#formulize):not(.formulize-screen) .fz-main {
   padding: var(--s-6) var(--s-6) 0;
 }
 
