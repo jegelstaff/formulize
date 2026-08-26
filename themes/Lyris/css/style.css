@@ -96,6 +96,11 @@
 
   /* Layout */
   --header-h: 48px;
+  /* Height reserved at the bottom of the viewport for the masquerade bar.
+     0px for everyone; only the rule in the "Masquerade bar" section (keyed off
+     the bar actually being in the document) gives it a real value, so every
+     `- var(--masquerade-h)` below is a no-op unless someone is masquerading. */
+  --masquerade-h: 0px;
   --sidebar-w: 220px;
 }
 
@@ -123,7 +128,9 @@ body {
 .fz-app {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  /* Stops short of the viewport bottom while masquerading, so the bar does not
+     cover the shell's sticky bottom chrome. See the "Masquerade bar" section. */
+  height: calc(100vh - var(--masquerade-h));
   overflow: hidden;
 }
 
@@ -248,10 +255,17 @@ body:not(#formulize) .fz-main {
   padding: var(--s-6) var(--s-6) 0;
 }
 
-/* Inline / drawer-iframe mode — header and sidebar suppressed via theme.html */
+/* Inline / drawer-iframe mode — header and sidebar suppressed via theme.html.
+   This mode scrolls the document itself rather than `.fz-main`, so the
+   masquerade allowance is taken as padding on the body instead of by shrinking
+   the shell. See the "Masquerade bar" section. */
+.fz-inline {
+  padding-bottom: var(--masquerade-h);
+}
+
 .fz-inline .fz-app {
   height: auto;
-  min-height: 100vh;
+  min-height: calc(100vh - var(--masquerade-h));
   overflow: visible;
 }
 
@@ -270,7 +284,7 @@ body:not(#formulize) .fz-main {
 
 .fz-drawer-scrim {
   position: fixed;
-  inset: 0;
+  inset: 0 0 var(--masquerade-h) 0;
   background: var(--c-overlay);
   z-index: 30;
 }
@@ -283,7 +297,8 @@ body:not(#formulize) .fz-main {
   position: fixed;
   top: 0;
   right: 0;
-  bottom: 0;
+  /* Lifted above the masquerade bar so the drawer's footer buttons stay clickable. */
+  bottom: var(--masquerade-h);
   width: 480px;
   min-width: 320px;
   max-width: 92vw;
@@ -1784,7 +1799,7 @@ a.main-menu__item-link--active::before {
 
 #session-timeout-warning {
   position: fixed;
-  bottom: var(--s-5);
+  bottom: calc(var(--s-5) + var(--masquerade-h));
   right: var(--s-5);
   max-width: 340px;
   background: var(--c-surface);
@@ -1842,11 +1857,38 @@ a.main-menu__item-link--active::before {
    Masquerade bar
    ============================================================ */
 
+/* The bar is rendered (theme.html) only while masquerading, and it is pinned to
+   the bottom of the viewport. Left to itself it OVERLAPS whatever bottom chrome
+   the screen underneath has pinned there -- the list-screen footer
+   (`.fz-list__footer`), the form action bar (`#multipage-controls`), the drawer
+   footer -- covering the Save/Close buttons and making them unclickable (#89).
+
+   Fix: reserve the bar's height instead of painting over it. `--masquerade-h`
+   defaults to 0px on `:root`; the `:has()` rule below raises it to the bar's
+   height only when the bar is actually in the document. The app shell is then
+   sized `100vh - var(--masquerade-h)`, so the whole scroll area -- and with it
+   every sticky bottom bar inside it -- ends where the masquerade bar begins, and
+   the viewport-fixed chrome that also reaches the bottom edge (drawer, scrim,
+   mobile off-canvas sidebar, session-timeout toast) is lifted by the same amount.
+   Nothing is conditional in those consumers: at 0px they compute to exactly
+   what they did before, so a non-masquerading user gets no dead bottom gap.
+
+   Keying off `:has()` rather than a body class keeps this entirely in CSS -- no
+   theme.html change, so no Smarty template recompile is needed to pick it up.
+   `:has()` is already relied on for the sticky form action bar further down.
+
+   The bar's own height is pinned to the same variable (rather than left to fall
+   out of its padding) so the space reserved and the space occupied cannot drift. */
+body:has(#formulize-masquerade-block) {
+  --masquerade-h: 48px;
+}
+
 #formulize-masquerade-block {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
+  height: var(--masquerade-h);
   background: var(--c-warning);
   color: #fff;
   padding: var(--s-2) var(--s-4);
@@ -1874,7 +1916,8 @@ a.main-menu__item-link--active::before {
     position: fixed;
     top: var(--header-h);
     left: 0;
-    bottom: 0;
+    /* stops above the masquerade bar; 0 otherwise -- see "Masquerade bar" */
+    bottom: var(--masquerade-h);
     /* override the desktop collapsed state on mobile */
     width: var(--sidebar-w) !important;
     z-index: 20;
@@ -1890,7 +1933,7 @@ a.main-menu__item-link--active::before {
   .fz-app--sidebar-open::after {
     content: '';
     position: fixed;
-    inset: var(--header-h) 0 0 0;
+    inset: var(--header-h) 0 var(--masquerade-h) 0;
     background: var(--c-overlay);
     z-index: 19;
   }
