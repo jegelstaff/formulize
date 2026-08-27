@@ -569,6 +569,7 @@ class icms_ipf_form_Base extends icms_form_Theme {
 			$js .= "\n<!-- Start Form Validation JavaScript //-->\n<script type='text/javascript'>\n<!--//\n";
 		}
 		$formname = $this->getName();
+		$js .= self::safeFocusJS();
 		$js .= "function xoopsFormValidate_{$formname}(myform) {";
 		// First, output code to check required elements
 		$elements = $this->getRequired();

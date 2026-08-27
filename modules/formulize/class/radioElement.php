@@ -409,14 +409,16 @@ class formulizeRadioElementHandler extends formulizeBaseClassForListsElementHand
 		$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
 		$eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
 		$validationCode[] = "selection = false;\n";
-		$validationCode[] = "if(myform.{$eltname}.length) {\n";
-		$validationCode[] = "for(var i=0;i<myform.{$eltname}.length;i++){\n";
-		$validationCode[] = "if(myform.{$eltname}[i].checked){\n";
+		$validationCode[] = "radioGroup = myform.{$eltname};\n";
+		$validationCode[] = "if(radioGroup) {\n";
+		$validationCode[] = "radioGroup = (radioGroup.length === undefined) ? [radioGroup] : radioGroup;\n";
+		$validationCode[] = "for(var i=0;i<radioGroup.length;i++){\n";
+		$validationCode[] = "if(radioGroup[i].checked){\n";
 		$validationCode[] = "selection = true;\n";
 		$validationCode[] = "}\n";
 		$validationCode[] = "}\n";
+		$validationCode[] = "if(selection == false) { window.alert(\"{$eltmsg}\");\n xoopsFormSafeFocus(myform, '{$eltname}');\n return false;\n }\n";
 		$validationCode[] = "}\n";
-		$validationCode[] = "if(selection == false) { window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n }\n";
 		return $validationCode;
 	}
 

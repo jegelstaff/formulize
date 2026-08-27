@@ -256,6 +256,7 @@ class formulize_themeForm extends XoopsThemeForm {
 
         $js .= "});\n"; // end of document ready
 
+		$js .= icms_form_Base::safeFocusJS();
 		$formname = $this->getName();
 		$js .= "function xoopsFormValidate_{$formname}(leave, myform) { \n";
 		$js .= $this->_drawValidationJS();

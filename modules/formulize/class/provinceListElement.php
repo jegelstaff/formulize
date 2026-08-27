@@ -177,14 +177,16 @@ class formulizeProvinceListElementHandler extends formulizeElementsHandler {
 		    $validationCode[] = "\nif ( myform.{$markupName}.options[0].selected ) {\n window.alert(\"{$eltmsg}\");\n myform.{$markupName}.focus();\n return false;\n }\n";
 		} else { // validation for radio buttons
 		    $validationCode[] = "selection = false;\n";
-		    $validationCode[] = "if(myform.{$markupName}.length) {\n";
-		    $validationCode[] = "for(var i=0;i<myform.{$markupName}.length;i++){\n";
-	    	$validationCode[] = "if(myform.{$markupName}[i].checked){\n";
+		    $validationCode[] = "radioGroup = myform.{$markupName};\n";
+		    $validationCode[] = "if(radioGroup) {\n";
+		    $validationCode[] = "radioGroup = (radioGroup.length === undefined) ? [radioGroup] : radioGroup;\n";
+		    $validationCode[] = "for(var i=0;i<radioGroup.length;i++){\n";
+		    $validationCode[] = "if(radioGroup[i].checked){\n";
 		    $validationCode[] = "selection = true;\n";
 		    $validationCode[] = "}\n";
-	    	$validationCode[] = "}\n";
 		    $validationCode[] = "}\n";
-		    $validationCode[] = "if(selection == false) { window.alert(\"{$eltmsg}\");\n myform.{$markupName}.focus();\n return false;\n }\n";
+		    $validationCode[] = "if(selection == false) { window.alert(\"{$eltmsg}\");\n xoopsFormSafeFocus(myform, '{$markupName}');\n return false;\n }\n";
+		    $validationCode[] = "}\n";
 		}
         return $validationCode;
     }

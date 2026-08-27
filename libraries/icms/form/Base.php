@@ -377,11 +377,36 @@ abstract class icms_form_Base {
 	 *
 	 * @param		boolean  $withtags	Include the < javascript > tags in the returned string
 	 */
+	/**
+	 * Javascript helper shared by all generated validation code.
+	 *
+	 * Validation code focuses the offending control by name. When several controls share a
+	 * name - a radio or checkbox group - myform[name] resolves to a RadioNodeList, which has
+	 * no focus() method, so calling focus() on it throws a TypeError and the 'return false'
+	 * that is supposed to follow never runs, letting invalid input through. Resolving to a
+	 * single focusable node first stops the focus call from ever breaking the validation.
+	 *
+	 * @return string javascript function declaration
+	 */
+	public static function safeFocusJS() {
+		return <<<'JS'
+function xoopsFormSafeFocus(myform, name) {
+    if (!myform) { return; }
+    var el = myform[name];
+    if (!el) { return; }
+    if (typeof el.focus === 'function') { el.focus(); return; }
+    if (typeof el.length === 'number' && el.length > 0 && el[0] && typeof el[0].focus === 'function') { el[0].focus(); }
+}
+
+JS;
+	}
+
 	public function renderValidationJS( $withtags = true ) {
 		$js = "";
 		if ( $withtags ) {
 			$js .= "\n<!-- Start Form Validation JavaScript //-->\n<script type='text/javascript'>\n<!--//\n";
 		}
+		$js .= self::safeFocusJS();
 		$formname = $this->getName();
 		$js .= "function xoopsFormValidate_{$formname}() { myform = window.document.{$formname}; ";
 		$elements = $this->getElements( true );

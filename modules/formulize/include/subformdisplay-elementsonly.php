@@ -83,7 +83,7 @@ if($screen) {
 // MODAL VALIDATION DOES NOT CURRENTLY SUPPORT UNIQUE VALUE CHECKS!
 print "</div>\n<br /><br />
 <script type='text/javascript'>
-function xoopsFormValidate_formulize_modal(myform) {
+".icms_form_Base::safeFocusJS()."function xoopsFormValidate_formulize_modal(myform) {
     ";
 print trim(implode("\n\r",(array) $GLOBALS['formulize_elementsOnlyForm_validationCode']));
 print "\n\r return true;
