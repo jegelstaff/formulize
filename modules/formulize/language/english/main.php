@@ -930,3 +930,9 @@ define("_formulize_USERACCOUNT_2FAOPTION_SMS", "Text a code");
 define("_formulize_USERACCOUNT_2FAOPTION_AUTHAPP", "Use an authenticator app");
 define("_formulize_USERACCOUNT_PWREPEATDESC", "Type the password twice for confirmation");
 
+
+// Autocomplete component - removing a selected value (issue #92)
+define("_formulize_AUTOCOMPLETE_REMOVE", "Remove");
+define("_formulize_AUTOCOMPLETE_REMOVE_ITEM", "Remove %s");
+define("_formulize_AUTOCOMPLETE_CONFIRM_MESSAGE", "Remove %s from the selected items?");
+define("_formulize_AUTOCOMPLETE_CONFIRM_MESSAGE_GENERIC", "Remove this item from the selected items?");

@@ -3343,38 +3343,20 @@ input[type="time"] { font-family: var(--font-sans); }
 }
 
 /* ---------- Autocomplete List → .fz-combo chip-input ----------
-   Core renders:
-     <div class="formulize_autocomplete">
-       <input class="formulize_autocomplete [formulize_autocomplete_multiple] …">
-     </div>
-     <img class="autocomplete-icon">                      (magnifying glass)
-     <div id="…_defaults">…hidden inputs…</div>
-     <div class="formulize_autocomplete_selections">       (chip container)
-       <p class="auto_multi auto_multi_…" target="…">Label</p>   (one chip / value)
-     </div>
-   We wrap the text input + magnifier as a single bordered field that reads like
-   the design's `.fz-combo__tags`, and present each `.auto_multi` <p> as a
-   removable chip (`.fz-combo__tag`). Chips are clickable to remove (core JS). */
+   As of issue #92 the autocomplete component's structure and interaction
+   mechanics live in the component itself (modules/formulize/templates/css/
+   formulize.css + include/js/autocomplete.js): the relatively-positioned
+   wrapper, the magnifier pinned inside the field, the flex chip tray, the chip
+   as an inline-flex row of label + remove button, and the confirm-before-remove
+   modal. What stays here is Lyris's skin for those parts — tokenised colour,
+   typography, field metrics, focus rings and transitions.
 
-/* The input wrapper (div.formulize_autocomplete) is the positioning context for
-   the magnifier. Core now renders the <img class="autocomplete-icon"> INSIDE this
-   wrapper (a child of the div, immediately after the input) so the icon can be
-   pinned as an absolute adornment over the input's right edge WITHOUT relying on
-   a :has() selector — :has() is unsupported on older engines, and when it fails
-   the icon falls back to normal flow and wraps onto its own line below the field
-   (the reported regression). Anchoring to this always-present relative wrapper is
-   robust across all engines. */
-.fz-form-screen .formulize_autocomplete:not(input),
-.fz-drawer__body .formulize_autocomplete:not(input) {
-  position: relative;
-  display: block;
-  width: 100%;
-}
+   Lyris rules are scoped to .fz-form-screen / .fz-drawer__body, so they outrank
+   the component's unscoped base rules without needing !important. */
 
-/* The autocomplete text input → a clean full-width field, room for the icon. */
+/* The autocomplete text input → Lyris field metrics and colours. */
 .fz-form-screen input.formulize_autocomplete,
 .fz-drawer__body input.formulize_autocomplete {
-  width: 100%;
   height: var(--field-h);
   padding: 0 36px 0 var(--field-pad-x);
   font: inherit;
@@ -3384,7 +3366,6 @@ input[type="time"] { font-family: var(--font-sans); }
   border: 1px solid var(--c-border-strong);
   border-radius: var(--field-radius);
   outline: none;
-  box-sizing: border-box;
   transition: border-color var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
 }
 .fz-form-screen input.formulize_autocomplete:hover,
@@ -3395,52 +3376,24 @@ input[type="time"] { font-family: var(--font-sans); }
   box-shadow: var(--sh-focus);
 }
 
-/* The magnifying-glass image → a muted icon pinned inside the field's right edge.
-   The icon is a child of the relatively-positioned div.formulize_autocomplete
-   wrapper, so absolute positioning resolves against that wrapper regardless of
-   :has() support. Centre it vertically over the input row and inset from the
-   right edge. Reset any width the native <img> would otherwise assume. */
+/* The magnifying glass → muted, and inset to match Lyris's field padding. */
 .fz-form-screen .formulize_autocomplete img.autocomplete-icon,
 .fz-drawer__body .formulize_autocomplete img.autocomplete-icon {
-  position: absolute;
-  top: 50%;
   right: 12px;
-  transform: translateY(-50%);
-  width: 15px;
-  height: 15px;
-  margin: 0;
   opacity: 0.55;
-  pointer-events: none;
-  float: none;
 }
 
-/* The selected-values chip tray → design's chip row. */
-.fz-form-screen .formulize_autocomplete_selections,
-.fz-drawer__body .formulize_autocomplete_selections {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
-  padding: 0 !important;   /* defeat the inline padding-right:10px */
-}
-.fz-form-screen .formulize_autocomplete_selections:empty,
-.fz-drawer__body .formulize_autocomplete_selections:empty { display: none; }
-
+/* Selected values → the design's chip row. */
 .fz-form-screen .formulize_autocomplete_selections .auto_multi,
 .fz-drawer__body .formulize_autocomplete_selections .auto_multi {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0;
   height: 26px;
-  padding: 0 10px;
+  padding: 0 4px 0 10px;
   border-radius: 13px;
   background: var(--c-accent-soft);
   border: 1px solid var(--c-accent-soft-2);
   color: var(--c-text);
   font-size: var(--fs-13);
   line-height: 1;
-  cursor: pointer;
   transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
 }
 .fz-form-screen .formulize_autocomplete_selections .auto_multi:hover,
@@ -3448,16 +3401,39 @@ input[type="time"] { font-family: var(--font-sans); }
   background: var(--c-surface-3);
   border-color: var(--c-border-strong);
 }
-/* Trailing "×" affordance (chips are click-to-remove in core JS). */
-.fz-form-screen .formulize_autocomplete_selections .auto_multi::after,
-.fz-drawer__body .formulize_autocomplete_selections .auto_multi::after {
-  content: "\00d7";
-  font-size: 14px;
-  line-height: 1;
+
+/* The chip's remove button. Only this removes the value, and only after the
+   browser's confirm() dialog is accepted.
+
+   Lyris's blanket `button:not([class*="fz-"]):not([class*="formulize_button"])`
+   rule below paints every bare button as a 32px-tall bordered surface with a
+   var(--r-2) radius. It ties on specificity (0-2-1) with the component's own
+   `.auto_multi button.auto_multi_remove` base rule and wins on source order,
+   because the theme sheet loads after formulize.css. So this icon button has to
+   restate the box metrics as well as the surface to opt back out of all of it. */
+.fz-form-screen .formulize_autocomplete_selections button.auto_multi_remove,
+.fz-drawer__body .formulize_autocomplete_selections button.auto_multi_remove {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
   color: var(--c-text-muted);
+  font-size: 14px;
 }
-.fz-form-screen .formulize_autocomplete_selections .auto_multi:hover::after,
-.fz-drawer__body .formulize_autocomplete_selections .auto_multi:hover::after {
+/* Hover/focus tints the glyph and nothing else. The background has to be stated
+   explicitly, because the blanket rule's :hover (0-3-1) otherwise outranks the
+   component's base rule and fills the button. Filling it here was the bug: it
+   painted a var(--c-surface) box - white, and rounded-rect rather than round,
+   since the radius was leaking from the blanket rule too. */
+.fz-form-screen .formulize_autocomplete_selections button.auto_multi_remove:hover,
+.fz-form-screen .formulize_autocomplete_selections button.auto_multi_remove:focus,
+.fz-drawer__body .formulize_autocomplete_selections button.auto_multi_remove:hover,
+.fz-drawer__body .formulize_autocomplete_selections button.auto_multi_remove:focus {
+  background: transparent;
+  box-shadow: none;
   color: var(--c-danger);
 }
 
@@ -3538,11 +3514,18 @@ input[type="time"] { font-family: var(--font-sans); }
     width: 100% !important;
   }
 
-  /* Autocomplete chips get a slightly taller tap target on touch screens. */
+  /* Autocomplete chips get a slightly taller tap target on touch screens, and
+     the remove button grows to a comfortable touch size. */
   .fz-form-screen .formulize_autocomplete_selections .auto_multi,
   .fz-drawer__body .formulize_autocomplete_selections .auto_multi {
-    height: 30px;
-    padding: 0 12px;
+    height: 32px;
+    padding: 0 6px 0 12px;
+  }
+  .fz-form-screen .formulize_autocomplete_selections button.auto_multi_remove,
+  .fz-drawer__body .formulize_autocomplete_selections button.auto_multi_remove {
+    width: 24px;
+    height: 24px;
+    font-size: 16px;
   }
 
   /* ---------- Mobile multipage action bar (issue #9, clutter) ----------

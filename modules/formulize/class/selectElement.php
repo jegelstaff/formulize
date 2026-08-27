@@ -1352,7 +1352,33 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 		return $form_ele;
 	}
 
+	/**
+	 * Emit the autocomplete component's UI strings for the browser, once per page.
+	 *
+	 * The component's behaviour (the chip markup and the removal confirmation
+	 * prompt) lives in modules/formulize/include/js/autocomplete.js so that it is
+	 * the same in every theme. That file has English fallbacks; this puts the
+	 * site's own language file in front of them.
+	 *
+	 * @return string A <script> block, or an empty string if already emitted.
+	 */
+	static function autocompleteLanguageJavascript() {
+		if(!empty($GLOBALS['formulizeAutocompleteLangOutput'])) {
+			return '';
+		}
+		$GLOBALS['formulizeAutocompleteLangOutput'] = true;
+		$lang = array(
+			'remove'                => _formulize_AUTOCOMPLETE_REMOVE,
+			'removeItem'            => _formulize_AUTOCOMPLETE_REMOVE_ITEM,
+			'confirmMessage'        => _formulize_AUTOCOMPLETE_CONFIRM_MESSAGE,
+			'confirmMessageGeneric' => _formulize_AUTOCOMPLETE_CONFIRM_MESSAGE_GENERIC,
+		);
+		return "<script type='text/javascript'>window.formulizeAutocompleteLang = ".json_encode($lang).";</script>\n";
+	}
+
 	function formulize_renderQuickSelect($markupName, $cachedLinkedOptionsFilename, $default_value, $default_value_user, $multiple = 0, $allow_new_values = 0) {
+
+		$output = self::autocompleteLanguageJavascript();
 
 		if($multiple) {
 			global $easiestml_lang;
@@ -1367,7 +1393,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 		}
 
 		// put markup for autocomplete boxes here
-		$output = "<div class=\"formulize_autocomplete\"><input type='text' class='formulize_autocomplete $multipleClass' name='".$markupName."_user' id = '".$markupName."_user' autocomplete='off' value='".str_replace("'", "&#039;", $default_value_user)."' aria-describedby='".$markupName."-help-text' /><img src='".XOOPS_URL."/modules/formulize/images/magnifying_glass.png' class='autocomplete-icon'></div>\n";
+		$output .= "<div class=\"formulize_autocomplete\"><input type='text' class='formulize_autocomplete $multipleClass' name='".$markupName."_user' id = '".$markupName."_user' autocomplete='off' value='".str_replace("'", "&#039;", $default_value_user)."' aria-describedby='".$markupName."-help-text' /><img src='".XOOPS_URL."/modules/formulize/images/magnifying_glass.png' class='autocomplete-icon'></div>\n";
 		$output .= "<div id='".$markupName."_defaults'>\n";
 		if(!$multiple) {
 				$output .= "<input type='hidden' name='".$markupName."' id = '".$markupName."' value='".(isset($default_value[0]) ? $default_value[0] : '')."' />\n";
@@ -1381,10 +1407,17 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 		}
 		$output .= '</div>';
 		if(is_array($selectedValues) OR $multiple) {
-				$output .= '<div id="'.$markupName.'_formulize_autocomplete_selections" class="formulize_autocomplete_selections" style="padding-right: 10px;">';
+				$output .= '<div id="'.$markupName.'_formulize_autocomplete_selections" class="formulize_autocomplete_selections">';
 				foreach($selectedValues as $id=>$value) {
 						if($value OR $value === 0) {
-								$output .= "<p class='auto_multi auto_multi_".$markupName."' target='".str_replace("'", "&#039;", $id)."'>".str_replace("'", "&#039;", $value)."</p>\n";
+								$escapedLabel = str_replace("'", "&#039;", $value);
+								// Structure must match formulizeBuildAutocompleteChip() in include/js/autocomplete.js,
+								// which builds the identical markup for values added after the page loads.
+								$output .= "<p class='auto_multi auto_multi_".$markupName."' target='".str_replace("'", "&#039;", $id)."'>";
+								$output .= "<span class='auto_multi_label'>".$escapedLabel."</span>";
+								// str_replace not sprintf, so that a literal % in a label is harmless
+								$output .= "<button type='button' class='auto_multi_remove' aria-label='".str_replace('%s', $escapedLabel, _formulize_AUTOCOMPLETE_REMOVE_ITEM)."' title='"._formulize_AUTOCOMPLETE_REMOVE."'>&times;</button>";
+								$output .= "</p>\n";
 						}
 				}
 				$output .= "</div>\n";
@@ -1469,7 +1502,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 								i = parseInt(jQuery('#".$markupName."_defaults').children().last().attr('target')) + 1;
 							}
 							jQuery('#".$markupName."_defaults').append(\"<input type='hidden' name='".$markupName."[]' jquerytag='".$markupName."' id='".$markupName."_\"+i+\"' target='\"+i+\"' value='\"+value+\"' />\");
-							jQuery('<p></p>').addClass('auto_multi auto_multi_".$markupName."').attr('target', value).text(label).appendTo('#".$markupName."_formulize_autocomplete_selections');
+							formulizeBuildAutocompleteChip('".$markupName."', value, label).appendTo('#".$markupName."_formulize_autocomplete_selections');
 							jQuery('#".$markupName."_user').val('');
 							jQuery('#last_selected_".$markupName."').val('');
 							triggerChangeOnMultiValueAutocomplete('".$markupName."');
@@ -1488,14 +1521,6 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 		formulize_initializeAutocomplete".$markupName."();
 		jQuery(document).ready(function() { checkForChrome(); });
 		";
-
-		if($multiple ){
-			$output.= "
-				jQuery('#".$markupName."_formulize_autocomplete_selections').on('click', '.auto_multi_".$markupName."', function() {
-					removeFromMultiValueAutocomplete(jQuery(this).attr('target'), '".$markupName."');
-				});
-			";
-		}
 
 		$output .= "\n</script>";
 

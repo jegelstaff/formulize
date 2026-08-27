@@ -1525,18 +1525,18 @@ table.outer select, .form-container select, #formulize_modal select {
     color: var(--text-color);
 }
 
+/* The autocomplete component now owns its own structure (issue #92): the
+   wrapper is the positioning context and the magnifier is pinned inside the
+   field. The wrapper only has to hug its input so the icon lands on the input's
+   right edge, and stay out of the flow of the chip tray that follows it -- so
+   inline-block rather than the old float. The icon's own placement hacks are
+   gone; the component handles them. */
 div.formulize_autocomplete {
     max-width: 300px;
-    display: block;
-    float: left;
+    display: inline-block;
+    float: none;
+    width: auto;
     padding-top: 0.2rem;
-}
-.autocomplete-icon {
-    display: inline;
-    transform: scale(0.75);
-    margin-left: -0.2em;
-    vertical-align: bottom;
-    padding-top: 0.3em;
 }
 
 
@@ -1546,8 +1546,8 @@ div.formulize_autocomplete {
     }
 
     div.formulize_autocomplete {
-        width: calc(100% - 30px);
-        display: inline;
+        width: auto;
+        display: inline-block;
     }
 
     .form-container .col2 select,

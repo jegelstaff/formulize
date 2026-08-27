@@ -400,8 +400,68 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
   text-indent: 0px; }
 
 /*=== End of Formulize Boutons ===*/
-.formulize_autocomplete {
-  display: inline-block; }
+/* ============================================================
+   Autocomplete component (issue #92)
+   ------------------------------------------------------------
+   Structure, layout and interaction mechanics for the autocomplete
+   element live here so that every theme gets the same component.
+   Themes are expected to re-skin these classes (colour, typography,
+   field metrics) but not to have to rebuild the layout.
+
+   Markup produced by modules/formulize/class/selectElement.php and
+   modules/formulize/include/js/autocomplete.js:
+
+     <div class="formulize_autocomplete">                (positioning context)
+       <input class="formulize_autocomplete [formulize_autocomplete_multiple]">
+       <img class="autocomplete-icon">                   (magnifying glass)
+     </div>
+     <div id="{name}_defaults"> ...hidden inputs... </div>
+     <div class="formulize_autocomplete_selections">     (chip tray, multi only)
+       <p class="auto_multi auto_multi_{name}" target="{value}">
+         <span class="auto_multi_label">Label</span>
+         <button class="auto_multi_remove">&times;</button>
+       </p>
+     </div>
+   ============================================================ */
+
+/* The wrapper is the positioning context for the magnifier, so the icon can be
+   an absolute adornment over the input's right edge without needing :has(). */
+div.formulize_autocomplete {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+input.formulize_autocomplete {
+  width: 100%;
+  box-sizing: border-box;
+  /* leave room for the magnifier pinned at the right edge */
+  padding-right: 32px;
+}
+
+.formulize_autocomplete img.autocomplete-icon {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  float: none;
+  pointer-events: none;
+}
+
+/* The tray of selected values wraps as a row of chips. */
+.formulize_autocomplete_selections {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.formulize_autocomplete_selections:empty {
+  display: none;
+}
 
 .formulize-element-edit-link {
   font-weight: normal;
@@ -633,15 +693,64 @@ div#formulize-printpreview div#multipage-controls {
     width: 25%;
 }
 
+/* A selected value. Neutral base skin; themes restyle colour and metrics.
+   Note the chip itself is NOT clickable any more - removal is the X button
+   only, and the X asks for confirmation first (issue #92). */
 .auto_multi {
-    margin: 0.2em;
-    display: table-row;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    padding: 2px 4px 2px 10px;
+    border: 1px solid #ccc;
+    border-radius: 13px;
+    background: #f2f2f2;
+    line-height: 1.4;
 }
 
-.auto_multi:hover {
+.auto_multi_label {
+    /* break, rather than overflow, on very long unbroken labels */
+    overflow-wrap: break-word;
+}
+
+/* The remove affordance. A real button, so it is keyboard reachable and
+   announced to screen readers. */
+.auto_multi button.auto_multi_remove {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* themes commonly give bare <button> a min-width and heavy padding for their
+       primary buttons; this is an icon button and has to opt out of all of it */
+    width: 18px;
+    height: 18px;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+    text-align: center;
+    text-transform: none;
+    font-weight: normal;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 15px;
+    line-height: 1;
     cursor: pointer;
-    text-decoration: line-through;
-    color: red;
+    opacity: 0.6;
+}
+
+.auto_multi button.auto_multi_remove:hover,
+.auto_multi button.auto_multi_remove:focus {
+    opacity: 1;
+    color: #c00;
+    box-shadow: none;
+}
+
+.auto_multi button.auto_multi_remove:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 1px;
 }
 
 .right-align-text {
