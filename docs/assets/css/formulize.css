@@ -558,43 +558,6 @@ blockquote {
 
 .tier-note { font-size: 11px; color: var(--color-neutral-600); margin: 0; }
 
-/* Level 5's "and also" block: three things that were otherwise three more rows
-   showing an X on five cards out of six. */
-/* Sits slightly askew, like something stuck onto the card afterwards. The tilt
-   is transform-only so it costs the layout nothing -- neighbours are unmoved. */
-.tier-plus {
-  margin: var(--space-2) 0 0;
-  padding: 6px var(--space-2) 7px;
-  background: var(--color-accent-2-100);
-  border: 1px solid var(--color-accent-2-300);
-  border-radius: var(--radius-sm);
-  font-size: 11px;
-  line-height: 1.3;
-  color: var(--color-accent-2-800);
-  position: relative;
-  z-index: 1;
-  transform: rotate(-1.8deg);
-  box-shadow: var(--shadow-sm);
-}
-.tier-plus strong {
-  display: block;
-  margin-bottom: 3px;
-  font-size: 9.5px;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--color-accent-2-700);
-}
-.tier-plus ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; }
-.tier-plus li { position: relative; padding-left: 1.45em; margin: 0; }
-.tier-plus li::before {
-  content: "¹3";
-  position: absolute;
-  left: 0;
-  top: 0;
-  font-weight: 700;
-  color: var(--color-accent-2-700);
-}
-
 .rail-addendum {
   margin: var(--space-4) 0 0;
   padding: var(--space-3) var(--space-4);
@@ -794,6 +757,13 @@ blockquote {
   border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
   font-size: 15px;
   line-height: 1.55;
+}
+
+.lede-note {
+  display: block;
+  margin-top: var(--space-2);
+  font-size: 13px;
+  color: var(--color-neutral-700);
 }
 
 .addon-grid {
@@ -1173,7 +1143,7 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
 
 .cmp { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 820px; margin: 0; font-size: 12.5px; table-layout: fixed; }
 
-.cmp th, .cmp td { text-align: left; vertical-align: top; padding: var(--space-2) var(--space-3); word-wrap: break-word; }
+.cmp th, .cmp td { text-align: left; vertical-align: top; padding: var(--space-2); word-wrap: break-word; }
 
 /* the frozen left column */
 .cmp th[scope="row"], .cmp .cmp-corner {
@@ -1212,17 +1182,31 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   vertical-align: middle;
   margin-left: 4px;
 }
+/* matches the rail badge: a second endorsement in a second colour, so the two
+   read as different claims rather than competing recommendations. */
+.cmp-tier em.alt { background: var(--color-brand-700); color: #fff; }
+
 .cmp-price { display: block; font-weight: 600; font-size: 12px; color: var(--color-accent-700); margin-top: 2px; }
 .cmp-grp { display: block; font-weight: 400; font-size: 11px; color: var(--color-neutral-600); margin-top: 3px; }
 
 .cmp tbody tr + tr th, .cmp tbody tr + tr td { border-top: 1px solid var(--color-divider); }
-.cmp tbody td { color: var(--color-neutral-800); line-height: 1.4; }
+/* balance stops a greedy fill leaving one or two words stranded on the last
+   line -- "how to / fix it" and the like. */
+.cmp tbody td { color: var(--color-neutral-800); line-height: 1.4; text-wrap: balance; }
 .cmp tbody td b { font-weight: 700; color: var(--color-text); }
 
-/* value markers, matching the card rail's vocabulary */
+/* value markers, matching the card rail's vocabulary -- and hung outside the
+   text like the cards' are, so a wrapped second line starts under the first
+   word rather than under the tick. */
+.cmp td.y, .cmp td.n, .cmp td.m {
+  position: relative;
+  padding-left: calc(var(--space-2) + 1.45em);
+}
 .cmp td.y::before, .cmp td.n::before, .cmp td.m::before {
+  position: absolute;
+  left: var(--space-2);
+  top: var(--space-2);
   font-weight: 700;
-  margin-right: 0.45em;
 }
 .cmp td.y::before { content: "\2713"; color: var(--color-accent-2-700); }
 .cmp td.n::before { content: "\2715"; color: var(--color-accent-500); }
@@ -1232,7 +1216,6 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
 .cmp .cmp-featured { background: var(--color-accent-100); }
 .cmp tbody td:nth-child(5) { background: color-mix(in srgb, var(--color-accent-100) 55%, transparent); }
 
-.cmp-plus-row td:not(.y) { background: transparent; }
 .cmp-cta td { padding-top: var(--space-4); padding-bottom: var(--space-4); }
 
 @media (max-width: 700px) {
@@ -1251,129 +1234,37 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
 .fine-print li { margin: 0 0 var(--space-1); max-width: 78ch; }
 sup.fn { color: var(--color-accent-600); font-weight: 700; }
 
-/* ── third layout: what each level ADDS ──────────────────────────────────── */
-
-.tier-lead {
-  margin: var(--space-1) 0 var(--space-2);
-  padding-bottom: var(--space-2);
-  border-bottom: 1px solid var(--color-divider);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--color-neutral-600);
-}
-
-/* No X marks and no cross-card alignment here, so rows just take the height
-   their own sentence needs. That is what makes room for plain language. */
-.tier-adds {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  font-size: 12.5px;
-  line-height: 1.4;
-  flex: 1;
-}
-.tier ul.tier-adds li { margin: 0; padding-left: 1.55em; position: relative; }
-.tier ul.tier-adds li::before {
-  content: "\2713";
-  position: absolute;
-  left: 0;
-  top: 0;
+.fine-print-head {
+  margin: var(--space-6) 0 var(--space-2);
+  font-family: var(--font-body);
   font-weight: 700;
-  color: var(--color-accent-2-700);
-}
-
-/* ── fourth layout: binary rows ticked, gradient rows valued ─────────────── */
-
-.tier-mix {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  flex: 1;
-}
-.tier ul.tier-mix li { margin: 0; }
-
-/* binary: is it there or not */
-.tier ul.tier-mix li.bin {
-  position: relative;
-  padding-left: 1.55em;
-  font-size: 12.5px;
-  line-height: 1.35;
-}
-.tier ul.tier-mix li.bin::before {
-  content: "\2713";
-  position: absolute;
-  left: 0;
-  top: 0;
-  font-weight: 700;
-  color: var(--color-accent-2-700);
-}
-.tier ul.tier-mix li.bin.no { color: var(--color-neutral-600); }
-.tier ul.tier-mix li.bin.no::before { content: "\2715"; color: var(--color-accent-500); }
-.tier ul.tier-mix li.bin.maybe { color: var(--color-neutral-600); }
-.tier ul.tier-mix li.bin.maybe::before { content: "?"; color: var(--color-accent-500); }
-
-/* gradient: no marker, because the question is how much, not whether. The label
-   goes quiet so the value can carry the row. */
-.tier ul.tier-mix li.grad {
-  padding: var(--space-1) 0 var(--space-1) var(--space-2);
-  border-left: 2px solid var(--color-neutral-300);
-}
-.tier ul.tier-mix li.grad .lbl {
-  display: block;
-  font-size: 9.5px;
-  letter-spacing: 0.07em;
+  font-size: 12px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--color-neutral-600);
-  line-height: 1.2;
+  color: var(--color-neutral-700);
 }
-.tier ul.tier-mix li.grad b {
-  display: block;
+.fine-print li b { color: var(--color-neutral-800); }
+.rail-addendum + .rail-addendum { margin-top: var(--space-2); }
+
+/* Inline SVG rather than the flag emoji: Windows has no flag glyphs, so the
+   emoji renders as the letters "CA" for a large share of visitors. */
+.flag-ca {
+  display: inline-block;
+  height: 0.85em;
+  width: auto;
+  vertical-align: -0.08em;
+  margin-left: 0.15em;
+  border: 1px solid var(--color-divider);
+  border-radius: 1px;
+}
+
+/* homepage route cards: one per way of working, price and a way through */
+.card-price {
+  margin: auto 0 var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-divider);
   font-size: 14px;
-  font-weight: 700;
-  line-height: 1.25;
-  color: var(--color-text);
-  margin-top: 1px;
+  color: var(--color-neutral-700);
 }
-.tier ul.tier-mix li.grad.hi { border-left-color: var(--color-accent); }
-.tier ul.tier-mix li.grad.hi b { color: var(--color-accent-700); }
-
-/* Level 5's "Plus" cell: a small heading over its own ticked list, so the cell
-   does not carry a tick of its own -- the items each carry one instead. */
-.cmp-plus-cell b {
-  display: block;
-  margin-bottom: var(--space-1);
-  font-size: 11px;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--color-accent-700);
-}
-.cmp-plus-cell ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.cmp-plus-cell li {
-  position: relative;
-  padding-left: 1.45em;
-  margin: 0;
-  line-height: 1.35;
-}
-.cmp-plus-cell li::before {
-  content: "\2713";
-  position: absolute;
-  left: 0;
-  top: 0;
-  font-weight: 700;
-  color: var(--color-accent-2-700);
-}
+.card-price strong { font-size: 19px; color: var(--color-text); }
+.triad-foot { margin: var(--space-6) 0 0; }
