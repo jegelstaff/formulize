@@ -139,33 +139,6 @@ if ($xoopsUser) {
 
   </div>
 
-  <{if !$smarty.get.fz_inline}>
-  <!-- RIGHT SLIDE-OUT DRAWER -->
-  <div class="fz-drawer-scrim js-drawer-scrim" aria-hidden="true" hidden></div>
-  <aside class="fz-drawer js-drawer" id="fz-drawer" role="dialog" aria-modal="true" aria-label="Detail panel" hidden>
-    <div class="fz-drawer__resize-handle js-drawer-resize-handle"></div>
-    <div class="fz-drawer__head">
-      <button class="fz-btn fz-btn--ghost fz-btn--icon fz-drawer__back js-drawer-back" aria-label="Back" hidden>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <polyline points="15 18 9 12 15 6"/>
-        </svg>
-      </button>
-      <span class="fz-drawer__title js-drawer-title"></span>
-      <div class="fz-spacer"></div>
-      <button class="fz-btn fz-btn--ghost fz-btn--icon js-drawer-close" aria-label="Close panel">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <line x1="18" y1="6" x2="6" y2="18"/>
-          <line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
-      </button>
-    </div>
-    <div class="fz-drawer__body js-drawer-body"></div>
-    <!-- The AI assistant gets its own body so viewing an entry doesn't destroy the
-         conversation: both panels persist, and the drawer shows one or the other. -->
-    <div class="fz-drawer__body fz-drawer__body--ai js-drawer-ai-body" hidden></div>
-    <div class="fz-drawer__foot js-drawer-foot"></div>
-  </aside>
-  <{/if}>
 
 </div>
 

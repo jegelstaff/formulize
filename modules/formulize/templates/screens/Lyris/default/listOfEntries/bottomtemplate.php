@@ -124,78 +124,6 @@ function fzSelectView(value, isStandard) {
         });
     }
 
-    // Read the list's form ids, emitted as data attributes on .fz-list-screen.
-    function listFormIds() {
-        var screenEl = document.querySelector('.fz-list-screen');
-        return {
-            fid:  screenEl ? screenEl.getAttribute('data-fz-fid')  : '',
-            frid: screenEl ? screenEl.getAttribute('data-fz-frid') : ''
-        };
-    }
-
-    // Parse goDetails('entry', 'screen') out of a loe-edit-entry onclick attribute.
-    function parseGoDetails(link) {
-        var result = { entryId: '', sid: '' };
-        if (!link) return result;
-        var onclick = link.getAttribute('onclick') || '';
-        var m = onclick.match(/goDetails\(\s*'([^']*)'\s*(?:,\s*'([^']*)')?/);
-        if (m) {
-            result.entryId = m[1] || '';
-            result.sid = m[2] || '';
-        }
-        return result;
-    }
-
-    function openEntry(entryId, sid) {
-        var ids = listFormIds();
-        window.formulize.drawer.openEntry({
-            fid: ids.fid,
-            frid: ids.frid,
-            entryId: entryId,
-            sid: sid
-        });
-    }
-
-    // The list's edit-destination setting, emitted as a data attribute on
-    // .fz-list-screen: 'drawer' opens the entry form in the right-side drawer
-    // (current behaviour), 'screen' leaves Formulize's default goDetails/addNew
-    // in place so the edit icon navigates to the full form screen.
-    function editDestination() {
-        var screenEl = document.querySelector('.fz-list-screen');
-        return screenEl ? (screenEl.getAttribute('data-fz-editdest') || 'drawer') : 'drawer';
-    }
-
-    function initRowDrawer() {
-        // When the list is set to open entries on the full form screen, do not
-        // override goDetails/addNew: Formulize's defaults handle the navigation.
-        if (editDestination() === 'screen') {
-            return;
-        }
-
-        // Override Formulize's goDetails so the loe-edit-entry onclick opens the drawer
-        window.goDetails = function (entryId, screen) {
-            openEntry(entryId, screen || '');
-        };
-
-        // Override addNew so the Add button opens a blank entry in the drawer
-        window.addNew = function () {
-            openEntry('', '');
-        };
-
-        // After a drawer save, reload the list by submitting its controls form.
-        // showLoading() captures the current scroll position and preserves all
-        // active filters, sorting, and paging (they live as hidden fields in the
-        // controls form), so the refreshed list reflects the change in place.
-        window.formulize = window.formulize || {};
-        window.formulize.onEntrySaved = function () {
-            if (typeof showLoading === 'function') {
-                showLoading();
-            } else {
-                window.location.reload();
-            }
-        };
-    }
-
     document.addEventListener('DOMContentLoaded', function () {
         // Unbind Formulize's default checkbox→panel handler; selection bar handles it instead.
         if (typeof jQuery !== 'undefined') {
@@ -214,7 +142,6 @@ function fzSelectView(value, isStandard) {
             }
         });
         initFilterToggle();
-        initRowDrawer();
     });
 }());
 </script>

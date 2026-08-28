@@ -1,12 +1,10 @@
 <?php
 
-$listFid  = (isset($screen) AND is_object($screen)) ? intval($screen->getVar('fid')) : 0;
-$listFrid = (isset($screen) AND is_object($screen) AND $screen->getVar('frid')) ? intval($screen->getVar('frid')) : 0;
+// The screen id keys this list's remembered filter-row visibility (see
+// bottomtemplate.php). Sending an entry to the right-side drawer instead of the
+// form screen is core's job now - see initListView() in
+// modules/formulize/include/js/drawer.js - so nothing about that is emitted here.
 $listSid  = (isset($screen) AND is_object($screen)) ? intval($screen->getVar('sid')) : 0;
-// Where the edit icon opens the entry form: 'drawer' (right-side drawer) or 'screen'
-// (navigate to the full edit form). Defaults to 'screen' (full form screen) when no
-// explicit value is stored; only an explicit 'drawer' choice opens the drawer.
-$listEditDest = (isset($screen) AND is_object($screen) AND $screen->getVar('editdestination') === 'drawer') ? 'drawer' : 'screen';
 
 // total entries in the list across all pages, shown beside the title
 $listTotalCount = isset($GLOBALS['formulize_countMasterResultsForPageNumbers']) ? intval($GLOBALS['formulize_countMasterResultsForPageNumbers']) : 0;
@@ -17,7 +15,7 @@ print "
 $submitButton
 $procedureResults
 
-<div class='fz-list-screen' data-fz-fid='$listFid' data-fz-frid='$listFrid' data-fz-sid='$listSid' data-fz-editdest='$listEditDest'>
+<div class='fz-list-screen' data-fz-sid='$listSid'>
 
   <div class='fz-list__titlebar'>
     <div class='fz-list__titlebar-start'>

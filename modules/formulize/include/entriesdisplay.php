@@ -4146,6 +4146,26 @@ function floatSaveButton(saveButtonOffset) {
 print checkForChrome();
 print "</script>";
 
+// Point this list at the right slide-out drawer, when the screen is set up that
+// way. The drawer component (include/js/drawer.js, published site-wide by
+// footer.php) takes over goDetails()/addNew() - defined immediately above - so the
+// list's existing edit icon and Add button open the entry in the drawer instead of
+// navigating to the form screen. Emitted here, in core, so every theme gets the
+// behaviour without carrying any drawer code of its own; the 'screen' setting (the
+// default) emits nothing and leaves the navigation exactly as it was.
+$isListScreen = ($screen AND is_object($screen) AND $screen->getVar('type') === 'listOfEntries');
+if($isListScreen AND $screen->getVar('editdestination') === 'drawer') {
+    print "<script type='text/javascript'>
+if(window.formulize && window.formulize.drawer) {
+    window.formulize.drawer.initListView(".json_encode(array(
+        'fid' => intval($screen->getVar('fid') ? $screen->getVar('fid') : $fid),
+        'frid' => intval($screen->getVar('frid') ? $screen->getVar('frid') : $frid),
+        'editDestination' => 'drawer',
+    )).");
+}
+</script>";
+}
+
 }
 
 /**

@@ -134,6 +134,24 @@ if (isset($xoopsOption['theme_use_smarty']) && $xoopsOption['theme_use_smarty'] 
 	// Formulize AI chat context: activity tracker (admin page/form events) + session queue flush (server-side action events)
 	$xoTheme->addScript(XOOPS_URL . '/modules/formulize/js/activity-tracker.js', array('type' => 'text/javascript'));
 
+	// The right slide-out drawer. It is a core component available to every theme
+	// (it builds its own markup on first use, so no theme template carries it), and
+	// it is published site-wide rather than only on list screens because a theme's
+	// AI assistant link can appear on any page. Its UI strings come from the
+	// language files, with English fallbacks inside the script itself.
+	if (function_exists('formulize_get_file_version')) {
+		$drawerStrings = array();
+		if (defined('_formulize_SAVE')) { $drawerStrings['save'] = _formulize_SAVE; }
+		if (defined('_CANCEL')) { $drawerStrings['cancel'] = _CANCEL; }
+		if (defined('_BACK')) { $drawerStrings['back'] = _BACK; }
+		if ($drawerStrings) {
+			$xoTheme->addScript('', array('type' => 'text/javascript'),
+				'window.formulize = window.formulize || {}; window.formulize.drawerStrings = ' . json_encode($drawerStrings) . ';');
+		}
+		$drawerJsVersion = formulize_get_file_version('/modules/formulize/include/js/drawer.js');
+		$xoTheme->addScript(XOOPS_URL . '/modules/formulize/include/js/drawer.js?v=' . $drawerJsVersion, array('type' => 'text/javascript'));
+	}
+
 	// Server-side action events and the authoritative pageview. The code that builds
 	// this lives with the queue it drains, so AJAX endpoints that render no footer (the
 	// Lyris drawer's, for instance) can emit the same thing for themselves.

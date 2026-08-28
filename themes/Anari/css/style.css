@@ -1485,16 +1485,23 @@ table.outer textarea[disabled],
     max-width: 270px;
 }
 
+/* The autocomplete field's full-width size on desktop. `width` sets the size we
+   want; `max-width: 100%` lets it give that up when the space it is in is
+   narrower - which is what happens in the right drawer, since this query is on
+   the VIEWPORT and so applies in full inside a ~480px panel.
+
+   `min-width: 0` is what lets it give that width up. It used to repeat 673px, and
+   because min-width beats max-width the field could never shrink at all, so it
+   punched out of the drawer and forced the panel to scroll sideways. It cannot
+   simply be dropped, though: the generic `.col2 input[type="text"]` rule further
+   down sets `min-width: 700px`, so with nothing stated here the field would
+   round *up* to 700px on desktop. Zero opts out of both. */
 @media (min-width: 768px) {
-    .form-row input.formulize_autocomplete {
-        width: 673px;
-        max-width: 673px;
-        min-width: 673px;
-    }
+    .form-row input.formulize_autocomplete,
     .form-row .col2 input.formulize_autocomplete {
         width: 673px;
-        max-width: 673px;
-        min-width: 673px;
+        max-width: 100%;
+        min-width: 0;
     }
 }
 
@@ -4015,4 +4022,87 @@ input#toggleRepeatData:focus-visible {
 .formulize-map-filters input[type="text"],
 .formulize-map-filters select {
     min-width: 120px;
+}
+
+/* ============================================================
+   Right slide-out drawer — Anari skin (issue #99)
+   ------------------------------------------------------------
+   The drawer is a core component (modules/formulize/include/js/drawer.js +
+   the .formulize-drawer rules in modules/formulize/templates/css/formulize.css):
+   it builds its own markup, so Anari's theme.html carries nothing for it, and it
+   handles layout, scrolling, drag-to-resize and the mobile breakpoint. All that
+   is needed here is Anari's look, expressed through the component's custom
+   properties plus its button classes.
+
+   Form fields inside the drawer are deliberately NOT styled here. The drawer's
+   body is wrapped in `.form-container` by
+   modules/formulize/templates/screens/Anari/default/drawer/toptemplate.php — the
+   same container Anari's form and multiPage screens emit — so the field rules
+   above apply in the drawer exactly as they do on a full-screen form.
+   ============================================================ */
+
+.formulize-drawer {
+  --formulize-drawer-bg: #FFF;
+  --formulize-drawer-fg: var(--text-color);
+  --formulize-drawer-border: #EBEFF2;
+  --formulize-drawer-muted: #707683;
+  --formulize-drawer-foot-bg: var(--background-color);
+  --formulize-drawer-shadow: -6px 0 20px 0 rgba(51, 77, 110, 0.18);
+  --formulize-drawer-radius: 10px;
+  --formulize-drawer-pad-x: 24px;
+  --formulize-drawer-pad-y: 20px;
+}
+
+.formulize-drawer__resize-handle:hover::after,
+.formulize-drawer__resize-handle--active::after {
+  background-color: var(--light-border-color);
+}
+
+.formulize-drawer__title {
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+/* Anari sets a 200px min-width, 30px padding and a solid blue fill on every
+   `button`; the component's own rules already out-specify that, so these only
+   have to restate Anari's typography and colours at drawer scale. */
+.formulize-drawer .formulize-drawer__btn {
+  height: 38px;
+  padding: 0 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 10px;
+  border: 1px solid var(--light-border-color);
+  background: #FFF;
+  color: var(--text-color);
+}
+
+.formulize-drawer .formulize-drawer__btn:hover {
+  background: #FFF;
+  box-shadow: 0px 4px 10px 0px rgba(16, 156, 241, 0.24);
+}
+
+.formulize-drawer .formulize-drawer__btn--primary,
+.formulize-drawer .formulize-drawer__btn--primary:hover {
+  background: var(--button-color);
+  border-color: var(--button-color);
+  color: #FFF;
+}
+
+.formulize-drawer .formulize-drawer__btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--formulize-drawer-muted);
+}
+
+.formulize-drawer .formulize-drawer__btn--ghost:hover {
+  background: var(--background-color);
+  box-shadow: none;
+  color: var(--text-color);
+}
+
+.formulize-drawer .formulize-drawer__btn--icon {
+  width: 34px;
+  padding: 0;
 }

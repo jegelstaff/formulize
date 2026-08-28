@@ -288,74 +288,46 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
 }
 
 /* ============================================================
-   Right slide-out drawer
+   Right slide-out drawer — Lyris skin (issue #99)
+   ------------------------------------------------------------
+   The drawer itself is a core component now: its markup, layout, scrolling,
+   drag-to-resize and mobile behaviour live in
+   modules/formulize/include/js/drawer.js and
+   modules/formulize/templates/css/formulize.css, and every theme gets them.
+
+   What is left here is skin — Lyris's surfaces, type scale and spacing mapped
+   onto the component's custom properties — plus the two things only this theme
+   knows about: the masquerade bar the drawer has to sit above, and Lyris's own
+   button look for the drawer's controls.
+
+   Form fields inside the drawer are NOT styled here. The drawer body is wrapped
+   by modules/formulize/templates/screens/Lyris/default/drawer/toptemplate.php,
+   which emits the same `.fz-form-screen` / `.fz-form` containers the form and
+   multiPage screens emit, so the form-screen rules further down this file apply
+   verbatim in the drawer. That is what keeps a form identical full screen and in
+   the drawer, and it is why the parallel set of `.formulize-drawer__body …` field rules
+   this file used to carry is gone.
    ============================================================ */
 
-.fz-drawer-scrim {
-  position: fixed;
-  inset: 0 0 var(--masquerade-h) 0;
-  background: var(--c-overlay);
-  z-index: 30;
-}
+.formulize-drawer {
+  --formulize-drawer-bg:       var(--c-surface);
+  --formulize-drawer-fg:       var(--c-text);
+  --formulize-drawer-border:   var(--c-border);
+  --formulize-drawer-muted:    var(--c-text-muted);
+  --formulize-drawer-foot-bg:  var(--c-surface-2);
+  --formulize-drawer-shadow:   var(--sh-4);
+  --formulize-drawer-radius:   var(--r-2);
+  --formulize-drawer-pad-x:    var(--s-5);
+  --formulize-drawer-pad-y:    var(--s-4);
 
-.fz-drawer-scrim[hidden] {
-  display: none;
-}
-
-.fz-drawer {
-  position: fixed;
-  top: 0;
-  right: 0;
   /* Lifted above the masquerade bar so the drawer's footer buttons stay clickable. */
   bottom: var(--masquerade-h);
-  width: 480px;
-  min-width: 320px;
-  max-width: 92vw;
-  background: var(--c-surface);
-  box-shadow: var(--sh-4);
-  z-index: 31;
-  display: flex;
-  flex-direction: column;
   animation: fz-drawer-in var(--dur-2) var(--ease);
 }
 
-.fz-drawer[hidden] {
-  display: none;
-}
-
-/* Custom resize handle on the left edge, dragged via JS (script.js).
-   Native CSS `resize` was tried first but dropped: its hit target is a
-   near-invisible ~13px corner icon flush against the viewport edge (Firefox
-   paints no icon there at all), and that corner sits under
-   #formulize-masquerade-block (z-index:100) whenever masquerading, blocking
-   it entirely. A dedicated strip is visible on hover and always reachable. */
-.fz-drawer__resize-handle {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: -4px;
-  width: 8px;
-  cursor: ew-resize;
-  z-index: 1;
-}
-
-/* The hit area above stays wide for an easy grab; the visible line drawn here
-   is a slim 4px bar so it reads as a crisp divider rather than a thick block.
-   No transition: a color fade over a couple of px reads as the edge going
-   soft/out-of-focus rather than a hover state — it should just snap on. */
-.fz-drawer__resize-handle::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 2px;
-  width: 3px;
-  background: transparent;
-}
-
-.fz-drawer__resize-handle:hover::after,
-.fz-drawer__resize-handle--active::after {
-  background-color: var(--c-border-strong);
+.formulize-drawer-scrim {
+  inset: 0 0 var(--masquerade-h) 0;
+  background: var(--c-overlay);
 }
 
 @keyframes fz-drawer-in {
@@ -363,75 +335,94 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
   to   { transform: translateX(0);    opacity: 1; }
 }
 
-.fz-drawer__head {
-  padding: var(--s-4) var(--s-5);
-  border-bottom: 1px solid var(--c-border);
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  flex-shrink: 0;
+.formulize-drawer__resize-handle:hover::after,
+.formulize-drawer__resize-handle--active::after {
+  background-color: var(--c-border-strong);
 }
 
-.fz-drawer__title {
+.formulize-drawer__head {
+  gap: var(--s-2);
+}
+
+.formulize-drawer__title {
   font-size: var(--fs-20);
-  font-weight: 600;
 }
 
-.fz-drawer__body {
-  flex: 1;
-  overflow: auto;
-  padding: var(--s-5);
-}
-
-/* The AI assistant's own panel. It brings its own padding and its own internal
-   scrolling (the chat log scrolls, the input row stays put), so unlike the entry
-   body this one neither pads nor scrolls - it just hands its full height over. */
-.fz-drawer__body--ai {
-  padding: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-/* display:flex above would otherwise beat the UA's [hidden] rule */
-.fz-drawer__body--ai[hidden] {
-  display: none;
-}
-
-.fz-drawer__loading {
+.formulize-drawer__loading {
   padding: var(--s-6);
-  color: var(--c-text-muted);
-  text-align: center;
 }
 
-.fz-drawer__foot {
+.formulize-drawer__foot {
   padding: var(--s-3) var(--s-5);
-  border-top: 1px solid var(--c-border);
-  display: flex;
-  justify-content: flex-end;
   gap: var(--s-2);
-  background: var(--c-surface-2);
-  flex-shrink: 0;
 }
 
-.fz-drawer__foot:empty {
-  display: none;
-}
-
-.fz-drawer__notice {
-  margin-right: auto;
-  align-self: center;
+.formulize-drawer__notice,
+.formulize-drawer__page-indicator {
   font-size: var(--fs-13);
-  color: var(--c-text-muted);
 }
 
-.fz-drawer__page-indicator {
-  align-self: center;
+.formulize-drawer__page-indicator {
   margin: 0 var(--s-1);
+}
+
+/* The component's buttons, given Lyris's .fz-btn look. Selector shape matches
+   the component's own (`.formulize-drawer .formulize-drawer__btn`) so this wins
+   on stylesheet order rather than on a specificity arms race. */
+.formulize-drawer .formulize-drawer__btn {
+  height: 32px;
+  padding: 0 var(--s-3);
   font-size: var(--fs-13);
-  color: var(--c-text-muted);
-  font-feature-settings: "tnum";
-  white-space: nowrap;
+  font-weight: 500;
+  border-radius: var(--r-2);
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-surface);
+  color: var(--c-text);
+  transition: background-color var(--dur-1) var(--ease),
+              border-color var(--dur-1) var(--ease),
+              color var(--dur-1) var(--ease);
+}
+
+.formulize-drawer .formulize-drawer__btn:hover {
+  background: var(--c-surface-3);
+  border-color: var(--c-text-muted);
+}
+
+.formulize-drawer .formulize-drawer__btn:focus-visible {
+  outline: none;
+  box-shadow: var(--sh-focus);
+}
+
+.formulize-drawer .formulize-drawer__btn--primary {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+  color: var(--c-text-on-accent);
+}
+
+.formulize-drawer .formulize-drawer__btn--primary:hover {
+  background: var(--c-accent-hover);
+  border-color: var(--c-accent-hover);
+  color: var(--c-text-on-accent);
+}
+
+.formulize-drawer .formulize-drawer__btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--c-text);
+}
+
+.formulize-drawer .formulize-drawer__btn--ghost:hover {
+  background: var(--c-surface-3);
+  border-color: transparent;
+  color: var(--c-text);
+}
+
+/* Restated after the base rule above, which would otherwise put the padding
+   back on the square icon buttons (source order beats the component's own
+   --icon rule, since both selectors have the same specificity). */
+.formulize-drawer .formulize-drawer__btn--icon {
+  width: 32px;
+  padding: 0;
 }
 
 /* ============================================================
@@ -1961,19 +1952,11 @@ body:has(#formulize-masquerade-block) {
     height: 24px;
   }
 
-  /* ---- Right drawer fills the screen ---- */
+  /* ---- Right drawer: tighter body gutter (the component already makes it
+     full-width and drops the resize handle at this breakpoint) ---- */
 
-  .fz-drawer {
-    width: 100vw;
-    max-width: 100vw;
-  }
-
-  .fz-drawer__resize-handle {
-    display: none;
-  }
-
-  .fz-drawer__body {
-    padding: var(--s-4);
+  .formulize-drawer {
+    --formulize-drawer-pad-x: var(--s-4);
   }
 
   /* ---- List title bar: compact, actions wrap under the title ---- */
@@ -2104,8 +2087,9 @@ body:has(#formulize-masquerade-block) {
    Ported from the design system (forms.css). `.fz-form` carries the base
    density vars; `.fz-form--compact` / `--comfy` are modifier classes set on
    the form container (owner decision: default container = label-top + compact).
-   `.fz-form-screen` and `.fz-drawer__body` retain the same vars as additive
-   aliases so existing markup keeps the 38px form sizing. */
+   `.fz-form-screen` retains the same vars as an additive alias so existing
+   markup keeps the 38px form sizing - including inside the right drawer, whose
+   body is wrapped in `.fz-form-screen` by the theme's drawer templates. */
 
 .fz-form,
 .fz-form-screen {
@@ -2519,9 +2503,7 @@ textarea.fz-control {
 .fz-form-screen .fz-field__body:has(input[type="radio"]),
 .fz-form-screen .fz-field__body:has(input[type="checkbox"]),
 .fz-form-screen .col2:has(input[type="radio"]),
-.fz-form-screen .col2:has(input[type="checkbox"]),
-.fz-drawer__body .fz-field__body:has(input[type="radio"]),
-.fz-drawer__body .fz-field__body:has(input[type="checkbox"]) {
+.fz-form-screen .col2:has(input[type="checkbox"]) {
   display: block;
   line-height: 1.9;        /* vertical rhythm between <br>-separated options */
 }
@@ -2529,9 +2511,7 @@ textarea.fz-control {
 .fz-form-screen .col2 input[type="radio"],
 .fz-form-screen .col2 input[type="checkbox"],
 .fz-form-screen .fz-field__body input[type="radio"],
-.fz-form-screen .fz-field__body input[type="checkbox"],
-.fz-drawer__body .fz-field__body input[type="radio"],
-.fz-drawer__body .fz-field__body input[type="checkbox"] {
+.fz-form-screen .fz-field__body input[type="checkbox"] {
   display: inline-block;
   width: auto !important;
   height: auto;
@@ -2545,9 +2525,7 @@ textarea.fz-control {
 .fz-form-screen .col2 input[type="radio"] + label,
 .fz-form-screen .col2 input[type="checkbox"] + label,
 .fz-form-screen .fz-field__body input[type="radio"] + label,
-.fz-form-screen .fz-field__body input[type="checkbox"] + label,
-.fz-drawer__body .fz-field__body input[type="radio"] + label,
-.fz-drawer__body .fz-field__body input[type="checkbox"] + label {
+.fz-form-screen .fz-field__body input[type="checkbox"] + label {
   display: inline;
   font-weight: 400;
   font-size: var(--field-text, var(--fs-14));
@@ -2557,60 +2535,13 @@ textarea.fz-control {
   vertical-align: middle;
 }
 
-/* ---------- Drawer form body — apply form-screen context ----------
-   When Formulize renders a form inside the right-drawer (.fz-drawer__body),
-   it doesn't add a .fz-form-screen class automatically. We apply the same
-   density tokens here so drawer-embedded forms also get the 38px controls. */
-
-.fz-drawer__body .form-row,
-.fz-drawer__body .form-container {
-  /* inherit tokens from the .fz-form-screen vars defined above by re-declaring */
-  --field-h:      38px;
-  --field-pad-x:  12px;
-  --field-pad-y:  8px;
-  --field-radius: var(--r-2);
-  --field-gap:    18px;
-  --field-text:   var(--fs-14);
-  --label-text:   1.1rem; /* ~16px, scales with root font-size (#32) */
-  --label-gap:    6px;
-  --help-text:    var(--fs-12);
-}
-
-.fz-drawer__body input[type="text"],
-.fz-drawer__body input[type="email"],
-.fz-drawer__body input[type="number"],
-.fz-drawer__body input[type="date"],
-.fz-drawer__body input[type="datetime-local"],
-.fz-drawer__body input[type="time"],
-.fz-drawer__body input[type="tel"],
-.fz-drawer__body input[type="url"],
-.fz-drawer__body input:not([type]),
-.fz-drawer__body select,
-.fz-drawer__body textarea {
-  height: var(--field-h);
-  padding: 0 var(--field-pad-x);
-  font-size: var(--field-text);
-  border-radius: var(--field-radius);
-  width: 100%;
-}
-
-.fz-drawer__body textarea {
-  height: auto;
-  min-height: calc(var(--field-h) * 2.4);
-  padding: var(--field-pad-y) var(--field-pad-x);
-}
-
-.fz-drawer__body select {
-  padding-right: 30px;
-}
-
 /* ---------- Rich-text (CKEditor) field — contain in drawer (issue #44) ----------
    The WYSIWYG element renders a CKEditor 5 instance whose toolbar buttons each
    carry a decorative `.ck-tooltip` span. That span is `position:absolute`,
    `visibility:hidden` and centered on its button, so the tooltip of the
    RIGHTMOST toolbar button spills ~8px (desktop) / ~29px (mobile) past the
    editor's box. Even while hidden it keeps its absolute layout footprint, which
-   propagated to `.fz-drawer__body`'s `scrollWidth` and produced a horizontal
+   propagated to `.formulize-drawer__body`'s `scrollWidth` and produced a horizontal
    scrollbar on the whole right drawer (the sole element exceeding the drawer
    content box at both breakpoints).
 
@@ -2618,7 +2549,7 @@ textarea.fz-control {
    `overflow-x: clip` contains the tooltip's stray right edge without creating a
    scroll container and leaves the vertical axis visible, so toolbar buttons and
    the below-button tooltips still render on hover — nothing usable is clipped. */
-.fz-drawer__body .ck.ck-editor {
+.formulize-drawer__body .ck.ck-editor {
   max-width: 100%;
   box-sizing: border-box;
   overflow-x: clip;
@@ -2626,8 +2557,7 @@ textarea.fz-control {
 
 /* ---------- Form-screen submit / action row ---------- */
 
-.fz-form-screen .form-actions,
-.fz-drawer__body .form-actions {
+.fz-form-screen .form-actions {
   display: flex;
   align-items: center;
   gap: var(--s-2);
@@ -2663,7 +2593,7 @@ textarea.fz-control {
    contain a full-page form action bar (`#formulizeform ... .formulizeThemeForm
    #multipage-controls`). List screens (no `#multipage-controls`) and the right
    drawer (its body is a separate elements-only endpoint that never renders
-   `#multipage-controls`; it builds its own `.fz-drawer__foot`) are untouched.
+   `#multipage-controls`; it builds its own `.formulize-drawer__foot`) are untouched.
    `.fz-inline` (drawer-iframe context) is excluded — that `.fz-main` is
    `overflow:visible` and lays out in normal page flow. */
 
@@ -2694,7 +2624,7 @@ body:not(.fz-inline) .fz-main:has(> #formulizeform .formulizeThemeForm #multipag
 
    Deliberately EXCLUDED: `#multipage-controls` (the bottom-anchored action bar).
    Like the list-screen sticky footer (`.fz-list__footer`) and the drawer footer
-   (`.fz-drawer__foot`), that bar is meant to be full-bleed — it spans edge-to-edge
+   (`.formulize-drawer__foot`), that bar is meant to be full-bleed — it spans edge-to-edge
    of `.fz-main` with its own inner `padding` (var(--s-4) var(--s-6)) providing the
    content inset. Adding a side margin here gave it an unwanted gutter, so it is
    left out of this rule.
@@ -2702,8 +2632,8 @@ body:not(.fz-inline) .fz-main:has(> #formulizeform .formulizeThemeForm #multipag
    Scoped to `body:not(.fz-inline) .fz-main` (the same guard the sticky action-bar
    fix uses): list screens have no `.fz-form-screen`, and when a form renders in
    the right drawer / inline iframe (`.fz-inline`, body padded by
-   `.fz-drawer__body { padding: --s-5 }`) we must NOT add a second gutter — so the
-   drawer and its `.fz-drawer__foot` are unaffected. */
+   `.formulize-drawer__body { padding: --s-5 }`) we must NOT add a second gutter — so the
+   drawer and its `.formulize-drawer__foot` are unaffected. */
 body:not(.fz-inline) .fz-main .fz-form-screen,
 body:not(.fz-inline) .fz-main #pageNavTable,
 body:not(.fz-inline) .fz-main .pageNavTable {
@@ -2876,7 +2806,7 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs::after {
    a theme-scoped override). Default appearance = bordered SECONDARY (used by
    "Close"); the Save-family override below paints them accent PRIMARY. */
 .formulizeThemeForm .formulize-form-submit-button,
-.fz-drawer__body .formulize-form-submit-button {
+.formulize-drawer__body .formulize-form-submit-button {
   height: 34px !important;
   min-width: 0 !important;
   width: auto;
@@ -2896,13 +2826,13 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs::after {
 }
 
 .formulizeThemeForm .formulize-form-submit-button:hover,
-.fz-drawer__body .formulize-form-submit-button:hover {
+.formulize-drawer__body .formulize-form-submit-button:hover {
   background-color: var(--c-surface-3) !important;
   border-color: var(--c-text-muted);
 }
 
 .formulizeThemeForm .formulize-form-submit-button:focus-visible,
-.fz-drawer__body .formulize-form-submit-button:focus-visible {
+.formulize-drawer__body .formulize-form-submit-button:focus-visible {
   outline: none;
   box-shadow: var(--sh-focus);
 }
@@ -2910,14 +2840,14 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs::after {
 /* Primary (accent) — the Save-family actions:
    name="save", "save_and_close", "save_and_finish" (any name beginning "save"). */
 .formulizeThemeForm .formulize-form-submit-button[name^="save"],
-.fz-drawer__body .formulize-form-submit-button[name^="save"] {
+.formulize-drawer__body .formulize-form-submit-button[name^="save"] {
   background-color: var(--c-accent) !important;
   color: var(--c-text-on-accent) !important;
   border-color: var(--c-accent);
 }
 
 .formulizeThemeForm .formulize-form-submit-button[name^="save"]:hover,
-.fz-drawer__body .formulize-form-submit-button[name^="save"]:hover {
+.formulize-drawer__body .formulize-form-submit-button[name^="save"]:hover {
   background-color: var(--c-accent-hover) !important;
   border-color: var(--c-accent-hover);
 }
@@ -2996,8 +2926,7 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs::after {
    drawer contexts so list-screen widgets are untouched.
    ============================================================ */
 
-.fz-form-screen,
-.fz-drawer__body {
+.fz-form-screen {
   --field-h:      38px;
   --field-pad-x:  12px;
   --field-radius: var(--r-2);
@@ -3010,8 +2939,7 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs::after {
    markup, but we can style the native file control to read like the
    design's dashed drop zone, and present the status line as a file
    chip row beneath it. */
-.fz-form-screen input[type="file"],
-.fz-drawer__body input[type="file"] {
+.fz-form-screen input[type="file"] {
   display: block;
   width: 100%;
   max-width: 520px;
@@ -3025,20 +2953,17 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs::after {
   cursor: pointer;
   transition: border-color var(--dur-1) var(--ease), background var(--dur-1) var(--ease);
 }
-.fz-form-screen input[type="file"]:hover,
-.fz-drawer__body input[type="file"]:hover {
+.fz-form-screen input[type="file"]:hover {
   border-color: var(--c-accent);
   background: var(--c-accent-soft);
 }
-.fz-form-screen input[type="file"]:focus,
-.fz-drawer__body input[type="file"]:focus {
+.fz-form-screen input[type="file"]:focus {
   outline: none;
   border-color: var(--c-border-focus);
   box-shadow: var(--sh-focus);
 }
 /* The native "Choose File" button → a compact secondary .fz-btn look. */
-.fz-form-screen input[type="file"]::file-selector-button,
-.fz-drawer__body input[type="file"]::file-selector-button {
+.fz-form-screen input[type="file"]::file-selector-button {
   margin-right: 12px;
   height: 28px;
   padding: 0 12px;
@@ -3052,8 +2977,7 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs::after {
   cursor: pointer;
   transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
 }
-.fz-form-screen input[type="file"]::file-selector-button:hover,
-.fz-drawer__body input[type="file"]::file-selector-button:hover {
+.fz-form-screen input[type="file"]::file-selector-button:hover {
   background: var(--c-surface-3);
   border-color: var(--c-text-muted);
 }
@@ -3091,8 +3015,7 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs::after {
    Core renders `<nobr><input type="range"> <output id="rangeValue_*">
    </nobr>`. Style the native track + thumb to the design's accent
    track/fill, and present the live value as a mono bubble. */
-.fz-form-screen input[type="range"],
-.fz-drawer__body input[type="range"] {
+.fz-form-screen input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
@@ -3105,30 +3028,25 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs::after {
   border: 0;
   cursor: pointer;
 }
-.fz-form-screen input[type="range"]:focus,
-.fz-drawer__body input[type="range"]:focus { outline: none; }
+.fz-form-screen input[type="range"]:focus { outline: none; }
 /* Track */
-.fz-form-screen input[type="range"]::-webkit-slider-runnable-track,
-.fz-drawer__body input[type="range"]::-webkit-slider-runnable-track {
+.fz-form-screen input[type="range"]::-webkit-slider-runnable-track {
   height: 6px;
   border-radius: 999px;
   background: var(--c-surface-3);
 }
-.fz-form-screen input[type="range"]::-moz-range-track,
-.fz-drawer__body input[type="range"]::-moz-range-track {
+.fz-form-screen input[type="range"]::-moz-range-track {
   height: 6px;
   border-radius: 999px;
   background: var(--c-surface-3);
 }
-.fz-form-screen input[type="range"]::-moz-range-progress,
-.fz-drawer__body input[type="range"]::-moz-range-progress {
+.fz-form-screen input[type="range"]::-moz-range-progress {
   height: 6px;
   border-radius: 999px;
   background: var(--c-accent);
 }
 /* Thumb */
-.fz-form-screen input[type="range"]::-webkit-slider-thumb,
-.fz-drawer__body input[type="range"]::-webkit-slider-thumb {
+.fz-form-screen input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   margin-top: -7px;          /* centre 20px thumb on 6px track */
@@ -3141,8 +3059,7 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs::after {
   cursor: grab;
   transition: box-shadow var(--dur-1) var(--ease);
 }
-.fz-form-screen input[type="range"]::-moz-range-thumb,
-.fz-drawer__body input[type="range"]::-moz-range-thumb {
+.fz-form-screen input[type="range"]::-moz-range-thumb {
   width: 18px;
   height: 18px;
   border-radius: 50%;
@@ -3151,17 +3068,14 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs::after {
   box-shadow: var(--sh-2);
   cursor: grab;
 }
-.fz-form-screen input[type="range"]:focus::-webkit-slider-thumb,
-.fz-drawer__body input[type="range"]:focus::-webkit-slider-thumb {
+.fz-form-screen input[type="range"]:focus::-webkit-slider-thumb {
   box-shadow: var(--sh-focus);
 }
-.fz-form-screen input[type="range"]:focus::-moz-range-thumb,
-.fz-drawer__body input[type="range"]:focus::-moz-range-thumb {
+.fz-form-screen input[type="range"]:focus::-moz-range-thumb {
   box-shadow: var(--sh-focus);
 }
 /* Live value readout (the <output> beside the slider) → mono bubble. */
-.fz-form-screen output[id^="rangeValue_"],
-.fz-drawer__body output[id^="rangeValue_"] {
+.fz-form-screen output[id^="rangeValue_"] {
   display: inline-block;
   margin-left: 12px;
   min-width: 34px;
@@ -3180,17 +3094,17 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs::after {
    (slider + 12px + bubble) is wider than the field and overflows, scrolling
    the whole drawer. Lay the nobr out as a flex row capped at the field width
    and let the slider shrink (flex, min-width:0) so the bubble always fits. */
-.fz-drawer__body nobr:has(input[type="range"]) {
+.formulize-drawer__body nobr:has(input[type="range"]) {
   display: flex;
   align-items: center;
   max-width: 100%;
 }
-.fz-drawer__body nobr:has(input[type="range"]) input[type="range"] {
+.formulize-drawer__body nobr:has(input[type="range"]) input[type="range"] {
   flex: 1 1 auto;
   width: auto;
   min-width: 0;
 }
-.fz-drawer__body nobr:has(input[type="range"]) output[id^="rangeValue_"] {
+.formulize-drawer__body nobr:has(input[type="range"]) output[id^="rangeValue_"] {
   flex: 0 0 auto;
 }
 
@@ -3198,8 +3112,7 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs::after {
    Core renders `<input type="color">`. Browsers draw a chunky default
    swatch button; normalise it to a clean rounded swatch sized to the
    field height, matching the design's `.fz-colorpicker__swatch`. */
-.fz-form-screen input[type="color"],
-.fz-drawer__body input[type="color"] {
+.fz-form-screen input[type="color"] {
   -webkit-appearance: none;
   appearance: none;
   width: var(--field-h);
@@ -3212,23 +3125,18 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs::after {
   vertical-align: middle;
   transition: border-color var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
 }
-.fz-form-screen input[type="color"]:hover,
-.fz-drawer__body input[type="color"]:hover { border-color: var(--c-text-muted); }
-.fz-form-screen input[type="color"]:focus,
-.fz-drawer__body input[type="color"]:focus {
+.fz-form-screen input[type="color"]:hover { border-color: var(--c-text-muted); }
+.fz-form-screen input[type="color"]:focus {
   outline: none;
   border-color: var(--c-border-focus);
   box-shadow: var(--sh-focus);
 }
-.fz-form-screen input[type="color"]::-webkit-color-swatch-wrapper,
-.fz-drawer__body input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
-.fz-form-screen input[type="color"]::-webkit-color-swatch,
-.fz-drawer__body input[type="color"]::-webkit-color-swatch {
+.fz-form-screen input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.fz-form-screen input[type="color"]::-webkit-color-swatch {
   border: 0;
   border-radius: 3px;
 }
-.fz-form-screen input[type="color"]::-moz-color-swatch,
-.fz-drawer__body input[type="color"]::-moz-color-swatch {
+.fz-form-screen input[type="color"]::-moz-color-swatch {
   border: 0;
   border-radius: 3px;
 }
@@ -3293,12 +3201,11 @@ input[type="time"] { font-family: var(--font-sans); }
    select (chevron + 38px box, already set by the base `select` rule) spans
    the field, matching the design's full-width `.fz-select-trigger`. */
 .fz-form-screen .fz-field__body > nobr:has(> select),
-.fz-drawer__body .col2 > nobr:has(> select) {
+.fz-form-screen .col2 > nobr:has(> select) {
   display: block;
   width: 100%;
 }
-.fz-form-screen nobr > select,
-.fz-drawer__body nobr > select {
+.fz-form-screen nobr > select {
   width: 100%;
 }
 
@@ -3307,8 +3214,7 @@ input[type="time"] { font-family: var(--font-sans); }
    rule forces `height: var(--field-h)` which clips it to one row and hides the
    chevron background awkwardly. Restyle multi-selects as the design's scrollable
    listbox surface: auto height, padded rows, accent-soft selected state. */
-.fz-form-screen select[multiple],
-.fz-drawer__body select[multiple] {
+.fz-form-screen select[multiple] {
   height: auto;
   min-height: calc(var(--field-h) * 2.4);
   max-height: 220px;
@@ -3320,21 +3226,18 @@ input[type="time"] { font-family: var(--font-sans); }
   border: 1px solid var(--c-border-strong);
   background-color: var(--c-surface);
 }
-.fz-form-screen select[multiple]:focus,
-.fz-drawer__body select[multiple]:focus {
+.fz-form-screen select[multiple]:focus {
   border-color: var(--c-border-focus);
   box-shadow: var(--sh-focus);
   outline: none;
 }
-.fz-form-screen select[multiple] option,
-.fz-drawer__body select[multiple] option {
+.fz-form-screen select[multiple] option {
   padding: 7px 10px;
   border-radius: var(--r-1);
   font-size: var(--field-text);
   color: var(--c-text);
 }
-.fz-form-screen select[multiple] option:checked,
-.fz-drawer__body select[multiple] option:checked {
+.fz-form-screen select[multiple] option:checked {
   /* WebKit needs the background painted via box-shadow to override the UA
      highlight; Firefox honours background directly. Belt-and-braces. */
   background: var(--c-accent-soft) linear-gradient(var(--c-accent-soft), var(--c-accent-soft));
@@ -3351,12 +3254,11 @@ input[type="time"] { font-family: var(--font-sans); }
    modal. What stays here is Lyris's skin for those parts — tokenised colour,
    typography, field metrics, focus rings and transitions.
 
-   Lyris rules are scoped to .fz-form-screen / .fz-drawer__body, so they outrank
+   Lyris rules are scoped to .fz-form-screen / .formulize-drawer__body, so they outrank
    the component's unscoped base rules without needing !important. */
 
 /* The autocomplete text input → Lyris field metrics and colours. */
-.fz-form-screen input.formulize_autocomplete,
-.fz-drawer__body input.formulize_autocomplete {
+.fz-form-screen input.formulize_autocomplete {
   height: var(--field-h);
   padding: 0 36px 0 var(--field-pad-x);
   font: inherit;
@@ -3368,24 +3270,20 @@ input[type="time"] { font-family: var(--font-sans); }
   outline: none;
   transition: border-color var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
 }
-.fz-form-screen input.formulize_autocomplete:hover,
-.fz-drawer__body input.formulize_autocomplete:hover { border-color: var(--c-text-muted); }
-.fz-form-screen input.formulize_autocomplete:focus,
-.fz-drawer__body input.formulize_autocomplete:focus {
+.fz-form-screen input.formulize_autocomplete:hover { border-color: var(--c-text-muted); }
+.fz-form-screen input.formulize_autocomplete:focus {
   border-color: var(--c-border-focus);
   box-shadow: var(--sh-focus);
 }
 
 /* The magnifying glass → muted, and inset to match Lyris's field padding. */
-.fz-form-screen .formulize_autocomplete img.autocomplete-icon,
-.fz-drawer__body .formulize_autocomplete img.autocomplete-icon {
+.fz-form-screen .formulize_autocomplete img.autocomplete-icon {
   right: 12px;
   opacity: 0.55;
 }
 
 /* Selected values → the design's chip row. */
-.fz-form-screen .formulize_autocomplete_selections .auto_multi,
-.fz-drawer__body .formulize_autocomplete_selections .auto_multi {
+.fz-form-screen .formulize_autocomplete_selections .auto_multi {
   height: 26px;
   padding: 0 4px 0 10px;
   border-radius: 13px;
@@ -3396,8 +3294,7 @@ input[type="time"] { font-family: var(--font-sans); }
   line-height: 1;
   transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
 }
-.fz-form-screen .formulize_autocomplete_selections .auto_multi:hover,
-.fz-drawer__body .formulize_autocomplete_selections .auto_multi:hover {
+.fz-form-screen .formulize_autocomplete_selections .auto_multi:hover {
   background: var(--c-surface-3);
   border-color: var(--c-border-strong);
 }
@@ -3405,14 +3302,24 @@ input[type="time"] { font-family: var(--font-sans); }
 /* The chip's remove button. Only this removes the value, and only after the
    browser's confirm() dialog is accepted.
 
-   Lyris's blanket `button:not([class*="fz-"]):not([class*="formulize_button"])`
+   Lyris's blanket `button:not([class*="fz-"]):not([class*="formulize_button"]):not([class*="formulize-drawer__btn"])`
    rule below paints every bare button as a 32px-tall bordered surface with a
-   var(--r-2) radius. It ties on specificity (0-2-1) with the component's own
-   `.auto_multi button.auto_multi_remove` base rule and wins on source order,
-   because the theme sheet loads after formulize.css. So this icon button has to
-   restate the box metrics as well as the surface to opt back out of all of it. */
-.fz-form-screen .formulize_autocomplete_selections button.auto_multi_remove,
-.fz-drawer__body .formulize_autocomplete_selections button.auto_multi_remove {
+   var(--r-2) radius. It outranks the component's own `.auto_multi
+   button.auto_multi_remove` base rule in formulize.css, because the theme sheet
+   loads afterwards. So this icon button has to restate the box metrics as well
+   as the surface to opt back out of all of it.
+
+   The `.auto_multi` in the middle of the selector is load-bearing, and is NOT
+   redundant with `.formulize_autocomplete_selections`. Each `:not([class*=...])`
+   on the blanket rule contributes a full attribute-selector's worth of
+   specificity, so every exemption added to that rule raises it. It started at
+   0-2-1 with two `:not()`s; adding the third (`formulize-drawer__btn`, to keep
+   the drawer's own buttons off the blanket skin) took it to 0-3-1 — exactly
+   tying the two-class opt-out this rule used to be, which then lost on source
+   order and let the white bordered box come back. Keeping `.auto_multi` here
+   puts the opt-out at 0-4-1 (and 0-5-1 for :hover/:focus), so it stays ahead of
+   the blanket rule even if a fourth exemption is ever added to it. */
+.fz-form-screen .formulize_autocomplete_selections .auto_multi button.auto_multi_remove {
   width: 18px;
   height: 18px;
   border-radius: 50%;
@@ -3428,10 +3335,8 @@ input[type="time"] { font-family: var(--font-sans); }
    component's base rule and fills the button. Filling it here was the bug: it
    painted a var(--c-surface) box - white, and rounded-rect rather than round,
    since the radius was leaking from the blanket rule too. */
-.fz-form-screen .formulize_autocomplete_selections button.auto_multi_remove:hover,
-.fz-form-screen .formulize_autocomplete_selections button.auto_multi_remove:focus,
-.fz-drawer__body .formulize_autocomplete_selections button.auto_multi_remove:hover,
-.fz-drawer__body .formulize_autocomplete_selections button.auto_multi_remove:focus {
+.fz-form-screen .formulize_autocomplete_selections .auto_multi button.auto_multi_remove:hover,
+.fz-form-screen .formulize_autocomplete_selections .auto_multi button.auto_multi_remove:focus {
   background: transparent;
   box-shadow: none;
   color: var(--c-danger);
@@ -3480,8 +3385,7 @@ input[type="time"] { font-family: var(--font-sans); }
 
 @media (max-width: 768px) {
   .fz-form,
-  .fz-form-screen,
-  .fz-drawer__body {
+  .fz-form-screen {
     --field-h:     44px;   /* iOS tap target */
     --field-text:  16px;   /* prevent iOS auto-zoom */
     --field-gap:   16px;
@@ -3516,13 +3420,11 @@ input[type="time"] { font-family: var(--font-sans); }
 
   /* Autocomplete chips get a slightly taller tap target on touch screens, and
      the remove button grows to a comfortable touch size. */
-  .fz-form-screen .formulize_autocomplete_selections .auto_multi,
-  .fz-drawer__body .formulize_autocomplete_selections .auto_multi {
+  .fz-form-screen .formulize_autocomplete_selections .auto_multi {
     height: 32px;
     padding: 0 6px 0 12px;
   }
-  .fz-form-screen .formulize_autocomplete_selections button.auto_multi_remove,
-  .fz-drawer__body .formulize_autocomplete_selections button.auto_multi_remove {
+  .fz-form-screen .formulize_autocomplete_selections .auto_multi button.auto_multi_remove {
     width: 24px;
     height: 24px;
     font-size: 16px;
@@ -3584,10 +3486,13 @@ input[type="time"] { font-family: var(--font-sans); }
    controls the Lyris button look (mirrors the `.fz-btn` primitive above).
    Elements that already carry an `.fz-*` / `.formulize_button` class, or
    sit inside an already-themed container, keep their own styling because
-   those selectors are more specific and win the cascade.
+   those selectors are more specific and win the cascade. The drawer
+   component's own buttons (`.formulize-drawer__btn`) are exempted the same
+   way: this blanket reset is `0,2,1`, so without the exclusion it would
+   outrank both the component's rules and Lyris's skin for them.
    ============================================================ */
 
-button:not([class*="fz-"]):not([class*="formulize_button"]),
+button:not([class*="fz-"]):not([class*="formulize_button"]):not([class*="formulize-drawer__btn"]),
 input[type="submit"]:not([class*="fz-"]),
 input[type="reset"]:not([class*="fz-"]),
 input[type="button"]:not([class*="fz-"]):not(.formulize_button) {
@@ -3615,7 +3520,7 @@ input[type="button"]:not([class*="fz-"]):not(.formulize_button) {
               color var(--dur-1) var(--ease);
 }
 
-button:not([class*="fz-"]):not([class*="formulize_button"]):hover,
+button:not([class*="fz-"]):not([class*="formulize_button"]):not([class*="formulize-drawer__btn"]):hover,
 input[type="submit"]:not([class*="fz-"]):hover,
 input[type="reset"]:not([class*="fz-"]):hover,
 input[type="button"]:not([class*="fz-"]):not(.formulize_button):hover {
@@ -3623,7 +3528,7 @@ input[type="button"]:not([class*="fz-"]):not(.formulize_button):hover {
   border-color: var(--c-text-muted);
 }
 
-button:not([class*="fz-"]):not([class*="formulize_button"]):focus-visible,
+button:not([class*="fz-"]):not([class*="formulize_button"]):not([class*="formulize-drawer__btn"]):focus-visible,
 input[type="submit"]:not([class*="fz-"]):focus-visible,
 input[type="reset"]:not([class*="fz-"]):focus-visible,
 input[type="button"]:not([class*="fz-"]):not(.formulize_button):focus-visible {
@@ -4221,20 +4126,15 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
    a caption, an add button, and a .formulize-subform-table of sub entries whose
    controls (pencil, delete checkboxes, delete/clone buttons) arrive unstyled —
    and the core pencil glyph is hardcoded white, invisible on the drawer surface.
-   Scoped under .fz-drawer: the same markup on non-Lyris pages is untouched. */
+   Scoped under .formulize-drawer: the same markup on non-Lyris pages is untouched. */
 
-/* .fz-btn's display would otherwise override the [hidden] attribute the JS toggles */
-.fz-drawer__back[hidden] {
-  display: none;
-}
-
-.fz-drawer .subform-caption {
+.formulize-drawer .subform-caption {
   margin: 0 0 var(--s-2);
   font-size: var(--fs-13);
 }
 
 /* add / delete-checked / clone-checked buttons: match the secondary fz-btn look */
-.fz-drawer .subform_button_controls input[type="button"] {
+.formulize-drawer .subform_button_controls input[type="button"] {
   height: 28px;
   padding: 0 var(--s-3);
   margin: 0 var(--s-2) var(--s-2) 0;
@@ -4251,17 +4151,17 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
   transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
 }
 
-.fz-drawer .subform_button_controls input[type="button"]:hover {
+.formulize-drawer .subform_button_controls input[type="button"]:hover {
   background: var(--c-surface-2);
   border-color: var(--c-text-subtle);
 }
 
-.fz-drawer .formulize-subform-table-scrollbox {
+.formulize-drawer .formulize-subform-table-scrollbox {
   overflow-x: auto;
   margin-top: var(--s-2);
 }
 
-.fz-drawer .formulize-subform-table {
+.formulize-drawer .formulize-subform-table {
   width: 100%;
   border-collapse: collapse;
   border: 1px solid var(--c-border);
@@ -4269,8 +4169,8 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
   font-size: var(--fs-13);
 }
 
-.fz-drawer .formulize-subform-table > tbody > tr > th,
-.fz-drawer .formulize-subform-table > tbody > tr > td {
+.formulize-drawer .formulize-subform-table > tbody > tr > th,
+.formulize-drawer .formulize-subform-table > tbody > tr > td {
   padding: var(--s-2) var(--s-3);
   border: none;
   border-bottom: 1px solid var(--c-border);
@@ -4278,31 +4178,31 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
   vertical-align: middle;
 }
 
-.fz-drawer .formulize-subform-table > tbody > tr:last-child > td {
+.formulize-drawer .formulize-subform-table > tbody > tr:last-child > td {
   border-bottom: none;
 }
 
-.fz-drawer .formulize-subform-table > tbody > tr > th {
+.formulize-drawer .formulize-subform-table > tbody > tr > th {
   background: var(--c-surface-2);
   color: var(--c-text-muted);
   font-weight: 500;
 }
 
-.fz-drawer .formulize-subform-table > tbody > tr > th p,
-.fz-drawer .formulize-subform-table > tbody > tr > td p {
+.formulize-drawer .formulize-subform-table > tbody > tr > th p,
+.formulize-drawer .formulize-subform-table > tbody > tr > td p {
   margin: 0;
 }
 
 /* pencil + delete checkbox columns hug their content */
-.fz-drawer .formulize-subform-table .subentry-view-cell,
-.fz-drawer .formulize-subform-table .subentry-delete-cell {
+.formulize-drawer .formulize-subform-table .subentry-view-cell,
+.formulize-drawer .formulize-subform-table .subentry-delete-cell {
   width: 1%;
   white-space: nowrap;
 }
 
 /* Pencil glyph colour is handled globally now (issue #61) — see the
    `a.loe-edit-entry::before` block earlier. Only layout remains here. */
-.fz-drawer .formulize-subform-table a.loe-edit-entry {
+.formulize-drawer .formulize-subform-table a.loe-edit-entry {
   display: inline-block;
   line-height: 1;
 }

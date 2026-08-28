@@ -199,6 +199,13 @@ var FORMULIZE = {
 };
 </script>\n";
 
+// Wrap the rendered elements in the active theme's drawer container (see
+// modules/formulize/templates/screens/<Theme>/default/drawer/toptemplate.php).
+// Those templates emit the same container classes the theme's form and multiPage
+// screens emit, so a form rendered here is styled exactly as it is full screen and
+// no theme needs a parallel set of "form inside the drawer" CSS rules.
+$GLOBALS['formulize_elementsOnly_wrapperTemplateType'] = 'drawer';
+
 // Trigger the conditional-element JavaScript: in elements-only mode it is only
 // emitted when this flag is set (see formdisplay.php). It mirrors how the subform
 // modal endpoint enables conditional elements.

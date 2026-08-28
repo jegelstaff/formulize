@@ -612,14 +612,23 @@ class formulize_elementsOnlyForm extends formulize_themeForm {
 		$ele_name = $this->getName();
 
         $topTemplate = $this->getTemplate('toptemplate');
-        $renderingModal = strstr(getCurrentURL(), 'subformdisplay-elementsonly.php') !== false ? true : false;
         $elementsInTable = stristr($this->getTemplate('elementcontainero'), '<tr') !== false ? true : false;
         $elementsInTable = (stristr($topTemplate, '<table') !== false AND $elementsInTable) ? true : false;
 
-        /*if(!$renderingModal) {
-            $ret = $this->processTemplate($topTemplate, array('formTitle'=>$this->getTitle()));
-        } else*/
-        if($elementsInTable) {
+        // A host that wants the elements wrapped in a theme container (the right
+        // slide-out drawer does, so a form is styled there exactly as it is full
+        // screen) names the screen-template type to take the wrapper from. Themes
+        // ship those templates at
+        // modules/formulize/templates/screens/<Theme>/default/<type>/{top,bottom}template.php.
+        // Opt-in, so every other elements-only consumer (the subform modal, API
+        // callers) renders bare elements exactly as before.
+        $wrapperType = isset($GLOBALS['formulize_elementsOnly_wrapperTemplateType']) ? $GLOBALS['formulize_elementsOnly_wrapperTemplateType'] : '';
+        $wrapperTop = $wrapperType ? getDefaultTemplate('toptemplate', $wrapperType) : '';
+
+        $ret = '';
+        if($wrapperTop) {
+            $ret = $this->processTemplate($wrapperTop, array('formTitle'=>$this->getTitle()));
+        } elseif($elementsInTable) {
             // major league hack to open table if it seems the top template would have opened a table for the element containers
             $ret = '<table>';
         }
@@ -627,11 +636,11 @@ class formulize_elementsOnlyForm extends formulize_themeForm {
 		$hidden = '';
 		list($ret, $hidden) = $this->_drawElements($this->getElements(), $ret, $hidden);
 
-        /*if(!$renderingModal) {
-            $template = $this->getTemplate('bottomtemplate');
-            $ret .= $this->processTemplate($template);
-        } else*/
-        if($elementsInTable) {
+        if($wrapperTop) {
+            if($wrapperBottom = getDefaultTemplate('bottomtemplate', $wrapperType)) {
+                $ret .= $this->processTemplate($wrapperBottom);
+            }
+        } elseif($elementsInTable) {
             $ret .= '</table>';
         }
 
