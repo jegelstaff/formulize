@@ -1296,35 +1296,40 @@ NEWVERSION;
 						 */
 						$fileNameParts = explode('_', substr($file, 0, -4));
 						$firstPart = $fileNameParts[0];
-						$secondPart = $fileNameParts[1];
-						$thirdPart = $fileNameParts[2];
+						$secondPart = $fileNameParts[1] ?? '';
+						$thirdPart = $fileNameParts[2] ?? '';
 						if($firstPart == "derived"
 							OR $firstPart == "areamodif"
 							OR $firstPart == "ib"
 							OR $firstPart == "text"
 							OR $firstPart == "textarea") {
 								$element_handler = xoops_getmodulehandler('elements','formulize');
-								$element_id = $fileNameParts[1];
-								if(is_numeric($element_id)) {
-										$elementObject = $element_handler->get($element_id);
-										$elementHandle = $elementObject->getVar('ele_handle');
-										rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$firstPart.'_'.$elementHandle.'.php');
+								$element_id = implode('_', array_slice($fileNameParts, 1));
+								if(is_numeric($element_id) AND $elementObject = $element_handler->get($element_id)) {
+									$elementHandle = $elementObject->getVar('ele_handle');
+									$newFile = $firstPart.'_'.$elementHandle.'.php';
+									if($file != $newFile AND !file_exists(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$newFile)) {
+										rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$newFile);
+									}
 								}
 						} elseif($firstPart.'_'.$secondPart.'_'.$thirdPart == "on_before_save"
 							OR $firstPart.'_'.$secondPart.'_'.$thirdPart == "on_after_save"
 							OR $firstPart.'_'.$secondPart == "on_delete"
 							OR $firstPart.'_'.$secondPart.'_'.$thirdPart == "custom_edit_check") {
 								$form_handler = xoops_getmodulehandler('forms','formulize');
-								$form_id = $fileNameParts[count($fileNameParts)-1];
-								if(is_numeric($form_id)) {
-										$fileType = $firstPart.'_'.$secondPart == "on_delete" ? "on_delete" : $firstPart.'_'.$secondPart.'_'.$thirdPart;
-										$formObject = $form_handler->get($form_id);
+								$fileType = $firstPart.'_'.$secondPart == "on_delete" ? "on_delete" : $firstPart.'_'.$secondPart.'_'.$thirdPart;
+								// everything after the event name is the form id in the legacy scheme, or the form handle in the current one
+								$form_id = substr(substr($file, 0, -4), strlen($fileType) + 1);
+								if(is_numeric($form_id) AND $formObject = $form_handler->get($form_id)) {
 										$formHandle = $formObject->getVar('form_handle');
-										rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$fileType.'_'.$formHandle.'.php');
+										$newFile = $fileType.'_'.$formHandle.'.php';
+										if($file != $newFile AND !file_exists(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$newFile)) {
+											rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$newFile);
+										}
 								}
 						} elseif($firstPart.'_'.$secondPart == "custom_html" OR $firstPart.'_'.$secondPart == "custom_code") {
-							$effect_id = $fileNameParts[2];
-							$button_id = $fileNameParts[3];
+							$effect_id = $fileNameParts[2] ?? '';
+							$button_id = $fileNameParts[3] ?? '';
 							if(is_numeric($button_id)) {
 								$screen_id = str_replace($firstPart.'_'.$secondPart.'_'.$effect_id.'_'.$button_id.'_', '', $file);
 								$screen_id = substr($screen_id, 0, -4); // cut off .php
