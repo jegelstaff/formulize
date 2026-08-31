@@ -469,7 +469,7 @@ function formulize_run_schema_migrations($prev_dbversion, $required_dbversion) {
 				$sql['add_ele_handle_index'] = "ALTER TABLE ".$xoopsDB->prefix("formulize")." ADD INDEX i_ele_handle (`ele_handle`)";
 				$sql['form_screen_multipage_formorder'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_multipage") . " ADD `formorder` text NOT NULL";
 				$sql['form_screen_multipage_disabledpages'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_multipage") . " ADD `disabledpages` text NOT NULL";
-				$sql['add_editdestination'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_listofentries") . " ADD `editdestination` varchar(10) NOT NULL default 'drawer'";
+				$sql['add_editdestination'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_listofentries") . " ADD `editdestination` varchar(10) NOT NULL default 'screen'";
 
         $needToSetSaveAndLeave = true;
         $needToSetPrintableView = true;
