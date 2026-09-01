@@ -4121,12 +4121,17 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
   text-align: center;
 }
 
-/* ---------- Subform elements inside the drawer (issue #57) ----------
+/* ---------- Subform elements (issue #57) ----------
    A subform element (e.g. Artifacts on the Collection form) renders core markup:
    a caption, an add button, and a .formulize-subform-table of sub entries whose
    controls (pencil, delete checkboxes, delete/clone buttons) arrive unstyled —
    and the core pencil glyph is hardcoded white, invisible on the drawer surface.
-   Scoped under .formulize-drawer: the same markup on non-Lyris pages is untouched. */
+
+   The caption and the add/delete/clone buttons stay scoped to .formulize-drawer:
+   full screen they already pick up Lyris's standard control styling at the
+   theme's normal 32px height, and pulling them down to the drawer's tighter
+   28px/13px would make them inconsistent with the fields beside them. The TABLE
+   rules below are scoped differently — see the next comment. */
 
 .formulize-drawer .subform-caption {
   margin: 0 0 var(--s-2);
@@ -4156,12 +4161,24 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
   border-color: var(--c-text-subtle);
 }
 
-.formulize-drawer .formulize-subform-table-scrollbox {
+/* ---------- Subform TABLE: same styling in the drawer and full screen (issue #106)
+   Scoped to `.fz-form-screen` rather than `.formulize-drawer`. Both the drawer
+   body and Lyris's own form/multiPage screens emit `.fz-form-screen` (see
+   modules/formulize/templates/screens/Lyris/default/{drawer,form,multiPage}/
+   toptemplate.php), so one rule set covers both and a subform table looks the
+   same either way. While these rules were drawer-only, a subform rendered full
+   screen fell through to the core defaults in
+   modules/formulize/templates/css/formulize.css — dotted left/right/bottom cell
+   rules, no outer border, 1px header padding, bold centred headers — which is
+   the mismatch issue #106 reported. Non-Lyris pages are untouched, and so are
+   list screens: they emit no `.fz-form-screen` and no `.formulize-subform-table`. */
+
+.fz-form-screen .formulize-subform-table-scrollbox {
   overflow-x: auto;
   margin-top: var(--s-2);
 }
 
-.formulize-drawer .formulize-subform-table {
+.fz-form-screen .formulize-subform-table {
   width: 100%;
   border-collapse: collapse;
   border: 1px solid var(--c-border);
@@ -4169,8 +4186,8 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
   font-size: var(--fs-13);
 }
 
-.formulize-drawer .formulize-subform-table > tbody > tr > th,
-.formulize-drawer .formulize-subform-table > tbody > tr > td {
+.fz-form-screen .formulize-subform-table > tbody > tr > th,
+.fz-form-screen .formulize-subform-table > tbody > tr > td {
   padding: var(--s-2) var(--s-3);
   border: none;
   border-bottom: 1px solid var(--c-border);
@@ -4178,31 +4195,31 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
   vertical-align: middle;
 }
 
-.formulize-drawer .formulize-subform-table > tbody > tr:last-child > td {
+.fz-form-screen .formulize-subform-table > tbody > tr:last-child > td {
   border-bottom: none;
 }
 
-.formulize-drawer .formulize-subform-table > tbody > tr > th {
+.fz-form-screen .formulize-subform-table > tbody > tr > th {
   background: var(--c-surface-2);
   color: var(--c-text-muted);
   font-weight: 500;
 }
 
-.formulize-drawer .formulize-subform-table > tbody > tr > th p,
-.formulize-drawer .formulize-subform-table > tbody > tr > td p {
+.fz-form-screen .formulize-subform-table > tbody > tr > th p,
+.fz-form-screen .formulize-subform-table > tbody > tr > td p {
   margin: 0;
 }
 
 /* pencil + delete checkbox columns hug their content */
-.formulize-drawer .formulize-subform-table .subentry-view-cell,
-.formulize-drawer .formulize-subform-table .subentry-delete-cell {
+.fz-form-screen .formulize-subform-table .subentry-view-cell,
+.fz-form-screen .formulize-subform-table .subentry-delete-cell {
   width: 1%;
   white-space: nowrap;
 }
 
 /* Pencil glyph colour is handled globally now (issue #61) — see the
    `a.loe-edit-entry::before` block earlier. Only layout remains here. */
-.formulize-drawer .formulize-subform-table a.loe-edit-entry {
+.fz-form-screen .formulize-subform-table a.loe-edit-entry {
   display: inline-block;
   line-height: 1;
 }
