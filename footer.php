@@ -144,6 +144,7 @@ if (isset($xoopsOption['theme_use_smarty']) && $xoopsOption['theme_use_smarty'] 
 		if (defined('_formulize_SAVE')) { $drawerStrings['save'] = _formulize_SAVE; }
 		if (defined('_CANCEL')) { $drawerStrings['cancel'] = _CANCEL; }
 		if (defined('_BACK')) { $drawerStrings['back'] = _BACK; }
+		if (defined('_formulize_CONFIRM_DISCARD_CHANGES')) { $drawerStrings['discardChanges'] = _formulize_CONFIRM_DISCARD_CHANGES; }
 		if ($drawerStrings) {
 			$xoTheme->addScript('', array('type' => 'text/javascript'),
 				'window.formulize = window.formulize || {}; window.formulize.drawerStrings = ' . json_encode($drawerStrings) . ';');

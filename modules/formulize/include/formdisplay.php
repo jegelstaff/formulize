@@ -2742,7 +2742,7 @@ window.onbeforeunload = function (e) {
 
 	var e = e || window.event;
 
-	var confirmationText = "<?php print _formulize_CONFIRMNOSAVE_UNLOAD; ?>"; // message may have single quotes in it!
+	var confirmationText = "<?php print _formulize_CONFIRM_DISCARD_CHANGES; ?>"; // message may have single quotes in it!
 
 	// For IE and Firefox prior to version 4
 	if (e) {
@@ -2960,7 +2960,7 @@ if(!$nosave) {
 	print "		removeEntryLocks('submitGoParent');\n"; // true causes the go_parent form to submit
 if(!$nosave) {
 	print "	} else {\n";
-	print "		var answer = confirm (\"" . _formulize_CONFIRMNOSAVE . "\");\n";
+	print "		var answer = confirm (\"" . _formulize_CONFIRM_DISCARD_CHANGES . "\");\n";
 	print "		if (answer) {\n";
 	print "			formulizechanged = 0;\n"; // don't want to trigger the beforeunload warning
 	print "			removeEntryLocks('submitGoParent');\n"; // true causes the go_parent form to submit

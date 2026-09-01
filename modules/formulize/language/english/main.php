@@ -341,8 +341,11 @@ define("_formulize_SAVE", "Save");
 define("_formulize_SAVE_AND_GOBACK", "Save and Go Back");
 define("_formulize_SAVE_AND_LEAVE", "Save and Close");
 define("_formulize_DONE", "Close");
-define("_formulize_CONFIRMNOSAVE", "You have not saved your changes!  Is that OK?  Click 'Cancel' to return to the form and then click 'Save' to save your changes.");
-define("_formulize_CONFIRMNOSAVE_UNLOAD", "You have not saved your changes!  Is that OK?");
+// The single source of truth for the "you are about to throw away edits" prompt.
+// Used everywhere an entry can be abandoned: the right drawer (close button, scrim,
+// Escape, Cancel, Back) and the full page form's Close/Done control. Keep it phrased
+// so that OK means "discard".
+define("_formulize_CONFIRM_DISCARD_CHANGES", "Discard unsaved changes to this entry?");
 
 define("_formulize_INFO_SAVED", "Your information has been saved.");
 define("_formulize_INFO_DONE1", "Click the <i>");

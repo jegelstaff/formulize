@@ -528,6 +528,23 @@
         return !(typeof window.formulizechanged !== 'undefined' && !window.formulizechanged);
     }
 
+    // Gate for every route that abandons the loaded entry: the footer Cancel button,
+    // the header close button, a click on the scrim, and Escape. Returns false when
+    // the user chose to stay, in which case the caller must leave the drawer exactly
+    // as it is (open, with the edits still in the fields).
+    //
+    // The `form` test is what keeps this from crying wolf. formHasChanges() reports
+    // "changed" when window.formulizechanged is undefined, which is right for a loaded
+    // form (the shared global is reset to 0 by fetchIntoDrawer after every load, so
+    // undefined can only mean something went wrong) but wrong for a drawer that is not
+    // showing an entry form at all -- a failed fetch, or arbitrary content pushed in
+    // through open(). Those have nothing to discard and must close silently.
+    function confirmDiscardIfChanged() {
+        var form = bodyEl ? bodyEl.querySelector('form') : null;
+        if (!form || !formHasChanges()) { return true; }
+        return window.confirm(S().discardChanges);
+    }
+
     // Run the current page's validation function and flush any CKEditors. Returns
     // false when validation fails (so the caller should stay on the page).
     //
@@ -628,7 +645,7 @@
     // Back control: leave the sub entry without saving (warn if it has changes).
     function goBack() {
         if (!drawerStack.length) { return; }
-        if (formHasChanges() && !window.confirm(S().discardChanges)) { return; }
+        if (!confirmDiscardIfChanged()) { return; }
         popToParent();
     }
 
@@ -802,7 +819,13 @@
 
     // ---- Closing ---------------------------------------------------------------
 
+    // Every way of dismissing the entry panel without saving ends up here -- footer
+    // Cancel, the header close button, the scrim, Escape, and the public close() --
+    // so the unsaved-changes warning lives here rather than being repeated at each
+    // call site. Saving does not come through here (closeAndRefresh closes directly),
+    // so a successful save never prompts.
     function closeEntryDrawer() {
+        if (!confirmDiscardIfChanged()) { return; }
         releaseEntryLocks();
         if (footEl) { footEl.innerHTML = ''; }
         currentEntryNav = null;
