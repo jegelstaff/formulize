@@ -29,6 +29,12 @@
  *                                        subform stubs (add/edit/delete/clone)
  *   initListView({ fid, frid, editDestination })
  *                                      - wire a list of entries to the drawer
+ *   isOpen()                           - is a drawer panel currently showing?
+ *
+ * Host hooks (window.formulize.*):
+ *   onEntrySaved()                     - a top-level entry was saved and the drawer closed
+ *   onDrawerClosed()                   - the drawer session ended (saved or cancelled);
+ *                                        fires once, then is cleared
  */
 (function () {
     'use strict';
@@ -252,6 +258,13 @@
         revealDrawer();
     }
 
+    // Is a drawer panel currently showing? Hosts use this to tell "the user is acting
+    // inside the drawer" from "the user is acting on the page behind it" — see the
+    // subform stubs in formdisplay-elementsonly.php.
+    function drawerIsOpen() {
+        return !!(drawer && !drawer.hidden);
+    }
+
     function closeDrawer() {
         if (!drawer) { return; }
         drawer.hidden = true;
@@ -364,7 +377,8 @@
         if (!ensureDom()) { return; }
         opts = opts || {};
         drawerStack = [];
-        currentFrame = { params: { fid: opts.fid, frid: opts.frid, sid: opts.sid, entryId: opts.entryId }, page: 0 };
+        currentFrame = { params: { fid: opts.fid, frid: opts.frid, sid: opts.sid, entryId: opts.entryId,
+                                   subformElementId: opts.subformElementId }, page: 0 };
         openDrawer({ title: opts.title || '' });
         updateBackButton();
         fetchIntoDrawer(buildEntryUrl(currentFrame.params));
@@ -576,6 +590,17 @@
         });
     }
 
+    // Tell the host page that the drawer session it opened has finished (saved or
+    // cancelled), so it can put back whatever state it handed over. The hook belongs to
+    // one session, so it is cleared as it fires; a host that wants another one registers
+    // it again when it next opens the drawer. (onEntrySaved is deliberately not cleared:
+    // initListView registers that once for the life of the page.)
+    function notifyHostClosed() {
+        var hook = window.formulize.onDrawerClosed;
+        window.formulize.onDrawerClosed = null;
+        if (typeof hook === 'function') { hook(); }
+    }
+
     // Release locks, close the drawer, and refresh the host (the list, normally).
     // Used after the final save.
     function closeAndRefresh() {
@@ -588,6 +613,7 @@
         if (typeof window.formulize.onEntrySaved === 'function') {
             window.formulize.onEntrySaved();
         }
+        notifyHostClosed();
     }
 
     // Return to the parent entry (re-fetched, so its subform table reflects whatever
@@ -784,6 +810,7 @@
         currentFrame = null;
         updateBackButton();
         closeDrawer();
+        notifyHostClosed();
     }
 
     // Closing the AI panel must leave it intact — no lock release (it holds none) and
@@ -854,7 +881,8 @@
         openAI: openAIInDrawer,
         saveEntry: saveEntryFromDrawer,
         subformAction: subformAction,
-        initListView: initListView
+        initListView: initListView,
+        isOpen: drawerIsOpen
     };
 
     // A theme's "open the AI assistant" affordance only has to carry the .js-open-ai

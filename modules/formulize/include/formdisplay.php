@@ -886,7 +886,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 
     formulize_benchmark("Start of formDisplay.");
 
-    $formElementsOnly = strstr(getCurrentURL(), 'subformdisplay-elementsonly.php') ? true : false; // true if we're rendering a modal
+    $formElementsOnly = false;
     if($titleOverride == "formElementsOnly") {
         $titleOverride = "all";
         $formElementsOnly = true;
@@ -3005,35 +3005,20 @@ print "function add_sub(sfid, numents, instance_id, frid, fid, mainformentry, su
     document.formulize_mainform.target_sub_open_modal.value=modal;
     document.formulize_mainform.numsubents.value=numents;
     document.formulize_mainform.target_sub_instance.value=instance_id;
-    if(subEntryDialog.dialog('isOpen')) {
-        window.document.formulize_mainform.modalscroll.value = subEntryDialog.scrollTop();
-        saveSub('reload');
-    } else {
-        if(formulizechanged == 0) {
-            jQuery(\"input[name^='decue_']\").remove();
-        }
-        validateAndSubmit();
+    if(formulizechanged == 0) {
+        jQuery(\"input[name^='decue_']\").remove();
     }
+    validateAndSubmit();
 }\n";
 
 print "	function sub_del(sfid, type, parentSubformElement, fid, entry) {
     var answer = confirm ('" . _formulize_DEL_ENTRIES . "');
     if (answer) {
         document.formulize_mainform.deletesubsflag.value=sfid;
-        if(subEntryDialog.dialog('isOpen')) {
-            document.formulize_mainform.target_sub.value=sfid;
-            document.formulize_mainform.target_sub_fid.value=fid;
-            document.formulize_mainform.target_sub_mainformentry.value=entry;
-            document.formulize_mainform.target_sub_parent_subformelement.value=parentSubformElement;
-            document.formulize_mainform.target_sub_open_modal.value=type;
-            window.document.formulize_mainform.modalscroll.value = subEntryDialog.scrollTop();
-            saveSub('reload');
-        } else {
-            if(formulizechanged == 0) {
-                jQuery(\"input[name^='decue_']\").remove();
-            }
-            validateAndSubmit();
+        if(formulizechanged == 0) {
+            jQuery(\"input[name^='decue_']\").remove();
         }
+        validateAndSubmit();
     } else {
         return false;
     }
@@ -3041,67 +3026,18 @@ print "	function sub_del(sfid, type, parentSubformElement, fid, entry) {
 
 print "	function sub_clone(sfid, type, parentSubformElement, fid, entry) {
     document.formulize_mainform.clonesubsflag.value=sfid;
-    if(subEntryDialog.dialog('isOpen')) {
-        document.formulize_mainform.target_sub.value=sfid;
-        document.formulize_mainform.target_sub_fid.value=fid;
-        document.formulize_mainform.target_sub_mainformentry.value=entry;
-        document.formulize_mainform.target_sub_parent_subformelement.value=parentSubformElement;
-        document.formulize_mainform.target_sub_open_modal.value=type;
-        window.document.formulize_mainform.modalscroll.value = subEntryDialog.scrollTop();
-        saveSub('reload');
-    } else {
-        if(formulizechanged == 0) {
-            jQuery(\"input[name^='decue_']\").remove();
-        }
-        validateAndSubmit();
+    if(formulizechanged == 0) {
+        jQuery(\"input[name^='decue_']\").remove();
     }
+    validateAndSubmit();
 }\n";
 
 
-global $xoopsConfig;
-if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/images/working-".$xoopsConfig['language'].".gif") ) {
-    $workingMessageGif = "<img src=\"" . XOOPS_URL . "/modules/formulize/images/working-" . $xoopsConfig['language'] . ".gif\">";
-    $savingMessageGif = "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-" . $xoopsConfig['language'] . ".gif\">";
-} else {
-    $workingMessageGif = "<img src=\"" . XOOPS_URL . "/modules/formulize/images/working-english.gif\">";
-    $savingMessageGif = "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-english.gif\">";
-}
-
 ?>
-
-var subEntryDialog;
-var savingSubEntry = false;
-jQuery(document).ready(function() {
-    subEntryDialog = jQuery("#subentry-dialog").dialog({
-        autoOpen: false,
-        modal: true,
-        width: "50%",
-        position: { my: "center", at: "center", of: window },
-        open: function() {
-            loadSub(jQuery(this));
-            jQuery(this).parent().css('position', 'fixed');
-            jQuery(this).parent().css('top', '10px');
-            jQuery(this).parent().css('left', (parseInt(jQuery(this).parent().css('left').replace('px', '')) - 10)+'px');
-            jQuery(this).css('overflow-y', 'auto !important');
-            jQuery(this).css('height', (parseInt(jQuery(window).height())-100)+'px');
-        },
-        close: function() {
-            removeModalEntryLocks();
-        }
-    });
-});
 
 jQuery.ajaxSetup({
   cache: false
 });
-
-function loadSub(dialogObject) {
-    dialogObject.empty();
-    dialogObject.html('<div id="subentry-dialog-content"><center><?php print $workingMessageGif; ?></center></div>');
-    dialogObject.load('<?php print XOOPS_URL; ?>/modules/formulize/include/subformdisplay-elementsonly.php?fid='+dialogObject.data('fid')+'&entry_id='+dialogObject.data('next_entry_id')+'&subformElementId='+dialogObject.data('subformElementId'), function() {
-        jQuery(".ui-dialog-content").scrollTop(dialogObject.yposition);
-    });
-}
 
 function redrawSubRow(entry_id,subformElementId) {
     jQuery.get('<?php print XOOPS_URL; ?>/modules/formulize/include/redrawSubformRow.php?entry_id='+entry_id+'&subformElementId='+subformElementId, function(data) {
@@ -3132,68 +3068,55 @@ function $actionFunctionName"."() {
 }";
 ?>
 
+// Open a sub entry in the right slide-out drawer. This is the subform interface's
+// "view entries in a drawer" setting (ele_value[3] of 2 or 3), which used to be a
+// jQuery UI modal dialog. The drawer component (modules/formulize/include/js/drawer.js,
+// published site-wide by footer.php) owns the panel, the form load, the footer
+// controls, validation, saving, entry locks and any deeper subform drill-down - the
+// same machinery a list view uses to open an entry, so there is one implementation of
+// "show an entry over the page" rather than two.
+//
+// This page's remaining job is what only it can do: put its own subform row and any
+// derived values back in sync once the drawer has saved, and restore the host form's
+// change flag, which the drawer resets while it owns the shared formulizechanged
+// global. (modalScroll is accepted for signature compatibility with the markup the
+// subform element emits, and with the server-side reopen after an add; the drawer has
+// no equivalent scroll position to restore.)
 function goSubModal(ent, fid, frid, mainformFid, mainformEntryId, subformElementId, modalScroll) {
-    subEntryDialog.data('entry_id', ent);
-    subEntryDialog.data('next_entry_id', ent);
-    subEntryDialog.data('fid', fid);
-    subEntryDialog.data('frid', frid);
-    subEntryDialog.data('mainformFid', mainformFid);
-    subEntryDialog.data('mainformEntryId', mainformEntryId);
-    subEntryDialog.data('subformElementId', subformElementId);
-    subEntryDialog.data('yposition', modalScroll);
-    subEntryDialog.dialog('open');
+    if(typeof window.formulize === 'undefined' || !window.formulize.drawer) { return; }
+    var hostFormChanged = window.formulizechanged;
+    window.formulize.onEntrySaved = function() {
+        formulize_subEntrySavedInDrawer(ent, frid, mainformFid, mainformEntryId, subformElementId);
+    };
+    window.formulize.onDrawerClosed = function() {
+        window.formulize.onEntrySaved = null;
+        window.formulizechanged = hostFormChanged;
+    };
+    window.formulize.drawer.openEntry({
+        fid: fid,
+        frid: frid,
+        entryId: ent,
+        subformElementId: subformElementId
+    });
 }
 
-function saveSub(reload) {
-    if(!savingSubEntry) {
-        if(xoopsFormValidate_formulize_modal(document.getElementById('formulize_modal'))) {
-            savingSubEntry = true;
-            subEntryDialog.children('div').css('opacity', '0.5');
-            subEntryDialog.append('<div id=savingmessage style="padding-top: 10px;"><?php print $savingMessageGif; ?></div>');
-            jQuery('#formulize_modal input[type="hidden"]').prop('disabled', false);
-            if(typeof updateCKEditors === 'function') { updateCKEditors(); }
-            var formData = new FormData(jQuery('#formulize_modal')[0]);
-            //var formData = subEntryDialog.children('form').serialize();
-            jQuery.post({
-                url: '<?php print XOOPS_URL; ?>/modules/formulize/include/readelements.php?fid='+subEntryDialog.data('fid')+'&frid='+subEntryDialog.data('frid'),
-                data: formData,
-                cache: false,
-                contentType: false,
-                processData: false,
-                success: function() {
-                    removeModalEntryLocks();
-                    jQuery.post('<?php print XOOPS_URL; ?>/modules/formulize/formulize_xhr_responder.php?op=update_derived_value&uid=<?php global $xoopsUser; print $xoopsUser ? $xoopsUser->getVar('uid') : 0; ?>&fid='+subEntryDialog.data('mainformFid')+'&frid='+subEntryDialog.data('frid')+'&entryId='+subEntryDialog.data('mainformEntryId')+'&returnElements=1', function(data) {
-                        savingSubEntry = false;
-                        if(reload && reload == 'reload') {
-                            jQuery('#formulize_mainform').append(jQuery('#formulize_modal .delbox:checked'));
-                            subEntryDialog.dialog('close');
-                            validateAndSubmit();
-                        } else {
-                            if(reload && reload == 'leave') {
-                                subEntryDialog.dialog('close');
-                            } else {
-                                if(reload && reload == 'new') {
-                                    subEntryDialog.data('next_entry_id', 'new');
-                                }
-                                loadSub(subEntryDialog);
-                            }
-                            redrawSubRow(subEntryDialog.data('entry_id'), subEntryDialog.data('subformElementId'));
-                            var elements = JSON.parse(data);
-                            for(elementId in elements) {
-                                var rowSelector = 'formulize-de_'+subEntryDialog.data('mainformFid')+'_'+subEntryDialog.data('mainformEntryId')+'_'+elementId;
-                                // if the element is shown, and there has been a change of value, then update it
-                                if(window.document.getElementById(rowSelector) !== null && window.document.getElementById(rowSelector).style.display != 'none'
-                                    && jQuery('#'+rowSelector).html() != elements[elementId]) {
-                                        jQuery('#'+rowSelector).empty();
-                                        jQuery('#'+rowSelector).append(elements[elementId]);
-                                }
-                            }
-                        }
-                    });
-                }
-            });
+// Bring the host page back in sync after the drawer saved a sub entry: redraw the
+// subform row so it shows the new values, and refresh any derived elements of the
+// parent entry that changed as a result. Same two updates the modal's own save did.
+function formulize_subEntrySavedInDrawer(ent, frid, mainformFid, mainformEntryId, subformElementId) {
+    redrawSubRow(ent, subformElementId);
+    jQuery.post('<?php print XOOPS_URL; ?>/modules/formulize/formulize_xhr_responder.php?op=update_derived_value&uid=<?php global $xoopsUser; print $xoopsUser ? $xoopsUser->getVar('uid') : 0; ?>&fid='+mainformFid+'&frid='+frid+'&entryId='+mainformEntryId+'&returnElements=1', function(data) {
+        var elements = JSON.parse(data);
+        for(var elementId in elements) {
+            var rowSelector = 'formulize-de_'+mainformFid+'_'+mainformEntryId+'_'+elementId;
+            // if the element is shown, and there has been a change of value, then update it
+            if(window.document.getElementById(rowSelector) !== null && window.document.getElementById(rowSelector).style.display != 'none'
+                && jQuery('#'+rowSelector).html() != elements[elementId]) {
+                    jQuery('#'+rowSelector).empty();
+                    jQuery('#'+rowSelector).append(elements[elementId]);
+            }
         }
-    }
+    });
 }
 
 function goSub(ent, fid, subformElementId) {

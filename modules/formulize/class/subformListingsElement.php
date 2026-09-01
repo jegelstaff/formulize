@@ -62,9 +62,9 @@ class formulizeSubformListingsElement extends formulizeElement {
 **Properties:**
 - all the common properties for Subform Interfaces, plus:
 - elementsInRow (Required. An array of element ids, indicating which elements from the source form should be shown in the list view. The values of these elements will be shown in each row. The values will not be editable, they will be shown as plain text.)
-- entryViewingMode (Optional. A string, either 'off', 'form_screen' or 'modal'. If 'off', then there are no clickable icons for opening up each connected entry for viewing/editing. If 'full_screen' then there are clickable icons, and they will cause the page to reload with the correct Form Screen for showing the connected entry. If 'modal' then there are clickable icons, and they will open a modal popup box for showing the connected entry. Default is 'full_screen'. For small forms, 'modal' is usually best. For large forms, 'full_screen' is usually best. If a user should not be able to view/edit the embedded entries, or does not need to, then set this to 'off'.
+- entryViewingMode (Optional. A string, either 'off', 'form_screen' or 'modal'. If 'off', then there are no clickable icons for opening up each connected entry for viewing/editing. If 'full_screen' then there are clickable icons, and they will cause the page to reload with the correct Form Screen for showing the connected entry. If 'modal' then there are clickable icons, and they will open the entry in the right slide-out drawer, over the page (this option is named 'modal' for backwards compatibility; it used to be a modal popup box). Default is 'full_screen'. For small forms, 'modal' is usually best. For large forms, 'full_screen' is usually best. If a user should not be able to view/edit the embedded entries, or does not need to, then set this to 'off'.
 **Example:**
-- A 'Listings' Subform Interface that shows the values of elements 101, 102, 103, and 104, from connected entries in form 97. Sort the entries by the value of element 101. Open entries in a modal popup for viewing/editing: { sourceForm: 97, elementsInRow: [101, 102, 103, 104], sortingElement: 101, entryViewingMode: 'modal' }";
+- A 'Listings' Subform Interface that shows the values of elements 101, 102, 103, and 104, from connected entries in form 97. Sort the entries by the value of element 101. Open entries in the drawer for viewing/editing: { sourceForm: 97, elementsInRow: [101, 102, 103, 104], sortingElement: 101, entryViewingMode: 'modal' }";
 		return $descriptionAndExamples;
 	}
 
@@ -709,8 +709,6 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 
     require_once XOOPS_ROOT_PATH.'/modules/formulize/include/subformSaveFunctions.php';
 
-    $renderingSubformUIInModal = strstr($_SERVER['SCRIPT_NAME'], 'subformdisplay-elementsonly.php') ? true : false;
-
 	$nestedSubform = false;
 	if(isset($GLOBALS['formulize_inlineSubformFrid'])) {
 		$frid = $GLOBALS['formulize_inlineSubformFrid'];
@@ -939,14 +937,15 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	$drawnHeadersOnce = false;
     static $drawnSubformBlankHidden = array();
 
+    // 'Modal' selects the overlay behaviour for viewing/adding sub entries: the view
+    // icon calls goSubModal() instead of goSub(), and add_sub() is told to reopen the
+    // new entry the same way. That overlay is the right drawer now - see goSubModal()
+    // in formdisplay.php - but the token is left as-is because it also travels over the
+    // wire as target_sub_open_modal, which existing custom code may post.
     $viewType = ($showViewButtons == 2 OR $showViewButtons == 3) ? 'Modal' : '';
-    $viewType = stristr($_SERVER['SCRIPT_NAME'], 'subformdisplay-elementsonly.php') ? 'Modal' : $viewType;
     $addViewType = ($showViewButtons == 2) ? 'Modal' : '';
-    $addViewType = stristr($_SERVER['SCRIPT_NAME'], 'subformdisplay-elementsonly.php') ? 'Modal' : $addViewType;
 
-    // div for View button dialog
     $col_two = "
-			<div id='subentry-dialog' style='display:none'></div>\n
 				<div id='subform_button_controls_$subform_id$subformElementId$subformInstance' class='subform_button_controls'>";
 
     $deleteButton = "";
@@ -1214,7 +1213,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                         if ($sub_ent !== "new" AND $deleteButton AND $userCouldDeleteOrClone AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
                             $col_two .= "<th class='subentry-delete-cell'></th>\n";
                         }
-                        if(!$renderingSubformUIInModal AND $showViewButtons AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) { $col_two .= "<th class='subentry-view-cell'></th>\n"; }
+                        if($showViewButtons AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) { $col_two .= "<th class='subentry-view-cell'></th>\n"; }
 						$col_two .= drawRowSubformHeaders($headersToDraw, $headingDescriptions);
 						$col_two .= "</tr>\n";
 						$drawnHeadersOnce = true;
@@ -1240,7 +1239,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 						}
 						$visualURL = $baseVisualURL . $entryIdentifier . '/';
 					}
-					if(!$renderingSubformUIInModal AND $showViewButtons AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
+					if($showViewButtons AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
 						$col_two .= "<td class='subentry-view-cell'><a href='$visualURL' class='loe-edit-entry' id='view".$sub_ent."' onclick=\"javascript:goSub".$viewType."('$sub_ent', '$subform_id', $additionalParams);return false;\">&nbsp;</a></td>\n";
 					}
 					include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";

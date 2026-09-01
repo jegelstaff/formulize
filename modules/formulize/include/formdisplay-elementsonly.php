@@ -1,6 +1,7 @@
 <?php
-// Generalized "elements only" form renderer for AJAX contexts (the right slide-out
-// drawer uses this; subform modals can eventually migrate to it as well).
+// Generalized "elements only" form renderer for AJAX contexts. The right slide-out
+// drawer uses this for everything it shows: an entry opened from a list, and (since the
+// subform modal was replaced by the drawer) sub entries opened from a subform element.
 //
 // Renders a form (optionally via a configured screen) as an elements-only <form>,
 // suitable for injection into a host page. The host is responsible for submitting
@@ -65,7 +66,7 @@ function formulize_elementsOnly_resolveScreen($sid, &$fid, &$frid, &$renderHandl
 
 // Loading a sub entry (drawer edit-sub flow): resolve the screen configured on the
 // subform element, the same way the subform modal endpoint does. Gate the requested
-// entry since this is a directly-reachable endpoint (mirrors subformdisplay-elementsonly.php).
+// entry since this is a directly-reachable endpoint.
 $subformElementId = isset($_GET['subformElementId']) ? intval($_GET['subformElementId']) : 0;
 if(!$sid AND $fid AND $subformElementId) {
     if(!security_check($fid, $entry_id)) {
@@ -236,10 +237,19 @@ print "<script type=\"application/json\" class=\"fz-drawer-meta\">".json_encode(
 
 // Subform interaction stubs. The subform element's markup hardcodes onclick calls to
 // add_sub/goSub/goSubModal/sub_del/sub_clone, which are defined by drawJavascript() on
-// full page loads but skipped in elements-only mode. Define guarded delegates that hand
-// the action to the host (window.formulize.drawer.subformAction) so the host can drive
-// its own UI (the Lyris drawer swaps the sub entry in, in place of the modal). No-ops
-// when no host hook is present, rather than throwing reference errors.
+// full page loads but skipped in elements-only mode. Install delegates that hand the
+// action to the host (window.formulize.drawer.subformAction) so the host can drive its
+// own UI: the drawer swaps the sub entry in, with Back returning to the parent.
+//
+// The host page may already define these globally - that is exactly the case when a form
+// screen loaded as a full page opens one of its sub entries in the drawer, because
+// drawJavascript() has run for the page's own form. So rather than only defining them
+// when absent, each delegate wraps whatever was there: while a drawer panel is showing,
+// the click can only have come from inside the drawer, so it routes to the drawer; with
+// the drawer closed it falls through to the page's original function, which still drives
+// the page's own subform tables exactly as before. Installed once per page - a second
+// fragment load (paging, drilling deeper) must not wrap the wrapper and lose the
+// original.
 print "<script type='text/javascript'>
 (function() {
     var subformHook = function(action, args) {
@@ -247,31 +257,35 @@ print "<script type='text/javascript'>
             window.formulize.drawer.subformAction(action, args || {});
         }
     };
-    if(typeof window.add_sub === 'undefined') {
-        window.add_sub = function(sfid, numents, instance_id, frid, fid, mainformentry, subformelement, modal, parent_subformelement) {
-            subformHook('add', { subFid: sfid, numEntries: numents, frid: frid, parentFid: fid, parentEntryId: mainformentry, subformElementId: subformelement });
+    var drawerShowing = function() {
+        return !!(window.formulize && window.formulize.drawer
+            && typeof window.formulize.drawer.isOpen === 'function' && window.formulize.drawer.isOpen());
+    };
+    var install = function(name, drawerImplementation) {
+        var pageImplementation = window[name];
+        if(pageImplementation && pageImplementation.formulizeDrawerDelegate) { return; }
+        var delegate = function() {
+            if(drawerShowing()) { return drawerImplementation.apply(null, arguments); }
+            if(typeof pageImplementation === 'function') { return pageImplementation.apply(null, arguments); }
         };
-    }
-    if(typeof window.goSub === 'undefined') {
-        window.goSub = function(ent, fid, subformElementId) {
-            subformHook('edit', { entryId: ent, subFid: fid, subformElementId: subformElementId });
-        };
-    }
-    if(typeof window.goSubModal === 'undefined') {
-        window.goSubModal = function(ent, fid, frid, mainformFid, mainformEntryId, subformElementId, modalScroll) {
-            subformHook('edit', { entryId: ent, subFid: fid, subformElementId: subformElementId });
-        };
-    }
-    if(typeof window.sub_del === 'undefined') {
-        window.sub_del = function(sfid, type, parentSubformElement, fid, entry) {
-            subformHook('delete', { subFid: sfid });
-        };
-    }
-    if(typeof window.sub_clone === 'undefined') {
-        window.sub_clone = function(sfid, type, parentSubformElement, fid, entry) {
-            subformHook('clone', { subFid: sfid });
-        };
-    }
+        delegate.formulizeDrawerDelegate = true;
+        window[name] = delegate;
+    };
+    install('add_sub', function(sfid, numents, instance_id, frid, fid, mainformentry, subformelement, modal, parent_subformelement) {
+        subformHook('add', { subFid: sfid, numEntries: numents, frid: frid, parentFid: fid, parentEntryId: mainformentry, subformElementId: subformelement });
+    });
+    install('goSub', function(ent, fid, subformElementId) {
+        subformHook('edit', { entryId: ent, subFid: fid, subformElementId: subformElementId });
+    });
+    install('goSubModal', function(ent, fid, frid, mainformFid, mainformEntryId, subformElementId, modalScroll) {
+        subformHook('edit', { entryId: ent, subFid: fid, subformElementId: subformElementId });
+    });
+    install('sub_del', function(sfid, type, parentSubformElement, fid, entry) {
+        subformHook('delete', { subFid: sfid });
+    });
+    install('sub_clone', function(sfid, type, parentSubformElement, fid, entry) {
+        subformHook('clone', { subFid: sfid });
+    });
 })();
 </script>\n";
 

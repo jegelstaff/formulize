@@ -483,7 +483,7 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 	}
 
 	// put in boilerplate code etc, and handle thanks page if applicable...
-	if(!$elements_only AND !isset($GLOBALS['formulize_inlineSubformFrid']) AND !strstr(getCurrentURL(), 'subformdisplay-elementsonly.php')) {
+	if(!$elements_only AND !isset($GLOBALS['formulize_inlineSubformFrid'])) {
 		include_once XOOPS_ROOT_PATH.'/modules/formulize/include/multipage_boilerplate.php';
 	}
 
