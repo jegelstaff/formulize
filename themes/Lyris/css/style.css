@@ -3037,7 +3037,6 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs::after {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  max-width: 420px;
   height: 20px;
   margin: 4px 0;
   padding: 0;
@@ -3107,22 +3106,29 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs::after {
   border-radius: var(--r-1);
   vertical-align: middle;
 }
-/* In the narrow right drawer the slider is width:100% of the field and the
-   value bubble sits beside it inside a non-wrapping <nobr>, so the row
-   (slider + 12px + bubble) is wider than the field and overflows, scrolling
-   the whole drawer. Lay the nobr out as a flex row capped at the field width
-   and let the slider shrink (flex, min-width:0) so the bubble always fits. */
-.formulize-drawer__body nobr:has(input[type="range"]) {
+/* Slider + value bubble share the field width.
+   The slider and its bubble live together in a non-wrapping <nobr>, so left
+   inline they lay out at their natural widths and the pair runs past the
+   field: the slider used to carry a max-width cap to hide that, which left it
+   short of the container while every other Lyris control fills it, and the
+   bubble still overflowed once the field was narrower than the cap.
+   Instead make the <nobr> the full-width flex row that *is* the control: the
+   bubble takes its content width, the slider flexes into whatever is left
+   (min-width:0 so it may shrink below its intrinsic size), and the pair is
+   exactly the field width at any container size. Same rule in the drawer and
+   at full screen, so the two stay consistent. */
+.fz-form-screen nobr:has(> input[type="range"]) {
   display: flex;
   align-items: center;
+  width: 100%;
   max-width: 100%;
 }
-.formulize-drawer__body nobr:has(input[type="range"]) input[type="range"] {
+.fz-form-screen nobr:has(> input[type="range"]) > input[type="range"] {
   flex: 1 1 auto;
   width: auto;
   min-width: 0;
 }
-.formulize-drawer__body nobr:has(input[type="range"]) output[id^="rangeValue_"] {
+.fz-form-screen nobr:has(> input[type="range"]) > output[id^="rangeValue_"] {
   flex: 0 0 auto;
 }
 
