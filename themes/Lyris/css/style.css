@@ -2672,13 +2672,59 @@ body:not(.fz-inline) .fz-main #pageNavTable,
 body:not(.fz-inline) .fz-main .pageNavTable {
   margin-left: var(--s-5, 20px);
   margin-right: var(--s-5, 20px);
-	margin-bottom: 0;
+}
+
+/* The page-nav strip keeps a zero bottom margin: when it is the sticky
+   `.pill-tabs` bar its own `padding-bottom` supplies the space below the pills
+   (and the `::after` separator has to anchor to the true bottom edge), so an
+   outer margin here would open a gap of scrolled content between the pinned
+   strip and the form card. */
+body:not(.fz-inline) .fz-main #pageNavTable,
+body:not(.fz-inline) .fz-main .pageNavTable {
+  margin-bottom: 0;
+}
+
+/* ---------- Vertical gutter for the form card (issue #121 items 1 and 3) ----
+   `.fz-main` on a form screen has no padding of its own, so the form card was
+   flush against both ends of the scroll area.
+
+   Bottom (item 3): the card butted directly against the sticky
+   `#multipage-controls` action bar — scrolled to the end, the last field sat
+   0px from the bar's top edge. A bottom margin gives the card the same
+   breathing room from the bar that it already has from the container sides.
+   The margin is outside the card, so it is transparent page background above
+   the bar, and because the bar is a normal (sticky) item at the end of the
+   flex column, nothing is ever hidden behind it.
+
+   Top (item 1): only screens that render top-level tabs got any top spacing,
+   and they got it from the sticky strip's own `padding-top` — the card is the
+   strip's next sibling. On a screen with no tabs (e.g. sid 1009) the card
+   started at the very top of the scroll area. Give it the same gutter, but
+   ONLY when there is no nav strip above it, so tabbed screens keep the pinned
+   strip flush at `top: 0` and are left exactly as they were.
+
+   Both use --s-5, the same token as the horizontal gutter above, so the card
+   is inset by one consistent value on all four sides and the spacing does not
+   depend on the form's density tokens (which issue #113 / PR #116 changes). */
+body:not(.fz-inline) .fz-main .fz-form-screen {
+  margin-bottom: var(--s-5, 20px);
+}
+
+body:not(.fz-inline) .fz-main:not(:has(#pageNavTable, .pageNavTable)) .fz-form-screen {
+  margin-top: var(--s-5, 20px);
 }
 
 #multipage-controls {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  /* Buttons to the right, page meta to the left (issue #121 item 4) — the same
+     arrangement the right drawer's footer uses (`.formulize-drawer__foot` is
+     `justify-content: flex-end` with `.formulize-drawer__notice` taking an auto
+     margin to sit at the far left). The Lyris multiPage bottomtemplate emits the
+     meta before the buttons so DOM order, focus order and visual order agree;
+     the auto margin below opens the gap between the two clusters. */
+  justify-content: flex-end;
   gap: var(--s-2, 8px);
   padding: var(--s-4, 16px) var(--s-6, 24px);
   /* Push the bar to the bottom of the flex-filled form column on short forms. */
@@ -2693,11 +2739,22 @@ body:not(.fz-inline) .fz-main .pageNavTable {
 }
 
 /* Page meta inside the action bar: "Page X of Y" indicator and the jump-to
-   selector read as muted meta, not competing with the buttons. The indicator
-   gets an auto left margin so it (and the selector) sit to the right of the
-   button cluster on desktop. */
+   selector read as muted meta, not competing with the buttons. They are emitted
+   first, and whichever of them comes last takes the auto right margin so it
+   absorbs the free space and pushes the button cluster to the right edge. Each
+   is independently switchable (the `showpageindicator` / `showpageselector` UI
+   options), hence the `:has()` fallback for a screen that shows the indicator
+   but not the selector; with neither of them present `justify-content: flex-end`
+   right-aligns the buttons on its own. */
+#multipage-controls #page-selector {
+  margin-right: auto;
+}
+
+#multipage-controls:not(:has(#page-selector)) #page-indicator {
+  margin-right: auto;
+}
+
 #multipage-controls #page-indicator {
-  margin-left: auto;
   font-size: var(--fs-13);
   color: var(--c-text-muted);
   font-feature-settings: "tnum";
@@ -2751,12 +2808,23 @@ body:not(.fz-inline) .fz-main .pageNavTable {
    Visual separation (issue request): the bare strip is transparent, so
    scrolling content would show through once pinned. Paint it with the page
    background and reveal a hairline + soft shadow along its bottom edge as the
-   form scrolls underneath — a "separator that fades in on scroll". Where the
-   `scroll()` animation timeline is supported the shadow animates in as the
-   user scrolls; elsewhere it degrades to an always-present hairline (no JS).
+   form scrolls underneath — a "separator that fades in on scroll".
    Negative side margins on the ::after let the separator span the full width
    of the scroll area even though the strip itself keeps the 20px content
    gutter shared with the form card.
+
+   Issue #121 item 2: this used to be driven by a scroll-driven animation
+   (`animation-timeline: scroll(nearest block)`) behind an
+   `@supports (animation-timeline: scroll())` guard, with an always-on hairline
+   as the fallback. Firefox does not implement scroll-driven animations (still
+   behind `layout.css.scroll-driven-animations.enabled` in 141), so it took the
+   fallback branch and showed the separator permanently, including at the top of
+   an unscrolled form — which is the reported difference from Chrome. The strip
+   is now toggled by `.is-scrolled`, set by initFormScrollSeparator() in
+   themes/Lyris/js/script.js from a passive scroll listener on `.fz-main`, and
+   faded with a plain `transition`. One mechanism, identical in every engine.
+   The scrub is lost (opacity is no longer tied to exact scroll offset) but over
+   a 24px range the two are visually indistinguishable.
 
    `padding-bottom` matches `padding-top` (review feedback on PR #41): without
    it the pills butted directly against the sticky region's bottom edge (and
@@ -2786,20 +2854,20 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs::after {
   height: 1px;
   background: var(--c-border);
   box-shadow: var(--sh-2);
+  opacity: 0;
+  transition: opacity 120ms linear;
+}
+
+/* `.is-scrolled` is set on the strip by initFormScrollSeparator() as soon as
+   the `.fz-main` scroll container leaves the top. */
+body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
   opacity: 1;
 }
 
-@supports (animation-timeline: scroll()) {
+@media (prefers-reduced-motion: reduce) {
   body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs::after {
-    opacity: 0;
-    animation: fz-tabs-separator-in linear both;
-    animation-timeline: scroll(nearest block);
-    animation-range: 0 24px;
+    transition: none;
   }
-}
-
-@keyframes fz-tabs-separator-in {
-  to { opacity: 1; }
 }
 
 .pill-tabs__item {

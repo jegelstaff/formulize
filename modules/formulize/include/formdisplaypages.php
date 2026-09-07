@@ -364,7 +364,13 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 			$pageSelectionList = pageSelectionList($currentPage, $totalPages, $pageTitles, "below", $conditions, $entry_id, $fid, $frid); // pageSelector can only show up once on the page, and we draw it with 'below' as the designation, since by default it shows up in the bottom templates. Used to be two versions, above and below, which allowed two copies of this to be functional in the page. Different names were required by the JS, which could be refactored to not need that. But expecting only one per page is valid and simpler for now.
 
 			$pageIndicator = $screen->getUIOption("showpageindicator") ? "<div id='page-indicator'>"._formulize_DMULTI_PAGE." $currentPage "._formulize_DMULTI_OF." $totalPages</div>" : "";
-			$pageSelector = $screen->getUIOption("showpageselector") ? "<div id='page-selector'>"._formulize_DMULTI_JUMPTO."&nbsp;&nbsp;$pageSelectionList<div>" : "";
+			// NB: the closing tag here was `<div>` rather than `</div>`, leaving
+			// #page-selector open. That was invisible while the selector was the last
+			// thing in the action bar (it only swallowed the trailing script/noscript),
+			// but any markup emitted after it ended up nested inside it. Lyris now emits
+			// the page meta before the buttons (issue #121 item 4), which turned the four
+			// form buttons into children of #page-selector, so the tag is closed properly.
+			$pageSelector = $screen->getUIOption("showpageselector") ? "<div id='page-selector'>"._formulize_DMULTI_JUMPTO."&nbsp;&nbsp;$pageSelectionList</div>" : "";
 
 			// setting up the basic templateVars for all templates
 			$templateVariables = array(
