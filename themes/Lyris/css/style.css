@@ -2311,6 +2311,24 @@ textarea.fz-control {
   padding: var(--field-pad-y) var(--field-pad-x);
 }
 
+/* Character / word limit counter sits under the textarea and is right-aligned
+   text, so its box has to be the textarea's box or the numbers do not line up
+   with the control they describe. Core gives .fz-limit-counter width:100% with a
+   max-width cap (300px, 700px from 768px up), because in an unstyled theme the
+   textarea is sized by its cols attribute and the cap stands in for that width.
+   Lyris sizes the textarea at 100% of the field instead, so the cap only stops
+   the counter short: on a 1440px screen it ended 355px inside the field's right
+   edge in the two-column kitchen sink, 649px inside it in one column. The
+   counter is the textarea's sibling in .fz-field__body, so removing the cap
+   leaves the two the same box at every container width — full screen, the drawer
+   at any drag width, and mobile — with no fixed size of our own to keep in step
+   with the field metrics. Scoped exactly like the control sizing above, so the
+   counter is full width wherever the textarea is. */
+.fz-form .fz-limit-counter,
+.fz-form-screen .fz-limit-counter {
+  max-width: none;
+}
+
 /* Selects: preserve the chevron background already set by the base rule */
 .fz-form select,
 .fz-form-screen select {
