@@ -3100,34 +3100,53 @@ img {
 	 margin-right: 1em;
 }
 
+/* "Table of elements" (grid) element - issue #119.
+   The element now renders as divs in a CSS grid; the structure and the gap
+   mechanics live in modules/formulize/templates/css/formulize.css and Anari
+   only supplies the skin and the width.
+
+   Width: Anari sizes every control in the field column to 700px (see
+   `.col2 input[type="text"] { min-width: 700px }` above) and caps it at 300px
+   below the 768px breakpoint. The grid takes the same two widths, so its right
+   hand edge lands on the same line as the fields above and below it - which is
+   what issue #119 asked for.
+
+   The old `max-width: 300px` on the container and `max-width: 75px` / `200px`
+   on the controls were there to stop the <table> blowing the layout out when a
+   grid held several wide inputs. `minmax(0, 1fr)` tracks do that job now, so
+   the controls are free to fill their cells and the caps come off. */
 .formulize-grid {
+    --fz-grid-column-gap: 1em;
+    --fz-grid-row-gap: 0.5em;
     width: 100%;
     max-width: 300px;
 }
-.formulize-grid input, .formulize-grid select {
-    width: auto !important;
-    max-width: 75px !important;
+.formulize-grid input:not([type="radio"]):not([type="checkbox"]):not([type="button"]):not([type="submit"]),
+.formulize-grid select,
+.formulize-grid textarea {
+    width: 100%;
+    min-width: 0 !important;
+    max-width: 100% !important;
 }
 .formulize-grid select {
 	margin-top: 0.5em;
 }
 @media (min-width: 768px) {
     .formulize-grid {
-        width: auto;
-        max-width: 100%;
+        max-width: 700px;
     }
-    .formulize-grid select {
-        min-width: 0px !important;
-        max-width: 100% !important;
-    }
-    .formulize-grid input {
-        min-width: 0px !important;
-        max-width: 200px !important;
+    /* Match the 700px the theme gives every other control in the field column,
+       so the grid's right edge lines up with theirs. */
+    .col2 .formulize-grid {
+        min-width: 700px;
     }
 }
 
-.formulize-grid td.head {
-		vertical-align: top;
+/* Header cells sat at the top of their table cell; keep that. */
+.formulize-grid .fz-grid__cell--corner,
+.formulize-grid .fz-grid__cell--columnheader,
+.formulize-grid .fz-grid__cell--rowheader {
+		align-self: start;
 }
 
 a.loe-edit-entry,

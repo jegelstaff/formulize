@@ -790,13 +790,96 @@ div[id^=cellcontents_1_] label {
   border: 1px solid black;
 }
 
-table.formulize-grid td.head {
-  padding-bottom: 0.5em;
+/* ---------- "Table of elements" (grid) element - issue #119 ----------
+   This element renders as divs laid out with CSS grid instead of a <table>.
+
+   Rows are real elements carrying role="row"; they pass the container's column
+   tracks straight through with `grid-template-columns: subgrid`, so every row
+   lines up and a stripe can be painted across a whole row. Where subgrid is
+   not available the rows fall back to `display: contents` and the cells become
+   direct grid items - the same layout, only row-level striping is lost.
+
+   Spacing between cells comes from `gap`, never from padding on the cells, so
+   the outer edges of the grid sit flush with the rest of the form. That was
+   the point of the change: the old `.formulize-grid td { padding-right: 1em }`
+   pushed the control in the last column 1em in from the right hand edge of the
+   field column, so a grid never lined up with the fields above and below it.
+
+   Structure is core's; skin (gap size, header typography, stripe colour, how
+   wide the controls run) belongs to the themes. Everything a theme is expected
+   to set is a custom property, listed here with its fallback. */
+
+.formulize-grid {
+  display: grid;
+  width: 100%;
+  /* Optional leading (row caption) and trailing (final cell) tracks. Left
+     empty here and filled in by the modifier classes below, so that the
+     template below stays a single declaration. */
+  --fz-grid-row-header-track: ;
+  --fz-grid-final-track: ;
+  grid-template-columns:
+    var(--fz-grid-row-header-track)
+    repeat(var(--fz-grid-data-columns, 1), minmax(0, 1fr))
+    var(--fz-grid-final-track);
+  column-gap: var(--fz-grid-column-gap, 1em);
+  row-gap: var(--fz-grid-row-gap, 0.5em);
+  align-items: stretch;
 }
 
-.formulize-grid td {
-	padding-right: 1em;
-	vertical-align: bottom;
+.formulize-grid.fz-grid--has-row-headers {
+  --fz-grid-row-header-track: max-content;
+}
+
+.formulize-grid.fz-grid--has-final-column {
+  --fz-grid-final-track: max-content;
+}
+
+.formulize-grid > .fz-grid__row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  column-gap: var(--fz-grid-column-gap, 1em);
+  align-items: end;
+}
+
+@supports not (grid-template-columns: subgrid) {
+  .formulize-grid > .fz-grid__row {
+    display: contents;
+  }
+}
+
+/* minmax(0, 1fr) tracks plus min-width:0 are what keep a long value inside its
+   cell instead of forcing the grid wider than the form. */
+.formulize-grid .fz-grid__cell {
+  min-width: 0;
+  align-self: end;
+}
+
+/* Controls stretch to their cell rather than overflowing it. Width is left to
+   the themes; this only stops a control escaping its track. */
+.formulize-grid input:not([type="radio"]):not([type="checkbox"]):not([type="button"]):not([type="submit"]):not([type="hidden"]),
+.formulize-grid select,
+.formulize-grid textarea {
+  max-width: 100%;
+}
+
+/* Alternating shading, from the element's "background" setting: horizontal
+   emphasises rows, vertical emphasises columns. A theme turns it on by giving
+   --fz-grid-stripe-bg a colour. With no colour the grid is unshaded, which is
+   what both shipped themes did with the old table markup - the even/odd
+   classes were emitted but nothing ever painted them. */
+.formulize-grid.fz-grid--shade-rows > .fz-grid__row--odd {
+  background: var(--fz-grid-stripe-bg, transparent);
+}
+
+.formulize-grid.fz-grid--shade-columns .fz-grid__cell.odd {
+  background: var(--fz-grid-stripe-bg, transparent);
+}
+
+/* Caption, when the element is set to show its heading above the grid. */
+.formulize-grid-caption {
+  font-weight: bold;
+  margin-bottom: 0.5em;
 }
 
 #listofentries div.main-cell-div > span,
@@ -1088,18 +1171,27 @@ button.formulize-ai-copy-btn:active {
    wider field in the drawer can still say so with an id-scoped rule of its own.
 
    Button-like inputs are excluded: their width is their label, and capping it
-   clips the text rather than wrapping it. */
+   clips the text rather than wrapping it.
+
+   `.formulize-grid` is in the list for the same reason the fields are: the
+   "table of elements" element renders as a CSS grid container (issue #119) and
+   a theme may give it a definite width to line it up with the fields around it
+   - Anari sets `min-width: 700px` on it above the 768px breakpoint, exactly as
+   it does for a text box. It used to be caught by the `table` selector above;
+   naming it keeps that containment now that it is a div. */
 #formulize-drawer .formulize-drawer__body img,
 #formulize-drawer .formulize-drawer__body input:not([type="button"]):not([type="submit"]):not([type="reset"]),
 #formulize-drawer .formulize-drawer__body select,
 #formulize-drawer .formulize-drawer__body textarea,
-#formulize-drawer .formulize-drawer__body table {
+#formulize-drawer .formulize-drawer__body table,
+#formulize-drawer .formulize-drawer__body .formulize-grid {
 	max-width: 100%;
 }
 
 #formulize-drawer .formulize-drawer__body input:not([type="button"]):not([type="submit"]):not([type="reset"]),
 #formulize-drawer .formulize-drawer__body select,
-#formulize-drawer .formulize-drawer__body textarea {
+#formulize-drawer .formulize-drawer__body textarea,
+#formulize-drawer .formulize-drawer__body .formulize-grid {
 	min-width: 0;
 }
 

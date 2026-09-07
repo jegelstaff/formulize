@@ -4247,3 +4247,52 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
   display: inline-block;
   line-height: 1;
 }
+
+/* ---------- "Table of elements" (grid) element (issue #119) ----------
+   Core renders this element as divs in a CSS grid rather than a <table>; the
+   column tracks, the gap and the ARIA roles all come from
+   modules/formulize/templates/css/formulize.css. Lyris supplies only the skin.
+
+   Scoped to `.fz-form-screen`, which both the drawer body and the full screen
+   form/multiPage toptemplates emit, so a grid looks the same either way.
+
+   Spacing uses the static `--s-*` scale rather than `--field-gap`, so it is
+   unaffected by the density change in PR #116 (field-gap 12px -> 18px). The
+   width comes from the core `width: 100%` plus `width: 100%` on the controls
+   below, so the last column ends flush with the right hand edge of the field
+   column, in line with every other field on the screen. */
+
+.fz-form-screen .formulize-grid {
+  --fz-grid-column-gap: var(--s-3);
+  --fz-grid-row-gap: var(--s-2);
+}
+
+.fz-form-screen .formulize-grid .fz-grid__cell--columnheader,
+.fz-form-screen .formulize-grid .fz-grid__cell--rowheader {
+  font-size: var(--fs-13);
+  font-weight: 500;
+  color: var(--c-text-muted);
+  line-height: var(--lh-snug);
+}
+
+/* Column captions sit on the baseline above their controls; a row caption
+   reads better centred against the control beside it. */
+.fz-form-screen .formulize-grid .fz-grid__cell--columnheader { align-self: end; }
+.fz-form-screen .formulize-grid .fz-grid__cell--rowheader { align-self: center; }
+
+/* Caption, when the element shows its heading above the grid instead of in
+   the label column. */
+.fz-form-screen .formulize-grid-caption {
+  font-size: var(--label-text, 1.1rem);
+  font-weight: 600;
+  color: var(--c-text);
+  margin-bottom: var(--s-2);
+}
+
+/* Controls fill their track, so the grid's right hand edge is the right hand
+   edge of its last control - the alignment issue #119 reported. */
+.fz-form-screen .formulize-grid input:not([type="radio"]):not([type="checkbox"]):not([type="button"]):not([type="submit"]),
+.fz-form-screen .formulize-grid select,
+.fz-form-screen .formulize-grid textarea {
+  width: 100%;
+}
