@@ -18,8 +18,10 @@ if($showTabs) {
 }
 
 // `.fz-form-screen` carries the form-screen density tokens; the inner
-// container carries the design-system label-mode + density modifiers.
-// Owner decision: default = label-top + compact.
+// container carries the design-system label-mode modifier. Density stays at
+// the design system's default (`.fz-form` = 38px controls) - issue #113
+// removed the `.fz-form--compact` modifier from form screens. The modifier
+// is still defined in the stylesheet, for a future per-screen setting.
 print "
     <div class='card fz-form-screen'>";
 
@@ -32,5 +34,5 @@ print "
 
         print "
         <div class='card__body'>
-            <div class='fz-form fz-form--label-top fz-form--compact form-container'>
+            <div class='fz-form fz-form--label-top form-container'>
 ";

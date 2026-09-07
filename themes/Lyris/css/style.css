@@ -2085,11 +2085,24 @@ body:has(#formulize-masquerade-block) {
 
 /* ---------- Density tokens: .fz-form + modifiers ----------
    Ported from the design system (forms.css). `.fz-form` carries the base
-   density vars; `.fz-form--compact` / `--comfy` are modifier classes set on
-   the form container (owner decision: default container = label-top + compact).
+   density vars; `.fz-form--compact` / `--comfy` are modifier classes that may
+   be set on the form container.
+
+   As of issue #113 no density modifier is applied to form screens: the form,
+   multiPage and drawer templates emit `.fz-form fz-form--label-top`, so every
+   form screen renders at the design system's default density (38px controls).
+   Compact was too tight to be the default. The two modifier rules below are
+   kept, defined but unapplied, so the density can be re-introduced later as a
+   per-screen configuration option without re-deriving the values.
+
    `.fz-form-screen` retains the same vars as an additive alias so existing
    markup keeps the 38px form sizing - including inside the right drawer, whose
-   body is wrapped in `.fz-form-screen` by the theme's drawer templates. */
+   body is wrapped in `.fz-form-screen` by the theme's drawer templates.
+
+   Note for whoever wires up that future option: a modifier has to go on the
+   inner `.fz-form` element, not on `.fz-form-screen`. `.fz-form-screen`
+   re-declares --field-h/--field-pad-x further down this sheet, so on a single
+   element carrying both classes the alias wins on source order. */
 
 .fz-form,
 .fz-form-screen {
@@ -2107,6 +2120,7 @@ body:has(#formulize-masquerade-block) {
   --required-color: var(--c-danger);
 }
 
+/* Currently unapplied - see the note above (issue #113). */
 .fz-form--compact {
   --field-h:     32px;
   --field-pad-x: 10px;
@@ -2118,6 +2132,7 @@ body:has(#formulize-masquerade-block) {
   --help-text:   var(--fs-11, 11px);
 }
 
+/* Currently unapplied - see the note above (issue #113). */
 .fz-form--comfy {
   --field-h:     44px;
   --field-pad-x: 14px;

@@ -19,19 +19,22 @@
 //   multi-selects and the autocomplete. Without it the drawer renders unstyled
 //   browser-default fields.
 //
-//   `.fz-form--compact` (inner) sets the density. It cannot be merged onto the
-//   outer element: `.fz-form-screen` re-declares --field-h/--field-pad-x later
-//   in the stylesheet than `.fz-form--compact` does, so on a single element the
-//   alias wins on source order and the fields render at the 38px default
-//   instead of Lyris's 32px compact size. Measured, by collapsing the two divs
-//   into one and reading the computed styles in the drawer: control height went
-//   32px -> 38px, while Lyris full screen stayed at 32px. That is exactly the
-//   full-screen/in-drawer mismatch this screen type exists to remove, so the
-//   nesting stays.
+//   `.fz-form` (inner) carries the design-system density tokens and the
+//   label-mode modifier, exactly as the full-screen form templates do. As of
+//   issue #113 no density modifier is applied here, so both levels resolve to
+//   the design system's default (38px controls) and the two containers agree.
+//   The nesting still stays: the levels mean different things, the drawer has
+//   to mirror the containers the theme's form screens emit so shared rules
+//   match, and if a density modifier is ever re-introduced as a setting it has
+//   to go on this inner element. It cannot be merged onto `.fz-form-screen`,
+//   which re-declares --field-h/--field-pad-x later in the stylesheet and so
+//   wins on source order over any modifier placed on the same element - that
+//   was measured during PR #100 (drawer controls went 32px -> 38px while full
+//   screen stayed at 32px) and is why the two divs were never collapsed.
 //
 // The card wrapper is deliberately dropped - the drawer itself plays that part.
 
 print "
 <div class='fz-form-screen formulize-drawer-form'>
-<div class='fz-form fz-form--label-top fz-form--compact form-container'>
+<div class='fz-form fz-form--label-top form-container'>
 ";
