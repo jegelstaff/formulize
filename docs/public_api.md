@@ -6,10 +6,11 @@ title: Public API
 
 # Public API
 
-Formulize has a public API that currently behaves in a REST-like manner. There are two initial operations that the public API supports:
+Formulize has a public API that currently behaves in a REST-like manner. The public API supports these operations:
 
 * [api status](status)
 * [queue processing](queue)
+* [reading entries from a form](read)
 
 ## Enabling the Public API
 
@@ -25,5 +26,5 @@ RewriteCond %{REQUEST_URI} ^/formulize-public-api/ [NC]
 RewriteCond %{REQUEST_FILENAME} !-f<br>
 RewriteCond %{REQUEST_FILENAME} !-d<br>
 RewriteCond %{REQUEST_FILENAME} !-l<br>
-RewriteRule ^(.*)$ /modules/formulize/public_api/index.php?apiPath=$1 [L,B]
+RewriteRule ^(.*)$ /modules/formulize/public_api/index.php?apiPath=$1 [L,B,QSA]
 ```

@@ -180,8 +180,10 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
 			curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
 			curl_setopt($curl, CURLINFO_HEADER_OUT, true);
 
-			// For MCP server, we need to test if Authorization header gets passed through
-			if($config->getVar('conf_name') == 'formulizeMCPServerEnabled') {
+			// The MCP server and the Public API both authenticate with an Authorization header,
+			// so both need to know whether this server passes that header through to PHP at all.
+			if($config->getVar('conf_name') == 'formulizeMCPServerEnabled'
+				OR $config->getVar('conf_name') == 'formulizePublicAPIEnabled') {
 				// Add a test Authorization header to verify it passes through
 				curl_setopt($curl, CURLOPT_HTTPHEADER, array(
 					'Authorization: Bearer test-header-passthrough-check'
@@ -202,6 +204,11 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
 				case 'formulizePublicAPIEnabled':
 					$json = json_decode($response);
 					$validResponse = (is_object($json) AND $json->status == "healthy");
+					// A stripped Authorization header does not stop the Public API being enabled,
+					// because session based and anonymous callers still work without one. Record the
+					// result so the settings page can warn that API keys will not work on this server.
+					$_SESSION['formulize_publicApiAuthHeaderPassthrough'] =
+						($validResponse AND !empty($json->authorization_header_received));
 					break;
 				case 'formulizeMCPServerEnabled':
 					$json = json_decode($response);

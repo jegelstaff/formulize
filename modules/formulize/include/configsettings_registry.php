@@ -449,6 +449,11 @@ return array(
                 'sections' => array(
                     _AM_CFG_SEC_PUBLIC_API => array(
                         array('name' => 'formulizePublicAPIEnabled', 'scope' => 'formulize'),
+                        array(
+                            'name' => 'formulizePublicAPIAllowedOrigins',
+                            'scope' => 'formulize',
+                            'showWhen' => array('name' => 'formulizePublicAPIEnabled', 'value' => 1),
+                        ),
                     ),
                     _AM_CFG_SEC_SESSIONS_COOKIES => array(
                         array('name' => 'session_expire', 'scope' => 'system'),

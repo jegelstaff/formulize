@@ -35,8 +35,19 @@ if(!defined('FORMULIZE_PUBLIC_API_REQUEST')) {
 	http_response_code(500);
     exit();
 }
+// Report whether the Authorization header survived the trip to PHP. Some server
+// configurations, notably CGI and some FastCGI setups, strip it unless they are
+// explicitly configured to pass it through, which would break API key authentication
+// with no other visible symptom. The admin check that turns the Public API on sends a
+// known test header and reads this back. The status value itself is untouched, because
+// that is what decides whether the preference is allowed to stay on.
+$formulize_authorizationHeaderReceived = function_exists('formulize_publicApiGetAuthorizationHeader')
+	? (trim(formulize_publicApiGetAuthorizationHeader()) !== '')
+	: false;
+
 print '{
 	"status": "healthy",
 	"timestamp": '.time().',
-	"version": "1"
+	"version": "1",
+	"authorization_header_received": '.($formulize_authorizationHeaderReceived ? 'true' : 'false').'
 }';

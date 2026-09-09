@@ -11324,6 +11324,55 @@ function isAIAssistantEnabled() {
 }
 
 /**
+ * Check if the Public API is enabled in Formulize preferences
+ *
+ * @return bool True if the Public API is enabled, false otherwise
+ */
+function isPublicAPIEnabled() {
+    global $xoopsModuleConfig;
+
+    if (isset($xoopsModuleConfig['formulizePublicAPIEnabled'])) {
+        return $xoopsModuleConfig['formulizePublicAPIEnabled'] == 1 ? true : false;
+    }
+
+    $config_handler = xoops_gethandler('config');
+    $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+
+    return isset($formulizeConfig['formulizePublicAPIEnabled']) && $formulizeConfig['formulizePublicAPIEnabled'] == 1;
+}
+
+/**
+ * The origins that may call the Public API from a browser on another site.
+ *
+ * Configured one per line in the Formulize preferences. Blank means same origin only.
+ * A single * means any origin. Values are lowercased and stripped of a trailing slash
+ * so that they compare cleanly against the Origin header a browser sends.
+ *
+ * @return array The allowed origins, or array('*') for any
+ */
+function formulize_publicApiAllowedOrigins() {
+    global $xoopsModuleConfig;
+
+    if (isset($xoopsModuleConfig['formulizePublicAPIAllowedOrigins'])) {
+        $setting = $xoopsModuleConfig['formulizePublicAPIAllowedOrigins'];
+    } else {
+        $config_handler = xoops_gethandler('config');
+        $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+        $setting = isset($formulizeConfig['formulizePublicAPIAllowedOrigins'])
+            ? $formulizeConfig['formulizePublicAPIAllowedOrigins'] : '';
+    }
+
+    $origins = array();
+    foreach (preg_split('/[\r\n,]+/', (string) $setting) as $origin) {
+        $origin = rtrim(strtolower(trim($origin)), '/');
+        if ($origin !== '') {
+            $origins[] = $origin;
+        }
+    }
+    return $origins;
+}
+
+/**
  * Takes a value and makes sure it's the correct type in PHP, either string, int or float
  *
  * @param mixed $value - the value we're working with

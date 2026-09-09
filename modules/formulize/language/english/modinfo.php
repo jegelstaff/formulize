@@ -171,13 +171,26 @@ foreach($formulizeConfig as $thisConfig=>$thisConfigValue) {
 		RewriteCond %{REQUEST_FILENAME} !-f<br>
 		RewriteCond %{REQUEST_FILENAME} !-d<br>
 		RewriteCond %{REQUEST_FILENAME} !-l<br>
-		RewriteRule ^(.*)$ /modules/formulize/public_api/index.php?apiPath=$1 [L,B]<br>
+		RewriteRule ^(.*)$ /modules/formulize/public_api/index.php?apiPath=$1 [L,B,QSA]<br>
 		</blockquote><i>If you enabled this option, but these instructions are still here, and the option is off again, then your server is not yet properly configured for the Public API.</i>";
+		break;
+	}
+	// When the API is on, but the check that enabled it found that this server strips the
+	// Authorization header, warn about it. The API still works for pages on this site and
+	// for anonymous access, but API keys cannot be used until the server passes the header
+	// through, and there is no other visible symptom when that happens.
+	if($thisConfig == 'formulizePublicAPIEnabled' AND $thisConfigValue == 1
+		AND isset($_SESSION['formulize_publicApiAuthHeaderPassthrough'])
+		AND !$_SESSION['formulize_publicApiAuthHeaderPassthrough']) {
+		$publicAPIInstructions = "<br><br><b>Note:</b> this server did not pass the <i>Authorization</i> header through to Formulize when the Public API was last checked. The Public API still works for pages on this site, and for anonymous access to forms you have opened to the Anonymous group, but <b>API keys will not work</b> until your server is configured to pass that header through. On Apache, adding <span style=\"font-family: monospace;\">CGIPassAuth On</span> to your .htaccess file usually solves it.";
 		break;
 	}
 }
 define("_MI_formulize_PUBLICAPIENABLED", "Enable the Public API");
 define("_MI_formulize_PUBLICAPIENABLED_DESC", "When this is enabled, you can use the Public API documented at https://formulize.org/developers/public-api/".$publicAPIInstructions);
+
+define("_MI_formulize_PUBLICAPIALLOWEDORIGINS", "Websites allowed to call the Public API");
+define("_MI_formulize_PUBLICAPIALLOWEDORIGINS_DESC", "Enter one website address per line, for example <i>https://www.example.org</i>. Javascript running on those websites will be allowed to read data from this site through the Public API.<br><br>Leave this blank unless you need it. When it is blank, only pages on this site itself can call the Public API from a browser. Enter a single asterisk (*) to allow any website, which you should only do if the data you are exposing is genuinely public.<br><br>This setting controls web browsers only. It is not a substitute for permissions: what any caller can actually read is still decided by the Formulize permissions of the user their API key belongs to, or by the permissions of the Anonymous group when no API key is used.");
 
 // Conditional visibility of the AI settings is handled declaratively by 'showWhen' in
 // include/configsettings_registry.php, which sets the initial state server-side and
