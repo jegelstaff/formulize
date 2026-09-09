@@ -40,12 +40,12 @@ if (!$opResults AND isset($_GET['op'])) {
             deleteForm($_GET['fid']);
             break;
 				case "patchDB-only":
-            // Escape hatch for when even the DB-only patch run times out: ?f=001 (matching a patch
+            // Escape hatch for when even the DB-only patch run times out: ?f=000 (matching a patch
             // file's numeric prefix) restricts the run to just that file, so each slow patch can be
             // applied in its own request. See xoops_module_update_formulize() for the dbversion implications.
             $patchFileFilter = isset($_GET['f']) ? preg_replace('/[^A-Za-z0-9_]/', '', $_GET['f']) : '';
             // Escape hatch one level further down: for patches that loop over their own list of files
-            // (e.g. 002_derived_value_formula_migration) and can't simply be restarted from the top once
+            // (e.g. 001_derived_value_formula_migration) and can't simply be restarted from the top once
             // partially run, ?start=derived_foo.php resumes that inner loop from a specific filename.
             $patchStartFrom = isset($_GET['start']) ? preg_replace('/[^A-Za-z0-9_.\-]/', '', $_GET['start']) : '';
             $patchOnlyFormAction = XOOPS_URL . '/modules/formulize/admin/ui.php?op=patchDB-only'
@@ -100,7 +100,7 @@ if (!$opResults AND isset($_GET['op'])) {
             break;
         case "setDBVersion":
             // Manual override for the stored dbversion, independent of any patch logic. Needed because
-            // some patches (e.g. 002_derived_value_formula_migration) are not safe to simply rerun once
+            // some patches (e.g. 001_derived_value_formula_migration) are not safe to simply rerun once
             // partially applied — see that file's own comments — so once an admin has manually confirmed
             // every remaining piece of a patch is actually done, this is how to advance (or, to force a
             // patch to run again for some other reason, roll back) the version directly, bypassing every

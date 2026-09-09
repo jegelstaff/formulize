@@ -2256,7 +2256,7 @@ function codeInNeedOfConversion() {
 
 // Auto-discovery entry point: called by xoops_module_update_formulize() via the patches loop.
 // Schema migrations are idempotent — safe to run on every update regardless of version.
-function formulize_patch_001_schema_migrations($prev_dbversion, $required_dbversion) {
+function formulize_patch_000_schema_migrations($prev_dbversion, $required_dbversion) {
     // formulize_run_schema_migrations() is idempotent ("can be run over and over non-destructively"),
     // reports problems inline, and exit()s on the few truly catastrophic cases (e.g. being unable to
     // move the custom_code folder). It does not currently distinguish soft failures, so we return true

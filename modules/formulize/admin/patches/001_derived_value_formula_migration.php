@@ -12,9 +12,16 @@ if (!defined('XOOPS_ROOT_PATH')) {
 // file those $handle references ARE the element references, so re-running would corrupt them. For that
 // reason this function ALWAYS returns true (success) and never asks on_update.php to abort/retry it.
 // Safety comes from the version gate plus ordering: it only runs when $prev_dbversion < 2, it runs
-// AFTER 001_schema_migrations (so an 001 abort prevents it from starting at all), and once it completes
+// AFTER 000_schema_migrations (so an 000 abort prevents it from starting at all), and once it completes
 // successfully dbversion advances to 2 and it never runs again. Files that could not be written are
 // reported for manual migration rather than triggering a destructive retry.
+//
+// ORDERING, the other side: this must also run BEFORE 002_always_run's hyphenated handle migration.
+// Stage 2 below matches the handle strings written in the old code files against the handles in the DB,
+// so those handles must still be hyphenated at this point. A handle that is still "my-handle" here is
+// emitted as $my-handle, which is not valid PHP on its own - 002_always_run rewrites it to $my_handle
+// immediately afterwards, via formulizeElementsHandler::renameHandleInCodeFiles(). Renaming the handles
+// first instead would leave every hyphenated reference here unmatched and silently unconverted.
 //
 // If a run times out partway through (the HTTP request can die while the PHP process keeps executing
 // server-side, silently continuing to rewrite files with no confirmation reaching the browser),
@@ -29,7 +36,7 @@ if (!defined('XOOPS_ROOT_PATH')) {
 // that would re-enter this function's file loop from the very top and re-corrupt everything already
 // fixed. Instead, use the admin's manual "set database version" tool to advance dbversion directly once
 // you've confirmed every file is done.
-function formulize_patch_002_derived_value_formula_migration($prev_dbversion, $required_dbversion, $startFrom = '') {
+function formulize_patch_001_derived_value_formula_migration($prev_dbversion, $required_dbversion, $startFrom = '') {
     if ($prev_dbversion >= 2) {
         return true; // already applied; nothing to do
     }

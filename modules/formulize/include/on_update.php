@@ -5,7 +5,7 @@ if (!defined('XOOPS_ROOT_PATH')) {
 
 // bring in the legacy functions and checks that we rely on
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/common.php';
-include_once XOOPS_ROOT_PATH . '/modules/formulize/admin/patches/001_schema_migrations.php';
+include_once XOOPS_ROOT_PATH . '/modules/formulize/admin/patches/000_schema_migrations.php';
 
 // Called by icms_module_update() after the module record has been updated in the DB.
 // $prev_dbversion is the dbversion that was in the modules table before this update run —
@@ -15,8 +15,8 @@ function xoops_module_update_formulize($module, $prev_version, $prev_dbversion, 
 
     $requiredDbVersion = intval($module->getInfo('dbversion'));
 
-    // Auto-discover patch files in admin/patches/, e.g. 001_schema_migrations.php, 002_derived....php.
-    // Convention: a file named 001_foo.php may define formulize_patch_001_foo($prev, $required).
+    // Auto-discover patch files in admin/patches/, e.g. 000_schema_migrations.php, 001_derived....php.
+    // Convention: a file named 000_foo.php may define formulize_patch_000_foo($prev, $required).
     // All files are included first, then callable functions are invoked in filename order (the numeric
     // prefix makes that order explicit and stable, because later patches may depend on earlier ones).
     // Each patch function gates itself on the version numbers it receives and returns false to signal
@@ -36,8 +36,8 @@ function xoops_module_update_formulize($module, $prev_version, $prev_dbversion, 
         . 'Required database version: ' . $requiredDbVersion . '</p>';
 
     // $fileFilter is an escape hatch for when running every patch in one request times out: it
-    // restricts this run to patch file(s) whose name starts with the given string (e.g. "001"), so
-    // each slow patch can be run on its own via ?op=patchDB-only&f=001. A filtered run never advances
+    // restricts this run to patch file(s) whose name starts with the given string (e.g. "000"), so
+    // each slow patch can be run on its own via ?op=patchDB-only&f=000. A filtered run never advances
     // dbversion, since it can't vouch for patches it didn't run — only a full, unfiltered pass does that.
     if ($fileFilter !== '') {
         $patchFiles = array_filter($patchFiles, function ($patchFile) use ($fileFilter) {
@@ -49,7 +49,7 @@ function xoops_module_update_formulize($module, $prev_version, $prev_dbversion, 
         }
     }
     // $startFrom is a further escape hatch, one level down from $fileFilter: some individual patches
-    // (e.g. 002_derived_value_formula_migration) loop over many files of their own and are NOT safe to
+    // (e.g. 001_derived_value_formula_migration) loop over many files of their own and are NOT safe to
     // simply rerun from the top once they've partially completed (see that file's own comments for why).
     // Passing a filename here lets such a patch resume from a specific point instead of the beginning.
     // We only pass it to patches that actually declare a parameter literally named $startFrom (checked
@@ -98,7 +98,7 @@ function xoops_module_update_formulize($module, $prev_version, $prev_dbversion, 
         $xoopsDB->queryF("UPDATE " . $xoopsDB->prefix('modules') . " SET dbversion = " . $requiredDbVersion . " WHERE dirname = 'formulize'");
     } elseif ($allSucceeded && $fileFilter !== '' && $patchFiles) {
         // Deliberately NOT suggesting a final unfiltered patchDB-only run here: not every patch is safe
-        // to rerun once partially applied (e.g. 002_derived_value_formula_migration — see its own
+        // to rerun once partially applied (e.g. 001_derived_value_formula_migration — see its own
         // comments), and a plain retry would restart such a patch's own file loop from the top with
         // $prev_dbversion still unchanged, re-corrupting anything already fixed.
         echo '<p>Database version has <strong>not</strong> been advanced, because this was a filtered run. '

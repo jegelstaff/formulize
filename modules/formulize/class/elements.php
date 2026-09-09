@@ -337,7 +337,7 @@ class formulizeElementsHandler {
 	 * when the file is not there would destroy the only copy of the code: what insert() is handed is
 	 * whatever cleanVars() produced, which is the stored value when ele_value was NOT the property that
 	 * changed, so a save that never touched the content at all (the Display tab, a reorder) would empty it.
-	 * Code can legitimately be in ele_value with no file yet - patch 001 wrote the files but left the
+	 * Code can legitimately be in ele_value with no file yet - patch 000 wrote the files but left the
 	 * database copies in place, cloneForm() copies element rows with raw SQL and no files, and an install
 	 * whose modules/formulize/code/ did not survive a deploy is in the same position.
 	 *

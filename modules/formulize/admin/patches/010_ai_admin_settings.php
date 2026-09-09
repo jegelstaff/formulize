@@ -14,7 +14,7 @@ if (!defined('XOOPS_ROOT_PATH')) {
 // The API key is deliberately NOT one of these settings' values: formulizeAIApiKey only
 // ever holds the marker 'set' or '', while the key itself lives encrypted in
 // formulize_ai_keys under FORMULIZE_AI_SYSTEM_UID. That table already exists (created in
-// 001_schema_migrations) and needs no change, since its uid column is a signed INT.
+// 000_schema_migrations) and needs no change, since its uid column is a signed INT.
 //
 // Idempotent: only inserts items that don't already exist. Gated to run once, when the
 // stored dbversion is below 17.

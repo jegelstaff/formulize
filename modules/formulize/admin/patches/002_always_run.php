@@ -3,7 +3,7 @@
 
 // Auto-discovery entry point: called by xoops_module_update_formulize() via the patches loop.
 // These operations should always run with an update... regardless of dbversion
-function formulize_patch_000_always_run($prev_dbversion, $required_dbversion) {
+function formulize_patch_002_always_run($prev_dbversion, $required_dbversion) {
 	global $xoopsConfig, $xoopsDB;
 
 	// clear the admin menu cache files, so that any changes to the menu structure or labels will be reflected in the admin interface
@@ -92,8 +92,9 @@ function formulize_patch_000_always_run($prev_dbversion, $required_dbversion) {
 function formulize_repair_primary_relationship() {
 	global $linkForms;
 
-	// No Primary Relationship yet means there is nothing to repair. On a site old enough not to have
-	// one, 001_schema_migrations creates it from scratch, and it runs after this patch.
+	// No Primary Relationship yet means there is nothing to repair. 000_schema_migrations creates one
+	// from scratch on a site old enough not to have one, and it runs before this patch, so by this point
+	// any site that should have one does.
 	if (!primaryRelationshipExists()) {
 		return true;
 	}
@@ -183,29 +184,14 @@ function formulize_migrate_hyphenated_handles() {
     }
 
     // Build rename map: ele_id => ['old' => ..., 'new' => ..., 'fid' => ...]
-    // Resolve collisions with a numeric suffix so every element gets a unique handle.
+    // 'new' is the name asked for, not necessarily the name granted: what an element can actually be
+    // called is settled per element in the loop below, because the answer depends on what has already
+    // been renamed by the time that element's turn comes.
     $renameMap = array();
     while ($row = $xoopsDB->fetchArray($res)) {
-        $oldHandle = $row['ele_handle'];
-        $baseNew   = str_replace('-', '_', $oldHandle);
-        $newHandle = $baseNew;
-        $suffix    = 2;
-        while (true) {
-            $checkRes = $xoopsDB->queryF(
-                "SELECT ele_id FROM " . $xoopsDB->prefix('formulize')
-                . " WHERE ele_handle = " . $xoopsDB->quoteString($newHandle)
-                . " AND id_form = "       . intval($row['id_form'])
-                . " AND ele_id != "       . intval($row['ele_id'])
-            );
-            if (!$checkRes || $xoopsDB->getRowsNum($checkRes) == 0) {
-                break;
-            }
-            $newHandle = $baseNew . '_' . $suffix;
-            $suffix++;
-        }
         $renameMap[intval($row['ele_id'])] = array(
-            'old' => $oldHandle,
-            'new' => $newHandle,
+            'old' => $row['ele_handle'],
+            'new' => str_replace('-', '_', $row['ele_handle']),
             'fid' => intval($row['id_form']),
         );
     }
@@ -226,11 +212,27 @@ function formulize_migrate_hyphenated_handles() {
             continue;
         }
         $element->setVar('ele_handle', $rename['new']);
+        // Settle on the final name before anything is renamed to it. insert() runs the handle through
+        // validateElementHandle anyway; running it here first means we know what the element is going to
+        // be called, rather than assuming the hyphens simply became underscores. They may not have:
+        // handles are unique across every form rather than within one (isElementHandleUnique queries
+        // formulize without an id_form condition), the metadata names are reserved as well, and a handle
+        // is truncated to 59 characters - so "creation-uid" or a name another form already uses comes
+        // back suffixed. Running the same check again inside insert() settles on the same answer, since
+        // an element is excluded from its own uniqueness check.
+        $newHandle = $element_handler->validateElementHandle($element);
+        // Move the data table column before the element definition is saved. If it cannot be moved, leave
+        // the handle alone too, so the definition never ends up pointing at a column that did not follow it.
+        $columnError = formulize_rename_hyphenated_data_column($rename['fid'], $rename['old'], $newHandle);
+        if ($columnError !== '') {
+            print "<p>Error renaming the data table field for ele_id=" . intval($eleId) . ": " . htmlspecialchars($columnError) . " The handle has been left as <code>" . htmlspecialchars($rename['old']) . "</code>.</p>";
+            continue;
+        }
         if (!$element_handler->insert($element, true)) {
             print "<p>Error renaming ele_id=" . intval($eleId) . ": " . htmlspecialchars($xoopsDB->error()) . "</p>";
             continue;
         }
-        print "<p>Renamed: <code>" . htmlspecialchars($rename['old']) . "</code> &rarr; <code>" . htmlspecialchars($rename['new']) . "</code> (form_id=" . $rename['fid'] . ")</p>\n";
+        print "<p>Renamed: <code>" . htmlspecialchars($rename['old']) . "</code> &rarr; <code>" . htmlspecialchars($newHandle) . "</code> (form_id=" . $rename['fid'] . ")</p>\n";
         $oldHandles[] = $rename['old'];
         $element_handler->renameElementResources($element, $rename['old']);
     }
@@ -282,6 +284,90 @@ function formulize_migrate_hyphenated_handles() {
               . "with the new underscore form (e.g. \$my_handle or {my_handle}).";
         echo '<script>alert(' . json_encode($msg) . ');</script>';
     }
+}
+
+/**
+ * Rename the data table column that belongs to an element whose handle is losing its hyphens.
+ *
+ * This is the work formulizeFormsHandler::updateField() would normally do, done here directly.
+ * updateField cannot be used: it runs both names through sanitize_handle_name(), which turns the
+ * hyphenated old name into the new one, so the rename becomes a silent no-op (or, when a data type
+ * is supplied to get past the equal-names shortcut, an ALTER against a column that does not exist).
+ * The old name has to reach the ALTER verbatim, and that is true only of this migration, so the
+ * statement is issued here rather than adding a bypass to the shared method for one caller.
+ *
+ * Idempotent, and safe on elements that have no column of their own: a column already sitting under
+ * the new name, or absent under both names (content elements), is left alone.
+ *
+ * @param int $fid The form the element belongs to
+ * @param string $oldHandle The handle as it stands in the data table, hyphens included
+ * @param string $newHandle The handle it is being renamed to
+ * @return string Empty string when there is nothing left to do, otherwise what stopped it
+ */
+function formulize_rename_hyphenated_data_column($fid, $oldHandle, $newHandle) {
+    global $xoopsDB;
+
+    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+    if (!$formObject = $form_handler->get(intval($fid))) {
+        return "could not load form " . intval($fid) . ".";
+    }
+    $formHandle = $formObject->getVar('form_handle');
+    if ($formHandle === '') {
+        // Form handles arrive in 000_schema_migrations, which runs before this file, so by this point
+        // every form should have one. An empty handle here means that step did not do its work for this
+        // form. Nothing is renamed for it: the handle stays hyphenated, matching its column, so the site
+        // is left consistent and the rename can be completed once the form handle is sorted out.
+        return "form " . intval($fid) . " has no form handle, so its data table cannot be located. Its element handles have been left hyphenated. Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
+    }
+
+    // A column name is not escapable inside backticks, so filter it instead. Hyphens are kept, which
+    // is the whole point here, and everything outside the character set handles are built from goes.
+    $oldColumn = preg_replace('/[^a-zA-Z0-9_-]/', '', $oldHandle);
+    $newColumn = preg_replace('/[^a-zA-Z0-9_-]/', '', $newHandle);
+    if ($oldColumn === '' OR $newColumn === '' OR $oldColumn === $newColumn) {
+        return '';
+    }
+
+    $tables = array($xoopsDB->prefix("formulize_" . $formHandle));
+    $revisionsTable = $xoopsDB->prefix("formulize_" . $formHandle . "_revisions");
+    // Checked directly rather than through formulizeFormsHandler::revisionsTableExists(), which creates
+    // the revisions table when revisions-for-all-forms is on. A table built mid-migration would be built
+    // from the element definitions, and so would arrive with columns under names the data table does not
+    // have yet. Nothing here needs a revisions table that does not already exist.
+    $revisionsRes = $xoopsDB->queryF("SHOW TABLES LIKE '" . formulize_db_escape($revisionsTable) . "'");
+    if ($revisionsRes AND $xoopsDB->getRowsNum($revisionsRes) > 0) {
+        $tables[] = $revisionsTable;
+    }
+
+    foreach ($tables as $table) {
+        // The whole column list is read, instead of a SHOW COLUMNS ... LIKE for the one name, because
+        // underscores are single character wildcards in a LIKE pattern and every handle is full of them.
+        $columns = array();
+        if (!$colRes = $xoopsDB->queryF("SHOW COLUMNS FROM `$table`")) {
+            return "could not read the columns of $table: " . $xoopsDB->error();
+        }
+        while ($colRow = $xoopsDB->fetchArray($colRes)) {
+            $columns[$colRow['Field']] = $colRow;
+        }
+        if (!isset($columns[$oldColumn])) {
+            continue; // already renamed on an earlier run, or an element type that stores no data
+        }
+        if (isset($columns[$newColumn])) {
+            return "$table has columns named both `$oldColumn` and `$newColumn`; they must be reconciled by hand.";
+        }
+        // Rebuild the definition rather than passing the type alone, so that a nullable column does not
+        // come back NOT NULL and a column with a default does not come back without one.
+        $definition = $columns[$oldColumn]['Type'];
+        $definition .= ($columns[$oldColumn]['Null'] == 'YES') ? ' NULL' : ' NOT NULL';
+        if ($columns[$oldColumn]['Default'] !== null) {
+            $definition .= ' DEFAULT ' . $xoopsDB->quoteString($columns[$oldColumn]['Default']);
+        }
+        if (!$xoopsDB->queryF("ALTER TABLE `$table` CHANGE `$oldColumn` `$newColumn` $definition")) {
+            return "could not rename `$oldColumn` to `$newColumn` in $table: " . $xoopsDB->error();
+        }
+    }
+
+    return '';
 }
 
 
