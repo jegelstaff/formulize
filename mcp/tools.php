@@ -294,7 +294,7 @@ Examples:
 - Search by name: {"form_id": 5, "filter": [{"element": "name", "operator": "LIKE", "value": "John"}]}
 - Get all the entries with a non-blank value in the "email" field: {"form_id": 5, "filter": [{"element": "email", "operator": "!=", "value": "{BLANK}"}], "limitSize": null}
 - Multiple conditions: {"form_id": 5, "filter": [{"element": "age", "operator": ">=", "value": "18"}, {"element": "status", "operator": "=", "value": "active"}], "and_or": "AND"}
-- Grouping, status = active AND (region = east OR region = west): {"form_id": 5, "filter": [{"element": "status", "operator": "=", "value": "active"}, {"any": [{"element": "region", "operator": "=", "value": "east"}, {"element": "region", "operator": "=", "value": "west"}]}]}',
+- Grouping conditions, ex. status = active AND (region = east OR region = west): {"form_id": 5, "filter": [{"element": "status", "operator": "=", "value": "active"}, {"any": [{"element": "region", "operator": "=", "value": "east"}, {"element": "region", "operator": "=", "value": "west"}]}]}',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
