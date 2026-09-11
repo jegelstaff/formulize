@@ -46,7 +46,7 @@ trait formulizeAdHocTableFormTrait {
 		global $xoopsDB;
 
 		// Check if this table form already exists
-		$checkSQL = "SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE tableform = " . $xoopsDB->quoteString($tableName);
+		$checkSQL = "SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE tableform = " . $xoopsDB->quoteString($tableName) . " AND lockedform = " . FORMULIZE_LOCKEDFORM_SYSTEM_MANAGED;
 		$checkRes = $xoopsDB->query($checkSQL);
 		if ($checkRes && $row = $xoopsDB->fetchArray($checkRes)) {
 			$fid = intval($row['id_form']);
