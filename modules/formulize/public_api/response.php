@@ -43,7 +43,7 @@ function formulize_publicApiSendCorsHeaders() {
     $normalisedOrigin = rtrim(strtolower($origin), '/');
     if (in_array('*', $allowedOrigins)) {
         header('Access-Control-Allow-Origin: *');
-    } elseif (in_array($normalisedOrigin, $allowedOrigins)) {
+    } elseif (formulize_publicApiOriginIsAllowed($normalisedOrigin, $allowedOrigins)) {
         header('Access-Control-Allow-Origin: '.$origin);
         // The response varies by origin, so shared caches must not reuse it across sites.
         header('Vary: Origin');

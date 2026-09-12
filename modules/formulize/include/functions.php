@@ -11345,10 +11345,13 @@ function isPublicAPIEnabled() {
  * The origins that may call the Public API from a browser on another site.
  *
  * Configured one per line in the Formulize preferences. Blank means same origin only.
- * A single * means any origin. Values are lowercased and stripped of a trailing slash
- * so that they compare cleanly against the Origin header a browser sends.
+ * A single * means any origin. Each entry is lowercased and stripped of a trailing slash;
+ * an entry with no scheme (eg. "www.example.org") matches that host under either http or
+ * https, and an entry whose host starts with "*." (eg. "*.example.org") matches any
+ * subdomain of that host. See formulize_publicApiOriginIsAllowed() for how entries are
+ * matched against the Origin header a browser sends.
  *
- * @return array The allowed origins, or array('*') for any
+ * @return array The allowed origin patterns, or array('*') for any
  */
 function formulize_publicApiAllowedOrigins() {
     global $xoopsModuleConfig;
@@ -11370,6 +11373,56 @@ function formulize_publicApiAllowedOrigins() {
         }
     }
     return $origins;
+}
+
+/**
+ * Split an origin-like string into its scheme and host(:port) parts.
+ *
+ * @param string $value A lowercased value, with any trailing slash already stripped -
+ *   either a full origin ("https://www.example.org") or a bare host ("www.example.org")
+ * @return array array('scheme' => string|null, 'host' => string). Scheme is null when
+ *   the value had none, which formulize_publicApiOriginIsAllowed() treats as a wildcard.
+ */
+function formulize_publicApiSplitOrigin($value) {
+    if (preg_match('#^([a-z][a-z0-9+.-]*)://(.+)$#', $value, $matches)) {
+        return array('scheme' => $matches[1], 'host' => $matches[2]);
+    }
+    return array('scheme' => null, 'host' => $value);
+}
+
+/**
+ * Whether a browser's Origin header is allowed by one entry from the public API's
+ * allowed-origins preference (see formulize_publicApiAllowedOrigins()).
+ *
+ * A pattern with no scheme matches its host under either http or https, so an
+ * administrator who forgets to type "https://" still gets a working entry. A pattern
+ * whose host starts with "*." matches any subdomain of that host, but not the bare
+ * domain itself - add a separate entry for that if it's also needed. This does not
+ * special-case a bare "*" (allow-any) entry; callers check for that separately since
+ * it skips origin comparison entirely.
+ *
+ * @param string $normalisedOrigin The caller's Origin header, lowercased and stripped of a trailing slash
+ * @param array $allowedOrigins Patterns from formulize_publicApiAllowedOrigins()
+ * @return bool
+ */
+function formulize_publicApiOriginIsAllowed($normalisedOrigin, $allowedOrigins) {
+    $origin = formulize_publicApiSplitOrigin($normalisedOrigin);
+    foreach ($allowedOrigins as $pattern) {
+        $allowed = formulize_publicApiSplitOrigin($pattern);
+        if ($allowed['scheme'] !== null && $allowed['scheme'] !== $origin['scheme']) {
+            continue;
+        }
+        if ($allowed['host'] === $origin['host']) {
+            return true;
+        }
+        if (strncmp($allowed['host'], '*.', 2) === 0) {
+            $suffix = substr($allowed['host'], 1); // keep the leading dot, drop the asterisk
+            if (strlen($origin['host']) > strlen($suffix) && substr($origin['host'], -strlen($suffix)) === $suffix) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 /**
