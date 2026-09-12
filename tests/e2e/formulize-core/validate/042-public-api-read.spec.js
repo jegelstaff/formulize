@@ -132,6 +132,75 @@ test.describe('Public API read endpoint', () => {
 		expect(groupedBody.data.length).toBeGreaterThanOrEqual(bareBody.data.length);
 	});
 
+	test('andOr joins the top level items, groups included', async ({ request }) => {
+		// Every set here is read back from the endpoint itself rather than assumed from the
+		// seeded entries, so the test says what the booleans have to do and nothing about the data.
+		const ids = async (filter, andOr) => {
+			const data = { fields: ['donors_name'], filter, limitSize: null };
+			if (andOr) { data.andOr = andOr; }
+			const res = await request.post(readUrl(FORM), {
+				headers: { 'Authorization': `Bearer ${apiKey}` },
+				data
+			});
+			expect(res.status()).toBe(200);
+			const body = await res.json();
+			return new Set(body.data.map(row => row.entry_id));
+		};
+		const sorted = (ids) => [...ids].sort((a, b) => a - b);
+
+		const bare = [{ element: 'donors_last_name', value: 'a' }];
+		const group = [{ any: [
+			{ element: 'donors_type_of_donor', value: 'Individual', operator: '=' },
+			{ element: 'donors_type_of_donor', value: 'Organization', operator: '=' }
+		] }];
+
+		const bareIds = await ids(bare);
+		const groupIds = await ids(group);
+		const union = new Set([...bareIds, ...groupIds]);
+		const intersection = new Set([...bareIds].filter(id => groupIds.has(id)));
+		// If the two halves matched the same entries, AND and OR would agree and prove nothing
+		expect(union.size, 'the two halves of the filter must select different entries').toBeGreaterThan(intersection.size);
+
+		// A group is one top level item like any other, so andOr decides what joins it to the
+		// condition beside it. Forcing AND whenever a group is present would return the
+		// intersection for both of these.
+		const combined = [...bare, ...group];
+		expect(sorted(await ids(combined, 'OR'))).toEqual(sorted(union));
+		expect(sorted(await ids(combined, 'AND'))).toEqual(sorted(intersection));
+	});
+
+	test('two blank tests are two conditions, not one', async ({ request }) => {
+		// A blank test is two comparisons underneath, empty or null. Sharing one expression
+		// between two of them would put OR between all four comparisons, quietly turning
+		// "both of these are blank" into "either of them is".
+		const ids = async (filter, andOr) => {
+			const data = { fields: ['donors_name'], filter, limitSize: null };
+			if (andOr) { data.andOr = andOr; }
+			const res = await request.post(readUrl(FORM), {
+				headers: { 'Authorization': `Bearer ${apiKey}` },
+				data
+			});
+			expect(res.status()).toBe(200);
+			const body = await res.json();
+			return new Set(body.data.map(row => row.entry_id));
+		};
+		const sorted = (ids) => [...ids].sort((a, b) => a - b);
+
+		const blankOrganization = { element: 'donors_organization_name', value: '{BLANK}', operator: '=' };
+		const blankFirstName = { element: 'donors_first_name', value: '{BLANK}', operator: '=' };
+
+		const organizationIds = await ids([blankOrganization]);
+		const firstNameIds = await ids([blankFirstName]);
+		const union = new Set([...organizationIds, ...firstNameIds]);
+		const intersection = new Set([...organizationIds].filter(id => firstNameIds.has(id)));
+		expect(union.size, 'the two blank tests must select different entries').toBeGreaterThan(intersection.size);
+
+		// The default AND means both fields blank, and OR means either one
+		const both = [blankOrganization, blankFirstName];
+		expect(sorted(await ids(both))).toEqual(sorted(intersection));
+		expect(sorted(await ids(both, 'OR'))).toEqual(sorted(union));
+	});
+
 	test('a nested group is refused rather than quietly flattened', async ({ request }) => {
 		const res = await request.post(readUrl(FORM), {
 			headers: { 'Authorization': `Bearer ${apiKey}` },

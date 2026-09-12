@@ -163,10 +163,10 @@ function formulize_readEntries($formIdOrHandle, $options = array(), $user = null
         $form_ids = array($fid);
     }
     $andOr = strtoupper($options['andOr'] ?? 'AND') == 'OR' ? 'OR' : 'AND';
+    // An array filter is a list of expressions, each carrying the boolean that goes between its
+    // own terms. formulize_parseFilter puts $andOr between the expressions themselves, so it is
+    // still the caller's operator that joins the top level items, exactly as for a flat string.
     $filter = formulize_apiValidateFilter($options['filter'] ?? '', $form_ids, $andOr, $allowedFields);
-    // An array filter is already a set of expressions carrying their own booleans, so the
-    // operator between them is fixed at AND by formulize_parseFilter's contract.
-    $andOr = is_array($filter) ? 'AND' : $andOr;
 
     // ---- scope and query ------------------------------------------------
     $scope = buildScope('all', $user, $fid);
@@ -488,7 +488,6 @@ function formulize_apiValidateFilter($filter, $form_ids, $andOr = 'AND', $allowe
 
     $bareTerms = array();
     $expressions = array();
-    $blankSearches = array();
 
     foreach ($filter as $item) {
 
@@ -521,16 +520,19 @@ function formulize_apiValidateFilter($filter, $form_ids, $andOr = 'AND', $allowe
         list($element, $value, $operator) = formulize_apiReadFilterCondition($item, $form_ids, $allowedFields);
         if ($value === '{BLANK}') {
             // A blank test is two terms with a boolean of its own, so it cannot simply join the
-            // other bare terms. Lift it into its own expression, as the MCP tool has always done.
+            // other bare terms. It gets an expression to itself, one per test rather than one
+            // shared by every blank test that needs the same boolean: two "is blank" conditions
+            // joined by AND are (a='' OR a IS NULL) AND (b='' OR b IS NULL), and merging them
+            // into a single OR expression would ask for either one instead of both.
             list($blankBoolean, $blankTerms) = formulize_apiBuildBlankTerms($element, $operator);
-            $blankSearches[$blankBoolean][] = implode('][', $blankTerms);
+            $expressions[] = array($blankBoolean, implode('][', $blankTerms));
         } else {
             $bareTerms[] = $element.'/**/'.$value.'/**/'.$operator;
         }
     }
 
     // Nothing but plain terms: use the flat string form, which is what gatherDataset likes best.
-    if (count($expressions) == 0 and count($blankSearches) == 0) {
+    if (count($expressions) == 0) {
         return implode('][', $bareTerms);
     }
 
@@ -540,11 +542,6 @@ function formulize_apiValidateFilter($filter, $form_ids, $andOr = 'AND', $allowe
     }
     foreach ($expressions as $expression) {
         $returnFilter[] = $expression;
-    }
-    foreach (array('AND', 'OR') as $blankBoolean) {
-        if (isset($blankSearches[$blankBoolean])) {
-            $returnFilter[] = array($blankBoolean, implode('][', $blankSearches[$blankBoolean]));
-        }
     }
     return $returnFilter;
 }
