@@ -1419,12 +1419,12 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			}
 		}
 		$dropRes = $xoopsDB->queryF("DROP TABLE " . DBPRE . "formulize_temp_extract_$timestamp");
-		$resultData = array('results' => $linkQueryRes, 'fid' => $fid, 'frid' => $frid, 'linkFids' => $linkformids, 'isUserTableForm' => $isUserTableForm);
+		$resultData = array('results' => $linkQueryRes, 'fid' => $fid, 'frid' => $frid, 'linkFids' => $linkformids, 'isUserTableForm' => $isUserTableForm, 'filterElements' => $filterElements);
 	} else {
 		if ($resultOnly !== 'bypass') {
 			$masterQueryRes = $xoopsDB->query($masterQuerySQL);
 		}
-		$resultData = array('results' => array($masterQueryRes), 'fid' => $fid, 'frid' => $frid, 'linkFids' => $linkformids, 'isUserTableForm' => $isUserTableForm);
+		$resultData = array('results' => array($masterQueryRes), 'fid' => $fid, 'frid' => $frid, 'linkFids' => $linkformids, 'isUserTableForm' => $isUserTableForm, 'filterElements' => $filterElements);
 	}
 	unset($GLOBALS['formulize_setQueryForExport']);
 
@@ -1754,6 +1754,7 @@ function formulize_gatherLinkMetadata($frid, $fid, $mainFormOnly = false)
 // 'fid' is the fid that was requested to generate those queries
 // 'frid' is the frid that was requested to generate those queries
 // 'linkFids' is the linkformids array generated as part of making those queries - all the ids of the linked forms, in the order they were processed
+// 'filterElements' is the list of elements the query was restricted to, if any, which governs whether derived values can be calculated
 function processGetDataResults($resultData)
 {
 
@@ -1763,6 +1764,7 @@ function processGetDataResults($resultData)
 	$linkformids = $resultData['linkFids'];
 	$isUserTableForm = isset($resultData['isUserTableForm']) ? $resultData['isUserTableForm'] : false;
 	$indexCacheKey = $resultData['indexCacheKey'] ?? "";
+	$filterElements = $resultData['filterElements'] ?? null;
 
 	global $xoopsDB, $xoopsUser;
 	$masterResults = array();
@@ -1907,8 +1909,25 @@ function processGetDataResults($resultData)
 		unset($queryRes[$queryResIndex]);
 	} // end of foreach query result
 
-	// potentially run through the derived value fields as long as we're not doing an export of data
-	if (!isset($GLOBALS['formulize_doingExport']) or $GLOBALS['formulize_doingExport'] !== true) {
+	// potentially run through the derived value fields as long as we're not doing an export of data,
+	// and as long as this query gathered whole entries.
+	//
+	// A derived value formula reads the other fields of the entry it is deriving from, and what it
+	// works out is not only put in the dataset, it is written back to the entry in the database. A
+	// query restricted to a list of elements has only some of the fields of each entry in it, and
+	// nothing says the fields a formula depends on are among them, so deriving from one risks
+	// calculating from absent values and saving the result. Restricting the elements says which
+	// fields are wanted, not which fields the entry has, so there is no way to tell a formula whose
+	// inputs are all present from one whose inputs are missing: the safe reading of a list of
+	// elements is that the entries are incomplete and nothing may be derived from them.
+	//
+	// In practice nothing asks for both at once. Derived values are only calculated when
+	// formulize_forceDerivedValueUpdate is set, which is the business of formulize_updateDerivedValues
+	// and the update_derived_value XHR action, and neither restricts the elements. The exception is
+	// the debugDerivedValues module preference, which turns the calculation on for every query there
+	// is, element list or not, and that is the case this guard is really here for.
+	if ((!isset($GLOBALS['formulize_doingExport']) or $GLOBALS['formulize_doingExport'] !== true)
+		AND empty($filterElements)) {
 		$derivedFieldMetadata = gatherDerivedValueFieldMetadata($fid, $linkformids);
 		if (count((array) $derivedFieldMetadata) > 0 and $masterIndexer > -1) { // if there is derived value info for this data set and we have started to create values...need to do this one more time for the last value that we would have gathered data for...
 			foreach ($masterResults as $masterIndex => $thisRecord) {
