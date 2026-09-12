@@ -172,6 +172,11 @@ function formulize_readEntries($formIdOrHandle, $options = array(), $user = null
     $scope = buildScope('all', $user, $fid);
     $actualScope = $scope[0];
 
+    // bypassCache, because this dataset will not be asked for again. A request reads once and
+    // ends, so keeping the result in formulize_cachedGetDataResults for the rest of the request
+    // buys nothing and holds every entry in memory until the request finishes, along with the
+    // entry-to-cache-key index that is built alongside it. At the limits this endpoint allows,
+    // that is the difference between holding one dataset and being unable to let go of it.
     $dataset = gatherDataset(
         $fid,
         $fieldsByForm,
@@ -182,7 +187,8 @@ function formulize_readEntries($formIdOrHandle, $options = array(), $user = null
         $limitSize,
         $sortField,
         $sortOrder,
-        $relationship
+        $relationship,
+        bypassCache: true
     );
 
     return array(
@@ -215,12 +221,19 @@ function formulize_readEntries($formIdOrHandle, $options = array(), $user = null
  * is harmless in PHP, where you ask for one field at a time and never line them up.
  * Grouping per child entry keeps every field a predictable shape.
  *
- * @param array result The return value of formulize_readEntries
+ * The dataset is consumed as it is read. Each item is released once its row has been built,
+ * so the two representations of an entry are never both in memory for the whole set, only for
+ * the one entry being worked on. That is why $result is taken by reference: the rows are the
+ * output and the dataset is the raw material, and at the limits this endpoint allows, holding
+ * both in full is the largest avoidable cost in the request. A caller that still needs the
+ * dataset afterwards should render from a copy.
+ *
+ * @param array result The return value of formulize_readEntries. Its 'dataset' is emptied.
  * @param bool|array raw true for raw database values throughout, or a list of the field
  *        handles that should be raw while everything else stays readable
  * @return array A list of rows
  */
-function formulize_renderEntriesAsRows($result, $raw = false) {
+function formulize_renderEntriesAsRows(&$result, $raw = false) {
 
     $rawAll = ($raw === true or $raw === 'true' or $raw === 1 or $raw === '1');
     $rawFields = is_array($raw) ? $raw : array();
@@ -238,64 +251,87 @@ function formulize_renderEntriesAsRows($result, $raw = false) {
         $formHandles[$thisFid] = ($thisFid == $mainFid) ? $mainFormHandle : getFormHandle($thisFid);
     }
 
-    $rows = array();
-    foreach ($result['dataset'] as $item) {
+    // Every value here is read exactly once, so there is nothing for prepvalues' cache to be
+    // reused for and no reason to let it grow to the size of the whole result. Left alone by an
+    // outer caller that had already turned it off, so that whoever set it decides when it ends.
+    $releasePreppedValueCacheFlag = false;
+    if (!isset($GLOBALS['formulize_doNotCachePreppedValues'])) {
+        $GLOBALS['formulize_doNotCachePreppedValues'] = true;
+        $releasePreppedValueCacheFlag = true;
+    }
 
-        // The dataset has one item per main form entry, so there is exactly one local id here.
-        $mainEntryId = null;
-        if (isset($item[$mainFormHandle]) and is_array($item[$mainFormHandle])) {
-            foreach ($item[$mainFormHandle] as $lid => $ignored) {
-                $mainEntryId = $lid;
-                break;
-            }
-        }
+    try {
 
-        $row = array('entry_id' => is_numeric($mainEntryId) ? intval($mainEntryId) : $mainEntryId);
-        if (isset($fieldsByForm[$mainFid])) {
-            foreach ($fieldsByForm[$mainFid] as $handle) {
-                if ($handle == 'entry_id') {
-                    continue;
+        $rows = array();
+        // Taking the items off the front rather than iterating: a foreach would be working on its own
+        // copy of the dataset the moment we removed anything from it, which is the opposite of the
+        // point. array_key_first is O(1), so this walks the dataset in order just as a foreach would.
+        while (($datasetKey = array_key_first($result['dataset'])) !== null) {
+
+            $item = $result['dataset'][$datasetKey];
+            unset($result['dataset'][$datasetKey]); // this entry's raw form is finished with once its row is built
+
+            // The dataset has one item per main form entry, so there is exactly one local id here.
+            $mainEntryId = null;
+            if (isset($item[$mainFormHandle]) and is_array($item[$mainFormHandle])) {
+                foreach ($item[$mainFormHandle] as $lid => $ignored) {
+                    $mainEntryId = $lid;
+                    break;
                 }
-                $row[$handle] = formulize_apiReadFieldValue(
-                    $item, $mainFormHandle, $mainEntryId, $handle,
-                    formulize_apiFieldIsRaw($handle, $rawAll, $rawFields), $metadataFields
-                );
             }
-        }
 
-        // Connected forms, grouped by the child entry each value belongs to.
-        $related = array();
-        foreach ($fieldsByForm as $thisFid => $handles) {
-            if ($thisFid == $mainFid) {
-                continue;
-            }
-            $thisFormHandle = $formHandles[$thisFid];
-            if (!isset($item[$thisFormHandle]) or !is_array($item[$thisFormHandle])) {
-                continue;
-            }
-            foreach ($item[$thisFormHandle] as $lid => $ignored) {
-                // A main form entry with no connected entry shows up as an empty local id.
-                if (!$lid or $lid === 'NULL') {
-                    continue;
-                }
-                $child = array('entry_id' => intval($lid));
-                foreach ($handles as $handle) {
+            $row = array('entry_id' => is_numeric($mainEntryId) ? intval($mainEntryId) : $mainEntryId);
+            if (isset($fieldsByForm[$mainFid])) {
+                foreach ($fieldsByForm[$mainFid] as $handle) {
                     if ($handle == 'entry_id') {
                         continue;
                     }
-                    $child[$handle] = formulize_apiReadFieldValue(
-                        $item, $thisFormHandle, $lid, $handle,
+                    $row[$handle] = formulize_apiReadFieldValue(
+                        $item, $mainFormHandle, $mainEntryId, $handle,
                         formulize_apiFieldIsRaw($handle, $rawAll, $rawFields), $metadataFields
                     );
                 }
-                $related[$thisFormHandle][] = $child;
             }
-        }
-        if (count($related)) {
-            $row['related'] = $related;
+
+            // Connected forms, grouped by the child entry each value belongs to.
+            $related = array();
+            foreach ($fieldsByForm as $thisFid => $handles) {
+                if ($thisFid == $mainFid) {
+                    continue;
+                }
+                $thisFormHandle = $formHandles[$thisFid];
+                if (!isset($item[$thisFormHandle]) or !is_array($item[$thisFormHandle])) {
+                    continue;
+                }
+                foreach ($item[$thisFormHandle] as $lid => $ignored) {
+                    // A main form entry with no connected entry shows up as an empty local id.
+                    if (!$lid or $lid === 'NULL') {
+                        continue;
+                    }
+                    $child = array('entry_id' => intval($lid));
+                    foreach ($handles as $handle) {
+                        if ($handle == 'entry_id') {
+                            continue;
+                        }
+                        $child[$handle] = formulize_apiReadFieldValue(
+                            $item, $thisFormHandle, $lid, $handle,
+                            formulize_apiFieldIsRaw($handle, $rawAll, $rawFields), $metadataFields
+                        );
+                    }
+                    $related[$thisFormHandle][] = $child;
+                }
+            }
+            if (count($related)) {
+                $row['related'] = $related;
+            }
+
+            $rows[] = $row;
         }
 
-        $rows[] = $row;
+    } finally {
+        if ($releasePreppedValueCacheFlag) {
+            unset($GLOBALS['formulize_doNotCachePreppedValues']);
+        }
     }
 
     return $rows;
