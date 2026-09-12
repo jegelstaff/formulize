@@ -2324,6 +2324,31 @@ function getMetaData($entry_id, $member_handler=null, $fid="", $useOldCode=false
 }
 
 /**
+ * May this user see the private elements of a given form?
+ *
+ * Asked per form rather than once per request, because a relationship reaches forms this
+ * user can hold different permissions on, and the answer for the form at the centre of the
+ * query says nothing about the ones connected to it.
+ *
+ * Cached per form and set of groups, since every form in a relationship asks the same
+ * question and the answer cannot change within a request.
+ *
+ * @param int $fid The form whose private elements are in question
+ * @param array $groups The group ids to check for
+ * @return bool
+ */
+function formulize_userCanViewPrivateElements($fid, $groups) {
+	static $cachedChecks = array();
+	$fid = intval($fid);
+	$cacheKey = $fid.'/'.implode(',', (array) $groups);
+	if (!isset($cachedChecks[$cacheKey])) {
+		$gperm_handler = xoops_gethandler('groupperm');
+		$cachedChecks[$cacheKey] = $gperm_handler->checkRight("view_private_elements", $fid, $groups, getFormulizeModId()) ? true : false;
+	}
+	return $cachedChecks[$cacheKey];
+}
+
+/**
  * Get all the elements form, and optionally related forms in a relationship.
  * By default, does not include text for display elements.
  *
@@ -2360,12 +2385,6 @@ function getAllColList($fid, $frid=0, $groups=null, $includeTextForDisplay=false
 			$groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
     }
 
-    // if current user does NOT have view_private_elements permission, then set a query to exclude those elements
-    $pq = "";
-    if (!$view_private_elements = $gperm_handler->checkRight("view_private_elements", $fid, $groups, $mid)) {
-        $pq = "AND ele_private=0";
-    }
-
 		$incbreaks = "";
     if (!$includeTextForDisplay) {
         $incbreaks = "AND (ele_type != 'fullWidthContent' AND ele_type != 'captionedContent')";
@@ -2373,7 +2392,7 @@ function getAllColList($fid, $frid=0, $groups=null, $includeTextForDisplay=false
 
     // generate the $allcols list
 		// do the passed in fid first, append rest of relationship after if necessary
-		$cols = addToColsList(array(), $fid, $uid, $groups, $mid, $gperm_handler, $gq, $pq, $incbreaks);
+		$cols = addToColsList(array(), $fid, $uid, $groups, $mid, $gperm_handler, $gq, $incbreaks);
     if ($frid) {
         $fids[0] = $fid;
         $check_results = checkForLinks($frid, $fids, $fid, "");
@@ -2381,12 +2400,12 @@ function getAllColList($fid, $frid=0, $groups=null, $includeTextForDisplay=false
         $sub_fids = $check_results['sub_fids'];
         foreach ($fids as $this_fid) {
 						if($this_fid != $fid) {
-							$cols = addToColsList($cols, $this_fid, $uid, $groups, $mid, $gperm_handler, $gq, $pq, $incbreaks);
+							$cols = addToColsList($cols, $this_fid, $uid, $groups, $mid, $gperm_handler, $gq, $incbreaks);
 						}
         }
         foreach ($sub_fids as $this_fid) {
 					if($this_fid != $fid) {
-						$cols = addToColsList($cols, $this_fid, $uid, $groups, $mid, $gperm_handler, $gq, $pq, $incbreaks);
+						$cols = addToColsList($cols, $this_fid, $uid, $groups, $mid, $gperm_handler, $gq, $incbreaks);
 					}
         }
     }
@@ -2404,21 +2423,173 @@ function getAllColList($fid, $frid=0, $groups=null, $includeTextForDisplay=false
  * @param int $mid The module id for the formulize module
  * @param object $gperm_handler The group permission handler object
  * @param string $gq The group query string for filtering elements based on element display settings (ie: which groups the elements are displayed to)
- * @param string $pq The private query string for filtering elements based on whether they're a private element or not
  * @param string $incbreaks The query string for including or excluding certain element types
  *
  * @return array The updated $cols array with the columns for the form added in, if the user has permission to access the form. The columns are the raw results from a function q query of the DB, ie: two dimensioned array, first dimension is a counter for the records returned, second dimension is the name of the db field returned, in this case the db fields are ele_id and ele_caption, ele_colhead, and ele_handle
  */
-function addToColsList($cols, $fid, $uid, $groups, $mid, $gperm_handler, $gq, $pq, $incbreaks) {
+function addToColsList($cols, $fid, $uid, $groups, $mid, $gperm_handler, $gq, $incbreaks) {
 	if(!is_array($cols)) { return array(); }
 	if (security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler)) {
 		global $xoopsDB;
+		$pq = formulize_userCanViewPrivateElements($fid, $groups) ? "" : "AND ele_private=0";
 		$formHandler = xoops_getmodulehandler('forms','formulize');
 		$formObject = $formHandler->get($fid);
 		$c = q("SELECT ele_id, ele_caption, ele_colhead, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$fid' $gq $pq $incbreaks AND ele_id IN (".implode(",", $formObject->getVar('elementsWithData')).") ORDER BY ele_order");
 		$cols[$fid] = $c;
 	}
 	return $cols;
+}
+
+/**
+ * Get the handles of any password elements on a form.
+ *
+ * A password element is never a column, for anyone. Its value is not searchable, it is not
+ * readable, and the element means nothing except as a form widget, where its owner sets
+ * their own password. So it is excluded wherever columns are offered or accepted, whether it
+ * reached the list through getAllColList (on an ad hoc users table form, where it does have
+ * a real column) or through getUserAccountColList.
+ *
+ * @param int|object $formIdOrObject The form to read
+ * @return array The handles to exclude
+ */
+function getUserAccountPasswordHandles($formIdOrObject) {
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	$formObject = (is_object($formIdOrObject) AND is_a($formIdOrObject, 'formulizeForm')) ? $formIdOrObject : $form_handler->get($formIdOrObject);
+	if (!is_object($formObject)) {
+		throw new Exception('Invalid form object or ID');
+	}
+	return $formObject->getVar('userAccountPasswordHandles');
+}
+
+/**
+ * Get the user account elements of a form that the given user may use as a column.
+ *
+ * getAllColList cannot report these. It only returns elements listed in the form's
+ * elementsWithData, and a user account element has hasData false, because its value lives
+ * in the users table rather than in a column of the form's own data table. They are real
+ * elements all the same: they can be sorted on, searched on, and displayed in a list, so
+ * anything working out which columns a user may use has to add them back.
+ *
+ * Two rules are applied on top of the element's own display groups:
+ *
+ * A password element is never a column. Its value is not searchable and not readable, and
+ * the element only means anything as a form widget, where its owner sets their own password.
+ *
+ * A private element is a column only for a user with view_private_elements on the form,
+ * which is the same test getAllColList applies to the elements it does return.
+ *
+ * @param int|object $formIdOrObject The form to read the user account elements of
+ * @param int|object $userIdOrObject Optional. The user to check display groups for. Defaults to the current user.
+ * @return array Rows in the same shape getAllColList returns: ele_id, ele_caption, ele_colhead, ele_handle, in element order
+ */
+function getUserAccountColList($formIdOrObject, $userIdOrObject = 0) {
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	$formObject = (is_object($formIdOrObject) AND is_a($formIdOrObject, 'formulizeForm')) ? $formIdOrObject : $form_handler->get($formIdOrObject);
+	if (!is_object($formObject)) {
+		throw new Exception('Invalid form object or ID');
+	}
+	$userAccountElementIds = $formObject->getVar('userAccountElements');
+	if (!is_array($userAccountElementIds) OR count($userAccountElementIds) == 0) {
+		return array();
+	}
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
+	$elementCaptions = $formObject->getVar('elementCaptions');
+	$elementColheads = $formObject->getVar('elementColheads');
+	$elementHandles = $formObject->getVar('elementHandles');
+	$passwordHandles = $formObject->getVar('userAccountPasswordHandles');
+	$cols = array();
+
+	// strip out elements not in the form object and also password elements
+	foreach ($userAccountElementIds as $i=>$eleId) {
+		if (!isset($elementHandles[$eleId]) OR in_array($elementHandles[$eleId], $passwordHandles)) {
+			unset($userAccountElementIds[$i]);
+			continue;
+		}
+	}
+
+	if(!empty($userAccountElementIds)) {
+
+		global $xoopsUser;
+		$member_handler = xoops_gethandler('member');
+		$userObject = is_a($userIdOrObject, 'icms_member_user_Object') ? $userIdOrObject : ($userIdOrObject ? $member_handler->getUser($userIdOrObject) : $xoopsUser);
+		$groups = $userObject? $userObject->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+		$viewPrivateElements = formulize_userCanViewPrivateElements($formObject->getVar('fid'), $groups);
+
+		// gather all element objects at once for efficiency
+		if($elementObjects = $element_handler->getObjects(new Criteria('ele_id', "(".implode(',', array_filter($userAccountElementIds, 'is_numeric')).")", 'IN'), id_as_key: true)) {
+			// prepare all the data and return
+			foreach ($elementObjects as $elementId=>$elementObject) {
+				if (!isset($elementObject) OR !is_object($elementObject) OR ($elementObject->getVar('ele_private') AND !$viewPrivateElements)) {
+					continue;
+				}
+				if (!$element_handler->isElementVisibleForUser($elementObject, $userIdOrObject)) {
+					continue;
+				}
+				$cols[] = array(
+					'ele_id' => $elementId,
+					'ele_caption' => isset($elementCaptions[$elementId]) ? $elementCaptions[$elementId] : '',
+					'ele_colhead' => isset($elementColheads[$elementId]) ? $elementColheads[$elementId] : '',
+					'ele_handle' => $elementHandles[$elementId]
+				);
+			}
+		}
+	}
+	return $cols;
+}
+
+/**
+ * Get every column handle this user may use on a form, or on a relationship of forms.
+ *
+ * The complete answer to "may this user work with this column", which getAllColList alone
+ * is not, in three parts: the metadata fields, which are always available; the elements
+ * getAllColList reports, which are the ones with a column in the form's own data table; and
+ * the user account elements, which getUserAccountColList adds back per form.
+ *
+ * The user account pass walks the forms getAllColList returned rather than the forms in the
+ * relationship, so a form this user cannot see contributes nothing here either.
+ *
+ * Use this wherever a set of column handles has to be vetted. Use getAllColList directly
+ * only when the element rows themselves are needed rather than a yes or no on each handle.
+ *
+ * @param int $fid The main form id
+ * @param int|string $frid Optional. The relationship to include connected forms from
+ * @param array $groups Optional. The group ids to check against. Defaults to the user's own.
+ * @param int|object $userIdOrObject Optional. The user to check element display groups for. Defaults to the current user. Must describe the same person as $groups, since each is used for a different half of the answer.
+ * @return array Keys are the permitted handles, values are true
+ */
+function getAllAllowedColHandles($fid, $frid = 0, $groups = null, $userIdOrObject = 0) {
+
+	$allowed = array();
+
+	$dataHandler = new formulizeDataHandler(false);
+	foreach ($dataHandler->metadataFields as $metadataField) {
+		$allowed[$metadataField] = true;
+	}
+
+	$cols = getAllColList($fid, $frid, $groups);
+	foreach ($cols as $thisFormCols) {
+		if (!is_array($thisFormCols)) {
+			continue;
+		}
+		foreach ($thisFormCols as $col) {
+			$allowed[$col['ele_handle']] = true;
+		}
+	}
+
+	// getUserAccountColList resolves the user, and the private element permission for each
+	// form, exactly the way addToColsList now does for the elements getAllColList returned
+	foreach (array_keys($cols) as $thisFid) {
+		foreach (getUserAccountColList($thisFid, $userIdOrObject) as $col) {
+			$allowed[$col['ele_handle']] = true;
+		}
+		// removed last, because on an ad hoc users table form a password element has a real
+		// column and so came back from getAllColList along with everything else
+		foreach (getUserAccountPasswordHandles($thisFid) as $passwordHandle) {
+			unset($allowed[$passwordHandle]);
+		}
+	}
+
+	return $allowed;
 }
 
 /**
@@ -8500,30 +8671,16 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
         }
         $formObject = $form_handler->get($thisFid);
         $boxeshtml = "";
-        // Add user account elements if this is an entries_are_users form, excluding password and non-visible elements
+        // Add user account elements, which getAllColList cannot report because they hold no
+        // column of their own. getUserAccountColList applies the rules about which of them this
+        // user may use, the same ones the list screens and the Public API go by.
         $userAccountElementIds = $formObject->getVar('userAccountElements');
         if(is_array($userAccountElementIds) && count($userAccountElementIds) > 0) {
-            $elementCaptions = $formObject->getVar('elementCaptions');
-            $elementColheads = $formObject->getVar('elementColheads');
-            $elementHandles  = $formObject->getVar('elementHandles');
-            $elementTypes    = $formObject->getVar('elementTypes');
-            $element_handler = xoops_getmodulehandler('elements', 'formulize');
-            global $xoopsUser;
-            $userAccountColsToAdd = array();
-            $excludedUaHandles = array(); // UA handles excluded from the column list entirely (e.g. password)
-            foreach($userAccountElementIds as $eleId) {
-                if($elementTypes[$eleId] == 'userAccountPassword') {
-                    $excludedUaHandles[] = $elementHandles[$eleId]; // track so it's also stripped from $columns below
-                    continue;
-                }
-                if(!$element_handler->isElementVisibleForUser($eleId)) { continue; }
-                $userAccountColsToAdd[] = array(
-                    'ele_id'      => $eleId,
-                    'ele_caption' => $elementCaptions[$eleId],
-                    'ele_colhead' => $elementColheads[$eleId],
-                    'ele_handle'  => $elementHandles[$eleId],
-                );
-            }
+						global $xoopsUser;
+            $userAccountColsToAdd = getUserAccountColList($formObject, $xoopsUser);
+            // stripped from $columns below as well, for the ad hoc table forms where a password
+            // element has a real column and so arrived in $columns from getAllColList
+            $excludedUaHandles = $formObject->getVar('userAccountPasswordHandles');
             // Remove from $columns any element whose handle already appears in $userAccountColsToAdd,
             // or in $excludedUaHandles (UA types that should never appear in the list, like password).
             // This prevents duplicates for both EAU forms (handles may be formulize_user_account_*)

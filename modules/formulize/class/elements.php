@@ -46,6 +46,11 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elementReferenceScanTra
 global $xoopsDB;
 define('formulize_TABLE', $xoopsDB->prefix("formulize"));
 
+global $formulizeCachedElementObjects;
+if (!isset($formulizeCachedElementObjects)) {
+	$formulizeCachedElementObjects = array();
+}
+
 class formulizeElement extends FormulizeObject {
 
 	var $isLinked;
@@ -751,20 +756,20 @@ class formulizeElementsHandler {
 	 * @return mixed The element object, or false if not found
 	 */
 	function get($idOrHandle, $bypassCache = false){
-		static $cachedElements = array();
-		if(!$bypassCache && isset($cachedElements[$idOrHandle])) {
-			return $cachedElements[$idOrHandle];
+		global $formulizeCachedElementObjects;
+		if(!$bypassCache && isset($formulizeCachedElementObjects[$idOrHandle])) {
+			return $formulizeCachedElementObjects[$idOrHandle];
 		}
 		if (is_numeric($idOrHandle) AND $idOrHandle > 0) {
 			$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE ele_id='.$idOrHandle;
 			if (!$result = $this->db->query($sql)) {
-				$cachedElements[$idOrHandle] = false;
+				$formulizeCachedElementObjects[$idOrHandle] = false;
 				return false;
 			}
 		} else {
 			$sql = "SELECT * FROM ".formulize_TABLE." WHERE ele_handle='".formulize_db_escape($idOrHandle)."'";
 			if (!$result = $this->db->query($sql)) {
-				$cachedElements[$idOrHandle] = false;
+				$formulizeCachedElementObjects[$idOrHandle] = false;
 				return false;
 			}
 		}
@@ -781,7 +786,7 @@ class formulizeElementsHandler {
 			}
 			$element->assignVars($array);
       $element = $this->_setElementProperties($element);
-			$cachedElements[$idOrHandle] = $element;
+			$formulizeCachedElementObjects[$idOrHandle] = $element;
 			return $element;
 		}
 		return false;
@@ -922,6 +927,11 @@ class formulizeElementsHandler {
 			$ele_id = $this->db->getInsertId();
 			$element->setVar('ele_id', $ele_id);
 		}
+
+		global $formulizeCachedElementObjects;
+		$element = $this->_setElementProperties($element);
+		$formulizeCachedElementObjects[$ele_id] = $element;
+
 		return $ele_id;
 	}
 
@@ -1785,6 +1795,11 @@ class formulizeElementsHandler {
 		$screenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 		$screenHandler->removeElementsFromScreens($elementObject->getVar('ele_id'));
 
+		global $formulizeCachedElementObjects;
+		if(isset($formulizeCachedElementObjects[$elementObject->getVar('ele_id')])) {
+			unset($formulizeCachedElementObjects[$elementObject->getVar('ele_id')]);
+		}
+
 		return ($result0 AND $result1 AND $result2 AND $result3 AND $result4) ? true : false;
 	}
 
@@ -1815,25 +1830,33 @@ class formulizeElementsHandler {
 		if( !$result ){
 			return false;
 		}
+
+		global $formulizeCachedElementObjects;
 		while( $myrow = $this->db->fetchArray($result) ){
 			// instantiate the right kind of element, depending on the type
-			$ele_type = $myrow['ele_type'];
-			if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
-				$customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
-				$elements = $customTypeHandler->create();
+			$elementId = $myrow['ele_id'];
+			if(isset($formulizeCachedElementObjects[$elementId])) {
+				$elementObject = $formulizeCachedElementObjects[$elementId];
 			} else {
-				$elements = new formulizeElement();
+				$ele_type = $myrow['ele_type'];
+				if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+					$customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
+					$elementObject = $customTypeHandler->create();
+				} else {
+					$elementObject = new formulizeElement();
+				}
+				$elementObject->assignVars($myrow);
+				$elementObject = $this->_setElementProperties($elementObject);
+				$formulizeCachedElementObjects[$elementId] = $elementObject;
 			}
-			$elements->assignVars($myrow);
-      $elements = $this->_setElementProperties($elements);
 			if($id_as_key === true OR $id_as_key == "element_id"){
-				$ret[$myrow['ele_id']] =& $elements;
+				$ret[$myrow['ele_id']] =& $elementObject;
 			}elseif($id_as_key == "handle") {
-				$ret[$myrow['ele_handle']] =& $elements;
+				$ret[$myrow['ele_handle']] =& $elementObject;
 			} else {
-				$ret[] =& $elements;
+				$ret[] =& $elementObject;
 			}
-			unset($elements);
+			unset($elementObject);
 		}
 		return $ret;
 	}

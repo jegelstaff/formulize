@@ -63,6 +63,7 @@ class formulizeForm extends FormulizeObject {
 			$elementTypesAreSystemElements = array();
 			$elementTypesAreUserAccountElements = array();
 			$userAccountElements = array();
+			$userAccountPasswordHandles = array();
 			$systemElements = array();
 			$element_handler = xoops_getmodulehandler('elements', 'formulize');
 			$displayFilter = $includeAllElements ? "" : "AND ele_display != \"0\"";
@@ -83,6 +84,9 @@ class formulizeForm extends FormulizeObject {
 				}
 				if($elementTypesAreUserAccountElements[$value['ele_type']]) {
 					$userAccountElements[$value['ele_id']] = $value['ele_id'];
+					if($value['ele_type'] == 'userAccountPassword') {
+						$userAccountPasswordHandles[] = $value['ele_handle'];
+					}
 				}
 				$elements[$value['ele_id']] = $value['ele_id'];
 				$elementCaptions[$value['ele_id']] = $value['ele_caption'];
@@ -143,6 +147,7 @@ class formulizeForm extends FormulizeObject {
 		$this->initVar("elementsWithData", XOBJ_DTYPE_ARRAY, serialize($elementsWithData));
 		$this->initVar("systemElements", XOBJ_DTYPE_ARRAY, serialize($systemElements));
 		$this->initVar("userAccountElements", XOBJ_DTYPE_ARRAY, serialize($userAccountElements));
+		$this->initVar("userAccountPasswordHandles", XOBJ_DTYPE_ARRAY, serialize($userAccountPasswordHandles));
 		$this->initVar("elementCaptions", XOBJ_DTYPE_ARRAY, serialize($elementCaptions));
 		$this->initVar("elementColheads", XOBJ_DTYPE_ARRAY, serialize($elementColheads));
 		$this->initVar("elementHandles", XOBJ_DTYPE_ARRAY, serialize($elementHandles));

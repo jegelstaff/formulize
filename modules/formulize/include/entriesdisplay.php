@@ -4259,50 +4259,12 @@ function removeNotAllowedCols($fid, $frid, $cols, $groups) {
 		$cols[$creation_dateKey] = "creation_datetime";
 	}
 
-	$all_allowed_cols = array();
-	$allowed_cols_in_view = array();
+	// the metadata fields, the elements with data, and the user account elements, all vetted
+	// against this user's permissions. Shared with the Public API and the column picker, so
+	// that a column means the same thing everywhere it is offered or accepted.
+	$all_allowed_cols = getAllAllowedColHandles($fid, $frid, $groups);
 
-	// metadata columns always allowed!
-	$dataHandler = new formulizeDataHandler(false);
-	$metadataFields = $dataHandler->metadataFields;
-
-	foreach ($metadataFields as $field)
-	{
-		$all_allowed_cols[] = $field;
-	}
-
-	$all_allowed_cols_raw = getAllColList($fid, $frid, $groups);
-	foreach($all_allowed_cols_raw as $form_id=>$values) {
-		foreach($values as $id=>$value) {
-			if(!in_array($value['ele_handle'], $all_allowed_cols)) {	$all_allowed_cols[] = $value['ele_handle']; }
-		}
-	}
-
-	// Also allow user account element handles for entries_are_users forms, subject to visibility permissions
-	$form_handler = xoops_getmodulehandler('forms', 'formulize');
-	$element_handler = xoops_getmodulehandler('elements', 'formulize');
-	global $xoopsUser;
-	foreach(array_keys($all_allowed_cols_raw) as $form_id) {
-		$formObj = $form_handler->get($form_id);
-		if($formObj && $formObj->getVar('entries_are_users')) {
-			$uaElementIds = $formObj->getVar('userAccountElements');
-			$elementHandles = $formObj->getVar('elementHandles');
-			if(is_array($uaElementIds)) {
-				foreach($uaElementIds as $eleId) {
-					if(isset($elementHandles[$eleId]) && !in_array($elementHandles[$eleId], $all_allowed_cols)) {
-						if($element_handler->isElementVisibleForUser($eleId)) {
-							$all_allowed_cols[] = $elementHandles[$eleId];
-						}
-					}
-				}
-			}
-		}
-	}
-
-	$all_cols_from_view = $cols;
-
-	$allowed_cols_in_view = array_intersect($all_cols_from_view, $all_allowed_cols);
-	$allowed_cols_in_view = array_values($allowed_cols_in_view);
+	$allowed_cols_in_view = array_values(array_intersect($cols, array_keys($all_allowed_cols)));
 
 	return $allowed_cols_in_view;
 }

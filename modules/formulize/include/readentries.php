@@ -121,7 +121,7 @@ function formulize_readEntries($formIdOrHandle, $options = array(), $user = null
     // Refuse anything this user may not see, before we go anywhere near the data. The same
     // list gates the sort field and the filter below, so a field that cannot be returned
     // cannot be used to order or select entries either.
-    $allowedFields = formulize_apiAllowedFieldHandles($fid, $relationship, $groups);
+    $allowedFields = formulize_apiAllowedFieldHandles($fid, $relationship, $groups, $user);
     formulize_apiCheckFieldPermissions($fields, $allowedFields);
     $fieldsByForm = formulize_apiValidateElementHandles($fields, $fid);
     if (empty($fieldsByForm)) {
@@ -341,11 +341,12 @@ function formulize_apiReadFieldValue($item, $formHandle, $localEntryId, $handle,
 /**
  * Every field handle this user is allowed to read in this query.
  *
- * getAllColList does the real work: it filters on the ele_display group lists and on
- * ele_private versus the view_private_elements permission, it drops forms in the
- * relationship the user cannot see at all, and it only reports elements that actually
- * hold data. Metadata field names are not elements, so they are added separately;
- * creator_email has its own masking inside the extraction.
+ * getAllAllowedColHandles is the authority, shared with the list screens and the column
+ * picker so that a field means the same thing in the API as it does in the product: the
+ * metadata fields, the elements whose ele_display and ele_private settings admit this
+ * user, and the user account elements, which hold no column of their own and so have to
+ * be added back on top of what getAllColList reports. Forms in the relationship this user
+ * cannot see contribute nothing.
  *
  * Worked out once per request, because every part of the request is measured against
  * the same list: the requested fields, the sort field, and every element named in the
@@ -355,26 +356,14 @@ function formulize_apiReadFieldValue($item, $formHandle, $localEntryId, $handle,
  * @param int fid The main form id
  * @param int frid The relationship being queried
  * @param array groups The user's group ids
+ * @param object user The user being acted as
  * @return array Keys are the permitted handles
  */
-function formulize_apiAllowedFieldHandles($fid, $frid, $groups) {
+function formulize_apiAllowedFieldHandles($fid, $frid, $groups, $user = null) {
     static $cached = array();
     $cacheKey = intval($fid).'/'.intval($frid).'/'.implode(',', $groups);
     if (!isset($cached[$cacheKey])) {
-        $allowed = array();
-        $dataHandler = new formulizeDataHandler(false);
-        foreach ($dataHandler->metadataFields as $metadataField) {
-            $allowed[$metadataField] = true;
-        }
-        foreach (getAllColList($fid, $frid, $groups) as $thisFormCols) {
-            if (!is_array($thisFormCols)) {
-                continue;
-            }
-            foreach ($thisFormCols as $col) {
-                $allowed[$col['ele_handle']] = true;
-            }
-        }
-        $cached[$cacheKey] = $allowed;
+        $cached[$cacheKey] = getAllAllowedColHandles($fid, $frid, $groups, $user ? $user : 0);
     }
     return $cached[$cacheKey];
 }
