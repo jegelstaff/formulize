@@ -118,8 +118,11 @@ function formulize_readEntries($formIdOrHandle, $options = array(), $user = null
     if (count($fields) == 0) {
         throw new FormulizeApiException('At least one field must be requested in the fields parameter', 'invalid_arguments');
     }
-    // Refuse anything this user may not see, before we go anywhere near the data.
-    formulize_apiCheckFieldPermissions($fields, $fid, $relationship, $groups);
+    // Refuse anything this user may not see, before we go anywhere near the data. The same
+    // list gates the sort field and the filter below, so a field that cannot be returned
+    // cannot be used to order or select entries either.
+    $allowedFields = formulize_apiAllowedFieldHandles($fid, $relationship, $groups);
+    formulize_apiCheckFieldPermissions($fields, $allowedFields);
     $fieldsByForm = formulize_apiValidateElementHandles($fields, $fid);
     if (empty($fieldsByForm)) {
         throw new FormulizeApiException('At least one field must be requested in the fields parameter', 'invalid_arguments');
@@ -131,7 +134,7 @@ function formulize_readEntries($formIdOrHandle, $options = array(), $user = null
     if (!empty($sortField)) {
         // Sorting by a field the caller cannot see would leak its ordering, so the sort field
         // goes through the same permission gate as the requested fields.
-        formulize_apiCheckFieldPermissions(array($sortField), $fid, $relationship, $groups);
+        formulize_apiCheckFieldPermissions(array($sortField), $allowedFields);
     }
 
     // ---- limits ---------------------------------------------------------
@@ -160,7 +163,7 @@ function formulize_readEntries($formIdOrHandle, $options = array(), $user = null
         $form_ids = array($fid);
     }
     $andOr = strtoupper($options['andOr'] ?? 'AND') == 'OR' ? 'OR' : 'AND';
-    $filter = formulize_apiValidateFilter($options['filter'] ?? '', $form_ids, $andOr);
+    $filter = formulize_apiValidateFilter($options['filter'] ?? '', $form_ids, $andOr, $allowedFields);
     // An array filter is already a set of expressions carrying their own booleans, so the
     // operator between them is fixed at AND by formulize_parseFilter's contract.
     $andOr = is_array($filter) ? 'AND' : $andOr;
@@ -336,40 +339,63 @@ function formulize_apiReadFieldValue($item, $formHandle, $localEntryId, $handle,
 }
 
 /**
- * Refuse any requested field handle this user is not allowed to read.
+ * Every field handle this user is allowed to read in this query.
  *
  * getAllColList does the real work: it filters on the ele_display group lists and on
- * ele_private versus the view_private_elements permission, and it only reports elements
- * that actually hold data. Metadata field names are not elements, so they bypass it;
+ * ele_private versus the view_private_elements permission, it drops forms in the
+ * relationship the user cannot see at all, and it only reports elements that actually
+ * hold data. Metadata field names are not elements, so they are added separately;
  * creator_email has its own masking inside the extraction.
  *
- * @param array fields The requested handles
+ * Worked out once per request, because every part of the request is measured against
+ * the same list: the requested fields, the sort field, and every element named in the
+ * filter. A field the caller may not read must not be usable in any of those roles,
+ * since a filter or a sort reveals the values of a field just as surely as returning it.
+ *
  * @param int fid The main form id
  * @param int frid The relationship being queried
  * @param array groups The user's group ids
- * @return void
- * @throws FormulizeApiException if any requested handle is not permitted
+ * @return array Keys are the permitted handles
  */
-function formulize_apiCheckFieldPermissions($fields, $fid, $frid, $groups) {
-    $dataHandler = new formulizeDataHandler(false);
-    $allowed = array();
-    $cols = getAllColList($fid, $frid, $groups);
-    foreach ($cols as $thisFormCols) {
-        if (!is_array($thisFormCols)) {
-            continue;
+function formulize_apiAllowedFieldHandles($fid, $frid, $groups) {
+    static $cached = array();
+    $cacheKey = intval($fid).'/'.intval($frid).'/'.implode(',', $groups);
+    if (!isset($cached[$cacheKey])) {
+        $allowed = array();
+        $dataHandler = new formulizeDataHandler(false);
+        foreach ($dataHandler->metadataFields as $metadataField) {
+            $allowed[$metadataField] = true;
         }
-        foreach ($thisFormCols as $col) {
-            $allowed[$col['ele_handle']] = true;
+        foreach (getAllColList($fid, $frid, $groups) as $thisFormCols) {
+            if (!is_array($thisFormCols)) {
+                continue;
+            }
+            foreach ($thisFormCols as $col) {
+                $allowed[$col['ele_handle']] = true;
+            }
         }
+        $cached[$cacheKey] = $allowed;
     }
+    return $cached[$cacheKey];
+}
+
+/**
+ * Refuse any field handle this user is not allowed to read.
+ *
+ * @param array fields The handles to check
+ * @param array allowedFields From formulize_apiAllowedFieldHandles
+ * @return void
+ * @throws FormulizeApiException if any handle is not permitted
+ */
+function formulize_apiCheckFieldPermissions($fields, $allowedFields) {
     foreach ($fields as $handle) {
         if (!is_string($handle)) {
             throw new FormulizeApiException('Field names must be strings', 'invalid_arguments');
         }
-        if ($handle === '' or in_array($handle, $dataHandler->metadataFields)) {
+        if ($handle === '') {
             continue;
         }
-        if (!isset($allowed[$handle])) {
+        if (!isset($allowedFields[$handle])) {
             // Deliberately the same message whether the field does not exist or is simply not
             // visible to this user, so the endpoint cannot be used to probe for field names.
             throw new FormulizeApiException('Unknown or unavailable field: '.$handle, 'unknown_element');
@@ -392,16 +418,23 @@ function formulize_apiCheckFieldPermissions($fields, $fid, $frid, $groups) {
  * shortcut here: it consumes exactly two levels, an outer list joined by one operator,
  * with each inner expression carrying its own.
  *
- * Also accepted, as legacy input: an integer entry id, or an old style filter string of
- * terms joined with the bracket separator.
+ * An integer entry id is also accepted, meaning that one entry of the main form.
+ *
+ * A filter string in gatherDataset's own format is NOT accepted, even though gatherDataset
+ * would take one. getData() treats a string beginning with "SELECT " as a complete query to
+ * run as it stands, which is how the export feature reuses a query it built itself, and the
+ * terms of a filter string are not measured against $allowedFields either. Neither is
+ * anything a caller of this API should be able to reach, so only a list of conditions
+ * described here gets through, and a JSON string carrying one is decoded first.
  *
  * @param mixed filter
  * @param array form_ids The forms whose elements the filter may reference
  * @param string andOr The operator joining the top level items
+ * @param array allowedFields From formulize_apiAllowedFieldHandles
  * @return mixed A string or array suitable for gatherDataset
  * @throws FormulizeApiException
  */
-function formulize_apiValidateFilter($filter, $form_ids, $andOr = 'AND') {
+function formulize_apiValidateFilter($filter, $form_ids, $andOr = 'AND', $allowedFields = array()) {
 
     if (is_numeric($filter)) {
         return intval($filter);
@@ -411,19 +444,20 @@ function formulize_apiValidateFilter($filter, $form_ids, $andOr = 'AND') {
     }
     if (is_string($filter)) {
         $trimmed = ltrim($filter);
-        if (substr($trimmed, 0, 1) === '[' or substr($trimmed, 0, 1) === '{') {
-            $decoded = json_decode($filter, true);
-            if ($decoded === null) {
-                throw new FormulizeApiException('Invalid JSON in the filter parameter: '.json_last_error_msg(), 'invalid_arguments');
-            }
-            $filter = $decoded;
-        } else {
-            // An old style filter string, passed straight through to gatherDataset.
-            return $filter;
+        if (substr($trimmed, 0, 1) !== '[' and substr($trimmed, 0, 1) !== '{') {
+            throw new FormulizeApiException(
+                'The filter parameter must be an entry id, or a list of conditions, or that list encoded as JSON',
+                'invalid_arguments'
+            );
         }
+        $decoded = json_decode($filter, true);
+        if ($decoded === null) {
+            throw new FormulizeApiException('Invalid JSON in the filter parameter: '.json_last_error_msg(), 'invalid_arguments');
+        }
+        $filter = $decoded;
     }
     if (!is_array($filter)) {
-        throw new FormulizeApiException('The filter parameter must be a number, a string, or an array', 'invalid_arguments');
+        throw new FormulizeApiException('The filter parameter must be an entry id or a list of conditions', 'invalid_arguments');
     }
 
     $bareTerms = array();
@@ -451,14 +485,14 @@ function formulize_apiValidateFilter($filter, $form_ids, $andOr = 'AND') {
                         'invalid_arguments'
                     );
                 }
-                $groupTerms = array_merge($groupTerms, formulize_apiBuildFilterTerms($condition, $form_ids, $groupOperator));
+                $groupTerms = array_merge($groupTerms, formulize_apiBuildFilterTerms($condition, $form_ids, $groupOperator, $allowedFields));
             }
             $expressions[] = array($groupOperator, implode('][', $groupTerms));
             continue;
         }
 
         // ---- a bare condition --------------------------------------------
-        list($element, $value, $operator) = formulize_apiReadFilterCondition($item, $form_ids);
+        list($element, $value, $operator) = formulize_apiReadFilterCondition($item, $form_ids, $allowedFields);
         if ($value === '{BLANK}') {
             // A blank test is two terms with a boolean of its own, so it cannot simply join the
             // other bare terms. Lift it into its own expression, as the MCP tool has always done.
@@ -500,8 +534,8 @@ function formulize_apiValidateFilter($filter, $form_ids, $andOr = 'AND') {
  * @return array The terms to add to the group
  * @throws FormulizeApiException
  */
-function formulize_apiBuildFilterTerms($condition, $form_ids, $groupOperator) {
-    list($element, $value, $operator) = formulize_apiReadFilterCondition($condition, $form_ids);
+function formulize_apiBuildFilterTerms($condition, $form_ids, $groupOperator, $allowedFields = array()) {
+    list($element, $value, $operator) = formulize_apiReadFilterCondition($condition, $form_ids, $allowedFields);
     if ($value === '{BLANK}') {
         list($blankBoolean, $blankTerms) = formulize_apiBuildBlankTerms($element, $operator);
         if ($blankBoolean !== $groupOperator) {
@@ -529,10 +563,19 @@ function formulize_apiBuildBlankTerms($element, $operator) {
 
 /**
  * Pull element, value and operator out of one condition, and check the element is usable.
+ *
+ * The element goes through the same permission gate as a requested field. Filtering on a
+ * field reveals its contents just as returning it does: repeat a request narrowing the
+ * value each time and you have read it, one comparison at a time. So a caller may only
+ * filter on what they could have asked to see.
+ *
+ * @param array condition
+ * @param array form_ids The forms whose elements the filter may reference
+ * @param array allowedFields From formulize_apiAllowedFieldHandles
  * @return array array(element, value, operator)
  * @throws FormulizeApiException
  */
-function formulize_apiReadFilterCondition($condition, $form_ids) {
+function formulize_apiReadFilterCondition($condition, $form_ids, $allowedFields = array()) {
     if (!is_array($condition) or !isset($condition['element'])) {
         throw new FormulizeApiException('Each filter condition needs an element and a value', 'invalid_arguments');
     }
@@ -548,6 +591,20 @@ function formulize_apiReadFilterCondition($condition, $form_ids) {
     if (!in_array($operator, formulize_apiFilterOperators())) {
         throw new FormulizeApiException('Unsupported filter operator: '.$condition['operator'], 'invalid_arguments');
     }
+
+    // A condition becomes one term of a filter string, with /**/ between its three parts and
+    // ][ between terms. A value carrying either sequence would not be searched for, it would
+    // be read back as more terms, on elements the caller never named and never passed through
+    // the permission check below. There is no escape for them in that format, so they are
+    // refused rather than quietly mangled.
+    if (strstr((string) $value, '][') or strstr((string) $value, '/**/')) {
+        throw new FormulizeApiException(
+            'The filter value for '.$element.' cannot contain ][ or /**/',
+            'invalid_arguments'
+        );
+    }
+
+    formulize_apiCheckFieldPermissions(array($element), $allowedFields);
 
     $dataHandler = new formulizeDataHandler(false);
     if (!in_array($element, $dataHandler->metadataFields)) {

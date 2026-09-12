@@ -83,7 +83,9 @@ That reads as _status = active AND (region = east OR region = west)_.
 
 Groups cannot contain other groups. Formulize filters support one level of grouping, and a nested group is rejected rather than quietly flattened.
 
-A filter can also be a single number, meaning one entry id, or a filter string in the format used by [gatherDataset](../API/functions/gatherDataset/).
+A filter can also be a single number, meaning one entry id.
+
+You can only filter on a field you have permission to see. Filtering on a field reveals its contents just as returning it does, so a field that would be refused in _fields_ is refused in _filter_ and in _sortField_ too. A value cannot contain `][` or `/**/`, which are reserved by the filter format.
 
 ## The response
 

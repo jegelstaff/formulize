@@ -145,6 +145,42 @@ test.describe('Public API read endpoint', () => {
 		expect(body.error.message).toContain('nested');
 	});
 
+	test('a filter cannot reach past the conditions format', async ({ request }) => {
+		const read = (filter) => request.post(readUrl(FORM), {
+			headers: { 'Authorization': `Bearer ${apiKey}` },
+			data: { fields: ['donors_name'], filter }
+		});
+
+		// gatherDataset runs a filter string beginning with SELECT as a complete query, which is
+		// how the export feature reuses a query it built itself. No caller of this endpoint may
+		// get near that, so a filter string is not a thing the endpoint accepts at all.
+		const rawSql = await read('SELECT uname, pass FROM ' + dbPrefix() + '_users');
+		expect(rawSql.status()).toBe(400);
+
+		// The same refusal for anything else that is not an entry id or a list of conditions
+		const legacyString = await read('donors_name/**/x/**/LIKE');
+		expect(legacyString.status()).toBe(400);
+
+		// A value carrying the term separators would be read back as extra conditions, on an
+		// element that never passed the permission check
+		const breakout = await read([
+			{ element: 'donors_name', value: 'x][no_such_field_at_all/**/1/**/=' }
+		]);
+		expect(breakout.status()).toBe(400);
+
+		// Filtering on a field reveals its contents, so it goes through the same gate as fields
+		const hiddenField = await read([
+			{ element: 'no_such_field_at_all', value: 'x', operator: '=' }
+		]);
+		expect(hiddenField.status()).toBe(400);
+		const hiddenBody = await hiddenField.json();
+		expect(hiddenBody.error.message).toContain('no_such_field_at_all');
+
+		// and the valid form of all of that still works
+		const ok = await read([{ element: 'donors_name', value: 'a' }]);
+		expect(ok.status()).toBe(200);
+	});
+
 	test('bad requests report the right status codes', async ({ request }) => {
 		// fields is required
 		const noFields = await request.post(readUrl(FORM), {
