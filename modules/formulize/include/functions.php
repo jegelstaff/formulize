@@ -758,11 +758,6 @@ function formulize_isNewEntryId($entry_id) {
  */
 function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups="", $mid="", $gperm_handler="") {
 
-		static $cachedSecurityChecks = array();
-		if(isset($cachedSecurityChecks[$form_id][$entry_id])) {
-			return $cachedSecurityChecks[$form_id][$entry_id];
-		}
-
     if (!$mid) { // if no mid specified, set it
         $mid = getFormulizeModId();
     }
@@ -790,6 +785,22 @@ function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups=
         }
     }
 
+    // The answer belongs to a person as much as to a form and an entry, so the person is part
+    // of the key. Keyed by form and entry alone, a request that asked about two users would
+    // hand the first one's answer to the second, which on this function means handing out
+    // access. The groups are in the key too, because a caller may state them rather than let
+    // them be derived above, and every permission check below is made against them.
+    //
+    // This is read here rather than at the top of the function because the user and the groups
+    // are not known until they have been resolved, just above. What that costs on a cache hit
+    // is the module id, which is held in a static, and the group lookup, which the user object
+    // holds after the first call.
+    static $cachedSecurityChecks = array();
+    $cacheKey = $form_id.'/'.$entry_id.'/'.$user_id.'/'.implode(',', (array) $groups);
+    if(isset($cachedSecurityChecks[$cacheKey])) {
+        return $cachedSecurityChecks[$cacheKey];
+    }
+
     // System-managed ad hoc forms (the Users / Groups management forms) are not real Formulize
     // forms: they carry no Formulize permission metadata and have no entry ownership/scope. Their
     // access is governed by a dedicated rule — a webmaster, or a user editing their own user
@@ -798,31 +809,31 @@ function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups=
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     if (($checkFormObject = $form_handler->get($form_id)) AND $checkFormObject->isSystemManagedForm()) {
         $result = formulize_systemManagedFormAccessCheck($checkFormObject, $entry_id, $user_id, $groups, $gperm_handler);
-        $cachedSecurityChecks[$form_id][$entry_id] = $result;
+        $cachedSecurityChecks[$cacheKey] = $result;
         return $result;
     }
 
     // For ad hoc table forms (Users/Groups management), system_admin permission was already
     // verified at the page level, so bypass the normal view_form check
     if ((!isset($GLOBALS['formulize_systemAdminPermissionVerified']) OR !$GLOBALS['formulize_systemAdminPermissionVerified']) AND !$gperm_handler->checkRight("view_form", $form_id, $groups, $mid)) {
-				$cachedSecurityChecks[$form_id][$entry_id] = false;
+				$cachedSecurityChecks[$cacheKey] = false;
         return false;
     }
 
     // system_admin was verified at the page level — skip all entry-level ownership/scope checks
     // since there is no Formulize data table to look up owner info from (e.g. groups form)
     if (isset($GLOBALS['formulize_systemAdminPermissionVerified']) AND $GLOBALS['formulize_systemAdminPermissionVerified']) {
-        $cachedSecurityChecks[$form_id][$entry_id] = true;
+        $cachedSecurityChecks[$cacheKey] = true;
         return true;
     }
 
     if ($entry_id == "proxy" AND !$gperm_handler->checkRight("add_proxy_entries", $form_id, $groups, $mid)) {
-				$cachedSecurityChecks[$form_id][$entry_id] = false;
+				$cachedSecurityChecks[$cacheKey] = false;
         return false;
     }
 
     if (formulize_isNewEntryId($entry_id) AND !$gperm_handler->checkRight("add_own_entry", $form_id, $groups, $mid)) {
-				$cachedSecurityChecks[$form_id][$entry_id] = false;
+				$cachedSecurityChecks[$cacheKey] = false;
         return false;
     }
 
@@ -846,10 +857,10 @@ function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups=
                     // anon ownership (uid 0) is not proof of identity, so require an unforgeable token:
                     // a passcode in session that matches the entry, or a validly-signed cookie for the entry
                     if(formulize_anonHoldsEntry($form_id, $entry_id)) {
-												$cachedSecurityChecks[$form_id][$entry_id] = true;
+												$cachedSecurityChecks[$cacheKey] = true;
                         return true;
                     }
-										$cachedSecurityChecks[$form_id][$entry_id] = false;
+										$cachedSecurityChecks[$cacheKey] = false;
                     return false;
                 }
             } elseif ($owner != $user_id) {
@@ -882,18 +893,18 @@ function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups=
                         if (array_intersect($pubbedgroups, $groups)) {
                             // user has been published an unlocked view for which the scope is all
                             if ($thisview['sv_currentview'] == "all") {
-																$cachedSecurityChecks[$form_id][$entry_id] = true;
+																$cachedSecurityChecks[$cacheKey] = true;
                                 return true;
                             }
                             // what about groupscope in the view?  is that accounted for below, or should we check against "group"??
                             $viewgroups = explode(",", $thisview['sv_currentview']);
                             if (array_intersect($data_handler->getEntryOwnerGroups($entry_id), $viewgroups)) {
-																$cachedSecurityChecks[$form_id][$entry_id] = true;
+																$cachedSecurityChecks[$cacheKey] = true;
                                 return true;
                             }
                         }
                     }
-										$cachedSecurityChecks[$form_id][$entry_id] = false;
+										$cachedSecurityChecks[$cacheKey] = false;
                     return false;
                 }
             }
@@ -906,18 +917,18 @@ function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups=
             global $xoopsDB;
             $checkSQL = "SELECT count(entry_id) FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." WHERE entry_id = $entry_id $perGroupFilter";
             if (!$checkRes = $xoopsDB->query($checkSQL)) {
-								$cachedSecurityChecks[$form_id][$entry_id] = false;
+								$cachedSecurityChecks[$cacheKey] = false;
                 return false;
             }
             $countRow = $xoopsDB->fetchRow($checkRes);
             if ($countRow[0] != 1) {
-								$cachedSecurityChecks[$form_id][$entry_id] = false;
+								$cachedSecurityChecks[$cacheKey] = false;
                 return false;
             }
         }
     }
 
-		$cachedSecurityChecks[$form_id][$entry_id] = true;
+		$cachedSecurityChecks[$cacheKey] = true;
     return true;
 }
 
@@ -2324,6 +2335,44 @@ function getMetaData($entry_id, $member_handler=null, $fid="", $useOldCode=false
 }
 
 /**
+ * Work out who a permission question is being asked about.
+ *
+ * Everything that asks "may this person see this" needs both a user id and a set of group
+ * ids, and the two have to describe the same person. Deriving them separately is how they
+ * come apart: a uid read from $xoopsUser next to a group list handed in by a caller agree
+ * only as long as every entry point remembers to assign $xoopsUser before it calls, which
+ * is an assumption made far away from the code relying on it. Resolve the person once, here,
+ * and read both off the object.
+ *
+ * @param int|object|null $userIdOrObject A user object, a user id, or null for the current user
+ * @return object|null The user, or null for the anonymous user
+ */
+function formulize_resolveUserObject($userIdOrObject = null) {
+	if (is_object($userIdOrObject)) {
+		return is_a($userIdOrObject, 'icms_member_user_Object') ? $userIdOrObject : null;
+	}
+	if ($userIdOrObject) {
+		$member_handler = xoops_gethandler('member');
+		return ($userObject = $member_handler->getUser($userIdOrObject)) ? $userObject : null;
+	}
+	global $xoopsUser;
+	return $xoopsUser ? $xoopsUser : null;
+}
+
+/**
+ * The groups a resolved user belongs to, or the anonymous group for no user.
+ *
+ * getGroups() holds its answer on the user object after the first call, so asking wherever
+ * the groups are needed costs nothing and keeps them tied to the user they came from.
+ *
+ * @param object|null $userObject From formulize_resolveUserObject
+ * @return array The group ids
+ */
+function formulize_userGroups($userObject) {
+	return is_object($userObject) ? $userObject->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+}
+
+/**
  * May this user see the private elements of a given form?
  *
  * Asked per form rather than once per request, because a relationship reaches forms this
@@ -2354,14 +2403,18 @@ function formulize_userCanViewPrivateElements($fid, $groups) {
  *
  * @param int $fid The form id we're getting elements for
  * @param string $frid Optional. The relationship if any that we should use to include related forms
- * @param array $groups Optional. Optional. An array of group ids that we should use to limit which elements are included (based on their display settings). If not specified, the display settings for the element are not taken into account.
+ * @param array $groups Optional. An array of group ids used to limit which elements are included, based on their display settings. If not specified, the display settings for the element are not taken into account. This narrows the elements only; it is not who the permission checks are about, which is $userIdOrObject.
  * @param bool $includeTextForDisplay Optional. Defaults to false, so 'text for display' elements are not included
+ * @param int|object $userIdOrObject Optional. The user whose permissions decide which forms and which private elements are reachable. Defaults to the current user.
  * @return array And array keyed for form id, where each value is the raw results from a function q query of the DB, ie: two dimensioned array, first dimension is a counter for the records returned, second dimension is the name of the db field returned, in this case the db fields are ele_id and ele_caption, ele_colhead, and ele_handle
  */
-function getAllColList($fid, $frid=0, $groups=null, $includeTextForDisplay=false) {
-    global $xoopsUser;
+function getAllColList($fid, $frid=0, $groups=null, $includeTextForDisplay=false, $userIdOrObject=null) {
     $gperm_handler = xoops_gethandler('groupperm');
-		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+    // Who is asking. Both halves of every permission question below come off this one object,
+    // rather than a uid from $xoopsUser sitting next to a group list that arrived separately.
+    $userObject = formulize_resolveUserObject($userIdOrObject);
+    $actorGroups = formulize_userGroups($userObject);
+    $uid = is_object($userObject) ? $userObject->getVar('uid') : 0;
     $mid = getFormulizeModId();
 		$fid = intval($fid);
 		$frid = intval($frid);
@@ -2370,19 +2423,18 @@ function getAllColList($fid, $frid=0, $groups=null, $includeTextForDisplay=false
       throw new Exception("List of columns requested without specifying a form nor a relationship.");
     }
 
-    // if $groups then build the necessary filter
-    // build query for display groups
+    // $groups narrows the elements to the ones displayed to those groups, and nothing else.
+    // It is a question about the elements, not about the person: passing none asks for every
+    // element whatever its display settings say, which is what the admin filter UIs want. The
+    // permission questions further down are asked about the user, never about this list, so a
+    // caller cannot widen what they are allowed to see by handing in a longer set of groups.
     $gq = "";
     if (is_array($groups)) {
 			$gq = "AND (ele_display='1'";
-			foreach ($groups as $i=>$thisgroup) {
-				$groups[$i] = intval($thisgroup);
+			foreach ($groups as $thisgroup) {
 				$gq .= " OR ele_display LIKE '%,".intval($thisgroup).",%'";
 			}
 			$gq .= ")";
-    } else {
-			// reset groups to be based off user object (and this instantiates it if it weren't present before)
-			$groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
     }
 
 		$incbreaks = "";
@@ -2392,7 +2444,7 @@ function getAllColList($fid, $frid=0, $groups=null, $includeTextForDisplay=false
 
     // generate the $allcols list
 		// do the passed in fid first, append rest of relationship after if necessary
-		$cols = addToColsList(array(), $fid, $uid, $groups, $mid, $gperm_handler, $gq, $incbreaks);
+		$cols = addToColsList(array(), $fid, $uid, $actorGroups, $mid, $gperm_handler, $gq, $incbreaks);
     if ($frid) {
         $fids[0] = $fid;
         $check_results = checkForLinks($frid, $fids, $fid, "");
@@ -2400,12 +2452,12 @@ function getAllColList($fid, $frid=0, $groups=null, $includeTextForDisplay=false
         $sub_fids = $check_results['sub_fids'];
         foreach ($fids as $this_fid) {
 						if($this_fid != $fid) {
-							$cols = addToColsList($cols, $this_fid, $uid, $groups, $mid, $gperm_handler, $gq, $incbreaks);
+							$cols = addToColsList($cols, $this_fid, $uid, $actorGroups, $mid, $gperm_handler, $gq, $incbreaks);
 						}
         }
         foreach ($sub_fids as $this_fid) {
 					if($this_fid != $fid) {
-						$cols = addToColsList($cols, $this_fid, $uid, $groups, $mid, $gperm_handler, $gq, $incbreaks);
+						$cols = addToColsList($cols, $this_fid, $uid, $actorGroups, $mid, $gperm_handler, $gq, $incbreaks);
 					}
         }
     }
@@ -2479,7 +2531,7 @@ function getUserAccountPasswordHandles($formIdOrObject) {
  * which is the same test getAllColList applies to the elements it does return.
  *
  * @param int|object $formIdOrObject The form to read the user account elements of
- * @param int|object $userIdOrObject Optional. The user to check display groups for. Defaults to the current user.
+ * @param int|object $userIdOrObject Optional. The user this is being asked about. Defaults to the current user.
  * @return array Rows in the same shape getAllColList returns: ele_id, ele_caption, ele_colhead, ele_handle, in element order
  */
 function getUserAccountColList($formIdOrObject, $userIdOrObject = 0) {
@@ -2509,11 +2561,8 @@ function getUserAccountColList($formIdOrObject, $userIdOrObject = 0) {
 
 	if(!empty($userAccountElementIds)) {
 
-		global $xoopsUser;
-		$member_handler = xoops_gethandler('member');
-		$userObject = is_a($userIdOrObject, 'icms_member_user_Object') ? $userIdOrObject : ($userIdOrObject ? $member_handler->getUser($userIdOrObject) : $xoopsUser);
-		$groups = $userObject? $userObject->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
-		$viewPrivateElements = formulize_userCanViewPrivateElements($formObject->getVar('fid'), $groups);
+		$userObject = formulize_resolveUserObject($userIdOrObject);
+		$viewPrivateElements = formulize_userCanViewPrivateElements($formObject->getVar('fid'), formulize_userGroups($userObject));
 
 		// gather all element objects at once for efficiency
 		if($elementObjects = $element_handler->getObjects(new Criteria('ele_id', "(".implode(',', array_filter($userAccountElementIds, 'is_numeric')).")", 'IN'), id_as_key: true)) {
@@ -2522,7 +2571,7 @@ function getUserAccountColList($formIdOrObject, $userIdOrObject = 0) {
 				if (!isset($elementObject) OR !is_object($elementObject) OR ($elementObject->getVar('ele_private') AND !$viewPrivateElements)) {
 					continue;
 				}
-				if (!$element_handler->isElementVisibleForUser($elementObject, $userIdOrObject)) {
+				if (!$element_handler->isElementVisibleForUser($elementObject, $userObject)) {
 					continue;
 				}
 				$cols[] = array(
@@ -2553,11 +2602,10 @@ function getUserAccountColList($formIdOrObject, $userIdOrObject = 0) {
  *
  * @param int $fid The main form id
  * @param int|string $frid Optional. The relationship to include connected forms from
- * @param array $groups Optional. The group ids to check against. Defaults to the user's own.
- * @param int|object $userIdOrObject Optional. The user to check element display groups for. Defaults to the current user. Must describe the same person as $groups, since each is used for a different half of the answer.
+ * @param int|object $userIdOrObject Optional. The user this is being asked about. Defaults to the current user.
  * @return array Keys are the permitted handles, values are true
  */
-function getAllAllowedColHandles($fid, $frid = 0, $groups = null, $userIdOrObject = 0) {
+function getAllAllowedColHandles($fid, $frid = 0, $userIdOrObject = null) {
 
 	$allowed = array();
 
@@ -2566,7 +2614,10 @@ function getAllAllowedColHandles($fid, $frid = 0, $groups = null, $userIdOrObjec
 		$allowed[$metadataField] = true;
 	}
 
-	$cols = getAllColList($fid, $frid, $groups);
+	// one user, asked for once. The groups are only here to narrow the elements to the ones
+	// displayed to this user; getAllColList asks its permission questions about the user.
+	$userObject = formulize_resolveUserObject($userIdOrObject);
+	$cols = getAllColList($fid, $frid, formulize_userGroups($userObject), false, $userObject);
 	foreach ($cols as $thisFormCols) {
 		if (!is_array($thisFormCols)) {
 			continue;
@@ -2576,10 +2627,10 @@ function getAllAllowedColHandles($fid, $frid = 0, $groups = null, $userIdOrObjec
 		}
 	}
 
-	// getUserAccountColList resolves the user, and the private element permission for each
-	// form, exactly the way addToColsList now does for the elements getAllColList returned
+	// getUserAccountColList works out the private element permission per form, exactly the way
+	// addToColsList now does for the elements getAllColList returned
 	foreach (array_keys($cols) as $thisFid) {
-		foreach (getUserAccountColList($thisFid, $userIdOrObject) as $col) {
+		foreach (getUserAccountColList($thisFid, $userObject) as $col) {
 			$allowed[$col['ele_handle']] = true;
 		}
 		// removed last, because on an ad hoc users table form a password element has a real

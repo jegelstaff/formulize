@@ -121,7 +121,7 @@ function formulize_readEntries($formIdOrHandle, $options = array(), $user = null
     // Refuse anything this user may not see, before we go anywhere near the data. The same
     // list gates the sort field and the filter below, so a field that cannot be returned
     // cannot be used to order or select entries either.
-    $allowedFields = formulize_apiAllowedFieldHandles($fid, $relationship, $groups, $user);
+    $allowedFields = formulize_apiAllowedFieldHandles($fid, $relationship, $user);
     formulize_apiCheckFieldPermissions($fields, $allowedFields);
     $fieldsByForm = formulize_apiValidateElementHandles($fields, $fid);
     if (empty($fieldsByForm)) {
@@ -355,15 +355,14 @@ function formulize_apiReadFieldValue($item, $formHandle, $localEntryId, $handle,
  *
  * @param int fid The main form id
  * @param int frid The relationship being queried
- * @param array groups The user's group ids
  * @param object user The user being acted as
  * @return array Keys are the permitted handles
  */
-function formulize_apiAllowedFieldHandles($fid, $frid, $groups, $user = null) {
+function formulize_apiAllowedFieldHandles($fid, $frid, $user = null) {
     static $cached = array();
-    $cacheKey = intval($fid).'/'.intval($frid).'/'.implode(',', $groups);
+    $cacheKey = intval($fid).'/'.intval($frid).'/'.intval(is_object($user) ? $user->getVar('uid') : 0);
     if (!isset($cached[$cacheKey])) {
-        $cached[$cacheKey] = getAllAllowedColHandles($fid, $frid, $groups, $user ? $user : 0);
+        $cached[$cacheKey] = getAllAllowedColHandles($fid, $frid, $user);
     }
     return $cached[$cacheKey];
 }

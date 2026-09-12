@@ -688,7 +688,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		$showcols = explode(",", $_POST['newcols']);
 	}
 
-	$showcols = removeNotAllowedCols($fid, $frid, $showcols, $groups); // converts old format metadata fields to new ones too if necessary
+	$showcols = removeNotAllowedCols($fid, $frid, $showcols, $xoopsUser); // converts old format metadata fields to new ones too if necessary
 
 	/**
 	 * STAGE 10 - DETERMINE THE SCOPE WE SHOULD USE FOR THIS PAGELOAD, AND THE VIEWS AVAILABLE TO THE USER. ENFORCE FUNDAMENTAL SEARCHES FROM THE LAST LOADED VIEW IF IT HAD ANY.
@@ -4242,7 +4242,8 @@ function loadAdvanceView($fid, $advance_view) {
 // remove columns that the user does not have permission to view -- added June 29, 2006 -- jwe
 // this function takes a column list (handles or ids) and returns it with all columns removed that the user cannot view according to the display options on the elements
 // this function also removes columns that are private if the user does not have view_private_elements permission
-function removeNotAllowedCols($fid, $frid, $cols, $groups) {
+// $userIdOrObject is who that is being decided for, defaulting to the current user
+function removeNotAllowedCols($fid, $frid, $cols, $userIdOrObject = null) {
 
 
 	// convert old metadata handles to new ones if present
@@ -4262,7 +4263,7 @@ function removeNotAllowedCols($fid, $frid, $cols, $groups) {
 	// the metadata fields, the elements with data, and the user account elements, all vetted
 	// against this user's permissions. Shared with the Public API and the column picker, so
 	// that a column means the same thing everywhere it is offered or accepted.
-	$all_allowed_cols = getAllAllowedColHandles($fid, $frid, $groups);
+	$all_allowed_cols = getAllAllowedColHandles($fid, $frid, $userIdOrObject);
 
 	$allowed_cols_in_view = array_values(array_intersect($cols, array_keys($all_allowed_cols)));
 
