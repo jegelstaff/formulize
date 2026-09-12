@@ -534,6 +534,10 @@ function makeNewConnectionElement($type, $fid, $otherElementId) {
 		// shunt everything else down one
 		$sql = "UPDATE ".$xoopsDB->prefix("formulize")." SET ele_order = ele_order + 1 WHERE ele_order >= 1 AND id_form = $fid";
 		$res = $xoopsDB->query($sql);
+		// every element of this form just moved, by SQL that went around the objects, so the
+		// ones already loaded are stale. Cleared here rather than after the insert below, which
+		// would throw away the element that insert just cached.
+		$element_handler->clearElementCache();
 		// set stuff uniquely for the different situations...
 		switch($type) {
 			case 'new-common-textbox':

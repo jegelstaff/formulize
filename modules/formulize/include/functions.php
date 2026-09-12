@@ -11810,6 +11810,10 @@ function figureOutOrder($orderChoice, $oldOrder=0, $fid=0) {
 		if($xoopsDB->getRowsNum($res) > 0) {
 			$sql = "UPDATE ".$xoopsDB->prefix("formulize")." SET ele_order = ele_order + 1 WHERE ele_order >= $orderValue AND id_form = $fid";
 			$res = $xoopsDB->query($sql);
+			// ele_order was changed by SQL rather than through the element objects, so any of
+			// this form's elements already loaded are holding the order they had a moment ago
+			$element_handler = xoops_getmodulehandler('elements', 'formulize');
+			$element_handler->clearElementCache();
 		}
 	}
 	return $orderValue;

@@ -869,11 +869,13 @@ class formulizeElementsHandler {
 	 * Forget every cached element.
 	 *
 	 * For when elements have been changed by SQL that went around the objects, leaving no list
-	 * of which ones are now stale.
+	 * of which ones are now stale. Public, because that SQL is not all in this class: anything
+	 * that writes to the formulize table directly has to say so, or the objects already loaded
+	 * go on reporting what the rows used to say for the rest of the request.
 	 *
 	 * @return void
 	 */
-	private function clearElementCache() {
+	public function clearElementCache() {
 		global $formulizeCachedElementObjects, $formulizeCachedElementIdsByHandle;
 		$formulizeCachedElementObjects = array();
 		$formulizeCachedElementIdsByHandle = array();
