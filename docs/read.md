@@ -81,7 +81,6 @@ Top level items are joined by _andOr_. To use a different operator for part of t
 
 That reads as _status = active AND (region = east OR region = west)_.
 
-Groups cannot contain other groups. Formulize filters support one level of grouping, and a nested group is rejected rather than quietly flattened.
 
 A filter can also be a single number, meaning one entry id.
 

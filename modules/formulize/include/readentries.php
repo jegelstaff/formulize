@@ -58,18 +58,15 @@ function formulize_apiFilterOperators() {
  *        - limitStart (int) default 0
  *        - limitSize (int|null) default 100, capped at 10000, null for no limit
  *        - relationship (int) 0 for the main form alone, -1 for the primary relationship
- * @param object user The user to act as. Defaults to the current $xoopsUser. Null is anonymous.
+ * @param int|object|null user The user to act as: a user object, a user id, or nothing at all for the current $xoopsUser.
  * @return array Keys: fid, formHandle, dataset, fieldsByForm, scope, and the validated
  *         filter/andOr/limitStart/limitSize/sortField/sortOrder/relationship values.
  * @throws FormulizeApiException
  */
 function formulize_readEntries($formIdOrHandle, $options = array(), $user = null) {
 
-    if ($user === null) {
-        global $xoopsUser;
-        $user = $xoopsUser;
-    }
-    $groups = $user ? $user->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+    $user = formulize_resolveUserObject($user);
+    $groups = formulize_userGroups($user);
 
     // ---- the form -------------------------------------------------------
     // The forms handler resolves either an id or a handle, so there is nothing to look up first.
