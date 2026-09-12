@@ -11,10 +11,11 @@
  *
  *   /formulize-public-api/v1/form/{form_handle_or_id}/read
  *
- * $id and $method are set by the controller that landed us here. $id is the form
- * handle or id, and $method is what to do with it. A write method is expected to
- * join read here later, which is why this file is named for the object rather than
- * the action.
+ * $id, $method and $formulize_publicApiUser are set by the controller that landed us
+ * here. $id is the form handle or id, $method is what to do with it, and the user is
+ * whoever the controller authenticated the request as, null for anonymous. A write
+ * method is expected to join read here later, which is why this file is named for the
+ * object rather than the action.
  *
  * Parameters travel in a JSON request body, or in the query string for simple
  * cases. The real work is done by the shared core in include/readentries.php,
@@ -91,7 +92,6 @@ switch($method) {
 
 		try {
 
-			$user = formulize_publicApiAuthenticate();
 			$parameters = formulize_publicApiReadParameters();
 
 			$options = array(
@@ -114,7 +114,7 @@ switch($method) {
 				}
 			}
 
-			$result = formulize_readEntries($id, $options, $user);
+			$result = formulize_readEntries($id, $options, $formulize_publicApiUser);
 			$rows = formulize_renderEntriesAsRows($result, formulize_publicApiReadRawSetting($parameters));
 
 			formulize_publicApiSendJson(array(

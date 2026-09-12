@@ -9,9 +9,12 @@
 /**
  * Authentication for the Public API.
  *
- * One seam, shared by every endpoint, so that a future write endpoint behaves the
- * same way and so there is exactly one place to consult an API key's scope if
- * scoped or read only keys are added later.
+ * One seam, called once by the router before it dispatches, so that a future write
+ * endpoint behaves the same way, so no endpoint can forget to authenticate and quietly
+ * run as whatever session the browser carried, and so there is exactly one place to
+ * consult an API key's scope if scoped or read only keys are added later. The router
+ * exempts status, which has to answer before any credential is considered; see the
+ * comment at the call site.
  *
  * Three ways in, in order of precedence:
  *
@@ -60,9 +63,13 @@ function formulize_publicApiGetAuthorizationHeader() {
 /**
  * Establish who is making this request.
  *
- * Assigns the $xoopsUser and $icmsUser globals so that everything downstream, in
- * particular the permission checks and buildScope, behaves exactly as it would
- * during a normal page load. This mirrors what the MCP server and makecsv.php do.
+ * Assigns the $xoopsUser and $icmsUser globals so that everything downstream behaves
+ * exactly as it would during a normal page load. That assignment is not a convenience:
+ * the data layer reads those globals directly, for the per-group filters that decide
+ * which rows a user may see and for creator_email redaction, so a user object returned
+ * without it would only be half honoured. This mirrors what the MCP server and
+ * makecsv.php do. No session is created: the globals last for this request only, and
+ * nothing is written to the session store or sent back as a cookie.
  *
  * @return object|null The authenticated user, or null for anonymous
  * @throws FormulizeApiException if a key was supplied but is not usable

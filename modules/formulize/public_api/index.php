@@ -108,9 +108,31 @@ if($formulize_publicApiGateResult) {
         exit();
     }
 
+    // Establish who is calling, once, before any endpoint runs.
+    //
+    // This belongs here rather than in each endpoint because the globals it assigns are what
+    // the data layer reads. getData consults $xoopsUser directly for the per-group filters that
+    // decide which rows a user may see, for the main form and every linked form (see
+    // include/extract.php), and again when deciding whether to redact creator_email. An endpoint
+    // that forgot to authenticate would not fail closed: it would run as whatever session the
+    // browser happened to carry, which for a same origin page is a real, logged in user.
+    //
+    // status is exempt, and must stay exempt. It reports whether the Authorization header
+    // survived the trip to PHP, and the admin check that turns the Public API on probes it with
+    // a known test header rather than a real key. Authenticating first would turn that probe
+    // into an authentication error, and the preference could never be switched on.
+    $formulize_publicApiUser = null;
+    if($objectOrAction != 'status') {
+        try {
+            $formulize_publicApiUser = formulize_publicApiAuthenticate();
+        } catch (FormulizeApiException $e) {
+            formulize_publicApiSendException($e); // sends the error envelope and exits
+        }
+    }
+
     $apiFilePath = XOOPS_ROOT_PATH."/modules/formulize/public_api/$version/$objectOrAction.php";
     if(file_exists($apiFilePath)) {
-        include_once $apiFilePath;
+        include_once $apiFilePath; // INCLUDED IN GLOBAL SCOPE, so that it has access to all previously defined variables and functions - if this changes, dependent code in each endpoint may break.
     } else {
         // no file for the requested api object or action, 404
         http_response_code(404);
