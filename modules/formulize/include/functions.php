@@ -11634,6 +11634,40 @@ function formulize_publicApiOriginIsAllowed($normalisedOrigin, $allowedOrigins) 
 }
 
 /**
+ * Whether an Origin header names this site itself.
+ *
+ * Browsers send an Origin header on same-origin POSTs as well as on cross-origin requests,
+ * so the Public API's origin check has to recognise this site's own address, or the default
+ * configuration - a blank allowlist, meaning same origin only - would refuse the site's own
+ * Javascript. Matched on host and port, ignoring the scheme, the same way a scheme-less
+ * allowlist entry is matched. The Host header of the request is accepted as well as
+ * XOOPS_URL, so that an install reachable at more than one address works at any of them;
+ * a browser sets Origin and Host from the same page, so agreement between them is
+ * same-origin by definition, whatever XOOPS_URL happens to say.
+ *
+ * @param string $normalisedOrigin The caller's Origin header, lowercased and stripped of a trailing slash
+ * @return bool
+ */
+function formulize_publicApiOriginIsThisSite($normalisedOrigin) {
+    $origin = formulize_publicApiSplitOrigin($normalisedOrigin);
+    if ($origin['host'] === '') {
+        return false;
+    }
+    $thisSiteHosts = array();
+    if (defined('XOOPS_URL')) {
+        $host = parse_url(XOOPS_URL, PHP_URL_HOST);
+        $port = parse_url(XOOPS_URL, PHP_URL_PORT);
+        if ($host) {
+            $thisSiteHosts[] = strtolower($host).($port ? ':'.$port : '');
+        }
+    }
+    if (isset($_SERVER['HTTP_HOST'])) {
+        $thisSiteHosts[] = strtolower(trim($_SERVER['HTTP_HOST']));
+    }
+    return in_array($origin['host'], $thisSiteHosts, true);
+}
+
+/**
  * Takes a value and makes sure it's the correct type in PHP, either string, int or float
  *
  * @param mixed $value - the value we're working with

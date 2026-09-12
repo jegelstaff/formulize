@@ -21,34 +21,52 @@ if (!defined('FORMULIZE_PUBLIC_API_REQUEST')) {
 }
 
 /**
- * Emit the CORS headers for this request, if the caller's origin is allowed.
+ * Check the caller's origin, and emit the CORS headers for it.
  *
- * A request with no Origin header is same origin, or is not from a browser at all,
- * and needs no CORS negotiation. When the origin is not on the administrator's
- * allowlist we deliberately send no CORS headers, which is what makes the browser
- * refuse the response.
+ * A browser puts an Origin header on every cross origin request, and cannot be talked out
+ * of it, so an origin that is present and not on the administrator's allowlist is refused
+ * here with a 403, before any endpoint runs. Leaving it to the browser to discard the
+ * response would mean a site that is not allowed could still make this one do the work, and
+ * incur whatever side effects that work has. This site's own address is always allowed, since
+ * browsers send an Origin header on same origin POSTs too, and rejecting those would break
+ * the site's own Javascript whenever the allowlist is blank.
  *
- * This constrains browsers, not attackers: it is a hygiene control, not a security
- * boundary. The security boundary is that an unauthenticated caller gets anonymous
- * permissions and can only reach forms an administrator has opened to anonymous.
+ * A request with no Origin header at all is allowed through to be authenticated as usual.
+ * That is not a hole in the above: a browser never omits the header on a cross origin
+ * request, so the only callers that arrive without one are same origin GETs, where the
+ * browser omits it by design, and things that are not browsers, which could put any origin
+ * they liked on the wire anyway. The allowlist governs browsers on other websites, which is
+ * what it is for, and it is not the security boundary. The boundary is the API key and the
+ * Formulize permissions of the user it belongs to, or the permissions of the anonymous user
+ * when no key is supplied.
  *
  * @return void
  */
-function formulize_publicApiSendCorsHeaders() {
+function formulize_publicApiEnforceOrigin() {
     $origin = isset($_SERVER['HTTP_ORIGIN']) ? trim($_SERVER['HTTP_ORIGIN']) : '';
     if ($origin === '') {
         return;
     }
     $allowedOrigins = formulize_publicApiAllowedOrigins();
+    // Echo back the normalised origin, not the header as it arrived. A browser compares this
+    // against its own origin byte for byte, and our matching is deliberately more forgiving
+    // than that, so an origin that matched only because of the normalisation has to be
+    // answered in its normalised form or the browser will reject an allowed caller.
     $normalisedOrigin = rtrim(strtolower($origin), '/');
     if (in_array('*', $allowedOrigins)) {
         header('Access-Control-Allow-Origin: *');
-    } elseif (formulize_publicApiOriginIsAllowed($normalisedOrigin, $allowedOrigins)) {
-        header('Access-Control-Allow-Origin: '.$origin);
+    } elseif (formulize_publicApiOriginIsThisSite($normalisedOrigin)
+        OR formulize_publicApiOriginIsAllowed($normalisedOrigin, $allowedOrigins)) {
+        header('Access-Control-Allow-Origin: '.$normalisedOrigin);
         // The response varies by origin, so shared caches must not reuse it across sites.
         header('Vary: Origin');
     } else {
-        return;
+        header('Vary: Origin');
+        formulize_publicApiSendError(
+            'origin_not_allowed',
+            'Requests from '.$normalisedOrigin.' are not allowed by this site. An administrator can allow it in the Formulize preferences, under the websites allowed to call the Public API.',
+            403
+        );  // sends the error envelope and exits
     }
     header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
     header('Access-Control-Allow-Headers: Authorization, Content-Type');

@@ -99,7 +99,10 @@ if($formulize_publicApiGateResult) {
     include_once XOOPS_ROOT_PATH.'/modules/formulize/public_api/response.php';
     include_once XOOPS_ROOT_PATH.'/modules/formulize/public_api/authenticate.php';
 
-    formulize_publicApiSendCorsHeaders();
+    // Settle the caller's origin first. A browser origin that the administrator has not allowed
+    // is refused outright in here, including on the preflight, so that a site that is not allowed
+    // never reaches an endpoint at all.
+    formulize_publicApiEnforceOrigin();
 
     // A cross origin request carrying a JSON body or an Authorization header is preflighted,
     // so answer OPTIONS before doing any work.
@@ -117,10 +120,15 @@ if($formulize_publicApiGateResult) {
     // that forgot to authenticate would not fail closed: it would run as whatever session the
     // browser happened to carry, which for a same origin page is a real, logged in user.
     //
-    // status is exempt, and must stay exempt. It reports whether the Authorization header
-    // survived the trip to PHP, and the admin check that turns the Public API on probes it with
-    // a known test header rather than a real key. Authenticating first would turn that probe
-    // into an authentication error, and the preference could never be switched on.
+    // status is exempt, and must stay exempt, or the Public API can never be enabled again.
+    // Enabling the preference makes ICMS cURL its own server at this endpoint, sending a
+    // well formed Authorization header carrying the fake key test-header-passthrough-check,
+    // so that status can report whether the header survived the trip to PHP at all (see
+    // icms_config_item_Handler::insert in libraries/icms/config/item/Handler.php). That
+    // request carries no session cookie, so authenticating it would reject the fake key and
+    // return an error envelope. The enable check looks for status == healthy, would not find
+    // it, and forces the preference back to 0. The setting would simply refuse to stick, with
+    // nothing to indicate why.
     $formulize_publicApiUser = null;
     if($objectOrAction != 'status') {
         try {
