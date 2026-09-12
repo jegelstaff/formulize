@@ -1977,10 +1977,12 @@ function processGetDataResults($resultData)
 
 	$totalMainFormEntryIdIndex = array(); // catalog all the entry ids in the main form, for deducing the groups later
 	$entryIdIndex = array(); // set to the entry ids once we're in the loops
+	$foreignKeyValuesFound = array(); // the values of any linked elements, gathered as the records are built
+	$linkedElementHandles = array(); // which handles are linked elements, worked out once each
 	foreach ($queryRes as $queryResIndex => $thisRes) {
 		// loop through the found data and create the dataset array in "getData" format
 		while ($masterQueryArray = $xoopsDB->fetchRow($thisRes)) {
-			formulize_benchmark("starting record");
+			//formulize_benchmark("starting record");
 			$creatorAllowsEmailViewing = null;
 			$creatorUid = null;
 			foreach ($masterQueryArray as $resultColIndex => $value) {
@@ -2091,6 +2093,20 @@ function processGetDataResults($resultData)
 					continue;
 				}
 				$masterResults[$masterIndexer][getFormHandle($curFormId)][$entryIdIndex[$curFormAlias]][$elementHandle] = $value;
+				// Note the foreign keys as they go past, so that reading the first value of a linked
+				// element later can resolve every value of it in one go. See formulize_recordForeignKeyValues
+				// for what this is for. Done here because this is the one place every value of every
+				// entry is already in hand, so it costs a lookup in a memo rather than a second walk
+				// through the finished dataset. Values are kept as keys, so a thousand entries naming
+				// the same few source entries are remembered as the few.
+				if (!isset($linkedElementHandles[$elementHandle])) {
+					// an element handle that names no element is a metadata field, which is never linked
+					$linkedElementHandles[$elementHandle] = (formulize_getElementMetaData($elementHandle, true)
+						AND formulize_isLinkedElement($elementHandle)) ? true : false;
+				}
+				if ($linkedElementHandles[$elementHandle] AND (is_string($value) OR is_int($value))) {
+					$foreignKeyValuesFound[$elementHandle][$value] = true;
+				}
 				if ($indexCacheKey) {
 					$GLOBALS['formulize_entryToCacheKeys'][getFormHandle($curFormId)][$entryIdIndex[$curFormAlias]][$indexCacheKey][$masterIndexer] = true;
 				}
@@ -2128,7 +2144,7 @@ function processGetDataResults($resultData)
 
 	$masterResults = injectSupplementaryData($masterResults, $fid, $totalMainFormEntryIdIndex, $isUserTableForm);
 
-	formulize_recordForeignKeyValuesInDataset($masterResults);
+	formulize_recordForeignKeyValues($foreignKeyValuesFound, count($masterResults));
 
 	return $masterResults;
 }
@@ -2143,60 +2159,36 @@ function processGetDataResults($resultData)
  * entries in different combinations gets no help at all from caching the conversions, because no
  * two of its values are the same string.
  *
- * This does not resolve anything. It records what is there, and the first read of a given element
- * hands the whole record to formulize_preresolveForeignKeyValues, which resolves it in one query
- * per few hundred keys. Nothing is resolved that is never asked for, and every caller benefits
- * without knowing this happened, which is the point of doing it here rather than in any one of
- * them.
+ * This does not resolve anything. The values are gathered in the loop that builds the records, so
+ * that noticing them costs nothing more than the loop already spends, and the first read of a given
+ * element hands the whole record to formulize_preresolveForeignKeyValues, which resolves it in one
+ * query per few hundred keys. Nothing is resolved that is never asked for, and every caller
+ * benefits without knowing this happened, which is the point of doing it here rather than in any
+ * one of them.
  *
- * Only datasets of some size are worth recording. Most queries in the module fetch a single entry
- * to read a field or two out of it, where batching cannot save more than a handful of queries and
- * the record is just something to carry around. The saving grows with the number of entries, so
- * that is what the threshold is on.
+ * Only datasets of some size are worth remembering, which is why the values arrive here to be
+ * merged rather than being written as they are found. Most queries in the module fetch a single
+ * entry to read a field or two out of it, where batching cannot save more than a handful of queries
+ * and the record is just something to carry around for the rest of the request. The saving grows
+ * with the number of entries, so that is what the threshold is on.
  *
- * @param array $dataset The finished dataset, as processGetDataResults is about to return it
+ * @param array $valuesByHandle Linked element handle => the values found, held as keys
+ * @param int $entryCount How many entries the dataset ended up holding
  * @return void
  */
-function formulize_recordForeignKeyValuesInDataset($dataset) {
+function formulize_recordForeignKeyValues($valuesByHandle, $entryCount) {
 
 	$minimumEntriesWorthRecording = 50;
-	if (!is_array($dataset) OR count($dataset) < $minimumEntriesWorthRecording) {
+	if ($entryCount < $minimumEntriesWorthRecording) {
 		return;
 	}
 
-	// which handles in each form are linked elements. Settled once per form, since every record of
-	// a form in a dataset carries the same keys, and skipping anything that is not an element at
-	// all: the metadata fields, owner_groups, creator_email and the user account fields.
-	$linkedHandlesByForm = array();
-
-	foreach ($dataset as $item) {
-		if (!is_array($item)) {
-			continue;
-		}
-		foreach ($item as $formHandle => $records) {
-			if (!is_array($records) OR !$records) {
-				continue;
-			}
-			if (!isset($linkedHandlesByForm[$formHandle])) {
-				$linkedHandlesByForm[$formHandle] = array();
-				foreach ((array) $records[array_key_first($records)] as $handle => $ignored) {
-					if (formulize_getElementMetaData($handle, true) AND formulize_isLinkedElement($handle)) {
-						$linkedHandlesByForm[$formHandle][] = $handle;
-					}
-				}
-			}
-			if (!$linkedHandlesByForm[$formHandle]) {
-				continue;
-			}
-			foreach ($records as $record) {
-				foreach ($linkedHandlesByForm[$formHandle] as $handle) {
-					// values are kept as keys, so that a thousand entries naming the same few source
-					// entries are recorded as the few, and a value seen twice costs nothing extra
-					if (isset($record[$handle]) AND (is_string($record[$handle]) OR is_int($record[$handle]))) {
-						$GLOBALS['formulize_pendingForeignKeyResolutions'][$handle][$record[$handle]] = true;
-					}
-				}
-			}
+	foreach ($valuesByHandle as $handle => $values) {
+		if (isset($GLOBALS['formulize_pendingForeignKeyResolutions'][$handle])) {
+			// a union, since another dataset may have recorded values for this element already
+			$GLOBALS['formulize_pendingForeignKeyResolutions'][$handle] += $values;
+		} else {
+			$GLOBALS['formulize_pendingForeignKeyResolutions'][$handle] = $values;
 		}
 	}
 }
