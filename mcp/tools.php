@@ -3792,7 +3792,7 @@ Do not use foreign key values with linked elements; use the readable value inste
 	 * The two vocabularies overlap but not entirely, and the difference matters: MCP maps
 	 * some types to HTTP 200 on purpose, so that a model sees "you asked for a handle that
 	 * does not exist" as an ordinary tool result to correct, rather than a transport
-	 * failure. Bad arguments are one of those, so they keep MCP's own type here.
+	 * failure. Bad arguments are one of those, so they use MCP's own type here.
 	 *
 	 * @param string $type The type from FormulizeApiException
 	 * @return string The equivalent FormulizeMCPException type
