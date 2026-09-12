@@ -155,12 +155,63 @@ function applyReadableValueTransformations($value, $handle, $entry_id) {
 /**
  * Convert foreign keys to readable values, for linked elements
  * If foreign key override is in place for datasets, foreign keys are preserved
+ *
+ * This is a caching wrapper around convertForeignKeysToReadableValuesUncached, because the
+ * conversion costs a query (or several) per value, and the answer depends only on the element
+ * and the foreign key being resolved. The entry doing the pointing has no bearing on it -- the
+ * $entry_id below is used in error messages and nowhere else -- so every entry pointing at the
+ * same source entry can share one lookup. prepvalues caches too, but its key includes the entry
+ * id, which is necessary for the element types where the entry does matter (OTHER text, for
+ * instance), and which means a linked value is otherwise re-queried for every entry that holds
+ * it. A list of 10,000 entries pointing at one of 50 countries is 50 queries here, not 10,000.
+ *
+ * Cached for the duration of the request. Nothing invalidates it if the source form is written
+ * to part way through a page load, which is the same bargain prepvalues' own cache makes; set
+ * $GLOBALS['formulize_doNotCacheDataSet'] to opt out where that matters.
+ *
  * @param mixed $value The raw value from the database for a given element in a given entry
  * @param string $handle The handle of the element
  * @param int $entry_id The ID of the entry
  * @return array An array of the converted values. If the element is not linked, the array will contain the original value(s) split on the standard separator.
  */
 function convertForeignKeysToReadableValues($value, $handle, $entry_id) {
+
+	static $cachedConversions = array();
+
+	// Both globals change what the conversion returns, so both belong in the key. Foreign keys can
+	// be preserved per handle or for everything, and an export can be configured to show different
+	// source columns than a list does.
+	$foreignKeysStayAsTheyAre = (isset($GLOBALS['formulize_useForeignKeysInDataset'][$handle])
+		OR isset($GLOBALS['formulize_useForeignKeysInDataset']['all'])) ? 1 : 0;
+	$doingExport = !empty($GLOBALS['formulize_doingExport']) ? 1 : 0;
+	// Only what can be an array key can be cached, which is what a database column holds: a string,
+	// an integer, or nothing at all. An empty column is worth caching too, since a connected form
+	// with no entry produces one for every row of a query. It gets a key of its own rather than
+	// being allowed to land on the empty string's, because a null byte cannot occur in a handle or
+	// a foreign key. Anything else, an array in particular, skips the cache.
+	$cacheableValue = is_null($value) ? "\0null" : ((is_string($value) OR is_int($value)) ? $value : null);
+	$canCache = (!is_null($cacheableValue) AND !isset($GLOBALS['formulize_doNotCacheDataSet']));
+
+	if ($canCache AND isset($cachedConversions[$handle][$foreignKeysStayAsTheyAre][$doingExport][$cacheableValue])) {
+		return $cachedConversions[$handle][$foreignKeysStayAsTheyAre][$doingExport][$cacheableValue];
+	}
+
+	$values = convertForeignKeysToReadableValuesUncached($value, $handle, $entry_id);
+
+	if ($canCache) {
+		$cachedConversions[$handle][$foreignKeysStayAsTheyAre][$doingExport][$cacheableValue] = $values;
+	}
+	return $values;
+}
+
+/**
+ * The actual conversion. Call convertForeignKeysToReadableValues instead of this.
+ * @param mixed $value The raw value from the database for a given element in a given entry
+ * @param string $handle The handle of the element
+ * @param int $entry_id The ID of the entry, used only to identify the entry in error messages
+ * @return array An array of the converted values. If the element is not linked, the array will contain the original value(s) split on the standard separator.
+ */
+function convertForeignKeysToReadableValuesUncached($value, $handle, $entry_id) {
 
 	$element_handler = xoops_getmodulehandler('elements', 'formulize');
 	$elementObject = $element_handler->get($handle);
@@ -3800,20 +3851,49 @@ function parseTableFormFilter($filter, $andor, $elementsById, $fid = 0, $tableNa
 // FUNCTIONS BELOW ARE FOR PROCESSING RESULTS
 // *******************************
 
-// returns the form handle for the form that the given element handle belongs to
+/**
+ * Returns the form handle for the form that the given element handle belongs to
+ *
+ * Every record of a form within an entry has the same keys, because the records are written one
+ * result row at a time out of a single query per form, and every row of that query carries the
+ * same columns. So the first record of a form answers for all of them, and finding the form costs
+ * one lookup per form rather than a walk through every record of every form. That walk used to be
+ * repeated for every field read out of every entry, which is expensive on the many side of a one
+ * to many connection.
+ *
+ * A record can fall out of step with its siblings in one place: the derived value pass in
+ * formulize_calcDerivedColumns creates a key for a derived element that was not among the columns
+ * selected, and only for the records whose derived value differs from what is already there. The
+ * full search below runs when the first record comes up empty, so such a record is still found.
+ *
+ * There is no need to know which record the caller is reading. An element handle belongs to
+ * exactly one form, metadata fields are only written into the records of the main form, and the
+ * handles of user account fields carry their own form id, so no two forms in an entry can hold
+ * the same key and the answer cannot depend on the record.
+ *
+ * @param array $entry An entry from a dataset, as returned by gatherDataset
+ * @param string $handle The element handle to locate
+ * @return string The form handle, or "" if the entry is not an array or the element handle is not found
+ */
 function getFormHandleFromEntry($entry, $handle)
 {
 	if (is_array($entry)) {
 		foreach ($entry as $formHandle => $record) {
-			foreach ($record as $elements) {
+			if (is_array($record) AND $record
+				AND array_key_exists($handle, (array)$record[array_key_first($record)])) {
+				return $formHandle;
+			}
+		}
+		// for the rare record that does not carry the same keys as its siblings
+		foreach ($entry as $formHandle => $record) {
+			foreach ((array)$record as $elements) {
 				if (array_key_exists($handle, (array)$elements)) {
 					return $formHandle;
 				}
 			}
 		}
-	} else {
-		return "";
 	}
+	return "";
 }
 
 // returns all the form handles for the given entry
@@ -3844,32 +3924,54 @@ function display($entry, $handle, $datasetKey = null, $localEntryId = null, $ret
  * @param int datasetKey - Optional. Only necessary if an entire dataset is passed as the entry, in which case this value is the key of the entry in the dataset to use, starting with 0 for the first entry.
  * @param int localEntryId - Optional. The entry id of a specific record in the dataset, for which you want to retreive values. Relevant when there are multiple records from the same form in the dataset, and you only want to work with values from one of them.
  * @param boolean raw - Optional. A flag to indicate if the raw value from the database should be returned for form elements, or if the value should be prepped for user consumption, ie: foreign keys converted to readable values, etc. Default is false (ie: by default, prepped values are returned)
+ * @param string formHandle - Optional. The handle of the form that the element belongs to, if the caller already knows it. Saves searching the entry for the form that contains the element. Ignored if the form is not part of the entry, or does not contain the element.
  * @return string|int|float|array Returns the value for the specified element in the passed in entry, optionally limited to the specified localEntryId. If values are prepped and there are multiple values in the result (such as in the case of a checkbox element *with multiple boxes checked*) then the function will return an array of values. If a multiple option element only has one element checked, the function will return the single value selected. An array will also be returned if there are multiple records in the dataset from the form that the handle belongs to.
  */
-function getValue($entry, $handle, $datasetKey = null, $localEntryId = null, $raw = false ) {
+function getValue($entry, $handle, $datasetKey = null, $localEntryId = null, $raw = false, $formHandle = "" ) {
 
 	$entry = is_numeric($datasetKey) ? $entry[$datasetKey] : $entry;
 
-	// return nothing if handle is not part of entry
-	if (!$formHandle = getFormHandleFromEntry($entry, $handle)) {
-		return "";
+	// A caller who already knows which form the handle belongs to can say so and skip the search.
+	// The form has to be checked before it is used, because it is the caller's assertion rather
+	// than something read out of the entry: a form that is not there, or is not an array of
+	// records, would otherwise be fatal below. Such a form is treated as though it had not been
+	// given at all. A form that is there is taken at its word: if the handle is not in it, the
+	// answer is that there is no value, rather than a value belonging to some other form.
+	if (!$formHandle OR !isset($entry[$formHandle]) OR !is_array($entry[$formHandle])) {
+		$formHandle = getFormHandleFromEntry($entry, $handle);
+		if (!$formHandle) {
+			return ""; // the handle is not part of the entry at all
+		}
+	}
+
+	// establish the records we're looking at, based on the active formHandle
+	$records = $entry[$formHandle];
+
+	// A local entry id of nothing, or the legacy "NULL" string, means every record of the form
+	// qualifies. Anything else names one record, which is worth knowing up front because it lets us
+	// go straight to that record instead of examining all of them. An id naming a record that is
+	// not here leaves nothing to read: asking for one record is not the same question as asking
+	// for all of them, so the records must be emptied rather than left as they are.
+	$specificLocalId = ($localEntryId AND $localEntryId !== "NULL") ? $localEntryId : null;
+	if ($specificLocalId !== null) {
+		$records = array_key_exists($specificLocalId, $records)
+			? array($specificLocalId => $records[$specificLocalId])
+			: array();
 	}
 
 	$foundValues = array();
 	$formulize_mostRecentLocalId = array();
-	foreach ($entry[$formHandle] as $lid => $elements) {
-		if (!$localEntryId OR $localEntryId == "NULL" OR $lid == $localEntryId) { // legacy "NULL" string value is valid :(
-			if (isMetaDataField($handle)) {
-				$GLOBALS['formulize_mostRecentLocalId'] = $lid;
-				return $elements[$handle];
-			} elseif($raw) {
-		    $foundValues[] = ($elements[$handle] AND is_string($elements[$handle])) ? htmlspecialchars_decode($elements[$handle]) : $elements[$handle];
+	foreach ($records as $lid => $elements) {
+		if (isMetaDataField($handle)) {
+			$GLOBALS['formulize_mostRecentLocalId'] = $lid;
+			return $elements[$handle];
+		} elseif($raw) {
+			$foundValues[] = ($elements[$handle] AND is_string($elements[$handle])) ? htmlspecialchars_decode($elements[$handle]) : $elements[$handle];
+			$formulize_mostRecentLocalId[] = $lid;
+		} else {
+			foreach (prepvalues($elements[$handle], $handle, $lid) as $thisValue) {
+				$foundValues[] = ($thisValue AND is_string($thisValue)) ? htmlspecialchars_decode($thisValue) : $thisValue;
 				$formulize_mostRecentLocalId[] = $lid;
-		  } else {
-				foreach (prepvalues($elements[$handle], $handle, $lid) as $thisValue) {
-					$foundValues[] = ($thisValue AND is_string($thisValue)) ? htmlspecialchars_decode($thisValue) : $thisValue;
-					$formulize_mostRecentLocalId[] = $lid;
-				}
 			}
 		}
 	}

@@ -313,15 +313,17 @@ function formulize_apiFieldIsRaw($handle, $rawAll, $rawFields) {
  * Read one field of one entry out of a dataset item.
  *
  * Ordinary elements go through getValue, which resolves foreign keys, splits multi-value
- * fields into arrays and decodes html entities.
+ * fields into arrays and decodes html entities. The form handle is passed to it, because we
+ * already know which form the value is coming from and getValue would otherwise search the
+ * item for it, once per field of every entry.
  *
- * Metadata fields cannot, because getValue locates a field by asking which form contains
- * that handle, and every form's records carry creation_datetime, entry_id and the rest.
- * getFormHandleFromEntry returns the first form it finds them in, which is not necessarily
- * the one being read, so once a relationship pulls connected forms into the item the answer
- * can come from the wrong form, or be filtered away entirely by a local entry id that only
- * means something in another form. Reading metadata straight out of the structure keeps it
- * attached to the entry it actually belongs to.
+ * Metadata fields cannot go through getValue at all, because the extraction layer writes
+ * metadata into the records of the main form only -- it reads the aliased metadata columns of
+ * the connected forms to work out which entry each row belongs to, and then skips them. So the
+ * form a metadata handle resolves to is always the main form, and asking for it against a
+ * connected entry's local id finds nothing. A connected entry's own entry_id survives as the
+ * key its record is stored under, which is where the rows built above take it from. Reading
+ * metadata straight out of the structure keeps it attached to the entry it belongs to.
  *
  * @param array item One item from the dataset
  * @param string formHandle The handle of the form the value should come from
@@ -335,7 +337,7 @@ function formulize_apiReadFieldValue($item, $formHandle, $localEntryId, $handle,
     if (in_array($handle, $metadataFields)) {
         return isset($item[$formHandle][$localEntryId][$handle]) ? $item[$formHandle][$localEntryId][$handle] : null;
     }
-    return getValue($item, $handle, null, $localEntryId, $isRaw);
+    return getValue($item, $handle, null, $localEntryId, $isRaw, $formHandle);
 }
 
 /**
