@@ -1,0 +1,47 @@
+/*
+ * Overrides for showing a Formulize screen inside an iframe on another website.
+ *
+ * The base theme's stylesheet is loaded first (see theme.html) and this file only adjusts what that
+ * stylesheet assumes about the viewport. That is the whole point of keeping it separate: the base
+ * theme can be improved without this theme carrying a copy that quietly falls behind it. There is
+ * nothing here to re-sync when the base theme changes, only this short list to re-check.
+ *
+ * The host page sizes the iframe to its content, so the viewport in here is as tall as everything
+ * in it. A height in vh therefore grows again every time the iframe grows, and a scrolling region
+ * becomes a box the screen is trapped inside, instead of letting the host page do the scrolling.
+ */
+
+.site-layout__main {
+  width: 100%;
+  height: auto;
+}
+
+.main-content {
+  height: auto;
+  overflow: visible;
+}
+
+#xo-canvas-leftcolumn {
+  height: auto;
+  overflow: visible;
+}
+
+div.list-of-entries .card__body,
+.scrollbox {
+  height: auto;
+  max-height: none;
+}
+
+/* position: fixed resolves against that same full-height viewport, so a centred warning can sit far
+   below anything the reader can see. Put it at the top of the screen instead. It cannot follow the
+   reader the way it does on a normal page: content inside a fully expanded iframe has no way to
+   stick to the host's viewport. */
+#session-timeout-warning {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: auto;
+  margin-left: 0;
+  max-width: 100%;
+}

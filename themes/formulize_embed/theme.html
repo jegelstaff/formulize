@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html xml:lang="<{$icms_langcode}>">
+
+<head>
+    <!-- Center block custom positioning -->
+    <{* Center blocks display order
+        valid values are:  lrc (left right / center) lcr (left center right) clr (center / left right)
+    *}>
+    <{assign var=theme_top_order value=lrc}>
+    <{assign var=theme_bottom_order value=lcr}>
+
+    <!-- Theme name -->
+    <{assign var=theme_name value=$xoTheme->folderName}>
+
+    <!-- Title and meta -->
+    <title><{if $xoops_pagetitle !=''}><{$xoops_pagetitle}> : <{/if}><{$icms_sitename}></title>
+    <meta http-equiv="content-type" content="text/html; charset=<{$icms_charset}>" />
+    <meta name="robots" content="<{$icms_meta_robots}>" />
+    <meta name="keywords" content="<{$icms_meta_keywords}>" />
+    <meta name="description" content="<{$icms_meta_description}>" />
+    <meta name="rating" content="<{$icms_meta_rating}>" />
+    <meta name="author" content="<{$icms_meta_author}>" />
+    <meta name="copyright" content="<{$icms_meta_copyright}>" />
+    <meta name="generator" content="Formulize" />
+
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Module Header -->
+    <{$icms_module_header}>
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" type="image/ico" href="<{$icms_imageurl}>icons/favicon.ico" />
+    <link rel="icon" type="image/png" href="<{$icms_imageurl}>icons/icon.png" />
+
+    <!-- CSS: must come after icms_module_header.
+         This theme does not keep its own copy of the site's stylesheet. It loads the base theme's,
+         so improvements there reach embedded screens instead of this theme drifting behind, and
+         then loads embed.css, which adjusts only what that stylesheet assumes about the viewport.
+         Relative urls inside the base stylesheet resolve against the base theme's own folder, so
+         its images and fonts come with it. Define FORMULIZE_EMBED_BASE_THEME in mainfile.php to
+         build on a different theme. -->
+    <{php}>
+    require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions.php';
+    $baseTheme = defined('FORMULIZE_EMBED_BASE_THEME') ? FORMULIZE_EMBED_BASE_THEME : 'Anari';
+    if (!is_dir(ICMS_THEME_PATH . '/' . $baseTheme)) {
+        $baseTheme = 'Anari';
+    }
+    $rtlPath = ($this->_tpl_vars['icms_rtl'] ?? false) ? 'rtl/' : '';
+    foreach (array('/themes/' . $baseTheme . '/' . $rtlPath . 'css/style.css',
+                   '/themes/' . $this->_tpl_vars['theme_name'] . '/css/embed.css') as $stylesheet) {
+        echo '<link rel="stylesheet" type="text/css" media="all" href="' . XOOPS_URL . $stylesheet
+            . '?v=' . formulize_get_file_version($stylesheet) . '" />';
+    }
+    <{/php}>
+
+    <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+
+</head>
+
+<body id="<{$icms_dirname}>" class="<{$icms_langcode}><{if isset($formulize_screen_id) && $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}>" style='display: none; overflow: hidden;'>
+
+<{includeq file="$theme_name/session-timeout-warning.html"}>
+
+<{php}>
+// set the base font size if the user has adjusted it in their profile
+global $xoopsUser;
+if($xoopsUser) {
+    $profile_handler = xoops_getmodulehandler('profile', 'profile');
+    $profile = $profile_handler->get($xoopsUser->getVar('uid'));
+    if($fontsize = $profile->getVar('fontsize')) {
+        print "<style>html { font-size: ".$fontsize."; }</style>";
+    }
+}
+<{/php}>
+
+<{if $xoBlocks.canvas_left and $xoBlocks.canvas_right}>
+<{assign var=columns_layout value='threecolumns-layout'}>
+<{elseif $xoBlocks.canvas_left}>
+<{assign var=columns_layout value='leftcolumn-layout'}>
+<{elseif $xoBlocks.canvas_right}>
+<{assign var=columns_layout value='rightcolumn-layout'}>
+<{/if}>
+  <div class="site-layout">
+
+    <!-- LAYOUT -> SIDEBAR -->
+    <{if $xoops_requesturi|strstr:'/modules/formulize/application.php'}>
+    <{assign var=openMenuClass value='site-layout__sidebar--open'}>
+    <script type='text/javascript'>
+      jQuery(document).ready(function() {
+        if (jQuery('.main-menu__item-link--active').length) {
+            window.addEventListener('formulize_pageShown', function () {
+                jQuery('#xo-canvas-leftcolumn').scrollTop(jQuery('.main-menu__item-link--active').offset().top-jQuery('#xo-canvas-leftcolumn').offset().top);
+            });
+        }
+      });
+    </script>
+		<{elseif !isset($openMenuClass)}>
+		<{assign var=openMenuClass value=''}>
+    <{/if}>
+
+
+    <!-- LAYOUT -> MAIN -->
+    <div class="site-layout__main">
+
+
+
+      <!-- MAIN CONTENT (gray background) -->
+      <div class="main-content">
+        <div class="container">
+
+        <{$icms_contents}>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <{php}>
+  $jsVersion = formulize_get_file_version('/themes/' . $this->_tpl_vars['theme_name'] . '/js/script.js');
+  echo '<script src="' . $this->_tpl_vars['icms_imageurl'] . 'js/script.js?v=' . $jsVersion . '"></script>';
+  <{/php}>
+
+  <script type='text/javascript'>
+    // An embedded screen talks to the page hosting it over postMessage. The host can't measure a
+    // document on another origin, and reaching into contentWindow only ever worked same-origin.
+    (function() {
+        // Revealing the body below has to happen whether or not anyone is listening, so this is not
+        // gated on being embedded: a screen opened directly would otherwise stay hidden for good.
+        var embedded = (window.parent !== window);
+        var lastHeight = 0;
+
+        function post(type, detail) {
+            if (!embedded) { return; }
+            var message = {type: type, formulize: true};
+            for (var key in (detail || {})) { message[key] = detail[key]; }
+            window.parent.postMessage(message, '*'); // heights only, nothing worth withholding
+        }
+
+        // measured from the content, not from scrollHeight, which can never report less than the
+        // height the host has already given the iframe, so the form could only ever grow
+        function contentHeight() {
+            var styles = window.getComputedStyle(document.body);
+            return Math.ceil(document.body.getBoundingClientRect().height
+                + parseFloat(styles.marginTop) + parseFloat(styles.marginBottom));
+        }
+
+        function reportHeight() {
+            var height = contentHeight();
+            if (height > 0 && height !== lastHeight) {
+                lastHeight = height;
+                post('formulize:resize', {height: height});
+            }
+        }
+
+        // every token check needs the session, and the session needs a cookie the browser will keep
+        function cookiesAreBlocked() {
+            try {
+                document.cookie = 'formulize_embed_test=1;SameSite=Lax;path=/';
+                var stored = document.cookie.indexOf('formulize_embed_test=') !== -1;
+                document.cookie = 'formulize_embed_test=;Max-Age=0;path=/';
+                return !stored;
+            } catch (e) {
+                return true;
+            }
+        }
+
+        jQuery(document).ready(function() {
+            // The body is hidden inline (see the body tag near the top of this file) and revealed here once
+						// the window has loaded, so the page appears in one piece rather than assembling visibly.
+						//
+						// The window load event does not replay: a handler registered after load has already fired will
+						// never run. document.ready does replay, so this callback can be reached after load - and if it
+						// is, the body would stay hidden and the whole page would render blank, with nothing thrown to
+						// explain it. formulize_pageShown would not fire either, so the listeners that restore scroll
+						// position (formdisplay.php, entriesdisplay.php, mapdisplay.php) would silently never run.
+						//
+						// So ask the document whether load has already happened instead of assuming it has not.
+            var formulizeShowPage = function() {
+                jQuery('body').show(200, function() {
+                    var formulize_pageShown = new CustomEvent('formulize_pageShown');
+                    window.dispatchEvent(formulize_pageShown);
+                    reportHeight();
+                    post('formulize:ready', {height: lastHeight});
+                    if (cookiesAreBlocked()) {
+                        post('formulize:sessionUnavailable');
+                    }
+                    // a page turn or a save reloads this document while the host page is still
+                    // scrolled to wherever the button was
+                    if (document.referrer.indexOf(window.location.origin) === 0) {
+                        post('formulize:scroll', {top: 0});
+                    }
+                });
+            };
+            if (document.readyState === 'complete') {
+                formulizeShowPage();
+            } else {
+                jQuery(window).on('load', formulizeShowPage);
+            }
+
+            // subform editors centre themselves on a document as tall as all of its content, so
+            // the host has to bring them into view
+            jQuery(document).bind('dialogopen', function(event) {
+                var dialog = jQuery(event.target).closest('.ui-dialog');
+                if (dialog.length) {
+                    post('formulize:scroll', {top: Math.max(0, dialog.offset().top - 20)});
+                }
+            });
+        });
+
+        if (embedded && window.ResizeObserver) {
+            var pending = null;
+            new ResizeObserver(function() {
+                clearTimeout(pending);
+                pending = setTimeout(reportHeight, 50);
+            }).observe(document.body);
+        } else if (embedded) {
+            setInterval(reportHeight, 500);
+        }
+    })();
+  </script>
+
+    <{ if isset($masquerade_username) AND $masquerade_username }>
+        <div id="formulize-masquerade-block">
+            Masquerading as <b><{$masquerade_username}></b>
+            <form method="post" action="<{$smarty.const.XOOPS_URL}>/modules/formulize/">
+                <input type="hidden" name="revert" value="1" />
+                <input type="hidden" name="op" value="masquerade" />
+                <input type="hidden" name="masquerade_end" value="1" />
+                <input type="submit" name="confirm_submit" value="Revert" />
+            </form>
+        </div>
+        <div style="clear:both;"></div>
+    <{ /if }>
+
+	<{if $formulize_customCodeForApplications}>
+		<{$formulize_customCodeForApplications}>
+	<{/if}>
+</body>
+
+</html>
