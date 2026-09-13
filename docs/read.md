@@ -128,8 +128,13 @@ Errors return an http status code and a body like this:
 
 ```json
 { "error": { "code": "permission_denied",
-             "message": "You do not have permission to view this form" } }
+             "message": "You do not have permission to view this form",
+             "hint": "This request carried no Authorization header, so it was handled as anonymous..." } }
 ```
+
+_message_ is a plain explanation that is suitable to show to people. _code_ does not change, so use it when your code needs to react to a particular error. _hint_ is only included on some errors, and is aimed at the developer: it explains the likely cause, such as a missing API key.
+
+Two errors have no body at all, only the status code: 503 when the Public API is not enabled, and 404 when the address does not match any part of the API, such as a misspelling of `form` in the URL. Read the body with that in mind.
 
 | Status | When |
 |---|---|
@@ -148,27 +153,48 @@ Javascript on another website can only read the response if an administrator has
 
 That setting controls web browsers. It is not a substitute for permissions: what any caller can read is still decided by Formulize permissions.
 
+First, a small function that makes the request and turns every kind of failure into an error with a useful message. The rest of the examples use it:
+
+```javascript
+async function readForm(form, body) {
+  let res;
+  try {
+    res = await fetch(`https://example.org/formulize-public-api/v1/form/${form}/read`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+  } catch (networkError) {
+    // fetch only fails like this when no response could be read at all: the site is
+    // unreachable, or it has not allowed this website to call the Public API.
+    throw new Error('Could not reach the Public API. The site may be down, or may not allow requests from this website.');
+  }
+
+  // Most errors carry a JSON body, but a 503 or an unknown address has none, so don't count on one.
+  const json = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    const error = new Error(json?.error?.message ?? `The Public API responded with http status ${res.status}`);
+    error.status = res.status;
+    error.code = json?.error?.code;
+    error.hint = json?.error?.hint;
+    throw error;
+  }
+  return json;
+}
+```
+
 Reading data into a web page on another website, from a form that has been opened to the Anonymous group:
 
 ```javascript
 async function loadDonors() {
-  const res = await fetch(
-    'https://example.org/formulize-public-api/v1/form/donors/read',
-    { method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        fields: ['donor_name', 'amount'],
-        filter: [ { element: 'amount', value: '100', operator: '>' } ],
-        sortField: 'amount',
-        sortOrder: 'DESC',
-        limitSize: 50
-      }) }
-  );
-  if (!res.ok) {
-    const { error } = await res.json();
-    throw new Error(error.message);
-  }
-  const { data, meta } = await res.json();
+  const { data, meta } = await readForm('donors', {
+    fields: ['donor_name', 'amount'],
+    filter: [ { element: 'amount', value: '100', operator: '>' } ],
+    sortField: 'amount',
+    sortOrder: 'DESC',
+    limitSize: 50
+  });
 
   // The data is in hand, so everything from here is ordinary synchronous code.
   document.querySelector('#count').textContent = meta.count;
@@ -177,49 +203,54 @@ async function loadDonors() {
 }
 
 loadDonors().catch(err => {
-  document.querySelector('#list').textContent = 'Could not load donors.';
-  console.error(err);
+  // Show the reason on the page. textContent displays it as plain text, never as HTML.
+  document.querySelector('#list').textContent = `Could not load donors: ${err.message}`;
+  // The hint is meant for you, not your visitors, so it goes to the console.
+  console.error(err.message, err.code ?? '', err.hint ?? '');
 });
 ```
 
-An `async` function returns a promise, so always attach a `catch` where you call it, or errors will pass silently.
+An `async` function returns a promise, so always attach a `catch` where you call it, or errors will pass silently. Showing `err.message` matters: a page that only says _Could not load donors_ hides whether the problem is permissions, a mistyped field name, or the API being turned off.
 
-The same request with an API key, which runs as the key's user instead of the anonymous user. Anyone who loads the page can read the key, so see [Authentication](#authentication) before using one this way:
+To react to a particular error, check `err.code` or `err.status` rather than the wording of the message:
+
+```javascript
+loadDonors().catch(err => {
+  const list = document.querySelector('#list');
+  if (err.code === 'permission_denied') {
+    list.textContent = 'This list is not public yet.';
+  } else {
+    list.textContent = `Could not load donors: ${err.message}`;
+  }
+  console.error(err.message, err.code ?? '', err.hint ?? '');
+});
+```
+
+The same request with an API key, which runs as the key's user instead of the anonymous user. Anyone who loads the page can read the key, so see [Authentication](#authentication) before using one this way. Add the key to the headers in `readForm`:
 
 ```javascript
 const API_KEY = '8f3ca19d...';
 
-const res = await fetch(
-  'https://example.org/formulize-public-api/v1/form/donors/read',
-  { method: 'POST',
+// in readForm:
     headers: {
       'Authorization': `Bearer ${API_KEY}`,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ fields: ['donor_name', 'amount'] }) }
-);
 ```
 
-Reading two forms at once, by starting both requests before waiting for either:
+Reading two forms at once, by starting both requests before waiting for either. If either request fails, `Promise.all` fails with that request's error, so the same `catch` handles it:
 
 ```javascript
-const read = (form, body) =>
-  fetch(`https://example.org/formulize-public-api/v1/form/${form}/read`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  }).then(r => r.json());
-
 const [donors, events] = await Promise.all([
-  read('donors', { fields: ['donor_name', 'amount'] }),
-  read('events', { fields: ['event_name', 'event_date'] })
+  readForm('donors', { fields: ['donor_name', 'amount'] }),
+  readForm('events', { fields: ['event_name', 'event_date'] })
 ]);
 ```
 
 Rendering connected forms:
 
 ```javascript
-const { data } = await read('countries', {
+const { data } = await readForm('countries', {
   fields: ['country_name', 'city_name'],
   relationship: -1
 });
