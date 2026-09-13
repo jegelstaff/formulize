@@ -11550,6 +11550,214 @@ function isPublicAPIEnabled() {
 }
 
 /**
+ * The URL to use when this server needs to make an HTTP request to itself.
+ *
+ * Inside Docker the port in XOOPS_URL is the host to container mapping (8080 by default, but
+ * configurable so several copies of Formulize can run at once). That mapping means nothing
+ * from inside the container, so it has to be discarded or the request never arrives. Outside
+ * Docker XOOPS_URL is used exactly as it stands.
+ *
+ * @param string $path An absolute path to append, eg. /formulize-public-api/v1/status
+ * @return string The URL to request
+ */
+function formulize_selfRequestUrl($path = '') {
+    $base = XOOPS_URL;
+    if(file_exists('/.dockerenv') AND preg_match('~^(https?://(?:localhost|127\.0\.0\.1)):\d+(.*)$~', XOOPS_URL, $urlParts)) {
+        $base = $urlParts[1].$urlParts[2];
+    }
+    return $base.$path;
+}
+
+/**
+ * Remember what the last Authorization header passthrough probe found.
+ *
+ * Kept in the session rather than the database because it is a fact about the server, not
+ * about the site: it is cheap to establish again, it is only ever shown to an administrator,
+ * and an answer that goes stale on its own is exactly what is wanted here. See
+ * formulize_publicApiAuthHeaderPassthrough() for why any of this exists.
+ *
+ * @param bool $passedThrough What the probe found
+ * @return bool The value recorded
+ */
+function formulize_recordPublicApiAuthHeaderPassthrough($passedThrough) {
+    $_SESSION['formulize_publicApiAuthHeaderPassthrough'] = (bool) $passedThrough;
+    $_SESSION['formulize_publicApiAuthHeaderPassthroughTime'] = time();
+    return $_SESSION['formulize_publicApiAuthHeaderPassthrough'];
+}
+
+/**
+ * Whether this server passes the Authorization header through to PHP.
+ *
+ * Some server configurations, notably CGI and some FastCGI setups, strip it unless they are
+ * explicitly told to pass it through. When that happens nothing looks broken: the Public API
+ * and the MCP server both keep working for session based and anonymous callers, and the site
+ * itself is unaffected. But every API key silently authenticates as nobody, and the caller is
+ * refused with a permission error, which sends whoever is debugging it looking at groups and
+ * permissions - the one place the problem is not. Hence going to this much trouble to say it
+ * out loud.
+ *
+ * It cannot be answered from inside an ordinary page request, because the administrator's
+ * browser does not send an Authorization header. The only way to find out is to have the
+ * server send one to itself, which is what this does, reading back the
+ * authorization_header_received flag that the Public API status endpoint reports.
+ *
+ * Two details make the answer trustworthy. The status endpoint reads the header with
+ * formulize_publicApiGetAuthorizationHeader(), the same function the authenticator uses, so
+ * this cannot report success on a server where a real API key would fail. And it uses the
+ * status endpoint's enable check path, which is exempt from the Public API preference, so the
+ * answer is available even while the API is switched off.
+ *
+ * The result is cached for a few minutes, because this is an HTTP round trip and the answer
+ * only changes when someone edits the server configuration. The cache expiring on its own is
+ * what lets the warning clear itself once that edit is made; admin/checkauthheader.php forces
+ * a fresh probe for someone who has just made the edit and wants to know now.
+ *
+ * @param int $maxAgeSeconds How stale a cached answer may be before probing again. Pass 0 to
+ *                           force a fresh probe.
+ * @return bool|null True if the header arrived, false if it was stripped, null if the question
+ *                   could not be answered - no cURL, or the server could not reach itself. Null
+ *                   is not recorded, and must never be reported as a failure: a server that
+ *                   cannot reach itself is a different problem, with its own warning on the
+ *                   settings page.
+ */
+function formulize_publicApiAuthHeaderPassthrough($maxAgeSeconds = 300) {
+
+    if($maxAgeSeconds > 0
+        AND isset($_SESSION['formulize_publicApiAuthHeaderPassthrough'])
+        AND isset($_SESSION['formulize_publicApiAuthHeaderPassthroughTime'])
+        AND (time() - intval($_SESSION['formulize_publicApiAuthHeaderPassthroughTime'])) < $maxAgeSeconds) {
+        return $_SESSION['formulize_publicApiAuthHeaderPassthrough'];
+    }
+
+    if(!function_exists('curl_version')) {
+        return null;
+    }
+
+    $curl = curl_init();
+    curl_setopt($curl, CURLOPT_URL, formulize_selfRequestUrl('/formulize-public-api/v1/status/formulize_check_if_public_api_is_properly_enabled_please'));
+    curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($curl, CURLOPT_TIMEOUT, 5);
+    curl_setopt($curl, CURLOPT_HTTPHEADER, array('Authorization: Bearer test-header-passthrough-check'));
+    $response = curl_exec($curl);
+    curl_close($curl);
+
+    // Anything other than the status endpoint's own answer tells us nothing about the header.
+    $json = json_decode($response);
+    if(!is_object($json) OR !isset($json->status) OR $json->status != 'healthy') {
+        return null;
+    }
+
+    return formulize_recordPublicApiAuthHeaderPassthrough(!empty($json->authorization_header_received));
+}
+
+/**
+ * The warning to show an administrator when this server strips the Authorization header.
+ *
+ * One wording, in one place, so the advice cannot drift apart between the settings page and
+ * the API keys page. Renders nothing at all unless the header is known to be stripped, so it
+ * is safe to drop into any admin page that has something to do with API keys.
+ *
+ * Deliberately phrased as what the test observed, naming the URL it used, rather than as a
+ * flat assertion about all traffic. The test is a request this server makes to itself, and
+ * there are setups where that is not the same journey a real caller makes - anything sitting
+ * in front of the origin is skipped, and split horizon DNS or a misconfigured vhost could
+ * land the test on a different stack than public traffic reaches. Those are unusual, but an
+ * administrator who is in one of them needs to be able to see that from the warning itself
+ * rather than spending the afternoon on the other side of the false alarm.
+ *
+ * @param int $maxAgeSeconds Passed through to formulize_publicApiAuthHeaderPassthrough()
+ * @return string HTML for the warning, or an empty string when there is nothing to warn about
+ */
+function formulize_publicApiAuthHeaderWarningHtml($maxAgeSeconds = 300) {
+    if(formulize_publicApiAuthHeaderPassthrough($maxAgeSeconds) !== false) {
+        return '';
+    }
+    $testedUrl = htmlspecialchars(formulize_selfRequestUrl('/formulize-public-api/v1/status/'));
+    return "<div class='formulize-authheader-warning'>"
+        ."<b>This server appears to be stripping the <i>Authorization</i> header.</b>"
+        ."<p>An API key sent in that header never reaches Formulize, so the request is treated as "
+        ."anonymous and refused with a permission error that looks like a Formulize permissions problem "
+        ."instead. That affects the Public API and any external AI assistant connecting through the MCP "
+        ."server. A key sent in a URL, such as the Google Sheets one on the API keys page, is not "
+        ."affected, and neither is anything else on this site: the Public API still works for pages on "
+        ."this site, and for anonymous access to forms you have opened to the Anonymous group.</p>"
+        ."<p>On Apache, adding <span class='formulize-authheader-code'>CGIPassAuth On</span> to the "
+        ."<span class='formulize-authheader-code'>.htaccess</span> file at the root of your site usually "
+        ."solves it. Once you have made the change, test it again here.</p>"
+        .formulize_publicApiAuthHeaderRecheckHtml()
+        ."<p style='font-size: 0.9em; color: #666;'>The test sent an <i>Authorization</i> header from this "
+        ."server to <span class='formulize-authheader-code'>$testedUrl</span> and it did not arrive. If "
+        ."public traffic reaches this site by a different route - through a proxy or load balancer, or on "
+        ."a hostname that resolves elsewhere from here - then that is not the journey your API callers "
+        ."make, and a key may work for them regardless.</p>"
+        ."</div>";
+}
+
+/**
+ * The "test it again" button, and the script that drives it.
+ *
+ * Someone who has just edited their server configuration needs to find out whether it worked
+ * now, not in five minutes when the cached answer expires, and without having to guess that
+ * turning the Public API preference off and on again is what re-runs the check. The button
+ * asks admin/checkauthheader.php for a fresh probe and reports what came back.
+ *
+ * Written for jQuery 1.4.2, which is what the Formulize admin actually runs: no .on(), and
+ * $.ajax returns a bare XMLHttpRequest rather than a promise, so the handlers go in the
+ * options and events are bound with .bind().
+ *
+ * @return string HTML for the button, and on first call the script and styles behind it
+ */
+function formulize_publicApiAuthHeaderRecheckHtml() {
+    static $rendered = false;
+    $button = "<p><button type='button' class='formulize-authheader-recheck'>Test the Authorization header again</button> "
+        ."<span class='formulize-authheader-result'></span></p>";
+    if($rendered) { // however many buttons end up on a page, the script belongs on it once
+        return $button;
+    }
+    $rendered = true;
+    $url = XOOPS_URL.'/modules/formulize/admin/checkauthheader.php';
+    return $button."
+    <style type='text/css'>
+    .formulize-authheader-warning { border-left: 4px solid #c0392b; background: #fdf3f2; padding: 0.75em 1em; margin: 1em 0; }
+    .formulize-authheader-warning p { margin: 0.6em 0; }
+    .formulize-authheader-code { font-family: monospace; background: #fff; padding: 0 0.3em; border: 1px solid #e0d0cf; }
+    .formulize-authheader-good { color: #1e7e34; font-weight: bold; }
+    .formulize-authheader-bad { color: #c0392b; font-weight: bold; }
+    </style>
+    <script type='text/javascript'>
+    jQuery(function(\$){
+        \$('.formulize-authheader-recheck').bind('click', function(){
+            var button = \$(this);
+            var result = button.siblings('.formulize-authheader-result');
+            button.attr('disabled', 'disabled');
+            result.removeClass('formulize-authheader-good').removeClass('formulize-authheader-bad').text('Testing...');
+            \$.ajax({
+                url: '".$url."',
+                dataType: 'json',
+                cache: false,
+                success: function(data){
+                    button.removeAttr('disabled');
+                    if(data && data.passthrough === true) {
+                        result.addClass('formulize-authheader-good').text('Fixed - the Authorization header is getting through now, so API keys will work. Reload this page to clear the warning.');
+                    } else if(data && data.passthrough === false) {
+                        result.addClass('formulize-authheader-bad').text('Still being stripped. Your change has not taken effect yet.');
+                    } else {
+                        result.addClass('formulize-authheader-bad').text(data && data.message ? data.message : 'The test could not be completed.');
+                    }
+                },
+                error: function(){
+                    button.removeAttr('disabled');
+                    result.addClass('formulize-authheader-bad').text('The test could not be completed. Check that you are still logged in.');
+                }
+            });
+            return false;
+        });
+    });
+    </script>";
+}
+
+/**
  * The origins that may call the Public API from a browser on another site.
  *
  * Configured one per line in the Formulize preferences. Blank means same origin only.

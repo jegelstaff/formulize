@@ -127,6 +127,27 @@ test.describe('Public API read endpoint', () => {
 		expect(res.status()).toBe(403);
 		const body = await res.json();
 		expect(body.error.code).toBe('permission_denied');
+		// A permission refusal on a request that carried no Authorization header is
+		// indistinguishable from one whose key the server stripped on the way in, and that
+		// second reading is the one nothing else in the system would ever point at. The
+		// hint has to be here, saying both, or a stripped header looks exactly like a
+		// Formulize permissions problem. See formulize_publicApiAuthHeaderHint().
+		expect(body.error.hint).toContain('no Authorization header');
+		expect(body.error.hint).toContain('CGIPassAuth On');
+	});
+
+	test('the hint about a stripped header is absent when a header did arrive', async ({ request }) => {
+		// The whole basis of the hint is that no Authorization header reached PHP. A caller
+		// whose header did arrive has some other problem, and must not be sent off to look at
+		// their web server configuration over it.
+		const res = await request.post(readUrl(FORM), {
+			headers: { 'Authorization': 'Bearer not-a-real-key' },
+			data: { fields: ['donors_name'] }
+		});
+		expect(res.status()).toBe(401);
+		const body = await res.json();
+		expect(body.error.code).toBe('authentication_error');
+		expect(body.error.hint).toBeUndefined();
 	});
 
 	test('an API key returns data in the documented envelope', async ({ request }) => {
@@ -726,6 +747,17 @@ test.describe('Public API read endpoint', () => {
 	test('OPTIONS preflight is answered', async ({ request }) => {
 		const res = await request.fetch(readUrl(FORM), { method: 'OPTIONS' });
 		expect(res.status()).toBe(204);
+	});
+
+	test('the rewritten /formulize-public-api/ URL routes to the API', async ({ request }) => {
+		// Every other test here addresses index.php?apiPath=... directly, which works with no
+		// rewrite rule at all. That is deliberate, but it means nothing else in this file would
+		// notice if the rewrite rule the setup instructions tell administrators to install
+		// stopped working - and htaccess-setup.js, which overwrites .htaccess for every run, did
+		// once omit it entirely. This is the only test that covers the URL real callers use.
+		const res = await request.get('/formulize-public-api/v1/status');
+		expect(res.status()).toBe(200);
+		expect((await res.json()).status).toBe('healthy');
 	});
 
 	test('the existing status endpoint still behaves as the admin check expects', async ({ request }) => {

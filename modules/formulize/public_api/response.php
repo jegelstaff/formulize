@@ -87,12 +87,55 @@ function formulize_publicApiSendJson($payload, $statusCode = 200) {
 }
 
 /**
+ * Explain a permission refusal that may really be a stripped Authorization header.
+ *
+ * This is the failure mode that costs people an afternoon. A server that does not pass the
+ * Authorization header through to PHP - CGI and some FastCGI setups, unless told to - drops
+ * the caller's API key before anything here ever sees it. The request is then anonymous, and
+ * anonymous almost never has permission, so the caller is told they do not have permission to
+ * view the form. They go and check the key, the user, the groups and the form permissions,
+ * all of which are fine, because the problem is in the web server configuration and nothing
+ * in the response points there.
+ *
+ * So when a request is refused on permissions AND arrived with no Authorization header at all,
+ * say both of the things it could mean. It is stated as the fact it is - no header arrived -
+ * rather than as a diagnosis, because a genuinely anonymous caller hitting a genuine
+ * permissions problem gets this too, and for them the first sentence is the whole answer.
+ *
+ * @param string code The error code about to be sent
+ * @return string The hint, or an empty string when it does not apply
+ */
+function formulize_publicApiAuthHeaderHint($code) {
+    if ($code !== 'permission_denied') {
+        return '';
+    }
+    // A session authenticated caller was not treated as anonymous, so none of this applies to
+    // them, however their request was refused.
+    if (!empty($GLOBALS['formulize_publicApiUser'])) {
+        return '';
+    }
+    if (!function_exists('formulize_publicApiGetAuthorizationHeader')
+        OR trim(formulize_publicApiGetAuthorizationHeader()) !== '') {
+        return '';
+    }
+    return 'This request carried no Authorization header, so it was handled as anonymous, and what it '
+        .'may read is decided by the permissions of the Anonymous group. If you did send an API key, '
+        .'then this web server is not passing the Authorization header through to PHP, and the key never '
+        .'arrived: on Apache, adding "CGIPassAuth On" to the .htaccess file at the root of the site '
+        .'usually solves it. An administrator can confirm which it is on the Formulize API keys page.';
+}
+
+/**
  * Send an error envelope built from an exception, and stop.
  * @param FormulizeApiException e
  * @return void
  */
 function formulize_publicApiSendException($e) {
-    formulize_publicApiSendJson(array('error' => $e->toErrorArray()), $e->toHTTPStatusCode());
+    $error = $e->toErrorArray();
+    if ($hint = formulize_publicApiAuthHeaderHint($error['code'])) {
+        $error['hint'] = $hint;
+    }
+    formulize_publicApiSendJson(array('error' => $error), $e->toHTTPStatusCode());
 }
 
 /**
@@ -103,7 +146,11 @@ function formulize_publicApiSendException($e) {
  * @return void
  */
 function formulize_publicApiSendError($code, $message, $statusCode = 400) {
-    formulize_publicApiSendJson(array('error' => array('code' => $code, 'message' => $message)), $statusCode);
+    $error = array('code' => $code, 'message' => $message);
+    if ($hint = formulize_publicApiAuthHeaderHint($code)) {
+        $error['hint'] = $hint;
+    }
+    formulize_publicApiSendJson(array('error' => $error), $statusCode);
 }
 
 /**

@@ -52,3 +52,10 @@ if($_POST['usersearch']) {
 
 $adminPage['keys'] = $allKeys;
 
+// If this server strips the Authorization header, every key created here is useless to the
+// Public API and to external AI assistants, with no symptom other than a permission error at
+// the far end. This is the page where someone creates one, so it is the page where they need
+// to be told. Renders nothing when the header is getting through, or when it could not be
+// established. See formulize_publicApiAuthHeaderWarningHtml() in include/functions.php.
+$adminPage['authHeaderWarning'] = formulize_publicApiAuthHeaderWarningHtml();
+

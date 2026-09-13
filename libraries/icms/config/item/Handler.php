@@ -203,12 +203,19 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
 					break;
 				case 'formulizePublicAPIEnabled':
 					$json = json_decode($response);
-					$validResponse = (is_object($json) AND $json->status == "healthy");
+					$validResponse = (is_object($json) AND !empty($json->status) AND $json->status == "healthy");
 					// A stripped Authorization header does not stop the Public API being enabled,
 					// because session based and anonymous callers still work without one. Record the
 					// result so the settings page can warn that API keys will not work on this server.
-					$_SESSION['formulize_publicApiAuthHeaderPassthrough'] =
-						($validResponse AND !empty($json->authorization_header_received));
+					// Recorded through the shared function rather than written straight to the session,
+					// so that it carries the timestamp the cache needs - without one this answer would
+					// never go stale, and the warning would still be on the settings page long after
+					// the administrator had fixed their server configuration. See
+					// formulize_publicApiAuthHeaderPassthrough() in modules/formulize/include/functions.php.
+					if($validResponse) {
+						include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
+						formulize_recordPublicApiAuthHeaderPassthrough(!empty($json->authorization_header_received));
+					}
 					break;
 				case 'formulizeMCPServerEnabled':
 					$json = json_decode($response);

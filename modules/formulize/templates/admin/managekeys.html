@@ -1,6 +1,7 @@
 <div class="panel-content content">
 
     <h2>Manage Keys</h2>
+    <{if $adminPage.authHeaderWarning}><{$adminPage.authHeaderWarning}><{/if}>
 		<blockquote>
     <p>You can connect Formulize to AI Assistants, and you can pipe data to Google Sheets. To do this, you need to create API keys for the users that are using this functionality.</p>
 		<p><b>WARNING!</b> These keys must be kept secure! They provide access to Formulize exactly the same as if that user logged in normally. Do not commit them to version control systems. Do not put them in Spreadsheets or other documents that are accessible to anyone other than the user for whom the key was issued!</p>

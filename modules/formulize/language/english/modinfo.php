@@ -175,16 +175,12 @@ foreach($formulizeConfig as $thisConfig=>$thisConfigValue) {
 		</blockquote><i>If you enabled this option, but these instructions are still here, and the option is off again, then your server is not yet properly configured for the Public API.</i>";
 		break;
 	}
-	// When the API is on, but the check that enabled it found that this server strips the
-	// Authorization header, warn about it. The API still works for pages on this site and
-	// for anonymous access, but API keys cannot be used until the server passes the header
-	// through, and there is no other visible symptom when that happens.
-	if($thisConfig == 'formulizePublicAPIEnabled' AND $thisConfigValue == 1
-		AND isset($_SESSION['formulize_publicApiAuthHeaderPassthrough'])
-		AND !$_SESSION['formulize_publicApiAuthHeaderPassthrough']) {
-		$publicAPIInstructions = "<br><br><b>Note:</b> this server did not pass the <i>Authorization</i> header through to Formulize when the Public API was last checked. The Public API still works for pages on this site, and for anonymous access to forms you have opened to the Anonymous group, but <b>API keys will not work</b> until your server is configured to pass that header through. On Apache, adding <span style=\"font-family: monospace;\">CGIPassAuth On</span> to your .htaccess file usually solves it.";
-		break;
-	}
+	// The other thing that can be wrong here - this server stripping the Authorization
+	// header, so that API keys silently authenticate as nobody - is warned about by
+	// formulize_publicApiAuthHeaderWarningHtml(), rendered under the setting itself by
+	// formulize_configFormElementHtml(). It belongs there rather than here because it has
+	// to establish the answer with an HTTP round trip, and this is a language file: it is
+	// loaded in plenty of contexts that have no business making one.
 }
 define("_MI_formulize_PUBLICAPIENABLED", "Enable the Public API");
 define("_MI_formulize_PUBLICAPIENABLED_DESC", "When this is enabled, you can use the Public API documented at https://formulize.org/developers/public-api/".$publicAPIInstructions);
