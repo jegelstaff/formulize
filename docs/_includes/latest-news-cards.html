@@ -1,0 +1,16 @@
+{% comment %}
+  Recent posts as cards, for the homepage. Set include.limit to change the count.
+  {% include latest-news-cards.html limit=3 %}
+  The plain headline list version is latest-news.html.
+{% endcomment %}
+{% assign limit = include.limit | default: 3 %}
+<div class="news-row">
+  {% for post in site.posts limit: limit %}
+    <a class="news-card" href="{{ post.url | relative_url }}">
+      <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%-d %B %Y" }}</time>
+      <span class="news-card-title">{{ post.title }}</span>
+      <p>{{ post.description | default: post.excerpt | strip_html | strip_newlines | truncate: 130 }}</p>
+      <span class="news-card-more">Read it &rarr;</span>
+    </a>
+  {% endfor %}
+</div>

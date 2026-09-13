@@ -2,7 +2,7 @@
   Main site menu. Flat top bar, one entry per key user activity.
   Add or reorder items here and every page picks up the change.
 {% endcomment %}
-{% assign menu = "Features,/features/|Pricing,/pricing/|Download,/download/|Videos,/videos/|News,/news/|AI,/ai/|Community,/connect" | split: "|" %}
+{% assign menu = "Features,/features/|AI,/ai/|Videos,/videos/|Pricing,/pricing/|News,/news/|Community,/connect" | split: "|" %}
 
 <header class="site-header">
   <div class="site-header-inner">
@@ -27,7 +27,7 @@
 
     <div class="header-cta">
       <a class="btn btn-secondary btn-sm" href="{{ site.github.repository_url }}" target="_blank" rel="noopener">GitHub</a>
-      <a class="btn btn-primary btn-sm" href="{{ site.signup_url }}" target="_blank" rel="noopener">Get hosted</a>
+      <a class="btn btn-primary btn-sm" href="{{ "/download/" | relative_url }}">Get Formulize</a>
     </div>
   </div>
 </header>
