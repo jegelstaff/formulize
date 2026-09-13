@@ -4,7 +4,7 @@ permalink: developers/API/classes/data_handler/elementHasValueInEntry/
 title: elementHasValueInEntry
 ---
 
-# elementHasValueInEntry( <span style='font-size: 14pt;'>(int) $entry_id, (int | string | object) $element_identifier</span> )
+# elementHasValueInEntry( <span class="sig-type">(int)</span> $entry_id, <span class="sig-type">(int | string | object)</span> $element_identifier )
 
 ## Description
 

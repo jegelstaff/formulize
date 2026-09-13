@@ -4,7 +4,7 @@ permalink: developers/API/classes/queue_handler/get/
 title: get
 ---
 
-# get( <span style='font-size: 14pt;'>(string) $queue_handle</span> )
+# get( <span class="sig-type">(string)</span> $queue_handle )
 
 ## Description
 

@@ -4,7 +4,7 @@ permalink: developers/API/functions/printSmart/
 title: printSmart
 ---
 
-# printSmart( <span style='font-size: 14pt;'>(string) $value, (int) $chars = 35</span> )
+# printSmart( <span class="sig-type">(string)</span> $value, <span class="sig-type">(int)</span> $chars <span class="sig-default">= 35</span> )
 
 ## Location
 

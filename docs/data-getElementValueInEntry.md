@@ -4,7 +4,7 @@ permalink: developers/API/classes/data_handler/getElementValueInEntry/
 title: getElementValueInEntry
 ---
 
-# getElementValueInEntry( <span style='font-size: 14pt;'>(int) $entry_id, (int | string | object) $element_identifier, (array)&nbsp;$scope_uids = array(), (array) $scope_group_ids = array()</span> )
+# getElementValueInEntry( <span class="sig-type">(int)</span> $entry_id, <span class="sig-type">(int | string | object)</span> $element_identifier, <span class="sig-type">(array)</span>&nbsp;$scope_uids <span class="sig-default">= array()</span>, <span class="sig-type">(array)</span> $scope_group_ids <span class="sig-default">= array()</span> )
 
 ## Description
 

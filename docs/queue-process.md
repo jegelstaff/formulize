@@ -4,7 +4,7 @@ permalink: developers/API/classes/queue_handler/process/
 title: process
 ---
 
-# process( <span style='font-size: 14pt;'>(object|string) $queue_or_queue_handle, (boolean) $synchronous = false</span> )
+# process( <span class="sig-type">(object|string)</span> $queue_or_queue_handle, <span class="sig-type">(boolean)</span> $synchronous <span class="sig-default">= false</span> )
 
 ## Description
 

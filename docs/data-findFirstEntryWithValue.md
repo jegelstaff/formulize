@@ -4,7 +4,7 @@ permalink: developers/API/classes/data_handler/findFirstEntryWithValue/
 title: findFirstEntryWithValue
 ---
 
-# findFirstEntryWithValue( <span style='font-size: 14pt;'>(int | string | object) $element_identifier, (string) $value, (string)&nbsp;$operator&nbsp;= "=", (array) $scope_uids = array()</span> )
+# findFirstEntryWithValue( <span class="sig-type">(int | string | object)</span> $element_identifier, <span class="sig-type">(string)</span> $value, <span class="sig-type">(string)</span>&nbsp;$operator&nbsp;<span class="sig-default">= "="</span>, <span class="sig-type">(array)</span> $scope_uids <span class="sig-default">= array()</span> )
 
 ## Description
 

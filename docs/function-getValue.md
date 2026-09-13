@@ -4,7 +4,7 @@ permalink: developers/API/functions/getValue/
 title: getValue
 ---
 
-# getValue( <span style='font-size: 14pt;'>(array) $entry, (string) $handle = "", (int) $datasetKey = null, (int) $localEntryId = null, (boolean) $raw = false</span> )
+# getValue( <span class="sig-type">(array)</span> $entry, <span class="sig-type">(string)</span> $handle <span class="sig-default">= ""</span>, <span class="sig-type">(int)</span> $datasetKey <span class="sig-default">= null</span>, <span class="sig-type">(int)</span> $localEntryId <span class="sig-default">= null</span>, <span class="sig-type">(boolean)</span> $raw <span class="sig-default">= false</span> )
 
 ## Location
 

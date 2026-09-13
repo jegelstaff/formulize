@@ -4,7 +4,7 @@ permalink: developers/API/classes/data_handler/findFirstEntryForUsers/
 title: findFirstEntryForUsers
 ---
 
-# findFirstEntryForUsers( <span style='font-size: 14pt;'>(int | array) $user_ids</span> )
+# findFirstEntryForUsers( <span class="sig-type">(int | array)</span> $user_ids )
 
 ## Description
 

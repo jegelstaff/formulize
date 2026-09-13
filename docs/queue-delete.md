@@ -4,7 +4,7 @@ permalink: developers/API/classes/queue_handler/delete/
 title: delete
 ---
 
-# delete( <span style='font-size: 14pt;'>(string) $queue_handle</span> )
+# delete( <span class="sig-type">(string)</span> $queue_handle )
 
 ## Description
 

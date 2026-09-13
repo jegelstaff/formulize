@@ -1077,12 +1077,12 @@ blockquote {
 .small-pic { width: 220px; }
 
 /* The API reference pages put the whole function signature inside the <h1> —
-   the name and the brackets as bare text, the argument list wrapped in a
-   hard-coded `<span style='font-size: 14pt;'>`. Mixing a display face with a
-   14pt span leaves the closing bracket stranded at heading size, so the whole
-   heading is set as one uniform code signature instead: monospace, a size up
-   from body, at a weight that still reads as a page title. The span's inline
-   font-size has to be overridden to match, hence the !important.
+   name, parens, variable names and default values as bare text, with just
+   each parenthesized type hint wrapped in <span class="sig-type">. The bare
+   text inherits the heading's own styling below (monospace, a size up from
+body, at a weight that still reads as a page title); the type-hint spans
+   are sized and muted down from that so long signatures read as
+   name-and-arguments first, with the type hints as secondary detail.
    Scoped to .prose h1 so no marketing heading can be caught by it. If a page
    would rather have a display-face title, the markdown should carry the name as
    the h1 and the signature as a fenced code block beneath it. */
@@ -1095,10 +1095,12 @@ blockquote {
   text-wrap: initial;
   margin-bottom: var(--space-6);
 }
-.prose h1 > span {
-  font: inherit;
-  font-size: inherit !important;
-  color: var(--color-neutral-800);
+.prose h1 span.sig-type,
+.prose h1 span.sig-default {
+  font-size: 0.74em;
+  font-weight: 400;
+  color: var(--color-neutral-600);
+white-space: nowrap;
 }
 
 nav.breadcrumbs { margin-bottom: var(--space-4); }

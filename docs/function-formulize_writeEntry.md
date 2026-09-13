@@ -4,7 +4,7 @@ permalink: developers/API/functions/formulize_writeEntry/
 title: formulize_writeEntry
 ---
 
-# formulize_writeEntry( <span style='font-size: 14pt;'>(array) $values, (int | string) $entry_id = "new", $action, (int) $proxyUser, (bool) $forceUpdate = false, (bool) $writeOwnerInfo = true</span> )
+# formulize_writeEntry( <span class="sig-type">(array)</span> $values, <span class="sig-type">(int | string)</span> $entry_id <span class="sig-default">= "new"</span>, $action, <span class="sig-type">(int)</span> $proxyUser, <span class="sig-type">(bool)</span> $forceUpdate <span class="sig-default">= false</span>, <span class="sig-type">(bool)</span> $writeOwnerInfo <span class="sig-default">= true</span> )
 
 ## Location
 
