@@ -14,25 +14,23 @@ If the API is not enabled, a 503 http error is returned.
 
 ## Authentication
 
-There are three ways to call this endpoint, and they are tried in this order.
+A request either carries an API key or it does not.
 
-__An existing session.__ Javascript running on a page of this site is already logged in, so it needs no key at all. This is the safest way to use the API from a browser.
-
-__An API key.__ Send it as an `Authorization: Bearer` header. Create keys on the __Manage API Keys__ page in the Formulize admin. Every key belongs to a user, and the request sees exactly the data that user can see.
+__With an API key__, the request runs as the user the key belongs to, and sees exactly the data that user can see. Send the key as an `Authorization: Bearer` header. Create keys on the __Manage API Keys__ page in the Formulize admin.
 
 ```
 Authorization: Bearer 8f3ca19d...
 ```
 
-__Anonymous.__ A request with no session and no key runs as the anonymous user. This is a supported way to publish data, not an error. It returns nothing at all unless an administrator has granted the Anonymous group permission to view the form, so nothing is exposed by accident.
+__Without an API key__, the request runs as the anonymous user. This is a supported way to publish data, not an error. It returns nothing at all unless an administrator has granted the Anonymous group permission to view the form, so nothing is exposed by accident.
 
-An API key gives access to Formulize in exactly the same way as logging in with someone's username and password. __Never put an API key in the Javascript of a public web page__, where anyone can read it. For a public page, rely on anonymous access instead, and grant the Anonymous group view permission only on the forms you intend to publish.
+An API key gives access to Formulize in exactly the same way as logging in with that user's username and password, and anyone who can see the key can use it. A key in the Javascript of a web page can be read by everyone who loads that page. So give the key to a user who can see only what those visitors should see, or rely on anonymous access if the data is meant for the public.
 
 If your server does not pass the `Authorization` header through to PHP, API keys will not work, and the Public API setting will say so after you save it. On Apache, adding `CGIPassAuth On` to your .htaccess file usually solves it.
 
 ## Calling from another website
 
-Javascript on another website can only read the response if an administrator has listed that site under __Websites allowed to call the Public API__, in Settings &rarr; Advanced &rarr; Public API. Leave that setting blank and only pages on this site can call the API from a browser.
+Javascript on another website can only read the response if an administrator has listed that site under __Websites allowed to call the Public API__, in Settings &rarr; Advanced &rarr; Public API. Leave that setting blank and no other website can call the API from a browser.
 
 That setting controls web browsers. It is not a substitute for permissions: what any caller can read is still decided by Formulize permissions.
 
@@ -81,6 +79,20 @@ Top level items are joined by _andOr_. To use a different operator for part of t
 
 That reads as _status = active AND (region = east OR region = west)_.
 
+A `none` group finds entries that have __no connected entry__ matching its conditions. It needs a _relationship_, and every condition in it has to be on the same connected form. This returns donors who have not given any BCE artifacts, including donors who have given no artifacts at all:
+
+```json
+"relationship": -1,
+"filter": [
+  {"none": [
+    {"element": "artifacts_era", "value": "BCE", "operator": "="}
+  ]}
+]
+```
+
+All the conditions in a `none` group have to be true of the same connected entry. `{"none": [era = CE, short_name LIKE Coin]}` rules out donors who gave a CE coin, not donors who gave a CE artifact and, separately, some coin. Use one `none` group per connected form, and more than one if you need separate tests on the same form.
+
+A `none` group cannot be used when _andOr_ is `OR`, cannot use metadata fields, and cannot contain other groups. A `{BLANK}` test with `=` has to be the only condition in its `none` group; with `!=` it can sit alongside others.
 
 A filter can also be a single number, meaning one entry id.
 
@@ -136,14 +148,19 @@ Errors return an http status code and a body like this:
 
 ## Examples
 
-Reading data into a web page, with no API key, from a form that has been opened to the Anonymous group:
+Reading data into a web page on another website:
 
 ```javascript
+const API_KEY = '8f3ca19d...';
+
 async function loadDonors() {
   const res = await fetch(
     'https://example.org/formulize-public-api/v1/form/donors/read',
     { method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Authorization': `Bearer ${API_KEY}`,
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({
         fields: ['donor_name', 'amount'],
         filter: [ { element: 'amount', value: '100', operator: '>' } ],
@@ -172,13 +189,18 @@ loadDonors().catch(err => {
 
 An `async` function returns a promise, so always attach a `catch` where you call it, or errors will pass silently.
 
+To read a form that has been opened to the Anonymous group, leave out the `Authorization` header.
+
 Reading two forms at once, by starting both requests before waiting for either:
 
 ```javascript
 const read = (form, body) =>
   fetch(`https://example.org/formulize-public-api/v1/form/${form}/read`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Authorization': `Bearer ${API_KEY}`,
+      'Content-Type': 'application/json'
+    },
     body: JSON.stringify(body)
   }).then(r => r.json());
 
@@ -203,7 +225,7 @@ document.querySelector('#out').innerHTML = data.map(country => `
 `).join('');
 ```
 
-From a server, a script, or a tool such as Zapier or Make, where the key stays secret:
+From a server, a script, or a tool such as Zapier or Make:
 
 ```
 curl -X POST https://example.org/formulize-public-api/v1/form/donors/read \
