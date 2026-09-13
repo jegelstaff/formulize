@@ -1,3 +1,9 @@
+---
+layout: default
+permalink: developers/embedding_screens/
+title: Embedding Screens in Another Website
+---
+
 # Embedding Formulize screens in another website
 
 A Formulize screen can appear inside a page on another website, and it works exactly as it does on
