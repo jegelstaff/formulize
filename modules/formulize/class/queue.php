@@ -115,7 +115,7 @@ class formulizeQueueHandler {
 	 */
 	function append($queue_or_queue_handle, $code, $item='', $allowDuplicates=false) {
 		global $xoopsUser;
-		$queue_handle = (is_object($queue_or_queue_handle) AND is_a($queue_or_queue_handle, 'formulizeQueue')) ? $queue_or_queue_handle->getVar('queue_handle') : FormulizeObject::santitize_handle_name($queue_or_queue_handle);
+		$queue_handle = (is_object($queue_or_queue_handle) AND is_a($queue_or_queue_handle, 'formulizeQueue')) ? $queue_or_queue_handle->getVar('queue_handle') : FormulizeObject::sanitize_handle_name($queue_or_queue_handle);
 		$fileName = microtime(true)."_".$queue_handle."_".$item.".php";
 		if(!$allowDuplicates) {
 			$existingQueueItems = formulize_scandirAndClean($this->queueDir, "_".$queue_handle."_".$item.".php", 0); // check for files with same queue_handle and item descriptor
