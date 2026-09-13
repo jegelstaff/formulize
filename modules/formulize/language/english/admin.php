@@ -1186,3 +1186,68 @@ define('_AM_EGS_SEARCH_PLACEHOLDER', 'Search by name...');
 define('_AM_ENTRY_GROUP_NOTICE', 'Disabled permissions are inherited from the template for all %s. You cannot change them, but you can set additional permissions.');
 define('_AM_ENTRY_GROUP_CONDITIONS_LABEL', 'Visibility conditions:');
 
+// Screen settings page (templates/admin/screen_settings.html)
+define("_AM_SCREEN_SETTINGS_LEGEND", "Settings for the Screen:");
+define("_AM_SCREEN_SETTINGS_NAME", "Name of the screen:");
+define("_AM_SCREEN_SETTINGS_HANDLE", "Handle for the screen:");
+define("_AM_SCREEN_SETTINGS_HANDLE_DESC", "Handles are a way to refer to the screen in any code you write.");
+define("_AM_SCREEN_SETTINGS_KIND", "What kind of screen is this:");
+define("_AM_SCREEN_SETTINGS_KIND_LIST", "List");
+define("_AM_SCREEN_SETTINGS_KIND_FORM", "Form");
+define("_AM_SCREEN_SETTINGS_KIND_TEMPLATE", "Template");
+define("_AM_SCREEN_SETTINGS_KIND_CALENDAR", "Calendar");
+define("_AM_SCREEN_SETTINGS_KIND_MAP", "Map");
+
+define("_AM_SCREEN_SETTINGS_URLS_LEGEND", "URLs for this screen");
+define("_AM_SCREEN_SETTINGS_URL_DEFAULT", "The default URL for this screen:");
+define("_AM_SCREEN_SETTINGS_URL_ALTERNATE", "Set an alternate URL for accessing this screen:");
+define("_AM_SCREEN_SETTINGS_URL_ALTERNATE_ELEMENT", "With an alternate URL, identify entries based on their value in this element:");
+
+define("_AM_SCREEN_SETTINGS_PHP_LEGEND", "PHP code for including this screen anywhere");
+define("_AM_SCREEN_SETTINGS_PHP_DESC", "You can embed this screen in any PHP application or web page that is running on the same web server.");
+define("_AM_SCREEN_SETTINGS_PHP_DESC2", "Use this snippet of PHP code to include it:");
+
+define("_AM_SCREEN_SETTINGS_TOKEN_LEGEND", "Should this screen use an anti-CSRF security token");
+define("_AM_SCREEN_SETTINGS_TOKEN_DESC", "The security token is a defense against cross-site request forgery attacks.");
+
+define("_AM_SCREEN_SETTINGS_PASSCODE_LEGEND", "Do Anonymous Users need a passcode to access this screen?");
+define("_AM_SCREEN_SETTINGS_PASSCODE_NO", "No, only permission to view the form");
+define("_AM_SCREEN_SETTINGS_PASSCODE_YES", "Yes, plus permission to view the form");
+define("_AM_SCREEN_SETTINGS_PASSCODE_DESC", "Passcodes are saved with any data a user enters into a form, and are used as a filter when viewing data. This allows anonymous users to interact with only certain data, and if passcodes are given out per-user, then having a passcode is like having a 'throwaway' account.");
+define("_AM_SCREEN_SETTINGS_PASSCODE_VALIDCODES", "Valid Codes");
+define("_AM_SCREEN_SETTINGS_PASSCODE_ACTIVE", "Active");
+define("_AM_SCREEN_SETTINGS_PASSCODE_EXPIRED", "Expired");
+define("_AM_SCREEN_SETTINGS_PASSCODE_AUTOEXPIRE", "Auto-expire on:");
+define("_AM_SCREEN_SETTINGS_PASSCODE_DELETE", "delete");
+define("_AM_SCREEN_SETTINGS_PASSCODE_ADDEXISTING", "Add a passcode from another screen:");
+define("_AM_SCREEN_SETTINGS_PASSCODE_ADDNEW", "Add a new passcode:");
+define("_AM_SCREEN_SETTINGS_PASSCODE_NOTE", "Optional Note");
+define("_AM_SCREEN_SETTINGS_PASSCODE_ADD", "Add");
+
+define("_AM_SCREEN_SETTINGS_EMBED_LEGEND", "Embedding this screen in another website");
+define("_AM_SCREEN_SETTINGS_EMBED_OFF", "Embedding is turned off for this site, so no website can show this screen in a frame. Turn it on under Settings &rarr; Advanced &rarr; Embedding in other websites, and this setting becomes available.");
+define("_AM_SCREEN_SETTINGS_EMBED_ORIGINS", "Which other websites can embed this screen?");
+define("_AM_SCREEN_SETTINGS_EMBED_ORIGINS_DESC", "One website per line. Write each as a domain, for example <em>www.example.com</em>, or with a scheme, <em>https://www.example.com</em>. A pasted page address works too, and <em>*.example.com</em> covers every subdomain. Those websites will be allowed to show this screen inside an iframe. Until you list one, no other website can embed this screen at all: browsers refuse to display it anywhere but this site.");
+define("_AM_SCREEN_SETTINGS_EMBED_CODE", "Code for the other website's page");
+define("_AM_SCREEN_SETTINGS_EMBED_CODE_DESC", "Paste this into the page that is to display the screen. Include the script once per page, however many screens that page shows. It keeps each screen as tall as its content, so there is no height to guess at.");
+
+// Website address lists, and the embedding settings that use them
+// (formulize_originSettingWarningHtml() and formulize_embedSessionSharingNoticeHtml()
+//  in modules/formulize/include/functions.php)
+define("_AM_ORIGINS_UNREADABLE_ONE", "This entry is being ignored, because it cannot be read as a website address:");
+define("_AM_ORIGINS_UNREADABLE_MANY", "These entries are being ignored, because they cannot be read as website addresses:");
+define("_AM_ORIGINS_UNREADABLE_HELP", "Write each website on its own line, as a domain such as <i>www.example.com</i>, or with a scheme, <i>https://www.example.com</i>.");
+define("_AM_ORIGINS_UNUSABLE_ONE", "This entry is a website address, but it cannot be used here:");
+define("_AM_ORIGINS_UNUSABLE_MANY", "These entries are website addresses, but they cannot be used here:");
+define("_AM_ORIGINS_UNUSABLE_HELP", "A single <code>*</code> means every website, which embedding does not accept: leaving the list empty already means no website may embed this. Only <i>http</i> and <i>https</i> addresses can be used, because those are the only ones a page can be framed over.");
+define("_AM_ORIGINS_KEPT", "Everything has been kept exactly as you wrote it, so you can correct it. Everything else in the list is in use.");
+
+define("_AM_EMBED_SESSION_ANON_TITLE", "Embedded screens on this site are always anonymous.");
+// %s is the SameSite value currently set for the site's session cookie, eg. Lax
+define("_AM_EMBED_SESSION_ANON_BODY", "The session cookie for this site is set to <code>SameSite=%s</code>, under Sessions &amp; cookies, which means browsers do not send it to a screen displayed in a frame on another website. Whoever is looking at the embedded screen, it can only ever show what the Anonymous group is allowed to see, and a screen that anonymous visitors cannot use will appear empty there.");
+define("_AM_EMBED_SESSION_ANON_LMS", "If you are embedding in a system your users are already signed in to, such as a learning management system, change that setting to <i>None</i>. Read the note that appears here when you do before you decide.");
+define("_AM_EMBED_SESSION_SHARED_TITLE", "Embedded screens on this site are logged in, not anonymous.");
+define("_AM_EMBED_SESSION_SHARED_BODY", "The session cookie for this site is set to <code>SameSite=None</code>, under Sessions &amp; cookies, so browsers do send it to a screen displayed in a frame on another website. A visitor who is signed in to this site sees their own data inside that other website's page, exactly as they would here.");
+define("_AM_EMBED_SESSION_SHARED_TRUST", "That makes the list of websites above the thing that decides who may display signed-in pages of this site. List only websites you control and trust. Any website named here, or on an individual screen, can put a signed-in page of this site inside a page of their own, and decide what appears around it.");
+
+define("_AM_EMBED_CODE_DEFAULT_TITLE", "Form");

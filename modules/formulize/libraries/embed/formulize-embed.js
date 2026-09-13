@@ -21,11 +21,32 @@
         return link.protocol + '//' + link.host;
     }
 
+    /**
+     * Make sure the screen knows it is being embedded.
+     *
+     * Nearly every browser tells it so itself, by sending Sec-Fetch-Dest on the request. The ones
+     * that don't would show the whole site - menus, header and footer - inside the frame. The
+     * formulize_embed parameter says it instead, so those browsers get the same thing as everyone
+     * else.
+     *
+     * The code Formulize generates for you already carries the parameter, so this does nothing and
+     * the iframe loads once. It is here for an iframe written by hand without it, which is worth
+     * one extra load to get right rather than leaving somebody with a mystery.
+     */
+    function ensureEmbedParameter(iframe) {
+        var src = iframe.getAttribute('src');
+        if (!src || /[?&]formulize_embed=/.test(src)) {
+            return;
+        }
+        iframe.setAttribute('src', src + (src.indexOf('?') === -1 ? '?' : '&') + 'formulize_embed=1');
+    }
+
     function register(iframe) {
         if (iframe.formulizeEmbedRegistered) {
             return;
         }
         iframe.formulizeEmbedRegistered = true;
+        ensureEmbedParameter(iframe);
         iframe.setAttribute('scrolling', 'no');
         iframe.style.width = '100%';
         iframe.style.border = '0';

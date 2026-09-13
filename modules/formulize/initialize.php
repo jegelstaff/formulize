@@ -111,6 +111,14 @@ $view_globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups
 $view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid);
 
 if($fid AND !$view_form = $gperm_handler->checkRight("view_form", $fid, $groups, $mid)) {
+    if(formulize_isEmbeddedRequest()) {
+        // Inside somebody else's iframe, so say so here rather than redirecting to the login page.
+        // That redirect would land on a page only this site may frame, and the browser would blank
+        // the frame with nothing anywhere explaining why - which looks like the embedding is broken
+        // rather than like a permission the screen does not have.
+        print formulize_embeddedNoPermissionHtml($currentURL);
+        return;
+    }
     if(strstr($currentURL, "/modules/formulize/") OR $formulizeCanonicalURI) { // if it's a formulize page reload to login screen (check URL and check if there was a valid Formulize clean URL)
         $nopermission = $xoopsUser ? "op=nopermission&" : ""; // no permission flag will bump the user to the All Applications page since they don't have perm for this page. If no user, they will be prompted for login.
         redirect_header(XOOPS_URL . "/user.php?".$nopermission."xoops_redirect=".urlencode($currentURL), 3, _formulize_NO_PERMISSION, false);

@@ -35,17 +35,21 @@
     <link rel="icon" type="image/png" href="<{$icms_imageurl}>icons/icon.png" />
 
     <!-- CSS: must come after icms_module_header.
-         This theme does not keep its own copy of the site's stylesheet. It loads the base theme's,
-         so improvements there reach embedded screens instead of this theme drifting behind, and
-         then loads embed.css, which adjusts only what that stylesheet assumes about the viewport.
-         Relative urls inside the base stylesheet resolve against the base theme's own folder, so
-         its images and fonts come with it. Define FORMULIZE_EMBED_BASE_THEME in mainfile.php to
-         build on a different theme. -->
+         This theme does not keep its own copy of the site's stylesheet. It loads the site's own
+         theme's, so improvements there reach embedded screens instead of this theme drifting
+         behind, and then loads embed.css, which adjusts only what that stylesheet assumes about
+         the viewport. Relative urls inside that stylesheet resolve against its own theme folder,
+         so the images and fonts come with it.
+         The site's theme is read from theme_set, which embedding deliberately leaves alone (see
+         modules/formulize/include/common.php), so an embedded screen is styled by whatever the
+         site is wearing today. Nothing to set, and nothing to keep in step. -->
     <{php}>
     require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions.php';
-    $baseTheme = defined('FORMULIZE_EMBED_BASE_THEME') ? FORMULIZE_EMBED_BASE_THEME : 'Anari';
-    if (!is_dir(ICMS_THEME_PATH . '/' . $baseTheme)) {
-        $baseTheme = 'Anari';
+    global $icmsConfig;
+    $baseTheme = $icmsConfig['theme_set'];
+    if (!$baseTheme OR !is_dir(ICMS_THEME_PATH . '/' . $baseTheme)
+        OR formulize_themeIsAnEmbedTheme($baseTheme)) {
+        $baseTheme = 'Anari'; // the site's theme is missing, or is itself an embed theme
     }
     $rtlPath = ($this->_tpl_vars['icms_rtl'] ?? false) ? 'rtl/' : '';
     foreach (array('/themes/' . $baseTheme . '/' . $rtlPath . 'css/style.css',

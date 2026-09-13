@@ -73,7 +73,13 @@ if ($screen_id == "new") {
     $settings['anonNeedsPasscode'] = $screen->getVar('anonNeedsPasscode');
     // escaped for display, because this one holds whatever the administrator typed, valid or not
     $settings['embedOrigins'] = $screen->getVar('embedOrigins');
-    $settings['embedOriginsInvalid'] = formulize_invalidEmbedOrigins($screen->getVar('embedOrigins', 'n'));
+    // the note about ignored entries is written in one place and shown wherever such a list is
+    // edited, so the preferences page and this page say the same thing in the same words
+    $settings['embedOriginsWarning'] = formulize_embedOriginsWarningHtml($screen->getVar('embedOrigins', 'n'));
+    // the ready-made iframe and script for the host page, with this screen's own address already in
+    // it, so nobody has to assemble one by hand or remember what has to be on the end of the URL
+    $settings['embedCode'] = formulize_screenEmbedCode($screen);
+    $settings['embedSessionNotice'] = formulize_embedSessionSharingNoticeHtml();
 	$settings['alternateURLsOn'] = $formulizeConfig['formulizeRewriteRulesEnabled'];
     if($settings['alternateURLsOn']) {
         $settings['rewriteruleAddress'] = $screen->getVar('rewriteruleAddress');
@@ -622,7 +628,7 @@ if ($screen_id != "new" && $settings['type'] == 'map') {
     $templates['usingTemplates'] = ($templates['toptemplate'] OR $templates['maptemplate'] OR $templates['bottomtemplate']);
 }
 
-$templates['themes'] = icms_view_theme_Factory::getThemesList();
+$templates['themes'] = formulize_selectableThemesList(); // embed themes carry no screen templates of their own
 global $xoopsConfig;
 $themeFolder = $screen ? $screen->getVar('theme') : $xoopsConfig['theme_set'];
 $themeDefaultPath = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$themeFolder."/default/".$settings['type']."/";

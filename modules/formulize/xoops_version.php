@@ -1276,6 +1276,14 @@ $modversion['config'][] = array(
 	'default' => '',
 );
 $modversion['config'][] = array(
+	'name' => 'formulizeEmbedTheme',
+	'title' => '_MI_formulize_EMBEDTHEME',
+	'description' => '_MI_formulize_EMBEDTHEME_DESC',
+	'formtype' => 'embedtheme',
+	'valuetype' => 'text',
+	'default' => 'formulize_embed',
+);
+$modversion['config'][] = array(
 	'name' => 'formulizePublicAPIEnabled',
 	'title' => '_MI_formulize_PUBLICAPIENABLED',
 	'description' => '_MI_formulize_PUBLICAPIENABLED_DESC',

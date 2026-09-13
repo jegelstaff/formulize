@@ -175,23 +175,26 @@ function formulize_configFormElementHtml($config) {
     // key in that header, so the enable check treats it as a precondition and forces the
     // setting back off. Without this, that presents as a preference that will not save, with
     // nothing on the page saying why.
-    // The list of websites allowed to call the Public API, plus a note about any entry that cannot
-    // be read as a website address. Without it a typo simply never matches, and the caller it was
-    // meant to admit is refused with nothing on this page suggesting why.
-    // The websites allowed to frame the whole site, with the same note about anything unreadable.
-    if ($name === 'formulizeFrameAncestors') {
-        $ele = new icms_form_elements_Textarea('', $name, icms_core_DataFilter::htmlSpecialChars($value), 5, 50);
-        return $ele->render() . formulize_originSettingWarningHtml($value, 'formulize_originPatternCanBeFramed');
-    }
-
-    if ($name === 'formulizePublicAPIAllowedOrigins') {
-        $ele = new icms_form_elements_Textarea('', $name, icms_core_DataFilter::htmlSpecialChars($value), 5, 50);
-        return $ele->render() . formulize_originSettingWarningHtml($value);
-    }
-
     if ($name === 'formulizeMCPServerEnabled') {
         $ele = new icms_form_elements_Radioyn('', $name, $value, _YES, _NO);
         return $ele->render() . formulize_mcpAuthHeaderWarningHtml();
+    }
+
+    // The websites allowed to frame the whole site, plus a note about any entry that is being
+    // ignored, and a note about what the session cookie setting means for the websites listed here.
+    if ($name === 'formulizeFrameAncestors') {
+        $ele = new icms_form_elements_Textarea('', $name, icms_core_DataFilter::htmlSpecialChars($value), 5, 50);
+        return $ele->render()
+            . formulize_embedOriginsWarningHtml($value)
+            . formulize_embedSessionSharingNoticeHtml();
+    }
+
+    // The list of websites allowed to call the Public API, plus a note about any entry that cannot
+    // be read as a website address. Without it a typo simply never matches, and the caller it was
+    // meant to admit is refused with nothing on this page suggesting why.
+    if ($name === 'formulizePublicAPIAllowedOrigins') {
+        $ele = new icms_form_elements_Textarea('', $name, icms_core_DataFilter::htmlSpecialChars($value), 5, 50);
+        return $ele->render() . formulize_originSettingWarningHtml($value);
     }
 
     switch ($formtype) {
@@ -254,10 +257,21 @@ function formulize_configFormElementHtml($config) {
 
         case 'theme':
         case 'theme_admin':
+            // themes for rendering embedded screens are filtered out: they draw no site chrome, so
+            // choosing one here would leave the site itself with no menus, header or footer
             $ele = new icms_form_elements_Select('', $name, $value);
-            $dirlist = ($formtype == 'theme_admin')
+            $dirlist = formulize_selectableThemesList(($formtype == 'theme_admin')
                 ? icms_view_theme_Factory::getAdminThemesList()
-                : icms_view_theme_Factory::getThemesList();
+                : icms_view_theme_Factory::getThemesList());
+            if (!empty($dirlist)) {
+                asort($dirlist);
+                $ele->addOptionArray($dirlist);
+            }
+            break;
+
+        case 'embedtheme':
+            $ele = new icms_form_elements_Select('', $name, $value);
+            $dirlist = formulize_embedThemesList();
             if (!empty($dirlist)) {
                 asort($dirlist);
                 $ele->addOptionArray($dirlist);

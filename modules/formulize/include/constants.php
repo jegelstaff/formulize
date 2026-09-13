@@ -37,3 +37,10 @@ define('FORMULIZE_QUERY_SCOPE_GLOBAL', 'all');
 define('FORMULIZE_EDIT_ICON_STYLE_OFF', 0);
 define('FORMULIZE_EDIT_ICON_STYLE_PEN', 1);
 define('FORMULIZE_EDIT_ICON_STYLE_MAGNIFIER', 2);
+// The theme an embedded screen renders with, unless the site names a different one in the
+// "Theme for embedded screens" preference. See formulize_embedThemeName().
+define('FORMULIZE_DEFAULT_EMBED_THEME', 'formulize_embed');
+
+// A file with this name in a theme folder marks that theme as one for rendering embedded screens.
+// See formulize_themeIsAnEmbedTheme() and the marker file in themes/formulize_embed.
+define('FORMULIZE_EMBED_THEME_MARKER', 'formulize-embed-theme.marker');

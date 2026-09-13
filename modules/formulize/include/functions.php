@@ -403,51 +403,88 @@ function formulize_originMatchesPattern($address, $pattern) {
  * They stay in the saved setting so the administrator can see and correct them, and this is what
  * the settings pages use to say which ones are being ignored.
  *
+ * Entries are ignored for two different reasons, and an administrator needs to be told which. An
+ * entry that cannot be read at all is a typo. An entry that reads perfectly well but is not
+ * something this particular setting can act on - a lone * in the embedding list, say - is not a
+ * typo, and telling someone their * "cannot be read as a website address" sends them looking for a
+ * mistake that isn't there.
+ *
  * @param string $value The saved setting
  * @param callable|null $usableCheck Given a parsed pattern, says whether this particular setting can
- *   act on it. Embedding uses this to report an address it cannot frame, such as a lone *.
- * @return array The ignored entries, exactly as they were written
+ *   act on it. Embedding uses this to rule out a lone *.
+ * @return array array('unreadable' => array, 'unusable' => array), each holding the entries exactly
+ *   as they were written
  */
 function formulize_invalidOriginEntries($value, $usableCheck = null) {
-    $invalid = array();
+    $invalid = array('unreadable' => array(), 'unusable' => array());
     foreach (formulize_splitOriginSetting($value) as $entry) {
         if (trim($entry) === '') {
             continue;
         }
         $pattern = formulize_parseOriginPattern($entry);
-        if (!$pattern OR ($usableCheck AND !call_user_func($usableCheck, $pattern))) {
-            $invalid[] = trim($entry);
+        if (!$pattern) {
+            $invalid['unreadable'][] = trim($entry);
+        } elseif ($usableCheck AND !call_user_func($usableCheck, $pattern)) {
+            $invalid['unusable'][] = trim($entry);
         }
     }
     return $invalid;
 }
 
 /**
- * A note for a settings page about entries that cannot be read as website addresses.
+ * Whether a setting has any entries that are being ignored.
+ *
+ * @param array $invalid From formulize_invalidOriginEntries()
+ * @return bool
+ */
+function formulize_hasInvalidOriginEntries($invalid) {
+    return (bool) ($invalid['unreadable'] OR $invalid['unusable']);
+}
+
+/**
+ * A note about entries that are being ignored, for a settings page or a screen's settings.
+ *
+ * The single place this note is written. The Formulize preferences and the screen settings page
+ * both show it, so that an administrator who has met it on one recognises it on the other, and so
+ * that its wording only ever has to be corrected once.
  *
  * @param string $value The saved setting
  * @param callable|null $usableCheck Passed through to formulize_invalidOriginEntries()
- * @return string HTML for the note, or an empty string when every entry can be read
+ * @return string HTML for the note, or an empty string when every entry is in use
  */
 function formulize_originSettingWarningHtml($value, $usableCheck = null) {
     $invalid = formulize_invalidOriginEntries($value, $usableCheck);
-    if (!$invalid) {
+    if (!formulize_hasInvalidOriginEntries($invalid)) {
         return '';
     }
+    $html = formulize_settingsWarningStylesHtml()."<div class='formulize-settings-warning'>";
+    if ($invalid['unreadable']) {
+        $html .= formulize_invalidOriginEntriesHtml($invalid['unreadable'],
+            _AM_ORIGINS_UNREADABLE_ONE, _AM_ORIGINS_UNREADABLE_MANY, _AM_ORIGINS_UNREADABLE_HELP);
+    }
+    if ($invalid['unusable']) {
+        $html .= formulize_invalidOriginEntriesHtml($invalid['unusable'],
+            _AM_ORIGINS_UNUSABLE_ONE, _AM_ORIGINS_UNUSABLE_MANY, _AM_ORIGINS_UNUSABLE_HELP);
+    }
+    return $html.'<p>'._AM_ORIGINS_KEPT.'</p></div>';
+}
+
+/**
+ * One group of ignored entries, listed under a heading and followed by an explanation.
+ *
+ * @param array $entries The entries, exactly as they were written
+ * @param string $headingOne Heading when there is exactly one
+ * @param string $headingMany Heading when there is more than one
+ * @param string $help The paragraph explaining what to do about them
+ * @return string HTML
+ */
+function formulize_invalidOriginEntriesHtml($entries, $headingOne, $headingMany, $help) {
     $list = '';
-    foreach ($invalid as $entry) {
+    foreach ($entries as $entry) {
         $list .= '<li><code>'.htmlspecialchars($entry).'</code></li>';
     }
-    $lead = count($invalid) === 1
-        ? 'This entry is being ignored, because it cannot be read as a website address:'
-        : 'These entries are being ignored, because they cannot be read as website addresses:';
-    return "<div class='formulize-authheader-warning'>"
-        ."<b>$lead</b>"
-        ."<ul>$list</ul>"
-        ."<p>They have been kept here so you can correct them. Write each website on its own line, as a "
-        ."domain such as <i>www.example.com</i>, or with a scheme, <i>https://www.example.com</i>. "
-        ."Everything else in the list is in use.</p>"
-        ."</div>";
+    return '<b>'.(count($entries) === 1 ? $headingOne : $headingMany).'</b>'
+        ."<ul>$list</ul><p>$help</p>";
 }
 
 /**
@@ -484,13 +521,16 @@ function formulize_originPatternCanBeFramed($pattern) {
 }
 
 /**
- * The entries in a screen's embedding setting that are being ignored.
+ * The note about entries in an embedding setting that are being ignored.
+ *
+ * Used by both the screen settings page and the site-wide preference, so the two say the same
+ * thing in the same words about the same list.
  *
  * @param string $value The saved setting
- * @return array The ignored entries, exactly as they were written
+ * @return string HTML for the note, or an empty string when every entry is in use
  */
-function formulize_invalidEmbedOrigins($value) {
-    return formulize_invalidOriginEntries($value, 'formulize_originPatternCanBeFramed');
+function formulize_embedOriginsWarningHtml($value) {
+    return formulize_originSettingWarningHtml($value, 'formulize_originPatternCanBeFramed');
 }
 
 /**
@@ -510,16 +550,249 @@ function formulize_embeddingAllowed() {
 /**
  * Read one Formulize preference, whichever module's page this request belongs to.
  *
+ * The one way Formulize preferences are read from code that can run on any page. When the request
+ * belongs to Formulize itself the preferences are already in $xoopsModuleConfig, so that is used;
+ * otherwise they are fetched once and kept for the rest of the request.
+ *
  * @param string $name The preference name
  * @return mixed The value, or an empty string when it is not set
  */
 function formulize_moduleConfigValue($name) {
+    global $xoopsModuleConfig;
+    if (isset($xoopsModuleConfig[$name])) {
+        return $xoopsModuleConfig[$name];
+    }
     static $formulizeConfig = null;
     if ($formulizeConfig === null) {
         $config_handler = xoops_gethandler('config');
         $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
     }
     return isset($formulizeConfig[$name]) ? $formulizeConfig[$name] : '';
+}
+
+/**
+ * The theme an embedded screen renders with.
+ *
+ * A preference rather than something an administrator has to define in mainfile.php. The shipped
+ * theme is the default; a site that wants to design its own copies the folder, and then chooses it
+ * here. FALSE when the chosen theme is not installed, which leaves an embedded screen rendering
+ * with the site's ordinary theme rather than with nothing.
+ *
+ * @return string|bool The theme folder name, or FALSE if it isn't installed
+ */
+function formulize_embedThemeName() {
+    $theme = formulize_moduleConfigValue('formulizeEmbedTheme');
+    if (!$theme) {
+        $theme = FORMULIZE_DEFAULT_EMBED_THEME;
+    }
+    // a theme folder name reaches the filesystem, so it may only ever be a plain folder name
+    if (!preg_match('/^[A-Za-z0-9_-]+$/', $theme)) {
+        return false;
+    }
+    return is_dir(ICMS_THEME_PATH.'/'.$theme) ? $theme : false;
+}
+
+/**
+ * THEME PICKERS AND EMBED THEMES
+ *
+ * A theme is a folder under /themes with a theme.html file in it, and that file is exactly what
+ * puts the folder in the list of themes a site can choose. An embed theme needs a theme.html like
+ * any other, so it cannot be kept out of that list by leaving something out.
+ *
+ * So it is marked instead. A file named by FORMULIZE_EMBED_THEME_MARKER in the folder says "this
+ * theme is for rendering screens inside somebody else's page". The two functions below split the
+ * installed themes on that marker: ordinary themes for the pickers that choose how the site itself
+ * looks, embed themes for the one preference that chooses how an embedded screen looks. Copying an
+ * embed theme to design your own carries the marker along with everything else, so a copy behaves
+ * the way the original did without anything having to be registered anywhere.
+ */
+
+/**
+ * What an embedded screen shows when the visitor is not allowed to see it.
+ *
+ * An embedded screen cannot send somebody to the login page: that page may only be framed by this
+ * site, so the browser blanks the frame and the visitor is left looking at an empty box on someone
+ * else's website, with nothing saying what happened or what to do. So the screen says it here, in
+ * the frame, and offers to open itself in a new tab, where signing in works normally.
+ *
+ * Two situations reach this, and they need different words. Nobody is signed in, which is the
+ * ordinary case - the session cookie does not travel into a frame on another website unless the
+ * site is set up for that - and signing in is the answer. Or somebody is signed in and still may
+ * not see this screen, where signing in is not the answer and saying so would only send them round
+ * in circles.
+ *
+ * @param string $returnUrl The screen's own address, to come back to after signing in
+ * @return string HTML for the message
+ */
+function formulize_embeddedNoPermissionHtml($returnUrl) {
+    global $xoopsUser;
+    $openUrl = $returnUrl;
+    if ($xoopsUser) {
+        $message = _formulize_NO_PERMISSION;
+        $invitation = _formulize_EMBED_NOPERM_ACCOUNT;
+    } else {
+        $message = _formulize_EMBED_SIGNIN_NEEDED;
+        $invitation = _formulize_EMBED_SIGNIN_NEWTAB;
+        $openUrl = XOOPS_URL.'/user.php?xoops_redirect='.urlencode($returnUrl);
+    }
+    return "<div class='formulize-embed-nopermission'>"
+        ."<p>".htmlspecialchars($message)."</p>"
+        ."<p>".htmlspecialchars($invitation)."</p>"
+        ."<p><a href='".htmlspecialchars($openUrl)."' target='_blank' rel='noopener'>"
+        .htmlspecialchars(_formulize_EMBED_OPEN_NEWWINDOW)."</a></p>"
+        ."</div>";
+}
+
+/**
+ * The address a screen is reached at, preferring the clean URL when the screen has one.
+ *
+ * @param object $screen The screen
+ * @return string The full URL
+ */
+function formulize_screenUrl($screen) {
+    $cleanAddress = $screen->getVar('rewriteruleAddress', 'n');
+    if ($cleanAddress AND formulize_moduleConfigValue('formulizeRewriteRulesEnabled')) {
+        return XOOPS_URL.'/'.ltrim($cleanAddress, '/');
+    }
+    return XOOPS_URL.'/modules/formulize/index.php?sid='.intval($screen->getVar('sid'));
+}
+
+/**
+ * The HTML to paste into another website's page to embed this screen.
+ *
+ * Generated rather than written out in the documentation for somebody to adapt, because three
+ * things in it have to be right and only this end knows them: the screen's own address, the
+ * address of the helper script on this site, and the formulize_embed parameter.
+ *
+ * That parameter is what tells Formulize to render without site chrome in the handful of browsers
+ * that do not send Sec-Fetch-Dest. It costs nothing to have it there on every browser, and putting
+ * it in the generated snippet means nobody has to know it exists, or find out the hard way that
+ * they needed it. formulize-embed.js also adds it to any iframe that reaches it without one, so a
+ * hand-written iframe ends up in the same place.
+ *
+ * @param object $screen The screen
+ * @return string The HTML to paste, ready to display in a textarea
+ */
+function formulize_screenEmbedCode($screen) {
+    $url = formulize_screenUrl($screen);
+    $url .= (strpos($url, '?') === false ? '?' : '&').'formulize_embed=1';
+    $title = $screen->getVar('title');
+    return '<iframe data-formulize-embed src="'.htmlspecialchars($url).'"'
+        .' title="'.htmlspecialchars($title ? $title : _AM_EMBED_CODE_DEFAULT_TITLE).'"></iframe>'."\n"
+        .'<script src="'.htmlspecialchars(XOOPS_URL.'/modules/formulize/libraries/embed/formulize-embed.js').'"></script>';
+}
+
+/**
+ * The styling for a settings-page warning, on the first call and never again.
+ *
+ * Every warning carries its own styling rather than relying on some other warning to have put it
+ * on the page. They appear on different settings pages and in different combinations, and the
+ * styling used to be emitted only by the Authorization header check, so a warning shown without
+ * that one on the page rendered unstyled.
+ *
+ * @return string A style block, or an empty string once it has already been rendered
+ */
+function formulize_settingsWarningStylesHtml() {
+    static $rendered = false;
+    if ($rendered) {
+        return '';
+    }
+    $rendered = true;
+    return "
+    <style type='text/css'>
+    .formulize-settings-warning { border-left: 4px solid #c0392b; background: #fdf3f2; padding: 0.75em 1em; margin: 1em 0; }
+    .formulize-settings-warning p { margin: 0.6em 0; }
+    .formulize-settings-warning ul { margin: 0.4em 0 0.6em 1.5em; }
+    .formulize-settings-warning code { font-family: monospace; background: #fff; padding: 0 0.3em; border: 1px solid #e0d0cf; }
+    .formulize-settings-code { font-family: monospace; background: #fff; padding: 0 0.3em; border: 1px solid #e0d0cf; }
+    .formulize-settings-note { border-left: 4px solid #ce8c22; background: #fdf8ef; padding: 0.75em 1em; margin: 1em 0; }
+    .formulize-settings-note p { margin: 0.6em 0; }
+    </style>";
+}
+
+/**
+ * A note about what the session cookie's SameSite setting means for embedding.
+ *
+ * These two settings are configured on different pages and decide one thing between them, so
+ * whichever page you are on needs to say what the other one is doing.
+ *
+ * With the default of Lax the session cookie is not sent into a frame on another website, so an
+ * embedded screen is always anonymous no matter who is looking at it, and only what the Anonymous
+ * group may see can appear there. Set to None, the session cookie does travel into the frame, and
+ * an embedded screen shows the visitor whatever they are logged in to see. That is what an LMS or
+ * portal integration needs, and it is also what makes the list of allowed websites load-bearing:
+ * on such a site those websites receive logged-in pages, not anonymous ones.
+ *
+ * @return string HTML for the note, or an empty string when there is nothing worth saying
+ */
+function formulize_embedSessionSharingNoticeHtml() {
+    global $icmsConfig;
+    $sameSite = isset($icmsConfig['cookie_samesite']) ? $icmsConfig['cookie_samesite'] : 'Lax';
+    if (!formulize_embeddingAllowed()) {
+        return '';
+    }
+    if ($sameSite !== 'None') {
+        return formulize_settingsWarningStylesHtml()
+            ."<div class='formulize-settings-note'>"
+            ."<p><b>"._AM_EMBED_SESSION_ANON_TITLE."</b> "
+            .sprintf(_AM_EMBED_SESSION_ANON_BODY, htmlspecialchars($sameSite))."</p>"
+            ."<p>"._AM_EMBED_SESSION_ANON_LMS."</p>"
+            ."</div>";
+    }
+    return formulize_settingsWarningStylesHtml()
+        ."<div class='formulize-settings-warning'>"
+        ."<p><b>"._AM_EMBED_SESSION_SHARED_TITLE."</b> "._AM_EMBED_SESSION_SHARED_BODY."</p>"
+        ."<p>"._AM_EMBED_SESSION_SHARED_TRUST."</p>"
+        ."</div>";
+}
+
+/**
+ * Whether a theme folder is an embed theme.
+ *
+ * @param string $theme The theme folder name
+ * @return bool
+ */
+function formulize_themeIsAnEmbedTheme($theme) {
+    return file_exists(ICMS_THEME_PATH.'/'.$theme.'/'.FORMULIZE_EMBED_THEME_MARKER);
+}
+
+/**
+ * The themes a site can choose for its own pages, ie: every installed theme except the embed ones.
+ *
+ * @param array|null $themes The list to filter, or NULL for every installed theme
+ * @return array folder name => folder name
+ */
+function formulize_selectableThemesList($themes = null) {
+    if ($themes === null) {
+        $themes = icms_view_theme_Factory::getThemesList();
+    }
+    foreach (array_keys($themes) as $theme) {
+        if (formulize_themeIsAnEmbedTheme($theme)) {
+            unset($themes[$theme]);
+        }
+    }
+    return $themes;
+}
+
+/**
+ * The themes available for rendering embedded screens.
+ *
+ * The shipped theme is always offered, even before anything has been chosen, so the preference
+ * never presents an empty list.
+ *
+ * @return array folder name => folder name
+ */
+function formulize_embedThemesList() {
+    $themes = array();
+    foreach (icms_view_theme_Factory::getThemesList() as $theme) {
+        if (formulize_themeIsAnEmbedTheme($theme)) {
+            $themes[$theme] = $theme;
+        }
+    }
+    if (!$themes AND is_dir(ICMS_THEME_PATH.'/'.FORMULIZE_DEFAULT_EMBED_THEME)) {
+        $themes[FORMULIZE_DEFAULT_EMBED_THEME] = FORMULIZE_DEFAULT_EMBED_THEME;
+    }
+    return $themes;
 }
 
 /**
@@ -11985,15 +12258,16 @@ function formulize_authHeaderWarningHtml($consequenceHtml, $maxAgeSeconds = 300)
         return '';
     }
     $testedUrl = htmlspecialchars(formulize_selfRequestUrl('/formulize-public-api/v1/status/'));
-    return "<div class='formulize-authheader-warning'>"
+    return formulize_settingsWarningStylesHtml()
+        ."<div class='formulize-settings-warning'>"
         ."<b>This server appears to be stripping the <i>Authorization</i> header.</b>"
         .$consequenceHtml
-        ."<p>On Apache, adding <span class='formulize-authheader-code'>CGIPassAuth On</span> to the "
-        ."<span class='formulize-authheader-code'>.htaccess</span> file at the root of your site usually "
+        ."<p>On Apache, adding <span class='formulize-settings-code'>CGIPassAuth On</span> to the "
+        ."<span class='formulize-settings-code'>.htaccess</span> file at the root of your site usually "
         ."solves it. Once you have made the change, test it again here.</p>"
         .formulize_authHeaderRecheckHtml()
         ."<p style='font-size: 0.9em; color: #666;'>The test sent an <i>Authorization</i> header from this "
-        ."server to <span class='formulize-authheader-code'>$testedUrl</span> and it did not arrive. If "
+        ."server to <span class='formulize-settings-code'>$testedUrl</span> and it did not arrive. If "
         ."public traffic reaches this site by a different route - through a proxy or load balancer, or on "
         ."a hostname that resolves elsewhere from here - then that is not the journey your API callers "
         ."make, and a key may work for them regardless.</p>"
@@ -12074,9 +12348,6 @@ function formulize_authHeaderRecheckHtml() {
     $url = XOOPS_URL.'/modules/formulize/admin/checkauthheader.php';
     return $button."
     <style type='text/css'>
-    .formulize-authheader-warning { border-left: 4px solid #c0392b; background: #fdf3f2; padding: 0.75em 1em; margin: 1em 0; }
-    .formulize-authheader-warning p { margin: 0.6em 0; }
-    .formulize-authheader-code { font-family: monospace; background: #fff; padding: 0 0.3em; border: 1px solid #e0d0cf; }
     .formulize-authheader-good { color: #1e7e34; font-weight: bold; }
     .formulize-authheader-bad { color: #c0392b; font-weight: bold; }
     </style>
@@ -12125,17 +12396,7 @@ function formulize_authHeaderRecheckHtml() {
  * @return array The allowed origin patterns, or array('*') for any
  */
 function formulize_publicApiAllowedOrigins() {
-    global $xoopsModuleConfig;
-
-    if (isset($xoopsModuleConfig['formulizePublicAPIAllowedOrigins'])) {
-        $setting = $xoopsModuleConfig['formulizePublicAPIAllowedOrigins'];
-    } else {
-        $config_handler = xoops_gethandler('config');
-        $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-        $setting = isset($formulizeConfig['formulizePublicAPIAllowedOrigins'])
-            ? $formulizeConfig['formulizePublicAPIAllowedOrigins'] : '';
-    }
-
+    $setting = formulize_moduleConfigValue('formulizePublicAPIAllowedOrigins');
     $patterns = array();
     foreach (formulize_splitOriginSetting($setting) as $entry) {
         if ($pattern = formulize_parseOriginPattern($entry)) {
@@ -12158,24 +12419,6 @@ function formulize_publicApiAllowsEveryOrigin($allowedOrigins) {
         }
     }
     return false;
-}
-
-/**
- * The entries in the Public API's allowlist that are being ignored.
- *
- * @return array The unreadable entries, exactly as they were written
- */
-function formulize_publicApiInvalidOrigins() {
-    global $xoopsModuleConfig;
-    if (isset($xoopsModuleConfig['formulizePublicAPIAllowedOrigins'])) {
-        $setting = $xoopsModuleConfig['formulizePublicAPIAllowedOrigins'];
-    } else {
-        $config_handler = xoops_gethandler('config');
-        $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-        $setting = isset($formulizeConfig['formulizePublicAPIAllowedOrigins'])
-            ? $formulizeConfig['formulizePublicAPIAllowedOrigins'] : '';
-    }
-    return formulize_invalidOriginEntries($setting);
 }
 
 /**

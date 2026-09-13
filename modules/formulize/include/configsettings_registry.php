@@ -462,6 +462,11 @@ return array(
                             'scope' => 'formulize',
                             'showWhen' => array('name' => 'formulizeEmbeddingEnabled', 'value' => 1),
                         ),
+                        array(
+                            'name' => 'formulizeEmbedTheme',
+                            'scope' => 'formulize',
+                            'showWhen' => array('name' => 'formulizeEmbeddingEnabled', 'value' => 1),
+                        ),
                     ),
                     _AM_CFG_SEC_SESSIONS_COOKIES => array(
                         array('name' => 'session_expire', 'scope' => 'system'),

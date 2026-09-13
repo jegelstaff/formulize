@@ -2815,27 +2815,20 @@ function formulize_isEmbeddedRequest() {
 }
 
 /**
- * The theme used to render embedded screens: no site chrome, and it speaks the postMessage
- * protocol that lets the host page size the iframe. Sites can use their own by defining
- * FORMULIZE_EMBED_THEME in mainfile.php.
- *
- * @return string|bool The theme folder name, or FALSE if it isn't installed
- */
-function formulize_embedThemeName() {
-	$theme = defined('FORMULIZE_EMBED_THEME') ? FORMULIZE_EMBED_THEME : 'formulize_embed';
-	return is_dir(ICMS_THEME_PATH . '/' . $theme) ? $theme : false;
-}
-
-/**
  * The theme to render this request with when it is being embedded, or FALSE for the normal one.
  *
  * Two things have to be true. The request has to look embedded - either framed, which the browser
  * says with Sec-Fetch-Dest, or asking for it with the formulize_embed parameter - and an
- * administrator has to have turned embedding on. While it is off the parameter does nothing, and a
- * page framed by the site itself renders the way it always does.
+ * administrator has to have turned embedding on. While embedding is off the parameter does nothing.
  *
- * This can only be answered once the module's settings can be read, which is why it is called from
- * the module's own bootstrap rather than from the earliest part of the core one.
+ * Note that any framed page is an embedded one, including a Formulize screen framed by another page
+ * of this same site. There is nothing in the request that tells those apart, and a screen inside a
+ * frame wants the same chrome-free rendering either way.
+ *
+ * The answer depends on Formulize's own settings, so the module's functions have to be loaded. They
+ * are, on every page: include/common.php loads the module's bootstrap before any page reaches
+ * header.php. The check is here for the handful of contexts that run without it, such as the
+ * installer, where the honest answer is that this request is not an embedded screen.
  *
  * @return string|bool The theme folder to render with, or FALSE
  */
@@ -2843,7 +2836,10 @@ function formulize_embedRenderingTheme() {
 	if (!formulize_isEmbeddedRequest()) {
 		return false;
 	}
-	if (!function_exists('formulize_embeddingAllowed') OR !formulize_embeddingAllowed()) {
+	if (!function_exists('formulize_embeddingAllowed') OR !function_exists('formulize_embedThemeName')) {
+		return false;
+	}
+	if (!formulize_embeddingAllowed()) {
 		return false;
 	}
 	return formulize_embedThemeName();
