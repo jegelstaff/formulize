@@ -10,41 +10,100 @@ description: News, articles and release notes from the Formulize project.
   <p>What we are building, where we have been talking about it, and what is worth knowing if you use Formulize.</p>
 </div>
 
-<div class="post-list">
-  {% for post in paginator.posts %}
-    <article class="post-teaser{% unless post.image %} no-image{% endunless %}">
-      {% if post.image %}
-        <div class="post-teaser-thumb">
-          <a href="{{ post.url | relative_url }}"><img class="washed" src="{{ post.image | relative_url }}" alt=""></a>
-        </div>
-      {% endif %}
-      <div>
-        <p class="post-meta">
-          <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%-d %B %Y" }}</time>
-          {% for cat in post.categories %}<span class="tag tag-accent">{{ cat }}</span>{% endfor %}
-        </p>
-        <h2><a href="{{ post.url | relative_url }}">{{ post.title }}</a></h2>
-        <p class="post-excerpt">{{ post.description | default: post.excerpt | strip_html | truncatewords: 40 }}</p>
-        <a class="btn btn-secondary btn-sm" href="{{ post.url | relative_url }}">Read it</a>
-      </div>
-    </article>
-  {% endfor %}
+<div class="post-list" id="post-list">
+  <p>Loading news&hellip;</p>
 </div>
 
-{% if paginator.total_pages > 1 %}
-  <nav class="pagination" aria-label="Pagination">
-    {% if paginator.previous_page %}
-      <a class="btn btn-secondary" href="{{ paginator.previous_page_path | relative_url }}">&larr; Newer</a>
-    {% else %}
-      <span class="btn btn-secondary" aria-disabled="true" style="opacity: 0.45;">&larr; Newer</span>
-    {% endif %}
+<nav class="pagination" aria-label="Pagination" id="pagination" hidden></nav>
 
-    <span class="pagination-status">Page {{ paginator.page }} of {{ paginator.total_pages }}</span>
+<script src="{{ "/assets/js/news-api.js" | relative_url }}"></script>
+<script>
+(async function () {
+  // No total count is available from the read API (see /developers/Public_API/read) --
+  // it only reports how many rows came back in this response, not the size of the
+  // whole dataset. So paging follows the API's own documented technique: keep going
+  // while a full page comes back, and stop offering "Older" once fewer rows do.
+  const PAGE_SIZE = 6;
+  const list = document.getElementById('post-list');
+  const nav = document.getElementById('pagination');
 
-    {% if paginator.next_page %}
-      <a class="btn btn-secondary" href="{{ paginator.next_page_path | relative_url }}">Older &rarr;</a>
-    {% else %}
-      <span class="btn btn-secondary" aria-disabled="true" style="opacity: 0.45;">Older &rarr;</span>
-    {% endif %}
-  </nav>
-{% endif %}
+  function currentStart() {
+    const n = parseInt(new URLSearchParams(location.search).get('start'), 10);
+    return Number.isInteger(n) && n >= 0 ? n : 0;
+  }
+
+  function pageUrl(start) {
+    const params = new URLSearchParams(location.search);
+    if (start > 0) params.set('start', start); else params.delete('start');
+    const qs = params.toString();
+    return location.pathname + (qs ? '?' + qs : '');
+  }
+
+  function navLink(label, start, enabled) {
+    if (enabled) return el('a', { class: 'btn btn-secondary', href: pageUrl(start) }, label);
+    return el('span', { class: 'btn btn-secondary', 'aria-disabled': 'true', style: 'opacity: 0.45;' }, label);
+  }
+
+  async function load() {
+    const start = currentStart();
+    list.replaceChildren(el('p', 'Loading news…'));
+    nav.hidden = true;
+
+    let data;
+    try {
+      ({ data } = await readNewsForm({
+        fields: ['news_headline', 'news_teaser', 'news_image', 'creation_datetime'],
+        sortField: 'creation_datetime',
+        sortOrder: 'DESC',
+        limitStart: start,
+        limitSize: PAGE_SIZE
+      }));
+    } catch (err) {
+      list.replaceChildren(el('p', 'Could not load news: ' + err.message));
+      console.error(err.message, err.code ?? '', err.hint ?? '');
+      return;
+    }
+
+    if (!data.length) {
+      list.replaceChildren(el('p', start === 0 ? 'No news yet.' : 'No more news.'));
+      if (start > 0) {
+        nav.hidden = false;
+        nav.replaceChildren(
+          navLink('← Newer', Math.max(0, start - PAGE_SIZE), true),
+          el('span', { class: 'pagination-status' }, ''),
+          navLink('Older →', start + PAGE_SIZE, false)
+        );
+      }
+      return;
+    }
+
+    list.replaceChildren(...data.map(entry => {
+      const classes = 'post-teaser' + (entry.news_image ? '' : ' no-image');
+      const href = '{{ "/news/entry/" | relative_url }}?id=' + entry.entry_id;
+      const parts = [];
+      if (entry.news_image) {
+        parts.push(el('div', { class: 'post-teaser-thumb' }, el('img', { class: 'washed', src: entry.news_image, alt: '' })));
+      }
+      parts.push(el('div', null,
+        el('p', { class: 'post-meta' },
+          el('time', { datetime: newsIsoDate(entry.creation_datetime) }, formatNewsDate(entry.creation_datetime))
+        ),
+        el('h2', entry.news_headline),
+        el('p', { class: 'post-excerpt' }, newsTeaserText(entry, 220)),
+        el('span', { class: 'btn btn-secondary btn-sm' }, 'Read it')
+      ));
+      return el('a', { class: classes, href }, ...parts);
+    }));
+
+    const hasNext = data.length === PAGE_SIZE;
+    nav.hidden = false;
+    nav.replaceChildren(
+      navLink('← Newer', Math.max(0, start - PAGE_SIZE), start > 0),
+      el('span', { class: 'pagination-status' }, 'Showing ' + (start + 1) + '–' + (start + data.length)),
+      navLink('Older →', start + PAGE_SIZE, hasNext)
+    );
+  }
+
+  load();
+})();
+</script>
