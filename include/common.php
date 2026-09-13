@@ -83,19 +83,15 @@ if($icmsUser AND in_array(XOOPS_GROUP_ADMIN, $icmsUser->getGroups()) AND $icmsCo
 	$_SESSION['xoopsUserTheme'] = $icmsConfig['theme_admin_set'];
 }
 
-// a screen embedded in another website renders with no site chrome, whoever is viewing it.
-// Deliberately not written to the session: embedded mode is decided per request, so the same
-// URL still renders normally when it is opened directly. Vary is sent either way, since the
-// same URL now has two representations.
+// The same URL can render with the site's chrome or without it, depending on whether it is being
+// embedded, so shared caches have to tell those apart. Whether this request is one of them is
+// settled in the module's bootstrap further down, where its settings can be read.
 if (!headers_sent()) {
 	header('Vary: Sec-Fetch-Dest', false);
 }
-// No other website may put this site's pages in a frame. A screen that names the websites allowed
-// to embed it replaces this header later in the request; everything else keeps this.
+// No other website may put this site's pages in a frame. Anything an administrator has allowed is
+// added further down, once the settings saying so can be read.
 formulize_sendFrameAncestorsHeader();
-if (formulize_isEmbeddedRequest() AND $embedTheme = formulize_embedThemeName()) {
-	$icmsConfig['theme_set'] = $embedTheme;
-}
 
 icms::launchModule();
 

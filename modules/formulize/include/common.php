@@ -205,6 +205,15 @@ function formulize_exception_handler($exception) {
 
 set_exception_handler('formulize_exception_handler');
 
+// A screen being embedded renders with no site chrome. Decided here rather than in the core
+// bootstrap because it depends on a setting, and settings cannot be read that early. Deliberately
+// not written to the session: it is decided per request, so the same URL still renders normally
+// when it is opened directly.
+global $icmsConfig;
+if ($formulizeEmbedTheme = formulize_embedRenderingTheme()) {
+    $icmsConfig['theme_set'] = $formulizeEmbedTheme;
+}
+
 // The core bootstrap has already said that only this site may frame its pages, before any settings
 // could be read. Now that they can be, allow the websites an administrator has named for the whole
 // site. A screen with its own list adds to this again when it renders.

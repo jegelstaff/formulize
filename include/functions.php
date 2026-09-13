@@ -2827,6 +2827,29 @@ function formulize_embedThemeName() {
 }
 
 /**
+ * The theme to render this request with when it is being embedded, or FALSE for the normal one.
+ *
+ * Two things have to be true. The request has to look embedded - either framed, which the browser
+ * says with Sec-Fetch-Dest, or asking for it with the formulize_embed parameter - and an
+ * administrator has to have turned embedding on. While it is off the parameter does nothing, and a
+ * page framed by the site itself renders the way it always does.
+ *
+ * This can only be answered once the module's settings can be read, which is why it is called from
+ * the module's own bootstrap rather than from the earliest part of the core one.
+ *
+ * @return string|bool The theme folder to render with, or FALSE
+ */
+function formulize_embedRenderingTheme() {
+	if (!formulize_isEmbeddedRequest()) {
+		return false;
+	}
+	if (!function_exists('formulize_embeddingAllowed') OR !formulize_embeddingAllowed()) {
+		return false;
+	}
+	return formulize_embedThemeName();
+}
+
+/**
  * Tell browsers which websites may display this page inside a frame.
  *
  * Sent on every page, naming this site alone, so no other website can put any part of Formulize -

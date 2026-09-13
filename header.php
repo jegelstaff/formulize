@@ -26,7 +26,7 @@ $xoopsThemeFactory->defaultTheme = $icmsConfig['theme_set'];
 $themeOptions = array('contentTemplate' => (isset($xoopsOption['template_main']) ? $xoopsOption['template_main'] : ''),);
 // naming the folder explicitly stops a theme choice in the request or the session from putting a
 // fully themed page inside somebody else's iframe
-if (formulize_isEmbeddedRequest() AND $embedTheme = formulize_embedThemeName()) {
+if ($embedTheme = formulize_embedRenderingTheme()) {
 	$themeOptions['folderName'] = $embedTheme;
 }
 
