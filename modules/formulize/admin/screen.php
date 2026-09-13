@@ -70,6 +70,9 @@ if ($screen_id == "new") {
     $settings['frid'] = $screen->getVar('frid');
     $settings['useToken'] = $screen->getVar('useToken');
     $settings['anonNeedsPasscode'] = $screen->getVar('anonNeedsPasscode');
+    // escaped for display, because this one holds whatever the administrator typed, valid or not
+    $settings['embedOrigins'] = $screen->getVar('embedOrigins');
+    $settings['embedOriginsInvalid'] = formulize_invalidEmbedOrigins($screen->getVar('embedOrigins', 'n'));
 	$settings['alternateURLsOn'] = $formulizeConfig['formulizeRewriteRulesEnabled'];
     if($settings['alternateURLsOn']) {
         $settings['rewriteruleAddress'] = $screen->getVar('rewriteruleAddress');

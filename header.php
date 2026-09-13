@@ -23,10 +23,17 @@ $xoopsThemeFactory = new icms_view_theme_Factory();
 $xoopsThemeFactory->allowedThemes = $icmsConfig['theme_set_allowed'];
 $xoopsThemeFactory->defaultTheme = $icmsConfig['theme_set'];
 
+$themeOptions = array('contentTemplate' => (isset($xoopsOption['template_main']) ? $xoopsOption['template_main'] : ''),);
+// naming the folder explicitly stops a theme choice in the request or the session from putting a
+// fully themed page inside somebody else's iframe
+if (formulize_isEmbeddedRequest() AND $embedTheme = formulize_embedThemeName()) {
+	$themeOptions['folderName'] = $embedTheme;
+}
+
 /**
  * @var icms_view_theme_Object
  */
-$icmsTheme = $xoTheme =& $xoopsThemeFactory->createInstance(array('contentTemplate' => (isset($xoopsOption['template_main']) ? $xoopsOption['template_main'] : ''),));
+$icmsTheme = $xoTheme =& $xoopsThemeFactory->createInstance($themeOptions);
 $GLOBALS['icmsTheme'] = $icmsTheme;
 $GLOBALS['xoTheme'] = $xoTheme;
 $xoopsTpl = $icmsTpl =& $xoTheme->template;

@@ -166,6 +166,10 @@ if (!$loadThisView) {
 if ($screen) {
 
 		$renderedFormulizeScreen = $screen;
+
+    // restrict who can frame this screen, if the screen names the websites allowed to embed it
+    formulize_sendScreenFrameAncestorsHeader($screen);
+
     // this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
 

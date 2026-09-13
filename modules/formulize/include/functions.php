@@ -259,6 +259,281 @@ function gatherNames($groups, $nametype='uname', $requireAllGroups=false, $filte
 }
 
 /**
+ * WEBSITE ADDRESS LISTS
+ *
+ * Two features ask an administrator to name other websites: the screen setting for who may embed a
+ * screen, and the preference for who may call the Public API. They ask for the same thing in the
+ * same words, so they read it with the same code, and someone who learns the format on one page
+ * finds it works on the other.
+ *
+ * What the two do with the answer is where they part company. Embedding hands the list to the
+ * browser in a Content-Security-Policy header and lets the browser decide; the Public API has to
+ * decide for itself, in PHP, whether the Origin header on a request matches. So the shared part is
+ * reading a written address into a pattern, and each feature keeps its own use of that pattern.
+ */
+
+/**
+ * Split a setting into the entries the administrator wrote.
+ *
+ * Entries are separated by line or by comma, and never by spaces: a line like "not a url" has to
+ * stay in one piece, or it would be read as three separate single-word hostnames, each of which
+ * looks perfectly valid on its own.
+ *
+ * @param string $value The saved setting
+ * @return array One entry per line or comma, still exactly as written
+ */
+function formulize_splitOriginSetting($value) {
+    return preg_split('/[\r\n,]+/', (string) $value);
+}
+
+/**
+ * Read one written website address into the parts that decide what it matches.
+ *
+ * All the natural ways of naming a website are accepted, because people type these by hand:
+ *
+ *   example.com                  a domain on its own, meaning either http or https
+ *   www.example.com
+ *   HTTPS://Example.com/a/page   a pasted page address; only the website part is kept
+ *   *.example.com                any subdomain
+ *   *example.com                 read as *.example.com, the only thing it could mean
+ *   example.com:8443             a port, which then has to match exactly
+ *   *                            every website, which only the Public API accepts
+ *
+ * A parsed pattern is built only from lowercase letters, digits, dots, hyphens and a port number.
+ * That is what stops a newline or a semicolon reaching a response header and turning one setting
+ * into a second directive.
+ *
+ * @param string $entry One address as it was written
+ * @return array|bool array('everything'=>bool, 'scheme'=>string|null, 'host'=>string,
+ *   'wildcard'=>bool, 'port'=>string|null), or FALSE if it cannot be read as an address.
+ *   A NULL scheme means the address named no scheme, and so matches either one.
+ */
+function formulize_parseOriginPattern($entry) {
+    $entry = trim($entry);
+    if ($entry === '') {
+        return false;
+    }
+    if ($entry === '*') {
+        return array('everything' => true, 'scheme' => null, 'host' => '*', 'wildcard' => true, 'port' => null);
+    }
+    $scheme = null;
+    if (preg_match('#^([A-Za-z][A-Za-z0-9+.-]*)://(.*)$#', $entry, $matches)) {
+        // any scheme is read, not only http and https: a browser extension calling the Public API
+        // sends an origin of its own kind, and an administrator has to be able to name it.
+        // Embedding narrows this to http and https, because that is all it can act on.
+        $scheme = strtolower($matches[1]);
+        $entry = $matches[2];
+    }
+    // only the website part of a pasted address is kept
+    $entry = preg_split('#[/?\#]#', $entry, 2)[0];
+    $port = null;
+    if (preg_match('#^(.*):([0-9]{1,5})$#', $entry, $matches)) {
+        $entry = $matches[1];
+        $port = $matches[2];
+    }
+    $host = strtolower($entry);
+    $wildcard = false;
+    $bareHost = $host;
+    if (strpos($host, '*') !== false) {
+        // a wildcard only means anything as the whole leftmost label
+        if (substr($host, 0, 1) !== '*') {
+            return false;
+        }
+        $bareHost = ltrim(substr($host, 1), '.');
+        if (strpos($bareHost, '*') !== false) {
+            return false;
+        }
+        $wildcard = true;
+    }
+    if (!preg_match('#^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$#', $bareHost)) {
+        return false;
+    }
+    return array('everything' => false, 'scheme' => $scheme, 'host' => $bareHost, 'wildcard' => $wildcard, 'port' => $port);
+}
+
+/**
+ * Write a parsed pattern back out as text.
+ *
+ * @param array $pattern From formulize_parseOriginPattern()
+ * @return string The address in its canonical written form
+ */
+function formulize_renderOriginPattern($pattern) {
+    if (!empty($pattern['everything'])) {
+        return '*';
+    }
+    return ($pattern['scheme'] === null ? '' : $pattern['scheme'].'://')
+        .($pattern['wildcard'] ? '*.' : '')
+        .$pattern['host']
+        .($pattern['port'] === null ? '' : ':'.$pattern['port']);
+}
+
+/**
+ * Whether an address matches a pattern from an administrator's list.
+ *
+ * A pattern that names no scheme matches either scheme, so an administrator who does not type
+ * "https://" still gets a working entry. A wildcard matches subdomains and not the domain itself,
+ * so *.example.com covers www.example.com but not example.com. A port has to match exactly,
+ * present or absent, since a different port is a different website as far as a browser is concerned.
+ *
+ * @param array $address A parsed concrete address, from formulize_parseOriginPattern()
+ * @param array $pattern A parsed pattern from the administrator's list
+ * @return bool
+ */
+function formulize_originMatchesPattern($address, $pattern) {
+    if (!empty($pattern['everything'])) {
+        return true;
+    }
+    if ($pattern['scheme'] !== null AND $pattern['scheme'] !== $address['scheme']) {
+        return false;
+    }
+    if ($pattern['port'] !== $address['port']) {
+        return false;
+    }
+    if (!$pattern['wildcard']) {
+        return $pattern['host'] === $address['host'];
+    }
+    $suffix = '.'.$pattern['host'];
+    return (strlen($address['host']) > strlen($suffix)
+        AND substr($address['host'], -strlen($suffix)) === $suffix);
+}
+
+/**
+ * The entries in a setting that cannot be read as website addresses.
+ *
+ * They stay in the saved setting so the administrator can see and correct them, and this is what
+ * the settings pages use to say which ones are being ignored.
+ *
+ * @param string $value The saved setting
+ * @param callable|null $usableCheck Given a parsed pattern, says whether this particular setting can
+ *   act on it. Embedding uses this to report an address it cannot frame, such as a lone *.
+ * @return array The ignored entries, exactly as they were written
+ */
+function formulize_invalidOriginEntries($value, $usableCheck = null) {
+    $invalid = array();
+    foreach (formulize_splitOriginSetting($value) as $entry) {
+        if (trim($entry) === '') {
+            continue;
+        }
+        $pattern = formulize_parseOriginPattern($entry);
+        if (!$pattern OR ($usableCheck AND !call_user_func($usableCheck, $pattern))) {
+            $invalid[] = trim($entry);
+        }
+    }
+    return $invalid;
+}
+
+/**
+ * A note for a settings page about entries that cannot be read as website addresses.
+ *
+ * @param string $value The saved setting
+ * @param callable|null $usableCheck Passed through to formulize_invalidOriginEntries()
+ * @return string HTML for the note, or an empty string when every entry can be read
+ */
+function formulize_originSettingWarningHtml($value, $usableCheck = null) {
+    $invalid = formulize_invalidOriginEntries($value, $usableCheck);
+    if (!$invalid) {
+        return '';
+    }
+    $list = '';
+    foreach ($invalid as $entry) {
+        $list .= '<li><code>'.htmlspecialchars($entry).'</code></li>';
+    }
+    $lead = count($invalid) === 1
+        ? 'This entry is being ignored, because it cannot be read as a website address:'
+        : 'These entries are being ignored, because they cannot be read as website addresses:';
+    return "<div class='formulize-authheader-warning'>"
+        ."<b>$lead</b>"
+        ."<ul>$list</ul>"
+        ."<p>They have been kept here so you can correct them. Write each website on its own line, as a "
+        ."domain such as <i>www.example.com</i>, or with a scheme, <i>https://www.example.com</i>. "
+        ."Everything else in the list is in use.</p>"
+        ."</div>";
+}
+
+/**
+ * The websites allowed to embed a screen, ready for the frame-ancestors header.
+ *
+ * A lone * is not accepted here: leaving the setting empty already means no restriction, so the
+ * only thing a * could add is a way to write "anyone" that looks like a restriction. Only http and
+ * https addresses are kept, since a page can only be framed over one of those.
+ *
+ * @param string $value The saved setting
+ * @return array The addresses, in canonical form and deduplicated
+ */
+function formulize_parseEmbedOrigins($value) {
+    $origins = array();
+    foreach (formulize_splitOriginSetting($value) as $entry) {
+        $pattern = formulize_parseOriginPattern($entry);
+        if ($pattern AND formulize_originPatternCanBeFramed($pattern)) {
+            $origin = formulize_renderOriginPattern($pattern);
+            $origins[$origin] = $origin;
+        }
+    }
+    return array_values($origins);
+}
+
+/**
+ * Whether a parsed pattern is one that embedding can act on.
+ *
+ * @param array $pattern From formulize_parseOriginPattern()
+ * @return bool
+ */
+function formulize_originPatternCanBeFramed($pattern) {
+    return (empty($pattern['everything'])
+        AND ($pattern['scheme'] === null OR $pattern['scheme'] === 'http' OR $pattern['scheme'] === 'https'));
+}
+
+/**
+ * The entries in a screen's embedding setting that are being ignored.
+ *
+ * @param string $value The saved setting
+ * @return array The ignored entries, exactly as they were written
+ */
+function formulize_invalidEmbedOrigins($value) {
+    return formulize_invalidOriginEntries($value, 'formulize_originPatternCanBeFramed');
+}
+
+/**
+ * The websites allowed to frame any page of this site.
+ *
+ * Set in the Formulize preferences, and meant for a site that is reached through an LMS or a
+ * portal that displays it in a frame. These apply everywhere, so a website named here does not
+ * need repeating on each screen that it embeds.
+ *
+ * @return array The websites, in canonical form
+ */
+function formulize_siteFrameAncestors() {
+    static $origins = null;
+    if ($origins === null) {
+        $config_handler = xoops_gethandler('config');
+        $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+        $origins = formulize_parseEmbedOrigins(
+            isset($formulizeConfig['formulizeFrameAncestors']) ? $formulizeConfig['formulizeFrameAncestors'] : ''
+        );
+    }
+    return $origins;
+}
+
+/**
+ * Tell browsers which other websites may show this screen in a frame.
+ *
+ * Every page of the site already says who may frame it, so a screen that names no websites is
+ * left alone and inherits that. A screen that names some sends the header again, allowing those
+ * websites as well as the ones allowed across the whole site.
+ *
+ * @param object $screen The screen about to be rendered
+ * @return void
+ */
+function formulize_sendScreenFrameAncestorsHeader($screen) {
+    if (!is_object($screen)) {
+        return;
+    }
+    if ($origins = formulize_parseEmbedOrigins($screen->getVar('embedOrigins', 'n'))) {
+        formulize_sendFrameAncestorsHeader(array_merge(formulize_siteFrameAncestors(), $origins));
+    }
+}
+
+/**
  * Deduce the current URL, including full query string, etc. Caches the first instance found. Resets cache if a rewriteruleAddress is specified
  * @param string $rewriteruleAddress If passed in, this value will be used instead of the URI. Intended to seed the current URL in cases where we need to modify the canonical URL because it is using rewrite rules and pointing to an invalid identifier.
  * @return string The current URL, from cache if already determined and no rewriteruleAddress was specified
@@ -11837,61 +12112,68 @@ function formulize_publicApiAllowedOrigins() {
             ? $formulizeConfig['formulizePublicAPIAllowedOrigins'] : '';
     }
 
-    $origins = array();
-    foreach (preg_split('/[\r\n,]+/', (string) $setting) as $origin) {
-        $origin = rtrim(strtolower(trim($origin)), '/');
-        if ($origin !== '') {
-            $origins[] = $origin;
+    $patterns = array();
+    foreach (formulize_splitOriginSetting($setting) as $entry) {
+        if ($pattern = formulize_parseOriginPattern($entry)) {
+            $patterns[] = $pattern;
         }
     }
-    return $origins;
+    return $patterns;
 }
 
 /**
- * Split an origin-like string into its scheme and host(:port) parts.
+ * Whether the Public API's allowlist opens the API to every website.
  *
- * @param string $value A lowercased value, with any trailing slash already stripped -
- *   either a full origin ("https://www.example.org") or a bare host ("www.example.org")
- * @return array array('scheme' => string|null, 'host' => string). Scheme is null when
- *   the value had none, which formulize_publicApiOriginIsAllowed() treats as a wildcard.
+ * @param array $allowedOrigins Parsed patterns from formulize_publicApiAllowedOrigins()
+ * @return bool
  */
-function formulize_publicApiSplitOrigin($value) {
-    if (preg_match('#^([a-z][a-z0-9+.-]*)://(.+)$#', $value, $matches)) {
-        return array('scheme' => $matches[1], 'host' => $matches[2]);
+function formulize_publicApiAllowsEveryOrigin($allowedOrigins) {
+    foreach ($allowedOrigins as $pattern) {
+        if (!empty($pattern['everything'])) {
+            return true;
+        }
     }
-    return array('scheme' => null, 'host' => $value);
+    return false;
 }
 
 /**
- * Whether a browser's Origin header is allowed by one entry from the public API's
- * allowed-origins preference (see formulize_publicApiAllowedOrigins()).
+ * The entries in the Public API's allowlist that are being ignored.
  *
- * A pattern with no scheme matches its host under either http or https, so an
- * administrator who forgets to type "https://" still gets a working entry. A pattern
- * whose host starts with "*." matches any subdomain of that host, but not the bare
- * domain itself - add a separate entry for that if it's also needed. This does not
- * special-case a bare "*" (allow-any) entry; callers check for that separately since
- * it skips origin comparison entirely.
+ * @return array The unreadable entries, exactly as they were written
+ */
+function formulize_publicApiInvalidOrigins() {
+    global $xoopsModuleConfig;
+    if (isset($xoopsModuleConfig['formulizePublicAPIAllowedOrigins'])) {
+        $setting = $xoopsModuleConfig['formulizePublicAPIAllowedOrigins'];
+    } else {
+        $config_handler = xoops_gethandler('config');
+        $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+        $setting = isset($formulizeConfig['formulizePublicAPIAllowedOrigins'])
+            ? $formulizeConfig['formulizePublicAPIAllowedOrigins'] : '';
+    }
+    return formulize_invalidOriginEntries($setting);
+}
+
+/**
+ * Whether a browser's Origin header is allowed by the Public API's allowlist.
+ *
+ * The list is read and matched by the shared website address code near the top of this file,
+ * which is the same code behind the screen setting for who may embed a screen. A bare "*" entry
+ * is not handled here: callers check for it with formulize_publicApiAllowsEveryOrigin(), because
+ * it is answered with a different header rather than by comparing anything.
  *
  * @param string $normalisedOrigin The caller's Origin header, lowercased and stripped of a trailing slash
- * @param array $allowedOrigins Patterns from formulize_publicApiAllowedOrigins()
+ * @param array $allowedOrigins Parsed patterns from formulize_publicApiAllowedOrigins()
  * @return bool
  */
 function formulize_publicApiOriginIsAllowed($normalisedOrigin, $allowedOrigins) {
-    $origin = formulize_publicApiSplitOrigin($normalisedOrigin);
+    $origin = formulize_parseOriginPattern($normalisedOrigin);
+    if (!$origin) {
+        return false;
+    }
     foreach ($allowedOrigins as $pattern) {
-        $allowed = formulize_publicApiSplitOrigin($pattern);
-        if ($allowed['scheme'] !== null && $allowed['scheme'] !== $origin['scheme']) {
-            continue;
-        }
-        if ($allowed['host'] === $origin['host']) {
+        if (empty($pattern['everything']) AND formulize_originMatchesPattern($origin, $pattern)) {
             return true;
-        }
-        if (strncmp($allowed['host'], '*.', 2) === 0) {
-            $suffix = substr($allowed['host'], 1); // keep the leading dot, drop the asterisk
-            if (strlen($origin['host']) > strlen($suffix) && substr($origin['host'], -strlen($suffix)) === $suffix) {
-                return true;
-            }
         }
     }
     return false;
@@ -11913,22 +12195,25 @@ function formulize_publicApiOriginIsAllowed($normalisedOrigin, $allowedOrigins) 
  * @return bool
  */
 function formulize_publicApiOriginIsThisSite($normalisedOrigin) {
-    $origin = formulize_publicApiSplitOrigin($normalisedOrigin);
-    if ($origin['host'] === '') {
+    $origin = formulize_parseOriginPattern($normalisedOrigin);
+    if (!$origin) {
         return false;
     }
-    $thisSiteHosts = array();
+    $thisSiteAddresses = array();
     if (defined('XOOPS_URL')) {
-        $host = parse_url(XOOPS_URL, PHP_URL_HOST);
-        $port = parse_url(XOOPS_URL, PHP_URL_PORT);
-        if ($host) {
-            $thisSiteHosts[] = strtolower($host).($port ? ':'.$port : '');
-        }
+        $thisSiteAddresses[] = XOOPS_URL;
     }
     if (isset($_SERVER['HTTP_HOST'])) {
-        $thisSiteHosts[] = strtolower(trim($_SERVER['HTTP_HOST']));
+        $thisSiteAddresses[] = $_SERVER['HTTP_HOST'];
     }
-    return in_array($origin['host'], $thisSiteHosts, true);
+    foreach ($thisSiteAddresses as $address) {
+        $thisSite = formulize_parseOriginPattern($address);
+        // compared without the scheme, the same way an entry that names no scheme is compared
+        if ($thisSite AND $thisSite['host'] === $origin['host'] AND $thisSite['port'] === $origin['port']) {
+            return true;
+        }
+    }
+    return false;
 }
 
 /**

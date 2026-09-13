@@ -204,3 +204,10 @@ function formulize_exception_handler($exception) {
 }
 
 set_exception_handler('formulize_exception_handler');
+
+// The core bootstrap has already said that only this site may frame its pages, before any settings
+// could be read. Now that they can be, allow the websites an administrator has named for the whole
+// site. A screen with its own list adds to this again when it renders.
+if ($siteFrameAncestors = formulize_siteFrameAncestors()) {
+    formulize_sendFrameAncestorsHeader($siteFrameAncestors);
+}

@@ -53,7 +53,7 @@ function formulize_publicApiEnforceOrigin() {
     // than that, so an origin that matched only because of the normalisation has to be
     // answered in its normalised form or the browser will reject an allowed caller.
     $normalisedOrigin = rtrim(strtolower($origin), '/');
-    if (in_array('*', $allowedOrigins)) {
+    if (formulize_publicApiAllowsEveryOrigin($allowedOrigins)) {
         header('Access-Control-Allow-Origin: *');
     } elseif (formulize_publicApiOriginIsThisSite($normalisedOrigin)
         OR formulize_publicApiOriginIsAllowed($normalisedOrigin, $allowedOrigins)) {

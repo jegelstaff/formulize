@@ -6,6 +6,14 @@
 function formulize_patch_002_always_run($prev_dbversion, $required_dbversion) {
 	global $xoopsConfig, $xoopsDB;
 
+	// Clear the compiled Smarty templates. Not everything in here belongs to Formulize, and updating
+	// the module is not enough on its own to refresh those, so they are swept away on every update.
+	foreach((array) scandir(XOOPS_ROOT_PATH.'/templates_c') as $templateFile) {
+		if($templateFile !== '.' AND $templateFile !== '..' AND $templateFile !== 'index.html') {
+			unlink(XOOPS_ROOT_PATH.'/templates_c/'.$templateFile);
+		}
+	}
+
 	// clear the admin menu cache files, so that any changes to the menu structure or labels will be reflected in the admin interface
 	$adminMenuLangs = [ 'english', $xoopsConfig['language'] ];
 	$adminMenuLangs = array_unique($adminMenuLangs);
@@ -52,7 +60,116 @@ function formulize_patch_002_always_run($prev_dbversion, $required_dbversion) {
 		return false;
 	}
 
+	if (!formulize_restore_webmaster_view_form_permissions()) {
+		return false;
+	}
+
+	formulize_remove_stray_registered_user_edit_form_permissions();
+	formulize_ensure_screen_template_folder_for_theme();
+	formulize_warn_about_element_containers_missing_element_class();
+
+	// Keep the timezone list in step with PHP's timezone database, which changes with the PHP
+	// version the site runs on rather than with anything Formulize does.
+	formulize_update_timezone_options($xoopsDB);
+
   return true;
+}
+
+/**
+ * Give the Webmasters group explicit view_form permission on every form.
+ *
+ * Webmasters need this on every form, always. Without it the owner groups column cannot report the
+ * Webmasters group for entries webmasters created, and the owner group information then runs out of
+ * step with the dataset it is supposed to describe.
+ *
+ * @return bool FALSE only if a permission could not be written
+ */
+function formulize_restore_webmaster_view_form_permissions() {
+	global $xoopsDB;
+	$sql = "SELECT id_form FROM ".$xoopsDB->prefix('formulize_id')." AS f WHERE NOT EXISTS(SELECT 1 FROM ".$xoopsDB->prefix("group_permission")." AS p WHERE p.gperm_itemid = f.id_form AND p.gperm_name = 'view_form' AND p.gperm_groupid = 1)";
+	$res = $xoopsDB->query($sql);
+	if (!$res) {
+		print "Error: could not assign 'View Form' permission for Webmasters to all forms.<br>".$xoopsDB->error()."<br>Assign this permission manually for Webmasters to all forms, or please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
+		return false;
+	}
+	$assigned = true;
+	$formulizeModId = getFormulizeModId();
+	while($row = $xoopsDB->fetchRow($res)) {
+		$formId = intval($row[0]);
+		$insertSql = "INSERT INTO ".$xoopsDB->prefix("group_permission")." (`gperm_itemid`, `gperm_groupid`, `gperm_name`, `gperm_modid`) VALUES ($formId, 1, 'view_form', $formulizeModId)";
+		if($xoopsDB->queryF($insertSql) == false) {
+			$assigned = false;
+		}
+	}
+	if(!$assigned) {
+		print "Error: could not assign 'View Form' permission for Webmasters to all forms.<br>".$xoopsDB->error()."<br>Assign this permission manually for Webmasters to all forms, or please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
+	}
+	return $assigned;
+}
+
+/**
+ * Take edit_form away from Registered Users when that group is not a module administrator.
+ *
+ * Sites carry these from time immemorial, and the group should not hold them without admin rights.
+ *
+ * @return void
+ */
+function formulize_remove_stray_registered_user_edit_form_permissions() {
+	global $xoopsDB;
+	$gperm_handler = xoops_gethandler('groupperm');
+	if($gperm_handler->checkRight("module_admin", getFormulizeModId(), XOOPS_GROUP_USERS, 1) !== false) {
+		return;
+	}
+	$sql = "DELETE FROM ".$xoopsDB->prefix("group_permission")." WHERE gperm_name='edit_form' AND gperm_modid=".getFormulizeModId()." AND gperm_groupid=".XOOPS_GROUP_USERS;
+	if(!$xoopsDB->queryF($sql)) {
+		print "Error: could not remove stray 'edit form' permissions from Registered Users.<br>".$xoopsDB->error()."<br>";
+	}
+}
+
+/**
+ * Make sure the screen templates folder exists for the theme the site is currently using.
+ *
+ * A site that switches theme has no folder for the new one until something creates it, and screens
+ * fall back to the system defaults in the meantime.
+ *
+ * @return void
+ */
+function formulize_ensure_screen_template_folder_for_theme() {
+	global $xoopsConfig;
+	$screenpathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/";
+	if(!file_exists($screenpathname)) {
+		recurse_copy(XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/", $screenpathname);
+	}
+}
+
+/**
+ * Warn about custom elementcontainero.php files that predate the $elementClass variable.
+ *
+ * These are files the site's own people maintain, and a copy of an old one can arrive at any time,
+ * so this is worth checking on every update rather than once. The Office Use Only layout at the
+ * bottom of a form does not work on screens whose container file lacks the variable.
+ *
+ * @return void
+ */
+function formulize_warn_about_element_containers_missing_element_class() {
+	$missingElementClass = [];
+	$baseElementContainerDir = XOOPS_ROOT_PATH . '/modules/formulize/templates/screens';
+	if (!is_dir($baseElementContainerDir)) {
+		return;
+	}
+	$ecoDirectory = new RecursiveDirectoryIterator($baseElementContainerDir);
+	$iterator = new RecursiveIteratorIterator($ecoDirectory);
+	$regex = new RegexIterator($iterator, '/^.+\/elementcontainero\.php$/i', RecursiveRegexIterator::GET_MATCH);
+	foreach (array_keys(iterator_to_array($regex)) as $ecoFilePath) {
+		$contents = file_get_contents($ecoFilePath);
+		if (strlen($contents) > 0 AND strpos($contents, '$elementClass') === false) {
+			$missingElementClass[] = $ecoFilePath;
+		}
+	}
+	if(count($missingElementClass) > 0) {
+		$ecoMessage = "You have one or more 'elementcontainero.php' files which are missing the \$elementClass variable used in Formulize 8.1+.\n\nThe normal usage looks like this:\n\nprint \"<div class='form-row \$elementClass' \$style id='\$elementContainerId'>\";\n\nThe 'Office Use Only' layout at the bottom of forms will not work correctly on the affected screens until these files are updated.\n\nThe affected files are:\n\n" . implode("\n", $missingElementClass);
+		echo '<script>alert(' . json_encode($ecoMessage) . ');</script>';
+	}
 }
 
 /**

@@ -103,6 +103,23 @@ include "<{$smarty.const.XOOPS_ROOT_PATH}>/modules/formulize/index.php";</blockq
   </fieldset>
 
 
+  <fieldset>
+	  <legend>Which other websites can embed this screen?</legend>
+
+	  <div class="form-item">
+	    <textarea name="screens-embedOrigins" id="screens-embedOrigins" rows="4" cols="60" placeholder="www.example.com"><{$content.embedOrigins}></textarea>
+	    <{if $content.embedOriginsInvalid}>
+	      <div class="description" style="border-left: 4px solid #ce8c22; padding-left: 0.75em; margin-bottom: 0.5em;">
+	        <strong>These entries are being ignored, because they cannot be read as website addresses:</strong>
+	        <{foreach from=$content.embedOriginsInvalid item=badOrigin}><br /><code><{$badOrigin|escape}></code><{/foreach}>
+	        <br />They have been kept above so you can correct them. Everything else in the list is in use.
+	      </div>
+	    <{/if}>
+	    <div class="description">One website per line. Write each as a domain, for example <em>www.example.com</em>, or with a scheme, <em>https://www.example.com</em>. A pasted page address works too, and <em>*.example.com</em> covers every subdomain. Those websites will be allowed to show this screen inside an iframe. Until you list one, no other website can embed this screen at all: browsers refuse to display it anywhere but this site.</div>
+	  </div>
+  </fieldset>
+
+
   <!--<fieldset>
 	  <legend>Sample PHP Code</legend>
 

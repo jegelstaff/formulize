@@ -2795,3 +2795,58 @@ function setupAuthentication() {
 
 	return $client;
 }
+
+/**
+ * Determine if this request is a document being loaded inside an iframe, ie: a Formulize screen
+ * embedded in another website. Browsers send Sec-Fetch-Dest on every navigation in the frame,
+ * including form submissions and page turns, so embedded mode survives the whole interaction
+ * without any state being stored in the session or carried in the URL.
+ * The formulize_embed request parameter is a fallback for browsers that don't send the header.
+ *
+ * @return bool TRUE if this request should be treated as embedded
+ */
+function formulize_isEmbeddedRequest() {
+	static $embedded = null;
+	if ($embedded === null) {
+		$embedded = ((isset($_SERVER['HTTP_SEC_FETCH_DEST']) AND $_SERVER['HTTP_SEC_FETCH_DEST'] === 'iframe')
+			OR !empty($_REQUEST['formulize_embed']));
+	}
+	return $embedded;
+}
+
+/**
+ * The theme used to render embedded screens: no site chrome, and it speaks the postMessage
+ * protocol that lets the host page size the iframe. Sites can use their own by defining
+ * FORMULIZE_EMBED_THEME in mainfile.php.
+ *
+ * @return string|bool The theme folder name, or FALSE if it isn't installed
+ */
+function formulize_embedThemeName() {
+	$theme = defined('FORMULIZE_EMBED_THEME') ? FORMULIZE_EMBED_THEME : 'formulize_embed';
+	return is_dir(ICMS_THEME_PATH . '/' . $theme) ? $theme : false;
+}
+
+/**
+ * Tell browsers which websites may display this page inside a frame.
+ *
+ * Sent on every page, naming this site alone, so no other website can put any part of Formulize -
+ * the login page and the admin interface included - inside a frame of its own and trick somebody
+ * into clicking through it.
+ *
+ * It is sent this early, before any module settings can be read, so that a page is never served
+ * without it. Anything an administrator has allowed is added by sending it again once those
+ * settings are available: see formulize_siteFrameAncestors(), and the screen version in
+ * formulize_sendScreenFrameAncestorsHeader().
+ *
+ * @param array $extraOrigins Websites to allow in addition to this site
+ * @return void
+ */
+function formulize_sendFrameAncestorsHeader($extraOrigins = array()) {
+	if (headers_sent()) {
+		return;
+	}
+	// deduplicated, so naming a website on a screen that is already allowed across the whole site
+	// does not list it twice
+	$sources = array_unique(array_merge(array("'self'"), $extraOrigins));
+	header('Content-Security-Policy: frame-ancestors '.implode(' ', $sources));
+}
