@@ -1488,6 +1488,11 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			$limitByEntryId .= ") ";
 			if (!$start) {
 				$limitClause = ""; // nullify the existing limitClause since we don't want to use it in the actual query
+			} elseif ($emptySetFilters) {
+				// No entry matched, and the query below cannot be left to work that out for itself: empty set conditions only
+				// exist in the EXISTS layer of the entry id query, never in $whereClause, so dropping the restriction would
+				// return entries those conditions were supposed to rule out.
+				$limitByEntryId = " AND (0) ";
 			} else {
 				$limitByEntryId = "";
 			}

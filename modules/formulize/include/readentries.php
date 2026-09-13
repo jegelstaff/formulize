@@ -163,7 +163,7 @@ function formulize_readEntries($formIdOrHandle, $options = array(), $user = null
 	// An array filter is a list of expressions, each carrying the boolean that goes between its
 	// own terms. formulize_parseFilter puts $andOr between the expressions themselves, so it is
 	// still the caller's operator that joins the top level items, exactly as for a flat string.
-	$filter = formulize_apiValidateFilter($options['filter'] ?? '', $form_ids, $andOr, $allowedFields);
+	$filter = formulize_apiValidateFilter($options['filter'] ?? '', $form_ids, $andOr, $allowedFields, $fid);
 
 	// ---- scope and query ------------------------------------------------
 	$scope = buildScope('all', $user, $fid);
@@ -441,6 +441,10 @@ function formulize_apiCheckFieldPermissions($fields, $allowedFields) {
  * shortcut here: it consumes exactly two levels, an outer list joined by one operator,
  * with each inner expression carrying its own.
  *
+ * A third kind of group, 'none', selects main form entries that have NO connected entry
+ * matching all of its conditions. See formulize_apiBuildEmptySetExpression for the rules
+ * it has to follow.
+ *
  * An integer entry id is also accepted, meaning that one entry of the main form.
  *
  * A filter string in gatherDataset's own format is NOT accepted, even though gatherDataset
@@ -454,10 +458,11 @@ function formulize_apiCheckFieldPermissions($fields, $allowedFields) {
  * @param array form_ids The forms whose elements the filter may reference
  * @param string andOr The operator joining the top level items
  * @param array allowedFields From formulize_apiAllowedFieldHandles
+ * @param int mainFormId The form being read, which a 'none' group may not reference
  * @return mixed A string or array suitable for gatherDataset
  * @throws FormulizeApiException
  */
-function formulize_apiValidateFilter($filter, $form_ids, $andOr = 'AND', $allowedFields = array()) {
+function formulize_apiValidateFilter($filter, $form_ids, $andOr = 'AND', $allowedFields = array(), $mainFormId = 0) {
 
 	if (is_numeric($filter)) {
 		return intval($filter);
@@ -492,6 +497,12 @@ function formulize_apiValidateFilter($filter, $form_ids, $andOr = 'AND', $allowe
 			throw new FormulizeApiException('Each filter item must be a condition or a group', 'invalid_arguments');
 		}
 
+		// ---- an empty set group ------------------------------------------
+		if (isset($item['none'])) {
+			$expressions[] = formulize_apiBuildEmptySetExpression($item['none'], $form_ids, $andOr, $allowedFields, $mainFormId);
+			continue;
+		}
+
 		// ---- a group -----------------------------------------------------
 		if (isset($item['any']) or isset($item['all'])) {
 			$groupOperator = isset($item['any']) ? 'OR' : 'AND';
@@ -501,7 +512,7 @@ function formulize_apiValidateFilter($filter, $form_ids, $andOr = 'AND', $allowe
 			}
 			$groupTerms = array();
 			foreach ($groupItems as $condition) {
-				if (is_array($condition) and (isset($condition['any']) or isset($condition['all']))) {
+				if (formulize_apiIsFilterGroup($condition)) {
 					throw new FormulizeApiException(
 						'Filter groups cannot be nested inside other groups. Formulize filters support one level of grouping.',
 						'invalid_arguments'
@@ -582,6 +593,114 @@ function formulize_apiBuildBlankTerms($element, $operator) {
 }
 
 /**
+ * Is this filter item a group of conditions rather than a single condition?
+ * @return bool
+ */
+function formulize_apiIsFilterGroup($item) {
+	return is_array($item) and (isset($item['any']) or isset($item['all']) or isset($item['none']));
+}
+
+/**
+ * Build the expression for a 'none' group: main form entries qualify only when no connected
+ * entry matches every condition in the group.
+ *
+ * formulize_parseFilter turns an expression carrying 'none' in its third slot into a NOT
+ * EXISTS against the connected form. It is lenient about what it will not handle, and drops
+ * it without a word, which for a NOT EXISTS means the caller gets more entries back than
+ * they asked for and has no way to tell. So everything it would drop is refused here instead:
+ *
+ * - There must be a connected form to quantify over, so a relationship has to be in effect
+ *   and no condition may be on the main form. Metadata fields such as creation_uid always
+ *   belong to the main form in a filter, so they are refused too.
+ * - Every condition must be on the same connected form. Conditions on two forms become two
+ *   separate NOT EXISTS clauses, "no A matches x and no B matches y", which is not what a
+ *   single group appears to say.
+ * - The top level andOr must be AND. The NOT EXISTS clauses are ANDed onto the query
+ *   whatever andOr says, so an OR between this group and the rest cannot be honoured.
+ * - An "is blank" test needs OR between its two parts, while the group needs AND between
+ *   its conditions, and one clause only has one boolean. So an "is blank" test must be the
+ *   only condition in its group. "Is not blank" is two ANDed parts and mixes freely.
+ *
+ * @param mixed conditions The contents of the 'none' key
+ * @param array form_ids The forms whose elements the filter may reference
+ * @param string andOr The operator joining the top level items
+ * @param array allowedFields From formulize_apiAllowedFieldHandles
+ * @param int mainFormId The form being read
+ * @return array array(boolean, terms, 'none'), one row of an array filter for gatherDataset
+ * @throws FormulizeApiException
+ */
+function formulize_apiBuildEmptySetExpression($conditions, $form_ids, $andOr, $allowedFields, $mainFormId) {
+
+	if (!is_array($conditions) or count($conditions) == 0) {
+		throw new FormulizeApiException('A filter group must contain at least one condition', 'invalid_arguments');
+	}
+	$connectedFormIds = array_diff($form_ids, array($mainFormId));
+	if (count($connectedFormIds) == 0) {
+		throw new FormulizeApiException(
+			'A none group finds entries with no matching connected entry, so it needs a relationship that connects this form to other forms',
+			'invalid_arguments'
+		);
+	}
+	if ($andOr == 'OR') {
+		throw new FormulizeApiException(
+			'A none group cannot be used when andOr is OR. Put the other conditions in an any group instead.',
+			'invalid_arguments'
+		);
+	}
+
+	$terms = array();
+	$groupFormId = null;
+	$blankTestCount = 0;
+	foreach ($conditions as $condition) {
+		if (formulize_apiIsFilterGroup($condition)) {
+			throw new FormulizeApiException(
+				'Filter groups cannot be nested inside other groups. Formulize filters support one level of grouping.',
+				'invalid_arguments'
+			);
+		}
+		list($element, $value, $operator, $elementFormId) = formulize_apiReadFilterCondition($condition, $form_ids, $allowedFields);
+		if (!$elementFormId) {
+			throw new FormulizeApiException(
+				'A none group can only use elements from connected forms, and '.$element.' is a metadata field of the main form',
+				'invalid_arguments'
+			);
+		}
+		if ($elementFormId == $mainFormId) {
+			throw new FormulizeApiException(
+				'A none group can only use elements from connected forms, and '.$element.' is on the main form',
+				'invalid_arguments'
+			);
+		}
+		if ($groupFormId !== null and $elementFormId != $groupFormId) {
+			throw new FormulizeApiException(
+				'All the conditions in a none group must be on the same connected form. Use a separate none group for each form.',
+				'invalid_arguments'
+			);
+		}
+		$groupFormId = $elementFormId;
+
+		if ($value === '{BLANK}') {
+			list($blankBoolean, $blankTerms) = formulize_apiBuildBlankTerms($element, $operator);
+			if ($blankBoolean == 'OR') {
+				$blankTestCount++;
+			}
+			$terms = array_merge($terms, $blankTerms);
+		} else {
+			$terms[] = $element.'/**/'.$value.'/**/'.$operator;
+		}
+	}
+
+	if ($blankTestCount > 0 and count($conditions) > 1) {
+		throw new FormulizeApiException(
+			'A blank test must be the only condition in its none group. Use a separate none group for it.',
+			'invalid_arguments'
+		);
+	}
+
+	return array($blankTestCount ? 'OR' : 'AND', implode('][', $terms), 'none');
+}
+
+/**
  * Pull element, value and operator out of one condition, and check the element is usable.
  *
  * The element goes through the same permission gate as a requested field. Filtering on a
@@ -592,7 +711,7 @@ function formulize_apiBuildBlankTerms($element, $operator) {
  * @param array condition
  * @param array form_ids The forms whose elements the filter may reference
  * @param array allowedFields From formulize_apiAllowedFieldHandles
- * @return array array(element, value, operator)
+ * @return array array(element, value, operator, form id of the element, or 0 for a metadata field)
  * @throws FormulizeApiException
  */
 function formulize_apiReadFilterCondition($condition, $form_ids, $allowedFields = array()) {
@@ -626,6 +745,7 @@ function formulize_apiReadFilterCondition($condition, $form_ids, $allowedFields 
 
 	formulize_apiCheckFieldPermissions(array($element), $allowedFields);
 
+	$elementFormId = 0;
 	$dataHandler = new formulizeDataHandler(false);
 	if (!in_array($element, $dataHandler->metadataFields)) {
 		if (!$elementObject = _getElementObject($element)) {
@@ -633,9 +753,10 @@ function formulize_apiReadFilterCondition($condition, $form_ids, $allowedFields 
 		} elseif (!in_array($elementObject->getVar('fid'), $form_ids)) {
 			throw new FormulizeApiException('Element is not part of this dataset: '.$element, 'invalid_data');
 		}
+		$elementFormId = intval($elementObject->getVar('fid'));
 	}
 
-	return array($element, $value, $operator);
+	return array($element, $value, $operator, $elementFormId);
 }
 
 /**

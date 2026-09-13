@@ -685,6 +685,119 @@ test.describe('Public API read endpoint', () => {
 		expect(notBlankInAll.status()).toBe(200);
 	});
 
+	test('a none group finds entries with no matching connected entry', async ({ request }) => {
+		expect(artifactsForm, 'the Artifacts form from test 010 should exist').toBeTruthy();
+		const era = artifactsForm + '_era';
+		const shortName = artifactsForm + '_short_name';
+		const donor = artifactsForm + '_donor';
+
+		const ids = async (filter) => {
+			const res = await apiRead(request, { fields: ['donors_name'], filter, relationship: -1, limitSize: null });
+			expect(res.status()).toBe(200);
+			return (await res.json()).data.map(row => row.entry_id).sort((a, b) => a - b);
+		};
+		// What each filter is supposed to select, read from the database rather than from the
+		// endpoint under test. The donor element is a linked select, so it holds the donor's entry id.
+		// An artifact with no donor is left out of the subquery, since a single NULL in it would
+		// make every NOT IN below unknown rather than true, and select nothing.
+		const donorsWhere = (where) => dbQuery(
+			`SELECT entry_id FROM ${dbPrefix()}_formulize_donors WHERE ${where} ORDER BY entry_id`
+		).map(row => parseInt(row[0], 10));
+		const donorsWithArtifactsWhere = (where) =>
+			`entry_id IN (SELECT ${donor} FROM ${dbPrefix()}_formulize_${artifactsForm} WHERE ${donor} IS NOT NULL AND ${where})`;
+
+		const everything = await ids('');
+
+		// No connected entry matching one condition
+		const noBce = await ids([{ none: [{ element: era, value: 'BCE', operator: '=' }] }]);
+		expect(noBce).toEqual(donorsWhere(`NOT ${donorsWithArtifactsWhere(`${era} = 'BCE'`)}`));
+		expect(noBce.length, 'the none group has to select something').toBeGreaterThan(0);
+		expect(noBce.length, 'and has to leave something out').toBeLessThan(everything.length);
+
+		// A donor with nothing connected at all has no matching connected entry either, so it
+		// qualifies. An INNER join to the connected form would quietly lose it.
+		const noArtifactsAtAll = donorsWhere(`NOT ${donorsWithArtifactsWhere('1=1')}`);
+		expect(noArtifactsAtAll.length, 'the test data has a donor with no artifacts').toBeGreaterThan(0);
+		for (const id of noArtifactsAtAll) {
+			expect(noBce).toContain(id);
+		}
+
+		// Every condition in the group has to be true of the same connected entry. Treating them
+		// as separate tests, "no CE artifact and no coin", would rule out more donors than this.
+		const noCeCoin = await ids([{ none: [
+			{ element: era, value: 'CE', operator: '=' },
+			{ element: shortName, value: 'Coin' }
+		] }]);
+		expect(noCeCoin).toEqual(donorsWhere(`NOT ${donorsWithArtifactsWhere(`${era} = 'CE' AND ${shortName} LIKE '%Coin%'`)}`));
+		const separately = donorsWhere(
+			`NOT ${donorsWithArtifactsWhere(`${era} = 'CE'`)} AND NOT ${donorsWithArtifactsWhere(`${shortName} LIKE '%Coin%'`)}`
+		);
+		expect(noCeCoin, 'the data has to tell one connected entry apart from two, or this proves nothing').not.toEqual(separately);
+
+		// Alongside an ordinary condition on the main form. When nothing at all qualifies, the
+		// read has to come back empty: the NOT EXISTS only lives in the query that picks the entry
+		// ids, so losing that restriction once returned every Individual donor here.
+		const combined = async (typeOfDonor) => ids([
+			{ element: 'donors_type_of_donor', value: typeOfDonor, operator: '=' },
+			{ none: [{ element: era, value: 'BCE', operator: '=' }] }
+		]);
+		for (const typeOfDonor of ['Individual', 'Organization']) {
+			expect(await combined(typeOfDonor)).toEqual(donorsWhere(
+				`donors_type_of_donor = '${typeOfDonor}' AND NOT ${donorsWithArtifactsWhere(`${era} = 'BCE'`)}`
+			));
+		}
+		expect(await combined('Individual'), 'every Individual donor in the test data has a BCE artifact').toEqual([]);
+
+		// A lone "is blank" test is allowed, and "is not blank" mixes with other conditions
+		const blankOk = await apiRead(request, {
+			fields: ['donors_name'], relationship: -1,
+			filter: [{ none: [{ element: shortName, value: '{BLANK}', operator: '=' }] }]
+		});
+		expect(blankOk.status()).toBe(200);
+		expect(await ids([{ none: [
+			{ element: shortName, value: '{BLANK}', operator: '!=' },
+			{ element: era, value: 'BCE', operator: '=' }
+		] }])).toEqual(donorsWhere(
+			`NOT ${donorsWithArtifactsWhere(`${era} = 'BCE' AND ${shortName} != '' AND ${shortName} IS NOT NULL`)}`
+		));
+	});
+
+	test('a none group is refused wherever it would be quietly ignored', async ({ request }) => {
+		expect(artifactsForm, 'the Artifacts form from test 010 should exist').toBeTruthy();
+		const era = artifactsForm + '_era';
+		const bce = { element: era, value: 'BCE', operator: '=' };
+
+		// Each of these would reach the database as a NOT EXISTS that is silently dropped, and
+		// return more entries than were asked for, so each has to be an error instead.
+		const refused = async (body, messagePart, form = FORM) => {
+			const res = await apiRead(request, Object.assign({ fields: ['donors_name'], relationship: -1 }, body), form);
+			expect(res.status(), JSON.stringify(body)).toBe(400);
+			expect((await res.json()).error.message).toContain(messagePart);
+		};
+
+		await refused({ filter: [{ none: [bce] }], relationship: 0 }, 'relationship');
+		await refused({ filter: [{ none: [{ element: 'donors_name', value: 'x' }] }] }, 'on the main form');
+		await refused({ filter: [{ none: [{ element: 'creation_uid', value: '1', operator: '=' }] }] }, 'metadata field');
+		await refused({ filter: [{ none: [bce] }], andOr: 'OR' }, 'andOr is OR');
+		await refused({ filter: [{ none: [
+			{ element: artifactsForm + '_short_name', value: '{BLANK}', operator: '=' },
+			bce
+		] }] }, 'only condition');
+		await refused({ filter: [{ none: [] }] }, 'at least one condition');
+		await refused({ filter: [{ none: [{ any: [bce] }] }] }, 'nested');
+		await refused({ filter: [{ any: [{ none: [bce] }] }] }, 'nested');
+
+		// Conditions on two different connected forms. Artifacts is connected to Donors and to
+		// Exhibits, so it is the main form for this one.
+		await refused({
+			fields: [artifactsForm + '_short_name'],
+			filter: [{ none: [
+				{ element: 'donors_type_of_donor', value: 'Individual', operator: '=' },
+				{ element: 'exhibits_name', value: 'x' }
+			] }]
+		}, 'same connected form', artifactsForm);
+	});
+
 	test('bad requests report the right status codes', async ({ request }) => {
 		// fields is required
 		const noFields = await request.post(readUrl(FORM), {

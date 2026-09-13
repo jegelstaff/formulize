@@ -294,7 +294,8 @@ Examples:
 - Search by name: {"form_id": 5, "filter": [{"element": "name", "operator": "LIKE", "value": "John"}]}
 - Get all the entries with a non-blank value in the "email" field: {"form_id": 5, "filter": [{"element": "email", "operator": "!=", "value": "{BLANK}"}], "limitSize": null}
 - Multiple conditions: {"form_id": 5, "filter": [{"element": "age", "operator": ">=", "value": "18"}, {"element": "status", "operator": "=", "value": "active"}], "and_or": "AND"}
-- Grouping conditions, ex. status = active AND (region = east OR region = west): {"form_id": 5, "filter": [{"element": "status", "operator": "=", "value": "active"}, {"any": [{"element": "region", "operator": "=", "value": "east"}, {"element": "region", "operator": "=", "value": "west"}]}]}',
+- Grouping conditions, ex. status = active AND (region = east OR region = west): {"form_id": 5, "filter": [{"element": "status", "operator": "=", "value": "active"}, {"any": [{"element": "region", "operator": "=", "value": "east"}, {"element": "region", "operator": "=", "value": "west"}]}]}
+- Entries with no matching _connected_ entry (has no effect with only a single form), ex. donors who have given no artifacts from the BCE era (includes donors with no artifacts at all): {"form_id": 6, "relationship_id": -1, "filter": [{"none": [{"element": "artifacts_era", "operator": "=", "value": "BCE"}]}]}',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
@@ -352,7 +353,10 @@ Correct example for linked elements:
 												'type' => 'object',
 												'description' => 'A group of conditions, so that part of the filter can use a different boolean operator than the rest. Use "any" to put OR between the conditions in the group, or "all" to put AND between them. The group as a whole is joined to the other top level items by the and_or property. Groups cannot be nested inside other groups.
 Example, status = active AND (region = east OR region = west):
-- [ { "element": "status", "operator": "=", "value": "active" }, { "any": [ { "element": "region", "operator": "=", "value": "east" }, { "element": "region", "operator": "=", "value": "west" } ] } ]',
+- [ { "element": "status", "operator": "=", "value": "active" }, { "any": [ { "element": "region", "operator": "=", "value": "east" }, { "element": "region", "operator": "=", "value": "west" } ] } ]
+Use "none" to find entries with NO connected entry matching all the conditions in the group. It requires relationship_id, every condition must be on the same connected form (not the main form, and not a metadata field), and and_or must be AND. A {BLANK} test with = must be the only condition in its none group.
+Example, donors with no BCE artifact:
+- [ { "none": [ { "element": "artifacts_era", "operator": "=", "value": "BCE" } ] } ]',
 												'properties' => [
 													'any' => [
 														'type' => 'array',
@@ -361,6 +365,10 @@ Example, status = active AND (region = east OR region = west):
 													'all' => [
 														'type' => 'array',
 														'description' => 'Conditions with AND between them.'
+													],
+													'none' => [
+														'type' => 'array',
+														'description' => 'Conditions on one connected form. Entries qualify when no connected entry matches all of them.'
 													]
 												]
 											]
