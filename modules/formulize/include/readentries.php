@@ -659,10 +659,14 @@ function formulize_apiValidateElementHandles($elementHandles, $form_id) {
         if ($handle === '') {
             continue;
         }
-        if (!$elementObject = $element_handler->get($handle) and !in_array($handle, $dataHandler->metadataFields)) {
-            throw new FormulizeApiException('Invalid element handle: '.$handle, 'unknown_element');
-        }
-        $validatedHandles[($elementObject ? $elementObject->getVar('fid') : $form_id)][] = $handle;
+				$validatedFormId = $form_id;
+				if(!in_array($handle, $dataHandler->metadataFields)) {
+					if(!$elementObject = $element_handler->get($handle)) {
+						throw new FormulizeApiException('Invalid element handle: '.$handle, 'unknown_element');
+					}
+					$validatedFormId = $elementObject->getVar('fid');
+				}
+        $validatedHandles[$validatedFormId][] = $handle;
     }
     return $validatedHandles;
 }
