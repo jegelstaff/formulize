@@ -1260,6 +1260,14 @@ $modversion['config'][] = array(
 	'default' => '0',
 );
 $modversion['config'][] = array(
+	'name' => 'formulizeEmbeddingEnabled',
+	'title' => '_MI_formulize_EMBEDDINGENABLED',
+	'description' => '_MI_formulize_EMBEDDINGENABLED_DESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 0,
+);
+$modversion['config'][] = array(
 	'name' => 'formulizeFrameAncestors',
 	'title' => '_MI_formulize_FRAMEANCESTORS',
 	'description' => '_MI_formulize_FRAMEANCESTORS_DESC',

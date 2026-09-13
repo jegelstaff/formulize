@@ -50,6 +50,7 @@ $settings['passcodes'] = $passcode_handler->getThisScreenPasscodes($screen_id);
 
 $config_handler = $config_handler = xoops_gethandler('config');
 $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+$settings['embeddingAllowed'] = formulize_embeddingAllowed(); // a new screen has this question too
 if ($screen_id == "new") {
     $settings['type'] = 'listOfEntries';
     $settings['frid'] = 0;

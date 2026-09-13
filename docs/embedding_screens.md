@@ -77,6 +77,15 @@ the page.
 `Sec-Fetch-Dest` header. The same address has to be able to return both the embedded version and the
 normal one, and a cache that ignores this will serve people the wrong one.
 
+## Turning embedding on
+
+Embedding is off until you turn it on. In the Formulize preferences, under **Settings → Advanced →
+Embedding in other websites**, set **Allow this site to be embedded in other websites** to Yes.
+
+While it is off, no website can display this site or any screen in it inside a frame, whatever any
+individual screen says. Turning it off again later blocks everything at once, and leaves the lists
+below untouched, so turning it back on restores exactly what you had.
+
 ## Choosing which websites may embed a screen
 
 Open the screen's settings and find **Which other websites can embed this screen?**. Write one
@@ -98,7 +107,7 @@ you it is being ignored, so you can correct it. Nothing you type is thrown away.
 
 ### Full embedding of the site
 
-If you need to display your entire Formulize website inside an iframe on another website, such as inside an LMS, name that system in the Formulize preferences, under **Websites allowed to display this site in a frame**.
+If you need to display your entire Formulize website inside an iframe on another website, such as inside an LMS, name that system in the Formulize preferences, under **Websites allowed to display this site in a frame**, in the same place as the switch above.
 
 Websites named there can frame every page of the site, so you do not need to repeat them on the individual screens they embed. A screen's own list adds to them.
 

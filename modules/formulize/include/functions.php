@@ -494,24 +494,48 @@ function formulize_invalidEmbedOrigins($value) {
 }
 
 /**
+ * Whether this site may be embedded in other websites at all.
+ *
+ * The single switch over everything to do with embedding, off unless an administrator turns it on.
+ * While it is off, no website can frame any part of this site, whatever is named in the site-wide
+ * setting or on an individual screen. Those lists are left alone, so turning it back on restores
+ * exactly what was allowed before.
+ *
+ * @return bool
+ */
+function formulize_embeddingAllowed() {
+    return (bool) formulize_moduleConfigValue('formulizeEmbeddingEnabled');
+}
+
+/**
+ * Read one Formulize preference, whichever module's page this request belongs to.
+ *
+ * @param string $name The preference name
+ * @return mixed The value, or an empty string when it is not set
+ */
+function formulize_moduleConfigValue($name) {
+    static $formulizeConfig = null;
+    if ($formulizeConfig === null) {
+        $config_handler = xoops_gethandler('config');
+        $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+    }
+    return isset($formulizeConfig[$name]) ? $formulizeConfig[$name] : '';
+}
+
+/**
  * The websites allowed to frame any page of this site.
  *
  * Set in the Formulize preferences, and meant for a site that is reached through an LMS or a
  * portal that displays it in a frame. These apply everywhere, so a website named here does not
  * need repeating on each screen that it embeds.
  *
- * @return array The websites, in canonical form
+ * @return array The websites, in canonical form, or none at all when embedding is turned off
  */
 function formulize_siteFrameAncestors() {
-    static $origins = null;
-    if ($origins === null) {
-        $config_handler = xoops_gethandler('config');
-        $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-        $origins = formulize_parseEmbedOrigins(
-            isset($formulizeConfig['formulizeFrameAncestors']) ? $formulizeConfig['formulizeFrameAncestors'] : ''
-        );
+    if (!formulize_embeddingAllowed()) {
+        return array();
     }
-    return $origins;
+    return formulize_parseEmbedOrigins(formulize_moduleConfigValue('formulizeFrameAncestors'));
 }
 
 /**
@@ -525,7 +549,7 @@ function formulize_siteFrameAncestors() {
  * @return void
  */
 function formulize_sendScreenFrameAncestorsHeader($screen) {
-    if (!is_object($screen)) {
+    if (!is_object($screen) OR !formulize_embeddingAllowed()) {
         return;
     }
     if ($origins = formulize_parseEmbedOrigins($screen->getVar('embedOrigins', 'n'))) {
