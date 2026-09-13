@@ -1049,6 +1049,15 @@ class formulizeElementsHandler {
 			throw new Exception("Invalid element object passed to initializeElementHandle");
 		}
 		$ele_handle = $element->getVar('ele_handle');
+		// An existing element whose handle is the one already stored has nothing to validate. The stored
+		// element is read bypassing the cache, because the cached object may be this very object, already
+		// carrying the handle we are checking.
+		if($ele_handle
+			AND $elementId = intval($element->getVar('ele_id'))
+			AND $storedElement = $this->get($elementId, bypassCache: true)
+			AND $storedElement->getVar('ele_handle') === $ele_handle) {
+			return $ele_handle;
+		}
 		if(!$ele_handle) {
 			// make a sanitized handle based on the caption
 			// if no caption, use the element id
