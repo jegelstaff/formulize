@@ -180,8 +180,10 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
 			curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
 			curl_setopt($curl, CURLINFO_HEADER_OUT, true);
 
-			// For MCP server, we need to test if Authorization header gets passed through
-			if($config->getVar('conf_name') == 'formulizeMCPServerEnabled') {
+			// The MCP server and the Public API both authenticate with an Authorization header,
+			// so both need to know whether this server passes that header through to PHP at all.
+			if($config->getVar('conf_name') == 'formulizeMCPServerEnabled'
+				OR $config->getVar('conf_name') == 'formulizePublicAPIEnabled') {
 				// Add a test Authorization header to verify it passes through
 				curl_setopt($curl, CURLOPT_HTTPHEADER, array(
 					'Authorization: Bearer test-header-passthrough-check'
@@ -201,13 +203,34 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
 					break;
 				case 'formulizePublicAPIEnabled':
 					$json = json_decode($response);
-					$validResponse = (is_object($json) AND $json->status == "healthy");
+					$validResponse = (is_object($json) AND !empty($json->status) AND $json->status == "healthy");
+					// A stripped Authorization header does not stop the Public API being enabled,
+					// because session based and anonymous callers still work without one. Record the
+					// result so the settings page can warn that API keys will not work on this server.
+					// Recorded through the shared function rather than written straight to the session,
+					// so that it carries the timestamp the cache needs - without one this answer would
+					// never go stale, and the warning would still be on the settings page long after
+					// the administrator had fixed their server configuration. See
+					// formulize_authHeaderPassthrough() in modules/formulize/include/functions.php.
+					if($validResponse) {
+						include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
+						formulize_recordAuthHeaderPassthrough(!empty($json->authorization_header_received));
+					}
 					break;
 				case 'formulizeMCPServerEnabled':
 					$json = json_decode($response);
 					// MCP server should return JSON with status, and HTTP 200
 					// Even if auth fails, it should respond with JSON structure indicating the server is working
 					$validResponse = ($httpCode == 200 AND is_object($json) AND isset($json->status) AND $json->status == 'canBeEnabled');
+					// canBeEnabled is set only when the test Authorization header actually arrived
+					// (see mcp/mcp.php), so a valid response here is proof the header gets through,
+					// and worth recording for the warnings that ask about it elsewhere. Only the
+					// positive: a failure here could equally be the MCP server being unreachable or
+					// broken, which says nothing about the header either way.
+					if($validResponse) {
+						include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
+						formulize_recordAuthHeaderPassthrough(true);
+					}
 					break;
 			}
 

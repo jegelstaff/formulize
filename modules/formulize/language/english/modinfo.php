@@ -167,17 +167,32 @@ foreach($formulizeConfig as $thisConfig=>$thisConfigValue) {
 		$publicAPIInstructions = "<br><br>For the Public API to work, you will need to add code similar to this, to the .htaccess file at the root of your website. Make sure to put it above any rewrite rules that handle alternate URLs.
 		<blockquote style=\"font-weight: normal; font-family: monospace; white-space: nowrap;\">
 		RewriteEngine On<br>
-		RewriteCond %{REQUEST_URI} ^/formulize-public-api/ [NC]
+		<br>
+		RewriteCond %{HTTP:Authorization} .<br>
+		RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]<br>
+		<br>
+		RewriteCond %{REQUEST_URI} ^/formulize-public-api/ [NC]<br>
 		RewriteCond %{REQUEST_FILENAME} !-f<br>
 		RewriteCond %{REQUEST_FILENAME} !-d<br>
 		RewriteCond %{REQUEST_FILENAME} !-l<br>
-		RewriteRule ^(.*)$ /modules/formulize/public_api/index.php?apiPath=$1 [L,B]<br>
-		</blockquote><i>If you enabled this option, but these instructions are still here, and the option is off again, then your server is not yet properly configured for the Public API.</i>";
+		RewriteRule ^(.*)$ /modules/formulize/public_api/index.php?apiPath=$1 [L,B,QSA]<br>
+		</blockquote>
+		The two lines mentioning <i>Authorization</i> are not part of the routing - they are what make <i>API keys</i> work. A key travels in an <i>Authorization</i> header, and many servers drop that header before PHP ever sees it, which leaves every key authenticating as nobody - the caller is told they do not have permission, with nothing pointing at the real cause. Those two lines hand the header to PHP under a name Formulize also reads. If your server still strips it, adding <span style=\"font-family: monospace;\">CGIPassAuth On</span> to the same file is the other way to fix it.<br><br>
+		<i>If you enabled this option, but these instructions are still here, and the option is off again, then your server is not yet properly configured for the Public API.</i>";
 		break;
 	}
+	// The other thing that can be wrong here - this server stripping the Authorization
+	// header, so that API keys silently authenticate as nobody - is warned about by
+	// formulize_publicApiAuthHeaderWarningHtml(), rendered under the setting itself by
+	// formulize_configFormElementHtml(). It belongs there rather than here because it has
+	// to establish the answer with an HTTP round trip, and this is a language file: it is
+	// loaded in plenty of contexts that have no business making one.
 }
 define("_MI_formulize_PUBLICAPIENABLED", "Enable the Public API");
 define("_MI_formulize_PUBLICAPIENABLED_DESC", "When this is enabled, you can use the Public API documented at https://formulize.org/developers/public-api/".$publicAPIInstructions);
+
+define("_MI_formulize_PUBLICAPIALLOWEDORIGINS", "Websites allowed to call the Public API");
+define("_MI_formulize_PUBLICAPIALLOWEDORIGINS_DESC", "Enter one website address per line, for example <i>https://www.example.org</i>. Javascript running on those websites will be allowed to read data from this site through the Public API.<br><br>The <i>https://</i> is optional - an address entered without one, eg. <i>www.example.org</i>, will match that website under either http or https. A leading <i>*.</i>, eg. <i>*.example.org</i>, matches any subdomain of that website, but not the bare domain itself, so add that separately too if you need it.<br><br>Leave this blank unless you need it. When it is blank, only pages on this site itself can call the Public API from a browser. Enter a single asterisk (*) to allow any website, which you should only do if the data you are exposing is genuinely public.<br><br>This setting controls web browsers: a request that arrives from a website not listed here is refused outright, and pages on this site itself are always allowed. Servers and scripts calling with an API key do not identify a website, so this setting does not apply to them, and it is not a substitute for permissions: what any caller can actually read is still decided by the Formulize permissions of the user their API key belongs to, or by the permissions of the Anonymous group when no API key is used.");
 
 // Conditional visibility of the AI settings is handled declaratively by 'showWhen' in
 // include/configsettings_registry.php, which sets the initial state server-side and

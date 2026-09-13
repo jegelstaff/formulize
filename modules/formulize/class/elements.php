@@ -46,6 +46,22 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elementReferenceScanTra
 global $xoopsDB;
 define('formulize_TABLE', $xoopsDB->prefix("formulize"));
 
+// The element object cache, keyed by ele_id, and the index that lets a handle find its way in.
+//
+// Keyed by id alone so that one element is one cached object, however it was asked for. Keying
+// by whatever the caller happened to pass would let the same element sit in the cache twice,
+// once under its id and once under its handle, as two objects that drift apart the moment
+// either is modified - and would leave the handle copy behind when insert() or delete()
+// invalidated the id.
+global $formulizeCachedElementObjects; // ele_id => element object, or false when the lookup failed
+global $formulizeCachedElementIdsByHandle; // ele_handle => ele_id
+if (!isset($formulizeCachedElementObjects)) {
+	$formulizeCachedElementObjects = array();
+}
+if (!isset($formulizeCachedElementIdsByHandle)) {
+	$formulizeCachedElementIdsByHandle = array();
+}
+
 class formulizeElement extends FormulizeObject {
 
 	var $isLinked;
@@ -751,20 +767,24 @@ class formulizeElementsHandler {
 	 * @return mixed The element object, or false if not found
 	 */
 	function get($idOrHandle, $bypassCache = false){
-		static $cachedElements = array();
-		if(!$bypassCache && isset($cachedElements[$idOrHandle])) {
-			return $cachedElements[$idOrHandle];
+		global $formulizeCachedElementObjects, $formulizeCachedElementIdsByHandle;
+		// resolve whatever was passed to the id the cache is keyed by. A handle can only be
+		// resolved once it has been seen; before that there is nothing to check and we query.
+		$isId = (is_numeric($idOrHandle) AND $idOrHandle > 0);
+		$elementId = $isId ? intval($idOrHandle)
+			: (isset($formulizeCachedElementIdsByHandle[$idOrHandle]) ? $formulizeCachedElementIdsByHandle[$idOrHandle] : null);
+		if(!$bypassCache && $elementId !== null && isset($formulizeCachedElementObjects[$elementId])) {
+			return $formulizeCachedElementObjects[$elementId];
 		}
-		if (is_numeric($idOrHandle) AND $idOrHandle > 0) {
+		if ($isId) {
 			$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE ele_id='.$idOrHandle;
 			if (!$result = $this->db->query($sql)) {
-				$cachedElements[$idOrHandle] = false;
+				$formulizeCachedElementObjects[$elementId] = false;
 				return false;
 			}
 		} else {
 			$sql = "SELECT * FROM ".formulize_TABLE." WHERE ele_handle='".formulize_db_escape($idOrHandle)."'";
 			if (!$result = $this->db->query($sql)) {
-				$cachedElements[$idOrHandle] = false;
 				return false;
 			}
 		}
@@ -781,7 +801,7 @@ class formulizeElementsHandler {
 			}
 			$element->assignVars($array);
       $element = $this->_setElementProperties($element);
-			$cachedElements[$idOrHandle] = $element;
+			$this->cacheElementObject($element);
 			return $element;
 		}
 		return false;
@@ -801,7 +821,67 @@ class formulizeElementsHandler {
 			return $element;
     }
 
-	function insert(&$element, $force = false){
+	/**
+	 * Put an element object in the cache, under its id, with its handle indexed to it.
+	 *
+	 * The element must already have been through _setElementProperties, since everything that
+	 * reads the cache expects those derived properties to be set.
+	 *
+	 * @param object $element The element to cache
+	 * @return void
+	 */
+	private function cacheElementObject($element) {
+		global $formulizeCachedElementObjects, $formulizeCachedElementIdsByHandle;
+		if(!is_object($element) OR !$elementId = intval($element->getVar('ele_id'))) {
+			return;
+		}
+		$formulizeCachedElementObjects[$elementId] = $element;
+		// An element can change its handle, and a handle freed up that way can be taken by
+		// another element, so any handle still pointing here is dropped before the current one
+		// is recorded. Otherwise the old name would go on resolving to this element.
+		foreach($formulizeCachedElementIdsByHandle as $thisHandle => $thisElementId) {
+			if($thisElementId === $elementId) {
+				unset($formulizeCachedElementIdsByHandle[$thisHandle]);
+			}
+		}
+		if($elementHandle = $element->getVar('ele_handle', 'n')) {
+			$formulizeCachedElementIdsByHandle[$elementHandle] = $elementId;
+		}
+	}
+
+	/**
+	 * Forget one cached element, by id, along with any handle that points to it.
+	 * @param int $elementId The element to forget
+	 * @return void
+	 */
+	private function clearCachedElement($elementId) {
+		global $formulizeCachedElementObjects, $formulizeCachedElementIdsByHandle;
+		$elementId = intval($elementId);
+		unset($formulizeCachedElementObjects[$elementId]);
+		foreach($formulizeCachedElementIdsByHandle as $thisHandle => $thisElementId) {
+			if($thisElementId === $elementId) {
+				unset($formulizeCachedElementIdsByHandle[$thisHandle]);
+			}
+		}
+	}
+
+	/**
+	 * Forget every cached element.
+	 *
+	 * For when elements have been changed by SQL that went around the objects, leaving no list
+	 * of which ones are now stale. Public, because that SQL is not all in this class: anything
+	 * that writes to the formulize table directly has to say so, or the objects already loaded
+	 * go on reporting what the rows used to say for the rest of the request.
+	 *
+	 * @return void
+	 */
+	public function clearElementCache() {
+		global $formulizeCachedElementObjects, $formulizeCachedElementIdsByHandle;
+		$formulizeCachedElementObjects = array();
+		$formulizeCachedElementIdsByHandle = array();
+	}
+
+	public function insert(&$element, $force = false){
         if( get_class($element) != 'formulizeElement' AND is_subclass_of($element, 'formulizeElement') == false){
             return false;
         }
@@ -922,6 +1002,10 @@ class formulizeElementsHandler {
 			$ele_id = $this->db->getInsertId();
 			$element->setVar('ele_id', $ele_id);
 		}
+
+		$element = $this->_setElementProperties($element);
+		$this->cacheElementObject($element);
+
 		return $ele_id;
 	}
 
@@ -965,6 +1049,15 @@ class formulizeElementsHandler {
 			throw new Exception("Invalid element object passed to initializeElementHandle");
 		}
 		$ele_handle = $element->getVar('ele_handle');
+		// An existing element whose handle is the one already stored has nothing to validate. The stored
+		// element is read bypassing the cache, because the cached object may be this very object, already
+		// carrying the handle we are checking.
+		if($ele_handle
+			AND $elementId = intval($element->getVar('ele_id'))
+			AND $storedElement = $this->get($elementId, bypassCache: true)
+			AND $storedElement->getVar('ele_handle') === $ele_handle) {
+			return $ele_handle;
+		}
 		if(!$ele_handle) {
 			// make a sanitized handle based on the caption
 			// if no caption, use the element id
@@ -1206,6 +1299,15 @@ class formulizeElementsHandler {
 						}
 					}
 				}
+				// Everything above rewrote element rows with SQL that went around the element
+				// objects: ele_value in every element that links to this one or embeds a {handle}
+				// token, and ele_caption and ele_desc wherever that token appears. Any of those
+				// already in the cache still holds the old text, and the passes are written as
+				// LIKE searches rather than as a list of ids, so there is no way to name the ones
+				// that changed. The whole cache goes instead. A handle rename is rare, and a cold
+				// cache costs a re-read; a stale one costs a linked element pointing at a handle
+				// that no longer exists.
+				$this->clearElementCache();
 			}
 		}
 	}
@@ -1785,6 +1887,8 @@ class formulizeElementsHandler {
 		$screenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 		$screenHandler->removeElementsFromScreens($elementObject->getVar('ele_id'));
 
+		$this->clearCachedElement($elementObject->getVar('ele_id'));
+
 		return ($result0 AND $result1 AND $result2 AND $result3 AND $result4) ? true : false;
 	}
 
@@ -1815,25 +1919,35 @@ class formulizeElementsHandler {
 		if( !$result ){
 			return false;
 		}
+
+		global $formulizeCachedElementObjects;
 		while( $myrow = $this->db->fetchArray($result) ){
 			// instantiate the right kind of element, depending on the type
-			$ele_type = $myrow['ele_type'];
-			if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
-				$customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
-				$elements = $customTypeHandler->create();
+			$elementId = $myrow['ele_id'];
+			// an entry that is not an object is the negative cache get() writes when a lookup
+			// fails, and we have the row here, so rebuild rather than hand back the false
+			if(isset($formulizeCachedElementObjects[$elementId]) AND is_object($formulizeCachedElementObjects[$elementId])) {
+				$elementObject = $formulizeCachedElementObjects[$elementId];
 			} else {
-				$elements = new formulizeElement();
+				$ele_type = $myrow['ele_type'];
+				if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+					$customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
+					$elementObject = $customTypeHandler->create();
+				} else {
+					$elementObject = new formulizeElement();
+				}
+				$elementObject->assignVars($myrow);
+				$elementObject = $this->_setElementProperties($elementObject);
+				$this->cacheElementObject($elementObject);
 			}
-			$elements->assignVars($myrow);
-      $elements = $this->_setElementProperties($elements);
 			if($id_as_key === true OR $id_as_key == "element_id"){
-				$ret[$myrow['ele_id']] =& $elements;
+				$ret[$myrow['ele_id']] =& $elementObject;
 			}elseif($id_as_key == "handle") {
-				$ret[$myrow['ele_handle']] =& $elements;
+				$ret[$myrow['ele_handle']] =& $elementObject;
 			} else {
-				$ret[] =& $elements;
+				$ret[] =& $elementObject;
 			}
-			unset($elements);
+			unset($elementObject);
 		}
 		return $ret;
 	}

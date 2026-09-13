@@ -1,13 +1,18 @@
 <div class="panel-content content">
 
     <h2>Manage Keys</h2>
+    <{if $adminPage.authHeaderWarning}><{$adminPage.authHeaderWarning}><{/if}>
 		<blockquote>
-    <p>You can connect Formulize to AI Assistants, and you can pipe data to Google Sheets. To do this, you need to create API keys for the users that are using this functionality.</p>
+    <p>Use API Keys to connect to Formulize from external applications.</p>
 		<p><b>WARNING!</b> These keys must be kept secure! They provide access to Formulize exactly the same as if that user logged in normally. Do not commit them to version control systems. Do not put them in Spreadsheets or other documents that are accessible to anyone other than the user for whom the key was issued!</p>
 		</blockquote>
-		<h3>Formulize and AI</h3>
+		<h3>Public API</h3>
 		<blockquote>
-		<p>Make sure AI is enabled under <a href='<{$xoops_url}>/modules/formulize/admin/ui.php?page=settings&view=ai'>Settings &rsaquo; AI</a>. You can <a href='https://formulize.org/ai' target='_blank'>read more about Formulize and AI at https://formulize.org/ai</a>.</p>
+		<p>Make sure the Public API is enabled under <a href='<{$xoops_url}>/modules/formulize/admin/ui.php?page=settings&view=advanced'>Settings &rsaquo; Advanced</a>. Read more about the Public API at <a href='https://formulize.org/developers/Public_API/' target='_blank'>https://formulize.org/developers/Public_API/</a>.</p>
+		</blockquote>
+		<h3>External AI Assistants (Claude Desktop, etc)</h3>
+		<blockquote>
+		<p>Make sure External AI is enabled under <a href='<{$xoops_url}>/modules/formulize/admin/ui.php?page=settings&view=ai'>Settings &rsaquo; AI</a>. Read more about Formulize and AI at <a href='https://formulize.org/ai' target='_blank'>https://formulize.org/ai</a>.</p>
 		</blockquote>
 		<h3>Google Sheets</h3>
 		<blockquote>

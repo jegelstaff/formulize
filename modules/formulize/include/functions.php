@@ -758,11 +758,6 @@ function formulize_isNewEntryId($entry_id) {
  */
 function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups="", $mid="", $gperm_handler="") {
 
-		static $cachedSecurityChecks = array();
-		if(isset($cachedSecurityChecks[$form_id][$entry_id])) {
-			return $cachedSecurityChecks[$form_id][$entry_id];
-		}
-
     if (!$mid) { // if no mid specified, set it
         $mid = getFormulizeModId();
     }
@@ -790,6 +785,22 @@ function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups=
         }
     }
 
+    // The answer belongs to a person as much as to a form and an entry, so the person is part
+    // of the key. Keyed by form and entry alone, a request that asked about two users would
+    // hand the first one's answer to the second, which on this function means handing out
+    // access. The groups are in the key too, because a caller may state them rather than let
+    // them be derived above, and every permission check below is made against them.
+    //
+    // This is read here rather than at the top of the function because the user and the groups
+    // are not known until they have been resolved, just above. What that costs on a cache hit
+    // is the module id, which is held in a static, and the group lookup, which the user object
+    // holds after the first call.
+    static $cachedSecurityChecks = array();
+    $cacheKey = $form_id.'/'.$entry_id.'/'.$user_id.'/'.implode(',', (array) $groups);
+    if(isset($cachedSecurityChecks[$cacheKey])) {
+        return $cachedSecurityChecks[$cacheKey];
+    }
+
     // System-managed ad hoc forms (the Users / Groups management forms) are not real Formulize
     // forms: they carry no Formulize permission metadata and have no entry ownership/scope. Their
     // access is governed by a dedicated rule — a webmaster, or a user editing their own user
@@ -798,31 +809,31 @@ function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups=
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     if (($checkFormObject = $form_handler->get($form_id)) AND $checkFormObject->isSystemManagedForm()) {
         $result = formulize_systemManagedFormAccessCheck($checkFormObject, $entry_id, $user_id, $groups, $gperm_handler);
-        $cachedSecurityChecks[$form_id][$entry_id] = $result;
+        $cachedSecurityChecks[$cacheKey] = $result;
         return $result;
     }
 
     // For ad hoc table forms (Users/Groups management), system_admin permission was already
     // verified at the page level, so bypass the normal view_form check
     if ((!isset($GLOBALS['formulize_systemAdminPermissionVerified']) OR !$GLOBALS['formulize_systemAdminPermissionVerified']) AND !$gperm_handler->checkRight("view_form", $form_id, $groups, $mid)) {
-				$cachedSecurityChecks[$form_id][$entry_id] = false;
+				$cachedSecurityChecks[$cacheKey] = false;
         return false;
     }
 
     // system_admin was verified at the page level — skip all entry-level ownership/scope checks
     // since there is no Formulize data table to look up owner info from (e.g. groups form)
     if (isset($GLOBALS['formulize_systemAdminPermissionVerified']) AND $GLOBALS['formulize_systemAdminPermissionVerified']) {
-        $cachedSecurityChecks[$form_id][$entry_id] = true;
+        $cachedSecurityChecks[$cacheKey] = true;
         return true;
     }
 
     if ($entry_id == "proxy" AND !$gperm_handler->checkRight("add_proxy_entries", $form_id, $groups, $mid)) {
-				$cachedSecurityChecks[$form_id][$entry_id] = false;
+				$cachedSecurityChecks[$cacheKey] = false;
         return false;
     }
 
     if (formulize_isNewEntryId($entry_id) AND !$gperm_handler->checkRight("add_own_entry", $form_id, $groups, $mid)) {
-				$cachedSecurityChecks[$form_id][$entry_id] = false;
+				$cachedSecurityChecks[$cacheKey] = false;
         return false;
     }
 
@@ -846,10 +857,10 @@ function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups=
                     // anon ownership (uid 0) is not proof of identity, so require an unforgeable token:
                     // a passcode in session that matches the entry, or a validly-signed cookie for the entry
                     if(formulize_anonHoldsEntry($form_id, $entry_id)) {
-												$cachedSecurityChecks[$form_id][$entry_id] = true;
+												$cachedSecurityChecks[$cacheKey] = true;
                         return true;
                     }
-										$cachedSecurityChecks[$form_id][$entry_id] = false;
+										$cachedSecurityChecks[$cacheKey] = false;
                     return false;
                 }
             } elseif ($owner != $user_id) {
@@ -882,18 +893,18 @@ function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups=
                         if (array_intersect($pubbedgroups, $groups)) {
                             // user has been published an unlocked view for which the scope is all
                             if ($thisview['sv_currentview'] == "all") {
-																$cachedSecurityChecks[$form_id][$entry_id] = true;
+																$cachedSecurityChecks[$cacheKey] = true;
                                 return true;
                             }
                             // what about groupscope in the view?  is that accounted for below, or should we check against "group"??
                             $viewgroups = explode(",", $thisview['sv_currentview']);
                             if (array_intersect($data_handler->getEntryOwnerGroups($entry_id), $viewgroups)) {
-																$cachedSecurityChecks[$form_id][$entry_id] = true;
+																$cachedSecurityChecks[$cacheKey] = true;
                                 return true;
                             }
                         }
                     }
-										$cachedSecurityChecks[$form_id][$entry_id] = false;
+										$cachedSecurityChecks[$cacheKey] = false;
                     return false;
                 }
             }
@@ -906,18 +917,18 @@ function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups=
             global $xoopsDB;
             $checkSQL = "SELECT count(entry_id) FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." WHERE entry_id = $entry_id $perGroupFilter";
             if (!$checkRes = $xoopsDB->query($checkSQL)) {
-								$cachedSecurityChecks[$form_id][$entry_id] = false;
+								$cachedSecurityChecks[$cacheKey] = false;
                 return false;
             }
             $countRow = $xoopsDB->fetchRow($checkRes);
             if ($countRow[0] != 1) {
-								$cachedSecurityChecks[$form_id][$entry_id] = false;
+								$cachedSecurityChecks[$cacheKey] = false;
                 return false;
             }
         }
     }
 
-		$cachedSecurityChecks[$form_id][$entry_id] = true;
+		$cachedSecurityChecks[$cacheKey] = true;
     return true;
 }
 
@@ -2324,19 +2335,86 @@ function getMetaData($entry_id, $member_handler=null, $fid="", $useOldCode=false
 }
 
 /**
+ * Work out who a permission question is being asked about.
+ *
+ * Everything that asks "may this person see this" needs both a user id and a set of group
+ * ids, and the two have to describe the same person. Deriving them separately is how they
+ * come apart: a uid read from $xoopsUser next to a group list handed in by a caller agree
+ * only as long as every entry point remembers to assign $xoopsUser before it calls, which
+ * is an assumption made far away from the code relying on it. Resolve the person once, here,
+ * and read both off the object.
+ *
+ * @param int|object|null $userIdOrObject A user object, a user id, or null for the current user
+ * @return object|null The user, or null for the anonymous user
+ */
+function formulize_resolveUserObject($userIdOrObject = null) {
+	if (is_object($userIdOrObject)) {
+		return is_a($userIdOrObject, 'icms_member_user_Object') ? $userIdOrObject : null;
+	}
+	if ($userIdOrObject) {
+		$member_handler = xoops_gethandler('member');
+		return ($userObject = $member_handler->getUser($userIdOrObject)) ? $userObject : null;
+	}
+	global $xoopsUser;
+	return $xoopsUser ? $xoopsUser : null;
+}
+
+/**
+ * The groups a resolved user belongs to, or the anonymous group for no user.
+ *
+ * getGroups() holds its answer on the user object after the first call, so asking wherever
+ * the groups are needed costs nothing and keeps them tied to the user they came from.
+ *
+ * @param object|null $userObject From formulize_resolveUserObject
+ * @return array The group ids
+ */
+function formulize_userGroups($userObject) {
+	return is_object($userObject) ? $userObject->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+}
+
+/**
+ * May this user see the private elements of a given form?
+ *
+ * Asked per form rather than once per request, because a relationship reaches forms this
+ * user can hold different permissions on, and the answer for the form at the centre of the
+ * query says nothing about the ones connected to it.
+ *
+ * Cached per form and set of groups, since every form in a relationship asks the same
+ * question and the answer cannot change within a request.
+ *
+ * @param int $fid The form whose private elements are in question
+ * @param array $groups The group ids to check for
+ * @return bool
+ */
+function formulize_userCanViewPrivateElements($fid, $groups) {
+	static $cachedChecks = array();
+	$fid = intval($fid);
+	$cacheKey = $fid.'/'.implode(',', (array) $groups);
+	if (!isset($cachedChecks[$cacheKey])) {
+		$gperm_handler = xoops_gethandler('groupperm');
+		$cachedChecks[$cacheKey] = $gperm_handler->checkRight("view_private_elements", $fid, $groups, getFormulizeModId()) ? true : false;
+	}
+	return $cachedChecks[$cacheKey];
+}
+
+/**
  * Get all the elements form, and optionally related forms in a relationship.
  * By default, does not include text for display elements.
  *
  * @param int $fid The form id we're getting elements for
  * @param string $frid Optional. The relationship if any that we should use to include related forms
- * @param array $groups Optional. Optional. An array of group ids that we should use to limit which elements are included (based on their display settings). If not specified, the display settings for the element are not taken into account.
+ * @param array $groups Optional. An array of group ids used to limit which elements are included, based on their display settings. If not specified, the display settings for the element are not taken into account. This narrows the elements only; it is not who the permission checks are about, which is $userIdOrObject.
  * @param bool $includeTextForDisplay Optional. Defaults to false, so 'text for display' elements are not included
+ * @param int|object $userIdOrObject Optional. The user whose permissions decide which forms and which private elements are reachable. Defaults to the current user.
  * @return array And array keyed for form id, where each value is the raw results from a function q query of the DB, ie: two dimensioned array, first dimension is a counter for the records returned, second dimension is the name of the db field returned, in this case the db fields are ele_id and ele_caption, ele_colhead, and ele_handle
  */
-function getAllColList($fid, $frid=0, $groups=null, $includeTextForDisplay=false) {
-    global $xoopsUser;
+function getAllColList($fid, $frid=0, $groups=null, $includeTextForDisplay=false, $userIdOrObject=null) {
     $gperm_handler = xoops_gethandler('groupperm');
-		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+    // Who is asking. Both halves of every permission question below come off this one object,
+    // rather than a uid from $xoopsUser sitting next to a group list that arrived separately.
+    $userObject = formulize_resolveUserObject($userIdOrObject);
+    $actorGroups = formulize_userGroups($userObject);
+    $uid = is_object($userObject) ? $userObject->getVar('uid') : 0;
     $mid = getFormulizeModId();
 		$fid = intval($fid);
 		$frid = intval($frid);
@@ -2345,25 +2423,18 @@ function getAllColList($fid, $frid=0, $groups=null, $includeTextForDisplay=false
       throw new Exception("List of columns requested without specifying a form nor a relationship.");
     }
 
-    // if $groups then build the necessary filter
-    // build query for display groups
+    // $groups narrows the elements to the ones displayed to those groups, and nothing else.
+    // It is a question about the elements, not about the person: passing none asks for every
+    // element whatever its display settings say, which is what the admin filter UIs want. The
+    // permission questions further down are asked about the user, never about this list, so a
+    // caller cannot widen what they are allowed to see by handing in a longer set of groups.
     $gq = "";
     if (is_array($groups)) {
 			$gq = "AND (ele_display='1'";
-			foreach ($groups as $i=>$thisgroup) {
-				$groups[$i] = intval($thisgroup);
+			foreach ($groups as $thisgroup) {
 				$gq .= " OR ele_display LIKE '%,".intval($thisgroup).",%'";
 			}
 			$gq .= ")";
-    } else {
-			// reset groups to be based off user object (and this instantiates it if it weren't present before)
-			$groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
-    }
-
-    // if current user does NOT have view_private_elements permission, then set a query to exclude those elements
-    $pq = "";
-    if (!$view_private_elements = $gperm_handler->checkRight("view_private_elements", $fid, $groups, $mid)) {
-        $pq = "AND ele_private=0";
     }
 
 		$incbreaks = "";
@@ -2373,7 +2444,7 @@ function getAllColList($fid, $frid=0, $groups=null, $includeTextForDisplay=false
 
     // generate the $allcols list
 		// do the passed in fid first, append rest of relationship after if necessary
-		$cols = addToColsList(array(), $fid, $uid, $groups, $mid, $gperm_handler, $gq, $pq, $incbreaks);
+		$cols = addToColsList(array(), $fid, $uid, $actorGroups, $mid, $gperm_handler, $gq, $incbreaks);
     if ($frid) {
         $fids[0] = $fid;
         $check_results = checkForLinks($frid, $fids, $fid, "");
@@ -2381,12 +2452,12 @@ function getAllColList($fid, $frid=0, $groups=null, $includeTextForDisplay=false
         $sub_fids = $check_results['sub_fids'];
         foreach ($fids as $this_fid) {
 						if($this_fid != $fid) {
-							$cols = addToColsList($cols, $this_fid, $uid, $groups, $mid, $gperm_handler, $gq, $pq, $incbreaks);
+							$cols = addToColsList($cols, $this_fid, $uid, $actorGroups, $mid, $gperm_handler, $gq, $incbreaks);
 						}
         }
         foreach ($sub_fids as $this_fid) {
 					if($this_fid != $fid) {
-						$cols = addToColsList($cols, $this_fid, $uid, $groups, $mid, $gperm_handler, $gq, $pq, $incbreaks);
+						$cols = addToColsList($cols, $this_fid, $uid, $actorGroups, $mid, $gperm_handler, $gq, $incbreaks);
 					}
         }
     }
@@ -2404,21 +2475,172 @@ function getAllColList($fid, $frid=0, $groups=null, $includeTextForDisplay=false
  * @param int $mid The module id for the formulize module
  * @param object $gperm_handler The group permission handler object
  * @param string $gq The group query string for filtering elements based on element display settings (ie: which groups the elements are displayed to)
- * @param string $pq The private query string for filtering elements based on whether they're a private element or not
  * @param string $incbreaks The query string for including or excluding certain element types
  *
  * @return array The updated $cols array with the columns for the form added in, if the user has permission to access the form. The columns are the raw results from a function q query of the DB, ie: two dimensioned array, first dimension is a counter for the records returned, second dimension is the name of the db field returned, in this case the db fields are ele_id and ele_caption, ele_colhead, and ele_handle
  */
-function addToColsList($cols, $fid, $uid, $groups, $mid, $gperm_handler, $gq, $pq, $incbreaks) {
+function addToColsList($cols, $fid, $uid, $groups, $mid, $gperm_handler, $gq, $incbreaks) {
 	if(!is_array($cols)) { return array(); }
 	if (security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler)) {
 		global $xoopsDB;
+		$pq = formulize_userCanViewPrivateElements($fid, $groups) ? "" : "AND ele_private=0";
 		$formHandler = xoops_getmodulehandler('forms','formulize');
 		$formObject = $formHandler->get($fid);
 		$c = q("SELECT ele_id, ele_caption, ele_colhead, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$fid' $gq $pq $incbreaks AND ele_id IN (".implode(",", $formObject->getVar('elementsWithData')).") ORDER BY ele_order");
 		$cols[$fid] = $c;
 	}
 	return $cols;
+}
+
+/**
+ * Get the handles of any password elements on a form.
+ *
+ * A password element is never a column, for anyone. Its value is not searchable, it is not
+ * readable, and the element means nothing except as a form widget, where its owner sets
+ * their own password. So it is excluded wherever columns are offered or accepted, whether it
+ * reached the list through getAllColList (on an ad hoc users table form, where it does have
+ * a real column) or through getUserAccountColList.
+ *
+ * @param int|object $formIdOrObject The form to read
+ * @return array The handles to exclude
+ */
+function getUserAccountPasswordHandles($formIdOrObject) {
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	$formObject = (is_object($formIdOrObject) AND is_a($formIdOrObject, 'formulizeForm')) ? $formIdOrObject : $form_handler->get($formIdOrObject);
+	if (!is_object($formObject)) {
+		throw new Exception('Invalid form object or ID');
+	}
+	return $formObject->getVar('userAccountPasswordHandles');
+}
+
+/**
+ * Get the user account elements of a form that the given user may use as a column.
+ *
+ * getAllColList cannot report these. It only returns elements listed in the form's
+ * elementsWithData, and a user account element has hasData false, because its value lives
+ * in the users table rather than in a column of the form's own data table. They are real
+ * elements all the same: they can be sorted on, searched on, and displayed in a list, so
+ * anything working out which columns a user may use has to add them back.
+ *
+ * Two rules are applied on top of the element's own display groups:
+ *
+ * A password element is never a column. Its value is not searchable and not readable, and
+ * the element only means anything as a form widget, where its owner sets their own password.
+ *
+ * A private element is a column only for a user with view_private_elements on the form,
+ * which is the same test getAllColList applies to the elements it does return.
+ *
+ * @param int|object $formIdOrObject The form to read the user account elements of
+ * @param int|object $userIdOrObject Optional. The user this is being asked about. Defaults to the current user.
+ * @return array Rows in the same shape getAllColList returns: ele_id, ele_caption, ele_colhead, ele_handle, in element order
+ */
+function getUserAccountColList($formIdOrObject, $userIdOrObject = 0) {
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	$formObject = (is_object($formIdOrObject) AND is_a($formIdOrObject, 'formulizeForm')) ? $formIdOrObject : $form_handler->get($formIdOrObject);
+	if (!is_object($formObject)) {
+		throw new Exception('Invalid form object or ID');
+	}
+	$userAccountElementIds = $formObject->getVar('userAccountElements');
+	if (!is_array($userAccountElementIds) OR count($userAccountElementIds) == 0) {
+		return array();
+	}
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
+	$elementCaptions = $formObject->getVar('elementCaptions');
+	$elementColheads = $formObject->getVar('elementColheads');
+	$elementHandles = $formObject->getVar('elementHandles');
+	$passwordHandles = $formObject->getVar('userAccountPasswordHandles');
+	$cols = array();
+
+	// strip out elements not in the form object and also password elements
+	foreach ($userAccountElementIds as $i=>$eleId) {
+		if (!isset($elementHandles[$eleId]) OR in_array($elementHandles[$eleId], $passwordHandles)) {
+			unset($userAccountElementIds[$i]);
+			continue;
+		}
+	}
+
+	if(!empty($userAccountElementIds)) {
+
+		$userObject = formulize_resolveUserObject($userIdOrObject);
+		$viewPrivateElements = formulize_userCanViewPrivateElements($formObject->getVar('fid'), formulize_userGroups($userObject));
+
+		// gather all element objects at once for efficiency
+		if($elementObjects = $element_handler->getObjects(new Criteria('ele_id', "(".implode(',', array_filter($userAccountElementIds, 'is_numeric')).")", 'IN'), id_as_key: true)) {
+			// prepare all the data and return
+			foreach ($elementObjects as $elementId=>$elementObject) {
+				if (!isset($elementObject) OR !is_object($elementObject) OR ($elementObject->getVar('ele_private') AND !$viewPrivateElements)) {
+					continue;
+				}
+				if (!$element_handler->isElementVisibleForUser($elementObject, $userObject)) {
+					continue;
+				}
+				$cols[] = array(
+					'ele_id' => $elementId,
+					'ele_caption' => isset($elementCaptions[$elementId]) ? $elementCaptions[$elementId] : '',
+					'ele_colhead' => isset($elementColheads[$elementId]) ? $elementColheads[$elementId] : '',
+					'ele_handle' => $elementHandles[$elementId]
+				);
+			}
+		}
+	}
+	return $cols;
+}
+
+/**
+ * Get every column handle this user may use on a form, or on a relationship of forms.
+ *
+ * The complete answer to "may this user work with this column", which getAllColList alone
+ * is not, in three parts: the metadata fields, which are always available; the elements
+ * getAllColList reports, which are the ones with a column in the form's own data table; and
+ * the user account elements, which getUserAccountColList adds back per form.
+ *
+ * The user account pass walks the forms getAllColList returned rather than the forms in the
+ * relationship, so a form this user cannot see contributes nothing here either.
+ *
+ * Use this wherever a set of column handles has to be vetted. Use getAllColList directly
+ * only when the element rows themselves are needed rather than a yes or no on each handle.
+ *
+ * @param int $fid The main form id
+ * @param int|string $frid Optional. The relationship to include connected forms from
+ * @param int|object $userIdOrObject Optional. The user this is being asked about. Defaults to the current user.
+ * @return array Keys are the permitted handles, values are true
+ */
+function getAllAllowedColHandles($fid, $frid = 0, $userIdOrObject = null) {
+
+	$allowed = array();
+
+	$dataHandler = new formulizeDataHandler(false);
+	foreach ($dataHandler->metadataFields as $metadataField) {
+		$allowed[$metadataField] = true;
+	}
+
+	// one user, asked for once. The groups are only here to narrow the elements to the ones
+	// displayed to this user; getAllColList asks its permission questions about the user.
+	$userObject = formulize_resolveUserObject($userIdOrObject);
+	$cols = getAllColList($fid, $frid, formulize_userGroups($userObject), false, $userObject);
+	foreach ($cols as $thisFormCols) {
+		if (!is_array($thisFormCols)) {
+			continue;
+		}
+		foreach ($thisFormCols as $col) {
+			$allowed[$col['ele_handle']] = true;
+		}
+	}
+
+	// getUserAccountColList works out the private element permission per form, exactly the way
+	// addToColsList now does for the elements getAllColList returned
+	foreach (array_keys($cols) as $thisFid) {
+		foreach (getUserAccountColList($thisFid, $userObject) as $col) {
+			$allowed[$col['ele_handle']] = true;
+		}
+		// removed last, because on an ad hoc users table form a password element has a real
+		// column and so came back from getAllColList along with everything else
+		foreach (getUserAccountPasswordHandles($thisFid) as $passwordHandle) {
+			unset($allowed[$passwordHandle]);
+		}
+	}
+
+	return $allowed;
 }
 
 /**
@@ -8500,30 +8722,16 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
         }
         $formObject = $form_handler->get($thisFid);
         $boxeshtml = "";
-        // Add user account elements if this is an entries_are_users form, excluding password and non-visible elements
+        // Add user account elements, which getAllColList cannot report because they hold no
+        // column of their own. getUserAccountColList applies the rules about which of them this
+        // user may use, the same ones the list screens and the Public API go by.
         $userAccountElementIds = $formObject->getVar('userAccountElements');
         if(is_array($userAccountElementIds) && count($userAccountElementIds) > 0) {
-            $elementCaptions = $formObject->getVar('elementCaptions');
-            $elementColheads = $formObject->getVar('elementColheads');
-            $elementHandles  = $formObject->getVar('elementHandles');
-            $elementTypes    = $formObject->getVar('elementTypes');
-            $element_handler = xoops_getmodulehandler('elements', 'formulize');
-            global $xoopsUser;
-            $userAccountColsToAdd = array();
-            $excludedUaHandles = array(); // UA handles excluded from the column list entirely (e.g. password)
-            foreach($userAccountElementIds as $eleId) {
-                if($elementTypes[$eleId] == 'userAccountPassword') {
-                    $excludedUaHandles[] = $elementHandles[$eleId]; // track so it's also stripped from $columns below
-                    continue;
-                }
-                if(!$element_handler->isElementVisibleForUser($eleId)) { continue; }
-                $userAccountColsToAdd[] = array(
-                    'ele_id'      => $eleId,
-                    'ele_caption' => $elementCaptions[$eleId],
-                    'ele_colhead' => $elementColheads[$eleId],
-                    'ele_handle'  => $elementHandles[$eleId],
-                );
-            }
+						global $xoopsUser;
+            $userAccountColsToAdd = getUserAccountColList($formObject, $xoopsUser);
+            // stripped from $columns below as well, for the ad hoc table forms where a password
+            // element has a real column and so arrived in $columns from getAllColList
+            $excludedUaHandles = $formObject->getVar('userAccountPasswordHandles');
             // Remove from $columns any element whose handle already appears in $userAccountColsToAdd,
             // or in $excludedUaHandles (UA types that should never appear in the list, like password).
             // This prevents duplicates for both EAU forms (handles may be formulize_user_account_*)
@@ -11324,6 +11532,406 @@ function isAIAssistantEnabled() {
 }
 
 /**
+ * Check if the Public API is enabled in Formulize preferences
+ *
+ * @return bool True if the Public API is enabled, false otherwise
+ */
+function isPublicAPIEnabled() {
+    global $xoopsModuleConfig;
+
+    if (isset($xoopsModuleConfig['formulizePublicAPIEnabled'])) {
+        return $xoopsModuleConfig['formulizePublicAPIEnabled'] == 1 ? true : false;
+    }
+
+    $config_handler = xoops_gethandler('config');
+    $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+
+    return isset($formulizeConfig['formulizePublicAPIEnabled']) && $formulizeConfig['formulizePublicAPIEnabled'] == 1;
+}
+
+/**
+ * The URL to use when this server needs to make an HTTP request to itself.
+ *
+ * Inside Docker the port in XOOPS_URL is the host to container mapping (8080 by default, but
+ * configurable so several copies of Formulize can run at once). That mapping means nothing
+ * from inside the container, so it has to be discarded or the request never arrives. Outside
+ * Docker XOOPS_URL is used exactly as it stands.
+ *
+ * @param string $path An absolute path to append, eg. /formulize-public-api/v1/status
+ * @return string The URL to request
+ */
+function formulize_selfRequestUrl($path = '') {
+    $base = XOOPS_URL;
+    if(file_exists('/.dockerenv') AND preg_match('~^(https?://(?:localhost|127\.0\.0\.1)):\d+(.*)$~', XOOPS_URL, $urlParts)) {
+        $base = $urlParts[1].$urlParts[2];
+    }
+    return $base.$path;
+}
+
+/**
+ * Remember what the last Authorization header passthrough probe found.
+ *
+ * Kept in the session rather than the database because it is a fact about the server, not
+ * about the site: it is cheap to establish again, it is only ever shown to an administrator,
+ * and an answer that goes stale on its own is exactly what is wanted here. See
+ * formulize_authHeaderPassthrough() for why any of this exists.
+ *
+ * @param bool $passedThrough What the probe found
+ * @return bool The value recorded
+ */
+function formulize_recordAuthHeaderPassthrough($passedThrough) {
+    $_SESSION['formulize_authHeaderPassthrough'] = (bool) $passedThrough;
+    $_SESSION['formulize_authHeaderPassthroughTime'] = time();
+    return $_SESSION['formulize_authHeaderPassthrough'];
+}
+
+/**
+ * Whether this server passes the Authorization header through to PHP.
+ *
+ * Some server configurations, notably CGI and some FastCGI setups, strip it unless they are
+ * explicitly told to pass it through, and both features that authenticate with an API key then
+ * fail in a way that names something other than the cause. The Public API carries on working
+ * for session and anonymous callers, so nothing looks broken, but every key silently
+ * authenticates as nobody and the caller is refused with a permission error - which sends
+ * whoever is debugging it looking at groups and permissions, the one place the problem is not.
+ * The MCP Server preference simply refuses to stay on, because its enable check treats the
+ * header as a precondition and there is no other way for an external client to sign in. Hence
+ * going to this much trouble to say it out loud.
+ *
+ * The probe goes to the Public API's status endpoint, but what it establishes is a property of
+ * the server, so it is equally the answer for MCP: same Apache, same request, and the status
+ * endpoint answers whether or not the Public API preference itself is on.
+ *
+ * It cannot be answered from inside an ordinary page request, because the administrator's
+ * browser does not send an Authorization header. The only way to find out is to have the
+ * server send one to itself, which is what this does, reading back the
+ * authorization_header_received flag that the Public API status endpoint reports.
+ *
+ * Two details make the answer trustworthy. The status endpoint reads the header with
+ * formulize_publicApiGetAuthorizationHeader(), the same function the authenticator uses, so
+ * this cannot report success on a server where a real API key would fail. And it uses the
+ * status endpoint's enable check path, which is exempt from the Public API preference, so the
+ * answer is available even while the API is switched off.
+ *
+ * The result is cached for a few minutes, because this is an HTTP round trip and the answer
+ * only changes when someone edits the server configuration. The cache expiring on its own is
+ * what lets the warning clear itself once that edit is made; admin/checkauthheader.php forces
+ * a fresh probe for someone who has just made the edit and wants to know now.
+ *
+ * @param int $maxAgeSeconds How stale a cached answer may be before probing again. Pass 0 to
+ *                           force a fresh probe.
+ * @return bool|null True if the header arrived, false if it was stripped, null if the question
+ *                   could not be answered - no cURL, or the server could not reach itself. Null
+ *                   is not recorded, and must never be reported as a failure: a server that
+ *                   cannot reach itself is a different problem, with its own warning on the
+ *                   settings page.
+ */
+function formulize_authHeaderPassthrough($maxAgeSeconds = 300) {
+
+    if($maxAgeSeconds > 0
+        AND isset($_SESSION['formulize_authHeaderPassthrough'])
+        AND isset($_SESSION['formulize_authHeaderPassthroughTime'])
+        AND (time() - intval($_SESSION['formulize_authHeaderPassthroughTime'])) < $maxAgeSeconds) {
+        return $_SESSION['formulize_authHeaderPassthrough'];
+    }
+
+    if(!function_exists('curl_version')) {
+        return null;
+    }
+
+    $curl = curl_init();
+    curl_setopt($curl, CURLOPT_URL, formulize_selfRequestUrl('/formulize-public-api/v1/status/formulize_check_if_public_api_is_properly_enabled_please'));
+    curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($curl, CURLOPT_TIMEOUT, 5);
+    curl_setopt($curl, CURLOPT_HTTPHEADER, array('Authorization: Bearer test-header-passthrough-check'));
+    $response = curl_exec($curl);
+    curl_close($curl);
+
+    // Anything other than the status endpoint's own answer tells us nothing about the header.
+    $json = json_decode($response);
+    if(!is_object($json) OR !isset($json->status) OR $json->status != 'healthy') {
+        return null;
+    }
+
+    return formulize_recordAuthHeaderPassthrough(!empty($json->authorization_header_received));
+}
+
+/**
+ * The warning to show an administrator when this server strips the Authorization header.
+ *
+ * The consequence differs by where it is shown, because the two features that depend on the
+ * header fail in genuinely different ways - the Public API stays on and quietly refuses keys,
+ * while the MCP Server preference refuses to turn on at all - so each caller supplies that
+ * paragraph. Everything else is shared: the same probe, the same fix, the same button, and the
+ * same caveat, so the advice cannot drift apart between the pages that give it.
+ *
+ * Renders nothing at all unless the header is known to be stripped, so it is safe to drop into
+ * any admin page that has something to do with API keys.
+ *
+ * Deliberately phrased as what the test observed, naming the URL it used, rather than as a
+ * flat assertion about all traffic. The test is a request this server makes to itself, and
+ * there are setups where that is not the same journey a real caller makes - anything sitting
+ * in front of the origin is skipped, and split horizon DNS or a misconfigured vhost could
+ * land the test on a different stack than public traffic reaches. Those are unusual, but an
+ * administrator who is in one of them needs to be able to see that from the warning itself
+ * rather than spending the afternoon on the other side of the false alarm.
+ *
+ * @param string $consequenceHtml The paragraph saying what this breaks, for where it is shown
+ * @param int $maxAgeSeconds Passed through to formulize_authHeaderPassthrough()
+ * @return string HTML for the warning, or an empty string when there is nothing to warn about
+ */
+function formulize_authHeaderWarningHtml($consequenceHtml, $maxAgeSeconds = 300) {
+    if(formulize_authHeaderPassthrough($maxAgeSeconds) !== false) {
+        return '';
+    }
+    $testedUrl = htmlspecialchars(formulize_selfRequestUrl('/formulize-public-api/v1/status/'));
+    return "<div class='formulize-authheader-warning'>"
+        ."<b>This server appears to be stripping the <i>Authorization</i> header.</b>"
+        .$consequenceHtml
+        ."<p>On Apache, adding <span class='formulize-authheader-code'>CGIPassAuth On</span> to the "
+        ."<span class='formulize-authheader-code'>.htaccess</span> file at the root of your site usually "
+        ."solves it. Once you have made the change, test it again here.</p>"
+        .formulize_authHeaderRecheckHtml()
+        ."<p style='font-size: 0.9em; color: #666;'>The test sent an <i>Authorization</i> header from this "
+        ."server to <span class='formulize-authheader-code'>$testedUrl</span> and it did not arrive. If "
+        ."public traffic reaches this site by a different route - through a proxy or load balancer, or on "
+        ."a hostname that resolves elsewhere from here - then that is not the journey your API callers "
+        ."make, and a key may work for them regardless.</p>"
+        ."</div>";
+}
+
+/**
+ * The Authorization header warning, worded for the Public API and the API keys page.
+ *
+ * The Public API does not stop working when the header is stripped - it stays on, and session
+ * and anonymous callers are unaffected - so what needs saying is that keys specifically are
+ * being dropped, and that the permission error the caller sees is not what it looks like.
+ *
+ * @param int $maxAgeSeconds Passed through to formulize_authHeaderPassthrough()
+ * @return string HTML for the warning, or an empty string when there is nothing to warn about
+ */
+function formulize_publicApiAuthHeaderWarningHtml($maxAgeSeconds = 300) {
+    return formulize_authHeaderWarningHtml(
+        "<p>An API key sent in that header never reaches Formulize, so the request is treated as "
+        ."anonymous and refused with a permission error that looks like a Formulize permissions problem "
+        ."instead. That affects the Public API and any external AI assistant connecting through the MCP "
+        ."server. A key sent in a URL, such as the Google Sheets one on the API keys page, is not "
+        ."affected, and neither is anything else on this site: the Public API still works for pages on "
+        ."this site, and for anonymous access to forms you have opened to the Anonymous group.</p>",
+        $maxAgeSeconds
+    );
+}
+
+/**
+ * The Authorization header warning, worded for the MCP Server preference.
+ *
+ * The MCP server fails differently from the Public API, and worse. An external MCP client has
+ * no session and no anonymous mode - an API key in the Authorization header is the only way in
+ * - so the check that runs when the preference is saved treats the header as a precondition and
+ * refuses to let the setting stay on without it (see the enable check in
+ * icms_config_item_Handler::insert, and canBeEnabled in mcp/mcp.php). That is the right call,
+ * but on its own it presents as a preference that silently will not save, with nothing
+ * anywhere naming the cause. This is what names it.
+ *
+ * @param int $maxAgeSeconds Passed through to formulize_authHeaderPassthrough()
+ * @return string HTML for the warning, or an empty string when there is nothing to warn about
+ */
+function formulize_mcpAuthHeaderWarningHtml($maxAgeSeconds = 300) {
+    return formulize_authHeaderWarningHtml(
+        "<p><b>This is why the MCP Server setting will not stay turned on.</b> An external AI assistant "
+        ."identifies itself with an API key in that header, and has no other way to sign in, so the check "
+        ."that runs when you save this setting requires the header to arrive. It did not, so the setting "
+        ."is switched back off rather than left on in a state where no assistant could ever connect.</p>"
+        ."<p>Fix the header and the setting will save normally. Nothing else on this site is affected, and "
+        ."the embedded AI Assistant, which runs inside Formulize using your own login rather than a key, "
+        ."works regardless.</p>",
+        $maxAgeSeconds
+    );
+}
+
+/**
+ * The "test it again" button, and the script that drives it.
+ *
+ * Someone who has just edited their server configuration needs to find out whether it worked
+ * now, not in five minutes when the cached answer expires, and without having to guess that
+ * turning the Public API preference off and on again is what re-runs the check. The button
+ * asks admin/checkauthheader.php for a fresh probe and reports what came back.
+ *
+ * Written for jQuery 1.4.2, which is what the Formulize admin actually runs: no .on(), and
+ * $.ajax returns a bare XMLHttpRequest rather than a promise, so the handlers go in the
+ * options and events are bound with .bind().
+ *
+ * @return string HTML for the button, and on first call the script and styles behind it
+ */
+function formulize_authHeaderRecheckHtml() {
+    static $rendered = false;
+    $button = "<p><button type='button' class='formulize-authheader-recheck'>Test the Authorization header again</button> "
+        ."<span class='formulize-authheader-result'></span></p>";
+    if($rendered) { // however many buttons end up on a page, the script belongs on it once
+        return $button;
+    }
+    $rendered = true;
+    $url = XOOPS_URL.'/modules/formulize/admin/checkauthheader.php';
+    return $button."
+    <style type='text/css'>
+    .formulize-authheader-warning { border-left: 4px solid #c0392b; background: #fdf3f2; padding: 0.75em 1em; margin: 1em 0; }
+    .formulize-authheader-warning p { margin: 0.6em 0; }
+    .formulize-authheader-code { font-family: monospace; background: #fff; padding: 0 0.3em; border: 1px solid #e0d0cf; }
+    .formulize-authheader-good { color: #1e7e34; font-weight: bold; }
+    .formulize-authheader-bad { color: #c0392b; font-weight: bold; }
+    </style>
+    <script type='text/javascript'>
+    jQuery(function(\$){
+        \$('.formulize-authheader-recheck').bind('click', function(){
+            var button = \$(this);
+            var result = button.siblings('.formulize-authheader-result');
+            button.attr('disabled', 'disabled');
+            result.removeClass('formulize-authheader-good').removeClass('formulize-authheader-bad').text('Testing...');
+            \$.ajax({
+                url: '".$url."',
+                dataType: 'json',
+                cache: false,
+                success: function(data){
+                    button.removeAttr('disabled');
+                    if(data && data.passthrough === true) {
+                        result.addClass('formulize-authheader-good').text('Fixed - the Authorization header is getting through now, so API keys will work. Reload this page to clear the warning.');
+                    } else if(data && data.passthrough === false) {
+                        result.addClass('formulize-authheader-bad').text('Still being stripped. Your change has not taken effect yet.');
+                    } else {
+                        result.addClass('formulize-authheader-bad').text(data && data.message ? data.message : 'The test could not be completed.');
+                    }
+                },
+                error: function(){
+                    button.removeAttr('disabled');
+                    result.addClass('formulize-authheader-bad').text('The test could not be completed. Check that you are still logged in.');
+                }
+            });
+            return false;
+        });
+    });
+    </script>";
+}
+
+/**
+ * The origins that may call the Public API from a browser on another site.
+ *
+ * Configured one per line in the Formulize preferences. Blank means same origin only.
+ * A single * means any origin. Each entry is lowercased and stripped of a trailing slash;
+ * an entry with no scheme (eg. "www.example.org") matches that host under either http or
+ * https, and an entry whose host starts with "*." (eg. "*.example.org") matches any
+ * subdomain of that host. See formulize_publicApiOriginIsAllowed() for how entries are
+ * matched against the Origin header a browser sends.
+ *
+ * @return array The allowed origin patterns, or array('*') for any
+ */
+function formulize_publicApiAllowedOrigins() {
+    global $xoopsModuleConfig;
+
+    if (isset($xoopsModuleConfig['formulizePublicAPIAllowedOrigins'])) {
+        $setting = $xoopsModuleConfig['formulizePublicAPIAllowedOrigins'];
+    } else {
+        $config_handler = xoops_gethandler('config');
+        $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+        $setting = isset($formulizeConfig['formulizePublicAPIAllowedOrigins'])
+            ? $formulizeConfig['formulizePublicAPIAllowedOrigins'] : '';
+    }
+
+    $origins = array();
+    foreach (preg_split('/[\r\n,]+/', (string) $setting) as $origin) {
+        $origin = rtrim(strtolower(trim($origin)), '/');
+        if ($origin !== '') {
+            $origins[] = $origin;
+        }
+    }
+    return $origins;
+}
+
+/**
+ * Split an origin-like string into its scheme and host(:port) parts.
+ *
+ * @param string $value A lowercased value, with any trailing slash already stripped -
+ *   either a full origin ("https://www.example.org") or a bare host ("www.example.org")
+ * @return array array('scheme' => string|null, 'host' => string). Scheme is null when
+ *   the value had none, which formulize_publicApiOriginIsAllowed() treats as a wildcard.
+ */
+function formulize_publicApiSplitOrigin($value) {
+    if (preg_match('#^([a-z][a-z0-9+.-]*)://(.+)$#', $value, $matches)) {
+        return array('scheme' => $matches[1], 'host' => $matches[2]);
+    }
+    return array('scheme' => null, 'host' => $value);
+}
+
+/**
+ * Whether a browser's Origin header is allowed by one entry from the public API's
+ * allowed-origins preference (see formulize_publicApiAllowedOrigins()).
+ *
+ * A pattern with no scheme matches its host under either http or https, so an
+ * administrator who forgets to type "https://" still gets a working entry. A pattern
+ * whose host starts with "*." matches any subdomain of that host, but not the bare
+ * domain itself - add a separate entry for that if it's also needed. This does not
+ * special-case a bare "*" (allow-any) entry; callers check for that separately since
+ * it skips origin comparison entirely.
+ *
+ * @param string $normalisedOrigin The caller's Origin header, lowercased and stripped of a trailing slash
+ * @param array $allowedOrigins Patterns from formulize_publicApiAllowedOrigins()
+ * @return bool
+ */
+function formulize_publicApiOriginIsAllowed($normalisedOrigin, $allowedOrigins) {
+    $origin = formulize_publicApiSplitOrigin($normalisedOrigin);
+    foreach ($allowedOrigins as $pattern) {
+        $allowed = formulize_publicApiSplitOrigin($pattern);
+        if ($allowed['scheme'] !== null && $allowed['scheme'] !== $origin['scheme']) {
+            continue;
+        }
+        if ($allowed['host'] === $origin['host']) {
+            return true;
+        }
+        if (strncmp($allowed['host'], '*.', 2) === 0) {
+            $suffix = substr($allowed['host'], 1); // keep the leading dot, drop the asterisk
+            if (strlen($origin['host']) > strlen($suffix) && substr($origin['host'], -strlen($suffix)) === $suffix) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/**
+ * Whether an Origin header names this site itself.
+ *
+ * Browsers send an Origin header on same-origin POSTs as well as on cross-origin requests,
+ * so the Public API's origin check has to recognise this site's own address, or the default
+ * configuration - a blank allowlist, meaning same origin only - would refuse the site's own
+ * Javascript. Matched on host and port, ignoring the scheme, the same way a scheme-less
+ * allowlist entry is matched. The Host header of the request is accepted as well as
+ * XOOPS_URL, so that an install reachable at more than one address works at any of them;
+ * a browser sets Origin and Host from the same page, so agreement between them is
+ * same-origin by definition, whatever XOOPS_URL happens to say.
+ *
+ * @param string $normalisedOrigin The caller's Origin header, lowercased and stripped of a trailing slash
+ * @return bool
+ */
+function formulize_publicApiOriginIsThisSite($normalisedOrigin) {
+    $origin = formulize_publicApiSplitOrigin($normalisedOrigin);
+    if ($origin['host'] === '') {
+        return false;
+    }
+    $thisSiteHosts = array();
+    if (defined('XOOPS_URL')) {
+        $host = parse_url(XOOPS_URL, PHP_URL_HOST);
+        $port = parse_url(XOOPS_URL, PHP_URL_PORT);
+        if ($host) {
+            $thisSiteHosts[] = strtolower($host).($port ? ':'.$port : '');
+        }
+    }
+    if (isset($_SERVER['HTTP_HOST'])) {
+        $thisSiteHosts[] = strtolower(trim($_SERVER['HTTP_HOST']));
+    }
+    return in_array($origin['host'], $thisSiteHosts, true);
+}
+
+/**
  * Takes a value and makes sure it's the correct type in PHP, either string, int or float
  *
  * @param mixed $value - the value we're working with
@@ -11500,6 +12108,10 @@ function figureOutOrder($orderChoice, $oldOrder=0, $fid=0) {
 		if($xoopsDB->getRowsNum($res) > 0) {
 			$sql = "UPDATE ".$xoopsDB->prefix("formulize")." SET ele_order = ele_order + 1 WHERE ele_order >= $orderValue AND id_form = $fid";
 			$res = $xoopsDB->query($sql);
+			// ele_order was changed by SQL rather than through the element objects, so any of
+			// this form's elements already loaded are holding the order they had a moment ago
+			$element_handler = xoops_getmodulehandler('elements', 'formulize');
+			$element_handler->clearElementCache();
 		}
 	}
 	return $orderValue;

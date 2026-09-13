@@ -1973,6 +1973,12 @@ NEWVERSION;
             }
         }
 
+        // Several passes above rewrote element rows directly - ele_type for the slider rename,
+        // ele_value for the counter_type rename, and whatever the $sql list held - so nothing
+        // loaded before this point can be trusted for the rest of the request.
+        $element_handler = xoops_getmodulehandler('elements', 'formulize');
+        $element_handler->clearElementCache();
+
         print "DB updates completed.  result: OK";
 
 }

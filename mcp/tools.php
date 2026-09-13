@@ -293,7 +293,9 @@ Examples:
 - Get specific entry: {"form_id": 5, "filter": 526}
 - Search by name: {"form_id": 5, "filter": [{"element": "name", "operator": "LIKE", "value": "John"}]}
 - Get all the entries with a non-blank value in the "email" field: {"form_id": 5, "filter": [{"element": "email", "operator": "!=", "value": "{BLANK}"}], "limitSize": null}
-- Multiple conditions: {"form_id": 5, "filter": [{"element": "age", "operator": ">=", "value": "18"}, {"element": "status", "operator": "=", "value": "active"}], "and_or": "AND"}',
+- Multiple conditions: {"form_id": 5, "filter": [{"element": "age", "operator": ">=", "value": "18"}, {"element": "status", "operator": "=", "value": "active"}], "and_or": "AND"}
+- Grouping conditions, ex. status = active AND (region = east OR region = west): {"form_id": 5, "filter": [{"element": "status", "operator": "=", "value": "active"}, {"any": [{"element": "region", "operator": "=", "value": "east"}, {"element": "region", "operator": "=", "value": "west"}]}]}
+- Entries with no matching _connected_ entry (has no effect with only a single form), ex. donors who have given no artifacts from the BCE era (includes donors with no artifacts at all): {"form_id": 6, "relationship_id": -1, "filter": [{"none": [{"element": "artifacts_era", "operator": "=", "value": "BCE"}]}]}',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
@@ -326,23 +328,51 @@ Correct example for linked elements:
 - [ { "element": "related_products", "operator": "LIKE", "value": "Gadget Pro" } ]
 - [ { "element": "assigned_department", "operator": "=", "value": "Customer Support" } ]',
 									'items' => [
-										'type' => 'object',
-										'properties' => [
-											'element' => [
-												'type' => 'string',
-												'description' => 'Element handle to filter on (get from get_form_details). If a relationship_id is set, elements from connected forms can be used.'
+										'oneOf' => [
+											[
+												'type' => 'object',
+												'description' => 'A single condition. The operator is optional and defaults to LIKE.',
+												'properties' => [
+													'element' => [
+														'type' => 'string',
+														'description' => 'Element handle to filter on (get from get_form_details). If a relationship_id is set, elements from connected forms can be used.'
+													],
+													'operator' => [
+														'type' => 'string',
+														'enum' => ['=', '>', '<', '>=', '<=', '!=', 'LIKE', 'NOT LIKE'],
+														'description' => 'Optional. Comparison operator, defaulting to LIKE. Use LIKE for partial text matches.'
+													],
+													'value' => [
+														'type' => 'string',
+														'description' => 'Value to compare against. For dates use YYYY-MM-DD format. For times, use hh:mm format. For duration elements, use minutes as an integer. Do _not_ use foreign keys to filter linked elements, and instead use the readable value which this tool understands automatically. Use the special value "{BLANK}" (without quotes) to filter for blank values.'
+													]
+												],
+												'required' => ['element', 'value']
 											],
-											'operator' => [
-												'type' => 'string',
-												'enum' => ['=', '>', '<', '>=', '<=', '!=', 'LIKE'],
-												'description' => 'Comparison operator. Use LIKE for partial text matches.'
-											],
-											'value' => [
-												'type' => 'string',
-												'description' => 'Value to compare against. For dates use YYYY-MM-DD format. For times, use hh:mm format. For duration elements, use minutes as an integer. Do _not_ use foreign keys to filter linked elements, and instead use the readable value which this tool understands automatically. Use the special value "{BLANK}" (without quotes) to filter for blank values.'
+											[
+												'type' => 'object',
+												'description' => 'A group of conditions, so that part of the filter can use a different boolean operator than the rest. Use "any" to put OR between the conditions in the group, or "all" to put AND between them. The group as a whole is joined to the other top level items by the and_or property. Groups cannot be nested inside other groups.
+Example, status = active AND (region = east OR region = west):
+- [ { "element": "status", "operator": "=", "value": "active" }, { "any": [ { "element": "region", "operator": "=", "value": "east" }, { "element": "region", "operator": "=", "value": "west" } ] } ]
+Use "none" to find entries with NO connected entry matching all the conditions in the group. It requires relationship_id, every condition must be on the same connected form (not the main form, and not a metadata field), and and_or must be AND. A {BLANK} test with = must be the only condition in its none group.
+Example, donors with no BCE artifact:
+- [ { "none": [ { "element": "artifacts_era", "operator": "=", "value": "BCE" } ] } ]',
+												'properties' => [
+													'any' => [
+														'type' => 'array',
+														'description' => 'Conditions with OR between them.'
+													],
+													'all' => [
+														'type' => 'array',
+														'description' => 'Conditions with AND between them.'
+													],
+													'none' => [
+														'type' => 'array',
+														'description' => 'Conditions on one connected form. Entries qualify when no connected entry matches all of them.'
+													]
+												]
 											]
-										],
-										'required' => ['element', 'operator', 'value']
+										]
 									]
 								]
 							]
@@ -350,7 +380,7 @@ Correct example for linked elements:
 						'and_or' => [
 							'type' => 'string',
 							'enum' => ['AND', 'OR'],
-							'description' => 'Logical operator between multiple filter conditions. Default: AND'
+							'description' => 'Logical operator between the top level items of the filter array. Default: AND. Conditions inside a group use the operator of that group instead.'
 						],
 						'limitSize' => [
 							'oneOf' => [
@@ -3697,304 +3727,90 @@ Do not use foreign key values with linked elements; use the readable value inste
 	}
 
 	/**
-	 * Gather data using Formulize's built-in function with proper permission scoping
+	 * Gather data from a form, with proper permission scoping.
+	 *
+	 * The work is done by the shared read core in modules/formulize/include/readentries.php,
+	 * which the Public API read endpoint uses as well. Only the MCP specific argument
+	 * unpacking and response envelope live here.
+	 *
 	 * @param array $arguments An associative array containing the parameters for gathering data from a form.
 	 * - 'form_id': The ID of the form to gather data from.
-	 * - 'elementHandles': Optional. An array of element handles to include in the dataset. If not specified, all elements will be included.
-	 * - 'filter': Optional. A filter string to apply to the dataset
-	 * - 'andOr': Optional. The boolean operator to use between multiple filter strings, if there are multiple filters. Defaults to 'AND'.
-	 * - 'currentView': Optional. The scope of entries to include, either 'all' for all entries, 'group' for entries belonging to the user's group(s), or 'mine' for the user's own entries. Defaults to 'all'. Automatically downgraded if necessary to the level of the authenticated user's permissions on the form.
-	 * - 'limitStart': Optional. The starting record for the LIMIT statement. If not specified, no limit will be applied.
+	 * - 'elements': An array of element handles to include in the dataset.
+	 * - 'filter': Optional. An entry id, or an array of conditions and groups. See formulize_apiValidateFilter.
+	 * - 'and_or': Optional. The boolean operator between the top level filter items. Defaults to 'AND'.
+	 * - 'limitStart': Optional. The starting record for the LIMIT statement. Defaults to 0.
 	 * - 'limitSize': Optional. The number of records to return. Defaults to 100. Set to null for no limit.
-	 * - 'sortField': Optional. The element handle to sort the dataset by. If not specified, no sorting will be applied.
+	 * - 'sortField': Optional. The element handle to sort the dataset by. Defaults to entry_id.
 	 * - 'sortOrder': Optional. The sort direction, either 'ASC' or 'DESC'. Defaults to 'ASC'.
-	 * - 'relationship_id': Optional. The ID of the relationship to use for gathering data. Defaults to -1 for the Primary Relationship which includes all connected forms.
-	 * @return array An associative array containing the gathered dataset, total count, scope used, current view requested, current view actual, authenticated user details, and parameters used.
+	 * - 'relationship_id': Optional. The relationship to gather through. Defaults to 0, the main form alone.
+	 * @return array An associative array containing the gathered dataset, total count, scope used, and parameters used.
 	 */
 	private function get_entries_from_form($arguments)
 	{
+		include_once XOOPS_ROOT_PATH.'/modules/formulize/include/readentries.php';
 
-		global $xoopsUser;
-
-		$form_id = intval($arguments['form_id']);
-		$filter = $arguments['filter'] ?? '';
-		$andOr = $arguments['andOr'] ?? 'AND';
-		$limitStart = $arguments['limitStart'] ?? 0;
-		$limitSize = ((isset($arguments['limitSize']) && is_numeric($arguments['limitSize'])) || $arguments['limitSize'] === null) ? $arguments['limitSize'] : 100;
-		$sortField = $arguments['sortField'] ?? 'entry_id';
-		$sortOrder = ($arguments['sortOrder'] ?? 'ASC') == 'DESC' ? 'DESC' : 'ASC';
-		$elements = $arguments['elements'] ?? array();
-		$relationship_id = intval($arguments['relationship_id'] ?? 0);
-
-		$form_handler = xoops_getmodulehandler('forms', 'formulize');
-
-		if(!$form_id OR $form_id < 0) {
-			throw new FormulizeMCPException('Invalid form ID. Form ID must be a positive integer', 'form_not_found');
-		} elseif(!$formObject = $form_handler->get($form_id)) {
-			throw new FormulizeMCPException('Invalid form ID. No form exists with ID '.$form_id, 'form_not_found');
-		}
-
-		if(!is_array($elements)) {
-			throw new FormulizeMCPException('Elements parameter must be an array of element handles', 'invalid_data');
-		}
-		$elements = $this->validateElementHandles($elements, $form_id);
-		if(empty($elements)) {
-			throw new FormulizeMCPException('At least one element must be specified in the elements parameter', 'invalid_data');
-		}
-
-		// Build scope based on authenticated user and their permissions
-		$scope = buildScope('all', $xoopsUser, $form_id);
-
-		// The buildScope function returns an array with [scope, actualCurrentView]
-		$actualScope = $scope[0];
-
-		// validate stuff...
-		if (!empty($sortField)) {
-			$dataHandler = new formulizeDataHandler();
-			$element_handler = xoops_getmodulehandler('elements', 'formulize');
-			if(!$elementObject = $element_handler->get($sortField) AND !in_array($sortField, $dataHandler->metadataFields)) {
-				throw new FormulizeMCPException('Invalid element handle for sortField: '.$sortField, 'unknown_element');
-			}
-		}
-		// if a specific relationship requested and it's not valid, throw error
-		// validRelationship will be the relationship object, or boolean true if relationship_id is 0 (no relationships) - or boolean false if not 0 and form is not in relationship
-		$validRelationship = $relationship_id !== 0 ? $this->validateRelationshipId($relationship_id, $form_id) : true;
-		if(!$validRelationship) {
-			if($relationship_id > 0) {
-				throw new FormulizeMCPException('Form is not part of the relationship.  relationship_id: '.$relationship_id, 'invalid_data', context: ['valid_relationship_ids_for_form' => $this->getValidRelationshipIds($form_id) ]);
-			} else {
-				$relationship_id = 0; // instead of primary relationship (-1), use 0 to indicate no relationships, since the form is not in any relationship
-			}
-		}
-		list($limitStart, $limitSize) = $this->validateLimitParameters($limitStart, $limitSize);
-
-		// cleanup $filter into old style filter string, if necessary
-		// supports {BLANK} value for searching for blank values
-		// if filter is an array, then force AND between multiple filters since the array is a series of nested searches with their own booleans between
-		if(is_object($validRelationship)) {
-			$relationship_handler = xoops_getmodulehandler('frameworks', 'formulize');
-			$linksByForm = $relationship_handler->getLinksGroupedByForm($validRelationship, $form_id);
-			$form_ids = array();
-			foreach($linksByForm as $links) {
-				foreach($links as $thisLink) {
-					if(!in_array($thisLink['form1'], $form_ids)) {
-						$form_ids[] = $thisLink['form1'];
-					}
-					if(!in_array($thisLink['form2'], $form_ids)) {
-						$form_ids[] = $thisLink['form2'];
-					}
-				}
-			}
-		} else {
-			$form_ids = array($form_id);
-		}
-		$filter = $this->validateFilter($filter, $form_ids, $andOr);
-		$andOr = is_array($filter) ? 'AND' : $andOr;
-
-		// Call Formulize's gatherDataset function with all parameters
-		$dataset = gatherDataset(
-			$form_id,
-			$elements,
-			$filter,
-			$andOr,
-			$actualScope,
-			$limitStart,
-			$limitSize,
-			$sortField,
-			$sortOrder,
-			$relationship_id
+		$options = array(
+			'fields' => $arguments['elements'] ?? array(),
+			'filter' => $arguments['filter'] ?? '',
+			'andOr' => $arguments['and_or'] ?? 'AND',
+			'sortField' => $arguments['sortField'] ?? 'entry_id',
+			'sortOrder' => $arguments['sortOrder'] ?? 'ASC',
+			'limitStart' => $arguments['limitStart'] ?? 0,
+			// array_key_exists rather than isset, because an explicit null means "no limit"
+			// and must be told apart from the parameter being absent, which means 100.
+			'limitSize' => array_key_exists('limitSize', $arguments) ? $arguments['limitSize'] : 100,
+			'relationship' => intval($arguments['relationship_id'] ?? 0),
 		);
 
+		try {
+			$result = formulize_readEntries($arguments['form_id'] ?? 0, $options);
+		} catch (FormulizeApiException $e) {
+			throw new FormulizeMCPException(
+				$e->getMessage(),
+				$this->mapApiExceptionType($e->getType()),
+				context: $e->getContext()
+			);
+		}
+
+		// The raw nested dataset is returned exactly as it always has been. Models are
+		// expected to pass values through prepare_database_values_for_human_readability when
+		// they need them readable, so rendering is not shared with the Public API, which
+		// renders values itself.
 		return [
-			'form_id' => $form_id,
-			'dataset' => $dataset,
-			'total_count' => count($dataset),
-			'scope_used' => $actualScope,
+			'form_id' => $result['fid'],
+			'dataset' => $result['dataset'],
+			'total_count' => count($result['dataset']),
+			'scope_used' => $result['scope'],
 			'parameters_used' => [
-				'elements' => $elements,
-				'filter' => $filter,
-				'andOr' => $andOr,
-				'limitStart' => $limitStart,
-				'limitSize' => $limitSize,
-				'sortField' => $sortField,
-				'sortOrder' => $sortOrder,
-				'relationship_id' => $relationship_id
+				'elements' => $result['fieldsByForm'],
+				'filter' => $result['filter'],
+				'and_or' => $result['andOr'],
+				'limitStart' => $result['limitStart'],
+				'limitSize' => $result['limitSize'],
+				'sortField' => $result['sortField'],
+				'sortOrder' => $result['sortOrder'],
+				'relationship_id' => $result['relationship']
 			]
 		];
-
 	}
 
-/**
- * Convert MCP filter array into old style filter string for compatibility with gatherDataset
- * @param mixed $filter - an array of filters to use, each one is an array with three keys: element, value, operator
- * @param array $form_ids - array of the form ids valid for this filter (based on the relationship being queried)
- * @param string $andOr - the boolean operator to use between multiple filters, if there are multiple filters. Defaults to 'AND'.
- * @return mixed - a string or array suitable for passing to gatherDataset
- */
-private function validateFilter($filter, $form_ids, $andOr = 'AND') {
-	// Handle simple entry ID lookup
-	if (is_numeric($filter)) {
-		return intval($filter);
-	}
-
-	// Handle empty/null filter
-	if (empty($filter)) {
-		return '';
-	}
-
-	// If filter is a JSON string, decode it first
-	if (is_string($filter) && (substr($filter, 0, 1) === '[' || substr($filter, 0, 1) === '{')) {
-		$decoded = json_decode($filter, true);
-		if ($decoded !== null) {
-			$filter = $decoded;
-		} else {
-			throw new FormulizeMCPException("Invalid JSON in filter parameter: " . json_last_error_msg(), 'invalid_data');
-		}
-	}
-	if(!is_array($filter)) {
-		throw new FormulizeMCPException("The 'filter' parameter must be an integer or an array.", 'invalid_data');
-	}
-	$filterStringParts = array();
-	$blankSearches = array();
-	foreach($filter as $thisFilter) {
-		$elementObject = _getElementObject($thisFilter['element']);
-		if(!$elementObject) {
-			throw new FormulizeMCPException('Invalid element handle in filter: '.$thisFilter['element'], 'unknown_element');
-		} elseif(!in_array($elementObject->getVar('fid'), $form_ids)) {
-			throw new FormulizeMCPException('Element handle not part of this dataset: '.$thisFilter['element'], 'invalid_data');
-		}
-		// similar to formulize_parseSearchesIntoFilter but that is tuned to dealing with searches entered through UI which aren't in array format already
-		// this will not quite work perfectly if there are multiple blank searches on different elements
-		// search for email = {BLANK} AND phone = {BLANK} would actually need a third level of nesting in final output, since the structure for just the blank portion should be:
-		// ((email = '' OR email IS NULL) AND (phone = '' OR phone IS NULL))
-		// A very smartly recursive handling when parsing the $blankSearches array could probably handle this, and we just put each field into a sub level of the array when creating it, but for now, we will just note the limitation
-		if($thisFilter['value'] == '{BLANK}') {
-			if($thisFilter['operator'] == "!=" OR $thisFilter['operator'] == "NOT LIKE") {
-				$blankOp1 = "!=";
-				$blankOp2 = " IS NOT NULL ";
-				$blankBoolean = "AND";
-			} else {
-				$blankOp1 = "=";
-				$blankOp2 = " IS NULL ";
-				$blankBoolean = "OR";
-			}
-			$blankSearches[$blankBoolean][] = $thisFilter['element']."/**//**/$blankOp1][".$thisFilter['element']."/**//**/$blankOp2";
-		} else {
-			$filterStringParts[] = $thisFilter['element'].'/**/'.$thisFilter['value'].'/**/'.$thisFilter['operator'];
-		}
-	}
-	if(!empty($blankSearches)) {
-		$returnFilter = array([
-				$andOr,
-				implode('][', $filterStringParts)
-		]);
-		if(isset($blankSearches['AND'])) {
-			$returnFilter[] = [
-				'AND',
-				implode('][', $blankSearches['AND'])
-			];
-		}
-		if(isset($blankSearches['OR'])) {
-			$returnFilter[] = [
-				'OR',
-				implode('][', $blankSearches['OR'])
-			];
-		}
-		return $returnFilter;
-	} else {
-		return implode('][', $filterStringParts);
-	}
-}
-
-/**
- * Validate element handles array, and gives back an array ready for use in gatherDataset
- * @param array elementHandles - an array of candidate element handles
- * @param int form_id - the form ID for use with any metadata fields
- * @return array a multidimensional array, outer keys are form ids, each one has as a value an array of the valid element handles that are part of that form
- */
-	private function validateElementHandles($elementHandles, $form_id)
+	/**
+	 * Translate a shared core exception type into the type MCP uses for the same situation.
+	 *
+	 * The two vocabularies overlap but not entirely, and the difference matters: MCP maps
+	 * some types to HTTP 200 on purpose, so that a model sees "you asked for a handle that
+	 * does not exist" as an ordinary tool result to correct, rather than a transport
+	 * failure. Bad arguments are one of those, so they use MCP's own type here.
+	 *
+	 * @param string $type The type from FormulizeApiException
+	 * @return string The equivalent FormulizeMCPException type
+	 */
+	private function mapApiExceptionType($type)
 	{
-		if (!is_array($elementHandles)) {
-			return [];
-		}
-
-		$dataHandler = new formulizeDataHandler();
-
-		$validatedHandles = [];
-		$element_handler = xoops_getmodulehandler('elements', 'formulize');
-		foreach ($elementHandles as $handle) {
-			if (!is_string($handle)) {
-				throw new FormulizeMCPException('Element handle must be a string', 'invalid_data');
-			}
-			if($handle !== '') {
-				if(!$elementObject = $element_handler->get($handle) AND !in_array($handle, $dataHandler->metadataFields)) {
-					throw new FormulizeMCPException('Invalid element handle: ' . $handle, 'invalid_data');
-				}
-				$validatedHandles[($elementObject ? $elementObject->getVar('fid') : $form_id)][] = $handle;
-			}
-		}
-
-		return $validatedHandles;
-	}
-
-	/**
-	 * Validate relationship ID
-	 * Lookup to see if the relationship ID exists and includes the form_id
-	 * @param int $relationshipId - the relationship ID to validate
-	 * @param int $formId - the form ID to check against
-	 * @return mixed - the relationship object if valid, or false if not valid
-	 */
-	private function validateRelationshipId($relationshipId, $formId) {
-		$relationship_handler = xoops_getmodulehandler('frameworks', 'formulize');
-		$validRelationships = $relationship_handler->getFrameworksByForm($formId, includePrimaryRelationship: true);
-		return isset($validRelationships[$relationshipId]) ? $validRelationships[$relationshipId] : false;
-	}
-
-	/**
-	 * Get a list of relationship IDs valid for a given form
-	 * @param int $formId - the form ID to check against
-	 * @return mixed - an array of valid relationship IDs
-	 */
-	private function getValidRelationshipIds($formId) {
-		$relationship_handler = xoops_getmodulehandler('frameworks', 'formulize');
-		$validRelationships = $relationship_handler->getFrameworksByForm($formId, includePrimaryRelationship: true);
-		ksort($validRelationships);
-		return array_keys($validRelationships);
-	}
-
-	/**
-	 * Validate and sanitize limit parameters
-	 */
-	private function validateLimitParameters($limitStart, $limitSize)
-	{
-		$validatedLimitStart = 0; // Default
-		$validatedLimitSize = 100; // Default
-
-		if ($limitStart !== null) {
-			if (!is_numeric($limitStart) || $limitStart < 0) {
-				throw new FormulizeMCPException('limitStart must be a non-negative integer', 'invalid_data');
-			}
-			$validatedLimitStart = intval($limitStart);
-		}
-
-		if ($limitSize !== null) {
-			if (!is_numeric($limitSize)) {
-				throw new FormulizeMCPException('limitSize must be an integer or null', 'invalid_data');
-			}
-			$limitSizeInt = intval($limitSize);
-			if ($limitSizeInt < 0) {
-				throw new FormulizeMCPException('limitSize must be non-negative', 'invalid_data');
-			}
-			// Reasonable upper limit to prevent resource exhaustion
-			if ($limitSizeInt > 10000) {
-				throw new FormulizeMCPException('limitSize cannot exceed 10000 records', 'invalid_data');
-			}
-			$validatedLimitSize = $limitSizeInt;
-		} else {
-			$validatedLimitSize = null; // No limit!
-		}
-
-		return [$validatedLimitStart, $validatedLimitSize];
+		$map = [
+			'invalid_arguments' => 'invalid_data',
+		];
+		return $map[$type] ?? $type;
 	}
 
 

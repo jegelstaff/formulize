@@ -39,7 +39,7 @@ $modversion = array(
 	'license' => "GPL-2.0",
 	'image' => "images/formulize.gif",
 	'dirname' => "formulize",
-	'dbversion' => 17,
+	'dbversion' => 18,
 	'onUpdate' => "include/on_update.php"
 );
 
@@ -1266,6 +1266,14 @@ $modversion['config'][] = array(
 	'formtype' => 'yesno',
 	'valuetype' => 'int',
 	'default' => 0,
+);
+$modversion['config'][] = array(
+	'name' => 'formulizePublicAPIAllowedOrigins',
+	'title' => '_MI_formulize_PUBLICAPIALLOWEDORIGINS',
+	'description' => '_MI_formulize_PUBLICAPIALLOWEDORIGINS_DESC',
+	'formtype' => 'textsarea',
+	'valuetype' => 'text',
+	'default' => '',
 );
 
 // The basement...

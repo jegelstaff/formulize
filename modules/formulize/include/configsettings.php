@@ -160,6 +160,26 @@ function formulize_configFormElementHtml($config) {
         return formulize_configAiModelFieldHtml($name, $value);
     }
 
+    // The ordinary yes/no control, plus a warning when this server strips the Authorization
+    // header. Keyed off the setting's name for the same reason as formulizeAIModel above: no
+    // database migration, conf_formtype stays 'yesno'. This is the one render path that runs
+    // exactly when the Public API section is on screen and nowhere else, which is what makes
+    // it the right place to spend an HTTP round trip establishing the answer.
+    if ($name === 'formulizePublicAPIEnabled') {
+        $ele = new icms_form_elements_Radioyn('', $name, $value, _YES, _NO);
+        return $ele->render() . formulize_publicApiAuthHeaderWarningHtml();
+    }
+
+    // Same idea, different consequence. A stripped header does not stop the Public API being
+    // enabled, but it does stop this one: an external MCP client has no way in except an API
+    // key in that header, so the enable check treats it as a precondition and forces the
+    // setting back off. Without this, that presents as a preference that will not save, with
+    // nothing on the page saying why.
+    if ($name === 'formulizeMCPServerEnabled') {
+        $ele = new icms_form_elements_Radioyn('', $name, $value, _YES, _NO);
+        return $ele->render() . formulize_mcpAuthHeaderWarningHtml();
+    }
+
     switch ($formtype) {
 
         case 'aikey':

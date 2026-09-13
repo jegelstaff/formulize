@@ -107,28 +107,12 @@ function applyReadableValueTransformations($value, $handle, $entry_id) {
 		} elseif(!isset($GLOBALS['formulize_useForeignKeysInDataset'][$handle])
 			AND !isset($GLOBALS['formulize_useForeignKeysInDataset']['all'])) {
 
-			$ele_value = $elementObject->getVar('ele_value');
-
-			if (count($values) > 0
-				AND is_array($ele_value)
-				AND isset($ele_value[2])
-				AND is_array($ele_value[2])
-				AND $listtype = array_key_first($ele_value[2])
-				AND ($listtype === "{USERNAMES}" OR $listtype === "{FULLNAMES}")) {
-
-				$uidFilter = makeUidFilter($values);
-				$values = []; // empty it and remake below
-				$listtype = $listtype == "{USERNAMES}" ? 'uname' : 'name';
-				if (strlen($uidFilter) > 4) {   // skip this when $uidFilter = "uid=" becaues the query will fail
-					$names = go("SELECT uname, name FROM " . DBPRE . "users WHERE $uidFilter ORDER BY $listtype");
-					foreach ($names as $thisname) {
-						if ($thisname[$listtype]) {
-							$values[] = $thisname[$listtype];
-						} else {
-							$values[] = $thisname['uname'];
-						}
-					}
-				}
+			if (count($values) > 0 AND formulize_isUserListElement($handle)) {
+				// the raw value is what the names are cached under, when it is something that can be
+				// a key at all: two entries naming the same person hold the same value, whichever
+				// entries they are
+				$values = formulize_convertUidsToReadableNames($values, $handle,
+					(is_string($value) OR is_int($value)) ? $value : null);
 			}
 		}
 
@@ -153,14 +137,280 @@ function applyReadableValueTransformations($value, $handle, $entry_id) {
 }
 
 /**
+ * Is this element a list of users?
+ *
+ * A user list holds uids and displays the names they stand for, which is the same problem a linked
+ * element has with its foreign keys, and it is solved the same way below. What makes an element one
+ * is the first key of its options, either {USERNAMES} or {FULLNAMES}.
+ *
+ * Both show the uname. The users table also has a name column, which is where XOOPS originally kept
+ * a person's real name as distinct from their login, but that is not how accounts work here: the
+ * login is login_name and uname is the name a person is known by, which is what the user account
+ * elements write when a first and last name are entered. Nothing in the module writes the name
+ * column any more, so asking for it would mean showing an empty value, or whatever a site happened
+ * to have in there before the accounts were reworked.
+ *
+ * @param string $handle The element handle
+ * @return bool
+ */
+function formulize_isUserListElement($handle) {
+	static $cachedUserLists = array();
+	if (!isset($cachedUserLists[$handle])) {
+		$cachedUserLists[$handle] = false;
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		if ($elementObject = $element_handler->get($handle) AND !$elementObject->isLinked) {
+			$ele_value = $elementObject->getVar('ele_value');
+			if (is_array($ele_value) AND isset($ele_value[2]) AND is_array($ele_value[2])
+				AND $listtype = array_key_first($ele_value[2])) {
+				$cachedUserLists[$handle] = ($listtype === "{USERNAMES}" OR $listtype === "{FULLNAMES}");
+			}
+		}
+	}
+	return $cachedUserLists[$handle];
+}
+
+/**
+ * Turn the uids held by a user list element into the names they stand for.
+ *
+ * Cached against the raw value, and batched the same way linked elements are: the names a value
+ * stands for depend on the uids in it and on nothing about the entry holding it, so every entry
+ * naming the same people shares one answer, and the first read of an element resolves every value
+ * of it the dataset holds. Without that, a column naming a handful of people across five hundred
+ * entries is five hundred queries against the users table.
+ *
+ * @param array $uids The uids from the value, already split apart
+ * @param string $handle The element handle
+ * @param string|int|null $cacheableValue The raw value to cache under, or null not to cache
+ * @return array The names, in the order the database gives them
+ */
+function formulize_convertUidsToReadableNames($uids, $handle, $cacheableValue = null) {
+
+	$cachedNames = &formulize_userListConversionCacheSlot($handle);
+	$canCache = (!is_null($cacheableValue) AND !isset($GLOBALS['formulize_doNotCacheDataSet']));
+
+	if ($canCache AND isset($cachedNames[$cacheableValue])) {
+		return $cachedNames[$cacheableValue];
+	}
+
+	// first value of this element to be read: resolve everything the dataset holds for it at once
+	if ($canCache AND isset($GLOBALS['formulize_pendingUserListResolutions'][$handle])) {
+		$pendingValues = array_keys($GLOBALS['formulize_pendingUserListResolutions'][$handle]);
+		unset($GLOBALS['formulize_pendingUserListResolutions'][$handle]);
+		formulize_preresolveUserListValues($handle, $pendingValues);
+		if (isset($cachedNames[$cacheableValue])) {
+			return $cachedNames[$cacheableValue];
+		}
+	}
+
+	$names = formulize_readUserListNames($uids, $handle);
+
+	if ($canCache) {
+		$cachedNames[$cacheableValue] = $names;
+	}
+	return $names;
+}
+
+/**
+ * The names for one value's worth of uids, read one value at a time.
+ * @param array $uids The uids from the value
+ * @param string $handle The element handle
+ * @return array The unames, in the order the database sorts them
+ */
+function formulize_readUserListNames($uids, $handle) {
+	if (!formulize_isUserListElement($handle)) {
+		return array();
+	}
+	$uidFilter = makeUidFilter($uids);
+	if (strlen($uidFilter) <= 4) { // "uid=" with nothing after it, which the query would choke on
+		return array();
+	}
+	return array_column(go("SELECT uid, uname FROM " . DBPRE . "users WHERE $uidFilter ORDER BY uname"), 'uname');
+}
+
+/**
+ * Resolve the uids of one user list element for a whole set of values at once.
+ *
+ * Unlike the foreign key version this asks for every uid in one query rather than a few hundred at
+ * a time, because the order the names come back in is the order they are shown in. Filtering one
+ * ordered result down to the uids of a particular value reproduces exactly what ordering that
+ * value's own query would have given, which splitting the query into chunks would not. A set large
+ * enough for that to be an unreasonable query is left to be resolved a value at a time.
+ *
+ * @param string $handle The user list element whose values are being resolved
+ * @param array $rawValues The values of that element as they came out of the database
+ * @return void
+ */
+function formulize_preresolveUserListValues($handle, $rawValues) {
+
+	$mostUidsWorthAskingForAtOnce = 5000;
+
+	if (isset($GLOBALS['formulize_doNotCacheDataSet'])) {
+		return; // caching is off, so there is nowhere to put the answers
+	}
+	if (!formulize_isUserListElement($handle)) {
+		return;
+	}
+
+	$cachedNames = &formulize_userListConversionCacheSlot($handle);
+
+	$uidsWanted = array();
+	$uidsPerValue = array();
+	foreach ($rawValues as $rawValue) {
+		if ((!is_string($rawValue) AND !is_int($rawValue))
+			OR isset($cachedNames[$rawValue]) OR isset($uidsPerValue[$rawValue])) {
+			continue;
+		}
+		$strippedValue = (is_string($rawValue) AND substr($rawValue, 0, 5) == '*=+*:') ? substr($rawValue, 5) : $rawValue;
+		$theseUids = is_string($strippedValue) ? explode('*=+*:', $strippedValue) : array($strippedValue);
+		$uidsInThisValue = array();
+		foreach ($theseUids as $uid) {
+			if (is_numeric($uid)) {
+				$uidsInThisValue[intval($uid)] = true;
+				$uidsWanted[intval($uid)] = true;
+			}
+		}
+		$uidsPerValue[$rawValue] = $uidsInThisValue;
+	}
+	if (empty($uidsWanted) OR count($uidsWanted) > $mostUidsWorthAskingForAtOnce) {
+		return;
+	}
+
+	// keyed by uid, so that each value can pick out its own users by key rather than by searching
+	$orderedUsers = go("SELECT uid, uname FROM " . DBPRE . "users WHERE uid IN ("
+		. implode(",", array_map('intval', array_keys($uidsWanted))) . ") ORDER BY uname", 'uid');
+	if (empty($orderedUsers)) {
+		return; // nothing came back, so let the one at a time path report whatever is wrong
+	}
+
+	// array_intersect_key keeps the order of its first argument, so taking each value's uids out of
+	// the one ordered result gives exactly the order that value's own query would have produced: a
+	// subset of a sorted list is sorted the same way
+	foreach ($uidsPerValue as $rawValue => $uidsInThisValue) {
+		$cachedNames[$rawValue] = array_column(array_intersect_key($orderedUsers, $uidsInThisValue), 'uname');
+	}
+}
+
+/**
+ * The slice of the user list name cache that applies to one element.
+ *
+ * Returned by reference so that the one value at a time path and formulize_preresolveUserListValues
+ * read and write the same place. There is nothing in the key but the element, because unlike a
+ * foreign key conversion, what a uid stands for does not change with the export flag or with
+ * whether foreign keys are being preserved.
+ *
+ * @param string $handle The element handle
+ * @return array A reference to the cache for that element
+ */
+function &formulize_userListConversionCacheSlot($handle) {
+	if (!isset($GLOBALS['formulize_cachedUserListNames'][$handle])) {
+		$GLOBALS['formulize_cachedUserListNames'][$handle] = array();
+	}
+	return $GLOBALS['formulize_cachedUserListNames'][$handle];
+}
+
+/**
  * Convert foreign keys to readable values, for linked elements
  * If foreign key override is in place for datasets, foreign keys are preserved
+ *
+ * This is a caching wrapper around convertForeignKeysToReadableValuesUncached, because the
+ * conversion costs a query (or several) per value, and the answer depends only on the element
+ * and the foreign key being resolved. The entry doing the pointing has no bearing on it -- the
+ * $entry_id below is used in error messages and nowhere else -- so every entry pointing at the
+ * same source entry can share one lookup. prepvalues caches too, but its key includes the entry
+ * id, which is necessary for the element types where the entry does matter (OTHER text, for
+ * instance), and which means a linked value is otherwise re-queried for every entry that holds
+ * it. A list of 10,000 entries pointing at one of 50 countries is 50 queries here, not 10,000.
+ *
+ * Cached for the duration of the request. Nothing invalidates it if the source form is written
+ * to part way through a page load, which is the same bargain prepvalues' own cache makes; set
+ * $GLOBALS['formulize_doNotCacheDataSet'] to opt out where that matters.
+ *
  * @param mixed $value The raw value from the database for a given element in a given entry
  * @param string $handle The handle of the element
  * @param int $entry_id The ID of the entry
  * @return array An array of the converted values. If the element is not linked, the array will contain the original value(s) split on the standard separator.
  */
 function convertForeignKeysToReadableValues($value, $handle, $entry_id) {
+
+	$cachedConversions = &formulize_foreignKeyConversionCacheSlot($handle);
+	$cacheableValue = formulize_foreignKeyConversionCacheKey($value);
+	$canCache = (!is_null($cacheableValue) AND !isset($GLOBALS['formulize_doNotCacheDataSet']));
+
+	if ($canCache AND isset($cachedConversions[$cacheableValue])) {
+		return $cachedConversions[$cacheableValue];
+	}
+
+	// The first value of this element to be read out of a dataset resolves every value of it that
+	// the dataset holds, in one go, so that the rest of them are answered from the cache. The
+	// record is dropped whether or not the resolution could use it, since a second attempt would
+	// reach the same conclusion, and what it could not do the one at a time path below still can.
+	if ($canCache AND isset($GLOBALS['formulize_pendingForeignKeyResolutions'][$handle])) {
+		$pendingValues = array_keys($GLOBALS['formulize_pendingForeignKeyResolutions'][$handle]);
+		unset($GLOBALS['formulize_pendingForeignKeyResolutions'][$handle]);
+		formulize_preresolveForeignKeyValues($handle, $pendingValues);
+		if (isset($cachedConversions[$cacheableValue])) {
+			return $cachedConversions[$cacheableValue];
+		}
+	}
+
+	$values = convertForeignKeysToReadableValuesUncached($value, $handle, $entry_id);
+
+	if ($canCache) {
+		$cachedConversions[$cacheableValue] = $values;
+	}
+	return $values;
+}
+
+/**
+ * The slice of the conversion cache that applies to one element under the current conditions.
+ *
+ * Returned by reference so that both the single value path and formulize_preresolveForeignKeyValues
+ * read and write the same place, and so that neither has to know how the key is put together.
+ *
+ * Both globals in the key change what a conversion returns, so neither may be allowed to share an
+ * entry with the other setting: foreign keys can be preserved for one element or for all of them,
+ * and an export can be configured to show different source columns than a list does.
+ *
+ * @param string $handle The element handle whose values are being converted
+ * @return array A reference to the cache for that element under the conditions now in force
+ */
+function &formulize_foreignKeyConversionCacheSlot($handle) {
+	$foreignKeysStayAsTheyAre = (isset($GLOBALS['formulize_useForeignKeysInDataset'][$handle])
+		OR isset($GLOBALS['formulize_useForeignKeysInDataset']['all'])) ? 1 : 0;
+	$doingExport = !empty($GLOBALS['formulize_doingExport']) ? 1 : 0;
+	if (!isset($GLOBALS['formulize_cachedForeignKeyConversions'][$handle][$foreignKeysStayAsTheyAre][$doingExport])) {
+		$GLOBALS['formulize_cachedForeignKeyConversions'][$handle][$foreignKeysStayAsTheyAre][$doingExport] = array();
+	}
+	return $GLOBALS['formulize_cachedForeignKeyConversions'][$handle][$foreignKeysStayAsTheyAre][$doingExport];
+}
+
+/**
+ * The key one raw database value is cached under, or null if it cannot be cached.
+ *
+ * Only what can be an array key can be cached, which is what a database column holds: a string, an
+ * integer, or nothing at all. An empty column is worth caching too, since a connected form with no
+ * entry produces one for every row of a query. It gets a key of its own rather than being allowed
+ * to land on the empty string's, because a null byte cannot occur in a foreign key. Anything else,
+ * an array in particular, has no key and is not cached.
+ *
+ * @param mixed $value The raw value from the database
+ * @return string|int|null
+ */
+function formulize_foreignKeyConversionCacheKey($value) {
+	if (is_null($value)) {
+		return "\0null";
+	}
+	return (is_string($value) OR is_int($value)) ? $value : null;
+}
+
+/**
+ * The actual conversion. Call convertForeignKeysToReadableValues instead of this.
+ * @param mixed $value The raw value from the database for a given element in a given entry
+ * @param string $handle The handle of the element
+ * @param int $entry_id The ID of the entry, used only to identify the entry in error messages
+ * @return array An array of the converted values. If the element is not linked, the array will contain the original value(s) split on the standard separator.
+ */
+function convertForeignKeysToReadableValuesUncached($value, $handle, $entry_id) {
 
 	$element_handler = xoops_getmodulehandler('elements', 'formulize');
 	$elementObject = $element_handler->get($handle);
@@ -186,57 +436,32 @@ function convertForeignKeysToReadableValues($value, $handle, $entry_id) {
 			// need to get the form id by checking the ele_value[2] property of the element definition, to get the form id from the first part of that
 			// Also, value could be multiple entries in a comma separate list! So check for that and run in a loop.
 			global $xoopsDB;
-			$sourceMeta = explode("#*=:*", $source_ele_value[2]); // [0] will be the fid of the form we're after, [1] is the handle of that element
 			$newValues = [];
-			if(!empty($values) AND $sourceMeta[1]) {
+			// the source form and its columns are a property of the element, not of the value being
+			// resolved, so they are settled once for all the foreign keys in this value
+			if(!empty($values) AND $sourceColumns = formulize_linkedElementSourceColumns($source_ele_value)) {
+				list($sourceFormObject, $sourceColumnHandles) = $sourceColumns;
 				$form_handler = xoops_getmodulehandler('forms', 'formulize');
 				foreach($values as $value) {
 					$value = is_string($value) ? intval(trim($value)) : intval($value);
-					// need to check if an alternative value field has been defined, or if we're in an export and an alterative field for exports has been defined
-					// These two settings cascade, because that is what the admin UI promises. The opt-out option on the export columns setting is labelled
-					// _AM_ELE_VALUEINLIST ("Use the value displayed in the list"), so an export with no export columns of its own falls back to the list columns.
-					// The opt-out option on the list columns setting is labelled _AM_ELE_LINKSELECTEDABOVE ("Use the linked field selected above"), so if those are
-					// not set either, we end up on the linked element's own source column, which is what altFieldSource staying empty gives us below.
-					// save the value before convertElementIdsToElementHandles()
-					$before_conversion = $sourceMeta[1];
-					$altFieldSource = "";
-					if (!empty($GLOBALS['formulize_doingExport']) AND formulize_altColumnsAreInEffect($source_ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS] ?? null)) {
-						$altFieldSource = $source_ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS];
-					} elseif (formulize_altColumnsAreInEffect($source_ele_value[EV_MULTIPLE_LIST_COLUMNS] ?? null)) {
-						$altFieldSource = $source_ele_value[EV_MULTIPLE_LIST_COLUMNS];
-					}
-					if ($altFieldSource) {
-						$altFieldSource = is_array($altFieldSource) ? $altFieldSource : array($altFieldSource);
-						$sourceMeta[1] = convertElementIdsToElementHandles($altFieldSource, $sourceMeta[0]);
-						// remove empty entries, which can happen if an element referenced here no longer exists
-						$sourceMeta[1] = array_filter($sourceMeta[1]);
-						// unfortunately, sometimes sourceMeta[1] seems to be saved as element handles rather than element IDs, and in that case,
-						// convertElementIdsToElementHandles() returns array(0 => 'none') which causes an error in the query below.
-						// check for that case here and revert back to the value of sourceMeta[1] before convertElementIdsToElementHandles()
-						if ((1 == count((array) $sourceMeta[1]) and isset($sourceMeta[1][0]) and "none" == $sourceMeta[1][0]) or $sourceMeta[1] == "none") {
-							$sourceMeta[1] = $before_conversion;
-						}
-					}
-					$sourceFormObject = $form_handler->get($sourceMeta[0]);
-					$sourceMeta[1] = is_array($sourceMeta[1]) ? $sourceMeta[1] : array($sourceMeta[1]);
 					$query_columns = array();
-					foreach ($sourceMeta[1] as $key => $handle) {
+					foreach ($sourceColumnHandles as $key => $sourceColumnHandle) {
 						// check if this is a link to a link
-						if ($second_source_ele_value = formulize_isLinkedElement($handle)) {
+						if ($second_source_ele_value = formulize_isLinkedElement($sourceColumnHandle)) {
 							$secondSourceMeta = explode("#*=:*", $second_source_ele_value[2]);
 							$secondFormObject = $form_handler->get($secondSourceMeta[0]);
 							$sql = "SELECT t1.`" . $secondSourceMeta[1] . "`, t1.entry_id FROM " . DBPRE . "formulize_" . $secondFormObject->getVar('form_handle') .
 								" as t1, " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " as t2 WHERE t2.`entry_id` = $value
-								AND t1.`entry_id` IN (TRIM(',' FROM t2.`" . $handle . "`)) ORDER BY t2.`entry_id`";
+								AND t1.`entry_id` IN (TRIM(',' FROM t2.`" . $sourceColumnHandle . "`)) ORDER BY t2.`entry_id`";
 							if (!$res = $xoopsDB->query($sql)) {
-								print "Error: could not retrieve the source values for a LINKED LINKED selectbox ($handle) during data extraction for entry number $entry_id.  SQL:<br>$sql<br>";
+								print "Error: could not retrieve the source values for a LINKED LINKED selectbox ($sourceColumnHandle) during data extraction for entry number $entry_id.  SQL:<br>$sql<br>";
 							} else {
 								$row = $xoopsDB->fetchRow($res);
 								$linkedvalue = prepvalues($row[0], $secondSourceMeta[1], $row[1]); // prep the source value we found, based on its own handle, and the entry id it belongs to
 								$query_columns[] = "'" . formulize_db_escape($linkedvalue[0]) . "'"; // use the literal value of the ultimate source (after prep) as a value we're selecting. This will be added to the SELECT below, in case there is more than one field being gathered (because of alternative values). This way, a mix of links to links, and actual fields can work within the same query when alternative values are in effect.
 							}
 						} else {
-							$query_columns[] = "`$handle` as `prep_this_$handle`"; // not a link to a link, so we can include the field normally and select whatever its value is
+							$query_columns[] = "`$sourceColumnHandle` as `prep_this_$sourceColumnHandle`"; // not a link to a link, so we can include the field normally and select whatever its value is
 						}
 					}
 					$sql = "SELECT " . implode(", ", $query_columns) . " FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') .
@@ -249,8 +474,7 @@ function convertForeignKeysToReadableValues($value, $handle, $entry_id) {
 							foreach($array as $k=>$v) {
 								if(substr($k, 0, 10) == "prep_this_") {
 									// this is a normal field, not a link to a link, so prep it based on the handle of the current element
-									$handle = substr($k, 10);
-									$preppedValue = prepValues($v, $handle, $value);
+									$preppedValue = prepValues($v, substr($k, 10), $value);
 									$array[$k] = is_array($preppedValue) ? $preppedValue[0] : $preppedValue; // should never be multiple values coming out of the prep, because we're retrieving a single value by query for entry id in the SQL! So array should only ever have one value (or would be a non-array for metadata?)
 								} else {
 									// this is a field that has already been sorted out, so take as is
@@ -275,16 +499,189 @@ function convertForeignKeysToReadableValues($value, $handle, $entry_id) {
 	return $values;
 }
 
+/**
+ * Resolve the foreign keys of one linked element for a whole set of values at once.
+ *
+ * convertForeignKeysToReadableValues answers for one value at a time and caches the answer, which
+ * is enough when a handful of source entries are pointed at over and over. It is not enough when
+ * the values are spread out: a field pointing at a few thousand different source entries still
+ * costs a query each. This gathers every foreign key in the set, asks for them in one query per
+ * few hundred, and seeds the same cache, so the rendering that follows finds every answer waiting.
+ *
+ * It handles the ordinary shape of a linked element and quietly declines anything else, leaving
+ * those values to be resolved one at a time as before. In particular a source column that is
+ * itself a linked element cannot be batched: the single value path resolves it with a query per
+ * value and folds the answer into the SELECT as a literal, so there is no one query that covers
+ * the set. Declining is always safe, since it only means the work happens later.
+ *
+ * @param string $handle The linked element whose values are being resolved
+ * @param array $rawValues The values of that element as they came out of the database, which may
+ *        be single foreign keys or comma separated lists of them. Duplicates are fine.
+ * @return void
+ */
+function formulize_preresolveForeignKeyValues($handle, $rawValues) {
+
+	global $xoopsDB;
+
+	if (isset($GLOBALS['formulize_doNotCacheDataSet'])) {
+		return; // caching is off, so there is nowhere to put the answers
+	}
+	if (isset($GLOBALS['formulize_useForeignKeysInDataset'][$handle])
+		OR isset($GLOBALS['formulize_useForeignKeysInDataset']['all'])) {
+		return; // foreign keys are being kept as they are, so nothing is converted
+	}
+	if (!$source_ele_value = formulize_isLinkedElement($handle)) {
+		return; // not a linked element, or a snapshot, so there are no foreign keys here
+	}
+	if (!$sourceColumns = formulize_linkedElementSourceColumns($source_ele_value)) {
+		return;
+	}
+	list($sourceFormObject, $sourceColumnHandles) = $sourceColumns;
+	// duplicated handles collapse into one column in the single value path, because it aliases
+	// each one and reads the result as an associative array, so they must collapse here too
+	$sourceColumnHandles = array_values(array_unique($sourceColumnHandles));
+	foreach ($sourceColumnHandles as $sourceColumnHandle) {
+		if (formulize_isLinkedElement($sourceColumnHandle)) {
+			return; // a link to a link, which has to be resolved a value at a time
+		}
+	}
+
+	$cachedConversions = &formulize_foreignKeyConversionCacheSlot($handle);
+
+	// Work out which foreign keys are wanted, and which raw values they have to be assembled back
+	// into. A raw value already in the cache is skipped, so calling this twice costs one query.
+	$foreignKeysWanted = array();
+	$foreignKeysPerValue = array();
+	foreach ($rawValues as $rawValue) {
+		$cacheableValue = formulize_foreignKeyConversionCacheKey($rawValue);
+		if (is_null($cacheableValue) OR isset($cachedConversions[$cacheableValue])
+			OR isset($foreignKeysPerValue[$cacheableValue]) OR $rawValue === 'new') {
+			continue;
+		}
+		$trimmedValue = is_string($rawValue) ? trim($rawValue, ",") : $rawValue;
+		$theseForeignKeys = (is_string($trimmedValue) AND strstr($trimmedValue, ",")) ? explode(",", $trimmedValue) : array($trimmedValue);
+		foreach ($theseForeignKeys as $key => $foreignKey) {
+			$foreignKey = is_string($foreignKey) ? intval(trim($foreignKey)) : intval($foreignKey);
+			$theseForeignKeys[$key] = $foreignKey;
+			$foreignKeysWanted[$foreignKey] = true;
+		}
+		$foreignKeysPerValue[$cacheableValue] = $theseForeignKeys;
+	}
+	if (empty($foreignKeysWanted)) {
+		return;
+	}
+
+	// one readable value per source entry, gathered a few hundred entries at a time
+	$selectColumns = array("entry_id AS `formulize_preresolve_entry_id`");
+	foreach ($sourceColumnHandles as $sourceColumnHandle) {
+		$selectColumns[] = "`$sourceColumnHandle` as `prep_this_$sourceColumnHandle`";
+	}
+	$sourceTable = DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle');
+	$readableValues = array();
+	foreach (array_chunk(array_keys($foreignKeysWanted), 500) as $foreignKeyChunk) {
+		$sql = "SELECT " . implode(", ", $selectColumns) . " FROM $sourceTable WHERE entry_id IN ("
+			. implode(",", array_map('intval', $foreignKeyChunk)) . ")";
+		if (!$res = $xoopsDB->query($sql)) {
+			return; // leave everything to be resolved one value at a time, which will report its own errors
+		}
+		while ($row = $xoopsDB->fetchArray($res)) {
+			$sourceEntryId = $row['formulize_preresolve_entry_id'];
+			$preppedColumns = array();
+			foreach ($sourceColumnHandles as $sourceColumnHandle) {
+				$preppedValue = prepValues($row["prep_this_$sourceColumnHandle"], $sourceColumnHandle, $sourceEntryId);
+				$preppedColumns[] = is_array($preppedValue) ? ($preppedValue[0] ?? '') : $preppedValue;
+			}
+			$readableValues[$sourceEntryId] = implode(" | ", $preppedColumns);
+		}
+	}
+
+	// Put each raw value back together from its own foreign keys, in the order they were written
+	// in. A foreign key with no source entry contributes nothing at all, which is what the single
+	// value path does when its query comes back empty.
+	foreach ($foreignKeysPerValue as $cacheableValue => $theseForeignKeys) {
+		$assembledValues = array();
+		foreach ($theseForeignKeys as $foreignKey) {
+			if (isset($readableValues[$foreignKey])) {
+				$assembledValues[] = $readableValues[$foreignKey];
+			}
+		}
+		$cachedConversions[$cacheableValue] = $assembledValues;
+	}
+}
+
+/**
+ * Which form, and which columns of it, does a linked element's foreign key point at?
+ *
+ * Factored out of convertForeignKeysToReadableValuesUncached so that the one entry at a time
+ * path and the whole set at once path in formulize_preresolveForeignKeyValues cannot drift
+ * apart on the question of what a foreign key resolves to. Nothing here depends on the value
+ * being resolved, only on the element's own definition and the request-wide export flag.
+ *
+ * @param array $source_ele_value The ele_value of the linked element, from formulize_isLinkedElement
+ * @return array|false array(source form object, array of column handles in that form), or false
+ *         if the element does not name a source element or the source form no longer exists
+ */
+function formulize_linkedElementSourceColumns($source_ele_value) {
+
+	$sourceMeta = explode("#*=:*", $source_ele_value[2]); // [0] will be the fid of the form we're after, [1] is the handle of that element
+	if (!isset($sourceMeta[1]) OR !$sourceMeta[1]) {
+		return false;
+	}
+
+	// need to check if an alternative value field has been defined, or if we're in an export and an alterative field for exports has been defined
+	// These two settings cascade, because that is what the admin UI promises. The opt-out option on the export columns setting is labelled
+	// _AM_ELE_VALUEINLIST ("Use the value displayed in the list"), so an export with no export columns of its own falls back to the list columns.
+	// The opt-out option on the list columns setting is labelled _AM_ELE_LINKSELECTEDABOVE ("Use the linked field selected above"), so if those are
+	// not set either, we end up on the linked element's own source column, which is what altFieldSource staying empty gives us below.
+	// save the value before convertElementIdsToElementHandles()
+	$before_conversion = $sourceMeta[1];
+	$altFieldSource = "";
+	if (!empty($GLOBALS['formulize_doingExport']) AND formulize_altColumnsAreInEffect($source_ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS] ?? null)) {
+		$altFieldSource = $source_ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS];
+	} elseif (formulize_altColumnsAreInEffect($source_ele_value[EV_MULTIPLE_LIST_COLUMNS] ?? null)) {
+		$altFieldSource = $source_ele_value[EV_MULTIPLE_LIST_COLUMNS];
+	}
+	if ($altFieldSource) {
+		$altFieldSource = is_array($altFieldSource) ? $altFieldSource : array($altFieldSource);
+		$sourceMeta[1] = convertElementIdsToElementHandles($altFieldSource, $sourceMeta[0]);
+		// remove empty entries, which can happen if an element referenced here no longer exists
+		$sourceMeta[1] = array_filter($sourceMeta[1]);
+		// unfortunately, sometimes sourceMeta[1] seems to be saved as element handles rather than element IDs, and in that case,
+		// convertElementIdsToElementHandles() returns array(0 => 'none') which causes an error in the query below.
+		// check for that case here and revert back to the value of sourceMeta[1] before convertElementIdsToElementHandles()
+		if ((1 == count((array) $sourceMeta[1]) and isset($sourceMeta[1][0]) and "none" == $sourceMeta[1][0]) or $sourceMeta[1] == "none") {
+			$sourceMeta[1] = $before_conversion;
+		}
+	}
+
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	if (!$sourceFormObject = $form_handler->get($sourceMeta[0])) {
+		return false; // the source form has been deleted, so there is nothing to resolve against
+	}
+	return array($sourceFormObject, is_array($sourceMeta[1]) ? $sourceMeta[1] : array($sourceMeta[1]));
+}
+
 // this function takes a value and a handle (field) and an entry id, and returns an array containing the item(s) that represent the value in a human readable way for use in a list of entries, dataset, etc
 // unless the handle is a metadata handle, and then it is returned flat, because there's no way it would ever have multiple values
 // in some cases, even a textbox field would come back with an array of values here, because an array of values could have been passed in, if for example the textbox field is on the many side of a one to many relationship
+//
+// Results are cached per value, per element, per entry, for the life of the request. The entry is
+// part of the key because some element types genuinely depend on it, OTHER text most of all, which
+// means the cache holds an entry for every value of every field of every entry that gets read. That
+// pays for itself when the same value is prepped more than once, which is what rendering a screen
+// does. A caller that reads every value exactly once, on the other hand, fills the cache with
+// entries that will never be read, and at several thousand entries that is a lot of memory spent on
+// nothing. Such a caller can set $GLOBALS['formulize_doNotCachePreppedValues'] to opt out of it.
+// (Linked elements are unaffected: their conversion is cached inside
+// convertForeignKeysToReadableValues, keyed by the foreign key alone, which is small and is reused
+// across entries no matter who is asking.)
 function prepvalues($value, $handle, $entry_id)
 {
 
 	$original_value = $value;
 	static $cachedPrepedValues = array();
 	$fk = (!isset($GLOBALS['formulize_useForeignKeysInDataset'][$handle]) and !isset($GLOBALS['formulize_useForeignKeysInDataset']['all']));
-	$canCache = !is_array($original_value);
+	$canCache = (!is_array($original_value) AND !isset($GLOBALS['formulize_doNotCachePreppedValues']));
 	if ($canCache && isset($cachedPrepedValues[$original_value][$handle][$entry_id][$fk])) {
 		return $cachedPrepedValues[$original_value][$handle][$entry_id][$fk];
 	}
@@ -1091,6 +1488,11 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			$limitByEntryId .= ") ";
 			if (!$start) {
 				$limitClause = ""; // nullify the existing limitClause since we don't want to use it in the actual query
+			} elseif ($emptySetFilters) {
+				// No entry matched, and the query below cannot be left to work that out for itself: empty set conditions only
+				// exist in the EXISTS layer of the entry id query, never in $whereClause, so dropping the restriction would
+				// return entries those conditions were supposed to rule out.
+				$limitByEntryId = " AND (0) ";
 			} else {
 				$limitByEntryId = "";
 			}
@@ -1368,12 +1770,12 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			}
 		}
 		$dropRes = $xoopsDB->queryF("DROP TABLE " . DBPRE . "formulize_temp_extract_$timestamp");
-		$resultData = array('results' => $linkQueryRes, 'fid' => $fid, 'frid' => $frid, 'linkFids' => $linkformids, 'isUserTableForm' => $isUserTableForm);
+		$resultData = array('results' => $linkQueryRes, 'fid' => $fid, 'frid' => $frid, 'linkFids' => $linkformids, 'isUserTableForm' => $isUserTableForm, 'filterElements' => $filterElements);
 	} else {
 		if ($resultOnly !== 'bypass') {
 			$masterQueryRes = $xoopsDB->query($masterQuerySQL);
 		}
-		$resultData = array('results' => array($masterQueryRes), 'fid' => $fid, 'frid' => $frid, 'linkFids' => $linkformids, 'isUserTableForm' => $isUserTableForm);
+		$resultData = array('results' => array($masterQueryRes), 'fid' => $fid, 'frid' => $frid, 'linkFids' => $linkformids, 'isUserTableForm' => $isUserTableForm, 'filterElements' => $filterElements);
 	}
 	unset($GLOBALS['formulize_setQueryForExport']);
 
@@ -1703,6 +2105,7 @@ function formulize_gatherLinkMetadata($frid, $fid, $mainFormOnly = false)
 // 'fid' is the fid that was requested to generate those queries
 // 'frid' is the frid that was requested to generate those queries
 // 'linkFids' is the linkformids array generated as part of making those queries - all the ids of the linked forms, in the order they were processed
+// 'filterElements' is the list of elements the query was restricted to, if any, which governs whether derived values can be calculated
 function processGetDataResults($resultData)
 {
 
@@ -1712,6 +2115,7 @@ function processGetDataResults($resultData)
 	$linkformids = $resultData['linkFids'];
 	$isUserTableForm = isset($resultData['isUserTableForm']) ? $resultData['isUserTableForm'] : false;
 	$indexCacheKey = $resultData['indexCacheKey'] ?? "";
+	$filterElements = $resultData['filterElements'] ?? null;
 
 	global $xoopsDB, $xoopsUser;
 	$masterResults = array();
@@ -1734,14 +2138,30 @@ function processGetDataResults($resultData)
 
 	$totalMainFormEntryIdIndex = array(); // catalog all the entry ids in the main form, for deducing the groups later
 	$entryIdIndex = array(); // set to the entry ids once we're in the loops
+	$foreignKeyValuesFound = array(); // the values of any linked elements, gathered as the records are built
+	$userListValuesFound = array(); // the same, for elements that show the names of users
+	$batchableElementHandles = array(); // which handles hold values worth resolving in bulk, worked out once each
+	$formHandlesById = array(); // form id => handle, so the decoding happens once per form
+	$mainFormHandle = $formHandlesById[$fid] = getFormHandle($fid); // fixed for the whole of this dataset
 	foreach ($queryRes as $queryResIndex => $thisRes) {
+		$fieldNames = array(); // the column names of this result set, which are the same for every row of it
 		// loop through the found data and create the dataset array in "getData" format
 		while ($masterQueryArray = $xoopsDB->fetchRow($thisRes)) {
-			formulize_benchmark("starting record");
+			//formulize_benchmark("starting record");
+			if (!$fieldNames) {
+				// Asked for once per result set instead of once per row. The database builds a fresh
+				// metadata record for a column every time it is asked for the name, and the answer
+				// cannot differ between rows of the same result. The positions are what is kept, since
+				// a form joined to itself has the same column name in more than one place and the
+				// position is the only thing that tells them apart.
+				foreach ($masterQueryArray as $resultColIndex => $ignored) {
+					$fieldNames[$resultColIndex] = $xoopsDB->getFieldName($thisRes, $resultColIndex);
+				}
+			}
 			$creatorAllowsEmailViewing = null;
 			$creatorUid = null;
 			foreach ($masterQueryArray as $resultColIndex => $value) {
-				$field = $xoopsDB->getFieldName($thisRes, $resultColIndex); // must use fetchRow above and then get the field name this way, just in case a form joins to itself and the same field names get used in multiple points in the result set. fetchArray will return an associative array, in which the last items with the duplicate name will take precedence and overwrite the earlier items!
+				$field = $fieldNames[$resultColIndex]; // must use fetchRow above and then get the field name by position, just in case a form joins to itself and the same field names get used in multiple points in the result set. fetchArray will return an associative array, in which the last items with the duplicate name will take precedence and overwrite the earlier items!
 				// ignore those plain fields, and metafields on non-main forms, since we can only work with the ones that are properly aliased to their respective tables.  More details....Must refer to metadata fields by aliases only!  since * is included in SQL syntax, fetch_assoc will return plain column names from all forms with the values from those columns.....Also want to ignore the email fields, since the fact they're prefixed with "main" can throwoff the calculation of which entry we're currently writing
 				if (
 					$field == "entry_id" or
@@ -1762,9 +2182,9 @@ function processGetDataResults($resultData)
 					// will be collected with mainform ($fid) data
 					if ($field == 'main_email') {
 						if ($is_webmaster or $view_private_fields or $creatorAllowsEmailViewing or $creatorUid == $this_userid) {
-							$masterResults[$masterIndexer][getFormHandle($fid)][$entryIdIndex['main']]['creator_email'] = $value;
+							$masterResults[$masterIndexer][$mainFormHandle][$entryIdIndex['main']]['creator_email'] = $value;
 						} else {
-							$masterResults[$masterIndexer][getFormHandle($fid)][$entryIdIndex['main']]['creator_email'] = "";
+							$masterResults[$masterIndexer][$mainFormHandle][$entryIdIndex['main']]['creator_email'] = "";
 						}
 					}
 					continue;
@@ -1774,6 +2194,7 @@ function processGetDataResults($resultData)
 					$fieldNameParts = explode("_", $field);
 					$curFormAlias = $fieldNameParts[0];
 					$curFormId = $curFormAlias == 'main' ? $fid : $linkformids[substr($curFormAlias, 1)]; // the table aliases are based on the keys of the linked forms in the linkformids array, so if we get the number out of the table alias, that key will give us the form id of the linked form as stored in the linkformids array
+					$curFormHandle = $formHandlesById[$curFormId] ??= getFormHandle($curFormId);
 					if (strstr($field, 'entry_id')) {
 						$entryIdIndex[$curFormAlias] = $value;
 						if ($curFormAlias == 'main' and !in_array($value, $totalMainFormEntryIdIndex)) {
@@ -1809,6 +2230,7 @@ function processGetDataResults($resultData)
 					$eauFormAlias = $eauParts[0];
 					$eauProperty  = $eauParts[1];
 					$eauCurFormId = ($eauFormAlias == 'main') ? $fid : $linkformids[intval(substr($eauFormAlias, 1))];
+					$eauCurFormHandle = $formHandlesById[$eauCurFormId] ??= getFormHandle($eauCurFormId); // asked for once rather than at each of the writes below
 					if($eauFormAlias == 'main' && isset($writtenMains[$entryIdIndex['main']])) {
 						continue; // skip if this main entry has already been fully written
 					}
@@ -1824,12 +2246,12 @@ function processGetDataResults($resultData)
 					if($eauProperty === 'uname') {
 						$uname = $value ?? '';
 						$lastSpace = strrpos($uname, ' ');
-						$masterResults[$masterIndexer][getFormHandle($eauCurFormId)][$entryIdIndex[$eauFormAlias]]['formulize_user_account_fullname_'  . $eauCurFormId] = $uname;
-						$masterResults[$masterIndexer][getFormHandle($eauCurFormId)][$entryIdIndex[$eauFormAlias]]['formulize_user_account_firstname_' . $eauCurFormId] = ($lastSpace !== false) ? substr($uname, 0, $lastSpace) : $uname;
-						$masterResults[$masterIndexer][getFormHandle($eauCurFormId)][$entryIdIndex[$eauFormAlias]]['formulize_user_account_lastname_'  . $eauCurFormId] = ($lastSpace !== false) ? substr($uname, $lastSpace + 1) : '';
+						$masterResults[$masterIndexer][$eauCurFormHandle][$entryIdIndex[$eauFormAlias]]['formulize_user_account_fullname_'  . $eauCurFormId] = $uname;
+						$masterResults[$masterIndexer][$eauCurFormHandle][$entryIdIndex[$eauFormAlias]]['formulize_user_account_firstname_' . $eauCurFormId] = ($lastSpace !== false) ? substr($uname, 0, $lastSpace) : $uname;
+						$masterResults[$masterIndexer][$eauCurFormHandle][$entryIdIndex[$eauFormAlias]]['formulize_user_account_lastname_'  . $eauCurFormId] = ($lastSpace !== false) ? substr($uname, $lastSpace + 1) : '';
 					} elseif(isset($eauPropertyToType[$eauProperty])) {
 						$eauHandle = 'formulize_user_account_' . $eauPropertyToType[$eauProperty] . '_' . $eauCurFormId;
-						$masterResults[$masterIndexer][getFormHandle($eauCurFormId)][$entryIdIndex[$eauFormAlias]][$eauHandle] = $value;
+						$masterResults[$masterIndexer][$eauCurFormHandle][$entryIdIndex[$eauFormAlias]][$eauHandle] = $value;
 					}
 					continue;
 				} elseif (!strstr($field, "main_email") and !strstr($field, "main_user_viewemail")) {
@@ -1837,7 +2259,7 @@ function processGetDataResults($resultData)
 					if(formulize_getElementMetaData($field, isHandle: true)) {
 						$elementHandle = $field;
 					} else {
-						trigger_error("Formulize error: could not find element with handle $field in form " . getFormHandle($curFormId) . ". This may be due to a deleted element that is still present in the data table.");
+						trigger_error("Formulize error: could not find element with handle $field in form " . $curFormHandle . ". This may be due to a deleted element that is still present in the data table.");
 						continue;
 					}
 				} else { // it's some other field...??
@@ -1847,17 +2269,59 @@ function processGetDataResults($resultData)
 				if ($curFormAlias == "main" and isset($writtenMains[$entryIdIndex['main']])) {
 					continue;
 				}
-				$masterResults[$masterIndexer][getFormHandle($curFormId)][$entryIdIndex[$curFormAlias]][$elementHandle] = $value;
+				$masterResults[$masterIndexer][$curFormHandle][$entryIdIndex[$curFormAlias]][$elementHandle] = $value;
+				// Note the values that will cost a query each to make readable as they go past, so that
+				// reading the first of them later can resolve every value of that element in one go.
+				// See formulize_recordForeignKeyValues for what this is for. Done here because this is
+				// the one place every value of every entry is already in hand, so it costs a lookup in
+				// a memo rather than a second walk through the finished dataset. Values are kept as
+				// keys, so a thousand entries naming the same few source entries, or the same few
+				// people, are remembered as the few.
+				if (!isset($batchableElementHandles[$elementHandle])) {
+					// an element handle that names no element is a metadata field, which is neither
+					$batchableElementHandles[$elementHandle] = false;
+					if (formulize_getElementMetaData($elementHandle, true)) {
+						if (formulize_isLinkedElement($elementHandle)) {
+							$batchableElementHandles[$elementHandle] = 'linked';
+						} elseif (formulize_isUserListElement($elementHandle)) {
+							$batchableElementHandles[$elementHandle] = 'userlist';
+						}
+					}
+				}
+				if ($batchableElementHandles[$elementHandle] AND (is_string($value) OR is_int($value))) {
+					if ($batchableElementHandles[$elementHandle] === 'linked') {
+						$foreignKeyValuesFound[$elementHandle][$value] = true;
+					} else {
+						$userListValuesFound[$elementHandle][$value] = true;
+					}
+				}
 				if ($indexCacheKey) {
-					$GLOBALS['formulize_entryToCacheKeys'][getFormHandle($curFormId)][$entryIdIndex[$curFormAlias]][$indexCacheKey][$masterIndexer] = true;
+					$GLOBALS['formulize_entryToCacheKeys'][$curFormHandle][$entryIdIndex[$curFormAlias]][$indexCacheKey][$masterIndexer] = true;
 				}
 			} // end of foreach field loop within a record
 		} // end of main while loop for all records
 		unset($queryRes[$queryResIndex]);
 	} // end of foreach query result
 
-	// potentially run through the derived value fields as long as we're not doing an export of data
-	if (!isset($GLOBALS['formulize_doingExport']) or $GLOBALS['formulize_doingExport'] !== true) {
+	// potentially run through the derived value fields as long as we're not doing an export of data,
+	// and as long as this query gathered whole entries.
+	//
+	// A derived value formula reads the other fields of the entry it is deriving from, and what it
+	// works out is not only put in the dataset, it is written back to the entry in the database. A
+	// query restricted to a list of elements has only some of the fields of each entry in it, and
+	// nothing says the fields a formula depends on are among them, so deriving from one risks
+	// calculating from absent values and saving the result. Restricting the elements says which
+	// fields are wanted, not which fields the entry has, so there is no way to tell a formula whose
+	// inputs are all present from one whose inputs are missing: the safe reading of a list of
+	// elements is that the entries are incomplete and nothing may be derived from them.
+	//
+	// In practice nothing asks for both at once. Derived values are only calculated when
+	// formulize_forceDerivedValueUpdate is set, which is the business of formulize_updateDerivedValues
+	// and the update_derived_value XHR action, and neither restricts the elements. The exception is
+	// the debugDerivedValues module preference, which turns the calculation on for every query there
+	// is, element list or not, and that is the case this guard is really here for.
+	if ((!isset($GLOBALS['formulize_doingExport']) or $GLOBALS['formulize_doingExport'] !== true)
+		AND empty($filterElements)) {
 		$derivedFieldMetadata = gatherDerivedValueFieldMetadata($fid, $linkformids);
 		if (count((array) $derivedFieldMetadata) > 0 and $masterIndexer > -1) { // if there is derived value info for this data set and we have started to create values...need to do this one more time for the last value that we would have gathered data for...
 			foreach ($masterResults as $masterIndex => $thisRecord) {
@@ -1868,7 +2332,76 @@ function processGetDataResults($resultData)
 
 	$masterResults = injectSupplementaryData($masterResults, $fid, $totalMainFormEntryIdIndex, $isUserTableForm);
 
+	formulize_recordForeignKeyValues($foreignKeyValuesFound);
+	formulize_recordUserListValues($userListValuesFound);
+
 	return $masterResults;
+}
+
+/**
+ * Note which foreign keys a dataset holds, so that reading the first of them can resolve them all.
+ *
+ * A linked element holds the entry id of an entry in another form, and turning that into something
+ * readable means reading that entry. Done one value at a time, as it is when a screen or a template
+ * asks for values as it renders, that is a query per distinct value, and for an element that allows
+ * several values at once it is a query per key: a list of entries naming the same twenty source
+ * entries in different combinations gets no help at all from caching the conversions, because no
+ * two of its values are the same string.
+ *
+ * This does not resolve anything. The values are gathered in the loop that builds the records, so
+ * that noticing them costs nothing more than the loop already spends, and the first read of a given
+ * element hands the whole record to formulize_preresolveForeignKeyValues, which resolves it in one
+ * query per few hundred keys. Nothing is resolved that is never asked for, and every caller
+ * benefits without knowing this happened, which is the point of doing it here rather than in any
+ * one of them.
+ *
+ * Every dataset is recorded, however small. Noticing the values costs nothing that the loop
+ * building the records was not spending anyway, and resolving them is never worse than resolving
+ * them one at a time would have been: one round trip either way for a single key, and one instead
+ * of several for an element holding more than one. A twenty entry list with a linked column is one
+ * query rather than twenty, which is the ordinary case and not the exceptional one.
+ *
+ * What is given up is that reading one value of an element resolves all of the values of it that
+ * the dataset holds, so a caller reading a single entry's value out of a larger set fetches source
+ * rows it will not look at. That is more rows in one round trip, against many round trips, and a
+ * field that is worth reading at all is nearly always read for every entry in the set: rendering a
+ * column, or exporting one.
+ *
+ * @param array $valuesByHandle Linked element handle => the values found, held as keys
+ * @return void
+ */
+function formulize_recordForeignKeyValues($valuesByHandle) {
+
+	foreach ($valuesByHandle as $handle => $values) {
+		if (isset($GLOBALS['formulize_pendingForeignKeyResolutions'][$handle])) {
+			// a union, since another dataset may have recorded values for this element already
+			$GLOBALS['formulize_pendingForeignKeyResolutions'][$handle] += $values;
+		} else {
+			$GLOBALS['formulize_pendingForeignKeyResolutions'][$handle] = $values;
+		}
+	}
+}
+
+/**
+ * Note which uids a dataset holds, so that reading the first of them can resolve them all.
+ *
+ * The same arrangement formulize_recordForeignKeyValues describes, for elements that show the names
+ * of users rather than values from another form. The reason it is needed is the same: the names are
+ * read one value at a time as a screen renders, and the cache that would otherwise spare the repeat
+ * lookups is keyed by the entry, so two entries naming the same person do not help each other.
+ *
+ * @param array $valuesByHandle User list element handle => the values found, held as keys
+ * @return void
+ */
+function formulize_recordUserListValues($valuesByHandle) {
+
+	foreach ($valuesByHandle as $handle => $values) {
+		if (isset($GLOBALS['formulize_pendingUserListResolutions'][$handle])) {
+			$GLOBALS['formulize_pendingUserListResolutions'][$handle] += $values;
+		} else {
+			$GLOBALS['formulize_pendingUserListResolutions'][$handle] = $values;
+		}
+	}
 }
 
 
@@ -3800,20 +4333,49 @@ function parseTableFormFilter($filter, $andor, $elementsById, $fid = 0, $tableNa
 // FUNCTIONS BELOW ARE FOR PROCESSING RESULTS
 // *******************************
 
-// returns the form handle for the form that the given element handle belongs to
+/**
+ * Returns the form handle for the form that the given element handle belongs to
+ *
+ * Every record of a form within an entry has the same keys, because the records are written one
+ * result row at a time out of a single query per form, and every row of that query carries the
+ * same columns. So the first record of a form answers for all of them, and finding the form costs
+ * one lookup per form rather than a walk through every record of every form. That walk used to be
+ * repeated for every field read out of every entry, which is expensive on the many side of a one
+ * to many connection.
+ *
+ * A record can fall out of step with its siblings in one place: the derived value pass in
+ * formulize_calcDerivedColumns creates a key for a derived element that was not among the columns
+ * selected, and only for the records whose derived value differs from what is already there. The
+ * full search below runs when the first record comes up empty, so such a record is still found.
+ *
+ * There is no need to know which record the caller is reading. An element handle belongs to
+ * exactly one form, metadata fields are only written into the records of the main form, and the
+ * handles of user account fields carry their own form id, so no two forms in an entry can hold
+ * the same key and the answer cannot depend on the record.
+ *
+ * @param array $entry An entry from a dataset, as returned by gatherDataset
+ * @param string $handle The element handle to locate
+ * @return string The form handle, or "" if the entry is not an array or the element handle is not found
+ */
 function getFormHandleFromEntry($entry, $handle)
 {
 	if (is_array($entry)) {
 		foreach ($entry as $formHandle => $record) {
-			foreach ($record as $elements) {
+			if (is_array($record) AND $record
+				AND array_key_exists($handle, (array)$record[array_key_first($record)])) {
+				return $formHandle;
+			}
+		}
+		// for the rare record that does not carry the same keys as its siblings
+		foreach ($entry as $formHandle => $record) {
+			foreach ((array)$record as $elements) {
 				if (array_key_exists($handle, (array)$elements)) {
 					return $formHandle;
 				}
 			}
 		}
-	} else {
-		return "";
 	}
+	return "";
 }
 
 // returns all the form handles for the given entry
@@ -3844,32 +4406,54 @@ function display($entry, $handle, $datasetKey = null, $localEntryId = null, $ret
  * @param int datasetKey - Optional. Only necessary if an entire dataset is passed as the entry, in which case this value is the key of the entry in the dataset to use, starting with 0 for the first entry.
  * @param int localEntryId - Optional. The entry id of a specific record in the dataset, for which you want to retreive values. Relevant when there are multiple records from the same form in the dataset, and you only want to work with values from one of them.
  * @param boolean raw - Optional. A flag to indicate if the raw value from the database should be returned for form elements, or if the value should be prepped for user consumption, ie: foreign keys converted to readable values, etc. Default is false (ie: by default, prepped values are returned)
+ * @param string formHandle - Optional. The handle of the form that the element belongs to, if the caller already knows it. Saves searching the entry for the form that contains the element. Ignored if the form is not part of the entry, or does not contain the element.
  * @return string|int|float|array Returns the value for the specified element in the passed in entry, optionally limited to the specified localEntryId. If values are prepped and there are multiple values in the result (such as in the case of a checkbox element *with multiple boxes checked*) then the function will return an array of values. If a multiple option element only has one element checked, the function will return the single value selected. An array will also be returned if there are multiple records in the dataset from the form that the handle belongs to.
  */
-function getValue($entry, $handle, $datasetKey = null, $localEntryId = null, $raw = false ) {
+function getValue($entry, $handle, $datasetKey = null, $localEntryId = null, $raw = false, $formHandle = "" ) {
 
 	$entry = is_numeric($datasetKey) ? $entry[$datasetKey] : $entry;
 
-	// return nothing if handle is not part of entry
-	if (!$formHandle = getFormHandleFromEntry($entry, $handle)) {
-		return "";
+	// A caller who already knows which form the handle belongs to can say so and skip the search.
+	// The form has to be checked before it is used, because it is the caller's assertion rather
+	// than something read out of the entry: a form that is not there, or is not an array of
+	// records, would otherwise be fatal below. Such a form is treated as though it had not been
+	// given at all. A form that is there is taken at its word: if the handle is not in it, the
+	// answer is that there is no value, rather than a value belonging to some other form.
+	if (!$formHandle OR !isset($entry[$formHandle]) OR !is_array($entry[$formHandle])) {
+		$formHandle = getFormHandleFromEntry($entry, $handle);
+		if (!$formHandle) {
+			return ""; // the handle is not part of the entry at all
+		}
+	}
+
+	// establish the records we're looking at, based on the active formHandle
+	$records = $entry[$formHandle];
+
+	// A local entry id of nothing, or the legacy "NULL" string, means every record of the form
+	// qualifies. Anything else names one record, which is worth knowing up front because it lets us
+	// go straight to that record instead of examining all of them. An id naming a record that is
+	// not here leaves nothing to read: asking for one record is not the same question as asking
+	// for all of them, so the records must be emptied rather than left as they are.
+	$specificLocalId = ($localEntryId AND $localEntryId !== "NULL") ? $localEntryId : null;
+	if ($specificLocalId !== null) {
+		$records = array_key_exists($specificLocalId, $records)
+			? array($specificLocalId => $records[$specificLocalId])
+			: array();
 	}
 
 	$foundValues = array();
 	$formulize_mostRecentLocalId = array();
-	foreach ($entry[$formHandle] as $lid => $elements) {
-		if (!$localEntryId OR $localEntryId == "NULL" OR $lid == $localEntryId) { // legacy "NULL" string value is valid :(
-			if (isMetaDataField($handle)) {
-				$GLOBALS['formulize_mostRecentLocalId'] = $lid;
-				return $elements[$handle];
-			} elseif($raw) {
-		    $foundValues[] = ($elements[$handle] AND is_string($elements[$handle])) ? htmlspecialchars_decode($elements[$handle]) : $elements[$handle];
+	foreach ($records as $lid => $elements) {
+		if (isMetaDataField($handle)) {
+			$GLOBALS['formulize_mostRecentLocalId'] = $lid;
+			return $elements[$handle];
+		} elseif($raw) {
+			$foundValues[] = ($elements[$handle] AND is_string($elements[$handle])) ? htmlspecialchars_decode($elements[$handle]) : $elements[$handle];
+			$formulize_mostRecentLocalId[] = $lid;
+		} else {
+			foreach (prepvalues($elements[$handle], $handle, $lid) as $thisValue) {
+				$foundValues[] = ($thisValue AND is_string($thisValue)) ? htmlspecialchars_decode($thisValue) : $thisValue;
 				$formulize_mostRecentLocalId[] = $lid;
-		  } else {
-				foreach (prepvalues($elements[$handle], $handle, $lid) as $thisValue) {
-					$foundValues[] = ($thisValue AND is_string($thisValue)) ? htmlspecialchars_decode($thisValue) : $thisValue;
-					$formulize_mostRecentLocalId[] = $lid;
-				}
 			}
 		}
 	}
