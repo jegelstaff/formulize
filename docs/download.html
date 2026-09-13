@@ -3,15 +3,28 @@ layout: default
 permalink: download/
 title: Download Formulize
 full_width: true
-description: Download the latest release of Formulize, free and open source under GPL-2.0, and install it on any PHP and MySQL or MariaDB host.
+description: Download Formulize free and run it on your own server, or have us host it for you. The software is the same either way — complete, unlimited and open source under GPL-2.0.
 ---
 
 <div class="band-head" style="max-width: 68ch;">
-  <h1>Download Formulize</h1>
-  <p>Free, unlimited, and fully open source under GPL-2.0. The master branch is always stable and ready to install, so you do not have to wait for a formal release to get new features.</p>
+  <h1 style="margin-top: var(--space-3);">Get Formulize</h1>
+  <p>The software is the same whichever way you start: complete, unlimited, open source. What you are choosing is who runs the server &mdash; and how much help you want from the people who build it.</p>
 </div>
 
 <section class="band">
+  <div class="band-head">
+    <h2>How do you want to use Formulize?</h2>
+    <p>Every option includes the complete software, all features, <span class="bold">unlimited everything</span>. The only difference is how involved you want us to be.</p>
+  </div>
+  {% include get-choice.html %}
+  <p class="triad-foot"><a class="btn btn-primary" href="{{ "/pricing/" | relative_url }}">Compare every plan in detail</a></p>
+</section>
+
+<section class="band">
+  <div class="band-head">
+    <h2>Download and self-host</h2>
+    <p>Free, unlimited, and fully open source under GPL-2.0. The master branch is always stable and ready to install, so you do not have to wait for a formal release to get new features.</p>
+  </div>
   <div class="download-grid">
     <a class="download-card" href="{{ site.github.repository_url }}/zipball/{{ site.github.latest_release.tag_name }}" target="_blank" rel="noopener">
       <img src="{{ "/assets/img/zip-icon.png" | relative_url }}" alt="">
@@ -34,11 +47,11 @@ description: Download the latest release of Formulize, free and open source unde
         <span>Track the master branch, or contribute a change back</span>
       </span>
     </a>
-    <a class="download-card" href="{{ "/pricing/" | relative_url }}" style="background: var(--color-accent-100);">
+    <a class="download-card" href="{{ site.signup_url }}" target="_blank" rel="noopener" style="background: var(--color-accent-100);">
       <img src="{{ "/assets/img/cup-border.png" | relative_url }}" alt="">
       <span>
         <strong>Rather not run a server?</strong>
-        <span>We will host it for you, from $19/month</span>
+        <span>Sign up and we will host it for you, from $49/month</span>
       </span>
     </a>
   </div>
@@ -46,7 +59,7 @@ description: Download the latest release of Formulize, free and open source unde
 
 <section class="band">
   <div class="band-head">
-    <h2>What you need</h2>
+    <h2>What you need to self-host</h2>
   </div>
   <div class="triad">
     <div class="card">

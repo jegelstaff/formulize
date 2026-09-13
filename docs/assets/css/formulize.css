@@ -1,63 +1,81 @@
 /* ==========================================================================
    formulize.org — main stylesheet
-   Built on the "Organic" design system tokens (cream ground, terracotta +
-   sage accents, Caprasimo display over Figtree), with the Formulize blue
-   kept as a third accent so the logo and hero stay recognizable.
+   Palette: a pale blue ground (#cee0ea) under a charcoal shell (#3a3a3a),
+   with two action colours doing two different jobs — green (#81de76) is the
+   CTA (buttons and badges only) and blue (#4c7ec0) is the accent ramp that
+   carries links, prices, hovers and tick marks. Type is Unbounded ExtraBold
+   over Poppins, both tracked +4%.
    Plain CSS on purpose: Jekyll serves this file as a static asset, so it
    needs no Sass compilation and can be previewed directly in a browser.
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Caprasimo:wght@400&family=Figtree:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@800&family=Poppins:wght@400;500;600;700&display=swap');
 
 :root {
-  /* — Organic tokens — */
-  --color-bg: #f5ead8;
-  --color-surface: #ebddc5;
-  --color-text: #201e1d;
-  --color-accent: #c67139;
-  --color-accent-2: #7a8a5e;
-  --color-divider: color-mix(in srgb, #201e1d 16%, transparent);
+  --color-bg: #cee0ea;
+  --color-surface: #ffffff;
+  --color-text: #000000;
+  --color-accent: #4c7ec0;
+  --color-accent-2: #81de76;
+  --color-divider: color-mix(in srgb, #000000 15%, transparent);
 
-  --color-neutral-100: #f9f4ed;
-  --color-neutral-200: #eee7db;
-  --color-neutral-300: #dcd3c4;
-  --color-neutral-400: #c0b6a5;
-  --color-neutral-500: #a19786;
-  --color-neutral-600: #82796a;
-  --color-neutral-700: #645c50;
-  --color-neutral-800: #474238;
-  --color-neutral-900: #2e2b25;
+  /* The charcoal shell: header, footer, and anything that has to read as
+     chrome rather than content. Held apart from the neutral ramp so the ramp
+     can stay monotonic. */
+  --color-shell: #3a3a3a;
 
-  --color-accent-100: #fff2eb;
-  --color-accent-200: #ffe1d0;
-  --color-accent-300: #ffc6a5;
-  --color-accent-400: #f6a06b;
-  --color-accent-500: #d67f48;
-  --color-accent-600: #b2622d;
-  --color-accent-700: #8c491a;
-  --color-accent-800: #643312;
-  --color-accent-900: #402310;
+  /* The green is an action colour, not a text colour — it is light enough that
+     it only ever appears as a fill with black type on it. */
+  --color-cta: #81de76;
+  --color-cta-hover: #6ad15e;
+  --color-cta-active: #57bd4b;
 
-  --color-accent-2-100: #f0fae1;
-  --color-accent-2-200: #e1eecc;
-  --color-accent-2-300: #ccdbb2;
-  --color-accent-2-400: #aebf92;
-  --color-accent-2-500: #8fa073;
-  --color-accent-2-600: #728157;
-  --color-accent-2-700: #56633f;
-  --color-accent-2-800: #3d472b;
-  --color-accent-2-900: #272e1b;
+  --color-neutral-100: #ffffff;
+  --color-neutral-200: #f2f6f8;
+  --color-neutral-300: #dce7ed;
+  --color-neutral-400: #afc0c9;
+  --color-neutral-500: #7f8c93;
+  --color-neutral-600: #626d73;
+  --color-neutral-700: #4a5357;
+  --color-neutral-800: #2c3235;
+  --color-neutral-900: #14181a;
 
-  /* — Formulize blue, the third accent (from the existing hero) — */
-  --color-brand: #3da1c5;
-  --color-brand-600: #2b87a9;
-  --color-brand-700: #246b85;
-  --color-brand-200: #cfe8f1;
-  --color-brand-100: #e4f2f7;
+  --color-accent-100: #eaf1fa;
+  --color-accent-200: #d2e2f5;
+  --color-accent-300: #aec8e9;
+  --color-accent-400: #7ba4d6;
+  --color-accent-500: #4c7ec0;
+  --color-accent-600: #3c66a1;
+  --color-accent-700: #2f5182;
+  --color-accent-800: #223c61;
+  --color-accent-900: #172942;
 
-  --font-heading: "Caprasimo", system-ui, sans-serif;
-  --font-heading-weight: 400;
-  --font-body: "Figtree", system-ui, sans-serif;
+  --color-accent-2-100: #eefaec;
+  --color-accent-2-200: #d9f5d4;
+  --color-accent-2-300: #b8ecb0;
+  --color-accent-2-400: #81de76;
+  --color-accent-2-500: #5cbf50;
+  --color-accent-2-600: #489c3e;
+  --color-accent-2-700: #377a2f;
+  --color-accent-2-800: #275822;
+  --color-accent-2-900: #193a17;
+
+  /* Formulize blue, kept as its own family so the second badge and the hosted
+     rail stay a different claim from the green CTA. */
+  --color-brand: #4c7ec0;
+  --color-brand-600: #3c66a1;
+  --color-brand-700: #2f5182;
+  --color-brand-200: #d2e2f5;
+  --color-brand-100: #eaf1fa;
+
+  /* Deep enough that white body copy on the hero band clears 4.5:1; the
+     mockup's lighter band only managed about 2.5:1. */
+  --color-hero: #3c66a1;
+
+  --font-heading: "Unbounded", system-ui, sans-serif;
+  --font-heading-weight: 800;
+  --font-body: "Poppins", system-ui, sans-serif;
+  --tracking: 0.04em;
 
   --space-1: 4.4px;
   --space-2: 8.8px;
@@ -72,9 +90,9 @@
   --radius-md: 16px;
   --radius-lg: 28px;
 
-  --shadow-sm: 0 1px 2px color-mix(in srgb, #2e2b25 14%, transparent);
-  --shadow-md: 0 3px 10px color-mix(in srgb, #2e2b25 16%, transparent);
-  --shadow-lg: 0 12px 32px color-mix(in srgb, #2e2b25 22%, transparent);
+  --shadow-sm: 0 1px 2px color-mix(in srgb, #14181a 14%, transparent);
+  --shadow-md: 0 3px 10px color-mix(in srgb, #14181a 16%, transparent);
+  --shadow-lg: 0 12px 32px color-mix(in srgb, #14181a 22%, transparent);
 
   --page-max: 1160px;
 }
@@ -90,22 +108,26 @@ body {
   font-family: var(--font-body);
   font-size: 17px;
   line-height: 1.6;
+  letter-spacing: var(--tracking);
   -webkit-font-smoothing: antialiased;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   font-weight: var(--font-heading-weight);
-  line-height: 1.12;
-  letter-spacing: -0.015em;
+  line-height: 1.18;
+  letter-spacing: var(--tracking);
   margin: 0 0 var(--space-3);
   color: var(--color-text);
   text-wrap: balance;
 }
-h1 { font-size: 46px; }
-h2 { font-size: 35px; }
-h3 { font-size: 28px; }
-h4 { font-size: 23px; }
+/* Unbounded ExtraBold sets far wider than the face this replaced, and the +4%
+   tracking widens it again, so the display sizes come down a step to keep the
+   same number of words on a line. */
+h1 { font-size: 39px; }
+h2 { font-size: 30px; }
+h3 { font-size: 25px; }
+h4 { font-size: 21px; }
 h5 { font-size: 19px; }
 h6 { font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; }
 
@@ -186,6 +208,7 @@ blockquote {
 .band-head { max-width: 62ch; margin-bottom: var(--space-8); }
 .band-head h2 { margin-bottom: var(--space-2); }
 .band-head p { margin: 0; color: var(--color-neutral-800); font-size: 19px; line-height: 1.5; }
+.band-head p + p { margin-top: var(--space-3); }
 
 .band-head-row {
   display: flex;
@@ -218,9 +241,9 @@ blockquote {
   border-radius: 999px;
   transition: background-color 120ms ease, color 120ms ease;
 }
-.btn-primary { background: var(--color-accent); color: var(--color-bg); }
-.btn-primary:hover, .btn-primary:focus { background: var(--color-accent-600); color: var(--color-bg); }
-.btn-primary:active { background: var(--color-accent-700); }
+.btn-primary { background: var(--color-cta); color: #000; }
+.btn-primary:hover, .btn-primary:focus { background: var(--color-cta-hover); color: #000; }
+.btn-primary:active { background: var(--color-cta-active); color: #000; }
 .btn-secondary { border-color: var(--color-divider); color: var(--color-text); }
 .btn-secondary:hover, .btn-secondary:focus {
   background: color-mix(in srgb, var(--color-text) 7%, transparent);
@@ -262,9 +285,8 @@ blockquote {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: color-mix(in srgb, var(--color-bg) 92%, transparent);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--color-divider);
+  background: var(--color-shell);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .site-header-inner {
@@ -282,7 +304,7 @@ blockquote {
   align-items: flex-start;
   gap: var(--space-1);
   text-decoration: none;
-  color: var(--color-text);
+  color: #fff;
   margin-right: auto;
 }
 .brand-logo { height: 34px; width: auto; }
@@ -292,7 +314,7 @@ blockquote {
   font-size: 12.5px;
   letter-spacing: 0.04em;
   white-space: nowrap;
-  color: var(--color-neutral-700);
+  color: rgba(255, 255, 255, 0.72);
   margin-top: 0;
 }
 
@@ -309,19 +331,28 @@ blockquote {
   display: block;
   padding: var(--space-2) var(--space-3);
   border-radius: 999px;
-  color: var(--color-text);
+  color: #fff;
   text-decoration: none;
   font-size: 15.5px;
   font-weight: 500;
   white-space: nowrap;
 }
-.main-nav a:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); color: var(--color-text); }
+.main-nav a:hover { background: rgba(255, 255, 255, 0.14); color: #fff; }
 .main-nav a[aria-current="page"] {
-  background: var(--color-accent-100);
-  color: var(--color-accent-800);
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
 }
 
 .header-cta { display: flex; align-items: center; gap: var(--space-2); }
+/* On the charcoal shell an outlined secondary would disappear, so in the header
+   it becomes the solid white pill from the mockup. */
+.header-cta .btn-secondary { background: #fff; border-color: #fff; color: #000; }
+.header-cta .btn-secondary:hover, .header-cta .btn-secondary:focus {
+  background: var(--color-neutral-300);
+  border-color: var(--color-neutral-300);
+  color: #000;
+}
+.site-header :focus-visible { outline-color: #fff; }
 
 /* no-JS mobile menu toggle */
 .nav-toggle { display: none; }
@@ -331,17 +362,18 @@ blockquote {
   gap: var(--space-2);
   cursor: pointer;
   padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-divider);
+  border: 1px solid rgba(255, 255, 255, 0.45);
   border-radius: 999px;
   font-family: var(--font-heading);
-  font-size: 14px;
+  font-size: 13px;
+  color: #fff;
 }
 .nav-toggle-label .bars {
   display: block;
   width: 16px;
   height: 2px;
-  background: var(--color-text);
-  box-shadow: 0 5px 0 var(--color-text), 0 -5px 0 var(--color-text);
+  background: #fff;
+  box-shadow: 0 5px 0 #fff, 0 -5px 0 #fff;
 }
 
 /* ── social / download banner ───────────────────────────────────────────── */
@@ -363,7 +395,7 @@ blockquote {
   justify-content: center;
   gap: var(--space-2);
   padding: var(--space-4) var(--space-3);
-  background: var(--color-neutral-100);
+  background: var(--color-neutral-200);
   text-decoration: none;
   color: var(--color-neutral-800);
   font-size: 13.5px;
@@ -386,10 +418,13 @@ blockquote {
 .hero {
   position: relative;
   overflow: hidden;
-  background-color: var(--color-brand);
+  background-color: var(--color-hero);
+  /* The site's own checkbox/plus/circle tile, recoloured to white on
+     transparency so it reads as texture over whatever --color-hero is, instead
+     of carrying the old light blue ground with it. */
   background-image: url('../img/hero-pattern.png');
   background-repeat: repeat;
-  background-size: 200px 200px;
+  background-size: 198px 196px;
   border-radius: var(--radius-lg);
   padding: var(--space-8);
   display: flex;
@@ -401,9 +436,9 @@ blockquote {
 .hero-text { flex: 1 1 0; min-width: 0; }
 .hero-text h1 {
   color: #fff;
-  font-size: 44px;
+  font-size: 38px;
   margin-bottom: var(--space-4);
-  text-shadow: 0 2px 6px rgba(36, 107, 133, 0.45);
+  text-shadow: 0 2px 6px rgba(23, 41, 66, 0.45);
 }
 .hero-text p {
   font-size: 18.5px;
@@ -536,8 +571,8 @@ blockquote {
   position: absolute;
   top: calc(var(--space-4) * -1);
   left: var(--space-6);
-  background: var(--color-accent);
-  color: var(--color-bg);
+  background: var(--color-cta);
+  color: #000;
   font-family: var(--font-heading);
   font-size: 12.5px;
   letter-spacing: 0.06em;
@@ -554,9 +589,9 @@ blockquote {
 .tier-blurb { font-size: 15px; color: var(--color-neutral-800); margin: 0; min-height: 3em; }
 .tier-price {
   font-family: var(--font-heading);
-  font-size: 34px;
+  font-size: 32px;
   line-height: 1;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.02em;
 }
 .tier-price span {
   font-family: var(--font-body);
@@ -565,7 +600,7 @@ blockquote {
   color: var(--color-neutral-700);
   letter-spacing: 0;
 }
-/* A second badge in the same terracotta would compete with "Most popular" and
+/* A second badge in the same green would compete with "Most popular" and
    leave neither reading as the recommendation. The brand blue keeps the badge
    family intact while marking it as a different kind of claim. */
 .tier-flag-alt { background: var(--color-brand-700); color: #fff; }
@@ -599,7 +634,7 @@ blockquote {
   color: var(--color-accent-2-700);
   font-weight: 700;
 }
-.tier ul li.no { color: var(--color-neutral-700); }
+.tier ul li.no { color: var(--color-neutral-600); }
 .tier ul li.no::before { content: "–"; color: var(--color-neutral-600); }
 .tier .btn { margin-top: var(--space-2); }
 
@@ -632,8 +667,10 @@ blockquote {
 }
 .tier ul.tier-feats li.no { color: var(--color-neutral-700); }
 .tier ul.tier-feats li.maybe { color: var(--color-neutral-700); }
-.tier ul.tier-feats li.no::before { content: "\2715"; color: var(--color-accent-600); }
-.tier ul.tier-feats li.maybe::before { content: "?"; color: var(--color-accent-600); padding-left: 0.15em; }
+/* Neutral, not blue: the blue is now the accent that marks things as present,
+   so a blue cross would fight the green tick beside it. */
+.tier ul.tier-feats li.no::before { content: "\2715"; color: var(--color-neutral-500); }
+.tier ul.tier-feats li.maybe::before { content: "?"; color: var(--color-neutral-500); padding-left: 0.15em; }
 .tier-feats small {
   display: block;
   font-size: 13.5px;
@@ -685,9 +722,9 @@ blockquote {
   display: block;
   font-family: var(--font-heading);
   font-weight: var(--font-heading-weight);
-  font-size: 21px;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
+  font-size: 19px;
+  line-height: 1.2;
+  letter-spacing: 0.03em;
 }
 .rail-legend > span {
   display: block;
@@ -822,7 +859,7 @@ blockquote {
 .compare thead th {
   position: sticky;
   top: 0;
-  background: var(--color-surface);
+  background: var(--color-neutral-200);
   font-family: var(--font-heading);
   font-weight: var(--font-heading-weight);
   font-size: 13px;
@@ -849,7 +886,7 @@ blockquote {
   color: var(--color-accent-800);
 }
 .yes { color: var(--color-accent-2-700); font-weight: 700; }
-.no, .maybe { color: var(--color-neutral-500); }
+.no, .maybe { color: var(--color-neutral-600); }
 .compare small { display: block; font-size: 13px; color: var(--color-neutral-700); }
 
 .footnotes { font-size: 13.5px; color: var(--color-neutral-700); }
@@ -1039,6 +1076,31 @@ blockquote {
 }
 .small-pic { width: 220px; }
 
+/* The API reference pages put the whole function signature inside the <h1> —
+   the name and the brackets as bare text, the argument list wrapped in a
+   hard-coded `<span style='font-size: 14pt;'>`. Mixing a display face with a
+   14pt span leaves the closing bracket stranded at heading size, so the whole
+   heading is set as one uniform code signature instead: monospace, a size up
+   from body, at a weight that still reads as a page title. The span's inline
+   font-size has to be overridden to match, hence the !important.
+   Scoped to .prose h1 so no marketing heading can be caught by it. If a page
+   would rather have a display-face title, the markdown should carry the name as
+   the h1 and the signature as a fenced code block beneath it. */
+.prose h1:has(> span) {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 23px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.5;
+  text-wrap: initial;
+  margin-bottom: var(--space-6);
+}
+.prose h1 > span {
+  font: inherit;
+  font-size: inherit !important;
+  color: var(--color-neutral-800);
+}
+
 nav.breadcrumbs { margin-bottom: var(--space-4); }
 nav.breadcrumbs ol {
   display: flex;
@@ -1059,13 +1121,14 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
 /* ── footer ─────────────────────────────────────────────────────────────── */
 
 .site-footer {
-  background: var(--color-neutral-900);
-  color: var(--color-neutral-300);
+  background: var(--color-shell);
+  color: rgba(255, 255, 255, 0.85);
   padding: var(--space-12) 0 var(--space-8);
   margin-top: var(--space-12);
 }
-.site-footer a { color: var(--color-accent-300); text-decoration: none; }
-.site-footer a:hover { color: var(--color-accent-200); text-decoration: underline; }
+.site-footer a { color: #fff; text-decoration: none; }
+.site-footer a:hover { color: var(--color-accent-2-300); text-decoration: underline; }
+.site-footer :focus-visible { outline-color: #fff; }
 .footer-cols {
   display: grid;
   grid-template-columns: 1.4fr repeat(3, 1fr);
@@ -1075,14 +1138,14 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   font-size: 14px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--color-neutral-400);
+  color: rgba(255, 255, 255, 0.6);
   font-family: var(--font-body);
   font-weight: 600;
   margin-bottom: var(--space-3);
 }
 .footer-cols ul { list-style: none; margin: 0; padding: 0; font-size: 15.5px; }
 .footer-cols li { margin-bottom: var(--space-2); }
-.footer-brand p { font-size: 15.5px; color: var(--color-neutral-300); max-width: 34ch; }
+.footer-brand p { font-size: 15.5px; color: rgba(255, 255, 255, 0.8); max-width: 34ch; }
 .footer-brand .brand-logo {
   height: 30px;
   margin-bottom: var(--space-3);
@@ -1090,21 +1153,127 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
 .footer-bottom {
   margin-top: var(--space-8);
   padding-top: var(--space-4);
-  border-top: 1px solid var(--color-neutral-800);
+  border-top: 1px solid rgba(255, 255, 255, 0.22);
   font-size: 13.5px;
-  color: var(--color-neutral-400);
+  color: rgba(255, 255, 255, 0.65);
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-4);
   justify-content: space-between;
 }
-.footer-bottom a { color: var(--color-neutral-400); }
+.footer-bottom a { color: rgba(255, 255, 255, 0.65); }
+
+/* ── homepage lead hero: headline + video ───────────────────────────────── */
+
+.hero-lead .hero-text { flex: 1 1 44%; }
+.hero-lead .hero-text h1 { font-size: 39px; margin-bottom: var(--space-4); }
+.hero-text p.hero-sub {
+  font-size: 20px;
+  line-height: 1.45;
+  margin-bottom: 0;
+  color: rgba(255, 255, 255, 0.96);
+  max-width: 34ch;
+}
+.hero-media { flex: 1 1 56%; min-width: 0; max-width: 620px; }
+.hero-media .hero-thumbnail { max-width: none; display: block; }
+.hero-caption {
+  margin: var(--space-3) 0 0;
+  font-size: 15.5px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.9);
+}
+.hero-play { display: block; border-radius: var(--radius-md); }
+.hero-play img { display: block; width: 100%; height: auto; transition: opacity 0.15s ease; }
+.hero-play:hover img { opacity: 0.92; }
+.hero-play:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+
+/* ── news cards (homepage) ─────────────────────────────────────────────── */
+
+.news-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+.news-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-6);
+  background: var(--color-neutral-100);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+.news-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); color: inherit; }
+.news-card time {
+  font-size: 13.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--color-neutral-700);
+}
+.news-card-title {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 23px;
+  line-height: 1.2;
+  color: var(--color-text);
+}
+.news-card:hover .news-card-title { color: var(--color-accent-700); }
+.news-card p {
+  margin: 0;
+  font-size: 16.5px;
+  line-height: 1.5;
+  color: var(--color-neutral-800);
+}
+.news-card-more {
+  margin-top: auto;
+  padding-top: var(--space-3);
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--color-accent-700);
+}
+
+.band-foot { margin: var(--space-6) 0 0; }
+.band-foot a {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 19px;
+  color: var(--color-accent-700);
+}
+
+/* ── full feature list (features page) ────────────────────────────────── */
+
+.feature-cols {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-8);
+}
+.feature-cols h3 { font-size: 22px; margin: 0 0 var(--space-3); }
+.feature-cols ul {
+  margin: 0;
+  padding-left: var(--space-6);
+  font-size: 16.5px;
+  line-height: 1.5;
+  color: var(--color-neutral-800);
+}
+.feature-cols li { margin-bottom: var(--space-2); }
+.feature-cols li:last-child { margin-bottom: 0; }
 
 /* ── responsive ─────────────────────────────────────────────────────────── */
 
 @media (max-width: 1080px) {
   .tier-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .footer-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 1160px) {
+  .hero-lead .hero-text { flex: 1 1 50%; }
+  .hero-lead .hero-text h1 { font-size: 32px; }
+  .hero-text p.hero-sub { font-size: 18.5px; max-width: none; }
+  .hero-media { flex: 1 1 50%; }
 }
 
 @media (max-width: 1060px) {
@@ -1122,12 +1291,17 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
 }
 
 @media (max-width: 900px) {
-  h1 { font-size: 34px; }
-  h2 { font-size: 27px; }
+  h1 { font-size: 30px; }
+  h2 { font-size: 24px; }
   .hero { flex-direction: column; align-items: flex-start; padding: var(--space-6); }
-  .hero-text h1 { font-size: 31px; }
+  .hero-text h1 { font-size: 27px; }
   .hero-thumbnail { max-width: 100%; }
   .triad, .onramp, .video-row, .download-grid, .addon-grid { grid-template-columns: minmax(0, 1fr); }
+  .feature-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hero-media { max-width: 100%; }
+  .hero-lead .hero-text h1 { font-size: 27px; }
+  .hero-text p.hero-sub { font-size: 18px; max-width: none; }
+  .news-row { grid-template-columns: minmax(0, 1fr); }
   .action-strip { grid-template-columns: repeat(2, 1fr); }
   .post-teaser { grid-template-columns: minmax(0, 1fr); }
 }
@@ -1138,6 +1312,7 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   .news-list a { flex-direction: column; gap: var(--space-1); }
   .news-list time { flex: none; }
   .tier-grid { grid-template-columns: minmax(0, 1fr); }
+  .feature-cols { grid-template-columns: minmax(0, 1fr); }
   .brand-logo { height: 28px; }
   .brand-tagline { display: none; }
 }
@@ -1195,8 +1370,8 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  background: var(--color-accent);
-  color: var(--color-bg);
+  background: var(--color-cta);
+  color: #000;
   padding: 2px 8px;
   border-radius: 999px;
   margin: var(--space-1) 0 0;
@@ -1228,8 +1403,8 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   font-weight: 700;
 }
 .cmp td.y::before { content: "\2713"; color: var(--color-accent-2-700); }
-.cmp td.n::before { content: "\2715"; color: var(--color-accent-600); }
-.cmp td.m::before { content: "?"; color: var(--color-accent-600); }
+.cmp td.n::before { content: "\2715"; color: var(--color-neutral-500); }
+.cmp td.m::before { content: "?"; color: var(--color-neutral-500); }
 .cmp td.n, .cmp td.m { color: var(--color-neutral-700); }
 
 .cmp .cmp-featured { background: var(--color-accent-100); }
