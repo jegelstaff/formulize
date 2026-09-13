@@ -10,10 +10,11 @@ description: Formulize is open source software for collecting and organizing you
 <div class="hero hero-lead">
   <div class="hero-text">
     <h1>Improvise. Organize. Customize.</h1>
-    <p class="hero-sub">Your very own database &mdash; web-based forms, custom workflows and interactive reports. No code required, and fully open source.</p>
+    <p class="hero-sub">Bring your data to life, with custom forms, apps, and websites.</p>
+		<p class="hero-sub">No code required, fully AI enabled, and completely open source.</p>
     <div class="hero-actions btn-row">
-      <a class="btn btn-on-dark" href="{{ "/download/" | relative_url }}">Try it yourself</a>
-      <a class="btn btn-outline-light" href="{{ "/features/" | relative_url }}">See what it does</a>
+      <a class="btn btn-primary" href="{{ "/download/" | relative_url }}">Try it yourself</a>
+      <a class="btn btn-secondary" href="{{ "/features/" | relative_url }}">See what it does</a>
     </div>
   </div>
   <div class="hero-media">
@@ -22,7 +23,7 @@ description: Formulize is open source software for collecting and organizing you
         <img src="{{ "/assets/img/intro-to-formulize-plus-ai.webp" | relative_url }}" alt="">
       </a>
     </div>
-    <p class="hero-caption">Seven minutes: what Formulize is, and an AI assistant building a working database with it.</p>
+    <p class="hero-caption">Seven minutes: what Formulize is, and how the AI integration can work with your data.</p>
   </div>
 </div>
 
@@ -31,7 +32,37 @@ description: Formulize is open source software for collecting and organizing you
     <h2>Latest news</h2>
     <a class="btn btn-secondary btn-sm" href="{{ "/news/" | relative_url }}">All news &amp; articles</a>
   </div>
-  {% include latest-news-cards.html limit=3 %}
+  <div class="news-row" id="news-row">
+    <p>Loading news&hellip;</p>
+  </div>
+  <script src="{{ "/assets/js/news-api.js" | relative_url }}"></script>
+  <script>
+  (async function () {
+    const container = document.getElementById('news-row');
+    try {
+      const { data } = await readNewsForm({
+        fields: ['news_headline', 'news_teaser', 'creation_datetime'],
+        sortField: 'creation_datetime',
+        sortOrder: 'DESC',
+        limitSize: 3
+      });
+      if (!data.length) {
+        container.replaceChildren(el('p', 'No news yet.'));
+        return;
+      }
+      container.replaceChildren(...data.map(entry => el('a',
+        { class: 'news-card', href: '{{ "/news/entry/" | relative_url }}?id=' + entry.entry_id },
+        el('time', { datetime: newsIsoDate(entry.creation_datetime) }, formatNewsDate(entry.creation_datetime)),
+        el('span', { class: 'news-card-title' }, entry.news_headline),
+        el('p', newsTeaserText(entry)),
+        el('span', { class: 'news-card-more' }, 'Read it →')
+      )));
+    } catch (err) {
+      container.replaceChildren(el('p', 'Could not load news: ' + err.message));
+      console.error(err.message, err.code ?? '', err.hint ?? '');
+    }
+  })();
+  </script>
 </section>
 
 <section class="band">

@@ -1,0 +1,75 @@
+---
+layout: default
+title: News
+full_width: true
+hide_breadcrumbs: true
+description: A news article from Formulize.
+---
+
+<article class="post-body">
+  <header class="post-header" id="entry-header">
+    <p>Loading&hellip;</p>
+  </header>
+
+  <div class="prose" id="entry-body"></div>
+
+  <hr>
+
+  <nav class="btn-row">
+    <a class="btn btn-secondary" href="{{ "/news/" | relative_url }}">&larr; All news</a>
+  </nav>
+</article>
+
+<script src="{{ "/assets/js/news-api.js" | relative_url }}"></script>
+<script>
+(async function () {
+  const header = document.getElementById('entry-header');
+  const body = document.getElementById('entry-body');
+  const id = parseInt(new URLSearchParams(location.search).get('id'), 10);
+
+  if (!Number.isInteger(id) || id <= 0) {
+    header.replaceChildren(el('h1', 'News entry not found'));
+    body.replaceChildren(el('p', 'No news entry was specified.'));
+    return;
+  }
+
+  let data;
+  try {
+    ({ data } = await readNewsForm({
+      fields: ['news_headline', 'news_body', 'news_image', 'creation_datetime'],
+      filter: [{ element: 'entry_id', value: String(id), operator: '=' }]
+    }));
+  } catch (err) {
+    header.replaceChildren(el('h1', 'Could not load this news entry'));
+    body.replaceChildren(el('p', err.message));
+    console.error(err.message, err.code ?? '', err.hint ?? '');
+    return;
+  }
+
+  const entry = data[0];
+  if (!entry) {
+    header.replaceChildren(el('h1', 'News entry not found'));
+    body.replaceChildren(el('p', 'This news entry does not exist, or is no longer available.'));
+    return;
+  }
+
+  document.title = entry.news_headline + ' | Formulize';
+  header.replaceChildren(
+    el('p', { class: 'post-meta' },
+      el('time', { datetime: newsIsoDate(entry.creation_datetime) }, formatNewsDate(entry.creation_datetime))
+    ),
+    el('h1', entry.news_headline)
+  );
+
+  body.replaceChildren();
+  if (entry.news_image) {
+    body.append(el('img', {
+      class: 'washed',
+      src: entry.news_image,
+      alt: '',
+      style: 'border-radius: var(--radius-lg); margin-bottom: var(--space-4);'
+    }));
+  }
+  renderNewsBody(body, entry.news_body);
+})();
+</script>

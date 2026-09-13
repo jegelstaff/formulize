@@ -138,6 +138,13 @@ li { margin-bottom: var(--space-1); }
 
 a { color: var(--color-accent-700); text-underline-offset: 3px; }
 a:hover, a:focus { color: var(--color-accent-600); }
+/* :visited is scoped to prose content (API reference pages, blog posts) rather
+   than site-wide — it's a real wayfinding aid on link-dense reference/listing
+   pages, but applying it globally would risk bleeding into buttons and card
+   CTAs, which should read the same regardless of visited state. Browsers only
+   allow color-ish properties here (privacy: no font-weight, no content), so
+   this is a subtly darker shade rather than a different hue. */
+.prose a:visited { color: var(--color-accent-800); }
 
 img { display: block; max-width: 100%; }
 figure { margin: 0; }
@@ -239,25 +246,41 @@ blockquote {
   border: 1px solid transparent;
   padding: var(--space-3) var(--space-6);
   border-radius: 999px;
-  transition: background-color 120ms ease, color 120ms ease;
+  transition: background-color 120ms ease, color 120ms ease, transform 0.15s ease;
 }
+/* Hover is a scale-up, not a color change, on every button — same treatment
+   as the .action-strip tiles. :active (an actual press) still darkens, as
+   distinct feedback for the click itself rather than just pointing at it. */
+.btn:hover, .btn:focus-visible { transform: scale(1.05); }
+/* Three roles, not six: primary (filled, the one strong action), secondary
+   (outlined, a lesser action next to a primary), ghost (plain text, minor
+   actions). Secondary used to need a different class on every dark
+   background it sat on (btn-on-dark in the hero, btn-outline-light also in
+   the hero, a .header-cta override in the header) because its border/text
+   colors were hard-coded for a light background. It's custom properties now,
+   so context (site-header, hero) can just override the properties below
+   instead of needing a whole separate class — one visual style everywhere,
+   auto-adapting instead of hand-matched per spot. btn-brand dropped: nothing
+   in the site referenced it. */
 .btn-primary { background: var(--color-cta); color: #000; }
-.btn-primary:hover, .btn-primary:focus { background: var(--color-cta-hover); color: #000; }
 .btn-primary:active { background: var(--color-cta-active); color: #000; }
-.btn-secondary { border-color: var(--color-divider); color: var(--color-text); }
-.btn-secondary:hover, .btn-secondary:focus {
-  background: color-mix(in srgb, var(--color-text) 7%, transparent);
-  color: var(--color-text);
+.btn-secondary {
+  --btn-secondary-border: var(--color-divider);
+  --btn-secondary-text: var(--color-text);
+  --btn-secondary-active-bg: color-mix(in srgb, var(--color-text) 14%, transparent);
+  border-color: var(--btn-secondary-border);
+  color: var(--btn-secondary-text);
 }
-.btn-secondary:active { background: color-mix(in srgb, var(--color-text) 14%, transparent); }
-.btn-brand { background: var(--color-brand-700); color: #fff; }
-.btn-brand:hover, .btn-brand:focus { background: var(--color-brand-600); color: #fff; }
+.btn-secondary:active { background: var(--btn-secondary-active-bg); }
+/* The only two dark backgrounds a secondary button sits on. Same class,
+   same shape, just a white outline instead of a gray one. */
+.site-header .btn-secondary,
+.hero .btn-secondary {
+  --btn-secondary-border: rgba(255, 255, 255, 0.7);
+  --btn-secondary-text: #fff;
+  --btn-secondary-active-bg: rgba(255, 255, 255, 0.28);
+}
 .btn-ghost { color: var(--color-accent-700); padding-inline: var(--space-2); }
-.btn-ghost:hover { background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
-.btn-on-dark { background: rgba(255, 255, 255, 0.94); color: var(--color-brand-700); }
-.btn-on-dark:hover, .btn-on-dark:focus { background: #fff; color: var(--color-brand-700); }
-.btn-outline-light { border-color: rgba(255, 255, 255, 0.7); color: #fff; }
-.btn-outline-light:hover, .btn-outline-light:focus { background: rgba(255, 255, 255, 0.16); color: #fff; }
 .btn-sm { padding: var(--space-2) var(--space-4); font-size: 14px; }
 .btn-block { width: 100%; }
 
@@ -344,14 +367,6 @@ blockquote {
 }
 
 .header-cta { display: flex; align-items: center; gap: var(--space-2); }
-/* On the charcoal shell an outlined secondary would disappear, so in the header
-   it becomes the solid white pill from the mockup. */
-.header-cta .btn-secondary { background: #fff; border-color: #fff; color: #000; }
-.header-cta .btn-secondary:hover, .header-cta .btn-secondary:focus {
-  background: var(--color-neutral-300);
-  border-color: var(--color-neutral-300);
-  color: #000;
-}
 .site-header :focus-visible { outline-color: #fff; }
 
 /* no-JS mobile menu toggle */
@@ -385,9 +400,12 @@ blockquote {
   background: var(--color-divider);
   border: 1px solid var(--color-divider);
   border-radius: var(--radius-lg);
-  overflow: hidden;
   margin: 0 0 var(--space-8);
 }
+/* No overflow: hidden on the strip — a hovered tile needs to visibly grow past
+   the strip's own edges, not just its neighbors. Clipping to the strip's
+   rounded silhouette is done per-tile instead (below), so nothing depends on
+   the parent to mask square corners. */
 .action-strip-item {
   display: flex;
   flex-direction: column;
@@ -401,8 +419,23 @@ blockquote {
   font-size: 13.5px;
   line-height: 1.3;
   text-align: center;
+  position: relative;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
-.action-strip-item:hover { background: var(--color-neutral-200); color: var(--color-accent-800); }
+.action-strip-item:first-child { border-radius: var(--radius-lg) 0 0 var(--radius-lg); }
+.action-strip-item:last-child { border-radius: 0 var(--radius-lg) var(--radius-lg) 0; }
+/* Scale in place: it grows the tile around its own center without reflowing
+   neighbors. The box-shadow stands in for a border — unlike an actual border
+   it doesn't change the box's size (no layout jump), and because it's part of
+   the tile's own paint it scales outward together with the transform, so the
+   divider line appears to move with the growing edge instead of just
+   vanishing under it. z-index keeps that edge drawn over the neighbor tile
+   rather than tucked behind it. */
+.action-strip-item:hover {
+  transform: scale(1.06);
+  z-index: 1;
+  box-shadow: 0 0 0 1px var(--color-divider);
+}
 .action-strip-icons { display: flex; align-items: center; gap: var(--space-2); }
 .action-strip-icons img { max-height: 22px; width: auto; }
 .action-strip-item strong {
@@ -411,7 +444,9 @@ blockquote {
   font-weight: var(--font-heading-weight);
   font-size: 16px;
   color: var(--color-text);
+  transition: color 0.15s ease;
 }
+.action-strip-item:hover strong { color: var(--color-accent-800); }
 
 /* ── hero ───────────────────────────────────────────────────────────────── */
 
@@ -466,13 +501,19 @@ blockquote {
   padding: var(--space-6);
   background: var(--color-surface);
   border-radius: calc(var(--radius-lg) * 1.15);
+  transition: box-shadow 0.15s ease;
 }
+/* Hover lives on .card itself rather than on a wrapping .card-link, so it
+   still fires on the cards that aren't link-wrapped (get-choice.html's
+   pricing triad, the PHP/MySQL/time triad on the download page) as well as
+   the ones that are. */
+.card:hover { box-shadow: var(--shadow-md); }
 .card-kicker {
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--color-accent-700);
+  color: var(--color-text);
 }
 .card-title {
   font-family: var(--font-heading);
@@ -480,7 +521,10 @@ blockquote {
   font-size: 23px;
   line-height: 1.2;
   margin: 0;
+  color: var(--color-accent-700);
+  transition: color 0.15s ease;
 }
+.card:hover .card-title { color: var(--color-text); }
 .card-body { margin: 0; font-size: 16.5px; color: var(--color-neutral-800); flex: 1; }
 .card-meta {
   display: flex;
@@ -493,22 +537,22 @@ blockquote {
 .elev-md { box-shadow: var(--shadow-md); }
 .elev-lg { box-shadow: var(--shadow-lg); }
 
+/* .card-link always wraps a whole .card now (get-choice.html, download.html,
+   features.html) — every card links to exactly one destination, so the whole
+   box is the click target rather than a single line inside it. */
 .card-link { text-decoration: none; color: inherit; }
-/* Direct child of a card = an inline link, not a whole-card wrapper, so it needs
-   to look like a link. The wrapper use is always a.card-link > .card. */
-.card > a.card-link {
+.card-link:hover { color: inherit; }
+/* The "See what is included"-style line inside a linked card: a plain span,
+   not a nested <a> (a card-link already wraps the card), styled the same as
+   .news-card-more so the two matching CTA patterns look the same. */
+.card-link-more {
   align-self: flex-start;
-  white-space: nowrap;
   font-weight: 600;
   font-size: 16px;
   color: var(--color-accent-700);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-.card > a.card-link:hover { color: var(--color-accent-600); }
-.card-link:hover { color: inherit; }
-.card-link:hover .card { box-shadow: var(--shadow-md); }
-.card-link:hover .card-title { color: var(--color-accent-700); }
 
 /* ── on-ramp: two ways to start ─────────────────────────────────────────── */
 
@@ -561,7 +605,9 @@ blockquote {
   background: var(--color-neutral-100);
   border: 1px solid var(--color-divider);
   border-radius: calc(var(--radius-lg) * 1.15);
+  transition: box-shadow 0.15s ease;
 }
+.tier:hover { box-shadow: var(--shadow-md); }
 .tier-featured {
   background: var(--color-surface);
   border-color: var(--color-accent-400);
@@ -585,7 +631,10 @@ blockquote {
   font-size: 22px;
   line-height: 1.1;
   margin: 0;
+  color: var(--color-accent-700);
+  transition: color 0.15s ease;
 }
+.tier:hover .tier-name { color: var(--color-text); }
 .tier-blurb { font-size: 15px; color: var(--color-neutral-800); margin: 0; min-height: 3em; }
 .tier-price {
   font-family: var(--font-heading);
@@ -919,6 +968,9 @@ blockquote {
 }
 
 .post-list { display: flex; flex-direction: column; gap: var(--space-6); }
+/* .post-teaser is the whole link now (was an <article> with three separate
+   <a>s inside it, all pointing at the same post) — one destination, so one
+   click target for the whole box, matching .news-card. */
 .post-teaser {
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr);
@@ -926,12 +978,20 @@ blockquote {
   padding: var(--space-6);
   background: var(--color-neutral-100);
   border-radius: calc(var(--radius-lg) * 1.15);
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.15s ease;
 }
+.post-teaser:hover { box-shadow: var(--shadow-md); }
 .post-teaser.no-image { grid-template-columns: minmax(0, 1fr); }
 .post-teaser-thumb { border-radius: var(--radius-md); overflow: hidden; align-self: start; }
-.post-teaser h2 { font-size: 28px; margin-bottom: var(--space-2); }
-.post-teaser h2 a { color: inherit; text-decoration: none; }
-.post-teaser h2 a:hover { color: var(--color-accent-700); }
+.post-teaser h2 {
+  font-size: 28px;
+  margin-bottom: var(--space-2);
+  color: var(--color-accent-700);
+  transition: color 0.15s ease;
+}
+.post-teaser:hover h2 { color: var(--color-text); }
 .post-meta {
   display: flex;
   align-items: center;
@@ -1026,6 +1086,7 @@ blockquote {
   border-radius: calc(var(--radius-lg) * 1.15);
   text-decoration: none;
   color: inherit;
+  transition: box-shadow 0.15s ease;
 }
 .download-card:hover { box-shadow: var(--shadow-md); color: inherit; }
 .download-card img { width: 34px; height: auto; flex: none; }
@@ -1034,7 +1095,10 @@ blockquote {
   font-family: var(--font-heading);
   font-weight: var(--font-heading-weight);
   font-size: 21px;
+  color: var(--color-accent-700);
+  transition: color 0.15s ease;
 }
+.download-card:hover strong { color: var(--color-text); }
 .download-card span { font-size: 15px; color: var(--color-neutral-700); }
 
 /* ── prose pages (markdown docs) ────────────────────────────────────────── */
@@ -1176,6 +1240,7 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   color: rgba(255, 255, 255, 0.96);
   max-width: 34ch;
 }
+.hero-text p.hero-sub + p.hero-sub { margin-top: var(--space-3); }
 .hero-media { flex: 1 1 56%; min-width: 0; max-width: 620px; }
 .hero-media .hero-thumbnail { max-width: none; display: block; }
 .hero-caption {
@@ -1185,8 +1250,8 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   color: rgba(255, 255, 255, 0.9);
 }
 .hero-play { display: block; border-radius: var(--radius-md); }
-.hero-play img { display: block; width: 100%; height: auto; transition: opacity 0.15s ease; }
-.hero-play:hover img { opacity: 0.92; }
+.hero-play img { display: block; width: 100%; height: auto; opacity: 0.92; transition: opacity 0.15s ease; }
+.hero-play:hover img { opacity: 1; }
 .hero-play:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 
 /* ── news cards (homepage) ─────────────────────────────────────────────── */
@@ -1206,9 +1271,9 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   box-shadow: var(--shadow-sm);
   text-decoration: none;
   color: inherit;
-  transition: box-shadow 0.15s ease, transform 0.15s ease;
+  transition: box-shadow 0.15s ease;
 }
-.news-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); color: inherit; }
+.news-card:hover { box-shadow: var(--shadow-md); color: inherit; }
 .news-card time {
   font-size: 13.5px;
   letter-spacing: 0.05em;
@@ -1221,9 +1286,10 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   font-weight: var(--font-heading-weight);
   font-size: 23px;
   line-height: 1.2;
-  color: var(--color-text);
+  color: var(--color-accent-700);
+  transition: color 0.15s ease;
 }
-.news-card:hover .news-card-title { color: var(--color-accent-700); }
+.news-card:hover .news-card-title { color: var(--color-text); }
 .news-card p {
   margin: 0;
   font-size: 16.5px;
@@ -1236,6 +1302,8 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   font-size: 15.5px;
   font-weight: 600;
   color: var(--color-accent-700);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .band-foot { margin: var(--space-6) 0 0; }
@@ -1304,7 +1372,15 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   .hero-lead .hero-text h1 { font-size: 27px; }
   .hero-text p.hero-sub { font-size: 18px; max-width: none; }
   .news-row { grid-template-columns: minmax(0, 1fr); }
+  /* Two columns now, so the rounded corners belong to four different tiles
+     (one each) instead of the first/last tile owning a whole rounded side. */
   .action-strip { grid-template-columns: repeat(2, 1fr); }
+  .action-strip-item:first-child,
+  .action-strip-item:last-child { border-radius: 0; }
+  .action-strip-item:nth-child(1) { border-radius: var(--radius-lg) 0 0 0; }
+  .action-strip-item:nth-child(2) { border-radius: 0 var(--radius-lg) 0 0; }
+  .action-strip-item:nth-child(3) { border-radius: 0 0 0 var(--radius-lg); }
+  .action-strip-item:nth-child(4) { border-radius: 0 0 var(--radius-lg) 0; }
   .post-teaser { grid-template-columns: minmax(0, 1fr); }
 }
 
