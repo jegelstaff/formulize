@@ -26,7 +26,7 @@ __Without an API key__, the request runs as the anonymous user. This is a suppor
 
 An API key gives access to Formulize in exactly the same way as logging in with that user's username and password, and anyone who can see the key can use it. A key in the Javascript of a web page can be read by everyone who loads that page. So give the key to a user who can see only what those visitors should see, or rely on anonymous access if the data is meant for the public.
 
-If your server does not pass the `Authorization` header through to PHP, API keys will not work, and the Public API setting will say so after you save it. On Apache, adding `CGIPassAuth On` to your .htaccess file usually solves it.
+If your server does not pass the `Authorization` header through to PHP, API keys will not work, and the Public API setting will say so after you save it. See [The Authorization header](../Public_API/#the-authorization-header) on the Public API page for how to fix it.
 
 ## Parameters
 
@@ -184,6 +184,16 @@ async function readForm(form, body) {
 }
 ```
 
+And a small function for putting data on the page. It makes an element and adds whatever you pass it as the contents. Text is always added as text, never as HTML, so values from the API cannot run as code. See [Cross-site Scripting Risks](#cross-site-scripting-risks) for why that matters.
+
+```javascript
+function el(tag, ...contents) {
+  const element = document.createElement(tag);
+  element.append(...contents);
+  return element;
+}
+```
+
 Reading data into a web page on another website, from a form that has been opened to the Anonymous group:
 
 ```javascript
@@ -198,8 +208,11 @@ async function loadDonors() {
 
   // The data is in hand, so everything from here is ordinary synchronous code.
   document.querySelector('#count').textContent = meta.count;
-  document.querySelector('#list').innerHTML =
-    data.map(d => `<li>${d.donor_name} - ${d.amount}</li>`).join('');
+  // Make an <li> for each entry, then put them all in the list in place of what was there.
+  // el() and replaceChildren() both add values as text, never as HTML.
+  document.querySelector('#list').replaceChildren(
+    ...data.map(d => el('li', `${d.donor_name} - ${d.amount}`))
+  );
 }
 
 loadDonors().catch(err => {
@@ -255,12 +268,24 @@ const { data } = await readForm('countries', {
   relationship: -1
 });
 
-document.querySelector('#out').innerHTML = data.map(country => `
-  <h2>${country.country_name}</h2>
-  <ul>${(country.related?.cities ?? [])
-        .map(c => `<li>${c.city_name}</li>`).join('')}</ul>
-`).join('');
+document.querySelector('#out').replaceChildren(...data.flatMap(country => [
+  el('h2', country.country_name),
+  el('ul', ...(country.related?.cities ?? []).map(city => el('li', city.city_name)))
+]));
 ```
+
+### Cross-site Scripting Risks
+
+__Do not put values from the API into `innerHTML`, `outerHTML`, `insertAdjacentHTML()` or other functions and methods that treat a string as HTML.__ The Formulize API returns values exactly as they were entered, regardless of whether you ask for _raw_ values (in the `read` method, _raw_ values as a concept relates to things like foreign keys in the Formulize database).
+
+When Formulize displays data in its own screens it makes the data safe to show, but when you request data through the API, you get exactly what is in the database. It's your job to take appropriate steps to make it safe.
+
+A value like `<img src=x onerror="...">` is returned as those characters, and a rich text field is returned as its HTML. Put that into `innerHTML` and the browser runs it as part of your page. Anyone who can fill in the form in Formulize, including anonymous visitors if the form allows them, could then run their own script on your website, for everyone who visits it.
+
+This is called cross-site scripting (XSS). To show values safely, build the elements yourself and add values to them as text. `textContent`, `append()` and `replaceChildren()` all treat a string as plain text, which is what the examples above use. `innerHTML`, `outerHTML` and `insertAdjacentHTML()` treat a string as HTML, __so never give them values from the API__. If you really need to show a rich text field's formatting, clean the HTML first with a sanitizer such as [DOMPurify](https://github.com/cure53/DOMPurify): `DOMPurify.sanitize(value)`.
+
+The greatest risk is when a form in Formulize is open for public submissions, and you are displaying data from those submissions. If there are restrictions on who can submit data, the risk is lower, but the risk is never zero, because even trusted users can have their accounts stolen, hijacked, etc, and then data that you might believe is trusted can actually be malicious.
+
 
 ### From a server, a script, or a tool such as Zapier or Make
 
