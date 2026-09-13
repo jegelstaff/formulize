@@ -28,12 +28,6 @@ An API key gives access to Formulize in exactly the same way as logging in with 
 
 If your server does not pass the `Authorization` header through to PHP, API keys will not work, and the Public API setting will say so after you save it. On Apache, adding `CGIPassAuth On` to your .htaccess file usually solves it.
 
-## Calling from another website
-
-Javascript on another website can only read the response if an administrator has listed that site under __Websites allowed to call the Public API__, in Settings &rarr; Advanced &rarr; Public API. Leave that setting blank and no other website can call the API from a browser.
-
-That setting controls web browsers. It is not a substitute for permissions: what any caller can read is still decided by Formulize permissions.
-
 ## Parameters
 
 | Parameter | Description |
@@ -148,19 +142,20 @@ Errors return an http status code and a body like this:
 
 ## Examples
 
-Reading data into a web page on another website:
+### Calling from another website
+
+Javascript on another website can only read the response if an administrator has listed that site under __Websites allowed to call the Public API__, in Settings &rarr; Advanced &rarr; Public API. Leave that setting blank and no other website can call the API from a browser.
+
+That setting controls web browsers. It is not a substitute for permissions: what any caller can read is still decided by Formulize permissions.
+
+Reading data into a web page on another website, from a form that has been opened to the Anonymous group:
 
 ```javascript
-const API_KEY = '8f3ca19d...';
-
 async function loadDonors() {
   const res = await fetch(
     'https://example.org/formulize-public-api/v1/form/donors/read',
     { method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${API_KEY}`,
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         fields: ['donor_name', 'amount'],
         filter: [ { element: 'amount', value: '100', operator: '>' } ],
@@ -189,7 +184,21 @@ loadDonors().catch(err => {
 
 An `async` function returns a promise, so always attach a `catch` where you call it, or errors will pass silently.
 
-To read a form that has been opened to the Anonymous group, leave out the `Authorization` header.
+The same request with an API key, which runs as the key's user instead of the anonymous user. Anyone who loads the page can read the key, so see [Authentication](#authentication) before using one this way:
+
+```javascript
+const API_KEY = '8f3ca19d...';
+
+const res = await fetch(
+  'https://example.org/formulize-public-api/v1/form/donors/read',
+  { method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ fields: ['donor_name', 'amount'] }) }
+);
+```
 
 Reading two forms at once, by starting both requests before waiting for either:
 
@@ -197,10 +206,7 @@ Reading two forms at once, by starting both requests before waiting for either:
 const read = (form, body) =>
   fetch(`https://example.org/formulize-public-api/v1/form/${form}/read`, {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${API_KEY}`,
-      'Content-Type': 'application/json'
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
   }).then(r => r.json());
 
@@ -225,7 +231,7 @@ document.querySelector('#out').innerHTML = data.map(country => `
 `).join('');
 ```
 
-From a server, a script, or a tool such as Zapier or Make:
+### From a server, a script, or a tool such as Zapier or Make
 
 ```
 curl -X POST https://example.org/formulize-public-api/v1/form/donors/read \
