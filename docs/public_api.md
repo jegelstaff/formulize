@@ -12,6 +12,8 @@ Formulize has a public API that currently behaves in a REST-like manner. The pub
 * [queue processing](queue)
 * [reading entries from a form](read)
 
+Requests that choose which entries to work with use the same [filter format](filters).
+
 ## Enabling the Public API
 
 The Public API must be enabled through the Formulize preferences, and a rewrite rule needs to be added to your server, so that API requests are routed to the correct place.
@@ -33,13 +35,39 @@ RewriteCond %{REQUEST_FILENAME} !-l
 RewriteRule ^(.*)$ /modules/formulize/public_api/index.php?apiPath=$1 [L,B,QSA]
 ```
 
+## Authentication
+
+A request either carries an API key or it does not.
+
+__With an API key__, the request runs as the user the key belongs to, and sees exactly the data that user can see. Send the key as an `Authorization: Bearer` header. Create keys on the __Manage API Keys__ page in the Formulize admin.
+
+```
+Authorization: Bearer 8f3ca19d...
+```
+
+__Without an API key__, the request runs as the anonymous user. This is a supported way to publish data, not an error. It returns nothing at all unless an administrator has granted the Anonymous group permission to view the form, so nothing is exposed by accident.
+
+An API key gives access to Formulize in exactly the same way as logging in with that user's username and password, and anyone who can see the key can use it. A key in the Javascript of a web page can be read by everyone who loads that page. So give the key to a user who can see only what those visitors should see, or rely on anonymous access if the data is meant for the public.
+
+Use `POST` rather than `GET` when you send a key, where the endpoint allows it. Some servers and proxies record full URLs in their logs, and a browser keeps them in its history, so anything in a query string can end up stored somewhere you did not intend.
+
 ## The Authorization header
 
 The two lines above that mention `Authorization` are there to make **API keys** work. Many server configurations - CGI, and some FastCGI and PHP-FPM setups - **remove that header before PHP ever sees it**, unless they are explicitly told not to. This is a property of the web server, not of Formulize, and it affects any application that authenticates this way.
 
 ### Checking whether your server passes it
 
-The status endpoint reports this directly. Send it a request with any `Authorization` header:
+Formulize checks this for you. If it finds that your server is stripping the header, a warning
+appears in the Formulize settings under the Public API setting, and on the **API keys** page, with
+a button that re-runs the test after you have changed your server configuration.
+
+No warning means the test did not find a problem. The test is a request your server makes to
+itself, though, so it cannot see a proxy, load balancer, or CDN in front of your site, and those
+can strip the header too. If API keys still do not work, see the troubleshooting steps below.
+
+### Troubleshooting
+
+To check by hand, send the status endpoint a request with any `Authorization` header:
 
 ```
 curl -H "Authorization: Bearer anything" https://yoursite.org/formulize-public-api/v1/status
@@ -58,11 +86,9 @@ If `authorization_header_received` is `false`, your server is stripping the head
 will ever work. The key itself does not need to be valid for this check - the status endpoint does
 not authenticate, it only reports whether the header arrived.
 
-Formulize also checks this for you. If it finds the header is being stripped, a warning appears
-in the Formulize settings under the Public API setting, and on the **API keys** page, with a
-button that re-runs the test after you have changed your server configuration. A request that is
-refused on permissions while carrying no `Authorization` header also gets an extra `hint` field
-in its error response explaining both possibilities.
+A request that is refused on permissions while carrying no `Authorization` header also gets an
+extra `hint` field in its error response, explaining that the request was handled as anonymous,
+or that the server may have stripped the key.
 
 ### Fixing it
 
@@ -93,7 +119,7 @@ header too, before the request ever reaches your web server. Formulize's own che
 that, because it tests by making a request to itself and never goes out through the proxy. If
 the check says the header is fine but your keys still do not work, look there next.
 
-### What is not affected
+### What is not affected by the Authorization Header
 
 - **Requests from pages on your own site.** Browser Javascript on this site is authenticated by
   the visitor's existing login session, and never sends an API key.
@@ -103,6 +129,6 @@ the check says the header is fine but your keys still do not work, look there ne
   Those are query string parameters, not headers.
 - **The embedded AI Assistant**, which runs inside Formulize using your own login.
 
-The **MCP Server** setting *is* affected, and more strictly: an external AI assistant has no way
-to sign in other than an API key in this header, so Formulize will not let that setting be turned
+The **External AI** setting *is* affected, and strictly: an external AI assistant has no way
+to sign in other than an API key in this header, so Formulize will not let the _External AI_ setting be turned
 on at all until the header gets through.

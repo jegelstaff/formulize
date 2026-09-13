@@ -14,26 +14,16 @@ If the API is not enabled, a 503 http error is returned.
 
 ## Authentication
 
-A request either carries an API key or it does not.
+A request with an API key, sent as an `Authorization: Bearer` header, runs as the user the key belongs to and sees exactly what that user can see. A request without one runs as the anonymous user, and only sees forms that have been opened to the Anonymous group.
 
-__With an API key__, the request runs as the user the key belongs to, and sees exactly the data that user can see. Send the key as an `Authorization: Bearer` header. Create keys on the __Manage API Keys__ page in the Formulize admin.
-
-```
-Authorization: Bearer 8f3ca19d...
-```
-
-__Without an API key__, the request runs as the anonymous user. This is a supported way to publish data, not an error. It returns nothing at all unless an administrator has granted the Anonymous group permission to view the form, so nothing is exposed by accident.
-
-An API key gives access to Formulize in exactly the same way as logging in with that user's username and password, and anyone who can see the key can use it. A key in the Javascript of a web page can be read by everyone who loads that page. So give the key to a user who can see only what those visitors should see, or rely on anonymous access if the data is meant for the public.
-
-If your server does not pass the `Authorization` header through to PHP, API keys will not work, and the Public API setting will say so after you save it. See [The Authorization header](../Public_API/#the-authorization-header) on the Public API page for how to fix it.
+See [Authentication](../Public_API/#authentication) on the Public API page for how keys work, and how to keep them safe.
 
 ## Parameters
 
 | Parameter | Description |
 |---|---|
 | __fields__ | __Required.__ The element handles to return. Metadata field names such as `creation_datetime` can be included too. `entry_id` is always returned. |
-| filter | Which entries to return. See below. |
+| filter | Which entries to return. See [Filters](#filters) below, and the [Filters](filters) page for everything filters can do. |
 | andOr | `AND` or `OR`, between the top level items of _filter_. Defaults to `AND`. |
 | sortField | An element handle or metadata field name to sort by. Defaults to `entry_id`. |
 | sortOrder | `ASC` or `DESC`. Defaults to `ASC`. |
@@ -46,7 +36,7 @@ Requesting a field you do not have permission to see is an error, not a silent o
 
 ## Filters
 
-The preferred form is a list of conditions. Each needs an _element_ and a _value_. The _operator_ is optional and defaults to `LIKE`, so a plain condition is a partial text match.
+_filter_ decides which entries are returned. It is a list of conditions, each with an _element_ and a _value_, and optionally an _operator_. The operator defaults to `LIKE`, which is a partial text match:
 
 ```json
 "filter": [
@@ -55,42 +45,9 @@ The preferred form is a list of conditions. Each needs an _element_ and a _value
 ]
 ```
 
-Valid operators are `=`, `!=`, `>`, `<`, `>=`, `<=`, `LIKE` and `NOT LIKE`. Use the value `{BLANK}` to find entries where a field is empty, or combine it with `!=` to find entries where it is not.
+The conditions are joined by _andOr_, which is `AND` unless you say otherwise, so this returns major donors who gave more than 100.
 
-Filter linked elements by the value you can read on screen, not by the foreign key stored underneath. The API resolves it for you.
-
-Top level items are joined by _andOr_. To use a different operator for part of the expression, wrap conditions in a group. `any` puts `OR` between them, `all` puts `AND`:
-
-```json
-"filter": [
-  {"element": "status", "value": "active", "operator": "="},
-  {"any": [
-    {"element": "region", "value": "east", "operator": "="},
-    {"element": "region", "value": "west", "operator": "="}
-  ]}
-]
-```
-
-That reads as _status = active AND (region = east OR region = west)_.
-
-A `none` group finds entries that have __no connected entry__ matching its conditions. It needs a _relationship_, and every condition in it has to be on the same connected form. This returns donors who have not given any BCE artifacts, including donors who have given no artifacts at all:
-
-```json
-"relationship": -1,
-"filter": [
-  {"none": [
-    {"element": "artifacts_era", "value": "BCE", "operator": "="}
-  ]}
-]
-```
-
-All the conditions in a `none` group have to be true of the same connected entry. `{"none": [era = CE, short_name LIKE Coin]}` rules out donors who gave a CE coin, not donors who gave a CE artifact and, separately, some coin. Use one `none` group per connected form, and more than one if you need separate tests on the same form.
-
-A `none` group cannot be used when _andOr_ is `OR`, cannot use metadata fields, and cannot contain other groups. A `{BLANK}` test with `=` has to be the only condition in its `none` group; with `!=` it can sit alongside others.
-
-A filter can also be a single number, meaning one entry id.
-
-You can only filter on a field you have permission to see. Filtering on a field reveals its contents just as returning it does, so a field that would be refused in _fields_ is refused in _filter_ and in _sortField_ too. A value cannot contain `][` or `/**/`, which are reserved by the filter format.
+Filters can do a lot more: mix `AND` and `OR`, find blank values, and find entries that have no connected entry matching a condition. The [Filters](filters) page covers all of it.
 
 ## The response
 
@@ -194,7 +151,16 @@ function el(tag, ...contents) {
 }
 ```
 
-Reading data into a web page on another website, from a form that has been opened to the Anonymous group:
+#### Reading data into a web page
+
+This example reads from a form that has been opened to the Anonymous group. First, the HTML where the data will go:
+
+```html
+<p>Number of donors: <span id="count"></span></p>
+<ul id="list"><li>Loading donors...</li></ul>
+```
+
+The loading message is part of the page, so it shows as soon as the page does, and no code is needed to take it away. When the data arrives, `replaceChildren()` puts it in place of the message, and if something goes wrong, the error message replaces it instead. Then the Javascript:
 
 ```javascript
 async function loadDonors() {
