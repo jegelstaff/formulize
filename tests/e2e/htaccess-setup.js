@@ -16,6 +16,16 @@ module.exports = async () => {
   const htaccessContent = `
 RewriteEngine On
 
+# Pass the Authorization header through to PHP, which is what makes API keys work. Kept here
+# so the dev site matches the .htaccess the setup instructions give administrators, rather
+# than only working because this container happens to run mod_php, where the header survives
+# anyway. formulize_publicApiGetAuthorizationHeader() reads the REDIRECT_HTTP_AUTHORIZATION
+# this sets. The mod_rewrite form is used rather than CGIPassAuth because it needs nothing
+# beyond mod_rewrite, which the Public API rule below already requires, and it cannot 500 on
+# an older Apache or under a stricter AllowOverride.
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
 # Public API
 RewriteCond %{REQUEST_URI} ^/formulize-public-api/ [NC]
 RewriteCond %{REQUEST_FILENAME} !-f

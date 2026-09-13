@@ -170,6 +170,16 @@ function formulize_configFormElementHtml($config) {
         return $ele->render() . formulize_publicApiAuthHeaderWarningHtml();
     }
 
+    // Same idea, different consequence. A stripped header does not stop the Public API being
+    // enabled, but it does stop this one: an external MCP client has no way in except an API
+    // key in that header, so the enable check treats it as a precondition and forces the
+    // setting back off. Without this, that presents as a preference that will not save, with
+    // nothing on the page saying why.
+    if ($name === 'formulizeMCPServerEnabled') {
+        $ele = new icms_form_elements_Radioyn('', $name, $value, _YES, _NO);
+        return $ele->render() . formulize_mcpAuthHeaderWarningHtml();
+    }
+
     switch ($formtype) {
 
         case 'aikey':

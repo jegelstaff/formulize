@@ -11574,27 +11574,33 @@ function formulize_selfRequestUrl($path = '') {
  * Kept in the session rather than the database because it is a fact about the server, not
  * about the site: it is cheap to establish again, it is only ever shown to an administrator,
  * and an answer that goes stale on its own is exactly what is wanted here. See
- * formulize_publicApiAuthHeaderPassthrough() for why any of this exists.
+ * formulize_authHeaderPassthrough() for why any of this exists.
  *
  * @param bool $passedThrough What the probe found
  * @return bool The value recorded
  */
-function formulize_recordPublicApiAuthHeaderPassthrough($passedThrough) {
-    $_SESSION['formulize_publicApiAuthHeaderPassthrough'] = (bool) $passedThrough;
-    $_SESSION['formulize_publicApiAuthHeaderPassthroughTime'] = time();
-    return $_SESSION['formulize_publicApiAuthHeaderPassthrough'];
+function formulize_recordAuthHeaderPassthrough($passedThrough) {
+    $_SESSION['formulize_authHeaderPassthrough'] = (bool) $passedThrough;
+    $_SESSION['formulize_authHeaderPassthroughTime'] = time();
+    return $_SESSION['formulize_authHeaderPassthrough'];
 }
 
 /**
  * Whether this server passes the Authorization header through to PHP.
  *
  * Some server configurations, notably CGI and some FastCGI setups, strip it unless they are
- * explicitly told to pass it through. When that happens nothing looks broken: the Public API
- * and the MCP server both keep working for session based and anonymous callers, and the site
- * itself is unaffected. But every API key silently authenticates as nobody, and the caller is
- * refused with a permission error, which sends whoever is debugging it looking at groups and
- * permissions - the one place the problem is not. Hence going to this much trouble to say it
- * out loud.
+ * explicitly told to pass it through, and both features that authenticate with an API key then
+ * fail in a way that names something other than the cause. The Public API carries on working
+ * for session and anonymous callers, so nothing looks broken, but every key silently
+ * authenticates as nobody and the caller is refused with a permission error - which sends
+ * whoever is debugging it looking at groups and permissions, the one place the problem is not.
+ * The MCP Server preference simply refuses to stay on, because its enable check treats the
+ * header as a precondition and there is no other way for an external client to sign in. Hence
+ * going to this much trouble to say it out loud.
+ *
+ * The probe goes to the Public API's status endpoint, but what it establishes is a property of
+ * the server, so it is equally the answer for MCP: same Apache, same request, and the status
+ * endpoint answers whether or not the Public API preference itself is on.
  *
  * It cannot be answered from inside an ordinary page request, because the administrator's
  * browser does not send an Authorization header. The only way to find out is to have the
@@ -11620,13 +11626,13 @@ function formulize_recordPublicApiAuthHeaderPassthrough($passedThrough) {
  *                   cannot reach itself is a different problem, with its own warning on the
  *                   settings page.
  */
-function formulize_publicApiAuthHeaderPassthrough($maxAgeSeconds = 300) {
+function formulize_authHeaderPassthrough($maxAgeSeconds = 300) {
 
     if($maxAgeSeconds > 0
-        AND isset($_SESSION['formulize_publicApiAuthHeaderPassthrough'])
-        AND isset($_SESSION['formulize_publicApiAuthHeaderPassthroughTime'])
-        AND (time() - intval($_SESSION['formulize_publicApiAuthHeaderPassthroughTime'])) < $maxAgeSeconds) {
-        return $_SESSION['formulize_publicApiAuthHeaderPassthrough'];
+        AND isset($_SESSION['formulize_authHeaderPassthrough'])
+        AND isset($_SESSION['formulize_authHeaderPassthroughTime'])
+        AND (time() - intval($_SESSION['formulize_authHeaderPassthroughTime'])) < $maxAgeSeconds) {
+        return $_SESSION['formulize_authHeaderPassthrough'];
     }
 
     if(!function_exists('curl_version')) {
@@ -11648,15 +11654,20 @@ function formulize_publicApiAuthHeaderPassthrough($maxAgeSeconds = 300) {
         return null;
     }
 
-    return formulize_recordPublicApiAuthHeaderPassthrough(!empty($json->authorization_header_received));
+    return formulize_recordAuthHeaderPassthrough(!empty($json->authorization_header_received));
 }
 
 /**
  * The warning to show an administrator when this server strips the Authorization header.
  *
- * One wording, in one place, so the advice cannot drift apart between the settings page and
- * the API keys page. Renders nothing at all unless the header is known to be stripped, so it
- * is safe to drop into any admin page that has something to do with API keys.
+ * The consequence differs by where it is shown, because the two features that depend on the
+ * header fail in genuinely different ways - the Public API stays on and quietly refuses keys,
+ * while the MCP Server preference refuses to turn on at all - so each caller supplies that
+ * paragraph. Everything else is shared: the same probe, the same fix, the same button, and the
+ * same caveat, so the advice cannot drift apart between the pages that give it.
+ *
+ * Renders nothing at all unless the header is known to be stripped, so it is safe to drop into
+ * any admin page that has something to do with API keys.
  *
  * Deliberately phrased as what the test observed, naming the URL it used, rather than as a
  * flat assertion about all traffic. The test is a request this server makes to itself, and
@@ -11666,32 +11677,77 @@ function formulize_publicApiAuthHeaderPassthrough($maxAgeSeconds = 300) {
  * administrator who is in one of them needs to be able to see that from the warning itself
  * rather than spending the afternoon on the other side of the false alarm.
  *
- * @param int $maxAgeSeconds Passed through to formulize_publicApiAuthHeaderPassthrough()
+ * @param string $consequenceHtml The paragraph saying what this breaks, for where it is shown
+ * @param int $maxAgeSeconds Passed through to formulize_authHeaderPassthrough()
  * @return string HTML for the warning, or an empty string when there is nothing to warn about
  */
-function formulize_publicApiAuthHeaderWarningHtml($maxAgeSeconds = 300) {
-    if(formulize_publicApiAuthHeaderPassthrough($maxAgeSeconds) !== false) {
+function formulize_authHeaderWarningHtml($consequenceHtml, $maxAgeSeconds = 300) {
+    if(formulize_authHeaderPassthrough($maxAgeSeconds) !== false) {
         return '';
     }
     $testedUrl = htmlspecialchars(formulize_selfRequestUrl('/formulize-public-api/v1/status/'));
     return "<div class='formulize-authheader-warning'>"
         ."<b>This server appears to be stripping the <i>Authorization</i> header.</b>"
-        ."<p>An API key sent in that header never reaches Formulize, so the request is treated as "
-        ."anonymous and refused with a permission error that looks like a Formulize permissions problem "
-        ."instead. That affects the Public API and any external AI assistant connecting through the MCP "
-        ."server. A key sent in a URL, such as the Google Sheets one on the API keys page, is not "
-        ."affected, and neither is anything else on this site: the Public API still works for pages on "
-        ."this site, and for anonymous access to forms you have opened to the Anonymous group.</p>"
+        .$consequenceHtml
         ."<p>On Apache, adding <span class='formulize-authheader-code'>CGIPassAuth On</span> to the "
         ."<span class='formulize-authheader-code'>.htaccess</span> file at the root of your site usually "
         ."solves it. Once you have made the change, test it again here.</p>"
-        .formulize_publicApiAuthHeaderRecheckHtml()
+        .formulize_authHeaderRecheckHtml()
         ."<p style='font-size: 0.9em; color: #666;'>The test sent an <i>Authorization</i> header from this "
         ."server to <span class='formulize-authheader-code'>$testedUrl</span> and it did not arrive. If "
         ."public traffic reaches this site by a different route - through a proxy or load balancer, or on "
         ."a hostname that resolves elsewhere from here - then that is not the journey your API callers "
         ."make, and a key may work for them regardless.</p>"
         ."</div>";
+}
+
+/**
+ * The Authorization header warning, worded for the Public API and the API keys page.
+ *
+ * The Public API does not stop working when the header is stripped - it stays on, and session
+ * and anonymous callers are unaffected - so what needs saying is that keys specifically are
+ * being dropped, and that the permission error the caller sees is not what it looks like.
+ *
+ * @param int $maxAgeSeconds Passed through to formulize_authHeaderPassthrough()
+ * @return string HTML for the warning, or an empty string when there is nothing to warn about
+ */
+function formulize_publicApiAuthHeaderWarningHtml($maxAgeSeconds = 300) {
+    return formulize_authHeaderWarningHtml(
+        "<p>An API key sent in that header never reaches Formulize, so the request is treated as "
+        ."anonymous and refused with a permission error that looks like a Formulize permissions problem "
+        ."instead. That affects the Public API and any external AI assistant connecting through the MCP "
+        ."server. A key sent in a URL, such as the Google Sheets one on the API keys page, is not "
+        ."affected, and neither is anything else on this site: the Public API still works for pages on "
+        ."this site, and for anonymous access to forms you have opened to the Anonymous group.</p>",
+        $maxAgeSeconds
+    );
+}
+
+/**
+ * The Authorization header warning, worded for the MCP Server preference.
+ *
+ * The MCP server fails differently from the Public API, and worse. An external MCP client has
+ * no session and no anonymous mode - an API key in the Authorization header is the only way in
+ * - so the check that runs when the preference is saved treats the header as a precondition and
+ * refuses to let the setting stay on without it (see the enable check in
+ * icms_config_item_Handler::insert, and canBeEnabled in mcp/mcp.php). That is the right call,
+ * but on its own it presents as a preference that silently will not save, with nothing
+ * anywhere naming the cause. This is what names it.
+ *
+ * @param int $maxAgeSeconds Passed through to formulize_authHeaderPassthrough()
+ * @return string HTML for the warning, or an empty string when there is nothing to warn about
+ */
+function formulize_mcpAuthHeaderWarningHtml($maxAgeSeconds = 300) {
+    return formulize_authHeaderWarningHtml(
+        "<p><b>This is why the MCP Server setting will not stay turned on.</b> An external AI assistant "
+        ."identifies itself with an API key in that header, and has no other way to sign in, so the check "
+        ."that runs when you save this setting requires the header to arrive. It did not, so the setting "
+        ."is switched back off rather than left on in a state where no assistant could ever connect.</p>"
+        ."<p>Fix the header and the setting will save normally. Nothing else on this site is affected, and "
+        ."the embedded AI Assistant, which runs inside Formulize using your own login rather than a key, "
+        ."works regardless.</p>",
+        $maxAgeSeconds
+    );
 }
 
 /**
@@ -11708,7 +11764,7 @@ function formulize_publicApiAuthHeaderWarningHtml($maxAgeSeconds = 300) {
  *
  * @return string HTML for the button, and on first call the script and styles behind it
  */
-function formulize_publicApiAuthHeaderRecheckHtml() {
+function formulize_authHeaderRecheckHtml() {
     static $rendered = false;
     $button = "<p><button type='button' class='formulize-authheader-recheck'>Test the Authorization header again</button> "
         ."<span class='formulize-authheader-result'></span></p>";

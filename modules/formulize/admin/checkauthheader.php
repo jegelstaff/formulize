@@ -42,7 +42,7 @@ if(!$xoopsUser OR !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
     exit();
 }
 
-$passthrough = formulize_publicApiAuthHeaderPassthrough(0); // 0 means do not use the cached answer
+$passthrough = formulize_authHeaderPassthrough(0); // 0 means do not use the cached answer
 
 if($passthrough === true) {
     $message = 'The Authorization header is reaching Formulize. API keys will work.';

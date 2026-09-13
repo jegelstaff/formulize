@@ -167,12 +167,18 @@ foreach($formulizeConfig as $thisConfig=>$thisConfigValue) {
 		$publicAPIInstructions = "<br><br>For the Public API to work, you will need to add code similar to this, to the .htaccess file at the root of your website. Make sure to put it above any rewrite rules that handle alternate URLs.
 		<blockquote style=\"font-weight: normal; font-family: monospace; white-space: nowrap;\">
 		RewriteEngine On<br>
-		RewriteCond %{REQUEST_URI} ^/formulize-public-api/ [NC]
+		<br>
+		RewriteCond %{HTTP:Authorization} .<br>
+		RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]<br>
+		<br>
+		RewriteCond %{REQUEST_URI} ^/formulize-public-api/ [NC]<br>
 		RewriteCond %{REQUEST_FILENAME} !-f<br>
 		RewriteCond %{REQUEST_FILENAME} !-d<br>
 		RewriteCond %{REQUEST_FILENAME} !-l<br>
 		RewriteRule ^(.*)$ /modules/formulize/public_api/index.php?apiPath=$1 [L,B,QSA]<br>
-		</blockquote><i>If you enabled this option, but these instructions are still here, and the option is off again, then your server is not yet properly configured for the Public API.</i>";
+		</blockquote>
+		The two lines mentioning <i>Authorization</i> are not part of the routing - they are what make <i>API keys</i> work. A key travels in an <i>Authorization</i> header, and many servers drop that header before PHP ever sees it, which leaves every key authenticating as nobody - the caller is told they do not have permission, with nothing pointing at the real cause. Those two lines hand the header to PHP under a name Formulize also reads. If your server still strips it, adding <span style=\"font-family: monospace;\">CGIPassAuth On</span> to the same file is the other way to fix it.<br><br>
+		<i>If you enabled this option, but these instructions are still here, and the option is off again, then your server is not yet properly configured for the Public API.</i>";
 		break;
 	}
 	// The other thing that can be wrong here - this server stripping the Authorization
