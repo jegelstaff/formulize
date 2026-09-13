@@ -35,6 +35,18 @@ RewriteCond %{REQUEST_FILENAME} !-l
 RewriteRule ^(.*)$ /modules/formulize/public_api/index.php?apiPath=$1 [L,B,QSA]
 ```
 
+These rules go in the `.htaccess` file in the root folder of your website, the folder that contains `mainfile.php`.
+
+If your website is in a subfolder of its domain, such as `https://example.org/system`, then two of the lines need that subfolder at the start of their paths:
+
+```
+RewriteCond %{REQUEST_URI} ^/system/formulize-public-api/ [NC]
+...
+RewriteRule ^(.*)$ /system/modules/formulize/public_api/index.php?apiPath=$1 [L,B,QSA]
+```
+
+Until the Public API is enabled, the Formulize preferences page shows these rules under the Public API setting, with the correct paths for your website already filled in.
+
 ## Authentication
 
 A request either carries an API key or it does not.

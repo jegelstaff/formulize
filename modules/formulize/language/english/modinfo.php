@@ -144,16 +144,21 @@ define("_MI_formulize_FORMULIZELOGFILELOCATIONDESC", "Formulize generates log fi
 define("_MI_formulize_formulizeLogFileStorageDurationHours", "How long should Formulize log files be kept (in hours)");
 define("_MI_formulize_formulizeLogFileStorageDurationHoursDESC", "After this many hours, the log files will be deleted from the server.");
 
+// The path this site lives at within its domain, eg: /system for a site at example.org/system, or
+// nothing for a site at the root of its domain. The .htaccess examples below need it in their
+// absolute paths, so that they work as is when copied from a site that is in a subfolder.
+$formulizeSitePath = htmlspecialchars(rtrim((string) parse_url(XOOPS_URL, PHP_URL_PATH), '/'));
+
 $rewriteRuleInstructions = '';
 foreach($formulizeConfig as $thisConfig=>$thisConfigValue) {
 	if($thisConfig == 'formulizeRewriteRulesEnabled' AND $thisConfigValue == 0) {
-		$rewriteRuleInstructions = "<br><br>For alternate URLs to work, you will need to add code similar to this, to the .htaccess file at the root of your website:
+		$rewriteRuleInstructions = "<br><br>For alternate URLs to work, you will need to add code similar to this, to the .htaccess file in the root folder of your website (the folder that contains mainfile.php):
 		<blockquote style=\"font-weight: normal; font-family: monospace; white-space: nowrap;\">
 		RewriteEngine On<br>
 		RewriteCond %{REQUEST_FILENAME} !-f<br>
 		RewriteCond %{REQUEST_FILENAME} !-d<br>
 		RewriteCond %{REQUEST_FILENAME} !-l<br>
-		RewriteRule ^(.*)$ /modules/formulize/index.php?formulizeRewriteRuleAddress=$1 [L,B,QSA]<br>
+		RewriteRule ^(.*)$ $formulizeSitePath/modules/formulize/index.php?formulizeRewriteRuleAddress=$1 [L,B,QSA]<br>
 		</blockquote><i>If you enabled this option, but these instructions are still here, and the option is off again, then your server is not yet properly configured for alternate URLs.</i>";
 		break;
 	}
@@ -164,18 +169,18 @@ define("_MI_formulize_rewriteRulesEnabledDESC", "When this is enabled, you can s
 $publicAPIInstructions = '';
 foreach($formulizeConfig as $thisConfig=>$thisConfigValue) {
 	if($thisConfig == 'formulizePublicAPIEnabled' AND $thisConfigValue == 0) {
-		$publicAPIInstructions = "<br><br>For the Public API to work, you will need to add code similar to this, to the .htaccess file at the root of your website. Make sure to put it above any rewrite rules that handle alternate URLs.
+		$publicAPIInstructions = "<br><br>For the Public API to work, you will need to add code similar to this, to the .htaccess file in the root folder of your website (the folder that contains mainfile.php). Make sure to put it above any rewrite rules that handle alternate URLs.
 		<blockquote style=\"font-weight: normal; font-family: monospace; white-space: nowrap;\">
 		RewriteEngine On<br>
 		<br>
 		RewriteCond %{HTTP:Authorization} .<br>
 		RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]<br>
 		<br>
-		RewriteCond %{REQUEST_URI} ^/formulize-public-api/ [NC]<br>
+		RewriteCond %{REQUEST_URI} ^$formulizeSitePath/formulize-public-api/ [NC]<br>
 		RewriteCond %{REQUEST_FILENAME} !-f<br>
 		RewriteCond %{REQUEST_FILENAME} !-d<br>
 		RewriteCond %{REQUEST_FILENAME} !-l<br>
-		RewriteRule ^(.*)$ /modules/formulize/public_api/index.php?apiPath=$1 [L,B,QSA]<br>
+		RewriteRule ^(.*)$ $formulizeSitePath/modules/formulize/public_api/index.php?apiPath=$1 [L,B,QSA]<br>
 		</blockquote>
 		The two lines mentioning <i>Authorization</i> are not part of the routing - they are what make <i>API keys</i> work. A key travels in an <i>Authorization</i> header, and many servers drop that header before PHP ever sees it, which leaves every key authenticating as nobody - the caller is told they do not have permission, with nothing pointing at the real cause. Those two lines hand the header to PHP under a name Formulize also reads. If your server still strips it, adding <span style=\"font-family: monospace;\">CGIPassAuth On</span> to the same file is the other way to fix it.<br><br>
 		<i>If you enabled this option, but these instructions are still here, and the option is off again, then your server is not yet properly configured for the Public API.</i>";

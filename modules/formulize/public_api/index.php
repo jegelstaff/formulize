@@ -58,6 +58,11 @@ if(!defined('XOOPS_MAINFILE_INCLUDED')) {
 // rewrite rules are not set up.
 $formulize_apiRequestUri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
 $formulize_apiRequestPath = (string) parse_url($formulize_apiRequestUri, PHP_URL_PATH);
+// A site in a subfolder of its domain, eg: example.org/system, receives /system/formulize-public-api/...
+$formulize_apiSitePath = rtrim((string) parse_url(XOOPS_URL, PHP_URL_PATH), '/');
+if($formulize_apiSitePath AND stripos($formulize_apiRequestPath, $formulize_apiSitePath.'/') === 0) {
+    $formulize_apiRequestPath = substr($formulize_apiRequestPath, strlen($formulize_apiSitePath));
+}
 if(stripos($formulize_apiRequestPath, '/formulize-public-api/') === 0) {
     $formulize_apiPath = ltrim($formulize_apiRequestPath, '/');
 } else {
