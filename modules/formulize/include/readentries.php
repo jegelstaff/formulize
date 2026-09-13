@@ -30,7 +30,7 @@
  */
 
 if (!defined('XOOPS_ROOT_PATH')) {
-    exit();
+	exit();
 }
 
 include_once XOOPS_ROOT_PATH.'/modules/formulize/class/apiexception.php';
@@ -42,7 +42,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/extract.php';
  * @return array
  */
 function formulize_apiFilterOperators() {
-    return array('=', '!=', '>', '<', '>=', '<=', 'LIKE', 'NOT LIKE');
+	return array('=', '!=', '>', '<', '>=', '<=', 'LIKE', 'NOT LIKE');
 }
 
 /**
@@ -65,143 +65,143 @@ function formulize_apiFilterOperators() {
  */
 function formulize_readEntries($formIdOrHandle, $options = array(), $user = null) {
 
-    $user = formulize_resolveUserObject($user);
-    $groups = formulize_userGroups($user);
+	$user = formulize_resolveUserObject($user);
+	$groups = formulize_userGroups($user);
 
-    // ---- the form -------------------------------------------------------
-    // The forms handler resolves either an id or a handle, so there is nothing to look up first.
-    $form_handler = xoops_getmodulehandler('forms', 'formulize');
-    if ($formIdOrHandle === '' or $formIdOrHandle === null) {
-        throw new FormulizeApiException('No form was specified', 'form_not_found');
-    }
-    if (!$formObject = $form_handler->get($formIdOrHandle)) {
-        throw new FormulizeApiException('No form exists with the id or handle: '.$formIdOrHandle, 'form_not_found');
-    }
-    $fid = intval($formObject->getVar('fid'));
-    $formHandle = $formObject->getVar('form_handle');
+	// ---- the form -------------------------------------------------------
+	// The forms handler resolves either an id or a handle, so there is nothing to look up first.
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	if ($formIdOrHandle === '' or $formIdOrHandle === null) {
+		throw new FormulizeApiException('No form was specified', 'form_not_found');
+	}
+	if (!$formObject = $form_handler->get($formIdOrHandle)) {
+		throw new FormulizeApiException('No form exists with the id or handle: '.$formIdOrHandle, 'form_not_found');
+	}
+	$fid = intval($formObject->getVar('fid'));
+	$formHandle = $formObject->getVar('form_handle');
 
-    // ---- may this user see the form at all? -----------------------------
-    // gatherDataset alone would not refuse: buildScope quietly downgrades to "mine" and
-    // hands back an empty dataset. That is not good enough here, because anonymous callers
-    // are supported and deserve an explicit answer.
-    $gperm_handler = xoops_gethandler('groupperm');
-    if (!$gperm_handler->checkRight('view_form', $fid, $groups, getFormulizeModId())) {
-        throw new FormulizeApiException('You do not have permission to view this form', 'permission_denied');
-    }
+	// ---- may this user see the form at all? -----------------------------
+	// gatherDataset alone would not refuse: buildScope quietly downgrades to "mine" and
+	// hands back an empty dataset. That is not good enough here, because anonymous callers
+	// are supported and deserve an explicit answer.
+	$gperm_handler = xoops_gethandler('groupperm');
+	if (!$gperm_handler->checkRight('view_form', $fid, $groups, getFormulizeModId())) {
+		throw new FormulizeApiException('You do not have permission to view this form', 'permission_denied');
+	}
 
-    // ---- relationship ---------------------------------------------------
-    $relationship = intval($options['relationship'] ?? 0);
-    // The validator gives back the relationship object, or false when this form is not part
-    // of the requested relationship. 0 means "no relationship" and needs no lookup.
-    $validRelationship = $relationship !== 0 ? formulize_apiValidateRelationshipId($relationship, $fid) : true;
-    if (!$validRelationship) {
-        if ($relationship > 0) {
-            throw new FormulizeApiException(
-                'This form is not part of relationship '.$relationship,
-                'invalid_data',
-                array('valid_relationship_ids_for_form' => formulize_apiGetValidRelationshipIds($fid))
-            );
-        }
-        // The primary relationship was requested but this form is in no relationship at all,
-        // so fall back to the main form rather than failing.
-        $relationship = 0;
-    }
+	// ---- relationship ---------------------------------------------------
+	$relationship = intval($options['relationship'] ?? 0);
+	// The validator gives back the relationship object, or false when this form is not part
+	// of the requested relationship. 0 means "no relationship" and needs no lookup.
+	$validRelationship = $relationship !== 0 ? formulize_apiValidateRelationshipId($relationship, $fid) : true;
+	if (!$validRelationship) {
+		if ($relationship > 0) {
+			throw new FormulizeApiException(
+				'This form is not part of relationship '.$relationship,
+				'invalid_data',
+				array('valid_relationship_ids_for_form' => formulize_apiGetValidRelationshipIds($fid))
+			);
+		}
+		// The primary relationship was requested but this form is in no relationship at all,
+		// so fall back to the main form rather than failing.
+		$relationship = 0;
+	}
 
-    // ---- fields ---------------------------------------------------------
-    $fields = $options['fields'] ?? array();
-    if (!is_array($fields)) {
-        throw new FormulizeApiException('The fields parameter must be an array of element handles', 'invalid_arguments');
-    }
-    if (count($fields) == 0) {
-        throw new FormulizeApiException('At least one field must be requested in the fields parameter', 'invalid_arguments');
-    }
-    // Refuse anything this user may not see, before we go anywhere near the data. The same
-    // list gates the sort field and the filter below, so a field that cannot be returned
-    // cannot be used to order or select entries either.
-    $allowedFields = formulize_apiAllowedFieldHandles($fid, $relationship, $user);
-    formulize_apiCheckFieldPermissions($fields, $allowedFields);
-    $fieldsByForm = formulize_apiValidateElementHandles($fields, $fid);
-    if (empty($fieldsByForm)) {
-        throw new FormulizeApiException('At least one field must be requested in the fields parameter', 'invalid_arguments');
-    }
+	// ---- fields ---------------------------------------------------------
+	$fields = $options['fields'] ?? array();
+	if (!is_array($fields)) {
+		throw new FormulizeApiException('The fields parameter must be an array of element handles', 'invalid_arguments');
+	}
+	if (count($fields) == 0) {
+		throw new FormulizeApiException('At least one field must be requested in the fields parameter', 'invalid_arguments');
+	}
+	// Refuse anything this user may not see, before we go anywhere near the data. The same
+	// list gates the sort field and the filter below, so a field that cannot be returned
+	// cannot be used to order or select entries either.
+	$allowedFields = formulize_apiAllowedFieldHandles($fid, $relationship, $user);
+	formulize_apiCheckFieldPermissions($fields, $allowedFields);
+	$fieldsByForm = formulize_apiValidateElementHandles($fields, $fid);
+	if (empty($fieldsByForm)) {
+		throw new FormulizeApiException('At least one field must be requested in the fields parameter', 'invalid_arguments');
+	}
 
-    // ---- sorting --------------------------------------------------------
-    $sortField = $options['sortField'] ?? 'entry_id';
-    $sortOrder = ($options['sortOrder'] ?? 'ASC') == 'DESC' ? 'DESC' : 'ASC';
-    if (!empty($sortField)) {
-        // Sorting by a field the caller cannot see would leak its ordering, so the sort field
-        // goes through the same permission gate as the requested fields.
-        formulize_apiCheckFieldPermissions(array($sortField), $allowedFields);
-    }
+	// ---- sorting --------------------------------------------------------
+	$sortField = $options['sortField'] ?? 'entry_id';
+	$sortOrder = ($options['sortOrder'] ?? 'ASC') == 'DESC' ? 'DESC' : 'ASC';
+	if (!empty($sortField)) {
+		// Sorting by a field the caller cannot see would leak its ordering, so the sort field
+		// goes through the same permission gate as the requested fields.
+		formulize_apiCheckFieldPermissions(array($sortField), $allowedFields);
+	}
 
-    // ---- limits ---------------------------------------------------------
-    list($limitStart, $limitSize) = formulize_apiValidateLimitParameters(
-        $options['limitStart'] ?? 0,
-        array_key_exists('limitSize', $options) ? $options['limitSize'] : 100
-    );
+	// ---- limits ---------------------------------------------------------
+	list($limitStart, $limitSize) = formulize_apiValidateLimitParameters(
+		$options['limitStart'] ?? 0,
+		array_key_exists('limitSize', $options) ? $options['limitSize'] : 100
+	);
 
-    // ---- filter ---------------------------------------------------------
-    // Which forms may the filter reference? Everything reachable through the relationship.
-    if (is_object($validRelationship)) {
-        $relationship_handler = xoops_getmodulehandler('frameworks', 'formulize');
-        $linksByForm = $relationship_handler->getLinksGroupedByForm($validRelationship, $fid);
-        $form_ids = array();
-        foreach ($linksByForm as $links) {
-            foreach ($links as $thisLink) {
-                if (!in_array($thisLink['form1'], $form_ids)) {
-                    $form_ids[] = $thisLink['form1'];
-                }
-                if (!in_array($thisLink['form2'], $form_ids)) {
-                    $form_ids[] = $thisLink['form2'];
-                }
-            }
-        }
-    } else {
-        $form_ids = array($fid);
-    }
-    $andOr = strtoupper($options['andOr'] ?? 'AND') == 'OR' ? 'OR' : 'AND';
-    // An array filter is a list of expressions, each carrying the boolean that goes between its
-    // own terms. formulize_parseFilter puts $andOr between the expressions themselves, so it is
-    // still the caller's operator that joins the top level items, exactly as for a flat string.
-    $filter = formulize_apiValidateFilter($options['filter'] ?? '', $form_ids, $andOr, $allowedFields);
+	// ---- filter ---------------------------------------------------------
+	// Which forms may the filter reference? Everything reachable through the relationship.
+	if (is_object($validRelationship)) {
+		$relationship_handler = xoops_getmodulehandler('frameworks', 'formulize');
+		$linksByForm = $relationship_handler->getLinksGroupedByForm($validRelationship, $fid);
+		$form_ids = array();
+		foreach ($linksByForm as $links) {
+			foreach ($links as $thisLink) {
+				if (!in_array($thisLink['form1'], $form_ids)) {
+					$form_ids[] = $thisLink['form1'];
+				}
+				if (!in_array($thisLink['form2'], $form_ids)) {
+					$form_ids[] = $thisLink['form2'];
+				}
+			}
+		}
+	} else {
+		$form_ids = array($fid);
+	}
+	$andOr = strtoupper($options['andOr'] ?? 'AND') == 'OR' ? 'OR' : 'AND';
+	// An array filter is a list of expressions, each carrying the boolean that goes between its
+	// own terms. formulize_parseFilter puts $andOr between the expressions themselves, so it is
+	// still the caller's operator that joins the top level items, exactly as for a flat string.
+	$filter = formulize_apiValidateFilter($options['filter'] ?? '', $form_ids, $andOr, $allowedFields);
 
-    // ---- scope and query ------------------------------------------------
-    $scope = buildScope('all', $user, $fid);
-    $actualScope = $scope[0];
+	// ---- scope and query ------------------------------------------------
+	$scope = buildScope('all', $user, $fid);
+	$actualScope = $scope[0];
 
-    // bypassCache, because this dataset will not be asked for again. A request reads once and
-    // ends, so keeping the result in formulize_cachedGetDataResults for the rest of the request
-    // buys nothing and holds every entry in memory until the request finishes, along with the
-    // entry-to-cache-key index that is built alongside it. At the limits this endpoint allows,
-    // that is the difference between holding one dataset and being unable to let go of it.
-    $dataset = gatherDataset(
-        $fid,
-        $fieldsByForm,
-        $filter,
-        $andOr,
-        $actualScope,
-        $limitStart,
-        $limitSize,
-        $sortField,
-        $sortOrder,
-        $relationship,
-        bypassCache: true
-    );
+	// bypassCache, because this dataset will not be asked for again. A request reads once and
+	// ends, so keeping the result in formulize_cachedGetDataResults for the rest of the request
+	// buys nothing and holds every entry in memory until the request finishes, along with the
+	// entry-to-cache-key index that is built alongside it. At the limits this endpoint allows,
+	// that is the difference between holding one dataset and being unable to let go of it.
+	$dataset = gatherDataset(
+		$fid,
+		$fieldsByForm,
+		$filter,
+		$andOr,
+		$actualScope,
+		$limitStart,
+		$limitSize,
+		$sortField,
+		$sortOrder,
+		$relationship,
+		bypassCache: true
+	);
 
-    return array(
-        'fid' => $fid,
-        'formHandle' => $formHandle,
-        'dataset' => $dataset,
-        'fieldsByForm' => $fieldsByForm,
-        'scope' => $actualScope,
-        'filter' => $filter,
-        'andOr' => $andOr,
-        'limitStart' => $limitStart,
-        'limitSize' => $limitSize,
-        'sortField' => $sortField,
-        'sortOrder' => $sortOrder,
-        'relationship' => $relationship,
-    );
+	return array(
+		'fid' => $fid,
+		'formHandle' => $formHandle,
+		'dataset' => $dataset,
+		'fieldsByForm' => $fieldsByForm,
+		'scope' => $actualScope,
+		'filter' => $filter,
+		'andOr' => $andOr,
+		'limitStart' => $limitStart,
+		'limitSize' => $limitSize,
+		'sortField' => $sortField,
+		'sortOrder' => $sortOrder,
+		'relationship' => $relationship,
+	);
 }
 
 /**
@@ -232,106 +232,106 @@ function formulize_readEntries($formIdOrHandle, $options = array(), $user = null
  */
 function formulize_renderEntriesAsRows(&$result, $raw = false) {
 
-    $rawAll = ($raw === true or $raw === 'true' or $raw === 1 or $raw === '1');
-    $rawFields = is_array($raw) ? $raw : array();
+	$rawAll = ($raw === true or $raw === 'true' or $raw === 1 or $raw === '1');
+	$rawFields = is_array($raw) ? $raw : array();
 
-    $mainFid = $result['fid'];
-    $mainFormHandle = $result['formHandle'];
-    $fieldsByForm = $result['fieldsByForm'];
+	$mainFid = $result['fid'];
+	$mainFormHandle = $result['formHandle'];
+	$fieldsByForm = $result['fieldsByForm'];
 
-    $dataHandler = new formulizeDataHandler(false);
-    $metadataFields = $dataHandler->metadataFields;
+	$dataHandler = new formulizeDataHandler(false);
+	$metadataFields = $dataHandler->metadataFields;
 
-    // form id => form handle, for the connected forms
-    $formHandles = array();
-    foreach (array_keys($fieldsByForm) as $thisFid) {
-        $formHandles[$thisFid] = ($thisFid == $mainFid) ? $mainFormHandle : getFormHandle($thisFid);
-    }
+	// form id => form handle, for the connected forms
+	$formHandles = array();
+	foreach (array_keys($fieldsByForm) as $thisFid) {
+		$formHandles[$thisFid] = ($thisFid == $mainFid) ? $mainFormHandle : getFormHandle($thisFid);
+	}
 
-    // Every value here is read exactly once, so there is nothing for prepvalues' cache to be
-    // reused for and no reason to let it grow to the size of the whole result. Left alone by an
-    // outer caller that had already turned it off, so that whoever set it decides when it ends.
-    $releasePreppedValueCacheFlag = false;
-    if (!isset($GLOBALS['formulize_doNotCachePreppedValues'])) {
-        $GLOBALS['formulize_doNotCachePreppedValues'] = true;
-        $releasePreppedValueCacheFlag = true;
-    }
+	// Every value here is read exactly once, so there is nothing for prepvalues' cache to be
+	// reused for and no reason to let it grow to the size of the whole result. Left alone by an
+	// outer caller that had already turned it off, so that whoever set it decides when it ends.
+	$releasePreppedValueCacheFlag = false;
+	if (!isset($GLOBALS['formulize_doNotCachePreppedValues'])) {
+		$GLOBALS['formulize_doNotCachePreppedValues'] = true;
+		$releasePreppedValueCacheFlag = true;
+	}
 
-    try {
+	try {
 
-        $rows = array();
-        // Taking the items off the front rather than iterating: a foreach would be working on its own
-        // copy of the dataset the moment we removed anything from it, which is the opposite of the
-        // point. array_key_first is O(1), so this walks the dataset in order just as a foreach would.
-        while (($datasetKey = array_key_first($result['dataset'])) !== null) {
+		$rows = array();
+		// Taking the items off the front rather than iterating: a foreach would be working on its own
+		// copy of the dataset the moment we removed anything from it, which is the opposite of the
+		// point. array_key_first is O(1), so this walks the dataset in order just as a foreach would.
+		while (($datasetKey = array_key_first($result['dataset'])) !== null) {
 
-            $item = $result['dataset'][$datasetKey];
-            unset($result['dataset'][$datasetKey]); // this entry's raw form is finished with once its row is built
+			$item = $result['dataset'][$datasetKey];
+			unset($result['dataset'][$datasetKey]); // this entry's raw form is finished with once its row is built
 
-            // The dataset has one item per main form entry, so there is exactly one local id here.
-            $mainEntryId = null;
-            if (isset($item[$mainFormHandle]) and is_array($item[$mainFormHandle])) {
-                foreach ($item[$mainFormHandle] as $lid => $ignored) {
-                    $mainEntryId = $lid;
-                    break;
-                }
-            }
+			// The dataset has one item per main form entry, so there is exactly one local id here.
+			$mainEntryId = null;
+			if (isset($item[$mainFormHandle]) and is_array($item[$mainFormHandle])) {
+				foreach ($item[$mainFormHandle] as $lid => $ignored) {
+					$mainEntryId = $lid;
+					break;
+				}
+			}
 
-            $row = array('entry_id' => is_numeric($mainEntryId) ? intval($mainEntryId) : $mainEntryId);
-            if (isset($fieldsByForm[$mainFid])) {
-                foreach ($fieldsByForm[$mainFid] as $handle) {
-                    if ($handle == 'entry_id') {
-                        continue;
-                    }
-                    $row[$handle] = formulize_apiReadFieldValue(
-                        $item, $mainFormHandle, $mainEntryId, $handle,
-                        formulize_apiFieldIsRaw($handle, $rawAll, $rawFields), $metadataFields
-                    );
-                }
-            }
+			$row = array('entry_id' => is_numeric($mainEntryId) ? intval($mainEntryId) : $mainEntryId);
+			if (isset($fieldsByForm[$mainFid])) {
+				foreach ($fieldsByForm[$mainFid] as $handle) {
+					if ($handle == 'entry_id') {
+						continue;
+					}
+					$row[$handle] = formulize_apiReadFieldValue(
+						$item, $mainFormHandle, $mainEntryId, $handle,
+						formulize_apiFieldIsRaw($handle, $rawAll, $rawFields), $metadataFields
+					);
+				}
+			}
 
-            // Connected forms, grouped by the child entry each value belongs to.
-            $related = array();
-            foreach ($fieldsByForm as $thisFid => $handles) {
-                if ($thisFid == $mainFid) {
-                    continue;
-                }
-                $thisFormHandle = $formHandles[$thisFid];
-                if (!isset($item[$thisFormHandle]) or !is_array($item[$thisFormHandle])) {
-                    continue;
-                }
-                foreach ($item[$thisFormHandle] as $lid => $ignored) {
-                    // A main form entry with no connected entry shows up as an empty local id.
-                    if (!$lid or $lid === 'NULL') {
-                        continue;
-                    }
-                    $child = array('entry_id' => intval($lid));
-                    foreach ($handles as $handle) {
-                        if ($handle == 'entry_id') {
-                            continue;
-                        }
-                        $child[$handle] = formulize_apiReadFieldValue(
-                            $item, $thisFormHandle, $lid, $handle,
-                            formulize_apiFieldIsRaw($handle, $rawAll, $rawFields), $metadataFields
-                        );
-                    }
-                    $related[$thisFormHandle][] = $child;
-                }
-            }
-            if (count($related)) {
-                $row['related'] = $related;
-            }
+			// Connected forms, grouped by the child entry each value belongs to.
+			$related = array();
+			foreach ($fieldsByForm as $thisFid => $handles) {
+				if ($thisFid == $mainFid) {
+					continue;
+				}
+				$thisFormHandle = $formHandles[$thisFid];
+				if (!isset($item[$thisFormHandle]) or !is_array($item[$thisFormHandle])) {
+					continue;
+				}
+				foreach ($item[$thisFormHandle] as $lid => $ignored) {
+					// A main form entry with no connected entry shows up as an empty local id.
+					if (!$lid or $lid === 'NULL') {
+						continue;
+					}
+					$child = array('entry_id' => intval($lid));
+					foreach ($handles as $handle) {
+						if ($handle == 'entry_id') {
+							continue;
+						}
+						$child[$handle] = formulize_apiReadFieldValue(
+							$item, $thisFormHandle, $lid, $handle,
+							formulize_apiFieldIsRaw($handle, $rawAll, $rawFields), $metadataFields
+						);
+					}
+					$related[$thisFormHandle][] = $child;
+				}
+			}
+			if (count($related)) {
+				$row['related'] = $related;
+			}
 
-            $rows[] = $row;
-        }
+			$rows[] = $row;
+		}
 
-    } finally {
-        if ($releasePreppedValueCacheFlag) {
-            unset($GLOBALS['formulize_doNotCachePreppedValues']);
-        }
-    }
+	} finally {
+		if ($releasePreppedValueCacheFlag) {
+			unset($GLOBALS['formulize_doNotCachePreppedValues']);
+		}
+	}
 
-    return $rows;
+	return $rows;
 }
 
 /**
@@ -339,7 +339,7 @@ function formulize_renderEntriesAsRows(&$result, $raw = false) {
  * @return bool
  */
 function formulize_apiFieldIsRaw($handle, $rawAll, $rawFields) {
-    return $rawAll ? true : in_array($handle, $rawFields);
+	return $rawAll ? true : in_array($handle, $rawFields);
 }
 
 /**
@@ -367,10 +367,10 @@ function formulize_apiFieldIsRaw($handle, $rawAll, $rawFields) {
  * @return mixed
  */
 function formulize_apiReadFieldValue($item, $formHandle, $localEntryId, $handle, $isRaw, $metadataFields) {
-    if (in_array($handle, $metadataFields)) {
-        return isset($item[$formHandle][$localEntryId][$handle]) ? $item[$formHandle][$localEntryId][$handle] : null;
-    }
-    return getValue($item, $handle, null, $localEntryId, $isRaw, $formHandle);
+	if (in_array($handle, $metadataFields)) {
+		return isset($item[$formHandle][$localEntryId][$handle]) ? $item[$formHandle][$localEntryId][$handle] : null;
+	}
+	return getValue($item, $handle, null, $localEntryId, $isRaw, $formHandle);
 }
 
 /**
@@ -394,12 +394,12 @@ function formulize_apiReadFieldValue($item, $formHandle, $localEntryId, $handle,
  * @return array Keys are the permitted handles
  */
 function formulize_apiAllowedFieldHandles($fid, $frid, $user = null) {
-    static $cached = array();
-    $cacheKey = intval($fid).'/'.intval($frid).'/'.intval(is_object($user) ? $user->getVar('uid') : 0);
-    if (!isset($cached[$cacheKey])) {
-        $cached[$cacheKey] = getAllAllowedColHandles($fid, $frid, $user);
-    }
-    return $cached[$cacheKey];
+	static $cached = array();
+	$cacheKey = intval($fid).'/'.intval($frid).'/'.intval(is_object($user) ? $user->getVar('uid') : 0);
+	if (!isset($cached[$cacheKey])) {
+		$cached[$cacheKey] = getAllAllowedColHandles($fid, $frid, $user);
+	}
+	return $cached[$cacheKey];
 }
 
 /**
@@ -411,19 +411,19 @@ function formulize_apiAllowedFieldHandles($fid, $frid, $user = null) {
  * @throws FormulizeApiException if any handle is not permitted
  */
 function formulize_apiCheckFieldPermissions($fields, $allowedFields) {
-    foreach ($fields as $handle) {
-        if (!is_string($handle)) {
-            throw new FormulizeApiException('Field names must be strings', 'invalid_arguments');
-        }
-        if ($handle === '') {
-            continue;
-        }
-        if (!isset($allowedFields[$handle])) {
-            // Deliberately the same message whether the field does not exist or is simply not
-            // visible to this user, so the endpoint cannot be used to probe for field names.
-            throw new FormulizeApiException('Unknown or unavailable field: '.$handle, 'unknown_element');
-        }
-    }
+	foreach ($fields as $handle) {
+		if (!is_string($handle)) {
+			throw new FormulizeApiException('Field names must be strings', 'invalid_arguments');
+		}
+		if ($handle === '') {
+			continue;
+		}
+		if (!isset($allowedFields[$handle])) {
+			// Deliberately the same message whether the field does not exist or is simply not
+			// visible to this user, so the endpoint cannot be used to probe for field names.
+			throw new FormulizeApiException('Unknown or unavailable field: '.$handle, 'unknown_element');
+		}
+	}
 }
 
 /**
@@ -459,88 +459,88 @@ function formulize_apiCheckFieldPermissions($fields, $allowedFields) {
  */
 function formulize_apiValidateFilter($filter, $form_ids, $andOr = 'AND', $allowedFields = array()) {
 
-    if (is_numeric($filter)) {
-        return intval($filter);
-    }
-    if (empty($filter)) {
-        return '';
-    }
-    if (is_string($filter)) {
-        $trimmed = ltrim($filter);
-        if (substr($trimmed, 0, 1) !== '[' and substr($trimmed, 0, 1) !== '{') {
-            throw new FormulizeApiException(
-                'The filter parameter must be an entry id, or a list of conditions, or that list encoded as JSON',
-                'invalid_arguments'
-            );
-        }
-        $decoded = json_decode($filter, true);
-        if ($decoded === null) {
-            throw new FormulizeApiException('Invalid JSON in the filter parameter: '.json_last_error_msg(), 'invalid_arguments');
-        }
-        $filter = $decoded;
-    }
-    if (!is_array($filter)) {
-        throw new FormulizeApiException('The filter parameter must be an entry id or a list of conditions', 'invalid_arguments');
-    }
+	if (is_numeric($filter)) {
+		return intval($filter);
+	}
+	if (empty($filter)) {
+		return '';
+	}
+	if (is_string($filter)) {
+		$trimmed = ltrim($filter);
+		if (substr($trimmed, 0, 1) !== '[' and substr($trimmed, 0, 1) !== '{') {
+			throw new FormulizeApiException(
+				'The filter parameter must be an entry id, or a list of conditions, or that list encoded as JSON',
+				'invalid_arguments'
+			);
+		}
+		$decoded = json_decode($filter, true);
+		if ($decoded === null) {
+			throw new FormulizeApiException('Invalid JSON in the filter parameter: '.json_last_error_msg(), 'invalid_arguments');
+		}
+		$filter = $decoded;
+	}
+	if (!is_array($filter)) {
+		throw new FormulizeApiException('The filter parameter must be an entry id or a list of conditions', 'invalid_arguments');
+	}
 
-    $bareTerms = array();
-    $expressions = array();
+	$bareTerms = array();
+	$expressions = array();
 
-    foreach ($filter as $item) {
+	foreach ($filter as $item) {
 
-        if (!is_array($item)) {
-            throw new FormulizeApiException('Each filter item must be a condition or a group', 'invalid_arguments');
-        }
+		if (!is_array($item)) {
+			throw new FormulizeApiException('Each filter item must be a condition or a group', 'invalid_arguments');
+		}
 
-        // ---- a group -----------------------------------------------------
-        if (isset($item['any']) or isset($item['all'])) {
-            $groupOperator = isset($item['any']) ? 'OR' : 'AND';
-            $groupItems = isset($item['any']) ? $item['any'] : $item['all'];
-            if (!is_array($groupItems) or count($groupItems) == 0) {
-                throw new FormulizeApiException('A filter group must contain at least one condition', 'invalid_arguments');
-            }
-            $groupTerms = array();
-            foreach ($groupItems as $condition) {
-                if (is_array($condition) and (isset($condition['any']) or isset($condition['all']))) {
-                    throw new FormulizeApiException(
-                        'Filter groups cannot be nested inside other groups. Formulize filters support one level of grouping.',
-                        'invalid_arguments'
-                    );
-                }
-                $groupTerms = array_merge($groupTerms, formulize_apiBuildFilterTerms($condition, $form_ids, $groupOperator, $allowedFields));
-            }
-            $expressions[] = array($groupOperator, implode('][', $groupTerms));
-            continue;
-        }
+		// ---- a group -----------------------------------------------------
+		if (isset($item['any']) or isset($item['all'])) {
+			$groupOperator = isset($item['any']) ? 'OR' : 'AND';
+			$groupItems = isset($item['any']) ? $item['any'] : $item['all'];
+			if (!is_array($groupItems) or count($groupItems) == 0) {
+				throw new FormulizeApiException('A filter group must contain at least one condition', 'invalid_arguments');
+			}
+			$groupTerms = array();
+			foreach ($groupItems as $condition) {
+				if (is_array($condition) and (isset($condition['any']) or isset($condition['all']))) {
+					throw new FormulizeApiException(
+						'Filter groups cannot be nested inside other groups. Formulize filters support one level of grouping.',
+						'invalid_arguments'
+					);
+				}
+				$groupTerms = array_merge($groupTerms, formulize_apiBuildFilterTerms($condition, $form_ids, $groupOperator, $allowedFields));
+			}
+			$expressions[] = array($groupOperator, implode('][', $groupTerms));
+			continue;
+		}
 
-        // ---- a bare condition --------------------------------------------
-        list($element, $value, $operator) = formulize_apiReadFilterCondition($item, $form_ids, $allowedFields);
-        if ($value === '{BLANK}') {
-            // A blank test is two terms with a boolean of its own, so it cannot simply join the
-            // other bare terms. It gets an expression to itself, one per test rather than one
-            // shared by every blank test that needs the same boolean: two "is blank" conditions
-            // joined by AND are (a='' OR a IS NULL) AND (b='' OR b IS NULL), and merging them
-            // into a single OR expression would ask for either one instead of both.
-            list($blankBoolean, $blankTerms) = formulize_apiBuildBlankTerms($element, $operator);
-            $expressions[] = array($blankBoolean, implode('][', $blankTerms));
-        } else {
-            $bareTerms[] = $element.'/**/'.$value.'/**/'.$operator;
-        }
-    }
+		// ---- a bare condition --------------------------------------------
+		list($element, $value, $operator) = formulize_apiReadFilterCondition($item, $form_ids, $allowedFields);
+		if ($value === '{BLANK}') {
+			// A blank test is two terms with a boolean of its own, so it cannot simply join the
+			// other bare terms. It gets an expression to itself, one per test rather than one
+			// shared by every blank test that needs the same boolean: two "is blank" conditions
+			// joined by AND are (a='' OR a IS NULL) AND (b='' OR b IS NULL), and merging them
+			// into a single OR expression would ask for either one instead of both.
+			list($blankBoolean, $blankTerms) = formulize_apiBuildBlankTerms($element, $operator);
+			$expressions[] = array($blankBoolean, implode('][', $blankTerms));
+		} else {
+			$bareTerms[] = $element.'/**/'.$value.'/**/'.$operator;
+		}
+	}
 
-    // Nothing but plain terms: use the flat string form, which is what gatherDataset likes best.
-    if (count($expressions) == 0) {
-        return implode('][', $bareTerms);
-    }
+	// Nothing but plain terms: use the flat string form, which is what gatherDataset likes best.
+	if (count($expressions) == 0) {
+		return implode('][', $bareTerms);
+	}
 
-    $returnFilter = array();
-    if (count($bareTerms)) {
-        $returnFilter[] = array($andOr, implode('][', $bareTerms));
-    }
-    foreach ($expressions as $expression) {
-        $returnFilter[] = $expression;
-    }
-    return $returnFilter;
+	$returnFilter = array();
+	if (count($bareTerms)) {
+		$returnFilter[] = array($andOr, implode('][', $bareTerms));
+	}
+	foreach ($expressions as $expression) {
+		$returnFilter[] = $expression;
+	}
+	return $returnFilter;
 }
 
 /**
@@ -555,19 +555,19 @@ function formulize_apiValidateFilter($filter, $form_ids, $andOr = 'AND', $allowe
  * @throws FormulizeApiException
  */
 function formulize_apiBuildFilterTerms($condition, $form_ids, $groupOperator, $allowedFields = array()) {
-    list($element, $value, $operator) = formulize_apiReadFilterCondition($condition, $form_ids, $allowedFields);
-    if ($value === '{BLANK}') {
-        list($blankBoolean, $blankTerms) = formulize_apiBuildBlankTerms($element, $operator);
-        if ($blankBoolean !== $groupOperator) {
-            throw new FormulizeApiException(
-                'A blank test on '.$element.' needs '.$blankBoolean.' between its parts, so it cannot go in an '
-                .($groupOperator == 'OR' ? 'any' : 'all').' group. Put it at the top level of the filter instead.',
-                'invalid_arguments'
-            );
-        }
-        return $blankTerms;
-    }
-    return array($element.'/**/'.$value.'/**/'.$operator);
+	list($element, $value, $operator) = formulize_apiReadFilterCondition($condition, $form_ids, $allowedFields);
+	if ($value === '{BLANK}') {
+		list($blankBoolean, $blankTerms) = formulize_apiBuildBlankTerms($element, $operator);
+		if ($blankBoolean !== $groupOperator) {
+			throw new FormulizeApiException(
+				'A blank test on '.$element.' needs '.$blankBoolean.' between its parts, so it cannot go in an '
+				.($groupOperator == 'OR' ? 'any' : 'all').' group. Put it at the top level of the filter instead.',
+				'invalid_arguments'
+			);
+		}
+		return $blankTerms;
+	}
+	return array($element.'/**/'.$value.'/**/'.$operator);
 }
 
 /**
@@ -575,10 +575,10 @@ function formulize_apiBuildFilterTerms($condition, $form_ids, $groupOperator, $a
  * @return array array(boolean, array(term, term))
  */
 function formulize_apiBuildBlankTerms($element, $operator) {
-    if ($operator == '!=' or $operator == 'NOT LIKE') {
-        return array('AND', array($element.'/**//**/!=', $element.'/**//**/ IS NOT NULL '));
-    }
-    return array('OR', array($element.'/**//**/=', $element.'/**//**/ IS NULL '));
+	if ($operator == '!=' or $operator == 'NOT LIKE') {
+		return array('AND', array($element.'/**//**/!=', $element.'/**//**/ IS NOT NULL '));
+	}
+	return array('OR', array($element.'/**//**/=', $element.'/**//**/ IS NULL '));
 }
 
 /**
@@ -596,46 +596,46 @@ function formulize_apiBuildBlankTerms($element, $operator) {
  * @throws FormulizeApiException
  */
 function formulize_apiReadFilterCondition($condition, $form_ids, $allowedFields = array()) {
-    if (!is_array($condition) or !isset($condition['element'])) {
-        throw new FormulizeApiException('Each filter condition needs an element and a value', 'invalid_arguments');
-    }
-    if (!array_key_exists('value', $condition)) {
-        throw new FormulizeApiException('The filter condition for '.$condition['element'].' has no value', 'invalid_arguments');
-    }
-    $element = $condition['element'];
-    $value = $condition['value'];
-    if (is_array($value) or is_object($value)) {
-        throw new FormulizeApiException('The filter value for '.$element.' must be a single value', 'invalid_arguments');
-    }
-    $operator = (isset($condition['operator']) and $condition['operator'] !== '') ? strtoupper(trim($condition['operator'])) : 'LIKE';
-    if (!in_array($operator, formulize_apiFilterOperators())) {
-        throw new FormulizeApiException('Unsupported filter operator: '.$condition['operator'], 'invalid_arguments');
-    }
+	if (!is_array($condition) or !isset($condition['element'])) {
+		throw new FormulizeApiException('Each filter condition needs an element and a value', 'invalid_arguments');
+	}
+	if (!array_key_exists('value', $condition)) {
+		throw new FormulizeApiException('The filter condition for '.$condition['element'].' has no value', 'invalid_arguments');
+	}
+	$element = $condition['element'];
+	$value = $condition['value'];
+	if (is_array($value) or is_object($value)) {
+		throw new FormulizeApiException('The filter value for '.$element.' must be a single value', 'invalid_arguments');
+	}
+	$operator = (isset($condition['operator']) and $condition['operator'] !== '') ? strtoupper(trim($condition['operator'])) : 'LIKE';
+	if (!in_array($operator, formulize_apiFilterOperators())) {
+		throw new FormulizeApiException('Unsupported filter operator: '.$condition['operator'], 'invalid_arguments');
+	}
 
-    // A condition becomes one term of a filter string, with /**/ between its three parts and
-    // ][ between terms. A value carrying either sequence would not be searched for, it would
-    // be read back as more terms, on elements the caller never named and never passed through
-    // the permission check below. There is no escape for them in that format, so they are
-    // refused rather than quietly mangled.
-    if (strstr((string) $value, '][') or strstr((string) $value, '/**/')) {
-        throw new FormulizeApiException(
-            'The filter value for '.$element.' cannot contain ][ or /**/',
-            'invalid_arguments'
-        );
-    }
+	// A condition becomes one term of a filter string, with /**/ between its three parts and
+	// ][ between terms. A value carrying either sequence would not be searched for, it would
+	// be read back as more terms, on elements the caller never named and never passed through
+	// the permission check below. There is no escape for them in that format, so they are
+	// refused rather than quietly mangled.
+	if (strstr((string) $value, '][') or strstr((string) $value, '/**/')) {
+		throw new FormulizeApiException(
+			'The filter value for '.$element.' cannot contain ][ or /**/',
+			'invalid_arguments'
+		);
+	}
 
-    formulize_apiCheckFieldPermissions(array($element), $allowedFields);
+	formulize_apiCheckFieldPermissions(array($element), $allowedFields);
 
-    $dataHandler = new formulizeDataHandler(false);
-    if (!in_array($element, $dataHandler->metadataFields)) {
-        if (!$elementObject = _getElementObject($element)) {
-            throw new FormulizeApiException('Unknown element in filter: '.$element, 'unknown_element');
-        } elseif (!in_array($elementObject->getVar('fid'), $form_ids)) {
-            throw new FormulizeApiException('Element is not part of this dataset: '.$element, 'invalid_data');
-        }
-    }
+	$dataHandler = new formulizeDataHandler(false);
+	if (!in_array($element, $dataHandler->metadataFields)) {
+		if (!$elementObject = _getElementObject($element)) {
+			throw new FormulizeApiException('Unknown element in filter: '.$element, 'unknown_element');
+		} elseif (!in_array($elementObject->getVar('fid'), $form_ids)) {
+			throw new FormulizeApiException('Element is not part of this dataset: '.$element, 'invalid_data');
+		}
+	}
 
-    return array($element, $value, $operator);
+	return array($element, $value, $operator);
 }
 
 /**
@@ -646,29 +646,29 @@ function formulize_apiReadFilterCondition($condition, $form_ids, $allowedFields 
  * @throws FormulizeApiException
  */
 function formulize_apiValidateElementHandles($elementHandles, $form_id) {
-    if (!is_array($elementHandles)) {
-        return array();
-    }
-    $dataHandler = new formulizeDataHandler(false);
-    $validatedHandles = array();
-    $element_handler = xoops_getmodulehandler('elements', 'formulize');
-    foreach ($elementHandles as $handle) {
-        if (!is_string($handle)) {
-            throw new FormulizeApiException('Element handle must be a string', 'invalid_arguments');
-        }
-        if ($handle === '') {
-            continue;
-        }
-				$validatedFormId = $form_id;
-				if(!in_array($handle, $dataHandler->metadataFields)) {
-					if(!$elementObject = $element_handler->get($handle)) {
-						throw new FormulizeApiException('Invalid element handle: '.$handle, 'unknown_element');
-					}
-					$validatedFormId = $elementObject->getVar('fid');
-				}
-        $validatedHandles[$validatedFormId][] = $handle;
-    }
-    return $validatedHandles;
+	if (!is_array($elementHandles)) {
+		return array();
+	}
+	$dataHandler = new formulizeDataHandler(false);
+	$validatedHandles = array();
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
+	foreach ($elementHandles as $handle) {
+		if (!is_string($handle)) {
+			throw new FormulizeApiException('Element handle must be a string', 'invalid_arguments');
+		}
+		if ($handle === '') {
+			continue;
+		}
+		$validatedFormId = $form_id;
+		if(!in_array($handle, $dataHandler->metadataFields)) {
+			if(!$elementObject = $element_handler->get($handle)) {
+				throw new FormulizeApiException('Invalid element handle: '.$handle, 'unknown_element');
+			}
+			$validatedFormId = $elementObject->getVar('fid');
+		}
+		$validatedHandles[$validatedFormId][] = $handle;
+	}
+	return $validatedHandles;
 }
 
 /**
@@ -676,9 +676,9 @@ function formulize_apiValidateElementHandles($elementHandles, $form_id) {
  * @return mixed The relationship object if valid, false if not
  */
 function formulize_apiValidateRelationshipId($relationshipId, $formId) {
-    $relationship_handler = xoops_getmodulehandler('frameworks', 'formulize');
-    $validRelationships = $relationship_handler->getFrameworksByForm($formId, includePrimaryRelationship: true);
-    return isset($validRelationships[$relationshipId]) ? $validRelationships[$relationshipId] : false;
+	$relationship_handler = xoops_getmodulehandler('frameworks', 'formulize');
+	$validRelationships = $relationship_handler->getFrameworksByForm($formId, includePrimaryRelationship: true);
+	return isset($validRelationships[$relationshipId]) ? $validRelationships[$relationshipId] : false;
 }
 
 /**
@@ -686,10 +686,10 @@ function formulize_apiValidateRelationshipId($relationshipId, $formId) {
  * @return array
  */
 function formulize_apiGetValidRelationshipIds($formId) {
-    $relationship_handler = xoops_getmodulehandler('frameworks', 'formulize');
-    $validRelationships = $relationship_handler->getFrameworksByForm($formId, includePrimaryRelationship: true);
-    ksort($validRelationships);
-    return array_keys($validRelationships);
+	$relationship_handler = xoops_getmodulehandler('frameworks', 'formulize');
+	$validRelationships = $relationship_handler->getFrameworksByForm($formId, includePrimaryRelationship: true);
+	ksort($validRelationships);
+	return array_keys($validRelationships);
 }
 
 /**
@@ -699,30 +699,30 @@ function formulize_apiGetValidRelationshipIds($formId) {
  */
 function formulize_apiValidateLimitParameters($limitStart, $limitSize) {
 
-    $validatedLimitStart = 0;
+	$validatedLimitStart = 0;
 
-    if ($limitStart !== null) {
-        if (!is_numeric($limitStart) or $limitStart < 0) {
-            throw new FormulizeApiException('limitStart must be a non-negative integer', 'invalid_arguments');
-        }
-        $validatedLimitStart = intval($limitStart);
-    }
+	if ($limitStart !== null) {
+		if (!is_numeric($limitStart) or $limitStart < 0) {
+			throw new FormulizeApiException('limitStart must be a non-negative integer', 'invalid_arguments');
+		}
+		$validatedLimitStart = intval($limitStart);
+	}
 
-    if ($limitSize === null) {
-        return array($validatedLimitStart, null); // no limit
-    }
+	if ($limitSize === null) {
+		return array($validatedLimitStart, null); // no limit
+	}
 
-    if (!is_numeric($limitSize)) {
-        throw new FormulizeApiException('limitSize must be an integer or null', 'invalid_arguments');
-    }
-    $limitSizeInt = intval($limitSize);
-    if ($limitSizeInt < 0) {
-        throw new FormulizeApiException('limitSize must be non-negative', 'invalid_arguments');
-    }
-    // Guard against a single request trying to pull the whole database into memory.
-    if ($limitSizeInt > 10000) {
-        throw new FormulizeApiException('limitSize cannot exceed 10000 records', 'invalid_arguments');
-    }
+	if (!is_numeric($limitSize)) {
+		throw new FormulizeApiException('limitSize must be an integer or null', 'invalid_arguments');
+	}
+	$limitSizeInt = intval($limitSize);
+	if ($limitSizeInt < 0) {
+		throw new FormulizeApiException('limitSize must be non-negative', 'invalid_arguments');
+	}
+	// Guard against a single request trying to pull the whole database into memory.
+	if ($limitSizeInt > 10000) {
+		throw new FormulizeApiException('limitSize cannot exceed 10000 records', 'invalid_arguments');
+	}
 
-    return array($validatedLimitStart, $limitSizeInt);
+	return array($validatedLimitStart, $limitSizeInt);
 }
