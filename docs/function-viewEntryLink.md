@@ -4,7 +4,7 @@ title: viewEntryLink
 permalink: developers/API/functions/viewEntryLink/
 ---
 
-# viewEntryLink( <span style='font-size: 14pt;'>(string) $clickable_text, (int | array) $entry_id_or_dataset_record, (int) $override_screen_id </span> )
+# viewEntryLink( <span class="sig-type">(string)</span> $clickable_text, <span class="sig-type">(int | array)</span> $entry_id_or_dataset_record, <span class="sig-type">(int)</span> $override_screen_id  )
 
 ## Location
 

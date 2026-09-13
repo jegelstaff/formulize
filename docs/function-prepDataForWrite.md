@@ -4,7 +4,7 @@ permalink: developers/API/functions/prepDataForWrite/
 title: prepDataForWrite
 ---
 
-# prepDataForWrite( <span style='font-size: 14pt;'>(object | string | int) $element_identifier, (array | string | int) $value, (int) $entry_id</span> )
+# prepDataForWrite( <span class="sig-type">(object | string | int)</span> $element_identifier, <span class="sig-type">(array | string | int)</span> $value, <span class="sig-type">(int)</span> $entry_id )
 
 ## Location
 

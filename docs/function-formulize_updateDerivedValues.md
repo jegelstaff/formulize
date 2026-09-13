@@ -4,7 +4,7 @@ permalink: developers/API/functions/formulize_updateDerivedValues/
 title: formulize_updateDerivedValues
 ---
 
-# formulize_updateDerivedValues( <span style='font-size: 14pt;'>(mixed) $entry_id_or_filter, (int) $fid, (int) $frid = 0</span> )
+# formulize_updateDerivedValues( <span class="sig-type">(mixed)</span> $entry_id_or_filter, <span class="sig-type">(int)</span> $fid, <span class="sig-type">(int)</span> $frid <span class="sig-default">= 0</span> )
 
 ## Location
 

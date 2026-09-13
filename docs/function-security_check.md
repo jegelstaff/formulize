@@ -4,7 +4,7 @@ permalink: developers/API/functions/security_check/
 title: security_check
 ---
 
-# security_check( <span style='font-size: 14pt;'>(int) $form_id, (int) $entry_id = "", (int) $user_id = ""</span> )
+# security_check( <span class="sig-type">(int)</span> $form_id, <span class="sig-type">(int)</span> $entry_id <span class="sig-default">= ""</span>, <span class="sig-type">(int)</span> $user_id <span class="sig-default">= ""</span> )
 
 ## Location
 

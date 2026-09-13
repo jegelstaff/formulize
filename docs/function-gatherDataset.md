@@ -4,7 +4,7 @@ permalink: developers/API/functions/gatherDataset/
 title: gatherDataset
 ---
 
-# gatherDataset( <span style='font-size: 14pt;'>(int) $fid, (array) $elementHandles = array(), (int|string|array) $filter = "", (string) $andOr = "AND", (array|string) $scope = "", (int) $limitStart = null, (int) $limitSize = null, (string) $sortField = "", (string) $sortOrder = ASC", (int) $frid = -1, (bool) $bypassCache = false</span> )
+# gatherDataset( <span class="sig-type">(int)</span> $fid, <span class="sig-type">(array)</span> $elementHandles <span class="sig-default">= array()</span>, <span class="sig-type">(int|string|array)</span> $filter <span class="sig-default">= ""</span>, <span class="sig-type">(string)</span> $andOr <span class="sig-default">= "AND"</span>, <span class="sig-type">(array|string)</span> $scope <span class="sig-default">= ""</span>, <span class="sig-type">(int)</span> $limitStart <span class="sig-default">= null</span>, <span class="sig-type">(int)</span> $limitSize <span class="sig-default">= null</span>, <span class="sig-type">(string)</span> $sortField <span class="sig-default">= ""</span>, <span class="sig-type">(string)</span> $sortOrder <span class="sig-default">= ASC"</span>, <span class="sig-type">(int)</span> $frid <span class="sig-default">= -1</span>, <span class="sig-type">(bool)</span> $bypassCache <span class="sig-default">= false</span> )
 
 ## Location
 

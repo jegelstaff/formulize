@@ -4,7 +4,7 @@ permalink: developers/API/functions/buildScope/
 title: buildScope
 ---
 
-# buildScope( <span style='font-size: 14pt;'>(string|int) $currentView, (object|int) $userIdOrObject, (int) $fid</span> )
+# buildScope( <span class="sig-type">(string|int)</span> $currentView, <span class="sig-type">(object|int)</span> $userIdOrObject, <span class="sig-type">(int)</span> $fid )
 
 ## Location
 

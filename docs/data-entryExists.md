@@ -4,7 +4,7 @@ permalink: developers/API/classes/data_handler/entryExists/
 title: entryExists
 ---
 
-# entryExists( <span style='font-size: 14pt;'>(int) $entry_id</span> )
+# entryExists( <span class="sig-type">(int)</span> $entry_id )
 
 ## Description
 

@@ -4,7 +4,7 @@ permalink: developers/API/classes/queue_handler/create/
 title: create
 ---
 
-# create( <span style='font-size: 14pt;'>(string) $queue_handle</span> )
+# create( <span class="sig-type">(string)</span> $queue_handle )
 
 ## Description
 

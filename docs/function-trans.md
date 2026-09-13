@@ -4,7 +4,7 @@ title: trans
 permalink: developers/API/functions/trans/
 ---
 
-# trans( <span style='font-size: 14pt;'>(string) $string, (string) $lang = null</span> )
+# trans( <span class="sig-type">(string)</span> $string, <span class="sig-type">(string)</span> $lang <span class="sig-default">= null</span> )
 
 ## Location
 

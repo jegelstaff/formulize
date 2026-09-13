@@ -4,7 +4,7 @@ permalink: developers/API/classes/data_handler/writeEntry/
 title: writeEntry
 ---
 
-# writeEntry( <span style='font-size: 14pt;'>(int | string) $entry_id, (array) $values, (int) $proxyUser, (bool) $forceUpdate = false, (bool) $update_metadata = true</span> )
+# writeEntry( <span class="sig-type">(int | string)</span> $entry_id, <span class="sig-type">(array)</span> $values, <span class="sig-type">(int)</span> $proxyUser, <span class="sig-type">(bool)</span> $forceUpdate <span class="sig-default">= false</span>, <span class="sig-type">(bool)</span> $update_metadata <span class="sig-default">= true</span> )
 
 ## Description
 

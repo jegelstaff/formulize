@@ -4,7 +4,7 @@ permalink: developers/API/classes/data_handler/findAllEntriesWithValue/
 title: findAllEntriesWithValue
 ---
 
-# findAllEntriesWithValue( <span style='font-size: 14pt;'>(int | string | object) $element_identifier, (string) $value, (array)&nbsp;$scope_uids&nbsp;=&nbsp;array(), (array) $scope_group_ids = array(), (string) $operator = "="</span> )
+# findAllEntriesWithValue( <span class="sig-type">(int | string | object)</span> $element_identifier, <span class="sig-type">(string)</span> $value, <span class="sig-type">(array)</span>&nbsp;$scope_uids&nbsp;<span class="sig-default">=&nbsp;array()</span>, <span class="sig-type">(array)</span> $scope_group_ids <span class="sig-default">= array()</span>, <span class="sig-type">(string)</span> $operator <span class="sig-default">= "="</span> )
 
 ## Description
 
