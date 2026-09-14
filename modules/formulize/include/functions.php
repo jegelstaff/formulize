@@ -736,6 +736,7 @@ function formulize_embedSessionSharingNoticeHtml($value = '') {
         return formulize_settingsWarningStylesHtml()
             ."<div class='formulize-settings-warning'>"
             ."<p><b>"._AM_EMBED_SESSION_SHARED_TITLE."</b> "._AM_EMBED_SESSION_SHARED_BODY."</p>"
+            ."<p>"._AM_EMBED_SESSION_SHARED_BROWSERS."</p>"
             ."<p>"._AM_EMBED_SESSION_SHARED_TRUST."</p>"
             ."</div>";
     }

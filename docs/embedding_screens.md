@@ -38,32 +38,30 @@ One website per line. Until you list one, no other website can embed that screen
 
 ### 3. Give Formulize an address on the same domain as the host page
 
-**This is the part that needs a server change, and the whole thing depends on it.**
+**This is the part that needs a server change.** The address in the iframe has to be on the same
+domain as the page it appears in, over `https`. If the host page is on `www.example.com`, the screen
+has to come from something like `forms.example.com`.
 
-The address in the iframe has to be on the same domain as the page it appears in. If the host page
-is on `www.example.com`, the screen has to come from something like `forms.example.com`.
+Three things have to be true:
 
-If you point the iframe at a different domain, visitors will see the screen but will not be able to
-submit anything. Browsers do not send your site's cookies into a frame on an unrelated website, so
-there is no session, and without a session there is nothing to save into. No setting in Formulize
-changes this — it is the browser's decision, not ours.
+1. `forms.example.com` resolves to a server that will answer for it.
+2. That server serves your existing Formulize site under the new name — an **alias** of the site you
+   already have, sharing the same files and database, not a new site.
+3. There is a TLS certificate for `forms.example.com` on that server.
 
-You have two ways to get an address on the right domain. Either is fine:
+If both machines have a control panel like cPanel or Plesk, that is a CNAME record on the host
+domain, a domain alias on the Formulize server, and the panel's SSL button — no configuration files
+involved.
 
-**Point a name at the Formulize server.** Create `forms.example.com` as a CNAME or A record aiming
-at the server, and get a TLS certificate for that name.
-
-**Or proxy it.** Have `forms.example.com` pass requests through to the Formulize server. Two things
-matter if you do:
-
-- Proxy the **whole hostname**. Something like `example.com/forms/` will not work, because the links
-  and buttons Formulize generates point outside that path.
-- Pass the original hostname through:
-  - nginx: `fastcgi_param SERVER_NAME $host;` and `proxy_set_header X-Forwarded-Proto $scheme;`
-  - Apache: `UseCanonicalName Off`
+[Giving Formulize an address on the host website's domain](../embedding_screens_setup/) has the
+steps: the control-panel route, the server-configuration route, and the reverse proxy alternative.
 
 Your Formulize site stays reachable at its own address as well, and opening it directly still works
 normally.
+
+**You can skip this step if every visitor to the embedded screen will be anonymous, and you are
+willing to accept that some browsers will not be able to submit.** Read
+[Embedding on a different domain](#embedding-on-a-different-domain) before you decide.
 
 ### 4. Paste the code into the host page
 
@@ -86,32 +84,57 @@ That is everything. The screen sizes itself to its content, so there is no heigh
 Embedding does not change who can use a screen. What changes is whether the visitor is signed in
 while they use it — and that depends entirely on **where** the screen is embedded.
 
-Browsers send your site's session cookie into a frame only when the page doing the framing is on the
-same domain as the screen, over the same https. So:
+With the settings at their defaults, browsers send your site's session cookie into a frame only when
+the page doing the framing is on the same domain as the screen, over the same https. So:
 
 **Embedded on the same domain** — the arrangement step 3 sets up, `forms.example.com` inside
 `www.example.com`. The session travels with the visitor. The screen shows them their own data and
 behaves exactly as it does on your own site, submitting included. This is the normal case, and it is
 why step 3 matters.
 
-**Embedded on a different domain** — `forms.example.com` inside `someone-else.com`. No session
-reaches the screen. Whoever is looking at it, Formulize sees an anonymous visitor. That means:
-
-- A screen the Anonymous group can view displays normally, but **submitting will fail** — the
-  anti-spam token needs a session.
-- A screen that requires a login shows a short message and a link to open it in a new window, where
-  signing in works.
-- A screen protected by a passcode still asks for the passcode, and that works inside the frame.
+**Embedded on a different domain** — `forms.example.com` inside `someone-else.com`. See below.
 
 The screen's settings page tells you which of the two you have. It reads the websites you have
 listed, compares each against your own address, and says which will be signed in and which will be
 anonymous.
 
-If you need signed-in screens on a **different** domain — a learning management system, a portal —
-change **SameSite** under **Settings → Advanced → Sessions & cookies** to `None`. Do read what the
-preferences page tells you when you do: with `None`, every website in your embedding lists can
-display signed-in pages of your site inside a page of their own. List only websites you control and
-trust.
+## Embedding on a different domain
+
+Skipping step 3 means the browser sends no cookies into the frame. Whoever is looking at the screen,
+Formulize sees an anonymous visitor with no session. With the settings at their defaults:
+
+- A screen the Anonymous group can view **displays normally**.
+- **Submitting fails.** The visitor sees *Error: the data you submitted could not be saved in the
+  database.*
+- A screen that requires a login shows a short message and a link to open it in a new window, where
+  signing in works.
+- A screen protected by a passcode accepts the passcode and opens, then **asks for it again** on the
+  next page or when the visitor tries to save.
+- An anonymous visitor who saved an entry earlier **cannot return to it**. Every visit starts a blank
+  new entry.
+
+Under the screen, an **Open this form in a new window** link appears. The form works normally in that
+tab.
+
+### Making submissions work on a different domain
+
+Change **SameSite** under **Settings → Advanced → Sessions & cookies** to `None`. Then, for visitors
+whose browser accepts third-party cookies:
+
+- Submitting works.
+- Passcode screens work.
+- Signed-in visitors see their own data, which is what a learning management system or a portal
+  needs.
+
+Three things to know before you do it:
+
+- **Some browsers refuse third-party cookies whatever this is set to.** Safari does by default. Those
+  visitors get the behaviour listed above — the screen displays, submitting fails, and they are
+  offered the link to open it in a new window. There is no way to tell in advance how many of your
+  visitors this will be. Step 3 is the only arrangement that works in every browser.
+- **Anonymous visitors still cannot return to an entry they saved earlier**, on any browser.
+- With `None`, every website in your embedding lists can display signed-in pages of your site inside
+  a page of their own. List only websites you control and trust.
 
 ## Choosing which websites may embed
 
@@ -196,8 +219,21 @@ off for the site. Check both, then reload.
 Formulize it was in a frame, and the address in the iframe is missing `?formulize_embed=1`. Copy the
 code from the screen's settings page again — it includes the parameter.
 
-**The form displays but will not submit.** The iframe address is not on the same domain as the host
-page. See step 3.
+**The form displays but will not submit**, and the visitor sees *Error: the data you submitted could
+not be saved in the database.* The browser is not keeping cookies for the screen. Either the iframe
+address is not on the same domain as the host page — see step 3 and
+[the setup steps](../embedding_screens_setup/) — or it is, but one of those steps is incomplete. Open
+the iframe address directly in a browser: if the address bar moves to a different name as you click
+around, the server is not passing the requested hostname to Formulize.
+
+**The form will not submit for some people but works for others.** You have SameSite set to `None`
+and those people's browsers refuse third-party cookies. See
+[Embedding on a different domain](#embedding-on-a-different-domain).
+
+**A passcode screen keeps asking for the passcode.** The screen has no session. Same cause as above.
+
+**An anonymous visitor cannot get back to the entry they saved.** Same cause as above. This one is
+not fixed by SameSite — it needs step 3.
 
 **Everyone sees the screen as anonymous, but they are signed in to the LMS.** That is the default.
 See "Who can use an embedded screen" above.

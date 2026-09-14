@@ -163,8 +163,14 @@ if($xoopsUser) {
             }
         }
 
-        // every token check needs the session, and the session needs a cookie the browser will keep
-        function cookiesAreBlocked() {
+        // Every token check needs the session, and the session needs a cookie the browser will keep.
+        //
+        // Writing a cookie from script only catches a browser that refuses them outright. A browser
+        // that keeps cookies for this frame in a box of their own passes that test while the session
+        // cookie is still turned away, so the script test cannot be the whole answer: ask the server
+        // whether its cookie came back instead. By the time this runs the browser has either kept the
+        // cookie from the page response or refused it, so the answer is the real one.
+        function scriptCookiesBlocked() {
             try {
                 document.cookie = 'formulize_embed_test=1;SameSite=Lax;path=/';
                 var stored = document.cookie.indexOf('formulize_embed_test=') !== -1;
@@ -173,6 +179,26 @@ if($xoopsUser) {
             } catch (e) {
                 return true;
             }
+        }
+
+        function checkSessionSurvives() {
+            if (!embedded) {
+                return;
+            }
+            if (scriptCookiesBlocked()) {
+                post('formulize:sessionUnavailable');
+                return;
+            }
+            jQuery.ajax({
+                url: '<{php}>echo XOOPS_URL;<{/php}>/modules/formulize/formulize_embed_session_check.php',
+                cache: false,
+                success: function(data) {
+                    if (jQuery.trim(String(data)) !== '1') {
+                        post('formulize:sessionUnavailable');
+                    }
+                }
+                // a request that does not arrive says nothing about cookies, so nothing is reported
+            });
         }
 
         jQuery(document).ready(function() {
@@ -192,9 +218,7 @@ if($xoopsUser) {
                     window.dispatchEvent(formulize_pageShown);
                     reportHeight();
                     post('formulize:ready', {height: lastHeight});
-                    if (cookiesAreBlocked()) {
-                        post('formulize:sessionUnavailable');
-                    }
+                    checkSessionSurvives();
                     // a page turn or a save reloads this document while the host page is still
                     // scrolled to wherever the button was
                     if (document.referrer.indexOf(window.location.origin) === 0) {
@@ -206,6 +230,23 @@ if($xoopsUser) {
                 formulizeShowPage();
             } else {
                 jQuery(window).on('load', formulizeShowPage);
+            }
+
+            // The session timeout warning is a banner at the very top of this document. Someone
+            // part-way down a long form would never see it appear, because the host page is
+            // scrolled well past it, so ask the host to bring it into view. Watched rather than
+            // hooked into the warning's own script, so that session-timeout-warning.html stays
+            // the same file every other theme uses.
+            var timeoutWarning = document.getElementById('session-timeout-warning');
+            if (embedded && timeoutWarning && window.MutationObserver) {
+                new MutationObserver(function(mutations, observer) {
+                    if (timeoutWarning.offsetParent === null) {
+                        return; // still hidden
+                    }
+                    observer.disconnect(); // it only has to be brought into view once
+                    reportHeight(); // the banner makes the document taller before the scroll lands
+                    post('formulize:scroll', {top: 0});
+                }).observe(timeoutWarning, {attributes: true, attributeFilter: ['style', 'class']});
             }
 
             // subform editors centre themselves on a document as tall as all of its content, so
