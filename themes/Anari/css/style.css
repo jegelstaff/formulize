@@ -24,17 +24,87 @@ time, mark, audio, video {
   vertical-align: baseline;
 }
 
+/* ---- Design tokens ----
+
+   These are the same custom property names the Lyris theme uses, so the two
+   themes share one vocabulary and one Appearance page. The values below are
+   Anari's own palette, ie: the defaults, which is what this theme looks like
+   when nothing has been customized.
+
+   The Appearance page in the Formulize admin UI overrides a subset of them, by
+   generating themes/Anari/appearance/appearance.css and linking it after this
+   file (see formulize_renderAppearanceHead() in
+   modules/formulize/include/appearance.php, called from theme.html). Each of
+   the nine configurable colours drives several tokens: picking one Primary
+   colour, for instance, rewrites --c-accent and its hover/soft/focus variants
+   together, so the interface stays coherent whatever colour is chosen. The
+   derivations are done in PHP with color-mix(), which is why the defaults here
+   are written out in full rather than derived: nothing depends on these
+   particular values being related to each other. */
+
 :root {
-  --button-color: #0d7bbf;
-  --accent-color: #0d7bbf;
-  --text-color: #323C47;
-  --background-color: #F5F6F8;
-	--light-border-color: #C2CFE0;
-	--alert-color: #e74c3c;
+  /* Primary - buttons, links, selected rows, focus rings */
+  --c-accent:        #0d7bbf;
+  --c-accent-fg:     #0d7bbf;
+  --c-accent-hover:  #0b6aa3;
+  --c-accent-soft:   #e7f2fa;
+  --c-accent-soft-2: #cfe5f4;
+  --c-border-focus:  #0b6aa3;
+  --sh-focus:        0 0 0 3px rgba(13, 123, 191, 0.15);
+
+  /* Page background */
+  --c-bg:            #F5F6F8;
+
+  /* Surface - cards, tables, panels and other raised areas */
+  --c-surface:       #FFFFFF;
+  --c-surface-2:     #FBFCFD;
+  --c-surface-3:     #F8FAFB;
+
+  /* Text - muted and subtle are derived from it */
+  --c-text:          #323C47;
+  --c-text-muted:    #707683;
+  --c-text-subtle:   #90A0B7;
+
+  /* Borders - strong is derived */
+  --c-border:        #EBEFF2;
+  --c-border-strong: #C2CFE0;
+
+  /* Status colours */
+  --c-success:       #27BD6B;
+  --c-success-soft:  #E4F7ED;
+  --c-warning:       #F1B70F;
+  --c-warning-soft:  #FDF3D5;
+  --c-danger:        #FF365F;
+  --c-danger-soft:   #FFE3E9;
+  --c-info:          #334D6E;
+  --c-info-soft:     #E6EBF1;
+
+  /* Typography. --font-sans is what the Appearance page's font setting
+     overrides; the Poppins webfont this theme ships with is requested in
+     theme.html and simply goes unused when another font is chosen. */
+  --font-sans: Poppins, Helvetica, Verdana, sans-serif;
+
+  /* Anari-specific shadows. Both follow the colour they tint, so they keep
+     tracking the Primary/Text settings without the Appearance page needing to
+     know about them: these are shaped glows rather than the flat ring that
+     --sh-focus is, so they can't just reuse it. */
+  --sh-accent-glow:    0px 4px 10px 0px color-mix(in srgb, var(--c-accent) 24%, transparent);
+  --sh-secondary-glow: 0px 4px 10px 0px color-mix(in srgb, var(--c-text-muted) 24%, transparent);
+
+  /* Legacy aliases. This theme (and any site-specific custom CSS written
+     against it) referred to these before the tokens above existed, so they are
+     kept, pointing at the tokens, and pick up customizations like everything
+     else. */
+  --button-color: var(--c-accent);
+  --accent-color: var(--c-accent);
+  --text-color: var(--c-text);
+  --background-color: var(--c-bg);
+  --light-border-color: var(--c-border-strong);
+  --alert-color: var(--c-danger);
 }
 
 body {
-  font-family: Poppins, Helvetica, Verdana, sans-serif;
+  font-family: var(--font-sans);
   color: var(--text-color);
   background: var(--background-color);
   line-height: 1.4;
@@ -97,7 +167,7 @@ div.ck-content blockquote {
 	padding-right: 1.5em;
 	padding-left: 1.5em;
 	font-style: italic;
-	border-left: 5px solid #ccc
+	border-left: 5px solid var(--c-border-strong)
 }
 
 div.ck-content h1 {
@@ -409,9 +479,9 @@ table:first-child div.applinks h1 {
 }
 
 .site-header {
-  background: #FFF;
+  background: var(--c-surface);
   height: 60px;
-  border-bottom: 1px solid #EBEFF2;
+  border-bottom: 1px solid var(--c-border);
   display: flex;
   align-items: center;
 }
@@ -450,7 +520,7 @@ table:first-child div.applinks h1 {
   border: 0;
 }
 .site-header__search-input::placeholder {
-  color: #90A0B7;
+  color: var(--c-text-subtle);
 }
 .site-header__search-input::-webkit-input-placeholder {
   line-height: normal !important;
@@ -474,7 +544,7 @@ table:first-child div.applinks h1 {
 .user-actions__link {
   margin: 0 10px;
   text-decoration: none;
-  color: #334D6E;
+  color: var(--c-text);
   text-align: center;
   padding-left: 0.3rem;
   padding-right: 0.3rem;
@@ -495,8 +565,8 @@ table:first-child div.applinks h1 {
   top: 1px;
   right: -2px;
   border-radius: 50%;
-  border: 1px solid #FFF;
-  background: #F7685B;
+  border: 1px solid var(--c-surface);
+  background: var(--c-danger);
 }
 
 .user-actions__link--notifications {
@@ -509,7 +579,7 @@ table:first-child div.applinks h1 {
 }
 
 .sidebar {
-  background: #FFF;
+  background: var(--c-surface);
   position: relative;
   z-index: 100;
   box-shadow: 6px 0px 18px 0px rgba(51, 77, 110, 0.06);
@@ -517,7 +587,7 @@ table:first-child div.applinks h1 {
 
 .site-branding {
   height: 60px;
-  border-bottom: 1px solid #EBEFF2;
+  border-bottom: 1px solid var(--c-border);
   display: flex;
   align-items: center;
   padding: 0 30px;
@@ -539,7 +609,7 @@ table:first-child div.applinks h1 {
 }
 
 .main-menu {
-  background: #FFF;
+  background: var(--c-surface);
   padding-bottom: 30px;
 }
 
@@ -549,12 +619,12 @@ table:first-child div.applinks h1 {
   align-items: center;
   font-size: 0.85rem;
   font-weight: 500;
-  color: #334D6E;
+  color: var(--c-text);
   text-decoration: none;
   line-height: 1.6;
 }
 .main-menu__item:hover {
-  background: #f8fafb;
+  background: var(--c-surface-3);
 }
 
 .main-menu__item-link-icon {
@@ -606,7 +676,7 @@ table:first-child div.applinks h1 {
   width: 20px;
   min-width: 20px;
   margin-right: 20px;
-  color: #334D6E;
+  color: var(--c-text);
 	margin-top: 0.7em;
 }
 
@@ -620,7 +690,7 @@ table:first-child div.applinks h1 {
 }
 
 .full-avatar {
-  background: #FFF;
+  background: var(--c-surface);
   height: 100px;
   display: flex;
   flex-direction: column;
@@ -653,7 +723,7 @@ table:first-child div.applinks h1 {
 }
 
 .full-avatar__name {
-  color: #334D6E;
+  color: var(--c-text);
   font-weight: 500;
   line-height: 1.4;
   text-decoration: none;
@@ -663,7 +733,7 @@ table:first-child div.applinks h1 {
 }
 
 .full-avatar__email {
-  color: #90A0B7;
+  color: var(--c-text-subtle);
   font-size: 0.8rem;
   line-height: 1.4;
   text-decoration: none;
@@ -750,7 +820,7 @@ button, input[type="submit"], input[type="button"], input[type="reset"],
 }
 button:hover, input[type="submit"]:hover, input[type="button"]:hover, input[type="reset"]:hover,
 .btn:hover {
-  box-shadow: 0px 4px 10px 0px rgba(16, 156, 241, 0.24);
+  box-shadow: var(--sh-accent-glow);
   transform: none;
   cursor: pointer;
 }
@@ -786,7 +856,7 @@ div#formulize-button-controls label[for=button-controls] {
 button, input[type="submit"], input[type="button"], input[type="reset"],
 .btn--primary {
   background-color:  var(--button-color);
-  box-shadow: 0px 4px 10px 0px rgba(16, 156, 241, 0.24);
+  box-shadow: var(--sh-accent-glow);
 }
 @media print {
   button, input[type="submit"], input[type="button"], input[type="reset"],
@@ -799,8 +869,8 @@ button, input[type="submit"], input[type="button"], input[type="reset"],
 }
 
 .btn--secondary {
-  background-color: #707683;
-  box-shadow: 0px 4px 10px 0px rgba(112, 118, 131, 0.24);
+  background-color: var(--c-text-muted);
+  box-shadow: var(--sh-secondary-glow);
 }
 @media print {
   .btn--secondary {
@@ -900,7 +970,7 @@ button, input[type="submit"], input[type="button"], input[type="reset"],
 }
 
 .chip {
-  background: #707683;
+  background: var(--c-text-muted);
   color: #FFF;
   font-weight: 500;
   display: inline-block;
@@ -918,7 +988,7 @@ button, input[type="submit"], input[type="button"], input[type="reset"],
 }
 
 .chip--navy {
-  background: #334D6E;
+  background: var(--c-info);
 }
 
 .chip--blue {
@@ -926,7 +996,7 @@ button, input[type="submit"], input[type="button"], input[type="reset"],
 }
 
 .chip--red {
-  background: #FF365F;
+  background: var(--c-danger);
 }
 
 .chip--cranberry {
@@ -934,8 +1004,8 @@ button, input[type="submit"], input[type="button"], input[type="reset"],
 }
 
 .chip--light {
-  background: #F5F6F8;
-  color: #707683;
+  background: var(--c-bg);
+  color: var(--c-text-muted);
 }
 
 @media print {
@@ -1073,7 +1143,7 @@ table.formulize-subform-table td {
   margin: 4px -10px 0;
   text-decoration: none;
   color:  var(--accent-color);
-  background: #f1f4f8;
+  background: var(--c-surface-3);
   padding: 0.5em 2em;
   border: 1px solid var(--light-border-color);
   border-bottom-left-radius: 2px;
@@ -1131,7 +1201,7 @@ table.formulize-subform-table td {
 .form-heading {
   font-weight: 400;
   font-size: 0.9rem;
-  color: #6A707E;
+  color: var(--c-text-muted);
   margin-top: 60px;
 }
 .form-heading:first-of-type {
@@ -1279,7 +1349,7 @@ table.outer textarea,
   width: 100%;
   max-width: 300px;
   border: 0;
-  border-bottom: 1px solid #818E9B;
+  border-bottom: 1px solid var(--c-border-strong);
   padding-top: 0.5em;
   padding-right: 0;
   padding-left: 0.5em;
@@ -1452,7 +1522,7 @@ table.outer textarea[disabled],
 #formulize_modal input[type="date"][disabled],
 #formulize_modal input[type="time"][disabled],
 #formulize_modal input[type="password"][disabled] {
-  color: #818E9B;
+  color: var(--c-text-subtle);
 }
 @media print {
     .form-input[disabled],
@@ -1507,7 +1577,7 @@ table.outer textarea[disabled],
 
 .form-container textarea, table.outer textarea,
 #formulize_modal textarea, table.outer textarea {
-    border-left: 1px solid #818E9B;
+    border-left: 1px solid var(--c-border-strong);
     padding-left: 1em;
 }
 
@@ -1525,7 +1595,7 @@ textarea {
 
 table.outer select, .form-container select, #formulize_modal select {
     border: 0;
-    border-bottom: 1px solid #818E9B;
+    border-bottom: 1px solid var(--c-border-strong);
     padding-left: 0.25em;
     width: 100%;
     max-width: 300px;
@@ -1585,12 +1655,12 @@ div.formulize_autocomplete {
 }
 
 .form-required {
-  color: #FF365F;
+  color: var(--c-danger);
 }
 
 .form-help-text {
   font-size: 0.8rem;
-  color: #6A707E;
+  color: var(--c-text-muted);
   padding: 0.6em 0;
   line-height: 1.4;
   clear: both;
@@ -1639,8 +1709,8 @@ ul.form-help-text {
 
 .table {
   width: 100%;
-  background: #FFF;
-  color: #707683;
+  background: var(--c-surface);
+  color: var(--c-text-muted);
   border-radius: 4px;
   box-shadow: 6px 0px 10px 0px rgba(51, 77, 110, 0.08);
 }
@@ -1654,7 +1724,7 @@ ul.form-help-text {
 }
 
 .table thead tr {
-  border-bottom: 1px solid #EBEFF2;
+  border-bottom: 1px solid var(--c-border);
 }
 @media print {
   .table thead tr {
@@ -1666,7 +1736,7 @@ ul.form-help-text {
 }
 
 .table tbody tr {
-  border-bottom: 1px solid #EBEFF2;
+  border-bottom: 1px solid var(--c-border);
 }
 @media print {
   .table tbody tr {
@@ -1678,7 +1748,7 @@ ul.form-help-text {
 }
 
 .table--striped tr:nth-child(2n) {
-  background: #fbfcfd;
+  background: var(--c-surface-2);
 }
 @media print {
   .table--striped tr:nth-child(2n) {
@@ -1687,7 +1757,7 @@ ul.form-help-text {
 }
 
 .table--hover-highlight-row tr:hover {
-  background: #f8fafb;
+  background: var(--c-surface-3);
 }
 
 .table th, .table td {
@@ -1695,7 +1765,7 @@ ul.form-help-text {
 }
 
 .table th {
-  color: #90A0B7;
+  color: var(--c-text-subtle);
   font-weight: 500;
 }
 @media print {
@@ -1749,7 +1819,7 @@ ul.form-help-text {
 }
 button.ui-dialog-titlebar-close {
     min-width: auto;
-    border: 1px solid #999999 !important;
+    border: 1px solid var(--c-border-strong) !important;
     box-shadow: none;
 }
 
@@ -1766,7 +1836,7 @@ button.ui-dialog-titlebar-close {
     border: 0;
     border-radius: 10px;
     min-width: 200px;
-    box-shadow: 0px 4px 10px 0px rgba(16, 156, 241, 0.24);
+    box-shadow: var(--sh-accent-glow);
     height: auto;
     width: auto;
 }
@@ -1836,7 +1906,7 @@ div.subform-entry-container .ui-widget-content {
 
 
 .card {
-  background: #FFF;
+  background: var(--c-surface);
   border-radius: 4px;
   box-shadow: 6px 0px 10px 0px rgba(51, 77, 110, 0.08);
 }
@@ -1851,7 +1921,7 @@ div.subform-entry-container .ui-widget-content {
 
 .card__header {
   padding: 20px 24px;
-  border-bottom: 1px solid #EBEFF2;
+  border-bottom: 1px solid var(--c-border);
 }
 @media print {
   .card__header {
@@ -1874,7 +1944,7 @@ button.card__title {
 }
 
 .card__title {
-  color: #323C47 !important;
+  color: var(--c-text) !important;
   line-height: 1;
   font-weight: 500;
 }
@@ -1910,7 +1980,7 @@ output[id^=rangeValue] {
   height: 280px;
   cursor: pointer;
   user-select: none;
-  background: #dae2ec;
+  background: var(--c-border-strong);
   box-shadow: none;
 }
 @media (min-width: 768px) {
@@ -1951,7 +2021,7 @@ input::-webkit-slider-runnable-track {
   box-sizing: border-box;
   width: 100%;
   height: 1px;
-  background: #818E9B;
+  background: var(--c-border-strong);
   border-radius: 100px;
   /*margin: 140px 0;*/
 }
@@ -1965,7 +2035,7 @@ input::-moz-range-track {
   box-sizing: border-box;
   width: 100%;
   height: 1px;
-  background: #818E9B;
+  background: var(--c-border-strong);
   border-radius: 100px;
   margin: 140px 0;
 }
@@ -1979,7 +2049,7 @@ input::-ms-track {
   box-sizing: border-box;
   width: 100%;
   height: 1px;
-  background: #818E9B;
+  background: var(--c-border-strong);
   border-radius: 100px;
   color: transparent;
   padding: 140px 0;
@@ -1997,12 +2067,12 @@ input::-ms-fill-upper {
   box-sizing: border-box;
   width: 100%;
   height: 1px;
-  background: #818E9B;
+  background: var(--c-border-strong);
   border-radius: 100px;
 }
 
 input::-ms-fill-lower {
-  background: #2ED47A;
+  background: var(--c-success);
 }
 
 .rangeslider-fill-lower {
@@ -2017,11 +2087,11 @@ input::-ms-fill-lower {
 }
 
 .rangeslider-fill-lower--green {
-  background-color: #27bd6b;
+  background-color: var(--c-success);
 }
 
 .rangeslider-fill-lower--yellow {
-  background-color: #f4c53f;
+  background-color: var(--c-warning);
 }
 
 .rangeslider-fill-lower--red {
@@ -2030,7 +2100,7 @@ input::-ms-fill-lower {
 
 input::-webkit-slider-thumb {
   box-sizing: border-box;
-  box-shadow: 0px 4px 10px rgba(16, 156, 241, 0.24);
+  box-shadow: var(--sh-accent-glow);
   border: 7px solid  var(--accent-color);
   height: 30px;
   width: 30px;
@@ -2051,7 +2121,7 @@ input::-webkit-slider-thumb {
 
 input::-moz-range-thumb {
   box-sizing: border-box;
-  box-shadow: 0px 4px 10px rgba(16, 156, 241, 0.24);
+  box-shadow: var(--sh-accent-glow);
   border: 7px solid  var(--accent-color);
   height: 30px;
   width: 30px;
@@ -2071,7 +2141,7 @@ input::-moz-range-thumb {
 
 input::-ms-thumb {
   box-sizing: border-box;
-  box-shadow: 0px 4px 10px rgba(16, 156, 241, 0.24);
+  box-shadow: var(--sh-accent-glow);
   border: 7px solid  var(--accent-color);
   height: 30px;
   width: 30px;
@@ -2090,7 +2160,7 @@ input::-ms-thumb {
 
 .rangeslider-thumb {
   box-sizing: border-box;
-  box-shadow: 0px 4px 10px rgba(16, 156, 241, 0.24);
+  box-shadow: var(--sh-accent-glow);
   border: 7px solid  var(--accent-color);
   height: 30px;
   width: 30px;
@@ -2179,7 +2249,7 @@ input::-ms-thumb {
   position: absolute;
   top: 8px;
   left: -20px;
-  background: #dae2ec;
+  background: var(--c-border-strong);
 }
 .rating-text__step:first-child {
   margin-top: 0;
@@ -2193,7 +2263,7 @@ input::-ms-thumb {
 }
 
 .rating-text__step--active {
-  color: #334D6E;
+  color: var(--c-text);
 }
 @media print {
   .rating-text__step--active {
@@ -2205,13 +2275,13 @@ input::-ms-thumb {
 }
 
 .rating-text__step--active.rating-text__step--green:before {
-  background: #27bd6b;
+  background: var(--c-success);
 }
 .rating-text__step--active.rating-text__step--yellow:before {
-  background: #f1b70f;
+  background: var(--c-warning);
 }
 .rating-text__step--active.rating-text__step--red:before {
-  background: #FF365F;
+  background: var(--c-danger);
 }
 
 .rating-text--layout {
@@ -2230,7 +2300,7 @@ input::-ms-thumb {
 }
 
 .progress-bar {
-  background: #dae2ec;
+  background: var(--c-border-strong);
   height: 6px;
   border-radius: 3px;
 }
@@ -2242,7 +2312,7 @@ input::-ms-thumb {
 
 .progress-bar__inner {
   height: 6px;
-  background: #334D6E;
+  background: var(--c-info);
   border-radius: 3px;
 }
 
@@ -2284,7 +2354,7 @@ input::-ms-thumb {
 }
 
 .self-assessment__heading {
-  color: #6A707E;
+  color: var(--c-text-muted);
   font-size: 1rem;
   line-height: 1;
   padding: 0.5rem 0;
@@ -2315,8 +2385,14 @@ input::-ms-thumb {
   }
 }
 
+/* Restates the body font on the elements that browsers give a font of their
+   own (form controls, tables) and on the jQuery UI widgets that ship their
+   own family. Goes through --font-sans rather than naming Poppins, so the
+   Appearance page's font setting reaches these elements too: they cover
+   nearly all the text on a page, so a hardcoded family here would override
+   the chosen font everywhere it matters. */
 div, span, textarea, select, p, input, th, td, .ui-widget div, .ui-widget span, .ui-widget textarea, .ui-widget select, .ui-widget p, .ui-widget input, .ui-widget th, .ui-widget td {
-  font-family: Poppins, Helvetica, Verdana, sans-serif;
+  font-family: var(--font-sans);
 }
 
 img, svg {
@@ -3168,7 +3244,7 @@ a.de-edit-icon:hover{
 span.formulize-masquerade-help {
   display: block;
   font-size: 0.85em;
-  color: #666;
+  color: var(--c-text-muted);
   margin-top: 4px;
 }
 
@@ -3458,7 +3534,7 @@ input[name='pickdiffgroup'] {
 /* compatibility with classic xoops table layout */
 
 table.outer {
-  background: #FFF;
+  background: var(--c-surface);
   border-radius: 4px;
   box-shadow: 6px 0px 10px 0px rgba(51, 77, 110, 0.08);
   margin-bottom: 30px;
@@ -3523,7 +3599,7 @@ div.scrollbox table.outer {
 
 table.outer th {
   padding: 20px 24px;
-  border-bottom: 1px solid #EBEFF2;
+  border-bottom: 1px solid var(--c-border);
 }
 @media print {
   table.outer th {
@@ -3569,7 +3645,7 @@ table.outer input[type=submit], table.outer input[type=button] {
   text-decoration: none;
   border: 0;
   border-radius: 10px;
-  background: #707683;
+  background: var(--c-text-muted);
   text-align: center;
 }
 table.outer input[type=submit]:hover, table.outer input[type=button]:hover {
@@ -3600,7 +3676,7 @@ table.outer input[type=submit]:hover, table.outer input[type=button]:hover {
 
 table.outer input[type=submit], table.outer input[type=button] {
   background-color:  var(--button-color);
-  box-shadow: 0px 4px 10px 0px rgba(16, 156, 241, 0.24);
+  box-shadow: var(--sh-accent-glow);
 }
 @media print {
   table.outer input[type=submit], table.outer input[type=button] {
@@ -3720,7 +3796,7 @@ form[name='metachoiceform'] td p {
 }
 #advanced_options p input[type='text'] {
     width: auto;
-    border: 1px solid rgb(170, 170, 170);
+    border: 1px solid var(--c-border-strong);
     padding: 0.1em;
     margin-bottom: 1em;
 }
@@ -3780,7 +3856,7 @@ input#toggleRepeatData::before {
   display:block;
   width:0.75rem;
   height:0.75rem;
-  background: #fff;
+  background: var(--c-surface);
   border-radius:1.2rem;
   position: absolute;
   top:0.1rem;
@@ -3809,7 +3885,7 @@ input#toggleRepeatData:focus-visible {
   width: 500px;
   z-index: 101;
   text-align: center;
-  background-color: #fff;
+  background-color: var(--c-surface);
   color: black;
   border: 3px solid #ce8c22;
   padding: 1em;
@@ -3868,7 +3944,7 @@ input#toggleRepeatData:focus-visible {
 .pm-breadcrumbs {
   margin-bottom: 1rem;
   font-size: 0.9em;
-  color: #666;
+  color: var(--c-text-muted);
 }
 
 .pm-breadcrumbs a {
@@ -3982,7 +4058,7 @@ input#toggleRepeatData:focus-visible {
   /* Date - block, smaller text */
   #prvmsg table td:nth-child(3) {
     font-size: 0.85em;
-    color: #666;
+    color: var(--c-text-muted);
     padding-left: 2.5rem;
   }
 
@@ -4061,10 +4137,10 @@ input#toggleRepeatData:focus-visible {
    ============================================================ */
 
 .formulize-drawer {
-  --formulize-drawer-bg: #FFF;
+  --formulize-drawer-bg: var(--c-surface);
   --formulize-drawer-fg: var(--text-color);
-  --formulize-drawer-border: #EBEFF2;
-  --formulize-drawer-muted: #707683;
+  --formulize-drawer-border: var(--c-border);
+  --formulize-drawer-muted: var(--c-text-muted);
   --formulize-drawer-foot-bg: var(--background-color);
   --formulize-drawer-shadow: -6px 0 20px 0 rgba(51, 77, 110, 0.18);
   --formulize-drawer-radius: 10px;
@@ -4093,13 +4169,13 @@ input#toggleRepeatData:focus-visible {
   font-weight: 600;
   border-radius: 10px;
   border: 1px solid var(--light-border-color);
-  background: #FFF;
+  background: var(--c-surface);
   color: var(--text-color);
 }
 
 .formulize-drawer .formulize-drawer__btn:hover {
-  background: #FFF;
-  box-shadow: 0px 4px 10px 0px rgba(16, 156, 241, 0.24);
+  background: var(--c-surface);
+  box-shadow: var(--sh-accent-glow);
 }
 
 .formulize-drawer .formulize-drawer__btn--primary,

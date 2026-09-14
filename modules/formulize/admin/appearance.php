@@ -40,8 +40,6 @@ if(!defined('_FORMULIZE_UI_PHP_INCLUDED')) { exit(); }
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/appearance.php";
 
-$colourMap = formulize_appearanceColourMap();
-$fontMap = formulize_appearanceFontMap();
 $saved = false;
 $errors = array();
 
@@ -51,6 +49,13 @@ $errors = array();
 $themes = formulize_getAppearanceThemes();
 $requestedTheme = isset($_POST['appearance_theme']) ? $_POST['appearance_theme'] : (isset($_GET['theme']) ? $_GET['theme'] : '');
 $selectedTheme = formulize_resolveAppearanceTheme($requestedTheme);
+
+// The colours and fonts on offer, with the defaults of the theme being edited, which
+// is not necessarily the theme this admin page is being rendered with. Each theme
+// declares its own palette and font, so what "default" means here follows the picker
+// above rather than whatever the admin happens to be looking at the site in.
+$colourMap = formulize_appearanceColourMap($selectedTheme);
+$fontMap = formulize_appearanceFontMap($selectedTheme);
 
 // the settings as they stand, read out of the theme's generated stylesheet
 $settings = formulize_getAppearanceSettings($selectedTheme);
@@ -126,7 +131,7 @@ if(isset($_POST['appearance_save']) OR isset($_POST['appearance_reset'])) {
     }
 
     // show what was submitted either way, so a failed save doesn't mean retyping it
-    $settings = formulize_sanitizeAppearanceSettings($submitted);
+    $settings = formulize_sanitizeAppearanceSettings($submitted, $selectedTheme);
 }
 
 $colours = array();

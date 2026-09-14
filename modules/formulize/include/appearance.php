@@ -45,15 +45,87 @@
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
 /**
- * The colours users can set, with the design-system default for each, and the
- * CSS custom properties each one drives. Derived tokens use color-mix() so any
- * user-picked base colour produces coherent hover/soft/muted variants.
+ * The custom properties a theme defines in its own stylesheet, ie: the palette
+ * it looks like before any appearance settings are applied. Read out of the
+ * first :root block in the theme's css/style.css, which is where every theme
+ * built on the Formulize design tokens declares them.
  *
+ * This is what makes the defaults on the Appearance page the defaults of the
+ * theme being edited, rather than one shared palette: each theme's real values
+ * are already written down in its own stylesheet, so they are read from there
+ * rather than copied into PHP, and a theme's palette can never drift from the
+ * defaults the Appearance page offers to reset to.
+ *
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return array CSS custom property (including the leading --) => declared value
+ */
+function formulize_appearanceThemeTokens($theme = null) {
+    static $tokens = array(); // parses a file, and is asked for once per colour
+    $theme = formulize_resolveAppearanceTheme($theme);
+    if (!isset($tokens[$theme])) {
+        $tokens[$theme] = array();
+        $file = ICMS_THEME_PATH . '/' . $theme . '/css/style.css';
+        $css = ($theme AND is_file($file)) ? @file_get_contents($file) : false;
+        // The first :root block only: later ones are media/scheme variations, not the base
+        // palette. The block has to start a line (or follow a rule) to be the real thing
+        // and not a :root mentioned inside some longer selector.
+        if ($css !== false AND preg_match('/(?:^|\})\s*:root\s*\{([^}]*)\}/m', $css, $block)) {
+            if (preg_match_all('/(--[A-Za-z0-9_-]+)\s*:\s*([^;]+);/', $block[1], $matches, PREG_SET_ORDER)) {
+                foreach ($matches as $match) {
+                    $tokens[$theme][$match[1]] = trim($match[2]);
+                }
+            }
+        }
+    }
+    return $tokens[$theme];
+}
+
+/**
+ * The colours users can set, with the default for each in the theme being
+ * asked about, and the CSS custom properties each one drives. Derived tokens
+ * use color-mix() so any user-picked base colour produces coherent hover/soft/
+ * muted variants.
+ *
+ * The defaults written in below are the Formulize design system's, and are used
+ * as-is for a theme that doesn't declare a colour itself. Where the theme does
+ * declare it (every theme built on these tokens declares all of them), the
+ * theme's own value is the default, so the Appearance page shows, and resets to,
+ * what that theme actually looks like. See formulize_appearanceThemeTokens().
+ *
+ * @param string|null $theme theme folder name, defaults to the active theme
  * @return array config name (without the appearance_ prefix) => array with
  *               'label', 'description', 'default' (hex), and 'tokens', a map of
  *               CSS custom property => value template where %s is the base colour
  */
-function formulize_appearanceColourMap() {
+function formulize_appearanceColourMap($theme = null) {
+    $map = formulize_appearanceColourMapDefinition();
+    $themeTokens = formulize_appearanceThemeTokens($theme);
+    foreach ($map as $key => $colour) {
+        // the base token is the one the colour is used at unchanged, ie: the plain %s
+        // template. The rest are derived from it and can't be read back as a base colour.
+        foreach ($colour['tokens'] as $token => $template) {
+            if ($template !== '%s') {
+                continue;
+            }
+            $value = formulize_sanitizeAppearanceColour(isset($themeTokens[$token]) ? $themeTokens[$token] : '');
+            if ($value) { // a theme can declare it as rgba(), a var(), or not at all: keep our default then
+                $map[$key]['default'] = $value;
+            }
+            break;
+        }
+    }
+    return $map;
+}
+
+/**
+ * The colour map as it is written down here: the design system's own defaults,
+ * before the theme being edited has had its say. Separate from
+ * formulize_appearanceColourMap() only so that function has something to layer
+ * the theme's values onto; everything else should call that one.
+ *
+ * @return array same shape as formulize_appearanceColourMap()
+ */
+function formulize_appearanceColourMapDefinition() {
     return array(
         'primary' => array(
             'label' => 'Primary',
@@ -146,17 +218,44 @@ function formulize_appearanceColourMap() {
 }
 
 /**
+ * The name of the font a theme uses when no font has been chosen on the
+ * Appearance page, ie: the first family in the --font-sans it declares itself.
+ * That is what the default option in the font picker actually gives you, so it
+ * is what that option is labelled with.
+ *
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return string the family name, or 'Geist' when the theme doesn't declare one
+ */
+function formulize_appearanceThemeFontName($theme = null) {
+    $tokens = formulize_appearanceThemeTokens($theme);
+    if (isset($tokens['--font-sans'])) {
+        $first = trim(strtok($tokens['--font-sans'], ','), " \t\"'");
+        // a var() or other indirection isn't a family name we can show
+        if ($first !== '' AND preg_match('/^[A-Za-z0-9 _-]+$/', $first)) {
+            return $first;
+        }
+    }
+    return 'Geist';
+}
+
+/**
  * Curated font choices. 'google' is the family parameter for the Google Fonts
  * css2 API (false when no webfont needs loading), 'stack' is the CSS
  * font-family value for --font-sans.
  *
+ * The first choice is "leave the theme's own font alone", which is why its
+ * label names the theme's font rather than a fixed one: on Lyris that is Geist,
+ * on Anari it is Poppins. Its key stays 'geist' because that key is written
+ * into saved settings, and nothing is recorded for the default anyway.
+ *
+ * @param string|null $theme theme folder name, defaults to the active theme
  * @return array font key => array with 'label', 'google', 'stack'
  */
-function formulize_appearanceFontMap() {
+function formulize_appearanceFontMap($theme = null) {
     $fallback = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
     return array(
         'geist' => array(
-            'label' => 'Geist (default)',
+            'label' => formulize_appearanceThemeFontName($theme) . ' (default)',
             'google' => 'Geist:wght@400;500;600;700',
             'stack' => "'Geist', $fallback",
         ),
@@ -210,7 +309,9 @@ function formulize_appearanceFontMap() {
  */
 function formulize_appearanceSettingNames() {
     $names = array('appearance_font', 'appearance_customfont', 'appearance_logo');
-    foreach (array_keys(formulize_appearanceColourMap()) as $key) {
+    // the definition, not the theme-aware map: the setting names are the same for every
+    // theme, and only the defaults differ, so there is no theme to resolve here
+    foreach (array_keys(formulize_appearanceColourMapDefinition()) as $key) {
         $names[] = 'appearance_' . $key;
     }
     return $names;
@@ -352,13 +453,16 @@ function formulize_sanitizeAppearanceFontFamily($value) {
  * pushing junk into the CSS or into the admin form.
  *
  * @param array $values setting name => raw value, any subset
+ * @param string|null $theme theme the settings belong to, whose own palette is
+ *                           what counts as default. Defaults to the active theme.
  * @return array setting name => clean value (all setting names present)
  */
-function formulize_sanitizeAppearanceSettings($values) {
+function formulize_sanitizeAppearanceSettings($values, $theme = null) {
     $clean = formulize_defaultAppearanceSettings();
-    foreach (formulize_appearanceColourMap() as $key => $colour) {
+    foreach (formulize_appearanceColourMap($theme) as $key => $colour) {
         $value = formulize_sanitizeAppearanceColour(isset($values['appearance_' . $key]) ? $values['appearance_' . $key] : '');
-        // nothing is recorded for a colour that is the design default, so the defaults can evolve
+        // nothing is recorded for a colour that is this theme's default, so the theme's own
+        // palette keeps applying (derived variants included) and the defaults can evolve
         $clean['appearance_' . $key] = ($value == $colour['default']) ? '' : $value;
     }
     $fonts = formulize_appearanceFontMap();
@@ -445,9 +549,11 @@ function formulize_buildAppearanceSettingsBlock($settings, $theme) {
  * mangled line costs that one setting and nothing else.
  *
  * @param string $path path of the stylesheet to read
+ * @param string|null $theme the theme the stylesheet belongs to, whose own
+ *                           palette is what counts as default when validating
  * @return array|false settings array, or false when the file has no usable settings block
  */
-function formulize_readAppearanceCssSettings($path) {
+function formulize_readAppearanceCssSettings($path, $theme = null) {
     if (!$path OR !is_file($path)) {
         return false;
     }
@@ -467,7 +573,7 @@ function formulize_readAppearanceCssSettings($path) {
             $values[$match[1]] = $match[2];
         }
     }
-    return formulize_sanitizeAppearanceSettings($values);
+    return formulize_sanitizeAppearanceSettings($values, $theme);
 }
 
 /**
@@ -498,7 +604,7 @@ function formulize_getLegacyAppearanceSettings($theme) {
     foreach (formulize_appearanceSettingNames() as $name) {
         $values[$name] = isset($formulizeConfig[$name]) ? $formulizeConfig[$name] : '';
     }
-    return formulize_sanitizeAppearanceSettings($values);
+    return formulize_sanitizeAppearanceSettings($values, $theme);
 }
 
 /**
@@ -514,7 +620,7 @@ function formulize_getAppearanceSettings($theme = null) {
     static $cache = array();
     $theme = formulize_resolveAppearanceTheme($theme);
     if (!isset($cache[$theme])) {
-        $settings = formulize_readAppearanceCssSettings(formulize_getAppearanceCssPath($theme));
+        $settings = formulize_readAppearanceCssSettings(formulize_getAppearanceCssPath($theme), $theme);
         $cache[$theme] = ($settings === false) ? formulize_getLegacyAppearanceSettings($theme) : $settings;
     }
     return $cache[$theme];
@@ -735,16 +841,18 @@ function formulize_appearanceDirIsWritable($theme = null) {
  * derived variants) for every colour that differs from the design defaults.
  *
  * @param array|null $settings appearance settings to use, defaults to the saved ones
+ * @param string|null $theme the theme being styled, whose own palette is what
+ *                           counts as default. Defaults to the active theme.
  * @return array CSS custom property => value
  */
-function formulize_getAppearanceCssOverrides($settings = null) {
-    $settings = is_array($settings) ? $settings : formulize_getAppearanceSettings();
+function formulize_getAppearanceCssOverrides($settings = null, $theme = null) {
+    $settings = is_array($settings) ? $settings : formulize_getAppearanceSettings($theme);
     $overrides = array();
     $font = formulize_getAppearanceFont($settings);
     if ($font['stack']) {
         $overrides['--font-sans'] = $font['stack'];
     }
-    foreach (formulize_appearanceColourMap() as $key => $colour) {
+    foreach (formulize_appearanceColourMap($theme) as $key => $colour) {
         $value = formulize_sanitizeAppearanceColour($settings['appearance_' . $key]);
         if ($value AND $value != $colour['default']) {
             foreach ($colour['tokens'] as $token => $template) {
@@ -783,14 +891,14 @@ function formulize_getAppearanceCssOverrides($settings = null) {
 function formulize_buildAppearanceCss($settings = null, $theme = null) {
     $theme = formulize_resolveAppearanceTheme($theme);
     $settings = is_array($settings)
-        ? formulize_sanitizeAppearanceSettings($settings)
+        ? formulize_sanitizeAppearanceSettings($settings, $theme)
         : formulize_getAppearanceSettings($theme);
     $font = formulize_getAppearanceFont($settings);
     $css = formulize_buildAppearanceSettingsBlock($settings, $theme) . "\n";
     if ($font['url']) {
         $css .= '@import url("' . $font['url'] . '");' . "\n";
     }
-    $overrides = formulize_getAppearanceCssOverrides($settings);
+    $overrides = formulize_getAppearanceCssOverrides($settings, $theme);
     if ($overrides) {
         $css .= ":root {\n";
         foreach ($overrides as $token => $value) {
