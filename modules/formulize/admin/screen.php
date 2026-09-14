@@ -79,7 +79,7 @@ if ($screen_id == "new") {
     // the ready-made iframe and script for the host page, with this screen's own address already in
     // it, so nobody has to assemble one by hand or remember what has to be on the end of the URL
     $settings['embedCode'] = formulize_screenEmbedCode($screen);
-    $settings['embedSessionNotice'] = formulize_embedSessionSharingNoticeHtml();
+    $settings['embedSessionNotice'] = formulize_embedSessionSharingNoticeHtml($screen->getVar('embedOrigins', 'n'));
 	$settings['alternateURLsOn'] = $formulizeConfig['formulizeRewriteRulesEnabled'];
     if($settings['alternateURLsOn']) {
         $settings['rewriteruleAddress'] = $screen->getVar('rewriteruleAddress');

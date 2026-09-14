@@ -83,25 +83,35 @@ That is everything. The screen sizes itself to its content, so there is no heigh
 
 ## Who can use an embedded screen
 
-Embedding does not change who can use a screen. It changes who is looking.
+Embedding does not change who can use a screen. What changes is whether the visitor is signed in
+while they use it — and that depends entirely on **where** the screen is embedded.
 
-By default, **an embedded screen is always anonymous**, no matter who is looking at it. Browsers do
-not send your site's session cookie into a frame on another website, so as far as Formulize is
-concerned nobody is signed in. That means:
+Browsers send your site's session cookie into a frame only when the page doing the framing is on the
+same domain as the screen, over the same https. So:
 
-- A screen the Anonymous group can view works normally.
+**Embedded on the same domain** — the arrangement step 3 sets up, `forms.example.com` inside
+`www.example.com`. The session travels with the visitor. The screen shows them their own data and
+behaves exactly as it does on your own site, submitting included. This is the normal case, and it is
+why step 3 matters.
+
+**Embedded on a different domain** — `forms.example.com` inside `someone-else.com`. No session
+reaches the screen. Whoever is looking at it, Formulize sees an anonymous visitor. That means:
+
+- A screen the Anonymous group can view displays normally, but **submitting will fail** — the
+  anti-spam token needs a session.
 - A screen that requires a login shows a short message and a link to open it in a new window, where
   signing in works.
 - A screen protected by a passcode still asks for the passcode, and that works inside the frame.
 
-If you are embedding into a system your users are already signed in to — a learning management
-system, an intranet portal — and you want them to see their own data in the frame, you need the
-session cookie to travel with them. Change **SameSite** under **Settings → Advanced → Sessions &
-cookies** to `None`.
+The screen's settings page tells you which of the two you have. It reads the websites you have
+listed, compares each against your own address, and says which will be signed in and which will be
+anonymous.
 
-Do read what the preferences page tells you when you do. With `None`, every website in your
-embedding lists can display signed-in pages of your site inside a page of their own. List only
-websites you control and trust.
+If you need signed-in screens on a **different** domain — a learning management system, a portal —
+change **SameSite** under **Settings → Advanced → Sessions & cookies** to `None`. Do read what the
+preferences page tells you when you do: with `None`, every website in your embedding lists can
+display signed-in pages of your site inside a page of their own. List only websites you control and
+trust.
 
 ## Choosing which websites may embed
 

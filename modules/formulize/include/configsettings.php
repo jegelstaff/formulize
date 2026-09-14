@@ -186,7 +186,7 @@ function formulize_configFormElementHtml($config) {
         $ele = new icms_form_elements_Textarea('', $name, icms_core_DataFilter::htmlSpecialChars($value), 5, 50);
         return $ele->render()
             . formulize_embedOriginsWarningHtml($value)
-            . formulize_embedSessionSharingNoticeHtml();
+            . formulize_embedSessionSharingNoticeHtml($value);
     }
 
     // The list of websites allowed to call the Public API, plus a note about any entry that cannot

@@ -725,25 +725,145 @@ function formulize_settingsWarningStylesHtml() {
  *
  * @return string HTML for the note, or an empty string when there is nothing worth saying
  */
-function formulize_embedSessionSharingNoticeHtml() {
+function formulize_embedSessionSharingNoticeHtml($value = '') {
     global $icmsConfig;
     $sameSite = isset($icmsConfig['cookie_samesite']) ? $icmsConfig['cookie_samesite'] : 'Lax';
     if (!formulize_embeddingAllowed()) {
         return '';
     }
-    if ($sameSite !== 'None') {
+    // SameSite=None sends the session everywhere, so where a website sits makes no difference
+    if ($sameSite === 'None') {
         return formulize_settingsWarningStylesHtml()
-            ."<div class='formulize-settings-note'>"
-            ."<p><b>"._AM_EMBED_SESSION_ANON_TITLE."</b> "
-            .sprintf(_AM_EMBED_SESSION_ANON_BODY, htmlspecialchars($sameSite))."</p>"
-            ."<p>"._AM_EMBED_SESSION_ANON_LMS."</p>"
+            ."<div class='formulize-settings-warning'>"
+            ."<p><b>"._AM_EMBED_SESSION_SHARED_TITLE."</b> "._AM_EMBED_SESSION_SHARED_BODY."</p>"
+            ."<p>"._AM_EMBED_SESSION_SHARED_TRUST."</p>"
             ."</div>";
     }
-    return formulize_settingsWarningStylesHtml()
-        ."<div class='formulize-settings-warning'>"
-        ."<p><b>"._AM_EMBED_SESSION_SHARED_TITLE."</b> "._AM_EMBED_SESSION_SHARED_BODY."</p>"
-        ."<p>"._AM_EMBED_SESSION_SHARED_TRUST."</p>"
-        ."</div>";
+    $thisHost = strtolower((string) parse_url(XOOPS_URL, PHP_URL_HOST));
+    $html = formulize_settingsWarningStylesHtml()
+        ."<div class='formulize-settings-note'>"
+        ."<p><b>"._AM_EMBED_SESSION_DEPENDS_TITLE."</b> "
+        .sprintf(_AM_EMBED_SESSION_DEPENDS_BODY, htmlspecialchars($sameSite), '<code>'.htmlspecialchars($thisHost).'</code>')
+        ."</p>";
+    // sorted into what this site can say for certain about the websites actually listed, so the
+    // rule above does not have to be applied by hand to each one
+    $sorted = formulize_sortOriginsBySessionSharing($value, $thisHost);
+    if ($sorted['same']) {
+        $html .= '<p>'._AM_EMBED_SESSION_LIST_SAME.' '
+            .'<code>'.implode('</code>, <code>', array_map('htmlspecialchars', $sorted['same'])).'</code></p>';
+    }
+    if ($sorted['cross']) {
+        $html .= '<p>'._AM_EMBED_SESSION_LIST_CROSS.' '
+            .'<code>'.implode('</code>, <code>', array_map('htmlspecialchars', $sorted['cross'])).'</code></p>';
+    }
+    return $html.'<p>'._AM_EMBED_SESSION_DEPENDS_LMS.'</p></div>';
+}
+
+/**
+ * Sort the websites in an embedding list into those that share this site's session and those that
+ * do not.
+ *
+ * A browser sends a SameSite=Lax cookie into a frame when the framing page and the framed page are
+ * the same site, which means the same registrable domain AND the same scheme. So a screen at
+ * forms.example.com embedded in www.example.com is signed in, while the same screen embedded in
+ * someone-else.com is anonymous. Ports make no difference.
+ *
+ * Only relationships this site can be sure of are reported. Working out the registrable domain of
+ * an arbitrary hostname needs the Public Suffix List, which Formulize does not carry, so the
+ * comparison here is limited to the cases that need no such list: the same hostname, one hostname
+ * inside the other, or two hostnames under a shared parent that is clearly a registrable domain
+ * rather than a public suffix like co.uk. Anything else is left out of both lists rather than
+ * guessed at - the note states the rule, and an administrator can apply it to what remains.
+ *
+ * @param string $value The saved setting
+ * @param string $thisHost This site's own hostname
+ * @return array array('same' => array, 'cross' => array) of canonical addresses
+ */
+function formulize_sortOriginsBySessionSharing($value, $thisHost) {
+    $sorted = array('same' => array(), 'cross' => array());
+    if (!$thisHost) {
+        return $sorted;
+    }
+    $thisScheme = strtolower((string) parse_url(XOOPS_URL, PHP_URL_SCHEME));
+    foreach (formulize_splitOriginSetting($value) as $entry) {
+        $pattern = formulize_parseOriginPattern($entry);
+        if (!$pattern OR !formulize_originPatternCanBeFramed($pattern)) {
+            continue;
+        }
+        // a pattern naming no scheme is matched by the browser against this site's own scheme, so
+        // it is only ever same-scheme; one naming a different scheme is a different site outright
+        if ($pattern['scheme'] !== null AND $pattern['scheme'] !== $thisScheme) {
+            $sorted['cross'][] = formulize_renderOriginPattern($pattern);
+            continue;
+        }
+        $relationship = formulize_hostSessionRelationship($pattern['host'], $thisHost);
+        if ($relationship !== 'unknown') {
+            $sorted[$relationship][] = formulize_renderOriginPattern($pattern);
+        }
+    }
+    return $sorted;
+}
+
+/**
+ * Whether two hostnames are the same site, as a browser decides it, where that can be known
+ * without the Public Suffix List.
+ *
+ * @param string $host The hostname from the administrator's list (a wildcard's bare host)
+ * @param string $thisHost This site's own hostname
+ * @return string 'same', 'cross', or 'unknown' when it cannot be decided safely
+ */
+function formulize_hostSessionRelationship($host, $thisHost) {
+    if ($host === $thisHost) {
+        return 'same';
+    }
+    // one inside the other, eg. example.com and forms.example.com: the shorter one is the parent,
+    // and a parent that somebody has actually listed is a domain they hold, not a public suffix
+    if (substr($thisHost, -strlen('.'.$host)) === '.'.$host
+        OR substr($host, -strlen('.'.$thisHost)) === '.'.$thisHost) {
+        return 'same';
+    }
+    // siblings, eg. www.example.com and forms.example.com: same site only if what they share is a
+    // registrable domain. Requiring a label before a two-label tail rules out two unrelated sites
+    // that merely share a public suffix, eg. a.co.uk and b.co.uk.
+    $hostLabels = explode('.', $host);
+    $thisLabels = explode('.', $thisHost);
+    $shared = array();
+    while ($hostLabels AND $thisLabels AND end($hostLabels) === end($thisLabels)) {
+        array_unshift($shared, array_pop($hostLabels));
+        array_pop($thisLabels);
+    }
+    if (count($shared) < 2) {
+        return 'cross'; // nothing in common beyond a bare TLD, or nothing at all
+    }
+    if (count($shared) === 2 AND in_array(implode('.', $shared), formulize_multiLabelPublicSuffixes(), true)) {
+        return 'cross'; // all they share is something like co.uk, so they are different sites
+    }
+    return 'same';
+}
+
+/**
+ * The public suffixes with two labels that are common enough to be worth knowing about here.
+ *
+ * Not the Public Suffix List, and not trying to be: this only has to stop the sibling test above
+ * from calling two unrelated sites the same site. A suffix that is missing leaves a pair reported
+ * as sharing the session when they do not, so the list covers the ones a Formulize site is most
+ * likely to meet. See formulize_hostSessionRelationship().
+ *
+ * @return array
+ */
+function formulize_multiLabelPublicSuffixes() {
+    return array(
+        'co.uk', 'org.uk', 'ac.uk', 'gov.uk', 'me.uk', 'net.uk', 'sch.uk',
+        'com.au', 'net.au', 'org.au', 'edu.au', 'gov.au', 'id.au',
+        'co.nz', 'net.nz', 'org.nz', 'ac.nz', 'govt.nz',
+        'co.za', 'org.za', 'net.za', 'gov.za', 'ac.za',
+        'co.jp', 'or.jp', 'ne.jp', 'ac.jp', 'go.jp',
+        'com.br', 'net.br', 'org.br', 'gov.br', 'edu.br',
+        'co.in', 'net.in', 'org.in', 'gen.in', 'gov.in',
+        'com.mx', 'com.ar', 'com.sg', 'com.hk', 'com.tw', 'com.cn', 'net.cn', 'org.cn', 'gov.cn',
+        'co.il', 'co.kr', 'or.kr', 'com.tr', 'com.pl', 'com.ua', 'com.ru',
+        'gc.ca', 'qc.ca', 'on.ca', 'ab.ca', 'bc.ca',
+    );
 }
 
 /**

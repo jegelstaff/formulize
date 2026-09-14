@@ -1,10 +1,15 @@
 /*
  * Overrides for showing a Formulize screen inside an iframe on another website.
  *
- * The base theme's stylesheet is loaded first (see theme.html) and this file only adjusts what that
- * stylesheet assumes about the viewport. That is the whole point of keeping it separate: the base
+ * The site theme's stylesheet is loaded first (see theme.html) and this file only adjusts what that
+ * stylesheet assumes about the viewport. That is the whole point of keeping it separate: the site
  * theme can be improved without this theme carrying a copy that quietly falls behind it. There is
- * nothing here to re-sync when the base theme changes, only this short list to re-check.
+ * nothing here to re-sync when the site theme changes, only this short list to re-check.
+ *
+ * It is called style.css, rather than something that describes what it holds, because ImpressCMS
+ * looks for exactly that name when it builds $icms_themecss (see xoops_getcss() in
+ * include/functions.php) and prints "The theme does not exist" across the top of the page when no
+ * theme folder has one.
  *
  * The host page sizes the iframe to its content, so the viewport in here is as tall as everything
  * in it. A height in vh therefore grows again every time the iframe grows, and a scrolling region

@@ -37,9 +37,12 @@
     <!-- CSS: must come after icms_module_header.
          This theme does not keep its own copy of the site's stylesheet. It loads the site's own
          theme's, so improvements there reach embedded screens instead of this theme drifting
-         behind, and then loads embed.css, which adjusts only what that stylesheet assumes about
-         the viewport. Relative urls inside that stylesheet resolve against its own theme folder,
-         so the images and fonts come with it.
+         behind, and then loads its own style.css, which adjusts only what that stylesheet assumes
+         about the viewport. Relative urls inside that stylesheet resolve against its own theme
+         folder, so the images and fonts come with it.
+         This theme's own stylesheet has to be called css/style.css, even though it holds only
+         overrides: ImpressCMS looks for that exact name when it builds $icms_themecss, and prints
+         "The theme does not exist" over the top of the page when it cannot find one.
          The site's theme is read from theme_set, which embedding deliberately leaves alone (see
          modules/formulize/include/common.php), so an embedded screen is styled by whatever the
          site is wearing today. Nothing to set, and nothing to keep in step. -->
@@ -53,7 +56,7 @@
     }
     $rtlPath = ($this->_tpl_vars['icms_rtl'] ?? false) ? 'rtl/' : '';
     foreach (array('/themes/' . $baseTheme . '/' . $rtlPath . 'css/style.css',
-                   '/themes/' . $this->_tpl_vars['theme_name'] . '/css/embed.css') as $stylesheet) {
+                   '/themes/' . $this->_tpl_vars['theme_name'] . '/css/style.css') as $stylesheet) {
         echo '<link rel="stylesheet" type="text/css" media="all" href="' . XOOPS_URL . $stylesheet
             . '?v=' . formulize_get_file_version($stylesheet) . '" />';
     }
