@@ -644,25 +644,12 @@ function formulize_embeddedNoPermissionHtml($returnUrl) {
 }
 
 /**
- * The address a screen is reached at, preferring the clean URL when the screen has one.
- *
- * @param object $screen The screen
- * @return string The full URL
- */
-function formulize_screenUrl($screen) {
-    $cleanAddress = $screen->getVar('rewriteruleAddress', 'n');
-    if ($cleanAddress AND formulize_moduleConfigValue('formulizeRewriteRulesEnabled')) {
-        return XOOPS_URL.'/'.ltrim($cleanAddress, '/');
-    }
-    return XOOPS_URL.'/modules/formulize/index.php?sid='.intval($screen->getVar('sid'));
-}
-
-/**
  * The HTML to paste into another website's page to embed this screen.
  *
- * Generated rather than written out in the documentation for somebody to adapt, because three
+ * Generated rather than written out in the documentation for somebody to adapt, because four
  * things in it have to be right and only this end knows them: the screen's own address, the
- * address of the helper script on this site, and the formulize_embed parameter.
+ * address of the helper script on this site, the formulize_embed parameter, and a size that holds
+ * up in a page we cannot see.
  *
  * That parameter is what tells Formulize to render without site chrome in the handful of browsers
  * that do not send Sec-Fetch-Dest. It costs nothing to have it there on every browser, and putting
@@ -670,15 +657,27 @@ function formulize_screenUrl($screen) {
  * they needed it. formulize-embed.js also adds it to any iframe that reaches it without one, so a
  * hand-written iframe ends up in the same place.
  *
+ * The address is always index.php?sid=, never the alternate address the screen may have under
+ * Alternate URLs. An embedded screen is reached through a name on the host website's own domain
+ * pointed at this server, and the rewrite rules that serve the alternate addresses are not part of
+ * that arrangement, so the tidy address is one more thing to get working for no gain: nobody ever
+ * sees the address that is in an iframe.
+ *
+ * The size is set here as well as in formulize-embed.js, so the frame is right in the moment
+ * before the script is parsed, and still right if the script never arrives - blocked, or this site
+ * moved and the src went stale. Without it the browser falls back to the 300x150 that CSS gives
+ * any replaced element with no size of its own. minWidthValue() in formulize-embed.js explains
+ * what the floor under the width is for.
+ *
  * @param object $screen The screen
  * @return string The HTML to paste, ready to display in a textarea
  */
 function formulize_screenEmbedCode($screen) {
-    $url = formulize_screenUrl($screen);
-    $url .= (strpos($url, '?') === false ? '?' : '&').'formulize_embed=1';
+    $url = XOOPS_URL.'/modules/formulize/index.php?sid='.intval($screen->getVar('sid')).'&formulize_embed=1';
     $title = $screen->getVar('title');
     return '<iframe data-formulize-embed src="'.htmlspecialchars($url).'"'
-        .' title="'.htmlspecialchars($title ? $title : _AM_EMBED_CODE_DEFAULT_TITLE).'"></iframe>'."\n"
+        .' title="'.htmlspecialchars($title ? $title : _AM_EMBED_CODE_DEFAULT_TITLE).'"'
+        .' style="width:100%;min-width:min(400px,100vw);height:600px;border:0"></iframe>'."\n"
         .'<script src="'.htmlspecialchars(XOOPS_URL.'/modules/formulize/libraries/embed/formulize-embed.js').'"></script>';
 }
 

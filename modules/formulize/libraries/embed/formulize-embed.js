@@ -6,9 +6,10 @@
  *   <iframe data-formulize-embed src="https://forms.example.com/my-screen"></iframe>
  *   <script src="https://forms.example.com/modules/formulize/libraries/embed/formulize-embed.js"></script>
  *
- * The screen reports its own height, so no height needs to be guessed here. Messages are only
- * accepted from the window of a registered iframe, and only when they come from the origin that
- * iframe was pointed at.
+ * The screen reports its own height, so no height needs to be guessed here. The width is whatever
+ * the surrounding page gives it, with a floor under it so it cannot collapse (see minWidthValue).
+ * Messages are only accepted from the window of a registered iframe, and only when they come from
+ * the origin that iframe was pointed at.
  */
 (function (window, document) {
     'use strict';
@@ -41,6 +42,45 @@
         iframe.setAttribute('src', src + (src.indexOf('?') === -1 ? '?' : '&') + 'formulize_embed=1');
     }
 
+    /**
+     * The narrowest the screen is allowed to become.
+     *
+     * An iframe fills its container, which is right when the container has a width of its own and
+     * silently wrong when it does not. Inside anything sized to fit its contents - a float, an
+     * inline-block, a flex or grid item, a table cell, width: fit-content - the container's width
+     * depends on its children, a percentage width on a child cannot answer that, and the iframe
+     * falls back to the 300px that CSS gives any replaced element with no size. The container then
+     * shrinks to match. Nothing looks broken; the screen is just a sliver, and the person who
+     * pasted the code in has no way to guess why.
+     *
+     * A minimum width fixes that from this side, because it is not only a clamp on the iframe: it
+     * becomes the iframe's contribution to the container's own minimum width, so a container that
+     * had collapsed grows to honour it. Capped at the width of the window, so that on a phone it
+     * gives way rather than pushing a horizontal scrollbar onto the host page.
+     *
+     * It cannot do anything about a page whose column really is narrow, and it should not try -
+     * that is the host's design, and a screen in a 600px column gets 600px. Screens stay usable
+     * there because an iframe has its own viewport, so the site theme's narrow-screen rules apply
+     * to the width of the frame rather than the width of the visitor's monitor.
+     *
+     * Browsers without min() are from before 2020. They get a flat 320px, which is narrow enough
+     * that no phone gains a scrollbar and still wide enough to lift the 300px collapse.
+     */
+    function minWidthValue(iframe) {
+        var requested = iframe.getAttribute('data-formulize-embed-min-width');
+        if (requested === 'off' || requested === '0') {
+            return '';
+        }
+        var floor = parseInt(requested, 10);
+        if (!floor || floor < 0) {
+            floor = 400; // a phone held sideways: enough for a form, rarely wider than a real column
+        }
+        if (window.CSS && window.CSS.supports && window.CSS.supports('width', 'min(1px, 100vw)')) {
+            return 'min(' + floor + 'px, 100vw)';
+        }
+        return Math.min(floor, 320) + 'px';
+    }
+
     function register(iframe) {
         if (iframe.formulizeEmbedRegistered) {
             return;
@@ -49,6 +89,7 @@
         ensureEmbedParameter(iframe);
         iframe.setAttribute('scrolling', 'no');
         iframe.style.width = '100%';
+        iframe.style.minWidth = minWidthValue(iframe);
         iframe.style.border = '0';
         if (!iframe.style.height) {
             iframe.style.height = (iframe.getAttribute('data-formulize-embed-height') || 600) + 'px';

@@ -266,10 +266,15 @@ Point the iframe at the new address. The screen's settings page generates the co
 host website is in its list — take it from there rather than editing it by hand.
 
 ```html
-<iframe data-formulize-embed src="https://forms.example.com/contact-us?formulize_embed=1"
-        title="Contact us"></iframe>
+<iframe data-formulize-embed src="https://forms.example.com/modules/formulize/index.php?sid=12&formulize_embed=1"
+        title="Contact us"
+        style="width:100%;min-width:min(400px,100vw);height:600px;border:0"></iframe>
 <script src="https://forms.example.com/modules/formulize/libraries/embed/formulize-embed.js"></script>
 ```
+
+The address is the screen's plain `index.php?sid=` one, not an Alternate URL you may have given it.
+The rewrite rules that serve those addresses are not part of this arrangement, and nobody sees the
+address inside an iframe anyway.
 
 Your original address keeps working. Opening it directly still shows the whole site normally.
 

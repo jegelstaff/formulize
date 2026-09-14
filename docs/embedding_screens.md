@@ -69,15 +69,18 @@ The screen's settings page shows you the exact code for that screen, under **Cod
 website's page**. It looks like this:
 
 ```html
-<iframe data-formulize-embed src="https://forms.example.com/contact-us?formulize_embed=1"
-        title="Contact us"></iframe>
+<iframe data-formulize-embed src="https://forms.example.com/modules/formulize/index.php?sid=12&formulize_embed=1"
+        title="Contact us"
+        style="width:100%;min-width:min(400px,100vw);height:600px;border:0"></iframe>
 <script src="https://forms.example.com/modules/formulize/libraries/embed/formulize-embed.js"></script>
 ```
 
 Copy it from the settings page rather than from here — it has your screen's real address in it
 already. Include the script once per page, however many screens that page shows.
 
-That is everything. The screen sizes itself to its content, so there is no height to guess at.
+That is everything. The screen sizes itself to its content, so there is no height to guess at, and
+it takes the width your page gives it — see [How wide the screen will be](#how-wide-the-screen-will-be)
+if it comes out narrower than you expected.
 
 ## Who can use an embedded screen
 
@@ -165,6 +168,28 @@ on the individual screens they embed: a screen's own list adds to them.
 
 For embedding individual screens, leave this blank and use the setting on each screen.
 
+## How wide the screen will be
+
+The screen fills whatever container you put the iframe in. A container 700px wide gives you a 700px
+screen, and there is nothing to set — that is the usual case and it needs no attention.
+
+There is a floor under it, at 400px, so it cannot collapse. Some layouts size a box to fit whatever
+is inside it — a float, an `inline-block`, a flex or grid item, a table cell, `width: fit-content` —
+and inside one of those a percentage width has nothing to resolve against, so browsers fall back to
+the 300px they give any element with no size of its own. The result is a usable page with a sliver
+of a form in it and no error anywhere to explain why. The floor stops that happening.
+
+The floor gives way on a narrow screen rather than pushing a horizontal scrollbar onto your page: on
+a phone the frame is as wide as the window. Set `data-formulize-embed-min-width` to change it, or to
+`off` to remove it, if you have a column narrower than 400px and you would rather the screen fit
+inside it.
+
+A narrow frame gets the narrow layout — the same one a phone gets, which in the standard theme means
+anything under 768px — because a frame has a viewport of its own and the screen is measuring the
+frame rather than the monitor. So a screen in a narrow column stays usable; it just reads like a
+phone. If a form looks cramped in your page, widen the container around the iframe rather than the
+iframe itself.
+
 ## Changing how an embedded screen looks
 
 An embedded screen borrows your site's own theme stylesheet, so it looks like the rest of your site
@@ -182,13 +207,14 @@ switch. Nothing to edit in `mainfile.php`.
 ## For the developer of the host page
 
 Mark each iframe with `data-formulize-embed` and include `formulize-embed.js` once per page. The
-script finds every marked iframe, keeps each one as tall as its content, and scrolls the page when
-the screen needs something brought into view.
+script finds every marked iframe, keeps each one as tall as its content, holds it to a sensible
+width, and scrolls the page when the screen needs something brought into view.
 
 | Attribute | Effect |
 |---|---|
 | `data-formulize-embed` | Required. Marks the iframe for the script. |
 | `data-formulize-embed-height` | Height in pixels to start at, before the screen reports its own. Defaults to 600. |
+| `data-formulize-embed-min-width` | Narrowest the frame may become, in pixels. Defaults to 400. `off` removes the floor. Capped at the width of the window either way. |
 | `data-formulize-embed-fallback` | Set to `off` to suppress the "open in a new window" link. |
 | `data-formulize-embed-fallback-text` | Wording for that link. |
 
@@ -214,6 +240,11 @@ address is not on the same domain as the page — see step 3 above.
 
 **The frame is empty.** The website showing it is not in the screen's list, or embedding is turned
 off for the site. Check both, then reload.
+
+**The form is a narrow sliver.** The iframe is in a container that sizes itself to its contents, and
+the version of `formulize-embed.js` on your Formulize site predates the floor described under
+[How wide the screen will be](#how-wide-the-screen-will-be). Take the code from the screen's settings
+page again — it now carries a `style` that sets the width whether or not the script has loaded.
 
 **The screen appears with your site's menus, header and footer around it.** The browser did not tell
 Formulize it was in a frame, and the address in the iframe is missing `?formulize_embed=1`. Copy the

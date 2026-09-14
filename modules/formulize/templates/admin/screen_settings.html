@@ -54,6 +54,33 @@
         <{/if}>
 	</fieldset>
 
+	<{* Embedding in another website sits with the other ways of reaching this screen, and ahead of
+	   the PHP include below it, because that is what people come here for now: including a screen
+	   in another page on this same server is a much older idea and a much rarer one. The code to
+	   paste only appears once the site allows embedding at all - until then there is nothing that
+	   would work anywhere. *}>
+	<fieldset>
+		<legend><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_LEGEND}></legend>
+
+	  <div class="form-item">
+	    <{if not $content.embeddingAllowed}>
+	      <div class="description"><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_OFF}></div>
+	    <{else}>
+	    <{if $content.embedCode}>
+	    <label for="screens-embedCode"><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_CODE}></label>
+	    <textarea id="screens-embedCode" rows="4" cols="60" readonly onclick="this.select();"><{$content.embedCode}></textarea>
+	    <div class="description"><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_CODE_DESC}></div>
+	    <br />
+	    <{/if}>
+	    <label for="screens-embedOrigins"><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_ORIGINS}></label>
+	    <textarea name="screens-embedOrigins" id="screens-embedOrigins" rows="4" cols="60" placeholder="www.example.com"><{$content.embedOrigins}></textarea>
+	    <{$content.embedOriginsWarning}>
+	    <div class="description"><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_ORIGINS_DESC}></div>
+	    <{$content.embedSessionNotice}>
+	    <{/if}>
+	  </div>
+	</fieldset>
+
 	<fieldset>
 		<legend><{$smarty.const._AM_SCREEN_SETTINGS_PHP_LEGEND}></legend>
 		<p><{$smarty.const._AM_SCREEN_SETTINGS_PHP_DESC}><br /><{$smarty.const._AM_SCREEN_SETTINGS_PHP_DESC2}></p>
@@ -102,26 +129,6 @@ include "<{$smarty.const.XOOPS_ROOT_PATH}>/modules/formulize/index.php";</blockq
 	  </div>
   </fieldset>
 
-
-  <fieldset>
-	  <legend><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_LEGEND}></legend>
-
-	  <div class="form-item">
-	    <{if not $content.embeddingAllowed}>
-	      <div class="description"><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_OFF}></div>
-	    <{else}>
-	    <label for="screens-embedOrigins"><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_ORIGINS}></label>
-	    <textarea name="screens-embedOrigins" id="screens-embedOrigins" rows="4" cols="60" placeholder="www.example.com"><{$content.embedOrigins}></textarea>
-	    <{$content.embedOriginsWarning}>
-	    <div class="description"><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_ORIGINS_DESC}></div>
-	    <{$content.embedSessionNotice}>
-
-	    <label for="screens-embedCode"><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_CODE}></label>
-	    <textarea id="screens-embedCode" rows="4" cols="60" readonly onclick="this.select();"><{$content.embedCode}></textarea>
-	    <div class="description"><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_CODE_DESC}></div>
-	    <{/if}>
-	  </div>
-  </fieldset>
 
 
   <!--<fieldset>
