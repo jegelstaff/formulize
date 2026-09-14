@@ -92,7 +92,7 @@
 
     // Drag-resize limits. MIN_WIDTH and the 92vw cap mirror the min-width/max-width
     // declared on .formulize-drawer in the base stylesheet.
-    var MIN_WIDTH        = 320;
+    var MIN_WIDTH        = 390;
     var MOBILE_BREAKPOINT = 768;
     var AI_DEFAULT_WIDTH = '640px'; // chat needs more room than the entry-form default
     var WIDTH_STORAGE_KEY    = 'fz-drawer-width';
@@ -187,7 +187,10 @@
         var saved = null;
         try { saved = localStorage.getItem(widthStorageKey()); } catch (e) { /* ignore */ }
         if (saved) {
-            drawer.style.width = saved;
+            // A remembered width always wins over the default, but never takes the
+            // drawer below the minimum — a value stored before the minimum was
+            // raised would otherwise fight the stylesheet's min-width (issue #124).
+            drawer.style.width = Math.max(parseFloat(saved) || MIN_WIDTH, MIN_WIDTH) + 'px';
         } else if (drawerMode === 'ai') {
             drawer.style.width = AI_DEFAULT_WIDTH;
         } else {

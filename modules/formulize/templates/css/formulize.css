@@ -1038,8 +1038,13 @@ button.formulize-ai-copy-btn:active {
 
 .formulize-drawer {
 	/* Override these in a theme to reskin without rewriting the rules below. */
-	--formulize-drawer-width: 480px;
-	--formulize-drawer-min-width: 320px;   /* mirrored by MIN_WIDTH in drawer.js */
+	/* Opening width for a user who has never resized: 30% of the browser window,
+	   floored at the minimum below (issue #124). drawer.js only sets an inline
+	   width once the user has dragged one, so this stays live as the window is
+	   resized, and min-width does the flooring rather than a max() that would
+	   duplicate the 390px in two places. */
+	--formulize-drawer-width: 30vw;
+	--formulize-drawer-min-width: 390px;   /* mirrored by MIN_WIDTH in drawer.js */
 	--formulize-drawer-max-width: 92vw;    /* mirrored by maxDrawerWidth() in drawer.js */
 	--formulize-drawer-bg: #ffffff;
 	--formulize-drawer-fg: inherit;
