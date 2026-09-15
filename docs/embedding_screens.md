@@ -144,9 +144,10 @@ Three things to know before you do it:
 Write one website per line. All of these work:
 
 ```
-example.com                     a domain on its own, matching http or https
+example.com                     a domain on its own, matched only under this site's own scheme
 www.example.com
 https://campaign.example.com    include https:// to require a secure connection
+http://localhost:4000           include http:// for a host that is not using https
 *.example.com                   any subdomain, but not example.com itself
 example.com:8443                include a port if the site uses one
 ```
@@ -156,6 +157,8 @@ website it belongs to is used. You can separate entries with commas instead of l
 
 If you type something that is not a website address, it stays in the box and the settings page tells
 you it is being ignored, so you can correct it. Nothing you type is thrown away.
+
+**Leaving out the scheme assumes `https`** If your host is running only under `https://` then you need to include `http://` ie: `http://localhost:4000`.
 
 ### Embedding the whole site
 
@@ -240,6 +243,11 @@ address is not on the same domain as the page — see step 3 above.
 
 **The frame is empty.** The website showing it is not in the screen's list, or embedding is turned
 off for the site. Check both, then reload.
+
+**The browser reports a connection error inside the frame** — something like "refused to connect" —
+even though the same address opens fine in its own tab. This is a blocked frame, not a real network
+problem. Check if the host page is using `http://` while the Formulize site uses `https://`. If there's a mismatch there, make sure to include `http://` excplicitly when specifying the allowed website in the Formulize settings. See
+[Choosing which websites may embed](#choosing-which-websites-may-embed).
 
 **The form is a narrow sliver.** The iframe is in a container that sizes itself to its contents, and
 the version of `formulize-embed.js` on your Formulize site predates the floor described under
