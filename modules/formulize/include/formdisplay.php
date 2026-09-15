@@ -2819,9 +2819,14 @@ if($entryId != 'new' AND isset($_POST['yposition']) AND
 // anyway: moving to another page of a form means whatever the host is looking at is now the middle
 // of something else. A save that stays on the same page asks for nothing, so the reader is left
 // exactly where they were.
+// Read from $settings, not $_POST. $settings is what this render decided - the same values
+// writeHiddenSettings() writes back out - whereas $_POST is what arrived and is rewritten as the
+// page is put together: formdisplaypages.php strips the screen id off the page number, and
+// formulize_currentPage is unset outright in places to force a landing on page 1. Asking $_POST
+// here gets an answer about the wrong request.
 // false: this is already inside a script block, so a tag here would close it early
-if(isset($_POST['formulize_currentPage']) AND isset($_POST['formulize_prevPage'])
-   AND intval($_POST['formulize_currentPage']) != intval($_POST['formulize_prevPage'])) {
+if(isset($settings['formulize_currentPage']) AND isset($settings['formulize_prevPage'])
+   AND intval($settings['formulize_currentPage']) != intval($settings['formulize_prevPage'])) {
     print formulize_embedScrollToTopScript(false);
 }
 ?>
