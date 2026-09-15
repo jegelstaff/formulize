@@ -66,7 +66,9 @@
 
 </head>
 
-<body id="<{$icms_dirname}>" class="<{$icms_langcode}><{if isset($formulize_screen_id) && $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}>" style='display: none; overflow: hidden;'>
+<{* nothing in here scrolls: the frame is sized to its whole content, so the page hosting it is what
+   moves. Saying so stops the form trying to save and restore a scroll position that cannot exist. *}>
+<body id="<{$icms_dirname}>" data-formulize-scroll-container="none" class="<{$icms_langcode}><{if isset($formulize_screen_id) && $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}>" style='display: none; overflow: hidden;'>
 
 <{includeq file="$theme_name/session-timeout-warning.html"}>
 
@@ -147,12 +149,32 @@ if($xoopsUser) {
             window.parent.postMessage(message, '*'); // heights only, nothing worth withholding
         }
 
-        // measured from the content, not from scrollHeight, which can never report less than the
-        // height the host has already given the iframe, so the form could only ever grow
+        // Measured from the content, not from scrollHeight, which can never report less than the
+        // height the host has already given the iframe, so the form could only ever grow.
+        //
+        // The body's own box is not the whole story, which is what clips a save button by a few
+        // pixels: a last child's bottom margin collapses through the body rather than adding to it,
+        // and a float or a positioned element can sit below the body's edge entirely. So take the
+        // lowest point of the children too. The slack at the end covers what no box reports at all -
+        // a focus ring, a shadow - and costs an empty sliver at worst.
         function contentHeight() {
-            var styles = window.getComputedStyle(document.body);
-            return Math.ceil(document.body.getBoundingClientRect().height
-                + parseFloat(styles.marginTop) + parseFloat(styles.marginBottom));
+            var body = document.body;
+            var styles = window.getComputedStyle(body);
+            var scrolled = window.pageYOffset || document.documentElement.scrollTop || 0;
+            var height = body.getBoundingClientRect().bottom + scrolled + parseFloat(styles.marginBottom);
+            for (var i = 0; i < body.children.length; i++) {
+                var child = body.children[i];
+                var childStyles = window.getComputedStyle(child);
+                if (childStyles.position === 'fixed' || childStyles.display === 'none') {
+                    continue; // pinned to the viewport, or not drawn: neither makes the page taller
+                }
+                var bottom = child.getBoundingClientRect().bottom + scrolled
+                    + (parseFloat(childStyles.marginBottom) || 0);
+                if (bottom > height) {
+                    height = bottom;
+                }
+            }
+            return Math.ceil(height + (parseFloat(styles.fontSize) || 16) * 0.5);
         }
 
         function reportHeight() {
@@ -201,9 +223,11 @@ if($xoopsUser) {
                     reportHeight();
                     post('formulize:ready', {height: lastHeight});
                     checkSessionSurvives();
-                    // a page turn or a save reloads this document while the host page is still
-                    // scrolled to wherever the button was
-                    if (document.referrer.indexOf(window.location.origin) === 0) {
+                    // Only when the screen says so - a page turn, or a search that replaced the
+                    // entries. The server decides that, by the same rule it uses to decide whether
+                    // a saved scroll position still applies (formulize_embedScrollToTopScript).
+                    // A save that stays put asks for nothing, and the host is left where it was.
+                    if (window.formulizeEmbedScrollToTop) {
                         post('formulize:scroll', {top: 0});
                     }
                 });

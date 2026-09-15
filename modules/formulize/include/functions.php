@@ -1317,6 +1317,31 @@ function formulize_signAnonEntryToken($fid, $entry_id, $expires) {
 }
 
 /**
+ * Ask the page hosting an embedded screen to come back to the top of the frame.
+ *
+ * An embedded screen cannot scroll itself: the frame is sized to its whole content and never has a
+ * scrollbar, so the page hosting it is the only thing that moves. The theme turns this flag into a
+ * message to that page once the screen is drawn.
+ *
+ * Only for when the reader is being shown something genuinely different - another page of a form, a
+ * new set of search results - which is the same question the server already answers when it decides
+ * whether a saved scroll position still applies. Staying put is the right answer far more often, and
+ * is what happens when this is not printed: the host page never reloaded, so leaving it alone leaves
+ * the reader looking at exactly what they were looking at.
+ *
+ * @param bool $wrapInScriptTag TRUE when printing into the page, FALSE when the call site is already
+ *   inside a script block - a tag opened there would close it early and break everything after it
+ * @return string Javascript to print, or an empty string when this screen is not embedded
+ */
+function formulize_embedScrollToTopScript($wrapInScriptTag = true) {
+    if (!formulize_isEmbeddedRequest()) {
+        return '';
+    }
+    $js = 'window.formulizeEmbedScrollToTop = true;';
+    return $wrapInScriptTag ? "<script type='text/javascript'>$js</script>\n" : "$js\n";
+}
+
+/**
  * The name this site's session cookie goes by.
  *
  * A site can rename it, so asking PHP alone gets the wrong answer on a site that has.

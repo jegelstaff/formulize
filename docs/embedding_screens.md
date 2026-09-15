@@ -229,6 +229,7 @@ width, and scrolls the page when the screen needs something brought into view.
 | `data-formulize-embed` | Required. Marks the iframe for the script. |
 | `data-formulize-embed-height` | Height in pixels to start at, before the screen reports its own. Defaults to 600. |
 | `data-formulize-embed-min-width` | Narrowest the frame may become, in pixels. Defaults to 400. `off` removes the floor. Capped at the width of the window either way. |
+| `data-formulize-embed-scroll-margin` | Room left above the screen when it is brought into view, in pixels. Defaults to two lines of your page's text. Raise it if your page has a sticky header the screen would otherwise scroll underneath; `0` removes it. |
 | `data-formulize-embed-fallback` | Set to `off` to suppress the "open in a new window" link. |
 | `data-formulize-embed-fallback-text` | Wording for that link. |
 

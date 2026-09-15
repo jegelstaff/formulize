@@ -119,9 +119,29 @@
         return window.pageYOffset || document.documentElement.scrollTop || 0;
     }
 
+    /**
+     * How much room to leave above whatever is being brought into view.
+     *
+     * Landing the top of the screen exactly at the top of the window reads as though it has been
+     * shoved against the browser's own chrome, so a margin is left above it. Two of the host page's
+     * own text lines, which lands in the right place on a page of any size rather than being a
+     * number that happens to suit one.
+     *
+     * A host page with a sticky header of its own needs more than that, and only the host knows how
+     * much, so data-formulize-embed-scroll-margin overrides it. 0 turns it off.
+     */
+    function scrollMargin(iframe) {
+        var requested = parseInt(iframe.getAttribute('data-formulize-embed-scroll-margin'), 10);
+        if (requested >= 0) {
+            return requested;
+        }
+        var rootFontSize = parseFloat(window.getComputedStyle(document.documentElement).fontSize);
+        return Math.round((rootFontSize || 16) * 2);
+    }
+
     function scrollIntoView(iframe, offsetWithinFrame) {
         var frameTop = iframe.getBoundingClientRect().top + pageOffset();
-        var target = Math.max(0, frameTop + offsetWithinFrame - 20);
+        var target = Math.max(0, frameTop + offsetWithinFrame - scrollMargin(iframe));
         var viewportTop = pageOffset();
         var viewportBottom = viewportTop + (window.innerHeight || document.documentElement.clientHeight);
         if (target >= viewportTop && target <= viewportBottom - 60) {
