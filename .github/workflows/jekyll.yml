@@ -14,6 +14,17 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+  # Fired by Formulize itself when a news story is saved. News lives in the
+  # News form on formulize.net and is baked into the site at build time by
+  # docs/_plugins/news_pages.rb, so publishing a story only reaches the site on
+  # a rebuild - this is what makes that automatic. The form's on_after_save
+  # hook POSTs to the repository_dispatch API with this event type.
+  #
+  # If the hook is ever broken or its token expires, nothing breaks here: run
+  # the workflow by hand from the Actions tab and the site catches up.
+  repository_dispatch:
+    types: [formulize-news-updated]
+
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read

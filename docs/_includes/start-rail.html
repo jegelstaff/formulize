@@ -1,0 +1,212 @@
+{% comment %}
+  The "How to get started" rail, in three groups:
+    Do it yourself  -- You build it + We host it   (you build your own system)
+    Hosted          -- We help + We train you      (you build it, we help)
+    Managed         -- We've got this              (we set it up and fix what breaks)
+
+  The names carry the argument: the subject moves from "you" to "we" at exactly
+  the point where paying starts, and the verb escalates from there. They are the
+  card headlines in get-choice.html promoted into tier names, so the two must
+  keep agreeing with each other.
+
+  The query string keys on /signup/ stay level-1..level-4 on purpose, so a
+  rename never breaks a link somebody has already shared.
+
+  SEVEN axes, in the same order on every card:
+    1. Unlimited forms, users, and data
+    2. Full AI integration
+    3. Security updates, maintenance, and 24/7 monitoring
+    4. Full database backups          (subline carries retention)
+    5. Onboarding                     (subline carries training AND data migration)
+    6. Unlimited tech-support         (subline carries response time AND whether
+                                       we tell you how to fix it, or fix it for you)
+    7. Custom web address
+
+  Rows 1 and 2 are ticked on EVERY option including the free download -- that is
+  the promise made above the rail, restated where a comparison shopper checks it.
+
+  "maybe" = the capability exists but nobody is providing it for you: self-hosting.
+
+  BACKUP RETENTION VALUES AND PRICES ARE PLACEHOLDERS pending confirmation.
+{% endcomment %}
+<div class="rail-wrap">
+  <button class="rail-arrow rail-prev" type="button" aria-label="Scroll left">&#8249;</button>
+  <button class="rail-arrow rail-next" type="button" aria-label="Scroll right">&#8250;</button>
+
+  <div class="rail" tabindex="0" role="group" aria-label="Ways to get started with Formulize">
+
+    <div class="rail-group rail-group-diy">
+      <p class="rail-legend"><strong>Do it yourself</strong> <span>You build your own system. The only question is whose server it runs on.</span></p>
+      <div class="rail-cards">
+
+        <div class="tier">
+          <h3 class="tier-name">You build it <span>Free forever &middot; open source</span></h3>
+          <ul class="tier-feats">
+            <li>Unlimited forms, users, and data!</li>
+            <li>Full AI integration</li>
+            <li class="maybe">Security updates, maintenance, and 24/7 monitoring<small>Your server, your rules</small></li>
+            <li class="maybe">Full database backups<small>Your server, your rules</small></li>
+            <li class="no">Onboarding<small>Docs and videos &middot; training and data migration by the hour</small></li>
+            <li class="no">Unlimited tech-support<small>Slack and GitHub &middot; or we can help by the hour</small></li>
+            <li class="maybe">Custom web address<small>Your server, your rules</small></li>
+            <li class="no">Quarterly system review by the Formulize team</li>
+          </ul>
+          <a class="btn btn-secondary btn-block" href="{{ "/download/" | relative_url }}">Download</a>
+          <p class="tier-note">You run the server</p>
+        </div>
+
+        <div class="tier">
+          <h3 class="tier-name">We host it <span>$49/month</span></h3>
+          <ul class="tier-feats">
+            <li>Unlimited forms, users, and data!</li>
+            <li>Full AI integration</li>
+            <li>Security updates, maintenance, and 24/7 monitoring<small>Always the latest secure version</small></li>
+            <li>Full database backups<small>Going back <span class="bold">1 week</span></small></li>
+            <li class="no">Onboarding<small>Docs and videos &middot; training and data migration by the hour</small></li>
+            <li class="no">Unlimited tech-support<small>Slack and GitHub &middot; or we can help by the hour</small></li>
+            <li class="no">Custom web address<small>Instead: yourname.formulize.net</small></li>
+            <li class="no">Quarterly system review by the Formulize team</li>
+          </ul>
+          <a class="btn btn-secondary btn-block" href="{{ "/signup/" | relative_url }}?plan=level-1">Sign up</a>
+          <p class="tier-note">Billed annually &middot; $59 month to month</p>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="rail-group rail-group-hosted">
+      <p class="rail-legend"><strong>Hosted</strong> <span>We run the server, <span class="bold">in Canada</span>. You run the system, with our help.</span></p>
+      <div class="rail-cards">
+
+        <div class="tier">
+          <h3 class="tier-name">We help <span>$149/month</span></h3>
+          <ul class="tier-feats">
+            <li>Unlimited forms, users, and data!</li>
+            <li>Full AI integration</li>
+            <li>Security updates, maintenance, and 24/7 monitoring<small>Always the latest secure version</small></li>
+            <li>Full database backups<small>Going back <span class="bold">1 month</span></small></li>
+            <li>Onboarding<small><span class="bold">1 hour</span> orientation &middot; data migration by the hour</small></li>
+            <li>Unlimited tech-support<small>Tell us what's wrong, and we'll tell you how to fix it, <span class="bold">within 1 business day</span></small></li>
+            <li class="no">Custom web address<small>Instead: yourname.formulize.net</small></li>
+            <li class="no">Quarterly system review by the Formulize team</li>
+          </ul>
+          <a class="btn btn-secondary btn-block" href="{{ "/signup/" | relative_url }}?plan=level-2">Sign up</a>
+          <p class="tier-note">Billed annually &middot; $179 month to month</p>
+        </div>
+
+        <div class="tier tier-featured">
+          <span class="tier-flag">Most popular</span>
+          <h3 class="tier-name">We train you <span>$199/month + $449 setup</span></h3>
+          <ul class="tier-feats">
+            <li>Unlimited forms, users, and data!</li>
+            <li>Full AI integration</li>
+            <li>Security updates, maintenance, and 24/7 monitoring<small>Always the latest secure version</small></li>
+            <li>Full database backups<small>Going back <span class="bold">3 months</span></small></li>
+            <li>Onboarding<small><span class="bold">Half day</span> training session &middot; data migration by the hour</small></li>
+            <li>Unlimited tech-support<small>Tell us what's wrong, and we'll tell you how to fix it, <span class="bold">within 4 hours</span></small></li>
+            <li>Custom web address<small>ie: yourname.org, etc</small></li>
+            <li class="no">Quarterly system review by the Formulize team</li>
+          </ul>
+          <a class="btn btn-primary btn-block" href="{{ "/signup/" | relative_url }}?plan=level-3">Sign up</a>
+          <p class="tier-note">Billed annually &middot; $239 month to month</p>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="rail-group rail-group-team">
+      <p class="rail-legend"><strong>Managed</strong> <span>We run the server, we help set up your system, and we keep it running smoothly.</span></p>
+      <div class="rail-cards">
+
+        <div class="tier">
+          <span class="tier-flag tier-flag-alt">Best value</span>
+          <h3 class="tier-name">We&rsquo;ve got this <span>$1,199/month + $2,999 setup</span></h3>
+          <ul class="tier-feats">
+            <li>Unlimited forms, users, and data!</li>
+            <li>Full AI integration</li>
+            <li>Security updates, maintenance, and 24/7 monitoring<small>Always the latest secure version</small></li>
+            <li>Full database backups<small>Going back <span class="bold">6 months</span></small></li>
+            <li>Onboarding<small><span class="bold">3 days</span> of training, system configuration, and data migration</small></li>
+            <li>Unlimited tech-support<small>Tell us what's wrong, and <span class="bold">we'll fix it for you</span>. Initial reply <span class="bold">within 1 hour</span></small></li>
+            <li>Custom web address<small>ie: yourname.org, etc</small></li>
+            <li>Quarterly system review by the Formulize team</li>
+          </ul>
+          <a class="btn btn-secondary btn-block" href="{{ "/signup/" | relative_url }}?plan=level-4">Sign up</a>
+          <p class="tier-note">Billed annually only</p>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% include plans-custom-note.html %}
+
+<script>
+(function () {
+  // Runs from more than one include, and the rails it must wire may appear later
+  // in the document than the script itself -- so wait for the DOM and skip any
+  // wrap that a previous copy already claimed.
+  function wireRails() {
+    document.querySelectorAll('.rail-wrap').forEach(function (wrap) {
+      if (wrap.dataset.railWired) { return; }
+      var rail = wrap.querySelector('.rail');
+      var prev = wrap.querySelector('.rail-prev');
+      var next = wrap.querySelector('.rail-next');
+      if (!rail || !prev || !next) { return; }
+      wrap.dataset.railWired = '1';
+
+      // Stops are the group boundaries, not a fixed pixel step, so a click always
+      // lands on "Do it yourself" / "Hosted" / "Managed" rather than mid-group.
+      // A final stop close to the end is folded into the end itself, so no click
+      // ever reveals a sliver of leftover scroll.
+      function stops() {
+        var railRect = rail.getBoundingClientRect();
+        var max = Math.max(0, rail.scrollWidth - rail.clientWidth);
+        var list = [];
+        rail.querySelectorAll('.rail-group').forEach(function (g) {
+          var left = rail.scrollLeft + (g.getBoundingClientRect().left - railRect.left);
+          left = Math.max(0, Math.min(Math.round(left), max));
+          if (!list.length || left - list[list.length - 1] > 40) { list.push(left); }
+        });
+        if (!list.length) { list = [0]; }
+        if (max - list[list.length - 1] <= 140) { list[list.length - 1] = max; }
+        else { list.push(max); }
+        return list;
+      }
+
+      function go(dir) {
+        var s = stops();
+        var cur = rail.scrollLeft;
+        var target;
+        if (dir > 0) {
+          target = s.filter(function (v) { return v > cur + 8; })[0];
+          if (target === undefined) { target = s[s.length - 1]; }
+        } else {
+          var before = s.filter(function (v) { return v < cur - 8; });
+          target = before.length ? before[before.length - 1] : 0;
+        }
+        rail.scrollTo({ left: target, behavior: 'smooth' });
+      }
+
+      function sync() {
+        var max = Math.max(0, rail.scrollWidth - rail.clientWidth);
+        prev.disabled = rail.scrollLeft < 8;
+        next.disabled = rail.scrollLeft >= max - 8;
+      }
+
+      prev.addEventListener('click', function () { go(-1); });
+      next.addEventListener('click', function () { go(1); });
+      rail.addEventListener('scroll', sync);
+      window.addEventListener('resize', sync);
+      sync();
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wireRails);
+  } else {
+    wireRails();
+  }
+})();
+</script>

@@ -4,7 +4,7 @@ permalink: developers/API/classes/data_handler/getEntryMeta/
 title: getEntryMeta
 ---
 
-# getEntryMeta( <span style='font-size: 14pt;'>(int) $entry_id, (bool) $updateCache = false</span> )
+# getEntryMeta( <span class="sig-type">(int)</span> $entry_id, <span class="sig-type">(bool)</span> $updateCache <span class="sig-default">= false</span> )
 
 ## Description
 

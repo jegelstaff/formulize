@@ -4,7 +4,7 @@ permalink: developers/API/classes/data_handler/findAllEntriesWithAllValues/
 title: findAllEntriesWithAllValues
 ---
 
-# findAllEntriesWithAllValues( <span style='font-size: 14pt;'>(array) $elementsAndValues, (string | array) $operator = "=", (string) $fieldsToReturn = "entry_id" </span> )
+# findAllEntriesWithAllValues( <span class="sig-type">(array)</span> $elementsAndValues, <span class="sig-type">(string | array)</span> $operator <span class="sig-default">= "="</span>, <span class="sig-type">(string)</span> $fieldsToReturn <span class="sig-default">= "entry_id"</span>  )
 
 ## Description
 

@@ -2,49 +2,196 @@
 layout: default
 custom_id: home
 title: Home
+full_width: true
+hide_breadcrumbs: true
+description: Formulize is open source software for collecting and organizing your data — web forms, workflows and reports, with no code required. Self-host it free, or let us host it for you.
 ---
 
-<div class="hero">
-	<div class="hero-text">
-		<h1>Easily collect and organize your data &mdash; no code required</h1>
-		<p>With Formulize, you can create web-based forms, connect them together to make unique apps, and publish the data with interactive reports.</p>
-		<p>Formulize is quickly configured, and reconfigured, so it adapts as your needs change and your data grows. Watch the intro video to learn more.</p>
-	</div>
-	<div class="hero-thumbnail">
-		<a href="https://youtu.be/LDsF91eUi28" target="_BLANK">
-			<img src="/assets/img/intro-to-formulize-plus-ai.webp">
-		</a>
-	</div>
+{% comment %}
+  Band order is the order a stranger needs things in: what is it, what would I
+  use it for, what does it actually do, show me, the AI story, what does it
+  cost, can I just hire you, is this alive, who are you.
+
+  News used to sit second, which served repeat visitors at the expense of
+  everyone arriving for the first time. It is now further down, and it is
+  Liquid rather than a runtime fetch - _plugins/news_pages.rb puts the stories
+  in site.data at build time.
+{% endcomment %}
+
+<div class="hero hero-lead">
+  <div class="hero-text">
+    <h1>Improvise. Organize. Customize.</h1>
+    <p class="hero-sub">Bring your data to life, with custom forms, apps, and websites.</p>
+    <p class="hero-sub">No code required, fully AI enabled, and completely open source.</p>
+    <div class="hero-actions btn-row">
+      <a class="btn btn-primary" href="{{ "/get/" | relative_url }}">Get Formulize</a>
+      <a class="btn btn-secondary" href="{{ "/features/" | relative_url }}">See what it does</a>
+    </div>
+  </div>
+  <div class="hero-media">
+    <div class="hero-thumbnail">
+      <a class="hero-play" href="https://youtu.be/LDsF91eUi28" target="_BLANK" aria-label="Watch the 7 minute intro to Formulize">
+        <img src="{{ "/assets/img/intro-to-formulize-plus-ai.webp" | relative_url }}" alt="">
+      </a>
+    </div>
+    <p class="hero-caption">Seven minutes: what Formulize is, and how the AI integration can work with your data.</p>
+  </div>
 </div>
 
-<h2 class="mobile-title">Open Source Developer of Year!</h2>
+<section class="band">
+  <div class="band-head-row">
+    <h2>What would you build?</h2>
+    <a class="btn btn-secondary btn-sm" href="{{ "/examples/" | relative_url }}">See all examples</a>
+  </div>
+  <div class="triad">
+    <a class="card-link" href="{{ "/examples/" | relative_url }}">
+      <div class="card">
+        <span class="card-kicker">Funding</span>
+        <h3 class="card-title">Grant applications and reporting</h3>
+        <p class="card-body">Applications in one form, progress reports in another, joined together, with a standing report of what is overdue.</p>
+      </div>
+    </a>
+    <a class="card-link" href="{{ "/examples/" | relative_url }}">
+      <div class="card">
+        <span class="card-kicker">People</span>
+        <h3 class="card-title">Volunteers and shifts</h3>
+        <p class="card-body">Volunteers sign themselves up and keep their own details current. Coordinators see the whole schedule.</p>
+      </div>
+    </a>
+    <a class="card-link" href="{{ "/examples/" | relative_url }}">
+      <div class="card">
+        <span class="card-kicker">Casework</span>
+        <h3 class="card-title">Client intake and case notes</h3>
+        <p class="card-body">Notes joined to each client, owned by the team that wrote them, visible only to the people who should see them.</p>
+      </div>
+    </a>
+  </div>
+</section>
 
-<div class='page-pic'><a href='/open-source-developer-of-the-year'><img class='small-pic'src="/assets/img/open-source-developer-of-the-year.jpg" alt="The PHP Elephants are so proud of the Open Source Developer of the Year award!" title="The PHP Elephants are so proud of the Open Source Developer of the Year award!"></a></div>
+<section class="band">
+  <div class="band-head">
+    <h2>Improvise. Organize. Customize.</h2>
+    <p>All of it is in every copy of Formulize, hosted or self-hosted. Nothing is held back for paying customers.</p>
+  </div>
+  <div class="triad">
+    <div class="card">
+      <h3 class="card-title">Improvise</h3>
+      <ul>
+        <li>Create any kind of database application</li>
+        <li>1 form, 10 forms, 100 forms, <em>no limits</em></li>
+        <li>Flexible search, sorting and reporting</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 class="card-title">Organize</h3>
+      <ul>
+        <li>Join your forms together into custom workflows</li>
+        <li>Control who sees which forms and which data</li>
+        <li>Do it all with your mouse, <em>no programming required</em></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 class="card-title">Customize</h3>
+      <ul>
+        <li>Custom form elements, events and templates</li>
+        <li>An API for connecting other tools</li>
+        <li><em>Completely free</em>, and <em>fully open source</em></li>
+      </ul>
+    </div>
+  </div>
+  <p class="triad-foot"><a class="btn btn-secondary" href="{{ "/features/" | relative_url }}">Everything it does</a></p>
+</section>
 
-<h2 class="desktop-title">Open Source Developer of Year!</h2>
+<section class="band">
+  <div class="band-head-row">
+    <h2>See it work</h2>
+    <a class="btn btn-secondary btn-sm" href="{{ "/videos" | relative_url }}">All videos</a>
+  </div>
+  <div class="video-row">
+    <a class="video-card" href="https://youtu.be/Cm6yR5cMn7Y" target="_BLANK">
+      <img class="washed" src="{{ "/assets/img/formulize-confoo-ai.webp" | relative_url }}" alt="">
+      <span class="video-card-title">Watch AI make a complete database</span>
+      <span class="text-muted">A conference management system for Confoo &middot; 7 mins</span>
+    </a>
+    <a class="video-card" href="https://youtu.be/gaL1z8Tomcw" target="_BLANK">
+      <img class="washed" src="{{ "/assets/img/formulize-coffee-system.webp" | relative_url }}" alt="">
+      <span class="video-card-title">Order coffee with Formulize</span>
+      <span class="text-muted">Step by step, a super easy ordering system &middot; 7 mins</span>
+    </a>
+    <a class="video-card" href="https://www.youtube.com/watch?v=JeI2u_LZUJg" target="_BLANK">
+      <img class="washed" src="{{ "/assets/img/thumbnail-700.webp" | relative_url }}" alt="">
+      <span class="video-card-title">Formulize from zero to sixty</span>
+      <span class="text-muted">The complete setup of the demo Museum database &middot; 30 mins</span>
+    </a>
+  </div>
+</section>
 
-<p>Formulize Lead Developer, Julian Egelstaff, won the <a href='/open-source-developer-of-the-year' class='readmore'>Open Source Developer of the Year award at Confoo</a> this year!</p>
+<section class="band">
+  <div class="band-head">
+    <h2>An AI assistant that understands your whole system</h2>
+    <p>Formulize is 100&#37; configuration based, so the configuration explains both what your system does and how it does it. An assistant connecting to Formulize gets the whole picture &mdash; and can create forms, connect them, and work with your data.</p>
+  </div>
+  <p class="btn-row">
+    <a class="btn btn-primary" href="{{ "/ai" | relative_url }}">How AI works in Formulize</a>
+    <a class="btn btn-secondary" href="https://youtu.be/Cm6yR5cMn7Y" target="_BLANK">Watch it build a database</a>
+  </p>
+</section>
 
-<hr>
+<section class="band">
+  <div class="band-head">
+    <h2>Three ways to start</h2>
+    <p>Every option includes the complete software, all features, <span class="bold">unlimited everything</span>. The only difference is how involved you want us to be.</p>
+  </div>
+  {% include get-choice.html %}
+  <p class="triad-foot"><a class="btn btn-primary" href="{{ "/pricing/" | relative_url }}">Compare every plan</a></p>
+</section>
 
-<h2>Improvise</h2>
-<ul>
-		<li>Create any kind of database application</li>
-		<li>1 form, 10 forms, 100 forms, <i>no limits</i></li>
-		<li>Browse your data using a flexible search, sorting and reporting interface</li>
-		<li>Import from, and export to Google Sheets, Excel...</li>
-</ul>
-<h2>Organize</h2>
-<ul>
-		<li>Join your forms together into custom workflows</li>
-		<li>Control who can interact with which forms and which data</li>
-		<li>Publish customized, searchable reports, to some or all of your users</li>
-		<li>Do it all with your mouse, <i>no programming required</i></li>
-</ul>
-<h2>Customize</h2>
-<ul>
-		<li>Extensible with custom form elements, events, templates...</li>
-		<li>An API for working under the hood, and connecting with other tools</li>
-		<li>Runs on PHP and MySQL/MariaDB</li>
-		<li><i>Completely free</i>, and <i>fully open source</i> (GPL-2.0)</li>
-</ul>
+<section class="band">
+  <div class="card elev-sm" style="background: var(--color-accent-100);">
+    <h2 style="margin-bottom: var(--space-2);">Or you can just hire us</h2>
+    <p class="card-body" style="font-size: 16px; max-width: 62ch;">Training, tech support, system design, data migration, and help getting an AI assistant working with your data &mdash; from the people who write the software. Available on any plan, including the free download.</p>
+    <div class="btn-row">
+      <a class="btn btn-primary" href="{{ "/services/" | relative_url }}">What we can do</a>
+      <a class="btn btn-secondary" href="{{ "/contact/" | relative_url }}">Talk to us</a>
+    </div>
+  </div>
+</section>
+
+{% assign latest_stories = site.data.news_stories %}
+{% if latest_stories and latest_stories.size > 0 %}
+<section class="band">
+  <div class="band-head-row">
+    <h2>Latest news</h2>
+    <a class="btn btn-secondary btn-sm" href="{{ "/news/" | relative_url }}">All news &amp; articles</a>
+  </div>
+  <div class="news-row">
+    {%- for entry in latest_stories limit: 3 %}
+    <a class="news-card" href="{{ entry.url | relative_url }}">
+      <time datetime="{{ entry.date }}">{{ entry.date_display }}</time>
+      <span class="news-card-title">{{ entry.headline }}</span>
+      <p>{{ entry.teaser }}</p>
+      <span class="news-card-more">Read it &rarr;</span>
+    </a>
+    {%- endfor %}
+  </div>
+  {%- assign latest_release = site.data.news_releases | first %}
+  {%- if latest_release %}
+  <p class="triad-foot text-muted">
+    Latest release: <a href="{{ latest_release.url | relative_url }}">{{ latest_release.headline }}</a>,
+    {{ latest_release.date_display }} &middot;
+    <a href="{{ "/news/releases/" | relative_url }}">every release</a>
+  </p>
+  {%- endif %}
+</section>
+{% endif %}
+
+<section class="band">
+  <div class="band-head">
+    <h2>Built in the open since 2005</h2>
+    <p>Formulize has been developed and released publicly for more than twenty years, always free and always under GPL-2.0. In 2026 its lead developer won Open Source Developer of the Year at Confoo. If we host it for you, your data stays in Canada.</p>
+  </div>
+  <p class="btn-row">
+    <a class="btn btn-secondary" href="{{ "/about/" | relative_url }}">About the project</a>
+    <a class="btn btn-ghost" href="{{ "/news/releases/" | relative_url }}">The release history</a>
+  </p>
+</section>

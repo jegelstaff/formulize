@@ -1,0 +1,173 @@
+---
+layout: default
+permalink: examples/
+title: Examples
+full_width: true
+description: What people build with Formulize — grant tracking, volunteer scheduling, memberships, client intake, bookings and event registration — and what each one looks like when it is built.
+---
+
+{% comment %}
+  The "is this for me?" page. Someone who has never heard of Formulize, and who
+  would not describe what they need as "a database", should be able to find
+  something here shaped like their own problem.
+
+  These are illustrative, and the page says so out loud. Nothing here is a case
+  study and no organisation is named, because none has agreed to be. What every
+  card describes is only what the software demonstrably does: forms, forms
+  joined to other forms, per-group permissions, and reports.
+{% endcomment %}
+
+<div class="band-head" style="max-width: 68ch;">
+  <h1 style="margin-top: var(--space-3);">What people build with Formulize</h1>
+  <p>Most of it starts the same way: a spreadsheet that three people are emailing back and forth, and nobody is sure which copy is current.</p>
+  <p>Formulize replaces that with forms other people can fill in, rules about who sees what, and reports that are always up to date. You build it by clicking, not by coding &mdash; which means you can change it next month when the work changes.</p>
+</div>
+
+<section class="band">
+  <div class="band-head">
+    <h2>Six things it is good at</h2>
+    <p>These are illustrative examples, not case studies &mdash; a sketch of how each one is put together, so you can see whether your own situation looks like any of them.</p>
+  </div>
+
+  <div class="triad">
+    <div class="card">
+      <span class="card-kicker">Funding</span>
+      <h3 class="card-title">Grant applications and reporting</h3>
+      <p class="card-body">Applications arrive by email, in different formats, and the reporting deadlines creep up on you.</p>
+      <ul>
+        <li>One form for the application, one for each progress report</li>
+        <li>The two joined, so every report sits under its grant</li>
+        <li>Applicants see only their own entries; staff see all of them</li>
+        <li>A report of what is outstanding, filtered by date</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <span class="card-kicker">People</span>
+      <h3 class="card-title">Volunteer and shift scheduling</h3>
+      <p class="card-body">You have more volunteers than you can keep in your head, and no reliable picture of who is covering what.</p>
+      <ul>
+        <li>A volunteer form and a shift form, joined together</li>
+        <li>Volunteers sign themselves up and update their own details</li>
+        <li>Coordinators see the whole schedule, volunteers see theirs</li>
+        <li>Search for shifts with nobody assigned to them</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <span class="card-kicker">Membership</span>
+      <h3 class="card-title">Memberships and renewals</h3>
+      <p class="card-body">The membership list lives in a spreadsheet, and renewal dates are tracked by whoever remembers to look.</p>
+      <ul>
+        <li>A member form, with a renewals form joined to it</li>
+        <li>Import the spreadsheet you already have to start</li>
+        <li>Members update their own record; nobody else sees it</li>
+        <li>A standing report of who is lapsing in the next month</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <span class="card-kicker">Casework</span>
+      <h3 class="card-title">Client intake and case notes</h3>
+      <p class="card-body">Intake is on paper, notes are in personal folders, and handover between staff loses things.</p>
+      <ul>
+        <li>An intake form, with case notes joined to each client</li>
+        <li>Entries owned by the team that created them</li>
+        <li>Front-desk staff see intake, caseworkers see the notes</li>
+        <li>Export to Excel when a funder wants numbers</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <span class="card-kicker">Resources</span>
+      <h3 class="card-title">Equipment and room bookings</h3>
+      <p class="card-body">Bookings happen by asking whoever has the calendar, and two people turn up for the same room.</p>
+      <ul>
+        <li>An items form and a bookings form, joined together</li>
+        <li>Anyone can request; a named group approves</li>
+        <li>A shared list of what is out and when it is due back</li>
+        <li>Filter by this month, or the last twelve</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <span class="card-kicker">Events</span>
+      <h3 class="card-title">Event registration and RSVPs</h3>
+      <p class="card-body">Registrations come in by email and someone retypes them into a list for the door.</p>
+      <ul>
+        <li>A public form anyone can fill in, no account needed</li>
+        <li>An events form joined to it, so each event has its own list</li>
+        <li>Organisers see everything; the public form shows nothing back</li>
+        <li>A door list you can sort and search on the day</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="band-head">
+    <h2>The same idea, in every one</h2>
+    <p>Every example above is the same three moves. Once you have seen them done once, the rest is variations.</p>
+  </div>
+  <div class="feature-cols">
+    <div>
+      <h3>Make the forms</h3>
+      <ul>
+        <li>One form per kind of thing you are tracking</li>
+        <li>Any number of forms, any number of entries</li>
+        <li><a href="{{ "/ai" | relative_url }}">Or describe it to an AI assistant</a> and let it build them</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Join them together</h3>
+      <ul>
+        <li>Each client has many notes; each grant has many reports</li>
+        <li>The connection is a setting, not code</li>
+        <li>Reports can then draw on both forms at once</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Decide who sees what</h3>
+      <ul>
+        <li>Per group, per form, and per entry</li>
+        <li>People can be limited to only their own entries</li>
+        <li><a href="{{ "/searching" | relative_url }}">Searchable reports</a> published to some or all of them</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="band-head-row">
+    <h2>Watch one get built</h2>
+    <a class="btn btn-secondary btn-sm" href="{{ "/videos" | relative_url }}">All videos</a>
+  </div>
+  <div class="video-row">
+    <a class="video-card" href="https://youtu.be/Cm6yR5cMn7Y" target="_BLANK">
+      <img class="washed" src="{{ "/assets/img/formulize-confoo-ai.webp" | relative_url }}" alt="">
+      <span class="video-card-title">A conference management system, built by AI</span>
+      <span class="text-muted">Sessions, speakers and schedules, from a prompt &middot; 7 mins</span>
+    </a>
+    <a class="video-card" href="https://youtu.be/gaL1z8Tomcw" target="_BLANK">
+      <img class="washed" src="{{ "/assets/img/formulize-coffee-system.webp" | relative_url }}" alt="">
+      <span class="video-card-title">An ordering system, step by step</span>
+      <span class="text-muted">The whole build, start to finish &middot; 7 mins</span>
+    </a>
+    <a class="video-card" href="https://www.youtube.com/watch?v=JeI2u_LZUJg" target="_BLANK">
+      <img class="washed" src="{{ "/assets/img/thumbnail-700.webp" | relative_url }}" alt="">
+      <span class="video-card-title">A full collection database</span>
+      <span class="text-muted">The complete setup of the demo Museum system &middot; 30 mins</span>
+    </a>
+  </div>
+</section>
+
+<section class="band">
+  <div class="card elev-sm" style="background: var(--color-accent-100);">
+    <h2 style="margin-bottom: var(--space-2);">Does one of these look like your problem?</h2>
+    <p class="card-body" style="font-size: 16px; max-width: 62ch;">Download Formulize and build it yourself for free, or tell us what you are trying to do and we will tell you what it would take &mdash; including if the answer is the free download.</p>
+    <div class="btn-row">
+      <a class="btn btn-primary" href="{{ "/get/" | relative_url }}">Get Formulize</a>
+      <a class="btn btn-secondary" href="{{ "/contact/" | relative_url }}">Talk to us</a>
+    </div>
+  </div>
+</section>

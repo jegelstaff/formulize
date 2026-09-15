@@ -1,0 +1,73 @@
+{% comment %}
+  Embeds one Formulize screen from formulize.net into a page here.
+
+  Usage:
+    {% include embedded-form.html
+       sid="1"
+       title="Get help with Formulize"
+       height="900" %}
+
+  Parameters:
+    sid     the screen id on the Formulize site. 1 = Help Request,
+            3 = Get your own Formulize system.
+
+            It has to be the sid, not the screen's prettier rewrite address
+            (get-help, get-hosting): those do not resolve when the request comes
+            from another domain, which is exactly the case here. Copy the sid
+            from the screen's settings page, which is also where the rest of
+            this markup comes from.
+    title   the iframe's accessible name. Required - it is what a screen reader
+            announces when it reaches the frame.
+    height  starting height in pixels, before the screen reports its real one.
+            Pick something close to the finished form so the page does not jump.
+
+  The script is emitted once per page however many screens the page embeds,
+  which is what formulize-embed.js expects. assign is page-scoped in Jekyll's
+  Liquid, so the flag survives from one include call to the next.
+
+  IMPORTANT - submissions and the same-domain rule. site.forms_url currently
+  points at formulize.net, which is a different domain from this site. Browsers
+  will not send the Formulize session cookie into a frame across domains, so the
+  form displays but saving fails. The fix is an alias of the Formulize site on
+  this domain (forms.formulize.org) - see docs/embedding_screens_setup. Until
+  that exists, the "open in its own window" link below the frame is the route
+  that actually works, and the sessionUnavailable handler promotes it the moment
+  the screen reports the problem.
+{% endcomment %}
+
+<div class="embed-frame">
+  <iframe data-formulize-embed
+          class="embed-frame-iframe"
+          src="{{ site.forms_url }}/modules/formulize/index.php?sid={{ include.sid }}&amp;formulize_embed=1"
+          title="{{ include.title }}"
+          data-formulize-embed-height="{{ include.height | default: 800 }}"
+          data-formulize-embed-fallback="off"
+          style="width:100%;min-width:min(400px,100vw);height:{{ include.height | default: 800 }}px;border:0"></iframe>
+
+  <p class="embed-frame-note" data-embed-note>
+    Trouble with the form?
+    <a href="{{ site.forms_url }}/modules/formulize/index.php?sid={{ include.sid }}" target="_blank" rel="noopener">Open it in its own window</a>,
+    or email <a href="mailto:info@formulize.org">info@formulize.org</a> and we will pick it up from there.
+  </p>
+</div>
+
+{% unless formulize_embed_script_loaded %}
+<script src="{{ site.forms_url }}/modules/formulize/libraries/embed/formulize-embed.js"></script>
+<script>
+(function () {
+  // The screen tells us when the visitor's browser is refusing it cookies, which
+  // means pressing Send would fail. Rather than let someone fill in a long form
+  // and lose it, promote the "own window" link from a quiet footnote to a
+  // warning, in place, the moment we know.
+  document.addEventListener('formulize:sessionUnavailable', function (event) {
+    var frame = event.target.closest('.embed-frame');
+    var note = frame && frame.querySelector('[data-embed-note]');
+    if (!note || note.classList.contains('is-warning')) { return; }
+    note.classList.add('is-warning');
+    note.insertAdjacentHTML('afterbegin',
+      '<strong>This form cannot be submitted from inside this page in your browser.</strong> ');
+  }, true);
+})();
+</script>
+{% assign formulize_embed_script_loaded = true %}
+{% endunless %}

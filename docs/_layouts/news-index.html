@@ -1,0 +1,58 @@
+---
+layout: default
+full_width: true
+---
+
+{%- comment -%}
+  The main news page carries announcements and articles. Release notes are the
+  overwhelming majority of entries by count, so they get their own page rather
+  than burying everything else; the most recent handful are listed here as a
+  compact secondary band, with a link through to the full list.
+{%- endcomment -%}
+
+<div class="band-head" style="max-width: 68ch;">
+  <h1 style="margin-top: var(--space-3);">News</h1>
+  <p>What is happening with Formulize &mdash; announcements, articles, and notes from every release.</p>
+  <p class="text-muted"><a href="{{ "/news/feed.xml" | relative_url }}">Subscribe by RSS</a></p>
+</div>
+
+<section class="band">
+  {%- if page.entries and page.entries.size > 0 %}
+  <div class="post-list">
+    {%- for entry in page.entries %}
+    <a class="post-teaser{% unless entry.image %} no-image{% endunless %}" href="{{ entry.url | relative_url }}">
+      {%- if entry.image %}
+      <span class="post-teaser-thumb"><img class="washed" src="{{ entry.image }}" alt=""></span>
+      {%- endif %}
+      <span>
+        <span class="post-meta"><time datetime="{{ entry.date }}">{{ entry.date_display }}</time></span>
+        <h2>{{ entry.headline }}</h2>
+        <span class="post-excerpt">{{ entry.teaser }}</span>
+        <span class="news-card-more">Read it &rarr;</span>
+      </span>
+    </a>
+    {%- endfor %}
+  </div>
+  {%- else %}
+  <p>No announcements yet.</p>
+  {%- endif %}
+</section>
+
+{%- if page.recent_releases and page.recent_releases.size > 0 %}
+<section class="band">
+  <div class="band-head-row">
+    <h2>Latest releases</h2>
+    <a class="btn btn-secondary btn-sm" href="{{ "/news/releases/" | relative_url }}">All {{ page.releases_total }} releases</a>
+  </div>
+  <ul class="news-list">
+    {%- for entry in page.recent_releases %}
+    <li>
+      <a href="{{ entry.url | relative_url }}">
+        <time datetime="{{ entry.date }}">{{ entry.date_display }}</time>
+        <span class="news-title">{{ entry.headline }}</span>
+      </a>
+    </li>
+    {%- endfor %}
+  </ul>
+</section>
+{%- endif %}

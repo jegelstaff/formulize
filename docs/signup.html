@@ -1,0 +1,123 @@
+---
+layout: default
+permalink: signup/
+title: Sign up for hosting
+full_width: true
+description: Sign up to have Formulize hosted for you, from $49 a month, on servers in Canada. Every plan includes every feature, with unlimited forms, users and data.
+---
+
+{% comment %}
+  Carries the "Get your own Formulize system" screen from formulize.net,
+  embedded: form 2, screen 3, so sid=3. The screen also has a rewrite address
+  (get-hosting) but that only resolves for same-domain requests, so it cannot be
+  used here.
+
+  Order: which plan you picked, then the form, then what happens next. The plan
+  card goes above the form because it answers "am I about to be charged
+  $1,199?", and that has to be settled before anyone starts typing.
+
+  The plan summaries are keyed on level-1..level-4 rather than on the plan
+  names. That already earned its keep once: the plans were renamed from
+  "Level 1".."Level 4" to the You/We names without a single shared link
+  breaking. Renaming again means editing the display strings here and in
+  start-rail.html / start-table.html, and nothing else.
+{% endcomment %}
+
+<div class="band-head" style="max-width: 68ch;">
+  <h1 style="margin-top: var(--space-3);">Get your own Formulize system</h1>
+  <p>We will set it up, keep it patched and monitored, and back it up every night, on servers in Canada. You get the complete software with every feature, unlimited forms, unlimited users and unlimited data.</p>
+  <p><span class="bold">No payment information is needed now.</span> Tell us what you want, we will build it, and then we will talk to you about getting started.</p>
+</div>
+
+<section class="band">
+  <div id="plan-summary" class="plan-preview">
+    <div class="card plan-card" data-plan="level-1">
+      <span class="card-kicker">You chose</span>
+      <h3 class="card-title">We host it</h3>
+      <p class="card-price"><strong>$49</strong>/month</p>
+      <p class="card-body">We run the server. Security updates, monitoring and nightly backups going back a week. Your system lives at yourname.formulize.net.</p>
+      <p class="text-muted">Billed annually &middot; $59 month to month</p>
+    </div>
+    <div class="card plan-card" data-plan="level-2">
+      <span class="card-kicker">You chose</span>
+      <h3 class="card-title">We help</h3>
+      <p class="card-price"><strong>$149</strong>/month</p>
+      <p class="card-body">Everything above, with backups going back a month, an hour of orientation, and unlimited tech support answered within one business day.</p>
+      <p class="text-muted">Billed annually &middot; $179 month to month</p>
+    </div>
+    <div class="card plan-card" data-plan="level-3">
+      <span class="card-kicker">You chose</span>
+      <h3 class="card-title">We train you</h3>
+      <p class="card-price"><strong>$199</strong>/month</p>
+      <p class="card-body">Backups going back three months, half a day of training, support answered within four hours, and your own web address.</p>
+      <p class="text-muted">Billed annually &middot; $239 month to month &middot; $449 one-time setup</p>
+    </div>
+    <div class="card plan-card" data-plan="level-4">
+      <span class="card-kicker">You chose</span>
+      <h3 class="card-title">We&rsquo;ve got this</h3>
+      <p class="card-price"><strong>$1,199</strong>/month</p>
+      <p class="card-body">Backups going back six months, three days of training and configuration, a first reply within the hour, and we fix it for you rather than telling you how.</p>
+      <p class="text-muted">Billed annually &middot; $2,999 one-time setup</p>
+    </div>
+  </div>
+  <p class="triad-foot"><a class="btn btn-secondary btn-sm" href="{{ "/pricing/" | relative_url }}">Compare every plan again</a></p>
+</section>
+
+<section class="band">
+  <div class="band-head">
+    <h2>Tell us about your system</h2>
+    <p>Roughly five minutes. Where you are not sure of an answer, put down what you think and we will sort it out when we talk.</p>
+  </div>
+  {% include embedded-form.html
+     sid="3"
+     title="Get your own Formulize system"
+     height="1500" %}
+</section>
+
+<section class="band">
+  <div class="band-head">
+    <h2>What happens next</h2>
+  </div>
+  <div class="triad">
+    <div class="card">
+      <span class="card-kicker">Right away</span>
+      <h3 class="card-title">We read it</h3>
+      <p class="card-body">Your answers land in the Formulize system we run our own work in. A person reads them, not a queue.</p>
+    </div>
+    <div class="card">
+      <span class="card-kicker">Then</span>
+      <h3 class="card-title">We build it</h3>
+      <p class="card-body">We set up your system at the address you asked for, with your webmaster account ready to sign in to.</p>
+    </div>
+    <div class="card">
+      <span class="card-kicker">After that</span>
+      <h3 class="card-title">We talk</h3>
+      <p class="card-body">We get in touch to walk you through it and sort out billing. Nothing is charged before that conversation.</p>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="card elev-sm" style="background: var(--color-accent-100);">
+    <h2 style="margin-bottom: var(--space-2);">Not sure yet?</h2>
+    <p class="card-body" style="font-size: 16px; max-width: 62ch;">Describe what you are trying to build and we will tell you which plan fits &mdash; including if that answer is the free download.</p>
+    <div class="btn-row">
+      <a class="btn btn-primary" href="{{ "/contact/" | relative_url }}">Ask us first</a>
+      <a class="btn btn-secondary" href="{{ "/download/" | relative_url }}">Download it free</a>
+    </div>
+  </div>
+</section>
+
+<script>
+(function () {
+  // The pricing page links here as /signup/?plan=level-3. With no plan named,
+  // or an unrecognised one, every card stays visible and the page reads as a
+  // summary of the options -- so a mistyped link is never a dead end. With
+  // JavaScript off, the same thing happens, for the same reason.
+  var wanted = new URLSearchParams(window.location.search).get('plan');
+  var cards = document.querySelectorAll('#plan-summary .plan-card');
+  var match = document.querySelector('#plan-summary .plan-card[data-plan="' + (wanted || '').replace(/[^a-z0-9-]/gi, '') + '"]');
+  if (!match) { return; }
+  cards.forEach(function (card) { card.hidden = (card !== match); });
+})();
+</script>

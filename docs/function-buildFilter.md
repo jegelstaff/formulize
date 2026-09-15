@@ -4,7 +4,7 @@ permalink: developers/API/functions/buildFilter/
 title: buildFilter
 ---
 
-# buildFilter( <span style='font-size: 14pt;'>(string) $name, (int | string | object) $element_identifier, (string) $defaultText = "Choose an option", (string) $formDOMId = "", (bool | string | array) $defaultValue = false, (bool) $multi = false</span> )
+# buildFilter( <span class="sig-type">(string)</span> $name, <span class="sig-type">(int | string | object)</span> $element_identifier, <span class="sig-type">(string)</span> $defaultText <span class="sig-default">= "Choose an option"</span>, <span class="sig-type">(string)</span> $formDOMId <span class="sig-default">= ""</span>, <span class="sig-type">(bool | string | array)</span> $defaultValue <span class="sig-default">= false</span>, <span class="sig-type">(bool)</span> $multi <span class="sig-default">= false</span> )
 
 ## Location
 

@@ -1,0 +1,31 @@
+{% comment %}
+  The pre-footer strip, on every page.
+
+  The first tile used to link straight to a release zipball. That fires from
+  every page in the site, including the pricing page, so half the audience met
+  a tarball they had no use for. It now leads to /get/, which asks whether you
+  want to run it yourself or have us run it, and still names the current
+  release so the tile keeps its "there is a new version" job.
+{% endcomment %}
+<div class="action-strip">
+  <a class="action-strip-item" href="{{ "/get/" | relative_url }}">
+    <span class="action-strip-icons"><img src="{{ "/assets/img/zip-icon.png" | relative_url }}" alt=""></span>
+    <span>Get <strong>Formulize {{ site.github.latest_release.tag_name }}</strong></span>
+  </a>
+  <a class="action-strip-item" href="{{ site.github.repository_url }}" target="_blank" rel="noopener">
+    <span class="action-strip-icons"><img src="{{ "/assets/img/octocat-icon.png" | relative_url }}" alt=""></span>
+    <span>Participate on <strong>GitHub</strong></span>
+  </a>
+  <a class="action-strip-item" href="https://ko-fi.com/formulize/" target="_blank" rel="noopener">
+    <span class="action-strip-icons"><img src="{{ "/assets/img/cup-border.png" | relative_url }}" alt=""></span>
+    <span>Donate on <strong>Ko-fi</strong></span>
+  </a>
+  <a class="action-strip-item" href="{{ "/community/" | relative_url }}">
+    <span class="action-strip-icons">
+      <img src="{{ "/assets/img/bluesky.png" | relative_url }}" alt="">
+      <img src="{{ "/assets/img/slack-icon.png" | relative_url }}" alt="">
+      <img src="{{ "/assets/img/discord-icon.png" | relative_url }}" alt="">
+    </span>
+    <span>Connect on <strong>Bluesky, Slack, Discord</strong></span>
+  </a>
+</div>

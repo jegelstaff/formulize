@@ -4,7 +4,7 @@ permalink: developers/API/classes/data_handler/deleteEntries/
 title: deleteEntries
 ---
 
-# deleteEntries( <span style='font-size: 14pt;'>(int | array) $entry_ids</span> )
+# deleteEntries( <span class="sig-type">(int | array)</span> $entry_ids )
 
 ## Description
 

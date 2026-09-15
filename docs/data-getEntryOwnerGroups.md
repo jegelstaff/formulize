@@ -4,7 +4,7 @@ permalink: developers/API/classes/data_handler/getEntryOwnerGroups/
 title: getEntryOwnerGroups
 ---
 
-# getEntryOwnerGroups( <span style='font-size: 14pt;'>(int) $entry_id = 0</span> )
+# getEntryOwnerGroups( <span class="sig-type">(int)</span> $entry_id <span class="sig-default">= 0</span> )
 
 ## Description
 

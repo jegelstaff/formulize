@@ -1,0 +1,1645 @@
+/* ==========================================================================
+   formulize.org — main stylesheet
+   Palette: a pale blue ground (#e2ecf2) under a charcoal shell (#3a3a3a),
+   with two action colours doing two different jobs — green (#81de76) is the
+   CTA (buttons and badges only) and blue (#4c7ec0) is the accent ramp that
+   carries links, prices, hovers and tick marks. Type is Unbounded ExtraBold
+   over Poppins, both tracked +4%.
+   Plain CSS on purpose: Jekyll serves this file as a static asset, so it
+   needs no Sass compilation and can be previewed directly in a browser.
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@800&family=Poppins:wght@400;500;600;700&display=swap');
+
+:root {
+  --color-bg: #e2ecf2;
+  --color-surface: #ffffff;
+  --color-text: #000000;
+  --color-accent: #4c7ec0;
+  --color-accent-2: #81de76;
+  --color-divider: color-mix(in srgb, #000000 15%, transparent);
+
+  /* The charcoal shell: header, footer, and anything that has to read as
+     chrome rather than content. Held apart from the neutral ramp so the ramp
+     can stay monotonic. */
+  --color-shell: #3a3a3a;
+
+  /* The green is an action colour, not a text colour — it is light enough that
+     it only ever appears as a fill with black type on it. */
+  --color-cta: #81de76;
+  --color-cta-hover: #6ad15e;
+  --color-cta-active: #57bd4b;
+
+  --color-neutral-100: #ffffff;
+  --color-neutral-200: #f2f6f8;
+  --color-neutral-300: #dce7ed;
+  --color-neutral-400: #afc0c9;
+  --color-neutral-500: #7f8c93;
+  --color-neutral-600: #626d73;
+  --color-neutral-700: #4a5357;
+  --color-neutral-800: #2c3235;
+  --color-neutral-900: #14181a;
+
+  --color-accent-100: #eaf1fa;
+  --color-accent-200: #d2e2f5;
+  --color-accent-300: #aec8e9;
+  --color-accent-400: #7ba4d6;
+  --color-accent-500: #4c7ec0;
+  --color-accent-600: #3c66a1;
+  --color-accent-700: #2f5182;
+  --color-accent-800: #223c61;
+  --color-accent-900: #172942;
+
+  --color-accent-2-100: #eefaec;
+  --color-accent-2-200: #d9f5d4;
+  --color-accent-2-300: #b8ecb0;
+  --color-accent-2-400: #81de76;
+  --color-accent-2-500: #5cbf50;
+  --color-accent-2-600: #489c3e;
+  --color-accent-2-700: #377a2f;
+  --color-accent-2-800: #275822;
+  --color-accent-2-900: #193a17;
+
+  /* Formulize blue, kept as its own family so the second badge and the hosted
+     rail stay a different claim from the green CTA. */
+  --color-brand: #4c7ec0;
+  --color-brand-600: #3c66a1;
+  --color-brand-700: #2f5182;
+  --color-brand-200: #d2e2f5;
+  --color-brand-100: #eaf1fa;
+
+  /* Deep enough that white body copy on the hero band clears 4.5:1; the
+     mockup's lighter band only managed about 2.5:1. */
+  --color-hero: #3c66a1;
+
+  --font-heading: "Unbounded", system-ui, sans-serif;
+  --font-heading-weight: 800;
+  --font-body: "Poppins", system-ui, sans-serif;
+  --tracking: 0.04em;
+
+  --space-1: 4.4px;
+  --space-2: 8.8px;
+  --space-3: 13.2px;
+  --space-4: 17.6px;
+  --space-6: 26.4px;
+  --space-8: 35.2px;
+  --space-12: 52.8px;
+  --space-16: 70.4px;
+
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 28px;
+
+  --shadow-sm: 0 1px 2px color-mix(in srgb, #14181a 14%, transparent);
+  --shadow-md: 0 3px 10px color-mix(in srgb, #14181a 16%, transparent);
+  --shadow-lg: 0 12px 32px color-mix(in srgb, #14181a 22%, transparent);
+
+  --page-max: 1160px;
+}
+
+/* ── base ───────────────────────────────────────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.6;
+  letter-spacing: var(--tracking);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  line-height: 1.18;
+  letter-spacing: var(--tracking);
+  margin: 0 0 var(--space-3);
+  color: var(--color-text);
+  text-wrap: balance;
+}
+/* Unbounded ExtraBold sets far wider than the face this replaced, and the +4%
+   tracking widens it again, so the display sizes come down a step to keep the
+   same number of words on a line. */
+h1 { font-size: 39px; }
+h2 { font-size: 30px; }
+h3 { font-size: 25px; }
+h4 { font-size: 21px; }
+h5 { font-size: 19px; }
+h6 { font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+p, ul, ol, dl, pre, table, blockquote { margin: 0 0 var(--space-4); }
+p { text-wrap: pretty; }
+ul, ol { padding-left: var(--space-6); }
+li { margin-bottom: var(--space-1); }
+
+a { color: var(--color-accent-700); text-underline-offset: 3px; }
+a:hover, a:focus { color: var(--color-accent-600); }
+/* :visited is scoped to prose content (API reference pages, blog posts) rather
+   than site-wide — it's a real wayfinding aid on link-dense reference/listing
+   pages, but applying it globally would risk bleeding into buttons and card
+   CTAs, which should read the same regardless of visited state. Browsers only
+   allow color-ish properties here (privacy: no font-weight, no content), so
+   this is a subtly darker shade rather than a different hue. */
+.prose a:visited { color: var(--color-accent-800); }
+
+img { display: block; max-width: 100%; }
+
+/* The hidden attribute has to beat component display rules. Several components
+   here set display:flex or display:grid on the same element that script wants
+   to hide (the plan cards on /signup/, for one), and a class selector outranks
+   the user agent's own [hidden] rule - so without this, el.hidden = true does
+   nothing at all. */
+[hidden] { display: none !important; }
+figure { margin: 0; }
+
+hr {
+  height: 1px;
+  border: 0;
+  margin: var(--space-8) 0;
+  background: var(--color-divider);
+}
+
+code, pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+}
+code { font-size: 17px; color: var(--color-accent-700); }
+pre {
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-neutral-100);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+}
+pre code { font-size: inherit; color: inherit; }
+
+blockquote {
+  border-left: 3px solid var(--color-accent-300);
+  padding-left: var(--space-4);
+  font-style: italic;
+  color: var(--color-neutral-700);
+}
+
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+::selection { background: color-mix(in srgb, var(--color-accent) 30%, transparent); }
+
+.text-muted { color: var(--color-neutral-700); }
+.washed { filter: saturate(0.6) contrast(0.85) brightness(1.1) opacity(0.94); }
+.italic { font-style: italic; }
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap;
+}
+.bold {
+	font-weight: bold;
+}
+.italic {
+	font-style: italic;
+}
+.underline {
+	text-decoration: underline;
+}
+
+/* ── layout ─────────────────────────────────────────────────────────────── */
+
+.page {
+  width: 100%;
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+}
+
+.site-main { padding: var(--space-8) 0 var(--space-16); }
+
+.band { padding: var(--space-12) 0; }
+.band + .band { padding-top: 0; }
+
+.band-head { max-width: 62ch; margin-bottom: var(--space-8); }
+.band-head h2 { margin-bottom: var(--space-2); }
+.band-head p { margin: 0; color: var(--color-neutral-800); font-size: 19px; line-height: 1.5; }
+.band-head p + p { margin-top: var(--space-3); }
+
+.band-head-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-6);
+}
+.band-head-row h2 { margin: 0; }
+
+/* ── buttons ────────────────────────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  text-decoration: none;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 15px;
+  line-height: 1.2;
+  white-space: nowrap;
+  color: var(--color-text);
+  background: transparent;
+  border: 1px solid transparent;
+  padding: var(--space-3) var(--space-6);
+  border-radius: 999px;
+  transition: background-color 120ms ease, color 120ms ease, transform 0.15s ease;
+}
+/* Hover is a scale-up, not a color change, on every button — same treatment
+   as the .action-strip tiles. :active (an actual press) still darkens, as
+   distinct feedback for the click itself rather than just pointing at it. */
+.btn:hover, .btn:focus-visible { transform: scale(1.05); }
+/* Three roles, not six: primary (filled, the one strong action), secondary
+   (outlined, a lesser action next to a primary), ghost (plain text, minor
+   actions). Secondary used to need a different class on every dark
+   background it sat on (btn-on-dark in the hero, btn-outline-light also in
+   the hero, a .header-cta override in the header) because its border/text
+   colors were hard-coded for a light background. It's custom properties now,
+   so context (site-header, hero) can just override the properties below
+   instead of needing a whole separate class — one visual style everywhere,
+   auto-adapting instead of hand-matched per spot. btn-brand dropped: nothing
+   in the site referenced it. */
+.btn-primary { background: var(--color-cta); color: #000; }
+.btn-primary:active { background: var(--color-cta-active); color: #000; }
+.btn-secondary {
+  --btn-secondary-border: var(--color-divider);
+  --btn-secondary-text: var(--color-text);
+  --btn-secondary-active-bg: color-mix(in srgb, var(--color-text) 14%, transparent);
+  border-color: var(--btn-secondary-border);
+  color: var(--btn-secondary-text);
+}
+.btn-secondary:active { background: var(--btn-secondary-active-bg); }
+/* The only two dark backgrounds a secondary button sits on. Same class,
+   same shape, just a white outline instead of a gray one. */
+.site-header .btn-secondary,
+.hero .btn-secondary {
+  --btn-secondary-border: rgba(255, 255, 255, 0.7);
+  --btn-secondary-text: #fff;
+  --btn-secondary-active-bg: rgba(255, 255, 255, 0.28);
+}
+.btn-ghost { color: var(--color-accent-700); padding-inline: var(--space-2); }
+.btn-sm { padding: var(--space-2) var(--space-4); font-size: 14px; }
+.btn-block { width: 100%; }
+
+.btn-row { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+
+/* ── tags ───────────────────────────────────────────────────────────────── */
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  padding: 3px 11px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.tag-accent { background: var(--color-accent-100); color: var(--color-accent-800); }
+.tag-accent-2 { background: var(--color-accent-2-100); color: var(--color-accent-2-800); }
+.tag-neutral { background: var(--color-neutral-100); color: var(--color-neutral-800); }
+.tag-outline { border: 1px solid var(--color-accent); color: var(--color-accent-700); }
+
+/* ── site header + main menu ────────────────────────────────────────────── */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--color-shell);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.site-header-inner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-3) var(--space-6);
+  max-width: var(--page-max);
+  margin: 0 auto;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  text-decoration: none;
+  color: #fff;
+  margin-right: auto;
+}
+.brand-logo { height: 34px; width: auto; }
+.brand-tagline {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.72);
+  margin-top: 0;
+}
+
+.main-nav ul {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.main-nav li { margin: 0; }
+.main-nav a {
+  display: block;
+  padding: var(--space-2) var(--space-3);
+  border-radius: 999px;
+  color: #fff;
+  text-decoration: none;
+  font-size: 15.5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.main-nav a:hover { background: rgba(255, 255, 255, 0.14); color: #fff; }
+.main-nav a[aria-current="page"] {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+.header-cta { display: flex; align-items: center; gap: var(--space-2); }
+.site-header :focus-visible { outline-color: #fff; }
+
+/* no-JS mobile menu toggle */
+.nav-toggle { display: none; }
+.nav-toggle-label {
+  display: none;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 999px;
+  font-family: var(--font-heading);
+  font-size: 13px;
+  color: #fff;
+}
+.nav-toggle-label .bars {
+  display: block;
+  width: 16px;
+  height: 2px;
+  background: #fff;
+  box-shadow: 0 5px 0 #fff, 0 -5px 0 #fff;
+}
+
+/* ── social / download banner ───────────────────────────────────────────── */
+
+.action-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--color-divider);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  margin: 0 0 var(--space-8);
+}
+/* No overflow: hidden on the strip — a hovered tile needs to visibly grow past
+   the strip's own edges, not just its neighbors. Clipping to the strip's
+   rounded silhouette is done per-tile instead (below), so nothing depends on
+   the parent to mask square corners. */
+.action-strip-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-3);
+  background: #fff;
+  text-decoration: none;
+  color: var(--color-neutral-800);
+  font-size: 13.5px;
+  line-height: 1.3;
+  text-align: center;
+  position: relative;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.action-strip-item:first-child { border-radius: var(--radius-lg) 0 0 var(--radius-lg); }
+.action-strip-item:last-child { border-radius: 0 var(--radius-lg) var(--radius-lg) 0; }
+/* Scale in place: it grows the tile around its own center without reflowing
+   neighbors. The box-shadow stands in for a border — unlike an actual border
+   it doesn't change the box's size (no layout jump), and because it's part of
+   the tile's own paint it scales outward together with the transform, so the
+   divider line appears to move with the growing edge instead of just
+   vanishing under it. z-index keeps that edge drawn over the neighbor tile
+   rather than tucked behind it. */
+.action-strip-item:hover {
+  transform: scale(1.06);
+  z-index: 1;
+  box-shadow: 0 0 0 1px var(--color-divider);
+}
+.action-strip-icons { display: flex; align-items: center; gap: var(--space-2); }
+.action-strip-icons img { max-height: 22px; width: auto; }
+.action-strip-item strong {
+  display: block;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 16px;
+  color: var(--color-text);
+  transition: color 0.15s ease;
+}
+.action-strip-item:hover strong { color: var(--color-accent-800); }
+
+/* ── hero ───────────────────────────────────────────────────────────────── */
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--color-hero);
+  /* The site's own checkbox/plus/circle tile, recoloured to white on
+     transparency so it reads as texture over whatever --color-hero is, instead
+     of carrying the old light blue ground with it. */
+  background-image: url('../img/hero-pattern.png');
+  background-repeat: repeat;
+  background-size: 198px 196px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  color: #fff;
+  margin-bottom: var(--space-8);
+}
+.hero-text { flex: 1 1 0; min-width: 0; }
+.hero-text h1 {
+  color: #fff;
+  font-size: 38px;
+  margin-bottom: var(--space-4);
+  text-shadow: 0 2px 6px rgba(23, 41, 66, 0.45);
+}
+.hero-text p {
+  font-size: 18.5px;
+  line-height: 1.5;
+  margin-bottom: var(--space-3);
+  color: rgba(255, 255, 255, 0.95);
+  max-width: 46ch;
+}
+.hero-actions { margin-top: var(--space-6); }
+.hero-thumbnail {
+  flex: 0 0 auto;
+  max-width: 380px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+.hero-thumbnail img { border-radius: var(--radius-md); }
+
+/* ── cards ──────────────────────────────────────────────────────────────── */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-6);
+  background: var(--color-surface);
+  border-radius: calc(var(--radius-lg) * 1.15);
+  transition: box-shadow 0.15s ease;
+}
+/* Hover lives on .card itself rather than on a wrapping .card-link, so it
+   still fires on the cards that aren't link-wrapped (get-choice.html's
+   pricing triad, the PHP/MySQL/time triad on the download page) as well as
+   the ones that are. */
+.card:hover { box-shadow: var(--shadow-md); }
+.card-kicker {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text);
+}
+.card-title {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 23px;
+  line-height: 1.2;
+  margin: 0;
+  color: var(--color-accent-700);
+  transition: color 0.15s ease;
+}
+.card:hover .card-title { color: var(--color-text); }
+.card-body { margin: 0; font-size: 16.5px; color: var(--color-neutral-800); flex: 1; }
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 12.5px;
+  color: var(--color-neutral-700);
+}
+.elev-sm { box-shadow: var(--shadow-sm); }
+.elev-md { box-shadow: var(--shadow-md); }
+.elev-lg { box-shadow: var(--shadow-lg); }
+
+/* .card-link always wraps a whole .card now (get-choice.html, download.html,
+   features.html) — every card links to exactly one destination, so the whole
+   box is the click target rather than a single line inside it. */
+.card-link { text-decoration: none; color: inherit; }
+.card-link:hover { color: inherit; }
+/* The "See what is included"-style line inside a linked card: a plain span,
+   not a nested <a> (a card-link already wraps the card), styled the same as
+   .news-card-more so the two matching CTA patterns look the same. */
+.card-link-more {
+  align-self: flex-start;
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--color-accent-700);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ── on-ramp: two ways to start ─────────────────────────────────────────── */
+
+.onramp {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+.onramp .card { gap: var(--space-3); }
+.onramp-num {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-heading);
+  font-size: 18px;
+  background: var(--color-accent-200);
+  color: var(--color-accent-800);
+}
+.onramp .card:nth-child(2) .onramp-num { background: var(--color-accent-2-200); color: var(--color-accent-2-800); }
+.onramp ul { margin: 0; padding-left: var(--space-6); font-size: 16.5px; color: var(--color-neutral-800); }
+
+/* ── feature triad ──────────────────────────────────────────────────────── */
+
+.triad {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+.triad .card { background: var(--color-neutral-100); }
+.triad h3 { margin-bottom: var(--space-2); }
+.triad ul { margin: 0; padding-left: var(--space-6); font-size: 16.5px; }
+.triad em { color: var(--color-accent-700); font-style: italic; }
+
+/* ── pricing ────────────────────────────────────────────────────────────── */
+
+.tier-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+  align-items: stretch;
+}
+.tier {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  background: var(--color-neutral-100);
+  border: 1px solid var(--color-divider);
+  border-radius: calc(var(--radius-lg) * 1.15);
+  transition: box-shadow 0.15s ease;
+}
+.tier:hover { box-shadow: var(--shadow-md); }
+.tier-featured {
+  background: var(--color-surface);
+  border-color: var(--color-accent-400);
+  box-shadow: var(--shadow-md);
+}
+.tier-flag {
+  position: absolute;
+  top: calc(var(--space-4) * -1);
+  left: var(--space-6);
+  background: var(--color-cta);
+  color: #000;
+  font-family: var(--font-heading);
+  font-size: 12.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: var(--space-1) var(--space-3);
+  border-radius: 999px;
+}
+.tier-name {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  line-height: 1.1;
+  margin: 0;
+  color: var(--color-accent-700);
+  transition: color 0.15s ease;
+}
+.tier:hover .tier-name { color: var(--color-text); }
+.tier-blurb { font-size: 15px; color: var(--color-neutral-800); margin: 0; min-height: 3em; }
+.tier-price {
+  font-family: var(--font-heading);
+  font-size: 32px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+.tier-price span {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-neutral-700);
+  letter-spacing: 0;
+}
+/* A second badge in the same green would compete with "Most popular" and
+   leave neither reading as the recommendation. The brand blue keeps the badge
+   family intact while marking it as a different kind of claim. */
+.tier-flag-alt { background: var(--color-brand-700); color: #fff; }
+
+.tier-note { font-size: 13.5px; color: var(--color-neutral-700); margin: 0; }
+
+.rail-addendum {
+  margin: var(--space-4) 0 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-neutral-200);
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--color-neutral-800);
+}
+.tier ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-size: 15px;
+  flex: 1;
+}
+.tier ul li { margin: 0; padding-left: 1.4em; position: relative; }
+.tier ul li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--color-accent-2-700);
+  font-weight: 700;
+}
+.tier ul li.no { color: var(--color-neutral-600); }
+.tier ul li.no::before { content: "–"; color: var(--color-neutral-600); }
+.tier .btn { margin-top: var(--space-2); }
+
+.tier-grid-services .tier { background: var(--color-accent-2-100); border-color: var(--color-accent-2-300); }
+.tier-grid-services .tier-price { font-size: 28px; }
+
+/* uniform check / cross feature rows, used in the getting-started rail */
+.tier-feats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  font-size: 15px;
+  line-height: 1.45;
+  flex: 1;
+}
+.tier ul.tier-feats li { margin: 0; padding-left: 1.55em; position: relative; }
+/* Rows take their natural height. Reserving the tallest card's height on every
+   card left visible dead air in the shorter ones; the cards still finish level
+   because .tier-feats flexes, and reading ACROSS plans is the table's job. */
+.tier ul.tier-feats li::before {
+  content: "\2713";
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-weight: 700;
+  color: var(--color-accent-2-700);
+}
+.tier ul.tier-feats li.no { color: var(--color-neutral-700); }
+.tier ul.tier-feats li.maybe { color: var(--color-neutral-700); }
+/* Neutral, not blue: the blue is now the accent that marks things as present,
+   so a blue cross would fight the green tick beside it. */
+.tier ul.tier-feats li.no::before { content: "\2715"; color: var(--color-neutral-500); }
+.tier ul.tier-feats li.maybe::before { content: "?"; color: var(--color-neutral-500); padding-left: 0.15em; }
+.tier-feats small {
+  display: block;
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: var(--color-neutral-700);
+  margin-top: 2px;
+}
+
+/* ── getting-started rail ───────────────────────────────────────────────── */
+
+.rail-wrap { position: relative; }
+.rail {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-4);
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  padding: var(--space-4) var(--space-1) var(--space-2);
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-neutral-400) transparent;
+}
+.rail:focus-visible { outline-offset: -2px; }
+
+.rail-group {
+  flex: none;
+  width: min-content;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border-radius: calc(var(--radius-lg) * 1.15);
+  background: var(--color-neutral-200);
+  scroll-snap-align: start;
+}
+.rail-group-diy { background: var(--color-accent-2-200); }
+.rail-group-hosted { background: var(--color-brand-200); }
+.rail-group-team { background: var(--color-brand-700); }
+.rail-group-team .rail-legend strong { color: #fff; }
+.rail-group-team .rail-legend > span { color: rgba(255, 255, 255, 0.88); }
+
+.rail-legend {
+  display: block;
+  margin: 0;
+  padding: var(--space-1) var(--space-2) 0;
+}
+.rail-legend strong {
+  display: block;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 19px;
+  line-height: 1.2;
+  letter-spacing: 0.03em;
+}
+.rail-legend > span {
+  display: block;
+  font-size: 14.5px;
+  line-height: 1.4;
+  color: var(--color-neutral-800);
+  margin-top: 3px;
+}
+
+.rail-cards { display: flex; align-items: stretch; gap: var(--space-4); flex: 1; }
+.rail-cards .tier {
+  width: 306px;
+  flex: none;
+  padding: var(--space-6);
+  gap: var(--space-3);
+  background: var(--color-neutral-100);
+  border-color: transparent;
+  scroll-snap-align: start;
+}
+.rail-cards .tier-featured { background: #fff; border-color: var(--color-accent-400); }
+.rail-cards .tier-name {
+  font-size: 24px;
+  line-height: 1.15;
+  margin: 0;
+}
+.rail-cards .tier-name span {
+  display: block;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 17px;
+  color: var(--color-accent-700);
+  white-space: nowrap;
+  margin-top: 4px;
+}
+.rail-cards .tier-feats { margin-top: var(--space-1); }
+.rail-cards .tier-flag { top: calc(var(--space-3) * -1); left: var(--space-4); }
+.rail-cards .btn { margin-top: var(--space-1); }
+
+.rail-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 4;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 1px solid var(--color-divider);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: var(--shadow-md);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease, background-color 120ms ease;
+}
+.rail-wrap:hover .rail-arrow,
+.rail-wrap:focus-within .rail-arrow { opacity: 1; pointer-events: auto; }
+.rail-arrow:hover { background: #fff; color: var(--color-accent-700); }
+.rail-arrow:disabled { opacity: 0 !important; pointer-events: none; }
+.rail-prev { left: calc(var(--space-4) * -1); }
+.rail-next { right: calc(var(--space-4) * -1); }
+@media (hover: none) {
+  .rail-arrow { display: none; }
+}
+
+.rail-hint {
+  font-size: 14px;
+  color: var(--color-neutral-700);
+  margin: var(--space-3) 0 0;
+}
+
+/* The one promise the tier cards must never contradict: same software everywhere. */
+.lede-promise {
+  margin: var(--space-4) 0 0;
+  padding: var(--space-4) var(--space-4) var(--space-4) var(--space-6);
+  border-left: 3px solid var(--color-brand-600);
+  background: var(--color-brand-100);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+  font-size: 19px;
+  line-height: 1.5;
+}
+
+.lede-note {
+  display: block;
+  margin-top: var(--space-2);
+  font-size: 14.5px;
+  color: var(--color-neutral-700);
+}
+
+.addon-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+.addon {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-6);
+  border: 1px dashed var(--color-neutral-400);
+  border-radius: var(--radius-lg);
+}
+.addon strong { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 19px; }
+.addon span { font-size: 15px; color: var(--color-neutral-700); }
+
+/* comparison table */
+.compare-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  background: var(--color-neutral-100);
+}
+.compare {
+  width: 100%;
+  min-width: 1180px;
+  border-collapse: collapse;
+  font-size: 15px;
+  margin: 0;
+}
+.compare th, .compare td {
+  padding: var(--space-2) var(--space-3);
+  text-align: center;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+  vertical-align: middle;
+}
+.compare thead th {
+  position: sticky;
+  top: 0;
+  background: var(--color-neutral-200);
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 13px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-divider);
+}
+.compare th[scope="row"], .compare tbody td:first-child {
+  text-align: left;
+  font-weight: 500;
+  color: var(--color-neutral-800);
+}
+.compare th[scope="row"] { min-width: 260px; }
+.compare-ladder { min-width: 900px; }
+.compare tbody tr:hover { background: color-mix(in srgb, var(--color-text) 4%, transparent); }
+.compare .group th {
+  text-align: left;
+  background: var(--color-accent-100);
+  font-family: var(--font-heading);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent-800);
+}
+.yes { color: var(--color-accent-2-700); font-weight: 700; }
+.no, .maybe { color: var(--color-neutral-600); }
+.compare small { display: block; font-size: 13px; color: var(--color-neutral-700); }
+
+.footnotes { font-size: 13.5px; color: var(--color-neutral-700); }
+.footnotes p { margin: 0 0 var(--space-1); }
+
+/* ── news ───────────────────────────────────────────────────────────────── */
+
+.news-list { list-style: none; margin: 0; padding: 0; }
+.news-list li { margin: 0; border-bottom: 1px solid var(--color-divider); }
+.news-list li:last-child { border-bottom: 0; }
+.news-list a {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+  text-decoration: none;
+  color: var(--color-text);
+}
+.news-list a:hover { color: var(--color-accent-700); }
+.news-list time {
+  flex: 0 0 7.5em;
+  font-size: 14px;
+  color: var(--color-neutral-700);
+  font-variant-numeric: tabular-nums;
+}
+.news-list .news-title {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 20px;
+}
+
+.post-list { display: flex; flex-direction: column; gap: var(--space-6); }
+/* .post-teaser is the whole link now (was an <article> with three separate
+   <a>s inside it, all pointing at the same post) — one destination, so one
+   click target for the whole box, matching .news-card. */
+.post-teaser {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: var(--space-6);
+  padding: var(--space-6);
+  background: var(--color-neutral-100);
+  border-radius: calc(var(--radius-lg) * 1.15);
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.15s ease;
+}
+.post-teaser:hover { box-shadow: var(--shadow-md); }
+.post-teaser.no-image { grid-template-columns: minmax(0, 1fr); }
+.post-teaser-thumb { border-radius: var(--radius-md); overflow: hidden; align-self: start; }
+.post-teaser h2 {
+  font-size: 28px;
+  margin-bottom: var(--space-2);
+  color: var(--color-accent-700);
+  transition: color 0.15s ease;
+}
+.post-teaser:hover h2 { color: var(--color-text); }
+.post-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: 13.5px;
+  color: var(--color-neutral-700);
+  margin-bottom: var(--space-2);
+}
+.post-excerpt { margin-bottom: var(--space-3); color: var(--color-neutral-800); }
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-8);
+}
+.pagination .btn { min-width: 7em; }
+.pagination-status { font-size: 15px; color: var(--color-neutral-700); }
+
+.post-body { max-width: 72ch; }
+.post-header { margin-bottom: var(--space-6); }
+.post-header h1 { margin-bottom: var(--space-2); }
+
+/* ── videos ─────────────────────────────────────────────────────────────── */
+
+#video-flex-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-6);
+  margin: 0;
+  padding: 0;
+}
+#video-flex-list > div {
+  background: var(--color-neutral-100);
+  border-radius: calc(var(--radius-lg) * 1.15);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+#video-flex-list img { width: 100%; height: 180px; object-fit: cover; border: 0; }
+#video-flex-list p {
+  padding: var(--space-4) var(--space-6) var(--space-6);
+  margin: 0;
+  font-size: 16.5px;
+  line-height: 1.5;
+}
+#video-flex-list a { text-decoration: none; }
+.video-title {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 20px;
+  color: var(--color-text);
+}
+#video-flex-list a:hover .video-title { color: var(--color-accent-700); }
+
+.video-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+.video-card { text-decoration: none; color: inherit; }
+.video-card img {
+  border-radius: var(--radius-md);
+  width: 100%;
+  height: 170px;
+  object-fit: cover;
+  box-shadow: var(--shadow-sm);
+}
+.video-card-title {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 20px;
+  line-height: 1.2;
+  margin-top: var(--space-3);
+}
+.video-card:hover .video-card-title { color: var(--color-accent-700); }
+.video-card span.text-muted { font-size: 15px; }
+
+/* ── download page ──────────────────────────────────────────────────────── */
+
+.download-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+.download-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  background: var(--color-surface);
+  border-radius: calc(var(--radius-lg) * 1.15);
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.15s ease;
+}
+.download-card:hover { box-shadow: var(--shadow-md); color: inherit; }
+.download-card img { width: 34px; height: auto; flex: none; }
+.download-card strong {
+  display: block;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 21px;
+  color: var(--color-accent-700);
+  transition: color 0.15s ease;
+}
+.download-card:hover strong { color: var(--color-text); }
+.download-card span { font-size: 15px; color: var(--color-neutral-700); }
+
+/* ── prose pages (markdown docs) ────────────────────────────────────────── */
+
+.prose { max-width: 78ch; }
+.prose h1 { margin-bottom: var(--space-4); }
+.prose h2 { font-size: 30px; margin-top: var(--space-8); }
+.prose h3 { font-size: 24px; margin-top: var(--space-6); }
+.prose h4 { font-size: 19px; margin-top: var(--space-6); }
+.prose img {
+  border: 1px solid var(--color-neutral-300);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-4);
+}
+/* News entry image: floats beside the body text instead of sitting full-width
+   above it, so the headline reads first and the body starts right under it,
+   wrapping around the image while there's text left to wrap. */
+.prose img.news-entry-image {
+  float: right;
+  width: 45%;
+  max-width: 320px;
+  margin: 0 0 var(--space-4) var(--space-6);
+}
+@media (max-width: 600px) {
+  .prose img.news-entry-image { float: none; width: 100%; max-width: none; margin: 0 0 var(--space-4); }
+}
+/* Floats inside .post-body's .prose shouldn't bleed past the divider below it. */
+.post-body hr { clear: both; }
+.prose table { font-size: 16px; border-collapse: collapse; width: 100%; }
+.prose th, .prose td {
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-divider);
+}
+.prose th { font-family: var(--font-heading); font-weight: var(--font-heading-weight); }
+.prose .social-image {
+  display: inline-block;
+  border: 0;
+  vertical-align: middle;
+  max-height: 1.2em;
+  margin: 0 0 0 var(--space-1);
+}
+.prose #image404 { border: 0; }
+
+.page-pic { margin: 0 0 var(--space-4); max-width: 300px; }
+.page-pic img { border-radius: var(--radius-md); }
+.page-pic p {
+  text-align: center;
+  font-style: italic;
+  font-size: 14px;
+  color: var(--color-neutral-700);
+  margin: var(--space-2) 0 0;
+}
+.small-pic { width: 220px; }
+
+/* The API reference pages put the whole function signature inside the <h1> —
+   name, parens, variable names and default values as bare text, with just
+   each parenthesized type hint wrapped in <span class="sig-type">. The bare
+   text inherits the heading's own styling below (monospace, a size up from
+   body, at a weight that still reads as a page title); the type-hint spans
+   are sized and muted down from that so long signatures read as
+   name-and-arguments first, with the type hints as secondary detail.
+   Scoped to .prose h1 so no marketing heading can be caught by it. If a page
+   would rather have a display-face title, the markdown should carry the name as
+   the h1 and the signature as a fenced code block beneath it. */
+.prose h1:has(> span) {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 23px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.5;
+  text-wrap: initial;
+  margin-bottom: var(--space-6);
+}
+.prose h1 span.sig-type,
+.prose h1 span.sig-default {
+  font-size: 0.74em;
+  font-weight: 400;
+  color: var(--color-neutral-600);
+  white-space: nowrap;
+}
+
+nav.breadcrumbs { margin-bottom: var(--space-4); }
+nav.breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 13.5px;
+  color: var(--color-neutral-700);
+}
+nav.breadcrumbs li { margin: 0; }
+nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
+  margin-right: var(--space-1);
+  content: "»";
+}
+
+/* ── footer ─────────────────────────────────────────────────────────────── */
+
+.site-footer {
+  background: var(--color-shell);
+  color: rgba(255, 255, 255, 0.85);
+  padding: var(--space-12) 0 var(--space-8);
+  margin-top: var(--space-12);
+}
+.site-footer a { color: #fff; text-decoration: none; }
+.site-footer a:hover { color: var(--color-accent-2-300); text-decoration: underline; }
+.site-footer :focus-visible { outline-color: #fff; }
+.footer-cols {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-8);
+}
+.footer-cols h2, .footer-cols h3 {
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+  font-family: var(--font-body);
+  font-weight: 600;
+  margin-bottom: var(--space-3);
+}
+.footer-cols ul { list-style: none; margin: 0; padding: 0; font-size: 15.5px; }
+.footer-cols li { margin-bottom: var(--space-2); }
+/* The footer carries four task columns now, so the brand sits on its own
+   full-width row above them rather than competing for a fifth column. */
+.footer-brand { grid-column: 1 / -1; margin-bottom: var(--space-2); }
+.footer-brand p { font-size: 15.5px; color: rgba(255, 255, 255, 0.8); max-width: 34ch; }
+.footer-brand .brand-logo {
+  height: 30px;
+  margin-bottom: var(--space-3);
+}
+.footer-bottom {
+  margin-top: var(--space-8);
+  padding-top: var(--space-4);
+  border-top: 1px solid rgba(255, 255, 255, 0.22);
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.65);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  justify-content: space-between;
+}
+.footer-bottom a { color: rgba(255, 255, 255, 0.65); }
+
+/* ── homepage lead hero: headline + video ───────────────────────────────── */
+
+.hero-lead .hero-text { flex: 1 1 44%; }
+.hero-lead .hero-text h1 { font-size: 39px; margin-bottom: var(--space-4); }
+.hero-text p.hero-sub {
+  font-size: 20px;
+  line-height: 1.45;
+  margin-bottom: 0;
+  color: rgba(255, 255, 255, 0.96);
+  max-width: 34ch;
+}
+.hero-text p.hero-sub + p.hero-sub { margin-top: var(--space-3); }
+.hero-media { flex: 1 1 56%; min-width: 0; max-width: 620px; }
+.hero-media .hero-thumbnail { max-width: none; display: block; }
+.hero-caption {
+  margin: var(--space-3) 0 0;
+  font-size: 15.5px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.9);
+}
+.hero-play { display: block; border-radius: var(--radius-md); }
+.hero-play img { display: block; width: 100%; height: auto; opacity: 0.92; transition: opacity 0.15s ease; }
+.hero-play:hover img { opacity: 1; }
+.hero-play:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+
+/* ── news cards (homepage) ─────────────────────────────────────────────── */
+
+.news-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+.news-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-6);
+  background: var(--color-neutral-100);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.15s ease;
+}
+.news-card:hover { box-shadow: var(--shadow-md); color: inherit; }
+.news-card time {
+  font-size: 13.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--color-neutral-700);
+}
+.news-card-title {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 23px;
+  line-height: 1.2;
+  color: var(--color-accent-700);
+  transition: color 0.15s ease;
+}
+.news-card:hover .news-card-title { color: var(--color-text); }
+.news-card p {
+  margin: 0;
+  font-size: 16.5px;
+  line-height: 1.5;
+  color: var(--color-neutral-800);
+}
+.news-card-more {
+  margin-top: auto;
+  padding-top: var(--space-3);
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--color-accent-700);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.band-foot { margin: var(--space-6) 0 0; }
+.band-foot a {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 19px;
+  color: var(--color-accent-700);
+}
+
+/* ── full feature list (features page) ────────────────────────────────── */
+
+.feature-cols {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-8);
+}
+.feature-cols h3 { font-size: 22px; margin: 0 0 var(--space-3); }
+.feature-cols ul {
+  margin: 0;
+  padding-left: var(--space-6);
+  font-size: 16.5px;
+  line-height: 1.5;
+  color: var(--color-neutral-800);
+}
+.feature-cols li { margin-bottom: var(--space-2); }
+.feature-cols li:last-child { margin-bottom: 0; }
+
+/* ── embedded Formulize screens ─────────────────────────────────────────── */
+
+/* The frame on /contact/ and /signup/. The screen inside brings its own theme
+   from the Formulize site, so this is only the surround: a surface that makes
+   the form read as part of this page rather than as a window cut into it.
+
+   Deliberately narrower than the full page. The form is a single column of
+   fields and a 1160px-wide one would have the eye travelling much further than
+   any of the text around it. */
+.embed-frame {
+  max-width: 820px;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+}
+
+.embed-frame-iframe {
+  display: block;
+  /* The script sets the real height once the screen reports it; this only keeps
+     the box from collapsing before the first message arrives. */
+  min-height: 320px;
+  border-radius: var(--radius-md);
+  background: transparent;
+}
+
+/* formulize-embed.js puts this class on the iframe until the screen is visible,
+   so the surround can say something is happening rather than sitting blank. */
+.embed-frame-iframe.formulize-embed--loading {
+  background:
+    linear-gradient(var(--color-neutral-200), var(--color-neutral-200)) center / 100% 100% no-repeat;
+}
+
+.embed-frame-note {
+  margin: var(--space-4) 0 0;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-divider);
+  font-size: 15px;
+  color: var(--color-neutral-700);
+}
+
+/* Promoted by the sessionUnavailable handler in _includes/embedded-form.html,
+   when the screen reports that this browser will not let it save. */
+.embed-frame-note.is-warning {
+  border-top: 0;
+  border-left: 3px solid var(--color-accent);
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-accent-100);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+}
+
+@media (max-width: 620px) {
+  /* Reclaim the gutter on a phone - the screen inside has padding of its own. */
+  .embed-frame { padding: var(--space-3); border-radius: var(--radius-md); }
+}
+
+/* ── signup plan preview ───────────────────────────────────────────────── */
+
+/* Four plans, so this cannot be .triad (which would leave a 3+1 orphan row).
+   Once a plan is chosen on /pricing/ only one card survives the filter, and a
+   single card sitting in a quarter-width column is the intended result. */
+.plan-preview {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+.plan-preview .card { background: var(--color-neutral-100); }
+
+@media (max-width: 1080px) {
+  .plan-preview { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 620px) {
+  .plan-preview { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ── responsive ─────────────────────────────────────────────────────────── */
+
+@media (max-width: 1080px) {
+  .tier-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .footer-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 1160px) {
+  .hero-lead .hero-text { flex: 1 1 50%; }
+  .hero-lead .hero-text h1 { font-size: 32px; }
+  .hero-text p.hero-sub { font-size: 18.5px; max-width: none; }
+  .hero-media { flex: 1 1 50%; }
+}
+
+@media (max-width: 1060px) {
+  .site-header-inner { flex-wrap: wrap; padding: var(--space-3) var(--space-4); }
+  .nav-toggle-label { display: inline-flex; order: 3; }
+  .main-nav {
+    order: 4;
+    flex-basis: 100%;
+    display: none;
+  }
+  .nav-toggle:checked ~ .main-nav { display: block; }
+  .main-nav ul { flex-direction: column; align-items: stretch; gap: 0; padding-bottom: var(--space-3); }
+  .main-nav a { padding: var(--space-3); border-radius: var(--radius-md); }
+  .header-cta .btn-secondary { display: none; }
+}
+
+@media (max-width: 900px) {
+  h1 { font-size: 30px; }
+  h2 { font-size: 24px; }
+  .hero { flex-direction: column; align-items: flex-start; padding: var(--space-6); }
+  .hero-text h1 { font-size: 27px; }
+  .hero-thumbnail { max-width: 100%; }
+  .triad, .onramp, .video-row, .download-grid, .addon-grid { grid-template-columns: minmax(0, 1fr); }
+  .feature-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hero-media { max-width: 100%; }
+  .hero-lead .hero-text h1 { font-size: 27px; }
+  .hero-text p.hero-sub { font-size: 18px; max-width: none; }
+  .news-row { grid-template-columns: minmax(0, 1fr); }
+  /* Two columns now, so the rounded corners belong to four different tiles
+     (one each) instead of the first/last tile owning a whole rounded side. */
+  .action-strip { grid-template-columns: repeat(2, 1fr); }
+  .action-strip-item:first-child,
+  .action-strip-item:last-child { border-radius: 0; }
+  .action-strip-item:nth-child(1) { border-radius: var(--radius-lg) 0 0 0; }
+  .action-strip-item:nth-child(2) { border-radius: 0 var(--radius-lg) 0 0; }
+  .action-strip-item:nth-child(3) { border-radius: 0 0 0 var(--radius-lg); }
+  .action-strip-item:nth-child(4) { border-radius: 0 0 var(--radius-lg) 0; }
+  .post-teaser { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 560px) {
+  .page { padding: 0 var(--space-4); }
+  .rail-cards .tier { width: 268px; }
+  .news-list a { flex-direction: column; gap: var(--space-1); }
+  .news-list time { flex: none; }
+  .tier-grid { grid-template-columns: minmax(0, 1fr); }
+  .feature-cols { grid-template-columns: minmax(0, 1fr); }
+  .brand-logo { height: 28px; }
+  .brand-tagline { display: none; }
+}
+
+@media print {
+  .site-header, .site-footer, .action-strip { display: none; }
+  body { background: #fff; }
+}
+
+/* ── alternate comparison layout: frozen row labels, scroll the levels ────── */
+
+.cmp-wrap {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  background: var(--color-neutral-100);
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-neutral-400) transparent;
+}
+
+.cmp { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1250px; margin: 0; font-size: 15px; table-layout: fixed; }
+
+.cmp th, .cmp td { text-align: left; vertical-align: top; padding: var(--space-3); word-wrap: break-word; }
+
+/* the frozen left column */
+.cmp th[scope="row"], .cmp .cmp-corner {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  width: 186px;
+  min-width: 186px;
+  background: var(--color-neutral-200);
+  border-right: 1px solid var(--color-divider);
+  font-weight: 600;
+  font-size: 15.5px;
+  line-height: 1.35;
+}
+.cmp thead th { position: sticky; top: 0; z-index: 1; background: var(--color-neutral-200); }
+.cmp .cmp-corner { z-index: 3; }
+
+.cmp thead th:not(.cmp-corner) { border-bottom: 2px solid var(--color-divider); }
+.cmp-tier {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 19px;
+  line-height: 1.15;
+}
+.cmp-tier em {
+  display: block;
+  width: fit-content;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-style: normal;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: var(--color-cta);
+  color: #000;
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin: var(--space-1) 0 0;
+}
+/* matches the rail badge: a second endorsement in a second colour, so the two
+   read as different claims rather than competing recommendations. */
+.cmp-tier em.alt { background: var(--color-brand-700); color: #fff; }
+
+.cmp-price { display: block; font-weight: 600; font-size: 15px; color: var(--color-accent-700); margin-top: 3px; }
+.cmp-grp { display: block; font-weight: 400; font-size: 13px; line-height: 1.35; color: var(--color-neutral-700); margin-top: 4px; }
+
+.cmp tbody tr + tr th, .cmp tbody tr + tr td { border-top: 1px solid var(--color-divider); }
+/* balance stops a greedy fill leaving one or two words stranded on the last
+   line -- "how to / fix it" and the like. */
+.cmp tbody td { color: var(--color-neutral-800); line-height: 1.4; text-wrap: balance; }
+.cmp tbody td b { font-weight: 700; color: var(--color-text); }
+
+/* value markers, matching the card rail's vocabulary -- and hung outside the
+   text like the cards' are, so a wrapped second line starts under the first
+   word rather than under the tick. */
+.cmp td.y, .cmp td.n, .cmp td.m {
+  position: relative;
+  padding-left: calc(var(--space-2) + 1.25em);
+}
+.cmp td.y::before, .cmp td.n::before, .cmp td.m::before {
+  position: absolute;
+  left: var(--space-2);
+  top: var(--space-2);
+  font-weight: 700;
+}
+.cmp td.y::before { content: "\2713"; color: var(--color-accent-2-700); }
+.cmp td.n::before { content: "\2715"; color: var(--color-neutral-500); }
+.cmp td.m::before { content: "?"; color: var(--color-neutral-500); }
+.cmp td.n, .cmp td.m { color: var(--color-neutral-700); }
+
+.cmp .cmp-featured { background: var(--color-accent-100); }
+.cmp tbody td:nth-child(5) { background: color-mix(in srgb, var(--color-accent-100) 55%, transparent); }
+
+.cmp-cta td { padding-top: var(--space-4); padding-bottom: var(--space-4); }
+
+@media (max-width: 700px) {
+  .cmp th[scope="row"], .cmp .cmp-corner { width: 172px; min-width: 172px; }
+}
+
+/* Fine print. Built as a list so further notes can be added without restyling. */
+.fine-print {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-neutral-700);
+}
+.fine-print li { margin: 0 0 var(--space-1); max-width: 78ch; }
+sup.fn { color: var(--color-accent-600); font-weight: 700; }
+
+.fine-print-head {
+  margin: var(--space-6) 0 var(--space-2);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+}
+.fine-print li b { color: var(--color-neutral-800); }
+.rail-addendum + .rail-addendum { margin-top: var(--space-2); }
+
+/* Inline SVG rather than the flag emoji: Windows has no flag glyphs, so the
+   emoji renders as the letters "CA" for a large share of visitors. */
+.flag-ca {
+  display: inline-block;
+  height: 0.85em;
+  width: auto;
+  vertical-align: -0.08em;
+  margin-left: 0.15em;
+  border: 1px solid var(--color-divider);
+  border-radius: 1px;
+}
+
+/* homepage route cards: one per way of working, price and a way through */
+.card-price {
+  margin: auto 0 var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-divider);
+  font-size: 16px;
+  color: var(--color-neutral-800);
+}
+.card-price strong { font-weight: 600; font-size: 21px; color: var(--color-text); }
+.triad-foot { margin: var(--space-6) 0 0; }

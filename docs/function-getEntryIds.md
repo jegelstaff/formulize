@@ -4,7 +4,7 @@ permalink: developers/API/functions/getEntryIds/
 title: getEntryIds
 ---
 
-# getEntryIds( <span style='font-size: 14pt;'>(array) $entry, (int|string) $formIdOrHandle = "", (int) $datasetKey = null, (boolean) $fidAsKeys = false</span> )
+# getEntryIds( <span class="sig-type">(array)</span> $entry, <span class="sig-type">(int|string)</span> $formIdOrHandle <span class="sig-default">= ""</span>, <span class="sig-type">(int)</span> $datasetKey <span class="sig-default">= null</span>, <span class="sig-type">(boolean)</span> $fidAsKeys <span class="sig-default">= false</span> )
 
 ## Location
 

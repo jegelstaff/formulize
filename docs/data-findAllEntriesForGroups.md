@@ -4,7 +4,7 @@ permalink: developers/API/classes/data_handler/findAllEntriesForGroups/
 title: findAllEntriesForGroups
 ---
 
-# findAllEntriesForGroups( <span style='font-size: 14pt;'>(int | array) $group_ids</span> )
+# findAllEntriesForGroups( <span class="sig-type">(int | array)</span> $group_ids )
 
 ## Description
 

@@ -4,7 +4,7 @@ permalink: developers/API/classes/queue_handler/append/
 title: append
 ---
 
-# append( <span style='font-size: 14pt;'>(object|string) $queue_or_queue_handle, (string) $code, (string), $item = '', (boolean) $allowDuplicates = false</span> )
+# append( <span class="sig-type">(object|string)</span> $queue_or_queue_handle, <span class="sig-type">(string)</span> $code, <span class="sig-type">(string)</span> $item <span class="sig-default">= ''</span>, <span class="sig-type">(boolean)</span> $allowDuplicates <span class="sig-default">= false</span> )
 
 ## Description
 

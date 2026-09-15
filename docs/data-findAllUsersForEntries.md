@@ -4,7 +4,7 @@ permalink: developers/API/classes/data_handler/findAllUsersForEntries/
 title: findAllUsersForEntries
 ---
 
-# findAllUsersForEntries( <span style='font-size: 14pt;'>(int | array) $entry_ids, (array) $scope_uids = array()</span> )
+# findAllUsersForEntries( <span class="sig-type">(int | array)</span> $entry_ids, <span class="sig-type">(array)</span> $scope_uids <span class="sig-default">= array()</span> )
 
 ## Description
 
