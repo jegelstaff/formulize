@@ -66,9 +66,20 @@
 
 </head>
 
-<{* nothing in here scrolls: the frame is sized to its whole content, so the page hosting it is what
-   moves. Saying so stops the form trying to save and restore a scroll position that cannot exist. *}>
-<body id="<{$icms_dirname}>" data-formulize-scroll-container="none" class="<{$icms_langcode}><{if isset($formulize_screen_id) && $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}>" style='display: none; overflow: hidden;'>
+<{php}>
+// Inside a frame, nothing here scrolls: the frame is sized to its whole content and the page hosting
+// it is what moves. Say so, and turn this page's own scrolling off, so a reader gets one scrollbar
+// rather than two and the form does not try to save a scroll position that cannot exist.
+//
+// This page is also drawn at the top level, by the "open in its own window" link, and there it has to
+// scroll like any other page or a long form simply cannot be reached. The browser is what tells the
+// two apart - being asked for through the formulize_embed parameter is not the same as being framed.
+$this->assign('formulize_framedAttributes',
+    formulize_isAuthoritativelyEmbeddedRequest()
+        ? ' data-formulize-scroll-container="none" style="display: none; overflow: hidden;"'
+        : ' style="display: none;"');
+<{/php}>
+<body id="<{$icms_dirname}>" class="<{$icms_langcode}><{if isset($formulize_screen_id) && $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}>"<{$formulize_framedAttributes}>>
 
 <{includeq file="$theme_name/session-timeout-warning.html"}>
 
