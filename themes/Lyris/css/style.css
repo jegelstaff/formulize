@@ -3120,11 +3120,21 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
    status line (existing file + delete link). We can't restructure the
    markup, but we can style the native file control to read like the
    design's dashed drop zone, and present the status line as a file
-   chip row beneath it. */
+   chip row beneath it.
+
+   The drop zone carried a max-width cap (520px) that stopped it short of the
+   field while every other Lyris control fills it: in the kitchen sink at 1440px
+   the field body and its neighbouring selects/inputs measure 1055px, and the
+   file input sat at 520px, ending 535px inside the field's right edge. The
+   `#fileUploadUI_<name>` wrapper is already the full field width, so dropping
+   the cap lets width:100% do the job on its own — the control is exactly the
+   field width at any container size (full screen, the drawer at any drag width,
+   and mobile) with no fixed size of our own to keep in step with the field
+   metrics. The `.formulize-fileupload-element` status chip below is already
+   full width for the same reason. */
 .fz-form-screen input[type="file"] {
   display: block;
   width: 100%;
-  max-width: 520px;
   min-height: 84px;
   padding: 16px;
   font-size: var(--fs-13);
