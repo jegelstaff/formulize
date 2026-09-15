@@ -1,0 +1,26 @@
+---
+layout: default
+full_width: true
+---
+
+<div class="band-head" style="max-width: 68ch;">
+  <h1 style="margin-top: var(--space-3);">Releases</h1>
+  <p>Every Formulize release and what changed in it. The master branch is always stable and ready to install, so completed features land there before a formal release.</p>
+  <p class="btn-row">
+    <a class="btn btn-primary" href="{{ "/get/" | relative_url }}">Get Formulize</a>
+    <a class="btn btn-secondary" href="{{ "/roadmap" | relative_url }}">See what is next</a>
+  </p>
+</div>
+
+<section class="band">
+  <ul class="news-list">
+    {%- for entry in page.entries %}
+    <li>
+      <a href="{{ entry.url | relative_url }}">
+        <time datetime="{{ entry.date }}">{{ entry.date_display }}</time>
+        <span class="news-title">{{ entry.headline }}</span>
+      </a>
+    </li>
+    {%- endfor %}
+  </ul>
+</section>

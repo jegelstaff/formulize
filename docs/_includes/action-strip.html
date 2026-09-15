@@ -1,8 +1,16 @@
-{% comment %} The download / GitHub / Ko-fi / community strip, kept from the previous site. {% endcomment %}
+{% comment %}
+  The pre-footer strip, on every page.
+
+  The first tile used to link straight to a release zipball. That fires from
+  every page in the site, including the pricing page, so half the audience met
+  a tarball they had no use for. It now leads to /get/, which asks whether you
+  want to run it yourself or have us run it, and still names the current
+  release so the tile keeps its "there is a new version" job.
+{% endcomment %}
 <div class="action-strip">
-  <a class="action-strip-item" href="{{ site.github.repository_url }}/zipball/{{ site.github.latest_release.tag_name }}" target="_blank" rel="noopener">
+  <a class="action-strip-item" href="{{ "/get/" | relative_url }}">
     <span class="action-strip-icons"><img src="{{ "/assets/img/zip-icon.png" | relative_url }}" alt=""></span>
-    <span>Download <strong>{{ site.github.latest_release.tag_name | default: "Formulize" }}</strong></span>
+    <span>Get <strong>Formulize {{ site.github.latest_release.tag_name }}</strong></span>
   </a>
   <a class="action-strip-item" href="{{ site.github.repository_url }}" target="_blank" rel="noopener">
     <span class="action-strip-icons"><img src="{{ "/assets/img/octocat-icon.png" | relative_url }}" alt=""></span>
@@ -12,7 +20,7 @@
     <span class="action-strip-icons"><img src="{{ "/assets/img/cup-border.png" | relative_url }}" alt=""></span>
     <span>Donate on <strong>Ko-fi</strong></span>
   </a>
-  <a class="action-strip-item" href="{{ "/connect" | relative_url }}">
+  <a class="action-strip-item" href="{{ "/community/" | relative_url }}">
     <span class="action-strip-icons">
       <img src="{{ "/assets/img/bluesky.png" | relative_url }}" alt="">
       <img src="{{ "/assets/img/slack-icon.png" | relative_url }}" alt="">

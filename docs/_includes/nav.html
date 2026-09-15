@@ -1,8 +1,14 @@
 {% comment %}
-  Main site menu. Flat top bar, one entry per key user activity.
-  Add or reorder items here and every page picks up the change.
+  The main menu. One variable holds every item - edit this line to reorder or
+  rename. "label,/url/" pairs, separated by pipes.
+
+  The six items are the questions a stranger arrives with, in order: what is
+  it, what could I build with it, what is the AI story, what does it cost,
+  where are the docs, is this project alive. Videos are a format rather than a
+  topic, so they sit inside Examples and Docs rather than in the menu, and the
+  community links live in the footer.
 {% endcomment %}
-{% assign menu = "Features,/features/|AI,/ai/|Videos,/videos/|Pricing,/pricing/|News,/news/|Community,/connect" | split: "|" %}
+{% assign menu = "Features,/features/|Examples,/examples/|AI,/ai/|Pricing,/pricing/|Docs,/developers/|News,/news/" | split: "|" %}
 
 <header class="site-header">
   <div class="site-header-inner">
@@ -27,7 +33,12 @@
 
     <div class="header-cta">
       <a class="btn btn-secondary btn-sm" href="{{ site.github.repository_url }}" target="_blank" rel="noopener">GitHub</a>
-      <a class="btn btn-primary btn-sm" href="{{ "/download/" | relative_url }}">Get Formulize</a>
+      {% comment %}
+        Points at /get/, not at /download/. Half the people who click this want
+        a tarball and half want us to run it for them; /get/ is the fork that
+        asks which, so neither lands on the other's page.
+      {% endcomment %}
+      <a class="btn btn-primary btn-sm" href="{{ "/get/" | relative_url }}">Get Formulize</a>
     </div>
   </div>
 </header>

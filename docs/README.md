@@ -1,109 +1,108 @@
-# The Minimal theme
+# formulize.org
 
-[Build Status](https://github.com/pages-themes/minimal/actions/workflows/ci.yaml) [![Gem Version](https://badge.fury.io/rb/jekyll-theme-minimal.svg)](https://badge.fury.io/rb/jekyll-theme-minimal)
+The Formulize project website. Jekyll, published to GitHub Pages by
+`.github/workflows/jekyll.yml` on every push to `master`, and on demand from
+the Actions tab.
 
-*Minimal is a Jekyll theme for GitHub Pages. You can [preview the theme to see what it looks like](http://pages-themes.github.io/minimal), or even [use it today](#usage).*
-
-![Thumbnail of Minimal](thumbnail.png)
-
-## Usage
-
-To use the Minimal theme:
-
-1. Add the following to your site's `_config.yml`:
-
-    ```yml
-    remote_theme: pages-themes/minimal
-    ```
-
-2. Optionally, if you'd like to preview your site on your computer, add the following to your site's `Gemfile`:
-
-    ```ruby
-    gem "github-pages", group: :jekyll_plugins
-    ```
-
-## Customizing
-
-### Configuration variables
-
-Minimal will respect the following variables, if set in your site's `_config.yml`:
-
-```yml
-title: [The title of your site]
-description: [A short description of your site's purpose]
+```
+cd docs
+bundle install
+bundle exec jekyll serve     # http://localhost:4000
 ```
 
-Additionally, you may choose to set the following optional variables:
+## Information architecture
 
-```yml
-show_downloads: ["true" or "false" to indicate whether to provide a download URL]
-google_analytics: [Your Google Analytics tracking ID]
-```
+The menu is the *understanding* layer, for people who have never heard of
+Formulize: **Features · Examples · AI · Pricing · Docs · News**, edited as one
+`menu` variable at the top of `_includes/nav.html`.
 
-### Stylesheet
+The footer is the *doing* layer, in four columns named after what a visitor is
+trying to accomplish: getting started, professional services, help and
+documentation, project and community.
 
-If you'd like to add your own custom styles:
+The audience is two halves — developers and consultants, and staff at
+non-profits and small businesses who have IT needs but do not describe them in
+IT terms. Most pages have to work for both, which is why `/get/` exists.
 
-1. Create a file called `/assets/css/style.scss` in your site
-2. Add the following content to the top of the file, exactly as shown:
-    ```scss
-    ---
-    ---
+### The pages that carry the funnel
 
-    @import "{{ site.theme }}";
-    ```
-3. Add any custom CSS (or Sass, including imports) you'd like immediately after the `@import` line
+| Page | Job |
+| --- | --- |
+| `/get/` | The fork, and the target of the header button. Three doors, three destinations. Not a content page. |
+| `/download/` | Self-host only. Keeps its URL because ~120 markdown pages link to it. |
+| `/pricing/` | Hosting plans. `_includes/start-rail.html` is for choosing, `start-table.html` for verifying. |
+| `/services/` | Training, support, system design, data migration, by the hour. The half of the business the plans do not describe. |
+| `/examples/` | What people build. The only page written for someone who would not call their problem "a database". |
+| `/signup/` | Placeholder for the **Hosting Requests** form (formulize.net form 2, screen 3). |
+| `/contact/` | Placeholder for the **Help Requests** form (formulize.net form 1, screen 1). |
 
-*Note: If you'd like to change the theme's Sass variables, you must set new values before the `@import` line in your stylesheet.*
+`_includes/get-choice.html` is the three-way choice used on the homepage,
+`/get/` and `/download/`. Each card links somewhere different — that is the
+point of it, so do not collapse them back onto one destination.
 
-### Layouts
+Two pages are waiting on the form-embedding work. Until it lands they show a
+marked placeholder and fall back to `info@formulize.org`, which works today.
+Neither form is publicly reachable yet: every menu item pointing at them on
+formulize.net is restricted to the Webmasters group.
 
-If you'd like to change the theme's HTML layout:
+## News
 
-1. [Copy the original template](https://github.com/pages-themes/minimal/blob/master/_layouts/default.html) from the theme's repository<br />(*Pro-tip: click "raw" to make copying easier*)
-2. Create a file called `/_layouts/default.html` in your site
-3. Paste the default layout content copied in the first step
-4. Customize the layout as you'd like
+News is **not** Jekyll posts. It lives in the News form on formulize.net and is
+pulled in at build time by `_plugins/news_pages.rb`, which generates:
 
-### Overriding GitHub-generated URLs
+- `/news/` — announcements and articles, plus the ten most recent releases
+- `/news/<slug>/` — one page per story
+- `/news/releases/` — the release feed, which is most of the entries by count
+- `/news/entry/<id>/` — a permanent redirect per story, so editing a headline
+  never strands a shared link
+- `/news/feed.xml` — RSS
 
-Templates often rely on URLs supplied by GitHub such as links to your repository or links to download your project. If you'd like to override one or more default URLs:
+Slugs come from the form's `news_slug` field, falling back to a slugified
+headline. `news_type` (Announcement / Article / Release) decides which index a
+story lands on; anything that is not explicitly a Release is treated as a
+story, so a blank value surfaces rather than disappearing.
 
-1. Look at [the template source](https://github.com/pages-themes/minimal/blob/master/_layouts/default.html) to determine the name of the variable. It will be in the form of `{{ site.github.zip_url }}`.
-2. Specify the URL that you'd like the template to use in your site's `_config.yml`. For example, if the variable was `site.github.url`, you'd add the following:
-    ```yml
-    github:
-      zip_url: http://example.com/download.zip
-      another_url: another value
-    ```
-3. When your site is built, Jekyll will use the URL you specified, rather than the default one provided by GitHub.
+Publishing a story therefore needs a site rebuild. The News form's
+`on_after_save` hook fires a `repository_dispatch` at GitHub to do that
+automatically; if it ever stops working, run the workflow by hand from the
+Actions tab and the site catches up.
 
-*Note: You must remove the `site.` prefix, and each variable name (after the `github.`) should be indent with two space below `github:`.*
+Every successful fetch is cached to `_data/news.json`, which is used if
+formulize.net cannot be reached. `FORMULIZE_NEWS_OFFLINE=1` skips the fetch and
+builds from that cache.
 
-For more information, see [the Jekyll variables documentation](https://jekyllrb.com/docs/variables/).
+## Look and feel
 
-## Roadmap
+Every colour and font comes from the `:root` block at the top of
+`assets/css/formulize.css`. Nothing downstream hard-codes a colour, so the
+whole site can be re-skinned from those few lines. `assets/css/style.scss` only
+imports `rouge-github` for code highlighting.
 
-See the [open issues](https://github.com/pages-themes/minimal/issues) for a list of proposed features (and known issues).
+Pages set `full_width: true` when they lay out their own bands; without it
+`_layouts/default.html` wraps the content in `.prose`, which is what gives the
+~120 markdown pages readable typography with no edits.
 
-## Project philosophy
+## Generated content
 
-The Minimal theme is intended to make it quick and easy for GitHub Pages users to create their first (or 100th) website. The theme should meet the vast majority of users' needs out of the box, erring on the side of simplicity rather than flexibility, and provide users the opportunity to opt-in to additional complexity if they have specific needs or wish to further customize their experience (such as adding custom CSS or modifying the default layout). It should also look great, but that goes without saying.
+Three things in this site are generated rather than written, and all three are
+built from real sources rather than kept in step by hand:
 
-## Contributing
+- `_plugins/news_pages.rb` — the news section, from the Public API
+- `_plugins/mcp_tool_pages.rb` — one page per MCP tool, from a dump of the
+  running app's `registerTools()`
+- `_plugins/breadcrumbs.rb` — breadcrumb trails, by walking URL segments
 
-Interested in contributing to Minimal? We'd love your help. Minimal is an open source project, built one contribution at a time by users like you. See [the CONTRIBUTING file](docs/CONTRIBUTING.md) for instructions on how to contribute.
+`_data/` is gitignored in full. Everything in it is fetched or generated at
+build time.
 
-### Previewing the theme locally
+## Known gaps
 
-If you'd like to preview the theme locally (for example, in the process of proposing a change):
-
-1. Clone down the theme's repository (`git clone https://github.com/pages-themes/minimal`)
-2. `cd` into the theme's directory
-3. Run `script/bootstrap` to install the necessary dependencies
-4. Run `bundle exec jekyll serve` to start the preview server
-5. Visit [`localhost:4000`](http://localhost:4000) in your browser to preview the theme
-
-### Running tests
-
-The theme contains a minimal test suite, to ensure a site with the theme would build successfully. To run the tests, simply run `script/cibuild`. You'll need to run `script/bootstrap` one before the test script will work.
+- `/about/` carries a `TODO` comment listing facts that were left out rather
+  than guessed: who else is on the team, the legal entity behind
+  formulize.net, any honest deployment count, and whether there is a privacy
+  policy to link to.
+- `/signup/` keys off `level-1`…`level-4` in the query string rather than off
+  the plan names, which is what let the plans be renamed from `Level 1`–`Level
+  4` to the You/We names without breaking any shared link. Keep it that way.
+- `_includes/start-rail.html` notes that backup retention values are
+  provisional.
