@@ -3519,6 +3519,15 @@ input[name='pickdiffgroup'] {
 	margin-bottom: 0.6em;
 }
 
+/* Numeric list values are aligned to the right of the cell. getHTMLForList in
+   functions.php marks them with .formulize-numeric instead of the hardcoded
+   inline style it used to emit, so the theme owns the alignment. (closes #131)
+   The span/li is already block level in this context (see formulize.css), so
+   text-align lands on the full width of the cell. */
+#listofentries .formulize-numeric {
+	text-align: right;
+}
+
 .list-of-entries table.outer tr.entry-row:last-of-type td.formulize-controls {
 	border-bottom: 1px dotted var(--light-border-color);
 }

@@ -1412,14 +1412,22 @@ textarea {
 	margin-bottom: 0.3em;
 }
 
-/* Neutralize the inline style="text-align: right" that the element renderer
-   emits for numeric values (functions.php getHTMLForList). Table cells in the
-   Lyris list layout already inherit text-align: left from .fz-table td; the
-   inline style on the inner span/li was overriding that and forcing numbers
-   to the right. Use !important to beat the inline specificity. (closes #20) */
-.fz-table .main-cell-div span,
-.fz-table .main-cell-div li {
-  text-align: unset !important;
+/* Numeric list values are aligned to the right of the cell. getHTMLForList in
+   functions.php marks them with .formulize-numeric instead of the hardcoded
+   inline style it used to emit, so the theme owns the alignment. (closes #131)
+   This replaces the old `text-align: unset !important` override that existed
+   only to neutralize that inline style (issue #20) - there is nothing left to
+   neutralize, and non-numeric values now simply inherit the cell's alignment. */
+.fz-table .main-cell-div .formulize-numeric {
+  text-align: right;
+}
+
+/* Inline-editable cells lay the pencil and the value out as flex items, which
+   shrink-wraps the value and leaves it nowhere to align to. Let the value box
+   grow so a number can reach the right edge of the cell. Scoped with :has() so
+   only numeric cells are affected; text cells keep the snug pencil spacing. */
+.fz-table .main-cell-div > .formulize-display-element-contents:has(.formulize-numeric) {
+  flex: 1;
 }
 
 .fz-search-row input:not([type="checkbox"]):not([type="radio"]),

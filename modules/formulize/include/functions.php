@@ -7981,12 +7981,15 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
         $output .= '<ul class="main-cell-list">';
     }
     foreach ($value as $valueId=>$v) {
-        $elstyle = 'style="text-align: ';
-        if (is_numeric($v)) {
-            $elstyle .= 'right;"'; // and if there is a width that pushes the right edge over then it looks nice, sort of, but more formatting controls on table and whitespace between cells, etc... is necessary
-        } else {
-            $elstyle .= 'left"';
-        }
+        // Numeric values are aligned to the right of the cell. That alignment is expressed as a class
+        // so themes decide how (and whether) to do it, instead of a hardcoded inline style. (closes #131)
+        // Detection is based on the element type as well as the raw value: a number element always
+        // renders a number, because numberElement::formatDataForList coerces anything that isn't
+        // numeric to zero, so a null/empty value still displays as 0, 0.0, $0.00 etc. Checking only the
+        // raw value left those cells looking like text. Values from other element types (text, derived,
+        // ...) are judged on the value itself, which is what gets formatted for display.
+        $isNumericValue = ($element_type == 'number' OR (!is_array($v) AND is_numeric(trim((string) $v))));
+        $elclass = $isNumericValue ? ' class="formulize-numeric"' : '';
         $thisEntryId = isset($localIds[$valueId]) ? $localIds[$valueId] : $entryId;
         if ($counter == 1 AND $deDisplay AND $element_type != 'derived') {
            $output .= '<div class="formulize-display-element-edit-icon"><a class="de-edit-icon" href="" onclick="renderElement(\''.$handle.'\', '.$cachedElementIds[$handle].', '.$thisEntryId.', '.$fid.',0,'.$deInstanceCounter.');return false;"></a></div><div class="formulize-display-element-contents">';
@@ -8006,7 +8009,7 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
 					}
 				}
         $tag = $useList ? 'li' : 'span';
-				$output .= '<'.$tag.' '.$elstyle.'>' . formatDataForList($v, $handle, $textWidth, $thisEntryId) . '</'.$tag.'>';
+				$output .= '<'.$tag.$elclass.'>' . formatDataForList($v, $handle, $textWidth, $thisEntryId) . '</'.$tag.'>';
         $counter++;
     }
     if ($useList) {
