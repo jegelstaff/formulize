@@ -1,3 +1,14 @@
+/* ---- Design tokens ----
+   The theme's default palette and other design tokens live in their own
+   stylesheet, imported here so everything that loads style.css gets them.
+   The Appearance page reads the theme's defaults out of that file too.
+
+   @import has to come before any other rule, so this sits above the reset
+   below; custom properties on :root don't collide with it either way.
+   ---- */
+
+@import url("tokens.css");
+
 /* http://meyerweb.com/eric/tools/css/reset/
    v2.0 | 20110126
    License: none (public domain)
@@ -22,85 +33,6 @@ time, mark, audio, video {
   font-size: 100%;
   font: inherit;
   vertical-align: baseline;
-}
-
-/* ---- Design tokens ----
-
-   These are the same custom property names the Lyris theme uses, so the two
-   themes share one vocabulary and one Appearance page. The values below are
-   Anari's own palette, ie: the defaults, which is what this theme looks like
-   when nothing has been customized.
-
-   The Appearance page in the Formulize admin UI overrides a subset of them, by
-   generating themes/Anari/appearance/appearance.css and linking it after this
-   file (see formulize_renderAppearanceHead() in
-   modules/formulize/include/appearance.php, called from theme.html). Each of
-   the nine configurable colours drives several tokens: picking one Primary
-   colour, for instance, rewrites --c-accent and its hover/soft/focus variants
-   together, so the interface stays coherent whatever colour is chosen. The
-   derivations are done in PHP with color-mix(), which is why the defaults here
-   are written out in full rather than derived: nothing depends on these
-   particular values being related to each other. */
-
-:root {
-  /* Primary - buttons, links, selected rows, focus rings */
-  --c-accent:        #0d7bbf;
-  --c-accent-fg:     #0d7bbf;
-  --c-accent-hover:  #0b6aa3;
-  --c-accent-soft:   #e7f2fa;
-  --c-accent-soft-2: #cfe5f4;
-  --c-border-focus:  #0b6aa3;
-  --sh-focus:        0 0 0 3px rgba(13, 123, 191, 0.15);
-
-  /* Page background */
-  --c-bg:            #F5F6F8;
-
-  /* Surface - cards, tables, panels and other raised areas */
-  --c-surface:       #FFFFFF;
-  --c-surface-2:     #FBFCFD;
-  --c-surface-3:     #F8FAFB;
-
-  /* Text - muted and subtle are derived from it */
-  --c-text:          #323C47;
-  --c-text-muted:    #707683;
-  --c-text-subtle:   #90A0B7;
-
-  /* Borders - strong is derived */
-  --c-border:        #EBEFF2;
-  --c-border-strong: #C2CFE0;
-
-  /* Status colours */
-  --c-success:       #27BD6B;
-  --c-success-soft:  #E4F7ED;
-  --c-warning:       #F1B70F;
-  --c-warning-soft:  #FDF3D5;
-  --c-danger:        #FF365F;
-  --c-danger-soft:   #FFE3E9;
-  --c-info:          #334D6E;
-  --c-info-soft:     #E6EBF1;
-
-  /* Typography. --font-sans is what the Appearance page's font setting
-     overrides; the Poppins webfont this theme ships with is requested in
-     theme.html and simply goes unused when another font is chosen. */
-  --font-sans: Poppins, Helvetica, Verdana, sans-serif;
-
-  /* Anari-specific shadows. Both follow the colour they tint, so they keep
-     tracking the Primary/Text settings without the Appearance page needing to
-     know about them: these are shaped glows rather than the flat ring that
-     --sh-focus is, so they can't just reuse it. */
-  --sh-accent-glow:    0px 4px 10px 0px color-mix(in srgb, var(--c-accent) 24%, transparent);
-  --sh-secondary-glow: 0px 4px 10px 0px color-mix(in srgb, var(--c-text-muted) 24%, transparent);
-
-  /* Legacy aliases. This theme (and any site-specific custom CSS written
-     against it) referred to these before the tokens above existed, so they are
-     kept, pointing at the tokens, and pick up customizations like everything
-     else. */
-  --button-color: var(--c-accent);
-  --accent-color: var(--c-accent);
-  --text-color: var(--c-text);
-  --background-color: var(--c-bg);
-  --light-border-color: var(--c-border-strong);
-  --alert-color: var(--c-danger);
 }
 
 body {
@@ -4261,3 +4193,4 @@ input#toggleRepeatData:focus-visible {
   font-size: 0.9rem;
   line-height: 1.3;
 }
+

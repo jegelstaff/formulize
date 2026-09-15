@@ -47,8 +47,9 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 /**
  * The custom properties a theme defines in its own stylesheet, ie: the palette
  * it looks like before any appearance settings are applied. Read out of the
- * first :root block in the theme's css/style.css, which is where every theme
- * built on the Formulize design tokens declares them.
+ * first :root block in the theme's css/tokens.css, the dedicated design tokens
+ * stylesheet a theme declares its defaults in, falling back to css/style.css for
+ * a theme that still declares them inline at the top of its main stylesheet.
  *
  * This is what makes the defaults on the Appearance page the defaults of the
  * theme being edited, rather than one shared palette: each theme's real values
@@ -64,8 +65,17 @@ function formulize_appearanceThemeTokens($theme = null) {
     $theme = formulize_resolveAppearanceTheme($theme);
     if (!isset($tokens[$theme])) {
         $tokens[$theme] = array();
-        $file = ICMS_THEME_PATH . '/' . $theme . '/css/style.css';
-        $css = ($theme AND is_file($file)) ? @file_get_contents($file) : false;
+        $css = false;
+        // tokens.css is where a theme declares its defaults; style.css is the fallback
+        // for themes that have not been split up that way (yet), since they used to all
+        // declare their tokens at the top of it.
+        foreach (array('tokens.css', 'style.css') as $name) {
+            $file = ICMS_THEME_PATH . '/' . $theme . '/css/' . $name;
+            if ($theme AND is_file($file) AND ($contents = @file_get_contents($file)) !== false) {
+                $css = $contents;
+                break;
+            }
+        }
         // The first :root block only: later ones are media/scheme variations, not the base
         // palette. The block has to start a line (or follow a rule) to be the real thing
         // and not a :root mentioned inside some longer selector.
