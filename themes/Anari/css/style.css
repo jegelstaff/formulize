@@ -4159,12 +4159,50 @@ input#toggleRepeatData:focus-visible {
   color: var(--text-color);
 }
 
-/* Anari sets a 200px min-width, 30px padding and a solid blue fill on every
-   `button`; the component's own rules already out-specify that, so these only
-   have to restate Anari's typography and colours at drawer scale. */
+/* The drawer's multipage tab strip. Anari's full screen pills are a raised
+   folder-tab shape that depends on sitting directly on top of the form card;
+   the drawer's strip is a wrapping row of its own, so it takes Anari's colours
+   and a simple rounded pill rather than that shape. Skin only -- core owns the
+   layout and the wrapping behaviour. */
+.formulize-drawer__tab {
+  color: var(--accent-color);
+  background: var(--c-surface-3);
+  border: 1px solid var(--light-border-color);
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 200ms linear;
+}
+
+.formulize-drawer__tab:hover {
+  background: var(--accent-color);
+  border-color: var(--light-border-color);
+  color: #fff;
+}
+
+.formulize-drawer__tab--active,
+.formulize-drawer__tab--active:disabled {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  color: #fff;
+}
+
+/* The drawer's header Back/Close icon buttons. Anari sets a 200px min-width, 30px
+   padding and a solid blue fill on every `button`; the component's own rules already
+   out-specify that, so these only have to restate Anari's typography and colours at
+   drawer scale.
+
+   The drawer FOOTER's buttons are deliberately not these any more: they are
+   `input.formulize-form-submit-button`, the same class the full screen action bar
+   uses, so Anari's own rule for that class (which paints every one of them
+   var(--button-color), full screen included) covers both surfaces and they agree on
+   colour by construction. Their geometry — against Anari's 200px min-width and 30px
+   padding on every `input[type=button]` — is reset by core's
+   `.formulize-drawer .formulize-drawer__foot .formulize-form-submit-button`, so
+   nothing further is needed here. */
 .formulize-drawer .formulize-drawer__btn {
   height: 38px;
-  padding: 0 20px;
+  padding: 0 12px;
   font-size: 0.9rem;
   font-weight: 600;
   border-radius: 10px;
@@ -4176,13 +4214,6 @@ input#toggleRepeatData:focus-visible {
 .formulize-drawer .formulize-drawer__btn:hover {
   background: var(--c-surface);
   box-shadow: var(--sh-accent-glow);
-}
-
-.formulize-drawer .formulize-drawer__btn--primary,
-.formulize-drawer .formulize-drawer__btn--primary:hover {
-  background: var(--button-color);
-  border-color: var(--button-color);
-  color: #FFF;
 }
 
 .formulize-drawer .formulize-drawer__btn--ghost {
@@ -4200,4 +4231,24 @@ input#toggleRepeatData:focus-visible {
 .formulize-drawer .formulize-drawer__btn--icon {
   width: 34px;
   padding: 0;
+}
+
+/* Once the drawer is 768px or wider (drawer.js adds `formulize-drawer--wide` off the
+   drawer's own measured width) its footer stops wearing the full screen form's mobile
+   action bar and wears Anari's ordinary button instead: one row, and the `12px 30px`
+   padding, 0.9rem/1.3 type and auto height Anari gives every `input[type=button]` and
+   restates on `.formulize-form-submit-button`. Core's `--wide` rule sets a generic
+   36px/16px, which this replaces with Anari's own geometry (PR #127 review).
+
+   The one thing deliberately NOT taken from Anari's full screen bar is its 200px
+   min-width. Four 200px buttons need 800px plus gaps, which is what makes that bar
+   overflow horizontally on a narrow screen (a pre-existing Anari bug, noted in the
+   previous round of this review); importing it would put the same overflow inside the
+   drawer, where the drawer's minimum width guarantees it. The buttons size to their
+   labels instead, which is what Anari's own rule would give them without that floor. */
+.formulize-drawer--wide .formulize-drawer__foot .formulize-form-submit-button {
+  height: auto;
+  padding: 12px 30px;
+  font-size: 0.9rem;
+  line-height: 1.3;
 }

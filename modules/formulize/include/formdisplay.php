@@ -1623,6 +1623,13 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		// draw in the submitbutton if necessary
 		if (!$formElementsOnly) {
 			$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $entry, $fids, $formframe, $mainform, $entry, $elements_allowed, $allDoneOverride, $printall, $screen);
+    } else {
+			// Elements-only renders draw no button tray -- the host draws its own controls.
+			// Record the button configuration instead, so the host (the right slide-out
+			// drawer) presents the same buttons, with the same configured text, as the full
+			// screen form would. Multipage screens record their own, richer version of this
+			// first, in formdisplaypages.php.
+			formulize_recordElementsOnlyButtonMeta($go_back, $currentURL, $button_text, $settings, $entry, $fids, $formframe, $mainform, $elements_allowed, $allDoneOverride, $printall, $screen);
     }
 
 		$newHiddenElements = array();
@@ -1808,6 +1815,173 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 
 }
 
+// Work out which form-level buttons a screen presents, and what each one is labelled.
+// This is the single source of truth for that decision. The full page rendering
+// (addSubmitButton, below) builds its button tray from it, and elements-only renders
+// publish it as JSON so a host that draws its own controls -- the right slide-out
+// drawer -- shows the same buttons, with the same configured text, as the full screen
+// form does. Nothing else is allowed to decide which form buttons exist.
+//
+// Returns an ordered map of button name => label, using the same names the full page
+// rendering gives its buttons: printableview, save, saveandleave, done. A button the
+// screen has switched off (its configured text is "{NOBUTTON}"), or that the user has
+// no permission for, is simply absent from the map. Labels are returned raw; callers
+// pass them through trans() when they render them.
+function formulize_resolveFormButtons($button_text, $go_back, $fid, $uid, $entry, $allDoneOverride = false, $printall = 0, $currentURL = '', $defaultSaveText = null) {
+
+	$buttons = array();
+
+	if($printall == 2) { // 2 is special setting in multipage screens that means do not include any printable buttons of any kind
+		return $buttons;
+	}
+
+	if($currentURL AND strstr($currentURL, "printview.php")) { // don't do anything if we're on the print view
+		return $buttons;
+	}
+
+	$pv_text_temp = _formulize_PRINTVIEW;
+	// null means "the screen did not specify this button at all", which is not the same
+	// as it specifying "{NOBUTTON}". The distinction drives the done button below.
+	$done_text_temp = null;
+	$save_text_temp = null;
+	$save_and_leave_text_temp = null;
+	if(!$button_text OR ($button_text == "{NOBUTTON}" AND isset($go_back['form']) AND $go_back['form'])) { // presence of a goback form (ie: parent form) overrides {NOBUTTON} -- assumption is the save button will not also be overridden at the same time
+		$button_text = _formulize_DONE;
+	} elseif(is_array($button_text)) {
+		$done_text_temp = $button_text[0] ? $button_text[0] : _formulize_DONE;
+		$save_text_temp = $button_text[1] ? $button_text[1] : _formulize_SAVE;
+		$save_and_leave_text_temp = $button_text[2] ? $button_text[2] : _formulize_SAVE_AND_LEAVE;
+		if($button_text[3]) {
+			$pv_text_temp = $button_text[3];
+		}
+	}
+
+	$config_handler = xoops_gethandler('config');
+	$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+	if($pv_text_temp != "{NOBUTTON}" AND $formulizeConfig['formulizeShowPrintableViewButtons']) {
+		$buttons['printableview'] = $pv_text_temp;
+	}
+
+	$userCanEditEntry = formulizePermHandler::user_can_edit_entry($fid, $uid, $entry);
+
+	$saveText = $save_text_temp ? $save_text_temp : ($defaultSaveText ? $defaultSaveText : _formulize_SAVE);
+	if($saveText != "{NOBUTTON}" AND $userCanEditEntry) {
+		$buttons['save'] = $saveText;
+	}
+
+	if($save_and_leave_text_temp !== null AND $save_and_leave_text_temp != "{NOBUTTON}" AND $userCanEditEntry) {
+		$buttons['saveandleave'] = $save_and_leave_text_temp;
+	}
+
+	if(!$allDoneOverride) {
+		if($done_text_temp === null) {
+			if($button_text != "{NOBUTTON}") { $buttons['done'] = $button_text; }
+		} elseif($done_text_temp != "{NOBUTTON}") {
+			$buttons['done'] = $done_text_temp;
+		}
+	}
+
+	return $buttons;
+
+}
+
+// The hidden fields the printable view button posts to printview.php. Factored out of
+// the full page rendering so an elements-only render can publish the same values and
+// have its host post an identical request (the drawer builds the form in Javascript,
+// since its fragment is injected inside a form and a nested one would be dropped).
+function formulize_printViewFields($go_back, $fids, $formframe, $mainform, $cur_entry, $elements_allowed, $screen, $settings) {
+
+	$currentPage = "";
+	$screenid = "";
+	if($screen) {
+		$screenid = $screen->getVar('sid');
+		// check for a current page setting
+		if(isset($settings['formulize_currentPage'])) {
+			$currentPage = $settings['formulize_currentPage'];
+		}
+	}
+
+	$fields = array(
+		'screenid' => $screenid,
+		'currentpage' => $currentPage,
+		'lastentry' => $cur_entry,
+	);
+	if(isset($go_back['form']) AND $go_back['form']) { // we're on a sub, so display this form only
+		$fields['formframe'] = $fids[0];
+	} else { // otherwise, display like normal
+		$fields['formframe'] = $formframe;
+		$fields['mainform'] = $mainform;
+	}
+	$fields['elements_allowed'] = is_array($elements_allowed) ? implode(",", $elements_allowed) : '';
+
+	return $fields;
+}
+
+// Elements-only renders nest: a subform element inside the requested form renders its own
+// elements-only form, and each of those works out its own button configuration. Keying the
+// record by screen and form is what lets the endpoint publish the answer for the form it
+// was actually asked for rather than one belonging to something rendered inside it. (A form
+// that contains a subform of itself, on the same screen, would still collide -- there is no
+// key that separates those two, and nothing renders that way in practice.)
+function formulize_elementsOnlyButtonMetaKey($screen, $fid) {
+	$sid = (is_object($screen) AND $screen->getVar('sid')) ? $screen->getVar('sid') : 0;
+	return intval($sid).'-'.intval($fid);
+}
+
+// Record the form-level button configuration of an elements-only render, for a host that
+// draws its own controls. First writer wins for a given key, which is what lets a multipage
+// screen record its own richer version (in formdisplaypages.php) before the displayForm
+// call nested inside it records a poorer one.
+function formulize_registerElementsOnlyButtonMeta($key, $meta) {
+	if(!isset($GLOBALS['formulize_elementsOnlyButtonMeta'])) {
+		$GLOBALS['formulize_elementsOnlyButtonMeta'] = array();
+	}
+	if(!isset($GLOBALS['formulize_elementsOnlyButtonMeta'][$key])) {
+		$GLOBALS['formulize_elementsOnlyButtonMeta'][$key] = $meta;
+	}
+}
+
+// The JSON block the elements-only endpoint emits so the host can read the button
+// configuration of the form it asked for. Empty string when nothing was recorded.
+function formulize_elementsOnlyButtonMetaJs($screen, $fid) {
+	$key = formulize_elementsOnlyButtonMetaKey($screen, $fid);
+	if(!isset($GLOBALS['formulize_elementsOnlyButtonMeta'][$key])) {
+		return '';
+	}
+	return "<script type=\"application/json\" class=\"fz-form-buttons\">"
+		.json_encode($GLOBALS['formulize_elementsOnlyButtonMeta'][$key])."</script>\n";
+}
+
+// Work out the button configuration of an elements-only render and record it. The drawer
+// builds its footer from what this produces, so the buttons it offers -- and their text --
+// are the screen's configured ones, exactly as on the full screen form.
+function formulize_recordElementsOnlyButtonMeta($go_back, $currentURL, $button_text, $settings, $entry, $fids, $formframe, $mainform, $elements_allowed, $allDoneOverride, $printall, $screen) {
+
+	global $xoopsUser;
+	$fid = $fids[key($fids)]; // get first element in array, might not be keyed as 0 :(
+	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+
+	$buttons = formulize_resolveFormButtons($button_text, $go_back, $fid, $uid, $entry, $allDoneOverride, $printall, $currentURL, _formulize_SAVE);
+
+	$meta = array(
+		'printableView' => isset($buttons['printableview']) ? trans($buttons['printableview']) : null,
+		'save'          => isset($buttons['save'])          ? trans($buttons['save'])          : null,
+		'saveAndLeave'  => isset($buttons['saveandleave'])  ? trans($buttons['saveandleave'])  : null,
+		'done'          => isset($buttons['done'])          ? trans($buttons['done'])          : null,
+		'printAction'   => null,
+		'printFields'   => null,
+	);
+	if($meta['printableView']) {
+		$meta['printAction'] = XOOPS_URL . "/modules/formulize/printview.php";
+		// no security token: printview.php does not check one (its check is commented out
+		// in core), and the full page rendering's token would not survive being handed to
+		// the host as JSON anyway
+		$meta['printFields'] = formulize_printViewFields($go_back, $fids, $formframe, $mainform, $entry, $elements_allowed, $screen, $settings);
+	}
+
+	formulize_registerElementsOnlyButtonMeta(formulize_elementsOnlyButtonMetaKey($screen, $fid), $meta);
+}
+
 // add the submit button to a form
 function addSubmitButton($form, $subButtonText, $go_back, $currentURL, $button_text, $settings, $entry, $fids, $formframe, $mainform, $cur_entry, $elements_allowed="", $allDoneOverride=false, $printall=0, $screen=null) { //nmc 2007.03.24 - added $printall
 
@@ -1825,35 +1999,15 @@ function addSubmitButton($form, $subButtonText, $go_back, $currentURL, $button_t
 		return $form;
 	}
 
-	$pv_text_temp = _formulize_PRINTVIEW;
-	if(!$button_text OR ($button_text == "{NOBUTTON}" AND $go_back['form'])) { // presence of a goback form (ie: parent form) overrides {NOBUTTON} -- assumption is the save button will not also be overridden at the same time
-		$button_text = _formulize_DONE;
-	} elseif(is_array($button_text)) {
-		if(!$button_text[0]) {
-			$done_text_temp = _formulize_DONE;
-		} else {
-			$done_text_temp = $button_text[0];
-		}
-		if(!$button_text[1]) {
-			$save_text_temp = _formulize_SAVE;
-		} else {
-			$save_text_temp = $button_text[1];
-		}
-		if(!$button_text[2]) {
-			$save_and_leave_text_temp = _formulize_SAVE_AND_LEAVE;
-		} else {
-			$save_and_leave_text_temp = $button_text[2];
-		}
-		if($button_text[3]) {
-			$pv_text_temp = $button_text[3];
-		}
-	}
+	// which buttons this screen presents, and what each is called -- the same answer the
+	// drawer gets, from the same function, so the two can never disagree
+	$buttons = formulize_resolveFormButtons($button_text, $go_back, $fid, $uid, $entry, $allDoneOverride, $printall, $currentURL, $subButtonText);
 
-	$config_handler = xoops_gethandler('config');
-	$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 	$rendered_buttons = "";
-	if($pv_text_temp != "{NOBUTTON}" AND $formulizeConfig['formulizeShowPrintableViewButtons']) {
+	if(isset($buttons['printableview'])) {
 
+		$pv_text_temp = $buttons['printableview'];
+		$printViewFields = formulize_printViewFields($go_back, $fids, $formframe, $mainform, $cur_entry, $elements_allowed, $screen, $settings);
 		$newcurrentURL= XOOPS_URL . "/modules/formulize/printview.php";
 		print "<form name='printview' action='".$newcurrentURL."' method=post target=_blank>\n";
 
@@ -1862,39 +2016,14 @@ function addSubmitButton($form, $subButtonText, $go_back, $currentURL, $button_t
 			print $GLOBALS['xoopsSecurity']->getTokenHTML();
 		}
 
-		$currentPage = "";
-		$screenid = "";
-		if($screen) {
-			$screenid = $screen->getVar('sid');
-			// check for a current page setting
-			if(isset($settings['formulize_currentPage'])) {
-				$currentPage = $settings['formulize_currentPage'];
-			}
-		}
-
-		print "<input type=hidden name=screenid value='".$screenid."'>";
-		print "<input type=hidden name=currentpage value='".$currentPage."'>";
-
-		print "<input type=hidden name=lastentry value=".$cur_entry.">";
-		if($go_back['form']) { // we're on a sub, so display this form only
-			print "<input type=hidden name=formframe value=".$fids[0].">";
-		} else { // otherwise, display like normal
-			print "<input type=hidden name=formframe value='".$formframe."'>";
-			print "<input type=hidden name=mainform value='".$mainform."'>";
-		}
-		if(is_array($elements_allowed)) {
-			$ele_allowed = implode(",",$elements_allowed);
-			print "<input type=hidden name=elements_allowed value='".$ele_allowed."'>";
-		} else {
-			print "<input type=hidden name=elements_allowed value=''>";
+		foreach($printViewFields as $printViewFieldName=>$printViewFieldValue) {
+			print "<input type=hidden name=".$printViewFieldName." value='".$printViewFieldValue."'>";
 		}
 		print "</form>";
 		//added by Cory Aug 27, 2005 to make forms printable
 
 		$printbutton = new XoopsFormButton('', 'printbutton',  $pv_text_temp, 'button');
-		if(is_array($elements_allowed)) {
-			$ele_allowed = implode(",",$elements_allowed);
-		}
+		$ele_allowed = $printViewFields['elements_allowed'];
 		$printbutton->setExtra("onclick='javascript:PrintPop(\"$ele_allowed\");'");
 		$rendered_buttons = $printbutton->render(); // nmc 2007.03.24 - added
 		if ($printall) {																					// nmc 2007.03.24 - added
@@ -1908,24 +2037,21 @@ function addSubmitButton($form, $subButtonText, $go_back, $currentURL, $button_t
 	}
 	$buttontray->setClass("no-print");
 
-	if($save_text_temp) { $subButtonText = $save_text_temp; }
-
-	if($subButtonText != "{NOBUTTON}" AND formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
-		$saveButton = new XoopsFormButton('', 'submitx', trans($subButtonText), 'button'); // doesn't use name submit since that conflicts with the submit javascript function
+	if(isset($buttons['save'])) {
+		$saveButton = new XoopsFormButton('', 'submitx', trans($buttons['save']), 'button'); // doesn't use name submit since that conflicts with the submit javascript function
 		$saveButton->setExtra("onclick=javascript:validateAndSubmit();");
 		$buttontray->addElement($saveButton);
 	}
 
-	if(isset($save_and_leave_text_temp) AND $save_and_leave_text_temp != "{NOBUTTON}" AND formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
+	if(isset($buttons['saveandleave'])) {
 		// also add in the save and close button
-		$saveAndLeaveButton = new XoopsFormButton('', 'submit_save_and_leave', trans($save_and_leave_text_temp), 'button');
+		$saveAndLeaveButton = new XoopsFormButton('', 'submit_save_and_leave', trans($buttons['saveandleave']), 'button');
 		$saveAndLeaveButton->setExtra("onclick=javascript:validateAndSubmit('leave');");
 		$buttontray->addElement($saveAndLeaveButton);
 	}
 
-	if((($button_text != "{NOBUTTON}" AND !$done_text_temp) OR (isset($done_text_temp) AND $done_text_temp != "{NOBUTTON}")) AND !$allDoneOverride) {
-		if($done_text_temp) { $button_text = $done_text_temp; }
-		$donebutton = new XoopsFormButton('', 'donebutton', trans($button_text), 'button');
+	if(isset($buttons['done'])) {
+		$donebutton = new XoopsFormButton('', 'donebutton', trans($buttons['done']), 'button');
 		$donebutton->setExtra("onclick=javascript:verifyDone();");
 		$buttontray->addElement($donebutton);
 	}
@@ -2636,11 +2762,9 @@ if($xoopsConfig['theme_set']=='formulize_standalone') {
     print "<div id=savingmessage style=\"display: none;\">\n";
 }
 global $xoopsConfig;
-if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/images/saving-".$xoopsConfig['language'].".gif") ) {
-    print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-" . $xoopsConfig['language'] . ".gif\">\n";
-} else {
-    print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-english.gif\">\n";
-}
+// the drawer shows the same animation for its own (XHR) saves, so which file that is
+// is resolved in one shared place - see formulize_savingGraphicUrl()
+print "<img src=\"" . formulize_savingGraphicUrl() . "\">\n";
 print "</div>\n";
 
 $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;

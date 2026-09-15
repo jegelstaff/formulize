@@ -12214,6 +12214,27 @@ function formulize_get_file_version($relativeFilePath) {
 	return 0;
 }
 
+/**
+ * The URL of Formulize's "saving" animation, in the site's language where there is one.
+ *
+ * Full screen this is what showSavingGraphic() reveals over the dimmed form while a save
+ * is in flight (see drawJavascript in formdisplay.php). The right drawer saves over XHR
+ * rather than by submitting the page, so it cannot reuse that markup, but it must use the
+ * same animation -- the drawer is meant to be the same form, not a different product, and
+ * a save in it was previously silent (PR #127 review). Resolving the file in one place is
+ * what keeps the two surfaces on the same asset and the same english fallback.
+ *
+ * @return string Absolute URL of the saving animation
+ */
+function formulize_savingGraphicUrl() {
+	global $xoopsConfig;
+	$language = isset($xoopsConfig['language']) ? $xoopsConfig['language'] : 'english';
+	if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/images/saving-".$language.".gif")) {
+		return XOOPS_URL."/modules/formulize/images/saving-".$language.".gif";
+	}
+	return XOOPS_URL."/modules/formulize/images/saving-english.gif";
+}
+
 // prints a scoped inline <style> block overriding one of the formulize icon CSS custom
 // properties (--formulize-loe-icon or --formulize-de-icon), so a single screen/subform
 // instance can use a different icon glyph than the shared formulize.css default, without

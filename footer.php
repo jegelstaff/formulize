@@ -149,6 +149,15 @@ if (isset($xoopsOption['theme_use_smarty']) && $xoopsOption['theme_use_smarty'] 
 			$xoTheme->addScript('', array('type' => 'text/javascript'),
 				'window.formulize = window.formulize || {}; window.formulize.drawerStrings = ' . json_encode($drawerStrings) . ';');
 		}
+		// The saving animation the drawer shows while one of its XHR saves is in flight.
+		// It is the very same asset full screen reveals over the dimmed form (resolved by
+		// the shared formulize_savingGraphicUrl()), published here because the drawer
+		// builds its own chrome in Javascript and has no server-rendered markup to carry
+		// an <img> in.
+		if (function_exists('formulize_savingGraphicUrl')) {
+			$xoTheme->addScript('', array('type' => 'text/javascript'),
+				'window.formulize = window.formulize || {}; window.formulize.savingGraphicUrl = ' . json_encode(formulize_savingGraphicUrl()) . ';');
+		}
 		$drawerJsVersion = formulize_get_file_version('/modules/formulize/include/js/drawer.js');
 		$xoTheme->addScript(XOOPS_URL . '/modules/formulize/include/js/drawer.js?v=' . $drawerJsVersion, array('type' => 'text/javascript'));
 	}

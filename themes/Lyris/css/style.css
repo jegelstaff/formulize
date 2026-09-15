@@ -330,6 +330,35 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
   background: var(--c-overlay);
 }
 
+/* The drawer's multipage tab strip, given the same pill treatment as the full
+   screen strip (`.pill-tabs__item` further down this file) so a multipage form
+   looks like itself in both places. Skin only -- the layout, and the wrapping of
+   the row, come from core. */
+.formulize-drawer__tab {
+  font-size: var(--fs-13);
+  font-weight: 500;
+  color: var(--c-text-muted);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-full, 999px);
+  background: var(--c-surface);
+  transition: color var(--dur-1) var(--ease),
+              border-color var(--dur-1) var(--ease),
+              background-color var(--dur-1) var(--ease);
+}
+
+.formulize-drawer__tab:hover {
+  color: var(--c-text);
+  border-color: var(--c-border-strong);
+  background: var(--c-surface-2);
+}
+
+.formulize-drawer__tab--active,
+.formulize-drawer__tab--active:disabled {
+  color: var(--c-text-on-accent);
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+}
+
 @keyframes fz-drawer-in {
   from { transform: translateX(16px); opacity: 0; }
   to   { transform: translateX(0);    opacity: 1; }
@@ -352,8 +381,13 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
   padding: var(--s-6);
 }
 
+/* The footer tray takes the same gutter and gap as the full screen action bar does
+   at a mobile width (`#multipage-controls` below: var(--s-4) padding, var(--s-2)
+   gap), because it is now the same bar -- same wrapping flex row, same
+   `.formulize-form-submit-button` children. Core already sets these in px; they are
+   restated in Lyris's tokens so the two bars stay tied together if the scale moves. */
 .formulize-drawer__foot {
-  padding: var(--s-3) var(--s-5);
+  padding: var(--s-4);
   gap: var(--s-2);
 }
 
@@ -362,13 +396,12 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
   font-size: var(--fs-13);
 }
 
-.formulize-drawer__page-indicator {
-  margin: 0 var(--s-1);
-}
-
-/* The component's buttons, given Lyris's .fz-btn look. Selector shape matches
-   the component's own (`.formulize-drawer .formulize-drawer__btn`) so this wins
-   on stylesheet order rather than on a specificity arms race. */
+/* The drawer's chrome buttons (the header's Back and Close icons), given Lyris's
+   .fz-btn look. Selector shape matches the component's own
+   (`.formulize-drawer .formulize-drawer__btn`) so this wins on stylesheet order
+   rather than on a specificity arms race. The footer's form buttons are not these:
+   they are `.formulize-form-submit-button`, skinned by the full screen rules further
+   down this file. */
 .formulize-drawer .formulize-drawer__btn {
   height: 32px;
   padding: 0 var(--s-3);
@@ -393,18 +426,6 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
   box-shadow: var(--sh-focus);
 }
 
-.formulize-drawer .formulize-drawer__btn--primary {
-  background: var(--c-accent);
-  border-color: var(--c-accent);
-  color: var(--c-text-on-accent);
-}
-
-.formulize-drawer .formulize-drawer__btn--primary:hover {
-  background: var(--c-accent-hover);
-  border-color: var(--c-accent-hover);
-  color: var(--c-text-on-accent);
-}
-
 .formulize-drawer .formulize-drawer__btn--ghost {
   background: transparent;
   border-color: transparent;
@@ -426,7 +447,7 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
 }
 
 /* ============================================================
-   Loading overlay (list reloads + full-page form/subform saves)
+   Loading overlay (list reloads + full-page form/subform saves + drawer saves)
    ============================================================ */
 
 /* #workingmessage and #savingmessage are core Formulize markup: divs (inline
@@ -448,13 +469,33 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
   backdrop-filter: blur(1px);
 }
 
+/* The drawer's save-in-place overlay (.formulize-drawer__saving, built by
+   showDrawerSaving() in include/js/drawer.js) is the drawer's equivalent of
+   #savingmessage, and holds the same legacy saving gif. It has to be restyled here
+   for the same reason the two ids above are: core formulize.css only gives it
+   geometry, so left alone it shows the raw default-Formulize gif — i.e. Anari's
+   look — while everything around it in Lyris is spinning the Lyris spinner
+   (PR #127 review).
+
+   Only the skin is taken here, not the geometry: core positions this one
+   absolute/inset:0 inside the drawer, which is correct — a save in the drawer must
+   block the drawer, not the whole viewport the way a full-page submit does. So this
+   adds the same wash and the same spinner on top of the drawer-scoped box, rather
+   than restating the position/inset/z-index of the fixed full-screen overlays. */
+.formulize-drawer__saving {
+  background: rgba(255, 255, 255, 0.40);
+  backdrop-filter: blur(1px);
+}
+
 #workingmessage img,
-#savingmessage img {
+#savingmessage img,
+.formulize-drawer__saving img {
   display: none;
 }
 
 #workingmessage::after,
-#savingmessage::after {
+#savingmessage::after,
+.formulize-drawer__saving::after {
   content: "";
   position: absolute;
   top: 50%;
@@ -474,7 +515,8 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
 
 @media (prefers-reduced-motion: reduce) {
   #workingmessage::after,
-  #savingmessage::after {
+  #savingmessage::after,
+  .formulize-drawer__saving::after {
     animation-duration: 1.6s;
   }
 }
@@ -2905,9 +2947,16 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
    `color:white !important`, `min-width:185px` and `height:36px`. We must use
    `!important` here to win against core without editing the core file (this is
    a theme-scoped override). Default appearance = bordered SECONDARY (used by
-   "Close"); the Save-family override below paints them accent PRIMARY. */
+   "Close"); the Save-family override below paints them accent PRIMARY.
+
+   `.formulize-drawer__foot` is in every selector here because the right drawer's
+   footer now builds the screen's form buttons as the same
+   `input.formulize-form-submit-button` elements, carrying the same names, instead of
+   its own `formulize-drawer__btn--primary/--ghost` pair. One rule set, one role
+   mapping, both surfaces (PR #127 review). */
 .formulizeThemeForm .formulize-form-submit-button,
-.formulize-drawer__body .formulize-form-submit-button {
+.formulize-drawer__body .formulize-form-submit-button,
+.formulize-drawer__foot .formulize-form-submit-button {
   height: 34px !important;
   min-width: 0 !important;
   width: auto;
@@ -2927,30 +2976,62 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
 }
 
 .formulizeThemeForm .formulize-form-submit-button:hover,
-.formulize-drawer__body .formulize-form-submit-button:hover {
+.formulize-drawer__body .formulize-form-submit-button:hover,
+.formulize-drawer__foot .formulize-form-submit-button:hover {
   background-color: var(--c-surface-3) !important;
   border-color: var(--c-text-muted);
 }
 
 .formulizeThemeForm .formulize-form-submit-button:focus-visible,
-.formulize-drawer__body .formulize-form-submit-button:focus-visible {
+.formulize-drawer__body .formulize-form-submit-button:focus-visible,
+.formulize-drawer__foot .formulize-form-submit-button:focus-visible {
   outline: none;
   box-shadow: var(--sh-focus);
 }
 
 /* Primary (accent) — the Save-family actions:
-   name="save", "save_and_close", "save_and_finish" (any name beginning "save"). */
+   name="save", "save_and_close", "save_and_finish" (any name beginning "save").
+   On both surfaces that is exactly one button, the plain "Save": the multipage bar
+   names its other controls prev/close/next, and the drawer's footer follows the same
+   naming, so "Save and Close" (the leave action, which full screen renders in the
+   prev slot) stays secondary here just as it does full screen. */
 .formulizeThemeForm .formulize-form-submit-button[name^="save"],
-.formulize-drawer__body .formulize-form-submit-button[name^="save"] {
+.formulize-drawer__body .formulize-form-submit-button[name^="save"],
+.formulize-drawer__foot .formulize-form-submit-button[name^="save"] {
   background-color: var(--c-accent) !important;
   color: var(--c-text-on-accent) !important;
   border-color: var(--c-accent);
 }
 
 .formulizeThemeForm .formulize-form-submit-button[name^="save"]:hover,
-.formulize-drawer__body .formulize-form-submit-button[name^="save"]:hover {
+.formulize-drawer__body .formulize-form-submit-button[name^="save"]:hover,
+.formulize-drawer__foot .formulize-form-submit-button[name^="save"]:hover {
   background-color: var(--c-accent-hover) !important;
   border-color: var(--c-accent-hover);
+}
+
+/* The drawer footer's sizing is the mobile #multipage-controls sizing (see the
+   max-width media query near the end of this file): two buttons to a row, 44px tap
+   targets. It is unconditional because the drawer is a mobile-width surface at every
+   window size. `height` needs !important to beat the 34px !important above and
+   Lyris's blanket bare-`input[type=button]` reset, exactly as the full screen mobile
+   rule does. */
+.formulize-drawer__foot .formulize-form-submit-button {
+  flex: 1 1 calc(50% - var(--s-2));
+  min-width: 0 !important;
+  height: 44px !important;
+  padding: 0 var(--s-3);
+}
+
+/* ...until the drawer is wide enough not to be a mobile-width surface any more. At
+   768px and up (drawer.js adds `formulize-drawer--wide` off the drawer's own measured
+   width) the footer's buttons become the ones the full screen bar uses on a desktop:
+   content width, one row, the 34px/16px geometry declared for
+   `.formulizeThemeForm .formulize-form-submit-button` above (PR #127 review). */
+.formulize-drawer--wide .formulize-drawer__foot .formulize-form-submit-button {
+  flex: 0 0 auto;
+  height: 34px !important;
+  padding: 0 16px;
 }
 
 /* On multi-page forms the bar also holds #prev ("Save and Close") and #next
@@ -3409,7 +3490,7 @@ input[type="time"] { font-family: var(--font-sans); }
 /* The chip's remove button. Only this removes the value, and only after the
    browser's confirm() dialog is accepted.
 
-   Lyris's blanket `button:not([class*="fz-"]):not([class*="formulize_button"]):not([class*="formulize-drawer__btn"])`
+   Lyris's blanket `button:not([class*="fz-"]):not([class*="formulize_button"]):not([class*="formulize-drawer__btn"]):not([class*="formulize-drawer__tab"])`
    rule below paints every bare button as a 32px-tall bordered surface with a
    var(--r-2) radius. It outranks the component's own `.auto_multi
    button.auto_multi_remove` base rule in formulize.css, because the theme sheet
@@ -3599,7 +3680,7 @@ input[type="time"] { font-family: var(--font-sans); }
    outrank both the component's rules and Lyris's skin for them.
    ============================================================ */
 
-button:not([class*="fz-"]):not([class*="formulize_button"]):not([class*="formulize-drawer__btn"]),
+button:not([class*="fz-"]):not([class*="formulize_button"]):not([class*="formulize-drawer__btn"]):not([class*="formulize-drawer__tab"]),
 input[type="submit"]:not([class*="fz-"]),
 input[type="reset"]:not([class*="fz-"]),
 input[type="button"]:not([class*="fz-"]):not(.formulize_button) {
@@ -3627,7 +3708,7 @@ input[type="button"]:not([class*="fz-"]):not(.formulize_button) {
               color var(--dur-1) var(--ease);
 }
 
-button:not([class*="fz-"]):not([class*="formulize_button"]):not([class*="formulize-drawer__btn"]):hover,
+button:not([class*="fz-"]):not([class*="formulize_button"]):not([class*="formulize-drawer__btn"]):not([class*="formulize-drawer__tab"]):hover,
 input[type="submit"]:not([class*="fz-"]):hover,
 input[type="reset"]:not([class*="fz-"]):hover,
 input[type="button"]:not([class*="fz-"]):not(.formulize_button):hover {
@@ -3635,7 +3716,7 @@ input[type="button"]:not([class*="fz-"]):not(.formulize_button):hover {
   border-color: var(--c-text-muted);
 }
 
-button:not([class*="fz-"]):not([class*="formulize_button"]):not([class*="formulize-drawer__btn"]):focus-visible,
+button:not([class*="fz-"]):not([class*="formulize_button"]):not([class*="formulize-drawer__btn"]):not([class*="formulize-drawer__tab"]):focus-visible,
 input[type="submit"]:not([class*="fz-"]):focus-visible,
 input[type="reset"]:not([class*="fz-"]):focus-visible,
 input[type="button"]:not([class*="fz-"]):not(.formulize_button):focus-visible {
@@ -3643,7 +3724,7 @@ input[type="button"]:not([class*="fz-"]):not(.formulize_button):focus-visible {
   box-shadow: var(--sh-focus);
 }
 
-button:not([class*="fz-"]):disabled,
+button:not([class*="fz-"]):not([class*="formulize-drawer__tab"]):disabled,
 input[type="submit"]:not([class*="fz-"]):disabled,
 input[type="reset"]:not([class*="fz-"]):disabled,
 input[type="button"]:not([class*="fz-"]):disabled {
