@@ -229,12 +229,20 @@ width, and scrolls the page when the screen needs something brought into view.
 | `data-formulize-embed` | Required. Marks the iframe for the script. |
 | `data-formulize-embed-height` | Height in pixels to start at, before the screen reports its own. Defaults to 600. |
 | `data-formulize-embed-min-width` | Narrowest the frame may become, in pixels. Defaults to 400. `off` removes the floor. Capped at the width of the window either way. |
-| `data-formulize-embed-scroll-margin` | Room left above the screen when it is brought into view, in pixels. Defaults to two lines of your page's text. Raise it if your page has a sticky header the screen would otherwise scroll underneath; `0` removes it. |
+| `data-formulize-embed-scroll-margin` | Room left above the screen when it is brought into view, in pixels. Set this only to override what is worked out for you; `0` removes the gap entirely. |
 | `data-formulize-embed-fallback` | Set to `off` to suppress the "open in a new window" link. |
 | `data-formulize-embed-fallback-text` | Wording for that link. |
 
 While a screen is loading, its iframe has the class `formulize-embed--loading`, so you can show a
 spinner behind it and have it disappear when the screen arrives.
+
+When the screen asks to be brought into view — after a page turn, or a search that replaced the
+entries — the script works out where to stop on its own. It measures anything your page pins to the
+top of the window, so a sticky header does not end up covering the screen, and the padding and border
+of whatever box you have put the frame in, so the top edge of that box stays visible. If you have set
+`scroll-padding-top` on your page, that is used instead of measuring, on the basis that you have
+already decided. You should not need `data-formulize-embed-scroll-margin` unless you want a specific
+number regardless.
 
 The screen fires DOM events on the iframe, so you can react without modifying the script:
 

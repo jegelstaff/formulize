@@ -120,23 +120,72 @@
     }
 
     /**
-     * How much room to leave above whatever is being brought into view.
+     * How much of the top of the window is already spoken for by the host page.
      *
-     * Landing the top of the screen exactly at the top of the window reads as though it has been
-     * shoved against the browser's own chrome, so a margin is left above it. Two of the host page's
-     * own text lines, which lands in the right place on a page of any size rather than being a
-     * number that happens to suit one.
+     * A header that pins itself to the top of the window covers whatever is scrolled underneath it,
+     * so stopping at the top of the frame leaves the frame behind the header rather than in front of
+     * the reader. How tall that header is belongs to the host page, changes with its own breakpoints,
+     * and is not something this script can be told in advance - so it is measured instead of guessed.
      *
-     * A host page with a sticky header of its own needs more than that, and only the host knows how
-     * much, so data-formulize-embed-scroll-margin overrides it. 0 turns it off.
+     * A host that has set scroll-padding-top has already answered the question deliberately, and that
+     * answer is taken as given. Otherwise: ask the browser what is actually drawn at the top of the
+     * window right now, and keep whatever is pinned there.
+     */
+    function pinnedHeaderHeight() {
+        var declared = parseFloat(window.getComputedStyle(document.documentElement).scrollPaddingTop);
+        if (declared > 0) {
+            return declared;
+        }
+        if (!document.elementsFromPoint) {
+            return 0; // too old to ask; the margin below still applies
+        }
+        var covered = 0;
+        var atTheTop = document.elementsFromPoint(Math.round((window.innerWidth || 0) / 2), 1);
+        for (var i = 0; i < atTheTop.length; i++) {
+            var position = window.getComputedStyle(atTheTop[i]).position;
+            if (position !== 'fixed' && position !== 'sticky') {
+                continue; // scrolls away with everything else, so it covers nothing
+            }
+            var bottom = atTheTop[i].getBoundingClientRect().bottom;
+            if (bottom > covered) {
+                covered = bottom;
+            }
+        }
+        return covered;
+    }
+
+    /**
+     * The distance between the top of the box holding the frame and the top of the frame itself.
+     *
+     * An embedded screen is usually put inside something with padding and a border of its own - a
+     * card, a panel - and the top of that box is what a reader sees as the top of the screen. Scroll
+     * to the frame and the box's own edge is left above the fold, so the thing looks cut off.
+     */
+    function containerEdgeHeight(iframe) {
+        var container = iframe.parentElement;
+        if (!container) {
+            return 0;
+        }
+        var styles = window.getComputedStyle(container);
+        return (parseFloat(styles.paddingTop) || 0) + (parseFloat(styles.borderTopWidth) || 0);
+    }
+
+    /**
+     * How far above the frame to stop.
+     *
+     * Everything that can be measured is measured - what the host pins to the top of the window, and
+     * the edge of the box the frame sits in - and one line of the host page's own text is added on
+     * top, so the screen has a little room rather than being flush against whatever is above it.
+     *
+     * data-formulize-embed-scroll-margin overrides the lot with a fixed number. 0 turns it off.
      */
     function scrollMargin(iframe) {
         var requested = parseInt(iframe.getAttribute('data-formulize-embed-scroll-margin'), 10);
         if (requested >= 0) {
             return requested;
         }
-        var rootFontSize = parseFloat(window.getComputedStyle(document.documentElement).fontSize);
-        return Math.round((rootFontSize || 16) * 2);
+        var rootFontSize = parseFloat(window.getComputedStyle(document.documentElement).fontSize) || 16;
+        return Math.round(rootFontSize + pinnedHeaderHeight() + containerEdgeHeight(iframe));
     }
 
     function scrollIntoView(iframe, offsetWithinFrame) {
