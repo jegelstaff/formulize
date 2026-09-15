@@ -3265,10 +3265,15 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
 .fz-form-screen input[type="range"]:focus::-moz-range-thumb {
   box-shadow: var(--sh-focus);
 }
-/* Live value readout (the <output> beside the slider) → mono bubble. */
+/* Live value readout (the <output> beside the slider) → mono bubble.
+   No left margin here: read-only mode renders the <output> on its own (core
+   emits just the bubble, with no slider and no <nobr> wrapper), so any left
+   margin on the base rule would indent the value away from the field edge
+   while every other read-only value sits flush. The gap between slider and
+   bubble is applied in the <nobr> rule below, which only exists in edit
+   mode. */
 .fz-form-screen output[id^="rangeValue_"] {
   display: inline-block;
-  margin-left: 12px;
   min-width: 34px;
   padding: 2px 8px;
   font-family: var(--font-mono);
@@ -3304,6 +3309,7 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
 }
 .fz-form-screen nobr:has(> input[type="range"]) > output[id^="rangeValue_"] {
   flex: 0 0 auto;
+  margin-left: 12px;   /* gap between the slider and its value bubble */
 }
 
 /* ---------- Color picker → .fz-colorpicker look ----------
