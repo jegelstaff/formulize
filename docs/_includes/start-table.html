@@ -1,9 +1,14 @@
 {% comment %}
-  ALTERNATE LAYOUT of the same six offerings, for comparison against start-rail.html.
+  The comparison table on /pricing/, below start-rail.html.
 
-  Same seven axes and the same Level 5 "Plus" sticker, but each axis name appears
-  ONCE, in a frozen left column, instead of six times across six cards. Scroll the
-  table sideways to move through the levels; the row labels stay put.
+  The two are not rivals and neither is going away: the rail is for choosing
+  (each level argued on its own terms, in the order the commitment grows) and
+  this table is for verifying (every axis named once, in a frozen left column,
+  so a row can be read straight across). People do both, in that order, and the
+  table is where a careful buyer checks the claim the cards made.
+
+  Same axes, in the same order, as the rail - if you add one there, add it
+  here. Scroll sideways to move through the levels; the row labels stay put.
 {% endcomment %}
 <div class="cmp-wrap">
   <table class="cmp">
@@ -11,27 +16,27 @@
       <tr>
         <th scope="col" class="cmp-corner"><span class="visually-hidden">What is included</span></th>
         <th scope="col">
-          <span class="cmp-tier">Open Source</span>
+          <span class="cmp-tier">You build it</span>
           <span class="cmp-price">Free forever</span>
-          <span class="cmp-grp">Do it yourself &middot; your server</span>
+          <span class="cmp-grp">Do it yourself &middot; your server &middot; open source</span>
         </th>
         <th scope="col">
-          <span class="cmp-tier">Level 1</span>
+          <span class="cmp-tier">We host it</span>
           <span class="cmp-price">$49/month</span>
           <span class="cmp-grp">Do it yourself &middot; our server</span>
         </th>
         <th scope="col">
-          <span class="cmp-tier">Level 2</span>
+          <span class="cmp-tier">We help</span>
           <span class="cmp-price">$149/month</span>
           <span class="cmp-grp">Hosted, with our help</span>
         </th>
         <th scope="col" class="cmp-featured">
-          <span class="cmp-tier">Level 3 <em>Most popular</em></span>
+          <span class="cmp-tier">We train you <em>Most popular</em></span>
           <span class="cmp-price">$199/month + $449 setup</span>
           <span class="cmp-grp">Hosted, with our help</span>
         </th>
         <th scope="col">
-          <span class="cmp-tier">Level 4 <em class="alt">Best value</em></span>
+          <span class="cmp-tier">We&rsquo;ve got this <em class="alt">Best value</em></span>
           <span class="cmp-price">$1,199/month + $2,999 setup</span>
           <span class="cmp-grp">Managed &middot; annual only</span>
         </th>
@@ -125,10 +130,10 @@
       <tr class="cmp-cta">
         <th scope="row"><span class="visually-hidden">Get started</span></th>
         <td><a class="btn btn-secondary btn-block" href="{{ "/download/" | relative_url }}">Download</a></td>
-        <td><a class="btn btn-secondary btn-block" href="{{ site.signup_url }}" target="_blank" rel="noopener">Sign up</a></td>
-        <td><a class="btn btn-secondary btn-block" href="{{ site.signup_url }}" target="_blank" rel="noopener">Sign up</a></td>
-        <td><a class="btn btn-primary btn-block" href="{{ site.signup_url }}" target="_blank" rel="noopener">Sign up</a></td>
-        <td><a class="btn btn-secondary btn-block" href="{{ site.signup_url }}" target="_blank" rel="noopener">Sign up</a></td>
+        <td><a class="btn btn-secondary btn-block" href="{{ "/signup/" | relative_url }}?plan=level-1">Sign up</a></td>
+        <td><a class="btn btn-secondary btn-block" href="{{ "/signup/" | relative_url }}?plan=level-2">Sign up</a></td>
+        <td><a class="btn btn-primary btn-block" href="{{ "/signup/" | relative_url }}?plan=level-3">Sign up</a></td>
+        <td><a class="btn btn-secondary btn-block" href="{{ "/signup/" | relative_url }}?plan=level-4">Sign up</a></td>
         </tr>
 
     </tbody>

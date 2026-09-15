@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+{%- comment -%}
+  RSS 2.0 for /news/. This replaces jekyll-feed, which could only ever see
+  Jekyll posts and so went away with them - the stories live in the News form
+  on formulize.net now, and news_pages.rb hands them to this layout.
+
+  Body HTML goes in the description as escaped markup (the RSS convention)
+  rather than in a CDATA block, so a body containing "]]>" cannot break the
+  feed.
+{%- endcomment -%}
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Formulize news</title>
+    <link>{{ "/news/" | absolute_url }}</link>
+    <atom:link href="{{ "/news/feed.xml" | absolute_url }}" rel="self" type="application/rss+xml" />
+    <description>{{ site.description | xml_escape }}</description>
+    <language>en</language>
+    {%- for entry in page.entries %}
+    <item>
+      <title>{{ entry.headline | xml_escape }}</title>
+      <link>{{ entry.url | absolute_url }}</link>
+      <guid isPermaLink="false">formulize-news-{{ entry.id }}</guid>
+      {%- if entry.date_rfc822 %}
+      <pubDate>{{ entry.date_rfc822 }}</pubDate>
+      {%- endif %}
+      <category>{{ entry.type | xml_escape }}</category>
+      <description>{{ entry.body_html | xml_escape }}</description>
+    </item>
+    {%- endfor %}
+  </channel>
+</rss>

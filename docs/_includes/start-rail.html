@@ -1,8 +1,16 @@
 {% comment %}
-  The "How to get started" rail, in three groups of two:
-    Do it yourself  -- Open Source + Level 1 (you build your own system)
-    Hosted          -- Levels 2 + 3          (you build it, we help)
-    Managed         -- Levels 4 + 5          (we help set it up and fix what breaks)
+  The "How to get started" rail, in three groups:
+    Do it yourself  -- You build it + We host it   (you build your own system)
+    Hosted          -- We help + We train you      (you build it, we help)
+    Managed         -- We've got this              (we set it up and fix what breaks)
+
+  The names carry the argument: the subject moves from "you" to "we" at exactly
+  the point where paying starts, and the verb escalates from there. They are the
+  card headlines in get-choice.html promoted into tier names, so the two must
+  keep agreeing with each other.
+
+  The query string keys on /signup/ stay level-1..level-4 on purpose, so a
+  rename never breaks a link somebody has already shared.
 
   SEVEN axes, in the same order on every card:
     1. Unlimited forms, users, and data
@@ -32,7 +40,7 @@
       <div class="rail-cards">
 
         <div class="tier">
-          <h3 class="tier-name">Open Source <span>Free forever</span></h3>
+          <h3 class="tier-name">You build it <span>Free forever &middot; open source</span></h3>
           <ul class="tier-feats">
             <li>Unlimited forms, users, and data!</li>
             <li>Full AI integration</li>
@@ -48,7 +56,7 @@
         </div>
 
         <div class="tier">
-          <h3 class="tier-name">Level 1 <span>$49/month</span></h3>
+          <h3 class="tier-name">We host it <span>$49/month</span></h3>
           <ul class="tier-feats">
             <li>Unlimited forms, users, and data!</li>
             <li>Full AI integration</li>
@@ -59,7 +67,7 @@
             <li class="no">Custom web address<small>Instead: yourname.formulize.net</small></li>
             <li class="no">Quarterly system review by the Formulize team</li>
           </ul>
-          <a class="btn btn-secondary btn-block" href="{{ site.signup_url }}" target="_blank" rel="noopener">Sign up</a>
+          <a class="btn btn-secondary btn-block" href="{{ "/signup/" | relative_url }}?plan=level-1">Sign up</a>
           <p class="tier-note">Billed annually &middot; $59 month to month</p>
         </div>
 
@@ -71,7 +79,7 @@
       <div class="rail-cards">
 
         <div class="tier">
-          <h3 class="tier-name">Level 2 <span>$149/month</span></h3>
+          <h3 class="tier-name">We help <span>$149/month</span></h3>
           <ul class="tier-feats">
             <li>Unlimited forms, users, and data!</li>
             <li>Full AI integration</li>
@@ -82,13 +90,13 @@
             <li class="no">Custom web address<small>Instead: yourname.formulize.net</small></li>
             <li class="no">Quarterly system review by the Formulize team</li>
           </ul>
-          <a class="btn btn-secondary btn-block" href="{{ site.signup_url }}" target="_blank" rel="noopener">Sign up</a>
+          <a class="btn btn-secondary btn-block" href="{{ "/signup/" | relative_url }}?plan=level-2">Sign up</a>
           <p class="tier-note">Billed annually &middot; $179 month to month</p>
         </div>
 
         <div class="tier tier-featured">
           <span class="tier-flag">Most popular</span>
-          <h3 class="tier-name">Level 3 <span>$199/month + $449 setup</span></h3>
+          <h3 class="tier-name">We train you <span>$199/month + $449 setup</span></h3>
           <ul class="tier-feats">
             <li>Unlimited forms, users, and data!</li>
             <li>Full AI integration</li>
@@ -99,7 +107,7 @@
             <li>Custom web address<small>ie: yourname.org, etc</small></li>
             <li class="no">Quarterly system review by the Formulize team</li>
           </ul>
-          <a class="btn btn-primary btn-block" href="{{ site.signup_url }}" target="_blank" rel="noopener">Sign up</a>
+          <a class="btn btn-primary btn-block" href="{{ "/signup/" | relative_url }}?plan=level-3">Sign up</a>
           <p class="tier-note">Billed annually &middot; $239 month to month</p>
         </div>
 
@@ -112,7 +120,7 @@
 
         <div class="tier">
           <span class="tier-flag tier-flag-alt">Best value</span>
-          <h3 class="tier-name">Level 4 <span>$1,199/month + $2,999 setup</span></h3>
+          <h3 class="tier-name">We&rsquo;ve got this <span>$1,199/month + $2,999 setup</span></h3>
           <ul class="tier-feats">
             <li>Unlimited forms, users, and data!</li>
             <li>Full AI integration</li>
@@ -123,7 +131,7 @@
             <li>Custom web address<small>ie: yourname.org, etc</small></li>
             <li>Quarterly system review by the Formulize team</li>
           </ul>
-          <a class="btn btn-secondary btn-block" href="{{ site.signup_url }}" target="_blank" rel="noopener">Sign up</a>
+          <a class="btn btn-secondary btn-block" href="{{ "/signup/" | relative_url }}?plan=level-4">Sign up</a>
           <p class="tier-note">Billed annually only</p>
         </div>
 

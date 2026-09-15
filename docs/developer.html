@@ -1,27 +1,93 @@
 ---
 layout: default
 permalink: developers/
-title: Technical Documentation
+title: Documentation
+full_width: true
+description: Technical documentation for Formulize — the internal and public APIs, the local development environment, configuration as code, templates, custom elements and debugging.
 ---
 
-<h1>Technical Documentation</h1>
+{% comment %}
+  This page is now a top-level menu item ("Docs"), so it is grouped rather than
+  being one flat list of thirteen links. Every link that was on it is still
+  here; the ordering is by what someone is trying to do, with getting it
+  running first, because that is the most common reason to arrive.
 
-<ul>
-<li><a href='./API'>Code, Classes, and Functions (the Internal API)</a></li>
-<li><a href='./Public_API'>The Public API for accessing Formulize remotely</a></li>
-<li><a href='./embedding_screens'>Embedding screens in another website</a></li>
-<li><a href='./embedding_screens_setup'>Giving Formulize an address on the host website's domain</a></li>
-<li><a href='./deploying_locally'>Development Environment</a></li>
-<li><a href='./setup_sms_provider'>Setting Up an SMS Provider</a></li>
-<li><a href='./configuration_as_code'>Configuration as code</a></li>
-<li><a href='./debugging'>Debugging with XDebug</a></li>
-<li><a href='/files/Inside_Formulize-a_Developers_Guide.pdf'>Inside Formulize - A Developer's Guide (PDF)</a></li>
-<li><a href='https://docs.google.com/presentation/d/1p5MffKmo7mSbHnQJT0kXKXMuKBG_pKm1GsoGFW4qngM/edit?usp=sharing' target="_BLANK">Retrospective on adding MCP to Formulize (Google Slides)</a></li>
-<li><a href='https://youtu.be/fAI2sMPNrw0/' target="_BLANK">DevOps in Formulize (YouTube)</a></li>
-<li><a href='./version_control'>Version Control</a></li>
-<li><a href='./github_pages'>GitHub Pages Config</a></li>
-<li><a href='./git_tips'>Git Tips and Tricks</a></li>
-<li><a href='./templates'>Working With Templates</a></li>
-<li><a href='./themes'>What Formulize Expects From a Theme</a></li>
+  User-facing documentation (installing, the search syntax) is deliberately
+  listed alongside the developer material - people looking for "the docs" do
+  not know or care which of the two they need.
+{% endcomment %}
 
-</ul>
+<div class="band-head" style="max-width: 68ch;">
+  <h1 style="margin-top: var(--space-3);">Documentation</h1>
+  <p>Everything from installing Formulize on your own server through to the API, custom elements and the development environment.</p>
+  <p class="text-muted">Not a developer? The <a href="{{ "/videos" | relative_url }}">videos</a> and the <a href="{{ "/searching" | relative_url }}">search cheat sheet</a> are probably what you want, and the <a href="{{ "/community/" | relative_url }}">community</a> will answer questions for free.</p>
+</div>
+
+<section class="band">
+  <div class="feature-cols">
+    <div>
+      <h3>Getting it running</h3>
+      <ul>
+        <li><a href="{{ "/deploying_a_website" | relative_url }}">Deploy Formulize to a website</a></li>
+        <li><a href="{{ "/deploying_a_website/updating_formulize" | relative_url }}">Update an existing installation</a></li>
+        <li><a href="./deploying_locally">Local development environment</a></li>
+        <li><a href="{{ "/deploying_a_website/writable_folders" | relative_url }}">Writable files and folders</a></li>
+        <li><a href="./debugging">Debugging with XDebug</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h3>The APIs</h3>
+      <ul>
+        <li><a href="./API">Code, classes and functions (the internal API)</a></li>
+        <li><a href="./Public_API">The Public API, for reaching Formulize remotely</a></li>
+        <li><a href="{{ "/ai/mcp-reference" | relative_url }}">MCP tools, resources and prompts</a></li>
+        <li><a href="/files/Inside_Formulize-a_Developers_Guide.pdf">Inside Formulize &mdash; a Developer's Guide (PDF)</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h3>Extending and configuring</h3>
+      <ul>
+        <li><a href="./configuration_as_code">Configuration as code</a></li>
+        <li><a href="./embedding_screens">Embedding screens in another website</a></li>
+        <li><a href="./embedding_screens_setup">Giving Formulize an address on the host website's domain</a></li>
+        <li><a href="./API/custom_form_elements">Custom form elements</a></li>
+        <li><a href="./templates">Working with templates</a></li>
+        <li><a href="./setup_sms_provider">Setting up an SMS provider</a></li>
+        <li><a href="{{ "/searching" | relative_url }}">Search terms cheat sheet</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h3>Working on Formulize</h3>
+      <ul>
+        <li><a href="./version_control">Version control</a></li>
+        <li><a href="./git_tips">Git tips and tricks</a></li>
+        <li><a href="./version_control/testing">Testing</a></li>
+        <li><a href="./github_pages">GitHub Pages config</a></li>
+        <li><a href="{{ "/roadmap" | relative_url }}">Roadmap</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h3>Talks and background</h3>
+      <ul>
+        <li><a href="https://docs.google.com/presentation/d/1p5MffKmo7mSbHnQJT0kXKXMuKBG_pKm1GsoGFW4qngM/edit?usp=sharing" target="_BLANK">Retrospective on adding MCP to Formulize (Slides)</a></li>
+        <li><a href="https://youtu.be/fAI2sMPNrw0/" target="_BLANK">DevOps in Formulize (YouTube)</a></li>
+        <li><a href="{{ "/videos" | relative_url }}">All videos and tutorials</a></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="card elev-sm" style="background: var(--color-accent-100);">
+    <h2 style="margin-bottom: var(--space-2);">Something missing, or wrong?</h2>
+    <p class="card-body" style="font-size: 16px; max-width: 62ch;">The documentation is in the same repository as the software. Open a discussion, or send a pull request against the <code>docs/</code> folder.</p>
+    <div class="btn-row">
+      <a class="btn btn-secondary" href="{{ site.github.repository_url }}/discussions/new?category=tech-support" target="_blank" rel="noopener">Ask a question</a>
+      <a class="btn btn-ghost" href="{{ site.github.repository_url }}" target="_blank" rel="noopener">Formulize on GitHub</a>
+    </div>
+  </div>
+</section>

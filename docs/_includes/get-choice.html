@@ -1,38 +1,47 @@
 {% comment %}
-  The three-way "how involved do you want us to be" choice. Lives on the
-  Get Formulize page. Prices here are the entry price of each band -- the
-  full ladder is on /pricing/ (start-rail.html).
+  The three-way "how involved do you want us to be" choice, used on the
+  homepage, on /get/ and on /download/.
 
-  Each card links to /pricing/ as a whole, not just the "See what is
-  included" line -- same pattern as the news cards, since all three cards
-  have exactly one destination.
+  Each card now goes somewhere different. They all used to point at /pricing/,
+  which meant the choice was decorative - everyone landed on the same page and
+  had to work out which third of it applied to them. Now the card is the
+  decision: self-hosters go to the downloads, people who want us to run it go
+  to the plans, and people who want it built for them go to a human.
+
+  Prices here are the entry price of each band; the full ladder is on /pricing/
+  in start-rail.html.
+
+  These three headlines are also where the plan names came from - the tiers on
+  /pricing/ are called You build it, We host it, We help, We train you and
+  We've got this. Change a headline here and the plan names have to move with
+  it, or the homepage and the pricing page stop telling the same story.
 {% endcomment %}
 <div class="triad">
-  <a class="card-link" href="{{ "/pricing/" | relative_url }}">
+  <a class="card-link" href="{{ "/download/" | relative_url }}">
     <div class="card">
       <span class="card-kicker">Do it yourself</span>
       <h3 class="card-title">You build it.</h3>
-      <p class="card-body">Run Formulize on your own server, or we can run it for you on one of ours.</p>
+      <p class="card-body">Run Formulize on your own server. Free forever, and the same complete software we host.</p>
       <p class="card-price"><strong>Free</strong> &middot; or plain hosting from <strong>$49</strong>/month</p>
-      <span class="card-link-more">See what is included &rarr;</span>
+      <span class="card-link-more">Download it &rarr;</span>
     </div>
   </a>
   <a class="card-link" href="{{ "/pricing/" | relative_url }}">
     <div class="card">
       <span class="card-kicker">Hosted</span>
       <h3 class="card-title">You build it, we help.</h3>
-      <p class="card-body">We will point you in the right direction, and be there when you need help.</p>
+      <p class="card-body">We run the server, in Canada. We will point you in the right direction, and be there when you need help.</p>
       <p class="card-price">From <strong>$149</strong>/month</p>
       <span class="card-link-more">See what is included &rarr;</span>
     </div>
   </a>
-  <a class="card-link" href="{{ "/pricing/" | relative_url }}">
+  <a class="card-link" href="{{ "/contact/" | relative_url }}">
     <div class="card">
       <span class="card-kicker">Managed</span>
       <h3 class="card-title">Don't worry. We've got this.</h3>
-      <p class="card-body">We will set up a system tailored to your needs, and keep it running smoothly.</p>
+      <p class="card-body">We will set up a system tailored to your needs, train your people, and keep it running smoothly.</p>
       <p class="card-price">From <strong>$1,199</strong>/month</p>
-      <span class="card-link-more">See what is included &rarr;</span>
+      <span class="card-link-more">Talk to us &rarr;</span>
     </div>
   </a>
 </div>
