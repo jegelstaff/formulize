@@ -2596,7 +2596,15 @@ textarea.fz-control {
   cursor: pointer;
 }
 
-/* The option label sits inline next to its control with comfortable spacing. */
+/* The option label sits inline next to its control, separated from it by the
+   control's own 8px right margin (above).
+
+   No right-hand spacing is applied to the label (issue #130): the element's
+   own delimiter setting — 'linebreak', 'space', or a custom separator string
+   such as `<span class='list_element_delimiter'>~</span>` — is what separates
+   one option from the next. A margin on the label pushed that separator away
+   from the option it follows and broke those layouts, so spacing between
+   options is left entirely to the delimiter. */
 .fz-form-screen .col2 input[type="radio"] + label,
 .fz-form-screen .col2 input[type="checkbox"] + label,
 .fz-form-screen .fz-field__body input[type="radio"] + label,
@@ -2606,7 +2614,6 @@ textarea.fz-control {
   font-size: var(--field-text, var(--fs-14));
   color: var(--c-text);
   cursor: pointer;
-  margin-right: 20px;       /* gap before next inline option */
   vertical-align: middle;
 }
 
