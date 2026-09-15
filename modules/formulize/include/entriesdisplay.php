@@ -2123,7 +2123,7 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 												list($allowed, $isDisabled) = elementIsAllowedForUserInEntry($displayElementObject, $internalID);
 												if($displayIconsToActivateElements AND !$isDisabled) {
 													if($multiValueBRNeeded) { print "\n<br />\n"; } // in the case of multiple values, split them based on this
-													print '<div id="deDiv_'.$colhandle.'_'.$internalID.'_'.$deInstanceCounter.'">';
+													print '<div class="formulize-de-container" id="deDiv_'.$colhandle.'_'.$internalID.'_'.$deInstanceCounter.'">';
 													print getHTMLForList($values, $colhandle, $internalID, $displayIconsToActivateElements, $textWidth, $internalID, $fid, $cellRowAddress, $i, $deInstanceCounter); // $internalID passed in in place of $currentColumnLocalId because we are manually looping through the data to get to the lowest level, so we can be sure of the local id that is in use, and it won't be an array, etc (unless we're showing a checkbox element??? or something else with multiple values??? - probably doesn't matter because the entry id is the same for all values of a single element that allows multiple selection)
 													print "</div>";
 													$deInstanceCounter++;
@@ -2143,7 +2143,7 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 								}
 							} elseif(formulizePermHandler::user_can_edit_entry($fid, $uid, $entry_id)) { // display based on the mainform entry id
 								if($displayIconsToActivateElements) {
-									print '<div id="deDiv_'.$colhandle.'_'.$entry_id.'_'.$deInstanceCounter.'">';
+									print '<div class="formulize-de-container" id="deDiv_'.$colhandle.'_'.$entry_id.'_'.$deInstanceCounter.'">';
 									print getHTMLForList($value,$colhandle,$entry_id, $displayIconsToActivateElements, $textWidth, $currentColumnLocalId, $fid, $cellRowAddress, $i, $deInstanceCounter);
 									print "</div>";
 									$deInstanceCounter++;
@@ -3652,7 +3652,7 @@ function renderElement(handle,element_id,entryId,fid,check,deInstanceCounter) {
 		} else if(check) {
 			// do nothing...only allow one saving operation at a time
 		} else {
-			jQuery("#deDiv_"+handle+"_"+entryId+"_"+deInstanceCounter).html(elementStates[handle][entryId]);
+			jQuery("#deDiv_"+handle+"_"+entryId+"_"+deInstanceCounter).removeClass("formulize-de-editing").html(elementStates[handle][entryId]);
 			elementStates[handle].splice(entryId, 1);
 			elementActive = "";
 		}
@@ -3666,7 +3666,15 @@ function renderElementHtml(elementHtml,params) {
 	entryId = params[2];
 	fid = params[3];
 	deInstanceCounter = params[5];
-	jQuery("#deDiv_"+handle+"_"+entryId+"_"+deInstanceCounter).html(elementHtml+"<br /><a style=\"display: inline-block;\" href=\"\" onclick=\"renderElement('"+handle+"', "+element_id+", "+entryId+", "+fid+",1,"+deInstanceCounter+");return false;\"><img src=\"<?php print XOOPS_URL; ?>/modules/formulize/images/check.gif\" /></a>&nbsp;&nbsp;&nbsp;<a style=\"display: inline-block;\" href=\"\" onclick=\"javascript:renderElement('"+handle+"', "+element_id+", "+entryId+", "+fid+",0,"+deInstanceCounter+");return false;\"><img src=\"<?php print XOOPS_URL; ?>/modules/formulize/images/x-wide.gif\" /></a>");
+	// the field and its save/cancel controls are laid out on a single line by the
+	// .formulize-de-editing / .formulize-de-controls rules in formulize.css, so no
+	// <br /> or &nbsp; spacing is emitted here. Themes can restyle the controls by
+	// targeting .formulize-de-save / .formulize-de-cancel.
+	var deControls = "<span class=\"formulize-de-controls\">"
+		+ "<a class=\"formulize-de-save\" href=\"\" onclick=\"renderElement('"+handle+"', "+element_id+", "+entryId+", "+fid+",1,"+deInstanceCounter+");return false;\"><img src=\"<?php print XOOPS_URL; ?>/modules/formulize/images/check.gif\" alt=\"\" /></a>"
+		+ "<a class=\"formulize-de-cancel\" href=\"\" onclick=\"javascript:renderElement('"+handle+"', "+element_id+", "+entryId+", "+fid+",0,"+deInstanceCounter+");return false;\"><img src=\"<?php print XOOPS_URL; ?>/modules/formulize/images/x-wide.gif\" alt=\"\" /></a>"
+		+ "</span>";
+	jQuery("#deDiv_"+handle+"_"+entryId+"_"+deInstanceCounter).addClass("formulize-de-editing").html(elementHtml+deControls);
 }
 
 function renderElementNewValue(elementValue,params) {
@@ -3676,7 +3684,7 @@ function renderElementNewValue(elementValue,params) {
 	fid = params[3];
 	deInstanceCounter = params[5];
 	jQuery("#deDiv_"+handle+"_"+entryId+"_"+deInstanceCounter).fadeTo("fast",1);
-	jQuery("#deDiv_"+handle+"_"+entryId+"_"+deInstanceCounter).html(elementValue);
+	jQuery("#deDiv_"+handle+"_"+entryId+"_"+deInstanceCounter).removeClass("formulize-de-editing").html(elementValue);
 	elementStates[handle].splice(entryId, 1);
 	savingNow = "";
 	elementActive = "";

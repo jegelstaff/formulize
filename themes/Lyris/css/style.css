@@ -1402,107 +1402,54 @@ a.de-edit-icon:hover::before {
    selectors never touch ordinary cells.
    ============================================================ */
 
-/* View mode: put the pencil on the same line as the cell text and
-   drop the float/2em-indent layout that pushed it out of alignment. */
-.fz-table .main-cell-div:has(> .formulize-display-element-edit-icon) {
-  display: flex;
-  align-items: baseline;
-  gap: 0.4em;
-}
-
-.fz-table .main-cell-div > .formulize-display-element-edit-icon {
-  float: none;
-  margin: 0;
-}
-
-.fz-table .main-cell-div > .formulize-display-element-contents {
-  padding-left: 0;
-}
+/* View mode: layout is handled globally now (PR #135 review) — core
+   formulize.css lays the pencil cell out as a flex row and right-aligns
+   the pencil against the cell edge for every theme, so the Lyris-only
+   float/indent overrides that used to live here are gone. Anything left
+   under .fz-table here must stay cosmetic: a layout override scoped to
+   .fz-table outranks the core rules and would un-do the right alignment. */
 
 /* Pencil glyph colour is handled globally now (issue #61) — see the
    `a.loe-edit-entry::before, a.de-edit-icon::before` block above. */
 
-/* Edit mode: keep the field and its save/cancel controls on one row,
-   vertically centred, instead of dropping the icons onto a new line. */
-.fz-table [id^="deDiv_"]:has(> a > img[src$="check.gif"]),
-.fz-table [id^="deDiv_"]:has(> a > img[src$="x-wide.gif"]) {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 0.35em;
-}
-
-.fz-table [id^="deDiv_"] > br {
+/* Edit mode (issue #134): core now emits a .formulize-de-container cell that
+   gains .formulize-de-editing while editing, with the save/cancel anchors in a
+   .formulize-de-controls wrapper — and core formulize.css carries the base
+   layout (one row, no <br />, no &nbsp; spacing, field flexes to fill). What is
+   left here is purely Lyris cosmetics: swap the legacy colourful gifs for clean
+   theme glyphs and give them hover affordances. */
+.fz-table .formulize-de-controls > a > img {
   display: none;
 }
 
-/* Let the edit field flex so the field + both controls always share
-   one row (icons keep their size, the field takes the slack). The core
-   markup hardcodes size="30" on text inputs, whose intrinsic ~30ch width
-   would otherwise become the column's preferred width and reflow the
-   auto-layout table much wider on entering edit mode. Zero the flex-basis
-   and width so the field contributes ~nothing to the column's preferred
-   size (no reflow when there is already room), while flex-grow makes it
-   fill the space the cell already has. */
-.fz-table [id^="deDiv_"] > input,
-.fz-table [id^="deDiv_"] > select,
-.fz-table [id^="deDiv_"] > textarea {
-  flex: 1 1 0;
-  min-width: 0;
-  width: 0;
-  max-width: 100%;
-}
-
-.fz-table [id^="deDiv_"] > a:has(> img[src$="check.gif"]),
-.fz-table [id^="deDiv_"] > a:has(> img[src$="x-wide.gif"]) {
-  flex: 0 0 auto;
-}
-
-/* Replace the legacy colourful gif icons with clean Lyris glyphs:
-   hide the <img> and draw a glyph on its anchor. */
-.fz-table [id^="deDiv_"] > a > img[src$="check.gif"],
-.fz-table [id^="deDiv_"] > a > img[src$="x-wide.gif"] {
-  display: none;
-}
-
-.fz-table [id^="deDiv_"] > a:has(> img[src$="check.gif"]),
-.fz-table [id^="deDiv_"] > a:has(> img[src$="x-wide.gif"]) {
-  /* Core emits inline style="display: inline-block;" on these anchors,
-     which beats a plain stylesheet rule and drops the glyphs out of the
-     flex row (one sits higher than the other). Force inline-flex with
-     !important so they participate in the flex row and baseline-align. */
-  display: inline-flex !important;
-  align-items: center;
-  justify-content: center;
+.fz-table .formulize-de-controls > a {
   width: 1.6em;
   height: 1.6em;
   border-radius: 4px;
-  line-height: 1;
   font-size: 1rem;
-  text-decoration: none;
   transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
 }
 
-.fz-table [id^="deDiv_"] > a:has(> img[src$="check.gif"])::before {
+.fz-table .formulize-de-save::before {
   content: "\2713"; /* save */
   color: var(--c-success);
   font-weight: 600;
 }
 
-.fz-table [id^="deDiv_"] > a:has(> img[src$="x-wide.gif"])::before {
+.fz-table .formulize-de-cancel::before {
   content: "\2715"; /* cancel */
   color: var(--c-text-muted);
 }
 
-.fz-table [id^="deDiv_"] > a:has(> img[src$="check.gif"]):hover {
+.fz-table .formulize-de-save:hover {
   background: var(--c-success-soft);
 }
 
-.fz-table [id^="deDiv_"] > a:has(> img[src$="x-wide.gif"]):hover {
+.fz-table .formulize-de-cancel:hover {
   background: var(--c-surface-3);
 }
 
-.fz-table [id^="deDiv_"] > a:has(> img[src$="x-wide.gif"]):hover::before {
+.fz-table .formulize-de-cancel:hover::before {
   color: var(--c-danger);
 }
 

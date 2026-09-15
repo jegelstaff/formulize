@@ -776,12 +776,95 @@ div[id^=cellcontents_1_] label {
     white-space: nowrap;
 }
 
+/* ---------- Inline-edit pencil in list view cells (view mode) ----------
+   A cell that can be edited in place renders the edit-icon div FIRST in the
+   source, followed by the cell contents:
+
+     .main-cell-div > .formulize-display-element-edit-icon
+                    + .formulize-display-element-contents
+
+   The pencil used to be floated to the left of the cell, with the contents
+   indented 2em to clear it. It now sits at the RIGHT edge of the cell instead,
+   on the same line as the cell text - globally, for every theme, so themes do
+   not have to re-do this layout individually.
+
+   The source order is left alone (the icon stays first, so keyboard/reading
+   order still reaches the edit trigger before the value); flexbox `order`
+   moves it to the visual end and `margin-left: auto` pins it against the
+   cell's right edge no matter how short the value is. Same flex approach the
+   .formulize-de-editing rules below use for the save/cancel controls.
+
+   The :has() guard keeps all of this scoped to cells that actually carry a
+   pencil - ordinary cells are untouched. */
+
+.main-cell-div:has(> .formulize-display-element-edit-icon) {
+	display: flex;
+	align-items: baseline;
+	gap: 0.4em;
+}
+
 .formulize-display-element-edit-icon {
-	float: left; margin-right: 5px; margin-bottom: 5px;
+	order: 2;
+	margin: 0 0 0 auto; /* margin-left:auto pushes the pencil to the cell's right edge */
+	flex: 0 0 auto;
 }
 
 .formulize-display-element-contents {
-	padding-left: 2em;
+	order: 1;
+	flex: 1 1 auto;
+	min-width: 0; /* let long values shrink/ellipsis instead of shoving the pencil out */
+}
+
+/* ---------- Inline ("dynamic") editing of fields in list views - issue #134 ----------
+   A list view cell that can be edited in place renders as
+   .formulize-de-container. While the field is being edited the container also
+   carries .formulize-de-editing (added/removed by renderElementHtml() and its
+   companions in entriesdisplay.php) and holds the element's own markup followed
+   by a .formulize-de-controls wrapper with the save/cancel anchors.
+
+   These are base layout rules only: they keep the field and both controls on a
+   single, vertically-centred line and space the icons with a real gap instead of
+   the &nbsp; runs and <br /> the old markup used. Cosmetics (icon artwork,
+   colours, sizing) are deliberately left alone so each theme can restyle
+   .formulize-de-save / .formulize-de-cancel however it likes. */
+
+.formulize-de-editing {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.35em;
+}
+
+/* Let the edit field take the slack rather than its intrinsic width. Core
+   emits size="30" on text inputs, whose ~30ch preferred width would otherwise
+   widen the column and reflow an auto-layout table the moment editing starts. */
+.formulize-de-editing > input,
+.formulize-de-editing > select,
+.formulize-de-editing > textarea {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 0;
+  max-width: 100%;
+}
+
+.formulize-de-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  flex: 0 0 auto;
+}
+
+.formulize-de-controls > a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.formulize-de-controls > a > img {
+  display: block;
+  border: 0;
 }
 
 .formulize-uploaded-image-thumbnail {
