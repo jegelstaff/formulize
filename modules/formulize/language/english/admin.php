@@ -1186,3 +1186,71 @@ define('_AM_EGS_SEARCH_PLACEHOLDER', 'Search by name...');
 define('_AM_ENTRY_GROUP_NOTICE', 'Disabled permissions are inherited from the template for all %s. You cannot change them, but you can set additional permissions.');
 define('_AM_ENTRY_GROUP_CONDITIONS_LABEL', 'Visibility conditions:');
 
+// Screen settings page (templates/admin/screen_settings.html)
+define("_AM_SCREEN_SETTINGS_LEGEND", "Settings for the Screen:");
+define("_AM_SCREEN_SETTINGS_NAME", "Name of the screen:");
+define("_AM_SCREEN_SETTINGS_HANDLE", "Handle for the screen:");
+define("_AM_SCREEN_SETTINGS_HANDLE_DESC", "Handles are a way to refer to the screen in any code you write.");
+define("_AM_SCREEN_SETTINGS_KIND", "What kind of screen is this:");
+define("_AM_SCREEN_SETTINGS_KIND_LIST", "List");
+define("_AM_SCREEN_SETTINGS_KIND_FORM", "Form");
+define("_AM_SCREEN_SETTINGS_KIND_TEMPLATE", "Template");
+define("_AM_SCREEN_SETTINGS_KIND_CALENDAR", "Calendar");
+define("_AM_SCREEN_SETTINGS_KIND_MAP", "Map");
+
+define("_AM_SCREEN_SETTINGS_URLS_LEGEND", "URLs for this screen");
+define("_AM_SCREEN_SETTINGS_URL_DEFAULT", "The default URL for this screen:");
+define("_AM_SCREEN_SETTINGS_URL_ALTERNATE", "Set an alternate URL for accessing this screen:");
+define("_AM_SCREEN_SETTINGS_URL_ALTERNATE_ELEMENT", "With an alternate URL, identify entries based on their value in this element:");
+
+define("_AM_SCREEN_SETTINGS_PHP_LEGEND", "PHP code for including this screen anywhere");
+define("_AM_SCREEN_SETTINGS_PHP_DESC", "You can embed this screen in any PHP application or web page that is running on the same web server.");
+define("_AM_SCREEN_SETTINGS_PHP_DESC2", "Use this snippet of PHP code to include it:");
+
+define("_AM_SCREEN_SETTINGS_TOKEN_LEGEND", "Should this screen use an anti-CSRF security token");
+define("_AM_SCREEN_SETTINGS_TOKEN_DESC", "The security token is a defense against cross-site request forgery attacks.");
+
+define("_AM_SCREEN_SETTINGS_PASSCODE_LEGEND", "Do Anonymous Users need a passcode to access this screen?");
+define("_AM_SCREEN_SETTINGS_PASSCODE_NO", "No, only permission to view the form");
+define("_AM_SCREEN_SETTINGS_PASSCODE_YES", "Yes, plus permission to view the form");
+define("_AM_SCREEN_SETTINGS_PASSCODE_DESC", "Passcodes are saved with any data a user enters into a form, and are used as a filter when viewing data. This allows anonymous users to interact with only certain data, and if passcodes are given out per-user, then having a passcode is like having a 'throwaway' account.");
+define("_AM_SCREEN_SETTINGS_PASSCODE_VALIDCODES", "Valid Codes");
+define("_AM_SCREEN_SETTINGS_PASSCODE_ACTIVE", "Active");
+define("_AM_SCREEN_SETTINGS_PASSCODE_EXPIRED", "Expired");
+define("_AM_SCREEN_SETTINGS_PASSCODE_AUTOEXPIRE", "Auto-expire on:");
+define("_AM_SCREEN_SETTINGS_PASSCODE_DELETE", "delete");
+define("_AM_SCREEN_SETTINGS_PASSCODE_ADDEXISTING", "Add a passcode from another screen:");
+define("_AM_SCREEN_SETTINGS_PASSCODE_ADDNEW", "Add a new passcode:");
+define("_AM_SCREEN_SETTINGS_PASSCODE_NOTE", "Optional Note");
+define("_AM_SCREEN_SETTINGS_PASSCODE_ADD", "Add");
+
+define("_AM_SCREEN_SETTINGS_EMBED_LEGEND", "Embedding this screen in another website");
+define("_AM_SCREEN_SETTINGS_EMBED_OFF", "Embedding is turned off for this site, so no website can show this screen in a frame. Turn it on under Settings &rarr; Advanced &rarr; Embedding in other websites, and this setting becomes available.");
+define("_AM_SCREEN_SETTINGS_EMBED_ORIGINS", "Which other websites can embed this screen?");
+define("_AM_SCREEN_SETTINGS_EMBED_ORIGINS_DESC", "One website per line. Write each as a domain, for example <em>www.example.com</em>, or with a scheme, <em>https://www.example.com</em>. A pasted page address works too, and <em>*.example.com</em> covers every subdomain. Those websites will be allowed to show this screen inside an iframe. Until you list one, no other website can embed this screen at all: browsers refuse to display it anywhere but this site.<br><br>Leaving out the scheme does not mean either one is allowed: the browser only matches it against this site's own scheme, https on almost every site. A website using plain http instead, such as a local development site, needs to be written as <em>http://www.example.com</em>, or the browser will refuse to display this screen there.");
+define("_AM_SCREEN_SETTINGS_EMBED_CODE", "Code for the other website's page");
+define("_AM_SCREEN_SETTINGS_EMBED_CODE_DESC", "Paste this into the page that is to display the screen. Include the script once per page, however many screens that page shows. Each screen stays as tall as its content, so there is no height to guess at, and as wide as the page gives it, but never narrower than 400 pixels, so it cannot end up too narrow to use.<br><br>Change the address in the code to one on the same domain as the page you are pasting it into, and set that address up on this server, or visitors will not be signed in and will not be able to submit the screen.<br><br>How embedding works, start to finish: <a href='https://formulize.org/developers/embedding_screens/' target='_blank'>formulize.org/developers/embedding_screens</a><br>Setting up the address on this server: <a href='https://formulize.org/developers/embedding_screens_setup/' target='_blank'>formulize.org/developers/embedding_screens_setup</a>");
+
+// Website address lists, and the embedding settings that use them
+// (formulize_originSettingWarningHtml() and formulize_embedSessionSharingNoticeHtml()
+//  in modules/formulize/include/functions.php)
+define("_AM_ORIGINS_UNREADABLE_ONE", "This entry is being ignored, because it cannot be read as a website address:");
+define("_AM_ORIGINS_UNREADABLE_MANY", "These entries are being ignored, because they cannot be read as website addresses:");
+define("_AM_ORIGINS_UNREADABLE_HELP", "Write each website on its own line, as a domain such as <i>www.example.com</i>, or with a scheme, <i>https://www.example.com</i>.");
+define("_AM_ORIGINS_UNUSABLE_ONE", "This entry is a website address, but it cannot be used here:");
+define("_AM_ORIGINS_UNUSABLE_MANY", "These entries are website addresses, but they cannot be used here:");
+define("_AM_ORIGINS_UNUSABLE_HELP", "A single <code>*</code> means every website, which embedding does not accept: leaving the list empty already means no website may embed this. Only <i>http</i> and <i>https</i> addresses can be used, because those are the only ones a page can be framed over.");
+define("_AM_ORIGINS_KEPT", "Everything has been kept exactly as you wrote it, so you can correct it. Everything else in the list is in use.");
+
+define("_AM_EMBED_SESSION_DEPENDS_TITLE", "Whether an embedded screen is signed in depends on where it is embedded.");
+// the first %s is the SameSite value set for the session cookie (eg. Lax); the second is this site's hostname
+define("_AM_EMBED_SESSION_DEPENDS_BODY", "The session cookie for this site is set to <code>SameSite=%s</code>, under Sessions &amp; cookies. Browsers send it into a frame only when the page doing the framing is on the same domain as this site (%s) and uses the same https or http. Embedded there, a screen shows the visitor their own data and saves normally, exactly as it would here. Embedded on any other domain, the session does not reach it: the screen is anonymous however the visitor is signed in, it can only show what the Anonymous group is allowed to see, and a passcode screen asks for the passcode again on the next page. <b>Anonymous visitors can still submit it</b>, as long as this site is https and their browser keeps a cookie for the embedded page - Safari does not, by default, and offers them a link to open the screen in its own window instead. Setting up an address on the same domain: <a href='https://formulize.org/developers/embedding_screens_setup/' target='_blank'>formulize.org/developers/embedding_screens_setup</a>");
+define("_AM_EMBED_SESSION_LIST_SAME", "<b>These share this site's session</b>, so screens embedded there are signed in and can be submitted:");
+define("_AM_EMBED_SESSION_LIST_CROSS", "<b>These are a different site to the browser</b>, so screens embedded there are anonymous, whoever is looking at them. Anonymous visitors can still submit:");
+define("_AM_EMBED_SESSION_DEPENDS_LMS", "If you are embedding in a system on another domain and your users need to see their own data there, such as a learning management system, change the SameSite setting to <i>None</i>. That works only in browsers that accept third-party cookies, which Safari does not by default. An address on the same domain as the host page is the only arrangement that works in every browser. Read the note that appears here when you do before you decide.");
+define("_AM_EMBED_SESSION_SHARED_TITLE", "Embedded screens on this site are logged in, not anonymous.");
+define("_AM_EMBED_SESSION_SHARED_BODY", "The session cookie for this site is set to <code>SameSite=None</code>, under Sessions &amp; cookies, so browsers do send it to a screen displayed in a frame on another website. A visitor who is signed in to this site sees their own data inside that other website's page, exactly as they would here.");
+define("_AM_EMBED_SESSION_SHARED_BROWSERS", "This depends on the visitor's browser accepting third-party cookies. Safari refuses them by default, and any browser can be set to. Those visitors see the screen as anonymous and cannot submit it; they are offered a link to open it in a new window instead. Giving Formulize an address on the same domain as the host page is the only arrangement that works in every browser: <a href='https://formulize.org/developers/embedding_screens_setup/' target='_blank'>formulize.org/developers/embedding_screens_setup</a>");
+define("_AM_EMBED_SESSION_SHARED_TRUST", "That makes the list of websites above the thing that decides who may display signed-in pages of this site. List only websites you control and trust. Any website named here, or on an individual screen, can put a signed-in page of this site inside a page of their own, and decide what appears around it.");
+
+define("_AM_EMBED_CODE_DEFAULT_TITLE", "Form");

@@ -1,0 +1,126 @@
+/*
+ * Overrides for showing a Formulize screen inside an iframe on another website.
+ *
+ * The site theme's stylesheet is loaded first (see theme.html) and most of this file only adjusts
+ * what that stylesheet assumes about the viewport. That is the whole point of keeping it separate:
+ * the site theme can be improved without this theme carrying a copy that quietly falls behind it.
+ * There is nothing here to re-sync when the site theme changes, only this short list to re-check.
+ *
+ * The exception is the session timeout warning at the bottom, which this theme styles outright
+ * rather than adjusts, because it is the theme that puts that markup on the page and no site theme
+ * can be relied on to have rules for it. See the comment there.
+ *
+ * It is called style.css, rather than something that describes what it holds, because ImpressCMS
+ * looks for exactly that name when it builds $icms_themecss (see xoops_getcss() in
+ * include/functions.php) and prints "The theme does not exist" across the top of the page when no
+ * theme folder has one.
+ *
+ * The host page sizes the iframe to its content, so the viewport in here is as tall as everything
+ * in it. A height in vh therefore grows again every time the iframe grows, and a scrolling region
+ * becomes a box the screen is trapped inside, instead of letting the host page do the scrolling.
+ */
+
+.site-layout__main {
+  width: 100%;
+  height: auto;
+}
+
+.main-content {
+  height: auto;
+  overflow: visible;
+}
+
+#xo-canvas-leftcolumn {
+  height: auto;
+  overflow: visible;
+}
+
+div.list-of-entries .card__body,
+.scrollbox {
+  height: auto;
+  max-height: none;
+}
+
+/* SESSION TIMEOUT WARNING
+ *
+ * Styled in full here rather than adjusted, because this theme cannot assume the site theme has
+ * styled it. The warning is injected by this theme's own theme.html, into a page that borrows
+ * whatever stylesheet the site happens to be wearing, and a site theme that has no rules for it
+ * leaves the markup bare: two loose icons and some text over the top of the form, with the close
+ * icon sitting wherever it lands in the middle of the sentence. So this theme owns the component
+ * outright, and it looks the same on an embedded screen whatever the site theme is.
+ *
+ * It is a banner in the normal flow rather than a floating box. Two reasons. Nothing can be
+ * covered by it, which matters most here because the host page decides what is around the iframe
+ * and we cannot see it. And position: fixed is no use anyway: the host sizes the iframe to its
+ * full content, so the viewport inside is as tall as the whole document and a fixed element has
+ * nothing to stick to. The iframe grows by the height of the banner when it appears, and
+ * theme.html asks the host to scroll it into view. */
+#session-timeout-warning {
+  position: relative; /* the icons below anchor to this box, not to the page */
+  top: auto;
+  left: auto;
+  right: auto;
+  width: auto;
+  max-width: none;
+  box-sizing: border-box;
+  /* inset a little on every side: this sits above the site theme's own container, so without a
+     margin it would run edge to edge against the sides of the iframe while the form inside is
+     indented, and a bordered, rounded box touching the frame edge reads as a rendering fault */
+  margin: 0.75em 0.75em 1.25em 0.75em;
+  padding: 1em 3.25em 1em 3.5em; /* room for the icon on the left, the close button on the right */
+  text-align: left;
+  background-color: #fffaf0;
+  color: #1a1a1a;
+  border: 1px solid #ce8c22;
+  border-left: 5px solid #ce8c22;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  z-index: 101;
+}
+
+#session-timeout-warning p {
+  margin: 0 0 0.4em 0;
+  line-height: 1.4;
+}
+
+#session-timeout-warning p:last-of-type {
+  margin-bottom: 0;
+}
+
+#session-timeout-warning img.session-timeout-warning-icon {
+  position: absolute;
+  top: 1em;
+  left: 1em;
+  width: 20px;
+  height: auto;
+}
+
+/* the whole point of the warning is that it can be dismissed, so the target is padded out to
+   something findable rather than left as the bare size of the gif */
+#session-timeout-warning img.session-timeout-warning-close {
+  position: absolute;
+  top: 0.6em;
+  right: 0.6em;
+  box-sizing: content-box;
+  padding: 7px; /* x.gif is only 11px square; this makes the target 25px */
+  cursor: pointer;
+  border-radius: 3px;
+  opacity: 0.65;
+}
+
+#session-timeout-warning img.session-timeout-warning-close:hover,
+#session-timeout-warning img.session-timeout-warning-close:focus {
+  opacity: 1;
+  background-color: rgba(206, 140, 34, 0.15);
+}
+
+/* narrow iframes: the icon column costs too much width to keep */
+@media (max-width: 420px) {
+  #session-timeout-warning {
+    padding: 2.5em 1em 1em 1em;
+  }
+  #session-timeout-warning img.session-timeout-warning-icon {
+    top: 0.75em;
+  }
+}

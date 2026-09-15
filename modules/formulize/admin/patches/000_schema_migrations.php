@@ -20,13 +20,7 @@ function formulize_run_schema_migrations($prev_dbversion, $required_dbversion) {
         // PATCH LOGIC GOES HERE
         print "<h2>Data Schema Updates and Internal Changes:</h2>";
 
-        // clear out the contents of the templates_c folder, just in case (some templates here are not Formulize templates, and updating the Formulize module is not sufficient to refresh them)
-        $templateFiles = scandir(XOOPS_ROOT_PATH.'/templates_c');
-        foreach($templateFiles as $templateFile) {
-            if($templateFile !== '.' AND $templateFile !== '..' AND $templateFile !== 'index.html') {
-                unlink(XOOPS_ROOT_PATH.'/templates_c/'.$templateFile);
-            }
-        }
+        // The templates_c clear that used to be here now runs on every update, from 002_always_run.
 
         $testsql = "SHOW TABLES";
         $resultst = $xoopsDB->queryF($testsql);
@@ -303,11 +297,8 @@ function formulize_run_schema_migrations($prev_dbversion, $required_dbversion) {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
         }
 
-				// if the registered users group does not have module_admin permission, then remove all edit_form permissions they might have from time immemorial
-				$gperm_handler = xoops_gethandler('groupperm');
-				if($gperm_handler->checkRight("module_admin", getFormulizeModId(), XOOPS_GROUP_USERS, 1) === false) {
-					$sql['remove_registered_users_edit_form_perms'] = "DELETE FROM ".$xoopsDB->prefix("group_permission")." WHERE gperm_name='edit_form' AND gperm_modid=".getFormulizeModId()." AND gperm_groupid=".XOOPS_GROUP_USERS;
-				}
+				// The removal of stray edit_form permissions from Registered Users now runs on every
+				// update, from 002_always_run.
 
         // if this is a standalone installation, then we want to make sure the session id field in the DB is large enough to store whatever session id we might be working with
         if (file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
@@ -741,24 +732,7 @@ function formulize_run_schema_migrations($prev_dbversion, $required_dbversion) {
 					print "Error: could not update legacy linked select elements with 'use default when blank' setting.<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
 				}
 
-				// Check for elementcontainero.php files in the modules/formulize/templates/screens subfolders, that DO NOT have $elementClass present in the contents
-				// Alert the user that they should update these files to include $elementClass for the Office Use Only layout to work in F8.1+
-				$elementContainerOFilesMissingElementClass = [];
-				$baseElementContainerDir = XOOPS_ROOT_PATH . '/modules/formulize/templates/screens';
-				$ecoDirectory = new RecursiveDirectoryIterator($baseElementContainerDir);
-				$iterator = new RecursiveIteratorIterator($ecoDirectory);
-				$regex = new RegexIterator($iterator, '/^.+\/elementcontainero\.php$/i', RecursiveRegexIterator::GET_MATCH);
-				$ecoFiles = array_keys(iterator_to_array($regex));
-				foreach ($ecoFiles as $ecoFilePath) {
-						$contents = file_get_contents($ecoFilePath);
-						if (strlen($contents) > 0 AND strpos($contents, '$elementClass') === false) {
-								$elementContainerOFilesMissingElementClass[] = $ecoFilePath;
-						}
-				}
-				if(count($elementContainerOFilesMissingElementClass) > 0) {
-					$ecoMessage = "You have one or more 'elementcontainero.php' files which are missing the \$elementClass variable used in Formulize 8.1+.\n\nThe normal usage looks like this:\n\nprint \"<div class='form-row \$elementClass' \$style id='\$elementContainerId'>\";\n\nThe 'Office Use Only' layout at the bottom of forms will not work correctly on the affected screens until these files are updated.\n\nThe affected files are:\n\n" . implode("\n", $elementContainerOFilesMissingElementClass);
-					echo '<script>alert(' . json_encode($ecoMessage) . ');</script>';
-				}
+				// The elementcontainero.php check now runs on every update, from 002_always_run.
 
 				// Scan custom per-screen openlisttemplate.php files for getAriaSort() definition.
 				// This function was moved to functions.php; if it remains in a custom template file it will
@@ -1018,23 +992,7 @@ NEWVERSION;
 					echo '<script>alert(' . json_encode($sortLinkWriteMessage) . ');</script>';
 				}
 
-				// Webmasters group needs explicit view_form permission on every form always! Or else the owner groups column won't work, and that will mess up datasets because the found owner groups to the mainform records in the datasets won't be parallel to that actual dataset (it will be mising owner group info for the Webmasters group for any entries created by webmasters!)
-				$sql = "SELECT id_form FROM ".$xoopsDB->prefix('formulize_id')." AS f WHERE NOT EXISTS(SELECT 1 FROM ".$xoopsDB->prefix("group_permission")." AS p WHERE p.gperm_itemid = f.id_form AND p.gperm_name = 'view_form' AND p.gperm_groupid = 1)";
-				$viewFormAssigned = false;
-				if($res = $xoopsDB->query($sql)) {
-					$viewFormAssigned = true;
-					$formulizeModId = getFormulizeModId();
-					while($row = $xoopsDB->fetchRow($res)) {
-						$formId = intval($row[0]);
-						$sql = "INSERT INTO ".$xoopsDB->prefix("group_permission")." (`gperm_itemid`, `gperm_groupid`, `gperm_name`, `gperm_modid`) VALUES ($formId, 1, 'view_form', $formulizeModId)";
-						if($xoopsDB->queryF($sql) == false) {
-							$viewFormAssigned = false;
-						}
-					}
-				}
-				if(!$viewFormAssigned) {
-						print "Error: could assign 'View Form' permission for Webmasters to all forms.<br>".$xoopsDB->error()."<br>Assign this permission manually for Webmasters to all forms, or please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
-				}
+				// The Webmasters view_form repair now runs on every update, from 002_always_run.
 
 				// add opening <?php tags to code snippets that don't have them... only if we haven't yet moved custom_code to a renamed code folder!
 				// 1. derived value formulas $ele_value[0]
@@ -1544,8 +1502,7 @@ NEWVERSION;
         // Ensure field_options column can hold the full timezone list
         $sql = "ALTER TABLE ".$xoopsDB->prefix("profile_field")." MODIFY `field_options` TEXT NOT NULL DEFAULT ''";
         $xoopsDB->queryF($sql);
-        // Always update timezone options list (keeps in sync with PHP's timezone database)
-        formulize_update_timezone_options($xoopsDB);
+        // The timezone options list is refreshed on every update, from 002_always_run.
 
         // if this is the first time we're adding the saveandleave and printable view options... set the values to the language constants
         if($needToSetSaveAndLeave) {
@@ -2261,8 +2218,16 @@ function codeInNeedOfConversion() {
 }
 
 // Auto-discovery entry point: called by xoops_module_update_formulize() via the patches loop.
-// Schema migrations are idempotent — safe to run on every update regardless of version.
+//
+// This file is closed to new work. Everything in it brings a site up to database version 18, and a
+// site already at 18 or beyond has had all of it. Schema changes from here on get their own numbered
+// patch file, gated on the version that introduces them, and anything that genuinely has to happen on
+// every update belongs in 002_always_run - several such safety nets were moved there when this gate
+// was added, precisely because they would otherwise have stopped running.
 function formulize_patch_000_schema_migrations($prev_dbversion, $required_dbversion) {
+    if ($prev_dbversion >= 18) {
+        return true; // everything here is already applied, and nothing new is added to this file
+    }
     // formulize_run_schema_migrations() is idempotent ("can be run over and over non-destructively"),
     // reports problems inline, and exit()s on the few truly catastrophic cases (e.g. being unable to
     // move the custom_code folder). It does not currently distinguish soft failures, so we return true

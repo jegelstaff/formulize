@@ -204,3 +204,14 @@ function formulize_exception_handler($exception) {
 }
 
 set_exception_handler('formulize_exception_handler');
+
+// The core bootstrap has already said that only this site may frame its pages, before any settings
+// could be read. Now that they can be, allow the websites an administrator has named for the whole
+// site. A screen with its own list adds to this again when it renders.
+if ($siteFrameAncestors = formulize_siteFrameAncestors()) {
+    formulize_sendFrameAncestorsHeader($siteFrameAncestors);
+}
+
+// An anonymous visitor inside somebody else's frame gets no session cookie back, so their security
+// tokens have to be tied to something else or nothing they submit can ever be saved.
+formulize_issueAnonTokenBindCookie();
