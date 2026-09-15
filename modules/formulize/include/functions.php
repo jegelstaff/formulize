@@ -1317,8 +1317,172 @@ function formulize_signAnonEntryToken($fid, $entry_id, $expires) {
 }
 
 /**
- * Set the hardened, signed anonymous-entry cookie for a form, and update $_COOKIE so
- * the value is available within the current request.
+ * The name this site's session cookie goes by.
+ *
+ * A site can rename it, so asking PHP alone gets the wrong answer on a site that has.
+ *
+ * @return string The cookie name to look for in $_COOKIE
+ */
+function formulize_sessionCookieName() {
+    global $icmsConfig;
+    return ($icmsConfig['use_mysession'] AND $icmsConfig['session_name'] != '')
+        ? $icmsConfig['session_name'] : session_name();
+}
+
+/**
+ * Whether this request has to depart from the site's own cookie policy for a cookie to work at all.
+ *
+ * A browser will not send a SameSite=Lax cookie to a page inside somebody else's frame, and will not
+ * store one sent back from there either. So on an embedded request, a cookie written under the
+ * site's usual policy is simply thrown away, and everything that depends on it - saving an entry,
+ * returning to one - fails with nothing to show for it.
+ *
+ * Three things all have to be true before we override that policy, and each one matters:
+ *
+ *  - the site is https. SameSite=None is only honoured on a Secure cookie, so without https there
+ *    is nothing to be done here and pretending otherwise would just write a cookie browsers drop.
+ *  - the BROWSER says this is a frame load. Never the formulize_embed parameter: that is something a
+ *    visitor can type, and writing a cross-site cookie because a request asked us to would let any
+ *    page on the internet decide how our cookies are scoped.
+ *  - the site's own policy is not already None, in which case its cookies already reach the frame
+ *    and there is nothing to fix. We only ever deviate from what an administrator has configured
+ *    when that configuration would otherwise break the page in front of them.
+ *
+ * @return bool TRUE if cookies written on this request should be scoped to work inside a frame
+ */
+function formulize_embeddedCookieOverrideApplies() {
+    static $applies = null;
+    if ($applies === null) {
+        // ICMS_URL rather than $_SERVER['HTTPS'], to agree with the session cookie: behind a reverse
+        // proxy (see the embedding setup documentation) the connection to the browser is https while
+        // this server's own connection is not, and only the configured URL knows that.
+        $secure = (substr(ICMS_URL, 0, 5) == 'https');
+        $applies = ($secure
+            AND formulize_isAuthoritativelyEmbeddedRequest()
+            AND icms_core_Session::cookieSameSite($secure) !== 'None');
+    }
+    return $applies;
+}
+
+/**
+ * Write a cookie, scoped so that it survives wherever this request is being rendered.
+ *
+ * The one place Formulize's own cookies are written, so that the rules about how they are scoped
+ * live in a single place rather than being restated at each cookie.
+ *
+ * Off an embedded request the cookie follows the site's own SameSite preference. On one it is
+ * written SameSite=None so the browser will keep it, and Partitioned with it, which is what confines
+ * that decision: a partitioned cookie is filed under the website doing the embedding, so the value
+ * written while this screen sits in one website's page cannot be read, or planted, from another's.
+ * Browsers that do not know the attribute ignore it and keep the cookie as an ordinary one.
+ *
+ * Written as a header rather than through setcookie(), which has no way to say Partitioned.
+ *
+ * @param string $name The cookie name
+ * @param string $value The value to store
+ * @param int $expires Unix timestamp the cookie should be dropped at
+ * @return bool TRUE if the cookie was written, FALSE if the response had already begun
+ */
+function formulize_setCookie($name, $value, $expires) {
+    if (headers_sent()) {
+        // Nothing is recorded in $_COOKIE either. A value there says "the browser has this", and
+        // acting on one the browser was never sent would be worse than failing here: a token filed
+        // under a key that can never come back cannot be validated by anybody, ever.
+        return false;
+    }
+    $secure = (substr(ICMS_URL, 0, 5) == 'https');
+    $partitioned = formulize_embeddedCookieOverrideApplies();
+    if ($partitioned) {
+        $secure = true;
+        $sameSite = 'None';
+    } else {
+        $sameSite = icms_core_Session::cookieSameSite($secure);
+    }
+    header('Set-Cookie: '.rawurlencode($name).'='.rawurlencode($value)
+        .'; Expires='.gmdate('D, d-M-Y H:i:s \G\M\T', $expires)
+        .'; Max-Age='.max(0, $expires - time())
+        .'; Path=/' // available anywhere in the domain (not just the current folder)
+        .($secure ? '; Secure' : '')
+        .'; HttpOnly' // only ever read server side, so an injected script cannot read it
+        .'; SameSite='.$sameSite
+        .($partitioned ? '; Partitioned' : ''), false); // false: add to any cookies already being set
+    $_COOKIE[$name] = $value; // so the rest of this request sees what the browser is being given
+    return true;
+}
+
+/**
+ * The value that anonymous visitors' security tokens are tied to, in place of their session id.
+ *
+ * Security tokens are filed under the session id, so that a token issued to one browser cannot be
+ * redeemed by another - which is what stops somebody collecting a token of their own and then
+ * getting an unrelated visitor's browser to submit it. Inside somebody else's frame there is no
+ * session to file them under: the session cookie never arrives, so every request begins a new one,
+ * and a token issued while the page was drawn can never be found again when it is submitted.
+ *
+ * This is the replacement for anonymous visitors: a cookie that carries nothing but an unguessable
+ * value, and exists only to be the name the token is filed under. It is not a session, holds no
+ * identity, and grants nothing on its own.
+ *
+ * Only for visitors who are not logged in. A logged in request always files its tokens under the
+ * real session id, whatever cookies happen to be in the browser, so the protection on an account
+ * is never the weaker of the two.
+ *
+ * Reading only, and deliberately: the cookie is issued in one place, by
+ * formulize_issueAnonTokenBindCookie(), so that validating a token can never have a side effect of
+ * its own and there is only ever one answer to when a visitor gets one.
+ *
+ * @return string The value to file tokens under, or an empty string to use the session instead
+ */
+function formulize_anonTokenBindKey() {
+    if (!empty($GLOBALS['xoopsUser']) OR !empty(icms::$user)) {
+        return ''; // logged in: the session is the only thing their tokens are ever tied to
+    }
+    if (isset($_COOKIE[formulize_sessionCookieName()])) {
+        return ''; // the session came back, so it can do this job and nothing needs standing in for it
+    }
+    if (!isset($_COOKIE[FORMULIZE_ANON_BIND_COOKIE])) {
+        return '';
+    }
+    $key = (string) $_COOKIE[FORMULIZE_ANON_BIND_COOKIE];
+    // This value becomes part of a filename and of a glob() pattern, and unlike a session id it was
+    // written by the visitor. Nothing but the 64 hex characters it is supposed to be will do:
+    // anything else is discarded rather than repaired, so that no ../ or * can reach disk.
+    return (strlen($key) === 64 AND ctype_xdigit($key)) ? strtolower($key) : '';
+}
+
+/**
+ * Issue the cookie that anonymous visitors' security tokens are tied to, if this request warrants one.
+ *
+ * Called once, from the module bootstrap, for two reasons. A cookie is a header, so it has to be
+ * written before a page has begun composing its response - by the time a screen is drawing itself
+ * and asking for a token it can be too late. And it means the answer to "when does a visitor get
+ * one of these" is in a single place rather than implied by whoever happens to ask for a key first.
+ *
+ * Only a frame load issues one, which is what formulize_embeddedCookieOverrideApplies() decides. A
+ * request the framed page makes for itself afterwards - an XMLHttpRequest, say - is reported by the
+ * browser as something other than a frame load, and reuses the cookie already in the browser rather
+ * than being refused a key.
+ *
+ * @return void
+ */
+function formulize_issueAnonTokenBindCookie() {
+    if (formulize_anonTokenBindKey() OR !formulize_embeddedCookieOverrideApplies()) {
+        return; // already has a usable one, or is not entitled to one
+    }
+    if (!empty($GLOBALS['xoopsUser']) OR !empty(icms::$user)) {
+        return; // logged in: their tokens are tied to the session and this would never be read
+    }
+    global $icmsConfig;
+    $lifetime = (isset($icmsConfig['session_expire']) AND intval($icmsConfig['session_expire']))
+        ? intval($icmsConfig['session_expire']) * 60 : 3600;
+    formulize_setCookie(FORMULIZE_ANON_BIND_COOKIE, bin2hex(random_bytes(32)), time() + $lifetime);
+}
+
+/**
+ * Set the hardened, signed anonymous-entry cookie for a form.
+ *
+ * Scoped by formulize_setCookie(), so an entry saved from inside somebody else's frame can still be
+ * returned to there - on that website's page, which is the only place the cookie is filed under.
  *
  * @param int $fid The form ID
  * @param int $entry_id The entry ID to grant the anonymous visitor access to
@@ -1327,16 +1491,7 @@ function formulize_signAnonEntryToken($fid, $entry_id, $expires) {
 function formulize_setAnonEntryCookie($fid, $entry_id) {
     $cookieName = 'entryid_'.intval($fid);
     $expires = time()+60*60*24*7; // 7 days, sliding (refreshed each time the anon saves)
-    $cookieValue = formulize_signAnonEntryToken($fid, $entry_id, $expires);
-    $secure = (!empty($_SERVER['HTTPS']) AND strtolower($_SERVER['HTTPS']) !== 'off');
-    setcookie($cookieName, $cookieValue, array(
-        'expires' => $expires,
-        'path' => '/', // available anywhere in the domain (not just the current folder)
-        'secure' => $secure,
-        'httponly' => true, // only ever read server side
-        'samesite' => 'Lax',
-    ));
-    $_COOKIE[$cookieName] = $cookieValue;
+    formulize_setCookie($cookieName, formulize_signAnonEntryToken($fid, $entry_id, $expires), $expires);
 }
 
 /**

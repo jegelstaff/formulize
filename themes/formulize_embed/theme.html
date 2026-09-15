@@ -163,30 +163,12 @@ if($xoopsUser) {
             }
         }
 
-        // Every token check needs the session, and the session needs a cookie the browser will keep.
-        //
-        // Writing a cookie from script only catches a browser that refuses them outright. A browser
-        // that keeps cookies for this frame in a box of their own passes that test while the session
-        // cookie is still turned away, so the script test cannot be the whole answer: ask the server
-        // whether its cookie came back instead. By the time this runs the browser has either kept the
-        // cookie from the page response or refused it, so the answer is the real one.
-        function scriptCookiesBlocked() {
-            try {
-                document.cookie = 'formulize_embed_test=1;SameSite=Lax;path=/';
-                var stored = document.cookie.indexOf('formulize_embed_test=') !== -1;
-                document.cookie = 'formulize_embed_test=;Max-Age=0;path=/';
-                return !stored;
-            } catch (e) {
-                return true;
-            }
-        }
-
+        // Only the server can say whether a cookie this screen can be submitted with came back, so
+        // only the server is asked - see formulize_embed_session_check.php. Do not add a test from
+        // script here: writing a cookie to see if it sticks reports failure inside a frame even when
+        // the one the screen relies on was kept.
         function checkSessionSurvives() {
             if (!embedded) {
-                return;
-            }
-            if (scriptCookiesBlocked()) {
-                post('formulize:sessionUnavailable');
                 return;
             }
             jQuery.ajax({

@@ -211,3 +211,7 @@ set_exception_handler('formulize_exception_handler');
 if ($siteFrameAncestors = formulize_siteFrameAncestors()) {
     formulize_sendFrameAncestorsHeader($siteFrameAncestors);
 }
+
+// An anonymous visitor inside somebody else's frame gets no session cookie back, so their security
+// tokens have to be tied to something else or nothing they submit can ever be saved.
+formulize_issueAnonTokenBindCookie();

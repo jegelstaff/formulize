@@ -2797,21 +2797,58 @@ function setupAuthentication() {
 }
 
 /**
- * Determine if this request is a document being loaded inside an iframe, ie: a Formulize screen
- * embedded in another website. Browsers send Sec-Fetch-Dest on every navigation in the frame,
+ * Determine if this request should be RENDERED as an embedded screen, ie: drawn without the site's
+ * menus, header and footer. Browsers send Sec-Fetch-Dest on every navigation in the frame,
  * including form submissions and page turns, so embedded mode survives the whole interaction
  * without any state being stored in the session or carried in the URL.
- * The formulize_embed request parameter is a fallback for browsers that don't send the header.
+ *
+ * The formulize_embed request parameter answers a deliberately broader question than the header
+ * does, and it is not only a compatibility fallback. Two things need it:
+ *
+ *  - browsers that do not send Sec-Fetch-Dest at all, which would otherwise show the whole site
+ *    inside the frame
+ *  - the "open this form in a new window" fallback, which is a TOP LEVEL load and so is honestly
+ *    reported by the browser as a document rather than an iframe. It still wants the embedded
+ *    rendering: the visitor is working on somebody else's website, and handing them the whole
+ *    Formulize site at that point is further from what the page's designer intended, not closer.
+ *
+ * Because the parameter is something the visitor can type, THIS FUNCTION MUST ONLY EVER DECIDE HOW
+ * A PAGE IS PRESENTED. Spoofing it is harmless there - somebody sees a page without menus. Anything
+ * that grants access, or changes what is written or trusted, has to ask
+ * formulize_isAuthoritativelyEmbeddedRequest() instead.
  *
  * @return bool TRUE if this request should be treated as embedded
  */
 function formulize_isEmbeddedRequest() {
 	static $embedded = null;
 	if ($embedded === null) {
-		$embedded = ((isset($_SERVER['HTTP_SEC_FETCH_DEST']) AND $_SERVER['HTTP_SEC_FETCH_DEST'] === 'iframe')
+		$embedded = (formulize_isAuthoritativelyEmbeddedRequest()
 			OR !empty($_REQUEST['formulize_embed']));
 	}
 	return $embedded;
+}
+
+/**
+ * Determine if the BROWSER says this request is a document being loaded into a frame.
+ *
+ * The same question as formulize_isEmbeddedRequest(), minus the part a visitor can type. Sec-Fetch-Dest
+ * is set by the browser from what is actually happening, and pages have no way to override it: it is
+ * not reachable from fetch(), XMLHttpRequest or any markup, so a page on another website cannot make
+ * a victim's browser claim to be framing us when it is not.
+ *
+ * Use this, never formulize_isEmbeddedRequest(), for anything with a consequence - in particular for
+ * deciding to write a cookie that will travel cross-site. A request that merely says it is embedded
+ * is not evidence of anything.
+ *
+ * Note this is only ever true of a frame NAVIGATION. A request the framed page makes for itself
+ * afterwards - an XMLHttpRequest, a script, an image - is honestly reported as something else, so
+ * code that runs in those requests cannot use this to recognise that it belongs to an embedded
+ * screen, and must not be written as though it can.
+ *
+ * @return bool TRUE if the browser reports this request as loading a document into a frame
+ */
+function formulize_isAuthoritativelyEmbeddedRequest() {
+	return (isset($_SERVER['HTTP_SEC_FETCH_DEST']) AND $_SERVER['HTTP_SEC_FETCH_DEST'] === 'iframe');
 }
 
 /**

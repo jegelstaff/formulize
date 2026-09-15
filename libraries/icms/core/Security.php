@@ -70,7 +70,7 @@ class icms_core_Security {
 		$timeout = time() + $timeout;
 		$token_id = hash('sha256',(uniqid(rand(), true)));
 		// save token data on the server
-		touch($this->tokenDir . '/' . $name . '_' . session_id() . '_' . $token_id . '_' . $timeout);
+		touch($this->tokenDir . '/' . $name . '_' . $this->tokenBindKey() . '_' . $token_id . '_' . $timeout);
 		$token = hash('sha256',($token_id.$_SERVER['HTTP_USER_AGENT'].XOOPS_DB_PREFIX));
 		return $token;
 	}
@@ -91,7 +91,7 @@ class icms_core_Security {
 			return false;
 		}
 		$validFound = false;
-		$sessionTokenFilesOfType = glob($this->tokenDir . '/' . $name . '_' . session_id() . '_*');
+		$sessionTokenFilesOfType = glob($this->tokenDir . '/' . $name . '_' . $this->tokenBindKey() . '_*');
 		foreach($sessionTokenFilesOfType as $tokenPathAndFileName) {
 			if($this->tokenExpired($tokenPathAndFileName)) {
 				unlink($tokenPathAndFileName);
@@ -121,6 +121,23 @@ class icms_core_Security {
 		}
 		$this->garbageCollection($name);
 		return $validFound;
+	}
+
+	/**
+	 * The name this request's tokens are filed under. ALTERED BY FREEFORM SOLUTIONS FOR FORMULIZE.
+	 *
+	 * The session id, except for an anonymous visitor inside somebody else's frame, whose session
+	 * cookie never reaches them: there, a cookie kept for the purpose stands in for it. See
+	 * formulize_anonTokenBindKey(), which answers by the same rule whether a token is being issued
+	 * or checked, so the two always agree on where to look without either having to work it out.
+	 *
+	 * @return string The value to file a token under, and to look for one under
+	 **/
+	private function tokenBindKey() {
+		if ($bindKey = formulize_anonTokenBindKey()) {
+			return $bindKey;
+		}
+		return session_id();
 	}
 
 	/**

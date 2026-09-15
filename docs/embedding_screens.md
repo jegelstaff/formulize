@@ -103,41 +103,52 @@ anonymous.
 
 ## Embedding on a different domain
 
-Skipping step 3 means the browser sends no cookies into the frame. Whoever is looking at the screen,
-Formulize sees an anonymous visitor with no session. With the settings at their defaults:
+Skipping step 3 means the browser sends your site's session cookie nowhere near the frame. Whoever is
+looking at the screen, Formulize sees an anonymous visitor with no session. With the settings at
+their defaults:
 
 - A screen the Anonymous group can view **displays normally**.
-- **Submitting fails.** The visitor sees *Error: the data you submitted could not be saved in the
-  database.*
+- **Anonymous visitors can submit it**, in browsers that allow an embedded page to keep a cookie of
+  its own. Formulize keeps one small cookie for this, holding nothing but an unguessable value, so
+  that it can tell a submission came from the browser the form was drawn in. Your Formulize site has
+  to be `https` for it — see below for the browsers this does not cover.
 - A screen that requires a login shows a short message and a link to open it in a new window, where
-  signing in works.
+  signing in works. Signed-in visitors are still anonymous inside the frame; only step 3 or the
+  SameSite change below alters that.
 - A screen protected by a passcode accepts the passcode and opens, then **asks for it again** on the
-  next page or when the visitor tries to save.
-- An anonymous visitor who saved an entry earlier **cannot return to it**. Every visit starts a blank
-  new entry.
+  next page or when the visitor tries to save. The passcode is held in the session, which is not
+  reaching the frame.
+- An anonymous visitor who saved an entry earlier **can return to it on the same website that
+  embedded it**, but not by visiting your Formulize site directly afterwards. The cookie that
+  remembers their entry is filed under the website doing the embedding, and is not visible anywhere
+  else.
 
-Under the screen, an **Open this form in a new window** link appears. The form works normally in that
-tab.
+**Where submitting still does not work:** browsers that refuse third-party cookies outright rather
+than keeping them separated per website. Safari does by default. Those visitors get an **Open this
+form in a new window** link under the screen, and the form works normally in that tab. Step 3 is
+still the only arrangement that works in every browser.
 
-### Making submissions work on a different domain
+### Making signed-in visitors and passcode screens work on a different domain
+
+Anonymous submitting is covered above and needs nothing set here. This is for the rest: visitors
+seeing their own data, and passcode screens.
 
 Change **SameSite** under **Settings → Advanced → Sessions & cookies** to `None`. Then, for visitors
 whose browser accepts third-party cookies:
 
-- Submitting works.
 - Passcode screens work.
 - Signed-in visitors see their own data, which is what a learning management system or a portal
   needs.
 
-Three things to know before you do it:
+Two things to know before you do it:
 
 - **Some browsers refuse third-party cookies whatever this is set to.** Safari does by default. Those
-  visitors get the behaviour listed above — the screen displays, submitting fails, and they are
-  offered the link to open it in a new window. There is no way to tell in advance how many of your
-  visitors this will be. Step 3 is the only arrangement that works in every browser.
-- **Anonymous visitors still cannot return to an entry they saved earlier**, on any browser.
+  visitors see the screen as anonymous, and are offered the link to open it in a new window. There is
+  no way to tell in advance how many of your visitors this will be. Step 3 is the only arrangement
+  that works in every browser.
 - With `None`, every website in your embedding lists can display signed-in pages of your site inside
-  a page of their own. List only websites you control and trust.
+  a page of their own. That is a much wider grant than anonymous submitting needs, which is why it is
+  not required for it. List only websites you control and trust.
 
 ## Choosing which websites may embed
 
@@ -259,20 +270,30 @@ Formulize it was in a frame, and the address in the iframe is missing `?formuliz
 code from the screen's settings page again — it includes the parameter.
 
 **The form displays but will not submit**, and the visitor sees *Error: the data you submitted could
-not be saved in the database.* The browser is not keeping cookies for the screen. Either the iframe
-address is not on the same domain as the host page — see step 3 and
-[the setup steps](../embedding_screens_setup/) — or it is, but one of those steps is incomplete. Open
-the iframe address directly in a browser: if the address bar moves to a different name as you click
-around, the server is not passing the requested hostname to Formulize.
+not be saved in the database.* The browser is not keeping any cookie for the screen. Check these in
+order:
 
-**The form will not submit for some people but works for others.** You have SameSite set to `None`
-and those people's browsers refuse third-party cookies. See
+1. **Is your Formulize site `https`?** The cookie that lets an anonymous visitor submit from inside a
+   frame cannot be set over plain `http` — browsers require it to be marked secure, and they only
+   accept that over `https`.
+2. **Is it Safari, or a browser set to block third-party cookies?** Then it cannot work on a different
+   domain at all, and step 3 is the answer.
+3. **If the iframe address *is* on the same domain as the host page**, one of the setup steps is
+   incomplete. Open the iframe address directly in a browser: if the address bar moves to a different
+   name as you click around, the server is not passing the requested hostname to Formulize. See
+   [the setup steps](../embedding_screens_setup/).
+
+**The form will not submit for some people but works for others.** Those people's browsers refuse
+third-party cookies, Safari's default. See
 [Embedding on a different domain](#embedding-on-a-different-domain).
 
-**A passcode screen keeps asking for the passcode.** The screen has no session. Same cause as above.
+**A passcode screen keeps asking for the passcode.** The passcode is kept in the session, and the
+session is not reaching the frame. This one needs SameSite set to `None`, or step 3.
 
-**An anonymous visitor cannot get back to the entry they saved.** Same cause as above. This one is
-not fixed by SameSite — it needs step 3.
+**An anonymous visitor cannot get back to the entry they saved** after going to your Formulize site
+directly. That is expected: the cookie remembering their entry is filed under the website that
+embedded the screen, and is deliberately not readable from anywhere else. Returning to the entry on
+the website that embedded it does work. Only step 3 makes the two the same place.
 
 **Everyone sees the screen as anonymous, but they are signed in to the LMS.** That is the default.
 See "Who can use an embedded screen" above.
