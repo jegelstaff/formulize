@@ -4,38 +4,65 @@ permalink: developers/github_pages/
 title: Github Pages
 ---
 
-# GitHub Pages and Jekyll Configuration
+# GitHub Pages and Jekyll configuration
 
-GitHub Pages is a conveninent system for hosting publically available web pages. You can generate a GitHub Pages site for your project by starting at [https://pages.github.com/](https://pages.github.com/).
+[formulize.org](https://www.formulize.org/) is a Jekyll site kept in the
+`/docs/` folder of the main [formulize](https://github.com/jegelstaff/formulize)
+repository, and published through GitHub Pages. To write or preview a page
+yourself, see [Writing and previewing documentation](/developers/version_control/documentation)
+— this page is about how the site is configured and how it actually gets
+deployed.
 
-You can manage the files for your GitHub Pages site through a **/docs** folder, or through a special branch called **gh-pages**. We use the **/docs** folder. The default address of the site is based on the user who has the repository and the repository name.  In Formulize's case, we use the GitHub Pages site as the basis for [https://www.formulize.org/](https://www.formulize.org/)
+## Configuration
 
-The Jekyll site relies on one main configuration file called **_config.yml**.  That file looks like this:
+The whole site is driven by `docs/_config.yml`:
 
-    markdown: kramdown
-    baseurl: /formulize
-    url: http://jegelstaff.github.io/formulize/
-    permalink: formulize/:title/
+```yaml
+title: Improvise. Organize. Customize.
+markdown: kramdown
+baseurl: ""
+url: https://formulize.org
+permalink: /:title/
+repository: jegelstaff/formulize
+```
 
-That file is critical for making sure the navigation and everything else works as expected.  Most pages of the site are written in Markdown, but regular HTML can be used as well.  For more details about writing documentation and the structure of the pages, [see the Documentation page](../version_control/documentation)
+`baseurl` is empty and `permalink` has no repository name in it, because the
+site is served from its own domain (formulize.org) rather than from a
+`github.io/<repo>/` path — so URLs and links across the site are written as
+plain absolute paths (`/features/`, `/developers/API`), not prefixed with
+anything.
 
-## Deploying documentation
+Most pages are Markdown (kramdown); a handful that lay out their own visual
+bands, like the homepage, are plain `.html`. Both are covered in
+[Writing and previewing documentation](/developers/version_control/documentation).
 
-Deployment of documentation is automatic as soon as you commit changes to the **/docs** folder.
+## How it deploys
 
-### For the record, if you use gh-pages... (not necessary in Formulize anymore)
+Deployment is automatic. There is no separate `gh-pages` branch and no manual
+publish step — pushing to `master` is enough. The actual work happens in
+[`.github/workflows/jekyll.yml`](https://github.com/jegelstaff/formulize/blob/master/.github/workflows/jekyll.yml),
+which runs on:
 
-If you use a **gh-pages** branch, then you can still keep documentation changes in your master branch, so your docs and code can be unified in the same commits. However, you then have to do a separate step to deploy documentation.
+- every push to `master`,
+- a manual run from the **Actions** tab (`workflow_dispatch`), and
+- a `repository_dispatch` fired by the News form on formulize.net whenever a
+  story is saved — publishing a news story therefore triggers its own
+  rebuild, without anyone needing to touch the repository. If that hook is
+  ever broken, running the workflow by hand from the Actions tab catches the
+  site back up.
 
-In the past, we maintained a working copy of the gh-pages branch, inside a **/formulize-docs/** folder of the master branch. This allowed us to make changes to the docs as part of regular commits. After commits, someone had to deploy the contents of the /formulize-docs/ folder to the gh-pages branch, by using the following script **from the root of their local git repository**:
+Besides building the Jekyll site, that workflow also fetches the current
+roadmap from the GitHub API, and briefly boots Formulize itself inside Docker
+so it can dump real MCP tool schemas for the [AI reference pages](/ai/mcp-reference/)
+— both fall back to their last committed values in `docs/_data/` if that step
+fails, so a CI hiccup in either one does not block the docs deploy. The build
+itself is the same command you would run locally:
 
-    git checkout gh-pages
-    git read-tree master:formulize-docs
-    git commit -m "Publish docs from master branch"
-    git push origin gh-pages
-    git checkout -- .
-    git checkout master
+```bash
+bundle exec jekyll build
+```
 
-Bad things will happen if you run that script from a folder other than the root of your local git repository.
-
-The script switches to the gh-pages branch, updates it with the contents of the /formulize-docs/ folder from the master branch, and then commits the changes and pushes them to GitHub.  Then it switches back to the master branch.
+The result is uploaded and published with GitHub's own `actions/deploy-pages`
+action — nothing formulize-specific there. The workflow file is the source of
+truth for the exact steps; this page just orients you to what it is doing and
+why.

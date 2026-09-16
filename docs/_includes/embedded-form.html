@@ -33,12 +33,25 @@
   that exists, the "open in its own window" link below the frame is the route
   that actually works, and the sessionUnavailable handler promotes it the moment
   the screen reports the problem.
+
+  PLAN PRE-SELECTION - /pricing/ and /signup/'s plan cards link here as
+  ?plan=level-1..4. The iframe's src is deliberately NOT set directly in the
+  HTML below (it's stashed in data-embed-src instead): a plain src attribute
+  starts loading immediately, before this page's own ?plan= param could be
+  read and appended, so the frame would always load without it. Building the
+  final src in the script below, forwarding the current page's own ?plan= if
+  present, means it's there from the very first request the frame makes -
+  see hosting_requests_which_plan on the Hosting Requests form (form 2),
+  which has a small script element of its own that reads it back out of
+  window.location.search inside the frame and pre-selects the matching radio
+  button. Harmless no-op on a screen with no such element and on a request
+  with no ?plan= param.
 {% endcomment %}
 
 <div class="embed-frame">
   <iframe data-formulize-embed
           class="embed-frame-iframe"
-          src="{{ site.forms_url }}/modules/formulize/index.php?sid={{ include.sid }}&amp;formulize_embed=1"
+          data-embed-src="{{ site.forms_url }}/modules/formulize/index.php?sid={{ include.sid }}&amp;formulize_embed=1"
           title="{{ include.title }}"
           data-formulize-embed-height="{{ include.height | default: 800 }}"
           data-formulize-embed-fallback="off"
@@ -46,10 +59,27 @@
 
   <p class="embed-frame-note" data-embed-note>
     Trouble with the form?
-    <a href="{{ site.forms_url }}/modules/formulize/index.php?sid={{ include.sid }}" target="_blank" rel="noopener">Open it in its own window</a>,
+    <a class="embed-frame-standalone-link" href="{{ site.forms_url }}/modules/formulize/index.php?sid={{ include.sid }}" target="_blank" rel="noopener">Open it in its own window</a>,
     or email <a href="mailto:info@formulize.org">info@formulize.org</a> and we will pick it up from there.
   </p>
 </div>
+
+<script>
+(function () {
+  var plan = new URLSearchParams(window.location.search).get('plan');
+  document.querySelectorAll('iframe[data-embed-src]').forEach(function (frame) {
+    if (frame.src) { return; } // already set, e.g. by an earlier run of this same script
+    var url = frame.getAttribute('data-embed-src');
+    if (plan) { url += '&plan=' + encodeURIComponent(plan); }
+    frame.src = url;
+  });
+  if (plan) {
+    document.querySelectorAll('.embed-frame-standalone-link').forEach(function (link) {
+      link.href += (link.href.indexOf('?') === -1 ? '?' : '&') + 'plan=' + encodeURIComponent(plan);
+    });
+  }
+})();
+</script>
 
 {% unless formulize_embed_script_loaded %}
 <script src="{{ site.forms_url }}/modules/formulize/libraries/embed/formulize-embed.js"></script>

@@ -1,35 +1,57 @@
 {% comment %}
-  The main menu. One variable holds every item - edit this line to reorder or
-  rename. "label,/url/" pairs, separated by pipes.
+  The main menu, from _data/nav.yml. Six top-level items - the same six
+  questions a stranger arrives with, in order: what is it, what could I build
+  with it, what is the AI story, what does it cost, where are the docs, is
+  this project alive. Videos are a format rather than a topic, so they sit
+  inside Examples and Docs rather than in the menu, and the community links
+  live in the footer.
 
-  The six items are the questions a stranger arrives with, in order: what is
-  it, what could I build with it, what is the AI story, what does it cost,
-  where are the docs, is this project alive. Videos are a format rather than a
-  topic, so they sit inside Examples and Docs rather than in the menu, and the
-  community links live in the footer.
+  Every item also carries a dropdown of its most-wanted subpages, so a
+  visitor can see what is inside a section and jump straight to a specific
+  page instead of landing on a hub page and hunting from there. The dropdown
+  is a shortcut past the top-level link, never a replacement for it - the
+  link itself always goes to that section's own page.
+
+  Dropdowns are CSS-only (:hover / :focus-within on li.has-dropdown), so they
+  degrade gracefully and work for keyboard users tabbing through. On the
+  mobile (checkbox) menu they render open inline instead of needing a second
+  toggle - see the max-width: 1060px rules in formulize.css.
 {% endcomment %}
-{% assign menu = "Features,/features/|Examples,/examples/|AI,/ai/|Pricing,/pricing/|Docs,/developers/|News,/news/" | split: "|" %}
 
 <header class="site-header">
   <div class="site-header-inner">
-    <a class="brand" href="{{ "/" | relative_url }}">
-      <img class="brand-logo" src="{{ "/assets/img/formulize-wordmark.png" | relative_url }}" alt="Formulize">
-      <span class="brand-tagline">{{ site.title }}</span>
-    </a>
+    {% comment %}
+      The logo and menu sit in their own box so the pattern behind the header
+      runs around them rather than behind the wordmark and the menu labels.
+      The two buttons stay outside it - they carry their own fill and border,
+      so they read as buttons on the pattern without needing the box.
+    {% endcomment %}
+    <div class="header-bar">
+      <a class="brand" href="{{ "/" | relative_url }}">
+        <img class="brand-logo" src="{{ "/assets/img/formulize-wordmark.png" | relative_url }}" alt="Formulize">
+        <span class="brand-tagline">{{ site.title }}</span>
+      </a>
 
-    <input class="nav-toggle" type="checkbox" id="nav-toggle">
-    <label class="nav-toggle-label" for="nav-toggle"><span class="bars"></span> Menu</label>
+      <input class="nav-toggle" type="checkbox" id="nav-toggle">
+      <label class="nav-toggle-label" for="nav-toggle"><span class="bars"></span> Menu</label>
 
-    <nav class="main-nav" aria-label="Main menu">
-      <ul>
-        {% for entry in menu %}
-          {% assign parts = entry | split: "," %}
-          {% assign label = parts[0] %}
-          {% assign href = parts[1] %}
-          <li><a href="{{ href | relative_url }}"{% if page.url contains href %} aria-current="page"{% endif %}>{{ label }}</a></li>
-        {% endfor %}
-      </ul>
-    </nav>
+      <nav class="main-nav" aria-label="Main menu">
+        <ul>
+          {% for item in site.data.nav %}
+            <li{% if item.children %} class="has-dropdown"{% endif %}>
+              <a href="{{ item.url | relative_url }}"{% if page.url contains item.url %} aria-current="page"{% endif %}{% if item.children %} aria-haspopup="true"{% endif %}>{{ item.label }}</a>
+              {% if item.children %}
+                <ul class="nav-dropdown">
+                  {% for child in item.children %}
+                    <li><a href="{{ child.url | relative_url }}"{% if page.url == child.url %} aria-current="page"{% endif %}>{{ child.label }}</a></li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      </nav>
+    </div>
 
     <div class="header-cta">
       <a class="btn btn-secondary btn-sm" href="{{ site.github.repository_url }}" target="_blank" rel="noopener">GitHub</a>

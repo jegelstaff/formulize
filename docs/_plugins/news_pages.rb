@@ -38,13 +38,18 @@ module Jekyll
 
     API_URL = "https://formulize.net/services/formulize-public-api/v1/form/news/read".freeze
 
-    # news_slug and news_type were added to the form for this plugin's benefit;
-    # both are optional in the data and both have fallbacks below, so entries
-    # that predate them still generate correctly.
+    # news_slug, news_type and news_pin were added to the form for this
+    # plugin's benefit; all are optional in the data and all have fallbacks
+    # below, so entries that predate them still generate correctly.
     FIELDS = %w[
       news_headline news_slug news_type news_teaser news_body
-      news_published_date news_link_text news_link_url news_image
+      news_published_date news_link_text news_link_url news_image news_pin
     ].freeze
+
+    # Truthy spellings for news_pin as the Public API might return it - the
+    # readable "Yes", or the raw stored value (Formulize's yn element type
+    # stores Yes as 1, not as a plain boolean).
+    PIN_TRUE_VALUES = %w[1 yes true].freeze
 
     RELEASES_DIR = File.join("news", "releases").freeze
     FETCH_ATTEMPTS = 3
@@ -63,6 +68,14 @@ module Jekyll
 
       stories  = entries.reject { |entry| entry["type"] == "Release" }
       releases = entries.select { |entry| entry["type"] == "Release" }
+
+      # A pinned story (news_pin in the News form, kept to at most one by the
+      # form's on_after_save hook) always leads the list, regardless of its
+      # publish date - everything else stays in normal newest-first order.
+      # Only stories are affected; the release feed and the combined RSS feed
+      # (built from `entries`, not `stories`) are unaffected by pinning.
+      pinned_stories, stories = stories.partition { |entry| entry["pinned"] }
+      stories = pinned_stories + stories
 
       entries.each do |entry|
         site.pages << story_page(site, entry)
@@ -194,7 +207,8 @@ module Jekyll
         "image"        => presence(raw["news_image"]),
         "link_text"    => presence(raw["news_link_text"]),
         "link_url"     => presence(raw["news_link_url"]),
-        "raw_slug"     => presence(raw["news_slug"])
+        "raw_slug"     => presence(raw["news_slug"]),
+        "pinned"       => PIN_TRUE_VALUES.include?(raw["news_pin"].to_s.strip.downcase)
       }
     end
 
@@ -207,10 +221,14 @@ module Jekyll
       presence(value) || "Announcement"
     end
 
+    # No length cap here: news_teaser is written by an author specifically to
+    # be used in full wherever a teaser appears, not as a snippet to be cut
+    # short. Cards that need equal height regardless of how long a given
+    # teaser runs handle that in CSS (grid stretch + a bottom-anchored "Read
+    # it" link), not by truncating the text.
     def teaser_for(raw)
       text = presence(raw["news_teaser"]) || presence(raw["news_body"]) || ""
-      flat = text.gsub(/\s+/, " ").strip
-      flat.length > 200 ? "#{flat[0, 199].rstrip}..." : flat
+      text.gsub(/\s+/, " ").strip
     end
 
     # news_body is Markdown, rendered through the site's own kramdown converter
