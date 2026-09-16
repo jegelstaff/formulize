@@ -22,7 +22,7 @@ full_width: true
     {%- for entry in page.entries %}
     <a class="post-teaser{% unless entry.image %} no-image{% endunless %}" href="{{ entry.url | relative_url }}">
       {%- if entry.image %}
-      <span class="post-teaser-thumb"><img class="washed" src="{{ entry.image }}" alt=""></span>
+      <span class="post-teaser-thumb"><img src="{{ entry.image }}" alt=""></span>
       {%- endif %}
       <span>
         <span class="post-meta"><time datetime="{{ entry.date }}">{{ entry.date_display }}</time></span>

@@ -3,19 +3,11 @@
   what does it cost). The footer carries the doing layer: four columns, each
   one a thing a visitor is actually trying to accomplish.
 {% endcomment %}
-<div class="page">
-  {% include action-strip.html %}
-</div>
-
 <footer class="site-footer">
   <div class="page">
+    {% include action-strip.html %}
+    <div class="footer-panel">
     <div class="footer-cols">
-      <div class="footer-brand">
-        <img class="brand-logo" src="{{ "/assets/img/formulize-wordmark.png" | relative_url }}" alt="Formulize">
-        <p>{{ site.description }}</p>
-        <p><a href="{{ "/get/" | relative_url }}">Get Formulize &rarr;</a></p>
-      </div>
-
       <div>
         <h3>Getting started</h3>
         <ul>
@@ -64,6 +56,7 @@
     <div class="footer-bottom">
       <span>Formulize is free and fully open source, GPL-2.0. Maintained by <a href="{{ site.github.repository_url }}" target="_blank" rel="noopener">The Formulize Project</a>.</span>
       <span><a href="{{ "/about/" | relative_url }}">Hosted data stays in Canada</a></span>
+    </div>
     </div>
   </div>
 </footer>

@@ -10,6 +10,27 @@ bundle install
 bundle exec jekyll serve     # http://localhost:4000
 ```
 
+Always run `jekyll serve` through `bundle exec`. This project's Gemfile.lock
+pins specific gem versions (including the GitHub Pages gem, which tracks what
+github.io actually runs); a bare `jekyll serve` uses whatever Jekyll happens
+to be installed globally instead, which is usually a different version and
+can behave differently from what actually gets deployed.
+
+To check a change from another device (a phone on the same Wi-Fi, say), bind
+to every network interface instead of just this machine:
+
+```
+bundle exec jekyll serve --host 0.0.0.0
+```
+
+Then, from the other device, browse to `http://<this-computer's-LAN-IP>:4000`
+— find that IP with `ipconfig` (Windows) or `ifconfig`/`ip addr` (macOS/Linux).
+Windows may prompt to allow Ruby through the firewall the first time; allow it
+for private networks.
+
+The published version of this same walkthrough is
+[Writing and previewing documentation](https://www.formulize.org/developers/version_control/documentation/).
+
 ## Information architecture
 
 The menu is the *understanding* layer, for people who have never heard of
