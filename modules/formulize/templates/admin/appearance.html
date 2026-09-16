@@ -1,34 +1,31 @@
-<div class="panel-content content">
+<div class="panel-content content fz-appearance">
 
-    <h2>Appearance</h2>
-    <blockquote>
-    <p>Customize the colours, font, and logo of the end-user interface. Each theme has its own settings, so pick the theme you want to change below. Variations of each colour (hover states, soft backgrounds, muted text) are derived automatically, so the interface always stays coherent.</p>
-    </blockquote>
-
-    <p>
-        <label for="appearance_theme_select"><b>Theme:</b></label>
+    <{* The theme picker governs everything below it, so it sits above the groups in
+       its own strip rather than reading as just another setting. *}>
+    <div class="fz-appearance-theme">
+        <label for="appearance_theme_select">Theme</label>
         <select id="appearance_theme_select" size="1">
         <{foreach from=$adminPage.themes key=themeDir item=themeName}>
             <option value="<{$themeDir}>" <{if $themeDir == $adminPage.selected_theme}>selected="selected"<{/if}>><{$themeName}><{if $themeDir == $adminPage.active_theme}> (active)<{/if}></option>
         <{/foreach}>
         </select>
-        <span style="font-size: smaller;">Each theme's settings are kept in the stylesheet generated for it, <{$adminPage.appearance_css}>. Delete that file to put this theme back to the defaults.</span>
-    </p>
+        <p class="fz-appearance-theme-note">Each theme's settings are kept in the stylesheet generated for it, <{$adminPage.appearance_css}>. Delete that file to put this theme back to the defaults.</p>
+    </div>
 
     <{if !$adminPage.theme_supports_appearance}>
-    <p style="color: #a86a14; font-weight: bold;">The <{$adminPage.selected_theme}> theme does not use the Formulize appearance settings, so anything saved here will be kept but won't change how that theme looks. A theme opts in by calling formulize_renderAppearanceHead() in its theme.html.</p>
+    <p class="fz-appearance-notice fz-appearance-notice-warning">The <{$adminPage.selected_theme}> theme does not use the Formulize appearance settings, so anything saved here will be kept but won't change how that theme looks. A theme opts in by calling formulize_renderAppearanceHead() in its theme.html.</p>
     <{/if}>
 
     <{if !$adminPage.appearance_dir_writable}>
-    <p style="color: #b3261e; font-weight: bold;">The web server cannot write to <{$adminPage.appearance_dir}>, and was not able to correct the permissions itself. This theme's settings are kept in the stylesheet generated in that folder, so nothing can be saved for it until that folder is made writable on your server.</p>
+    <p class="fz-appearance-notice fz-appearance-notice-error">The web server cannot write to <{$adminPage.appearance_dir}>, and was not able to correct the permissions itself. This theme's settings are kept in the stylesheet generated in that folder, so nothing can be saved for it until that folder is made writable on your server.</p>
     <{/if}>
 
     <{if $adminPage.saved}>
-    <p style="color: #2a7a4f; font-weight: bold;">Appearance settings saved.</p>
+    <p class="fz-appearance-notice fz-appearance-notice-success">Appearance settings saved.</p>
     <{/if}>
 
     <{foreach from=$adminPage.errors item=error}>
-    <p style="color: #b3261e; font-weight: bold;"><{$error}></p>
+    <p class="fz-appearance-notice fz-appearance-notice-error"><{$error}></p>
     <{/foreach}>
 
     <form id="appearance" name="appearance" method="post" enctype="multipart/form-data">
@@ -36,56 +33,69 @@
     <{* keeps a save on the theme that is being edited, whichever one that is *}>
     <input type="hidden" name="appearance_theme" value="<{$adminPage.selected_theme}>" />
 
-    <h3>Colours</h3>
-    <table style="max-width: 700px;">
-    <{foreach from=$adminPage.colours item=colour}>
-        <tr>
-            <td style="padding: 6px 12px 6px 0; white-space: nowrap; vertical-align: top;">
-                <label for="appearance_<{$colour.key}>"><b><{$colour.label}></b></label><br/>
-                <span style="font-size: smaller;"><{$colour.description}></span>
-            </td>
-            <td style="padding: 6px 0; vertical-align: top; white-space: nowrap;">
-                <input type="color" id="appearance_<{$colour.key}>" name="appearance_<{$colour.key}>" value="<{$colour.value}>" data-default="<{$colour.default}>" oninput="appearanceSyncResetLinks();" />
-                <a href="#" class="appearance-reset" style="font-size: smaller;" onclick="document.getElementById('appearance_<{$colour.key}>').value = '<{$colour.default}>'; appearanceSyncResetLinks(); return false;">Reset to default (<{$colour.default}>)</a>
-            </td>
-        </tr>
-    <{/foreach}>
-    </table>
-
-    <br/><hr/><br/>
-
-    <h3>Font</h3>
-    <p>
-        <select name="appearance_font" id="appearance_font" onchange="appearanceToggleCustomFont();">
-        <{foreach from=$adminPage.fonts key=fontKey item=fontLabel}>
-            <option value="<{$fontKey}>" <{if $adminPage.currentFont == $fontKey}>selected="selected"<{/if}>><{$fontLabel}></option>
+    <fieldset class="fz-appearance-group">
+        <legend>Colours</legend>
+        <{* A grid rather than a table: the swatches are of equal weight and want to sit
+           side by side, so they reflow from three columns to one as the window narrows
+           instead of leaving a table's worth of empty space to the right of them. *}>
+        <div class="fz-appearance-colours">
+        <{foreach from=$adminPage.colours item=colour}>
+            <div class="fz-appearance-colour">
+                <input type="color" class="fz-appearance-swatch" id="appearance_<{$colour.key}>" name="appearance_<{$colour.key}>" value="<{$colour.value}>" data-default="<{$colour.default}>" oninput="appearanceSyncResetLinks();" />
+                <div class="fz-appearance-colour-text">
+                    <label for="appearance_<{$colour.key}>"><{$colour.label}></label>
+                    <span class="fz-appearance-hint"><{$colour.description}></span>
+                    <a href="#" class="appearance-reset" onclick="document.getElementById('appearance_<{$colour.key}>').value = '<{$colour.default}>'; appearanceSyncResetLinks(); return false;">Reset to <{$colour.default}></a>
+                </div>
+            </div>
         <{/foreach}>
-        </select>
-    </p>
-    <p id="appearance_customfont_row">
-        Google Font name: <input type="text" name="appearance_customfont" value="<{$adminPage.currentCustomFont}>" placeholder="e.g. Roboto" />
-        <br/><span style="font-size: smaller;">Enter the exact font name as it appears on <a href="https://fonts.google.com" target="_blank">fonts.google.com</a>. The font will be loaded from Google Fonts.</span>
-    </p>
+        </div>
+    </fieldset>
 
-    <br/><hr/><br/>
+    <fieldset class="fz-appearance-group">
+        <legend>Font</legend>
+        <div class="fz-appearance-field">
+            <label for="appearance_font">Font family</label>
+            <select name="appearance_font" id="appearance_font" onchange="appearanceToggleCustomFont();">
+            <{foreach from=$adminPage.fonts key=fontKey item=fontLabel}>
+                <option value="<{$fontKey}>" <{if $adminPage.currentFont == $fontKey}>selected="selected"<{/if}>><{$fontLabel}></option>
+            <{/foreach}>
+            </select>
+        </div>
+        <div class="fz-appearance-field" id="appearance_customfont_row">
+            <label for="appearance_customfont">Google Font name</label>
+            <input type="text" id="appearance_customfont" name="appearance_customfont" value="<{$adminPage.currentCustomFont}>" placeholder="e.g. Roboto" />
+            <span class="fz-appearance-hint">Enter the exact font name as it appears on <a href="https://fonts.google.com" target="_blank">fonts.google.com</a>. The font will be loaded from Google Fonts.</span>
+        </div>
+    </fieldset>
 
-    <h3>Logo</h3>
-    <{if $adminPage.logoUrl}>
-    <p>Current logo:<br/><img src="<{$adminPage.logoUrl}>" alt="Current logo" style="max-height: 60px; background: #f1f1ed; padding: 8px; border-radius: 4px;" /></p>
-    <p><label><input type="checkbox" name="appearance_logo_remove" value="1" /> Remove the custom logo and use the theme's default logo</label></p>
-    <p>Replace logo: <input type="file" name="appearance_logo_file" accept="image/png,image/jpeg,image/gif,image/svg+xml,image/webp" /></p>
-    <{else}>
-    <p>The theme's default logo is in use. Upload an image to replace it (PNG, JPEG, GIF, SVG, or WebP):</p>
-    <p><input type="file" name="appearance_logo_file" accept="image/png,image/jpeg,image/gif,image/svg+xml,image/webp" /></p>
-    <{/if}>
+    <fieldset class="fz-appearance-group">
+        <legend>Logo</legend>
+        <{if $adminPage.logoUrl}>
+        <div class="fz-appearance-field">
+            <label>Current logo</label>
+            <img class="fz-appearance-logo" src="<{$adminPage.logoUrl}>" alt="Current logo" />
+        </div>
+        <div class="fz-appearance-field">
+            <label class="fz-appearance-checkbox"><input type="checkbox" name="appearance_logo_remove" value="1" /> Remove the custom logo and use the theme's default logo</label>
+        </div>
+        <div class="fz-appearance-field">
+            <label for="appearance_logo_file">Replace logo</label>
+            <input type="file" id="appearance_logo_file" name="appearance_logo_file" accept="image/png,image/jpeg,image/gif,image/svg+xml,image/webp" />
+        </div>
+        <{else}>
+        <div class="fz-appearance-field">
+            <label for="appearance_logo_file">Upload a logo</label>
+            <input type="file" id="appearance_logo_file" name="appearance_logo_file" accept="image/png,image/jpeg,image/gif,image/svg+xml,image/webp" />
+            <span class="fz-appearance-hint">The theme's default logo is in use. Upload a PNG, JPEG, GIF, SVG, or WebP image to replace it.</span>
+        </div>
+        <{/if}>
+    </fieldset>
 
-    <br/><hr/><br/>
-
-    <p>
+    <div class="fz-appearance-actions">
         <input type="submit" name="appearance_save" value="Save Appearance" />
-        &nbsp;&nbsp;
-        <input type="submit" name="appearance_reset" value="Reset Everything to Defaults" onclick="return confirm('Reset all appearance settings for the <{$adminPage.selected_theme}> theme to their defaults? This will also remove any logo uploaded for it.');" />
-    </p>
+        <input type="submit" class="fz-appearance-destructive" name="appearance_reset" value="Reset Everything to Defaults" onclick="return confirm('Reset all appearance settings for the <{$adminPage.selected_theme}> theme to their defaults? This will also remove any logo uploaded for it.');" />
+    </div>
 
     </form>
 
@@ -105,12 +115,16 @@ function appearanceToggleCustomFont() {
 }
 appearanceToggleCustomFont();
 
-// show each colour's reset link only when the picker differs from the default
+// show each colour's reset link only when the picker differs from the default. The
+// link lives alongside the label in the swatch's row, so the row is what gets asked
+// for it rather than the input's immediate parent.
 function appearanceSyncResetLinks() {
     document.querySelectorAll('#appearance input[type=color][data-default]').forEach(function (input) {
-        var link = input.parentNode.querySelector('.appearance-reset');
+        var row = input.closest('.fz-appearance-colour') || input.parentNode;
+        var link = row.querySelector('.appearance-reset');
         if (!link) return;
         var isDefault = input.value.toLowerCase() == input.getAttribute('data-default').toLowerCase();
+        // hidden rather than removed, so showing it never nudges the row's neighbours
         link.style.visibility = isDefault ? 'hidden' : 'visible';
     });
 }
