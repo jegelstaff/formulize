@@ -221,23 +221,37 @@ blockquote {
    space-16 more here on top of that (and, until the fix above, another
    space-12 from the footer's own margin-top) was three closing gaps
    stacked on each other before the footer even started. */
-.site-main { padding: var(--space-8) 0 0; }
+/* The opening gap belongs to the column, not to <main>: <main> is the full
+   width of the window and transparent, so padding here would be a full-width
+   strip of .page-top-pattern showing directly under the header box. Putting
+   it inside .page means the fill below covers it. */
+.site-main { padding: 0; }
+
+/* .page-top-pattern is fixed, so content keeps scrolling up through it.
+   Filling the column is what keeps the pattern out of it - what is left
+   showing is the margins either side, which is the whole point: an accent
+   down the edges of the page rather than a texture behind the words.
+
+   One fill on the column rather than one per paragraph, heading and button.
+   Those were tried, and the problem with them is edges - a run of text given
+   its own background is a rectangle sized to the text, and its edge slices
+   whatever pixels it lands on in half. The column's edges are the page
+   gutters, where there is nothing to cut. Scoped to <main>'s copy of .page;
+   the footer has one too and it is dark blue now. */
+.site-main > .page {
+  background-color: var(--color-bg);
+  padding-top: var(--space-8);
+}
 
 .band { padding: var(--space-12) 0; }
 .band + .band { padding-top: 0; }
 
-/* Wrap a band's contents in this where the band sits over one of the pattern
-   layers - .page-bottom-pattern reaching up past the footer into the bottom
-   of <main>, or .page-top-pattern trailing down from the header. Stray
-   pixels behind text or a button make them hard to read.
-
-   This was first tried as an invisible patch: page-coloured, sized to
-   fit-content so it hugged the text and let the pattern run past it. The
-   trouble with an invisible box is that it still has edges, and every edge
-   cut pixels in half somewhere. Being a visible card instead - the same
-   tinted, bordered card the Features and Pricing pages already end on -
-   means the boundary is deliberate, which is also why it can go full width
-   without looking like a rectangle punched out of the pattern. */
+/* Wrap a band's contents in this to give them the same tinted, bordered card
+   the Features and Pricing pages end on. It started out as protection - the
+   pixel pattern used to reach into the page at both ends, and text sitting
+   over it needed a clean ground - but the pattern is confined to the header
+   now and this is purely a visual device: a way to close a page off with
+   something more deliberate than another run of loose text. */
 .band-box {
   padding: var(--space-6);
   background-color: var(--color-accent-100);
@@ -276,17 +290,26 @@ blockquote {
   font-size: 15px;
   line-height: 1.2;
   white-space: nowrap;
-  color: var(--color-text);
+  /* Blue at rest, black on hover - on every button, filled or outlined. Set
+     once here rather than per role so .btn-primary's green fill and the
+     outlined ones can't drift apart. The only exception is the hero, further
+     down, where the button sits on blue and has to stay white.
+
+     900 rather than the 700 used for body links: on the green fill 700 is
+     only 4.8:1, and on the darker :active green it drops to 3.3:1, which
+     fails. 900 is 8.8:1 on the green and 12.2:1 on the page background,
+     while still leaving a visible step down to black on hover. */
+  color: var(--color-accent-900);
   background: transparent;
   border: 1px solid transparent;
   padding: var(--space-3) var(--space-6);
   border-radius: var(--radius-md);
   transition: background-color 120ms ease, color 120ms ease, transform 0.15s ease;
 }
-/* Hover is a scale-up, not a color change, on every button — same treatment
-   as the .action-strip tiles. :active (an actual press) still darkens, as
-   distinct feedback for the click itself rather than just pointing at it. */
-.btn:hover, .btn:focus-visible { transform: scale(1.05); }
+/* Hover is a scale-up plus the text going black — same scale treatment as
+   the .action-strip tiles. :active (an actual press) still darkens the fill,
+   as distinct feedback for the click itself rather than just pointing at it. */
+.btn:hover, .btn:focus-visible { transform: scale(1.05); color: var(--color-text); }
 /* Two roles, not three: primary (filled, the one strong action) and
    secondary (outlined, everything else). .btn-ghost used to be a third,
    borderless "plain text" role, but a button that looks like a run of text
@@ -300,35 +323,30 @@ blockquote {
    needing a whole separate class — one visual style everywhere,
    auto-adapting instead of hand-matched per spot. btn-brand dropped: nothing
    in the site referenced it. */
-.btn-primary { background: var(--color-cta); color: #000; }
-.btn-primary:active { background: var(--color-cta-active); color: #000; }
+/* No colour of their own: both roles take the blue/black from .btn above. */
+.btn-primary { background: var(--color-cta); }
+.btn-primary:active { background: var(--color-cta-active); }
 .btn-secondary,
 .btn-ghost {
   --btn-secondary-border: var(--color-divider);
-  --btn-secondary-text: var(--color-accent-700);
-  --btn-secondary-text-hover: var(--color-text);
   --btn-secondary-active-bg: color-mix(in srgb, var(--color-text) 14%, transparent);
   border-color: var(--btn-secondary-border);
-  color: var(--btn-secondary-text);
 }
-/* Text darkens to black on hover, same moment as the scale-up on .btn:hover
-   above - two cues for the same "this is the one under your cursor" signal
-   rather than the scale doing all the work on its own. */
-.btn-secondary:hover, .btn-secondary:focus-visible,
-.btn-ghost:hover, .btn-ghost:focus-visible { color: var(--btn-secondary-text-hover); }
 .btn-secondary:active,
 .btn-ghost:active { background: var(--btn-secondary-active-bg); }
-/* The one dark background a secondary button still sits on directly - the
-   header's own nav bar is a white surface now, so it uses the default
-   (dark-on-light) secondary style like everywhere else on the page. White
-   text throughout here (no separate hover shade) because both blue and
-   black read poorly against the hero's own blue. */
+/* The one place an outlined button sits straight on a dark panel with no
+   fill of its own, so it's the exception to the blue/black rule: both of
+   those disappear into the hero blue. Listed after .btn:hover deliberately -
+   same specificity, so being later is what keeps it white on hover too. In
+   the header, the equivalent button gets a light fill instead and so can
+   keep the normal blue/black. */
 .hero .btn-secondary,
-.hero .btn-ghost {
+.hero .btn-ghost,
+.hero .btn-secondary:hover,
+.hero .btn-ghost:hover {
   --btn-secondary-border: rgba(255, 255, 255, 0.7);
-  --btn-secondary-text: #fff;
-  --btn-secondary-text-hover: #fff;
   --btn-secondary-active-bg: rgba(255, 255, 255, 0.28);
+  color: #fff;
 }
 .btn-sm { padding: var(--space-2) var(--space-4); font-size: 14px; }
 .btn-block { width: 100%; }
@@ -357,41 +375,50 @@ blockquote {
   position: sticky;
   top: 0;
   z-index: 50;
-  /* The whole footer pattern was tried here once and read as circus-y: the
-     bold solid bars are unreadable behind nav text, and being sticky they
-     were on screen the entire time. What runs here instead is only the
-     sparse top quarter of that same image, rotated 180 so it starts at its
-     densest and thins out downwards - see .page-top-pattern, which carries
-     the rest of it down past the header. The header paints the identical
-     image at the identical position and size, so the two line up with no
-     offset to keep in sync: the header simply covers the top of the layer
-     with the same pixels. Keeping the fill opaque is what lets the header
-     stay sticky - once scrolled, it carries its own strip of the pattern
-     over the page instead of letting content show through. */
+  /* The header paints its own copy of the pattern, and .page-top-pattern
+     below carries the same image on down the page behind everything. Both
+     use the identical position and size and both are pinned to the top of
+     the viewport - sticky here, fixed there - so they stay lined up at any
+     scroll position with no offset to maintain.
+
+     padding-bottom is 0 deliberately. This element is the pattern's ground,
+     so any bottom padding is pattern showing directly under the header box,
+     full width. The gap before the content belongs to .site-main > .page
+     instead, which is filled and so covers the layer beneath it.
+
+     The image is the sparse top 40% of the footer pattern, rotated 180 so it
+     starts at its densest and thins downwards - the source is empty for its
+     first 15% and turns into solid bars past 50%, which is why the slice
+     stops at 40%.
+
+     Keeping the fill opaque is what lets the header stay sticky: once
+     scrolled it carries its own strip of the pattern over the page instead
+     of letting content show through. */
   background-color: var(--color-bg);
   background-image: url("/assets/img/pixel-bars-header.png");
   background-repeat: repeat-x;
   background-position: top center;
   background-size: 1300px auto;
-  padding: var(--space-4) 0 var(--space-4);
+  padding: var(--space-4) 0 0;
 }
 
-/* The continuation of the header's pattern below the header itself, so the
-   image gets its full 305px to thin out in rather than being cut off at the
-   nav. Same layer trick as .page-bottom-pattern: absolutely positioned
-   against <body>, z-index -1 so page content paints over it.
+/* The same image continuing below the header, so the pattern runs on down
+   the margins either side of the content instead of stopping dead at the
+   header box. The filled content column (see .site-main > .page) is what
+   keeps it out of the middle - between them, the pattern reads as an accent
+   down the page edges and never sits behind text.
 
-   305px is the top 32% of the source at the 1300px display width. The source
-   is empty for its first 15% and only reaches ~27% coverage by 32%, so
-   flipped that gives a visible field of pixels across the header thinning to
-   nothing about 150px below it - present at the top, gone before it reaches
-   the first band of a page that has no hero. */
+   Fixed rather than absolute so it stays put instead of scrolling away with
+   the top of the document. z-index: -1 puts it behind page content, which
+   works because <html> has no background of its own: body's --color-bg
+   propagates to the canvas and is painted below negative-z-index layers
+   rather than over them. Give <html> a background and this vanishes. */
 .page-top-pattern {
-  position: absolute;
+  position: fixed;
   left: 0;
   right: 0;
   top: 0;
-  height: 305px;
+  height: 381px;
   background-image: url("/assets/img/pixel-bars-header.png");
   background-repeat: repeat-x;
   background-position: top center;
@@ -405,32 +432,47 @@ blockquote {
    rather than under it. */
 [id] { scroll-margin-top: 96px; }
 
-/* The row itself is just layout now - the box is .header-bar inside it, so
-   the pattern shows in the gap between that box and the two buttons. */
+/* The row itself is just layout now - the box is .header-bar inside it. No
+   bottom padding, for the same reason .site-header has none: this element is
+   transparent, so any space below the bar is header background showing, and
+   header background is the pixel pattern. */
 .site-header-inner {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-3) var(--space-6);
+  padding: 0 var(--space-6);
   max-width: var(--page-max);
   margin: 0 auto;
 }
 
-/* Same card as .band-box, wrapped around the logo and menu: the pattern up
-   here is dense enough at its top edge to sit behind the wordmark and clip
-   the menu labels' descenders, which is what the box is for. */
+/* The same dark panel as the hero, minus the hero's texture - the pixel
+   pattern is already running behind and around this box, and a second
+   pattern inside it would be two textures fighting. Dark and heavy is the
+   point: it has to hold its own against the pattern rather than blend into
+   it the way the earlier light box did. */
 .header-bar {
   display: flex;
   align-items: center;
   gap: var(--space-6);
   flex: 1;
   min-width: 0;
-  padding: var(--space-2) var(--space-5);
-  background-color: var(--color-accent-100);
-  border: 1px solid var(--color-divider);
+  padding: var(--space-4) var(--space-6);
+  background-color: var(--color-hero);
   border-radius: calc(var(--radius-lg) * 1.15);
-  box-shadow: var(--shadow-sm);
+  color: #fff;
 }
+/* The logo gets its own box inside the bar, filled with the page background.
+   The wordmark's grey lettering and the dark blue border on its checkmark
+   were both drawn for a light ground and go muddy straight on the blue, and
+   recolouring artwork we don't control is not the fix - giving it back the
+   ground it was drawn for is. The tagline comes with it, so the two read as
+   one block. */
+.header-bar .brand {
+  background-color: var(--color-bg);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+}
+.header-bar .brand-tagline { color: var(--color-neutral-600); }
 
 .brand {
   display: flex;
@@ -461,20 +503,24 @@ blockquote {
   padding: 0;
 }
 .main-nav li { margin: 0; }
+/* White on the dark bar. Hover and the current-page marker are translucent
+   white rather than the accent tints they used to be, so they read as a
+   lightening of whatever is underneath instead of a light chip stamped on
+   the blue. */
 .main-nav a {
   display: block;
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-md);
-  color: var(--color-text);
+  color: #fff;
   text-decoration: none;
   font-size: 15.5px;
   font-weight: 500;
   white-space: nowrap;
 }
-.main-nav a:hover { background: var(--color-accent-100); color: var(--color-text); }
+.main-nav a:hover { background: rgba(255, 255, 255, 0.16); color: #fff; }
 .main-nav a[aria-current="page"] {
-  background: var(--color-accent-200);
-  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.24);
+  color: #fff;
 }
 
 /* Dropdowns: hover for a mouse, focus-within for a keyboard, so a Tab
@@ -489,8 +535,8 @@ blockquote {
   height: 5px;
   margin-left: 6px;
   margin-bottom: 1px;
-  border-right: 1.5px solid rgba(0, 0, 0, 0.55);
-  border-bottom: 1.5px solid rgba(0, 0, 0, 0.55);
+  border-right: 1.5px solid rgba(255, 255, 255, 0.7);
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.7);
   transform: rotate(45deg);
 }
 .main-nav .nav-dropdown {
@@ -533,10 +579,25 @@ blockquote {
   white-space: normal;
 }
 
-/* Outside .header-bar, straight on the pattern, so the outlined one needs a
-   fill of its own - transparent, the pixels would show through it. */
-.header-cta { display: flex; align-items: center; gap: var(--space-2); }
-.header-cta .btn-secondary { background-color: var(--color-accent-100); }
+/* Last in the bar, hard against its right edge. Stacked rather than in a
+   row: side by side the pair is wide enough to start squeezing the menu at
+   narrower desktop widths, and stacked they come out about the height of the
+   logo block at the other end. */
+.header-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+}
+/* Both buttons need a light fill to sit on the dark bar - the outlined one
+   has none of its own, and its divider-grey border disappears into the blue.
+   With a light fill it keeps the same blue-to-black text as every other
+   button on the site instead of needing the hero's white treatment. */
+.header-cta .btn-secondary {
+  background-color: var(--color-accent-100);
+  border-color: transparent;
+}
+.btn-icon { width: 16px; height: 16px; flex: none; }
 
 /* no-JS mobile menu toggle */
 .nav-toggle { display: none; }
@@ -546,28 +607,27 @@ blockquote {
   gap: var(--space-2);
   cursor: pointer;
   padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-divider);
+  border: 1px solid rgba(255, 255, 255, 0.55);
   border-radius: var(--radius-md);
   font-family: var(--font-heading);
   font-size: 13px;
-  color: var(--color-text);
+  color: #fff;
 }
 .nav-toggle-label .bars {
   display: block;
   width: 16px;
   height: 2px;
-  background: var(--color-text);
-  box-shadow: 0 5px 0 var(--color-text), 0 -5px 0 var(--color-text);
+  background: #fff;
+  box-shadow: 0 5px 0 #fff, 0 -5px 0 #fff;
 }
 
 /* ── social / download banner ───────────────────────────────────────────── */
 
 /* Opaque colours, not var(--color-divider) - that's a semi-transparent
-   black, meant to be composited over a known solid background. It worked
-   fine back when this strip always sat on the page's own solid colour, but
-   now that .page-bottom-pattern can sit behind it (see the footer, where
-   the strip lives now), transparent gap/border colours just let the
-   pattern show through as stray colour instead of reading as a grey line. */
+   black, meant to be composited over a known solid background. This strip
+   lives in the footer, which is dark blue, so a translucent black line would
+   darken into it and disappear rather than reading as the grey rule between
+   tiles that it is meant to be. */
 .action-strip {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -628,13 +688,12 @@ blockquote {
 .hero {
   position: relative;
   overflow: hidden;
+  /* Flat, no texture. This used to carry the site's own checkbox/plus/circle
+     tile; the pixel pattern around the header is the page's distinctive
+     element now, and a second texture inside the hero only competed with it
+     (and with the hero's own text). hero-pattern.png is left in the repo,
+     unreferenced, in case it is wanted back. */
   background-color: var(--color-hero);
-  /* The site's own checkbox/plus/circle tile, recoloured to white on
-     transparency so it reads as texture over whatever --color-hero is, instead
-     of carrying the old light blue ground with it. */
-  background-image: url('../img/hero-pattern.png');
-  background-repeat: repeat;
-  background-size: 198px 196px;
   border-radius: var(--radius-lg);
   padding: var(--space-8);
   display: flex;
@@ -1300,20 +1359,6 @@ blockquote {
 /* ── prose pages (markdown docs) ────────────────────────────────────────── */
 
 .prose { max-width: 78ch; }
-/* Every markdown page (the docs, the news entries) is one long text column,
-   and its last few paragraphs sit over the top of .page-bottom-pattern. The
-   column is already narrower than the band, so giving it the .band-box
-   treatment is the tight box - the pattern still runs past it on the right.
-   Scoped to the page-level column so a nested .prose doesn't box twice; the
-   max-width is grown by the padding because of border-box, so the text
-   measure stays at 78ch. */
-.page > .prose {
-  max-width: calc(78ch + var(--space-4) * 2);
-  margin: calc(var(--space-4) * -1);
-  padding: var(--space-4);
-  background-color: var(--color-bg);
-  border-radius: var(--radius-md);
-}
 .prose h1 { margin-bottom: var(--space-4); }
 .prose h2 { font-size: 30px; margin-top: var(--space-8); }
 .prose h3 { font-size: 24px; margin-top: var(--space-6); }
@@ -1410,81 +1455,28 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
 
 /* ── footer ─────────────────────────────────────────────────────────────── */
 
-/* The pixel pattern used to be .site-footer's own background, sized and
-   padded to fit whatever height the footer's actual content added up to.
-   That fought itself constantly: tightening the content spacing (which is
-   its own, separate concern) kept shrinking the box the pattern had to fit
-   inside, which kept cutting the image off before it reached its own solid
-   band. Decoupling them - the pattern as its own full-height layer behind
-   everything, content spacing free to be whatever looks best on its own
-   terms - is the actual fix, not another round of resizing one to chase
-   the other.
+/* A flat, full-width band of the same blue as the header bar and the hero,
+   so the three read as one family and the pixel pattern is left as the one
+   distinctive thing on the page rather than something that bookends it.
 
-   This div is the first thing in <body> (see _layouts/default.html),
-   absolutely positioned against it (hence body { position: relative }
-   below - without that, its containing block would be the viewport, not
-   the page, and bottom: 0 would stick it to the bottom of the screen while
-   scrolling instead of the bottom of the page). Because it comes first in
-   the DOM and nothing gives it a z-index, everything painted after it -
-   the header, the page content, the footer's own action-strip and panel -
-   naturally paints on top of it wherever they overlap, with no z-index
-   tricks needed. .site-footer itself has no background of its own on
-   desktop for exactly that reason: it would otherwise be an opaque layer
-   sitting between this pattern and its own content, hiding the pattern
-   everywhere except where the content doesn't cover it. */
-body { position: relative; }
-.page-bottom-pattern {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  /* Sized by width, same reasoning as the header's copy of this rule: the
-     source image is much taller than wide per repeat unit, so this is what
-     actually controls bar thickness. Bar thickness and rendered height are
-     the same knob though (both scale with the image's own aspect ratio) -
-     at this size the image, and so this div, is 1300 * 3102/4233 =~ 952px
-     tall. Free to be whatever looks good now - nothing downstream has to
-     fit inside it any more. */
-  height: 952px;
-  background-image: url("/assets/img/pixel-bars-footer.png");
-  background-repeat: repeat-x;
-  background-position: bottom center;
-  background-size: 1300px auto;
-  pointer-events: none;
-  /* Without an explicit z-index here, this ends up painted *after* all the
-     normal, non-positioned content on the page (that's just how the CSS
-     painting order works for a positioned element left at z-index: auto -
-     "on top of everything else" regardless of DOM order, not "wherever it
-     falls in the DOM"). That showed up as the pattern covering the footer
-     panel's own text. -1 puts it back in the actual bottom layer. */
-  z-index: -1;
-}
+   This was a pattern layer on desktop until now - a full-height, absolutely
+   positioned div behind the whole page, with this flat blue only as the
+   narrow-width fallback. The flat treatment is what every width gets now, so
+   the fallback moved up here and the media query no longer overrides any of
+   it. Going with it: the div in _layouts/default.html, and the
+   body { position: relative } that gave it a containing block (nothing else
+   needed it - every other absolutely positioned thing on the site has a
+   positioned ancestor of its own). */
 .site-footer {
-  /* Bottom is var(--space-4) - deliberately the same distance the header
-     keeps its own white bubble from the top of the viewport, so the two
-     bubbles read as a matching pair. Top is 0 and there's no margin-top on
-     the element itself: .site-main's own bottom padding plus the last
-     band's own bottom padding already leave real space before the footer
-     starts, and .action-strip sitting flush against the top plus the gap
-     below it (see .footer-panel) do the remaining visual work against the
-     pattern layer behind everything now, rather than this element's own
-     padding needing to reveal a specific slice of it. */
-  padding: 0 0 var(--space-4);
+  background-color: var(--color-hero);
+  padding: var(--space-4) 0;
+  color: #fff;
 }
-/* Gap between .action-strip and this panel, tuned by eye on the live page -
-   free to be whatever spacing looks best now that the pattern behind both
-   of them (see .page-bottom-pattern) is its own full-height layer rather
-   than something these two have to leave enough room inside. */
-.footer-panel {
-  margin-top: 54px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-divider);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  padding: var(--space-8);
-}
-.site-footer a { color: var(--color-accent-700); text-decoration: none; }
-.site-footer a:hover { color: var(--color-accent-900); text-decoration: underline; }
+/* No card styling: on the blue this reads as part of the band rather than a
+   white box floating on it. */
+.footer-panel { margin-top: var(--space-8); }
+.site-footer a { color: #fff; text-decoration: none; }
+.site-footer a:hover { color: var(--color-accent-2-300); text-decoration: underline; }
 .footer-cols {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1494,7 +1486,12 @@ body { position: relative; }
   font-size: 14px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--color-neutral-600);
+  /* Pale green rather than white, so these stay distinguishable from the
+     white links underneath instead of flattening into them - the dark grey
+     that used to do that job is unreadable on the blue. The obvious green
+     (accent-2-300) measures 4.34:1 here, under AA for text this size; this
+     one is 4.98:1. */
+  color: var(--color-accent-2-200);
   font-family: var(--font-body);
   font-weight: 600;
   margin-bottom: var(--space-3);
@@ -1504,15 +1501,15 @@ body { position: relative; }
 .footer-bottom {
   margin-top: var(--space-8);
   padding-top: var(--space-4);
-  border-top: 1px solid var(--color-divider);
+  border-top: 1px solid rgba(255, 255, 255, 0.22);
   font-size: 13.5px;
-  color: var(--color-neutral-600);
+  color: rgba(255, 255, 255, 0.65);
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-4);
   justify-content: space-between;
 }
-.footer-bottom a { color: var(--color-neutral-600); }
+.footer-bottom a { color: rgba(255, 255, 255, 0.65); }
 
 /* ── homepage lead hero: headline + video ───────────────────────────────── */
 
@@ -1725,36 +1722,10 @@ body { position: relative; }
   .tier-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .footer-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
-  /* Below this width there isn't enough room left for the pattern to read
-     as anything - .footer-cols is down to 2 columns (1 on narrower phones,
-     see the 600px query below), which makes .footer-panel taller than is
-     worth showing much pattern behind at a sensible bar thickness. Hide
-     the pattern layer entirely and fall back to a flat version of the same
-     blue used behind the header/hero, with the panel's own white card
-     styling turned off so it just reads as part of that background rather
-     than a floating box with nothing to float on. */
-  .page-bottom-pattern { display: none; }
-  /* The top pattern does stay on at this width, unlike the bottom one. The
-     header is the one place the layout doesn't really change on a phone -
-     it is still a short bar with the logo in it - and .header-bar keeps the
-     pattern off the nav text at every width, so there is nothing here that
-     needs the desktop's room to work. */
-  .site-footer {
-    background-color: var(--color-hero);
-    padding-top: var(--space-4);
-  }
-  .footer-panel {
-    margin-top: var(--space-8);
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    padding: 0;
-  }
-  .site-footer a { color: #fff; }
-  .site-footer a:hover { color: var(--color-accent-2-300); }
-  .footer-cols h2, .footer-cols h3 { color: rgba(255, 255, 255, 0.6); }
-  .footer-bottom { border-top-color: rgba(255, 255, 255, 0.22); color: rgba(255, 255, 255, 0.65); }
-  .footer-bottom a { color: rgba(255, 255, 255, 0.65); }
+  /* The footer used to need a whole flat-blue fallback here, because on
+     desktop it was a pixel-pattern layer. That flat treatment is now what
+     every width gets (see .site-footer), so there is nothing left to
+     override - only the column count above. */
 }
 
 @media (max-width: 1160px) {
@@ -1770,8 +1741,13 @@ body { position: relative; }
      buttons, every menu label wrapped onto three lines. It takes the whole
      first row and the buttons wrap to the second, which is the same two-row
      header as before, just with the box drawn around the top one. */
-  .site-header-inner { flex-wrap: wrap; padding: var(--space-3) var(--space-4); }
+  .site-header-inner { flex-wrap: wrap; padding: 0 var(--space-4); }
   .header-bar { flex: 1 1 100%; flex-wrap: wrap; gap: var(--space-3); }
+  /* The buttons come after <nav> in the markup so they land on the right on
+     desktop; here they belong back up beside the logo, ahead of the Menu
+     label and the menu itself. Ordered explicitly rather than left to fall
+     out of source order, since source order is now the opposite of this. */
+  .header-cta { order: 2; flex-direction: row; }
   .nav-toggle-label { display: inline-flex; order: 3; }
   .main-nav {
     order: 4;
