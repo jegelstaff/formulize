@@ -86,9 +86,12 @@
   --space-12: 52.8px;
   --space-16: 70.4px;
 
-  --radius-sm: 8px;
-  --radius-md: 16px;
-  --radius-lg: 28px;
+  /* A third of what these were (8/16/28). Pills and circles are deliberately
+     not on this scale - the 999px buttons and tags, and the 50% avatars, are
+     meant to be fully round and stay hard-coded. */
+  --radius-sm: 3px;
+  --radius-md: 5px;
+  --radius-lg: 9px;
 
   --shadow-sm: 0 1px 2px color-mix(in srgb, #14181a 14%, transparent);
   --shadow-md: 0 3px 10px color-mix(in srgb, #14181a 16%, transparent);
@@ -189,7 +192,6 @@ blockquote {
 ::selection { background: color-mix(in srgb, var(--color-accent) 30%, transparent); }
 
 .text-muted { color: var(--color-neutral-700); }
-.washed { filter: saturate(0.6) contrast(0.85) brightness(1.1) opacity(0.94); }
 .italic { font-style: italic; }
 .visually-hidden {
   position: absolute; width: 1px; height: 1px; overflow: hidden;
@@ -214,10 +216,36 @@ blockquote {
   padding: 0 var(--space-6);
 }
 
-.site-main { padding: var(--space-8) 0 var(--space-16); }
+/* No bottom padding: .band already ends in its own var(--space-12) bottom
+   padding, the same as the gap between every other pair of bands - adding
+   space-16 more here on top of that (and, until the fix above, another
+   space-12 from the footer's own margin-top) was three closing gaps
+   stacked on each other before the footer even started. */
+.site-main { padding: var(--space-8) 0 0; }
 
 .band { padding: var(--space-12) 0; }
 .band + .band { padding-top: 0; }
+
+/* Wrap a band's contents in this where the band sits over one of the pattern
+   layers - .page-bottom-pattern reaching up past the footer into the bottom
+   of <main>, or .page-top-pattern trailing down from the header. Stray
+   pixels behind text or a button make them hard to read.
+
+   This was first tried as an invisible patch: page-coloured, sized to
+   fit-content so it hugged the text and let the pattern run past it. The
+   trouble with an invisible box is that it still has edges, and every edge
+   cut pixels in half somewhere. Being a visible card instead - the same
+   tinted, bordered card the Features and Pricing pages already end on -
+   means the boundary is deliberate, which is also why it can go full width
+   without looking like a rectangle punched out of the pattern. */
+.band-box {
+  padding: var(--space-6);
+  background-color: var(--color-accent-100);
+  border: 1px solid var(--color-divider);
+  border-radius: calc(var(--radius-lg) * 1.15);
+  box-shadow: var(--shadow-sm);
+}
+.band-box > :last-child { margin-bottom: 0; }
 
 .band-head { max-width: 62ch; margin-bottom: var(--space-8); }
 .band-head h2 { margin-bottom: var(--space-2); }
@@ -232,7 +260,7 @@ blockquote {
   flex-wrap: wrap;
   margin-bottom: var(--space-6);
 }
-.band-head-row h2 { margin: 0; }
+.band-head-row h2, .band-head-row h3 { margin: 0; }
 
 /* ── buttons ────────────────────────────────────────────────────────────── */
 
@@ -252,42 +280,56 @@ blockquote {
   background: transparent;
   border: 1px solid transparent;
   padding: var(--space-3) var(--space-6);
-  border-radius: 999px;
+  border-radius: var(--radius-md);
   transition: background-color 120ms ease, color 120ms ease, transform 0.15s ease;
 }
 /* Hover is a scale-up, not a color change, on every button — same treatment
    as the .action-strip tiles. :active (an actual press) still darkens, as
    distinct feedback for the click itself rather than just pointing at it. */
 .btn:hover, .btn:focus-visible { transform: scale(1.05); }
-/* Three roles, not six: primary (filled, the one strong action), secondary
-   (outlined, a lesser action next to a primary), ghost (plain text, minor
-   actions). Secondary used to need a different class on every dark
+/* Two roles, not three: primary (filled, the one strong action) and
+   secondary (outlined, everything else). .btn-ghost used to be a third,
+   borderless "plain text" role, but a button that looks like a run of text
+   reads as a link rather than a button sitting next to one - so it now
+   shares the secondary style exactly, and the two class names are
+   interchangeable. Secondary used to need a different class on every dark
    background it sat on (btn-on-dark in the hero, btn-outline-light also in
    the hero, a .header-cta override in the header) because its border/text
    colors were hard-coded for a light background. It's custom properties now,
-   so context (site-header, hero) can just override the properties below
-   instead of needing a whole separate class — one visual style everywhere,
+   so context (hero) can just override the properties below instead of
+   needing a whole separate class — one visual style everywhere,
    auto-adapting instead of hand-matched per spot. btn-brand dropped: nothing
    in the site referenced it. */
 .btn-primary { background: var(--color-cta); color: #000; }
 .btn-primary:active { background: var(--color-cta-active); color: #000; }
-.btn-secondary {
+.btn-secondary,
+.btn-ghost {
   --btn-secondary-border: var(--color-divider);
-  --btn-secondary-text: var(--color-text);
+  --btn-secondary-text: var(--color-accent-700);
+  --btn-secondary-text-hover: var(--color-text);
   --btn-secondary-active-bg: color-mix(in srgb, var(--color-text) 14%, transparent);
   border-color: var(--btn-secondary-border);
   color: var(--btn-secondary-text);
 }
-.btn-secondary:active { background: var(--btn-secondary-active-bg); }
-/* The only two dark backgrounds a secondary button sits on. Same class,
-   same shape, just a white outline instead of a gray one. */
-.site-header .btn-secondary,
-.hero .btn-secondary {
+/* Text darkens to black on hover, same moment as the scale-up on .btn:hover
+   above - two cues for the same "this is the one under your cursor" signal
+   rather than the scale doing all the work on its own. */
+.btn-secondary:hover, .btn-secondary:focus-visible,
+.btn-ghost:hover, .btn-ghost:focus-visible { color: var(--btn-secondary-text-hover); }
+.btn-secondary:active,
+.btn-ghost:active { background: var(--btn-secondary-active-bg); }
+/* The one dark background a secondary button still sits on directly - the
+   header's own nav bar is a white surface now, so it uses the default
+   (dark-on-light) secondary style like everywhere else on the page. White
+   text throughout here (no separate hover shade) because both blue and
+   black read poorly against the hero's own blue. */
+.hero .btn-secondary,
+.hero .btn-ghost {
   --btn-secondary-border: rgba(255, 255, 255, 0.7);
   --btn-secondary-text: #fff;
+  --btn-secondary-text-hover: #fff;
   --btn-secondary-active-bg: rgba(255, 255, 255, 0.28);
 }
-.btn-ghost { color: var(--color-accent-700); padding-inline: var(--space-2); }
 .btn-sm { padding: var(--space-2) var(--space-4); font-size: 14px; }
 .btn-block { width: 100%; }
 
@@ -315,17 +357,79 @@ blockquote {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: var(--color-shell);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  /* The whole footer pattern was tried here once and read as circus-y: the
+     bold solid bars are unreadable behind nav text, and being sticky they
+     were on screen the entire time. What runs here instead is only the
+     sparse top quarter of that same image, rotated 180 so it starts at its
+     densest and thins out downwards - see .page-top-pattern, which carries
+     the rest of it down past the header. The header paints the identical
+     image at the identical position and size, so the two line up with no
+     offset to keep in sync: the header simply covers the top of the layer
+     with the same pixels. Keeping the fill opaque is what lets the header
+     stay sticky - once scrolled, it carries its own strip of the pattern
+     over the page instead of letting content show through. */
+  background-color: var(--color-bg);
+  background-image: url("/assets/img/pixel-bars-header.png");
+  background-repeat: repeat-x;
+  background-position: top center;
+  background-size: 1300px auto;
+  padding: var(--space-4) 0 var(--space-4);
 }
 
+/* The continuation of the header's pattern below the header itself, so the
+   image gets its full 305px to thin out in rather than being cut off at the
+   nav. Same layer trick as .page-bottom-pattern: absolutely positioned
+   against <body>, z-index -1 so page content paints over it.
+
+   305px is the top 32% of the source at the 1300px display width. The source
+   is empty for its first 15% and only reaches ~27% coverage by 32%, so
+   flipped that gives a visible field of pixels across the header thinning to
+   nothing about 150px below it - present at the top, gone before it reaches
+   the first band of a page that has no hero. */
+.page-top-pattern {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 305px;
+  background-image: url("/assets/img/pixel-bars-header.png");
+  background-repeat: repeat-x;
+  background-position: top center;
+  background-size: 1300px auto;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* The header is sticky, so any in-page anchor - including the nav
+   dropdowns' jumps into Features/Examples - needs room to land below it
+   rather than under it. */
+[id] { scroll-margin-top: 96px; }
+
+/* The row itself is just layout now - the box is .header-bar inside it, so
+   the pattern shows in the gap between that box and the two buttons. */
 .site-header-inner {
   display: flex;
   align-items: center;
-  gap: var(--space-6);
+  gap: var(--space-4);
   padding: var(--space-3) var(--space-6);
   max-width: var(--page-max);
   margin: 0 auto;
+}
+
+/* Same card as .band-box, wrapped around the logo and menu: the pattern up
+   here is dense enough at its top edge to sit behind the wordmark and clip
+   the menu labels' descenders, which is what the box is for. */
+.header-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-2) var(--space-5);
+  background-color: var(--color-accent-100);
+  border: 1px solid var(--color-divider);
+  border-radius: calc(var(--radius-lg) * 1.15);
+  box-shadow: var(--shadow-sm);
 }
 
 .brand {
@@ -334,7 +438,7 @@ blockquote {
   align-items: flex-start;
   gap: var(--space-1);
   text-decoration: none;
-  color: #fff;
+  color: var(--color-text);
   margin-right: auto;
 }
 .brand-logo { height: 34px; width: auto; }
@@ -344,7 +448,7 @@ blockquote {
   font-size: 12.5px;
   letter-spacing: 0.04em;
   white-space: nowrap;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--color-neutral-600);
   margin-top: 0;
 }
 
@@ -360,21 +464,79 @@ blockquote {
 .main-nav a {
   display: block;
   padding: var(--space-2) var(--space-3);
-  border-radius: 999px;
-  color: #fff;
+  border-radius: var(--radius-md);
+  color: var(--color-text);
   text-decoration: none;
   font-size: 15.5px;
   font-weight: 500;
   white-space: nowrap;
 }
-.main-nav a:hover { background: rgba(255, 255, 255, 0.14); color: #fff; }
+.main-nav a:hover { background: var(--color-accent-100); color: var(--color-text); }
 .main-nav a[aria-current="page"] {
-  background: rgba(255, 255, 255, 0.18);
-  color: #fff;
+  background: var(--color-accent-200);
+  color: var(--color-text);
 }
 
+/* Dropdowns: hover for a mouse, focus-within for a keyboard, so a Tab
+   press behaves the same as a hover instead of skipping the submenu. The
+   top-level link stays a real link either way - the dropdown is a shortcut
+   past it, not the only way in. */
+.main-nav li { position: relative; }
+.main-nav li.has-dropdown > a::after {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-left: 6px;
+  margin-bottom: 1px;
+  border-right: 1.5px solid rgba(0, 0, 0, 0.55);
+  border-bottom: 1.5px solid rgba(0, 0, 0, 0.55);
+  transform: rotate(45deg);
+}
+.main-nav .nav-dropdown {
+  /* .main-nav ul (above) makes every <ul> in the header a horizontal flex
+     row, including this one - the actual cause of the earlier wrapping and
+     overflow, not a width problem at all: each item was being laid out as
+     its own narrow flex column side by side, instead of stacked. This
+     overrides it back to a normal vertical list. */
+  display: block;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  z-index: 60;
+  width: 300px;
+  margin: var(--space-1) 0 0;
+  padding: var(--space-3);
+  list-style: none;
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, -4px);
+  transition: opacity 0.12s ease, transform 0.12s ease, visibility 0.12s;
+}
+.main-nav li.has-dropdown:hover > .nav-dropdown,
+.main-nav li.has-dropdown:focus-within > .nav-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+}
+.main-nav .nav-dropdown li { margin: 0; }
+.main-nav .nav-dropdown a {
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  font-size: 15.5px;
+  font-weight: 400;
+  line-height: 1.4;
+  white-space: normal;
+}
+
+/* Outside .header-bar, straight on the pattern, so the outlined one needs a
+   fill of its own - transparent, the pixels would show through it. */
 .header-cta { display: flex; align-items: center; gap: var(--space-2); }
-.site-header :focus-visible { outline-color: #fff; }
+.header-cta .btn-secondary { background-color: var(--color-accent-100); }
 
 /* no-JS mobile menu toggle */
 .nav-toggle { display: none; }
@@ -384,28 +546,34 @@ blockquote {
   gap: var(--space-2);
   cursor: pointer;
   padding: var(--space-2) var(--space-3);
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  border-radius: 999px;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
   font-family: var(--font-heading);
   font-size: 13px;
-  color: #fff;
+  color: var(--color-text);
 }
 .nav-toggle-label .bars {
   display: block;
   width: 16px;
   height: 2px;
-  background: #fff;
-  box-shadow: 0 5px 0 #fff, 0 -5px 0 #fff;
+  background: var(--color-text);
+  box-shadow: 0 5px 0 var(--color-text), 0 -5px 0 var(--color-text);
 }
 
 /* ── social / download banner ───────────────────────────────────────────── */
 
+/* Opaque colours, not var(--color-divider) - that's a semi-transparent
+   black, meant to be composited over a known solid background. It worked
+   fine back when this strip always sat on the page's own solid colour, but
+   now that .page-bottom-pattern can sit behind it (see the footer, where
+   the strip lives now), transparent gap/border colours just let the
+   pattern show through as stray colour instead of reading as a grey line. */
 .action-strip {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1px;
-  background: var(--color-divider);
-  border: 1px solid var(--color-divider);
+  background: var(--color-neutral-300);
+  border: 1px solid var(--color-neutral-300);
   border-radius: var(--radius-lg);
   margin: 0 0 var(--space-8);
 }
@@ -507,6 +675,7 @@ blockquote {
   gap: var(--space-2);
   padding: var(--space-6);
   background: var(--color-surface);
+  border: 1px solid var(--color-divider);
   border-radius: calc(var(--radius-lg) * 1.15);
   transition: box-shadow 0.15s ease;
 }
@@ -547,8 +716,15 @@ blockquote {
 /* .card-link always wraps a whole .card now (get-choice.html, download.html,
    features.html) — every card links to exactly one destination, so the whole
    box is the click target rather than a single line inside it. */
-.card-link { text-decoration: none; color: inherit; }
+/* display: flex (rather than the <a> default of inline) so the .card inside
+   stretches to fill it — a grid row of .card-links is already made equal
+   height by .triad's default grid stretch, but that only stretches the
+   .card-link box itself; without this, the visible .card inside just sizes
+   to its own content and the cards visibly mismatch even though their
+   invisible wrappers match. */
+.card-link { display: flex; text-decoration: none; color: inherit; }
 .card-link:hover { color: inherit; }
+.card-link .card { flex: 1; }
 /* The "See what is included"-style line inside a linked card: a plain span,
    not a nested <a> (a card-link already wraps the card), styled the same as
    .news-card-more so the two matching CTA patterns look the same. */
@@ -664,7 +840,7 @@ blockquote {
 .tier-note { font-size: 13.5px; color: var(--color-neutral-700); margin: 0; }
 
 .rail-addendum {
-  margin: var(--space-4) 0 0;
+  margin: var(--space-4) 0;
   padding: var(--space-3) var(--space-4);
   background: var(--color-neutral-200);
   border-radius: var(--radius-md);
@@ -950,7 +1126,17 @@ blockquote {
 
 /* ── news ───────────────────────────────────────────────────────────────── */
 
-.news-list { list-style: none; margin: 0; padding: 0; }
+/* Same job as .band-box, applied directly: the news and releases indexes end
+   in one of these, so the pattern would otherwise run behind the headlines.
+   A list genuinely fills the content column, so here the tight box around
+   the content is a full-width one. */
+.news-list {
+  list-style: none;
+  margin: calc(var(--space-4) * -1);
+  padding: var(--space-4);
+  background-color: var(--color-bg);
+  border-radius: var(--radius-md);
+}
 .news-list li { margin: 0; border-bottom: 1px solid var(--color-divider); }
 .news-list li:last-child { border-bottom: 0; }
 .news-list a {
@@ -984,6 +1170,7 @@ blockquote {
   gap: var(--space-6);
   padding: var(--space-6);
   background: var(--color-neutral-100);
+  border: 1px solid var(--color-divider);
   border-radius: calc(var(--radius-lg) * 1.15);
   text-decoration: none;
   color: inherit;
@@ -1034,6 +1221,7 @@ blockquote {
 }
 #video-flex-list > div {
   background: var(--color-neutral-100);
+  border: 1px solid var(--color-divider);
   border-radius: calc(var(--radius-lg) * 1.15);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
@@ -1090,6 +1278,7 @@ blockquote {
   gap: var(--space-4);
   padding: var(--space-6);
   background: var(--color-surface);
+  border: 1px solid var(--color-divider);
   border-radius: calc(var(--radius-lg) * 1.15);
   text-decoration: none;
   color: inherit;
@@ -1111,6 +1300,20 @@ blockquote {
 /* ── prose pages (markdown docs) ────────────────────────────────────────── */
 
 .prose { max-width: 78ch; }
+/* Every markdown page (the docs, the news entries) is one long text column,
+   and its last few paragraphs sit over the top of .page-bottom-pattern. The
+   column is already narrower than the band, so giving it the .band-box
+   treatment is the tight box - the pattern still runs past it on the right.
+   Scoped to the page-level column so a nested .prose doesn't box twice; the
+   max-width is grown by the padding because of border-box, so the text
+   measure stays at 78ch. */
+.page > .prose {
+  max-width: calc(78ch + var(--space-4) * 2);
+  margin: calc(var(--space-4) * -1);
+  padding: var(--space-4);
+  background-color: var(--color-bg);
+  border-radius: var(--radius-md);
+}
 .prose h1 { margin-bottom: var(--space-4); }
 .prose h2 { font-size: 30px; margin-top: var(--space-8); }
 .prose h3 { font-size: 24px; margin-top: var(--space-6); }
@@ -1207,15 +1410,81 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
 
 /* ── footer ─────────────────────────────────────────────────────────────── */
 
-.site-footer {
-  background: var(--color-shell);
-  color: rgba(255, 255, 255, 0.85);
-  padding: var(--space-12) 0 var(--space-8);
-  margin-top: var(--space-12);
+/* The pixel pattern used to be .site-footer's own background, sized and
+   padded to fit whatever height the footer's actual content added up to.
+   That fought itself constantly: tightening the content spacing (which is
+   its own, separate concern) kept shrinking the box the pattern had to fit
+   inside, which kept cutting the image off before it reached its own solid
+   band. Decoupling them - the pattern as its own full-height layer behind
+   everything, content spacing free to be whatever looks best on its own
+   terms - is the actual fix, not another round of resizing one to chase
+   the other.
+
+   This div is the first thing in <body> (see _layouts/default.html),
+   absolutely positioned against it (hence body { position: relative }
+   below - without that, its containing block would be the viewport, not
+   the page, and bottom: 0 would stick it to the bottom of the screen while
+   scrolling instead of the bottom of the page). Because it comes first in
+   the DOM and nothing gives it a z-index, everything painted after it -
+   the header, the page content, the footer's own action-strip and panel -
+   naturally paints on top of it wherever they overlap, with no z-index
+   tricks needed. .site-footer itself has no background of its own on
+   desktop for exactly that reason: it would otherwise be an opaque layer
+   sitting between this pattern and its own content, hiding the pattern
+   everywhere except where the content doesn't cover it. */
+body { position: relative; }
+.page-bottom-pattern {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* Sized by width, same reasoning as the header's copy of this rule: the
+     source image is much taller than wide per repeat unit, so this is what
+     actually controls bar thickness. Bar thickness and rendered height are
+     the same knob though (both scale with the image's own aspect ratio) -
+     at this size the image, and so this div, is 1300 * 3102/4233 =~ 952px
+     tall. Free to be whatever looks good now - nothing downstream has to
+     fit inside it any more. */
+  height: 952px;
+  background-image: url("/assets/img/pixel-bars-footer.png");
+  background-repeat: repeat-x;
+  background-position: bottom center;
+  background-size: 1300px auto;
+  pointer-events: none;
+  /* Without an explicit z-index here, this ends up painted *after* all the
+     normal, non-positioned content on the page (that's just how the CSS
+     painting order works for a positioned element left at z-index: auto -
+     "on top of everything else" regardless of DOM order, not "wherever it
+     falls in the DOM"). That showed up as the pattern covering the footer
+     panel's own text. -1 puts it back in the actual bottom layer. */
+  z-index: -1;
 }
-.site-footer a { color: #fff; text-decoration: none; }
-.site-footer a:hover { color: var(--color-accent-2-300); text-decoration: underline; }
-.site-footer :focus-visible { outline-color: #fff; }
+.site-footer {
+  /* Bottom is var(--space-4) - deliberately the same distance the header
+     keeps its own white bubble from the top of the viewport, so the two
+     bubbles read as a matching pair. Top is 0 and there's no margin-top on
+     the element itself: .site-main's own bottom padding plus the last
+     band's own bottom padding already leave real space before the footer
+     starts, and .action-strip sitting flush against the top plus the gap
+     below it (see .footer-panel) do the remaining visual work against the
+     pattern layer behind everything now, rather than this element's own
+     padding needing to reveal a specific slice of it. */
+  padding: 0 0 var(--space-4);
+}
+/* Gap between .action-strip and this panel, tuned by eye on the live page -
+   free to be whatever spacing looks best now that the pattern behind both
+   of them (see .page-bottom-pattern) is its own full-height layer rather
+   than something these two have to leave enough room inside. */
+.footer-panel {
+  margin-top: 54px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-8);
+}
+.site-footer a { color: var(--color-accent-700); text-decoration: none; }
+.site-footer a:hover { color: var(--color-accent-900); text-decoration: underline; }
 .footer-cols {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1225,33 +1494,25 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   font-size: 14px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--color-neutral-600);
   font-family: var(--font-body);
   font-weight: 600;
   margin-bottom: var(--space-3);
 }
 .footer-cols ul { list-style: none; margin: 0; padding: 0; font-size: 15.5px; }
 .footer-cols li { margin-bottom: var(--space-2); }
-/* The footer carries four task columns now, so the brand sits on its own
-   full-width row above them rather than competing for a fifth column. */
-.footer-brand { grid-column: 1 / -1; margin-bottom: var(--space-2); }
-.footer-brand p { font-size: 15.5px; color: rgba(255, 255, 255, 0.8); max-width: 34ch; }
-.footer-brand .brand-logo {
-  height: 30px;
-  margin-bottom: var(--space-3);
-}
 .footer-bottom {
   margin-top: var(--space-8);
   padding-top: var(--space-4);
-  border-top: 1px solid rgba(255, 255, 255, 0.22);
+  border-top: 1px solid var(--color-divider);
   font-size: 13.5px;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--color-neutral-600);
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-4);
   justify-content: space-between;
 }
-.footer-bottom a { color: rgba(255, 255, 255, 0.65); }
+.footer-bottom a { color: var(--color-neutral-600); }
 
 /* ── homepage lead hero: headline + video ───────────────────────────────── */
 
@@ -1291,6 +1552,7 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   gap: var(--space-2);
   padding: var(--space-6);
   background: var(--color-neutral-100);
+  border: 1px solid var(--color-divider);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   text-decoration: none;
@@ -1298,6 +1560,27 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   transition: box-shadow 0.15s ease;
 }
 .news-card:hover { box-shadow: var(--shadow-md); color: inherit; }
+.news-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+.news-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.news-card-thumb {
+  flex: none;
+  width: 128px;
+  height: 128px;
+  object-fit: contain;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
 .news-card time {
   font-size: 13.5px;
   letter-spacing: 0.05em;
@@ -1368,6 +1651,7 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
 .embed-frame {
   max-width: 820px;
   background: var(--color-surface);
+  border: 1px solid var(--color-divider);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   padding: var(--space-6);
@@ -1440,6 +1724,37 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
 @media (max-width: 1080px) {
   .tier-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .footer-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  /* Below this width there isn't enough room left for the pattern to read
+     as anything - .footer-cols is down to 2 columns (1 on narrower phones,
+     see the 600px query below), which makes .footer-panel taller than is
+     worth showing much pattern behind at a sensible bar thickness. Hide
+     the pattern layer entirely and fall back to a flat version of the same
+     blue used behind the header/hero, with the panel's own white card
+     styling turned off so it just reads as part of that background rather
+     than a floating box with nothing to float on. */
+  .page-bottom-pattern { display: none; }
+  /* The top pattern does stay on at this width, unlike the bottom one. The
+     header is the one place the layout doesn't really change on a phone -
+     it is still a short bar with the logo in it - and .header-bar keeps the
+     pattern off the nav text at every width, so there is nothing here that
+     needs the desktop's room to work. */
+  .site-footer {
+    background-color: var(--color-hero);
+    padding-top: var(--space-4);
+  }
+  .footer-panel {
+    margin-top: var(--space-8);
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+  }
+  .site-footer a { color: #fff; }
+  .site-footer a:hover { color: var(--color-accent-2-300); }
+  .footer-cols h2, .footer-cols h3 { color: rgba(255, 255, 255, 0.6); }
+  .footer-bottom { border-top-color: rgba(255, 255, 255, 0.22); color: rgba(255, 255, 255, 0.65); }
+  .footer-bottom a { color: rgba(255, 255, 255, 0.65); }
 }
 
 @media (max-width: 1160px) {
@@ -1450,17 +1765,61 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
 }
 
 @media (max-width: 1060px) {
+  /* The open menu drops down inside .header-bar now, so the box has to have
+     the full width to open into - squeezed into the space left beside the
+     buttons, every menu label wrapped onto three lines. It takes the whole
+     first row and the buttons wrap to the second, which is the same two-row
+     header as before, just with the box drawn around the top one. */
   .site-header-inner { flex-wrap: wrap; padding: var(--space-3) var(--space-4); }
+  .header-bar { flex: 1 1 100%; flex-wrap: wrap; gap: var(--space-3); }
   .nav-toggle-label { display: inline-flex; order: 3; }
   .main-nav {
     order: 4;
     flex-basis: 100%;
     display: none;
   }
-  .nav-toggle:checked ~ .main-nav { display: block; }
+  /* The header is position: sticky, pinned to the viewport once you scroll
+     past it. With the menu open, its content (six items plus every dropdown
+     rendered open inline) is routinely taller than the viewport - and a
+     sticky element doesn't get its own scrollbar, it just lets the extra
+     content overflow invisibly below the fold. Sticky only releases and lets
+     the page carry it away once you scroll past the *whole document's*
+     remaining height, which is why the menu looked stuck partway down: nine
+     times out of ten you hit the bottom of the page before you hit the
+     bottom of the menu. Giving the open menu its own bounded height and
+     scrollbar makes it scroll on its own, independent of where the page
+     itself has scrolled to. The height figures are the measured height of
+     the bar above it (logo + tagline + padding at this breakpoint, just the
+     logo below 560px) - see the matching override there. */
+  .nav-toggle:checked ~ .main-nav {
+    display: block;
+    max-height: calc(100vh - 88px);
+    max-height: calc(100dvh - 88px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
   .main-nav ul { flex-direction: column; align-items: stretch; gap: 0; padding-bottom: var(--space-3); }
   .main-nav a { padding: var(--space-3); border-radius: var(--radius-md); }
   .header-cta .btn-secondary { display: none; }
+
+  /* No room for a floating dropdown on a phone-width menu, and no separate
+     toggle for it either - the outer checkbox already opens the whole menu,
+     so submenus just render open inline underneath their parent. */
+  .main-nav li.has-dropdown > a::after { display: none; }
+  .main-nav .nav-dropdown {
+    position: static;
+    width: auto;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    margin: 0 0 var(--space-2);
+    padding: 0 0 0 var(--space-4);
+    background: none;
+    border: none;
+    box-shadow: none;
+  }
+  .main-nav .nav-dropdown a { padding: var(--space-2) var(--space-3); }
 }
 
 @media (max-width: 900px) {
@@ -1496,6 +1855,12 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   .feature-cols { grid-template-columns: minmax(0, 1fr); }
   .brand-logo { height: 28px; }
   .brand-tagline { display: none; }
+  /* The bar above the open menu is shorter here - no tagline line, a
+     smaller logo - so the menu can claim more of the viewport. */
+  .nav-toggle:checked ~ .main-nav {
+    max-height: calc(100vh - 60px);
+    max-height: calc(100dvh - 60px);
+  }
 }
 
 @media print {
