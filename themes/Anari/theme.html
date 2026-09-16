@@ -25,8 +25,6 @@
 
     <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1">
 
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-
     <!-- Module Header -->
     <{$icms_module_header}>
 
@@ -37,9 +35,21 @@
     <!-- CSS: must come after icms_module_header -->
     <{php}>
     require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions.php';
+    require_once XOOPS_ROOT_PATH . '/modules/formulize/include/appearance.php';
     $rtlPath = ($this->_tpl_vars['icms_rtl'] ?? false) ? 'rtl/' : '';
     $cssVersion = formulize_get_file_version('/themes/Anari/' . $rtlPath . 'css/style.css');
+    // Poppins is this theme's own font, so it is only fetched while it is the one in use.
+    // A font chosen on the Appearance page overrides --font-sans and brings its own webfont.
+    $appearanceFont = formulize_getAppearanceFont();
+    if (!$appearanceFont['stack']) {
+        echo '<link rel="stylesheet" type="text/css" media="all" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" />';
+    }
     echo '<link rel="stylesheet" type="text/css" media="all" href="' . $this->_tpl_vars['icms_imageurl'] . $rtlPath . 'css/style.css?v=' . $cssVersion . '" />';
+    // user-configured colours, font, and logo, from the Appearance page in the Formulize admin UI.
+    // Goes after the stylesheet link above, so the generated overrides win the cascade.
+    echo formulize_renderAppearanceHead();
+    $appearanceLogoUrl = formulize_getAppearanceLogoUrl();
+    $this->assign('appearance_logo_url', $appearanceLogoUrl ? $appearanceLogoUrl : $this->_tpl_vars['icms_imageurl'] . 'images/logo.png');
     <{/php}>
 
     <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
@@ -103,7 +113,7 @@ if($xoopsUser) {
           </div>
 
           <div class="site-branding__logo">
-            <a href='<{$logo_url}>'><img class="site-branding__logo-image" src="<{$icms_imageurl}>images/logo.png" alt="Logo image"></a>
+            <a href='<{$logo_url}>'><img class="site-branding__logo-image" src="<{$appearance_logo_url}>" alt="Logo image"></a>
           </div>
 
         </div>
@@ -137,7 +147,7 @@ if($xoopsUser) {
                 </a>
 
                 <div class="site-branding__logo" id='main-logo'>
-                  <a href='<{$logo_url}>'><img class="site-branding__logo-image" src="<{$icms_imageurl}>images/logo.png" alt="Logo image"></a>
+                  <a href='<{$logo_url}>'><img class="site-branding__logo-image" src="<{$appearance_logo_url}>" alt="Logo image"></a>
                 </div>
             </div>
 

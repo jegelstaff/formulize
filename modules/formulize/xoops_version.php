@@ -823,6 +823,9 @@ $modversion['templates'][] = array(
 $modversion['templates'][] = array(
 	'file' => 'admin/element_multiple_onoff.html',
 	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/appearance.html',
+	'description' => '');
 
 
 //	Module Configs
@@ -1349,6 +1352,29 @@ $modversion['config'][] = array(
 	'valuetype' => 'int',
 	'default' => '0',
 );
+
+// Appearance settings... where the Appearance page in the Formulize admin UI used to
+// keep the site's colours, font and logo. They are now kept per theme, in the
+// stylesheet generated for each theme, so nothing writes these items any more. They
+// are still declared, and still read when a theme has no generated stylesheet yet, so
+// that a site upgrading from a version that used them keeps the appearance it already
+// had (see formulize_getLegacyAppearanceSettings). Removing the declaration would drop
+// the rows on the next module update, and with them a site's settings, so it is left
+// in place. The hidden formtype keeps them out of the system preferences form.
+$appearanceConfigNames = array('appearance_primary', 'appearance_background', 'appearance_surface',
+	'appearance_text', 'appearance_border', 'appearance_success', 'appearance_warning',
+	'appearance_danger', 'appearance_info', 'appearance_font', 'appearance_customfont',
+	'appearance_logo');
+foreach($appearanceConfigNames as $appearanceConfigName) {
+	$modversion['config'][] = array(
+		'name' => $appearanceConfigName,
+		'title' => '_MI_formulize_APPEARANCE_SETTING',
+		'description' => '',
+		'formtype' => 'hidden',
+		'valuetype' => 'text',
+		'default' => '',
+	);
+}
 
 $modversion['blocks'][1] = array(
 	'file' => "mymenu.php",

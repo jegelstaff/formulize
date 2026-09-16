@@ -151,7 +151,7 @@
 
 
 
-.formulize_button {
+/* .formulize_button {
   text-indent: 30px;
   border-color: #0076a3;
   color: #fff !important;
@@ -159,7 +159,7 @@
   font-size: 15px;
   font-weight: bold;
   height: 36px;
-  width: 185px !important; }
+  width: 185px !important; } */
 
 .formulize_button.formulize_button_dialog {
   text-indent: 0;
@@ -330,7 +330,7 @@ a.formulize-open-close-link {
 }
 
 /*=== Formulize Boutons by Francois T ===*/
-button, input[type='submit'], input[type='button'], input[type='reset'] {
+/* button, input[type='submit'], input[type='button'], input[type='reset'] {
   background-color: #F4F9FE;
   -webkit-border-radius: 5px;
   color: #2F85DC;
@@ -342,10 +342,10 @@ button:hover, .xo-formbuttons:hover, .formButton:hover {
 
 button:focus, input[type='submit']:focus, input[type='button']:focus, input[type='reset']:focus, .xo-formbuttons:focus, .formButton:focus {
   background-color: #f4f4f4;
-  border-color: #333; }
+  border-color: #333; } */
 
 /*=== Formulize Boutons by Francois T ===*/
-#formulize_addButton, #formulize_addProxyButton {
+/* #formulize_addButton, #formulize_addProxyButton {
   text-indent: 45px;
   background: #2F85DC url("../../images/contact-new.png") no-repeat 10px;
   width: 210px !important; }
@@ -393,15 +393,75 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
   background: #61A6EE url("../../images/findsave.png") no-repeat 10px; }
 
 #formulize_deleteViewButton {
-  background: #61A6EE url("../../images/finddel.png") no-repeat 10px; }
+  background: #61A6EE url("../../images/finddel.png") no-repeat 10px; } */
 
 #formulize_saveButton {
   background-color: #61A6EE;
   text-indent: 0px; }
 
 /*=== End of Formulize Boutons ===*/
-.formulize_autocomplete {
-  display: inline-block; }
+/* ============================================================
+   Autocomplete component (issue #92)
+   ------------------------------------------------------------
+   Structure, layout and interaction mechanics for the autocomplete
+   element live here so that every theme gets the same component.
+   Themes are expected to re-skin these classes (colour, typography,
+   field metrics) but not to have to rebuild the layout.
+
+   Markup produced by modules/formulize/class/selectElement.php and
+   modules/formulize/include/js/autocomplete.js:
+
+     <div class="formulize_autocomplete">                (positioning context)
+       <input class="formulize_autocomplete [formulize_autocomplete_multiple]">
+       <img class="autocomplete-icon">                   (magnifying glass)
+     </div>
+     <div id="{name}_defaults"> ...hidden inputs... </div>
+     <div class="formulize_autocomplete_selections">     (chip tray, multi only)
+       <p class="auto_multi auto_multi_{name}" target="{value}">
+         <span class="auto_multi_label">Label</span>
+         <button class="auto_multi_remove">&times;</button>
+       </p>
+     </div>
+   ============================================================ */
+
+/* The wrapper is the positioning context for the magnifier, so the icon can be
+   an absolute adornment over the input's right edge without needing :has(). */
+div.formulize_autocomplete {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+input.formulize_autocomplete {
+  width: 100%;
+  box-sizing: border-box;
+  /* leave room for the magnifier pinned at the right edge */
+  padding-right: 32px;
+}
+
+.formulize_autocomplete img.autocomplete-icon {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  float: none;
+  pointer-events: none;
+}
+
+/* The tray of selected values wraps as a row of chips. */
+.formulize_autocomplete_selections {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.formulize_autocomplete_selections:empty {
+  display: none;
+}
 
 .formulize-element-edit-link {
   font-weight: normal;
@@ -633,15 +693,64 @@ div#formulize-printpreview div#multipage-controls {
     width: 25%;
 }
 
+/* A selected value. Neutral base skin; themes restyle colour and metrics.
+   Note the chip itself is NOT clickable any more - removal is the X button
+   only, and the X asks for confirmation first (issue #92). */
 .auto_multi {
-    margin: 0.2em;
-    display: table-row;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    padding: 2px 4px 2px 10px;
+    border: 1px solid #ccc;
+    border-radius: 13px;
+    background: #f2f2f2;
+    line-height: 1.4;
 }
 
-.auto_multi:hover {
+.auto_multi_label {
+    /* break, rather than overflow, on very long unbroken labels */
+    overflow-wrap: break-word;
+}
+
+/* The remove affordance. A real button, so it is keyboard reachable and
+   announced to screen readers. */
+.auto_multi button.auto_multi_remove {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* themes commonly give bare <button> a min-width and heavy padding for their
+       primary buttons; this is an icon button and has to opt out of all of it */
+    width: 18px;
+    height: 18px;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+    text-align: center;
+    text-transform: none;
+    font-weight: normal;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 15px;
+    line-height: 1;
     cursor: pointer;
-    text-decoration: line-through;
-    color: red;
+    opacity: 0.6;
+}
+
+.auto_multi button.auto_multi_remove:hover,
+.auto_multi button.auto_multi_remove:focus {
+    opacity: 1;
+    color: #c00;
+    box-shadow: none;
+}
+
+.auto_multi button.auto_multi_remove:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 1px;
 }
 
 .right-align-text {
@@ -667,12 +776,95 @@ div[id^=cellcontents_1_] label {
     white-space: nowrap;
 }
 
+/* ---------- Inline-edit pencil in list view cells (view mode) ----------
+   A cell that can be edited in place renders the edit-icon div FIRST in the
+   source, followed by the cell contents:
+
+     .main-cell-div > .formulize-display-element-edit-icon
+                    + .formulize-display-element-contents
+
+   The pencil used to be floated to the left of the cell, with the contents
+   indented 2em to clear it. It now sits at the RIGHT edge of the cell instead,
+   on the same line as the cell text - globally, for every theme, so themes do
+   not have to re-do this layout individually.
+
+   The source order is left alone (the icon stays first, so keyboard/reading
+   order still reaches the edit trigger before the value); flexbox `order`
+   moves it to the visual end and `margin-left: auto` pins it against the
+   cell's right edge no matter how short the value is. Same flex approach the
+   .formulize-de-editing rules below use for the save/cancel controls.
+
+   The :has() guard keeps all of this scoped to cells that actually carry a
+   pencil - ordinary cells are untouched. */
+
+.main-cell-div:has(> .formulize-display-element-edit-icon) {
+	display: flex;
+	align-items: baseline;
+	gap: 0.4em;
+}
+
 .formulize-display-element-edit-icon {
-	float: left; margin-right: 5px; margin-bottom: 5px;
+	order: 2;
+	margin: 0 0 0 auto; /* margin-left:auto pushes the pencil to the cell's right edge */
+	flex: 0 0 auto;
 }
 
 .formulize-display-element-contents {
-	padding-left: 2em;
+	order: 1;
+	flex: 1 1 auto;
+	min-width: 0; /* let long values shrink/ellipsis instead of shoving the pencil out */
+}
+
+/* ---------- Inline ("dynamic") editing of fields in list views - issue #134 ----------
+   A list view cell that can be edited in place renders as
+   .formulize-de-container. While the field is being edited the container also
+   carries .formulize-de-editing (added/removed by renderElementHtml() and its
+   companions in entriesdisplay.php) and holds the element's own markup followed
+   by a .formulize-de-controls wrapper with the save/cancel anchors.
+
+   These are base layout rules only: they keep the field and both controls on a
+   single, vertically-centred line and space the icons with a real gap instead of
+   the &nbsp; runs and <br /> the old markup used. Cosmetics (icon artwork,
+   colours, sizing) are deliberately left alone so each theme can restyle
+   .formulize-de-save / .formulize-de-cancel however it likes. */
+
+.formulize-de-editing {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.35em;
+}
+
+/* Let the edit field take the slack rather than its intrinsic width. Core
+   emits size="30" on text inputs, whose ~30ch preferred width would otherwise
+   widen the column and reflow an auto-layout table the moment editing starts. */
+.formulize-de-editing > input,
+.formulize-de-editing > select,
+.formulize-de-editing > textarea {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 0;
+  max-width: 100%;
+}
+
+.formulize-de-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  flex: 0 0 auto;
+}
+
+.formulize-de-controls > a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.formulize-de-controls > a > img {
+  display: block;
+  border: 0;
 }
 
 .formulize-uploaded-image-thumbnail {
@@ -681,19 +873,101 @@ div[id^=cellcontents_1_] label {
   border: 1px solid black;
 }
 
-table.formulize-grid td.head {
-  padding-bottom: 0.5em;
+/* ---------- "Table of elements" (grid) element - issue #119 ----------
+   This element renders as divs laid out with CSS grid instead of a <table>.
+
+   Rows are real elements carrying role="row"; they pass the container's column
+   tracks straight through with `grid-template-columns: subgrid`, so every row
+   lines up and a stripe can be painted across a whole row. Where subgrid is
+   not available the rows fall back to `display: contents` and the cells become
+   direct grid items - the same layout, only row-level striping is lost.
+
+   Spacing between cells comes from `gap`, never from padding on the cells, so
+   the outer edges of the grid sit flush with the rest of the form. That was
+   the point of the change: the old `.formulize-grid td { padding-right: 1em }`
+   pushed the control in the last column 1em in from the right hand edge of the
+   field column, so a grid never lined up with the fields above and below it.
+
+   Structure is core's; skin (gap size, header typography, stripe colour, how
+   wide the controls run) belongs to the themes. Everything a theme is expected
+   to set is a custom property, listed here with its fallback. */
+
+.formulize-grid {
+  display: grid;
+  width: 100%;
+  /* Optional leading (row caption) and trailing (final cell) tracks. Left
+     empty here and filled in by the modifier classes below, so that the
+     template below stays a single declaration. */
+  --fz-grid-row-header-track: ;
+  --fz-grid-final-track: ;
+  grid-template-columns:
+    var(--fz-grid-row-header-track)
+    repeat(var(--fz-grid-data-columns, 1), minmax(0, 1fr))
+    var(--fz-grid-final-track);
+  column-gap: var(--fz-grid-column-gap, 1em);
+  row-gap: var(--fz-grid-row-gap, 0.5em);
+  align-items: stretch;
 }
 
-.formulize-grid td {
-	padding-right: 1em;
-	vertical-align: bottom;
+.formulize-grid.fz-grid--has-row-headers {
+  --fz-grid-row-header-track: max-content;
+}
+
+.formulize-grid.fz-grid--has-final-column {
+  --fz-grid-final-track: max-content;
+}
+
+.formulize-grid > .fz-grid__row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  column-gap: var(--fz-grid-column-gap, 1em);
+  align-items: end;
+}
+
+@supports not (grid-template-columns: subgrid) {
+  .formulize-grid > .fz-grid__row {
+    display: contents;
+  }
+}
+
+/* minmax(0, 1fr) tracks plus min-width:0 are what keep a long value inside its
+   cell instead of forcing the grid wider than the form. */
+.formulize-grid .fz-grid__cell {
+  min-width: 0;
+  align-self: end;
+}
+
+/* Controls stretch to their cell rather than overflowing it. Width is left to
+   the themes; this only stops a control escaping its track. */
+.formulize-grid input:not([type="radio"]):not([type="checkbox"]):not([type="button"]):not([type="submit"]):not([type="hidden"]),
+.formulize-grid select,
+.formulize-grid textarea {
+  max-width: 100%;
+}
+
+/* Alternating shading, from the element's "background" setting: horizontal
+   emphasises rows, vertical emphasises columns. A theme turns it on by giving
+   --fz-grid-stripe-bg a colour. With no colour the grid is unshaded, which is
+   what both shipped themes did with the old table markup - the even/odd
+   classes were emitted but nothing ever painted them. */
+.formulize-grid.fz-grid--shade-rows > .fz-grid__row--odd {
+  background: var(--fz-grid-stripe-bg, transparent);
+}
+
+.formulize-grid.fz-grid--shade-columns .fz-grid__cell.odd {
+  background: var(--fz-grid-stripe-bg, transparent);
+}
+
+/* Caption, when the element is set to show its heading above the grid. */
+.formulize-grid-caption {
+  font-weight: bold;
+  margin-bottom: 0.5em;
 }
 
 #listofentries div.main-cell-div > span,
 #listofentries div.formulize-display-element-contents > span {
 	display: block;
-	padding-bottom: 0.3em;
 }
 
 #listofentries div.main-cell-div ul.main-cell-list > li,
@@ -737,7 +1011,12 @@ table.formulize-grid td.head {
 	padding-left: 1em;
 }
 
-.formulize-office-use-only-start-hidden {
+/* `div.` raises specificity to 0,1,1 so this "start hidden" utility beats a theme's
+   `.fz-field`/`.form-row { display: flex }` (0,1,0) that loads after this stylesheet.
+   Without it the Office Use Only field/Hide button never start hidden under the Lyris
+   theme, so the toggle appears to do nothing. jQuery .toggle()/.show()/.hide() write an
+   inline display, which still overrides this rule, so the toggle keeps working. */
+div.formulize-office-use-only-start-hidden {
 		display: none;
 }
 
@@ -804,5 +1083,556 @@ button.formulize-ai-copy-btn:active {
 @media (min-width: 768px) {
 	.fz-limit-counter {
 		max-width: 700px;
+	}
+}
+
+/* ============================================================
+   Right slide-out drawer component (issue #99)
+   ------------------------------------------------------------
+   Structure, layout and interaction mechanics for the drawer live here so
+   that every theme gets the same component. A theme that does nothing at
+   all still gets a usable, presentable drawer from these rules; a theme
+   that wants its own look re-skins the classes (or just overrides the
+   custom properties declared on .formulize-drawer) without having to
+   rebuild the layout, the scroll behaviour or the resize affordance.
+
+   Markup built by modules/formulize/include/js/drawer.js:
+
+     <div class="formulize-drawer-scrim">                (click-to-close backdrop)
+     <aside class="formulize-drawer">
+       <div class="formulize-drawer__resize-handle">     (drag to resize)
+       <div class="formulize-drawer__head">
+         <button class="formulize-drawer__btn ... formulize-drawer__back">
+         <span class="formulize-drawer__title">
+         <div class="formulize-drawer__spacer">
+         <button class="formulize-drawer__btn ... formulize-drawer__close">
+       </div>
+       <nav class="formulize-drawer__tabs">              (multipage page tabs)
+       <div class="formulize-drawer__body">              (the entry form)
+       <div class="formulize-drawer__body--ai">          (the AI assistant)
+       <div class="formulize-drawer__foot">              (the screen's form buttons, paging)
+     </aside>
+
+   The form content inside .formulize-drawer__body is wrapped by the theme's
+   drawer screen templates (templates/screens/<theme>/default/drawer/), which
+   emit the same container classes the theme's full-screen form templates do.
+   That is what keeps a form styled identically in the drawer and full screen,
+   and it is why there are no form-field rules in this section.
+   ============================================================ */
+
+.formulize-drawer {
+	/* Override these in a theme to reskin without rewriting the rules below. */
+	/* Opening width for a user who has never resized: 30% of the browser window,
+	   floored at the minimum below (issue #124). drawer.js only sets an inline
+	   width once the user has dragged one, so this stays live as the window is
+	   resized, and min-width does the flooring rather than a max() that would
+	   duplicate the 390px in two places. */
+	--formulize-drawer-width: 30vw;
+	--formulize-drawer-min-width: 390px;   /* mirrored by MIN_WIDTH in drawer.js */
+	--formulize-drawer-max-width: 92vw;    /* mirrored by maxDrawerWidth() in drawer.js */
+	--formulize-drawer-bg: #ffffff;
+	--formulize-drawer-fg: inherit;
+	--formulize-drawer-border: #d9d9d9;
+	--formulize-drawer-muted: #6b6b6b;
+	--formulize-drawer-foot-bg: #f6f6f6;
+	--formulize-drawer-shadow: -8px 0 24px rgba(0, 0, 0, 0.18);
+	--formulize-drawer-radius: 4px;
+	--formulize-drawer-pad-x: 20px;
+	--formulize-drawer-pad-y: 16px;
+	--formulize-drawer-z: 31;
+
+	position: fixed;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	width: var(--formulize-drawer-width);
+	min-width: var(--formulize-drawer-min-width);
+	max-width: var(--formulize-drawer-max-width);
+	background: var(--formulize-drawer-bg);
+	color: var(--formulize-drawer-fg);
+	box-shadow: var(--formulize-drawer-shadow);
+	z-index: var(--formulize-drawer-z);
+	display: flex;
+	flex-direction: column;
+	animation: formulize-drawer-in 180ms ease;
+}
+
+.formulize-drawer[hidden] {
+	display: none;
+}
+
+.formulize-drawer-scrim {
+	position: fixed;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.35);
+	/* one below the drawer itself */
+	z-index: 30;
+}
+
+.formulize-drawer-scrim[hidden] {
+	display: none;
+}
+
+@keyframes formulize-drawer-in {
+	from { transform: translateX(16px); opacity: 0; }
+	to   { transform: translateX(0);    opacity: 1; }
+}
+
+/* Custom resize handle on the left edge, dragged via drawer.js. Native CSS
+   `resize` was tried first and dropped: its hit target is a near-invisible
+   ~13px corner icon flush against the viewport edge (Firefox paints no icon
+   there at all), and that corner can sit underneath other fixed chrome. A
+   dedicated strip is visible on hover and always reachable. */
+.formulize-drawer__resize-handle {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: -4px;
+	width: 8px;
+	cursor: ew-resize;
+	z-index: 1;
+}
+
+/* The hit area above stays wide for an easy grab; the visible line drawn here
+   is a slim bar so it reads as a crisp divider rather than a thick block. No
+   transition: a colour fade over a couple of px reads as the edge going soft
+   rather than as a hover state - it should just snap on. */
+.formulize-drawer__resize-handle::after {
+	content: "";
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 2px;
+	width: 3px;
+	background: transparent;
+}
+
+.formulize-drawer__resize-handle:hover::after,
+.formulize-drawer__resize-handle--active::after {
+	background-color: var(--formulize-drawer-border);
+}
+
+.formulize-drawer__head {
+	padding: var(--formulize-drawer-pad-y) var(--formulize-drawer-pad-x);
+	border-bottom: 1px solid var(--formulize-drawer-border);
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-shrink: 0;
+}
+
+.formulize-drawer__title {
+	font-size: 20px;
+	font-weight: 600;
+	line-height: 1.3;
+}
+
+/* Pushes the close button to the far end regardless of title length. */
+.formulize-drawer__spacer {
+	flex: 1 1 auto;
+}
+
+/* The multi-page tab strip, mirroring the full screen form's page tabs.
+
+   A wrapping row, matching what the full screen strip does (`.pill-tabs` in the
+   themes is `display:flex; flex-wrap:wrap`): every tab is shown in full and the
+   row wraps onto as many lines as it needs.
+
+   This started life as a single non-wrapping scrolling row, to spend a constant
+   ~40px of the drawer's scarce vertical space whatever the page count. In
+   practice the horizontal scroll did not work well on desktop -- a trackpad user
+   has no obvious way to reach the tabs that are off the end -- so wrapping won,
+   at the cost of some vertical space on a screen with many pages. The scrolling
+   variant is kept immediately below, switched off, so going back is a one-line
+   change. */
+.formulize-drawer__tabs {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px;
+	padding: 8px var(--formulize-drawer-pad-x);
+	border-bottom: 1px solid var(--formulize-drawer-border);
+	flex-shrink: 0;
+}
+
+.formulize-drawer__tab {
+	flex: 0 0 auto;
+	/* every tab shows its full page title, as the full screen strip does -- no
+	   clipping, the row wraps instead */
+	white-space: normal;
+	padding: 6px 12px;
+	border: 1px solid transparent;
+	border-radius: var(--formulize-drawer-radius);
+	background: transparent;
+	color: var(--formulize-drawer-muted);
+	font: inherit;
+	font-size: 13px;
+	line-height: 1.4;
+	cursor: pointer;
+}
+
+/* Themes routinely give every bare `button` a wide min-width (Anari uses 200px,
+   with generous padding to match). A tab that inherits that becomes a fixed slab,
+   and a wrapping strip of slabs collapses to roughly one tab per row -- 7 rows and
+   272px of the drawer's height for a 7-page screen. Reset it here, scoped the same
+   way as the drawer's button reset below so it outranks the theme's rule without
+   out-specifying the themes' own .formulize-drawer__tab skins. */
+.formulize-drawer .formulize-drawer__tab {
+	min-width: 0;
+	width: auto;
+	height: auto;
+}
+
+.formulize-drawer__tab:hover {
+	background: var(--formulize-drawer-foot-bg);
+	color: var(--formulize-drawer-fg);
+}
+
+/* The active tab is disabled -- it is the page you are already on -- so it must
+   not inherit the greyed-out look a disabled button normally gets. */
+.formulize-drawer__tab--active,
+.formulize-drawer__tab--active:disabled {
+	background: var(--formulize-drawer-foot-bg);
+	border-color: var(--formulize-drawer-border);
+	color: var(--formulize-drawer-fg);
+	font-weight: 600;
+	cursor: default;
+	opacity: 1;
+}
+
+/* ---- Horizontal-scroll tab strip (retired, kept for an easy revert) --------
+   The original behaviour: one non-wrapping row that scrolls sideways, with the
+   edges faded so it reads as "there is more this way". Abandoned because the
+   sideways scroll was awkward on desktop, but preserved here in case we want it
+   back. drawer.js already scrolls the active tab into view after every load, and
+   does so harmlessly when the strip wraps instead, so nothing else has to change.
+
+   To re-enable: add the `formulize-drawer__tabs--scroll` class to the <nav> that
+   ensureDom() builds in drawer.js (search for `formulize-drawer__tabs`). */
+.formulize-drawer__tabs--scroll {
+	flex-wrap: nowrap;
+	align-items: stretch;
+	overflow-x: auto;
+	overflow-y: hidden;
+	scrollbar-width: thin;
+	scroll-snap-type: x proximity;
+	-webkit-mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
+	mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
+}
+
+.formulize-drawer__tabs--scroll .formulize-drawer__tab {
+	scroll-snap-align: start;
+	/* one long page name must not be allowed to eat the whole row */
+	max-width: 55%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* The scrolling region. It carries no padding of its own: the wrapper emitted
+   by the theme's drawer templates is the same container the theme's form
+   screen uses, so the form's own gutters apply here exactly as they do full
+   screen. */
+.formulize-drawer__body {
+	flex: 1;
+	overflow: auto;
+	padding: var(--formulize-drawer-pad-x);
+}
+
+/* Containment: nothing inside the drawer may be wider than the drawer, and no
+   field may demand more width than the drawer has.
+
+   Themes size their form fields for a full-width page, typically inside a
+   `@media (min-width: 768px)` block. That query is about the VIEWPORT, so it
+   still applies inside the drawer even though the drawer is a few hundred
+   pixels wide, and a `min-width: 700px` field would push the whole panel into
+   a horizontal scroll (`max-width` is powerless against `min-width`).
+
+   Keeping the content inside the panel is the drawer's own structural job, not
+   a second set of field styles - nothing here touches how a field LOOKS, and
+   `max-width` only ever shrinks, so a theme whose fields are already narrower
+   is unaffected. It is anchored on the component's id because a theme rule like
+   `.col2 input[type="text"]` scores the same 0,2,1 as any class-only selector
+   here and would win on stylesheet order; a theme that deliberately wants a
+   wider field in the drawer can still say so with an id-scoped rule of its own.
+
+   Button-like inputs are excluded: their width is their label, and capping it
+   clips the text rather than wrapping it.
+
+   `.formulize-grid` is in the list for the same reason the fields are: the
+   "table of elements" element renders as a CSS grid container (issue #119) and
+   a theme may give it a definite width to line it up with the fields around it
+   - Anari sets `min-width: 700px` on it above the 768px breakpoint, exactly as
+   it does for a text box. It used to be caught by the `table` selector above;
+   naming it keeps that containment now that it is a div. */
+#formulize-drawer .formulize-drawer__body img,
+#formulize-drawer .formulize-drawer__body input:not([type="button"]):not([type="submit"]):not([type="reset"]),
+#formulize-drawer .formulize-drawer__body select,
+#formulize-drawer .formulize-drawer__body textarea,
+#formulize-drawer .formulize-drawer__body table,
+#formulize-drawer .formulize-drawer__body .formulize-grid {
+	max-width: 100%;
+}
+
+#formulize-drawer .formulize-drawer__body input:not([type="button"]):not([type="submit"]):not([type="reset"]),
+#formulize-drawer .formulize-drawer__body select,
+#formulize-drawer .formulize-drawer__body textarea,
+#formulize-drawer .formulize-drawer__body .formulize-grid {
+	min-width: 0;
+}
+
+/* Capping the field itself is not enough when it sits inside shrink-to-fit
+   boxes. `.col1`/`.col2` are Formulize's own label/value columns and float, and
+   the autocomplete's wrapper is an inline-block (it has to hug its input, so the
+   magnifier stays pinned to the field's right edge). All three are sized by their
+   contents, so when a theme gives a field a definite `width` the whole chain
+   inherits it: Anari sets `width: 673px` on the autocomplete above its 768px
+   breakpoint, and that query is about the VIEWPORT, so it applies in full inside a
+   480px drawer. The input's min-content contribution is then 673px, every
+   shrink-to-fit ancestor becomes 673px wide, and the `max-width: 100%` above
+   resolves against a containing block that is itself 673px - so it clamps to
+   nothing and the panel gets a horizontal scrollbar.
+
+   Capping the ancestors breaks the cycle. `.form-row` is a block, so it has a
+   definite width taken from the drawer; clamping the columns and the wrapper to
+   `100%` of that gives the input's own `max-width: 100%` something smaller than
+   673px to resolve against, and the whole chain collapses to the drawer width.
+   Scoped to the drawer, so a theme's full-screen sizing is untouched, and
+   `max-width` only ever shrinks, so a theme whose fields already fit is
+   unaffected. */
+#formulize-drawer .formulize-drawer__body .col1,
+#formulize-drawer .formulize-drawer__body .col2,
+#formulize-drawer .formulize-drawer__body div.formulize_autocomplete {
+	max-width: 100%;
+}
+
+/* The AI assistant's own panel. It brings its own padding and its own internal
+   scrolling (the chat log scrolls, the input row stays put), so unlike the
+   entry body this one neither pads nor scrolls - it just hands its full height
+   over. */
+.formulize-drawer__body--ai {
+	padding: 0;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+
+/* display:flex above would otherwise beat the UA's [hidden] rule */
+.formulize-drawer__body--ai[hidden] {
+	display: none;
+}
+
+.formulize-drawer__loading {
+	padding: 24px;
+	color: var(--formulize-drawer-muted);
+	text-align: center;
+}
+
+/* Formulize's saving animation over the drawer while one of its saves is in flight.
+   Full screen the equivalent is #savingmessage, which showSavingGraphic() reveals
+   after dropping #formulizeform to 0.5 opacity; this does the same to the drawer's
+   form, and freezes the tabs and the footer buttons the way full screen disables
+   .formulize-form-submit-button for the duration. Built by drawer.js (search for
+   showDrawerSaving); the <img> inside it is the very same saving-<language>.gif.
+
+   This is geometry plus the default-Formulize gif, nothing more, exactly as the core
+   rules for #savingmessage are. A theme that replaces the saving animation restyles
+   this class alongside #savingmessage / #workingmessage in its own stylesheet, which
+   loads after this one -- Lyris does, hiding the gif and drawing its spinner (see
+   "Loading overlay" in themes/Lyris/css/style.css). Themes that do not, like Anari,
+   get what is here. Keep the img and the box separable so a theme can swap the
+   animation without having to restate the drawer-scoped positioning. */
+.formulize-drawer__saving {
+	position: absolute;
+	inset: 0;
+	z-index: 2;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.formulize-drawer__saving[hidden] {
+	display: none;
+}
+
+.formulize-drawer__saving img {
+	max-width: 80%;
+	height: auto;
+}
+
+.formulize-drawer--saving .formulize-drawer__body {
+	opacity: 0.5;
+}
+
+.formulize-drawer--saving .formulize-drawer__foot,
+.formulize-drawer--saving .formulize-drawer__tabs {
+	opacity: 0.5;
+	pointer-events: none;
+}
+
+/* The footer tray is the full screen form's action bar (#multipage-controls) at a
+   mobile viewport, and is deliberately built from the same parts: same flex row,
+   same wrap, same 16px padding and 8px gap, and buttons that are literally the same
+   `input.formulize-form-submit-button` elements (see makeButton in drawer.js).
+   The drawer is a mobile-width surface at every window size -- 390px minimum, and
+   only ever a fraction of the window -- so it takes that mobile layout
+   unconditionally rather than behind a media query.
+
+   This replaces a single non-wrapping row of drawer-only buttons, which squeezed
+   four controls into a 390px strip at 32px tall while full screen was giving the
+   same four 44px tap targets two to a row. */
+.formulize-drawer__foot {
+	padding: 16px;
+	border-top: 1px solid var(--formulize-drawer-border);
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8px;
+	background: var(--formulize-drawer-foot-bg);
+	flex-shrink: 0;
+}
+
+.formulize-drawer__foot:empty {
+	display: none;
+}
+
+/* Page meta and transient notices each take a line of their own, below the buttons,
+   the way the full screen bar puts #page-indicator / #page-selector on their own
+   centered lines at a mobile width (the `order: 90` there, mirrored here). They are
+   meta, so they must never compete with the buttons for room in a button row. The
+   notice collapses when empty so it costs no row and no gap. */
+.formulize-drawer__notice,
+.formulize-drawer__page-indicator {
+	flex: 1 1 100%;
+	order: 90;
+	min-width: 0;
+	margin: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	text-align: center;
+	font-size: 13px;
+	color: var(--formulize-drawer-muted);
+}
+
+.formulize-drawer__notice:empty {
+	display: none;
+}
+
+.formulize-drawer__page-indicator {
+	font-feature-settings: "tnum";
+}
+
+/* The footer's form buttons. These carry `.formulize-form-submit-button` -- the class
+   the full screen action bar uses -- so a theme skins both surfaces with one set of
+   rules and the drawer inherits full screen's role colours (keyed off the button's
+   name) for free. What is left here is the layout half of what Lyris's mobile
+   #multipage-controls rule does: two buttons to a row, 44px tap targets. The
+   min-width / width / height / text-indent resets are spelled out because
+   `.formulize-form-submit-button` further up this file sizes the full page bar's
+   buttons at a fixed 185px x 36px. */
+.formulize-drawer .formulize-drawer__foot .formulize-form-submit-button {
+	flex: 1 1 calc(50% - 8px);
+	min-width: 0;
+	width: auto;
+	height: 44px;
+	padding: 0 10px;
+	font: inherit;
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 1;
+	text-indent: 0;
+	text-align: center;
+	text-shadow: none;
+	background-image: none;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	border-radius: var(--formulize-drawer-radius);
+	cursor: pointer;
+}
+
+/* Once the drawer is at least as wide as the mobile breakpoint (768px — drawer.js adds
+   `formulize-drawer--wide` off the drawer's measured width, not the window's, because
+   the drawer is drag-resizable), there is no longer any reason for it to wear the full
+   screen form's MOBILE action bar. The buttons become full screen's ordinary ones: sized
+   to their label, on one row, at the desktop height rather than a 44px tap target. The
+   two-up 50% flex is what makes them look "compact/drawer-specific", so that is what
+   goes. Themes restate the height/padding in their own tokens below. */
+.formulize-drawer--wide .formulize-drawer__foot .formulize-form-submit-button {
+	flex: 0 0 auto;
+	height: 36px;
+	padding: 0 16px;
+}
+
+/* The drawer's own chrome buttons: the header's Back and Close icons. (The footer's
+   form buttons are the shared `.formulize-form-submit-button` above.) Deliberately
+   self-contained rather than reusing a theme's button class, so the component is
+   complete on its own; a theme re-skins these classes (see themes/Lyris/css/style.css
+   for an example that maps them onto the theme's own button primitive). Scoped under
+   .formulize-drawer so they outrank the bare `button` / `button:hover` rules several
+   themes set, while still being easy for a theme to override with a selector of the
+   same shape. The min-width / width / background resets are spelled out because those
+   theme rules often set a wide default. */
+.formulize-drawer .formulize-drawer__btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	flex: 0 1 auto;
+	min-width: 0;
+	width: auto;
+	overflow: hidden;
+	height: 32px;
+	padding: 0 10px;
+	font: inherit;
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 1;
+	border-radius: var(--formulize-drawer-radius);
+	border: 1px solid var(--formulize-drawer-border);
+	background: var(--formulize-drawer-bg);
+	color: inherit;
+	box-shadow: none;
+	cursor: pointer;
+	text-transform: none;
+}
+
+.formulize-drawer .formulize-drawer__btn:hover {
+	background: var(--formulize-drawer-foot-bg);
+}
+
+.formulize-drawer .formulize-drawer__btn--ghost {
+	background: transparent;
+	border-color: transparent;
+}
+
+.formulize-drawer .formulize-drawer__btn--ghost:hover {
+	background: var(--formulize-drawer-foot-bg);
+}
+
+.formulize-drawer .formulize-drawer__btn--icon {
+	width: 32px;
+	padding: 0;
+}
+
+/* display:inline-flex above would otherwise beat the UA's [hidden] rule */
+.formulize-drawer .formulize-drawer__btn[hidden] {
+	display: none;
+}
+
+/* On a phone the drawer is the screen: full width, and the resize affordance
+   is meaningless. drawer.js clears any stored inline width below this
+   breakpoint so a desktop-sized value cannot leak in here. */
+@media (max-width: 768px) {
+	.formulize-drawer {
+		width: 100%;
+		min-width: 0;
+		max-width: none;
+	}
+
+	.formulize-drawer__resize-handle {
+		display: none;
 	}
 }

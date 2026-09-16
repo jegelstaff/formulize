@@ -79,7 +79,7 @@ if (!isset($_POST['metachoice']) AND !isset($formulize_doingManualExport)) {
     print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
 
     print "</head>";
-    print "<body style=\"background: white; margin-top:20px;\"><center>";
+    print "<body class=\"formulize-popup\" style=\"background: white; margin-top:20px;\"><center>";
     print "<table width=100%><tr><td width=5%></td><td width=90%>";
     print "<form id=\"metachoiceform\" name=\"metachoiceform\" action=\"".getCurrentURL() . "\" method=\"post\">\n";
 

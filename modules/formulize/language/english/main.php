@@ -341,8 +341,11 @@ define("_formulize_SAVE", "Save");
 define("_formulize_SAVE_AND_GOBACK", "Save and Go Back");
 define("_formulize_SAVE_AND_LEAVE", "Save and Close");
 define("_formulize_DONE", "Close");
-define("_formulize_CONFIRMNOSAVE", "You have not saved your changes!  Is that OK?  Click 'Cancel' to return to the form and then click 'Save' to save your changes.");
-define("_formulize_CONFIRMNOSAVE_UNLOAD", "You have not saved your changes!  Is that OK?");
+// The single source of truth for the "you are about to throw away edits" prompt.
+// Used everywhere an entry can be abandoned: the right drawer (close button, scrim,
+// Escape, Cancel, Back) and the full page form's Close/Done control. Keep it phrased
+// so that OK means "discard".
+define("_formulize_CONFIRM_DISCARD_CHANGES", "Discard unsaved changes to this entry?");
 
 define("_formulize_INFO_SAVED", "Your information has been saved.");
 define("_formulize_INFO_DONE1", "Click the <i>");
@@ -764,6 +767,7 @@ define("_AM_FORMULIZE_LOE_ONPAGE", "Page");
 define("_AM_FORMULIZE_LOE_PREVIOUS", "Previous");
 define("_AM_FORMULIZE_LOE_NEXT", "Next");
 define("_AM_FORMULIZE_LOE_TOTAL", "Showing entries: %d to %d of %d.");
+define("_AM_FORMULIZE_LOE_PAGE_X_OF_Y", "Page %s of %s");
 define("_AM_FORMULIZE_LOE_HIDE_REPEATS", "Hide repeating data:");
 
 define("_formulize_DE_LOE_LIMIT_REACHED1", "There are");
@@ -929,3 +933,9 @@ define("_formulize_USERACCOUNT_2FAOPTION_SMS", "Text a code");
 define("_formulize_USERACCOUNT_2FAOPTION_AUTHAPP", "Use an authenticator app");
 define("_formulize_USERACCOUNT_PWREPEATDESC", "Type the password twice for confirmation");
 
+
+// Autocomplete component - removing a selected value (issue #92)
+define("_formulize_AUTOCOMPLETE_REMOVE", "Remove");
+define("_formulize_AUTOCOMPLETE_REMOVE_ITEM", "Remove %s");
+define("_formulize_AUTOCOMPLETE_CONFIRM_MESSAGE", "Remove %s from the selected items?");
+define("_formulize_AUTOCOMPLETE_CONFIRM_MESSAGE_GENERIC", "Remove this item from the selected items?");
