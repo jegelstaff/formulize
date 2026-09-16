@@ -114,7 +114,9 @@ class formulizeUserAccountGroupMembershipElementHandler extends formulizeUserAcc
 			// handle-based class (auto_multi_{elementHandle}) additively so tests can
 			// target the element across entries. Mirrors the enabled-branch behaviour below.
 			$labelContent = implode('', array_map(function($name) use ($markupName, $elementHandle) {
-				return "<p class='auto_multi auto_multi_{$markupName} auto_multi_{$elementHandle}'>{$name}</p>";
+				// Read-only chip: same structure as the editable chips built in
+				// selectElement.php / autocomplete.js, minus the remove button.
+				return "<p class='auto_multi auto_multi_{$markupName} auto_multi_{$elementHandle}'><span class='auto_multi_label'>{$name}</span></p>";
 			}, $selectedNames));
 			return new XoopsFormLabel($caption, $labelContent, $markupName);
 		}

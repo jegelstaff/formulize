@@ -328,7 +328,7 @@ define("_formulize_ADD_HELP4", "Para excluir entradas, marque as caixas correspo
 define("_formulize_SUBFORM_VIEW", "Ver");
 define("_formulize_SAVE", "Salvar");
 define("_formulize_DONE", "Tudo pronto");
-define("_formulize_CONFIRMNOSAVE", "Você não salvou suas alterações! Isso está certo? Clique em 'Cancelar' para retornar ao formulário e clique em 'Salvar' para salvar suas alterações.");
+define("_formulize_CONFIRM_DISCARD_CHANGES", "Descartar as alterações não salvas desta entrada?");
 
 define("_formulize_INFO_SAVED", "Sua informação foi salva.");
 define("_formulize_INFO_DONE1", "Clique no botão <i>");
