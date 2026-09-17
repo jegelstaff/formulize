@@ -2,13 +2,6 @@
 <html xml:lang="<{$icms_langcode}>">
 
 <head>
-    <!-- Center block custom positioning -->
-    <{* Center blocks display order
-        valid values are:  lrc (left right / center) lcr (left center right) clr (center / left right)
-    *}>
-    <{assign var=theme_top_order value=lrc}>
-    <{assign var=theme_bottom_order value=lcr}>
-
     <!-- Theme name -->
     <{assign var=theme_name value=$xoTheme->folderName}>
 
@@ -44,10 +37,9 @@
          overrides: ImpressCMS looks for that exact name when it builds $icms_themecss, and prints
          "The theme does not exist" over the top of the page when it cannot find one.
          The site's theme is read from theme_set, which embedding deliberately leaves alone (see
-         modules/formulize/include/common.php), so an embedded screen is styled by whatever the
+         header.php, which picks this theme by folder name instead), so an embedded screen is styled by whatever the
          site is wearing today. Nothing to set, and nothing to keep in step. -->
     <{php}>
-    require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions.php';
     global $icmsConfig;
     $baseTheme = $icmsConfig['theme_set'];
     if (!$baseTheme OR !is_dir(ICMS_THEME_PATH . '/' . $baseTheme)
@@ -66,21 +58,28 @@
 
 </head>
 
-<{php}>
+<body id="<{$icms_dirname}>" class="<{$icms_langcode}><{if isset($formulize_screen_id) && $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}>" style="display: none;">
+
+<script type='text/javascript'>
 // Inside a frame, nothing here scrolls: the frame is sized to its whole content and the page hosting
 // it is what moves. Say so, and turn this page's own scrolling off, so a reader gets one scrollbar
 // rather than two and the form does not try to save a scroll position that cannot exist.
 //
 // This page is also drawn at the top level, by the "open in its own window" link, and there it has to
-// scroll like any other page or a long form simply cannot be reached. The browser is what tells the
-// two apart - being asked for through the formulize_embed parameter is not the same as being framed.
-$this->assign('formulize_framedAttributes',
-    formulize_isAuthoritativelyEmbeddedRequest()
-        ? ' data-formulize-scroll-container="none" style="display: none; overflow: hidden;"'
-        : ' style="display: none;"');
-<{/php}>
-<body id="<{$icms_dirname}>" class="<{$icms_langcode}><{if isset($formulize_screen_id) && $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}>"<{$formulize_framedAttributes}>>
+// scroll like any other page or a long form simply cannot be reached. So this is decided here, in the
+// browser, by whether the page actually is in a frame. Neither the formulize_embed parameter, which
+// the top level link carries too, nor the Sec-Fetch-Dest header, which not every browser sends, can
+// answer that as reliably.
+if (window.parent !== window) {
+    document.body.setAttribute('data-formulize-scroll-container', 'none');
+    document.body.style.overflow = 'hidden';
+}
+</script>
 
+<{* This theme keeps its own copy of session-timeout-warning.html on purpose, rather than borrowing the
+   site theme's the way it borrows the stylesheet. Not every theme has one, and the script at the bottom
+   of this file depends on the #session-timeout-warning element it contains to bring the warning into
+   view on the host page. Keep that id if you change the copy. *}>
 <{includeq file="$theme_name/session-timeout-warning.html"}>
 
 <{php}>
@@ -95,31 +94,7 @@ if($xoopsUser) {
 }
 <{/php}>
 
-<{if $xoBlocks.canvas_left and $xoBlocks.canvas_right}>
-<{assign var=columns_layout value='threecolumns-layout'}>
-<{elseif $xoBlocks.canvas_left}>
-<{assign var=columns_layout value='leftcolumn-layout'}>
-<{elseif $xoBlocks.canvas_right}>
-<{assign var=columns_layout value='rightcolumn-layout'}>
-<{/if}>
   <div class="site-layout">
-
-    <!-- LAYOUT -> SIDEBAR -->
-    <{if $xoops_requesturi|strstr:'/modules/formulize/application.php'}>
-    <{assign var=openMenuClass value='site-layout__sidebar--open'}>
-    <script type='text/javascript'>
-      jQuery(document).ready(function() {
-        if (jQuery('.main-menu__item-link--active').length) {
-            window.addEventListener('formulize_pageShown', function () {
-                jQuery('#xo-canvas-leftcolumn').scrollTop(jQuery('.main-menu__item-link--active').offset().top-jQuery('#xo-canvas-leftcolumn').offset().top);
-            });
-        }
-      });
-    </script>
-		<{elseif !isset($openMenuClass)}>
-		<{assign var=openMenuClass value=''}>
-    <{/if}>
-
 
     <!-- LAYOUT -> MAIN -->
     <div class="site-layout__main">
@@ -197,7 +172,9 @@ if($xoopsUser) {
         }
 
         // Only the server can say whether a cookie this screen can be submitted with came back, so
-        // only the server is asked - see formulize_embed_session_check.php. Do not add a test from
+        // only the server is asked - see the embed_session_check op in formulize_xhr_responder.php.
+        // That responder answers nothing at all when the uid sent does not match the visitor, and an
+        // empty answer reads as "no cookie" below, so the uid must be the real one. Do not add a test from
         // script here: writing a cookie to see if it sticks reports failure inside a frame even when
         // the one the screen relies on was kept.
         function checkSessionSurvives() {
@@ -205,7 +182,7 @@ if($xoopsUser) {
                 return;
             }
             jQuery.ajax({
-                url: '<{php}>echo XOOPS_URL;<{/php}>/modules/formulize/formulize_embed_session_check.php',
+                url: '<{php}>global $xoopsUser; echo XOOPS_URL.'/modules/formulize/formulize_xhr_responder.php?op=embed_session_check&uid='.($xoopsUser ? intval($xoopsUser->getVar('uid')) : 0);<{/php}>',
                 cache: false,
                 success: function(data) {
                     if (jQuery.trim(String(data)) !== '1') {

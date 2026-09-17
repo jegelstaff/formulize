@@ -42,3 +42,5 @@ define("_MI_formulizeMENU_DESC","Visualizza in un blocco il menu individuale con
 
 // Names of blocks for this module (Not all module has blocks)
 define("_MI_formulizeMENU_BNAME","Form");
+
+include_once XOOPS_ROOT_PATH . '/modules/formulize/language/english/modinfo.php'; // just to catch whatever constants might be missing

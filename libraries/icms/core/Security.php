@@ -91,7 +91,10 @@ class icms_core_Security {
 			return false;
 		}
 		$validFound = false;
-		$sessionTokenFilesOfType = glob($this->tokenDir . '/' . $name . '_' . $this->tokenBindKey() . '_*');
+		$sessionTokenFilesOfType = array();
+		foreach($this->tokenBindKeysToCheck() as $bindKey) {
+			$sessionTokenFilesOfType = array_merge($sessionTokenFilesOfType, (array) glob($this->tokenDir . '/' . $name . '_' . $bindKey . '_*'));
+		}
 		foreach($sessionTokenFilesOfType as $tokenPathAndFileName) {
 			if($this->tokenExpired($tokenPathAndFileName)) {
 				unlink($tokenPathAndFileName);
@@ -128,16 +131,33 @@ class icms_core_Security {
 	 *
 	 * The session id, except for an anonymous visitor inside somebody else's frame, whose session
 	 * cookie never reaches them: there, a cookie kept for the purpose stands in for it. See
-	 * formulize_anonTokenBindKey(), which answers by the same rule whether a token is being issued
-	 * or checked, so the two always agree on where to look without either having to work it out.
+	 * formulize_anonTokenBindKey().
 	 *
-	 * @return string The value to file a token under, and to look for one under
+	 * @return string The value to file a new token under
 	 **/
 	private function tokenBindKey() {
 		if ($bindKey = formulize_anonTokenBindKey()) {
 			return $bindKey;
 		}
 		return session_id();
+	}
+
+	/**
+	 * The names a submitted token may be filed under. ALTERED BY FREEFORM SOLUTIONS FOR FORMULIZE.
+	 *
+	 * Always the session id. For an anonymous visitor with a bind cookie, that too: a token filed under
+	 * the bind cookie can come back on a request that now carries a session cookie as well, and
+	 * formulize_anonBindCookieValue() explains when. Logged in visitors are only ever checked against
+	 * the session.
+	 *
+	 * @return array The values to look for token files under
+	 **/
+	private function tokenBindKeysToCheck() {
+		$keys = array(session_id());
+		if ($bindKey = formulize_anonBindCookieValue()) {
+			$keys[] = $bindKey;
+		}
+		return array_unique($keys);
 	}
 
 	/**

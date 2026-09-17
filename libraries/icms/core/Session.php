@@ -190,7 +190,7 @@ class icms_core_Session {
 		// If there's no xoopsUserId set in the $_SESSION yet, and there's an ICMS session cookie present, then let's make one last attempt to load the session (could be because we're embedded in a system that doesn't have a parallel user table like what is used above)
 		// essentially, if session_start failed (which would happen if another system already started it) then we're trying again.
 		// Possibly, we should be appending the existing $_SESSION data somehow?? Don't want to clobber session data from host system??
-		$icms_session_name = ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '') ? $icmsConfig['session_name'] : session_name();
+		$icms_session_name = self::cookieName();
 		if (!isset($_SESSION['xoopsUserId']) && isset($_COOKIE[$icms_session_name])) {
 			if ($icms_session_data = $instance->read($_COOKIE[$icms_session_name])) {
 				session_decode($icms_session_data); // put session data into $_SESSION, including the xoopsUserId if present, same as if session_start had been successful
@@ -208,7 +208,7 @@ class icms_core_Session {
 				icms::$user = $icms_user; // ALTERED BY FREEFORM SOLUTIONS TO AVOID NAMING CONFLICT WITH GLOBAL USER OBJECT FROM EXTERNAL SYSTEMS
 				if ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '') {
 					// we need to secure cookie when using SSL
-					$secure = substr(ICMS_URL, 0, 5) == 'https' ? 1 : 0;
+					$secure = self::siteIsSecure();
 					$arr_cookie_options = array (
 						'expires' => 0,
 						'path' => '/',
@@ -392,10 +392,8 @@ class icms_core_Session {
 	 * @return  bool
 	 **/
 	public function update_cookie($sess_id = null, $expire = null) {
-		global $icmsConfig;
-		$secure = substr(ICMS_URL, 0, 5) == 'https' ? 1 : 0; // we need to secure cookie when using SSL
-		$session_name = ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '')
-				? $icmsConfig['session_name'] : session_name();
+		$secure = self::siteIsSecure(); // we need to secure cookie when using SSL
+		$session_name = self::cookieName();
 		$session_id = empty($sess_id) ? session_id() : $sess_id;
         $arr_cookie_options = array (
             'expires' => 0,
@@ -406,6 +404,32 @@ class icms_core_Session {
             'samesite' => self::cookieSameSite($secure) // Lax default; configurable via cookie_samesite preference (None auto-downgraded to Lax when not Secure)
             );
         setcookie($session_name, $session_id, $arr_cookie_options);
+	}
+
+	/**
+	 * The name this site's session cookie goes by. ALTERED BY FREEFORM SOLUTIONS FOR FORMULIZE.
+	 *
+	 * A site can rename it, so asking PHP alone gets the wrong answer on a site that has. The one place
+	 * this is worked out, for everything that needs to look for the cookie in $_COOKIE.
+	 *
+	 * @return string The cookie name
+	 */
+	static public function cookieName() {
+		global $icmsConfig;
+		return ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '')
+			? $icmsConfig['session_name'] : session_name();
+	}
+
+	/**
+	 * Whether this site is served over https, for deciding whether cookies are Secure. ALTERED BY FREEFORM SOLUTIONS FOR FORMULIZE.
+	 *
+	 * Read from ICMS_URL rather than $_SERVER['HTTPS']: behind a reverse proxy the connection to the
+	 * browser is https while this server's own connection is not, and only the configured URL knows that.
+	 *
+	 * @return bool
+	 */
+	static public function siteIsSecure() {
+		return substr(ICMS_URL, 0, 5) == 'https';
 	}
 
 	/**

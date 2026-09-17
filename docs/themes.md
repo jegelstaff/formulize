@@ -54,11 +54,19 @@ Then Formulize will not try to save or restore a position at all.
 
 A theme meant for [screens embedded in another website](../embedding_screens/) is chosen from a
 separate list in the Formulize preferences, and is kept out of the normal theme pickers. Put a file
-named `formulize-embed-theme.marker` in the theme folder to mark it as one.
+named `formulize-embed-theme.marker` in the theme folder to mark it as one. A theme without the
+marker is not used for embedded screens, even if it is chosen in the preferences.
 
-The simplest way to make your own is to copy the `themes/formulize_embed` folder. Keep two things in
-your copy: that marker file, and the script at the bottom of `theme.html`, which is how an embedded
-screen reports its height to the page hosting it.
+The simplest way to make your own is to copy the `themes/formulize_embed` folder. Keep these in your
+copy:
+
+- the marker file
+- the short script just after the `<body>` tag in `theme.html`, which turns off the page's own
+  scrolling when it is inside a frame
+- the script at the bottom of `theme.html`, which is how an embedded screen reports its height to
+  the page hosting it
+- `session-timeout-warning.html`, including its `session-timeout-warning` id, which the script at the
+  bottom uses to bring the warning into view
 
 ## Checking your theme
 

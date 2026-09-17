@@ -93,6 +93,10 @@ $screen_handler = xoops_getmodulehandler('screen', 'formulize');
 if($sid) {
 	$thisscreen1 = $screen_handler->get($sid); // first get basic screen object to determine type
 	$fid = is_object($thisscreen1) ? $thisscreen1->getVar('fid') : 0;
+	// allow the websites this screen names to frame it, as well as the ones allowed across the whole site.
+	// Sent before the permission check below, so that the message an embedded visitor gets when they may
+	// not see the screen is allowed to appear in the frame too, rather than the browser blanking it.
+	formulize_sendScreenFrameAncestorsHeader($thisscreen1);
 }
 
 // set the flag to force derived value updates, if it is in the URL
@@ -174,9 +178,6 @@ if (!$loadThisView) {
 if ($screen) {
 
 		$renderedFormulizeScreen = $screen;
-
-    // restrict who can frame this screen, if the screen names the websites allowed to embed it
-    formulize_sendScreenFrameAncestorsHeader($screen);
 
     // this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";

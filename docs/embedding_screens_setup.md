@@ -262,19 +262,13 @@ The same checks as A4.
 
 ## After either method
 
-Point the iframe at the new address. The screen's settings page generates the code for you once the
-host website is in its list — take it from there rather than editing it by hand.
+Point the iframe at the new address. The screen's settings page shows the code to use. There are two versions, one for anonymous users, and one for when you have set up an embedding address to use in order to preserve user sessions in the embedded screens.
 
-```html
-<iframe data-formulize-embed src="https://forms.example.com/modules/formulize/index.php?sid=12&formulize_embed=1"
-        title="Contact us"
-        style="width:100%;min-width:min(400px,100vw);height:600px;border:0"></iframe>
-<script src="https://forms.example.com/modules/formulize/libraries/embed/formulize-embed.js"></script>
-```
+Since Formulize has no way to know the embedding address you're using, replace `{embedding-address}` in the example code with the address you are using.
 
-The address is the screen's plain `index.php?sid=` one, not an Alternate URL you may have given it.
-The rewrite rules that serve those addresses are not part of this arrangement, and nobody sees the
-address inside an iframe anyway.
+If you don't need to preserve user sessions, you can just use the regular code with the normal site address of your Formulize system.
+
+The address must use the screen's plain `index.php?sid=` location, not any Alternate URL you may have given it. The rewrite rules that serve those addresses are not part of this arrangement, and nobody sees the address inside an iframe anyway.
 
 Your original address keeps working. Opening it directly still shows the whole site normally.
 
@@ -288,9 +282,9 @@ Open the host page and use the embedded screen. If the visitor is signed in to y
 another tab, the screen should show their own data and save normally.
 
 If an **Open this form in a new window** link appears under the screen, the browser is not keeping
-cookies for it. Work back through the checks in A4: the embedding address is not on the same domain
-as the host page, is not `https`, or the links inside the frame are going back to the original
-address.
+cookies for it. First check that the iframe uses the embedding address, not the ordinary address.
+Then work back through the checks in A4: the embedding address is not on the same domain as the host
+page, is not `https`, or the links inside the frame are going back to the original address.
 
 ## If you cannot create an address on the host website's domain
 

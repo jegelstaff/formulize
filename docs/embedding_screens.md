@@ -34,13 +34,15 @@ of the website that will display it:
 www.example.com
 ```
 
-One website per line. Until you list one, no other website can embed that screen.
+One website per line. Until you list one, no other website can embed that screen. Write the website
+whose page shows the screen, even if you set up an embedding address for it in step 3.
 
 ### 3. Give Formulize an address on the same domain as the host page
 
-**This is the part that needs a server change.** The address in the iframe has to be on the same
-domain as the page it appears in, over `https`. If the host page is on `www.example.com`, the screen
-has to come from something like `forms.example.com`.
+**This is the part that needs a server change.** For visitors to be signed in to the embedded screen,
+and for submitting to work in every browser, the address in the iframe has to be on the same domain
+as the page it appears in, over `https`. If the host page is on `www.example.com`, the screen has to
+come from something like `forms.example.com`. These docs call that the **embedding address**.
 
 Three things have to be true:
 
@@ -65,18 +67,22 @@ willing to accept that some browsers will not be able to submit.** Read
 
 ### 4. Paste the code into the host page
 
-The screen's settings page shows you the exact code for that screen, under **Code for the other
-website's page**. It looks like this:
+The screen's settings page shows you the code for that screen, under **Code for the other website's
+page**. It looks like this:
 
 ```html
-<iframe data-formulize-embed src="https://forms.example.com/modules/formulize/index.php?sid=12&formulize_embed=1"
+<iframe data-formulize-embed src="https://forms.mycompany.com/modules/formulize/index.php?sid=12&formulize_embed=1"
         title="Contact us"
         style="width:100%;min-width:min(400px,100vw);height:600px;border:0"></iframe>
-<script src="https://forms.example.com/modules/formulize/libraries/embed/formulize-embed.js"></script>
+<script src="https://forms.mycompany.com/modules/formulize/libraries/embed/formulize-embed.js"></script>
 ```
 
-Copy it from the settings page rather than from here — it has your screen's real address in it
-already. Include the script once per page, however many screens that page shows.
+The settings page has a second version that is the same, with `{embedding-address}` in place of the
+address. If you did step 3, use that one and replace `{embedding-address}` with your embedding
+address, eg. `forms.example.com`.
+
+Copy the code from the settings page rather than from here, because it has your screen's real number
+in it. Include the script once per page, however many screens that page shows.
 
 That is everything. The screen sizes itself to its content, so there is no height to guess at, and
 it takes the width your page gives it — see [How wide the screen will be](#how-wide-the-screen-will-be)
@@ -90,16 +96,18 @@ while they use it — and that depends entirely on **where** the screen is embed
 With the settings at their defaults, browsers send your site's session cookie into a frame only when
 the page doing the framing is on the same domain as the screen, over the same https. So:
 
-**Embedded on the same domain** — the arrangement step 3 sets up, `forms.example.com` inside
-`www.example.com`. The session travels with the visitor. The screen shows them their own data and
-behaves exactly as it does on your own site, submitting included. This is the normal case, and it is
-why step 3 matters.
+**Embedded on the same domain** — the arrangement step 3 sets up, an iframe pointing at
+`forms.example.com` inside a page on `www.example.com`. The session travels with the visitor. The
+screen shows them their own data and behaves exactly as it does on your own site, submitting
+included. This is the normal case, and it is why step 3 matters.
 
-**Embedded on a different domain** — `forms.example.com` inside `someone-else.com`. See below.
+**Embedded on a different domain** — an iframe pointing at your ordinary Formulize address, eg.
+`forms.mycompany.com`, inside a page on `www.example.com`. See below.
 
-The screen's settings page tells you which of the two you have. It reads the websites you have
-listed, compares each against your own address, and says which will be signed in and which will be
-anonymous.
+The screen's settings page sorts the websites you list by whether they're on the same domain as your
+Formulize address. It can't know about an embedding address, so if you use one, those websites will
+be signed in even if the page lists them as anonymous. A website the page can't sort for certain is
+left out of both lists.
 
 ## Embedding on a different domain
 
@@ -169,7 +177,9 @@ website it belongs to is used. You can separate entries with commas instead of l
 If you type something that is not a website address, it stays in the box and the settings page tells
 you it is being ignored, so you can correct it. Nothing you type is thrown away.
 
-**Leaving out the scheme assumes `https`** If your host is running only under `https://` then you need to include `http://` ie: `http://localhost:4000`.
+**Leaving out the scheme means your Formulize site's own scheme**, which is `https` on almost every
+site. If the website doing the embedding uses plain `http`, such as a local development site, write
+`http://` explicitly, eg. `http://localhost:4000`.
 
 ### Embedding the whole site
 
@@ -210,10 +220,15 @@ An embedded screen borrows your site's own theme stylesheet, so it looks like th
 with no work at all. If you change your site's theme, embedded screens follow.
 
 To design the embedded appearance yourself, copy the `themes/formulize_embed` folder to a new name.
-Keep two things in your copy:
+Keep these in your copy:
 
 - the `formulize-embed-theme.marker` file, which is what tells Formulize this is an embed theme
+- the short script just after the `<body>` tag in `theme.html`, which turns off the page's own
+  scrolling inside a frame
 - the script at the bottom of `theme.html`, which is how the screen reports its height to the host page
+- `session-timeout-warning.html`, including its `session-timeout-warning` id
+
+See [themes](../themes/) for more.
 
 Your copy then appears in **Theme for embedded screens**, in the preferences beside the on/off
 switch. Nothing to edit in `mainfile.php`.
@@ -266,8 +281,10 @@ off for the site. Check both, then reload.
 
 **The browser reports a connection error inside the frame** — something like "refused to connect" —
 even though the same address opens fine in its own tab. This is a blocked frame, not a real network
-problem. Check if the host page is using `http://` while the Formulize site uses `https://`. If there's a mismatch there, make sure to include `http://` excplicitly when specifying the allowed website in the Formulize settings. See
-[Choosing which websites may embed](#choosing-which-websites-may-embed).
+problem. Check whether the host page uses `http://` while your Formulize site uses `https://`. If so,
+write `http://` explicitly when you list the website in the screen's settings. See
+[Choosing which websites may embed](#choosing-which-websites-may-embed). Also check that you listed
+the host website, eg. `www.example.com`, and not the embedding address.
 
 **The form is a narrow sliver.** The iframe is in a container that sizes itself to its contents, and
 the version of `formulize-embed.js` on your Formulize site predates the floor described under
@@ -287,7 +304,9 @@ order:
    accept that over `https`.
 2. **Is it Safari, or a browser set to block third-party cookies?** Then it cannot work on a different
    domain at all, and step 3 is the answer.
-3. **If the iframe address *is* on the same domain as the host page**, one of the setup steps is
+3. **Is the iframe using your ordinary Formulize address**, or the embedding address with
+   `{embedding-address}` replaced? Only the second works in every browser.
+4. **If the iframe address *is* on the same domain as the host page**, one of the setup steps is
    incomplete. Open the iframe address directly in a browser: if the address bar moves to a different
    name as you click around, the server is not passing the requested hostname to Formulize. See
    [the setup steps](../embedding_screens_setup/).

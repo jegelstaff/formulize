@@ -67,13 +67,23 @@
 	      <div class="description"><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_OFF}></div>
 	    <{else}>
 	    <{if $content.embedCode}>
-	    <label for="screens-embedCode"><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_CODE}></label>
-	    <textarea id="screens-embedCode" rows="4" cols="60" readonly onclick="this.select();"><{$content.embedCode}></textarea>
+	    <{* Two versions of the code, because this page only knows the address it is being viewed at.
+	       That address works for anonymous visitors. Signed-in visitors need an embedding address on the
+	       host website's own domain, which the administrator has to fill in. *}>
+	    <label><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_CODE}></label>
 	    <div class="description"><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_CODE_DESC}></div>
+	    <br />
+	    <label for="screens-embedCode"><{$content.embedCodeAnonLabel}></label>
+	    <textarea id="screens-embedCode" rows="4" cols="60" readonly onclick="this.select();"><{$content.embedCode}></textarea>
+	    <div class="description"><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_CODE_ANON_DESC}></div>
+	    <br />
+	    <label for="screens-embedCodeAlias"><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_CODE_ALIAS}></label>
+	    <textarea id="screens-embedCodeAlias" rows="4" cols="60" readonly onclick="this.select();"><{$content.embedCodeForEmbeddingAddress}></textarea>
+	    <div class="description"><{$content.embedCodeAliasDesc}></div>
 	    <br />
 	    <{/if}>
 	    <label for="screens-embedOrigins"><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_ORIGINS}></label>
-	    <textarea name="screens-embedOrigins" id="screens-embedOrigins" rows="4" cols="60" placeholder="www.example.com"><{$content.embedOrigins}></textarea>
+	    <textarea name="screens-embedOrigins" id="screens-embedOrigins" rows="4" cols="60" maxlength="1000" placeholder="www.example.com"><{$content.embedOrigins}></textarea>
 	    <{$content.embedOriginsWarning}>
 	    <div class="description"><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_ORIGINS_DESC}></div>
 	    <{$content.embedSessionNotice}>

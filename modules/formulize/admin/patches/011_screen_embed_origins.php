@@ -4,9 +4,13 @@ if (!defined('XOOPS_ROOT_PATH')) {
 }
 
 // Adds the embedOrigins column to the screen table. It holds the websites a screen may be embedded
-// in, one origin per line, and Formulize sends a Content-Security-Policy: frame-ancestors header for
-// any screen that names some. A screen with nothing listed is not restricted, so existing embedding
-// keeps working and this patch changes nothing about a running site.
+// in, one origin per line, and Formulize adds them to the Content-Security-Policy: frame-ancestors
+// header it sends for that screen.
+//
+// From this version every page says that only this site may frame it, until an administrator turns
+// embedding on and names the websites allowed, either site-wide or on individual screens. A site that
+// is displayed inside another system's frame today stops appearing there after updating until that
+// is done, which is what the message below tells the person running the update.
 //
 // Gated to run once, when the stored dbversion is below 19.
 function formulize_patch_011_screen_embed_origins($prev_dbversion, $required_dbversion) {
@@ -32,7 +36,10 @@ function formulize_patch_011_screen_embed_origins($prev_dbversion, $required_dbv
         return false;
     }
 
-    echo '<p>Added the setting naming which other websites may embed each screen. Every screen starts'
-        . ' with nothing listed, which places no restriction on embedding, exactly as before.</p>';
+    echo '<p>Added the setting naming which other websites may embed each screen.</p>'
+        . '<p><b>Other websites can no longer display this site in a frame</b> until you allow them. If this'
+        . ' site appears inside another system, such as a learning management system or a portal, turn on'
+        . ' <i>Allow this site to be embedded in other websites</i> under Settings &rarr; Advanced &rarr;'
+        . ' Embedding in other websites, and name that system\'s address there.</p>';
     return true;
 }

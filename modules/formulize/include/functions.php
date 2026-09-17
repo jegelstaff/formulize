@@ -490,9 +490,10 @@ function formulize_invalidOriginEntriesHtml($entries, $headingOne, $headingMany,
 /**
  * The websites allowed to embed a screen, ready for the frame-ancestors header.
  *
- * A lone * is not accepted here: leaving the setting empty already means no restriction, so the
- * only thing a * could add is a way to write "anyone" that looks like a restriction. Only http and
- * https addresses are kept, since a page can only be framed over one of those.
+ * A lone * is not accepted here. Embedding is something an administrator grants website by website:
+ * an empty setting means no other website may frame the screen, and allowing every website on the
+ * internet to frame it is not a choice this setting offers. Only http and https addresses are kept,
+ * since a page can only be framed over one of those.
  *
  * @param string $value The saved setting
  * @return array The addresses, in canonical form and deduplicated
@@ -575,10 +576,11 @@ function formulize_moduleConfigValue($name) {
  *
  * A preference rather than something an administrator has to define in mainfile.php. The shipped
  * theme is the default; a site that wants to design its own copies the folder, and then chooses it
- * here. FALSE when the chosen theme is not installed, which leaves an embedded screen rendering
- * with the site's ordinary theme rather than with nothing.
+ * here. FALSE when the chosen theme is not installed, or is not marked as an embed theme (see
+ * FORMULIZE_EMBED_THEME_MARKER), which leaves an embedded screen rendering with the site's ordinary
+ * theme rather than with nothing.
  *
- * @return string|bool The theme folder name, or FALSE if it isn't installed
+ * @return string|bool The theme folder name, or FALSE if it isn't an installed embed theme
  */
 function formulize_embedThemeName() {
     $theme = formulize_moduleConfigValue('formulizeEmbedTheme');
@@ -589,7 +591,7 @@ function formulize_embedThemeName() {
     if (!preg_match('/^[A-Za-z0-9_-]+$/', $theme)) {
         return false;
     }
-    return is_dir(ICMS_THEME_PATH.'/'.$theme) ? $theme : false;
+    return (is_dir(ICMS_THEME_PATH.'/'.$theme) AND formulize_themeIsAnEmbedTheme($theme)) ? $theme : false;
 }
 
 /**
@@ -658,7 +660,7 @@ function formulize_embeddedNoPermissionHtml($returnUrl) {
  * hand-written iframe ends up in the same place.
  *
  * The address is always index.php?sid=, never the alternate address the screen may have under
- * Alternate URLs. An embedded screen is reached through a name on the host website's own domain
+ * Alternate URLs. An embedded screen is often reached through a name on the host website's own domain
  * pointed at this server, and the rewrite rules that serve the alternate addresses are not part of
  * that arrangement, so the tidy address is one more thing to get working for no gain: nobody ever
  * sees the address that is in an iframe.
@@ -669,16 +671,39 @@ function formulize_embeddedNoPermissionHtml($returnUrl) {
  * any replaced element with no size of its own. minWidthValue() in formulize-embed.js explains
  * what the floor under the width is for.
  *
+ * WHICH ADDRESS. This site answers at whatever address a request arrives on, and an administrator is
+ * reaching it through the site's ordinary address, so that is the only address this request knows.
+ * It is the right one for a screen used anonymously on a website on another domain. A screen whose
+ * visitors need to be signed in is instead reached through a second address on the host website's own
+ * domain, pointed at this server - and nothing here can know what that address is, or whether one
+ * exists. So the settings page shows the code twice: once with the ordinary address, and once with
+ * formulize_embeddingAddressPlaceholderUrl() in its place for the administrator to fill in.
+ *
  * @param object $screen The screen
+ * @param string $siteUrl The address to build the code from, with no trailing slash. Defaults to the
+ *   address this request arrived on.
  * @return string The HTML to paste, ready to display in a textarea
  */
-function formulize_screenEmbedCode($screen) {
-    $url = XOOPS_URL.'/modules/formulize/index.php?sid='.intval($screen->getVar('sid')).'&formulize_embed=1';
+function formulize_screenEmbedCode($screen, $siteUrl = XOOPS_URL) {
+    $url = $siteUrl.'/modules/formulize/index.php?sid='.intval($screen->getVar('sid')).'&formulize_embed=1';
     $title = $screen->getVar('title');
     return '<iframe data-formulize-embed src="'.htmlspecialchars($url).'"'
         .' title="'.htmlspecialchars($title ? $title : _AM_EMBED_CODE_DEFAULT_TITLE).'"'
         .' style="width:100%;min-width:min(400px,100vw);height:600px;border:0"></iframe>'."\n"
-        .'<script src="'.htmlspecialchars(XOOPS_URL.'/modules/formulize/libraries/embed/formulize-embed.js').'"></script>';
+        .'<script src="'.htmlspecialchars($siteUrl.'/modules/formulize/libraries/embed/formulize-embed.js').'"></script>';
+}
+
+/**
+ * This site's address with the host replaced by a placeholder, for embed code an administrator
+ * completes with the embedding address they have set up on the host website's domain.
+ *
+ * Always https, because an embedding address has to be. Any folder the site is installed in is kept,
+ * since the embedding address serves the same site from the same place.
+ *
+ * @return string eg. https://{embedding-address} or https://{embedding-address}/formulize
+ */
+function formulize_embeddingAddressPlaceholderUrl() {
+    return 'https://'.FORMULIZE_EMBEDDING_ADDRESS_PLACEHOLDER.rtrim((string) parse_url(XOOPS_URL, PHP_URL_PATH), '/');
 }
 
 /**
@@ -715,13 +740,21 @@ function formulize_settingsWarningStylesHtml() {
  * These two settings are configured on different pages and decide one thing between them, so
  * whichever page you are on needs to say what the other one is doing.
  *
- * With the default of Lax the session cookie is not sent into a frame on another website, so an
- * embedded screen is always anonymous no matter who is looking at it, and only what the Anonymous
- * group may see can appear there. Set to None, the session cookie does travel into the frame, and
- * an embedded screen shows the visitor whatever they are logged in to see. That is what an LMS or
- * portal integration needs, and it is also what makes the list of allowed websites load-bearing:
- * on such a site those websites receive logged-in pages, not anonymous ones.
+ * With the default of Lax, whether the session cookie reaches an embedded screen depends on where it
+ * is embedded. A browser sends it into a frame when the page doing the framing is the same site as
+ * this one - the same registrable domain and the same scheme, eg. this site at forms.example.com
+ * inside www.example.com - and there the screen shows visitors their own data exactly as it would
+ * on this site. On a website on another domain the cookie is withheld, so the screen is anonymous
+ * no matter who is looking at it. The note sorts the websites listed into those two groups where
+ * that can be known for certain.
  *
+ * Set to None, the session cookie travels into a frame on any website, and an embedded screen shows
+ * the visitor whatever they are logged in to see. That is what an LMS or portal integration needs,
+ * and it is also what makes the list of allowed websites load-bearing: on such a site those websites
+ * receive logged-in pages, not anonymous ones.
+ *
+ * @param string $value The saved list of allowed websites, sorted in the note by whether they share
+ *   the session
  * @return string HTML for the note, or an empty string when there is nothing worth saying
  */
 function formulize_embedSessionSharingNoticeHtml($value = '') {
@@ -743,17 +776,24 @@ function formulize_embedSessionSharingNoticeHtml($value = '') {
     $html = formulize_settingsWarningStylesHtml()
         ."<div class='formulize-settings-note'>"
         ."<p><b>"._AM_EMBED_SESSION_DEPENDS_TITLE."</b> "
-        .sprintf(_AM_EMBED_SESSION_DEPENDS_BODY, htmlspecialchars($sameSite), '<code>'.htmlspecialchars($thisHost).'</code>')
+        .sprintf(_AM_EMBED_SESSION_DEPENDS_BODY, htmlspecialchars($sameSite))
         ."</p>";
-    // sorted into what this site can say for certain about the websites actually listed, so the
-    // rule above does not have to be applied by hand to each one
+    // Sorted into what this site can say for certain about the websites actually listed, so the rule
+    // above does not have to be applied by hand to each one.
+    //
+    // Sorted against the address this page is being viewed at, which is all this request knows. That
+    // is normally the site's ordinary address, while the iframe on another website usually points at
+    // a second address on that website's own domain (see the embedding setup documentation), which
+    // nothing here can detect. So a website on a different domain is not declared anonymous outright:
+    // it is anonymous through THIS address, and the note says how to change that.
+    $hostCode = '<code>'.htmlspecialchars($thisHost).'</code>';
     $sorted = formulize_sortOriginsBySessionSharing($value, $thisHost);
     if ($sorted['same']) {
-        $html .= '<p>'._AM_EMBED_SESSION_LIST_SAME.' '
+        $html .= '<p>'.sprintf(_AM_EMBED_SESSION_LIST_SAME, $hostCode).' '
             .'<code>'.implode('</code>, <code>', array_map('htmlspecialchars', $sorted['same'])).'</code></p>';
     }
     if ($sorted['cross']) {
-        $html .= '<p>'._AM_EMBED_SESSION_LIST_CROSS.' '
+        $html .= '<p>'.sprintf(_AM_EMBED_SESSION_LIST_CROSS, $hostCode).' '
             .'<code>'.implode('</code>, <code>', array_map('htmlspecialchars', $sorted['cross'])).'</code></p>';
     }
     return $html.'<p>'._AM_EMBED_SESSION_DEPENDS_LMS.'</p></div>';
@@ -790,8 +830,12 @@ function formulize_sortOriginsBySessionSharing($value, $thisHost) {
         if (!$pattern OR !formulize_originPatternCanBeFramed($pattern)) {
             continue;
         }
-        // a pattern naming no scheme is matched by the browser against this site's own scheme, so
-        // it is only ever same-scheme; one naming a different scheme is a different site outright
+        // A pattern naming no scheme is matched by the browser against this site's own scheme, and on
+        // an http site against https as well, since browsers let a scheme-less entry upgrade. So on an
+        // https site it is same-scheme; on an http site it is treated as same-scheme here even though
+        // an https website it admits would be cross-site. Embedding only really works over https, so
+        // that case is not worth a third category. A pattern naming a different scheme is a
+        // different site outright.
         if ($pattern['scheme'] !== null AND $pattern['scheme'] !== $thisScheme) {
             $sorted['cross'][] = formulize_renderOriginPattern($pattern);
             continue;
@@ -816,11 +860,20 @@ function formulize_hostSessionRelationship($host, $thisHost) {
     if ($host === $thisHost) {
         return 'same';
     }
+    // An IP address is a site of its own: it shares nothing with any other address or any hostname,
+    // however many of its numbers happen to line up with theirs
+    if (filter_var($host, FILTER_VALIDATE_IP) OR filter_var($thisHost, FILTER_VALIDATE_IP)) {
+        return 'cross';
+    }
+    $suffixes = formulize_multiLabelPublicSuffixes();
     // one inside the other, eg. example.com and forms.example.com: the shorter one is the parent,
-    // and a parent that somebody has actually listed is a domain they hold, not a public suffix
-    if (substr($thisHost, -strlen('.'.$host)) === '.'.$host
-        OR substr($host, -strlen('.'.$thisHost)) === '.'.$thisHost) {
-        return 'same';
+    // and a parent that somebody has actually listed is a domain they hold - unless it is itself a
+    // suffix that unrelated sites live under, eg. github.io
+    if (substr($thisHost, -strlen('.'.$host)) === '.'.$host) {
+        return in_array($host, $suffixes, true) ? 'cross' : 'same';
+    }
+    if (substr($host, -strlen('.'.$thisHost)) === '.'.$thisHost) {
+        return in_array($thisHost, $suffixes, true) ? 'cross' : 'same';
     }
     // siblings, eg. www.example.com and forms.example.com: same site only if what they share is a
     // registrable domain. Requiring a label before a two-label tail rules out two unrelated sites
@@ -835,24 +888,43 @@ function formulize_hostSessionRelationship($host, $thisHost) {
     if (count($shared) < 2) {
         return 'cross'; // nothing in common beyond a bare TLD, or nothing at all
     }
-    if (count($shared) === 2 AND in_array(implode('.', $shared), formulize_multiLabelPublicSuffixes(), true)) {
-        return 'cross'; // all they share is something like co.uk, so they are different sites
+    if (count($shared) === 2) {
+        if (in_array(implode('.', $shared), $suffixes, true)) {
+            return 'cross'; // all they share is something like co.uk, so they are different sites
+        }
+        if (strlen($shared[1]) === 2 AND strlen($shared[0]) <= 3) {
+            // A short label under a country code has the shape of a registry's own suffix - co.xx,
+            // com.xx, gc.ca - and one missing from the list cannot be told apart from a short
+            // registered name, so it is not guessed at. A longer one, like example.ca, is a name
+            // somebody registered, and those are what most sites under a country code look like.
+            return 'unknown';
+        }
     }
     return 'same';
 }
 
 /**
- * The public suffixes with two labels that are common enough to be worth knowing about here.
+ * The suffixes with two labels that unrelated sites share, common enough to be worth knowing here.
  *
- * Not the Public Suffix List, and not trying to be: this only has to stop the sibling test above
- * from calling two unrelated sites the same site. A suffix that is missing leaves a pair reported
- * as sharing the session when they do not, so the list covers the ones a Formulize site is most
- * likely to meet. See formulize_hostSessionRelationship().
+ * Both kinds: public ones run by registries, like co.uk, and private ones run by hosting platforms
+ * that hand out subdomains to their customers, like github.io, where two customers' sites are as
+ * unrelated as two .co.uk sites are.
+ *
+ * Not the Public Suffix List, and not trying to be: this only has to stop the tests in
+ * formulize_hostSessionRelationship() from calling two unrelated sites the same site. Short two-label
+ * tails under a country code that are not listed here are reported as unknown rather than guessed at,
+ * but a missing suffix anywhere else - under a generic top level domain (.com, .net, .app...), or a
+ * longer one under a country code - still leaves a pair reported as sharing the session when they do
+ * not, so those are the ones worth adding.
  *
  * @return array
  */
 function formulize_multiLabelPublicSuffixes() {
     return array(
+        // private suffixes: hosting platforms that give each customer a subdomain
+        'github.io', 'gitlab.io', 'herokuapp.com', 'azurewebsites.net', 'cloudapp.net', 'appspot.com',
+        'cloudfront.net', 'netlify.app', 'vercel.app', 'pages.dev', 'workers.dev', 'web.app',
+        'firebaseapp.com', 'onrender.com', 'fly.dev', 'amplifyapp.com', 'blogspot.com',
         'co.uk', 'org.uk', 'ac.uk', 'gov.uk', 'me.uk', 'net.uk', 'sch.uk',
         'com.au', 'net.au', 'org.au', 'edu.au', 'gov.au', 'id.au',
         'co.nz', 'net.nz', 'org.nz', 'ac.nz', 'govt.nz',
@@ -1317,6 +1389,83 @@ function formulize_signAnonEntryToken($fid, $entry_id, $expires) {
 }
 
 /**
+ * Determine if this request should be RENDERED as an embedded screen, ie: drawn without the site's
+ * menus, header and footer. Browsers send Sec-Fetch-Dest on every navigation in the frame,
+ * including form submissions and page turns, so embedded mode survives the whole interaction
+ * without any state being stored in the session or carried in the URL.
+ *
+ * Nothing is ever embedded while an administrator has embedding turned off, so that switch is part
+ * of the answer here, and no caller has to remember to ask it as well.
+ *
+ * The formulize_embed request parameter answers a deliberately broader question than the header
+ * does, and it is not only a compatibility fallback. Two things need it:
+ *
+ *  - browsers that do not send Sec-Fetch-Dest at all, which would otherwise show the whole site
+ *    inside the frame
+ *  - the "open this form in a new window" fallback, which is a TOP LEVEL load and so is honestly
+ *    reported by the browser as a document rather than an iframe. It still wants the embedded
+ *    rendering: the visitor is working on somebody else's website, and handing them the whole
+ *    Formulize site at that point is further from what the page's designer intended, not closer.
+ *
+ * Because the parameter is something the visitor can type, THIS FUNCTION MUST ONLY EVER DECIDE HOW
+ * A PAGE IS PRESENTED. Spoofing it is harmless there - somebody sees a page without menus. Anything
+ * that grants access, or changes what is written or trusted, has to ask
+ * formulize_isAuthoritativelyEmbeddedRequest() instead.
+ *
+ * Note that any framed page is an embedded one, including a Formulize screen framed by another page
+ * of this same site. There is nothing in the request that tells those apart, and a screen inside a
+ * frame wants the same chrome-free rendering either way.
+ *
+ * @return bool TRUE if this request should be treated as embedded
+ */
+function formulize_isEmbeddedRequest() {
+    static $embedded = null;
+    if ($embedded === null) {
+        $embedded = (formulize_embeddingAllowed()
+            AND (formulize_isAuthoritativelyEmbeddedRequest() OR !empty($_REQUEST['formulize_embed'])));
+    }
+    return $embedded;
+}
+
+/**
+ * Determine if the BROWSER says this request is a document being loaded into a frame.
+ *
+ * The same question as formulize_isEmbeddedRequest(), minus the part a visitor can type. Sec-Fetch-Dest
+ * is set by the browser from what is actually happening, and pages have no way to override it: it is
+ * not reachable from fetch(), XMLHttpRequest or any markup, so a page on another website cannot make
+ * a victim's browser claim to be framing us when it is not.
+ *
+ * Use this, never formulize_isEmbeddedRequest(), for anything with a consequence - in particular for
+ * deciding to write a cookie that will travel cross-site. A request that merely says it is embedded
+ * is not evidence of anything.
+ *
+ * Purely a fact about the request: it does not consult whether embedding is turned on. Callers that
+ * act on it decide that for themselves.
+ *
+ * Note this is only ever true of a frame NAVIGATION. A request the framed page makes for itself
+ * afterwards - an XMLHttpRequest, a script, an image - is honestly reported as something else, so
+ * code that runs in those requests cannot use this to recognise that it belongs to an embedded
+ * screen, and must not be written as though it can.
+ *
+ * @return bool TRUE if the browser reports this request as loading a document into a frame
+ */
+function formulize_isAuthoritativelyEmbeddedRequest() {
+    return (isset($_SERVER['HTTP_SEC_FETCH_DEST']) AND $_SERVER['HTTP_SEC_FETCH_DEST'] === 'iframe');
+}
+
+/**
+ * The theme to render this request with when it is being embedded, or FALSE for the normal one.
+ *
+ * Called from header.php, which runs after the module bootstrap has loaded these functions and
+ * Formulize's settings, on every page.
+ *
+ * @return string|bool The theme folder to render with, or FALSE
+ */
+function formulize_embedRenderingTheme() {
+    return formulize_isEmbeddedRequest() ? formulize_embedThemeName() : false;
+}
+
+/**
  * Ask the page hosting an embedded screen to come back to the top of the frame.
  *
  * An embedded screen cannot scroll itself: the frame is sized to its whole content and never has a
@@ -1342,19 +1491,6 @@ function formulize_embedScrollToTopScript($wrapInScriptTag = true) {
 }
 
 /**
- * The name this site's session cookie goes by.
- *
- * A site can rename it, so asking PHP alone gets the wrong answer on a site that has.
- *
- * @return string The cookie name to look for in $_COOKIE
- */
-function formulize_sessionCookieName() {
-    global $icmsConfig;
-    return ($icmsConfig['use_mysession'] AND $icmsConfig['session_name'] != '')
-        ? $icmsConfig['session_name'] : session_name();
-}
-
-/**
  * Whether this request has to depart from the site's own cookie policy for a cookie to work at all.
  *
  * A browser will not send a SameSite=Lax cookie to a page inside somebody else's frame, and will not
@@ -1362,8 +1498,10 @@ function formulize_sessionCookieName() {
  * site's usual policy is simply thrown away, and everything that depends on it - saving an entry,
  * returning to one - fails with nothing to show for it.
  *
- * Three things all have to be true before we override that policy, and each one matters:
+ * Four things all have to be true before we override that policy, and each one matters:
  *
+ *  - an administrator has turned embedding on. While it is off, no other website may frame this
+ *    site, so there is nothing to make work.
  *  - the site is https. SameSite=None is only honoured on a Secure cookie, so without https there
  *    is nothing to be done here and pretending otherwise would just write a cookie browsers drop.
  *  - the BROWSER says this is a frame load. Never the formulize_embed parameter: that is something a
@@ -1378,11 +1516,10 @@ function formulize_sessionCookieName() {
 function formulize_embeddedCookieOverrideApplies() {
     static $applies = null;
     if ($applies === null) {
-        // ICMS_URL rather than $_SERVER['HTTPS'], to agree with the session cookie: behind a reverse
-        // proxy (see the embedding setup documentation) the connection to the browser is https while
-        // this server's own connection is not, and only the configured URL knows that.
-        $secure = (substr(ICMS_URL, 0, 5) == 'https');
+        // judged the same way as the session cookie, so the two always agree
+        $secure = icms_core_Session::siteIsSecure();
         $applies = ($secure
+            AND formulize_embeddingAllowed()
             AND formulize_isAuthoritativelyEmbeddedRequest()
             AND icms_core_Session::cookieSameSite($secure) !== 'None');
     }
@@ -1415,7 +1552,7 @@ function formulize_setCookie($name, $value, $expires) {
         // under a key that can never come back cannot be validated by anybody, ever.
         return false;
     }
-    $secure = (substr(ICMS_URL, 0, 5) == 'https');
+    $secure = icms_core_Session::siteIsSecure();
     $partitioned = formulize_embeddedCookieOverrideApplies();
     if ($partitioned) {
         $secure = true;
@@ -1456,14 +1593,40 @@ function formulize_setCookie($name, $value, $expires) {
  * formulize_issueAnonTokenBindCookie(), so that validating a token can never have a side effect of
  * its own and there is only ever one answer to when a visitor gets one.
  *
+ * This decides where a NEW token is filed. Checking a submitted token is more forgiving, and looks
+ * under both the session and the bind cookie: see formulize_anonBindCookieValue() for why.
+ *
  * @return string The value to file tokens under, or an empty string to use the session instead
  */
 function formulize_anonTokenBindKey() {
+    if (isset($_COOKIE[icms_core_Session::cookieName()])) {
+        return ''; // the session came back, so it can do this job and nothing needs standing in for it
+    }
+    return formulize_anonBindCookieValue();
+}
+
+/**
+ * The bind cookie this anonymous visitor's browser sent, whether or not their session cookie came too.
+ *
+ * A token can be filed under the bind cookie on one request and submitted on the next with the
+ * session cookie present as well. That is the ordinary course of events wherever the session cookie
+ * DOES reach the frame - a screen embedded on the same domain, which is the arrangement the setup
+ * documentation recommends. The first time such a visitor loads the frame they have no session
+ * cookie yet, because none has been issued, and nothing in that request can tell "not issued yet"
+ * apart from "blocked because the frame is on another website". So they get a bind cookie, the form's
+ * token is filed under it, and the same response gives them a session cookie that their browser keeps.
+ * When they submit, both come back. Looking only under the session would reject a token that was
+ * legitimately issued to this browser, and the visitor's first save would fail.
+ *
+ * So a submitted token is looked for under both, which is what this is for. Both are values only this
+ * browser holds, so accepting either binds the token to the browser exactly as tightly as before.
+ * Logged in visitors never get here: their tokens are only ever checked against the session.
+ *
+ * @return string The bind value, or an empty string when there is no usable one
+ */
+function formulize_anonBindCookieValue() {
     if (!empty($GLOBALS['xoopsUser']) OR !empty(icms::$user)) {
         return ''; // logged in: the session is the only thing their tokens are ever tied to
-    }
-    if (isset($_COOKIE[formulize_sessionCookieName()])) {
-        return ''; // the session came back, so it can do this job and nothing needs standing in for it
     }
     if (!isset($_COOKIE[FORMULIZE_ANON_BIND_COOKIE])) {
         return '';
@@ -1476,31 +1639,42 @@ function formulize_anonTokenBindKey() {
 }
 
 /**
- * Issue the cookie that anonymous visitors' security tokens are tied to, if this request warrants one.
+ * Issue the cookie that anonymous visitors' security tokens are tied to, or keep an existing one alive.
  *
  * Called once, from the module bootstrap, for two reasons. A cookie is a header, so it has to be
  * written before a page has begun composing its response - by the time a screen is drawing itself
  * and asking for a token it can be too late. And it means the answer to "when does a visitor get
  * one of these" is in a single place rather than implied by whoever happens to ask for a key first.
  *
- * Only a frame load issues one, which is what formulize_embeddedCookieOverrideApplies() decides. A
+ * Only a frame load writes one, which is what formulize_embeddedCookieOverrideApplies() decides. A
  * request the framed page makes for itself afterwards - an XMLHttpRequest, say - is reported by the
  * browser as something other than a frame load, and reuses the cookie already in the browser rather
  * than being refused a key.
  *
+ * A visitor who already has one gets the same value back with a fresh expiry, so the cookie lasts
+ * as long as they keep using the screen, the same way a session does. Without that it would run out
+ * part way through a long multipage form, and the next save would fail.
+ *
  * @return void
  */
 function formulize_issueAnonTokenBindCookie() {
-    if (formulize_anonTokenBindKey() OR !formulize_embeddedCookieOverrideApplies()) {
-        return; // already has a usable one, or is not entitled to one
+    if (!formulize_embeddedCookieOverrideApplies()) {
+        return; // not a frame load this cookie can be written on
     }
     if (!empty($GLOBALS['xoopsUser']) OR !empty(icms::$user)) {
         return; // logged in: their tokens are tied to the session and this would never be read
     }
+    $value = formulize_anonBindCookieValue();
+    if (!$value) {
+        if (isset($_COOKIE[icms_core_Session::cookieName()])) {
+            return; // the session reaches this frame, so it can do the job and nothing needs standing in for it
+        }
+        $value = bin2hex(random_bytes(32));
+    }
     global $icmsConfig;
     $lifetime = (isset($icmsConfig['session_expire']) AND intval($icmsConfig['session_expire']))
         ? intval($icmsConfig['session_expire']) * 60 : 3600;
-    formulize_setCookie(FORMULIZE_ANON_BIND_COOKIE, bin2hex(random_bytes(32)), time() + $lifetime);
+    formulize_setCookie(FORMULIZE_ANON_BIND_COOKIE, $value, time() + $lifetime);
 }
 
 /**
