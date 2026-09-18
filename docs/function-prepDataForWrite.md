@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/API/functions/prepDataForWrite/
+permalink: developers/functions/prepDataForWrite/
+redirect_from:
+ - developers/API/functions/prepDataForWrite/
 title: prepDataForWrite
 ---
 

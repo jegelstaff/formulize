@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/API/classes/data_handler/findAllEntriesWithValue/
+permalink: developers/classes/data_handler/findAllEntriesWithValue/
+redirect_from:
+ - developers/API/classes/data_handler/findAllEntriesWithValue/
 title: findAllEntriesWithValue
 ---
 

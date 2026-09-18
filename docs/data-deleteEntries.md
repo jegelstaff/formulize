@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/API/classes/data_handler/deleteEntries/
+permalink: developers/classes/data_handler/deleteEntries/
+redirect_from:
+ - developers/API/classes/data_handler/deleteEntries/
 title: deleteEntries
 ---
 

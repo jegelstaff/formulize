@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/API/classes/data_handler/elementHasValueInEntry/
+permalink: developers/classes/data_handler/elementHasValueInEntry/
+redirect_from:
+ - developers/API/classes/data_handler/elementHasValueInEntry/
 title: elementHasValueInEntry
 ---
 

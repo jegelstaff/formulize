@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/API/classes/data_handler/getEntryMeta/
+permalink: developers/classes/data_handler/getEntryMeta/
+redirect_from:
+ - developers/API/classes/data_handler/getEntryMeta/
 title: getEntryMeta
 ---
 

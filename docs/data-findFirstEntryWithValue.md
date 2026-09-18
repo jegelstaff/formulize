@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/API/classes/data_handler/findFirstEntryWithValue/
+permalink: developers/classes/data_handler/findFirstEntryWithValue/
+redirect_from:
+ - developers/API/classes/data_handler/findFirstEntryWithValue/
 title: findFirstEntryWithValue
 ---
 

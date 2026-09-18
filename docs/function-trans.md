@@ -1,7 +1,9 @@
 ---
 layout: default
 title: trans
-permalink: developers/API/functions/trans/
+permalink: developers/functions/trans/
+redirect_from:
+ - developers/API/functions/trans/
 ---
 
 # trans( <span class="sig-type">(string)</span> $string, <span class="sig-type">(string)</span> $lang <span class="sig-default">= null</span> )

@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/API/classes/queue_handler/create/
+permalink: developers/classes/queue_handler/create/
+redirect_from:
+ - developers/API/classes/queue_handler/create/
 title: create
 ---
 

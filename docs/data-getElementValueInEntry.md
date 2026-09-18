@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/API/classes/data_handler/getElementValueInEntry/
+permalink: developers/classes/data_handler/getElementValueInEntry/
+redirect_from:
+ - developers/API/classes/data_handler/getElementValueInEntry/
 title: getElementValueInEntry
 ---
 

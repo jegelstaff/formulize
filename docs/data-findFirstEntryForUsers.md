@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/API/classes/data_handler/findFirstEntryForUsers/
+permalink: developers/classes/data_handler/findFirstEntryForUsers/
+redirect_from:
+ - developers/API/classes/data_handler/findFirstEntryForUsers/
 title: findFirstEntryForUsers
 ---
 

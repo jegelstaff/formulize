@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/API/classes/queue_object/
+permalink: developers/classes/queue_object/
+redirect_from:
+ - developers/API/classes/queue_object/
 title: Queue Object
 ---
 
