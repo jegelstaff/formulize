@@ -1,0 +1,37 @@
+---
+layout: default
+permalink: report-a-bug/
+redirect_from:
+  - /bugs
+  - /bugs/
+  - /bug
+title: Report a bug
+full_width: true
+description: Found something in Formulize that isn't working? Tell us here. You don't need a GitHub account.
+---
+
+{% comment %}
+  Carries the "Report a bug" screen from formulize.net, embedded: form 11
+  (Bug Reports), screen 27, so sid=27. The screen has no rewrite address, since
+  those only resolve for same-domain requests and could not be used here anyway.
+
+  This page exists because the other way to report a bug, GitHub Discussions or
+  Issues, needs a GitHub account, and that stops a lot of people. The GitHub
+  routes are still linked below the form for anyone who has an account.
+
+  The screen carries its own intro heading inside the embedded content, so this
+  page's own copy stays minimal rather than repeating it.
+{% endcomment %}
+
+<div class="band-head" style="max-width: 68ch;">
+  <h1 style="margin-top: var(--space-3);">Report a bug</h1>
+  <p>If something in Formulize isn't working the way it should, let us know. Every report is read by the people who maintain the code.</p>
+</div>
+
+<section class="band">
+  {% include embedded-form.html
+     sid="27"
+     title="Report a bug in Formulize"
+     height="1400" %}
+  <p class="text-muted" style="max-width: 68ch;">Have a GitHub account? You can also <a href="{{ site.github.repository_url }}/issues/new" target="_blank" rel="noopener">open an issue</a> or <a href="{{ site.github.repository_url }}/discussions" target="_blank" rel="noopener">start a discussion</a>. Need help with something rather than a bug fixed? <a href="{{ "/contact/" | relative_url }}">Contact us</a>.</p>
+</section>

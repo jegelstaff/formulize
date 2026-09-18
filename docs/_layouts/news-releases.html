@@ -10,6 +10,7 @@ full_width: true
     <a class="btn btn-primary" href="{{ "/get/" | relative_url }}">Get Formulize</a>
     <a class="btn btn-secondary" href="{{ "/roadmap" | relative_url }}">See what is next</a>
   </p>
+  <p class="text-muted"><a href="{{ "/mailinglist/" | relative_url }}">Join the mailing list</a> to hear about new releases by email. Found a problem in a release? <a href="{{ "/report-a-bug/" | relative_url }}">Report a bug</a>.</p>
 </div>
 
 <section class="band">
@@ -17,7 +18,7 @@ full_width: true
     {%- for entry in page.entries %}
     <li>
       <a href="{{ entry.url | relative_url }}">
-        <time datetime="{{ entry.date }}">{{ entry.date_display }}</time>
+        {% include release-date.html %}
         <span class="news-title">{{ entry.headline }}</span>
       </a>
     </li>

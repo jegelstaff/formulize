@@ -1,0 +1,33 @@
+---
+layout: default
+permalink: unsubscribe/
+title: Unsubscribe
+full_width: true
+description: Unsubscribe from the Formulize mailing list.
+---
+
+{% comment %}
+  Carries the "Unsubscribe" screen from formulize.net, embedded: form 3
+  (Mailing List Emails), screen 7, so sid=7. The screen also has a rewrite
+  address (unsubscribe) but that only resolves for same-domain requests, so
+  it cannot be used here.
+
+  The screen already carries its own intro heading and an "other channels"
+  footer (Bluesky/Slack/Discord) inside the embedded content itself, so this
+  page's own copy stays minimal rather than repeating it. Split out from
+  mailinglist.html (sid=5, same form) so each page stays about the one thing
+  someone came to do.
+{% endcomment %}
+
+<div class="band-head" style="max-width: 68ch;">
+  <h1 style="margin-top: var(--space-3);">Unsubscribe</h1>
+  <p>Sorry to see you go.</p>
+</div>
+
+<section class="band">
+  {% include embedded-form.html
+     sid="7"
+     title="Unsubscribe from the mailing list"
+     height="700" %}
+  <p class="text-muted" style="max-width: 68ch;">Changed your mind? <a href="{{ "/mailinglist/" | relative_url }}">Join the mailing list</a>.</p>
+</section>
