@@ -1,7 +1,8 @@
 ---
 layout: default
-permalink: developers/classes/queue_handler/process/
+permalink: documentation/classes/queue_handler/process/
 redirect_from:
+ - developers/classes/queue_handler/process/
  - developers/API/classes/queue_handler/process/
 title: process
 ---

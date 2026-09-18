@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/version_control/testing/creating_tests/
+permalink: documentation/version_control/testing/creating_tests/
+redirect_from:
+ - developers/version_control/testing/creating_tests/
 title: Creating Tests
 ---
 

@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: deploying_a_website/writable_folders/
+permalink: documentation/deploying_a_website/writable_folders/
+redirect_from:
+ - deploying_a_website/writable_folders/
 title: Folders in Formulize that need to be writable
 ---
 

@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/version_control/documentation/
+permalink: documentation/version_control/documentation/
+redirect_from:
+ - developers/version_control/documentation/
 title: Writing and Previewing Documentation
 ---
 
@@ -67,7 +69,7 @@ Every page starts with front matter like this:
 ```yaml
 ---
 layout: default
-permalink: developers/some-page/
+permalink: documentation/some-page/
 title: Some Page
 ---
 ```
@@ -83,7 +85,7 @@ destination — but here, unlike in the front matter above, *with* a leading
 slash and *without* a trailing one:
 
 ```markdown
-[Link text](/developers/some-page)
+[Link text](/documentation/some-page)
 ```
 
 Relative links (`../some-other-page`) also work, resolved the normal way a
@@ -92,8 +94,8 @@ path in `/docs/`.
 
 ## Where things fit together
 
-- [GitHub Pages and Jekyll configuration](/developers/github_pages) covers
+- [GitHub Pages and Jekyll configuration](/documentation/github_pages) covers
   `_config.yml`, how the site actually gets deployed, and what runs in CI.
-- The [Documentation](/developers/) hub links out to the rest of what a
+- The [Documentation](/documentation/) hub links out to the rest of what a
   contributor is likely to need — version control, git tips, testing, the
   roadmap.

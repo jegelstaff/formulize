@@ -1,7 +1,8 @@
 ---
 layout: default
-permalink: developers/custom_form_elements/
+permalink: documentation/custom_form_elements/
 redirect_from:
+ - developers/custom_form_elements/
  - developers/API/custom_form_elements/
 title: Writing your own element classes
 ---

@@ -1,5 +1,5 @@
 ---
 permalink: /ci/
-redirect_to: /developers/ci/
+redirect_to: /documentation/ci/
 sitemap: false
 ---

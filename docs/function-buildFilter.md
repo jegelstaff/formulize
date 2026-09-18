@@ -1,7 +1,8 @@
 ---
 layout: default
-permalink: developers/functions/buildFilter/
+permalink: documentation/functions/buildFilter/
 redirect_from:
+ - developers/functions/buildFilter/
  - developers/API/functions/buildFilter/
 title: buildFilter
 ---

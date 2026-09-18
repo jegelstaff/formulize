@@ -29,7 +29,7 @@ Windows may prompt to allow Ruby through the firewall the first time; allow it
 for private networks.
 
 The published version of this same walkthrough is
-[Writing and previewing documentation](https://www.formulize.org/developers/version_control/documentation/).
+[Writing and previewing documentation](https://www.formulize.org/documentation/version_control/documentation/).
 
 ## Information architecture
 

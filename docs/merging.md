@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/version_control/merging/
+permalink: documentation/version_control/merging/
+redirect_from:
+ - developers/version_control/merging/
 title: Merging
 ---
 
@@ -14,5 +16,5 @@ Comments will be made on the branch in one of several ways: inline in the code (
 
 If further work is required, more commits can be made to the pull request, and a thumbs-up comment should be made once the work is complete.
 
-If the branch is accepted, then the reviewer will merge it with the master branch. Once the merge is complete, then the branch can be deleted, and any new/updated  documentation [will automatically be deployed to formulize.org](/formulize/developers/github_pages).
+If the branch is accepted, then the reviewer will merge it with the master branch. Once the merge is complete, then the branch can be deleted, and any new/updated  documentation [will automatically be deployed to formulize.org](/documentation/github_pages).
 

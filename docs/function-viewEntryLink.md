@@ -1,8 +1,9 @@
 ---
 layout: default
 title: viewEntryLink
-permalink: developers/functions/viewEntryLink/
+permalink: documentation/functions/viewEntryLink/
 redirect_from:
+ - developers/functions/viewEntryLink/
  - developers/API/functions/viewEntryLink/
 ---
 

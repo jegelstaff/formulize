@@ -1,7 +1,8 @@
 ---
 layout: default
-permalink: developers/classes/queue_handler/
+permalink: documentation/classes/queue_handler/
 redirect_from:
+ - developers/classes/queue_handler/
  - developers/API/classes/queue_handler/
 title: Queue Handler
 ---

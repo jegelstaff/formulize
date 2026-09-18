@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/ci/
+permalink: documentation/ci/
+redirect_from:
+ - developers/ci/
 title: Continuous Integration
 ---
 

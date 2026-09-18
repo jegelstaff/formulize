@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/scss-sass/
+permalink: documentation/scss-sass/
+redirect_from:
+ - developers/scss-sass/
 title: SCSS and Sass
 ---
 

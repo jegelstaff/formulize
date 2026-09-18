@@ -1,7 +1,8 @@
 ---
 layout: default
-permalink: developers/classes/queue_handler/append/
+permalink: documentation/classes/queue_handler/append/
 redirect_from:
+ - developers/classes/queue_handler/append/
  - developers/API/classes/queue_handler/append/
 title: append
 ---

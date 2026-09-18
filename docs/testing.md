@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/version_control/testing/
+permalink: documentation/version_control/testing/
+redirect_from:
+ - developers/version_control/testing/
 title: Testing
 ---
 

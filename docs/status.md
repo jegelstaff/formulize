@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/Public_API/status
+permalink: documentation/Public_API/status
+redirect_from:
+ - developers/Public_API/status
 title: status
 ---
 

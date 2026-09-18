@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: roadmap/
+permalink: documentation/roadmap/
+redirect_from:
+ - roadmap/
 title: Roadmap
 ---
 

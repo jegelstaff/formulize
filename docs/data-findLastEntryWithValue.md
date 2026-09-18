@@ -1,7 +1,8 @@
 ---
 layout: default
-permalink: developers/classes/data_handler/findLastEntryWithValue/
+permalink: documentation/classes/data_handler/findLastEntryWithValue/
 redirect_from:
+ - developers/classes/data_handler/findLastEntryWithValue/
  - developers/API/classes/data_handler/findLastEntryWithValue/
 title: findLastEntryWithValue
 ---

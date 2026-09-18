@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/github_pages/
+permalink: documentation/github_pages/
+redirect_from:
+ - developers/github_pages/
 title: Github Pages
 ---
 
@@ -9,7 +11,7 @@ title: Github Pages
 [formulize.org](https://www.formulize.org/) is a Jekyll site kept in the
 `/docs/` folder of the main [formulize](https://github.com/jegelstaff/formulize)
 repository, and published through GitHub Pages. To write or preview a page
-yourself, see [Writing and previewing documentation](/developers/version_control/documentation)
+yourself, see [Writing and previewing documentation](/documentation/version_control/documentation)
 — this page is about how the site is configured and how it actually gets
 deployed.
 
@@ -29,12 +31,12 @@ repository: jegelstaff/formulize
 `baseurl` is empty and `permalink` has no repository name in it, because the
 site is served from its own domain (formulize.org) rather than from a
 `github.io/<repo>/` path — so URLs and links across the site are written as
-plain absolute paths (`/features/`, `/developers/classes`), not prefixed with
+plain absolute paths (`/features/`, `/documentation/classes`), not prefixed with
 anything.
 
 Most pages are Markdown (kramdown); a handful that lay out their own visual
 bands, like the homepage, are plain `.html`. Both are covered in
-[Writing and previewing documentation](/developers/version_control/documentation).
+[Writing and previewing documentation](/documentation/version_control/documentation).
 
 ## How it deploys
 
