@@ -18,11 +18,29 @@
  * The host page sizes the iframe to its content, so the viewport in here is as tall as everything
  * in it. A height in vh therefore grows again every time the iframe grows, and a scrolling region
  * becomes a box the screen is trapped inside, instead of letting the host page do the scrolling.
+ *
+ * It is also as wide as the host page's column and no wider, and unlike the site it cannot be
+ * scrolled sideways, so anything too wide for that column is cut off rather than reachable. The
+ * last section of this file is the short list of places where that happens. See the comment there.
+ *
+ * WHICH STYLESHEET ANY OF THIS IS ARGUING WITH. Whichever one the site is wearing - this theme
+ * borrows it rather than carrying a copy. Every override here was written against the standard
+ * theme, and all but one are scoped by a class name that theme happens to use, so against a
+ * different theme they match nothing and cost nothing. That is the property to preserve when adding
+ * to this file: prefer a selector that names the thing being corrected over one that would land on
+ * any theme's version of it. A mobile-first theme needs none of this, and a rule broad enough to
+ * reach it would be correcting a fault it does not have.
  */
 
 .site-layout__main {
   width: 100%;
   height: auto;
+  /* the site theme keeps 100px clear below the form so the last field is not jammed against the
+     bottom of a window-height scrolling area. There is no such area here - the frame is exactly as
+     tall as its contents - so most of that would only add empty space to the bottom of every
+     embedded screen, which the host page then has to make room for. Enough is kept that the last
+     button is not flush against the edge of the frame. */
+  padding-bottom: 1.5em;
 }
 
 .main-content {
@@ -123,4 +141,42 @@ div.list-of-entries .card__body,
   #session-timeout-warning img.session-timeout-warning-icon {
     top: 0.75em;
   }
+}
+
+/* NOTHING HERE CAN BE SCROLLED SIDEWAYS
+ *
+ * This document does not scroll: the frame is as tall as its whole contents and the host page is
+ * what moves, so theme.html turns scrolling off and the iframe is marked scrolling="no". That is
+ * right for the vertical, and it means anything wider than the frame is not merely awkward, as it
+ * would be on the site itself where the content area can be scrolled across to reach it. It is
+ * cut off at the edge of the frame with no way to get to it at all.
+ *
+ * Which makes fitting a narrow frame a correctness question here rather than a matter of taste. A
+ * frame in a phone-width column is roughly 280px across once the container's padding is taken off,
+ * and the rules below are the places in the site theme where content wider than that is laid out
+ * with no way to wrap. Each one caps rather than restyles, so a frame with room to spare looks
+ * exactly as it does on the site.
+ *
+ * Widths that genuinely cannot be reduced - a list of entries with twenty columns - are not the
+ * concern here. Those sit in a box of their own that scrolls sideways (.table-wrapper, and the
+ * subform scrollbox), which keeps working inside a frame because the box scrolls, not the page. */
+
+/* multipage navigation is a flex row sized to its contents, which on a narrow frame means a row
+   wider than the frame with the Next button somewhere past the right-hand edge - the one button on
+   the page a reader cannot do without. Measured in a 324px frame against the standard theme: the
+   row comes out 429px wide and Next sits from 250px to 450px, so most of the button and all of its
+   label are past the edge. Sized to the space available instead, and allowed to wrap.
+
+   This is the whole of the problem at any width a phone actually has. Buttons elsewhere carry a
+   200px minimum, which sounds like the same bug and is not: in normal flow they simply wrap onto
+   the next line. It is this row that cannot, being a flex row with nothing telling it to. A cap on
+   button widths generally was tried here and measured: it changes nothing at 324px, and only starts
+   to matter below about a 200px column, which is not a column anyone embeds a form into. It was
+   dropped rather than kept as insurance, because a bare `button` selector is the one kind of rule
+   in this file that would reach a future site theme that has no such problem - see the note at the
+   top about which stylesheet these overrides are written against. */
+#multipage-controls {
+  width: auto;
+  max-width: 100%;
+  flex-wrap: wrap;
 }

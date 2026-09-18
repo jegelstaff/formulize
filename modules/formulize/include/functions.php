@@ -668,8 +668,13 @@ function formulize_embeddedNoPermissionHtml($returnUrl) {
  * The size is set here as well as in formulize-embed.js, so the frame is right in the moment
  * before the script is parsed, and still right if the script never arrives - blocked, or this site
  * moved and the src went stale. Without it the browser falls back to the 300x150 that CSS gives
- * any replaced element with no size of its own. minWidthValue() in formulize-embed.js explains
- * what the floor under the width is for.
+ * any replaced element with no size of its own.
+ *
+ * No minimum width here, though applyMinWidth() in formulize-embed.js puts one on in the one case
+ * that needs it. Deciding that takes a measurement of the host's page, and nothing written here can
+ * take one: 100vw is the window rather than the column, so it hangs the frame over the side of a
+ * narrow page, and 100% cannot lift the collapse a floor exists for. So it is left to the script,
+ * which is the only thing here that can measure anything.
  *
  * WHICH ADDRESS. This site answers at whatever address a request arrives on, and an administrator is
  * reaching it through the site's ordinary address, so that is the only address this request knows.
@@ -689,7 +694,7 @@ function formulize_screenEmbedCode($screen, $siteUrl = XOOPS_URL) {
     $title = $screen->getVar('title');
     return '<iframe data-formulize-embed src="'.htmlspecialchars($url).'"'
         .' title="'.htmlspecialchars($title ? $title : _AM_EMBED_CODE_DEFAULT_TITLE).'"'
-        .' style="width:100%;min-width:min(400px,100vw);height:600px;border:0"></iframe>'."\n"
+        .' style="width:100%;height:600px;border:0"></iframe>'."\n"
         .'<script src="'.htmlspecialchars($siteUrl.'/modules/formulize/libraries/embed/formulize-embed.js').'"></script>';
 }
 

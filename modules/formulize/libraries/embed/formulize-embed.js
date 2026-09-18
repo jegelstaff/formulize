@@ -7,7 +7,7 @@
  *   <script src="https://forms.example.com/modules/formulize/libraries/embed/formulize-embed.js"></script>
  *
  * The screen reports its own height, so no height needs to be guessed here. The width is whatever
- * the surrounding page gives it, with a floor under it so it cannot collapse (see minWidthValue).
+ * the surrounding page gives it, with a floor under it so it cannot collapse (see applyMinWidth).
  * Messages are only accepted from the window of a registered iframe, and only when they come from
  * the origin that iframe was pointed at.
  */
@@ -43,42 +43,177 @@
     }
 
     /**
-     * The narrowest the screen is allowed to become.
+     * The width of an element's content box, which is what its children have to live in.
+     */
+    function contentWidth(element) {
+        var styles = window.getComputedStyle(element);
+        return element.getBoundingClientRect().width
+            - (parseFloat(styles.paddingLeft) || 0) - (parseFloat(styles.paddingRight) || 0)
+            - (parseFloat(styles.borderLeftWidth) || 0) - (parseFloat(styles.borderRightWidth) || 0);
+    }
+
+    /**
+     * What the host page has where it put the frame: how much width, and whether anything around
+     * the frame is being sized by it.
+     *
+     * Both answers come from the same measurement. The frame steps out of the flow and the
+     * ancestors are asked their width again. Anything that answers differently was being sized by
+     * the frame; the first one that answers the same has a width of its own, and that is the
+     * column. Out of the flow rather than hidden, so that nothing disturbs the document inside the
+     * frame - display: none is a reload in some browsers, and a form half filled in would be lost.
+     *
+     * It has to be measured because there is nothing in CSS that can answer either question from
+     * in here. 100vw is the window, and the window is not the column: a frame in a 324px column on
+     * a 360px phone was being given a 360px floor and hanging 36px over the side of the page. 100%
+     * is the column, but it is worth nothing in the case the floor exists for - a container sized
+     * to its contents has no width until its children have one, so a percentage on a child only
+     * ever repeats back what the frame already said.
+     */
+    function columnAround(iframe) {
+        var ancestors = [];
+        for (var node = iframe.parentElement; node; node = node.parentElement) {
+            ancestors.push({node: node, wasWide: contentWidth(node)});
+            if (node === document.body) {
+                break;
+            }
+        }
+        var position = iframe.style.position;
+        var visibility = iframe.style.visibility;
+        iframe.style.position = 'absolute';
+        iframe.style.visibility = 'hidden';
+        var available = 0;
+        var column = null;
+        var sizedByTheFrame = false;
+        for (var i = 0; i < ancestors.length; i++) {
+            var isWide = contentWidth(ancestors[i].node);
+            if (Math.abs(isWide - ancestors[i].wasWide) < 1) {
+                available = isWide;
+                column = ancestors[i].node;
+                break;
+            }
+            sizedByTheFrame = true;
+        }
+        iframe.style.position = position;
+        iframe.style.visibility = visibility;
+        return {
+            // clientWidth rather than 100vw as the last resort: it leaves out the scrollbar, which
+            // vw does not, and a floor one scrollbar too wide is how a page gains a scrollbar
+            available: available > 0 ? available : document.documentElement.clientWidth,
+            sizedByTheFrame: sizedByTheFrame,
+            node: column
+        };
+    }
+
+    /**
+     * Put a floor under the width, in the one case where the width can collapse.
      *
      * An iframe fills its container, which is right when the container has a width of its own and
      * silently wrong when it does not. Inside anything sized to fit its contents - a float, an
-     * inline-block, a flex or grid item, a table cell, width: fit-content - the container's width
-     * depends on its children, a percentage width on a child cannot answer that, and the iframe
-     * falls back to the 300px that CSS gives any replaced element with no size. The container then
-     * shrinks to match. Nothing looks broken; the screen is just a sliver, and the person who
-     * pasted the code in has no way to guess why.
+     * inline-block, a table cell, width: fit-content - the container's width depends on its
+     * children, a percentage width on a child cannot answer that, and the iframe falls back to the
+     * 300px that CSS gives any replaced element with no size. The container then shrinks to match.
+     * Nothing looks broken; the screen is just a sliver, and the person who pasted the code in has
+     * no way to guess why.
      *
-     * A minimum width fixes that from this side, because it is not only a clamp on the iframe: it
-     * becomes the iframe's contribution to the container's own minimum width, so a container that
-     * had collapsed grows to honour it. Capped at the width of the window, so that on a phone it
-     * gives way rather than pushing a horizontal scrollbar onto the host page.
+     * A minimum width fixes that, because it is not only a clamp on the iframe: it becomes the
+     * iframe's contribution to the container's own minimum width, so a container that had collapsed
+     * grows to honour it.
      *
-     * It cannot do anything about a page whose column really is narrow, and it should not try -
-     * that is the host's design, and a screen in a 600px column gets 600px. Screens stay usable
-     * there because an iframe has its own viewport, so the site theme's narrow-screen rules apply
-     * to the width of the frame rather than the width of the visitor's monitor.
+     * Everywhere else it is left off entirely, and everywhere else is nearly every page. width:100%
+     * has already taken all the width there is to take, so a floor under that can only ever be one
+     * of two things: the same number, or too big. Too big is not harmless - in a flex row it takes
+     * the space a sibling needed, and in a narrow column it hangs over the side of the host's page.
+     * So the floor goes on only when the measurement shows something around the frame really is
+     * being sized by it, and is capped at the width of the column either way.
      *
-     * Browsers without min() are from before 2020. They get a flat 320px, which is narrow enough
-     * that no phone gains a scrollbar and still wide enough to lift the 300px collapse.
+     * It does not try to do anything about a column that really is narrow - that is the host's
+     * design, and a screen in a 600px column gets 600px. Screens stay usable there because an
+     * iframe has its own viewport, so the site theme's narrow-screen rules apply to the width of
+     * the frame rather than the width of the visitor's monitor.
+     *
+     * The host's own stylesheet outranks all of this. It is their page, they can see the column
+     * this frame is in and we cannot, so a min-width coming from a stylesheet is left to stand. It
+     * is asked of the cascade with our own inline value cleared away first, or we would only ever
+     * find our own answer. data-formulize-embed-min-width="off" turns the floor off outright.
+     *
+     * A stylesheet, though, and not the style attribute, which is cleared rather than honoured. The
+     * asymmetry is deliberate: the style attribute on one of these frames is part of the snippet
+     * Formulize generated, so it is ours to manage, and clearing it is what lets an old snippet
+     * already pasted into somebody's page - carrying the 100vw floor that was wrong - be repaired
+     * by nothing more than this script reaching it. A host who wants the last word on the width has
+     * a stylesheet rule, which is not touched, and the attribute above, which stops this outright.
+     * Either way a host who writes an inline floor and loses it is no worse off, because what
+     * replaces it is a floor only where one is needed and never wider than their column.
      */
-    function minWidthValue(iframe) {
+    function desiredMinWidth(iframe) {
         var requested = iframe.getAttribute('data-formulize-embed-min-width');
         if (requested === 'off' || requested === '0') {
             return '';
+        }
+        var ours = iframe.style.minWidth;
+        iframe.style.minWidth = ''; // put back below, either way, before anything is painted
+        var fromTheHost = window.getComputedStyle(iframe).minWidth;
+        var column = (fromTheHost && fromTheHost !== '0px' && fromTheHost !== 'auto' && fromTheHost !== 'none')
+            ? null // the host's stylesheet has an opinion about this frame, and it is their page
+            : columnAround(iframe);
+        iframe.style.minWidth = ours;
+        if (!column || !column.sizedByTheFrame) {
+            return ''; // nothing here is waiting on the frame for a width, so the frame has one
         }
         var floor = parseInt(requested, 10);
         if (!floor || floor < 0) {
             floor = 400; // a phone held sideways: enough for a form, rarely wider than a real column
         }
-        if (window.CSS && window.CSS.supports && window.CSS.supports('width', 'min(1px, 100vw)')) {
-            return 'min(' + floor + 'px, 100vw)';
+        return Math.round(Math.min(floor, column.available)) + 'px';
+    }
+
+    /**
+     * Written only when it changes, because this is called from a ResizeObserver watching the very
+     * box this writes into. Setting a value that is already set would resize nothing, but it is
+     * still a write inside a resize callback, and browsers report those as an undelivered-
+     * notification loop. Nothing changing means nothing written, and the question settles.
+     */
+    function applyMinWidth(iframe) {
+        var value = desiredMinWidth(iframe);
+        if (iframe.style.minWidth !== value) {
+            iframe.style.minWidth = value;
         }
-        return Math.min(floor, 320) + 'px';
+    }
+
+    /**
+     * The column is measured, so it has to be measured again whenever the column changes.
+     *
+     * Watching the column, rather than the window, because most of what changes a column never
+     * touches the window at all: a webfont arriving and reflowing the page, an accordion or a tab
+     * opening above the frame, a container in the middle of a transition. A resize listener sleeps
+     * through every one of those. It is kept below anyway, for browsers too old for ResizeObserver,
+     * where a turned phone is at least the common case.
+     *
+     * The column, specifically, and not the frame's own parent - which is the obvious box to watch
+     * and the wrong one. In the case the floor exists for, the parent is sized by the frame, so our
+     * own floor is holding it open: the column around it can narrow to nothing and that parent will
+     * report the same width throughout, and the watch would sleep through the one situation it was
+     * added for. The column is by definition the nearest box that is not sized by the frame, which
+     * is exactly what makes it the one worth watching.
+     *
+     * Waiting for it to settle keeps this to one pass rather than one per frame of an animation,
+     * since every pass asks the browser for a layout it would rather have put off.
+     */
+    function watchColumn(iframe) {
+        if (!window.ResizeObserver) {
+            return;
+        }
+        var watched = columnAround(iframe).node || document.body;
+        if (!watched) {
+            return;
+        }
+        var settling = null;
+        new ResizeObserver(function () {
+            clearTimeout(settling);
+            settling = setTimeout(function () {
+                applyMinWidth(iframe);
+            }, 50);
+        }).observe(watched);
     }
 
     function register(iframe) {
@@ -89,14 +224,27 @@
         ensureEmbedParameter(iframe);
         iframe.setAttribute('scrolling', 'no');
         iframe.style.width = '100%';
-        iframe.style.minWidth = minWidthValue(iframe);
         iframe.style.border = '0';
         if (!iframe.style.height) {
             iframe.style.height = (iframe.getAttribute('data-formulize-embed-height') || 600) + 'px';
         }
+        applyMinWidth(iframe);
+        watchColumn(iframe);
         addClass(iframe, 'formulize-embed--loading');
         frames.push({iframe: iframe, origin: originOf(iframe.src)});
     }
+
+    // the safety net described in watchColumn, for browsers without ResizeObserver. Harmless where
+    // there is one: a pass that finds nothing changed writes nothing.
+    var remeasuring = null;
+    window.addEventListener('resize', function () {
+        clearTimeout(remeasuring);
+        remeasuring = setTimeout(function () {
+            for (var i = 0; i < frames.length; i++) {
+                applyMinWidth(frames[i].iframe);
+            }
+        }, 150);
+    }, false);
 
     function scan() {
         var found = document.querySelectorAll('iframe[data-formulize-embed]');
@@ -251,6 +399,9 @@
         switch (message.type) {
             case 'formulize:ready':
                 removeClass(frame.iframe, 'formulize-embed--loading');
+                // the host page has had time to finish settling by now - web fonts, images - so
+                // the column may not be the width it was when the frame was first registered
+                applyMinWidth(frame.iframe);
                 if (message.height) {
                     frame.iframe.style.height = message.height + 'px';
                 }

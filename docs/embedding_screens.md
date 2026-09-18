@@ -73,7 +73,7 @@ page**. It looks like this:
 ```html
 <iframe data-formulize-embed src="https://forms.mycompany.com/modules/formulize/index.php?sid=12&formulize_embed=1"
         title="Contact us"
-        style="width:100%;min-width:min(400px,100vw);height:600px;border:0"></iframe>
+        style="width:100%;height:600px;border:0"></iframe>
 <script src="https://forms.mycompany.com/modules/formulize/libraries/embed/formulize-embed.js"></script>
 ```
 
@@ -197,16 +197,28 @@ For embedding individual screens, leave this blank and use the setting on each s
 The screen fills whatever container you put the iframe in. A container 700px wide gives you a 700px
 screen, and there is nothing to set — that is the usual case and it needs no attention.
 
-There is a floor under it, at 400px, so it cannot collapse. Some layouts size a box to fit whatever
-is inside it — a float, an `inline-block`, a flex or grid item, a table cell, `width: fit-content` —
-and inside one of those a percentage width has nothing to resolve against, so browsers fall back to
-the 300px they give any element with no size of its own. The result is a usable page with a sliver
-of a form in it and no error anywhere to explain why. The floor stops that happening.
+In one case that is not enough, and there is a floor under it, at 400px. Some layouts size a box to
+fit whatever is inside it — a float, an `inline-block`, a table cell, `width: fit-content` — and
+inside one of those a percentage width has nothing to resolve against, so browsers fall back to the
+300px they give any element with no size of its own, and the box shrinks to match. The result is a
+usable page with a sliver of a form in it and no error anywhere to explain why. The floor stops that
+happening.
 
-The floor gives way on a narrow screen rather than pushing a horizontal scrollbar onto your page: on
-a phone the frame is as wide as the window. Set `data-formulize-embed-min-width` to change it, or to
-`off` to remove it, if you have a column narrower than 400px and you would rather the screen fit
-inside it.
+Outside that case there is no floor at all, because there is nothing for it to do: the frame has
+already taken the full width of your column, and a minimum under that could only be the same number
+or too big a one. So the script measures your page where you put the frame, applies a floor only
+where something around the frame is waiting on the frame for its width, and caps it at the width of
+the column either way — a column narrower than 400px gets a frame that fits inside it, never one
+hanging over the edge. It measures again when the window is resized or a phone is turned on its side.
+
+A `min-width` in your own stylesheet overrides all of this. You can see the column and we cannot, so
+what you say about it stands. Set `data-formulize-embed-min-width` to change the number, or to `off`
+to remove the floor altogether.
+
+Put it in a stylesheet rather than in the iframe's `style` attribute. The script clears that
+attribute's `min-width` and decides for itself, because that attribute is part of the code Formulize
+generated for you — which is what lets a page still carrying an older version of that code be put
+right by nothing more than the current script loading on it.
 
 A narrow frame gets the narrow layout — the same one a phone gets, which in the standard theme means
 anything under 768px — because a frame has a viewport of its own and the screen is measuring the
@@ -243,7 +255,7 @@ width, and scrolls the page when the screen needs something brought into view.
 |---|---|
 | `data-formulize-embed` | Required. Marks the iframe for the script. |
 | `data-formulize-embed-height` | Height in pixels to start at, before the screen reports its own. Defaults to 600. |
-| `data-formulize-embed-min-width` | Narrowest the frame may become, in pixels. Defaults to 400. `off` removes the floor. Capped at the width of the window either way. |
+| `data-formulize-embed-min-width` | Narrowest the frame may become, in pixels, in the one case where a frame can collapse. Defaults to 400. `off` removes the floor. Never wider than the column the frame is in, whatever the number, and not applied at all where the frame already fills its column. A `min-width` in your own stylesheet takes precedence over all of this. |
 | `data-formulize-embed-scroll-margin` | Room left above the screen when it is brought into view, in pixels. Set this only to override what is worked out for you; `0` removes the gap entirely. |
 | `data-formulize-embed-fallback` | Set to `off` to suppress the "open in a new window" link. |
 | `data-formulize-embed-fallback-text` | Wording for that link. |
