@@ -1,7 +1,8 @@
 ---
 layout: default
-permalink: developers/functions/formulize_updateDerivedValues/
+permalink: documentation/functions/formulize_updateDerivedValues/
 redirect_from:
+ - developers/functions/formulize_updateDerivedValues/
  - developers/API/functions/formulize_updateDerivedValues/
 title: formulize_updateDerivedValues
 ---

@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/git_tips/
+permalink: documentation/git_tips/
+redirect_from:
+ - developers/git_tips/
 title: Git Tips and Tricks
 ---
 

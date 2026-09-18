@@ -1,7 +1,8 @@
 ---
 layout: default
-permalink: developers/classes/data_handler/findAllValuesForField/
+permalink: documentation/classes/data_handler/findAllValuesForField/
 redirect_from:
+ - developers/classes/data_handler/findAllValuesForField/
  - developers/API/classes/data_handler/findAllValuesForField/
 title: findAllValuesForField
 ---

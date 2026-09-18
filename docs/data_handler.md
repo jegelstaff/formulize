@@ -1,7 +1,8 @@
 ---
 layout: default
-permalink: developers/classes/data_handler/
+permalink: documentation/classes/data_handler/
 redirect_from:
+ - developers/classes/data_handler/
  - developers/API/classes/data_handler/
 title: Data Handler
 ---

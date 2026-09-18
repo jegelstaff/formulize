@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/templates/
+permalink: documentation/templates/
+redirect_from:
+ - developers/templates/
 title: Templates
 ---
 

@@ -1,7 +1,8 @@
 ---
 layout: default
-permalink: developers/functions/gatherDataset/
+permalink: documentation/functions/gatherDataset/
 redirect_from:
+ - developers/functions/gatherDataset/
  - developers/API/functions/gatherDataset/
 title: gatherDataset
 ---

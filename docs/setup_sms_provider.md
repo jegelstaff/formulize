@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/setup_sms_provider/
+permalink: documentation/setup_sms_provider/
+redirect_from:
+ - developers/setup_sms_provider/
 title: Setting Up an SMS Provider
 ---
 

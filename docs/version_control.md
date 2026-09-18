@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/version_control/
+permalink: documentation/version_control/
+redirect_from:
+ - developers/version_control/
 title: Version Control
 ---
 

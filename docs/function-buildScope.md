@@ -1,7 +1,8 @@
 ---
 layout: default
-permalink: developers/functions/buildScope/
+permalink: documentation/functions/buildScope/
 redirect_from:
+ - developers/functions/buildScope/
  - developers/API/functions/buildScope/
 title: buildScope
 ---

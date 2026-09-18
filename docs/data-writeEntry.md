@@ -1,7 +1,8 @@
 ---
 layout: default
-permalink: developers/classes/data_handler/writeEntry/
+permalink: documentation/classes/data_handler/writeEntry/
 redirect_from:
+ - developers/classes/data_handler/writeEntry/
  - developers/API/classes/data_handler/writeEntry/
 title: writeEntry
 ---

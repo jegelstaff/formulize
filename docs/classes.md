@@ -1,7 +1,8 @@
 ---
 layout: default
-permalink: developers/classes/
+permalink: documentation/classes/
 redirect_from:
+ - developers/classes/
  - developers/API/classes/
 title: Classes
 ---

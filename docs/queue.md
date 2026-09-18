@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/Public_API/queue
+permalink: documentation/Public_API/queue
+redirect_from:
+ - developers/Public_API/queue
 title: queue
 ---
 

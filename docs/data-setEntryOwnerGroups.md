@@ -1,7 +1,8 @@
 ---
 layout: default
-permalink: developers/classes/data_handler/setEntryOwnerGroups/
+permalink: documentation/classes/data_handler/setEntryOwnerGroups/
 redirect_from:
+ - developers/classes/data_handler/setEntryOwnerGroups/
  - developers/API/classes/data_handler/setEntryOwnerGroups/
 title: setEntryOwnerGroups
 ---

@@ -1,8 +1,9 @@
 ---
 layout: default
 title: viewEntryButton
-permalink: developers/functions/viewEntryButton/
+permalink: documentation/functions/viewEntryButton/
 redirect_from:
+ - developers/functions/viewEntryButton/
  - developers/API/functions/viewEntryButton/
 ---
 

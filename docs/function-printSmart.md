@@ -1,7 +1,8 @@
 ---
 layout: default
-permalink: developers/functions/printSmart/
+permalink: documentation/functions/printSmart/
 redirect_from:
+ - developers/functions/printSmart/
  - developers/API/functions/printSmart/
 title: printSmart
 ---

@@ -1,8 +1,9 @@
 ---
 layout: default
 title: trans
-permalink: developers/functions/trans/
+permalink: documentation/functions/trans/
 redirect_from:
+ - developers/functions/trans/
  - developers/API/functions/trans/
 ---
 
