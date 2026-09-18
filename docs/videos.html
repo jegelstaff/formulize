@@ -2,6 +2,7 @@
 layout: default
 permalink: videos/
 title: Formulize Videos
+full_width: true
 ---
 
 {% comment %}
@@ -20,6 +21,14 @@ title: Formulize Videos
 
 <h1>Formulize Videos</h1>
 
+{% comment %}
+  In a .band like every other full-width page's content, not loose in the
+  column. .page carries no bottom padding of its own - the closing gap before
+  the footer is meant to come from the last band's own var(--space-12), and
+  without one here the last card in the grid ran straight into the action
+  strip.
+{% endcomment %}
+<section class="band">
 <div id="video-flex-list">
 	<div>
 		<a href="https://youtu.be/LDsF91eUi28" target="_BLANK">
@@ -71,3 +80,4 @@ title: Formulize Videos
 			The core concepts are all still the same</p>
 	</div>
 </div>
+</section>

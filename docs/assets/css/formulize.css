@@ -98,6 +98,8 @@
   --shadow-lg: 0 12px 32px color-mix(in srgb, #14181a 22%, transparent);
 
   --page-max: 1160px;
+  /* The comfortable measure for running text - see .prose. */
+  --measure: 52rem;
 }
 
 /* ── base ───────────────────────────────────────────────────────────────── */
@@ -155,7 +157,17 @@ ul, ol { padding-left: var(--space-6); }
 li { margin-bottom: var(--space-1); }
 
 a { color: var(--color-accent-700); text-underline-offset: 3px; }
-a:hover, a:focus { color: var(--color-accent-600); }
+/* :not(.btn) so this stays out of the buttons. Buttons own their own colour
+   in the .btn block further down and set it for every state there; without
+   the exclusion, a:focus (0,1,1) outranks plain .btn (0,1,0) and a focused
+   button picks up this lighter 600 instead - lighter than its own resting
+   700, and only 3.5:1 on the green fill, which fails AA. Browsers grant
+   :focus-visible on both keyboard and mouse paths, so .btn:focus-visible
+   normally wins and hides this, but script-moved focus (:focus without
+   :focus-visible) exposes it. The :hover half was already being saved only
+   by .btn:hover being later in the file at equal specificity - excluded
+   here too so button colour doesn't depend on source order. */
+a:not(.btn):hover, a:not(.btn):focus { color: var(--color-accent-600); }
 /* :visited is scoped to prose content (API reference pages, blog posts) rather
    than site-wide — it's a real wayfinding aid on link-dense reference/listing
    pages, but applying it globally would risk bleeding into buttons and card
@@ -305,16 +317,20 @@ blockquote {
   font-size: 15px;
   line-height: 1.2;
   white-space: nowrap;
-  /* Blue at rest, black on hover - on every button, filled or outlined. Set
-     once here rather than per role so .btn-primary's green fill and the
-     outlined ones can't drift apart. The only exception is the hero, further
-     down, where the button sits on blue and has to stay white.
+  /* Dark blue at rest, darker blue on hover - on every button, filled or
+     outlined. Set once here rather than per role so .btn-primary's green
+     fill and the outlined ones can't drift apart. The only exception is the
+     hero, further down, where the button sits on blue and has to stay white.
 
-     900 rather than the 700 used for body links: on the green fill 700 is
-     only 4.8:1, and on the darker :active green it drops to 3.3:1, which
-     fails. 900 is 8.8:1 on the green and 12.2:1 on the page background,
-     while still leaving a visible step down to black on hover. */
-  color: var(--color-accent-900);
+     700, the same blue as body links. This was 900 for a while, to clear
+     4.5:1 on the darker :active green in one go - but 900 is only 1.4:1
+     against the black these went to on hover, so both states read as flat
+     black and the hover change was invisible. The fix is to stop hovering
+     to black (see below) and let the resting colour be a blue you can
+     actually see: 700 is 8:1 on the page background and 4.8:1 on the green
+     fill. The one place it doesn't clear AA is the pressed green, handled
+     on .btn-primary:active rather than by darkening every button. */
+  color: var(--color-accent-700);
   background: transparent;
   border: 1px solid transparent;
   padding: var(--space-3) var(--space-6);
@@ -327,12 +343,17 @@ blockquote {
    that, won't animate a transition through it - so a genuinely different
    visited colour doesn't fade in/out smoothly like every other state here,
    it pops. Declared before :hover/:focus-visible (LVHA order) so hovering a
-   visited button still goes black rather than getting stuck on this. */
-.btn:visited { color: var(--color-accent-900); }
-/* Hover is a scale-up plus the text going black — same scale treatment as
-   the .action-strip tiles. :active (an actual press) still darkens the fill,
-   as distinct feedback for the click itself rather than just pointing at it. */
-.btn:hover, .btn:focus-visible { transform: scale(1.05); color: var(--color-text); }
+   visited button still darkens to 900 rather than getting stuck on this. */
+.btn:visited { color: var(--color-accent-700); }
+/* Hover is a scale-up plus the text darkening two steps, 700 -> 900 — same
+   scale treatment as the .action-strip tiles. Deliberately not black: black
+   is so close to any blue dark enough to sit on the green fill that the
+   change can't be seen, which is what went wrong before. 900 keeps the hue
+   and just drops the lightness, which is legible because the resting 700 is
+   light enough to read as blue in the first place. :active (an actual
+   press) still darkens the fill, as distinct feedback for the click itself
+   rather than just pointing at it. */
+.btn:hover, .btn:focus-visible { transform: scale(1.05); color: var(--color-accent-900); }
 /* Two roles: primary (filled, the one strong action) and secondary
    (outlined, everything else). A third role, ghost, used to exist alongside
    secondary - a borderless "plain text" button - but it read as a link
@@ -353,9 +374,13 @@ blockquote {
    separate class — one visual style everywhere, auto-adapting instead of
    hand-matched per spot. btn-brand dropped even earlier: nothing in the
    site referenced it. */
-/* No colour of its own: takes the blue/black from .btn above. */
+/* No colour of its own: takes the 700/900 blues from .btn above. */
 .btn-primary { background: var(--color-cta); }
-.btn-primary:active { background: var(--color-cta-active); }
+/* The one spot the resting 700 doesn't clear 4.5:1: on the pressed green it
+   is 3.3:1. Hovering already moves it to 900 (6.1:1 there), but a press can
+   happen without a hover - keyboard Enter/Space, and touch - so pin it here
+   too rather than relying on :hover being along for the ride. */
+.btn-primary:active { background: var(--color-cta-active); color: var(--color-accent-900); }
 .btn-secondary {
   --btn-secondary-border: var(--color-divider);
   --btn-secondary-active-bg: color-mix(in srgb, var(--color-text) 14%, transparent);
@@ -363,13 +388,13 @@ blockquote {
 }
 .btn-secondary:active { background: var(--btn-secondary-active-bg); }
 /* The one place an outlined button sits straight on a dark panel with no
-   fill of its own, so it's the exception to the blue/black rule: it
-   disappears into the hero blue otherwise. The custom properties and the
+   fill of its own, so it's the exception to the 700/900 rule: both of
+   those disappear into the hero blue otherwise. The custom properties and the
    rest/visited colour are set here on the plain (no pseudo-class) selector,
    which keeps matching through :hover too, so :hover below only has to
    touch colour - it doesn't need to repeat the border/active-bg values. In
    the header, the equivalent button gets a light fill instead and so can
-   keep the normal blue/black.
+   keep the normal 700/900.
 
    --color-neutral-200 rather than white at rest - the same off-white the
    "Getting started" style footer headings use, which sits on this same
@@ -380,8 +405,8 @@ blockquote {
   --btn-secondary-active-bg: rgba(255, 255, 255, 0.28);
   color: var(--color-neutral-200);
 }
-/* White on hover/focus instead of the black everywhere else - black would
-   read as barely-there on the hero's blue. Listed after .btn:hover
+/* White on hover/focus instead of the 900 everywhere else - a blue that
+   dark would read as barely-there on the hero's blue. Listed after .btn:hover
    deliberately - same specificity, so being later is what keeps it white on
    hover too. */
 .hero .btn-secondary:hover,
@@ -659,26 +684,24 @@ blockquote {
 
 /* ── social / download banner ───────────────────────────────────────────── */
 
-/* One colour does two jobs here: the border is the strip's outline, and the
-   background shows through the 1px grid gap as the rules between tiles - so
-   both have to be the same value, and changing one without the other leaves
-   the dividers a different colour from the frame.
+/* The border is the strip's outline; the same divider grey used to also be
+   the *only* thing drawing the rules between tiles, via a 1px grid gap with
+   this background showing through it. That worked for the outer edges but
+   dropped the rule between whichever two tiles happened to share the gap
+   track the browser rounded down - grid gap tracks split any width that
+   isn't a clean multiple of the column count, and 1px is small enough that
+   the rounding error can eat the whole track on one specific pair of tiles
+   while leaving the others fine. Explicit borders on the tiles themselves
+   (below) always render at a full 1px regardless of how the columns round.
 
    It is the same divider grey as every other box on the site, the footer
    panel below included, rather than the dark blue it used to be. The blue was
    holding four white tiles together as one object back when it was the only
    drawn line in a white footer; now the panel underneath is drawn in grey
-   too, and a blue frame above a grey one read as two unrelated systems.
-
-   The translucent black does composite over the pixel artwork rather than a
-   flat colour, which is what the blue was originally chosen to avoid - but
-   the strip sits at the top of the footer where the artwork has not started
-   yet, so in practice it is grey on white like everywhere else. */
+   too, and a blue frame above a grey one read as two unrelated systems. */
 .action-strip {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 1px;
-  background: var(--color-divider);
   border: 1px solid var(--color-divider);
   border-radius: var(--radius-lg);
   margin: 0 0 var(--space-8);
@@ -712,9 +735,12 @@ blockquote {
   line-height: 1.3;
   text-align: center;
   position: relative;
+  /* The divider between this tile and its left neighbour - see the comment
+     above .action-strip for why this replaced a grid-gap background. */
+  border-left: 1px solid var(--color-divider);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
-.action-strip-item:first-child { border-radius: var(--radius-lg) 0 0 var(--radius-lg); }
+.action-strip-item:first-child { border-left: none; border-radius: var(--radius-lg) 0 0 var(--radius-lg); }
 .action-strip-item:last-child { border-radius: 0 var(--radius-lg) var(--radius-lg) 0; }
 /* Scale in place: it grows the tile around its own center without reflowing
    neighbors. The box-shadow stands in for a border — unlike an actual border
@@ -728,8 +754,21 @@ blockquote {
   z-index: 1;
   /* The same grey as the strip's own border and rules - while a tile is
      hovered this ring is its border, so it has to be the border's colour.
-     Anything else reads as one odd-coloured tile inside the grid. */
-  box-shadow: 0 0 0 1px var(--color-divider);
+     Anything else reads as one odd-coloured tile inside the grid.
+
+     Four separate offset shadows rather than one "0 0 0 1px" spread, so a
+     side that already has a real border (border-left above, or the top
+     border row-2 tiles get at the 900px breakpoint below) can leave that
+     side out. A spread shadow can't do that - it inflates all four sides
+     as one shape - and stacking it on top of a real border on the same
+     side doubled the line's apparent width instead of just matching it. */
+  box-shadow: 0 -1px 0 var(--color-divider), 1px 0 0 var(--color-divider), 0 1px 0 var(--color-divider), -1px 0 0 var(--color-divider);
+}
+/* Tiles after the first already draw their own left divider at rest
+   (border-left, above) - the transform carries it along on hover, so the
+   ring only needs to cover the other three sides. */
+.action-strip-item:not(:first-child):hover {
+  box-shadow: 0 -1px 0 var(--color-divider), 1px 0 0 var(--color-divider), 0 1px 0 var(--color-divider);
 }
 .action-strip-icons { display: flex; align-items: center; gap: var(--space-2); }
 .action-strip-icons img { max-height: 22px; width: auto; }
@@ -1428,9 +1467,15 @@ blockquote {
 
 /* ── videos ─────────────────────────────────────────────────────────────── */
 
+/* Three to a row, filling the content column, rather than auto-fill on a
+   260px minimum: auto-fill let the column decide how many cards fit, which
+   meant the number changed with the page width and the cards were never
+   sized on purpose. The videos page is full_width so this row is the whole
+   1160px column. Steps down to two and then one below - see the responsive
+   block at the end of this file. */
 #video-flex-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-6);
   margin: 0;
   padding: 0;
@@ -1442,7 +1487,13 @@ blockquote {
   overflow: hidden;
   box-shadow: var(--shadow-sm);
 }
-#video-flex-list img { width: 100%; height: 180px; object-fit: cover; border: 0; }
+/* 5:3 is the shape every thumbnail in /assets/img is already saved at
+   (700x420), so nothing is cropped; the ratio is declared rather than left to
+   the file so a card keeps its place in the row if one ever arrives a
+   different shape. Sized by ratio rather than the fixed 180px this had while
+   the cards were narrow - a fixed height letterboxes harder the wider the
+   card gets. */
+#video-flex-list img { width: 100%; aspect-ratio: 5 / 3; height: auto; object-fit: cover; border: 0; }
 #video-flex-list p {
   padding: var(--space-4) var(--space-6) var(--space-6);
   margin: 0;
@@ -1457,6 +1508,27 @@ blockquote {
   color: var(--color-text);
 }
 #video-flex-list a:hover .video-title { color: var(--color-accent-700); }
+
+/* A single video dropped into the middle of a prose page (see AI.md): the
+   thumbnail beside its caption, inside the reading measure, rather than a
+   card in the videos grid. It used to borrow #video-flex-list for this and
+   got the two-column shape only because the reading measure happened to be
+   narrow enough to fit two auto-fill tracks - the moment the grid became a
+   deliberate three-up, that coincidence stopped holding. */
+.video-inline {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-6);
+  margin: 0 0 var(--space-4);
+}
+.video-inline img { width: 100%; border: 0; margin: 0; }
+.video-inline p { margin: 0; font-size: 16.5px; line-height: 1.5; }
+.video-inline a { text-decoration: none; }
+.video-inline a:hover .video-title { color: var(--color-accent-700); }
+@media (max-width: 600px) {
+  .video-inline { grid-template-columns: minmax(0, 1fr); }
+}
 
 .video-row {
   display: grid;
@@ -1515,7 +1587,23 @@ blockquote {
 
 /* ── prose pages (markdown docs) ────────────────────────────────────────── */
 
-.prose { max-width: 78ch; }
+/* The reading measure is a cap on each block, not on the column itself, so
+   that the blocks which are not prose can opt out of it. Tables and code are
+   the ones that matter: an MCP tool's properties table or a PHP example in
+   the API reference was being folded into a 78ch ribbon with a third of the
+   page empty beside it, and the code blocks were scrolling sideways inside
+   that ribbon while the room they needed sat unused to the right.
+
+   52rem rather than 78ch because ch resolves against each element's own font
+   - on an h2 at 30px, 78ch is far wider than the page - and rem is the same
+   length everywhere. 52rem is 832px, which is what 78ch measured at in the
+   17px body face, so running text is unchanged. */
+.prose { max-width: none; }
+.prose > * { max-width: var(--measure); }
+.prose > table,
+.prose > pre,
+.prose > .highlight,
+.prose > .highlighter-rouge { max-width: none; }
 .prose h1 { margin-bottom: var(--space-4); }
 .prose h2 { font-size: 30px; margin-top: var(--space-8); }
 .prose h3 { font-size: 24px; margin-top: var(--space-6); }
@@ -1728,7 +1816,11 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   border: 1px solid var(--color-divider);
   border-radius: calc(var(--radius-lg) * 1.15);
   color: var(--color-text);
+  /* Same rest/hover shadow step as .card, so this box lifts the same way
+     every other bordered box on the site does. */
+  transition: box-shadow 0.15s ease;
 }
+.footer-panel:hover { box-shadow: var(--shadow-md); }
 /* Scoped to the panel, not to .site-footer, so it can't reach the action
    strip's tiles - they are <a> elements too and carry their own colour.
    These are ordinary links on white now, so they take the site's ordinary
@@ -2123,6 +2215,10 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   .hero-thumbnail { max-width: 100%; }
   .triad, .onramp, .video-row, .download-grid, .addon-grid { grid-template-columns: minmax(0, 1fr); }
   .feature-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* Two rather than straight to one: the videos page is a gallery of seven
+     and it keeps reading as a grid at tablet width, where the three-up rows
+     elsewhere on the site are trios of equals that don't. */
+  #video-flex-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .hero-media { max-width: 100%; }
   .hero-lead .hero-text h1 { font-size: 27px; }
   .hero-text p.hero-sub { font-size: 18px; max-width: none; }
@@ -2136,6 +2232,16 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   .action-strip-item:nth-child(2) { border-radius: 0 var(--radius-lg) 0 0; }
   .action-strip-item:nth-child(3) { border-radius: 0 0 0 var(--radius-lg); }
   .action-strip-item:nth-child(4) { border-radius: 0 0 var(--radius-lg) 0; }
+  /* Two columns means the third tile starts a new row - it needs the
+     vertical divider dropped (it's now a row-start tile, not a right-hand
+     one) and a horizontal divider added instead, matching the fourth tile
+     which already sits to the right of it. */
+  .action-strip-item:nth-child(3) { border-left: none; border-top: 1px solid var(--color-divider); }
+  .action-strip-item:nth-child(4) { border-top: 1px solid var(--color-divider); }
+  /* These two now carry a real top border too, so their hover ring drops
+     top the same way the base rule above already drops left for them. */
+  .action-strip-item:nth-child(3):hover { box-shadow: -1px 0 0 var(--color-divider), 1px 0 0 var(--color-divider), 0 1px 0 var(--color-divider); }
+  .action-strip-item:nth-child(4):hover { box-shadow: 1px 0 0 var(--color-divider), 0 1px 0 var(--color-divider); }
   /* Below this width the 220px-capped float leaves too little room for text
      beside it (this used to be where the old grid layout dropped to a
      single column) - full width and stacked above the text reads better. */
@@ -2170,17 +2276,19 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   .triad,
   .onramp,
   .video-row,
+  #video-flex-list,
   .download-grid,
   .addon-grid,
-  .plan-preview,
-  .action-strip { grid-template-columns: minmax(0, 1fr); }
-  /* Back to one rounded box, not the 2x2 arrangement the 900px rules set up:
-     stacked, the first and last tile own the top and bottom corners again and
-     the two in the middle are square. */
-  .action-strip-item:nth-child(1) { border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
-  .action-strip-item:nth-child(2),
-  .action-strip-item:nth-child(3) { border-radius: 0; }
-  .action-strip-item:nth-child(4) { border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
+  .plan-preview { grid-template-columns: minmax(0, 1fr); }
+  /* .action-strip is the exception to the rule above: it stays the 2x2 the
+     900px rules set up, rather than stacking into four full-width rows,
+     which is why its corner overrides are not repeated here. It can afford
+     to: its tiles are short labels that wrap on their spaces, and the
+     longest unbreakable word in any of them ("Participate") is well inside
+     a half-width track even at 320px - so it is not one of the components
+     that was widening the document. Four stacked rows of it is a lot of
+     footer to scroll past on a phone; as a 2x2 it reads as one object and
+     takes half the height. */
   /* The two-line floor on the footer headings exists to line four columns of
      links up with each other. In one column there is nothing to line up with,
      and a heading that does not wrap would just sit above a line of empty
@@ -2203,15 +2311,56 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
      Markdown table has nowhere to put one. */
   .prose table { display: block; width: 100%; overflow-x: auto; }
   /* The tagline is hidden at this width (below), so the logo is the whole
-     brand block and can take the room the tagline used to. 36px is where the
-     header stops growing: at 42 it goes from 129px to 135. */
-  .brand-logo { height: 36px; }
+     brand block and can take the room the tagline used to. 36px used to be
+     where the header stopped growing, back when the bar here was two rows
+     with Get Formulize on the second. It is one row now, and the row's
+     height is set by the 40px Menu control beside it, so the first 4px of
+     this are free and the rest costs the header 1px each. 43 is about as
+     far as it can go on width rather than height: the wordmark is 4.5x as
+     wide as it is tall, so at 43 the logo, the gap and the Menu control come
+     to 346px and the bar still holds together on one line on a 360px screen,
+     which is the narrowest phone worth designing for. */
+  .brand-logo { height: 43px; }
   .brand-tagline { display: none; }
+  /* Get Formulize comes out of the header entirely at phone width. Every
+     page's hero carries the same call to action a screen further down, so in
+     the header it is a duplicate - and it is the duplicate that was making
+     the bar too wide for one line, wrapping the three controls onto two rows
+     and taking a third of a short screen for chrome. Without it the bar is
+     the logo and the Menu control, which fit on one line at any phone width.
+
+     The button is only hidden, not removed from the markup: it is the right
+     thing to have in the header on a wide screen, where there is room for it
+     and the hero may well be scrolled past.
+
+     The auto margin moves from .header-cta (now hidden, so its margin does
+     nothing) to the Menu control, which is what has to be pushed to the far
+     right in its place. Logo hard left, Menu hard right, on the row's normal
+     padding. */
+  .header-cta { display: none; }
+  .nav-toggle-label { margin-left: auto; }
   /* The bar above the open menu is shorter here - no tagline line, a
-     smaller logo - so the menu can claim more of the viewport. */
+     smaller logo, and one row rather than two - so the menu can claim more
+     of the viewport. 100px is measured: the open menu's top is 78px down at
+     this breakpoint, and the header's own bottom padding and green rule
+     account for the remaining 22. */
   .nav-toggle:checked ~ .main-nav {
-    max-height: calc(100vh - 60px);
-    max-height: calc(100dvh - 60px);
+    max-height: calc(100vh - 100px);
+    max-height: calc(100dvh - 100px);
+  }
+}
+
+/* The one width the bigger logo does not fit on a single line. 320px is a
+   real target rather than an old phone: WCAG reflow is tested at a 320px
+   equivalent, which is what a 1280px screen at 400% zoom gives you. Here the
+   logo goes back to the size it was, which is the largest that leaves room
+   for the gap and the Menu control on one row - and, because the bar is one
+   row again, the open menu goes back to the height measured against it. */
+@media (max-width: 359px) {
+  .brand-logo { height: 36px; }
+  .nav-toggle:checked ~ .main-nav {
+    max-height: calc(100vh - 93px);
+    max-height: calc(100dvh - 93px);
   }
 }
 
