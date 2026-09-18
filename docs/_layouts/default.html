@@ -22,7 +22,16 @@
       <div class="page">
         {% unless page.hide_breadcrumbs %}{% include nav-breadcrumbs.html %}{% endunless %}
 
-        {% if page.full_width %}
+        {%- comment -%}
+          layout.full_width as well as page.full_width: the generated news
+          pages get their layout from _plugins/news_pages.rb and have no front
+          matter of their own, so the only place news-index/news-releases/
+          news-entry can ask for the full column is their own layout front
+          matter. Jekyll merges each layout's data into the `layout` variable
+          as it renders outwards, so by the time this layout runs, layout.*
+          carries what the inner layout declared.
+        {%- endcomment -%}
+        {% if page.full_width or layout.full_width %}
           {{ content }}
         {% else %}
           <div class="prose">
