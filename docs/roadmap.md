@@ -8,6 +8,8 @@ title: Roadmap
 
 *The master branch of Formulize is always stable and ready to install.* Features completed for an upcoming release are available immediately — you don't have to wait for a formal release to get new capabilities.
 
+*Would rather hear about new releases by email? [Join the mailing list](/mailinglist/).*
+
 ---
 
 {% for release in site.data.roadmap_issues %}

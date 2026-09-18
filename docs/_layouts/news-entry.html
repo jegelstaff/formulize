@@ -42,8 +42,9 @@ full_width: true
   <nav class="btn-row">
     <a class="btn btn-secondary" href="{{ "/news/" | relative_url }}">&larr; All news</a>
     {%- if entry.type == "Release" %}
-    <a class="btn btn-ghost" href="{{ "/news/releases/" | relative_url }}">All releases</a>
+    <a class="btn btn-secondary" href="{{ "/news/releases/" | relative_url }}">All releases</a>
     {%- endif %}
-    <a class="btn btn-ghost" href="{{ "/get/" | relative_url }}">Get Formulize</a>
+    <a class="btn btn-primary" href="{{ "/get/" | relative_url }}">Get Formulize</a>
   </nav>
+  <p class="text-muted" style="margin-top: var(--space-4);">Don't want to miss the next one? <a href="{{ "/mailinglist/" | relative_url }}">Join the mailing list</a>.</p>
 </article>

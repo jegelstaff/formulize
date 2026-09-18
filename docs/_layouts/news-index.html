@@ -13,16 +13,16 @@ full_width: true
 <div class="band-head" style="max-width: 68ch;">
   <h1 style="margin-top: var(--space-3);">News</h1>
   <p>What is happening with Formulize &mdash; announcements, articles, and notes from every release.</p>
-  <p class="text-muted"><a href="{{ "/news/feed.xml" | relative_url }}">Subscribe by RSS</a></p>
+  <p class="text-muted"><a href="{{ "/news/feed.xml" | relative_url }}">Subscribe by RSS</a>, or <a href="{{ "/mailinglist/" | relative_url }}">join the mailing list</a> for the same thing by email.</p>
 </div>
 
 <section class="band">
   {%- if page.entries and page.entries.size > 0 %}
   <div class="post-list">
     {%- for entry in page.entries %}
-    <a class="post-teaser{% unless entry.image %} no-image{% endunless %}" href="{{ entry.url | relative_url }}">
+    <a class="post-teaser" href="{{ entry.url | relative_url }}">
       {%- if entry.image %}
-      <span class="post-teaser-thumb"><img src="{{ entry.image }}" alt=""></span>
+      <img class="post-teaser-thumb" src="{{ entry.image }}" alt="">
       {%- endif %}
       <span>
         <span class="post-meta"><time datetime="{{ entry.date }}">{{ entry.date_display }}</time></span>
@@ -48,7 +48,7 @@ full_width: true
     {%- for entry in page.recent_releases %}
     <li>
       <a href="{{ entry.url | relative_url }}">
-        <time datetime="{{ entry.date }}">{{ entry.date_display }}</time>
+        {% include release-date.html %}
         <span class="news-title">{{ entry.headline }}</span>
       </a>
     </li>

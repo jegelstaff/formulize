@@ -2,9 +2,11 @@
   The main menu, from _data/nav.yml. Six top-level items - the same six
   questions a stranger arrives with, in order: what is it, what could I build
   with it, what is the AI story, what does it cost, where are the docs, is
-  this project alive. Videos are a format rather than a topic, so they sit
-  inside Examples and Docs rather than in the menu, and the community links
-  live in the footer.
+  this project alive. Videos are a format rather than a topic, so they are a
+  child of Docs rather than a seventh top-level item - people looking for "the
+  docs" count a tutorial video as documentation. The page stays at /videos/
+  though, because much of it is intro material for anyone, not developers. The
+  community links live in the footer.
 
   Every item also carries a dropdown of its most-wanted subpages, so a
   visitor can see what is inside a section and jump straight to a specific
@@ -44,8 +46,35 @@
       <nav class="main-nav" aria-label="Main menu">
         <ul>
           {% for item in site.data.nav %}
+            {%- comment -%}
+              A top-level item highlights for anywhere in its section, not just
+              for its own page. "Anywhere in its section" is two things, because
+              a section's pages are not all under its URL: pages beneath the
+              item itself (/developers/deploying_locally/ under Docs), and the
+              pages its dropdown lists, which often sit elsewhere entirely
+              (/download/, /signup/ and /services/ all belong to Pricing). Both
+              are matched with `contains` so a child's own subpages count too.
+
+              Anchor children (/features/#ai) are cut back to their page before
+              comparing, or nothing would ever match them. A child URL of "/"
+              is skipped for the obvious reason - it is inside every page URL
+              there is, and would light up its section on every page of the
+              site.
+
+              aria-current="page" stays on the exact page only; the section
+              match is a class, because the other five items are not the
+              current page in any sense a screen reader should be told about.
+            {%- endcomment -%}
+            {% assign in_section = false %}
+            {% if page.url contains item.url %}{% assign in_section = true %}{% endif %}
+            {% for child in item.children %}
+              {% assign child_path = child.url | split: '#' | first %}
+              {% if child_path != '/' and child_path != '' and page.url contains child_path %}
+                {% assign in_section = true %}
+              {% endif %}
+            {% endfor %}
             <li{% if item.children %} class="has-dropdown"{% endif %}>
-              <a href="{{ item.url | relative_url }}"{% if page.url contains item.url %} aria-current="page"{% endif %}{% if item.children %} aria-haspopup="true"{% endif %}>{{ item.label }}</a>
+              <a href="{{ item.url | relative_url }}"{% if page.url == item.url %} aria-current="page"{% elsif in_section %} class="nav-section-current"{% endif %}{% if item.children %} aria-haspopup="true"{% endif %}>{{ item.label }}</a>
               {% if item.children %}
                 <ul class="nav-dropdown">
                   {% for child in item.children %}

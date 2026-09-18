@@ -42,7 +42,7 @@ description: Formulize is open source software for collecting and organizing you
     <p class="hero-sub">No code required, fully AI enabled, and completely open source.</p>
     <div class="hero-actions btn-row">
       <a class="btn btn-primary" href="{{ "/get/" | relative_url }}">Get Formulize</a>
-      <a class="btn btn-secondary" href="{{ "/features/" | relative_url }}">See what it does</a>
+      <a class="btn btn-secondary" href="{{ "/features/" | relative_url }}">What can it do?</a>
     </div>
   </div>
   <div class="hero-media">
@@ -62,17 +62,22 @@ description: Formulize is open source software for collecting and organizing you
     <h2>Latest news</h2>
     <a class="btn btn-secondary btn-sm" href="{{ "/news/" | relative_url }}">All news &amp; articles</a>
   </div>
-  <div class="news-row" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
+  {%- comment -%}
+    .news-row-pair, not an inline grid-template-columns. The inline version
+    could not be overridden by the media queries that collapse this row to one
+    column on a phone - a style attribute outranks any stylesheet rule - so
+    the homepage kept two cards side by side all the way down to 320px, where
+    each card is about 110px wide and the headlines stop wrapping.
+  {%- endcomment -%}
+  <div class="news-row news-row-pair">
     {%- for entry in latest_stories limit: 2 %}
     <a class="news-card" href="{{ entry.url | relative_url }}">
-      <div class="news-card-head">
-        <div class="news-card-meta">
-          <time datetime="{{ entry.date }}">{{ entry.date_display }}</time>
-          <span class="news-card-title">{{ entry.headline }}</span>
-        </div>
+      <div class="news-card-body">
         {% if entry.image %}<img class="news-card-thumb" src="{{ entry.image }}" alt="">{% endif %}
+        <time datetime="{{ entry.date }}">{{ entry.date_display }}</time>
+        <span class="news-card-title">{{ entry.headline }}</span>
+        <p>{{ entry.teaser }}</p>
       </div>
-      <p>{{ entry.teaser }}</p>
       <span class="news-card-more">Read it &rarr;</span>
     </a>
     {%- endfor %}
@@ -141,7 +146,7 @@ description: Formulize is open source software for collecting and organizing you
     </div>
     <p class="btn-row">
       <a class="btn btn-secondary" href="{{ "/about/" | relative_url }}">About the project</a>
-      <a class="btn btn-ghost" href="{{ "/news/releases/" | relative_url }}">The release history</a>
+      <a class="btn btn-secondary" href="{{ "/news/releases/" | relative_url }}">The release history</a>
     </p>
   </div>
 </section>

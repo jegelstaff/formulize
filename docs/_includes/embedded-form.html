@@ -9,7 +9,8 @@
 
   Parameters:
     sid     the screen id on the Formulize site. 1 = Help Request,
-            3 = Get your own Formulize system.
+            3 = Get your own Formulize system, 5 = Join the mailing list,
+            7 = Unsubscribe, 27 = Report a bug.
 
             It has to be the sid, not the screen's prettier rewrite address
             (get-help, get-hosting): those do not resolve when the request comes
@@ -55,7 +56,29 @@
           title="{{ include.title }}"
           data-formulize-embed-height="{{ include.height | default: 800 }}"
           data-formulize-embed-fallback="off"
-          style="width:100%;min-width:min(400px,100vw);height:{{ include.height | default: 800 }}px;border:0"></iframe>
+          {%- comment -%}
+            The min-width floor is turned off, and set here instead.
+
+            formulize-embed.js puts its own floor on every frame it registers,
+            as style.minWidth = min(400px, 100vw). 100vw is the width of the
+            viewport including any scrollbar and takes no notice of the
+            padding on the containers around the frame, so on a phone the
+            floor came out wider than the column the frame sits in: at a 360px
+            viewport the frame was held at 360px inside a 324px column, and
+            pushed the whole document 36px wider than the screen. That is a
+            sideways scroll on every page carrying an embedded form, and it is
+            the script's inline style, so no stylesheet rule of ours can argue
+            with it. "off" is the script's own supported opt-out (it then sets
+            minWidth to the empty string and leaves the frame alone).
+
+            What is left is the inline floor below, which says the same thing
+            against the column rather than the viewport: min(400px, 100%) can
+            never exceed the space available, and above about a 440px viewport
+            there is room for the real 400px minimum and it applies as before.
+            It is also what holds the frame up if the script never loads.
+          {%- endcomment -%}
+          data-formulize-embed-min-width="off"
+          style="width:100%;min-width:min(400px,100%);height:{{ include.height | default: 800 }}px"></iframe>
 
   <p class="embed-frame-note" data-embed-note>
     Trouble with the form?

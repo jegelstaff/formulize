@@ -1,0 +1,35 @@
+---
+layout: default
+permalink: mailinglist/
+title: Join the mailing list
+full_width: true
+description: Occasional email from Formulize about releases and what the project is up to — usually once a month or less.
+---
+
+{% comment %}
+  Carries the "Join the mailing list" screen from formulize.net, embedded:
+  form 3 (Mailing List Emails), screen 5, so sid=5. The screen also has a
+  rewrite address (join-our-mailing-list) but that only resolves for
+  same-domain requests, so it cannot be used here.
+
+  The screen already carries its own intro heading and an "other channels"
+  footer (Bluesky/Slack/Discord) inside the embedded content itself, so this
+  page's own copy stays minimal rather than repeating it.
+
+  Unsubscribe (sid=7, same form) is a separate page - unsubscribe.html -
+  rather than a second embed here, so each page stays about the one thing
+  someone came to do.
+{% endcomment %}
+
+<div class="band-head" style="max-width: 68ch;">
+  <h1 style="margin-top: var(--space-3);">Join the mailing list</h1>
+  <p>Occasional email about releases and what the project is up to &mdash; usually once a month or less.</p>
+</div>
+
+<section class="band">
+  {% include embedded-form.html
+     sid="5"
+     title="Join the mailing list"
+     height="700" %}
+  <p class="text-muted" style="max-width: 68ch;">Already on the list and want off? <a href="{{ "/unsubscribe/" | relative_url }}">Unsubscribe here</a>.</p>
+</section>

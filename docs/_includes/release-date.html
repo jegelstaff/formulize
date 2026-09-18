@@ -1,0 +1,10 @@
+{%- comment -%}
+  A release date split onto two lines, day+month then year, so the year
+  always lands on its own line instead of only wrapping there for long
+  month names (August, September, November...) while short ones (May,
+  June...) stay on one line. entry.date_display is always "D Month YYYY"
+  (see display_date in _plugins/news_pages.rb), so splitting on spaces and
+  keeping the last token as the year is reliable.
+{%- endcomment -%}
+{%- assign date_parts = entry.date_display | split: " " -%}
+<time datetime="{{ entry.date }}"><span class="news-date-line">{{ date_parts[0] }} {{ date_parts[1] }}</span><span class="news-date-line">{{ date_parts[2] }}</span></time>
