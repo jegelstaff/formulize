@@ -1,7 +1,9 @@
 ---
 layout: default
 title: Functions
-permalink: developers/API/functions/
+permalink: developers/functions/
+redirect_from:
+ - developers/API/functions/
 ---
 {% assign pages = site.pages | where_exp: "page", "page.name contains 'function-'" %}
 

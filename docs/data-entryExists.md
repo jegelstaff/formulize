@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/API/classes/data_handler/entryExists/
+permalink: developers/classes/data_handler/entryExists/
+redirect_from:
+ - developers/API/classes/data_handler/entryExists/
 title: entryExists
 ---
 

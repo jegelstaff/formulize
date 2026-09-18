@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/API/functions/getValue/
+permalink: developers/functions/getValue/
+redirect_from:
+ - developers/API/functions/getValue/
 title: getValue
 ---
 

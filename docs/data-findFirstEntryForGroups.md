@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/API/classes/data_handler/findFirstEntryForGroups/
+permalink: developers/classes/data_handler/findFirstEntryForGroups/
+redirect_from:
+ - developers/API/classes/data_handler/findFirstEntryForGroups/
 title: findFirstEntryForGroups
 ---
 

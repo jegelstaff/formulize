@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/API/classes/data_handler/findAllEntriesForGroups/
+permalink: developers/classes/data_handler/findAllEntriesForGroups/
+redirect_from:
+ - developers/API/classes/data_handler/findAllEntriesForGroups/
 title: findAllEntriesForGroups
 ---
 

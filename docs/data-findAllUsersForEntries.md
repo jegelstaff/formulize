@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/API/classes/data_handler/findAllUsersForEntries/
+permalink: developers/classes/data_handler/findAllUsersForEntries/
+redirect_from:
+ - developers/API/classes/data_handler/findAllUsersForEntries/
 title: findAllUsersForEntries
 ---
 

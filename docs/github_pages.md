@@ -29,7 +29,7 @@ repository: jegelstaff/formulize
 `baseurl` is empty and `permalink` has no repository name in it, because the
 site is served from its own domain (formulize.org) rather than from a
 `github.io/<repo>/` path — so URLs and links across the site are written as
-plain absolute paths (`/features/`, `/developers/API`), not prefixed with
+plain absolute paths (`/features/`, `/developers/classes`), not prefixed with
 anything.
 
 Most pages are Markdown (kramdown); a handful that lay out their own visual

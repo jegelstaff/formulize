@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/API/code_flow/
+permalink: developers/code_flow/
+redirect_from:
+ - developers/API/code_flow/
 title: Code Flow
 ---
 

@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/API/functions/getEntryIds/
+permalink: developers/functions/getEntryIds/
+redirect_from:
+ - developers/API/functions/getEntryIds/
 title: getEntryIds
 ---
 

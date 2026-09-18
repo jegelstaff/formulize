@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/API/functions/formulize_writeEntry/
+permalink: developers/functions/formulize_writeEntry/
+redirect_from:
+ - developers/API/functions/formulize_writeEntry/
 title: formulize_writeEntry
 ---
 

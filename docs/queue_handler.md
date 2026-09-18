@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/API/classes/queue_handler/
+permalink: developers/classes/queue_handler/
+redirect_from:
+ - developers/API/classes/queue_handler/
 title: Queue Handler
 ---
 {% assign pages = site.pages | where_exp: "page", "page.name contains 'queue-'" %}

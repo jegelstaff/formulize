@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/API/classes/queue_handler/delete/
+permalink: developers/classes/queue_handler/delete/
+redirect_from:
+ - developers/API/classes/queue_handler/delete/
 title: delete
 ---
 

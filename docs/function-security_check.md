@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/API/functions/security_check/
+permalink: developers/functions/security_check/
+redirect_from:
+ - developers/API/functions/security_check/
 title: security_check
 ---
 

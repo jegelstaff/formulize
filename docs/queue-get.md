@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/API/classes/queue_handler/get/
+permalink: developers/classes/queue_handler/get/
+redirect_from:
+ - developers/API/classes/queue_handler/get/
 title: get
 ---
 
