@@ -1,0 +1,50 @@
+---
+layout: default
+full_width: true
+---
+
+{% assign entry = page.entry %}
+
+<article class="post-body">
+  <header class="post-header">
+    <p class="post-meta">
+      <time datetime="{{ entry.date }}">{{ entry.date_display }}</time>
+      {% if entry.type != "Announcement" %}<span class="tag tag-accent">{{ entry.type }}</span>{% endif %}
+    </p>
+    <h1>{{ entry.headline }}</h1>
+  </header>
+
+  <div class="prose">
+    {%- if entry.image %}
+    {%- comment -%}
+      Floats as part of the body flow (see .news-entry-image in formulize.css)
+      so the headline stays full width above it and the text wraps around it.
+    {%- endcomment %}
+    <img class="news-entry-image" src="{{ entry.image }}" alt="">
+    {%- endif %}
+
+    {{ entry.body_html }}
+
+    {%- comment -%}
+      A separate, prominent "read more" call to action, distinct from any links
+      already inline in the body. Both fields are optional on the form and both
+      have to be set for it to appear.
+    {%- endcomment %}
+    {%- if entry.link_text and entry.link_url %}
+    <p>
+      <a class="news-card-more" href="{{ entry.link_url }}" target="_blank" rel="noopener noreferrer">{{ entry.link_text }} &rarr;</a>
+    </p>
+    {%- endif %}
+  </div>
+
+  <hr>
+
+  <nav class="btn-row">
+    <a class="btn btn-secondary" href="{{ "/news/" | relative_url }}">&larr; All news</a>
+    {%- if entry.type == "Release" %}
+    <a class="btn btn-secondary" href="{{ "/news/releases/" | relative_url }}">All releases</a>
+    {%- endif %}
+    <a class="btn btn-primary" href="{{ "/get/" | relative_url }}">Get Formulize</a>
+  </nav>
+  <p class="text-muted" style="margin-top: var(--space-4);">Don't want to miss the next one? <a href="{{ "/mailinglist/" | relative_url }}">Join the mailing list</a>.</p>
+</article>

@@ -1,12 +1,16 @@
 ---
 layout: default
-permalink: roadmap/
+permalink: documentation/roadmap/
+redirect_from:
+ - roadmap/
 title: Roadmap
 ---
 
 # Formulize Roadmap
 
 *The master branch of Formulize is always stable and ready to install.* Features completed for an upcoming release are available immediately — you don't have to wait for a formal release to get new capabilities.
+
+*Would rather hear about new releases by email? [Join the mailing list](/mailinglist/).*
 
 ---
 

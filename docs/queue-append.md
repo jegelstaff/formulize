@@ -1,10 +1,13 @@
 ---
 layout: default
-permalink: developers/API/classes/queue_handler/append/
+permalink: documentation/classes/queue_handler/append/
+redirect_from:
+ - developers/classes/queue_handler/append/
+ - developers/API/classes/queue_handler/append/
 title: append
 ---
 
-# append( <span style='font-size: 14pt;'>(object|string) $queue_or_queue_handle, (string) $code, (string), $item = '', (boolean) $allowDuplicates = false</span> )
+# <span class="sig-name">append</span>( <span class="sig-arg"><span class="sig-type">(object|string)</span> $queue_or_queue_handle</span>, <span class="sig-arg"><span class="sig-type">(string)</span> $code</span>, <span class="sig-arg"><span class="sig-type">(string)</span> $item <span class="sig-default">= ''</span></span>, <span class="sig-arg"><span class="sig-type">(boolean)</span> $allowDuplicates <span class="sig-default">= false</span></span> )
 
 ## Description
 

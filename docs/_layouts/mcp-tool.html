@@ -2,7 +2,15 @@
 layout: default
 ---
 
-<h1><code>{{ page.tool.name }}</code></h1>
+{%- comment -%}
+  The tool name is the page's title, set in the site's display face like any
+  other page title. It used to be wrapped in <code>, which is what a reader
+  types themselves - and nobody types these. An AI assistant calls the tool; a
+  person reading this page is reading about a capability, not copying a string.
+  In <code> it also rendered at the inline code size, which left the page's own
+  title visibly smaller than the "Properties" heading below it.
+{%- endcomment -%}
+<h1>{{ page.tool.name }}</h1>
 
 <p><em>{{ page.tool.visibility | replace: '_', '-' | capitalize }} MCP tool.</em></p>
 

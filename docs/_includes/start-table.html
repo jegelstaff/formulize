@@ -1,0 +1,144 @@
+{% comment %}
+  The comparison table on /pricing/, below start-rail.html.
+
+  The two are not rivals and neither is going away: the rail is for choosing
+  (each level argued on its own terms, in the order the commitment grows) and
+  this table is for verifying (every axis named once, in a frozen left column,
+  so a row can be read straight across). People do both, in that order, and the
+  table is where a careful buyer checks the claim the cards made.
+
+  Same axes, in the same order, as the rail - if you add one there, add it
+  here. Scroll sideways to move through the levels; the row labels stay put.
+{% endcomment %}
+<div class="cmp-wrap">
+  <table class="cmp">
+    <thead>
+      <tr>
+        <th scope="col" class="cmp-corner"><span class="visually-hidden">What is included</span></th>
+        <th scope="col">
+          <span class="cmp-tier">You build it</span>
+          <span class="cmp-price">Free forever</span>
+          <span class="cmp-grp">Do it yourself &middot; your server &middot; open source</span>
+        </th>
+        <th scope="col">
+          <span class="cmp-tier">We host it</span>
+          <span class="cmp-price">$49/month</span>
+          <span class="cmp-grp">Do it yourself &middot; our server</span>
+        </th>
+        <th scope="col">
+          <span class="cmp-tier">We help</span>
+          <span class="cmp-price">$149/month</span>
+          <span class="cmp-grp">Hosted, with our help</span>
+        </th>
+        <th scope="col" class="cmp-featured">
+          <span class="cmp-tier">We train you <em>Most popular</em></span>
+          <span class="cmp-price">$199/month + $449 setup</span>
+          <span class="cmp-grp">Hosted, with our help</span>
+        </th>
+        <th scope="col">
+          <span class="cmp-tier">We&rsquo;ve got this <em class="alt">Best value</em></span>
+          <span class="cmp-price">$1,199/month + $2,999 setup</span>
+          <span class="cmp-grp">Managed &middot; annual only</span>
+        </th>
+        </tr>
+    </thead>
+    <tbody>
+
+      <tr>
+        <th scope="row">Unlimited forms, users, and data</th>
+        <td class="y">Always</td>
+        <td class="y">Always</td>
+        <td class="y">Always</td>
+        <td class="y">Always</td>
+        <td class="y">Always</td>
+        </tr>
+
+      <tr>
+        <th scope="row">Full AI integration</th>
+        <td class="y">Always</td>
+        <td class="y">Always</td>
+        <td class="y">Always</td>
+        <td class="y">Always</td>
+        <td class="y">Always</td>
+        </tr>
+
+      <tr>
+        <th scope="row">Security updates, maintenance, and 24/7 monitoring</th>
+        <td class="m">Your server, your rules</td>
+        <td class="y">Automatic</td>
+        <td class="y">Automatic</td>
+        <td class="y">Automatic</td>
+        <td class="y">Automatic</td>
+        </tr>
+
+      <tr>
+        <th scope="row">Backups, going back</th>
+        <td class="m">Your server, your rules</td>
+        <td class="y"><b>1 week</b></td>
+        <td class="y"><b>1 month</b></td>
+        <td class="y"><b>3 months</b></td>
+        <td class="y"><b>6 months</b></td>
+        </tr>
+
+      <tr>
+        <th scope="row">Onboarding</th>
+        <td class="n">Docs and videos</td>
+        <td class="n">Docs and videos</td>
+        <td class="y"><b>1 hour</b> orientation</td>
+        <td class="y"><b>Half day</b> training</td>
+        <td class="y"><b>3 days</b> training, system configuration, data migration</td>
+        </tr>
+
+      <tr>
+        <th scope="row">When something isn&rsquo;t working</th>
+        <td class="n">Up to you</td>
+        <td class="n">Up to you</td>
+        <td class="y">We will tell you how to fix it</td>
+        <td class="y">We will tell you how to fix it</td>
+        <td class="y"><b>We will fix it for you</b></td>
+        </tr>
+
+      <tr>
+        <th scope="row">Support response</th>
+        <td class="m">Community, or by the hour</td>
+        <td class="m">Community, or by the hour</td>
+        <td class="y"><b>1 business day</b></td>
+        <td class="y"><b>4 hours</b></td>
+        <td class="y"><b>1 hour</b></td>
+        </tr>
+
+      <tr>
+        <th scope="row">Custom web address</th>
+        <td class="m">Your server, your rules</td>
+        <td class="n">yourname.formulize.net</td>
+        <td class="n">yourname.formulize.net</td>
+        <td class="y"><b>yourname.org</b></td>
+        <td class="y"><b>yourname.org</b></td>
+        </tr>
+
+
+
+      <tr>
+        <th scope="row">Quarterly system review by the Formulize team</th>
+        <td class="n"></td>
+        <td class="n"></td>
+        <td class="n"></td>
+        <td class="n"></td>
+        <td class="y">Included</td>
+      </tr>
+
+      <tr class="cmp-cta">
+        <th scope="row"><span class="visually-hidden">Get started</span></th>
+        <td><a class="btn btn-secondary btn-block" href="{{ "/download/" | relative_url }}">Download</a></td>
+        <td><a class="btn btn-secondary btn-block" href="{{ "/signup/" | relative_url }}?plan=level-1">Sign up</a></td>
+        <td><a class="btn btn-secondary btn-block" href="{{ "/signup/" | relative_url }}?plan=level-2">Sign up</a></td>
+        <td><a class="btn btn-primary btn-block" href="{{ "/signup/" | relative_url }}?plan=level-3">Sign up</a></td>
+        <td><a class="btn btn-secondary btn-block" href="{{ "/signup/" | relative_url }}?plan=level-4">Sign up</a></td>
+        </tr>
+
+    </tbody>
+  </table>
+</div>
+
+{% include plans-custom-note.html %}
+

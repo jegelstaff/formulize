@@ -1,10 +1,13 @@
 ---
 layout: default
-permalink: developers/API/classes/data_handler/findAllValuesForField/
+permalink: documentation/classes/data_handler/findAllValuesForField/
+redirect_from:
+ - developers/classes/data_handler/findAllValuesForField/
+ - developers/API/classes/data_handler/findAllValuesForField/
 title: findAllValuesForField
 ---
 
-# findAllValuesForField( <span style='font-size: 14pt;'>(string) $element_handle, (string) $sort = "", (array)&nbsp;$scope_group_ids&nbsp;=&nbsp;array(), (array) $scope_uids = array(), (bool) $usePerGroupFilters = false</span> )
+# <span class="sig-name">findAllValuesForField</span>( <span class="sig-arg"><span class="sig-type">(string)</span> $element_handle</span>, <span class="sig-arg"><span class="sig-type">(string)</span> $sort <span class="sig-default">= ""</span></span>, <span class="sig-arg"><span class="sig-type">(array)</span> $scope_group_ids <span class="sig-default">= array()</span></span>, <span class="sig-arg"><span class="sig-type">(array)</span> $scope_uids <span class="sig-default">= array()</span></span>, <span class="sig-arg"><span class="sig-type">(bool)</span> $usePerGroupFilters <span class="sig-default">= false</span></span> )
 
 ## Description
 

@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/debugging/
+permalink: documentation/debugging/
+redirect_from:
+ - developers/debugging/
 title: Debugging
 ---
 

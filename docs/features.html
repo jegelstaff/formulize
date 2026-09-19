@@ -1,0 +1,153 @@
+---
+layout: default
+permalink: features/
+title: Features
+full_width: true
+description: What Formulize does — forms, workflows, permissions, reports, AI, and an API — and where to read the documentation.
+---
+
+<div class="band-head" style="max-width: 68ch;">
+  <h1>One system, configured your way</h1>
+  <p>With Formulize, you can create web-based forms, connect them together to make unique apps, and publish the data with interactive reports.</p>
+  <p>Programming is <em>entirely optional</em>. Formulize is quickly configured, and reconfigured, so it can adapt as your needs change and your data grows.</p>
+</div>
+
+<section class="band" style="padding-top: 0;">
+  <div class="triad">
+    <div class="card">
+      <h3 class="card-title">Improvise</h3>
+      <p>If you can dream it, you can build it. Try out every idea. Keep the ones that work best for you. <em>Zero in on something uniquely yours</em>.</p>
+    </div>
+    <div class="card">
+      <h3 class="card-title">Organize</h3>
+      <p>Collect all your information, and control how people see it and use it. Connect everything in meaningful ways that <em>reflect the real world</em>.</p>
+    </div>
+    <div class="card">
+      <h3 class="card-title">Customize</h3>
+      <p>Make it look and work however you want. Even dig under the hood if that's your thing &mdash; it's all open source. <em> Tailor everything to your needs</em>.</p>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="band-head inpage-anchor-heading">
+    <h2>Every feature, in every copy</h2>
+    <p>There is no cut-down community edition. Whether you download it or we host it, you get it all.</p>
+  </div>
+  <div class="feature-cols">
+    <div class="inpage-anchor" id="forms-and-data">
+      <h3>Forms and data</h3>
+      <ul>
+        <li>Create any kind of database application</li>
+        <li>1 form, 10 forms, 100 forms &mdash; no limits</li>
+        <li>Unlimited users and unlimited entries</li>
+        <li>Flexible search, sorting and reporting</li>
+        <li>Import from, and export to, Google Sheets and Excel</li>
+        <li><a href="{{ "/searching" | relative_url }}">A search syntax</a> for filtering data precisely</li>
+      </ul>
+    </div>
+    <div class="inpage-anchor" id="workflow-and-people">
+      <h3>Workflow and people</h3>
+      <ul>
+        <li>Join your forms together into custom workflows</li>
+        <li>Control who can interact with which forms and which data</li>
+        <li>Per-group ownership of individual entries</li>
+        <li>Publish customized, searchable reports to some or all of your users</li>
+        <li>Do it all with your mouse, no programming required</li>
+      </ul>
+    </div>
+    <div class="inpage-anchor" id="ai">
+      <h3>AI</h3>
+      <ul>
+        <li>Connect an assistant <a href="{{ "/ai/setup-mcp" | relative_url }}">over MCP</a>, or use the embedded option</li>
+        <li>The assistant can create forms, connect them, and work with your data</li>
+        <li>It reads the configuration, so it understands the whole system</li>
+				<li>No black box &mdash; you can alter everything the AI configures</li>
+				<li>AI features can work for end users and administrators alike</li>
+      </ul>
+    </div>
+    <div class="inpage-anchor" id="extending-it">
+      <h3>Extending it</h3>
+      <ul>
+        <li>Custom form elements, events and templates</li>
+        <li><a href="{{ "/documentation/" | relative_url }}">An internal API</a> and a <a href="{{ "/documentation/Public_API" | relative_url }}">A public API</a> for working under the hood</li>
+        <li><a href="{{ "/documentation/configuration_as_code" | relative_url }}">Configuration as code</a></li>
+        <li><a href="{{ "/documentation/deploying_locally" | relative_url }}">A local development environment</a> with Docker and VS Code</li>
+      </ul>
+    </div>
+    <div class="inpage-anchor" id="running-it">
+      <h3>Running it</h3>
+      <ul>
+        <li>Runs on PHP and MySQL or MariaDB</li>
+        <li>The master branch is always stable and ready to install</li>
+        <li>Completely free, and fully open source under GPL-2.0</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="band-head">
+    <h2>Formulize and AI</h2>
+    <p>Because the configuration explains both what your system does and how it does it, an AI assistant connecting to Formulize gets the whole picture &mdash; it can easily help people use it, or even add to it, with new reports, data, or even entire applications.</p>
+  </div>
+  <div class="onramp">
+    <div class="card elev-sm">
+      <h3 class="card-title">Set it up</h3>
+      <p class="card-body">Connect an assistant over MCP, or use the embedded option, and start describing what you want.</p>
+      <div class="btn-row">
+        <a class="btn btn-secondary" href="{{ "/ai/setup-mcp" | relative_url }}">MCP setup</a>
+				<a class="btn btn-primary" href="{{ "/ai" | relative_url }}">Read about AI in Formulize</a>
+      </div>
+    </div>
+    <div class="card elev-sm">
+      <h3 class="card-title">Watch it happen</h3>
+      <a class="hero-play" href="https://youtu.be/Cm6yR5cMn7Y" target="_BLANK" aria-label="Watch the video: an AI assistant builds a complete conference management database" style="max-width: 67%;">
+        <img src="{{ "/assets/img/formulize-confoo-ai.webp" | relative_url }}" alt="">
+      </a>
+      <p class="card-body">Seven minutes: an AI assistant builds a complete conference management database from a prompt.</p>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="band-head">
+    <h2>Documentation and what's coming next</h2>
+    <p>Everything from installing on your own server to the public API and the release roadmap.</p>
+  </div>
+  <div class="triad">
+    <a class="card-link" href="{{ "/documentation" | relative_url }}">
+      <div class="card" style="background: var(--color-surface);">
+        <span class="card-kicker">Reference</span>
+        <h3 class="card-title">Technical documentation</h3>
+        <p class="card-body">Installing, upgrading, templates, custom elements, the API, configuration as code, debugging and the development environment.</p>
+      </div>
+    </a>
+    <a class="card-link" href="{{ "/roadmap" | relative_url }}">
+      <div class="card" style="background: var(--color-surface);">
+        <span class="card-kicker">What is next</span>
+        <h3 class="card-title">Roadmap</h3>
+        <p class="card-body">The master branch is always stable and ready to install, and completed features land there before a formal release.</p>
+      </div>
+    </a>
+    <a class="card-link" href="{{ "/documentation/searching" | relative_url }}">
+      <div class="card" style="background: var(--color-surface);">
+        <span class="card-kicker">Cheat sheet</span>
+        <h3 class="card-title">Search terms</h3>
+        <p class="card-body">The full syntax for filtering and finding data in reports and the search interface.</p>
+      </div>
+    </a>
+  </div>
+</section>
+
+<section class="band">
+  <div class="card elev-sm" style="background: var(--color-accent-100);">
+    <h2 style="margin-bottom: var(--space-2);">Try it on your own data</h2>
+    <p class="card-body" style="max-width: 60ch;">Download it and run it yourself for free, or have us host it and skip the server work entirely.</p>
+    <div class="btn-row">
+      <a class="btn btn-primary" href="{{ "/get/" | relative_url }}">Get Formulize</a>
+      <a class="btn btn-secondary" href="{{ "/examples/" | relative_url }}">See what people build</a>
+      <a class="btn btn-secondary" href="{{ "/pricing/" | relative_url }}">Compare plans</a>
+    </div>
+  </div>
+</section>

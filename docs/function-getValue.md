@@ -1,10 +1,13 @@
 ---
 layout: default
-permalink: developers/API/functions/getValue/
+permalink: documentation/functions/getValue/
+redirect_from:
+ - developers/functions/getValue/
+ - developers/API/functions/getValue/
 title: getValue
 ---
 
-# getValue( <span style='font-size: 14pt;'>(array) $entry, (string) $handle = "", (int) $datasetKey = null, (int) $localEntryId = null, (boolean) $raw = false</span> )
+# <span class="sig-name">getValue</span>( <span class="sig-arg"><span class="sig-type">(array)</span> $entry</span>, <span class="sig-arg"><span class="sig-type">(string)</span> $handle <span class="sig-default">= ""</span></span>, <span class="sig-arg"><span class="sig-type">(int)</span> $datasetKey <span class="sig-default">= null</span></span>, <span class="sig-arg"><span class="sig-type">(int)</span> $localEntryId <span class="sig-default">= null</span></span>, <span class="sig-arg"><span class="sig-type">(boolean)</span> $raw <span class="sig-default">= false</span></span> )
 
 ## Location
 

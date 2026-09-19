@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/Public_API/
+permalink: documentation/Public_API/
+redirect_from:
+ - developers/Public_API/
 title: Public API
 ---
 

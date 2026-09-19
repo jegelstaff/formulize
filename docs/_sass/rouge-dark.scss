@@ -1,0 +1,126 @@
+/* Dark syntax colours for code blocks, the other half of the reader-chosen
+   light/dark switch described in assets/css/formulize.css. The ground, the
+   plain text and the border are custom properties set there; these are the
+   token colours, and they live here because this is where the light theme
+   they override lives (rouge-github.scss, imported just above this).
+
+   Every rule is prefixed with the attribute the switch sets on <html>, which
+   also settles the cascade: [data-code-theme="dark"] .highlight .c is one
+   selector more specific than rouge-github's .highlight .c, so these win
+   regardless of which file a browser happens to have loaded first.
+
+   The token families are grouped rather than enumerated one class per rule the
+   way the light theme does, because the palette is chosen by family - comments,
+   keywords, strings, numbers, names, punctuation - and a grouped list is what
+   makes it obvious that nothing was missed. */
+
+:root[data-code-theme="dark"] {
+  /* Comments */
+  .highlight .c,
+  .highlight .cd,
+  .highlight .c1,
+  .highlight .cm,
+  .highlight .cs,
+  .highlight .cp {
+    color: #8b949e;
+  }
+
+  /* Keywords and operators */
+  .highlight .k,
+  .highlight .kv,
+  .highlight .kc,
+  .highlight .kd,
+  .highlight .kn,
+  .highlight .kp,
+  .highlight .kr,
+  .highlight .o,
+  .highlight .ow {
+    color: #ff7b72;
+  }
+
+  /* Types and built-ins */
+  .highlight .kt,
+  .highlight .nc,
+  .highlight .nn,
+  .highlight .no,
+  .highlight .ne,
+  .highlight .nb,
+  .highlight .bp {
+    color: #ffa657;
+  }
+
+  /* Function and method names, decorators */
+  .highlight .nf,
+  .highlight .nd {
+    color: #d2a8ff;
+  }
+
+  /* Variables, attributes, labels */
+  .highlight .nv,
+  .highlight .vc,
+  .highlight .vg,
+  .highlight .vi,
+  .highlight .na,
+  .highlight .nl,
+  .highlight .ni {
+    color: #79c0ff;
+  }
+
+  /* Markup tags - HTML, XML */
+  .highlight .nt {
+    color: #7ee787;
+  }
+
+  /* Strings, in all their flavours */
+  .highlight .s,
+  .highlight .s1,
+  .highlight .s2,
+  .highlight .sb,
+  .highlight .sc,
+  .highlight .sd,
+  .highlight .se,
+  .highlight .sh,
+  .highlight .si,
+  .highlight .sr,
+  .highlight .ss,
+  .highlight .sx {
+    color: #a5d6ff;
+  }
+
+  /* Numbers */
+  .highlight .m,
+  .highlight .mb,
+  .highlight .mx,
+  .highlight .mf,
+  .highlight .mh,
+  .highlight .mi,
+  .highlight .mo,
+  .highlight .il {
+    color: #79c0ff;
+  }
+
+  /* Generic output: diffs, prompts, errors, headings in a console dump. The
+     light theme tints diff lines with a near-white background, which is a
+     rectangle of glare on a dark ground - these use a dark wash of the same
+     hue instead, and keep the colour on the text where it belongs. */
+  .highlight .gd {
+    color: #ffa198;
+    background-color: #490202;
+  }
+  .highlight .gi {
+    color: #7ee787;
+    background-color: #04260f;
+  }
+  .highlight .gr,
+  .highlight .gt,
+  .highlight .err {
+    color: #ffa198;
+    background-color: transparent;
+  }
+  .highlight .go,
+  .highlight .gp,
+  .highlight .gh,
+  .highlight .gu {
+    color: #8b949e;
+  }
+}

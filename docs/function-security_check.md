@@ -1,10 +1,13 @@
 ---
 layout: default
-permalink: developers/API/functions/security_check/
+permalink: documentation/functions/security_check/
+redirect_from:
+ - developers/functions/security_check/
+ - developers/API/functions/security_check/
 title: security_check
 ---
 
-# security_check( <span style='font-size: 14pt;'>(int) $form_id, (int) $entry_id = "", (int) $user_id = ""</span> )
+# <span class="sig-name">security_check</span>( <span class="sig-arg"><span class="sig-type">(int)</span> $form_id</span>, <span class="sig-arg"><span class="sig-type">(int)</span> $entry_id <span class="sig-default">= ""</span></span>, <span class="sig-arg"><span class="sig-type">(int)</span> $user_id <span class="sig-default">= ""</span></span> )
 
 ## Location
 

@@ -1,10 +1,13 @@
 ---
 layout: default
-permalink: developers/API/classes/data_handler/writeEntry/
+permalink: documentation/classes/data_handler/writeEntry/
+redirect_from:
+ - developers/classes/data_handler/writeEntry/
+ - developers/API/classes/data_handler/writeEntry/
 title: writeEntry
 ---
 
-# writeEntry( <span style='font-size: 14pt;'>(int | string) $entry_id, (array) $values, (int) $proxyUser, (bool) $forceUpdate = false, (bool) $update_metadata = true</span> )
+# <span class="sig-name">writeEntry</span>( <span class="sig-arg"><span class="sig-type">(int | string)</span> $entry_id</span>, <span class="sig-arg"><span class="sig-type">(array)</span> $values</span>, <span class="sig-arg"><span class="sig-type">(int)</span> $proxyUser</span>, <span class="sig-arg"><span class="sig-type">(bool)</span> $forceUpdate <span class="sig-default">= false</span></span>, <span class="sig-arg"><span class="sig-type">(bool)</span> $update_metadata <span class="sig-default">= true</span></span> )
 
 ## Description
 

@@ -1,10 +1,13 @@
 ---
 layout: default
-permalink: developers/API/classes/queue_handler/delete/
+permalink: documentation/classes/queue_handler/delete/
+redirect_from:
+ - developers/classes/queue_handler/delete/
+ - developers/API/classes/queue_handler/delete/
 title: delete
 ---
 
-# delete( <span style='font-size: 14pt;'>(string) $queue_handle</span> )
+# <span class="sig-name">delete</span>( <span class="sig-arg"><span class="sig-type">(string)</span> $queue_handle</span> )
 
 ## Description
 

@@ -1,18 +1,19 @@
 ---
 layout: default
-permalink: developers/deploying_locally/
+permalink: documentation/deploying_locally/
 title: Deploying Locally
 redirect_from:
+ - developers/deploying_locally/
  - developers/development_environment/
 ---
 
 # Deploying Formulize Locally
 
-Formulize can be run locally using Docker containers. Among other things, this makes [local debugging with XDebug](/developers/debugging) very easy.
+Formulize can be run locally using Docker containers. Among other things, this makes [local debugging with XDebug](/documentation/debugging) very easy.
 
 ## First, if you're running Windows
 
-You might want to look at the [step-by-step instructions for setting up Formulize and Docker in VS Code on Windows](/developers/debugging#formulize-vscode).
+You might want to look at the [step-by-step instructions for setting up Formulize and Docker in VS Code on Windows](/documentation/debugging#formulize-vscode).
 
 ## <a name='quick-start'></a>Quick Start
 
@@ -31,7 +32,7 @@ Browse to [http://localhost:8080](http://localhost:8080) to access Formulize. Lo
 
 ## Things to know about running Formulize locally
 
-The official Formulize release packages, and the ```master``` branch, are ready for installation on a web server. If you use one of those, you will need to [go through the installer](/deploying_a_website/installing_formulize) in order to setup Formulize.
+The official Formulize release packages, and the ```master``` branch, are ready for installation on a web server. If you use one of those, you will need to [go through the installer](/documentation/deploying_a_website/installing_formulize) in order to setup Formulize.
 
 The ```monastery``` branch is a working Formulize system, ready to use. It has no forms or users, it is empty, but the installer has already been run. It is generally a better place to start for local development and testing.
 
@@ -61,7 +62,7 @@ If you have a copy of files from an existing Formulize website, you could use th
 
 4. Browse to [http://localhost:8080](http://localhost:8080)
 
-5. Follow the steps for [going through the installer](deploying_a_website/installing_formulize) in order to setup Formulize.
+5. Follow the steps for [going through the installer](/documentation/deploying_a_website/installing_formulize) in order to setup Formulize.
 
 ## Setting up a local development version of an existing website
 

@@ -1,10 +1,13 @@
 ---
 layout: default
-permalink: developers/API/classes/data_handler/entryExists/
+permalink: documentation/classes/data_handler/entryExists/
+redirect_from:
+ - developers/classes/data_handler/entryExists/
+ - developers/API/classes/data_handler/entryExists/
 title: entryExists
 ---
 
-# entryExists( <span style='font-size: 14pt;'>(int) $entry_id</span> )
+# <span class="sig-name">entryExists</span>( <span class="sig-arg"><span class="sig-type">(int)</span> $entry_id</span> )
 
 ## Description
 

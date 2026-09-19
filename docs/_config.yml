@@ -2,14 +2,49 @@ title: Improvise. Organize. Customize.
 logo: /assets/img/formulize-logo.png
 description: Your very own database. 100% free and open source.
 markdown: kramdown
-baseurl: /
-url: https://formulize.org/
+baseurl: ""
+url: https://formulize.org
 permalink: /:title/
 repository: jegelstaff/formulize
+author: The Formulize Project
+
+# Where the sign-up / hosting calls to action point, for anything that still
+# leaves the site. /signup/ and /contact/ now embed the forms directly instead.
+signup_url: https://formulize.net
+
+# The Formulize site that serves the embedded screens on /contact/ and /signup/.
+#
+# CHANGING THIS IS WHAT MAKES THOSE FORMS SUBMITTABLE. A browser will not send
+# Formulize's session cookie into a frame whose domain differs from the page
+# around it, so while this points at formulize.net the forms display on
+# formulize.org but saving fails. Pointing it at an alias of the same Formulize
+# site on this domain - https://forms.formulize.org - fixes that in every
+# browser, and needs a CNAME, a domain alias and a TLS certificate, no more.
+# See docs/embedding_screens_setup for the steps.
+forms_url: https://formulize.net/services
+
+# News lives in the News form on formulize.net and is pulled in at build time
+# by _plugins/news_pages.rb, which generates /news/, /news/<slug>/,
+# /news/releases/ and /news/feed.xml. There are no Jekyll posts, so
+# jekyll-paginate and jekyll-feed are deliberately absent - both only ever
+# worked on _posts.
+
 plugins:
   - breadcrumbs
   - jekyll-github-metadata
   - jekyll-redirect-from
+
+# news_pages.rb and copy_writable_folders.rb rewrite these on every single
+# build (news.json as a fetch-failure fallback cache, writableFilesAndFolders
+# as a straight file copy). Without excluding them, `jekyll serve --watch`
+# sees its own output change and rebuilds forever. Excluding them here only
+# stops the watcher from reacting to them - DataReader loads _data files
+# without consulting `exclude`, so site.data.writableFilesAndFolders and the
+# news generator both keep working exactly as before.
+exclude:
+  - _data/news.json
+  - _data/writableFilesAndFolders.json
+
 breadcrumbs:
   root:
     hide: false  # show breadcrumbs on root/home page

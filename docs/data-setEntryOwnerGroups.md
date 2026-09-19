@@ -1,10 +1,13 @@
 ---
 layout: default
-permalink: developers/API/classes/data_handler/setEntryOwnerGroups/
+permalink: documentation/classes/data_handler/setEntryOwnerGroups/
+redirect_from:
+ - developers/classes/data_handler/setEntryOwnerGroups/
+ - developers/API/classes/data_handler/setEntryOwnerGroups/
 title: setEntryOwnerGroups
 ---
 
-# setEntryOwnerGroups( <span style='font-size: 14pt;'>(int | array) $user_ids, (int | array) $entry_ids</span> )
+# <span class="sig-name">setEntryOwnerGroups</span>( <span class="sig-arg"><span class="sig-type">(int | array)</span> $user_ids</span>, <span class="sig-arg"><span class="sig-type">(int | array)</span> $entry_ids</span> )
 
 ## Description
 

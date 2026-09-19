@@ -1,123 +1,148 @@
 ---
 layout: default
-permalink: developers/version_control/testing/creating_tests/
+permalink: documentation/version_control/testing/creating_tests/
+redirect_from:
+ - developers/version_control/testing/creating_tests/
 title: Creating Tests
 ---
 
-# Creating Selenium 2 Tests with Selenium Builder
+# Creating Tests
 
-**This is a nice idea, but we don't actively maintain any Selenium 2 tests currently**
+This page is about writing new end to end tests with [Playwright](https://playwright.dev/). For what the test suites are, and how to run them, see [Testing](../). For how they are wired into GitHub Actions, see [Continuous Integration](../../../ci).
 
-**If we were making Selenium tests, the Selenium IDE extension for Firefox is recommended**
+## Where the file goes
 
-We use run Selenium 2 tests on [Sauce Labs](http://www.saucelabs.com) as part of our [continuous integration platform](../../../ci).  This page describes how to use [Selenium Builder](http://www.saucelabs.com/builder) to create tests in [Firefox](http://www.mozilla.org/firefox).
+```
+tests/e2e/
+  playwright.config.js     the shared configuration
+  base-url.js              works out which copy of Formulize to talk to
+  utils.js                 the helpers every spec uses
+  formulize-core/
+    config.js              the admin credentials and base URL for the core suite
+    setup/                 build the museum system, in order, one worker
+    validate/              interrogate what setup built, in parallel
+```
 
-## Current Tests
+Core Formulize tests go in `formulize-core/setup/` or `formulize-core/validate/`. Tests for your own site or application go in a directory of their own inside `tests/e2e/`, named for the site.
 
-Current tests start with a blank slate, and install Formulize, then set up a demo system which is a mock version of an agile project tracker. Test filenames start with a number, as tests are run on Travis based on filename sort order.
+Which of the two core folders a spec belongs in is a question about what it needs, not about what it checks:
 
-## Creating A New Test
+* **`setup/`** if it builds something later specs depend on — a form, a user, a permission, a menu. These run in file-name order, on a single worker, and each one assumes everything numbered below it has already happened.
+* **`validate/`** if it only reads or exercises the finished system. These run four-way parallel in CI, in no guaranteed order.
 
-### Local Setup
+File names start with a number, and the number is the running order within the folder. Leave gaps — the existing files go up in fives and ones precisely so a new spec can be slotted between two others without renumbering the suite.
 
-Before creating a new test, you need to get your local configuration to match the the configuration that the Travis CI system has after it has run all the tests. This way, your new test will build on the setup and configuration of all the other tests. There are two ways you can do this:
+## The shape of a spec
 
-1. Run all the existing tests locally
-2. Dump all the tables in your database and then import the **ci/formulize_test_db.sql** file, which is from the test system after all the tests have been completed.
+```js
+const { test, expect } = require('@playwright/test');
+import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD } from '../config';
+import { login, saveFormulizeForm } from '../../utils';
 
-If you follow method 2, then you will need to alter the file in your trust path so it has the database table prefix  **selenium** and has the salt **s4RyHEWYxWN9OUAGvCdxljYRqqSgEf9qbsvVSvhWSumtfyI7SNx6ct1n5fypNFdi4**.
+test.describe('Artifacts list', () => {
+	test('shows the acquisition date column', async ({ page }) => {
+		await login(page, 'curator1', '12345');
+		await page.goto('/modules/formulize/index.php?fid=2');
+		await expect(page.getByText('Date of acquisition')).toBeVisible();
+	});
+});
+```
 
-Also, you need to ensure that your local installation is being treated as the DocumentRoot of your webserver, ie: when you go to [http://localhost](http://localhost) you see your local installation; your local installation does not have a directory name after the localhost domain name.
+Two things to notice. There is no base URL in the file: `playwright.config.js` sets `baseURL` from `base-url.js`, which reads `FORMULIZE_WEB_PORT` out of the repository's `.env` — so `page.goto('/modules/...')` follows whichever port Docker published the site on, and hard-coding `http://localhost:8080` is what breaks a colleague's run. And credentials come from `formulize-core/config.js`, which reads `E2E_TEST_ADMIN_USERNAME` and `E2E_TEST_ADMIN_PASSWORD` from the environment with sensible defaults, rather than being typed into each spec.
 
-If you do not configure your local installation to behave this way, then you will need to manually edit the test file after you save it, to change the references to the URL so they are simply 'localhost' and include no directory names.
+## Use the helpers in utils.js
 
-### CI Setup
+`tests/e2e/utils.js` is where the hard-won knowledge about driving Formulize lives. Reach for it before writing raw Playwright, because most of these helpers exist to work around a race that only shows up under load, and a spec that rolls its own version of one will be the flaky spec in the suite.
 
-If you are checking to see that your test works in the Travis CI and Sauce Labs system, you can uncomment this line of the **.travis.yml** file:
+The ones you will want first:
 
-    # - mysql formulize < ci/formulize_test_db.sql
+| Helper | What it is for |
+| --- | --- |
+| `login(page, username, password)` | Log in and wait for the redirect into Formulize |
+| `saveFormulizeForm(page, buttonText)` | Save a data-entry form: waits for the form token, watches the saving animation appear and disappear, and asserts no "the data you submitted" error |
+| `saveAdminForm(page, type)` | The same for the admin UI, which saves differently |
+| `waitForWorkingMessage(page)` | Wait out an in-page list action — search, sort, paging, changing view |
+| `waitForAdminPageReady(page)` | Wait for the admin UI wrapper, which starts hidden and is revealed on window load |
+| `applyColumnChanges(popup)` | Submit the "Change columns" popup, tolerating the fact that the popup destroys itself as a result of the click |
+| `addElementForm(page, type)`, `openElementAccordion`, `deleteElement` | Build and edit elements without re-deriving the admin UI's markup |
+| `clearEntryLocks(page)` | Release the entry locks this page is holding |
+| `dbQuery(sql)`, `getSystemConfig`, `setSystemConfig`, `getUserByLogin` | Read and write the test database directly, through `docker exec`, for the handful of things a browser cannot reach |
 
-That will cause the Travis CI system to prepopulate the database, as if all the current tests had already run. This way you can run just your own new test to make sure it works.
+`ElementType` in the same file maps every element type to the tab and heading the admin UI shows for it, which is what `addElementForm` uses.
 
-To cause the system to run only your new test, you need to modify this line in the **ci/travis/interpreter_config.json** file:
+### Direct database access
 
-    "ci/selenium2-tests/*"
+`dbQuery` and the helpers built on it run `mariadb` inside the Docker container. They exist for things that genuinely cannot be done through the browser — reading the confirmation code for a self-registration, since the container cannot send email, or flipping a system setting that has no convenient UI. They are not a shortcut past the interface. A test that sets up its fixture with SQL and then checks it with SQL has not tested Formulize.
 
-Replace the * with the name of your new test.
+## Things that will bite you
 
-### Recording
+### Entry locks
 
-A test can be recorded in Firefox using the Selenium Builder plugin. Taking a database backup before making changes to forms is advised, so that after recording the test, the database can be restored, and the test can be played back to confirm that it works.
+Formulize locks an entry while someone has it open, so that two people do not overwrite each other. A test that opens an entry and then simply ends still holds that lock, and the next test that wants the same entry — quite possibly in a different spec file, run minutes later — fails with no obvious connection to the test that caused it.
 
-Choose the Selenium 2 version of the test file format. The scripts are text files containing json data which is easy to edit with a regular text editor.
+So a test that opens an entry must leave it: navigate away at the end, or call `clearEntryLocks(page)`. Where a whole describe block opens entries, put it in an `afterEach`:
 
-A drawback to the json format is that comments cannot be included in the file, as this breaks json-parsing.
+```js
+test.afterEach(async ({ page }) => {
+	await clearEntryLocks(page);
+});
+```
 
-### Playback
+Note that `users.php` renders System Users form elements for every user it lists, so merely *listing* users takes locks on all of them.
 
-A test can be played back locally, if you have an active [Selenium Server](http://www.seleniumhq.org/download/). To run Selenium Server, download the .jar file and then type the following command on your command line:
+### CI runs the validate suite four ways parallel
 
-    java -jar selenium-server-jar-filename.jar
+`playwright.config.js` sets `fullyParallel: false` and `workers: 1`, which is what you get locally. **CI overrides both** — the validate step runs `npx playwright test formulize-core/validate --workers=4 --fully-parallel`. A spec whose tests depend on each other therefore passes on your machine and fails in CI, which is the worst way to find out.
 
-You can then play back your tests in Selenium Builder in Firefox. The command line will show each step of the test, and you can also watch the operations playback in the browser.
+If the tests in a file must run in order, in the same worker, say so in the file:
 
-## General Tips
+```js
+// The second test reads the API key the first one creates, so they must run in
+// order, in the same worker. CI runs the validate suite --fully-parallel.
+test.describe.configure({ mode: 'serial' });
+```
 
-All tests should start with logging in to the website.  When Selenium starts a test, it clears all session information so the new test starts from scratch.
+Better still, where you can, make each test set up what it needs so the question does not arise.
 
-Avoid unnecessary clicks on page elements, and if you do make unnecessary clicks, these steps can be deleted from the test script while still recording.
+### Shared state between validate specs
 
-Do not use the tab key to navigate between text boxes, as it does not work reliably when playing back the script.
+The validate specs all run against one museum system. If your spec modifies something, check that nothing else touches it, and say so in a comment at the top of the file — that comment is what the next person needs when their unrelated spec starts failing. Prefer building your own form and cleaning it up (`createMuseumForm`, `deleteMuseumForm`) over editing a shared one.
 
-Sometimes the script recorder will identify links clicked by text label, though the link text is not unique. These should be edited so that links are clicked by a more reliable xpath or CSS-style selector. In same cases, it may be advisable to add CSS classes to page elements to increase reliability of testing.
+### The first failure stops the run
 
-A script that works on playback once may not work every time. Test scripts more than once.
+`maxFailures: 1`. Because the setup specs build on each other, everything after a failure would be testing a half-built system.
 
-## Test Variables
+## Writing selectors that hold up
 
-Since testing site domain name or other settings could change between the Travis testing environment and other testing environments, a good practice is to declare variables at the top of the testing script, then use those variables within the script.
+Prefer Playwright's role- and label-based locators — `getByRole('button', { name: 'Save' })`, `getByRole('checkbox', { name: 'Height' })` — over CSS paths. They survive markup changes, and they fail with a message that says what was being looked for.
 
-For example, a simple script which logs in may declare variables such as these:
+Where a generated id is genuinely the right handle (`#celladdress_2_9` for a particular cell of a list, `td#key-1` for the first API key), use it, but do not derive one from a form id you have hard-coded. `getFidFromListPage(page)` and `getFidFromFormAdminPage(page)` read the real id off the page, because form ids depend on the order the setup suite created things in.
 
-    {
-      "type": "store",
-      "text": "localhost",
-      "variable": "test_domain"
-    },
-    {
-      "type": "store",
-      "text": "password",
-      "variable": "admin_password"
-    },
+Add a class or a `data-` attribute to the application markup if that is what it takes to make a reliable selector possible. That is a legitimate change to make in the same branch as the test.
 
-Then the domain variable would be used like this to open the page:
+## Debugging a failure
 
-    {
-      "type": "get",
-      "url": "http://${test_domain}/index.php"
-    },
+Run the one file, headed, with the timeout off:
 
-You may wish to simply copy and paste the top portion of an existing script into your own to handle the site login steps.
+```
+cd tests/e2e
+npx playwright test formulize-core/validate/030-mcp-working.spec.js --headed --timeout=0
+```
 
-Since variables can store arbitrary text, and the test scripts cannot contain comments, variables may be used as a way to insert comments.
+Failures keep a trace and a video. The trace viewer shows the DOM, the network and the console at every step, and is almost always faster than adding `console.log`:
 
-## Wait Until the Next Page Loads
+```
+npx playwright show-trace test-results/<the-failing-test>/trace.zip
+```
 
-Test scripts run much faster than using a browser normally. When a form is submitted, the next step may run without waiting for the page to load, which can cause the script to fail at that point.
+The HTML report from the last run is in `test-report/`:
 
-There are two ways to stop the script until the next page has loaded. The first is the most reliable, cause the script to wait until text which appears on the next page appears.
+```
+npx playwright show-report test-report
+```
 
-    {
-      "type": "waitForTextPresent",
-      "text": "<unique text on new page>"
-    },
+There is also a PHP error reporter wired into the run (`php-error-reporter.js`), which surfaces PHP notices and warnings the application emitted during the test. A test that passes while printing warnings is worth a second look.
 
-If the next page is the same as the current page, as when saving changes to a form, then a different method of waiting for a page to load is needed. This causes the script to pause for a specified number of milliseconds. The wait time may vary with test environment, so try to pick a value long enough for the slowest environment or the script may fail intermittently.
+## Committing
 
-    {
-      "type": "pause",
-      "waitTime": "2345"
-    },
-
-Short pauses may also be used to wait for actions, such as ajax loading, or javascript page changes.
-
+Tests go in the same branch and the same pull request as the code they cover. If a test needs a fixture the setup suite does not build, add it to the setup suite rather than building it in the validate spec — and remember that inserting a setup spec changes what every later spec sees.

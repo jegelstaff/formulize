@@ -1,10 +1,13 @@
 ---
 layout: default
-permalink: developers/API/classes/data_handler/findAllUsersForEntries/
+permalink: documentation/classes/data_handler/findAllUsersForEntries/
+redirect_from:
+ - developers/classes/data_handler/findAllUsersForEntries/
+ - developers/API/classes/data_handler/findAllUsersForEntries/
 title: findAllUsersForEntries
 ---
 
-# findAllUsersForEntries( <span style='font-size: 14pt;'>(int | array) $entry_ids, (array) $scope_uids = array()</span> )
+# <span class="sig-name">findAllUsersForEntries</span>( <span class="sig-arg"><span class="sig-type">(int | array)</span> $entry_ids</span>, <span class="sig-arg"><span class="sig-type">(array)</span> $scope_uids <span class="sig-default">= array()</span></span> )
 
 ## Description
 

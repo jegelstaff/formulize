@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: deploying_a_website/updating_formulize/
+permalink: documentation/deploying_a_website/updating_formulize/
+redirect_from:
+ - deploying_a_website/updating_formulize/
 title: Updating Formulize
 ---
 

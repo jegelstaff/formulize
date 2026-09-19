@@ -1,10 +1,13 @@
 ---
 layout: default
-permalink: developers/API/functions/prepDataForWrite/
+permalink: documentation/functions/prepDataForWrite/
+redirect_from:
+ - developers/functions/prepDataForWrite/
+ - developers/API/functions/prepDataForWrite/
 title: prepDataForWrite
 ---
 
-# prepDataForWrite( <span style='font-size: 14pt;'>(object | string | int) $element_identifier, (array | string | int) $value, (int) $entry_id</span> )
+# <span class="sig-name">prepDataForWrite</span>( <span class="sig-arg"><span class="sig-type">(object | string | int)</span> $element_identifier</span>, <span class="sig-arg"><span class="sig-type">(array | string | int)</span> $value</span>, <span class="sig-arg"><span class="sig-type">(int)</span> $entry_id</span> )
 
 ## Location
 

@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/configuration_as_code/
+permalink: documentation/configuration_as_code/
+redirect_from:
+ - developers/configuration_as_code/
 title: Configuration as Code
 ---
 

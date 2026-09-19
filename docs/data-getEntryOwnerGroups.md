@@ -1,10 +1,13 @@
 ---
 layout: default
-permalink: developers/API/classes/data_handler/getEntryOwnerGroups/
+permalink: documentation/classes/data_handler/getEntryOwnerGroups/
+redirect_from:
+ - developers/classes/data_handler/getEntryOwnerGroups/
+ - developers/API/classes/data_handler/getEntryOwnerGroups/
 title: getEntryOwnerGroups
 ---
 
-# getEntryOwnerGroups( <span style='font-size: 14pt;'>(int) $entry_id = 0</span> )
+# <span class="sig-name">getEntryOwnerGroups</span>( <span class="sig-arg"><span class="sig-type">(int)</span> $entry_id <span class="sig-default">= 0</span></span> )
 
 ## Description
 

@@ -1,10 +1,13 @@
 ---
 layout: default
-permalink: developers/API/functions/getEntryIds/
+permalink: documentation/functions/getEntryIds/
+redirect_from:
+ - developers/functions/getEntryIds/
+ - developers/API/functions/getEntryIds/
 title: getEntryIds
 ---
 
-# getEntryIds( <span style='font-size: 14pt;'>(array) $entry, (int|string) $formIdOrHandle = "", (int) $datasetKey = null, (boolean) $fidAsKeys = false</span> )
+# <span class="sig-name">getEntryIds</span>( <span class="sig-arg"><span class="sig-type">(array)</span> $entry</span>, <span class="sig-arg"><span class="sig-type">(int|string)</span> $formIdOrHandle <span class="sig-default">= ""</span></span>, <span class="sig-arg"><span class="sig-type">(int)</span> $datasetKey <span class="sig-default">= null</span></span>, <span class="sig-arg"><span class="sig-type">(boolean)</span> $fidAsKeys <span class="sig-default">= false</span></span> )
 
 ## Location
 

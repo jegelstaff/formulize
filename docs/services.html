@@ -1,0 +1,98 @@
+---
+layout: default
+permalink: services/
+title: Professional services
+full_width: true
+description: Training, tech support, system design, data migration and AI help from the team that builds Formulize. Available on any plan, including the free self-hosted download, at $200/hour ($150/hour for non-profits).
+---
+
+{% comment %}
+  Hosting plans ask a visitor to work out for themselves which level of help
+  they need. A good half of the audience has told us, in effect, that they
+  cannot do that - they know something is wrong and do not know what to ask
+  for. This page is for them: it names the work rather than the tier.
+
+  Everything here is already committed to elsewhere on the site. The rates and
+  definitions come from _includes/plans-fine-print.html, the onboarding and
+  support descriptions from _includes/start-rail.html, and the service list
+  from the "Help Requests" form on formulize.net, which is what /contact/
+  submits to. Keep them in step.
+{% endcomment %}
+
+<div class="band-head" style="max-width: 68ch;">
+  <h1 style="margin-top: var(--space-3);">We're here to help</h1>
+  <p>Formulize is designed to be used by anyone, but that doesn't mean you have to figure it out by yourself.</p>
+  <p>The same people who write the software can train your staff, build your system with you, move your old data in, or pick up the phone when something breaks.</p>
+  <p>Available on any plan &mdash; including the free download.</p>
+  <p class="btn-row">
+    <a class="btn btn-primary" href="{{ "/contact/" | relative_url }}">Tell us what you need</a>
+    <a class="btn btn-secondary" href="{{ "/pricing/" | relative_url }}">See plans with support included</a>
+  </p>
+</div>
+
+<section class="band">
+  <div class="band-head">
+    <h2>What we do</h2>
+  </div>
+
+  <div class="triad">
+    <div class="card">
+      <span class="card-kicker">Getting going</span>
+      <h3 class="card-title">Getting started with Formulize</h3>
+      <p class="card-body">An orientation session for you and your colleagues: what Formulize is, how it fits your situation, and what your first forms should be. Often this is all anybody needs.</p>
+    </div>
+    <div class="card">
+      <span class="card-kicker">Training</span>
+      <h3 class="card-title">Training your people</h3>
+      <p class="card-body">From an hour to several days, for the people who will build forms and for the people who will only ever fill them in. A day means eight hours of our time, and usually works better as two mornings than one long sitting.</p>
+    </div>
+    <div class="card">
+      <span class="card-kicker">Design</span>
+      <h3 class="card-title">System design and implementation</h3>
+      <p class="card-body">Tell us what the work actually looks like and we will design the forms, the connections between them and the permissions to match, then build it with you so you can keep changing it yourself afterwards.</p>
+    </div>
+    <div class="card">
+      <span class="card-kicker">Your old data</span>
+      <h3 class="card-title">Data migration</h3>
+      <p class="card-body">Spreadsheets, an old database, a system nobody has the password for any more. We move what is worth moving, and tell you honestly what is not.</p>
+    </div>
+    <div class="card">
+      <span class="card-kicker">When it breaks</span>
+      <h3 class="card-title">Tech support</h3>
+      <p class="card-body">Staffed 8am to 6pm Eastern, Monday to Friday. On the hosted plans it is unlimited and comes with a response time guarantee; for everyone else we can still help by the hour.</p>
+    </div>
+    <div class="card">
+      <span class="card-kicker">AI</span>
+      <h3 class="card-title">Using AI with your data</h3>
+      <p class="card-body">We can help you connect an AI assistant, control what it should and should not be allowed to do, and figure out where it genuinely saves you time. <a href="{{ "/ai" | relative_url }}">How AI works in Formulize</a>.</p>
+    </div>
+  </div>
+  <p class="triad-foot btn-row">
+    <a class="btn btn-primary" href="{{ "/contact/" | relative_url }}">Tell us what you need</a>
+    <a class="btn btn-secondary" href="{{ "/pricing/" | relative_url }}">See plans with support included</a>
+  </p>
+</section>
+
+<section class="band">
+  <div class="band-head">
+    <h2>What it costs</h2>
+  </div>
+  <div class="triad">
+		<div class="card">
+      <span class="card-kicker">Included with some plans</span>
+      <h3 class="card-title">No extra cost</h3>
+      <p class="card-body">Some monthly plans give you <em>unlimited tech support</em>, and anywhere from an hour of orientation up to three days of training and configuration.</p>
+      <p><a class="card-link-more" href="{{ "/pricing/" | relative_url }}">Compare the plans &rarr;</a></p>
+    </div>
+    <div class="card">
+      <span class="card-kicker">By the hour</span>
+      <h3 class="card-title">$200/hour</h3>
+      <p class="card-body">Tell us what you're looking for and we will give you a clear estimate of what's involved and how long it will take. We can do as much or as little as you like. All prices in Canadian dollars. {% include flag-ca.html %}</p>
+    </div>
+    <div class="card" style="background: var(--color-accent-100);">
+      <span class="card-kicker">Non-profits and charities</span>
+      <h3 class="card-title">$150/hour</h3>
+      <p class="card-body">Our discounted rate for organizations making a difference.</p>
+    </div>
+  </div>
+</section>
