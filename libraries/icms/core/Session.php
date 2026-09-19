@@ -54,11 +54,31 @@ class icms_core_Session {
 
       //Authenticate code from Google OAuth Flow
 			if(isset($_GET['code']) && isset($_GET['newcode'])){
-				//for the create new user pathway to this session init call
-				$userData["email"] = $_SESSION['email'];
-				//finally guaranteed to be done with these
-				unset($_SESSION['email']);
-				unset($_SESSION['name']);
+				// ALTERED BY FREEFORM SOLUTIONS FOR FORMULIZE. This is the tail of the new-user flow:
+				// integration_api.php redirects back here once the account and its resource mapping
+				// exist, and the "code" in that URL is the flow's own nonce, not an authorization code
+				// from Google. That is why the identity is read from the session rather than verified
+				// against Google again - re-authenticating is not an option, because there is nothing
+				// in this URL that Google would recognise.
+				//
+				// So the nonce is what has to be checked. Without it, this branch accepts whatever
+				// sits in $_SESSION['email'] - a key other integrations write too, the Brightspace
+				// launch among them - which would let an identity established through one integration
+				// be redeemed through another's lookup. Only a session that actually went through a
+				// verified flow and reached new_user.php holds a matching nonce.
+				if(!empty($_SESSION['newuser'])
+					AND hash_equals((string) $_SESSION['newuser'], (string) $_GET['newcode'])) {
+					//for the create new user pathway to this session init call
+					$userData["email"] = $_SESSION['email'];
+					//finally guaranteed to be done with these
+					unset($_SESSION['email']);
+					unset($_SESSION['name']);
+					unset($_SESSION['newuser']); // one journey through the flow, one use
+				}
+				// A nonce that does not match leaves $userData unset, so nothing is established here,
+				// and deliberately does not fall through to authenticate() below: $_GET['code'] is
+				// the nonce, and handing it to Google would only raise an error. Anyone who really is
+				// mid-flow still gets signed in by the resource map key further down.
 			}else if (isset($_GET['code'])){
 				$client->authenticate($_GET['code']);
 				$userData = $objOAuthService->userinfo->get();
@@ -161,6 +181,24 @@ class icms_core_Session {
 	    $icms_user = icms::handler('icms_member')->getUser($xoops_userid);
 
 			if (is_object($icms_user)) {
+				// ALTERED BY FREEFORM SOLUTIONS FOR FORMULIZE. Give the session a new id at the moment
+				// it stops being anonymous and becomes this person's, so that an id planted in their
+				// browser beforehand is not the one their signed in session ends up filed under.
+				// include/checklogin.php already does this for an ordinary username and password
+				// login; every external provider reaching this point was skipping it.
+				//
+				// It matters most in the arrangement the embedding documentation recommends, where
+				// Formulize answers on a subdomain of a website whose pages are served by somebody
+				// else and edited by people at the client: a script on one of those pages can write a
+				// cookie for the shared parent domain, and this host reads it back.
+				//
+				// Only on the transition, never on a request that is already this person's. The
+				// integrations above reach this block on EVERY page load - Drupal hands over its user
+				// id each time - so regenerating unconditionally would issue a fresh cookie on every
+				// request and strand anything already in flight under the previous id.
+				if (!isset($_SESSION['xoopsUserId']) OR $_SESSION['xoopsUserId'] != $icms_user->getVar('uid')) {
+					$instance->icms_sessionRegenerateId(true);
+				}
 				// set a few things in $_SESSION, similar to what include/checklogin.php does, and make a cookie and a database entry
 				$_SESSION['xoopsUserId'] = $icms_user->getVar('uid');
 				$_SESSION['xoopsUserGroups'] = $icms_user->getGroups();
