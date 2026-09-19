@@ -35,6 +35,8 @@
     // block instead - see drawAIAssistantMenuSection() in modules/formulize/include/functions.php)
     $this->assign('show_ai_link', function_exists('isAIAssistantEnabled') && isAIAssistantEnabled());
     <{/php}>
+
+		<script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
 </head>
 
 <body id="<{$icms_dirname}>" class="<{$icms_langcode}><{if isset($formulize_screen_id) && $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}><{if $smarty.get.fz_inline}> fz-inline<{/if}>">

@@ -4364,3 +4364,12 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
 .fz-form-screen .formulize-grid textarea {
   width: 100%;
 }
+
+/* Fixes layout issues with home screen pages with links */
+.appcatspacer {
+	width: auto;
+}
+
+.applinks p {
+	padding-left: 0.5em;
+}
