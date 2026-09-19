@@ -392,6 +392,9 @@ blockquote {
 }
 .band-head-row h2, .band-head-row h3 { margin: 0; }
 
+.inpage-anchor { padding-top: var(--space-8); }
+.inpage-anchor-heading { margin-bottom: var(--space-1); }
+
 /* ── buttons ────────────────────────────────────────────────────────────── */
 
 .btn {
@@ -2183,6 +2186,7 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-8);
+	row-gap: 0; /* spacing covered by padding-top on the containing divs of each item in the flex container */
 }
 .feature-cols h3 { font-size: 22px; margin: 0 0 var(--space-3); }
 .feature-cols ul {
