@@ -7,7 +7,7 @@ redirect_from:
 title: entryExists
 ---
 
-# entryExists( <span class="sig-type">(int)</span> $entry_id )
+# <span class="sig-name">entryExists</span>( <span class="sig-arg"><span class="sig-type">(int)</span> $entry_id</span> )
 
 ## Description
 

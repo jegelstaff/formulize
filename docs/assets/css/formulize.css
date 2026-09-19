@@ -195,17 +195,106 @@ hr {
 
 code, pre {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-  font-size: 13px;
+  /* 13px was set against a 17px body face, which put code blocks a full four
+     points under the prose around them - small enough that a config file or a
+     PHP example was harder to read than the paragraph explaining it, which is
+     backwards on pages whose whole point is the code. 15.5px is still a step
+     down from the body (monospace sets optically larger at the same size, so
+     matching 17 exactly would read as bigger than the prose) but it is a step,
+     not a drop. */
+  font-size: 15.5px;
 }
 code { font-size: 17px; color: var(--color-accent-700); }
 pre {
   padding: var(--space-3) var(--space-4);
-  background: var(--color-neutral-100);
-  border: 1px solid var(--color-divider);
+  background: var(--code-bg, var(--color-neutral-100));
+  color: var(--code-fg, inherit);
+  border: 1px solid var(--code-border, var(--color-divider));
   border-radius: var(--radius-md);
   overflow-x: auto;
 }
 pre code { font-size: inherit; color: inherit; }
+
+/* ── code blocks: the light/dark switch ─────────────────────────────────────
+
+   Every code block on the site can be read light-on-dark or dark-on-light,
+   and the choice is the reader's, not the page's. It is one setting for the
+   whole site rather than per block: someone who wants dark code wants it in
+   every example on every page, and a per-block memory would mean a page of
+   six examples in two different schemes.
+
+   How it is wired:
+
+   - The chosen scheme lives in the `formulize_code_theme` cookie and is put on
+     <html> as data-code-theme by a tiny inline script in <head> (see
+     _includes/head-custom.html), so it is set before the first paint. Doing it
+     from the deferred script instead would paint every block light and then
+     repaint it dark, which is the flash this avoids.
+   - assets/js/code-theme.js wraps each block in .code-block at load and adds
+     the button. The wrapper exists because <pre> scrolls horizontally: a
+     button positioned inside it would slide away with the code.
+   - The three --code-* custom properties below are what actually changes.
+     <pre> reads them with light-mode fallbacks, so a block still renders
+     correctly with the script blocked or JavaScript off - the toggle simply is
+     not there.
+   - The syntax colours are the other half of this and live with the rest of
+     the highlighting theme, in _sass/rouge-dark.scss. */
+
+:root[data-code-theme="dark"] {
+  --code-bg: #14181a;
+  --code-fg: #e6edf3;
+  --code-border: #30383c;
+}
+
+.code-block {
+  position: relative;
+  margin: 0 0 var(--space-4);
+}
+/* The block inside the wrapper carries the margin no longer - the wrapper does
+   - so a code block occupies exactly the space it did before it was wrapped. */
+.code-block > pre,
+.code-block > .highlight,
+.code-block > .highlighter-rouge { margin-bottom: 0; }
+/* .prose caps each of its direct children at the reading measure and exempts
+   code from that cap by element; once wrapped, the wrapper is the child, so it
+   needs the exemption instead or every code block folds to 52rem. */
+.prose > .code-block { max-width: none; }
+
+.code-theme-toggle {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  z-index: 1;
+  padding: 2px var(--space-2);
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  line-height: 1.6;
+  letter-spacing: var(--tracking);
+  color: var(--color-neutral-700);
+  background: var(--color-neutral-200);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  /* Understated until wanted: the button sits over the top-right of the code,
+     where a long first line may run under it, so it stays quiet at rest and
+     comes forward on hover and on keyboard focus. */
+  opacity: 0.55;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.code-block:hover .code-theme-toggle,
+.code-theme-toggle:hover,
+.code-theme-toggle:focus-visible { opacity: 1; }
+.code-theme-toggle:hover { background: var(--color-accent-100); color: var(--color-accent-800); }
+:root[data-code-theme="dark"] .code-theme-toggle {
+  color: #c9d4dc;
+  background: #232b2f;
+  border-color: #3d474c;
+}
+:root[data-code-theme="dark"] .code-theme-toggle:hover { background: #303a3f; color: #ffffff; }
+/* Coarse pointers have no hover to reveal it with, so it is simply always on. */
+@media (hover: none) {
+  .code-theme-toggle { opacity: 1; }
+}
 
 blockquote {
   border-left: 3px solid var(--color-accent-300);
@@ -462,8 +551,11 @@ blockquote {
 
 /* The header is sticky, so any in-page anchor - including the nav
    dropdowns' jumps into Features/Examples - needs room to land below it
-   rather than under it. */
-[id] { scroll-margin-top: 96px; }
+   rather than under it. The header itself is ~108px tall at desktop widths
+   (17.6px padding top and bottom, the 69px logo, the 4px rule) - this has to
+   clear that plus a bit of breathing room, or the target still lands partly
+   behind the header instead of below it. */
+[id] { scroll-margin-top: 128px; }
 
 /* The row is just layout: the page-width column the header's contents sit
    in. Vertical spacing belongs to .site-header's padding, not here. */
@@ -1005,6 +1097,17 @@ blockquote {
 .triad ul { margin: 0; padding-left: var(--space-6); font-size: 16.5px; }
 .triad em { color: var(--color-accent-700); font-style: italic; }
 
+/* Two equal boxes side by side, for a pair of closing calls to action - see
+   the bottom of /contact/. Its own class rather than .triad with one card
+   missing, so the two share the full width instead of leaving a third of the
+   row empty. Matched to .triad's gap so a page can use both without the
+   rhythm changing. */
+.duo {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+
 /* ── pricing ────────────────────────────────────────────────────────────── */
 
 .tier-grid {
@@ -1398,6 +1501,33 @@ blockquote {
   font-weight: var(--font-heading-weight);
   font-size: 20px;
 }
+/* The headline-and-teaser column of a release row - on /news/releases/ and in
+   "Latest releases" on /news/ - stacked beside the date. min-width: 0 because
+   it is a flex child: without it a long
+   unbroken word in a teaser sets the column's floor at its own width and the
+   row pushes past the page. */
+.news-list .news-text { display: block; min-width: 0; }
+.news-list .news-title { display: block; }
+/* Explicitly coloured rather than left to inherit, so it stays quiet when the
+   row is hovered and only the headline above it lights up. */
+.news-list .news-teaser {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--color-neutral-700);
+}
+/* The trailing "- what this one is good for" half of a title, on the PDF list
+   on /download/. Nested inside .news-title rather than placed beside it, so
+   the two stay one wrapping run of text and .news-list a keeps a single flex
+   child. A note set in the heading face at heading size read as more title,
+   which is exactly what these are not. */
+.news-list .news-note {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 16px;
+  color: var(--color-neutral-700);
+}
 
 .post-list { display: flex; flex-direction: column; gap: var(--space-6); }
 /* .post-teaser is the whole link now (was an <article> with three separate
@@ -1462,6 +1592,11 @@ blockquote {
 /* Not a .band, so it doesn't get a .band's own closing gap - without this the
    final btn-row sits flush against the footer. */
 .post-body { max-width: 72ch; padding-bottom: var(--space-12); }
+/* A news entry is a .prose inside a .post-body, and both now close on their
+   own var(--space-12) - which is two closing gaps stacked, the same mistake
+   .site-main used to make. The outer box keeps it, because it is the one that
+   owns the layout of this page. */
+.post-body > .prose { padding-bottom: 0; }
 .post-header { margin-bottom: var(--space-6); }
 .post-header h1 { margin-bottom: var(--space-2); }
 
@@ -1599,6 +1734,13 @@ blockquote {
    length everywhere. 52rem is 832px, which is what 78ch measured at in the
    17px body face, so running text is unchanged. */
 .prose { max-width: none; }
+/* The closing gap on every documentation page. Full-width pages get theirs
+   from the last .band's own bottom padding, which is why .site-main > .page
+   deliberately has none - but a markdown page has no bands, so its last
+   paragraph, or worse its last code block, finished hard against the clickable
+   boxes at the top of the footer with nothing between them. Same var(--space-12)
+   the bands use, so both kinds of page close on the same gap. */
+.prose { padding-bottom: var(--space-12); }
 .prose > * { max-width: var(--measure); }
 .prose > table,
 .prose > pre,
@@ -1655,30 +1797,65 @@ blockquote {
 .small-pic { width: 220px; }
 
 /* The API reference pages put the whole function signature inside the <h1> —
-   name, parens, variable names and default values as bare text, with just
-   each parenthesized type hint wrapped in <span class="sig-type">. The bare
-   text inherits the heading's own styling below (monospace, a size up from
-   body, at a weight that still reads as a page title); the type-hint spans
-   are sized and muted down from that so long signatures read as
-   name-and-arguments first, with the type hints as secondary detail.
+   the name and the parens as bare text, and each argument wrapped in
+   <span class="sig-arg">, which in turn holds the parenthesized type hint
+   (.sig-type) and any default value (.sig-default).
+
+   The point of the split is that the name is sized independently of everything
+   else. The function name is the page's title and has to read as one - it was
+   set at 23px, which left it visibly smaller than the "Description" h2
+   immediately below it at 30px, so the title of the page looked like a
+   subheading of its own first section. It is the largest thing on the page now.
+   The arguments stay near body size: they are reference detail, and blowing
+   them up with the name would have turned an eleven-argument signature like
+   gatherDataset into six lines of display type.
+
+   Which way round the sizes are set matters, and it is the opposite of the
+   obvious. The heading itself carries the ARGUMENT size, and .sig-name is what
+   steps up from it - because the punctuation holding the signature together
+   (the parens, and the comma between every pair of arguments) is bare text in
+   the h1 with no element of its own to hook a rule onto. Sizing the heading as
+   the name and stepping the arguments down left those commas set at 34px,
+   black and bold, reading as a row of blobs between the arguments rather than
+   as punctuation. Done this way they simply inherit, and come out at argument
+   size along with everything else that is not the name.
+
+   line-height stays unitless so that this works: each element recomputes it
+   against its own font-size, so the line holding the 34px name gets a line box
+   to match rather than the 19px one the heading's own strut would give it.
+
    Scoped to .prose h1 so no marketing heading can be caught by it. If a page
    would rather have a display-face title, the markdown should carry the name as
    the h1 and the signature as a fenced code block beneath it. */
 .prose h1:has(> span) {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-  font-size: 23px;
-  font-weight: 600;
+  font-size: 19px;
+  font-weight: 400;
   letter-spacing: 0;
   line-height: 1.5;
   text-wrap: initial;
   margin-bottom: var(--space-6);
 }
+.prose h1 span.sig-name {
+  font-size: 34px;
+  font-weight: 600;
+}
+/* One argument, kept whole: the type hint, the variable name and the default
+   value are one thing to read and a line break anywhere inside it makes a
+   signature much harder to scan - "(array)" left stranded at the end of one
+   line with "$scope_uids = array()" starting the next. nowrap on the argument
+   as a unit is what fixes that; the commas between arguments sit outside these
+   spans, so a long signature still wraps, just only ever between arguments.
+
+   It replaces a hand-applied fix: a few of these pages had &nbsp; typed
+   between the pieces of one or two arguments, which held those together and
+   left every other argument on the page free to break. */
+.prose h1 span.sig-arg {
+  white-space: nowrap;
+}
 .prose h1 span.sig-type,
 .prose h1 span.sig-default {
-  font-size: 0.74em;
-  font-weight: 400;
   color: var(--color-neutral-600);
-  white-space: nowrap;
 }
 
 nav.breadcrumbs { margin-bottom: var(--space-4); }
@@ -2213,7 +2390,7 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   .hero { flex-direction: column; align-items: flex-start; padding: var(--space-6); }
   .hero-text h1 { font-size: 27px; }
   .hero-thumbnail { max-width: 100%; }
-  .triad, .onramp, .video-row, .download-grid, .addon-grid { grid-template-columns: minmax(0, 1fr); }
+  .triad, .duo, .onramp, .video-row, .download-grid, .addon-grid { grid-template-columns: minmax(0, 1fr); }
   .feature-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   /* Two rather than straight to one: the videos page is a gallery of seven
      and it keeps reading as a grid at tablet width, where the three-up rows
@@ -2274,6 +2451,7 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   .news-row,
   .news-row-pair,
   .triad,
+  .duo,
   .onramp,
   .video-row,
   #video-flex-list,

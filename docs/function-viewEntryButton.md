@@ -7,7 +7,7 @@ redirect_from:
  - developers/API/functions/viewEntryButton/
 ---
 
-# viewEntryButton( <span class="sig-type">(string)</span> $clickable_text, <span class="sig-type">(int | array)</span> $entry_id_or_dataset_record, <span class="sig-type">(int)</span> $override_screen_id  )
+# <span class="sig-name">viewEntryButton</span>( <span class="sig-arg"><span class="sig-type">(string)</span> $clickable_text</span>, <span class="sig-arg"><span class="sig-type">(int | array)</span> $entry_id_or_dataset_record</span>, <span class="sig-arg"><span class="sig-type">(int)</span> $override_screen_id</span> )
 
 ## Location
 

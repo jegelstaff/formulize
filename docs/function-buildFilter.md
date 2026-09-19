@@ -7,7 +7,7 @@ redirect_from:
 title: buildFilter
 ---
 
-# buildFilter( <span class="sig-type">(string)</span> $name, <span class="sig-type">(int | string | object)</span> $element_identifier, <span class="sig-type">(string)</span> $defaultText <span class="sig-default">= "Choose an option"</span>, <span class="sig-type">(string)</span> $formDOMId <span class="sig-default">= ""</span>, <span class="sig-type">(bool | string | array)</span> $defaultValue <span class="sig-default">= false</span>, <span class="sig-type">(bool)</span> $multi <span class="sig-default">= false</span> )
+# <span class="sig-name">buildFilter</span>( <span class="sig-arg"><span class="sig-type">(string)</span> $name</span>, <span class="sig-arg"><span class="sig-type">(int | string | object)</span> $element_identifier</span>, <span class="sig-arg"><span class="sig-type">(string)</span> $defaultText <span class="sig-default">= "Choose an option"</span></span>, <span class="sig-arg"><span class="sig-type">(string)</span> $formDOMId <span class="sig-default">= ""</span></span>, <span class="sig-arg"><span class="sig-type">(bool | string | array)</span> $defaultValue <span class="sig-default">= false</span></span>, <span class="sig-arg"><span class="sig-type">(bool)</span> $multi <span class="sig-default">= false</span></span> )
 
 ## Location
 

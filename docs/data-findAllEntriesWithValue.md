@@ -7,7 +7,7 @@ redirect_from:
 title: findAllEntriesWithValue
 ---
 
-# findAllEntriesWithValue( <span class="sig-type">(int | string | object)</span> $element_identifier, <span class="sig-type">(string)</span> $value, <span class="sig-type">(array)</span>&nbsp;$scope_uids&nbsp;<span class="sig-default">=&nbsp;array()</span>, <span class="sig-type">(array)</span> $scope_group_ids <span class="sig-default">= array()</span>, <span class="sig-type">(string)</span> $operator <span class="sig-default">= "="</span> )
+# <span class="sig-name">findAllEntriesWithValue</span>( <span class="sig-arg"><span class="sig-type">(int | string | object)</span> $element_identifier</span>, <span class="sig-arg"><span class="sig-type">(string)</span> $value</span>, <span class="sig-arg"><span class="sig-type">(array)</span> $scope_uids <span class="sig-default">= array()</span></span>, <span class="sig-arg"><span class="sig-type">(array)</span> $scope_group_ids <span class="sig-default">= array()</span></span>, <span class="sig-arg"><span class="sig-type">(string)</span> $operator <span class="sig-default">= "="</span></span> )
 
 ## Description
 

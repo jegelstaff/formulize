@@ -7,7 +7,7 @@ redirect_from:
 title: findAllEntriesForUsers
 ---
 
-# findAllEntriesForUsers( <span class="sig-type">(int | array)</span> $user_ids, <span class="sig-type">(array)</span> $scope_uids <span class="sig-default">= array()</span>, <span class="sig-type">(array)</span>&nbsp;$scope_group_ids <span class="sig-default">= array()</span> )
+# <span class="sig-name">findAllEntriesForUsers</span>( <span class="sig-arg"><span class="sig-type">(int | array)</span> $user_ids</span>, <span class="sig-arg"><span class="sig-type">(array)</span> $scope_uids <span class="sig-default">= array()</span></span>, <span class="sig-arg"><span class="sig-type">(array)</span> $scope_group_ids <span class="sig-default">= array()</span></span> )
 
 ## Description
 

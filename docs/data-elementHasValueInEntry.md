@@ -7,7 +7,7 @@ redirect_from:
 title: elementHasValueInEntry
 ---
 
-# elementHasValueInEntry( <span class="sig-type">(int)</span> $entry_id, <span class="sig-type">(int | string | object)</span> $element_identifier )
+# <span class="sig-name">elementHasValueInEntry</span>( <span class="sig-arg"><span class="sig-type">(int)</span> $entry_id</span>, <span class="sig-arg"><span class="sig-type">(int | string | object)</span> $element_identifier</span> )
 
 ## Description
 

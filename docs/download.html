@@ -25,20 +25,6 @@ description: Download Formulize free and run it on your own server. Complete, un
 
 <section class="band">
   <div class="download-grid">
-    <a class="download-card" href="{{ site.github.repository_url }}/zipball/{{ site.github.latest_release.tag_name }}" target="_blank" rel="noopener">
-      <img src="{{ "/assets/img/zip-icon.png" | relative_url }}" alt="">
-      <span>
-        <strong>Latest release &mdash; .zip</strong>
-        <span>{{ site.github.latest_release.tag_name | default: "Current release" }}{% if site.github.latest_release.published_at %}, published {{ site.github.latest_release.published_at | date: "%-d %B %Y" }}{% endif %}</span>
-      </span>
-    </a>
-    <a class="download-card" href="{{ site.github.repository_url }}/tarball/{{ site.github.latest_release.tag_name }}" target="_blank" rel="noopener">
-      <img src="{{ "/assets/img/tar-gz-icon.png" | relative_url }}" alt="">
-      <span>
-        <strong>Latest release &mdash; .tar.gz</strong>
-        <span>The same files, for anyone who prefers tar</span>
-      </span>
-    </a>
     <a class="download-card" href="{{ site.github.repository_url }}" target="_blank" rel="noopener">
       <img src="{{ "/assets/img/octocat-icon.png" | relative_url }}" alt="">
       <span>
@@ -51,6 +37,20 @@ description: Download Formulize free and run it on your own server. Complete, un
       <span>
         <strong>Rather not run a server?</strong>
         <span>We will host it for you, from $49/month</span>
+      </span>
+    </a>
+    <a class="download-card" href="{{ site.github.repository_url }}/zipball/{{ site.github.latest_release.tag_name }}" target="_blank" rel="noopener">
+      <img src="{{ "/assets/img/zip-icon.png" | relative_url }}" alt="">
+      <span>
+        <strong>Latest release &mdash; .zip</strong>
+        <span>{{ site.github.latest_release.tag_name | default: "Current release" }}{% if site.github.latest_release.published_at %}, published {{ site.github.latest_release.published_at | date: "%-d %B %Y" }}{% endif %}</span>
+      </span>
+    </a>
+    <a class="download-card" href="{{ site.github.repository_url }}/tarball/{{ site.github.latest_release.tag_name }}" target="_blank" rel="noopener">
+      <img src="{{ "/assets/img/tar-gz-icon.png" | relative_url }}" alt="">
+      <span>
+        <strong>Latest release &mdash; .tar.gz</strong>
+        <span>The same files, for anyone who prefers tar</span>
       </span>
     </a>
   </div>
@@ -74,7 +74,7 @@ description: Download Formulize free and run it on your own server. Complete, un
     <div class="card">
       <span class="card-kicker">Time</span>
       <h3 class="card-title">About twenty minutes</h3>
-      <p class="card-body">The installer walks through the rest, step by step, with screenshots in the guide.</p>
+      <p class="card-body">The installer walks through the rest, step by step, with screenshots in <a href="{{ "/documentation/deploying_a_website" | relative_url }}">the guide</a>.</p>
     </div>
   </div>
 </section>
@@ -99,7 +99,7 @@ description: Download Formulize free and run it on your own server. Complete, un
     <a class="card-link" href="{{ "/documentation/deploying_locally" | relative_url }}">
       <div class="card" style="background: var(--color-surface);">
         <h3 class="card-title">Local development environment</h3>
-        <p class="card-body">Run Formulize on your own machine with Docker and VS Code.</p>
+        <p class="card-body">Run Formulize on your own machine with Docker.</p>
       </div>
     </a>
   </div>
@@ -109,19 +109,24 @@ description: Download Formulize free and run it on your own server. Complete, un
   <div class="band-head">
     <h2>Guides in PDF</h2>
   </div>
+  {% comment %}
+    Each item is a title followed by a note about what the guide is good for.
+    Only the title is in the heading face; the note is .news-note, which puts
+    it back into the body face. Note that "Inside Formulize &mdash; a
+    Developer's Guide" has an em dash of its own inside the title, so the two
+    halves cannot be split on the dash - they are marked up separately.
+  {% endcomment %}
   <ul class="news-list">
-
-    <li><a href="{{ "/files/How_to_Design_a_Formulize_Application.pdf" | relative_url }}"><span class="news-title">How to Design a Formulize Application &mdash; a great conceptual overview</span></a></li>
-    <li><a href="{{ "/files/Using_Formulize-Pageworks_to_Make_Custom_Applications.pdf" | relative_url }}"><span class="news-title">Using Formulize Pageworks to Make Custom Applications &mdash; an oldie but still has some good bits for developers interested in the deep and ancient innards</span></a></li>
-		<li><a href="{{ "/files/Inside_Formulize-a_Developers_Guide.pdf" | relative_url }}"><span class="news-title">Inside Formulize &mdash; a Developer's Guide &mdash; some good conceptual info, and older reference material, but mostly superseded by the docs on this site</span></a></li>
-		<li><a href="{{ "/files/Formulize_4.0_Final_Getting_Started_Guide.pdf" | relative_url }}"><span class="news-title">Formulize 4.0 Getting Started Guide &mdash; not irrelevant, but mostly superseded by the docs on this site</span></a></li>
+    <li><a href="{{ "/files/How_to_Design_a_Formulize_Application.pdf" | relative_url }}"><span class="news-title">How to Design a Formulize Application<span class="news-note"> &mdash; a great conceptual overview</span></span></a></li>
+    <li><a href="{{ "/files/Using_Formulize-Pageworks_to_Make_Custom_Applications.pdf" | relative_url }}"><span class="news-title">Using Formulize Pageworks to Make Custom Applications<span class="news-note"> &mdash; an oldie but still has some good bits for developers interested in the deep and ancient innards</span></span></a></li>
+    <li><a href="{{ "/files/Inside_Formulize-a_Developers_Guide.pdf" | relative_url }}"><span class="news-title">Inside Formulize &mdash; a Developer's Guide<span class="news-note"> &mdash; some good conceptual info, and older reference material, but mostly superseded by the docs on this site</span></span></a></li>
+    <li><a href="{{ "/files/Formulize_4.0_Final_Getting_Started_Guide.pdf" | relative_url }}"><span class="news-title">Formulize 4.0 Getting Started Guide<span class="news-note"> &mdash; not irrelevant, but mostly superseded by the docs on this site</span></span></a></li>
   </ul>
 </section>
 
 <section class="band">
   <div class="card elev-sm" style="background: var(--color-accent-100);">
     <h2 style="margin-bottom: var(--space-2);">Stuck on the install?</h2>
-    <p class="card-body" style="font-size: 16px; max-width: 62ch;">Ask in the community &mdash; it is free and you do not need to be a customer. Or hire us for an hour and skip the reading.</p>
     <div class="btn-row">
       <a class="btn btn-secondary" href="{{ "/community/" | relative_url }}">Ask the community</a>
       <a class="btn btn-secondary" href="{{ "/contact/" | relative_url }}">Ask us directly</a>

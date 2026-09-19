@@ -7,7 +7,7 @@ redirect_from:
 title: buildScope
 ---
 
-# buildScope( <span class="sig-type">(string|int)</span> $currentView, <span class="sig-type">(object|int)</span> $userIdOrObject, <span class="sig-type">(int)</span> $fid )
+# <span class="sig-name">buildScope</span>( <span class="sig-arg"><span class="sig-type">(string|int)</span> $currentView</span>, <span class="sig-arg"><span class="sig-type">(object|int)</span> $userIdOrObject</span>, <span class="sig-arg"><span class="sig-type">(int)</span> $fid</span> )
 
 ## Location
 

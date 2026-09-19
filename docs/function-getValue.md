@@ -7,7 +7,7 @@ redirect_from:
 title: getValue
 ---
 
-# getValue( <span class="sig-type">(array)</span> $entry, <span class="sig-type">(string)</span> $handle <span class="sig-default">= ""</span>, <span class="sig-type">(int)</span> $datasetKey <span class="sig-default">= null</span>, <span class="sig-type">(int)</span> $localEntryId <span class="sig-default">= null</span>, <span class="sig-type">(boolean)</span> $raw <span class="sig-default">= false</span> )
+# <span class="sig-name">getValue</span>( <span class="sig-arg"><span class="sig-type">(array)</span> $entry</span>, <span class="sig-arg"><span class="sig-type">(string)</span> $handle <span class="sig-default">= ""</span></span>, <span class="sig-arg"><span class="sig-type">(int)</span> $datasetKey <span class="sig-default">= null</span></span>, <span class="sig-arg"><span class="sig-type">(int)</span> $localEntryId <span class="sig-default">= null</span></span>, <span class="sig-arg"><span class="sig-type">(boolean)</span> $raw <span class="sig-default">= false</span></span> )
 
 ## Location
 

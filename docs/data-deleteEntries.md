@@ -7,7 +7,7 @@ redirect_from:
 title: deleteEntries
 ---
 
-# deleteEntries( <span class="sig-type">(int | array)</span> $entry_ids )
+# <span class="sig-name">deleteEntries</span>( <span class="sig-arg"><span class="sig-type">(int | array)</span> $entry_ids</span> )
 
 ## Description
 

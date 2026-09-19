@@ -7,7 +7,7 @@ redirect_from:
 title: getElementValueInEntry
 ---
 
-# getElementValueInEntry( <span class="sig-type">(int)</span> $entry_id, <span class="sig-type">(int | string | object)</span> $element_identifier, <span class="sig-type">(array)</span>&nbsp;$scope_uids <span class="sig-default">= array()</span>, <span class="sig-type">(array)</span> $scope_group_ids <span class="sig-default">= array()</span> )
+# <span class="sig-name">getElementValueInEntry</span>( <span class="sig-arg"><span class="sig-type">(int)</span> $entry_id</span>, <span class="sig-arg"><span class="sig-type">(int | string | object)</span> $element_identifier</span>, <span class="sig-arg"><span class="sig-type">(array)</span> $scope_uids <span class="sig-default">= array()</span></span>, <span class="sig-arg"><span class="sig-type">(array)</span> $scope_group_ids <span class="sig-default">= array()</span></span> )
 
 ## Description
 

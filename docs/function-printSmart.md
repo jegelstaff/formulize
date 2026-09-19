@@ -7,7 +7,7 @@ redirect_from:
 title: printSmart
 ---
 
-# printSmart( <span class="sig-type">(string)</span> $value, <span class="sig-type">(int)</span> $chars <span class="sig-default">= 35</span> )
+# <span class="sig-name">printSmart</span>( <span class="sig-arg"><span class="sig-type">(string)</span> $value</span>, <span class="sig-arg"><span class="sig-type">(int)</span> $chars <span class="sig-default">= 35</span></span> )
 
 ## Location
 

@@ -7,7 +7,7 @@ redirect_from:
 title: setEntryOwnerGroups
 ---
 
-# setEntryOwnerGroups( <span class="sig-type">(int | array)</span> $user_ids, <span class="sig-type">(int | array)</span> $entry_ids )
+# <span class="sig-name">setEntryOwnerGroups</span>( <span class="sig-arg"><span class="sig-type">(int | array)</span> $user_ids</span>, <span class="sig-arg"><span class="sig-type">(int | array)</span> $entry_ids</span> )
 
 ## Description
 

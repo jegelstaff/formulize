@@ -7,7 +7,7 @@ redirect_from:
 title: append
 ---
 
-# append( <span class="sig-type">(object|string)</span> $queue_or_queue_handle, <span class="sig-type">(string)</span> $code, <span class="sig-type">(string)</span> $item <span class="sig-default">= ''</span>, <span class="sig-type">(boolean)</span> $allowDuplicates <span class="sig-default">= false</span> )
+# <span class="sig-name">append</span>( <span class="sig-arg"><span class="sig-type">(object|string)</span> $queue_or_queue_handle</span>, <span class="sig-arg"><span class="sig-type">(string)</span> $code</span>, <span class="sig-arg"><span class="sig-type">(string)</span> $item <span class="sig-default">= ''</span></span>, <span class="sig-arg"><span class="sig-type">(boolean)</span> $allowDuplicates <span class="sig-default">= false</span></span> )
 
 ## Description
 

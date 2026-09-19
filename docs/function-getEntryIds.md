@@ -7,7 +7,7 @@ redirect_from:
 title: getEntryIds
 ---
 
-# getEntryIds( <span class="sig-type">(array)</span> $entry, <span class="sig-type">(int|string)</span> $formIdOrHandle <span class="sig-default">= ""</span>, <span class="sig-type">(int)</span> $datasetKey <span class="sig-default">= null</span>, <span class="sig-type">(boolean)</span> $fidAsKeys <span class="sig-default">= false</span> )
+# <span class="sig-name">getEntryIds</span>( <span class="sig-arg"><span class="sig-type">(array)</span> $entry</span>, <span class="sig-arg"><span class="sig-type">(int|string)</span> $formIdOrHandle <span class="sig-default">= ""</span></span>, <span class="sig-arg"><span class="sig-type">(int)</span> $datasetKey <span class="sig-default">= null</span></span>, <span class="sig-arg"><span class="sig-type">(boolean)</span> $fidAsKeys <span class="sig-default">= false</span></span> )
 
 ## Location
 

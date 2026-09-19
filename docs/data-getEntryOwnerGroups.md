@@ -7,7 +7,7 @@ redirect_from:
 title: getEntryOwnerGroups
 ---
 
-# getEntryOwnerGroups( <span class="sig-type">(int)</span> $entry_id <span class="sig-default">= 0</span> )
+# <span class="sig-name">getEntryOwnerGroups</span>( <span class="sig-arg"><span class="sig-type">(int)</span> $entry_id <span class="sig-default">= 0</span></span> )
 
 ## Description
 

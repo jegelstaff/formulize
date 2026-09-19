@@ -7,7 +7,7 @@ redirect_from:
 title: formulize_updateDerivedValues
 ---
 
-# formulize_updateDerivedValues( <span class="sig-type">(mixed)</span> $entry_id_or_filter, <span class="sig-type">(int)</span> $fid, <span class="sig-type">(int)</span> $frid <span class="sig-default">= 0</span> )
+# <span class="sig-name">formulize_updateDerivedValues</span>( <span class="sig-arg"><span class="sig-type">(mixed)</span> $entry_id_or_filter</span>, <span class="sig-arg"><span class="sig-type">(int)</span> $fid</span>, <span class="sig-arg"><span class="sig-type">(int)</span> $frid <span class="sig-default">= 0</span></span> )
 
 ## Location
 
