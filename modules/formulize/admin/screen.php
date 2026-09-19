@@ -50,6 +50,7 @@ $settings['passcodes'] = $passcode_handler->getThisScreenPasscodes($screen_id);
 
 $config_handler = $config_handler = xoops_gethandler('config');
 $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+$settings['embeddingAllowed'] = formulize_embeddingAllowed(); // a new screen has this question too
 if ($screen_id == "new") {
     $settings['type'] = 'listOfEntries';
     $settings['frid'] = 0;
@@ -70,6 +71,21 @@ if ($screen_id == "new") {
     $settings['frid'] = $screen->getVar('frid');
     $settings['useToken'] = $screen->getVar('useToken');
     $settings['anonNeedsPasscode'] = $screen->getVar('anonNeedsPasscode');
+    // escaped for display, because this one holds whatever the administrator typed, valid or not
+    $settings['embedOrigins'] = $screen->getVar('embedOrigins');
+    // the note about ignored entries is written in one place and shown wherever such a list is
+    // edited, so the preferences page and this page say the same thing in the same words
+    $settings['embedOriginsWarning'] = formulize_embedOriginsWarningHtml($screen->getVar('embedOrigins', 'n'));
+    // the ready-made iframe and script for the host page, with this screen's own address already in
+    // it, so nobody has to assemble one by hand or remember what has to be on the end of the URL.
+    // Twice: with the address this page is being viewed at, which works as it is for anonymous
+    // visitors, and with a placeholder for an embedding address on the host website's domain, which
+    // is what signed-in visitors need and which nothing here can know
+    $settings['embedCode'] = formulize_screenEmbedCode($screen);
+    $settings['embedCodeAnonLabel'] = sprintf(_AM_SCREEN_SETTINGS_EMBED_CODE_ANON, htmlspecialchars(parse_url(XOOPS_URL, PHP_URL_HOST)));
+    $settings['embedCodeForEmbeddingAddress'] = formulize_screenEmbedCode($screen, formulize_embeddingAddressPlaceholderUrl());
+    $settings['embedCodeAliasDesc'] = sprintf(_AM_SCREEN_SETTINGS_EMBED_CODE_ALIAS_DESC, FORMULIZE_EMBEDDING_ADDRESS_PLACEHOLDER);
+    $settings['embedSessionNotice'] = formulize_embedSessionSharingNoticeHtml($screen->getVar('embedOrigins', 'n'));
 	$settings['alternateURLsOn'] = $formulizeConfig['formulizeRewriteRulesEnabled'];
     if($settings['alternateURLsOn']) {
         $settings['rewriteruleAddress'] = $screen->getVar('rewriteruleAddress');
@@ -618,7 +634,7 @@ if ($screen_id != "new" && $settings['type'] == 'map') {
     $templates['usingTemplates'] = ($templates['toptemplate'] OR $templates['maptemplate'] OR $templates['bottomtemplate']);
 }
 
-$templates['themes'] = icms_view_theme_Factory::getThemesList();
+$templates['themes'] = formulize_selectableThemesList(); // embed themes carry no screen templates of their own
 global $xoopsConfig;
 $themeFolder = $screen ? $screen->getVar('theme') : $xoopsConfig['theme_set'];
 $themeDefaultPath = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$themeFolder."/default/".$settings['type']."/";

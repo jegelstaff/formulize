@@ -39,7 +39,7 @@ if (isset($_POST['themeeditor_save'])) {
     $content = isset($_POST['file_content']) ? $_POST['file_content'] : '';
 
     // Only themes actually installed in this Formulize installation may be targeted
-    $themes = icms_view_theme_Factory::getThemesList();
+    $themes = formulize_selectableThemesList(); // embed themes are not edited here
     if ($theme === '' OR !isset($themes[$theme])) {
         formulize_themeeditor_sendSaveResponse("Could not save: unknown theme.");
     }
@@ -94,7 +94,7 @@ if(!$xoopsUser OR !$xoopsUser->isAdmin(getFormulizeModId())) {
 // final crumb via $adminPage['extra_breadcrumbs'], set once the selected file is known.
 
 // Themes installed in this Formulize installation
-$adminPage['themes'] = icms_view_theme_Factory::getThemesList();
+$adminPage['themes'] = formulize_selectableThemesList();
 
 // Site's current default theme
 global $xoopsConfig;

@@ -456,6 +456,18 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 		'form_screen_page_number'=>$currentPage
 	));
 
+	// Embedded, ask the page hosting this screen to come back to the top of the frame, since the
+	// reader is being shown a different page of the form and whatever the host page is looking at is
+	// now the middle of something else. Staying on the same page asks for nothing, so an ordinary
+	// save leaves the reader exactly where they were.
+	//
+	// Emitted here rather than with the form's own javascript because the thanks page draws no form
+	// at all - the displayForm() below is skipped for it - and arriving at the thanks page is the
+	// most common moment this is wanted.
+	if(!$elements_only AND intval($currentPage) != intval($prevPage)) {
+		print formulize_embedScrollToTopScript();
+	}
+
 	// display the form if applicable...
 	if($currentPage != $thanksPage) {
 		if(count((array) $forminfo['elements'])==0) {

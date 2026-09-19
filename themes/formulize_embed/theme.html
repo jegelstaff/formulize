@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html xml:lang="<{$icms_langcode}>">
+
+<head>
+    <!-- Theme name -->
+    <{assign var=theme_name value=$xoTheme->folderName}>
+
+    <!-- Title and meta -->
+    <title><{if $xoops_pagetitle !=''}><{$xoops_pagetitle}> : <{/if}><{$icms_sitename}></title>
+    <meta http-equiv="content-type" content="text/html; charset=<{$icms_charset}>" />
+    <meta name="robots" content="<{$icms_meta_robots}>" />
+    <meta name="keywords" content="<{$icms_meta_keywords}>" />
+    <meta name="description" content="<{$icms_meta_description}>" />
+    <meta name="rating" content="<{$icms_meta_rating}>" />
+    <meta name="author" content="<{$icms_meta_author}>" />
+    <meta name="copyright" content="<{$icms_meta_copyright}>" />
+    <meta name="generator" content="Formulize" />
+
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1">
+
+    <!-- Module Header -->
+    <{$icms_module_header}>
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" type="image/ico" href="<{$icms_imageurl}>icons/favicon.ico" />
+    <link rel="icon" type="image/png" href="<{$icms_imageurl}>icons/icon.png" />
+
+    <!-- CSS: must come after icms_module_header.
+         This theme does not keep its own copy of the site's stylesheet. It loads the site's own
+         theme's, so improvements there reach embedded screens instead of this theme drifting
+         behind, and then loads its own style.css, which adjusts only what that stylesheet assumes
+         about the viewport. Relative urls inside that stylesheet resolve against its own theme
+         folder, so the images and fonts come with it.
+         This theme's own stylesheet has to be called css/style.css, even though it holds only
+         overrides: ImpressCMS looks for that exact name when it builds $icms_themecss, and prints
+         "The theme does not exist" over the top of the page when it cannot find one.
+         The site's theme is read from theme_set, which embedding deliberately leaves alone (see
+         header.php, which picks this theme by folder name instead), so an embedded screen is styled by whatever the
+         site is wearing today. Nothing to set, and nothing to keep in step. Which stylesheets that
+         takes differs from theme to theme; formulize_embedBaseThemeStylesheets() knows. -->
+    <{php}>
+    echo formulize_embedBaseThemeStylesheets($this->_tpl_vars['icms_rtl'] ?? false);
+    $stylesheet = '/themes/' . $this->_tpl_vars['theme_name'] . '/css/style.css';
+    echo '<link rel="stylesheet" type="text/css" media="all" href="' . XOOPS_URL . $stylesheet
+        . '?v=' . formulize_get_file_version($stylesheet) . '" />';
+    <{/php}>
+
+    <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+
+</head>
+
+<{* fz-inline is the class a theme can key off for a page drawn without its chrome, whose document
+   scrolls rather than a pane inside it, and whose lists flow rather than filling a fixed height -
+   which is exactly this page. Lyris uses it for its own chrome-less pages. *}>
+<body id="<{$icms_dirname}>" class="<{$icms_langcode}> fz-inline<{if isset($formulize_screen_id) && $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}>" style="display: none;">
+
+<script type='text/javascript'>
+// Inside a frame, nothing here scrolls: the frame is sized to its whole content and the page hosting
+// it is what moves. Say so, and turn this page's own scrolling off, so a reader gets one scrollbar
+// rather than two and the form does not try to save a scroll position that cannot exist.
+//
+// This page is also drawn at the top level, by the "open in its own window" link, and there it has to
+// scroll like any other page or a long form simply cannot be reached. So this is decided here, in the
+// browser, by whether the page actually is in a frame. Neither the formulize_embed parameter, which
+// the top level link carries too, nor the Sec-Fetch-Dest header, which not every browser sends, can
+// answer that as reliably.
+if (window.parent !== window) {
+    document.body.setAttribute('data-formulize-scroll-container', 'none');
+    document.body.style.overflow = 'hidden';
+}
+</script>
+
+<{* This theme keeps its own copy of session-timeout-warning.html on purpose, rather than borrowing the
+   site theme's the way it borrows the stylesheet. Not every theme has one, and the script at the bottom
+   of this file depends on the #session-timeout-warning element it contains to bring the warning into
+   view on the host page. Keep that id if you change the copy. *}>
+<{includeq file="$theme_name/session-timeout-warning.html"}>
+
+<{php}>
+// set the base font size if the user has adjusted it in their profile
+global $xoopsUser;
+if($xoopsUser) {
+    $profile_handler = xoops_getmodulehandler('profile', 'profile');
+    $profile = $profile_handler->get($xoopsUser->getVar('uid'));
+    if($fontsize = $profile->getVar('fontsize')) {
+        print "<style>html { font-size: ".$fontsize."; }</style>";
+    }
+}
+<{/php}>
+
+  <{* The screen goes inside the borrowed site theme's own content area, because that theme's
+     stylesheet often finds the screen through the elements around it. The theme says what those are
+     in its embed-content.html. See formulize_embedBaseThemeContentTemplate(). *}>
+  <{php}>$this->assign('embed_content_template', formulize_embedBaseThemeContentTemplate());<{/php}>
+  <{if $embed_content_template}>
+    <{includeq file=$embed_content_template}>
+  <{else}>
+    <main><{$icms_contents}></main>
+  <{/if}>
+
+
+  <{php}>
+  $jsVersion = formulize_get_file_version('/themes/' . $this->_tpl_vars['theme_name'] . '/js/script.js');
+  echo '<script src="' . $this->_tpl_vars['icms_imageurl'] . 'js/script.js?v=' . $jsVersion . '"></script>';
+  <{/php}>
+
+  <script type='text/javascript'>
+    // An embedded screen talks to the page hosting it over postMessage. The host can't measure a
+    // document on another origin, and reaching into contentWindow only ever worked same-origin.
+    (function() {
+        // Revealing the body below has to happen whether or not anyone is listening, so this is not
+        // gated on being embedded: a screen opened directly would otherwise stay hidden for good.
+        var embedded = (window.parent !== window);
+        var lastHeight = 0;
+
+        function post(type, detail) {
+            if (!embedded) { return; }
+            var message = {type: type, formulize: true};
+            for (var key in (detail || {})) { message[key] = detail[key]; }
+            window.parent.postMessage(message, '*'); // heights only, nothing worth withholding
+        }
+
+        // Measured from the content, not from scrollHeight, which can never report less than the
+        // height the host has already given the iframe, so the form could only ever grow.
+        //
+        // The body's own box is not the whole story, which is what clips a save button by a few
+        // pixels: a last child's bottom margin collapses through the body rather than adding to it,
+        // and a float or a positioned element can sit below the body's edge entirely. So take the
+        // lowest point of the children too. The slack at the end covers what no box reports at all -
+        // a focus ring, a shadow - and costs an empty sliver at worst.
+        function contentHeight() {
+            var body = document.body;
+            var styles = window.getComputedStyle(body);
+            var scrolled = window.pageYOffset || document.documentElement.scrollTop || 0;
+            var height = body.getBoundingClientRect().bottom + scrolled + parseFloat(styles.marginBottom);
+            for (var i = 0; i < body.children.length; i++) {
+                var child = body.children[i];
+                var childStyles = window.getComputedStyle(child);
+                if (childStyles.position === 'fixed' || childStyles.display === 'none') {
+                    continue; // pinned to the viewport, or not drawn: neither makes the page taller
+                }
+                var bottom = child.getBoundingClientRect().bottom + scrolled
+                    + (parseFloat(childStyles.marginBottom) || 0);
+                if (bottom > height) {
+                    height = bottom;
+                }
+            }
+            return Math.ceil(height + (parseFloat(styles.fontSize) || 16) * 0.5);
+        }
+
+        function reportHeight() {
+            var height = contentHeight();
+            if (height > 0 && height !== lastHeight) {
+                lastHeight = height;
+                post('formulize:resize', {height: height});
+            }
+        }
+
+        // Only the server can say whether a cookie this screen can be submitted with came back, so
+        // only the server is asked - see the embed_session_check op in formulize_xhr_responder.php.
+        // That responder answers nothing at all when the uid sent does not match the visitor, and an
+        // empty answer reads as "no cookie" below, so the uid must be the real one. Do not add a test from
+        // script here: writing a cookie to see if it sticks reports failure inside a frame even when
+        // the one the screen relies on was kept.
+        function checkSessionSurvives() {
+            if (!embedded) {
+                return;
+            }
+            jQuery.ajax({
+                url: '<{php}>global $xoopsUser; echo XOOPS_URL.'/modules/formulize/formulize_xhr_responder.php?op=embed_session_check&uid='.($xoopsUser ? intval($xoopsUser->getVar('uid')) : 0);<{/php}>',
+                cache: false,
+                success: function(data) {
+                    if (jQuery.trim(String(data)) !== '1') {
+                        post('formulize:sessionUnavailable');
+                    }
+                }
+                // a request that does not arrive says nothing about cookies, so nothing is reported
+            });
+        }
+
+        jQuery(document).ready(function() {
+            // The body is hidden inline (see the body tag near the top of this file) and revealed here once
+						// the window has loaded, so the page appears in one piece rather than assembling visibly.
+						//
+						// The window load event does not replay: a handler registered after load has already fired will
+						// never run. document.ready does replay, so this callback can be reached after load - and if it
+						// is, the body would stay hidden and the whole page would render blank, with nothing thrown to
+						// explain it. formulize_pageShown would not fire either, so the listeners that restore scroll
+						// position (formdisplay.php, entriesdisplay.php, mapdisplay.php) would silently never run.
+						//
+						// So ask the document whether load has already happened instead of assuming it has not.
+            var formulizeShowPage = function() {
+                jQuery('body').show(200, function() {
+                    var formulize_pageShown = new CustomEvent('formulize_pageShown');
+                    window.dispatchEvent(formulize_pageShown);
+                    reportHeight();
+                    post('formulize:ready', {height: lastHeight});
+                    checkSessionSurvives();
+                    // Only when the screen says so - a page turn, or a search that replaced the
+                    // entries. The server decides that, by the same rule it uses to decide whether
+                    // a saved scroll position still applies (formulize_embedScrollToTopScript).
+                    // A save that stays put asks for nothing, and the host is left where it was.
+                    if (window.formulizeEmbedScrollToTop) {
+                        post('formulize:scroll', {top: 0});
+                    }
+                });
+            };
+            if (document.readyState === 'complete') {
+                formulizeShowPage();
+            } else {
+                jQuery(window).on('load', formulizeShowPage);
+            }
+
+            // The session timeout warning is a banner at the very top of this document. Someone
+            // part-way down a long form would never see it appear, because the host page is
+            // scrolled well past it, so ask the host to bring it into view. Watched rather than
+            // hooked into the warning's own script, so that session-timeout-warning.html stays
+            // the same file every other theme uses.
+            var timeoutWarning = document.getElementById('session-timeout-warning');
+            if (embedded && timeoutWarning && window.MutationObserver) {
+                new MutationObserver(function(mutations, observer) {
+                    if (timeoutWarning.offsetParent === null) {
+                        return; // still hidden
+                    }
+                    observer.disconnect(); // it only has to be brought into view once
+                    reportHeight(); // the banner makes the document taller before the scroll lands
+                    post('formulize:scroll', {top: 0});
+                }).observe(timeoutWarning, {attributes: true, attributeFilter: ['style', 'class']});
+            }
+
+            // subform editors centre themselves on a document as tall as all of its content, so
+            // the host has to bring them into view
+            jQuery(document).bind('dialogopen', function(event) {
+                var dialog = jQuery(event.target).closest('.ui-dialog');
+                if (dialog.length) {
+                    post('formulize:scroll', {top: Math.max(0, dialog.offset().top - 20)});
+                }
+            });
+        });
+
+        if (embedded && window.ResizeObserver) {
+            var pending = null;
+            new ResizeObserver(function() {
+                clearTimeout(pending);
+                pending = setTimeout(reportHeight, 50);
+            }).observe(document.body);
+        } else if (embedded) {
+            setInterval(reportHeight, 500);
+        }
+    })();
+  </script>
+
+    <{ if isset($masquerade_username) AND $masquerade_username }>
+        <div id="formulize-masquerade-block">
+            Masquerading as <b><{$masquerade_username}></b>
+            <form method="post" action="<{$smarty.const.XOOPS_URL}>/modules/formulize/">
+                <input type="hidden" name="revert" value="1" />
+                <input type="hidden" name="op" value="masquerade" />
+                <input type="hidden" name="masquerade_end" value="1" />
+                <input type="submit" name="confirm_submit" value="Revert" />
+            </form>
+        </div>
+        <div style="clear:both;"></div>
+    <{ /if }>
+
+	<{if $formulize_customCodeForApplications}>
+		<{$formulize_customCodeForApplications}>
+	<{/if}>
+</body>
+
+</html>

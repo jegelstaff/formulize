@@ -2795,3 +2795,28 @@ function setupAuthentication() {
 
 	return $client;
 }
+
+/**
+ * Tell browsers which websites may display this page inside a frame.
+ *
+ * Sent on every page, naming this site alone, so no other website can put any part of Formulize -
+ * the login page and the admin interface included - inside a frame of its own and trick somebody
+ * into clicking through it.
+ *
+ * It is sent this early, before any module settings can be read, so that a page is never served
+ * without it. Anything an administrator has allowed is added by sending it again once those
+ * settings are available: see formulize_siteFrameAncestors(), and the screen version in
+ * formulize_sendScreenFrameAncestorsHeader().
+ *
+ * @param array $extraOrigins Websites to allow in addition to this site
+ * @return void
+ */
+function formulize_sendFrameAncestorsHeader($extraOrigins = array()) {
+	if (headers_sent()) {
+		return;
+	}
+	// deduplicated, so naming a website on a screen that is already allowed across the whole site
+	// does not list it twice
+	$sources = array_unique(array_merge(array("'self'"), $extraOrigins));
+	header('Content-Security-Policy: frame-ancestors '.implode(' ', $sources));
+}

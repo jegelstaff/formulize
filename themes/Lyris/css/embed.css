@@ -1,0 +1,14 @@
+/*
+ * Loaded after this theme's own stylesheet, only when a screen is embedded in another website and
+ * is borrowing this theme's styling. See docs/themes.md.
+ *
+ * In there the frame is sized to its content, so the viewport is as tall as everything in it.
+ * The fz-inline rules in style.css already take the header and sidebar away and let the document
+ * scroll. This undoes the one place where they still assume a window-height page.
+ */
+
+/* stretched to the height of the viewport, which in here is the height of the frame, so the frame
+   could grow but never shrink again */
+.fz-inline .fz-app {
+  min-height: 0;
+}

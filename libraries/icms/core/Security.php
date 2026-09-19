@@ -66,11 +66,28 @@ class icms_core_Security {
 	 */
 	public function createToken($timeout = 0, $name = _CORE_TOKEN) {
 		$this->garbageCollection($name);
+		// ALTERED BY FREEFORM SOLUTIONS FOR FORMULIZE. A token is only worth anything because it is
+		// filed under a value that one browser alone holds. With nothing to file it under, the file
+		// would be written with an empty key in the middle of its name, and validateToken() would
+		// find it again by globbing that same empty key - so any browser at all could redeem it.
+		// Refusing here fails closed: the page gets no token and its submission is rejected, rather
+		// than the page looking protected while accepting anybody's submission.
+		$bindKey = $this->tokenBindKey();
+		if ($bindKey === '') {
+			icms::$logger->addExtra(_CORE_TOKENVALID, 'No session or bind key to tie a security token to');
+			return '';
+		}
 		$timeout = ($timeout == 0) ? (int) ($GLOBALS['icmsConfig']['session_expire'] * 60) : (int) $timeout; // session_expire is in minutes, we need seconds
 		$timeout = time() + $timeout;
-		$token_id = hash('sha256',(uniqid(rand(), true)));
+		// ALTERED BY FREEFORM SOLUTIONS FOR FORMULIZE. Was hash('sha256', uniqid(rand(), true)).
+		// uniqid is the clock, and rand() is not a cryptographic generator, so the id was predictable
+		// to anyone who could have one minted at a moment of their own choosing. An embedded screen
+		// lets any website on the internet do exactly that, in a visitor's browser, with no session
+		// and no login, which is what makes guessing worth attempting at all. Same length and same
+		// alphabet as before, so nothing downstream changes and tokens already issued still validate.
+		$token_id = bin2hex(random_bytes(32));
 		// save token data on the server
-		touch($this->tokenDir . '/' . $name . '_' . session_id() . '_' . $token_id . '_' . $timeout);
+		touch($this->tokenDir . '/' . $name . '_' . $bindKey . '_' . $token_id . '_' . $timeout);
 		$token = hash('sha256',($token_id.$_SERVER['HTTP_USER_AGENT'].XOOPS_DB_PREFIX));
 		return $token;
 	}
@@ -91,7 +108,10 @@ class icms_core_Security {
 			return false;
 		}
 		$validFound = false;
-		$sessionTokenFilesOfType = glob($this->tokenDir . '/' . $name . '_' . session_id() . '_*');
+		$sessionTokenFilesOfType = array();
+		foreach($this->tokenBindKeysToCheck() as $bindKey) {
+			$sessionTokenFilesOfType = array_merge($sessionTokenFilesOfType, (array) glob($this->tokenDir . '/' . $name . '_' . $bindKey . '_*'));
+		}
 		foreach($sessionTokenFilesOfType as $tokenPathAndFileName) {
 			if($this->tokenExpired($tokenPathAndFileName)) {
 				unlink($tokenPathAndFileName);
@@ -121,6 +141,47 @@ class icms_core_Security {
 		}
 		$this->garbageCollection($name);
 		return $validFound;
+	}
+
+	/**
+	 * The name this request's tokens are filed under. ALTERED BY FREEFORM SOLUTIONS FOR FORMULIZE.
+	 *
+	 * The session id, except for an anonymous visitor inside somebody else's frame, whose session
+	 * cookie never reaches them: there, a cookie kept for the purpose stands in for it. See
+	 * formulize_anonTokenBindKey().
+	 *
+	 * @return string The value to file a new token under
+	 **/
+	private function tokenBindKey() {
+		if ($bindKey = formulize_anonTokenBindKey()) {
+			return $bindKey;
+		}
+		return session_id();
+	}
+
+	/**
+	 * The names a submitted token may be filed under. ALTERED BY FREEFORM SOLUTIONS FOR FORMULIZE.
+	 *
+	 * Always the session id. For an anonymous visitor with a bind cookie, that too: a token filed under
+	 * the bind cookie can come back on a request that now carries a session cookie as well, and
+	 * formulize_anonBindCookieValue() explains when. Logged in visitors are only ever checked against
+	 * the session.
+	 *
+	 * @return array The values to look for token files under
+	 **/
+	private function tokenBindKeysToCheck() {
+		$keys = array();
+		// Empty keys are dropped rather than searched under. An empty key globs as tokenname__* and
+		// would match the files written when there was nothing to bind to, which any browser could
+		// then redeem. With no usable key at all this returns nothing, no file is looked at, and the
+		// token is refused - the same fail-closed answer createToken() gives when it cannot bind one.
+		if ($sessionId = session_id()) {
+			$keys[] = $sessionId;
+		}
+		if ($bindKey = formulize_anonBindCookieValue()) {
+			$keys[] = $bindKey;
+		}
+		return array_unique($keys);
 	}
 
 	/**

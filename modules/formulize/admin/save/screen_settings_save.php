@@ -121,6 +121,11 @@ $screen->setVar('fid',$fid);
 $screen->setVar('type',$screens['type']);
 $screen->setVar('useToken',$screens['useToken']);
 $screen->setVar('anonNeedsPasscode',$screens['anonNeedsPasscode']);
+if(isset($screens['embedOrigins'])) { // left alone when the screen was saved from a page without this field
+	// Saved as it was written, malformed entries included, so the administrator can see and correct
+	// them rather than watch them vanish. Only the entries that can be read are ever sent in the header.
+	$screen->setVar('embedOrigins', trim($screens['embedOrigins']));
+}
 $screen->setVar('rewriteruleAddress',formulizeScreen::sanitize_rewrite_address($screens['rewriteruleAddress']));
 $screen->setVar('rewriteruleElement', intval($screens['rewriteruleElement']));
 

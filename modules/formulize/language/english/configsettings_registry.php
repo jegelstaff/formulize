@@ -70,6 +70,7 @@ define('_AM_CFG_SEC_AVAILABILITY', 'Availability');
 
 // --- Section headings: Settings > Advanced ---
 define('_AM_CFG_SEC_PUBLIC_API', 'Public API');
+define('_AM_CFG_SEC_EMBEDDING', 'Embedding in other websites');
 define('_AM_CFG_SEC_SESSIONS_COOKIES', 'Sessions & cookies');
 define('_AM_CFG_SEC_DEBUGGING', 'Debugging');
 define('_AM_CFG_SEC_BASEMENT', "Basement (don't touch unless you really have to)");

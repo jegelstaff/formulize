@@ -455,6 +455,19 @@ return array(
                             'showWhen' => array('name' => 'formulizePublicAPIEnabled', 'value' => 1),
                         ),
                     ),
+                    _AM_CFG_SEC_EMBEDDING => array(
+                        array('name' => 'formulizeEmbeddingEnabled', 'scope' => 'formulize'),
+                        array(
+                            'name' => 'formulizeFrameAncestors',
+                            'scope' => 'formulize',
+                            'showWhen' => array('name' => 'formulizeEmbeddingEnabled', 'value' => 1),
+                        ),
+                        array(
+                            'name' => 'formulizeEmbedTheme',
+                            'scope' => 'formulize',
+                            'showWhen' => array('name' => 'formulizeEmbeddingEnabled', 'value' => 1),
+                        ),
+                    ),
                     _AM_CFG_SEC_SESSIONS_COOKIES => array(
                         array('name' => 'session_expire', 'scope' => 'system'),
                         array('name' => 'session_name', 'scope' => 'system', 'description' => _AM_CFG_DESC_SESSION_NAME),

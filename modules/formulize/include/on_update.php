@@ -23,6 +23,11 @@ function xoops_module_update_formulize($module, $prev_version, $prev_dbversion, 
     // failure. On the first failure we abort WITHOUT advancing dbversion, so a failed update is left
     // clearly incomplete and can be corrected and retried cleanly (later patches never run on top of a
     // half-applied earlier one).
+    //
+    // 000_schema_migrations is closed to new work: it brings a site up to dbversion 18 and is skipped
+    // on sites already there. A schema change from here on gets its own numbered patch file, gated on
+    // the dbversion that introduces it. Anything that genuinely has to happen on every update goes in
+    // 002_always_run.
     $patchesDir = XOOPS_ROOT_PATH . '/modules/formulize/admin/patches/';
     $patchFiles = glob($patchesDir . '*.php');
     $allSucceeded = true;

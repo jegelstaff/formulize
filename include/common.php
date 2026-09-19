@@ -83,6 +83,16 @@ if($icmsUser AND in_array(XOOPS_GROUP_ADMIN, $icmsUser->getGroups()) AND $icmsCo
 	$_SESSION['xoopsUserTheme'] = $icmsConfig['theme_admin_set'];
 }
 
+// The same URL can render with the site's chrome or without it, depending on whether it is being
+// embedded, so shared caches have to tell those apart. Whether this request is one of them is
+// settled in the module's bootstrap further down, where its settings can be read.
+if (!headers_sent()) {
+	header('Vary: Sec-Fetch-Dest', false);
+}
+// No other website may put this site's pages in a frame. Anything an administrator has allowed is
+// added further down, once the settings saying so can be read.
+formulize_sendFrameAncestorsHeader();
+
 icms::launchModule();
 
 if ($icmsConfigPersona['multi_login']) {
