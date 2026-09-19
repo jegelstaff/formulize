@@ -26,18 +26,14 @@
 - label: Examples
   url: /examples/
   children:
-    - label: Grant applications and reporting
-      url: /examples/#funding
-    - label: Volunteer and shift scheduling
-      url: /examples/#people
-    - label: Memberships and renewals
-      url: /examples/#membership
-    - label: Client intake and case notes
-      url: /examples/#casework
-    - label: Equipment and room bookings
-      url: /examples/#resources
-    - label: Event registration and RSVPs
-      url: /examples/#events
+    - label: People and relationships
+      url: /examples/#people-and-relationships
+    - label: Money and resources
+      url: /examples/#money-and-resources
+    - label: Operations and casework
+      url: /examples/#operations-and-casework
+    - label: Public forms and content
+      url: /examples/#public-forms-and-content
 
 - label: AI
   url: /ai/

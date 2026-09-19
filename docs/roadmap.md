@@ -31,7 +31,7 @@ title: Roadmap
 ### Features available now on the master branch
 
 {% for issue in release.done %}
-- **[{{ issue.title }}]({{ issue.html_url }})** — {% if issue.body %}{{ issue.body | strip_html | truncatewords: 30 }}{% endif %}
+- **[{{ issue.title }}]({{ issue.html_url }})** — {% if issue.body %}{{ issue.body | strip_html | truncatewords: 40 }}{% endif %}
 {% endfor %}
 
 {% endif %}
@@ -39,7 +39,7 @@ title: Roadmap
 {% if release.open and release.open.size > 0 %}
 ### Features still under development
 {% for issue in release.open %}
-- **[{{ issue.title }}]({{ issue.html_url }})** — {% if issue.body %}{{ issue.body | strip_html | truncatewords: 30 }}{% endif %}
+- **[{{ issue.title }}]({{ issue.html_url }})** — {% if issue.body %}{{ issue.body | strip_html | truncatewords: 40 }}{% endif %}
 {% endfor %}
 
 {% else %}

@@ -1,0 +1,4397 @@
+C:/Ruby34-x64/lib/ruby/3.4.0/win32/registry.rb:2: warning: fiddle/import is found in fiddle, which will no longer be part of the default gems starting from Ruby 3.5.0.
+You can add fiddle to your Gemfile or gemspec to silence this warning.
+To use retry middleware with Faraday v2.0+, install `faraday-retry` gem
+Configuration file: C:/code/formulize2/docs/_config.yml
+            Source: C:/code/formulize2/docs
+       Destination: C:/code/formulize2/docs/_site
+ Incremental build: disabled. Enable with --incremental
+      Generating... 
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+[33m   GitHub Metadata: No GitHub API authentication could be found. Some fields may be missing or have incorrect data.[0m
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    done in 16.456 seconds.
+  Please add the following to your Gemfile to avoid polling for changes:
+    gem 'wdm', '>= 0.1.0' if Gem.win_platform?
+ Auto-regeneration: enabled for 'C:/code/formulize2/docs'
+    Server address: http://127.0.0.1:4444/
+  Server running... press ctrl-c to stop.
+      Regenerating: 1 file(s) changed at 2026-09-19 13:29:18
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 15.6487788 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:29:33
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 6.6115219 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:29:40
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 5.3541179 seconds.
+                    
+      Regenerating: 2 file(s) changed at 2026-09-19 13:29:46
+                    _jekyll_serve.log
+                    assets/css/formulize.css
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 7.523472 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:29:53
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 5.0345621 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:29:58
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 7.2352041 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:30:05
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 6.1462383 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:30:12
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 7.2877632 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:30:19
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 8.2751658 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:30:27
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 8.364284 seconds.
+                    
+      Regenerating: 2 file(s) changed at 2026-09-19 13:30:36
+                    _jekyll_serve.log
+                    examples.html
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 7.3458772 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:30:43
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 7.3074516 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:30:51
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 9.9742293 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:31:01
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 5.878539 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:31:07
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 7.0108407 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:31:14
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 7.6597749 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:31:21
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 7.367471 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:31:29
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 5.7324566 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:31:35
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 9.5414357 seconds.
+                    
+      Regenerating: 2 file(s) changed at 2026-09-19 13:31:44
+                    _jekyll_serve.log
+                    examples.html
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 9.1777889 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:31:53
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 7.4400537 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:32:01
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 11.3119138 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:32:12
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 8.4247076 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:32:21
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 10.12261 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:32:31
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 8.7687212 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:32:40
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 9.4229714 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:32:49
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 6.7962904 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:32:56
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 6.5553051 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:33:03
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 7.8515024 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:33:11
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 7.9452561 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:33:19
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 9.5287618 seconds.
+                    
+      Regenerating: 2 file(s) changed at 2026-09-19 13:33:28
+                    _jekyll_serve.log
+                    examples.html
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 8.1400587 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:33:36
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 11.0050185 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:33:47
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 13.8509728 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:34:01
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 8.4256026 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:34:10
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 10.8636176 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:34:21
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 7.2644947 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:34:28
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 5.0723062 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:34:33
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 6.05844 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:34:39
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 7.3653962 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:34:47
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 5.0713963 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:34:52
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 7.3275428 seconds.
+                    
+      Regenerating: 2 file(s) changed at 2026-09-19 13:34:59
+                    _jekyll_serve.log
+                    examples.html
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 6.4240714 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:35:06
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 6.3659377 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:35:12
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 7.3359967 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:35:20
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 6.2975408 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:35:26
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 4.4336698 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:35:30
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 7.407828 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:35:38
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 5.2006605 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:35:43
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 5.9666938 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:35:49
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 7.1634059 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:35:56
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 4.9550832 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:36:01
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 9.1352768 seconds.
+                    
+      Regenerating: 2 file(s) changed at 2026-09-19 13:36:11
+                    _jekyll_serve.log
+                    examples.html
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 10.6265695 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:36:21
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 8.4209692 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:36:30
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 7.1536076 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:36:37
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 4.2799772 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:36:41
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 4.6537958 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:36:46
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 4.4436699 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:36:51
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 3.7113149 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:36:54
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.4966519 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:36:57
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.4415084 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:36:59
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.3472981 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:37:02
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.2796929 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:37:04
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.2755946 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:37:06
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.4021285 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:37:09
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.497164 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:37:11
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.599232 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:37:14
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 6.2055424 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:37:20
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 6.0240184 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:37:26
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 6.0481036 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:37:33
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 4.8685726 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:37:38
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.9952822 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:37:41
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.3550962 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:37:43
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 3.0203048 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:37:46
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.8734592 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:37:49
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.7474328 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:37:52
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 3.2455844 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:37:55
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 3.1544835 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:37:58
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 3.4558236 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:38:02
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.887209 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:38:05
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.7031215 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:38:08
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.7194175 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:38:10
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.7188395 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:38:13
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.7107828 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:38:16
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.7565652 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:38:19
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.7715264 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:38:22
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.2899823 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:38:24
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.5304846 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:38:26
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.6089177 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:38:29
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.6976875 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:38:32
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.4958578 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:38:34
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.515046 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:38:37
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.2989727 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:38:39
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.7618394 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:38:42
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.9155342 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:38:45
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 4.0677843 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:38:49
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 6.2705499 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:38:56
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 5.2930178 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:39:01
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 7.0735986 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:39:08
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 5.009077 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:39:13
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 3.681511 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:39:17
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 5.0057219 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:39:22
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 10.4545873 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:39:32
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 7.6771186 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:39:40
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 4.3829646 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:39:45
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 3.5300165 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:39:48
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 3.2756377 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:39:52
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.7003871 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:39:54
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.8368718 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:39:57
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.75797 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:40:00
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.8961374 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:40:03
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 3.0661957 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:40:06
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.7303417 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:40:09
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 3.0219775 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:40:12
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 3.0237704 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:40:15
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.6198033 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:40:18
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.7478739 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:40:21
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.7984406 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:40:23
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 3.1859427 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:40:27
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.9123939 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:40:30
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 3.1250588 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:40:33
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 3.308971 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:40:36
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 3.04761 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:40:39
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 2.9830841 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:40:42
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 9.4065285 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:40:52
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 11.8184619 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:41:04
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 25.7006581 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:41:29
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 22.2748271 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:41:52
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 10.8332683 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:42:03
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 13.1153089 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:42:16
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 27.4266146 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:42:43
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 38.7878565 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:43:22
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 25.7918599 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:43:48
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 16.3811502 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:44:05
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 14.4781213 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:44:19
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 10.5551076 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:44:30
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 10.8673855 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:44:41
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 11.2114719 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:44:52
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 9.798169 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:45:02
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 10.2316694 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:45:12
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 9.2217737 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:45:21
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 10.6917762 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:45:32
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 7.755268 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:45:40
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 9.7363522 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:45:50
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 7.5722211 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:45:57
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 8.1918636 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:46:06
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 7.7700378 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:46:13
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 6.6531554 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:46:20
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 7.9066934 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:46:28
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 9.0041668 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:46:37
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 13.325434 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:46:51
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 9.2571276 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:47:00
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 8.1891141 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:47:08
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 8.276849 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:47:16
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 7.7257914 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:47:24
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 7.8881474 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:47:32
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 8.5182491 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:47:41
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 10.2901654 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:47:51
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 13.2482634 seconds.
+                    
+      Regenerating: 1 file(s) changed at 2026-09-19 13:48:04
+                    _jekyll_serve.log
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)
+         News pages Generated 55 stories (6 announcements/articles, 49 releases), an index, a releases index and a feed.
+     MCP tool pages Generated 63 tool pages (20 standard, 43 admin-only)
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+4 │ @import "rouge-github";
+  │         ^^^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 4:9  root stylesheet
+DEPRECATION WARNING [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+  ╷
+9 │ @import "rouge-dark";
+  │         ^^^^^^^^^^^^
+  ╵
+    C:\code\formulize2\docs\assets\css\style.scss 9:9  root stylesheet
+                    ...done in 14.9035851 seconds.
+                    
+      Regenerating: 2 file(s) changed at 2026-09-19 13:48:19
+                    _jekyll_serve.log
+                    examples.html
+      MCP extractor Jekyll source directory: C:/code/formulize2/docs
+      MCP extractor Found MCP directory at: C:/code/formulize2/mcp
+      MCP extractor Extracted 13 MCP items (10 resources, 3 prompts)

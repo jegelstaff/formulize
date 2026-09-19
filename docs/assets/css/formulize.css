@@ -356,7 +356,17 @@ blockquote {
 }
 
 .band { padding: var(--space-12) 0; }
-.band + .band { padding-top: 0; }
+/* Zeroes the gap between two stacked bands so it's one space-12, not two.
+   Also covers the page heading immediately before the first band - that
+   heading is a bare .band-head div or (videos.html) a bare h1, never a
+   .band itself, so without this the heading's own bottom margin and the
+   band's full padding-top stacked into a much bigger gap than any other
+   pair of bands on the page. */
+.band + .band,
+.band-head + .band,
+h1 + .band {
+  padding-top: 0;
+}
 
 /* Wrap a band's contents in this to give them the same tinted, bordered card
    the Features and Pricing pages end on. It started out as protection - the
@@ -691,35 +701,47 @@ blockquote {
   border-bottom: 1.5px solid var(--color-accent-500);
   transform: rotate(45deg);
 }
-.main-nav .nav-dropdown {
-  /* .main-nav ul (above) makes every <ul> in the header a horizontal flex
-     row, including this one - the actual cause of the earlier wrapping and
-     overflow, not a width problem at all: each item was being laid out as
-     its own narrow flex column side by side, instead of stacked. This
-     overrides it back to a normal vertical list. */
-  display: block;
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  z-index: 60;
-  width: 300px;
-  margin: var(--space-1) 0 0;
-  padding: var(--space-3);
-  list-style: none;
-  background: var(--color-surface);
-  border: 1px solid var(--color-divider);
-  border-radius: var(--radius-md);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18);
-  opacity: 0;
-  visibility: hidden;
-  transform: translate(-50%, -4px);
-  transition: opacity 0.12s ease, transform 0.12s ease, visibility 0.12s;
-}
-.main-nav li.has-dropdown:hover > .nav-dropdown,
-.main-nav li.has-dropdown:focus-within > .nav-dropdown {
-  opacity: 1;
-  visibility: visible;
-  transform: translate(-50%, 0);
+/* This floating-panel appearance (absolute position, translate/opacity
+   reveal on hover or focus-within) is the desktop dropdown only - the
+   max-width: 1060px block further down replaces it with a plain inline
+   list. It has to be walled off behind the matching min-width here,
+   because :focus-within beats that mobile override on specificity alone
+   (four classes/pseudo-classes vs. two) regardless of source order: without
+   this guard, tapping a link inside a mobile dropdown re-applied this
+   block's `transform: translate(-50%, 0)` on top of the mobile reset,
+   sliding that submenu about half its own width to the left - off the edge
+   of the screen - for as long as focus stayed inside it. */
+@media (min-width: 1061px) {
+  .main-nav .nav-dropdown {
+    /* .main-nav ul (above) makes every <ul> in the header a horizontal flex
+       row, including this one - the actual cause of the earlier wrapping and
+       overflow, not a width problem at all: each item was being laid out as
+       its own narrow flex column side by side, instead of stacked. This
+       overrides it back to a normal vertical list. */
+    display: block;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    z-index: 60;
+    width: 300px;
+    margin: var(--space-1) 0 0;
+    padding: var(--space-3);
+    list-style: none;
+    background: var(--color-surface);
+    border: 1px solid var(--color-divider);
+    border-radius: var(--radius-md);
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18);
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(-50%, -4px);
+    transition: opacity 0.12s ease, transform 0.12s ease, visibility 0.12s;
+  }
+  .main-nav li.has-dropdown:hover > .nav-dropdown,
+  .main-nav li.has-dropdown:focus-within > .nav-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, 0);
+  }
 }
 .main-nav .nav-dropdown li { margin: 0; }
 .main-nav .nav-dropdown a {
@@ -1099,6 +1121,13 @@ blockquote {
 .triad h3 { margin-bottom: var(--space-2); }
 .triad ul { margin: 0; padding-left: var(--space-6); font-size: 16.5px; }
 .triad em { color: var(--color-accent-700); font-style: italic; }
+
+/* A named category heading over one .triad, so a long card grid (examples.html)
+   reads as a few sorted groups instead of one undifferentiated wall. Plain h3
+   at the global 25px is distinct enough from the band's own h2 without a
+   dedicated font size. */
+.example-group + .example-group { margin-top: var(--space-8); }
+.example-group h3 { margin-bottom: var(--space-4); }
 
 /* Two equal boxes side by side, for a pair of closing calls to action - see
    the bottom of /contact/. Its own class rather than .triad with one card
@@ -1689,7 +1718,7 @@ blockquote {
   margin-top: var(--space-3);
 }
 .video-card:hover .video-card-title { color: var(--color-accent-700); }
-.video-card span.text-muted { font-size: 15px; }
+.video-card span.text-muted { font-size: 15px; line-height: 1.45; }
 
 /* ── download page ──────────────────────────────────────────────────────── */
 
@@ -2188,6 +2217,15 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   gap: var(--space-8);
 	row-gap: 0; /* spacing covered by padding-top on the containing divs of each item in the flex container */
 }
+/* The two other .feature-cols (the documentation hub's category list, and
+   the "same idea, in every one" trio on the examples page) don't tag their
+   items with .inpage-anchor, so they never picked up that padding-top - at
+   any width where the grid wraps to more rows than columns, a later row's
+   heading sits flush against the previous row's last bullet. Row-gap fixes
+   that the direct way, but only here, scoped off the features page's own
+   items with :has() - added on top of their existing padding-top it would
+   double the gap between their rows instead of leaving them alone. */
+.feature-cols:not(:has(.inpage-anchor)) { row-gap: var(--space-8); }
 .feature-cols h3 { font-size: 22px; margin: 0 0 var(--space-3); }
 .feature-cols ul {
   margin: 0;
@@ -2255,20 +2293,22 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
 
 /* Four plans, so this cannot be .triad (which would leave a 3+1 orphan row).
    Once a plan is chosen on /pricing/ only one card survives the filter, and a
-   single card sitting in a quarter-width column is the intended result. */
-.plan-preview {
+   single card sitting in a quarter-width column is the intended result.
+   .quad is the same grid for any other set of four (the homepage's example
+   categories), so it gets the same 4 / 2 / 1 column steps. */
+.plan-preview, .quad {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-6);
 }
-.plan-preview .card { background: var(--color-neutral-100); }
+.plan-preview .card, .quad .card { background: var(--color-neutral-100); }
 
 @media (max-width: 1080px) {
-  .plan-preview { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .plan-preview, .quad { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 620px) {
-  .plan-preview { grid-template-columns: minmax(0, 1fr); }
+  .plan-preview, .quad { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* ── responsive ─────────────────────────────────────────────────────────── */
@@ -2370,9 +2410,25 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   .header-cta .btn-secondary { display: none; }
 
   /* No room for a floating dropdown on a phone-width menu, and no separate
-     toggle for it either - the outer checkbox already opens the whole menu,
-     so submenus just render open inline underneath their parent. */
-  .main-nav li.has-dropdown > a::after { display: none; }
+     disclosure control either - the top-level link doubles as one (see the
+     script at the bottom of nav.html): a tap opens its own section inline
+     underneath it and closes whichever other one was open, and only opens
+     the section you're already in this way, from is-expanded set server-side
+     in nav.html. The chevron that only ever pointed down at desktop (marking
+     "there's a dropdown here") repoints to double as that control's own
+     open/closed state, rather than being hidden as dead weight on mobile. */
+  .main-nav li.has-dropdown > a::after {
+    /* Collapsed: same corner as the desktop marker, turned a quarter turn
+       the other way to point right rather than down - "there's more this
+       way". (rotate(45deg) is down - the desktop marker's own angle - so
+       right is a further -90deg from there, not +90deg.) */
+    transform: rotate(-45deg);
+    transition: transform 0.15s ease;
+  }
+  .main-nav li.has-dropdown.is-expanded > a::after {
+    /* Expanded: back to the desktop marker's own down-pointing angle. */
+    transform: rotate(45deg);
+  }
   .main-nav .nav-dropdown {
     position: static;
     width: auto;
@@ -2384,7 +2440,9 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
     background: none;
     border: none;
     box-shadow: none;
+    display: none;
   }
+  .main-nav li.has-dropdown.is-expanded > .nav-dropdown { display: block; }
   .main-nav .nav-dropdown a { padding: var(--space-2) var(--space-3); }
 }
 
@@ -2461,6 +2519,7 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   #video-flex-list,
   .download-grid,
   .addon-grid,
+  .quad,
   .plan-preview { grid-template-columns: minmax(0, 1fr); }
   /* .action-strip is the exception to the rule above: it stays the 2x2 the
      900px rules set up, rather than stacking into four full-width rows,

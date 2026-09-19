@@ -34,8 +34,9 @@ plugins:
   - jekyll-github-metadata
   - jekyll-redirect-from
 
-# news_pages.rb and copy_writable_folders.rb rewrite these on every single
-# build (news.json as a fetch-failure fallback cache, writableFilesAndFolders
+# news_pages.rb, roadmap_data.rb and copy_writable_folders.rb rewrite these on
+# every build (news.json and roadmap_issues.json as fetch-failure fallback
+# caches, writableFilesAndFolders
 # as a straight file copy). Without excluding them, `jekyll serve --watch`
 # sees its own output change and rebuilds forever. Excluding them here only
 # stops the watcher from reacting to them - DataReader loads _data files
@@ -43,6 +44,7 @@ plugins:
 # news generator both keep working exactly as before.
 exclude:
   - _data/news.json
+  - _data/roadmap_issues.json
   - _data/writableFilesAndFolders.json
 
 breadcrumbs:

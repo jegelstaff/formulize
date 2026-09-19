@@ -63,6 +63,11 @@
               aria-current="page" stays on the exact page only; the section
               match is a class, because the other five items are not the
               current page in any sense a screen reader should be told about.
+
+              in_section doubles as the mobile menu's initial accordion
+              state below: the section you're already in opens expanded, the
+              other five start collapsed (see the is-expanded rules and the
+              script at the bottom of this file).
             {%- endcomment -%}
             {% assign in_section = false %}
             {% if page.url contains item.url %}{% assign in_section = true %}{% endif %}
@@ -72,8 +77,8 @@
                 {% assign in_section = true %}
               {% endif %}
             {% endfor %}
-            <li{% if item.children %} class="has-dropdown"{% endif %}>
-              <a href="{{ item.url | relative_url }}"{% if page.url == item.url %} aria-current="page"{% elsif in_section %} class="nav-section-current"{% endif %}{% if item.children %} aria-haspopup="true"{% endif %}>{{ item.label }}</a>
+            <li{% if item.children %} class="has-dropdown{% if in_section %} is-expanded{% endif %}"{% endif %}>
+              <a href="{{ item.url | relative_url }}"{% if page.url == item.url %} aria-current="page"{% elsif in_section %} class="nav-section-current"{% endif %}{% if item.children %} aria-haspopup="true" aria-expanded="{{ in_section }}"{% endif %}>{{ item.label }}</a>
               {% if item.children %}
                 <ul class="nav-dropdown">
                   {% for child in item.children %}
@@ -105,3 +110,50 @@
     </div>
   </div>
 </header>
+
+<script>
+  // The mobile menu is a plain checkbox toggle (see .nav-toggle above) with
+  // one open section rendered per top-level item (see is-expanded in the CSS
+  // and the initial state Liquid sets above). Neither needs JS by itself -
+  // this only covers the two things a checkbox and :hover/:focus-within
+  // can't: closing the whole menu on navigation, and making a tap on a
+  // collapsed top-level item open its section instead of following the link
+  // straight away.
+  (function () {
+    var mobileQuery = window.matchMedia('(max-width: 1060px)');
+    var navToggle = document.getElementById('nav-toggle');
+
+    document.querySelectorAll('.main-nav a').forEach(function (link) {
+      link.addEventListener('click', function (e) {
+        var li = link.parentElement;
+        var isCollapsedSectionLink = mobileQuery.matches &&
+          li.classList.contains('has-dropdown') &&
+          link.getAttribute('aria-haspopup') === 'true' &&
+          !li.classList.contains('is-expanded');
+
+        if (isCollapsedSectionLink) {
+          // First tap on a section that's closed: open it (and close
+          // whichever other one was open - only one at a time) instead of
+          // navigating. The link itself still goes to the section's own
+          // page - tapping it again, now that it's expanded, falls through
+          // to the navigation below.
+          e.preventDefault();
+          document.querySelectorAll('.main-nav li.has-dropdown.is-expanded').forEach(function (openLi) {
+            openLi.classList.remove('is-expanded');
+            openLi.querySelector(':scope > a').setAttribute('aria-expanded', 'false');
+          });
+          li.classList.add('is-expanded');
+          link.setAttribute('aria-expanded', 'true');
+          return;
+        }
+
+        // Anything else - a leaf link, an in-page anchor (Features and
+        // Examples), or a second tap on an already-open section - is a real
+        // navigation. A normal link closes the menu just by loading a new
+        // page and throwing this DOM away; an in-page anchor doesn't reload
+        // anything, so this closes it explicitly instead.
+        navToggle.checked = false;
+      });
+    });
+  })();
+</script>

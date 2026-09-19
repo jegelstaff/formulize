@@ -27,6 +27,10 @@ title: Updating Formulize
 
 3. Make sure [the folders that need to be writable](../writable_folders) are writable by the web server
 
-4. Login to your website. _If a database and configuration update is required,_ you will be redirected to the admin side where you can click a button to apply the update. __Backup your files and database before applying updates__.
+4. Login to your website _with a webmaster account_.
+
+5. _If a database and configuration update is required,_ you will be redirected to the admin side where you can click a button to apply the update. __Backup your files and database before applying updates__. If you are _not_ directed automatically to the admin side then there's nothing more to do.
+
+6. Celebrate a succesful upgrade! 🎉
 
 
