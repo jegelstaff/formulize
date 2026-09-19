@@ -7,7 +7,7 @@ redirect_from:
 title: getEntryMeta
 ---
 
-# getEntryMeta( <span class="sig-type">(int)</span> $entry_id, <span class="sig-type">(bool)</span> $updateCache <span class="sig-default">= false</span> )
+# <span class="sig-name">getEntryMeta</span>( <span class="sig-arg"><span class="sig-type">(int)</span> $entry_id</span>, <span class="sig-arg"><span class="sig-type">(bool)</span> $updateCache <span class="sig-default">= false</span></span> )
 
 ## Description
 

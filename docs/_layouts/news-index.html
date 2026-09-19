@@ -7,12 +7,12 @@ full_width: true
   The main news page carries announcements and articles. Release notes are the
   overwhelming majority of entries by count, so they get their own page rather
   than burying everything else; the most recent handful are listed here as a
-  compact secondary band, with a link through to the full list.
+  secondary band, each with its teaser exactly as on /news/releases/, and a link
+  through to the full list.
 {%- endcomment -%}
 
 <div class="band-head" style="max-width: 68ch;">
   <h1 style="margin-top: var(--space-3);">News</h1>
-  <p>What is happening with Formulize &mdash; announcements, articles, and notes from every release.</p>
   <p class="text-muted"><a href="{{ "/news/feed.xml" | relative_url }}">Subscribe by RSS</a>, or <a href="{{ "/mailinglist/" | relative_url }}">join the mailing list</a> for the same thing by email.</p>
 </div>
 
@@ -49,7 +49,12 @@ full_width: true
     <li>
       <a href="{{ entry.url | relative_url }}">
         {% include release-date.html %}
-        <span class="news-title">{{ entry.headline }}</span>
+        <span class="news-text">
+          <span class="news-title">{{ entry.headline }}</span>
+          {%- if entry.teaser and entry.teaser != "" %}
+          <span class="news-teaser">{{ entry.teaser }}</span>
+          {%- endif %}
+        </span>
       </a>
     </li>
     {%- endfor %}

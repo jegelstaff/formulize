@@ -7,7 +7,7 @@ redirect_from:
 title: findAllEntriesForGroups
 ---
 
-# findAllEntriesForGroups( <span class="sig-type">(int | array)</span> $group_ids )
+# <span class="sig-name">findAllEntriesForGroups</span>( <span class="sig-arg"><span class="sig-type">(int | array)</span> $group_ids</span> )
 
 ## Description
 

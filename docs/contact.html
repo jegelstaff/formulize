@@ -23,8 +23,7 @@ description: Tell us what you are trying to build and we will tell you what it w
 {% endcomment %}
 
 <div class="band-head" style="max-width: 68ch;">
-  <h1 style="margin-top: var(--space-3);">Tell us what you are trying to do</h1>
-  <p>Describe the situation in your own words &mdash; what you are tracking, roughly how many people are involved, and what is going wrong now. We will suggest some ways forward.</p>
+  <h1 style="margin-top: var(--space-3);">Get help with Formulize</h1>
 </div>
 
 <section class="band">
@@ -64,16 +63,30 @@ description: Tell us what you are trying to build and we will tell you what it w
       </div>
     </a>
   </div>
-  <p class="text-muted" style="max-width: 68ch;">Think you have found a bug? <a href="{{ "/report-a-bug/" | relative_url }}">Report it here</a>. You don't need a GitHub account.</p>
 </section>
 
+{% comment %}
+  The two boxes that close the page are the two things a visitor might be here
+  for that the help form above is the wrong place for: a bug report, and buying
+  hosting. They read as a pair, so they are a pair - one .duo row, same blue
+  fill, equal height.
+{% endcomment %}
 <section class="band">
-  <div class="card elev-sm" style="background: var(--color-accent-100);">
-    <h2 style="margin-bottom: var(--space-2);">Already know you want hosting?</h2>
-    <p class="card-body" style="font-size: 16px; max-width: 62ch;">If you have picked a plan, the sign-up form asks the handful of extra things we need to build your system.</p>
-    <div class="btn-row">
-      <a class="btn btn-primary" href="{{ "/signup/" | relative_url }}">Sign up for hosting</a>
-      <a class="btn btn-secondary" href="{{ "/pricing/" | relative_url }}">Compare the plans</a>
+  <div class="duo">
+    <div class="card elev-sm" style="background: var(--color-accent-100);">
+      <h2 style="margin-bottom: var(--space-2);">Think you found a bug?</h2>
+      <p class="card-body" style="font-size: 16px;">Sorry there was a problem. Tell us all about it.</p>
+      <div class="btn-row">
+        <a class="btn btn-primary" href="{{ "/report-a-bug/" | relative_url }}">Report a bug</a>
+      </div>
+    </div>
+    <div class="card elev-sm" style="background: var(--color-accent-100);">
+      <h2 style="margin-bottom: var(--space-2);">Already know you want hosting?</h2>
+      <p class="card-body" style="font-size: 16px;">Let us know a few details and your site can be online in minutes.</p>
+      <div class="btn-row">
+        <a class="btn btn-primary" href="{{ "/signup/" | relative_url }}">Sign up for hosting</a>
+        <a class="btn btn-secondary" href="{{ "/pricing/" | relative_url }}">Compare plans</a>
+      </div>
     </div>
   </div>
 </section>

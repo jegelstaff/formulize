@@ -4,3 +4,8 @@
    All other site styles live in /assets/css/formulize.css, which is a plain
    CSS file served as a static asset (no Sass step, previewable directly). */
 @import "rouge-github";
+
+/* The dark half of the reader-chosen code block scheme. Imported after the
+   light theme it overrides; see the file itself, and the .code-block block in
+   formulize.css, for how the two are switched between. */
+@import "rouge-dark";

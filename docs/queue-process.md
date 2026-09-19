@@ -7,7 +7,7 @@ redirect_from:
 title: process
 ---
 
-# process( <span class="sig-type">(object|string)</span> $queue_or_queue_handle, <span class="sig-type">(boolean)</span> $synchronous <span class="sig-default">= false</span> )
+# <span class="sig-name">process</span>( <span class="sig-arg"><span class="sig-type">(object|string)</span> $queue_or_queue_handle</span>, <span class="sig-arg"><span class="sig-type">(boolean)</span> $synchronous <span class="sig-default">= false</span></span> )
 
 ## Description
 

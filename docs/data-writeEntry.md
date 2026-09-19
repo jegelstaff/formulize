@@ -7,7 +7,7 @@ redirect_from:
 title: writeEntry
 ---
 
-# writeEntry( <span class="sig-type">(int | string)</span> $entry_id, <span class="sig-type">(array)</span> $values, <span class="sig-type">(int)</span> $proxyUser, <span class="sig-type">(bool)</span> $forceUpdate <span class="sig-default">= false</span>, <span class="sig-type">(bool)</span> $update_metadata <span class="sig-default">= true</span> )
+# <span class="sig-name">writeEntry</span>( <span class="sig-arg"><span class="sig-type">(int | string)</span> $entry_id</span>, <span class="sig-arg"><span class="sig-type">(array)</span> $values</span>, <span class="sig-arg"><span class="sig-type">(int)</span> $proxyUser</span>, <span class="sig-arg"><span class="sig-type">(bool)</span> $forceUpdate <span class="sig-default">= false</span></span>, <span class="sig-arg"><span class="sig-type">(bool)</span> $update_metadata <span class="sig-default">= true</span></span> )
 
 ## Description
 

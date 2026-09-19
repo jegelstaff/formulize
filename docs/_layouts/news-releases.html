@@ -13,13 +13,29 @@ full_width: true
   <p class="text-muted"><a href="{{ "/mailinglist/" | relative_url }}">Join the mailing list</a> to hear about new releases by email. Found a problem in a release? <a href="{{ "/report-a-bug/" | relative_url }}">Report a bug</a>.</p>
 </div>
 
+{%- comment -%}
+  Each row carries the release's teaser under its headline, because a version
+  number on its own tells a reader nothing about whether the release is the one
+  they are looking for. The ten-row "Latest releases" list on the main news page
+  carries them for the same reason, in the same markup - keep the two in step.
+
+  The date, the headline and the teaser are three things, and .news-list lays a
+  row out as a two-column flex: the date, then everything else. So the headline
+  and the teaser are wrapped together in .news-text, which stacks them in the
+  second column.
+{%- endcomment -%}
 <section class="band">
   <ul class="news-list">
     {%- for entry in page.entries %}
     <li>
       <a href="{{ entry.url | relative_url }}">
         {% include release-date.html %}
-        <span class="news-title">{{ entry.headline }}</span>
+        <span class="news-text">
+          <span class="news-title">{{ entry.headline }}</span>
+          {%- if entry.teaser and entry.teaser != "" %}
+          <span class="news-teaser">{{ entry.teaser }}</span>
+          {%- endif %}
+        </span>
       </a>
     </li>
     {%- endfor %}

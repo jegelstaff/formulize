@@ -7,7 +7,7 @@ redirect_from:
 title: security_check
 ---
 
-# security_check( <span class="sig-type">(int)</span> $form_id, <span class="sig-type">(int)</span> $entry_id <span class="sig-default">= ""</span>, <span class="sig-type">(int)</span> $user_id <span class="sig-default">= ""</span> )
+# <span class="sig-name">security_check</span>( <span class="sig-arg"><span class="sig-type">(int)</span> $form_id</span>, <span class="sig-arg"><span class="sig-type">(int)</span> $entry_id <span class="sig-default">= ""</span></span>, <span class="sig-arg"><span class="sig-type">(int)</span> $user_id <span class="sig-default">= ""</span></span> )
 
 ## Location
 

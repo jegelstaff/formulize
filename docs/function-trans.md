@@ -7,7 +7,7 @@ redirect_from:
  - developers/API/functions/trans/
 ---
 
-# trans( <span class="sig-type">(string)</span> $string, <span class="sig-type">(string)</span> $lang <span class="sig-default">= null</span> )
+# <span class="sig-name">trans</span>( <span class="sig-arg"><span class="sig-type">(string)</span> $string</span>, <span class="sig-arg"><span class="sig-type">(string)</span> $lang <span class="sig-default">= null</span></span> )
 
 ## Location
 

@@ -150,7 +150,7 @@ class formulizeShuffledRadioElementHandler extends formulizeRadioElementHandler 
 
 ### What the example deliberately leaves out
 
-The standard radio element's render method supports several extra features that this simple example does not reproduce: the "other" write-in option (__{OTHER|...}__), alternate on-screen text for options (uitext), configurable delimiters between options, and the preservation of out-of-range values saved under an older set of options. If your custom element needs those, study the render and prepareDataForSaving methods in __radioElement.php__ — but note that they work in terms of option positions, so you would need to carry the presented order through to the save step yourself.
+The standard radio element's render method supports several extra features that this simple example does not reproduce: the "other" write-in option, alternate on-screen text for options (uitext), configurable delimiters between options, and the preservation of out-of-range values saved under an older set of options. If your custom element needs those, study the render and prepareDataForSaving methods in __radioElement.php__ — but note that they work in terms of option positions, so you would need to carry the presented order through to the save step yourself.
 
 ## Tips
 

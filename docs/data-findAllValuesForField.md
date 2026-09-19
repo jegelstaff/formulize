@@ -7,7 +7,7 @@ redirect_from:
 title: findAllValuesForField
 ---
 
-# findAllValuesForField( <span class="sig-type">(string)</span> $element_handle, <span class="sig-type">(string)</span> $sort <span class="sig-default">= ""</span>, <span class="sig-type">(array)</span>&nbsp;$scope_group_ids&nbsp;<span class="sig-default">=&nbsp;array()</span>, <span class="sig-type">(array)</span> $scope_uids <span class="sig-default">= array()</span>, <span class="sig-type">(bool)</span> $usePerGroupFilters <span class="sig-default">= false</span> )
+# <span class="sig-name">findAllValuesForField</span>( <span class="sig-arg"><span class="sig-type">(string)</span> $element_handle</span>, <span class="sig-arg"><span class="sig-type">(string)</span> $sort <span class="sig-default">= ""</span></span>, <span class="sig-arg"><span class="sig-type">(array)</span> $scope_group_ids <span class="sig-default">= array()</span></span>, <span class="sig-arg"><span class="sig-type">(array)</span> $scope_uids <span class="sig-default">= array()</span></span>, <span class="sig-arg"><span class="sig-type">(bool)</span> $usePerGroupFilters <span class="sig-default">= false</span></span> )
 
 ## Description
 

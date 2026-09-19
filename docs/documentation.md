@@ -26,9 +26,33 @@ bundle install
 bundle exec jekyll serve
 ```
 
-Then browse to [http://localhost:4000](http://localhost:4000). `jekyll serve`
-watches the `/docs/` folder and rebuilds automatically as you save changes —
-refresh the page in your browser to see them, no restart needed.
+Then browse to [http://localhost:4000](http://localhost:4000).
+
+### Live updates while you write
+
+`jekyll serve` already watches the `/docs/` folder and rebuilds as you save —
+watching is part of `serve`, so there is no `--watch` flag to add. Save a file,
+refresh the browser, and the change is there.
+
+To skip the refresh as well, add `--livereload`:
+
+```bash
+bundle exec jekyll serve --livereload
+```
+
+That injects a small script into every page which reloads the tab itself once
+the rebuild finishes, so the browser follows along beside the editor.
+
+Two things the watcher will not pick up:
+
+- **Changes to `_config.yml`.** Jekyll reads it once, at startup. Stop the
+  server and start it again after editing it.
+- **Anything a plugin generates on each build.** `_plugins/news_pages.rb`
+  rewrites `_data/news.json` and `_plugins/copy_writable_folders.rb` rewrites
+  `_data/writableFilesAndFolders.json` every time the site is built. Both are
+  listed under `exclude:` in `_config.yml` for exactly that reason — without
+  it the watcher sees its own output change and rebuilds forever. Leave them
+  excluded.
 
 ### Always use `bundle exec`
 
@@ -94,8 +118,9 @@ path in `/docs/`.
 
 ## Where things fit together
 
-- [GitHub Pages and Jekyll configuration](/documentation/github_pages) covers
-  `_config.yml`, how the site actually gets deployed, and what runs in CI.
+- [GitHub Pages and Jekyll configuration](/documentation/version_control/documentation/github_pages) covers
+  `_config.yml`, the plugins and CI steps that generate the news, AI reference
+  and roadmap pages, and how the site actually gets deployed.
 - The [Documentation](/documentation/) hub links out to the rest of what a
   contributor is likely to need — version control, git tips, testing, the
   roadmap.

@@ -7,7 +7,7 @@ redirect_from:
 title: formulize_writeEntry
 ---
 
-# formulize_writeEntry( <span class="sig-type">(array)</span> $values, <span class="sig-type">(int | string)</span> $entry_id <span class="sig-default">= "new"</span>, $action, <span class="sig-type">(int)</span> $proxyUser, <span class="sig-type">(bool)</span> $forceUpdate <span class="sig-default">= false</span>, <span class="sig-type">(bool)</span> $writeOwnerInfo <span class="sig-default">= true</span> )
+# <span class="sig-name">formulize_writeEntry</span>( <span class="sig-arg"><span class="sig-type">(array)</span> $values</span>, <span class="sig-arg"><span class="sig-type">(int | string)</span> $entry_id <span class="sig-default">= "new"</span></span>, <span class="sig-arg">$action</span>, <span class="sig-arg"><span class="sig-type">(int)</span> $proxyUser</span>, <span class="sig-arg"><span class="sig-type">(bool)</span> $forceUpdate <span class="sig-default">= false</span></span>, <span class="sig-arg"><span class="sig-type">(bool)</span> $writeOwnerInfo <span class="sig-default">= true</span></span> )
 
 ## Location
 

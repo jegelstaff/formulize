@@ -7,7 +7,7 @@ redirect_from:
 title: findFirstEntryForGroups
 ---
 
-# findFirstEntryForGroups( <span class="sig-type">(int | array)</span> $group_ids )
+# <span class="sig-name">findFirstEntryForGroups</span>( <span class="sig-arg"><span class="sig-type">(int | array)</span> $group_ids</span> )
 
 ## Description
 

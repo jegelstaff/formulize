@@ -7,7 +7,7 @@ redirect_from:
 title: delete
 ---
 
-# delete( <span class="sig-type">(string)</span> $queue_handle )
+# <span class="sig-name">delete</span>( <span class="sig-arg"><span class="sig-type">(string)</span> $queue_handle</span> )
 
 ## Description
 

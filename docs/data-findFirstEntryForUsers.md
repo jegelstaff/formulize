@@ -7,7 +7,7 @@ redirect_from:
 title: findFirstEntryForUsers
 ---
 
-# findFirstEntryForUsers( <span class="sig-type">(int | array)</span> $user_ids )
+# <span class="sig-name">findFirstEntryForUsers</span>( <span class="sig-arg"><span class="sig-type">(int | array)</span> $user_ids</span> )
 
 ## Description
 

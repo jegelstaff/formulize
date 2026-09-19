@@ -14,10 +14,10 @@ We use [Github]({{ site.github.repository_url }}) as our version control system.
 2. Create a new branch based on master [help](./branching)
 3. Start a pull request an GitHub [help](./branching)
 4. Make code changes, push to your branch regularly
-5. Update/create documentation where applicable [help](./documentation)
-6. Give "thumbs up" in your pull request when you think it is ready
-7. A maintainer will review the pull request and merge it
-8. A maintainer will publish the documentation updates, if any [help](../github_pages)
+5. Update/create tests where applicable [help](./testing)
+6. Update/create documentation where applicable [help](./documentation)
+7. Give "thumbs up" in your pull request when you think it is ready
+8. A maintainer will review the pull request and merge it
 
 For more details about each major part of this process, see the following pages:
 

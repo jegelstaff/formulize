@@ -7,7 +7,7 @@ redirect_from:
 title: prepDataForWrite
 ---
 
-# prepDataForWrite( <span class="sig-type">(object | string | int)</span> $element_identifier, <span class="sig-type">(array | string | int)</span> $value, <span class="sig-type">(int)</span> $entry_id )
+# <span class="sig-name">prepDataForWrite</span>( <span class="sig-arg"><span class="sig-type">(object | string | int)</span> $element_identifier</span>, <span class="sig-arg"><span class="sig-type">(array | string | int)</span> $value</span>, <span class="sig-arg"><span class="sig-type">(int)</span> $entry_id</span> )
 
 ## Location
 
