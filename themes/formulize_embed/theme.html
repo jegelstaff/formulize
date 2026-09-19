@@ -18,8 +18,6 @@
 
     <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1">
 
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-
     <!-- Module Header -->
     <{$icms_module_header}>
 
@@ -38,27 +36,23 @@
          "The theme does not exist" over the top of the page when it cannot find one.
          The site's theme is read from theme_set, which embedding deliberately leaves alone (see
          header.php, which picks this theme by folder name instead), so an embedded screen is styled by whatever the
-         site is wearing today. Nothing to set, and nothing to keep in step. -->
+         site is wearing today. Nothing to set, and nothing to keep in step. Which stylesheets that
+         takes differs from theme to theme; formulize_embedBaseThemeStylesheets() knows. -->
     <{php}>
-    global $icmsConfig;
-    $baseTheme = $icmsConfig['theme_set'];
-    if (!$baseTheme OR !is_dir(ICMS_THEME_PATH . '/' . $baseTheme)
-        OR formulize_themeIsAnEmbedTheme($baseTheme)) {
-        $baseTheme = 'Anari'; // the site's theme is missing, or is itself an embed theme
-    }
-    $rtlPath = ($this->_tpl_vars['icms_rtl'] ?? false) ? 'rtl/' : '';
-    foreach (array('/themes/' . $baseTheme . '/' . $rtlPath . 'css/style.css',
-                   '/themes/' . $this->_tpl_vars['theme_name'] . '/css/style.css') as $stylesheet) {
-        echo '<link rel="stylesheet" type="text/css" media="all" href="' . XOOPS_URL . $stylesheet
-            . '?v=' . formulize_get_file_version($stylesheet) . '" />';
-    }
+    echo formulize_embedBaseThemeStylesheets($this->_tpl_vars['icms_rtl'] ?? false);
+    $stylesheet = '/themes/' . $this->_tpl_vars['theme_name'] . '/css/style.css';
+    echo '<link rel="stylesheet" type="text/css" media="all" href="' . XOOPS_URL . $stylesheet
+        . '?v=' . formulize_get_file_version($stylesheet) . '" />';
     <{/php}>
 
     <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
 
 </head>
 
-<body id="<{$icms_dirname}>" class="<{$icms_langcode}><{if isset($formulize_screen_id) && $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}>" style="display: none;">
+<{* fz-inline is the class a theme can key off for a page drawn without its chrome, whose document
+   scrolls rather than a pane inside it, and whose lists flow rather than filling a fixed height -
+   which is exactly this page. Lyris uses it for its own chrome-less pages. *}>
+<body id="<{$icms_dirname}>" class="<{$icms_langcode}> fz-inline<{if isset($formulize_screen_id) && $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}>" style="display: none;">
 
 <script type='text/javascript'>
 // Inside a frame, nothing here scrolls: the frame is sized to its whole content and the page hosting
@@ -94,24 +88,15 @@ if($xoopsUser) {
 }
 <{/php}>
 
-  <div class="site-layout">
-
-    <!-- LAYOUT -> MAIN -->
-    <div class="site-layout__main">
-
-
-
-      <!-- MAIN CONTENT (gray background) -->
-      <div class="main-content">
-        <div class="container">
-
-        <{$icms_contents}>
-
-        </div>
-      </div>
-
-    </div>
-  </div>
+  <{* The screen goes inside the borrowed site theme's own content area, because that theme's
+     stylesheet often finds the screen through the elements around it. The theme says what those are
+     in its embed-content.html. See formulize_embedBaseThemeContentTemplate(). *}>
+  <{php}>$this->assign('embed_content_template', formulize_embedBaseThemeContentTemplate());<{/php}>
+  <{if $embed_content_template}>
+    <{includeq file=$embed_content_template}>
+  <{else}>
+    <main><{$icms_contents}></main>
+  <{/if}>
 
 
   <{php}>

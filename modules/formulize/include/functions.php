@@ -595,6 +595,88 @@ function formulize_embedThemeName() {
 }
 
 /**
+ * The site theme whose styling an embedded screen borrows.
+ *
+ * An embed theme keeps no stylesheet of its own beyond a few overrides. It borrows the site's
+ * theme, so an embedded screen looks like the rest of the site and never falls behind it. Embedding
+ * leaves theme_set alone (header.php picks the embed theme by folder name instead), so theme_set is
+ * still the site's theme here. It is also what chooses the screen templates, so the stylesheet and
+ * the markup it was written for always come from the same theme.
+ *
+ * @return string The theme folder name
+ */
+function formulize_embedBaseTheme() {
+    global $icmsConfig;
+    $theme = $icmsConfig['theme_set'];
+    if (!$theme OR !is_dir(ICMS_THEME_PATH.'/'.$theme) OR formulize_themeIsAnEmbedTheme($theme)) {
+        $theme = 'Anari'; // the site's theme is missing, or is itself an embed theme
+    }
+    return $theme;
+}
+
+/**
+ * The stylesheet links an embedded screen needs in order to look like the site's own theme.
+ *
+ * These are whatever the site theme's own head loads, minus anything that belongs to its chrome.
+ * Themes differ in this - one starts with a reset stylesheet, one has colours, font and logo set on
+ * the Appearance page - and an embedded screen that loads only style.css would lose everything that
+ * a theme keeps outside it. Last comes the theme's css/embed.css, if it has one, where a theme
+ * corrects whatever its layout assumes about the window. The embed theme itself names no site
+ * theme's markup, so a new theme never needs anything changed there.
+ *
+ * The Appearance settings belong to whichever theme is being rendered, and on an embedded screen
+ * that is the embed theme. icms_view_theme_Factory::getThemesList() leaves embed themes out, so the
+ * Appearance code falls back to the site's theme, which is the one being borrowed here.
+ *
+ * @param bool $rtl TRUE for a right-to-left language, which a theme may keep separate stylesheets for
+ * @return string HTML to print in the head
+ */
+function formulize_embedBaseThemeStylesheets($rtl = false) {
+    $theme = formulize_embedBaseTheme();
+    $folder = '/themes/'.$theme.'/'.($rtl ? 'rtl/' : '').'css/';
+    $html = '';
+    foreach (array('reset.css', 'style.css') as $name) { // style.css brings anything it @imports, such as tokens.css
+        if ($name == 'style.css' OR file_exists(XOOPS_ROOT_PATH.$folder.$name)) {
+            $html .= '<link rel="stylesheet" type="text/css" media="all" href="'.XOOPS_URL.$folder.$name
+                .'?v='.formulize_get_file_version($folder.$name).'" />'."\n";
+        }
+    }
+    // Colours, font and logo from the Appearance page, for a theme that uses them. After the theme's
+    // stylesheet, so the settings win. Checked for rather than required because the Appearance page
+    // arrived in a separate line of development from embedding; once both are merged the check always
+    // passes and can go.
+    $appearanceFile = XOOPS_ROOT_PATH.'/modules/formulize/include/appearance.php';
+    if (file_exists($appearanceFile)) {
+        require_once $appearanceFile;
+        if (formulize_themeSupportsAppearance($theme)) {
+            $html .= formulize_renderAppearanceHead();
+        }
+    }
+    // the theme's own corrections for being shown in a frame, if it needs any
+    $embedStylesheet = $folder.'embed.css';
+    if (file_exists(XOOPS_ROOT_PATH.$embedStylesheet)) {
+        $html .= '<link rel="stylesheet" type="text/css" media="all" href="'.XOOPS_URL.$embedStylesheet
+            .'?v='.formulize_get_file_version($embedStylesheet).'" />'."\n";
+    }
+    return $html;
+}
+
+/**
+ * The template that wraps an embedded screen in the borrowed site theme's own content area.
+ *
+ * A theme's stylesheet often finds the screen through the elements its layout puts around it, so
+ * a theme can supply embed-content.html, which prints $icms_contents inside those elements and leaves
+ * out its header and menus. The embed theme includes it in place of the screen.
+ *
+ * @return string The template's path under the themes folder, or an empty string when the site
+ *   theme has none and the screen is drawn on its own
+ */
+function formulize_embedBaseThemeContentTemplate() {
+    $template = formulize_embedBaseTheme().'/embed-content.html';
+    return file_exists(ICMS_THEME_PATH.'/'.$template) ? $template : '';
+}
+
+/**
  * THEME PICKERS AND EMBED THEMES
  *
  * A theme is a folder under /themes with a theme.html file in it, and that file is exactly what
@@ -602,9 +684,11 @@ function formulize_embedThemeName() {
  * any other, so it cannot be kept out of that list by leaving something out.
  *
  * So it is marked instead. A file named by FORMULIZE_EMBED_THEME_MARKER in the folder says "this
- * theme is for rendering screens inside somebody else's page". The two functions below split the
- * installed themes on that marker: ordinary themes for the pickers that choose how the site itself
- * looks, embed themes for the one preference that chooses how an embedded screen looks. Copying an
+ * theme is for rendering screens inside somebody else's page". icms_view_theme_Factory::getThemesList()
+ * leaves marked themes out, so every picker that chooses how the site itself looks is without them,
+ * and formulize_embedThemesList() below lists them for the one preference that chooses how an
+ * embedded screen looks. formulize_selectableThemesList() applies the same rule to a list from
+ * anywhere else, such as the admin themes. Copying an
  * embed theme to design your own carries the marker along with everything else, so a copy behaves
  * the way the original did without anything having to be registered anywhere.
  */
@@ -981,8 +1065,9 @@ function formulize_selectableThemesList($themes = null) {
  */
 function formulize_embedThemesList() {
     $themes = array();
-    foreach (icms_view_theme_Factory::getThemesList() as $theme) {
-        if (formulize_themeIsAnEmbedTheme($theme)) {
+    // not from icms_view_theme_Factory::getThemesList(), which leaves embed themes out
+    foreach (icms_core_Filesystem::getDirList(ICMS_THEME_PATH.'/') as $theme) {
+        if (file_exists(ICMS_THEME_PATH.'/'.$theme.'/theme.html') AND formulize_themeIsAnEmbedTheme($theme)) {
             $themes[$theme] = $theme;
         }
     }

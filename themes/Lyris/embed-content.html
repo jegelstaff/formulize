@@ -1,0 +1,11 @@
+<{* How this theme wraps a screen that is embedded in another website. The embed theme draws the page
+   and includes this in place of the screen, so the screen sits inside this theme's own content area
+   and this theme's stylesheet finds it there, without any of this theme's header or sidebar. The
+   body carries fz-inline, as it does on this theme's own chrome-less pages. See docs/themes.md. *}>
+<div class="fz-app" id="fz-app">
+  <div class="fz-app__body">
+    <main class="fz-main" role="main" id="fz-main">
+      <{$icms_contents}>
+    </main>
+  </div>
+</div>

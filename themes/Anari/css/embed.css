@@ -1,0 +1,32 @@
+/*
+ * Loaded after this theme's own stylesheet, only when a screen is embedded in another website and
+ * is borrowing this theme's styling. See docs/themes.md.
+ *
+ * In there the frame is sized to its content, so the viewport is as tall as everything in it. The
+ * rules below undo the places where this theme assumes a window-height layout with its own
+ * scrolling area.
+ */
+
+/* this theme's font, which theme.html loads and which an embedded screen does not get from there */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap");
+
+.site-layout__main {
+  width: 100%;
+  height: auto;
+  /* this theme keeps 100px clear below the form so the last field is not jammed against the
+     bottom of a window-height scrolling area. There is no such area here - the frame is exactly as
+     tall as its contents - so most of that would only add empty space to the bottom of every
+     embedded screen, which the host page then has to make room for. Enough is kept that the last
+     button is not flush against the edge of the frame. */
+  padding-bottom: 1.5em;
+}
+
+.main-content {
+  height: auto;
+  overflow: visible;
+}
+
+#xo-canvas-leftcolumn {
+  height: auto;
+  overflow: visible;
+}

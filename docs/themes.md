@@ -68,6 +68,41 @@ copy:
 - `session-timeout-warning.html`, including its `session-timeout-warning` id, which the script at the
   bottom uses to bring the warning into view
 
+## 4. Style screens so they still work without your header and menus
+
+An embedded screen borrows your theme's styling without its page layout. It loads your
+`css/reset.css`, if you have one, then your `css/style.css`, and then any colours, font and logo set on
+the Appearance page. It does not load your `theme.html` or your script. The `<body>` has the class
+`fz-inline`.
+
+Two optional files let you adjust how your theme looks when embedded:
+
+- **`embed-content.html`**: the elements your theme puts around the page content, with
+  `<{$icms_contents}>` inside them and your header and menus left out. Add it if your stylesheet
+  styles screens through those elements. Without it, the screen is drawn inside a plain `<main>`.
+
+  ```html
+  <div class="my-layout">
+    <main class="my-main-pane">
+      <{$icms_contents}>
+    </main>
+  </div>
+  ```
+
+- **`css/embed.css`**: loaded after your other stylesheets, only on embedded screens. Use it for
+  anything that assumes your page fills the window. An embedded screen is exactly as tall as its
+  content, so a content area that fills the window and scrolls on its own should just be as tall as
+  its content:
+
+  ```css
+  .my-main-pane {
+    height: auto;
+    overflow: visible;
+  }
+  ```
+
+The Anari theme has both files, if you want an example.
+
 ## Checking your theme
 
 Open a long form in your theme, scroll down, and save it. You should be returned to where you were

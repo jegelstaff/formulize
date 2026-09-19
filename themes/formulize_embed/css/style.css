@@ -24,33 +24,23 @@
  * last section of this file is the short list of places where that happens. See the comment there.
  *
  * WHICH STYLESHEET ANY OF THIS IS ARGUING WITH. Whichever one the site is wearing - this theme
- * borrows it rather than carrying a copy. Every override here was written against the standard
- * theme, and all but one are scoped by a class name that theme happens to use, so against a
- * different theme they match nothing and cost nothing. That is the property to preserve when adding
- * to this file: prefer a selector that names the thing being corrected over one that would land on
- * any theme's version of it. A mobile-first theme needs none of this, and a rule broad enough to
- * reach it would be correcting a fault it does not have.
+ * borrows it rather than carrying a copy. So nothing here names any one site theme's markup. Every
+ * rule is aimed at the document itself, at markup Formulize's own screen templates emit, or at the
+ * session timeout warning this theme puts on the page, and is right whichever theme is borrowed.
+ * Corrections for one particular theme's layout belong in that theme's own css/embed.css, which is
+ * loaded just before this file whenever that theme is the one being borrowed (see
+ * formulize_embedBaseThemeStylesheets()). Keep it that way when adding to this file, so that a new
+ * site theme never needs anything changed here.
  */
 
-.site-layout__main {
-  width: 100%;
+/* a document as tall as the viewport can never report a height smaller than the frame it is already
+   in, so the host could make the frame taller but never shorter again (theme.html measures the body
+   to report the height). A site theme that fills the window this way would leave an embedded screen
+   unable to shrink after a search that returns fewer entries. The document is as tall as what is in
+   it. */
+html,
+body {
   height: auto;
-  /* the site theme keeps 100px clear below the form so the last field is not jammed against the
-     bottom of a window-height scrolling area. There is no such area here - the frame is exactly as
-     tall as its contents - so most of that would only add empty space to the bottom of every
-     embedded screen, which the host page then has to make room for. Enough is kept that the last
-     button is not flush against the edge of the frame. */
-  padding-bottom: 1.5em;
-}
-
-.main-content {
-  height: auto;
-  overflow: visible;
-}
-
-#xo-canvas-leftcolumn {
-  height: auto;
-  overflow: visible;
 }
 
 div.list-of-entries .card__body,
@@ -79,6 +69,7 @@ div.list-of-entries .card__body,
   top: auto;
   left: auto;
   right: auto;
+  bottom: auto; /* a site theme that floats its warning in a corner offsets it from the bottom, which on a relative box shifts it up over whatever is above */
   width: auto;
   max-width: none;
   box-sizing: border-box;
@@ -121,6 +112,7 @@ div.list-of-entries .card__body,
   top: 0.6em;
   right: 0.6em;
   box-sizing: content-box;
+  margin: 0; /* a site theme's own close button can carry margins that would nudge this off its corner */
   padding: 7px; /* x.gif is only 11px square; this makes the target 25px */
   cursor: pointer;
   border-radius: 3px;
