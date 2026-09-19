@@ -1,4 +1,7 @@
 # Ignore everything in this directory
 *
-# Except this file
+# Except these: .gitignore itself, and nav.yml, which is hand-authored (the
+# main site menu) rather than generated at build time like everything else
+# here, so it has to be committed to survive a fresh checkout.
 !.gitignore
+!nav.yml
