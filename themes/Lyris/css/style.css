@@ -19,12 +19,44 @@ body {
   height: 100%;
 }
 
+/* The root font size the whole type scale is a proportion of. The --fs-* tokens
+   are rem, so every text size in this stylesheet follows this one declaration,
+   and moving it moves all of them together.
+
+   Three layers get a say, in this order: the theme's own default
+   (--font-size-base in tokens.css), the site-wide Text size setting on the
+   Appearance page (which overrides that token in the generated appearance.css),
+   and finally a user's personal font size preference, which theme.html prints as
+   an inline style further down the document and so wins over both. */
+html {
+  font-size: var(--font-size-base);
+}
+
 body {
   font-family: var(--font-sans);
   font-size: var(--fs-14);
   line-height: var(--lh-base);
   color: var(--c-text);
   background: var(--c-bg);
+}
+
+/* ---- Secondary font ----
+   The one place the secondary font is applied, so what it covers is written down
+   once and is the same list the Appearance page's help text promises: headings,
+   form labels, and the drawer's title. Everything else keeps --font-sans.
+
+   --font-heading is var(--font-sans) unless a second font has been chosen, so
+   these rules are inert on a site using a single font, and nothing needs to know
+   whether one has been picked. Only the family is set here: size, weight and
+   colour stay with the rules that own those elements. */
+h1, h2, h3, h4, h5, h6,
+.fz-field__label,
+.form-label,
+.xoops-form-element-caption,
+.xoops-form-element-caption-required,
+.fz-form-screen .formulize-grid-caption,
+.formulize-drawer__title {
+  font-family: var(--font-heading);
 }
 
 /* ============================================================

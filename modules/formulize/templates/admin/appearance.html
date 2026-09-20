@@ -54,18 +54,61 @@
 
     <fieldset class="fz-appearance-group">
         <legend>Font</legend>
+
+        <{* Main font: everything that isn't a heading or a label. *}>
         <div class="fz-appearance-field">
-            <label for="appearance_font">Font family</label>
-            <select name="appearance_font" id="appearance_font" onchange="appearanceToggleCustomFont();">
-            <{foreach from=$adminPage.fonts key=fontKey item=fontLabel}>
-                <option value="<{$fontKey}>" <{if $adminPage.currentFont == $fontKey}>selected="selected"<{/if}>><{$fontLabel}></option>
+            <label for="appearance_font">Main font</label>
+            <select name="appearance_font" id="appearance_font" onchange="appearanceToggleCustomFont(); appearanceUpdateFontPreviews();">
+            <{foreach from=$adminPage.fonts item=font}>
+                <option value="<{$font.key}>" <{if $adminPage.currentFont == $font.key}>selected="selected"<{/if}>><{$font.label}></option>
             <{/foreach}>
             </select>
+            <span class="fz-appearance-hint">Used for body text, tables, buttons and form controls.</span>
         </div>
         <div class="fz-appearance-field" id="appearance_customfont_row">
             <label for="appearance_customfont">Google Font name</label>
-            <input type="text" id="appearance_customfont" name="appearance_customfont" value="<{$adminPage.currentCustomFont}>" placeholder="e.g. Roboto" />
+            <input type="text" id="appearance_customfont" name="appearance_customfont" value="<{$adminPage.currentCustomFont}>" placeholder="e.g. Roboto" oninput="appearanceUpdateFontPreviews();" />
             <span class="fz-appearance-hint">Enter the exact font name as it appears on <a href="https://fonts.google.com" target="_blank">fonts.google.com</a>. The font will be loaded from Google Fonts.</span>
+        </div>
+        <{* The preview is a live sample rather than a saved-and-reload round trip, so a
+           font can be tried on before it is committed to. *}>
+        <div class="fz-appearance-font-preview" id="appearance_font_preview">
+            <span class="fz-appearance-font-preview-label">Preview</span>
+            <span class="fz-appearance-font-preview-sample">The quick brown fox jumps over the lazy dog &mdash; 0123456789</span>
+        </div>
+
+        <{* Secondary font: headings, form labels, and the drawer's title. *}>
+        <div class="fz-appearance-field">
+            <label for="appearance_headingfont">Secondary font</label>
+            <select name="appearance_headingfont" id="appearance_headingfont" onchange="appearanceToggleCustomFont(); appearanceUpdateFontPreviews();">
+            <{foreach from=$adminPage.headingFonts item=font}>
+                <option value="<{$font.key}>" <{if $adminPage.currentHeadingFont == $font.key}>selected="selected"<{/if}>><{$font.label}></option>
+            <{/foreach}>
+            </select>
+            <span class="fz-appearance-hint">Used for headings, form labels, and the title of the drawer that opens from the right. Leave it on "same as the main font" to use one font throughout.</span>
+        </div>
+        <div class="fz-appearance-field" id="appearance_headingcustomfont_row">
+            <label for="appearance_headingcustomfont">Google Font name</label>
+            <input type="text" id="appearance_headingcustomfont" name="appearance_headingcustomfont" value="<{$adminPage.currentHeadingCustomFont}>" placeholder="e.g. Playfair Display" oninput="appearanceUpdateFontPreviews();" />
+            <span class="fz-appearance-hint">Enter the exact font name as it appears on <a href="https://fonts.google.com" target="_blank">fonts.google.com</a>. The font will be loaded from Google Fonts.</span>
+        </div>
+        <div class="fz-appearance-font-preview" id="appearance_headingfont_preview">
+            <span class="fz-appearance-font-preview-label">Preview</span>
+            <span class="fz-appearance-font-preview-sample fz-appearance-font-preview-sample--heading">The quick brown fox jumps over the lazy dog</span>
+        </div>
+
+        <{* Text size: the size the standard content text renders at, which is what
+           an admin means by "font size". The root font size that actually produces
+           it is worked out from this and written into the generated stylesheet -
+           see the Text size functions in include/appearance.php. *}>
+        <div class="fz-appearance-field">
+            <label for="appearance_fontsize">Text size</label>
+            <select name="appearance_fontsize" id="appearance_fontsize" onchange="appearanceUpdateFontPreviews();">
+            <{foreach from=$adminPage.fontSizes item=size}>
+                <option value="<{$size.key}>" <{if $adminPage.currentFontSize == $size.key}>selected="selected"<{/if}>><{$size.label}></option>
+            <{/foreach}>
+            </select>
+            <span class="fz-appearance-hint">The size of the standard text in lists and content. Every other text size is a proportion of it, so raising it makes the whole interface larger. Individual users can still override it with the font size setting in their own profile. This theme's own default is <{$adminPage.defaultFontSize}>.</span>
         </div>
     </fieldset>
 
@@ -109,11 +152,87 @@ document.getElementById('appearance_theme_select').onchange = function () {
     location.href = 'ui.php?page=appearance&view=stylescolors&theme=' + encodeURIComponent(this.value);
 };
 
+// The "Google Font name" box belongs to the "Other Google Font…" choice, so each
+// picker only shows its own box while that choice is selected.
 function appearanceToggleCustomFont() {
-    var fontSelect = document.getElementById('appearance_font');
-    document.getElementById('appearance_customfont_row').style.display = (fontSelect.value == 'custom') ? '' : 'none';
+    [['appearance_font', 'appearance_customfont_row'],
+     ['appearance_headingfont', 'appearance_headingcustomfont_row']].forEach(function (pair) {
+        var select = document.getElementById(pair[0]);
+        var row = document.getElementById(pair[1]);
+        if (select && row) {
+            row.style.display = (select.value == 'custom') ? '' : 'none';
+        }
+    });
 }
 appearanceToggleCustomFont();
+
+/* ---------------------------------------------------------------------------
+   Live font preview
+
+   What each choice renders as, keyed the same way the select's values are, so
+   the preview shows the font-family value a save would actually write. Webfonts
+   are pulled in on demand as choices are made, which is what lets the preview be
+   immediate: nothing here is saved, and the page is never reloaded.
+   --------------------------------------------------------------------------- */
+var appearanceFontStacks = <{$adminPage.fontStacksJson}>;
+var appearanceLoadedWebfonts = {};
+
+function appearanceLoadWebfont(family) {
+    if (!family || appearanceLoadedWebfonts[family]) return;
+    appearanceLoadedWebfonts[family] = true;
+    var link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://fonts.googleapis.com/css2?family=' + family + '&display=swap';
+    document.head.appendChild(link);
+}
+
+// Resolve one picker to {stack, google}, or null when there is nothing to show
+// yet (the custom choice with no family name typed in).
+function appearanceResolveFont(selectId, customId) {
+    var select = document.getElementById(selectId);
+    if (!select) return null;
+    if (select.value == 'custom') {
+        var input = document.getElementById(customId);
+        // same characters the PHP side accepts in a family name, so the preview can
+        // never show something that wouldn't survive being saved
+        var name = input ? input.value.replace(/[^a-zA-Z0-9 ]/g, '').trim() : '';
+        if (!name) return null;
+        return { stack: "'" + name + "', sans-serif", google: name.replace(/ /g, '+') + ':wght@400;500;600;700' };
+    }
+    return appearanceFontStacks[select.value] || null;
+}
+
+function appearanceUpdateFontPreviews() {
+    var size = document.getElementById('appearance_fontsize');
+    var main = appearanceResolveFont('appearance_font', 'appearance_customfont');
+    var headingSelect = document.getElementById('appearance_headingfont');
+    // "same as the main font" is the default secondary choice, and it previews as
+    // the main font rather than as the font map's nominal default
+    var heading = (headingSelect && headingSelect.value == 'geist')
+        ? main
+        : appearanceResolveFont('appearance_headingfont', 'appearance_headingcustomfont');
+
+    [['appearance_font_preview', main], ['appearance_headingfont_preview', heading]].forEach(function (pair) {
+        var box = document.getElementById(pair[0]);
+        var font = pair[1];
+        if (!box) return;
+        var sample = box.querySelector('.fz-appearance-font-preview-sample');
+        if (!sample) return;
+        if (font) {
+            appearanceLoadWebfont(font.google);
+            sample.style.fontFamily = font.stack;
+        } else {
+            sample.style.fontFamily = '';
+        }
+        // The samples are shown at the chosen text size. That size is the standard
+        // content text size, so the sample is literally the size the words in lists
+        // and content will come out at - which is what makes it worth previewing.
+        if (size && size.value) {
+            box.style.fontSize = size.value;
+        }
+    });
+}
+appearanceUpdateFontPreviews();
 
 // show each colour's reset link only when the picker differs from the default. The
 // link lives alongside the label in the swatch's row, so the row is what gets asked

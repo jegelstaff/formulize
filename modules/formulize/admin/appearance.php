@@ -56,6 +56,7 @@ $selectedTheme = formulize_resolveAppearanceTheme($requestedTheme);
 // above rather than whatever the admin happens to be looking at the site in.
 $colourMap = formulize_appearanceColourMap($selectedTheme);
 $fontMap = formulize_appearanceFontMap($selectedTheme);
+$headingFontMap = formulize_appearanceHeadingFontMap($selectedTheme);
 
 // the settings as they stand, read out of the theme's generated stylesheet
 $settings = formulize_getAppearanceSettings($selectedTheme);
@@ -83,9 +84,15 @@ if(isset($_POST['appearance_save']) OR isset($_POST['appearance_reset'])) {
         }
         $submitted['appearance_font'] = isset($_POST['appearance_font']) ? $_POST['appearance_font'] : '';
         $submitted['appearance_customfont'] = isset($_POST['appearance_customfont']) ? $_POST['appearance_customfont'] : '';
+        $submitted['appearance_headingfont'] = isset($_POST['appearance_headingfont']) ? $_POST['appearance_headingfont'] : '';
+        $submitted['appearance_headingcustomfont'] = isset($_POST['appearance_headingcustomfont']) ? $_POST['appearance_headingcustomfont'] : '';
+        $submitted['appearance_fontsize'] = isset($_POST['appearance_fontsize']) ? $_POST['appearance_fontsize'] : '';
         $submitted['appearance_logo'] = $settings['appearance_logo']; // kept unless removed or replaced below
         if($submitted['appearance_font'] == 'custom' AND !formulize_sanitizeAppearanceFontFamily($submitted['appearance_customfont'])) {
             $errors[] = "Please enter a Google Font name to use a custom font. The default font has been kept.";
+        }
+        if($submitted['appearance_headingfont'] == 'custom' AND !formulize_sanitizeAppearanceFontFamily($submitted['appearance_headingcustomfont'])) {
+            $errors[] = "Please enter a Google Font name to use a custom secondary font. Headings and labels have been left following the main font.";
         }
     }
 
@@ -145,10 +152,46 @@ foreach($colourMap as $key => $colour) {
     );
 }
 
+// The pickers are rendered from these, and the live preview beside each one is driven
+// by $fontStacks below, so what the preview shows is the same font-family value the
+// save would write rather than a second list that could drift from this one.
 $fonts = array();
 foreach($fontMap as $key => $font) {
-    $fonts[$key] = $font['label'];
+    $fonts[] = array('key' => $key, 'label' => $font['label']);
 }
+$headingFonts = array();
+foreach($headingFontMap as $key => $font) {
+    $headingFonts[] = array('key' => $key, 'label' => $font['label']);
+}
+
+// What each choice actually renders as, for the preview. The default choice is the
+// theme's own --font-sans (Geist on Lyris, Poppins on Anari), not the font map's
+// nominal Geist stack, so previewing "default" shows the theme being edited. 'custom'
+// carries nothing: the browser builds it from whatever family name has been typed in.
+$themeTokens = formulize_appearanceThemeTokens($selectedTheme);
+$fontStacks = array();
+foreach($fontMap as $key => $font) {
+    if($key == 'custom') {
+        $fontStacks[$key] = array('stack' => '', 'google' => '');
+    } elseif($key == 'geist') {
+        $fontStacks[$key] = array(
+            'stack' => isset($themeTokens['--font-sans']) ? $themeTokens['--font-sans'] : $font['stack'],
+            'google' => str_replace(' ', '+', formulize_appearanceThemeFontName($selectedTheme)) . ':wght@400;500;600;700',
+        );
+    } else {
+        $fontStacks[$key] = array('stack' => $font['stack'], 'google' => $font['google'] ? $font['google'] : '');
+    }
+}
+
+// The sizes on offer are the size the standard content text renders at, not the root
+// font size underneath it, and they are the selected theme's: each theme sets its
+// content text at a different step of its own scale. See the Text size group of
+// functions in include/appearance.php for the translation between the two.
+$fontSizes = array();
+foreach(formulize_appearanceFontSizeMap($selectedTheme) as $size => $label) {
+    $fontSizes[] = array('key' => $size, 'label' => $label);
+}
+$defaultFontSize = formulize_appearanceThemeContentSize($selectedTheme);
 
 // the logo can still be sitting in the legacy uploads/appearance folder on a site
 // that had one uploaded before appearance files moved into the theme folders, so
@@ -173,6 +216,13 @@ $adminPage['colours'] = $colours;
 $adminPage['fonts'] = $fonts;
 $adminPage['currentFont'] = $settings['appearance_font'] ? $settings['appearance_font'] : 'geist';
 $adminPage['currentCustomFont'] = $settings['appearance_customfont'];
+$adminPage['headingFonts'] = $headingFonts;
+$adminPage['currentHeadingFont'] = $settings['appearance_headingfont'] ? $settings['appearance_headingfont'] : 'geist';
+$adminPage['currentHeadingCustomFont'] = $settings['appearance_headingcustomfont'];
+$adminPage['fontStacksJson'] = json_encode($fontStacks);
+$adminPage['fontSizes'] = $fontSizes;
+$adminPage['defaultFontSize'] = $defaultFontSize;
+$adminPage['currentFontSize'] = $settings['appearance_fontsize'] ? $settings['appearance_fontsize'] : $defaultFontSize;
 $adminPage['logoUrl'] = $logoUrl;
 $adminPage['saved'] = $saved;
 $adminPage['errors'] = $errors;

@@ -35,11 +35,45 @@ time, mark, audio, video {
   vertical-align: baseline;
 }
 
+/* The root font size the whole type scale is a proportion of. This theme sizes
+   its text in rem, em and %, so every text size follows this one declaration and
+   moving it moves all of them together. It has to come after the reset above,
+   which sets `font-size: 100%` on `html` among everything else.
+
+   Three layers get a say, in this order: the theme's own default
+   (--font-size-base in tokens.css), the site-wide Text size setting on the
+   Appearance page (which overrides that token in the generated appearance.css),
+   and finally a user's personal font size preference, which theme.html prints as
+   an inline style further down the document and so wins over both. */
+html {
+  font-size: var(--font-size-base);
+}
+
 body {
   font-family: var(--font-sans);
   color: var(--text-color);
   background: var(--background-color);
   line-height: 1.4;
+}
+
+/* ---- Secondary font ----
+   The one place the secondary font is applied, so what it covers is written down
+   once and is the same list the Appearance page's help text promises: headings,
+   form labels, and the drawer's title. Everything else keeps --font-sans.
+
+   --font-heading is var(--font-sans) unless a second font has been chosen, so
+   these rules are inert on a site using a single font. Only the family is set
+   here: size, weight and colour stay with the rules that own those elements.
+   `font: inherit` in the reset above means headings would otherwise take the
+   body's family, so this is what gives them one of their own. */
+h1, h2, h3, h4, h5, h6,
+.fz-field__label,
+.form-label,
+.form-label--inline,
+.xoops-form-element-caption,
+.xoops-form-element-caption-required,
+.formulize-drawer__title {
+  font-family: var(--font-heading);
 }
 
 input {
