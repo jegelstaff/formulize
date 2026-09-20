@@ -1,14 +1,15 @@
 ---
 layout: default
-permalink: documentation/embedding_screens_setup/
+permalink: documentation/embedding_screens/setup/
 redirect_from:
  - developers/embedding_screens_setup/
+ - documentation/embedding_screens_setup/
 title: Giving Formulize an Address on the Host Website's Domain
 ---
 
 # Giving Formulize an address on the host website's domain
 
-This is step 3 of [Embedding screens in another website](../embedding_screens/). Do it when signed-in
+This is step 3 of [Embedding screens in another website](../). Do it when signed-in
 visitors need to use an embedded screen, or when anonymous visitors need to be able to submit one in
 every browser.
 
@@ -290,5 +291,5 @@ page, is not `https`, or the links inside the frame are going back to the origin
 
 ## If you cannot create an address on the host website's domain
 
-See [Embedding on a different domain](../embedding_screens/#embedding-on-a-different-domain) for what
+See [Embedding on a different domain](../#embedding-on-a-different-domain) for what
 works and what does not without this step.
