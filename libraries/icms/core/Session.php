@@ -181,7 +181,7 @@ class icms_core_Session {
 	    $icms_user = icms::handler('icms_member')->getUser($xoops_userid);
 
 			if (is_object($icms_user)) {
-				// ALTERED BY FREEFORM SOLUTIONS FOR FORMULIZE. Give the session a new id at the moment
+				// Give the session a new id at the moment
 				// it stops being anonymous and becomes this person's, so that an id planted in their
 				// browser beforehand is not the one their signed in session ends up filed under.
 				// include/checklogin.php already does this for an ordinary username and password
