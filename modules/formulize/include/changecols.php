@@ -136,7 +136,7 @@ print "<script type='text/javascript' src='".XOOPS_URL."/libraries/jquery/jquery
 changeColJavascript();
 
 print "</head>";
-print "<body style=\"background: white; margin-top:20px;\"><center>";
+print "<body class=\"formulize-popup\" style=\"background: white; margin-top:20px;\"><center>";
 print "<table style=\"width: 100%;\" role=\"presentation\"><tr><td style=\"width: 5%;\"></td><td style=\"width: 90%;\">";
 print "<form name=newcolform action=\"" . XOOPS_URL . "\" method=post>\n";
 print "<table class='outer popup' role='presentation'>";

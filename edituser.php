@@ -47,6 +47,19 @@ if($xoTheme) {
     $xoTheme->addScript("/modules/formulize/libraries/formulize.js?v=".$jsVersion);
 }
 
+// Tell the theme that this page's content is a Formulize screen, so it can lay the page out the
+// same way it lays out a form screen inside the module. This page drops a bare screen straight
+// into the theme's main region, but it renders that screen itself rather than going through
+// modules/formulize/initialize.php, which is the only other place this template variable is set.
+// Without it the theme sees an ordinary system page (the body id here is "system", not
+// "formulize") and adds its simple-page gutter on top of the insets the form screen already
+// manages for itself — a doubled side gutter, and an action bar that is meant to be full-bleed
+// pushed in from the edges.
+global $xoopsTpl;
+if (is_object($xoopsTpl)) {
+	$xoopsTpl->assign('formulize_screen_id', $sid);
+}
+
 // Process any submitted account data before rendering (save-before-display), mirroring
 // initialize.php and users.php. The rendered form posts back here with its own hidden fields.
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/readelements.php';

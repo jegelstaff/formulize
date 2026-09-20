@@ -7,6 +7,9 @@ modules/formulize/templates/css/.sass-cache/
 templates_c/
 trust_*/
 uploads/profile/
+# generated at runtime from the Formulize Appearance settings: the appearance.css
+# built for each theme, and any logo uploaded for it
+themes/*/appearance/
 themes/formulize_standalone/.sass-cache/
 themes/formulize_mobile_app/.sass-cache/
 *.bak
