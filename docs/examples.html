@@ -3,7 +3,7 @@ layout: default
 permalink: examples/
 title: Examples
 full_width: true
-description: What people build with Formulize — CRM, memberships, grant tracking, casework, time and activity tracking, bookings, inventory, surveys, and headless content management — and what each one looks like when it is built.
+description: What people build with Formulize — CRM, memberships, grant tracking, casework, time and activity tracking, bookings, inventory, surveys, and custom content management — and what each one looks like when it is built.
 ---
 
 {% comment %}
@@ -11,10 +11,18 @@ description: What people build with Formulize — CRM, memberships, grant tracki
   would not describe what they need as "a database", should be able to find
   something here shaped like their own problem.
 
-  These are illustrative, and the page says so out loud. Nothing here is a case
-  study and no organisation is named, because none has agreed to be. What every
-  card describes is only what the software demonstrably does: forms, forms
-  joined to other forms, per-group permissions, and reports.
+  Every card is a composite. There are real implementations behind all of
+  them - every situation on this page is one that has actually been solved in
+  Formulize - but no card is any single one of those, and none is specific
+  enough to read as a spec. The shapes are general on purpose.
+
+  No organisation is named, because none has agreed to be. Nothing on the page
+  announces the cards as illustrative, and nothing needs to: no card claims a
+  client, a result, or a number, so there is nothing here to disclaim. What
+  keeps that true is that every card describes only what the software
+  demonstrably does - forms, forms joined to other forms, per-group
+  permissions, and reports. Hold that line and the page needs no disclaimer.
+  Put a metric or a named organisation on a card and it does.
 
   Every card is the same two halves - "The situation:" and "With Formulize:" -
   and the problem half is written on one rule: the organisation is already
@@ -25,6 +33,15 @@ description: What people build with Formulize — CRM, memberships, grant tracki
   believable, and a believable problem is what buys the rest of the card its
   credit. The bullets then have to answer the problem as stated, not a more
   convenient version of it.
+
+  The two halves are two different voices, and the split is the point. "The
+  situation:" is always first person - "we", "our", "the rest of us" - because
+  it is the organisation describing its own workaround, and an admission only
+  sounds like one in the mouth of the person making it. "Everyone keeps good
+  track of their own contacts" is an observation about someone else; "We all
+  keep good track of our own contacts" is a confession. The bullets then answer
+  in second person, to the reader. Keep new cards on both sides of that line:
+  no "you" in a situation, and no "we" in the bullets.
 
   The page is two questions with the examples between them, and the answer to
   each question is a card of three columns, so the two bookend each other.
@@ -154,7 +171,7 @@ description: What people build with Formulize — CRM, memberships, grant tracki
       <div class="card" id="expenses">
         <details>
           <summary><h3 class="card-title">Expense claims and approvals</h3></summary>
-          <p class="card-body"><em>The situation:</em> We have a different claim form depending on the type of expense, and we email them all to accounting, and they're always behind in saying how much they owe us.</p>
+          <p class="card-body"><em>The situation:</em> We have different claims form depending on the type of expense. We email them to accounting, but they're always behind in saying how much they owe us.</p>
           <p class="example-solution"><em>With Formulize:</em></p>
           <ul>
             <li>A dynamic claims form that asks the right questions for each kind of expense</li>
@@ -276,18 +293,18 @@ description: What people build with Formulize — CRM, memberships, grant tracki
       <div class="card" id="surveys">
         <details>
           <summary><h3 class="card-title">Surveys and questionnaires</h3></summary>
-          <p class="card-body"><em>The situation:</em> Our survey tool does its job, but the results come back as their own spreadsheet, that's separate from the people and programs the data is about.</p>
+          <p class="card-body"><em>The situation:</em> Our surveys do give us feedback about our programs, but the results come back in their own spreadsheet, separate from all our other data about those programs.</p>
           <p class="example-solution"><em>With Formulize:</em></p>
           <ul>
             <li>A public form for respondents, no account required</li>
-            <li>Responses joined to the person, event, or program they relate to</li>
+            <li>Responses joined to the program, event, and people they relate to</li>
             <li>Results reported alongside everything else you track</li>
             <li>Easily reuse or adapt the same form for the next round</li>
           </ul>
         </details>
       </div>
 
-      <div class="card" id="headless-cms">
+      <div class="card" id="custom-content-management">
         <details>
           <summary><h3 class="card-title">Custom content management</h3></summary>
           <p class="card-body"><em>The situation:</em> Our website is beautiful and custom-made, but the content is hard to change, and we want to add regularly updated announcements that any of our staff can write, but only managers approve them.</p>
@@ -307,8 +324,8 @@ description: What people build with Formulize — CRM, memberships, grant tracki
 <section class="band">
   <div class="card elev-sm" style="background: var(--color-accent-100);">
     <h2 style="margin-bottom: 0;">Do any of those sound familiar?</h2>
-    <p class="card-body" style="font-size: 19px; max-width: 62ch; margin-bottom: var(--space-2);">Formulize has helped organizations with all these needs, and <strong>often with multiple solutions working together</strong>, so the processes become unified.</p>
-		<p style="font-size: 19px; max-width: 62ch; margin-bottom: var(--space-6);"><em>Memberships</em> might seem different from <em>Activity Logs</em>, but to a database it's all variations on a theme.</p>
+    <p class="card-body" style="font-size: 19px; max-width: 62ch; margin-bottom: var(--space-2);">Formulize has helped organizations with all these needs, and <strong>often with multiple solutions working together</strong>, so their processes become unified.</p>
+		<p class="card-body" style="font-size: 19px; max-width: 62ch; margin-bottom: var(--space-6);"><em>Memberships</em> might seem different from <em>Activity Logs</em>, but to a database it's all variations on a theme.</p>
     {%- comment -%}
       Tighter column gap than .feature-cols uses elsewhere. Inside the card the
       three columns are already narrowed by the card's own padding, and at the
