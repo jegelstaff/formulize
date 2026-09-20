@@ -3035,7 +3035,6 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
 .fz-form-screen input[type="file"] {
   display: block;
   width: 100%;
-  min-height: 84px;
   padding: 16px;
   font-size: var(--fs-13);
   color: var(--c-text-muted);
