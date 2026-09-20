@@ -146,6 +146,14 @@ h1, h2, h3, h4, h5, h6 {
    same number of words on a line. */
 h1 { font-size: 39px; }
 h2 { font-size: 30px; }
+
+/* /examples/ is built as two questions - "Why do people use Formulize?" and
+   "What do people use Formulize for?" - and they carry equal weight, so they
+   are set at the same size rather than at h1 and h2's default step apart. The
+   second stays an h2 because it is still a section inside the page, and the
+   class rather than an inline size so the pair cannot drift apart at the 900px
+   breakpoint, where h1 and h2 shrink by different amounts. */
+.page-question { font-size: 39px; }
 h3 { font-size: 25px; }
 h4 { font-size: 21px; }
 h5 { font-size: 19px; }
@@ -1188,25 +1196,71 @@ h1 + .band {
    to the tallest in their row by default, so opening one card would drag its
    neighbour's box open too and leave it three-quarters empty. Starting them
    instead lets each card be exactly as tall as its own contents. */
-.triad-2up { align-items: start; }
+.triad-2up { align-items: start; --example-card-title: 23px; }
 
-/* .card is already a flex column with a gap; the <details> now holds that
-   column, so it takes the same treatment. */
-.triad-2up .card > details { display: flex; flex-direction: column; gap: var(--space-2); }
+/* .card is already a flex column; the <details> now holds that column, so it
+   takes the same treatment - but without the gap. A single gap would space
+   the title, the paragraph and the bullets equally, and these three do not
+   want equal spacing: the paragraph belongs to the title above it and wants
+   clear air before the list below. The paragraph carries that spacing as its
+   own margins instead, just below. */
+.triad-2up .card > details {
+  display: flex;
+  flex-direction: column;
+  /* Two lines of the title, as a floor under the whole card rather than under
+     the heading. Under the heading it also sat between the heading and the
+     paragraph, so a one-line title opened with 14px of dead space below it
+     that a two-line title did not have. Down here the slack falls below the
+     contents, where a closed card has nothing anyway and an open card has
+     long since grown past it - so every card, one-line title or two, now has
+     the same gap under its heading, and closed cards are still uniform. */
+  min-block-size: calc(2 * 1.2 * var(--example-card-title));
+}
 
 /* .card-body carries flex: 1 globally, which makes the paragraph absorb any
    slack in the card and pushes the bullets to the bottom - so in a row of
    cards the lists line up but the text floats away from its own heading.
    These cards stack their content top to bottom instead, like an ordinary
    block would. */
-.triad-2up .card-body { flex: 0 0 auto; }
+/* Asymmetric on purpose: tight to the title it explains, a wider gap before
+   the bullets. .card-body is margin: 0 globally, so both are set here, and
+   the top one is 0: the title's own line box already leaves enough air, and
+   anything added on top reads as the paragraph drifting away from the
+   heading it belongs to. Both margins sit inside the animated box, so they
+   travel with the contents and add nothing to a closed card. */
+.triad-2up .card-title { font-size: var(--example-card-title); }
+.triad-2up .card-body { flex: 0 0 auto; margin-block: var(--space-4); }
+
+/* "With Formulize:" - the label over the bullets, matching "The problem:" that
+   opens the paragraph above. Both are <em> rather than <strong> on purpose:
+   they are structure, telling you which half of the card you are reading, and
+   bold would pull the eye onto them and away from the content they introduce.
+   The type matches .card-body so the two halves read as one block of text, and
+   the margins are the inverse of it: no air above, because .card-body's own
+   space-4 bottom margin already put the gap there, and only space-2 below, so
+   the label stays attached to the list it belongs to rather than floating
+   between the paragraph and the bullets. */
+.triad-2up .example-solution {
+  flex: 0 0 auto;
+  margin: 0 0 var(--space-2);
+  font-size: 16.5px;
+  color: var(--color-neutral-800);
+}
 
 /* The whole title row is the control, so it gets the pointer and the chevron,
    and the default disclosure triangle is removed in both its guises (the
    standard list-style and WebKit's older pseudo-element). */
+/* align-items: flex-start, not center. Centred, the chevron sat halfway down
+   whichever title it belonged to, so it landed in a different place on a
+   one-line card than on a three-line one - and on a phone, where almost every
+   title wraps, it read as floating loose to the right of the text rather than
+   marking the row. Started from the top with a fixed offset it is always the
+   same distance below the card's top edge, whatever the title does.
+   Horizontally it is already pinned: space-between holds it against the right
+   edge no matter how wide the title runs. */
 .triad-2up summary {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-3);
   cursor: pointer;
@@ -1214,17 +1268,26 @@ h1 + .band {
 }
 .triad-2up summary::-webkit-details-marker { display: none; }
 
-/* A two-line floor under the title, so a closed card is the same height
-   whether its title runs to one line or two and the grid reads as a tidy
-   list. 2.4em is two lines of .card-title's own 1.2 line-height, so it
-   follows the type rather than a pixel guess; the inner flex is only there
-   to centre a one-line title in the space the two-line ones need. */
-.triad-2up summary h3 { min-height: 2.4em; display: flex; align-items: center; }
+/* The two-line floor that used to live here has moved onto the <details>
+   itself, above - under the title it also sat between the title and the
+   paragraph, so a one-line card opened with more space under its heading
+   than a two-line one.
+
+   .triad h3 sets a margin below every heading in a triad, which the ordinary
+   cards want because it is their only gap before the body text. These cards
+   set that gap on the paragraph instead, so the margin here is pure surplus:
+   it pushed the summary 8.8px taller than its own title, which both broke
+   the closed cards' uniform height and widened the gap the floor was just
+   moved to fix. */
+.triad-2up summary h3 { margin-bottom: 0; }
 .triad-2up summary::after {
   content: "";
   flex: none;
   width: 9px;
   height: 9px;
+  /* Centres the arrow on the first line of the title: half of .card-title's
+     23px x 1.2 line box, less half the rotated square's own height. */
+  margin-top: 9px;
   margin-right: 3px;
   border-right: 2.5px solid var(--color-accent-500);
   border-bottom: 2.5px solid var(--color-accent-500);
@@ -1232,6 +1295,55 @@ h1 + .band {
   transition: transform 0.15s ease;
 }
 .triad-2up details[open] summary::after { transform: rotate(-135deg); }
+
+/* The card rolls open and shut rather than snapping. The row holding the
+   contents is animated from 0fr to 1fr, which every current engine can run -
+   transitions on grid-template-rows go back to Firefox 66 and Safari 16.
+
+   align-content: start is load-bearing, not tidying. Without it the container
+   defaults to stretch, and while the fr track is mid-interpolation the free
+   space is handed back to the rows, which lays the contents out against a
+   moving track: the text starts about 60px low and rides up into place as the
+   card grows. Starting the rows instead pins the contents to the top, so the
+   card wipes down over text that never moves.
+
+   ::details-content is the box the browser already wraps a <details>'s
+   contents in, and it is the second row. overflow is clipped so the bullets
+   are wiped at the card's edge rather than spilling past it, and
+   min-block-size is 0 because a grid item's automatic minimum size is the
+   height of its own contents - that floor would outrank the track being
+   animated and the card would snap open at full height. It also carries the
+   content-visibility transition, which is what actually hides a closed card's
+   contents; that flips between two keywords rather than over a range, hence
+   allow-discrete, and without it the contents would vanish the instant the
+   card was closed with nothing left to watch roll up.
+
+   The display switch sits inside the @supports rather than in the base rule:
+   where ::details-content is missing there is no second row for 0fr to
+   collapse, and the track sizes would land on the contents themselves. Gated
+   this way, such browsers keep the flex column and open instantly. The
+   selector repeats `.card >` to match the base rule's specificity, or
+   `display: flex` would still win. */
+@supports (selector(details::details-content)) {
+  .triad-2up .card > details {
+    display: grid;
+    grid-template-rows: auto 0fr;
+    align-content: start;
+    transition: grid-template-rows 0.22s ease;
+  }
+  .triad-2up .card > details[open] { grid-template-rows: auto 1fr; }
+  .triad-2up details::details-content {
+    min-block-size: 0;
+    overflow: clip;
+    transition: content-visibility 0.22s ease;
+    transition-behavior: allow-discrete;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .triad-2up .card > details,
+    .triad-2up details::details-content { transition: none; }
+  }
+}
 .triad-2up summary:focus-visible { outline: 2px solid var(--color-accent-500); outline-offset: 3px; }
 
 /* A named category heading over one .triad, so a long card grid (examples.html)
@@ -1239,7 +1351,12 @@ h1 + .band {
    at the global 25px is distinct enough from the band's own h2 without a
    dedicated font size. */
 .example-group + .example-group { margin-top: var(--space-8); }
-.example-group h3 { margin-bottom: var(--space-4); }
+/* Direct child only: the category heading. Without the combinator this also
+   matched every card title nested inside the group, which quietly put 17.6px
+   under each one - propping up the closed cards' uniform height and standing
+   in for the gap above the paragraph, both by accident. Both are now set
+   deliberately, so this has to stop reaching them. */
+.example-group > h3 { margin-bottom: var(--space-4); }
 
 /* Two equal boxes side by side, for a pair of closing calls to action - see
    the bottom of /contact/. Its own class rather than .triad with one card
@@ -2448,14 +2565,21 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
    subheads alone carry the structure. Margins rather than a flex gap, so the
    subhead sits close to its own sentence and the space falls between the
    pairs instead of being shared out evenly between all six children. */
-.subhead-list { max-width: 62ch; }
+/* 76ch, not the 62ch of running prose: every line in this list is meant to be
+   one line, and at a narrower measure two of the six wrapped. There is nothing
+   aligned across them, so a longer line added later just wraps. */
+.subhead-list { max-width: 76ch; }
 .subhead-list h3 { font-size: 22px; margin: 0 0 var(--space-2); }
-.subhead-list p {
+.subhead-list p,
+.subhead-list ul {
   margin: 0 0 var(--space-6);
   font-size: 19px;
   line-height: 1.5;
   color: var(--color-neutral-800);
 }
+.subhead-list ul { padding-left: var(--space-6); }
+.subhead-list li { margin-bottom: var(--space-2); }
+.subhead-list li:last-child { margin-bottom: 0; }
 .subhead-list > :last-child { margin-bottom: 0; }
 
 /* ── embedded Formulize screens ─────────────────────────────────────────── */
@@ -2670,6 +2794,7 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
 @media (max-width: 900px) {
   h1 { font-size: 30px; }
   h2 { font-size: 24px; }
+  .page-question { font-size: 30px; }
   .hero { flex-direction: column; align-items: flex-start; padding: var(--space-6); }
   .hero-text h1 { font-size: 27px; }
   .hero-thumbnail { max-width: 100%; }
@@ -2757,6 +2882,14 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
      and a heading that does not wrap would just sit above a line of empty
      space, so it comes off here. */
   .footer-cols h2, .footer-cols h3 { min-height: 0; }
+  /* The example cards are a single column of about 300px here, where a 23px
+     title wraps to three lines as often as not. Two points smaller keeps most
+     of them to two, which shortens every closed card and keeps the title and
+     its chevron looking like one row. Scoped to these cards - .card-title is
+     the whole site's, and the cards elsewhere are not this narrow. */
+  .triad-2up { --example-card-title: 20px; }
+  /* Half of the smaller line box, less half the arrow, as above. */
+  .triad-2up summary::after { margin-top: 7px; }
   /* Buttons stop being a single unbreakable line here. white-space: nowrap is
      right on a wide screen - a two-line button in a row of one-line ones
      looks broken - but a label like "See plans with support included" is
