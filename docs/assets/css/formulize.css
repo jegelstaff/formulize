@@ -364,6 +364,13 @@ blockquote {
 }
 
 .band { padding: var(--space-12) 0; }
+/* Same job as .band-box's copy of this: the band's own padding owns its
+   bottom edge, so a last child does not add its margin on top of it. It only
+   ever catches a trailing <p class="btn-row"> - a p, so it inherits the base
+   paragraph margin, and a button row is almost always the last thing in its
+   band - which was putting an extra space-4 under three button rows on the
+   site while every band ending in a card or a grid got the padding alone. */
+.band > :last-child { margin-bottom: 0; }
 /* Zeroes the gap between two stacked bands so it's one space-12, not two.
    Also covers the page heading immediately before the first band - that
    heading is a bare .band-head div or (videos.html) a bare h1, never a
@@ -399,6 +406,12 @@ h1 + .band {
 .band-head h2 { margin-bottom: var(--space-2); }
 .band-head p { margin: 0; color: var(--color-neutral-800); font-size: 19px; line-height: 1.5; }
 .band-head p + p { margin-top: var(--space-3); }
+/* A .band-head that is only a heading, sitting directly on top of its own
+   content inside a box rather than introducing a whole band. The standard
+   space-8 below is sized for a heading plus a lede paragraph with a band's
+   worth of air under it; over a bare list in a .band-box it just reads as a
+   gap. */
+.band-head-tight { margin-bottom: var(--space-4); }
 
 .band-head-row {
   display: flex;
@@ -510,9 +523,12 @@ h1 + .band {
   border-color: var(--btn-secondary-border);
 }
 .btn-secondary:active { background: var(--btn-secondary-active-bg); }
-/* The one place an outlined button sits straight on a dark panel with no
-   fill of its own, so it's the exception to the 700/900 rule: both of
-   those disappear into the hero blue otherwise. The custom properties and the
+/* Outlined buttons sitting straight on a dark panel with no fill of their
+   own - the hero, and the note beside the Managed plan - so they're the
+   exception to the 700/900 rule: both of those disappear into the blue
+   otherwise. Scoped to .plan-aside on the Managed side, NOT the whole band:
+   the "Sign up" button in that row is also a .btn-secondary, but it sits on
+   a white card, where white-on-white would erase it. The custom properties and the
    rest/visited colour are set here on the plain (no pseudo-class) selector,
    which keeps matching through :hover too, so :hover below only has to
    touch colour - it doesn't need to repeat the border/active-bg values. In
@@ -523,7 +539,9 @@ h1 + .band {
    "Getting started" style footer headings use, which sits on this same
    --color-hero blue in .footer-panel, so it's already proven there. */
 .hero .btn-secondary,
-.hero .btn-secondary:visited {
+.hero .btn-secondary:visited,
+.plan-band-team .plan-aside .btn-secondary,
+.plan-band-team .plan-aside .btn-secondary:visited {
   --btn-secondary-border: rgba(255, 255, 255, 0.7);
   --btn-secondary-active-bg: rgba(255, 255, 255, 0.28);
   color: var(--color-neutral-200);
@@ -533,7 +551,9 @@ h1 + .band {
    deliberately - same specificity, so being later is what keeps it white on
    hover too. */
 .hero .btn-secondary:hover,
-.hero .btn-secondary:focus-visible {
+.hero .btn-secondary:focus-visible,
+.plan-band-team .plan-aside .btn-secondary:hover,
+.plan-band-team .plan-aside .btn-secondary:focus-visible {
   color: #fff;
 }
 .btn-sm { padding: var(--space-2) var(--space-4); font-size: 14px; }
@@ -1501,12 +1521,175 @@ h1 + .band {
    so a blue cross would fight the green tick beside it. */
 .tier ul.tier-feats li.no::before { content: "\2715"; color: var(--color-neutral-500); }
 .tier ul.tier-feats li.maybe::before { content: "?"; color: var(--color-neutral-500); padding-left: 0.15em; }
+/* The "$X value!" tags on the training rows. They were <small>, which is the
+   sublines' style - grey, 13.5px - so the number meant to be the loudest
+   thing on the card was set in the quietest type on it.
+
+   Inline at the end of the row, not on a line of its own: it is a note ON
+   that item, and sitting it below turned it into a second bullet competing
+   with the real ones. white-space: nowrap so the tag never breaks across
+   lines internally - it pushes the last word or two of the row down instead,
+   which is the right thing to give up.
+
+   Outlined rather than filled so it can go on any card: "We train you"
+   already carries a green "Most popular" flag and a green Sign up button,
+   and a third green FILL there was one too many. The outline marks the line
+   without joining that competition. 7.8:1 on its own tint.
+
+   The top margin is deliberately SMALLER than the gap below. .tier-feats
+   spaces its rows with gap: space-3, which lands about 9px under the tag; at
+   space-2 above it the tag sat 10px from its own row and 9px from the next
+   one, reading as a free-floating item between two rows rather than as a
+   note on the row it belongs to. space-1 puts it 5px under its own line -
+   about half the gap to the next row - so the grouping is unambiguous. */
+.value-badge {
+  display: inline-block;
+  /* An inline-block contributes its MARGIN box to the line box it sits in, so
+     a top margin here genuinely opens a gap above the tag rather than just
+     nudging it down over the line above. No margin-left: when the tag wraps
+     to its own line - which it does on both cards at most widths - a left
+     margin indents it away from the tick column. The gap for the inline case
+     is a plain space in the markup instead, which collapses at a line break
+     the way a margin does not. */
+  margin-top: var(--space-1);
+  padding: 2px 9px;
+  border: 1.5px solid var(--color-accent-2-600);
+  border-radius: var(--radius-md);
+  background: var(--color-accent-2-100);
+  color: var(--color-accent-2-800);
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
 .tier-feats small {
   display: block;
   font-size: 13.5px;
   line-height: 1.4;
   color: var(--color-neutral-700);
   margin-top: 2px;
+}
+
+/* ── getting-started bands ──────────────────────────────── */
+
+/* The same three groups the rail holds, laid out as full-width rows instead
+   of a horizontal scroller. The colours are the .rail-group-* tokens rather
+   than fresh values, so a change to one group's colour reaches both layouts
+   and they cannot drift into two different blues. */
+.plan-band {
+  padding: var(--space-6);
+  border-radius: calc(var(--radius-lg) * 1.15);
+  background: var(--color-neutral-200);
+}
+/* Jump targets for the level-specific links elsewhere on the site - the
+   get-choice cards, the download page's hosting card, the services page's
+   "plans with support included". Same technique and the same measured values
+   as .feature-stack .inpage-anchor further down: the global [id] rule's 128px
+   was written against a ~108px header, and the header is really 133px from
+   1080px up, so a jump would tuck the box's first 5px behind the bar. 148px
+   clears the tallest case with about 15px of air.
+
+   No .inpage-anchor padding-top here, unlike the Features cards: those sit
+   flush in a grid and need the breathing room manufactured, while these boxes
+   already have a full .band of space above them. The scroll-margin alone puts
+   the whole box cleanly below the header. */
+.plan-band[id],
+.band-box[id] { scroll-margin-top: 148px; }
+
+.plan-band-diy { background: var(--color-accent-2-200); }
+.plan-band-hosted { background: var(--color-brand-200); }
+.plan-band-team { background: var(--color-brand-700); }
+.plan-band-team .band-head h2 { color: #fff; }
+.plan-band-team .band-head p { color: rgba(255, 255, 255, 0.88); }
+/* The Hosted band's own blue, borrowed as the Managed band's accent for the
+   badge and the card's button. It ties the two paid tiers to each other and
+   leaves the green CTA to mean "Most popular" alone, so the two badges stay
+   different claims rather than two shouts.
+
+   It also solves a collision: .tier-flag-alt is white on brand-700, which is
+   exactly this band's background, so the badge would have vanished into it.
+
+   Text needs no override on either. On this fill .btn's resting accent-700 is
+   6.1:1 and its accent-900 hover is 11.1:1; accent-900 on the badge is
+   11.1:1. The button keeps .btn-secondary's border - the fill is only 1.3:1
+   against the white card it sits on, so the edge is what makes it read as a
+   button rather than a wash. */
+.plan-band-team .tier-flag-alt {
+  background: var(--color-brand-200);
+  color: var(--color-accent-900);
+}
+.plan-band-team .tier .btn-secondary { background: var(--color-brand-200); }
+
+/* Two columns because every row holds either two cards, or one card and the
+   note beside it. The cards are far wider here than the rail's fixed 306px,
+   which is what buys room to drop the sublines onto one line each. */
+.plan-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  align-items: stretch;
+}
+/* The .tier-flag badges hang space-4 above their card's top edge, so the row
+   needs more than that under the heading or the badge ends up touching the
+   legend text - at space-4 the clearance measured 1px. space-6 leaves about
+   ten, which is enough for the badge to read as attached to its card rather
+   than crashing into the line above. */
+.plan-cards { margin-top: var(--space-6); }
+
+/* A row holding one card and the note, rather than two cards. The note gets
+   less width than a second card would: it is supporting copy, so an equal
+   half made the row read as two peers.
+
+   Worth knowing before changing this number or trimming the note: at 0.82 the
+   note wraps enough that it is now the TALLER of the two (483 vs the card's
+   natural 452 at 1280), so it sets the row height and the card stretches to
+   meet it - .tier is a column flexbox whose .tier-feats has flex: 1, so the
+   slack lands in the gap above its button. Shorten the note much and the two
+   swap roles: the card drives the height again and the note, being
+   align-self: center, floats in the middle of the row with air above and
+   below it. */
+.plan-cards-solo { grid-template-columns: minmax(0, 1fr) minmax(0, 0.82fr); }
+
+/* Keylined in the same hairline the outlined buttons on this band use, so the
+   note reads as a deliberate object against the blue instead of loose text
+   floating next to a card. The border colour is the only part that has to
+   know about the dark ground; everything else works on any .plan-band. */
+.plan-aside {
+  align-self: center;
+  padding: var(--space-6);
+  border: 1px solid var(--color-divider);
+  border-radius: calc(var(--radius-lg) * 1.15);
+}
+.plan-band-team .plan-aside { border-color: rgba(255, 255, 255, 0.7); }
+.plan-aside h3 { font-size: 22px; margin-bottom: var(--space-3); }
+.plan-aside p,
+.plan-aside ul { font-size: 15.5px; line-height: 1.55; margin-bottom: var(--space-3); }
+/* Plain bullets, not the green ticks the .tier cards use: these are terms you
+   can ask us to negotiate, not things already included at this level, and a
+   tick would claim otherwise. The markers take the list's own colour, which
+   on the Managed band is the near-white the aside text is set in. */
+.plan-aside li { margin-bottom: var(--space-2); }
+.plan-aside > :last-child { margin-bottom: 0; }
+.plan-band-team .plan-aside { color: rgba(255, 255, 255, 0.92); }
+.plan-band-team .plan-aside h3 { color: #fff; }
+.plan-band-team .plan-aside strong { color: #fff; }
+
+@media (max-width: 860px) {
+  .plan-cards,
+  .plan-cards-solo { grid-template-columns: minmax(0, 1fr); }
+  /* Stacked, the row gap is space-4 and .tier-flag hangs exactly space-4
+     above its own card, so "Most popular" comes to rest on the bottom edge of
+     the card above it. Doubling the gap for this card alone leaves the badge
+     the same clearance the top of the row gets from .plan-cards' space-6.
+     Only a badged card with another card above it needs this, which on this
+     page is the featured one; the Managed card is first in its own row. */
+  .plan-cards .tier-featured { margin-top: var(--space-4); }
+  /* Stacked, the note reads as a footer to the card above it rather than a
+     column beside it, so it takes the gap rather than optical centring. */
+  .plan-aside { align-self: start; }
 }
 
 /* ── getting-started rail ───────────────────────────────────────────────── */
@@ -1575,21 +1758,31 @@ h1 + .band {
   scroll-snap-align: start;
 }
 .rail-cards .tier-featured { background: #fff; border-color: var(--color-accent-400); }
-.rail-cards .tier-name {
+.rail-cards .tier-name,
+.plan-cards .tier-name {
   font-size: 24px;
   line-height: 1.15;
   margin: 0;
 }
-.rail-cards .tier-name span {
+/* The price on its own line under the name. Belongs to the card rather than
+   to either layout, so both the rail and the bands claim it - without this
+   the span runs on and reads as part of the name ("You build it Free
+   forever"). */
+.rail-cards .tier-name span,
+.plan-cards .tier-name span {
   display: block;
   font-family: var(--font-body);
   font-weight: 600;
   font-size: 17px;
   color: var(--color-accent-700);
-  white-space: nowrap;
   margin-top: 4px;
 }
-.rail-cards .tier-feats { margin-top: var(--space-1); }
+/* The rail's cards are a fixed 306px, narrow enough that a wrapped price
+   looks broken, so it is held on one line there. The band cards are twice
+   that and "$199/month + $449 setup" is better wrapped than overflowing. */
+.rail-cards .tier-name span { white-space: nowrap; }
+.rail-cards .tier-feats,
+.plan-cards .tier-feats { margin-top: var(--space-1); }
 .rail-cards .tier-flag { top: calc(var(--space-3) * -1); left: var(--space-4); }
 .rail-cards .btn { margin-top: var(--space-1); }
 
@@ -1632,21 +1825,33 @@ h1 + .band {
   margin: var(--space-3) 0 0;
 }
 
-/* The one promise the tier cards must never contradict: same software everywhere. */
+/* The one promise the tier cards must never contradict: same software
+   everywhere. It used to carry its own tint and left rule, from before the
+   rest of the site settled on one tinted box; it sits in a plain .band-box
+   now like every other one, so all that is left here is the lede's reading
+   size - 19px, the step .band-head p is set at. */
 .lede-promise {
-  margin: var(--space-4) 0 0;
-  padding: var(--space-4) var(--space-4) var(--space-4) var(--space-6);
-  border-left: 3px solid var(--color-brand-600);
-  background: var(--color-brand-100);
-  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+  margin: 0 0 var(--space-4);
   font-size: 19px;
   line-height: 1.5;
 }
+/* On a phone the full list is most of a screen standing between the headline
+   and the plans, and at 19px it is a long scroll to make one point: every
+   plan includes every feature. The two items marked .lede-keep make that
+   point, and the button under the list goes to the page whose job is the rest
+   of them. Only the list that has somewhere to send you is trimmed - the
+   hosting promise below it uses .lede-promise too and keeps all of its items,
+   which are not written up anywhere else. */
+@media (max-width: 700px) {
+  .lede-promise-trim li:not(.lede-keep) { display: none; }
+}
 
+/* The qualifications under the promise. Same size and colour as .fine-print
+   further down, so every piece of small print on the page reads alike. */
 .lede-note {
-  display: block;
-  margin-top: var(--space-2);
-  font-size: 14.5px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
   color: var(--color-neutral-700);
 }
 
@@ -2429,6 +2634,26 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
 .hero-play:hover img { opacity: 1; }
 .hero-play:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 
+/* The videos band on the documentation hub: the thumbnail is the smaller of
+   the two columns because it is an invitation, not the content - the copy and
+   the button are what someone reads. .hero-play, just above, carries the
+   image's own hover and focus treatment and is not scoped to the hero. */
+.video-feature {
+  display: grid;
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
+  gap: var(--space-6);
+  align-items: center;
+}
+.video-feature h2 { margin-bottom: var(--space-2); }
+.video-feature p { color: var(--color-neutral-800); font-size: 17px; line-height: 1.55; }
+.video-feature > div > :last-child { margin-bottom: 0; }
+@media (max-width: 760px) {
+  /* Stacked, the thumbnail would run the full width of the box and dwarf the
+     copy under it, so it keeps to a readable size and the text sits below. */
+  .video-feature { grid-template-columns: minmax(0, 1fr); }
+  .video-feature .hero-play { max-width: 360px; }
+}
+
 /* ── news cards (homepage) ─────────────────────────────────────────────── */
 
 .news-row {
@@ -2961,6 +3186,9 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   /* Paired with .feature-stack's own scroll-margin further up: that rule is
      two classes and would otherwise override .inpage-anchor's 92px here. */
   .feature-stack .inpage-anchor { scroll-margin-top: 92px; }
+  /* The header is 82px here, so the same 92px the other anchors drop to. */
+  .plan-band[id],
+  .band-box[id] { scroll-margin-top: 92px; }
   .triad-2up { --example-card-title: 20px; }
   /* Half of the smaller line box, less half the arrow, as above. */
   .triad-2up summary::after { margin-top: 7px; }
@@ -3077,7 +3305,12 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   scrollbar-color: var(--color-neutral-400) transparent;
 }
 
-.cmp { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1250px; margin: 0; font-size: 15px; table-layout: fixed; }
+/* min-width is what makes the wrapper scroll: four level columns at a
+   readable width plus the 186px label column. It was 1250px when there were
+   five levels; dropping "You build it" gave the four that remain about 15px
+   each rather than shrinking the table, because the widest cells here are
+   phrases ("by email, phone and video"), not numbers. */
+.cmp { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1100px; margin: 0; font-size: 15px; table-layout: fixed; }
 
 .cmp th, .cmp td { text-align: left; vertical-align: top; padding: var(--space-3); word-wrap: break-word; }
 
@@ -3098,30 +3331,37 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
 .cmp .cmp-corner { z-index: 3; }
 
 .cmp thead th:not(.cmp-corner) { border-bottom: 2px solid var(--color-divider); }
+/* The badge sits above its level name, and every column has the slot whether
+   or not it is badged - see the note in start-table.html. The height is set
+   on the box rather than left to padding and line box, so the empty slot and
+   a filled one cannot drift apart and leave the names off by a pixel. */
+.cmp-flag {
+  display: block;
+  width: fit-content;
+  height: 18px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 11px;
+  line-height: 18px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: var(--color-cta);
+  color: #000;
+  padding: 0 8px;
+  border-radius: 999px;
+  margin: 0 0 var(--space-1);
+}
+/* matches the cards' second badge: a second endorsement in a second colour,
+   so the two read as different claims rather than competing recommendations. */
+.cmp-flag-alt { background: var(--color-brand-700); color: #fff; }
+/* the reserved slot: it holds the line open and shows nothing. */
+.cmp-flag-none { background: none; }
 .cmp-tier {
   display: block;
   font-family: var(--font-heading);
   font-size: 19px;
   line-height: 1.15;
 }
-.cmp-tier em {
-  display: block;
-  width: fit-content;
-  font-family: var(--font-body);
-  font-weight: 600;
-  font-style: normal;
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  background: var(--color-cta);
-  color: #000;
-  padding: 2px 8px;
-  border-radius: 999px;
-  margin: var(--space-1) 0 0;
-}
-/* matches the rail badge: a second endorsement in a second colour, so the two
-   read as different claims rather than competing recommendations. */
-.cmp-tier em.alt { background: var(--color-brand-700); color: #fff; }
 
 .cmp-price { display: block; font-weight: 600; font-size: 15px; color: var(--color-accent-700); margin-top: 3px; }
 .cmp-grp { display: block; font-weight: 400; font-size: 13px; line-height: 1.35; color: var(--color-neutral-700); margin-top: 4px; }
@@ -3151,12 +3391,28 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
 .cmp td.n, .cmp td.m { color: var(--color-neutral-700); }
 
 .cmp .cmp-featured { background: var(--color-accent-100); }
-.cmp tbody td:nth-child(5) { background: color-mix(in srgb, var(--color-accent-100) 55%, transparent); }
+/* the featured column, tinted down the body to carry the header's flag. The
+   count includes the row-label th, so this is the third level column -- move
+   it if a level is ever added or removed. */
+.cmp tbody td:nth-child(4) { background: color-mix(in srgb, var(--color-accent-100) 55%, transparent); }
 
 .cmp-cta td { padding-top: var(--space-4); padding-bottom: var(--space-4); }
 
+/* The table is desktop-only, heading and all - .cmp-section is the section
+   around it on /pricing/.
+
+   Below this width you get the row labels and about a column and a half of
+   levels at a time, so reading a row means holding two values in your head
+   while you scroll sideways for the other two. The straight-across comparison
+   is the whole reason the table exists, and it is the first thing that stops
+   working. Nothing is lost by dropping it: every value in here is also in the
+   cards in plans-bands.html, which stack one level at a time at this width
+   and read better for it.
+
+   This is also where the frozen label column used to narrow to 172px. With
+   the table gone below 700px that rule had nothing left to do. */
 @media (max-width: 700px) {
-  .cmp th[scope="row"], .cmp .cmp-corner { width: 172px; min-width: 172px; }
+  .cmp-section { display: none; }
 }
 
 /* Fine print. Built as a list so further notes can be added without restyling. */

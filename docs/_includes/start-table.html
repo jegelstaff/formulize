@@ -1,42 +1,70 @@
 {% comment %}
-  The comparison table on /pricing/, below start-rail.html.
+  The comparison table on /pricing/, below plans-bands.html.
 
-  The two are not rivals and neither is going away: the rail is for choosing
+  The two are not rivals and neither is going away: the bands are for choosing
   (each level argued on its own terms, in the order the commitment grows) and
   this table is for verifying (every axis named once, in a frozen left column,
   so a row can be read straight across). People do both, in that order, and the
   table is where a careful buyer checks the claim the cards made.
 
-  Same axes, in the same order, as the rail - if you add one there, add it
-  here. Scroll sideways to move through the levels; the row labels stay put.
+  HOSTED LEVELS ONLY. "You build it" is not a column here. The free download
+  has nothing to compare on - the answer to nearly every row is "your server,
+  your rules" - so its column was a stack of the same shrug, and it squeezed
+  the four paid levels for the reader who is actually choosing between them.
+  It is still the first card in plans-bands.html, which is where someone
+  decides whether to host at all; this table is for the decision after that
+  one. The Download button stays off the CTA row for the same reason.
+
+  WHAT NEVER VARIES IS NOT A ROW. Unlimited everything, full AI, and security
+  /updates/monitoring are promised at the top of /pricing/ for every plan, so
+  a row each was four identical cells restating the page's own opening. Only
+  what actually differs between levels earns a row here.
+
+  Same axes, in the same order, as the cards in plans-bands.html - if you add
+  one there, add it here. Support is four rows rather than one because it
+  escalates on four separate counts: how directly you can reach us, how fast
+  we answer, how much we do once we have, and whether changing the system is
+  included at all (see the support note in plans-bands.html). Scroll sideways
+  to move through the levels; the row labels stay put.
+
+  PRICES ARE PLACEHOLDERS, matching plans-bands.html. Change both together.
+  The header prices are the annual rate, as the cards' prices are; the
+  month-to-month rate is on the cards alone, in each card's note, because a
+  second price per column is a second thing to read in a table whose job is
+  to make one row readable straight across.
 {% endcomment %}
 <div class="cmp-wrap">
   <table class="cmp">
     <thead>
+      {% comment %}
+        Every column opens with a .cmp-flag, badged or empty. The two empty
+        ones are what keep the four level names on one line with each other -
+        without them the unbadged columns start their name where the badged
+        ones start their badge, and the header row reads as two rows.
+      {% endcomment %}
       <tr>
         <th scope="col" class="cmp-corner"><span class="visually-hidden">What is included</span></th>
         <th scope="col">
-          <span class="cmp-tier">You build it</span>
-          <span class="cmp-price">Free forever</span>
-          <span class="cmp-grp">Do it yourself &middot; your server &middot; open source</span>
-        </th>
-        <th scope="col">
+          <span class="cmp-flag cmp-flag-none" aria-hidden="true"></span>
           <span class="cmp-tier">We host it</span>
           <span class="cmp-price">$49/month</span>
           <span class="cmp-grp">Do it yourself &middot; our server</span>
         </th>
         <th scope="col">
+          <span class="cmp-flag cmp-flag-none" aria-hidden="true"></span>
           <span class="cmp-tier">We help</span>
           <span class="cmp-price">$149/month</span>
           <span class="cmp-grp">Hosted, with our help</span>
         </th>
         <th scope="col" class="cmp-featured">
-          <span class="cmp-tier">We train you <em>Most popular</em></span>
+          <span class="cmp-flag">Most popular</span>
+          <span class="cmp-tier">We train you</span>
           <span class="cmp-price">$199/month + $449 setup</span>
           <span class="cmp-grp">Hosted, with our help</span>
         </th>
         <th scope="col">
-          <span class="cmp-tier">We&rsquo;ve got this <em class="alt">Best value</em></span>
+          <span class="cmp-flag cmp-flag-alt">Best value</span>
+          <span class="cmp-tier">We&rsquo;ve got this</span>
           <span class="cmp-price">$1,199/month + $2,999 setup</span>
           <span class="cmp-grp">Managed &middot; annual only</span>
         </th>
@@ -45,35 +73,7 @@
     <tbody>
 
       <tr>
-        <th scope="row">Unlimited forms, users, and data</th>
-        <td class="y">Always</td>
-        <td class="y">Always</td>
-        <td class="y">Always</td>
-        <td class="y">Always</td>
-        <td class="y">Always</td>
-        </tr>
-
-      <tr>
-        <th scope="row">Full AI integration</th>
-        <td class="y">Always</td>
-        <td class="y">Always</td>
-        <td class="y">Always</td>
-        <td class="y">Always</td>
-        <td class="y">Always</td>
-        </tr>
-
-      <tr>
-        <th scope="row">Security updates, maintenance, and 24/7 monitoring</th>
-        <td class="m">Your server, your rules</td>
-        <td class="y">Automatic</td>
-        <td class="y">Automatic</td>
-        <td class="y">Automatic</td>
-        <td class="y">Automatic</td>
-        </tr>
-
-      <tr>
         <th scope="row">Backups, going back</th>
-        <td class="m">Your server, your rules</td>
         <td class="y"><b>1 week</b></td>
         <td class="y"><b>1 month</b></td>
         <td class="y"><b>3 months</b></td>
@@ -83,15 +83,29 @@
       <tr>
         <th scope="row">Onboarding</th>
         <td class="n">Docs and videos</td>
-        <td class="n">Docs and videos</td>
         <td class="y"><b>1 hour</b> orientation</td>
         <td class="y"><b>Half day</b> training</td>
         <td class="y"><b>3 days</b> training, system configuration, data migration</td>
         </tr>
 
       <tr>
+        <th scope="row">How you reach us</th>
+        <td class="m">Community &mdash; Slack, Discord and GitHub</td>
+        <td class="y">Unlimited, <b>by email</b></td>
+        <td class="y">Unlimited, <b>by email, phone and video</b></td>
+        <td class="y">Unlimited, <b>by email, phone and video</b></td>
+        </tr>
+
+      <tr>
+        <th scope="row">Support response</th>
+        <td class="m">When the community answers</td>
+        <td class="y"><b>1 business day</b></td>
+        <td class="y"><b>4 hours</b></td>
+        <td class="y"><b>1 hour</b></td>
+        </tr>
+
+      <tr>
         <th scope="row">When something isn&rsquo;t working</th>
-        <td class="n">Up to you</td>
         <td class="n">Up to you</td>
         <td class="y">We will tell you how to fix it</td>
         <td class="y">We will tell you how to fix it</td>
@@ -99,28 +113,25 @@
         </tr>
 
       <tr>
-        <th scope="row">Support response</th>
-        <td class="m">Community, or by the hour</td>
-        <td class="m">Community, or by the hour</td>
-        <td class="y"><b>1 business day</b></td>
-        <td class="y"><b>4 hours</b></td>
-        <td class="y"><b>1 hour</b></td>
+        <th scope="row">Changes to how your system works</th>
+        <td class="n">By the hour</td>
+        <td class="n">By the hour</td>
+        <td class="n">By the hour</td>
+        <td class="y"><b>Unlimited</b> configuration of what you already have</td>
         </tr>
 
       <tr>
         <th scope="row">Custom web address</th>
-        <td class="m">Your server, your rules</td>
-        <td class="n">yourname.formulize.net</td>
-        <td class="n">yourname.formulize.net</td>
-        <td class="y"><b>yourname.org</b></td>
-        <td class="y"><b>yourname.org</b></td>
+        {% comment %} wbr, so if the column is ever too narrow for the sample
+           domain it breaks at the dot rather than mid-word. {% endcomment %}
+        <td class="n">yoursite.<wbr>formulize.net</td>
+        <td class="n">yoursite.<wbr>formulize.net</td>
+        <td class="y"><b>yoursite.org</b></td>
+        <td class="y"><b>yoursite.org</b></td>
         </tr>
-
-
 
       <tr>
         <th scope="row">Quarterly system review by the Formulize team</th>
-        <td class="n"></td>
         <td class="n"></td>
         <td class="n"></td>
         <td class="n"></td>
@@ -129,7 +140,6 @@
 
       <tr class="cmp-cta">
         <th scope="row"><span class="visually-hidden">Get started</span></th>
-        <td><a class="btn btn-secondary btn-block" href="{{ "/download/" | relative_url }}">Download</a></td>
         <td><a class="btn btn-secondary btn-block" href="{{ "/signup/" | relative_url }}?plan=level-1">Sign up</a></td>
         <td><a class="btn btn-secondary btn-block" href="{{ "/signup/" | relative_url }}?plan=level-2">Sign up</a></td>
         <td><a class="btn btn-primary btn-block" href="{{ "/signup/" | relative_url }}?plan=level-3">Sign up</a></td>
@@ -139,6 +149,3 @@
     </tbody>
   </table>
 </div>
-
-{% include plans-custom-note.html %}
-

@@ -31,28 +31,28 @@ description: Sign up to have Formulize hosted for you, from $49 a month, on serv
 
 <section class="band">
   <div id="plan-summary" class="plan-preview">
-    <div class="card plan-card" data-plan="level-1">
+    <div class="card plan-card" data-plan="level-1" hidden>
       <span class="card-kicker">You chose</span>
       <h3 class="card-title">We host it</h3>
       <p class="card-price"><strong>$49</strong>/month</p>
-      <p class="card-body">We run the server. Security updates, monitoring and nightly backups going back a week. Your system lives at yourname.formulize.net.</p>
+      <p class="card-body">We run the server. Security updates, monitoring and nightly backups going back a week. Your system lives at yoursite.formulize.net.</p>
       <p class="text-muted">Billed annually &middot; $59 month to month</p>
     </div>
-    <div class="card plan-card" data-plan="level-2">
+    <div class="card plan-card" data-plan="level-2" hidden>
       <span class="card-kicker">You chose</span>
       <h3 class="card-title">We help</h3>
       <p class="card-price"><strong>$149</strong>/month</p>
       <p class="card-body">Everything above, with backups going back a month, an hour of orientation, and unlimited tech support answered within one business day.</p>
       <p class="text-muted">Billed annually &middot; $179 month to month</p>
     </div>
-    <div class="card plan-card" data-plan="level-3">
+    <div class="card plan-card" data-plan="level-3" hidden>
       <span class="card-kicker">You chose</span>
       <h3 class="card-title">We train you</h3>
       <p class="card-price"><strong>$199</strong>/month</p>
       <p class="card-body">Backups going back three months, half a day of training, support answered within four hours, and your own web address.</p>
       <p class="text-muted">Billed annually &middot; $239 month to month &middot; $449 one-time setup</p>
     </div>
-    <div class="card plan-card" data-plan="level-4">
+    <div class="card plan-card" data-plan="level-4" hidden>
       <span class="card-kicker">You chose</span>
       <h3 class="card-title">We&rsquo;ve got this</h3>
       <p class="card-price"><strong>$1,199</strong>/month</p>
@@ -60,7 +60,7 @@ description: Sign up to have Formulize hosted for you, from $49 a month, on serv
       <p class="text-muted">Billed annually &middot; $2,999 one-time setup</p>
     </div>
   </div>
-  <p class="triad-foot"><a class="btn btn-secondary btn-sm" href="{{ "/pricing/" | relative_url }}">Compare every plan again</a></p>
+  <p class="triad-foot"><a class="btn btn-secondary btn-sm" href="{{ "/pricing/" | relative_url }}">Compare every plan</a></p>
 </section>
 
 <section class="band">
@@ -110,14 +110,17 @@ description: Sign up to have Formulize hosted for you, from $49 a month, on serv
 
 <script>
 (function () {
-  // The pricing page links here as /signup/?plan=level-3. With no plan named,
-  // or an unrecognised one, every card stays visible and the page reads as a
-  // summary of the options -- so a mistyped link is never a dead end. With
-  // JavaScript off, the same thing happens, for the same reason.
+  // The pricing page links here as /signup/?plan=level-3, and this reveals
+  // that plan's card. All four ship hidden in the markup, so with no plan
+  // named, with an unrecognised one, or with JavaScript off, the band shows
+  // no plan at all and the "Compare every plan" button under it is the way
+  // on. Hiding them in the markup rather than here is the whole point: every
+  // card is headed "You chose", which is only true of the one that was
+  // actually chosen, and the page is linked bare from the footer and from
+  // /contact/ - arrivals that never chose anything. A card that started
+  // visible would also say it for a frame before script could take it back.
   var wanted = new URLSearchParams(window.location.search).get('plan');
-  var cards = document.querySelectorAll('#plan-summary .plan-card');
   var match = document.querySelector('#plan-summary .plan-card[data-plan="' + (wanted || '').replace(/[^a-z0-9-]/gi, '') + '"]');
-  if (!match) { return; }
-  cards.forEach(function (card) { card.hidden = (card !== match); });
+  if (match) { match.hidden = false; }
 })();
 </script>

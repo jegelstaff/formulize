@@ -96,6 +96,30 @@ description: Technical documentation for Formulize — the internal and public A
   </div>
 </section>
 
+{% comment %}
+  The videos were only ever reachable from one link inside "Talks and
+  background" above, which buried the whole library under a subheading about
+  conference slides. That link stays - someone scanning the groups should
+  still find it where it belongs - and this band gives the library its own
+  place on the page for anyone who would rather watch than read.
+{% endcomment %}
+<section class="band">
+  <div class="band-box">
+    <div class="video-feature">
+      <a class="hero-play" href="{{ "/documentation/videos/" | relative_url }}" aria-label="All Formulize videos and tutorials">
+        <img src="{{ "/assets/img/intro-to-formulize-plus-ai.webp" | relative_url }}" alt="">
+      </a>
+      <div>
+        <h2>Would you rather watch?</h2>
+        <p>Everything from a quick introduction, to an AI assistant building a complete database from a prompt, to a deep dive into DevOps. Plus the full tutorial series for Formulize 4.</p>
+        <p class="btn-row">
+          <a class="btn btn-primary" href="{{ "/documentation/videos/" | relative_url }}">All videos and tutorials</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="band">
   <div class="card elev-sm" style="background: var(--color-accent-100);">
     <h2 style="margin-bottom: var(--space-2);">Something missing, or wrong?</h2>
