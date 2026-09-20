@@ -1,0 +1,119 @@
+/* ============================================================
+   Anari — design tokens
+   ============================================================
+
+   The theme's default palette and the rest of its design tokens, kept in this
+   file rather than in style.css so the defaults are in one place that is easy
+   to find, read, and re-skin.
+
+   This file is also what the Formulize Appearance page reads the theme's
+   default colours and font out of (see formulize_appearanceThemeTokens() in
+   modules/formulize/include/appearance.php), so that the defaults it offers,
+   and resets to, are what this theme actually looks like. Keep the declarations
+   below in a single :root block, one `--token: value;` per line, and put any
+   media/colour-scheme variations in style.css instead, so that parsing keeps
+   working.
+
+   Loaded via the @import at the top of style.css, so anything that pulls in
+   style.css — including the standalone popup and print pages that only ever
+   link the theme's style.css — gets the tokens too.
+   ============================================================ */
+
+/* ---- Design tokens ----
+
+   These are the same custom property names the Lyris theme uses, so the two
+   themes share one vocabulary and one Appearance page. The values below are
+   Anari's own palette, ie: the defaults, which is what this theme looks like
+   when nothing has been customized.
+
+   The Appearance page in the Formulize admin UI overrides a subset of them, by
+   generating themes/Anari/appearance/appearance.css and linking it after this
+   file (see formulize_renderAppearanceHead() in
+   modules/formulize/include/appearance.php, called from theme.html). Each of
+   the nine configurable colours drives several tokens: picking one Primary
+   colour, for instance, rewrites --c-accent and its hover/soft/focus variants
+   together, so the interface stays coherent whatever colour is chosen. The
+   derivations are done in PHP with color-mix(), which is why the defaults here
+   are written out in full rather than derived: nothing depends on these
+   particular values being related to each other. */
+
+:root {
+  /* Primary - buttons, links, selected rows, focus rings */
+  --c-accent:        #0d7bbf;
+  --c-accent-fg:     #0d7bbf;
+  --c-accent-hover:  #0b6aa3;
+  --c-accent-soft:   #e7f2fa;
+  --c-accent-soft-2: #cfe5f4;
+  --c-border-focus:  #0b6aa3;
+  --sh-focus:        0 0 0 3px rgba(13, 123, 191, 0.15);
+
+  /* Page background */
+  --c-bg:            #F5F6F8;
+
+  /* Surface - cards, tables, panels and other raised areas */
+  --c-surface:       #FFFFFF;
+  --c-surface-2:     #FBFCFD;
+  --c-surface-3:     #F8FAFB;
+
+  /* Text - muted and subtle are derived from it */
+  --c-text:          #323C47;
+  --c-text-muted:    #707683;
+  --c-text-subtle:   #90A0B7;
+
+  /* Borders - strong is derived */
+  --c-border:        #EBEFF2;
+  --c-border-strong: #C2CFE0;
+
+  /* Status colours */
+  --c-success:       #27BD6B;
+  --c-success-soft:  #E4F7ED;
+  --c-warning:       #F1B70F;
+  --c-warning-soft:  #FDF3D5;
+  --c-danger:        #FF365F;
+  --c-danger-soft:   #FFE3E9;
+  --c-info:          #334D6E;
+  --c-info-soft:     #E6EBF1;
+
+  /* Typography. --font-sans is what the Appearance page's font setting
+     overrides; the Poppins webfont this theme ships with is requested in
+     theme.html and simply goes unused when another font is chosen. */
+  --font-sans: Poppins, Helvetica, Verdana, sans-serif;
+
+  /* The secondary font, used for headings, form labels, and the drawer's title.
+     Follows --font-sans unless the Appearance page has been given a second font
+     to use, so one font throughout stays the default. */
+  --font-heading: var(--font-sans);
+
+  /* Base font size: the root font size, applied to `html` in style.css. This
+     theme sizes its text in rem and em throughout, so every text size is already
+     a proportion of this one and moving it moves all of them. The Appearance
+     page's "Text size" setting overrides it, and a user's own profile font size
+     setting overrides that in turn (see theme.html). */
+  --font-size-base: 16px;
+
+  /* How big this theme's standard content text is as a proportion of the base
+     above. This theme puts no font-size on `body` and sizes its content text at
+     the root size itself, so the two are the same thing and the ratio is 1: the
+     "Text size" setting on the Appearance page means exactly what it says here.
+     (Lyris sets its content text at 0.8125 of the base, and so declares that -
+     see themes/Lyris/css/tokens.css.) */
+  --font-size-content-ratio: 1;
+
+  /* Anari-specific shadows. Both follow the colour they tint, so they keep
+     tracking the Primary/Text settings without the Appearance page needing to
+     know about them: these are shaped glows rather than the flat ring that
+     --sh-focus is, so they can't just reuse it. */
+  --sh-accent-glow:    0px 4px 10px 0px color-mix(in srgb, var(--c-accent) 24%, transparent);
+  --sh-secondary-glow: 0px 4px 10px 0px color-mix(in srgb, var(--c-text-muted) 24%, transparent);
+
+  /* Legacy aliases. This theme (and any site-specific custom CSS written
+     against it) referred to these before the tokens above existed, so they are
+     kept, pointing at the tokens, and pick up customizations like everything
+     else. */
+  --button-color: var(--c-accent);
+  --accent-color: var(--c-accent);
+  --text-color: var(--c-text);
+  --background-color: var(--c-bg);
+  --light-border-color: var(--c-border-strong);
+  --alert-color: var(--c-danger);
+}

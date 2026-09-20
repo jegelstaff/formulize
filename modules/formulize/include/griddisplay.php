@@ -68,12 +68,8 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
 function displayGrid($fid, $entry_id, $rowcaps, $colcaps, $title="", $orientation="horizontal", $startID="first", $finalCell="", $finalRow="", $calledInternal=false, $screen=null, $headingAtSide="", $elementObject=null, $prevEntry = array()) {
 
 	global $xoopsUser;
-	$numcols = count((array) $colcaps);
-	if(is_array($finalCell)) {
-		$numcols = $numcols+2;
-	} else {
-		$numcols = $numcols+1;
-	}
+	// (the old $numcols total went into the title row's colspan; the grid works
+	// out its own tracks further down)
 	$numrows = count((array) array_filter($rowcaps, 'nonNullGridRowCaps'));	# count non-null row captions
 	if($title == "{FORMTITLE}") {
 		$title = trans(getFormTitle($fid));
@@ -115,78 +111,134 @@ function displayGrid($fid, $entry_id, $rowcaps, $colcaps, $title="", $orientatio
 	// start buffering the output
 	ob_start();
 
-	// set the title row
+	// ---------------------------------------------------------------------
+	// Work out the shape of the grid before drawing anything. A CSS grid
+	// container has to know how many column tracks it needs up front, and
+	// whether there is a leading row-caption track or a trailing final-cell
+	// track, so all of that is decided here rather than while drawing.
+	// (issue #119 - this element used to render as a <table>.)
+	// ---------------------------------------------------------------------
+	$elementRenderer = new formulizeElementRenderer($elementObject);
+	$idForm = is_object($elementObject) ? $elementObject->getVar('id_form') : $fid;
+
+	$columnCaptions = array();
+	$haveColumnCaptions = false;
+	foreach($colcaps as $thiscap) {
+		$thiscap = trim($elementRenderer->formulize_replaceReferencesAndVariables($thiscap, $entry_id, $idForm));
+		$columnCaptions[] = $thiscap;
+		if(preg_replace('/[\s]+/mu', '', $thiscap) != '') {
+			$haveColumnCaptions = true;
+		}
+	}
+
+	$rowCaptions = array();
+	$haveRowCaptions = false;
+	foreach($rowcaps as $thiscap) {
+		$thiscap = trim($elementRenderer->formulize_replaceReferencesAndVariables($thiscap, $entry_id, $idForm));
+		$rowCaptions[] = $thiscap;
+		if(preg_replace('/[\s]+/mu', '', $thiscap) != '') {
+			$haveRowCaptions = true;
+		}
+	}
+
+	// Only draw a header band when it has something in it. The old table always
+	// drew an empty leading cell when the heading was above the grid; in a CSS
+	// grid that is a zero width track plus a gap, which pushes the first real
+	// column in from the left edge of the field for no reason.
+	$showRowHeaderColumn = ($numrows > 1 OR $haveRowCaptions);
+	$showColumnHeaderRow = $haveColumnCaptions;
+	$hasFinalColumn = is_array($finalCell);
+	$dataColumnCount = count((array) $colcaps);
+
+	// A stable id so the caption can name the grid for assistive technology.
+	static $gridInstanceCount = 0;
+	$gridInstanceCount++;
+	$gridDomId = is_object($elementObject)
+		? "de_".$idForm."_".$entry_id."_".$elementObject->getVar('ele_id')
+		: "formulize-grid-".$gridInstanceCount;
+	$captionId = $gridDomId."-grid-caption";
+
+	// role="table" rather than role="grid": role="grid" is a composite widget
+	// and commits the author to a full arrow-key navigation model with a roving
+	// tabindex, which this element does not have - its cells are reached with
+	// Tab, like any other run of form fields. role="table" keeps the row and
+	// header relationships the <table> used to give assistive technology
+	// without promising keyboard behaviour that is not implemented.
+	$gridClasses = "formulize-grid fz-grid";
+	$gridClasses .= $headingAtSide ? " fz-grid--heading-at-side" : " fz-grid--heading-above";
+	$gridClasses .= $showRowHeaderColumn ? " fz-grid--has-row-headers" : "";
+	$gridClasses .= $hasFinalColumn ? " fz-grid--has-final-column" : "";
+	$gridClasses .= ($orientation == "vertical") ? " fz-grid--shade-columns" : " fz-grid--shade-rows";
+
+	$accessibleName = trim(strip_tags(html_entity_decode($title, ENT_QUOTES, 'UTF-8')));
+	$gridAria = " role=\"table\"";
+	if($accessibleName != '') {
+		$gridAria .= $headingAtSide
+			? " aria-label=\"".htmlspecialchars($accessibleName, ENT_QUOTES, 'UTF-8')."\""
+			: " aria-labelledby=\"$captionId\"";
+	}
+
+	// The caption sits outside the grid container so that it is not a grid item
+	// and does not need a column track of its own.
+	if(!$headingAtSide AND $accessibleName != '') {
+		print "<div class=\"formulize-grid-caption fz-grid__caption\" id=\"$captionId\">$title</div>\n";
+	}
 	if($headingAtSide) {
 		$gridContents[0] = $title;
-		$class = "even";
-		print "<table class='formulize-grid'>\n<tr>";
-		if ($numrows > 1 OR preg_replace('/[\s]+/mu', '', $rowcaps[0]) != '') {
-			echo "<td class='head'></td>";
+	}
+	print "<div class=\"$gridClasses\"$gridAria style=\"--fz-grid-data-columns: $dataColumnCount;\">\n";
+
+	// draw the column caption band
+	if($showColumnHeaderRow) {
+		print "<div class=\"fz-grid__row fz-grid__row--head\" role=\"row\">\n";
+		if($showRowHeaderColumn) {
+			print "<div class=\"fz-grid__cell fz-grid__cell--corner head\" role=\"cell\"></div>\n";
 		}
-	} else {
-		print "<table class='outer formulize-grid'>\n";
 		$class = "head";
-		if($title) { print "<tr><th colspan='$numcols'>$title</th></tr>\n"; }
-		print "<tr>\n<td class=\"head\">&nbsp;</td>\n";
-	}
-
-	// draw top row
-	$needToDrawCellsWhenHeadingAtSide = false;
-	$cellsWhenHeadingAtSide = '';
-	$elementRenderer = new formulizeElementRenderer($elementObject);
-	foreach($colcaps as $thiscap) {
-		$thiscap = trim($elementRenderer->formulize_replaceReferencesAndVariables($thiscap, $entry_id, $elementObject->getVar('id_form')));
-		if($headingAtSide) {
-			$needToDrawCellsWhenHeadingAtSide = preg_replace('/[\s]+/mu', '', $thiscap) != '' ? true : $needToDrawCellsWhenHeadingAtSide;
-			$cellsWhenHeadingAtSide .= "<td class=head>$thiscap</td>\n";
-		} else {
-		  if($orientation == "vertical" AND $class=="even" AND !$headingAtSide) { // only alternate rows
-				$class = "odd";
-			} elseif($orientation == "vertical") {
-				$class = "even";
+		foreach($columnCaptions as $thiscap) {
+			if($headingAtSide) {
+				$cellClass = "head";
+			} else {
+				if($orientation == "vertical" AND $class == "even") { // only alternate columns
+					$class = "odd";
+				} elseif($orientation == "vertical") {
+					$class = "even";
+				}
+				$cellClass = $class;
 			}
-			print "<td class=$class>$thiscap</td>\n";
+			print "<div class=\"fz-grid__cell fz-grid__cell--columnheader $cellClass\" role=\"columnheader\">$thiscap</div>\n";
 		}
+		if($hasFinalColumn) { // blank header for the final column if there is such a thing
+			print "<div class=\"fz-grid__cell fz-grid__cell--corner head\" role=\"cell\"></div>\n";
+		}
+		print "</div>\n";
 	}
-
-	if($needToDrawCellsWhenHeadingAtSide) {
-		print $cellsWhenHeadingAtSide;
-	}
-
-	if(is_array($finalCell)) { // draw blank header for last column if there is such a thing
-		print "<td class=head>&nbsp;</td>\n";
-	}
-	print "</tr>\n";
 
 	// draw regular rows
 	$class = "head";
 	$row_index = 0;
 	$ele_index = 0;
-	foreach($rowcaps as $thiscap) {
-		// convert any { } terms in the cap
-		$thiscap = trim($elementRenderer->formulize_replaceReferencesAndVariables($thiscap, $entry_id, $elementObject->getVar('id_form')));
-		if($orientation == "horizontal" AND $class=="even") {
+	foreach($rowCaptions as $thiscap) {
+		if($orientation == "horizontal" AND $class == "even") {
 			$class = "odd";
 		} elseif($orientation == "horizontal") {
 			$class = "even";
 		} else {
 			$class = "head";
 		}
-		print "<tr>\n";
-		if($headingAtSide) {
-			if ($numrows > 1 OR preg_replace('/[\s]+/mu', '', $thiscap) != '') {
-				print "<td class=\"head\">$thiscap</td>\n";
-			}
-		} else {
-			print "<td class=$class>$thiscap</td>\n";
+		$rowStripeClass = ($orientation == "horizontal") ? " fz-grid__row--$class" : "";
+		print "<div class=\"fz-grid__row$rowStripeClass\" role=\"row\">\n";
+		if($showRowHeaderColumn) {
+			$rowHeaderClass = $headingAtSide ? "head" : $class;
+			print "<div class=\"fz-grid__cell fz-grid__cell--rowheader $rowHeaderClass\" role=\"rowheader\">$thiscap</div>\n";
 		}
 		foreach($colcaps as $thiscolcap) {
-			if($orientation == "vertical" AND $class=="even") {
+			if($orientation == "vertical" AND $class == "even") {
 				$class = "odd";
 			} elseif($orientation == "vertical") {
 				$class = "even";
 			}
-			print "<td class=$class>\n";
+			print "<div class=\"fz-grid__cell $class\" role=\"cell\">\n";
 			$elementInGridId = $element_ids_query[$ele_index];
 			$deReturnValue = displayElement("", $elementInGridId, $entry_id, false, $screen, $prevEntry, false);
 			if(is_array($deReturnValue)) {
@@ -198,32 +250,30 @@ function displayGrid($fid, $entry_id, $rowcaps, $colcaps, $title="", $orientatio
 			}
 			if(is_object($form_ele)) {
 				print $form_ele->render();
-			} else {
-			  print "&nbsp;";
 			}
-			print "</td>\n";
+			print "</div>\n";
 			catalogueGridElement($elementInGridId, $entry_id, $elementObject, $form_ele, $prevEntry, $screen);
 			$ele_index++;
 		}
-		if(is_array($finalCell)) { // draw final cell values if they exist
+		if($hasFinalColumn) { // draw final cell values if they exist
 			if($orientation == "vertical") {
 				$class = "head";
 			}
-			if($finalCell[$row_index]) {
-				print "<td class=$class>" . $finalCell[$row_index] . "</td>\n";
-			} else {
-				print "<td class=$class>&nbsp;</td>\n";
-			}
+			$finalCellContents = isset($finalCell[$row_index]) ? $finalCell[$row_index] : "";
+			print "<div class=\"fz-grid__cell fz-grid__cell--final $class\" role=\"cell\">$finalCellContents</div>\n";
 		}
-		print "</tr>\n";
+		print "</div>\n";
 		$row_index++;
 	}
 
-	// draw final row if necessary
+	// draw final row if necessary. NOTE: $finalRow is developer supplied HTML. It
+	// used to be the inside of a <tr>, ie: a series of <td> cells. In the grid it
+	// needs to be a series of <div class="fz-grid__cell" role="cell"> elements
+	// instead.
 	if($finalRow) {
-		print "<tr>$finalRow</tr>\n";
+		print "<div class=\"fz-grid__row fz-grid__row--final\" role=\"row\">$finalRow</div>\n";
 	}
-	print "</table>";
+	print "</div>";
 	$gridContents[1] = trans(ob_get_clean());
 	if($headingAtSide === "") { // if $headingAtSide is "" (not false) then we print out the grid contents here.  Only pass back contents if $headingAtSide is specified as true or false (presumably by the formdisplay.php file), since otherwise for backwards compatibility we need to printout contents here because that's what the behaviour used to be.
 		print $gridContents[1];

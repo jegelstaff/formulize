@@ -245,6 +245,32 @@ Anything you set yourself is left alone by the launcher — it only fills in bla
 FORMULIZE_WEB_PORT=8081 FORMULIZE_DB_PORT=3307 docker compose up
 ```
 
+### Reaching Formulize from another device
+
+By default the ports are published on `127.0.0.1`, which means Formulize and its
+database are reachable only from the machine Docker is running on. Nothing else
+on your network can see them.
+
+If you need to open it up — to test on a phone or tablet on the same wi-fi, for
+instance — set `FORMULIZE_BIND_HOST` in `.env`:
+
+```
+FORMULIZE_BIND_HOST=0.0.0.0
+```
+
+Then restart with `docker compose up -d`, and browse to your machine's address
+on the network, such as `http://192.168.1.20:8080`. As with the ports, you can
+also set it inline for a one-off run:
+
+```bash
+FORMULIZE_BIND_HOST=0.0.0.0 docker compose up
+```
+
+Leaving it blank keeps the default of `127.0.0.1`.
+
+This exposes the database as well as the site, and both use the default
+development passwords, so only do it on a network you trust.
+
 ### Two folders with the same name
 
 Compose names its containers and its database volume after the folder the project is in. If your two checkouts are in folders with *different* names (say `formulize` and `formulize2`) they are separate projects and each gets its own database, which is what you want.

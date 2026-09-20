@@ -1,3 +1,14 @@
+/* ---- Design tokens ----
+   The theme's default palette and other design tokens live in their own
+   stylesheet, imported here so everything that loads style.css gets them.
+   The Appearance page reads the theme's defaults out of that file too.
+
+   @import has to come before any other rule, so this sits above the reset
+   below; custom properties on :root don't collide with it either way.
+   ---- */
+
+@import url("tokens.css");
+
 /* http://meyerweb.com/eric/tools/css/reset/
    v2.0 | 20110126
    License: none (public domain)
@@ -24,20 +35,45 @@ time, mark, audio, video {
   vertical-align: baseline;
 }
 
-:root {
-  --button-color: #0d7bbf;
-  --accent-color: #0d7bbf;
-  --text-color: #323C47;
-  --background-color: #F5F6F8;
-	--light-border-color: #C2CFE0;
-	--alert-color: #e74c3c;
+/* The root font size the whole type scale is a proportion of. This theme sizes
+   its text in rem, em and %, so every text size follows this one declaration and
+   moving it moves all of them together. It has to come after the reset above,
+   which sets `font-size: 100%` on `html` among everything else.
+
+   Three layers get a say, in this order: the theme's own default
+   (--font-size-base in tokens.css), the site-wide Text size setting on the
+   Appearance page (which overrides that token in the generated appearance.css),
+   and finally a user's personal font size preference, which theme.html prints as
+   an inline style further down the document and so wins over both. */
+html {
+  font-size: var(--font-size-base);
 }
 
 body {
-  font-family: Poppins, Helvetica, Verdana, sans-serif;
+  font-family: var(--font-sans);
   color: var(--text-color);
   background: var(--background-color);
   line-height: 1.4;
+}
+
+/* ---- Secondary font ----
+   The one place the secondary font is applied, so what it covers is written down
+   once and is the same list the Appearance page's help text promises: headings,
+   form labels, and the drawer's title. Everything else keeps --font-sans.
+
+   --font-heading is var(--font-sans) unless a second font has been chosen, so
+   these rules are inert on a site using a single font. Only the family is set
+   here: size, weight and colour stay with the rules that own those elements.
+   `font: inherit` in the reset above means headings would otherwise take the
+   body's family, so this is what gives them one of their own. */
+h1, h2, h3, h4, h5, h6,
+.fz-field__label,
+.form-label,
+.form-label--inline,
+.xoops-form-element-caption,
+.xoops-form-element-caption-required,
+.formulize-drawer__title {
+  font-family: var(--font-heading);
 }
 
 input {
@@ -97,7 +133,7 @@ div.ck-content blockquote {
 	padding-right: 1.5em;
 	padding-left: 1.5em;
 	font-style: italic;
-	border-left: 5px solid #ccc
+	border-left: 5px solid var(--c-border-strong)
 }
 
 div.ck-content h1 {
@@ -409,9 +445,9 @@ table:first-child div.applinks h1 {
 }
 
 .site-header {
-  background: #FFF;
+  background: var(--c-surface);
   height: 60px;
-  border-bottom: 1px solid #EBEFF2;
+  border-bottom: 1px solid var(--c-border);
   display: flex;
   align-items: center;
 }
@@ -450,7 +486,7 @@ table:first-child div.applinks h1 {
   border: 0;
 }
 .site-header__search-input::placeholder {
-  color: #90A0B7;
+  color: var(--c-text-subtle);
 }
 .site-header__search-input::-webkit-input-placeholder {
   line-height: normal !important;
@@ -474,7 +510,7 @@ table:first-child div.applinks h1 {
 .user-actions__link {
   margin: 0 10px;
   text-decoration: none;
-  color: #334D6E;
+  color: var(--c-text);
   text-align: center;
   padding-left: 0.3rem;
   padding-right: 0.3rem;
@@ -495,8 +531,8 @@ table:first-child div.applinks h1 {
   top: 1px;
   right: -2px;
   border-radius: 50%;
-  border: 1px solid #FFF;
-  background: #F7685B;
+  border: 1px solid var(--c-surface);
+  background: var(--c-danger);
 }
 
 .user-actions__link--notifications {
@@ -509,7 +545,7 @@ table:first-child div.applinks h1 {
 }
 
 .sidebar {
-  background: #FFF;
+  background: var(--c-surface);
   position: relative;
   z-index: 100;
   box-shadow: 6px 0px 18px 0px rgba(51, 77, 110, 0.06);
@@ -517,7 +553,7 @@ table:first-child div.applinks h1 {
 
 .site-branding {
   height: 60px;
-  border-bottom: 1px solid #EBEFF2;
+  border-bottom: 1px solid var(--c-border);
   display: flex;
   align-items: center;
   padding: 0 30px;
@@ -539,7 +575,7 @@ table:first-child div.applinks h1 {
 }
 
 .main-menu {
-  background: #FFF;
+  background: var(--c-surface);
   padding-bottom: 30px;
 }
 
@@ -549,12 +585,12 @@ table:first-child div.applinks h1 {
   align-items: center;
   font-size: 0.85rem;
   font-weight: 500;
-  color: #334D6E;
+  color: var(--c-text);
   text-decoration: none;
   line-height: 1.6;
 }
 .main-menu__item:hover {
-  background: #f8fafb;
+  background: var(--c-surface-3);
 }
 
 .main-menu__item-link-icon {
@@ -606,7 +642,7 @@ table:first-child div.applinks h1 {
   width: 20px;
   min-width: 20px;
   margin-right: 20px;
-  color: #334D6E;
+  color: var(--c-text);
 	margin-top: 0.7em;
 }
 
@@ -620,7 +656,7 @@ table:first-child div.applinks h1 {
 }
 
 .full-avatar {
-  background: #FFF;
+  background: var(--c-surface);
   height: 100px;
   display: flex;
   flex-direction: column;
@@ -653,7 +689,7 @@ table:first-child div.applinks h1 {
 }
 
 .full-avatar__name {
-  color: #334D6E;
+  color: var(--c-text);
   font-weight: 500;
   line-height: 1.4;
   text-decoration: none;
@@ -663,7 +699,7 @@ table:first-child div.applinks h1 {
 }
 
 .full-avatar__email {
-  color: #90A0B7;
+  color: var(--c-text-subtle);
   font-size: 0.8rem;
   line-height: 1.4;
   text-decoration: none;
@@ -750,7 +786,7 @@ button, input[type="submit"], input[type="button"], input[type="reset"],
 }
 button:hover, input[type="submit"]:hover, input[type="button"]:hover, input[type="reset"]:hover,
 .btn:hover {
-  box-shadow: 0px 4px 10px 0px rgba(16, 156, 241, 0.24);
+  box-shadow: var(--sh-accent-glow);
   transform: none;
   cursor: pointer;
 }
@@ -786,7 +822,7 @@ div#formulize-button-controls label[for=button-controls] {
 button, input[type="submit"], input[type="button"], input[type="reset"],
 .btn--primary {
   background-color:  var(--button-color);
-  box-shadow: 0px 4px 10px 0px rgba(16, 156, 241, 0.24);
+  box-shadow: var(--sh-accent-glow);
 }
 @media print {
   button, input[type="submit"], input[type="button"], input[type="reset"],
@@ -799,8 +835,8 @@ button, input[type="submit"], input[type="button"], input[type="reset"],
 }
 
 .btn--secondary {
-  background-color: #707683;
-  box-shadow: 0px 4px 10px 0px rgba(112, 118, 131, 0.24);
+  background-color: var(--c-text-muted);
+  box-shadow: var(--sh-secondary-glow);
 }
 @media print {
   .btn--secondary {
@@ -900,7 +936,7 @@ button, input[type="submit"], input[type="button"], input[type="reset"],
 }
 
 .chip {
-  background: #707683;
+  background: var(--c-text-muted);
   color: #FFF;
   font-weight: 500;
   display: inline-block;
@@ -918,7 +954,7 @@ button, input[type="submit"], input[type="button"], input[type="reset"],
 }
 
 .chip--navy {
-  background: #334D6E;
+  background: var(--c-info);
 }
 
 .chip--blue {
@@ -926,7 +962,7 @@ button, input[type="submit"], input[type="button"], input[type="reset"],
 }
 
 .chip--red {
-  background: #FF365F;
+  background: var(--c-danger);
 }
 
 .chip--cranberry {
@@ -934,8 +970,8 @@ button, input[type="submit"], input[type="button"], input[type="reset"],
 }
 
 .chip--light {
-  background: #F5F6F8;
-  color: #707683;
+  background: var(--c-bg);
+  color: var(--c-text-muted);
 }
 
 @media print {
@@ -1073,7 +1109,7 @@ table.formulize-subform-table td {
   margin: 4px -10px 0;
   text-decoration: none;
   color:  var(--accent-color);
-  background: #f1f4f8;
+  background: var(--c-surface-3);
   padding: 0.5em 2em;
   border: 1px solid var(--light-border-color);
   border-bottom-left-radius: 2px;
@@ -1131,7 +1167,7 @@ table.formulize-subform-table td {
 .form-heading {
   font-weight: 400;
   font-size: 0.9rem;
-  color: #6A707E;
+  color: var(--c-text-muted);
   margin-top: 60px;
 }
 .form-heading:first-of-type {
@@ -1279,7 +1315,7 @@ table.outer textarea,
   width: 100%;
   max-width: 300px;
   border: 0;
-  border-bottom: 1px solid #818E9B;
+  border-bottom: 1px solid var(--c-border-strong);
   padding-top: 0.5em;
   padding-right: 0;
   padding-left: 0.5em;
@@ -1452,7 +1488,7 @@ table.outer textarea[disabled],
 #formulize_modal input[type="date"][disabled],
 #formulize_modal input[type="time"][disabled],
 #formulize_modal input[type="password"][disabled] {
-  color: #818E9B;
+  color: var(--c-text-subtle);
 }
 @media print {
     .form-input[disabled],
@@ -1485,22 +1521,29 @@ table.outer textarea[disabled],
     max-width: 270px;
 }
 
+/* The autocomplete field's full-width size on desktop. `width` sets the size we
+   want; `max-width: 100%` lets it give that up when the space it is in is
+   narrower - which is what happens in the right drawer, since this query is on
+   the VIEWPORT and so applies in full inside a ~480px panel.
+
+   `min-width: 0` is what lets it give that width up. It used to repeat 673px, and
+   because min-width beats max-width the field could never shrink at all, so it
+   punched out of the drawer and forced the panel to scroll sideways. It cannot
+   simply be dropped, though: the generic `.col2 input[type="text"]` rule further
+   down sets `min-width: 700px`, so with nothing stated here the field would
+   round *up* to 700px on desktop. Zero opts out of both. */
 @media (min-width: 768px) {
-    .form-row input.formulize_autocomplete {
-        width: 673px;
-        max-width: 673px;
-        min-width: 673px;
-    }
+    .form-row input.formulize_autocomplete,
     .form-row .col2 input.formulize_autocomplete {
         width: 673px;
-        max-width: 673px;
-        min-width: 673px;
+        max-width: 100%;
+        min-width: 0;
     }
 }
 
 .form-container textarea, table.outer textarea,
 #formulize_modal textarea, table.outer textarea {
-    border-left: 1px solid #818E9B;
+    border-left: 1px solid var(--c-border-strong);
     padding-left: 1em;
 }
 
@@ -1518,25 +1561,25 @@ textarea {
 
 table.outer select, .form-container select, #formulize_modal select {
     border: 0;
-    border-bottom: 1px solid #818E9B;
+    border-bottom: 1px solid var(--c-border-strong);
     padding-left: 0.25em;
     width: 100%;
     max-width: 300px;
     color: var(--text-color);
 }
 
+/* The autocomplete component now owns its own structure (issue #92): the
+   wrapper is the positioning context and the magnifier is pinned inside the
+   field. The wrapper only has to hug its input so the icon lands on the input's
+   right edge, and stay out of the flow of the chip tray that follows it -- so
+   inline-block rather than the old float. The icon's own placement hacks are
+   gone; the component handles them. */
 div.formulize_autocomplete {
     max-width: 300px;
-    display: block;
-    float: left;
+    display: inline-block;
+    float: none;
+    width: auto;
     padding-top: 0.2rem;
-}
-.autocomplete-icon {
-    display: inline;
-    transform: scale(0.75);
-    margin-left: -0.2em;
-    vertical-align: bottom;
-    padding-top: 0.3em;
 }
 
 
@@ -1546,8 +1589,8 @@ div.formulize_autocomplete {
     }
 
     div.formulize_autocomplete {
-        width: calc(100% - 30px);
-        display: inline;
+        width: auto;
+        display: inline-block;
     }
 
     .form-container .col2 select,
@@ -1578,12 +1621,12 @@ div.formulize_autocomplete {
 }
 
 .form-required {
-  color: #FF365F;
+  color: var(--c-danger);
 }
 
 .form-help-text {
   font-size: 0.8rem;
-  color: #6A707E;
+  color: var(--c-text-muted);
   padding: 0.6em 0;
   line-height: 1.4;
   clear: both;
@@ -1632,8 +1675,8 @@ ul.form-help-text {
 
 .table {
   width: 100%;
-  background: #FFF;
-  color: #707683;
+  background: var(--c-surface);
+  color: var(--c-text-muted);
   border-radius: 4px;
   box-shadow: 6px 0px 10px 0px rgba(51, 77, 110, 0.08);
 }
@@ -1647,7 +1690,7 @@ ul.form-help-text {
 }
 
 .table thead tr {
-  border-bottom: 1px solid #EBEFF2;
+  border-bottom: 1px solid var(--c-border);
 }
 @media print {
   .table thead tr {
@@ -1659,7 +1702,7 @@ ul.form-help-text {
 }
 
 .table tbody tr {
-  border-bottom: 1px solid #EBEFF2;
+  border-bottom: 1px solid var(--c-border);
 }
 @media print {
   .table tbody tr {
@@ -1671,7 +1714,7 @@ ul.form-help-text {
 }
 
 .table--striped tr:nth-child(2n) {
-  background: #fbfcfd;
+  background: var(--c-surface-2);
 }
 @media print {
   .table--striped tr:nth-child(2n) {
@@ -1680,7 +1723,7 @@ ul.form-help-text {
 }
 
 .table--hover-highlight-row tr:hover {
-  background: #f8fafb;
+  background: var(--c-surface-3);
 }
 
 .table th, .table td {
@@ -1688,7 +1731,7 @@ ul.form-help-text {
 }
 
 .table th {
-  color: #90A0B7;
+  color: var(--c-text-subtle);
   font-weight: 500;
 }
 @media print {
@@ -1742,8 +1785,30 @@ ul.form-help-text {
 }
 button.ui-dialog-titlebar-close {
     min-width: auto;
-    border: 1px solid #999999 !important;
+    border: 1px solid var(--c-border-strong) !important;
     box-shadow: none;
+}
+
+/* Dialog OK/Cancel buttons — the Anari blue-pill look (formerly injected inline as
+   #id !important rules from include/2fa/manage.php). Now owned by the theme and
+   targeted by class: .ui-button inside .ui-dialog-buttonset. */
+.ui-dialog .ui-dialog-buttonpane .ui-dialog-buttonset .ui-button {
+    background: var(--button-color, #0d7bbf);
+    color: white;
+    font-weight: 600;
+    font-size: 0.9rem;
+    line-height: 1.3;
+    padding: 0;
+    border: 0;
+    border-radius: 10px;
+    min-width: 200px;
+    box-shadow: var(--sh-accent-glow);
+    height: auto;
+    width: auto;
+}
+.ui-dialog .ui-dialog-buttonpane .ui-dialog-buttonset .ui-button .ui-button-text {
+    padding: 12px 30px;
+    line-height: 1.3;
 }
 table.formulize-subform-table th {
     text-align: left;
@@ -1807,7 +1872,7 @@ div.subform-entry-container .ui-widget-content {
 
 
 .card {
-  background: #FFF;
+  background: var(--c-surface);
   border-radius: 4px;
   box-shadow: 6px 0px 10px 0px rgba(51, 77, 110, 0.08);
 }
@@ -1822,7 +1887,7 @@ div.subform-entry-container .ui-widget-content {
 
 .card__header {
   padding: 20px 24px;
-  border-bottom: 1px solid #EBEFF2;
+  border-bottom: 1px solid var(--c-border);
 }
 @media print {
   .card__header {
@@ -1845,7 +1910,7 @@ button.card__title {
 }
 
 .card__title {
-  color: #323C47 !important;
+  color: var(--c-text) !important;
   line-height: 1;
   font-weight: 500;
 }
@@ -1881,7 +1946,7 @@ output[id^=rangeValue] {
   height: 280px;
   cursor: pointer;
   user-select: none;
-  background: #dae2ec;
+  background: var(--c-border-strong);
   box-shadow: none;
 }
 @media (min-width: 768px) {
@@ -1922,7 +1987,7 @@ input::-webkit-slider-runnable-track {
   box-sizing: border-box;
   width: 100%;
   height: 1px;
-  background: #818E9B;
+  background: var(--c-border-strong);
   border-radius: 100px;
   /*margin: 140px 0;*/
 }
@@ -1936,7 +2001,7 @@ input::-moz-range-track {
   box-sizing: border-box;
   width: 100%;
   height: 1px;
-  background: #818E9B;
+  background: var(--c-border-strong);
   border-radius: 100px;
   margin: 140px 0;
 }
@@ -1950,7 +2015,7 @@ input::-ms-track {
   box-sizing: border-box;
   width: 100%;
   height: 1px;
-  background: #818E9B;
+  background: var(--c-border-strong);
   border-radius: 100px;
   color: transparent;
   padding: 140px 0;
@@ -1968,12 +2033,12 @@ input::-ms-fill-upper {
   box-sizing: border-box;
   width: 100%;
   height: 1px;
-  background: #818E9B;
+  background: var(--c-border-strong);
   border-radius: 100px;
 }
 
 input::-ms-fill-lower {
-  background: #2ED47A;
+  background: var(--c-success);
 }
 
 .rangeslider-fill-lower {
@@ -1988,11 +2053,11 @@ input::-ms-fill-lower {
 }
 
 .rangeslider-fill-lower--green {
-  background-color: #27bd6b;
+  background-color: var(--c-success);
 }
 
 .rangeslider-fill-lower--yellow {
-  background-color: #f4c53f;
+  background-color: var(--c-warning);
 }
 
 .rangeslider-fill-lower--red {
@@ -2001,7 +2066,7 @@ input::-ms-fill-lower {
 
 input::-webkit-slider-thumb {
   box-sizing: border-box;
-  box-shadow: 0px 4px 10px rgba(16, 156, 241, 0.24);
+  box-shadow: var(--sh-accent-glow);
   border: 7px solid  var(--accent-color);
   height: 30px;
   width: 30px;
@@ -2022,7 +2087,7 @@ input::-webkit-slider-thumb {
 
 input::-moz-range-thumb {
   box-sizing: border-box;
-  box-shadow: 0px 4px 10px rgba(16, 156, 241, 0.24);
+  box-shadow: var(--sh-accent-glow);
   border: 7px solid  var(--accent-color);
   height: 30px;
   width: 30px;
@@ -2042,7 +2107,7 @@ input::-moz-range-thumb {
 
 input::-ms-thumb {
   box-sizing: border-box;
-  box-shadow: 0px 4px 10px rgba(16, 156, 241, 0.24);
+  box-shadow: var(--sh-accent-glow);
   border: 7px solid  var(--accent-color);
   height: 30px;
   width: 30px;
@@ -2061,7 +2126,7 @@ input::-ms-thumb {
 
 .rangeslider-thumb {
   box-sizing: border-box;
-  box-shadow: 0px 4px 10px rgba(16, 156, 241, 0.24);
+  box-shadow: var(--sh-accent-glow);
   border: 7px solid  var(--accent-color);
   height: 30px;
   width: 30px;
@@ -2150,7 +2215,7 @@ input::-ms-thumb {
   position: absolute;
   top: 8px;
   left: -20px;
-  background: #dae2ec;
+  background: var(--c-border-strong);
 }
 .rating-text__step:first-child {
   margin-top: 0;
@@ -2164,7 +2229,7 @@ input::-ms-thumb {
 }
 
 .rating-text__step--active {
-  color: #334D6E;
+  color: var(--c-text);
 }
 @media print {
   .rating-text__step--active {
@@ -2176,13 +2241,13 @@ input::-ms-thumb {
 }
 
 .rating-text__step--active.rating-text__step--green:before {
-  background: #27bd6b;
+  background: var(--c-success);
 }
 .rating-text__step--active.rating-text__step--yellow:before {
-  background: #f1b70f;
+  background: var(--c-warning);
 }
 .rating-text__step--active.rating-text__step--red:before {
-  background: #FF365F;
+  background: var(--c-danger);
 }
 
 .rating-text--layout {
@@ -2201,7 +2266,7 @@ input::-ms-thumb {
 }
 
 .progress-bar {
-  background: #dae2ec;
+  background: var(--c-border-strong);
   height: 6px;
   border-radius: 3px;
 }
@@ -2213,7 +2278,7 @@ input::-ms-thumb {
 
 .progress-bar__inner {
   height: 6px;
-  background: #334D6E;
+  background: var(--c-info);
   border-radius: 3px;
 }
 
@@ -2255,7 +2320,7 @@ input::-ms-thumb {
 }
 
 .self-assessment__heading {
-  color: #6A707E;
+  color: var(--c-text-muted);
   font-size: 1rem;
   line-height: 1;
   padding: 0.5rem 0;
@@ -2286,8 +2351,14 @@ input::-ms-thumb {
   }
 }
 
+/* Restates the body font on the elements that browsers give a font of their
+   own (form controls, tables) and on the jQuery UI widgets that ship their
+   own family. Goes through --font-sans rather than naming Poppins, so the
+   Appearance page's font setting reaches these elements too: they cover
+   nearly all the text on a page, so a hardcoded family here would override
+   the chosen font everywhere it matters. */
 div, span, textarea, select, p, input, th, td, .ui-widget div, .ui-widget span, .ui-widget textarea, .ui-widget select, .ui-widget p, .ui-widget input, .ui-widget th, .ui-widget td {
-  font-family: Poppins, Helvetica, Verdana, sans-serif;
+  font-family: var(--font-sans);
 }
 
 img, svg {
@@ -3071,34 +3142,53 @@ img {
 	 margin-right: 1em;
 }
 
+/* "Table of elements" (grid) element - issue #119.
+   The element now renders as divs in a CSS grid; the structure and the gap
+   mechanics live in modules/formulize/templates/css/formulize.css and Anari
+   only supplies the skin and the width.
+
+   Width: Anari sizes every control in the field column to 700px (see
+   `.col2 input[type="text"] { min-width: 700px }` above) and caps it at 300px
+   below the 768px breakpoint. The grid takes the same two widths, so its right
+   hand edge lands on the same line as the fields above and below it - which is
+   what issue #119 asked for.
+
+   The old `max-width: 300px` on the container and `max-width: 75px` / `200px`
+   on the controls were there to stop the <table> blowing the layout out when a
+   grid held several wide inputs. `minmax(0, 1fr)` tracks do that job now, so
+   the controls are free to fill their cells and the caps come off. */
 .formulize-grid {
+    --fz-grid-column-gap: 1em;
+    --fz-grid-row-gap: 0.5em;
     width: 100%;
     max-width: 300px;
 }
-.formulize-grid input, .formulize-grid select {
-    width: auto !important;
-    max-width: 75px !important;
+.formulize-grid input:not([type="radio"]):not([type="checkbox"]):not([type="button"]):not([type="submit"]),
+.formulize-grid select,
+.formulize-grid textarea {
+    width: 100%;
+    min-width: 0 !important;
+    max-width: 100% !important;
 }
 .formulize-grid select {
 	margin-top: 0.5em;
 }
 @media (min-width: 768px) {
     .formulize-grid {
-        width: auto;
-        max-width: 100%;
+        max-width: 700px;
     }
-    .formulize-grid select {
-        min-width: 0px !important;
-        max-width: 100% !important;
-    }
-    .formulize-grid input {
-        min-width: 0px !important;
-        max-width: 200px !important;
+    /* Match the 700px the theme gives every other control in the field column,
+       so the grid's right edge lines up with theirs. */
+    .col2 .formulize-grid {
+        min-width: 700px;
     }
 }
 
-.formulize-grid td.head {
-		vertical-align: top;
+/* Header cells sat at the top of their table cell; keep that. */
+.formulize-grid .fz-grid__cell--corner,
+.formulize-grid .fz-grid__cell--columnheader,
+.formulize-grid .fz-grid__cell--rowheader {
+		align-self: start;
 }
 
 a.loe-edit-entry,
@@ -3120,7 +3210,7 @@ a.de-edit-icon:hover{
 span.formulize-masquerade-help {
   display: block;
   font-size: 0.85em;
-  color: #666;
+  color: var(--c-text-muted);
   margin-top: 4px;
 }
 
@@ -3395,6 +3485,15 @@ input[name='pickdiffgroup'] {
 	margin-bottom: 0.6em;
 }
 
+/* Numeric list values are aligned to the right of the cell. getHTMLForList in
+   functions.php marks them with .formulize-numeric instead of the hardcoded
+   inline style it used to emit, so the theme owns the alignment. (closes #131)
+   The span/li is already block level in this context (see formulize.css), so
+   text-align lands on the full width of the cell. */
+#listofentries .formulize-numeric {
+	text-align: right;
+}
+
 .list-of-entries table.outer tr.entry-row:last-of-type td.formulize-controls {
 	border-bottom: 1px dotted var(--light-border-color);
 }
@@ -3410,7 +3509,7 @@ input[name='pickdiffgroup'] {
 /* compatibility with classic xoops table layout */
 
 table.outer {
-  background: #FFF;
+  background: var(--c-surface);
   border-radius: 4px;
   box-shadow: 6px 0px 10px 0px rgba(51, 77, 110, 0.08);
   margin-bottom: 30px;
@@ -3475,7 +3574,7 @@ div.scrollbox table.outer {
 
 table.outer th {
   padding: 20px 24px;
-  border-bottom: 1px solid #EBEFF2;
+  border-bottom: 1px solid var(--c-border);
 }
 @media print {
   table.outer th {
@@ -3521,7 +3620,7 @@ table.outer input[type=submit], table.outer input[type=button] {
   text-decoration: none;
   border: 0;
   border-radius: 10px;
-  background: #707683;
+  background: var(--c-text-muted);
   text-align: center;
 }
 table.outer input[type=submit]:hover, table.outer input[type=button]:hover {
@@ -3552,7 +3651,7 @@ table.outer input[type=submit]:hover, table.outer input[type=button]:hover {
 
 table.outer input[type=submit], table.outer input[type=button] {
   background-color:  var(--button-color);
-  box-shadow: 0px 4px 10px 0px rgba(16, 156, 241, 0.24);
+  box-shadow: var(--sh-accent-glow);
 }
 @media print {
   table.outer input[type=submit], table.outer input[type=button] {
@@ -3672,7 +3771,7 @@ form[name='metachoiceform'] td p {
 }
 #advanced_options p input[type='text'] {
     width: auto;
-    border: 1px solid rgb(170, 170, 170);
+    border: 1px solid var(--c-border-strong);
     padding: 0.1em;
     margin-bottom: 1em;
 }
@@ -3732,7 +3831,7 @@ input#toggleRepeatData::before {
   display:block;
   width:0.75rem;
   height:0.75rem;
-  background: #fff;
+  background: var(--c-surface);
   border-radius:1.2rem;
   position: absolute;
   top:0.1rem;
@@ -3761,7 +3860,7 @@ input#toggleRepeatData:focus-visible {
   width: 500px;
   z-index: 101;
   text-align: center;
-  background-color: #fff;
+  background-color: var(--c-surface);
   color: black;
   border: 3px solid #ce8c22;
   padding: 1em;
@@ -3820,7 +3919,7 @@ input#toggleRepeatData:focus-visible {
 .pm-breadcrumbs {
   margin-bottom: 1rem;
   font-size: 0.9em;
-  color: #666;
+  color: var(--c-text-muted);
 }
 
 .pm-breadcrumbs a {
@@ -3934,7 +4033,7 @@ input#toggleRepeatData:focus-visible {
   /* Date - block, smaller text */
   #prvmsg table td:nth-child(3) {
     font-size: 0.85em;
-    color: #666;
+    color: var(--c-text-muted);
     padding-left: 2.5rem;
   }
 
@@ -3994,3 +4093,138 @@ input#toggleRepeatData:focus-visible {
 .formulize-map-filters select {
     min-width: 120px;
 }
+
+/* ============================================================
+   Right slide-out drawer — Anari skin (issue #99)
+   ------------------------------------------------------------
+   The drawer is a core component (modules/formulize/include/js/drawer.js +
+   the .formulize-drawer rules in modules/formulize/templates/css/formulize.css):
+   it builds its own markup, so Anari's theme.html carries nothing for it, and it
+   handles layout, scrolling, drag-to-resize and the mobile breakpoint. All that
+   is needed here is Anari's look, expressed through the component's custom
+   properties plus its button classes.
+
+   Form fields inside the drawer are deliberately NOT styled here. The drawer's
+   body is wrapped in `.form-container` by
+   modules/formulize/templates/screens/Anari/default/drawer/toptemplate.php — the
+   same container Anari's form and multiPage screens emit — so the field rules
+   above apply in the drawer exactly as they do on a full-screen form.
+   ============================================================ */
+
+.formulize-drawer {
+  --formulize-drawer-bg: var(--c-surface);
+  --formulize-drawer-fg: var(--text-color);
+  --formulize-drawer-border: var(--c-border);
+  --formulize-drawer-muted: var(--c-text-muted);
+  --formulize-drawer-foot-bg: var(--background-color);
+  --formulize-drawer-shadow: -6px 0 20px 0 rgba(51, 77, 110, 0.18);
+  --formulize-drawer-radius: 10px;
+  --formulize-drawer-pad-x: 24px;
+  --formulize-drawer-pad-y: 20px;
+}
+
+.formulize-drawer__resize-handle:hover::after,
+.formulize-drawer__resize-handle--active::after {
+  background-color: var(--light-border-color);
+}
+
+.formulize-drawer__title {
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+/* The drawer's multipage tab strip. Anari's full screen pills are a raised
+   folder-tab shape that depends on sitting directly on top of the form card;
+   the drawer's strip is a wrapping row of its own, so it takes Anari's colours
+   and a simple rounded pill rather than that shape. Skin only -- core owns the
+   layout and the wrapping behaviour. */
+.formulize-drawer__tab {
+  color: var(--accent-color);
+  background: var(--c-surface-3);
+  border: 1px solid var(--light-border-color);
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 200ms linear;
+}
+
+.formulize-drawer__tab:hover {
+  background: var(--accent-color);
+  border-color: var(--light-border-color);
+  color: #fff;
+}
+
+.formulize-drawer__tab--active,
+.formulize-drawer__tab--active:disabled {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  color: #fff;
+}
+
+/* The drawer's header Back/Close icon buttons. Anari sets a 200px min-width, 30px
+   padding and a solid blue fill on every `button`; the component's own rules already
+   out-specify that, so these only have to restate Anari's typography and colours at
+   drawer scale.
+
+   The drawer FOOTER's buttons are deliberately not these any more: they are
+   `input.formulize-form-submit-button`, the same class the full screen action bar
+   uses, so Anari's own rule for that class (which paints every one of them
+   var(--button-color), full screen included) covers both surfaces and they agree on
+   colour by construction. Their geometry — against Anari's 200px min-width and 30px
+   padding on every `input[type=button]` — is reset by core's
+   `.formulize-drawer .formulize-drawer__foot .formulize-form-submit-button`, so
+   nothing further is needed here. */
+.formulize-drawer .formulize-drawer__btn {
+  height: 38px;
+  padding: 0 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 10px;
+  border: 1px solid var(--light-border-color);
+  background: var(--c-surface);
+  color: var(--text-color);
+}
+
+.formulize-drawer .formulize-drawer__btn:hover {
+  background: var(--c-surface);
+  box-shadow: var(--sh-accent-glow);
+}
+
+.formulize-drawer .formulize-drawer__btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--formulize-drawer-muted);
+}
+
+.formulize-drawer .formulize-drawer__btn--ghost:hover {
+  background: var(--background-color);
+  box-shadow: none;
+  color: var(--text-color);
+}
+
+.formulize-drawer .formulize-drawer__btn--icon {
+  width: 34px;
+  padding: 0;
+}
+
+/* Once the drawer is 768px or wider (drawer.js adds `formulize-drawer--wide` off the
+   drawer's own measured width) its footer stops wearing the full screen form's mobile
+   action bar and wears Anari's ordinary button instead: one row, and the `12px 30px`
+   padding, 0.9rem/1.3 type and auto height Anari gives every `input[type=button]` and
+   restates on `.formulize-form-submit-button`. Core's `--wide` rule sets a generic
+   36px/16px, which this replaces with Anari's own geometry (PR #127 review).
+
+   The one thing deliberately NOT taken from Anari's full screen bar is its 200px
+   min-width. Four 200px buttons need 800px plus gaps, which is what makes that bar
+   overflow horizontally on a narrow screen (a pre-existing Anari bug, noted in the
+   previous round of this review); importing it would put the same overflow inside the
+   drawer, where the drawer's minimum width guarantees it. The buttons size to their
+   labels instead, which is what Anari's own rule would give them without that floor. */
+.formulize-drawer--wide .formulize-drawer__foot .formulize-form-submit-button {
+  height: auto;
+  padding: 12px 30px;
+  font-size: 0.9rem;
+  line-height: 1.3;
+}
+
