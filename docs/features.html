@@ -13,6 +13,9 @@ description: What Formulize does — forms, workflows, permissions, reports, AI,
 </div>
 
 <section class="band">
+	<div class="band-head">
+    <h2>The Formulize Method</h2>
+  </div>
   <div class="triad">
     <div class="card">
       <h3 class="card-title">Improvise</h3>
@@ -30,75 +33,101 @@ description: What Formulize does — forms, workflows, permissions, reports, AI,
 </section>
 
 <section class="band">
-  <div class="band-box">
-  <div class="band-head inpage-anchor-heading">
+  <div class="band-head">
     <h2>Every feature, in every copy</h2>
     <p>There is no cut-down community edition. Whether you download it or we host it, you get it all.</p>
   </div>
-  <div class="feature-cols">
-    <div class="inpage-anchor" id="forms-and-data">
+  <div class="feature-cols feature-stack">
+    <div class="card inpage-anchor" id="forms-and-data">
       <h3>Forms and data</h3>
       <ul>
-        <li>Create any kind of database application</li>
-        <li>1 form, 10 forms, 100 forms &mdash; no limits</li>
-        <li>Unlimited users and unlimited entries</li>
-        <li>Flexible search, sorting and reporting</li>
-        <li>Import from, and export to, Google Sheets and Excel</li>
-        <li><a href="{{ "/searching" | relative_url }}">A search syntax</a> for filtering data precisely</li>
+        <li><em>Unlimited</em> users, forms, and entries</li>
+        <li>Dozens of field types, from plain text to dropdowns, lists, phone numbers, dates, sliders, files...</li>
+				<li>Calculated fields, with formulas that can reach into connected forms</li>
+        <li>Multi-page forms, where fields and whole pages appear only when they apply</li>
+        <li>Subforms, so a single entry can hold as many related records as it needs</li>
+        <li>Revision history, and locking so two people can't overwrite each other</li>
       </ul>
     </div>
-    <div class="inpage-anchor" id="workflow-and-people">
-      <h3>Workflow and people</h3>
+    <div class="card inpage-anchor" id="searching-and-reporting">
+      <h3>Searching and reporting</h3>
       <ul>
-        <li>Join your forms together into custom workflows</li>
-        <li>Control who can interact with which forms and which data</li>
-        <li>Per-group ownership of individual entries</li>
         <li>Publish customized, searchable reports to some or all of your users</li>
-        <li>Do it all with your mouse, no programming required</li>
+        <li>Multiple screen types: show your data as a list, a map, a calendar...</li>
+				<li>Perform simple or complex searches, across all connected forms at once</li>
+				<li>Save commonly used views for quick access later</li>
+				<li>Publish views to other users as standardized reports</li>
+				<li>Design custom screens for your own unique dashboards</li>
       </ul>
     </div>
-    <div class="inpage-anchor" id="ai">
+    <div class="card inpage-anchor" id="users-and-workflow">
+      <h3>Users and Workflow</h3>
+      <ul>
+				<li>Join your forms together to unify and automate processes</li>
+        <li>Organize users into groups, and control which ones access which forms</li>
+        <li>Set distinct permissions for viewing, adding and updating entries</li>
+				<li>Allow public access on only the forms and data you choose</li>
+				<li>Have forms inherit settings from other forms, so you only configure things once</li>
+        <li>Notify people when things happen, by email, text message, or privately inside Formulize</li>
+      </ul>
+    </div>
+    <div class="card inpage-anchor" id="ai">
       <h3>AI</h3>
       <ul>
-        <li>Connect an assistant <a href="{{ "/ai/setup-mcp" | relative_url }}">over MCP</a>, or use the embedded option</li>
-        <li>The assistant can create forms, connect them, and work with your data</li>
-        <li>It reads the configuration, so it understands the whole system</li>
-				<li>No black box &mdash; you can alter everything the AI configures</li>
-				<li>AI features can work for end users and administrators alike</li>
+        <li>Chat with AI inside Formulize, or connect an assistant <a href="{{ "/ai/setup-mcp" | relative_url }}">over MCP</a></li>
+				<li><em>No black box</em> &mdash; AI only ever works with settings you can see and change yourself</li>
+				<li>AI can read the Formulize configuration, so it gets the big picture and you don't have to explain everything</li>
+        <li>Use AI to create forms, enter data, generate reports, whatever you want</li>
+				<li><em>Secure by design</em> &mdash; AI can only ever access the data that the human user is permitted to access</li>
+        <li>Use any AI provider you like. Don't have one? <a href="{{ "/pricing/" | relative_url }}">Our hosted plans</a> can include Claude for you.</li>
       </ul>
     </div>
-    <div class="inpage-anchor" id="extending-it">
+    <div class="card inpage-anchor" id="extending-it">
       <h3>Extending it</h3>
       <ul>
-        <li>Custom form elements, events and templates</li>
-        <li><a href="{{ "/documentation/" | relative_url }}">An internal API</a> and a <a href="{{ "/documentation/Public_API" | relative_url }}">A public API</a> for working under the hood</li>
-        <li><a href="{{ "/documentation/configuration_as_code" | relative_url }}">Configuration as code</a></li>
-        <li><a href="{{ "/documentation/deploying_locally" | relative_url }}">A local development environment</a> with Docker and VS Code</li>
+        <li>Create your own custom form elements, based on any of the standard classes</li>
+				<li>Customize the appearance with the built-in theme editor</li>
+        <li>Run your own code before or after an entry is saved or deleted</li>
+        <li><a href="{{ "/documentation/configuration_as_code" | relative_url }}">Configuration-as-code</a> gives you a plain text copy of your forms for version control, and easy deployment</li>
+        <li><a href="{{ "/documentation/deploying_locally" | relative_url }}">Develop locally and debug </a> with Docker and VS Code</li>
+				<li>Fully open source under GPL-2.0, so change whatever you need, whenever you want</li>
       </ul>
     </div>
-    <div class="inpage-anchor" id="running-it">
+    <div class="card inpage-anchor" id="connecting-it-to-other-systems">
+      <h3>Connecting it to other systems</h3>
+      <ul>
+        <li><a href="{{ "/documentation/embedding_screens" | relative_url }}">Embed any screen in another website</a>, and it will work exactly the same way</li>
+				<li>Import from and export to spreadsheets</li>
+        <li>Single sign-on through the identity provider you already use, including SAML</li>
+        <li>Use the <a href="{{ "/documentation/Public_API" | relative_url }}">Public API</a> to handle integration with third parties</li>
+				<li>All data is stored in MySQL or MariaDB, in a one-table-per-form schema with foreign keys so you can query it directly</li>
+      </ul>
+    </div>
+    <div class="card inpage-anchor" id="running-it">
       <h3>Running it</h3>
       <ul>
-        <li>Runs on PHP and MySQL or MariaDB</li>
+        <li>Run it on your own LAMP server, or <a href="{{ "/pricing/" | relative_url }}">have us host it for you</a></li>
+        <li>Mobile, Tablet, and Desktop compatible</li>
+        <li>System event logging, with a viewer for searching the events</li>
+        <li>Clean error handling, with a built-in "Report to the webmaster" feature</li>
         <li>The master branch is always stable and ready to install</li>
         <li>Completely free, and fully open source under GPL-2.0</li>
       </ul>
     </div>
-  </div>
   </div>
 </section>
 
 <section class="band">
   <div class="band-head">
     <h2>Formulize and AI</h2>
-    <p>Because the configuration explains both what your system does and how it does it, an AI assistant connecting to Formulize gets the whole picture &mdash; it can easily help people use it, or even add to it, with new reports, data, or even entire applications.</p>
+    <p>An AI assistant connecting to Formulize gets the big picture, because the configuration explains everything about what your system does and how it does it. You don't have to explain all the details in elaborate prompts. Just tell the AI  what you're trying to do and it will figure out the rest.</p>
   </div>
   <div class="onramp">
     <div class="card elev-sm">
-      <h3 class="card-title">Set it up</h3>
-      <p class="card-body">Connect an assistant over MCP, or use the embedded option, and start describing what you want.</p>
+      <h3 class="card-title">Secure by Design</h3>
+      <p class="card-body">AI can help people use Formulize, but it is automatically limited to only the forms and data that the human is allowed to access.</p>
+      <p class="card-body">If you're a webmaster, AI can help you add new forms, reports, or even create entire applications, but every setting is touches is something you can see and change yourself.</p>
       <div class="btn-row">
-        <a class="btn btn-secondary" href="{{ "/ai/setup-mcp" | relative_url }}">MCP setup</a>
 				<a class="btn btn-primary" href="{{ "/ai" | relative_url }}">Read about AI in Formulize</a>
       </div>
     </div>
@@ -108,6 +137,18 @@ description: What Formulize does — forms, workflows, permissions, reports, AI,
         <img src="{{ "/assets/img/formulize-confoo-ai.webp" | relative_url }}" alt="">
       </a>
       <p class="card-body">Seven minutes: an AI assistant builds a complete conference management database from a prompt.</p>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="card elev-sm" style="background: var(--color-accent-100);">
+    <h2 style="margin-bottom: var(--space-2);">Try it on your own data</h2>
+    <p class="card-body" style="max-width: 60ch;">Download it and run it yourself for free, or have us host it and skip the server work entirely.</p>
+    <div class="btn-row">
+      <a class="btn btn-primary" href="{{ "/get/" | relative_url }}">Get Formulize</a>
+      <a class="btn btn-secondary" href="{{ "/examples/" | relative_url }}">See what people build</a>
+      <a class="btn btn-secondary" href="{{ "/pricing/" | relative_url }}">Compare plans</a>
     </div>
   </div>
 </section>
@@ -145,14 +186,3 @@ description: What Formulize does — forms, workflows, permissions, reports, AI,
   </div>
 </section>
 
-<section class="band">
-  <div class="card elev-sm" style="background: var(--color-accent-100);">
-    <h2 style="margin-bottom: var(--space-2);">Try it on your own data</h2>
-    <p class="card-body" style="max-width: 60ch;">Download it and run it yourself for free, or have us host it and skip the server work entirely.</p>
-    <div class="btn-row">
-      <a class="btn btn-primary" href="{{ "/get/" | relative_url }}">Get Formulize</a>
-      <a class="btn btn-secondary" href="{{ "/examples/" | relative_url }}">See what people build</a>
-      <a class="btn btn-secondary" href="{{ "/pricing/" | relative_url }}">Compare plans</a>
-    </div>
-  </div>
-</section>

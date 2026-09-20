@@ -2555,6 +2555,77 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
 .feature-cols li { margin-bottom: var(--space-2); }
 .feature-cols li:last-child { margin-bottom: 0; }
 
+/* The topics stacked one under another, each one's bullets across three
+   columns rather than the topics themselves being the columns. Two things
+   were wrong with three topics across: each of the six bullets under a
+   heading wrapped two and three times in a 330px track, so a topic was a
+   tall ragged block rather than a list; and seven topics of unequal length
+   in a three-column grid leaves the short ones padding out their row and the
+   whole thing reads as a grid to be scanned in a Z rather than a list to be
+   read down. Stacked, each heading owns the full width of the page, its own
+   bullets sit under it in three short columns, and the band is seven blocks
+   down the page in the order the menu lists them.
+
+   Each topic is a .card of its own on the page's own blue, rather than the
+   seven of them sharing one tinted .band-box. One box around the lot made
+   the band a single object with seven headings inside it, and the menu's
+   seven destinations were all the same place; as seven white cards, the
+   thing the menu points at is a thing you can see the edges of.
+
+   Multi-column on the ul rather than a grid of three tracks, so the browser
+   balances the columns and the list still reads in source order down one
+   column and on to the next. Balancing is by height rather than by count, so
+   the six-bullet topics fall 2/2/2 and the five-bullet one falls 2/2/1,
+   while "Running it" - seven bullets, and the last of them short - falls
+   3/3/1. A grid of three tracks would read across the rows instead, and
+   would hold every row to the height of its tallest bullet.
+
+   column-width alongside column-count makes the count a ceiling rather than
+   a fixed number, which is the whole responsive story here: three columns
+   while each can be 260px wide, two when the box is too narrow for that, one
+   on a phone - measured off the box itself rather than the window, and so
+   needing nothing in the collapse lists further down. Those lists are also
+   why the stack rule is written at two classes: .feature-cols is re-columned
+   at 900px and 560px, and at one class the later of the two rules would win
+   and put this list back into two columns of topics on a tablet.
+
+   break-inside on the items, because a bullet that wraps is otherwise free
+   to leave one line at the foot of a column and carry the rest to the top of
+   the next. */
+.feature-cols.feature-stack { grid-template-columns: minmax(0, 1fr); row-gap: var(--space-6); }
+.feature-stack ul {
+  column-count: 3;
+  column-width: 260px;
+  column-gap: var(--space-8);
+}
+.feature-stack li { break-inside: avoid; }
+
+/* .inpage-anchor's top padding is the gap between rows everywhere else this
+   class is used, and inside a card it would be a strip of white above the
+   heading instead - so the gap moves out to the grid's row-gap above, where
+   it belongs once each row has edges of its own. Both rules are written at
+   two classes to clear .inpage-anchor's own padding and .feature-cols' own
+   row-gap: 0, and the 560px block's smaller padding with them.
+
+   gap: 0 on the card because .card is a flex column with a space-2 gap, and
+   the heading already carries a space-3 margin below it: together that is
+   22px of air under a 22px heading, which reads as the bullets belonging to
+   the next topic rather than this one. */
+.feature-stack .card { gap: 0; }
+
+/* A card lands from the menu with its own top edge showing, which the topics
+   did not when they were seven headings inside one box - so the global
+   [id] scroll-margin has to actually clear the sticky header here, and it is
+   a few pixels short of doing that. Measured, the header is 133px from
+   1080px up, 121px at 1080, 112px from 900 down and 82px below 560; the
+   global 128px was written against a ~108px header and leaves the widest
+   case tucking the card's first 5px behind the bar. 148px clears the tallest
+   of them with about 15px of air, and hands the shorter ones a little more.
+   The 560px block keeps its own 92px, which is already right for the 82px
+   bar there - without repeating it here that rule would lose on specificity
+   and a phone would open every topic 66px down an empty screen. */
+.feature-stack .inpage-anchor { scroll-margin-top: 148px; }
+
 /* Subheads with a line of text under each, stacked down the page - the three
    situations in the opening card on /examples/. It was three columns first,
    and reads better as a list: at three across, each sentence was a narrow
@@ -2887,6 +2958,9 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
      of them to two, which shortens every closed card and keeps the title and
      its chevron looking like one row. Scoped to these cards - .card-title is
      the whole site's, and the cards elsewhere are not this narrow. */
+  /* Paired with .feature-stack's own scroll-margin further up: that rule is
+     two classes and would otherwise override .inpage-anchor's 92px here. */
+  .feature-stack .inpage-anchor { scroll-margin-top: 92px; }
   .triad-2up { --example-card-title: 20px; }
   /* Half of the smaller line box, less half the arrow, as above. */
   .triad-2up summary::after { margin-top: 7px; }

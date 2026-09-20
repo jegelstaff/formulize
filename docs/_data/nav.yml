@@ -14,12 +14,16 @@
   children:
     - label: Forms and data
       url: /features/#forms-and-data
-    - label: Workflow and people
-      url: /features/#workflow-and-people
+    - label: Searching and reporting
+      url: /features/#searching-and-reporting
+    - label: Users and workflow
+      url: /features/#users-and-workflow
     - label: AI
       url: /features/#ai
     - label: Extending it
       url: /features/#extending-it
+    - label: Connecting it to other systems
+      url: /features/#connecting-it-to-other-systems
     - label: Running it
       url: /features/#running-it
 
