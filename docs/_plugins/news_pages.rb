@@ -19,6 +19,7 @@ require "net/http"
 require "uri"
 require "json"
 require "date"
+require "nokogiri"
 
 module Jekyll
   # One generated page. Everything is rendered by the layout from page.entry /
@@ -194,12 +195,14 @@ module Jekyll
 
     def build_entry(raw, converter)
       date = raw["news_published_date"].to_s.strip
+      teaser_text = teaser_for(raw)
 
       {
         "id"           => raw["entry_id"].to_i,
         "headline"     => raw["news_headline"].to_s,
         "type"         => normalize_type(raw["news_type"]),
-        "teaser"       => teaser_for(raw),
+        "teaser"       => teaser_text,
+        "teaser_html"  => teaser_html_for(teaser_text, converter),
         "date"         => date.empty? ? nil : date,
         "date_display" => display_date(date),
         "date_rfc822"  => rfc822_date(date),
@@ -229,6 +232,22 @@ module Jekyll
     def teaser_for(raw)
       text = presence(raw["news_teaser"]) || presence(raw["news_body"]) || ""
       text.gsub(/\s+/, " ").strip
+    end
+
+    # The teaser is Markdown too, so it gets the same converter - but inline
+    # only: the wrapping <p> is dropped so the teaser can sit inside whatever
+    # element a template puts it in.
+    #
+    # A teaser's own links survive. They could not while a card was one big <a>
+    # around everything (an <a> inside an <a> is invalid - browsers split it in
+    # two), so the cards and rows that show a teaser now put the link on the
+    # headline and stretch it over the box instead. See .stretched-link.
+    def teaser_html_for(text, converter)
+      return "" if text.empty?
+
+      fragment = Nokogiri::HTML.fragment(converter.convert(text).strip)
+      fragment.css("p").each { |para| para.replace(para.children) }
+      fragment.to_html
     end
 
     # news_body is Markdown, rendered through the site's own kramdown converter
@@ -292,7 +311,7 @@ module Jekyll
       NewsGeneratedPage.new(
         site, site.source, File.join("news", entry["slug"]), "index.html", "news-entry",
         "title"       => entry["headline"],
-        "description" => entry["teaser"],
+        "description" => Nokogiri::HTML.fragment(entry["teaser_html"]).text,
         "entry"       => entry
       )
     end

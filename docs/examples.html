@@ -15,291 +15,311 @@ description: What people build with Formulize — CRM, memberships, grant tracki
   study and no organisation is named, because none has agreed to be. What every
   card describes is only what the software demonstrably does: forms, forms
   joined to other forms, per-group permissions, and reports.
+
+  The page is two questions with the examples between them, and the answer to
+  each question is a card of three columns, so the two bookend each other.
+  "Why do people use Formulize?" opens with the three situations people arrive
+  in; "Do any of those sound familiar?" closes with the three moves every
+  example is made of, and the buttons.
+
+  Order matters here. The example cards are long, and anything placed after
+  them is effectively unread - nobody scrolls to the bottom of fifteen cards.
+  So the opening card sits above them. The examples lose nothing by being
+  further down: each category is its own anchor in the main menu, so people
+  arrive at them directly. The closing card is the exception and stays at the
+  bottom, because it only makes sense to someone who has just read the cards.
+
+  There are no videos on this page on purpose. The ones we have are good, but
+  none of them is the payoff for what this page promises - watching one of these
+  examples get built. Until such a video exists, the videos live on
+  /documentation/videos/ and this page does not borrow them.
 {% endcomment %}
 
 <div class="band-head" style="max-width: 68ch;">
-  <h1 style="margin-top: var(--space-3);">What people build with Formulize</h1>
-  <p>Most of it starts the same way: a spreadsheet that three people are emailing back and forth, and nobody is sure which copy is current.</p>
-  <p>Formulize replaces that with forms other people can fill in, rules about who sees what, and reports that are always up to date. You build it by clicking, not by coding &mdash; which means you can change it next month when the work changes.</p>
+  <h1 style="margin-top: var(--space-3);">Why do people use Formulize?</h1>
 </div>
 
-<section class="band" style="padding-top: 0;">
-  <div class="card elev-sm" style="background: var(--color-surface); max-width: 68ch;">
-    <span class="card-kicker">The tell</span>
-    <h2 style="margin-bottom: var(--space-2);">Lots of email and spreadsheets, and nothing off-the-shelf fits?</h2>
-    <p class="card-body" style="font-size: 17px;">That's not a gap in the software market &mdash; it's what a process unique to your organisation looks like. Formulize doesn't ship a fixed idea of what your workflow should be: you configure the forms, the connections, and who sees what, to match the process you actually have.</p>
+<section class="band">
+  <div class="card elev-sm" style="background: var(--color-accent-100);">
+    <div class="subhead-list">
+      <h3>To move beyond cobbled together solutions</h3>
+      <ul>
+        <li>A monster spreadsheet that breaks whenever someone edits the wrong cell.</li>
+      </ul>
+      <h3>To get away from the square peg, round hole problem</h3>
+      <ul>
+        <li>No off-the-shelf product fits the way you actually work.</li>
+      </ul>
+      <h3>To eliminate data sovereignty concerns</h3>
+      <ul>
+        <li>Your data is locked away in systems you don't control.</li>
+      </ul>
+    </div>
   </div>
 </section>
 
 <section class="band">
-  <div class="band-head">
-    <h2>A few things it is good at</h2>
-    <p>These are illustrative examples, not case studies &mdash; a sketch of how each one is put together, so you can see whether your own situation looks like any of them.</p>
+  <div class="band-head" style="margin-bottom: var(--space-2);">
+    <h2>What do people build with Formulize?</h2>
   </div>
 
   <div class="example-group inpage-anchor" id="people-and-relationships">
     <h3>People and relationships</h3>
-    <div class="triad">
+    <div class="triad triad-2up">
       <div class="card" id="membership">
-        <span class="card-kicker">Membership</span>
-        <h3 class="card-title">Memberships and renewals</h3>
-        <p class="card-body">The membership list lives in a spreadsheet, and renewal dates are tracked by whoever remembers to look.</p>
-        <ul>
-          <li>A member form, with a renewals form joined to it</li>
-          <li>Import the spreadsheet you already have to start</li>
-          <li>Members update their own record; nobody else sees it</li>
-          <li>A standing report of who is lapsing in the next month</li>
-        </ul>
+        <details>
+          <summary><h3 class="card-title">Memberships and renewals</h3></summary>
+          <p class="card-body">The membership list lives in a spreadsheet, and renewal dates are tracked by whoever remembers to look.</p>
+          <ul>
+            <li>A member form, with a renewals form joined to it</li>
+            <li>Import the spreadsheet you already have to start</li>
+            <li>Members update their own record; nobody else sees it</li>
+            <li>A standing report of who is lapsing in the next month</li>
+          </ul>
+        </details>
       </div>
 
       <div class="card" id="crm">
-        <span class="card-kicker">Relationships</span>
-        <h3 class="card-title">Contact management and CRM</h3>
-        <p class="card-body">Contacts are split across email, spreadsheets, and someone's phone, and nobody has the full picture.</p>
-        <ul>
-          <li>A contacts form, with interactions or notes joined to each one</li>
-          <li>Everyone works from the same record, updated in one place</li>
-          <li>Segment contacts by group, tag, or status</li>
-          <li>A report of who hasn't been followed up with</li>
-        </ul>
+        <details>
+          <summary><h3 class="card-title">Contact management and CRM</h3></summary>
+          <p class="card-body">Contacts are split across email, spreadsheets, and someone's phone, and nobody has the full picture.</p>
+          <ul>
+            <li>A contacts form, with interactions or notes joined to each one</li>
+            <li>Everyone works from the same record, updated in one place</li>
+            <li>Segment contacts by group, tag, or status</li>
+            <li>A report of who hasn't been followed up with</li>
+          </ul>
+        </details>
       </div>
 
       <div class="card" id="people">
-        <span class="card-kicker">People</span>
-        <h3 class="card-title">Volunteer and shift scheduling</h3>
-        <p class="card-body">You have more volunteers than you can keep in your head, and no reliable picture of who is covering what.</p>
-        <ul>
-          <li>A volunteer form and a shift form, joined together</li>
-          <li>Volunteers sign themselves up and update their own details</li>
-          <li>Coordinators see the whole schedule, volunteers see theirs</li>
-          <li>Search for shifts with nobody assigned to them</li>
-        </ul>
+        <details>
+          <summary><h3 class="card-title">Volunteer and shift scheduling</h3></summary>
+          <p class="card-body">You have more volunteers than you can keep in your head, and no reliable picture of who is covering what.</p>
+          <ul>
+            <li>A volunteer form and a shift form, joined together</li>
+            <li>Volunteers sign themselves up and update their own details</li>
+            <li>Coordinators see the whole schedule, volunteers see theirs</li>
+            <li>Search for shifts with nobody assigned to them</li>
+          </ul>
+        </details>
       </div>
 
       <div class="card" id="placements">
-        <span class="card-kicker">Matching</span>
-        <h3 class="card-title">Managing placements and co-ops</h3>
-        <p class="card-body">Matching people to placements is a spreadsheet, a lot of email, and a process that's a little different every term.</p>
-        <ul>
-          <li>A candidates form and a placements form, joined together</li>
-          <li>Track preferences, capacity, and status as matches are made</li>
-          <li>Coordinators see everything; participants see only their own match</li>
-          <li>Adjust the process whenever the rules change, without starting over</li>
-        </ul>
+        <details>
+          <summary><h3 class="card-title">Managing placements and co-ops</h3></summary>
+          <p class="card-body">Matching people to placements is a spreadsheet, a lot of email, and a process that's a little different every term.</p>
+          <ul>
+            <li>A candidates form and a placements form, joined together</li>
+            <li>Track preferences, capacity, and status as matches are made</li>
+            <li>Coordinators see everything; participants see only their own match</li>
+            <li>Adjust the process whenever the rules change, without starting over</li>
+          </ul>
+        </details>
       </div>
     </div>
   </div>
 
   <div class="example-group inpage-anchor" id="money-and-resources">
     <h3>Money and resources</h3>
-    <div class="triad">
+    <div class="triad triad-2up">
       <div class="card" id="funding">
-        <span class="card-kicker">Funding</span>
-        <h3 class="card-title">Grant applications and reporting</h3>
-        <p class="card-body">Applications arrive by email, in different formats, and the reporting deadlines creep up on you.</p>
-        <ul>
-          <li>One form for the application, one for each progress report</li>
-          <li>The two joined, so every report sits under its grant</li>
-          <li>Applicants see only their own entries; staff see all of them</li>
-          <li>A report of what is outstanding, filtered by date</li>
-        </ul>
+        <details>
+          <summary><h3 class="card-title">Grant applications and reporting</h3></summary>
+          <p class="card-body">Applications arrive by email, in different formats, and the reporting deadlines creep up on you.</p>
+          <ul>
+            <li>One form for the application, one for each progress report</li>
+            <li>The two joined, so every report sits under its grant</li>
+            <li>Applicants see only their own entries; staff see all of them</li>
+            <li>A report of what is outstanding, filtered by date</li>
+          </ul>
+        </details>
       </div>
 
       <div class="card" id="expenses">
-        <span class="card-kicker">Finance</span>
-        <h3 class="card-title">Expense claims and approvals</h3>
-        <p class="card-body">Receipts come in by email, approvals happen somewhere in an inbox, and nobody can say what is still owed.</p>
-        <ul>
-          <li>A claims form, with an approval step joined to it</li>
-          <li>Staff submit their own; approvers see only what needs their sign-off</li>
-          <li>A running report of what is approved but not yet paid</li>
-          <li>Export the totals to Excel when it is time to reconcile</li>
-        </ul>
+        <details>
+          <summary><h3 class="card-title">Expense claims and approvals</h3></summary>
+          <p class="card-body">Receipts come in by email, approvals happen somewhere in an inbox, and nobody can say what is still owed.</p>
+          <ul>
+            <li>A claims form, with an approval step joined to it</li>
+            <li>Staff submit their own; approvers see only what needs their sign-off</li>
+            <li>A running report of what is approved but not yet paid</li>
+            <li>Export the totals to Excel when it is time to reconcile</li>
+          </ul>
+        </details>
       </div>
 
       <div class="card" id="resources">
-        <span class="card-kicker">Resources</span>
-        <h3 class="card-title">Equipment and room bookings</h3>
-        <p class="card-body">Bookings happen by asking whoever has the calendar, and two people turn up for the same room.</p>
-        <ul>
-          <li>An items form and a bookings form, joined together</li>
-          <li>Anyone can request; a named group approves</li>
-          <li>A shared list of what is out and when it is due back</li>
-          <li>Filter by this month, or the last twelve</li>
-        </ul>
+        <details>
+          <summary><h3 class="card-title">Equipment and room bookings</h3></summary>
+          <p class="card-body">Bookings happen by asking whoever has the calendar, and two people turn up for the same room.</p>
+          <ul>
+            <li>An items form and a bookings form, joined together</li>
+            <li>Anyone can request; a named group approves</li>
+            <li>A shared list of what is out and when it is due back</li>
+            <li>Filter by this month, or the last twelve</li>
+          </ul>
+        </details>
       </div>
 
       <div class="card" id="inventory">
-        <span class="card-kicker">Assets</span>
-        <h3 class="card-title">Inventory and equipment tracking</h3>
-        <p class="card-body">The stock list lives in someone's head, or a spreadsheet that is already out of date.</p>
-        <ul>
-          <li>An items form, with a movements form joined to it</li>
-          <li>Anyone logs what came in or went out; one report shows what is on hand</li>
-          <li>Search by location, category, or condition</li>
-          <li>Filter for what needs reordering, right now</li>
-        </ul>
+        <details>
+          <summary><h3 class="card-title">Inventory and equipment tracking</h3></summary>
+          <p class="card-body">The stock list lives in someone's head, or a spreadsheet that is already out of date.</p>
+          <ul>
+            <li>An items form, with a movements form joined to it</li>
+            <li>Anyone logs what came in or went out; one report shows what is on hand</li>
+            <li>Search by location, category, or condition</li>
+            <li>Filter for what needs reordering, right now</li>
+          </ul>
+        </details>
       </div>
     </div>
   </div>
 
   <div class="example-group inpage-anchor" id="operations-and-casework">
     <h3>Operations and casework</h3>
-    <div class="triad">
+    <div class="triad triad-2up">
       <div class="card" id="casework">
-        <span class="card-kicker">Casework</span>
-        <h3 class="card-title">Client intake and case notes</h3>
-        <p class="card-body">Intake is on paper, notes are in personal folders, and handover between staff loses things.</p>
-        <ul>
-          <li>An intake form, with case notes joined to each client</li>
-          <li>Entries owned by the team that created them</li>
-          <li>Front-desk staff see intake, caseworkers see the notes</li>
-          <li>Export to Excel when a funder wants numbers</li>
-        </ul>
+        <details>
+          <summary><h3 class="card-title">Client intake and case notes</h3></summary>
+          <p class="card-body">Intake is on paper, notes are in personal folders, and handover between staff loses things.</p>
+          <ul>
+            <li>An intake form, with case notes joined to each client</li>
+            <li>Entries owned by the team that created them</li>
+            <li>Front-desk staff see intake, caseworkers see the notes</li>
+            <li>Export to Excel when a funder wants numbers</li>
+          </ul>
+        </details>
       </div>
 
       <div class="card" id="activity-logging">
-        <span class="card-kicker">Records</span>
-        <h3 class="card-title">Activity logging</h3>
-        <p class="card-body">Work gets done, but there's no record of it beyond whoever happens to remember doing it.</p>
-        <ul>
-          <li>A log form anyone on the team can fill in, in seconds</li>
-          <li>Entries linked to the client, project, or case they belong to</li>
-          <li>A running history nobody has to reconstruct from memory</li>
-          <li>Filter by person, date, or type of activity</li>
-        </ul>
+        <details>
+          <summary><h3 class="card-title">Activity logging</h3></summary>
+          <p class="card-body">Work gets done, but there's no record of it beyond whoever happens to remember doing it.</p>
+          <ul>
+            <li>A log form anyone on the team can fill in, in seconds</li>
+            <li>Entries linked to the client, project, or case they belong to</li>
+            <li>A running history nobody has to reconstruct from memory</li>
+            <li>Filter by person, date, or type of activity</li>
+          </ul>
+        </details>
       </div>
 
       <div class="card" id="time-tracking">
-        <span class="card-kicker">Hours</span>
-        <h3 class="card-title">Time tracking</h3>
-        <p class="card-body">Timesheets are a spreadsheet per person, and totalling them up is a monthly chore.</p>
-        <ul>
-          <li>A time entry form, joined to the project or client it is billed to</li>
-          <li>People log their own hours; managers see everyone's</li>
-          <li>Totals reported by person, project, or date range</li>
-          <li>Export the totals for payroll or billing</li>
-        </ul>
+        <details>
+          <summary><h3 class="card-title">Time tracking</h3></summary>
+          <p class="card-body">Timesheets are a spreadsheet per person, and totalling them up is a monthly chore.</p>
+          <ul>
+            <li>A time entry form, joined to the project or client it is billed to</li>
+            <li>People log their own hours; managers see everyone's</li>
+            <li>Totals reported by person, project, or date range</li>
+            <li>Export the totals for payroll or billing</li>
+          </ul>
+        </details>
       </div>
 
       <div class="card" id="assessments">
-        <span class="card-kicker">Evaluation</span>
-        <h3 class="card-title">Assessments and evaluations</h3>
-        <p class="card-body">Every round of assessments is its own spreadsheet, and pulling the results together takes days.</p>
-        <ul>
-          <li>One assessment form, joined to the person or program it covers</li>
-          <li>Assessors see only what is assigned to them</li>
-          <li>Results compared and reported across everyone at once</li>
-          <li>Reuse the same form next round, changed or not</li>
-        </ul>
+        <details>
+          <summary><h3 class="card-title">Assessments and evaluations</h3></summary>
+          <p class="card-body">Every round of assessments is its own spreadsheet, and pulling the results together takes days.</p>
+          <ul>
+            <li>One assessment form, joined to the person or program it covers</li>
+            <li>Assessors see only what is assigned to them</li>
+            <li>Results compared and reported across everyone at once</li>
+            <li>Reuse the same form next round, changed or not</li>
+          </ul>
+        </details>
       </div>
     </div>
   </div>
 
   <div class="example-group inpage-anchor" id="public-forms-and-content">
     <h3>Public forms and content</h3>
-    <div class="triad">
+    <div class="triad triad-2up">
       <div class="card" id="events">
-        <span class="card-kicker">Events</span>
-        <h3 class="card-title">Event registration and RSVPs</h3>
-        <p class="card-body">Registrations come in by email and someone retypes them into a list for the door.</p>
-        <ul>
-          <li>A public form anyone can fill in, no account needed</li>
-          <li>An events form joined to it, so each event has its own list</li>
-          <li>Organisers see everything; the public form shows nothing back</li>
-          <li>A door list you can sort and search on the day</li>
-        </ul>
+        <details>
+          <summary><h3 class="card-title">Event registration and RSVPs</h3></summary>
+          <p class="card-body">Registrations come in by email and someone retypes them into a list for the door.</p>
+          <ul>
+            <li>A public form anyone can fill in, no account needed</li>
+            <li>An events form joined to it, so each event has its own list</li>
+            <li>Organisers see everything; the public form shows nothing back</li>
+            <li>A door list you can sort and search on the day</li>
+          </ul>
+        </details>
       </div>
 
       <div class="card" id="surveys">
-        <span class="card-kicker">Feedback</span>
-        <h3 class="card-title">Surveys and questionnaires</h3>
-        <p class="card-body">A survey tool works fine until you need the results joined to the rest of your data.</p>
-        <ul>
-          <li>A public form for respondents, no account required</li>
-          <li>Responses joined to the person, event, or program they relate to</li>
-          <li>Results reported alongside everything else you track</li>
-          <li>Reuse or adapt the same form for the next round</li>
-        </ul>
+        <details>
+          <summary><h3 class="card-title">Surveys and questionnaires</h3></summary>
+          <p class="card-body">A survey tool works fine until you need the results joined to the rest of your data.</p>
+          <ul>
+            <li>A public form for respondents, no account required</li>
+            <li>Responses joined to the person, event, or program they relate to</li>
+            <li>Results reported alongside everything else you track</li>
+            <li>Reuse or adapt the same form for the next round</li>
+          </ul>
+        </details>
       </div>
 
       <div class="card" id="headless-cms">
-        <span class="card-kicker">Technical</span>
-        <h3 class="card-title">Headless content management</h3>
-        <p class="card-body">You want a custom front end, but still need somewhere structured to manage the content behind it.</p>
-        <ul>
-          <li>Formulize as the backend; any front end consumes it over the API</li>
-          <li>This site's own News section is a live example</li>
-          <li>Editors work in ordinary forms; nothing about the API changes when the content does</li>
-          <li>No separate CMS to license, host, or keep in sync</li>
-        </ul>
+        <details>
+          <summary><h3 class="card-title">Headless content management</h3></summary>
+          <p class="card-body">You want a custom front end, but still need somewhere structured to manage the content behind it.</p>
+          <ul>
+            <li>Formulize as the backend; any front end consumes it over the API</li>
+            <li>This site's own News section is a live example</li>
+            <li>Editors work in ordinary forms; nothing about the API changes when the content does</li>
+            <li>No separate CMS to license, host, or keep in sync</li>
+          </ul>
+        </details>
       </div>
     </div>
-  </div>
-</section>
-
-<section class="band">
-  <div class="band-head">
-    <h2>The same idea, in every one</h2>
-    <p>Every example above is the same three moves. Once you have seen them done once, the rest is variations.</p>
-  </div>
-  <div class="feature-cols">
-    <div>
-      <h3>Make the forms</h3>
-      <ul>
-        <li>One form per kind of thing you are tracking</li>
-        <li>Any number of forms, any number of entries</li>
-        <li><a href="{{ "/ai" | relative_url }}">Or describe it to an AI assistant</a> and let it build them</li>
-      </ul>
-    </div>
-    <div>
-      <h3>Join them together</h3>
-      <ul>
-        <li>Each client has many notes; each grant has many reports</li>
-        <li>The connection is a setting, not code</li>
-        <li>Reports can then draw on both forms at once</li>
-      </ul>
-    </div>
-    <div>
-      <h3>Decide who sees what</h3>
-      <ul>
-        <li>Per group, per form, and per entry</li>
-        <li>People can be limited to only their own entries</li>
-        <li><a href="{{ "/documentation/searching" | relative_url }}">Searchable reports</a> published to some or all of them</li>
-      </ul>
-    </div>
-  </div>
-</section>
-
-<section class="band">
-  <div class="band-head-row">
-    <h2>Watch one get built</h2>
-    <a class="btn btn-secondary btn-sm" href="{{ "/documentation/videos" | relative_url }}">All videos</a>
-  </div>
-  <div class="video-row">
-    <a class="video-card" href="https://youtu.be/gaL1z8Tomcw" target="_BLANK">
-      <img src="{{ "/assets/img/formulize-coffee-system.webp" | relative_url }}" alt="">
-      <span class="video-card-title">An ordering system, step by step</span>
-      <span class="text-muted">The whole build, start to finish &middot; 7 mins</span>
-    </a>
-    <a class="video-card" href="https://youtu.be/Cm6yR5cMn7Y" target="_BLANK">
-      <img src="{{ "/assets/img/formulize-confoo-ai.webp" | relative_url }}" alt="">
-      <span class="video-card-title">A conference management system, built by AI</span>
-      <span class="text-muted">Sessions, speakers and schedules, from a prompt &middot; 7 mins</span>
-    </a>
-    <a class="video-card" href="https://www.youtube.com/watch?v=JeI2u_LZUJg" target="_BLANK">
-      <img src="{{ "/assets/img/thumbnail-700.webp" | relative_url }}" alt="">
-      <span class="video-card-title">A full collection database</span>
-      <span class="text-muted">The complete setup of the demo Museum system &middot; 30 mins</span>
-    </a>
   </div>
 </section>
 
 <section class="band">
   <div class="card elev-sm" style="background: var(--color-accent-100);">
-    <h2 style="margin-bottom: var(--space-2);">Does one of these look like your problem?</h2>
-    <p class="card-body" style="font-size: 16px; max-width: 62ch;">Download Formulize and build it yourself for free, or tell us what you are trying to do and we will tell you what it would take &mdash; including if the answer is the free download.</p>
-    <div class="btn-row">
+    <h2 style="margin-bottom: 0;">Do any of those sound familiar?</h2>
+    <p class="card-body" style="font-size: 19px; max-width: 62ch; margin-bottom: var(--space-6);">Formulize has helped organizations with all these needs. Memberships might seem different from Activity Logs, but to a database it's all variations on a theme.</p>
+    {%- comment -%}
+      Tighter column gap than .feature-cols uses elsewhere. Inside the card the
+      three columns are already narrowed by the card's own padding, and at the
+      default space-8 gap "Decide who sees what" is a couple of pixels too wide
+      to stay on one line - it wraps, and that column's bullets then start lower
+      than the other two. space-6 buys back enough width to keep all three
+      headings on one line from 1280px up. Below that they wrap whatever the gap
+      is, which is why this is a gap change and not a nowrap.
+    {%- endcomment -%}
+    <div class="feature-cols" style="column-gap: var(--space-6);">
+      <div>
+        <h3>Make the forms</h3>
+        <ul>
+          <li>One form per kind of thing you are tracking</li>
+          <li>Create as many forms as you need, each with any number of entries</li>
+          <li>Or <a href="{{ "/ai" | relative_url }}">describe them to an AI assistant</a> and let it build them for you</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Join them together</h3>
+        <ul>
+          <li>Each client has many notes; each grant has many reports</li>
+          <li>The connection is a setting, not code</li>
+          <li>Reports can then draw on both forms at once</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Decide who sees what</h3>
+        <ul>
+          <li>Control who sees which entries in which forms</li>
+          <li>Restrict who can create and modify data</li>
+          <li>Publish <a href="{{ "/documentation/searching" | relative_url }}">searchable reports</a> to your users</li>
+        </ul>
+      </div>
+    </div>
+		<p class="card-body" style="font-size: 19px; max-width: 62ch; margin-top: var(--space-6);">Formulize gives you complete control, by letting you build solutions that meet your needs, precisely. You build by clicking, not by coding, so whenever the goalposts move again, you just change one setting and the whole application updates automatically.</p>
+    <div class="btn-row" style="margin-top: var(--space-6);">
       <a class="btn btn-primary" href="{{ "/get/" | relative_url }}">Get Formulize</a>
       <a class="btn btn-secondary" href="{{ "/contact/" | relative_url }}">Talk to us</a>
     </div>

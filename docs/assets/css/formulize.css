@@ -402,6 +402,19 @@ h1 + .band {
 }
 .band-head-row h2, .band-head-row h3 { margin: 0; }
 
+/* A band's "See all ..." button: at the right of the heading on a wide screen,
+   below the cards once they stack into a single column (620px, the same width
+   .quad collapses at, further down). Both copies are in the markup and only
+   one is ever displayed - display: none also takes the hidden one out of the
+   tab order and the accessibility tree, so it is never read out twice. The
+   .band-head-row prefix is what beats .btn's display: inline-flex, declared
+   further down, which would win at equal specificity. */
+.band-foot-cta { display: none; }
+@media (max-width: 620px) {
+  .band-head-row .band-head-cta { display: none; }
+  .band-foot-cta { display: block; }
+}
+
 .inpage-anchor { padding-top: var(--space-8); }
 .inpage-anchor-heading { margin-bottom: var(--space-1); }
 
@@ -1017,6 +1030,34 @@ h1 + .band {
   text-underline-offset: 3px;
 }
 
+/* One link stretched over the whole box it sits in (which needs position:
+   relative), so a card or a list row is clickable anywhere without being
+   wrapped in an <a>. That matters because news teasers are Markdown and can
+   contain links: an <a> inside an <a> is invalid and browsers split it in
+   two, which is why the teaser link used to be stripped out.
+   Anything inside the box that has to stay separately clickable must be
+   raised above the overlay - see the teaser links below.
+   The trade-off is that dragging to select text in one of these boxes hits
+   the overlay instead; the text is short and selecting it is not what anyone
+   comes to a card for. */
+.stretched-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+/* Above the overlay, so a teaser's own links go where they say they go while
+   the rest of the card still goes to the story. Coloured and underlined
+   explicitly because .news-list a paints every link in that list as body text. */
+.post-excerpt a,
+.news-card p a,
+.news-list .news-teaser a {
+  position: relative;
+  z-index: 2;
+  color: var(--color-accent-700);
+  text-decoration: underline;
+}
+
 /* ── pixel accents ──────────────────────────────────────────────────────── */
 
 /* Seven shapes taken out of the header/footer pixel pattern and redrawn as
@@ -1121,6 +1162,77 @@ h1 + .band {
 .triad h3 { margin-bottom: var(--space-2); }
 .triad ul { margin: 0; padding-left: var(--space-6); font-size: 16.5px; }
 .triad em { color: var(--color-accent-700); font-style: italic; }
+
+/* Two up rather than three, for the example grids on /examples/. Those cards
+   carry a sentence of context plus four bullets each, which is a cramped read
+   in a third-of-the-page track; at half the page the bullets stop wrapping
+   mid-phrase and each group of four resolves into a tidy 2x2.
+
+   A modifier class rather than a `.example-group .triad` descendant rule on
+   purpose. A descendant selector would outrank the plain `.triad` entries in
+   the 900px and 620px collapse lists further down, and these grids would then
+   stay two-up on a phone. At one class it ties with them, they come later in
+   the file, and so they still win where they apply. */
+.triad-2up { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* The example cards are collapsed to their title until someone opens one.
+   Fifteen of them with a sentence and four bullets each is more text than
+   anybody reads; as a list of fifteen titles it is scannable, and the one
+   that sounds like your own situation is a click away. <details>/<summary>
+   rather than scripted accordions because it needs no JavaScript, is keyboard
+   and screen-reader operable as it stands, and - the part that matters here -
+   behaves identically on a phone, where the same tap opens the same card. So
+   there is no separate mobile pattern to design or maintain.
+
+   align-items: start is what makes it feel right in a grid. Grid items stretch
+   to the tallest in their row by default, so opening one card would drag its
+   neighbour's box open too and leave it three-quarters empty. Starting them
+   instead lets each card be exactly as tall as its own contents. */
+.triad-2up { align-items: start; }
+
+/* .card is already a flex column with a gap; the <details> now holds that
+   column, so it takes the same treatment. */
+.triad-2up .card > details { display: flex; flex-direction: column; gap: var(--space-2); }
+
+/* .card-body carries flex: 1 globally, which makes the paragraph absorb any
+   slack in the card and pushes the bullets to the bottom - so in a row of
+   cards the lists line up but the text floats away from its own heading.
+   These cards stack their content top to bottom instead, like an ordinary
+   block would. */
+.triad-2up .card-body { flex: 0 0 auto; }
+
+/* The whole title row is the control, so it gets the pointer and the chevron,
+   and the default disclosure triangle is removed in both its guises (the
+   standard list-style and WebKit's older pseudo-element). */
+.triad-2up summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  cursor: pointer;
+  list-style: none;
+}
+.triad-2up summary::-webkit-details-marker { display: none; }
+
+/* A two-line floor under the title, so a closed card is the same height
+   whether its title runs to one line or two and the grid reads as a tidy
+   list. 2.4em is two lines of .card-title's own 1.2 line-height, so it
+   follows the type rather than a pixel guess; the inner flex is only there
+   to centre a one-line title in the space the two-line ones need. */
+.triad-2up summary h3 { min-height: 2.4em; display: flex; align-items: center; }
+.triad-2up summary::after {
+  content: "";
+  flex: none;
+  width: 9px;
+  height: 9px;
+  margin-right: 3px;
+  border-right: 2.5px solid var(--color-accent-500);
+  border-bottom: 2.5px solid var(--color-accent-500);
+  transform: rotate(45deg) translate(-2px, -2px);
+  transition: transform 0.15s ease;
+}
+.triad-2up details[open] summary::after { transform: rotate(-135deg); }
+.triad-2up summary:focus-visible { outline: 2px solid var(--color-accent-500); outline-offset: 3px; }
 
 /* A named category heading over one .triad, so a long card grid (examples.html)
    reads as a few sorted groups instead of one undifferentiated wall. Plain h3
@@ -1508,15 +1620,26 @@ h1 + .band {
 }
 .news-list li { margin: 0; border-bottom: 1px solid var(--color-divider); }
 .news-list li:last-child { border-bottom: 0; }
-.news-list a {
+/* Two row shapes share this list. A release row is a plain <li>, because its
+   teaser is Markdown and can carry links of its own, which an <a> wrapped
+   around the whole row would make invalid - the headline is the link and
+   .stretched-link makes the rest of the row clickable. The download list is
+   the other shape: a row there is one link and nothing else, so the <a> is
+   still the row. Only the layout is split between the two; colour and
+   underline below stay on every link in the list. */
+.news-list > li > a,
+.news-list > li.news-list-row {
   display: flex;
   align-items: baseline;
   gap: var(--space-4);
   padding: var(--space-3) 0;
-  text-decoration: none;
-  color: var(--color-text);
 }
+.news-list > li.news-list-row { position: relative; }
+.news-list a { text-decoration: none; color: var(--color-text); }
 .news-list a:hover { color: var(--color-accent-700); }
+/* The whole row is the click target, so hovering anywhere in it lights the
+   headline - what .news-list a:hover did on its own when the row was one <a>. */
+.news-list-row:hover .news-title { color: var(--color-accent-700); }
 .news-list time {
   flex: 0 0 7.5em;
   font-size: 14px;
@@ -1562,16 +1685,18 @@ h1 + .band {
 }
 
 .post-list { display: flex; flex-direction: column; gap: var(--space-6); }
-/* .post-teaser is the whole link now (was an <article> with three separate
-   <a>s inside it, all pointing at the same post) — one destination, so one
-   click target for the whole box, matching .news-card. */
+/* One destination, so one click target for the whole box (it was an <article>
+   with three separate <a>s inside it, all pointing at the same post), matching
+   .news-card. The link is on the headline and .stretched-link covers the card
+   with it, rather than the card being one big <a>, so that a teaser's own
+   Markdown links stay real links. */
 .post-teaser {
+  position: relative;
   display: block;
   padding: var(--space-6);
   background: var(--color-neutral-100);
   border: 1px solid var(--color-divider);
   border-radius: calc(var(--radius-lg) * 1.15);
-  text-decoration: none;
   color: inherit;
   transition: box-shadow 0.15s ease;
 }
@@ -1594,13 +1719,16 @@ h1 + .band {
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
 }
-.post-teaser h2 {
-  font-size: 28px;
-  margin-bottom: var(--space-2);
+.post-teaser h2 { font-size: 28px; margin-bottom: var(--space-2); }
+.post-teaser h2 a {
   color: var(--color-accent-700);
+  text-decoration: none;
   transition: color 0.15s ease;
 }
-.post-teaser:hover h2 { color: var(--color-text); }
+/* Wins over the site-wide a:not(.btn):hover, which is the same specificity but
+   earlier in the file - so the headline reads the same whether the pointer is
+   on it or anywhere else in the card. */
+.post-teaser:hover h2 a { color: var(--color-text); }
 .post-meta {
   display: flex;
   align-items: center;
@@ -1609,7 +1737,14 @@ h1 + .band {
   color: var(--color-neutral-700);
   margin-bottom: var(--space-2);
 }
-.post-excerpt { margin-bottom: var(--space-3); color: var(--color-neutral-800); }
+/* No bottom margin of its own: the gap below it belongs to .news-card-more's
+   padding-top, so it is the same whether the teaser or the thumbnail is what
+   the "Read more" line ends up clearing. */
+.post-excerpt { margin: 0; color: var(--color-neutral-800); }
+/* Sits outside the text block, after the thumbnail float, so clear: both drops
+   it below whichever is taller - the teaser or the image - and it always ends
+   up on the card's bottom-left rather than mid-card beside a tall thumbnail. */
+.post-teaser .news-card-more { display: block; clear: both; padding-top: var(--space-4); }
 
 .pagination {
   display: flex;
@@ -1868,9 +2003,20 @@ h1 + .band {
   text-wrap: initial;
   margin-bottom: var(--space-6);
 }
+/* 700 rather than 600, because the weight that gets used is decided by the
+   face the monospace stack actually resolves to, and that is different on
+   every platform. On Windows the stack lands on Consolas, which ships regular
+   and bold and nothing between, so a request for 600 is served by the 700
+   face and the name reads bold - which is the look these pages were designed
+   around. On iOS the stack lands on SF Mono, which does have a real Semibold,
+   so 600 was served literally; with -webkit-font-smoothing: antialiased on
+   top of it (see body) the name came out visibly lighter than its own page
+   title should be, and lighter than every desktop rendering of it. Asking for
+   700 gets the bold face wherever one exists and leaves Consolas exactly
+   where it already was. */
 .prose h1 span.sig-name {
   font-size: 34px;
-  font-weight: 600;
+  font-weight: 700;
 }
 /* One argument, kept whole: the type hint, the variable name and the default
    value are one thing to read and a line break anywhere inside it makes a
@@ -1881,13 +2027,61 @@ h1 + .band {
 
    It replaces a hand-applied fix: a few of these pages had &nbsp; typed
    between the pieces of one or two arguments, which held those together and
-   left every other argument on the page free to break. */
+   left every other argument on the page free to break.
+
+   It holds at every width, phones included, and that has a cost worth writing
+   down. The longest arguments in the reference - "(bool | string | array)
+   $defaultValue = false", "(int | string | object) $element_identifier" - are
+   wider than a phone screen at any readable size, and nowrap means those pages
+   scroll sideways rather than breaking the argument up: about seven of the
+   thirty-seven at iPhone width, and about fifteen on a 320px screen, by
+   between 4px and 100px. The scroll is the document's, not the heading's, so
+   on those pages the body text swipes sideways too.
+
+   That is the deliberate trade. These are reference pages, the rule is what
+   makes a signature scannable, and losing it on every argument to spare a
+   handful was judged the worse deal. Note that relaxing white-space here is
+   not a fix available in CSS anyway: nowrap is all or nothing, and
+   overflow-wrap has no effect on a run that cannot wrap at all. The only
+   lever is the markup - gluing each argument's pieces with &nbsp; so the
+   browser breaks one only when it genuinely cannot fit - and that tax on
+   writing these pages was not judged worth paying. If the scrolling ever does
+   need to go, the other option is overflow-x: auto on the signature h1, which
+   confines it to the signature instead of the page. */
 .prose h1 span.sig-arg {
   white-space: nowrap;
 }
 .prose h1 span.sig-type,
 .prose h1 span.sig-default {
   color: var(--color-neutral-600);
+}
+
+/* The signature is sized for a 830px column, and a phone does not have one.
+   At 19px the argument list of an ordinary function ran to five lines on a
+   390px screen and carried nearly as much weight on the page as the section
+   headings under it, and the longest arguments - "(bool | string | array)
+   $defaultValue = false" is the worst - were wider than the whole screen,
+   which with nowrap on them pushed the document sideways.
+
+   The name comes down to 30px rather than further: .prose h2 stays at 30px
+   at every width, and the whole reason the name is sized separately is that
+   it has to hold its own against the "Description" heading immediately below
+   it instead of reading as a subheading of it. 30px of bold monospace and
+   30px of Unbounded are about the same size on the page, which is the
+   relationship desktop already has at 34/30.
+
+   The arguments come down further, to 15px. They are reference detail next to
+   17px body text, and the drop is what takes that five-line block back to two
+   or three.
+
+   Only the sizes change here. The nowrap above stays on at this width, which
+   is what keeps an argument reading as one thing on a phone exactly as it
+   does on a desktop, and the 19px -> 15px drop is also what brings all but
+   the longest four arguments in the reference inside a phone screen. See that
+   rule for why the four that are still too wide are left to scroll. */
+@media (max-width: 600px) {
+  .prose h1:has(> span) { font-size: 15px; }
+  .prose h1 span.sig-name { font-size: 30px; }
 }
 
 nav.breadcrumbs { margin-bottom: var(--space-4); }
@@ -2130,7 +2324,11 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
    class selectors and come later in the file - can override it. Written as
    .news-row.news-row-pair it would outrank them and never collapse. */
 .news-row-pair { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+/* Clickable anywhere, but not itself an <a>: the headline carries the link and
+   .stretched-link covers the card with it, which leaves a teaser free to have
+   Markdown links of its own. */
 .news-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -2139,7 +2337,6 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   border: 1px solid var(--color-divider);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  text-decoration: none;
   color: inherit;
   transition: box-shadow 0.15s ease;
 }
@@ -2182,9 +2379,13 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   font-size: 23px;
   line-height: 1.2;
   color: var(--color-accent-700);
+  text-decoration: none;
   transition: color 0.15s ease;
 }
-.news-card:hover .news-card-title { color: var(--color-text); }
+/* a.news-card-title, not .news-card-title, to outrank the site-wide
+   a:not(.btn):hover when the pointer is on the headline itself - otherwise the
+   headline takes a different colour from the rest of the card's hover. */
+.news-card:hover a.news-card-title { color: var(--color-text); }
 .news-card p {
   margin: 0;
   font-size: 16.5px;
@@ -2236,6 +2437,26 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
 }
 .feature-cols li { margin-bottom: var(--space-2); }
 .feature-cols li:last-child { margin-bottom: 0; }
+
+/* Subheads with a line of text under each, stacked down the page - the three
+   situations in the opening card on /examples/. It was three columns first,
+   and reads better as a list: at three across, each sentence was a narrow
+   two- or three-line block and the eye had to travel sideways between them.
+
+   Held to the same 62ch as the paragraphs that frame it in that card, and set
+   at their size too, so the whole card is one measure and one size and the
+   subheads alone carry the structure. Margins rather than a flex gap, so the
+   subhead sits close to its own sentence and the space falls between the
+   pairs instead of being shared out evenly between all six children. */
+.subhead-list { max-width: 62ch; }
+.subhead-list h3 { font-size: 22px; margin: 0 0 var(--space-2); }
+.subhead-list p {
+  margin: 0 0 var(--space-6);
+  font-size: 19px;
+  line-height: 1.5;
+  color: var(--color-neutral-800);
+}
+.subhead-list > :last-child { margin-bottom: 0; }
 
 /* ── embedded Formulize screens ─────────────────────────────────────────── */
 
@@ -2490,7 +2711,8 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
 @media (max-width: 560px) {
   .page { padding: 0 var(--space-4); }
   .rail-cards .tier { width: 268px; }
-  .news-list a { flex-direction: column; gap: var(--space-1); }
+  .news-list > li > a,
+  .news-list > li.news-list-row { flex-direction: column; gap: var(--space-1); }
   .news-list time { flex: none; }
   /* One column for everything below this width, without exception.
 
@@ -2563,6 +2785,32 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
      which is the narrowest phone worth designing for. */
   .brand-logo { height: 43px; }
   .brand-tagline { display: none; }
+
+  /* The header is 82px here, not the ~133px it is at desktop widths - the
+     logo above is smaller and the tagline is gone. The global 128px
+     scroll-margin-top is measured against the big one, so a jump into
+     Features or Examples landed 46px below the header rather than just clear
+     of it, and with .inpage-anchor's own padding on top of that it was 81px
+     of empty page above the heading someone had just asked for. 92px clears
+     the 82px header with ten to spare, and the padding gives the heading the
+     rest of its air - about 36px in total, which is what the same jump gets
+     at desktop widths.
+
+     Scoped to .inpage-anchor rather than written over the global [id] rule,
+     even though every anchor on the site is offset against the same shrunken
+     header here. These nine (five on Features, four on Examples) are the ones
+     the menu jumps to and the ones that carry the padding; a heading on a
+     documentation page has no padding of its own, so the same 92px would put
+     it 10px under the header instead of 46px, which is tighter than anything
+     asked for. Equal specificity to [id], declared later, so it wins where it
+     applies and leaves every other anchor alone.
+
+     This is safe across handsets because it keys off the CSS viewport width,
+     not the device: every phone in portrait is inside this breakpoint (a
+     Galaxy S21 reports 360px, an iPhone 15 Pro Max 430px) and gets the same
+     82px header. The narrowest bucket, under 360px, shrinks the logo again to
+     an even shorter header, so the clearance there is larger still. */
+  .inpage-anchor { scroll-margin-top: 92px; padding-top: var(--space-6); }
   /* Get Formulize comes out of the header entirely at phone width. Every
      page's hero carries the same call to action a screen further down, so in
      the header it is a duplicate - and it is the duplicate that was making

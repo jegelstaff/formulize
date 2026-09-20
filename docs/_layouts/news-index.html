@@ -20,17 +20,17 @@ full_width: true
   {%- if page.entries and page.entries.size > 0 %}
   <div class="post-list">
     {%- for entry in page.entries %}
-    <a class="post-teaser" href="{{ entry.url | relative_url }}">
+    <div class="post-teaser">
       {%- if entry.image %}
       <img class="post-teaser-thumb" src="{{ entry.image }}" alt="">
       {%- endif %}
-      <span>
+      <div>
         <span class="post-meta"><time datetime="{{ entry.date }}">{{ entry.date_display }}</time></span>
-        <h2>{{ entry.headline }}</h2>
-        <span class="post-excerpt">{{ entry.teaser }}</span>
-        <span class="news-card-more">Read it &rarr;</span>
-      </span>
-    </a>
+        <h2><a class="stretched-link" href="{{ entry.url | relative_url }}">{{ entry.headline }}</a></h2>
+        <p class="post-excerpt">{{ entry.teaser_html }}</p>
+      </div>
+      <span class="news-card-more">Read more &rarr;</span>
+    </div>
     {%- endfor %}
   </div>
   {%- else %}
@@ -46,16 +46,14 @@ full_width: true
   </div>
   <ul class="news-list">
     {%- for entry in page.recent_releases %}
-    <li>
-      <a href="{{ entry.url | relative_url }}">
-        {% include release-date.html %}
-        <span class="news-text">
-          <span class="news-title">{{ entry.headline }}</span>
-          {%- if entry.teaser and entry.teaser != "" %}
-          <span class="news-teaser">{{ entry.teaser }}</span>
-          {%- endif %}
-        </span>
-      </a>
+    <li class="news-list-row">
+      {% include release-date.html %}
+      <span class="news-text">
+        <a class="news-title stretched-link" href="{{ entry.url | relative_url }}">{{ entry.headline }}</a>
+        {%- if entry.teaser and entry.teaser != "" %}
+        <span class="news-teaser">{{ entry.teaser_html }}</span>
+        {%- endif %}
+      </span>
     </li>
     {%- endfor %}
   </ul>

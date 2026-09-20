@@ -71,15 +71,15 @@ description: Formulize is open source software for collecting and organizing you
   {%- endcomment -%}
   <div class="news-row news-row-pair">
     {%- for entry in latest_stories limit: 2 %}
-    <a class="news-card" href="{{ entry.url | relative_url }}">
+    <div class="news-card">
       <div class="news-card-body">
         {% if entry.image %}<img class="news-card-thumb" src="{{ entry.image }}" alt="">{% endif %}
         <time datetime="{{ entry.date }}">{{ entry.date_display }}</time>
-        <span class="news-card-title">{{ entry.headline }}</span>
-        <p>{{ entry.teaser }}</p>
+        <a class="news-card-title stretched-link" href="{{ entry.url | relative_url }}">{{ entry.headline }}</a>
+        <p>{{ entry.teaser_html }}</p>
       </div>
-      <span class="news-card-more">Read it &rarr;</span>
-    </a>
+      <span class="news-card-more">Read more &rarr;</span>
+    </div>
     {%- endfor %}
   </div>
 </section>
@@ -88,7 +88,7 @@ description: Formulize is open source software for collecting and organizing you
 <section class="band">
   <div class="band-head-row">
     <h2>What would you build?</h2>
-    <a class="btn btn-secondary btn-sm" href="{{ "/examples/" | relative_url }}">See all examples</a>
+    <a class="btn btn-secondary btn-sm band-head-cta" href="{{ "/examples/" | relative_url }}">See all examples</a>
   </div>
   <div class="quad">
     <a class="card-link" href="{{ "/examples/#people-and-relationships" | relative_url }}">
@@ -124,6 +124,7 @@ description: Formulize is open source software for collecting and organizing you
       </div>
     </a>
   </div>
+  <p class="triad-foot band-foot-cta"><a class="btn btn-secondary btn-sm" href="{{ "/examples/" | relative_url }}">See all examples</a></p>
 </section>
 
 <section class="band">
@@ -144,9 +145,6 @@ description: Formulize is open source software for collecting and organizing you
   </div>
   {% include get-choice.html %}
   <p class="triad-foot"><a class="btn btn-primary" href="{{ "/pricing/" | relative_url }}">Compare every plan</a></p>
-  <p class="text-muted" style="margin-top: var(--space-4);">
-    Prefer to hire us by the hour instead? <a href="{{ "/services/" | relative_url }}">Training, tech support, system design, data migration and AI help</a> are available on any plan, including the free download.
-  </p>
 </section>
 
 <section class="band">
