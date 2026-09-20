@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/embedding_screens_setup/
+permalink: documentation/embedding_screens_setup/
+redirect_from:
+ - developers/embedding_screens_setup/
 title: Giving Formulize an Address on the Host Website's Domain
 ---
 

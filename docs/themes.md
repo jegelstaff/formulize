@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/themes/
+permalink: documentation/themes/
+redirect_from:
+ - developers/themes/
 title: What Formulize Expects From a Theme
 ---
 

@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/embedding_screens/
+permalink: documentation/embedding_screens/
+redirect_from:
+ - developers/embedding_screens/
 title: Embedding Screens in Another Website
 ---
 
