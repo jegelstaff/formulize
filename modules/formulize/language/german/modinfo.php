@@ -68,4 +68,5 @@ define("_MI_formulizeMENU_BNAME","Formularmenü");
 
 // Version
 define("_MI_VERSION","2.0b");
-?>
+
+include_once XOOPS_ROOT_PATH . '/modules/formulize/language/english/modinfo.php'; // just to catch whatever constants might be missing

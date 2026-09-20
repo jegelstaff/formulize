@@ -933,6 +933,12 @@ define("_formulize_USERACCOUNT_2FAOPTION_SMS", "Text a code");
 define("_formulize_USERACCOUNT_2FAOPTION_AUTHAPP", "Use an authenticator app");
 define("_formulize_USERACCOUNT_PWREPEATDESC", "Type the password twice for confirmation");
 
+// An embedded screen the visitor is not allowed to see
+// (formulize_embeddedNoPermissionHtml() in modules/formulize/include/functions.php)
+define("_formulize_EMBED_SIGNIN_NEEDED", "You need to sign in to use this form.");
+define("_formulize_EMBED_SIGNIN_NEWTAB", "Signing in has to happen in its own tab rather than here, so this opens in a new one.");
+define("_formulize_EMBED_NOPERM_ACCOUNT", "You are signed in, but this screen is not available to your account. If you think it should be, ask whoever looks after this site.");
+define("_formulize_EMBED_OPEN_NEWWINDOW", "Open this in a new window");
 
 // Autocomplete component - removing a selected value (issue #92)
 define("_formulize_AUTOCOMPLETE_REMOVE", "Remove");

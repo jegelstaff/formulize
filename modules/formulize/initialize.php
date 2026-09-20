@@ -93,6 +93,10 @@ $screen_handler = xoops_getmodulehandler('screen', 'formulize');
 if($sid) {
 	$thisscreen1 = $screen_handler->get($sid); // first get basic screen object to determine type
 	$fid = is_object($thisscreen1) ? $thisscreen1->getVar('fid') : 0;
+	// allow the websites this screen names to frame it, as well as the ones allowed across the whole site.
+	// Sent before the permission check below, so that the message an embedded visitor gets when they may
+	// not see the screen is allowed to appear in the frame too, rather than the browser blanking it.
+	formulize_sendScreenFrameAncestorsHeader($thisscreen1);
 }
 
 // set the flag to force derived value updates, if it is in the URL
@@ -111,6 +115,14 @@ $view_globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups
 $view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid);
 
 if($fid AND !$view_form = $gperm_handler->checkRight("view_form", $fid, $groups, $mid)) {
+    if(formulize_isEmbeddedRequest()) {
+        // Inside somebody else's iframe, so say so here rather than redirecting to the login page.
+        // That redirect would land on a page only this site may frame, and the browser would blank
+        // the frame with nothing anywhere explaining why - which looks like the embedding is broken
+        // rather than like a permission the screen does not have.
+        print formulize_embeddedNoPermissionHtml($currentURL);
+        return;
+    }
     if(strstr($currentURL, "/modules/formulize/") OR $formulizeCanonicalURI) { // if it's a formulize page reload to login screen (check URL and check if there was a valid Formulize clean URL)
         $nopermission = $xoopsUser ? "op=nopermission&" : ""; // no permission flag will bump the user to the All Applications page since they don't have perm for this page. If no user, they will be prompted for login.
         redirect_header(XOOPS_URL . "/user.php?".$nopermission."xoops_redirect=".urlencode($currentURL), 3, _formulize_NO_PERMISSION, false);
@@ -166,6 +178,7 @@ if (!$loadThisView) {
 if ($screen) {
 
 		$renderedFormulizeScreen = $screen;
+
     // this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
 

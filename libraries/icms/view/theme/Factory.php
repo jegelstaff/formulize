@@ -84,13 +84,21 @@ class icms_view_theme_Factory {
 	
 	/**
 	 * Gets list of themes folder from themes directory, excluding any directories that do not have theme.html
+	 *
+	 * Themes for rendering embedded screens are left out
+	 * too: they draw no site chrome, so they are never a choice for how the site itself looks, and
+	 * anything that works from this list - every theme picker, the Appearance page - would otherwise
+	 * treat one as a theme of the site. Leaving them out here, rather than at each caller, also means
+	 * code that falls back to the site's theme when the theme rendering the page is not in this list
+	 * finds the right one on an embedded screen. See formulize_embedThemesList() for the embed themes.
 	 * @return	array
 	 */
 	static public function getThemesList() {
 		$dirtyList = $cleanList = array();
 		$dirtyList = icms_core_Filesystem::getDirList(ICMS_THEME_PATH . '/');
 		foreach ($dirtyList as $item) {
-			if (file_exists(ICMS_THEME_PATH . '/' . $item . '/theme.html')) {
+			if (file_exists(ICMS_THEME_PATH . '/' . $item . '/theme.html')
+				AND !file_exists(ICMS_THEME_PATH . '/' . $item . '/' . FORMULIZE_EMBED_THEME_MARKER)) {
 				$cleanList[$item] = $item;
 			}
 		}

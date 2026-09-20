@@ -6,6 +6,14 @@
 function formulize_patch_002_always_run($prev_dbversion, $required_dbversion) {
 	global $xoopsConfig, $xoopsDB;
 
+	// Clear the compiled Smarty templates. Not everything in here belongs to Formulize, and updating
+	// the module is not enough on its own to refresh those, so they are swept away on every update.
+	foreach((array) scandir(XOOPS_ROOT_PATH.'/templates_c') as $templateFile) {
+		if($templateFile !== '.' AND $templateFile !== '..' AND $templateFile !== 'index.html') {
+			unlink(XOOPS_ROOT_PATH.'/templates_c/'.$templateFile);
+		}
+	}
+
 	// clear the admin menu cache files, so that any changes to the menu structure or labels will be reflected in the admin interface
 	$adminMenuLangs = [ 'english', $xoopsConfig['language'] ];
 	$adminMenuLangs = array_unique($adminMenuLangs);
@@ -52,7 +60,391 @@ function formulize_patch_002_always_run($prev_dbversion, $required_dbversion) {
 		return false;
 	}
 
+	if (!formulize_restore_webmaster_view_form_permissions()) {
+		return false;
+	}
+
+	formulize_remove_stray_registered_user_edit_form_permissions();
+	formulize_ensure_screen_template_folder_for_theme();
+	formulize_warn_about_element_containers_missing_element_class();
+	formulize_repair_custom_openlisttemplate_functions();
+
+	// Keep the timezone list in step with PHP's timezone database, which changes with the PHP
+	// version the site runs on rather than with anything Formulize does.
+	formulize_update_timezone_options($xoopsDB);
+
   return true;
+}
+
+/**
+ * Give the Webmasters group explicit view_form permission on every form.
+ *
+ * Webmasters need this on every form, always. Without it the owner groups column cannot report the
+ * Webmasters group for entries webmasters created, and the owner group information then runs out of
+ * step with the dataset it is supposed to describe.
+ *
+ * @return bool FALSE only if a permission could not be written
+ */
+function formulize_restore_webmaster_view_form_permissions() {
+	global $xoopsDB;
+	$sql = "SELECT id_form FROM ".$xoopsDB->prefix('formulize_id')." AS f WHERE NOT EXISTS(SELECT 1 FROM ".$xoopsDB->prefix("group_permission")." AS p WHERE p.gperm_itemid = f.id_form AND p.gperm_name = 'view_form' AND p.gperm_groupid = 1)";
+	$res = $xoopsDB->query($sql);
+	if (!$res) {
+		print "Error: could not assign 'View Form' permission for Webmasters to all forms.<br>".$xoopsDB->error()."<br>Assign this permission manually for Webmasters to all forms, or please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
+		return false;
+	}
+	$assigned = true;
+	$formulizeModId = getFormulizeModId();
+	while($row = $xoopsDB->fetchRow($res)) {
+		$formId = intval($row[0]);
+		$insertSql = "INSERT INTO ".$xoopsDB->prefix("group_permission")." (`gperm_itemid`, `gperm_groupid`, `gperm_name`, `gperm_modid`) VALUES ($formId, 1, 'view_form', $formulizeModId)";
+		if($xoopsDB->queryF($insertSql) == false) {
+			$assigned = false;
+		}
+	}
+	if(!$assigned) {
+		print "Error: could not assign 'View Form' permission for Webmasters to all forms.<br>".$xoopsDB->error()."<br>Assign this permission manually for Webmasters to all forms, or please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
+	}
+	return $assigned;
+}
+
+/**
+ * Take edit_form away from Registered Users when that group is not a module administrator.
+ *
+ * Sites carry these from time immemorial, and the group should not hold them without admin rights.
+ *
+ * @return void
+ */
+function formulize_remove_stray_registered_user_edit_form_permissions() {
+	global $xoopsDB;
+	$gperm_handler = xoops_gethandler('groupperm');
+	if($gperm_handler->checkRight("module_admin", getFormulizeModId(), XOOPS_GROUP_USERS, 1) !== false) {
+		return;
+	}
+	$sql = "DELETE FROM ".$xoopsDB->prefix("group_permission")." WHERE gperm_name='edit_form' AND gperm_modid=".getFormulizeModId()." AND gperm_groupid=".XOOPS_GROUP_USERS;
+	if(!$xoopsDB->queryF($sql)) {
+		print "Error: could not remove stray 'edit form' permissions from Registered Users.<br>".$xoopsDB->error()."<br>";
+	}
+}
+
+/**
+ * Make sure the screen templates folder exists for the theme the site is currently using.
+ *
+ * A site that switches theme has no folder for the new one until something creates it, and screens
+ * fall back to the system defaults in the meantime.
+ *
+ * @return void
+ */
+function formulize_ensure_screen_template_folder_for_theme() {
+	global $xoopsConfig;
+	$screenpathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/";
+	if(!file_exists($screenpathname)) {
+		recurse_copy(XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/", $screenpathname);
+	}
+}
+
+/**
+ * Warn about custom elementcontainero.php files that predate the $elementClass variable.
+ *
+ * These are files the site's own people maintain, and a copy of an old one can arrive at any time,
+ * so this is worth checking on every update rather than once. The Office Use Only layout at the
+ * bottom of a form does not work on screens whose container file lacks the variable.
+ *
+ * @return void
+ */
+function formulize_warn_about_element_containers_missing_element_class() {
+	$missingElementClass = [];
+	$baseElementContainerDir = XOOPS_ROOT_PATH . '/modules/formulize/templates/screens';
+	if (!is_dir($baseElementContainerDir)) {
+		return;
+	}
+	$ecoDirectory = new RecursiveDirectoryIterator($baseElementContainerDir);
+	$iterator = new RecursiveIteratorIterator($ecoDirectory);
+	$regex = new RegexIterator($iterator, '/^.+\/elementcontainero\.php$/i', RecursiveRegexIterator::GET_MATCH);
+	foreach (array_keys(iterator_to_array($regex)) as $ecoFilePath) {
+		$contents = file_get_contents($ecoFilePath);
+		if (strlen($contents) > 0 AND strpos($contents, '$elementClass') === false) {
+			$missingElementClass[] = $ecoFilePath;
+		}
+	}
+	if(count($missingElementClass) > 0) {
+		$ecoMessage = "You have one or more 'elementcontainero.php' files which are missing the \$elementClass variable used in Formulize 8.1+.\n\nThe normal usage looks like this:\n\nprint \"<div class='form-row \$elementClass' \$style id='\$elementContainerId'>\";\n\nThe 'Office Use Only' layout at the bottom of forms will not work correctly on the affected screens until these files are updated.\n\nThe affected files are:\n\n" . implode("\n", $missingElementClass);
+		echo '<script>alert(' . json_encode($ecoMessage) . ');</script>';
+	}
+}
+
+/**
+ * Repair custom openlisttemplate.php files that still carry functions which have moved into Formulize.
+ *
+ * getAriaSort() now lives in functions.php, so a custom template that still defines it causes a fatal
+ * "cannot redeclare function" error. clickableSortLink() changed to support sorting by several columns,
+ * and a template with the old version keeps the old behaviour. Like the elementcontainero.php check,
+ * these are files the site's own people maintain, and a copy of an old one can arrive at any time, so
+ * this runs on every update rather than once.
+ *
+ * @return void
+ */
+function formulize_repair_custom_openlisttemplate_functions() {
+	if (!is_dir(XOOPS_ROOT_PATH . '/modules/formulize/templates/screens')) {
+		return;
+	}
+	// Scan custom per-screen openlisttemplate.php files for getAriaSort() definition.
+	// This function was moved to functions.php; if it remains in a custom template file it will
+	// cause a PHP fatal error ("cannot redeclare function") that breaks the site.
+	// Files in numeric subdirectories are user-customised copies that survive the update patch;
+	// files in named dirs (e.g. "default") are replaced by the patch and do not need handling.
+	$ariaAutoFixed = [];
+	$ariaMismatch = [];
+	$ariaNotWritable = [];
+	$ariaCanonicalRaw = <<<'CANONICAL'
+function getAriaSort($elementHandle) {
+	$sort = isset($_POST['sort']) ? $_POST['sort'] : null;
+	$order = isset($_POST['order']) ? $_POST['order'] : null;
+
+	if ($sort == $elementHandle) {
+		if ($order == 'SORT_ASC') {
+			return 'ascending';
+		}
+		if ($order == 'SORT_DESC') {
+			return 'descending';
+		}
+	}
+	return 'none';
+}
+CANONICAL;
+	$ariaCanonical = preg_replace('/\s+/', '', $ariaCanonicalRaw);
+	$ariaScreensDir = XOOPS_ROOT_PATH . '/modules/formulize/templates/screens';
+	$ariaDirectory = new RecursiveDirectoryIterator($ariaScreensDir, RecursiveDirectoryIterator::SKIP_DOTS);
+	$ariaIter = new RecursiveIteratorIterator($ariaDirectory);
+	$ariaRegex = new RegexIterator($ariaIter, '/^.+\/openlisttemplate\.php$/i', RecursiveRegexIterator::GET_MATCH);
+	$ariaFiles = array_keys(iterator_to_array($ariaRegex));
+	foreach ($ariaFiles as $ariaFilePath) {
+		if (!is_numeric(basename(dirname($ariaFilePath)))) {
+			continue; // skip named dirs (default, Anari/default, etc.) — replaced by the patch
+		}
+		$ariaContent = file_get_contents($ariaFilePath);
+		if ($ariaContent === false || strlen($ariaContent) === 0) {
+			continue;
+		}
+		$funcPos = strpos($ariaContent, 'function getAriaSort(');
+		if ($funcPos === false) {
+			continue;
+		}
+		// Walk back to include any preceding docblock
+		$blockStart = $funcPos;
+		$beforeFunc = substr($ariaContent, 0, $funcPos);
+		if (substr(rtrim($beforeFunc), -2) === '*/') {
+			$docStart = strrpos($beforeFunc, '/**');
+			if ($docStart !== false) {
+				$blockStart = $docStart;
+			}
+		}
+		// Include leading whitespace on the line that starts the block
+		$lineStart = strrpos(substr($ariaContent, 0, $blockStart), "\n");
+		$blockStart = ($lineStart !== false) ? $lineStart + 1 : 0;
+		// Find the matching closing brace by counting depth
+		$bracePos = strpos($ariaContent, '{', $funcPos);
+		if ($bracePos === false) {
+			continue;
+		}
+		$depth = 0;
+		$blockEnd = $bracePos;
+		for ($i = $bracePos, $ariaLen = strlen($ariaContent); $i < $ariaLen; $i++) {
+			if ($ariaContent[$i] === '{') {
+				$depth++;
+			} elseif ($ariaContent[$i] === '}') {
+				$depth--;
+				if ($depth === 0) {
+					$blockEnd = $i;
+					break;
+				}
+			}
+		}
+		// Normalize the function body (without docblock) for comparison
+		$funcBody = substr($ariaContent, $funcPos, $blockEnd - $funcPos + 1);
+		$funcNormalized = preg_replace('/\s+/', '', $funcBody);
+		if (!is_writable($ariaFilePath)) {
+			$ariaNotWritable[] = $ariaFilePath;
+			continue;
+		}
+		// Consume trailing newlines after the closing brace
+		$afterBlock = $blockEnd + 1;
+		while ($afterBlock < strlen($ariaContent) && ($ariaContent[$afterBlock] === "\n" || $ariaContent[$afterBlock] === "\r")) {
+			$afterBlock++;
+		}
+		if ($funcNormalized === $ariaCanonical) {
+			// Canonical version — safe to delete entirely
+			$newContent = substr($ariaContent, 0, $blockStart) . substr($ariaContent, $afterBlock);
+			file_put_contents($ariaFilePath, $newContent);
+			$ariaAutoFixed[] = $ariaFilePath;
+		} else {
+			// Modified version — wrap in function_exists guard and alert the user
+			$fullBlock = substr($ariaContent, $blockStart, $blockEnd - $blockStart + 1);
+			$wrapped = "if (!function_exists('getAriaSort')) {\n" . $fullBlock . "\n}";
+			$newContent = substr($ariaContent, 0, $blockStart) . $wrapped . substr($ariaContent, $afterBlock);
+			file_put_contents($ariaFilePath, $newContent);
+			$ariaMismatch[] = $ariaFilePath;
+		}
+	}
+	if (count($ariaMismatch) > 0) {
+		$ariaMessage = "IMPORTANT: One or more custom 'openlisttemplate.php' files contained a modified version of the getAriaSort() function, which has been moved to functions.php.\n\nThe custom version has been DEACTIVATED (wrapped in a function_exists guard) to prevent a PHP fatal error. The built-in version of getAriaSort() is now active. If your custom version had important changes, review functions.php and merge your changes there.\n\nThe affected files are:\n\n" . implode("\n", $ariaMismatch);
+		echo '<script>alert(' . json_encode($ariaMessage) . ');</script>';
+	}
+	if (count($ariaNotWritable) > 0) {
+		$ariaWriteMessage = "BREAKING: The following custom 'openlisttemplate.php' files still contain the getAriaSort() function, which has been moved to functions.php. These files could not be automatically patched (not writable by the web server). Your site will produce PHP fatal errors until these files are manually updated.\n\nFor each file, either remove the getAriaSort() function definition entirely (and migrate important changes to functions.php), or wrap it in:\n\nif (!function_exists('getAriaSort')) { ... }\n\nThe affected files are:\n\n" . implode("\n", $ariaNotWritable);
+		echo '<script>alert(' . json_encode($ariaWriteMessage) . ');</script>';
+	}
+
+	// Scan custom per-screen openlisttemplate.php files for the old version of clickableSortLink().
+	// The function signature is the same but the implementation changed to support multi-column sorting.
+	// If the file has the old canonical version, replace it automatically.
+	// If the file has a customised version, leave it alone but warn the user.
+	$sortLinkAutoFixed = [];
+	$sortLinkMismatch = [];
+	$sortLinkNotWritable = [];
+	$sortLinkOldCanonicalRaw = <<<'OLDCANONICAL'
+function clickableSortLink($elementHandle, $clickableContent) {
+
+	// get current sorting element and order
+	$sort = isset($_POST['sort']) ? $_POST['sort'] : null;
+	$order = isset($_POST['order']) ? $_POST['order'] : null;
+
+	// setup containers for the clickable item
+	$clickableSortLink = "
+		<div style='padding-right:20px;'>
+			<a style='display:flex;' href='' alt='"._formulize_DE_SORTTHISCOL."' title='"._formulize_DE_SORTTHISCOL."' onclick='javascript:sort_data(\"$elementHandle\");return false;'>
+				<div>$clickableContent</div>
+				<div style='min-width:15px; padding-left:5px;' aria-hidden='true'>";
+
+					// if the element is the current sorting element, add an icon to show this
+					if($elementHandle == $sort) {
+						$iconClass = $order == "SORT_DESC" ? "fas fa-sort-amount-down" : "fas fa-sort-amount-up";
+						$clickableSortLink .= "<i class='$iconClass'></i>";
+					}
+
+				// close the markup
+				$clickableSortLink .= "
+				</div>
+			</a>
+		</div>";
+
+	return $clickableSortLink;
+}
+OLDCANONICAL;
+	$sortLinkOldCanonical = preg_replace('/\s+/', '', $sortLinkOldCanonicalRaw);
+	$sortLinkNewVersion = <<<'NEWVERSION'
+/**
+ * Generate the markup for the clickable sort links in the column headers, including the appropriate sort icon and tooltip text based on the current sort state.
+ * The link will have an onclick handler that calls the sort_data JavaScript function with the element handle and whether the shift key was held (for multi-column sorting).
+ * @param string elementHandle - the handle of the element for the column header we are generating the link for
+ * @param string clickableContent - the text or markup that will be displayed to the user as the clickable thing on screen
+ * @return string The HTML markup for the clickable sort link, including the appropriate sort icon and tooltip text based on the current sort state.
+ */
+function clickableSortLink($elementHandle, $clickableContent) {
+
+	list($title, $icon) = getSortTitleAndIcon($elementHandle);
+
+	return "
+		<div class='sort-link-wrapper'>
+			<a href='' alt='" . htmlspecialchars($title) . "' title='" . htmlspecialchars($title) . "' onclick='javascript:sort_data(\"$elementHandle\", event.shiftKey);return false;'>
+				<div>$clickableContent</div>
+				<div class='sort-link-icon' aria-hidden='true'>$icon</div>
+			</a>
+		</div>";
+}
+NEWVERSION;
+	// Re-use the same files array from the getAriaSort scan above
+	foreach ($ariaFiles as $sortLinkFilePath) {
+		if (!is_numeric(basename(dirname($sortLinkFilePath)))) {
+			continue;
+		}
+		$sortLinkContent = file_get_contents($sortLinkFilePath);
+		if ($sortLinkContent === false || strlen($sortLinkContent) === 0) {
+			continue;
+		}
+		$slFuncPos = strpos($sortLinkContent, 'function clickableSortLink(');
+		if ($slFuncPos === false) {
+			continue;
+		}
+		// Walk back to include any preceding comment (// or /**)
+		$slBlockStart = $slFuncPos;
+		$slBeforeFunc = substr($sortLinkContent, 0, $slFuncPos);
+		$slBeforeTrimmed = rtrim($slBeforeFunc);
+		if (substr($slBeforeTrimmed, -2) === '*/') {
+			$slDocStart = strrpos($slBeforeFunc, '/**');
+			if ($slDocStart !== false) {
+				$slBlockStart = $slDocStart;
+			}
+		} elseif (substr($slBeforeTrimmed, -1) !== '') {
+			// Check for // line comment on the immediately preceding line
+			$slLastNewline = strrpos($slBeforeTrimmed, "\n");
+			$slPrecedingLine = ($slLastNewline !== false) ? substr($slBeforeTrimmed, $slLastNewline + 1) : $slBeforeTrimmed;
+			if (strpos(ltrim($slPrecedingLine), '//') === 0) {
+				// Walk back through consecutive // comment lines
+				$slSearchPos = $slLastNewline;
+				while ($slSearchPos > 0) {
+					$slPrevNewline = strrpos(substr($slBeforeTrimmed, 0, $slSearchPos), "\n");
+					$slLine = ($slPrevNewline !== false) ? substr($slBeforeTrimmed, $slPrevNewline + 1, $slSearchPos - $slPrevNewline - 1) : substr($slBeforeTrimmed, 0, $slSearchPos);
+					if (strpos(ltrim($slLine), '//') === 0) {
+						$slSearchPos = ($slPrevNewline !== false) ? $slPrevNewline : 0;
+					} else {
+						break;
+					}
+				}
+				$slBlockStart = $slSearchPos + 1;
+			}
+		}
+		// Include leading whitespace on the line that starts the block
+		$slLineStart = strrpos(substr($sortLinkContent, 0, $slBlockStart), "\n");
+		$slBlockStart = ($slLineStart !== false) ? $slLineStart + 1 : 0;
+		// Find the matching closing brace
+		$slBracePos = strpos($sortLinkContent, '{', $slFuncPos);
+		if ($slBracePos === false) {
+			continue;
+		}
+		$slDepth = 0;
+		$slBlockEnd = $slBracePos;
+		for ($i = $slBracePos, $slLen = strlen($sortLinkContent); $i < $slLen; $i++) {
+			if ($sortLinkContent[$i] === '{') {
+				$slDepth++;
+			} elseif ($sortLinkContent[$i] === '}') {
+				$slDepth--;
+				if ($slDepth === 0) {
+					$slBlockEnd = $i;
+					break;
+				}
+			}
+		}
+		// Normalize the function body only (without any preceding comment) for comparison
+		$slFuncBody = substr($sortLinkContent, $slFuncPos, $slBlockEnd - $slFuncPos + 1);
+		$slFuncNormalized = preg_replace('/\s+/', '', $slFuncBody);
+		if ($slFuncNormalized !== $sortLinkOldCanonical) {
+			// Customised — leave file untouched, warn the user
+			$sortLinkMismatch[] = $sortLinkFilePath;
+			continue;
+		}
+		if (!is_writable($sortLinkFilePath)) {
+			$sortLinkNotWritable[] = $sortLinkFilePath;
+			continue;
+		}
+		// Consume trailing newlines after the closing brace
+		$slAfterBlock = $slBlockEnd + 1;
+		while ($slAfterBlock < strlen($sortLinkContent) && ($sortLinkContent[$slAfterBlock] === "\n" || $sortLinkContent[$slAfterBlock] === "\r")) {
+			$slAfterBlock++;
+		}
+		// Replace the old block with the new version
+		$newContent = substr($sortLinkContent, 0, $slBlockStart) . $sortLinkNewVersion . "\n" . substr($sortLinkContent, $slAfterBlock);
+		file_put_contents($sortLinkFilePath, $newContent);
+		$sortLinkAutoFixed[] = $sortLinkFilePath;
+	}
+	if (count($sortLinkMismatch) > 0) {
+		$sortLinkMismatchMessage = "NOTE: One or more custom 'openlisttemplate.php' files contain a customised version of the clickableSortLink() function. These files have NOT been modified.\n\nTo enable multi-column sorting on these screens, update the clickableSortLink() function in each file to match the new version found in the default template:\n\nmodules/formulize/templates/screens/default/listOfEntries/openlisttemplate.php\n\nThe affected files are:\n\n" . implode("\n", $sortLinkMismatch);
+		echo '<script>alert(' . json_encode($sortLinkMismatchMessage) . ');</script>';
+	}
+	if (count($sortLinkNotWritable) > 0) {
+		$sortLinkWriteMessage = "NOTE: The following custom 'openlisttemplate.php' files contain the old version of clickableSortLink() and could not be automatically updated (not writable by the web server). Multi-column sorting will not work on these screens until the files are manually updated.\n\nReplace the clickableSortLink() function with the new version found in:\n\nmodules/formulize/templates/screens/default/listOfEntries/openlisttemplate.php\n\nThe affected files are:\n\n" . implode("\n", $sortLinkNotWritable);
+		echo '<script>alert(' . json_encode($sortLinkWriteMessage) . ');</script>';
+	}
 }
 
 /**

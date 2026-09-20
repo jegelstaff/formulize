@@ -460,6 +460,4 @@ define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REPLACE", "Substitui
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REMOVE", "Remover o valor especificado do valor atual");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_APPEND", "Acrescentar o valor especificado no final do valor atual");
 
-
-
-?>
+include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/admin.php'; // just to catch whatever constants might be missing

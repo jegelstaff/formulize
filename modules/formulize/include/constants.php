@@ -37,3 +37,22 @@ define('FORMULIZE_QUERY_SCOPE_GLOBAL', 'all');
 define('FORMULIZE_EDIT_ICON_STYLE_OFF', 0);
 define('FORMULIZE_EDIT_ICON_STYLE_PEN', 1);
 define('FORMULIZE_EDIT_ICON_STYLE_MAGNIFIER', 2);
+// The theme an embedded screen renders with, unless the site names a different one in the
+// "Theme for embedded screens" preference. See formulize_embedThemeName().
+define('FORMULIZE_DEFAULT_EMBED_THEME', 'formulize_embed');
+
+// Stands in for the embedding address - a name on the host website's own domain, pointed at this
+// server - in the embed code shown on a screen's settings page, since nothing here can know it.
+// See formulize_embeddingAddressPlaceholderUrl().
+define('FORMULIZE_EMBEDDING_ADDRESS_PLACEHOLDER', '{embedding-address}');
+
+// A file with this name in a theme folder marks that theme as one for rendering embedded screens.
+// See formulize_themeIsAnEmbedTheme() and the marker file in themes/formulize_embed.
+define('FORMULIZE_EMBED_THEME_MARKER', 'formulize-embed-theme.marker');
+
+// Cookie that binds an anonymous visitor's security tokens to their own browser when the session
+// cookie cannot reach an embedded screen. See formulize_anonTokenBindKey().
+// The __Host- prefix is part of the name and is load bearing: browsers refuse to store a cookie
+// named this way unless it is Secure, Path=/ and has no Domain, which stops a neighbouring
+// subdomain from planting a bind key of its own choosing. Do not rename it without that prefix.
+define('FORMULIZE_ANON_BIND_COOKIE', '__Host-formulize_anonbind');

@@ -702,4 +702,11 @@ define("_formulize_USERACCOUNT_2FAOPTION_SMS", "Envoyez un code par SMS");
 define("_formulize_USERACCOUNT_2FAOPTION_AUTHAPP", "Utilisez une application d'authentification");
 define("_formulize_USERACCOUNT_PWREPEATDESC", "Saisissez le mot de passe deux fois pour confirmation");
 
+// Un écran intégré que le visiteur n'est pas autorisé à voir
+define("_formulize_EMBED_SIGNIN_NEEDED", "Vous devez vous connecter pour utiliser ce formulaire.");
+define("_formulize_EMBED_SIGNIN_NEWTAB", "La connexion doit se faire dans son propre onglet plutôt qu'ici : ce lien en ouvre donc un nouveau.");
+define("_formulize_EMBED_NOPERM_ACCOUNT", "Vous êtes connecté, mais cet écran n'est pas accessible à votre compte. Si vous pensez qu'il devrait l'être, contactez la personne qui gère ce site.");
+define("_formulize_EMBED_OPEN_NEWWINDOW", "Ouvrir dans une nouvelle fenêtre");
+
+
 include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/main.php';

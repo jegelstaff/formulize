@@ -273,6 +273,7 @@ CREATE TABLE `formulize_screen` (
   `theme` varchar(101) NOT NULL default '',
 	`rewriteruleAddress` varchar(255) NULL default NULL,
   `rewriteruleElement` smallint(5) unsigned NOT NULL default 0,
+  `embedOrigins` varchar(1000) NOT NULL default '',
 	FULLTEXT i_rewrite (`rewriteruleAddress`),
 	INDEX i_fid (`fid`),
 	INDEX i_frid (`frid`),

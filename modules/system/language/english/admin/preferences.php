@@ -434,7 +434,7 @@ define("_MD_AM_AUTHOKTA","Use SP-initiated Okta SAML authentication");
 define("_MD_AM_AUTHOKTADESC","If your site uses Okta as an authentication service, enter the SSO URL in this box. Only SP-initiated SAML authentication is supported. You must place a completed 'settings.php' file in the /libraries/php-saml/ directory.");
 
 define("_MD_AM_COOKIE_SAMESITE","Session cookie SameSite");
-define("_MD_AM_COOKIE_SAMESITEDSC","Controls the SameSite attribute on the session cookie. Lax is recommended. Use None ONLY if Formulize is embedded cross-site in an iframe (e.g. an LTI/Brightspace integration) - None also requires the site to be served over HTTPS. Strict is the most restrictive.");
+define("_MD_AM_COOKIE_SAMESITEDSC","Controls the SameSite attribute on the session cookie. Lax is recommended.<br><br>Use None ONLY if Formulize is embedded in an iframe on a website that is on a different domain to this site, such as an LTI/Brightspace integration. None requires the site to be served over HTTPS, and it only works in browsers that accept third-party cookies - Safari refuses them by default, and visitors using those browsers will see embedded screens as anonymous and will not be able to submit them. Giving Formulize an address on the same domain as the page doing the embedding is the only arrangement that works in every browser: <a href='https://formulize.org/developers/embedding_screens_setup/' target='_blank'>formulize.org/developers/embedding_screens_setup</a><br><br>Strict is the most restrictive.");
 
 
 

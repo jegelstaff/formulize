@@ -1741,6 +1741,25 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		AND isset($_POST['formulize_scrollPageStart'])
 		AND intval($_POST['formulize_scrollPageStart']) === $formulize_LOEPageStart);
 
+	// Embedded, the same decision has to be taken one level up: the frame does not scroll, the page
+	// hosting it does. So when the entries on screen have actually changed - a page jump, a search, a
+	// scope change - ask the host to come back to the top of the frame, since what it is looking at
+	// is now the middle of a different set of entries. Anything else asks for nothing, and a reader
+	// is left exactly where they were.
+	//
+	// Note this asks whether the LIST changed, not whether a scroll position was saved, which is what
+	// $restoreScrollPosition above turns on. The two cannot be shared: the embed theme flattens the
+	// scrollbox (height auto, max-height none) so that the whole list renders at full height and the
+	// frame grows to fit it, which means nothing scrolls inside an embedded list and the saved
+	// position is always 0. Keyed off a saved position, this would never fire at all.
+	//
+	// The scrollPageStart field is only present when the list's own controls form was submitted, so
+	// requiring it keeps a visitor's first arrival from being scrolled anywhere.
+	if(isset($_POST['formulize_scrollPageStart'])
+		AND ($regeneratePageNumbers OR intval($_POST['formulize_scrollPageStart']) !== $formulize_LOEPageStart)) {
+		print formulize_embedScrollToTopScript();
+	}
+
 	interfaceJavascript($fid, $frid, $currentview, $useWorking, ($screen AND $screen->getVar('dedisplay')), $settings['lockedColumns'], $screen, $restoreScrollPosition); // must be called after form is drawn, so that the javascript which clears ventry can operate correctly (clearing is necessary to avoid displaying the form after clicking the Back button on the form and then clicking a button or doing an operation that causes a posting of the controls form).
 
 	$buttonCodeArray['quickSearches'] = $quickSearches;

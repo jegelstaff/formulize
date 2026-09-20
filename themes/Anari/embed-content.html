@@ -1,0 +1,15 @@
+<{* How this theme wraps a screen that is embedded in another website. The embed theme draws the page
+   and includes this in place of the screen, so the screen sits inside this theme's own content area
+   and this theme's stylesheet finds it there, without any of this theme's header or menus.
+   See docs/themes.md. *}>
+<div class="site-layout">
+  <div class="site-layout__main">
+    <div class="main-content">
+      <div class="container">
+
+      <{$icms_contents}>
+
+      </div>
+    </div>
+  </div>
+</div>

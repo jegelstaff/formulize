@@ -39,7 +39,7 @@ $modversion = array(
 	'license' => "GPL-2.0",
 	'image' => "images/formulize.gif",
 	'dirname' => "formulize",
-	'dbversion' => 18,
+	'dbversion' => 19,
 	'onUpdate' => "include/on_update.php"
 );
 
@@ -1261,6 +1261,30 @@ $modversion['config'][] = array(
 	'formtype' => 'yesno',
 	'valuetype' => 'int',
 	'default' => '0',
+);
+$modversion['config'][] = array(
+	'name' => 'formulizeEmbeddingEnabled',
+	'title' => '_MI_formulize_EMBEDDINGENABLED',
+	'description' => '_MI_formulize_EMBEDDINGENABLED_DESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 0,
+);
+$modversion['config'][] = array(
+	'name' => 'formulizeFrameAncestors',
+	'title' => '_MI_formulize_FRAMEANCESTORS',
+	'description' => '_MI_formulize_FRAMEANCESTORS_DESC',
+	'formtype' => 'textsarea',
+	'valuetype' => 'text',
+	'default' => '',
+);
+$modversion['config'][] = array(
+	'name' => 'formulizeEmbedTheme',
+	'title' => '_MI_formulize_EMBEDTHEME',
+	'description' => '_MI_formulize_EMBEDTHEME_DESC',
+	'formtype' => 'embedtheme',
+	'valuetype' => 'text',
+	'default' => 'formulize_embed',
 );
 $modversion['config'][] = array(
 	'name' => 'formulizePublicAPIEnabled',

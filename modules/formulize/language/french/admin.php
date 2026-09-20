@@ -693,4 +693,77 @@ define('_AM_ENTRY_GROUP_NOTICE', 'Les permissions désactivées ne peuvent pas �
 define('_AM_ENTRY_GROUP_CONDITIONS_LABEL', 'Conditions de visibilité :');
 
 
+// Page des réglages de l'écran (templates/admin/screen_settings.html)
+define("_AM_SCREEN_SETTINGS_LEGEND", "Réglages de l'écran :");
+define("_AM_SCREEN_SETTINGS_NAME", "Nom de l'écran :");
+define("_AM_SCREEN_SETTINGS_HANDLE", "Identifiant de l'écran :");
+define("_AM_SCREEN_SETTINGS_HANDLE_DESC", "Les identifiants permettent de désigner l'écran dans le code que vous écrivez.");
+define("_AM_SCREEN_SETTINGS_KIND", "De quel type d'écran s'agit-il :");
+define("_AM_SCREEN_SETTINGS_KIND_LIST", "Liste");
+define("_AM_SCREEN_SETTINGS_KIND_FORM", "Formulaire");
+define("_AM_SCREEN_SETTINGS_KIND_TEMPLATE", "Gabarit");
+define("_AM_SCREEN_SETTINGS_KIND_CALENDAR", "Calendrier");
+define("_AM_SCREEN_SETTINGS_KIND_MAP", "Carte");
+
+define("_AM_SCREEN_SETTINGS_URLS_LEGEND", "URL de cet écran");
+define("_AM_SCREEN_SETTINGS_URL_DEFAULT", "L'URL par défaut de cet écran :");
+define("_AM_SCREEN_SETTINGS_URL_ALTERNATE", "Définir une autre URL pour accéder à cet écran :");
+define("_AM_SCREEN_SETTINGS_URL_ALTERNATE_ELEMENT", "Avec une autre URL, identifier les enregistrements selon leur valeur dans cet élément :");
+
+define("_AM_SCREEN_SETTINGS_PHP_LEGEND", "Code PHP pour inclure cet écran n'importe où");
+define("_AM_SCREEN_SETTINGS_PHP_DESC", "Vous pouvez intégrer cet écran dans n'importe quelle application PHP ou page web hébergée sur le même serveur web.");
+define("_AM_SCREEN_SETTINGS_PHP_DESC2", "Utilisez cet extrait de code PHP pour l'inclure :");
+
+define("_AM_SCREEN_SETTINGS_TOKEN_LEGEND", "Cet écran doit-il utiliser un jeton de sécurité anti-CSRF");
+define("_AM_SCREEN_SETTINGS_TOKEN_DESC", "Le jeton de sécurité est une protection contre les attaques de type falsification de requête intersite.");
+
+define("_AM_SCREEN_SETTINGS_PASSCODE_LEGEND", "Les utilisateurs anonymes ont-ils besoin d'un code d'accès pour utiliser cet écran ?");
+define("_AM_SCREEN_SETTINGS_PASSCODE_NO", "Non, seulement la permission de voir le formulaire");
+define("_AM_SCREEN_SETTINGS_PASSCODE_YES", "Oui, en plus de la permission de voir le formulaire");
+define("_AM_SCREEN_SETTINGS_PASSCODE_DESC", "Les codes d'accès sont enregistrés avec les données saisies dans un formulaire, et servent de filtre lors de la consultation des données. Cela permet aux utilisateurs anonymes de n'interagir qu'avec certaines données, et si les codes sont distribués un par utilisateur, disposer d'un code équivaut à disposer d'un compte jetable.");
+define("_AM_SCREEN_SETTINGS_PASSCODE_VALIDCODES", "Codes valides");
+define("_AM_SCREEN_SETTINGS_PASSCODE_ACTIVE", "Actif");
+define("_AM_SCREEN_SETTINGS_PASSCODE_EXPIRED", "Expiré");
+define("_AM_SCREEN_SETTINGS_PASSCODE_AUTOEXPIRE", "Expiration automatique le :");
+define("_AM_SCREEN_SETTINGS_PASSCODE_DELETE", "supprimer");
+define("_AM_SCREEN_SETTINGS_PASSCODE_ADDEXISTING", "Ajouter un code d'accès provenant d'un autre écran :");
+define("_AM_SCREEN_SETTINGS_PASSCODE_ADDNEW", "Ajouter un nouveau code d'accès :");
+define("_AM_SCREEN_SETTINGS_PASSCODE_NOTE", "Note facultative");
+define("_AM_SCREEN_SETTINGS_PASSCODE_ADD", "Ajouter");
+
+define("_AM_SCREEN_SETTINGS_EMBED_LEGEND", "Intégration de cet écran dans un autre site web");
+define("_AM_SCREEN_SETTINGS_EMBED_OFF", "L'intégration est désactivée pour ce site : aucun site web ne peut afficher cet écran dans un cadre. Activez-la dans Réglages &rarr; Avancé &rarr; Intégration dans d'autres sites web, et ce réglage deviendra disponible.");
+define("_AM_SCREEN_SETTINGS_EMBED_ORIGINS", "Quels autres sites web peuvent intégrer cet écran ?");
+define("_AM_SCREEN_SETTINGS_EMBED_ORIGINS_DESC", "Un site web par ligne. Écrivez chacun sous forme de domaine, par exemple <em>www.example.com</em>, ou avec un schéma, <em>https://www.example.com</em>. Une adresse de page collée fonctionne aussi, et <em>*.example.com</em> couvre tous les sous-domaines. Ces sites web seront autorisés à afficher cet écran dans une iframe. Indiquez le site web dont la page affiche l'écran, et non une adresse d'intégration mise en place pour lui : pour une page sur <em>www.example.com</em> qui intègre l'écran par <em>forms.example.com</em>, indiquez <em>www.example.com</em>. Tant que vous n'en indiquez aucun, aucun autre site web ne peut intégrer cet écran : les navigateurs refusent de l'afficher ailleurs que sur ce site.<br><br>Omettre le schéma ne signifie pas que les deux sont acceptés : le navigateur ne le compare qu'au schéma de ce site, https sur presque tous les sites. Un site web qui utilise plutôt le simple http, comme un site de développement local, doit être écrit <em>http://www.example.com</em>, sinon le navigateur refusera d'y afficher cet écran.");
+define("_AM_SCREEN_SETTINGS_EMBED_CODE", "Code à placer dans la page de l'autre site web");
+define("_AM_SCREEN_SETTINGS_EMBED_CODE_DESC", "Collez l'un de ces codes dans la page qui doit afficher l'écran. Incluez le script une seule fois par page, quel que soit le nombre d'écrans qu'elle affiche. Chaque écran conserve la hauteur de son contenu, il n'y a donc aucune hauteur à deviner, et prend la largeur que la page lui accorde, sans jamais descendre sous 400 pixels, pour ne pas devenir trop étroit pour être utilisable.<br><br>Le fonctionnement de l'intégration, du début à la fin : <a href='https://formulize.org/developers/embedding_screens/' target='_blank'>formulize.org/developers/embedding_screens</a>");
+define("_AM_SCREEN_SETTINGS_EMBED_CODE_ANON", "Pour les visiteurs anonymes, avec l'adresse de ce site (%s)");
+define("_AM_SCREEN_SETTINGS_EMBED_CODE_ANON_DESC", "Fonctionne tel quel. Les visiteurs sont anonymes dans le cadre, même s'ils sont connectés à ce site.");
+define("_AM_SCREEN_SETTINGS_EMBED_CODE_ALIAS", "Pour les visiteurs connectés, et pour l'enregistrement dans tous les navigateurs, avec une adresse d'intégration");
+define("_AM_SCREEN_SETTINGS_EMBED_CODE_ALIAS_DESC", "Remplacez <code>%1\$s</code> aux deux endroits par l'adresse d'intégration que vous avez mise en place, par exemple <em>forms.example.com</em>. Formulize ne peut pas connaître cette adresse. Mise en place d'une adresse d'intégration : <a href='https://formulize.org/developers/embedding_screens_setup/' target='_blank'>formulize.org/developers/embedding_screens_setup</a>");
+
+
+// Listes d'adresses de sites web, et les réglages d'intégration qui les utilisent
+define("_AM_ORIGINS_UNREADABLE_ONE", "Cette entrée est ignorée, car elle ne peut pas être lue comme une adresse de site web :");
+define("_AM_ORIGINS_UNREADABLE_MANY", "Ces entrées sont ignorées, car elles ne peuvent pas être lues comme des adresses de sites web :");
+define("_AM_ORIGINS_UNREADABLE_HELP", "Écrivez chaque site web sur sa propre ligne, sous forme de domaine comme <i>www.example.com</i>, ou avec un schéma, <i>https://www.example.com</i>.");
+define("_AM_ORIGINS_UNUSABLE_ONE", "Cette entrée est bien une adresse de site web, mais elle ne peut pas être utilisée ici :");
+define("_AM_ORIGINS_UNUSABLE_MANY", "Ces entrées sont bien des adresses de sites web, mais elles ne peuvent pas être utilisées ici :");
+define("_AM_ORIGINS_UNUSABLE_HELP", "Un simple <code>*</code> désigne tous les sites web, ce que l'intégration n'accepte pas : laisser la liste vide signifie déjà qu'aucun site web ne peut faire cette intégration. Seules les adresses <i>http</i> et <i>https</i> peuvent être utilisées, car ce sont les seules par lesquelles une page peut être affichée dans un cadre.");
+define("_AM_ORIGINS_KEPT", "Tout a été conservé exactement tel que vous l'avez saisi, afin que vous puissiez le corriger. Tout le reste de la liste est bien utilisé.");
+
+define("_AM_EMBED_SESSION_DEPENDS_TITLE", "Le fait qu'un écran intégré soit connecté ou non dépend de l'endroit où il est intégré.");
+// le premier %s est la valeur SameSite du cookie de session (par ex. Lax) ; le second est le nom d'hôte de ce site
+define("_AM_EMBED_SESSION_DEPENDS_BODY", "Le cookie de session de ce site est défini sur <code>SameSite=%s</code>, dans Sessions et cookies. Les navigateurs ne l'envoient dans un cadre que si la page qui affiche ce cadre se trouve sur le même domaine que l'adresse indiquée dans l'iframe, et utilise le même https ou http. Cette adresse n'a pas à être celle que vous utilisez pour accéder à ce site : une adresse mise en place sur le domaine de l'autre site web, et pointant vers ce serveur, compte comme ce domaine. Intégré sur le même domaine, un écran montre au visiteur ses propres données et s'enregistre normalement, exactement comme il le ferait ici. Intégré sur tout autre domaine, la session ne lui parvient pas : l'écran est anonyme quelle que soit la connexion du visiteur, il ne peut montrer que ce que le groupe Anonyme est autorisé à voir, et un écran protégé par un code d'accès redemande ce code à la page suivante. <b>Les visiteurs anonymes peuvent tout de même l'enregistrer</b>, à condition que ce site soit en https et que leur navigateur conserve un cookie pour la page intégrée - Safari ne le fait pas par défaut, et leur propose un lien pour ouvrir l'écran dans sa propre fenêtre. Pour mettre en place une adresse sur le même domaine : <a href='https://formulize.org/developers/embedding_screens_setup/' target='_blank'>formulize.org/developers/embedding_screens_setup</a>");
+define("_AM_EMBED_SESSION_LIST_SAME", "<b>Ces sites sont sur le même domaine que %s</b>, l'adresse depuis laquelle vous consultez cette page : les écrans qui y sont intégrés avec cette adresse sont connectés et peuvent être enregistrés :");
+define("_AM_EMBED_SESSION_LIST_CROSS", "<b>Ces sites sont sur un autre domaine que %s</b>, l'adresse depuis laquelle vous consultez cette page. Un écran qui y est intégré avec cette adresse est anonyme, qui que soit le visiteur, mais les visiteurs anonymes peuvent tout de même l'enregistrer. Si vous avez mis en place une adresse sur le domaine de ce site web et l'avez indiquée dans l'iframe, l'écran y est au contraire connecté :");
+define("_AM_EMBED_SESSION_DEPENDS_LMS", "Si vous faites l'intégration dans un système situé sur un autre domaine et que vos utilisateurs doivent y voir leurs propres données, comme une plateforme d'apprentissage, changez le réglage SameSite pour <i>None</i>. Cela ne fonctionne que dans les navigateurs qui acceptent les cookies tiers, ce que Safari ne fait pas par défaut. Une adresse sur le même domaine que la page hôte est la seule configuration qui fonctionne dans tous les navigateurs. Lisez la note qui apparaîtra ici à ce moment-là avant de décider.");
+define("_AM_EMBED_SESSION_SHARED_TITLE", "Sur ce site, les écrans intégrés sont connectés, et non anonymes.");
+define("_AM_EMBED_SESSION_SHARED_BODY", "Le cookie de session de ce site est défini sur <code>SameSite=None</code>, dans Sessions et cookies : les navigateurs l'envoient donc à un écran affiché dans un cadre sur un autre site web. Un visiteur connecté à ce site voit ses propres données dans la page de cet autre site web, exactement comme il les verrait ici.");
+define("_AM_EMBED_SESSION_SHARED_BROWSERS", "Cela dépend de l'acceptation des cookies tiers par le navigateur du visiteur. Safari les refuse par défaut, et tout navigateur peut être réglé ainsi. Ces visiteurs voient l'écran comme anonyme et ne peuvent pas l'enregistrer ; un lien leur est proposé pour l'ouvrir dans une nouvelle fenêtre. Donner à Formulize une adresse sur le même domaine que la page hôte est la seule configuration qui fonctionne dans tous les navigateurs : <a href='https://formulize.org/developers/embedding_screens_setup/' target='_blank'>formulize.org/developers/embedding_screens_setup</a>");
+define("_AM_EMBED_SESSION_SHARED_TRUST", "La liste de sites web ci-dessus devient donc ce qui détermine qui peut afficher les pages connectées de ce site. N'indiquez que des sites web que vous contrôlez et en qui vous avez confiance. Tout site web nommé ici, ou sur un écran particulier, peut placer une page connectée de ce site dans une page à lui, et décider de ce qui l'entoure.");
+
+define("_AM_EMBED_CODE_DEFAULT_TITLE", "Formulaire");
+
+
 include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/admin.php'; // just to catch whatever constants might be missing

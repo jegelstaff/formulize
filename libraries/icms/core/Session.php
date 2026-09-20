@@ -54,11 +54,31 @@ class icms_core_Session {
 
       //Authenticate code from Google OAuth Flow
 			if(isset($_GET['code']) && isset($_GET['newcode'])){
-				//for the create new user pathway to this session init call
-				$userData["email"] = $_SESSION['email'];
-				//finally guaranteed to be done with these
-				unset($_SESSION['email']);
-				unset($_SESSION['name']);
+				// ALTERED BY FREEFORM SOLUTIONS FOR FORMULIZE. This is the tail of the new-user flow:
+				// integration_api.php redirects back here once the account and its resource mapping
+				// exist, and the "code" in that URL is the flow's own nonce, not an authorization code
+				// from Google. That is why the identity is read from the session rather than verified
+				// against Google again - re-authenticating is not an option, because there is nothing
+				// in this URL that Google would recognise.
+				//
+				// So the nonce is what has to be checked. Without it, this branch accepts whatever
+				// sits in $_SESSION['email'] - a key other integrations write too, the Brightspace
+				// launch among them - which would let an identity established through one integration
+				// be redeemed through another's lookup. Only a session that actually went through a
+				// verified flow and reached new_user.php holds a matching nonce.
+				if(!empty($_SESSION['newuser'])
+					AND hash_equals((string) $_SESSION['newuser'], (string) $_GET['newcode'])) {
+					//for the create new user pathway to this session init call
+					$userData["email"] = $_SESSION['email'];
+					//finally guaranteed to be done with these
+					unset($_SESSION['email']);
+					unset($_SESSION['name']);
+					unset($_SESSION['newuser']); // one journey through the flow, one use
+				}
+				// A nonce that does not match leaves $userData unset, so nothing is established here,
+				// and deliberately does not fall through to authenticate() below: $_GET['code'] is
+				// the nonce, and handing it to Google would only raise an error. Anyone who really is
+				// mid-flow still gets signed in by the resource map key further down.
 			}else if (isset($_GET['code'])){
 				$client->authenticate($_GET['code']);
 				$userData = $objOAuthService->userinfo->get();
@@ -161,6 +181,24 @@ class icms_core_Session {
 	    $icms_user = icms::handler('icms_member')->getUser($xoops_userid);
 
 			if (is_object($icms_user)) {
+				// Give the session a new id at the moment
+				// it stops being anonymous and becomes this person's, so that an id planted in their
+				// browser beforehand is not the one their signed in session ends up filed under.
+				// include/checklogin.php already does this for an ordinary username and password
+				// login; every external provider reaching this point was skipping it.
+				//
+				// It matters most in the arrangement the embedding documentation recommends, where
+				// Formulize answers on a subdomain of a website whose pages are served by somebody
+				// else and edited by people at the client: a script on one of those pages can write a
+				// cookie for the shared parent domain, and this host reads it back.
+				//
+				// Only on the transition, never on a request that is already this person's. The
+				// integrations above reach this block on EVERY page load - Drupal hands over its user
+				// id each time - so regenerating unconditionally would issue a fresh cookie on every
+				// request and strand anything already in flight under the previous id.
+				if (!isset($_SESSION['xoopsUserId']) OR $_SESSION['xoopsUserId'] != $icms_user->getVar('uid')) {
+					$instance->icms_sessionRegenerateId(true);
+				}
 				// set a few things in $_SESSION, similar to what include/checklogin.php does, and make a cookie and a database entry
 				$_SESSION['xoopsUserId'] = $icms_user->getVar('uid');
 				$_SESSION['xoopsUserGroups'] = $icms_user->getGroups();
@@ -190,7 +228,7 @@ class icms_core_Session {
 		// If there's no xoopsUserId set in the $_SESSION yet, and there's an ICMS session cookie present, then let's make one last attempt to load the session (could be because we're embedded in a system that doesn't have a parallel user table like what is used above)
 		// essentially, if session_start failed (which would happen if another system already started it) then we're trying again.
 		// Possibly, we should be appending the existing $_SESSION data somehow?? Don't want to clobber session data from host system??
-		$icms_session_name = ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '') ? $icmsConfig['session_name'] : session_name();
+		$icms_session_name = self::cookieName();
 		if (!isset($_SESSION['xoopsUserId']) && isset($_COOKIE[$icms_session_name])) {
 			if ($icms_session_data = $instance->read($_COOKIE[$icms_session_name])) {
 				session_decode($icms_session_data); // put session data into $_SESSION, including the xoopsUserId if present, same as if session_start had been successful
@@ -208,7 +246,7 @@ class icms_core_Session {
 				icms::$user = $icms_user; // ALTERED BY FREEFORM SOLUTIONS TO AVOID NAMING CONFLICT WITH GLOBAL USER OBJECT FROM EXTERNAL SYSTEMS
 				if ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '') {
 					// we need to secure cookie when using SSL
-					$secure = substr(ICMS_URL, 0, 5) == 'https' ? 1 : 0;
+					$secure = self::siteIsSecure();
 					$arr_cookie_options = array (
 						'expires' => 0,
 						'path' => '/',
@@ -392,10 +430,8 @@ class icms_core_Session {
 	 * @return  bool
 	 **/
 	public function update_cookie($sess_id = null, $expire = null) {
-		global $icmsConfig;
-		$secure = substr(ICMS_URL, 0, 5) == 'https' ? 1 : 0; // we need to secure cookie when using SSL
-		$session_name = ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '')
-				? $icmsConfig['session_name'] : session_name();
+		$secure = self::siteIsSecure(); // we need to secure cookie when using SSL
+		$session_name = self::cookieName();
 		$session_id = empty($sess_id) ? session_id() : $sess_id;
         $arr_cookie_options = array (
             'expires' => 0,
@@ -406,6 +442,32 @@ class icms_core_Session {
             'samesite' => self::cookieSameSite($secure) // Lax default; configurable via cookie_samesite preference (None auto-downgraded to Lax when not Secure)
             );
         setcookie($session_name, $session_id, $arr_cookie_options);
+	}
+
+	/**
+	 * The name this site's session cookie goes by. ALTERED BY FREEFORM SOLUTIONS FOR FORMULIZE.
+	 *
+	 * A site can rename it, so asking PHP alone gets the wrong answer on a site that has. The one place
+	 * this is worked out, for everything that needs to look for the cookie in $_COOKIE.
+	 *
+	 * @return string The cookie name
+	 */
+	static public function cookieName() {
+		global $icmsConfig;
+		return ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '')
+			? $icmsConfig['session_name'] : session_name();
+	}
+
+	/**
+	 * Whether this site is served over https, for deciding whether cookies are Secure. ALTERED BY FREEFORM SOLUTIONS FOR FORMULIZE.
+	 *
+	 * Read from ICMS_URL rather than $_SERVER['HTTPS']: behind a reverse proxy the connection to the
+	 * browser is https while this server's own connection is not, and only the configured URL knows that.
+	 *
+	 * @return bool
+	 */
+	static public function siteIsSecure() {
+		return substr(ICMS_URL, 0, 5) == 'https';
 	}
 
 	/**

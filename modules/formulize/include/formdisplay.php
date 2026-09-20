@@ -2887,42 +2887,63 @@ window.addEventListener('pagehide', window.formulize_clearEntryLocks);
 global $codeToIncludejQueryWhenNecessary;
 print $codeToIncludejQueryWhenNecessary;
 
+// Which element scrolls, so that a saved position can be put back where it came from.
+//
+// Every theme answers this differently - Anari scrolls .main-content, Lyris scrolls .fz-main, older
+// themes scroll the window itself, and an embedded screen scrolls nothing at all because the page
+// hosting it is what moves. So the element is found rather than named: the nearest ancestor of the
+// form that is actually scrollable. A theme whose markup makes that ambiguous can say so outright
+// with data-formulize-scroll-container on its body tag, and "none" there means nothing here scrolls.
+//
+// Found rather than named on purpose. Naming themes is what this used to do, and a theme that was
+// not on the list - which is every theme written after the list - silently lost the feature instead
+// of breaking loudly enough for anyone to notice.
+print "
+window.formulize_scrollContainer = function() {
+    var declared = jQuery('body').attr('data-formulize-scroll-container');
+    if(declared === 'none') {
+        return null;
+    }
+    if(declared) {
+        return jQuery(declared).length ? jQuery(declared) : jQuery(window);
+    }
+    var container = null;
+    jQuery('#formulizeform').parents().each(function() {
+        var overflow = jQuery(this).css('overflow-y');
+        if(this.scrollHeight > this.clientHeight && (overflow === 'auto' || overflow === 'scroll')) {
+            container = jQuery(this);
+            return false; // the nearest one is the one the form sits in
+        }
+    });
+    return container ? container : jQuery(window);
+};
+";
+
 // a bit hacky... check the intval of the currentPage and the prevPage, prevPage may be (always is?) "page number hyphen screen id number"
 // so if someone jumps from one screen to another but lands on same ordinal page, this will be true, but really it's false because they're different screens
 if($entryId != 'new' AND isset($_POST['yposition']) AND
    intval($_POST['yposition'])>0 AND
    (!isset($_POST['formulize_currentPage']) OR intval($_POST['formulize_currentPage']) == intval($_POST['formulize_prevPage']))
    ) {
-    if($xoopsConfig['theme_set']=='Anari') {
-        // requires the formulize_pageShown event to have been created and fired. The theme.html file does this in the Anari theme.
-        print "
-        window.addEventListener('formulize_pageShown', function () {
-            jQuery('.main-content').scrollTop(".intval($_POST['yposition']).");
-        });
-        ";
-    } else {
-        print "
-        jQuery(document).ready(function () {
-            jQuery(window).on('load', function() {";
-            // if the yposition is negative, then it's an offset of the formulizeform element so...
-            // get the parents of the formulizeform div, and presumably only one of them is scrollable! And set the scroll position based on the current "top" value of formulizeform, plus the previous offset of formulize form which was sent in POST
-            if(intval($_POST['yposition'])<0) {
-                print "
-                jQuery('#formulizeform').parents().each(function() {
-                    if(jQuery(this)[0].scrollHeight > jQuery(this)[0].clientHeight) {
-                        jQuery(this).scrollTop(jQuery('#formulizeform').offset().top + ".intval($_POST['yposition']*-1).");
-                    }
-                });";
-            // otherwise, just set the scrollTop of the window...after a delay because some other events might still be executing and altering the height of the page
-            } elseif($_POST['yposition']>0) {
-                print "
-                setTimeout(function() { jQuery(window).scrollTop(".intval($_POST['yposition'])."); }, 200);";
+    // Put it back once the page has settled, or the measurement is taken against a layout that has
+    // not happened yet. formulize_pageShown is what themes fire when they reveal the page; the load
+    // handler covers a theme that does not fire it, and catches the case where it fired before this
+    // listener existed. Whichever arrives first wins, and the other does nothing.
+    print "
+    (function() {
+        var restored = false;
+        var restore = function() {
+            var container = window.formulize_scrollContainer();
+            if(restored || !container) {
+                return; // already done, or nothing here scrolls: an embedded screen moves its host instead
             }
-            print "
-            });
-        });
-        ";
-    }
+            restored = true;
+            container.scrollTop(".intval($_POST['yposition']).");
+        };
+        window.addEventListener('formulize_pageShown', restore);
+        jQuery(window).on('load', function() { setTimeout(restore, 200); });
+    })();
+    ";
 }
 ?>
 
@@ -3037,15 +3058,10 @@ if(!$nosave) { // need to check for add or update permissions on the current use
         if(jQuery('#save_and_leave_button')) {
             jQuery('#save_and_leave_button').attr('disabled', 'disabled');
         }
-        <?php if($xoopsConfig['theme_set']=='Anari') { ?>
-            jQuery('#yposition').val(jQuery('.main-content').scrollTop());
-        <?php } else { ?>
-            if(jQuery(window).scrollTop()) {
-                jQuery('#yposition').val(jQuery(window).scrollTop());
-            } else {
-                jQuery('#yposition').val((jQuery('#formulizeform').offset().top));
-            }
-        <?php } ?>
+        // read from whatever this theme actually scrolls, so the value means the same thing when it
+        // is put back. An embedded screen has no scroller of its own and reports 0.
+        var formulize_savedScroller = window.formulize_scrollContainer();
+        jQuery('#yposition').val(formulize_savedScroller ? formulize_savedScroller.scrollTop() : 0);
         showSavingGraphic();
         if (leave=='leave') {
             jQuery('#save_and_leave').val(1);

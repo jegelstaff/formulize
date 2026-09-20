@@ -1,0 +1,174 @@
+/*
+ * Overrides for showing a Formulize screen inside an iframe on another website.
+ *
+ * The site theme's stylesheet is loaded first (see theme.html) and most of this file only adjusts
+ * what that stylesheet assumes about the viewport. That is the whole point of keeping it separate:
+ * the site theme can be improved without this theme carrying a copy that quietly falls behind it.
+ * There is nothing here to re-sync when the site theme changes, only this short list to re-check.
+ *
+ * The exception is the session timeout warning at the bottom, which this theme styles outright
+ * rather than adjusts, because it is the theme that puts that markup on the page and no site theme
+ * can be relied on to have rules for it. See the comment there.
+ *
+ * It is called style.css, rather than something that describes what it holds, because ImpressCMS
+ * looks for exactly that name when it builds $icms_themecss (see xoops_getcss() in
+ * include/functions.php) and prints "The theme does not exist" across the top of the page when no
+ * theme folder has one.
+ *
+ * The host page sizes the iframe to its content, so the viewport in here is as tall as everything
+ * in it. A height in vh therefore grows again every time the iframe grows, and a scrolling region
+ * becomes a box the screen is trapped inside, instead of letting the host page do the scrolling.
+ *
+ * It is also as wide as the host page's column and no wider, and unlike the site it cannot be
+ * scrolled sideways, so anything too wide for that column is cut off rather than reachable. The
+ * last section of this file is the short list of places where that happens. See the comment there.
+ *
+ * WHICH STYLESHEET ANY OF THIS IS ARGUING WITH. Whichever one the site is wearing - this theme
+ * borrows it rather than carrying a copy. So nothing here names any one site theme's markup. Every
+ * rule is aimed at the document itself, at markup Formulize's own screen templates emit, or at the
+ * session timeout warning this theme puts on the page, and is right whichever theme is borrowed.
+ * Corrections for one particular theme's layout belong in that theme's own css/embed.css, which is
+ * loaded just before this file whenever that theme is the one being borrowed (see
+ * formulize_embedBaseThemeStylesheets()). Keep it that way when adding to this file, so that a new
+ * site theme never needs anything changed here.
+ */
+
+/* a document as tall as the viewport can never report a height smaller than the frame it is already
+   in, so the host could make the frame taller but never shorter again (theme.html measures the body
+   to report the height). A site theme that fills the window this way would leave an embedded screen
+   unable to shrink after a search that returns fewer entries. The document is as tall as what is in
+   it. */
+html,
+body {
+  height: auto;
+}
+
+div.list-of-entries .card__body,
+.scrollbox {
+  height: auto;
+  max-height: none;
+}
+
+/* SESSION TIMEOUT WARNING
+ *
+ * Styled in full here rather than adjusted, because this theme cannot assume the site theme has
+ * styled it. The warning is injected by this theme's own theme.html, into a page that borrows
+ * whatever stylesheet the site happens to be wearing, and a site theme that has no rules for it
+ * leaves the markup bare: two loose icons and some text over the top of the form, with the close
+ * icon sitting wherever it lands in the middle of the sentence. So this theme owns the component
+ * outright, and it looks the same on an embedded screen whatever the site theme is.
+ *
+ * It is a banner in the normal flow rather than a floating box. Two reasons. Nothing can be
+ * covered by it, which matters most here because the host page decides what is around the iframe
+ * and we cannot see it. And position: fixed is no use anyway: the host sizes the iframe to its
+ * full content, so the viewport inside is as tall as the whole document and a fixed element has
+ * nothing to stick to. The iframe grows by the height of the banner when it appears, and
+ * theme.html asks the host to scroll it into view. */
+#session-timeout-warning {
+  position: relative; /* the icons below anchor to this box, not to the page */
+  top: auto;
+  left: auto;
+  right: auto;
+  bottom: auto; /* a site theme that floats its warning in a corner offsets it from the bottom, which on a relative box shifts it up over whatever is above */
+  width: auto;
+  max-width: none;
+  box-sizing: border-box;
+  /* inset a little on every side: this sits above the site theme's own container, so without a
+     margin it would run edge to edge against the sides of the iframe while the form inside is
+     indented, and a bordered, rounded box touching the frame edge reads as a rendering fault */
+  margin: 0.75em 0.75em 1.25em 0.75em;
+  padding: 1em 3.25em 1em 3.5em; /* room for the icon on the left, the close button on the right */
+  text-align: left;
+  background-color: #fffaf0;
+  color: #1a1a1a;
+  border: 1px solid #ce8c22;
+  border-left: 5px solid #ce8c22;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  z-index: 101;
+}
+
+#session-timeout-warning p {
+  margin: 0 0 0.4em 0;
+  line-height: 1.4;
+}
+
+#session-timeout-warning p:last-of-type {
+  margin-bottom: 0;
+}
+
+#session-timeout-warning img.session-timeout-warning-icon {
+  position: absolute;
+  top: 1em;
+  left: 1em;
+  width: 20px;
+  height: auto;
+}
+
+/* the whole point of the warning is that it can be dismissed, so the target is padded out to
+   something findable rather than left as the bare size of the gif */
+#session-timeout-warning img.session-timeout-warning-close {
+  position: absolute;
+  top: 0.6em;
+  right: 0.6em;
+  box-sizing: content-box;
+  margin: 0; /* a site theme's own close button can carry margins that would nudge this off its corner */
+  padding: 7px; /* x.gif is only 11px square; this makes the target 25px */
+  cursor: pointer;
+  border-radius: 3px;
+  opacity: 0.65;
+}
+
+#session-timeout-warning img.session-timeout-warning-close:hover,
+#session-timeout-warning img.session-timeout-warning-close:focus {
+  opacity: 1;
+  background-color: rgba(206, 140, 34, 0.15);
+}
+
+/* narrow iframes: the icon column costs too much width to keep */
+@media (max-width: 420px) {
+  #session-timeout-warning {
+    padding: 2.5em 1em 1em 1em;
+  }
+  #session-timeout-warning img.session-timeout-warning-icon {
+    top: 0.75em;
+  }
+}
+
+/* NOTHING HERE CAN BE SCROLLED SIDEWAYS
+ *
+ * This document does not scroll: the frame is as tall as its whole contents and the host page is
+ * what moves, so theme.html turns scrolling off and the iframe is marked scrolling="no". That is
+ * right for the vertical, and it means anything wider than the frame is not merely awkward, as it
+ * would be on the site itself where the content area can be scrolled across to reach it. It is
+ * cut off at the edge of the frame with no way to get to it at all.
+ *
+ * Which makes fitting a narrow frame a correctness question here rather than a matter of taste. A
+ * frame in a phone-width column is roughly 280px across once the container's padding is taken off,
+ * and the rules below are the places in the site theme where content wider than that is laid out
+ * with no way to wrap. Each one caps rather than restyles, so a frame with room to spare looks
+ * exactly as it does on the site.
+ *
+ * Widths that genuinely cannot be reduced - a list of entries with twenty columns - are not the
+ * concern here. Those sit in a box of their own that scrolls sideways (.table-wrapper, and the
+ * subform scrollbox), which keeps working inside a frame because the box scrolls, not the page. */
+
+/* multipage navigation is a flex row sized to its contents, which on a narrow frame means a row
+   wider than the frame with the Next button somewhere past the right-hand edge - the one button on
+   the page a reader cannot do without. Measured in a 324px frame against the standard theme: the
+   row comes out 429px wide and Next sits from 250px to 450px, so most of the button and all of its
+   label are past the edge. Sized to the space available instead, and allowed to wrap.
+
+   This is the whole of the problem at any width a phone actually has. Buttons elsewhere carry a
+   200px minimum, which sounds like the same bug and is not: in normal flow they simply wrap onto
+   the next line. It is this row that cannot, being a flex row with nothing telling it to. A cap on
+   button widths generally was tried here and measured: it changes nothing at 324px, and only starts
+   to matter below about a 200px column, which is not a column anyone embeds a form into. It was
+   dropped rather than kept as insurance, because a bare `button` selector is the one kind of rule
+   in this file that would reach a future site theme that has no such problem - see the note at the
+   top about which stylesheet these overrides are written against. */
+#multipage-controls {
+  width: auto;
+  max-width: 100%;
+  flex-wrap: wrap;
+}

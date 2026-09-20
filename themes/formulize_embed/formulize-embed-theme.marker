@@ -1,0 +1,8 @@
+This file marks the folder it is in as a Formulize embed theme.
+
+It keeps the theme out of the pickers where it would make no sense - the site theme, the admin
+theme, the per-screen template theme - and puts it into the one where it does: the "Theme for
+embedded screens" preference. A theme needs a theme.html file to work at all, and that file is what
+puts a folder in the theme list, so the marker is what tells the two kinds of theme apart.
+
+If you copy this folder to design your own embedded appearance, keep this file.
