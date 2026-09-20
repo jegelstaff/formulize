@@ -3796,6 +3796,97 @@ fieldset#icms_block_login_form {
   text-decoration: underline;
 }
 
+/* ---------- "Login with Google" (issue #154) ----------
+   When the site is configured for Google-only auth (`auth_googleonly`), the
+   login block renders a nested link instead of the username/password form:
+
+     a.google-only-login-link > div.google-btn > div.google-icon-wrapper
+       > img.google-icon-svg + span.btn-text.btn
+
+   Lyris had no rules for any of that, so it fell through to the generic
+   secondary-link treatment above (`a:not(.btn)` — an inline accent link) and
+   the Google "G" rendered at the SVG's intrinsic size, leaving an oversized
+   logo next to a plain blue link with no button chrome at all.
+
+   The issue asks for the *whole wrapper* to read as one actionable button
+   with the icon and label on a centred horizontal row, so the `<a>` itself
+   becomes the button and the two intermediate `<div>`s are collapsed with
+   `display: contents`. That also neutralises the template's inline
+   `style="max-width: 192px"` on `.google-btn` without needing `!important`:
+   an element with no box has no width to constrain.
+
+   Chrome mirrors the bare-button primitive (surface background, strong
+   border, `--r-2` radius) rather than the accent treatment used by the
+   password Login submit — a coloured fill behind Google's multicolour mark
+   reads poorly, and the neutral surface matches Google's own button
+   guidance. Selectors are written as `a.google-only-login-link` (0-1-1 plus
+   the id) so they outrank the `a:not(.btn)` rule above on specificity, not
+   only on source order. */
+.google-only-login-div {
+  display: flex;
+  justify-content: center;
+}
+
+#block_login_form a.google-only-login-link,
+#icms_block_login_form a.google-only-login-link,
+a.google-only-login-link {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  width: 100%;
+  min-height: 36px;
+  margin-top: var(--s-2);
+  padding: 0 var(--s-4);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-2);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-size: var(--fs-14);
+  font-weight: 500;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--dur-1) var(--ease),
+              border-color var(--dur-1) var(--ease);
+}
+
+#block_login_form a.google-only-login-link:hover,
+#icms_block_login_form a.google-only-login-link:hover,
+a.google-only-login-link:hover {
+  background: var(--c-surface-3);
+  border-color: var(--c-text-muted);
+  color: var(--c-text);
+  text-decoration: none;
+}
+
+a.google-only-login-link:focus-visible {
+  outline: none;
+  box-shadow: var(--sh-focus);
+}
+
+/* Collapse the intermediate wrappers so the icon and label become direct
+   flex children of the link (and the inline max-width has no box to act on). */
+.google-only-login-link .google-btn,
+.google-only-login-link .google-icon-wrapper {
+  display: contents;
+}
+
+.google-only-login-link .google-icon-svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+/* The label carries `.btn` in the template purely as a legacy hook; keep it
+   as plain inline text now that the link provides the button chrome. */
+.google-only-login-link .btn-text,
+.google-only-login-link .btn-text b {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
 /* ---------- jQuery-UI modals / dialogs ----------
    Several flows open jQuery-UI dialogs (`.dialog()`): the login / lost-password
    2FA dialogs (include/2fa/manage.php), the sub-entry dialog and sub-form
