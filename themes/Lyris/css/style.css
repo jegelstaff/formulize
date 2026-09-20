@@ -2441,7 +2441,7 @@ textarea.fz-control {
 .fz-form-screen .col2:has(input[type="radio"]),
 .fz-form-screen .col2:has(input[type="checkbox"]) {
   display: block;
-  line-height: 1.9;        /* vertical rhythm between <br>-separated options */
+  line-height: 1.6;        /* vertical rhythm between <br>-separated options */
 }
 
 .fz-form-screen .col2 input[type="radio"],
