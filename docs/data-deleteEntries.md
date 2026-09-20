@@ -1,10 +1,13 @@
 ---
 layout: default
-permalink: developers/API/classes/data_handler/deleteEntries/
+permalink: documentation/classes/data_handler/deleteEntries/
+redirect_from:
+ - developers/classes/data_handler/deleteEntries/
+ - developers/API/classes/data_handler/deleteEntries/
 title: deleteEntries
 ---
 
-# deleteEntries( <span style='font-size: 14pt;'>(int | array) $entry_ids</span> )
+# <span class="sig-name">deleteEntries</span>( <span class="sig-arg"><span class="sig-type">(int | array)</span> $entry_ids</span> )
 
 ## Description
 

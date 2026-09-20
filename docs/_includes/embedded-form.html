@@ -1,0 +1,126 @@
+{% comment %}
+  Embeds one Formulize screen from formulize.net into a page here.
+
+  Usage:
+    {% include embedded-form.html
+       sid="1"
+       title="Get help with Formulize"
+       height="900" %}
+
+  Parameters:
+    sid     the screen id on the Formulize site. 1 = Help Request,
+            3 = Get your own Formulize system, 5 = Join the mailing list,
+            7 = Unsubscribe, 27 = Report a bug.
+
+            It has to be the sid, not the screen's prettier rewrite address
+            (get-help, get-hosting): those do not resolve when the request comes
+            from another domain, which is exactly the case here. Copy the sid
+            from the screen's settings page, which is also where the rest of
+            this markup comes from.
+    title   the iframe's accessible name. Required - it is what a screen reader
+            announces when it reaches the frame.
+    height  starting height in pixels, before the screen reports its real one.
+            Pick something close to the finished form so the page does not jump.
+
+  The script is emitted once per page however many screens the page embeds,
+  which is what formulize-embed.js expects. assign is page-scoped in Jekyll's
+  Liquid, so the flag survives from one include call to the next.
+
+  IMPORTANT - submissions and the same-domain rule. site.forms_url currently
+  points at formulize.net, which is a different domain from this site. Browsers
+  will not send the Formulize session cookie into a frame across domains, so the
+  form displays but saving fails. The fix is an alias of the Formulize site on
+  this domain (forms.formulize.org) - see docs/embedding_screens_setup. Until
+  that exists, the "open in its own window" link below the frame is the route
+  that actually works, and the sessionUnavailable handler promotes it the moment
+  the screen reports the problem.
+
+  PLAN PRE-SELECTION - /pricing/ and /signup/'s plan cards link here as
+  ?plan=level-1..4. The iframe's src is deliberately NOT set directly in the
+  HTML below (it's stashed in data-embed-src instead): a plain src attribute
+  starts loading immediately, before this page's own ?plan= param could be
+  read and appended, so the frame would always load without it. Building the
+  final src in the script below, forwarding the current page's own ?plan= if
+  present, means it's there from the very first request the frame makes -
+  see hosting_requests_which_plan on the Hosting Requests form (form 2),
+  which has a small script element of its own that reads it back out of
+  window.location.search inside the frame and pre-selects the matching radio
+  button. Harmless no-op on a screen with no such element and on a request
+  with no ?plan= param.
+{% endcomment %}
+
+<div class="embed-frame">
+  <iframe data-formulize-embed
+          class="embed-frame-iframe"
+          data-embed-src="{{ site.forms_url }}/modules/formulize/index.php?sid={{ include.sid }}&amp;formulize_embed=1"
+          title="{{ include.title }}"
+          data-formulize-embed-height="{{ include.height | default: 800 }}"
+          data-formulize-embed-fallback="off"
+          {%- comment -%}
+            The min-width floor is turned off, and set here instead.
+
+            formulize-embed.js puts its own floor on every frame it registers,
+            as style.minWidth = min(400px, 100vw). 100vw is the width of the
+            viewport including any scrollbar and takes no notice of the
+            padding on the containers around the frame, so on a phone the
+            floor came out wider than the column the frame sits in: at a 360px
+            viewport the frame was held at 360px inside a 324px column, and
+            pushed the whole document 36px wider than the screen. That is a
+            sideways scroll on every page carrying an embedded form, and it is
+            the script's inline style, so no stylesheet rule of ours can argue
+            with it. "off" is the script's own supported opt-out (it then sets
+            minWidth to the empty string and leaves the frame alone).
+
+            What is left is the inline floor below, which says the same thing
+            against the column rather than the viewport: min(400px, 100%) can
+            never exceed the space available, and above about a 440px viewport
+            there is room for the real 400px minimum and it applies as before.
+            It is also what holds the frame up if the script never loads.
+          {%- endcomment -%}
+          data-formulize-embed-min-width="off"
+          style="width:100%;min-width:min(400px,100%);height:{{ include.height | default: 800 }}px"></iframe>
+
+  <p class="embed-frame-note" data-embed-note>
+    Trouble with the form?
+    <a class="embed-frame-standalone-link" href="{{ site.forms_url }}/modules/formulize/index.php?sid={{ include.sid }}" target="_blank" rel="noopener">Open it in its own window</a>,
+    or email <a href="mailto:info@formulize.org">info@formulize.org</a> and we will pick it up from there.
+  </p>
+</div>
+
+<script>
+(function () {
+  var plan = new URLSearchParams(window.location.search).get('plan');
+  document.querySelectorAll('iframe[data-embed-src]').forEach(function (frame) {
+    if (frame.src) { return; } // already set, e.g. by an earlier run of this same script
+    var url = frame.getAttribute('data-embed-src');
+    if (plan) { url += '&plan=' + encodeURIComponent(plan); }
+    frame.src = url;
+  });
+  if (plan) {
+    document.querySelectorAll('.embed-frame-standalone-link').forEach(function (link) {
+      link.href += (link.href.indexOf('?') === -1 ? '?' : '&') + 'plan=' + encodeURIComponent(plan);
+    });
+  }
+})();
+</script>
+
+{% unless formulize_embed_script_loaded %}
+<script src="{{ site.forms_url }}/modules/formulize/libraries/embed/formulize-embed.js"></script>
+<script>
+(function () {
+  // The screen tells us when the visitor's browser is refusing it cookies, which
+  // means pressing Send would fail. Rather than let someone fill in a long form
+  // and lose it, promote the "own window" link from a quiet footnote to a
+  // warning, in place, the moment we know.
+  document.addEventListener('formulize:sessionUnavailable', function (event) {
+    var frame = event.target.closest('.embed-frame');
+    var note = frame && frame.querySelector('[data-embed-note]');
+    if (!note || note.classList.contains('is-warning')) { return; }
+    note.classList.add('is-warning');
+    note.insertAdjacentHTML('afterbegin',
+      '<strong>This form cannot be submitted from inside this page in your browser.</strong> ');
+  }, true);
+})();
+</script>
+{% assign formulize_embed_script_loaded = true %}
+{% endunless %}

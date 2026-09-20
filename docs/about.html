@@ -1,0 +1,139 @@
+---
+layout: default
+permalink: about/
+title: About Formulize
+full_width: true
+description: Formulize has been developed in the open since 2005, is free under GPL-2.0, and is maintained by the same small team that offers hosting and support. Who we are, and how formulize.org and formulize.net relate.
+---
+
+{% comment %}
+  The trust page. Someone deciding whether to put their organisation's data
+  into a system run by people they have never met needs to know who those
+  people are and how long they have been doing this.
+
+  Everything on this page is checkable: the release history comes from the News
+  form, the award from the announcement of it, the licence from LICENSE in the
+  repository. Where a fact was not available it is left as an HTML comment
+  below rather than guessed at - see the TODOs.
+{% endcomment %}
+
+<div class="band-head" style="max-width: 68ch;">
+  <h1 style="margin-top: var(--space-3);">Twenty years of making data make sense</h1>
+  <p>Formulize is software for collecting and organizing information.</p>
+	<p>Absolutely everything about Formulize is configurable, from the forms that people use, to the permissions that control who can use them, to the screens where all your data shows up.</p>
+	<p>The beauty of Formulize is that the people who know how the system should work, can be the people who actually make it work that way.</p>
+	<p>And for developers, the configuration-based approach makes it extremely easy to deploy complex systems, and extremely fast to respond when clients want changes (they <em>always</em> want changes).</p>
+	<p>For AI, the configuration gives a complete roadmap to the entire system. Your AI tools will immediately understand how your system works and why it works that way, so they can easily generate reports, do data entry, or even help you create entire applications from scratch.</p>
+	<p>Formulize was first released publically in January 2005. It has been developed in the open ever since, licensed under GPL-2.0, so it's completely <strong>free</strong> and always will be.</p>
+</div>
+
+<section class="band">
+  <div class="band-head">
+    <h2>formulize.org and formulize.net</h2>
+    <p>Two addresses, one team.</p>
+  </div>
+  <div class="onramp">
+    <div class="card elev-sm">
+      <span class="card-kicker">This site</span>
+      <h3 class="card-title">formulize.org</h3>
+      <p class="card-body">The open source project. The software, the documentation, the community, the release history, the roadmap... And everything here is free, and the source is on GitHub under GPL-2.0.</p>
+    </div>
+    <div class="card elev-sm">
+      <span class="card-kicker">Professional Services</span>
+      <h3 class="card-title">formulize.net</h3>
+      <p class="card-body">This is where where the Formulize development team offers hosting and services. If you want to get started with Formulize, and don't want to setup your own server or don't know how, this is the way to go. Training and support are also available.</p>
+      <div class="btn-row">
+        <a class="btn btn-secondary" href="{{ "/pricing/" | relative_url }}">Plans &amp; pricing</a>
+        <a class="btn btn-secondary" href="{{ "/services/" | relative_url }}">Services</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="band-head">
+    <h2>A long, venerable release history</h2>
+  </div>
+  <div class="triad">
+    <a class="card-link" href="{{ "/news/releases/" | relative_url }}">
+      <div class="card">
+        <span class="card-kicker">Since 2005</span>
+        <h3 class="card-title">Release early and often</h3>
+        <p class="card-body">The earliest public release was  version 1.5, in January 2005. Every release since is listed.</p>
+        <p><span class="card-link-more">Every release &rarr;</span></p>
+      </div>
+    </a>
+    <a class="card-link" href="{{ site.github.repository_url }}">
+      <div class="card">
+        <span class="card-kicker">Always ready</span>
+        <h3 class="card-title">Get the latest features</h3>
+        <p class="card-body">The latest code on Github is always functional, so you don't have to wait for an official release to get the latest features.</p>
+        <p><span class="card-link-more">Formulize on GitHub &rarr;</span></p>
+      </div>
+    </a>
+    <a class="card-link" href="{{ "/features/" | relative_url }}">
+      <div class="card">
+        <span class="card-kicker">Licence</span>
+        <h3 class="card-title">GPL-2.0, in full</h3>
+        <p class="card-body">Formulize is always full featured, no matter how you run it. There is no trial version, community edition, or open core with closed add ons.</p>
+        <p><span class="card-link-more">See the features &rarr;</span></p>
+      </div>
+    </a>
+  </div>
+</section>
+
+<section class="band">
+  <div class="band-head">
+    <h2>Open Source Developer of the Year</h2>
+    <p>At the Confoo web technology conference in Montreal in March 2026, Formulize lead developer Julian Egelstaff won the Open Source Developer of the Year award.</p>
+  </div>
+  <div class="onramp">
+    <div class="card elev-sm">
+      <blockquote class="card-body" style="font-size: 17px; max-width: 52ch;">
+        &ldquo;It&rsquo;s clich&eacute;, but I stand on the shoulders of giants. This is very validating, of all the work that we&rsquo;ve done this past year, and for the past 22 years.&rdquo;
+      </blockquote>
+      <p class="text-muted">Julian Egelstaff, accepting the award</p>
+      <div class="btn-row">
+        <a class="btn btn-secondary" href="{{ "/news/open-source-developer-of-the-year/" | relative_url }}">Read the announcement</a>
+      </div>
+    </div>
+    <div class="card elev-sm">
+      <h3 class="card-title">The first Formulize Summit</h3>
+      <p class="card-body">In August 2022 Formulize users met for a day in Toronto, to learn from each other and to launch Formulize 7. The opening talk is online.</p>
+      <div class="btn-row">
+        <a class="btn btn-secondary" href="https://youtu.be/AgbXjtLFUJ0" target="_BLANK">Watch the opening</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="band-box">
+    <div class="band-head">
+      <h2>Where your data lives</h2>
+      <p>If we host your system, your data stays in Canada and is backed up every night. If your organisation has particular requirements &mdash; a records retention schedule, a procurement checklist, a written response commitment &mdash; those can be built into your arrangement during setup.</p>
+      <p>Alternatively, you can self-host, and your data is on your server, under your rules. We never see it.</p>
+    </div>
+    <p class="btn-row">
+      <a class="btn btn-secondary" href="{{ "/pricing/" | relative_url }}">Hosting plans</a>
+      <a class="btn btn-secondary" href="{{ "/contact/" | relative_url }}">Ask a question</a>
+    </p>
+  </div>
+</section>
+
+{% comment %}
+  TODO, before publishing - these need answers from the team, and have been
+  deliberately left out rather than invented:
+
+  - Who else is on the team? The only two people named anywhere on the site are
+    Julian Egelstaff (lead developer) and Arvin Singla (developer, named in the
+    award announcement). If there are others, they belong on this page.
+  - What is the legal entity behind formulize.net, and where is it registered?
+    Buyers at the $1,199 level will ask, and procurement departments will
+    require it.
+  - Is there a number of users, organisations or deployments that can be stated
+    honestly? "Twenty years" is doing all the credibility work on this page at
+    the moment.
+  - Is there a privacy policy or data-handling document to link to? The Canada
+    residency claim would be much stronger next to one.
+{% endcomment %}

@@ -1,0 +1,457 @@
+---
+layout: default
+permalink: examples/
+title: Examples
+full_width: true
+description: What people build with Formulize — CRM, memberships, grant tracking, casework, time and activity tracking, bookings, inventory, surveys, and custom content management — and what each one looks like when it is built.
+---
+
+{% comment %}
+  The "is this for me?" page. Someone who has never heard of Formulize, and who
+  would not describe what they need as "a database", should be able to find
+  something here shaped like their own problem.
+
+  Every card is a composite. There are real implementations behind all of
+  them - every situation on this page is one that has actually been solved in
+  Formulize - but no card is any single one of those, and none is specific
+  enough to read as a spec. The shapes are general on purpose.
+
+  No organisation is named, because none has agreed to be. Nothing on the page
+  announces the cards as illustrative, and nothing needs to: no card claims a
+  client, a result, or a number, so there is nothing here to disclaim. What
+  keeps that true is that every card describes only what the software
+  demonstrably does - forms, forms joined to other forms, per-group
+  permissions, and reports. Hold that line and the page needs no disclaimer.
+  Put a metric or a named organisation on a card and it does.
+
+  Every card is the same two halves - "The situation:" and "With Formulize:" -
+  and the problem half is written on one rule: the organisation is already
+  doing the work and already recording it somehow. Nobody reading this page
+  recognises themselves in "you have no record of it", because they do have a
+  record; what they have is a spreadsheet per person, a folder per caseworker,
+  a calendar that half the bookings never reach. Problems written that way are
+  believable, and a believable problem is what buys the rest of the card its
+  credit. The bullets then have to answer the problem as stated, not a more
+  convenient version of it.
+
+  The two halves are two different voices, and the split is the point. "The
+  situation:" is always first person - "we", "our", "the rest of us" - because
+  it is the organisation describing its own workaround, and an admission only
+  sounds like one in the mouth of the person making it. "Everyone keeps good
+  track of their own contacts" is an observation about someone else; "We all
+  keep good track of our own contacts" is a confession. The bullets then answer
+  in second person, to the reader. Keep new cards on both sides of that line:
+  no "you" in a situation, and no "we" in the bullets.
+
+  The page is two questions with the examples between them, and the answer to
+  each question is a card of three columns, so the two bookend each other.
+  "Why do people use Formulize?" opens with the three situations people arrive
+  in; "Do any of those sound familiar?" closes with the three moves every
+  example is made of, and the buttons.
+
+  Order matters here. The example cards are long, and anything placed after
+  them is effectively unread - nobody scrolls to the bottom of fifteen cards.
+  So the opening card sits above them. The examples lose nothing by being
+  further down: each category is its own anchor in the main menu, so people
+  arrive at them directly. The closing card is the exception and stays at the
+  bottom, because it only makes sense to someone who has just read the cards.
+
+  There are no videos on this page on purpose. The ones we have are good, but
+  none of them is the payoff for what this page promises - watching one of these
+  examples get built. Until such a video exists, the videos live on
+  /documentation/videos/ and this page does not borrow them.
+{% endcomment %}
+
+<div class="band-head" style="max-width: 68ch;">
+  <h1 class="page-question" style="margin-top: var(--space-3);">Why do people use Formulize?</h1>
+</div>
+
+<section class="band">
+  <div class="card elev-sm" style="background: var(--color-accent-100);">
+    <div class="subhead-list">
+      <h3>Off-the-shelf products don't work the way your team <em>actually</em> works</h3>
+      <ul>
+        <li>Formulize is designed around customization to eliminate the &ldquo;square peg, round hole&rdquo; problem.</li>
+      </ul>
+      <h3>You have data locked away in foreign systems you don&apos;t control</h3>
+      <ul>
+        <li>Formulize is open source and gives you complete access to the entire system, including all your data.</li>
+      </ul>
+			<h3>You&apos;ve got too many cobbled-together solutions</h3>
+      <ul>
+        <li>Formulize replaces all the emails, the half-working systems, and the monster spreadsheet that breaks whenever someone edits the wrong cell.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="band-head" style="margin-bottom: var(--space-2);">
+    <h2 class="page-question">What do people use it for?</h2>
+  </div>
+
+  <div class="example-group inpage-anchor" id="people-and-relationships">
+    <h3>People and relationships</h3>
+    <div class="triad triad-2up">
+      <div class="card" id="memberships-and-renewals">
+        <details>
+          <summary><h3 class="card-title">Memberships and renewals</h3></summary>
+          <p class="card-body"><em>The situation:</em> Our membership list is a spreadsheet that is mostly up to date, we just have to be careful when we're looking for who needs to renew, because if we don't include every column when we re-sort then everything gets very mixed up.</p>
+          <p class="example-solution"><em>With Formulize:</em></p>
+          <ul>
+            <li>A member form, with a renewal history joined to it</li>
+            <li>Start by importing the spreadsheet you already have</li>
+            <li>Members can log in and update their own record, so the list keeps itself current</li>
+            <li>A series of live reports, including who is lapsing in the next month</li>
+          </ul>
+        </details>
+      </div>
+
+      <div class="card" id="contact-management-and-crm">
+        <details>
+          <summary><h3 class="card-title">Contact management and CRM</h3></summary>
+          <p class="card-body"><em>The situation:</em> We all keep good track of our own contacts &mdash; but in separate lists, and which one has the new phone number for the big client?</p>
+          <p class="example-solution"><em>With Formulize:</em></p>
+          <ul>
+            <li>A contacts form, with interactions and notes joined to each one</li>
+            <li>One record per contact, that everyone adds to and everyone can see</li>
+            <li>Segment contacts by group, tag, or status</li>
+            <li>A report of who needs a follow-up, and by whom</li>
+          </ul>
+        </details>
+      </div>
+
+      <div class="card" id="volunteers-and-shift-scheduling">
+        <details>
+          <summary><h3 class="card-title">Volunteers and shift scheduling</h3></summary>
+          <p class="card-body"><em>The situation:</em> Which of our volunteers have completed the new training module? And meanwhile our coordinator can't keep up with requests for swapping shifts, so the schedule is only ever partly right.</p>
+          <p class="example-solution"><em>With Formulize:</em></p>
+          <ul>
+            <li>A volunteer profile form that records training and whatever else you need</li>
+            <li>A shift form attached to each profile, and volunteers can pick from available shifts or request swaps</li>
+            <li>Coordinators see the whole schedule; volunteers see only their own shifts</li>
+            <li>Everything is always up to date; easily search profiles and find open shifts</li>
+          </ul>
+        </details>
+      </div>
+
+      <div class="card" id="managing-placements-and-co-ops">
+        <details>
+          <summary><h3 class="card-title">Managing placements and co-ops</h3></summary>
+          <p class="card-body"><em>The situation:</em> We get the matching done, in a spreadsheet and a lot of email, but the criteria shift every term, and the candidates are always asking us about their status.</p>
+          <p class="example-solution"><em>With Formulize:</em></p>
+          <ul>
+            <li>A candidates form and a placements form, joined together by a third form to record who is assigned where</li>
+            <li>Track preferences, capacity, and requirements to automatically find suitable candidates</li>
+            <li>Coordinators see everything; candidates see only their own assignment</li>
+            <li>For the next term, update only the data that changed; the same process keeps working</li>
+          </ul>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <div class="example-group inpage-anchor" id="money-and-resources">
+    <h3>Money and resources</h3>
+    <div class="triad triad-2up">
+      <div class="card" id="grant-applications-and-reporting">
+        <details>
+          <summary><h3 class="card-title">Grant applications and reporting</h3></summary>
+          <p class="card-body"><em>The situation:</em> Our applications and progress reports both come in as email attachments, and the only thing connecting them is a folder we name carefully.</p>
+          <p class="example-solution"><em>With Formulize:</em></p>
+          <ul>
+            <li>One form for the application, connected to one for each progress report</li>
+            <li>Everything joined by applicant, so all reports sit where they belong</li>
+            <li>Applicants see only their own entries; staff see all of them</li>
+            <li>A flexible report of what is outstanding and what is due next, by date, or whatever criteria you need right now</li>
+          </ul>
+        </details>
+      </div>
+
+      <div class="card" id="expense-claims-and-approvals">
+        <details>
+          <summary><h3 class="card-title">Expense claims and approvals</h3></summary>
+          <p class="card-body"><em>The situation:</em> We have different claims form depending on the type of expense. We email them to accounting, but they're always behind in saying how much they owe us.</p>
+          <p class="example-solution"><em>With Formulize:</em></p>
+          <ul>
+            <li>A dynamic claims form that asks the right questions for each kind of expense</li>
+            <li>Staff submit their own; approvers see only what needs their sign-off</li>
+            <li>Running reports of what is approved but not yet paid, and totals by category</li>
+            <li>When it's time to reconcile, export the data to Excel, QuickBooks, etc.</li>
+          </ul>
+        </details>
+      </div>
+
+      <div class="card" id="equipment-and-room-bookings">
+        <details>
+          <summary><h3 class="card-title">Equipment and room bookings</h3></summary>
+          <p class="card-body"><em>The situation:</em> We write bookings into a shared calendar everyone sees, but only one person can edit it, so the rest of us have to send requests to that person by email or phone.</p>
+          <p class="example-solution"><em>With Formulize:</em></p>
+          <ul>
+            <li>An items form and a bookings form, joined together</li>
+            <li>Anyone can request; certain people can approve</li>
+            <li>One shared list automatically generated, of what is out, who has it, and when it&apos;s due back</li>
+            <li>Filter by this month, or a date range, or category, or search for a particular item</li>
+          </ul>
+        </details>
+      </div>
+
+      <div class="card" id="inventory">
+        <details>
+          <summary><h3 class="card-title">Inventory</h3></summary>
+          <p class="card-body"><em>The situation:</em> We have a stock list, and it was right on the day we counted it, but nothing since then records what has actually moved in or out.</p>
+          <p class="example-solution"><em>With Formulize:</em></p>
+          <ul>
+            <li>An items form, with a movements form joined to it</li>
+            <li>Anyone can log what came in or went out, as it happens</li>
+            <li>What is on hand is a report, not a recount</li>
+            <li>Search by location, category, or condition, or filter for what needs reordering</li>
+          </ul>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <div class="example-group inpage-anchor" id="operations-and-casework">
+    <h3>Operations and casework</h3>
+    <div class="triad triad-2up">
+      <div class="card" id="client-intake-and-case-notes">
+        <details>
+          <summary><h3 class="card-title">Client intake and case notes</h3></summary>
+          <p class="card-body"><em>The situation:</em> We have a lot of paper forms at intake, so data entry is a constant, and then our notes system doesn't allow more than one worker per client, so we have to duplicate client profiles.</p>
+          <p class="example-solution"><em>With Formulize:</em></p>
+          <ul>
+            <li>An intake form, with case notes joined to each client</li>
+            <li>One client history, added to by whoever is working the case</li>
+						<li>Add and remove workers just by changing permissions; one set of unified data</li>
+            <li>Front-desk staff see all intakes and profile info; caseworkers see their own notes</li>
+          </ul>
+        </details>
+      </div>
+
+      <div class="card" id="activity-logging">
+        <details>
+          <summary><h3 class="card-title">Activity logging</h3></summary>
+          <p class="card-body"><em>The situation:</em> We get the work done, and logged, but our logging system doesn't have a place for &ldquo;category&rdquo;, so we type that info into the general notes box.</p>
+          <p class="example-solution"><em>With Formulize:</em></p>
+          <ul>
+            <li>A customized log form that anyone on the team can fill in</li>
+            <li>Entries are linked to the client, project, or case they belong to, so reporting is easy</li>
+            <li>A running history that nobody has to piece together manually</li>
+            <li>Filter by person, date, or category, and get automatic calculations of totals</li>
+          </ul>
+        </details>
+      </div>
+
+      <div class="card" id="time-tracking">
+        <details>
+          <summary><h3 class="card-title">Time tracking</h3></summary>
+          <p class="card-body"><em>The situation:</em> We all fill in a timesheet, but the categorization options aren't as detailed as we need, so our admins export to Excel each month.</p>
+          <p class="example-solution"><em>With Formulize:</em></p>
+          <ul>
+            <li>A customized time entry form, joined to the project or client it is billed to</li>
+            <li>People log their own hours; managers see everyone's, and can classify according to any criteria</li>
+            <li>Totals by person, project, or date range, at any point in the month</li>
+            <li>For payroll and billing, export the totals or directly integrate with accounting via the API</li>
+          </ul>
+        </details>
+      </div>
+
+      <div class="card" id="assessments-and-evaluations">
+        <details>
+          <summary><h3 class="card-title">Assessments and evaluations</h3></summary>
+          <p class="card-body"><em>The situation:</em> We get the assessments done and the scores recorded, but our system can't compare across years, we're not sure why, so we put the totals from prior years into a spreadsheet to make reports.</p>
+          <p class="example-solution"><em>With Formulize:</em></p>
+          <ul>
+            <li>One assessment form, joined to the person or program it covers</li>
+            <li>Assessors see only what is assigned to them</li>
+            <li>Results compared across everyone at once, and across any timeframe, including years</li>
+            <li>Filter results by person, program, or date range</li>
+          </ul>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <div class="example-group inpage-anchor" id="public-forms-and-content">
+    <h3>Public forms and content</h3>
+    <div class="triad triad-2up">
+      <div class="card" id="event-registration-and-rsvps">
+        <details>
+          <summary><h3 class="card-title">Event registration and RSVPs</h3></summary>
+          <p class="card-body"><em>The situation:</em> Registrations come in and we record every one of them, but it&apos;s hard to track when an event is full, and we have to retype everything into a single attendance list for the door staff.</p>
+          <p class="example-solution"><em>With Formulize:</em></p>
+          <ul>
+            <li>A public form where anyone can RSVP, no account needed</li>
+            <li>An events form behind the scenes where each event's RSVPs show up automatically</li>
+            <li>The public form only includes events that still have space; organizers log in and see all events</li>
+            <li>A door list is automatically generated, and you can sort and search it on the day</li>
+          </ul>
+        </details>
+      </div>
+
+      <div class="card" id="surveys-and-questionnaires">
+        <details>
+          <summary><h3 class="card-title">Surveys and questionnaires</h3></summary>
+          <p class="card-body"><em>The situation:</em> Our surveys do give us feedback about our programs, but the results come back in their own spreadsheet, separate from all our other data about those programs.</p>
+          <p class="example-solution"><em>With Formulize:</em></p>
+          <ul>
+            <li>A public form for respondents, no account required</li>
+            <li>Responses joined to the program, event, and people they relate to</li>
+            <li>Results reported alongside everything else you track</li>
+            <li>Easily reuse or adapt the same form for the next round</li>
+          </ul>
+        </details>
+      </div>
+
+      <div class="card" id="custom-content-management">
+        <details>
+          <summary><h3 class="card-title">Custom content management</h3></summary>
+          <p class="card-body"><em>The situation:</em> Our website is beautiful and custom-made, but the content is hard to change, and we want to add regularly updated announcements that any of our staff can write, but only managers approve them.</p>
+          <p class="example-solution"><em>With Formulize:</em></p>
+          <ul>
+            <li>A custom form in Formulize to record the announcements; the website pulls in the content live over the API</li>
+            <li>Editors work in ordinary forms, approvers review and publish; no coding required</li>
+            <li>This site's own <a href='{{ "/news/" | relative_url }}'>News section</a> is a live example of this exact workflow</li>
+            <li>No separate CMS to license, host, or keep in sync</li>
+          </ul>
+        </details>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="card elev-sm" style="background: var(--color-accent-100);">
+    <h2 style="margin-bottom: 0;">Do any of those sound familiar?</h2>
+    <p class="card-body" style="font-size: 19px; max-width: 62ch; margin-bottom: var(--space-2);">Formulize has helped organizations with all these needs, and <strong>often with multiple solutions working together</strong>, so their processes become unified.</p>
+		<p class="card-body" style="font-size: 19px; max-width: 62ch; margin-bottom: var(--space-6);"><em>Memberships</em> might seem different from <em>Activity Logs</em>, but to a database it's all variations on a theme.</p>
+    {%- comment -%}
+      Tighter column gap than .feature-cols uses elsewhere. Inside the card the
+      three columns are already narrowed by the card's own padding, and at the
+      default space-8 gap "Decide who sees what" is a couple of pixels too wide
+      to stay on one line - it wraps, and that column's bullets then start lower
+      than the other two. space-6 buys back enough width to keep all three
+      headings on one line from 1280px up. Below that they wrap whatever the gap
+      is, which is why this is a gap change and not a nowrap.
+    {%- endcomment -%}
+    <div class="feature-cols" style="column-gap: var(--space-6);">
+      <div>
+        <h3>Make the forms</h3>
+        <ul>
+          <li>One form for each type of thing you&apos;re tracking</li>
+          <li>Create as many forms as you need, with <em>unlimited</em> entries</li>
+          <li>Or <a href="{{ "/ai" | relative_url }}">describe the forms to an AI</a> and have it build them for you</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Join them together</h3>
+        <ul>
+          <li>Each client has many notes; each grant has many reports</li>
+          <li>The connection is a setting, not code</li>
+          <li>Reports can then draw on both forms at once</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Decide who sees what</h3>
+        <ul>
+          <li>Control who sees which entries in which forms</li>
+          <li>Restrict who can create and modify data</li>
+          <li>Publish <a href="{{ "/documentation/searching" | relative_url }}">searchable reports</a> to your users</li>
+        </ul>
+      </div>
+    </div>
+		<p class="card-body" style="font-size: 19px; max-width: 62ch; margin-top: var(--space-6);">Formulize gives you complete control by letting you build solutions that meet your needs precisely. You build by clicking, not by coding, so the next time the goalposts move, you just change some settings and the whole system updates automatically.</p>
+    <div class="btn-row" style="margin-top: var(--space-6);">
+      <a class="btn btn-primary" href="{{ "/get/" | relative_url }}">Get Formulize</a>
+      <a class="btn btn-secondary" href="{{ "/contact/" | relative_url }}">Talk to us</a>
+    </div>
+  </div>
+</section>
+
+<script>
+(function () {
+  // Every category in the main menu is an anchor into this page, so arriving
+  // at one is someone saying which examples they want to read. The cards are
+  // closed <details> by default, which is right for scrolling the page but
+  // wrong for that arrival: it hands them a heading and four more things to
+  // click. So a jump to a category opens that category's cards and closes
+  // every other one, which keeps the page a single open section rather than
+  // an accumulating pile of them.
+  //
+  // Only the four category divs count. Any other fragment on the page - a
+  // single card's id, say - is left alone, and a visit with no fragment at
+  // all opens nothing, which is the page as it was.
+  var groups = document.querySelectorAll('.example-group[id]');
+  if (!groups.length) { return; }
+
+  function groupFor(hash) {
+    if (!hash || hash.length < 2) { return null; }
+    var el = document.getElementById(decodeURIComponent(hash.slice(1)));
+    return el && el.classList.contains('example-group') ? el : null;
+  }
+
+  function openOnly(group) {
+    groups.forEach(function (g) {
+      var wanted = g === group;
+      g.querySelectorAll('details').forEach(function (d) { d.open = wanted; });
+    });
+  }
+
+  // The cards wipe open and closed over 0.22s (see .triad-2up details in
+  // formulize.css), so for about a quarter of a second after a jump the
+  // page above the heading is still changing height and the heading is
+  // still moving. A single scroll - the browser's own, or one of ours -
+  // is measured against a layout that is out of date a frame later, which
+  // is what left the heading above the top of the window. So rather than
+  // scroll once, this holds the heading in place for as long as the cards
+  // are moving: re-aimed every frame, the heading sits still and the cards
+  // open underneath it. A scroll of their own hands control straight back,
+  // so this can never trap anyone. scroll-margin-top on .inpage-anchor
+  // clears the fixed header.
+  var holding = null;
+
+  function holdInView(group) {
+    var until = performance.now() + 340;
+    holding = group;
+    (function step(now) {
+      if (holding !== group) { return; }
+      group.scrollIntoView();
+      if (now < until) { requestAnimationFrame(step); } else { holding = null; }
+    })(performance.now());
+  }
+
+  ['wheel', 'touchstart', 'keydown'].forEach(function (name) {
+    window.addEventListener(name, function () { holding = null; }, { passive: true });
+  });
+
+  document.addEventListener('click', function (e) {
+    var link = e.target.closest ? e.target.closest('a[href]') : null;
+    if (!link) { return; }
+    var group = groupFor(link.hash);
+    if (!group) { return; }
+    if (link.pathname !== window.location.pathname || link.host !== window.location.host) { return; }
+    if (link.hash === window.location.hash) {
+      // Clicking the category you are already in is not a navigation and
+      // scrolls nothing by itself, so this does both - which is what makes
+      // the menu work for someone who closed the cards by hand and clicked
+      // the same item again to get them back.
+      e.preventDefault();
+    }
+    openOnly(group);
+    holdInView(group);
+  }, true);
+
+  // Arriving from another page, and any fragment change that didn't come
+  // from a click here: back and forward, or a hash typed into the bar.
+  function syncToHash() {
+    var group = groupFor(window.location.hash);
+    if (!group) { return; }
+    openOnly(group);
+    holdInView(group);
+  }
+
+  syncToHash();
+  window.addEventListener('hashchange', syncToHash);
+})();
+</script>

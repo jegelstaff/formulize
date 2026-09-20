@@ -57,7 +57,7 @@ If both machines have a control panel like cPanel or Plesk, that is a CNAME reco
 domain, a domain alias on the Formulize server, and the panel's SSL button — no configuration files
 involved.
 
-[Giving Formulize an address on the host website's domain](../embedding_screens_setup/) has the
+[Giving Formulize an address on the host website's domain](setup/) has the
 steps: the control-panel route, the server-configuration route, and the reverse proxy alternative.
 
 Your Formulize site stays reachable at its own address as well, and opening it directly still works
@@ -323,7 +323,7 @@ order:
 4. **If the iframe address *is* on the same domain as the host page**, one of the setup steps is
    incomplete. Open the iframe address directly in a browser: if the address bar moves to a different
    name as you click around, the server is not passing the requested hostname to Formulize. See
-   [the setup steps](../embedding_screens_setup/).
+   [the setup steps](setup/).
 
 **The form will not submit for some people but works for others.** Those people's browsers refuse
 third-party cookies, Safari's default. See

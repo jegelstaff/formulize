@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: searching/
+permalink: documentation/searching/
+redirect_from:
+ - searching/
 title: Searching
 ---
 

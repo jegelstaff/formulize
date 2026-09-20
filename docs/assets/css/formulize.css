@@ -1,0 +1,3466 @@
+/* ==========================================================================
+   formulize.org — main stylesheet
+   Palette: a pale blue ground (#e2ecf2) under a charcoal shell (#3a3a3a),
+   with two action colours doing two different jobs — green (#81de76) is the
+   CTA (buttons and badges only) and blue (#4c7ec0) is the accent ramp that
+   carries links, prices, hovers and tick marks. Type is Unbounded ExtraBold
+   over Poppins, both tracked +4%.
+   Plain CSS on purpose: Jekyll serves this file as a static asset, so it
+   needs no Sass compilation and can be previewed directly in a browser.
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@800&family=Poppins:wght@400;500;600;700&display=swap');
+
+:root {
+  --color-bg: #e2ecf2;
+  --color-surface: #ffffff;
+  --color-text: #000000;
+  --color-accent: #4c7ec0;
+  --color-accent-2: #81de76;
+  --color-divider: color-mix(in srgb, #000000 15%, transparent);
+
+  /* The charcoal shell: header, footer, and anything that has to read as
+     chrome rather than content. Held apart from the neutral ramp so the ramp
+     can stay monotonic. */
+  --color-shell: #3a3a3a;
+
+  /* The green is an action colour, not a text colour — it is light enough that
+     it only ever appears as a fill with black type on it. */
+  --color-cta: #81de76;
+  --color-cta-hover: #6ad15e;
+  --color-cta-active: #57bd4b;
+
+  --color-neutral-100: #ffffff;
+  --color-neutral-200: #f2f6f8;
+  --color-neutral-300: #dce7ed;
+  --color-neutral-400: #afc0c9;
+  --color-neutral-500: #7f8c93;
+  --color-neutral-600: #626d73;
+  --color-neutral-700: #4a5357;
+  --color-neutral-800: #2c3235;
+  --color-neutral-900: #14181a;
+
+  --color-accent-100: #eaf1fa;
+  --color-accent-200: #d2e2f5;
+  --color-accent-300: #aec8e9;
+  --color-accent-400: #7ba4d6;
+  --color-accent-500: #4c7ec0;
+  --color-accent-600: #3c66a1;
+  --color-accent-700: #2f5182;
+  --color-accent-800: #223c61;
+  --color-accent-900: #172942;
+
+  --color-accent-2-100: #eefaec;
+  --color-accent-2-200: #d9f5d4;
+  --color-accent-2-300: #b8ecb0;
+  --color-accent-2-400: #81de76;
+  --color-accent-2-500: #5cbf50;
+  --color-accent-2-600: #489c3e;
+  --color-accent-2-700: #377a2f;
+  --color-accent-2-800: #275822;
+  --color-accent-2-900: #193a17;
+
+  /* Formulize blue, kept as its own family so the second badge and the hosted
+     rail stay a different claim from the green CTA. */
+  --color-brand: #4c7ec0;
+  --color-brand-600: #3c66a1;
+  --color-brand-700: #2f5182;
+  --color-brand-200: #d2e2f5;
+  --color-brand-100: #eaf1fa;
+
+  /* Deep enough that white body copy on the hero band clears 4.5:1; the
+     mockup's lighter band only managed about 2.5:1. */
+  --color-hero: #3c66a1;
+
+  --font-heading: "Unbounded", system-ui, sans-serif;
+  --font-heading-weight: 800;
+  --font-body: "Poppins", system-ui, sans-serif;
+  --tracking: 0.04em;
+
+  --space-1: 4.4px;
+  --space-2: 8.8px;
+  --space-3: 13.2px;
+  --space-4: 17.6px;
+  --space-6: 26.4px;
+  --space-8: 35.2px;
+  --space-12: 52.8px;
+  --space-16: 70.4px;
+
+  /* A third of what these were (8/16/28). Pills and circles are deliberately
+     not on this scale - the 999px buttons and tags, and the 50% avatars, are
+     meant to be fully round and stay hard-coded. */
+  --radius-sm: 3px;
+  --radius-md: 5px;
+  --radius-lg: 9px;
+
+  --shadow-sm: 0 1px 2px color-mix(in srgb, #14181a 14%, transparent);
+  --shadow-md: 0 3px 10px color-mix(in srgb, #14181a 16%, transparent);
+  --shadow-lg: 0 12px 32px color-mix(in srgb, #14181a 22%, transparent);
+
+  --page-max: 1160px;
+  /* The comfortable measure for running text - see .prose. */
+  --measure: 52rem;
+}
+
+/* ── base ───────────────────────────────────────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.6;
+  letter-spacing: var(--tracking);
+  -webkit-font-smoothing: antialiased;
+  /* A word longer than its line breaks rather than hanging out of the box.
+     Without this, an unbreakable string - a URL, an element handle like
+     generate_a_report_about_a_form, a long heading in a narrow column - is
+     laid out at its full width and widens the whole document, because text
+     is not an element and no amount of overflow handling on the boxes around
+     it applies. That is a sideways scroll on the entire page, and it is
+     invisible in any inspector that looks at element rectangles: every box
+     measures correctly and the text simply paints past the edge of one.
+
+     break-word rather than anywhere: it only breaks a word that has no
+     opportunity to wrap at all, so ordinary prose is unaffected. It does not
+     reach <pre>, where white-space: pre means nothing wraps regardless -
+     those scroll horizontally in their own box, which is what a code block
+     should do. */
+  overflow-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  line-height: 1.18;
+  letter-spacing: var(--tracking);
+  margin: 0 0 var(--space-3);
+  color: var(--color-text);
+  text-wrap: balance;
+}
+/* Unbounded ExtraBold sets far wider than the face this replaced, and the +4%
+   tracking widens it again, so the display sizes come down a step to keep the
+   same number of words on a line. */
+h1 { font-size: 39px; }
+h2 { font-size: 30px; }
+
+/* /examples/ is built as two questions - "Why do people use Formulize?" and
+   "What do people use Formulize for?" - and they carry equal weight, so they
+   are set at the same size rather than at h1 and h2's default step apart. The
+   second stays an h2 because it is still a section inside the page, and the
+   class rather than an inline size so the pair cannot drift apart at the 900px
+   breakpoint, where h1 and h2 shrink by different amounts. */
+.page-question { font-size: 39px; }
+h3 { font-size: 25px; }
+h4 { font-size: 21px; }
+h5 { font-size: 19px; }
+h6 { font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+p, ul, ol, dl, pre, table, blockquote { margin: 0 0 var(--space-4); }
+p { text-wrap: pretty; }
+ul, ol { padding-left: var(--space-6); }
+li { margin-bottom: var(--space-1); }
+
+a { color: var(--color-accent-700); text-underline-offset: 3px; }
+/* :not(.btn) so this stays out of the buttons. Buttons own their own colour
+   in the .btn block further down and set it for every state there; without
+   the exclusion, a:focus (0,1,1) outranks plain .btn (0,1,0) and a focused
+   button picks up this lighter 600 instead - lighter than its own resting
+   700, and only 3.5:1 on the green fill, which fails AA. Browsers grant
+   :focus-visible on both keyboard and mouse paths, so .btn:focus-visible
+   normally wins and hides this, but script-moved focus (:focus without
+   :focus-visible) exposes it. The :hover half was already being saved only
+   by .btn:hover being later in the file at equal specificity - excluded
+   here too so button colour doesn't depend on source order. */
+a:not(.btn):hover, a:not(.btn):focus { color: var(--color-accent-600); }
+/* :visited is scoped to prose content (API reference pages, blog posts) rather
+   than site-wide — it's a real wayfinding aid on link-dense reference/listing
+   pages, but applying it globally would risk bleeding into buttons and card
+   CTAs, which should read the same regardless of visited state. Browsers only
+   allow color-ish properties here (privacy: no font-weight, no content), so
+   this is a subtly darker shade rather than a different hue. */
+.prose a:visited { color: var(--color-accent-800); }
+
+img { display: block; max-width: 100%; }
+
+/* The hidden attribute has to beat component display rules. Several components
+   here set display:flex or display:grid on the same element that script wants
+   to hide (the plan cards on /signup/, for one), and a class selector outranks
+   the user agent's own [hidden] rule - so without this, el.hidden = true does
+   nothing at all. */
+[hidden] { display: none !important; }
+figure { margin: 0; }
+
+hr {
+  height: 1px;
+  border: 0;
+  margin: var(--space-8) 0;
+  background: var(--color-divider);
+}
+
+code, pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  /* 13px was set against a 17px body face, which put code blocks a full four
+     points under the prose around them - small enough that a config file or a
+     PHP example was harder to read than the paragraph explaining it, which is
+     backwards on pages whose whole point is the code. 15.5px is still a step
+     down from the body (monospace sets optically larger at the same size, so
+     matching 17 exactly would read as bigger than the prose) but it is a step,
+     not a drop. */
+  font-size: 15.5px;
+}
+code { font-size: 17px; color: var(--color-accent-700); }
+pre {
+  padding: var(--space-3) var(--space-4);
+  background: var(--code-bg, var(--color-neutral-100));
+  color: var(--code-fg, inherit);
+  border: 1px solid var(--code-border, var(--color-divider));
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+}
+pre code { font-size: inherit; color: inherit; }
+
+/* ── code blocks: the light/dark switch ─────────────────────────────────────
+
+   Every code block on the site can be read light-on-dark or dark-on-light,
+   and the choice is the reader's, not the page's. It is one setting for the
+   whole site rather than per block: someone who wants dark code wants it in
+   every example on every page, and a per-block memory would mean a page of
+   six examples in two different schemes.
+
+   How it is wired:
+
+   - The chosen scheme lives in the `formulize_code_theme` cookie and is put on
+     <html> as data-code-theme by a tiny inline script in <head> (see
+     _includes/head-custom.html), so it is set before the first paint. Doing it
+     from the deferred script instead would paint every block light and then
+     repaint it dark, which is the flash this avoids.
+   - assets/js/code-theme.js wraps each block in .code-block at load and adds
+     the button. The wrapper exists because <pre> scrolls horizontally: a
+     button positioned inside it would slide away with the code.
+   - The three --code-* custom properties below are what actually changes.
+     <pre> reads them with light-mode fallbacks, so a block still renders
+     correctly with the script blocked or JavaScript off - the toggle simply is
+     not there.
+   - The syntax colours are the other half of this and live with the rest of
+     the highlighting theme, in _sass/rouge-dark.scss. */
+
+:root[data-code-theme="dark"] {
+  --code-bg: #14181a;
+  --code-fg: #e6edf3;
+  --code-border: #30383c;
+}
+
+.code-block {
+  position: relative;
+  margin: 0 0 var(--space-4);
+}
+/* The block inside the wrapper carries the margin no longer - the wrapper does
+   - so a code block occupies exactly the space it did before it was wrapped. */
+.code-block > pre,
+.code-block > .highlight,
+.code-block > .highlighter-rouge { margin-bottom: 0; }
+/* .prose caps each of its direct children at the reading measure and exempts
+   code from that cap by element; once wrapped, the wrapper is the child, so it
+   needs the exemption instead or every code block folds to 52rem. */
+.prose > .code-block { max-width: none; }
+
+.code-theme-toggle {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  z-index: 1;
+  padding: 2px var(--space-2);
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  line-height: 1.6;
+  letter-spacing: var(--tracking);
+  color: var(--color-neutral-700);
+  background: var(--color-neutral-200);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  /* Understated until wanted: the button sits over the top-right of the code,
+     where a long first line may run under it, so it stays quiet at rest and
+     comes forward on hover and on keyboard focus. */
+  opacity: 0.55;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.code-block:hover .code-theme-toggle,
+.code-theme-toggle:hover,
+.code-theme-toggle:focus-visible { opacity: 1; }
+.code-theme-toggle:hover { background: var(--color-accent-100); color: var(--color-accent-800); }
+:root[data-code-theme="dark"] .code-theme-toggle {
+  color: #c9d4dc;
+  background: #232b2f;
+  border-color: #3d474c;
+}
+:root[data-code-theme="dark"] .code-theme-toggle:hover { background: #303a3f; color: #ffffff; }
+/* Coarse pointers have no hover to reveal it with, so it is simply always on. */
+@media (hover: none) {
+  .code-theme-toggle { opacity: 1; }
+}
+
+blockquote {
+  border-left: 3px solid var(--color-accent-300);
+  padding-left: var(--space-4);
+  font-style: italic;
+  color: var(--color-neutral-700);
+}
+
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+::selection { background: color-mix(in srgb, var(--color-accent) 30%, transparent); }
+
+.text-muted { color: var(--color-neutral-700); }
+.italic { font-style: italic; }
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap;
+}
+.bold {
+	font-weight: bold;
+}
+.italic {
+	font-style: italic;
+}
+.underline {
+	text-decoration: underline;
+}
+
+/* ── layout ─────────────────────────────────────────────────────────────── */
+
+.page {
+  width: 100%;
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+}
+
+/* No bottom padding: .band already ends in its own var(--space-12) bottom
+   padding, the same as the gap between every other pair of bands - adding
+   space-16 more here on top of that (and, until the fix above, another
+   space-12 from the footer's own margin-top) was three closing gaps
+   stacked on each other before the footer even started. */
+/* The opening gap belongs to the column, not to <main>: <main> is the full
+   width of the window and transparent, so padding here is a full-width strip
+   of whatever is behind the page, showing directly under the header box.
+   Putting it inside .page means the fill below covers it. */
+.site-main { padding: 0; }
+
+/* An explicit fill on the content column, matching the page background it
+   sits on. It was load-bearing when a pixel-pattern layer ran down the page
+   behind everything - this is what kept the pattern in the margins and out
+   from behind the words. That layer is gone (the pattern lives in the footer
+   now), so this is belt and braces: it costs nothing and it means anything
+   dropped in behind the page later has a clean column to work against.
+   Scoped to <main>'s copy of .page; the footer has one too and it is blue. */
+.site-main > .page {
+  background-color: var(--color-bg);
+  padding-top: var(--space-8);
+}
+
+.band { padding: var(--space-12) 0; }
+/* Same job as .band-box's copy of this: the band's own padding owns its
+   bottom edge, so a last child does not add its margin on top of it. It only
+   ever catches a trailing <p class="btn-row"> - a p, so it inherits the base
+   paragraph margin, and a button row is almost always the last thing in its
+   band - which was putting an extra space-4 under three button rows on the
+   site while every band ending in a card or a grid got the padding alone. */
+.band > :last-child { margin-bottom: 0; }
+/* Zeroes the gap between two stacked bands so it's one space-12, not two.
+   Also covers the page heading immediately before the first band - that
+   heading is a bare .band-head div or (videos.html) a bare h1, never a
+   .band itself, so without this the heading's own bottom margin and the
+   band's full padding-top stacked into a much bigger gap than any other
+   pair of bands on the page. */
+.band + .band,
+.band-head + .band,
+h1 + .band {
+  padding-top: 0;
+}
+
+/* Wrap a band's contents in this to give them the same tinted, bordered card
+   the Features and Pricing pages end on. It started out as protection - the
+   pixel pattern used to reach into the page at both ends, and text sitting
+   over it needed a clean ground - but the pattern is confined to the header
+   now and this is purely a visual device: a way to close a page off with
+   something more deliberate than another run of loose text. */
+.band-box {
+  padding: var(--space-6);
+  background-color: var(--color-accent-100);
+  border: 1px solid var(--color-divider);
+  border-radius: calc(var(--radius-lg) * 1.15);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.15s ease;
+}
+/* Same rest/hover shadow step as .card, so every tinted box on the site
+   lifts the same way regardless of which of the two it's built from. */
+.band-box:hover { box-shadow: var(--shadow-md); }
+.band-box > :last-child { margin-bottom: 0; }
+
+.band-head { max-width: 62ch; margin-bottom: var(--space-8); }
+.band-head h2 { margin-bottom: var(--space-2); }
+.band-head p { margin: 0; color: var(--color-neutral-800); font-size: 19px; line-height: 1.5; }
+.band-head p + p { margin-top: var(--space-3); }
+/* A .band-head that is only a heading, sitting directly on top of its own
+   content inside a box rather than introducing a whole band. The standard
+   space-8 below is sized for a heading plus a lede paragraph with a band's
+   worth of air under it; over a bare list in a .band-box it just reads as a
+   gap. */
+.band-head-tight { margin-bottom: var(--space-4); }
+
+.band-head-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-6);
+}
+.band-head-row h2, .band-head-row h3 { margin: 0; }
+
+/* A band's "See all ..." button: at the right of the heading on a wide screen,
+   below the cards once they stack into a single column (620px, the same width
+   .quad collapses at, further down). Both copies are in the markup and only
+   one is ever displayed - display: none also takes the hidden one out of the
+   tab order and the accessibility tree, so it is never read out twice. The
+   .band-head-row prefix is what beats .btn's display: inline-flex, declared
+   further down, which would win at equal specificity. */
+.band-foot-cta { display: none; }
+@media (max-width: 620px) {
+  .band-head-row .band-head-cta { display: none; }
+  .band-foot-cta { display: block; }
+}
+
+.inpage-anchor { padding-top: var(--space-8); }
+.inpage-anchor-heading { margin-bottom: var(--space-1); }
+
+/* ── buttons ────────────────────────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  text-decoration: none;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 15px;
+  line-height: 1.2;
+  white-space: nowrap;
+  /* Dark blue at rest, darker blue on hover - on every button, filled or
+     outlined. Set once here rather than per role so .btn-primary's green
+     fill and the outlined ones can't drift apart. The only exception is the
+     hero, further down, where the button sits on blue and has to stay white.
+
+     700, the same blue as body links. This was 900 for a while, to clear
+     4.5:1 on the darker :active green in one go - but 900 is only 1.4:1
+     against the black these went to on hover, so both states read as flat
+     black and the hover change was invisible. The fix is to stop hovering
+     to black (see below) and let the resting colour be a blue you can
+     actually see: 700 is 8:1 on the page background and 4.8:1 on the green
+     fill. The one place it doesn't clear AA is the pressed green, handled
+     on .btn-primary:active rather than by darkening every button. */
+  color: var(--color-accent-700);
+  background: transparent;
+  border: 1px solid transparent;
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-md);
+  transition: background-color 120ms ease, color 120ms ease, transform 0.15s ease;
+}
+/* Buttons don't get a separate visited colour - pinned to the same blue as
+   .btn above rather than left to default to the browser's visited-link
+   colour. Browsers restrict :visited styling for privacy and, as part of
+   that, won't animate a transition through it - so a genuinely different
+   visited colour doesn't fade in/out smoothly like every other state here,
+   it pops. Declared before :hover/:focus-visible (LVHA order) so hovering a
+   visited button still darkens to 900 rather than getting stuck on this. */
+.btn:visited { color: var(--color-accent-700); }
+/* Hover is a scale-up plus the text darkening two steps, 700 -> 900 — same
+   scale treatment as the .action-strip tiles. Deliberately not black: black
+   is so close to any blue dark enough to sit on the green fill that the
+   change can't be seen, which is what went wrong before. 900 keeps the hue
+   and just drops the lightness, which is legible because the resting 700 is
+   light enough to read as blue in the first place. :active (an actual
+   press) still darkens the fill, as distinct feedback for the click itself
+   rather than just pointing at it. */
+.btn:hover, .btn:focus-visible { transform: scale(1.05); color: var(--color-accent-900); }
+/* Two roles: primary (filled, the one strong action) and secondary
+   (outlined, everything else). A third role, ghost, used to exist alongside
+   secondary - a borderless "plain text" button - but it read as a link
+   rather than a button sitting next to one, so it was merged into secondary
+   (sharing this exact style) and, later, every ghost button in the site's
+   HTML was reclassed to secondary outright and the class dropped for good.
+
+   Secondary also briefly carried a dark-blue fill of its own for a few
+   commits (see git history if it's ever wanted back) - reverted, it
+   competed too much with primary's green over which one read as the strong
+   action.
+
+   Secondary used to need a different class on every dark background it sat
+   on (btn-on-dark in the hero, btn-outline-light also in the hero, a
+   .header-cta override in the header) because its border/text colors were
+   hard-coded for a light background. It's custom properties now, so context
+   (hero) can just override the properties below instead of needing a whole
+   separate class — one visual style everywhere, auto-adapting instead of
+   hand-matched per spot. btn-brand dropped even earlier: nothing in the
+   site referenced it. */
+/* No colour of its own: takes the 700/900 blues from .btn above. */
+.btn-primary { background: var(--color-cta); }
+/* The one spot the resting 700 doesn't clear 4.5:1: on the pressed green it
+   is 3.3:1. Hovering already moves it to 900 (6.1:1 there), but a press can
+   happen without a hover - keyboard Enter/Space, and touch - so pin it here
+   too rather than relying on :hover being along for the ride. */
+.btn-primary:active { background: var(--color-cta-active); color: var(--color-accent-900); }
+.btn-secondary {
+  --btn-secondary-border: var(--color-divider);
+  --btn-secondary-active-bg: color-mix(in srgb, var(--color-text) 14%, transparent);
+  border-color: var(--btn-secondary-border);
+}
+.btn-secondary:active { background: var(--btn-secondary-active-bg); }
+/* Outlined buttons sitting straight on a dark panel with no fill of their
+   own - the hero, and the note beside the Managed plan - so they're the
+   exception to the 700/900 rule: both of those disappear into the blue
+   otherwise. Scoped to .plan-aside on the Managed side, NOT the whole band:
+   the "Sign up" button in that row is also a .btn-secondary, but it sits on
+   a white card, where white-on-white would erase it. The custom properties and the
+   rest/visited colour are set here on the plain (no pseudo-class) selector,
+   which keeps matching through :hover too, so :hover below only has to
+   touch colour - it doesn't need to repeat the border/active-bg values. In
+   the header, the equivalent button gets a light fill instead and so can
+   keep the normal 700/900.
+
+   --color-neutral-200 rather than white at rest - the same off-white the
+   "Getting started" style footer headings use, which sits on this same
+   --color-hero blue in .footer-panel, so it's already proven there. */
+.hero .btn-secondary,
+.hero .btn-secondary:visited,
+.plan-band-team .plan-aside .btn-secondary,
+.plan-band-team .plan-aside .btn-secondary:visited {
+  --btn-secondary-border: rgba(255, 255, 255, 0.7);
+  --btn-secondary-active-bg: rgba(255, 255, 255, 0.28);
+  color: var(--color-neutral-200);
+}
+/* White on hover/focus instead of the 900 everywhere else - a blue that
+   dark would read as barely-there on the hero's blue. Listed after .btn:hover
+   deliberately - same specificity, so being later is what keeps it white on
+   hover too. */
+.hero .btn-secondary:hover,
+.hero .btn-secondary:focus-visible,
+.plan-band-team .plan-aside .btn-secondary:hover,
+.plan-band-team .plan-aside .btn-secondary:focus-visible {
+  color: #fff;
+}
+.btn-sm { padding: var(--space-2) var(--space-4); font-size: 14px; }
+.btn-block { width: 100%; }
+
+.btn-row { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+
+/* ── tags ───────────────────────────────────────────────────────────────── */
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  padding: 3px 11px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.tag-accent { background: var(--color-accent-100); color: var(--color-accent-800); }
+.tag-accent-2 { background: var(--color-accent-2-100); color: var(--color-accent-2-800); }
+.tag-neutral { background: var(--color-neutral-100); color: var(--color-neutral-800); }
+.tag-outline { border: 1px solid var(--color-accent); color: var(--color-accent-700); }
+
+/* ── site header + main menu ────────────────────────────────────────────── */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  /* White, with a green rule underneath - the mirror of .site-footer, which
+     is white with the same green rule on top. Between them the page is
+     bracketed by two green lines, and the light blue in the middle is the
+     page rather than the chrome.
+
+     The fill has to stay opaque: the header is sticky, so once scrolled it
+     carries this strip over the page instead of letting content show
+     through. White qualifies; the old --color-bg did too, but it was the
+     same colour as the page, so the header had no edge of its own and the
+     rule is now what gives it one.
+
+     Padding is symmetric now. It was var(--space-4) 0 0 when the bar inside
+     was a dark panel sitting on a pattern, where any bottom padding showed
+     as a strip of pattern under the box. There is no box and no pattern
+     here any more, so the bar just needs equal air above and below it. */
+  background-color: var(--color-surface);
+  border-bottom: 4px solid var(--color-accent-2);
+  padding: var(--space-4) 0;
+}
+
+/* The header is sticky, so any in-page anchor - including the nav
+   dropdowns' jumps into Features/Examples - needs room to land below it
+   rather than under it. The header itself is ~108px tall at desktop widths
+   (17.6px padding top and bottom, the 69px logo, the 4px rule) - this has to
+   clear that plus a bit of breathing room, or the target still lands partly
+   behind the header instead of below it. */
+[id] { scroll-margin-top: 128px; }
+
+/* The row is just layout: the page-width column the header's contents sit
+   in. Vertical spacing belongs to .site-header's padding, not here. */
+.site-header-inner {
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-6);
+  max-width: var(--page-max);
+  margin: 0 auto;
+}
+
+/* A flex row, not a panel. This was a dark blue box for as long as the
+   header had a pattern behind it - it needed to be heavy enough to hold its
+   own against that. With the header white there is nothing to hold out
+   against, and a filled box on white would just be a second surface for no
+   reason, so the fill, the radius and the white text are all gone and the
+   header's own ground shows through.
+
+   The logo's box went with it. That box existed to give the wordmark a light
+   ground, because its grey lettering and the dark blue border on its
+   checkmark were drawn for one and went muddy straight on the blue. White is
+   a light ground, so the artwork is already on what it was drawn for and the
+   box has nothing left to do. .brand's own colours apply now. */
+.header-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  text-decoration: none;
+  color: var(--color-text);
+  margin-right: auto;
+}
+/* 69px, at the image's native 8008x1764 ratio, renders 313px wide - measured
+   as the largest size that still holds that ratio once the viewport reaches
+   --page-max (1160px), where .site-header-inner stops growing and the row's
+   width is fixed regardless of how much wider the window gets. This is
+   taller than the old fixed 58px, and taller than .header-cta's 82px
+   stacked-button ceiling once the gap and tagline are added on top - the
+   logo is now the tallest thing in the row on wide screens, and the header
+   is a bit taller for it. Accepted trade for the bigger logo.
+
+   Below 1160px, .header-bar's width shrinks 1:1 with the viewport while the
+   full menu is still inline (the 1060px breakpoint below is where it moves
+   behind the toggle instead), so the row has steadily less room for the
+   brand block - 69px stops fitting almost immediately. 48px is the value
+   that still holds its ratio down to the 1060px wrap; past that the menu no
+   longer competes for space, so 48px keeps being safe all the way to the
+   560px breakpoint below, where the tagline disappears and the logo drops
+   again to 36px. */
+.brand-logo { width: auto; height: 69px; }
+.brand-tagline {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  color: var(--color-neutral-600);
+  margin-top: 0;
+}
+
+.main-nav ul {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.main-nav li { margin: 0; }
+/* Dark blue on white. These were white with translucent-white chips when the
+   bar was a dark panel; on white that whole scheme inverts - a translucent
+   white chip on white is invisible, so both states are opaque tints now.
+
+   The two states are deliberately different hues rather than two strengths
+   of one: blue for hover, green for the page you are on. Hover is transient
+   and happens under the pointer, where a tint of the link's own colour reads
+   as the link lighting up. The current-page marker has to be legible at a
+   glance with nothing pointing at it, and green is the only other colour in
+   the header - it is the rule underneath - so it reads as a marker rather
+   than as a slightly stronger hover. */
+.main-nav a {
+  display: block;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--color-accent-800);
+  text-decoration: none;
+  font-size: 15.5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.main-nav a:hover { background: var(--color-accent-100); color: var(--color-accent-900); }
+/* .nav-section-current is the same marker on a top-level item whose section
+   you are somewhere inside - see the comment in _includes/nav.html for what
+   counts as inside. It is deliberately the identical green rather than a
+   weaker version of it: the question this answers is "which part of the site
+   am I in", and a half-strength answer to that just reads as a rendering
+   glitch next to the full-strength one on the dropdown item. Only ever one
+   top-level item carries it, so there is nothing for it to compete with. */
+.main-nav a[aria-current="page"],
+.main-nav a.nav-section-current {
+  background: var(--color-accent-2-200);
+  color: var(--color-accent-900);
+}
+
+/* Dropdowns: hover for a mouse, focus-within for a keyboard, so a Tab
+   press behaves the same as a hover instead of skipping the submenu. The
+   top-level link stays a real link either way - the dropdown is a shortcut
+   past it, not the only way in. */
+.main-nav li { position: relative; }
+.main-nav li.has-dropdown > a::after {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-left: 6px;
+  margin-bottom: 1px;
+  /* Was translucent white for the dark bar; on white it needs to be a
+     lightened version of the link colour instead, so it reads as part of the
+     link rather than as a separate mark. */
+  border-right: 1.5px solid var(--color-accent-500);
+  border-bottom: 1.5px solid var(--color-accent-500);
+  transform: rotate(45deg);
+}
+/* This floating-panel appearance (absolute position, translate/opacity
+   reveal on hover or focus-within) is the desktop dropdown only - the
+   max-width: 1060px block further down replaces it with a plain inline
+   list. It has to be walled off behind the matching min-width here,
+   because :focus-within beats that mobile override on specificity alone
+   (four classes/pseudo-classes vs. two) regardless of source order: without
+   this guard, tapping a link inside a mobile dropdown re-applied this
+   block's `transform: translate(-50%, 0)` on top of the mobile reset,
+   sliding that submenu about half its own width to the left - off the edge
+   of the screen - for as long as focus stayed inside it. */
+@media (min-width: 1061px) {
+  .main-nav .nav-dropdown {
+    /* .main-nav ul (above) makes every <ul> in the header a horizontal flex
+       row, including this one - the actual cause of the earlier wrapping and
+       overflow, not a width problem at all: each item was being laid out as
+       its own narrow flex column side by side, instead of stacked. This
+       overrides it back to a normal vertical list. */
+    display: block;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    z-index: 60;
+    width: 300px;
+    margin: var(--space-1) 0 0;
+    padding: var(--space-3);
+    list-style: none;
+    background: var(--color-surface);
+    border: 1px solid var(--color-divider);
+    border-radius: var(--radius-md);
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18);
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(-50%, -4px);
+    transition: opacity 0.12s ease, transform 0.12s ease, visibility 0.12s;
+  }
+  .main-nav li.has-dropdown:hover > .nav-dropdown,
+  .main-nav li.has-dropdown:focus-within > .nav-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, 0);
+  }
+}
+.main-nav .nav-dropdown li { margin: 0; }
+.main-nav .nav-dropdown a {
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  font-size: 15.5px;
+  font-weight: 400;
+  line-height: 1.4;
+  white-space: normal;
+}
+
+/* Last in the bar, hard against its right edge. Stacked rather than in a
+   row: side by side the pair is wide enough to start squeezing the menu at
+   narrower desktop widths, and stacked they come out about the height of the
+   logo block at the other end. */
+.header-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+}
+/* No override here any more. This carried a light fill back when the header
+   was a dark bar and secondary was still outlined - its divider-grey border
+   would have disappeared into the blue otherwise. The header is white now,
+   and secondary carries its own dark-blue fill regardless of background, so
+   this GitHub button just matches every other .btn-secondary on the site
+   instead of being a one-off. */
+.btn-icon { width: 16px; height: 16px; flex: none; }
+
+/* no-JS mobile menu toggle */
+.nav-toggle { display: none; }
+/* White throughout until the header went white, at which point the whole
+   control - border, label and all three bars - disappeared into the
+   background and the mobile menu had no visible way in. Same dark blue as
+   the nav links it opens. */
+.nav-toggle-label {
+  display: none;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-accent-300);
+  border-radius: var(--radius-md);
+  font-family: var(--font-heading);
+  font-size: 13px;
+  color: var(--color-accent-800);
+}
+/* The middle bar is the element; the other two are its box-shadows, so all
+   three take the same colour and it has to be set in both places. */
+.nav-toggle-label .bars {
+  display: block;
+  width: 16px;
+  height: 2px;
+  background: var(--color-accent-800);
+  box-shadow: 0 5px 0 var(--color-accent-800), 0 -5px 0 var(--color-accent-800);
+}
+
+/* ── social / download banner ───────────────────────────────────────────── */
+
+/* The border is the strip's outline; the same divider grey used to also be
+   the *only* thing drawing the rules between tiles, via a 1px grid gap with
+   this background showing through it. That worked for the outer edges but
+   dropped the rule between whichever two tiles happened to share the gap
+   track the browser rounded down - grid gap tracks split any width that
+   isn't a clean multiple of the column count, and 1px is small enough that
+   the rounding error can eat the whole track on one specific pair of tiles
+   while leaving the others fine. Explicit borders on the tiles themselves
+   (below) always render at a full 1px regardless of how the columns round.
+
+   It is the same divider grey as every other box on the site, the footer
+   panel below included, rather than the dark blue it used to be. The blue was
+   holding four white tiles together as one object back when it was the only
+   drawn line in a white footer; now the panel underneath is drawn in grey
+   too, and a blue frame above a grey one read as two unrelated systems. */
+.action-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  margin: 0 0 var(--space-8);
+}
+/* No overflow: hidden on the strip — a hovered tile needs to visibly grow past
+   the strip's own edges, not just its neighbors. Clipping to the strip's
+   rounded silhouette is done per-tile instead (below), so nothing depends on
+   the parent to mask square corners. */
+.action-strip-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-3);
+  background: #fff;
+  text-decoration: none;
+  /* The site's link colour, which is what these are - the same blue the
+     footer panel's link columns use directly below. Green was the other
+     candidate and is not usable here: #81de76 on white is about 1.7:1,
+     nowhere near legible at 13.5px. */
+  color: var(--color-accent-700);
+  /* Was 13.5px, which the Unbounded heading beside it simply flattened -
+     that face is wider and heavier than Poppins at the same nominal size, so
+     a 2.5px gap read as a much larger one and the prefix stopped registering
+     as part of the same phrase. 15.5px against the heading's 16px keeps the
+     order right without the prefix disappearing, and matches the footer
+     links. There is headroom here if it needs more: nothing in the strip
+     wraps until well past this, and the tiles only grow a few px. */
+  font-size: 15.5px;
+  line-height: 1.3;
+  text-align: center;
+  position: relative;
+  /* The divider between this tile and its left neighbour - see the comment
+     above .action-strip for why this replaced a grid-gap background. */
+  border-left: 1px solid var(--color-divider);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.action-strip-item:first-child { border-left: none; border-radius: var(--radius-lg) 0 0 var(--radius-lg); }
+.action-strip-item:last-child { border-radius: 0 var(--radius-lg) var(--radius-lg) 0; }
+/* Scale in place: it grows the tile around its own center without reflowing
+   neighbors. The box-shadow stands in for a border — unlike an actual border
+   it doesn't change the box's size (no layout jump), and because it's part of
+   the tile's own paint it scales outward together with the transform, so the
+   divider line appears to move with the growing edge instead of just
+   vanishing under it. z-index keeps that edge drawn over the neighbor tile
+   rather than tucked behind it. */
+.action-strip-item:hover {
+  transform: scale(1.06);
+  z-index: 1;
+  /* The same grey as the strip's own border and rules - while a tile is
+     hovered this ring is its border, so it has to be the border's colour.
+     Anything else reads as one odd-coloured tile inside the grid.
+
+     Four separate offset shadows rather than one "0 0 0 1px" spread, so a
+     side that already has a real border (border-left above, or the top
+     border row-2 tiles get at the 900px breakpoint below) can leave that
+     side out. A spread shadow can't do that - it inflates all four sides
+     as one shape - and stacking it on top of a real border on the same
+     side doubled the line's apparent width instead of just matching it. */
+  box-shadow: 0 -1px 0 var(--color-divider), 1px 0 0 var(--color-divider), 0 1px 0 var(--color-divider), -1px 0 0 var(--color-divider);
+}
+/* Tiles after the first already draw their own left divider at rest
+   (border-left, above) - the transform carries it along on hover, so the
+   ring only needs to cover the other three sides. */
+.action-strip-item:not(:first-child):hover {
+  box-shadow: 0 -1px 0 var(--color-divider), 1px 0 0 var(--color-divider), 0 1px 0 var(--color-divider);
+}
+.action-strip-icons { display: flex; align-items: center; gap: var(--space-2); }
+.action-strip-icons img { max-height: 22px; width: auto; }
+.action-strip-item strong {
+  display: block;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 16px;
+  color: var(--color-text);
+  transition: color 0.15s ease;
+}
+.action-strip-item:hover strong { color: var(--color-accent-800); }
+
+/* ── hero ───────────────────────────────────────────────────────────────── */
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  /* The site's own checkbox/plus/circle tile, recoloured to white on
+     transparency so it reads as texture over whatever --color-hero is,
+     instead of carrying the old light blue ground with it. Turned off for a
+     while when the header itself carried this same pattern (two textured
+     panels on one page competed, both with each other and with the hero's
+     text) - the header is a plain white bar now, so the hero is free to
+     carry it again. */
+  background-color: var(--color-hero);
+  background-image: url('../img/hero-pattern.png');
+  background-repeat: repeat;
+  background-size: 198px 196px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  color: #fff;
+  margin-bottom: var(--space-8);
+}
+.hero-text { flex: 1 1 0; min-width: 0; }
+.hero-text h1 {
+  color: #fff;
+  font-size: 38px;
+  margin-bottom: var(--space-4);
+  text-shadow: 0 2px 6px rgba(23, 41, 66, 0.45);
+}
+.hero-text p {
+  font-size: 18.5px;
+  line-height: 1.5;
+  margin-bottom: var(--space-3);
+  color: rgba(255, 255, 255, 0.95);
+  max-width: 46ch;
+}
+.hero-actions { margin-top: var(--space-6); }
+.hero-thumbnail {
+  flex: 0 0 auto;
+  max-width: 380px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+.hero-thumbnail img { border-radius: var(--radius-md); }
+
+/* ── cards ──────────────────────────────────────────────────────────────── */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: calc(var(--radius-lg) * 1.15);
+  transition: box-shadow 0.15s ease;
+}
+/* Hover lives on .card itself rather than on a wrapping .card-link, so it
+   still fires on the cards that aren't link-wrapped (get-choice.html's
+   pricing triad, the PHP/MySQL/time triad on the download page) as well as
+   the ones that are. */
+.card:hover { box-shadow: var(--shadow-md); }
+.card-kicker {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text);
+}
+.card-title {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 23px;
+  line-height: 1.2;
+  margin: 0;
+  color: var(--color-accent-700);
+  transition: color 0.15s ease;
+}
+.card:hover .card-title { color: var(--color-text); }
+.card-body { margin: 0; font-size: 16.5px; color: var(--color-neutral-800); flex: 1; }
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 12.5px;
+  color: var(--color-neutral-700);
+}
+.elev-sm { box-shadow: var(--shadow-sm); }
+.elev-md { box-shadow: var(--shadow-md); }
+.elev-lg { box-shadow: var(--shadow-lg); }
+
+/* .card-link always wraps a whole .card now (get-choice.html, download.html,
+   features.html) — every card links to exactly one destination, so the whole
+   box is the click target rather than a single line inside it. */
+/* display: flex (rather than the <a> default of inline) so the .card inside
+   stretches to fill it — a grid row of .card-links is already made equal
+   height by .triad's default grid stretch, but that only stretches the
+   .card-link box itself; without this, the visible .card inside just sizes
+   to its own content and the cards visibly mismatch even though their
+   invisible wrappers match. */
+.card-link { display: flex; text-decoration: none; color: inherit; }
+.card-link:hover { color: inherit; }
+.card-link .card { flex: 1; }
+/* The "See what is included"-style line inside a linked card: a plain span,
+   not a nested <a> (a card-link already wraps the card), styled the same as
+   .news-card-more so the two matching CTA patterns look the same. */
+.card-link-more {
+  align-self: flex-start;
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--color-accent-700);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* One link stretched over the whole box it sits in (which needs position:
+   relative), so a card or a list row is clickable anywhere without being
+   wrapped in an <a>. That matters because news teasers are Markdown and can
+   contain links: an <a> inside an <a> is invalid and browsers split it in
+   two, which is why the teaser link used to be stripped out.
+   Anything inside the box that has to stay separately clickable must be
+   raised above the overlay - see the teaser links below.
+   The trade-off is that dragging to select text in one of these boxes hits
+   the overlay instead; the text is short and selecting it is not what anyone
+   comes to a card for. */
+.stretched-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+/* Above the overlay, so a teaser's own links go where they say they go while
+   the rest of the card still goes to the story. Coloured and underlined
+   explicitly because .news-list a paints every link in that list as body text. */
+.post-excerpt a,
+.news-card p a,
+.news-list .news-teaser a {
+  position: relative;
+  z-index: 2;
+  color: var(--color-accent-700);
+  text-decoration: underline;
+}
+
+/* ── pixel accents ──────────────────────────────────────────────────────── */
+
+/* Seven shapes taken out of the header/footer pixel pattern and redrawn as
+   their own SVGs in assets/img/accents/ - the two-tone square, the tall split
+   bar, the diagonal step, the notched L, the block with a bar hung off one
+   end, the three-colour corner, and a three-module rule. They use the
+   pattern's own three colours, which are already tokens here:
+   #2f5182 is --color-accent-700, #4c7ec0 is --color-accent-500 and #81de76
+   is --color-accent-2-400.
+
+   They are drawn rather than cropped on purpose. The source PNGs are 4233px
+   wide with softened, slightly irregular edges, so a crop of one square
+   arrives as a fuzzy 127px bitmap; redrawn, the same shape is a 260-byte SVG
+   that stays crisp at any size and keeps its transparent ground on white.
+
+   The accent is a background on ::after rather than an <img>, so it is
+   decorative to a screen reader without needing an alt="" on every use, and
+   the shape is swapped by setting one custom property. */
+.pixel-accent {
+  --accent-shape: url("/assets/img/accents/square-split.svg");
+  --accent-size: 44px;
+  position: relative;
+  /* The accent sits in reserved space rather than over the content: the box
+     grows by the height of the mark so the last line of text still clears it
+     however the card wraps. */
+  padding-bottom: calc(var(--space-6) + var(--accent-size));
+}
+.pixel-accent::after {
+  content: "";
+  position: absolute;
+  left: var(--space-6);
+  bottom: var(--space-6);
+  width: var(--accent-size);
+  height: var(--accent-size);
+  background-image: var(--accent-shape);
+  background-repeat: no-repeat;
+  /* contain + left bottom so the shapes that are not square - the 4:3 block
+     with the offset bar, the 1:2 tall bar - sit on the same baseline and the
+     same left edge as the square ones instead of floating. */
+  background-position: left bottom;
+  background-size: contain;
+  pointer-events: none;
+}
+
+.pixel-accent-bar::after    { --accent-shape: url("/assets/img/accents/bar-split.svg"); }
+.pixel-accent-step::after   { --accent-shape: url("/assets/img/accents/step.svg"); }
+.pixel-accent-notch::after  { --accent-shape: url("/assets/img/accents/notch.svg"); }
+.pixel-accent-offset::after { --accent-shape: url("/assets/img/accents/bar-offset.svg"); }
+.pixel-accent-trio::after   { --accent-shape: url("/assets/img/accents/corner-trio.svg"); }
+
+/* Bottom right instead of bottom left, for a box whose last row of content
+   already starts at the left edge - under the button row on the homepage's
+   closing band, a left-hand mark reads as a stray fourth button. */
+.pixel-accent-right::after {
+  left: auto;
+  right: var(--space-6);
+  background-position: right bottom;
+}
+
+/* A full-width band can carry a bigger mark than a card in a three-up row;
+   at the card's 44px it reads as a speck in the corner of the box. */
+.pixel-accent-lg { --accent-size: 64px; }
+
+/* The one shape meant to be placed in the markup rather than hung off a
+   corner: a short three-colour rule under a heading. */
+.pixel-rule {
+  width: 48px;
+  height: 12px;
+  margin: 0 0 var(--space-4);
+}
+
+/* ── on-ramp: two ways to start ─────────────────────────────────────────── */
+
+.onramp {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+.onramp .card { gap: var(--space-3); }
+.onramp-num {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-heading);
+  font-size: 18px;
+  background: var(--color-accent-200);
+  color: var(--color-accent-800);
+}
+.onramp .card:nth-child(2) .onramp-num { background: var(--color-accent-2-200); color: var(--color-accent-2-800); }
+.onramp ul { margin: 0; padding-left: var(--space-6); font-size: 16.5px; color: var(--color-neutral-800); }
+
+/* ── feature triad ──────────────────────────────────────────────────────── */
+
+.triad {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+.triad .card { background: var(--color-neutral-100); }
+.triad h3 { margin-bottom: var(--space-2); }
+.triad ul { margin: 0; padding-left: var(--space-6); font-size: 16.5px; }
+.triad em { color: var(--color-accent-700); font-style: italic; }
+
+/* Two up rather than three, for the example grids on /examples/. Those cards
+   carry a sentence of context plus four bullets each, which is a cramped read
+   in a third-of-the-page track; at half the page the bullets stop wrapping
+   mid-phrase and each group of four resolves into a tidy 2x2.
+
+   A modifier class rather than a `.example-group .triad` descendant rule on
+   purpose. A descendant selector would outrank the plain `.triad` entries in
+   the 900px and 620px collapse lists further down, and these grids would then
+   stay two-up on a phone. At one class it ties with them, they come later in
+   the file, and so they still win where they apply. */
+.triad-2up { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* The example cards are collapsed to their title until someone opens one.
+   Fifteen of them with a sentence and four bullets each is more text than
+   anybody reads; as a list of fifteen titles it is scannable, and the one
+   that sounds like your own situation is a click away. <details>/<summary>
+   rather than scripted accordions because it needs no JavaScript, is keyboard
+   and screen-reader operable as it stands, and - the part that matters here -
+   behaves identically on a phone, where the same tap opens the same card. So
+   there is no separate mobile pattern to design or maintain.
+
+   align-items: start is what makes it feel right in a grid. Grid items stretch
+   to the tallest in their row by default, so opening one card would drag its
+   neighbour's box open too and leave it three-quarters empty. Starting them
+   instead lets each card be exactly as tall as its own contents. */
+.triad-2up { align-items: start; --example-card-title: 23px; }
+
+/* .card is already a flex column; the <details> now holds that column, so it
+   takes the same treatment - but without the gap. A single gap would space
+   the title, the paragraph and the bullets equally, and these three do not
+   want equal spacing: the paragraph belongs to the title above it and wants
+   clear air before the list below. The paragraph carries that spacing as its
+   own margins instead, just below. */
+.triad-2up .card > details {
+  display: flex;
+  flex-direction: column;
+  /* Two lines of the title, as a floor under the whole card rather than under
+     the heading. Under the heading it also sat between the heading and the
+     paragraph, so a one-line title opened with 14px of dead space below it
+     that a two-line title did not have. Down here the slack falls below the
+     contents, where a closed card has nothing anyway and an open card has
+     long since grown past it - so every card, one-line title or two, now has
+     the same gap under its heading, and closed cards are still uniform. */
+  min-block-size: calc(2 * 1.2 * var(--example-card-title));
+}
+
+/* .card-body carries flex: 1 globally, which makes the paragraph absorb any
+   slack in the card and pushes the bullets to the bottom - so in a row of
+   cards the lists line up but the text floats away from its own heading.
+   These cards stack their content top to bottom instead, like an ordinary
+   block would. */
+/* Asymmetric on purpose: tight to the title it explains, a wider gap before
+   the bullets. .card-body is margin: 0 globally, so both are set here, and
+   the top one is 0: the title's own line box already leaves enough air, and
+   anything added on top reads as the paragraph drifting away from the
+   heading it belongs to. Both margins sit inside the animated box, so they
+   travel with the contents and add nothing to a closed card. */
+.triad-2up .card-title { font-size: var(--example-card-title); }
+.triad-2up .card-body { flex: 0 0 auto; margin-block: var(--space-4); }
+
+/* "With Formulize:" - the label over the bullets, matching "The problem:" that
+   opens the paragraph above. Both are <em> rather than <strong> on purpose:
+   they are structure, telling you which half of the card you are reading, and
+   bold would pull the eye onto them and away from the content they introduce.
+   The type matches .card-body so the two halves read as one block of text, and
+   the margins are the inverse of it: no air above, because .card-body's own
+   space-4 bottom margin already put the gap there, and only space-2 below, so
+   the label stays attached to the list it belongs to rather than floating
+   between the paragraph and the bullets. */
+.triad-2up .example-solution {
+  flex: 0 0 auto;
+  margin: 0 0 var(--space-2);
+  font-size: 16.5px;
+  color: var(--color-neutral-800);
+}
+
+/* The whole title row is the control, so it gets the pointer and the chevron,
+   and the default disclosure triangle is removed in both its guises (the
+   standard list-style and WebKit's older pseudo-element). */
+/* align-items: flex-start, not center. Centred, the chevron sat halfway down
+   whichever title it belonged to, so it landed in a different place on a
+   one-line card than on a three-line one - and on a phone, where almost every
+   title wraps, it read as floating loose to the right of the text rather than
+   marking the row. Started from the top with a fixed offset it is always the
+   same distance below the card's top edge, whatever the title does.
+   Horizontally it is already pinned: space-between holds it against the right
+   edge no matter how wide the title runs. */
+.triad-2up summary {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  cursor: pointer;
+  list-style: none;
+}
+.triad-2up summary::-webkit-details-marker { display: none; }
+
+/* The two-line floor that used to live here has moved onto the <details>
+   itself, above - under the title it also sat between the title and the
+   paragraph, so a one-line card opened with more space under its heading
+   than a two-line one.
+
+   .triad h3 sets a margin below every heading in a triad, which the ordinary
+   cards want because it is their only gap before the body text. These cards
+   set that gap on the paragraph instead, so the margin here is pure surplus:
+   it pushed the summary 8.8px taller than its own title, which both broke
+   the closed cards' uniform height and widened the gap the floor was just
+   moved to fix. */
+.triad-2up summary h3 { margin-bottom: 0; }
+.triad-2up summary::after {
+  content: "";
+  flex: none;
+  width: 9px;
+  height: 9px;
+  /* Centres the arrow on the first line of the title: half of .card-title's
+     23px x 1.2 line box, less half the rotated square's own height. */
+  margin-top: 9px;
+  margin-right: 3px;
+  border-right: 2.5px solid var(--color-accent-500);
+  border-bottom: 2.5px solid var(--color-accent-500);
+  transform: rotate(45deg) translate(-2px, -2px);
+  transition: transform 0.15s ease;
+}
+.triad-2up details[open] summary::after { transform: rotate(-135deg); }
+
+/* The card rolls open and shut rather than snapping. The row holding the
+   contents is animated from 0fr to 1fr, which every current engine can run -
+   transitions on grid-template-rows go back to Firefox 66 and Safari 16.
+
+   align-content: start is load-bearing, not tidying. Without it the container
+   defaults to stretch, and while the fr track is mid-interpolation the free
+   space is handed back to the rows, which lays the contents out against a
+   moving track: the text starts about 60px low and rides up into place as the
+   card grows. Starting the rows instead pins the contents to the top, so the
+   card wipes down over text that never moves.
+
+   ::details-content is the box the browser already wraps a <details>'s
+   contents in, and it is the second row. overflow is clipped so the bullets
+   are wiped at the card's edge rather than spilling past it, and
+   min-block-size is 0 because a grid item's automatic minimum size is the
+   height of its own contents - that floor would outrank the track being
+   animated and the card would snap open at full height. It also carries the
+   content-visibility transition, which is what actually hides a closed card's
+   contents; that flips between two keywords rather than over a range, hence
+   allow-discrete, and without it the contents would vanish the instant the
+   card was closed with nothing left to watch roll up.
+
+   The display switch sits inside the @supports rather than in the base rule:
+   where ::details-content is missing there is no second row for 0fr to
+   collapse, and the track sizes would land on the contents themselves. Gated
+   this way, such browsers keep the flex column and open instantly. The
+   selector repeats `.card >` to match the base rule's specificity, or
+   `display: flex` would still win. */
+@supports (selector(details::details-content)) {
+  .triad-2up .card > details {
+    display: grid;
+    grid-template-rows: auto 0fr;
+    align-content: start;
+    transition: grid-template-rows 0.22s ease;
+  }
+  .triad-2up .card > details[open] { grid-template-rows: auto 1fr; }
+  .triad-2up details::details-content {
+    min-block-size: 0;
+    overflow: clip;
+    transition: content-visibility 0.22s ease;
+    transition-behavior: allow-discrete;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .triad-2up .card > details,
+    .triad-2up details::details-content { transition: none; }
+  }
+}
+.triad-2up summary:focus-visible { outline: 2px solid var(--color-accent-500); outline-offset: 3px; }
+
+/* A named category heading over one .triad, so a long card grid (examples.html)
+   reads as a few sorted groups instead of one undifferentiated wall. Plain h3
+   at the global 25px is distinct enough from the band's own h2 without a
+   dedicated font size. */
+.example-group + .example-group { margin-top: var(--space-8); }
+/* Direct child only: the category heading. Without the combinator this also
+   matched every card title nested inside the group, which quietly put 17.6px
+   under each one - propping up the closed cards' uniform height and standing
+   in for the gap above the paragraph, both by accident. Both are now set
+   deliberately, so this has to stop reaching them. */
+.example-group > h3 { margin-bottom: var(--space-4); }
+
+/* Two equal boxes side by side, for a pair of closing calls to action - see
+   the bottom of /contact/. Its own class rather than .triad with one card
+   missing, so the two share the full width instead of leaving a third of the
+   row empty. Matched to .triad's gap so a page can use both without the
+   rhythm changing. */
+.duo {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+
+/* ── pricing ────────────────────────────────────────────────────────────── */
+
+.tier-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+  align-items: stretch;
+}
+.tier {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  background: var(--color-neutral-100);
+  border: 1px solid var(--color-divider);
+  border-radius: calc(var(--radius-lg) * 1.15);
+  transition: box-shadow 0.15s ease;
+}
+.tier:hover { box-shadow: var(--shadow-md); }
+.tier-featured {
+  background: var(--color-surface);
+  border-color: var(--color-accent-400);
+  box-shadow: var(--shadow-md);
+}
+.tier-flag {
+  position: absolute;
+  top: calc(var(--space-4) * -1);
+  left: var(--space-6);
+  background: var(--color-cta);
+  color: #000;
+  font-family: var(--font-heading);
+  font-size: 12.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: var(--space-1) var(--space-3);
+  border-radius: 999px;
+}
+.tier-name {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  line-height: 1.1;
+  margin: 0;
+  color: var(--color-accent-700);
+  transition: color 0.15s ease;
+}
+.tier:hover .tier-name { color: var(--color-text); }
+.tier-blurb { font-size: 15px; color: var(--color-neutral-800); margin: 0; min-height: 3em; }
+.tier-price {
+  font-family: var(--font-heading);
+  font-size: 32px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+.tier-price span {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-neutral-700);
+  letter-spacing: 0;
+}
+/* A second badge in the same green would compete with "Most popular" and
+   leave neither reading as the recommendation. The brand blue keeps the badge
+   family intact while marking it as a different kind of claim. */
+.tier-flag-alt { background: var(--color-brand-700); color: #fff; }
+
+.tier-note { font-size: 13.5px; color: var(--color-neutral-700); margin: 0; }
+
+.rail-addendum {
+  margin: var(--space-4) 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-neutral-200);
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--color-neutral-800);
+}
+.tier ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-size: 15px;
+  flex: 1;
+}
+.tier ul li { margin: 0; padding-left: 1.4em; position: relative; }
+.tier ul li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--color-accent-2-700);
+  font-weight: 700;
+}
+.tier ul li.no { color: var(--color-neutral-600); }
+.tier ul li.no::before { content: "–"; color: var(--color-neutral-600); }
+.tier .btn { margin-top: var(--space-2); }
+
+.tier-grid-services .tier { background: var(--color-accent-2-100); border-color: var(--color-accent-2-300); }
+.tier-grid-services .tier-price { font-size: 28px; }
+
+/* uniform check / cross feature rows, used in the getting-started rail */
+.tier-feats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  font-size: 15px;
+  line-height: 1.45;
+  flex: 1;
+}
+.tier ul.tier-feats li { margin: 0; padding-left: 1.55em; position: relative; }
+/* Rows take their natural height. Reserving the tallest card's height on every
+   card left visible dead air in the shorter ones; the cards still finish level
+   because .tier-feats flexes, and reading ACROSS plans is the table's job. */
+.tier ul.tier-feats li::before {
+  content: "\2713";
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-weight: 700;
+  color: var(--color-accent-2-700);
+}
+.tier ul.tier-feats li.no { color: var(--color-neutral-700); }
+.tier ul.tier-feats li.maybe { color: var(--color-neutral-700); }
+/* Neutral, not blue: the blue is now the accent that marks things as present,
+   so a blue cross would fight the green tick beside it. */
+.tier ul.tier-feats li.no::before { content: "\2715"; color: var(--color-neutral-500); }
+.tier ul.tier-feats li.maybe::before { content: "?"; color: var(--color-neutral-500); padding-left: 0.15em; }
+/* The "$X value!" tags on the training rows. They were <small>, which is the
+   sublines' style - grey, 13.5px - so the number meant to be the loudest
+   thing on the card was set in the quietest type on it.
+
+   Inline at the end of the row, not on a line of its own: it is a note ON
+   that item, and sitting it below turned it into a second bullet competing
+   with the real ones. white-space: nowrap so the tag never breaks across
+   lines internally - it pushes the last word or two of the row down instead,
+   which is the right thing to give up.
+
+   Outlined rather than filled so it can go on any card: "We train you"
+   already carries a green "Most popular" flag and a green Sign up button,
+   and a third green FILL there was one too many. The outline marks the line
+   without joining that competition. 7.8:1 on its own tint.
+
+   The top margin is deliberately SMALLER than the gap below. .tier-feats
+   spaces its rows with gap: space-3, which lands about 9px under the tag; at
+   space-2 above it the tag sat 10px from its own row and 9px from the next
+   one, reading as a free-floating item between two rows rather than as a
+   note on the row it belongs to. space-1 puts it 5px under its own line -
+   about half the gap to the next row - so the grouping is unambiguous. */
+.value-badge {
+  display: inline-block;
+  /* An inline-block contributes its MARGIN box to the line box it sits in, so
+     a top margin here genuinely opens a gap above the tag rather than just
+     nudging it down over the line above. No margin-left: when the tag wraps
+     to its own line - which it does on both cards at most widths - a left
+     margin indents it away from the tick column. The gap for the inline case
+     is a plain space in the markup instead, which collapses at a line break
+     the way a margin does not. */
+  margin-top: var(--space-1);
+  padding: 2px 9px;
+  border: 1.5px solid var(--color-accent-2-600);
+  border-radius: var(--radius-md);
+  background: var(--color-accent-2-100);
+  color: var(--color-accent-2-800);
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.tier-feats small {
+  display: block;
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: var(--color-neutral-700);
+  margin-top: 2px;
+}
+
+/* ── getting-started bands ──────────────────────────────── */
+
+/* The same three groups the rail holds, laid out as full-width rows instead
+   of a horizontal scroller. The colours are the .rail-group-* tokens rather
+   than fresh values, so a change to one group's colour reaches both layouts
+   and they cannot drift into two different blues. */
+.plan-band {
+  padding: var(--space-6);
+  border-radius: calc(var(--radius-lg) * 1.15);
+  background: var(--color-neutral-200);
+}
+/* Jump targets for the level-specific links elsewhere on the site - the
+   get-choice cards, the download page's hosting card, the services page's
+   "plans with support included". Same technique and the same measured values
+   as .feature-stack .inpage-anchor further down: the global [id] rule's 128px
+   was written against a ~108px header, and the header is really 133px from
+   1080px up, so a jump would tuck the box's first 5px behind the bar. 148px
+   clears the tallest case with about 15px of air.
+
+   No .inpage-anchor padding-top here, unlike the Features cards: those sit
+   flush in a grid and need the breathing room manufactured, while these boxes
+   already have a full .band of space above them. The scroll-margin alone puts
+   the whole box cleanly below the header. */
+.plan-band[id],
+.band-box[id] { scroll-margin-top: 148px; }
+
+.plan-band-diy { background: var(--color-accent-2-200); }
+.plan-band-hosted { background: var(--color-brand-200); }
+.plan-band-team { background: var(--color-brand-700); }
+.plan-band-team .band-head h2 { color: #fff; }
+.plan-band-team .band-head p { color: rgba(255, 255, 255, 0.88); }
+/* The Hosted band's own blue, borrowed as the Managed band's accent for the
+   badge and the card's button. It ties the two paid tiers to each other and
+   leaves the green CTA to mean "Most popular" alone, so the two badges stay
+   different claims rather than two shouts.
+
+   It also solves a collision: .tier-flag-alt is white on brand-700, which is
+   exactly this band's background, so the badge would have vanished into it.
+
+   Text needs no override on either. On this fill .btn's resting accent-700 is
+   6.1:1 and its accent-900 hover is 11.1:1; accent-900 on the badge is
+   11.1:1. The button keeps .btn-secondary's border - the fill is only 1.3:1
+   against the white card it sits on, so the edge is what makes it read as a
+   button rather than a wash. */
+.plan-band-team .tier-flag-alt {
+  background: var(--color-brand-200);
+  color: var(--color-accent-900);
+}
+.plan-band-team .tier .btn-secondary { background: var(--color-brand-200); }
+
+/* Two columns because every row holds either two cards, or one card and the
+   note beside it. The cards are far wider here than the rail's fixed 306px,
+   which is what buys room to drop the sublines onto one line each. */
+.plan-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  align-items: stretch;
+}
+/* The .tier-flag badges hang space-4 above their card's top edge, so the row
+   needs more than that under the heading or the badge ends up touching the
+   legend text - at space-4 the clearance measured 1px. space-6 leaves about
+   ten, which is enough for the badge to read as attached to its card rather
+   than crashing into the line above. */
+.plan-cards { margin-top: var(--space-6); }
+
+/* A row holding one card and the note, rather than two cards. The note gets
+   less width than a second card would: it is supporting copy, so an equal
+   half made the row read as two peers.
+
+   Worth knowing before changing this number or trimming the note: at 0.82 the
+   note wraps enough that it is now the TALLER of the two (483 vs the card's
+   natural 452 at 1280), so it sets the row height and the card stretches to
+   meet it - .tier is a column flexbox whose .tier-feats has flex: 1, so the
+   slack lands in the gap above its button. Shorten the note much and the two
+   swap roles: the card drives the height again and the note, being
+   align-self: center, floats in the middle of the row with air above and
+   below it. */
+.plan-cards-solo { grid-template-columns: minmax(0, 1fr) minmax(0, 0.82fr); }
+
+/* Keylined in the same hairline the outlined buttons on this band use, so the
+   note reads as a deliberate object against the blue instead of loose text
+   floating next to a card. The border colour is the only part that has to
+   know about the dark ground; everything else works on any .plan-band. */
+.plan-aside {
+  align-self: center;
+  padding: var(--space-6);
+  border: 1px solid var(--color-divider);
+  border-radius: calc(var(--radius-lg) * 1.15);
+}
+.plan-band-team .plan-aside { border-color: rgba(255, 255, 255, 0.7); }
+.plan-aside h3 { font-size: 22px; margin-bottom: var(--space-3); }
+.plan-aside p,
+.plan-aside ul { font-size: 15.5px; line-height: 1.55; margin-bottom: var(--space-3); }
+/* Plain bullets, not the green ticks the .tier cards use: these are terms you
+   can ask us to negotiate, not things already included at this level, and a
+   tick would claim otherwise. The markers take the list's own colour, which
+   on the Managed band is the near-white the aside text is set in. */
+.plan-aside li { margin-bottom: var(--space-2); }
+.plan-aside > :last-child { margin-bottom: 0; }
+.plan-band-team .plan-aside { color: rgba(255, 255, 255, 0.92); }
+.plan-band-team .plan-aside h3 { color: #fff; }
+.plan-band-team .plan-aside strong { color: #fff; }
+
+@media (max-width: 860px) {
+  .plan-cards,
+  .plan-cards-solo { grid-template-columns: minmax(0, 1fr); }
+  /* Stacked, the row gap is space-4 and .tier-flag hangs exactly space-4
+     above its own card, so "Most popular" comes to rest on the bottom edge of
+     the card above it. Doubling the gap for this card alone leaves the badge
+     the same clearance the top of the row gets from .plan-cards' space-6.
+     Only a badged card with another card above it needs this, which on this
+     page is the featured one; the Managed card is first in its own row. */
+  .plan-cards .tier-featured { margin-top: var(--space-4); }
+  /* Stacked, the note reads as a footer to the card above it rather than a
+     column beside it, so it takes the gap rather than optical centring. */
+  .plan-aside { align-self: start; }
+}
+
+/* ── getting-started rail ───────────────────────────────────────────────── */
+
+.rail-wrap { position: relative; }
+.rail {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-4);
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  padding: var(--space-4) var(--space-1) var(--space-2);
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-neutral-400) transparent;
+}
+.rail:focus-visible { outline-offset: -2px; }
+
+.rail-group {
+  flex: none;
+  width: min-content;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border-radius: calc(var(--radius-lg) * 1.15);
+  background: var(--color-neutral-200);
+  scroll-snap-align: start;
+}
+.rail-group-diy { background: var(--color-accent-2-200); }
+.rail-group-hosted { background: var(--color-brand-200); }
+.rail-group-team { background: var(--color-brand-700); }
+.rail-group-team .rail-legend strong { color: #fff; }
+.rail-group-team .rail-legend > span { color: rgba(255, 255, 255, 0.88); }
+
+.rail-legend {
+  display: block;
+  margin: 0;
+  padding: var(--space-1) var(--space-2) 0;
+}
+.rail-legend strong {
+  display: block;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 19px;
+  line-height: 1.2;
+  letter-spacing: 0.03em;
+}
+.rail-legend > span {
+  display: block;
+  font-size: 14.5px;
+  line-height: 1.4;
+  color: var(--color-neutral-800);
+  margin-top: 3px;
+}
+
+.rail-cards { display: flex; align-items: stretch; gap: var(--space-4); flex: 1; }
+.rail-cards .tier {
+  width: 306px;
+  flex: none;
+  padding: var(--space-6);
+  gap: var(--space-3);
+  background: var(--color-neutral-100);
+  border-color: transparent;
+  scroll-snap-align: start;
+}
+.rail-cards .tier-featured { background: #fff; border-color: var(--color-accent-400); }
+.rail-cards .tier-name,
+.plan-cards .tier-name {
+  font-size: 24px;
+  line-height: 1.15;
+  margin: 0;
+}
+/* The price on its own line under the name. Belongs to the card rather than
+   to either layout, so both the rail and the bands claim it - without this
+   the span runs on and reads as part of the name ("You build it Free
+   forever"). */
+.rail-cards .tier-name span,
+.plan-cards .tier-name span {
+  display: block;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 17px;
+  color: var(--color-accent-700);
+  margin-top: 4px;
+}
+/* The rail's cards are a fixed 306px, narrow enough that a wrapped price
+   looks broken, so it is held on one line there. The band cards are twice
+   that and "$199/month + $449 setup" is better wrapped than overflowing. */
+.rail-cards .tier-name span { white-space: nowrap; }
+.rail-cards .tier-feats,
+.plan-cards .tier-feats { margin-top: var(--space-1); }
+.rail-cards .tier-flag { top: calc(var(--space-3) * -1); left: var(--space-4); }
+.rail-cards .btn { margin-top: var(--space-1); }
+
+.rail-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 4;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 1px solid var(--color-divider);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: var(--shadow-md);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease, background-color 120ms ease;
+}
+.rail-wrap:hover .rail-arrow,
+.rail-wrap:focus-within .rail-arrow { opacity: 1; pointer-events: auto; }
+.rail-arrow:hover { background: #fff; color: var(--color-accent-700); }
+.rail-arrow:disabled { opacity: 0 !important; pointer-events: none; }
+.rail-prev { left: calc(var(--space-4) * -1); }
+.rail-next { right: calc(var(--space-4) * -1); }
+@media (hover: none) {
+  .rail-arrow { display: none; }
+}
+
+.rail-hint {
+  font-size: 14px;
+  color: var(--color-neutral-700);
+  margin: var(--space-3) 0 0;
+}
+
+/* The one promise the tier cards must never contradict: same software
+   everywhere. It used to carry its own tint and left rule, from before the
+   rest of the site settled on one tinted box; it sits in a plain .band-box
+   now like every other one, so all that is left here is the lede's reading
+   size - 19px, the step .band-head p is set at. */
+.lede-promise {
+  margin: 0 0 var(--space-4);
+  font-size: 19px;
+  line-height: 1.5;
+}
+/* On a phone the full list is most of a screen standing between the headline
+   and the plans, and at 19px it is a long scroll to make one point: every
+   plan includes every feature. The two items marked .lede-keep make that
+   point, and the button under the list goes to the page whose job is the rest
+   of them. Only the list that has somewhere to send you is trimmed - the
+   hosting promise below it uses .lede-promise too and keeps all of its items,
+   which are not written up anywhere else. */
+@media (max-width: 700px) {
+  .lede-promise-trim li:not(.lede-keep) { display: none; }
+}
+
+/* The qualifications under the promise. Same size and colour as .fine-print
+   further down, so every piece of small print on the page reads alike. */
+.lede-note {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-neutral-700);
+}
+
+.addon-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+.addon {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-6);
+  border: 1px dashed var(--color-neutral-400);
+  border-radius: var(--radius-lg);
+}
+.addon strong { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 19px; }
+.addon span { font-size: 15px; color: var(--color-neutral-700); }
+
+/* comparison table */
+.compare-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  background: var(--color-neutral-100);
+}
+.compare {
+  width: 100%;
+  min-width: 1180px;
+  border-collapse: collapse;
+  font-size: 15px;
+  margin: 0;
+}
+.compare th, .compare td {
+  padding: var(--space-2) var(--space-3);
+  text-align: center;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+  vertical-align: middle;
+}
+.compare thead th {
+  position: sticky;
+  top: 0;
+  background: var(--color-neutral-200);
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 13px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-divider);
+}
+.compare th[scope="row"], .compare tbody td:first-child {
+  text-align: left;
+  font-weight: 500;
+  color: var(--color-neutral-800);
+}
+.compare th[scope="row"] { min-width: 260px; }
+.compare-ladder { min-width: 900px; }
+.compare tbody tr:hover { background: color-mix(in srgb, var(--color-text) 4%, transparent); }
+.compare .group th {
+  text-align: left;
+  background: var(--color-accent-100);
+  font-family: var(--font-heading);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent-800);
+}
+.yes { color: var(--color-accent-2-700); font-weight: 700; }
+.no, .maybe { color: var(--color-neutral-600); }
+.compare small { display: block; font-size: 13px; color: var(--color-neutral-700); }
+
+.footnotes { font-size: 13.5px; color: var(--color-neutral-700); }
+.footnotes p { margin: 0 0 var(--space-1); }
+
+/* ── news ───────────────────────────────────────────────────────────────── */
+
+/* Same job as .band-box, applied directly: the news and releases indexes end
+   in one of these, so the pattern would otherwise run behind the headlines.
+   A list genuinely fills the content column, so here the tight box around
+   the content is a full-width one. */
+.news-list {
+  list-style: none;
+  margin: calc(var(--space-4) * -1);
+  padding: var(--space-4);
+  background-color: var(--color-bg);
+  border-radius: var(--radius-md);
+}
+.news-list li { margin: 0; border-bottom: 1px solid var(--color-divider); }
+.news-list li:last-child { border-bottom: 0; }
+/* Two row shapes share this list. A release row is a plain <li>, because its
+   teaser is Markdown and can carry links of its own, which an <a> wrapped
+   around the whole row would make invalid - the headline is the link and
+   .stretched-link makes the rest of the row clickable. The download list is
+   the other shape: a row there is one link and nothing else, so the <a> is
+   still the row. Only the layout is split between the two; colour and
+   underline below stay on every link in the list. */
+.news-list > li > a,
+.news-list > li.news-list-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+}
+.news-list > li.news-list-row { position: relative; }
+.news-list a { text-decoration: none; color: var(--color-text); }
+.news-list a:hover { color: var(--color-accent-700); }
+/* The whole row is the click target, so hovering anywhere in it lights the
+   headline - what .news-list a:hover did on its own when the row was one <a>. */
+.news-list-row:hover .news-title { color: var(--color-accent-700); }
+.news-list time {
+  flex: 0 0 7.5em;
+  font-size: 14px;
+  color: var(--color-neutral-700);
+  font-variant-numeric: tabular-nums;
+}
+/* Forces the year onto its own line always, rather than only wrapping there
+   for long month names (August, September, November...) while short ones
+   (May, June...) stay on one line - see _includes/release-date.html, which
+   splits the date into these two spans. */
+.news-date-line { display: block; }
+.news-list .news-title {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 20px;
+}
+/* The headline-and-teaser column of a release row - on /news/releases/ and in
+   "Latest releases" on /news/ - stacked beside the date. min-width: 0 because
+   it is a flex child: without it a long
+   unbroken word in a teaser sets the column's floor at its own width and the
+   row pushes past the page. */
+.news-list .news-text { display: block; min-width: 0; }
+.news-list .news-title { display: block; }
+/* Explicitly coloured rather than left to inherit, so it stays quiet when the
+   row is hovered and only the headline above it lights up. */
+.news-list .news-teaser {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--color-neutral-700);
+}
+/* The trailing "- what this one is good for" half of a title, on the PDF list
+   on /download/. Nested inside .news-title rather than placed beside it, so
+   the two stay one wrapping run of text and .news-list a keeps a single flex
+   child. A note set in the heading face at heading size read as more title,
+   which is exactly what these are not. */
+.news-list .news-note {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 16px;
+  color: var(--color-neutral-700);
+}
+
+.post-list { display: flex; flex-direction: column; gap: var(--space-6); }
+/* One destination, so one click target for the whole box (it was an <article>
+   with three separate <a>s inside it, all pointing at the same post), matching
+   .news-card. The link is on the headline and .stretched-link covers the card
+   with it, rather than the card being one big <a>, so that a teaser's own
+   Markdown links stay real links. */
+.post-teaser {
+  position: relative;
+  display: block;
+  padding: var(--space-6);
+  background: var(--color-neutral-100);
+  border: 1px solid var(--color-divider);
+  border-radius: calc(var(--radius-lg) * 1.15);
+  color: inherit;
+  transition: box-shadow 0.15s ease;
+}
+/* Block flow rather than grid, so the thumbnail can float and the heading/
+   excerpt wrap around it - matches .news-card-body's reasoning exactly.
+   The clearfix keeps the card's own height (and its border/padding) honest
+   when the float is taller than the text next to it. */
+.post-teaser::after { content: ""; display: block; clear: both; }
+.post-teaser:hover { box-shadow: var(--shadow-md); }
+/* No fixed box or crop: the photo comes from whatever gets uploaded to the
+   News form, in whatever aspect ratio it has - max-width/max-height only
+   cap how large that shape is allowed to get, same as .news-card-thumb. */
+.post-teaser-thumb {
+  float: right;
+  width: auto;
+  height: auto;
+  max-width: 220px;
+  max-height: 220px;
+  margin: 0 0 var(--space-4) var(--space-6);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+.post-teaser h2 { font-size: 28px; margin-bottom: var(--space-2); }
+.post-teaser h2 a {
+  color: var(--color-accent-700);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+/* Wins over the site-wide a:not(.btn):hover, which is the same specificity but
+   earlier in the file - so the headline reads the same whether the pointer is
+   on it or anywhere else in the card. */
+.post-teaser:hover h2 a { color: var(--color-text); }
+.post-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: 13.5px;
+  color: var(--color-neutral-700);
+  margin-bottom: var(--space-2);
+}
+/* No bottom margin of its own: the gap below it belongs to .news-card-more's
+   padding-top, so it is the same whether the teaser or the thumbnail is what
+   the "Read more" line ends up clearing. */
+.post-excerpt { margin: 0; color: var(--color-neutral-800); }
+/* Sits outside the text block, after the thumbnail float, so clear: both drops
+   it below whichever is taller - the teaser or the image - and it always ends
+   up on the card's bottom-left rather than mid-card beside a tall thumbnail. */
+.post-teaser .news-card-more { display: block; clear: both; padding-top: var(--space-4); }
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-8);
+}
+.pagination .btn { min-width: 7em; }
+.pagination-status { font-size: 15px; color: var(--color-neutral-700); }
+
+/* Not a .band, so it doesn't get a .band's own closing gap - without this the
+   final btn-row sits flush against the footer. */
+.post-body { max-width: 72ch; padding-bottom: var(--space-12); }
+/* A news entry is a .prose inside a .post-body, and both now close on their
+   own var(--space-12) - which is two closing gaps stacked, the same mistake
+   .site-main used to make. The outer box keeps it, because it is the one that
+   owns the layout of this page. */
+.post-body > .prose { padding-bottom: 0; }
+.post-header { margin-bottom: var(--space-6); }
+.post-header h1 { margin-bottom: var(--space-2); }
+
+/* ── videos ─────────────────────────────────────────────────────────────── */
+
+/* Three to a row, filling the content column, rather than auto-fill on a
+   260px minimum: auto-fill let the column decide how many cards fit, which
+   meant the number changed with the page width and the cards were never
+   sized on purpose. The videos page is full_width so this row is the whole
+   1160px column. Steps down to two and then one below - see the responsive
+   block at the end of this file. */
+#video-flex-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-6);
+  margin: 0;
+  padding: 0;
+}
+#video-flex-list > div {
+  background: var(--color-neutral-100);
+  border: 1px solid var(--color-divider);
+  border-radius: calc(var(--radius-lg) * 1.15);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+/* 5:3 is the shape every thumbnail in /assets/img is already saved at
+   (700x420), so nothing is cropped; the ratio is declared rather than left to
+   the file so a card keeps its place in the row if one ever arrives a
+   different shape. Sized by ratio rather than the fixed 180px this had while
+   the cards were narrow - a fixed height letterboxes harder the wider the
+   card gets. */
+#video-flex-list img { width: 100%; aspect-ratio: 5 / 3; height: auto; object-fit: cover; border: 0; }
+#video-flex-list p {
+  padding: var(--space-4) var(--space-6) var(--space-6);
+  margin: 0;
+  font-size: 16.5px;
+  line-height: 1.5;
+}
+#video-flex-list a { text-decoration: none; }
+.video-title {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 20px;
+  color: var(--color-text);
+}
+#video-flex-list a:hover .video-title { color: var(--color-accent-700); }
+
+/* A single video dropped into the middle of a prose page (see AI.md): the
+   thumbnail beside its caption, inside the reading measure, rather than a
+   card in the videos grid. It used to borrow #video-flex-list for this and
+   got the two-column shape only because the reading measure happened to be
+   narrow enough to fit two auto-fill tracks - the moment the grid became a
+   deliberate three-up, that coincidence stopped holding. */
+.video-inline {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-6);
+  margin: 0 0 var(--space-4);
+}
+.video-inline img { width: 100%; border: 0; margin: 0; }
+.video-inline p { margin: 0; font-size: 16.5px; line-height: 1.5; }
+.video-inline a { text-decoration: none; }
+.video-inline a:hover .video-title { color: var(--color-accent-700); }
+@media (max-width: 600px) {
+  .video-inline { grid-template-columns: minmax(0, 1fr); }
+}
+
+.video-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+.video-card { text-decoration: none; color: inherit; }
+.video-card img {
+  border-radius: var(--radius-md);
+  width: 100%;
+  height: 170px;
+  object-fit: cover;
+  box-shadow: var(--shadow-sm);
+}
+.video-card-title {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 20px;
+  line-height: 1.2;
+  margin-top: var(--space-3);
+}
+.video-card:hover .video-card-title { color: var(--color-accent-700); }
+.video-card span.text-muted { font-size: 15px; line-height: 1.45; }
+
+/* ── download page ──────────────────────────────────────────────────────── */
+
+.download-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+.download-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: calc(var(--radius-lg) * 1.15);
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.15s ease;
+}
+.download-card:hover { box-shadow: var(--shadow-md); color: inherit; }
+.download-card img { width: 34px; height: auto; flex: none; }
+.download-card strong {
+  display: block;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 21px;
+  color: var(--color-accent-700);
+  transition: color 0.15s ease;
+}
+.download-card:hover strong { color: var(--color-text); }
+.download-card span { font-size: 15px; color: var(--color-neutral-700); }
+
+/* ── prose pages (markdown docs) ────────────────────────────────────────── */
+
+/* The reading measure is a cap on each block, not on the column itself, so
+   that the blocks which are not prose can opt out of it. Tables and code are
+   the ones that matter: an MCP tool's properties table or a PHP example in
+   the API reference was being folded into a 78ch ribbon with a third of the
+   page empty beside it, and the code blocks were scrolling sideways inside
+   that ribbon while the room they needed sat unused to the right.
+
+   52rem rather than 78ch because ch resolves against each element's own font
+   - on an h2 at 30px, 78ch is far wider than the page - and rem is the same
+   length everywhere. 52rem is 832px, which is what 78ch measured at in the
+   17px body face, so running text is unchanged. */
+.prose { max-width: none; }
+/* The closing gap on every documentation page. Full-width pages get theirs
+   from the last .band's own bottom padding, which is why .site-main > .page
+   deliberately has none - but a markdown page has no bands, so its last
+   paragraph, or worse its last code block, finished hard against the clickable
+   boxes at the top of the footer with nothing between them. Same var(--space-12)
+   the bands use, so both kinds of page close on the same gap. */
+.prose { padding-bottom: var(--space-12); }
+.prose > * { max-width: var(--measure); }
+.prose > table,
+.prose > pre,
+.prose > .highlight,
+.prose > .highlighter-rouge { max-width: none; }
+.prose h1 { margin-bottom: var(--space-4); }
+.prose h2 { font-size: 30px; margin-top: var(--space-8); }
+.prose h3 { font-size: 24px; margin-top: var(--space-6); }
+.prose h4 { font-size: 19px; margin-top: var(--space-6); }
+.prose img {
+  border: 1px solid var(--color-neutral-300);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-4);
+}
+/* News entry image: floats beside the body text instead of sitting full-width
+   above it, so the headline reads first and the body starts right under it,
+   wrapping around the image while there's text left to wrap. */
+.prose img.news-entry-image {
+  float: right;
+  width: 45%;
+  max-width: 320px;
+  margin: 0 0 var(--space-4) var(--space-6);
+}
+@media (max-width: 600px) {
+  .prose img.news-entry-image { float: none; width: 100%; max-width: none; margin: 0 0 var(--space-4); }
+}
+/* Floats inside .post-body's .prose shouldn't bleed past the divider below it. */
+.post-body hr { clear: both; }
+.prose table { font-size: 16px; border-collapse: collapse; width: 100%; }
+.prose th, .prose td {
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-divider);
+}
+.prose th { font-family: var(--font-heading); font-weight: var(--font-heading-weight); }
+.prose .social-image {
+  display: inline-block;
+  border: 0;
+  vertical-align: middle;
+  max-height: 1.2em;
+  margin: 0 0 0 var(--space-1);
+}
+.prose #image404 { border: 0; }
+
+.page-pic { margin: 0 0 var(--space-4); max-width: 300px; }
+.page-pic img { border-radius: var(--radius-md); }
+.page-pic p {
+  text-align: center;
+  font-style: italic;
+  font-size: 14px;
+  color: var(--color-neutral-700);
+  margin: var(--space-2) 0 0;
+}
+.small-pic { width: 220px; }
+
+/* The API reference pages put the whole function signature inside the <h1> —
+   the name and the parens as bare text, and each argument wrapped in
+   <span class="sig-arg">, which in turn holds the parenthesized type hint
+   (.sig-type) and any default value (.sig-default).
+
+   The point of the split is that the name is sized independently of everything
+   else. The function name is the page's title and has to read as one - it was
+   set at 23px, which left it visibly smaller than the "Description" h2
+   immediately below it at 30px, so the title of the page looked like a
+   subheading of its own first section. It is the largest thing on the page now.
+   The arguments stay near body size: they are reference detail, and blowing
+   them up with the name would have turned an eleven-argument signature like
+   gatherDataset into six lines of display type.
+
+   Which way round the sizes are set matters, and it is the opposite of the
+   obvious. The heading itself carries the ARGUMENT size, and .sig-name is what
+   steps up from it - because the punctuation holding the signature together
+   (the parens, and the comma between every pair of arguments) is bare text in
+   the h1 with no element of its own to hook a rule onto. Sizing the heading as
+   the name and stepping the arguments down left those commas set at 34px,
+   black and bold, reading as a row of blobs between the arguments rather than
+   as punctuation. Done this way they simply inherit, and come out at argument
+   size along with everything else that is not the name.
+
+   line-height stays unitless so that this works: each element recomputes it
+   against its own font-size, so the line holding the 34px name gets a line box
+   to match rather than the 19px one the heading's own strut would give it.
+
+   Scoped to .prose h1 so no marketing heading can be caught by it. If a page
+   would rather have a display-face title, the markdown should carry the name as
+   the h1 and the signature as a fenced code block beneath it. */
+.prose h1:has(> span) {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 19px;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.5;
+  text-wrap: initial;
+  margin-bottom: var(--space-6);
+}
+/* 700 rather than 600, because the weight that gets used is decided by the
+   face the monospace stack actually resolves to, and that is different on
+   every platform. On Windows the stack lands on Consolas, which ships regular
+   and bold and nothing between, so a request for 600 is served by the 700
+   face and the name reads bold - which is the look these pages were designed
+   around. On iOS the stack lands on SF Mono, which does have a real Semibold,
+   so 600 was served literally; with -webkit-font-smoothing: antialiased on
+   top of it (see body) the name came out visibly lighter than its own page
+   title should be, and lighter than every desktop rendering of it. Asking for
+   700 gets the bold face wherever one exists and leaves Consolas exactly
+   where it already was. */
+.prose h1 span.sig-name {
+  font-size: 34px;
+  font-weight: 700;
+}
+/* One argument, kept whole: the type hint, the variable name and the default
+   value are one thing to read and a line break anywhere inside it makes a
+   signature much harder to scan - "(array)" left stranded at the end of one
+   line with "$scope_uids = array()" starting the next. nowrap on the argument
+   as a unit is what fixes that; the commas between arguments sit outside these
+   spans, so a long signature still wraps, just only ever between arguments.
+
+   It replaces a hand-applied fix: a few of these pages had &nbsp; typed
+   between the pieces of one or two arguments, which held those together and
+   left every other argument on the page free to break.
+
+   It holds at every width, phones included, and that has a cost worth writing
+   down. The longest arguments in the reference - "(bool | string | array)
+   $defaultValue = false", "(int | string | object) $element_identifier" - are
+   wider than a phone screen at any readable size, and nowrap means those pages
+   scroll sideways rather than breaking the argument up: about seven of the
+   thirty-seven at iPhone width, and about fifteen on a 320px screen, by
+   between 4px and 100px. The scroll is the document's, not the heading's, so
+   on those pages the body text swipes sideways too.
+
+   That is the deliberate trade. These are reference pages, the rule is what
+   makes a signature scannable, and losing it on every argument to spare a
+   handful was judged the worse deal. Note that relaxing white-space here is
+   not a fix available in CSS anyway: nowrap is all or nothing, and
+   overflow-wrap has no effect on a run that cannot wrap at all. The only
+   lever is the markup - gluing each argument's pieces with &nbsp; so the
+   browser breaks one only when it genuinely cannot fit - and that tax on
+   writing these pages was not judged worth paying. If the scrolling ever does
+   need to go, the other option is overflow-x: auto on the signature h1, which
+   confines it to the signature instead of the page. */
+.prose h1 span.sig-arg {
+  white-space: nowrap;
+}
+.prose h1 span.sig-type,
+.prose h1 span.sig-default {
+  color: var(--color-neutral-600);
+}
+
+/* The signature is sized for a 830px column, and a phone does not have one.
+   At 19px the argument list of an ordinary function ran to five lines on a
+   390px screen and carried nearly as much weight on the page as the section
+   headings under it, and the longest arguments - "(bool | string | array)
+   $defaultValue = false" is the worst - were wider than the whole screen,
+   which with nowrap on them pushed the document sideways.
+
+   The name comes down to 30px rather than further: .prose h2 stays at 30px
+   at every width, and the whole reason the name is sized separately is that
+   it has to hold its own against the "Description" heading immediately below
+   it instead of reading as a subheading of it. 30px of bold monospace and
+   30px of Unbounded are about the same size on the page, which is the
+   relationship desktop already has at 34/30.
+
+   The arguments come down further, to 15px. They are reference detail next to
+   17px body text, and the drop is what takes that five-line block back to two
+   or three.
+
+   Only the sizes change here. The nowrap above stays on at this width, which
+   is what keeps an argument reading as one thing on a phone exactly as it
+   does on a desktop, and the 19px -> 15px drop is also what brings all but
+   the longest four arguments in the reference inside a phone screen. See that
+   rule for why the four that are still too wide are left to scroll. */
+@media (max-width: 600px) {
+  .prose h1:has(> span) { font-size: 15px; }
+  .prose h1 span.sig-name { font-size: 30px; }
+}
+
+nav.breadcrumbs { margin-bottom: var(--space-4); }
+nav.breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 13.5px;
+  color: var(--color-neutral-700);
+}
+nav.breadcrumbs li { margin: 0; }
+nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
+  margin-right: var(--space-1);
+  content: "»";
+}
+
+/* ── footer ─────────────────────────────────────────────────────────────── */
+
+/* A normal, full-width band in the flow of the page, wearing the pixel
+   pattern as decoration on top of its own fill.
+
+   That "on top of its own fill" is the whole difference from the earlier
+   version of this. Then, the pattern was a separately positioned full-height
+   div behind the entire page and .site-footer was transparent over it, so to
+   a reader the pixels *were* the footer. Now the footer is an ordinary
+   element with an ordinary background, and the pattern is the second layer
+   of it - background-color showing through everywhere the artwork is
+   transparent. Nothing is positioned, nothing needs a z-index, and the
+   footer's own content paints over it for free.
+
+   The image is the top 58.5% of the full artwork (pixel-bars-footer.png,
+   which is the whole thing), used the right way up so it starts empty and
+   reaches its densest at the very bottom of the page - growing up out of the
+   bottom edge. The header's slice, back when it had one, was the top 40%
+   turned 180 degrees to fall the other way instead; this is more than twice
+   as much of the artwork, and the other way round.
+
+   54.29% is not a round number because it is not a ratio - it is a cut at a
+   specific feature of the artwork. The pattern is built from rows of blocks
+   about 102 source rows tall, and 1684 is the row where one of those
+   boundaries falls: the bottom edge of a row of transparent squares, with
+   coloured blocks starting underneath it. Ending the image there means the
+   page ends on a clean line of squares rather than part way through the next
+   row of colour. Re-cutting to any other height should land on one of those
+   boundaries too - they repeat every ~102 rows - and the bottom padding
+   below has to move with it.
+
+   Sized by width like every other use of this artwork - the repeat unit is
+   much wider than it is tall, so 1300px is what actually sets the bar
+   thickness. At that width the image renders 1300 * 1684/4233 = ~517px tall,
+   and one row of blocks is ~31px.
+
+   The artwork is a layer of its own rather than a background-image on the
+   footer, because it has to sit *behind the footer's content* and still be
+   dimmable. A background-image cannot be faded on its own - opacity on the
+   element would take the text down with it - so it goes on a ::before, and
+   --footer-pattern-strength is the one knob for how present it is.
+
+   The stacking is the point and it is load-bearing. The footer is given a
+   stacking context (position + isolation), so painting order inside it runs:
+   the footer's own background-color, then negative-z-index children, then
+   the in-flow content. That puts the ::before above the fill and below every
+   link without touching the z-index of anything inside the footer. Drop the
+   isolation and the -1 escapes to the root stacking context, where the
+   footer's own background-color paints over it and the pattern vanishes.
+
+   The bottom padding is small on purpose, and it is now set from the artwork
+   rather than from the spacing scale. The image ends on a block boundary
+   (see above), so one row of blocks below the panel is 31px at the default
+   background-size - that is the whole of the gap, and it is what makes the
+   page finish on a clean line of squares with nothing trailing after it.
+   It was var(--space-16) before, which left two and a bit rows showing and a
+   partial row cut off at the page edge.
+
+   Because it is one block row, it scales with background-size in the media
+   queries below rather than staying fixed. */
+.site-footer {
+  position: relative;
+  isolation: isolate;
+  --footer-pattern-strength: 1;
+  background-color: var(--color-bg);
+  /* The one hard line between the page and the footer. White on the page's
+     light blue is a very soft step - soft enough that the footer stopped
+     reading as its own zone - and this draws the boundary without darkening
+     the ground back down. Same green as the artwork and the action strip. */
+  padding: 0 0 31px;
+  color: var(--color-text);
+}
+.site-footer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: url("/assets/img/pixel-bars-footer-band.png");
+  background-repeat: repeat-x;
+  background-position: bottom center;
+  background-size: 1300px auto;
+  opacity: var(--footer-pattern-strength);
+  pointer-events: none;
+}
+
+/* The artwork is sized in px, so its rendered height is fixed while the
+   footer gets much taller as the columns stack - by 400px wide the footer is
+   about twice the height it is on desktop. Narrowing the image is what keeps
+   the bars from looking chunky against a small screen, but every px taken
+   off the width is height lost too, so this only trims it: the pattern
+   covers less of a phone footer than a desktop one and fades out lower down,
+   which is the same idea either way. Narrow screens see the middle of the
+   repeat, which is all the pattern needs - it has no left or right to get
+   wrong. Worth retuning once the content sitting on top of it is settled. */
+@media (max-width: 900px) {
+  .site-footer { padding-bottom: 27px; }
+  .site-footer::before { background-size: 1100px auto; }
+}
+@media (max-width: 600px) {
+  .site-footer { padding-bottom: 22px; }
+  .site-footer::before { background-size: 900px auto; }
+}
+/* The panel is a white box on the footer's white ground, separated from it by
+   the divider-grey border every other box on the site uses rather than by a
+   change of fill. It still gives the artwork something to be behind: the box
+   covers the middle, the pixels show in the gutters either side of it and in
+   the band below, which is the same figure-on-pattern arrangement the header
+   used to have at the top of the page.
+
+   Bottom padding on .site-footer is what sets how much pattern is visible
+   under the box; it is deliberately larger than the top padding. */
+.footer-panel {
+  margin-top: var(--space-8);
+  padding: var(--space-8) var(--space-8) var(--space-6);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: calc(var(--radius-lg) * 1.15);
+  color: var(--color-text);
+  /* Same rest/hover shadow step as .card, so this box lifts the same way
+     every other bordered box on the site does. */
+  transition: box-shadow 0.15s ease;
+}
+.footer-panel:hover { box-shadow: var(--shadow-md); }
+/* Scoped to the panel, not to .site-footer, so it can't reach the action
+   strip's tiles - they are <a> elements too and carry their own colour.
+   These are ordinary links on white now, so they take the site's ordinary
+   link colour; the only thing kept from the dark-panel version is dropping
+   the underline until hover, because five stacked underlined links per column
+   is a lot of line noise. */
+.footer-panel a { color: var(--color-accent-700); text-decoration: none; }
+.footer-panel a:hover { color: var(--color-accent-600); text-decoration: underline; }
+.footer-cols {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-8);
+}
+/* Ordinary headings on a white box now: Unbounded in black, like every other
+   heading on a white ground, sitting above 15.5px Poppins links in the accent
+   blue. The face does the work the uppercase-and-tracking treatment used to
+   do back when these were Poppins on dark blue.
+
+   Uppercase and the 0.08em tracking are gone because Unbounded ExtraBold
+   cannot afford them on top of everything else this face already costs in
+   width - the column is only about 246px at full page width.
+
+   Even mixed case, "Professional services" and "Help & documentation" wrap to
+   two lines at that width while the other two fit on one, which left the four
+   link lists starting at different heights - the thing that actually makes
+   the columns hard to read across. min-height is two lines of this type, so a
+   heading that does not wrap still reserves the space of one that does and
+   every list starts level.
+
+   Two lines rather than a hard-coded pixel height so it tracks the font-size
+   and line-height above, and min- rather than a fixed height so a heading
+   that needs three lines at some narrower width still gets them. The
+   line-height is set here rather than inherited from the h1-h6 rule for the
+   same reason: this calc has to be able to name it. */
+.footer-cols h2, .footer-cols h3 {
+  font-size: 16px;
+  line-height: 1.2;
+  min-height: calc(2 * 1.2 * 16px);
+  letter-spacing: var(--tracking);
+  color: var(--color-text);
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  margin-bottom: var(--space-3);
+}
+.footer-cols ul { list-style: none; margin: 0; padding: 0; font-size: 15.5px; }
+.footer-cols li { margin-bottom: var(--space-2); }
+/* Fine print, so it is the one thing in the panel allowed to sit below full
+   contrast - neutral-700 is the same muted grey .text-muted uses elsewhere on
+   white, rather than the translucent white this carried on the dark panel.
+   The rule above it is the panel's own border colour, so the two greys in the
+   box are one grey. */
+.footer-bottom {
+  margin-top: var(--space-8);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-divider);
+  font-size: 13.5px;
+  color: var(--color-neutral-700);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  justify-content: space-between;
+}
+
+/* ── homepage lead hero: headline + video ───────────────────────────────── */
+
+.hero-lead .hero-text { flex: 1 1 44%; }
+.hero-lead .hero-text h1 { font-size: 39px; margin-bottom: var(--space-4); }
+.hero-text p.hero-sub {
+  font-size: 20px;
+  line-height: 1.45;
+  margin-bottom: 0;
+  color: rgba(255, 255, 255, 0.96);
+  max-width: 34ch;
+}
+.hero-text p.hero-sub + p.hero-sub { margin-top: var(--space-3); }
+.hero-media { flex: 1 1 56%; min-width: 0; max-width: 620px; }
+.hero-media .hero-thumbnail { max-width: none; display: block; }
+.hero-caption {
+  margin: var(--space-3) 0 0;
+  font-size: 15.5px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.9);
+}
+.hero-play { display: block; border-radius: var(--radius-md); }
+.hero-play img { display: block; width: 100%; height: auto; opacity: 0.92; transition: opacity 0.15s ease; }
+.hero-play:hover img { opacity: 1; }
+.hero-play:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+
+/* The videos band on the documentation hub: the thumbnail is the smaller of
+   the two columns because it is an invitation, not the content - the copy and
+   the button are what someone reads. .hero-play, just above, carries the
+   image's own hover and focus treatment and is not scoped to the hero. */
+.video-feature {
+  display: grid;
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
+  gap: var(--space-6);
+  align-items: center;
+}
+.video-feature h2 { margin-bottom: var(--space-2); }
+.video-feature p { color: var(--color-neutral-800); font-size: 17px; line-height: 1.55; }
+.video-feature > div > :last-child { margin-bottom: 0; }
+@media (max-width: 760px) {
+  /* Stacked, the thumbnail would run the full width of the box and dwarf the
+     copy under it, so it keeps to a readable size and the text sits below. */
+  .video-feature { grid-template-columns: minmax(0, 1fr); }
+  .video-feature .hero-play { max-width: 360px; }
+}
+
+/* ── news cards (homepage) ─────────────────────────────────────────────── */
+
+.news-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+/* Two up instead of three, for the homepage, which shows two stories. Kept to
+   a single class so the responsive rules further down - which are also single
+   class selectors and come later in the file - can override it. Written as
+   .news-row.news-row-pair it would outrank them and never collapse. */
+.news-row-pair { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+/* Clickable anywhere, but not itself an <a>: the headline carries the link and
+   .stretched-link covers the card with it, which leaves a teaser free to have
+   Markdown links of its own. */
+.news-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-6);
+  background: var(--color-neutral-100);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  color: inherit;
+  transition: box-shadow 0.15s ease;
+}
+.news-card:hover { box-shadow: var(--shadow-md); color: inherit; }
+/* Plain block flow rather than flex, so a thumbnail can float and the
+   heading/teaser wrap around it - a flex/grid item can't be floated, which
+   is why this used to be a fixed side-by-side row instead. The clearfix
+   keeps the card's own height honest when the float is taller than the
+   text next to it. */
+.news-card-body::after { content: ""; display: block; clear: both; }
+/* No fixed box/object-fit crop: thumbnails come from whatever photo gets
+   uploaded to the News form, in whatever aspect ratio it has, and forcing
+   them all into one shape was the thing being fixed here. max-width/
+   max-height instead just cap how large any shape is allowed to get. */
+.news-card-thumb {
+  float: right;
+  width: auto;
+  height: auto;
+  max-width: 128px;
+  max-height: 128px;
+  margin: 0 0 var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+.news-card time {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-size: 13.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--color-neutral-700);
+}
+.news-card-title {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 23px;
+  line-height: 1.2;
+  color: var(--color-accent-700);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+/* a.news-card-title, not .news-card-title, to outrank the site-wide
+   a:not(.btn):hover when the pointer is on the headline itself - otherwise the
+   headline takes a different colour from the rest of the card's hover. */
+.news-card:hover a.news-card-title { color: var(--color-text); }
+.news-card p {
+  margin: 0;
+  font-size: 16.5px;
+  line-height: 1.5;
+  color: var(--color-neutral-800);
+}
+.news-card-more {
+  margin-top: auto;
+  padding-top: var(--space-3);
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--color-accent-700);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.band-foot { margin: var(--space-6) 0 0; }
+.band-foot a {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 19px;
+  color: var(--color-accent-700);
+}
+
+/* ── full feature list (features page) ────────────────────────────────── */
+
+.feature-cols {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-8);
+	row-gap: 0; /* spacing covered by padding-top on the containing divs of each item in the flex container */
+}
+/* The two other .feature-cols (the documentation hub's category list, and
+   the "same idea, in every one" trio on the examples page) don't tag their
+   items with .inpage-anchor, so they never picked up that padding-top - at
+   any width where the grid wraps to more rows than columns, a later row's
+   heading sits flush against the previous row's last bullet. Row-gap fixes
+   that the direct way, but only here, scoped off the features page's own
+   items with :has() - added on top of their existing padding-top it would
+   double the gap between their rows instead of leaving them alone. */
+.feature-cols:not(:has(.inpage-anchor)) { row-gap: var(--space-8); }
+.feature-cols h3 { font-size: 22px; margin: 0 0 var(--space-3); }
+.feature-cols ul {
+  margin: 0;
+  padding-left: var(--space-6);
+  font-size: 16.5px;
+  line-height: 1.5;
+  color: var(--color-neutral-800);
+}
+.feature-cols li { margin-bottom: var(--space-2); }
+.feature-cols li:last-child { margin-bottom: 0; }
+
+/* The topics stacked one under another, each one's bullets across three
+   columns rather than the topics themselves being the columns. Two things
+   were wrong with three topics across: each of the six bullets under a
+   heading wrapped two and three times in a 330px track, so a topic was a
+   tall ragged block rather than a list; and seven topics of unequal length
+   in a three-column grid leaves the short ones padding out their row and the
+   whole thing reads as a grid to be scanned in a Z rather than a list to be
+   read down. Stacked, each heading owns the full width of the page, its own
+   bullets sit under it in three short columns, and the band is seven blocks
+   down the page in the order the menu lists them.
+
+   Each topic is a .card of its own on the page's own blue, rather than the
+   seven of them sharing one tinted .band-box. One box around the lot made
+   the band a single object with seven headings inside it, and the menu's
+   seven destinations were all the same place; as seven white cards, the
+   thing the menu points at is a thing you can see the edges of.
+
+   Multi-column on the ul rather than a grid of three tracks, so the browser
+   balances the columns and the list still reads in source order down one
+   column and on to the next. Balancing is by height rather than by count, so
+   the six-bullet topics fall 2/2/2 and the five-bullet one falls 2/2/1,
+   while "Running it" - seven bullets, and the last of them short - falls
+   3/3/1. A grid of three tracks would read across the rows instead, and
+   would hold every row to the height of its tallest bullet.
+
+   column-width alongside column-count makes the count a ceiling rather than
+   a fixed number, which is the whole responsive story here: three columns
+   while each can be 260px wide, two when the box is too narrow for that, one
+   on a phone - measured off the box itself rather than the window, and so
+   needing nothing in the collapse lists further down. Those lists are also
+   why the stack rule is written at two classes: .feature-cols is re-columned
+   at 900px and 560px, and at one class the later of the two rules would win
+   and put this list back into two columns of topics on a tablet.
+
+   break-inside on the items, because a bullet that wraps is otherwise free
+   to leave one line at the foot of a column and carry the rest to the top of
+   the next. */
+.feature-cols.feature-stack { grid-template-columns: minmax(0, 1fr); row-gap: var(--space-6); }
+.feature-stack ul {
+  column-count: 3;
+  column-width: 260px;
+  column-gap: var(--space-8);
+}
+.feature-stack li { break-inside: avoid; }
+
+/* .inpage-anchor's top padding is the gap between rows everywhere else this
+   class is used, and inside a card it would be a strip of white above the
+   heading instead - so the gap moves out to the grid's row-gap above, where
+   it belongs once each row has edges of its own. Both rules are written at
+   two classes to clear .inpage-anchor's own padding and .feature-cols' own
+   row-gap: 0, and the 560px block's smaller padding with them.
+
+   gap: 0 on the card because .card is a flex column with a space-2 gap, and
+   the heading already carries a space-3 margin below it: together that is
+   22px of air under a 22px heading, which reads as the bullets belonging to
+   the next topic rather than this one. */
+.feature-stack .card { gap: 0; }
+
+/* A card lands from the menu with its own top edge showing, which the topics
+   did not when they were seven headings inside one box - so the global
+   [id] scroll-margin has to actually clear the sticky header here, and it is
+   a few pixels short of doing that. Measured, the header is 133px from
+   1080px up, 121px at 1080, 112px from 900 down and 82px below 560; the
+   global 128px was written against a ~108px header and leaves the widest
+   case tucking the card's first 5px behind the bar. 148px clears the tallest
+   of them with about 15px of air, and hands the shorter ones a little more.
+   The 560px block keeps its own 92px, which is already right for the 82px
+   bar there - without repeating it here that rule would lose on specificity
+   and a phone would open every topic 66px down an empty screen. */
+.feature-stack .inpage-anchor { scroll-margin-top: 148px; }
+
+/* Subheads with a line of text under each, stacked down the page - the three
+   situations in the opening card on /examples/. It was three columns first,
+   and reads better as a list: at three across, each sentence was a narrow
+   two- or three-line block and the eye had to travel sideways between them.
+
+   Held to the same 62ch as the paragraphs that frame it in that card, and set
+   at their size too, so the whole card is one measure and one size and the
+   subheads alone carry the structure. Margins rather than a flex gap, so the
+   subhead sits close to its own sentence and the space falls between the
+   pairs instead of being shared out evenly between all six children. */
+/* 76ch, not the 62ch of running prose: every line in this list is meant to be
+   one line, and at a narrower measure two of the six wrapped. There is nothing
+   aligned across them, so a longer line added later just wraps. */
+.subhead-list { max-width: 76ch; }
+.subhead-list h3 { font-size: 22px; margin: 0 0 var(--space-2); }
+.subhead-list p,
+.subhead-list ul {
+  margin: 0 0 var(--space-6);
+  font-size: 19px;
+  line-height: 1.5;
+  color: var(--color-neutral-800);
+}
+.subhead-list ul { padding-left: var(--space-6); }
+.subhead-list li { margin-bottom: var(--space-2); }
+.subhead-list li:last-child { margin-bottom: 0; }
+.subhead-list > :last-child { margin-bottom: 0; }
+
+/* ── embedded Formulize screens ─────────────────────────────────────────── */
+
+/* The frame on /contact/ and /signup/. The embedded screen brings its own
+   theme, including its own padding around the fields, so this wrapper does
+   not add a second surface around it - that read as two nested borders once
+   the frame's content rendered. Full width of the page column on desktop;
+   only the iframe's own 1px border marks it off from the surrounding copy. */
+.embed-frame {
+  margin-bottom: var(--space-6);
+}
+
+.embed-frame-iframe {
+  display: block;
+  width: 100%;
+  /* The script sets the real height once the screen reports it; this only keeps
+     the box from collapsing before the first message arrives. */
+  min-height: 320px;
+  /* !important: formulize-embed.js sets style.border = '0' inline once it
+     registers the frame (most host pages want no border of their own), which
+     otherwise beats this rule outright regardless of source order. */
+  border: 1px solid var(--color-divider) !important;
+  border-radius: var(--radius-md);
+  background: transparent;
+}
+
+/* formulize-embed.js puts this class on the iframe until the screen is visible,
+   so the surround can say something is happening rather than sitting blank. */
+.embed-frame-iframe.formulize-embed--loading {
+  background:
+    linear-gradient(var(--color-neutral-200), var(--color-neutral-200)) center / 100% 100% no-repeat;
+}
+
+.embed-frame-note {
+  margin: var(--space-4) 0 0;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-divider);
+  font-size: 15px;
+  color: var(--color-neutral-700);
+}
+
+/* Promoted by the sessionUnavailable handler in _includes/embedded-form.html,
+   when the screen reports that this browser will not let it save. */
+.embed-frame-note.is-warning {
+  border-top: 0;
+  border-left: 3px solid var(--color-accent);
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-accent-100);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+}
+
+/* ── signup plan preview ───────────────────────────────────────────────── */
+
+/* Four plans, so this cannot be .triad (which would leave a 3+1 orphan row).
+   Once a plan is chosen on /pricing/ only one card survives the filter, and a
+   single card sitting in a quarter-width column is the intended result.
+   .quad is the same grid for any other set of four (the homepage's example
+   categories), so it gets the same 4 / 2 / 1 column steps. */
+.plan-preview, .quad {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+.plan-preview .card, .quad .card { background: var(--color-neutral-100); }
+
+@media (max-width: 1080px) {
+  .plan-preview, .quad { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 620px) {
+  .plan-preview, .quad { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ── responsive ─────────────────────────────────────────────────────────── */
+
+@media (max-width: 1080px) {
+  .tier-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .footer-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  /* The footer used to need a whole flat-blue fallback here, because on
+     desktop it was a pixel-pattern layer with nothing behind it. It is a
+     filled band at every width now, with the pattern only decorating it (see
+     .site-footer), so there is nothing left to override - only the column
+     count above. The artwork is sized in px and anchored bottom-centre, so
+     narrow screens simply see the middle of it. */
+}
+
+@media (max-width: 1160px) {
+  /* .site-header-inner is capped at --page-max (1160px) and centred above
+     that, so the row's width only starts shrinking below this breakpoint -
+     see the comment on .brand-logo above for why that means the logo has to
+     shrink here too. */
+  .brand-logo { height: 48px; }
+  .hero-lead .hero-text { flex: 1 1 50%; }
+  .hero-lead .hero-text h1 { font-size: 32px; }
+  .hero-text p.hero-sub { font-size: 18.5px; max-width: none; }
+  .hero-media { flex: 1 1 50%; }
+}
+
+@media (max-width: 1060px) {
+  /* The open menu drops down inside .header-bar now, so the box has to have
+     the full width to open into - squeezed into the space left beside the
+     buttons, every menu label wrapped onto three lines. It takes the whole
+     first row and the buttons wrap to the second, which is the same two-row
+     header as before, just with the box drawn around the top one. */
+  .site-header-inner { flex-wrap: wrap; padding: 0 var(--space-4); }
+  .header-bar { flex: 1 1 100%; flex-wrap: wrap; gap: var(--space-3); }
+  /* The buttons come after <nav> in the markup so they land on the right on
+     desktop; here they belong back up beside the logo, ahead of the menu
+     itself. Ordered explicitly rather than left to fall out of source order,
+     since source order is now the opposite of this.
+
+     Menu before Get Formulize, and Get Formulize pushed to the far right by
+     the auto margin. The two had been the other way round, which put the
+     green button between the logo and the Menu control - the one thing in the
+     bar you have to find on a phone was the hardest to spot, wedged in the
+     middle with the loudest object on the page beside it. Now the row reads
+     logo, Menu, gap, Get Formulize: navigation on the left where the logo
+     already is, the call to action alone on the right.
+
+     The auto margin is also what places it when the bar wraps. Below about
+     500px all three do not fit on one line, so Get Formulize takes a second
+     row by itself - and it stays right-aligned there rather than sitting
+     under the logo, because the margin still has the whole row to eat. */
+  .nav-toggle-label { display: inline-flex; order: 2; }
+  .header-cta { order: 3; margin-left: auto; flex-direction: row; }
+  /* .brand's own margin-right: auto has to go, or the two auto margins split
+     the free space between them and Menu ends up floating in the middle of
+     the bar rather than sitting beside the logo. One auto margin, on the
+     thing being pushed right, is all this row needs: the logo is first so it
+     is already hard left, and Get Formulize takes every remaining pixel.
+
+     It matters on the wrapped row too. With both margins live, the logo's
+     auto pushed Menu to the far right of the first line - logo at one edge
+     and the Menu control at the other, which is the arrangement this whole
+     override is trying to get away from. */
+  .brand { margin-right: 0; }
+  .main-nav {
+    order: 4;
+    flex-basis: 100%;
+    display: none;
+  }
+  /* The header is position: sticky, pinned to the viewport once you scroll
+     past it. With the menu open, its content (six items plus every dropdown
+     rendered open inline) is routinely taller than the viewport - and a
+     sticky element doesn't get its own scrollbar, it just lets the extra
+     content overflow invisibly below the fold. Sticky only releases and lets
+     the page carry it away once you scroll past the *whole document's*
+     remaining height, which is why the menu looked stuck partway down: nine
+     times out of ten you hit the bottom of the page before you hit the
+     bottom of the menu. Giving the open menu its own bounded height and
+     scrollbar makes it scroll on its own, independent of where the page
+     itself has scrolled to. The height figures are the measured height of
+     the bar above it (logo + tagline + padding at this breakpoint, just the
+     logo below 560px) - see the matching override there. 88px was measured
+     against the old 58px logo; carried down by the same 10px the logo lost
+     moving to 48px here, but not re-measured - check it against the real
+     bar height at this breakpoint if the open menu ends up clipped or leaves
+     a gap. */
+  .nav-toggle:checked ~ .main-nav {
+    display: block;
+    max-height: calc(100vh - 78px);
+    max-height: calc(100dvh - 78px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  .main-nav ul { flex-direction: column; align-items: stretch; gap: 0; padding-bottom: var(--space-3); }
+  .main-nav a { padding: var(--space-3); border-radius: var(--radius-md); }
+  .header-cta .btn-secondary { display: none; }
+
+  /* No room for a floating dropdown on a phone-width menu, and no separate
+     disclosure control either - the top-level link doubles as one (see the
+     script at the bottom of nav.html): a tap opens its own section inline
+     underneath it and closes whichever other one was open, and only opens
+     the section you're already in this way, from is-expanded set server-side
+     in nav.html. The chevron that only ever pointed down at desktop (marking
+     "there's a dropdown here") repoints to double as that control's own
+     open/closed state, rather than being hidden as dead weight on mobile. */
+  .main-nav li.has-dropdown > a::after {
+    /* Collapsed: same corner as the desktop marker, turned a quarter turn
+       the other way to point right rather than down - "there's more this
+       way". (rotate(45deg) is down - the desktop marker's own angle - so
+       right is a further -90deg from there, not +90deg.) */
+    transform: rotate(-45deg);
+    transition: transform 0.15s ease;
+  }
+  .main-nav li.has-dropdown.is-expanded > a::after {
+    /* Expanded: back to the desktop marker's own down-pointing angle. */
+    transform: rotate(45deg);
+  }
+  .main-nav .nav-dropdown {
+    position: static;
+    width: auto;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    margin: 0 0 var(--space-2);
+    padding: 0 0 0 var(--space-4);
+    background: none;
+    border: none;
+    box-shadow: none;
+    display: none;
+  }
+  .main-nav li.has-dropdown.is-expanded > .nav-dropdown { display: block; }
+  .main-nav .nav-dropdown a { padding: var(--space-2) var(--space-3); }
+}
+
+@media (max-width: 900px) {
+  h1 { font-size: 30px; }
+  h2 { font-size: 24px; }
+  .page-question { font-size: 30px; }
+  .hero { flex-direction: column; align-items: flex-start; padding: var(--space-6); }
+  .hero-text h1 { font-size: 27px; }
+  .hero-thumbnail { max-width: 100%; }
+  .triad, .duo, .onramp, .video-row, .download-grid, .addon-grid { grid-template-columns: minmax(0, 1fr); }
+  .feature-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* Two rather than straight to one: the videos page is a gallery of seven
+     and it keeps reading as a grid at tablet width, where the three-up rows
+     elsewhere on the site are trios of equals that don't. */
+  #video-flex-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hero-media { max-width: 100%; }
+  .hero-lead .hero-text h1 { font-size: 27px; }
+  .hero-text p.hero-sub { font-size: 18px; max-width: none; }
+  .news-row, .news-row-pair { grid-template-columns: minmax(0, 1fr); }
+  /* Two columns now, so the rounded corners belong to four different tiles
+     (one each) instead of the first/last tile owning a whole rounded side. */
+  .action-strip { grid-template-columns: repeat(2, 1fr); }
+  .action-strip-item:first-child,
+  .action-strip-item:last-child { border-radius: 0; }
+  .action-strip-item:nth-child(1) { border-radius: var(--radius-lg) 0 0 0; }
+  .action-strip-item:nth-child(2) { border-radius: 0 var(--radius-lg) 0 0; }
+  .action-strip-item:nth-child(3) { border-radius: 0 0 0 var(--radius-lg); }
+  .action-strip-item:nth-child(4) { border-radius: 0 0 var(--radius-lg) 0; }
+  /* Two columns means the third tile starts a new row - it needs the
+     vertical divider dropped (it's now a row-start tile, not a right-hand
+     one) and a horizontal divider added instead, matching the fourth tile
+     which already sits to the right of it. */
+  .action-strip-item:nth-child(3) { border-left: none; border-top: 1px solid var(--color-divider); }
+  .action-strip-item:nth-child(4) { border-top: 1px solid var(--color-divider); }
+  /* These two now carry a real top border too, so their hover ring drops
+     top the same way the base rule above already drops left for them. */
+  .action-strip-item:nth-child(3):hover { box-shadow: -1px 0 0 var(--color-divider), 1px 0 0 var(--color-divider), 0 1px 0 var(--color-divider); }
+  .action-strip-item:nth-child(4):hover { box-shadow: 1px 0 0 var(--color-divider), 0 1px 0 var(--color-divider); }
+  /* Below this width the 220px-capped float leaves too little room for text
+     beside it (this used to be where the old grid layout dropped to a
+     single column) - full width and stacked above the text reads better. */
+  .post-teaser-thumb { float: none; max-width: 100%; margin: 0 0 var(--space-4) 0; }
+}
+
+@media (max-width: 560px) {
+  .page { padding: 0 var(--space-4); }
+  .rail-cards .tier { width: 268px; }
+  .news-list > li > a,
+  .news-list > li.news-list-row { flex-direction: column; gap: var(--space-1); }
+  .news-list time { flex: none; }
+  /* One column for everything below this width, without exception.
+
+     Two columns of a 560px viewport is about 240px each, and about 110px once
+     the containing box has its own padding as .footer-panel does - narrow
+     enough that headings stop wrapping and push their own column wider than
+     the screen. That was the cause of the horizontal scroll on a phone: a
+     grid track cannot shrink below the widest unbreakable word in it, so an
+     over-long "Professional services" or "Help & documentation" quietly made
+     the whole document wider than the viewport, and the page scrolled
+     sideways against the header, which was still the correct width.
+
+     Everything on the site that is a row of columns is listed here, so the
+     rule is one place rather than a decision per component. Most of these
+     already collapse at 900 or 1080; they are repeated because being listed
+     twice is harmless and being missed is what produced the bug. */
+  .tier-grid,
+  .feature-cols,
+  .footer-cols,
+  .news-row,
+  .news-row-pair,
+  .triad,
+  .duo,
+  .onramp,
+  .video-row,
+  #video-flex-list,
+  .download-grid,
+  .addon-grid,
+  .quad,
+  .plan-preview { grid-template-columns: minmax(0, 1fr); }
+  /* .action-strip is the exception to the rule above: it stays the 2x2 the
+     900px rules set up, rather than stacking into four full-width rows,
+     which is why its corner overrides are not repeated here. It can afford
+     to: its tiles are short labels that wrap on their spaces, and the
+     longest unbreakable word in any of them ("Participate") is well inside
+     a half-width track even at 320px - so it is not one of the components
+     that was widening the document. Four stacked rows of it is a lot of
+     footer to scroll past on a phone; as a 2x2 it reads as one object and
+     takes half the height. */
+  /* The two-line floor on the footer headings exists to line four columns of
+     links up with each other. In one column there is nothing to line up with,
+     and a heading that does not wrap would just sit above a line of empty
+     space, so it comes off here. */
+  .footer-cols h2, .footer-cols h3 { min-height: 0; }
+  /* The example cards are a single column of about 300px here, where a 23px
+     title wraps to three lines as often as not. Two points smaller keeps most
+     of them to two, which shortens every closed card and keeps the title and
+     its chevron looking like one row. Scoped to these cards - .card-title is
+     the whole site's, and the cards elsewhere are not this narrow. */
+  /* Paired with .feature-stack's own scroll-margin further up: that rule is
+     two classes and would otherwise override .inpage-anchor's 92px here. */
+  .feature-stack .inpage-anchor { scroll-margin-top: 92px; }
+  /* The header is 82px here, so the same 92px the other anchors drop to. */
+  .plan-band[id],
+  .band-box[id] { scroll-margin-top: 92px; }
+  .triad-2up { --example-card-title: 20px; }
+  /* Half of the smaller line box, less half the arrow, as above. */
+  .triad-2up summary::after { margin-top: 7px; }
+  /* Buttons stop being a single unbreakable line here. white-space: nowrap is
+     right on a wide screen - a two-line button in a row of one-line ones
+     looks broken - but a label like "See plans with support included" is
+     382px set on one line, wider than a phone, and nowrap means it cannot do
+     anything about it: it just sticks out past the screen and takes the
+     document's width with it. Wrapping is the lesser problem at this width,
+     where most buttons are full-width blocks anyway. */
+  .btn { white-space: normal; }
+  /* Wide tables scroll inside their own box rather than widening the page.
+     display: block is what makes a table scrollable at all - overflow has no
+     effect on display: table - and it costs nothing here because these are
+     plain prose tables with no column sizing to preserve. The reference
+     tables on /searching/ are the ones this is for: they are 630px wide at a
+     360px viewport. .cmp does this properly with a real wrapper element; a
+     Markdown table has nowhere to put one. */
+  .prose table { display: block; width: 100%; overflow-x: auto; }
+  /* The tagline is hidden at this width (below), so the logo is the whole
+     brand block and can take the room the tagline used to. 36px used to be
+     where the header stopped growing, back when the bar here was two rows
+     with Get Formulize on the second. It is one row now, and the row's
+     height is set by the 40px Menu control beside it, so the first 4px of
+     this are free and the rest costs the header 1px each. 43 is about as
+     far as it can go on width rather than height: the wordmark is 4.5x as
+     wide as it is tall, so at 43 the logo, the gap and the Menu control come
+     to 346px and the bar still holds together on one line on a 360px screen,
+     which is the narrowest phone worth designing for. */
+  .brand-logo { height: 43px; }
+  .brand-tagline { display: none; }
+
+  /* The header is 82px here, not the ~133px it is at desktop widths - the
+     logo above is smaller and the tagline is gone. The global 128px
+     scroll-margin-top is measured against the big one, so a jump into
+     Features or Examples landed 46px below the header rather than just clear
+     of it, and with .inpage-anchor's own padding on top of that it was 81px
+     of empty page above the heading someone had just asked for. 92px clears
+     the 82px header with ten to spare, and the padding gives the heading the
+     rest of its air - about 36px in total, which is what the same jump gets
+     at desktop widths.
+
+     Scoped to .inpage-anchor rather than written over the global [id] rule,
+     even though every anchor on the site is offset against the same shrunken
+     header here. These nine (five on Features, four on Examples) are the ones
+     the menu jumps to and the ones that carry the padding; a heading on a
+     documentation page has no padding of its own, so the same 92px would put
+     it 10px under the header instead of 46px, which is tighter than anything
+     asked for. Equal specificity to [id], declared later, so it wins where it
+     applies and leaves every other anchor alone.
+
+     This is safe across handsets because it keys off the CSS viewport width,
+     not the device: every phone in portrait is inside this breakpoint (a
+     Galaxy S21 reports 360px, an iPhone 15 Pro Max 430px) and gets the same
+     82px header. The narrowest bucket, under 360px, shrinks the logo again to
+     an even shorter header, so the clearance there is larger still. */
+  .inpage-anchor { scroll-margin-top: 92px; padding-top: var(--space-6); }
+  /* Get Formulize comes out of the header entirely at phone width. Every
+     page's hero carries the same call to action a screen further down, so in
+     the header it is a duplicate - and it is the duplicate that was making
+     the bar too wide for one line, wrapping the three controls onto two rows
+     and taking a third of a short screen for chrome. Without it the bar is
+     the logo and the Menu control, which fit on one line at any phone width.
+
+     The button is only hidden, not removed from the markup: it is the right
+     thing to have in the header on a wide screen, where there is room for it
+     and the hero may well be scrolled past.
+
+     The auto margin moves from .header-cta (now hidden, so its margin does
+     nothing) to the Menu control, which is what has to be pushed to the far
+     right in its place. Logo hard left, Menu hard right, on the row's normal
+     padding. */
+  .header-cta { display: none; }
+  .nav-toggle-label { margin-left: auto; }
+  /* The bar above the open menu is shorter here - no tagline line, a
+     smaller logo, and one row rather than two - so the menu can claim more
+     of the viewport. 100px is measured: the open menu's top is 78px down at
+     this breakpoint, and the header's own bottom padding and green rule
+     account for the remaining 22. */
+  .nav-toggle:checked ~ .main-nav {
+    max-height: calc(100vh - 100px);
+    max-height: calc(100dvh - 100px);
+  }
+}
+
+/* The one width the bigger logo does not fit on a single line. 320px is a
+   real target rather than an old phone: WCAG reflow is tested at a 320px
+   equivalent, which is what a 1280px screen at 400% zoom gives you. Here the
+   logo goes back to the size it was, which is the largest that leaves room
+   for the gap and the Menu control on one row - and, because the bar is one
+   row again, the open menu goes back to the height measured against it. */
+@media (max-width: 359px) {
+  .brand-logo { height: 36px; }
+  .nav-toggle:checked ~ .main-nav {
+    max-height: calc(100vh - 93px);
+    max-height: calc(100dvh - 93px);
+  }
+}
+
+@media print {
+  .site-header, .site-footer, .action-strip { display: none; }
+  body { background: #fff; }
+}
+
+/* ── alternate comparison layout: frozen row labels, scroll the levels ────── */
+
+.cmp-wrap {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  background: var(--color-neutral-100);
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-neutral-400) transparent;
+}
+
+/* min-width is what makes the wrapper scroll: four level columns at a
+   readable width plus the 186px label column. It was 1250px when there were
+   five levels; dropping "You build it" gave the four that remain about 15px
+   each rather than shrinking the table, because the widest cells here are
+   phrases ("by email, phone and video"), not numbers. */
+.cmp { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1100px; margin: 0; font-size: 15px; table-layout: fixed; }
+
+.cmp th, .cmp td { text-align: left; vertical-align: top; padding: var(--space-3); word-wrap: break-word; }
+
+/* the frozen left column */
+.cmp th[scope="row"], .cmp .cmp-corner {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  width: 186px;
+  min-width: 186px;
+  background: var(--color-neutral-200);
+  border-right: 1px solid var(--color-divider);
+  font-weight: 600;
+  font-size: 15.5px;
+  line-height: 1.35;
+}
+.cmp thead th { position: sticky; top: 0; z-index: 1; background: var(--color-neutral-200); }
+.cmp .cmp-corner { z-index: 3; }
+
+.cmp thead th:not(.cmp-corner) { border-bottom: 2px solid var(--color-divider); }
+/* The badge sits above its level name, and every column has the slot whether
+   or not it is badged - see the note in start-table.html. The height is set
+   on the box rather than left to padding and line box, so the empty slot and
+   a filled one cannot drift apart and leave the names off by a pixel. */
+.cmp-flag {
+  display: block;
+  width: fit-content;
+  height: 18px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 11px;
+  line-height: 18px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: var(--color-cta);
+  color: #000;
+  padding: 0 8px;
+  border-radius: 999px;
+  margin: 0 0 var(--space-1);
+}
+/* matches the cards' second badge: a second endorsement in a second colour,
+   so the two read as different claims rather than competing recommendations. */
+.cmp-flag-alt { background: var(--color-brand-700); color: #fff; }
+/* the reserved slot: it holds the line open and shows nothing. */
+.cmp-flag-none { background: none; }
+.cmp-tier {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 19px;
+  line-height: 1.15;
+}
+
+.cmp-price { display: block; font-weight: 600; font-size: 15px; color: var(--color-accent-700); margin-top: 3px; }
+.cmp-grp { display: block; font-weight: 400; font-size: 13px; line-height: 1.35; color: var(--color-neutral-700); margin-top: 4px; }
+
+.cmp tbody tr + tr th, .cmp tbody tr + tr td { border-top: 1px solid var(--color-divider); }
+/* balance stops a greedy fill leaving one or two words stranded on the last
+   line -- "how to / fix it" and the like. */
+.cmp tbody td { color: var(--color-neutral-800); line-height: 1.4; text-wrap: balance; }
+.cmp tbody td b { font-weight: 700; color: var(--color-text); }
+
+/* value markers, matching the card rail's vocabulary -- and hung outside the
+   text like the cards' are, so a wrapped second line starts under the first
+   word rather than under the tick. */
+.cmp td.y, .cmp td.n, .cmp td.m {
+  position: relative;
+  padding-left: calc(var(--space-2) + 1.25em);
+}
+.cmp td.y::before, .cmp td.n::before, .cmp td.m::before {
+  position: absolute;
+  left: var(--space-2);
+  top: var(--space-2);
+  font-weight: 700;
+}
+.cmp td.y::before { content: "\2713"; color: var(--color-accent-2-700); }
+.cmp td.n::before { content: "\2715"; color: var(--color-neutral-500); }
+.cmp td.m::before { content: "?"; color: var(--color-neutral-500); }
+.cmp td.n, .cmp td.m { color: var(--color-neutral-700); }
+
+.cmp .cmp-featured { background: var(--color-accent-100); }
+/* the featured column, tinted down the body to carry the header's flag. The
+   count includes the row-label th, so this is the third level column -- move
+   it if a level is ever added or removed. */
+.cmp tbody td:nth-child(4) { background: color-mix(in srgb, var(--color-accent-100) 55%, transparent); }
+
+.cmp-cta td { padding-top: var(--space-4); padding-bottom: var(--space-4); }
+
+/* The table is desktop-only, heading and all - .cmp-section is the section
+   around it on /pricing/.
+
+   Below this width you get the row labels and about a column and a half of
+   levels at a time, so reading a row means holding two values in your head
+   while you scroll sideways for the other two. The straight-across comparison
+   is the whole reason the table exists, and it is the first thing that stops
+   working. Nothing is lost by dropping it: every value in here is also in the
+   cards in plans-bands.html, which stack one level at a time at this width
+   and read better for it.
+
+   This is also where the frozen label column used to narrow to 172px. With
+   the table gone below 700px that rule had nothing left to do. */
+@media (max-width: 700px) {
+  .cmp-section { display: none; }
+}
+
+/* Fine print. Built as a list so further notes can be added without restyling. */
+.fine-print {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-neutral-700);
+}
+.fine-print li { margin: 0 0 var(--space-1); max-width: 78ch; }
+sup.fn { color: var(--color-accent-600); font-weight: 700; }
+
+.fine-print-head {
+  margin: var(--space-6) 0 var(--space-2);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+}
+.fine-print li b { color: var(--color-neutral-800); }
+.rail-addendum + .rail-addendum { margin-top: var(--space-2); }
+
+/* Inline SVG rather than the flag emoji: Windows has no flag glyphs, so the
+   emoji renders as the letters "CA" for a large share of visitors. The
+   markup is _includes/flag-ca.html, shared by the plans promise note and the
+   footer's bottom line. */
+.flag-ca {
+  display: inline-block;
+  height: 0.85em;
+  width: auto;
+  vertical-align: -0.08em;
+  margin-left: 0.15em;
+  /* The flag's own white half needs an edge or it bleeds into a light page. */
+  border: 1px solid var(--color-divider);
+  border-radius: 1px;
+}
+
+/* homepage route cards: one per way of working, price and a way through */
+.card-price {
+  margin: auto 0 var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-divider);
+  font-size: 16px;
+  color: var(--color-neutral-800);
+}
+.card-price strong { font-weight: 600; font-size: 21px; color: var(--color-text); }
+.triad-foot { margin: var(--space-6) 0 0; }

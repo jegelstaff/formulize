@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: view_user_perms/
+permalink: documentation/view_user_perms/
+redirect_from:
+ - view_user_perms/
 title: View User Permissions
 ---
 

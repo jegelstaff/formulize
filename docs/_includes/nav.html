@@ -1,0 +1,159 @@
+{% comment %}
+  The main menu, from _data/nav.yml. Six top-level items - the same six
+  questions a stranger arrives with, in order: what is it, what could I build
+  with it, what is the AI story, what does it cost, where are the docs, is
+  this project alive. Videos are a format rather than a topic, so they are a
+  child of Docs rather than a seventh top-level item - people looking for "the
+  docs" count a tutorial video as documentation. The community links live in
+  the footer.
+
+  Every item also carries a dropdown of its most-wanted subpages, so a
+  visitor can see what is inside a section and jump straight to a specific
+  page instead of landing on a hub page and hunting from there. The dropdown
+  is a shortcut past the top-level link, never a replacement for it - the
+  link itself always goes to that section's own page.
+
+  Dropdowns are CSS-only (:hover / :focus-within on li.has-dropdown), so they
+  degrade gracefully and work for keyboard users tabbing through. On the
+  mobile (checkbox) menu they render open inline instead of needing a second
+  toggle - see the max-width: 1060px rules in formulize.css.
+{% endcomment %}
+
+<header class="site-header">
+  <div class="site-header-inner">
+    {% comment %}
+      Everything - logo, menu, both buttons - sits inside one dark box, so the
+      pattern behind the header runs around the whole thing rather than behind
+      the wordmark and the menu labels. The two buttons stack vertically at the
+      far right, after the menu; stacked, they take about the height of the
+      wordmark instead of stretching the box wider.
+
+      The checkbox stays immediately before <nav> whatever the visual order:
+      the mobile menu opens on .nav-toggle:checked ~ .main-nav, which needs
+      the two to be siblings in that order in the markup. On mobile the
+      buttons and the Menu label are put back in front of it with `order`.
+    {% endcomment %}
+    <div class="header-bar">
+      <a class="brand" href="{{ "/" | relative_url }}">
+        <img class="brand-logo" src="{{ "/assets/img/formulize-wordmark.png" | relative_url }}" alt="Formulize">
+        <span class="brand-tagline">{{ site.title }}</span>
+      </a>
+
+      <input class="nav-toggle" type="checkbox" id="nav-toggle">
+      <label class="nav-toggle-label" for="nav-toggle"><span class="bars"></span> Menu</label>
+
+      <nav class="main-nav" aria-label="Main menu">
+        <ul>
+          {% for item in site.data.nav %}
+            {%- comment -%}
+              A top-level item highlights for anywhere in its section, not just
+              for its own page. "Anywhere in its section" is two things, because
+              a section's pages are not all under its URL: pages beneath the
+              item itself (/documentation/deploying_locally/ under Docs), and the
+              pages its dropdown lists, which often sit elsewhere entirely
+              (/download/, /signup/ and /services/ all belong to Pricing). Both
+              are matched with `contains` so a child's own subpages count too.
+
+              Anchor children (/features/#ai) are cut back to their page before
+              comparing, or nothing would ever match them. A child URL of "/"
+              is skipped for the obvious reason - it is inside every page URL
+              there is, and would light up its section on every page of the
+              site.
+
+              aria-current="page" stays on the exact page only; the section
+              match is a class, because the other five items are not the
+              current page in any sense a screen reader should be told about.
+
+              in_section doubles as the mobile menu's initial accordion
+              state below: the section you're already in opens expanded, the
+              other five start collapsed (see the is-expanded rules and the
+              script at the bottom of this file).
+            {%- endcomment -%}
+            {% assign in_section = false %}
+            {% if page.url contains item.url %}{% assign in_section = true %}{% endif %}
+            {% for child in item.children %}
+              {% assign child_path = child.url | split: '#' | first %}
+              {% if child_path != '/' and child_path != '' and page.url contains child_path %}
+                {% assign in_section = true %}
+              {% endif %}
+            {% endfor %}
+            <li{% if item.children %} class="has-dropdown{% if in_section %} is-expanded{% endif %}"{% endif %}>
+              <a href="{{ item.url | relative_url }}"{% if page.url == item.url %} aria-current="page"{% elsif in_section %} class="nav-section-current"{% endif %}{% if item.children %} aria-haspopup="true" aria-expanded="{{ in_section }}"{% endif %}>{{ item.label }}</a>
+              {% if item.children %}
+                <ul class="nav-dropdown">
+                  {% for child in item.children %}
+                    <li><a href="{{ child.url | relative_url }}"{% if page.url == child.url %} aria-current="page"{% endif %}>{{ child.label }}</a></li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      </nav>
+
+      <div class="header-cta">
+        {% comment %}
+          Points at /get/, not at /download/. Half the people who click this want
+          a tarball and half want us to run it for them; /get/ is the fork that
+          asks which, so neither lands on the other's page.
+        {% endcomment %}
+        <a class="btn btn-primary btn-sm" href="{{ "/get/" | relative_url }}">Get Formulize</a>
+        <a class="btn btn-secondary btn-sm" href="{{ site.github.repository_url }}" target="_blank" rel="noopener">
+          GitHub
+          {%- comment -%}
+            GitHub's own mark, inlined rather than linked so it inherits
+            currentColor and changes with the button text on hover.
+          {%- endcomment -%}
+          <svg class="btn-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<script>
+  // The mobile menu is a plain checkbox toggle (see .nav-toggle above) with
+  // one open section rendered per top-level item (see is-expanded in the CSS
+  // and the initial state Liquid sets above). Neither needs JS by itself -
+  // this only covers the two things a checkbox and :hover/:focus-within
+  // can't: closing the whole menu on navigation, and making a tap on a
+  // collapsed top-level item open its section instead of following the link
+  // straight away.
+  (function () {
+    var mobileQuery = window.matchMedia('(max-width: 1060px)');
+    var navToggle = document.getElementById('nav-toggle');
+
+    document.querySelectorAll('.main-nav a').forEach(function (link) {
+      link.addEventListener('click', function (e) {
+        var li = link.parentElement;
+        var isCollapsedSectionLink = mobileQuery.matches &&
+          li.classList.contains('has-dropdown') &&
+          link.getAttribute('aria-haspopup') === 'true' &&
+          !li.classList.contains('is-expanded');
+
+        if (isCollapsedSectionLink) {
+          // First tap on a section that's closed: open it (and close
+          // whichever other one was open - only one at a time) instead of
+          // navigating. The link itself still goes to the section's own
+          // page - tapping it again, now that it's expanded, falls through
+          // to the navigation below.
+          e.preventDefault();
+          document.querySelectorAll('.main-nav li.has-dropdown.is-expanded').forEach(function (openLi) {
+            openLi.classList.remove('is-expanded');
+            openLi.querySelector(':scope > a').setAttribute('aria-expanded', 'false');
+          });
+          li.classList.add('is-expanded');
+          link.setAttribute('aria-expanded', 'true');
+          return;
+        }
+
+        // Anything else - a leaf link, an in-page anchor (Features and
+        // Examples), or a second tap on an already-open section - is a real
+        // navigation. A normal link closes the menu just by loading a new
+        // page and throwing this DOM away; an in-page anchor doesn't reload
+        // anything, so this closes it explicitly instead.
+        navToggle.checked = false;
+      });
+    });
+  })();
+</script>

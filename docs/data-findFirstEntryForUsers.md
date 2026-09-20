@@ -1,10 +1,13 @@
 ---
 layout: default
-permalink: developers/API/classes/data_handler/findFirstEntryForUsers/
+permalink: documentation/classes/data_handler/findFirstEntryForUsers/
+redirect_from:
+ - developers/classes/data_handler/findFirstEntryForUsers/
+ - developers/API/classes/data_handler/findFirstEntryForUsers/
 title: findFirstEntryForUsers
 ---
 
-# findFirstEntryForUsers( <span style='font-size: 14pt;'>(int | array) $user_ids</span> )
+# <span class="sig-name">findFirstEntryForUsers</span>( <span class="sig-arg"><span class="sig-type">(int | array)</span> $user_ids</span> )
 
 ## Description
 

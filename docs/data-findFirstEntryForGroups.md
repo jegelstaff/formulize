@@ -1,10 +1,13 @@
 ---
 layout: default
-permalink: developers/API/classes/data_handler/findFirstEntryForGroups/
+permalink: documentation/classes/data_handler/findFirstEntryForGroups/
+redirect_from:
+ - developers/classes/data_handler/findFirstEntryForGroups/
+ - developers/API/classes/data_handler/findFirstEntryForGroups/
 title: findFirstEntryForGroups
 ---
 
-# findFirstEntryForGroups( <span style='font-size: 14pt;'>(int | array) $group_ids</span> )
+# <span class="sig-name">findFirstEntryForGroups</span>( <span class="sig-arg"><span class="sig-type">(int | array)</span> $group_ids</span> )
 
 ## Description
 

@@ -1,10 +1,13 @@
 ---
 layout: default
-permalink: developers/API/functions/printSmart/
+permalink: documentation/functions/printSmart/
+redirect_from:
+ - developers/functions/printSmart/
+ - developers/API/functions/printSmart/
 title: printSmart
 ---
 
-# printSmart( <span style='font-size: 14pt;'>(string) $value, (int) $chars = 35</span> )
+# <span class="sig-name">printSmart</span>( <span class="sig-arg"><span class="sig-type">(string)</span> $value</span>, <span class="sig-arg"><span class="sig-type">(int)</span> $chars <span class="sig-default">= 35</span></span> )
 
 ## Location
 

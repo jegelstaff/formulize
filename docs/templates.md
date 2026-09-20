@@ -1,12 +1,16 @@
 ---
 layout: default
-permalink: developers/templates/
+permalink: documentation/templates/
+redirect_from:
+ - developers/templates/
 title: Templates
 ---
 
 # Working With Templates
 
 Templates use the [Smarty](http://www.smarty.net/) templating system.
+
+<strong>Note:</strong> the open/close tag is non-standard: `<{ }>`
 
 ## Changes Not Showing?
 
@@ -28,4 +32,4 @@ The site can be installed in the root of a website, or in a subfolder. For examp
 
 ## CSS Rules
 
-You may need to style new elements you add to a template. Most likely the element you add will be specific to Formulize, so the CSS rules should go into the Formulize CSS files. ~~Formulize uses [SASS/SCSS](http://sass-lang.com/), which has a very similar syntax to CSS. The rules are broken into several files. One for front-end pages, one for admin pages, one for colours and function definitions, and one for CSS rules that are shared by both the front-end and admin sections~~ Much of the necessary CSS to make Formulize work is in the style.css file in the applicable theme (under the /theme/ folder). CSS organization will be rationalized at some point in the future.
+You may need to style new elements you add to a template. Most likely the element you add will be specific to Formulize, so the CSS rules should go into the Formulize CSS files. Much of the necessary CSS to make Formulize work is in the style.css file in the applicable theme (under the /theme/ folder). CSS organization will be rationalized at some point in the future.

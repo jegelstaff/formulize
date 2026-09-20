@@ -1,0 +1,45 @@
+---
+layout: default
+full_width: true
+---
+
+<div class="band-head" style="max-width: 68ch;">
+  <h1 style="margin-top: var(--space-3);">Releases</h1>
+  <p>Every Formulize release and what changed in it. The master branch is always stable and ready to install, so completed features land there before a formal release.</p>
+  <p class="btn-row">
+    <a class="btn btn-primary" href="{{ "/get/" | relative_url }}">Get Formulize</a>
+    <a class="btn btn-secondary" href="{{ "/documentation/roadmap" | relative_url }}">See what's next</a>
+  </p>
+  <p class="text-muted"><a href="{{ "/mailinglist/" | relative_url }}">Join the mailing list</a> to hear about new releases by email. Found a problem in a release? <a href="{{ "/report-a-bug/" | relative_url }}">Report a bug</a>.</p>
+</div>
+
+{%- comment -%}
+  Each row carries the release's teaser under its headline, because a version
+  number on its own tells a reader nothing about whether the release is the one
+  they are looking for. The ten-row "Latest releases" list on the main news page
+  carries them for the same reason, in the same markup - keep the two in step.
+
+  The date, the headline and the teaser are three things, and .news-list-row
+  lays a row out as a two-column flex: the date, then everything else. So the
+  headline and the teaser are wrapped together in .news-text, which stacks them
+  in the second column.
+
+  The link is on the headline, not around the whole row, because a teaser is
+  Markdown and can carry links of its own - which an enclosing <a> would make
+  invalid. .stretched-link puts the row back to being clickable anywhere.
+{%- endcomment -%}
+<section class="band">
+  <ul class="news-list">
+    {%- for entry in page.entries %}
+    <li class="news-list-row">
+      {% include release-date.html %}
+      <span class="news-text">
+        <a class="news-title stretched-link" href="{{ entry.url | relative_url }}">{{ entry.headline }}</a>
+        {%- if entry.teaser and entry.teaser != "" %}
+        <span class="news-teaser">{{ entry.teaser_html }}</span>
+        {%- endif %}
+      </span>
+    </li>
+    {%- endfor %}
+  </ul>
+</section>

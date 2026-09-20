@@ -1,10 +1,13 @@
 ---
 layout: default
-permalink: developers/API/classes/queue_handler/create/
+permalink: documentation/classes/queue_handler/create/
+redirect_from:
+ - developers/classes/queue_handler/create/
+ - developers/API/classes/queue_handler/create/
 title: create
 ---
 
-# create( <span style='font-size: 14pt;'>(string) $queue_handle</span> )
+# <span class="sig-name">create</span>( <span class="sig-arg"><span class="sig-type">(string)</span> $queue_handle</span> )
 
 ## Description
 

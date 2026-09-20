@@ -1,6 +1,9 @@
 ---
 layout: default
-permalink: developers/API/functions/getCurrentURL/
+permalink: documentation/functions/getCurrentURL/
+redirect_from:
+ - developers/functions/getCurrentURL/
+ - developers/API/functions/getCurrentURL/
 title: getCurrentURL
 ---
 

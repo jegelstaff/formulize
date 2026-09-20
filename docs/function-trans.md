@@ -1,10 +1,13 @@
 ---
 layout: default
 title: trans
-permalink: developers/API/functions/trans/
+permalink: documentation/functions/trans/
+redirect_from:
+ - developers/functions/trans/
+ - developers/API/functions/trans/
 ---
 
-# trans( <span style='font-size: 14pt;'>(string) $string, (string) $lang = null</span> )
+# <span class="sig-name">trans</span>( <span class="sig-arg"><span class="sig-type">(string)</span> $string</span>, <span class="sig-arg"><span class="sig-type">(string)</span> $lang <span class="sig-default">= null</span></span> )
 
 ## Location
 

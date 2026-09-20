@@ -1,10 +1,13 @@
 ---
 layout: default
 title: viewEntryLink
-permalink: developers/API/functions/viewEntryLink/
+permalink: documentation/functions/viewEntryLink/
+redirect_from:
+ - developers/functions/viewEntryLink/
+ - developers/API/functions/viewEntryLink/
 ---
 
-# viewEntryLink( <span style='font-size: 14pt;'>(string) $clickable_text, (int | array) $entry_id_or_dataset_record, (int) $override_screen_id </span> )
+# <span class="sig-name">viewEntryLink</span>( <span class="sig-arg"><span class="sig-type">(string)</span> $clickable_text</span>, <span class="sig-arg"><span class="sig-type">(int | array)</span> $entry_id_or_dataset_record</span>, <span class="sig-arg"><span class="sig-type">(int)</span> $override_screen_id</span> )
 
 ## Location
 

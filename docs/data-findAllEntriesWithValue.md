@@ -1,10 +1,13 @@
 ---
 layout: default
-permalink: developers/API/classes/data_handler/findAllEntriesWithValue/
+permalink: documentation/classes/data_handler/findAllEntriesWithValue/
+redirect_from:
+ - developers/classes/data_handler/findAllEntriesWithValue/
+ - developers/API/classes/data_handler/findAllEntriesWithValue/
 title: findAllEntriesWithValue
 ---
 
-# findAllEntriesWithValue( <span style='font-size: 14pt;'>(int | string | object) $element_identifier, (string) $value, (array)&nbsp;$scope_uids&nbsp;=&nbsp;array(), (array) $scope_group_ids = array(), (string) $operator = "="</span> )
+# <span class="sig-name">findAllEntriesWithValue</span>( <span class="sig-arg"><span class="sig-type">(int | string | object)</span> $element_identifier</span>, <span class="sig-arg"><span class="sig-type">(string)</span> $value</span>, <span class="sig-arg"><span class="sig-type">(array)</span> $scope_uids <span class="sig-default">= array()</span></span>, <span class="sig-arg"><span class="sig-type">(array)</span> $scope_group_ids <span class="sig-default">= array()</span></span>, <span class="sig-arg"><span class="sig-type">(string)</span> $operator <span class="sig-default">= "="</span></span> )
 
 ## Description
 

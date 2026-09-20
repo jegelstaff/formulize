@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/Public_API/queue
+permalink: documentation/Public_API/queue
+redirect_from:
+ - developers/Public_API/queue
 title: queue
 ---
 
@@ -14,7 +16,7 @@ If the queue is processed asynchronously, then the API will return true. If the 
 
 If the queue is processed asynchronously, enabling logging in the Formulize preferences can be useful to monitor what the queue is doing.
 
-See the documentation on the [Queue Handler's Process method](../API/classes/queue_handler/process) for more details about queue processing.
+See the documentation on the [Queue Handler's Process method](../classes/queue_handler/process) for more details about queue processing.
 
 If the API is not enabled, a 503 http error is returned.
 

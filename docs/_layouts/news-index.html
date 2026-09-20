@@ -1,0 +1,61 @@
+---
+layout: default
+full_width: true
+---
+
+{%- comment -%}
+  The main news page carries announcements and articles. Release notes are the
+  overwhelming majority of entries by count, so they get their own page rather
+  than burying everything else; the most recent handful are listed here as a
+  secondary band, each with its teaser exactly as on /news/releases/, and a link
+  through to the full list.
+{%- endcomment -%}
+
+<div class="band-head" style="max-width: 68ch;">
+  <h1 style="margin-top: var(--space-3);">News</h1>
+  <p class="text-muted"><a href="{{ "/news/feed.xml" | relative_url }}">Subscribe by RSS</a>, or <a href="{{ "/mailinglist/" | relative_url }}">join the mailing list</a> for the same thing by email.</p>
+</div>
+
+<section class="band">
+  {%- if page.entries and page.entries.size > 0 %}
+  <div class="post-list">
+    {%- for entry in page.entries %}
+    <div class="post-teaser">
+      {%- if entry.image %}
+      <img class="post-teaser-thumb" src="{{ entry.image }}" alt="">
+      {%- endif %}
+      <div>
+        <span class="post-meta"><time datetime="{{ entry.date }}">{{ entry.date_display }}</time></span>
+        <h2><a class="stretched-link" href="{{ entry.url | relative_url }}">{{ entry.headline }}</a></h2>
+        <p class="post-excerpt">{{ entry.teaser_html }}</p>
+      </div>
+      <span class="news-card-more">Read more &rarr;</span>
+    </div>
+    {%- endfor %}
+  </div>
+  {%- else %}
+  <p>No announcements yet.</p>
+  {%- endif %}
+</section>
+
+{%- if page.recent_releases and page.recent_releases.size > 0 %}
+<section class="band">
+  <div class="band-head-row">
+    <h2>Latest releases</h2>
+    <a class="btn btn-secondary btn-sm" href="{{ "/news/releases/" | relative_url }}">All {{ page.releases_total }} releases</a>
+  </div>
+  <ul class="news-list">
+    {%- for entry in page.recent_releases %}
+    <li class="news-list-row">
+      {% include release-date.html %}
+      <span class="news-text">
+        <a class="news-title stretched-link" href="{{ entry.url | relative_url }}">{{ entry.headline }}</a>
+        {%- if entry.teaser and entry.teaser != "" %}
+        <span class="news-teaser">{{ entry.teaser_html }}</span>
+        {%- endif %}
+      </span>
+    </li>
+    {%- endfor %}
+  </ul>
+</section>
+{%- endif %}

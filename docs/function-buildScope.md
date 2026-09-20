@@ -1,10 +1,13 @@
 ---
 layout: default
-permalink: developers/API/functions/buildScope/
+permalink: documentation/functions/buildScope/
+redirect_from:
+ - developers/functions/buildScope/
+ - developers/API/functions/buildScope/
 title: buildScope
 ---
 
-# buildScope( <span style='font-size: 14pt;'>(string|int) $currentView, (object|int) $userIdOrObject, (int) $fid</span> )
+# <span class="sig-name">buildScope</span>( <span class="sig-arg"><span class="sig-type">(string|int)</span> $currentView</span>, <span class="sig-arg"><span class="sig-type">(object|int)</span> $userIdOrObject</span>, <span class="sig-arg"><span class="sig-type">(int)</span> $fid</span> )
 
 ## Location
 

@@ -1,0 +1,140 @@
+---
+layout: default
+permalink: download/
+title: Download Formulize
+full_width: true
+description: Download Formulize free and run it on your own server. Complete, unlimited and open source under GPL-2.0, with PHP and MySQL or MariaDB all you need.
+---
+
+{% comment %}
+  The self-host page, and only that. The three-way "how involved do you want us
+  to be" choice used to sit at the top of this page, which meant someone who
+  had already decided to run it themselves had to scroll past two options they
+  had rejected. That choice is now /get/, which is where the header button
+  goes; anyone arriving here has already made it.
+
+  The URL stays /download/ because roughly 120 markdown pages and the pricing
+  rail link to it.
+{% endcomment %}
+
+<div class="band-head" style="max-width: 68ch;">
+  <h1 style="margin-top: var(--space-3);">Download and self-host</h1>
+  <p>Free, unlimited, and fully open source under GPL-2.0. The master branch is always stable and ready to install, so you do not have to wait for a formal release to get new features.</p>
+  <p class="text-muted">Rather not run a server? <a href="{{ "/get/" | relative_url }}">There are other ways to start</a>.</p>
+</div>
+
+<section class="band">
+  <div class="download-grid">
+    <a class="download-card" href="{{ site.github.repository_url }}" target="_blank" rel="noopener">
+      <img src="{{ "/assets/img/octocat-icon.png" | relative_url }}" alt="">
+      <span>
+        <strong>Clone from GitHub</strong>
+        <span>Track the master branch, or contribute a change back</span>
+      </span>
+    </a>
+    <a class="download-card" href="{{ "/pricing/#do-it-yourself" | relative_url }}" style="background: var(--color-accent-100);">
+      <img src="{{ "/assets/img/cup-border.png" | relative_url }}" alt="">
+      <span>
+        <strong>Rather not run a server?</strong>
+        <span>We will host it for you, from $49/month</span>
+      </span>
+    </a>
+    <a class="download-card" href="{{ site.github.repository_url }}/zipball/{{ site.github.latest_release.tag_name }}" target="_blank" rel="noopener">
+      <img src="{{ "/assets/img/zip-icon.png" | relative_url }}" alt="">
+      <span>
+        <strong>Latest release &mdash; .zip</strong>
+        <span>{{ site.github.latest_release.tag_name | default: "Current release" }}{% if site.github.latest_release.published_at %}, published {{ site.github.latest_release.published_at | date: "%-d %B %Y" }}{% endif %}</span>
+      </span>
+    </a>
+    <a class="download-card" href="{{ site.github.repository_url }}/tarball/{{ site.github.latest_release.tag_name }}" target="_blank" rel="noopener">
+      <img src="{{ "/assets/img/tar-gz-icon.png" | relative_url }}" alt="">
+      <span>
+        <strong>Latest release &mdash; .tar.gz</strong>
+        <span>The same files, for anyone who prefers tar</span>
+      </span>
+    </a>
+  </div>
+</section>
+
+<section class="band">
+  <div class="band-head">
+    <h2>What you need to self-host</h2>
+  </div>
+  <div class="triad">
+    <div class="card">
+      <span class="card-kicker">Server</span>
+      <h3 class="card-title">PHP</h3>
+      <p class="card-body">Any standard PHP hosting account will do. Shared hosting, a VPS, or a container.</p>
+    </div>
+    <div class="card">
+      <span class="card-kicker">Database</span>
+      <h3 class="card-title">MySQL or MariaDB</h3>
+      <p class="card-body">One database, and a user that can create tables in it.</p>
+    </div>
+    <div class="card">
+      <span class="card-kicker">Time</span>
+      <h3 class="card-title">About twenty minutes</h3>
+      <p class="card-body">The installer walks through the rest, step by step, with screenshots in <a href="{{ "/documentation/deploying_a_website" | relative_url }}">the guide</a>.</p>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="band-head">
+    <h2>Installing and upgrading</h2>
+  </div>
+  <div class="triad">
+    <a class="card-link" href="{{ "/documentation/deploying_a_website" | relative_url }}">
+      <div class="card" style="background: var(--color-surface);">
+        <h3 class="card-title">Deploy to your website</h3>
+        <p class="card-body">The full installation walkthrough, including writable folders and the installer screens.</p>
+        <span class="card-link-more">Read the walkthrough &rarr;</span>
+      </div>
+    </a>
+    <a class="card-link" href="{{ "/documentation/deploying_a_website/updating_formulize" | relative_url }}">
+      <div class="card" style="background: var(--color-surface);">
+        <h3 class="card-title">Update an existing site</h3>
+        <p class="card-body">How to move an existing Formulize installation to a newer version safely.</p>
+        <span class="card-link-more">Read the upgrade guide &rarr;</span>
+      </div>
+    </a>
+    <a class="card-link" href="{{ "/documentation/deploying_locally" | relative_url }}">
+      <div class="card" style="background: var(--color-surface);">
+        <h3 class="card-title">Local development environment</h3>
+        <p class="card-body">Run Formulize on your own machine with Docker.</p>
+        <span class="card-link-more">Set up locally &rarr;</span>
+      </div>
+    </a>
+  </div>
+</section>
+
+<section class="band">
+  <div class="band-head">
+    <h2>Guides in PDF</h2>
+  </div>
+  {% comment %}
+    Each item is a title followed by a note about what the guide is good for.
+    Only the title is in the heading face; the note is .news-note, which puts
+    it back into the body face. Note that "Inside Formulize &mdash; a
+    Developer's Guide" has an em dash of its own inside the title, so the two
+    halves cannot be split on the dash - they are marked up separately.
+  {% endcomment %}
+  <ul class="news-list">
+    <li><a href="{{ "/files/How_to_Design_a_Formulize_Application.pdf" | relative_url }}"><span class="news-title">How to Design a Formulize Application<span class="news-note"> &mdash; a great conceptual overview</span></span></a></li>
+    <li><a href="{{ "/files/Using_Formulize-Pageworks_to_Make_Custom_Applications.pdf" | relative_url }}"><span class="news-title">Using Formulize Pageworks to Make Custom Applications<span class="news-note"> &mdash; an oldie but still has some good bits for developers interested in the deep and ancient innards</span></span></a></li>
+    <li><a href="{{ "/files/Inside_Formulize-a_Developers_Guide.pdf" | relative_url }}"><span class="news-title">Inside Formulize &mdash; a Developer's Guide<span class="news-note"> &mdash; some good conceptual info, and older reference material, but mostly superseded by the docs on this site</span></span></a></li>
+    <li><a href="{{ "/files/Formulize_4.0_Final_Getting_Started_Guide.pdf" | relative_url }}"><span class="news-title">Formulize 4.0 Getting Started Guide<span class="news-note"> &mdash; not irrelevant, but mostly superseded by the docs on this site</span></span></a></li>
+  </ul>
+</section>
+
+<section class="band">
+  <div class="card elev-sm" style="background: var(--color-accent-100);">
+    <h2 style="margin-bottom: var(--space-2);">Stuck on the install?</h2>
+    <div class="btn-row">
+      <a class="btn btn-secondary" href="{{ "/community/" | relative_url }}">Ask the community</a>
+      <a class="btn btn-secondary" href="{{ "/contact/" | relative_url }}">Ask us directly</a>
+      <a class="btn btn-secondary" href="{{ "/services/" | relative_url }}">Hire us instead</a>
+      <a class="btn btn-secondary" href="{{ "/report-a-bug/" | relative_url }}">Report a bug</a>
+    </div>
+  </div>
+</section>

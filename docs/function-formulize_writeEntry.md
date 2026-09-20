@@ -1,10 +1,13 @@
 ---
 layout: default
-permalink: developers/API/functions/formulize_writeEntry/
+permalink: documentation/functions/formulize_writeEntry/
+redirect_from:
+ - developers/functions/formulize_writeEntry/
+ - developers/API/functions/formulize_writeEntry/
 title: formulize_writeEntry
 ---
 
-# formulize_writeEntry( <span style='font-size: 14pt;'>(array) $values, (int | string) $entry_id = "new", $action, (int) $proxyUser, (bool) $forceUpdate = false, (bool) $writeOwnerInfo = true</span> )
+# <span class="sig-name">formulize_writeEntry</span>( <span class="sig-arg"><span class="sig-type">(array)</span> $values</span>, <span class="sig-arg"><span class="sig-type">(int | string)</span> $entry_id <span class="sig-default">= "new"</span></span>, <span class="sig-arg">$action</span>, <span class="sig-arg"><span class="sig-type">(int)</span> $proxyUser</span>, <span class="sig-arg"><span class="sig-type">(bool)</span> $forceUpdate <span class="sig-default">= false</span></span>, <span class="sig-arg"><span class="sig-type">(bool)</span> $writeOwnerInfo <span class="sig-default">= true</span></span> )
 
 ## Location
 

@@ -1,0 +1,56 @@
+{% comment %}
+  The three-way "how involved do you want us to be" choice, used on the
+  homepage, on /get/ and on /download/.
+
+  All three cards go to /pricing/, each to its own anchor: #do-it-yourself,
+  #hosted, #managed. They used to go to the bare /pricing/ with no anchor,
+  which made the choice decorative - everyone landed at the top of the same
+  page and had to work out which third of it applied to them. The anchors are
+  what fix that, so the card stays the decision without needing three
+  different destinations. The kickers are the anchor names on purpose: the
+  three coloured bands on /pricing/ are titled Do it yourself, Hosted and
+  Managed, so a renamed kicker means a renamed band and a changed id.
+
+  Managed pointed at /contact/ for a while, on the reasoning that someone
+  wanting it built for them wants a human rather than a price list. It goes to
+  the plan now - the Managed band carries its own "Tell us what you need"
+  button through to /contact/, so the human is still one click away and the
+  three cards behave alike.
+
+  Prices here are the entry price of each band; the full ladder is on /pricing/
+  in start-rail.html.
+
+  These three headlines are also where the plan names came from - the tiers on
+  /pricing/ are called You build it, We host it, We help, We train you and
+  We've got this. Change a headline here and the plan names have to move with
+  it, or the homepage and the pricing page stop telling the same story.
+{% endcomment %}
+<div class="triad">
+  <a class="card-link" href="{{ "/pricing/#do-it-yourself" | relative_url }}">
+    <div class="card">
+      <span class="card-kicker">Do it yourself</span>
+      <h3 class="card-title">You build it.</h3>
+      <p class="card-body">Run Formulize yourself, because databases are cool!</p>
+      <p class="card-price"><strong>Free</strong> on your own server<br><strong>$49</strong>/month on ours, including backups, maintenance, and monitoring</p>
+      <span class="card-link-more">Compare plans &rarr;</span>
+    </div>
+  </a>
+  <a class="card-link" href="{{ "/pricing/#hosted" | relative_url }}">
+    <div class="card">
+      <span class="card-kicker">Hosted</span>
+      <h3 class="card-title">You build it,<br>we help.</h3>
+      <p class="card-body">Your own system, hosted in Canada. We point you in the right direction, and we'll be there when you need help.</p>
+      <p class="card-price">From <strong>$149</strong>/month</p>
+      <span class="card-link-more">See what is included &rarr;</span>
+    </div>
+  </a>
+  <a class="card-link" href="{{ "/pricing/#managed" | relative_url }}">
+    <div class="card">
+      <span class="card-kicker">Managed</span>
+      <h3 class="card-title">Don't worry. We've got this.</h3>
+      <p class="card-body">We will set up a system tailored to your needs, train your people, and keep it running smoothly.</p>
+      <p class="card-price">From <strong>$1,199</strong>/month</p>
+      <span class="card-link-more">See the managed plan &rarr;</span>
+    </div>
+  </a>
+</div>

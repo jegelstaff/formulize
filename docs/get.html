@@ -1,0 +1,51 @@
+---
+layout: default
+permalink: get/
+title: Get Formulize
+full_width: true
+description: "Three ways to get Formulize: download it and run it yourself for free, have us host it from $49 a month, or have us build and run the whole thing for you."
+---
+
+{% comment %}
+  A router, not a content page. This is where the header's "Get Formulize"
+  button lands, and its only job is to send three quite different people to
+  three different places before any of them has to read something written for
+  someone else.
+{% endcomment %}
+
+<div class="band-head" style="max-width: 68ch;">
+  <h1 style="margin-top: var(--space-3);">Get Formulize</h1>
+</div>
+
+<section class="band">
+  {% include get-choice.html %}
+</section>
+
+<section class="band">
+  <div class="band-box">
+    <div class="band-head">
+      <h2>Every option includes everything!</h2>
+      <p><strong>Unlimited</strong> forms, users, and data, plus the full AI integration &mdash; on every plan, including the free download.</p>
+    </div>
+    <p class="btn-row">
+			<a class="btn btn-primary" href="{{ "/pricing/" | relative_url }}">Compare every plan</a>
+      <a class="btn btn-secondary" href="{{ "/features/" | relative_url }}">See the feature list</a>
+			<a class="btn btn-secondary" href="{{ "/download/" | relative_url }}">Download it free</a>
+    </p>
+  </div>
+</section>
+
+<section class="band">
+  <div class="band-box">
+		<div class="band-head">
+			<h2>Not sure where you fit?</h2>
+			<p>Tell us what you are trying to build and how people will use it, and we will tell you different ways you can go about it.</p>
+		</div>
+    <div class="btn-row">
+      <a class="btn btn-primary" href="{{ "/contact/" | relative_url }}">Talk to us</a>
+      <a class="btn btn-secondary" href="{{ "/examples/" | relative_url }}">See what people build</a>
+    </div>
+  </div>
+</section>
+
+

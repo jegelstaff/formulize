@@ -6,4 +6,20 @@
 <!-- You can set your favicon here -->
 <!-- link rel="shortcut icon" type="image/x-icon" href="{{ '/favicon.ico' | relative_url }}" -->
 
+<!-- Code blocks remember whether the reader wanted them light or dark. This
+     has to run here, inline and blocking, rather than from code-theme.js: the
+     attribute it sets is what the CSS keys off, so setting it any later than
+     this means every code block on the page paints light and then repaints
+     dark. It is deliberately the smallest thing that can do the job - the
+     button, the wrapper and the cookie writing are all in the deferred file. -->
+<script>
+  (function () {
+    var m = document.cookie.match(/(?:^|;\s*)formulize_code_theme=(dark|light)/);
+    if (m && m[1] === 'dark') {
+      document.documentElement.setAttribute('data-code-theme', 'dark');
+    }
+  })();
+</script>
+<script defer src="{{ "/assets/js/code-theme.js" | relative_url }}"></script>
+
 <!-- end custom head snippets -->

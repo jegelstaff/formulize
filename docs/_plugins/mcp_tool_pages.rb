@@ -135,11 +135,68 @@ module Jekyll
     def format_description(text, markdown_converter)
       return "" if text.nil? || text.strip.empty?
 
+      text = code_format_object_literals(text)
       text = bold_property_names(text)
       text = isolate_heading_lines(text)
       paragraphs = text.split(/\n{2,}/).map { |paragraph| add_soft_break_hints(paragraph) }
 
       render_with_element_sections(paragraphs, markdown_converter)
+    end
+
+    # The descriptions are full of worked examples written as object literals -
+    # strict JSON in most tools ({"form_id": 5, "filter": 526}), JavaScript
+    # style with bare keys and single quotes in the element tools
+    # ({ options: [ 'fork', 'knife' ] }). Set in the body face and run together
+    # with the prose around them they are genuinely hard to read: the quotes,
+    # colons and brackets are the whole content, and the body face is not built
+    # to keep them apart. Wrapping each one in backticks hands it to the
+    # markdown converter as inline code, which is all it needs - these are
+    # illustrations inside a sentence, not code blocks of their own.
+    #
+    # The matching is a recursive regex rather than a scan for the first
+    # closing brace, because these nest: a filter array inside a filter object
+    # inside the argument object, three levels deep in places. Stopping at the
+    # first "}" would backtick a third of an example and leave the rest bare.
+    # Quoted strings are consumed whole so that a brace or bracket inside one
+    # (eg the special value "{BLANK}") cannot throw the brace count off.
+    #
+    # Two deliberate limits:
+    #
+    # 1. One line at a time, because everything downstream of here works line by
+    #    line - isolate_heading_lines and add_soft_break_hints both split on
+    #    newlines - so a pair of backticks opened on one line and closed on
+    #    another would be separated by the markup those add and never pair up.
+    # 2. Text already inside backticks is left alone, so a description that has
+    #    marked up its own examples is not given a second set.
+    OBJECT_LITERAL = /
+      (?<obj>
+        \{ (?: [^{}\[\]"']++ | \g<str> | \g<obj> | \g<arr> )*+ \}
+      )
+      |
+      (?<arr>
+        \[ (?: [^{}\[\]"']++ | \g<str> | \g<obj> | \g<arr> )*+ \]
+      )
+      (?<str>
+        "(?: [^"\\] | \\. )*+" | '(?: [^'\\] | \\. )*+'
+      ){0}
+    /x.freeze
+
+    def code_format_object_literals(text)
+      text.split("\n").map { |line| code_format_line(line) }.join("\n")
+    end
+
+    def code_format_line(line)
+      # An odd number of backticks means the existing spans do not pair up.
+      # Nothing here can improve that, so the line is left exactly as it was.
+      return line if line.count("`").odd?
+
+      # Split on backtick-delimited spans, keeping them, and rewrite only the
+      # pieces between them.
+      line.split(/(`[^`]*`)/).map do |piece|
+        next piece if piece.start_with?("`")
+
+        piece.gsub(OBJECT_LITERAL) { |literal| "`#{literal}`" }
+      end.join
     end
 
     # A bullet whose line is just "propertyName (...)" - eg "delimiter

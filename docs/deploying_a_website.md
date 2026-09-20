@@ -1,8 +1,9 @@
 ---
 layout: default
-permalink: deploying_a_website/
+permalink: documentation/deploying_a_website/
 title: Deploying Formulize to a Website
 redirect_from:
+ - deploying_a_website/
  - developers/deploying_formulize/
  - developers/building/
  - install/

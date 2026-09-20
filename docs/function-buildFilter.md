@@ -1,10 +1,13 @@
 ---
 layout: default
-permalink: developers/API/functions/buildFilter/
+permalink: documentation/functions/buildFilter/
+redirect_from:
+ - developers/functions/buildFilter/
+ - developers/API/functions/buildFilter/
 title: buildFilter
 ---
 
-# buildFilter( <span style='font-size: 14pt;'>(string) $name, (int | string | object) $element_identifier, (string) $defaultText = "Choose an option", (string) $formDOMId = "", (bool | string | array) $defaultValue = false, (bool) $multi = false</span> )
+# <span class="sig-name">buildFilter</span>( <span class="sig-arg"><span class="sig-type">(string)</span> $name</span>, <span class="sig-arg"><span class="sig-type">(int | string | object)</span> $element_identifier</span>, <span class="sig-arg"><span class="sig-type">(string)</span> $defaultText <span class="sig-default">= "Choose an option"</span></span>, <span class="sig-arg"><span class="sig-type">(string)</span> $formDOMId <span class="sig-default">= ""</span></span>, <span class="sig-arg"><span class="sig-type">(bool | string | array)</span> $defaultValue <span class="sig-default">= false</span></span>, <span class="sig-arg"><span class="sig-type">(bool)</span> $multi <span class="sig-default">= false</span></span> )
 
 ## Location
 

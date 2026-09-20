@@ -1,6 +1,9 @@
 ---
 layout: default
-permalink: developers/API/classes/data_handler/
+permalink: documentation/classes/data_handler/
+redirect_from:
+ - developers/classes/data_handler/
+ - developers/API/classes/data_handler/
 title: Data Handler
 ---
 {% assign pages = site.pages | where_exp: "page", "page.name contains 'data-'" %}

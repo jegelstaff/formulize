@@ -1,27 +1,132 @@
 ---
 layout: default
-permalink: developers/
-title: Technical Documentation
+permalink: documentation/
+redirect_from:
+ - developers/
+ - developers/API/
+title: Documentation
+full_width: true
+description: Technical documentation for Formulize — the internal and public APIs, the local development environment, configuration as code, templates, custom elements and debugging.
 ---
 
-<h1>Technical Documentation</h1>
+{% comment %}
+  This page is now a top-level menu item ("Docs"), so it is grouped rather than
+  being one flat list of thirteen links. Every link that was on it is still
+  here; the ordering is by what someone is trying to do, with getting it
+  running first, because that is the most common reason to arrive.
 
-<ul>
-<li><a href='./API'>Code, Classes, and Functions (the Internal API)</a></li>
-<li><a href='./Public_API'>The Public API for accessing Formulize remotely</a></li>
-<li><a href='./embedding_screens'>Embedding screens in another website</a></li>
-<li><a href='./embedding_screens_setup'>Giving Formulize an address on the host website's domain</a></li>
-<li><a href='./deploying_locally'>Development Environment</a></li>
-<li><a href='./setup_sms_provider'>Setting Up an SMS Provider</a></li>
-<li><a href='./configuration_as_code'>Configuration as code</a></li>
-<li><a href='./debugging'>Debugging with XDebug</a></li>
-<li><a href='/files/Inside_Formulize-a_Developers_Guide.pdf'>Inside Formulize - A Developer's Guide (PDF)</a></li>
-<li><a href='https://docs.google.com/presentation/d/1p5MffKmo7mSbHnQJT0kXKXMuKBG_pKm1GsoGFW4qngM/edit?usp=sharing' target="_BLANK">Retrospective on adding MCP to Formulize (Google Slides)</a></li>
-<li><a href='https://youtu.be/fAI2sMPNrw0/' target="_BLANK">DevOps in Formulize (YouTube)</a></li>
-<li><a href='./version_control'>Version Control</a></li>
-<li><a href='./github_pages'>GitHub Pages Config</a></li>
-<li><a href='./git_tips'>Git Tips and Tricks</a></li>
-<li><a href='./templates'>Working With Templates</a></li>
-<li><a href='./themes'>What Formulize Expects From a Theme</a></li>
+  User-facing documentation is deliberately listed alongside the developer
+  material, rather than on a separate page - people looking for "the docs" do
+  not know or care which of the two they need. "Using Formulize" collects the
+  short how-do-I-do-X pages (search syntax, viewing a user's permissions,
+  changing columns) that are really about the day-to-day admin UI rather than
+  building or extending anything.
+{% endcomment %}
 
-</ul>
+<div class="band-head" style="max-width: 68ch;">
+  <h1 style="margin-top: var(--space-3);">Documentation</h1>
+</div>
+
+<section class="band">
+  <div class="band-box">
+  <div class="feature-cols">
+    <div>
+      <h3>Getting it running</h3>
+      <ul>
+        <li><a href="./deploying_a_website">Deploy Formulize to a website</a></li>
+        <li><a href="./deploying_a_website/updating_formulize">Update an existing installation</a></li>
+        <li><a href="./deploying_locally">Local development environment</a></li>
+        <li><a href="./deploying_a_website/writable_folders">Writable files and folders</a></li>
+        <li><a href="./debugging">Debugging with XDebug</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h3>Using Formulize</h3>
+      <ul>
+        <li><a href="./searching">Search terms cheat sheet</a></li>
+        <li><a href="./view_user_perms">Viewing a user's permissions</a></li>
+        <li><a href="./changing_columns">Changing columns in a list</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h3>The APIs</h3>
+      <ul>
+        <li><a href="./classes">Classes (the internal API)</a></li>
+        <li><a href="./functions">Functions (the internal API)</a></li>
+        <li><a href="./Public_API">The Public API, for reaching Formulize remotely</a></li>
+        <li><a href="{{ "/ai/mcp-reference" | relative_url }}">MCP tools, resources and prompts</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h3>Extending and configuring</h3>
+      <ul>
+        <li><a href="./configuration_as_code">Configuration as code</a></li>
+        <li><a href="./embedding_screens">Embedding screens in another website</a></li>
+        <li><a href="./custom_form_elements">Custom form elements</a></li>
+        <li><a href="./templates">Working with templates</a></li>
+        <li><a href="./setup_sms_provider">Setting up an SMS provider</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h3>Working on Formulize</h3>
+      <ul>
+        <li><a href="./code_flow">The flow through the code</a></li>
+        <li><a href="./version_control">Version control</a></li>
+        <li><a href="./git_tips">Git tips and tricks</a></li>
+        <li><a href="./version_control/testing">Testing</a></li>
+        <li><a href="./version_control/documentation">Writing and previewing documentation</a></li>
+        <li><a href="./version_control/documentation/github_pages">GitHub Pages config</a></li>
+        <li><a href="./roadmap">Roadmap</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h3>Talks and background</h3>
+      <ul>
+        <li><a href="https://docs.google.com/presentation/d/1p5MffKmo7mSbHnQJT0kXKXMuKBG_pKm1GsoGFW4qngM/edit?usp=sharing" target="_BLANK">Retrospective on adding MCP to Formulize (Slides)</a></li>
+        <li><a href="https://youtu.be/fAI2sMPNrw0/" target="_BLANK">DevOps in Formulize (YouTube)</a></li>
+        <li><a href="./videos">All videos and tutorials</a></li>
+      </ul>
+    </div>
+  </div>
+  </div>
+</section>
+
+{% comment %}
+  The videos were only ever reachable from one link inside "Talks and
+  background" above, which buried the whole library under a subheading about
+  conference slides. That link stays - someone scanning the groups should
+  still find it where it belongs - and this band gives the library its own
+  place on the page for anyone who would rather watch than read.
+{% endcomment %}
+<section class="band">
+  <div class="band-box">
+    <div class="video-feature">
+      <a class="hero-play" href="{{ "/documentation/videos/" | relative_url }}" aria-label="All Formulize videos and tutorials">
+        <img src="{{ "/assets/img/intro-to-formulize-plus-ai.webp" | relative_url }}" alt="">
+      </a>
+      <div>
+        <h2>Would you rather watch?</h2>
+        <p>Everything from a quick introduction, to an AI assistant building a complete database from a prompt, to a deep dive into DevOps. Plus the full tutorial series for Formulize 4.</p>
+        <p class="btn-row">
+          <a class="btn btn-primary" href="{{ "/documentation/videos/" | relative_url }}">All videos and tutorials</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="card elev-sm" style="background: var(--color-accent-100);">
+    <h2 style="margin-bottom: var(--space-2);">Something missing, or wrong?</h2>
+    <div class="btn-row">
+      <a class="btn btn-secondary" href="{{ "/report-a-bug/" | relative_url }}">Report a bug</a>
+      <a class="btn btn-secondary" href="{{ "/community/" | relative_url }}">Get in touch</a>
+      <a class="btn btn-secondary" href="{{ site.github.repository_url }}" target="_blank" rel="noopener">Formulize on GitHub</a>
+    </div>
+  </div>
+</section>

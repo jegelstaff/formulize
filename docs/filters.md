@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/Public_API/filters
+permalink: documentation/Public_API/filters
+redirect_from:
+ - developers/Public_API/filters
 title: filters
 ---
 

@@ -1,6 +1,8 @@
 ---
 layout: default
-permalink: developers/Public_API/read
+permalink: documentation/Public_API/read
+redirect_from:
+ - developers/Public_API/read
 title: read
 ---
 

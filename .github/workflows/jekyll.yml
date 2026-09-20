@@ -14,6 +14,17 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+  # Fired by Formulize itself when a news story is saved. News lives in the
+  # News form on formulize.net and is baked into the site at build time by
+  # docs/_plugins/news_pages.rb, so publishing a story only reaches the site on
+  # a rebuild - this is what makes that automatic. The form's on_after_save
+  # hook POSTs to the repository_dispatch API with this event type.
+  #
+  # If the hook is ever broken or its token expires, nothing breaks here: run
+  # the workflow by hand from the Actions tab and the site catches up.
+  repository_dispatch:
+    types: [formulize-news-updated]
+
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
@@ -44,116 +55,6 @@ jobs:
           cache-version: 0 # Increment this number if you need to re-download cached gems
       - name: Try bundle install again
         run: bundle install --gemfile=/home/runner/work/formulize/formulize/docs/Gemfile
-      - name: Fetch roadmap data from GitHub API
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          BASE="https://api.github.com/repos/jegelstaff/formulize"
-          DATADIR="/home/runner/work/formulize/formulize/docs/_data"
-
-          api_get() {
-            curl -sf \
-              -H "Authorization: Bearer $GH_TOKEN" \
-              -H "Accept: application/vnd.github+json" \
-              "$1"
-          }
-
-          # Roadmap releases are discovered, not hardcoded: every OPEN milestone
-          # whose title is a plain version number (8.3, 9.0, 10.0 ...) becomes a
-          # section, ordered by version. So closing a milestone on GitHub drops it
-          # from the roadmap on the next deploy, and opening one adds it, with no
-          # edit to this workflow. Milestones whose titles aren't version numbers
-          # (Backlog, Deep Backlog) are ignored.
-          #
-          # The version sort compares numerically per component, so 10.0 sorts
-          # after 9.1 rather than before 8.3 as a plain string sort would give.
-          # The regexes use [.] rather than \\. purely to keep the escaping
-          # readable through the YAML/shell/jq layers.
-          api_get "$BASE/milestones?state=open&per_page=100" > /tmp/milestones.json
-
-          jq '
-            [.[] | select(.title | test("^[0-9]+([.][0-9]+)+$"))] |
-            sort_by(.title | split(".") | map(tonumber))
-          ' /tmp/milestones.json > /tmp/roadmap_milestones.json
-
-          MS_NUMS=$(jq -r '.[].number' /tmp/roadmap_milestones.json)
-
-          # Nothing in docs/_data is committed (see the .gitignore there - it is all
-          # generated at build time), so there is no stale copy to fall back on. Write
-          # an empty array and let the roadmap page render with no release sections,
-          # which is the honest result if no release is currently open.
-          if [ -z "$MS_NUMS" ]; then
-            echo "::warning::No open version-numbered milestones found - publishing a roadmap with no release sections."
-            echo '[]' > "$DATADIR/roadmap_issues.json"
-            exit 0
-          fi
-
-          echo "Roadmap milestones:"
-          jq -r '.[] | "  #\(.number) \(.title)"' /tmp/roadmap_milestones.json
-
-          for MS_NUM in $MS_NUMS; do
-            # Slice this milestone out of the list already fetched above, so the
-            # object has the same shape the roadmap template expects (due_on,
-            # description) without a second API call per milestone.
-            jq --argjson num "$MS_NUM" '.[] | select(.number == $num)' \
-              /tmp/roadmap_milestones.json > "/tmp/ms_${MS_NUM}.json"
-
-            # GitHub's /issues endpoint returns both issues and PRs; save raw for both states
-            api_get "$BASE/issues?labels=Marquee+Feature&milestone=${MS_NUM}&state=open&per_page=50" \
-              > "/tmp/raw_open_${MS_NUM}.json"
-            api_get "$BASE/issues?labels=Marquee+Feature&milestone=${MS_NUM}&state=closed&per_page=50" \
-              > "/tmp/raw_done_${MS_NUM}.json"
-
-            # Collect issue numbers (items without a pull_request field) across both states
-            jq -s '
-              (.[0] + .[1]) |
-              [.[] | select(has("pull_request") | not) | .number]
-            ' "/tmp/raw_open_${MS_NUM}.json" "/tmp/raw_done_${MS_NUM}.json" \
-              > "/tmp/issue_nums_${MS_NUM}.json"
-
-            # Build open/done arrays: keep issues and PRs not linked to a collected issue.
-            # A PR is considered linked if its body references a collected issue number
-            # via a closing keyword (closes/fixes/resolves #N).
-            for STATE in open done; do
-              jq --slurpfile issue_nums "/tmp/issue_nums_${MS_NUM}.json" '
-                [.[] |
-                  select(
-                    (has("pull_request") | not) or
-                    (
-                      (.body // "") |
-                      [scan("(?i)(?:closes?|fixes?|resolves?)\\s+#([0-9]+)") | .[0] | tonumber] |
-                      (map(select(. as $ref | ($issue_nums[0] | index($ref)) != null)) | length == 0)
-                    )
-                  ) |
-                  {number: .number, title: .title, body: .body, html_url: .html_url}
-                ]
-              ' "/tmp/raw_${STATE}_${MS_NUM}.json" > "/tmp/${STATE}_${MS_NUM}.json"
-            done
-          done
-
-          # Emit one release object per milestone, in the version order established
-          # above, then slurp them into the array the roadmap template iterates.
-          # The `key` is derived from the version ("8.3" -> "v83") to match the
-          # values this file used to hardcode.
-          : > /tmp/releases.jsonl
-          for MS_NUM in $MS_NUMS; do
-            jq -n \
-              --slurpfile ms   "/tmp/ms_${MS_NUM}.json" \
-              --slurpfile open "/tmp/open_${MS_NUM}.json" \
-              --slurpfile done "/tmp/done_${MS_NUM}.json" \
-              '{
-                key: ("v" + ($ms[0].title | gsub("[.]"; ""))),
-                version: $ms[0].title,
-                milestone: $ms[0],
-                open: $open[0],
-                done: $done[0]
-              }' >> /tmp/releases.jsonl
-          done
-
-          jq -s '.' /tmp/releases.jsonl > "$DATADIR/roadmap_issues.json"
-
-          echo "Wrote $(jq 'length' "$DATADIR/roadmap_issues.json") releases to roadmap_issues.json:"
-          jq -r '.[] | "  \(.version): \(.done | length) done, \(.open | length) open"' "$DATADIR/roadmap_issues.json"
       - name: Set file/directory permissions
         working-directory: /home/runner/work/formulize/formulize
         run: |
@@ -252,6 +153,10 @@ jobs:
         working-directory: /home/runner/work/formulize/formulize/docs
         env:
           JEKYLL_ENV: production
+          # Read by jekyll-github-metadata and by _plugins/roadmap_data.rb (which
+          # builds the roadmap from milestones/issues). Both work unauthenticated
+          # too - this just lifts GitHub's 60 requests/hour anonymous limit.
+          JEKYLL_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload artifact
         # Automatically uploads an artifact from the './_site' directory by default
         uses: actions/upload-pages-artifact@v3

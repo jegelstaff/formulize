@@ -1,10 +1,13 @@
 ---
 layout: default
-permalink: developers/API/classes/data_handler/elementHasValueInEntry/
+permalink: documentation/classes/data_handler/elementHasValueInEntry/
+redirect_from:
+ - developers/classes/data_handler/elementHasValueInEntry/
+ - developers/API/classes/data_handler/elementHasValueInEntry/
 title: elementHasValueInEntry
 ---
 
-# elementHasValueInEntry( <span style='font-size: 14pt;'>(int) $entry_id, (int | string | object) $element_identifier</span> )
+# <span class="sig-name">elementHasValueInEntry</span>( <span class="sig-arg"><span class="sig-type">(int)</span> $entry_id</span>, <span class="sig-arg"><span class="sig-type">(int | string | object)</span> $element_identifier</span> )
 
 ## Description
 

@@ -1,10 +1,13 @@
 ---
 layout: default
-permalink: developers/API/classes/data_handler/findFirstEntryWithValue/
+permalink: documentation/classes/data_handler/findFirstEntryWithValue/
+redirect_from:
+ - developers/classes/data_handler/findFirstEntryWithValue/
+ - developers/API/classes/data_handler/findFirstEntryWithValue/
 title: findFirstEntryWithValue
 ---
 
-# findFirstEntryWithValue( <span style='font-size: 14pt;'>(int | string | object) $element_identifier, (string) $value, (string)&nbsp;$operator&nbsp;= "=", (array) $scope_uids = array()</span> )
+# <span class="sig-name">findFirstEntryWithValue</span>( <span class="sig-arg"><span class="sig-type">(int | string | object)</span> $element_identifier</span>, <span class="sig-arg"><span class="sig-type">(string)</span> $value</span>, <span class="sig-arg"><span class="sig-type">(string)</span> $operator <span class="sig-default">= "="</span></span>, <span class="sig-arg"><span class="sig-type">(array)</span> $scope_uids <span class="sig-default">= array()</span></span> )
 
 ## Description
 

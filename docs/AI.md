@@ -18,7 +18,7 @@ You can use AI assistants to help you work with Formulize. They can understand t
 
 AI can even create forms and elements based on your prompts, or based on documents you upload, or whatever other information you can provide. The AI can connect multiple forms into useful applications, and it can update the configuration of the elements too.
 
-<div id='video-flex-list'>
+<div class='video-inline'>
 		<a href="https://youtu.be/Cm6yR5cMn7Y" target="_BLANK">
 			<img src="/assets/img/formulize-confoo-ai.webp">
 		</a>

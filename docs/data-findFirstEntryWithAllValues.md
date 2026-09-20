@@ -1,10 +1,13 @@
 ---
 layout: default
-permalink: developers/API/classes/data_handler/findFirstEntryWithAllValues/
+permalink: documentation/classes/data_handler/findFirstEntryWithAllValues/
+redirect_from:
+ - developers/classes/data_handler/findFirstEntryWithAllValues/
+ - developers/API/classes/data_handler/findFirstEntryWithAllValues/
 title: findFirstEntryWithAllValues
 ---
 
-# findFirstEntryWithAllValues( <span style='font-size: 14pt;'>(array) $elementsAndValues, (string | array) $operator = "=", (string) $fieldsToReturn = "entry_id" </span> )
+# <span class="sig-name">findFirstEntryWithAllValues</span>( <span class="sig-arg"><span class="sig-type">(array)</span> $elementsAndValues</span>, <span class="sig-arg"><span class="sig-type">(string | array)</span> $operator <span class="sig-default">= "="</span></span>, <span class="sig-arg"><span class="sig-type">(string)</span> $fieldsToReturn <span class="sig-default">= "entry_id"</span></span> )
 
 ## Description
 

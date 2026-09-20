@@ -16,7 +16,7 @@ title: External AI Assistant Setup (MCP)
 
 2. **Enable AI integration via MCP**. Go to the __Formulize Preferences__ page, accessible from the main Formulize admin page. Scroll down to the __AI__ section, and click _Yes_ for the _Enable AI Integration via MCP_ option.
 
-    If this option does not "stick" and reverts to _No_, then you need to make sure your server is passing through an "authorization header" to PHP. Add this code to the .htaccess file in the root folder of your website (the folder that contains mainfile.php). Make sure to put it above any other rewrite rules. If you have already added the rewrite rules for the [Public API](/developers/Public_API/), these lines are part of those rules, and you do not need to add them again.
+    If this option does not "stick" and reverts to _No_, then you need to make sure your server is passing through an "authorization header" to PHP. Add this code to the .htaccess file in the root folder of your website (the folder that contains mainfile.php). Make sure to put it above any other rewrite rules. If you have already added the rewrite rules for the [Public API](/documentation/Public_API/), these lines are part of those rules, and you do not need to add them again.
 
 		    # Necessary for HTTP Authorization header to be passed through to the MCP server
 		    RewriteEngine On

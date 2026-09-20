@@ -1,10 +1,13 @@
 ---
 layout: default
-permalink: developers/API/classes/data_handler/getEntryMeta/
+permalink: documentation/classes/data_handler/getEntryMeta/
+redirect_from:
+ - developers/classes/data_handler/getEntryMeta/
+ - developers/API/classes/data_handler/getEntryMeta/
 title: getEntryMeta
 ---
 
-# getEntryMeta( <span style='font-size: 14pt;'>(int) $entry_id, (bool) $updateCache = false</span> )
+# <span class="sig-name">getEntryMeta</span>( <span class="sig-arg"><span class="sig-type">(int)</span> $entry_id</span>, <span class="sig-arg"><span class="sig-type">(bool)</span> $updateCache <span class="sig-default">= false</span></span> )
 
 ## Description
 
