@@ -1473,7 +1473,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 				// Primary sort is on main form. Only include parts safe for $entryIdQuery (main form,
 				// usertable, owner_groups_subquery) — connected-form aliases like f0.col are not
 				// in $entryIdQuery's FROM clause and would cause a SQL error.
-				$thisOrderByClause = $frameworkSafeOrderByParts
+				$thisOrderByClause = (isset($frameworkSafeOrderByParts) AND $frameworkSafeOrderByParts)
 					? " ORDER BY " . implode(", ", $frameworkSafeOrderByParts) . " "
 					: " ORDER BY main.entry_id ";
 			}
