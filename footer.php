@@ -166,8 +166,7 @@ if (isset($xoopsOption['theme_use_smarty']) && $xoopsOption['theme_use_smarty'] 
 	// this lives with the queue it drains, so AJAX endpoints that render no footer (the
 	// Lyris drawer's, for instance) can emit the same thing for themselves.
 	if (!empty($GLOBALS['formulize_ai_context_queue'])
-		|| !empty($GLOBALS['formulize_rendered_form_info'])
-		|| !empty($_SESSION['formulize_ai_context_pending'])) {
+		|| !empty($GLOBALS['formulize_rendered_form_info'])) {
 		include_once XOOPS_ROOT_PATH . '/modules/formulize/include/writeToFormulizeLog.php';
 		if ($activityLogJs = formulize_activityLogJs()) {
 			$xoTheme->addScript('', array('type' => 'text/javascript'), $activityLogJs);

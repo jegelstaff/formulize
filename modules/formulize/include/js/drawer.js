@@ -951,6 +951,22 @@
                 contentType: false,
                 processData: false
             });
+        }).then(function (response) {
+            // Tell the AI chat's activity log what was just saved. readelements.php cannot report
+            // this itself: it has to return an empty body, because the inline-edit caller in
+            // entriesdisplay.php alerts any non-empty response to the user as an error. Nothing
+            // needs to come back from the server anyway - this side is the one that knows what it
+            // asked to be saved.
+            if (window.formulize && typeof window.formulize.recordActivity === 'function') {
+                var frame = currentFrame && currentFrame.params ? currentFrame.params : {};
+                window.formulize.recordActivity({
+                    event: 'saving-data',
+                    fid:   form.getAttribute('data-fid') || frame.fid || null,
+                    sid:   frame.sid || null,
+                    entry: frame.entryId || null
+                });
+            }
+            return response;
         });
     }
 

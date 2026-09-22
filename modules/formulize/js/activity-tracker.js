@@ -38,6 +38,37 @@
         writeLog(log);
     }
 
+    /**
+     * Record an event the browser itself observed.
+     *
+     * Exposed because some things the AI needs to know about happen in requests that cannot
+     * report them. Saving from the drawer, and saving an inline edit in a list, both POST to
+     * readelements.php, which has to return an empty body: the inline-edit caller treats any
+     * non-empty response as an error and alerts it to the user. There is nowhere in that
+     * response for the server to put anything.
+     *
+     * Those saves do not need a reply, though, because the page that asked for them already
+     * knows what it asked for. Recording at the call site is simpler than any channel back
+     * from the server, and it is accurate in a way a deferred server report was not: it
+     * happens when the save succeeds, rather than whenever some later page happened to render.
+     *
+     * @param {Object} evt Event fields: event, fid, sid, entry, ele_id and so on
+     */
+    function recordActivity(evt) {
+        if (!evt || typeof evt !== 'object') return;
+        var clean = {};
+        for (var k in evt) {
+            if (!Object.prototype.hasOwnProperty.call(evt, k)) continue;
+            if (evt[k] === null || evt[k] === undefined || evt[k] === '') continue;
+            clean[k] = evt[k];
+        }
+        if (!clean.type) clean.type = 'formulize_event';
+        addEvent(clean);
+    }
+
+    window.formulize = window.formulize || {};
+    window.formulize.recordActivity = recordActivity;
+
     function parseParams(search) {
         var params = {};
         if (!search || search.length < 2) return params;

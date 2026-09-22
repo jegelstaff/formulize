@@ -94,20 +94,6 @@ function formulize_enqueue_ai_context($data) {
 		array_shift($GLOBALS['formulize_ai_context_queue']);
 	}
 
-	// Also park it in the session, because the request that queued an event is often not
-	// the one that can deliver it. Saving from the Lyris drawer posts to readelements.php,
-	// which renders nothing a script could ride along in — and whose response body cannot
-	// be used either, since the inline-edit caller in entriesdisplay.php alerts any
-	// non-empty response as an error. Parked events go out with the next render.
-	if (session_status() === PHP_SESSION_ACTIVE) {
-		if (!isset($_SESSION['formulize_ai_context_pending'])) {
-			$_SESSION['formulize_ai_context_pending'] = array();
-		}
-		$_SESSION['formulize_ai_context_pending'][] = $entry;
-		if (count($_SESSION['formulize_ai_context_pending']) > 30) {
-			array_shift($_SESSION['formulize_ai_context_pending']);
-		}
-	}
 }
 
 /**
@@ -161,18 +147,7 @@ function formulize_activityLogJs($explicitTitle = null) {
 		}
 	}
 
-	// Deliver everything still undelivered, not merely what this request queued: the
-	// session copy is the superset, and includes events from requests that had no way to
-	// emit anything themselves. Note the pageview derivation above deliberately reads the
-	// per-request queue instead, so a stale event from an earlier request can never
-	// mislabel this render.
-	$pending = array();
-	if (session_status() === PHP_SESSION_ACTIVE && !empty($_SESSION['formulize_ai_context_pending'])) {
-		$pending = $_SESSION['formulize_ai_context_pending'];
-		unset($_SESSION['formulize_ai_context_pending']);
-	} elseif (!empty($GLOBALS['formulize_ai_context_queue'])) {
-		$pending = $GLOBALS['formulize_ai_context_queue'];
-	}
+	$pending = !empty($GLOBALS['formulize_ai_context_queue']) ? $GLOBALS['formulize_ai_context_queue'] : array();
 	unset($GLOBALS['formulize_ai_context_queue']);
 
 	$js = '';

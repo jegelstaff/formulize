@@ -3690,6 +3690,17 @@ function renderElement(handle,element_id,entryId,fid,check,deInstanceCounter) {
 				if(data) {
 				   alert(data);
 				} else {
+					// Record the save for the AI chat's activity log. readelements.php cannot say
+					// anything itself, because this very handler treats any non-empty response as
+					// an error, so the side that asked for the save reports it instead.
+					if(window.formulize && typeof window.formulize.recordActivity === 'function') {
+						window.formulize.recordActivity({
+							event: 'saving-data',
+							fid: fid,
+							entry: entryId,
+							ele_id: element_id
+						});
+					}
 					// need to get the current value, and then prep it, and then format it
 					var formulize_xhr_params = [];
 					formulize_xhr_params[0] = handle;

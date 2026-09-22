@@ -411,6 +411,20 @@ function icms_cp_footer() {
 		}
 	}
 
+	// Formulize AI chat context: activity tracker (admin page/form events) + the events the server
+	// queued while building this page. The front end does this in footer.php, which admin pages
+	// never reach - icms_cp_footer() renders the theme and nothing else - so without this the whole
+	// admin side reports nothing at all.
+	$formulizeActivityLog = ICMS_ROOT_PATH . '/modules/formulize/include/writeToFormulizeLog.php';
+	$xoTheme->addScript(ICMS_URL . '/modules/formulize/js/activity-tracker.js', array('type' => 'text/javascript'));
+	if (!empty($GLOBALS['formulize_ai_context_queue'])
+		|| !empty($GLOBALS['formulize_rendered_form_info'])) {
+		include_once $formulizeActivityLog;
+		if ($activityLogJs = formulize_activityLogJs()) {
+			$xoTheme->addScript('', array('type' => 'text/javascript'), $activityLogJs);
+		}
+	}
+
 	icms::$logger->stopTime( 'XOOPS output init' );
 	icms::$logger->startTime( 'Module display' );
 
