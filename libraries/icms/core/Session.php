@@ -648,10 +648,17 @@ class icms_core_Session {
 	 * THIS IS TO PRESERVE THE INTEGRITY OF $_SESSION
 	 * IF MULTIPLE REQUESTS (PROBABLY AJAX REQUESTS) ARRIVE CLOSE TOGETHER, ONE COULD START BEFORE THE PREVIOUS IS FINISHED AND SO THEY WOULD BOTH GET THE SAME $_SESSION.
 	 * HOWEVER THIS IS BAD IF THE SUBSEQUENT REQUEST DEPENDS ON VALUES WRITTEN TO THE SESSION DATA DURING THE PRIOR REQUEST.
-	 * THIS IS ESPECIALLY RELEVANT WITH REGARD TO THE ANTI-CSRF TOKENS WHICH ARE STORED IN THE SESSION
-	 * When the session is loaded, sess_updated is set to 1. When session is written back at end of request, current time stamp replaces the 1
-	 * If when we load a session, sess_updated is 1, we try again for up to 10 seconds to load it again
-	 * If we don't get it after 10 seconds, we go with whatever we have in the DB at that time and write a note to the error log.
+	 *
+	 * The lock lives in its own column, sess_locked, holding the time the request that took it
+	 * started, or 0 for a session nobody is working on. With the lock in its own column, sess_updated
+	 * always holds a real time and the collector can tell an in-flight session from an expired one.
+	 *
+	 * The ten second cap on waiting is deliberate and is not negotiable: past that this goes with
+	 * whatever the database has, even if that turns out to be stale, because a page that eventually
+	 * loads with slightly old session data is a far better outcome for the person using the site
+	 * than a page that hangs.
+	 *
+	 * A lock older than LOCK_WAIT_STALE_SECONDS is not waited on at all.
 	 */
 	private function readSession($sess_id) {
 
@@ -660,22 +667,27 @@ class icms_core_Session {
 
 		$ticks = 0;
 		$sess_data = '';
-		$sess_updated = 0;
+		$sess_locked = 0;
+		$lockable = self::sessionLockingAvailable();
 		static $sessionLoaded = false; // track within this session, whether we have ever loaded a session
 		while($ticks<30) {
 			$ticks++;
-			$sql = sprintf('SELECT sess_data, sess_ip, sess_updated FROM %s WHERE sess_id = %s', icms::$xoopsDB->prefix('session'), icms::$xoopsDB->quoteString($sess_id));
+			$sql = sprintf('SELECT sess_data, sess_ip, %s FROM %s WHERE sess_id = %s',
+				$lockable ? 'sess_locked' : '0 AS sess_locked',
+				icms::$xoopsDB->prefix('session'), icms::$xoopsDB->quoteString($sess_id));
 			if (false != $result = icms::$xoopsDB->query($sql)) {
-				if (icms::$xoopsDB->getRowsNum($result) > 0 AND list($sess_data, $sess_ip, $sess_updated) = icms::$xoopsDB->fetchRow($result)) {
-					// session data locked, and we haven't already loaded a session in this PHP instantiation, wait 1/3rd of a second and try again
-					if($sess_updated==1 AND !$sessionLoaded) {
+				if (icms::$xoopsDB->getRowsNum($result) > 0 AND list($sess_data, $sess_ip, $sess_locked) = icms::$xoopsDB->fetchRow($result)) {
+					// session data locked by a request that is still plausibly running, and we haven't
+					// already loaded a session in this PHP instantiation, wait 1/3rd of a second and try again
+					if(self::sessionLockIsWorthWaitingFor($sess_locked) AND !$sessionLoaded) {
 						usleep(333333);
 						continue; // continue while loop -- only circumstance in which we continue loop
-					// got the session data, so mark updated time as "1" to indicate a request is in progress, and carry on.
+					// got the session data, so take the lock for this request, and carry on.
 					} else {
 						$sessionLoaded = true;
-						if($sess_data AND $sess_updated != 1) {
-							$sql = sprintf('UPDATE %s SET sess_updated = 1 WHERE sess_id = %s',icms::$xoopsDB->prefix('session'),icms::$xoopsDB->quoteString($sess_id));
+						if($sess_data AND $lockable) {
+							$sql = sprintf('UPDATE %s SET sess_locked = %u WHERE sess_id = %s',
+								icms::$xoopsDB->prefix('session'), time(), icms::$xoopsDB->quoteString($sess_id));
 							icms::$xoopsDB->queryF($sql);
 						}
 						break; // session found
@@ -688,13 +700,84 @@ class icms_core_Session {
 			}
 		}
 		// tried for ten seconds, still locked, go with what we got, write an error log note about this
-		if($ticks >= 30 AND $sess_updated == 1) {
+		if($ticks >= 30 AND self::sessionLockIsWorthWaitingFor($sess_locked)) {
 			$sessionLoaded = true;
 			error_log('Formulize Standalone Error: After 10 seconds the session data was still locked by a prior request, so we\'re going with the current state of the session data anyway! URI: '.str_replace("&amp;", "&", htmlSpecialChars(strip_tags($_SERVER['REQUEST_URI']))));
 		}
 		$sess_data = !is_string($sess_data) ? '' : $sess_data; // must return a string!
 		if($sess_data) { $cachedSessionIds[$sess_id] = $sess_data; }
     return $sess_data;
+	}
+
+	/**
+	 * How old a lock can be and still be worth waiting for.
+	 *
+	 * Waiting and garbage collection ask completely different questions of the same lock, so they
+	 * get different answers. Waiting asks "is the holder about to finish, so that a moment's pause
+	 * gets me its data?" Since this only ever waits ten seconds before going ahead regardless, a
+	 * lock already much older than that belongs to a request that is either gone or is going to
+	 * outlast our patience anyway - either way the pause buys nothing and only costs the person at
+	 * the screen ten seconds. Thirty seconds is comfortably past the ten we would spend, so a
+	 * holder that really is about to finish is still waited for.
+	 *
+	 * Getting this wrong is cheap in both directions: too short and a reader occasionally gets
+	 * session data a moment before it was rewritten, which is what every version before the lock
+	 * existed did; too long and somebody waits ten seconds for nothing.
+	 */
+	const LOCK_WAIT_STALE_SECONDS = 30;
+
+	/**
+	 * How long garbage collection honours a lock before treating the session as collectable.
+	 *
+	 * This asks the other question: "could a request still be working on this?" Getting it wrong
+	 * in one direction deletes a session out from under a live request and logs that person out,
+	 * which is the bug this whole change exists to fix, so the answer has to cover the longest a
+	 * request could possibly run - a long report or a large CSV export can take minutes. The limit
+	 * the server itself puts on a request is the right guide, plus a margin for the request to get
+	 * its write in after reaching that limit.
+	 *
+	 * Erring long costs nothing: the row is simply collected on a later pass. Nobody waits on this
+	 * value - waiting is capped at ten seconds by LOCK_WAIT_STALE_SECONDS and the loop above.
+	 *
+	 * @return int
+	 */
+	static private function sessionLockGraceSeconds() {
+		$maxExecution = (int) ini_get('max_execution_time');
+		// 0 means no limit at all, so there is nothing to derive a figure from; five minutes is
+		// well beyond a normal web request without keeping a dead lock around all day.
+		if ($maxExecution <= 0) { $maxExecution = 300; }
+		return max(60, $maxExecution + 30);
+	}
+
+	/**
+	 * Whether a lock is recent enough that pausing for its holder could pay off.
+	 *
+	 * @param int $sess_locked The stored lock time, 0 when nothing holds the session
+	 * @return bool
+	 */
+	static private function sessionLockIsWorthWaitingFor($sess_locked) {
+		$sess_locked = (int) $sess_locked;
+		return ($sess_locked > 0 AND $sess_locked > (time() - self::LOCK_WAIT_STALE_SECONDS));
+	}
+
+	/**
+	 * Whether this site's session table has the sess_locked column yet.
+	 *
+	 * Formulize patch 013 adds it, and there is a window on any given site between the new code
+	 * arriving and the patch being run. Sessions are the last thing that should fail closed over a
+	 * missing column, so without it the locking is simply skipped: concurrent requests can then
+	 * read the same session, which is the behaviour every version before the lock existed had, and
+	 * is a great deal better than every request dying on an unknown column.
+	 *
+	 * @return bool
+	 */
+	static private function sessionLockingAvailable() {
+		static $available = null;
+		if ($available !== null) { return $available; }
+		$available = false;
+		$result = icms::$xoopsDB->query(sprintf("SHOW COLUMNS FROM %s LIKE 'sess_locked'", icms::$xoopsDB->prefix('session')));
+		if ($result AND icms::$xoopsDB->getRowsNum($result) > 0) { $available = true; }
+		return $available;
 	}
 
 	/**
@@ -706,9 +789,12 @@ class icms_core_Session {
 	private function writeSession($sess_id, $sess_data) {
 		$sess_id = icms::$xoopsDB->quoteString($sess_id);
 		$sess_data = icms::$xoopsDB->quoteString($sess_data);
+		$lockable = self::sessionLockingAvailable();
+		// Releasing the lock is part of the same statement that records the write, so there is no
+		// moment where the session is written but still shows as held.
 		$sql = sprintf(
-			"UPDATE %s SET sess_updated = '%u', sess_data = %s WHERE sess_id = %s",
-			icms::$xoopsDB->prefix('session'), time(), $sess_data, $sess_id
+			"UPDATE %s SET sess_updated = '%u', %s sess_data = %s WHERE sess_id = %s",
+			icms::$xoopsDB->prefix('session'), time(), $lockable ? 'sess_locked = 0,' : '', $sess_data, $sess_id
 			);
 		icms::$xoopsDB->queryF($sql);
 		if (!icms::$xoopsDB->getAffectedRows()) {
@@ -762,7 +848,15 @@ class icms_core_Session {
 			'user_id'=>intval($_SESSION['xoopsUserId'])
 		));
 		$mintime = time() - (int) $expire;
+		// Never collect a session a request is currently working on. sess_updated is not a safe
+		// guide on its own at the moment the collector runs: PHP calls this handler immediately
+		// after read(), so any session with a request in flight is mid-update by definition, and
+		// deleting it out from under that request logs its user out. A lock older than the grace
+		// period belongs to a request that died, and that session is collectable like any other.
 		$sql = sprintf("DELETE FROM %s WHERE sess_updated < '%u'", icms::$xoopsDB->prefix('session'), $mintime);
+		if (self::sessionLockingAvailable()) {
+			$sql .= sprintf(" AND (sess_locked = 0 OR sess_locked < '%u')", time() - self::sessionLockGraceSeconds());
+		}
 		if(icms::$xoopsDB->queryF($sql)) { return true; } else { return false; }
 	}
 }

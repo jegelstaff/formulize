@@ -478,7 +478,8 @@ CREATE TABLE session (
   sess_id varchar(60) NOT NULL default '',
   sess_updated int(10) unsigned NOT NULL default '0',
   sess_ip varchar(64) NOT NULL default '',
-  sess_data text NOT NULL,
+  sess_data mediumtext NOT NULL,
+  sess_locked int(10) unsigned NOT NULL default '0',
   PRIMARY KEY  (sess_id),
   KEY updated (sess_updated)
 );
