@@ -888,6 +888,8 @@
   text-align: start;
   vertical-align: middle;
   border-bottom: 1px solid var(--fz-color-border);
+  /* its own surface, so the table reads the same on the page as in a card */
+  background: var(--fz-color-surface);
 }
 .fz-table :where(tbody td) {
   height: var(--fz-row-height);
@@ -901,7 +903,7 @@
   border-bottom-color: var(--fz-color-border-strong);
 }
 .fz-table--striped :where(tbody tr:nth-child(even) td) {
-  background: var(--fz-color-surface-2);
+  background: var(--fz-color-surface-3);
 }
 
 /* ---- Badge ------------------------------------------------------------------
