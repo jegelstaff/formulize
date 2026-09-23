@@ -1822,6 +1822,7 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 	$useHeadings = true;
 	$repeatHeaders = 0;
 	$columnWidth = 0;
+	$columnWidthMode = 'natural';
 	$textWidth = 35;
 	$useCheckboxes = $settings['lockcontrols'] ? 2 : 0;
 	$useViewEntryLinks = $settings['lockcontrols'] ? 0 : 1;
@@ -1836,6 +1837,9 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 		$useHeadings = $screen->getVar('useheadings');
 		$repeatHeaders = $screen->getVar('repeatheaders');
 		$columnWidth = $screen->getVar('columnwidth');
+		$columnWidthMode = in_array($screen->getVar('columnwidthmode'), array('natural', 'full', 'fixed'))
+			? $screen->getVar('columnwidthmode')
+			: ($columnWidth ? 'fixed' : 'natural'); // fall back the same way the old setting worked, for screens saved before this option existed
 		$textWidth = $screen->getVar('textwidth');
 		if($textWidth == 0) { $textWidth = 10000; }
 		$useCheckboxes = $screen->getVar('usecheckboxes');
@@ -1946,6 +1950,31 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 
     global $procedureResults; // set in drawInterface
 
+	// work out how to render the list-view table's column widths, based on the "How should the width
+	// of the columns in the list be determined?" setting (columnwidthmode, see listOfEntriesScreen).
+	// 'fixed' gives every column the same pixel width (the old behaviour, when columnwidth was nonzero).
+	// 'natural' sizes each column to fit its content - only Lyris' table markup/CSS (table-layout:auto,
+	// width:1% shrink-to-fit trick on the cells) can render that without every column being stretched
+	// proportionally to fill the container, so it only gets the special treatment on that theme; other
+	// themes fall back to unstyled cells, which is the same as how the old "0" setting always rendered.
+	// 'full' (the old default) leaves cells unstyled, letting the table stretch to fill its container.
+	// In the 'fixed' and (Lyris) 'natural' cases, an extra unstyled spacer column is appended so that a
+	// table narrower than its container still visually appears to extend to the far edge of that space,
+	// instead of leaving a gap - the real columns stay locked at their content/pixel width and the spacer
+	// absorbs the remaining space.
+	global $xoopsConfig;
+	$isLyrisTheme = (isset($xoopsConfig['theme_set']) AND $xoopsConfig['theme_set'] == 'Lyris');
+	if($columnWidthMode == 'fixed' AND $columnWidth) {
+		$columnWidthStyle = "style='width: $columnWidth"."px'";
+		$spacerNeeded = true;
+	} elseif($columnWidthMode == 'natural' AND $isLyrisTheme) {
+		$columnWidthStyle = "style='width: 1%'";
+		$spacerNeeded = true;
+	} else {
+		$columnWidthStyle = "";
+		$spacerNeeded = false;
+	}
+
 	$templateVariables = array(
 		'procedureResults' => $procedureResults,
 		'scrollBoxClassOnOff' => $scrollBoxClassOnOff,
@@ -1956,8 +1985,8 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 		'viewEntryLinksShown' => $useViewEntryLinks,
 		'lockedColumns' => $settings['lockedColumns'],
 		'numberOfInlineCustomButtons' => count((array) $inlineButtons),
-		'spacerNeeded' => ($columnWidth ? true : false),
-		'columnWidthStyle' => ($columnWidth ? "style='width: $columnWidth"."px'" : ""),
+		'spacerNeeded' => $spacerNeeded,
+		'columnWidthStyle' => $columnWidthStyle,
 		'colspan' => $colspan,
 		'downloadCalculationsURL' => $downloadCalculationsURL,
 		'downloadCalculationsText' => $downloadCalculationsText,

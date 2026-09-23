@@ -259,6 +259,7 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $headings['usesearchcalcmsgs'] = $screen->getVar('usesearchcalcmsgs');
   $headings['usesearch'] = $screen->getVar('usesearch');
   $headings['columnwidth'] = $screen->getVar('columnwidth');
+  $headings['columnwidthmode'] = $screen->getVar('columnwidthmode') ? $screen->getVar('columnwidthmode') : 'natural';
   $headings['textwidth'] = $screen->getVar('textwidth');
   $headings['usecheckboxes'] = $screen->getVar('usecheckboxes');
   $headings['useviewentrylinks'] = $screen->getVar('useviewentrylinks');

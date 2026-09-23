@@ -1280,6 +1280,27 @@ textarea {
   table-layout: auto;
 }
 
+/* Column-width modes (issue #919): the list screen's "How should the width of the columns
+   in the list be determined?" setting drives which of these three shapes the table ends up
+   in. All three keep .fz-table at width:100% / table-layout:auto - only what entriesdisplay.php
+   puts on the real column cells (columnWidthStyle, see drawEntries()) changes:
+     - 'full'    - cells get no inline width, so the auto-layout algorithm distributes 100% of
+                   the container across all columns, stretching them proportionally. No spacer
+                   column is rendered.
+     - 'fixed'   - every real column cell gets an inline `width: Npx`, which auto-layout treats
+                   as authoritative for that column.
+     - 'natural' - every real column cell gets an inline `width: 1%`. With table-layout:auto that
+                   is not a literal 1% - it is the classic shrink-to-fit hint that makes the
+                   browser size the column to its content's min/max width instead of stretching it.
+   For 'fixed' and 'natural', a trailing `.formulize-spacer` cell with no inline width is appended
+   (spacerNeeded in entriesdisplay.php). Because it is the only column left unconstrained, the
+   auto-layout algorithm hands it all the leftover width instead of re-stretching the real columns,
+   so the table still visually reaches the far edge of its container even though its real columns
+   stopped growing at their content/pixel width. */
+.fz-table .formulize-spacer {
+  cursor: default;
+}
+
 .fz-table-empty {
 	padding: 10px;
 }

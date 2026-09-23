@@ -84,6 +84,20 @@
     </div>
 		<br><hr><br>
     <div class="form-item">
+      <label for="screens-columnwidthmode"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_COLUMNWIDTHMODE}></label>
+      <div class="form-radios">
+			  <label for="natural"><input type="radio" id="screens-columnwidthmode" name="screens-columnwidthmode"<{if $content.columnwidthmode eq 'natural' or $content.columnwidthmode eq ''}> checked="checked"<{/if}> value="natural"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_COLUMNWIDTHMODE_NATURAL}></label>
+		  </div>
+		  <div class="form-radios">
+			  <label for="full"><input type="radio" id="screens-columnwidthmode" name="screens-columnwidthmode"<{if $content.columnwidthmode eq 'full'}> checked="checked"<{/if}> value="full"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_COLUMNWIDTHMODE_FULL}></label>
+		  </div>
+		  <div class="form-radios">
+			  <label for="fixed"><input type="radio" id="screens-columnwidthmode" name="screens-columnwidthmode"<{if $content.columnwidthmode eq 'fixed'}> checked="checked"<{/if}> value="fixed"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_COLUMNWIDTHMODE_FIXED}></label>
+		  </div>
+      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_COLUMNWIDTHMODE}></div>
+    </div>
+		<br><hr><br>
+    <div class="form-item">
       <label for="screens-columnwidth"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_COLUMNWIDTH}></label>
       <input type="text" id="screens-columnwidth" name="screens-columnwidth" value="<{$content.columnwidth}>" size="3" maxlength="3"/>
       <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_COLUMNWIDTH}></div>
