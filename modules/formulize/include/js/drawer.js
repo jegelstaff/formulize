@@ -104,8 +104,8 @@
     // layout everywhere else in Formulize turns on at.
     var WIDE_BREAKPOINT  = 768;
     var AI_DEFAULT_WIDTH = '640px'; // chat needs more room than the entry-form default
-    var WIDTH_STORAGE_KEY    = 'fz-drawer-width';
-    var AI_WIDTH_STORAGE_KEY = 'fz-drawer-width-ai';
+    var WIDTH_STORAGE_KEY    = 'formulize-drawer-width';
+    var AI_WIDTH_STORAGE_KEY = 'formulize-drawer-width-ai';
 
     // ---- DOM -------------------------------------------------------------------
 
@@ -321,10 +321,10 @@
     // ---- Entry form state ------------------------------------------------------
 
     // Paging state for the currently loaded entry form. Populated from the
-    // fz-multipage-nav metadata the endpoint emits; null for single-page forms.
+    // formulize-multipage-nav metadata the endpoint emits; null for single-page forms.
     var currentEntryNav = null;
 
-    // fz-form-buttons metadata the endpoint emits: which form buttons this screen is
+    // formulize-form-buttons metadata the endpoint emits: which form buttons this screen is
     // configured to present, and what each is called. It is the server's answer, made by
     // the same code that builds the full screen form's button tray, so the drawer never
     // decides for itself which buttons exist or what they say.
@@ -348,7 +348,7 @@
     // plain single-page form screen).
     function readNavMeta() {
         if (!bodyEl) { return null; }
-        var el = bodyEl.querySelector('script.fz-multipage-nav');
+        var el = bodyEl.querySelector('script.formulize-multipage-nav');
         if (!el) { return null; }
         try { return JSON.parse(el.textContent); } catch (e) { return null; }
     }
@@ -357,7 +357,7 @@
     // fid/entryId, and — for the subform add flow — the resolved parent entry id).
     function readDrawerMeta() {
         if (!bodyEl) { return null; }
-        var el = bodyEl.querySelector('script.fz-drawer-meta');
+        var el = bodyEl.querySelector('script.formulize-drawer-meta');
         if (!el) { return null; }
         try { return JSON.parse(el.textContent); } catch (e) { return null; }
     }
@@ -365,7 +365,7 @@
     // Read the form-button metadata the endpoint emits (null when absent).
     function readButtonMeta() {
         if (!bodyEl) { return null; }
-        var el = bodyEl.querySelector('script.fz-form-buttons');
+        var el = bodyEl.querySelector('script.formulize-form-buttons');
         if (!el) { return null; }
         try { return JSON.parse(el.textContent); } catch (e) { return null; }
     }
@@ -457,7 +457,7 @@
     // Fetch an entry form into the drawer body and re-sync all per-form state
     // (change flag, paging metadata, title, current-frame bookkeeping, footer, Back
     // control). Every drawer load — open, page turn, subform descend, back — funnels
-    // through here. Returns a promise of the fz-drawer-meta object (null on failure).
+    // through here. Returns a promise of the formulize-drawer-meta object (null on failure).
     // A POST is always a write: the fragment endpoint runs readelements.php before it
     // renders. So every drawer load that carries one raises the saving animation, which
     // covers save-in-place, a page hop that saves the page it is leaving, and the subform
@@ -585,9 +585,9 @@
     // Build the drawer footer controls for the loaded entry form.
     //
     // Which buttons exist, and what each is called, is decided by the server and handed
-    // over as metadata: fz-form-buttons carries the screen's form-level buttons (the same
+    // over as metadata: formulize-form-buttons carries the screen's form-level buttons (the same
     // ones addSubmitButton renders full screen -- printable view, save, save and leave,
-    // done/close, resolved from the screen's own settings), and fz-multipage-nav carries
+    // done/close, resolved from the screen's own settings), and formulize-multipage-nav carries
     // the paging controls. Nothing here invents a button or a label; the English strings
     // remain only as a fallback for a host that publishes no metadata at all.
     //
@@ -713,7 +713,7 @@
         var navButtons = drawerShowsNavButtons(nav);
         // The screen's button set for the page being shown, computed server side by
         // formulize_multipageButtonSet() — the very same call the full screen action bar
-        // is built from — and published in fz-multipage-nav as ordered {slot, text}
+        // is built from — and published in formulize-multipage-nav as ordered {slot, text}
         // pairs. Rendering it verbatim is what makes the drawer's footer the full screen
         // footer: on the kitchen sink screen that is "Save and Close / Save / Close /
         // Save and Continue" on page one, "Save and Go Back / Save / Close / Save and

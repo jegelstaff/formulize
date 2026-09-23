@@ -54,7 +54,7 @@ h1, h2, h3, h4, h5, h6,
 .form-label,
 .xoops-form-element-caption,
 .xoops-form-element-caption-required,
-.fz-form-screen .formulize-grid-caption,
+.lyris-form-screen .formulize-grid-caption,
 .formulize-drawer__title {
   font-family: var(--fz-font-heading);
 }
@@ -63,7 +63,7 @@ h1, h2, h3, h4, h5, h6,
    App shell
    ============================================================ */
 
-.fz-app {
+.lyris-app {
   display: flex;
   flex-direction: column;
   /* Stops short of the viewport bottom while masquerading, so the bar does not
@@ -74,7 +74,7 @@ h1, h2, h3, h4, h5, h6,
 
 /* ---- Header ---- */
 
-.fz-header {
+.lyris-header {
   height: var(--lyris-header-height);
   flex-shrink: 0;
   display: flex;
@@ -87,31 +87,31 @@ h1, h2, h3, h4, h5, h6,
   position: relative;
 }
 
-.fz-header__start {
+.lyris-header__start {
   display: flex;
   align-items: center;
   gap: calc(var(--fz-spacing) * 2);
 }
 
-.fz-header__brand {
+.lyris-header__brand {
   display: flex;
   align-items: center;
 }
 
-.fz-header__brand img {
+.lyris-header__brand img {
   height: 28px;
   width: auto;
   display: block;
 }
 
-.fz-header__end {
+.lyris-header__end {
   display: flex;
   align-items: center;
   gap: calc(var(--fz-spacing) * 3);
   margin-left: auto;
 }
 
-.fz-header__action-link {
+.lyris-header__action-link {
   font-size: var(--fz-text-xs-plus);
   font-weight: 500;
   color: var(--fz-color-text-muted);
@@ -119,22 +119,22 @@ h1, h2, h3, h4, h5, h6,
   transition: color var(--fz-duration-fast) var(--fz-ease-out);
 }
 
-.fz-header__action-link:hover {
+.lyris-header__action-link:hover {
   color: var(--fz-color-text);
 }
 
-.fz-header__inbox {
+.lyris-header__inbox {
   display: inline-flex;
   align-items: center;
   position: relative;
   color: var(--fz-color-text-muted);
 }
 
-.fz-header__inbox:hover {
+.lyris-header__inbox:hover {
   color: var(--fz-color-text);
 }
 
-.fz-header__badge {
+.lyris-header__badge {
   position: absolute;
   top: -3px;
   right: -4px;
@@ -145,14 +145,14 @@ h1, h2, h3, h4, h5, h6,
   border: 1.5px solid var(--fz-color-surface);
 }
 
-.fz-header__nav-toggle {
+.lyris-header__nav-toggle {
   color: var(--fz-color-text-muted);
   flex-shrink: 0;
 }
 
 /* ---- App body ---- */
 
-.fz-app__body {
+.lyris-app__body {
   flex: 1;
   display: flex;
   overflow: hidden;
@@ -161,7 +161,7 @@ h1, h2, h3, h4, h5, h6,
 
 /* ---- Sidebar ---- */
 
-.fz-sidebar {
+.lyris-sidebar {
   width: var(--lyris-sidebar-width);
   flex-shrink: 0;
   overflow-y: auto;
@@ -171,13 +171,13 @@ h1, h2, h3, h4, h5, h6,
   transition: width var(--fz-duration) var(--fz-ease-out);
 }
 
-.fz-app--sidebar-closed .fz-sidebar {
+.lyris-app--sidebar-closed .lyris-sidebar {
   width: 0;
 }
 
 /* ---- Main content ---- */
 
-.fz-main {
+.lyris-main {
   flex: 1;
   overflow: auto;
   min-width: 0;
@@ -185,7 +185,7 @@ h1, h2, h3, h4, h5, h6,
 }
 
 /* Simple / system pages (login, register, lostpass, ...) drop their raw
-   content straight into .fz-main with no wrapper, so it butts against the
+   content straight into .lyris-main with no wrapper, so it butts against the
    viewport edge. Give those pages a horizontal (and top) gutter. Formulize
    app/list screens (body#formulize) are full-bleed by design — the titlebar,
    list body and pagination manage their own insets — so they're excluded.
@@ -193,35 +193,35 @@ h1, h2, h3, h4, h5, h6,
    `.formulize-screen` is excluded for the same reason. A page can render a bare
    Formulize screen while living outside the module — edituser.php is one, and its
    body id is "system" — and that content manages its own insets too
-   (`.fz-form-screen` takes a calc(var(--fz-spacing) * 5) side margin, `#multipage-controls` is
+   (`.lyris-form-screen` takes a calc(var(--fz-spacing) * 5) side margin, `#multipage-controls` is
    deliberately full-bleed). The body class is the theme's existing "this content
    is a Formulize screen" signal, so keying off it covers those pages whatever
    their body id is. Pages that merely embed a screen inside their own wrapper and
    chrome (signup.php) never set the signal, so they keep the gutter. */
-body:not(#formulize):not(.formulize-screen) .fz-main {
+body:not(#formulize):not(.formulize-screen) .lyris-main {
   padding: calc(var(--fz-spacing) * 6) calc(var(--fz-spacing) * 6) 0;
 }
 
 /* Inline / drawer-iframe mode — header and sidebar suppressed via theme.html.
-   This mode scrolls the document itself rather than `.fz-main`, so the
+   This mode scrolls the document itself rather than `.lyris-main`, so the
    masquerade allowance is taken as padding on the body instead of by shrinking
    the shell. See the "Masquerade bar" section. */
-.fz-inline {
+.formulize-inline {
   padding-bottom: var(--lyris-masquerade-height);
 }
 
-.fz-inline .fz-app {
+.formulize-inline .lyris-app {
   height: auto;
   min-height: calc(100vh - var(--lyris-masquerade-height));
   overflow: visible;
 }
 
-.fz-inline .fz-app__body {
+.formulize-inline .lyris-app__body {
   flex: 1;
   overflow: visible;
 }
 
-.fz-inline .fz-main {
+.formulize-inline .lyris-main {
   overflow: visible;
 }
 
@@ -240,7 +240,7 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
 
    Form fields inside the drawer are NOT styled here. The drawer body is wrapped
    by modules/formulize/templates/screens/Lyris/default/drawer/toptemplate.php,
-   which emits the same `.fz-form-screen` / `.fz-form` containers the form and
+   which emits the same `.lyris-form-screen` / `.lyris-form` containers the form and
    multiPage screens emit, so the form-screen rules further down this file apply
    verbatim in the drawer. That is what keeps a form identical full screen and in
    the drawer, and it is why the parallel set of `.formulize-drawer__body …` field rules
@@ -260,7 +260,7 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
 
   /* Lifted above the masquerade bar so the drawer's footer buttons stay clickable. */
   bottom: var(--lyris-masquerade-height);
-  animation: fz-drawer-in var(--fz-duration) var(--fz-ease-out);
+  animation: lyris-drawer-in var(--fz-duration) var(--fz-ease-out);
 }
 
 .formulize-drawer-scrim {
@@ -297,7 +297,7 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
   border-color: var(--fz-color-accent);
 }
 
-@keyframes fz-drawer-in {
+@keyframes lyris-drawer-in {
   from { transform: translateX(16px); opacity: 0; }
   to   { transform: translateX(0);    opacity: 1; }
 }
@@ -444,10 +444,10 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
   border: 3px solid var(--fz-color-border);
   border-top-color: var(--fz-color-accent);
   border-radius: 50%;
-  animation: fz-spin 0.7s linear infinite;
+  animation: lyris-spin 0.7s linear infinite;
 }
 
-@keyframes fz-spin {
+@keyframes lyris-spin {
   to { transform: rotate(360deg); }
 }
 
@@ -508,7 +508,7 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
 .fz-btn--ghost:hover { background: var(--fz-color-surface-3); }
 
 /* Filter toggle — highlight when filters are visible */
-#fz-filter-toggle[aria-pressed="true"] {
+#lyris-filter-toggle[aria-pressed="true"] {
   background: var(--fz-color-accent-soft);
   border-color: var(--fz-color-accent-soft-2);
   color: var(--fz-color-accent);
@@ -520,7 +520,7 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
 .fz-btn--icon.fz-btn--sm { width: calc(var(--fz-spacing) * 6.5); }
 
 /* Chip — pill button used for filter chips and selection bar actions */
-.fz-chip {
+.lyris-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -537,21 +537,21 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
   cursor: default;
   transition: background var(--fz-duration-fast) var(--fz-ease-out), border-color var(--fz-duration-fast) var(--fz-ease-out);
 }
-button.fz-chip { cursor: pointer; }
-button.fz-chip:hover { background: var(--fz-color-accent-soft-2); }
+button.lyris-chip { cursor: pointer; }
+button.lyris-chip:hover { background: var(--fz-color-accent-soft-2); }
 
-.fz-chip:has(.fz-chip__close) { padding-right: 4px; }
+.lyris-chip:has(.lyris-chip__close) { padding-right: 4px; }
 
-.fz-chip__close {
+.lyris-chip__close {
   width: 18px; height: 18px;
   border-radius: var(--fz-radius-full);
   display: inline-flex; align-items: center; justify-content: center;
   background: transparent; border: 0;
   cursor: pointer; color: var(--fz-color-text-muted);
 }
-.fz-chip__close:hover { background: rgba(0,0,0,.08); color: var(--fz-color-text); }
+.lyris-chip__close:hover { background: rgba(0,0,0,.08); color: var(--fz-color-text); }
 
-.fz-chip--ghost {
+.lyris-chip--ghost {
   background: var(--fz-color-surface);
   border-color: var(--fz-color-border-strong);
   border-style: dashed;
@@ -559,28 +559,28 @@ button.fz-chip:hover { background: var(--fz-color-accent-soft-2); }
   font-weight: 400;
   cursor: pointer;
 }
-.fz-chip--ghost:hover { background: var(--fz-color-surface-3); color: var(--fz-color-text); }
+.lyris-chip--ghost:hover { background: var(--fz-color-surface-3); color: var(--fz-color-text); }
 
-.fz-chip--dark {
+.lyris-chip--dark {
   background: rgba(255,255,255,.10);
   border-color: rgba(255,255,255,.18);
   color: #fff;
 }
-button.fz-chip--dark:hover { background: rgba(255,255,255,.18); border-color: rgba(255,255,255,.28); }
+button.lyris-chip--dark:hover { background: rgba(255,255,255,.18); border-color: rgba(255,255,255,.28); }
 
-.fz-chip--dark.fz-chip--danger {
+.lyris-chip--dark.lyris-chip--danger {
   background: rgba(255,90,90,.14);
   border-color: rgba(255,120,120,.35);
   color: #ffbaba;
 }
-button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); border-color: rgba(255,120,120,.5); }
+button.lyris-chip--dark.lyris-chip--danger:hover { background: rgba(255,90,90,.22); border-color: rgba(255,120,120,.5); }
 
-.fz-chip--outline {
+.lyris-chip--outline {
   background: transparent;
   border-color: var(--fz-color-border-strong);
   color: var(--fz-color-text-muted);
 }
-.fz-chip--dark.fz-chip--outline {
+.lyris-chip--dark.lyris-chip--outline {
   background: transparent;
   border-color: rgba(255,255,255,.25);
   color: rgba(255,255,255,.85);
@@ -588,12 +588,7 @@ button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); bo
 
 /* Helpers */
 .fz-spacer  { flex: 1 1 auto; }
-.fz-divider { width: 1px; height: 20px; background: var(--fz-color-border); }
-.fz-hstack  { display: flex; align-items: center; gap: calc(var(--fz-spacing) * 2); }
-.fz-vstack  { display: flex; flex-direction: column; gap: calc(var(--fz-spacing) * 2); }
-.fz-muted   { color: var(--fz-color-text-muted); }
-.fz-subtle  { color: var(--fz-color-text-subtle); }
-.fz-mono    { font-family: var(--fz-font-mono); font-feature-settings: "tnum"; }
+.lyris-divider { width: 1px; height: 20px; background: var(--fz-color-border); }
 
 /* ---- Toggle switch ----------------------------------------------------
    Reusable primitive: turns a real <input type="checkbox"> into a sliding
@@ -758,8 +753,8 @@ textarea {
    List screen
    ============================================================ */
 
-/* The core list wrappers (#listofentries > form#controls) sit between .fz-main and
-   .fz-list-screen. They must carry the height through so the screen can fill the
+/* The core list wrappers (#listofentries > form#controls) sit between .lyris-main and
+   .lyris-list-screen. They must carry the height through so the screen can fill the
    main scroll area and pin its footer; otherwise height:100% resolves against an
    auto-height parent and collapses to the content height. */
 #listofentries,
@@ -770,12 +765,12 @@ textarea {
   flex-direction: column;
 }
 
-.fz-list-screen {
+.lyris-list-screen {
   display: flex;
   flex-direction: column;
   /* fill the main scroll area so the body scrolls internally and the titlebar /
      footer stay pinned (the V2 app-chrome layout). The flex chain that makes this
-     work lives on .fz-list__body (flex:1; overflow:auto; min-height:0). */
+     work lives on .lyris-list__body (flex:1; overflow:auto; min-height:0). */
   flex: 1 1 auto;
   min-height: 0;
   position: relative;
@@ -783,13 +778,13 @@ textarea {
 
 /* Embedded lists have no fixed-height ancestor, so let them flow naturally
    instead of collapsing the body to zero height. */
-.fz-inline #listofentries,
-.fz-inline #listofentries #controls,
-.fz-inline .fz-list-screen { height: auto; display: block; }
-.fz-inline .fz-list__body  { overflow: visible; }
+.formulize-inline #listofentries,
+.formulize-inline #listofentries #controls,
+.formulize-inline .lyris-list-screen { height: auto; display: block; }
+.formulize-inline .lyris-list__body  { overflow: visible; }
 
 /* Title bar */
-.fz-list__titlebar {
+.lyris-list__titlebar {
   display: flex;
   align-items: center;
   gap: calc(var(--fz-spacing) * 2);
@@ -800,7 +795,7 @@ textarea {
   flex-shrink: 0;
 }
 
-.fz-list__titlebar-start {
+.lyris-list__titlebar-start {
   display: flex;
   align-items: center;
   gap: calc(var(--fz-spacing) * 3);
@@ -808,7 +803,7 @@ textarea {
   min-width: 0;
 }
 
-.fz-list__titlebar-end {
+.lyris-list__titlebar-end {
   display: flex;
   align-items: center;
   gap: calc(var(--fz-spacing) * 2);
@@ -816,8 +811,8 @@ textarea {
 }
 
 /* Formulize-generated buttons in the titlebar styled as fz-btn */
-.fz-list__titlebar input[type="button"],
-.fz-list__titlebar .formulize_button {
+.lyris-list__titlebar input[type="button"],
+.lyris-list__titlebar .formulize_button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -834,30 +829,30 @@ textarea {
   white-space: nowrap;
   transition: background var(--fz-duration-fast) var(--fz-ease-out), border-color var(--fz-duration-fast) var(--fz-ease-out);
 }
-.fz-list__titlebar input[type="button"]:hover,
-.fz-list__titlebar .formulize_button:hover { background: var(--fz-color-surface-3); }
+.lyris-list__titlebar input[type="button"]:hover,
+.lyris-list__titlebar .formulize_button:hover { background: var(--fz-color-surface-3); }
 
 /* Add entry — primary */
-.fz-list__titlebar #formulize_addButton {
+.lyris-list__titlebar #formulize_addButton {
   background: var(--fz-color-accent);
   color: var(--fz-color-on-accent);
   border-color: var(--fz-color-accent);
 }
-.fz-list__titlebar #formulize_addButton:hover {
+.lyris-list__titlebar #formulize_addButton:hover {
   background: var(--fz-color-accent-hover);
   border-color: var(--fz-color-accent-hover);
 }
 
 /* More actions (...) — ghost icon button */
-.fz-list__titlebar #formulize_moreActionsButton {
+.lyris-list__titlebar #formulize_moreActionsButton {
   width: var(--fz-control-height);
   padding: 0;
   border-color: transparent;
   background: transparent;
 }
-.fz-list__titlebar #formulize_moreActionsButton:hover { background: var(--fz-color-surface-3); }
+.lyris-list__titlebar #formulize_moreActionsButton:hover { background: var(--fz-color-surface-3); }
 
-.fz-list__title {
+.lyris-list__title {
   font-size: var(--fz-text-xl);
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -868,7 +863,7 @@ textarea {
 }
 
 /* Total entry count beside the title */
-.fz-list__count {
+.lyris-list__count {
   font-family: var(--fz-font-mono);
   font-size: var(--fz-text-xs);
   font-feature-settings: "tnum";
@@ -877,12 +872,12 @@ textarea {
 }
 
 /* More-actions wrapper — anchors the dropdown to the "..." button */
-.fz-list__more-wrap {
+.lyris-list__more-wrap {
   position: relative;
 }
 
 /* More-actions dropdown */
-.fz-list__action-panel {
+.lyris-list__action-panel {
   display: none;
   position: absolute;
   top: calc(100% + 4px);
@@ -897,14 +892,14 @@ textarea {
   flex-direction: column;
 }
 
-.fz-list__action-panel.open {
+.lyris-list__action-panel.open {
   display: flex;
 }
 
 /* Formulize-generated buttons inside the dropdown styled as pop items */
-.fz-list__action-panel input[type="button"],
-.fz-list__action-panel input[type="submit"],
-.fz-list__action-panel .formulize_button {
+.lyris-list__action-panel input[type="button"],
+.lyris-list__action-panel input[type="submit"],
+.lyris-list__action-panel .formulize_button {
   display: flex;
   align-items: center;
   width: 100%;
@@ -921,9 +916,9 @@ textarea {
   white-space: nowrap;
 }
 
-.fz-list__action-panel input[type="button"]:hover,
-.fz-list__action-panel input[type="submit"]:hover,
-.fz-list__action-panel .formulize_button:hover {
+.lyris-list__action-panel input[type="button"]:hover,
+.lyris-list__action-panel input[type="submit"]:hover,
+.lyris-list__action-panel .formulize_button:hover {
   background: var(--fz-color-surface-3);
 }
 
@@ -932,15 +927,15 @@ textarea {
    `input[type="button"].formulize_button` (see formulize_screenLOEButton).
    The base `.formulize_button` rule added for the inline-edit save button
    (issue #34, PR #38) selects them as `input[type="button"].formulize_button`
-   — specificity (0,2,1), the same as the `.fz-list__action-panel
+   — specificity (0,2,1), the same as the `.lyris-list__action-panel
    input[type="button"]` reset above. Because the base rule is later in the
    file it wins the tie and leaks its 1px border (plus surface/height/radius)
    onto every menu item. Re-assert the flat menu-item look here at strictly
    higher specificity (0,3,1) so it wins regardless of source order. Additive
    and Lyris-scoped; the inline-edit save/go buttons live in
-   `.fz-list__footer`, not this panel, so they are untouched. */
-.fz-list__action-panel input[type="button"].formulize_button,
-.fz-list__action-panel input[type="submit"].formulize_button {
+   `.lyris-list__footer`, not this panel, so they are untouched. */
+.lyris-list__action-panel input[type="button"].formulize_button,
+.lyris-list__action-panel input[type="submit"].formulize_button {
   height: 30px;
   padding: 0 calc(var(--fz-spacing) * 2);
   border: 0;
@@ -948,14 +943,14 @@ textarea {
   background: transparent;
   font-weight: inherit;
 }
-.fz-list__action-panel input[type="button"].formulize_button:hover,
-.fz-list__action-panel input[type="submit"].formulize_button:hover {
+.lyris-list__action-panel input[type="button"].formulize_button:hover,
+.lyris-list__action-panel input[type="submit"].formulize_button:hover {
   background: var(--fz-color-surface-3);
   border-color: transparent;
 }
 
 /* Popover components (shared across dropdown contexts) */
-.fz-pop {
+.lyris-pop {
   background: var(--fz-color-surface);
   border-radius: var(--fz-radius-lg);
   box-shadow: var(--fz-shadow-lg);
@@ -964,7 +959,7 @@ textarea {
   min-width: 180px;
 }
 
-.fz-pop__item {
+.lyris-pop__item {
   display: flex;
   align-items: center;
   gap: calc(var(--fz-spacing) * 2);
@@ -983,20 +978,20 @@ textarea {
   line-height: var(--fz-leading-snug);
 }
 
-.fz-pop__item:hover { background: var(--fz-color-surface-3); }
-.fz-pop__item--active { background: var(--fz-color-accent-soft); color: var(--fz-color-accent-text); font-weight: 500; }
-.fz-pop__item--active:hover { background: var(--fz-color-accent-soft-2); }
-.fz-pop__item--disabled { color: var(--fz-color-text-subtle); cursor: default; pointer-events: none; }
-.fz-pop__item--danger { color: var(--fz-color-danger); }
-.fz-pop__sep { height: 1px; background: var(--fz-color-border); margin: 4px 2px; }
-.fz-pop__group { padding: 4px 8px; font-size: var(--fz-text-xs); color: var(--fz-color-text-subtle); text-transform: uppercase; letter-spacing: .04em; }
+.lyris-pop__item:hover { background: var(--fz-color-surface-3); }
+.lyris-pop__item--active { background: var(--fz-color-accent-soft); color: var(--fz-color-accent-text); font-weight: 500; }
+.lyris-pop__item--active:hover { background: var(--fz-color-accent-soft-2); }
+.lyris-pop__item--disabled { color: var(--fz-color-text-subtle); cursor: default; pointer-events: none; }
+.lyris-pop__item--danger { color: var(--fz-color-danger); }
+.lyris-pop__sep { height: 1px; background: var(--fz-color-border); margin: 4px 2px; }
+.lyris-pop__group { padding: 4px 8px; font-size: var(--fz-text-xs); color: var(--fz-color-text-subtle); text-transform: uppercase; letter-spacing: .04em; }
 
 /* View switcher — binoculars icon button + dropdown panel */
-.fz-view-switcher {
+.lyris-view-switcher {
   position: relative;
 }
 
-.fz-view-switcher__panel {
+.lyris-view-switcher__panel {
   display: none;
   position: absolute;
   top: calc(100% + 4px);
@@ -1011,12 +1006,12 @@ textarea {
   flex-direction: column;
 }
 
-.fz-view-switcher__panel.open {
+.lyris-view-switcher__panel.open {
   display: flex;
 }
 
 /* Selection bar (shown when rows are checked, overlays the titlebar) */
-.fz-selection-bar {
+.lyris-selection-bar {
   display: none;
   position: absolute;
   top: 0;
@@ -1032,18 +1027,18 @@ textarea {
   min-height: 56px;
 }
 
-.fz-selection-bar.is-active {
+.lyris-selection-bar.is-active {
   display: flex;
 }
 
-.fz-selection-bar__start {
+.lyris-selection-bar__start {
   display: flex;
   align-items: center;
   gap: calc(var(--fz-spacing) * 2);
   flex-shrink: 0;
 }
 
-.fz-selection-bar__actions {
+.lyris-selection-bar__actions {
   display: flex;
   align-items: center;
   gap: calc(var(--fz-spacing) * 2);
@@ -1057,24 +1052,24 @@ textarea {
 }
 
 /* Buttons inside the dark selection bar — chip-dark style
-   (mirrors the `.fz-chip--dark` / `--danger` / `--outline` primitives above;
+   (mirrors the `.lyris-chip--dark` / `--danger` / `--outline` primitives above;
    core renders these as bare `input[type=button].formulize_button` so the
    classes cannot be applied to the markup).
 
    The `input[type="button"].formulize_button` selectors are load-bearing, for
-   the same reason as in `.fz-list__action-panel` above (issue #34, PR #38):
+   the same reason as in `.lyris-list__action-panel` above (issue #34, PR #38):
    the base `.formulize_button` rule near the end of this file also matches as
    `input[type="button"].formulize_button` — specificity (0,2,1), tying the
-   `.fz-selection-bar input[type="button"]` reset here and winning on source
+   `.lyris-selection-bar input[type="button"]` reset here and winning on source
    order. That is what made "Clone selected" / "Change owner" render as light
    surface pills with `color: var(--fz-color-text)` on the dark bar, and then keep
    near-black text on hover (issue #82). Matching at (0,3,1) reclaims them
    regardless of source order. */
-.fz-selection-bar input[type="button"],
-.fz-selection-bar input[type="submit"],
-.fz-selection-bar .formulize_button,
-.fz-selection-bar input[type="button"].formulize_button,
-.fz-selection-bar input[type="submit"].formulize_button {
+.lyris-selection-bar input[type="button"],
+.lyris-selection-bar input[type="submit"],
+.lyris-selection-bar .formulize_button,
+.lyris-selection-bar input[type="button"].formulize_button,
+.lyris-selection-bar input[type="submit"].formulize_button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1094,11 +1089,11 @@ textarea {
               color var(--fz-duration-fast) var(--fz-ease-out);
 }
 
-.fz-selection-bar input[type="button"]:hover,
-.fz-selection-bar input[type="submit"]:hover,
-.fz-selection-bar .formulize_button:hover,
-.fz-selection-bar input[type="button"].formulize_button:hover,
-.fz-selection-bar input[type="submit"].formulize_button:hover {
+.lyris-selection-bar input[type="button"]:hover,
+.lyris-selection-bar input[type="submit"]:hover,
+.lyris-selection-bar .formulize_button:hover,
+.lyris-selection-bar input[type="button"].formulize_button:hover,
+.lyris-selection-bar input[type="submit"].formulize_button:hover {
   background: rgba(255,255,255,.18);
   border-color: rgba(255,255,255,.28);
   color: #fff;
@@ -1108,11 +1103,11 @@ textarea {
    `outline: none; box-shadow: var(--fz-focus-ring)`, but `--fz-focus-ring` is a dark
    slate ring meant for light surfaces and is invisible on this bar. Keep the
    same ring geometry and invert it into the bar's white-alpha family. */
-.fz-selection-bar input[type="button"]:focus-visible,
-.fz-selection-bar input[type="submit"]:focus-visible,
-.fz-selection-bar .formulize_button:focus-visible,
-.fz-selection-bar input[type="button"].formulize_button:focus-visible,
-.fz-selection-bar input[type="submit"].formulize_button:focus-visible {
+.lyris-selection-bar input[type="button"]:focus-visible,
+.lyris-selection-bar input[type="submit"]:focus-visible,
+.lyris-selection-bar .formulize_button:focus-visible,
+.lyris-selection-bar input[type="button"].formulize_button:focus-visible,
+.lyris-selection-bar input[type="submit"].formulize_button:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px rgba(255,255,255,.35);
 }
@@ -1120,12 +1115,12 @@ textarea {
 /* Delete button — danger chip-dark. Hover also lifts the text to full white:
    the background step alone (.14 -> .22 over a near-black bar) is barely
    perceptible, which is why this button read as having no hover state. */
-.fz-selection-bar #formulize_deleteButton {
+.lyris-selection-bar #formulize_deleteButton {
   background: rgba(255,90,90,.14);
   border-color: rgba(255,120,120,.35);
   color: #ffbaba;
 }
-.fz-selection-bar #formulize_deleteButton:hover {
+.lyris-selection-bar #formulize_deleteButton:hover {
   background: rgba(255,90,90,.22);
   border-color: rgba(255,120,120,.5);
   color: #fff;
@@ -1136,22 +1131,22 @@ textarea {
    `:hover` here their background/border/colour were pinned and the buttons had
    no hover state at all (issue #82). Hover fills them with the chip-dark rest
    background and lifts the text to full white — the same ghost -> filled move
-   `.fz-chip--ghost:hover` makes on light surfaces. */
-.fz-selection-bar #formulize_clearSelectButton,
-.fz-selection-bar #formulize_selectAllButton {
+   `.lyris-chip--ghost:hover` makes on light surfaces. */
+.lyris-selection-bar #formulize_clearSelectButton,
+.lyris-selection-bar #formulize_selectAllButton {
   background: transparent;
   border-color: rgba(255,255,255,.25);
   color: rgba(255,255,255,.85);
 }
-.fz-selection-bar #formulize_clearSelectButton:hover,
-.fz-selection-bar #formulize_selectAllButton:hover {
+.lyris-selection-bar #formulize_clearSelectButton:hover,
+.lyris-selection-bar #formulize_selectAllButton:hover {
   background: rgba(255,255,255,.10);
   border-color: rgba(255,255,255,.45);
   color: #fff;
 }
 
 /* Footer (pagination) */
-.fz-list__footer {
+.lyris-list__footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1164,13 +1159,13 @@ textarea {
   flex-shrink: 0;
 }
 
-.fz-list__footer-start {
+.lyris-list__footer-start {
   display: flex;
   align-items: center;
   gap: calc(var(--fz-spacing) * 3);
 }
 
-.fz-list__footer-end {
+.lyris-list__footer-end {
   display: flex;
   align-items: center;
   gap: calc(var(--fz-spacing) * 2);
@@ -1179,7 +1174,7 @@ textarea {
 /* "Hide repeating data" label wraps its text and the #toggleRepeatData
    switch inline; align them on a row and give the switch a little breathing
    room from the label text. */
-.fz-list__footer-start label[for="toggleRepeatData"] {
+.lyris-list__footer-start label[for="toggleRepeatData"] {
   display: inline-flex;
   align-items: center;
   gap: calc(var(--fz-spacing) * 2);
@@ -1188,19 +1183,19 @@ textarea {
 
 /* Pagination (pageNavControls variable template): rows-per-page select +
    chevron prev / "Page X of Y" / chevron next. */
-.fz-pagination {
+.lyris-pagination {
   display: flex;
   align-items: center;
   gap: calc(var(--fz-spacing) * 3);
 }
 
-.fz-pagination__nav {
+.lyris-pagination__nav {
   display: flex;
   align-items: center;
   gap: calc(var(--fz-spacing) * 1);
 }
 
-.fz-pagination__status {
+.lyris-pagination__status {
   font-size: var(--fz-text-xs-plus);
   color: var(--fz-color-text-muted);
   font-variant-numeric: tabular-nums;
@@ -1209,11 +1204,11 @@ textarea {
 }
 
 /* Mobile-only "pg" abbreviation — hidden on desktop where the full "Page" label shows. */
-.fz-pagination__status-pg {
+.lyris-pagination__status-pg {
   display: none;
 }
 
-.fz-pagination__nav .fz-btn[disabled] {
+.lyris-pagination__nav .fz-btn[disabled] {
   opacity: .4;
   cursor: default;
   pointer-events: none;
@@ -1221,29 +1216,29 @@ textarea {
 
 /* Desktop numbered page links — hidden on mobile (the compact "X of Y" status
    is shown there instead), shown as a row of clickable page numbers on ≥769px. */
-.fz-pagination__pages {
+.lyris-pagination__pages {
   display: none; /* hidden by default; enabled for desktop below */
 }
 
 @media (min-width: 769px) {
-  .fz-pagination__pages {
+  .lyris-pagination__pages {
     display: flex;
     align-items: center;
     gap: calc(var(--fz-spacing) * 1);
   }
 
   /* On desktop the numbered links replace the compact "Page X of Y" status. */
-  .fz-pagination__status {
+  .lyris-pagination__status {
     display: none;
   }
 
-  .fz-pagination__page {
+  .lyris-pagination__page {
     min-width: 26px;
     justify-content: center;
     font-variant-numeric: tabular-nums;
   }
 
-  .fz-pagination__page--active {
+  .lyris-pagination__page--active {
     background: var(--fz-color-accent);
     border-color: var(--fz-color-accent);
     color: var(--fz-color-on-accent);
@@ -1251,7 +1246,7 @@ textarea {
     pointer-events: none;
   }
 
-  .fz-pagination__ellipsis {
+  .lyris-pagination__ellipsis {
     padding: 0 calc(var(--fz-spacing) * 1);
     color: var(--fz-color-text-muted);
     user-select: none;
@@ -1262,7 +1257,7 @@ textarea {
    List body — scrollable table container
    ============================================================ */
 
-.fz-list__body {
+.lyris-list__body {
   overflow: auto;
   flex: 1;
   min-height: 0;
@@ -1295,7 +1290,7 @@ textarea {
                    one character. The pixel width then wins, and the content wraps within it
                    instead of being truncated. Unlike table-layout:fixed, this leaves the
                    checkbox/controls column sized to its content. If the columns add up to
-                   more than the container, the table grows past 100% and .fz-list__body
+                   more than the container, the table grows past 100% and .lyris-list__body
                    scrolls horizontally.
      - 'natural' - every real column cell gets an inline `width: 1%`. With table-layout:auto that
                    is not a literal 1% - it is the classic shrink-to-fit hint that makes the
@@ -1324,7 +1319,7 @@ textarea {
   line-height: var(--fz-leading-snug);
 }
 
-.fz-table-empty {
+.lyris-table-empty {
 	padding: 10px;
 }
 
@@ -1371,7 +1366,7 @@ textarea {
    inputs visible while the data rows scroll. z-index:2 matches the header row so
    they sit at the same stacking level; the solid background prevents data rows from
    bleeding through. */
-.fz-search-row td {
+.lyris-search-row td {
   position: sticky;
   top: var(--lyris-thead-height, 36px);
   z-index: 2;
@@ -1382,7 +1377,7 @@ textarea {
   padding-bottom: calc(var(--fz-spacing) * 2);
 }
 
-.fz-search-row .main-cell-div {
+.lyris-search-row .main-cell-div {
   width: 0;
   min-width: 100%;
 }
@@ -1410,27 +1405,27 @@ textarea {
   flex: 1;
 }
 
-.fz-search-row input:not([type="checkbox"]):not([type="radio"]),
-.fz-search-row select,
-.fz-search-row textarea {
+.lyris-search-row input:not([type="checkbox"]):not([type="radio"]),
+.lyris-search-row select,
+.lyris-search-row textarea {
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
 }
 
 /* Checkbox / controls column */
-.fz-table .fz-cb {
+.fz-table .lyris-cb {
   width: 52px;
   padding: 0 calc(var(--fz-spacing) * 2);
   vertical-align: middle;
   white-space: nowrap;
 }
 
-.fz-table .fz-cb input[type="checkbox"] {
+.fz-table .lyris-cb input[type="checkbox"] {
   vertical-align: middle;
 }
 
-.fz-table .fz-cb .loe-edit-entry {
+.fz-table .lyris-cb .loe-edit-entry {
   vertical-align: middle;
   display: inline-block;
   line-height: 1;
@@ -1592,7 +1587,7 @@ a.de-edit-icon:hover::before {
 }
 
 /* Sort link in column headers */
-.fz-th-sort {
+.lyris-th-sort {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -1602,13 +1597,13 @@ a.de-edit-icon:hover::before {
   text-decoration: none;
 }
 
-.fz-th-sort:hover { color: var(--fz-color-text); }
+.lyris-th-sort:hover { color: var(--fz-color-text); }
 
 /* Sort indicator icon.
    Unsorted columns show a faint neutral double-arrow that brightens on hover,
    signalling the column is sortable. The active sort column shows a filled
    accent triangle (up = ascending, down = descending) at full strength. */
-.fz-sort-ico {
+.lyris-sort-ico {
   display: inline-flex;
   align-items: center;
   color: var(--fz-color-text-subtle);
@@ -1616,25 +1611,25 @@ a.de-edit-icon:hover::before {
   transition: opacity var(--fz-duration-fast) var(--fz-ease-out), color var(--fz-duration-fast) var(--fz-ease-out);
 }
 
-.fz-sort-ico svg {
+.lyris-sort-ico svg {
   display: block;
 }
 
-.fz-th-sort:hover .fz-sort-ico {
+.lyris-th-sort:hover .lyris-sort-ico {
   opacity: 0.6;
 }
 
-.fz-sort-ico--active {
+.lyris-sort-ico--active {
   color: var(--fz-color-accent);
   opacity: 1;
 }
 
-.fz-th-sort:hover .fz-sort-ico--active {
+.lyris-th-sort:hover .lyris-sort-ico--active {
   opacity: 1;
 }
 
 /* Priority badge shown when more than one column is sorted */
-.fz-sort-badge {
+.lyris-sort-badge {
   margin-left: 2px;
   font-size: 9px;
   font-weight: 600;
@@ -1649,7 +1644,7 @@ a.de-edit-icon:hover::before {
 
 /* Container injected by blockszone.html */
 #xo-canvas-leftcolumn {
-  /* Scroll is handled by .fz-sidebar; don't add overflow here */
+  /* Scroll is handled by .lyris-sidebar; don't add overflow here */
 }
 
 .xo-blockszone {
@@ -1923,7 +1918,7 @@ a.main-menu__item-link--active::before {
 /* The bar is rendered (theme.html) only while masquerading, and it is pinned to
    the bottom of the viewport. Left to itself it OVERLAPS whatever bottom chrome
    the screen underneath has pinned there -- the list-screen footer
-   (`.fz-list__footer`), the form action bar (`#multipage-controls`), the drawer
+   (`.lyris-list__footer`), the form action bar (`#multipage-controls`), the drawer
    footer -- covering the Save/Close buttons and making them unclickable (#89).
 
    Fix: reserve the bar's height instead of painting over it. `--lyris-masquerade-height`
@@ -1975,7 +1970,7 @@ body:has(#formulize-masquerade-block) {
 
   /* ---- Sidebar: off-canvas slide-in ---- */
 
-  .fz-sidebar {
+  .lyris-sidebar {
     position: fixed;
     top: var(--lyris-header-height);
     left: 0;
@@ -1989,11 +1984,11 @@ body:has(#formulize-masquerade-block) {
     box-shadow: var(--fz-shadow-md);
   }
 
-  .fz-app--sidebar-open .fz-sidebar {
+  .lyris-app--sidebar-open .lyris-sidebar {
     transform: translateX(0);
   }
 
-  .fz-app--sidebar-open::after {
+  .lyris-app--sidebar-open::after {
     content: '';
     position: fixed;
     inset: var(--lyris-header-height) 0 var(--lyris-masquerade-height) 0;
@@ -2003,15 +1998,15 @@ body:has(#formulize-masquerade-block) {
 
   /* ---- Header: tighter chrome ---- */
 
-  .fz-header {
+  .lyris-header {
     padding: 0 calc(var(--fz-spacing) * 3);
   }
 
-  .fz-header__end {
+  .lyris-header__end {
     gap: calc(var(--fz-spacing) * 2);
   }
 
-  .fz-header__brand img {
+  .lyris-header__brand img {
     height: 24px;
   }
 
@@ -2024,37 +2019,37 @@ body:has(#formulize-masquerade-block) {
 
   /* ---- List title bar: compact, actions wrap under the title ---- */
 
-  .fz-list__titlebar {
+  .lyris-list__titlebar {
     flex-wrap: wrap;
     padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3);
     min-height: 48px;
   }
 
-  .fz-list__title {
+  .lyris-list__title {
     font-size: var(--fz-text-base);
   }
 
   /* count beside the title is a desktop affordance */
-  .fz-list__count {
+  .lyris-list__count {
     display: none;
   }
 
   /* ---- Selection bar: one row, actions pan horizontally ---- */
 
-  .fz-selection-bar {
+  .lyris-selection-bar {
     flex-wrap: nowrap;
     overflow-x: auto;
     padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3);
     min-height: 48px;
   }
 
-  .fz-selection-bar__actions {
+  .lyris-selection-bar__actions {
     flex-wrap: nowrap;
   }
 
   /* ---- Footer / pagination: slim bar ---- */
 
-  .fz-list__footer {
+  .lyris-list__footer {
     flex-wrap: wrap;
     gap: calc(var(--fz-spacing) * 2);
     padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3);
@@ -2067,21 +2062,21 @@ body:has(#formulize-masquerade-block) {
      "pg" abbreviation in place of the full "Page" label so the page number
      (e.g. "pg 2 / 5") is clearly distinct from the result count. */
   .page-navigation-total__label,
-  .fz-pagination__status-label,
-  .fz-list__footer-start label[for="toggleRepeatData"] {
+  .lyris-pagination__status-label,
+  .lyris-list__footer-start label[for="toggleRepeatData"] {
     display: none;
   }
 
-  .fz-pagination__status-pg {
+  .lyris-pagination__status-pg {
     display: inline;
   }
 
   /* ---- Table: pan columns horizontally; the checkbox column and the
      first data column stay pinned on the left so rows remain identifiable.
-     Horizontal scrolling comes from .fz-list__body (overflow: auto) once
+     Horizontal scrolling comes from .lyris-list__body (overflow: auto) once
      the nowrap cells force the table wider than the viewport. ---- */
 
-  .fz-table .fz-cb,
+  .fz-table .lyris-cb,
   .fz-table .column0 {
     position: sticky;
     left: 0;
@@ -2089,7 +2084,7 @@ body:has(#formulize-masquerade-block) {
   }
 
   /* first data column sits after the 52px checkbox column when present */
-  .fz-table .fz-cb ~ .column0 {
+  .fz-table .lyris-cb ~ .column0 {
     left: 52px;
   }
 
@@ -2102,20 +2097,20 @@ body:has(#formulize-masquerade-block) {
 
   /* pinned header cells: sticky both ways, above row headers (z 2) and
      pinned body cells (z 1) */
-  .fz-table thead .fz-cb,
+  .fz-table thead .lyris-cb,
   .fz-table thead .column0 {
     top: 0;
     z-index: 3;
   }
 
-  /* Filter row cells that are also left-pinned (fz-cb and column0) need
+  /* Filter row cells that are also left-pinned (lyris-cb and column0) need
      top:36px to clear the column-header row and z-index:3 to sit above
      both the top-sticky filter row (z 2) and the left-sticky body cells
      (z 1) — they're pinned in both axes simultaneously.
-     Specificity must beat .fz-table thead .fz-cb (3 selectors), so we
+     Specificity must beat .fz-table thead .lyris-cb (3 selectors), so we
      include .fz-table in the selector chain. */
-  .fz-table .fz-search-row .fz-cb,
-  .fz-table .fz-search-row .column0 {
+  .fz-table .lyris-search-row .lyris-cb,
+  .fz-table .lyris-search-row .column0 {
     top: var(--lyris-thead-height, 36px);
     z-index: 3;
   }
@@ -2125,13 +2120,13 @@ body:has(#formulize-masquerade-block) {
    Form screen — field anatomy & .fz-control primitive
    ============================================================
 
-   These styles apply only inside `.fz-form-screen` (a wrapper added by
+   These styles apply only inside `.lyris-form-screen` (a wrapper added by
    toptemplate.php / the drawer body around Formulize form output).
    They are additive: list-screen inputs and filters keep their
    existing 32px `.fz-input`-equivalent baseline.
 
    Design spec (forms.css):
-     --lyris-field-height:      38px    (.fz-form default, at standard density)
+     --lyris-field-height:      38px    (.lyris-form default, at standard density)
      --lyris-field-padding-x:  12px
      --lyris-field-radius: 6px
      --lyris-field-gap:    18px    vertical gap between field rows
@@ -2146,18 +2141,18 @@ body:has(#formulize-masquerade-block) {
          .form-help-text                  ← elementtemplate1/2.php
    ============================================================ */
 
-/* ---------- Field metrics: .fz-form ----------
-   `.fz-form` carries the form's field metrics. The height, the padding and the
+/* ---------- Field metrics: .lyris-form ----------
+   `.lyris-form` carries the form's field metrics. The height, the padding and the
    gap between fields follow the density set on the Appearance page, through
    the Formulize UI tokens (see formulize-ui.css): 38px / 12px / 18px at
    standard density, the values these were fixed at before density existed.
 
-   `.fz-form-screen` retains the same vars as an additive alias, including inside
-   the right drawer, whose body is wrapped in `.fz-form-screen` by the theme's
+   `.lyris-form-screen` retains the same vars as an additive alias, including inside
+   the right drawer, whose body is wrapped in `.lyris-form-screen` by the theme's
    drawer templates. */
 
-.fz-form,
-.fz-form-screen {
+.lyris-form,
+.lyris-form-screen {
   --lyris-field-height:        var(--fz-field-height);
   --lyris-field-padding-x:     calc(var(--fz-spacing) * 3);
   --lyris-field-padding-y:     calc(var(--fz-spacing) * 2);
@@ -2175,7 +2170,7 @@ body:has(#formulize-masquerade-block) {
    Can be applied directly to an input/select/textarea element, or used
    as a wrapper (per forms.css intent). Here we apply it as a direct class
    AND via the contextual selectors below so raw Formulize-rendered elements
-   inside .fz-form-screen automatically get the richer form-screen sizing. */
+   inside .lyris-form-screen automatically get the richer form-screen sizing. */
 
 .fz-control {
   appearance: none;
@@ -2312,33 +2307,33 @@ textarea.fz-control {
   border-left: 1px solid var(--fz-color-border);
 }
 
-/* ---------- Contextual override: raw form elements inside .fz-form-screen ----------
+/* ---------- Contextual override: raw form elements inside .lyris-form-screen ----------
    Formulize renders raw <input>, <select>, <textarea> with no class. Inside a form
    screen these should use the 38px control sizing instead of the 32px list baseline.
    We scope tightly so only elements directly inside form rows are affected. */
 
-.fz-form input[type="text"],
-.fz-form input[type="email"],
-.fz-form input[type="number"],
-.fz-form input[type="date"],
-.fz-form input[type="datetime-local"],
-.fz-form input[type="time"],
-.fz-form input[type="tel"],
-.fz-form input[type="url"],
-.fz-form input:not([type]),
-.fz-form select,
-.fz-form textarea,
-.fz-form-screen input[type="text"],
-.fz-form-screen input[type="email"],
-.fz-form-screen input[type="number"],
-.fz-form-screen input[type="date"],
-.fz-form-screen input[type="datetime-local"],
-.fz-form-screen input[type="time"],
-.fz-form-screen input[type="tel"],
-.fz-form-screen input[type="url"],
-.fz-form-screen input:not([type]),
-.fz-form-screen select,
-.fz-form-screen textarea {
+.lyris-form input[type="text"],
+.lyris-form input[type="email"],
+.lyris-form input[type="number"],
+.lyris-form input[type="date"],
+.lyris-form input[type="datetime-local"],
+.lyris-form input[type="time"],
+.lyris-form input[type="tel"],
+.lyris-form input[type="url"],
+.lyris-form input:not([type]),
+.lyris-form select,
+.lyris-form textarea,
+.lyris-form-screen input[type="text"],
+.lyris-form-screen input[type="email"],
+.lyris-form-screen input[type="number"],
+.lyris-form-screen input[type="date"],
+.lyris-form-screen input[type="datetime-local"],
+.lyris-form-screen input[type="time"],
+.lyris-form-screen input[type="tel"],
+.lyris-form-screen input[type="url"],
+.lyris-form-screen input:not([type]),
+.lyris-form-screen select,
+.lyris-form-screen textarea {
   height: var(--lyris-field-height);
   padding: 0 var(--lyris-field-padding-x);
   font-size: var(--lyris-field-text);
@@ -2346,8 +2341,8 @@ textarea.fz-control {
   width: 100%;
 }
 
-.fz-form textarea,
-.fz-form-screen textarea {
+.lyris-form textarea,
+.lyris-form-screen textarea {
   height: auto;
   min-height: calc(var(--lyris-field-height) * 2.4);
   padding: var(--lyris-field-padding-y) var(--lyris-field-padding-x);
@@ -2355,7 +2350,7 @@ textarea.fz-control {
 
 /* Character / word limit counter sits under the textarea and is right-aligned
    text, so its box has to be the textarea's box or the numbers do not line up
-   with the control they describe. Core gives .fz-limit-counter width:100% with a
+   with the control they describe. Core gives .formulize-limit-counter width:100% with a
    max-width cap (300px, 700px from 768px up), because in an unstyled theme the
    textarea is sized by its cols attribute and the cap stands in for that width.
    Lyris sizes the textarea at 100% of the field instead, so the cap only stops
@@ -2366,14 +2361,14 @@ textarea.fz-control {
    at any drag width, and mobile — with no fixed size of our own to keep in step
    with the field metrics. Scoped exactly like the control sizing above, so the
    counter is full width wherever the textarea is. */
-.fz-form .fz-limit-counter,
-.fz-form-screen .fz-limit-counter {
+.lyris-form .formulize-limit-counter,
+.lyris-form-screen .formulize-limit-counter {
   max-width: none;
 }
 
 /* Selects: preserve the chevron background already set by the base rule */
-.fz-form select,
-.fz-form-screen select {
+.lyris-form select,
+.lyris-form-screen select {
   padding-right: 30px;
 }
 
@@ -2388,8 +2383,8 @@ textarea.fz-control {
    only ever hits the count box, which is a direct child of the controls row; the
    filter-search box sits inside a nested div.subform-filter-search and keeps the
    10em core gives it in modules/formulize/templates/css/formulize.css. */
-.fz-form .subform_button_controls > input[type="text"],
-.fz-form-screen .subform_button_controls > input[type="text"] {
+.lyris-form .subform_button_controls > input[type="text"],
+.lyris-form-screen .subform_button_controls > input[type="text"] {
   width: calc(2ch + 2 * var(--lyris-field-padding-x) + 2px);
   margin: 0 calc(var(--fz-spacing) * 2);
 }
@@ -2423,7 +2418,7 @@ textarea.fz-control {
 
 /* ---------- Form container & field rows ---------- */
 
-.fz-form,
+.lyris-form,
 .form-container {
   display: flex;
   flex-direction: column;
@@ -2499,18 +2494,18 @@ textarea.fz-control {
    Default = label-top (the natural column flow above). Left-label and float
    are ported for completeness / opt-in via the container modifier class. */
 
-.fz-form--label-left .fz-field {
+.lyris-form--label-left .fz-field {
   flex-direction: row;
   align-items: flex-start;
   gap: calc(var(--fz-spacing) * 6);
 }
-.fz-form--label-left .fz-field__label {
+.lyris-form--label-left .fz-field__label {
   width: var(--lyris-label-column-width, 220px);
   flex: none;
   padding-top: calc((var(--lyris-field-height) - var(--lyris-label-text) * 1.35) / 2);
   justify-content: flex-start;
 }
-.fz-form--label-left .fz-field__body {
+.lyris-form--label-left .fz-field__body {
   flex: 1 1 auto;
   min-width: 0;
 }
@@ -2577,18 +2572,18 @@ textarea.fz-control {
    rows: control immediately left of its label, options stacked by the `<br>`.
    Matches the design's `.fz-choice` / `.fz-choice-group`. */
 
-.fz-form-screen .fz-field__body:has(input[type="radio"]),
-.fz-form-screen .fz-field__body:has(input[type="checkbox"]),
-.fz-form-screen .col2:has(input[type="radio"]),
-.fz-form-screen .col2:has(input[type="checkbox"]) {
+.lyris-form-screen .fz-field__body:has(input[type="radio"]),
+.lyris-form-screen .fz-field__body:has(input[type="checkbox"]),
+.lyris-form-screen .col2:has(input[type="radio"]),
+.lyris-form-screen .col2:has(input[type="checkbox"]) {
   display: block;
   line-height: 1.6;        /* vertical rhythm between <br>-separated options */
 }
 
-.fz-form-screen .col2 input[type="radio"],
-.fz-form-screen .col2 input[type="checkbox"],
-.fz-form-screen .fz-field__body input[type="radio"],
-.fz-form-screen .fz-field__body input[type="checkbox"] {
+.lyris-form-screen .col2 input[type="radio"],
+.lyris-form-screen .col2 input[type="checkbox"],
+.lyris-form-screen .fz-field__body input[type="radio"],
+.lyris-form-screen .fz-field__body input[type="checkbox"] {
   display: inline-block;
   width: auto !important;
   height: auto;
@@ -2607,10 +2602,10 @@ textarea.fz-control {
    one option from the next. A margin on the label pushed that separator away
    from the option it follows and broke those layouts, so spacing between
    options is left entirely to the delimiter. */
-.fz-form-screen .col2 input[type="radio"] + label,
-.fz-form-screen .col2 input[type="checkbox"] + label,
-.fz-form-screen .fz-field__body input[type="radio"] + label,
-.fz-form-screen .fz-field__body input[type="checkbox"] + label {
+.lyris-form-screen .col2 input[type="radio"] + label,
+.lyris-form-screen .col2 input[type="checkbox"] + label,
+.lyris-form-screen .fz-field__body input[type="radio"] + label,
+.lyris-form-screen .fz-field__body input[type="checkbox"] + label {
   display: inline;
   font-weight: 400;
   font-size: var(--lyris-field-text, var(--fz-text-sm));
@@ -2641,7 +2636,7 @@ textarea.fz-control {
 
 /* ---------- Form-screen submit / action row ---------- */
 
-.fz-form-screen .form-actions {
+.lyris-form-screen .form-actions {
   display: flex;
   align-items: center;
   gap: calc(var(--fz-spacing) * 2);
@@ -2664,63 +2659,63 @@ textarea.fz-control {
 
    The earlier fix used `position:sticky; bottom:0` alone. Sticky only pins an
    element once its content would otherwise scroll out of view — i.e. only when
-   the form is TALLER than the scroll area (`.fz-main`). On a large/tall viewport
+   the form is TALLER than the scroll area (`.lyris-main`). On a large/tall viewport
    where the form is SHORTER than the screen, nothing scrolls, so the bar just
    sat at its natural (mid-page) position — the reported large-resolution bug.
 
-   Fix: make the full-page form chain a flex column that fills `.fz-main`, then
+   Fix: make the full-page form chain a flex column that fills `.lyris-main`, then
    let the bar's `margin-top:auto` push it to the bottom of the filled column on
    short forms, while `position:sticky; bottom:0` keeps it pinned while long
    forms scroll. Both cases hold at any resolution.
 
-   Scope: `:has()` limits the flex-fill to `.fz-main` instances that actually
+   Scope: `:has()` limits the flex-fill to `.lyris-main` instances that actually
    contain a full-page form action bar (`#formulizeform ... .formulizeThemeForm
    #multipage-controls`). List screens (no `#multipage-controls`) and the right
    drawer (its body is a separate elements-only endpoint that never renders
    `#multipage-controls`; it builds its own `.formulize-drawer__foot`) are untouched.
-   `.fz-inline` (drawer-iframe context) is excluded — that `.fz-main` is
+   `.formulize-inline` (drawer-iframe context) is excluded — that `.lyris-main` is
    `overflow:visible` and lays out in normal page flow. */
 
-body:not(.fz-inline) .fz-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) {
+body:not(.formulize-inline) .lyris-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) {
   display: flex;
   flex-direction: column;
 }
 
-body:not(.fz-inline) .fz-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform {
+body:not(.formulize-inline) .lyris-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform {
   flex: 1 0 auto;
   display: flex;
   flex-direction: column;
   min-height: 0;
 }
 
-body:not(.fz-inline) .fz-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform > .formulizeThemeForm {
+body:not(.formulize-inline) .lyris-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform > .formulizeThemeForm {
   flex: 1 0 auto;
   display: flex;
   flex-direction: column;
 }
 
 /* ---------- Horizontal gutter for form-screen content (review item B) ----------
-   `.fz-form-screen` (the form card) and `#pageNavTable` (the multipage page-nav
-   strip) are laid out full width inside `.fz-main`, so they butted flush against
+   `.lyris-form-screen` (the form card) and `#pageNavTable` (the multipage page-nav
+   strip) are laid out full width inside `.lyris-main`, so they butted flush against
    the left/right container edges. Inset them by the same outer gutter (calc(var(--fz-spacing) * 5),
    20px — the same horizontal gutter the list-screen title/footer bars use) so
    they breathe from the container sides and stay visually aligned with each other.
 
    Deliberately EXCLUDED: `#multipage-controls` (the bottom-anchored action bar).
-   Like the list-screen sticky footer (`.fz-list__footer`) and the drawer footer
+   Like the list-screen sticky footer (`.lyris-list__footer`) and the drawer footer
    (`.formulize-drawer__foot`), that bar is meant to be full-bleed — it spans edge-to-edge
-   of `.fz-main` with its own inner `padding` (calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 6)) providing the
+   of `.lyris-main` with its own inner `padding` (calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 6)) providing the
    content inset. Adding a side margin here gave it an unwanted gutter, so it is
    left out of this rule.
 
-   Scoped to `body:not(.fz-inline) .fz-main` (the same guard the sticky action-bar
-   fix uses): list screens have no `.fz-form-screen`, and when a form renders in
-   the right drawer / inline iframe (`.fz-inline`, body padded by
+   Scoped to `body:not(.formulize-inline) .lyris-main` (the same guard the sticky action-bar
+   fix uses): list screens have no `.lyris-form-screen`, and when a form renders in
+   the right drawer / inline iframe (`.formulize-inline`, body padded by
    `.formulize-drawer__body { padding: calc(var(--fz-spacing) * 5) }`) we must NOT add a second gutter — so the
    drawer and its `.formulize-drawer__foot` are unaffected. */
-body:not(.fz-inline) .fz-main .fz-form-screen,
-body:not(.fz-inline) .fz-main #pageNavTable,
-body:not(.fz-inline) .fz-main .pageNavTable {
+body:not(.formulize-inline) .lyris-main .lyris-form-screen,
+body:not(.formulize-inline) .lyris-main #pageNavTable,
+body:not(.formulize-inline) .lyris-main .pageNavTable {
   margin-left: calc(var(--fz-spacing) * 5);
   margin-right: calc(var(--fz-spacing) * 5);
 }
@@ -2730,13 +2725,13 @@ body:not(.fz-inline) .fz-main .pageNavTable {
    (and the `::after` separator has to anchor to the true bottom edge), so an
    outer margin here would open a gap of scrolled content between the pinned
    strip and the form card. */
-body:not(.fz-inline) .fz-main #pageNavTable,
-body:not(.fz-inline) .fz-main .pageNavTable {
+body:not(.formulize-inline) .lyris-main #pageNavTable,
+body:not(.formulize-inline) .lyris-main .pageNavTable {
   margin-bottom: 0;
 }
 
 /* ---------- Vertical gutter for the form card (issue #121 items 1 and 3) ----
-   `.fz-main` on a form screen has no padding of its own, so the form card was
+   `.lyris-main` on a form screen has no padding of its own, so the form card was
    flush against both ends of the scroll area.
 
    Bottom (item 3): the card butted directly against the sticky
@@ -2757,11 +2752,11 @@ body:not(.fz-inline) .fz-main .pageNavTable {
    Both use calc(var(--fz-spacing) * 5), the same token as the horizontal gutter above, so the card
    is inset by one consistent value on all four sides and the spacing does not
    depend on the form's density tokens (which issue #113 / PR #116 changes). */
-body:not(.fz-inline) .fz-main .fz-form-screen {
+body:not(.formulize-inline) .lyris-main .lyris-form-screen {
   margin-bottom: calc(var(--fz-spacing) * 5);
 }
 
-body:not(.fz-inline) .fz-main:not(:has(#pageNavTable, .pageNavTable)) .fz-form-screen {
+body:not(.formulize-inline) .lyris-main:not(:has(#pageNavTable, .pageNavTable)) .lyris-form-screen {
   margin-top: calc(var(--fz-spacing) * 5);
 }
 
@@ -2839,15 +2834,15 @@ body:not(.fz-inline) .fz-main:not(:has(#pageNavTable, .pageNavTable)) .fz-form-s
 
 /* ---------- Sticky page-nav tabs on long forms (issue #31) ----------
    The page-nav strip (`#pageNavTable.pill-tabs`) is a flow child of the
-   `.formulizeThemeForm` column that scrolls inside `.fz-main` (the only
+   `.formulizeThemeForm` column that scrolls inside `.lyris-main` (the only
    scroll container here — `overflow-y:auto`; the intermediate `#formulizeform`
    / `.formulize_mainform` ancestors are `overflow:visible`, so they don't
    defeat `position:sticky`). Pin the tabs to the top of that scroll area so
    they stay reachable while a long form body scrolls.
 
-   `top:0`: `.fz-main` for a form screen (`body#formulize`) has no top padding,
-   and the app header lives OUTSIDE `.fz-main` (it is a sibling above
-   `.fz-app__body`), so 0 is flush with the top of the scroll viewport — no
+   `top:0`: `.lyris-main` for a form screen (`body#formulize`) has no top padding,
+   and the app header lives OUTSIDE `.lyris-main` (it is a sibling above
+   `.lyris-app__body`), so 0 is flush with the top of the scroll viewport — no
    fixed/sticky header sits above it inside this container.
 
    `z-index:4`: above scrolling form fields (the admin "edit element" link is
@@ -2872,7 +2867,7 @@ body:not(.fz-inline) .fz-main:not(:has(#pageNavTable, .pageNavTable)) .fz-form-s
    fallback branch and showed the separator permanently, including at the top of
    an unscrolled form — which is the reported difference from Chrome. The strip
    is now toggled by `.is-scrolled`, set by initFormScrollSeparator() in
-   themes/Lyris/js/script.js from a passive scroll listener on `.fz-main`, and
+   themes/Lyris/js/script.js from a passive scroll listener on `.lyris-main`, and
    faded with a plain `transition`. One mechanism, identical in every engine.
    The scrub is lost (opacity is no longer tied to exact scroll offset) but over
    a 24px range the two are visually indistinguishable.
@@ -2883,7 +2878,7 @@ body:not(.fz-inline) .fz-main:not(:has(#pageNavTable, .pageNavTable)) .fz-form-s
    breathing room above but none below. The `::after` separator still anchors
    to `bottom:0` of this box, i.e. below the added padding, so it continues to
    mark the true bottom edge of the sticky region. */
-body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs {
+body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs {
   position: sticky;
   top: 0;
   z-index: 4;
@@ -2896,7 +2891,7 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs {
 }
 
 /* Bottom separator that fades in as content scrolls under the pinned tabs. */
-body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs::after {
+body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs::after {
   content: "";
   position: absolute;
   left: calc(-1 * calc(var(--fz-spacing) * 5));
@@ -2910,13 +2905,13 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs::after {
 }
 
 /* `.is-scrolled` is set on the strip by initFormScrollSeparator() as soon as
-   the `.fz-main` scroll container leaves the top. */
-body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
+   the `.lyris-main` scroll container leaves the top. */
+body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::after {
   opacity: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs::after {
+  body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs::after {
     transition: none;
   }
 }
@@ -3105,8 +3100,8 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
    ------------------------------------------------------------
    The text/select/textarea/radio/checkbox primitives are handled
    above. This block brings the remaining element types up to the
-   design's KitchenSink artboard: file upload (.fz-droparea look),
-   range slider (.fz-range look), color picker (.fz-colorpicker
+   design's KitchenSink artboard: file upload (.lyris-droparea look),
+   range slider (.lyris-range look), color picker (.lyris-colorpicker
    look), duration tray, and the native date/time picker chrome.
 
    Formulize core emits raw, mostly class-less controls, so these
@@ -3117,13 +3112,13 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
    drawer contexts so list-screen widgets are untouched.
    ============================================================ */
 
-.fz-form-screen {
+.lyris-form-screen {
   --lyris-field-height:      var(--fz-field-height);
   --lyris-field-padding-x:   calc(var(--fz-spacing) * 3);
   --lyris-field-radius: var(--fz-radius-md);
 }
 
-/* ---------- File upload → drop-area look (.fz-droparea) ----------
+/* ---------- File upload → drop-area look (.lyris-droparea) ----------
    Core renders a bare `<input type="file">` inside
    `#fileUploadUI_<name>`, preceded by a `.formulize-fileupload-element`
    status line (existing file + delete link). We can't restructure the
@@ -3141,7 +3136,7 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
    and mobile) with no fixed size of our own to keep in step with the field
    metrics. The `.formulize-fileupload-element` status chip below is already
    full width for the same reason. */
-.fz-form-screen input[type="file"] {
+.lyris-form-screen input[type="file"] {
   display: block;
   width: 100%;
   padding: 16px;
@@ -3153,17 +3148,17 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
   cursor: pointer;
   transition: border-color var(--fz-duration-fast) var(--fz-ease-out), background var(--fz-duration-fast) var(--fz-ease-out);
 }
-.fz-form-screen input[type="file"]:hover {
+.lyris-form-screen input[type="file"]:hover {
   border-color: var(--fz-color-accent);
   background: var(--fz-color-accent-soft);
 }
-.fz-form-screen input[type="file"]:focus {
+.lyris-form-screen input[type="file"]:focus {
   outline: none;
   border-color: var(--fz-color-focus);
   box-shadow: var(--fz-focus-ring);
 }
 /* The native "Choose File" button → a compact secondary .fz-btn look. */
-.fz-form-screen input[type="file"]::file-selector-button {
+.lyris-form-screen input[type="file"]::file-selector-button {
   margin-right: 12px;
   height: 28px;
   padding: 0 12px;
@@ -3177,12 +3172,12 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
   cursor: pointer;
   transition: background var(--fz-duration-fast) var(--fz-ease-out), border-color var(--fz-duration-fast) var(--fz-ease-out);
 }
-.fz-form-screen input[type="file"]::file-selector-button:hover {
+.lyris-form-screen input[type="file"]::file-selector-button:hover {
   background: var(--fz-color-surface-3);
   border-color: var(--fz-color-text-muted);
 }
 
-/* Existing-file status row → a file chip (matches .fz-fileitem). */
+/* Existing-file status row → a file chip (matches .lyris-fileitem). */
 .formulize-fileupload-element {
   display: flex;
   flex-wrap: wrap;
@@ -3211,11 +3206,11 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
   font-weight: 500;
 }
 
-/* ---------- Range slider → .fz-range look ----------
+/* ---------- Range slider → .lyris-range look ----------
    Core renders `<nobr><input type="range"> <output id="rangeValue_*">
    </nobr>`. Style the native track + thumb to the design's accent
    track/fill, and present the live value as a mono bubble. */
-.fz-form-screen input[type="range"] {
+.lyris-form-screen input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
@@ -3227,25 +3222,25 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
   border: 0;
   cursor: pointer;
 }
-.fz-form-screen input[type="range"]:focus { outline: none; }
+.lyris-form-screen input[type="range"]:focus { outline: none; }
 /* Track */
-.fz-form-screen input[type="range"]::-webkit-slider-runnable-track {
+.lyris-form-screen input[type="range"]::-webkit-slider-runnable-track {
   height: 6px;
   border-radius: 999px;
   background: var(--fz-color-surface-3);
 }
-.fz-form-screen input[type="range"]::-moz-range-track {
+.lyris-form-screen input[type="range"]::-moz-range-track {
   height: 6px;
   border-radius: 999px;
   background: var(--fz-color-surface-3);
 }
-.fz-form-screen input[type="range"]::-moz-range-progress {
+.lyris-form-screen input[type="range"]::-moz-range-progress {
   height: 6px;
   border-radius: 999px;
   background: var(--fz-color-accent);
 }
 /* Thumb */
-.fz-form-screen input[type="range"]::-webkit-slider-thumb {
+.lyris-form-screen input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   margin-top: -7px;          /* centre 20px thumb on 6px track */
@@ -3258,7 +3253,7 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
   cursor: grab;
   transition: box-shadow var(--fz-duration-fast) var(--fz-ease-out);
 }
-.fz-form-screen input[type="range"]::-moz-range-thumb {
+.lyris-form-screen input[type="range"]::-moz-range-thumb {
   width: 18px;
   height: 18px;
   border-radius: 50%;
@@ -3267,10 +3262,10 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
   box-shadow: var(--fz-shadow-sm);
   cursor: grab;
 }
-.fz-form-screen input[type="range"]:focus::-webkit-slider-thumb {
+.lyris-form-screen input[type="range"]:focus::-webkit-slider-thumb {
   box-shadow: var(--fz-focus-ring);
 }
-.fz-form-screen input[type="range"]:focus::-moz-range-thumb {
+.lyris-form-screen input[type="range"]:focus::-moz-range-thumb {
   box-shadow: var(--fz-focus-ring);
 }
 /* Live value readout (the <output> beside the slider) → mono bubble.
@@ -3280,7 +3275,7 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
    while every other read-only value sits flush. The gap between slider and
    bubble is applied in the <nobr> rule below, which only exists in edit
    mode. */
-.fz-form-screen output[id^="rangeValue_"] {
+.lyris-form-screen output[id^="rangeValue_"] {
   display: inline-block;
   min-width: 34px;
   padding: 2px 8px;
@@ -3304,27 +3299,27 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
    (min-width:0 so it may shrink below its intrinsic size), and the pair is
    exactly the field width at any container size. Same rule in the drawer and
    at full screen, so the two stay consistent. */
-.fz-form-screen nobr:has(> input[type="range"]) {
+.lyris-form-screen nobr:has(> input[type="range"]) {
   display: flex;
   align-items: center;
   width: 100%;
   max-width: 100%;
 }
-.fz-form-screen nobr:has(> input[type="range"]) > input[type="range"] {
+.lyris-form-screen nobr:has(> input[type="range"]) > input[type="range"] {
   flex: 1 1 auto;
   width: auto;
   min-width: 0;
 }
-.fz-form-screen nobr:has(> input[type="range"]) > output[id^="rangeValue_"] {
+.lyris-form-screen nobr:has(> input[type="range"]) > output[id^="rangeValue_"] {
   flex: 0 0 auto;
   margin-left: 12px;   /* gap between the slider and its value bubble */
 }
 
-/* ---------- Color picker → .fz-colorpicker look ----------
+/* ---------- Color picker → .lyris-colorpicker look ----------
    Core renders `<input type="color">`. Browsers draw a chunky default
    swatch button; normalise it to a clean rounded swatch sized to the
-   field height, matching the design's `.fz-colorpicker__swatch`. */
-.fz-form-screen input[type="color"] {
+   field height, matching the design's `.lyris-colorpicker__swatch`. */
+.lyris-form-screen input[type="color"] {
   -webkit-appearance: none;
   appearance: none;
   width: var(--lyris-field-height);
@@ -3337,23 +3332,23 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
   vertical-align: middle;
   transition: border-color var(--fz-duration-fast) var(--fz-ease-out), box-shadow var(--fz-duration-fast) var(--fz-ease-out);
 }
-.fz-form-screen input[type="color"]:hover { border-color: var(--fz-color-text-muted); }
-.fz-form-screen input[type="color"]:focus {
+.lyris-form-screen input[type="color"]:hover { border-color: var(--fz-color-text-muted); }
+.lyris-form-screen input[type="color"]:focus {
   outline: none;
   border-color: var(--fz-color-focus);
   box-shadow: var(--fz-focus-ring);
 }
-.fz-form-screen input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
-.fz-form-screen input[type="color"]::-webkit-color-swatch {
+.lyris-form-screen input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.lyris-form-screen input[type="color"]::-webkit-color-swatch {
   border: 0;
   border-radius: 3px;
 }
-.fz-form-screen input[type="color"]::-moz-color-swatch {
+.lyris-form-screen input[type="color"]::-moz-color-swatch {
   border: 0;
   border-radius: 3px;
 }
 
-/* ---------- Duration tray → single grouped control (.fz-duration) ----------
+/* ---------- Duration tray → single grouped control ----------
    Core renders an XoopsFormElementTray of
    `<input type="number" class="formulize-duration-element-input">`
    segments, each prefixed by a small unit label. Pull the segment
@@ -3399,8 +3394,8 @@ input[type="time"] { font-family: var(--fz-font-sans); }
    ------------------------------------------------------------
    Brings the richer "Choice inputs" section of the design's
    KitchenSink artboard up to the forms.css primitives:
-     • Autocomplete List  → .fz-combo chip-input + .fz-listbox menu
-     • Multi-select Listbox (<select multiple>) → .fz-listbox
+     • Autocomplete List  → .lyris-combo chip-input + .lyris-listbox menu
+     • Multi-select Listbox (<select multiple>) → .lyris-listbox
      • Native <select> dropdown wrapper polish (defeats <nobr>)
    Scoped to the form-screen / drawer contexts so list-screen
    filters and widgets are untouched.
@@ -3411,22 +3406,22 @@ input[type="time"] { font-family: var(--fz-font-sans); }
    The nobr is inline, so the select only stretches to its content width and
    never fills the field. Make the wrapper a full-width block so the styled
    select (chevron + 38px box, already set by the base `select` rule) spans
-   the field, matching the design's full-width `.fz-select-trigger`. */
-.fz-form-screen .fz-field__body > nobr:has(> select),
-.fz-form-screen .col2 > nobr:has(> select) {
+   the field, matching the design's full-width `.lyris-select-trigger`. */
+.lyris-form-screen .fz-field__body > nobr:has(> select),
+.lyris-form-screen .col2 > nobr:has(> select) {
   display: block;
   width: 100%;
 }
-.fz-form-screen nobr > select {
+.lyris-form-screen nobr > select {
   width: 100%;
 }
 
-/* ---------- Multi-select Listbox (<select multiple>) → .fz-listbox ----------
+/* ---------- Multi-select Listbox (<select multiple>) → .lyris-listbox ----------
    A `<select multiple size="N">` must show N rows; the shared single-select
    rule forces `height: var(--lyris-field-height)` which clips it to one row and hides the
    chevron background awkwardly. Restyle multi-selects as the design's scrollable
    listbox surface: auto height, padded rows, accent-soft selected state. */
-.fz-form-screen select[multiple] {
+.lyris-form-screen select[multiple] {
   height: auto;
   min-height: calc(var(--lyris-field-height) * 2.4);
   max-height: 220px;
@@ -3438,18 +3433,18 @@ input[type="time"] { font-family: var(--fz-font-sans); }
   border: 1px solid var(--fz-color-border-strong);
   background-color: var(--fz-color-surface);
 }
-.fz-form-screen select[multiple]:focus {
+.lyris-form-screen select[multiple]:focus {
   border-color: var(--fz-color-focus);
   box-shadow: var(--fz-focus-ring);
   outline: none;
 }
-.fz-form-screen select[multiple] option {
+.lyris-form-screen select[multiple] option {
   padding: 7px 10px;
   border-radius: var(--fz-radius-sm);
   font-size: var(--lyris-field-text);
   color: var(--fz-color-text);
 }
-.fz-form-screen select[multiple] option:checked {
+.lyris-form-screen select[multiple] option:checked {
   /* WebKit needs the background painted via box-shadow to override the UA
      highlight; Firefox honours background directly. Belt-and-braces. */
   background: var(--fz-color-accent-soft) linear-gradient(var(--fz-color-accent-soft), var(--fz-color-accent-soft));
@@ -3457,7 +3452,7 @@ input[type="time"] { font-family: var(--fz-font-sans); }
   font-weight: 500;
 }
 
-/* ---------- Autocomplete List → .fz-combo chip-input ----------
+/* ---------- Autocomplete List → .lyris-combo chip-input ----------
    As of issue #92 the autocomplete component's structure and interaction
    mechanics live in the component itself (modules/formulize/templates/css/
    formulize.css + include/js/autocomplete.js): the relatively-positioned
@@ -3466,11 +3461,11 @@ input[type="time"] { font-family: var(--fz-font-sans); }
    modal. What stays here is Lyris's skin for those parts — tokenised colour,
    typography, field metrics, focus rings and transitions.
 
-   Lyris rules are scoped to .fz-form-screen / .formulize-drawer__body, so they outrank
+   Lyris rules are scoped to .lyris-form-screen / .formulize-drawer__body, so they outrank
    the component's unscoped base rules without needing !important. */
 
 /* The autocomplete text input → Lyris field metrics and colours. */
-.fz-form-screen input.formulize_autocomplete {
+.lyris-form-screen input.formulize_autocomplete {
   height: var(--lyris-field-height);
   padding: 0 36px 0 var(--lyris-field-padding-x);
   font: inherit;
@@ -3482,20 +3477,20 @@ input[type="time"] { font-family: var(--fz-font-sans); }
   outline: none;
   transition: border-color var(--fz-duration-fast) var(--fz-ease-out), box-shadow var(--fz-duration-fast) var(--fz-ease-out);
 }
-.fz-form-screen input.formulize_autocomplete:hover { border-color: var(--fz-color-text-muted); }
-.fz-form-screen input.formulize_autocomplete:focus {
+.lyris-form-screen input.formulize_autocomplete:hover { border-color: var(--fz-color-text-muted); }
+.lyris-form-screen input.formulize_autocomplete:focus {
   border-color: var(--fz-color-focus);
   box-shadow: var(--fz-focus-ring);
 }
 
 /* The magnifying glass → muted, and inset to match Lyris's field padding. */
-.fz-form-screen .formulize_autocomplete img.autocomplete-icon {
+.lyris-form-screen .formulize_autocomplete img.autocomplete-icon {
   right: 12px;
   opacity: 0.55;
 }
 
 /* Selected values → the design's chip row. */
-.fz-form-screen .formulize_autocomplete_selections .auto_multi {
+.lyris-form-screen .formulize_autocomplete_selections .auto_multi {
   height: 26px;
   padding: 0 4px 0 10px;
   border-radius: 13px;
@@ -3506,7 +3501,7 @@ input[type="time"] { font-family: var(--fz-font-sans); }
   line-height: 1;
   transition: background var(--fz-duration-fast) var(--fz-ease-out), border-color var(--fz-duration-fast) var(--fz-ease-out);
 }
-.fz-form-screen .formulize_autocomplete_selections .auto_multi:hover {
+.lyris-form-screen .formulize_autocomplete_selections .auto_multi:hover {
   background: var(--fz-color-surface-3);
   border-color: var(--fz-color-border-strong);
 }
@@ -3536,7 +3531,7 @@ input[type="time"] { font-family: var(--fz-font-sans); }
    out-specifying it any more — but the selector is left as-is (the `.auto_multi`
    in the middle is harmless) so the skin still cleanly outranks formulize.css's
    base rule, which is all it needs to do. */
-.fz-form-screen .formulize_autocomplete_selections .auto_multi button.auto_multi_remove {
+.lyris-form-screen .formulize_autocomplete_selections .auto_multi button.auto_multi_remove {
   width: 18px;
   height: 18px;
   border-radius: 50%;
@@ -3552,14 +3547,14 @@ input[type="time"] { font-family: var(--fz-font-sans); }
    component's base rule and fills the button. Filling it here was the bug: it
    painted a var(--fz-color-surface) box - white, and rounded-rect rather than round,
    since the radius was leaking from the blanket rule too. */
-.fz-form-screen .formulize_autocomplete_selections .auto_multi button.auto_multi_remove:hover,
-.fz-form-screen .formulize_autocomplete_selections .auto_multi button.auto_multi_remove:focus {
+.lyris-form-screen .formulize_autocomplete_selections .auto_multi button.auto_multi_remove:hover,
+.lyris-form-screen .formulize_autocomplete_selections .auto_multi button.auto_multi_remove:focus {
   background: transparent;
   box-shadow: none;
   color: var(--fz-color-danger);
 }
 
-/* ---------- jQuery UI autocomplete menu → .fz-listbox surface ----------
+/* ---------- jQuery UI autocomplete menu → .lyris-listbox surface ----------
    The suggestions dropdown is appended to <body> by jQuery UI as
    `ul.ui-autocomplete.ui-menu > li.ui-menu-item > div`. Re-skin it to the
    design's listbox: bordered card, hover/active rows in accent-soft. */
@@ -3601,8 +3596,8 @@ input[type="time"] { font-family: var(--fz-font-sans); }
    ============================================================ */
 
 @media (max-width: 768px) {
-  .fz-form,
-  .fz-form-screen {
+  .lyris-form,
+  .lyris-form-screen {
     --lyris-field-height:     max(var(--fz-field-height), 2.75rem);   /* iOS tap target: never under 44px, whatever the density */
     --lyris-field-text:  16px;   /* prevent iOS auto-zoom */
     --lyris-field-gap:   16px;
@@ -3637,11 +3632,11 @@ input[type="time"] { font-family: var(--fz-font-sans); }
 
   /* Autocomplete chips get a slightly taller tap target on touch screens, and
      the remove button grows to a comfortable touch size. */
-  .fz-form-screen .formulize_autocomplete_selections .auto_multi {
+  .lyris-form-screen .formulize_autocomplete_selections .auto_multi {
     height: 32px;
     padding: 0 6px 0 12px;
   }
-  .fz-form-screen .formulize_autocomplete_selections .auto_multi button.auto_multi_remove {
+  .lyris-form-screen .formulize_autocomplete_selections .auto_multi button.auto_multi_remove {
     width: 24px;
     height: 24px;
     font-size: 16px;
@@ -3784,7 +3779,7 @@ input[type="button"]:not([class*="fz-"]):disabled {
    won't clobber the richer, container-specific treatments below (titlebar,
    action panel, selection bar). But that left `.formulize_button` unstyled
    anywhere those containers don't reach — most visibly the inline-edit list
-   save button in `.fz-list__footer`, which fell back to raw browser chrome.
+   save button in `.lyris-list__footer`, which fell back to raw browser chrome.
 
    Give every `.formulize_button` a base Lyris button look here (mirrors the
    `.fz-btn` primitive). The container-specific rules and id selectors are more
@@ -3869,9 +3864,9 @@ input[type="button"].formulize_button {
 /* Generalized fieldset card. Any raw <fieldset> in the Lyris content area
    (the login page's #icms_block_login_form, plus any other fieldset in the
    end-user UI) gets the same card treatment: border, radius, padding,
-   surface background and a styled legend. Scoped to .fz-main so it only
+   surface background and a styled legend. Scoped to .lyris-main so it only
    touches theme content, not chrome. */
-.fz-main fieldset {
+.lyris-main fieldset {
   margin: calc(var(--fz-spacing) * 6) 0;
   padding: calc(var(--fz-spacing) * 6);
   border: 1px solid var(--fz-color-border);
@@ -3885,7 +3880,7 @@ fieldset#icms_block_login_form {
   max-width: 380px;
 }
 
-.fz-main fieldset > legend {
+.lyris-main fieldset > legend {
   padding: 0 calc(var(--fz-spacing) * 2);
   font-size: var(--fz-text-base);
   font-weight: 600;
@@ -4404,8 +4399,8 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
 }
 
 /* ---------- Subform TABLE: same styling in the drawer and full screen (issue #106)
-   Scoped to `.fz-form-screen` rather than `.formulize-drawer`. Both the drawer
-   body and Lyris's own form/multiPage screens emit `.fz-form-screen` (see
+   Scoped to `.lyris-form-screen` rather than `.formulize-drawer`. Both the drawer
+   body and Lyris's own form/multiPage screens emit `.lyris-form-screen` (see
    modules/formulize/templates/screens/Lyris/default/{drawer,form,multiPage}/
    toptemplate.php), so one rule set covers both and a subform table looks the
    same either way. While these rules were drawer-only, a subform rendered full
@@ -4413,14 +4408,14 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
    modules/formulize/templates/css/formulize.css — dotted left/right/bottom cell
    rules, no outer border, 1px header padding, bold centred headers — which is
    the mismatch issue #106 reported. Non-Lyris pages are untouched, and so are
-   list screens: they emit no `.fz-form-screen` and no `.formulize-subform-table`. */
+   list screens: they emit no `.lyris-form-screen` and no `.formulize-subform-table`. */
 
-.fz-form-screen .formulize-subform-table-scrollbox {
+.lyris-form-screen .formulize-subform-table-scrollbox {
   overflow-x: auto;
   margin-top: calc(var(--fz-spacing) * 2);
 }
 
-.fz-form-screen .formulize-subform-table {
+.lyris-form-screen .formulize-subform-table {
   width: 100%;
   border-collapse: collapse;
   border: 1px solid var(--fz-color-border);
@@ -4428,8 +4423,8 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
   font-size: var(--fz-text-xs-plus);
 }
 
-.fz-form-screen .formulize-subform-table > tbody > tr > th,
-.fz-form-screen .formulize-subform-table > tbody > tr > td {
+.lyris-form-screen .formulize-subform-table > tbody > tr > th,
+.lyris-form-screen .formulize-subform-table > tbody > tr > td {
   padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3);
   border: none;
   border-bottom: 1px solid var(--fz-color-border);
@@ -4437,31 +4432,31 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
   vertical-align: middle;
 }
 
-.fz-form-screen .formulize-subform-table > tbody > tr:last-child > td {
+.lyris-form-screen .formulize-subform-table > tbody > tr:last-child > td {
   border-bottom: none;
 }
 
-.fz-form-screen .formulize-subform-table > tbody > tr > th {
+.lyris-form-screen .formulize-subform-table > tbody > tr > th {
   background: var(--fz-color-surface-2);
   color: var(--fz-color-text-muted);
   font-weight: 500;
 }
 
-.fz-form-screen .formulize-subform-table > tbody > tr > th p,
-.fz-form-screen .formulize-subform-table > tbody > tr > td p {
+.lyris-form-screen .formulize-subform-table > tbody > tr > th p,
+.lyris-form-screen .formulize-subform-table > tbody > tr > td p {
   margin: 0;
 }
 
 /* pencil + delete checkbox columns hug their content */
-.fz-form-screen .formulize-subform-table .subentry-view-cell,
-.fz-form-screen .formulize-subform-table .subentry-delete-cell {
+.lyris-form-screen .formulize-subform-table .subentry-view-cell,
+.lyris-form-screen .formulize-subform-table .subentry-delete-cell {
   width: 1%;
   white-space: nowrap;
 }
 
 /* Pencil glyph colour is handled globally now (issue #61) — see the
    `a.loe-edit-entry::before` block earlier. Only layout remains here. */
-.fz-form-screen .formulize-subform-table a.loe-edit-entry {
+.lyris-form-screen .formulize-subform-table a.loe-edit-entry {
   display: inline-block;
   line-height: 1;
 }
@@ -4471,7 +4466,7 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
    column tracks, the gap and the ARIA roles all come from
    modules/formulize/templates/css/formulize.css. Lyris supplies only the skin.
 
-   Scoped to `.fz-form-screen`, which both the drawer body and the full screen
+   Scoped to `.lyris-form-screen`, which both the drawer body and the full screen
    form/multiPage toptemplates emit, so a grid looks the same either way.
 
    Spacing uses the static `--s-*` scale rather than `--lyris-field-gap`, so it is
@@ -4480,13 +4475,13 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
    below, so the last column ends flush with the right hand edge of the field
    column, in line with every other field on the screen. */
 
-.fz-form-screen .formulize-grid {
+.lyris-form-screen .formulize-grid {
   --formulize-grid-column-gap: calc(var(--fz-spacing) * 3);
   --formulize-grid-row-gap: calc(var(--fz-spacing) * 2);
 }
 
-.fz-form-screen .formulize-grid .fz-grid__cell--columnheader,
-.fz-form-screen .formulize-grid .fz-grid__cell--rowheader {
+.lyris-form-screen .formulize-grid .formulize-grid__cell--columnheader,
+.lyris-form-screen .formulize-grid .formulize-grid__cell--rowheader {
   font-size: var(--fz-text-xs-plus);
   font-weight: 500;
   color: var(--fz-color-text-muted);
@@ -4495,12 +4490,12 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
 
 /* Column captions sit on the baseline above their controls; a row caption
    reads better centred against the control beside it. */
-.fz-form-screen .formulize-grid .fz-grid__cell--columnheader { align-self: end; }
-.fz-form-screen .formulize-grid .fz-grid__cell--rowheader { align-self: center; }
+.lyris-form-screen .formulize-grid .formulize-grid__cell--columnheader { align-self: end; }
+.lyris-form-screen .formulize-grid .formulize-grid__cell--rowheader { align-self: center; }
 
 /* Caption, when the element shows its heading above the grid instead of in
    the label column. */
-.fz-form-screen .formulize-grid-caption {
+.lyris-form-screen .formulize-grid-caption {
   font-size: var(--lyris-label-text, 1.1rem);
   font-weight: 600;
   color: var(--fz-color-text);
@@ -4509,9 +4504,9 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
 
 /* Controls fill their track, so the grid's right hand edge is the right hand
    edge of its last control - the alignment issue #119 reported. */
-.fz-form-screen .formulize-grid input:not([type="radio"]):not([type="checkbox"]):not([type="button"]):not([type="submit"]),
-.fz-form-screen .formulize-grid select,
-.fz-form-screen .formulize-grid textarea {
+.lyris-form-screen .formulize-grid input:not([type="radio"]):not([type="checkbox"]):not([type="button"]):not([type="submit"]),
+.lyris-form-screen .formulize-grid select,
+.lyris-form-screen .formulize-grid textarea {
   width: 100%;
 }
 

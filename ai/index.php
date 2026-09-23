@@ -77,11 +77,11 @@ if (!isAIAssistantEnabled()) {
 ?>
 
 <style>
-@keyframes fz-roll-down {
+@keyframes formulize-roll-down {
     from { opacity: 0; transform: translateY(-10px) scaleY(0.88); transform-origin: top; }
     to   { opacity: 1; transform: translateY(0)     scaleY(1);    transform-origin: top; }
 }
-.fz-roll-down { animation: fz-roll-down 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
+.formulize-roll-down { animation: formulize-roll-down 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
 
 /* In the drawer the panel is the page: fill it rather than centring a fixed-width
    column, and lose the rounded corners that only made sense floating on a page. */
@@ -389,9 +389,9 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
     }
 
     function slideDown(el) {
-        el.classList.remove('fz-roll-down');
+        el.classList.remove('formulize-roll-down');
         void el.offsetWidth; // force reflow so the animation restarts each time
-        el.classList.add('fz-roll-down');
+        el.classList.add('formulize-roll-down');
     }
 
     function updateInputState() {

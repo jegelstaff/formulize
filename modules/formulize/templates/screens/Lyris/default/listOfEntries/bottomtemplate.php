@@ -1,12 +1,12 @@
 <?php
 
 print "
-  <div class='fz-list__footer'>
-    <div class='fz-list__footer-start'>$saveButton $numberOfEntries $toggleRepeatData</div>
-    <div class='fz-list__footer-end'>$pageNavControls</div>
+  <div class='lyris-list__footer'>
+    <div class='lyris-list__footer-start'>$saveButton $numberOfEntries $toggleRepeatData</div>
+    <div class='lyris-list__footer-end'>$pageNavControls</div>
   </div>
 
-</div><!-- /.fz-list-screen -->
+</div><!-- /.lyris-list-screen -->
 ";
 
 if ($messageText) {
@@ -16,20 +16,20 @@ if ($messageText) {
 ?>
 
 <script>
-// Generic panel system: buttons with [data-fz-panel="id"] toggle panels by ID.
-// All toggleable panels must carry the fz-panel class.
+// Generic panel system: buttons with [data-lyris-panel="id"] toggle panels by ID.
+// All toggleable panels must carry the lyris-panel class.
 document.addEventListener('click', function (e) {
-    var trigger = e.target.closest('[data-fz-panel]');
-    var inPanel = e.target.closest('.fz-panel');
+    var trigger = e.target.closest('[data-lyris-panel]');
+    var inPanel = e.target.closest('.lyris-panel');
     if (trigger) {
-        var panelId = trigger.getAttribute('data-fz-panel');
+        var panelId = trigger.getAttribute('data-lyris-panel');
         var panel   = document.getElementById(panelId);
         if (!panel) return;
         var opening = !panel.classList.contains('open');
-        document.querySelectorAll('.fz-panel.open').forEach(function (p) { p.classList.remove('open'); });
+        document.querySelectorAll('.lyris-panel.open').forEach(function (p) { p.classList.remove('open'); });
         if (opening) { panel.classList.add('open'); }
     } else if (!inPanel) {
-        document.querySelectorAll('.fz-panel.open').forEach(function (p) { p.classList.remove('open'); });
+        document.querySelectorAll('.lyris-panel.open').forEach(function (p) { p.classList.remove('open'); });
     }
 });
 
@@ -44,7 +44,7 @@ function fzSelectView(value, isStandard) {
         form.curviewid.value  = '';
     }
     form.lockcontrols.value = 0;
-    var panel = document.getElementById('fz-view-panel');
+    var panel = document.getElementById('lyris-view-panel');
     if (panel) { panel.classList.remove('open'); }
     showLoading();
 }
@@ -52,7 +52,7 @@ function fzSelectView(value, isStandard) {
 (function () {
     function updateSelectionBar() {
         var checked = document.querySelectorAll('.formulize_selection_checkbox:checked');
-        var bar     = document.getElementById('fz-selection-bar');
+        var bar     = document.getElementById('lyris-selection-bar');
         var countEl = document.querySelector('.js-selection-count');
         if (!bar) return;
         if (countEl) countEl.textContent = checked.length + ' selected';
@@ -70,11 +70,11 @@ function fzSelectView(value, isStandard) {
     // Persisted filter-row visibility, keyed by screen id, in a single
     // localStorage object: { "<sid>": true|false }. Absent/corrupt state
     // falls back to the rendered default (filters hidden).
-    var FILTERS_KEY = 'fz-filters-shown';
+    var FILTERS_KEY = 'lyris-filters-shown';
 
     function getScreenId() {
-        var screenEl = document.querySelector('.fz-list-screen');
-        var sid = screenEl ? screenEl.getAttribute('data-fz-sid') : '';
+        var screenEl = document.querySelector('.lyris-list-screen');
+        var sid = screenEl ? screenEl.getAttribute('data-lyris-sid') : '';
         return (sid && sid !== '0') ? sid : '';
     }
 
@@ -103,8 +103,8 @@ function fzSelectView(value, isStandard) {
     }
 
     function initFilterToggle() {
-        var btn  = document.getElementById('fz-filter-toggle');
-        var rows = document.querySelectorAll('.fz-search-row');
+        var btn  = document.getElementById('lyris-filter-toggle');
+        var rows = document.querySelectorAll('.lyris-search-row');
         if (!btn) return;
         if (rows.length === 0) { btn.style.display = 'none'; return; }
 
@@ -130,7 +130,7 @@ function fzSelectView(value, isStandard) {
     function initStickyFilterOffset() {
         var table = document.querySelector('.fz-table');
         var headerRow = table ? table.querySelector('thead tr:first-child') : null;
-        if (!headerRow || headerRow.classList.contains('fz-search-row') || typeof ResizeObserver === 'undefined') return;
+        if (!headerRow || headerRow.classList.contains('lyris-search-row') || typeof ResizeObserver === 'undefined') return;
         new ResizeObserver(function () {
             table.style.setProperty('--lyris-thead-height', headerRow.getBoundingClientRect().height + 'px');
         }).observe(headerRow);

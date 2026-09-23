@@ -909,15 +909,15 @@ div[id^=cellcontents_1_] label {
   align-items: stretch;
 }
 
-.formulize-grid.fz-grid--has-row-headers {
+.formulize-grid.formulize-grid--has-row-headers {
   --formulize-grid-row-header-track: max-content;
 }
 
-.formulize-grid.fz-grid--has-final-column {
+.formulize-grid.formulize-grid--has-final-column {
   --formulize-grid-final-track: max-content;
 }
 
-.formulize-grid > .fz-grid__row {
+.formulize-grid > .formulize-grid__row {
   display: grid;
   grid-column: 1 / -1;
   grid-template-columns: subgrid;
@@ -926,14 +926,14 @@ div[id^=cellcontents_1_] label {
 }
 
 @supports not (grid-template-columns: subgrid) {
-  .formulize-grid > .fz-grid__row {
+  .formulize-grid > .formulize-grid__row {
     display: contents;
   }
 }
 
 /* minmax(0, 1fr) tracks plus min-width:0 are what keep a long value inside its
    cell instead of forcing the grid wider than the form. */
-.formulize-grid .fz-grid__cell {
+.formulize-grid .formulize-grid__cell {
   min-width: 0;
   align-self: end;
 }
@@ -951,11 +951,11 @@ div[id^=cellcontents_1_] label {
    --formulize-grid-stripe-bg a colour. With no colour the grid is unshaded, which is
    what both shipped themes did with the old table markup - the even/odd
    classes were emitted but nothing ever painted them. */
-.formulize-grid.fz-grid--shade-rows > .fz-grid__row--odd {
+.formulize-grid.formulize-grid--shade-rows > .formulize-grid__row--odd {
   background: var(--formulize-grid-stripe-bg, transparent);
 }
 
-.formulize-grid.fz-grid--shade-columns .fz-grid__cell.odd {
+.formulize-grid.formulize-grid--shade-columns .formulize-grid__cell.odd {
   background: var(--formulize-grid-stripe-bg, transparent);
 }
 
@@ -1061,7 +1061,7 @@ button.formulize-ai-copy-btn:active {
 }
 
 /* Textarea word/character limit counter */
-.fz-limit-counter {
+.formulize-limit-counter {
 	font-size: 0.85em;
 	margin-top: 0.5em;
 	text-align: right;
@@ -1069,19 +1069,19 @@ button.formulize-ai-copy-btn:active {
 	max-width: 300px;
 	box-sizing: border-box;
 }
-.fz-limit-counter.fz-limit-green {
+.formulize-limit-counter.formulize-limit-green {
 	color: #2e7d32;
 }
-.fz-limit-counter.fz-limit-orange {
+.formulize-limit-counter.formulize-limit-orange {
 	color: #e65100;
 }
-.fz-limit-counter.fz-limit-red {
+.formulize-limit-counter.formulize-limit-red {
 	color: #c62828;
 	font-weight: bold;
 }
 
 @media (min-width: 768px) {
-	.fz-limit-counter {
+	.formulize-limit-counter {
 		max-width: 700px;
 	}
 }

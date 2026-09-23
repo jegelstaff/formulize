@@ -13,20 +13,20 @@ document.addEventListener('DOMContentLoaded', () => {
 // ============================================================
 
 function initSidebar() {
-  const app = document.getElementById('fz-app');
+  const app = document.getElementById('lyris-app');
   const toggle = document.querySelector('.js-sidebar-toggle');
   if (!app || !toggle) return;
 
-  const STORAGE_KEY = 'fz-sidebar-closed';
+  const STORAGE_KEY = 'lyris-sidebar-closed';
   const isMobile = () => window.innerWidth <= 768;
 
   function setSidebarState(closed) {
     if (isMobile()) {
-      app.classList.toggle('fz-app--sidebar-open', !closed);
-      app.classList.remove('fz-app--sidebar-closed');
+      app.classList.toggle('lyris-app--sidebar-open', !closed);
+      app.classList.remove('lyris-app--sidebar-closed');
     } else {
-      app.classList.toggle('fz-app--sidebar-closed', closed);
-      app.classList.remove('fz-app--sidebar-open');
+      app.classList.toggle('lyris-app--sidebar-closed', closed);
+      app.classList.remove('lyris-app--sidebar-open');
     }
     toggle.setAttribute('aria-expanded', String(!closed));
     try { localStorage.setItem(STORAGE_KEY, String(closed)); } catch (_) { /* ignore */ }
@@ -34,8 +34,8 @@ function initSidebar() {
 
   toggle.addEventListener('click', () => {
     const closed = isMobile()
-      ? app.classList.contains('fz-app--sidebar-open')
-      : !app.classList.contains('fz-app--sidebar-closed');
+      ? app.classList.contains('lyris-app--sidebar-open')
+      : !app.classList.contains('lyris-app--sidebar-closed');
     setSidebarState(closed);
   });
 
@@ -50,8 +50,8 @@ function initSidebar() {
 
   // Close mobile sidebar on outside click
   document.addEventListener('click', (e) => {
-    if (!isMobile() || !app.classList.contains('fz-app--sidebar-open')) return;
-    const sidebar = document.getElementById('fz-sidebar');
+    if (!isMobile() || !app.classList.contains('lyris-app--sidebar-open')) return;
+    const sidebar = document.getElementById('lyris-sidebar');
     if (sidebar && !sidebar.contains(e.target) && !toggle.contains(e.target)) {
       setSidebarState(true);
     }
@@ -104,13 +104,13 @@ function initCardToggles() {
 // `@supports` fallback and drew the separator permanently — issue #121 item 2.
 // A passive scroll listener works identically in every engine.
 //
-// `.fz-main` is the scroll container for a form screen (`overflow-y: auto`);
+// `.lyris-main` is the scroll container for a form screen (`overflow-y: auto`);
 // the strip is a descendant of it, not of the page, so this listens on the
 // container rather than on the window. Nothing to do on screens that render no
 // tabs, and the drawer builds its own footer/scroller, so it is untouched.
 function initFormScrollSeparator() {
-  if (document.body.classList.contains('fz-inline')) return;
-  const scroller = document.querySelector('.fz-main');
+  if (document.body.classList.contains('formulize-inline')) return;
+  const scroller = document.querySelector('.lyris-main');
   const tabs = scroller ? scroller.querySelector('#pageNavTable.pill-tabs') : null;
   if (!scroller || !tabs) return;
 
