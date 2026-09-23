@@ -113,7 +113,7 @@
     </fieldset>
 
     <fieldset class="fz-appearance-group">
-        <legend>Logo</legend>
+        <legend>Logo and favicon</legend>
         <{if $adminPage.logoUrl}>
         <div class="fz-appearance-field">
             <label>Current logo</label>
@@ -133,11 +133,34 @@
             <span class="fz-appearance-hint">The theme's default logo is in use. Upload a PNG, JPEG, GIF, SVG, or WebP image to replace it.</span>
         </div>
         <{/if}>
+
+        <{* The favicon is the icon browsers show in the tab and in bookmarks. It is
+           uploaded and stored exactly like the logo above, and an unset favicon means
+           the theme's own built-in icon keeps being used. *}>
+        <{if $adminPage.faviconUrl}>
+        <div class="fz-appearance-field">
+            <label>Current favicon</label>
+            <img class="fz-appearance-favicon" src="<{$adminPage.faviconUrl}>" alt="Current favicon" />
+        </div>
+        <div class="fz-appearance-field">
+            <label class="fz-appearance-checkbox"><input type="checkbox" name="appearance_favicon_remove" value="1" /> Remove the custom favicon and use the theme's default favicon</label>
+        </div>
+        <div class="fz-appearance-field">
+            <label for="appearance_favicon_file">Replace favicon</label>
+            <input type="file" id="appearance_favicon_file" name="appearance_favicon_file" accept="image/png,image/x-icon,image/vnd.microsoft.icon,image/svg+xml,image/gif,image/jpeg,image/webp" />
+        </div>
+        <{else}>
+        <div class="fz-appearance-field">
+            <label for="appearance_favicon_file">Upload a favicon</label>
+            <input type="file" id="appearance_favicon_file" name="appearance_favicon_file" accept="image/png,image/x-icon,image/vnd.microsoft.icon,image/svg+xml,image/gif,image/jpeg,image/webp" />
+            <span class="fz-appearance-hint">The icon browsers show in the tab and in bookmarks. The theme's default favicon is in use. Upload a PNG, ICO, SVG, GIF, JPEG, or WebP image to replace it. A square image of at least 32&times;32 works best.</span>
+        </div>
+        <{/if}>
     </fieldset>
 
     <div class="fz-appearance-actions">
         <input type="submit" name="appearance_save" value="Save Appearance" />
-        <input type="submit" class="fz-appearance-destructive" name="appearance_reset" value="Reset Everything to Defaults" onclick="return confirm('Reset all appearance settings for the <{$adminPage.selected_theme}> theme to their defaults? This will also remove any logo uploaded for it.');" />
+        <input type="submit" class="fz-appearance-destructive" name="appearance_reset" value="Reset Everything to Defaults" onclick="return confirm('Reset all appearance settings for the <{$adminPage.selected_theme}> theme to their defaults? This will also remove any logo or favicon uploaded for it.');" />
     </div>
 
     </form>

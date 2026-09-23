@@ -25,12 +25,12 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// Appearance settings: colours, font, and logo, configured on the Appearance
-// page in the Formulize admin UI, and rendered by themes as CSS custom property
-// overrides on :root.
+// Appearance settings: colours, font, logo, and favicon, configured on the
+// Appearance page in the Formulize admin UI, and rendered by themes as CSS custom
+// property overrides on :root.
 //
 // Settings are kept per theme, in the theme's own generated stylesheet. That
-// stylesheet, and any uploaded logo, live in an "appearance" folder inside the
+// stylesheet, and any uploaded logo or favicon, live in an "appearance" folder inside the
 // theme's folder, ie: themes/Lyris/appearance/. That folder is inside the web
 // root and is not access-protected the way uploads/ usually is, so the files are
 // reachable by the browser wherever the site is deployed.
@@ -494,7 +494,8 @@ function formulize_appearanceBaseFontSizeFor($contentSize, $theme = null) {
  */
 function formulize_appearanceSettingNames() {
     $names = array('appearance_font', 'appearance_customfont', 'appearance_headingfont',
-        'appearance_headingcustomfont', 'appearance_fontsize', 'appearance_logo');
+        'appearance_headingcustomfont', 'appearance_fontsize', 'appearance_logo',
+        'appearance_favicon');
     // the definition, not the theme-aware map: the setting names are the same for every
     // theme, and only the defaults differ, so there is no theme to resolve here
     foreach (array_keys(formulize_appearanceColourMapDefinition()) as $key) {
@@ -675,9 +676,12 @@ function formulize_sanitizeAppearanceSettings($values, $theme = null) {
     // its default type scale is.
     $fontSize = formulize_sanitizeAppearanceFontSize(isset($values['appearance_fontsize']) ? $values['appearance_fontsize'] : '', $theme);
     $clean['appearance_fontsize'] = ($fontSize == formulize_appearanceThemeContentSize($theme)) ? '' : $fontSize;
-    // the logo is a bare filename in the theme's appearance folder, never a path
-    $logo = basename(trim((string) (isset($values['appearance_logo']) ? $values['appearance_logo'] : '')));
-    $clean['appearance_logo'] = preg_match('/^[A-Za-z0-9][A-Za-z0-9._-]*$/', $logo) ? $logo : '';
+    // the logo and the favicon are bare filenames in the theme's appearance folder,
+    // never paths
+    foreach (array('appearance_logo', 'appearance_favicon') as $fileSetting) {
+        $file = basename(trim((string) (isset($values[$fileSetting]) ? $values[$fileSetting] : '')));
+        $clean[$fileSetting] = preg_match('/^[A-Za-z0-9][A-Za-z0-9._-]*$/', $file) ? $file : '';
+    }
     return $clean;
 }
 
@@ -1005,14 +1009,52 @@ function formulize_getAppearanceLogoPath($theme = null) {
  * @return string URL of the logo, or '' when no custom logo is set
  */
 function formulize_getAppearanceLogoUrl($theme = null) {
-    $path = formulize_getAppearanceLogoPath($theme);
-    if ($path) {
-        $base = (strpos($path, formulize_getLegacyAppearanceDir() . '/') === 0)
-            ? formulize_getLegacyAppearanceUrl()
-            : formulize_getAppearanceUrl($theme);
-        return $base . '/' . rawurlencode(basename($path)) . '?v=' . filemtime($path);
+    return formulize_getAppearanceFileUrl(formulize_getAppearanceLogoPath($theme), $theme);
+}
+
+/**
+ * The filesystem path of the uploaded custom favicon, if any. Kept alongside the
+ * logo, and in exactly the same way: a bare filename recorded in the theme's
+ * generated stylesheet, and the file itself in the theme's appearance folder.
+ *
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return string path of the favicon file, or '' when no custom favicon is set
+ */
+function formulize_getAppearanceFaviconPath($theme = null) {
+    $settings = formulize_getAppearanceSettings($theme);
+    return formulize_locateAppearanceFile($settings['appearance_favicon'], $theme);
+}
+
+/**
+ * The URL of the uploaded custom favicon, if any. A theme falls back to its own
+ * built-in icons when this is empty, so an unset favicon changes nothing.
+ *
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return string URL of the favicon, or '' when no custom favicon is set
+ */
+function formulize_getAppearanceFaviconUrl($theme = null) {
+    return formulize_getAppearanceFileUrl(formulize_getAppearanceFaviconPath($theme), $theme);
+}
+
+/**
+ * The URL of one of a theme's appearance files, given its path. A direct static
+ * URL, with the file's modification time included for cache busting. The file
+ * can still be sitting in the legacy uploads/appearance folder on a site that
+ * predates per-theme appearance files, so the folder it was actually found in
+ * decides the base URL.
+ *
+ * @param string $path path of the file, as returned by formulize_locateAppearanceFile()
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return string URL of the file, or '' when $path is empty
+ */
+function formulize_getAppearanceFileUrl($path, $theme = null) {
+    if (!$path) {
+        return '';
     }
-    return '';
+    $base = (strpos($path, formulize_getLegacyAppearanceDir() . '/') === 0)
+        ? formulize_getLegacyAppearanceUrl()
+        : formulize_getAppearanceUrl($theme);
+    return $base . '/' . rawurlencode(basename($path)) . '?v=' . filemtime($path);
 }
 
 /**
