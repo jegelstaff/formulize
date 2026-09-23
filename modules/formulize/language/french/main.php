@@ -476,7 +476,6 @@ define("_formulize_DE_STANDARD_VIEWS", "FORMAT DE VUE STANDARD:");
 define("_formulize_DE_UPDATEENTRY", "Mettre à jour mon entrée");
 define("_formulize_DE_USETHISSCOPE", "Utilisez ces groupes comme visualisateurs ");
 define("_formulize_DE_VIEWDETAILS", "Cliquez pour voir des détails sur cette entrée.");
-define("_formulize_DE_WARNLOCK", "<p>La vue sélectionnées est en mode <i>bloquée</i>.  Cela veut dire que vous ne pouvez rien y faire.</p><p>Vous pouvez juste utiliser la recherche en haut de chaque colonne.</p>");
 define("_formulize_DE_XCOMMA", "Séparé par des virgules");
 define("_formulize_DE_XCUST", "Personnalisé:");
 define("_formulize_DE_XF", "exported_");

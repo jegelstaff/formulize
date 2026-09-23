@@ -615,12 +615,6 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		// must check for this and set it here, inside this section, where we know for sure that $_POST['lockcontrols'] has been set based on the database value for the saved view, and not anything else sent from the user!!!  Otherwise the user might be injecting a greater scope for themselves than they should have!
 		$currentViewCanExpand = $_POST['lockcontrols'] ? false : true; // if the controls are not locked, then we can expand the view for the user so they can see things they wouldn't normally see
 
-		// if there is a screen with a top template in effect, then do not lock the controls even if the saved view says we should.  Assume that the screen author has compensated for any permission issues.
-		// we need to do this after rachetting down the visibility controls.  Fact is, controlling UI for users is one thing that we can trust the screen author to do, so we don't need to indicate that the controls are locked.  But we don't want the visibility to override what people can normally see, so we rachet that down above.
-		if($screen AND $_POST['lockcontrols'] AND $screen->getTemplate('toptemplate') != "") {
-			$_POST['lockcontrols'] = 0;
-		}
-
 	} elseif(isset($_POST['advscope']) AND $_POST['advscope'] AND strstr($_POST['advscope'], ",")) { // looking for comma sort of means that we're checking that a valid advanced scope is being sent
 		$currentView = $_POST['advscope'];
 	} elseif(isset($_POST['currentview']) AND $_POST['currentview']) { // could have been unset by deletion of a view or something else, so we must check to make sure it exists before we override the default that was determined above
@@ -694,7 +688,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	 * STAGE 10 - DETERMINE THE SCOPE WE SHOULD USE FOR THIS PAGELOAD, AND THE VIEWS AVAILABLE TO THE USER. ENFORCE FUNDAMENTAL SEARCHES FROM THE LAST LOADED VIEW IF IT HAD ANY.
 	 */
 	list($scope, $currentView) = buildScope($currentView, $uid, $fid, $currentViewCanExpand);
-	list($settings['viewoptions'], $settings['pubstart'], $settings['endstandard'], $settings['pickgroups'], $settings['loadviewname'], $settings['curviewid'], $settings['publishedviewnames'], $settings['viewitems']) = generateViews($fid, $uid, $groups, $frid, $currentView, (isset($loadedView) ? $loadedView : null), $view_groupscope, $view_globalscope, (isset($_POST['curviewid']) ? $_POST['curviewid'] : null), $loadOnlyView, $screen, (isset($_POST['lastloaded']) ? $_POST['lastloaded'] : null)); // pubstart used to indicate to the delete button where the list of published views begins in the current view drop down (since you cannot delete published views)
+	list($settings['viewoptions'], $settings['pubstart'], $settings['endstandard'], $settings['pickgroups'], $settings['loadviewname'], $settings['curviewid'], $settings['publishedviewnames'], $settings['viewitems']) = generateViews($fid, $uid, $groups, $frid, $currentView, (isset($loadedView) ? $loadedView : null), $view_groupscope, $view_globalscope, $loadOnlyView, $screen, (isset($_POST['lastloaded']) ? $_POST['lastloaded'] : null)); // pubstart used to indicate to the delete button where the list of published views begins in the current view drop down (since you cannot delete published views)
 	if(isset($_POST['loadviewname']) AND $_POST['loadviewname']) { $settings['loadviewname'] = $_POST['loadviewname']; }
 	// if a view was loaded, then update the lastloaded value, otherwise preserve the previous value
 	if(isset($settings['curviewid']) AND $settings['curviewid']) {
@@ -1236,7 +1230,7 @@ function enforceSearchesAsFundamentalFilters($savedViewIndentifier, $screen) {
 }
 
 // return the available current view settings based on the user's permissions
-function generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $view_groupscope, $view_globalscope, $prevview, $loadOnlyView, $screen, $lastLoaded) {
+function generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $view_groupscope, $view_globalscope, $loadOnlyView, $screen, $lastLoaded) {
 	global $xoopsDB;
 
 	$limitViews = false;
@@ -1334,7 +1328,7 @@ function generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $v
 			$viewItems[] = array('type' => 'group', 'label' => _formulize_DE_SAVED_VIEWS);
 		}
 		for($i=0;$i<count((array) $s_reports);$i++) {
-			if($loadedView == "sold_" . $s_reports[$i]['report_id'] OR $prevview == "sold_" . $s_reports[$i]['report_id']) {
+			if($loadedView == "sold_" . $s_reports[$i]['report_id']) {
 				$vcounter++;
 				$options .= "<option value=$currentView selected>&nbsp;&nbsp;" . stripslashes($s_reports[$i]['report_name']) . "</option>\n"; // " (id: " . $s_reports[$i]['report_id'] . ")</option>\n";
 				$loadviewname = $s_reports[$i]['report_name'];
@@ -1347,7 +1341,7 @@ function generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $v
 			}
 		}
 		for($i=0;$i<count((array) $ns_reports);$i++) {
-			if($loadedView == "s" . $ns_reports[$i]['sv_id'] OR $prevview == "s" . $ns_reports[$i]['sv_id']) {
+			if($loadedView == "s" . $ns_reports[$i]['sv_id']) {
 				$vcounter++;
 				$options .= "<option value=$currentView selected>&nbsp;&nbsp;" . stripslashes($ns_reports[$i]['sv_name']) . "</option>\n"; // " (id: " . $ns_reports[$i]['sv_id'] . ")</option>\n";
 				$loadviewname = $ns_reports[$i]['sv_name'];
@@ -1370,7 +1364,7 @@ function generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $v
 	$firstPublishedView = $vcounter + 1;
 	if(!$limitViews) { // old reports are not selectable in the screen UI so will never be in the limit list
 		for($i=0;$i<count((array) $p_reports);$i++) {
-			if($loadedView == "pold_" . $p_reports[$i]['report_id'] OR $prevview == "pold_" . $p_reports[$i]['report_id']) {
+			if($loadedView == "pold_" . $p_reports[$i]['report_id']) {
 				$vcounter++;
 				$options .= "<option value=$currentView selected>&nbsp;&nbsp;" . stripslashes($p_reports[$i]['report_name']) . "</option>\n"; // " (id: " . $p_reports[$i]['report_id'] . ")</option>\n";
 				$loadviewname = $p_reports[$i]['report_name'];
@@ -1386,7 +1380,7 @@ function generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $v
 	$publishedViewNames = array();
 	for($i=0;$i<count((array) $np_reports);$i++) {
 		if(!$limitViews OR in_array($np_reports[$i]['sv_id'], $screenLimitViews)) {
-			if($loadedView == "p" . $np_reports[$i]['sv_id'] OR $prevview == "p" . $np_reports[$i]['sv_id'] OR ($forceLastLoaded AND $lastLoaded == "p" . $np_reports[$i]['sv_id'])) {
+			if($loadedView == "p" . $np_reports[$i]['sv_id'] OR ($forceLastLoaded AND $lastLoaded == "p" . $np_reports[$i]['sv_id'])) {
 				$vcounter++;
 				$options .= "<option value=$currentView selected>&nbsp;&nbsp;" . stripslashes($np_reports[$i]['sv_name']) . "</option>\n"; // " (id: " . $np_reports[$i]['sv_id'] . ")</option>\n";
 				$loadviewname = $np_reports[$i]['sv_name'];
@@ -1599,7 +1593,6 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	}
 	$buttonCodeArray['addButtonHeading'] = ($buttonCodeArray['addButton'] OR $buttonCodeArray['addMultiButton'] OR $buttonCodeArray['addProxyButton']) ? _formulize_DE_FILLINFORM : "";
 	$buttonCodeArray['submitButton'] = $submitButton;
-	$buttonCodeArray['lockControlsWarning'] = "<input type=hidden name=curviewid id=curviewid value=$curviewid>"._formulize_DE_WARNLOCK;
 
 
 	// print current view if the screen is not providing a UI element to the user
@@ -1826,7 +1819,7 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 	$textWidth = 35;
 	$useCheckboxes = $settings['lockcontrols'] ? 2 : 0;
 	$useViewEntryLinks = $settings['lockcontrols'] ? 0 : 1;
-	$useSearch = $settings['lockcontrols'] ? 0 : 1;
+	$useSearch = $settings['lockcontrols'] ? 0 : 1; // no search boxes when a view locks the controls, so the view's searches stay as they are
 	$deColumns = array();
 	$useSearchCalcMsgs = 1;
 	$inlineButtons = array();
@@ -1847,7 +1840,7 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 		if($textWidth == 0) { $textWidth = 10000; }
 		$useCheckboxes = $screen->getVar('usecheckboxes');
 		$useViewEntryLinks = $screen->getVar('useviewentrylinks');
-		$useSearch = $screen->getVar('usesearch') ? $screen->getVar('usesearch') : 0;
+		$useSearch = ($screen->getVar('usesearch') AND !$settings['lockcontrols']) ? $screen->getVar('usesearch') : 0;
 		$hiddenColumns = $screen->getVar('hiddencolumns');
 		$deColumns = $screen->getVar('decolumns');
 		$displayIconsToActivateElements = $screen->getVar('dedisplay');
@@ -3760,11 +3753,6 @@ function renderElementNewValue(elementValue,params) {
 window.document.controls.ventry.value = '';
 window.document.controls.loadreport.value = '';
 
-function warnLock() {
-	alert('<?php print _formulize_DE_WARNLOCK; ?>');
-	return false;
-}
-
 function clearSearchHelp(formObj, defaultHelp) {
 	if(formObj.firstbox.value == defaultHelp) {
 		formObj.firstbox.value = "";
@@ -4024,7 +4012,6 @@ function change_view(formObj, pickgroups, endstandard) {
 					window.document.controls.loadreport.value = 1;
 					if(i <= endstandard && window.document.controls.lockcontrols.value == 1) {
 						window.document.controls.resetview.value = 1;
-						window.document.controls.curviewid.value = "";
 					}
 					window.document.controls.lockcontrols.value = 0;
 					window.document.controls.ventry.value = '';

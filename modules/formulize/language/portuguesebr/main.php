@@ -359,7 +359,6 @@ define("_formulize_DE_NO_STANDARD_VIEWS", "Não há visões padrão disponíveis
 define("_formulize_DE_SAVED_VIEWS", "SUAS VISÕES SALVAS:");
 define("_formulize_DE_PUB_VIEWS", "VISÕES PUBLICADAS:");
 define("_formulize_DE_SEARCH_HELP", "Digite aqui os termos de busca");
-define("_formulize_DE_WARNLOCK", "<p>A visão que você selecionou está ajustada para <i>controles travados</i>. Isto significa que você não pode mudar as colunas, fazer cálculos, buscas avançadas ou exportar dados.</p><p>Você pode classificar e fazer buscas simples usando os controles no topo de cada coluna.</p>");
 define("_formulize_DE_MINE", "Minhas entradas");
 define("_formulize_DE_GROUP", "Entradas de todos os usuários em meu grupo(s)");
 define("_formulize_DE_ALL", "Entradas de todos os usuários em todos os grupos");

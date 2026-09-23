@@ -389,7 +389,6 @@ define("_formulize_DE_CHANGEOWNER_CANCEL_BUTTON", "Cancel");
 define("_formulize_DE_CHANGEOWNER_CONFIRM_BUTTON", "Confirm");
 define("_formulize_DE_SEARCH_POP_HELP", "Click here for info about the search terms");
 define("_formulize_DE_TOGGLE_SEARCHES", "Click to open the search interface");
-define("_formulize_DE_WARNLOCK", "<p>The view that you have selected is set to <i>lock the controls</i>.  This means that you cannot change the columns, do calculations, do advanced searches, or export data.</p><p>You can perform sorting and basic searches using the controls at the top of each column.</p>");
 define("_formulize_DE_MINE", "Entries by me");
 define("_formulize_DE_GROUP", "Entries by all users in my group(s)");
 define("_formulize_DE_ALL", "Entries by all users in all groups");
