@@ -2,6 +2,7 @@ const { test, expect } = require('@playwright/test');
 import { E2E_TEST_BASE_URL } from '../config';
 import { login, dbQuery, dbPrefix } from '../../utils';
 const { execFileSync } = require('child_process');
+const { webContainer } = require('../../docker-containers');
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
 
@@ -24,7 +25,6 @@ test.use({ baseURL: E2E_TEST_BASE_URL });
 // parallel worker would race other specs that log in as admin. It runs right after
 // install and leaves admin in a normal, logged-in-able state (a fresh bcrypt hash).
 
-const WEB_CONTAINER = process.env.E2E_WEB_CONTAINER || 'formulize-web-1';
 const ADMIN = 'admin';
 const ADMIN_PASS = 'password';
 
@@ -40,7 +40,7 @@ function legacyHash(password, salt) {
 		'require "/var/www/html/mainfile.php";' +
 		'echo "<H>".(new icms_core_Password())->encryptPass(' +
 		JSON.stringify(password) + ', ' + JSON.stringify(salt) + ', 1, 1)."</H>";';
-	const out = execFileSync('docker', ['exec', WEB_CONTAINER, 'php', '-r', php], { encoding: 'utf8' });
+	const out = execFileSync('docker', ['exec', webContainer(), 'php', '-r', php], { encoding: 'utf8' });
 	const m = out.match(/<H>([0-9a-f]{64})<\/H>/);
 	if (!m) throw new Error('Failed to compute legacy hash in container. php output:\n' + out);
 	return m[1];

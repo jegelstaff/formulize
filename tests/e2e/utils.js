@@ -1093,12 +1093,13 @@ export async function ensureMainMenuOpen(page) {
 // send). These helpers let a spec read that code straight from the database, and toggle
 // system settings that have no convenient UI, exactly as a human tester would.
 //
-// Container name and credentials match docker-compose.yaml; override via env if needed.
+// The container is whichever one Compose is running for this checkout (see docker-containers.js);
+// the credentials match docker-compose.yaml. Override either via env if needed.
 // ============================================================================
 
 const { execFileSync } = require('child_process');
+const { dbContainer } = require('./docker-containers');
 
-const DB_CONTAINER = process.env.E2E_DB_CONTAINER || 'formulize-mariadb-1';
 const DB_ROOT_PASS = process.env.E2E_DB_ROOT_PASS || 'abc123';
 const DB_NAME = process.env.E2E_DB_NAME || 'formulize';
 
@@ -1113,7 +1114,7 @@ export function dbQuery(sql) {
 	// a shell would treat backticks (MySQL identifier quotes, e.g. `groups`) as command substitution.
 	const out = execFileSync(
 		'docker',
-		['exec', DB_CONTAINER, 'mariadb', '-uroot', `-p${DB_ROOT_PASS}`, '-N', '-e', sql, DB_NAME],
+		['exec', dbContainer(), 'mariadb', '-uroot', `-p${DB_ROOT_PASS}`, '-N', '-e', sql, DB_NAME],
 		{ encoding: 'utf8' }
 	);
 	const trimmed = out.replace(/\n$/, '');

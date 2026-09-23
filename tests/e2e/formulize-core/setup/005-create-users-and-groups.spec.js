@@ -676,13 +676,6 @@ test.describe('I. New Users admin page UI', () => {
 // These tests verify the bidirectional enforcement contract documented in
 // modules/formulize/include/readelements.php:672,694 — when a user is
 // removed from a condition-driven group, the next save re-adds them.
-//
-// NOTE: the userAccountGroupMembership element's autocomplete-tag-remove
-// markup and the eagGroupMembers element's remove-member UI were not
-// directly observed in the planning pass; these selectors are best-effort
-// and may need adjustment on first run. See plan section "Block 1.6" and
-// the userAccountGroupMembershipElement.php / eagGroupMembersElement.php
-// classes for the rendering details.
 test.describe('K. Enforcement of per-group conditions', () => {
 
 	test('Removing All Curators from curator1\'s entry is reverted on save', async ({ page }) => {
@@ -690,23 +683,36 @@ test.describe('K. Enforcement of per-group conditions', () => {
 		await page.goto(`/modules/formulize/master.php?fid=${phase1.staffFid}`);
 		await page.getByRole('row', { name: /curator1/ }).getByRole('link').first().click();
 
-		// The Group Membership element renders selected groups as <p class='auto_multi ...'> tags.
-		// The click handler is delegated from the container div. The <p> has display:table-row so
-		// hit-testing resolves to the container; use force:true to bypass Playwright's interceptor check.
+		// The Group Membership element renders each selected group as a chip:
+		//   <p class='auto_multi auto_multi_{handle}'><span class='auto_multi_label'>Name</span><button class='auto_multi_remove'>×</button></p>
+		// (selectElement.php / formulizeBuildAutocompleteChip() in autocomplete.js). Match on the label
+		// span, since the chip's own text includes the × and so is never exactly the group name.
+		// Clicking the chip does nothing; only its × button removes it, after a confirm() dialog.
 		const markupName = 'formulize_user_account_groupmembership_' + phase1.staffFid;
-		const allCuratorsTag = page.locator(`p.auto_multi_${markupName}`).filter({ hasText: /^All Curators$/ });
-		// The Group Membership element renders its tags via JS after the entry form loads;
-		// wait for the tag to actually be present/visible before clicking (otherwise, under
-		// load, the click can fire before render — a real race that worsens on fast CI).
-		await expect(allCuratorsTag).toBeVisible({ timeout: 30000 });
-		await allCuratorsTag.click({ force: true });
+		const allCuratorsChip = page.locator(`p.auto_multi_${markupName}`)
+			.filter({ has: page.locator('.auto_multi_label', { hasText: /^All Curators$/ }) });
+		// Wait for the chip to render before clicking (under load the click can otherwise
+		// fire before render — a real race that worsens on fast CI).
+		await expect(allCuratorsChip).toBeVisible({ timeout: 30000 });
+
+		// Playwright dismisses dialogs by default, which would cancel the removal, so accept it
+		// explicitly, and check it is the removal prompt for this group rather than accepting blind.
+		let dialogMessage = null;
+		page.once('dialog', async dialog => {
+			dialogMessage = dialog.message();
+			await dialog.accept();
+		});
+		await allCuratorsChip.locator('button.auto_multi_remove').click();
+		await expect.poll(() => dialogMessage).toContain('All Curators');
+		// The chip must be gone before saving: otherwise the save still submits All Curators and the
+		// check below would pass without the enforcement ever having had anything to revert.
+		await expect(allCuratorsChip).toHaveCount(0);
 		await saveFormulizeForm(page, 'Save');
 
 		// Reload the entry and verify All Curators is back.
 		await page.goto(`/modules/formulize/master.php?fid=${phase1.staffFid}`);
 		await page.getByRole('row', { name: /curator1/ }).getByRole('link').first().click();
-		const markupNameCheck = 'formulize_user_account_groupmembership_' + phase1.staffFid;
-		await expect(page.locator(`p.auto_multi_${markupNameCheck}`).filter({ hasText: 'All Curators' })).toBeVisible();
+		await expect(allCuratorsChip).toBeVisible();
 		await clearEntryLocks(page);
 	});
 

@@ -1,4 +1,5 @@
 const { execSync } = require('child_process');
+const { webContainer } = require('./docker-containers');
 
 function extractMostRecentError(logContent) {
   const lines = logContent.split('\n').filter(line => line.trim());
@@ -40,7 +41,7 @@ class PhpErrorReporter {
     }
 
     try {
-      const containerName = 'formulize-web-1';
+      const containerName = webContainer();
       const logPath = '/var/www/html/logs/formulize_log_active.log';
 
       const catCommand = `docker exec ${containerName} tail -n 500 ${logPath}`;
