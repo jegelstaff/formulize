@@ -1628,6 +1628,16 @@ a.de-edit-icon:hover::before {
   line-height: var(--lh-tight);
 }
 
+/* The Formulize menu block has no real title: blockszone.html still emits a
+   .xo-blocktitle for it, and ImpressCMS fills that heading with the admin-only
+   "Edit block" wrench icon (images/crystal/actions/configure.png). In the Lyris
+   sidebar that leaves a stray wrench floating above the nav for admins, so the
+   whole title row is hidden for the formulize block. Scoped to
+   `.xo-block.formulize` so other modules' block titles are untouched. */
+.xo-block.formulize > .xo-blocktitle {
+  display: none;
+}
+
 /* Nav menu (menu.html outputs .main-menu) */
 .main-menu {
   list-style: none;
