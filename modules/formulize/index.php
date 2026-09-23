@@ -61,6 +61,7 @@ if($xoTheme) {
 
     $cssVersion = formulize_get_file_version('/modules/formulize/templates/css/formulize.css');
 		$jsVersion = formulize_get_file_version('/modules/formulize/libraries/formulize.js');
+    $xoTheme->addStylesheet(formulize_uiStylesheetPath());
     $xoTheme->addStylesheet("/modules/formulize/templates/css/formulize.css?v=".$cssVersion);
     $xoTheme->addScript("/modules/formulize/libraries/formulize.js?v=".$jsVersion);
 }

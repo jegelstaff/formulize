@@ -35,7 +35,7 @@
     $rtlPath = ($this->_tpl_vars['icms_rtl'] ?? false) ? 'rtl/' : '';
     $cssVersion = formulize_get_file_version('/themes/Anari/' . $rtlPath . 'css/style.css');
     // Poppins is this theme's own font, so it is only fetched while it is the one in use.
-    // A font chosen on the Appearance page overrides --font-sans and brings its own webfont.
+    // A font chosen on the Appearance page overrides --fz-font-sans and brings its own webfont.
     $appearanceFont = formulize_getAppearanceFont();
     if (!$appearanceFont['stack']) {
         echo '<link rel="stylesheet" type="text/css" media="all" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" />';

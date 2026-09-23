@@ -186,7 +186,7 @@ function displayGrid($fid, $entry_id, $rowcaps, $colcaps, $title="", $orientatio
 	if($headingAtSide) {
 		$gridContents[0] = $title;
 	}
-	print "<div class=\"$gridClasses\"$gridAria style=\"--fz-grid-data-columns: $dataColumnCount;\">\n";
+	print "<div class=\"$gridClasses\"$gridAria style=\"--formulize-grid-data-columns: $dataColumnCount;\">\n";
 
 	// draw the column caption band
 	if($showColumnHeaderRow) {

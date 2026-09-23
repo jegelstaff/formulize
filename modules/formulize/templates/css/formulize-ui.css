@@ -1,0 +1,95 @@
+/* ============================================================
+   Formulize UI
+   ============================================================
+
+   The public tokens, layout classes, components and utilities for building
+   markup in Formulize: screen templates, template screens, derived values, text
+   elements and theme tweaks. Loaded before Formulize's own stylesheet and before
+   the theme's, on every page that loads Formulize's stylesheet (see
+   formulize_uiStylesheetPath() in modules/formulize/include/functions.php).
+
+   Naming:
+     fz-          public: documented, and safe to build with, in any theme
+     lyris-       the Lyris theme's own classes and tokens
+     formulize-   Formulize core's internal classes and tokens
+
+   Every public selector is a single class, and there is no !important here.
+   Themes write their rules that style core's markup with :where(), so that
+   those rules weigh nothing and a public class always beats them.
+
+   ============================================================
+   Tokens
+   ============================================================
+
+   The public design tokens. The names are Tailwind CSS v4's theme variable
+   names, with fz- in front. A theme declares its own values for these in its
+   own stylesheet (Lyris and Anari do, in their tokens.css), and the Appearance
+   page overrides the ones it offers, so the values below are only what a page
+   gets when neither has set them. They are the Formulize design system's
+   defaults, the same as Lyris's.
+   ============================================================ */
+
+:root {
+  /* Colour */
+  --fz-color-page:          #f7f7f5;
+  --fz-color-surface:       #ffffff;
+  --fz-color-surface-2:     #fafaf8;
+  --fz-color-surface-3:     #f1f1ed;
+  --fz-color-overlay:       rgba(15, 17, 21, 0.45);
+
+  --fz-color-border:        #e6e6e1;
+  --fz-color-border-strong: #d1d1cb;
+  --fz-color-focus:         #1f2937;
+
+  --fz-color-text:          #14161a;
+  --fz-color-text-muted:    #5b6068;
+  --fz-color-text-subtle:   #8a8e95;
+  --fz-color-on-accent:     #ffffff;
+
+  --fz-color-accent:        #2e3340;
+  --fz-color-accent-hover:  #1c2029;
+  --fz-color-accent-soft:   #eef0f4;
+  --fz-color-accent-soft-2: #dde1ea;
+  --fz-color-accent-text:   #2e3340;
+
+  --fz-color-success:       #2a7a4f;
+  --fz-color-success-soft:  #e6f1ea;
+  --fz-color-warning:       #a86a14;
+  --fz-color-warning-soft:  #fbecd2;
+  --fz-color-danger:        #b3261e;
+  --fz-color-danger-soft:   #f8e1de;
+  --fz-color-info:          #2e5fa8;
+  --fz-color-info-soft:     #e2ecf8;
+
+  /* Type */
+  --fz-font-sans:    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --fz-font-heading: var(--fz-font-sans);
+  --fz-font-mono:    ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --fz-text-xs:   0.75rem;
+  --fz-text-sm:   0.875rem;
+  --fz-text-base: 1rem;
+  --fz-text-lg:   1.125rem;
+  --fz-text-xl:   1.25rem;
+  --fz-text-2xl:  1.5rem;
+
+  --fz-leading-normal: 1.5;
+
+  /* Shape and depth */
+  --fz-radius-sm:   4px;
+  --fz-radius-md:   6px;
+  --fz-radius-lg:   8px;
+  --fz-radius-xl:   12px;
+  --fz-radius-full: 999px;
+
+  --fz-shadow-xs: 0 1px 0 rgba(15,17,21,.04);
+  --fz-shadow-sm: 0 1px 2px rgba(15,17,21,.06), 0 1px 0 rgba(15,17,21,.04);
+  --fz-shadow-md: 0 4px 12px rgba(15,17,21,.08), 0 1px 2px rgba(15,17,21,.05);
+  --fz-shadow-lg: 0 12px 32px rgba(15,17,21,.14), 0 2px 6px rgba(15,17,21,.06);
+  --fz-focus-ring: 0 0 0 3px rgba(46,51,64,.15);
+
+  /* Motion */
+  --fz-ease-out:      cubic-bezier(.2,.7,.3,1);
+  --fz-duration-fast: 120ms;
+  --fz-duration:      200ms;
+}

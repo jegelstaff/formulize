@@ -22,51 +22,51 @@
 
 :root {
   /* Colors */
-  --c-bg:            #f7f7f5;
-  --c-surface:       #ffffff;
-  --c-surface-2:     #fafaf8;
-  --c-surface-3:     #f1f1ed;
-  --c-overlay:       rgba(15, 17, 21, 0.45);
+  --fz-color-page:           #f7f7f5;
+  --fz-color-surface:        #ffffff;
+  --fz-color-surface-2:      #fafaf8;
+  --fz-color-surface-3:      #f1f1ed;
+  --fz-color-overlay:        rgba(15, 17, 21, 0.45);
 
-  --c-border:        #e6e6e1;
-  --c-border-strong: #d1d1cb;
-  --c-border-focus:  #1f2937;
+  --fz-color-border:         #e6e6e1;
+  --fz-color-border-strong:  #d1d1cb;
+  --fz-color-focus:          #1f2937;
 
-  --c-text:          #14161a;
-  --c-text-muted:    #5b6068;
-  --c-text-subtle:   #8a8e95;
-  --c-text-on-accent:#ffffff;
+  --fz-color-text:           #14161a;
+  --fz-color-text-muted:     #5b6068;
+  --fz-color-text-subtle:    #8a8e95;
+  --fz-color-on-accent:      #ffffff;
 
-  --c-accent:        #2e3340;
-  --c-accent-hover:  #1c2029;
-  --c-accent-soft:   #eef0f4;
-  --c-accent-soft-2: #dde1ea;
-  --c-accent-fg:     #2e3340;
+  --fz-color-accent:         #2e3340;
+  --fz-color-accent-hover:   #1c2029;
+  --fz-color-accent-soft:    #eef0f4;
+  --fz-color-accent-soft-2:  #dde1ea;
+  --fz-color-accent-text:    #2e3340;
 
-  --c-success:       #2a7a4f;
-  --c-success-soft:  #e6f1ea;
-  --c-warning:       #a86a14;
-  --c-warning-soft:  #fbecd2;
-  --c-danger:        #b3261e;
-  --c-danger-soft:   #f8e1de;
-  --c-info:          #2e5fa8;
-  --c-info-soft:     #e2ecf8;
+  --fz-color-success:        #2a7a4f;
+  --fz-color-success-soft:   #e6f1ea;
+  --fz-color-warning:        #a86a14;
+  --fz-color-warning-soft:   #fbecd2;
+  --fz-color-danger:         #b3261e;
+  --fz-color-danger-soft:    #f8e1de;
+  --fz-color-info:           #2e5fa8;
+  --fz-color-info-soft:      #e2ecf8;
 
   /* Typography */
-  --font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --fz-font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --fz-font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   /* The secondary font, used for headings, form labels, and the drawer's title.
-     Follows --font-sans unless the Appearance page has been given a second font
+     Follows --fz-font-sans unless the Appearance page has been given a second font
      to use, so one font throughout is the default and nothing here has to know
      which font that is. */
-  --font-heading: var(--font-sans);
+  --fz-font-heading: var(--fz-font-sans);
 
   /* Base font size: the root font size, applied to `html` in style.css, that the
      --fs-* scale below is expressed as a proportion of. Changing it moves the
      whole type scale together, which is what the Appearance page's "Text size"
      setting does, and what a user's own profile font size setting does on top of
      that (see theme.html). */
-  --font-size-base: 16px;
+  --formulize-font-size-base: 16px;
 
   /* How big this theme's standard content text is as a proportion of the base
      above: the --fs-* step the rules for text in lists, tables and content use,
@@ -82,24 +82,27 @@
      stylesheet to read. */
   --font-size-content-ratio: 0.8125;
 
-  /* Type scale. Named for the pixel size each step is at the 16px default base,
-     and written in rem so every step stays that proportion of whatever the base
-     actually is: --fs-14 is 14px at a 16px base and 15.75px at an 18px one. */
+  /* Type scale, in rem so every step stays in proportion to whatever the base
+     actually is: --fz-text-sm is 14px at a 16px base and 15.75px at an 18px one.
+     The --fz-text-* steps are Tailwind's (see formulize-ui.css). The --fs-* steps
+     are Lyris's sizes that are not on Tailwind's scale; they move to the nearest
+     step in phase 2b of the Formulize UI work, as do the other unprefixed tokens
+     left in this file (--lh-*, --s-*, --r-4, --row-h-*, --font-size-content-ratio). */
   --fs-11: 0.6875rem;
-  --fs-12: 0.75rem;
+  --fz-text-xs: 0.75rem;
   --fs-13: 0.8125rem;
-  --fs-14: 0.875rem;
+  --fz-text-sm: 0.875rem;
   --fs-15: 0.9375rem;
-  --fs-16: 1rem;
-  --fs-18: 1.125rem;
-  --fs-20: 1.25rem;
-  --fs-24: 1.5rem;
+  --fz-text-base: 1rem;
+  --fz-text-lg: 1.125rem;
+  --fz-text-xl: 1.25rem;
+  --fz-text-2xl: 1.5rem;
   --fs-28: 1.75rem;
   --fs-32: 2rem;
 
   --lh-tight: 1.2;
   --lh-snug:  1.35;
-  --lh-base:  1.5;
+  --fz-leading-normal:  1.5;
 
   /* Spacing (4px scale) */
   --s-1:  4px;
@@ -114,37 +117,37 @@
   --s-10: 64px;
 
   /* Radii */
-  --r-1: 4px;
-  --r-2: 6px;
-  --r-3: 8px;
+  --fz-radius-sm: 4px;
+  --fz-radius-md: 6px;
+  --fz-radius-lg: 8px;
   --r-4: 10px;
-  --r-5: 12px;
-  --r-full: 999px;
+  --fz-radius-xl: 12px;
+  --fz-radius-full: 999px;
 
   /* Shadows */
-  --sh-1: 0 1px 0 rgba(15,17,21,.04);
-  --sh-2: 0 1px 2px rgba(15,17,21,.06), 0 1px 0 rgba(15,17,21,.04);
-  --sh-3: 0 4px 12px rgba(15,17,21,.08), 0 1px 2px rgba(15,17,21,.05);
-  --sh-4: 0 12px 32px rgba(15,17,21,.14), 0 2px 6px rgba(15,17,21,.06);
-  --sh-focus: 0 0 0 3px rgba(46,51,64,.15);
+  --fz-shadow-xs: 0 1px 0 rgba(15,17,21,.04);
+  --fz-shadow-sm: 0 1px 2px rgba(15,17,21,.06), 0 1px 0 rgba(15,17,21,.04);
+  --fz-shadow-md: 0 4px 12px rgba(15,17,21,.08), 0 1px 2px rgba(15,17,21,.05);
+  --fz-shadow-lg: 0 12px 32px rgba(15,17,21,.14), 0 2px 6px rgba(15,17,21,.06);
+  --fz-focus-ring: 0 0 0 3px rgba(46,51,64,.15);
 
   /* Density */
   --row-h-compact:     32px;
   --row-h-cozy:        40px;
   --row-h-comfortable: 52px;
-  --row-pad-x: var(--s-3);
+  --lyris-row-padding-x: var(--s-3);
 
   /* Motion */
-  --ease: cubic-bezier(.2,.7,.3,1);
-  --dur-1: 120ms;
-  --dur-2: 200ms;
+  --fz-ease-out: cubic-bezier(.2,.7,.3,1);
+  --fz-duration-fast: 120ms;
+  --fz-duration: 200ms;
 
   /* Layout */
-  --header-h: 48px;
+  --lyris-header-height: 48px;
   /* Height reserved at the bottom of the viewport for the masquerade bar.
      0px for everyone; only the rule in the "Masquerade bar" section (keyed off
      the bar actually being in the document) gives it a real value, so every
-     `- var(--masquerade-h)` below is a no-op unless someone is masquerading. */
-  --masquerade-h: 0px;
-  --sidebar-w: 220px;
+     `- var(--lyris-masquerade-height)` below is a no-op unless someone is masquerading. */
+  --lyris-masquerade-height: 0px;
+  --lyris-sidebar-width: 220px;
 }
