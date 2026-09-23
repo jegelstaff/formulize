@@ -2361,6 +2361,23 @@ textarea.fz-control {
   padding-right: 30px;
 }
 
+/* Subform "Add [x] entries" count box (issue #932). The subform controls row is
+   an Add button, a count box and a trailing label, all inline. Core renders the
+   count box as a bare <input type=text ... size=2 maxlength=2> with no class
+   (modules/formulize/class/subformListingsElement.php), so the width:100% in the
+   contextual override above caught it: the box filled the whole form width and
+   pushed the label onto the next line. Sized here to its two characters plus the
+   density's own horizontal padding, so it tracks the compact/comfortable field
+   metrics instead of a hardcoded px width. Scoped with a child combinator so it
+   only ever hits the count box, which is a direct child of the controls row; the
+   filter-search box sits inside a nested div.subform-filter-search and keeps the
+   10em core gives it in modules/formulize/templates/css/formulize.css. */
+.fz-form .subform_button_controls > input[type="text"],
+.fz-form-screen .subform_button_controls > input[type="text"] {
+  width: calc(2ch + 2 * var(--field-pad-x) + 2px);
+  margin: 0 var(--s-2);
+}
+
 /* ---------- Form card surface ---------- */
 
 .card {
@@ -4358,6 +4375,16 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
 .formulize-drawer .subform_button_controls input[type="button"]:hover {
   background: var(--c-surface-2);
   border-color: var(--c-text-subtle);
+}
+
+/* The "Add x entries" count box sits in that same row, so it follows the buttons
+   down to 28px here instead of standing 10px taller than the Add button beside
+   it. Its width and spacing come from the form-screen rule that sizes the box
+   (see the subform count box rule in the form-controls section); only the
+   drawer's tighter height is set here. */
+.formulize-drawer .subform_button_controls > input[type="text"] {
+  height: 28px;
+  margin-bottom: var(--s-2);
 }
 
 /* ---------- Subform TABLE: same styling in the drawer and full screen (issue #106)
