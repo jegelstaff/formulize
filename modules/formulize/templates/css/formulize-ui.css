@@ -86,6 +86,11 @@
   --fz-text-3xl:                1.875rem;
   --fz-text-3xl--line-height:   2.25rem;
 
+  --fz-font-weight-normal:   400;
+  --fz-font-weight-medium:   500;
+  --fz-font-weight-semibold: 600;
+  --fz-font-weight-bold:     700;
+
   --fz-leading-tight:   1.25;
   --fz-leading-snug:    1.375;
   --fz-leading-normal:  1.5;
@@ -202,12 +207,12 @@
 }
 
 /* Auto grid: equal columns, as many as fit, each at least --fz-auto-grid-min
-   wide, so fewer columns as the space narrows and one when it is narrower than
-   that. The --max-N modifiers cap the number of columns. Set
+   wide (10rem, so two fit in the drawer at its narrowest), so fewer columns as
+   the space narrows and one when it is narrower than that. The --max-N modifiers cap the number of columns. Set
    --fz-auto-grid-min on the element itself to change the minimum. */
 .fz-auto-grid {
   --fz-gap: calc(var(--fz-spacing) * 4);
-  --fz-auto-grid-min: 12rem;
+  --fz-auto-grid-min: 10rem;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--fz-auto-grid-min)), 1fr));
 }
@@ -391,3 +396,389 @@
 .fz-gap-y-10  { --fz-gap-y: calc(var(--fz-spacing) * 10); row-gap: calc(var(--fz-spacing) * 10); }
 .fz-gap-y-12  { --fz-gap-y: calc(var(--fz-spacing) * 12); row-gap: calc(var(--fz-spacing) * 12); }
 .fz-gap-y-16  { --fz-gap-y: calc(var(--fz-spacing) * 16); row-gap: calc(var(--fz-spacing) * 16); }
+
+
+/* ============================================================
+   Utilities
+   ============================================================
+
+   Tailwind's utilities, with an fz- prefix and Tailwind's meanings, drawing on
+   the tokens. Each does one thing. They come last, and weigh one class like
+   everything else here, so on the same element a utility wins over a layout
+   class or a component; within a group, the more specific one comes later
+   (fz-m-4 fz-mt-0 leaves the top margin at 0).
+
+   Spacing steps are the scale's: 0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 16, each a
+   multiple of --fz-spacing, so they follow the density. s and e are start and
+   end, which follow the text direction; l and r are always left and right. In
+   a site with right-to-left languages, prefer s and e.
+   ============================================================ */
+
+/* ---- Margin ---- */
+.fz-m-0     { margin: 0; }
+.fz-m-1     { margin: calc(var(--fz-spacing) * 1); }
+.fz-m-2     { margin: calc(var(--fz-spacing) * 2); }
+.fz-m-3     { margin: calc(var(--fz-spacing) * 3); }
+.fz-m-4     { margin: calc(var(--fz-spacing) * 4); }
+.fz-m-5     { margin: calc(var(--fz-spacing) * 5); }
+.fz-m-6     { margin: calc(var(--fz-spacing) * 6); }
+.fz-m-8     { margin: calc(var(--fz-spacing) * 8); }
+.fz-m-10    { margin: calc(var(--fz-spacing) * 10); }
+.fz-m-12    { margin: calc(var(--fz-spacing) * 12); }
+.fz-m-16    { margin: calc(var(--fz-spacing) * 16); }
+
+.fz-mx-0    { margin-inline: 0; }
+.fz-mx-1    { margin-inline: calc(var(--fz-spacing) * 1); }
+.fz-mx-2    { margin-inline: calc(var(--fz-spacing) * 2); }
+.fz-mx-3    { margin-inline: calc(var(--fz-spacing) * 3); }
+.fz-mx-4    { margin-inline: calc(var(--fz-spacing) * 4); }
+.fz-mx-5    { margin-inline: calc(var(--fz-spacing) * 5); }
+.fz-mx-6    { margin-inline: calc(var(--fz-spacing) * 6); }
+.fz-mx-8    { margin-inline: calc(var(--fz-spacing) * 8); }
+.fz-mx-10   { margin-inline: calc(var(--fz-spacing) * 10); }
+.fz-mx-12   { margin-inline: calc(var(--fz-spacing) * 12); }
+.fz-mx-16   { margin-inline: calc(var(--fz-spacing) * 16); }
+
+.fz-my-0    { margin-block: 0; }
+.fz-my-1    { margin-block: calc(var(--fz-spacing) * 1); }
+.fz-my-2    { margin-block: calc(var(--fz-spacing) * 2); }
+.fz-my-3    { margin-block: calc(var(--fz-spacing) * 3); }
+.fz-my-4    { margin-block: calc(var(--fz-spacing) * 4); }
+.fz-my-5    { margin-block: calc(var(--fz-spacing) * 5); }
+.fz-my-6    { margin-block: calc(var(--fz-spacing) * 6); }
+.fz-my-8    { margin-block: calc(var(--fz-spacing) * 8); }
+.fz-my-10   { margin-block: calc(var(--fz-spacing) * 10); }
+.fz-my-12   { margin-block: calc(var(--fz-spacing) * 12); }
+.fz-my-16   { margin-block: calc(var(--fz-spacing) * 16); }
+
+.fz-ms-0    { margin-inline-start: 0; }
+.fz-ms-1    { margin-inline-start: calc(var(--fz-spacing) * 1); }
+.fz-ms-2    { margin-inline-start: calc(var(--fz-spacing) * 2); }
+.fz-ms-3    { margin-inline-start: calc(var(--fz-spacing) * 3); }
+.fz-ms-4    { margin-inline-start: calc(var(--fz-spacing) * 4); }
+.fz-ms-5    { margin-inline-start: calc(var(--fz-spacing) * 5); }
+.fz-ms-6    { margin-inline-start: calc(var(--fz-spacing) * 6); }
+.fz-ms-8    { margin-inline-start: calc(var(--fz-spacing) * 8); }
+.fz-ms-10   { margin-inline-start: calc(var(--fz-spacing) * 10); }
+.fz-ms-12   { margin-inline-start: calc(var(--fz-spacing) * 12); }
+.fz-ms-16   { margin-inline-start: calc(var(--fz-spacing) * 16); }
+
+.fz-me-0    { margin-inline-end: 0; }
+.fz-me-1    { margin-inline-end: calc(var(--fz-spacing) * 1); }
+.fz-me-2    { margin-inline-end: calc(var(--fz-spacing) * 2); }
+.fz-me-3    { margin-inline-end: calc(var(--fz-spacing) * 3); }
+.fz-me-4    { margin-inline-end: calc(var(--fz-spacing) * 4); }
+.fz-me-5    { margin-inline-end: calc(var(--fz-spacing) * 5); }
+.fz-me-6    { margin-inline-end: calc(var(--fz-spacing) * 6); }
+.fz-me-8    { margin-inline-end: calc(var(--fz-spacing) * 8); }
+.fz-me-10   { margin-inline-end: calc(var(--fz-spacing) * 10); }
+.fz-me-12   { margin-inline-end: calc(var(--fz-spacing) * 12); }
+.fz-me-16   { margin-inline-end: calc(var(--fz-spacing) * 16); }
+
+.fz-mt-0    { margin-top: 0; }
+.fz-mt-1    { margin-top: calc(var(--fz-spacing) * 1); }
+.fz-mt-2    { margin-top: calc(var(--fz-spacing) * 2); }
+.fz-mt-3    { margin-top: calc(var(--fz-spacing) * 3); }
+.fz-mt-4    { margin-top: calc(var(--fz-spacing) * 4); }
+.fz-mt-5    { margin-top: calc(var(--fz-spacing) * 5); }
+.fz-mt-6    { margin-top: calc(var(--fz-spacing) * 6); }
+.fz-mt-8    { margin-top: calc(var(--fz-spacing) * 8); }
+.fz-mt-10   { margin-top: calc(var(--fz-spacing) * 10); }
+.fz-mt-12   { margin-top: calc(var(--fz-spacing) * 12); }
+.fz-mt-16   { margin-top: calc(var(--fz-spacing) * 16); }
+
+.fz-mr-0    { margin-right: 0; }
+.fz-mr-1    { margin-right: calc(var(--fz-spacing) * 1); }
+.fz-mr-2    { margin-right: calc(var(--fz-spacing) * 2); }
+.fz-mr-3    { margin-right: calc(var(--fz-spacing) * 3); }
+.fz-mr-4    { margin-right: calc(var(--fz-spacing) * 4); }
+.fz-mr-5    { margin-right: calc(var(--fz-spacing) * 5); }
+.fz-mr-6    { margin-right: calc(var(--fz-spacing) * 6); }
+.fz-mr-8    { margin-right: calc(var(--fz-spacing) * 8); }
+.fz-mr-10   { margin-right: calc(var(--fz-spacing) * 10); }
+.fz-mr-12   { margin-right: calc(var(--fz-spacing) * 12); }
+.fz-mr-16   { margin-right: calc(var(--fz-spacing) * 16); }
+
+.fz-mb-0    { margin-bottom: 0; }
+.fz-mb-1    { margin-bottom: calc(var(--fz-spacing) * 1); }
+.fz-mb-2    { margin-bottom: calc(var(--fz-spacing) * 2); }
+.fz-mb-3    { margin-bottom: calc(var(--fz-spacing) * 3); }
+.fz-mb-4    { margin-bottom: calc(var(--fz-spacing) * 4); }
+.fz-mb-5    { margin-bottom: calc(var(--fz-spacing) * 5); }
+.fz-mb-6    { margin-bottom: calc(var(--fz-spacing) * 6); }
+.fz-mb-8    { margin-bottom: calc(var(--fz-spacing) * 8); }
+.fz-mb-10   { margin-bottom: calc(var(--fz-spacing) * 10); }
+.fz-mb-12   { margin-bottom: calc(var(--fz-spacing) * 12); }
+.fz-mb-16   { margin-bottom: calc(var(--fz-spacing) * 16); }
+
+.fz-ml-0    { margin-left: 0; }
+.fz-ml-1    { margin-left: calc(var(--fz-spacing) * 1); }
+.fz-ml-2    { margin-left: calc(var(--fz-spacing) * 2); }
+.fz-ml-3    { margin-left: calc(var(--fz-spacing) * 3); }
+.fz-ml-4    { margin-left: calc(var(--fz-spacing) * 4); }
+.fz-ml-5    { margin-left: calc(var(--fz-spacing) * 5); }
+.fz-ml-6    { margin-left: calc(var(--fz-spacing) * 6); }
+.fz-ml-8    { margin-left: calc(var(--fz-spacing) * 8); }
+.fz-ml-10   { margin-left: calc(var(--fz-spacing) * 10); }
+.fz-ml-12   { margin-left: calc(var(--fz-spacing) * 12); }
+.fz-ml-16   { margin-left: calc(var(--fz-spacing) * 16); }
+
+.fz-m-auto  { margin: auto; }
+.fz-mx-auto { margin-inline: auto; }
+.fz-ms-auto { margin-inline-start: auto; }
+.fz-me-auto { margin-inline-end: auto; }
+.fz-ml-auto { margin-left: auto; }
+.fz-mr-auto { margin-right: auto; }
+
+/* ---- Padding ---- */
+.fz-p-0     { padding: 0; }
+.fz-p-1     { padding: calc(var(--fz-spacing) * 1); }
+.fz-p-2     { padding: calc(var(--fz-spacing) * 2); }
+.fz-p-3     { padding: calc(var(--fz-spacing) * 3); }
+.fz-p-4     { padding: calc(var(--fz-spacing) * 4); }
+.fz-p-5     { padding: calc(var(--fz-spacing) * 5); }
+.fz-p-6     { padding: calc(var(--fz-spacing) * 6); }
+.fz-p-8     { padding: calc(var(--fz-spacing) * 8); }
+.fz-p-10    { padding: calc(var(--fz-spacing) * 10); }
+.fz-p-12    { padding: calc(var(--fz-spacing) * 12); }
+.fz-p-16    { padding: calc(var(--fz-spacing) * 16); }
+
+.fz-px-0    { padding-inline: 0; }
+.fz-px-1    { padding-inline: calc(var(--fz-spacing) * 1); }
+.fz-px-2    { padding-inline: calc(var(--fz-spacing) * 2); }
+.fz-px-3    { padding-inline: calc(var(--fz-spacing) * 3); }
+.fz-px-4    { padding-inline: calc(var(--fz-spacing) * 4); }
+.fz-px-5    { padding-inline: calc(var(--fz-spacing) * 5); }
+.fz-px-6    { padding-inline: calc(var(--fz-spacing) * 6); }
+.fz-px-8    { padding-inline: calc(var(--fz-spacing) * 8); }
+.fz-px-10   { padding-inline: calc(var(--fz-spacing) * 10); }
+.fz-px-12   { padding-inline: calc(var(--fz-spacing) * 12); }
+.fz-px-16   { padding-inline: calc(var(--fz-spacing) * 16); }
+
+.fz-py-0    { padding-block: 0; }
+.fz-py-1    { padding-block: calc(var(--fz-spacing) * 1); }
+.fz-py-2    { padding-block: calc(var(--fz-spacing) * 2); }
+.fz-py-3    { padding-block: calc(var(--fz-spacing) * 3); }
+.fz-py-4    { padding-block: calc(var(--fz-spacing) * 4); }
+.fz-py-5    { padding-block: calc(var(--fz-spacing) * 5); }
+.fz-py-6    { padding-block: calc(var(--fz-spacing) * 6); }
+.fz-py-8    { padding-block: calc(var(--fz-spacing) * 8); }
+.fz-py-10   { padding-block: calc(var(--fz-spacing) * 10); }
+.fz-py-12   { padding-block: calc(var(--fz-spacing) * 12); }
+.fz-py-16   { padding-block: calc(var(--fz-spacing) * 16); }
+
+.fz-ps-0    { padding-inline-start: 0; }
+.fz-ps-1    { padding-inline-start: calc(var(--fz-spacing) * 1); }
+.fz-ps-2    { padding-inline-start: calc(var(--fz-spacing) * 2); }
+.fz-ps-3    { padding-inline-start: calc(var(--fz-spacing) * 3); }
+.fz-ps-4    { padding-inline-start: calc(var(--fz-spacing) * 4); }
+.fz-ps-5    { padding-inline-start: calc(var(--fz-spacing) * 5); }
+.fz-ps-6    { padding-inline-start: calc(var(--fz-spacing) * 6); }
+.fz-ps-8    { padding-inline-start: calc(var(--fz-spacing) * 8); }
+.fz-ps-10   { padding-inline-start: calc(var(--fz-spacing) * 10); }
+.fz-ps-12   { padding-inline-start: calc(var(--fz-spacing) * 12); }
+.fz-ps-16   { padding-inline-start: calc(var(--fz-spacing) * 16); }
+
+.fz-pe-0    { padding-inline-end: 0; }
+.fz-pe-1    { padding-inline-end: calc(var(--fz-spacing) * 1); }
+.fz-pe-2    { padding-inline-end: calc(var(--fz-spacing) * 2); }
+.fz-pe-3    { padding-inline-end: calc(var(--fz-spacing) * 3); }
+.fz-pe-4    { padding-inline-end: calc(var(--fz-spacing) * 4); }
+.fz-pe-5    { padding-inline-end: calc(var(--fz-spacing) * 5); }
+.fz-pe-6    { padding-inline-end: calc(var(--fz-spacing) * 6); }
+.fz-pe-8    { padding-inline-end: calc(var(--fz-spacing) * 8); }
+.fz-pe-10   { padding-inline-end: calc(var(--fz-spacing) * 10); }
+.fz-pe-12   { padding-inline-end: calc(var(--fz-spacing) * 12); }
+.fz-pe-16   { padding-inline-end: calc(var(--fz-spacing) * 16); }
+
+.fz-pt-0    { padding-top: 0; }
+.fz-pt-1    { padding-top: calc(var(--fz-spacing) * 1); }
+.fz-pt-2    { padding-top: calc(var(--fz-spacing) * 2); }
+.fz-pt-3    { padding-top: calc(var(--fz-spacing) * 3); }
+.fz-pt-4    { padding-top: calc(var(--fz-spacing) * 4); }
+.fz-pt-5    { padding-top: calc(var(--fz-spacing) * 5); }
+.fz-pt-6    { padding-top: calc(var(--fz-spacing) * 6); }
+.fz-pt-8    { padding-top: calc(var(--fz-spacing) * 8); }
+.fz-pt-10   { padding-top: calc(var(--fz-spacing) * 10); }
+.fz-pt-12   { padding-top: calc(var(--fz-spacing) * 12); }
+.fz-pt-16   { padding-top: calc(var(--fz-spacing) * 16); }
+
+.fz-pr-0    { padding-right: 0; }
+.fz-pr-1    { padding-right: calc(var(--fz-spacing) * 1); }
+.fz-pr-2    { padding-right: calc(var(--fz-spacing) * 2); }
+.fz-pr-3    { padding-right: calc(var(--fz-spacing) * 3); }
+.fz-pr-4    { padding-right: calc(var(--fz-spacing) * 4); }
+.fz-pr-5    { padding-right: calc(var(--fz-spacing) * 5); }
+.fz-pr-6    { padding-right: calc(var(--fz-spacing) * 6); }
+.fz-pr-8    { padding-right: calc(var(--fz-spacing) * 8); }
+.fz-pr-10   { padding-right: calc(var(--fz-spacing) * 10); }
+.fz-pr-12   { padding-right: calc(var(--fz-spacing) * 12); }
+.fz-pr-16   { padding-right: calc(var(--fz-spacing) * 16); }
+
+.fz-pb-0    { padding-bottom: 0; }
+.fz-pb-1    { padding-bottom: calc(var(--fz-spacing) * 1); }
+.fz-pb-2    { padding-bottom: calc(var(--fz-spacing) * 2); }
+.fz-pb-3    { padding-bottom: calc(var(--fz-spacing) * 3); }
+.fz-pb-4    { padding-bottom: calc(var(--fz-spacing) * 4); }
+.fz-pb-5    { padding-bottom: calc(var(--fz-spacing) * 5); }
+.fz-pb-6    { padding-bottom: calc(var(--fz-spacing) * 6); }
+.fz-pb-8    { padding-bottom: calc(var(--fz-spacing) * 8); }
+.fz-pb-10   { padding-bottom: calc(var(--fz-spacing) * 10); }
+.fz-pb-12   { padding-bottom: calc(var(--fz-spacing) * 12); }
+.fz-pb-16   { padding-bottom: calc(var(--fz-spacing) * 16); }
+
+.fz-pl-0    { padding-left: 0; }
+.fz-pl-1    { padding-left: calc(var(--fz-spacing) * 1); }
+.fz-pl-2    { padding-left: calc(var(--fz-spacing) * 2); }
+.fz-pl-3    { padding-left: calc(var(--fz-spacing) * 3); }
+.fz-pl-4    { padding-left: calc(var(--fz-spacing) * 4); }
+.fz-pl-5    { padding-left: calc(var(--fz-spacing) * 5); }
+.fz-pl-6    { padding-left: calc(var(--fz-spacing) * 6); }
+.fz-pl-8    { padding-left: calc(var(--fz-spacing) * 8); }
+.fz-pl-10   { padding-left: calc(var(--fz-spacing) * 10); }
+.fz-pl-12   { padding-left: calc(var(--fz-spacing) * 12); }
+.fz-pl-16   { padding-left: calc(var(--fz-spacing) * 16); }
+
+/* ---- Display ---- */
+.fz-block        { display: block; }
+.fz-inline-block { display: inline-block; }
+.fz-inline       { display: inline; }
+.fz-hidden       { display: none; }
+
+/* Hidden on screen, read by screen readers: a label for something only an icon
+   shows, for instance. */
+.fz-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* The one screen-size switch: 48rem (768px), Lyris's mobile layout and
+   Tailwind's md. For layout, prefer the layout classes, which respond to their
+   own width. */
+@media (max-width: 47.99rem) {
+  .fz-hide-on-mobile { display: none; }
+}
+@media (min-width: 48rem) {
+  .fz-show-on-mobile { display: none; }
+}
+
+/* ---- Width ---- */
+.fz-w-full     { width: 100%; }
+.fz-w-auto     { width: auto; }
+.fz-w-fit      { width: fit-content; }
+.fz-max-w-full { max-width: 100%; }
+/* Lets a flex or grid child get narrower than its content, which fz-truncate
+   needs inside one. */
+.fz-min-w-0    { min-width: 0; }
+
+/* ---- Text ---- */
+/* Each size sets its line height too, as Tailwind's do. xs-plus (13px) is
+   Formulize UI's own step, between xs and sm. */
+.fz-text-xs      { font-size: var(--fz-text-xs); line-height: var(--fz-text-xs--line-height); }
+.fz-text-xs-plus { font-size: var(--fz-text-xs-plus); line-height: var(--fz-text-xs-plus--line-height); }
+.fz-text-sm      { font-size: var(--fz-text-sm); line-height: var(--fz-text-sm--line-height); }
+.fz-text-base    { font-size: var(--fz-text-base); line-height: var(--fz-text-base--line-height); }
+.fz-text-lg      { font-size: var(--fz-text-lg); line-height: var(--fz-text-lg--line-height); }
+.fz-text-xl      { font-size: var(--fz-text-xl); line-height: var(--fz-text-xl--line-height); }
+.fz-text-2xl     { font-size: var(--fz-text-2xl); line-height: var(--fz-text-2xl--line-height); }
+.fz-text-3xl     { font-size: var(--fz-text-3xl); line-height: var(--fz-text-3xl--line-height); }
+
+.fz-font-normal   { font-weight: var(--fz-font-weight-normal); }
+.fz-font-medium   { font-weight: var(--fz-font-weight-medium); }
+.fz-font-semibold { font-weight: var(--fz-font-weight-semibold); }
+.fz-font-bold     { font-weight: var(--fz-font-weight-bold); }
+
+.fz-font-sans     { font-family: var(--fz-font-sans); }
+.fz-font-heading  { font-family: var(--fz-font-heading); }
+.fz-font-mono     { font-family: var(--fz-font-mono); }
+
+.fz-leading-tight  { line-height: var(--fz-leading-tight); }
+.fz-leading-snug   { line-height: var(--fz-leading-snug); }
+.fz-leading-normal { line-height: var(--fz-leading-normal); }
+
+.fz-text-start  { text-align: start; }
+.fz-text-center { text-align: center; }
+.fz-text-end    { text-align: end; }
+.fz-text-left   { text-align: left; }
+.fz-text-right  { text-align: right; }
+
+/* Text colours, by role. The status colours are for short, emphasised text,
+   such as a status word or a total, not paragraphs: some themes' status colours
+   are too light to read at body text size. */
+.fz-text-default   { color: var(--fz-color-text); }
+.fz-text-muted     { color: var(--fz-color-text-muted); }
+.fz-text-subtle    { color: var(--fz-color-text-subtle); }
+.fz-text-accent    { color: var(--fz-color-accent-text); }
+.fz-text-on-accent { color: var(--fz-color-on-accent); }
+.fz-text-success   { color: var(--fz-color-success); }
+.fz-text-warning   { color: var(--fz-color-warning); }
+.fz-text-danger    { color: var(--fz-color-danger); }
+.fz-text-info      { color: var(--fz-color-info); }
+
+/* One line, cut off with an ellipsis. */
+.fz-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fz-text-nowrap     { white-space: nowrap; }
+.fz-wrap-break-word { overflow-wrap: break-word; }
+.fz-tabular-nums    { font-variant-numeric: tabular-nums; }
+
+/* ---- Background ---- */
+.fz-bg-page         { background-color: var(--fz-color-page); }
+.fz-bg-surface      { background-color: var(--fz-color-surface); }
+.fz-bg-surface-2    { background-color: var(--fz-color-surface-2); }
+.fz-bg-surface-3    { background-color: var(--fz-color-surface-3); }
+.fz-bg-accent       { background-color: var(--fz-color-accent); }
+.fz-bg-accent-soft  { background-color: var(--fz-color-accent-soft); }
+.fz-bg-success-soft { background-color: var(--fz-color-success-soft); }
+.fz-bg-warning-soft { background-color: var(--fz-color-warning-soft); }
+.fz-bg-danger-soft  { background-color: var(--fz-color-danger-soft); }
+.fz-bg-info-soft    { background-color: var(--fz-color-info-soft); }
+
+/* ---- Border ---- */
+/* A 1px border, in the border colour; then a colour class changes its colour. */
+.fz-border   { border: 1px solid var(--fz-color-border); }
+.fz-border-t { border-top: 1px solid var(--fz-color-border); }
+.fz-border-b { border-bottom: 1px solid var(--fz-color-border); }
+.fz-border-s { border-inline-start: 1px solid var(--fz-color-border); }
+.fz-border-e { border-inline-end: 1px solid var(--fz-color-border); }
+.fz-border-0 { border-width: 0; }
+
+.fz-border-strong  { border-color: var(--fz-color-border-strong); }
+.fz-border-accent  { border-color: var(--fz-color-accent); }
+.fz-border-success { border-color: var(--fz-color-success); }
+.fz-border-warning { border-color: var(--fz-color-warning); }
+.fz-border-danger  { border-color: var(--fz-color-danger); }
+.fz-border-info    { border-color: var(--fz-color-info); }
+
+/* ---- Corner radius ---- */
+.fz-rounded-none { border-radius: 0; }
+.fz-rounded-sm   { border-radius: var(--fz-radius-sm); }
+.fz-rounded-md   { border-radius: var(--fz-radius-md); }
+.fz-rounded-lg   { border-radius: var(--fz-radius-lg); }
+.fz-rounded-xl   { border-radius: var(--fz-radius-xl); }
+.fz-rounded-full { border-radius: var(--fz-radius-full); }
+
+/* ---- Shadow ---- */
+.fz-shadow-none { box-shadow: none; }
+.fz-shadow-xs   { box-shadow: var(--fz-shadow-xs); }
+.fz-shadow-sm   { box-shadow: var(--fz-shadow-sm); }
+.fz-shadow-md   { box-shadow: var(--fz-shadow-md); }
+.fz-shadow-lg   { box-shadow: var(--fz-shadow-lg); }
+
+/* ---- Overflow ---- */
+.fz-overflow-auto   { overflow: auto; }
+.fz-overflow-x-auto { overflow-x: auto; }
+.fz-overflow-hidden { overflow: hidden; }
+
+/* ---- Lists ---- */
+.fz-list-none { list-style-type: none; }
