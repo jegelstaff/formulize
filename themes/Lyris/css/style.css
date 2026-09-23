@@ -586,8 +586,7 @@ button.lyris-chip--dark.lyris-chip--danger:hover { background: rgba(255,90,90,.2
   color: rgba(255,255,255,.85);
 }
 
-/* Helpers */
-.fz-spacer  { flex: 1 1 auto; }
+/* Helpers (fz-spacer is Formulize UI's, in formulize-ui.css) */
 .lyris-divider { width: 1px; height: 20px; background: var(--fz-color-border); }
 
 /* ---- Toggle switch ----------------------------------------------------
