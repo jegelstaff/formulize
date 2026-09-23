@@ -93,10 +93,9 @@
 		  </div>
 		  <div class="form-radios">
 			  <label for="fixed"><input type="radio" id="screens-columnwidthmode" name="screens-columnwidthmode"<{if $content.columnwidthmode eq 'fixed'}> checked="checked"<{/if}> value="fixed"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_COLUMNWIDTHMODE_FIXED}></label>
-			  <div class="form-item" id="columnwidth-container"<{if $content.columnwidthmode ne 'fixed'}> style="display: none;"<{/if}>>
+			  <div class="form-item" id="columnwidth-container" style="margin: 10px 0 10px 22px;<{if $content.columnwidthmode ne 'fixed'}> display: none;<{/if}>">
 			    <label for="screens-columnwidth"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_COLUMNWIDTH}></label>
 			    <input type="text" id="screens-columnwidth" name="screens-columnwidth" value="<{$content.columnwidth}>" size="3" maxlength="3"/>
-			    <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_COLUMNWIDTH}></div>
 			  </div>
 		  </div>
       <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_COLUMNWIDTHMODE}></div>

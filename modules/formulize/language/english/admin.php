@@ -983,7 +983,7 @@ define("_AM_FORMULIZE_SCREEN_LOE_COLUMNWIDTHMODE_NATURAL", "Natural sizing - eac
 define("_AM_FORMULIZE_SCREEN_LOE_COLUMNWIDTHMODE_FULL", "Full width - the table expands to fill the available space<br>");
 define("_AM_FORMULIZE_SCREEN_LOE_COLUMNWIDTHMODE_FIXED", "Fixed pixel width - every column is the same width, in pixels");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_COLUMNWIDTHMODE", "With natural sizing or a fixed pixel width, if the resulting table is narrower than the space available, it will still appear to extend to the end of that space.");
-define("_AM_FORMULIZE_SCREEN_LOE_COLUMNWIDTH", "If using a fixed pixel width, how many pixels wide should each column be?");
+define("_AM_FORMULIZE_SCREEN_LOE_COLUMNWIDTH", "How many pixels wide should each column be?");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_COLUMNWIDTH", "Only applies when 'Fixed pixel width' is selected above.");
 define("_AM_FORMULIZE_SCREEN_LOE_TEXTWIDTH", "How many characters of text should be displayed in any cell?");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_TEXTWIDTH", "Set to '0' for no limit.");
