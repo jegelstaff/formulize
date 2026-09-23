@@ -146,7 +146,9 @@ h1, h2, h3, h4, h5, h6,
 }
 
 .lyris-header__nav-toggle {
-  color: var(--fz-color-text-muted);
+  /* No colour of its own: it has always rendered in the .fz-btn text colour,
+     because Lyris's .fz-btn rules used to come later in this file and won.
+     They are Formulize UI's now, which loads first, so a colour here would. */
   flex-shrink: 0;
 }
 
@@ -463,49 +465,9 @@ body:not(#formulize):not(.formulize-screen) .lyris-main {
    Utility components
    ============================================================ */
 
-/* Button */
-.fz-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: var(--fz-control-height);
-  padding: 0 calc(var(--fz-spacing) * 3);
-  border-radius: var(--fz-radius-md);
-  border: 1px solid var(--fz-color-border-strong);
-  background: var(--fz-color-surface);
-  color: var(--fz-color-text);
-  font: inherit;
-  font-size: var(--fz-text-xs-plus);
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-  text-decoration: none;
-  appearance: none;
-  -webkit-appearance: none;
-  transition: background var(--fz-duration-fast) var(--fz-ease-out),
-              border-color var(--fz-duration-fast) var(--fz-ease-out),
-              color var(--fz-duration-fast) var(--fz-ease-out);
-}
-
-.fz-btn:hover { background: var(--fz-color-surface-3); }
-.fz-btn:focus-visible { outline: none; box-shadow: var(--fz-focus-ring); }
-
-.fz-btn--primary {
-  background: var(--fz-color-accent);
-  color: var(--fz-color-on-accent);
-  border-color: var(--fz-color-accent);
-}
-.fz-btn--primary:hover {
-  background: var(--fz-color-accent-hover);
-  border-color: var(--fz-color-accent-hover);
-}
-
-.fz-btn--ghost {
-  border-color: transparent;
-  background: transparent;
-}
-.fz-btn--ghost:hover { background: var(--fz-color-surface-3); }
+/* Button: .fz-btn and its modifiers are Formulize UI's (formulize-ui.css),
+   drawn from the same tokens this theme sets, so they look here as they did
+   when they were defined in this file. Only Lyris's own states are left here. */
 
 /* Filter toggle — highlight when filters are visible */
 #lyris-filter-toggle[aria-pressed="true"] {
@@ -514,10 +476,6 @@ body:not(#formulize):not(.formulize-screen) .lyris-main {
   color: var(--fz-color-accent);
 }
 
-.fz-btn--sm  { height: calc(var(--fz-spacing) * 6.5); padding: 0 calc(var(--fz-spacing) * 2); font-size: var(--fz-text-xs); }
-.fz-btn--lg  { height: calc(var(--fz-spacing) * 9); padding: 0 14px; font-size: var(--fz-text-sm); }
-.fz-btn--icon { width: var(--fz-control-height); padding: 0; }
-.fz-btn--icon.fz-btn--sm { width: calc(var(--fz-spacing) * 6.5); }
 
 /* Chip — pill button used for filter chips and selection bar actions */
 .lyris-chip {
@@ -589,74 +547,9 @@ button.lyris-chip--dark.lyris-chip--danger:hover { background: rgba(255,90,90,.2
 /* Helpers (fz-spacer is Formulize UI's, in formulize-ui.css) */
 .lyris-divider { width: 1px; height: 20px; background: var(--fz-color-border); }
 
-/* ---- Toggle switch ----------------------------------------------------
-   Reusable primitive: turns a real <input type="checkbox"> into a sliding
-   on/off switch, styling the input itself as the track and a ::before
-   pseudo-element as the thumb. The underlying checkbox is preserved, so
-   its checked state and form submission behave exactly as a normal box.
-
-   Opt in per element by adding the `fz-toggle` class to the checkbox:
-       <input type="checkbox" class="fz-toggle">
-   No wrapper markup is required. Off state uses the neutral surface/border
-   tokens; the on state fills with --fz-color-accent. Keyboard focus shows the
-   standard focus ring, and the thumb slides with the theme's motion tokens.
-
-   The list-view "Hide repeating data" control (#toggleRepeatData) opts in by
-   carrying the `fz-toggle` class in its core-rendered markup, so it needs no
-   id-scoped CSS here. The class is inert in other themes without this rule. */
-.fz-toggle {
-  appearance: none;
-  -webkit-appearance: none;
-  box-sizing: border-box;
-  position: relative;
-  flex: none;
-  display: inline-block;
-  vertical-align: middle;
-  width: 34px;
-  height: 20px;
-  margin: 0;
-  padding: 0;
-  border: 1px solid var(--fz-color-border-strong);
-  border-radius: var(--fz-radius-full);
-  background: var(--fz-color-surface-3);
-  cursor: pointer;
-  transition: background var(--fz-duration) var(--fz-ease-out),
-              border-color var(--fz-duration) var(--fz-ease-out);
-}
-
-.fz-toggle::before {
-  content: "";
-  position: absolute;
-  top: 1px;
-  left: 1px;
-  width: 16px;
-  height: 16px;
-  border-radius: var(--fz-radius-full);
-  background: var(--fz-color-surface);
-  box-shadow: var(--fz-shadow-sm);
-  transition: transform var(--fz-duration) var(--fz-ease-out);
-}
-
-.fz-toggle:hover { border-color: var(--fz-color-text-subtle); }
-
-.fz-toggle:checked {
-  background: var(--fz-color-accent);
-  border-color: var(--fz-color-accent);
-}
-
-.fz-toggle:checked::before {
-  transform: translateX(14px);
-}
-
-.fz-toggle:focus-visible {
-  outline: none;
-  box-shadow: var(--fz-focus-ring);
-}
-
-.fz-toggle:disabled {
-  cursor: default;
-  opacity: .5;
-}
+/* ---- Toggle switch: .fz-toggle is Formulize UI's (formulize-ui.css). The
+   list-view "Hide repeating data" control (#toggleRepeatData) carries the
+   class in its core-rendered markup. ---- */
 
 /* ============================================================
    Form controls — generalized input / select / textarea
