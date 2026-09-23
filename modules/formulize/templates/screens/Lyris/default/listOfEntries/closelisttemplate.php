@@ -4,7 +4,7 @@ print "</tbody></table>";
 
 if($calculationResults) {
 	print "
-	<table class='fz-table'>
+	<table class='lyris-list-table'>
 		$calculationResults
 	</table>";
 }

@@ -1159,7 +1159,7 @@ textarea {
    Table
    ============================================================ */
 
-.fz-table {
+.lyris-list-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
@@ -1169,13 +1169,13 @@ textarea {
 
 /* Column-width modes (issue #919): the list screen's "How should the width of the columns
    in the list be determined?" setting drives which of these three shapes the table ends up
-   in. All three keep .fz-table at width:100% / table-layout:auto - mainly what entriesdisplay.php
+   in. All three keep .lyris-list-table at width:100% / table-layout:auto - mainly what entriesdisplay.php
    puts on the real column cells (columnWidthStyle, see drawEntries()) changes:
      - 'full'    - cells get no inline width, so the auto-layout algorithm distributes 100% of
                    the container across all columns, stretching them proportionally. No spacer
                    column is rendered.
      - 'fixed'   - every real column cell gets an inline `width: Npx`, and the table gets
-                   .fz-table--fixed-columns. Under auto layout a cell width is only a minimum:
+                   .lyris-list-table--fixed-columns. Under auto layout a cell width is only a minimum:
                    a column still grows to its content's min-content width, which for the nowrap
                    cells below is the whole text. So in this mode the column cells wrap, with
                    overflow-wrap:anywhere, which also shrinks their min-content width to about
@@ -1192,7 +1192,7 @@ textarea {
    auto-layout algorithm hands it all the leftover width instead of re-stretching the real columns,
    so the table still visually reaches the far edge of its container even though its real columns
    stopped growing at their content/pixel width. */
-.fz-table .formulize-spacer {
+.lyris-list-table .formulize-spacer {
   cursor: default;
 }
 
@@ -1201,10 +1201,10 @@ textarea {
    is what lets the inline pixel width hold, because it counts toward min-content width (see the
    column-width modes comment above). Scoped to .column so the checkbox/controls column keeps its
    nowrap and stays sized to its content. The extra class in the selector beats the base
-   .fz-table th/td rule, which comes later in this file. Row heights (--fz-row-height) are minimums on
+   .lyris-list-table th/td rule, which comes later in this file. Row heights (--fz-row-height) are minimums on
    table cells, so rows grow to fit the wrapped text. A wrapped header row is taller than 36px, so the sticky filter row
    follows the header row's real height via --lyris-thead-height (set in the Lyris bottomtemplate). */
-.fz-table.fz-table--fixed-columns .column {
+.lyris-list-table.lyris-list-table--fixed-columns .column {
   white-space: normal;
   overflow-wrap: anywhere;
   text-overflow: clip;
@@ -1215,8 +1215,8 @@ textarea {
 	padding: 10px;
 }
 
-.fz-table th,
-.fz-table td {
+.lyris-list-table th,
+.lyris-list-table td {
   text-align: left;
   vertical-align: middle;
   padding: 0 var(--lyris-row-padding-x);
@@ -1227,7 +1227,7 @@ textarea {
   white-space: nowrap;
 }
 
-.fz-table thead th {
+.lyris-list-table thead th {
   height: 36px;
   font-weight: 600;
   font-size: var(--fz-text-xs);
@@ -1239,10 +1239,10 @@ textarea {
   z-index: 2;
 }
 
-.fz-table tbody tr:hover td { background: var(--fz-color-surface-2); }
-.fz-table tbody tr[aria-selected="true"] td { background: var(--fz-color-accent-soft); }
+.lyris-list-table tbody tr:hover td { background: var(--fz-color-surface-2); }
+.lyris-list-table tbody tr[aria-selected="true"] td { background: var(--fz-color-accent-soft); }
 
-.fz-table--cozy tbody td { height: var(--fz-row-height); } /* follows the density: 40px at standard */
+.lyris-list-table--cozy tbody td { height: var(--fz-row-height); } /* follows the density: 40px at standard */
 
 /* Filter / search row.
    The table uses auto layout, where a column's width is the widest content in any of
@@ -1274,7 +1274,7 @@ textarea {
   min-width: 100%;
 }
 
-.fz-table .main-cell-div {
+.lyris-list-table .main-cell-div {
 	margin-top: 0.3em;
 	margin-bottom: 0.3em;
 }
@@ -1285,7 +1285,7 @@ textarea {
    This replaces the old `text-align: unset !important` override that existed
    only to neutralize that inline style (issue #20) - there is nothing left to
    neutralize, and non-numeric values now simply inherit the cell's alignment. */
-.fz-table .main-cell-div .formulize-numeric {
+.lyris-list-table .main-cell-div .formulize-numeric {
   text-align: right;
 }
 
@@ -1293,7 +1293,7 @@ textarea {
    shrink-wraps the value and leaves it nowhere to align to. Let the value box
    grow so a number can reach the right edge of the cell. Scoped with :has() so
    only numeric cells are affected; text cells keep the snug pencil spacing. */
-.fz-table .main-cell-div > .formulize-display-element-contents:has(.formulize-numeric) {
+.lyris-list-table .main-cell-div > .formulize-display-element-contents:has(.formulize-numeric) {
   flex: 1;
 }
 
@@ -1306,18 +1306,18 @@ textarea {
 }
 
 /* Checkbox / controls column */
-.fz-table .lyris-cb {
+.lyris-list-table .lyris-cb {
   width: 52px;
   padding: 0 calc(var(--fz-spacing) * 2);
   vertical-align: middle;
   white-space: nowrap;
 }
 
-.fz-table .lyris-cb input[type="checkbox"] {
+.lyris-list-table .lyris-cb input[type="checkbox"] {
   vertical-align: middle;
 }
 
-.fz-table .lyris-cb .loe-edit-entry {
+.lyris-list-table .lyris-cb .loe-edit-entry {
   vertical-align: middle;
   display: inline-block;
   line-height: 1;
@@ -1358,7 +1358,7 @@ a.de-edit-icon:hover::before {
    and drops old colourful gif save/cancel icons onto a new line
    (edit mode). Recolour + realign for Lyris and swap the legacy
    gifs for clean theme glyphs. All rules are additive and scoped to
-   .fz-table so other themes keep the core defaults. The deDiv/pencil
+   .lyris-list-table so other themes keep the core defaults. The deDiv/pencil
    is only emitted for columns that are inline-editable, so these
    selectors never touch ordinary cells.
    ============================================================ */
@@ -1367,8 +1367,8 @@ a.de-edit-icon:hover::before {
    formulize.css lays the pencil cell out as a flex row and right-aligns
    the pencil against the cell edge for every theme, so the Lyris-only
    float/indent overrides that used to live here are gone. Anything left
-   under .fz-table here must stay cosmetic: a layout override scoped to
-   .fz-table outranks the core rules and would un-do the right alignment. */
+   under .lyris-list-table here must stay cosmetic: a layout override scoped to
+   .lyris-list-table outranks the core rules and would un-do the right alignment. */
 
 /* Pencil glyph colour is handled globally now (issue #61) — see the
    `a.loe-edit-entry::before, a.de-edit-icon::before` block above. */
@@ -1379,11 +1379,11 @@ a.de-edit-icon:hover::before {
    layout (one row, no <br />, no &nbsp; spacing, field flexes to fill). What is
    left here is purely Lyris cosmetics: swap the legacy colourful gifs for clean
    theme glyphs and give them hover affordances. */
-.fz-table .formulize-de-controls > a > img {
+.lyris-list-table .formulize-de-controls > a > img {
   display: none;
 }
 
-.fz-table .formulize-de-controls > a {
+.lyris-list-table .formulize-de-controls > a {
   width: 1.6em;
   height: 1.6em;
   border-radius: 4px;
@@ -1391,31 +1391,31 @@ a.de-edit-icon:hover::before {
   transition: background var(--fz-duration-fast) var(--fz-ease-out), color var(--fz-duration-fast) var(--fz-ease-out);
 }
 
-.fz-table .formulize-de-save::before {
+.lyris-list-table .formulize-de-save::before {
   content: "\2713"; /* save */
   color: var(--fz-color-success);
   font-weight: 600;
 }
 
-.fz-table .formulize-de-cancel::before {
+.lyris-list-table .formulize-de-cancel::before {
   content: "\2715"; /* cancel */
   color: var(--fz-color-text-muted);
 }
 
-.fz-table .formulize-de-save:hover {
+.lyris-list-table .formulize-de-save:hover {
   background: var(--fz-color-success-soft);
 }
 
-.fz-table .formulize-de-cancel:hover {
+.lyris-list-table .formulize-de-cancel:hover {
   background: var(--fz-color-surface-3);
 }
 
-.fz-table .formulize-de-cancel:hover::before {
+.lyris-list-table .formulize-de-cancel:hover::before {
   color: var(--fz-color-danger);
 }
 
 /* Formulize selection checkboxes get the same treatment as fz-checkbox (formulize-ui.css) */
-.fz-table .formulize_selection_checkbox {
+.lyris-list-table .formulize_selection_checkbox {
   appearance: none;
   width: 16px;
   height: 16px;
@@ -1429,12 +1429,12 @@ a.de-edit-icon:hover::before {
   transition: background var(--fz-duration-fast) var(--fz-ease-out), border-color var(--fz-duration-fast) var(--fz-ease-out);
 }
 
-.fz-table .formulize_selection_checkbox:checked {
+.lyris-list-table .formulize_selection_checkbox:checked {
   background: var(--fz-color-accent);
   border-color: var(--fz-color-accent);
 }
 
-.fz-table .formulize_selection_checkbox:checked::after {
+.lyris-list-table .formulize_selection_checkbox:checked::after {
   content: "";
   position: absolute;
   left: 4px;
@@ -1936,29 +1936,29 @@ body:has(#formulize-masquerade-block) {
      Horizontal scrolling comes from .lyris-list__body (overflow: auto) once
      the nowrap cells force the table wider than the viewport. ---- */
 
-  .fz-table .lyris-cb,
-  .fz-table .column0 {
+  .lyris-list-table .lyris-cb,
+  .lyris-list-table .column0 {
     position: sticky;
     left: 0;
     z-index: 1;
   }
 
   /* first data column sits after the 52px checkbox column when present */
-  .fz-table .lyris-cb ~ .column0 {
+  .lyris-list-table .lyris-cb ~ .column0 {
     left: 52px;
   }
 
   /* divider shadow marks the edge of the pinned columns; cap their width
      so long first-column content can't eat the whole viewport */
-  .fz-table .column0 {
+  .lyris-list-table .column0 {
     box-shadow: 1px 0 0 var(--fz-color-border);
     max-width: 45vw;
   }
 
   /* pinned header cells: sticky both ways, above row headers (z 2) and
      pinned body cells (z 1) */
-  .fz-table thead .lyris-cb,
-  .fz-table thead .column0 {
+  .lyris-list-table thead .lyris-cb,
+  .lyris-list-table thead .column0 {
     top: 0;
     z-index: 3;
   }
@@ -1967,10 +1967,10 @@ body:has(#formulize-masquerade-block) {
      top:36px to clear the column-header row and z-index:3 to sit above
      both the top-sticky filter row (z 2) and the left-sticky body cells
      (z 1) — they're pinned in both axes simultaneously.
-     Specificity must beat .fz-table thead .lyris-cb (3 selectors), so we
-     include .fz-table in the selector chain. */
-  .fz-table .lyris-search-row .lyris-cb,
-  .fz-table .lyris-search-row .column0 {
+     Specificity must beat .lyris-list-table thead .lyris-cb (3 selectors), so we
+     include .lyris-list-table in the selector chain. */
+  .lyris-list-table .lyris-search-row .lyris-cb,
+  .lyris-list-table .lyris-search-row .column0 {
     top: var(--lyris-thead-height, 36px);
     z-index: 3;
   }
