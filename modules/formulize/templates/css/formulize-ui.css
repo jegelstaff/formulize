@@ -330,6 +330,10 @@
    Elements inside a component that have no class of their own (a description
    list's dt and dd) are selected through :where(), so that every selector here
    still weighs one class.
+
+   Components that hold text set their own line height rather than inheriting
+   the theme's, so they read the same in every theme (Anari's reset sets the
+   page's line height to 1).
    ============================================================ */
 
 /* ---- Card -----------------------------------------------------------------
@@ -349,6 +353,7 @@
   border-radius: var(--fz-radius-lg);
   box-shadow: var(--fz-shadow-sm);
   color: var(--fz-color-text);
+  line-height: var(--fz-leading-normal);
 }
 .fz-card > * { margin-block: 0; }
 
@@ -502,6 +507,7 @@
   border-radius: var(--fz-radius-md);
   background: var(--fz-tone-soft);
   color: var(--fz-color-text);
+  line-height: var(--fz-leading-normal);
 }
 .fz-callout > * { margin-block: 0; }
 .fz-callout__title {
@@ -546,6 +552,7 @@
   grid-template-columns: fit-content(40%) minmax(0, 1fr);
   gap: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 4);
   margin: 0;
+  line-height: var(--fz-leading-normal);
 }
 .fz-dl > :where(div) { display: contents; }
 .fz-dl :where(dt) {
@@ -577,6 +584,7 @@
   border: 1px dashed var(--fz-color-border-strong);
   border-radius: var(--fz-radius-lg);
   color: var(--fz-color-text-muted);
+  line-height: var(--fz-leading-normal);
   text-align: center;
 }
 .fz-empty > * { margin: 0; }
