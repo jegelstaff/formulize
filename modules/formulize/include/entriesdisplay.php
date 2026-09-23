@@ -1840,6 +1840,9 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 		$columnWidthMode = in_array($screen->getVar('columnwidthmode'), array('natural', 'full', 'fixed'))
 			? $screen->getVar('columnwidthmode')
 			: ($columnWidth ? 'fixed' : 'natural'); // fall back the same way the old setting worked, for screens saved before this option existed
+		if($columnWidthMode == 'fixed' AND !$columnWidth) {
+			$columnWidth = formulizeListOfEntriesScreen::DEFAULT_FIXED_COLUMN_WIDTH;
+		}
 		$textWidth = $screen->getVar('textwidth');
 		if($textWidth == 0) { $textWidth = 10000; }
 		$useCheckboxes = $screen->getVar('usecheckboxes');
@@ -1987,6 +1990,7 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 		'numberOfInlineCustomButtons' => count((array) $inlineButtons),
 		'spacerNeeded' => $spacerNeeded,
 		'columnWidthStyle' => $columnWidthStyle,
+		'fixedColumnWidths' => ($columnWidthMode == 'fixed' AND $columnWidth) ? true : false,
 		'colspan' => $colspan,
 		'downloadCalculationsURL' => $downloadCalculationsURL,
 		'downloadCalculationsText' => $downloadCalculationsText,

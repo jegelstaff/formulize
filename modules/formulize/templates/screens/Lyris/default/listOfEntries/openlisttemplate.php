@@ -7,9 +7,12 @@ if($downloadCalculationsURL AND $downloadCalculationsText) {
 	</div>";
 }
 
+// in fixed pixel width mode, the column cells wrap their content so the pixel widths hold instead of growing to fit it (see the Lyris style.css)
+$fixedColumnsClass = !empty($fixedColumnWidths) ? ' fz-table--fixed-columns' : '';
+
 print "
 <div class='fz-list__body' id='formulize-list-of-entries'>
-	<table class='fz-table fz-table--cozy'>
+	<table class='fz-table fz-table--cozy$fixedColumnsClass'>
 	<thead>";
 
 		if($headersShown) {
@@ -82,7 +85,7 @@ function drawHeaderRow($headers, $checkBoxesShown, $viewEntryLinksShown, $column
 
 	while($numberOfInlineCustomButtons > 0) {
 		$numberOfInlineCustomButtons--;
-		$cells[] = "<th id='celladdress_h$headingRowNumber"."_"."$columnNumber' class='head'></th>";
+		$cells[] = "<th $columnWidthStyle id='celladdress_h$headingRowNumber"."_"."$columnNumber' class='head'></th>";
         $columnNumber++;
 	}
 

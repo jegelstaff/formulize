@@ -71,6 +71,9 @@ $screen->setVar('columnwidth',$screens['columnwidth']);
 $columnWidthModeOptions = array('natural', 'full', 'fixed');
 $columnWidthMode = (isset($screens['columnwidthmode']) AND in_array($screens['columnwidthmode'], $columnWidthModeOptions)) ? $screens['columnwidthmode'] : 'natural';
 $screen->setVar('columnwidthmode', $columnWidthMode);
+if($columnWidthMode == 'fixed' AND intval($screens['columnwidth']) <= 0) {
+  $screen->setVar('columnwidth', formulizeListOfEntriesScreen::DEFAULT_FIXED_COLUMN_WIDTH);
+}
 $screen->setVar('textwidth',$screens['textwidth']);
 $screen->setVar('usecheckboxes',$screens['usecheckboxes']);
 $screen->setVar('useviewentrylinks',(array_key_exists('useviewentrylinks',$screens))?$screens['useviewentrylinks']:0);

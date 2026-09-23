@@ -39,6 +39,9 @@ require_once XOOPS_ROOT_PATH.'/modules/formulize/class/screen.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 class formulizeListOfEntriesScreen extends formulizeScreen {
+
+    // the pixel width used in 'fixed' columnwidthmode when no width has been set
+    const DEFAULT_FIXED_COLUMN_WIDTH = 250;
     function __construct() {
         parent::__construct();
         $this->initVar("dobr", XOBJ_DTYPE_INT, 1, false);
