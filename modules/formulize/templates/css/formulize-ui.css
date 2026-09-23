@@ -108,6 +108,11 @@
   --fz-shadow-lg: 0 12px 32px rgba(15,17,21,.14), 0 2px 6px rgba(15,17,21,.06);
   --fz-focus-ring: 0 0 0 3px rgba(46,51,64,.15);
 
+  /* Container widths, Tailwind's (see fz-container) */
+  --fz-container-2xl: 42rem;
+  --fz-container-6xl: 72rem;
+  --fz-container-7xl: 80rem;
+
   /* Motion */
   --fz-ease-out:      cubic-bezier(.2,.7,.3,1);
   --fz-duration-fast: 120ms;
@@ -142,3 +147,247 @@
   --fz-field-height:   calc(var(--fz-spacing) * 9.5);  /* form fields: 38px */
   --fz-row-height:     calc(var(--fz-spacing) * 10);   /* list rows: 40px */
 }
+
+
+/* ============================================================
+   Layout classes
+   ============================================================
+
+   Classes that arrange their children. They respond to the space they are
+   given, not to the size of the screen, so the same markup works full screen,
+   in the drawer, on a phone, and embedded in another site.
+
+   The gap is the only space between the children: their top and bottom
+   margins are removed. Change the gap with the fz-gap-* utilities below.
+
+   Each class declares its default gap as --fz-gap, and resets --fz-gap-x and
+   --fz-gap-y, so a value set on an element further out never leaks in; the gap
+   utilities set them again on the same element. fz-auto-grid needs the gap in
+   its column calculation, which is why the gap is a custom property here and
+   not only the gap property.
+   ============================================================ */
+
+.fz-stack,
+.fz-cluster,
+.fz-auto-grid,
+.fz-with-sidebar,
+.fz-switcher {
+  --fz-gap-x: initial;
+  --fz-gap-y: initial;
+  gap: var(--fz-gap-y, var(--fz-gap)) var(--fz-gap-x, var(--fz-gap));
+}
+
+.fz-stack > *,
+.fz-cluster > *,
+.fz-auto-grid > *,
+.fz-with-sidebar > *,
+.fz-switcher > * {
+  margin-block: 0;
+}
+
+/* Stack: children one above the other. */
+.fz-stack {
+  --fz-gap: calc(var(--fz-spacing) * 4);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Cluster: children side by side, vertically centred, wrapping onto new lines
+   when they run out of room. */
+.fz-cluster {
+  --fz-gap: calc(var(--fz-spacing) * 2);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Auto grid: equal columns, as many as fit, each at least --fz-auto-grid-min
+   wide, so fewer columns as the space narrows and one when it is narrower than
+   that. The --max-N modifiers cap the number of columns. Set
+   --fz-auto-grid-min on the element itself to change the minimum. */
+.fz-auto-grid {
+  --fz-gap: calc(var(--fz-spacing) * 4);
+  --fz-auto-grid-min: 12rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--fz-auto-grid-min)), 1fr));
+}
+.fz-auto-grid--narrow { --fz-auto-grid-min: 8rem; }
+.fz-auto-grid--wide   { --fz-auto-grid-min: 18rem; }
+.fz-auto-grid--max-2 { --fz-auto-grid-max: 2; }
+.fz-auto-grid--max-3 { --fz-auto-grid-max: 3; }
+.fz-auto-grid--max-4 { --fz-auto-grid-max: 4; }
+.fz-auto-grid--max-5 { --fz-auto-grid-max: 5; }
+.fz-auto-grid--max-6 { --fz-auto-grid-max: 6; }
+/* With a maximum, a column is never narrower than an equal share of the row
+   at that maximum, so no more than that many fit. */
+.fz-auto-grid--max-2,
+.fz-auto-grid--max-3,
+.fz-auto-grid--max-4,
+.fz-auto-grid--max-5,
+.fz-auto-grid--max-6 {
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(
+      min(100%, max(
+        var(--fz-auto-grid-min),
+        (100% - (var(--fz-auto-grid-max) - 1) * var(--fz-gap-x, var(--fz-gap))) / var(--fz-auto-grid-max)
+      )),
+      1fr
+    )
+  );
+}
+
+/* With sidebar: the first child is a side --fz-sidebar-width wide, the second
+   takes the rest. They stack when the main area would be narrower than half
+   the space. fz-with-sidebar--end puts the side second.
+
+   The main area's grow factor dwarfs the side's, so the side keeps its width to
+   within a fraction of a pixel; the side's own grow factor of 1 is what lets it
+   fill the row once the two have stacked. */
+.fz-with-sidebar {
+  --fz-gap: calc(var(--fz-spacing) * 4);
+  --fz-sidebar-width: 16rem;
+  display: flex;
+  flex-wrap: wrap;
+}
+.fz-with-sidebar > :where(:first-child) {
+  flex-basis: var(--fz-sidebar-width);
+  flex-grow: 1;
+}
+.fz-with-sidebar > :where(:last-child) {
+  flex-basis: 0;
+  flex-grow: 99999;
+  min-inline-size: 50%;
+}
+.fz-with-sidebar--end > :where(:first-child) {
+  flex-basis: 0;
+  flex-grow: 99999;
+  min-inline-size: 50%;
+}
+.fz-with-sidebar--end > :where(:last-child) {
+  flex-basis: var(--fz-sidebar-width);
+  flex-grow: 1;
+  min-inline-size: 0;
+}
+
+/* Switcher: children in equal columns while the container is wider than
+   --fz-switcher-threshold, and all stacked when it isn't: never part way. */
+.fz-switcher {
+  --fz-gap: calc(var(--fz-spacing) * 4);
+  --fz-switcher-threshold: 32rem;
+  display: flex;
+  flex-wrap: wrap;
+}
+.fz-switcher > * {
+  flex-grow: 1;
+  flex-basis: calc((var(--fz-switcher-threshold) - 100%) * 999);
+}
+
+/* Container: centred, at most 72rem wide, with space at the sides. */
+.fz-container {
+  box-sizing: border-box;
+  inline-size: 100%;
+  max-inline-size: var(--fz-container-6xl);
+  margin-inline: auto;
+  padding-inline: calc(var(--fz-spacing) * 4);
+}
+.fz-container--narrow { max-inline-size: var(--fz-container-2xl); }
+.fz-container--wide   { max-inline-size: var(--fz-container-7xl); }
+
+/* Spacer: takes up the free space in a row, pushing what follows to the end. */
+.fz-spacer { flex: 1 1 auto; }
+
+
+/* ============================================================
+   Layout utilities
+   ============================================================
+
+   Tailwind's layout utilities, with an fz- prefix and Tailwind's meanings:
+   fz-grid only sets display: grid, and fz-grid-cols-3 is exactly three
+   columns at every width, since there are no screen-size variants. For a
+   layout that adapts to its space, use the layout classes above.
+
+   They come after the layout classes, and weigh the same (one class), so on
+   the same element a utility wins.
+   ============================================================ */
+
+/* Display */
+.fz-flex        { display: flex; }
+.fz-inline-flex { display: inline-flex; }
+.fz-grid        { display: grid; }
+
+/* Flex direction, wrapping, and how children grow and shrink */
+.fz-flex-row    { flex-direction: row; }
+.fz-flex-col    { flex-direction: column; }
+.fz-flex-wrap   { flex-wrap: wrap; }
+.fz-flex-nowrap { flex-wrap: nowrap; }
+.fz-flex-1      { flex: 1; }
+.fz-flex-auto   { flex: auto; }
+.fz-flex-none   { flex: none; }
+.fz-grow        { flex-grow: 1; }
+.fz-shrink-0    { flex-shrink: 0; }
+
+/* Alignment */
+.fz-items-start    { align-items: flex-start; }
+.fz-items-center   { align-items: center; }
+.fz-items-end      { align-items: flex-end; }
+.fz-items-baseline { align-items: baseline; }
+.fz-items-stretch  { align-items: stretch; }
+.fz-justify-start   { justify-content: flex-start; }
+.fz-justify-center  { justify-content: center; }
+.fz-justify-end     { justify-content: flex-end; }
+.fz-justify-between { justify-content: space-between; }
+.fz-self-start  { align-self: flex-start; }
+.fz-self-center { align-self: center; }
+.fz-self-end    { align-self: flex-end; }
+
+/* Grid columns, and how many columns a child spans */
+.fz-grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+.fz-grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.fz-grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.fz-grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.fz-grid-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.fz-grid-cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.fz-col-span-1 { grid-column: span 1 / span 1; }
+.fz-col-span-2 { grid-column: span 2 / span 2; }
+.fz-col-span-3 { grid-column: span 3 / span 3; }
+.fz-col-span-4 { grid-column: span 4 / span 4; }
+.fz-col-span-5 { grid-column: span 5 / span 5; }
+.fz-col-span-6 { grid-column: span 6 / span 6; }
+.fz-col-span-full { grid-column: 1 / -1; }
+
+/* Gap: step N of the spacing scale. Also sets the --fz-gap* custom properties
+   the layout classes read. */
+.fz-gap-0   { --fz-gap: 0; gap: 0; }
+.fz-gap-1   { --fz-gap: calc(var(--fz-spacing) * 1); gap: calc(var(--fz-spacing) * 1); }
+.fz-gap-2   { --fz-gap: calc(var(--fz-spacing) * 2); gap: calc(var(--fz-spacing) * 2); }
+.fz-gap-3   { --fz-gap: calc(var(--fz-spacing) * 3); gap: calc(var(--fz-spacing) * 3); }
+.fz-gap-4   { --fz-gap: calc(var(--fz-spacing) * 4); gap: calc(var(--fz-spacing) * 4); }
+.fz-gap-5   { --fz-gap: calc(var(--fz-spacing) * 5); gap: calc(var(--fz-spacing) * 5); }
+.fz-gap-6   { --fz-gap: calc(var(--fz-spacing) * 6); gap: calc(var(--fz-spacing) * 6); }
+.fz-gap-8   { --fz-gap: calc(var(--fz-spacing) * 8); gap: calc(var(--fz-spacing) * 8); }
+.fz-gap-10  { --fz-gap: calc(var(--fz-spacing) * 10); gap: calc(var(--fz-spacing) * 10); }
+.fz-gap-12  { --fz-gap: calc(var(--fz-spacing) * 12); gap: calc(var(--fz-spacing) * 12); }
+.fz-gap-16  { --fz-gap: calc(var(--fz-spacing) * 16); gap: calc(var(--fz-spacing) * 16); }
+.fz-gap-x-0   { --fz-gap-x: 0; column-gap: 0; }
+.fz-gap-x-1   { --fz-gap-x: calc(var(--fz-spacing) * 1); column-gap: calc(var(--fz-spacing) * 1); }
+.fz-gap-x-2   { --fz-gap-x: calc(var(--fz-spacing) * 2); column-gap: calc(var(--fz-spacing) * 2); }
+.fz-gap-x-3   { --fz-gap-x: calc(var(--fz-spacing) * 3); column-gap: calc(var(--fz-spacing) * 3); }
+.fz-gap-x-4   { --fz-gap-x: calc(var(--fz-spacing) * 4); column-gap: calc(var(--fz-spacing) * 4); }
+.fz-gap-x-5   { --fz-gap-x: calc(var(--fz-spacing) * 5); column-gap: calc(var(--fz-spacing) * 5); }
+.fz-gap-x-6   { --fz-gap-x: calc(var(--fz-spacing) * 6); column-gap: calc(var(--fz-spacing) * 6); }
+.fz-gap-x-8   { --fz-gap-x: calc(var(--fz-spacing) * 8); column-gap: calc(var(--fz-spacing) * 8); }
+.fz-gap-x-10  { --fz-gap-x: calc(var(--fz-spacing) * 10); column-gap: calc(var(--fz-spacing) * 10); }
+.fz-gap-x-12  { --fz-gap-x: calc(var(--fz-spacing) * 12); column-gap: calc(var(--fz-spacing) * 12); }
+.fz-gap-x-16  { --fz-gap-x: calc(var(--fz-spacing) * 16); column-gap: calc(var(--fz-spacing) * 16); }
+.fz-gap-y-0   { --fz-gap-y: 0; row-gap: 0; }
+.fz-gap-y-1   { --fz-gap-y: calc(var(--fz-spacing) * 1); row-gap: calc(var(--fz-spacing) * 1); }
+.fz-gap-y-2   { --fz-gap-y: calc(var(--fz-spacing) * 2); row-gap: calc(var(--fz-spacing) * 2); }
+.fz-gap-y-3   { --fz-gap-y: calc(var(--fz-spacing) * 3); row-gap: calc(var(--fz-spacing) * 3); }
+.fz-gap-y-4   { --fz-gap-y: calc(var(--fz-spacing) * 4); row-gap: calc(var(--fz-spacing) * 4); }
+.fz-gap-y-5   { --fz-gap-y: calc(var(--fz-spacing) * 5); row-gap: calc(var(--fz-spacing) * 5); }
+.fz-gap-y-6   { --fz-gap-y: calc(var(--fz-spacing) * 6); row-gap: calc(var(--fz-spacing) * 6); }
+.fz-gap-y-8   { --fz-gap-y: calc(var(--fz-spacing) * 8); row-gap: calc(var(--fz-spacing) * 8); }
+.fz-gap-y-10  { --fz-gap-y: calc(var(--fz-spacing) * 10); row-gap: calc(var(--fz-spacing) * 10); }
+.fz-gap-y-12  { --fz-gap-y: calc(var(--fz-spacing) * 12); row-gap: calc(var(--fz-spacing) * 12); }
+.fz-gap-y-16  { --fz-gap-y: calc(var(--fz-spacing) * 16); row-gap: calc(var(--fz-spacing) * 16); }
