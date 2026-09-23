@@ -112,7 +112,7 @@ h1, h2, h3, h4, h5, h6,
 }
 
 .fz-header__action-link {
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   font-weight: 500;
   color: var(--fz-color-text-muted);
   text-decoration: none;
@@ -273,7 +273,7 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
    looks like itself in both places. Skin only -- the layout, and the wrapping of
    the row, come from core. */
 .formulize-drawer__tab {
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   font-weight: 500;
   color: var(--fz-color-text-muted);
   border: 1px solid var(--fz-color-border);
@@ -331,7 +331,7 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
 
 .formulize-drawer__notice,
 .formulize-drawer__page-indicator {
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
 }
 
 /* The drawer's chrome buttons (the header's Back and Close icons), given Lyris's
@@ -343,7 +343,7 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
 .formulize-drawer .formulize-drawer__btn {
   height: var(--fz-control-height);
   padding: 0 calc(var(--fz-spacing) * 3);
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   font-weight: 500;
   border-radius: var(--fz-radius-md);
   border: 1px solid var(--fz-color-border-strong);
@@ -476,7 +476,7 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
   background: var(--fz-color-surface);
   color: var(--fz-color-text);
   font: inherit;
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
@@ -531,7 +531,7 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
   border: 1px solid var(--fz-color-accent-soft-2);
   color: var(--fz-color-text);
   font-family: var(--fz-font-sans);
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   font-weight: 500;
   white-space: nowrap;
   cursor: default;
@@ -693,7 +693,7 @@ textarea {
   height: var(--fz-control-height);
   padding: 0 10px;
   font: inherit;
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   font-family: var(--fz-font-sans);
   color: var(--fz-color-text);
   background: var(--fz-color-surface);
@@ -828,7 +828,7 @@ textarea {
   background: var(--fz-color-surface);
   color: var(--fz-color-text);
   font: inherit;
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
@@ -913,7 +913,7 @@ textarea {
   border: 0;
   background: transparent;
   font: inherit;
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   color: var(--fz-color-text);
   border-radius: var(--fz-radius-sm);
   cursor: pointer;
@@ -974,7 +974,7 @@ textarea {
   border: 0;
   background: transparent;
   font: inherit;
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   color: var(--fz-color-text);
   border-radius: var(--fz-radius-sm);
   cursor: pointer;
@@ -1085,7 +1085,7 @@ textarea {
   border: 1px solid rgba(255,255,255,.18);
   color: #fff;
   font: inherit;
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
@@ -1159,7 +1159,7 @@ textarea {
   padding: calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 5);
   background: var(--fz-color-surface);
   border-top: 1px solid var(--fz-color-border);
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   color: var(--fz-color-text-muted);
   flex-shrink: 0;
 }
@@ -1201,7 +1201,7 @@ textarea {
 }
 
 .fz-pagination__status {
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   color: var(--fz-color-text-muted);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -1276,7 +1276,7 @@ textarea {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   table-layout: auto;
 }
 
@@ -1700,7 +1700,7 @@ a.de-edit-icon:hover::before {
   gap: calc(var(--fz-spacing) * 2);
   padding: 6px calc(var(--fz-spacing) * 2);
   border-radius: var(--fz-radius-md);
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   font-weight: 500;
   color: var(--fz-color-text);
   text-decoration: none;
@@ -1871,7 +1871,7 @@ a.main-menu__item-link--active::before {
   box-shadow: var(--fz-shadow-lg);
   padding: calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 5);
   z-index: 50;
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   line-height: var(--fz-leading-normal);
   display: none; /* shown via JS */
 }
@@ -1955,7 +1955,7 @@ body:has(#formulize-masquerade-block) {
   background: var(--fz-color-warning);
   color: #fff;
   padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 4);
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -2453,7 +2453,7 @@ textarea.fz-control {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: var(--lyris-label-text, var(--fz-text-sm));
+  font-size: var(--lyris-label-text, var(--fz-text-xs-plus));
   font-weight: 600;
   color: var(--fz-color-text);
   line-height: var(--fz-leading-snug);
@@ -2806,7 +2806,7 @@ body:not(.fz-inline) .fz-main:not(:has(#pageNavTable, .pageNavTable)) .fz-form-s
 }
 
 #multipage-controls #page-indicator {
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   color: var(--fz-color-text-muted);
   font-feature-settings: "tnum";
   white-space: nowrap;
@@ -2816,7 +2816,7 @@ body:not(.fz-inline) .fz-main:not(:has(#pageNavTable, .pageNavTable)) .fz-form-s
   display: flex;
   align-items: center;
   gap: calc(var(--fz-spacing) * 2);
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   color: var(--fz-color-text-muted);
   white-space: nowrap;
 }
@@ -2926,7 +2926,7 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
   align-items: center;
   gap: calc(var(--fz-spacing) * 1);
   padding: calc(var(--fz-spacing) * 1) calc(var(--fz-spacing) * 3);
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   font-weight: 500;
   line-height: 1.4;
   color: var(--fz-color-text-muted);
@@ -2970,7 +2970,7 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
   min-width: 0 !important;
   width: auto;
   padding: 0 16px;
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   font-weight: 500 !important;
   line-height: 1;
   border-radius: var(--fz-radius-md);
@@ -3059,7 +3059,7 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
   width: auto !important;
   min-width: 0 !important;
   height: calc(var(--fz-spacing) * 8.5) !important;
-  font-size: var(--fz-text-sm) !important;
+  font-size: var(--fz-text-xs-plus) !important;
   color: var(--fz-color-text) !important;
 }
 /* Re-assert legible on-accent text for the Save-family primary after the reset. */
@@ -3145,7 +3145,7 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
   display: block;
   width: 100%;
   padding: 16px;
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   color: var(--fz-color-text-muted);
   background: var(--fz-color-surface-2);
   border: 1.5px dashed var(--fz-color-border-strong);
@@ -3168,7 +3168,7 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
   height: 28px;
   padding: 0 12px;
   font: inherit;
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   font-weight: 500;
   color: var(--fz-color-text);
   background: var(--fz-color-surface);
@@ -3190,7 +3190,7 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
   gap: 8px;
   margin-bottom: 8px;
   padding: 8px 10px;
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   color: var(--fz-color-text);
   background: var(--fz-color-surface);
   border: 1px solid var(--fz-color-border);
@@ -3502,7 +3502,7 @@ input[type="time"] { font-family: var(--fz-font-sans); }
   background: var(--fz-color-accent-soft);
   border: 1px solid var(--fz-color-accent-soft-2);
   color: var(--fz-color-text);
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   line-height: 1;
   transition: background var(--fz-duration-fast) var(--fz-ease-out), border-color var(--fz-duration-fast) var(--fz-ease-out);
 }
@@ -3675,7 +3675,7 @@ input[type="time"] { font-family: var(--fz-font-sans); }
     order: 90;
     margin-top: calc(var(--fz-spacing) * 1);
     text-align: center;
-    font-size: var(--fz-text-sm);
+    font-size: var(--fz-text-xs-plus);
     color: var(--fz-color-text-muted);
     font-feature-settings: "tnum";
   }
@@ -3739,7 +3739,7 @@ input[type="button"]:not([class*="fz-"]):not(.formulize_button) {
   background: var(--fz-color-surface);
   color: var(--fz-color-text);
   font: inherit;
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   font-weight: 500;
   line-height: 1;
   cursor: pointer;
@@ -3804,7 +3804,7 @@ input[type="button"].formulize_button {
   background: var(--fz-color-surface);
   color: var(--fz-color-text);
   font: inherit;
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   font-weight: 500;
   line-height: 1;
   cursor: pointer;
@@ -3905,7 +3905,7 @@ fieldset#icms_block_login_form {
 
 #block_login_form .form-label,
 #icms_block_login_form .form-label {
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   font-weight: 500;
   color: var(--fz-color-text-muted);
 }
@@ -3923,7 +3923,7 @@ fieldset#icms_block_login_form {
   align-items: center;
   gap: calc(var(--fz-spacing) * 1);
   margin-bottom: calc(var(--fz-spacing) * 3);
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   color: var(--fz-color-text-muted);
 }
 
@@ -3957,7 +3957,7 @@ fieldset#icms_block_login_form {
   display: inline-block;
   margin-top: calc(var(--fz-spacing) * 2);
   color: var(--fz-color-accent-text);
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   font-weight: 500;
   text-decoration: none;
 }
@@ -4095,7 +4095,7 @@ fieldset#icms_block_login_form {
   display: inline-block;
   margin-bottom: calc(var(--fz-spacing) * 1);
   color: var(--fz-color-text);
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   font-weight: 500;
 }
 .ui-dialog.ui-widget .ui-dialog-content input[type="text"],
@@ -4164,7 +4164,7 @@ fieldset#icms_block_login_form {
   background: var(--fz-color-surface);
   color: var(--fz-color-text);
   font-family: var(--fz-font-sans);
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   font-weight: 500;
   line-height: 1;
   cursor: pointer;
@@ -4367,7 +4367,7 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
 
 .formulize-drawer .subform-caption {
   margin: 0 0 calc(var(--fz-spacing) * 2);
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
 }
 
 /* add / delete-checked / clone-checked buttons: match the secondary fz-btn look */
@@ -4380,7 +4380,7 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
   background: var(--fz-color-surface);
   color: var(--fz-color-text);
   font: inherit;
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   font-weight: 500;
   cursor: pointer;
   appearance: none;
@@ -4425,7 +4425,7 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
   border-collapse: collapse;
   border: 1px solid var(--fz-color-border);
   border-radius: var(--fz-radius-md);
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
 }
 
 .fz-form-screen .formulize-subform-table > tbody > tr > th,
@@ -4487,7 +4487,7 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
 
 .fz-form-screen .formulize-grid .fz-grid__cell--columnheader,
 .fz-form-screen .formulize-grid .fz-grid__cell--rowheader {
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-text-xs-plus);
   font-weight: 500;
   color: var(--fz-color-text-muted);
   line-height: var(--fz-leading-snug);

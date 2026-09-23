@@ -342,9 +342,9 @@ function formulize_appearanceHeadingFontMap($theme = null) {
  * the only value that moves every text size together.
  *
  * The size an admin is *thinking about* is the one they can see: the standard
- * text in lists and content. In Lyris that is --fz-text-sm, ie: 14px, not the
- * 16px root it is derived from. Showing them "16px" and calling it the font size
- * is telling them their content text is 16px when it is 14px.
+ * text in lists and content. In Lyris that is --fz-text-xs-plus, ie: 13px, not
+ * the 16px root it is derived from. Showing them "16px" and calling it the font
+ * size is telling them their content text is 16px when it is 13px.
  *
  * So the Appearance page works entirely in content text size - that is what the
  * dropdown offers, what is recorded in the generated stylesheet's settings
@@ -355,14 +355,13 @@ function formulize_appearanceHeadingFontMap($theme = null) {
 
 /**
  * How big a theme's standard content text is as a proportion of its root font
- * size.
+ * size, from the --formulize-content-ratio the theme declares.
  *
- * A theme built on Formulize UI sets its content text at --fz-text-sm, and
- * declares that token in rem, so the ratio is read from it: 0.875 in Lyris. A
- * theme that sizes its content text some other way can declare the ratio itself
- * as --formulize-content-ratio, which wins: Anari sizes its content text at the
- * root size and declares 1. A theme that declares neither is read as 1, which is
- * the safe reading: the setting then simply means what it says.
+ * Each theme declares its own because each sets its content text at a different
+ * step of its scale: Lyris's content rules are --fz-text-xs-plus (0.8125rem) and
+ * so it declares 0.8125, while Anari sizes content text at the root size itself
+ * and declares 1. A theme that declares nothing is read as 1, which is the safe
+ * reading: the setting then simply means what it says.
  *
  * @param string|null $theme theme folder name, defaults to the active theme
  * @return float a ratio greater than zero
@@ -370,9 +369,6 @@ function formulize_appearanceHeadingFontMap($theme = null) {
 function formulize_appearanceContentRatio($theme = null) {
     $tokens = formulize_appearanceThemeTokens($theme);
     $ratio = isset($tokens['--formulize-content-ratio']) ? (float) $tokens['--formulize-content-ratio'] : 0;
-    if ($ratio <= 0 AND isset($tokens['--fz-text-sm']) AND preg_match('/^([0-9]*\.?[0-9]+)rem$/', trim($tokens['--fz-text-sm']), $match)) {
-        $ratio = (float) $match[1];
-    }
     return ($ratio > 0) ? $ratio : 1;
 }
 
@@ -423,7 +419,7 @@ function formulize_appearanceThemeContentSize($theme = null) {
  * of the default), applied to the theme's own content size instead of to a fixed
  * 16px, so the middle option is always the theme's real current size and the
  * others are the same relative jumps. On Anari, whose content ratio is 1, that
- * reproduces exactly the 14-20px list; on Lyris it becomes 12-18px around 14px.
+ * reproduces exactly the 14-20px list; on Lyris it becomes 11-16px around 13px.
  *
  * @param string|null $theme theme folder name, defaults to the active theme
  * @return array css length => label
@@ -734,13 +730,11 @@ function formulize_sanitizeAppearanceSettings($values, $theme = null) {
  *
  * Generation 2: the tokens were renamed to the Formulize UI names (--c-accent
  * became --fz-color-accent, and so on).
- * Generation 3: Lyris's content text moved from 13px to 14px, so a chosen text
- * size now works out to a different root font size.
  *
  * @return string the whole comment, one line
  */
 function formulize_appearanceCssGenerationMarker() {
-    return '/* Formulize appearance stylesheet, generation 3 */';
+    return '/* Formulize appearance stylesheet, generation 2 */';
 }
 
 /**

@@ -67,10 +67,12 @@
   --fz-font-mono:    ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* Type scale: Tailwind's sizes, each with the line height Tailwind pairs it
-     with. Fixed: the same in every theme. The standard content text in lists,
-     tables and forms is --fz-text-sm. */
+     with, plus one step of Formulize's own, xs-plus (13px), between xs and sm,
+     which Tailwind has no step for. Fixed: the same in every theme. */
   --fz-text-xs:                 0.75rem;
   --fz-text-xs--line-height:    1rem;
+  --fz-text-xs-plus:            0.8125rem;
+  --fz-text-xs-plus--line-height: 1.25rem;
   --fz-text-sm:                 0.875rem;
   --fz-text-sm--line-height:    1.25rem;
   --fz-text-base:               1rem;
