@@ -1350,22 +1350,31 @@ textarea {
 	margin-bottom: 0.3em;
 }
 
-/* Numeric list values are aligned to the right of the cell. getHTMLForList in
-   functions.php marks them with .formulize-numeric instead of the hardcoded
-   inline style it used to emit, so the theme owns the alignment. (closes #131)
-   This replaces the old `text-align: unset !important` override that existed
-   only to neutralize that inline style (issue #20) - there is nothing left to
-   neutralize, and non-numeric values now simply inherit the cell's alignment. */
-.fz-table .main-cell-div .formulize-numeric {
-  text-align: right;
-}
+/* Numeric list values sit at the left of the cell, like every other value, but
+   with their decimal points lined up down the column. (closes #918, replaces the
+   flush-right alignment from #131.)
 
-/* Inline-editable cells lay the pencil and the value out as flex items, which
-   shrink-wraps the value and leaves it nowhere to align to. Let the value box
-   grow so a number can reach the right edge of the cell. Scoped with :has() so
-   only numeric cells are affected; text cells keep the snug pencil spacing. */
-.fz-table .main-cell-div > .formulize-display-element-contents:has(.formulize-numeric) {
-  flex: 1;
+   getHTMLForList in functions.php marks them with .formulize-numeric and, when
+   drawEntries has been able to measure the column, sets --fz-num-width to the
+   width of the widest formatted number in that column. Every number in the
+   column therefore gets the same box; the number is pushed to that box's right
+   edge, and the box itself starts at the left of the cell - so the numbers read
+   as left aligned while the decimals still stack. tabular-nums keeps the digits
+   the same width as the `ch` unit the measurement is expressed in.
+
+   Without a measurement (subform listings, the inline-edit redraw path) the
+   fallback 0 makes the box shrink-wrap the number, which is plain left
+   alignment - the sensible degradation rather than a guessed width.
+
+   Scoped to spans: multi-value cells render list items, which stay list items.
+   The #listofentries prefix is needed to outrank formulize.css's
+   `#listofentries div.main-cell-div > span { display: block }`. */
+#listofentries .fz-table span.formulize-numeric {
+  display: inline-block;
+  text-align: right;
+  min-width: var(--fz-num-width, 0);
+  max-width: 100%;
+  font-variant-numeric: tabular-nums;
 }
 
 .fz-search-row input:not([type="checkbox"]):not([type="radio"]),
