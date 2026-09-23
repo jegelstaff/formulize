@@ -201,6 +201,7 @@ CREATE TABLE `formulize_screen_listofentries` (
   `dedisplay` int(1) NOT NULL,
   `desavetext` varchar(255) NOT NULL default '',
   `columnwidth` int(1) NOT NULL,
+  `columnwidthmode` varchar(10) NOT NULL default 'natural',
   `textwidth` int(1) NOT NULL,
   `customactions` text NOT NULL,
   `entriesperpage` int(1) NOT NULL,

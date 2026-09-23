@@ -1280,6 +1280,50 @@ textarea {
   table-layout: auto;
 }
 
+/* Column-width modes (issue #919): the list screen's "How should the width of the columns
+   in the list be determined?" setting drives which of these three shapes the table ends up
+   in. All three keep .fz-table at width:100% / table-layout:auto - mainly what entriesdisplay.php
+   puts on the real column cells (columnWidthStyle, see drawEntries()) changes:
+     - 'full'    - cells get no inline width, so the auto-layout algorithm distributes 100% of
+                   the container across all columns, stretching them proportionally. No spacer
+                   column is rendered.
+     - 'fixed'   - every real column cell gets an inline `width: Npx`, and the table gets
+                   .fz-table--fixed-columns. Under auto layout a cell width is only a minimum:
+                   a column still grows to its content's min-content width, which for the nowrap
+                   cells below is the whole text. So in this mode the column cells wrap, with
+                   overflow-wrap:anywhere, which also shrinks their min-content width to about
+                   one character. The pixel width then wins, and the content wraps within it
+                   instead of being truncated. Unlike table-layout:fixed, this leaves the
+                   checkbox/controls column sized to its content. If the columns add up to
+                   more than the container, the table grows past 100% and .fz-list__body
+                   scrolls horizontally.
+     - 'natural' - every real column cell gets an inline `width: 1%`. With table-layout:auto that
+                   is not a literal 1% - it is the classic shrink-to-fit hint that makes the
+                   browser size the column to its content's min/max width instead of stretching it.
+   For 'fixed' and 'natural', a trailing `.formulize-spacer` cell with no inline width is appended
+   (spacerNeeded in entriesdisplay.php). Because it is the only column left unconstrained, the
+   auto-layout algorithm hands it all the leftover width instead of re-stretching the real columns,
+   so the table still visually reaches the far edge of its container even though its real columns
+   stopped growing at their content/pixel width. */
+.fz-table .formulize-spacer {
+  cursor: default;
+}
+
+/* Fixed pixel width columns wrap their content (headers included) instead of truncating it, so
+   nothing longer than the column is hidden from the user. overflow-wrap:anywhere (not break-word)
+   is what lets the inline pixel width hold, because it counts toward min-content width (see the
+   column-width modes comment above). Scoped to .column so the checkbox/controls column keeps its
+   nowrap and stays sized to its content. The extra class in the selector beats the base
+   .fz-table th/td rule, which comes later in this file. Row heights (--row-h-*) are minimums on
+   table cells, so rows grow to fit the wrapped text. A wrapped header row is taller than 36px, so the sticky filter row
+   follows the header row's real height via --fz-thead-h (set in the Lyris bottomtemplate). */
+.fz-table.fz-table--fixed-columns .column {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  line-height: var(--lh-snug);
+}
+
 .fz-table-empty {
 	padding: 10px;
 }
@@ -1331,7 +1375,7 @@ textarea {
    bleeding through. */
 .fz-search-row td {
   position: sticky;
-  top: 36px;
+  top: var(--fz-thead-h, 36px);
   z-index: 2;
   background: var(--c-surface-2);
   /* Vertical breathing room so the filter inputs aren't flush against the
@@ -2074,7 +2118,7 @@ body:has(#formulize-masquerade-block) {
      include .fz-table in the selector chain. */
   .fz-table .fz-search-row .fz-cb,
   .fz-table .fz-search-row .column0 {
-    top: 36px;
+    top: var(--fz-thead-h, 36px);
     z-index: 3;
   }
 }

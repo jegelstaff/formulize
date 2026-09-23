@@ -978,8 +978,13 @@ define("_AM_FORMULIZE_SCREEN_LOE_DESC_EDITDESTINATION", "The drawer option only 
 define("_AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN", "What screen should be used to display individual entries when users click on them?");
 define("_AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN_DEFAULT", "Use the default version of this form");
 define("_AM_FORMULIZE_SCREEN_LOE_VIEWENTRYPAGEWORKS", "Pageworks page");
+define("_AM_FORMULIZE_SCREEN_LOE_COLUMNWIDTHMODE", "How should the width of the columns in the list be determined?");
+define("_AM_FORMULIZE_SCREEN_LOE_COLUMNWIDTHMODE_NATURAL", "Natural sizing - each column is sized to fit its content<br>");
+define("_AM_FORMULIZE_SCREEN_LOE_COLUMNWIDTHMODE_FULL", "Full width - the table expands to fill the available space<br>");
+define("_AM_FORMULIZE_SCREEN_LOE_COLUMNWIDTHMODE_FIXED", "Fixed pixel width - every column is the same width, in pixels");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_COLUMNWIDTHMODE", "With natural sizing or a fixed pixel width, if the resulting table is narrower than the space available, it will still appear to extend to the end of that space.");
 define("_AM_FORMULIZE_SCREEN_LOE_COLUMNWIDTH", "How many pixels wide should each column be?");
-define("_AM_FORMULIZE_SCREEN_LOE_DESC_COLUMNWIDTH", "Set to '0' to have columns expand to their natural width.");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_COLUMNWIDTH", "Only applies when 'Fixed pixel width' is selected above.");
 define("_AM_FORMULIZE_SCREEN_LOE_TEXTWIDTH", "How many characters of text should be displayed in any cell?");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_TEXTWIDTH", "Set to '0' for no limit.");
 define("_AM_FORMULIZE_SCREEN_LOE_USESEARCH", "Should the 'Quicksearch' boxes appear at the top of each column?");

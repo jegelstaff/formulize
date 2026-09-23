@@ -258,7 +258,8 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $headings['repeatheaders'] = $screen->getVar('repeatheaders');
   $headings['usesearchcalcmsgs'] = $screen->getVar('usesearchcalcmsgs');
   $headings['usesearch'] = $screen->getVar('usesearch');
-  $headings['columnwidth'] = $screen->getVar('columnwidth');
+  $headings['columnwidth'] = $screen->getVar('columnwidth') ? $screen->getVar('columnwidth') : formulizeListOfEntriesScreen::DEFAULT_FIXED_COLUMN_WIDTH;
+  $headings['columnwidthmode'] = $screen->getVar('columnwidthmode') ? $screen->getVar('columnwidthmode') : 'natural';
   $headings['textwidth'] = $screen->getVar('textwidth');
   $headings['usecheckboxes'] = $screen->getVar('usecheckboxes');
   $headings['useviewentrylinks'] = $screen->getVar('useviewentrylinks');
