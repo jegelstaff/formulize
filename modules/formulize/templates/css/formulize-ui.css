@@ -175,6 +175,7 @@
 .fz-stack,
 .fz-cluster,
 .fz-auto-grid,
+.fz-grid-list,
 .fz-with-sidebar,
 .fz-switcher {
   --fz-gap-x: initial;
@@ -185,6 +186,7 @@
 .fz-stack > *,
 .fz-cluster > *,
 .fz-auto-grid > *,
+.fz-grid-list > *,
 .fz-with-sidebar > *,
 .fz-switcher > * {
   margin-block: 0;
@@ -210,26 +212,39 @@
    wide (10rem, so two fit in the drawer at its narrowest), so fewer columns as
    the space narrows and one when it is narrower than that. The --max-N modifiers cap the number of columns. Set
    --fz-auto-grid-min on the element itself to change the minimum. */
-.fz-auto-grid {
+.fz-auto-grid,
+.fz-grid-list {
   --fz-gap: calc(var(--fz-spacing) * 4);
   --fz-auto-grid-min: 10rem;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--fz-auto-grid-min)), 1fr));
 }
-.fz-auto-grid--narrow { --fz-auto-grid-min: 8rem; }
-.fz-auto-grid--wide   { --fz-auto-grid-min: 18rem; }
-.fz-auto-grid--max-2 { --fz-auto-grid-max: 2; }
-.fz-auto-grid--max-3 { --fz-auto-grid-max: 3; }
-.fz-auto-grid--max-4 { --fz-auto-grid-max: 4; }
-.fz-auto-grid--max-5 { --fz-auto-grid-max: 5; }
-.fz-auto-grid--max-6 { --fz-auto-grid-max: 6; }
+.fz-auto-grid--narrow,
+.fz-grid-list--narrow { --fz-auto-grid-min: 8rem; }
+.fz-auto-grid--wide,
+.fz-grid-list--wide   { --fz-auto-grid-min: 18rem; }
+.fz-auto-grid--max-2,
+.fz-grid-list--max-2 { --fz-auto-grid-max: 2; }
+.fz-auto-grid--max-3,
+.fz-grid-list--max-3 { --fz-auto-grid-max: 3; }
+.fz-auto-grid--max-4,
+.fz-grid-list--max-4 { --fz-auto-grid-max: 4; }
+.fz-auto-grid--max-5,
+.fz-grid-list--max-5 { --fz-auto-grid-max: 5; }
+.fz-auto-grid--max-6,
+.fz-grid-list--max-6 { --fz-auto-grid-max: 6; }
 /* With a maximum, a column is never narrower than an equal share of the row
    at that maximum, so no more than that many fit. */
 .fz-auto-grid--max-2,
+.fz-grid-list--max-2,
 .fz-auto-grid--max-3,
+.fz-grid-list--max-3,
 .fz-auto-grid--max-4,
+.fz-grid-list--max-4,
 .fz-auto-grid--max-5,
-.fz-auto-grid--max-6 {
+.fz-grid-list--max-5,
+.fz-auto-grid--max-6,
+.fz-grid-list--max-6 {
   grid-template-columns: repeat(
     auto-fit,
     minmax(
@@ -302,6 +317,278 @@
 /* Spacer: takes up the free space in a row, pushing what follows to the end. */
 .fz-spacer { flex: 1 1 auto; }
 
+
+/* ============================================================
+   Components
+   ============================================================
+
+   Things to build with. Each has a main class, classes for its parts
+   (fz-card__title) and for its variations (fz-card--interactive), and draws
+   everything from the tokens, so it follows the theme, the Appearance page and
+   the density. They come before the utilities, so a utility can adjust one.
+
+   Elements inside a component that have no class of their own (a description
+   list's dt and dd) are selected through :where(), so that every selector here
+   still weighs one class.
+   ============================================================ */
+
+/* ---- Card -----------------------------------------------------------------
+   A surface for one thing: an entry, a summary, a group of fields. Its
+   children are stacked 3 steps apart, with their own margins removed. */
+.fz-card {
+  --fz-gap: calc(var(--fz-spacing) * 3);
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--fz-gap);
+  min-width: 0;
+  padding: calc(var(--fz-spacing) * 4);
+  background: var(--fz-color-surface);
+  border: 1px solid var(--fz-color-border);
+  border-radius: var(--fz-radius-lg);
+  box-shadow: var(--fz-shadow-sm);
+  color: var(--fz-color-text);
+}
+.fz-card > * { margin-block: 0; }
+
+/* A row for the title and any actions, wrapping when out of room. */
+.fz-card__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--fz-spacing) * 2);
+}
+.fz-card__title {
+  margin: 0;
+  font-family: var(--fz-font-heading);
+  font-size: var(--fz-text-base);
+  line-height: var(--fz-leading-snug);
+  font-weight: var(--fz-font-weight-semibold);
+}
+.fz-card__subtitle {
+  margin: 0;
+  color: var(--fz-color-text-muted);
+  font-size: var(--fz-text-xs-plus);
+}
+/* A row at the bottom, separated by a line. */
+.fz-card__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(var(--fz-spacing) * 2);
+  padding-top: calc(var(--fz-spacing) * 3);
+  border-top: 1px solid var(--fz-color-border);
+}
+/* No padding: for a table or an image that should reach the edges. */
+.fz-card--flush {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* The whole card is clickable. fz-card__link goes on the one link the card
+   opens, or on an element around it when the link is generated for you
+   (viewEntryLink() in a list template); its click area is stretched over the
+   card. Other links and controls in the card still work on their own. */
+.fz-card--interactive {
+  transition: border-color var(--fz-duration-fast) var(--fz-ease-out),
+              box-shadow var(--fz-duration-fast) var(--fz-ease-out);
+}
+.fz-card--interactive:hover {
+  border-color: var(--fz-color-border-strong);
+  box-shadow: var(--fz-shadow-md);
+}
+.fz-card--interactive:focus-within {
+  box-shadow: var(--fz-focus-ring);
+}
+.fz-card__link,
+.fz-card__link :where(a) {
+  color: inherit;
+  text-decoration: none;
+}
+.fz-card__link:hover,
+.fz-card__link :where(a):hover {
+  text-decoration: underline;
+}
+.fz-card__link:focus-visible,
+.fz-card__link :where(a):focus-visible {
+  outline: none;
+}
+.fz-card__link::after,
+.fz-card__link :where(a)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+/* the stretched link's own ::after is not a link inside the card */
+.fz-card__link:not(a)::after { content: none; }
+.fz-card--interactive :where(a, button, input, select, textarea, label):where(:not(.fz-card__link, .fz-card__link a)) {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---- Card list and grid list ------------------------------------------------
+   A list of entries shown as cards: one below the other (fz-card-list), or in
+   columns (fz-grid-list, which works like fz-auto-grid and takes the same
+   --max-N, --narrow and --wide modifiers, with its own name). On a <ul> or
+   <ol>, with an <li class="fz-card"> for each entry. */
+.fz-card-list {
+  --fz-gap: calc(var(--fz-spacing) * 3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--fz-gap);
+}
+.fz-card-list,
+.fz-grid-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fz-card-list > * { margin-block: 0; }
+
+/* ---- Badge ------------------------------------------------------------------
+   A short label: a status, a category, a count. The tone is in the tint and the
+   dot; the text stays the normal text colour, so it is readable whatever
+   colours the theme or the Appearance page uses. */
+.fz-badge {
+  --fz-tone: var(--fz-color-text-subtle);
+  --fz-tone-soft: var(--fz-color-surface-3);
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--fz-spacing) * 1.5);
+  height: calc(var(--fz-spacing) * 5.5);
+  padding: 0 calc(var(--fz-spacing) * 2);
+  border-radius: var(--fz-radius-full);
+  background: var(--fz-tone-soft);
+  color: var(--fz-color-text);
+  font-size: var(--fz-text-xs);
+  line-height: 1;
+  font-weight: var(--fz-font-weight-medium);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.fz-badge::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--fz-tone);
+}
+.fz-badge--plain::before { content: none; }
+.fz-badge--accent  { --fz-tone: var(--fz-color-accent);  --fz-tone-soft: var(--fz-color-accent-soft); }
+.fz-badge--info    { --fz-tone: var(--fz-color-info);    --fz-tone-soft: var(--fz-color-info-soft); }
+.fz-badge--success { --fz-tone: var(--fz-color-success); --fz-tone-soft: var(--fz-color-success-soft); }
+.fz-badge--warning { --fz-tone: var(--fz-color-warning); --fz-tone-soft: var(--fz-color-warning-soft); }
+.fz-badge--danger  { --fz-tone: var(--fz-color-danger);  --fz-tone-soft: var(--fz-color-danger-soft); }
+
+/* ---- Callout ----------------------------------------------------------------
+   A message set apart from the content around it: instructions, a warning, the
+   result of something the user did (give that one role="status"). The tone is
+   the tint and the border at the start; the text stays the normal colour. */
+.fz-callout {
+  --fz-tone: var(--fz-color-accent);
+  --fz-tone-soft: var(--fz-color-accent-soft);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--fz-spacing);
+  padding: calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 4);
+  border: 1px solid color-mix(in srgb, var(--fz-tone) 25%, transparent);
+  border-inline-start: 4px solid var(--fz-tone);
+  border-radius: var(--fz-radius-md);
+  background: var(--fz-tone-soft);
+  color: var(--fz-color-text);
+}
+.fz-callout > * { margin-block: 0; }
+.fz-callout__title {
+  font-weight: var(--fz-font-weight-semibold);
+}
+.fz-callout--info    { --fz-tone: var(--fz-color-info);    --fz-tone-soft: var(--fz-color-info-soft); }
+.fz-callout--success { --fz-tone: var(--fz-color-success); --fz-tone-soft: var(--fz-color-success-soft); }
+.fz-callout--warning { --fz-tone: var(--fz-color-warning); --fz-tone-soft: var(--fz-color-warning-soft); }
+.fz-callout--danger  { --fz-tone: var(--fz-color-danger);  --fz-tone-soft: var(--fz-color-danger-soft); }
+
+/* ---- Toolbar ----------------------------------------------------------------
+   A row with a group at each end, such as a heading and its buttons, wrapping
+   when it runs out of room. */
+.fz-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--fz-spacing) * 2);
+}
+.fz-toolbar > * { margin-block: 0; }
+.fz-toolbar__start,
+.fz-toolbar__end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(var(--fz-spacing) * 2);
+  min-width: 0;
+}
+.fz-toolbar__start > *,
+.fz-toolbar__end > * { margin-block: 0; }
+.fz-toolbar__end { margin-inline-start: auto; }
+
+/* ---- Description list -------------------------------------------------------
+   Labelled values: an entry's fields in a card, a summary. On a <dl>; each
+   <dt>/<dd> pair may be wrapped in a <div>. Terms and values side by side;
+   fz-dl--stacked puts each term above its value. */
+.fz-dl {
+  display: grid;
+  /* terms take the width they need, but never more than 40%, so values keep
+     room to wrap between words even in a narrow card */
+  grid-template-columns: fit-content(40%) minmax(0, 1fr);
+  gap: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 4);
+  margin: 0;
+}
+.fz-dl > :where(div) { display: contents; }
+.fz-dl :where(dt) {
+  margin: 0;
+  color: var(--fz-color-text-muted);
+  font-weight: var(--fz-font-weight-medium);
+}
+.fz-dl :where(dd) {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+.fz-dl--stacked {
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--fz-spacing);
+}
+.fz-dl--stacked :where(dd) { margin-bottom: calc(var(--fz-spacing) * 2); }
+.fz-dl--stacked :where(dd:last-child) { margin-bottom: 0; }
+
+/* ---- Empty state ------------------------------------------------------------
+   What to show where there is nothing to show yet, and what to do about it. */
+.fz-empty {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--fz-spacing) * 2);
+  padding: calc(var(--fz-spacing) * 10) calc(var(--fz-spacing) * 4);
+  border: 1px dashed var(--fz-color-border-strong);
+  border-radius: var(--fz-radius-lg);
+  color: var(--fz-color-text-muted);
+  text-align: center;
+}
+.fz-empty > * { margin: 0; }
+.fz-empty__title {
+  color: var(--fz-color-text);
+  font-size: var(--fz-text-base);
+  font-weight: var(--fz-font-weight-semibold);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fz-card--interactive { transition: none; }
+}
 
 /* ============================================================
    Layout utilities
