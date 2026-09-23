@@ -342,9 +342,9 @@ function formulize_appearanceHeadingFontMap($theme = null) {
  * the only value that moves every text size together.
  *
  * The size an admin is *thinking about* is the one they can see: the standard
- * text in lists and content. In Lyris that is --fs-13, ie: 13px, not the 16px
- * root it is derived from. Showing them "16px" and calling it the font size is
- * telling them their content text is 16px when it is 13px.
+ * text in lists and content. In Lyris that is --fz-text-sm, ie: 14px, not the
+ * 16px root it is derived from. Showing them "16px" and calling it the font size
+ * is telling them their content text is 16px when it is 14px.
  *
  * So the Appearance page works entirely in content text size - that is what the
  * dropdown offers, what is recorded in the generated stylesheet's settings
@@ -355,20 +355,24 @@ function formulize_appearanceHeadingFontMap($theme = null) {
 
 /**
  * How big a theme's standard content text is as a proportion of its root font
- * size, from the --font-size-content-ratio the theme declares.
+ * size.
  *
- * Each theme declares its own because each sets its content text at a different
- * step of its scale: Lyris's content rules are --fs-13 (0.8125rem) and so it
- * declares 0.8125, while Anari sizes content text at the root size itself and
- * declares 1. A theme that declares nothing is read as 1, which is the safe
- * reading: the setting then simply means what it says.
+ * A theme built on Formulize UI sets its content text at --fz-text-sm, and
+ * declares that token in rem, so the ratio is read from it: 0.875 in Lyris. A
+ * theme that sizes its content text some other way can declare the ratio itself
+ * as --formulize-content-ratio, which wins: Anari sizes its content text at the
+ * root size and declares 1. A theme that declares neither is read as 1, which is
+ * the safe reading: the setting then simply means what it says.
  *
  * @param string|null $theme theme folder name, defaults to the active theme
  * @return float a ratio greater than zero
  */
 function formulize_appearanceContentRatio($theme = null) {
     $tokens = formulize_appearanceThemeTokens($theme);
-    $ratio = isset($tokens['--font-size-content-ratio']) ? (float) $tokens['--font-size-content-ratio'] : 0;
+    $ratio = isset($tokens['--formulize-content-ratio']) ? (float) $tokens['--formulize-content-ratio'] : 0;
+    if ($ratio <= 0 AND isset($tokens['--fz-text-sm']) AND preg_match('/^([0-9]*\.?[0-9]+)rem$/', trim($tokens['--fz-text-sm']), $match)) {
+        $ratio = (float) $match[1];
+    }
     return ($ratio > 0) ? $ratio : 1;
 }
 
@@ -419,7 +423,7 @@ function formulize_appearanceThemeContentSize($theme = null) {
  * of the default), applied to the theme's own content size instead of to a fixed
  * 16px, so the middle option is always the theme's real current size and the
  * others are the same relative jumps. On Anari, whose content ratio is 1, that
- * reproduces exactly the 14-20px list; on Lyris it becomes 11-16px around 13px.
+ * reproduces exactly the 14-20px list; on Lyris it becomes 12-18px around 14px.
  *
  * @param string|null $theme theme folder name, defaults to the active theme
  * @return array css length => label
@@ -488,14 +492,44 @@ function formulize_appearanceBaseFontSizeFor($contentSize, $theme = null) {
 }
 
 /**
+ * The densities on offer: how much space there is, and how tall buttons, form
+ * fields and list rows are. Each one is a value for --fz-spacing, the step every
+ * space and size in Formulize UI is a multiple of, so that one token is all the
+ * generated stylesheet has to set. Standard is the default. The same values are
+ * the fz-density-* classes in modules/formulize/templates/css/formulize-ui.css,
+ * which set the density for one part of a page: keep the two in step.
+ *
+ * @return array key => array('label' => ..., 'spacing' => css length or '' for the default)
+ */
+function formulize_appearanceDensityMap() {
+    return array(
+        'tight'       => array('label' => 'Tight',       'spacing' => '0.21875rem'),
+        'standard'    => array('label' => 'Standard',    'spacing' => ''),
+        'comfortable' => array('label' => 'Comfortable', 'spacing' => '0.28125rem'),
+    );
+}
+
+/**
+ * Whether a theme uses the density setting: whether it sizes things with
+ * Formulize UI's --fz-spacing step, which it declares with its other tokens.
+ *
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return boolean
+ */
+function formulize_appearanceThemeUsesDensity($theme = null) {
+    $tokens = formulize_appearanceThemeTokens($theme);
+    return isset($tokens['--fz-spacing']);
+}
+
+/**
  * The names of all the appearance settings, ie: the keys of a settings array
  *
  * @return array of setting names
  */
 function formulize_appearanceSettingNames() {
     $names = array('appearance_font', 'appearance_customfont', 'appearance_headingfont',
-        'appearance_headingcustomfont', 'appearance_fontsize', 'appearance_logo',
-        'appearance_favicon');
+        'appearance_headingcustomfont', 'appearance_fontsize', 'appearance_density',
+        'appearance_logo', 'appearance_favicon');
     // the definition, not the theme-aware map: the setting names are the same for every
     // theme, and only the defaults differ, so there is no theme to resolve here
     foreach (array_keys(formulize_appearanceColourMapDefinition()) as $key) {
@@ -676,6 +710,10 @@ function formulize_sanitizeAppearanceSettings($values, $theme = null) {
     // its default type scale is.
     $fontSize = formulize_sanitizeAppearanceFontSize(isset($values['appearance_fontsize']) ? $values['appearance_fontsize'] : '', $theme);
     $clean['appearance_fontsize'] = ($fontSize == formulize_appearanceThemeContentSize($theme)) ? '' : $fontSize;
+    // standard is the default, and so, like every other default, is recorded as nothing
+    $densities = formulize_appearanceDensityMap();
+    $density = isset($values['appearance_density']) ? trim((string) $values['appearance_density']) : '';
+    $clean['appearance_density'] = (isset($densities[$density]) AND $densities[$density]['spacing'] !== '') ? $density : '';
     // the logo and the favicon are bare filenames in the theme's appearance folder,
     // never paths
     foreach (array('appearance_logo', 'appearance_favicon') as $fileSetting) {
@@ -696,11 +734,13 @@ function formulize_sanitizeAppearanceSettings($values, $theme = null) {
  *
  * Generation 2: the tokens were renamed to the Formulize UI names (--c-accent
  * became --fz-color-accent, and so on).
+ * Generation 3: Lyris's content text moved from 13px to 14px, so a chosen text
+ * size now works out to a different root font size.
  *
  * @return string the whole comment, one line
  */
 function formulize_appearanceCssGenerationMarker() {
-    return '/* Formulize appearance stylesheet, generation 2 */';
+    return '/* Formulize appearance stylesheet, generation 3 */';
 }
 
 /**
@@ -1170,6 +1210,11 @@ function formulize_getAppearanceCssOverrides($settings = null, $theme = null) {
     $fontSize = formulize_sanitizeAppearanceFontSize(isset($settings['appearance_fontsize']) ? $settings['appearance_fontsize'] : '', $theme);
     if ($fontSize AND $fontSize != formulize_appearanceThemeContentSize($theme)) {
         $overrides['--formulize-font-size-base'] = formulize_appearanceBaseFontSizeFor($fontSize, $theme);
+    }
+    $densities = formulize_appearanceDensityMap();
+    $density = isset($settings['appearance_density']) ? $settings['appearance_density'] : '';
+    if (isset($densities[$density]) AND $densities[$density]['spacing'] !== '') {
+        $overrides['--fz-spacing'] = $densities[$density]['spacing'];
     }
     foreach (formulize_appearanceColourMap($theme) as $key => $colour) {
         $value = formulize_sanitizeAppearanceColour($settings['appearance_' . $key]);

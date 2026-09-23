@@ -95,9 +95,10 @@
      above. This theme puts no font-size on `body` and sizes its content text at
      the root size itself, so the two are the same thing and the ratio is 1: the
      "Text size" setting on the Appearance page means exactly what it says here.
-     (Lyris sets its content text at 0.8125 of the base, and so declares that -
-     see themes/Lyris/css/tokens.css.) */
-  --font-size-content-ratio: 1;
+     (A theme built on Formulize UI, like Lyris, needs no such token: its content
+     text is --fz-text-sm, which the Appearance page reads the ratio from. See
+     formulize_appearanceContentRatio().) */
+  --formulize-content-ratio: 1;
 
   /* Anari-specific shadows. Both follow the colour they tint, so they keep
      tracking the Primary/Text settings without the Appearance page needing to

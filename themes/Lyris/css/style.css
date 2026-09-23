@@ -79,8 +79,8 @@ h1, h2, h3, h4, h5, h6,
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: var(--s-2);
-  padding: 0 var(--s-4);
+  gap: calc(var(--fz-spacing) * 2);
+  padding: 0 calc(var(--fz-spacing) * 4);
   background: var(--fz-color-surface);
   border-bottom: 1px solid var(--fz-color-border);
   z-index: 10;
@@ -90,7 +90,7 @@ h1, h2, h3, h4, h5, h6,
 .fz-header__start {
   display: flex;
   align-items: center;
-  gap: var(--s-2);
+  gap: calc(var(--fz-spacing) * 2);
 }
 
 .fz-header__brand {
@@ -107,12 +107,12 @@ h1, h2, h3, h4, h5, h6,
 .fz-header__end {
   display: flex;
   align-items: center;
-  gap: var(--s-3);
+  gap: calc(var(--fz-spacing) * 3);
   margin-left: auto;
 }
 
 .fz-header__action-link {
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
   font-weight: 500;
   color: var(--fz-color-text-muted);
   text-decoration: none;
@@ -193,13 +193,13 @@ h1, h2, h3, h4, h5, h6,
    `.formulize-screen` is excluded for the same reason. A page can render a bare
    Formulize screen while living outside the module — edituser.php is one, and its
    body id is "system" — and that content manages its own insets too
-   (`.fz-form-screen` takes a --s-5 side margin, `#multipage-controls` is
+   (`.fz-form-screen` takes a calc(var(--fz-spacing) * 5) side margin, `#multipage-controls` is
    deliberately full-bleed). The body class is the theme's existing "this content
    is a Formulize screen" signal, so keying off it covers those pages whatever
    their body id is. Pages that merely embed a screen inside their own wrapper and
    chrome (signup.php) never set the signal, so they keep the gutter. */
 body:not(#formulize):not(.formulize-screen) .fz-main {
-  padding: var(--s-6) var(--s-6) 0;
+  padding: calc(var(--fz-spacing) * 6) calc(var(--fz-spacing) * 6) 0;
 }
 
 /* Inline / drawer-iframe mode — header and sidebar suppressed via theme.html.
@@ -255,8 +255,8 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
   --formulize-drawer-foot-bg:  var(--fz-color-surface-2);
   --formulize-drawer-shadow:   var(--fz-shadow-lg);
   --formulize-drawer-radius:   var(--fz-radius-md);
-  --formulize-drawer-pad-x:    var(--s-5);
-  --formulize-drawer-pad-y:    var(--s-4);
+  --formulize-drawer-pad-x:    calc(var(--fz-spacing) * 5);
+  --formulize-drawer-pad-y:    calc(var(--fz-spacing) * 4);
 
   /* Lifted above the masquerade bar so the drawer's footer buttons stay clickable. */
   bottom: var(--lyris-masquerade-height);
@@ -273,7 +273,7 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
    looks like itself in both places. Skin only -- the layout, and the wrapping of
    the row, come from core. */
 .formulize-drawer__tab {
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
   font-weight: 500;
   color: var(--fz-color-text-muted);
   border: 1px solid var(--fz-color-border);
@@ -308,7 +308,7 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
 }
 
 .formulize-drawer__head {
-  gap: var(--s-2);
+  gap: calc(var(--fz-spacing) * 2);
 }
 
 .formulize-drawer__title {
@@ -316,22 +316,22 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
 }
 
 .formulize-drawer__loading {
-  padding: var(--s-6);
+  padding: calc(var(--fz-spacing) * 6);
 }
 
 /* The footer tray takes the same gutter and gap as the full screen action bar does
-   at a mobile width (`#multipage-controls` below: var(--s-4) padding, var(--s-2)
+   at a mobile width (`#multipage-controls` below: calc(var(--fz-spacing) * 4) padding, calc(var(--fz-spacing) * 2)
    gap), because it is now the same bar -- same wrapping flex row, same
    `.formulize-form-submit-button` children. Core already sets these in px; they are
    restated in Lyris's tokens so the two bars stay tied together if the scale moves. */
 .formulize-drawer__foot {
-  padding: var(--s-4);
-  gap: var(--s-2);
+  padding: calc(var(--fz-spacing) * 4);
+  gap: calc(var(--fz-spacing) * 2);
 }
 
 .formulize-drawer__notice,
 .formulize-drawer__page-indicator {
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
 }
 
 /* The drawer's chrome buttons (the header's Back and Close icons), given Lyris's
@@ -341,9 +341,9 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
    they are `.formulize-form-submit-button`, skinned by the full screen rules further
    down this file. */
 .formulize-drawer .formulize-drawer__btn {
-  height: 32px;
-  padding: 0 var(--s-3);
-  font-size: var(--fs-13);
+  height: var(--fz-control-height);
+  padding: 0 calc(var(--fz-spacing) * 3);
+  font-size: var(--fz-text-sm);
   font-weight: 500;
   border-radius: var(--fz-radius-md);
   border: 1px solid var(--fz-color-border-strong);
@@ -380,7 +380,7 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
    back on the square icon buttons (source order beats the component's own
    --icon rule, since both selectors have the same specificity). */
 .formulize-drawer .formulize-drawer__btn--icon {
-  width: 32px;
+  width: var(--fz-control-height);
   padding: 0;
 }
 
@@ -469,14 +469,14 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 32px;
-  padding: 0 var(--s-3);
+  height: var(--fz-control-height);
+  padding: 0 calc(var(--fz-spacing) * 3);
   border-radius: var(--fz-radius-md);
   border: 1px solid var(--fz-color-border-strong);
   background: var(--fz-color-surface);
   color: var(--fz-color-text);
   font: inherit;
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
@@ -514,10 +514,10 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
   color: var(--fz-color-accent);
 }
 
-.fz-btn--sm  { height: 26px; padding: 0 var(--s-2); font-size: var(--fz-text-xs); }
-.fz-btn--lg  { height: 36px; padding: 0 14px; font-size: var(--fz-text-sm); }
-.fz-btn--icon { width: 32px; padding: 0; }
-.fz-btn--icon.fz-btn--sm { width: 26px; }
+.fz-btn--sm  { height: calc(var(--fz-spacing) * 6.5); padding: 0 calc(var(--fz-spacing) * 2); font-size: var(--fz-text-xs); }
+.fz-btn--lg  { height: calc(var(--fz-spacing) * 9); padding: 0 14px; font-size: var(--fz-text-sm); }
+.fz-btn--icon { width: var(--fz-control-height); padding: 0; }
+.fz-btn--icon.fz-btn--sm { width: calc(var(--fz-spacing) * 6.5); }
 
 /* Chip — pill button used for filter chips and selection bar actions */
 .fz-chip {
@@ -531,7 +531,7 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
   border: 1px solid var(--fz-color-accent-soft-2);
   color: var(--fz-color-text);
   font-family: var(--fz-font-sans);
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
   font-weight: 500;
   white-space: nowrap;
   cursor: default;
@@ -589,8 +589,8 @@ button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); bo
 /* Helpers */
 .fz-spacer  { flex: 1 1 auto; }
 .fz-divider { width: 1px; height: 20px; background: var(--fz-color-border); }
-.fz-hstack  { display: flex; align-items: center; gap: var(--s-2); }
-.fz-vstack  { display: flex; flex-direction: column; gap: var(--s-2); }
+.fz-hstack  { display: flex; align-items: center; gap: calc(var(--fz-spacing) * 2); }
+.fz-vstack  { display: flex; flex-direction: column; gap: calc(var(--fz-spacing) * 2); }
 .fz-muted   { color: var(--fz-color-text-muted); }
 .fz-subtle  { color: var(--fz-color-text-subtle); }
 .fz-mono    { font-family: var(--fz-font-mono); font-feature-settings: "tnum"; }
@@ -690,10 +690,10 @@ input[type="week"],
 input:not([type]),
 select,
 textarea {
-  height: 32px;
+  height: var(--fz-control-height);
   padding: 0 10px;
   font: inherit;
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
   font-family: var(--fz-font-sans);
   color: var(--fz-color-text);
   background: var(--fz-color-surface);
@@ -792,8 +792,8 @@ textarea {
 .fz-list__titlebar {
   display: flex;
   align-items: center;
-  gap: var(--s-2);
-  padding: var(--s-3) var(--s-5);
+  gap: calc(var(--fz-spacing) * 2);
+  padding: calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 5);
   background: var(--fz-color-surface);
   border-bottom: 1px solid var(--fz-color-border);
   min-height: 56px;
@@ -803,7 +803,7 @@ textarea {
 .fz-list__titlebar-start {
   display: flex;
   align-items: center;
-  gap: var(--s-3);
+  gap: calc(var(--fz-spacing) * 3);
   flex: 1;
   min-width: 0;
 }
@@ -811,7 +811,7 @@ textarea {
 .fz-list__titlebar-end {
   display: flex;
   align-items: center;
-  gap: var(--s-2);
+  gap: calc(var(--fz-spacing) * 2);
   flex-shrink: 0;
 }
 
@@ -821,14 +821,14 @@ textarea {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 32px;
-  padding: 0 var(--s-3);
+  height: var(--fz-control-height);
+  padding: 0 calc(var(--fz-spacing) * 3);
   border-radius: var(--fz-radius-md);
   border: 1px solid var(--fz-color-border-strong);
   background: var(--fz-color-surface);
   color: var(--fz-color-text);
   font: inherit;
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
@@ -850,7 +850,7 @@ textarea {
 
 /* More actions (...) — ghost icon button */
 .fz-list__titlebar #formulize_moreActionsButton {
-  width: 32px;
+  width: var(--fz-control-height);
   padding: 0;
   border-color: transparent;
   background: transparent;
@@ -861,7 +861,7 @@ textarea {
   font-size: var(--fz-text-xl);
   font-weight: 600;
   letter-spacing: -0.01em;
-  line-height: var(--lh-tight);
+  line-height: var(--fz-leading-tight);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -893,7 +893,7 @@ textarea {
   border: 1px solid var(--fz-color-border);
   border-radius: var(--fz-radius-lg);
   box-shadow: var(--fz-shadow-lg);
-  padding: var(--s-1) 0;
+  padding: calc(var(--fz-spacing) * 1) 0;
   flex-direction: column;
 }
 
@@ -909,11 +909,11 @@ textarea {
   align-items: center;
   width: 100%;
   height: 30px;
-  padding: 0 var(--s-2);
+  padding: 0 calc(var(--fz-spacing) * 2);
   border: 0;
   background: transparent;
   font: inherit;
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
   color: var(--fz-color-text);
   border-radius: var(--fz-radius-sm);
   cursor: pointer;
@@ -942,7 +942,7 @@ textarea {
 .fz-list__action-panel input[type="button"].formulize_button,
 .fz-list__action-panel input[type="submit"].formulize_button {
   height: 30px;
-  padding: 0 var(--s-2);
+  padding: 0 calc(var(--fz-spacing) * 2);
   border: 0;
   border-radius: var(--fz-radius-sm);
   background: transparent;
@@ -960,27 +960,27 @@ textarea {
   border-radius: var(--fz-radius-lg);
   box-shadow: var(--fz-shadow-lg);
   border: 1px solid var(--fz-color-border);
-  padding: var(--s-1);
+  padding: calc(var(--fz-spacing) * 1);
   min-width: 180px;
 }
 
 .fz-pop__item {
   display: flex;
   align-items: center;
-  gap: var(--s-2);
+  gap: calc(var(--fz-spacing) * 2);
   width: 100%;
   min-height: 30px;
-  padding: 5px var(--s-2);
+  padding: 5px calc(var(--fz-spacing) * 2);
   border: 0;
   background: transparent;
   font: inherit;
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
   color: var(--fz-color-text);
   border-radius: var(--fz-radius-sm);
   cursor: pointer;
   text-align: left;
   white-space: normal;
-  line-height: var(--lh-snug);
+  line-height: var(--fz-leading-snug);
 }
 
 .fz-pop__item:hover { background: var(--fz-color-surface-3); }
@@ -989,7 +989,7 @@ textarea {
 .fz-pop__item--disabled { color: var(--fz-color-text-subtle); cursor: default; pointer-events: none; }
 .fz-pop__item--danger { color: var(--fz-color-danger); }
 .fz-pop__sep { height: 1px; background: var(--fz-color-border); margin: 4px 2px; }
-.fz-pop__group { padding: 4px 8px; font-size: var(--fs-11); color: var(--fz-color-text-subtle); text-transform: uppercase; letter-spacing: .04em; }
+.fz-pop__group { padding: 4px 8px; font-size: var(--fz-text-xs); color: var(--fz-color-text-subtle); text-transform: uppercase; letter-spacing: .04em; }
 
 /* View switcher — binoculars icon button + dropdown panel */
 .fz-view-switcher {
@@ -1007,7 +1007,7 @@ textarea {
   border: 1px solid var(--fz-color-border);
   border-radius: var(--fz-radius-lg);
   box-shadow: var(--fz-shadow-lg);
-  padding: var(--s-1) 0;
+  padding: calc(var(--fz-spacing) * 1) 0;
   flex-direction: column;
 }
 
@@ -1024,8 +1024,8 @@ textarea {
   right: 0;
   z-index: 10;
   align-items: center;
-  gap: var(--s-2);
-  padding: var(--s-3) var(--s-5);
+  gap: calc(var(--fz-spacing) * 2);
+  padding: calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 5);
   background: var(--fz-color-text);
   color: var(--fz-color-page);
   border-bottom: 1px solid var(--fz-color-text);
@@ -1039,14 +1039,14 @@ textarea {
 .fz-selection-bar__start {
   display: flex;
   align-items: center;
-  gap: var(--s-2);
+  gap: calc(var(--fz-spacing) * 2);
   flex-shrink: 0;
 }
 
 .fz-selection-bar__actions {
   display: flex;
   align-items: center;
-  gap: var(--s-2);
+  gap: calc(var(--fz-spacing) * 2);
   flex-wrap: wrap;
 }
 
@@ -1085,7 +1085,7 @@ textarea {
   border: 1px solid rgba(255,255,255,.18);
   color: #fff;
   font: inherit;
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
@@ -1155,11 +1155,11 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--s-4);
-  padding: var(--s-3) var(--s-5);
+  gap: calc(var(--fz-spacing) * 4);
+  padding: calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 5);
   background: var(--fz-color-surface);
   border-top: 1px solid var(--fz-color-border);
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
   color: var(--fz-color-text-muted);
   flex-shrink: 0;
 }
@@ -1167,13 +1167,13 @@ textarea {
 .fz-list__footer-start {
   display: flex;
   align-items: center;
-  gap: var(--s-3);
+  gap: calc(var(--fz-spacing) * 3);
 }
 
 .fz-list__footer-end {
   display: flex;
   align-items: center;
-  gap: var(--s-2);
+  gap: calc(var(--fz-spacing) * 2);
 }
 
 /* "Hide repeating data" label wraps its text and the #toggleRepeatData
@@ -1182,7 +1182,7 @@ textarea {
 .fz-list__footer-start label[for="toggleRepeatData"] {
   display: inline-flex;
   align-items: center;
-  gap: var(--s-2);
+  gap: calc(var(--fz-spacing) * 2);
   cursor: pointer;
 }
 
@@ -1191,21 +1191,21 @@ textarea {
 .fz-pagination {
   display: flex;
   align-items: center;
-  gap: var(--s-3);
+  gap: calc(var(--fz-spacing) * 3);
 }
 
 .fz-pagination__nav {
   display: flex;
   align-items: center;
-  gap: var(--s-1);
+  gap: calc(var(--fz-spacing) * 1);
 }
 
 .fz-pagination__status {
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
   color: var(--fz-color-text-muted);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-  padding: 0 var(--s-1);
+  padding: 0 calc(var(--fz-spacing) * 1);
 }
 
 /* Mobile-only "pg" abbreviation — hidden on desktop where the full "Page" label shows. */
@@ -1229,7 +1229,7 @@ textarea {
   .fz-pagination__pages {
     display: flex;
     align-items: center;
-    gap: var(--s-1);
+    gap: calc(var(--fz-spacing) * 1);
   }
 
   /* On desktop the numbered links replace the compact "Page X of Y" status. */
@@ -1252,7 +1252,7 @@ textarea {
   }
 
   .fz-pagination__ellipsis {
-    padding: 0 var(--s-1);
+    padding: 0 calc(var(--fz-spacing) * 1);
     color: var(--fz-color-text-muted);
     user-select: none;
   }
@@ -1276,7 +1276,7 @@ textarea {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
   table-layout: auto;
 }
 
@@ -1314,14 +1314,14 @@ textarea {
    is what lets the inline pixel width hold, because it counts toward min-content width (see the
    column-width modes comment above). Scoped to .column so the checkbox/controls column keeps its
    nowrap and stays sized to its content. The extra class in the selector beats the base
-   .fz-table th/td rule, which comes later in this file. Row heights (--row-h-*) are minimums on
+   .fz-table th/td rule, which comes later in this file. Row heights (--fz-row-height) are minimums on
    table cells, so rows grow to fit the wrapped text. A wrapped header row is taller than 36px, so the sticky filter row
    follows the header row's real height via --lyris-thead-height (set in the Lyris bottomtemplate). */
 .fz-table.fz-table--fixed-columns .column {
   white-space: normal;
   overflow-wrap: anywhere;
   text-overflow: clip;
-  line-height: var(--lh-snug);
+  line-height: var(--fz-leading-snug);
 }
 
 .fz-table-empty {
@@ -1355,9 +1355,7 @@ textarea {
 .fz-table tbody tr:hover td { background: var(--fz-color-surface-2); }
 .fz-table tbody tr[aria-selected="true"] td { background: var(--fz-color-accent-soft); }
 
-.fz-table--compact     tbody td { height: var(--row-h-compact); }
-.fz-table--cozy        tbody td { height: var(--row-h-cozy); }
-.fz-table--comfortable tbody td { height: var(--row-h-comfortable); white-space: normal; line-height: var(--lh-snug); }
+.fz-table--cozy tbody td { height: var(--fz-row-height); } /* follows the density: 40px at standard */
 
 /* Filter / search row.
    The table uses auto layout, where a column's width is the widest content in any of
@@ -1380,8 +1378,8 @@ textarea {
   background: var(--fz-color-surface-2);
   /* Vertical breathing room so the filter inputs aren't flush against the
      row edges; keep the base horizontal --lyris-row-padding-x. */
-  padding-top: var(--s-2);
-  padding-bottom: var(--s-2);
+  padding-top: calc(var(--fz-spacing) * 2);
+  padding-bottom: calc(var(--fz-spacing) * 2);
 }
 
 .fz-search-row .main-cell-div {
@@ -1423,7 +1421,7 @@ textarea {
 /* Checkbox / controls column */
 .fz-table .fz-cb {
   width: 52px;
-  padding: 0 var(--s-2);
+  padding: 0 calc(var(--fz-spacing) * 2);
   vertical-align: middle;
   white-space: nowrap;
 }
@@ -1655,21 +1653,21 @@ a.de-edit-icon:hover::before {
 }
 
 .xo-blockszone {
-  padding: var(--s-4) var(--s-2);
+  padding: calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 2);
   display: flex;
   flex-direction: column;
-  gap: var(--s-4);
+  gap: calc(var(--fz-spacing) * 4);
 }
 
 /* Block title renders as a section label */
 .xo-blocktitle h3 {
-  padding: 0 var(--s-2) var(--s-2);
-  font-size: var(--fs-11);
+  padding: 0 calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 2);
+  font-size: var(--fz-text-xs);
   font-weight: 600;
   color: var(--fz-color-text-subtle);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  line-height: var(--lh-tight);
+  line-height: var(--fz-leading-tight);
 }
 
 /* The Formulize menu block has no real title: blockszone.html still emits a
@@ -1699,15 +1697,15 @@ a.de-edit-icon:hover::before {
 .main-menu__item-link {
   display: flex;
   align-items: center;
-  gap: var(--s-2);
-  padding: 6px var(--s-2);
+  gap: calc(var(--fz-spacing) * 2);
+  padding: 6px calc(var(--fz-spacing) * 2);
   border-radius: var(--fz-radius-md);
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
   font-weight: 500;
   color: var(--fz-color-text);
   text-decoration: none;
   transition: background var(--fz-duration-fast) var(--fz-ease-out);
-  line-height: var(--lh-snug);
+  line-height: var(--fz-leading-snug);
 	cursor: pointer;
 }
 
@@ -1812,8 +1810,8 @@ a.main-menu__item-link--active::before {
    a group read as one visually grouped branch hanging off their parent. */
 .main-menu__subitems {
   list-style: none;
-  margin: var(--s-1) 0 var(--s-1) var(--s-3);
-  padding: 0 0 0 var(--s-2);
+  margin: calc(var(--fz-spacing) * 1) 0 calc(var(--fz-spacing) * 1) calc(var(--fz-spacing) * 3);
+  padding: 0 0 0 calc(var(--fz-spacing) * 2);
   display: flex;
   flex-direction: column;
   gap: 1px;
@@ -1851,7 +1849,7 @@ a.main-menu__item-link--active::before {
    accounts for the rail's own 1px border, which sits outside the padding box
    the sub-item is positioned against. */
 .main-menu__subitem a.main-menu__item-link--active::before {
-  left: calc(-1 * var(--s-2) - 1px);
+  left: calc(-1 * calc(var(--fz-spacing) * 2) - 1px);
   top: 1px;
   bottom: 1px;
   width: 2px;
@@ -1864,16 +1862,16 @@ a.main-menu__item-link--active::before {
 
 #session-timeout-warning {
   position: fixed;
-  bottom: calc(var(--s-5) + var(--lyris-masquerade-height));
-  right: var(--s-5);
+  bottom: calc(calc(var(--fz-spacing) * 5) + var(--lyris-masquerade-height));
+  right: calc(var(--fz-spacing) * 5);
   max-width: 340px;
   background: var(--fz-color-surface);
   border: 1px solid var(--fz-color-border-strong);
   border-radius: var(--fz-radius-lg);
   box-shadow: var(--fz-shadow-lg);
-  padding: var(--s-4) var(--s-5);
+  padding: calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 5);
   z-index: 50;
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
   line-height: var(--fz-leading-normal);
   display: none; /* shown via JS */
 }
@@ -1887,7 +1885,7 @@ a.main-menu__item-link--active::before {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--s-2);
+  gap: calc(var(--fz-spacing) * 2);
 }
 
 .session-timeout-warning-icon {
@@ -1903,8 +1901,8 @@ a.main-menu__item-link--active::before {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin: calc(var(--s-1) * -1) calc(var(--s-1) * -1) 0 var(--s-2);
-  padding: var(--s-1);
+  margin: calc(calc(var(--fz-spacing) * 1) * -1) calc(calc(var(--fz-spacing) * 1) * -1) 0 calc(var(--fz-spacing) * 2);
+  padding: calc(var(--fz-spacing) * 1);
   border: 0;
   background: transparent;
   border-radius: var(--fz-radius-md);
@@ -1956,12 +1954,12 @@ body:has(#formulize-masquerade-block) {
   height: var(--lyris-masquerade-height);
   background: var(--fz-color-warning);
   color: #fff;
-  padding: var(--s-2) var(--s-4);
-  font-size: var(--fs-13);
+  padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 4);
+  font-size: var(--fz-text-sm);
   font-weight: 500;
   display: flex;
   align-items: center;
-  gap: var(--s-3);
+  gap: calc(var(--fz-spacing) * 3);
   z-index: 100;
 }
 
@@ -2006,11 +2004,11 @@ body:has(#formulize-masquerade-block) {
   /* ---- Header: tighter chrome ---- */
 
   .fz-header {
-    padding: 0 var(--s-3);
+    padding: 0 calc(var(--fz-spacing) * 3);
   }
 
   .fz-header__end {
-    gap: var(--s-2);
+    gap: calc(var(--fz-spacing) * 2);
   }
 
   .fz-header__brand img {
@@ -2021,14 +2019,14 @@ body:has(#formulize-masquerade-block) {
      full-width and drops the resize handle at this breakpoint) ---- */
 
   .formulize-drawer {
-    --formulize-drawer-pad-x: var(--s-4);
+    --formulize-drawer-pad-x: calc(var(--fz-spacing) * 4);
   }
 
   /* ---- List title bar: compact, actions wrap under the title ---- */
 
   .fz-list__titlebar {
     flex-wrap: wrap;
-    padding: var(--s-2) var(--s-3);
+    padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3);
     min-height: 48px;
   }
 
@@ -2046,7 +2044,7 @@ body:has(#formulize-masquerade-block) {
   .fz-selection-bar {
     flex-wrap: nowrap;
     overflow-x: auto;
-    padding: var(--s-2) var(--s-3);
+    padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3);
     min-height: 48px;
   }
 
@@ -2058,8 +2056,8 @@ body:has(#formulize-masquerade-block) {
 
   .fz-list__footer {
     flex-wrap: wrap;
-    gap: var(--s-2);
-    padding: var(--s-2) var(--s-3);
+    gap: calc(var(--fz-spacing) * 2);
+    padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3);
     font-size: var(--fz-text-xs);
   }
 
@@ -2133,7 +2131,7 @@ body:has(#formulize-masquerade-block) {
    existing 32px `.fz-input`-equivalent baseline.
 
    Design spec (forms.css):
-     --lyris-field-height:      38px    (.fz-form default)
+     --lyris-field-height:      38px    (.fz-form default, at standard density)
      --lyris-field-padding-x:  12px
      --lyris-field-radius: 6px
      --lyris-field-gap:    18px    vertical gap between field rows
@@ -2148,65 +2146,29 @@ body:has(#formulize-masquerade-block) {
          .form-help-text                  ← elementtemplate1/2.php
    ============================================================ */
 
-/* ---------- Density tokens: .fz-form + modifiers ----------
-   Ported from the design system (forms.css). `.fz-form` carries the base
-   density vars; `.fz-form--compact` / `--comfy` are modifier classes that may
-   be set on the form container.
+/* ---------- Field metrics: .fz-form ----------
+   `.fz-form` carries the form's field metrics. The height, the padding and the
+   gap between fields follow the density set on the Appearance page, through
+   the Formulize UI tokens (see formulize-ui.css): 38px / 12px / 18px at
+   standard density, the values these were fixed at before density existed.
 
-   As of issue #113 no density modifier is applied to form screens: the form,
-   multiPage and drawer templates emit `.fz-form fz-form--label-top`, so every
-   form screen renders at the design system's default density (38px controls).
-   Compact was too tight to be the default. The two modifier rules below are
-   kept, defined but unapplied, so the density can be re-introduced later as a
-   per-screen configuration option without re-deriving the values.
-
-   `.fz-form-screen` retains the same vars as an additive alias so existing
-   markup keeps the 38px form sizing - including inside the right drawer, whose
-   body is wrapped in `.fz-form-screen` by the theme's drawer templates.
-
-   Note for whoever wires up that future option: a modifier has to go on the
-   inner `.fz-form` element, not on `.fz-form-screen`. `.fz-form-screen`
-   re-declares --lyris-field-height/--lyris-field-padding-x further down this sheet, so on a single
-   element carrying both classes the alias wins on source order. */
+   `.fz-form-screen` retains the same vars as an additive alias, including inside
+   the right drawer, whose body is wrapped in `.fz-form-screen` by the theme's
+   drawer templates. */
 
 .fz-form,
 .fz-form-screen {
-  /* 38px control height for dedicated entry-editing screens */
-  --lyris-field-height:        38px;
-  --lyris-field-padding-x:    12px;
-  --lyris-field-padding-y:    8px;
-  --lyris-field-radius:   var(--fz-radius-md);   /* 6px */
-  --lyris-field-gap:      18px;
-  --lyris-field-text:     var(--fz-text-sm);
-  --lyris-label-text:     1.1rem; /* ~16px, scales with root font-size (#32) */
-  --lyris-label-gap:      6px;
-  --lyris-label-column-width:    220px;
-  --lyris-help-text:      var(--fz-text-xs);
-  --lyris-required-color: var(--fz-color-danger);
-}
-
-/* Currently unapplied - see the note above (issue #113). */
-.fz-form--compact {
-  --lyris-field-height:     32px;
-  --lyris-field-padding-x: 10px;
-  --lyris-field-gap:   12px;
-  --lyris-field-text:  var(--fs-13);
-  --lyris-label-text:  1rem; /* ~16px, scales with root font-size (#32) */
-  --lyris-label-gap:   4px;
-  --lyris-label-column-width: 200px;
-  --lyris-help-text:   var(--fs-11, 11px);
-}
-
-/* Currently unapplied - see the note above (issue #113). */
-.fz-form--comfy {
-  --lyris-field-height:     44px;
-  --lyris-field-padding-x: 14px;
-  --lyris-field-gap:   24px;
-  --lyris-field-text:  var(--fs-15);
-  --lyris-label-text:  1.0625rem; /* ~17px, one step up from compact/default for comfy density */
-  --lyris-label-gap:   8px;
-  --lyris-label-column-width: 240px;
-  --lyris-help-text:   var(--fs-13);
+  --lyris-field-height:        var(--fz-field-height);
+  --lyris-field-padding-x:     calc(var(--fz-spacing) * 3);
+  --lyris-field-padding-y:     calc(var(--fz-spacing) * 2);
+  --lyris-field-radius:        var(--fz-radius-md);   /* 6px */
+  --lyris-field-gap:           calc(var(--fz-spacing) * 4.5);
+  --lyris-field-text:          var(--fz-text-sm);
+  --lyris-label-text:          1.1rem; /* ~16px, scales with root font-size (#32) */
+  --lyris-label-gap:           6px;
+  --lyris-label-column-width:  220px;
+  --lyris-help-text:           var(--fz-text-xs);
+  --lyris-required-color:      var(--fz-color-danger);
 }
 
 /* ---------- .fz-control primitive (38px) ----------
@@ -2429,7 +2391,7 @@ textarea.fz-control {
 .fz-form .subform_button_controls > input[type="text"],
 .fz-form-screen .subform_button_controls > input[type="text"] {
   width: calc(2ch + 2 * var(--lyris-field-padding-x) + 2px);
-  margin: 0 var(--s-2);
+  margin: 0 calc(var(--fz-spacing) * 2);
 }
 
 /* ---------- Form card surface ---------- */
@@ -2437,26 +2399,26 @@ textarea.fz-control {
 .card {
   background: var(--fz-color-surface);
   border: 1px solid var(--fz-color-border);
-  border-radius: var(--r-4);   /* 10px */
+  border-radius: var(--fz-radius-lg);
   box-shadow: var(--fz-shadow-sm);
-  margin-bottom: var(--s-4);
+  margin-bottom: calc(var(--fz-spacing) * 4);
 }
 
 .card__header {
-  padding: var(--s-4) var(--s-6);
+  padding: calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 6);
   border-bottom: 1px solid var(--fz-color-border);
 }
 
 .card__title {
-  font-size: var(--fs-15);
+  font-size: var(--fz-text-base);
   font-weight: 600;
   margin: 0;
   letter-spacing: -0.005em;
-  line-height: var(--lh-snug);
+  line-height: var(--fz-leading-snug);
 }
 
 .card__body {
-  padding: var(--s-6);
+  padding: calc(var(--fz-spacing) * 6);
 }
 
 /* ---------- Form container & field rows ---------- */
@@ -2491,10 +2453,10 @@ textarea.fz-control {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: var(--lyris-label-text, var(--fs-13));
+  font-size: var(--lyris-label-text, var(--fz-text-sm));
   font-weight: 600;
   color: var(--fz-color-text);
-  line-height: var(--lh-snug);
+  line-height: var(--fz-leading-snug);
   /* label-to-control gap supplied by the .fz-field gap */
 }
 
@@ -2540,7 +2502,7 @@ textarea.fz-control {
 .fz-form--label-left .fz-field {
   flex-direction: row;
   align-items: flex-start;
-  gap: var(--s-6, 24px);
+  gap: calc(var(--fz-spacing) * 6);
 }
 .fz-form--label-left .fz-field__label {
   width: var(--lyris-label-column-width, 220px);
@@ -2585,7 +2547,7 @@ textarea.fz-control {
 .form-row:has(> .col1) {
   flex-direction: row;
   align-items: flex-start;
-  gap: var(--s-6, 24px);
+  gap: calc(var(--fz-spacing) * 6);
 }
 
 .col1 {
@@ -2682,10 +2644,10 @@ textarea.fz-control {
 .fz-form-screen .form-actions {
   display: flex;
   align-items: center;
-  gap: var(--s-2);
-  padding-top: var(--s-4);
+  gap: calc(var(--fz-spacing) * 2);
+  padding-top: calc(var(--fz-spacing) * 4);
   border-top: 1px solid var(--fz-color-border);
-  margin-top: var(--s-2);
+  margin-top: calc(var(--fz-spacing) * 2);
 }
 
 /* ---------- Form-screen action buttons ----------
@@ -2740,27 +2702,27 @@ body:not(.fz-inline) .fz-main:has(> #formulizeform .formulizeThemeForm #multipag
 /* ---------- Horizontal gutter for form-screen content (review item B) ----------
    `.fz-form-screen` (the form card) and `#pageNavTable` (the multipage page-nav
    strip) are laid out full width inside `.fz-main`, so they butted flush against
-   the left/right container edges. Inset them by the same outer gutter (--s-5,
+   the left/right container edges. Inset them by the same outer gutter (calc(var(--fz-spacing) * 5),
    20px — the same horizontal gutter the list-screen title/footer bars use) so
    they breathe from the container sides and stay visually aligned with each other.
 
    Deliberately EXCLUDED: `#multipage-controls` (the bottom-anchored action bar).
    Like the list-screen sticky footer (`.fz-list__footer`) and the drawer footer
    (`.formulize-drawer__foot`), that bar is meant to be full-bleed — it spans edge-to-edge
-   of `.fz-main` with its own inner `padding` (var(--s-4) var(--s-6)) providing the
+   of `.fz-main` with its own inner `padding` (calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 6)) providing the
    content inset. Adding a side margin here gave it an unwanted gutter, so it is
    left out of this rule.
 
    Scoped to `body:not(.fz-inline) .fz-main` (the same guard the sticky action-bar
    fix uses): list screens have no `.fz-form-screen`, and when a form renders in
    the right drawer / inline iframe (`.fz-inline`, body padded by
-   `.formulize-drawer__body { padding: --s-5 }`) we must NOT add a second gutter — so the
+   `.formulize-drawer__body { padding: calc(var(--fz-spacing) * 5) }`) we must NOT add a second gutter — so the
    drawer and its `.formulize-drawer__foot` are unaffected. */
 body:not(.fz-inline) .fz-main .fz-form-screen,
 body:not(.fz-inline) .fz-main #pageNavTable,
 body:not(.fz-inline) .fz-main .pageNavTable {
-  margin-left: var(--s-5, 20px);
-  margin-right: var(--s-5, 20px);
+  margin-left: calc(var(--fz-spacing) * 5);
+  margin-right: calc(var(--fz-spacing) * 5);
 }
 
 /* The page-nav strip keeps a zero bottom margin: when it is the sticky
@@ -2792,15 +2754,15 @@ body:not(.fz-inline) .fz-main .pageNavTable {
    ONLY when there is no nav strip above it, so tabbed screens keep the pinned
    strip flush at `top: 0` and are left exactly as they were.
 
-   Both use --s-5, the same token as the horizontal gutter above, so the card
+   Both use calc(var(--fz-spacing) * 5), the same token as the horizontal gutter above, so the card
    is inset by one consistent value on all four sides and the spacing does not
    depend on the form's density tokens (which issue #113 / PR #116 changes). */
 body:not(.fz-inline) .fz-main .fz-form-screen {
-  margin-bottom: var(--s-5, 20px);
+  margin-bottom: calc(var(--fz-spacing) * 5);
 }
 
 body:not(.fz-inline) .fz-main:not(:has(#pageNavTable, .pageNavTable)) .fz-form-screen {
-  margin-top: var(--s-5, 20px);
+  margin-top: calc(var(--fz-spacing) * 5);
 }
 
 #multipage-controls {
@@ -2814,8 +2776,8 @@ body:not(.fz-inline) .fz-main:not(:has(#pageNavTable, .pageNavTable)) .fz-form-s
      meta before the buttons so DOM order, focus order and visual order agree;
      the auto margin below opens the gap between the two clusters. */
   justify-content: flex-end;
-  gap: var(--s-2, 8px);
-  padding: var(--s-4, 16px) var(--s-6, 24px);
+  gap: calc(var(--fz-spacing) * 2);
+  padding: calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 6);
   /* Push the bar to the bottom of the flex-filled form column on short forms. */
   margin-top: auto;
   border-top: 1px solid var(--fz-color-border);
@@ -2844,7 +2806,7 @@ body:not(.fz-inline) .fz-main:not(:has(#pageNavTable, .pageNavTable)) .fz-form-s
 }
 
 #multipage-controls #page-indicator {
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
   color: var(--fz-color-text-muted);
   font-feature-settings: "tnum";
   white-space: nowrap;
@@ -2853,14 +2815,14 @@ body:not(.fz-inline) .fz-main:not(:has(#pageNavTable, .pageNavTable)) .fz-form-s
 #multipage-controls #page-selector {
   display: flex;
   align-items: center;
-  gap: var(--s-2);
-  font-size: var(--fs-13);
+  gap: calc(var(--fz-spacing) * 2);
+  font-size: var(--fz-text-sm);
   color: var(--fz-color-text-muted);
   white-space: nowrap;
 }
 
 #multipage-controls #page-selector select {
-  height: 34px;
+  height: calc(var(--fz-spacing) * 8.5);
 }
 
 /* ---------- Multipage page-nav tabs (#pageNavTable.pill-tabs) ----------
@@ -2870,9 +2832,9 @@ body:not(.fz-inline) .fz-main:not(:has(#pageNavTable, .pageNavTable)) .fz-form-s
 .pill-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--s-1, 4px);
+  gap: calc(var(--fz-spacing) * 1);
   align-items: center;
-  margin-bottom: var(--s-3, 12px);
+  margin-bottom: calc(var(--fz-spacing) * 3);
 }
 
 /* ---------- Sticky page-nav tabs on long forms (issue #31) ----------
@@ -2929,16 +2891,16 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs {
   /* absorb the strip's own top margin into padding so the pinned bar sits
      flush at top:0 without a gap of scrolled content peeking above it */
   margin-top: 0;
-  padding-top: var(--s-3, 12px);
-  padding-bottom: var(--s-3, 12px);
+  padding-top: calc(var(--fz-spacing) * 3);
+  padding-bottom: calc(var(--fz-spacing) * 3);
 }
 
 /* Bottom separator that fades in as content scrolls under the pinned tabs. */
 body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs::after {
   content: "";
   position: absolute;
-  left: calc(-1 * var(--s-5, 20px));
-  right: calc(-1 * var(--s-5, 20px));
+  left: calc(-1 * calc(var(--fz-spacing) * 5));
+  right: calc(-1 * calc(var(--fz-spacing) * 5));
   bottom: 0;
   height: 1px;
   background: var(--fz-color-border);
@@ -2962,9 +2924,9 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
 .pill-tabs__item {
   display: inline-flex;
   align-items: center;
-  gap: var(--s-1, 4px);
-  padding: var(--s-1, 4px) var(--s-3, 12px);
-  font-size: var(--fs-13);
+  gap: calc(var(--fz-spacing) * 1);
+  padding: calc(var(--fz-spacing) * 1) calc(var(--fz-spacing) * 3);
+  font-size: var(--fz-text-sm);
   font-weight: 500;
   line-height: 1.4;
   color: var(--fz-color-text-muted);
@@ -3004,11 +2966,11 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
 .formulizeThemeForm .formulize-form-submit-button,
 .formulize-drawer__body .formulize-form-submit-button,
 .formulize-drawer__foot .formulize-form-submit-button {
-  height: 34px !important;
+  height: calc(var(--fz-spacing) * 8.5) !important;
   min-width: 0 !important;
   width: auto;
   padding: 0 16px;
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
   font-weight: 500 !important;
   line-height: 1;
   border-radius: var(--fz-radius-md);
@@ -3064,10 +3026,10 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
    Lyris's blanket bare-`input[type=button]` reset, exactly as the full screen mobile
    rule does. */
 .formulize-drawer__foot .formulize-form-submit-button {
-  flex: 1 1 calc(50% - var(--s-2));
+  flex: 1 1 calc(50% - calc(var(--fz-spacing) * 2));
   min-width: 0 !important;
   height: 44px !important;
-  padding: 0 var(--s-3);
+  padding: 0 calc(var(--fz-spacing) * 3);
 }
 
 /* ...until the drawer is wide enough not to be a mobile-width surface any more. At
@@ -3077,7 +3039,7 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
    `.formulizeThemeForm .formulize-form-submit-button` above (PR #127 review). */
 .formulize-drawer--wide .formulize-drawer__foot .formulize-form-submit-button {
   flex: 0 0 auto;
-  height: 34px !important;
+  height: calc(var(--fz-spacing) * 8.5) !important;
   padding: 0 16px;
 }
 
@@ -3096,8 +3058,8 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
   text-shadow: none !important;
   width: auto !important;
   min-width: 0 !important;
-  height: 34px !important;
-  font-size: var(--fs-13) !important;
+  height: calc(var(--fz-spacing) * 8.5) !important;
+  font-size: var(--fz-text-sm) !important;
   color: var(--fz-color-text) !important;
 }
 /* Re-assert legible on-accent text for the Save-family primary after the reset. */
@@ -3118,7 +3080,7 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
   top: 0;
   right: 0;
   z-index: 2;
-  font-size: var(--fs-11, 11px);
+  font-size: var(--fz-text-xs, 11px);
   font-weight: 500;
   line-height: 1.3;
   color: var(--fz-color-accent);
@@ -3156,8 +3118,8 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
    ============================================================ */
 
 .fz-form-screen {
-  --lyris-field-height:      38px;
-  --lyris-field-padding-x:  12px;
+  --lyris-field-height:      var(--fz-field-height);
+  --lyris-field-padding-x:   calc(var(--fz-spacing) * 3);
   --lyris-field-radius: var(--fz-radius-md);
 }
 
@@ -3183,7 +3145,7 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
   display: block;
   width: 100%;
   padding: 16px;
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
   color: var(--fz-color-text-muted);
   background: var(--fz-color-surface-2);
   border: 1.5px dashed var(--fz-color-border-strong);
@@ -3206,7 +3168,7 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
   height: 28px;
   padding: 0 12px;
   font: inherit;
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
   font-weight: 500;
   color: var(--fz-color-text);
   background: var(--fz-color-surface);
@@ -3228,7 +3190,7 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
   gap: 8px;
   margin-bottom: 8px;
   padding: 8px 10px;
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
   color: var(--fz-color-text);
   background: var(--fz-color-surface);
   border: 1px solid var(--fz-color-border);
@@ -3540,7 +3502,7 @@ input[type="time"] { font-family: var(--fz-font-sans); }
   background: var(--fz-color-accent-soft);
   border: 1px solid var(--fz-color-accent-soft-2);
   color: var(--fz-color-text);
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
   line-height: 1;
   transition: background var(--fz-duration-fast) var(--fz-ease-out), border-color var(--fz-duration-fast) var(--fz-ease-out);
 }
@@ -3641,17 +3603,17 @@ input[type="time"] { font-family: var(--fz-font-sans); }
 @media (max-width: 768px) {
   .fz-form,
   .fz-form-screen {
-    --lyris-field-height:     44px;   /* iOS tap target */
+    --lyris-field-height:     max(var(--fz-field-height), 2.75rem);   /* iOS tap target: never under 44px, whatever the density */
     --lyris-field-text:  16px;   /* prevent iOS auto-zoom */
     --lyris-field-gap:   16px;
   }
 
   .card__body {
-    padding: var(--s-4);
+    padding: calc(var(--fz-spacing) * 4);
   }
 
   .card__header {
-    padding: var(--s-3) var(--s-4);
+    padding: calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 4);
   }
 
   /* Left-label two-column layout collapses to stacked single-column (label
@@ -3692,28 +3654,28 @@ input[type="time"] { font-family: var(--fz-font-sans); }
      evenly-sized 44px tap-target buttons two-up, then the page indicator and
      jump-to selector each on their own centered, legible full-width line. */
   #multipage-controls {
-    padding: var(--s-4);
-    row-gap: var(--s-2);
-    column-gap: var(--s-2);
+    padding: calc(var(--fz-spacing) * 4);
+    row-gap: calc(var(--fz-spacing) * 2);
+    column-gap: calc(var(--fz-spacing) * 2);
   }
 
   /* Buttons share the row evenly and are comfortable tap targets. */
   #multipage-controls #prev,
   #multipage-controls #next,
   #multipage-controls .formulize-form-submit-button {
-    flex: 1 1 calc(50% - var(--s-2));
+    flex: 1 1 calc(50% - calc(var(--fz-spacing) * 2));
     min-width: 0;
     height: 44px !important;
-    padding: 0 var(--s-3);
+    padding: 0 calc(var(--fz-spacing) * 3);
   }
 
   /* Page indicator on its own centered line, clearly separated from buttons. */
   #multipage-controls #page-indicator {
     flex-basis: 100%;
     order: 90;
-    margin-top: var(--s-1);
+    margin-top: calc(var(--fz-spacing) * 1);
     text-align: center;
-    font-size: var(--fs-13);
+    font-size: var(--fz-text-sm);
     color: var(--fz-color-text-muted);
     font-feature-settings: "tnum";
   }
@@ -3770,14 +3732,14 @@ input[type="button"]:not([class*="fz-"]):not(.formulize_button) {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 32px;
-  padding: 0 var(--s-3);
+  height: var(--fz-control-height);
+  padding: 0 calc(var(--fz-spacing) * 3);
   border-radius: var(--fz-radius-md);
   border: 1px solid var(--fz-color-border-strong);
   background: var(--fz-color-surface);
   color: var(--fz-color-text);
   font: inherit;
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
   font-weight: 500;
   line-height: 1;
   cursor: pointer;
@@ -3835,14 +3797,14 @@ input[type="button"].formulize_button {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 32px;
-  padding: 0 var(--s-3);
+  height: var(--fz-control-height);
+  padding: 0 calc(var(--fz-spacing) * 3);
   border-radius: var(--fz-radius-md);
   border: 1px solid var(--fz-color-border-strong);
   background: var(--fz-color-surface);
   color: var(--fz-color-text);
   font: inherit;
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
   font-weight: 500;
   line-height: 1;
   cursor: pointer;
@@ -3910,8 +3872,8 @@ input[type="button"].formulize_button {
    surface background and a styled legend. Scoped to .fz-main so it only
    touches theme content, not chrome. */
 .fz-main fieldset {
-  margin: var(--s-6) 0;
-  padding: var(--s-6);
+  margin: calc(var(--fz-spacing) * 6) 0;
+  padding: calc(var(--fz-spacing) * 6);
   border: 1px solid var(--fz-color-border);
   border-radius: var(--fz-radius-lg);
   background: var(--fz-color-surface);
@@ -3924,7 +3886,7 @@ fieldset#icms_block_login_form {
 }
 
 .fz-main fieldset > legend {
-  padding: 0 var(--s-2);
+  padding: 0 calc(var(--fz-spacing) * 2);
   font-size: var(--fz-text-base);
   font-weight: 600;
   color: var(--fz-color-text);
@@ -3937,13 +3899,13 @@ fieldset#icms_block_login_form {
 #icms_block_login_form .block_login_form--password {
   display: flex;
   flex-direction: column;
-  gap: var(--s-1);
-  margin-bottom: var(--s-3);
+  gap: calc(var(--fz-spacing) * 1);
+  margin-bottom: calc(var(--fz-spacing) * 3);
 }
 
 #block_login_form .form-label,
 #icms_block_login_form .form-label {
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
   font-weight: 500;
   color: var(--fz-color-text-muted);
 }
@@ -3959,9 +3921,9 @@ fieldset#icms_block_login_form {
 #icms_block_login_form .block_login_form--remember {
   display: flex;
   align-items: center;
-  gap: var(--s-1);
-  margin-bottom: var(--s-3);
-  font-size: var(--fs-13);
+  gap: calc(var(--fz-spacing) * 1);
+  margin-bottom: calc(var(--fz-spacing) * 3);
+  font-size: var(--fz-text-sm);
   color: var(--fz-color-text-muted);
 }
 
@@ -3969,7 +3931,7 @@ fieldset#icms_block_login_form {
    accent treatment (`input.btn` carries the `btn` class only). */
 #block_login_form .block_login_form--submit,
 #icms_block_login_form .block_login_form--submit {
-  margin-top: var(--s-2);
+  margin-top: calc(var(--fz-spacing) * 2);
 }
 
 #block_login_form input.btn[type="submit"],
@@ -3993,9 +3955,9 @@ fieldset#icms_block_login_form {
 #block_login_form a:not(.btn),
 #icms_block_login_form a:not(.btn) {
   display: inline-block;
-  margin-top: var(--s-2);
+  margin-top: calc(var(--fz-spacing) * 2);
   color: var(--fz-color-accent-text);
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
   font-weight: 500;
   text-decoration: none;
 }
@@ -4034,7 +3996,7 @@ fieldset#icms_block_login_form {
 .ui-dialog.ui-widget {
   padding: 0;
   border: 1px solid var(--fz-color-border);
-  border-radius: var(--r-4);
+  border-radius: var(--fz-radius-lg);
   background: var(--fz-color-surface);
   box-shadow: var(--fz-shadow-lg);
   color: var(--fz-color-text);
@@ -4042,13 +4004,13 @@ fieldset#icms_block_login_form {
   font-size: var(--fz-text-sm);
   /* Responsive: never wider than the viewport on small screens. jQuery-UI
      sets an inline pixel width; cap it and let content wrap. */
-  max-width: calc(100vw - var(--s-6));
+  max-width: calc(100vw - calc(var(--fz-spacing) * 6));
   overflow: hidden;
 }
 
 /* Titlebar / header */
 .ui-dialog.ui-widget .ui-dialog-titlebar {
-  padding: var(--s-4) var(--s-5);
+  padding: calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 5);
   border: 0;
   border-bottom: 1px solid var(--fz-color-border);
   border-radius: 0;
@@ -4067,7 +4029,7 @@ fieldset#icms_block_login_form {
 
 /* Themed close button — replace the jQuery-UI icon sprite with a CSS glyph */
 .ui-dialog.ui-widget .ui-dialog-titlebar-close {
-  right: var(--s-4);
+  right: calc(var(--fz-spacing) * 4);
   width: 28px;
   height: 28px;
   margin: -14px 0 0;
@@ -4119,21 +4081,21 @@ fieldset#icms_block_login_form {
 
 /* Content body */
 .ui-dialog.ui-widget .ui-dialog-content {
-  padding: var(--s-5);
+  padding: calc(var(--fz-spacing) * 5);
   color: var(--fz-color-text);
   font-family: var(--fz-font-sans);
   font-size: var(--fz-text-sm);
   line-height: 1.5;
 }
-.ui-dialog.ui-widget .ui-dialog-content p { margin: 0 0 var(--s-3); }
+.ui-dialog.ui-widget .ui-dialog-content p { margin: 0 0 calc(var(--fz-spacing) * 3); }
 .ui-dialog.ui-widget .ui-dialog-content p:last-child { margin-bottom: 0; }
 
 /* Form controls inside the dialog — match the Lyris .fz-input primitive */
 .ui-dialog.ui-widget .ui-dialog-content label {
   display: inline-block;
-  margin-bottom: var(--s-1);
+  margin-bottom: calc(var(--fz-spacing) * 1);
   color: var(--fz-color-text);
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
   font-weight: 500;
 }
 .ui-dialog.ui-widget .ui-dialog-content input[type="text"],
@@ -4145,7 +4107,7 @@ fieldset#icms_block_login_form {
 .ui-dialog.ui-widget .ui-dialog-content textarea {
   width: 100%;
   height: 38px;
-  padding: 0 var(--s-3);
+  padding: 0 calc(var(--fz-spacing) * 3);
   border: 1px solid var(--fz-color-border-strong);
   border-radius: var(--fz-radius-md);
   background: var(--fz-color-surface);
@@ -4157,7 +4119,7 @@ fieldset#icms_block_login_form {
 .ui-dialog.ui-widget .ui-dialog-content textarea {
   height: auto;
   min-height: 72px;
-  padding: var(--s-2) var(--s-3);
+  padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3);
   line-height: 1.5;
 }
 .ui-dialog.ui-widget .ui-dialog-content input[type="text"]:focus,
@@ -4175,14 +4137,14 @@ fieldset#icms_block_login_form {
 /* Button pane / footer */
 .ui-dialog.ui-widget .ui-dialog-buttonpane {
   margin: 0;
-  padding: var(--s-4) var(--s-5);
+  padding: calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 5);
   border: 0;
   border-top: 1px solid var(--fz-color-border);
   background: var(--fz-color-surface-2);
 }
 .ui-dialog.ui-widget .ui-dialog-buttonpane .ui-dialog-buttonset {
   display: flex;
-  gap: var(--s-2);
+  gap: calc(var(--fz-spacing) * 2);
   justify-content: flex-end;
   float: none;
 }
@@ -4194,15 +4156,15 @@ fieldset#icms_block_login_form {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 32px;
+  height: var(--fz-control-height);
   margin: 0;
-  padding: 0 var(--s-3);
+  padding: 0 calc(var(--fz-spacing) * 3);
   border: 1px solid var(--fz-color-border-strong);
   border-radius: var(--fz-radius-md);
   background: var(--fz-color-surface);
   color: var(--fz-color-text);
   font-family: var(--fz-font-sans);
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
   font-weight: 500;
   line-height: 1;
   cursor: pointer;
@@ -4237,8 +4199,8 @@ fieldset#icms_block_login_form {
    its footer buttons full-width so they stay tappable. */
 @media (max-width: 480px) {
   .ui-dialog.ui-widget {
-    left: var(--s-3) !important;
-    right: var(--s-3) !important;
+    left: calc(var(--fz-spacing) * 3) !important;
+    right: calc(var(--fz-spacing) * 3) !important;
     width: auto !important;
     max-width: none;
   }
@@ -4282,7 +4244,7 @@ fieldset#icms_block_login_form {
   position: relative;
   width: 100%;
   box-sizing: border-box;
-  margin: 0 0 var(--s-2);
+  margin: 0 0 calc(var(--fz-spacing) * 2);
   padding: 0;
   border: 1px solid var(--fz-color-border);
   border-radius: var(--fz-radius-md);
@@ -4308,7 +4270,7 @@ fieldset#icms_block_login_form {
 }
 .subform-accordion-container .ui-accordion-header .accordion-name-anchor {
   display: block;
-  padding: var(--s-3) var(--s-4) var(--s-3) var(--s-8);
+  padding: calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 10);
   color: inherit;
   font-size: var(--fz-text-sm);
   text-decoration: none;
@@ -4319,7 +4281,7 @@ fieldset#icms_block_login_form {
 .subform-accordion-container .ui-accordion-header .ui-icon {
   position: absolute;
   top: 50%;
-  left: var(--s-4);
+  left: calc(var(--fz-spacing) * 4);
   width: 7px;
   height: 7px;
   margin: 0;
@@ -4337,8 +4299,8 @@ fieldset#icms_block_login_form {
 /* Content panel — the embedded form for one connected entry. */
 .subform-accordion-container.ui-accordion .accordion-content.ui-accordion-content,
 .subform-accordion-container .ui-accordion-content.ui-widget-content {
-  margin: calc(-1 * var(--s-2) - 1px) 0 var(--s-3);
-  padding: var(--s-4);
+  margin: calc(-1 * calc(var(--fz-spacing) * 2) - 1px) 0 calc(var(--fz-spacing) * 3);
+  padding: calc(var(--fz-spacing) * 4);
   border: 1px solid var(--fz-color-accent-soft-2);
   border-top: 0;
   border-radius: 0 0 var(--fz-radius-md) var(--fz-radius-md);
@@ -4373,21 +4335,21 @@ fieldset#icms_block_login_form {
    and the whole form hugs the window edges. The rules below add page padding
    plus per-row vertical rhythm and a gap between the label and field columns. */
 body.formulize-popup {
-  padding: var(--s-6) var(--s-7) var(--s-8);
+  padding: calc(var(--fz-spacing) * 6) calc(var(--fz-spacing) * 8) calc(var(--fz-spacing) * 10);
   box-sizing: border-box;
 }
 body.formulize-popup .xo-theme-form table.outer > tbody > tr > th,
 body.formulize-popup .xo-theme-form table.outer > tbody > tr > td {
-  padding: var(--s-3) var(--s-4);
+  padding: calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 4);
   vertical-align: top;
 }
 /* A little more separation between the label column and its field. */
 body.formulize-popup .xo-theme-form table.outer > tbody > tr > td.head {
-  padding-right: var(--s-6);
+  padding-right: calc(var(--fz-spacing) * 6);
 }
 /* Give the form title a touch more room beneath it. */
 body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
-  padding-bottom: var(--s-4);
+  padding-bottom: calc(var(--fz-spacing) * 4);
   text-align: center;
 }
 
@@ -4404,21 +4366,21 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
    rules below are scoped differently — see the next comment. */
 
 .formulize-drawer .subform-caption {
-  margin: 0 0 var(--s-2);
-  font-size: var(--fs-13);
+  margin: 0 0 calc(var(--fz-spacing) * 2);
+  font-size: var(--fz-text-sm);
 }
 
 /* add / delete-checked / clone-checked buttons: match the secondary fz-btn look */
 .formulize-drawer .subform_button_controls input[type="button"] {
   height: 28px;
-  padding: 0 var(--s-3);
-  margin: 0 var(--s-2) var(--s-2) 0;
+  padding: 0 calc(var(--fz-spacing) * 3);
+  margin: 0 calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 2) 0;
   border-radius: var(--fz-radius-md);
   border: 1px solid var(--fz-color-border-strong);
   background: var(--fz-color-surface);
   color: var(--fz-color-text);
   font: inherit;
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
   font-weight: 500;
   cursor: pointer;
   appearance: none;
@@ -4438,7 +4400,7 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
    drawer's tighter height is set here. */
 .formulize-drawer .subform_button_controls > input[type="text"] {
   height: 28px;
-  margin-bottom: var(--s-2);
+  margin-bottom: calc(var(--fz-spacing) * 2);
 }
 
 /* ---------- Subform TABLE: same styling in the drawer and full screen (issue #106)
@@ -4455,7 +4417,7 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
 
 .fz-form-screen .formulize-subform-table-scrollbox {
   overflow-x: auto;
-  margin-top: var(--s-2);
+  margin-top: calc(var(--fz-spacing) * 2);
 }
 
 .fz-form-screen .formulize-subform-table {
@@ -4463,12 +4425,12 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
   border-collapse: collapse;
   border: 1px solid var(--fz-color-border);
   border-radius: var(--fz-radius-md);
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
 }
 
 .fz-form-screen .formulize-subform-table > tbody > tr > th,
 .fz-form-screen .formulize-subform-table > tbody > tr > td {
-  padding: var(--s-2) var(--s-3);
+  padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3);
   border: none;
   border-bottom: 1px solid var(--fz-color-border);
   text-align: left;
@@ -4519,16 +4481,16 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
    column, in line with every other field on the screen. */
 
 .fz-form-screen .formulize-grid {
-  --formulize-grid-column-gap: var(--s-3);
-  --formulize-grid-row-gap: var(--s-2);
+  --formulize-grid-column-gap: calc(var(--fz-spacing) * 3);
+  --formulize-grid-row-gap: calc(var(--fz-spacing) * 2);
 }
 
 .fz-form-screen .formulize-grid .fz-grid__cell--columnheader,
 .fz-form-screen .formulize-grid .fz-grid__cell--rowheader {
-  font-size: var(--fs-13);
+  font-size: var(--fz-text-sm);
   font-weight: 500;
   color: var(--fz-color-text-muted);
-  line-height: var(--lh-snug);
+  line-height: var(--fz-leading-snug);
 }
 
 /* Column captions sit on the baseline above their controls; a row caption
@@ -4542,7 +4504,7 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
   font-size: var(--lyris-label-text, 1.1rem);
   font-weight: 600;
   color: var(--fz-color-text);
-  margin-bottom: var(--s-2);
+  margin-bottom: calc(var(--fz-spacing) * 2);
 }
 
 /* Controls fill their track, so the grid's right hand edge is the right hand
