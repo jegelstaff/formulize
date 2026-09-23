@@ -119,6 +119,7 @@ if(isset($_POST['appearance_save']) OR isset($_POST['appearance_reset'])) {
         $submitted['appearance_headingfont'] = isset($_POST['appearance_headingfont']) ? $_POST['appearance_headingfont'] : '';
         $submitted['appearance_headingcustomfont'] = isset($_POST['appearance_headingcustomfont']) ? $_POST['appearance_headingcustomfont'] : '';
         $submitted['appearance_fontsize'] = isset($_POST['appearance_fontsize']) ? $_POST['appearance_fontsize'] : '';
+        $submitted['appearance_density'] = isset($_POST['appearance_density']) ? $_POST['appearance_density'] : '';
         foreach(array_keys(formulize_appearanceUploads()) as $uploadSetting) {
             $submitted[$uploadSetting] = $settings[$uploadSetting]; // kept unless removed or replaced below
         }
@@ -223,6 +224,11 @@ foreach(formulize_appearanceFontSizeMap($selectedTheme) as $size => $label) {
 }
 $defaultFontSize = formulize_appearanceThemeContentSize($selectedTheme);
 
+$densities = array();
+foreach(formulize_appearanceDensityMap() as $key => $density) {
+    $densities[] = array('key' => $key, 'label' => $density['label']);
+}
+
 // The logo can still be sitting in the legacy uploads/appearance folder on a site
 // that had one uploaded before appearance files moved into the theme folders, so the
 // shared lookup (which checks both places) builds the preview URLs. These are built
@@ -252,6 +258,9 @@ $adminPage['fontStacksJson'] = json_encode($fontStacks);
 $adminPage['fontSizes'] = $fontSizes;
 $adminPage['defaultFontSize'] = $defaultFontSize;
 $adminPage['currentFontSize'] = $settings['appearance_fontsize'] ? $settings['appearance_fontsize'] : $defaultFontSize;
+$adminPage['densities'] = $densities;
+$adminPage['currentDensity'] = $settings['appearance_density'] ? $settings['appearance_density'] : 'standard';
+$adminPage['themeUsesDensity'] = formulize_appearanceThemeUsesDensity($selectedTheme);
 $adminPage['logoUrl'] = $uploadUrls['appearance_logo'];
 $adminPage['faviconUrl'] = $uploadUrls['appearance_favicon'];
 $adminPage['saved'] = $saved;

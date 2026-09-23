@@ -66,20 +66,40 @@
   --fz-font-heading: var(--fz-font-sans);
   --fz-font-mono:    ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --fz-text-xs:   0.75rem;
-  --fz-text-sm:   0.875rem;
-  --fz-text-base: 1rem;
-  --fz-text-lg:   1.125rem;
-  --fz-text-xl:   1.25rem;
-  --fz-text-2xl:  1.5rem;
+  /* Type scale: Tailwind's sizes, each with the line height Tailwind pairs it
+     with, plus one step of Formulize's own, xs-plus (13px), between xs and sm,
+     which Tailwind has no step for. Fixed: the same in every theme. */
+  --fz-text-xs:                 0.75rem;
+  --fz-text-xs--line-height:    1rem;
+  --fz-text-xs-plus:            0.8125rem;
+  --fz-text-xs-plus--line-height: 1.25rem;
+  --fz-text-sm:                 0.875rem;
+  --fz-text-sm--line-height:    1.25rem;
+  --fz-text-base:               1rem;
+  --fz-text-base--line-height:  1.5rem;
+  --fz-text-lg:                 1.125rem;
+  --fz-text-lg--line-height:    1.75rem;
+  --fz-text-xl:                 1.25rem;
+  --fz-text-xl--line-height:    1.75rem;
+  --fz-text-2xl:                1.5rem;
+  --fz-text-2xl--line-height:   2rem;
+  --fz-text-3xl:                1.875rem;
+  --fz-text-3xl--line-height:   2.25rem;
 
-  --fz-leading-normal: 1.5;
+  --fz-leading-tight:   1.25;
+  --fz-leading-snug:    1.375;
+  --fz-leading-normal:  1.5;
+
+  /* Spacing. Every space and size on the scale is a multiple of this step, as
+     in Tailwind: calc(var(--fz-spacing) * 4) is 1rem. The density changes it
+     (see Density, below). */
+  --fz-spacing: 0.25rem;
 
   /* Shape and depth */
-  --fz-radius-sm:   4px;
-  --fz-radius-md:   6px;
-  --fz-radius-lg:   8px;
-  --fz-radius-xl:   12px;
+  --fz-radius-sm:   0.25rem;
+  --fz-radius-md:   0.375rem;
+  --fz-radius-lg:   0.5rem;
+  --fz-radius-xl:   0.75rem;
   --fz-radius-full: 999px;
 
   --fz-shadow-xs: 0 1px 0 rgba(15,17,21,.04);
@@ -92,4 +112,33 @@
   --fz-ease-out:      cubic-bezier(.2,.7,.3,1);
   --fz-duration-fast: 120ms;
   --fz-duration:      200ms;
+}
+
+
+/* ============================================================
+   Density
+   ============================================================
+
+   How much space there is, and how tall buttons, form fields and list rows
+   are. The Appearance page sets it for the whole site, by setting
+   --fz-spacing; these classes set it for one part of a page.
+
+   The heights are worked out from --fz-spacing, and are declared again on each
+   density class, not only on :root: a custom property that uses var() is worked
+   out once, where it is declared, and the elements inside inherit the result,
+   not the formula. Declared only on :root, the heights would stay at the page's
+   density inside a container with a different one.
+   ============================================================ */
+
+.fz-density-tight       { --fz-spacing: 0.21875rem; }  /* 3.5px at a 16px base */
+.fz-density-standard    { --fz-spacing: 0.25rem; }     /* 4px */
+.fz-density-comfortable { --fz-spacing: 0.28125rem; }  /* 4.5px */
+
+:root,
+.fz-density-tight,
+.fz-density-standard,
+.fz-density-comfortable {
+  --fz-control-height: calc(var(--fz-spacing) * 8);    /* buttons: 32px at standard */
+  --fz-field-height:   calc(var(--fz-spacing) * 9.5);  /* form fields: 38px */
+  --fz-row-height:     calc(var(--fz-spacing) * 10);   /* list rows: 40px */
 }

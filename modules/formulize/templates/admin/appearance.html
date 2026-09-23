@@ -102,13 +102,26 @@
            it is worked out from this and written into the generated stylesheet -
            see the Text size functions in include/appearance.php. *}>
         <div class="fz-appearance-field">
-            <label for="appearance_fontsize">Text size</label>
+            <label for="appearance_fontsize">Text and interface size</label>
             <select name="appearance_fontsize" id="appearance_fontsize" onchange="appearanceUpdateFontPreviews();">
             <{foreach from=$adminPage.fontSizes item=size}>
                 <option value="<{$size.key}>" <{if $adminPage.currentFontSize == $size.key}>selected="selected"<{/if}>><{$size.label}></option>
             <{/foreach}>
             </select>
-            <span class="fz-appearance-hint">The size of the standard text in lists and content. Every other text size is a proportion of it, so raising it makes the whole interface larger. Individual users can still override it with the font size setting in their own profile. This theme's own default is <{$adminPage.defaultFontSize}>.</span>
+            <span class="fz-appearance-hint">The size of the standard text in lists and content. Everything else is in proportion to it - other text, the space between things, buttons and form fields - so the whole interface gets bigger or smaller with it. Individual users can still override it with the font size setting in their own profile. This theme's own default is <{$adminPage.defaultFontSize}>.</span>
+        </div>
+    </fieldset>
+
+    <fieldset class="fz-appearance-group">
+        <legend>Density</legend>
+        <div class="fz-appearance-field">
+            <label for="appearance_density">Spacing and sizing</label>
+            <select name="appearance_density" id="appearance_density">
+            <{foreach from=$adminPage.densities item=density}>
+                <option value="<{$density.key}>" <{if $adminPage.currentDensity == $density.key}>selected="selected"<{/if}>><{$density.label}></option>
+            <{/foreach}>
+            </select>
+            <span class="fz-appearance-hint">How much space there is between things, and how tall buttons, form fields and the rows of lists are. Tight fits more on the screen; comfortable is roomier and easier to tap. Text size is not affected.<{if !$adminPage.themeUsesDensity}> The <{$adminPage.selected_theme}> theme does not use this setting, so it only affects Formulize UI classes used in templates.<{/if}></span>
         </div>
     </fieldset>
 

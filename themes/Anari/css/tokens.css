@@ -97,7 +97,7 @@
      "Text size" setting on the Appearance page means exactly what it says here.
      (Lyris sets its content text at 0.8125 of the base, and so declares that -
      see themes/Lyris/css/tokens.css.) */
-  --font-size-content-ratio: 1;
+  --formulize-content-ratio: 1;
 
   /* Anari-specific shadows. Both follow the colour they tint, so they keep
      tracking the Primary/Text settings without the Appearance page needing to
