@@ -6,16 +6,9 @@
    The theme's default palette and other design tokens live in their own
    stylesheet, imported here so everything that loads style.css gets them.
    The Appearance page reads the theme's defaults out of that file too.
-   The ?v= on the import is what makes browsers fetch the file again when it
-   changes. style.css itself is linked with a version that follows its own
-   modification time, but this import is a separate request, and without a
-   version of its own a browser keeps using a copy it cached earlier: a style.css
-   that uses new token names alongside an old tokens.css that doesn't declare
-   them breaks the layout. So whenever tokens.css changes, increase the number
-   here in the same change.
    ---- */
 
-@import url("tokens.css?v=2");
+@import url("tokens.css");
 
 /* ============================================================
    Base

@@ -17,10 +17,6 @@
    Loaded via the @import at the top of style.css, so anything that pulls in
    style.css — including the standalone popup and print pages that only ever
    link the theme's style.css — gets the tokens too.
-
-   When you change this file, increase the version on that @import in
-   style.css (tokens.css?v=N) in the same change, so that browsers fetch this
-   file again instead of using a copy they cached earlier.
    ============================================================ */
 
 /* ---- Design tokens ----
