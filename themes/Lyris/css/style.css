@@ -2298,7 +2298,7 @@ textarea.fz-control {
    10em core gives it in modules/formulize/templates/css/formulize.css. */
 .fz-form .subform_button_controls > input[type="text"],
 .fz-form-screen .subform_button_controls > input[type="text"] {
-  width: calc(3ch + 2 * var(--field-pad-x) + 2px);
+  width: calc(2ch + 2 * var(--field-pad-x) + 2px);
   margin: 0 var(--s-2);
 }
 
