@@ -41,16 +41,16 @@ time, mark, audio, video {
    which sets `font-size: 100%` on `html` among everything else.
 
    Three layers get a say, in this order: the theme's own default
-   (--font-size-base in tokens.css), the site-wide Text size setting on the
+   (--formulize-font-size-base in tokens.css), the site-wide Text size setting on the
    Appearance page (which overrides that token in the generated appearance.css),
    and finally a user's personal font size preference, which theme.html prints as
    an inline style further down the document and so wins over both. */
 html {
-  font-size: var(--font-size-base);
+  font-size: var(--formulize-font-size-base);
 }
 
 body {
-  font-family: var(--font-sans);
+  font-family: var(--fz-font-sans);
   color: var(--text-color);
   background: var(--background-color);
   line-height: 1.4;
@@ -59,9 +59,9 @@ body {
 /* ---- Secondary font ----
    The one place the secondary font is applied, so what it covers is written down
    once and is the same list the Appearance page's help text promises: headings,
-   form labels, and the drawer's title. Everything else keeps --font-sans.
+   form labels, and the drawer's title. Everything else keeps --fz-font-sans.
 
-   --font-heading is var(--font-sans) unless a second font has been chosen, so
+   --fz-font-heading is var(--fz-font-sans) unless a second font has been chosen, so
    these rules are inert on a site using a single font. Only the family is set
    here: size, weight and colour stay with the rules that own those elements.
    `font: inherit` in the reset above means headings would otherwise take the
@@ -73,7 +73,7 @@ h1, h2, h3, h4, h5, h6,
 .xoops-form-element-caption,
 .xoops-form-element-caption-required,
 .formulize-drawer__title {
-  font-family: var(--font-heading);
+  font-family: var(--fz-font-heading);
 }
 
 input {
@@ -133,7 +133,7 @@ div.ck-content blockquote {
 	padding-right: 1.5em;
 	padding-left: 1.5em;
 	font-style: italic;
-	border-left: 5px solid var(--c-border-strong)
+	border-left: 5px solid var(--fz-color-border-strong)
 }
 
 div.ck-content h1 {
@@ -445,9 +445,9 @@ table:first-child div.applinks h1 {
 }
 
 .site-header {
-  background: var(--c-surface);
+  background: var(--fz-color-surface);
   height: 60px;
-  border-bottom: 1px solid var(--c-border);
+  border-bottom: 1px solid var(--fz-color-border);
   display: flex;
   align-items: center;
 }
@@ -486,7 +486,7 @@ table:first-child div.applinks h1 {
   border: 0;
 }
 .site-header__search-input::placeholder {
-  color: var(--c-text-subtle);
+  color: var(--fz-color-text-subtle);
 }
 .site-header__search-input::-webkit-input-placeholder {
   line-height: normal !important;
@@ -510,7 +510,7 @@ table:first-child div.applinks h1 {
 .user-actions__link {
   margin: 0 10px;
   text-decoration: none;
-  color: var(--c-text);
+  color: var(--fz-color-text);
   text-align: center;
   padding-left: 0.3rem;
   padding-right: 0.3rem;
@@ -531,8 +531,8 @@ table:first-child div.applinks h1 {
   top: 1px;
   right: -2px;
   border-radius: 50%;
-  border: 1px solid var(--c-surface);
-  background: var(--c-danger);
+  border: 1px solid var(--fz-color-surface);
+  background: var(--fz-color-danger);
 }
 
 .user-actions__link--notifications {
@@ -545,7 +545,7 @@ table:first-child div.applinks h1 {
 }
 
 .sidebar {
-  background: var(--c-surface);
+  background: var(--fz-color-surface);
   position: relative;
   z-index: 100;
   box-shadow: 6px 0px 18px 0px rgba(51, 77, 110, 0.06);
@@ -553,7 +553,7 @@ table:first-child div.applinks h1 {
 
 .site-branding {
   height: 60px;
-  border-bottom: 1px solid var(--c-border);
+  border-bottom: 1px solid var(--fz-color-border);
   display: flex;
   align-items: center;
   padding: 0 30px;
@@ -575,7 +575,7 @@ table:first-child div.applinks h1 {
 }
 
 .main-menu {
-  background: var(--c-surface);
+  background: var(--fz-color-surface);
   padding-bottom: 30px;
 }
 
@@ -585,12 +585,12 @@ table:first-child div.applinks h1 {
   align-items: center;
   font-size: 0.85rem;
   font-weight: 500;
-  color: var(--c-text);
+  color: var(--fz-color-text);
   text-decoration: none;
   line-height: 1.6;
 }
 .main-menu__item:hover {
-  background: var(--c-surface-3);
+  background: var(--fz-color-surface-3);
 }
 
 .main-menu__item-link-icon {
@@ -642,7 +642,7 @@ table:first-child div.applinks h1 {
   width: 20px;
   min-width: 20px;
   margin-right: 20px;
-  color: var(--c-text);
+  color: var(--fz-color-text);
 	margin-top: 0.7em;
 }
 
@@ -656,7 +656,7 @@ table:first-child div.applinks h1 {
 }
 
 .full-avatar {
-  background: var(--c-surface);
+  background: var(--fz-color-surface);
   height: 100px;
   display: flex;
   flex-direction: column;
@@ -689,7 +689,7 @@ table:first-child div.applinks h1 {
 }
 
 .full-avatar__name {
-  color: var(--c-text);
+  color: var(--fz-color-text);
   font-weight: 500;
   line-height: 1.4;
   text-decoration: none;
@@ -699,7 +699,7 @@ table:first-child div.applinks h1 {
 }
 
 .full-avatar__email {
-  color: var(--c-text-subtle);
+  color: var(--fz-color-text-subtle);
   font-size: 0.8rem;
   line-height: 1.4;
   text-decoration: none;
@@ -835,7 +835,7 @@ button, input[type="submit"], input[type="button"], input[type="reset"],
 }
 
 .btn--secondary {
-  background-color: var(--c-text-muted);
+  background-color: var(--fz-color-text-muted);
   box-shadow: var(--sh-secondary-glow);
 }
 @media print {
@@ -936,7 +936,7 @@ button, input[type="submit"], input[type="button"], input[type="reset"],
 }
 
 .chip {
-  background: var(--c-text-muted);
+  background: var(--fz-color-text-muted);
   color: #FFF;
   font-weight: 500;
   display: inline-block;
@@ -954,7 +954,7 @@ button, input[type="submit"], input[type="button"], input[type="reset"],
 }
 
 .chip--navy {
-  background: var(--c-info);
+  background: var(--fz-color-info);
 }
 
 .chip--blue {
@@ -962,7 +962,7 @@ button, input[type="submit"], input[type="button"], input[type="reset"],
 }
 
 .chip--red {
-  background: var(--c-danger);
+  background: var(--fz-color-danger);
 }
 
 .chip--cranberry {
@@ -970,8 +970,8 @@ button, input[type="submit"], input[type="button"], input[type="reset"],
 }
 
 .chip--light {
-  background: var(--c-bg);
-  color: var(--c-text-muted);
+  background: var(--fz-color-page);
+  color: var(--fz-color-text-muted);
 }
 
 @media print {
@@ -1109,7 +1109,7 @@ table.formulize-subform-table td {
   margin: 4px -10px 0;
   text-decoration: none;
   color:  var(--accent-color);
-  background: var(--c-surface-3);
+  background: var(--fz-color-surface-3);
   padding: 0.5em 2em;
   border: 1px solid var(--light-border-color);
   border-bottom-left-radius: 2px;
@@ -1167,7 +1167,7 @@ table.formulize-subform-table td {
 .form-heading {
   font-weight: 400;
   font-size: 0.9rem;
-  color: var(--c-text-muted);
+  color: var(--fz-color-text-muted);
   margin-top: 60px;
 }
 .form-heading:first-of-type {
@@ -1315,7 +1315,7 @@ table.outer textarea,
   width: 100%;
   max-width: 300px;
   border: 0;
-  border-bottom: 1px solid var(--c-border-strong);
+  border-bottom: 1px solid var(--fz-color-border-strong);
   padding-top: 0.5em;
   padding-right: 0;
   padding-left: 0.5em;
@@ -1488,7 +1488,7 @@ table.outer textarea[disabled],
 #formulize_modal input[type="date"][disabled],
 #formulize_modal input[type="time"][disabled],
 #formulize_modal input[type="password"][disabled] {
-  color: var(--c-text-subtle);
+  color: var(--fz-color-text-subtle);
 }
 @media print {
     .form-input[disabled],
@@ -1543,7 +1543,7 @@ table.outer textarea[disabled],
 
 .form-container textarea, table.outer textarea,
 #formulize_modal textarea, table.outer textarea {
-    border-left: 1px solid var(--c-border-strong);
+    border-left: 1px solid var(--fz-color-border-strong);
     padding-left: 1em;
 }
 
@@ -1561,7 +1561,7 @@ textarea {
 
 table.outer select, .form-container select, #formulize_modal select {
     border: 0;
-    border-bottom: 1px solid var(--c-border-strong);
+    border-bottom: 1px solid var(--fz-color-border-strong);
     padding-left: 0.25em;
     width: 100%;
     max-width: 300px;
@@ -1621,12 +1621,12 @@ div.formulize_autocomplete {
 }
 
 .form-required {
-  color: var(--c-danger);
+  color: var(--fz-color-danger);
 }
 
 .form-help-text {
   font-size: 0.8rem;
-  color: var(--c-text-muted);
+  color: var(--fz-color-text-muted);
   padding: 0.6em 0;
   line-height: 1.4;
   clear: both;
@@ -1675,8 +1675,8 @@ ul.form-help-text {
 
 .table {
   width: 100%;
-  background: var(--c-surface);
-  color: var(--c-text-muted);
+  background: var(--fz-color-surface);
+  color: var(--fz-color-text-muted);
   border-radius: 4px;
   box-shadow: 6px 0px 10px 0px rgba(51, 77, 110, 0.08);
 }
@@ -1690,7 +1690,7 @@ ul.form-help-text {
 }
 
 .table thead tr {
-  border-bottom: 1px solid var(--c-border);
+  border-bottom: 1px solid var(--fz-color-border);
 }
 @media print {
   .table thead tr {
@@ -1702,7 +1702,7 @@ ul.form-help-text {
 }
 
 .table tbody tr {
-  border-bottom: 1px solid var(--c-border);
+  border-bottom: 1px solid var(--fz-color-border);
 }
 @media print {
   .table tbody tr {
@@ -1714,7 +1714,7 @@ ul.form-help-text {
 }
 
 .table--striped tr:nth-child(2n) {
-  background: var(--c-surface-2);
+  background: var(--fz-color-surface-2);
 }
 @media print {
   .table--striped tr:nth-child(2n) {
@@ -1723,7 +1723,7 @@ ul.form-help-text {
 }
 
 .table--hover-highlight-row tr:hover {
-  background: var(--c-surface-3);
+  background: var(--fz-color-surface-3);
 }
 
 .table th, .table td {
@@ -1731,7 +1731,7 @@ ul.form-help-text {
 }
 
 .table th {
-  color: var(--c-text-subtle);
+  color: var(--fz-color-text-subtle);
   font-weight: 500;
 }
 @media print {
@@ -1785,7 +1785,7 @@ ul.form-help-text {
 }
 button.ui-dialog-titlebar-close {
     min-width: auto;
-    border: 1px solid var(--c-border-strong) !important;
+    border: 1px solid var(--fz-color-border-strong) !important;
     box-shadow: none;
 }
 
@@ -1872,7 +1872,7 @@ div.subform-entry-container .ui-widget-content {
 
 
 .card {
-  background: var(--c-surface);
+  background: var(--fz-color-surface);
   border-radius: 4px;
   box-shadow: 6px 0px 10px 0px rgba(51, 77, 110, 0.08);
 }
@@ -1887,7 +1887,7 @@ div.subform-entry-container .ui-widget-content {
 
 .card__header {
   padding: 20px 24px;
-  border-bottom: 1px solid var(--c-border);
+  border-bottom: 1px solid var(--fz-color-border);
 }
 @media print {
   .card__header {
@@ -1910,7 +1910,7 @@ button.card__title {
 }
 
 .card__title {
-  color: var(--c-text) !important;
+  color: var(--fz-color-text) !important;
   line-height: 1;
   font-weight: 500;
 }
@@ -1946,7 +1946,7 @@ output[id^=rangeValue] {
   height: 280px;
   cursor: pointer;
   user-select: none;
-  background: var(--c-border-strong);
+  background: var(--fz-color-border-strong);
   box-shadow: none;
 }
 @media (min-width: 768px) {
@@ -1987,7 +1987,7 @@ input::-webkit-slider-runnable-track {
   box-sizing: border-box;
   width: 100%;
   height: 1px;
-  background: var(--c-border-strong);
+  background: var(--fz-color-border-strong);
   border-radius: 100px;
   /*margin: 140px 0;*/
 }
@@ -2001,7 +2001,7 @@ input::-moz-range-track {
   box-sizing: border-box;
   width: 100%;
   height: 1px;
-  background: var(--c-border-strong);
+  background: var(--fz-color-border-strong);
   border-radius: 100px;
   margin: 140px 0;
 }
@@ -2015,7 +2015,7 @@ input::-ms-track {
   box-sizing: border-box;
   width: 100%;
   height: 1px;
-  background: var(--c-border-strong);
+  background: var(--fz-color-border-strong);
   border-radius: 100px;
   color: transparent;
   padding: 140px 0;
@@ -2033,12 +2033,12 @@ input::-ms-fill-upper {
   box-sizing: border-box;
   width: 100%;
   height: 1px;
-  background: var(--c-border-strong);
+  background: var(--fz-color-border-strong);
   border-radius: 100px;
 }
 
 input::-ms-fill-lower {
-  background: var(--c-success);
+  background: var(--fz-color-success);
 }
 
 .rangeslider-fill-lower {
@@ -2053,11 +2053,11 @@ input::-ms-fill-lower {
 }
 
 .rangeslider-fill-lower--green {
-  background-color: var(--c-success);
+  background-color: var(--fz-color-success);
 }
 
 .rangeslider-fill-lower--yellow {
-  background-color: var(--c-warning);
+  background-color: var(--fz-color-warning);
 }
 
 .rangeslider-fill-lower--red {
@@ -2215,7 +2215,7 @@ input::-ms-thumb {
   position: absolute;
   top: 8px;
   left: -20px;
-  background: var(--c-border-strong);
+  background: var(--fz-color-border-strong);
 }
 .rating-text__step:first-child {
   margin-top: 0;
@@ -2229,7 +2229,7 @@ input::-ms-thumb {
 }
 
 .rating-text__step--active {
-  color: var(--c-text);
+  color: var(--fz-color-text);
 }
 @media print {
   .rating-text__step--active {
@@ -2241,13 +2241,13 @@ input::-ms-thumb {
 }
 
 .rating-text__step--active.rating-text__step--green:before {
-  background: var(--c-success);
+  background: var(--fz-color-success);
 }
 .rating-text__step--active.rating-text__step--yellow:before {
-  background: var(--c-warning);
+  background: var(--fz-color-warning);
 }
 .rating-text__step--active.rating-text__step--red:before {
-  background: var(--c-danger);
+  background: var(--fz-color-danger);
 }
 
 .rating-text--layout {
@@ -2266,7 +2266,7 @@ input::-ms-thumb {
 }
 
 .progress-bar {
-  background: var(--c-border-strong);
+  background: var(--fz-color-border-strong);
   height: 6px;
   border-radius: 3px;
 }
@@ -2278,7 +2278,7 @@ input::-ms-thumb {
 
 .progress-bar__inner {
   height: 6px;
-  background: var(--c-info);
+  background: var(--fz-color-info);
   border-radius: 3px;
 }
 
@@ -2320,7 +2320,7 @@ input::-ms-thumb {
 }
 
 .self-assessment__heading {
-  color: var(--c-text-muted);
+  color: var(--fz-color-text-muted);
   font-size: 1rem;
   line-height: 1;
   padding: 0.5rem 0;
@@ -2353,12 +2353,12 @@ input::-ms-thumb {
 
 /* Restates the body font on the elements that browsers give a font of their
    own (form controls, tables) and on the jQuery UI widgets that ship their
-   own family. Goes through --font-sans rather than naming Poppins, so the
+   own family. Goes through --fz-font-sans rather than naming Poppins, so the
    Appearance page's font setting reaches these elements too: they cover
    nearly all the text on a page, so a hardcoded family here would override
    the chosen font everywhere it matters. */
 div, span, textarea, select, p, input, th, td, .ui-widget div, .ui-widget span, .ui-widget textarea, .ui-widget select, .ui-widget p, .ui-widget input, .ui-widget th, .ui-widget td {
-  font-family: var(--font-sans);
+  font-family: var(--fz-font-sans);
 }
 
 img, svg {
@@ -3158,8 +3158,8 @@ img {
    grid held several wide inputs. `minmax(0, 1fr)` tracks do that job now, so
    the controls are free to fill their cells and the caps come off. */
 .formulize-grid {
-    --fz-grid-column-gap: 1em;
-    --fz-grid-row-gap: 0.5em;
+    --formulize-grid-column-gap: 1em;
+    --formulize-grid-row-gap: 0.5em;
     width: 100%;
     max-width: 300px;
 }
@@ -3210,7 +3210,7 @@ a.de-edit-icon:hover{
 span.formulize-masquerade-help {
   display: block;
   font-size: 0.85em;
-  color: var(--c-text-muted);
+  color: var(--fz-color-text-muted);
   margin-top: 4px;
 }
 
@@ -3509,7 +3509,7 @@ input[name='pickdiffgroup'] {
 /* compatibility with classic xoops table layout */
 
 table.outer {
-  background: var(--c-surface);
+  background: var(--fz-color-surface);
   border-radius: 4px;
   box-shadow: 6px 0px 10px 0px rgba(51, 77, 110, 0.08);
   margin-bottom: 30px;
@@ -3574,7 +3574,7 @@ div.scrollbox table.outer {
 
 table.outer th {
   padding: 20px 24px;
-  border-bottom: 1px solid var(--c-border);
+  border-bottom: 1px solid var(--fz-color-border);
 }
 @media print {
   table.outer th {
@@ -3620,7 +3620,7 @@ table.outer input[type=submit], table.outer input[type=button] {
   text-decoration: none;
   border: 0;
   border-radius: 10px;
-  background: var(--c-text-muted);
+  background: var(--fz-color-text-muted);
   text-align: center;
 }
 table.outer input[type=submit]:hover, table.outer input[type=button]:hover {
@@ -3771,7 +3771,7 @@ form[name='metachoiceform'] td p {
 }
 #advanced_options p input[type='text'] {
     width: auto;
-    border: 1px solid var(--c-border-strong);
+    border: 1px solid var(--fz-color-border-strong);
     padding: 0.1em;
     margin-bottom: 1em;
 }
@@ -3831,7 +3831,7 @@ input#toggleRepeatData::before {
   display:block;
   width:0.75rem;
   height:0.75rem;
-  background: var(--c-surface);
+  background: var(--fz-color-surface);
   border-radius:1.2rem;
   position: absolute;
   top:0.1rem;
@@ -3860,7 +3860,7 @@ input#toggleRepeatData:focus-visible {
   width: 500px;
   z-index: 101;
   text-align: center;
-  background-color: var(--c-surface);
+  background-color: var(--fz-color-surface);
   color: black;
   border: 3px solid #ce8c22;
   padding: 1em;
@@ -3919,7 +3919,7 @@ input#toggleRepeatData:focus-visible {
 .pm-breadcrumbs {
   margin-bottom: 1rem;
   font-size: 0.9em;
-  color: var(--c-text-muted);
+  color: var(--fz-color-text-muted);
 }
 
 .pm-breadcrumbs a {
@@ -4033,7 +4033,7 @@ input#toggleRepeatData:focus-visible {
   /* Date - block, smaller text */
   #prvmsg table td:nth-child(3) {
     font-size: 0.85em;
-    color: var(--c-text-muted);
+    color: var(--fz-color-text-muted);
     padding-left: 2.5rem;
   }
 
@@ -4112,10 +4112,10 @@ input#toggleRepeatData:focus-visible {
    ============================================================ */
 
 .formulize-drawer {
-  --formulize-drawer-bg: var(--c-surface);
+  --formulize-drawer-bg: var(--fz-color-surface);
   --formulize-drawer-fg: var(--text-color);
-  --formulize-drawer-border: var(--c-border);
-  --formulize-drawer-muted: var(--c-text-muted);
+  --formulize-drawer-border: var(--fz-color-border);
+  --formulize-drawer-muted: var(--fz-color-text-muted);
   --formulize-drawer-foot-bg: var(--background-color);
   --formulize-drawer-shadow: -6px 0 20px 0 rgba(51, 77, 110, 0.18);
   --formulize-drawer-radius: 10px;
@@ -4141,7 +4141,7 @@ input#toggleRepeatData:focus-visible {
    layout and the wrapping behaviour. */
 .formulize-drawer__tab {
   color: var(--accent-color);
-  background: var(--c-surface-3);
+  background: var(--fz-color-surface-3);
   border: 1px solid var(--light-border-color);
   border-radius: 20px;
   font-size: 0.85rem;
@@ -4182,12 +4182,12 @@ input#toggleRepeatData:focus-visible {
   font-weight: 600;
   border-radius: 10px;
   border: 1px solid var(--light-border-color);
-  background: var(--c-surface);
+  background: var(--fz-color-surface);
   color: var(--text-color);
 }
 
 .formulize-drawer .formulize-drawer__btn:hover {
-  background: var(--c-surface);
+  background: var(--fz-color-surface);
   box-shadow: var(--sh-accent-glow);
 }
 

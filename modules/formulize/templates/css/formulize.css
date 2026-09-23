@@ -898,30 +898,30 @@ div[id^=cellcontents_1_] label {
   /* Optional leading (row caption) and trailing (final cell) tracks. Left
      empty here and filled in by the modifier classes below, so that the
      template below stays a single declaration. */
-  --fz-grid-row-header-track: ;
-  --fz-grid-final-track: ;
+  --formulize-grid-row-header-track: ;
+  --formulize-grid-final-track: ;
   grid-template-columns:
-    var(--fz-grid-row-header-track)
-    repeat(var(--fz-grid-data-columns, 1), minmax(0, 1fr))
-    var(--fz-grid-final-track);
-  column-gap: var(--fz-grid-column-gap, 1em);
-  row-gap: var(--fz-grid-row-gap, 0.5em);
+    var(--formulize-grid-row-header-track)
+    repeat(var(--formulize-grid-data-columns, 1), minmax(0, 1fr))
+    var(--formulize-grid-final-track);
+  column-gap: var(--formulize-grid-column-gap, 1em);
+  row-gap: var(--formulize-grid-row-gap, 0.5em);
   align-items: stretch;
 }
 
 .formulize-grid.fz-grid--has-row-headers {
-  --fz-grid-row-header-track: max-content;
+  --formulize-grid-row-header-track: max-content;
 }
 
 .formulize-grid.fz-grid--has-final-column {
-  --fz-grid-final-track: max-content;
+  --formulize-grid-final-track: max-content;
 }
 
 .formulize-grid > .fz-grid__row {
   display: grid;
   grid-column: 1 / -1;
   grid-template-columns: subgrid;
-  column-gap: var(--fz-grid-column-gap, 1em);
+  column-gap: var(--formulize-grid-column-gap, 1em);
   align-items: end;
 }
 
@@ -948,15 +948,15 @@ div[id^=cellcontents_1_] label {
 
 /* Alternating shading, from the element's "background" setting: horizontal
    emphasises rows, vertical emphasises columns. A theme turns it on by giving
-   --fz-grid-stripe-bg a colour. With no colour the grid is unshaded, which is
+   --formulize-grid-stripe-bg a colour. With no colour the grid is unshaded, which is
    what both shipped themes did with the old table markup - the even/odd
    classes were emitted but nothing ever painted them. */
 .formulize-grid.fz-grid--shade-rows > .fz-grid__row--odd {
-  background: var(--fz-grid-stripe-bg, transparent);
+  background: var(--formulize-grid-stripe-bg, transparent);
 }
 
 .formulize-grid.fz-grid--shade-columns .fz-grid__cell.odd {
-  background: var(--fz-grid-stripe-bg, transparent);
+  background: var(--formulize-grid-stripe-bg, transparent);
 }
 
 /* Caption, when the element is set to show its heading above the grid. */

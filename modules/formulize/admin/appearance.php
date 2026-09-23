@@ -195,7 +195,7 @@ foreach($headingFontMap as $key => $font) {
 }
 
 // What each choice actually renders as, for the preview. The default choice is the
-// theme's own --font-sans (Geist on Lyris, Poppins on Anari), not the font map's
+// theme's own --fz-font-sans (Geist on Lyris, Poppins on Anari), not the font map's
 // nominal Geist stack, so previewing "default" shows the theme being edited. 'custom'
 // carries nothing: the browser builds it from whatever family name has been typed in.
 $themeTokens = formulize_appearanceThemeTokens($selectedTheme);
@@ -205,7 +205,7 @@ foreach($fontMap as $key => $font) {
         $fontStacks[$key] = array('stack' => '', 'google' => '');
     } elseif($key == 'geist') {
         $fontStacks[$key] = array(
-            'stack' => isset($themeTokens['--font-sans']) ? $themeTokens['--font-sans'] : $font['stack'],
+            'stack' => isset($themeTokens['--fz-font-sans']) ? $themeTokens['--fz-font-sans'] : $font['stack'],
             'google' => str_replace(' ', '+', formulize_appearanceThemeFontName($selectedTheme)) . ':wght@400;500;600;700',
         );
     } else {

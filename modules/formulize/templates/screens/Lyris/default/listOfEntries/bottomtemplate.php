@@ -126,13 +126,13 @@ function fzSelectView(value, isStandard) {
 
     // The sticky filter row sits just below the sticky column-header row. Headers can wrap onto
     // several lines (fixed pixel width columns), so track the header row's real height in
-    // --fz-thead-h rather than assuming its 36px single-line height.
+    // --lyris-thead-height rather than assuming its 36px single-line height.
     function initStickyFilterOffset() {
         var table = document.querySelector('.fz-table');
         var headerRow = table ? table.querySelector('thead tr:first-child') : null;
         if (!headerRow || headerRow.classList.contains('fz-search-row') || typeof ResizeObserver === 'undefined') return;
         new ResizeObserver(function () {
-            table.style.setProperty('--fz-thead-h', headerRow.getBoundingClientRect().height + 'px');
+            table.style.setProperty('--lyris-thead-height', headerRow.getBoundingClientRect().height + 'px');
         }).observe(headerRow);
     }
 

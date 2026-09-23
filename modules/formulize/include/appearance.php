@@ -142,13 +142,13 @@ function formulize_appearanceColourMapDefinition() {
             'description' => 'Buttons, links, selected rows, focus rings',
             'default' => '#2e3340',
             'tokens' => array(
-                '--c-accent' => '%s',
-                '--c-accent-fg' => '%s',
-                '--c-accent-hover' => 'color-mix(in srgb, %s 85%%, #000)',
-                '--c-accent-soft' => 'color-mix(in srgb, %s 8%%, #fff)',
-                '--c-accent-soft-2' => 'color-mix(in srgb, %s 16%%, #fff)',
-                '--c-border-focus' => 'color-mix(in srgb, %s 85%%, #000)',
-                '--sh-focus' => '0 0 0 3px color-mix(in srgb, %s 15%%, transparent)',
+                '--fz-color-accent' => '%s',
+                '--fz-color-accent-text' => '%s',
+                '--fz-color-accent-hover' => 'color-mix(in srgb, %s 85%%, #000)',
+                '--fz-color-accent-soft' => 'color-mix(in srgb, %s 8%%, #fff)',
+                '--fz-color-accent-soft-2' => 'color-mix(in srgb, %s 16%%, #fff)',
+                '--fz-color-focus' => 'color-mix(in srgb, %s 85%%, #000)',
+                '--fz-focus-ring' => '0 0 0 3px color-mix(in srgb, %s 15%%, transparent)',
             ),
         ),
         'background' => array(
@@ -156,7 +156,7 @@ function formulize_appearanceColourMapDefinition() {
             'description' => 'The backdrop behind all content',
             'default' => '#f7f7f5',
             'tokens' => array(
-                '--c-bg' => '%s',
+                '--fz-color-page' => '%s',
             ),
         ),
         'surface' => array(
@@ -164,9 +164,9 @@ function formulize_appearanceColourMapDefinition() {
             'description' => 'Cards, tables, panels and other raised areas',
             'default' => '#ffffff',
             'tokens' => array(
-                '--c-surface' => '%s',
-                '--c-surface-2' => 'color-mix(in srgb, %s 98%%, #555)',
-                '--c-surface-3' => 'color-mix(in srgb, %s 94%%, #555)',
+                '--fz-color-surface' => '%s',
+                '--fz-color-surface-2' => 'color-mix(in srgb, %s 98%%, #555)',
+                '--fz-color-surface-3' => 'color-mix(in srgb, %s 94%%, #555)',
             ),
         ),
         'text' => array(
@@ -174,9 +174,9 @@ function formulize_appearanceColourMapDefinition() {
             'description' => 'Main text colour; muted and subtle text are derived from it',
             'default' => '#14161a',
             'tokens' => array(
-                '--c-text' => '%s',
-                '--c-text-muted' => 'color-mix(in srgb, %s 65%%, #fff)',
-                '--c-text-subtle' => 'color-mix(in srgb, %s 45%%, #fff)',
+                '--fz-color-text' => '%s',
+                '--fz-color-text-muted' => 'color-mix(in srgb, %s 65%%, #fff)',
+                '--fz-color-text-subtle' => 'color-mix(in srgb, %s 45%%, #fff)',
             ),
         ),
         'border' => array(
@@ -184,8 +184,8 @@ function formulize_appearanceColourMapDefinition() {
             'description' => 'Dividers and outlines; strong borders are derived',
             'default' => '#e6e6e1',
             'tokens' => array(
-                '--c-border' => '%s',
-                '--c-border-strong' => 'color-mix(in srgb, %s 90%%, #000)',
+                '--fz-color-border' => '%s',
+                '--fz-color-border-strong' => 'color-mix(in srgb, %s 90%%, #000)',
             ),
         ),
         'success' => array(
@@ -193,8 +193,8 @@ function formulize_appearanceColourMapDefinition() {
             'description' => 'Positive statuses and badges',
             'default' => '#2a7a4f',
             'tokens' => array(
-                '--c-success' => '%s',
-                '--c-success-soft' => 'color-mix(in srgb, %s 12%%, #fff)',
+                '--fz-color-success' => '%s',
+                '--fz-color-success-soft' => 'color-mix(in srgb, %s 12%%, #fff)',
             ),
         ),
         'warning' => array(
@@ -202,8 +202,8 @@ function formulize_appearanceColourMapDefinition() {
             'description' => 'Caution statuses and badges',
             'default' => '#a86a14',
             'tokens' => array(
-                '--c-warning' => '%s',
-                '--c-warning-soft' => 'color-mix(in srgb, %s 12%%, #fff)',
+                '--fz-color-warning' => '%s',
+                '--fz-color-warning-soft' => 'color-mix(in srgb, %s 12%%, #fff)',
             ),
         ),
         'danger' => array(
@@ -211,8 +211,8 @@ function formulize_appearanceColourMapDefinition() {
             'description' => 'Errors, destructive actions',
             'default' => '#b3261e',
             'tokens' => array(
-                '--c-danger' => '%s',
-                '--c-danger-soft' => 'color-mix(in srgb, %s 12%%, #fff)',
+                '--fz-color-danger' => '%s',
+                '--fz-color-danger-soft' => 'color-mix(in srgb, %s 12%%, #fff)',
             ),
         ),
         'info' => array(
@@ -220,8 +220,8 @@ function formulize_appearanceColourMapDefinition() {
             'description' => 'Informational statuses and badges',
             'default' => '#2e5fa8',
             'tokens' => array(
-                '--c-info' => '%s',
-                '--c-info-soft' => 'color-mix(in srgb, %s 12%%, #fff)',
+                '--fz-color-info' => '%s',
+                '--fz-color-info-soft' => 'color-mix(in srgb, %s 12%%, #fff)',
             ),
         ),
     );
@@ -229,7 +229,7 @@ function formulize_appearanceColourMapDefinition() {
 
 /**
  * The name of the font a theme uses when no font has been chosen on the
- * Appearance page, ie: the first family in the --font-sans it declares itself.
+ * Appearance page, ie: the first family in the --fz-font-sans it declares itself.
  * That is what the default option in the font picker actually gives you, so it
  * is what that option is labelled with.
  *
@@ -238,8 +238,8 @@ function formulize_appearanceColourMapDefinition() {
  */
 function formulize_appearanceThemeFontName($theme = null) {
     $tokens = formulize_appearanceThemeTokens($theme);
-    if (isset($tokens['--font-sans'])) {
-        $first = trim(strtok($tokens['--font-sans'], ','), " \t\"'");
+    if (isset($tokens['--fz-font-sans'])) {
+        $first = trim(strtok($tokens['--fz-font-sans'], ','), " \t\"'");
         // a var() or other indirection isn't a family name we can show
         if ($first !== '' AND preg_match('/^[A-Za-z0-9 _-]+$/', $first)) {
             return $first;
@@ -251,7 +251,7 @@ function formulize_appearanceThemeFontName($theme = null) {
 /**
  * Curated font choices. 'google' is the family parameter for the Google Fonts
  * css2 API (false when no webfont needs loading), 'stack' is the CSS
- * font-family value for --font-sans.
+ * font-family value for --fz-font-sans.
  *
  * The first choice is "leave the theme's own font alone", which is why its
  * label names the theme's font rather than a fixed one: on Lyris that is Geist,
@@ -318,7 +318,7 @@ function formulize_appearanceFontMap($theme = null) {
  *
  * Same list of families as the main font, with one difference: the first option
  * doesn't mean "this theme's own font", it means "don't use a second font at
- * all". A theme declares --font-heading as var(--font-sans), so leaving this
+ * all". A theme declares --fz-font-heading as var(--fz-font-sans), so leaving this
  * setting alone is what makes headings follow whatever the main font is, and
  * nothing is written for it. That is also what the issue asks for: the second
  * font only does anything when it is different from the first.
@@ -374,7 +374,7 @@ function formulize_appearanceContentRatio($theme = null) {
 
 /**
  * The root font size a theme uses when none has been chosen on the Appearance
- * page, ie: the --font-size-base it declares itself. Read from the theme the
+ * page, ie: the --formulize-font-size-base it declares itself. Read from the theme the
  * same way the default colours are, so the Appearance page shows and resets to
  * what the theme actually looks like.
  *
@@ -386,7 +386,7 @@ function formulize_appearanceContentRatio($theme = null) {
  */
 function formulize_appearanceThemeFontSize($theme = null) {
     $tokens = formulize_appearanceThemeTokens($theme);
-    $value = strtolower(trim(isset($tokens['--font-size-base']) ? $tokens['--font-size-base'] : ''));
+    $value = strtolower(trim(isset($tokens['--formulize-font-size-base']) ? $tokens['--formulize-font-size-base'] : ''));
     return preg_match('/^[0-9]+(?:\.[0-9]+)?px$/', $value) ? $value : '16px';
 }
 
@@ -686,6 +686,24 @@ function formulize_sanitizeAppearanceSettings($values, $theme = null) {
 }
 
 /**
+ * The comment that says which generation of this code wrote a theme's appearance
+ * stylesheet. The settings block is the record of the settings and keeps its own
+ * format version (see formulize_appearanceSettingsBlockMarkers); this is about the
+ * CSS written after it, which changes whenever the tokens the themes use change.
+ * A stylesheet without the current marker is rewritten from the settings recorded
+ * in it the next time a page renders (see formulize_renderAppearanceHead), so that
+ * an admin's saved colours and fonts keep applying across such a change.
+ *
+ * Generation 2: the tokens were renamed to the Formulize UI names (--c-accent
+ * became --fz-color-accent, and so on).
+ *
+ * @return string the whole comment, one line
+ */
+function formulize_appearanceCssGenerationMarker() {
+    return '/* Formulize appearance stylesheet, generation 2 */';
+}
+
+/**
  * The lines that delimit the settings block inside a generated stylesheet. The
  * start marker carries a format version, so a stylesheet written by a later
  * version of Formulize is not misread by this one: it simply doesn't match, and
@@ -866,7 +884,7 @@ function formulize_resolveAppearanceFontChoice($choice, $customFamily) {
 
 /**
  * Resolve the Google Fonts css2 URL and the font-family values for the current
- * settings. Geist Mono is always requested alongside, since --font-mono uses it,
+ * settings. Geist Mono is always requested alongside, since --fz-font-mono uses it,
  * and the secondary font is requested too when one has been chosen and is not
  * the family the main font already brings in.
  *
@@ -904,7 +922,7 @@ function formulize_getAppearanceFont($settings = null) {
     return array(
         'url' => $url,
         'stack' => ($font['key'] == 'geist') ? false : $font['stack'], // false means the theme's own default applies
-        'heading' => $headingIsSeparate ? $heading['stack'] : false,   // false means headings follow --font-sans
+        'heading' => $headingIsSeparate ? $heading['stack'] : false,   // false means headings follow --fz-font-sans
     );
 }
 
@@ -1138,12 +1156,12 @@ function formulize_getAppearanceCssOverrides($settings = null, $theme = null) {
     $overrides = array();
     $font = formulize_getAppearanceFont($settings);
     if ($font['stack']) {
-        $overrides['--font-sans'] = $font['stack'];
+        $overrides['--fz-font-sans'] = $font['stack'];
     }
-    // Left alone, a theme's --font-heading is var(--font-sans), so headings and labels
+    // Left alone, a theme's --fz-font-heading is var(--fz-font-sans), so headings and labels
     // follow the main font without anything being written here.
     if ($font['heading']) {
-        $overrides['--font-heading'] = $font['heading'];
+        $overrides['--fz-font-heading'] = $font['heading'];
     }
     // The text size setting is the size of the standard content text, so it is
     // converted here to the root font size that produces it - the root size being
@@ -1151,7 +1169,7 @@ function formulize_getAppearanceCssOverrides($settings = null, $theme = null) {
     // one value that moves every text size together.
     $fontSize = formulize_sanitizeAppearanceFontSize(isset($settings['appearance_fontsize']) ? $settings['appearance_fontsize'] : '', $theme);
     if ($fontSize AND $fontSize != formulize_appearanceThemeContentSize($theme)) {
-        $overrides['--font-size-base'] = formulize_appearanceBaseFontSizeFor($fontSize, $theme);
+        $overrides['--formulize-font-size-base'] = formulize_appearanceBaseFontSizeFor($fontSize, $theme);
     }
     foreach (formulize_appearanceColourMap($theme) as $key => $colour) {
         $value = formulize_sanitizeAppearanceColour($settings['appearance_' . $key]);
@@ -1196,6 +1214,7 @@ function formulize_buildAppearanceCss($settings = null, $theme = null) {
         : formulize_getAppearanceSettings($theme);
     $font = formulize_getAppearanceFont($settings);
     $css = formulize_buildAppearanceSettingsBlock($settings, $theme) . "\n";
+    $css .= formulize_appearanceCssGenerationMarker() . "\n";
     if ($font['url']) {
         $css .= '@import url("' . $font['url'] . '");' . "\n";
     }
@@ -1208,7 +1227,7 @@ function formulize_buildAppearanceCss($settings = null, $theme = null) {
         $css .= "}\n";
     }
     // Apply the root font size here as well as declaring the token, rather than
-    // relying on the theme to have wired --font-size-base up to `html` itself.
+    // relying on the theme to have wired --formulize-font-size-base up to `html` itself.
     // This file is the record of the setting and is loaded after the theme's own
     // stylesheets, so having it do the applying means the size can never be
     // recorded here and yet have no effect - which is exactly what a theme that
@@ -1216,8 +1235,8 @@ function formulize_buildAppearanceCss($settings = null, $theme = null) {
     // anyone looking at this file would be able to see. Both bundled themes do
     // apply it, so for them this is the same declaration twice over, and a
     // theme's own rule is still what a default site renders with.
-    if (isset($overrides['--font-size-base'])) {
-        $css .= "html {\n  font-size: var(--font-size-base);\n}\n";
+    if (isset($overrides['--formulize-font-size-base'])) {
+        $css .= "html {\n  font-size: var(--formulize-font-size-base);\n}\n";
     }
     return $css;
 }
@@ -1254,7 +1273,8 @@ function formulize_regenerateAppearanceCss($settings = null, $theme = null) {
 /**
  * Render the head markup a theme needs for the appearance settings: preconnect
  * hints for the webfont host, and the link tag for the generated stylesheet,
- * which is regenerated first if it doesn't exist yet. Goes after the theme's
+ * which is regenerated first if it doesn't exist yet, or was written by an earlier
+ * generation of this code (see formulize_appearanceCssGenerationMarker). Goes after the theme's
  * own stylesheet links, so the overrides win the cascade.
  *
  * The settings and the stylesheet are those of the theme rendering the page,
@@ -1271,7 +1291,10 @@ function formulize_renderAppearanceHead() {
     $theme = formulize_getActiveAppearanceTheme();
     $cssPath = formulize_getAppearanceCssPath($theme);
     $cssExists = file_exists($cssPath);
-    if (!$cssExists) {
+    // written by an earlier generation of this code, whose CSS may use tokens the
+    // theme no longer has: rewrite it from the settings it records
+    $cssIsCurrent = ($cssExists AND strpos((string) @file_get_contents($cssPath), formulize_appearanceCssGenerationMarker()) !== false);
+    if (!$cssExists OR !$cssIsCurrent) {
         // settings are read before the file is written, so the values that go into it
         // are the ones this page is already rendering with, legacy or default
         $cssExists = formulize_regenerateAppearanceCss(formulize_getAppearanceSettings($theme), $theme);

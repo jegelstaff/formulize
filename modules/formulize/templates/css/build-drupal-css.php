@@ -105,7 +105,8 @@ function formulize_drupalCssPath($root, $theme) {
  * ORDER IS LOAD BEARING, and it is dictated by the theme template rather than chosen here:
  *
  *   theme.html  <{$icms_module_header}>  emits everything registered on $xoTheme, which is icms.css
- *                                        (header.php) and then formulize.css (modules/formulize/index.php)
+ *                                        (header.php) and then formulize-ui.css and formulize.css
+ *                                        (modules/formulize/index.php)
  *   theme.html  ...later...              the theme echoes its own stylesheets
  *
  * So the theme's stylesheets come LAST and override the module's, and every theme must be built that
@@ -124,6 +125,7 @@ function formulize_drupalCssPath($root, $theme) {
 function formulize_drupalCssSources($root, $theme) {
     $sources = array(
         'icms.css',
+        'modules/formulize/templates/css/formulize-ui.css',
         'modules/formulize/templates/css/formulize.css',
     );
     $themeCssDir = $root . '/themes/' . $theme . '/css';

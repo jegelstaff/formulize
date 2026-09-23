@@ -24,28 +24,28 @@ body {
    and moving it moves all of them together.
 
    Three layers get a say, in this order: the theme's own default
-   (--font-size-base in tokens.css), the site-wide Text size setting on the
+   (--formulize-font-size-base in tokens.css), the site-wide Text size setting on the
    Appearance page (which overrides that token in the generated appearance.css),
    and finally a user's personal font size preference, which theme.html prints as
    an inline style further down the document and so wins over both. */
 html {
-  font-size: var(--font-size-base);
+  font-size: var(--formulize-font-size-base);
 }
 
 body {
-  font-family: var(--font-sans);
-  font-size: var(--fs-14);
-  line-height: var(--lh-base);
-  color: var(--c-text);
-  background: var(--c-bg);
+  font-family: var(--fz-font-sans);
+  font-size: var(--fz-text-sm);
+  line-height: var(--fz-leading-normal);
+  color: var(--fz-color-text);
+  background: var(--fz-color-page);
 }
 
 /* ---- Secondary font ----
    The one place the secondary font is applied, so what it covers is written down
    once and is the same list the Appearance page's help text promises: headings,
-   form labels, and the drawer's title. Everything else keeps --font-sans.
+   form labels, and the drawer's title. Everything else keeps --fz-font-sans.
 
-   --font-heading is var(--font-sans) unless a second font has been chosen, so
+   --fz-font-heading is var(--fz-font-sans) unless a second font has been chosen, so
    these rules are inert on a site using a single font, and nothing needs to know
    whether one has been picked. Only the family is set here: size, weight and
    colour stay with the rules that own those elements. */
@@ -56,7 +56,7 @@ h1, h2, h3, h4, h5, h6,
 .xoops-form-element-caption-required,
 .fz-form-screen .formulize-grid-caption,
 .formulize-drawer__title {
-  font-family: var(--font-heading);
+  font-family: var(--fz-font-heading);
 }
 
 /* ============================================================
@@ -68,21 +68,21 @@ h1, h2, h3, h4, h5, h6,
   flex-direction: column;
   /* Stops short of the viewport bottom while masquerading, so the bar does not
      cover the shell's sticky bottom chrome. See the "Masquerade bar" section. */
-  height: calc(100vh - var(--masquerade-h));
+  height: calc(100vh - var(--lyris-masquerade-height));
   overflow: hidden;
 }
 
 /* ---- Header ---- */
 
 .fz-header {
-  height: var(--header-h);
+  height: var(--lyris-header-height);
   flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: var(--s-2);
   padding: 0 var(--s-4);
-  background: var(--c-surface);
-  border-bottom: 1px solid var(--c-border);
+  background: var(--fz-color-surface);
+  border-bottom: 1px solid var(--fz-color-border);
   z-index: 10;
   position: relative;
 }
@@ -114,24 +114,24 @@ h1, h2, h3, h4, h5, h6,
 .fz-header__action-link {
   font-size: var(--fs-13);
   font-weight: 500;
-  color: var(--c-text-muted);
+  color: var(--fz-color-text-muted);
   text-decoration: none;
-  transition: color var(--dur-1) var(--ease);
+  transition: color var(--fz-duration-fast) var(--fz-ease-out);
 }
 
 .fz-header__action-link:hover {
-  color: var(--c-text);
+  color: var(--fz-color-text);
 }
 
 .fz-header__inbox {
   display: inline-flex;
   align-items: center;
   position: relative;
-  color: var(--c-text-muted);
+  color: var(--fz-color-text-muted);
 }
 
 .fz-header__inbox:hover {
-  color: var(--c-text);
+  color: var(--fz-color-text);
 }
 
 .fz-header__badge {
@@ -140,13 +140,13 @@ h1, h2, h3, h4, h5, h6,
   right: -4px;
   width: 7px;
   height: 7px;
-  border-radius: var(--r-full);
-  background: var(--c-danger);
-  border: 1.5px solid var(--c-surface);
+  border-radius: var(--fz-radius-full);
+  background: var(--fz-color-danger);
+  border: 1.5px solid var(--fz-color-surface);
 }
 
 .fz-header__nav-toggle {
-  color: var(--c-text-muted);
+  color: var(--fz-color-text-muted);
   flex-shrink: 0;
 }
 
@@ -162,13 +162,13 @@ h1, h2, h3, h4, h5, h6,
 /* ---- Sidebar ---- */
 
 .fz-sidebar {
-  width: var(--sidebar-w);
+  width: var(--lyris-sidebar-width);
   flex-shrink: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  background: var(--c-surface-2);
-  border-right: 1px solid var(--c-border);
-  transition: width var(--dur-2) var(--ease);
+  background: var(--fz-color-surface-2);
+  border-right: 1px solid var(--fz-color-border);
+  transition: width var(--fz-duration) var(--fz-ease-out);
 }
 
 .fz-app--sidebar-closed .fz-sidebar {
@@ -181,7 +181,7 @@ h1, h2, h3, h4, h5, h6,
   flex: 1;
   overflow: auto;
   min-width: 0;
-  background: var(--c-bg);
+  background: var(--fz-color-page);
 }
 
 /* Simple / system pages (login, register, lostpass, ...) drop their raw
@@ -207,12 +207,12 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
    masquerade allowance is taken as padding on the body instead of by shrinking
    the shell. See the "Masquerade bar" section. */
 .fz-inline {
-  padding-bottom: var(--masquerade-h);
+  padding-bottom: var(--lyris-masquerade-height);
 }
 
 .fz-inline .fz-app {
   height: auto;
-  min-height: calc(100vh - var(--masquerade-h));
+  min-height: calc(100vh - var(--lyris-masquerade-height));
   overflow: visible;
 }
 
@@ -248,24 +248,24 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
    ============================================================ */
 
 .formulize-drawer {
-  --formulize-drawer-bg:       var(--c-surface);
-  --formulize-drawer-fg:       var(--c-text);
-  --formulize-drawer-border:   var(--c-border);
-  --formulize-drawer-muted:    var(--c-text-muted);
-  --formulize-drawer-foot-bg:  var(--c-surface-2);
-  --formulize-drawer-shadow:   var(--sh-4);
-  --formulize-drawer-radius:   var(--r-2);
+  --formulize-drawer-bg:       var(--fz-color-surface);
+  --formulize-drawer-fg:       var(--fz-color-text);
+  --formulize-drawer-border:   var(--fz-color-border);
+  --formulize-drawer-muted:    var(--fz-color-text-muted);
+  --formulize-drawer-foot-bg:  var(--fz-color-surface-2);
+  --formulize-drawer-shadow:   var(--fz-shadow-lg);
+  --formulize-drawer-radius:   var(--fz-radius-md);
   --formulize-drawer-pad-x:    var(--s-5);
   --formulize-drawer-pad-y:    var(--s-4);
 
   /* Lifted above the masquerade bar so the drawer's footer buttons stay clickable. */
-  bottom: var(--masquerade-h);
-  animation: fz-drawer-in var(--dur-2) var(--ease);
+  bottom: var(--lyris-masquerade-height);
+  animation: fz-drawer-in var(--fz-duration) var(--fz-ease-out);
 }
 
 .formulize-drawer-scrim {
-  inset: 0 0 var(--masquerade-h) 0;
-  background: var(--c-overlay);
+  inset: 0 0 var(--lyris-masquerade-height) 0;
+  background: var(--fz-color-overlay);
 }
 
 /* The drawer's multipage tab strip, given the same pill treatment as the full
@@ -275,26 +275,26 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
 .formulize-drawer__tab {
   font-size: var(--fs-13);
   font-weight: 500;
-  color: var(--c-text-muted);
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-full, 999px);
-  background: var(--c-surface);
-  transition: color var(--dur-1) var(--ease),
-              border-color var(--dur-1) var(--ease),
-              background-color var(--dur-1) var(--ease);
+  color: var(--fz-color-text-muted);
+  border: 1px solid var(--fz-color-border);
+  border-radius: var(--fz-radius-full, 999px);
+  background: var(--fz-color-surface);
+  transition: color var(--fz-duration-fast) var(--fz-ease-out),
+              border-color var(--fz-duration-fast) var(--fz-ease-out),
+              background-color var(--fz-duration-fast) var(--fz-ease-out);
 }
 
 .formulize-drawer__tab:hover {
-  color: var(--c-text);
-  border-color: var(--c-border-strong);
-  background: var(--c-surface-2);
+  color: var(--fz-color-text);
+  border-color: var(--fz-color-border-strong);
+  background: var(--fz-color-surface-2);
 }
 
 .formulize-drawer__tab--active,
 .formulize-drawer__tab--active:disabled {
-  color: var(--c-text-on-accent);
-  background: var(--c-accent);
-  border-color: var(--c-accent);
+  color: var(--fz-color-on-accent);
+  background: var(--fz-color-accent);
+  border-color: var(--fz-color-accent);
 }
 
 @keyframes fz-drawer-in {
@@ -304,7 +304,7 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
 
 .formulize-drawer__resize-handle:hover::after,
 .formulize-drawer__resize-handle--active::after {
-  background-color: var(--c-border-strong);
+  background-color: var(--fz-color-border-strong);
 }
 
 .formulize-drawer__head {
@@ -312,7 +312,7 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
 }
 
 .formulize-drawer__title {
-  font-size: var(--fs-20);
+  font-size: var(--fz-text-xl);
 }
 
 .formulize-drawer__loading {
@@ -345,35 +345,35 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
   padding: 0 var(--s-3);
   font-size: var(--fs-13);
   font-weight: 500;
-  border-radius: var(--r-2);
-  border: 1px solid var(--c-border-strong);
-  background: var(--c-surface);
-  color: var(--c-text);
-  transition: background-color var(--dur-1) var(--ease),
-              border-color var(--dur-1) var(--ease),
-              color var(--dur-1) var(--ease);
+  border-radius: var(--fz-radius-md);
+  border: 1px solid var(--fz-color-border-strong);
+  background: var(--fz-color-surface);
+  color: var(--fz-color-text);
+  transition: background-color var(--fz-duration-fast) var(--fz-ease-out),
+              border-color var(--fz-duration-fast) var(--fz-ease-out),
+              color var(--fz-duration-fast) var(--fz-ease-out);
 }
 
 .formulize-drawer .formulize-drawer__btn:hover {
-  background: var(--c-surface-3);
-  border-color: var(--c-text-muted);
+  background: var(--fz-color-surface-3);
+  border-color: var(--fz-color-text-muted);
 }
 
 .formulize-drawer .formulize-drawer__btn:focus-visible {
   outline: none;
-  box-shadow: var(--sh-focus);
+  box-shadow: var(--fz-focus-ring);
 }
 
 .formulize-drawer .formulize-drawer__btn--ghost {
   background: transparent;
   border-color: transparent;
-  color: var(--c-text);
+  color: var(--fz-color-text);
 }
 
 .formulize-drawer .formulize-drawer__btn--ghost:hover {
-  background: var(--c-surface-3);
+  background: var(--fz-color-surface-3);
   border-color: transparent;
-  color: var(--c-text);
+  color: var(--fz-color-text);
 }
 
 /* Restated after the base rule above, which would otherwise put the padding
@@ -441,8 +441,8 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
   width: 42px;
   height: 42px;
   margin: -21px 0 0 -21px;
-  border: 3px solid var(--c-border);
-  border-top-color: var(--c-accent);
+  border: 3px solid var(--fz-color-border);
+  border-top-color: var(--fz-color-accent);
   border-radius: 50%;
   animation: fz-spin 0.7s linear infinite;
 }
@@ -471,10 +471,10 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
   gap: 6px;
   height: 32px;
   padding: 0 var(--s-3);
-  border-radius: var(--r-2);
-  border: 1px solid var(--c-border-strong);
-  background: var(--c-surface);
-  color: var(--c-text);
+  border-radius: var(--fz-radius-md);
+  border: 1px solid var(--fz-color-border-strong);
+  background: var(--fz-color-surface);
+  color: var(--fz-color-text);
   font: inherit;
   font-size: var(--fs-13);
   font-weight: 500;
@@ -483,39 +483,39 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
   text-decoration: none;
   appearance: none;
   -webkit-appearance: none;
-  transition: background var(--dur-1) var(--ease),
-              border-color var(--dur-1) var(--ease),
-              color var(--dur-1) var(--ease);
+  transition: background var(--fz-duration-fast) var(--fz-ease-out),
+              border-color var(--fz-duration-fast) var(--fz-ease-out),
+              color var(--fz-duration-fast) var(--fz-ease-out);
 }
 
-.fz-btn:hover { background: var(--c-surface-3); }
-.fz-btn:focus-visible { outline: none; box-shadow: var(--sh-focus); }
+.fz-btn:hover { background: var(--fz-color-surface-3); }
+.fz-btn:focus-visible { outline: none; box-shadow: var(--fz-focus-ring); }
 
 .fz-btn--primary {
-  background: var(--c-accent);
-  color: var(--c-text-on-accent);
-  border-color: var(--c-accent);
+  background: var(--fz-color-accent);
+  color: var(--fz-color-on-accent);
+  border-color: var(--fz-color-accent);
 }
 .fz-btn--primary:hover {
-  background: var(--c-accent-hover);
-  border-color: var(--c-accent-hover);
+  background: var(--fz-color-accent-hover);
+  border-color: var(--fz-color-accent-hover);
 }
 
 .fz-btn--ghost {
   border-color: transparent;
   background: transparent;
 }
-.fz-btn--ghost:hover { background: var(--c-surface-3); }
+.fz-btn--ghost:hover { background: var(--fz-color-surface-3); }
 
 /* Filter toggle — highlight when filters are visible */
 #fz-filter-toggle[aria-pressed="true"] {
-  background: var(--c-accent-soft);
-  border-color: var(--c-accent-soft-2);
-  color: var(--c-accent);
+  background: var(--fz-color-accent-soft);
+  border-color: var(--fz-color-accent-soft-2);
+  color: var(--fz-color-accent);
 }
 
-.fz-btn--sm  { height: 26px; padding: 0 var(--s-2); font-size: var(--fs-12); }
-.fz-btn--lg  { height: 36px; padding: 0 14px; font-size: var(--fs-14); }
+.fz-btn--sm  { height: 26px; padding: 0 var(--s-2); font-size: var(--fz-text-xs); }
+.fz-btn--lg  { height: 36px; padding: 0 14px; font-size: var(--fz-text-sm); }
 .fz-btn--icon { width: 32px; padding: 0; }
 .fz-btn--icon.fz-btn--sm { width: 26px; }
 
@@ -526,40 +526,40 @@ body:not(#formulize):not(.formulize-screen) .fz-main {
   gap: 6px;
   height: 28px;
   padding: 0 12px;
-  border-radius: var(--r-full);
-  background: var(--c-accent-soft);
-  border: 1px solid var(--c-accent-soft-2);
-  color: var(--c-text);
-  font-family: var(--font-sans);
+  border-radius: var(--fz-radius-full);
+  background: var(--fz-color-accent-soft);
+  border: 1px solid var(--fz-color-accent-soft-2);
+  color: var(--fz-color-text);
+  font-family: var(--fz-font-sans);
   font-size: var(--fs-13);
   font-weight: 500;
   white-space: nowrap;
   cursor: default;
-  transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+  transition: background var(--fz-duration-fast) var(--fz-ease-out), border-color var(--fz-duration-fast) var(--fz-ease-out);
 }
 button.fz-chip { cursor: pointer; }
-button.fz-chip:hover { background: var(--c-accent-soft-2); }
+button.fz-chip:hover { background: var(--fz-color-accent-soft-2); }
 
 .fz-chip:has(.fz-chip__close) { padding-right: 4px; }
 
 .fz-chip__close {
   width: 18px; height: 18px;
-  border-radius: var(--r-full);
+  border-radius: var(--fz-radius-full);
   display: inline-flex; align-items: center; justify-content: center;
   background: transparent; border: 0;
-  cursor: pointer; color: var(--c-text-muted);
+  cursor: pointer; color: var(--fz-color-text-muted);
 }
-.fz-chip__close:hover { background: rgba(0,0,0,.08); color: var(--c-text); }
+.fz-chip__close:hover { background: rgba(0,0,0,.08); color: var(--fz-color-text); }
 
 .fz-chip--ghost {
-  background: var(--c-surface);
-  border-color: var(--c-border-strong);
+  background: var(--fz-color-surface);
+  border-color: var(--fz-color-border-strong);
   border-style: dashed;
-  color: var(--c-text-muted);
+  color: var(--fz-color-text-muted);
   font-weight: 400;
   cursor: pointer;
 }
-.fz-chip--ghost:hover { background: var(--c-surface-3); color: var(--c-text); }
+.fz-chip--ghost:hover { background: var(--fz-color-surface-3); color: var(--fz-color-text); }
 
 .fz-chip--dark {
   background: rgba(255,255,255,.10);
@@ -577,8 +577,8 @@ button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); bo
 
 .fz-chip--outline {
   background: transparent;
-  border-color: var(--c-border-strong);
-  color: var(--c-text-muted);
+  border-color: var(--fz-color-border-strong);
+  color: var(--fz-color-text-muted);
 }
 .fz-chip--dark.fz-chip--outline {
   background: transparent;
@@ -588,12 +588,12 @@ button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); bo
 
 /* Helpers */
 .fz-spacer  { flex: 1 1 auto; }
-.fz-divider { width: 1px; height: 20px; background: var(--c-border); }
+.fz-divider { width: 1px; height: 20px; background: var(--fz-color-border); }
 .fz-hstack  { display: flex; align-items: center; gap: var(--s-2); }
 .fz-vstack  { display: flex; flex-direction: column; gap: var(--s-2); }
-.fz-muted   { color: var(--c-text-muted); }
-.fz-subtle  { color: var(--c-text-subtle); }
-.fz-mono    { font-family: var(--font-mono); font-feature-settings: "tnum"; }
+.fz-muted   { color: var(--fz-color-text-muted); }
+.fz-subtle  { color: var(--fz-color-text-subtle); }
+.fz-mono    { font-family: var(--fz-font-mono); font-feature-settings: "tnum"; }
 
 /* ---- Toggle switch ----------------------------------------------------
    Reusable primitive: turns a real <input type="checkbox"> into a sliding
@@ -604,7 +604,7 @@ button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); bo
    Opt in per element by adding the `fz-toggle` class to the checkbox:
        <input type="checkbox" class="fz-toggle">
    No wrapper markup is required. Off state uses the neutral surface/border
-   tokens; the on state fills with --c-accent. Keyboard focus shows the
+   tokens; the on state fills with --fz-color-accent. Keyboard focus shows the
    standard focus ring, and the thumb slides with the theme's motion tokens.
 
    The list-view "Hide repeating data" control (#toggleRepeatData) opts in by
@@ -622,12 +622,12 @@ button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); bo
   height: 20px;
   margin: 0;
   padding: 0;
-  border: 1px solid var(--c-border-strong);
-  border-radius: var(--r-full);
-  background: var(--c-surface-3);
+  border: 1px solid var(--fz-color-border-strong);
+  border-radius: var(--fz-radius-full);
+  background: var(--fz-color-surface-3);
   cursor: pointer;
-  transition: background var(--dur-2) var(--ease),
-              border-color var(--dur-2) var(--ease);
+  transition: background var(--fz-duration) var(--fz-ease-out),
+              border-color var(--fz-duration) var(--fz-ease-out);
 }
 
 .fz-toggle::before {
@@ -637,17 +637,17 @@ button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); bo
   left: 1px;
   width: 16px;
   height: 16px;
-  border-radius: var(--r-full);
-  background: var(--c-surface);
-  box-shadow: var(--sh-2);
-  transition: transform var(--dur-2) var(--ease);
+  border-radius: var(--fz-radius-full);
+  background: var(--fz-color-surface);
+  box-shadow: var(--fz-shadow-sm);
+  transition: transform var(--fz-duration) var(--fz-ease-out);
 }
 
-.fz-toggle:hover { border-color: var(--c-text-subtle); }
+.fz-toggle:hover { border-color: var(--fz-color-text-subtle); }
 
 .fz-toggle:checked {
-  background: var(--c-accent);
-  border-color: var(--c-accent);
+  background: var(--fz-color-accent);
+  border-color: var(--fz-color-accent);
 }
 
 .fz-toggle:checked::before {
@@ -656,7 +656,7 @@ button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); bo
 
 .fz-toggle:focus-visible {
   outline: none;
-  box-shadow: var(--sh-focus);
+  box-shadow: var(--fz-focus-ring);
 }
 
 .fz-toggle:disabled {
@@ -694,35 +694,35 @@ textarea {
   padding: 0 10px;
   font: inherit;
   font-size: var(--fs-13);
-  font-family: var(--font-sans);
-  color: var(--c-text);
-  background: var(--c-surface);
-  border: 1px solid var(--c-border-strong);
-  border-radius: var(--r-2);
+  font-family: var(--fz-font-sans);
+  color: var(--fz-color-text);
+  background: var(--fz-color-surface);
+  border: 1px solid var(--fz-color-border-strong);
+  border-radius: var(--fz-radius-md);
   outline: none;
   box-sizing: border-box;
-  transition: border-color var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease), background var(--dur-1) var(--ease);
+  transition: border-color var(--fz-duration-fast) var(--fz-ease-out), box-shadow var(--fz-duration-fast) var(--fz-ease-out), background var(--fz-duration-fast) var(--fz-ease-out);
 }
 
 input::placeholder,
-textarea::placeholder { color: var(--c-text-subtle); }
+textarea::placeholder { color: var(--fz-color-text-subtle); }
 
 input:hover:not(:disabled):not(:focus),
 select:hover:not(:disabled):not(:focus),
-textarea:hover:not(:disabled):not(:focus) { border-color: var(--c-text-muted); }
+textarea:hover:not(:disabled):not(:focus) { border-color: var(--fz-color-text-muted); }
 
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: var(--c-border-focus);
-  box-shadow: var(--sh-focus);
+  border-color: var(--fz-color-focus);
+  box-shadow: var(--fz-focus-ring);
 }
 
 input:disabled,
 select:disabled,
 textarea:disabled {
-  background: var(--c-surface-3);
-  color: var(--c-text-subtle);
+  background: var(--fz-color-surface-3);
+  color: var(--fz-color-text-subtle);
   cursor: not-allowed;
 }
 
@@ -750,7 +750,7 @@ textarea {
   min-height: 76px;
   width: 100%;
   padding: 8px 10px;
-  line-height: var(--lh-base);
+  line-height: var(--fz-leading-normal);
   resize: vertical;
 }
 
@@ -794,8 +794,8 @@ textarea {
   align-items: center;
   gap: var(--s-2);
   padding: var(--s-3) var(--s-5);
-  background: var(--c-surface);
-  border-bottom: 1px solid var(--c-border);
+  background: var(--fz-color-surface);
+  border-bottom: 1px solid var(--fz-color-border);
   min-height: 56px;
   flex-shrink: 0;
 }
@@ -823,29 +823,29 @@ textarea {
   justify-content: center;
   height: 32px;
   padding: 0 var(--s-3);
-  border-radius: var(--r-2);
-  border: 1px solid var(--c-border-strong);
-  background: var(--c-surface);
-  color: var(--c-text);
+  border-radius: var(--fz-radius-md);
+  border: 1px solid var(--fz-color-border-strong);
+  background: var(--fz-color-surface);
+  color: var(--fz-color-text);
   font: inherit;
   font-size: var(--fs-13);
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
-  transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+  transition: background var(--fz-duration-fast) var(--fz-ease-out), border-color var(--fz-duration-fast) var(--fz-ease-out);
 }
 .fz-list__titlebar input[type="button"]:hover,
-.fz-list__titlebar .formulize_button:hover { background: var(--c-surface-3); }
+.fz-list__titlebar .formulize_button:hover { background: var(--fz-color-surface-3); }
 
 /* Add entry — primary */
 .fz-list__titlebar #formulize_addButton {
-  background: var(--c-accent);
-  color: var(--c-text-on-accent);
-  border-color: var(--c-accent);
+  background: var(--fz-color-accent);
+  color: var(--fz-color-on-accent);
+  border-color: var(--fz-color-accent);
 }
 .fz-list__titlebar #formulize_addButton:hover {
-  background: var(--c-accent-hover);
-  border-color: var(--c-accent-hover);
+  background: var(--fz-color-accent-hover);
+  border-color: var(--fz-color-accent-hover);
 }
 
 /* More actions (...) — ghost icon button */
@@ -855,10 +855,10 @@ textarea {
   border-color: transparent;
   background: transparent;
 }
-.fz-list__titlebar #formulize_moreActionsButton:hover { background: var(--c-surface-3); }
+.fz-list__titlebar #formulize_moreActionsButton:hover { background: var(--fz-color-surface-3); }
 
 .fz-list__title {
-  font-size: var(--fs-20);
+  font-size: var(--fz-text-xl);
   font-weight: 600;
   letter-spacing: -0.01em;
   line-height: var(--lh-tight);
@@ -869,10 +869,10 @@ textarea {
 
 /* Total entry count beside the title */
 .fz-list__count {
-  font-family: var(--font-mono);
-  font-size: var(--fs-12);
+  font-family: var(--fz-font-mono);
+  font-size: var(--fz-text-xs);
   font-feature-settings: "tnum";
-  color: var(--c-text-subtle);
+  color: var(--fz-color-text-subtle);
   flex-shrink: 0;
 }
 
@@ -889,10 +889,10 @@ textarea {
   right: 0;
   z-index: 200;
   min-width: 220px;
-  background: var(--c-surface);
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-3);
-  box-shadow: var(--sh-4);
+  background: var(--fz-color-surface);
+  border: 1px solid var(--fz-color-border);
+  border-radius: var(--fz-radius-lg);
+  box-shadow: var(--fz-shadow-lg);
   padding: var(--s-1) 0;
   flex-direction: column;
 }
@@ -914,8 +914,8 @@ textarea {
   background: transparent;
   font: inherit;
   font-size: var(--fs-13);
-  color: var(--c-text);
-  border-radius: var(--r-1);
+  color: var(--fz-color-text);
+  border-radius: var(--fz-radius-sm);
   cursor: pointer;
   text-align: left;
   white-space: nowrap;
@@ -924,7 +924,7 @@ textarea {
 .fz-list__action-panel input[type="button"]:hover,
 .fz-list__action-panel input[type="submit"]:hover,
 .fz-list__action-panel .formulize_button:hover {
-  background: var(--c-surface-3);
+  background: var(--fz-color-surface-3);
 }
 
 /* Issue #45: keep the more-actions dropdown items flat/borderless.
@@ -944,22 +944,22 @@ textarea {
   height: 30px;
   padding: 0 var(--s-2);
   border: 0;
-  border-radius: var(--r-1);
+  border-radius: var(--fz-radius-sm);
   background: transparent;
   font-weight: inherit;
 }
 .fz-list__action-panel input[type="button"].formulize_button:hover,
 .fz-list__action-panel input[type="submit"].formulize_button:hover {
-  background: var(--c-surface-3);
+  background: var(--fz-color-surface-3);
   border-color: transparent;
 }
 
 /* Popover components (shared across dropdown contexts) */
 .fz-pop {
-  background: var(--c-surface);
-  border-radius: var(--r-3);
-  box-shadow: var(--sh-4);
-  border: 1px solid var(--c-border);
+  background: var(--fz-color-surface);
+  border-radius: var(--fz-radius-lg);
+  box-shadow: var(--fz-shadow-lg);
+  border: 1px solid var(--fz-color-border);
   padding: var(--s-1);
   min-width: 180px;
 }
@@ -975,21 +975,21 @@ textarea {
   background: transparent;
   font: inherit;
   font-size: var(--fs-13);
-  color: var(--c-text);
-  border-radius: var(--r-1);
+  color: var(--fz-color-text);
+  border-radius: var(--fz-radius-sm);
   cursor: pointer;
   text-align: left;
   white-space: normal;
   line-height: var(--lh-snug);
 }
 
-.fz-pop__item:hover { background: var(--c-surface-3); }
-.fz-pop__item--active { background: var(--c-accent-soft); color: var(--c-accent-fg); font-weight: 500; }
-.fz-pop__item--active:hover { background: var(--c-accent-soft-2); }
-.fz-pop__item--disabled { color: var(--c-text-subtle); cursor: default; pointer-events: none; }
-.fz-pop__item--danger { color: var(--c-danger); }
-.fz-pop__sep { height: 1px; background: var(--c-border); margin: 4px 2px; }
-.fz-pop__group { padding: 4px 8px; font-size: var(--fs-11); color: var(--c-text-subtle); text-transform: uppercase; letter-spacing: .04em; }
+.fz-pop__item:hover { background: var(--fz-color-surface-3); }
+.fz-pop__item--active { background: var(--fz-color-accent-soft); color: var(--fz-color-accent-text); font-weight: 500; }
+.fz-pop__item--active:hover { background: var(--fz-color-accent-soft-2); }
+.fz-pop__item--disabled { color: var(--fz-color-text-subtle); cursor: default; pointer-events: none; }
+.fz-pop__item--danger { color: var(--fz-color-danger); }
+.fz-pop__sep { height: 1px; background: var(--fz-color-border); margin: 4px 2px; }
+.fz-pop__group { padding: 4px 8px; font-size: var(--fs-11); color: var(--fz-color-text-subtle); text-transform: uppercase; letter-spacing: .04em; }
 
 /* View switcher — binoculars icon button + dropdown panel */
 .fz-view-switcher {
@@ -1003,10 +1003,10 @@ textarea {
   right: 0;
   z-index: 200;
   min-width: 240px;
-  background: var(--c-surface);
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-3);
-  box-shadow: var(--sh-4);
+  background: var(--fz-color-surface);
+  border: 1px solid var(--fz-color-border);
+  border-radius: var(--fz-radius-lg);
+  box-shadow: var(--fz-shadow-lg);
   padding: var(--s-1) 0;
   flex-direction: column;
 }
@@ -1026,9 +1026,9 @@ textarea {
   align-items: center;
   gap: var(--s-2);
   padding: var(--s-3) var(--s-5);
-  background: var(--c-text);
-  color: var(--c-bg);
-  border-bottom: 1px solid var(--c-text);
+  background: var(--fz-color-text);
+  color: var(--fz-color-page);
+  border-bottom: 1px solid var(--fz-color-text);
   min-height: 56px;
 }
 
@@ -1051,7 +1051,7 @@ textarea {
 }
 
 .js-selection-count {
-  font-size: var(--fs-14);
+  font-size: var(--fz-text-sm);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -1067,7 +1067,7 @@ textarea {
    `input[type="button"].formulize_button` — specificity (0,2,1), tying the
    `.fz-selection-bar input[type="button"]` reset here and winning on source
    order. That is what made "Clone selected" / "Change owner" render as light
-   surface pills with `color: var(--c-text)` on the dark bar, and then keep
+   surface pills with `color: var(--fz-color-text)` on the dark bar, and then keep
    near-black text on hover (issue #82). Matching at (0,3,1) reclaims them
    regardless of source order. */
 .fz-selection-bar input[type="button"],
@@ -1080,7 +1080,7 @@ textarea {
   justify-content: center;
   height: 28px;
   padding: 0 12px;
-  border-radius: var(--r-full);
+  border-radius: var(--fz-radius-full);
   background: rgba(255,255,255,.10);
   border: 1px solid rgba(255,255,255,.18);
   color: #fff;
@@ -1089,9 +1089,9 @@ textarea {
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
-  transition: background var(--dur-1) var(--ease),
-              border-color var(--dur-1) var(--ease),
-              color var(--dur-1) var(--ease);
+  transition: background var(--fz-duration-fast) var(--fz-ease-out),
+              border-color var(--fz-duration-fast) var(--fz-ease-out),
+              color var(--fz-duration-fast) var(--fz-ease-out);
 }
 
 .fz-selection-bar input[type="button"]:hover,
@@ -1105,7 +1105,7 @@ textarea {
 }
 
 /* Keyboard focus. The theme's button primitives all use
-   `outline: none; box-shadow: var(--sh-focus)`, but `--sh-focus` is a dark
+   `outline: none; box-shadow: var(--fz-focus-ring)`, but `--fz-focus-ring` is a dark
    slate ring meant for light surfaces and is invisible on this bar. Keep the
    same ring geometry and invert it into the bar's white-alpha family. */
 .fz-selection-bar input[type="button"]:focus-visible,
@@ -1157,10 +1157,10 @@ textarea {
   justify-content: space-between;
   gap: var(--s-4);
   padding: var(--s-3) var(--s-5);
-  background: var(--c-surface);
-  border-top: 1px solid var(--c-border);
+  background: var(--fz-color-surface);
+  border-top: 1px solid var(--fz-color-border);
   font-size: var(--fs-13);
-  color: var(--c-text-muted);
+  color: var(--fz-color-text-muted);
   flex-shrink: 0;
 }
 
@@ -1202,7 +1202,7 @@ textarea {
 
 .fz-pagination__status {
   font-size: var(--fs-13);
-  color: var(--c-text-muted);
+  color: var(--fz-color-text-muted);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   padding: 0 var(--s-1);
@@ -1244,16 +1244,16 @@ textarea {
   }
 
   .fz-pagination__page--active {
-    background: var(--c-accent);
-    border-color: var(--c-accent);
-    color: var(--c-text-on-accent);
+    background: var(--fz-color-accent);
+    border-color: var(--fz-color-accent);
+    color: var(--fz-color-on-accent);
     cursor: default;
     pointer-events: none;
   }
 
   .fz-pagination__ellipsis {
     padding: 0 var(--s-1);
-    color: var(--c-text-muted);
+    color: var(--fz-color-text-muted);
     user-select: none;
   }
 }
@@ -1316,7 +1316,7 @@ textarea {
    nowrap and stays sized to its content. The extra class in the selector beats the base
    .fz-table th/td rule, which comes later in this file. Row heights (--row-h-*) are minimums on
    table cells, so rows grow to fit the wrapped text. A wrapped header row is taller than 36px, so the sticky filter row
-   follows the header row's real height via --fz-thead-h (set in the Lyris bottomtemplate). */
+   follows the header row's real height via --lyris-thead-height (set in the Lyris bottomtemplate). */
 .fz-table.fz-table--fixed-columns .column {
   white-space: normal;
   overflow-wrap: anywhere;
@@ -1332,9 +1332,9 @@ textarea {
 .fz-table td {
   text-align: left;
   vertical-align: middle;
-  padding: 0 var(--row-pad-x);
-  border-bottom: 1px solid var(--c-border);
-  background: var(--c-surface);
+  padding: 0 var(--lyris-row-padding-x);
+  border-bottom: 1px solid var(--fz-color-border);
+  background: var(--fz-color-surface);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1343,17 +1343,17 @@ textarea {
 .fz-table thead th {
   height: 36px;
   font-weight: 600;
-  font-size: var(--fs-12);
-  color: var(--c-text-muted);
-  background: var(--c-surface-2);
-  border-bottom-color: var(--c-border-strong);
+  font-size: var(--fz-text-xs);
+  color: var(--fz-color-text-muted);
+  background: var(--fz-color-surface-2);
+  border-bottom-color: var(--fz-color-border-strong);
   position: sticky;
   top: 0;
   z-index: 2;
 }
 
-.fz-table tbody tr:hover td { background: var(--c-surface-2); }
-.fz-table tbody tr[aria-selected="true"] td { background: var(--c-accent-soft); }
+.fz-table tbody tr:hover td { background: var(--fz-color-surface-2); }
+.fz-table tbody tr[aria-selected="true"] td { background: var(--fz-color-accent-soft); }
 
 .fz-table--compact     tbody td { height: var(--row-h-compact); }
 .fz-table--cozy        tbody td { height: var(--row-h-cozy); }
@@ -1375,11 +1375,11 @@ textarea {
    bleeding through. */
 .fz-search-row td {
   position: sticky;
-  top: var(--fz-thead-h, 36px);
+  top: var(--lyris-thead-height, 36px);
   z-index: 2;
-  background: var(--c-surface-2);
+  background: var(--fz-color-surface-2);
   /* Vertical breathing room so the filter inputs aren't flush against the
-     row edges; keep the base horizontal --row-pad-x. */
+     row edges; keep the base horizontal --lyris-row-padding-x. */
   padding-top: var(--s-2);
   padding-bottom: var(--s-2);
 }
@@ -1454,7 +1454,7 @@ textarea {
    stay where they are. */
 a.loe-edit-entry::before,
 a.de-edit-icon::before {
-  color: var(--c-text-muted);
+  color: var(--fz-color-text-muted);
 }
 
 a.loe-edit-entry:hover,
@@ -1464,7 +1464,7 @@ a.de-edit-icon:hover {
 
 a.loe-edit-entry:hover::before,
 a.de-edit-icon:hover::before {
-  color: var(--c-text);
+  color: var(--fz-color-text);
 }
 
 /* ============================================================
@@ -1503,30 +1503,30 @@ a.de-edit-icon:hover::before {
   height: 1.6em;
   border-radius: 4px;
   font-size: 1rem;
-  transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+  transition: background var(--fz-duration-fast) var(--fz-ease-out), color var(--fz-duration-fast) var(--fz-ease-out);
 }
 
 .fz-table .formulize-de-save::before {
   content: "\2713"; /* save */
-  color: var(--c-success);
+  color: var(--fz-color-success);
   font-weight: 600;
 }
 
 .fz-table .formulize-de-cancel::before {
   content: "\2715"; /* cancel */
-  color: var(--c-text-muted);
+  color: var(--fz-color-text-muted);
 }
 
 .fz-table .formulize-de-save:hover {
-  background: var(--c-success-soft);
+  background: var(--fz-color-success-soft);
 }
 
 .fz-table .formulize-de-cancel:hover {
-  background: var(--c-surface-3);
+  background: var(--fz-color-surface-3);
 }
 
 .fz-table .formulize-de-cancel:hover::before {
-  color: var(--c-danger);
+  color: var(--fz-color-danger);
 }
 
 /* Checkbox styling */
@@ -1535,18 +1535,18 @@ a.de-edit-icon:hover::before {
   width: 16px;
   height: 16px;
   border-radius: 3px;
-  border: 1.5px solid var(--c-border-strong);
-  background: var(--c-surface);
+  border: 1.5px solid var(--fz-color-border-strong);
+  background: var(--fz-color-surface);
   cursor: pointer;
   display: inline-block;
   vertical-align: middle;
   position: relative;
-  transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+  transition: background var(--fz-duration-fast) var(--fz-ease-out), border-color var(--fz-duration-fast) var(--fz-ease-out);
 }
 
 .fz-checkbox:checked {
-  background: var(--c-accent);
-  border-color: var(--c-accent);
+  background: var(--fz-color-accent);
+  border-color: var(--fz-color-accent);
 }
 
 .fz-checkbox:checked::after {
@@ -1567,18 +1567,18 @@ a.de-edit-icon:hover::before {
   width: 16px;
   height: 16px;
   border-radius: 3px;
-  border: 1.5px solid var(--c-border-strong);
-  background: var(--c-surface);
+  border: 1.5px solid var(--fz-color-border-strong);
+  background: var(--fz-color-surface);
   cursor: pointer;
   display: inline-block;
   vertical-align: middle;
   position: relative;
-  transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+  transition: background var(--fz-duration-fast) var(--fz-ease-out), border-color var(--fz-duration-fast) var(--fz-ease-out);
 }
 
 .fz-table .formulize_selection_checkbox:checked {
-  background: var(--c-accent);
-  border-color: var(--c-accent);
+  background: var(--fz-color-accent);
+  border-color: var(--fz-color-accent);
 }
 
 .fz-table .formulize_selection_checkbox:checked::after {
@@ -1604,7 +1604,7 @@ a.de-edit-icon:hover::before {
   text-decoration: none;
 }
 
-.fz-th-sort:hover { color: var(--c-text); }
+.fz-th-sort:hover { color: var(--fz-color-text); }
 
 /* Sort indicator icon.
    Unsorted columns show a faint neutral double-arrow that brightens on hover,
@@ -1613,9 +1613,9 @@ a.de-edit-icon:hover::before {
 .fz-sort-ico {
   display: inline-flex;
   align-items: center;
-  color: var(--c-text-subtle);
+  color: var(--fz-color-text-subtle);
   opacity: 0;
-  transition: opacity var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+  transition: opacity var(--fz-duration-fast) var(--fz-ease-out), color var(--fz-duration-fast) var(--fz-ease-out);
 }
 
 .fz-sort-ico svg {
@@ -1627,7 +1627,7 @@ a.de-edit-icon:hover::before {
 }
 
 .fz-sort-ico--active {
-  color: var(--c-accent);
+  color: var(--fz-color-accent);
   opacity: 1;
 }
 
@@ -1641,7 +1641,7 @@ a.de-edit-icon:hover::before {
   font-size: 9px;
   font-weight: 600;
   line-height: 1;
-  color: var(--c-accent);
+  color: var(--fz-color-accent);
   font-feature-settings: "tnum";
 }
 
@@ -1666,7 +1666,7 @@ a.de-edit-icon:hover::before {
   padding: 0 var(--s-2) var(--s-2);
   font-size: var(--fs-11);
   font-weight: 600;
-  color: var(--c-text-subtle);
+  color: var(--fz-color-text-subtle);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   line-height: var(--lh-tight);
@@ -1701,18 +1701,18 @@ a.de-edit-icon:hover::before {
   align-items: center;
   gap: var(--s-2);
   padding: 6px var(--s-2);
-  border-radius: var(--r-2);
+  border-radius: var(--fz-radius-md);
   font-size: var(--fs-13);
   font-weight: 500;
-  color: var(--c-text);
+  color: var(--fz-color-text);
   text-decoration: none;
-  transition: background var(--dur-1) var(--ease);
+  transition: background var(--fz-duration-fast) var(--fz-ease-out);
   line-height: var(--lh-snug);
 	cursor: pointer;
 }
 
 .main-menu__item-link:hover {
-  background: var(--c-surface-3);
+  background: var(--fz-color-surface-3);
 }
 
 /* Open/close iconography for top-level group headers.
@@ -1745,7 +1745,7 @@ a.de-edit-icon:hover::before {
   /* Closed: chevron points at the collapsed group. Open: points down at the
      revealed children. */
   transform: rotate(-90deg);
-  transition: transform var(--dur-2) var(--ease);
+  transition: transform var(--fz-duration) var(--fz-ease-out);
 }
 
 .main-menu__item--disclosure[open] > .main-menu__item-link::after {
@@ -1773,8 +1773,8 @@ a.de-edit-icon:hover::before {
    nested <ul class="main-menu__subitems"> below is reset to no padding, so the
    sub-item's left edge lines up with its .main-menu__item positioning origin. */
 a.main-menu__item-link--active {
-  background: var(--c-surface);
-  box-shadow: var(--sh-1);
+  background: var(--fz-color-surface);
+  box-shadow: var(--fz-shadow-xs);
 }
 
 a.main-menu__item-link--active::before {
@@ -1784,8 +1784,8 @@ a.main-menu__item-link--active::before {
   top: 6px;
   bottom: 6px;
   width: 2px;
-  border-radius: var(--r-full);
-  background: var(--c-accent);
+  border-radius: var(--fz-radius-full);
+  background: var(--fz-color-accent);
 }
 
 /* Active state applied to any item (leaf link or group header) just gets the
@@ -1797,11 +1797,11 @@ a.main-menu__item-link--active::before {
 .main-menu__item-link-icon {
   display: inline-flex;
   flex-shrink: 0;
-  color: var(--c-text-subtle);
+  color: var(--fz-color-text-subtle);
 }
 
 .main-menu__item-link--active .main-menu__item-link-icon {
-  color: var(--c-accent);
+  color: var(--fz-color-accent);
 }
 
 /* Sub-items. Upstream's menu.html wraps sub-items in a nested
@@ -1818,7 +1818,7 @@ a.main-menu__item-link--active::before {
   flex-direction: column;
   gap: 1px;
   /* The vertical guide line down the left of a group's children. */
-  border-left: 1px solid var(--c-border);
+  border-left: 1px solid var(--fz-color-border);
 }
 
 .main-menu__subitem {
@@ -1826,23 +1826,23 @@ a.main-menu__item-link--active::before {
 }
 
 .main-menu__subitem .main-menu__item-link {
-  font-size: var(--fs-12);
-  color: var(--c-text-muted);
+  font-size: var(--fz-text-xs);
+  color: var(--fz-color-text-muted);
 }
 
 .main-menu__subitem .main-menu__item-link:hover,
 .main-menu__subitem .main-menu__item-link--active {
-  color: var(--c-text);
+  color: var(--fz-color-text);
 }
 
 /* Active child. The generic active rule above gives every active leaf link a
-   plain --c-surface (white) pill, which on the off-white sidebar is a very
+   plain --fz-color-surface (white) pill, which on the off-white sidebar is a very
    faint distinction for the one item telling you where you are. A child gets
    an accent-tinted background instead, so it reads at a glance without adding
-   a second competing colour — --c-accent-soft is derived from the deployment's
+   a second competing colour — --fz-color-accent-soft is derived from the deployment's
    configured accent on the Appearance admin page, so this follows branding. */
 .main-menu__subitem a.main-menu__item-link--active {
-  background: var(--c-accent-soft);
+  background: var(--fz-color-accent-soft);
 }
 
 /* ...and its accent pipe moves out onto the guide line, so the rail itself
@@ -1864,23 +1864,23 @@ a.main-menu__item-link--active::before {
 
 #session-timeout-warning {
   position: fixed;
-  bottom: calc(var(--s-5) + var(--masquerade-h));
+  bottom: calc(var(--s-5) + var(--lyris-masquerade-height));
   right: var(--s-5);
   max-width: 340px;
-  background: var(--c-surface);
-  border: 1px solid var(--c-border-strong);
-  border-radius: var(--r-3);
-  box-shadow: var(--sh-4);
+  background: var(--fz-color-surface);
+  border: 1px solid var(--fz-color-border-strong);
+  border-radius: var(--fz-radius-lg);
+  box-shadow: var(--fz-shadow-lg);
   padding: var(--s-4) var(--s-5);
   z-index: 50;
   font-size: var(--fs-13);
-  line-height: var(--lh-base);
+  line-height: var(--fz-leading-normal);
   display: none; /* shown via JS */
 }
 
 #session-timeout-warning p {
   margin: 0;
-  color: var(--c-text-muted);
+  color: var(--fz-color-text-muted);
 }
 
 .session-timeout-warning-body {
@@ -1894,7 +1894,7 @@ a.main-menu__item-link--active::before {
   width: 20px;
   height: 20px;
   display: block;
-  color: var(--c-warning);
+  color: var(--fz-color-warning);
   flex: none;
 }
 
@@ -1907,15 +1907,15 @@ a.main-menu__item-link--active::before {
   padding: var(--s-1);
   border: 0;
   background: transparent;
-  border-radius: var(--r-2);
-  color: var(--c-text-subtle);
+  border-radius: var(--fz-radius-md);
+  color: var(--fz-color-text-subtle);
   cursor: pointer;
-  transition: color var(--dur-1) var(--ease), background var(--dur-1) var(--ease);
+  transition: color var(--fz-duration-fast) var(--fz-ease-out), background var(--fz-duration-fast) var(--fz-ease-out);
 }
 
 .session-timeout-warning-close:hover {
-  color: var(--c-text);
-  background: var(--c-surface-3);
+  color: var(--fz-color-text);
+  background: var(--fz-color-surface-3);
 }
 
 /* ============================================================
@@ -1928,10 +1928,10 @@ a.main-menu__item-link--active::before {
    (`.fz-list__footer`), the form action bar (`#multipage-controls`), the drawer
    footer -- covering the Save/Close buttons and making them unclickable (#89).
 
-   Fix: reserve the bar's height instead of painting over it. `--masquerade-h`
+   Fix: reserve the bar's height instead of painting over it. `--lyris-masquerade-height`
    defaults to 0px on `:root`; the `:has()` rule below raises it to the bar's
    height only when the bar is actually in the document. The app shell is then
-   sized `100vh - var(--masquerade-h)`, so the whole scroll area -- and with it
+   sized `100vh - var(--lyris-masquerade-height)`, so the whole scroll area -- and with it
    every sticky bottom bar inside it -- ends where the masquerade bar begins, and
    the viewport-fixed chrome that also reaches the bottom edge (drawer, scrim,
    mobile off-canvas sidebar, session-timeout toast) is lifted by the same amount.
@@ -1945,7 +1945,7 @@ a.main-menu__item-link--active::before {
    The bar's own height is pinned to the same variable (rather than left to fall
    out of its padding) so the space reserved and the space occupied cannot drift. */
 body:has(#formulize-masquerade-block) {
-  --masquerade-h: 48px;
+  --lyris-masquerade-height: 48px;
 }
 
 #formulize-masquerade-block {
@@ -1953,8 +1953,8 @@ body:has(#formulize-masquerade-block) {
   bottom: 0;
   left: 0;
   right: 0;
-  height: var(--masquerade-h);
-  background: var(--c-warning);
+  height: var(--lyris-masquerade-height);
+  background: var(--fz-color-warning);
   color: #fff;
   padding: var(--s-2) var(--s-4);
   font-size: var(--fs-13);
@@ -1979,16 +1979,16 @@ body:has(#formulize-masquerade-block) {
 
   .fz-sidebar {
     position: fixed;
-    top: var(--header-h);
+    top: var(--lyris-header-height);
     left: 0;
     /* stops above the masquerade bar; 0 otherwise -- see "Masquerade bar" */
-    bottom: var(--masquerade-h);
+    bottom: var(--lyris-masquerade-height);
     /* override the desktop collapsed state on mobile */
-    width: var(--sidebar-w) !important;
+    width: var(--lyris-sidebar-width) !important;
     z-index: 20;
     transform: translateX(-100%);
-    transition: transform var(--dur-2) var(--ease);
-    box-shadow: var(--sh-3);
+    transition: transform var(--fz-duration) var(--fz-ease-out);
+    box-shadow: var(--fz-shadow-md);
   }
 
   .fz-app--sidebar-open .fz-sidebar {
@@ -1998,8 +1998,8 @@ body:has(#formulize-masquerade-block) {
   .fz-app--sidebar-open::after {
     content: '';
     position: fixed;
-    inset: var(--header-h) 0 var(--masquerade-h) 0;
-    background: var(--c-overlay);
+    inset: var(--lyris-header-height) 0 var(--lyris-masquerade-height) 0;
+    background: var(--fz-color-overlay);
     z-index: 19;
   }
 
@@ -2033,7 +2033,7 @@ body:has(#formulize-masquerade-block) {
   }
 
   .fz-list__title {
-    font-size: var(--fs-16);
+    font-size: var(--fz-text-base);
   }
 
   /* count beside the title is a desktop affordance */
@@ -2060,7 +2060,7 @@ body:has(#formulize-masquerade-block) {
     flex-wrap: wrap;
     gap: var(--s-2);
     padding: var(--s-2) var(--s-3);
-    font-size: var(--fs-12);
+    font-size: var(--fz-text-xs);
   }
 
   /* Trim the footer to fit a phone: drop the "Showing entries:" / "Page" labels
@@ -2098,7 +2098,7 @@ body:has(#formulize-masquerade-block) {
   /* divider shadow marks the edge of the pinned columns; cap their width
      so long first-column content can't eat the whole viewport */
   .fz-table .column0 {
-    box-shadow: 1px 0 0 var(--c-border);
+    box-shadow: 1px 0 0 var(--fz-color-border);
     max-width: 45vw;
   }
 
@@ -2118,7 +2118,7 @@ body:has(#formulize-masquerade-block) {
      include .fz-table in the selector chain. */
   .fz-table .fz-search-row .fz-cb,
   .fz-table .fz-search-row .column0 {
-    top: var(--fz-thead-h, 36px);
+    top: var(--lyris-thead-height, 36px);
     z-index: 3;
   }
 }
@@ -2133,12 +2133,12 @@ body:has(#formulize-masquerade-block) {
    existing 32px `.fz-input`-equivalent baseline.
 
    Design spec (forms.css):
-     --field-h:      38px    (.fz-form default)
-     --field-pad-x:  12px
-     --field-radius: 6px
-     --field-gap:    18px    vertical gap between field rows
-     --label-gap:    6px     label-to-field gap
-     --label-text:   1rem (~16px, #32)
+     --lyris-field-height:      38px    (.fz-form default)
+     --lyris-field-padding-x:  12px
+     --lyris-field-radius: 6px
+     --lyris-field-gap:    18px    vertical gap between field rows
+     --lyris-label-gap:    6px     label-to-field gap
+     --lyris-label-text:   1rem (~16px, #32)
 
    HTML anatomy output by Lyris form templates:
      .card > .card__header + .card__body > .form-container
@@ -2166,47 +2166,47 @@ body:has(#formulize-masquerade-block) {
 
    Note for whoever wires up that future option: a modifier has to go on the
    inner `.fz-form` element, not on `.fz-form-screen`. `.fz-form-screen`
-   re-declares --field-h/--field-pad-x further down this sheet, so on a single
+   re-declares --lyris-field-height/--lyris-field-padding-x further down this sheet, so on a single
    element carrying both classes the alias wins on source order. */
 
 .fz-form,
 .fz-form-screen {
   /* 38px control height for dedicated entry-editing screens */
-  --field-h:        38px;
-  --field-pad-x:    12px;
-  --field-pad-y:    8px;
-  --field-radius:   var(--r-2);   /* 6px */
-  --field-gap:      18px;
-  --field-text:     var(--fs-14);
-  --label-text:     1.1rem; /* ~16px, scales with root font-size (#32) */
-  --label-gap:      6px;
-  --label-col-w:    220px;
-  --help-text:      var(--fs-12);
-  --required-color: var(--c-danger);
+  --lyris-field-height:        38px;
+  --lyris-field-padding-x:    12px;
+  --lyris-field-padding-y:    8px;
+  --lyris-field-radius:   var(--fz-radius-md);   /* 6px */
+  --lyris-field-gap:      18px;
+  --lyris-field-text:     var(--fz-text-sm);
+  --lyris-label-text:     1.1rem; /* ~16px, scales with root font-size (#32) */
+  --lyris-label-gap:      6px;
+  --lyris-label-column-width:    220px;
+  --lyris-help-text:      var(--fz-text-xs);
+  --lyris-required-color: var(--fz-color-danger);
 }
 
 /* Currently unapplied - see the note above (issue #113). */
 .fz-form--compact {
-  --field-h:     32px;
-  --field-pad-x: 10px;
-  --field-gap:   12px;
-  --field-text:  var(--fs-13);
-  --label-text:  1rem; /* ~16px, scales with root font-size (#32) */
-  --label-gap:   4px;
-  --label-col-w: 200px;
-  --help-text:   var(--fs-11, 11px);
+  --lyris-field-height:     32px;
+  --lyris-field-padding-x: 10px;
+  --lyris-field-gap:   12px;
+  --lyris-field-text:  var(--fs-13);
+  --lyris-label-text:  1rem; /* ~16px, scales with root font-size (#32) */
+  --lyris-label-gap:   4px;
+  --lyris-label-column-width: 200px;
+  --lyris-help-text:   var(--fs-11, 11px);
 }
 
 /* Currently unapplied - see the note above (issue #113). */
 .fz-form--comfy {
-  --field-h:     44px;
-  --field-pad-x: 14px;
-  --field-gap:   24px;
-  --field-text:  var(--fs-15);
-  --label-text:  1.0625rem; /* ~17px, one step up from compact/default for comfy density */
-  --label-gap:   8px;
-  --label-col-w: 240px;
-  --help-text:   var(--fs-13);
+  --lyris-field-height:     44px;
+  --lyris-field-padding-x: 14px;
+  --lyris-field-gap:   24px;
+  --lyris-field-text:  var(--fs-15);
+  --lyris-label-text:  1.0625rem; /* ~17px, one step up from compact/default for comfy density */
+  --lyris-label-gap:   8px;
+  --lyris-label-column-width: 240px;
+  --lyris-help-text:   var(--fs-13);
 }
 
 /* ---------- .fz-control primitive (38px) ----------
@@ -2219,37 +2219,37 @@ body:has(#formulize-masquerade-block) {
   appearance: none;
   -webkit-appearance: none;
   width: 100%;
-  height: var(--field-h, 38px);
-  padding: 0 var(--field-pad-x, 12px);
+  height: var(--lyris-field-height, 38px);
+  padding: 0 var(--lyris-field-padding-x, 12px);
   font: inherit;
-  font-size: var(--field-text, var(--fs-14));
-  font-family: var(--font-sans);
-  color: var(--c-text);
-  background: var(--c-surface);
-  border: 1px solid var(--c-border-strong);
-  border-radius: var(--field-radius, var(--r-2));
+  font-size: var(--lyris-field-text, var(--fz-text-sm));
+  font-family: var(--fz-font-sans);
+  color: var(--fz-color-text);
+  background: var(--fz-color-surface);
+  border: 1px solid var(--fz-color-border-strong);
+  border-radius: var(--lyris-field-radius, var(--fz-radius-md));
   outline: none;
   box-sizing: border-box;
-  transition: border-color var(--dur-1) var(--ease),
-              box-shadow var(--dur-1) var(--ease),
-              background var(--dur-1) var(--ease);
+  transition: border-color var(--fz-duration-fast) var(--fz-ease-out),
+              box-shadow var(--fz-duration-fast) var(--fz-ease-out),
+              background var(--fz-duration-fast) var(--fz-ease-out);
 }
 
-.fz-control::placeholder { color: var(--c-text-subtle); }
+.fz-control::placeholder { color: var(--fz-color-text-subtle); }
 
 .fz-control:hover:not(:disabled):not(:focus) {
-  border-color: var(--c-text-muted);
+  border-color: var(--fz-color-text-muted);
 }
 
 .fz-control:focus,
 .fz-control:focus-visible {
-  border-color: var(--c-border-focus);
-  box-shadow: var(--sh-focus);
+  border-color: var(--fz-color-focus);
+  box-shadow: var(--fz-focus-ring);
 }
 
 .fz-control:disabled {
-  background: var(--c-surface-3);
-  color: var(--c-text-subtle);
+  background: var(--fz-color-surface-3);
+  color: var(--fz-color-text-subtle);
   cursor: not-allowed;
 }
 
@@ -2267,9 +2267,9 @@ select.fz-control {
 /* textarea: auto-height, no fixed row height */
 textarea.fz-control {
   height: auto;
-  min-height: calc(var(--field-h, 38px) * 2.4);
-  padding: var(--field-pad-y, 8px) var(--field-pad-x, 12px);
-  line-height: var(--lh-base);
+  min-height: calc(var(--lyris-field-height, 38px) * 2.4);
+  padding: var(--lyris-field-padding-y, 8px) var(--lyris-field-padding-x, 12px);
+  line-height: var(--fz-leading-normal);
   resize: vertical;
 }
 
@@ -2278,18 +2278,18 @@ textarea.fz-control {
    the modifier class is present. */
 
 .fz-control--filled {
-  background: var(--c-surface-3);
+  background: var(--fz-color-surface-3);
   border-color: transparent;
 }
 .fz-control--filled:hover:not(:disabled):not(:focus) {
-  background: var(--c-surface-2);
-  border-color: var(--c-border);
+  background: var(--fz-color-surface-2);
+  border-color: var(--fz-color-border);
 }
-.fz-control--filled:focus { background: var(--c-surface); }
+.fz-control--filled:focus { background: var(--fz-color-surface); }
 
 .fz-control--underline {
   border: 0;
-  border-bottom: 1px solid var(--c-border-strong);
+  border-bottom: 1px solid var(--fz-color-border-strong);
   border-radius: 0;
   padding-left: 0;
   padding-right: 0;
@@ -2297,15 +2297,15 @@ textarea.fz-control {
 }
 .fz-control--underline:focus {
   box-shadow: none;
-  border-bottom-color: var(--c-border-focus);
+  border-bottom-color: var(--fz-color-focus);
   border-bottom-width: 2px;
 }
 
 .fz-control--multiline {
   height: auto;
-  min-height: calc(var(--field-h, 38px) * 2.4);
-  padding: 10px var(--field-pad-x, 12px);
-  line-height: var(--lh-base);
+  min-height: calc(var(--lyris-field-height, 38px) * 2.4);
+  padding: 10px var(--lyris-field-padding-x, 12px);
+  line-height: var(--fz-leading-normal);
   resize: vertical;
 }
 
@@ -2313,18 +2313,18 @@ textarea.fz-control {
 .fz-control-affix {
   display: flex;
   align-items: stretch;
-  border: 1px solid var(--c-border-strong);
-  border-radius: var(--field-radius, var(--r-2));
-  background: var(--c-surface);
-  height: var(--field-h, 38px);
+  border: 1px solid var(--fz-color-border-strong);
+  border-radius: var(--lyris-field-radius, var(--fz-radius-md));
+  background: var(--fz-color-surface);
+  height: var(--lyris-field-height, 38px);
   overflow: hidden;
-  transition: border-color var(--dur-1) var(--ease),
-              box-shadow var(--dur-1) var(--ease);
+  transition: border-color var(--fz-duration-fast) var(--fz-ease-out),
+              box-shadow var(--fz-duration-fast) var(--fz-ease-out);
 }
-.fz-control-affix:hover:not(:focus-within) { border-color: var(--c-text-muted); }
+.fz-control-affix:hover:not(:focus-within) { border-color: var(--fz-color-text-muted); }
 .fz-control-affix:focus-within {
-  border-color: var(--c-border-focus);
-  box-shadow: var(--sh-focus);
+  border-color: var(--fz-color-focus);
+  box-shadow: var(--fz-focus-ring);
 }
 .fz-control-affix .fz-control {
   border: 0;
@@ -2338,16 +2338,16 @@ textarea.fz-control {
   display: inline-flex;
   align-items: center;
   padding: 0 12px;
-  font-size: var(--field-text, var(--fs-14));
-  color: var(--c-text-subtle);
-  background: var(--c-surface-2);
-  border-right: 1px solid var(--c-border);
+  font-size: var(--lyris-field-text, var(--fz-text-sm));
+  color: var(--fz-color-text-subtle);
+  background: var(--fz-color-surface-2);
+  border-right: 1px solid var(--fz-color-border);
   white-space: nowrap;
   user-select: none;
 }
 .fz-control-affix__trail {
   border-right: 0;
-  border-left: 1px solid var(--c-border);
+  border-left: 1px solid var(--fz-color-border);
 }
 
 /* ---------- Contextual override: raw form elements inside .fz-form-screen ----------
@@ -2377,18 +2377,18 @@ textarea.fz-control {
 .fz-form-screen input:not([type]),
 .fz-form-screen select,
 .fz-form-screen textarea {
-  height: var(--field-h);
-  padding: 0 var(--field-pad-x);
-  font-size: var(--field-text);
-  border-radius: var(--field-radius);
+  height: var(--lyris-field-height);
+  padding: 0 var(--lyris-field-padding-x);
+  font-size: var(--lyris-field-text);
+  border-radius: var(--lyris-field-radius);
   width: 100%;
 }
 
 .fz-form textarea,
 .fz-form-screen textarea {
   height: auto;
-  min-height: calc(var(--field-h) * 2.4);
-  padding: var(--field-pad-y) var(--field-pad-x);
+  min-height: calc(var(--lyris-field-height) * 2.4);
+  padding: var(--lyris-field-padding-y) var(--lyris-field-padding-x);
 }
 
 /* Character / word limit counter sits under the textarea and is right-aligned
@@ -2428,23 +2428,23 @@ textarea.fz-control {
    10em core gives it in modules/formulize/templates/css/formulize.css. */
 .fz-form .subform_button_controls > input[type="text"],
 .fz-form-screen .subform_button_controls > input[type="text"] {
-  width: calc(2ch + 2 * var(--field-pad-x) + 2px);
+  width: calc(2ch + 2 * var(--lyris-field-padding-x) + 2px);
   margin: 0 var(--s-2);
 }
 
 /* ---------- Form card surface ---------- */
 
 .card {
-  background: var(--c-surface);
-  border: 1px solid var(--c-border);
+  background: var(--fz-color-surface);
+  border: 1px solid var(--fz-color-border);
   border-radius: var(--r-4);   /* 10px */
-  box-shadow: var(--sh-2);
+  box-shadow: var(--fz-shadow-sm);
   margin-bottom: var(--s-4);
 }
 
 .card__header {
   padding: var(--s-4) var(--s-6);
-  border-bottom: 1px solid var(--c-border);
+  border-bottom: 1px solid var(--fz-color-border);
 }
 
 .card__title {
@@ -2474,8 +2474,8 @@ textarea.fz-control {
 .form-row {
   display: flex;
   flex-direction: column;
-  gap: var(--label-gap, 6px);
-  margin-bottom: var(--field-gap, 18px);
+  gap: var(--lyris-label-gap, 6px);
+  margin-bottom: var(--lyris-field-gap, 18px);
   position: relative;
 }
 
@@ -2491,9 +2491,9 @@ textarea.fz-control {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: var(--label-text, var(--fs-13));
+  font-size: var(--lyris-label-text, var(--fs-13));
   font-weight: 600;
-  color: var(--c-text);
+  color: var(--fz-color-text);
   line-height: var(--lh-snug);
   /* label-to-control gap supplied by the .fz-field gap */
 }
@@ -2501,7 +2501,7 @@ textarea.fz-control {
 /* ---------- Required indicator: .fz-field__req asterisk (primitive) ---------- */
 
 .fz-field__req {
-  color: var(--required-color, var(--c-danger));
+  color: var(--lyris-required-color, var(--fz-color-danger));
   font-weight: 700;
   font-size: 0.95em;
 }
@@ -2511,7 +2511,7 @@ textarea.fz-control {
 .form-label span[style*="color:red"] {
   font-weight: 700;
   font-size: 0.95em;
-  color: var(--required-color, var(--c-danger)) !important;
+  color: var(--lyris-required-color, var(--fz-color-danger)) !important;
 }
 
 /* ---------- Body wrapper: .fz-field__body (primitive) ---------- */
@@ -2527,8 +2527,8 @@ textarea.fz-control {
 
 .fz-field__help,
 .form-help-text {
-  font-size: var(--help-text, var(--fs-12));
-  color: var(--c-text-muted);
+  font-size: var(--lyris-help-text, var(--fz-text-xs));
+  color: var(--fz-color-text-muted);
   line-height: 1.45;
   margin: 2px 0 0;
 }
@@ -2543,9 +2543,9 @@ textarea.fz-control {
   gap: var(--s-6, 24px);
 }
 .fz-form--label-left .fz-field__label {
-  width: var(--label-col-w, 220px);
+  width: var(--lyris-label-column-width, 220px);
   flex: none;
-  padding-top: calc((var(--field-h) - var(--label-text) * 1.35) / 2);
+  padding-top: calc((var(--lyris-field-height) - var(--lyris-label-text) * 1.35) / 2);
   justify-content: flex-start;
 }
 .fz-form--label-left .fz-field__body {
@@ -2593,7 +2593,7 @@ textarea.fz-control {
   min-width: 0;
   display: flex;
   align-items: flex-start;
-  padding-top: var(--field-pad-y, 8px); /* align label with control's text line */
+  padding-top: var(--lyris-field-padding-y, 8px); /* align label with control's text line */
 }
 
 .col1 .form-label {
@@ -2632,7 +2632,7 @@ textarea.fz-control {
   height: auto;
   margin: 0 8px 0 0;       /* 8px gap between control and its label */
   vertical-align: middle;
-  accent-color: var(--c-accent);
+  accent-color: var(--fz-color-accent);
   cursor: pointer;
 }
 
@@ -2651,8 +2651,8 @@ textarea.fz-control {
 .fz-form-screen .fz-field__body input[type="checkbox"] + label {
   display: inline;
   font-weight: 400;
-  font-size: var(--field-text, var(--fs-14));
-  color: var(--c-text);
+  font-size: var(--lyris-field-text, var(--fz-text-sm));
+  color: var(--fz-color-text);
   cursor: pointer;
   vertical-align: middle;
 }
@@ -2684,7 +2684,7 @@ textarea.fz-control {
   align-items: center;
   gap: var(--s-2);
   padding-top: var(--s-4);
-  border-top: 1px solid var(--c-border);
+  border-top: 1px solid var(--fz-color-border);
   margin-top: var(--s-2);
 }
 
@@ -2818,13 +2818,13 @@ body:not(.fz-inline) .fz-main:not(:has(#pageNavTable, .pageNavTable)) .fz-form-s
   padding: var(--s-4, 16px) var(--s-6, 24px);
   /* Push the bar to the bottom of the flex-filled form column on short forms. */
   margin-top: auto;
-  border-top: 1px solid var(--c-border);
+  border-top: 1px solid var(--fz-color-border);
   /* Keep it pinned while a long form body scrolls. */
   position: sticky;
   bottom: 0;
   z-index: 5;
-  background: var(--c-surface);
-  box-shadow: 0 -1px 0 var(--c-border), var(--sh-2);
+  background: var(--fz-color-surface);
+  box-shadow: 0 -1px 0 var(--fz-color-border), var(--fz-shadow-sm);
 }
 
 /* Page meta inside the action bar: "Page X of Y" indicator and the jump-to
@@ -2845,7 +2845,7 @@ body:not(.fz-inline) .fz-main:not(:has(#pageNavTable, .pageNavTable)) .fz-form-s
 
 #multipage-controls #page-indicator {
   font-size: var(--fs-13);
-  color: var(--c-text-muted);
+  color: var(--fz-color-text-muted);
   font-feature-settings: "tnum";
   white-space: nowrap;
 }
@@ -2855,7 +2855,7 @@ body:not(.fz-inline) .fz-main:not(:has(#pageNavTable, .pageNavTable)) .fz-form-s
   align-items: center;
   gap: var(--s-2);
   font-size: var(--fs-13);
-  color: var(--c-text-muted);
+  color: var(--fz-color-text-muted);
   white-space: nowrap;
 }
 
@@ -2925,7 +2925,7 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs {
   position: sticky;
   top: 0;
   z-index: 4;
-  background: var(--c-bg);
+  background: var(--fz-color-page);
   /* absorb the strip's own top margin into padding so the pinned bar sits
      flush at top:0 without a gap of scrolled content peeking above it */
   margin-top: 0;
@@ -2941,8 +2941,8 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs::after {
   right: calc(-1 * var(--s-5, 20px));
   bottom: 0;
   height: 1px;
-  background: var(--c-border);
-  box-shadow: var(--sh-2);
+  background: var(--fz-color-border);
+  box-shadow: var(--fz-shadow-sm);
   opacity: 0;
   transition: opacity 120ms linear;
 }
@@ -2967,26 +2967,26 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
   font-size: var(--fs-13);
   font-weight: 500;
   line-height: 1.4;
-  color: var(--c-text-muted);
+  color: var(--fz-color-text-muted);
   text-decoration: none;
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-full, 999px);
-  background: var(--c-surface);
-  transition: color var(--dur-1) var(--ease),
-              border-color var(--dur-1) var(--ease),
-              background-color var(--dur-1) var(--ease);
+  border: 1px solid var(--fz-color-border);
+  border-radius: var(--fz-radius-full, 999px);
+  background: var(--fz-color-surface);
+  transition: color var(--fz-duration-fast) var(--fz-ease-out),
+              border-color var(--fz-duration-fast) var(--fz-ease-out),
+              background-color var(--fz-duration-fast) var(--fz-ease-out);
 }
 
 .pill-tabs__item:hover {
-  color: var(--c-text);
-  border-color: var(--c-border-strong);
-  background: var(--c-surface-2);
+  color: var(--fz-color-text);
+  border-color: var(--fz-color-border-strong);
+  background: var(--fz-color-surface-2);
 }
 
 .pill-tabs__item--active {
-  color: var(--c-text-on-accent);
-  background: var(--c-accent);
-  border-color: var(--c-accent);
+  color: var(--fz-color-on-accent);
+  background: var(--fz-color-accent);
+  border-color: var(--fz-color-accent);
 }
 
 /* NOTE: Formulize core (modules/formulize/templates/css/formulize.css) styles
@@ -3011,29 +3011,29 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
   font-size: var(--fs-13);
   font-weight: 500 !important;
   line-height: 1;
-  border-radius: var(--r-2);
-  border: 1px solid var(--c-border-strong);
-  background-color: var(--c-surface) !important;
-  color: var(--c-text) !important;
+  border-radius: var(--fz-radius-md);
+  border: 1px solid var(--fz-color-border-strong);
+  background-color: var(--fz-color-surface) !important;
+  color: var(--fz-color-text) !important;
   cursor: pointer;
   white-space: nowrap;
-  transition: background-color var(--dur-1) var(--ease),
-              border-color var(--dur-1) var(--ease),
-              color var(--dur-1) var(--ease);
+  transition: background-color var(--fz-duration-fast) var(--fz-ease-out),
+              border-color var(--fz-duration-fast) var(--fz-ease-out),
+              color var(--fz-duration-fast) var(--fz-ease-out);
 }
 
 .formulizeThemeForm .formulize-form-submit-button:hover,
 .formulize-drawer__body .formulize-form-submit-button:hover,
 .formulize-drawer__foot .formulize-form-submit-button:hover {
-  background-color: var(--c-surface-3) !important;
-  border-color: var(--c-text-muted);
+  background-color: var(--fz-color-surface-3) !important;
+  border-color: var(--fz-color-text-muted);
 }
 
 .formulizeThemeForm .formulize-form-submit-button:focus-visible,
 .formulize-drawer__body .formulize-form-submit-button:focus-visible,
 .formulize-drawer__foot .formulize-form-submit-button:focus-visible {
   outline: none;
-  box-shadow: var(--sh-focus);
+  box-shadow: var(--fz-focus-ring);
 }
 
 /* Primary (accent) — the Save-family actions:
@@ -3045,16 +3045,16 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
 .formulizeThemeForm .formulize-form-submit-button[name^="save"],
 .formulize-drawer__body .formulize-form-submit-button[name^="save"],
 .formulize-drawer__foot .formulize-form-submit-button[name^="save"] {
-  background-color: var(--c-accent) !important;
-  color: var(--c-text-on-accent) !important;
-  border-color: var(--c-accent);
+  background-color: var(--fz-color-accent) !important;
+  color: var(--fz-color-on-accent) !important;
+  border-color: var(--fz-color-accent);
 }
 
 .formulizeThemeForm .formulize-form-submit-button[name^="save"]:hover,
 .formulize-drawer__body .formulize-form-submit-button[name^="save"]:hover,
 .formulize-drawer__foot .formulize-form-submit-button[name^="save"]:hover {
-  background-color: var(--c-accent-hover) !important;
-  border-color: var(--c-accent-hover);
+  background-color: var(--fz-color-accent-hover) !important;
+  border-color: var(--fz-color-accent-hover);
 }
 
 /* The drawer footer's sizing is the mobile #multipage-controls sizing (see the
@@ -3098,11 +3098,11 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
   min-width: 0 !important;
   height: 34px !important;
   font-size: var(--fs-13) !important;
-  color: var(--c-text) !important;
+  color: var(--fz-color-text) !important;
 }
 /* Re-assert legible on-accent text for the Save-family primary after the reset. */
 #multipage-controls .formulize-form-submit-button[name^="save"] {
-  color: var(--c-text-on-accent) !important;
+  color: var(--fz-color-on-accent) !important;
 }
 
 /* ---------- Admin-only "edit element" link ----------
@@ -3121,15 +3121,15 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
   font-size: var(--fs-11, 11px);
   font-weight: 500;
   line-height: 1.3;
-  color: var(--c-accent);
+  color: var(--fz-color-accent);
   text-decoration: none;
-  background: var(--c-surface);
+  background: var(--fz-color-surface);
   padding: 1px 6px;
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-2);
+  border: 1px solid var(--fz-color-border);
+  border-radius: var(--fz-radius-md);
   opacity: 0;
   pointer-events: none;
-  transition: opacity var(--dur-1) var(--ease);
+  transition: opacity var(--fz-duration-fast) var(--fz-ease-out);
 }
 .fz-field:hover > .formulize-element-edit-link,
 .fz-field > .formulize-element-edit-link:focus {
@@ -3156,9 +3156,9 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
    ============================================================ */
 
 .fz-form-screen {
-  --field-h:      38px;
-  --field-pad-x:  12px;
-  --field-radius: var(--r-2);
+  --lyris-field-height:      38px;
+  --lyris-field-padding-x:  12px;
+  --lyris-field-radius: var(--fz-radius-md);
 }
 
 /* ---------- File upload → drop-area look (.fz-droparea) ----------
@@ -3184,21 +3184,21 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
   width: 100%;
   padding: 16px;
   font-size: var(--fs-13);
-  color: var(--c-text-muted);
-  background: var(--c-surface-2);
-  border: 1.5px dashed var(--c-border-strong);
-  border-radius: var(--field-radius);
+  color: var(--fz-color-text-muted);
+  background: var(--fz-color-surface-2);
+  border: 1.5px dashed var(--fz-color-border-strong);
+  border-radius: var(--lyris-field-radius);
   cursor: pointer;
-  transition: border-color var(--dur-1) var(--ease), background var(--dur-1) var(--ease);
+  transition: border-color var(--fz-duration-fast) var(--fz-ease-out), background var(--fz-duration-fast) var(--fz-ease-out);
 }
 .fz-form-screen input[type="file"]:hover {
-  border-color: var(--c-accent);
-  background: var(--c-accent-soft);
+  border-color: var(--fz-color-accent);
+  background: var(--fz-color-accent-soft);
 }
 .fz-form-screen input[type="file"]:focus {
   outline: none;
-  border-color: var(--c-border-focus);
-  box-shadow: var(--sh-focus);
+  border-color: var(--fz-color-focus);
+  box-shadow: var(--fz-focus-ring);
 }
 /* The native "Choose File" button → a compact secondary .fz-btn look. */
 .fz-form-screen input[type="file"]::file-selector-button {
@@ -3208,16 +3208,16 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
   font: inherit;
   font-size: var(--fs-13);
   font-weight: 500;
-  color: var(--c-text);
-  background: var(--c-surface);
-  border: 1px solid var(--c-border-strong);
-  border-radius: var(--r-2);
+  color: var(--fz-color-text);
+  background: var(--fz-color-surface);
+  border: 1px solid var(--fz-color-border-strong);
+  border-radius: var(--fz-radius-md);
   cursor: pointer;
-  transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+  transition: background var(--fz-duration-fast) var(--fz-ease-out), border-color var(--fz-duration-fast) var(--fz-ease-out);
 }
 .fz-form-screen input[type="file"]::file-selector-button:hover {
-  background: var(--c-surface-3);
-  border-color: var(--c-text-muted);
+  background: var(--fz-color-surface-3);
+  border-color: var(--fz-color-text-muted);
 }
 
 /* Existing-file status row → a file chip (matches .fz-fileitem). */
@@ -3229,23 +3229,23 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
   margin-bottom: 8px;
   padding: 8px 10px;
   font-size: var(--fs-13);
-  color: var(--c-text);
-  background: var(--c-surface);
-  border: 1px solid var(--c-border);
-  border-radius: var(--field-radius);
+  color: var(--fz-color-text);
+  background: var(--fz-color-surface);
+  border: 1px solid var(--fz-color-border);
+  border-radius: var(--lyris-field-radius);
 }
 .formulize-fileupload-element:empty {
   display: none;       /* no border/box when there is no existing file */
 }
 .formulize-fileupload-element a {
-  color: var(--c-accent);
+  color: var(--fz-color-accent);
   text-decoration: none;
   font-weight: 500;
 }
 .formulize-fileupload-element a:hover { text-decoration: underline; }
 .formulize-fileupload-element .formulize_fileUploadDeleteButton {
   margin-left: auto;
-  color: var(--c-danger);
+  color: var(--fz-color-danger);
   font-weight: 500;
 }
 
@@ -3270,17 +3270,17 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
 .fz-form-screen input[type="range"]::-webkit-slider-runnable-track {
   height: 6px;
   border-radius: 999px;
-  background: var(--c-surface-3);
+  background: var(--fz-color-surface-3);
 }
 .fz-form-screen input[type="range"]::-moz-range-track {
   height: 6px;
   border-radius: 999px;
-  background: var(--c-surface-3);
+  background: var(--fz-color-surface-3);
 }
 .fz-form-screen input[type="range"]::-moz-range-progress {
   height: 6px;
   border-radius: 999px;
-  background: var(--c-accent);
+  background: var(--fz-color-accent);
 }
 /* Thumb */
 .fz-form-screen input[type="range"]::-webkit-slider-thumb {
@@ -3290,26 +3290,26 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: var(--c-surface);
-  border: 2px solid var(--c-accent);
-  box-shadow: var(--sh-2);
+  background: var(--fz-color-surface);
+  border: 2px solid var(--fz-color-accent);
+  box-shadow: var(--fz-shadow-sm);
   cursor: grab;
-  transition: box-shadow var(--dur-1) var(--ease);
+  transition: box-shadow var(--fz-duration-fast) var(--fz-ease-out);
 }
 .fz-form-screen input[type="range"]::-moz-range-thumb {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: var(--c-surface);
-  border: 2px solid var(--c-accent);
-  box-shadow: var(--sh-2);
+  background: var(--fz-color-surface);
+  border: 2px solid var(--fz-color-accent);
+  box-shadow: var(--fz-shadow-sm);
   cursor: grab;
 }
 .fz-form-screen input[type="range"]:focus::-webkit-slider-thumb {
-  box-shadow: var(--sh-focus);
+  box-shadow: var(--fz-focus-ring);
 }
 .fz-form-screen input[type="range"]:focus::-moz-range-thumb {
-  box-shadow: var(--sh-focus);
+  box-shadow: var(--fz-focus-ring);
 }
 /* Live value readout (the <output> beside the slider) → mono bubble.
    No left margin here: read-only mode renders the <output> on its own (core
@@ -3322,13 +3322,13 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
   display: inline-block;
   min-width: 34px;
   padding: 2px 8px;
-  font-family: var(--font-mono);
+  font-family: var(--fz-font-mono);
   font-feature-settings: "tnum";
-  font-size: var(--fs-12);
+  font-size: var(--fz-text-xs);
   text-align: center;
-  color: var(--c-text);
-  background: var(--c-surface-3);
-  border-radius: var(--r-1);
+  color: var(--fz-color-text);
+  background: var(--fz-color-surface-3);
+  border-radius: var(--fz-radius-sm);
   vertical-align: middle;
 }
 /* Slider + value bubble share the field width.
@@ -3365,21 +3365,21 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
 .fz-form-screen input[type="color"] {
   -webkit-appearance: none;
   appearance: none;
-  width: var(--field-h);
-  height: var(--field-h);
+  width: var(--lyris-field-height);
+  height: var(--lyris-field-height);
   padding: 3px;
-  background: var(--c-surface);
-  border: 1px solid var(--c-border-strong);
-  border-radius: var(--field-radius);
+  background: var(--fz-color-surface);
+  border: 1px solid var(--fz-color-border-strong);
+  border-radius: var(--lyris-field-radius);
   cursor: pointer;
   vertical-align: middle;
-  transition: border-color var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
+  transition: border-color var(--fz-duration-fast) var(--fz-ease-out), box-shadow var(--fz-duration-fast) var(--fz-ease-out);
 }
-.fz-form-screen input[type="color"]:hover { border-color: var(--c-text-muted); }
+.fz-form-screen input[type="color"]:hover { border-color: var(--fz-color-text-muted); }
 .fz-form-screen input[type="color"]:focus {
   outline: none;
-  border-color: var(--c-border-focus);
-  box-shadow: var(--sh-focus);
+  border-color: var(--fz-color-focus);
+  box-shadow: var(--fz-focus-ring);
 }
 .fz-form-screen input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
 .fz-form-screen input[type="color"]::-webkit-color-swatch {
@@ -3399,7 +3399,7 @@ body:not(.fz-inline) .fz-main #pageNavTable.pill-tabs.is-scrolled::after {
 .formulize-duration-element-input {
   width: 64px !important;
   text-align: right;
-  font-family: var(--font-mono);
+  font-family: var(--fz-font-mono);
   font-feature-settings: "tnum";
 }
 /* The tray renders each segment as a bare "Unit:&nbsp;<input>" pair with no
@@ -3424,13 +3424,13 @@ input[type="time"]::-webkit-calendar-picker-indicator,
 input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
   opacity: 0.55;
-  transition: opacity var(--dur-1) var(--ease);
+  transition: opacity var(--fz-duration-fast) var(--fz-ease-out);
 }
 input[type="date"]:hover::-webkit-calendar-picker-indicator,
 input[type="time"]:hover::-webkit-calendar-picker-indicator,
 input[type="datetime-local"]:hover::-webkit-calendar-picker-indicator { opacity: 0.85; }
 input[type="date"].icms-date-box,
-input[type="time"] { font-family: var(--font-sans); }
+input[type="time"] { font-family: var(--fz-font-sans); }
 
 /* ============================================================
    Kitchen-sink control types — second pass (choice inputs)
@@ -3461,37 +3461,37 @@ input[type="time"] { font-family: var(--font-sans); }
 
 /* ---------- Multi-select Listbox (<select multiple>) → .fz-listbox ----------
    A `<select multiple size="N">` must show N rows; the shared single-select
-   rule forces `height: var(--field-h)` which clips it to one row and hides the
+   rule forces `height: var(--lyris-field-height)` which clips it to one row and hides the
    chevron background awkwardly. Restyle multi-selects as the design's scrollable
    listbox surface: auto height, padded rows, accent-soft selected state. */
 .fz-form-screen select[multiple] {
   height: auto;
-  min-height: calc(var(--field-h) * 2.4);
+  min-height: calc(var(--lyris-field-height) * 2.4);
   max-height: 220px;
   padding: 4px;
   overflow-y: auto;
   background-image: none;      /* no chevron on a multi-select */
   cursor: default;
-  border-radius: var(--field-radius);
-  border: 1px solid var(--c-border-strong);
-  background-color: var(--c-surface);
+  border-radius: var(--lyris-field-radius);
+  border: 1px solid var(--fz-color-border-strong);
+  background-color: var(--fz-color-surface);
 }
 .fz-form-screen select[multiple]:focus {
-  border-color: var(--c-border-focus);
-  box-shadow: var(--sh-focus);
+  border-color: var(--fz-color-focus);
+  box-shadow: var(--fz-focus-ring);
   outline: none;
 }
 .fz-form-screen select[multiple] option {
   padding: 7px 10px;
-  border-radius: var(--r-1);
-  font-size: var(--field-text);
-  color: var(--c-text);
+  border-radius: var(--fz-radius-sm);
+  font-size: var(--lyris-field-text);
+  color: var(--fz-color-text);
 }
 .fz-form-screen select[multiple] option:checked {
   /* WebKit needs the background painted via box-shadow to override the UA
      highlight; Firefox honours background directly. Belt-and-braces. */
-  background: var(--c-accent-soft) linear-gradient(var(--c-accent-soft), var(--c-accent-soft));
-  color: var(--c-text);
+  background: var(--fz-color-accent-soft) linear-gradient(var(--fz-color-accent-soft), var(--fz-color-accent-soft));
+  color: var(--fz-color-text);
   font-weight: 500;
 }
 
@@ -3509,21 +3509,21 @@ input[type="time"] { font-family: var(--font-sans); }
 
 /* The autocomplete text input → Lyris field metrics and colours. */
 .fz-form-screen input.formulize_autocomplete {
-  height: var(--field-h);
-  padding: 0 36px 0 var(--field-pad-x);
+  height: var(--lyris-field-height);
+  padding: 0 36px 0 var(--lyris-field-padding-x);
   font: inherit;
-  font-size: var(--field-text);
-  color: var(--c-text);
-  background: var(--c-surface);
-  border: 1px solid var(--c-border-strong);
-  border-radius: var(--field-radius);
+  font-size: var(--lyris-field-text);
+  color: var(--fz-color-text);
+  background: var(--fz-color-surface);
+  border: 1px solid var(--fz-color-border-strong);
+  border-radius: var(--lyris-field-radius);
   outline: none;
-  transition: border-color var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
+  transition: border-color var(--fz-duration-fast) var(--fz-ease-out), box-shadow var(--fz-duration-fast) var(--fz-ease-out);
 }
-.fz-form-screen input.formulize_autocomplete:hover { border-color: var(--c-text-muted); }
+.fz-form-screen input.formulize_autocomplete:hover { border-color: var(--fz-color-text-muted); }
 .fz-form-screen input.formulize_autocomplete:focus {
-  border-color: var(--c-border-focus);
-  box-shadow: var(--sh-focus);
+  border-color: var(--fz-color-focus);
+  box-shadow: var(--fz-focus-ring);
 }
 
 /* The magnifying glass → muted, and inset to match Lyris's field padding. */
@@ -3537,23 +3537,23 @@ input[type="time"] { font-family: var(--font-sans); }
   height: 26px;
   padding: 0 4px 0 10px;
   border-radius: 13px;
-  background: var(--c-accent-soft);
-  border: 1px solid var(--c-accent-soft-2);
-  color: var(--c-text);
+  background: var(--fz-color-accent-soft);
+  border: 1px solid var(--fz-color-accent-soft-2);
+  color: var(--fz-color-text);
   font-size: var(--fs-13);
   line-height: 1;
-  transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+  transition: background var(--fz-duration-fast) var(--fz-ease-out), border-color var(--fz-duration-fast) var(--fz-ease-out);
 }
 .fz-form-screen .formulize_autocomplete_selections .auto_multi:hover {
-  background: var(--c-surface-3);
-  border-color: var(--c-border-strong);
+  background: var(--fz-color-surface-3);
+  border-color: var(--fz-color-border-strong);
 }
 
 /* The chip's remove button. Only this removes the value, and only after the
    browser's confirm() dialog is accepted.
 
    Lyris's blanket bare-`<button>` rule below paints every unclassed button as a
-   32px-tall bordered surface with a var(--r-2) radius, and it loads after the
+   32px-tall bordered surface with a var(--fz-radius-md) radius, and it loads after the
    component's own `.auto_multi button.auto_multi_remove` base rule in
    formulize.css. This chip's remove button is an icon button and must never get
    that skin.
@@ -3582,19 +3582,19 @@ input[type="time"] { font-family: var(--font-sans); }
   border: 0;
   box-shadow: none;
   padding: 0;
-  color: var(--c-text-muted);
+  color: var(--fz-color-text-muted);
   font-size: 14px;
 }
 /* Hover/focus tints the glyph and nothing else. The background has to be stated
    explicitly, because the blanket rule's :hover (0-3-1) otherwise outranks the
    component's base rule and fills the button. Filling it here was the bug: it
-   painted a var(--c-surface) box - white, and rounded-rect rather than round,
+   painted a var(--fz-color-surface) box - white, and rounded-rect rather than round,
    since the radius was leaking from the blanket rule too. */
 .fz-form-screen .formulize_autocomplete_selections .auto_multi button.auto_multi_remove:hover,
 .fz-form-screen .formulize_autocomplete_selections .auto_multi button.auto_multi_remove:focus {
   background: transparent;
   box-shadow: none;
-  color: var(--c-danger);
+  color: var(--fz-color-danger);
 }
 
 /* ---------- jQuery UI autocomplete menu → .fz-listbox surface ----------
@@ -3605,23 +3605,23 @@ input[type="time"] { font-family: var(--font-sans); }
   list-style: none;
   margin: 4px 0 0;
   padding: 4px;
-  background: var(--c-surface);
-  border: 1px solid var(--c-border-strong);
-  border-radius: var(--field-radius, var(--r-2));
-  box-shadow: var(--sh-2);
+  background: var(--fz-color-surface);
+  border: 1px solid var(--fz-color-border-strong);
+  border-radius: var(--lyris-field-radius, var(--fz-radius-md));
+  box-shadow: var(--fz-shadow-sm);
   max-height: 240px;
   overflow-y: auto;
   z-index: 1200;
-  font-family: var(--font-sans);
+  font-family: var(--fz-font-sans);
 }
 .ui-autocomplete.ui-menu .ui-menu-item { margin: 0; }
 .ui-autocomplete.ui-menu .ui-menu-item-wrapper,
 .ui-autocomplete.ui-menu .ui-menu-item > a {
   display: block;
   padding: 7px 10px;
-  border-radius: var(--r-1);
-  font-size: var(--fs-14);
-  color: var(--c-text);
+  border-radius: var(--fz-radius-sm);
+  font-size: var(--fz-text-sm);
+  color: var(--fz-color-text);
   cursor: pointer;
   border: 0;
   background: transparent;
@@ -3630,8 +3630,8 @@ input[type="time"] { font-family: var(--font-sans); }
 .ui-autocomplete.ui-menu .ui-menu-item-wrapper:hover,
 .ui-autocomplete.ui-menu .ui-menu-item > a.ui-state-active,
 .ui-autocomplete.ui-menu .ui-menu-item > a:hover {
-  background: var(--c-accent-soft);
-  color: var(--c-text);
+  background: var(--fz-color-accent-soft);
+  color: var(--fz-color-text);
 }
 
 /* ============================================================
@@ -3641,9 +3641,9 @@ input[type="time"] { font-family: var(--font-sans); }
 @media (max-width: 768px) {
   .fz-form,
   .fz-form-screen {
-    --field-h:     44px;   /* iOS tap target */
-    --field-text:  16px;   /* prevent iOS auto-zoom */
-    --field-gap:   16px;
+    --lyris-field-height:     44px;   /* iOS tap target */
+    --lyris-field-text:  16px;   /* prevent iOS auto-zoom */
+    --lyris-field-gap:   16px;
   }
 
   .card__body {
@@ -3660,7 +3660,7 @@ input[type="time"] { font-family: var(--font-sans); }
   .form-row:has(> .col1) {
     flex-direction: column;
     align-items: stretch;
-    gap: var(--label-gap, 6px);
+    gap: var(--lyris-label-gap, 6px);
   }
 
   .col1 {
@@ -3714,7 +3714,7 @@ input[type="time"] { font-family: var(--font-sans); }
     margin-top: var(--s-1);
     text-align: center;
     font-size: var(--fs-13);
-    color: var(--c-text-muted);
+    color: var(--fz-color-text-muted);
     font-feature-settings: "tnum";
   }
 
@@ -3772,10 +3772,10 @@ input[type="button"]:not([class*="fz-"]):not(.formulize_button) {
   gap: 6px;
   height: 32px;
   padding: 0 var(--s-3);
-  border-radius: var(--r-2);
-  border: 1px solid var(--c-border-strong);
-  background: var(--c-surface);
-  color: var(--c-text);
+  border-radius: var(--fz-radius-md);
+  border: 1px solid var(--fz-color-border-strong);
+  background: var(--fz-color-surface);
+  color: var(--fz-color-text);
   font: inherit;
   font-size: var(--fs-13);
   font-weight: 500;
@@ -3785,17 +3785,17 @@ input[type="button"]:not([class*="fz-"]):not(.formulize_button) {
   text-decoration: none;
   appearance: none;
   -webkit-appearance: none;
-  transition: background var(--dur-1) var(--ease),
-              border-color var(--dur-1) var(--ease),
-              color var(--dur-1) var(--ease);
+  transition: background var(--fz-duration-fast) var(--fz-ease-out),
+              border-color var(--fz-duration-fast) var(--fz-ease-out),
+              color var(--fz-duration-fast) var(--fz-ease-out);
 }
 
 button:not([class*="fz-"]):not([class*="formulize_button"]):not([class*="formulize-drawer__btn"]):not([class*="formulize-drawer__tab"]):not(:where(.auto_multi_remove)):hover,
 input[type="submit"]:not([class*="fz-"]):hover,
 input[type="reset"]:not([class*="fz-"]):hover,
 input[type="button"]:not([class*="fz-"]):not(.formulize_button):hover {
-  background: var(--c-surface-3);
-  border-color: var(--c-text-muted);
+  background: var(--fz-color-surface-3);
+  border-color: var(--fz-color-text-muted);
 }
 
 button:not([class*="fz-"]):not([class*="formulize_button"]):not([class*="formulize-drawer__btn"]):not([class*="formulize-drawer__tab"]):not(:where(.auto_multi_remove)):focus-visible,
@@ -3803,7 +3803,7 @@ input[type="submit"]:not([class*="fz-"]):focus-visible,
 input[type="reset"]:not([class*="fz-"]):focus-visible,
 input[type="button"]:not([class*="fz-"]):not(.formulize_button):focus-visible {
   outline: none;
-  box-shadow: var(--sh-focus);
+  box-shadow: var(--fz-focus-ring);
 }
 
 button:not([class*="fz-"]):not([class*="formulize-drawer__tab"]):disabled,
@@ -3837,10 +3837,10 @@ input[type="button"].formulize_button {
   gap: 6px;
   height: 32px;
   padding: 0 var(--s-3);
-  border-radius: var(--r-2);
-  border: 1px solid var(--c-border-strong);
-  background: var(--c-surface);
-  color: var(--c-text);
+  border-radius: var(--fz-radius-md);
+  border: 1px solid var(--fz-color-border-strong);
+  background: var(--fz-color-surface);
+  color: var(--fz-color-text);
   font: inherit;
   font-size: var(--fs-13);
   font-weight: 500;
@@ -3850,19 +3850,19 @@ input[type="button"].formulize_button {
   text-decoration: none;
   appearance: none;
   -webkit-appearance: none;
-  transition: background var(--dur-1) var(--ease),
-              border-color var(--dur-1) var(--ease),
-              color var(--dur-1) var(--ease);
+  transition: background var(--fz-duration-fast) var(--fz-ease-out),
+              border-color var(--fz-duration-fast) var(--fz-ease-out),
+              color var(--fz-duration-fast) var(--fz-ease-out);
 }
 
 .formulize_button:hover {
-  background: var(--c-surface-3);
-  border-color: var(--c-text-muted);
+  background: var(--fz-color-surface-3);
+  border-color: var(--fz-color-text-muted);
 }
 
 .formulize_button:focus-visible {
   outline: none;
-  box-shadow: var(--sh-focus);
+  box-shadow: var(--fz-focus-ring);
 }
 
 .formulize_button:disabled {
@@ -3880,15 +3880,15 @@ input[type="button"].formulize_button {
    otherwise leak the core background (most notably the footer save button). */
 #formulize_saveButton.formulize_button,
 #formulize_goButton.formulize_button {
-  background: var(--c-surface);
-  color: var(--c-text);
-  border-color: var(--c-border-strong);
+  background: var(--fz-color-surface);
+  color: var(--fz-color-text);
+  border-color: var(--fz-color-border-strong);
   text-indent: 0;
 }
 #formulize_saveButton.formulize_button:hover,
 #formulize_goButton.formulize_button:hover {
-  background: var(--c-surface-3);
-  border-color: var(--c-text-muted);
+  background: var(--fz-color-surface-3);
+  border-color: var(--fz-color-text-muted);
 }
 
 /* ---------- Login block + login page ----------
@@ -3900,8 +3900,8 @@ input[type="button"].formulize_button {
 
 #block_login_form,
 #icms_block_login_form {
-  color: var(--c-text);
-  font-size: var(--fs-14);
+  color: var(--fz-color-text);
+  font-size: var(--fz-text-sm);
 }
 
 /* Generalized fieldset card. Any raw <fieldset> in the Lyris content area
@@ -3912,10 +3912,10 @@ input[type="button"].formulize_button {
 .fz-main fieldset {
   margin: var(--s-6) 0;
   padding: var(--s-6);
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-3);
-  background: var(--c-surface);
-  box-shadow: var(--sh-2);
+  border: 1px solid var(--fz-color-border);
+  border-radius: var(--fz-radius-lg);
+  background: var(--fz-color-surface);
+  box-shadow: var(--fz-shadow-sm);
 }
 
 /* The login fieldset stays a compact, single-column card. */
@@ -3925,9 +3925,9 @@ fieldset#icms_block_login_form {
 
 .fz-main fieldset > legend {
   padding: 0 var(--s-2);
-  font-size: var(--fs-16);
+  font-size: var(--fz-text-base);
   font-weight: 600;
-  color: var(--c-text);
+  color: var(--fz-color-text);
 }
 
 /* Field rows — consistent vertical rhythm, stacked label + input. */
@@ -3945,7 +3945,7 @@ fieldset#icms_block_login_form {
 #icms_block_login_form .form-label {
   font-size: var(--fs-13);
   font-weight: 500;
-  color: var(--c-text-muted);
+  color: var(--fz-color-text-muted);
 }
 
 /* Inputs already pick up the global `.fz-input` primitive; just make them
@@ -3962,7 +3962,7 @@ fieldset#icms_block_login_form {
   gap: var(--s-1);
   margin-bottom: var(--s-3);
   font-size: var(--fs-13);
-  color: var(--c-text-muted);
+  color: var(--fz-color-text-muted);
 }
 
 /* Primary Login button — override the bare-button style above with the
@@ -3976,16 +3976,16 @@ fieldset#icms_block_login_form {
 #icms_block_login_form input.btn[type="submit"] {
   width: 100%;
   height: 36px;
-  background: var(--c-accent);
-  color: var(--c-text-on-accent);
-  border-color: var(--c-accent);
-  font-size: var(--fs-14);
+  background: var(--fz-color-accent);
+  color: var(--fz-color-on-accent);
+  border-color: var(--fz-color-accent);
+  font-size: var(--fz-text-sm);
 }
 
 #block_login_form input.btn[type="submit"]:hover,
 #icms_block_login_form input.btn[type="submit"]:hover {
-  background: var(--c-accent-hover);
-  border-color: var(--c-accent-hover);
+  background: var(--fz-color-accent-hover);
+  border-color: var(--fz-color-accent-hover);
 }
 
 /* Secondary links — "Lost your account info?", register, OpenID/Okta. */
@@ -3994,7 +3994,7 @@ fieldset#icms_block_login_form {
 #icms_block_login_form a:not(.btn) {
   display: inline-block;
   margin-top: var(--s-2);
-  color: var(--c-accent-fg);
+  color: var(--fz-color-accent-text);
   font-size: var(--fs-13);
   font-weight: 500;
   text-decoration: none;
@@ -4003,7 +4003,7 @@ fieldset#icms_block_login_form {
 #block_login_form #lostpass:hover,
 #block_login_form a:not(.btn):hover,
 #icms_block_login_form a:not(.btn):hover {
-  color: var(--c-accent-hover);
+  color: var(--fz-color-accent-hover);
   text-decoration: underline;
 }
 
@@ -4027,19 +4027,19 @@ fieldset#icms_block_login_form {
 
 .ui-widget-overlay,
 .ui-front.ui-widget-overlay {
-  background: var(--c-overlay);
+  background: var(--fz-color-overlay);
   opacity: 1;
 }
 
 .ui-dialog.ui-widget {
   padding: 0;
-  border: 1px solid var(--c-border);
+  border: 1px solid var(--fz-color-border);
   border-radius: var(--r-4);
-  background: var(--c-surface);
-  box-shadow: var(--sh-4);
-  color: var(--c-text);
-  font-family: var(--font-sans);
-  font-size: var(--fs-14);
+  background: var(--fz-color-surface);
+  box-shadow: var(--fz-shadow-lg);
+  color: var(--fz-color-text);
+  font-family: var(--fz-font-sans);
+  font-size: var(--fz-text-sm);
   /* Responsive: never wider than the viewport on small screens. jQuery-UI
      sets an inline pixel width; cap it and let content wrap. */
   max-width: calc(100vw - var(--s-6));
@@ -4050,19 +4050,19 @@ fieldset#icms_block_login_form {
 .ui-dialog.ui-widget .ui-dialog-titlebar {
   padding: var(--s-4) var(--s-5);
   border: 0;
-  border-bottom: 1px solid var(--c-border);
+  border-bottom: 1px solid var(--fz-color-border);
   border-radius: 0;
-  background: var(--c-surface-2);
-  color: var(--c-text);
-  font-family: var(--font-sans);
+  background: var(--fz-color-surface-2);
+  color: var(--fz-color-text);
+  font-family: var(--fz-font-sans);
 }
 
 .ui-dialog.ui-widget .ui-dialog-title {
   margin: 0;
-  font-size: var(--fs-16);
+  font-size: var(--fz-text-base);
   font-weight: 600;
   line-height: 1.3;
-  color: var(--c-text);
+  color: var(--fz-color-text);
 }
 
 /* Themed close button — replace the jQuery-UI icon sprite with a CSS glyph */
@@ -4074,20 +4074,20 @@ fieldset#icms_block_login_form {
   padding: 0;
   top: 50%;
   border: 1px solid transparent;
-  border-radius: var(--r-2);
+  border-radius: var(--fz-radius-md);
   background: transparent;
-  color: var(--c-text-muted);
-  transition: background var(--dur-1) var(--ease),
-              color var(--dur-1) var(--ease);
+  color: var(--fz-color-text-muted);
+  transition: background var(--fz-duration-fast) var(--fz-ease-out),
+              color var(--fz-duration-fast) var(--fz-ease-out);
 }
 .ui-dialog.ui-widget .ui-dialog-titlebar-close:hover {
-  background: var(--c-surface-3);
-  border-color: var(--c-border);
-  color: var(--c-text);
+  background: var(--fz-color-surface-3);
+  border-color: var(--fz-color-border);
+  color: var(--fz-color-text);
 }
 .ui-dialog.ui-widget .ui-dialog-titlebar-close:focus-visible {
   outline: none;
-  box-shadow: var(--sh-focus);
+  box-shadow: var(--fz-focus-ring);
 }
 /* Hide the default sprite icon and draw an "×" glyph instead */
 .ui-dialog.ui-widget .ui-dialog-titlebar-close .ui-button-icon,
@@ -4120,9 +4120,9 @@ fieldset#icms_block_login_form {
 /* Content body */
 .ui-dialog.ui-widget .ui-dialog-content {
   padding: var(--s-5);
-  color: var(--c-text);
-  font-family: var(--font-sans);
-  font-size: var(--fs-14);
+  color: var(--fz-color-text);
+  font-family: var(--fz-font-sans);
+  font-size: var(--fz-text-sm);
   line-height: 1.5;
 }
 .ui-dialog.ui-widget .ui-dialog-content p { margin: 0 0 var(--s-3); }
@@ -4132,7 +4132,7 @@ fieldset#icms_block_login_form {
 .ui-dialog.ui-widget .ui-dialog-content label {
   display: inline-block;
   margin-bottom: var(--s-1);
-  color: var(--c-text);
+  color: var(--fz-color-text);
   font-size: var(--fs-13);
   font-weight: 500;
 }
@@ -4146,12 +4146,12 @@ fieldset#icms_block_login_form {
   width: 100%;
   height: 38px;
   padding: 0 var(--s-3);
-  border: 1px solid var(--c-border-strong);
-  border-radius: var(--r-2);
-  background: var(--c-surface);
-  color: var(--c-text);
-  font-family: var(--font-sans);
-  font-size: var(--fs-14);
+  border: 1px solid var(--fz-color-border-strong);
+  border-radius: var(--fz-radius-md);
+  background: var(--fz-color-surface);
+  color: var(--fz-color-text);
+  font-family: var(--fz-font-sans);
+  font-size: var(--fz-text-sm);
   box-sizing: border-box;
 }
 .ui-dialog.ui-widget .ui-dialog-content textarea {
@@ -4168,8 +4168,8 @@ fieldset#icms_block_login_form {
 .ui-dialog.ui-widget .ui-dialog-content select:focus,
 .ui-dialog.ui-widget .ui-dialog-content textarea:focus {
   outline: none;
-  border-color: var(--c-border-focus);
-  box-shadow: var(--sh-focus);
+  border-color: var(--fz-color-focus);
+  box-shadow: var(--fz-focus-ring);
 }
 
 /* Button pane / footer */
@@ -4177,8 +4177,8 @@ fieldset#icms_block_login_form {
   margin: 0;
   padding: var(--s-4) var(--s-5);
   border: 0;
-  border-top: 1px solid var(--c-border);
-  background: var(--c-surface-2);
+  border-top: 1px solid var(--fz-color-border);
+  background: var(--fz-color-surface-2);
 }
 .ui-dialog.ui-widget .ui-dialog-buttonpane .ui-dialog-buttonset {
   display: flex;
@@ -4197,40 +4197,40 @@ fieldset#icms_block_login_form {
   height: 32px;
   margin: 0;
   padding: 0 var(--s-3);
-  border: 1px solid var(--c-border-strong);
-  border-radius: var(--r-2);
-  background: var(--c-surface);
-  color: var(--c-text);
-  font-family: var(--font-sans);
+  border: 1px solid var(--fz-color-border-strong);
+  border-radius: var(--fz-radius-md);
+  background: var(--fz-color-surface);
+  color: var(--fz-color-text);
+  font-family: var(--fz-font-sans);
   font-size: var(--fs-13);
   font-weight: 500;
   line-height: 1;
   cursor: pointer;
-  transition: background var(--dur-1) var(--ease),
-              border-color var(--dur-1) var(--ease),
-              color var(--dur-1) var(--ease);
+  transition: background var(--fz-duration-fast) var(--fz-ease-out),
+              border-color var(--fz-duration-fast) var(--fz-ease-out),
+              color var(--fz-duration-fast) var(--fz-ease-out);
 }
 .ui-dialog.ui-widget .ui-dialog-buttonset .ui-button .ui-button-text {
   padding: 0;
   line-height: 1;
 }
 .ui-dialog.ui-widget .ui-dialog-buttonset .ui-button:hover {
-  background: var(--c-surface-3);
-  border-color: var(--c-border-strong);
+  background: var(--fz-color-surface-3);
+  border-color: var(--fz-color-border-strong);
 }
 .ui-dialog.ui-widget .ui-dialog-buttonset .ui-button:focus-visible {
   outline: none;
-  box-shadow: var(--sh-focus);
+  box-shadow: var(--fz-focus-ring);
 }
 /* Primary / affirmative button = the first one in the set */
 .ui-dialog.ui-widget .ui-dialog-buttonset .ui-button:first-child {
-  background: var(--c-accent);
-  border-color: var(--c-accent);
-  color: var(--c-text-on-accent);
+  background: var(--fz-color-accent);
+  border-color: var(--fz-color-accent);
+  color: var(--fz-color-on-accent);
 }
 .ui-dialog.ui-widget .ui-dialog-buttonset .ui-button:first-child:hover {
-  background: var(--c-accent-hover);
-  border-color: var(--c-accent-hover);
+  background: var(--fz-color-accent-hover);
+  border-color: var(--fz-color-accent-hover);
 }
 
 /* Responsive: on narrow viewports let the dialog fill the width and stack
@@ -4270,8 +4270,8 @@ fieldset#icms_block_login_form {
 /* Container: drop Verdana/1.1em so embedded labels + fields inherit Lyris. */
 .subform-accordion-container.ui-accordion {
   width: 100%;
-  font-family: var(--font-sans);
-  font-size: var(--fs-14);
+  font-family: var(--fz-font-sans);
+  font-size: var(--fz-text-sm);
   border: 0;
   background: transparent;
 }
@@ -4284,24 +4284,24 @@ fieldset#icms_block_login_form {
   box-sizing: border-box;
   margin: 0 0 var(--s-2);
   padding: 0;
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-2);
-  background: var(--c-surface-2);
-  color: var(--c-text);
-  font-family: var(--font-sans);
+  border: 1px solid var(--fz-color-border);
+  border-radius: var(--fz-radius-md);
+  background: var(--fz-color-surface-2);
+  color: var(--fz-color-text);
+  font-family: var(--fz-font-sans);
   font-weight: 600;
-  transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+  transition: background var(--fz-duration-fast) var(--fz-ease-out), border-color var(--fz-duration-fast) var(--fz-ease-out);
 }
 .subform-accordion-container .ui-accordion-header.ui-state-hover,
 .subform-accordion-container .ui-accordion-header.ui-state-focus {
-  background: var(--c-surface-3);
-  border-color: var(--c-border-strong);
-  color: var(--c-text);
+  background: var(--fz-color-surface-3);
+  border-color: var(--fz-color-border-strong);
+  color: var(--fz-color-text);
 }
 .subform-accordion-container .ui-accordion-header.ui-state-active {
-  background: var(--c-accent-soft);
-  border-color: var(--c-accent-soft-2);
-  color: var(--c-accent-fg);
+  background: var(--fz-color-accent-soft);
+  border-color: var(--fz-color-accent-soft-2);
+  color: var(--fz-color-accent-text);
   /* square the bottom so the header joins its content panel below */
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
@@ -4310,7 +4310,7 @@ fieldset#icms_block_login_form {
   display: block;
   padding: var(--s-3) var(--s-4) var(--s-3) var(--s-8);
   color: inherit;
-  font-size: var(--fs-14);
+  font-size: var(--fz-text-sm);
   text-decoration: none;
 }
 .subform-accordion-container .ui-accordion-header .accordion-name { color: inherit; }
@@ -4324,11 +4324,11 @@ fieldset#icms_block_login_form {
   height: 7px;
   margin: 0;
   transform: translateY(-70%) rotate(45deg);
-  border: solid var(--c-text-muted);
+  border: solid var(--fz-color-text-muted);
   border-width: 0 2px 2px 0;
   background: none;
   text-indent: 0;
-  transition: transform var(--dur-1) var(--ease);
+  transition: transform var(--fz-duration-fast) var(--fz-ease-out);
 }
 .subform-accordion-container .ui-accordion-header.ui-state-active .ui-icon {
   transform: translateY(-30%) rotate(-135deg);
@@ -4339,13 +4339,13 @@ fieldset#icms_block_login_form {
 .subform-accordion-container .ui-accordion-content.ui-widget-content {
   margin: calc(-1 * var(--s-2) - 1px) 0 var(--s-3);
   padding: var(--s-4);
-  border: 1px solid var(--c-accent-soft-2);
+  border: 1px solid var(--fz-color-accent-soft-2);
   border-top: 0;
-  border-radius: 0 0 var(--r-2) var(--r-2);
-  background: var(--c-surface);
-  color: var(--c-text);
-  font-family: var(--font-sans);
-  font-size: var(--fs-14);
+  border-radius: 0 0 var(--fz-radius-md) var(--fz-radius-md);
+  background: var(--fz-color-surface);
+  color: var(--fz-color-text);
+  font-family: var(--fz-font-sans);
+  font-size: var(--fz-text-sm);
 }
 
 /* Neutralise jQuery-UI's `.ui-widget input/select/textarea/button` Verdana
@@ -4354,7 +4354,7 @@ fieldset#icms_block_login_form {
 .subform-accordion-container.ui-accordion select,
 .subform-accordion-container.ui-accordion textarea,
 .subform-accordion-container.ui-accordion button {
-  font-family: var(--font-sans);
+  font-family: var(--fz-font-sans);
 }
 
 /* ---------- List-view popup windows (issue #68) ----------
@@ -4413,22 +4413,22 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
   height: 28px;
   padding: 0 var(--s-3);
   margin: 0 var(--s-2) var(--s-2) 0;
-  border-radius: var(--r-2);
-  border: 1px solid var(--c-border-strong);
-  background: var(--c-surface);
-  color: var(--c-text);
+  border-radius: var(--fz-radius-md);
+  border: 1px solid var(--fz-color-border-strong);
+  background: var(--fz-color-surface);
+  color: var(--fz-color-text);
   font: inherit;
   font-size: var(--fs-13);
   font-weight: 500;
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
-  transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+  transition: background var(--fz-duration-fast) var(--fz-ease-out), border-color var(--fz-duration-fast) var(--fz-ease-out);
 }
 
 .formulize-drawer .subform_button_controls input[type="button"]:hover {
-  background: var(--c-surface-2);
-  border-color: var(--c-text-subtle);
+  background: var(--fz-color-surface-2);
+  border-color: var(--fz-color-text-subtle);
 }
 
 /* The "Add x entries" count box sits in that same row, so it follows the buttons
@@ -4461,8 +4461,8 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
 .fz-form-screen .formulize-subform-table {
   width: 100%;
   border-collapse: collapse;
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-2);
+  border: 1px solid var(--fz-color-border);
+  border-radius: var(--fz-radius-md);
   font-size: var(--fs-13);
 }
 
@@ -4470,7 +4470,7 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
 .fz-form-screen .formulize-subform-table > tbody > tr > td {
   padding: var(--s-2) var(--s-3);
   border: none;
-  border-bottom: 1px solid var(--c-border);
+  border-bottom: 1px solid var(--fz-color-border);
   text-align: left;
   vertical-align: middle;
 }
@@ -4480,8 +4480,8 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
 }
 
 .fz-form-screen .formulize-subform-table > tbody > tr > th {
-  background: var(--c-surface-2);
-  color: var(--c-text-muted);
+  background: var(--fz-color-surface-2);
+  color: var(--fz-color-text-muted);
   font-weight: 500;
 }
 
@@ -4512,22 +4512,22 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
    Scoped to `.fz-form-screen`, which both the drawer body and the full screen
    form/multiPage toptemplates emit, so a grid looks the same either way.
 
-   Spacing uses the static `--s-*` scale rather than `--field-gap`, so it is
+   Spacing uses the static `--s-*` scale rather than `--lyris-field-gap`, so it is
    unaffected by the density change in PR #116 (field-gap 12px -> 18px). The
    width comes from the core `width: 100%` plus `width: 100%` on the controls
    below, so the last column ends flush with the right hand edge of the field
    column, in line with every other field on the screen. */
 
 .fz-form-screen .formulize-grid {
-  --fz-grid-column-gap: var(--s-3);
-  --fz-grid-row-gap: var(--s-2);
+  --formulize-grid-column-gap: var(--s-3);
+  --formulize-grid-row-gap: var(--s-2);
 }
 
 .fz-form-screen .formulize-grid .fz-grid__cell--columnheader,
 .fz-form-screen .formulize-grid .fz-grid__cell--rowheader {
   font-size: var(--fs-13);
   font-weight: 500;
-  color: var(--c-text-muted);
+  color: var(--fz-color-text-muted);
   line-height: var(--lh-snug);
 }
 
@@ -4539,9 +4539,9 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
 /* Caption, when the element shows its heading above the grid instead of in
    the label column. */
 .fz-form-screen .formulize-grid-caption {
-  font-size: var(--label-text, 1.1rem);
+  font-size: var(--lyris-label-text, 1.1rem);
   font-weight: 600;
-  color: var(--c-text);
+  color: var(--fz-color-text);
   margin-bottom: var(--s-2);
 }
 

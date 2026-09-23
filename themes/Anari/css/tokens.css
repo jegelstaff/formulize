@@ -31,7 +31,7 @@
    file (see formulize_renderAppearanceHead() in
    modules/formulize/include/appearance.php, called from theme.html). Each of
    the nine configurable colours drives several tokens: picking one Primary
-   colour, for instance, rewrites --c-accent and its hover/soft/focus variants
+   colour, for instance, rewrites --fz-color-accent and its hover/soft/focus variants
    together, so the interface stays coherent whatever colour is chosen. The
    derivations are done in PHP with color-mix(), which is why the defaults here
    are written out in full rather than derived: nothing depends on these
@@ -39,57 +39,57 @@
 
 :root {
   /* Primary - buttons, links, selected rows, focus rings */
-  --c-accent:        #0d7bbf;
-  --c-accent-fg:     #0d7bbf;
-  --c-accent-hover:  #0b6aa3;
-  --c-accent-soft:   #e7f2fa;
-  --c-accent-soft-2: #cfe5f4;
-  --c-border-focus:  #0b6aa3;
-  --sh-focus:        0 0 0 3px rgba(13, 123, 191, 0.15);
+  --fz-color-accent:         #0d7bbf;
+  --fz-color-accent-text:    #0d7bbf;
+  --fz-color-accent-hover:   #0b6aa3;
+  --fz-color-accent-soft:    #e7f2fa;
+  --fz-color-accent-soft-2:  #cfe5f4;
+  --fz-color-focus:          #0b6aa3;
+  --fz-focus-ring:           0 0 0 3px rgba(13, 123, 191, 0.15);
 
   /* Page background */
-  --c-bg:            #F5F6F8;
+  --fz-color-page:           #F5F6F8;
 
   /* Surface - cards, tables, panels and other raised areas */
-  --c-surface:       #FFFFFF;
-  --c-surface-2:     #FBFCFD;
-  --c-surface-3:     #F8FAFB;
+  --fz-color-surface:        #FFFFFF;
+  --fz-color-surface-2:      #FBFCFD;
+  --fz-color-surface-3:      #F8FAFB;
 
   /* Text - muted and subtle are derived from it */
-  --c-text:          #323C47;
-  --c-text-muted:    #707683;
-  --c-text-subtle:   #90A0B7;
+  --fz-color-text:           #323C47;
+  --fz-color-text-muted:     #707683;
+  --fz-color-text-subtle:    #90A0B7;
 
   /* Borders - strong is derived */
-  --c-border:        #EBEFF2;
-  --c-border-strong: #C2CFE0;
+  --fz-color-border:         #EBEFF2;
+  --fz-color-border-strong:  #C2CFE0;
 
   /* Status colours */
-  --c-success:       #27BD6B;
-  --c-success-soft:  #E4F7ED;
-  --c-warning:       #F1B70F;
-  --c-warning-soft:  #FDF3D5;
-  --c-danger:        #FF365F;
-  --c-danger-soft:   #FFE3E9;
-  --c-info:          #334D6E;
-  --c-info-soft:     #E6EBF1;
+  --fz-color-success:        #27BD6B;
+  --fz-color-success-soft:   #E4F7ED;
+  --fz-color-warning:        #F1B70F;
+  --fz-color-warning-soft:   #FDF3D5;
+  --fz-color-danger:         #FF365F;
+  --fz-color-danger-soft:    #FFE3E9;
+  --fz-color-info:           #334D6E;
+  --fz-color-info-soft:      #E6EBF1;
 
-  /* Typography. --font-sans is what the Appearance page's font setting
+  /* Typography. --fz-font-sans is what the Appearance page's font setting
      overrides; the Poppins webfont this theme ships with is requested in
      theme.html and simply goes unused when another font is chosen. */
-  --font-sans: Poppins, Helvetica, Verdana, sans-serif;
+  --fz-font-sans: Poppins, Helvetica, Verdana, sans-serif;
 
   /* The secondary font, used for headings, form labels, and the drawer's title.
-     Follows --font-sans unless the Appearance page has been given a second font
+     Follows --fz-font-sans unless the Appearance page has been given a second font
      to use, so one font throughout stays the default. */
-  --font-heading: var(--font-sans);
+  --fz-font-heading: var(--fz-font-sans);
 
   /* Base font size: the root font size, applied to `html` in style.css. This
      theme sizes its text in rem and em throughout, so every text size is already
      a proportion of this one and moving it moves all of them. The Appearance
      page's "Text size" setting overrides it, and a user's own profile font size
      setting overrides that in turn (see theme.html). */
-  --font-size-base: 16px;
+  --formulize-font-size-base: 16px;
 
   /* How big this theme's standard content text is as a proportion of the base
      above. This theme puts no font-size on `body` and sizes its content text at
@@ -102,18 +102,18 @@
   /* Anari-specific shadows. Both follow the colour they tint, so they keep
      tracking the Primary/Text settings without the Appearance page needing to
      know about them: these are shaped glows rather than the flat ring that
-     --sh-focus is, so they can't just reuse it. */
-  --sh-accent-glow:    0px 4px 10px 0px color-mix(in srgb, var(--c-accent) 24%, transparent);
-  --sh-secondary-glow: 0px 4px 10px 0px color-mix(in srgb, var(--c-text-muted) 24%, transparent);
+     --fz-focus-ring is, so they can't just reuse it. */
+  --sh-accent-glow:    0px 4px 10px 0px color-mix(in srgb, var(--fz-color-accent) 24%, transparent);
+  --sh-secondary-glow: 0px 4px 10px 0px color-mix(in srgb, var(--fz-color-text-muted) 24%, transparent);
 
   /* Legacy aliases. This theme (and any site-specific custom CSS written
      against it) referred to these before the tokens above existed, so they are
      kept, pointing at the tokens, and pick up customizations like everything
      else. */
-  --button-color: var(--c-accent);
-  --accent-color: var(--c-accent);
-  --text-color: var(--c-text);
-  --background-color: var(--c-bg);
-  --light-border-color: var(--c-border-strong);
-  --alert-color: var(--c-danger);
+  --button-color: var(--fz-color-accent);
+  --accent-color: var(--fz-color-accent);
+  --text-color: var(--fz-color-text);
+  --background-color: var(--fz-color-page);
+  --light-border-color: var(--fz-color-border-strong);
+  --alert-color: var(--fz-color-danger);
 }

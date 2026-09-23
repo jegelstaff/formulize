@@ -13334,6 +13334,19 @@ function formulize_get_file_version($relativeFilePath) {
 }
 
 /**
+ * The Formulize UI stylesheet: the public tokens, layout classes, components and
+ * utilities that any theme and any template can use. Every page that loads
+ * Formulize's own stylesheet loads this one first, through here, so that where it
+ * lives and how it is versioned can change in one place.
+ *
+ * @return string Path relative to XOOPS_URL, with a cache-busting version
+ */
+function formulize_uiStylesheetPath() {
+	$path = '/modules/formulize/templates/css/formulize-ui.css';
+	return $path . '?v=' . formulize_get_file_version($path);
+}
+
+/**
  * The URL of Formulize's "saving" animation, in the site's language where there is one.
  *
  * Full screen this is what showSavingGraphic() reveals over the dimmed form while a save

@@ -27,7 +27,7 @@
 //   to mirror the containers the theme's form screens emit so shared rules
 //   match, and if a density modifier is ever re-introduced as a setting it has
 //   to go on this inner element. It cannot be merged onto `.fz-form-screen`,
-//   which re-declares --field-h/--field-pad-x later in the stylesheet and so
+//   which re-declares --lyris-field-height/--lyris-field-padding-x later in the stylesheet and so
 //   wins on source order over any modifier placed on the same element - that
 //   was measured during PR #100 (drawer controls went 32px -> 38px while full
 //   screen stayed at 32px) and is why the two divs were never collapsed.

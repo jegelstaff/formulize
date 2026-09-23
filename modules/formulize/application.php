@@ -92,6 +92,7 @@ if(count($allAppData)==0 AND !$xoopsUser) {
 }
 
 $cssVersion = formulize_get_file_version('/modules/formulize/templates/css/formulize.css');
+$xoTheme->addStylesheet(formulize_uiStylesheetPath());
 $xoTheme->addStylesheet("/modules/formulize/templates/css/formulize.css?v=".$cssVersion);
 
 $xoopsTpl->assign("allAppData", $allAppData);
