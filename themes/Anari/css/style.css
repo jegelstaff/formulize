@@ -770,7 +770,9 @@ div.list-of-entries .card__body {
   height: auto;
 }
 
-button, input[type="submit"], input[type="button"], input[type="reset"],
+/* Anari's buttons. Formulize UI's buttons (fz- classes) are left to
+   formulize-ui.css: :where() keeps each selector's weight as it was. */
+button:where(:not([class*="fz-"])), input[type="submit"]:where(:not([class*="fz-"])), input[type="button"]:where(:not([class*="fz-"])), input[type="reset"]:where(:not([class*="fz-"])),
 .btn {
   font-weight: 600;
   color: #FFF;
@@ -784,20 +786,20 @@ button, input[type="submit"], input[type="button"], input[type="reset"],
   background:  var(--button-color);
   text-align: center;
 }
-button:hover, input[type="submit"]:hover, input[type="button"]:hover, input[type="reset"]:hover,
+button:where(:not([class*="fz-"])):hover, input[type="submit"]:where(:not([class*="fz-"])):hover, input[type="button"]:where(:not([class*="fz-"])):hover, input[type="reset"]:where(:not([class*="fz-"])):hover,
 .btn:hover {
   box-shadow: var(--sh-accent-glow);
   transform: none;
   cursor: pointer;
 }
 
-button:focus, input[type="submit"]:focus, input[type="button"]:focus, input[type="reset"]:focus,
+button:where(:not([class*="fz-"])):focus, input[type="submit"]:where(:not([class*="fz-"])):focus, input[type="button"]:where(:not([class*="fz-"])):focus, input[type="reset"]:where(:not([class*="fz-"])):focus,
 .btn:focus {
     background-color:  var(--button-color);
 }
 
 
-button, input[type="submit"], input[type="button"], input[type="reset"],
+button:where(:not([class*="fz-"])), input[type="submit"]:where(:not([class*="fz-"])), input[type="button"]:where(:not([class*="fz-"])), input[type="reset"]:where(:not([class*="fz-"])),
 .btn {
     min-width: 200px;
   }
@@ -807,7 +809,7 @@ div#formulize-button-controls label[for=button-controls] {
 }
 
 @media print {
-  button, input[type="submit"], input[type="button"], input[type="reset"],
+  button:where(:not([class*="fz-"])), input[type="submit"]:where(:not([class*="fz-"])), input[type="button"]:where(:not([class*="fz-"])), input[type="reset"]:where(:not([class*="fz-"])),
   .btn {
     font-weight: 400;
     background: #fff;
@@ -819,13 +821,13 @@ div#formulize-button-controls label[for=button-controls] {
   }
 }
 
-button, input[type="submit"], input[type="button"], input[type="reset"],
+button:where(:not([class*="fz-"])), input[type="submit"]:where(:not([class*="fz-"])), input[type="button"]:where(:not([class*="fz-"])), input[type="reset"]:where(:not([class*="fz-"])),
 .btn--primary {
   background-color:  var(--button-color);
   box-shadow: var(--sh-accent-glow);
 }
 @media print {
-  button, input[type="submit"], input[type="button"], input[type="reset"],
+  button:where(:not([class*="fz-"])), input[type="submit"]:where(:not([class*="fz-"])), input[type="button"]:where(:not([class*="fz-"])), input[type="reset"]:where(:not([class*="fz-"])),
   .btn--primary {
     background: #fff;
     color: #000;
@@ -1035,7 +1037,8 @@ td.subentry-view-cell {
     width: 3em;
 }
 
-input[type=checkbox] {
+/* Formulize UI's toggle switch is a checkbox too, and is not enlarged. */
+input[type=checkbox]:where(:not(.fz-toggle)) {
   -ms-transform: scale(1.25); /* IE */
   -moz-transform: scale(1.25); /* FF */
   -webkit-transform: scale(1.25); /* Safari and Chrome */

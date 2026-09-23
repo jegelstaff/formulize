@@ -336,6 +336,146 @@
    page's line height to 1).
    ============================================================ */
 
+/* ---- Button ---------------------------------------------------------------
+   An action: a <button>, an <a>, or an <input type="submit">. A secondary
+   button by default; one modifier for the kind, and one for the size. Its
+   height follows the density. */
+.fz-btn {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: var(--fz-control-height);
+  /* as wide as its label: some themes give every button a minimum width */
+  min-width: 0;
+  padding: 0 calc(var(--fz-spacing) * 3);
+  border-radius: var(--fz-radius-md);
+  border: 1px solid var(--fz-color-border-strong);
+  background: var(--fz-color-surface);
+  color: var(--fz-color-text);
+  font: inherit;
+  font-size: var(--fz-text-xs-plus);
+  font-weight: var(--fz-font-weight-medium);
+  line-height: var(--fz-leading-normal);
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: background var(--fz-duration-fast) var(--fz-ease-out),
+              border-color var(--fz-duration-fast) var(--fz-ease-out),
+              color var(--fz-duration-fast) var(--fz-ease-out);
+}
+.fz-btn:hover { background: var(--fz-color-surface-3); }
+.fz-btn:focus-visible { outline: none; box-shadow: var(--fz-focus-ring); }
+.fz-btn:disabled,
+.fz-btn[aria-disabled="true"] {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+/* The main action: usually one per area. */
+.fz-btn--primary {
+  background: var(--fz-color-accent);
+  color: var(--fz-color-on-accent);
+  border-color: var(--fz-color-accent);
+}
+.fz-btn--primary:hover {
+  background: var(--fz-color-accent-hover);
+  border-color: var(--fz-color-accent-hover);
+}
+/* A destructive action, such as delete. */
+.fz-btn--danger {
+  background: var(--fz-color-danger);
+  color: #fff;
+  border-color: var(--fz-color-danger);
+}
+.fz-btn--danger:hover {
+  background: color-mix(in srgb, var(--fz-color-danger) 85%, #000);
+  border-color: color-mix(in srgb, var(--fz-color-danger) 85%, #000);
+}
+/* No border or background until hovered: for less important actions. */
+.fz-btn--ghost {
+  border-color: transparent;
+  background: transparent;
+}
+.fz-btn--ghost:hover { background: var(--fz-color-surface-3); }
+
+.fz-btn--sm {
+  height: calc(var(--fz-spacing) * 6.5);
+  padding: 0 calc(var(--fz-spacing) * 2);
+  font-size: var(--fz-text-xs);
+}
+.fz-btn--lg {
+  height: calc(var(--fz-spacing) * 9);
+  padding: 0 14px;
+  font-size: var(--fz-text-sm);
+}
+/* Square, for an icon on its own: as wide as it is tall, at any size. Give it
+   an aria-label. */
+.fz-btn--icon {
+  aspect-ratio: 1;
+  width: auto;
+  padding: 0;
+}
+/* The full width of its container. */
+.fz-btn--block {
+  display: flex;
+  width: 100%;
+}
+
+/* ---- Toggle -----------------------------------------------------------------
+   A switch: a real <input type="checkbox" class="fz-toggle">, drawn as an
+   on/off switch. It is still the checkbox, so checking it, the keyboard,
+   screen readers and form submission all work as they do for any checkbox.
+   Off uses the neutral surface and border; on fills with the accent. */
+.fz-toggle {
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  position: relative;
+  flex: none;
+  display: inline-block;
+  vertical-align: middle;
+  width: 34px;
+  height: 20px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--fz-color-border-strong);
+  border-radius: var(--fz-radius-full);
+  background: var(--fz-color-surface-3);
+  cursor: pointer;
+  transition: background var(--fz-duration) var(--fz-ease-out),
+              border-color var(--fz-duration) var(--fz-ease-out);
+}
+.fz-toggle::before {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--fz-radius-full);
+  background: var(--fz-color-surface);
+  box-shadow: var(--fz-shadow-sm);
+  transition: transform var(--fz-duration) var(--fz-ease-out);
+}
+.fz-toggle:hover { border-color: var(--fz-color-text-subtle); }
+.fz-toggle:checked {
+  background: var(--fz-color-accent);
+  border-color: var(--fz-color-accent);
+}
+.fz-toggle:checked::before { transform: translateX(14px); }
+.fz-toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--fz-focus-ring);
+}
+.fz-toggle:disabled {
+  cursor: default;
+  opacity: .5;
+}
+
 /* ---- Card -----------------------------------------------------------------
    A surface for one thing: an entry, a summary, a group of fields. Its
    children are stacked 3 steps apart, with their own margins removed. */
@@ -595,6 +735,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .fz-btn,
+  .fz-toggle,
+  .fz-toggle::before,
   .fz-card--interactive { transition: none; }
 }
 
