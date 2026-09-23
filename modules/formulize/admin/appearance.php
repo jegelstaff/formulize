@@ -25,7 +25,7 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// Appearance admin page: colours, font, and logo for the end-user UI, edited
+// Appearance admin page: colours, font, logo, and favicon for the end-user UI, edited
 // one theme at a time. The theme picker works the same way as the one in the
 // Theme Editor (admin/themeeditor.php): it lists the installed themes and
 // starts on the site's active theme, and switching it reloads this page with
@@ -61,15 +61,47 @@ $headingFontMap = formulize_appearanceHeadingFontMap($selectedTheme);
 // the settings as they stand, read out of the theme's generated stylesheet
 $settings = formulize_getAppearanceSettings($selectedTheme);
 
-// delete the logo file a theme is using, when the logo is being removed or replaced.
-// Only a file in the theme's own appearance folder is deleted: a logo still sitting in
-// the legacy uploads/appearance folder predates per-theme settings and can be shared
-// with another theme, so it is left alone and simply stops being referenced.
-function formulize_deleteAppearanceLogoFile($logoFile, $theme) {
-    $path = formulize_locateAppearanceFile($logoFile, $theme);
+// delete an uploaded appearance file a theme is using, when it is being removed or
+// replaced. Only a file in the theme's own appearance folder is deleted: a file still
+// sitting in the legacy uploads/appearance folder predates per-theme settings and can be
+// shared with another theme, so it is left alone and simply stops being referenced.
+function formulize_deleteAppearanceUploadedFile($file, $theme) {
+    $path = formulize_locateAppearanceFile($file, $theme);
     if($path AND strpos($path, formulize_getAppearanceDir($theme) . '/') === 0) {
         unlink($path);
     }
+}
+
+// The images that can be uploaded on this page: the logo in the site header, and the
+// favicon in the browser tab. They are handled identically - the file goes in the
+// theme's appearance folder and the stylesheet records which file is in use - so each
+// one is just a description of its own form fields and the image types it accepts.
+// The favicon also takes .ico, which browsers only ever want for a favicon.
+function formulize_appearanceUploads() {
+    $imageTypes = array(
+        'image/png' => 'png',
+        'image/jpeg' => 'jpg',
+        'image/gif' => 'gif',
+        'image/svg+xml' => 'svg',
+        'image/webp' => 'webp',
+    );
+    return array(
+        'appearance_logo' => array(
+            'noun' => 'logo',
+            'filePrefix' => 'formulize-appearance-logo-',
+            'types' => $imageTypes,
+            'typesLabel' => 'PNG, JPEG, GIF, SVG, or WebP',
+        ),
+        'appearance_favicon' => array(
+            'noun' => 'favicon',
+            'filePrefix' => 'formulize-appearance-favicon-',
+            'types' => $imageTypes + array(
+                'image/vnd.microsoft.icon' => 'ico',
+                'image/x-icon' => 'ico',
+            ),
+            'typesLabel' => 'PNG, ICO, SVG, GIF, JPEG, or WebP',
+        ),
+    );
 }
 
 if(isset($_POST['appearance_save']) OR isset($_POST['appearance_reset'])) {
@@ -87,7 +119,9 @@ if(isset($_POST['appearance_save']) OR isset($_POST['appearance_reset'])) {
         $submitted['appearance_headingfont'] = isset($_POST['appearance_headingfont']) ? $_POST['appearance_headingfont'] : '';
         $submitted['appearance_headingcustomfont'] = isset($_POST['appearance_headingcustomfont']) ? $_POST['appearance_headingcustomfont'] : '';
         $submitted['appearance_fontsize'] = isset($_POST['appearance_fontsize']) ? $_POST['appearance_fontsize'] : '';
-        $submitted['appearance_logo'] = $settings['appearance_logo']; // kept unless removed or replaced below
+        foreach(array_keys(formulize_appearanceUploads()) as $uploadSetting) {
+            $submitted[$uploadSetting] = $settings[$uploadSetting]; // kept unless removed or replaced below
+        }
         if($submitted['appearance_font'] == 'custom' AND !formulize_sanitizeAppearanceFontFamily($submitted['appearance_customfont'])) {
             $errors[] = "Please enter a Google Font name to use a custom font. The default font has been kept.";
         }
@@ -96,37 +130,33 @@ if(isset($_POST['appearance_save']) OR isset($_POST['appearance_reset'])) {
         }
     }
 
-    // The logo is an image, so it can't be a value in the stylesheet the way the
-    // colours and the font are. The file is kept beside the stylesheet in the theme's
-    // appearance folder, and the stylesheet records which file is in use, so the
+    // The logo and the favicon are images, so they can't be values in the stylesheet the
+    // way the colours and the font are. The files are kept beside the stylesheet in the
+    // theme's appearance folder, and the stylesheet records which file is in use, so the
     // stylesheet is still the one place the settings are read from.
-    $newLogo = '';
-    if(isset($_FILES['appearance_logo_file']) AND $_FILES['appearance_logo_file']['error'] == UPLOAD_ERR_OK) {
-        $allowedTypes = array(
-            'image/png' => 'png',
-            'image/jpeg' => 'jpg',
-            'image/gif' => 'gif',
-            'image/svg+xml' => 'svg',
-            'image/webp' => 'webp',
-        );
-        $mimeType = mime_content_type($_FILES['appearance_logo_file']['tmp_name']);
-        if(isset($allowedTypes[$mimeType])) {
-            $fileName = 'formulize-appearance-logo-' . time() . '.' . $allowedTypes[$mimeType];
-            $appearanceDir = formulize_prepareAppearanceDir($selectedTheme);
-            if($appearanceDir AND move_uploaded_file($_FILES['appearance_logo_file']['tmp_name'], $appearanceDir . '/' . $fileName)) {
-                $newLogo = $fileName;
+    foreach(formulize_appearanceUploads() as $uploadSetting => $upload) {
+        $field = $uploadSetting . '_file';
+        $newFile = '';
+        if(isset($_FILES[$field]) AND $_FILES[$field]['error'] == UPLOAD_ERR_OK) {
+            $mimeType = mime_content_type($_FILES[$field]['tmp_name']);
+            if(isset($upload['types'][$mimeType])) {
+                $fileName = $upload['filePrefix'] . time() . '.' . $upload['types'][$mimeType];
+                $appearanceDir = formulize_prepareAppearanceDir($selectedTheme);
+                if($appearanceDir AND move_uploaded_file($_FILES[$field]['tmp_name'], $appearanceDir . '/' . $fileName)) {
+                    $newFile = $fileName;
+                } else {
+                    $errors[] = "Could not move the uploaded " . $upload['noun'] . " into " . formulize_getAppearanceDir($selectedTheme) . ". Check the folder permissions.";
+                }
             } else {
-                $errors[] = "Could not move the uploaded logo into " . formulize_getAppearanceDir($selectedTheme) . ". Check the folder permissions.";
+                $errors[] = "The " . $upload['noun'] . " must be a " . $upload['typesLabel'] . " image.";
             }
-        } else {
-            $errors[] = "The logo must be a PNG, JPEG, GIF, SVG, or WebP image.";
         }
-    }
-    // the old file only goes when there is something to put in its place, or the admin
-    // asked for it to go, so a rejected upload leaves the current logo alone
-    if($newLogo OR isset($_POST['appearance_reset']) OR isset($_POST['appearance_logo_remove'])) {
-        formulize_deleteAppearanceLogoFile($settings['appearance_logo'], $selectedTheme);
-        $submitted['appearance_logo'] = $newLogo;
+        // the old file only goes when there is something to put in its place, or the admin
+        // asked for it to go, so a rejected upload leaves the current file alone
+        if($newFile OR isset($_POST['appearance_reset']) OR isset($_POST[$uploadSetting . '_remove'])) {
+            formulize_deleteAppearanceUploadedFile($settings[$uploadSetting], $selectedTheme);
+            $submitted[$uploadSetting] = $newFile;
+        }
     }
 
     // writing the stylesheet is the save: if it can't be written, nothing was saved,
@@ -193,16 +223,15 @@ foreach(formulize_appearanceFontSizeMap($selectedTheme) as $size => $label) {
 }
 $defaultFontSize = formulize_appearanceThemeContentSize($selectedTheme);
 
-// the logo can still be sitting in the legacy uploads/appearance folder on a site
-// that had one uploaded before appearance files moved into the theme folders, so
-// the shared lookup (which checks both places) builds the preview URL
-$logoPath = formulize_locateAppearanceFile($settings['appearance_logo'], $selectedTheme);
-$logoUrl = '';
-if($logoPath) {
-    $logoBase = (strpos($logoPath, formulize_getLegacyAppearanceDir() . '/') === 0)
-        ? formulize_getLegacyAppearanceUrl()
-        : formulize_getAppearanceUrl($selectedTheme);
-    $logoUrl = $logoBase . '/' . rawurlencode(basename($logoPath)) . '?v=' . filemtime($logoPath);
+// The logo can still be sitting in the legacy uploads/appearance folder on a site
+// that had one uploaded before appearance files moved into the theme folders, so the
+// shared lookup (which checks both places) builds the preview URLs. These are built
+// from $settings rather than from the active theme's helpers, because this page edits
+// whichever theme the picker is on, not the one it is being rendered with.
+$uploadUrls = array();
+foreach(array_keys(formulize_appearanceUploads()) as $uploadSetting) {
+    $uploadUrls[$uploadSetting] = formulize_getAppearanceFileUrl(
+        formulize_locateAppearanceFile($settings[$uploadSetting], $selectedTheme), $selectedTheme);
 }
 
 // Warn up front if this theme's appearance folder can't be written, rather than
@@ -223,7 +252,8 @@ $adminPage['fontStacksJson'] = json_encode($fontStacks);
 $adminPage['fontSizes'] = $fontSizes;
 $adminPage['defaultFontSize'] = $defaultFontSize;
 $adminPage['currentFontSize'] = $settings['appearance_fontsize'] ? $settings['appearance_fontsize'] : $defaultFontSize;
-$adminPage['logoUrl'] = $logoUrl;
+$adminPage['logoUrl'] = $uploadUrls['appearance_logo'];
+$adminPage['faviconUrl'] = $uploadUrls['appearance_favicon'];
 $adminPage['saved'] = $saved;
 $adminPage['errors'] = $errors;
 $adminPage['themes'] = $themes;

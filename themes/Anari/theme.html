@@ -28,10 +28,6 @@
     <!-- Module Header -->
     <{$icms_module_header}>
 
-    <!-- Favicon -->
-    <link rel="shortcut icon" type="image/ico" href="<{$icms_imageurl}>icons/favicon.ico" />
-    <link rel="icon" type="image/png" href="<{$icms_imageurl}>icons/icon.png" />
-
     <!-- CSS: must come after icms_module_header -->
     <{php}>
     require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions.php';
@@ -45,12 +41,24 @@
         echo '<link rel="stylesheet" type="text/css" media="all" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" />';
     }
     echo '<link rel="stylesheet" type="text/css" media="all" href="' . $this->_tpl_vars['icms_imageurl'] . $rtlPath . 'css/style.css?v=' . $cssVersion . '" />';
-    // user-configured colours, font, and logo, from the Appearance page in the Formulize admin UI.
+    // user-configured colours, font, logo, and favicon, from the Appearance page in the Formulize admin UI.
     // Goes after the stylesheet link above, so the generated overrides win the cascade.
     echo formulize_renderAppearanceHead();
     $appearanceLogoUrl = formulize_getAppearanceLogoUrl();
     $this->assign('appearance_logo_url', $appearanceLogoUrl ? $appearanceLogoUrl : $this->_tpl_vars['icms_imageurl'] . 'images/logo.png');
+    $this->assign('appearance_favicon_url', formulize_getAppearanceFaviconUrl());
     <{/php}>
+
+    <{* Favicon: the one uploaded on the Appearance page if there is one, otherwise the
+       theme's own. No type attribute on the uploaded one, because it can be any of the
+       formats that page accepts, and browsers go by the file itself anyway. *}>
+    <{if $appearance_favicon_url}>
+    <link rel="shortcut icon" href="<{$appearance_favicon_url}>" />
+    <link rel="icon" href="<{$appearance_favicon_url}>" />
+    <{else}>
+    <link rel="shortcut icon" type="image/ico" href="<{$icms_imageurl}>icons/favicon.ico" />
+    <link rel="icon" type="image/png" href="<{$icms_imageurl}>icons/icon.png" />
+    <{/if}>
 
     <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
 
