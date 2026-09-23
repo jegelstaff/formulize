@@ -870,6 +870,40 @@
 }
 .fz-card-list > * { margin-block: 0; }
 
+/* ---- Table ------------------------------------------------------------------
+   A plain data table: a header row, a line under each row, and rows the row
+   height, which follows the density. On a <table>. fz-table--striped shades
+   every other row. For a table wider than its container, wrap it in an
+   element with fz-overflow-x-auto. */
+.fz-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--fz-text-xs-plus);
+  line-height: var(--fz-leading-normal);
+  color: var(--fz-color-text);
+}
+.fz-table :where(th, td) {
+  padding: 0 calc(var(--fz-spacing) * 3);
+  text-align: start;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--fz-color-border);
+}
+.fz-table :where(tbody td) {
+  height: var(--fz-row-height);
+}
+.fz-table :where(thead th) {
+  height: calc(var(--fz-spacing) * 9);
+  font-size: var(--fz-text-xs);
+  font-weight: var(--fz-font-weight-semibold);
+  color: var(--fz-color-text-muted);
+  background: var(--fz-color-surface-2);
+  border-bottom-color: var(--fz-color-border-strong);
+}
+.fz-table--striped :where(tbody tr:nth-child(even) td) {
+  background: var(--fz-color-surface-2);
+}
+
 /* ---- Badge ------------------------------------------------------------------
    A short label: a status, a category, a count. The tone is in the tint and the
    dot; the text stays the normal text colour, so it is readable whatever

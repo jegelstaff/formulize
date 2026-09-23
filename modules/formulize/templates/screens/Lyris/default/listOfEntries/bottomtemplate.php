@@ -128,7 +128,7 @@ function fzSelectView(value, isStandard) {
     // several lines (fixed pixel width columns), so track the header row's real height in
     // --lyris-thead-height rather than assuming its 36px single-line height.
     function initStickyFilterOffset() {
-        var table = document.querySelector('.fz-table');
+        var table = document.querySelector('.lyris-list-table');
         var headerRow = table ? table.querySelector('thead tr:first-child') : null;
         if (!headerRow || headerRow.classList.contains('lyris-search-row') || typeof ResizeObserver === 'undefined') return;
         new ResizeObserver(function () {
