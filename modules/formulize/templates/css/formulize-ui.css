@@ -476,6 +476,283 @@
   opacity: .5;
 }
 
+/* ---- Form field -------------------------------------------------------------
+   A label, a control, and its help text:
+     <div class="fz-field">
+       <label class="fz-field__label" for="x">Name <span class="fz-field__req">*</span></label>
+       <div class="fz-field__body"><input class="fz-input" id="x"> <p class="fz-field__help">…</p></div>
+     </div>
+   The label sits above the control; fz-field--horizontal puts it beside, and
+   stacks them again when there isn't room. */
+.fz-field {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--fz-spacing) * 1.5);
+}
+.fz-field__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--fz-font-heading);
+  font-size: var(--fz-text-sm);
+  font-weight: var(--fz-font-weight-semibold);
+  line-height: var(--fz-leading-snug);
+  color: var(--fz-color-text);
+}
+/* On a <fieldset>, for a group of choices, with a <legend class="fz-field__label">:
+   no border, padding or margin of the fieldset's own. A legend sits outside the
+   fieldset's layout, so it carries the gap below it itself. */
+.fz-field:where(fieldset) {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.fz-field__label:where(legend) {
+  padding: 0;
+  margin-bottom: calc(var(--fz-spacing) * 1.5);
+}
+/* The required marker, inside the label. */
+.fz-field__req {
+  color: var(--fz-color-danger);
+  font-weight: var(--fz-font-weight-bold);
+  font-size: 0.95em;
+}
+/* The control and its help text. */
+.fz-field__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fz-spacing);
+  min-width: 0;
+}
+.fz-field__help {
+  margin: 0;
+  font-size: var(--fz-text-xs);
+  line-height: var(--fz-leading-snug);
+  color: var(--fz-color-text-muted);
+}
+/* Label beside the control, lined up with its first line; the two stack when
+   the control would get narrower than half the field. */
+.fz-field--horizontal {
+  --fz-field-label-width: 12rem;
+  flex-direction: row;
+  flex-wrap: wrap;
+  column-gap: calc(var(--fz-spacing) * 4);
+}
+.fz-field--horizontal > :where(.fz-field__label) {
+  flex: 1 1 var(--fz-field-label-width);
+  align-self: flex-start;
+  padding-top: calc((var(--fz-field-height) - var(--fz-text-sm) * var(--fz-leading-snug)) / 2);
+}
+.fz-field--horizontal > :where(.fz-field__body) {
+  flex: 99999 1 0;
+  min-width: 50%;
+}
+
+/* ---- Form controls ----------------------------------------------------------
+   fz-input (a text-like <input>: text, email, number, date…), fz-select and
+   fz-textarea share one look: the field height, which follows the density, a
+   border that darkens on hover, and the focus ring. aria-invalid="true" marks
+   one as invalid. */
+.fz-input,
+.fz-select,
+.fz-textarea {
+  box-sizing: border-box;
+  width: 100%;
+  height: var(--fz-field-height);
+  margin: 0;
+  padding: 0 calc(var(--fz-spacing) * 3);
+  border: 1px solid var(--fz-color-border-strong);
+  border-radius: var(--fz-radius-md);
+  background: var(--fz-color-surface);
+  color: var(--fz-color-text);
+  font: inherit;
+  font-size: var(--fz-text-sm);
+  line-height: var(--fz-leading-normal);
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: border-color var(--fz-duration-fast) var(--fz-ease-out),
+              box-shadow var(--fz-duration-fast) var(--fz-ease-out),
+              background var(--fz-duration-fast) var(--fz-ease-out);
+}
+.fz-input::placeholder,
+.fz-textarea::placeholder { color: var(--fz-color-text-subtle); }
+.fz-input:hover:not(:disabled):not(:focus),
+.fz-select:hover:not(:disabled):not(:focus),
+.fz-textarea:hover:not(:disabled):not(:focus) {
+  border-color: var(--fz-color-text-muted);
+}
+.fz-input:focus,
+.fz-select:focus,
+.fz-textarea:focus {
+  border-color: var(--fz-color-focus);
+  box-shadow: var(--fz-focus-ring);
+}
+.fz-input:disabled,
+.fz-select:disabled,
+.fz-textarea:disabled {
+  background: var(--fz-color-surface-3);
+  color: var(--fz-color-text-subtle);
+  cursor: not-allowed;
+}
+.fz-input[aria-invalid="true"],
+.fz-select[aria-invalid="true"],
+.fz-textarea[aria-invalid="true"] {
+  border-color: var(--fz-color-danger);
+}
+.fz-input[aria-invalid="true"]:focus,
+.fz-select[aria-invalid="true"]:focus,
+.fz-textarea[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--fz-color-danger) 20%, transparent);
+}
+/* A dropdown, with its own chevron. */
+.fz-select {
+  padding-right: 30px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235b6068' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+.fz-select[multiple] {
+  height: auto;
+  padding: calc(var(--fz-spacing) * 1.5) calc(var(--fz-spacing) * 2.5);
+  background-image: none;
+}
+/* Several lines; grows downwards when dragged. */
+.fz-textarea {
+  height: auto;
+  min-height: calc(var(--fz-field-height) * 2.4);
+  padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3);
+  resize: vertical;
+}
+
+/* ---- Input group ------------------------------------------------------------
+   An fz-input with text or an icon attached before or after it:
+     <div class="fz-input-group"><span class="fz-input-group__addon">$</span><input class="fz-input"></div> */
+.fz-input-group {
+  box-sizing: border-box;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  height: var(--fz-field-height);
+  border: 1px solid var(--fz-color-border-strong);
+  border-radius: var(--fz-radius-md);
+  background: var(--fz-color-surface);
+  overflow: hidden;
+  transition: border-color var(--fz-duration-fast) var(--fz-ease-out),
+              box-shadow var(--fz-duration-fast) var(--fz-ease-out);
+}
+.fz-input-group:hover:not(:focus-within) { border-color: var(--fz-color-text-muted); }
+.fz-input-group:focus-within {
+  border-color: var(--fz-color-focus);
+  box-shadow: var(--fz-focus-ring);
+}
+.fz-input-group > :where(.fz-input) {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.fz-input-group__addon {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 calc(var(--fz-spacing) * 3);
+  background: var(--fz-color-surface-2);
+  color: var(--fz-color-text-subtle);
+  font-size: var(--fz-text-sm);
+  white-space: nowrap;
+  user-select: none;
+  border-inline-end: 1px solid var(--fz-color-border);
+}
+.fz-input-group__addon:where(:last-child) {
+  border-inline-end: 0;
+  border-inline-start: 1px solid var(--fz-color-border);
+}
+
+/* ---- Checkbox and radio -----------------------------------------------------
+   A real <input type="checkbox" class="fz-checkbox"> or
+   <input type="radio" class="fz-radio">, drawn in the theme's colours. */
+.fz-checkbox,
+.fz-radio {
+  box-sizing: border-box;
+  position: relative;
+  flex: none;
+  display: inline-block;
+  vertical-align: middle;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  border: 1.5px solid var(--fz-color-border-strong);
+  background: var(--fz-color-surface);
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: background var(--fz-duration-fast) var(--fz-ease-out),
+              border-color var(--fz-duration-fast) var(--fz-ease-out);
+}
+.fz-checkbox { border-radius: 3px; }
+.fz-radio    { border-radius: 50%; }
+.fz-checkbox:checked,
+.fz-radio:checked {
+  background: var(--fz-color-accent);
+  border-color: var(--fz-color-accent);
+}
+.fz-checkbox:checked::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid var(--fz-color-on-accent);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.fz-radio:checked::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--fz-color-on-accent);
+}
+.fz-checkbox:focus-visible,
+.fz-radio:focus-visible {
+  outline: none;
+  box-shadow: var(--fz-focus-ring);
+}
+.fz-checkbox:disabled,
+.fz-radio:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+/* ---- Choice -----------------------------------------------------------------
+   A checkbox, radio or toggle with its label, the whole of it clickable:
+     <label class="fz-choice"><input type="radio" class="fz-radio" name="x"> Yes</label>
+   fz-choice-group stacks a set of them. */
+.fz-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--fz-spacing) * 2);
+  color: var(--fz-color-text);
+  font-size: var(--fz-text-sm);
+  line-height: var(--fz-leading-normal);
+  cursor: pointer;
+}
+.fz-choice-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: calc(var(--fz-spacing) * 2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
 /* ---- Card -----------------------------------------------------------------
    A surface for one thing: an entry, a summary, a group of fields. Its
    children are stacked 3 steps apart, with their own margins removed. */
@@ -737,6 +1014,12 @@
 @media (prefers-reduced-motion: reduce) {
   .fz-btn,
   .fz-toggle,
+  .fz-input,
+  .fz-select,
+  .fz-textarea,
+  .fz-input-group,
+  .fz-checkbox,
+  .fz-radio,
   .fz-toggle::before,
   .fz-card--interactive { transition: none; }
 }
