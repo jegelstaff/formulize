@@ -1661,6 +1661,53 @@ a.de-edit-icon:hover::before {
   background: var(--c-surface-3);
 }
 
+/* Open/close iconography for top-level group headers.
+   menu.html renders a group with children as <details>/<summary>, so the
+   open/closed state is already native — the chevron only has to follow the
+   [open] attribute, no JS required. `display: flex` on the <summary> (from
+   .main-menu__item-link) already suppresses the UA disclosure triangle in
+   Blink/WebKit; the marker resets below cover the engines that keep drawing it
+   regardless of `display`. The chevron is masked rather than a coloured SVG
+   background so it picks up `currentColor` and therefore follows whatever text
+   colour a deployment has configured on the Appearance admin page. */
+.main-menu__item--disclosure > .main-menu__item-link::-webkit-details-marker {
+  display: none;
+}
+
+.main-menu__item--disclosure > .main-menu__item-link::marker {
+  content: '';
+}
+
+.main-menu__item--disclosure > .main-menu__item-link::after {
+  content: '';
+  flex: none;
+  margin-left: auto;
+  width: 14px;
+  height: 14px;
+  background-color: currentColor;
+  opacity: 0.45;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center / 14px 14px no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center / 14px 14px no-repeat;
+  /* Closed: chevron points at the collapsed group. Open: points down at the
+     revealed children. */
+  transform: rotate(-90deg);
+  transition: transform var(--dur-2) var(--ease);
+}
+
+.main-menu__item--disclosure[open] > .main-menu__item-link::after {
+  transform: rotate(0deg);
+}
+
+.main-menu__item--disclosure > .main-menu__item-link:hover::after {
+  opacity: 0.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .main-menu__item--disclosure > .main-menu__item-link::after {
+    transition: none;
+  }
+}
+
 /* The boxed active treatment (surface + shadow) plus the vertical accent pipe
    is only for the active *leaf link* you're currently on. Upstream's menu.html
    also adds --active to a group's <summary> header when that group contains the
@@ -1705,17 +1752,23 @@ a.main-menu__item-link--active::before {
 
 /* Sub-items. Upstream's menu.html wraps sub-items in a nested
    <ul class="main-menu__subitems">, which by default reintroduces list
-   bullets and left padding. Reset both so there are no bullets and the
-   browser indent is removed; the intended indent is provided solely by
-   .main-menu__subitem's padding-left, keeping the active accent pipe flush. */
+   bullets and browser indent. Both are reset; the indent is then re-applied
+   deliberately as `margin-left` (the gutter the rail sits in) plus
+   `padding-left` (the gap between the rail and the label), so the children of
+   a group read as one visually grouped branch hanging off their parent. */
 .main-menu__subitems {
   list-style: none;
-  margin: 0;
-  padding: 0;
+  margin: var(--s-1) 0 var(--s-1) var(--s-3);
+  padding: 0 0 0 var(--s-2);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  /* The vertical guide line down the left of a group's children. */
+  border-left: 1px solid var(--c-border);
 }
 
 .main-menu__subitem {
-  padding-left: var(--s-4);
+  padding-left: 0;
 }
 
 .main-menu__subitem .main-menu__item-link {
@@ -1726,6 +1779,29 @@ a.main-menu__item-link--active::before {
 .main-menu__subitem .main-menu__item-link:hover,
 .main-menu__subitem .main-menu__item-link--active {
   color: var(--c-text);
+}
+
+/* Active child. The generic active rule above gives every active leaf link a
+   plain --c-surface (white) pill, which on the off-white sidebar is a very
+   faint distinction for the one item telling you where you are. A child gets
+   an accent-tinted background instead, so it reads at a glance without adding
+   a second competing colour — --c-accent-soft is derived from the deployment's
+   configured accent on the Appearance admin page, so this follows branding. */
+.main-menu__subitem a.main-menu__item-link--active {
+  background: var(--c-accent-soft);
+}
+
+/* ...and its accent pipe moves out onto the guide line, so the rail itself
+   thickens and turns accent-coloured at the active child rather than the pipe
+   floating in the gutter detached from both the rail and the label. The -1px
+   accounts for the rail's own 1px border, which sits outside the padding box
+   the sub-item is positioned against. */
+.main-menu__subitem a.main-menu__item-link--active::before {
+  left: calc(-1 * var(--s-2) - 1px);
+  top: 1px;
+  bottom: 1px;
+  width: 2px;
+  border-radius: 0;
 }
 
 /* ============================================================
