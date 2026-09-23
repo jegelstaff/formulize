@@ -562,21 +562,21 @@ button.lyris-chip--dark.lyris-chip--danger:hover { background: rgba(255,90,90,.2
    Width is intentionally left to the element/context (size attr, search-row,
    etc.) rather than forced to 100%, so inline controls like the pagination
    selector are not stretched. */
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="number"],
-input[type="search"],
-input[type="tel"],
-input[type="url"],
-input[type="date"],
-input[type="datetime-local"],
-input[type="time"],
-input[type="month"],
-input[type="week"],
-input:not([type]),
-select,
-textarea {
+input[type="text"]:where(:not([class*="fz-"])),
+input[type="email"]:where(:not([class*="fz-"])),
+input[type="password"]:where(:not([class*="fz-"])),
+input[type="number"]:where(:not([class*="fz-"])),
+input[type="search"]:where(:not([class*="fz-"])),
+input[type="tel"]:where(:not([class*="fz-"])),
+input[type="url"]:where(:not([class*="fz-"])),
+input[type="date"]:where(:not([class*="fz-"])),
+input[type="datetime-local"]:where(:not([class*="fz-"])),
+input[type="time"]:where(:not([class*="fz-"])),
+input[type="month"]:where(:not([class*="fz-"])),
+input[type="week"]:where(:not([class*="fz-"])),
+input:where(:not([class*="fz-"])):not([type]),
+select:where(:not([class*="fz-"])),
+textarea:where(:not([class*="fz-"])) {
   height: var(--fz-control-height);
   padding: 0 10px;
   font: inherit;
@@ -625,8 +625,8 @@ select {
 }
 
 /* Multi-line / list controls grow with their content. */
-select[multiple],
-select[size]:not([size="1"]) {
+select[multiple]:where(:not([class*="fz-"])),
+select[size]:where(:not([class*="fz-"])):not([size="1"]) {
   height: auto;
   padding: 6px 10px;
   background-image: none;
@@ -1414,39 +1414,7 @@ a.de-edit-icon:hover::before {
   color: var(--fz-color-danger);
 }
 
-/* Checkbox styling */
-.fz-checkbox {
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  border-radius: 3px;
-  border: 1.5px solid var(--fz-color-border-strong);
-  background: var(--fz-color-surface);
-  cursor: pointer;
-  display: inline-block;
-  vertical-align: middle;
-  position: relative;
-  transition: background var(--fz-duration-fast) var(--fz-ease-out), border-color var(--fz-duration-fast) var(--fz-ease-out);
-}
-
-.fz-checkbox:checked {
-  background: var(--fz-color-accent);
-  border-color: var(--fz-color-accent);
-}
-
-.fz-checkbox:checked::after {
-  content: "";
-  position: absolute;
-  left: 4px;
-  top: 1px;
-  width: 4px;
-  height: 8px;
-  border: solid white;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-}
-
-/* Formulize selection checkboxes get the same treatment as fz-checkbox */
+/* Formulize selection checkboxes get the same treatment as fz-checkbox (formulize-ui.css) */
 .fz-table .formulize_selection_checkbox {
   appearance: none;
   width: 16px;
@@ -2009,7 +1977,7 @@ body:has(#formulize-masquerade-block) {
 }
 
 /* ============================================================
-   Form screen — field anatomy & .fz-control primitive
+   Form screen — field anatomy
    ============================================================
 
    These styles apply only inside `.lyris-form-screen` (a wrapper added by
@@ -2058,174 +2026,40 @@ body:has(#formulize-masquerade-block) {
   --lyris-required-color:      var(--fz-color-danger);
 }
 
-/* ---------- .fz-control primitive (38px) ----------
-   Can be applied directly to an input/select/textarea element, or used
-   as a wrapper (per forms.css intent). Here we apply it as a direct class
-   AND via the contextual selectors below so raw Formulize-rendered elements
-   inside .lyris-form-screen automatically get the richer form-screen sizing. */
-
-.fz-control {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 100%;
-  height: var(--lyris-field-height, 38px);
-  padding: 0 var(--lyris-field-padding-x, 12px);
-  font: inherit;
-  font-size: var(--lyris-field-text, var(--fz-text-sm));
-  font-family: var(--fz-font-sans);
-  color: var(--fz-color-text);
-  background: var(--fz-color-surface);
-  border: 1px solid var(--fz-color-border-strong);
-  border-radius: var(--lyris-field-radius, var(--fz-radius-md));
-  outline: none;
-  box-sizing: border-box;
-  transition: border-color var(--fz-duration-fast) var(--fz-ease-out),
-              box-shadow var(--fz-duration-fast) var(--fz-ease-out),
-              background var(--fz-duration-fast) var(--fz-ease-out);
-}
-
-.fz-control::placeholder { color: var(--fz-color-text-subtle); }
-
-.fz-control:hover:not(:disabled):not(:focus) {
-  border-color: var(--fz-color-text-muted);
-}
-
-.fz-control:focus,
-.fz-control:focus-visible {
-  border-color: var(--fz-color-focus);
-  box-shadow: var(--fz-focus-ring);
-}
-
-.fz-control:disabled {
-  background: var(--fz-color-surface-3);
-  color: var(--fz-color-text-subtle);
-  cursor: not-allowed;
-}
-
-/* select: custom chevron */
-select.fz-control {
-  appearance: none;
-  -webkit-appearance: none;
-  padding-right: 30px;
-  cursor: pointer;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235b6068' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-}
-
-/* textarea: auto-height, no fixed row height */
-textarea.fz-control {
-  height: auto;
-  min-height: calc(var(--lyris-field-height, 38px) * 2.4);
-  padding: var(--lyris-field-padding-y, 8px) var(--lyris-field-padding-x, 12px);
-  line-height: var(--fz-leading-normal);
-  resize: vertical;
-}
-
-/* ---------- .fz-control variants (ported from forms.css) ----------
-   Available for future use / opt-in markup. Non-breaking: applied only when
-   the modifier class is present. */
-
-.fz-control--filled {
-  background: var(--fz-color-surface-3);
-  border-color: transparent;
-}
-.fz-control--filled:hover:not(:disabled):not(:focus) {
-  background: var(--fz-color-surface-2);
-  border-color: var(--fz-color-border);
-}
-.fz-control--filled:focus { background: var(--fz-color-surface); }
-
-.fz-control--underline {
-  border: 0;
-  border-bottom: 1px solid var(--fz-color-border-strong);
-  border-radius: 0;
-  padding-left: 0;
-  padding-right: 0;
-  background: transparent;
-}
-.fz-control--underline:focus {
-  box-shadow: none;
-  border-bottom-color: var(--fz-color-focus);
-  border-bottom-width: 2px;
-}
-
-.fz-control--multiline {
-  height: auto;
-  min-height: calc(var(--lyris-field-height, 38px) * 2.4);
-  padding: 10px var(--lyris-field-padding-x, 12px);
-  line-height: var(--fz-leading-normal);
-  resize: vertical;
-}
-
-/* Prefix/suffix affix wrapper */
-.fz-control-affix {
-  display: flex;
-  align-items: stretch;
-  border: 1px solid var(--fz-color-border-strong);
-  border-radius: var(--lyris-field-radius, var(--fz-radius-md));
-  background: var(--fz-color-surface);
-  height: var(--lyris-field-height, 38px);
-  overflow: hidden;
-  transition: border-color var(--fz-duration-fast) var(--fz-ease-out),
-              box-shadow var(--fz-duration-fast) var(--fz-ease-out);
-}
-.fz-control-affix:hover:not(:focus-within) { border-color: var(--fz-color-text-muted); }
-.fz-control-affix:focus-within {
-  border-color: var(--fz-color-focus);
-  box-shadow: var(--fz-focus-ring);
-}
-.fz-control-affix .fz-control {
-  border: 0;
-  background: transparent;
-  height: 100%;
-  padding: 0 12px;
-}
-.fz-control-affix .fz-control:focus { box-shadow: none; }
-.fz-control-affix__lead,
-.fz-control-affix__trail {
-  display: inline-flex;
-  align-items: center;
-  padding: 0 12px;
-  font-size: var(--lyris-field-text, var(--fz-text-sm));
-  color: var(--fz-color-text-subtle);
-  background: var(--fz-color-surface-2);
-  border-right: 1px solid var(--fz-color-border);
-  white-space: nowrap;
-  user-select: none;
-}
-.fz-control-affix__trail {
-  border-right: 0;
-  border-left: 1px solid var(--fz-color-border);
-}
+/* ---------- Formulize UI's form controls ----------
+   fz-input, fz-select, fz-textarea, fz-input-group, fz-checkbox, fz-radio and
+   fz-choice are Formulize UI's (formulize-ui.css). Core renders its form
+   elements as plain, class-less inputs, which the rules below style; the rules
+   that target plain inputs skip Formulize UI's classes (:where(:not(...)),
+   which adds no weight), so that those classes render as designed here too. */
 
 /* ---------- Contextual override: raw form elements inside .lyris-form-screen ----------
    Formulize renders raw <input>, <select>, <textarea> with no class. Inside a form
    screen these should use the 38px control sizing instead of the 32px list baseline.
    We scope tightly so only elements directly inside form rows are affected. */
 
-.lyris-form input[type="text"],
-.lyris-form input[type="email"],
-.lyris-form input[type="number"],
-.lyris-form input[type="date"],
-.lyris-form input[type="datetime-local"],
-.lyris-form input[type="time"],
-.lyris-form input[type="tel"],
-.lyris-form input[type="url"],
-.lyris-form input:not([type]),
-.lyris-form select,
-.lyris-form textarea,
-.lyris-form-screen input[type="text"],
-.lyris-form-screen input[type="email"],
-.lyris-form-screen input[type="number"],
-.lyris-form-screen input[type="date"],
-.lyris-form-screen input[type="datetime-local"],
-.lyris-form-screen input[type="time"],
-.lyris-form-screen input[type="tel"],
-.lyris-form-screen input[type="url"],
-.lyris-form-screen input:not([type]),
-.lyris-form-screen select,
-.lyris-form-screen textarea {
+.lyris-form input[type="text"]:where(:not([class*="fz-"])),
+.lyris-form input[type="email"]:where(:not([class*="fz-"])),
+.lyris-form input[type="number"]:where(:not([class*="fz-"])),
+.lyris-form input[type="date"]:where(:not([class*="fz-"])),
+.lyris-form input[type="datetime-local"]:where(:not([class*="fz-"])),
+.lyris-form input[type="time"]:where(:not([class*="fz-"])),
+.lyris-form input[type="tel"]:where(:not([class*="fz-"])),
+.lyris-form input[type="url"]:where(:not([class*="fz-"])),
+.lyris-form input:where(:not([class*="fz-"])):not([type]),
+.lyris-form select:where(:not([class*="fz-"])),
+.lyris-form textarea:where(:not([class*="fz-"])),
+.lyris-form-screen input[type="text"]:where(:not([class*="fz-"])),
+.lyris-form-screen input[type="email"]:where(:not([class*="fz-"])),
+.lyris-form-screen input[type="number"]:where(:not([class*="fz-"])),
+.lyris-form-screen input[type="date"]:where(:not([class*="fz-"])),
+.lyris-form-screen input[type="datetime-local"]:where(:not([class*="fz-"])),
+.lyris-form-screen input[type="time"]:where(:not([class*="fz-"])),
+.lyris-form-screen input[type="tel"]:where(:not([class*="fz-"])),
+.lyris-form-screen input[type="url"]:where(:not([class*="fz-"])),
+.lyris-form-screen input:where(:not([class*="fz-"])):not([type]),
+.lyris-form-screen select:where(:not([class*="fz-"])),
+.lyris-form-screen textarea:where(:not([class*="fz-"])) {
   height: var(--lyris-field-height);
   padding: 0 var(--lyris-field-padding-x);
   font-size: var(--lyris-field-text);
@@ -2233,8 +2067,8 @@ textarea.fz-control {
   width: 100%;
 }
 
-.lyris-form textarea,
-.lyris-form-screen textarea {
+.lyris-form textarea:where(:not([class*="fz-"])),
+.lyris-form-screen textarea:where(:not([class*="fz-"])) {
   height: auto;
   min-height: calc(var(--lyris-field-height) * 2.4);
   padding: var(--lyris-field-padding-y) var(--lyris-field-padding-x);
@@ -2259,8 +2093,8 @@ textarea.fz-control {
 }
 
 /* Selects: preserve the chevron background already set by the base rule */
-.lyris-form select,
-.lyris-form-screen select {
+.lyris-form select:where(:not([class*="fz-"])),
+.lyris-form-screen select:where(:not([class*="fz-"])) {
   padding-right: 30px;
 }
 
@@ -2314,12 +2148,16 @@ textarea.fz-control {
 .form-container {
   display: flex;
   flex-direction: column;
-  gap: 0; /* gap controlled by .fz-field margin-bottom */
+  gap: 0; /* gap controlled by .form-row margin-bottom */
 }
 
-/* ---------- Field wrapper: .fz-field (primitive) ----------
-   `.form-row` retained as an additive alias. */
-.fz-field,
+/* ---------- Field wrapper ----------
+   Lyris's form templates put Formulize UI's field classes (fz-field and its
+   parts, styled in formulize-ui.css) and the legacy form classes (form-row,
+   form-label, form-help-text) on the same elements. Lyris's styling of its own
+   forms targets the legacy classes, or is scoped inside .form-row, so that it
+   applies to Lyris's form markup only and leaves an fz-field anywhere else to
+   formulize-ui.css. */
 .form-row {
   display: flex;
   flex-direction: column;
@@ -2328,14 +2166,12 @@ textarea.fz-control {
   position: relative;
 }
 
-.fz-field:last-child,
 .form-row:last-child {
   margin-bottom: 0;
 }
 
-/* ---------- Label: .fz-field__label (primitive) ---------- */
+/* ---------- Label ---------- */
 
-.fz-field__label,
 .form-label {
   display: inline-flex;
   align-items: center;
@@ -2344,12 +2180,12 @@ textarea.fz-control {
   font-weight: 600;
   color: var(--fz-color-text);
   line-height: var(--fz-leading-snug);
-  /* label-to-control gap supplied by the .fz-field gap */
+  /* label-to-control gap supplied by the .form-row gap */
 }
 
-/* ---------- Required indicator: .fz-field__req asterisk (primitive) ---------- */
+/* ---------- Required indicator ---------- */
 
-.fz-field__req {
+.form-label .fz-field__req {
   color: var(--lyris-required-color, var(--fz-color-danger));
   font-weight: 700;
   font-size: 0.95em;
@@ -2363,18 +2199,17 @@ textarea.fz-control {
   color: var(--lyris-required-color, var(--fz-color-danger)) !important;
 }
 
-/* ---------- Body wrapper: .fz-field__body (primitive) ---------- */
+/* ---------- Body wrapper ---------- */
 
-.fz-field__body {
+.form-row > .fz-field__body {
   display: flex;
   flex-direction: column;
   gap: 4px;
   min-width: 0;
 }
 
-/* ---------- Help text: .fz-field__help (primitive) ---------- */
+/* ---------- Help text ---------- */
 
-.fz-field__help,
 .form-help-text {
   font-size: var(--lyris-help-text, var(--fz-text-xs));
   color: var(--fz-color-text-muted);
@@ -2472,10 +2307,10 @@ textarea.fz-control {
   line-height: 1.6;        /* vertical rhythm between <br>-separated options */
 }
 
-.lyris-form-screen .col2 input[type="radio"],
-.lyris-form-screen .col2 input[type="checkbox"],
-.lyris-form-screen .fz-field__body input[type="radio"],
-.lyris-form-screen .fz-field__body input[type="checkbox"] {
+.lyris-form-screen .col2 input[type="radio"]:where(:not([class*="fz-"])),
+.lyris-form-screen .col2 input[type="checkbox"]:where(:not([class*="fz-"])),
+.lyris-form-screen .fz-field__body input[type="radio"]:where(:not([class*="fz-"])),
+.lyris-form-screen .fz-field__body input[type="checkbox"]:where(:not([class*="fz-"])) {
   display: inline-block;
   width: auto !important;
   height: auto;
@@ -2494,10 +2329,10 @@ textarea.fz-control {
    one option from the next. A margin on the label pushed that separator away
    from the option it follows and broke those layouts, so spacing between
    options is left entirely to the delimiter. */
-.lyris-form-screen .col2 input[type="radio"] + label,
-.lyris-form-screen .col2 input[type="checkbox"] + label,
-.lyris-form-screen .fz-field__body input[type="radio"] + label,
-.lyris-form-screen .fz-field__body input[type="checkbox"] + label {
+.lyris-form-screen .col2 input[type="radio"]:where(:not([class*="fz-"])) + label,
+.lyris-form-screen .col2 input[type="checkbox"]:where(:not([class*="fz-"])) + label,
+.lyris-form-screen .fz-field__body input[type="radio"]:where(:not([class*="fz-"])) + label,
+.lyris-form-screen .fz-field__body input[type="checkbox"]:where(:not([class*="fz-"])) + label {
   display: inline;
   font-weight: 400;
   font-size: var(--lyris-field-text, var(--fz-text-sm));
@@ -2961,8 +2796,8 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
    field for admins/webmasters. Pull it out of flow and anchor it at the top-right
    by the label, revealed on field hover (owner request) — so it stays out of the
    way but is reachable where you'd look for it. */
-.fz-field { position: relative; }
-.fz-field > .formulize-element-edit-link {
+.form-row { position: relative; }
+.form-row > .formulize-element-edit-link {
   position: absolute;
   top: 0;
   right: 0;
@@ -2980,12 +2815,12 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
   pointer-events: none;
   transition: opacity var(--fz-duration-fast) var(--fz-ease-out);
 }
-.fz-field:hover > .formulize-element-edit-link,
-.fz-field > .formulize-element-edit-link:focus {
+.form-row:hover > .formulize-element-edit-link,
+.form-row > .formulize-element-edit-link:focus {
   opacity: 1;
   pointer-events: auto;
 }
-.fz-field > .formulize-element-edit-link:hover { text-decoration: underline; }
+.form-row > .formulize-element-edit-link:hover { text-decoration: underline; }
 
 /* ============================================================
    Rich form controls — kitchen-sink element types
@@ -3758,7 +3593,7 @@ input[type="button"].formulize_button {
    end-user UI) gets the same card treatment: border, radius, padding,
    surface background and a styled legend. Scoped to .lyris-main so it only
    touches theme content, not chrome. */
-.lyris-main fieldset {
+.lyris-main fieldset:where(:not([class*="fz-"])) {
   margin: calc(var(--fz-spacing) * 6) 0;
   padding: calc(var(--fz-spacing) * 6);
   border: 1px solid var(--fz-color-border);
@@ -3772,7 +3607,7 @@ fieldset#icms_block_login_form {
   max-width: 380px;
 }
 
-.lyris-main fieldset > legend {
+.lyris-main fieldset:where(:not([class*="fz-"])) > legend {
   padding: 0 calc(var(--fz-spacing) * 2);
   font-size: var(--fz-text-base);
   font-weight: 600;
