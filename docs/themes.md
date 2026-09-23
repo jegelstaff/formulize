@@ -75,7 +75,7 @@ copy:
 An embedded screen borrows your theme's styling without its page layout. It loads your
 `css/reset.css`, if you have one, then your `css/style.css`, and then any colours, font and logo set on
 the Appearance page. It does not load your `theme.html` or your script. The `<body>` has the class
-`fz-inline`.
+`formulize-inline`.
 
 Two optional files let you adjust how your theme looks when embedded:
 

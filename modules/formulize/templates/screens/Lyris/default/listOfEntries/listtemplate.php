@@ -4,12 +4,12 @@ print "<tr class='entry-row' aria-selected='false'>";
 
 	if($viewEntryLink OR $selectionCheckbox) {
 		print "
-			<td class='fz-cb'>
+			<td class='lyris-cb'>
 				$selectionCheckbox $viewEntryLink
 			</td>";
 	} elseif($searchHelp OR $toggleSearches) {
 		print "
-			<td class='fz-cb'></td>";
+			<td class='lyris-cb'></td>";
 	}
 
 	foreach($columnContents as $columnNumber=>$columnContent) {

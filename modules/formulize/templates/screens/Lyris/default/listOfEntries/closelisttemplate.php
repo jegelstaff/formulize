@@ -10,7 +10,7 @@ if($calculationResults) {
 }
 
 if($noDataFound) {
-	print "<p class='fz-table-empty'>$noDataFound</p>";
+	print "<p class='lyris-table-empty'>$noDataFound</p>";
 }
 
-print "</div><!-- /.fz-list__body -->";
+print "</div><!-- /.lyris-list__body -->";

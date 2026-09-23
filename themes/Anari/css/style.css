@@ -3185,9 +3185,9 @@ img {
 }
 
 /* Header cells sat at the top of their table cell; keep that. */
-.formulize-grid .fz-grid__cell--corner,
-.formulize-grid .fz-grid__cell--columnheader,
-.formulize-grid .fz-grid__cell--rowheader {
+.formulize-grid .formulize-grid__cell--corner,
+.formulize-grid .formulize-grid__cell--columnheader,
+.formulize-grid .formulize-grid__cell--rowheader {
 		align-self: start;
 }
 

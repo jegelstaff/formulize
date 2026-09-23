@@ -1948,7 +1948,7 @@ function formulize_elementsOnlyButtonMetaJs($screen, $fid) {
 	if(!isset($GLOBALS['formulize_elementsOnlyButtonMeta'][$key])) {
 		return '';
 	}
-	return "<script type=\"application/json\" class=\"fz-form-buttons\">"
+	return "<script type=\"application/json\" class=\"formulize-form-buttons\">"
 		.json_encode($GLOBALS['formulize_elementsOnlyButtonMeta'][$key])."</script>\n";
 }
 
@@ -2889,7 +2889,7 @@ print $codeToIncludejQueryWhenNecessary;
 
 // Which element scrolls, so that a saved position can be put back where it came from.
 //
-// Every theme answers this differently - Anari scrolls .main-content, Lyris scrolls .fz-main, older
+// Every theme answers this differently - Anari scrolls .main-content, Lyris scrolls .lyris-main, older
 // themes scroll the window itself, and an embedded screen scrolls nothing at all because the page
 // hosting it is what moves. So the element is found rather than named: the nearest ancestor of the
 // form that is actually scrollable. A theme whose markup makes that ambiguous can say so outright

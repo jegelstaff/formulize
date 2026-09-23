@@ -61,14 +61,14 @@ class formulizeTextAreaWithCounter extends XoopsFormTextArea {
 		$limit     = $this->_limitNumber;
 		$hasLimit  = $limit > 0;
 		$typeLabel = ($this->_counterType === 'words') ? 'words' : 'characters';
-		$counterId = 'fz-counter-' . preg_replace('/[^a-zA-Z0-9_-]/', '_', $this->_markupName);
+		$counterId = 'formulize-counter-' . preg_replace('/[^a-zA-Z0-9_-]/', '_', $this->_markupName);
 		$nameJs    = str_replace(["'", "\\"], ["\\'", "\\\\"], $this->_markupName);
 		$ctrIdJs   = str_replace(["'", "\\"], ["\\'", "\\\\"], $counterId);
 		$countFn   = $this->_counterType === 'words'
 			? "function(t){return t.trim()===''?0:t.trim().split(/\\s+/).length;}"
 			: "function(t){return t.length;}";
 		$initialText = $hasLimit ? ($limit . ' ' . $typeLabel . ' remaining') : ('0 ' . $typeLabel);
-		$html .= '<div id="' . htmlspecialchars($counterId, ENT_QUOTES) . '" class="fz-limit-counter fz-limit-green">'
+		$html .= '<div id="' . htmlspecialchars($counterId, ENT_QUOTES) . '" class="formulize-limit-counter formulize-limit-green">'
 		       . $initialText . '</div>';
 		$html .= "<script type='text/javascript'>"
 		       . "(function(){"
@@ -82,7 +82,7 @@ class formulizeTextAreaWithCounter extends XoopsFormTextArea {
 			       . "function update(){if(!ta||!ctr)return;"
 			       . "var used=count(ta.value),rem=limit-used;"
 			       . "ctr.textContent=rem<0?('" . $typeLabel . " limit: '+(-rem)+' over the limit'):(rem+' " . $typeLabel . " remaining');"
-			       . "ctr.className='fz-limit-counter '+(rem<=red?'fz-limit-red':rem<=orange?'fz-limit-orange':'fz-limit-green');"
+			       . "ctr.className='formulize-limit-counter '+(rem<=red?'formulize-limit-red':rem<=orange?'formulize-limit-orange':'formulize-limit-green');"
 			       . "}";
 		} else {
 			$html .= "function update(){if(!ta||!ctr)return;"
