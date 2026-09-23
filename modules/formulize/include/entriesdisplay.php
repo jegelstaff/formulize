@@ -1441,131 +1441,148 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 
 	$submitButton =  "<input type=submit name=submitx style=\"position: absolute; left: -10000px;\" value='' ></input>\n";
 
-	// need to establish these here because they are used in conditions lower down
-	$add_own_entry = $gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid);
-	$proxy = $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid);
-	$update_entry_ownership = $gperm_handler->checkRight("update_entry_ownership", $fid, $groups, $mid);
 	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
-	$user_can_delete    = formulizePermHandler::user_can_delete_from_form($fid, $uid);
-	$edit_form = $gperm_handler->checkRight("edit_form", $fid, $groups, $mid);
-	$module_admin_rights = $gperm_handler->checkRight("module_admin", $mid, $groups, 1);
+	$screenOrScreenType = $screen ? $screen : 'listOfEntries';
 
-	// establish text and code for buttons, whether a screen is in effect or not
-	// first 16 must be the action buttons that would appear behind the ... button
-	// change cols must be first action button declared
-	$screenButtonText = array();
-	$screenButtonText['changeColsButton'] = !$lockcontrols ? _formulize_DE_CHANGECOLS : "";
-	$screenButtonText['calcButton'] = !$lockcontrols ? _formulize_DE_CALCS : "";
-	$screenButtonText['proceduresButton'] = !$lockcontrols ? _formulize_DE_ADVCALCS : "";
-	$screenButtonText['exportButton'] = !$lockcontrols ? _formulize_DE_EXPORT : "";
-	$screenButtonText['exportCalcsButton'] = !$lockcontrols ? _formulize_DE_EXPORT_CALCS : "";
-	$screenButtonText['importButton'] = !$lockcontrols ? _formulize_DE_IMPORTDATA : "";
-	$screenButtonText['notifButton'] = !$lockcontrols ? _formulize_DE_NOTBUTTON : "";
-	$screenButtonText['cloneButton'] = !$lockcontrols ? _formulize_DE_CLONESEL : "";
-	$screenButtonText['deleteButton'] = !$lockcontrols ? _formulize_DE_DELETESEL : "";
-	$screenButtonText['selectAllButton'] = !$lockcontrols ? _formulize_DE_SELALL : "";
-	$screenButtonText['clearSelectButton'] = !$lockcontrols ? _formulize_DE_CLEARALL : "";
-	$screenButtonText['resetViewButton'] = !$lockcontrols ? _formulize_DE_RESETVIEW : "";
-	$screenButtonText['saveViewButton'] = !$lockcontrols ? _formulize_DE_SAVE : "";
-	$screenButtonText['deleteViewButton'] = !$lockcontrols ? _formulize_DE_DELETE : "";
-	$screenButtonText['changeOwnerButton'] = (!$lockcontrols AND $update_entry_ownership) ? _formulize_DE_CHANGEOWNER : "";
+	// permissions are looked up only when something needs them, and only once
+	$cachedPermissions = array();
+	$can = function($permission) use ($fid, $groups, $mid, $gperm_handler, $uid, &$cachedPermissions) {
+		if(!isset($cachedPermissions[$permission])) {
+			switch($permission) {
+				case 'delete':
+					$cachedPermissions[$permission] = formulizePermHandler::user_can_delete_from_form($fid, $uid);
+					break;
+				case 'module_admin':
+					$cachedPermissions[$permission] = $gperm_handler->checkRight("module_admin", $mid, $groups, 1);
+					break;
+				default:
+					$cachedPermissions[$permission] = $gperm_handler->checkRight($permission, $fid, $groups, $mid);
+			}
+		}
+		return $cachedPermissions[$permission];
+	};
 
-	// first 16 items must be the action buttons! First one must be change cols
-
-  $screenButtonText['procedureResults'] = $procedureResults;
-	$screenButtonText['modifyScreenLink'] = ($edit_form AND $screen AND $module_admin_rights) ? _formulize_DE_MODIFYSCREEN : "";
-	$screenButtonText['currentViewList'] = _formulize_DE_CURRENT_VIEW;
-	$screenButtonText['saveButton'] = _formulize_SAVE;
-	$screenButtonText['globalQuickSearch'] = _formulize_GLOBAL_SEARCH;
-    if(!$lockcontrols) {
-        $screenButtonText['addButton'] = $effectiveSingle == "off" ? _formulize_DE_ADDENTRY : _formulize_DE_UPDATEENTRY;
-        $screenButtonText['addMultiButton'] = _formulize_DE_ADD_MULTIPLE_ENTRY;
-        $screenButtonText['addProxyButton'] = _formulize_DE_PROXYENTRY;
-    }
-	if($screen) {
-		if($add_own_entry) {
-			$screenButtonText['addButton'] = !$lockcontrols ? $screen->getVar('useaddupdate') : "";
-			// determine number of pages on the view entry screen, if multiple pages then no Add Multi button because UX doesn't work in that case
+	// establish the text for each button, whether a screen is in effect or not
+	// a button gets its text only if it will actually be used, and every check is the same with or without a screen:
+	// default: the text used when there is no screen
+	// screenVar: the screen setting that holds the text when there is a screen
+	// menu: for the action buttons, 'beside' the ... button, or behind it under the heading for 'selection', 'actions', 'operations' or 'views'
+	// lockable: false if the button is still available when a view locks the controls (default true)
+	// requires: 'checkboxes', or other buttons that must appear on the page for this button to mean anything (must be declared earlier)
+	// templateNames: the template variables the button can appear through (default is the button name)
+	// alwaysBuild: build the button even if no template uses it, because something else outputs it in that case
+	// perms: permissions the user needs, checked with $can
+	// extra: a costly condition, checked last
+	$buttonSpecs = array(
+		'changeColsButton' => array('menu' => 'beside', 'default' => _formulize_DE_CHANGECOLS, 'screenVar' => 'usechangecols'),
+		'calcButton' => array('menu' => 'operations', 'default' => _formulize_DE_CALCS, 'screenVar' => 'usecalcs'),
+		'proceduresButton' => array('menu' => 'operations', 'default' => _formulize_DE_ADVCALCS, 'screenVar' => 'useadvcalcs'),
+		'exportButton' => array('menu' => 'operations', 'default' => _formulize_DE_EXPORT, 'screenVar' => 'useexport'),
+		// on the calc side, this button is shown through the $exportButton variable, so it takes its place in the menu from there
+		'exportCalcsButton' => array('default' => _formulize_DE_EXPORT_CALCS, 'screenVar' => 'useexportcalcs', 'templateNames' => array('exportCalcsButton', 'exportButton')),
+		'importButton' => array('menu' => 'operations', 'default' => _formulize_DE_IMPORTDATA, 'screenVar' => 'useimport', 'perms' => array('import_data')),
+		'notifButton' => array('menu' => 'operations', 'default' => _formulize_DE_NOTBUTTON, 'screenVar' => 'usenotifications'),
+		'cloneButton' => array('menu' => 'actions', 'default' => _formulize_DE_CLONESEL, 'screenVar' => 'useclone', 'requires' => array('checkboxes'), 'perms' => array('add_own_entry')),
+		'deleteButton' => array('menu' => 'actions', 'default' => _formulize_DE_DELETESEL, 'screenVar' => 'usedelete', 'requires' => array('checkboxes'), 'perms' => array('delete')),
+		'selectAllButton' => array('menu' => 'selection', 'default' => _formulize_DE_SELALL, 'screenVar' => 'useselectall', 'requires' => array('checkboxes')),
+		'clearSelectButton' => array('menu' => 'selection', 'default' => _formulize_DE_CLEARALL, 'screenVar' => 'useclearall', 'requires' => array('checkboxes')),
+		'changeOwnerButton' => array('menu' => 'actions', 'default' => _formulize_DE_CHANGEOWNER, 'screenVar' => 'usechangeowner', 'requires' => array('checkboxes'), 'perms' => array('update_entry_ownership')),
+		// always built, because it must set a currentview value in POST even when the list is not visible
+		'currentViewList' => array('default' => _formulize_DE_CURRENT_VIEW, 'screenVar' => 'usecurrentviewlist', 'lockable' => false, 'alwaysBuild' => true),
+		'resetViewButton' => array('menu' => 'views', 'default' => _formulize_DE_RESETVIEW, 'screenVar' => 'usereset', 'lockable' => false, 'requires' => array('currentViewList')),
+		'saveViewButton' => array('menu' => 'views', 'default' => _formulize_DE_SAVE, 'screenVar' => 'usesave', 'requires' => array('currentViewList')),
+		'deleteViewButton' => array('menu' => 'views', 'default' => _formulize_DE_DELETE, 'screenVar' => 'usedeleteview', 'requires' => array('currentViewList')),
+		// always built, because formulize_screenLOETemplate puts it below the list if no template uses it
+		'saveButton' => array('default' => _formulize_SAVE, 'screenVar' => 'desavetext', 'alwaysBuild' => true),
+		'addButton' => array('default' => ($effectiveSingle == "off" ? _formulize_DE_ADDENTRY : _formulize_DE_UPDATEENTRY), 'screenVar' => 'useaddupdate', 'perms' => array('add_own_entry')),
+		'addMultiButton' => array('default' => _formulize_DE_ADD_MULTIPLE_ENTRY, 'screenVar' => 'useaddmultiple', 'perms' => array('add_own_entry'), 'extra' => function() use ($screen, $fid) {
+			if(!$screen) {
+				return true;
+			}
+			// if there are multiple pages on the view entry screen then no Add Multi button, because UX doesn't work in that case
 			$viewEntryScreenNumberOfPages = 0;
 			$viewEntryScreen = determineViewEntryScreen($screen, $fid);
 			$screen_handler = xoops_getmodulehandler('screen', 'formulize');
 			if($viewEntryScreenObject = $screen_handler->get($viewEntryScreen) AND $viewEntryScreenObject->getVar('type') == 'multiPage') {
-			  $multiPageScreen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
-			  $viewEntryScreenObject = $multiPageScreen_handler->get($viewEntryScreen);
-			  $viewEntryScreenNumberOfPages = count($viewEntryScreenObject->getVar('pages'));
+				$multiPageScreen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+				$viewEntryScreenObject = $multiPageScreen_handler->get($viewEntryScreen);
+				$viewEntryScreenNumberOfPages = count($viewEntryScreenObject->getVar('pages'));
 			}
-			$screenButtonText['addMultiButton'] = (!$lockcontrols AND $viewEntryScreenNumberOfPages < 2)  ? $screen->getVar('useaddmultiple') : "";
-		} else {
-			$screenButtonText['addButton'] = "";
-			$screenButtonText['addMultiButton'] = "";
+			return $viewEntryScreenNumberOfPages < 2;
+		}),
+		'addProxyButton' => array('default' => _formulize_DE_PROXYENTRY, 'screenVar' => 'useaddproxy', 'perms' => array('add_proxy_entries')),
+	);
+
+	// resolve each button once, cheapest checks first
+	$screenButtonText = array();
+	$buttonAppearsOnPage = array();
+	foreach($buttonSpecs as $button=>$spec) {
+		$screenButtonText[$button] = "";
+		$buttonAppearsOnPage[$button] = false;
+		$text = $screen ? $screen->getVar($spec['screenVar']) : $spec['default'];
+		if(!$text OR ($lockcontrols AND (!isset($spec['lockable']) OR $spec['lockable']))) {
+			continue;
 		}
-		if($proxy) {
-			$screenButtonText['addProxyButton'] = !$lockcontrols ? $screen->getVar('useaddproxy') : "";
-		} else {
-			$screenButtonText['addProxyButton'] = "";
-		}
-		$screenButtonText['exportButton'] = !$lockcontrols ? $screen->getVar('useexport') : "";
-		$screenButtonText['importButton'] = $import_data = $gperm_handler->checkRight("import_data", $fid, $groups, $mid) ? $screen->getVar('useimport') : "";
-		$screenButtonText['notifButton'] = $screen->getVar('usenotifications');
-		$screenButtonText['currentViewList'] = $screen->getVar('usecurrentviewlist');
-		$screenButtonText['saveButton'] = !$lockcontrols ? $screen->getVar('desavetext') : "";
-		$screenButtonText['changeColsButton'] = !$lockcontrols ? $screen->getVar('usechangecols') : "";
-		$screenButtonText['calcButton'] = $screen->getVar('usecalcs');
-		$screenButtonText['proceduresButton'] = $screen->getVar('useadvcalcs');
-		$screenButtonText['exportCalcsButton'] = $screen->getVar('useexportcalcs');
-		// only include clone and delete and change owner if the checkboxes are in effect (2 means do not use checkboxes)
-		if($screen->getVar('usecheckboxes') != 2) {
-			$screenButtonText['cloneButton'] = $add_own_entry ? $screen->getVar('useclone') : "";
-			if ($user_can_delete and !$settings['lockcontrols']) {
-				$screenButtonText['deleteButton'] = $screen->getVar('usedelete');
-			} else {
-				$screenButtonText['deleteButton'] = "";
+		foreach((isset($spec['requires']) ? $spec['requires'] : array()) as $requirement) {
+			if(($requirement == 'checkboxes' AND $screen AND $screen->getVar('usecheckboxes') == 2)
+				OR ($requirement != 'checkboxes' AND !$buttonAppearsOnPage[$requirement])) {
+				continue 2;
 			}
-			$screenButtonText['selectAllButton'] = $screen->getVar('useselectall');
-			$screenButtonText['clearSelectButton'] = $screen->getVar('useclearall');
-			$screenButtonText['changeOwnerButton'] = ($update_entry_ownership AND $screen->getVar('usechangeowner')) ? $screen->getVar('usechangeowner') : "";
-		} else {
-			$screenButtonText['cloneButton'] = "";
-			$screenButtonText['deleteButton'] = "";
-			$screenButtonText['selectAllButton'] = "";
-			$screenButtonText['clearSelectButton'] = "";
-			$screenButtonText['changeOwnerButton'] = "";
 		}
-		// only include the reset, save, deleteview buttons if the current view list is in effect
-		if($screen->getVar('usecurrentviewlist')) {
-			$screenButtonText['resetViewButton'] = $screen->getVar('usereset');
-			$screenButtonText['saveViewButton'] = $screen->getVar('usesave');
-			$screenButtonText['deleteViewButton'] = $screen->getVar('usedeleteview');
-		} else {
-			$screenButtonText['resetViewButton'] = "";
-			$screenButtonText['saveViewButton'] = "";
-			$screenButtonText['deleteViewButton'] = "";
+		$usedInTemplate = screenTemplatesContain($screenOrScreenType, (isset($spec['templateNames']) ? $spec['templateNames'] : $button));
+		if(!$usedInTemplate AND !isset($spec['alwaysBuild'])) {
+			continue;
 		}
+		foreach((isset($spec['perms']) ? $spec['perms'] : array()) as $permission) {
+			if(!$can($permission)) {
+				continue 2;
+			}
+		}
+		if(isset($spec['extra']) AND !$spec['extra']()) {
+			continue;
+		}
+		$screenButtonText[$button] = $text;
+		$buttonAppearsOnPage[$button] = $usedInTemplate;
 	}
+
+	$screenButtonText['procedureResults'] = $procedureResults;
+	$screenButtonText['modifyScreenLink'] = ($screen AND $can('edit_form') AND $can('module_admin')) ? _formulize_DE_MODIFYSCREEN : "";
+	$screenButtonText['globalQuickSearch'] = _formulize_GLOBAL_SEARCH;
 	if($delete_other_reports = $gperm_handler->checkRight("delete_other_reports", $fid, $groups, $mid)) { $pubstart = 10000; }
 	if($screenButtonText['saveButton']) { $screenButtonText['goButton'] = $screenButtonText['saveButton']; } // want this button accessible by two names, essentially, since it serves two purposes semantically/logically
 
-	// determine if we need the ... button, based on the values of the action buttons, which is first 16 items in the screenButtonText array
-	$onActionButtonCounter = 0;
-	$atLeastOneActionButton = false;
-  $atLeastOneActionButtonNotChangeCols = false;
 	foreach($screenButtonText as $scrButton=>$scrText) {
 		$buttonCodeArray[$scrButton] = formulize_screenLOEButton($scrButton, $scrText, $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $effectiveSingle, $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid, $screen);
-		if($buttonCodeArray[$scrButton] AND $onActionButtonCounter < 15) { // first 0-15 items in the array should be the action buttons only
-			$atLeastOneActionButton = true;
-				if($onActionButtonCounter > 0) {
-						$atLeastOneActionButtonNotChangeCols = true;
-				}
-		}
-		$onActionButtonCounter++;
-	}
-	// make a ... button available for opening up extra actions beyond change cols
-	if($atLeastOneActionButtonNotChangeCols) {
-			$buttonCodeArray['moreActionsButton'] = formulize_screenLOEButton('moreActions', '...', $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $effectiveSingle, $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid, $screen);
 	}
 
 	if($hlist) { // if we're on the calc side, then the export button should be the export calcs one
 		$buttonCodeArray['exportButton'] = $buttonCodeArray['exportCalcsButton'];
+	}
+
+	// work out which action buttons are on the page, and which groups of them are behind the ... button
+	$atLeastOneActionButton = false;
+	$menuGroupsInUse = array();
+	foreach($buttonSpecs as $button=>$spec) {
+		if(isset($spec['menu']) AND $buttonCodeArray[$button]) {
+			$atLeastOneActionButton = true;
+			if($spec['menu'] != 'beside') {
+				$menuGroupsInUse[$spec['menu']] = true;
+			}
+		}
+	}
+	// make a ... button available if there are any actions to go behind it
+	if($menuGroupsInUse) {
+			$buttonCodeArray['moreActionsButton'] = formulize_screenLOEButton('moreActions', '...', $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $effectiveSingle, $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid, $screen);
+	}
+	// headings for the groups behind the ... button, but only when there is more than one group, otherwise a heading adds nothing
+	$menuHeadings = array(
+		'selection' => array('manageSelectionTitle', _formulize_MANAGE_SELECTION_TITLE),
+		'actions' => array('manageActionsTitle', _formulize_MANAGE_ACTIONS_TITLE),
+		'operations' => array('manageOperationsTitle', _formulize_MANAGE_OPERATIONS_TITLE),
+		'views' => array('manageViewsTitle', _formulize_MANAGE_VIEWS_TITLE),
+	);
+	foreach($menuHeadings as $menuGroup=>list($headingVariable, $headingText)) {
+		$buttonCodeArray[$headingVariable] = (count($menuGroupsInUse) > 1 AND isset($menuGroupsInUse[$menuGroup])) ? $headingText : "";
 	}
 	$buttonCodeArray['pageNavControls'] = $pageNav; // put this unique UI element into the buttonCodeArray for use elsewhere if necessary
     $buttonCodeArray['numberOfEntries'] = (!$screen || $screen->getVar('usenumberofentries') != 0) ? $entryTotals : '';
@@ -1580,14 +1597,14 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$buttonCodeArray['autoLoadedView'] = $loadview ? $loadviewname : '';
 	$buttonCodeArray['lockControls'] = $lockcontrols;
 	$buttonCodeArray['actionButtonHeading'] = $atLeastOneActionButton ? _formulize_DE_ACTIONS : "";
-	if($add_own_entry AND $effectiveSingle == "off" AND ($buttonCodeArray['addButton'] OR $buttonCodeArray['addMultiButton'])) {
+	if($can('add_own_entry') AND $effectiveSingle == "off" AND ($buttonCodeArray['addButton'] OR $buttonCodeArray['addMultiButton'])) {
 		$buttonCodeArray['addProxyButton'] = '';
-	} elseif($add_own_entry AND $proxy AND ($buttonCodeArray['addButton'] OR $buttonCodeArray['addProxyButton'])) { // this is a single entry form, so add in the update and proxy buttons if they have proxy, otherwise, just add in update button
+	} elseif($can('add_own_entry') AND $can('add_proxy_entries') AND ($buttonCodeArray['addButton'] OR $buttonCodeArray['addProxyButton'])) { // this is a single entry form, so add in the update and proxy buttons if they have proxy, otherwise, just add in update button
 		$buttonCodeArray['addMultiButton'] = '';
-	} elseif($add_own_entry AND $buttonCodeArray['addButton']) {
+	} elseif($can('add_own_entry') AND $buttonCodeArray['addButton']) {
 		$buttonCodeArray['addMultiButton'] = '';
 		$buttonCodeArray['addProxyButton'] = '';
-	} elseif($proxy AND $buttonCodeArray['addProxyButton']) {
+	} elseif($can('add_proxy_entries') AND $buttonCodeArray['addProxyButton']) {
 		$buttonCodeArray['addMultiButton'] = '';
 		$buttonCodeArray['addButton'] = '';
 	}
@@ -1596,8 +1613,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 
 
 	// print current view if the screen is not providing a UI element to the user
-  $screenOrScreenType = $screen ? $screen : 'listOfEntries';
-	if(!screenUsesSearchStringWithHandle($screenOrScreenType, 'currentViewList')) {
+	if(!screenTemplatesContain($screenOrScreenType, 'currentViewList')) {
 		print "<input type=hidden name=currentview id=currentview value=\"$currentview\"></input>\n";
 	}
 
@@ -1611,7 +1627,6 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 			}
 		}
 	}
-	$screenOrScreenType = $screen ? $screen : 'listOfEntries';
 	$filterHandles = extractHandles($filterTypes, getTemplateToRender('toptemplate', $screenOrScreenType));
 	$filterHandles = array_merge($filterHandles, extractHandles($filterTypes, getTemplateToRender('listtemplate', $screenOrScreenType)));
 	$filterHandles = array_merge($filterHandles, extractHandles($filterTypes, getTemplateToRender('bottomtemplate', $screenOrScreenType)));
@@ -1634,7 +1649,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	foreach($quickSearches as $handle=>$qsCode) {
 		$handle = str_replace("-","_",$handle);
 		foreach(formulize_quickSearchTypeNames() as $typeNames) {
-			if(screenUsesSearchStringWithHandle($screenOrScreenType, $typeNames['prefixes'], $handle)
+			if(screenTemplatesContain($screenOrScreenType, $typeNames['prefixes'], $handle)
 				OR in_array($handle, $settings['pubfilters'])) {
 				foreach($typeNames['prefixes'] as $prefix) {
 					$buttonCodeArray[$prefix.$handle] = $qsCode[$typeNames['key']] ?? '';
@@ -1753,7 +1768,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		print formulize_embedScrollToTopScript();
 	}
 
-	interfaceJavascript($fid, $frid, $currentview, $useWorking, ($screen AND $screen->getVar('dedisplay')), $settings['lockedColumns'], $screen, $restoreScrollPosition); // must be called after form is drawn, so that the javascript which clears ventry can operate correctly (clearing is necessary to avoid displaying the form after clicking the Back button on the form and then clicking a button or doing an operation that causes a posting of the controls form).
+	interfaceJavascript($fid, $frid, $currentview, $useWorking, ($screen AND $screen->getVar('dedisplay')), $settings['lockedColumns'], $screen, $restoreScrollPosition, $buttonCodeArray); // must be called after form is drawn, so that the javascript which clears ventry can operate correctly (clearing is necessary to avoid displaying the form after clicking the Back button on the form and then clicking a button or doing an operation that causes a posting of the controls form).
 
 	$buttonCodeArray['quickSearches'] = $quickSearches;
 
@@ -1786,20 +1801,36 @@ function formulize_quickSearchTypeNames() {
     return $typeNames;
 }
 
-// check for a handle being used in a quickSearch variable anywhere in relevant templates
-function screenUsesSearchStringWithHandle($screenOrScreenType, $searchString, $handle="") {
-    $searchString = !is_array($searchString) ? array($searchString) : $searchString;
-    foreach($searchString as $thisSearchString) {
-        if(
-            strstr(getTemplateToRender('toptemplate', $screenOrScreenType), $thisSearchString . $handle) OR
-    		strstr(getTemplateToRender('bottomtemplate', $screenOrScreenType), $thisSearchString . $handle) OR
-    		strstr(getTemplateToRender('openlisttemplate', $screenOrScreenType), $thisSearchString . $handle) OR
-    		strstr(getTemplateToRender('closelisttemplate', $screenOrScreenType), $thisSearchString . $handle)
-        ) {
-            return true;
-        }
-    }
-    return false;
+/**
+ * Check whether any of a list screen's templates mention a string, which is how we tell whether a screen uses a
+ * template variable, so that buttons, search boxes and other UI elements are only prepared when they will be shown.
+ *
+ * Looks in the top, bottom, openlist and closelist templates. The list template is left out, since it is rendered
+ * once per entry and is not where these page-level elements go. Checks the templates that will actually be
+ * rendered, so a screen without its own template is checked against the theme's default, or the system default.
+ *
+ * This is a plain text search, not a parse of the template. Pass names without the leading $, so that ${'name'}
+ * and similar forms are found too. Anything containing the string counts, including a longer variable name that
+ * starts with it ('addButton' is found in '$addButtonHeading') and text in comments. That errs on the side of
+ * preparing something that is then not shown, rather than leaving out something a template needs.
+ *
+ * Templates are cached after the first read, so repeated checks on the same screen are cheap.
+ *
+ * @param object|string $screenOrScreenType The screen object, or for lists with no screen, the screen type, ie: 'listOfEntries'
+ * @param string|array $strings A string to look for, or an array of strings, any one of which counts
+ * @param string $suffix Optional. Appended to each string before looking for it, ie: a form element handle, to
+ * 	check for search box variables such as quickSearchBox_ plus the handle
+ * @return bool True if any template contains any of the strings (with the suffix), false otherwise
+ */
+function screenTemplatesContain($screenOrScreenType, $strings, $suffix="") {
+	foreach((array) $strings as $string) {
+		foreach(array('toptemplate', 'bottomtemplate', 'openlisttemplate', 'closelisttemplate') as $templateName) {
+			if(strstr(getTemplateToRender($templateName, $screenOrScreenType), $string . $suffix)) {
+				return true;
+			}
+		}
+	}
+	return false;
 }
 
 // THIS FUNCTION DRAWS IN THE RESULTS OF THE QUERY
@@ -3599,7 +3630,7 @@ $output
 
 // this function includes the javascript necessary make the interface operate properly
 // note the mandatory clearing of the ventry value upon loading of the page.  Necessary to make the back button work right (otherwise ventry setting is retained from the previous loading of the page and the form is displayed after the next submission of the controls form)
-function interfaceJavascript($fid, $frid, $currentview, $useWorking, $useXhr, $lockedColumns, $screen=null, $restoreScrollPosition=false) {
+function interfaceJavascript($fid, $frid, $currentview, $useWorking, $useXhr, $lockedColumns, $screen=null, $restoreScrollPosition=false, $buttonCodeArray=array()) {
 
 	$autocompleteJsVersion = formulize_get_file_version('/modules/formulize/include/js/autocomplete.js');
 	print "<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/include/js/autocomplete.js?v=".$autocompleteJsVersion."'></script>";
@@ -3796,7 +3827,10 @@ function confirmClone() {
 
 <?php
 	$cloneFids = $GLOBALS['formulize_LOErendering_fidsInUse'];
-	if(!is_array($cloneFids) OR count($cloneFids) <= 1) {
+	if(empty($buttonCodeArray['cloneButton'])) {
+		// no clone button on the page, so nothing to prepare
+		print "\treturn false;\n";
+	} elseif(!is_array($cloneFids) OR count($cloneFids) <= 1) {
 		// Only one form in use, no need to ask which forms to clone
 		$clone_forms_value = (is_array($cloneFids) AND array_key_exists(0, $cloneFids)) ? $cloneFids[0] : $fid;
 		?>
@@ -3874,35 +3908,40 @@ function selectOwner() {
 			return false;
 		}
 		<?php
-		$markup = "";
-		$ownerFids = $GLOBALS['formulize_LOErendering_fidsInUse'];
-		if(is_array($ownerFids) AND count($ownerFids) > 1) {
-			$markup .= "<h3>"._formulize_DE_CHANGEOWNER_WHICH_FORMS."</h3>
-			<div style=\"max-height:200px;overflow:auto;padding:5px;margin-bottom:5px;\">\n";
-			$form_handler = xoops_getmodulehandler('forms', 'formulize');
-			$ownerFormOptions = array();
-			foreach($ownerFids as $thisFid) {
-				if($thisFormObject = $form_handler->get($thisFid)) {
-					$escapedTitle = addslashes(htmlspecialchars($thisFormObject->getVar('form_title'), ENT_QUOTES));
-					$checked = ($thisFid == $fid) ? "checked=\"checked\"" : "";
-					$markup .= "<div style=\"margin:8px 0;\"><label><input name=\"changeowner_form_checkbox[]\" type=\"checkbox\" class=\"changeowner_form_checkbox\" value=\"{$thisFid}\" $checked>$escapedTitle</label></div>\n";
+		if(empty($buttonCodeArray['changeOwnerButton'])) {
+			// no change owner button on the page, so don't gather the candidate owners, which could be thousands of users
+			print "return false;\n";
+		} else {
+			$markup = "";
+			$ownerFids = $GLOBALS['formulize_LOErendering_fidsInUse'];
+			if(is_array($ownerFids) AND count($ownerFids) > 1) {
+				$markup .= "<h3>"._formulize_DE_CHANGEOWNER_WHICH_FORMS."</h3>
+				<div style=\"max-height:200px;overflow:auto;padding:5px;margin-bottom:5px;\">\n";
+				$form_handler = xoops_getmodulehandler('forms', 'formulize');
+				$ownerFormOptions = array();
+				foreach($ownerFids as $thisFid) {
+					if($thisFormObject = $form_handler->get($thisFid)) {
+						$escapedTitle = addslashes(htmlspecialchars($thisFormObject->getVar('form_title'), ENT_QUOTES));
+						$checked = ($thisFid == $fid) ? "checked=\"checked\"" : "";
+						$markup .= "<div style=\"margin:8px 0;\"><label><input name=\"changeowner_form_checkbox[]\" type=\"checkbox\" class=\"changeowner_form_checkbox\" value=\"{$thisFid}\" $checked>$escapedTitle</label></div>\n";
+					}
 				}
+				$markup .= "</div>\n";
 			}
-			$markup .= "</div>\n";
+			$markup .= "<select id=\"changeowner_selected_uid\" style=\"width:100%;margin:8px 0;\">
+				<option value=\"\">"._formulize_DE_CHANGEOWNER_SELECT_NEW_OWNER."</option>
+			";
+			foreach(getListOfCandidateOwnersForFormEntries($fid, 'update') as $ownerId => $ownerName) {
+				$escapedName = addslashes(htmlspecialchars($ownerName, ENT_QUOTES));
+				$markup .= "<option value=\"$ownerId\">$escapedName</option>\n";
+			}
+			$markup .= "</select>\n";
+			$markup .= '<div style="margin-top:15px;text-align:center;">
+			<input type="button" class="formulize_button formulize_button_dialog" value="'._formulize_DE_CHANGEOWNER_CANCEL_BUTTON.'" onclick="document.getElementById(\'formulize_changeowner_dialog_overlay\').parentNode.removeChild(document.getElementById(\'formulize_changeowner_dialog_overlay\'));" style="margin-right:10px;">
+			<input type="button" class="formulize_button formulize_button_dialog" value="'._formulize_DE_CHANGEOWNER_CONFIRM_BUTTON.'" onclick="executeChangeOwner();">
+			</div>';
+			print plainJSDialog($markup, 'formulize_changeowner_dialog_overlay');
 		}
-		$markup .= "<select id=\"changeowner_selected_uid\" style=\"width:100%;margin:8px 0;\">
-			<option value=\"\">"._formulize_DE_CHANGEOWNER_SELECT_NEW_OWNER."</option>
-		";
-		foreach(getListOfCandidateOwnersForFormEntries($fid, 'update') as $ownerId => $ownerName) {
-			$escapedName = addslashes(htmlspecialchars($ownerName, ENT_QUOTES));
-			$markup .= "<option value=\"$ownerId\">$escapedName</option>\n";
-		}
-		$markup .= "</select>\n";
-		$markup .= '<div style="margin-top:15px;text-align:center;">
-		<input type="button" class="formulize_button formulize_button_dialog" value="'._formulize_DE_CHANGEOWNER_CANCEL_BUTTON.'" onclick="document.getElementById(\'formulize_changeowner_dialog_overlay\').parentNode.removeChild(document.getElementById(\'formulize_changeowner_dialog_overlay\'));" style="margin-right:10px;">
-		<input type="button" class="formulize_button formulize_button_dialog" value="'._formulize_DE_CHANGEOWNER_CONFIRM_BUTTON.'" onclick="executeChangeOwner();">
-		</div>';
-		print plainJSDialog($markup, 'formulize_changeowner_dialog_overlay');
 		?>
 }
 
@@ -4399,20 +4438,6 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 	foreach($buttonCodeArray as $buttonName=>$buttonCode) {
 		${$buttonName} = $buttonCode;
 	}
-	// setup the action button headings
-	$manageSelectionTitle = ($selectAllButton OR $clearSelectButton) ? _formulize_MANAGE_SELECTION_TITLE : "";
-	$manageActionsTitle = ($cloneButton OR $deleteButton OR $changeOwnerButton) ? _formulize_MANAGE_ACTIONS_TITLE : "";
-	$manageOperationsTitle = ($calcButton OR $proceduresButton OR $exportButton OR $importButton OR $notifButton) ? _formulize_MANAGE_OPERATIONS_TITLE : "";
-	$manageViewsTitle = ($saveViewButton OR $deleteViewButton OR $resetViewButton) ? _formulize_MANAGE_VIEWS_TITLE : "";
-	// When only one button group is present, a heading adds no context — suppress them all.
-	$buttonGroupCount = (int)!!($selectAllButton OR $clearSelectButton)
-	                  + (int)!!($cloneButton OR $deleteButton OR $changeOwnerButton)
-	                  + (int)!!($calcButton OR $proceduresButton OR $exportButton OR $importButton OR $notifButton)
-	                  + (int)!!($saveViewButton OR $deleteViewButton OR $resetViewButton);
-	if ($buttonGroupCount <= 1) {
-		$manageViewsTitle = $manageSelectionTitle = $manageActionsTitle = $manageOperationsTitle = "";
-	}
-
 	// setup the view name variables, with true only set for the last loaded view
 	$viewNumber = 1;
 	foreach($settings['publishedviewnames'] as $id=>$thisViewName) {
@@ -4447,10 +4472,7 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 		count((array) $screen->getVar('decolumns')) > 0 AND
 		!$screen->getVar('dedisplay') AND
 		$GLOBALS['formulize_displayElement_LOE_Used']) {
-		if(!strstr(getTemplateToRender('toptemplate', $screenOrScreenType), 'saveButton') AND
-		!strstr(getTemplateToRender('bottomtemplate', $screenOrScreenType), 'saveButton') AND
-		!strstr(getTemplateToRender('openlisttemplate', $screenOrScreenType), 'saveButton') AND
-		!strstr(getTemplateToRender('closelisttemplate', $screenOrScreenType), 'saveButton')) {
+		if(!screenTemplatesContain($screenOrScreenType, 'saveButton')) {
 			print "<div id=\"floating-list-of-entries-save-button\" class=\"\"><p>$saveButton</p></div>\n";
 		}
 	}	else {
@@ -4466,23 +4488,13 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 		include getTemplatePath($screenOrScreenType, $type."template");
 
 		// if there are no page nav controls in any template, then print them out
-		if($type == "top" AND
-			!strstr(getTemplateToRender('toptemplate', $screenOrScreenType), 'pageNavControls') AND
-			!strstr(getTemplateToRender('bottomtemplate', $screenOrScreenType), 'pageNavControls') AND
-			!strstr(getTemplateToRender('openlisttemplate', $screenOrScreenType), 'pageNavControls') AND
-			!strstr(getTemplateToRender('closelisttemplate', $screenOrScreenType), 'pageNavControls')
-			) {
+		if($type == "top" AND !screenTemplatesContain($screenOrScreenType, 'pageNavControls')) {
 			print $pageNavControls;
 		}
 	}
 
 	// output the message text to the screen if it's not used in the custom templates somewhere
-	if($type == "top" AND $messageText AND
-		!strstr(getTemplateToRender('toptemplate', $screenOrScreenType), 'messageText') AND
-		!strstr(getTemplateToRender('bottomtemplate', $screenOrScreenType), 'messageText') AND
-		!strstr(getTemplateToRender('openlisttemplate', $screenOrScreenType), 'messageText') AND
-		!strstr(getTemplateToRender('closelisttemplate', $screenOrScreenType), 'messageText')
-		) {
+	if($type == "top" AND $messageText AND !screenTemplatesContain($screenOrScreenType, 'messageText')) {
 		print "<p><center><b>$messageText</b></center></p>\n";
 	}
 
