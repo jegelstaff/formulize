@@ -90,8 +90,6 @@ function formulize_styleguideText($text) {
 	background: var(--fz-color-page);
 	border: 1px dashed var(--fz-color-border-strong);
 	border-radius: var(--fz-radius-lg);
-	margin-inline: auto;
-	width: 100%;
 	box-sizing: border-box;
 }
 .formulize-styleguide__code {
@@ -126,26 +124,6 @@ function formulize_styleguideText($text) {
 		</div>
 
 		<p class="fz-text-muted">Every class and token you can use in templates, template screens, derived values and text elements, shown in this site's theme and its Appearance settings. Copy the markup under any example to start from it.</p>
-
-		<div class="fz-cluster fz-gap-6" role="group" aria-label="How the examples are shown">
-			<label class="fz-cluster fz-gap-2" for="formulize-styleguide-density">Density
-				<select class="fz-select fz-w-auto" id="formulize-styleguide-density">
-					<option value="">This site's setting</option>
-					<option value="fz-density-tight">Tight</option>
-					<option value="fz-density-standard">Standard</option>
-					<option value="fz-density-comfortable">Comfortable</option>
-				</select>
-			</label>
-			<label class="fz-cluster fz-gap-2" for="formulize-styleguide-width">Width
-				<select class="fz-select fz-w-auto" id="formulize-styleguide-width">
-					<option value="">Full width</option>
-					<option value="350px">350px: the drawer at its narrowest</option>
-					<option value="358px">358px: a phone</option>
-					<option value="600px">600px</option>
-				</select>
-			</label>
-			<label class="fz-choice"><input type="checkbox" class="fz-checkbox" id="formulize-styleguide-rtl"> Right to left</label>
-		</div>
 
 		<div class="fz-with-sidebar fz-gap-8" style="--fz-sidebar-width: 14rem">
 
@@ -222,22 +200,6 @@ function formulize_styleguideText($text) {
 (function () {
 	var examples = document.querySelectorAll('[data-formulize-styleguide-example]');
 	function each(fn) { Array.prototype.forEach.call(examples, fn); }
-	document.getElementById('formulize-styleguide-density').addEventListener('change', function () {
-		var density = this.value;
-		each(function (example) {
-			example.classList.remove('fz-density-tight', 'fz-density-standard', 'fz-density-comfortable');
-			if (density) { example.classList.add(density); }
-		});
-	});
-	document.getElementById('formulize-styleguide-width').addEventListener('change', function () {
-		var width = this.value;
-		// the width is the content's: the frame's own padding and border go on top
-		each(function (example) { example.style.maxWidth = width ? 'calc(' + width + ' + var(--fz-spacing) * 10 + 2px)' : ''; });
-	});
-	document.getElementById('formulize-styleguide-rtl').addEventListener('change', function () {
-		var rtl = this.checked;
-		each(function (example) { example.dir = rtl ? 'rtl' : ''; });
-	});
 	// The examples' own links go nowhere.
 	each(function (example) {
 		example.addEventListener('click', function (event) {
