@@ -40,6 +40,8 @@
     if (!$appearanceFont['stack']) {
         echo '<link rel="stylesheet" type="text/css" media="all" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" />';
     }
+    // Formulize UI, on the pages where the module hasn't already put it in the head above
+    echo formulize_uiStylesheetLink();
     echo '<link rel="stylesheet" type="text/css" media="all" href="' . $this->_tpl_vars['icms_imageurl'] . $rtlPath . 'css/style.css?v=' . $cssVersion . '" />';
     // user-configured colours, font, logo, and favicon, from the Appearance page in the Formulize admin UI.
     // Goes after the stylesheet link above, so the generated overrides win the cascade.
