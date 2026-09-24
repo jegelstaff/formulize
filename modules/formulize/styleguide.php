@@ -181,9 +181,21 @@ function formulize_styleguideText($text) {
 						<div class="formulize-styleguide__example" data-formulize-styleguide-example>
 							<?php echo $entry['example']; ?>
 						</div>
+						<?php /* a recipe's example is its result; its code, below, is what to copy */ if (empty($entry['code'])) { ?>
 						<div class="formulize-styleguide__code">
 							<pre><code><?php echo htmlspecialchars(rtrim($entry['example']), ENT_QUOTES); ?></code></pre>
 							<button type="button" class="fz-btn fz-btn--sm formulize-styleguide__copy" data-formulize-styleguide-copy>Copy</button>
+						</div>
+						<?php } ?>
+						<?php } ?>
+
+						<?php foreach (isset($entry['code']) ? $entry['code'] : array() as $code) { ?>
+						<div class="fz-stack fz-gap-2">
+							<p class="fz-text-sm fz-font-semibold"><?php echo htmlspecialchars($code['label']); ?></p>
+							<div class="formulize-styleguide__code">
+								<pre><code><?php echo htmlspecialchars(rtrim($code['code']), ENT_QUOTES); ?></code></pre>
+								<button type="button" class="fz-btn fz-btn--sm formulize-styleguide__copy" data-formulize-styleguide-copy>Copy</button>
+							</div>
 						</div>
 						<?php } ?>
 					</article>

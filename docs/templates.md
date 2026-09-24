@@ -32,4 +32,6 @@ The site can be installed in the root of a website, or in a subfolder. For examp
 
 ## CSS Rules
 
+Before writing CSS for something you add to a template, look for it in [Formulize UI](../formulize_ui/): the classes for laying out and styling markup in templates, screens and themes. They follow the theme and the Appearance settings, so what you build with them keeps matching the rest of the site.
+
 You may need to style new elements you add to a template. Most likely the element you add will be specific to Formulize, so the CSS rules should go into the Formulize CSS files. Much of the necessary CSS to make Formulize work is in the style.css file in the applicable theme (under the /theme/ folder). CSS organization will be rationalized at some point in the future.
