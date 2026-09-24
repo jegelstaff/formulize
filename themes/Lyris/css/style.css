@@ -8,6 +8,14 @@
    The Appearance page reads the theme's defaults out of that file too.
    ---- */
 
+/* ---- Units ----
+   Sizes are in rem, so they follow the Appearance page's Text and interface
+   size. Spaces (padding, margins, gaps) are steps of --fz-spacing, so they also
+   follow the density. Only borders, shadows, hairlines of 2px or less and the
+   breakpoints are in px. Where a comment gives a size in px, it is the size at
+   the default settings.
+   ---- */
+
 @import url("tokens.css");
 
 /* ============================================================
@@ -99,7 +107,7 @@ h1, h2, h3, h4, h5, h6,
 }
 
 .lyris-header__brand img {
-  height: 28px;
+  height: 1.75rem;
   width: auto;
   display: block;
 }
@@ -136,10 +144,10 @@ h1, h2, h3, h4, h5, h6,
 
 .lyris-header__badge {
   position: absolute;
-  top: -3px;
-  right: -4px;
-  width: 7px;
-  height: 7px;
+  top: -0.1875rem;
+  right: -0.25rem;
+  width: 0.4375rem;
+  height: 0.4375rem;
   border-radius: var(--fz-radius-full);
   background: var(--fz-color-danger);
   border: 1.5px solid var(--fz-color-surface);
@@ -300,7 +308,7 @@ body:not(#formulize):not(.formulize-screen) .lyris-main {
 }
 
 @keyframes lyris-drawer-in {
-  from { transform: translateX(16px); opacity: 0; }
+  from { transform: translateX(1rem); opacity: 0; }
   to   { transform: translateX(0);    opacity: 1; }
 }
 
@@ -440,9 +448,9 @@ body:not(#formulize):not(.formulize-screen) .lyris-main {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 42px;
-  height: 42px;
-  margin: -21px 0 0 -21px;
+  width: 2.625rem;
+  height: 2.625rem;
+  margin: -1.3125rem 0 0 -1.3125rem;
   border: 3px solid var(--fz-color-border);
   border-top-color: var(--fz-color-accent);
   border-radius: 50%;
@@ -508,7 +516,7 @@ input:where(:not([class*="fz-"])):not([type]),
 select:where(:not([class*="fz-"])),
 textarea:where(:not([class*="fz-"])) {
   height: var(--fz-control-height);
-  padding: 0 10px;
+  padding: 0 calc(var(--fz-spacing) * 2.5);
   font: inherit;
   font-size: var(--fz-text-xs-plus);
   font-family: var(--fz-font-sans);
@@ -547,26 +555,26 @@ textarea:disabled {
 select {
   appearance: none;
   -webkit-appearance: none;
-  padding-right: 30px;
+  padding-right: calc(var(--fz-spacing) * 7.5);
   cursor: pointer;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235b6068' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 8px center;
+  background-position: right 0.5rem center;
 }
 
 /* Multi-line / list controls grow with their content. */
 select[multiple]:where(:not([class*="fz-"])),
 select[size]:where(:not([class*="fz-"])):not([size="1"]) {
   height: auto;
-  padding: 6px 10px;
+  padding: calc(var(--fz-spacing) * 1.5) calc(var(--fz-spacing) * 2.5);
   background-image: none;
 }
 
 textarea {
   height: auto;
-  min-height: 76px;
+  min-height: 4.75rem;
   width: 100%;
-  padding: 8px 10px;
+  padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 2.5);
   line-height: var(--fz-leading-normal);
   resize: vertical;
 }
@@ -613,7 +621,7 @@ textarea {
   padding: calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 5);
   background: var(--fz-color-surface);
   border-bottom: 1px solid var(--fz-color-border);
-  min-height: 56px;
+  min-height: 3.5rem;
   flex-shrink: 0;
 }
 
@@ -702,10 +710,10 @@ textarea {
 .lyris-list__action-panel {
   display: none;
   position: absolute;
-  top: calc(100% + 4px);
+  top: calc(100% + 0.25rem);
   right: 0;
   z-index: 200;
-  min-width: 220px;
+  min-width: 13.75rem;
   background: var(--fz-color-surface);
   border: 1px solid var(--fz-color-border);
   border-radius: var(--fz-radius-lg);
@@ -725,7 +733,7 @@ textarea {
   display: flex;
   align-items: center;
   width: 100%;
-  height: 30px;
+  height: 1.875rem;
   padding: 0 calc(var(--fz-spacing) * 2);
   border: 0;
   background: transparent;
@@ -758,7 +766,7 @@ textarea {
    `.lyris-list__footer`, not this panel, so they are untouched. */
 .lyris-list__action-panel input[type="button"].formulize_button,
 .lyris-list__action-panel input[type="submit"].formulize_button {
-  height: 30px;
+  height: 1.875rem;
   padding: 0 calc(var(--fz-spacing) * 2);
   border: 0;
   border-radius: var(--fz-radius-sm);
@@ -778,7 +786,7 @@ textarea {
   box-shadow: var(--fz-shadow-lg);
   border: 1px solid var(--fz-color-border);
   padding: calc(var(--fz-spacing) * 1);
-  min-width: 180px;
+  min-width: 11.25rem;
 }
 
 .lyris-pop__item {
@@ -786,8 +794,8 @@ textarea {
   align-items: center;
   gap: calc(var(--fz-spacing) * 2);
   width: 100%;
-  min-height: 30px;
-  padding: 5px calc(var(--fz-spacing) * 2);
+  min-height: 1.875rem;
+  padding: calc(var(--fz-spacing) * 1.25) calc(var(--fz-spacing) * 2);
   border: 0;
   background: transparent;
   font: inherit;
@@ -805,8 +813,8 @@ textarea {
 .lyris-pop__item--active:hover { background: var(--fz-color-accent-soft-2); }
 .lyris-pop__item--disabled { color: var(--fz-color-text-subtle); cursor: default; pointer-events: none; }
 .lyris-pop__item--danger { color: var(--fz-color-danger); }
-.lyris-pop__sep { height: 1px; background: var(--fz-color-border); margin: 4px 2px; }
-.lyris-pop__group { padding: 4px 8px; font-size: var(--fz-text-xs); color: var(--fz-color-text-subtle); text-transform: uppercase; letter-spacing: .04em; }
+.lyris-pop__sep { height: 1px; background: var(--fz-color-border); margin: calc(var(--fz-spacing) * 1) 2px; }
+.lyris-pop__group { padding: calc(var(--fz-spacing) * 1) calc(var(--fz-spacing) * 2); font-size: var(--fz-text-xs); color: var(--fz-color-text-subtle); text-transform: uppercase; letter-spacing: .04em; }
 
 /* View switcher — binoculars icon button + dropdown panel */
 .lyris-view-switcher {
@@ -816,10 +824,10 @@ textarea {
 .lyris-view-switcher__panel {
   display: none;
   position: absolute;
-  top: calc(100% + 4px);
+  top: calc(100% + 0.25rem);
   right: 0;
   z-index: 200;
-  min-width: 240px;
+  min-width: 15rem;
   background: var(--fz-color-surface);
   border: 1px solid var(--fz-color-border);
   border-radius: var(--fz-radius-lg);
@@ -846,7 +854,7 @@ textarea {
   background: var(--fz-color-text);
   color: var(--fz-color-page);
   border-bottom: 1px solid var(--fz-color-text);
-  min-height: 56px;
+  min-height: 3.5rem;
 }
 
 .lyris-selection-bar.is-active {
@@ -895,8 +903,8 @@ textarea {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 28px;
-  padding: 0 12px;
+  height: 1.75rem;
+  padding: 0 calc(var(--fz-spacing) * 3);
   border-radius: var(--fz-radius-full);
   background: rgba(255,255,255,.10);
   border: 1px solid rgba(255,255,255,.18);
@@ -1055,7 +1063,7 @@ textarea {
   }
 
   .lyris-pagination__page {
-    min-width: 26px;
+    min-width: 1.625rem;
     justify-content: center;
     font-variant-numeric: tabular-nums;
   }
@@ -1142,7 +1150,7 @@ textarea {
 }
 
 .lyris-table-empty {
-	padding: 10px;
+	padding: calc(var(--fz-spacing) * 2.5);
 }
 
 .lyris-list-table th,
@@ -1158,7 +1166,7 @@ textarea {
 }
 
 .lyris-list-table thead th {
-  height: 36px;
+  height: 2.25rem;
   font-weight: 600;
   font-size: var(--fz-text-xs);
   color: var(--fz-color-text-muted);
@@ -1190,7 +1198,7 @@ textarea {
    bleeding through. */
 .lyris-search-row td {
   position: sticky;
-  top: var(--lyris-thead-height, 36px);
+  top: var(--lyris-thead-height, 2.25rem);
   z-index: 2;
   background: var(--fz-color-surface-2);
   /* Vertical breathing room so the filter inputs aren't flush against the
@@ -1237,7 +1245,7 @@ textarea {
 
 /* Checkbox / controls column */
 .lyris-list-table .lyris-cb {
-  width: 52px;
+  width: 3.25rem;
   padding: 0 calc(var(--fz-spacing) * 2);
   vertical-align: middle;
   white-space: nowrap;
@@ -1316,7 +1324,7 @@ a.de-edit-icon:hover::before {
 .lyris-list-table .formulize-de-controls > a {
   width: 1.6em;
   height: 1.6em;
-  border-radius: 4px;
+  border-radius: 0.25rem;
   font-size: 1rem;
   transition: background var(--fz-duration-fast) var(--fz-ease-out), color var(--fz-duration-fast) var(--fz-ease-out);
 }
@@ -1347,9 +1355,9 @@ a.de-edit-icon:hover::before {
 /* Formulize selection checkboxes get the same treatment as fz-checkbox (formulize-ui.css) */
 .lyris-list-table .formulize_selection_checkbox {
   appearance: none;
-  width: 16px;
-  height: 16px;
-  border-radius: 3px;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 0.1875rem;
   border: 1.5px solid var(--fz-color-border-strong);
   background: var(--fz-color-surface);
   cursor: pointer;
@@ -1367,10 +1375,10 @@ a.de-edit-icon:hover::before {
 .lyris-list-table .formulize_selection_checkbox:checked::after {
   content: "";
   position: absolute;
-  left: 4px;
+  left: 0.25rem;
   top: 1px;
-  width: 4px;
-  height: 8px;
+  width: 0.25rem;
+  height: 0.5rem;
   border: solid white;
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
@@ -1380,7 +1388,7 @@ a.de-edit-icon:hover::before {
 .lyris-th-sort {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: calc(var(--fz-spacing) * 1);
   cursor: pointer;
   user-select: none;
   color: inherit;
@@ -1421,7 +1429,7 @@ a.de-edit-icon:hover::before {
 /* Priority badge shown when more than one column is sorted */
 .lyris-sort-badge {
   margin-left: 2px;
-  font-size: 9px;
+  font-size: 0.5625rem;
   font-weight: 600;
   line-height: 1;
   color: var(--fz-color-accent);
@@ -1483,7 +1491,7 @@ a.de-edit-icon:hover::before {
   display: flex;
   align-items: center;
   gap: calc(var(--fz-spacing) * 2);
-  padding: 6px calc(var(--fz-spacing) * 2);
+  padding: calc(var(--fz-spacing) * 1.5) calc(var(--fz-spacing) * 2);
   border-radius: var(--fz-radius-md);
   font-size: var(--fz-text-xs-plus);
   font-weight: 500;
@@ -1519,8 +1527,8 @@ a.de-edit-icon:hover::before {
   content: '';
   flex: none;
   margin-left: auto;
-  width: 14px;
-  height: 14px;
+  width: 0.875rem;
+  height: 0.875rem;
   background-color: currentColor;
   opacity: 0.45;
   -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center / 14px 14px no-repeat;
@@ -1564,8 +1572,8 @@ a.main-menu__item-link--active::before {
   content: '';
   position: absolute;
   left: -2px;
-  top: 6px;
-  bottom: 6px;
+  top: 0.375rem;
+  bottom: 0.375rem;
   width: 2px;
   border-radius: var(--fz-radius-full);
   background: var(--fz-color-accent);
@@ -1649,7 +1657,7 @@ a.main-menu__item-link--active::before {
   position: fixed;
   bottom: calc(calc(var(--fz-spacing) * 5) + var(--lyris-masquerade-height));
   right: calc(var(--fz-spacing) * 5);
-  max-width: 340px;
+  max-width: 21.25rem;
   background: var(--fz-color-surface);
   border: 1px solid var(--fz-color-border-strong);
   border-radius: var(--fz-radius-lg);
@@ -1674,8 +1682,8 @@ a.main-menu__item-link--active::before {
 }
 
 .session-timeout-warning-icon {
-  width: 20px;
-  height: 20px;
+  width: 1.25rem;
+  height: 1.25rem;
   display: block;
   color: var(--fz-color-warning);
   flex: none;
@@ -1728,7 +1736,7 @@ a.main-menu__item-link--active::before {
    The bar's own height is pinned to the same variable (rather than left to fall
    out of its padding) so the space reserved and the space occupied cannot drift. */
 body:has(#formulize-masquerade-block) {
-  --lyris-masquerade-height: 48px;
+  --lyris-masquerade-height: 3rem;
 }
 
 #formulize-masquerade-block {
@@ -1797,7 +1805,7 @@ body:has(#formulize-masquerade-block) {
   }
 
   .lyris-header__brand img {
-    height: 24px;
+    height: 1.5rem;
   }
 
   /* ---- Right drawer: tighter body gutter (the component already makes it
@@ -1812,7 +1820,7 @@ body:has(#formulize-masquerade-block) {
   .lyris-list__titlebar {
     flex-wrap: wrap;
     padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3);
-    min-height: 48px;
+    min-height: 3rem;
   }
 
   .lyris-list__title {
@@ -1830,7 +1838,7 @@ body:has(#formulize-masquerade-block) {
     flex-wrap: nowrap;
     overflow-x: auto;
     padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3);
-    min-height: 48px;
+    min-height: 3rem;
   }
 
   .lyris-selection-bar__actions {
@@ -1875,7 +1883,7 @@ body:has(#formulize-masquerade-block) {
 
   /* first data column sits after the 52px checkbox column when present */
   .lyris-list-table .lyris-cb ~ .column0 {
-    left: 52px;
+    left: 3.25rem;
   }
 
   /* divider shadow marks the edge of the pinned columns; cap their width
@@ -1901,7 +1909,7 @@ body:has(#formulize-masquerade-block) {
      include .lyris-list-table in the selector chain. */
   .lyris-list-table .lyris-search-row .lyris-cb,
   .lyris-list-table .lyris-search-row .column0 {
-    top: var(--lyris-thead-height, 36px);
+    top: var(--lyris-thead-height, 2.25rem);
     z-index: 3;
   }
 }
@@ -1950,8 +1958,8 @@ body:has(#formulize-masquerade-block) {
   --lyris-field-gap:           calc(var(--fz-spacing) * 4.5);
   --lyris-field-text:          var(--fz-text-sm);
   --lyris-label-text:          1.1rem; /* ~16px, scales with root font-size (#32) */
-  --lyris-label-gap:           6px;
-  --lyris-label-column-width:  220px;
+  --lyris-label-gap:           calc(var(--fz-spacing) * 1.5);
+  --lyris-label-column-width:  13.75rem;
   --lyris-help-text:           var(--fz-text-xs);
   --lyris-required-color:      var(--fz-color-danger);
 }
@@ -2025,7 +2033,7 @@ body:has(#formulize-masquerade-block) {
 /* Selects: preserve the chevron background already set by the base rule */
 .lyris-form select:where(:not([class*="fz-"])),
 .lyris-form-screen select:where(:not([class*="fz-"])) {
-  padding-right: 30px;
+  padding-right: calc(var(--fz-spacing) * 7.5);
 }
 
 /* Subform "Add [x] entries" count box (issue #932). The subform controls row is
@@ -2091,8 +2099,8 @@ body:has(#formulize-masquerade-block) {
 .form-row {
   display: flex;
   flex-direction: column;
-  gap: var(--lyris-label-gap, 6px);
-  margin-bottom: var(--lyris-field-gap, 18px);
+  gap: var(--lyris-label-gap, calc(var(--fz-spacing) * 1.5));
+  margin-bottom: var(--lyris-field-gap, calc(var(--fz-spacing) * 4.5));
   position: relative;
 }
 
@@ -2105,7 +2113,7 @@ body:has(#formulize-masquerade-block) {
 .form-label {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: calc(var(--fz-spacing) * 1.5);
   font-size: var(--lyris-label-text, var(--fz-text-xs-plus));
   font-weight: 600;
   color: var(--fz-color-text);
@@ -2134,7 +2142,7 @@ body:has(#formulize-masquerade-block) {
 .form-row > .fz-field__body {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: calc(var(--fz-spacing) * 1);
   min-width: 0;
 }
 
@@ -2157,7 +2165,7 @@ body:has(#formulize-masquerade-block) {
   gap: calc(var(--fz-spacing) * 6);
 }
 .lyris-form--label-left .fz-field__label {
-  width: var(--lyris-label-column-width, 220px);
+  width: var(--lyris-label-column-width, 13.75rem);
   flex: none;
   padding-top: calc((var(--lyris-field-height) - var(--lyris-label-text) * 1.35) / 2);
   justify-content: flex-start;
@@ -2207,7 +2215,7 @@ body:has(#formulize-masquerade-block) {
   min-width: 0;
   display: flex;
   align-items: flex-start;
-  padding-top: var(--lyris-field-padding-y, 8px); /* align label with control's text line */
+  padding-top: var(--lyris-field-padding-y, calc(var(--fz-spacing) * 2)); /* align label with control's text line */
 }
 
 .col1 .form-label {
@@ -2244,7 +2252,7 @@ body:has(#formulize-masquerade-block) {
   display: inline-block;
   width: auto !important;
   height: auto;
-  margin: 0 8px 0 0;       /* 8px gap between control and its label */
+  margin: 0 calc(var(--fz-spacing) * 2) 0 0;       /* 8px gap between control and its label */
   vertical-align: middle;
   accent-color: var(--fz-color-accent);
   cursor: pointer;
@@ -2621,7 +2629,7 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
   height: calc(var(--fz-spacing) * 8.5) !important;
   min-width: 0 !important;
   width: auto;
-  padding: 0 16px;
+  padding: 0 calc(var(--fz-spacing) * 4);
   font-size: var(--fz-text-xs-plus);
   font-weight: 500 !important;
   line-height: 1;
@@ -2680,7 +2688,7 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
 .formulize-drawer__foot .formulize-form-submit-button {
   flex: 1 1 calc(50% - calc(var(--fz-spacing) * 2));
   min-width: 0 !important;
-  height: 44px !important;
+  height: 2.75rem !important;
   padding: 0 calc(var(--fz-spacing) * 3);
 }
 
@@ -2692,7 +2700,7 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
 .formulize-drawer--wide .formulize-drawer__foot .formulize-form-submit-button {
   flex: 0 0 auto;
   height: calc(var(--fz-spacing) * 8.5) !important;
-  padding: 0 16px;
+  padding: 0 calc(var(--fz-spacing) * 4);
 }
 
 /* On multi-page forms the bar also holds #prev ("Save and Close") and #next
@@ -2732,13 +2740,13 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
   top: 0;
   right: 0;
   z-index: 2;
-  font-size: var(--fz-text-xs, 11px);
+  font-size: var(--fz-text-xs, 0.6875rem);
   font-weight: 500;
   line-height: 1.3;
   color: var(--fz-color-accent);
   text-decoration: none;
   background: var(--fz-color-surface);
-  padding: 1px 6px;
+  padding: 1px calc(var(--fz-spacing) * 1.5);
   border: 1px solid var(--fz-color-border);
   border-radius: var(--fz-radius-md);
   opacity: 0;
@@ -2796,7 +2804,7 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
 .lyris-form-screen input[type="file"] {
   display: block;
   width: 100%;
-  padding: 16px;
+  padding: calc(var(--fz-spacing) * 4);
   font-size: var(--fz-text-xs-plus);
   color: var(--fz-color-text-muted);
   background: var(--fz-color-surface-2);
@@ -2816,9 +2824,9 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
 }
 /* The native "Choose File" button → a compact secondary .fz-btn look. */
 .lyris-form-screen input[type="file"]::file-selector-button {
-  margin-right: 12px;
-  height: 28px;
-  padding: 0 12px;
+  margin-right: calc(var(--fz-spacing) * 3);
+  height: 1.75rem;
+  padding: 0 calc(var(--fz-spacing) * 3);
   font: inherit;
   font-size: var(--fz-text-xs-plus);
   font-weight: 500;
@@ -2839,9 +2847,9 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-  padding: 8px 10px;
+  gap: calc(var(--fz-spacing) * 2);
+  margin-bottom: calc(var(--fz-spacing) * 2);
+  padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 2.5);
   font-size: var(--fz-text-xs-plus);
   color: var(--fz-color-text);
   background: var(--fz-color-surface);
@@ -2871,8 +2879,8 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 20px;
-  margin: 4px 0;
+  height: 1.25rem;
+  margin: calc(var(--fz-spacing) * 1) 0;
   padding: 0;
   vertical-align: middle;
   background: transparent;
@@ -2882,17 +2890,17 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
 .lyris-form-screen input[type="range"]:focus { outline: none; }
 /* Track */
 .lyris-form-screen input[type="range"]::-webkit-slider-runnable-track {
-  height: 6px;
+  height: 0.375rem;
   border-radius: 999px;
   background: var(--fz-color-surface-3);
 }
 .lyris-form-screen input[type="range"]::-moz-range-track {
-  height: 6px;
+  height: 0.375rem;
   border-radius: 999px;
   background: var(--fz-color-surface-3);
 }
 .lyris-form-screen input[type="range"]::-moz-range-progress {
-  height: 6px;
+  height: 0.375rem;
   border-radius: 999px;
   background: var(--fz-color-accent);
 }
@@ -2900,9 +2908,9 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
 .lyris-form-screen input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  margin-top: -7px;          /* centre 20px thumb on 6px track */
-  width: 20px;
-  height: 20px;
+  margin-top: -0.4375rem;          /* centre 20px thumb on 6px track */
+  width: 1.25rem;
+  height: 1.25rem;
   border-radius: 50%;
   background: var(--fz-color-surface);
   border: 2px solid var(--fz-color-accent);
@@ -2911,8 +2919,8 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
   transition: box-shadow var(--fz-duration-fast) var(--fz-ease-out);
 }
 .lyris-form-screen input[type="range"]::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
   border-radius: 50%;
   background: var(--fz-color-surface);
   border: 2px solid var(--fz-color-accent);
@@ -2934,8 +2942,8 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
    mode. */
 .lyris-form-screen output[id^="rangeValue_"] {
   display: inline-block;
-  min-width: 34px;
-  padding: 2px 8px;
+  min-width: 2.125rem;
+  padding: 2px calc(var(--fz-spacing) * 2);
   font-family: var(--fz-font-mono);
   font-feature-settings: "tnum";
   font-size: var(--fz-text-xs);
@@ -2969,7 +2977,7 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
 }
 .lyris-form-screen nobr:has(> input[type="range"]) > output[id^="rangeValue_"] {
   flex: 0 0 auto;
-  margin-left: 12px;   /* gap between the slider and its value bubble */
+  margin-left: calc(var(--fz-spacing) * 3);   /* gap between the slider and its value bubble */
 }
 
 /* ---------- Color picker → .lyris-colorpicker look ----------
@@ -2981,7 +2989,7 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
   appearance: none;
   width: var(--lyris-field-height);
   height: var(--lyris-field-height);
-  padding: 3px;
+  padding: calc(var(--fz-spacing) * 0.75);
   background: var(--fz-color-surface);
   border: 1px solid var(--fz-color-border-strong);
   border-radius: var(--lyris-field-radius);
@@ -2998,11 +3006,11 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
 .lyris-form-screen input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
 .lyris-form-screen input[type="color"]::-webkit-color-swatch {
   border: 0;
-  border-radius: 3px;
+  border-radius: 0.1875rem;
 }
 .lyris-form-screen input[type="color"]::-moz-color-swatch {
   border: 0;
-  border-radius: 3px;
+  border-radius: 0.1875rem;
 }
 
 /* ---------- Duration tray → single grouped control ----------
@@ -3011,7 +3019,7 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
    segments, each prefixed by a small unit label. Pull the segment
    inputs into a tight mono field-cluster that reads as one control. */
 .formulize-duration-element-input {
-  width: 64px !important;
+  width: 4rem !important;
   text-align: right;
   font-family: var(--fz-font-mono);
   font-feature-settings: "tnum";
@@ -3024,7 +3032,7 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
 .fz-field__body:has(.formulize-duration-element-input) {
   flex-flow: row wrap;
   align-items: center;
-  gap: 4px 10px;
+  gap: calc(var(--fz-spacing) * 1) calc(var(--fz-spacing) * 2.5);
 }
 .formulize-duration-element-input {
   display: inline-block;
@@ -3081,8 +3089,8 @@ input[type="time"] { font-family: var(--fz-font-sans); }
 .lyris-form-screen select[multiple] {
   height: auto;
   min-height: calc(var(--lyris-field-height) * 2.4);
-  max-height: 220px;
-  padding: 4px;
+  max-height: 13.75rem;
+  padding: calc(var(--fz-spacing) * 1);
   overflow-y: auto;
   background-image: none;      /* no chevron on a multi-select */
   cursor: default;
@@ -3096,7 +3104,7 @@ input[type="time"] { font-family: var(--fz-font-sans); }
   outline: none;
 }
 .lyris-form-screen select[multiple] option {
-  padding: 7px 10px;
+  padding: calc(var(--fz-spacing) * 1.75) calc(var(--fz-spacing) * 2.5);
   border-radius: var(--fz-radius-sm);
   font-size: var(--lyris-field-text);
   color: var(--fz-color-text);
@@ -3124,7 +3132,7 @@ input[type="time"] { font-family: var(--fz-font-sans); }
 /* The autocomplete text input → Lyris field metrics and colours. */
 .lyris-form-screen input.formulize_autocomplete {
   height: var(--lyris-field-height);
-  padding: 0 36px 0 var(--lyris-field-padding-x);
+  padding: 0 calc(var(--fz-spacing) * 9) 0 var(--lyris-field-padding-x);
   font: inherit;
   font-size: var(--lyris-field-text);
   color: var(--fz-color-text);
@@ -3142,15 +3150,15 @@ input[type="time"] { font-family: var(--fz-font-sans); }
 
 /* The magnifying glass → muted, and inset to match Lyris's field padding. */
 .lyris-form-screen .formulize_autocomplete img.autocomplete-icon {
-  right: 12px;
+  right: 0.75rem;
   opacity: 0.55;
 }
 
 /* Selected values → the design's chip row. */
 .lyris-form-screen .formulize_autocomplete_selections .auto_multi {
-  height: 26px;
-  padding: 0 4px 0 10px;
-  border-radius: 13px;
+  height: 1.625rem;
+  padding: 0 calc(var(--fz-spacing) * 1) 0 calc(var(--fz-spacing) * 2.5);
+  border-radius: 0.8125rem;
   background: var(--fz-color-accent-soft);
   border: 1px solid var(--fz-color-accent-soft-2);
   color: var(--fz-color-text);
@@ -3189,15 +3197,15 @@ input[type="time"] { font-family: var(--fz-font-sans); }
    in the middle is harmless) so the skin still cleanly outranks formulize.css's
    base rule, which is all it needs to do. */
 .lyris-form-screen .formulize_autocomplete_selections .auto_multi button.auto_multi_remove {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
   border-radius: 50%;
   background: transparent;
   border: 0;
   box-shadow: none;
   padding: 0;
   color: var(--fz-color-text-muted);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 /* Hover/focus tints the glyph and nothing else. The background has to be stated
    explicitly, because the blanket rule's :hover (0-3-1) otherwise outranks the
@@ -3217,13 +3225,13 @@ input[type="time"] { font-family: var(--fz-font-sans); }
    design's listbox: bordered card, hover/active rows in accent-soft. */
 .ui-autocomplete.ui-menu {
   list-style: none;
-  margin: 4px 0 0;
-  padding: 4px;
+  margin: calc(var(--fz-spacing) * 1) 0 0;
+  padding: calc(var(--fz-spacing) * 1);
   background: var(--fz-color-surface);
   border: 1px solid var(--fz-color-border-strong);
   border-radius: var(--lyris-field-radius, var(--fz-radius-md));
   box-shadow: var(--fz-shadow-sm);
-  max-height: 240px;
+  max-height: 15rem;
   overflow-y: auto;
   z-index: 1200;
   font-family: var(--fz-font-sans);
@@ -3232,7 +3240,7 @@ input[type="time"] { font-family: var(--fz-font-sans); }
 .ui-autocomplete.ui-menu .ui-menu-item-wrapper,
 .ui-autocomplete.ui-menu .ui-menu-item > a {
   display: block;
-  padding: 7px 10px;
+  padding: calc(var(--fz-spacing) * 1.75) calc(var(--fz-spacing) * 2.5);
   border-radius: var(--fz-radius-sm);
   font-size: var(--fz-text-sm);
   color: var(--fz-color-text);
@@ -3256,8 +3264,8 @@ input[type="time"] { font-family: var(--fz-font-sans); }
   .lyris-form,
   .lyris-form-screen {
     --lyris-field-height:     max(var(--fz-field-height), 2.75rem);   /* iOS tap target: never under 44px, whatever the density */
-    --lyris-field-text:  16px;   /* prevent iOS auto-zoom */
-    --lyris-field-gap:   16px;
+    --lyris-field-text:  1rem;   /* prevent iOS auto-zoom */
+    --lyris-field-gap:   calc(var(--fz-spacing) * 4);
   }
 
   .card__body {
@@ -3274,7 +3282,7 @@ input[type="time"] { font-family: var(--fz-font-sans); }
   .form-row:has(> .col1) {
     flex-direction: column;
     align-items: stretch;
-    gap: var(--lyris-label-gap, 6px);
+    gap: var(--lyris-label-gap, calc(var(--fz-spacing) * 1.5));
   }
 
   .col1 {
@@ -3290,13 +3298,13 @@ input[type="time"] { font-family: var(--fz-font-sans); }
   /* Autocomplete chips get a slightly taller tap target on touch screens, and
      the remove button grows to a comfortable touch size. */
   .lyris-form-screen .formulize_autocomplete_selections .auto_multi {
-    height: 32px;
-    padding: 0 6px 0 12px;
+    height: 2rem;
+    padding: 0 calc(var(--fz-spacing) * 1.5) 0 calc(var(--fz-spacing) * 3);
   }
   .lyris-form-screen .formulize_autocomplete_selections .auto_multi button.auto_multi_remove {
-    width: 24px;
-    height: 24px;
-    font-size: 16px;
+    width: 1.5rem;
+    height: 1.5rem;
+    font-size: 1rem;
   }
 
   /* ---------- Mobile multipage action bar (issue #9, clutter) ----------
@@ -3317,7 +3325,7 @@ input[type="time"] { font-family: var(--fz-font-sans); }
   #multipage-controls .formulize-form-submit-button {
     flex: 1 1 calc(50% - calc(var(--fz-spacing) * 2));
     min-width: 0;
-    height: 44px !important;
+    height: 2.75rem !important;
     padding: 0 calc(var(--fz-spacing) * 3);
   }
 
@@ -3387,7 +3395,7 @@ input[type="button"]:not([class*="fz-"]):not(.formulize_button) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: calc(var(--fz-spacing) * 1.5);
   height: var(--fz-control-height);
   padding: 0 calc(var(--fz-spacing) * 3);
   border-radius: var(--fz-radius-md);
@@ -3452,7 +3460,7 @@ input[type="button"].formulize_button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: calc(var(--fz-spacing) * 1.5);
   height: var(--fz-control-height);
   padding: 0 calc(var(--fz-spacing) * 3);
   border-radius: var(--fz-radius-md);
@@ -3538,7 +3546,7 @@ input[type="button"].formulize_button {
 
 /* The login fieldset stays a compact, single-column card. */
 fieldset#icms_block_login_form {
-  max-width: 380px;
+  max-width: 23.75rem;
 }
 
 .lyris-main fieldset:where(:not([class*="fz-"])) > legend {
@@ -3593,7 +3601,7 @@ fieldset#icms_block_login_form {
 #block_login_form input.btn[type="submit"],
 #icms_block_login_form input.btn[type="submit"] {
   width: 100%;
-  height: 36px;
+  height: 2.25rem;
   background: var(--fz-color-accent);
   color: var(--fz-color-on-accent);
   border-color: var(--fz-color-accent);
@@ -3686,9 +3694,9 @@ fieldset#icms_block_login_form {
 /* Themed close button — replace the jQuery-UI icon sprite with a CSS glyph */
 .ui-dialog.ui-widget .ui-dialog-titlebar-close {
   right: calc(var(--fz-spacing) * 4);
-  width: 28px;
-  height: 28px;
-  margin: -14px 0 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin: -0.875rem 0 0;
   padding: 0;
   top: 50%;
   border: 1px solid transparent;
@@ -3718,14 +3726,14 @@ fieldset#icms_block_login_form {
 .ui-dialog.ui-widget .ui-dialog-titlebar-close .ui-icon::before {
   content: "\00d7";
   display: block;
-  width: 16px;
-  height: 16px;
-  margin: -8px 0 0 -8px;
+  width: 1rem;
+  height: 1rem;
+  margin: -0.5rem 0 0 -0.5rem;
   position: absolute;
   top: 50%;
   left: 50%;
-  font-size: 18px;
-  line-height: 16px;
+  font-size: 1.125rem;
+  line-height: 1rem;
   text-align: center;
   color: inherit;
 }
@@ -3762,7 +3770,7 @@ fieldset#icms_block_login_form {
 .ui-dialog.ui-widget .ui-dialog-content select,
 .ui-dialog.ui-widget .ui-dialog-content textarea {
   width: 100%;
-  height: 38px;
+  height: 2.375rem;
   padding: 0 calc(var(--fz-spacing) * 3);
   border: 1px solid var(--fz-color-border-strong);
   border-radius: var(--fz-radius-md);
@@ -3774,7 +3782,7 @@ fieldset#icms_block_login_form {
 }
 .ui-dialog.ui-widget .ui-dialog-content textarea {
   height: auto;
-  min-height: 72px;
+  min-height: 4.5rem;
   padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3);
   line-height: 1.5;
 }
@@ -3811,7 +3819,7 @@ fieldset#icms_block_login_form {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: calc(var(--fz-spacing) * 1.5);
   height: var(--fz-control-height);
   margin: 0;
   padding: 0 calc(var(--fz-spacing) * 3);
@@ -3938,8 +3946,8 @@ fieldset#icms_block_login_form {
   position: absolute;
   top: 50%;
   left: calc(var(--fz-spacing) * 4);
-  width: 7px;
-  height: 7px;
+  width: 0.4375rem;
+  height: 0.4375rem;
   margin: 0;
   transform: translateY(-70%) rotate(45deg);
   border: solid var(--fz-color-text-muted);
@@ -4028,7 +4036,7 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
 
 /* add / delete-checked / clone-checked buttons: match the secondary fz-btn look */
 .formulize-drawer .subform_button_controls input[type="button"] {
-  height: 28px;
+  height: 1.75rem;
   padding: 0 calc(var(--fz-spacing) * 3);
   margin: 0 calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 2) 0;
   border-radius: var(--fz-radius-md);
@@ -4055,7 +4063,7 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
    (see the subform count box rule in the form-controls section); only the
    drawer's tighter height is set here. */
 .formulize-drawer .subform_button_controls > input[type="text"] {
-  height: 28px;
+  height: 1.75rem;
   margin-bottom: calc(var(--fz-spacing) * 2);
 }
 
