@@ -613,11 +613,12 @@ textarea {
 .formulize-inline .lyris-list-screen { height: auto; display: block; }
 .formulize-inline .lyris-list__body  { overflow: visible; }
 
-/* Title bar */
+/* Title bar: a Formulize UI toolbar (fz-toolbar, with the title and count at
+   its start and the actions at its end). Lyris sets its chrome, and keeps it to
+   one row at every width: the actions never wrap, and the title gives way,
+   truncating with an ellipsis (see .lyris-list__title). */
 .lyris-list__titlebar {
-  display: flex;
-  align-items: center;
-  gap: calc(var(--fz-spacing) * 2);
+  flex-wrap: nowrap;
   padding: calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 5);
   background: var(--fz-color-surface);
   border-bottom: 1px solid var(--fz-color-border);
@@ -625,19 +626,14 @@ textarea {
   flex-shrink: 0;
 }
 
-.lyris-list__titlebar-start {
-  display: flex;
-  align-items: center;
-  gap: calc(var(--fz-spacing) * 3);
-  flex: 1;
-  min-width: 0;
+.lyris-list__titlebar > .fz-toolbar__start {
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
 }
 
-.lyris-list__titlebar-end {
-  display: flex;
-  align-items: center;
-  gap: calc(var(--fz-spacing) * 2);
+.lyris-list__titlebar > .fz-toolbar__end {
   flex-shrink: 0;
+  flex-wrap: nowrap;
 }
 
 /* Formulize-generated buttons in the titlebar styled as fz-btn */
@@ -840,7 +836,10 @@ textarea {
   display: flex;
 }
 
-/* Selection bar (shown when rows are checked, overlays the titlebar) */
+/* Selection bar (shown when rows are checked, overlays the titlebar): a
+   Formulize UI toolbar, hidden until rows are checked. Only Lyris's chrome is
+   set here, and the display, which this rule wins over fz-toolbar's by coming
+   later at the same weight. */
 .lyris-selection-bar {
   display: none;
   position: absolute;
@@ -848,8 +847,6 @@ textarea {
   left: 0;
   right: 0;
   z-index: 10;
-  align-items: center;
-  gap: calc(var(--fz-spacing) * 2);
   padding: calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 5);
   background: var(--fz-color-text);
   color: var(--fz-color-page);
@@ -862,17 +859,7 @@ textarea {
 }
 
 .lyris-selection-bar__start {
-  display: flex;
-  align-items: center;
-  gap: calc(var(--fz-spacing) * 2);
   flex-shrink: 0;
-}
-
-.lyris-selection-bar__actions {
-  display: flex;
-  align-items: center;
-  gap: calc(var(--fz-spacing) * 2);
-  flex-wrap: wrap;
 }
 
 .js-selection-count {
@@ -1149,8 +1136,10 @@ textarea {
   line-height: var(--fz-leading-snug);
 }
 
-.lyris-table-empty {
-	padding: calc(var(--fz-spacing) * 2.5);
+/* The empty list: a Formulize UI empty state (fz-empty), set in from the
+   edges of the list body. */
+.lyris-list__empty {
+  margin: calc(var(--fz-spacing) * 5);
 }
 
 .lyris-list-table th,
@@ -1243,9 +1232,21 @@ textarea {
   box-sizing: border-box;
 }
 
-/* Checkbox / controls column */
+/* Checkbox / controls column: one fixed width, its padding plus room for its
+   checkbox and edit icon (about 50.5px, depending on the font's space width;
+   52px leaves a little over), so it is the same with or without rows. On a
+   phone the first data column is pinned at this same offset (see Mobile
+   below): if the two differed, the pinned column overlapped the icons when
+   scrolled, or left a gap and misaligned the headers when the list was empty. */
+.lyris-list-table {
+  --lyris-cb-width: calc(var(--fz-spacing) * 4 + 3.25rem);
+}
+
 .lyris-list-table .lyris-cb {
-  width: 3.25rem;
+  box-sizing: border-box;
+  width: var(--lyris-cb-width);
+  min-width: var(--lyris-cb-width);
+  max-width: var(--lyris-cb-width);
   padding: 0 calc(var(--fz-spacing) * 2);
   vertical-align: middle;
   white-space: nowrap;
@@ -1815,10 +1816,9 @@ body:has(#formulize-masquerade-block) {
     --formulize-drawer-pad-x: calc(var(--fz-spacing) * 4);
   }
 
-  /* ---- List title bar: compact, actions wrap under the title ---- */
+  /* ---- List title bar: compact, still one row ---- */
 
   .lyris-list__titlebar {
-    flex-wrap: wrap;
     padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3);
     min-height: 3rem;
   }
@@ -1881,9 +1881,9 @@ body:has(#formulize-masquerade-block) {
     z-index: 1;
   }
 
-  /* first data column sits after the 52px checkbox column when present */
+  /* first data column sits after the checkbox column when present */
   .lyris-list-table .lyris-cb ~ .column0 {
-    left: 3.25rem;
+    left: var(--lyris-cb-width);
   }
 
   /* divider shadow marks the edge of the pinned columns; cap their width
@@ -1932,7 +1932,7 @@ body:has(#formulize-masquerade-block) {
      --lyris-label-text:   1rem (~16px, #32)
 
    HTML anatomy output by Lyris form templates:
-     .card > .card__header + .card__body > .form-container
+     .fz-card.lyris-form-card > .lyris-form-card__header + .lyris-form-card__body > .form-container
        .form-row                          ← elementcontainero.php
          .form-label (label)              ← elementtemplate1/2.php
          [rendered element — raw input/select/textarea]
@@ -2053,30 +2053,25 @@ body:has(#formulize-masquerade-block) {
   margin: 0 calc(var(--fz-spacing) * 2);
 }
 
-/* ---------- Form card surface ---------- */
+/* ---------- Form card surface ----------
+   The form is a Formulize UI card (fz-card, with fz-card__header and
+   fz-card__title), which gives it its surface, border, radius and shadow.
+   Lyris lays it out as a header over a body, each with its own padding and a
+   line between them, rather than as the card's padded stack of children. Not
+   fz-card--flush: that clips what overflows the card, such as a dropdown. */
 
-.card {
-  background: var(--fz-color-surface);
-  border: 1px solid var(--fz-color-border);
-  border-radius: var(--fz-radius-lg);
-  box-shadow: var(--fz-shadow-sm);
+.lyris-form-card {
+  gap: 0;
+  padding: 0;
   margin-bottom: calc(var(--fz-spacing) * 4);
 }
 
-.card__header {
+.lyris-form-card__header {
   padding: calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 6);
   border-bottom: 1px solid var(--fz-color-border);
 }
 
-.card__title {
-  font-size: var(--fz-text-base);
-  font-weight: 600;
-  margin: 0;
-  letter-spacing: -0.005em;
-  line-height: var(--fz-leading-snug);
-}
-
-.card__body {
+.lyris-form-card__body {
   padding: calc(var(--fz-spacing) * 6);
 }
 
@@ -3268,11 +3263,11 @@ input[type="time"] { font-family: var(--fz-font-sans); }
     --lyris-field-gap:   calc(var(--fz-spacing) * 4);
   }
 
-  .card__body {
+  .lyris-form-card__body {
     padding: calc(var(--fz-spacing) * 4);
   }
 
-  .card__header {
+  .lyris-form-card__header {
     padding: calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 4);
   }
 

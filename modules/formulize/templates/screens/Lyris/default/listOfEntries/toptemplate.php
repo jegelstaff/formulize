@@ -17,12 +17,12 @@ $procedureResults
 
 <div class='lyris-list-screen' data-lyris-sid='$listSid'>
 
-  <div class='lyris-list__titlebar'>
-    <div class='lyris-list__titlebar-start'>
+  <div class='fz-toolbar lyris-list__titlebar'>
+    <div class='fz-toolbar__start'>
       <h1 class='lyris-list__title'>$title</h1>
       $listTotalCountMarkup
     </div>
-    <div class='lyris-list__titlebar-end'>
+    <div class='fz-toolbar__end'>
       $addButton
 			$currentViewList";
 
@@ -82,14 +82,13 @@ print "
     </div>
   </div>
 
-  <div id='lyris-selection-bar' class='lyris-selection-bar'>
-    <div class='lyris-selection-bar__start'>
+  <div id='lyris-selection-bar' class='fz-toolbar lyris-selection-bar'>
+    <div class='fz-toolbar__start lyris-selection-bar__start'>
       $clearSelectButton
       <span class='js-selection-count'></span>
       $selectAllButton
     </div>
-    <div class='fz-spacer'></div>
-    <div class='lyris-selection-bar__actions'>
+    <div class='fz-toolbar__end lyris-selection-bar__actions'>
       $cloneButton
       $changeOwnerButton
       $deleteButton
