@@ -450,9 +450,7 @@ test.describe('Set columns and elements for screens', () => {
 	test('Procedures for Artifacts form', async ({ page }) => {
 		await page.getByText('Artifacts').first().click();
 		await page.getByRole('link', { name: 'Procedures' }).click();
-		await page.getByRole('group', { name: 'Before Saving' }).locator('span').first().click();
    	await setCodeMirrorValue(page, 'textarea[name="forms-on_before_save"]', '<?php\n\n// If there\'s a donor, mark as donated\nif($artifacts_donor) {\n\t$artifacts_donated_to_museum = 1; // yes is 1 in the database\n}\n');
-		await page.getByRole('group', { name: 'After Saving' }).locator('span').first().click();
    	await setCodeMirrorValue(page, 'textarea[name="forms-on_after_save"]', '<?php\n\n// standardize the artifacts ID numbers\nif(!$artifacts_id_number || !preg_match(\'/^M\d{3}$/\', $artifacts_id_number)) {\n\t$idLength = strlen($entry_id);\n\t$zeros = 3 - $idLength;\n\t$zeros = $zeros < 0 ? 0 : $zeros;\n\t$artifacts_id_number = "M";\n\tfor($i=1;$i<=$zeros;$i++) {\n\t\t$artifacts_id_number .= "0";\n\t}\n\t$artifacts_id_number .= $entry_id;\n\tformulize_writeEntry([\'artifacts_id_number\' => $artifacts_id_number], $entry_id);\n}');
 		await saveAdminForm(page);
 	})

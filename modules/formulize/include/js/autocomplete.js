@@ -83,13 +83,19 @@ function formulizeBuildAutocompleteChip(elementId, value, label) {
 //
 // One delegated handler on the document covers every autocomplete on the page,
 // including chips added after load.
+//
+// This file also loads in the admin UI (the permissions review autocomplete),
+// which runs jQuery 1.4.2, so this uses .delegate() rather than .on() (1.7+).
+// Under 1.4.2 an .on() call throws inside the ready queue, and every ready
+// handler queued after it never runs - including the one that turns code
+// textareas into CodeMirror editors.
 // ---------------------------------------------------------------------------
 jQuery(document).ready(function() {
 	if(window.formulizeAutocompleteRemovalBound) {
 		return;
 	}
 	window.formulizeAutocompleteRemovalBound = true;
-	jQuery(document).on('click', '.formulize_autocomplete_selections .auto_multi_remove', function(event) {
+	jQuery(document).delegate('.formulize_autocomplete_selections .auto_multi_remove', 'click', function(event) {
 		event.preventDefault();
 		event.stopPropagation();
 		var chip = jQuery(this).closest('.auto_multi');

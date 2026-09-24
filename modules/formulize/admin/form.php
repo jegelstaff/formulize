@@ -1089,6 +1089,8 @@ if ($fid != "new") {
     $adminPage['tabs'][$i]['content']['submitted_user'] = $submitted_user;
     $adminPage['tabs'][$i]['content']['userSelectionList'] = $userSelectionList;
     $adminPage['tabs'][$i]['content']['userperms'] = $userperms;
+    // version the autocomplete script URL so browsers pick up a changed file instead of a cached copy
+    $adminPage['tabs'][$i]['content']['autocomplete_js_version'] = formulize_get_file_version('/modules/formulize/include/js/autocomplete.js');
 
     // Permission inheritance data
     $adminPage['tabs'][$i]['content']['parent_perm_fid'] = $formObject->getVar('parent_perm_fid', 'n');

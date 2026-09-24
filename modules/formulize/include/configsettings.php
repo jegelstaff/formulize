@@ -301,7 +301,7 @@ function formulize_configFormElementHtml($config) {
 
             $formEle = $handler->render($eleValue, '', $name, false, $eleObj, 'new');
             return $formEle->render()
-                . "<script src='" . XOOPS_URL . "/modules/formulize/include/js/autocomplete.js'></script>";
+                . "<script src='" . XOOPS_URL . "/modules/formulize/include/js/autocomplete.js?v=" . formulize_get_file_version('/modules/formulize/include/js/autocomplete.js') . "'></script>";
 
         case 'textbox':
         default:
