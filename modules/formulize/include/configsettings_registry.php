@@ -211,6 +211,13 @@ return array(
                 'type' => 'page',
                 'page' => 'themeeditor',
             ),
+            // The Formulize UI style guide renders in the site's own theme, not
+            // inside the admin, so this view is a link out to it.
+            'styleguide' => array(
+                'name' => _AM_CFG_VIEW_APPEARANCE_STYLEGUIDE,
+                'type' => 'link',
+                'url' => '/modules/formulize/styleguide.php',
+            ),
             'settings' => array(
                 'name' => _AM_CFG_VIEW_APPEARANCE_SETTINGS,
                 'type' => 'settings',

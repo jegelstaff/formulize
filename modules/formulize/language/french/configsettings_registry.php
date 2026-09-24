@@ -26,6 +26,7 @@ define('_AM_CFG_VIEW_SETTINGS_ELEMENTS', 'Éléments');
 define('_AM_CFG_VIEW_SETTINGS_FORMS', 'Formulaires');
 define('_AM_CFG_VIEW_SETTINGS_MESSAGING', 'Messagerie');
 define('_AM_CFG_VIEW_SETTINGS_AI', 'IA');
+define('_AM_CFG_VIEW_APPEARANCE_STYLEGUIDE', 'Guide de style');
 define('_AM_CFG_VIEW_SETTINGS_SYSTEM', 'Système');
 define('_AM_CFG_VIEW_SETTINGS_ADVANCED', 'Avancé');
 define('_AM_CFG_VIEW_SETTINGS_PERMISSIONS', 'Copier les permissions');
