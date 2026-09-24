@@ -3182,7 +3182,7 @@ input[type="time"] { font-family: var(--fz-font-sans); }
    back around the chip's ×.
 
    That arms race is over: the blanket rule now carries
-   `:not(:where(.auto_multi_remove))`. `:where()` has zero specificity, so the
+   `:not(:where(.auto_multi_remove, [class*="lyris-"]))`. `:where()` has zero specificity, so the
    blanket rule simply stops MATCHING this button while its specificity stays
    exactly what it was for every other button. Nothing here depends on
    out-specifying it any more — but the selector is left as-is (the `.auto_multi`
@@ -3365,10 +3365,14 @@ input[type="time"] { font-family: var(--fz-font-sans); }
    - `:not([class*="..."])` for whole families of already-themed buttons. These
      add specificity (one attribute selector each), which is fine for families
      whose own rules are more specific anyway.
-   - `:not(:where(.auto_multi_remove))` for the autocomplete chip's × icon
+   - `:not(:where(.auto_multi_remove, [class*="lyris-"]))` for the autocomplete chip's × icon
      button. `:where()` contributes ZERO specificity, so this exemption removes
      the button from the blanket rule's match set without nudging the rule's
-     specificity up for anything else.
+     specificity up for anything else. The same `:where()` also exempts
+     Lyris's own classes (`lyris-`): anything carrying one is styled by its own
+     rules, as the `fz-` exemption does for Formulize UI. (The view switcher's
+     menu items were `fz-pop__item` until phase 3a renamed them `lyris-`, which
+     took them out of the `fz-` exemption and gave them the blanket button look.)
 
    Prefer the `:where()` form when adding new exemptions. Growing the plain
    `:not([class*=...])` list is what caused issue #141: the fourth exemption
@@ -3376,7 +3380,7 @@ input[type="time"] { font-family: var(--fz-font-sans); }
    source order — silently re-breaking a previously fixed component.
    ============================================================ */
 
-button:not([class*="fz-"]):not([class*="formulize_button"]):not([class*="formulize-drawer__btn"]):not([class*="formulize-drawer__tab"]):not(:where(.auto_multi_remove)),
+button:not([class*="fz-"]):not([class*="formulize_button"]):not([class*="formulize-drawer__btn"]):not([class*="formulize-drawer__tab"]):not(:where(.auto_multi_remove, [class*="lyris-"])),
 input[type="submit"]:not([class*="fz-"]),
 input[type="reset"]:not([class*="fz-"]),
 input[type="button"]:not([class*="fz-"]):not(.formulize_button) {
@@ -3404,7 +3408,7 @@ input[type="button"]:not([class*="fz-"]):not(.formulize_button) {
               color var(--fz-duration-fast) var(--fz-ease-out);
 }
 
-button:not([class*="fz-"]):not([class*="formulize_button"]):not([class*="formulize-drawer__btn"]):not([class*="formulize-drawer__tab"]):not(:where(.auto_multi_remove)):hover,
+button:not([class*="fz-"]):not([class*="formulize_button"]):not([class*="formulize-drawer__btn"]):not([class*="formulize-drawer__tab"]):not(:where(.auto_multi_remove, [class*="lyris-"])):hover,
 input[type="submit"]:not([class*="fz-"]):hover,
 input[type="reset"]:not([class*="fz-"]):hover,
 input[type="button"]:not([class*="fz-"]):not(.formulize_button):hover {
@@ -3412,7 +3416,7 @@ input[type="button"]:not([class*="fz-"]):not(.formulize_button):hover {
   border-color: var(--fz-color-text-muted);
 }
 
-button:not([class*="fz-"]):not([class*="formulize_button"]):not([class*="formulize-drawer__btn"]):not([class*="formulize-drawer__tab"]):not(:where(.auto_multi_remove)):focus-visible,
+button:not([class*="fz-"]):not([class*="formulize_button"]):not([class*="formulize-drawer__btn"]):not([class*="formulize-drawer__tab"]):not(:where(.auto_multi_remove, [class*="lyris-"])):focus-visible,
 input[type="submit"]:not([class*="fz-"]):focus-visible,
 input[type="reset"]:not([class*="fz-"]):focus-visible,
 input[type="button"]:not([class*="fz-"]):not(.formulize_button):focus-visible {
@@ -3420,7 +3424,7 @@ input[type="button"]:not([class*="fz-"]):not(.formulize_button):focus-visible {
   box-shadow: var(--fz-focus-ring);
 }
 
-button:not([class*="fz-"]):not([class*="formulize-drawer__tab"]):disabled,
+button:not([class*="fz-"]):not([class*="formulize-drawer__tab"]):not(:where([class*="lyris-"])):disabled,
 input[type="submit"]:not([class*="fz-"]):disabled,
 input[type="reset"]:not([class*="fz-"]):disabled,
 input[type="button"]:not([class*="fz-"]):disabled {
