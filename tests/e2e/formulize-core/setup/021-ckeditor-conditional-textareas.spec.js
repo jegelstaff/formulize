@@ -123,9 +123,9 @@ test.describe('CKEditor is only applied to rich text textareas', () => {
 
 	test('Conditionally revealed textareas become editors only when they are rich text', async ({ page }) => {
 
-		const streetAddress = page.locator('div.formulize-input-donors_street_address');
-		const bio = page.locator('div.formulize-input-donors_bio');
-		const orgBackground = page.locator('div.formulize-input-donors_org_background');
+		const streetAddress = page.locator('.form-row:has(.formulize-label-donors_street_address)');
+		const bio = page.locator('.form-row:has(.formulize-label-donors_bio)');
+		const orgBackground = page.locator('.form-row:has(.formulize-label-donors_org_background)');
 
 		// ---- On first load: nothing is answered, so both conditional elements are hidden.
 		// The always-visible plain textarea (street address) must not be an editor.
@@ -140,7 +140,7 @@ test.describe('CKEditor is only applied to rich text textareas', () => {
 			catalogue: typeof formulizeCKEditorIDs !== 'undefined' ? Object.keys(formulizeCKEditorIDs) : null,
 			// the plain always-visible textarea's DOM id, which is <markupName>_tarea just like
 			// a rich text one -- this collision is what the old code tripped over
-			streetAddressEditorId: document.querySelector('div.formulize-input-donors_street_address textarea').id,
+			streetAddressEditorId: document.querySelector('.form-row:has(.formulize-label-donors_street_address) textarea').id,
 			// the bootstrap must declare the editor registry exactly once, not once per editor
 			ckEditorsDeclarations: (document.documentElement.innerHTML.match(/var CKEditors = \{\};/g) || []).length,
 		}));

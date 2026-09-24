@@ -95,7 +95,7 @@ test.describe('Data Entry for Donors', () => {
 		await page.getByRole('textbox', { name: 'Email address' }).fill('voltaire@enlightenment.org');
 	  await page.getByRole('textbox', { name: 'Favourite colour' }).fill('#6c2d2d');
   	await page.getByRole('textbox', { name: 'Phone number' }).fill('1694221778');
-		await page.locator('div.formulize-input-donors_street_address textarea').fill('Château de Cirey\nCirey-sur-Blaise\nFrance');
+		await page.locator('.form-row:has(.formulize-label-donors_street_address) textarea').fill('Château de Cirey\nCirey-sur-Blaise\nFrance');
   	await page.getByRole('combobox').selectOption('Quebec');
   	await page.locator('.formulize-grid input[type="text"]').nth(0).fill('G1A 0A2');
 		await saveFormulizeForm(page);
@@ -110,7 +110,7 @@ test.describe('Data Entry for Donors', () => {
 		await page.getByRole('textbox', { name: 'Email address' }).fill('duchatelet@enlightenment.org');
 	 	await page.getByRole('textbox', { name: 'Favourite colour' }).fill('#3b96c4');
   	await page.getByRole('textbox', { name: 'Phone number' }).fill('1706221749');
-  	await page.locator('div.formulize-input-donors_street_address textarea').fill('Château de Cirey\nCirey-sur-Blaise\nFrance');
+  	await page.locator('.form-row:has(.formulize-label-donors_street_address) textarea').fill('Château de Cirey\nCirey-sur-Blaise\nFrance');
   	await page.getByRole('combobox').selectOption('Quebec');
   	await page.locator('.formulize-grid input[type="text"]').nth(0).fill('G1A 0A2');
 		await saveFormulizeForm(page);
@@ -123,7 +123,7 @@ test.describe('Data Entry for Donors', () => {
 		await page.getByRole('textbox', { name: 'Organization name' }).fill('Freeform Solutions');
 		await page.getByRole('textbox', { name: 'Email address' }).fill('formulize@freeform.ca');
   	await page.getByRole('textbox', { name: 'Phone number' }).fill('4166863766');
-  	await page.locator('div.formulize-input-donors_street_address textarea').fill('17 Crossovers St\nToronto');
+  	await page.locator('.form-row:has(.formulize-label-donors_street_address) textarea').fill('17 Crossovers St\nToronto');
   	await page.getByRole('combobox').selectOption('Ontario');
   	await page.locator('.formulize-grid input[type="text"]').nth(0).fill('M4E 3X2');
   	await saveFormulizeForm(page);
@@ -150,7 +150,7 @@ test.describe('Data entry for Artifacts as ahstaff', () => {
 			dialog.dismiss().catch(() => {});
 		});
 		await page.getByRole('button', { name: 'Save' }).click();
-		await expect(page.locator('div.formulize-input-artifacts_short_name input[type="text"]')).toBeFocused();
+		await expect(page.locator('.form-row:has(.formulize-label-artifacts_short_name) input[type="text"]')).toBeFocused();
 		await page.getByRole('textbox', { name: 'Short name *' }).fill('Roman Coin');
 		page.once('dialog', dialog => {
 			console.log(`Dialog message: ${dialog.message()}`);
@@ -569,7 +569,7 @@ test.describe('Data entry for Survey', () => {
 					await page.goto('/survey');
 					await page.waitForLoadState('networkidle');
 					await page.waitForLoadState('domcontentloaded');
-					rewriteWorks = await page.locator('div.formulize-label-surveys_your_name').count() > 0;
+					rewriteWorks = await page.locator('.formulize-label-surveys_your_name').count() > 0;
 				} catch {
 					rewriteWorks = false;
 				}
@@ -648,8 +648,8 @@ test.describe('Staff Comments for Surveys', () => {
 			await expect(page.getByText('Showing entries: 1 to 2')).toBeVisible();
 			await page.getByRole('row', { name: 'Ebanezer Scrooge' }).getByRole('link').click();
 			await expect(page.getByText('Which was your favourite artifact?')).toBeVisible();
-			const currentValue = await page.locator('div.formulize-input-surveys_staff_comments textarea').inputValue();
-			await page.locator('div.formulize-input-surveys_staff_comments textarea').fill(currentValue + "\nBah Humbug -mhstaff");
+			const currentValue = await page.locator('.form-row:has(.formulize-label-surveys_staff_comments) textarea').inputValue();
+			await page.locator('.form-row:has(.formulize-label-surveys_staff_comments) textarea').fill(currentValue + "\nBah Humbug -mhstaff");
 			await expect(page.getByText('Flagged to the staff')).not.toBeVisible();
 			await saveFormulizeForm(page);
 			await expect(page.getByText('Can we do better? -c2 Bah Humbug -mhstaff')).toHaveValue('Can we do better? -c2\nBah Humbug -mhstaff');
@@ -688,7 +688,7 @@ test.describe('New donation inside Donor record', () => {
 		await page.getByRole('link', { name: 'Short name' }).click();
 		await page.getByRole('row', { name: 'Candide - first edition' }).getByRole('link').click();
 		await expect(page.getByRole('radio', { name: 'Yes' })).toBeChecked();
-		await expect(page.locator('div.formulize-input-artifacts_donor select option[selected]')).toContainText('François-Marie Arouet');
+		await expect(page.locator('.form-row:has(.formulize-label-artifacts_donor) select option[selected]')).toContainText('François-Marie Arouet');
 	}),
 	test('Verify Add button limitation setting works as expected', async ({ page }) => {
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);

@@ -160,7 +160,7 @@ test.describe('Validate Data', () => {
 		await page.getByRole('button', { name: 'Printable Version' }).click();
 		const page2 = await page2Promise;
 		await expect(page2.getByText('Type of donor')).toBeVisible();
-		await expect(page2.getByText('Organization', { exact: true })).toBeVisible();
+		await expect(page2.locator('.form-row:has(.formulize-label-donors_type_of_donor)')).toContainText('Organization');
 		await expect(page2.getByText('Organization Name')).toBeVisible();
 		await expect(page2.getByText('Freeform Solutions').first()).toBeVisible();
 		await expect(page2.getByText('Phone number')).toBeVisible();
@@ -202,7 +202,7 @@ test.describe('Validate Data', () => {
 		await expect(page3.getByText('Date of acquisition').first()).toBeVisible();
 		await expect(page3.getByText('1955-11-25')).toBeVisible();
 		await expect(page3.getByText('Condition').first()).toBeVisible();
-		await expect(page3.getByText('10', {exact: true})).toBeVisible();
+		await expect(page3.locator('.form-row:has(.formulize-label-artifacts_condition)').first()).toContainText('10');
 		await expect(page3.getByText('Collections').first()).toBeVisible();
 		await expect(page3.getByText('Coins')).toBeVisible();
 		await expect(page3.getByText('Modern History')).toBeVisible();
