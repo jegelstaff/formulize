@@ -146,11 +146,11 @@
   --fz-duration: 200ms;
 
   /* Layout */
-  --lyris-header-height: 48px;
+  --lyris-header-height: 3rem;
   /* Height reserved at the bottom of the viewport for the masquerade bar.
      0px for everyone; only the rule in the "Masquerade bar" section (keyed off
      the bar actually being in the document) gives it a real value, so every
      `- var(--lyris-masquerade-height)` below is a no-op unless someone is masquerading. */
   --lyris-masquerade-height: 0px;
-  --lyris-sidebar-width: 220px;
+  --lyris-sidebar-width: 13.75rem;
 }
