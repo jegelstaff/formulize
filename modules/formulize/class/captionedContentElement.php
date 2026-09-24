@@ -47,7 +47,7 @@ class formulizeCaptionedContentElement extends formulizeStaticContentElement {
 **Description:** A block of static text or HTML shown in the right column of the form's two-column layout, with the caption shown to users as the label in the left column (just like a normal form element). Use it to present read-only information alongside a label. It does not collect any data.
 **Note:** For this type, the caption IS shown to users as the left-column label.
 **Properties:**
-- content (string, the text or HTML to display in the right column. You can include values from other elements in the current entry by putting an element handle in curly brackets, ie: {element_handle}. Plain text and basic HTML are supported. PHP code is not supported via this tool.)
+- content (string, the text or HTML to display in the right column. You can include values from other elements in the current entry by putting an element handle in curly brackets, ie: {element_handle}. Plain text and basic HTML are supported. PHP code is not supported via this tool. Lay out and style HTML with the Formulize UI classes, such as fz-callout for instructions: the formulize_ui topic of the get_documentation tool, if it is available, lists them.)
 **Examples:**
 - A labelled note: caption \"Status\" with { content: \"This application is awaiting review.\" }
 - HTML with a reference to the value of another element: { content: \"Total owing: <strong>{amount_due}</strong>\" }";

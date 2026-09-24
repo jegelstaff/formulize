@@ -22,6 +22,8 @@
     require_once XOOPS_ROOT_PATH . '/modules/formulize/include/appearance.php';
     $rtlPath = ($this->_tpl_vars['icms_rtl'] ?? false) ? 'rtl/' : '';
     $cssVersion = formulize_get_file_version('/themes/Lyris/' . $rtlPath . 'css/style.css');
+    // Formulize UI, on the pages where the module hasn't already put it in the head above
+    echo formulize_uiStylesheetLink();
     echo '<link rel="stylesheet" type="text/css" media="all" href="' . $this->_tpl_vars['icms_imageurl'] . $rtlPath . 'css/reset.css?v=' . $cssVersion . '" />';
     echo '<link rel="stylesheet" type="text/css" media="all" href="' . $this->_tpl_vars['icms_imageurl'] . $rtlPath . 'css/style.css?v=' . $cssVersion . '" />';
     // user-configured colours, font, logo, and favicon, from the Appearance page in the Formulize admin UI
@@ -48,7 +50,7 @@
 		<script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
 </head>
 
-<body id="<{$icms_dirname}>" class="<{$icms_langcode}><{if isset($formulize_screen_id) && $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}><{if $smarty.get.fz_inline}> fz-inline<{/if}>">
+<body id="<{$icms_dirname}>" class="<{$icms_langcode}><{if isset($formulize_screen_id) && $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}><{if $smarty.get.fz_inline}> formulize-inline<{/if}>">
 
 <{includeq file="$theme_name/session-timeout-warning.html"}>
 
@@ -63,7 +65,7 @@ if ($xoopsUser) {
 }
 <{/php}>
 
-<div class="fz-app" id="fz-app" data-sidebar-default="<{if $xoops_requesturi|strstr:'/modules/formulize/application.php'}>open<{else}>closed<{/if}>">
+<div class="lyris-app" id="lyris-app" data-sidebar-default="<{if $xoops_requesturi|strstr:'/modules/formulize/application.php'}>open<{else}>closed<{/if}>">
 
   <script>
   // Apply the saved sidebar state before first paint, so restoring a closed
@@ -72,12 +74,12 @@ if ($xoopsUser) {
   // change) and handles aria-expanded and the toggle behaviour.
   (function () {
     try {
-      var app = document.getElementById('fz-app');
-      var saved = localStorage.getItem('fz-sidebar-closed');
+      var app = document.getElementById('lyris-app');
+      var saved = localStorage.getItem('lyris-sidebar-closed');
       var defaultOpen = app.getAttribute('data-sidebar-default') === 'open';
       var closed = saved !== null ? saved === 'true' : !defaultOpen;
       if (closed && window.innerWidth > 768) {
-        app.classList.add('fz-app--sidebar-closed');
+        app.classList.add('lyris-app--sidebar-closed');
       }
     } catch (e) { /* ignore */ }
   })();
@@ -85,13 +87,13 @@ if ($xoopsUser) {
 
   <!-- HEADER -->
   <{if !$smarty.get.fz_inline}>
-  <header class="fz-header" role="banner">
+  <header class="lyris-header" role="banner">
 
-    <div class="fz-header__start">
+    <div class="lyris-header__start">
       <{if $xoBlocks.canvas_left}>
-      <button class="fz-btn fz-btn--ghost fz-btn--icon fz-header__nav-toggle js-sidebar-toggle"
+      <button class="fz-btn fz-btn--ghost fz-btn--icon lyris-header__nav-toggle js-sidebar-toggle"
               aria-label="Toggle navigation"
-              aria-controls="fz-sidebar"
+              aria-controls="lyris-sidebar"
               aria-expanded="false">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <line x1="3" y1="6" x2="21" y2="6"/>
@@ -100,33 +102,33 @@ if ($xoopsUser) {
         </svg>
       </button>
       <{/if}>
-      <a class="fz-header__brand" href="<{$logo_url}>">
+      <a class="lyris-header__brand" href="<{$logo_url}>">
         <img src="<{$appearance_logo_url}>" alt="<{$icms_sitename}>">
       </a>
     </div>
 
-    <div class="fz-header__end">
+    <div class="lyris-header__end">
       <{if $xoops_isuser && $show_ai_link}>
-      <a class="fz-header__action-link js-open-ai" href="<{$icms_url}>/ai/">AI</a>
+      <a class="lyris-header__action-link js-open-ai" href="<{$icms_url}>/ai/">AI</a>
       <{/if}>
       <{if $xoops_isadmin}>
-      <a class="fz-header__action-link" href="<{if isset($modifyScreenUrl) && $modifyScreenUrl}><{$modifyScreenUrl}><{else}><{$icms_url}>/modules/formulize/admin/ui.php<{/if}>">Admin</a>
+      <a class="lyris-header__action-link" href="<{if isset($modifyScreenUrl) && $modifyScreenUrl}><{$modifyScreenUrl}><{else}><{$icms_url}>/modules/formulize/admin/ui.php<{/if}>">Admin</a>
       <{/if}>
       <{if $xoops_isuser}>
         <{if $show_inbox_link}>
-        <a class="fz-header__action-link fz-header__inbox" href="<{$icms_url}>/viewpmsg.php"
+        <a class="lyris-header__action-link lyris-header__inbox" href="<{$icms_url}>/viewpmsg.php"
            aria-label="Inbox<{if $unread_pm_count > 0}>, <{$unread_pm_count}> unread<{/if}>">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
             <polyline points="22,6 12,13 2,6"/>
           </svg>
-          <{if $unread_pm_count > 0}><span class="fz-header__badge" aria-hidden="true"></span><{/if}>
+          <{if $unread_pm_count > 0}><span class="lyris-header__badge" aria-hidden="true"></span><{/if}>
         </a>
         <{/if}>
-        <a class="fz-header__action-link" href="<{$icms_url}>/edituser.php">Account</a>
-        <a class="fz-header__action-link" href="<{$icms_url}>/user.php?op=logout">Sign out</a>
+        <a class="lyris-header__action-link" href="<{$icms_url}>/edituser.php">Account</a>
+        <a class="lyris-header__action-link" href="<{$icms_url}>/user.php?op=logout">Sign out</a>
       <{else}>
-        <a class="fz-header__action-link" href="<{$icms_url}><{$formulize_redirect}>">Sign in</a>
+        <a class="lyris-header__action-link" href="<{$icms_url}><{$formulize_redirect}>">Sign in</a>
       <{/if}>
     </div>
 
@@ -134,17 +136,17 @@ if ($xoopsUser) {
   <{/if}>
 
   <!-- APP BODY (sidebar + main) -->
-  <div class="fz-app__body">
+  <div class="lyris-app__body">
 
     <{if $xoBlocks.canvas_left && !$smarty.get.fz_inline}>
-    <aside class="fz-sidebar" id="fz-sidebar" role="navigation" aria-label="Main navigation">
+    <aside class="lyris-sidebar" id="lyris-sidebar" role="navigation" aria-label="Main navigation">
       <{includeq file="$theme_name/blockszone.html" blocks=$xoBlocks.canvas_left
           zoneClass='xo-canvas-column' zoneId='xo-canvas-leftcolumn'
       }>
     </aside>
     <{/if}>
 
-    <main class="fz-main" role="main" id="fz-main">
+    <main class="lyris-main" role="main" id="lyris-main">
       <{$icms_contents}>
     </main>
 

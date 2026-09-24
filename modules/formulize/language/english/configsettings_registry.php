@@ -25,6 +25,7 @@ define('_AM_CFG_VIEW_USERS_TOKENS', 'Account Tokens');
 // --- View names: Appearance tab ---
 define('_AM_CFG_VIEW_APPEARANCE_STYLESCOLORS', 'Styles and Colors');
 define('_AM_CFG_VIEW_APPEARANCE_THEMEEDITOR', 'Theme Editor');
+define('_AM_CFG_VIEW_APPEARANCE_STYLEGUIDE', 'Style guide');
 define('_AM_CFG_VIEW_APPEARANCE_SETTINGS', 'Settings');
 
 // --- View names: Settings tab ---

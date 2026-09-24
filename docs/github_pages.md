@@ -84,6 +84,7 @@ roadmap and the latest news without anyone editing a Markdown file.
 | `_plugins/news_pages.rb` | every build | the whole `/news/` section |
 | `_plugins/mcp_tool_pages.rb` | every build | one page per MCP tool |
 | `_plugins/mcp_item_extractor.rb` | every build | MCP resources and prompts |
+| `_plugins/formulize_ui_pages.rb` | every build | the Formulize UI reference |
 | Roadmap fetch in `jekyll.yml` | CI only | the roadmap release sections |
 | `_plugins/copy_writable_folders.rb` | every build | the writable folders list |
 | `_plugins/breadcrumbs.rb` | every build | the breadcrumb trail on every page |
@@ -148,6 +149,25 @@ unlike for tools, because resource and prompt schemas are static text in the
 source. It runs at high priority so its data is ready before the pages that
 render it.
 
+### Formulize UI reference
+
+`_plugins/formulize_ui_pages.rb` generates [Formulize UI](/documentation/formulize_ui/)
+and one page per section under it, from the catalog in
+`modules/formulize/include/ui_catalog.php`. The catalog is the one place the
+classes and tokens are documented, and the in-app style guide renders it too, so
+the pages are never edited here: change the catalog.
+
+The plugin runs the catalog with `--json`, so it needs PHP: `php` if it is
+installed (GitHub's runners have it), otherwise the local development
+environment's `formulize-web-1` container. With neither, the pages are left out
+of that build and the plugin logs an error. The catalog is outside `docs/`, so
+`jekyll serve` doesn't rebuild when it changes; restart it to see a change.
+
+A separate workflow, `formulize-ui-check.yml`, runs the catalog's `--check` on
+every pull request that changes `formulize-ui.css` or the catalog. It fails if
+a class or token is in one but not the other, or if an example uses one that
+doesn't exist.
+
 ### Roadmap
 
 The [roadmap](/documentation/roadmap) is the one feed that is not a plugin: it
@@ -190,7 +210,8 @@ anything to fall back on. Each feed is written to degrade instead of failing the
 deploy: news retries and then falls back to its cache (cold in CI, so the
 retries are what matter there); a failed roadmap fetch publishes a roadmap with
 no release sections and logs a warning; a failed tool dump means the tool pages
-are not generated for that build, and the plugin logs an error. In every case the
+are not generated for that build, and the plugin logs an error; so does a build
+without PHP for the Formulize UI reference. In every case the
 site still builds and deploys. Slightly incomplete beats broken.
 
 ## How it deploys

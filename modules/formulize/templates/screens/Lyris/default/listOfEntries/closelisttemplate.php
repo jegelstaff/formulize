@@ -4,13 +4,13 @@ print "</tbody></table>";
 
 if($calculationResults) {
 	print "
-	<table class='fz-table'>
+	<table class='lyris-list-table'>
 		$calculationResults
 	</table>";
 }
 
 if($noDataFound) {
-	print "<p class='fz-table-empty'>$noDataFound</p>";
+	print "<div class='fz-empty lyris-list__empty'><p class='fz-empty__title'>$noDataFound</p></div>";
 }
 
-print "</div><!-- /.fz-list__body -->";
+print "</div><!-- /.lyris-list__body -->";

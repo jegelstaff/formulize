@@ -49,7 +49,7 @@ class formulizeFullWidthContentElement extends formulizeStaticContentElement {
 **Description:** A block of static text or HTML that spans the entire width of the form. Use it for instructions, headings, or contextual information shown to the people filling out the form. It does not collect any data.
 **Note:** For this type, the caption is an internal label only and is NOT shown to users. If you leave the content empty, the caption text will be displayed instead.
 **Properties:**
-- content (string, the text or HTML to display. You can include values from other elements in the current entry by putting an element handle in curly brackets, ie: {element_handle}. Plain text and basic HTML are supported. PHP code is not supported via this tool.)
+- content (string, the text or HTML to display. You can include values from other elements in the current entry by putting an element handle in curly brackets, ie: {element_handle}. Plain text and basic HTML are supported. PHP code is not supported via this tool. Lay out and style HTML with the Formulize UI classes, such as fz-callout for instructions: the formulize_ui topic of the get_documentation tool, if it is available, lists them.)
 **Examples:**
 - A simple instruction spanning the form: { content: \"Please complete all of the fields below.\" }
 - HTML with a reference to the value of another element: { content: \"<strong>Welcome, {first_name}!</strong>\" }";

@@ -6,7 +6,9 @@
 // is either:
 //   - type 'settings': a page of config settings, saved by delegating to the
 //     system preferences handler (preserving all its side-effects/validation), or
-//   - type 'page': an existing admin page relocated under this subject.
+//   - type 'page': an existing admin page relocated under this subject, or
+//   - type 'link': a link out to a page elsewhere in the site, such as the
+//     Formulize UI style guide, which renders in the site's own theme.
 
 // ui.php only routes here for registry subject slugs, so 'page' is always set;
 // resolve it (an unknown/empty slug just yields no subject and returns below).
@@ -23,6 +25,13 @@ if(!$resolved) {
 }
 $activeViewSlug = $resolved['slug'];
 $view = $resolved['view'];
+
+// A link view has nothing to render here: it is only ever a link in the subject's
+// navigation, but if it is asked for directly, go where it points.
+if(isset($view['type']) AND $view['type'] === 'link') {
+    header('Location: ' . XOOPS_URL . $view['url']);
+    exit();
+}
 $isPageView = (isset($view['type']) AND $view['type'] === 'page');
 
 // Webmaster-only applies to 'settings' views, which we render/save ourselves here.
@@ -63,7 +72,7 @@ $subnav = array();
 foreach($subject['views'] as $viewSlug => $viewDef) {
     $subnav[] = array(
         'name' => $viewDef['name'],
-        'url' => 'ui.php?page=' . $subjectSlug . '&view=' . $viewSlug,
+        'url' => (isset($viewDef['type']) AND $viewDef['type'] === 'link') ? XOOPS_URL . $viewDef['url'] : 'ui.php?page=' . $subjectSlug . '&view=' . $viewSlug,
         'active' => ($viewSlug === $activeViewSlug),
     );
 }

@@ -8,11 +8,11 @@ if($downloadCalculationsURL AND $downloadCalculationsText) {
 }
 
 // in fixed pixel width mode, the column cells wrap their content so the pixel widths hold instead of growing to fit it (see the Lyris style.css)
-$fixedColumnsClass = !empty($fixedColumnWidths) ? ' fz-table--fixed-columns' : '';
+$fixedColumnsClass = !empty($fixedColumnWidths) ? ' lyris-list-table--fixed-columns' : '';
 
 print "
-<div class='fz-list__body' id='formulize-list-of-entries'>
-	<table class='fz-table fz-table--cozy$fixedColumnsClass'>
+<div class='lyris-list__body' id='formulize-list-of-entries'>
+	<table class='fz-table lyris-list-table lyris-list-table--cozy$fixedColumnsClass'>
 	<thead>";
 
 		if($headersShown) {
@@ -21,10 +21,10 @@ print "
 
 		if($searchesShown) {
 
-			print "<tr class='fz-search-row' hidden>";
+			print "<tr class='lyris-search-row' hidden>";
 
 			if($searchHelp OR $toggleSearches) {
-				print "<td class='fz-cb head' id='celladdress_1_margin'>$toggleSearches $searchHelp</td>";
+				print "<td class='lyris-cb head' id='celladdress_1_margin'>$toggleSearches $searchHelp</td>";
 			}
 
 			foreach($columns as $columnNumber=>$elementHandle) {
@@ -71,7 +71,7 @@ function drawHeaderRow($headers, $checkBoxesShown, $viewEntryLinksShown, $column
 	$cells = array();
 
 	if($checkBoxesShown OR $viewEntryLinksShown) {
-		$cells[] = "<th class='fz-cb' id='celladdress_h$headingRowNumber"."_margin'></th>";
+		$cells[] = "<th class='lyris-cb' id='celladdress_h$headingRowNumber"."_margin'></th>";
 	}
 
 	$columnNumber = 0;
@@ -108,7 +108,7 @@ function clickableSortLink($elementHandle, $clickableContent) {
 	// is FontAwesome markup, which Lyris doesn't load, so we build our own SVG below
 	list($title,) = getSortTitleAndIcon($elementHandle);
 
-	return "<a class='fz-th-sort' href='' title='" . htmlspecialchars($title) . "' onclick='sort_data(\"$elementHandle\", event.shiftKey); return false;'>"
+	return "<a class='lyris-th-sort' href='' title='" . htmlspecialchars($title) . "' onclick='sort_data(\"$elementHandle\", event.shiftKey); return false;'>"
 		. $clickableContent
 		. lyrisSortIndicator($elementHandle)
 		. "</a>";
@@ -136,13 +136,13 @@ function lyrisSortIndicator($elementHandle) {
 	$sortPos = array_search($elementHandle, $sortList);
 	if ($sortPos === false) {
 		// not sorted, just the faint sortable hint
-		return "<span class='fz-sort-ico' aria-hidden='true'>$iconSort</span>";
+		return "<span class='lyris-sort-ico' aria-hidden='true'>$iconSort</span>";
 	}
 
 	$direction = (isset($orderList[$sortPos]) && $orderList[$sortPos] == 'SORT_DESC') ? $iconDesc : $iconAsc;
-	$badge = count($sortList) > 1 ? "<span class='fz-sort-badge'>" . ($sortPos + 1) . "</span>" : "";
+	$badge = count($sortList) > 1 ? "<span class='lyris-sort-badge'>" . ($sortPos + 1) . "</span>" : "";
 
-	return "<span class='fz-sort-ico fz-sort-ico--active' aria-hidden='true'>$direction$badge</span>";
+	return "<span class='lyris-sort-ico lyris-sort-ico--active' aria-hidden='true'>$direction$badge</span>";
 }
 
 /**

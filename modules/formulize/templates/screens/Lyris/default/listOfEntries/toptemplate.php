@@ -8,27 +8,27 @@ $listSid  = (isset($screen) AND is_object($screen)) ? intval($screen->getVar('si
 
 // total entries in the list across all pages, shown beside the title
 $listTotalCount = isset($GLOBALS['formulize_countMasterResultsForPageNumbers']) ? intval($GLOBALS['formulize_countMasterResultsForPageNumbers']) : 0;
-$listTotalCountMarkup = $listTotalCount > 0 ? "<span class='fz-list__count'>$listTotalCount entries</span>" : "";
+$listTotalCountMarkup = $listTotalCount > 0 ? "<span class='lyris-list__count'>$listTotalCount entries</span>" : "";
 
 print "
 
 $submitButton
 $procedureResults
 
-<div class='fz-list-screen' data-fz-sid='$listSid'>
+<div class='lyris-list-screen' data-lyris-sid='$listSid'>
 
-  <div class='fz-list__titlebar'>
-    <div class='fz-list__titlebar-start'>
-      <h1 class='fz-list__title'>$title</h1>
+  <div class='fz-toolbar lyris-list__titlebar'>
+    <div class='fz-toolbar__start'>
+      <h1 class='lyris-list__title'>$title</h1>
       $listTotalCountMarkup
     </div>
-    <div class='fz-list__titlebar-end'>
+    <div class='fz-toolbar__end'>
       $addButton
 			$currentViewList";
 
 if ($searchesShown) {
     print "
-      <button id='fz-filter-toggle' type='button' class='fz-btn fz-btn--ghost fz-btn--icon' aria-label='Toggle filters' title='Toggle filters'>
+      <button id='lyris-filter-toggle' type='button' class='fz-btn fz-btn--ghost fz-btn--icon' aria-label='Toggle filters' title='Toggle filters'>
         <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3 5h18M6 12h12M10 19h4'/></svg>
       </button>";
 }
@@ -42,13 +42,13 @@ $hasOtherSection   = ($calcButton OR $proceduresButton OR $notifButton);
 
 if ($moreActionsButton AND ($hasEntriesSection OR $hasViewSection OR $hasOtherSection)) {
   print "
-      <div class='fz-list__more-wrap'>
+      <div class='lyris-list__more-wrap'>
         $moreActionsButton
-        <div id='more-action-buttons' class='fz-list__action-panel fz-panel'>";
+        <div id='more-action-buttons' class='lyris-list__action-panel lyris-panel'>";
 
   if ($hasEntriesSection) {
     print "
-          <div class='fz-pop__group'>Entries</div>
+          <div class='lyris-pop__group'>Entries</div>
           $addMultiButton
           $addProxyButton
           $importButton
@@ -56,9 +56,9 @@ if ($moreActionsButton AND ($hasEntriesSection OR $hasViewSection OR $hasOtherSe
   }
 
   if ($hasViewSection) {
-    if ($hasEntriesSection) { print "\n          <div class='fz-pop__sep'></div>"; }
+    if ($hasEntriesSection) { print "\n          <div class='lyris-pop__sep'></div>"; }
     print "
-          <div class='fz-pop__group'>View</div>
+          <div class='lyris-pop__group'>View</div>
           $changeColsButton
           $saveViewButton
           $resetViewButton
@@ -66,7 +66,7 @@ if ($moreActionsButton AND ($hasEntriesSection OR $hasViewSection OR $hasOtherSe
   }
 
   if ($hasOtherSection) {
-    if ($hasEntriesSection OR $hasViewSection) { print "\n          <div class='fz-pop__sep'></div>"; }
+    if ($hasEntriesSection OR $hasViewSection) { print "\n          <div class='lyris-pop__sep'></div>"; }
     print "
           $calcButton
           $proceduresButton
@@ -82,14 +82,13 @@ print "
     </div>
   </div>
 
-  <div id='fz-selection-bar' class='fz-selection-bar'>
-    <div class='fz-selection-bar__start'>
+  <div id='lyris-selection-bar' class='fz-toolbar lyris-selection-bar'>
+    <div class='fz-toolbar__start lyris-selection-bar__start'>
       $clearSelectButton
       <span class='js-selection-count'></span>
       $selectAllButton
     </div>
-    <div class='fz-spacer'></div>
-    <div class='fz-selection-bar__actions'>
+    <div class='fz-toolbar__end lyris-selection-bar__actions'>
       $cloneButton
       $changeOwnerButton
       $deleteButton

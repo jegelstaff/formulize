@@ -235,7 +235,7 @@ if($screen) {
 // entryId/fid let the host track what is actually loaded (the add-new flow renders a
 // just-created sub entry the client has never seen); parentEntryId reports the resolved
 // parent id so a host that opened a brand-new parent can fix up its navigation state.
-print "<script type=\"application/json\" class=\"fz-drawer-meta\">".json_encode(array(
+print "<script type=\"application/json\" class=\"formulize-drawer-meta\">".json_encode(array(
     'title' => $drawerTitle,
     'fid' => intval($fid),
     'entryId' => $entry_id ? intval($entry_id) : 'new',

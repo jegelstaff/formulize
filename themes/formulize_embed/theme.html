@@ -49,10 +49,10 @@
 
 </head>
 
-<{* fz-inline is the class a theme can key off for a page drawn without its chrome, whose document
+<{* formulize-inline is the class a theme can key off for a page drawn without its chrome, whose document
    scrolls rather than a pane inside it, and whose lists flow rather than filling a fixed height -
    which is exactly this page. Lyris uses it for its own chrome-less pages. *}>
-<body id="<{$icms_dirname}>" class="<{$icms_langcode}> fz-inline<{if isset($formulize_screen_id) && $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}>" style="display: none;">
+<body id="<{$icms_dirname}>" class="<{$icms_langcode}> formulize-inline<{if isset($formulize_screen_id) && $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}>" style="display: none;">
 
 <script type='text/javascript'>
 // Inside a frame, nothing here scrolls: the frame is sized to its whole content and the page hosting

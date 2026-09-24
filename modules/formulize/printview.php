@@ -70,6 +70,7 @@ if (!$formulizeConfig['printviewStylesheets']) {
     $formulizeCssVersion = formulize_get_file_version('/modules/formulize/templates/css/formulize.css');
     print "
 		<link rel='stylesheet' type='text/css' media='all' href='".xoops_getcss($xoopsConfig['theme_set'])."'>
+		<link rel='stylesheet' type='text/css' media='all' href='".XOOPS_URL.formulize_uiStylesheetPath()."'>
 		<link rel='stylesheet' type='text/css' media='all' href='".XOOPS_URL."/modules/formulize/templates/css/formulize.css?v=".$formulizeCssVersion."'>
 ";
 

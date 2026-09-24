@@ -480,7 +480,7 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 			'pageWord'           => _formulize_DMULTI_PAGE,
 			'ofWord'             => _formulize_DMULTI_OF,
 		);
-		print "\n<script type=\"application/json\" class=\"fz-multipage-nav\">".json_encode($navMeta)."</script>\n";
+		print "\n<script type=\"application/json\" class=\"formulize-multipage-nav\">".json_encode($navMeta)."</script>\n";
 
 		// The form-level buttons the full page rendering shows alongside the paging
 		// controls: the screen's save and close buttons (savePageButton/closePageButton,

@@ -17,22 +17,22 @@ if($showTabs) {
     </div>";
 }
 
-// `.fz-form-screen` carries the form-screen density tokens; the inner
+// `.lyris-form-screen` carries the form-screen density tokens; the inner
 // container carries the design-system label-mode modifier. Density stays at
-// the design system's default (`.fz-form` = 38px controls) - issue #113
-// removed the `.fz-form--compact` modifier from form screens. The modifier
+// the design system's default (`.lyris-form` = 38px controls) - issue #113
+// removed the `.lyris-form--compact` modifier from form screens. The modifier
 // is still defined in the stylesheet, for a future per-screen setting.
 print "
-    <div class='card fz-form-screen'>";
+    <div class='fz-card lyris-form-card lyris-form-screen'>";
 
         if($formTitle) {
             print "
-            <div class='card__header'>
-                <h3 class='card__title'>".$formTitle."</h3>
+            <div class='fz-card__header lyris-form-card__header'>
+                <h3 class='fz-card__title'>".$formTitle."</h3>
             </div>";
         }
 
         print "
-        <div class='card__body'>
-            <div class='fz-form fz-form--label-top form-container'>
+        <div class='lyris-form-card__body'>
+            <div class='lyris-form lyris-form--label-top form-container'>
 ";

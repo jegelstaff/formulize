@@ -43,7 +43,7 @@ bundle exec jekyll serve --livereload
 That injects a small script into every page which reloads the tab itself once
 the rebuild finishes, so the browser follows along beside the editor.
 
-Two things the watcher will not pick up:
+Three things the watcher will not pick up:
 
 - **Changes to `_config.yml`.** Jekyll reads it once, at startup. Stop the
   server and start it again after editing it.
@@ -53,6 +53,12 @@ Two things the watcher will not pick up:
   listed under `exclude:` in `_config.yml` for exactly that reason — without
   it the watcher sees its own output change and rebuilds forever. Leave them
   excluded.
+- **Changes to the Formulize UI catalog.** The
+  [Formulize UI](/documentation/formulize_ui/) pages are generated from
+  `modules/formulize/include/ui_catalog.php`, which is outside `docs/`.
+  Restart the server to see a change to it. Generating them needs PHP, or the
+  local development environment running; see
+  [GitHub Pages config](/documentation/version_control/documentation/github_pages).
 
 ### Always use `bundle exec`
 

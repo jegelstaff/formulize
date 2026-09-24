@@ -898,42 +898,42 @@ div[id^=cellcontents_1_] label {
   /* Optional leading (row caption) and trailing (final cell) tracks. Left
      empty here and filled in by the modifier classes below, so that the
      template below stays a single declaration. */
-  --fz-grid-row-header-track: ;
-  --fz-grid-final-track: ;
+  --formulize-grid-row-header-track: ;
+  --formulize-grid-final-track: ;
   grid-template-columns:
-    var(--fz-grid-row-header-track)
-    repeat(var(--fz-grid-data-columns, 1), minmax(0, 1fr))
-    var(--fz-grid-final-track);
-  column-gap: var(--fz-grid-column-gap, 1em);
-  row-gap: var(--fz-grid-row-gap, 0.5em);
+    var(--formulize-grid-row-header-track)
+    repeat(var(--formulize-grid-data-columns, 1), minmax(0, 1fr))
+    var(--formulize-grid-final-track);
+  column-gap: var(--formulize-grid-column-gap, 1em);
+  row-gap: var(--formulize-grid-row-gap, 0.5em);
   align-items: stretch;
 }
 
-.formulize-grid.fz-grid--has-row-headers {
-  --fz-grid-row-header-track: max-content;
+.formulize-grid.formulize-grid--has-row-headers {
+  --formulize-grid-row-header-track: max-content;
 }
 
-.formulize-grid.fz-grid--has-final-column {
-  --fz-grid-final-track: max-content;
+.formulize-grid.formulize-grid--has-final-column {
+  --formulize-grid-final-track: max-content;
 }
 
-.formulize-grid > .fz-grid__row {
+.formulize-grid > .formulize-grid__row {
   display: grid;
   grid-column: 1 / -1;
   grid-template-columns: subgrid;
-  column-gap: var(--fz-grid-column-gap, 1em);
+  column-gap: var(--formulize-grid-column-gap, 1em);
   align-items: end;
 }
 
 @supports not (grid-template-columns: subgrid) {
-  .formulize-grid > .fz-grid__row {
+  .formulize-grid > .formulize-grid__row {
     display: contents;
   }
 }
 
 /* minmax(0, 1fr) tracks plus min-width:0 are what keep a long value inside its
    cell instead of forcing the grid wider than the form. */
-.formulize-grid .fz-grid__cell {
+.formulize-grid .formulize-grid__cell {
   min-width: 0;
   align-self: end;
 }
@@ -948,15 +948,15 @@ div[id^=cellcontents_1_] label {
 
 /* Alternating shading, from the element's "background" setting: horizontal
    emphasises rows, vertical emphasises columns. A theme turns it on by giving
-   --fz-grid-stripe-bg a colour. With no colour the grid is unshaded, which is
+   --formulize-grid-stripe-bg a colour. With no colour the grid is unshaded, which is
    what both shipped themes did with the old table markup - the even/odd
    classes were emitted but nothing ever painted them. */
-.formulize-grid.fz-grid--shade-rows > .fz-grid__row--odd {
-  background: var(--fz-grid-stripe-bg, transparent);
+.formulize-grid.formulize-grid--shade-rows > .formulize-grid__row--odd {
+  background: var(--formulize-grid-stripe-bg, transparent);
 }
 
-.formulize-grid.fz-grid--shade-columns .fz-grid__cell.odd {
-  background: var(--fz-grid-stripe-bg, transparent);
+.formulize-grid.formulize-grid--shade-columns .formulize-grid__cell.odd {
+  background: var(--formulize-grid-stripe-bg, transparent);
 }
 
 /* Caption, when the element is set to show its heading above the grid. */
@@ -1061,7 +1061,7 @@ button.formulize-ai-copy-btn:active {
 }
 
 /* Textarea word/character limit counter */
-.fz-limit-counter {
+.formulize-limit-counter {
 	font-size: 0.85em;
 	margin-top: 0.5em;
 	text-align: right;
@@ -1069,19 +1069,19 @@ button.formulize-ai-copy-btn:active {
 	max-width: 300px;
 	box-sizing: border-box;
 }
-.fz-limit-counter.fz-limit-green {
+.formulize-limit-counter.formulize-limit-green {
 	color: #2e7d32;
 }
-.fz-limit-counter.fz-limit-orange {
+.formulize-limit-counter.formulize-limit-orange {
 	color: #e65100;
 }
-.fz-limit-counter.fz-limit-red {
+.formulize-limit-counter.formulize-limit-red {
 	color: #c62828;
 	font-weight: bold;
 }
 
 @media (min-width: 768px) {
-	.fz-limit-counter {
+	.formulize-limit-counter {
 		max-width: 700px;
 	}
 }

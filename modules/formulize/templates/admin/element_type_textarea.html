@@ -16,7 +16,7 @@
       </select>
     </div>
 
-    <div class="form-item" id="fz-limit-number-row" <{if !$content.ele_value.counter_type || $content.ele_value.counter_type == 'none'}>style="display:none"<{/if}>>
+    <div class="form-item" id="formulize-limit-number-row" <{if !$content.ele_value.counter_type || $content.ele_value.counter_type == 'none'}>style="display:none"<{/if}>>
       <label for="elements-ele_value-limit-number"><{$smarty.const._AM_ELE_TEXTAREA_LIMIT_NUMBER}></label>
       <input type="text" id="elements-ele_value-limit-number" name="elements-ele_value[limit_number]" value="<{$content.ele_value.limit_number|default:0}>" size="6" maxlength="6"/>
     </div>
@@ -24,9 +24,9 @@
     <script type="text/javascript">
     $("#elements-ele_value-counter-type").change(function() {
       if ($(this).val() === "none") {
-        $("#fz-limit-number-row").hide();
+        $("#formulize-limit-number-row").hide();
       } else {
-        $("#fz-limit-number-row").show();
+        $("#formulize-limit-number-row").show();
       }
     });
     </script>

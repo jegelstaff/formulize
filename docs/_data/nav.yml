@@ -88,6 +88,8 @@
       url: /documentation/configuration_as_code/
     - label: Custom form elements
       url: /documentation/custom_form_elements/
+    - label: Formulize UI
+      url: /documentation/formulize_ui/
     - label: Roadmap
       url: /documentation/roadmap/
 

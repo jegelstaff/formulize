@@ -13334,6 +13334,44 @@ function formulize_get_file_version($relativeFilePath) {
 }
 
 /**
+ * The Formulize UI stylesheet: the public tokens, layout classes, components and
+ * utilities that any theme and any template can use. Every page that loads
+ * Formulize's own stylesheet loads this one first, through here, so that where it
+ * lives and how it is versioned can change in one place.
+ *
+ * @return string Path relative to XOOPS_URL, with a cache-busting version
+ */
+function formulize_uiStylesheetPath() {
+	$path = '/modules/formulize/templates/css/formulize-ui.css';
+	return $path . '?v=' . formulize_get_file_version($path);
+}
+
+/**
+ * The link tag for the Formulize UI stylesheet, for a theme to print in its head
+ * so that the classes work on every page it draws, including the pages outside
+ * the Formulize module (the home page, the account pages).
+ *
+ * Empty on the pages where Formulize has already added the stylesheet to the
+ * theme's head (every page that loads Formulize's own stylesheet), so that it
+ * is never loaded twice. Print it before the theme's own stylesheets, so the
+ * theme's styling comes after it in the cascade, as it does on those pages.
+ *
+ * @return string HTML, or '' when the stylesheet is already in the head
+ */
+function formulize_uiStylesheetLink() {
+	global $xoTheme;
+	$path = explode('?', formulize_uiStylesheetPath())[0];
+	if (is_object($xoTheme) AND !empty($xoTheme->metas['stylesheet'])) {
+		foreach (array_keys($xoTheme->metas['stylesheet']) as $src) {
+			if (explode('?', $src)[0] == $path) {
+				return '';
+			}
+		}
+	}
+	return '<link rel="stylesheet" type="text/css" media="all" href="' . XOOPS_URL . formulize_uiStylesheetPath() . '" />' . "\n";
+}
+
+/**
  * The URL of Formulize's "saving" animation, in the site's language where there is one.
  *
  * Full screen this is what showSavingGraphic() reveals over the dimmed form while a save

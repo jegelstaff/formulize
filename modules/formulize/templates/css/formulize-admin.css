@@ -1267,10 +1267,10 @@ ul.admin-application-form-list li {
   display: inline-block;
   float: right; }
 
-#fz-admin-toolbar {
+#formulize-admin-toolbar {
   float: right; }
 
-#fz-admin-toolbar a {
+#formulize-admin-toolbar a {
   background-color: #59a7d4;
   background: -webkit-linear-gradient(top, #59a7d4, #3391c7);
   background: -moz-linear-gradient(top, #59a7d4, #3391c7);
@@ -2480,14 +2480,14 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 
    Follows the same visual language as the config settings pages above: bold
    caption over a muted description, generous row spacing, and grey hairlines
-   for grouping. Everything is scoped to .fz-appearance so the page's own
+   for grouping. Everything is scoped to .formulize-appearance so the page's own
    fieldsets opt out of the module-wide blue fieldset/legend styling without
    changing it for any other admin screen.
    --------------------------------------------------------------------------- */
 
 /* The theme picker governs every group below it, so it reads as a page-level
    control in its own strip rather than as the first setting in a list. */
-.fz-appearance .fz-appearance-theme {
+.formulize-appearance .formulize-appearance-theme {
 	display: flex;
 	align-items: center;
 	flex-wrap: wrap;
@@ -2498,12 +2498,12 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 	border: 1px solid #e3e7e9;
 	border-radius: 6px;
 }
-.fz-appearance .fz-appearance-theme > label {
+.formulize-appearance .formulize-appearance-theme > label {
 	font-weight: bold;
 	padding: 0;
 	margin: 0;
 }
-.fz-appearance .fz-appearance-theme-note {
+.formulize-appearance .formulize-appearance-theme-note {
 	flex: 1 1 100%;
 	margin: 0;
 	font-size: 0.85em;
@@ -2513,7 +2513,7 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 
 /* Status messages, so a save confirmation or a permissions warning is a banner
    rather than a differently coloured paragraph. */
-.fz-appearance .fz-appearance-notice {
+.formulize-appearance .formulize-appearance-notice {
 	margin: 0 0 1em 0;
 	padding: 0.7em 1em;
 	border: 1px solid;
@@ -2521,15 +2521,15 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 	font-weight: bold;
 	line-height: 1.4;
 }
-.fz-appearance .fz-appearance-notice-success {
+.formulize-appearance .formulize-appearance-notice-success {
 	background: #eaf5ee;
 	border-color: #2a7a4f;
 	color: #23603e; }
-.fz-appearance .fz-appearance-notice-warning {
+.formulize-appearance .formulize-appearance-notice-warning {
 	background: #fdf4e3;
 	border-color: #a86a14;
 	color: #8a5610; }
-.fz-appearance .fz-appearance-notice-error {
+.formulize-appearance .formulize-appearance-notice-error {
 	background: #fdecea;
 	border-color: #b3261e;
 	color: #8f1e18; }
@@ -2537,14 +2537,14 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 /* Each group is a light card. The blue module-wide fieldset border would fight
    with the blue tab strip directly above the page, so these stay neutral and let
    the legends carry the hierarchy. */
-.fz-appearance .fz-appearance-group {
+.formulize-appearance .formulize-appearance-group {
 	margin: 0 0 1.5em 0;
 	padding: 0.5em 1.5em 1.5em 1.5em;
 	background: #fff;
 	border: 1px solid #ddd;
 	border-radius: 6px;
 }
-.fz-appearance .fz-appearance-group > legend {
+.formulize-appearance .formulize-appearance-group > legend {
 	padding: 0 0.5em;
 	margin-left: -0.35em;
 	font-size: 1.05em;
@@ -2555,7 +2555,7 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 /* Colour swatches: equal-weight items that belong side by side, so they flow
    across the available width and drop to fewer columns as it narrows, instead of
    a table's single stack with dead space beside it. */
-.fz-appearance .fz-appearance-colours {
+.formulize-appearance .formulize-appearance-colours {
 	display: grid;
 	grid-template-columns: 1fr;
 	gap: 1.4em 2em;
@@ -2566,21 +2566,21 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
    exactly. A fourth column on a wide screen would strand a single swatch on a
    row of its own. */
 @media (min-width: 700px) {
-	.fz-appearance .fz-appearance-colours { grid-template-columns: repeat(2, 1fr); }
+	.formulize-appearance .formulize-appearance-colours { grid-template-columns: repeat(2, 1fr); }
 }
 @media (min-width: 1100px) {
-	.fz-appearance .fz-appearance-colours { grid-template-columns: repeat(3, 1fr); }
+	.formulize-appearance .formulize-appearance-colours { grid-template-columns: repeat(3, 1fr); }
 }
-.fz-appearance .fz-appearance-colour {
+.formulize-appearance .formulize-appearance-colour {
 	display: flex;
 	align-items: flex-start;
 	gap: 0.8em;
 }
-.fz-appearance .fz-appearance-colour-text {
+.formulize-appearance .formulize-appearance-colour-text {
 	min-width: 0;
 	flex: 1 1 auto;
 }
-.fz-appearance .fz-appearance-colour-text > label {
+.formulize-appearance .formulize-appearance-colour-text > label {
 	display: block;
 	padding: 0;
 	font-weight: bold;
@@ -2589,7 +2589,7 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 
 /* The native colour input is inset and chrome-heavy by default; trimming it back
    to a plain rounded chip lines the nine of them up as a palette. */
-.fz-appearance .fz-appearance-swatch {
+.formulize-appearance .formulize-appearance-swatch {
 	flex: 0 0 auto;
 	width: 46px;
 	height: 34px;
@@ -2599,18 +2599,18 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 	border-radius: 5px;
 	cursor: pointer;
 }
-.fz-appearance .fz-appearance-swatch:focus {
+.formulize-appearance .formulize-appearance-swatch:focus {
 	background: #fff; /* the admin-wide yellow focus fill would tint the chip */
 	outline: 2px solid #0085b6;
 	outline-offset: 1px;
 }
-.fz-appearance .fz-appearance-swatch::-webkit-color-swatch-wrapper { padding: 0; }
-.fz-appearance .fz-appearance-swatch::-webkit-color-swatch { border: none; border-radius: 3px; }
-.fz-appearance .fz-appearance-swatch::-moz-color-swatch { border: none; border-radius: 3px; }
+.formulize-appearance .formulize-appearance-swatch::-webkit-color-swatch-wrapper { padding: 0; }
+.formulize-appearance .formulize-appearance-swatch::-webkit-color-swatch { border: none; border-radius: 3px; }
+.formulize-appearance .formulize-appearance-swatch::-moz-color-swatch { border: none; border-radius: 3px; }
 
 /* Kept in the flow with visibility rather than display, so a swatch that has been
    changed doesn't shunt the rows beside it down by a line. */
-.fz-appearance .appearance-reset {
+.formulize-appearance .appearance-reset {
 	display: inline-block;
 	margin-top: 0.3em;
 	font-size: 0.85em;
@@ -2618,27 +2618,27 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 
 /* Font and logo fields: caption, control, then the explanation underneath, which
    is the same reading order the config settings pages use. */
-.fz-appearance .fz-appearance-field {
+.formulize-appearance .formulize-appearance-field {
 	margin-top: 1.1em;
 }
-.fz-appearance .fz-appearance-field > label {
+.formulize-appearance .formulize-appearance-field > label {
 	display: block;
 	padding: 0;
 	margin-bottom: 0.3em;
 	font-weight: bold;
 }
-.fz-appearance .fz-appearance-field > label.fz-appearance-checkbox {
+.formulize-appearance .formulize-appearance-field > label.formulize-appearance-checkbox {
 	font-weight: normal;
 	margin-bottom: 0;
 }
-.fz-appearance .fz-appearance-field > label.fz-appearance-checkbox input {
+.formulize-appearance .formulize-appearance-field > label.formulize-appearance-checkbox input {
 	margin-right: 0.4em;
 }
-.fz-appearance .fz-appearance-field input[type=text] {
+.formulize-appearance .formulize-appearance-field input[type=text] {
 	width: 270px;
 	max-width: 100%;
 }
-.fz-appearance .fz-appearance-hint {
+.formulize-appearance .formulize-appearance-hint {
 	display: block;
 	margin-top: 0.3em;
 	font-size: 0.9em;
@@ -2651,14 +2651,14 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
    it carries the family, so the two settings combine the way they will on the site.
    No fixed height, but a generous line-height, so swapping between fonts of
    different metrics doesn't make the rows below it jump. */
-.fz-appearance .fz-appearance-font-preview {
+.formulize-appearance .formulize-appearance-font-preview {
 	margin-top: 0.75em;
 	padding: 0.9em 1em;
 	background: #f6f8f9;
 	border: 1px solid #e3e7e9;
 	border-radius: 6px;
 }
-.fz-appearance .fz-appearance-font-preview-label {
+.formulize-appearance .formulize-appearance-font-preview-label {
 	display: block;
 	margin-bottom: 0.35em;
 	font-size: 0.75em;
@@ -2667,20 +2667,20 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 	text-transform: uppercase;
 	color: #777;
 }
-.fz-appearance .fz-appearance-font-preview-sample {
+.formulize-appearance .formulize-appearance-font-preview-sample {
 	display: block;
 	line-height: 1.5;
 	color: #222;
 }
 /* The secondary font's sample is shown the way headings and labels use it: heavier
    and a step up in size, so the choice is judged in the role it will be filling. */
-.fz-appearance .fz-appearance-font-preview-sample--heading {
+.formulize-appearance .formulize-appearance-font-preview-sample--heading {
 	font-size: 1.35em;
 	font-weight: 600;
 	line-height: 1.3;
 }
-.fz-appearance .fz-appearance-logo,
-.fz-appearance .fz-appearance-favicon {
+.formulize-appearance .formulize-appearance-logo,
+.formulize-appearance .formulize-appearance-favicon {
 	display: block;
 	max-height: 60px;
 	max-width: 100%;
@@ -2691,7 +2691,7 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 }
 /* A favicon is tiny, and is judged at the size a browser tab shows it at, so its
    preview is shown at that size rather than blown up to the logo's box. */
-.fz-appearance .fz-appearance-favicon {
+.formulize-appearance .formulize-appearance-favicon {
 	width: 32px;
 	height: 32px;
 	box-sizing: content-box;
@@ -2700,7 +2700,7 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 
 /* The two submits are the end of the page, so they sit below a hairline in the
    same way the config pages separate their sections. */
-.fz-appearance .fz-appearance-actions {
+.formulize-appearance .formulize-appearance-actions {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 0.75em;
@@ -2708,6 +2708,6 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 	padding-top: 1.5em;
 	border-top: 1px solid #ccc;
 }
-.fz-appearance .fz-appearance-destructive {
+.formulize-appearance .formulize-appearance-destructive {
 	color: #8f1e18;
 }

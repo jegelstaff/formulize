@@ -119,6 +119,7 @@ if(isset($_POST['appearance_save']) OR isset($_POST['appearance_reset'])) {
         $submitted['appearance_headingfont'] = isset($_POST['appearance_headingfont']) ? $_POST['appearance_headingfont'] : '';
         $submitted['appearance_headingcustomfont'] = isset($_POST['appearance_headingcustomfont']) ? $_POST['appearance_headingcustomfont'] : '';
         $submitted['appearance_fontsize'] = isset($_POST['appearance_fontsize']) ? $_POST['appearance_fontsize'] : '';
+        $submitted['appearance_density'] = isset($_POST['appearance_density']) ? $_POST['appearance_density'] : '';
         foreach(array_keys(formulize_appearanceUploads()) as $uploadSetting) {
             $submitted[$uploadSetting] = $settings[$uploadSetting]; // kept unless removed or replaced below
         }
@@ -195,7 +196,7 @@ foreach($headingFontMap as $key => $font) {
 }
 
 // What each choice actually renders as, for the preview. The default choice is the
-// theme's own --font-sans (Geist on Lyris, Poppins on Anari), not the font map's
+// theme's own --fz-font-sans (Geist on Lyris, Poppins on Anari), not the font map's
 // nominal Geist stack, so previewing "default" shows the theme being edited. 'custom'
 // carries nothing: the browser builds it from whatever family name has been typed in.
 $themeTokens = formulize_appearanceThemeTokens($selectedTheme);
@@ -205,7 +206,7 @@ foreach($fontMap as $key => $font) {
         $fontStacks[$key] = array('stack' => '', 'google' => '');
     } elseif($key == 'geist') {
         $fontStacks[$key] = array(
-            'stack' => isset($themeTokens['--font-sans']) ? $themeTokens['--font-sans'] : $font['stack'],
+            'stack' => isset($themeTokens['--fz-font-sans']) ? $themeTokens['--fz-font-sans'] : $font['stack'],
             'google' => str_replace(' ', '+', formulize_appearanceThemeFontName($selectedTheme)) . ':wght@400;500;600;700',
         );
     } else {
@@ -222,6 +223,11 @@ foreach(formulize_appearanceFontSizeMap($selectedTheme) as $size => $label) {
     $fontSizes[] = array('key' => $size, 'label' => $label);
 }
 $defaultFontSize = formulize_appearanceThemeContentSize($selectedTheme);
+
+$densities = array();
+foreach(formulize_appearanceDensityMap() as $key => $density) {
+    $densities[] = array('key' => $key, 'label' => $density['label']);
+}
 
 // The logo can still be sitting in the legacy uploads/appearance folder on a site
 // that had one uploaded before appearance files moved into the theme folders, so the
@@ -252,6 +258,9 @@ $adminPage['fontStacksJson'] = json_encode($fontStacks);
 $adminPage['fontSizes'] = $fontSizes;
 $adminPage['defaultFontSize'] = $defaultFontSize;
 $adminPage['currentFontSize'] = $settings['appearance_fontsize'] ? $settings['appearance_fontsize'] : $defaultFontSize;
+$adminPage['densities'] = $densities;
+$adminPage['currentDensity'] = $settings['appearance_density'] ? $settings['appearance_density'] : 'standard';
+$adminPage['themeUsesDensity'] = formulize_appearanceThemeUsesDensity($selectedTheme);
 $adminPage['logoUrl'] = $uploadUrls['appearance_logo'];
 $adminPage['faviconUrl'] = $uploadUrls['appearance_favicon'];
 $adminPage['saved'] = $saved;

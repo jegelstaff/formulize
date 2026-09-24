@@ -22,129 +22,135 @@
 
 :root {
   /* Colors */
-  --c-bg:            #f7f7f5;
-  --c-surface:       #ffffff;
-  --c-surface-2:     #fafaf8;
-  --c-surface-3:     #f1f1ed;
-  --c-overlay:       rgba(15, 17, 21, 0.45);
+  --fz-color-page:           #f7f7f5;
+  --fz-color-surface:        #ffffff;
+  --fz-color-surface-2:      #fafaf8;
+  --fz-color-surface-3:      #f1f1ed;
+  --fz-color-overlay:        rgba(15, 17, 21, 0.45);
 
-  --c-border:        #e6e6e1;
-  --c-border-strong: #d1d1cb;
-  --c-border-focus:  #1f2937;
+  --fz-color-border:         #e6e6e1;
+  --fz-color-border-strong:  #d1d1cb;
+  --fz-color-focus:          #1f2937;
 
-  --c-text:          #14161a;
-  --c-text-muted:    #5b6068;
-  --c-text-subtle:   #8a8e95;
-  --c-text-on-accent:#ffffff;
+  --fz-color-text:           #14161a;
+  --fz-color-text-muted:     #5b6068;
+  --fz-color-text-subtle:    #8a8e95;
+  --fz-color-on-accent:      #ffffff;
 
-  --c-accent:        #2e3340;
-  --c-accent-hover:  #1c2029;
-  --c-accent-soft:   #eef0f4;
-  --c-accent-soft-2: #dde1ea;
-  --c-accent-fg:     #2e3340;
+  --fz-color-accent:         #2e3340;
+  --fz-color-accent-hover:   #1c2029;
+  --fz-color-accent-soft:    #eef0f4;
+  --fz-color-accent-soft-2:  #dde1ea;
+  --fz-color-accent-text:    #2e3340;
 
-  --c-success:       #2a7a4f;
-  --c-success-soft:  #e6f1ea;
-  --c-warning:       #a86a14;
-  --c-warning-soft:  #fbecd2;
-  --c-danger:        #b3261e;
-  --c-danger-soft:   #f8e1de;
-  --c-info:          #2e5fa8;
-  --c-info-soft:     #e2ecf8;
+  --fz-color-success:        #2a7a4f;
+  --fz-color-success-soft:   #e6f1ea;
+  --fz-color-warning:        #a86a14;
+  --fz-color-warning-soft:   #fbecd2;
+  --fz-color-danger:         #b3261e;
+  --fz-color-danger-soft:    #f8e1de;
+  --fz-color-info:           #2e5fa8;
+  --fz-color-info-soft:      #e2ecf8;
 
   /* Typography */
-  --font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --fz-font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --fz-font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   /* The secondary font, used for headings, form labels, and the drawer's title.
-     Follows --font-sans unless the Appearance page has been given a second font
+     Follows --fz-font-sans unless the Appearance page has been given a second font
      to use, so one font throughout is the default and nothing here has to know
      which font that is. */
-  --font-heading: var(--font-sans);
+  --fz-font-heading: var(--fz-font-sans);
 
   /* Base font size: the root font size, applied to `html` in style.css, that the
-     --fs-* scale below is expressed as a proportion of. Changing it moves the
-     whole type scale together, which is what the Appearance page's "Text size"
-     setting does, and what a user's own profile font size setting does on top of
-     that (see theme.html). */
-  --font-size-base: 16px;
+     type scale and the spacing below are expressed as a proportion of. Changing
+     it makes the whole interface bigger or smaller together, which is what the
+     Appearance page's "Text size" setting does, and what a user's own profile
+     font size setting does on top of that (see theme.html). */
+  --formulize-font-size-base: 16px;
 
   /* How big this theme's standard content text is as a proportion of the base
-     above: the --fs-* step the rules for text in lists, tables and content use,
-     which in this theme is --fs-13, ie: 0.8125rem, ie: 13px against the 16px
-     base. The Appearance page reads this, and offers its "Text size" setting in
-     content pixels rather than base ones, because "font size" to the person
-     setting it means the size of the words on the screen, not the number the
-     scale happens to be derived from. It divides the size picked by this ratio
-     to get the base font size to set.
+     above: --fz-text-xs-plus, 0.8125rem, so 13px against the 16px base. The
+     Appearance page reads this, and offers its "Text size" setting in content
+     pixels rather than base ones, because "font size" to the person setting it
+     means the size of the words on the screen. It divides the size picked by
+     this ratio to get the base font size to set. Keep it in step with the size
+     the content rules use. */
+  --formulize-content-ratio: 0.8125;
 
-     Keep it in step with the --fs-* token the content rules actually use: it is
-     the one place that relationship is written down for anything outside this
-     stylesheet to read. */
-  --font-size-content-ratio: 0.8125;
+  /* The size scales below are Formulize UI's, the same in every theme (see
+     modules/formulize/templates/css/formulize-ui.css), because markup that
+     implementers write depends on them: they are Tailwind CSS's values. They are
+     declared here as well, with exactly the same values, because the pages this
+     theme draws outside the Formulize module (the home page, the account pages)
+     do not load formulize-ui.css. Don't change them here.
 
-  /* Type scale. Named for the pixel size each step is at the 16px default base,
-     and written in rem so every step stays that proportion of whatever the base
-     actually is: --fs-14 is 14px at a 16px base and 15.75px at an 18px one. */
-  --fs-11: 0.6875rem;
-  --fs-12: 0.75rem;
-  --fs-13: 0.8125rem;
-  --fs-14: 0.875rem;
-  --fs-15: 0.9375rem;
-  --fs-16: 1rem;
-  --fs-18: 1.125rem;
-  --fs-20: 1.25rem;
-  --fs-24: 1.5rem;
-  --fs-28: 1.75rem;
-  --fs-32: 2rem;
+     The standard content text in lists and tables is --fz-text-xs-plus,
+     0.8125rem: 13px at the 16px base. */
 
-  --lh-tight: 1.2;
-  --lh-snug:  1.35;
-  --lh-base:  1.5;
+  /* Type scale, in rem, so every step stays in proportion to the base above.
+     Each size has the line height Tailwind pairs it with. xs-plus is Formulize
+     UI's own step between xs and sm, which Tailwind has none for. */
+  --fz-text-xs:                 0.75rem;
+  --fz-text-xs--line-height:    1rem;
+  --fz-text-xs-plus:            0.8125rem;
+  --fz-text-xs-plus--line-height: 1.25rem;
+  --fz-text-sm:                 0.875rem;
+  --fz-text-sm--line-height:    1.25rem;
+  --fz-text-base:               1rem;
+  --fz-text-base--line-height:  1.5rem;
+  --fz-text-lg:                 1.125rem;
+  --fz-text-lg--line-height:    1.75rem;
+  --fz-text-xl:                 1.25rem;
+  --fz-text-xl--line-height:    1.75rem;
+  --fz-text-2xl:                1.5rem;
+  --fz-text-2xl--line-height:   2rem;
+  --fz-text-3xl:                1.875rem;
+  --fz-text-3xl--line-height:   2.25rem;
 
-  /* Spacing (4px scale) */
-  --s-1:  4px;
-  --s-2:  8px;
-  --s-3:  12px;
-  --s-4:  16px;
-  --s-5:  20px;
-  --s-6:  24px;
-  --s-7:  32px;
-  --s-8:  40px;
-  --s-9:  48px;
-  --s-10: 64px;
+  --fz-leading-tight:   1.25;
+  --fz-leading-snug:    1.375;
+  --fz-leading-normal:  1.5;
+
+  /* Spacing. Every space and size on the scale is a multiple of this step,
+     calc(var(--fz-spacing) * 4) for 1rem, and the density set on the Appearance
+     page changes it: 3.5px, 4px or 4.5px at the 16px base. */
+  --fz-spacing: 0.25rem;
+
+  /* Heights, on the same scale, so they follow the density too: buttons and
+     compact controls (32px at standard density), form fields (38px), list
+     rows (40px). */
+  --fz-control-height: calc(var(--fz-spacing) * 8);
+  --fz-field-height:   calc(var(--fz-spacing) * 9.5);
+  --fz-row-height:     calc(var(--fz-spacing) * 10);
 
   /* Radii */
-  --r-1: 4px;
-  --r-2: 6px;
-  --r-3: 8px;
-  --r-4: 10px;
-  --r-5: 12px;
-  --r-full: 999px;
+  --fz-radius-sm:   0.25rem;
+  --fz-radius-md:   0.375rem;
+  --fz-radius-lg:   0.5rem;
+  --fz-radius-xl:   0.75rem;
+  --fz-radius-full: 999px;
 
   /* Shadows */
-  --sh-1: 0 1px 0 rgba(15,17,21,.04);
-  --sh-2: 0 1px 2px rgba(15,17,21,.06), 0 1px 0 rgba(15,17,21,.04);
-  --sh-3: 0 4px 12px rgba(15,17,21,.08), 0 1px 2px rgba(15,17,21,.05);
-  --sh-4: 0 12px 32px rgba(15,17,21,.14), 0 2px 6px rgba(15,17,21,.06);
-  --sh-focus: 0 0 0 3px rgba(46,51,64,.15);
+  --fz-shadow-xs: 0 1px 0 rgba(15,17,21,.04);
+  --fz-shadow-sm: 0 1px 2px rgba(15,17,21,.06), 0 1px 0 rgba(15,17,21,.04);
+  --fz-shadow-md: 0 4px 12px rgba(15,17,21,.08), 0 1px 2px rgba(15,17,21,.05);
+  --fz-shadow-lg: 0 12px 32px rgba(15,17,21,.14), 0 2px 6px rgba(15,17,21,.06);
+  --fz-focus-ring: 0 0 0 3px rgba(46,51,64,.15);
 
-  /* Density */
-  --row-h-compact:     32px;
-  --row-h-cozy:        40px;
-  --row-h-comfortable: 52px;
-  --row-pad-x: var(--s-3);
+  /* List rows: side padding of a cell */
+  --lyris-row-padding-x: calc(var(--fz-spacing) * 3);
 
   /* Motion */
-  --ease: cubic-bezier(.2,.7,.3,1);
-  --dur-1: 120ms;
-  --dur-2: 200ms;
+  --fz-ease-out: cubic-bezier(.2,.7,.3,1);
+  --fz-duration-fast: 120ms;
+  --fz-duration: 200ms;
 
   /* Layout */
-  --header-h: 48px;
+  --lyris-header-height: 3rem;
   /* Height reserved at the bottom of the viewport for the masquerade bar.
      0px for everyone; only the rule in the "Masquerade bar" section (keyed off
      the bar actually being in the document) gives it a real value, so every
-     `- var(--masquerade-h)` below is a no-op unless someone is masquerading. */
-  --masquerade-h: 0px;
-  --sidebar-w: 220px;
+     `- var(--lyris-masquerade-height)` below is a no-op unless someone is masquerading. */
+  --lyris-masquerade-height: 0px;
+  --lyris-sidebar-width: 13.75rem;
 }

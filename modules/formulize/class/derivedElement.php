@@ -64,6 +64,8 @@ class formulizeDerivedElement extends formulizeElement {
 When derived values are recomputed, a dataset will be made available to the code in the derived value element. The dataset will contain all the data in the entry being saved, plus all the data from connected entries in other forms. To access this data, use PHP variables named after the element handles, ie: \$workshop_name, \$booking_date, etc. These variables will resolve to the value(s) of that element in the current dataset. There may be multiple values for a given element in the dataset. In that case, the variable will resolve to an array of values; otherwise it will be a scalar. Use is_array() to detect whether an element has multiple values at present or not.
 
 For more details on the internal Formulize API functions and methods you can use in this code, use the get_documentation tool.
+
+A derived value can output HTML, which is shown in lists and in the form. Lay it out and style it with the Formulize UI classes, such as fz-badge for a status: the formulize_ui topic of the get_documentation tool, if it is available, lists them.
 **Examples:**
 - A derived value element that puts the first name and last name together: { code: \"\$value = \$profile_first_name.' '.\$profile_last_name;\" }
 - A derived value element that calculates a 10% tax on a subtotal field: { code: \"\$value = \$order_subtotal * 0.10;\", decimals: \"2\", prefix: \"$\" }

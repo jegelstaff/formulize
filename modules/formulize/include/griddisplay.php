@@ -164,11 +164,11 @@ function displayGrid($fid, $entry_id, $rowcaps, $colcaps, $title="", $orientatio
 	// Tab, like any other run of form fields. role="table" keeps the row and
 	// header relationships the <table> used to give assistive technology
 	// without promising keyboard behaviour that is not implemented.
-	$gridClasses = "formulize-grid fz-grid";
-	$gridClasses .= $headingAtSide ? " fz-grid--heading-at-side" : " fz-grid--heading-above";
-	$gridClasses .= $showRowHeaderColumn ? " fz-grid--has-row-headers" : "";
-	$gridClasses .= $hasFinalColumn ? " fz-grid--has-final-column" : "";
-	$gridClasses .= ($orientation == "vertical") ? " fz-grid--shade-columns" : " fz-grid--shade-rows";
+	$gridClasses = "formulize-grid";
+	$gridClasses .= $headingAtSide ? " formulize-grid--heading-at-side" : " formulize-grid--heading-above";
+	$gridClasses .= $showRowHeaderColumn ? " formulize-grid--has-row-headers" : "";
+	$gridClasses .= $hasFinalColumn ? " formulize-grid--has-final-column" : "";
+	$gridClasses .= ($orientation == "vertical") ? " formulize-grid--shade-columns" : " formulize-grid--shade-rows";
 
 	$accessibleName = trim(strip_tags(html_entity_decode($title, ENT_QUOTES, 'UTF-8')));
 	$gridAria = " role=\"table\"";
@@ -181,18 +181,18 @@ function displayGrid($fid, $entry_id, $rowcaps, $colcaps, $title="", $orientatio
 	// The caption sits outside the grid container so that it is not a grid item
 	// and does not need a column track of its own.
 	if(!$headingAtSide AND $accessibleName != '') {
-		print "<div class=\"formulize-grid-caption fz-grid__caption\" id=\"$captionId\">$title</div>\n";
+		print "<div class=\"formulize-grid-caption formulize-grid__caption\" id=\"$captionId\">$title</div>\n";
 	}
 	if($headingAtSide) {
 		$gridContents[0] = $title;
 	}
-	print "<div class=\"$gridClasses\"$gridAria style=\"--fz-grid-data-columns: $dataColumnCount;\">\n";
+	print "<div class=\"$gridClasses\"$gridAria style=\"--formulize-grid-data-columns: $dataColumnCount;\">\n";
 
 	// draw the column caption band
 	if($showColumnHeaderRow) {
-		print "<div class=\"fz-grid__row fz-grid__row--head\" role=\"row\">\n";
+		print "<div class=\"formulize-grid__row formulize-grid__row--head\" role=\"row\">\n";
 		if($showRowHeaderColumn) {
-			print "<div class=\"fz-grid__cell fz-grid__cell--corner head\" role=\"cell\"></div>\n";
+			print "<div class=\"formulize-grid__cell formulize-grid__cell--corner head\" role=\"cell\"></div>\n";
 		}
 		$class = "head";
 		foreach($columnCaptions as $thiscap) {
@@ -206,10 +206,10 @@ function displayGrid($fid, $entry_id, $rowcaps, $colcaps, $title="", $orientatio
 				}
 				$cellClass = $class;
 			}
-			print "<div class=\"fz-grid__cell fz-grid__cell--columnheader $cellClass\" role=\"columnheader\">$thiscap</div>\n";
+			print "<div class=\"formulize-grid__cell formulize-grid__cell--columnheader $cellClass\" role=\"columnheader\">$thiscap</div>\n";
 		}
 		if($hasFinalColumn) { // blank header for the final column if there is such a thing
-			print "<div class=\"fz-grid__cell fz-grid__cell--corner head\" role=\"cell\"></div>\n";
+			print "<div class=\"formulize-grid__cell formulize-grid__cell--corner head\" role=\"cell\"></div>\n";
 		}
 		print "</div>\n";
 	}
@@ -226,11 +226,11 @@ function displayGrid($fid, $entry_id, $rowcaps, $colcaps, $title="", $orientatio
 		} else {
 			$class = "head";
 		}
-		$rowStripeClass = ($orientation == "horizontal") ? " fz-grid__row--$class" : "";
-		print "<div class=\"fz-grid__row$rowStripeClass\" role=\"row\">\n";
+		$rowStripeClass = ($orientation == "horizontal") ? " formulize-grid__row--$class" : "";
+		print "<div class=\"formulize-grid__row$rowStripeClass\" role=\"row\">\n";
 		if($showRowHeaderColumn) {
 			$rowHeaderClass = $headingAtSide ? "head" : $class;
-			print "<div class=\"fz-grid__cell fz-grid__cell--rowheader $rowHeaderClass\" role=\"rowheader\">$thiscap</div>\n";
+			print "<div class=\"formulize-grid__cell formulize-grid__cell--rowheader $rowHeaderClass\" role=\"rowheader\">$thiscap</div>\n";
 		}
 		foreach($colcaps as $thiscolcap) {
 			if($orientation == "vertical" AND $class == "even") {
@@ -238,7 +238,7 @@ function displayGrid($fid, $entry_id, $rowcaps, $colcaps, $title="", $orientatio
 			} elseif($orientation == "vertical") {
 				$class = "even";
 			}
-			print "<div class=\"fz-grid__cell $class\" role=\"cell\">\n";
+			print "<div class=\"formulize-grid__cell $class\" role=\"cell\">\n";
 			$elementInGridId = $element_ids_query[$ele_index];
 			$deReturnValue = displayElement("", $elementInGridId, $entry_id, false, $screen, $prevEntry, false);
 			if(is_array($deReturnValue)) {
@@ -260,7 +260,7 @@ function displayGrid($fid, $entry_id, $rowcaps, $colcaps, $title="", $orientatio
 				$class = "head";
 			}
 			$finalCellContents = isset($finalCell[$row_index]) ? $finalCell[$row_index] : "";
-			print "<div class=\"fz-grid__cell fz-grid__cell--final $class\" role=\"cell\">$finalCellContents</div>\n";
+			print "<div class=\"formulize-grid__cell formulize-grid__cell--final $class\" role=\"cell\">$finalCellContents</div>\n";
 		}
 		print "</div>\n";
 		$row_index++;
@@ -268,10 +268,10 @@ function displayGrid($fid, $entry_id, $rowcaps, $colcaps, $title="", $orientatio
 
 	// draw final row if necessary. NOTE: $finalRow is developer supplied HTML. It
 	// used to be the inside of a <tr>, ie: a series of <td> cells. In the grid it
-	// needs to be a series of <div class="fz-grid__cell" role="cell"> elements
+	// needs to be a series of <div class="formulize-grid__cell" role="cell"> elements
 	// instead.
 	if($finalRow) {
-		print "<div class=\"fz-grid__row fz-grid__row--final\" role=\"row\">$finalRow</div>\n";
+		print "<div class=\"formulize-grid__row formulize-grid__row--final\" role=\"row\">$finalRow</div>\n";
 	}
 	print "</div>";
 	$gridContents[1] = trans(ob_get_clean());

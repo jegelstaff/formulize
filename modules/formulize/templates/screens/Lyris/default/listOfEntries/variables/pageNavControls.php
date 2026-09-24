@@ -19,14 +19,14 @@ $displayTotalPages  = max(1, $totalPages);
 $chevLeft  = "<svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='m15 18-6-6 6-6'/></svg>";
 $chevRight = "<svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='m9 18 6-6-6-6'/></svg>";
 
-print "<div class='fz-pagination'>";
+print "<div class='lyris-pagination'>";
 
 // rows-per-page selector (core markup, restyled)
 if($entriesPerPageSelector) {
-    print "<span class='fz-pagination__perpage'>$entriesPerPageSelector</span>";
+    print "<span class='lyris-pagination__perpage'>$entriesPerPageSelector</span>";
 }
 
-print "<div class='fz-pagination__nav'>";
+print "<div class='lyris-pagination__nav'>";
 
 if($hasPrev) {
     print "<button type='button' class='fz-btn fz-btn--ghost fz-btn--icon fz-btn--sm' aria-label='"._AM_FORMULIZE_LOE_PREVIOUS."' title='"._AM_FORMULIZE_LOE_PREVIOUS."' onclick=\"$jsFunction('$prevStart');return false;\">$chevLeft</button>";
@@ -45,10 +45,10 @@ $statusFirstPlaceholder = strpos($pageStatusFormat, '%s');
 $statusLabel = $statusFirstPlaceholder !== false ? substr($pageStatusFormat, 0, $statusFirstPlaceholder) : '';
 $statusNumbersFormat = $statusFirstPlaceholder !== false ? substr($pageStatusFormat, $statusFirstPlaceholder) : $pageStatusFormat;
 $statusNumbers = sprintf($statusNumbersFormat, $displayCurrentPage, $displayTotalPages);
-print "<span class='fz-pagination__status'><span class='fz-pagination__status-label'>$statusLabel</span><span class='fz-pagination__status-pg'>pg </span>$statusNumbers</span>";
+print "<span class='lyris-pagination__status'><span class='lyris-pagination__status-label'>$statusLabel</span><span class='lyris-pagination__status-pg'>pg </span>$statusNumbers</span>";
 
 // Desktop-only numbered page links (Anari-style). Hidden on mobile via CSS
-// (.fz-pagination__pages is display:none below 769px), where the compact
+// (.lyris-pagination__pages is display:none below 769px), where the compact
 // "X of Y" status above is shown instead. Uses the pageStarts map
 // (page=>record offset) the backend already provides — no backend changes.
 if($totalPages > 1) {
@@ -73,20 +73,20 @@ if($totalPages > 1) {
         $prev = $p;
     }
 
-    print "<div class='fz-pagination__pages'>";
+    print "<div class='lyris-pagination__pages'>";
     foreach($sequence as $p) {
         if($p === null) {
-            print "<span class='fz-pagination__ellipsis' aria-hidden='true'>&hellip;</span>";
+            print "<span class='lyris-pagination__ellipsis' aria-hidden='true'>&hellip;</span>";
             continue;
         }
         if($p == $displayCurrentPage) {
-            print "<span class='fz-btn fz-btn--sm fz-pagination__page fz-pagination__page--active' aria-current='page'>$p</span>";
+            print "<span class='fz-btn fz-btn--sm lyris-pagination__page lyris-pagination__page--active' aria-current='page'>$p</span>";
         } else {
             $offset = isset($pageStarts[$p]) ? intval($pageStarts[$p]) : 0;
-            print "<button type='button' class='fz-btn fz-btn--ghost fz-btn--sm fz-pagination__page' aria-label='"._AM_FORMULIZE_LOE_ONPAGE." $p' onclick=\"$jsFunction('$offset');return false;\">$p</button>";
+            print "<button type='button' class='fz-btn fz-btn--ghost fz-btn--sm lyris-pagination__page' aria-label='"._AM_FORMULIZE_LOE_ONPAGE." $p' onclick=\"$jsFunction('$offset');return false;\">$p</button>";
         }
     }
-    print "</div>"; // .fz-pagination__pages
+    print "</div>"; // .lyris-pagination__pages
 }
 
 if($hasNext) {
@@ -95,6 +95,6 @@ if($hasNext) {
     print "<button type='button' class='fz-btn fz-btn--ghost fz-btn--icon fz-btn--sm' disabled aria-disabled='true'>$chevRight</button>";
 }
 
-print "</div>"; // .fz-pagination__nav
+print "</div>"; // .lyris-pagination__nav
 
-print "</div>"; // .fz-pagination
+print "</div>"; // .lyris-pagination

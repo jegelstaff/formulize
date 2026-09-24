@@ -1,0 +1,1541 @@
+/* ============================================================
+   Formulize UI
+   ============================================================
+
+   The public tokens, layout classes, components and utilities for building
+   markup in Formulize: screen templates, template screens, derived values, text
+   elements and theme tweaks. Loaded before Formulize's own stylesheet and before
+   the theme's, on every page that loads Formulize's stylesheet (see
+   formulize_uiStylesheetPath() in modules/formulize/include/functions.php).
+
+   Naming:
+     fz-          public: documented, and safe to build with, in any theme
+     lyris-       the Lyris theme's own classes and tokens
+     formulize-   Formulize core's internal classes and tokens
+
+   Every public selector is a single class, and there is no !important here.
+   Themes write their rules that style core's markup with :where(), so that
+   those rules weigh nothing and a public class always beats them.
+
+   ============================================================
+   Tokens
+   ============================================================
+
+   The public design tokens. The names are Tailwind CSS v4's theme variable
+   names, with fz- in front. A theme declares its own values for these in its
+   own stylesheet (Lyris and Anari do, in their tokens.css), and the Appearance
+   page overrides the ones it offers, so the values below are only what a page
+   gets when neither has set them. They are the Formulize design system's
+   defaults, the same as Lyris's.
+   ============================================================ */
+
+:root {
+  /* Colour */
+  --fz-color-page:          #f7f7f5;
+  --fz-color-surface:       #ffffff;
+  --fz-color-surface-2:     #fafaf8;
+  --fz-color-surface-3:     #f1f1ed;
+  --fz-color-overlay:       rgba(15, 17, 21, 0.45);
+
+  --fz-color-border:        #e6e6e1;
+  --fz-color-border-strong: #d1d1cb;
+  --fz-color-focus:         #1f2937;
+
+  --fz-color-text:          #14161a;
+  --fz-color-text-muted:    #5b6068;
+  --fz-color-text-subtle:   #8a8e95;
+  --fz-color-on-accent:     #ffffff;
+
+  --fz-color-accent:        #2e3340;
+  --fz-color-accent-hover:  #1c2029;
+  --fz-color-accent-soft:   #eef0f4;
+  --fz-color-accent-soft-2: #dde1ea;
+  --fz-color-accent-text:   #2e3340;
+
+  --fz-color-success:       #2a7a4f;
+  --fz-color-success-soft:  #e6f1ea;
+  --fz-color-warning:       #a86a14;
+  --fz-color-warning-soft:  #fbecd2;
+  --fz-color-danger:        #b3261e;
+  --fz-color-danger-soft:   #f8e1de;
+  --fz-color-info:          #2e5fa8;
+  --fz-color-info-soft:     #e2ecf8;
+
+  /* Type */
+  --fz-font-sans:    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --fz-font-heading: var(--fz-font-sans);
+  --fz-font-mono:    ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Type scale: Tailwind's sizes, each with the line height Tailwind pairs it
+     with, plus one step of Formulize's own, xs-plus (13px), between xs and sm,
+     which Tailwind has no step for. Fixed: the same in every theme. */
+  --fz-text-xs:                 0.75rem;
+  --fz-text-xs--line-height:    1rem;
+  --fz-text-xs-plus:            0.8125rem;
+  --fz-text-xs-plus--line-height: 1.25rem;
+  --fz-text-sm:                 0.875rem;
+  --fz-text-sm--line-height:    1.25rem;
+  --fz-text-base:               1rem;
+  --fz-text-base--line-height:  1.5rem;
+  --fz-text-lg:                 1.125rem;
+  --fz-text-lg--line-height:    1.75rem;
+  --fz-text-xl:                 1.25rem;
+  --fz-text-xl--line-height:    1.75rem;
+  --fz-text-2xl:                1.5rem;
+  --fz-text-2xl--line-height:   2rem;
+  --fz-text-3xl:                1.875rem;
+  --fz-text-3xl--line-height:   2.25rem;
+
+  --fz-font-weight-normal:   400;
+  --fz-font-weight-medium:   500;
+  --fz-font-weight-semibold: 600;
+  --fz-font-weight-bold:     700;
+
+  --fz-leading-tight:   1.25;
+  --fz-leading-snug:    1.375;
+  --fz-leading-normal:  1.5;
+
+  /* Spacing. Every space and size on the scale is a multiple of this step, as
+     in Tailwind: calc(var(--fz-spacing) * 4) is 1rem. The density changes it
+     (see Density, below). */
+  --fz-spacing: 0.25rem;
+
+  /* Shape and depth */
+  --fz-radius-sm:   0.25rem;
+  --fz-radius-md:   0.375rem;
+  --fz-radius-lg:   0.5rem;
+  --fz-radius-xl:   0.75rem;
+  --fz-radius-full: 999px;
+
+  --fz-shadow-xs: 0 1px 0 rgba(15,17,21,.04);
+  --fz-shadow-sm: 0 1px 2px rgba(15,17,21,.06), 0 1px 0 rgba(15,17,21,.04);
+  --fz-shadow-md: 0 4px 12px rgba(15,17,21,.08), 0 1px 2px rgba(15,17,21,.05);
+  --fz-shadow-lg: 0 12px 32px rgba(15,17,21,.14), 0 2px 6px rgba(15,17,21,.06);
+  --fz-focus-ring: 0 0 0 3px rgba(46,51,64,.15);
+
+  /* Container widths, Tailwind's (see fz-container) */
+  --fz-container-2xl: 42rem;
+  --fz-container-6xl: 72rem;
+  --fz-container-7xl: 80rem;
+
+  /* Motion */
+  --fz-ease-out:      cubic-bezier(.2,.7,.3,1);
+  --fz-duration-fast: 120ms;
+  --fz-duration:      200ms;
+}
+
+
+/* ============================================================
+   Density
+   ============================================================
+
+   How much space there is, and how tall buttons, form fields and list rows
+   are. The Appearance page sets it for the whole site, by setting
+   --fz-spacing; these classes set it for one part of a page.
+
+   The heights are worked out from --fz-spacing, and are declared again on each
+   density class, not only on :root: a custom property that uses var() is worked
+   out once, where it is declared, and the elements inside inherit the result,
+   not the formula. Declared only on :root, the heights would stay at the page's
+   density inside a container with a different one.
+   ============================================================ */
+
+.fz-density-tight       { --fz-spacing: 0.21875rem; }  /* 3.5px at a 16px base */
+.fz-density-standard    { --fz-spacing: 0.25rem; }     /* 4px */
+.fz-density-comfortable { --fz-spacing: 0.28125rem; }  /* 4.5px */
+
+:root,
+.fz-density-tight,
+.fz-density-standard,
+.fz-density-comfortable {
+  --fz-control-height: calc(var(--fz-spacing) * 8);    /* buttons: 32px at standard */
+  --fz-field-height:   calc(var(--fz-spacing) * 9.5);  /* form fields: 38px */
+  --fz-row-height:     calc(var(--fz-spacing) * 10);   /* list rows: 40px */
+}
+
+
+/* ============================================================
+   Layout classes
+   ============================================================
+
+   Classes that arrange their children. They respond to the space they are
+   given, not to the size of the screen, so the same markup works full screen,
+   in the drawer, on a phone, and embedded in another site.
+
+   The gap is the only space between the children: their top and bottom
+   margins are removed. Change the gap with the fz-gap-* utilities below.
+
+   Each class declares its default gap as --fz-gap, and resets --fz-gap-x and
+   --fz-gap-y, so a value set on an element further out never leaks in; the gap
+   utilities set them again on the same element. fz-auto-grid needs the gap in
+   its column calculation, which is why the gap is a custom property here and
+   not only the gap property.
+   ============================================================ */
+
+.fz-stack,
+.fz-cluster,
+.fz-auto-grid,
+.fz-grid-list,
+.fz-with-sidebar,
+.fz-switcher {
+  --fz-gap-x: initial;
+  --fz-gap-y: initial;
+  gap: var(--fz-gap-y, var(--fz-gap)) var(--fz-gap-x, var(--fz-gap));
+}
+
+.fz-stack > *,
+.fz-cluster > *,
+.fz-auto-grid > *,
+.fz-grid-list > *,
+.fz-with-sidebar > *,
+.fz-switcher > * {
+  margin-block: 0;
+}
+
+/* Stack: children one above the other. */
+.fz-stack {
+  --fz-gap: calc(var(--fz-spacing) * 4);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Cluster: children side by side, vertically centred, wrapping onto new lines
+   when they run out of room. */
+.fz-cluster {
+  --fz-gap: calc(var(--fz-spacing) * 2);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Auto grid: equal columns, as many as fit, each at least --fz-auto-grid-min
+   wide (10rem, so two fit in the drawer at its narrowest), so fewer columns as
+   the space narrows and one when it is narrower than that. The --max-N modifiers cap the number of columns. Set
+   --fz-auto-grid-min on the element itself to change the minimum. */
+.fz-auto-grid,
+.fz-grid-list {
+  --fz-gap: calc(var(--fz-spacing) * 4);
+  --fz-auto-grid-min: 10rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--fz-auto-grid-min)), 1fr));
+}
+.fz-auto-grid--narrow,
+.fz-grid-list--narrow { --fz-auto-grid-min: 8rem; }
+.fz-auto-grid--wide,
+.fz-grid-list--wide   { --fz-auto-grid-min: 18rem; }
+.fz-auto-grid--max-2,
+.fz-grid-list--max-2 { --fz-auto-grid-max: 2; }
+.fz-auto-grid--max-3,
+.fz-grid-list--max-3 { --fz-auto-grid-max: 3; }
+.fz-auto-grid--max-4,
+.fz-grid-list--max-4 { --fz-auto-grid-max: 4; }
+.fz-auto-grid--max-5,
+.fz-grid-list--max-5 { --fz-auto-grid-max: 5; }
+.fz-auto-grid--max-6,
+.fz-grid-list--max-6 { --fz-auto-grid-max: 6; }
+/* With a maximum, a column is never narrower than an equal share of the row
+   at that maximum, so no more than that many fit. */
+.fz-auto-grid--max-2,
+.fz-grid-list--max-2,
+.fz-auto-grid--max-3,
+.fz-grid-list--max-3,
+.fz-auto-grid--max-4,
+.fz-grid-list--max-4,
+.fz-auto-grid--max-5,
+.fz-grid-list--max-5,
+.fz-auto-grid--max-6,
+.fz-grid-list--max-6 {
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(
+      min(100%, max(
+        var(--fz-auto-grid-min),
+        (100% - (var(--fz-auto-grid-max) - 1) * var(--fz-gap-x, var(--fz-gap))) / var(--fz-auto-grid-max)
+      )),
+      1fr
+    )
+  );
+}
+
+/* With sidebar: the first child is a side --fz-sidebar-width wide, the second
+   takes the rest. They stack when the main area would be narrower than half
+   the space. fz-with-sidebar--end puts the side second.
+
+   The main area's grow factor dwarfs the side's, so the side keeps its width to
+   within a fraction of a pixel; the side's own grow factor of 1 is what lets it
+   fill the row once the two have stacked. */
+.fz-with-sidebar {
+  --fz-gap: calc(var(--fz-spacing) * 4);
+  --fz-sidebar-width: 16rem;
+  display: flex;
+  flex-wrap: wrap;
+}
+.fz-with-sidebar > :where(:first-child) {
+  flex-basis: var(--fz-sidebar-width);
+  flex-grow: 1;
+}
+.fz-with-sidebar > :where(:last-child) {
+  flex-basis: 0;
+  flex-grow: 99999;
+  min-inline-size: 50%;
+}
+.fz-with-sidebar--end > :where(:first-child) {
+  flex-basis: 0;
+  flex-grow: 99999;
+  min-inline-size: 50%;
+}
+.fz-with-sidebar--end > :where(:last-child) {
+  flex-basis: var(--fz-sidebar-width);
+  flex-grow: 1;
+  min-inline-size: 0;
+}
+
+/* Switcher: children in equal columns while the container is wider than
+   --fz-switcher-threshold, and all stacked when it isn't: never part way. */
+.fz-switcher {
+  --fz-gap: calc(var(--fz-spacing) * 4);
+  --fz-switcher-threshold: 32rem;
+  display: flex;
+  flex-wrap: wrap;
+}
+.fz-switcher > * {
+  flex-grow: 1;
+  flex-basis: calc((var(--fz-switcher-threshold) - 100%) * 999);
+}
+
+/* Container: centred, at most 72rem wide, with space at the sides. */
+.fz-container {
+  box-sizing: border-box;
+  inline-size: 100%;
+  max-inline-size: var(--fz-container-6xl);
+  margin-inline: auto;
+  padding-inline: calc(var(--fz-spacing) * 4);
+}
+.fz-container--narrow { max-inline-size: var(--fz-container-2xl); }
+.fz-container--wide   { max-inline-size: var(--fz-container-7xl); }
+
+/* Spacer: takes up the free space in a row, pushing what follows to the end. */
+.fz-spacer { flex: 1 1 auto; }
+
+
+/* ============================================================
+   Components
+   ============================================================
+
+   Things to build with. Each has a main class, classes for its parts
+   (fz-card__title) and for its variations (fz-card--interactive), and draws
+   everything from the tokens, so it follows the theme, the Appearance page and
+   the density. They come before the utilities, so a utility can adjust one.
+
+   Elements inside a component that have no class of their own (a description
+   list's dt and dd) are selected through :where(), so that every selector here
+   still weighs one class.
+
+   Components that hold text set their own line height rather than inheriting
+   the theme's, so they read the same in every theme (Anari's reset sets the
+   page's line height to 1).
+   ============================================================ */
+
+/* ---- Button ---------------------------------------------------------------
+   An action: a <button>, an <a>, or an <input type="submit">. A secondary
+   button by default; one modifier for the kind, and one for the size. Its
+   height follows the density. */
+.fz-btn {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: var(--fz-control-height);
+  /* as wide as its label: some themes give every button a minimum width */
+  min-width: 0;
+  padding: 0 calc(var(--fz-spacing) * 3);
+  border-radius: var(--fz-radius-md);
+  border: 1px solid var(--fz-color-border-strong);
+  background: var(--fz-color-surface);
+  color: var(--fz-color-text);
+  font: inherit;
+  font-size: var(--fz-text-xs-plus);
+  font-weight: var(--fz-font-weight-medium);
+  line-height: var(--fz-leading-normal);
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: background var(--fz-duration-fast) var(--fz-ease-out),
+              border-color var(--fz-duration-fast) var(--fz-ease-out),
+              color var(--fz-duration-fast) var(--fz-ease-out);
+}
+.fz-btn:hover { background: var(--fz-color-surface-3); }
+.fz-btn:focus-visible { outline: none; box-shadow: var(--fz-focus-ring); }
+.fz-btn:disabled,
+.fz-btn[aria-disabled="true"] {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+/* The main action: usually one per area. */
+.fz-btn--primary {
+  background: var(--fz-color-accent);
+  color: var(--fz-color-on-accent);
+  border-color: var(--fz-color-accent);
+}
+.fz-btn--primary:hover {
+  background: var(--fz-color-accent-hover);
+  border-color: var(--fz-color-accent-hover);
+}
+/* A destructive action, such as delete. */
+.fz-btn--danger {
+  background: var(--fz-color-danger);
+  color: #fff;
+  border-color: var(--fz-color-danger);
+}
+.fz-btn--danger:hover {
+  background: color-mix(in srgb, var(--fz-color-danger) 85%, #000);
+  border-color: color-mix(in srgb, var(--fz-color-danger) 85%, #000);
+}
+/* No border or background until hovered: for less important actions. */
+.fz-btn--ghost {
+  border-color: transparent;
+  background: transparent;
+}
+.fz-btn--ghost:hover { background: var(--fz-color-surface-3); }
+
+.fz-btn--sm {
+  height: calc(var(--fz-spacing) * 6.5);
+  padding: 0 calc(var(--fz-spacing) * 2);
+  font-size: var(--fz-text-xs);
+}
+.fz-btn--lg {
+  height: calc(var(--fz-spacing) * 9);
+  padding: 0 14px;
+  font-size: var(--fz-text-sm);
+}
+/* Square, for an icon on its own: as wide as it is tall, at any size. Give it
+   an aria-label. */
+.fz-btn--icon {
+  aspect-ratio: 1;
+  width: auto;
+  padding: 0;
+}
+/* The full width of its container. */
+.fz-btn--block {
+  display: flex;
+  width: 100%;
+}
+
+/* ---- Toggle -----------------------------------------------------------------
+   A switch: a real <input type="checkbox" class="fz-toggle">, drawn as an
+   on/off switch. It is still the checkbox, so checking it, the keyboard,
+   screen readers and form submission all work as they do for any checkbox.
+   Off uses the neutral surface and border; on fills with the accent. */
+.fz-toggle {
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  position: relative;
+  flex: none;
+  display: inline-block;
+  vertical-align: middle;
+  width: 34px;
+  height: 20px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--fz-color-border-strong);
+  border-radius: var(--fz-radius-full);
+  background: var(--fz-color-surface-3);
+  cursor: pointer;
+  transition: background var(--fz-duration) var(--fz-ease-out),
+              border-color var(--fz-duration) var(--fz-ease-out);
+}
+.fz-toggle::before {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--fz-radius-full);
+  background: var(--fz-color-surface);
+  box-shadow: var(--fz-shadow-sm);
+  transition: transform var(--fz-duration) var(--fz-ease-out);
+}
+.fz-toggle:hover { border-color: var(--fz-color-text-subtle); }
+.fz-toggle:checked {
+  background: var(--fz-color-accent);
+  border-color: var(--fz-color-accent);
+}
+.fz-toggle:checked::before { transform: translateX(14px); }
+.fz-toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--fz-focus-ring);
+}
+.fz-toggle:disabled {
+  cursor: default;
+  opacity: .5;
+}
+
+/* ---- Form field -------------------------------------------------------------
+   A label, a control, and its help text:
+     <div class="fz-field">
+       <label class="fz-field__label" for="x">Name <span class="fz-field__req">*</span></label>
+       <div class="fz-field__body"><input class="fz-input" id="x"> <p class="fz-field__help">…</p></div>
+     </div>
+   The label sits above the control; fz-field--horizontal puts it beside, and
+   stacks them again when there isn't room. */
+.fz-field {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--fz-spacing) * 1.5);
+}
+.fz-field__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--fz-font-heading);
+  font-size: var(--fz-text-sm);
+  font-weight: var(--fz-font-weight-semibold);
+  line-height: var(--fz-leading-snug);
+  color: var(--fz-color-text);
+}
+/* On a <fieldset>, for a group of choices, with a <legend class="fz-field__label">:
+   no border, padding or margin of the fieldset's own. A legend sits outside the
+   fieldset's layout, so it carries the gap below it itself. */
+.fz-field:where(fieldset) {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.fz-field__label:where(legend) {
+  padding: 0;
+  margin-bottom: calc(var(--fz-spacing) * 1.5);
+}
+/* The required marker, inside the label. */
+.fz-field__req {
+  color: var(--fz-color-danger);
+  font-weight: var(--fz-font-weight-bold);
+  font-size: 0.95em;
+}
+/* The control and its help text. */
+.fz-field__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fz-spacing);
+  min-width: 0;
+}
+.fz-field__help {
+  margin: 0;
+  font-size: var(--fz-text-xs);
+  line-height: var(--fz-leading-snug);
+  color: var(--fz-color-text-muted);
+}
+/* Label beside the control, lined up with its first line; the two stack when
+   the control would get narrower than half the field. */
+.fz-field--horizontal {
+  --fz-field-label-width: 12rem;
+  flex-direction: row;
+  flex-wrap: wrap;
+  column-gap: calc(var(--fz-spacing) * 4);
+}
+.fz-field--horizontal > :where(.fz-field__label) {
+  flex: 1 1 var(--fz-field-label-width);
+  align-self: flex-start;
+  padding-top: calc((var(--fz-field-height) - var(--fz-text-sm) * var(--fz-leading-snug)) / 2);
+}
+.fz-field--horizontal > :where(.fz-field__body) {
+  flex: 99999 1 0;
+  min-width: 50%;
+}
+
+/* ---- Form controls ----------------------------------------------------------
+   fz-input (a text-like <input>: text, email, number, date…), fz-select and
+   fz-textarea share one look: the field height, which follows the density, a
+   border that darkens on hover, and the focus ring. aria-invalid="true" marks
+   one as invalid. */
+.fz-input,
+.fz-select,
+.fz-textarea {
+  box-sizing: border-box;
+  width: 100%;
+  height: var(--fz-field-height);
+  margin: 0;
+  padding: 0 calc(var(--fz-spacing) * 3);
+  border: 1px solid var(--fz-color-border-strong);
+  border-radius: var(--fz-radius-md);
+  background: var(--fz-color-surface);
+  color: var(--fz-color-text);
+  font: inherit;
+  font-size: var(--fz-text-sm);
+  line-height: var(--fz-leading-normal);
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: border-color var(--fz-duration-fast) var(--fz-ease-out),
+              box-shadow var(--fz-duration-fast) var(--fz-ease-out),
+              background var(--fz-duration-fast) var(--fz-ease-out);
+}
+.fz-input::placeholder,
+.fz-textarea::placeholder { color: var(--fz-color-text-subtle); }
+.fz-input:hover:not(:disabled):not(:focus),
+.fz-select:hover:not(:disabled):not(:focus),
+.fz-textarea:hover:not(:disabled):not(:focus) {
+  border-color: var(--fz-color-text-muted);
+}
+.fz-input:focus,
+.fz-select:focus,
+.fz-textarea:focus {
+  border-color: var(--fz-color-focus);
+  box-shadow: var(--fz-focus-ring);
+}
+.fz-input:disabled,
+.fz-select:disabled,
+.fz-textarea:disabled {
+  background: var(--fz-color-surface-3);
+  color: var(--fz-color-text-subtle);
+  cursor: not-allowed;
+}
+.fz-input[aria-invalid="true"],
+.fz-select[aria-invalid="true"],
+.fz-textarea[aria-invalid="true"] {
+  border-color: var(--fz-color-danger);
+}
+.fz-input[aria-invalid="true"]:focus,
+.fz-select[aria-invalid="true"]:focus,
+.fz-textarea[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--fz-color-danger) 20%, transparent);
+}
+/* A dropdown, with its own chevron. */
+.fz-select {
+  padding-right: 30px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235b6068' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+.fz-select[multiple] {
+  height: auto;
+  padding: calc(var(--fz-spacing) * 1.5) calc(var(--fz-spacing) * 2.5);
+  background-image: none;
+}
+/* Several lines; grows downwards when dragged. */
+.fz-textarea {
+  height: auto;
+  min-height: calc(var(--fz-field-height) * 2.4);
+  padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3);
+  resize: vertical;
+}
+
+/* ---- Input group ------------------------------------------------------------
+   An fz-input with text or an icon attached before or after it:
+     <div class="fz-input-group"><span class="fz-input-group__addon">$</span><input class="fz-input"></div> */
+.fz-input-group {
+  box-sizing: border-box;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  height: var(--fz-field-height);
+  border: 1px solid var(--fz-color-border-strong);
+  border-radius: var(--fz-radius-md);
+  background: var(--fz-color-surface);
+  overflow: hidden;
+  transition: border-color var(--fz-duration-fast) var(--fz-ease-out),
+              box-shadow var(--fz-duration-fast) var(--fz-ease-out);
+}
+.fz-input-group:hover:not(:focus-within) { border-color: var(--fz-color-text-muted); }
+.fz-input-group:focus-within {
+  border-color: var(--fz-color-focus);
+  box-shadow: var(--fz-focus-ring);
+}
+.fz-input-group > :where(.fz-input) {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.fz-input-group__addon {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 calc(var(--fz-spacing) * 3);
+  background: var(--fz-color-surface-2);
+  color: var(--fz-color-text-subtle);
+  font-size: var(--fz-text-sm);
+  white-space: nowrap;
+  user-select: none;
+  border-inline-end: 1px solid var(--fz-color-border);
+}
+.fz-input-group__addon:where(:last-child) {
+  border-inline-end: 0;
+  border-inline-start: 1px solid var(--fz-color-border);
+}
+
+/* ---- Checkbox and radio -----------------------------------------------------
+   A real <input type="checkbox" class="fz-checkbox"> or
+   <input type="radio" class="fz-radio">, drawn in the theme's colours. */
+.fz-checkbox,
+.fz-radio {
+  box-sizing: border-box;
+  position: relative;
+  flex: none;
+  display: inline-block;
+  vertical-align: middle;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  border: 1.5px solid var(--fz-color-border-strong);
+  background: var(--fz-color-surface);
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: background var(--fz-duration-fast) var(--fz-ease-out),
+              border-color var(--fz-duration-fast) var(--fz-ease-out);
+}
+.fz-checkbox { border-radius: 3px; }
+.fz-radio    { border-radius: 50%; }
+.fz-checkbox:checked,
+.fz-radio:checked {
+  background: var(--fz-color-accent);
+  border-color: var(--fz-color-accent);
+}
+.fz-checkbox:checked::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid var(--fz-color-on-accent);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.fz-radio:checked::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--fz-color-on-accent);
+}
+.fz-checkbox:focus-visible,
+.fz-radio:focus-visible {
+  outline: none;
+  box-shadow: var(--fz-focus-ring);
+}
+.fz-checkbox:disabled,
+.fz-radio:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+/* ---- Choice -----------------------------------------------------------------
+   A checkbox, radio or toggle with its label, the whole of it clickable:
+     <label class="fz-choice"><input type="radio" class="fz-radio" name="x"> Yes</label>
+   fz-choice-group stacks a set of them. */
+.fz-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--fz-spacing) * 2);
+  color: var(--fz-color-text);
+  font-size: var(--fz-text-sm);
+  line-height: var(--fz-leading-normal);
+  cursor: pointer;
+}
+.fz-choice-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: calc(var(--fz-spacing) * 2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* ---- Card -----------------------------------------------------------------
+   A surface for one thing: an entry, a summary, a group of fields. Its
+   children are stacked 3 steps apart, with their own margins removed. */
+.fz-card {
+  --fz-gap: calc(var(--fz-spacing) * 3);
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--fz-gap);
+  min-width: 0;
+  padding: calc(var(--fz-spacing) * 4);
+  background: var(--fz-color-surface);
+  border: 1px solid var(--fz-color-border);
+  border-radius: var(--fz-radius-lg);
+  box-shadow: var(--fz-shadow-sm);
+  color: var(--fz-color-text);
+  line-height: var(--fz-leading-normal);
+}
+.fz-card > * { margin-block: 0; }
+
+/* A row for the title and any actions, wrapping when out of room. */
+.fz-card__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--fz-spacing) * 2);
+}
+.fz-card__title {
+  margin: 0;
+  font-family: var(--fz-font-heading);
+  font-size: var(--fz-text-base);
+  line-height: var(--fz-leading-snug);
+  font-weight: var(--fz-font-weight-semibold);
+}
+.fz-card__subtitle {
+  margin: 0;
+  color: var(--fz-color-text-muted);
+  font-size: var(--fz-text-xs-plus);
+}
+/* A row at the bottom, separated by a line. */
+.fz-card__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(var(--fz-spacing) * 2);
+  padding-top: calc(var(--fz-spacing) * 3);
+  border-top: 1px solid var(--fz-color-border);
+}
+/* No padding: for a table or an image that should reach the edges. */
+.fz-card--flush {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* The whole card is clickable. fz-card__link goes on the one link the card
+   opens, or on an element around it when the link is generated for you
+   (viewEntryLink() in a list template); its click area is stretched over the
+   card. Other links and controls in the card still work on their own. */
+.fz-card--interactive {
+  transition: border-color var(--fz-duration-fast) var(--fz-ease-out),
+              box-shadow var(--fz-duration-fast) var(--fz-ease-out);
+}
+.fz-card--interactive:hover {
+  border-color: var(--fz-color-border-strong);
+  box-shadow: var(--fz-shadow-md);
+}
+.fz-card--interactive:focus-within {
+  box-shadow: var(--fz-focus-ring);
+}
+.fz-card__link,
+.fz-card__link :where(a) {
+  color: inherit;
+  text-decoration: none;
+}
+.fz-card__link:hover,
+.fz-card__link :where(a):hover {
+  text-decoration: underline;
+}
+.fz-card__link:focus-visible,
+.fz-card__link :where(a):focus-visible {
+  outline: none;
+}
+.fz-card__link::after,
+.fz-card__link :where(a)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+/* the stretched link's own ::after is not a link inside the card */
+.fz-card__link:not(a)::after { content: none; }
+.fz-card--interactive :where(a, button, input, select, textarea, label):where(:not(.fz-card__link, .fz-card__link a)) {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---- Card list and grid list ------------------------------------------------
+   A list of entries shown as cards: one below the other (fz-card-list), or in
+   columns (fz-grid-list, which works like fz-auto-grid and takes the same
+   --max-N, --narrow and --wide modifiers, with its own name). On a <ul> or
+   <ol>, with an <li class="fz-card"> for each entry. */
+.fz-card-list {
+  --fz-gap: calc(var(--fz-spacing) * 3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--fz-gap);
+}
+.fz-card-list,
+.fz-grid-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fz-card-list > * { margin-block: 0; }
+
+/* ---- Table ------------------------------------------------------------------
+   A plain data table: a header row, a line under each row, and rows the row
+   height, which follows the density. On a <table>. fz-table--striped shades
+   every other row. For a table wider than its container, wrap it in an
+   element with fz-overflow-x-auto. */
+.fz-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--fz-text-xs-plus);
+  line-height: var(--fz-leading-normal);
+  color: var(--fz-color-text);
+}
+.fz-table :where(th, td) {
+  padding: 0 calc(var(--fz-spacing) * 3);
+  text-align: start;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--fz-color-border);
+  /* its own surface, so the table reads the same on the page as in a card */
+  background: var(--fz-color-surface);
+}
+.fz-table :where(tbody td) {
+  height: var(--fz-row-height);
+}
+.fz-table :where(thead th) {
+  height: calc(var(--fz-spacing) * 9);
+  font-size: var(--fz-text-xs);
+  font-weight: var(--fz-font-weight-semibold);
+  color: var(--fz-color-text-muted);
+  background: var(--fz-color-surface-2);
+  border-bottom-color: var(--fz-color-border-strong);
+}
+.fz-table--striped :where(tbody tr:nth-child(even) td) {
+  background: var(--fz-color-surface-3);
+}
+
+/* ---- Badge ------------------------------------------------------------------
+   A short label: a status, a category, a count. The tone is in the tint and the
+   dot; the text stays the normal text colour, so it is readable whatever
+   colours the theme or the Appearance page uses. */
+.fz-badge {
+  --fz-tone: var(--fz-color-text-subtle);
+  --fz-tone-soft: var(--fz-color-surface-3);
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--fz-spacing) * 1.5);
+  height: calc(var(--fz-spacing) * 5.5);
+  padding: 0 calc(var(--fz-spacing) * 2);
+  border-radius: var(--fz-radius-full);
+  background: var(--fz-tone-soft);
+  color: var(--fz-color-text);
+  font-size: var(--fz-text-xs);
+  line-height: 1;
+  font-weight: var(--fz-font-weight-medium);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.fz-badge::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--fz-tone);
+}
+.fz-badge--plain::before { content: none; }
+.fz-badge--accent  { --fz-tone: var(--fz-color-accent);  --fz-tone-soft: var(--fz-color-accent-soft); }
+.fz-badge--info    { --fz-tone: var(--fz-color-info);    --fz-tone-soft: var(--fz-color-info-soft); }
+.fz-badge--success { --fz-tone: var(--fz-color-success); --fz-tone-soft: var(--fz-color-success-soft); }
+.fz-badge--warning { --fz-tone: var(--fz-color-warning); --fz-tone-soft: var(--fz-color-warning-soft); }
+.fz-badge--danger  { --fz-tone: var(--fz-color-danger);  --fz-tone-soft: var(--fz-color-danger-soft); }
+
+/* ---- Callout ----------------------------------------------------------------
+   A message set apart from the content around it: instructions, a warning, the
+   result of something the user did (give that one role="status"). The tone is
+   the tint and the border at the start; the text stays the normal colour. */
+.fz-callout {
+  --fz-tone: var(--fz-color-accent);
+  --fz-tone-soft: var(--fz-color-accent-soft);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--fz-spacing);
+  padding: calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 4);
+  border: 1px solid color-mix(in srgb, var(--fz-tone) 25%, transparent);
+  border-inline-start: 4px solid var(--fz-tone);
+  border-radius: var(--fz-radius-md);
+  background: var(--fz-tone-soft);
+  color: var(--fz-color-text);
+  line-height: var(--fz-leading-normal);
+}
+.fz-callout > * { margin-block: 0; }
+.fz-callout__title {
+  font-weight: var(--fz-font-weight-semibold);
+}
+.fz-callout--info    { --fz-tone: var(--fz-color-info);    --fz-tone-soft: var(--fz-color-info-soft); }
+.fz-callout--success { --fz-tone: var(--fz-color-success); --fz-tone-soft: var(--fz-color-success-soft); }
+.fz-callout--warning { --fz-tone: var(--fz-color-warning); --fz-tone-soft: var(--fz-color-warning-soft); }
+.fz-callout--danger  { --fz-tone: var(--fz-color-danger);  --fz-tone-soft: var(--fz-color-danger-soft); }
+
+/* ---- Toolbar ----------------------------------------------------------------
+   A row with a group at each end, such as a heading and its buttons, wrapping
+   when it runs out of room. */
+.fz-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--fz-spacing) * 2);
+}
+.fz-toolbar > * { margin-block: 0; }
+.fz-toolbar__start,
+.fz-toolbar__end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(var(--fz-spacing) * 2);
+  min-width: 0;
+}
+.fz-toolbar__start > *,
+.fz-toolbar__end > * { margin-block: 0; }
+.fz-toolbar__end { margin-inline-start: auto; }
+
+/* ---- Description list -------------------------------------------------------
+   Labelled values: an entry's fields in a card, a summary. On a <dl>; each
+   <dt>/<dd> pair may be wrapped in a <div>. Terms and values side by side;
+   fz-dl--stacked puts each term above its value. */
+.fz-dl {
+  display: grid;
+  /* terms take the width they need, but never more than 40%, so values keep
+     room to wrap between words even in a narrow card */
+  grid-template-columns: fit-content(40%) minmax(0, 1fr);
+  gap: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 4);
+  margin: 0;
+  line-height: var(--fz-leading-normal);
+}
+.fz-dl > :where(div) { display: contents; }
+.fz-dl :where(dt) {
+  margin: 0;
+  color: var(--fz-color-text-muted);
+  font-weight: var(--fz-font-weight-medium);
+}
+.fz-dl :where(dd) {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+.fz-dl--stacked {
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--fz-spacing);
+}
+.fz-dl--stacked :where(dd) { margin-bottom: calc(var(--fz-spacing) * 2); }
+.fz-dl--stacked :where(dd:last-child) { margin-bottom: 0; }
+
+/* ---- Empty state ------------------------------------------------------------
+   What to show where there is nothing to show yet, and what to do about it. */
+.fz-empty {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--fz-spacing) * 2);
+  padding: calc(var(--fz-spacing) * 10) calc(var(--fz-spacing) * 4);
+  border: 1px dashed var(--fz-color-border-strong);
+  border-radius: var(--fz-radius-lg);
+  color: var(--fz-color-text-muted);
+  line-height: var(--fz-leading-normal);
+  text-align: center;
+}
+.fz-empty > * { margin: 0; }
+.fz-empty__title {
+  color: var(--fz-color-text);
+  font-size: var(--fz-text-base);
+  font-weight: var(--fz-font-weight-semibold);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fz-btn,
+  .fz-toggle,
+  .fz-input,
+  .fz-select,
+  .fz-textarea,
+  .fz-input-group,
+  .fz-checkbox,
+  .fz-radio,
+  .fz-toggle::before,
+  .fz-card--interactive { transition: none; }
+}
+
+/* ============================================================
+   Layout utilities
+   ============================================================
+
+   Tailwind's layout utilities, with an fz- prefix and Tailwind's meanings:
+   fz-grid only sets display: grid, and fz-grid-cols-3 is exactly three
+   columns at every width, since there are no screen-size variants. For a
+   layout that adapts to its space, use the layout classes above.
+
+   They come after the layout classes, and weigh the same (one class), so on
+   the same element a utility wins.
+   ============================================================ */
+
+/* Display */
+.fz-flex        { display: flex; }
+.fz-inline-flex { display: inline-flex; }
+.fz-grid        { display: grid; }
+
+/* Flex direction, wrapping, and how children grow and shrink */
+.fz-flex-row    { flex-direction: row; }
+.fz-flex-col    { flex-direction: column; }
+.fz-flex-wrap   { flex-wrap: wrap; }
+.fz-flex-nowrap { flex-wrap: nowrap; }
+.fz-flex-1      { flex: 1; }
+.fz-flex-auto   { flex: auto; }
+.fz-flex-none   { flex: none; }
+.fz-grow        { flex-grow: 1; }
+.fz-shrink-0    { flex-shrink: 0; }
+
+/* Alignment */
+.fz-items-start    { align-items: flex-start; }
+.fz-items-center   { align-items: center; }
+.fz-items-end      { align-items: flex-end; }
+.fz-items-baseline { align-items: baseline; }
+.fz-items-stretch  { align-items: stretch; }
+.fz-justify-start   { justify-content: flex-start; }
+.fz-justify-center  { justify-content: center; }
+.fz-justify-end     { justify-content: flex-end; }
+.fz-justify-between { justify-content: space-between; }
+.fz-self-start  { align-self: flex-start; }
+.fz-self-center { align-self: center; }
+.fz-self-end    { align-self: flex-end; }
+
+/* Grid columns, and how many columns a child spans */
+.fz-grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+.fz-grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.fz-grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.fz-grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.fz-grid-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.fz-grid-cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.fz-col-span-1 { grid-column: span 1 / span 1; }
+.fz-col-span-2 { grid-column: span 2 / span 2; }
+.fz-col-span-3 { grid-column: span 3 / span 3; }
+.fz-col-span-4 { grid-column: span 4 / span 4; }
+.fz-col-span-5 { grid-column: span 5 / span 5; }
+.fz-col-span-6 { grid-column: span 6 / span 6; }
+.fz-col-span-full { grid-column: 1 / -1; }
+
+/* Gap: step N of the spacing scale. Also sets the --fz-gap* custom properties
+   the layout classes read. */
+.fz-gap-0   { --fz-gap: 0; gap: 0; }
+.fz-gap-1   { --fz-gap: calc(var(--fz-spacing) * 1); gap: calc(var(--fz-spacing) * 1); }
+.fz-gap-2   { --fz-gap: calc(var(--fz-spacing) * 2); gap: calc(var(--fz-spacing) * 2); }
+.fz-gap-3   { --fz-gap: calc(var(--fz-spacing) * 3); gap: calc(var(--fz-spacing) * 3); }
+.fz-gap-4   { --fz-gap: calc(var(--fz-spacing) * 4); gap: calc(var(--fz-spacing) * 4); }
+.fz-gap-5   { --fz-gap: calc(var(--fz-spacing) * 5); gap: calc(var(--fz-spacing) * 5); }
+.fz-gap-6   { --fz-gap: calc(var(--fz-spacing) * 6); gap: calc(var(--fz-spacing) * 6); }
+.fz-gap-8   { --fz-gap: calc(var(--fz-spacing) * 8); gap: calc(var(--fz-spacing) * 8); }
+.fz-gap-10  { --fz-gap: calc(var(--fz-spacing) * 10); gap: calc(var(--fz-spacing) * 10); }
+.fz-gap-12  { --fz-gap: calc(var(--fz-spacing) * 12); gap: calc(var(--fz-spacing) * 12); }
+.fz-gap-16  { --fz-gap: calc(var(--fz-spacing) * 16); gap: calc(var(--fz-spacing) * 16); }
+.fz-gap-x-0   { --fz-gap-x: 0; column-gap: 0; }
+.fz-gap-x-1   { --fz-gap-x: calc(var(--fz-spacing) * 1); column-gap: calc(var(--fz-spacing) * 1); }
+.fz-gap-x-2   { --fz-gap-x: calc(var(--fz-spacing) * 2); column-gap: calc(var(--fz-spacing) * 2); }
+.fz-gap-x-3   { --fz-gap-x: calc(var(--fz-spacing) * 3); column-gap: calc(var(--fz-spacing) * 3); }
+.fz-gap-x-4   { --fz-gap-x: calc(var(--fz-spacing) * 4); column-gap: calc(var(--fz-spacing) * 4); }
+.fz-gap-x-5   { --fz-gap-x: calc(var(--fz-spacing) * 5); column-gap: calc(var(--fz-spacing) * 5); }
+.fz-gap-x-6   { --fz-gap-x: calc(var(--fz-spacing) * 6); column-gap: calc(var(--fz-spacing) * 6); }
+.fz-gap-x-8   { --fz-gap-x: calc(var(--fz-spacing) * 8); column-gap: calc(var(--fz-spacing) * 8); }
+.fz-gap-x-10  { --fz-gap-x: calc(var(--fz-spacing) * 10); column-gap: calc(var(--fz-spacing) * 10); }
+.fz-gap-x-12  { --fz-gap-x: calc(var(--fz-spacing) * 12); column-gap: calc(var(--fz-spacing) * 12); }
+.fz-gap-x-16  { --fz-gap-x: calc(var(--fz-spacing) * 16); column-gap: calc(var(--fz-spacing) * 16); }
+.fz-gap-y-0   { --fz-gap-y: 0; row-gap: 0; }
+.fz-gap-y-1   { --fz-gap-y: calc(var(--fz-spacing) * 1); row-gap: calc(var(--fz-spacing) * 1); }
+.fz-gap-y-2   { --fz-gap-y: calc(var(--fz-spacing) * 2); row-gap: calc(var(--fz-spacing) * 2); }
+.fz-gap-y-3   { --fz-gap-y: calc(var(--fz-spacing) * 3); row-gap: calc(var(--fz-spacing) * 3); }
+.fz-gap-y-4   { --fz-gap-y: calc(var(--fz-spacing) * 4); row-gap: calc(var(--fz-spacing) * 4); }
+.fz-gap-y-5   { --fz-gap-y: calc(var(--fz-spacing) * 5); row-gap: calc(var(--fz-spacing) * 5); }
+.fz-gap-y-6   { --fz-gap-y: calc(var(--fz-spacing) * 6); row-gap: calc(var(--fz-spacing) * 6); }
+.fz-gap-y-8   { --fz-gap-y: calc(var(--fz-spacing) * 8); row-gap: calc(var(--fz-spacing) * 8); }
+.fz-gap-y-10  { --fz-gap-y: calc(var(--fz-spacing) * 10); row-gap: calc(var(--fz-spacing) * 10); }
+.fz-gap-y-12  { --fz-gap-y: calc(var(--fz-spacing) * 12); row-gap: calc(var(--fz-spacing) * 12); }
+.fz-gap-y-16  { --fz-gap-y: calc(var(--fz-spacing) * 16); row-gap: calc(var(--fz-spacing) * 16); }
+
+
+/* ============================================================
+   Utilities
+   ============================================================
+
+   Tailwind's utilities, with an fz- prefix and Tailwind's meanings, drawing on
+   the tokens. Each does one thing. They come last, and weigh one class like
+   everything else here, so on the same element a utility wins over a layout
+   class or a component; within a group, the more specific one comes later
+   (fz-m-4 fz-mt-0 leaves the top margin at 0).
+
+   Spacing steps are the scale's: 0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 16, each a
+   multiple of --fz-spacing, so they follow the density. s and e are start and
+   end, which follow the text direction; l and r are always left and right. In
+   a site with right-to-left languages, prefer s and e.
+   ============================================================ */
+
+/* ---- Margin ---- */
+.fz-m-0     { margin: 0; }
+.fz-m-1     { margin: calc(var(--fz-spacing) * 1); }
+.fz-m-2     { margin: calc(var(--fz-spacing) * 2); }
+.fz-m-3     { margin: calc(var(--fz-spacing) * 3); }
+.fz-m-4     { margin: calc(var(--fz-spacing) * 4); }
+.fz-m-5     { margin: calc(var(--fz-spacing) * 5); }
+.fz-m-6     { margin: calc(var(--fz-spacing) * 6); }
+.fz-m-8     { margin: calc(var(--fz-spacing) * 8); }
+.fz-m-10    { margin: calc(var(--fz-spacing) * 10); }
+.fz-m-12    { margin: calc(var(--fz-spacing) * 12); }
+.fz-m-16    { margin: calc(var(--fz-spacing) * 16); }
+
+.fz-mx-0    { margin-inline: 0; }
+.fz-mx-1    { margin-inline: calc(var(--fz-spacing) * 1); }
+.fz-mx-2    { margin-inline: calc(var(--fz-spacing) * 2); }
+.fz-mx-3    { margin-inline: calc(var(--fz-spacing) * 3); }
+.fz-mx-4    { margin-inline: calc(var(--fz-spacing) * 4); }
+.fz-mx-5    { margin-inline: calc(var(--fz-spacing) * 5); }
+.fz-mx-6    { margin-inline: calc(var(--fz-spacing) * 6); }
+.fz-mx-8    { margin-inline: calc(var(--fz-spacing) * 8); }
+.fz-mx-10   { margin-inline: calc(var(--fz-spacing) * 10); }
+.fz-mx-12   { margin-inline: calc(var(--fz-spacing) * 12); }
+.fz-mx-16   { margin-inline: calc(var(--fz-spacing) * 16); }
+
+.fz-my-0    { margin-block: 0; }
+.fz-my-1    { margin-block: calc(var(--fz-spacing) * 1); }
+.fz-my-2    { margin-block: calc(var(--fz-spacing) * 2); }
+.fz-my-3    { margin-block: calc(var(--fz-spacing) * 3); }
+.fz-my-4    { margin-block: calc(var(--fz-spacing) * 4); }
+.fz-my-5    { margin-block: calc(var(--fz-spacing) * 5); }
+.fz-my-6    { margin-block: calc(var(--fz-spacing) * 6); }
+.fz-my-8    { margin-block: calc(var(--fz-spacing) * 8); }
+.fz-my-10   { margin-block: calc(var(--fz-spacing) * 10); }
+.fz-my-12   { margin-block: calc(var(--fz-spacing) * 12); }
+.fz-my-16   { margin-block: calc(var(--fz-spacing) * 16); }
+
+.fz-ms-0    { margin-inline-start: 0; }
+.fz-ms-1    { margin-inline-start: calc(var(--fz-spacing) * 1); }
+.fz-ms-2    { margin-inline-start: calc(var(--fz-spacing) * 2); }
+.fz-ms-3    { margin-inline-start: calc(var(--fz-spacing) * 3); }
+.fz-ms-4    { margin-inline-start: calc(var(--fz-spacing) * 4); }
+.fz-ms-5    { margin-inline-start: calc(var(--fz-spacing) * 5); }
+.fz-ms-6    { margin-inline-start: calc(var(--fz-spacing) * 6); }
+.fz-ms-8    { margin-inline-start: calc(var(--fz-spacing) * 8); }
+.fz-ms-10   { margin-inline-start: calc(var(--fz-spacing) * 10); }
+.fz-ms-12   { margin-inline-start: calc(var(--fz-spacing) * 12); }
+.fz-ms-16   { margin-inline-start: calc(var(--fz-spacing) * 16); }
+
+.fz-me-0    { margin-inline-end: 0; }
+.fz-me-1    { margin-inline-end: calc(var(--fz-spacing) * 1); }
+.fz-me-2    { margin-inline-end: calc(var(--fz-spacing) * 2); }
+.fz-me-3    { margin-inline-end: calc(var(--fz-spacing) * 3); }
+.fz-me-4    { margin-inline-end: calc(var(--fz-spacing) * 4); }
+.fz-me-5    { margin-inline-end: calc(var(--fz-spacing) * 5); }
+.fz-me-6    { margin-inline-end: calc(var(--fz-spacing) * 6); }
+.fz-me-8    { margin-inline-end: calc(var(--fz-spacing) * 8); }
+.fz-me-10   { margin-inline-end: calc(var(--fz-spacing) * 10); }
+.fz-me-12   { margin-inline-end: calc(var(--fz-spacing) * 12); }
+.fz-me-16   { margin-inline-end: calc(var(--fz-spacing) * 16); }
+
+.fz-mt-0    { margin-top: 0; }
+.fz-mt-1    { margin-top: calc(var(--fz-spacing) * 1); }
+.fz-mt-2    { margin-top: calc(var(--fz-spacing) * 2); }
+.fz-mt-3    { margin-top: calc(var(--fz-spacing) * 3); }
+.fz-mt-4    { margin-top: calc(var(--fz-spacing) * 4); }
+.fz-mt-5    { margin-top: calc(var(--fz-spacing) * 5); }
+.fz-mt-6    { margin-top: calc(var(--fz-spacing) * 6); }
+.fz-mt-8    { margin-top: calc(var(--fz-spacing) * 8); }
+.fz-mt-10   { margin-top: calc(var(--fz-spacing) * 10); }
+.fz-mt-12   { margin-top: calc(var(--fz-spacing) * 12); }
+.fz-mt-16   { margin-top: calc(var(--fz-spacing) * 16); }
+
+.fz-mr-0    { margin-right: 0; }
+.fz-mr-1    { margin-right: calc(var(--fz-spacing) * 1); }
+.fz-mr-2    { margin-right: calc(var(--fz-spacing) * 2); }
+.fz-mr-3    { margin-right: calc(var(--fz-spacing) * 3); }
+.fz-mr-4    { margin-right: calc(var(--fz-spacing) * 4); }
+.fz-mr-5    { margin-right: calc(var(--fz-spacing) * 5); }
+.fz-mr-6    { margin-right: calc(var(--fz-spacing) * 6); }
+.fz-mr-8    { margin-right: calc(var(--fz-spacing) * 8); }
+.fz-mr-10   { margin-right: calc(var(--fz-spacing) * 10); }
+.fz-mr-12   { margin-right: calc(var(--fz-spacing) * 12); }
+.fz-mr-16   { margin-right: calc(var(--fz-spacing) * 16); }
+
+.fz-mb-0    { margin-bottom: 0; }
+.fz-mb-1    { margin-bottom: calc(var(--fz-spacing) * 1); }
+.fz-mb-2    { margin-bottom: calc(var(--fz-spacing) * 2); }
+.fz-mb-3    { margin-bottom: calc(var(--fz-spacing) * 3); }
+.fz-mb-4    { margin-bottom: calc(var(--fz-spacing) * 4); }
+.fz-mb-5    { margin-bottom: calc(var(--fz-spacing) * 5); }
+.fz-mb-6    { margin-bottom: calc(var(--fz-spacing) * 6); }
+.fz-mb-8    { margin-bottom: calc(var(--fz-spacing) * 8); }
+.fz-mb-10   { margin-bottom: calc(var(--fz-spacing) * 10); }
+.fz-mb-12   { margin-bottom: calc(var(--fz-spacing) * 12); }
+.fz-mb-16   { margin-bottom: calc(var(--fz-spacing) * 16); }
+
+.fz-ml-0    { margin-left: 0; }
+.fz-ml-1    { margin-left: calc(var(--fz-spacing) * 1); }
+.fz-ml-2    { margin-left: calc(var(--fz-spacing) * 2); }
+.fz-ml-3    { margin-left: calc(var(--fz-spacing) * 3); }
+.fz-ml-4    { margin-left: calc(var(--fz-spacing) * 4); }
+.fz-ml-5    { margin-left: calc(var(--fz-spacing) * 5); }
+.fz-ml-6    { margin-left: calc(var(--fz-spacing) * 6); }
+.fz-ml-8    { margin-left: calc(var(--fz-spacing) * 8); }
+.fz-ml-10   { margin-left: calc(var(--fz-spacing) * 10); }
+.fz-ml-12   { margin-left: calc(var(--fz-spacing) * 12); }
+.fz-ml-16   { margin-left: calc(var(--fz-spacing) * 16); }
+
+.fz-m-auto  { margin: auto; }
+.fz-mx-auto { margin-inline: auto; }
+.fz-ms-auto { margin-inline-start: auto; }
+.fz-me-auto { margin-inline-end: auto; }
+.fz-ml-auto { margin-left: auto; }
+.fz-mr-auto { margin-right: auto; }
+
+/* ---- Padding ---- */
+.fz-p-0     { padding: 0; }
+.fz-p-1     { padding: calc(var(--fz-spacing) * 1); }
+.fz-p-2     { padding: calc(var(--fz-spacing) * 2); }
+.fz-p-3     { padding: calc(var(--fz-spacing) * 3); }
+.fz-p-4     { padding: calc(var(--fz-spacing) * 4); }
+.fz-p-5     { padding: calc(var(--fz-spacing) * 5); }
+.fz-p-6     { padding: calc(var(--fz-spacing) * 6); }
+.fz-p-8     { padding: calc(var(--fz-spacing) * 8); }
+.fz-p-10    { padding: calc(var(--fz-spacing) * 10); }
+.fz-p-12    { padding: calc(var(--fz-spacing) * 12); }
+.fz-p-16    { padding: calc(var(--fz-spacing) * 16); }
+
+.fz-px-0    { padding-inline: 0; }
+.fz-px-1    { padding-inline: calc(var(--fz-spacing) * 1); }
+.fz-px-2    { padding-inline: calc(var(--fz-spacing) * 2); }
+.fz-px-3    { padding-inline: calc(var(--fz-spacing) * 3); }
+.fz-px-4    { padding-inline: calc(var(--fz-spacing) * 4); }
+.fz-px-5    { padding-inline: calc(var(--fz-spacing) * 5); }
+.fz-px-6    { padding-inline: calc(var(--fz-spacing) * 6); }
+.fz-px-8    { padding-inline: calc(var(--fz-spacing) * 8); }
+.fz-px-10   { padding-inline: calc(var(--fz-spacing) * 10); }
+.fz-px-12   { padding-inline: calc(var(--fz-spacing) * 12); }
+.fz-px-16   { padding-inline: calc(var(--fz-spacing) * 16); }
+
+.fz-py-0    { padding-block: 0; }
+.fz-py-1    { padding-block: calc(var(--fz-spacing) * 1); }
+.fz-py-2    { padding-block: calc(var(--fz-spacing) * 2); }
+.fz-py-3    { padding-block: calc(var(--fz-spacing) * 3); }
+.fz-py-4    { padding-block: calc(var(--fz-spacing) * 4); }
+.fz-py-5    { padding-block: calc(var(--fz-spacing) * 5); }
+.fz-py-6    { padding-block: calc(var(--fz-spacing) * 6); }
+.fz-py-8    { padding-block: calc(var(--fz-spacing) * 8); }
+.fz-py-10   { padding-block: calc(var(--fz-spacing) * 10); }
+.fz-py-12   { padding-block: calc(var(--fz-spacing) * 12); }
+.fz-py-16   { padding-block: calc(var(--fz-spacing) * 16); }
+
+.fz-ps-0    { padding-inline-start: 0; }
+.fz-ps-1    { padding-inline-start: calc(var(--fz-spacing) * 1); }
+.fz-ps-2    { padding-inline-start: calc(var(--fz-spacing) * 2); }
+.fz-ps-3    { padding-inline-start: calc(var(--fz-spacing) * 3); }
+.fz-ps-4    { padding-inline-start: calc(var(--fz-spacing) * 4); }
+.fz-ps-5    { padding-inline-start: calc(var(--fz-spacing) * 5); }
+.fz-ps-6    { padding-inline-start: calc(var(--fz-spacing) * 6); }
+.fz-ps-8    { padding-inline-start: calc(var(--fz-spacing) * 8); }
+.fz-ps-10   { padding-inline-start: calc(var(--fz-spacing) * 10); }
+.fz-ps-12   { padding-inline-start: calc(var(--fz-spacing) * 12); }
+.fz-ps-16   { padding-inline-start: calc(var(--fz-spacing) * 16); }
+
+.fz-pe-0    { padding-inline-end: 0; }
+.fz-pe-1    { padding-inline-end: calc(var(--fz-spacing) * 1); }
+.fz-pe-2    { padding-inline-end: calc(var(--fz-spacing) * 2); }
+.fz-pe-3    { padding-inline-end: calc(var(--fz-spacing) * 3); }
+.fz-pe-4    { padding-inline-end: calc(var(--fz-spacing) * 4); }
+.fz-pe-5    { padding-inline-end: calc(var(--fz-spacing) * 5); }
+.fz-pe-6    { padding-inline-end: calc(var(--fz-spacing) * 6); }
+.fz-pe-8    { padding-inline-end: calc(var(--fz-spacing) * 8); }
+.fz-pe-10   { padding-inline-end: calc(var(--fz-spacing) * 10); }
+.fz-pe-12   { padding-inline-end: calc(var(--fz-spacing) * 12); }
+.fz-pe-16   { padding-inline-end: calc(var(--fz-spacing) * 16); }
+
+.fz-pt-0    { padding-top: 0; }
+.fz-pt-1    { padding-top: calc(var(--fz-spacing) * 1); }
+.fz-pt-2    { padding-top: calc(var(--fz-spacing) * 2); }
+.fz-pt-3    { padding-top: calc(var(--fz-spacing) * 3); }
+.fz-pt-4    { padding-top: calc(var(--fz-spacing) * 4); }
+.fz-pt-5    { padding-top: calc(var(--fz-spacing) * 5); }
+.fz-pt-6    { padding-top: calc(var(--fz-spacing) * 6); }
+.fz-pt-8    { padding-top: calc(var(--fz-spacing) * 8); }
+.fz-pt-10   { padding-top: calc(var(--fz-spacing) * 10); }
+.fz-pt-12   { padding-top: calc(var(--fz-spacing) * 12); }
+.fz-pt-16   { padding-top: calc(var(--fz-spacing) * 16); }
+
+.fz-pr-0    { padding-right: 0; }
+.fz-pr-1    { padding-right: calc(var(--fz-spacing) * 1); }
+.fz-pr-2    { padding-right: calc(var(--fz-spacing) * 2); }
+.fz-pr-3    { padding-right: calc(var(--fz-spacing) * 3); }
+.fz-pr-4    { padding-right: calc(var(--fz-spacing) * 4); }
+.fz-pr-5    { padding-right: calc(var(--fz-spacing) * 5); }
+.fz-pr-6    { padding-right: calc(var(--fz-spacing) * 6); }
+.fz-pr-8    { padding-right: calc(var(--fz-spacing) * 8); }
+.fz-pr-10   { padding-right: calc(var(--fz-spacing) * 10); }
+.fz-pr-12   { padding-right: calc(var(--fz-spacing) * 12); }
+.fz-pr-16   { padding-right: calc(var(--fz-spacing) * 16); }
+
+.fz-pb-0    { padding-bottom: 0; }
+.fz-pb-1    { padding-bottom: calc(var(--fz-spacing) * 1); }
+.fz-pb-2    { padding-bottom: calc(var(--fz-spacing) * 2); }
+.fz-pb-3    { padding-bottom: calc(var(--fz-spacing) * 3); }
+.fz-pb-4    { padding-bottom: calc(var(--fz-spacing) * 4); }
+.fz-pb-5    { padding-bottom: calc(var(--fz-spacing) * 5); }
+.fz-pb-6    { padding-bottom: calc(var(--fz-spacing) * 6); }
+.fz-pb-8    { padding-bottom: calc(var(--fz-spacing) * 8); }
+.fz-pb-10   { padding-bottom: calc(var(--fz-spacing) * 10); }
+.fz-pb-12   { padding-bottom: calc(var(--fz-spacing) * 12); }
+.fz-pb-16   { padding-bottom: calc(var(--fz-spacing) * 16); }
+
+.fz-pl-0    { padding-left: 0; }
+.fz-pl-1    { padding-left: calc(var(--fz-spacing) * 1); }
+.fz-pl-2    { padding-left: calc(var(--fz-spacing) * 2); }
+.fz-pl-3    { padding-left: calc(var(--fz-spacing) * 3); }
+.fz-pl-4    { padding-left: calc(var(--fz-spacing) * 4); }
+.fz-pl-5    { padding-left: calc(var(--fz-spacing) * 5); }
+.fz-pl-6    { padding-left: calc(var(--fz-spacing) * 6); }
+.fz-pl-8    { padding-left: calc(var(--fz-spacing) * 8); }
+.fz-pl-10   { padding-left: calc(var(--fz-spacing) * 10); }
+.fz-pl-12   { padding-left: calc(var(--fz-spacing) * 12); }
+.fz-pl-16   { padding-left: calc(var(--fz-spacing) * 16); }
+
+/* ---- Display ---- */
+.fz-block        { display: block; }
+.fz-inline-block { display: inline-block; }
+.fz-inline       { display: inline; }
+.fz-hidden       { display: none; }
+
+/* Hidden on screen, read by screen readers: a label for something only an icon
+   shows, for instance. */
+.fz-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* The one screen-size switch: 48rem (768px), Lyris's mobile layout and
+   Tailwind's md. For layout, prefer the layout classes, which respond to their
+   own width. */
+@media (max-width: 47.99rem) {
+  .fz-hide-on-mobile { display: none; }
+}
+@media (min-width: 48rem) {
+  .fz-show-on-mobile { display: none; }
+}
+
+/* ---- Width ---- */
+.fz-w-full     { width: 100%; }
+.fz-w-auto     { width: auto; }
+.fz-w-fit      { width: fit-content; }
+.fz-max-w-full { max-width: 100%; }
+/* Lets a flex or grid child get narrower than its content, which fz-truncate
+   needs inside one. */
+.fz-min-w-0    { min-width: 0; }
+
+/* ---- Text ---- */
+/* Each size sets its line height too, as Tailwind's do. xs-plus (13px) is
+   Formulize UI's own step, between xs and sm. */
+.fz-text-xs      { font-size: var(--fz-text-xs); line-height: var(--fz-text-xs--line-height); }
+.fz-text-xs-plus { font-size: var(--fz-text-xs-plus); line-height: var(--fz-text-xs-plus--line-height); }
+.fz-text-sm      { font-size: var(--fz-text-sm); line-height: var(--fz-text-sm--line-height); }
+.fz-text-base    { font-size: var(--fz-text-base); line-height: var(--fz-text-base--line-height); }
+.fz-text-lg      { font-size: var(--fz-text-lg); line-height: var(--fz-text-lg--line-height); }
+.fz-text-xl      { font-size: var(--fz-text-xl); line-height: var(--fz-text-xl--line-height); }
+.fz-text-2xl     { font-size: var(--fz-text-2xl); line-height: var(--fz-text-2xl--line-height); }
+.fz-text-3xl     { font-size: var(--fz-text-3xl); line-height: var(--fz-text-3xl--line-height); }
+
+.fz-font-normal   { font-weight: var(--fz-font-weight-normal); }
+.fz-font-medium   { font-weight: var(--fz-font-weight-medium); }
+.fz-font-semibold { font-weight: var(--fz-font-weight-semibold); }
+.fz-font-bold     { font-weight: var(--fz-font-weight-bold); }
+
+.fz-font-sans     { font-family: var(--fz-font-sans); }
+.fz-font-heading  { font-family: var(--fz-font-heading); }
+.fz-font-mono     { font-family: var(--fz-font-mono); }
+
+.fz-leading-tight  { line-height: var(--fz-leading-tight); }
+.fz-leading-snug   { line-height: var(--fz-leading-snug); }
+.fz-leading-normal { line-height: var(--fz-leading-normal); }
+
+.fz-text-start  { text-align: start; }
+.fz-text-center { text-align: center; }
+.fz-text-end    { text-align: end; }
+.fz-text-left   { text-align: left; }
+.fz-text-right  { text-align: right; }
+
+/* Text colours, by role. The status colours are for short, emphasised text,
+   such as a status word or a total, not paragraphs: some themes' status colours
+   are too light to read at body text size. */
+.fz-text-default   { color: var(--fz-color-text); }
+.fz-text-muted     { color: var(--fz-color-text-muted); }
+.fz-text-subtle    { color: var(--fz-color-text-subtle); }
+.fz-text-accent    { color: var(--fz-color-accent-text); }
+.fz-text-on-accent { color: var(--fz-color-on-accent); }
+.fz-text-success   { color: var(--fz-color-success); }
+.fz-text-warning   { color: var(--fz-color-warning); }
+.fz-text-danger    { color: var(--fz-color-danger); }
+.fz-text-info      { color: var(--fz-color-info); }
+
+/* One line, cut off with an ellipsis. */
+.fz-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fz-text-nowrap     { white-space: nowrap; }
+.fz-wrap-break-word { overflow-wrap: break-word; }
+.fz-tabular-nums    { font-variant-numeric: tabular-nums; }
+
+/* ---- Background ---- */
+.fz-bg-page         { background-color: var(--fz-color-page); }
+.fz-bg-surface      { background-color: var(--fz-color-surface); }
+.fz-bg-surface-2    { background-color: var(--fz-color-surface-2); }
+.fz-bg-surface-3    { background-color: var(--fz-color-surface-3); }
+.fz-bg-accent       { background-color: var(--fz-color-accent); }
+.fz-bg-accent-soft  { background-color: var(--fz-color-accent-soft); }
+.fz-bg-success-soft { background-color: var(--fz-color-success-soft); }
+.fz-bg-warning-soft { background-color: var(--fz-color-warning-soft); }
+.fz-bg-danger-soft  { background-color: var(--fz-color-danger-soft); }
+.fz-bg-info-soft    { background-color: var(--fz-color-info-soft); }
+
+/* ---- Border ---- */
+/* A 1px border, in the border colour; then a colour class changes its colour. */
+.fz-border   { border: 1px solid var(--fz-color-border); }
+.fz-border-t { border-top: 1px solid var(--fz-color-border); }
+.fz-border-b { border-bottom: 1px solid var(--fz-color-border); }
+.fz-border-s { border-inline-start: 1px solid var(--fz-color-border); }
+.fz-border-e { border-inline-end: 1px solid var(--fz-color-border); }
+.fz-border-0 { border-width: 0; }
+
+.fz-border-strong  { border-color: var(--fz-color-border-strong); }
+.fz-border-accent  { border-color: var(--fz-color-accent); }
+.fz-border-success { border-color: var(--fz-color-success); }
+.fz-border-warning { border-color: var(--fz-color-warning); }
+.fz-border-danger  { border-color: var(--fz-color-danger); }
+.fz-border-info    { border-color: var(--fz-color-info); }
+
+/* ---- Corner radius ---- */
+.fz-rounded-none { border-radius: 0; }
+.fz-rounded-sm   { border-radius: var(--fz-radius-sm); }
+.fz-rounded-md   { border-radius: var(--fz-radius-md); }
+.fz-rounded-lg   { border-radius: var(--fz-radius-lg); }
+.fz-rounded-xl   { border-radius: var(--fz-radius-xl); }
+.fz-rounded-full { border-radius: var(--fz-radius-full); }
+
+/* ---- Shadow ---- */
+.fz-shadow-none { box-shadow: none; }
+.fz-shadow-xs   { box-shadow: var(--fz-shadow-xs); }
+.fz-shadow-sm   { box-shadow: var(--fz-shadow-sm); }
+.fz-shadow-md   { box-shadow: var(--fz-shadow-md); }
+.fz-shadow-lg   { box-shadow: var(--fz-shadow-lg); }
+
+/* ---- Overflow ---- */
+.fz-overflow-auto   { overflow: auto; }
+.fz-overflow-x-auto { overflow-x: auto; }
+.fz-overflow-hidden { overflow: hidden; }
+
+/* ---- Lists ---- */
+.fz-list-none { list-style-type: none; }
