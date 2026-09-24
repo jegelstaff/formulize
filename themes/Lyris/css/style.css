@@ -614,13 +614,26 @@ textarea {
 .formulize-inline .lyris-list__body  { overflow: visible; }
 
 /* Title bar: a Formulize UI toolbar (fz-toolbar, with the title and count at
-   its start and the actions at its end). Only Lyris's chrome is set here. */
+   its start and the actions at its end). Lyris sets its chrome, and keeps it to
+   one row at every width: the actions never wrap, and the title gives way,
+   truncating with an ellipsis (see .lyris-list__title). */
 .lyris-list__titlebar {
+  flex-wrap: nowrap;
   padding: calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 5);
   background: var(--fz-color-surface);
   border-bottom: 1px solid var(--fz-color-border);
   min-height: 3.5rem;
   flex-shrink: 0;
+}
+
+.lyris-list__titlebar > .fz-toolbar__start {
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
+}
+
+.lyris-list__titlebar > .fz-toolbar__end {
+  flex-shrink: 0;
+  flex-wrap: nowrap;
 }
 
 /* Formulize-generated buttons in the titlebar styled as fz-btn */
@@ -1219,9 +1232,21 @@ textarea {
   box-sizing: border-box;
 }
 
-/* Checkbox / controls column */
+/* Checkbox / controls column: one fixed width, its padding plus room for its
+   checkbox and edit icon (about 50.5px, depending on the font's space width;
+   52px leaves a little over), so it is the same with or without rows. On a
+   phone the first data column is pinned at this same offset (see Mobile
+   below): if the two differed, the pinned column overlapped the icons when
+   scrolled, or left a gap and misaligned the headers when the list was empty. */
+.lyris-list-table {
+  --lyris-cb-width: calc(var(--fz-spacing) * 4 + 3.25rem);
+}
+
 .lyris-list-table .lyris-cb {
-  width: 3.25rem;
+  box-sizing: border-box;
+  width: var(--lyris-cb-width);
+  min-width: var(--lyris-cb-width);
+  max-width: var(--lyris-cb-width);
   padding: 0 calc(var(--fz-spacing) * 2);
   vertical-align: middle;
   white-space: nowrap;
@@ -1791,7 +1816,7 @@ body:has(#formulize-masquerade-block) {
     --formulize-drawer-pad-x: calc(var(--fz-spacing) * 4);
   }
 
-  /* ---- List title bar: compact, actions wrap under the title ---- */
+  /* ---- List title bar: compact, still one row ---- */
 
   .lyris-list__titlebar {
     padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3);
@@ -1856,9 +1881,9 @@ body:has(#formulize-masquerade-block) {
     z-index: 1;
   }
 
-  /* first data column sits after the 52px checkbox column when present */
+  /* first data column sits after the checkbox column when present */
   .lyris-list-table .lyris-cb ~ .column0 {
-    left: 3.25rem;
+    left: var(--lyris-cb-width);
   }
 
   /* divider shadow marks the edge of the pinned columns; cap their width
