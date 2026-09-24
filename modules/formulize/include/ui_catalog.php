@@ -119,6 +119,7 @@ function formulize_uiCatalog() {
                     'A variation adds two dashes, and is always used with the main class: `fz-card fz-card--interactive`.',
                     'A utility is named after the Tailwind CSS class that does the same thing, with `fz-` in front: `fz-mt-4` is Tailwind\'s `mt-4`, a top margin of 4 steps.',
                     'A token is a CSS custom property, named after Tailwind\'s with `fz-` in front: `--fz-color-accent`, `--fz-text-sm`, `--fz-spacing`.',
+                    'In this reference, a set of related classes is written as one pattern. `{a,b}` is a choice, so `fz-{m,p}-4` is `fz-m-4` and `fz-p-4`; an empty choice means nothing there, so `fz-m{,x}-4` is `fz-m-4` and `fz-mx-4`. `{2-6}` is each number from 2 to 6. `{n}` is each step of the spacing scale. Use the class names the pattern stands for, never the pattern itself.',
                 ),
             ),
             array(
@@ -144,6 +145,7 @@ function formulize_uiCatalog() {
                     'Derived values whose value is HTML, and Full Width Content and Captioned Content elements (under Text for display).',
                     'A theme\'s own templates and stylesheets.',
                     'In Lyris the classes match the rest of the interface. In older themes, such as Anari, they use that theme\'s colours and fonts but may not match its other styles.',
+                    'AI tools connected to Formulize through MCP can read this whole reference: it is the `formulize_ui` topic of the `get_documentation` tool, which is available to users who can write custom code.',
                 ),
             ),
         ),
@@ -1139,6 +1141,7 @@ CODE
     return array(
         'version' => FORMULIZE_UI_VERSION,
         'title' => 'Formulize UI',
+        'summary' => 'The CSS classes and tokens for any HTML you write for Formulize: derived values, Full Width Content and Captioned Content elements, screen templates and themes. Read it before writing HTML or CSS, and use only the classes it lists.',
         'sections' => $sections,
     );
 }
@@ -1251,9 +1254,87 @@ function formulize_uiCheckCatalog($catalog, $css) {
     return $problems;
 }
 
+/**
+ * The catalog as one Markdown document, for AI tools: everything the style guide
+ * and the documentation site show, with the examples as code. The MCP server's
+ * get_documentation tool serves it as the formulize_ui topic.
+ *
+ * @param array $catalog from formulize_uiCatalog()
+ * @return string Markdown
+ */
+function formulize_uiAiReference($catalog) {
+    $lines = array();
+    $lines[] = "# $catalog[title] reference (version $catalog[version])";
+    $lines[] = '';
+    $lines[] = $catalog['summary'] . ' Every public class and token is listed here: a class that is not listed does not exist, and a Tailwind CSS class without the fz- prefix does nothing.';
+    foreach ($catalog['sections'] as $section) {
+        $lines[] = '';
+        $lines[] = "## $section[title]";
+        if (!empty($section['intro'])) {
+            $lines[] = '';
+            $lines[] = $section['intro'];
+        }
+        foreach ($section['entries'] as $entry) {
+            $lines[] = '';
+            $lines[] = "### $entry[name]";
+            $lines[] = '';
+            $lines[] = $entry['summary'];
+            foreach (array('classes' => 'Classes', 'tokens' => 'Tokens') as $kind => $heading) {
+                if (empty($entry[$kind])) {
+                    continue;
+                }
+                $lines[] = '';
+                $lines[] = "$heading:";
+                foreach ($entry[$kind] as $name => $description) {
+                    $lines[] = "- `$name`: $description";
+                }
+            }
+            if (!empty($entry['notes'])) {
+                $lines[] = '';
+                foreach ($entry['notes'] as $note) {
+                    $lines[] = "- $note";
+                }
+            }
+            // a recipe's example is its result; its code is what to write
+            if (!empty($entry['example']) AND empty($entry['code'])) {
+                $lines[] = '';
+                $lines[] = 'Example:';
+                $lines[] = '';
+                $lines[] = formulize_uiMarkdownCode($entry['example']);
+            }
+            foreach (isset($entry['code']) ? $entry['code'] : array() as $code) {
+                $lines[] = '';
+                $lines[] = "$code[label]:";
+                $lines[] = '';
+                $lines[] = formulize_uiMarkdownCode($code['code']);
+            }
+        }
+    }
+    return implode("\n", $lines) . "\n";
+}
+
+/**
+ * A fenced Markdown code block, marked with its language.
+ *
+ * @param string $code HTML, PHP (starting with a <?php tag) or CSS
+ * @return string Markdown
+ */
+function formulize_uiMarkdownCode($code) {
+    $code = rtrim($code);
+    if (substr($code, 0, 5) == '<?php') {
+        $language = 'php';
+    } elseif (substr(ltrim($code), 0, 1) == '<') {
+        $language = 'html';
+    } else {
+        $language = 'css';
+    }
+    return "```$language\n$code\n```";
+}
+
 // Run from the command line:
-//   php modules/formulize/include/ui_catalog.php --check  checks the catalog against formulize-ui.css
-//   php modules/formulize/include/ui_catalog.php --json   prints the catalog, for the documentation site
+//   php modules/formulize/include/ui_catalog.php --check     checks the catalog against formulize-ui.css
+//   php modules/formulize/include/ui_catalog.php --json      prints the catalog, for the documentation site
+//   php modules/formulize/include/ui_catalog.php --markdown  prints the reference for AI tools
 if (PHP_SAPI === 'cli' AND isset($argv[0]) AND realpath($argv[0]) === __FILE__) {
     if (in_array('--check', $argv)) {
         $css = file_get_contents(dirname(__DIR__) . '/templates/css/formulize-ui.css');
@@ -1268,10 +1349,14 @@ if (PHP_SAPI === 'cli' AND isset($argv[0]) AND realpath($argv[0]) === __FILE__) 
         echo 'The catalog documents all ' . count($names['classes']) . ' classes and ' . count($names['tokens']) . " tokens in formulize-ui.css.\n";
         exit(0);
     }
+    if (in_array('--markdown', $argv)) {
+        echo formulize_uiAiReference(formulize_uiCatalog());
+        exit(0);
+    }
     if (in_array('--json', $argv)) {
         echo json_encode(formulize_uiCatalog(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n";
         exit(0);
     }
-    fwrite(STDERR, "Usage: php modules/formulize/include/ui_catalog.php --check | --json\n");
+    fwrite(STDERR, "Usage: php modules/formulize/include/ui_catalog.php --check | --json | --markdown\n");
     exit(2);
 }
