@@ -21,9 +21,14 @@
 // pages and the reference for AI tools are generated from it, so none of them is
 // ever written by hand. When a class or token is added to, changed in or removed
 // from formulize-ui.css, change this file to match. Running this file from the
-// command line checks that the two agree, and fails if they don't:
+// command line checks that the two agree, and that the examples use only real
+// classes and tokens, and fails if they don't. The formulize-ui-check workflow
+// runs it on every pull request that changes either file:
 //
 //     php modules/formulize/include/ui_catalog.php --check
+//
+// The documentation site's pages are made from this file's --json output, by
+// docs/_plugins/formulize_ui_pages.rb.
 //
 // This file depends on nothing else in Formulize, so that it can run on its own.
 //
@@ -136,7 +141,7 @@ function formulize_uiCatalog() {
                 'summary' => 'Anywhere Formulize outputs your HTML, in any theme.',
                 'notes' => array(
                     'List screen and form screen templates, and template screens.',
-                    'Derived values whose value is HTML, and text for display elements.',
+                    'Derived values whose value is HTML, and Full Width Content and Captioned Content elements (under Text for display).',
                     'A theme\'s own templates and stylesheets.',
                     'In Lyris the classes match the rest of the interface. In older themes, such as Anari, they use that theme\'s colours and fonts but may not match its other styles.',
                 ),
@@ -879,6 +884,258 @@ HTML
         ),
     );
 
+    // ---------------------------------------------------------------------
+    $sections[] = array(
+        'id' => 'recipes',
+        'title' => 'Recipes',
+        'intro' => 'Complete examples of the classes at work in the places Formulize runs your code, ready to copy. Change the element handles to your own form\'s.',
+        'entries' => array(
+            array(
+                'id' => 'recipe-list-cards',
+                'name' => 'A list screen as cards',
+                'summary' => 'Show a list of entries as cards in columns instead of a table, each card opening its entry. On the list screen\'s Templates tab, replace the open list, list item and close list templates.',
+                'notes' => array(
+                    '`viewEntryLink()` makes the link that opens the entry; it has no class of its own, so put `fz-card__link` on the element around it. With `fz-card--interactive`, the whole card then opens the entry.',
+                    '`display()` gives the value of a field in the entry. Pass it through `htmlspecialchars()` before printing it, so a value that contains HTML shows as text.',
+                    '`fz-p-4` keeps the cards off the edges of the list area. Some themes, such as Anari, already pad it, and there you can leave it out.',
+                    'Use `fz-card-list` instead of `fz-grid-list` for cards one below the other.',
+                    'To colour the badges by status, see the next recipe.',
+                ),
+                'example' => <<<'HTML'
+<ul class="fz-grid-list fz-grid-list--max-3">
+  <li class="fz-card fz-card--interactive">
+    <h3 class="fz-card__title fz-card__link"><a href="#">Amira Haddad</a></h3>
+    <p class="fz-card__subtitle">Riverside Public School</p>
+    <div class="fz-cluster"><span class="fz-badge">Approved</span></div>
+  </li>
+  <li class="fz-card fz-card--interactive">
+    <h3 class="fz-card__title fz-card__link"><a href="#">Liam Chen</a></h3>
+    <p class="fz-card__subtitle">Lakeview Middle School</p>
+    <div class="fz-cluster"><span class="fz-badge">Under review</span></div>
+  </li>
+  <li class="fz-card fz-card--interactive">
+    <h3 class="fz-card__title fz-card__link"><a href="#">Sofia Rossi</a></h3>
+    <p class="fz-card__subtitle">Hillcrest Academy</p>
+    <div class="fz-cluster"><span class="fz-badge">Submitted</span></div>
+  </li>
+</ul>
+HTML
+                ,
+                'code' => array(
+                    array(
+                        'label' => 'Open list template',
+                        'code' => <<<'CODE'
+<?php
+print "<ul class='fz-grid-list fz-grid-list--max-3 fz-p-4'>";
+CODE
+                    ),
+                    array(
+                        'label' => 'List item template',
+                        'code' => <<<'CODE'
+<?php
+$student = htmlspecialchars(display($entry, 'applications_student'));
+$school = htmlspecialchars(display($entry, 'applications_school'));
+$status = htmlspecialchars(display($entry, 'applications_status'));
+print "
+<li class='fz-card fz-card--interactive'>
+  <h3 class='fz-card__title fz-card__link'>" . viewEntryLink($student) . "</h3>
+  <p class='fz-card__subtitle'>$school</p>
+  <div class='fz-cluster'><span class='fz-badge'>$status</span></div>
+</li>";
+CODE
+                    ),
+                    array(
+                        'label' => 'Close list template',
+                        'code' => <<<'CODE'
+<?php
+print "</ul>";
+CODE
+                    ),
+                ),
+            ),
+            array(
+                'id' => 'recipe-derived-badge',
+                'name' => 'A status as a badge',
+                'summary' => 'A derived value that shows a status as a coloured badge, in lists and wherever else the value appears.',
+                'notes' => array(
+                    'Choose the tone from the value, and keep the word: the colour adds to the word, it doesn\'t replace it.',
+                    'Formulize filters the HTML in a derived value, to keep scripts out of the page. Classes are kept, so the badge comes through.',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-cluster">
+  <span class="fz-badge fz-badge--info">Submitted</span>
+  <span class="fz-badge fz-badge--warning">Under review</span>
+  <span class="fz-badge fz-badge--success">Approved</span>
+  <span class="fz-badge fz-badge--danger">Rejected</span>
+</div>
+HTML
+                ,
+                'code' => array(
+                    array(
+                        'label' => 'Derived value',
+                        'code' => <<<'CODE'
+<?php
+$tones = array(
+    'Submitted' => 'info',
+    'Under review' => 'warning',
+    'Approved' => 'success',
+    'Rejected' => 'danger',
+);
+$tone = isset($tones[$applications_status]) ? ' fz-badge--' . $tones[$applications_status] : '';
+$value = "<span class='fz-badge$tone'>" . htmlspecialchars($applications_status) . "</span>";
+CODE
+                    ),
+                ),
+            ),
+            array(
+                'id' => 'recipe-form-intro',
+                'name' => 'An introduction to a form',
+                'summary' => 'Instructions at the top of a form, set apart from the fields. Put the HTML in a Full Width Content element, under Text for display.',
+                'example' => <<<'HTML'
+<div class="fz-callout">
+  <p class="fz-callout__title">Before you start</p>
+  <p>Have your student number and your school's address ready. The form takes about ten minutes, and you can save it and come back.</p>
+</div>
+HTML
+            ),
+            array(
+                'id' => 'recipe-dashboard',
+                'name' => 'A dashboard',
+                'summary' => 'A template screen that sums up a form\'s entries, with a count for each status in a row of cards. The template screen\'s code gathers the numbers; its template lays them out.',
+                'notes' => array(
+                    'In the template, `<{$name}>` prints a variable the code set. The values are prepared in the code, escaped, so the template only arranges them.',
+                    '`fz-container` centres the dashboard and gives it space at the sides, since a template screen has only what its template gives it.',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-stack fz-gap-6">
+  <div class="fz-toolbar">
+    <div class="fz-toolbar__start"><h2 class="fz-text-xl fz-font-semibold">Applications</h2></div>
+  </div>
+  <div class="fz-auto-grid fz-auto-grid--max-4">
+    <div class="fz-card"><p class="fz-text-sm fz-text-muted">Submitted</p><p class="fz-text-3xl fz-font-semibold fz-tabular-nums">48</p></div>
+    <div class="fz-card"><p class="fz-text-sm fz-text-muted">Under review</p><p class="fz-text-3xl fz-font-semibold fz-tabular-nums">12</p></div>
+    <div class="fz-card"><p class="fz-text-sm fz-text-muted">Approved</p><p class="fz-text-3xl fz-font-semibold fz-tabular-nums">31</p></div>
+    <div class="fz-card"><p class="fz-text-sm fz-text-muted">Rejected</p><p class="fz-text-3xl fz-font-semibold fz-tabular-nums">5</p></div>
+  </div>
+</div>
+HTML
+                ,
+                'code' => array(
+                    array(
+                        'label' => 'Template screen code',
+                        'code' => <<<'CODE'
+<?php
+$counts = array('Submitted' => 0, 'Under review' => 0, 'Approved' => 0, 'Rejected' => 0);
+foreach (gatherDataset(12) as $application) {
+    $status = display($application, 'applications_status');
+    if (isset($counts[$status])) {
+        $counts[$status]++;
+    }
+}
+$cards = '';
+foreach ($counts as $status => $count) {
+    $cards .= "<div class='fz-card'><p class='fz-text-sm fz-text-muted'>" . htmlspecialchars($status) . "</p>"
+        . "<p class='fz-text-3xl fz-font-semibold fz-tabular-nums'>$count</p></div>";
+}
+CODE
+                    ),
+                    array(
+                        'label' => 'Template screen template',
+                        'code' => <<<'CODE'
+<div class="fz-container fz-py-6 fz-stack fz-gap-6">
+  <div class="fz-toolbar">
+    <div class="fz-toolbar__start"><h2 class="fz-text-xl fz-font-semibold">Applications</h2></div>
+  </div>
+  <div class="fz-auto-grid fz-auto-grid--max-4"><{$cards}></div>
+</div>
+CODE
+                    ),
+                ),
+            ),
+        ),
+    );
+
+    // ---------------------------------------------------------------------
+    $sections[] = array(
+        'id' => 'themes',
+        'title' => 'For theme authors',
+        'intro' => 'How a theme works with Formulize UI: giving the tokens its values, loading the stylesheet, and keeping its own rules from getting in the way of the classes.',
+        'entries' => array(
+            array(
+                'id' => 'theme-tokens',
+                'name' => 'Giving the tokens values',
+                'summary' => 'Formulize UI sets a neutral default for every token. A theme gives them its own values in a `:root` rule, and the colours and font set on the Appearance page then override the theme\'s.',
+                'notes' => array(
+                    'Set the tokens, rather than restyling the classes: every class is built on them, so the theme\'s look reaches all of them at once, and the Appearance page keeps working.',
+                    'The sizes are in rem, so the Appearance page\'s Text and interface size setting scales them. Keep a theme\'s own sizes in rem too.',
+                ),
+                'code' => array(
+                    array(
+                        'label' => 'In the theme\'s stylesheet',
+                        'code' => <<<'CODE'
+:root {
+  --fz-color-accent: #0f5e9c;
+  --fz-color-accent-hover: #0b4a7a;
+  --fz-color-accent-soft: #e7f0f8;
+  --fz-font-sans: "Source Sans 3", system-ui, sans-serif;
+  --fz-radius-lg: 0.25rem;
+}
+CODE
+                    ),
+                ),
+            ),
+            array(
+                'id' => 'theme-loading',
+                'name' => 'Loading the stylesheet',
+                'summary' => 'Formulize adds `formulize-ui.css` to its own pages. A theme adds it to every other page by calling `formulize_uiStylesheetLink()` in its `theme.html`, before the theme\'s own stylesheet.',
+                'notes' => array(
+                    'The function returns nothing on a page that already has the stylesheet, so it is never loaded twice.',
+                    'The order matters: `formulize-ui.css` first, then Formulize\'s own stylesheet, then the theme\'s. Where a theme rule and a class have the same weight, the theme wins.',
+                ),
+                'code' => array(
+                    array(
+                        'label' => 'In theme.html, in the head',
+                        'code' => <<<'CODE'
+<{php}>
+require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions.php';
+echo formulize_uiStylesheetLink();
+<{/php}>
+<link rel="stylesheet" type="text/css" media="all" href="<{$icms_imageurl}>css/style.css" />
+CODE
+                    ),
+                ),
+            ),
+            array(
+                'id' => 'theme-weight',
+                'name' => 'Keeping theme rules out of the way',
+                'summary' => 'Every public class is a single class selector, with no `!important`, so a utility or a modifier can always adjust it. A theme keeps that working by not outweighing the classes.',
+                'notes' => array(
+                    'Give the theme\'s own classes the theme\'s prefix, such as `lyris-`, never `fz-`.',
+                    'When styling Formulize\'s own markup, wrap the selector in `:where()`, which gives it no weight, so a class added to that markup still wins.',
+                    'A rule that styles every element of a kind, such as every `button` or every checkbox, would also restyle the Formulize UI components. Add `:where(:not([class*="fz-"]))` to it: it skips any element with a Formulize UI class, and adds no weight, so the rule otherwise works as before.',
+                ),
+                'code' => array(
+                    array(
+                        'label' => 'In the theme\'s stylesheet',
+                        'code' => <<<'CODE'
+/* Formulize's own markup: no weight, so classes added to it still win */
+:where(#formulize-list-of-entries) td {
+  padding: 0.5rem 0.75rem;
+}
+
+/* Every button, except the Formulize UI ones */
+button:where(:not([class*="fz-"])),
+input[type="submit"]:where(:not([class*="fz-"])) {
+  min-width: 8rem;
+  border-radius: 0;
+}
+CODE
+                    ),
+                ),
+            ),
+        ),
+    );
+
     return array(
         'version' => FORMULIZE_UI_VERSION,
         'title' => 'Formulize UI',
@@ -934,7 +1191,29 @@ function formulize_uiStylesheetNames($css) {
 }
 
 /**
- * Compare the catalog with formulize-ui.css.
+ * Every example and piece of code in the catalog, as text.
+ *
+ * @param array $catalog from formulize_uiCatalog()
+ * @return array of arrays with 'where' (the entry's name) and 'text'
+ */
+function formulize_uiCatalogSamples($catalog) {
+    $samples = array();
+    foreach ($catalog['sections'] as $section) {
+        foreach ($section['entries'] as $entry) {
+            if (!empty($entry['example'])) {
+                $samples[] = array('where' => $entry['name'], 'text' => $entry['example']);
+            }
+            foreach (isset($entry['code']) ? $entry['code'] : array() as $code) {
+                $samples[] = array('where' => $entry['name'] . ', ' . $code['label'], 'text' => $code['code']);
+            }
+        }
+    }
+    return $samples;
+}
+
+/**
+ * Compare the catalog with formulize-ui.css: the classes and tokens it documents,
+ * and the ones its examples and code use.
  *
  * @param array $catalog from formulize_uiCatalog()
  * @param string $css the stylesheet's contents
@@ -952,10 +1231,29 @@ function formulize_uiCheckCatalog($catalog, $css) {
             $problems[] = "The $noun $name is in the catalog but not in formulize-ui.css.";
         }
     }
+    // A class name is fz- not preceded by a dash or a word character (which would
+    // make it part of a token or another name), followed by at least one letter or
+    // number, so a partial name such as the fz- in [class*="fz-"] is not counted.
+    foreach (formulize_uiCatalogSamples($catalog) as $sample) {
+        preg_match_all('/(?<![\w-])fz-[a-z0-9]+(?:(?:-|--|__)[a-z0-9]+)*/', $sample['text'], $classMatches);
+        preg_match_all('/--fz-[a-z0-9]+(?:-[a-z0-9]+)*/', $sample['text'], $tokenMatches);
+        foreach (array_unique($classMatches[0]) as $name) {
+            if (!in_array($name, $documented['classes'])) {
+                $problems[] = "The example in $sample[where] uses the class $name, which is not in the catalog.";
+            }
+        }
+        foreach (array_unique($tokenMatches[0]) as $name) {
+            if (!in_array($name, $documented['tokens'])) {
+                $problems[] = "The example in $sample[where] uses the token $name, which is not in the catalog.";
+            }
+        }
+    }
     return $problems;
 }
 
-// Run from the command line: php modules/formulize/include/ui_catalog.php --check
+// Run from the command line:
+//   php modules/formulize/include/ui_catalog.php --check  checks the catalog against formulize-ui.css
+//   php modules/formulize/include/ui_catalog.php --json   prints the catalog, for the documentation site
 if (PHP_SAPI === 'cli' AND isset($argv[0]) AND realpath($argv[0]) === __FILE__) {
     if (in_array('--check', $argv)) {
         $css = file_get_contents(dirname(__DIR__) . '/templates/css/formulize-ui.css');
@@ -970,6 +1268,10 @@ if (PHP_SAPI === 'cli' AND isset($argv[0]) AND realpath($argv[0]) === __FILE__) 
         echo 'The catalog documents all ' . count($names['classes']) . ' classes and ' . count($names['tokens']) . " tokens in formulize-ui.css.\n";
         exit(0);
     }
-    fwrite(STDERR, "Usage: php modules/formulize/include/ui_catalog.php --check\n");
+    if (in_array('--json', $argv)) {
+        echo json_encode(formulize_uiCatalog(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n";
+        exit(0);
+    }
+    fwrite(STDERR, "Usage: php modules/formulize/include/ui_catalog.php --check | --json\n");
     exit(2);
 }

@@ -1,0 +1,43 @@
+# Checks that the Formulize UI catalog (modules/formulize/include/ui_catalog.php)
+# still describes formulize-ui.css: every public class and token in one is in the
+# other, and every class and token the catalog's examples use exists. The
+# catalog is what the in-app style guide, the documentation site's reference
+# and the reference for AI tools are made from, so a class added to the
+# stylesheet without it would be undocumented everywhere.
+#
+# Runs only when one of the two files changes. GitHub's Ubuntu runners have PHP
+# installed, and the catalog depends on nothing else, so there is nothing to set
+# up. To run the same check locally:
+#
+#     php modules/formulize/include/ui_catalog.php --check
+#
+# or, in the local development environment:
+#
+#     docker exec formulize-web-1 php /var/www/html/modules/formulize/include/ui_catalog.php --check
+
+name: Formulize UI catalog check
+
+on:
+  pull_request:
+    paths:
+      - modules/formulize/templates/css/formulize-ui.css
+      - modules/formulize/include/ui_catalog.php
+  push:
+    branches:
+      - master
+    paths:
+      - modules/formulize/templates/css/formulize-ui.css
+      - modules/formulize/include/ui_catalog.php
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Check the catalog against formulize-ui.css
+        run: php modules/formulize/include/ui_catalog.php --check
