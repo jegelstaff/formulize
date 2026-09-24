@@ -7292,6 +7292,22 @@ function _formulize_numberFormat($value, $decimalOverride, $decimals="", $decSep
 }
 
 /**
+ * How many characters wide a formatted number is, for laying out a column of numbers.
+ *
+ * Used to size the equal-width box that numeric list values sit in so their decimal points line
+ * up (issue #918). The count is of visible characters, so any markup is stripped and entities are
+ * resolved first, and it is multibyte aware because prefixes and suffixes can be things like € or
+ * a non-breaking space.
+ *
+ * @param string $formattedNumber The number as it will be displayed, ie: the output of formulize_numberFormat
+ * @return int The number of visible characters in the formatted number
+ */
+function formulize_numericStringWidth($formattedNumber) {
+    $plain = html_entity_decode(strip_tags((string) $formattedNumber), ENT_QUOTES, 'UTF-8');
+    return function_exists('mb_strlen') ? mb_strlen($plain, 'UTF-8') : strlen($plain);
+}
+
+/**
  * Get the result of a calculation defined in a saved view
  *
  * @param mixed $formframe - The relationship ID, or name. Unless mainform is not specified, in which case this is the form ID, or handle, or title(!). Use IDs or handles!
@@ -9117,15 +9133,31 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
         $output .= '<ul class="main-cell-list">';
     }
     foreach ($value as $valueId=>$v) {
-        // Numeric values are aligned to the right of the cell. That alignment is expressed as a class
-        // so themes decide how (and whether) to do it, instead of a hardcoded inline style. (closes #131)
+        // Numeric values are marked with a class so themes decide how (and whether) to align them,
+        // instead of a hardcoded inline style. (closes #131)
         // Detection is based on the element type as well as the raw value: a number element always
         // renders a number, because numberElement::formatDataForList coerces anything that isn't
         // numeric to zero, so a null/empty value still displays as 0, 0.0, $0.00 etc. Checking only the
         // raw value left those cells looking like text. Values from other element types (text, derived,
         // ...) are judged on the value itself, which is what gets formatted for display.
+        // Numbers are displayed left aligned like any other value, but their decimal points still line
+        // up down the column. That works by putting every number in a column in an equal-width box and
+        // pushing the number to the box's right edge, which is possible because number formatting is
+        // fixed per element: the decimals, separators, prefix and suffix are identical for every value,
+        // so only the integer part varies. The width of that box is measured once per column by
+        // drawEntries (see entriesdisplay.php, issue #918) and passed here in a global; all this
+        // function does is emit the measurement as a custom property and let the theme do the styling.
+        // When no measurement is available - subform listings, the XHR inline-edit redraw path, custom
+        // code calling this directly - the property is simply left off and the value falls back to
+        // plain left alignment rather than being forced into a guessed box.
         $isNumericValue = ($element_type == 'number' OR (!is_array($v) AND is_numeric(trim((string) $v))));
-        $elclass = $isNumericValue ? ' class="formulize-numeric"' : '';
+        $elclass = '';
+        if ($isNumericValue) {
+            $elclass = ' class="formulize-numeric"';
+            if (isset($GLOBALS['formulize_numericColumnWidths'][$handle])) {
+                $elclass .= ' style="--fz-num-width: ' . intval($GLOBALS['formulize_numericColumnWidths'][$handle]) . 'ch"';
+            }
+        }
         $thisEntryId = isset($localIds[$valueId]) ? $localIds[$valueId] : $entryId;
         if ($counter == 1 AND $deDisplay AND $element_type != 'derived') {
            $output .= '<div class="formulize-display-element-edit-icon"><a class="de-edit-icon" href="" onclick="renderElement(\''.$handle.'\', '.$cachedElementIds[$handle].', '.$thisEntryId.', '.$fid.',0,'.$deInstanceCounter.');return false;"></a></div><div class="formulize-display-element-contents">';

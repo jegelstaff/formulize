@@ -3486,13 +3486,31 @@ input[name='pickdiffgroup'] {
 	margin-bottom: 0.6em;
 }
 
-/* Numeric list values are aligned to the right of the cell. getHTMLForList in
-   functions.php marks them with .formulize-numeric instead of the hardcoded
-   inline style it used to emit, so the theme owns the alignment. (closes #131)
-   The span/li is already block level in this context (see formulize.css), so
-   text-align lands on the full width of the cell. */
-#listofentries .formulize-numeric {
+/* Numeric list values sit at the left of the cell, like every other value, but
+   with their decimal points lined up down the column. (closes #918, replaces the
+   flush-right alignment from #131.)
+
+   getHTMLForList in functions.php marks them with .formulize-numeric and, when
+   drawEntries has been able to measure the column, sets --fz-num-width to the
+   width of the widest formatted number in that column. Every number in the
+   column gets that same box, the number is pushed to the box's right edge, and
+   the box starts at the left of the cell - so the numbers read as left aligned
+   while the decimals still stack. tabular-nums keeps the digits the same width
+   as the `ch` unit the measurement is expressed in. With no measurement
+   available the fallback 0 shrink-wraps the box, ie: plain left alignment.
+
+   Scoped to spans (multi-value cells render list items, which stay list items).
+   Both selectors are needed, and are as specific as they are, to outweigh
+   formulize.css's `#listofentries div.main-cell-div > span` and
+   `#listofentries div.formulize-display-element-contents > span`, which make
+   these spans `display: block`. */
+#listofentries .main-cell-div span.formulize-numeric,
+#listofentries .formulize-display-element-contents span.formulize-numeric {
+	display: inline-block;
 	text-align: right;
+	min-width: var(--fz-num-width, 0);
+	max-width: 100%;
+	font-variant-numeric: tabular-nums;
 }
 
 .list-of-entries table.outer tr.entry-row:last-of-type td.formulize-controls {
