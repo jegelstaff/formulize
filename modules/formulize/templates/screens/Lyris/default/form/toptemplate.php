@@ -10,12 +10,12 @@
 // `.form-container` is kept as an additive alias for backward compatibility.
 
 print "
-<div class='card lyris-form-screen'>
+<div class='fz-card lyris-form-card lyris-form-screen'>
 
-<div class='card__header'>
-	<h3 class='card__title'>".$formTitle."</h3>
+<div class='fz-card__header lyris-form-card__header'>
+	<h3 class='fz-card__title'>".$formTitle."</h3>
 </div>
 
-<div class='card__body'>
+<div class='lyris-form-card__body'>
 <div class='lyris-form lyris-form--label-top form-container'>
 ";

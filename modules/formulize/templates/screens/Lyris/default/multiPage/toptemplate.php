@@ -23,16 +23,16 @@ if($showTabs) {
 // removed the `.lyris-form--compact` modifier from form screens. The modifier
 // is still defined in the stylesheet, for a future per-screen setting.
 print "
-    <div class='card lyris-form-screen'>";
+    <div class='fz-card lyris-form-card lyris-form-screen'>";
 
         if($formTitle) {
             print "
-            <div class='card__header'>
-                <h3 class='card__title'>".$formTitle."</h3>
+            <div class='fz-card__header lyris-form-card__header'>
+                <h3 class='fz-card__title'>".$formTitle."</h3>
             </div>";
         }
 
         print "
-        <div class='card__body'>
+        <div class='lyris-form-card__body'>
             <div class='lyris-form lyris-form--label-top form-container'>
 ";
