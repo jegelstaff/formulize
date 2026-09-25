@@ -455,20 +455,22 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 			$ele_value['disabledelements'] = explode(",",$ele_value['disabledelements']);
 		}
 		global $xoopsDB;
-		$allFormsQuery = q("SELECT id_form, form_title FROM ".$xoopsDB->prefix("formulize_id")." WHERE id_form != ".intval($fid)." ORDER BY form_title");
+		$allFormsQuery = q("SELECT id_form, form_title FROM ".$xoopsDB->prefix("formulize_id")." ORDER BY form_title");
 		$allForms = array(_AM_FORMLINK_PICK);
 		foreach($allFormsQuery as $thisForm) {
+			if($thisForm['id_form'] == intval($fid)) { continue; } // added at the end instead, so it sorts last with a special label
 			$allForms[$thisForm['id_form']] = $thisForm['form_title'];
 		}
+		$allForms[$fid] = _AM_FORMULIZE_SELFREF_SUBFORM; // self-referential connections: a form can be its own subform
 		$validForms1 = q("SELECT t1.fl_form1_id, t2.form_title FROM " . $xoopsDB->prefix("formulize_framework_links") . " AS t1, " . $xoopsDB->prefix("formulize_id") . " AS t2 WHERE t1.fl_form2_id=" . intval($fid) . " AND t1.fl_unified_display=1 AND t1.fl_relationship != 1 AND t1.fl_form1_id=t2.id_form");
 		$validForms2 = q("SELECT t1.fl_form2_id, t2.form_title FROM " . $xoopsDB->prefix("formulize_framework_links") . " AS t1, " . $xoopsDB->prefix("formulize_id") . " AS t2 WHERE t1.fl_form1_id=" . intval($fid) . " AND t1.fl_unified_display=1 AND t1.fl_relationship != 1 AND t1.fl_form2_id=t2.id_form");
 		$validForms = array();
 		foreach($validForms1 as $vf1) {
-				$validForms[$vf1['fl_form1_id']] = $vf1['form_title'];
+				$validForms[$vf1['fl_form1_id']] = $vf1['fl_form2_id'] == intval($fid) ? _AM_FORMULIZE_SELFREF_SUBFORM : $vf1['form_title'];
 		}
 		foreach($validForms2 as $vf2) {
 				if (!isset($validForms[$vf2['fl_form2_id']])) {
-						$validForms[$vf2['fl_form2_id']] = $vf2['form_title'];
+						$validForms[$vf2['fl_form2_id']] = $vf2['fl_form2_id'] == intval($fid) ? _AM_FORMULIZE_SELFREF_SUBFORM : $vf2['form_title'];
 				}
 		}
 		$allForms['new'] = _AM_ELE_SUBFORM_NEW;

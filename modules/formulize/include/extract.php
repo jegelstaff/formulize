@@ -1155,7 +1155,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 					$joinText .= $newJoinText;
 					$hasOneSideFilters = (isset($oneSideFilters[$linkedFid]) AND is_array($oneSideFilters[$linkedFid]) AND count($oneSideFilters[$linkedFid]) > 0);
 					$hasEmptySetFilters = (isset($emptySetFilters[$linkedFid]) AND is_array($emptySetFilters[$linkedFid]) AND count($emptySetFilters[$linkedFid]) > 0);
-					if ($hasOneSideFilters OR $hasEmptySetFilters) { // only setup the existsJoinText when there is a where clause that applies to this form...otherwise, we don't care, this form is not relevant to the query that the calculations will do (except maybe when the mainform is not the one-side form...but that's another story)
+					if (($hasOneSideFilters OR $hasEmptySetFilters) AND $linkedFid != $fid) { // only setup the existsJoinText when there is a where clause that applies to this form...otherwise, we don't care, this form is not relevant to the query that the calculations will do (except maybe when the mainform is not the one-side form...but that's another story). Also, don't do this with self-referential connections, which will make the data array messy because there will be multiple values for certain fields, due to repeats in the query results due to fields being included multiple times, ugh.
 						// If this linked form is entries_are_users and any filter references its EAU table aliases,
 						// inject those joins inside the EXISTS subquery (before the WHERE).
 						$existsEauJoins = "";
