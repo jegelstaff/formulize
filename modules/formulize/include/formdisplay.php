@@ -2736,6 +2736,39 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 
 // draw in javascript for this form that is relevant to subforms
 // $nosave indicates that the user cannot save this entry, so we shouldn't check for formulizechanged
+/**
+ * The JavaScript that puts the cursor in an "Other" box when its option is checked, so the user
+ * can type the value straight away. Only on checking: a checkbox's change event fires when it is
+ * unchecked too, and so does a radio's when it is unchecked by clicking it again (formulize.js).
+ * optOther() in elementrenderer.php says which option each box belongs to, the same way the box's
+ * onkeydown finds the option to tick. Written out whether or not the page has an Other box yet,
+ * since one can arrive later with a conditional element. Adds its listener once per page, because
+ * the drawer runs a form's scripts again for every form it opens.
+ * @return string The JavaScript, without script tags
+ */
+function formulize_otherBoxFocusJs() {
+	return <<<'JS'
+if(!window.formulizeOtherBoxFocusAdded) {
+    window.formulizeOtherBoxFocusAdded = true;
+    document.addEventListener('change', function(e) {
+        var option = e.target;
+        if(!option.form || (option.type != 'checkbox' && option.type != 'radio') || !option.checked) {
+            return;
+        }
+        var boxes = option.form.querySelectorAll('input[data-formulize-other-for]');
+        for(var i = 0; i < boxes.length; i++) {
+            // a lone option is the element itself rather than a list of them
+            var options = option.form.elements[boxes[i].getAttribute('data-formulize-other-for')];
+            if(options && (options[boxes[i].getAttribute('data-formulize-other-index')] || options) === option) {
+                boxes[i].focus();
+            }
+        }
+    });
+}
+
+JS;
+}
+
 function drawJavascript($nosave=false, $entryId=null, $screen=null, $frid=null, $settings=array()) {
 
 if($screen AND !$frid) {
@@ -3394,6 +3427,8 @@ function removeTags(html) {
         $output .= "});\n";
         print $output;
     }
+
+    print formulize_otherBoxFocusJs();
 
     $autocompleteJsVersion = formulize_get_file_version('/modules/formulize/include/js/autocomplete.js');
     print "</script>

@@ -2053,6 +2053,30 @@ body:has(#formulize-masquerade-block) {
   margin: 0 calc(var(--fz-spacing) * 2);
 }
 
+/* The "Other" box of a checkbox or radio option. An option written {OTHER|n}
+   renders as "Other: " followed by a bare <input type=text size=n> inside the
+   option's label (optOther() in modules/formulize/class/elementrenderer.php),
+   so the width:100% in the contextual override above filled the line and
+   dropped the box underneath "Other:". Sized here to its n characters instead,
+   so it sits beside its label. The size attribute is no help: browsers work its
+   width out from metrics in the font, and Geist's put a size=50 box at room for
+   about 65 characters of ordinary text. So the width is n at half the box's
+   text size each, about what an ordinary character takes in Geist or Arial,
+   plus the density's horizontal padding and the border, like the subform count
+   box above. optOther() puts n on the box as --formulize-other-chars; where
+   it is missing, the calc is invalid and the width falls back to auto, which
+   is the size attribute's. max-width keeps a wide n inside a narrow drawer or
+   phone. The name is the hook because it is what saving reads
+   (other[ele_...]), so it cannot change without breaking saving. The selector
+   matches the override's weight and wins on source order, with the name test
+   and the fz- exclusion inside :where() so they add none. */
+.lyris-form input[type="text"]:where([name^="other["]:not([class*="fz-"])),
+.lyris-form-screen input[type="text"]:where([name^="other["]:not([class*="fz-"])) {
+  width: calc(var(--formulize-other-chars) * 0.5em + 2 * var(--lyris-field-padding-x) + 2px);
+  max-width: 100%;
+  vertical-align: middle;
+}
+
 /* ---------- Form card surface ----------
    The form is a Formulize UI card (fz-card, with fz-card__header and
    fz-card__title), which gives it its surface, border, radius and shadow.
@@ -3300,6 +3324,42 @@ input[type="time"] { font-family: var(--fz-font-sans); }
     width: 1.5rem;
     height: 1.5rem;
     font-size: 1rem;
+  }
+
+  /* On narrow screens the "Other" box of a checkbox or radio option takes all
+     the room there is, instead of the n characters it gets beside its label on
+     wider ones (see the "Other" box rule in the form-controls section, which
+     this follows on source order). A radio's box goes full width on its own
+     line under "Other:": core splits the radio, "Other:" and the box across
+     separate sibling elements, so nothing holds them as one row to lay out. */
+  .lyris-form input[type="text"]:where([name^="other["]:not([class*="fz-"])),
+  .lyris-form-screen input[type="text"]:where([name^="other["]:not([class*="fz-"])) {
+    width: 100%;
+  }
+
+  /* A checkbox's box stays on the checkbox's line and fills the rest of it,
+     because core puts the checkbox, "Other:" and the box in one label. That
+     label becomes the row, and its option takes the whole line, inline-level
+     so that a <br> delimiter after it adds no blank line. The box's margin is
+     the space "Other: " ends with, which a flex row drops, at the same 8px the
+     checkbox keeps from its text. */
+  .lyris-form :where(.icms_checkboxoption:has(> label > input[name^="other["])),
+  .lyris-form-screen :where(.icms_checkboxoption:has(> label > input[name^="other["])) {
+    display: inline-flex;
+    width: 100%;
+  }
+  .lyris-form :where(.icms_checkboxoption > label:has(> input[name^="other["])),
+  .lyris-form-screen :where(.icms_checkboxoption > label:has(> input[name^="other["])) {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    min-width: 0;
+  }
+  .lyris-form :where(.icms_checkboxoption > label) > input[type="text"]:where([name^="other["]:not([class*="fz-"])),
+  .lyris-form-screen :where(.icms_checkboxoption > label) > input[type="text"]:where([name^="other["]:not([class*="fz-"])) {
+    flex: 1 1 0;
+    min-width: 0;
+    margin-left: calc(var(--fz-spacing) * 2);
   }
 
   /* ---------- Mobile multipage action bar (issue #9, clutter) ----------

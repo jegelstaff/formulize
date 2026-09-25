@@ -205,7 +205,7 @@ var FORMULIZE = {
     SCREEN_ID : ".intval($sid).",
     FRID : ".intval($frid)."
 };
-</script>\n";
+".formulize_otherBoxFocusJs()."</script>\n";
 
 // Wrap the rendered elements in the active theme's drawer container (see
 // modules/formulize/templates/screens/<Theme>/default/drawer/toptemplate.php).

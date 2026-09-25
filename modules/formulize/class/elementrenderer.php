@@ -727,7 +727,7 @@ function optOther($s, $id, $entry_id, $counter, $checkbox=false, $isDisabled=fal
         return formulize_purifyHtmlValue($other_text, 'other_ele_'.$ele_id, $entry_id);
     }
     $s = explode('|', preg_replace('/[\{\}]/', '', $s));
-    $len = !empty($s[1]) ? $s[1] : $xoopsModuleConfig['t_width'];
+    $len = intval(!empty($s[1]) ? $s[1] : $xoopsModuleConfig['t_width']);
     if($entry_id == "new") {
         $blankSubformCounters[$ele_id] = isset($blankSubformCounters[$ele_id]) ? $blankSubformCounters[$ele_id] + 1 : 0;
         $blankSubformCounter = $blankSubformCounters[$ele_id];
@@ -741,6 +741,11 @@ function optOther($s, $id, $entry_id, $counter, $checkbox=false, $isDisabled=fal
     } else {
         $box->setExtra("onchange=\"javascript:formulizechanged=1;\" onkeydown=\"javascript:if(this.value != ''){this.form." . $id . "[$counter].checked = true;}\"");
     }
+    // the box's width in characters, for themes that size the box themselves rather than
+    // leave it to the size attribute, which browsers work out from the font (see Lyris's style.css)
+    $box->setExtra("style='--formulize-other-chars: $len'");
+    // the option this box belongs to, so checking that option can put the cursor in the box (drawJavascript() in formdisplay.php)
+    $box->setExtra("data-formulize-other-for='" . htmlspecialchars($checkbox ? $id . '[]' : $id) . "' data-formulize-other-index='" . intval($counter) . "'");
     return $box->render();
 }
 
