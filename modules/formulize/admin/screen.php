@@ -78,13 +78,10 @@ if ($screen_id == "new") {
     $settings['embedOriginsWarning'] = formulize_embedOriginsWarningHtml($screen->getVar('embedOrigins', 'n'));
     // the ready-made iframe and script for the host page, with this screen's own address already in
     // it, so nobody has to assemble one by hand or remember what has to be on the end of the URL.
-    // Twice: with the address this page is being viewed at, which works as it is for anonymous
-    // visitors, and with a placeholder for an embedding address on the host website's domain, which
-    // is what signed-in visitors need and which nothing here can know
+    // The site's address is a placeholder, since which address is right depends on who will use the
+    // screen - see formulize_screenEmbedCode()
     $settings['embedCode'] = formulize_screenEmbedCode($screen);
-    $settings['embedCodeAnonLabel'] = sprintf(_AM_SCREEN_SETTINGS_EMBED_CODE_ANON, htmlspecialchars(parse_url(XOOPS_URL, PHP_URL_HOST)));
-    $settings['embedCodeForEmbeddingAddress'] = formulize_screenEmbedCode($screen, formulize_embeddingAddressPlaceholderUrl());
-    $settings['embedCodeAliasDesc'] = sprintf(_AM_SCREEN_SETTINGS_EMBED_CODE_ALIAS_DESC, FORMULIZE_EMBEDDING_ADDRESS_PLACEHOLDER);
+    $settings['embedCodeAddressDesc'] = sprintf(_AM_SCREEN_SETTINGS_EMBED_CODE_ADDRESS_DESC, FORMULIZE_ADDRESS_PLACEHOLDER, htmlspecialchars(XOOPS_URL));
     $settings['embedSessionNotice'] = formulize_embedSessionSharingNoticeHtml($screen->getVar('embedOrigins', 'n'));
 	$settings['alternateURLsOn'] = $formulizeConfig['formulizeRewriteRulesEnabled'];
     if($settings['alternateURLsOn']) {

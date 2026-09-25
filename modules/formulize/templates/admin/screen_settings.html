@@ -67,19 +67,16 @@
 	      <div class="description"><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_OFF}></div>
 	    <{else}>
 	    <{if $content.embedCode}>
-	    <{* Two versions of the code, because this page only knows the address it is being viewed at.
-	       That address works for anonymous visitors. Signed-in visitors need an embedding address on the
-	       host website's own domain, which the administrator has to fill in. *}>
+	    <{* One copy of the code, with a placeholder where this site's address goes, since which address
+	       is right depends on who will use the screen - see formulize_screenEmbedCode(). It is plain
+	       text, so it is escaped here to show as code rather than render as a frame. *}>
 	    <label><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_CODE}></label>
 	    <div class="description"><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_CODE_DESC}></div>
-	    <br />
-	    <label for="screens-embedCode"><{$content.embedCodeAnonLabel}></label>
-	    <textarea id="screens-embedCode" rows="4" cols="60" readonly onclick="this.select();"><{$content.embedCode}></textarea>
-	    <div class="description"><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_CODE_ANON_DESC}></div>
-	    <br />
-	    <label for="screens-embedCodeAlias"><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_CODE_ALIAS}></label>
-	    <textarea id="screens-embedCodeAlias" rows="4" cols="60" readonly onclick="this.select();"><{$content.embedCodeForEmbeddingAddress}></textarea>
-	    <div class="description"><{$content.embedCodeAliasDesc}></div>
+	    <div class="formulize-admin-codeblock">
+	      <pre><code><{$content.embedCode|escape}></code></pre>
+	      <button type="button" class="formulize-admin-codeblock-copy" data-copied="<{$smarty.const._AM_SCREEN_SETTINGS_CODE_COPIED}>"><{$smarty.const._AM_SCREEN_SETTINGS_CODE_COPY}></button>
+	    </div>
+	    <div class="description"><{$content.embedCodeAddressDesc}></div>
 	    <br />
 	    <{/if}>
 	    <label for="screens-embedOrigins"><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_ORIGINS}></label>
@@ -94,9 +91,12 @@
 	<fieldset>
 		<legend><{$smarty.const._AM_SCREEN_SETTINGS_PHP_LEGEND}></legend>
 		<p><{$smarty.const._AM_SCREEN_SETTINGS_PHP_DESC}><br /><{$smarty.const._AM_SCREEN_SETTINGS_PHP_DESC2}></p>
-		<blockquote class="code">include_once "<{$smarty.const.XOOPS_ROOT_PATH}>/mainfile.php";<br/>
-$formulize_screen_id = <{$content.sid}>;<br/>
-include "<{$smarty.const.XOOPS_ROOT_PATH}>/modules/formulize/index.php";</blockquote>
+		<div class="formulize-admin-codeblock">
+		  <pre><code>include_once "<{$smarty.const.XOOPS_ROOT_PATH|escape}>/mainfile.php";
+$formulize_screen_id = <{$content.sid}>;
+include "<{$smarty.const.XOOPS_ROOT_PATH|escape}>/modules/formulize/index.php";</code></pre>
+		  <button type="button" class="formulize-admin-codeblock-copy" data-copied="<{$smarty.const._AM_SCREEN_SETTINGS_CODE_COPIED}>"><{$smarty.const._AM_SCREEN_SETTINGS_CODE_COPY}></button>
+		</div>
 	</fieldset>
 
   <fieldset>
@@ -167,6 +167,33 @@ include "<{$smarty.const.XOOPS_ROOT_PATH}>/modules/formulize/index.php";</blockq
     $('#make_new_passcode_button').click(function() {
         $('#make_new_passcode').val(1);
         $(".savebutton").click();
+    });
+    // Copy buttons on the code blocks. navigator.clipboard only exists on https, so a site served
+    // over plain http falls back to copying from a hidden textarea.
+    $('.formulize-admin-codeblock-copy').click(function() {
+        var button = $(this);
+        if(button.text() == button.attr('data-copied')) {
+            return; // still showing Copied from a click a moment ago
+        }
+        var text = button.siblings('pre').text();
+        var label = button.text();
+        var copied = function() {
+            button.text(button.attr('data-copied'));
+            setTimeout(function() { button.text(label); }, 1500);
+        };
+        if(navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(copied);
+        } else {
+            var area = document.createElement('textarea');
+            area.value = text;
+            area.style.position = 'fixed';
+            area.style.top = '-1000px';
+            document.body.appendChild(area);
+            area.select();
+            document.execCommand('copy');
+            document.body.removeChild(area);
+            copied();
+        }
     });
     $('input[name="screens-anonNeedsPasscode"]').click(function() {
        if($(this).val() == 1 && $('#codelist').css('display') == 'none') {

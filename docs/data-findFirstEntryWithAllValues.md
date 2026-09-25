@@ -64,15 +64,18 @@ $entry_id = $dataHandler->findFirstEntryWithAllValues($values, "IN");
 ~~~
 
 ~~~php
-// return the entry id and the player from the first entry in form 6 where the city is Toronto
-// Note the operator will be = implicitly, because that parameter has been skipped when the method is called
-// Note also that the third parameter has to be named specifically in order to skip the operator parameter
+// return the entry id and the player from the first entry in form 6
+// where the city is Toronto
+// Note the operator will be = implicitly, because that parameter
+// has been skipped when the method is called
+// Note also that the third parameter has to be named specifically
+// in order to skip the operator parameter
 $form_id = 6;
 $dataHandler = new formulizeDataHandler($form_id);
 $values = array(
-    'city'=>'Toronto';
+    'city'=>'Toronto'
 );
-$fieldsToReturn = 'entry_id, player'
+$fieldsToReturn = 'entry_id, player';
 $values = $dataHandler->findFirstEntryWithAllValues($values, fieldsToReturn: $fieldsToReturn);
 
 var_dump($values); // will output an array something like this: 'entry_id'=>125, 'player'=>'Timashov'

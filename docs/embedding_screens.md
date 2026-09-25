@@ -73,15 +73,18 @@ The screen's settings page shows you the code for that screen, under **Code for 
 page**. It looks like this:
 
 ```html
-<iframe data-formulize-embed src="https://forms.mycompany.com/modules/formulize/index.php?sid=12&formulize_embed=1"
+<iframe data-formulize-embed
         title="Contact us"
-        style="width:100%;height:600px;border:0"></iframe>
-<script src="https://forms.mycompany.com/modules/formulize/libraries/embed/formulize-embed.js"></script>
+        style="width:100%;height:600px;border:0"
+        src="{formulize-address}/modules/formulize/index.php?sid=12&formulize_embed=1"></iframe>
+<script src="{formulize-address}/modules/formulize/libraries/embed/formulize-embed.js"></script>
 ```
 
-The settings page has a second version that is the same, with `{embedding-address}` in place of the
-address. If you did step 3, use that one and replace `{embedding-address}` with your embedding
-address, eg. `forms.example.com`.
+Replace `{formulize-address}` in both places:
+
+- If you did step 3, use your embedding address, eg. `https://forms.example.com`.
+- If every visitor will be anonymous, you can use your Formulize site's own address, eg.
+  `https://mycompany.formulize.net`.
 
 Copy the code from the settings page rather than from here, because it has your screen's real number
 in it. Include the script once per page, however many screens that page shows.
@@ -165,7 +168,7 @@ Two things to know before you do it:
 Write one website per line. All of these work:
 
 ```
-example.com                     a domain on its own, matched only under this site's own scheme
+example.com                     a domain alone, matched only on this site's scheme
 www.example.com
 https://campaign.example.com    include https:// to require a secure connection
 http://localhost:4000           include http:// for a host that is not using https
@@ -318,8 +321,8 @@ order:
    accept that over `https`.
 2. **Is it Safari, or a browser set to block third-party cookies?** Then it cannot work on a different
    domain at all, and step 3 is the answer.
-3. **Is the iframe using your ordinary Formulize address**, or the embedding address with
-   `{embedding-address}` replaced? Only the second works in every browser.
+3. **Did you replace `{formulize-address}` with your ordinary Formulize address**, or with your
+   embedding address? Only the embedding address works in every browser.
 4. **If the iframe address *is* on the same domain as the host page**, one of the setup steps is
    incomplete. Open the iframe address directly in a browser: if the address bar moves to a different
    name as you click around, the server is not passing the requested hostname to Formulize. See

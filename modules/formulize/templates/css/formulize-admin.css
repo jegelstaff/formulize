@@ -2711,3 +2711,40 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 .formulize-appearance .formulize-appearance-destructive {
 	color: #8f1e18;
 }
+
+/* A snippet of code for the administrator to copy into somewhere else - the embed code and the
+   PHP include on a screen's settings page - shown as it is, with a Copy button at its top right.
+   The code is never wrapped: a wrapped line reads as a line break that is not really there, which
+   matters in something meant to be pasted. It scrolls sideways if it has to instead, and the right
+   padding keeps the button clear of the first lines. */
+.formulize-admin-codeblock {
+	position: relative;
+	margin: 0.5em 0;
+}
+.formulize-admin-codeblock pre {
+	margin: 0;
+	padding: 0.75em 6.5em 0.75em 1em;
+	background: #f6f8f9;
+	border: 1px solid #e3e7e9;
+	border-radius: 6px;
+	font-family: "Courier New", Courier, monospace;
+	font-size: 0.95em;
+	line-height: 1.5;
+	white-space: pre;
+	overflow-x: auto;
+}
+.formulize-admin-codeblock-copy {
+	position: absolute;
+	top: 0.5em;
+	right: 0.5em;
+	padding: 0.2em 0.8em;
+	font-size: 0.85em;
+	color: #333;
+	background: #fff;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	cursor: pointer;
+}
+.formulize-admin-codeblock-copy:hover {
+	background: #eef3f6;
+}

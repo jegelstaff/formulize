@@ -64,10 +64,10 @@ foreach($data as $entry) {
 ~~~
 
 ~~~php
-// Gather all the data in form 6 (fruit), plus connected forms in the Primary Relationship.
-// For each fruit, print out some order info for the first order in the dataset associated with
-// that fruit. Isolate the first order based on the underlying entry ids of the Orders form,
-// within each item in the dataset.
+// Gather all the data in form 6 (fruit), plus connected forms in the Primary
+// Relationship. For each fruit, print out some order info for the first order
+// in the dataset associated with that fruit. Isolate the first order based on
+// the underlying entry ids of the Orders form, within each item in the dataset.
 $fruitFormId = 6;
 $orderFormId = 11;
 $data = gatherDataset($fruitFormId);

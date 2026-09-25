@@ -77,7 +77,7 @@ If you have a copy of files from an existing Formulize website, you could use th
 5. Find the trust path file in your live website. If you don't know where it is, check ```mainfile.php``` in the root of your website and look for code like this near the top:
 ```php
 define( 'XOOPS_TRUST_PATH', '/var/www/mysite.com/sadg876kjhg89' );
-include_once XOOPS_TRUST_PATH . '/r87678sd908asdf48ffecfbfd223af293d.php' ;
+include_once XOOPS_TRUST_PATH . '/a3f9c1d20e8b40c5963c1f0b2d7a58e6.php' ;
 ```
 
 6. Open the trust path file, and note the ```SDATA_DB_PREFIX``` and ```SDATA_DB_SALT``` values

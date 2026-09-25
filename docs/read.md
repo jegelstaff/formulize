@@ -86,9 +86,13 @@ When _relationship_ is set, entries from connected forms appear under `related` 
 Errors return an http status code and a body like this:
 
 ```json
-{ "error": { "code": "permission_denied",
-             "message": "You do not have permission to view this form",
-             "hint": "This request carried no Authorization header, so it was handled as anonymous..." } }
+{
+  "error": {
+    "code": "permission_denied",
+    "message": "You do not have permission to view this form",
+    "hint": "This request carried no Authorization header, so it was handled as anonymous..."
+  }
+}
 ```
 
 _message_ is a plain explanation that is suitable to show to people. _code_ does not change, so use it when your code needs to react to a particular error. _hint_ is only included on some errors, and is aimed at the developer: it explains the likely cause, such as a missing API key.
@@ -267,6 +271,8 @@ curl -X POST https://example.org/formulize-public-api/v1/form/donors/read \
 The same request as a `GET`, for quick testing. Lists are comma separated:
 
 ```
-curl "https://example.org/formulize-public-api/v1/form/donors/read?fields=donor_name,amount&limitSize=25" \
+curl -G "https://example.org/formulize-public-api/v1/form/donors/read" \
+  -d "fields=donor_name,amount" \
+  -d "limitSize=25" \
   -H "Authorization: Bearer 8f3ca19d..."
 ```

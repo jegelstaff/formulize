@@ -41,7 +41,8 @@ $value = prepDataForWrite('fruit_choices', 3, 27);
 ~~~
 
 ~~~php
-// take a date value and prepare it for saving into a date element in a new entry in the database
+// take a date value and prepare it for saving into a date element
+// in a new entry in the database
 $value = "May 9, 1969";
 $value = prepDataForWrite('date_element_handle', $value, 'new');
 ~~~

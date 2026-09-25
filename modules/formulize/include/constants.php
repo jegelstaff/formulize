@@ -41,10 +41,11 @@ define('FORMULIZE_EDIT_ICON_STYLE_MAGNIFIER', 2);
 // "Theme for embedded screens" preference. See formulize_embedThemeName().
 define('FORMULIZE_DEFAULT_EMBED_THEME', 'formulize_embed');
 
-// Stands in for the embedding address - a name on the host website's own domain, pointed at this
-// server - in the embed code shown on a screen's settings page, since nothing here can know it.
-// See formulize_embeddingAddressPlaceholderUrl().
-define('FORMULIZE_EMBEDDING_ADDRESS_PLACEHOLDER', '{embedding-address}');
+// Stands in for this site's address in the embed code shown on a screen's settings page. The right
+// address depends on how the screen is embedded - this site's own for anonymous visitors, or an
+// embedding address on the host website's domain for signed-in ones - so the administrator fills it
+// in. See formulize_screenEmbedCode().
+define('FORMULIZE_ADDRESS_PLACEHOLDER', '{formulize-address}');
 
 // A file with this name in a theme folder marks that theme as one for rendering embedded screens.
 // See formulize_themeIsAnEmbedTheme() and the marker file in themes/formulize_embed.

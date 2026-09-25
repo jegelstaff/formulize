@@ -39,7 +39,8 @@ $dataHandler->setEntryOwnerGroups(399, 71);
 ~~~
 
 ~~~php
-// Update the entry ownership information for entries 71 through 75 in form 6, to all be user 399
+// Update the entry ownership information for entries 71 through 75
+// in form 6, to all be user 399
 $form_id = 6;
 $dataHandler = new formulizeDataHandler($form_id);
 $uids = array(399, 399, 399, 399, 399);

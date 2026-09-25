@@ -265,11 +265,9 @@ The same checks as A4.
 
 ## After either method
 
-Point the iframe at the new address. The screen's settings page shows the code to use. There are two versions, one for anonymous users, and one for when you have set up an embedding address to use in order to preserve user sessions in the embedded screens.
+Point the iframe at the new address. The screen's settings page shows the code to use, with `{formulize-address}` in the places where an address goes. Replace it with your embedding address, eg. `https://forms.example.com`.
 
-Since Formulize has no way to know the embedding address you're using, replace `{embedding-address}` in the example code with the address you are using.
-
-If you don't need to preserve user sessions, you can just use the regular code with the normal site address of your Formulize system.
+If you don't need to preserve user sessions, you can use the normal site address of your Formulize system instead.
 
 The address must use the screen's plain `index.php?sid=` location, not any Alternate URL you may have given it. The rewrite rules that serve those addresses are not part of this arrangement, and nobody sees the address inside an iframe anyway.
 

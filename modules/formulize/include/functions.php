@@ -760,39 +760,28 @@ function formulize_embeddedNoPermissionHtml($returnUrl) {
  * narrow page, and 100% cannot lift the collapse a floor exists for. So it is left to the script,
  * which is the only thing here that can measure anything.
  *
- * WHICH ADDRESS. This site answers at whatever address a request arrives on, and an administrator is
- * reaching it through the site's ordinary address, so that is the only address this request knows.
- * It is the right one for a screen used anonymously on a website on another domain. A screen whose
- * visitors need to be signed in is instead reached through a second address on the host website's own
- * domain, pointed at this server - and nothing here can know what that address is, or whether one
- * exists. So the settings page shows the code twice: once with the ordinary address, and once with
- * formulize_embeddingAddressPlaceholderUrl() in its place for the administrator to fill in.
+ * WHICH ADDRESS. The code carries FORMULIZE_ADDRESS_PLACEHOLDER where this site's address goes,
+ * for the administrator to fill in. This site's own address is right for a screen used anonymously
+ * on a website on another domain; a screen whose visitors need to be signed in is reached through a
+ * second address on the host website's own domain, pointed at this server, and nothing here can know
+ * what that is. The settings page used to show the code twice, once with each, which was a lot of
+ * duplication to make sense of without the documentation to hand. One copy with a placeholder, and a
+ * pointer to the documentation for the signed-in case, says the same thing.
+ *
+ * The attributes go one to a line with src last, so the long address is at the end of the snippet
+ * rather than on its first line. That is the shape the documentation shows it in as well.
  *
  * @param object $screen The screen
- * @param string $siteUrl The address to build the code from, with no trailing slash. Defaults to the
- *   address this request arrived on.
- * @return string The HTML to paste, ready to display in a textarea
+ * @return string The code to paste, as plain text - escape it for display
  */
-function formulize_screenEmbedCode($screen, $siteUrl = XOOPS_URL) {
-    $url = $siteUrl.'/modules/formulize/index.php?sid='.intval($screen->getVar('sid')).'&formulize_embed=1';
-    $title = $screen->getVar('title');
-    return '<iframe data-formulize-embed src="'.htmlspecialchars($url).'"'
-        .' title="'.htmlspecialchars($title ? $title : _AM_EMBED_CODE_DEFAULT_TITLE).'"'
-        .' style="width:100%;height:600px;border:0"></iframe>'."\n"
-        .'<script src="'.htmlspecialchars($siteUrl.'/modules/formulize/libraries/embed/formulize-embed.js').'"></script>';
-}
-
-/**
- * This site's address with the host replaced by a placeholder, for embed code an administrator
- * completes with the embedding address they have set up on the host website's domain.
- *
- * Always https, because an embedding address has to be. Any folder the site is installed in is kept,
- * since the embedding address serves the same site from the same place.
- *
- * @return string eg. https://{embedding-address} or https://{embedding-address}/formulize
- */
-function formulize_embeddingAddressPlaceholderUrl() {
-    return 'https://'.FORMULIZE_EMBEDDING_ADDRESS_PLACEHOLDER.rtrim((string) parse_url(XOOPS_URL, PHP_URL_PATH), '/');
+function formulize_screenEmbedCode($screen) {
+    $address = FORMULIZE_ADDRESS_PLACEHOLDER;
+    $title = $screen->getVar('title', 'n');
+    return '<iframe data-formulize-embed'."\n"
+        .'        title="'.htmlspecialchars($title ? $title : _AM_EMBED_CODE_DEFAULT_TITLE).'"'."\n"
+        .'        style="width:100%;height:600px;border:0"'."\n"
+        .'        src="'.$address.'/modules/formulize/index.php?sid='.intval($screen->getVar('sid')).'&formulize_embed=1"></iframe>'."\n"
+        .'<script src="'.$address.'/modules/formulize/libraries/embed/formulize-embed.js"></script>';
 }
 
 /**

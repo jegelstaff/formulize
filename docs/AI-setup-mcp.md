@@ -18,10 +18,13 @@ title: External AI Assistant Setup (MCP)
 
     If this option does not "stick" and reverts to _No_, then you need to make sure your server is passing through an "authorization header" to PHP. Add this code to the .htaccess file in the root folder of your website (the folder that contains mainfile.php). Make sure to put it above any other rewrite rules. If you have already added the rewrite rules for the [Public API](/documentation/Public_API/), these lines are part of those rules, and you do not need to add them again.
 
-		    # Necessary for HTTP Authorization header to be passed through to the MCP server
-		    RewriteEngine On
-		    RewriteCond %{HTTP:Authorization} .
-		    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+   ```apache
+   # Necessary for the HTTP Authorization header to be passed through
+   # to the MCP server
+   RewriteEngine On
+   RewriteCond %{HTTP:Authorization} .
+   RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+   ```
 
 3. **Write some introductory notes for the AI.** When AI is enabled in Formulize, there is a preference called _System Specific Instructions for the AI Assistant_. This is a very useful and powerful feature! Everything you type in this preference, will be communicated to the AI every time it connects to your Formulize system. This is your chance to give it any unique background info it might need in order to understand your system, what it's for, and how it works. Include details. The AI loves details.
 
@@ -37,24 +40,24 @@ title: External AI Assistant Setup (MCP)
 
 	- For Copilot in VSCode, make a file called ```mcp.json``` in the ```.vscode``` folder of your project. It should look like this
 
-	```json
-	{
-		"servers": {
-			"My Formulize MCP Server": {
-				"command": "npx",
-				"args": [
-					"-y",
-					"formulize-mcp"
-				],
-				"env": {
-					"FORMULIZE_URL": "https://<your.formulize.site.url>",
-					"FORMULIZE_API_KEY": "<your api key from your formulize site>",
-					"FORMULIZE_SERVER_NAME": "My Formulize MCP Server"
-				}
-			}
-		}
-	}
-	```
+   ```json
+   {
+     "servers": {
+       "My Formulize MCP Server": {
+         "command": "npx",
+         "args": [
+           "-y",
+           "formulize-mcp"
+         ],
+         "env": {
+           "FORMULIZE_URL": "https://<your.formulize.site.url>",
+           "FORMULIZE_API_KEY": "<your api key from your formulize site>",
+           "FORMULIZE_SERVER_NAME": "My Formulize MCP Server"
+         }
+       }
+     }
+   }
+   ```
 
 	- Also, in VSCode you will want to go into the preferences, and under __Chat > MCP__, make sure _discovery_ is enabled.
 
@@ -64,24 +67,24 @@ title: External AI Assistant Setup (MCP)
 	\
 	The file should look like this:
 
-	```json
-	{
-		"mcpServers": {
-			"My Formulize MCP Server": {
-				"command": "npx",
-				"args": [
-					"-y",
-					"formulize-mcp"
-				],
-				"env": {
-					"FORMULIZE_URL": "https://<your.formulize.site.url>",
-					"FORMULIZE_API_KEY": "<your api key from your formulize site>",
-					"FORMULIZE_SERVER_NAME": "My Formulize MCP Server"
-				}
-			}
-		}
-	}
-	```
+   ```json
+   {
+     "mcpServers": {
+       "My Formulize MCP Server": {
+         "command": "npx",
+         "args": [
+           "-y",
+           "formulize-mcp"
+         ],
+         "env": {
+           "FORMULIZE_URL": "https://<your.formulize.site.url>",
+           "FORMULIZE_API_KEY": "<your api key from your formulize site>",
+           "FORMULIZE_SERVER_NAME": "My Formulize MCP Server"
+         }
+       }
+     }
+   }
+   ```
 
 	- The configuration for other AI assistants should be similar. You need to use ```npx``` with ```formulize-mcp```, and set the environment variables.
 

@@ -39,7 +39,8 @@ $order_details = $dataHandler->getElementValueInEntry($entry_id, $element_handle
 
 ~~~php
 // get the value of order_customer from entry 19 in form 6
-// imagine order_customer is a linked selectbox pointing to the customer name in a customer form
+// imagine order_customer is a linked selectbox pointing to
+// the customer name in a customer form
 $form_id = 6;
 $dataHandler = new formulizeDataHandler($form_id);
 $entry_id = 19;

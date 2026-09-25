@@ -32,12 +32,13 @@ Key zero, the returned scope, can be passed directly into the [gatherDataset](..
 ## Examples
 
 ~~~php
-// Create the most permissive scope possible for user 12 on form 6, based on their permissions
+// Create the most permissive scope possible for user 12 on form 6,
+// based on their permissions
 $userId = 12;
 $formId = 6;
 $currentView = 'all'; // try to go big
 list($scope, $currentView) = buildScope($currentView, $userId, $formId);
-if($currenView != 'all') {
+if($currentView != 'all') {
 	print "Scope was reduced from 'all' based on the user's permissions";
 }
 ~~~
@@ -58,7 +59,7 @@ print_r($scope);
 ~~~php
 // Print out the order numbers from the Orders form, for all the orders that belong
 // to the currently logged in user's group(s)
-global $xoopsUser; // the active, logged in user, either a user object or an empty value if there is no logged in user
+global $xoopsUser; // the logged in user object, or empty if no one is logged in
 $orderFormId = 6;
 $currentView = 'group';
 list($scope, $currentView) = buildScope($currentView, $xoopsUser, $orderFormId);
@@ -70,7 +71,7 @@ foreach($data as $entry) {
 
 ~~~php
 // Make the scope based on groups 17 and 33
-global $xoopsUser; // the active, logged in user, either a user object or an empty value if there is no logged in user
+global $xoopsUser; // the logged in user object, or empty if no one is logged in
 $orderFormId = 6;
 $currentView = '17,33';
 list($scope, $currentView) = buildScope($currentView, $xoopsUser, $orderFormId);
@@ -78,7 +79,7 @@ list($scope, $currentView) = buildScope($currentView, $xoopsUser, $orderFormId);
 
 ~~~php
 // Make the scope based on groups 17 and 33, as long as the user is a member of those groups
-global $xoopsUser; // the active, logged in user, either a user object or an empty value if there is no logged in user
+global $xoopsUser; // the logged in user object, or empty if no one is logged in
 $orderFormId = 6;
 $currentView = 'onlymembergroups,17,33';
 list($scope, $currentView) = buildScope($currentView, $xoopsUser, $orderFormId);

@@ -167,7 +167,8 @@ More info: [Stack Overflow](https://stackoverflow.com/questions/15292391/is-it-p
 
 This lifesaver snippet of code lets you specify two commits and get a .zip containing only the files that are different between them. Perfect for making patches!
 
-    git archive --output=changes.zip HEAD $(git diff --name-only SHA1 SHA2 --diff-filter=ACMRTUXB)
+    git archive --output=changes.zip HEAD \
+      $(git diff --name-only SHA1 SHA2 --diff-filter=ACMRTUXB)
 
 Replace SHA1 and SHA2 with the git commits you are interested in.
 

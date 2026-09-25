@@ -220,10 +220,13 @@ pre {
   border: 1px solid var(--code-border, var(--color-divider));
   border-radius: var(--radius-md);
   overflow-x: auto;
+  /* Several examples indent with tabs. The browser default of 8 columns pushes
+     their lines far wider than the code needs; 4 is what editors show. */
+  tab-size: 4;
 }
 pre code { font-size: inherit; color: inherit; }
 
-/* ── code blocks: the light/dark switch ─────────────────────────────────────
+/* ── code blocks: copy and the light/dark switch ────────────────────────────
 
    Every code block on the site can be read light-on-dark or dark-on-light,
    and the choice is the reader's, not the page's. It is one setting for the
@@ -239,8 +242,9 @@ pre code { font-size: inherit; color: inherit; }
      from the deferred script instead would paint every block light and then
      repaint it dark, which is the flash this avoids.
    - assets/js/code-theme.js wraps each block in .code-block at load and adds
-     the button. The wrapper exists because <pre> scrolls horizontally: a
-     button positioned inside it would slide away with the code.
+     the buttons (copy, then light/dark). The wrapper exists because <pre>
+     scrolls horizontally: a button positioned inside it would slide away with
+     the code.
    - The three --code-* custom properties below are what actually changes.
      <pre> reads them with light-mode fallbacks, so a block still renders
      correctly with the script blocked or JavaScript off - the toggle simply is
@@ -268,40 +272,61 @@ pre code { font-size: inherit; color: inherit; }
    needs the exemption instead or every code block folds to 52rem. */
 .prose > .code-block { max-width: none; }
 
-.code-theme-toggle {
+/* Copy above light/dark, in a column over the top-right of the code. The code
+   keeps its natural width underneath, so a long line runs under the column -
+   and is hidden by it: the column has a solid backing in the code's own
+   background colour, and a narrow band of the same colour around it, so the
+   buttons never have code showing behind or through them. */
+.code-block-tools {
   position: absolute;
   top: var(--space-2);
   right: var(--space-2);
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  /* Wide enough for the longest label either button shows, so the column does
+     not change width when Copy becomes Copied. */
+  width: 5.75rem;
+  background: var(--code-bg, var(--color-neutral-100));
+  box-shadow: 0 0 0 var(--space-1) var(--code-bg, var(--color-neutral-100));
+}
+
+.code-block-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
   padding: 2px var(--space-2);
   font-family: var(--font-body);
   font-size: 12.5px;
   line-height: 1.6;
   letter-spacing: var(--tracking);
+  white-space: nowrap;
   color: var(--color-neutral-700);
   background: var(--color-neutral-200);
   border: 1px solid var(--color-divider);
   border-radius: var(--radius-sm);
   cursor: pointer;
-  /* Understated until wanted: the button sits over the top-right of the code,
-     where a long first line may run under it, so it stays quiet at rest and
-     comes forward on hover and on keyboard focus. */
+  /* Understated until wanted: quiet at rest, forward on hover and on keyboard
+     focus. The fade is on the buttons, not the column, so the column's backing
+     stays solid and nothing shows through. */
   opacity: 0.55;
   transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
-.code-block:hover .code-theme-toggle,
-.code-theme-toggle:hover,
-.code-theme-toggle:focus-visible { opacity: 1; }
-.code-theme-toggle:hover { background: var(--color-accent-100); color: var(--color-accent-800); }
-:root[data-code-theme="dark"] .code-theme-toggle {
+.code-block:hover .code-block-button,
+.code-block-tools:focus-within .code-block-button { opacity: 1; }
+.code-block-button svg { flex: none; }
+.code-block-button:hover { background: var(--color-accent-100); color: var(--color-accent-800); }
+:root[data-code-theme="dark"] .code-block-button {
   color: #c9d4dc;
   background: #232b2f;
   border-color: #3d474c;
 }
-:root[data-code-theme="dark"] .code-theme-toggle:hover { background: #303a3f; color: #ffffff; }
-/* Coarse pointers have no hover to reveal it with, so it is simply always on. */
+:root[data-code-theme="dark"] .code-block-button:hover { background: #303a3f; color: #ffffff; }
+/* Coarse pointers have no hover to reveal them with, so they are simply always on. */
 @media (hover: none) {
-  .code-theme-toggle { opacity: 1; }
+  .code-block-button { opacity: 1; }
 }
 
 blockquote {

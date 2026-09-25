@@ -74,7 +74,8 @@ $data = gatherDataset($formId);
 ~~~
 
 ~~~php
-// gather all the data in form 6 for only entry 99, plus connected forms in the Primary Relationship
+// gather all the data in form 6 for only entry 99, plus connected forms
+// in the Primary Relationship
 // filter can be an ID number to isolate one entry
 $formId = 6;
 $entryId = 99;
@@ -92,7 +93,8 @@ $data = gatherDataset($formId, scope: $scope);
 
 ~~~php
 // gather all the data in form 6, plus connected forms in the Primary Relationship
-// limit the data to only data where the value of the element 'fruit_name' is precisely 'Strawberries'
+// limit the data to only data where the value of the element 'fruit_name'
+// is precisely 'Strawberries'
 // filter strings use /**/ to separate component parts
 // the final component is the operator. Defaults to LIKE if not specified.
 $formId = 6;
@@ -102,7 +104,8 @@ $data = gatherDataset($formId, filter: $filter);
 
 ~~~php
 // gather all the data in form 6, plus connected forms in the Primary Relationship
-// limit the data to only data where the value of the element 'fruit_name' contains the word 'berries'
+// limit the data to only data where the value of the element 'fruit_name'
+// contains the word 'berries'
 // ie: Strawberries, Blueberries, etc
 // filter strings use /**/ to separate component parts
 $formId = 6;
@@ -157,7 +160,8 @@ foreach($data as $entry) {
 
 ~~~php
 // gather all the data in form 6, plus connected forms in the Primary Relationship
-// limit the data to only data where the value of the element 'order_price' is higher than 100
+// limit the data to only data where the value of the element 'order_price'
+// is higher than 100
 // filter strings use /**/ to separate component parts
 // the final component is the operator. Defaults to LIKE if not specified.
 $formId = 6;
@@ -167,8 +171,8 @@ $data = gatherDataset($formId, filter: $filter);
 
 ~~~php
 // Gather all the data in form 6, plus connected forms in the Primary Relationship
-// Limit the data to only data where the value of the element 'order_price' is higher than 100
-// and lower than 200
+// Limit the data to only data where the value of the element 'order_price'
+// is higher than 100 and lower than 200
 // Filter strings use /**/ to separate component parts
 // The final component is the operator. Defaults to LIKE if not specified.
 // Multiple filter strings can be concatenated with ][
