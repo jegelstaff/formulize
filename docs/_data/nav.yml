@@ -84,8 +84,8 @@
       url: /documentation/deploying_locally/
     - label: The Public API
       url: /documentation/Public_API/
-    - label: Configuration as code
-      url: /documentation/configuration_as_code/
+    - label: Formulize and AI
+      url: /ai/
     - label: Custom form elements
       url: /documentation/custom_form_elements/
     - label: Formulize UI
