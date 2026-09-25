@@ -176,7 +176,7 @@ $noNots = count((array) $nots) == 0 ? true : false;
 if($canSetNots) {
 	$set_groups1 = $gperm_handler->getGroupIds("view_groupscope", $fid, $mid);
 	$set_groups2 = $gperm_handler->getGroupIds("view_globalscope", $fid, $mid);
-	$set_groups = array_merge((array)$set_groups1, (array)$set_groups2); // type casting required for php 5
+	$set_groups = array_merge((array)$set_groups1, (array)$set_groups2, array(XOOPS_GROUP_ADMIN)); // type casting required for php 5. Webmasters always have global scope via the checkRight override, but getGroupIds only reports explicitly granted groups.
 	$group_names = $member_handler->getGroups("", true);
 	$group_options = array();
 	foreach($set_groups as $thisgroup) {

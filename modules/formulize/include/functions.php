@@ -5135,8 +5135,8 @@ function sendNotifications($fid, $event, $entries) {
     $gperm_handler =& xoops_gethandler('groupperm');
     $member_handler =& xoops_gethandler('member');
 
-    // get uids of all users with global scope
-    $groups_global = $gperm_handler->getGroupIds("view_globalscope", $fid, $mid);
+    // get uids of all users with global scope (webmasters always have it, via the checkRight override, but getGroupIds only reports explicitly granted groups)
+    $groups_global = array_unique(array_merge((array) $gperm_handler->getGroupIds("view_globalscope", $fid, $mid), array(XOOPS_GROUP_ADMIN)));
     $global_uids = formulize_getUsersByGroups($groups_global, $member_handler);
 
     // get uids of all users with group scope who share a group membership with the owner of the entry, **and the shared membership is in a group that has access to the form**
