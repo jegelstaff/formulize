@@ -25,6 +25,8 @@ title: Updating Formulize
    git stash pop
    ```
 
+   If you use ```git``` on your website, make sure web access to the ```.git``` folder is blocked. Go to ```https://www.mysite.com/.git/config``` (use your own site's address). You should see a "Not Found" page. If you don't, [block access to the .git folder](/deploying_a_website/#important-block-web-access-to-the-git-folder) now.
+
 3. Make sure [the folders that need to be writable](../writable_folders) are writable by the web server
 
 4. Login to your website _with a webmaster account_.

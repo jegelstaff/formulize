@@ -21,7 +21,7 @@ __If you're trying to update an existing Formulize system__, check out the [Upda
 
 ## Quick Start
 
-1. __Get the Formulize files onto your web server.__ We recommend using ```git```. See below. You could also [download the latest release from GitHub](https://github.com/jegelstaff/formulize/zipball/{{ site.github.latest_release.tag_name }}), and transfer the files to your web server however you see fit.
+1. __Get the Formulize files onto your web server.__ We recommend using ```git```. See below, and __make sure you block web access to the ```.git``` folder__. You could also [download the latest release from GitHub](https://github.com/jegelstaff/formulize/zipball/{{ site.github.latest_release.tag_name }}), and transfer the files to your web server however you see fit.
 
 2. __Put the files in the folder where you want Formulize to exist__, ie:
 - if you want Formulize to exist at ```https://www.mysite.com``` then put the files in the web root.
@@ -51,19 +51,35 @@ git clone {{ site.github.repository_url }}.git .
 git checkout -b my-formulize-branch
 ```
 
+### Important: block web access to the .git folder
+
+__Do this before you run the installer, and before your site is public.__
+
+Cloning puts a ```.git``` folder in the root of your website. It holds a complete copy of your site's files and their history, including anything you commit to your branch later. If it can be reached through a web browser, anyone can download it.
+
+On an Apache server, add this line to the ```.htaccess``` file in the root of your website. Create the file if it isn't there.
+
+```
+RedirectMatch 404 /\.git
+```
+
+On an nginx server, add this inside the ```server``` block for your site, then reload nginx:
+
+```
+location ~ /\.git {
+    return 404;
+}
+```
+
+To check that it worked, go to ```https://www.mysite.com/.git/config``` in a web browser (use your own site's address). You should see a "Not Found" page. If the browser shows or downloads a file instead, the ```.git``` folder is still accessible, so check the setting above before going any further.
+
+### Next steps
+
 Regardless of how you get the files on your server, the next steps are the same:
 
 - Make sure [the folders that need to be writable](../deploying_a_website/writable_folders) are writable by the web server user.
 
 - Open a web browser and go to the location where you put Formulize. The installer will appear. [Follow the steps for using the installer](../deploying_a_website/installing_formulize)
-
-## If you're using git, use .htaccess or other means to make the .git folder inaccessible
-
-Git creates a .git folder in the root of the website. This folder should __never__ be publically accessible. On an Apache server you can make it inaccessible with this command in an ```.htaccess``` file:
-
-```
-RedirectMatch 404 /\.git
-```
 
 ## If you're using git, commit changes regularly to your branch
 
