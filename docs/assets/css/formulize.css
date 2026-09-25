@@ -1599,11 +1599,37 @@ h1 + .band {
 .plan-band[id],
 .band-box[id] { scroll-margin-top: 148px; }
 
-.plan-band-diy { background: var(--color-accent-2-200); }
-.plan-band-hosted { background: var(--color-brand-200); }
-.plan-band-team { background: var(--color-brand-700); }
+/* The get-choice cards (homepage, /get/) take the same fills as the band each
+   one links to, from the same rule, so a card and its band cannot drift into
+   two different greens. .card.card-plan-* rather than the bare class, to
+   outrank .triad .card's white. */
+.plan-band-diy,
+.card.card-plan-diy { background: var(--color-accent-2-200); }
+.plan-band-hosted,
+.card.card-plan-hosted { background: var(--color-brand-200); }
+.plan-band-team,
+.card.card-plan-team { background: var(--color-brand-700); }
 .plan-band-team .band-head h2 { color: #fff; }
 .plan-band-team .band-head p { color: rgba(255, 255, 255, 0.88); }
+/* Laid out like the bands themselves: the kicker sits in the colour the way a
+   band's heading does, and the details are on a white panel on top. The frame
+   is only space-3 on the sides and bottom (the top is left at space-2, as the
+   kicker already gives that edge its own air), and the panel's padding is a step
+   under .card's space-6, so the content ends up barely narrower than on a
+   plain card. The panel's corners are radius-md rather than concentric with
+   the outer box: concentric works out at under 2px, which reads as square. */
+.card.card-plan { padding: var(--space-2) var(--space-3) var(--space-3); gap: var(--space-2); }
+.card-plan .card-kicker { padding: var(--space-1) var(--space-4) 0; }
+.card-plan-team .card-kicker { color: #fff; }
+.card-plan-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+}
 /* The Hosted band's own blue, borrowed as the Managed band's accent for the
    badge and the card's button. It ties the two paid tiers to each other and
    leaves the green CTA to mean "Most popular" alone, so the two badges stay

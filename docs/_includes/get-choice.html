@@ -24,33 +24,46 @@
   /pricing/ are called You build it, We host it, We help, We train you and
   We've got this. Change a headline here and the plan names have to move with
   it, or the homepage and the pricing page stop telling the same story.
+
+  Each card is built like its band on /pricing/: the band's colour (the
+  card-plan-* classes share their rules with plan-band-*) with the kicker
+  sitting in it the way the band's heading does, and the details on a white
+  panel on top. That is also what sets them apart from the plain white cards
+  elsewhere on the homepage: those describe things you could build, these are
+  things you can get.
 {% endcomment %}
 <div class="triad">
   <a class="card-link" href="{{ "/pricing/#do-it-yourself" | relative_url }}">
-    <div class="card">
+    <div class="card card-plan card-plan-diy">
       <span class="card-kicker">Do it yourself</span>
-      <h3 class="card-title">You build it.</h3>
-      <p class="card-body">Run Formulize yourself, because databases are cool!</p>
-      <p class="card-price"><strong>Free</strong> on your own server<br><strong>$49</strong>/month on ours, including backups, maintenance, and monitoring</p>
-      <span class="card-link-more">Compare plans &rarr;</span>
+      <div class="card-plan-inner">
+        <h3 class="card-title">You build it.</h3>
+        <p class="card-body">Run Formulize yourself, because databases are cool!</p>
+        <p class="card-price"><strong>Free</strong> on your own server<br><strong>$49</strong>/month on ours, including backups, maintenance, and monitoring</p>
+        <span class="card-link-more">Compare plans &rarr;</span>
+      </div>
     </div>
   </a>
   <a class="card-link" href="{{ "/pricing/#hosted" | relative_url }}">
-    <div class="card">
+    <div class="card card-plan card-plan-hosted">
       <span class="card-kicker">Hosted</span>
-      <h3 class="card-title">You build it,<br>we help.</h3>
-      <p class="card-body">Your own system, hosted in Canada. We point you in the right direction, and we'll be there when you need help.</p>
-      <p class="card-price">From <strong>$149</strong>/month</p>
-      <span class="card-link-more">See what is included &rarr;</span>
+      <div class="card-plan-inner">
+        <h3 class="card-title">You build it,<br>we help.</h3>
+        <p class="card-body">Your own system, hosted in Canada. We point you in the right direction, and we'll be there when you need help.</p>
+        <p class="card-price">From <strong>$149</strong>/month</p>
+        <span class="card-link-more">See what is included &rarr;</span>
+      </div>
     </div>
   </a>
   <a class="card-link" href="{{ "/pricing/#managed" | relative_url }}">
-    <div class="card">
+    <div class="card card-plan card-plan-team">
       <span class="card-kicker">Managed</span>
-      <h3 class="card-title">Don't worry. We've got this.</h3>
-      <p class="card-body">We will set up a system tailored to your needs, train your people, and keep it running smoothly.</p>
-      <p class="card-price">From <strong>$1,199</strong>/month</p>
-      <span class="card-link-more">See the managed plan &rarr;</span>
+      <div class="card-plan-inner">
+        <h3 class="card-title">Don't worry. We've got this.</h3>
+        <p class="card-body">We will set up a system tailored to your needs, train your people, and keep it running smoothly.</p>
+        <p class="card-price">From <strong>$1,199</strong>/month</p>
+        <span class="card-link-more">See the managed plan &rarr;</span>
+      </div>
     </div>
   </a>
 </div>
