@@ -23,23 +23,108 @@
     }
 
     /**
-     * Make sure the screen knows it is being embedded.
+     * The parameters the host page asked to hand on to the screen, as they appear in its own address.
      *
-     * Nearly every browser tells it so itself, by sending Sec-Fetch-Dest on the request. The ones
-     * that don't would show the whole site - menus, header and footer - inside the frame. The
-     * formulize_embed parameter says it instead, so those browsers get the same thing as everyone
-     * else.
+     * data-formulize-embed-pass-params names them, separated by spaces or commas. Only named ones,
+     * never the whole address: a host page's address can carry things that are none of the Formulize
+     * site's business - an email address, a sign-in token from somewhere else - and the host is the
+     * only one who knows which of its parameters are safe to share.
      *
-     * The code Formulize generates for you already carries the parameter, so this does nothing and
-     * the iframe loads once. It is here for an iframe written by hand without it, which is worth
-     * one extra load to get right rather than leaving somebody with a mystery.
+     * Each is passed exactly as it was written, still encoded, and a name that appears more than once
+     * is passed every time. What the screen does with them is up to the screen: this only delivers.
      */
-    function ensureEmbedParameter(iframe) {
+    function parametersToPass(iframe) {
+        var wanted = (iframe.getAttribute('data-formulize-embed-pass-params') || '').split(/[\s,]+/);
+        var query = window.location.search.replace(/^\?/, '');
+        var passing = [];
+        if (!query) {
+            return passing;
+        }
+        var pairs = query.split('&');
+        for (var i = 0; i < pairs.length; i++) {
+            var name = pairs[i].split('=')[0];
+            try {
+                name = decodeURIComponent(name.replace(/\+/g, ' '));
+            } catch (e) {
+                continue; // not a name anyone could have listed
+            }
+            for (var j = 0; j < wanted.length; j++) {
+                if (wanted[j] && wanted[j] === name) {
+                    passing.push({name: name, pair: pairs[i]});
+                    break;
+                }
+            }
+        }
+        return passing;
+    }
+
+    /**
+     * Take a parameter out of an address, so that the host page's value replaces the iframe's own
+     * rather than sitting beside it.
+     */
+    function withoutParameter(query, name) {
+        var kept = [];
+        var pairs = query ? query.split('&') : [];
+        for (var i = 0; i < pairs.length; i++) {
+            var pairName = pairs[i].split('=')[0];
+            try {
+                pairName = decodeURIComponent(pairName.replace(/\+/g, ' '));
+            } catch (e) { /* not the one being removed, so it stays */ }
+            if (pairName !== name) {
+                kept.push(pairs[i]);
+            }
+        }
+        return kept.join('&');
+    }
+
+    /**
+     * Settle the iframe's address before the screen has got far, so it loads at most twice.
+     *
+     * Two things can need adding. The formulize_embed parameter, which makes sure the screen knows it
+     * is being embedded: nearly every browser tells it so itself, by sending Sec-Fetch-Dest on the
+     * request, and the ones that don't would show the whole site - menus, header and footer - inside
+     * the frame. The code Formulize generates for you already carries it, so this is for an iframe
+     * written by hand without it.
+     *
+     * And the parameters the host page is passing on (see parametersToPass).
+     *
+     * Either one means changing the address, which starts the load again. Both are done in one change,
+     * and there is none at all for an iframe from the generated code on a page with nothing to pass,
+     * which is nearly every one.
+     */
+    function prepareSource(iframe) {
         var src = iframe.getAttribute('src');
-        if (!src || /[?&]formulize_embed=/.test(src)) {
+        if (!src) {
             return;
         }
-        iframe.setAttribute('src', src + (src.indexOf('?') === -1 ? '?' : '&') + 'formulize_embed=1');
+        var hash = '';
+        if (src.indexOf('#') !== -1) {
+            hash = src.substring(src.indexOf('#'));
+            src = src.substring(0, src.indexOf('#'));
+        }
+        var questionMark = src.indexOf('?');
+        var path = questionMark === -1 ? src : src.substring(0, questionMark);
+        var query = questionMark === -1 ? '' : src.substring(questionMark + 1);
+        var changed = false;
+        if (!/(^|&)formulize_embed=/.test(query)) {
+            query += (query ? '&' : '') + 'formulize_embed=1';
+            changed = true;
+        }
+        var passing = parametersToPass(iframe);
+        var removed = {};
+        for (var i = 0; i < passing.length; i++) {
+            if (!removed[passing[i].name]) {
+                query = withoutParameter(query, passing[i].name);
+                removed[passing[i].name] = true;
+            }
+        }
+        for (var j = 0; j < passing.length; j++) {
+            query += (query ? '&' : '') + passing[j].pair;
+            changed = true;
+        }
+        if (changed) {
+            iframe.setAttribute('src', path + (query ? '?' + query : '') + hash);
+        }
     }
 
     /**
@@ -221,10 +306,11 @@
             return;
         }
         iframe.formulizeEmbedRegistered = true;
-        ensureEmbedParameter(iframe);
+        prepareSource(iframe);
         iframe.setAttribute('scrolling', 'no');
         iframe.style.width = '100%';
-        iframe.style.border = '0';
+        addDefaultStyles(); // no border, but in a way the host's stylesheet can overrule
+
         if (!iframe.style.height) {
             iframe.style.height = (iframe.getAttribute('data-formulize-embed-height') || 600) + 'px';
         }
@@ -351,22 +437,80 @@
         }
     }
 
+    /**
+     * A look for the frame and the warning that works on any page, so that nobody has to write CSS
+     * for either - and that any CSS they do write simply wins.
+     *
+     * A stylesheet rather than inline styles, because an inline style beats every rule in the host's
+     * stylesheet, and the only way past it is !important. That is what setting style.border on the
+     * frame used to cost a host who wanted a border. So these go in a style element put first in the
+     * head. The frame's rule is wrapped in :where(), which gives it no specificity at all, so that
+     * a rule naming the frame by class - the obvious thing to write - is not outranked by the
+     * attribute selector here. The warning's rules are a single class each, and any rule of the
+     * host's naming the same class comes later in the page and takes precedence.
+     *
+     * The colours lean on the host's own text colour rather than choosing one, so the warning reads on
+     * a dark page as well as a light one.
+     */
+    var defaultStylesAdded = false;
+    function addDefaultStyles() {
+        if (defaultStylesAdded || !document.head) {
+            return;
+        }
+        defaultStylesAdded = true;
+        var style = document.createElement('style');
+        style.appendChild(document.createTextNode(
+            ':where(iframe[data-formulize-embed]){border:0}'
+            + '.formulize-embed__fallback{margin:0 0 1em;padding:.75em 1em;border-left:4px solid #d97706;'
+            + 'border-radius:4px;background:rgba(217,119,6,.12);color:inherit;font:inherit;line-height:1.5}'
+            + '.formulize-embed__fallback-message{font-weight:bold}'
+        ));
+        document.head.insertBefore(style, document.head.firstChild);
+    }
+
+    /**
+     * Tell the visitor, before they type anything, that this form cannot be sent from here.
+     *
+     * The screen reports it when the browser has kept neither cookie a submission could be checked
+     * against, so saving would fail. Above the frame, not below it: on a long form, anything under
+     * the frame is out of sight until the visitor has already filled it in.
+     *
+     * data-formulize-embed-fallback: leave it off for the warning and a link to open the screen in
+     * a new window, where it works. "message" for the warning alone, when the host would rather
+     * visitors did not leave the page. "off" for nothing, when the host is handling the
+     * formulize:sessionUnavailable event itself.
+     *
+     * The screen checks on every page it loads, so this can be asked for more than once per frame.
+     */
     function offerNewWindow(iframe) {
-        if (iframe.getAttribute('data-formulize-embed-fallback') === 'off' || iframe.formulizeEmbedFallbackShown) {
+        var mode = iframe.getAttribute('data-formulize-embed-fallback');
+        if (mode === 'off' || iframe.formulizeEmbedFallbackShown) {
             return;
         }
         iframe.formulizeEmbedFallbackShown = true;
-        var notice = document.createElement('p');
+        var notice = document.createElement('div');
         notice.className = 'formulize-embed__fallback';
-        var link = document.createElement('a');
-        link.href = iframe.src;
-        link.target = '_blank';
-        link.rel = 'noopener';
-        link.appendChild(document.createTextNode(
-            iframe.getAttribute('data-formulize-embed-fallback-text') || 'Open this form in a new window'
+        notice.setAttribute('role', 'alert');
+        var message = document.createElement('strong');
+        message.className = 'formulize-embed__fallback-message';
+        message.appendChild(document.createTextNode(
+            iframe.getAttribute('data-formulize-embed-fallback-message')
+            || 'This form cannot be submitted from inside this page in your browser.'
         ));
-        notice.appendChild(link);
-        iframe.parentNode.insertBefore(notice, iframe.nextSibling);
+        notice.appendChild(message);
+        if (mode !== 'message') {
+            var link = document.createElement('a');
+            link.className = 'formulize-embed__fallback-link';
+            link.href = iframe.src;
+            link.target = '_blank';
+            link.rel = 'noopener';
+            link.appendChild(document.createTextNode(
+                iframe.getAttribute('data-formulize-embed-fallback-text') || 'Open this form in a new window'
+            ));
+            notice.appendChild(document.createTextNode(' '));
+            notice.appendChild(link);
+        }
+        iframe.parentNode.insertBefore(notice, iframe);
     }
 
     function frameFor(source) {

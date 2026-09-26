@@ -282,8 +282,8 @@ that ignores this serves people the wrong one.
 Open the host page and use the embedded screen. If the visitor is signed in to your Formulize site in
 another tab, the screen should show their own data and save normally.
 
-If an **Open this form in a new window** link appears under the screen, the browser is not keeping
-cookies for it. First check that the iframe uses the embedding address, not the ordinary address.
+If a warning appears above the screen saying the form cannot be submitted from that page, the browser
+is not keeping cookies for it. First check that the iframe uses the embedding address, not the ordinary address.
 Then work back through the checks in A4: the embedding address is not on the same domain as the host
 page, is not `https`, or the links inside the frame are going back to the original address.
 

@@ -2946,10 +2946,7 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   /* The script sets the real height once the screen reports it; this only keeps
      the box from collapsing before the first message arrives. */
   min-height: 320px;
-  /* !important: formulize-embed.js sets style.border = '0' inline once it
-     registers the frame (most host pages want no border of their own), which
-     otherwise beats this rule outright regardless of source order. */
-  border: 1px solid var(--color-divider) !important;
+  border: 1px solid var(--color-divider);
   border-radius: var(--radius-md);
   background: transparent;
 }
@@ -2961,23 +2958,17 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
     linear-gradient(var(--color-neutral-200), var(--color-neutral-200)) center / 100% 100% no-repeat;
 }
 
-.embed-frame-note {
-  margin: var(--space-4) 0 0;
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--color-divider);
-  font-size: 15px;
-  color: var(--color-neutral-700);
-}
-
-/* Promoted by the sessionUnavailable handler in _includes/embedded-form.html,
-   when the screen reports that this browser will not let it save. */
-.embed-frame-note.is-warning {
-  border-top: 0;
-  border-left: 3px solid var(--color-accent);
-  margin-top: var(--space-4);
+/* The warning formulize-embed.js puts above the frame when the screen reports
+   that this browser will not let it save. The script brings a default look of
+   its own; this restyles it in the site's colours, and wins because it comes
+   later in the page. */
+.formulize-embed__fallback {
+  margin: 0 0 var(--space-4);
   padding: var(--space-3) var(--space-4);
-  background: var(--color-accent-100);
+  border-left: 3px solid var(--color-accent);
   border-radius: var(--radius-sm);
+  background: var(--color-accent-100);
+  font-size: 15px;
   color: var(--color-text);
 }
 

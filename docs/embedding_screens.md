@@ -137,9 +137,10 @@ their defaults:
   else.
 
 **Where submitting still does not work:** browsers that refuse third-party cookies outright rather
-than keeping them separated per website. Safari does by default. Those visitors get an **Open this
-form in a new window** link under the screen, and the form works normally in that tab. Step 3 is
-still the only arrangement that works in every browser.
+than keeping them separated per website. Safari does by default. Those visitors see a warning above
+the screen, saying the form cannot be submitted from that page, with a link to **open this form in a
+new window**, where it works normally. Step 3 is still the only arrangement that works in every
+browser.
 
 ### Making signed-in visitors and passcode screens work on a different domain
 
@@ -156,7 +157,7 @@ whose browser accepts third-party cookies:
 Two things to know before you do it:
 
 - **Some browsers refuse third-party cookies whatever this is set to.** Safari does by default. Those
-  visitors see the screen as anonymous, and are offered the link to open it in a new window. There is
+  visitors see the screen as anonymous, and see the warning with the link to open it in a new window. There is
   no way to tell in advance how many of your visitors this will be. Step 3 is the only arrangement
   that works in every browser.
 - With `None`, every website in your embedding lists can display signed-in pages of your site inside
@@ -262,8 +263,21 @@ width, and scrolls the page when the screen needs something brought into view.
 | `data-formulize-embed-height` | Height in pixels to start at, before the screen reports its own. Defaults to 600. |
 | `data-formulize-embed-min-width` | Narrowest the frame may become, in pixels, in the one case where a frame can collapse. Defaults to 400. `off` removes the floor. Never wider than the column the frame is in, whatever the number, and not applied at all where the frame already fills its column. A `min-width` in your own stylesheet takes precedence over all of this. |
 | `data-formulize-embed-scroll-margin` | Room left above the screen when it is brought into view, in pixels. Set this only to override what is worked out for you; `0` removes the gap entirely. |
-| `data-formulize-embed-fallback` | Set to `off` to suppress the "open in a new window" link. |
-| `data-formulize-embed-fallback-text` | Wording for that link. |
+| `data-formulize-embed-fallback` | What visitors see when the form cannot be submitted from your page. Leave it out for a warning above the screen with a link to open the form in a new window. `message` shows the warning without the link. `off` shows nothing; use it only if you handle `formulize:sessionUnavailable` yourself. |
+| `data-formulize-embed-fallback-message` | Wording for the warning. |
+| `data-formulize-embed-pass-params` | Names of parameters in your page's address to pass on to the screen, separated by spaces or commas. See below. |
+| `data-formulize-embed-fallback-text` | Wording for the link. |
+
+To pass parameters from your page's address on to the screen, list them on the iframe. With
+`data-formulize-embed-pass-params="plan"`, someone who arrives at `www.example.com/signup/?plan=gold`
+sees the screen loaded with `plan=gold` in its address, just as if they had opened
+`index.php?sid=5&plan=gold` on your Formulize site. Only the parameters you name are passed, and only
+when they are in the address; everything else in your page's address stays on your page. What the
+screen does with them is up to you, in the screen's own custom code: JavaScript inside the screen
+reads them from `window.location.search`, and PHP code from `$_GET`.
+
+The frame has no border. To give it one, take `border:0` out of the `style` attribute in the code
+you pasted, and style the iframe in your own stylesheet as you would any other element.
 
 While a screen is loading, its iframe has the class `formulize-embed--loading`, so you can show a
 spinner behind it and have it disappear when the screen arrives.
@@ -283,13 +297,25 @@ The screen fires DOM events on the iframe, so you can react without modifying th
 | `formulize:ready` | The screen is visible. Carries its height. |
 | `formulize:resize` | The height changed — a conditional element appeared, a validation message was added, or a page turned. |
 | `formulize:scroll` | The screen is asking for a position to be brought into view. |
-| `formulize:sessionUnavailable` | The visitor's browser is refusing cookies for this screen, so submitting would fail. |
+| `formulize:sessionUnavailable` | The visitor's browser has kept no cookie the screen can be submitted with, so submitting would fail. Anonymous visitors whose forms still work do not trigger it. It can fire again each time the screen loads a new page. |
+
+The events bubble, so one listener on the page covers every screen on it:
+
+```html
+<script>
+document.addEventListener('formulize:sessionUnavailable', function (event) {
+  // event.target is the iframe for the screen that cannot be submitted
+});
+</script>
+```
 
 The script ignores messages from anywhere other than the iframes it is managing.
 
-If the visitor's browser refuses cookies for the embedded screen, they get an "Open this form in a
-new window" link, and the form works normally in that tab. That is what you will see if the iframe
-address is not on the same domain as the page — see step 3 above.
+When a visitor's browser will not let the embedded screen be submitted, the script shows a warning
+directly above the iframe as soon as the screen loads, before they start typing. You do not need to
+add anything to your page for this. It is the `formulize-embed__fallback` class, so your own
+stylesheet can restyle it. You will see it whenever the iframe address is not on the same domain as
+the page and the browser blocks third-party cookies — see step 3 above.
 
 ## Troubleshooting
 
