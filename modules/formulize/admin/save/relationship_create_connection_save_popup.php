@@ -65,15 +65,20 @@ if($_POST['pairSelection'] == 'pair-manual') {
 }
 
 // only max of one key will be a flag for new element, we can't make two new elements at once!
-if(is_numeric($k1) AND is_numeric($k2)) {
-	$k1 = intval($k1);
-	$k2 = intval($k2);
-} elseif(!is_numeric($k1)) {
-	$k2 = intval($k2);
-	$k1 = makeNewConnectionElement($k1, $f1, $k2);
-} else {
-	$k1 = intval($k1);
-	$k2 = makeNewConnectionElement($k2, $f2, $k1);
+try {
+	if(is_numeric($k1) AND is_numeric($k2)) {
+		$k1 = intval($k1);
+		$k2 = intval($k2);
+	} elseif(!is_numeric($k1)) {
+		$k2 = intval($k2);
+		$k1 = makeNewConnectionElement($k1, $f1, $k2);
+	} else {
+		$k1 = intval($k1);
+		$k2 = makeNewConnectionElement($k2, $f2, $k1);
+	}
+} catch (Exception $e) {
+	print "Error: ".$e->getMessage();
+	return;
 }
 
 if($f1 AND $f2 AND $k1 AND $k2) {

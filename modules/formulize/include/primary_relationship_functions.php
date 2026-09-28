@@ -502,7 +502,8 @@ function linkExistsInPrimaryRelationship($cv, $rel, $k1, $k2) {
  * @param string type - Indicator of what kind of element we're making: new-common-parallel, new-common-textbox, new-linked-dropdown, new-linked-autocomplete, new-linked-multiselect-autocomplete, new-linked-checkboxes
  * @param int fid - The form id of the form where the element should be made
  * @param int otherElementId - The element id of an element associated with the new element we're making
- * @return boolean|int - Returns the id number of the element that was made, or false on failure
+ * @return boolean|int - Returns the id number of the element that was made, or false if otherElementId is not an element
+ * @throws Exception if the element or its database field could not be created
  */
 function makeNewConnectionElement($type, $fid, $otherElementId) {
 	global $xoopsDB;
@@ -629,14 +630,15 @@ function makeNewConnectionElement($type, $fid, $otherElementId) {
 			$elementId = $result;
 			addElementToMultipageScreens($fid, $elementId, positionAtTopOfPage: 1);
 			if($form_handler->insertElementField($element, $fieldDataType)) {
+				// a missing index costs speed, not correctness, and insertLinkIntoPrimaryRelationship tries again when the connection is recorded, so this is not worth abandoning the connection over
 				if($element->createIndex() == false) {
-					print "Error: could not create an index in the database for the new element. Please contact info@formulize.org for assistance.";
+					error_log("Formulize: could not create a database index for the new connection element $elementId in form $fid.");
 				}
 			} else {
-				print "Error: could not create the field in the database for the new element. Please contact info@formulize.org for assistance.";
+				throw new Exception("Could not create the field in the database for the new element (id $elementId). Please contact info@formulize.org for assistance.");
 			}
 		} else {
-			print "Error: could not save the new element. Please contact info@formulize.org for assistance.";
+			throw new Exception("Could not save the new element. Please contact info@formulize.org for assistance.");
 		}
 
 	}
