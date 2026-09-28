@@ -145,7 +145,7 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 			$ele_value[6] = $properties['showAddButton'] ? 'subform' : 'hideaddentries';
 		}
 		if(isset($properties['showDeleteButton'])) {
-			$ele_value['ShowDeleteButton'] = ($properties['showDeleteButton']) ? 1 : 0;
+			$ele_value['show_delete_button'] = ($properties['showDeleteButton']) ? 1 : 0;
 		}
 		if((isset($properties['elementsInRow']) AND is_array($properties['elementsInRow']) AND count($properties['elementsInRow']) > 0) OR (isset($properties['elementsInHeading']) AND is_array($properties['elementsInHeading']) AND count($properties['elementsInHeading']) > 0)) {
 			$elementsArray = isset($properties['elementsInRow']) ? $properties['elementsInRow'] : $properties['elementsInHeading'];
