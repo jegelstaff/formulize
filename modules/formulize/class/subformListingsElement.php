@@ -95,9 +95,10 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 	 * @param array $properties The properties to validate
 	 * @param array $ele_value The ele_value settings for this element, if applicable. Should be set by the caller, to the current ele_value settings of the element, if this is an existing element.
 	 * @param int|string|object $elementIdentifier The element id, handle or object of the element for which we're validating the properties.
+	 * @param int $formId The id of the form the element is in. Needed when creating, because a new element does not exist yet, so its form cannot be read from it. Ignored when $elementIdentifier resolves to an existing element.
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
-	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null) {
+	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null, $formId = null) {
 
 		$elementTypeName = strtolower(str_ireplace(['formulize', 'element'], "", static::class));
 
@@ -106,26 +107,32 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 			$sourceFid = intval($properties['sourceForm']);
 			if($sourceFormObject = $form_handler->get($sourceFid)) {
 				$ele_value[0] = $sourceFid;
+				$elementObject = $elementIdentifier ? _getElementObject($elementIdentifier) : false;
+				$hostFid = $elementObject ? intval($elementObject->getVar('fid')) : intval($formId);
 				$existingConnection = false;
-				if($sourceFid AND $elementObject = _getElementObject($elementIdentifier)) {
+				if($hostFid) {
 					$connection_handler = xoops_getmodulehandler('frameworks', 'formulize');
-					if($connections = $connection_handler->getLinksGroupedByForm($connection_handler->get(-1), $elementObject->getVar('fid'))) {
-						foreach($connections[$elementObject->getVar('fid')] as $connection) {
-							if($connection['form2'] == $sourceFid) {
-								$existingConnection = true;
-								break;
-							}
+					$connections = $connection_handler->getLinksGroupedByForm($connection_handler->get(-1), $hostFid);
+					foreach($connections[$hostFid] ?? [] as $connection) {
+						if($connection['form2'] == $sourceFid) {
+							$existingConnection = true;
+							break;
 						}
 					}
 				}
-				if($sourceFid AND $elementObject AND !$existingConnection) {
-					$formObject = $form_handler->get($elementObject->getVar('fid'));
+				if($hostFid AND !$existingConnection) {
+					$formObject = $form_handler->get($hostFid);
 					if($pi = $formObject->getVar('pi')) {
-						if($newLinkedElementId = makeNewConnectionElement('new-linked-dropdown', $sourceFid, $pi)) {
-							// if it's a row-based subform with no specific screen set, then let's try creating a new subform screen for displaying the sub entries
-							if($ele_value[8] == 'row' AND $ele_value['display_screen'] == 0 AND $newSubformScreenId = findOrMakeSubformScreen($newLinkedElementId, $elementObject->getVar('fid'))) {
-								$ele_value['display_screen'] = $newSubformScreenId;
-							}
+						if(!$newLinkedElementId = makeNewConnectionElement('new-linked-dropdown', $sourceFid, $pi)) {
+							throw new Exception("The Principal Identifier of '".$formObject->getVar('title')."' (form $hostFid) is element $pi, which does not exist, so no linked element could be created in '".$sourceFormObject->getVar('title')."' (form $sourceFid) to connect the two forms.");
+						}
+						// makeNewConnectionElement only makes the element, the connection between the forms has to be recorded separately
+						if(!linkExistsInPrimaryRelationship(0, 2, $pi, $newLinkedElementId) AND insertLinkIntoPrimaryRelationship(0, 2, $hostFid, $sourceFid, $pi, $newLinkedElementId) !== true) {
+							throw new Exception("Created a linked element (id $newLinkedElementId) in '".$sourceFormObject->getVar('title')."' (form $sourceFid) pointing to '".$formObject->getVar('title')."' (form $hostFid), but could not record the connection between the two forms in the Primary Relationship.");
+						}
+						// if it's a row-based subform with no specific screen set, then let's try creating a new subform screen for displaying the sub entries
+						if($ele_value[8] == 'row' AND $ele_value['display_screen'] == 0 AND $newSubformScreenId = findOrMakeSubformScreen($newLinkedElementId, $hostFid)) {
+							$ele_value['display_screen'] = $newSubformScreenId;
 						}
 					} else {
 						throw new Exception("There is no Principal Identifier set for '".$formObject->getVar('title')."' (form ".$formObject->getVar('fid').") . The default connection between '".$formObject->getVar('title')."' (form ".$formObject->getVar('fid').") and '".$sourceFormObject->getVar('title')."' (form ".$sourceFormObject->getVar('fid').") requires a Principal Identifier in '".$formObject->getVar('title')."' (form ".$formObject->getVar('fid')."), in order to create a new linked element in '".$sourceFormObject->getVar('title')."' (form ".$sourceFormObject->getVar('fid')."), which will connect the two forms. Set an existing element in '".$formObject->getVar('title')."' (form ".$formObject->getVar('fid').") to be its Principal Indentifier, or create a new element as the Principal Identifier, and then try creating the Subform Interface again.");

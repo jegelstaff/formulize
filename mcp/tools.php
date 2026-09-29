@@ -3697,7 +3697,8 @@ Do not use foreign key values with linked elements; use the readable value inste
 		$elementTypeHandler = xoops_getmodulehandler($type.'Element', 'formulize');
 		if(method_exists($elementTypeHandler, 'validateEleValuePublicAPIProperties')) {
 			$ele_value = $elementObject ? $elementObject->getVar('ele_value') : $elementTypeHandler->getDefaultEleValue();
-			$propertiesPreparedByTheElement = $elementTypeHandler->validateEleValuePublicAPIProperties($properties, $ele_value, $elementObject);
+			// $fid is passed for element types that need to know their form while being created, when there is no element object yet to read it from (ie: subform interfaces, which may connect their form to the source form)
+			$propertiesPreparedByTheElement = $elementTypeHandler->validateEleValuePublicAPIProperties($properties, $ele_value, $elementObject, $fid);
 			if(isset($propertiesPreparedByTheElement['upsertParams'])) {
 				// special case - the element type needs to pass special parameters to the upsert function
 				// for example, if it should create a subform interface in the source form
