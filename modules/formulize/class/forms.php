@@ -2005,6 +2005,56 @@ class formulizeFormsHandler {
 			print "Error: could not delete relationship links for form $fid";
 			$isError = true;
 		}
+		// permissions: the rights groups have on the form (every Formulize permission is keyed by form id)...
+		// deleteByModule would be tempting, but it ignores the item id unless a permission name is given too, and would delete every Formulize permission for every form
+		$gperm_handler = xoops_gethandler('groupperm');
+		$criteria = new CriteriaCompo();
+		$criteria->add(new Criteria('gperm_modid', getFormulizeModId()), 'AND');
+		$criteria->add(new Criteria('gperm_itemid', $fid), 'AND');
+		if(!$gperm_handler->deleteAll($criteria)) {
+			print "Error: could not delete permissions for form $fid";
+			$isError = true;
+		}
+		// ...the groups each group's members can see entries from...
+		$sql = "DELETE FROM ".$xoopsDB->prefix("formulize_groupscope_settings")." WHERE fid = $fid";
+		if(!$xoopsDB->query($sql)) {
+			print "Error: could not delete groupscope settings for form $fid";
+			$isError = true;
+		}
+		// ...the per-group filters on which entries each group can see...
+		$sql = "DELETE FROM ".$xoopsDB->prefix("formulize_group_filters")." WHERE fid = $fid";
+		if(!$xoopsDB->query($sql)) {
+			print "Error: could not delete group filters for form $fid";
+			$isError = true;
+		}
+		// ...and inheritance. Inheriting forms hold their own copies of this form's permissions, so they keep those and are simply no longer tied to a form that does not exist (same as clearing the parent in formulizePermHandler::setPermissionParent)
+		$sql = "UPDATE ".$xoopsDB->prefix("formulize_id")." SET parent_perm_fid = 0 WHERE parent_perm_fid = $fid";
+		if(!$xoopsDB->query($sql)) {
+			print "Error: could not detach the forms that inherit permissions from form $fid";
+			$isError = true;
+		}
+		// saved views of the form's entries
+		$savedViews_handler = xoops_getmodulehandler('savedViews', 'formulize');
+		if(!$savedViews_handler->deleteAllForForm($fid)) {
+			print "Error: could not delete saved views for form $fid";
+			$isError = true;
+		}
+		// advanced calculations on the form
+		$advanced_calculation_handler = xoops_getmodulehandler('advancedCalculation', 'formulize');
+		foreach((array) $advanced_calculation_handler->getList($fid) as $advancedCalculation) {
+			if(!$advanced_calculation_handler->delete($advancedCalculation['acid'])) {
+				$isError = true; // delete() prints its own error
+			}
+		}
+		// notification settings for the form (no handler for these, see include/setnot.php)
+		$sql = "DELETE FROM ".$xoopsDB->prefix("formulize_notification_conditions")." WHERE not_cons_fid = $fid";
+		if(!$xoopsDB->query($sql)) {
+			print "Error: could not delete notification settings for form $fid";
+			$isError = true;
+		}
+		// deliberately kept: formulize_deletion_logs, which may be consulted in audits after the form is gone, and
+		// formulize_digest_data, since digests are experimental and how they intersect with other features is unsettled.
+		// formulize_entry_owner_groups is removed by dropDataTable() below.
 		$sql = "SELECT sid, type FROM ".$xoopsDB->prefix("formulize_screen")." WHERE fid=$fid";
 		if($res = $xoopsDB->query($sql)) {
 			$application_handler = xoops_getmodulehandler('applications', 'formulize');

@@ -146,6 +146,28 @@ class formulizeSavedViewsHandler {
 	}
 
 	/**
+	 * Delete every saved view belonging to a form, ie: when the form itself is deleted. A view of a form that no
+	 * longer exists cannot be loaded, so there is nothing to keep it for.
+	 *
+	 * The form is identified the way getFormFramework() does it: a view saved with a relationship stores the
+	 * relationship id in sv_formframe and the form in sv_mainform; without a relationship, sv_mainform is blank
+	 * and sv_formframe is the form. So sv_formframe only means this form when sv_mainform is blank; otherwise it
+	 * is a relationship id, which could equal the form id by chance. The same rule is applied here in SQL, rather
+	 * than by loading every view in the system to pass through getFormFramework().
+	 *
+	 * @param int $fid The form whose views should be deleted
+	 * @return bool
+	 */
+	public function deleteAllForForm($fid) {
+		$fid = intval($fid);
+		if(!$fid) {
+			return false;
+		}
+		$table = $this->db->prefix('formulize_saved_views');
+		return (bool) $this->db->query("DELETE FROM $table WHERE sv_mainform = $fid OR ((sv_mainform IS NULL OR sv_mainform = 0) AND sv_formframe = $fid)");
+	}
+
+	/**
 	 * Who owns a saved view? Cached, because whether a person may change or delete a view is asked about the
 	 * same view several times over a single page load.
 	 * @param int $svId
