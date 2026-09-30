@@ -17,7 +17,13 @@ if ($messageText) {
 
 <script>
 // Generic panel system: buttons with [data-lyris-panel="id"] toggle panels by ID.
-// All toggleable panels must carry the lyris-panel class.
+// All toggleable panels must carry the lyris-panel class. Triggers that carry
+// aria-expanded have it kept in step with their panel; Escape closes an open
+// panel and returns focus to its trigger.
+function fzCloseLyrisPanels() {
+    document.querySelectorAll('.lyris-panel.open').forEach(function (p) { p.classList.remove('open'); });
+    document.querySelectorAll('[data-lyris-panel][aria-expanded]').forEach(function (t) { t.setAttribute('aria-expanded', 'false'); });
+}
 document.addEventListener('click', function (e) {
     var trigger = e.target.closest('[data-lyris-panel]');
     var inPanel = e.target.closest('.lyris-panel');
@@ -26,11 +32,22 @@ document.addEventListener('click', function (e) {
         var panel   = document.getElementById(panelId);
         if (!panel) return;
         var opening = !panel.classList.contains('open');
-        document.querySelectorAll('.lyris-panel.open').forEach(function (p) { p.classList.remove('open'); });
-        if (opening) { panel.classList.add('open'); }
+        fzCloseLyrisPanels();
+        if (opening) {
+            panel.classList.add('open');
+            if (trigger.hasAttribute('aria-expanded')) { trigger.setAttribute('aria-expanded', 'true'); }
+        }
     } else if (!inPanel) {
-        document.querySelectorAll('.lyris-panel.open').forEach(function (p) { p.classList.remove('open'); });
+        fzCloseLyrisPanels();
     }
+});
+document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    var open = document.querySelector('.lyris-panel.open');
+    if (!open) return;
+    var trigger = document.querySelector('[data-lyris-panel="' + open.id + '"]');
+    fzCloseLyrisPanels();
+    if (trigger) { trigger.focus(); }
 });
 
 // Selects a view: updates the hidden currentview input and submits the form.
@@ -44,8 +61,7 @@ function fzSelectView(value, isStandard) {
         form.curviewid.value  = '';
     }
     form.lockcontrols.value = 0;
-    var panel = document.getElementById('lyris-view-panel');
-    if (panel) { panel.classList.remove('open'); }
+    fzCloseLyrisPanels();
     showLoading();
 }
 
