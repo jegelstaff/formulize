@@ -1034,6 +1034,18 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 
 	$col_two .= $pageNav; // figured out above
 
+	// On Lyris, row subform tables use the same 'natural' column sizing as list views (issue #920, following #919):
+	// each column hugs its content (width: 1% on the cells, see the Lyris style.css), and a trailing unstyled
+	// spacer cell absorbs the leftover width, so a table narrower than its container still visually reaches
+	// the far edge. This is the same .formulize-spacer mechanism that entriesdisplay.php uses for list views.
+	global $xoopsConfig;
+	$subformSpacerHeaderCell = "";
+	$subformSpacerCell = "";
+	if(isset($xoopsConfig['theme_set']) AND $xoopsConfig['theme_set'] == 'Lyris') {
+		$subformSpacerHeaderCell = "<th class='formulize-spacer'></th>\n";
+		$subformSpacerCell = "<td class='formulize-spacer'></td>\n";
+	}
+
 	if($rowsOrForms=="row" OR $rowsOrForms =='') {
 		$subformTableScopeId = "formulize-subform-table-scrollbox-$subform_id$subformElementId$subformInstance";
 		if($subform_element_object AND intval($subform_element_object->ele_value['edit_icon_style']) == FORMULIZE_EDIT_ICON_STYLE_MAGNIFIER) {
@@ -1087,6 +1099,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                     }
 					$col_two .= "</td>\n";
 					$col_two .= drawRowSubformHeaders($headersToDraw, $headingDescriptions);
+					$col_two .= $subformSpacerHeaderCell;
 					$col_two .= "</tr>\n";
 					$drawnHeadersOnce = true;
 				}
@@ -1117,6 +1130,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 						}
 					}
 				}
+				$col_two .= $subformSpacerCell;
 				$col_two .= "</tr>\n";
 
 		}
@@ -1222,6 +1236,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                         }
                         if($showViewButtons AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) { $col_two .= "<th class='subentry-view-cell'></th>\n"; }
 						$col_two .= drawRowSubformHeaders($headersToDraw, $headingDescriptions);
+						$col_two .= $subformSpacerHeaderCell;
 						$col_two .= "</tr>\n";
 						$drawnHeadersOnce = true;
 					}
@@ -1279,6 +1294,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 							}
 						}
 					}
+					$col_two .= $subformSpacerCell;
 					$col_two .= "</tr>\n";
 
                 } else { // display the full form

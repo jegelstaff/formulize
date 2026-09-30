@@ -4178,6 +4178,39 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
   white-space: nowrap;
 }
 
+/* Column widths (issue #920): subform tables follow the list view's default
+   'natural' column-width mode (issue #919, see the column-width modes comment
+   on .fz-table). Every real column gets the width:1% shrink-to-fit hint and
+   stays on one line, so it is as wide as its content, and the trailing
+   .formulize-spacer cell that subformListingsElement.php appends to each row on
+   Lyris takes the leftover width. The table stays width:100%, so its border and
+   header band still reach the far edge of the field column. Wider content makes
+   the table grow past 100% and the scrollbox scrolls horizontally. Textarea
+   columns are left unconstrained so long text wraps instead of making the row
+   one very long line. */
+.lyris-form-screen .formulize-subform-table > tbody > tr > :not(.formulize-spacer):not(.subform-textarea-element) {
+  width: 1%;
+  white-space: nowrap;
+}
+
+/* the header captions are wrapped in a <p>, which a generic rule sets back to
+   white-space:normal; follow the cell instead */
+/* no padding on the spacer, so it takes no room when the table overflows */
+.lyris-form-screen .formulize-subform-table > tbody > tr > .formulize-spacer {
+  padding: 0;
+}
+
+.lyris-form-screen .formulize-subform-table > tbody > tr > th > p {
+  white-space: inherit;
+}
+
+/* Editable subform rows: form controls are width:100% on Lyris form screens,
+   which would collapse to nothing inside a shrink-to-fit column. Let them take
+   their own natural width (e.g. a text box's size attribute) instead. */
+.lyris-form-screen .formulize-subform-table > tbody > tr > td:not(.subform-textarea-element) :is(input, select) {
+  width: auto;
+}
+
 /* Pencil glyph colour is handled globally now (issue #61) — see the
    `a.loe-edit-entry::before` block earlier. Only layout remains here. */
 .lyris-form-screen .formulize-subform-table a.loe-edit-entry {
