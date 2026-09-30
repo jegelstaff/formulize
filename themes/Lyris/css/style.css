@@ -4234,6 +4234,14 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
   border-bottom: none;
 }
 
+/* Row hover, matching list-view rows (`.lyris-list-table tbody tr:hover td`,
+   issue #921). The header row lives in the same tbody and, when blank default
+   rows are drawn, starts with a <td> rather than a <th>, so rows holding any
+   <th> are excluded to keep the header from lighting up. */
+.lyris-form-screen .formulize-subform-table > tbody > tr:not(:has(> th)):hover > td {
+  background: var(--fz-color-surface-2);
+}
+
 .lyris-form-screen .formulize-subform-table > tbody > tr > th {
   background: var(--fz-color-surface-2);
   color: var(--fz-color-text-muted);
