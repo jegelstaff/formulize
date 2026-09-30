@@ -128,7 +128,7 @@ if ($xoopsUser) {
         <a class="lyris-header__action-link" href="<{$icms_url}>/edituser.php">Account</a>
         <a class="lyris-header__action-link" href="<{$icms_url}>/user.php?op=logout">Sign out</a>
       <{else}>
-        <a class="lyris-header__action-link" href="<{$icms_url}><{$formulize_redirect}>">Sign in</a>
+        <a class="lyris-header__action-link" href="<{if isset($formulize_signin_url) && $formulize_signin_url}><{$formulize_signin_url}><{else}><{$icms_url}><{$formulize_redirect}><{/if}>">Sign in</a>
       <{/if}>
     </div>
 
