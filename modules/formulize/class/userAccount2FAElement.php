@@ -195,7 +195,7 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 				$forgetDevicesHtml = "
 		<div class='formulize-tfa-forget-devices' style='margin-top:1em;'>
 			<input type='button' id='{$forgetButtonId}' value='".htmlspecialchars(_US_FORGET_DEVICES_BUTTON)."'>
-			<p style='font-size:0.85em;color:#666;'>"._US_FORGET_DEVICES_DESC."</p>
+			<p class='form-help-text'>"._US_FORGET_DEVICES_DESC."</p>
 		</div>
 		<script type='text/javascript'>
 		jQuery(document).ready(function() {

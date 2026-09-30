@@ -2174,6 +2174,12 @@ body:has(#formulize-masquerade-block) {
   margin: 2px 0 0;
 }
 
+/* The 2FA "Forget Remembered Devices" button and its help text sit outside a
+   .form-row, so they get no row gap; space the help text off the button. */
+.formulize-tfa-forget-devices .form-help-text {
+  margin-top: calc(var(--fz-spacing) * 2);
+}
+
 /* ---------- Label modes (set on the form container) ----------
    Default = label-top (the natural column flow above). Left-label and float
    are ported for completeness / opt-in via the container modifier class. */
