@@ -30,13 +30,66 @@
 // The documentation site's pages are made from this file's --json output, by
 // docs/_plugins/formulize_ui_pages.rb.
 //
-// This file depends on nothing else in Formulize, so that it can run on its own.
+// This file depends on nothing else in Formulize, so that it can run on its own,
+// except appearance_tokens.php beside it, which depends on nothing either: the
+// component sizes are documented from appearance_tokens.json, the one place
+// their preset values are kept, and their Defaults are read from
+// formulize-ui.css.
 //
 // Class names can be written as patterns, which the check and the reference
 // expand: {a,b,c} is a choice (fz-{m,p}-4 is fz-m-4 and fz-p-4), {1-6} is a range
 // of numbers, and {n} is the spacing scale's steps.
 
 define('FORMULIZE_UI_VERSION', '1');
+
+require_once __DIR__ . '/appearance_tokens.php';
+
+/**
+ * The component size tokens, documented from appearance_tokens.json: each one's
+ * description, its Default as formulize-ui.css declares it, and the values the
+ * Compact and Comfortable presets give it.
+ *
+ * @return array token => what it is
+ */
+function formulize_uiSizeTokens() {
+    $map = formulize_appearanceTokenMap();
+    $declared = formulize_appearanceTokenDeclarations(file_get_contents(dirname(__DIR__) . '/templates/css/formulize-ui.css'));
+    $tokens = array();
+    foreach ($map['tokens'] as $token => $entry) {
+        $values = array();
+        if (isset($declared[$token])) {
+            $default = formulize_appearanceTokenParse($entry['type'], $declared[$token]);
+            $values[] = 'Default ' . formulize_uiSizeTokenValue($entry['type'], $default);
+        }
+        foreach (array('compact' => 'Compact', 'comfortable' => 'Comfortable') as $preset => $name) {
+            if (isset($entry['presets'][$preset])) {
+                $values[] = $name . ' ' . formulize_uiSizeTokenValue($entry['type'], $entry['presets'][$preset]);
+            }
+        }
+        $tokens[$token] = $entry['description'] . ($values ? ' ' . implode(', ', $values) . '.' : '');
+    }
+    return $tokens;
+}
+
+/**
+ * A size token's value as the reference shows it: what it is written as, and
+ * what it comes to at the default 16px root font size.
+ *
+ * @param string $typeName the token's type
+ * @param mixed $value its value
+ * @return string eg: 9.5 steps (38px), sm (14px), 600, 65ch
+ */
+function formulize_uiSizeTokenValue($typeName, $value) {
+    $textSizes = array('xs' => 12, 'xs-plus' => 13, 'sm' => 14, 'sm-plus' => 15, 'base' => 16, 'lg' => 18, 'xl' => 20, '2xl' => 24, '3xl' => 30);
+    switch ($typeName) {
+        case 'spacing':
+            return formulize_appearanceTokenNumber($value) . ($value == 1 ? ' step' : ' steps') . ' (' . formulize_appearanceTokenNumber($value * 4) . 'px)';
+        case 'text':
+            return $value . (isset($textSizes[$value]) ? ' (' . $textSizes[$value] . 'px)' : '');
+        default:
+            return formulize_appearanceTokenCss($typeName, $value);
+    }
+}
 
 /**
  * The spacing scale's steps, which {n} in a class pattern stands for.
@@ -192,7 +245,7 @@ function formulize_uiCatalog() {
             array(
                 'id' => 'tokens-type',
                 'name' => 'Type',
-                'summary' => 'Fonts, text sizes (each with a line height), weights and line heights. The sizes are Tailwind\'s, plus xs-plus.',
+                'summary' => 'Fonts, text sizes (each with a line height), weights and line heights. The sizes are Tailwind\'s, plus xs-plus and sm-plus.',
                 'tokens' => array(
                     '--fz-font-sans' => 'The main font.',
                     '--fz-font-heading' => 'The secondary font, for headings and labels. The main font unless the Appearance page sets another.',
@@ -200,12 +253,13 @@ function formulize_uiCatalog() {
                     '--fz-text-xs' => '0.75rem (12px)',
                     '--fz-text-xs-plus' => '0.8125rem (13px). Formulize\'s own step; Lyris\'s content text.',
                     '--fz-text-sm' => '0.875rem (14px)',
+                    '--fz-text-sm-plus' => '0.9375rem (15px). Formulize\'s own step; labels and field text at the Comfortable size.',
                     '--fz-text-base' => '1rem (16px)',
                     '--fz-text-lg' => '1.125rem (18px)',
                     '--fz-text-xl' => '1.25rem (20px)',
                     '--fz-text-2xl' => '1.5rem (24px)',
                     '--fz-text-3xl' => '1.875rem (30px)',
-                    '--fz-text-{xs,xs-plus,sm,base,lg,xl,2xl,3xl}--line-height' => 'The line height that goes with each size, as in Tailwind: 1rem for xs, 1.25rem for xs-plus and sm, 1.5rem for base, and so on.',
+                    '--fz-text-{xs,xs-plus,sm,sm-plus,base,lg,xl,2xl,3xl}--line-height' => 'The line height that goes with each size, as in Tailwind: 1rem for xs, 1.25rem for xs-plus and sm, 1.375rem for sm-plus, 1.5rem for base, and so on.',
                     '--fz-font-weight-normal' => '400',
                     '--fz-font-weight-medium' => '500',
                     '--fz-font-weight-semibold' => '600',
@@ -218,12 +272,9 @@ function formulize_uiCatalog() {
             array(
                 'id' => 'tokens-space',
                 'name' => 'Spacing and sizes',
-                'summary' => 'One step that every space and size is a multiple of, as in Tailwind: `calc(var(--fz-spacing) * 4)` is 1rem, 16px. The density changes the step, so everything built on it follows.',
+                'summary' => 'One step that every space and size is a multiple of, as in Tailwind: `calc(var(--fz-spacing) * 4)` is 1rem, 16px. It is fixed, like the text sizes: the Size preset changes the component sizes, not the step.',
                 'tokens' => array(
-                    '--fz-spacing' => '0.25rem (4px) at standard density; 3.5px at tight, 4.5px at comfortable.',
-                    '--fz-control-height' => 'Buttons: 8 steps, 32px.',
-                    '--fz-field-height' => 'Form fields: 9.5 steps, 38px.',
-                    '--fz-row-height' => 'Table rows: 10 steps, 40px.',
+                    '--fz-spacing' => '0.25rem (4px).',
                     '--fz-container-2xl' => '42rem, the narrow container.',
                     '--fz-container-6xl' => '72rem, the container.',
                     '--fz-container-7xl' => '80rem, the wide container.',
@@ -274,28 +325,24 @@ function formulize_uiCatalog() {
                 ),
             ),
             array(
-                'id' => 'density',
-                'name' => 'Density',
-                'summary' => 'How much space there is, and how tall buttons, form fields and table rows are. The Appearance page sets it for the whole site; these classes set it for one part of a page.',
-                'classes' => array(
-                    'fz-density-tight' => 'Less space and shorter controls: fits more on the screen.',
-                    'fz-density-standard' => 'The default.',
-                    'fz-density-comfortable' => 'More space and taller controls: easier to read and to tap.',
+                'id' => 'tokens-sizes',
+                'name' => 'Component sizes',
+                'summary' => 'The sizes of the parts of the interface: titles, labels and field text, the heights of fields, buttons and list rows, and the space in forms, cards and the drawer. The components use them. The Appearance page\'s Size preset (Compact, Default, Comfortable) and its advanced settings change them. Steps are spacing steps, 4px each at the default settings.',
+                'tokens' => formulize_uiSizeTokens(),
+                'notes' => array(
+                    'Use them in your own CSS so it matches the components and follows the Size preset: `gap: var(--fz-field-gap)`, `height: var(--fz-control-height)`.',
+                    'To change a size for one part of a page, set the token on its container, in a style attribute. Everything inside uses that size; the rest of the page keeps the site\'s.',
                 ),
                 'example' => <<<'HTML'
-<div class="fz-auto-grid fz-auto-grid--max-3">
-  <div class="fz-card fz-density-tight">
-    <p class="fz-card__title">Tight</p>
-    <div class="fz-cluster"><button type="button" class="fz-btn fz-btn--primary">Save</button><button type="button" class="fz-btn">Cancel</button></div>
-  </div>
-  <div class="fz-card fz-density-standard">
-    <p class="fz-card__title">Standard</p>
-    <div class="fz-cluster"><button type="button" class="fz-btn fz-btn--primary">Save</button><button type="button" class="fz-btn">Cancel</button></div>
-  </div>
-  <div class="fz-card fz-density-comfortable">
-    <p class="fz-card__title">Comfortable</p>
-    <div class="fz-cluster"><button type="button" class="fz-btn fz-btn--primary">Save</button><button type="button" class="fz-btn">Cancel</button></div>
-  </div>
+<div class="fz-auto-grid fz-auto-grid--max-2">
+  <table class="fz-table">
+    <thead><tr><th>Name</th><th>Grade</th></tr></thead>
+    <tbody><tr><td>Ada</td><td>7</td></tr><tr><td>Grace</td><td>8</td></tr></tbody>
+  </table>
+  <table class="fz-table" style="--fz-row-height: calc(var(--fz-spacing) * 8)">
+    <thead><tr><th>Name</th><th>Grade</th></tr></thead>
+    <tbody><tr><td>Ada</td><td>7</td></tr><tr><td>Grace</td><td>8</td></tr></tbody>
+  </table>
 </div>
 HTML
             ),
@@ -1332,13 +1379,13 @@ function formulize_uiMarkdownCode($code) {
 }
 
 // Run from the command line:
-//   php modules/formulize/include/ui_catalog.php --check     checks the catalog against formulize-ui.css
+//   php modules/formulize/include/ui_catalog.php --check     checks the catalog, and appearance_tokens.json, against formulize-ui.css
 //   php modules/formulize/include/ui_catalog.php --json      prints the catalog, for the documentation site
 //   php modules/formulize/include/ui_catalog.php --markdown  prints the reference for AI tools
 if (PHP_SAPI === 'cli' AND isset($argv[0]) AND realpath($argv[0]) === __FILE__) {
     if (in_array('--check', $argv)) {
         $css = file_get_contents(dirname(__DIR__) . '/templates/css/formulize-ui.css');
-        $problems = formulize_uiCheckCatalog(formulize_uiCatalog(), $css);
+        $problems = array_merge(formulize_uiCheckCatalog(formulize_uiCatalog(), $css), formulize_appearanceCheckTokenMap(formulize_appearanceTokenMap(), $css));
         foreach ($problems as $problem) {
             fwrite(STDERR, $problem . "\n");
         }
