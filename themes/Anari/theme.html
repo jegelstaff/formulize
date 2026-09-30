@@ -184,7 +184,7 @@ if($xoopsUser) {
                   <a class="user-actions__link" href="<{$icms_url}>/edituser.php" title="Edit Account">Edit Account</a>
                   <a class="user-actions__link" href="<{$icms_url}>/user.php?op=logout" title="Logout">Logout</a>
                   <{elseif !isset($openMenuClass) OR !$openMenuClass }>
-                  <a class="user-actions__link" href="<{$icms_url}><{$formulize_redirect}>" title="Login">Login</a>
+                  <a class="user-actions__link" href="<{if isset($formulize_signin_url) && $formulize_signin_url}><{$formulize_signin_url}><{else}><{$icms_url}><{$formulize_redirect}><{/if}>" title="Login">Login</a>
                   <{/if}>
 
               </div>

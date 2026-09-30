@@ -182,6 +182,12 @@ class icms_view_theme_Object {
 					'show_inbox_link' => false
 				)
 			);
+			// When Google is the only way to sign in (same test as the login block), the theme's "Sign in"
+			// link uses the same Google login URL as the login block's "Login with Google" button.
+			global $icmsConfigAuth;
+			if (!empty($icmsConfigAuth['auth_openid']) && !empty($icmsConfigAuth['auth_googleonly']) && function_exists('authenticationURL')) {
+				$this->template->assign('formulize_signin_url', authenticationURL($icmsConfigAuth['auth_openid']));
+			}
 		}
 		// Meta tags
 		foreach ($icmsConfigMetaFooter as $name => $value) {

@@ -2740,12 +2740,19 @@ function icms_need_do_br($moduleName=false) {
  */
 
 function authenticationURL($needAuth) {
-	$authUrl = '';
-    if($needAuth AND $client = setupAuthentication()) {
-	    $client->setPrompt('select_account');
-	    $authUrl = $client->createAuthUrl();
+	// worked out once per page, since the login block and the theme's "Sign in" link can both ask for it
+	static $authUrl = null;
+	if(!$needAuth) {
+		return '';
 	}
-    return $authUrl;
+	if($authUrl === null) {
+		$authUrl = '';
+		if($client = setupAuthentication()) {
+			$client->setPrompt('select_account');
+			$authUrl = $client->createAuthUrl();
+		}
+	}
+	return $authUrl;
 }
 
 /**
