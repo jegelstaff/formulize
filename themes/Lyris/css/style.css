@@ -2779,6 +2779,24 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
 }
 .form-row > .formulize-element-edit-link:hover { text-decoration: underline; }
 
+/* ---------- Password-manager icon roots (LastPass) ----------
+   LastPass appends a zero-size `<div data-lastpass-icon-root>` as the LAST child
+   of the field row, with inline `position: relative; display: initial;
+   float: left` all `!important`, so no stylesheet can take it out of flow. In
+   the flex row it becomes an extra flex item, and the row's `gap` is inserted
+   before it: in the two-column (label-left) layout that steals one column gap
+   (calc(var(--fz-spacing) * 6)) from `.col2`, so text inputs no longer reach the
+   right edge (issue #929); in the stacked layout it adds a label-gap of height
+   below the field. The element sets no margin, so cancel the gap with a negative
+   margin on the axis that applies: inline-start for row layouts, block-start
+   for column layouts. The other axis is harmless on a zero-size item. The
+   element itself stays in the DOM and visible, so the extension's icon keeps
+   working. */
+.form-row > [data-lastpass-icon-root] {
+  margin-inline-start: calc(var(--fz-spacing) * -6) !important;
+  margin-block-start: calc(-1 * var(--lyris-label-gap, calc(var(--fz-spacing) * 1.5))) !important;
+}
+
 /* ============================================================
    Rich form controls — kitchen-sink element types
    ------------------------------------------------------------
