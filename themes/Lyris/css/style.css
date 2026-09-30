@@ -11,8 +11,9 @@
 /* ---- Units ----
    Sizes are in rem, so they follow the Appearance page's Text and interface
    size. Spaces (padding, margins, gaps) are steps of --fz-spacing, so they also
-   follow the density. Only borders, shadows, hairlines of 2px or less and the
-   breakpoints are in px. Where a comment gives a size in px, it is the size at
+   follow the density. The exception is the form density tokens, which set
+   their own value for each density (see "Form density"). Only borders,
+   shadows, hairlines of 2px or less and the breakpoints are in px. Where a comment gives a size in px, it is the size at
    the default settings.
    ---- */
 
@@ -2008,7 +2009,7 @@ body:has(#formulize-masquerade-block) {
    They are additive: list-screen inputs and filters keep their
    existing 32px `.fz-input`-equivalent baseline.
 
-   Design spec (issue #974), Default density, at the standard Appearance density:
+   Design spec (issue #974), Default density (the Appearance page's Standard):
      --lyris-field-height:     38px    field height
      --lyris-field-padding-x:  12px
      --lyris-field-radius:     6px
@@ -2027,44 +2028,65 @@ body:has(#formulize-masquerade-block) {
    ============================================================ */
 
 /* ---------- Form density ----------
+   The form density follows the Density setting on the Appearance page
+   (Tight, Standard or Comfortable), which issue #974's spec calls Compact,
+   Default and Comfortable. That setting changes --fz-spacing on :root, in the
+   generated appearance.css, and theme.html also puts the matching Formulize UI
+   density class (fz-density-tight, fz-density-standard or
+   fz-density-comfortable, see formulize-ui.css) on <body>. The same classes set
+   the density for one part of a page.
+
    The density tokens (label, field and help text, field height, the gap
-   between rows and the label-to-field gap) are declared once, on :root in
-   tokens.css, with the Default values. Two modifier classes swap in the
-   Compact and Comfortable values; put one on <body> or on a form wrapper.
-   They set tokens and nothing else, and no component rule refers to them, so
-   a component only ever reads the tokens.
+   between rows and the label-to-field gap) are declared on :root in
+   tokens.css with the Default values, and the rules below swap in each
+   density's own values on its class. They set tokens and nothing else, and no
+   component rule refers to the classes, so a component only ever reads the
+   tokens. fz-density-standard repeats the :root values, so that a Standard
+   part of a page inside a Tight or Comfortable one is Default again: keep the
+   two in step.
+
+   The heights and gaps are fixed rem values, not --fz-spacing multiples: the
+   density already changes --fz-spacing, so multiples of it would apply the
+   density twice. Every value is the spec's at the 16px base.
 
    None of these tokens may be re-declared on the form containers
    (.lyris-form, .lyris-form-screen) or anything else between <body> and a
-   field: a closer declaration would beat the class on an ancestor. Nothing
-   applies either class yet.
+   field: a closer declaration would beat the class on an ancestor. */
 
-   The heights and gaps are multiples of --fz-spacing, like the Default ones,
-   so they also follow the Appearance page's density: Compact is 34px / 14px /
-   4px and Comfortable is 42px / 26px / 8px at the standard 4px step. */
-
-.lyris-density--compact {
+.fz-density-tight {
   --lyris-label-text:     var(--fz-text-xs-plus);   /* 13px */
   --lyris-label-weight:   600;
   --lyris-field-text:     var(--fz-text-sm);        /* 14px */
   --lyris-help-text:      var(--fz-text-xs);        /* 12px */
   --lyris-help-leading:   1.45;
   --lyris-help-max-width: 70ch;
-  --lyris-field-height:   calc(var(--fz-spacing) * 8.5);
-  --lyris-field-gap:      calc(var(--fz-spacing) * 3.5);
-  --lyris-label-gap:      calc(var(--fz-spacing) * 1);
+  --lyris-field-height:   2.125rem;                 /* 34px */
+  --lyris-field-gap:      0.875rem;                 /* 14px */
+  --lyris-label-gap:      0.25rem;                  /* 4px */
 }
 
-.lyris-density--comfortable {
+.fz-density-standard {
+  --lyris-label-text:     var(--fz-text-sm);        /* 14px */
+  --lyris-label-weight:   600;
+  --lyris-field-text:     var(--fz-text-sm);        /* 14px */
+  --lyris-help-text:      var(--fz-text-xs-plus);   /* 13px */
+  --lyris-help-leading:   1.5;
+  --lyris-help-max-width: 65ch;
+  --lyris-field-height:   2.375rem;                 /* 38px */
+  --lyris-field-gap:      1.375rem;                 /* 22px */
+  --lyris-label-gap:      0.375rem;                 /* 6px */
+}
+
+.fz-density-comfortable {
   --lyris-label-text:     0.9375rem;                /* 15px */
   --lyris-label-weight:   500;
   --lyris-field-text:     0.9375rem;                /* 15px */
   --lyris-help-text:      var(--fz-text-xs-plus);   /* 13px */
   --lyris-help-leading:   1.5;
   --lyris-help-max-width: 62ch;
-  --lyris-field-height:   calc(var(--fz-spacing) * 10.5);
-  --lyris-field-gap:      calc(var(--fz-spacing) * 6.5);
-  --lyris-label-gap:      calc(var(--fz-spacing) * 2);
+  --lyris-field-height:   2.625rem;                 /* 42px */
+  --lyris-field-gap:      1.625rem;                 /* 26px */
+  --lyris-label-gap:      0.5rem;                   /* 8px */
 }
 
 /* ---------- Field metrics: .lyris-form ----------
@@ -3472,8 +3494,9 @@ input[type="time"] { font-family: var(--fz-font-sans); }
      fields. Every density's field height is under 44px, so all three get the
      same values here. */
   :root,
-  .lyris-density--compact,
-  .lyris-density--comfortable {
+  .fz-density-tight,
+  .fz-density-standard,
+  .fz-density-comfortable {
     --lyris-field-height: max(var(--fz-field-height), 2.75rem);   /* iOS tap target: never under 44px, whatever the density */
     --lyris-field-text:   1rem;   /* prevent iOS auto-zoom */
   }

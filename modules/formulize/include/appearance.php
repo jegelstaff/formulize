@@ -506,6 +506,23 @@ function formulize_appearanceDensityMap() {
 }
 
 /**
+ * The density a theme is set to on the Appearance page, as a key into
+ * formulize_appearanceDensityMap(): 'standard' when it is left at the default.
+ * A theme puts the matching fz-density-* class on <body> (Lyris does, in
+ * theme.html), so that sizes the spacing step can't express, such as a
+ * theme's form text sizes, can follow the density too.
+ *
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return string 'tight', 'standard' or 'comfortable'
+ */
+function formulize_getAppearanceDensity($theme = null) {
+    $settings = formulize_getAppearanceSettings($theme);
+    $density = isset($settings['appearance_density']) ? $settings['appearance_density'] : '';
+    $densities = formulize_appearanceDensityMap();
+    return ($density AND isset($densities[$density])) ? $density : 'standard';
+}
+
+/**
  * Whether a theme uses the density setting: whether it sizes things with
  * Formulize UI's --fz-spacing step, which it declares with its other tokens.
  *

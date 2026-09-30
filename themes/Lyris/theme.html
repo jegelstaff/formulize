@@ -31,6 +31,9 @@
     $appearanceLogoUrl = formulize_getAppearanceLogoUrl();
     $this->assign('appearance_logo_url', $appearanceLogoUrl ? $appearanceLogoUrl : $this->_tpl_vars['icms_imageurl'] . 'images/logo.png');
     $this->assign('appearance_favicon_url', formulize_getAppearanceFaviconUrl());
+    // The Appearance page's density, as Formulize UI's fz-density-* class on <body>: it
+    // switches the form density tokens (see "Form density" in css/style.css)
+    $this->assign('appearance_density', formulize_getAppearanceDensity());
     // The embedded AI assistant lives in the top bar in this theme (Anari puts it in the menu
     // block instead - see drawAIAssistantMenuSection() in modules/formulize/include/functions.php)
     $this->assign('show_ai_link', function_exists('isAIAssistantEnabled') && isAIAssistantEnabled());
@@ -50,7 +53,7 @@
 		<script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
 </head>
 
-<body id="<{$icms_dirname}>" class="<{$icms_langcode}><{if isset($formulize_screen_id) && $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}><{if $smarty.get.fz_inline}> formulize-inline<{/if}>">
+<body id="<{$icms_dirname}>" class="<{$icms_langcode}> fz-density-<{$appearance_density}><{if isset($formulize_screen_id) && $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}><{if $smarty.get.fz_inline}> formulize-inline<{/if}>">
 
 <{includeq file="$theme_name/session-timeout-warning.html"}>
 
