@@ -182,6 +182,18 @@ class icms_view_theme_Object {
 					'show_inbox_link' => false
 				)
 			);
+			// When Google is the only way to sign in (same test as the login block), the theme's "Sign in"
+			// link goes to user.php, which sends the visitor straight on to Google and remembers this page
+			// to come back to. Set here rather than in the theme so every page gets it, and so it works
+			// without recompiling theme templates.
+			global $icmsConfigAuth;
+			if (!empty($icmsConfigAuth['auth_openid']) && !empty($icmsConfigAuth['auth_googleonly'])) {
+				$siteUrlParts = parse_url(ICMS_URL);
+				$currentUrl = $siteUrlParts['scheme'] . '://' . $siteUrlParts['host']
+					. (isset($siteUrlParts['port']) ? ':' . $siteUrlParts['port'] : '')
+					. $_SERVER['REQUEST_URI'];
+				$this->template->assign('formulize_redirect', '/user.php?xoops_redirect=' . urlencode($currentUrl));
+			}
 		}
 		// Meta tags
 		foreach ($icmsConfigMetaFooter as $name => $value) {

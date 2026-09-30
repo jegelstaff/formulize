@@ -34,8 +34,6 @@
     // The embedded AI assistant lives in the top bar in this theme (Anari puts it in the menu
     // block instead - see drawAIAssistantMenuSection() in modules/formulize/include/functions.php)
     $this->assign('show_ai_link', function_exists('isAIAssistantEnabled') && isAIAssistantEnabled());
-    // Google is the only way to sign in (same test as the login block and user.php), so the top bar offers a Google sign in link
-    $this->assign('google_only_login', !empty($GLOBALS['icmsConfigAuth']['auth_openid']) && !empty($GLOBALS['icmsConfigAuth']['auth_googleonly']));
     <{/php}>
 
     <{* Favicon: the one uploaded on the Appearance page if there is one, otherwise the
@@ -129,12 +127,6 @@ if ($xoopsUser) {
         <{/if}>
         <a class="lyris-header__action-link" href="<{$icms_url}>/edituser.php">Account</a>
         <a class="lyris-header__action-link" href="<{$icms_url}>/user.php?op=logout">Sign out</a>
-      <{elseif $google_only_login}>
-        <{* user.php sends visitors straight on to Google when it is the only login method, and keeps the page to come back to *}>
-        <a class="lyris-header__action-link lyris-header__google-signin" href="<{$icms_url}><{if $formulize_redirect}><{$formulize_redirect}><{else}>/user.php<{/if}>">
-          <img class="lyris-header__google-icon" src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="" width="16" height="16">
-          Sign in with Google
-        </a>
       <{else}>
         <a class="lyris-header__action-link" href="<{$icms_url}><{$formulize_redirect}>">Sign in</a>
       <{/if}>
