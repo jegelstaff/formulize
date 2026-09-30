@@ -3816,7 +3816,7 @@ fieldset#icms_block_login_form {
    an element with no box has no width to constrain.
 
    Chrome mirrors the bare-button primitive (surface background, strong
-   border, `--r-2` radius) rather than the accent treatment used by the
+   border, `--fz-radius-md` radius) rather than the accent treatment used by the
    password Login submit — a coloured fill behind Google's multicolour mark
    reads poorly, and the neutral surface matches Google's own button
    guidance. Selectors are written as `a.google-only-login-link` (0-1-1 plus
@@ -3834,36 +3834,36 @@ a.google-only-login-link {
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: var(--s-2);
+  gap: calc(var(--fz-spacing) * 2);
   width: 100%;
-  min-height: 36px;
-  margin-top: var(--s-2);
-  padding: 0 var(--s-4);
-  border: 1px solid var(--c-border-strong);
-  border-radius: var(--r-2);
-  background: var(--c-surface);
-  color: var(--c-text);
-  font-size: var(--fs-14);
+  min-height: 2.25rem;
+  margin-top: calc(var(--fz-spacing) * 2);
+  padding: 0 calc(var(--fz-spacing) * 4);
+  border: 1px solid var(--fz-color-border-strong);
+  border-radius: var(--fz-radius-md);
+  background: var(--fz-color-surface);
+  color: var(--fz-color-text);
+  font-size: var(--fz-text-sm);
   font-weight: 500;
   line-height: 1;
   text-decoration: none;
   cursor: pointer;
-  transition: background var(--dur-1) var(--ease),
-              border-color var(--dur-1) var(--ease);
+  transition: background var(--fz-duration-fast) var(--fz-ease-out),
+              border-color var(--fz-duration-fast) var(--fz-ease-out);
 }
 
 #block_login_form a.google-only-login-link:hover,
 #icms_block_login_form a.google-only-login-link:hover,
 a.google-only-login-link:hover {
-  background: var(--c-surface-3);
-  border-color: var(--c-text-muted);
-  color: var(--c-text);
+  background: var(--fz-color-surface-3);
+  border-color: var(--fz-color-text-muted);
+  color: var(--fz-color-text);
   text-decoration: none;
 }
 
 a.google-only-login-link:focus-visible {
   outline: none;
-  box-shadow: var(--sh-focus);
+  box-shadow: var(--fz-focus-ring);
 }
 
 /* Collapse the intermediate wrappers so the icon and label become direct
