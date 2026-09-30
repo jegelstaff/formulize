@@ -131,6 +131,19 @@ h1, h2, h3, h4, h5, h6,
   color: var(--fz-color-text);
 }
 
+/* "Sign in with Google", shown instead of "Sign in" when Google is the only login method */
+.lyris-header__google-signin {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--fz-spacing) * 1.5);
+}
+
+.lyris-header__google-icon {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
 .lyris-header__inbox {
   display: inline-flex;
   align-items: center;
