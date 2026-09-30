@@ -67,6 +67,27 @@ h1, h2, h3, h4, h5, h6,
   font-family: var(--fz-font-heading);
 }
 
+/* ---------- Titles ----------
+   The form card title, the right drawer's title and the list title bar's title
+   share one style, from the --lyris-title-* tokens (tokens.css): 20px/600 on
+   wide screens, stepping down to 16px at the mobile breakpoint. Titles are the
+   same at every form density, so the density classes never touch these
+   tokens. */
+.fz-card__title,
+.formulize-drawer__title,
+.lyris-list__title {
+  font-family: var(--fz-font-heading);
+  font-size: var(--lyris-title-text);
+  font-weight: var(--lyris-title-weight);
+  line-height: var(--lyris-title-leading);
+}
+
+@media (max-width: 768px) {
+  :root {
+    --lyris-title-text: var(--fz-text-base);
+  }
+}
+
 /* ============================================================
    App shell
    ============================================================ */
@@ -319,10 +340,6 @@ body:not(#formulize):not(.formulize-screen) .lyris-main {
 
 .formulize-drawer__head {
   gap: calc(var(--fz-spacing) * 2);
-}
-
-.formulize-drawer__title {
-  font-size: var(--fz-text-xl);
 }
 
 .formulize-drawer__loading {
@@ -678,11 +695,10 @@ textarea {
 }
 .lyris-list__titlebar #formulize_moreActionsButton:hover { background: var(--fz-color-surface-3); }
 
+/* Size, weight and line height come from the shared title style (see
+   "Titles" near the top). */
 .lyris-list__title {
-  font-size: var(--fz-text-xl);
-  font-weight: 600;
   letter-spacing: -0.01em;
-  line-height: var(--fz-leading-tight);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1873,10 +1889,6 @@ body:has(#formulize-masquerade-block) {
     min-height: 3rem;
   }
 
-  .lyris-list__title {
-    font-size: var(--fz-text-base);
-  }
-
   /* view switcher beside the title: just the icon, as a square icon button
      (the active view's name stays in the button's accessible name) */
   .lyris-list__titlebar .lyris-view-switcher__toggle {
@@ -1996,13 +2008,15 @@ body:has(#formulize-masquerade-block) {
    They are additive: list-screen inputs and filters keep their
    existing 32px `.fz-input`-equivalent baseline.
 
-   Design spec (forms.css):
-     --lyris-field-height:      38px    (.lyris-form default, at standard density)
+   Design spec (issue #974), Default density, at the standard Appearance density:
+     --lyris-field-height:     38px    field height
      --lyris-field-padding-x:  12px
-     --lyris-field-radius: 6px
-     --lyris-field-gap:    18px    vertical gap between field rows
-     --lyris-label-gap:    6px     label-to-field gap
-     --lyris-label-text:   1rem (~16px, #32)
+     --lyris-field-radius:     6px
+     --lyris-field-gap:        22px    vertical gap between field rows
+     --lyris-label-gap:        6px     label-to-field gap (single column)
+     --lyris-label-text:       14px / 600
+     --lyris-field-text:       14px
+     --lyris-help-text:        13px / 1.5, at most 65ch wide
 
    HTML anatomy output by Lyris form templates:
      .fz-card.lyris-form-card > .lyris-form-card__header + .lyris-form-card__body > .form-container
@@ -2012,11 +2026,52 @@ body:has(#formulize-masquerade-block) {
          .form-help-text                  ← elementtemplate1/2.php
    ============================================================ */
 
+/* ---------- Form density ----------
+   The density tokens (label, field and help text, field height, the gap
+   between rows and the label-to-field gap) are declared once, on :root in
+   tokens.css, with the Default values. Two modifier classes swap in the
+   Compact and Comfortable values; put one on <body> or on a form wrapper.
+   They set tokens and nothing else, and no component rule refers to them, so
+   a component only ever reads the tokens.
+
+   None of these tokens may be re-declared on the form containers
+   (.lyris-form, .lyris-form-screen) or anything else between <body> and a
+   field: a closer declaration would beat the class on an ancestor. Nothing
+   applies either class yet.
+
+   The heights and gaps are multiples of --fz-spacing, like the Default ones,
+   so they also follow the Appearance page's density: Compact is 34px / 14px /
+   4px and Comfortable is 42px / 26px / 8px at the standard 4px step. */
+
+.lyris-density--compact {
+  --lyris-label-text:     var(--fz-text-xs-plus);   /* 13px */
+  --lyris-label-weight:   600;
+  --lyris-field-text:     var(--fz-text-sm);        /* 14px */
+  --lyris-help-text:      var(--fz-text-xs);        /* 12px */
+  --lyris-help-leading:   1.45;
+  --lyris-help-max-width: 70ch;
+  --lyris-field-height:   calc(var(--fz-spacing) * 8.5);
+  --lyris-field-gap:      calc(var(--fz-spacing) * 3.5);
+  --lyris-label-gap:      calc(var(--fz-spacing) * 1);
+}
+
+.lyris-density--comfortable {
+  --lyris-label-text:     0.9375rem;                /* 15px */
+  --lyris-label-weight:   500;
+  --lyris-field-text:     0.9375rem;                /* 15px */
+  --lyris-help-text:      var(--fz-text-xs-plus);   /* 13px */
+  --lyris-help-leading:   1.5;
+  --lyris-help-max-width: 62ch;
+  --lyris-field-height:   calc(var(--fz-spacing) * 10.5);
+  --lyris-field-gap:      calc(var(--fz-spacing) * 6.5);
+  --lyris-label-gap:      calc(var(--fz-spacing) * 2);
+}
+
 /* ---------- Field metrics: .lyris-form ----------
-   `.lyris-form` carries the form's field metrics. The height, the padding and the
-   gap between fields follow the density set on the Appearance page, through
-   the Formulize UI tokens (see formulize-ui.css): 38px / 12px / 18px at
-   standard density, the values these were fixed at before density existed.
+   `.lyris-form` carries the form's other field metrics: padding, radius and the
+   label column width. The padding follows the density set on the Appearance
+   page, through the Formulize UI tokens (see formulize-ui.css). The density
+   tokens above are deliberately not repeated here.
 
    `.lyris-form-screen` retains the same vars as an additive alias, including inside
    the right drawer, whose body is wrapped in `.lyris-form-screen` by the theme's
@@ -2024,16 +2079,10 @@ body:has(#formulize-masquerade-block) {
 
 .lyris-form,
 .lyris-form-screen {
-  --lyris-field-height:        var(--fz-field-height);
   --lyris-field-padding-x:     calc(var(--fz-spacing) * 3);
   --lyris-field-padding-y:     calc(var(--fz-spacing) * 2);
   --lyris-field-radius:        var(--fz-radius-md);   /* 6px */
-  --lyris-field-gap:           calc(var(--fz-spacing) * 4.5);
-  --lyris-field-text:          var(--fz-text-sm);
-  --lyris-label-text:          1.1rem; /* ~16px, scales with root font-size (#32) */
-  --lyris-label-gap:           calc(var(--fz-spacing) * 1.5);
   --lyris-label-column-width:  13.75rem;
-  --lyris-help-text:           var(--fz-text-xs);
   --lyris-required-color:      var(--fz-color-danger);
 }
 
@@ -2101,6 +2150,11 @@ body:has(#formulize-masquerade-block) {
 .lyris-form .formulize-limit-counter,
 .lyris-form-screen .formulize-limit-counter {
   max-width: none;
+  /* Sized and spaced like the help text. Not capped at the help text's
+     --lyris-help-max-width, though: it is right-aligned to the textarea, so a
+     cap would pull it back off the textarea's right edge (see above). */
+  font-size: var(--lyris-help-text);
+  line-height: var(--lyris-help-leading);
 }
 
 /* Selects: preserve the chevron background already set by the base rule */
@@ -2191,8 +2245,8 @@ body:has(#formulize-masquerade-block) {
 .form-row {
   display: flex;
   flex-direction: column;
-  gap: var(--lyris-label-gap, calc(var(--fz-spacing) * 1.5));
-  margin-bottom: var(--lyris-field-gap, calc(var(--fz-spacing) * 4.5));
+  gap: var(--lyris-label-gap);           /* label to field, single column */
+  margin-bottom: var(--lyris-field-gap); /* between rows */
   position: relative;
 }
 
@@ -2206,11 +2260,19 @@ body:has(#formulize-masquerade-block) {
   display: inline-flex;
   align-items: center;
   gap: calc(var(--fz-spacing) * 1.5);
-  font-size: var(--lyris-label-text, var(--fz-text-xs-plus));
-  font-weight: 600;
+  font-size: var(--lyris-label-text);
+  font-weight: var(--lyris-label-weight);
   color: var(--fz-color-text);
-  line-height: var(--fz-leading-snug);
+  line-height: 1.375; /* the two-column .col1 padding below assumes this */
+  text-wrap: pretty;
   /* label-to-control gap supplied by the .form-row gap */
+}
+
+/* A label above its field (the single-column layout) stops at a readable
+   line length. Two-column labels are held to their column instead; at the
+   mobile breakpoint those stack too, and get the same cap there. */
+.form-row:not(:has(> .col1)) > .form-label {
+  max-width: 60ch;
 }
 
 /* ---------- Required indicator ---------- */
@@ -2240,22 +2302,17 @@ body:has(#formulize-masquerade-block) {
 
 /* ---------- Help text ---------- */
 
-.form-help-text {
-  font-size: var(--lyris-help-text, var(--fz-text-xs));
-  color: var(--fz-color-text-muted);
-  line-height: 1.45;
-  margin: 2px 0 0;
-}
-
 /* Long help text is hard to read when it runs the full width of the form on a
-   wide monitor (issue #962). On desktop it wraps at about 70 characters, within
-   the 60-80 character range that reads comfortably. On mobile the form is
-   already narrower than that, so the help text keeps the full width. Anari caps
-   its help text the same way, at 700px. */
-@media (min-width: 769px) {
-  .form-help-text {
-    max-width: 70ch;
-  }
+   wide monitor (issue #962), so it wraps at --lyris-help-max-width: 65ch at the
+   Default density, within the 60-80 character range that reads comfortably
+   (issue #974). On mobile the form is already narrower than that, so the cap
+   has no effect there. Anari caps its help text the same way, at 700px. */
+.form-help-text {
+  font-size: var(--lyris-help-text);
+  color: var(--fz-color-text-muted);
+  line-height: var(--lyris-help-leading);
+  max-width: var(--lyris-help-max-width);
+  margin: 2px 0 0;
 }
 
 /* The 2FA "Forget Remembered Devices" button and its help text sit outside a
@@ -2276,7 +2333,7 @@ body:has(#formulize-masquerade-block) {
 .lyris-form--label-left .fz-field__label {
   width: var(--lyris-label-column-width, 13.75rem);
   flex: none;
-  padding-top: calc((var(--lyris-field-height) - var(--lyris-label-text) * 1.35) / 2);
+  padding-top: calc((var(--lyris-field-height) - var(--lyris-label-text) * 1.375) / 2);
   justify-content: flex-start;
 }
 .lyris-form--label-left .fz-field__body {
@@ -2324,7 +2381,9 @@ body:has(#formulize-masquerade-block) {
   min-width: 0;
   display: flex;
   align-items: flex-start;
-  padding-top: var(--lyris-field-padding-y, calc(var(--fz-spacing) * 2)); /* align label with control's text line */
+  /* Centre the label's first line (line-height 1.375, see .form-label) on the
+     field beside it, whatever the density. */
+  padding-top: calc((var(--lyris-field-height) - var(--lyris-label-text) * 1.375) / 2);
 }
 
 .col1 .form-label {
@@ -2334,6 +2393,27 @@ body:has(#formulize-masquerade-block) {
 .col2 {
   flex: 1 1 auto;        /* fill the remaining width (ignore inline `width: auto`) */
   min-width: 0;
+}
+
+/* ---------- Read-only values ----------
+   A field shown read-only, or a disabled one, renders its value as plain text
+   (or <nobr>/<output>) in the field's body, with no control in it. The value is
+   set at the field text size, so it matches what a control would show. The
+   :has() test is what tells such a body from one holding a control: anything a
+   person can type in, pick from or press, or a table (a subform, say). */
+.form-row > .fz-field__body:not(:has(input:not([type="hidden"]), select, textarea, button, table, iframe, [contenteditable])) {
+  font-size: var(--lyris-field-text);
+  line-height: var(--fz-leading-normal);
+}
+
+/* In the two-column layout the value's first line is centred on the same line
+   a field's centre would be on, which is where the label's first line is
+   centred too (see .col1). Wide screens only: the mobile layout stacks the
+   columns, and drops both paddings. */
+@media (min-width: 769px) {
+  .form-row > .col2:not(:has(input:not([type="hidden"]), select, textarea, button, table, iframe, [contenteditable])) {
+    padding-top: calc((var(--lyris-field-height) - var(--lyris-field-text) * var(--fz-leading-normal)) / 2);
+  }
 }
 
 /* ---------- Radio / checkbox option groups (elementtemplate2 + others) ----------
@@ -2905,7 +2985,6 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
    ============================================================ */
 
 .lyris-form-screen {
-  --lyris-field-height:      var(--fz-field-height);
   --lyris-field-padding-x:   calc(var(--fz-spacing) * 3);
   --lyris-field-radius: var(--fz-radius-md);
 }
@@ -3388,11 +3467,15 @@ input[type="time"] { font-family: var(--fz-font-sans); }
    ============================================================ */
 
 @media (max-width: 768px) {
-  .lyris-form,
-  .lyris-form-screen {
-    --lyris-field-height:     max(var(--fz-field-height), 2.75rem);   /* iOS tap target: never under 44px, whatever the density */
-    --lyris-field-text:  1rem;   /* prevent iOS auto-zoom */
-    --lyris-field-gap:   calc(var(--fz-spacing) * 4);
+  /* Declared where the density tokens are (:root and the density classes),
+     never on the form containers, so that a density class still reaches the
+     fields. Every density's field height is under 44px, so all three get the
+     same values here. */
+  :root,
+  .lyris-density--compact,
+  .lyris-density--comfortable {
+    --lyris-field-height: max(var(--fz-field-height), 2.75rem);   /* iOS tap target: never under 44px, whatever the density */
+    --lyris-field-text:   1rem;   /* prevent iOS auto-zoom */
   }
 
   .lyris-form-card__body {
@@ -3409,13 +3492,17 @@ input[type="time"] { font-family: var(--fz-font-sans); }
   .form-row:has(> .col1) {
     flex-direction: column;
     align-items: stretch;
-    gap: var(--lyris-label-gap, calc(var(--fz-spacing) * 1.5));
+    gap: var(--lyris-label-gap);
   }
 
   .col1 {
     min-height: auto;
     width: 100% !important;
     padding-top: 0; /* no left-label top nudge when stacked */
+  }
+
+  .col1 .form-label {
+    max-width: 60ch; /* stacked above its field: same cap as single column */
   }
 
   .col2 {

@@ -140,6 +140,28 @@
   /* List rows: side padding of a cell */
   --lyris-row-padding-x: calc(var(--fz-spacing) * 3);
 
+  /* Titles: the one style shared by the form card title, the drawer title and
+     the list title. The same at every form density; steps down to
+     --fz-text-base at 768px and below (see "Titles" in style.css). */
+  --lyris-title-text:    var(--fz-text-xl);
+  --lyris-title-weight:  600;
+  --lyris-title-leading: 1.3;
+
+  /* Form density: the Default values. The .lyris-density--compact and
+     .lyris-density--comfortable classes in style.css override these tokens,
+     and only these; form components read the tokens, never the classes.
+     Field height and the gaps are on the spacing scale, so they follow the
+     Appearance page's density as well: 38px, 22px and 6px at standard. */
+  --lyris-label-text:     var(--fz-text-sm);
+  --lyris-label-weight:   600;
+  --lyris-field-text:     var(--fz-text-sm);
+  --lyris-help-text:      var(--fz-text-xs-plus);
+  --lyris-help-leading:   1.5;
+  --lyris-help-max-width: 65ch;
+  --lyris-field-height:   var(--fz-field-height);
+  --lyris-field-gap:      calc(var(--fz-spacing) * 5.5);
+  --lyris-label-gap:      calc(var(--fz-spacing) * 1.5);
+
   /* Motion */
   --fz-ease-out: cubic-bezier(.2,.7,.3,1);
   --fz-duration-fast: 120ms;
