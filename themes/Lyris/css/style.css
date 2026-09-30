@@ -1187,13 +1187,21 @@ textarea {
   white-space: nowrap;
 }
 
-.lyris-list-table thead th {
+/* Column header rows. The "repeat headers every X rows" list setting draws extra
+   header rows inside the tbody (drawHeaderRow in the Lyris openlisttemplate marks
+   every header row with .lyris-header-row), and those need to look the same as the
+   top one. Only the top header row in the thead is sticky. */
+.lyris-list-table thead th,
+.lyris-list-table .lyris-header-row th {
   height: 2.25rem;
   font-weight: 600;
   font-size: var(--fz-text-xs);
   color: var(--fz-color-text-muted);
   background: var(--fz-color-surface-2);
   border-bottom-color: var(--fz-color-border-strong);
+}
+
+.lyris-list-table thead th {
   position: sticky;
   top: 0;
   z-index: 2;
