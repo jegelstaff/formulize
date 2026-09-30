@@ -626,8 +626,8 @@ textarea {
 .formulize-inline .lyris-list-screen { height: auto; display: block; }
 .formulize-inline .lyris-list__body  { overflow: visible; }
 
-/* Title bar: a Formulize UI toolbar (fz-toolbar, with the title and count at
-   its start and the actions at its end). Lyris sets its chrome, and keeps it to
+/* Title bar: a Formulize UI toolbar (fz-toolbar, with the title and view
+   switcher at its start and the actions at its end). Lyris sets its chrome, and keeps it to
    one row at every width: the actions never wrap, and the title gives way,
    truncating with an ellipsis (see .lyris-list__title). */
 .lyris-list__titlebar {
@@ -699,15 +699,6 @@ textarea {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-/* Total entry count beside the title */
-.lyris-list__count {
-  font-family: var(--fz-font-mono);
-  font-size: var(--fz-text-xs);
-  font-feature-settings: "tnum";
-  color: var(--fz-color-text-subtle);
-  flex-shrink: 0;
 }
 
 /* More-actions wrapper — anchors the dropdown to the "..." button */
@@ -825,16 +816,58 @@ textarea {
 .lyris-pop__sep { height: 1px; background: var(--fz-color-border); margin: calc(var(--fz-spacing) * 1) 2px; }
 .lyris-pop__group { padding: calc(var(--fz-spacing) * 1) calc(var(--fz-spacing) * 2); font-size: var(--fz-text-xs); color: var(--fz-color-text-subtle); text-transform: uppercase; letter-spacing: .04em; }
 
-/* View switcher — binoculars icon button + dropdown panel */
+/* View switcher — sits beside the list title: a dashboard icon, the active
+   view's name and a chevron, all one button that opens the dropdown panel.
+   On narrow screens only the icon is left (see "Mobile"). The switcher keeps
+   its size; a long view name truncates, and the title gives way before it. */
 .lyris-view-switcher {
   position: relative;
+  flex-shrink: 0;
+  min-width: 0;
 }
+
+.lyris-list__titlebar .lyris-view-switcher__toggle {
+  gap: calc(var(--fz-spacing) * 1.5);
+  max-width: 18rem;
+  padding: 0 calc(var(--fz-spacing) * 2);
+  border: 1px solid transparent;
+  border-radius: var(--fz-radius-md);
+  background: transparent;
+  color: var(--fz-color-text-muted);
+  font-size: var(--fz-text-xs-plus);
+  font-weight: 500;
+}
+.lyris-list__titlebar .lyris-view-switcher__toggle:hover,
+.lyris-list__titlebar .lyris-view-switcher__toggle[aria-expanded="true"] {
+  background: var(--fz-color-surface-3);
+  color: var(--fz-color-text);
+}
+
+.lyris-view-switcher__icon,
+.lyris-view-switcher__chevron {
+  flex-shrink: 0;
+}
+.lyris-view-switcher__chevron {
+  opacity: .7;
+  transition: transform var(--fz-duration-fast) var(--fz-ease-out);
+}
+.lyris-view-switcher__toggle[aria-expanded="true"] .lyris-view-switcher__chevron {
+  transform: rotate(180deg);
+}
+
+.lyris-view-switcher__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lyris-view-switcher__label:empty { display: none; }
 
 .lyris-view-switcher__panel {
   display: none;
   position: absolute;
   top: calc(100% + 0.25rem);
-  right: 0;
+  left: 0;
   z-index: 200;
   min-width: 15rem;
   background: var(--fz-color-surface);
@@ -1167,13 +1200,21 @@ textarea {
   white-space: nowrap;
 }
 
-.lyris-list-table thead th {
+/* Column header rows. The "repeat headers every X rows" list setting draws extra
+   header rows inside the tbody (drawHeaderRow in the Lyris openlisttemplate marks
+   every header row with .lyris-header-row), and those need to look the same as the
+   top one. Only the top header row in the thead is sticky. */
+.lyris-list-table thead th,
+.lyris-list-table .lyris-header-row th {
   height: 2.25rem;
   font-weight: 600;
   font-size: var(--fz-text-xs);
   color: var(--fz-color-text-muted);
   background: var(--fz-color-surface-2);
   border-bottom-color: var(--fz-color-border-strong);
+}
+
+.lyris-list-table thead th {
   position: sticky;
   top: 0;
   z-index: 2;
@@ -1840,9 +1881,32 @@ body:has(#formulize-masquerade-block) {
     font-size: var(--fz-text-base);
   }
 
-  /* count beside the title is a desktop affordance */
-  .lyris-list__count {
+  /* view switcher beside the title: just the icon, as a square icon button
+     (the active view's name stays in the button's accessible name) */
+  .lyris-list__titlebar .lyris-view-switcher__toggle {
+    width: var(--fz-control-height);
+    padding: 0;
+  }
+
+  .lyris-view-switcher__label,
+  .lyris-view-switcher__chevron {
     display: none;
+  }
+
+  /* anchor its panel to the title bar's left gutter rather than to the icon,
+     so it cannot run off the right edge of a phone screen */
+  .lyris-list__titlebar {
+    position: relative;
+  }
+
+  .lyris-view-switcher {
+    position: static;
+  }
+
+  .lyris-view-switcher__panel {
+    top: calc(100% - 0.25rem);
+    left: calc(var(--fz-spacing) * 3);
+    max-width: calc(100% - var(--fz-spacing) * 6);
   }
 
   /* ---- Selection bar: one row, actions pan horizontally ---- */
@@ -2185,6 +2249,12 @@ body:has(#formulize-masquerade-block) {
   color: var(--fz-color-text-muted);
   line-height: 1.45;
   margin: 2px 0 0;
+}
+
+/* The 2FA "Forget Remembered Devices" button and its help text sit outside a
+   .form-row, so they get no row gap; space the help text off the button. */
+.formulize-tfa-forget-devices .form-help-text {
+  margin-top: calc(var(--fz-spacing) * 2);
 }
 
 /* ---------- Label modes (set on the form container) ----------
@@ -2791,6 +2861,24 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
   pointer-events: auto;
 }
 .form-row > .formulize-element-edit-link:hover { text-decoration: underline; }
+
+/* ---------- Password-manager icon roots (LastPass) ----------
+   LastPass appends a zero-size `<div data-lastpass-icon-root>` as the LAST child
+   of the field row, with inline `position: relative; display: initial;
+   float: left` all `!important`, so no stylesheet can take it out of flow. In
+   the flex row it becomes an extra flex item, and the row's `gap` is inserted
+   before it: in the two-column (label-left) layout that steals one column gap
+   (calc(var(--fz-spacing) * 6)) from `.col2`, so text inputs no longer reach the
+   right edge (issue #929); in the stacked layout it adds a label-gap of height
+   below the field. The element sets no margin, so cancel the gap with a negative
+   margin on the axis that applies: inline-start for row layouts, block-start
+   for column layouts. The other axis is harmless on a zero-size item. The
+   element itself stays in the DOM and visible, so the extension's icon keeps
+   working. */
+.form-row > [data-lastpass-icon-root] {
+  margin-inline-start: calc(var(--fz-spacing) * -6) !important;
+  margin-block-start: calc(-1 * var(--lyris-label-gap, calc(var(--fz-spacing) * 1.5))) !important;
+}
 
 /* ============================================================
    Rich form controls — kitchen-sink element types
@@ -4173,6 +4261,14 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
   border-bottom: none;
 }
 
+/* Row hover, matching list-view rows (`.lyris-list-table tbody tr:hover td`,
+   issue #921). The header row lives in the same tbody and, when blank default
+   rows are drawn, starts with a <td> rather than a <th>, so rows holding any
+   <th> are excluded to keep the header from lighting up. */
+.lyris-form-screen .formulize-subform-table > tbody > tr:not(:has(> th)):hover > td {
+  background: var(--fz-color-surface-2);
+}
+
 .lyris-form-screen .formulize-subform-table > tbody > tr > th {
   background: var(--fz-color-surface-2);
   color: var(--fz-color-text-muted);
@@ -4189,6 +4285,39 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
 .lyris-form-screen .formulize-subform-table .subentry-delete-cell {
   width: 1%;
   white-space: nowrap;
+}
+
+/* Column widths (issue #920): subform tables follow the list view's default
+   'natural' column-width mode (issue #919, see the column-width modes comment
+   on .fz-table). Every real column gets the width:1% shrink-to-fit hint and
+   stays on one line, so it is as wide as its content, and the trailing
+   .formulize-spacer cell that subformListingsElement.php appends to each row on
+   Lyris takes the leftover width. The table stays width:100%, so its border and
+   header band still reach the far edge of the field column. Wider content makes
+   the table grow past 100% and the scrollbox scrolls horizontally. Textarea
+   columns are left unconstrained so long text wraps instead of making the row
+   one very long line. */
+.lyris-form-screen .formulize-subform-table > tbody > tr > :not(.formulize-spacer):not(.subform-textarea-element) {
+  width: 1%;
+  white-space: nowrap;
+}
+
+/* the header captions are wrapped in a <p>, which a generic rule sets back to
+   white-space:normal; follow the cell instead */
+/* no padding on the spacer, so it takes no room when the table overflows */
+.lyris-form-screen .formulize-subform-table > tbody > tr > .formulize-spacer {
+  padding: 0;
+}
+
+.lyris-form-screen .formulize-subform-table > tbody > tr > th > p {
+  white-space: inherit;
+}
+
+/* Editable subform rows: form controls are width:100% on Lyris form screens,
+   which would collapse to nothing inside a shrink-to-fit column. Let them take
+   their own natural width (e.g. a text box's size attribute) instead. */
+.lyris-form-screen .formulize-subform-table > tbody > tr > td:not(.subform-textarea-element) :is(input, select) {
+  width: auto;
 }
 
 /* Pencil glyph colour is handled globally now (issue #61) — see the

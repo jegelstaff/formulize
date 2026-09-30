@@ -6,10 +6,6 @@
 // modules/formulize/include/js/drawer.js - so nothing about that is emitted here.
 $listSid  = (isset($screen) AND is_object($screen)) ? intval($screen->getVar('sid')) : 0;
 
-// total entries in the list across all pages, shown beside the title
-$listTotalCount = isset($GLOBALS['formulize_countMasterResultsForPageNumbers']) ? intval($GLOBALS['formulize_countMasterResultsForPageNumbers']) : 0;
-$listTotalCountMarkup = $listTotalCount > 0 ? "<span class='lyris-list__count'>$listTotalCount entries</span>" : "";
-
 print "
 
 $submitButton
@@ -20,11 +16,10 @@ $procedureResults
   <div class='fz-toolbar lyris-list__titlebar'>
     <div class='fz-toolbar__start'>
       <h1 class='lyris-list__title'>$title</h1>
-      $listTotalCountMarkup
+      $currentViewList
     </div>
     <div class='fz-toolbar__end'>
-      $addButton
-			$currentViewList";
+      $addButton";
 
 if ($searchesShown) {
     print "
