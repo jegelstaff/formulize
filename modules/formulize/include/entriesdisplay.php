@@ -2086,6 +2086,88 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 
 			$templateVariables['class'] = 'even'; // seed the table row class... will flip to odd on first row
 
+			// ---------- Decimal alignment of numeric columns (issue #918) ----------
+			// Numbers in list cells are left aligned like every other value, but the decimal
+			// points down a column still have to line up. Formatting is fixed per element, not
+			// per value: formulize_numberFormat always emits the same number of decimal places
+			// and the same prefix/suffix for every value in a column, so only the integer part
+			// varies in width. That means the decimals line up as soon as every number in the
+			// column sits in a box of the same width with the number pushed to the box's right
+			// edge - no per-value splitting of the decimal needed.
+			//
+			// Measure that box here, once per column, off the page of results already in memory.
+			// Because the format is fixed, the longest formatted string in a column is produced
+			// by whichever of the smallest or largest value has the greatest magnitude (the sign
+			// and the thousands separators are part of the formatted string, which is why both
+			// ends are measured rather than just the maximum). The measurement is handed to
+			// getHTMLForList through $GLOBALS['formulize_numericColumnWidths'], which emits it as
+			// a --fz-num-width custom property on each numeric value; the themes turn that into
+			// an inline-block box. Anywhere no width is known (subform listings, the XHR
+			// inline-edit redraw path) the property is simply absent and the value falls back to
+			// ordinary left alignment.
+			//
+			// Only the element types formulize_numberFormat actually formats are measured.
+			// Anything else (a select whose stored value happens to be numeric, say) displays
+			// text rather than a formatted number, so giving it a numeric box would be wrong.
+			$GLOBALS['formulize_numericColumnWidths'] = array();
+			foreach((array) $cols as $numericCol) {
+				if(isMetaDataField($numericCol) OR $numericCol == "creation_uid" OR $numericCol == "mod_uid" OR $numericCol == "entry_id") {
+					continue;
+				}
+				$numericColObject = $element_handler->get($numericCol);
+				if(!is_object($numericColObject)) {
+					continue;
+				}
+				$numericColType = $numericColObject->getVar('ele_type');
+				if($numericColType != "number" AND $numericColType != "text" AND $numericColType != "derived") {
+					continue;
+				}
+				$numericColMin = null;
+				$numericColMax = null;
+				foreach($data as $numericEntry) {
+					if($numericEntry == "") {
+						continue;
+					}
+					$numericValues = getValue($numericEntry, $numericCol);
+					if(!is_array($numericValues)) {
+						$numericValues = array($numericValues);
+					}
+					foreach($numericValues as $numericValue) {
+						if(is_array($numericValue)) {
+							continue;
+						}
+						$numericValue = trim((string) $numericValue);
+						if($numericValue === "") {
+							// number elements coerce an empty value to zero when they format it
+							// for a list, so an empty cell still displays as 0, 0.00, $0.00 etc.
+							if($numericColType != "number") {
+								continue;
+							}
+							$numericValue = "0";
+						} elseif(!is_numeric($numericValue)) {
+							continue;
+						}
+						$numericValue = $numericValue + 0;
+						if($numericColMin === null OR $numericValue < $numericColMin) {
+							$numericColMin = $numericValue;
+						}
+						if($numericColMax === null OR $numericValue > $numericColMax) {
+							$numericColMax = $numericValue;
+						}
+					}
+				}
+				if($numericColMin === null) {
+					continue; // nothing numeric in this column on this page of results
+				}
+				$numericColWidth = max(
+					formulize_numericStringWidth(formulize_numberFormat($numericColMin, $numericCol)),
+					formulize_numericStringWidth(formulize_numberFormat($numericColMax, $numericCol))
+				);
+				if($numericColWidth > 0) {
+					$GLOBALS['formulize_numericColumnWidths'][$numericCol] = $numericColWidth;
+				}
+			}
+
 			foreach($data as $id=>$entry) {
 				formulize_benchmark("starting to draw one row of results");
 
