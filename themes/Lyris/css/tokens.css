@@ -88,14 +88,17 @@
      0.8125rem: 13px at the 16px base. */
 
   /* Type scale, in rem, so every step stays in proportion to the base above.
-     Each size has the line height Tailwind pairs it with. xs-plus is Formulize
-     UI's own step between xs and sm, which Tailwind has none for. */
+     Each size has the line height Tailwind pairs it with. xs-plus and sm-plus
+     are Formulize UI's own steps, between xs and sm and between sm and base,
+     which Tailwind has none for. */
   --fz-text-xs:                 0.75rem;
   --fz-text-xs--line-height:    1rem;
   --fz-text-xs-plus:            0.8125rem;
   --fz-text-xs-plus--line-height: 1.25rem;
   --fz-text-sm:                 0.875rem;
   --fz-text-sm--line-height:    1.25rem;
+  --fz-text-sm-plus:            0.9375rem;
+  --fz-text-sm-plus--line-height: 1.375rem;
   --fz-text-base:               1rem;
   --fz-text-base--line-height:  1.5rem;
   --fz-text-lg:                 1.125rem;

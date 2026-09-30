@@ -67,14 +67,17 @@
   --fz-font-mono:    ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* Type scale: Tailwind's sizes, each with the line height Tailwind pairs it
-     with, plus one step of Formulize's own, xs-plus (13px), between xs and sm,
-     which Tailwind has no step for. Fixed: the same in every theme. */
+     with, plus two steps of Formulize's own that Tailwind has none for:
+     xs-plus (13px), between xs and sm, and sm-plus (15px), between sm and base.
+     Fixed: the same in every theme. */
   --fz-text-xs:                 0.75rem;
   --fz-text-xs--line-height:    1rem;
   --fz-text-xs-plus:            0.8125rem;
   --fz-text-xs-plus--line-height: 1.25rem;
   --fz-text-sm:                 0.875rem;
   --fz-text-sm--line-height:    1.25rem;
+  --fz-text-sm-plus:            0.9375rem;
+  --fz-text-sm-plus--line-height: 1.375rem;
   --fz-text-base:               1rem;
   --fz-text-base--line-height:  1.5rem;
   --fz-text-lg:                 1.125rem;
@@ -96,8 +99,9 @@
   --fz-leading-normal:  1.5;
 
   /* Spacing. Every space and size on the scale is a multiple of this step, as
-     in Tailwind: calc(var(--fz-spacing) * 4) is 1rem. The density changes it
-     (see Density, below). */
+     in Tailwind: calc(var(--fz-spacing) * 4) is 1rem. Fixed, like the type
+     scale: the Appearance page's sizes change the component sizes below, not
+     this. */
   --fz-spacing: 0.25rem;
 
   /* Shape and depth */
@@ -126,31 +130,69 @@
 
 
 /* ============================================================
-   Density
+   Component sizes
    ============================================================
 
-   How much space there is, and how tall buttons, form fields and list rows
-   are. The Appearance page sets it for the whole site, by setting
-   --fz-spacing; these classes set it for one part of a page.
+   The sizes of the parts of the interface: how big titles, labels and field
+   text are, how tall fields, buttons and list rows are, and how much space
+   there is in forms, cards and the drawer. Components read these, so setting
+   one changes that part everywhere, and nothing else.
 
-   The heights are worked out from --fz-spacing, and are declared again on each
-   density class, not only on :root: a custom property that uses var() is worked
-   out once, where it is declared, and the elements inside inherit the result,
-   not the formula. Declared only on :root, the heights would stay at the page's
-   density inside a container with a different one.
+   These are the Default values. The Appearance page's Size presets (Compact,
+   Comfortable) and its advanced settings replace them, in the stylesheet it
+   generates; the presets' values, and what each token can be set to, are in
+   modules/formulize/include/appearance_tokens.json. Keep each value written
+   the way that file's type for it is written (a number of spacing steps, a text
+   step, a weight, a line height, a number of ch), so the Appearance page can
+   read it; ui_catalog.php --check makes sure of it.
+
+   To change a size for one part of a page, set the token on its container:
+   style="--fz-row-height: calc(var(--fz-spacing) * 8)".
    ============================================================ */
 
-.fz-density-tight       { --fz-spacing: 0.21875rem; }  /* 3.5px at a 16px base */
-.fz-density-standard    { --fz-spacing: 0.25rem; }     /* 4px */
-.fz-density-comfortable { --fz-spacing: 0.28125rem; }  /* 4.5px */
+:root {
+  /* Type */
+  --fz-title-text:        var(--fz-text-xl);       /* form card, drawer and list titles: 20px */
+  --fz-title-text-narrow: var(--fz-text-base);     /* titles at 768px wide and below: 16px */
+  --fz-title-weight:      600;
+  --fz-title-leading:     1.25;
+  --fz-label-text:        var(--fz-text-sm);       /* form labels: 14px */
+  --fz-label-weight:      600;
+  --fz-field-text:        var(--fz-text-sm);       /* text in form fields, and read-only values */
+  --fz-help-text:         var(--fz-text-xs-plus);  /* help text and character counters: 13px */
+  --fz-help-leading:      1.5;
+  --fz-help-max-width:    65ch;
+  --fz-control-text:      var(--fz-text-xs-plus);  /* buttons, menu items, tabs */
+  --fz-table-text:        var(--fz-text-xs-plus);  /* list and table cells */
+  --fz-table-header-text: var(--fz-text-xs);       /* column headings */
 
-:root,
-.fz-density-tight,
-.fz-density-standard,
-.fz-density-comfortable {
-  --fz-control-height: calc(var(--fz-spacing) * 8);    /* buttons: 32px at standard */
-  --fz-field-height:   calc(var(--fz-spacing) * 9.5);  /* form fields: 38px */
-  --fz-row-height:     calc(var(--fz-spacing) * 10);   /* list rows: 40px */
+  /* Forms */
+  --fz-field-height:      calc(var(--fz-spacing) * 9.5);  /* 38px */
+  --fz-field-padding-x:   calc(var(--fz-spacing) * 3);
+  --fz-field-gap:         calc(var(--fz-spacing) * 5.5);  /* between fields: 22px */
+  --fz-label-gap:         calc(var(--fz-spacing) * 1.5);  /* label above its field: 6px */
+
+  /* Buttons and controls */
+  --fz-control-height:    calc(var(--fz-spacing) * 8);    /* 32px */
+  --fz-control-padding-x: calc(var(--fz-spacing) * 3);
+  --fz-menu-item-height:  calc(var(--fz-spacing) * 7.5);  /* 30px */
+  --fz-tab-padding-y:     calc(var(--fz-spacing) * 1);
+  --fz-tab-padding-x:     calc(var(--fz-spacing) * 3);
+
+  /* Lists */
+  --fz-row-height:          calc(var(--fz-spacing) * 10);  /* 40px */
+  --fz-cell-padding-x:      calc(var(--fz-spacing) * 3);
+  --fz-table-header-height: calc(var(--fz-spacing) * 9);   /* 36px */
+  --fz-toolbar-height:      calc(var(--fz-spacing) * 14);  /* list title and selection bars: 56px */
+  --fz-toolbar-padding-x:   calc(var(--fz-spacing) * 5);
+
+  /* Cards, drawers and the page */
+  --fz-card-padding:      calc(var(--fz-spacing) * 4);
+  --fz-card-gap:          calc(var(--fz-spacing) * 3);
+  --fz-form-padding:      calc(var(--fz-spacing) * 6);
+  --fz-drawer-padding-x:  calc(var(--fz-spacing) * 5);
+  --fz-drawer-padding-y:  calc(var(--fz-spacing) * 4);
+  --fz-page-padding:      calc(var(--fz-spacing) * 6);
 }
 
 
@@ -324,8 +366,8 @@
 
    Things to build with. Each has a main class, classes for its parts
    (fz-card__title) and for its variations (fz-card--interactive), and draws
-   everything from the tokens, so it follows the theme, the Appearance page and
-   the density. They come before the utilities, so a utility can adjust one.
+   everything from the tokens, so it follows the theme and the Appearance page,
+   including its Size preset. They come before the utilities, so a utility can adjust one.
 
    Elements inside a component that have no class of their own (a description
    list's dt and dd) are selected through :where(), so that every selector here
@@ -339,7 +381,7 @@
 /* ---- Button ---------------------------------------------------------------
    An action: a <button>, an <a>, or an <input type="submit">. A secondary
    button by default; one modifier for the kind, and one for the size. Its
-   height follows the density. */
+   height is the control height. */
 .fz-btn {
   box-sizing: border-box;
   display: inline-flex;
@@ -551,7 +593,7 @@
 
 /* ---- Form controls ----------------------------------------------------------
    fz-input (a text-like <input>: text, email, number, date…), fz-select and
-   fz-textarea share one look: the field height, which follows the density, a
+   fz-textarea share one look: the field height, a
    border that darkens on hover, and the focus ring. aria-invalid="true" marks
    one as invalid. */
 .fz-input,
@@ -872,7 +914,7 @@
 
 /* ---- Table ------------------------------------------------------------------
    A plain data table: a header row, a line under each row, and rows the row
-   height, which follows the density. On a <table>. fz-table--striped shades
+   height. On a <table>. fz-table--striped shades
    every other row. For a table wider than its container, wrap it in an
    element with fz-overflow-x-auto. */
 .fz-table {
@@ -1166,7 +1208,8 @@
    (fz-m-4 fz-mt-0 leaves the top margin at 0).
 
    Spacing steps are the scale's: 0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 16, each a
-   multiple of --fz-spacing, so they follow the density. s and e are start and
+   multiple of --fz-spacing. They are fixed, as in Tailwind: the Size preset
+   changes the component sizes, not the utilities. s and e are start and
    end, which follow the text direction; l and r are always left and right. In
    a site with right-to-left languages, prefer s and e.
    ============================================================ */
