@@ -93,7 +93,7 @@ function drawHeaderRow($headers, $checkBoxesShown, $viewEntryLinksShown, $column
 		$cells[] = "<th class='formulize-spacer'></th>";
 	}
 
-	return "<tr>".implode("\n", $cells)."</tr>";
+	return "<tr class='lyris-header-row'>".implode("\n", $cells)."</tr>";
 }
 
 /**
