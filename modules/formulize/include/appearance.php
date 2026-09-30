@@ -491,9 +491,8 @@ function formulize_appearanceBaseFontSizeFor($contentSize, $theme = null) {
  * The densities on offer: how much space there is, and how tall buttons, form
  * fields and list rows are. Each one is a value for --fz-spacing, the step every
  * space and size in Formulize UI is a multiple of, so that one token is all the
- * generated stylesheet has to set. Standard is the default. The same values are
- * the fz-density-* classes in modules/formulize/templates/css/formulize-ui.css,
- * which set the density for one part of a page: keep the two in step.
+ * generated stylesheet has to set. Standard is the default. To be replaced by
+ * the Size preset (see appearance_tokens.json).
  *
  * @return array key => array('label' => ..., 'spacing' => css length or '' for the default)
  */

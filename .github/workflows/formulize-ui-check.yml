@@ -3,7 +3,10 @@
 # other, and every class and token the catalog's examples use exists. The
 # catalog is what the in-app style guide, the documentation site's reference
 # and the reference for AI tools are made from, so a class added to the
-# stylesheet without it would be undocumented everywhere.
+# stylesheet without it would be undocumented everywhere. It also checks the
+# component size map (modules/formulize/include/appearance_tokens.json): that its
+# preset values are ones their tokens can have, and that formulize-ui.css
+# declares a Default for every token in it.
 #
 # Runs only when one of the two files changes. GitHub's Ubuntu runners have PHP
 # installed, and the catalog depends on nothing else, so there is nothing to set
@@ -22,12 +25,16 @@ on:
     paths:
       - modules/formulize/templates/css/formulize-ui.css
       - modules/formulize/include/ui_catalog.php
+      - modules/formulize/include/appearance_tokens.json
+      - modules/formulize/include/appearance_tokens.php
   push:
     branches:
       - master
     paths:
       - modules/formulize/templates/css/formulize-ui.css
       - modules/formulize/include/ui_catalog.php
+      - modules/formulize/include/appearance_tokens.json
+      - modules/formulize/include/appearance_tokens.php
   workflow_dispatch:
 
 permissions:
