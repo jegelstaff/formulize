@@ -2238,6 +2238,17 @@ body:has(#formulize-masquerade-block) {
   margin: 2px 0 0;
 }
 
+/* Long help text is hard to read when it runs the full width of the form on a
+   wide monitor (issue #962). On desktop it wraps at about 70 characters, within
+   the 60-80 character range that reads comfortably. On mobile the form is
+   already narrower than that, so the help text keeps the full width. Anari caps
+   its help text the same way, at 700px. */
+@media (min-width: 769px) {
+  .form-help-text {
+    max-width: 70ch;
+  }
+}
+
 /* The 2FA "Forget Remembered Devices" button and its help text sit outside a
    .form-row, so they get no row gap; space the help text off the button. */
 .formulize-tfa-forget-devices .form-help-text {
