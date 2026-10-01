@@ -140,13 +140,9 @@
   --fz-shadow-lg: 0 12px 32px rgba(15,17,21,.14), 0 2px 6px rgba(15,17,21,.06);
   --fz-focus-ring: 0 0 0 3px rgba(46,51,64,.15);
 
-  /* Floors for form fields, which only phones set (see the mobile form block
-     in style.css): the least a field's height and its text size can be. */
-  --lyris-tap-min:        0px;
-  --lyris-field-text-min: 0px;
-
-  /* List rows: side padding of a cell */
-  --lyris-row-padding-x: calc(var(--fz-spacing) * 3);
+  /* A floor for form field heights, which only phones set (see the mobile
+     form block in style.css). */
+  --lyris-tap-min: 0px;
 
   /* Motion */
   --fz-ease-out: cubic-bezier(.2,.7,.3,1);

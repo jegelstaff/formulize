@@ -261,9 +261,9 @@
     "--fz-page-padding": {
       "group": "surfaces",
       "label": "Page padding",
-      "description": "The space around the main content of the page.",
+      "description": "The space around the main content of the page: around a form screen, and around simple pages such as the login page.",
       "type": "spacing",
-      "presets": { "compact": 4, "comfortable": 8 }
+      "presets": { "compact": 4, "comfortable": 6 }
     }
   }
 }
