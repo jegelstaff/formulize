@@ -2018,8 +2018,7 @@ body:has(#formulize-masquerade-block) {
      --fz-help-text:        13px / 1.5 (--fz-help-leading), at most 65ch wide
    Components read those tokens directly; nothing here re-declares them, so a
    token set on a container reaches the fields inside it. On phones, field
-   heights and field text have floors (--lyris-tap-min, --lyris-field-text-min:
-   see the mobile form block).
+   heights have a floor (--lyris-tap-min: see the mobile form block).
 
    HTML anatomy output by Lyris form templates:
      .fz-card.lyris-form-card > .lyris-form-card__header + .lyris-form-card__body > .form-container
@@ -2083,7 +2082,7 @@ body:has(#formulize-masquerade-block) {
 .lyris-form-screen textarea:where(:not([class*="fz-"])) {
   height: max(var(--fz-field-height), var(--lyris-tap-min));
   padding: 0 var(--fz-field-padding-x);
-  font-size: max(var(--fz-field-text), var(--lyris-field-text-min));
+  font-size: var(--fz-field-text);
   border-radius: var(--lyris-field-radius);
   width: 100%;
 }
@@ -2363,7 +2362,7 @@ body:has(#formulize-masquerade-block) {
    :has() test is what tells such a body from one holding a control: anything a
    person can type in, pick from or press, or a table (a subform, say). */
 .form-row > .fz-field__body:not(:has(input:not([type="hidden"]), select, textarea, button, table, iframe, [contenteditable])) {
-  font-size: max(var(--fz-field-text), var(--lyris-field-text-min));
+  font-size: var(--fz-field-text);
   line-height: var(--fz-leading-normal);
 }
 
@@ -2423,7 +2422,7 @@ body:has(#formulize-masquerade-block) {
 .lyris-form-screen .fz-field__body input[type="checkbox"]:where(:not([class*="fz-"])) + label {
   display: inline;
   font-weight: 400;
-  font-size: max(var(--fz-field-text), var(--lyris-field-text-min));
+  font-size: var(--fz-field-text);
   color: var(--fz-color-text);
   cursor: pointer;
   vertical-align: middle;
@@ -3272,7 +3271,7 @@ input[type="time"] { font-family: var(--fz-font-sans); }
 .lyris-form-screen select[multiple] option {
   padding: calc(var(--fz-spacing) * 1.75) calc(var(--fz-spacing) * 2.5);
   border-radius: var(--fz-radius-sm);
-  font-size: max(var(--fz-field-text), var(--lyris-field-text-min));
+  font-size: var(--fz-field-text);
   color: var(--fz-color-text);
 }
 .lyris-form-screen select[multiple] option:checked {
@@ -3300,7 +3299,7 @@ input[type="time"] { font-family: var(--fz-font-sans); }
   height: max(var(--fz-field-height), var(--lyris-tap-min));
   padding: 0 calc(var(--fz-spacing) * 9) 0 var(--fz-field-padding-x);
   font: inherit;
-  font-size: max(var(--fz-field-text), var(--lyris-field-text-min));
+  font-size: var(--fz-field-text);
   color: var(--fz-color-text);
   background: var(--fz-color-surface);
   border: 1px solid var(--fz-color-border-strong);
@@ -3427,13 +3426,11 @@ input[type="time"] { font-family: var(--fz-font-sans); }
    ============================================================ */
 
 @media (max-width: 768px) {
-  /* Floors for form fields on phones (0 on wider screens, in tokens.css):
-     fields are never under 44px tall, a comfortable tap target, and their text
-     is never under 16px, below which iOS zooms in on the field. Whatever the
+  /* A floor for form fields on phones (0 on wider screens, in tokens.css):
+     fields are never under 44px tall, a comfortable tap target, whatever the
      Size preset. */
   :root {
-    --lyris-tap-min:        2.75rem;
-    --lyris-field-text-min: 1rem;
+    --lyris-tap-min: 2.75rem;
   }
 
   .lyris-form-card__body {
