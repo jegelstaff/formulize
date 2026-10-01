@@ -105,6 +105,47 @@ Two optional files let you adjust how your theme looks when embedded:
 
 The Anari theme has both files, if you want an example.
 
+## 5. Offer the Appearance page's size settings (optional)
+
+The Appearance page's [size settings](/documentation/appearance_sizes/) change Formulize UI's
+component size tokens (`--fz-field-height`, `--fz-row-height`, `--fz-title-text` and the rest). They
+only do anything in a theme whose own CSS sizes things with those tokens, so a theme says when it
+does, and only then does the Appearance page offer them.
+
+**Opt in** by declaring `--formulize-size-tokens` on `:root` in your `css/tokens.css`:
+
+```css
+:root {
+  --formulize-size-tokens: 1;
+}
+```
+
+**Provide sample screens** for the advanced size editor's preview, in an `appearance_preview` folder
+in your theme. Each is an HTML file named after a screen: `form.html`, `list.html`, `drawer.html` and
+`cards.html`. Provide the ones that suit your theme; the editor shows the ones it finds, and without
+any, the Appearance page doesn't link to it. A sample is the markup your theme puts in `<body>` for
+that kind of page, written out with sample content, and it is shown with your `css/reset.css`, your
+`css/style.css` and your generated appearance stylesheet, in a `<body>` with the id `formulize` and
+the class `formulize-screen`. No scripts run in it.
+
+Mark each part of the sample that can be selected with `data-fz-part`, naming the part:
+
+```html
+<input type="button" class="formulize-form-submit-button" value="Save" data-fz-part="button">
+```
+
+The parts, and the tokens each one is sized by, are the `components` in
+`modules/formulize/include/appearance_tokens.json`: `page`, `tabs`, `title`, `form`, `label`,
+`field`, `value` (a read-only value), `options` (radio buttons and checkboxes), `help`, `button`,
+`toolbar`, `menu`, `header` (column headings), `row`, `card` and `drawer`.
+
+Pieces shared between samples go in files starting with an underscore, and are included by name in
+double braces: `{{list}}` is the contents of `_list.html`. `{{logo_url}}` and `{{site_name}}` are your
+logo and the site's name. Clicking an element with `data-fz-toggle="some-id"` in the preview toggles
+the class `open` on the element with that id, for showing a menu.
+
+Lyris's samples, in `themes/Lyris/appearance_preview/`, are a complete example.
+
 ## Checking your theme
 
 Open a long form in your theme, scroll down, and save it. You should be returned to where you were

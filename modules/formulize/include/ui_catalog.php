@@ -1393,6 +1393,9 @@ if (PHP_SAPI === 'cli' AND isset($argv[0]) AND realpath($argv[0]) === __FILE__) 
     if (in_array('--check', $argv)) {
         $css = file_get_contents(dirname(__DIR__) . '/templates/css/formulize-ui.css');
         $problems = array_merge(formulize_uiCheckCatalog(formulize_uiCatalog(), $css), formulize_appearanceCheckTokenMap(formulize_appearanceTokenMap(), $css));
+        foreach (glob(dirname(dirname(dirname(__DIR__))) . '/themes/*/appearance_preview', GLOB_ONLYDIR) as $previewDir) {
+            $problems = array_merge($problems, formulize_appearanceCheckPreviewSamples(formulize_appearanceTokenMap(), $previewDir, basename(dirname($previewDir))));
+        }
         foreach ($problems as $problem) {
             fwrite(STDERR, $problem . "\n");
         }

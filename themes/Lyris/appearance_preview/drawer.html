@@ -1,0 +1,60 @@
+<!--
+  Sample screen for the Appearance page's advanced size editor: an entry open in
+  the drawer, over its list, with the drawer's real markup (as Formulize's
+  drawer script builds it, and Lyris's drawer templates fill it in). See
+  form.html for how the samples work.
+-->
+<div class="lyris-app lyris-app--sidebar-closed" id="lyris-app">
+  {{header}}
+  <div class="lyris-app__body">
+    <main class="lyris-main" role="main" id="lyris-main">
+      {{list}}
+    </main>
+  </div>
+</div>
+<div class="formulize-drawer-scrim" aria-hidden="true"></div>
+<aside class="formulize-drawer" id="formulize-drawer" role="dialog" aria-label="Detail panel" data-fz-part="drawer">
+  <div class="formulize-drawer__resize-handle"></div>
+  <div class="formulize-drawer__head">
+    <span class="formulize-drawer__title" data-fz-part="title">Ada Okafor</span>
+    <div class="formulize-drawer__spacer"></div>
+    <button type="button" class="formulize-drawer__btn formulize-drawer__btn--ghost formulize-drawer__btn--icon formulize-drawer__close" aria-label="Close panel" data-fz-part="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+  </div>
+  <div class="formulize-drawer__body">
+    <form id="formulize_drawer" onsubmit="return false;">
+      <div class="lyris-form-screen formulize-drawer-form">
+        <div class="lyris-form lyris-form--label-top form-container">
+          <div class="fz-field form-row">
+            <div style="width: 20%;" class="col1"><label for="pvd_program" class="fz-field__label form-label" data-fz-part="label">Program</label></div>
+            <div style="width: auto;" class="fz-field__body col2"><select id="pvd_program" data-fz-part="field"><option>Summer camp: Robotics</option><option>Summer camp: Coding</option></select></div>
+          </div>
+          <div class="fz-field form-row">
+            <div style="width: 20%;" class="col1"><label for="pvd_start" class="fz-field__label form-label" data-fz-part="label">Start date</label></div>
+            <div style="width: auto;" class="fz-field__body col2"><input type="text" id="pvd_start" value="2026-07-06" data-fz-part="field"></div>
+          </div>
+          <div class="fz-field form-row">
+            <div style="width: 20%;" class="col1"><label class="fz-field__label form-label" data-fz-part="label">Status</label></div>
+            <div style="width: auto;" class="fz-field__body col2" data-fz-part="options">
+              <input type="radio" id="pvd_s1" name="pvd_s"><label for="pvd_s1">Draft</label>
+              <br><input type="radio" id="pvd_s2" name="pvd_s" checked><label for="pvd_s2">Submitted</label>
+              <br><input type="radio" id="pvd_s3" name="pvd_s"><label for="pvd_s3">Approved</label>
+            </div>
+          </div>
+          <div class="fz-field form-row">
+            <div style="width: 20%;" class="col1"><label for="pvd_notes" class="fz-field__label form-label" data-fz-part="label">Notes</label></div>
+            <div style="width: auto;" class="fz-field__body col2">
+              <textarea id="pvd_notes" rows="4" cols="35" data-fz-part="field"></textarea>
+              <p class="fz-field__help form-help-text" data-fz-part="help">Visible to staff only.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+  <div class="formulize-drawer__foot">
+    <span class="formulize-drawer__notice"></span>
+    <input type="button" class="formulize-form-submit-button" name="prev" value="Save and Close" data-fz-part="button">
+    <input type="button" class="formulize-form-submit-button" name="save" value="Save" data-fz-part="button">
+    <input type="button" class="formulize-form-submit-button" name="close" value="Close" data-fz-part="button">
+  </div>
+</aside>
