@@ -9,10 +9,11 @@
    ---- */
 
 /* ---- Units ----
-   Sizes are in rem, so they follow the Appearance page's Text and interface
-   size. Spaces (padding, margins, gaps) are steps of --fz-spacing, so they also
-   follow the density. Only borders, shadows, hairlines of 2px or less and the
-   breakpoints are in px. Where a comment gives a size in px, it is the size at
+   Sizes are in rem, so they follow the browser's and the user's font size.
+   Spaces (padding, margins, gaps) are steps of --fz-spacing. Sizes the
+   Appearance page's Size preset sets are Formulize UI's component size tokens
+   (--fz-field-height, --fz-row-height...). Only borders, shadows, hairlines of
+   2px or less and the breakpoints are in px. Where a comment gives a size in px, it is the size at
    the default settings.
    ---- */
 
@@ -31,11 +32,10 @@ body {
    are rem, so every text size in this stylesheet follows this one declaration,
    and moving it moves all of them together.
 
-   Three layers get a say, in this order: the theme's own default
-   (--formulize-font-size-base in tokens.css), the site-wide Text size setting on the
-   Appearance page (which overrides that token in the generated appearance.css),
-   and finally a user's personal font size preference, which theme.html prints as
-   an inline style further down the document and so wins over both. */
+   Two layers get a say: the theme's own default (--formulize-font-size-base in
+   tokens.css), and a user's personal font size preference, which theme.html
+   prints as an inline style further down the document and so wins. The
+   Appearance page's Size preset sets the component sizes instead, not this. */
 html {
   font-size: var(--formulize-font-size-base);
 }

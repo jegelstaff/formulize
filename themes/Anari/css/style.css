@@ -40,11 +40,10 @@ time, mark, audio, video {
    moving it moves all of them together. It has to come after the reset above,
    which sets `font-size: 100%` on `html` among everything else.
 
-   Three layers get a say, in this order: the theme's own default
-   (--formulize-font-size-base in tokens.css), the site-wide Text size setting on the
-   Appearance page (which overrides that token in the generated appearance.css),
-   and finally a user's personal font size preference, which theme.html prints as
-   an inline style further down the document and so wins over both. */
+   Two layers get a say: the theme's own default (--formulize-font-size-base in
+   tokens.css), and a user's personal font size preference, which theme.html
+   prints as an inline style further down the document and so wins. The
+   Appearance page's Size preset sets the component sizes instead, not this. */
 html {
   font-size: var(--formulize-font-size-base);
 }

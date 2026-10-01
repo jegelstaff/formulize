@@ -148,7 +148,7 @@ function formulize_uiCatalog() {
     $sections[] = array(
         'id' => 'start',
         'title' => 'How it works',
-        'intro' => 'Formulize UI is a set of CSS classes for building markup in Formulize: screen templates, template screens, derived values and text elements that output HTML, and theme tweaks. They look right in any theme, follow the colours, fonts, text size and density set on the Appearance page, and work full screen, in the drawer, on a phone and embedded in another site. They follow the conventions of Tailwind CSS, so they will be familiar if you, or your AI tools, know Tailwind.',
+        'intro' => 'Formulize UI is a set of CSS classes for building markup in Formulize: screen templates, template screens, derived values and text elements that output HTML, and theme tweaks. They look right in any theme, follow the colours, fonts and size set on the Appearance page, and work full screen, in the drawer, on a phone and embedded in another site. They follow the conventions of Tailwind CSS, so they will be familiar if you, or your AI tools, know Tailwind.',
         'entries' => array(
             array(
                 'id' => 'rules',
@@ -158,7 +158,7 @@ function formulize_uiCatalog() {
                     'Arrange things with a layout class: `fz-stack` puts things one above the other, `fz-cluster` side by side, `fz-auto-grid` in columns. The gap between them is the only space between them, so you do not need margins.',
                     'Use a component for a thing: `fz-btn` for a button, `fz-card` for a box of content, `fz-callout` for a message, `fz-badge` for a status, `fz-field` and `fz-input` for a form field.',
                     'Adjust with a utility: `fz-mt-4` adds space above, `fz-text-muted` greys text. On the same element, a utility wins over a layout class or a component.',
-                    'Don\'t hard-code colours or sizes in your own CSS. Use the tokens, such as `var(--fz-color-accent)` and `calc(var(--fz-spacing) * 4)`, so your styles follow the theme, the Appearance page and the density.',
+                    'Don\'t hard-code colours or sizes in your own CSS. Use the tokens, such as `var(--fz-color-accent)` and `calc(var(--fz-spacing) * 4)`, so your styles follow the theme and the Appearance page.',
                     'Only the classes in this reference are public. Themes have their own classes, starting `lyris-` for Lyris, and Formulize has its own internal ones starting `formulize-`; those can change with any release.',
                 ),
             ),
@@ -208,7 +208,7 @@ function formulize_uiCatalog() {
     $sections[] = array(
         'id' => 'tokens',
         'title' => 'Tokens',
-        'intro' => 'Tokens are the CSS custom properties that hold the design\'s values. Use them in your own CSS and style attributes instead of fixed values, so your styles follow the theme, the Appearance page and the density: color: `var(--fz-color-text-muted)`. Sizes are given at the default settings; they are in rem, so they grow with the Appearance page\'s Text and interface size setting.',
+        'intro' => 'Tokens are the CSS custom properties that hold the design\'s values. Use them in your own CSS and style attributes instead of fixed values, so your styles follow the theme and the Appearance page: color: `var(--fz-color-text-muted)`. Sizes are given at the default settings; they are in rem, so they grow with the browser\'s font size.',
         'entries' => array(
             array(
                 'id' => 'tokens-colour',
@@ -519,7 +519,7 @@ HTML
     $sections[] = array(
         'id' => 'components',
         'title' => 'Components',
-        'intro' => 'Things to build with. Each has a main class, classes for its parts, and classes for its variations. They draw everything from the tokens, so they follow the theme, the Appearance page and the density.',
+        'intro' => 'Things to build with. Each has a main class, classes for its parts, and classes for its variations. They draw everything from the tokens, so they follow the theme and the Appearance page, including its Size preset.',
         'entries' => array(
             array(
                 'id' => 'button',
@@ -586,7 +586,7 @@ HTML
             array(
                 'id' => 'controls',
                 'name' => 'Inputs, dropdowns and text areas',
-                'summary' => 'Text-like inputs, dropdowns and text areas, sharing one look. Their height follows the density.',
+                'summary' => 'Text-like inputs, dropdowns and text areas, sharing one look. Their height is the field height, which the Size preset sets.',
                 'classes' => array(
                     'fz-input' => 'An `<input>`: text, email, number, date and the like.',
                     'fz-select' => 'A `<select>`, with its own chevron.',
@@ -707,7 +707,7 @@ HTML
             array(
                 'id' => 'table',
                 'name' => 'Table',
-                'summary' => 'A plain data table: a header row, a line under each row, and rows the row height, which follows the density.',
+                'summary' => 'A plain data table: a header row, a line under each row, and rows the row height, which the Size preset sets.',
                 'classes' => array(
                     'fz-table' => 'On a `<table>`.',
                     'fz-table--striped' => 'Every other row shaded.',
@@ -1116,7 +1116,7 @@ CODE
                 'summary' => 'Formulize UI sets a neutral default for every token. A theme gives them its own values in a `:root` rule, and the colours and font set on the Appearance page then override the theme\'s.',
                 'notes' => array(
                     'Set the tokens, rather than restyling the classes: every class is built on them, so the theme\'s look reaches all of them at once, and the Appearance page keeps working.',
-                    'The sizes are in rem, so the Appearance page\'s Text and interface size setting scales them. Keep a theme\'s own sizes in rem too.',
+                    'The sizes are in rem, so the browser\'s font size scales them. Keep a theme\'s own sizes in rem too.',
                 ),
                 'code' => array(
                     array(
