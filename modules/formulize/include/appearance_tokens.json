@@ -1,5 +1,5 @@
 {
-  "about": "The sizes the Appearance page's Size presets and advanced settings can change: the one place their Compact and Comfortable values are kept. Default is not here: it is the value the CSS declares (modules/formulize/templates/css/formulize-ui.css, or a theme's own tokens). Each token's type says how its values are written in CSS; the token's own min and max (in the type's steps), or its list of values, are what it can be set to, chosen so that every value in the range changes how things look. Read by modules/formulize/include/appearance_tokens.php.",
+  "about": "The sizes the Appearance page's Size presets and advanced settings can change: the one place their Compact and Comfortable values are kept. Default is not here: it is the value the CSS declares (modules/formulize/templates/css/formulize-ui.css, or a theme's own tokens). Each token's type says how its values are written in CSS; the token's own min and max (in the type's steps), or its list of values, are what it can be set to, chosen so that every value in the range changes how things look. Read by modules/formulize/include/appearance_tokens.php. The screens, components and gaps are for the advanced size editor (modules/formulize/appearance_sizes.php): the sample screens a theme can provide, the parts of the interface that can be selected in them and the tokens that size each part, and what can't be adjusted yet. A token's phone is the token used for it at 768px and below; its home is the part a shared token belongs to; its floor is the least it can be given another token's value (one line of a text token at a line height, plus extra px; or another token plus a number of steps).",
   "types": {
     "spacing": {
       "description": "A number of spacing steps (--fz-spacing, 0.25rem), in half steps.",
@@ -33,6 +33,160 @@
     "lists": "Lists",
     "surfaces": "Cards, drawers and the page"
   },
+  "screens": {
+    "form": "Form",
+    "list": "List",
+    "drawer": "Drawer",
+    "cards": "Cards"
+  },
+  "components": {
+    "page": {
+      "name": "Page",
+      "plural": "every page",
+      "tokens": ["--fz-page-padding"],
+      "gaps": ["The top bar height and the sidebar width.", "Sidebar menu items."]
+    },
+    "tabs": {
+      "name": "Page tabs",
+      "plural": "the page tabs of every multi-page form",
+      "tokens": ["--fz-tab-padding-y", "--fz-tab-padding-x", "--fz-control-text"],
+      "gaps": [
+        "The space between tabs, and below the tab strip.",
+        "Tab corner radius.",
+        "The drawer's page tabs."
+      ]
+    },
+    "title": {
+      "name": "Title",
+      "plural": "every form card, list and drawer title",
+      "tokens": ["--fz-title-text", "--fz-title-weight", "--fz-title-leading"],
+      "gaps": [
+        "Letter spacing.",
+        "Headings inside text elements and screen templates."
+      ]
+    },
+    "form": {
+      "name": "Form card",
+      "plural": "every form",
+      "tokens": ["--fz-form-padding", "--fz-card-padding", "--fz-field-gap"],
+      "gaps": [
+        "The space between form cards.",
+        "Card padding at phone widths, which is fixed.",
+        "Card corner radius and shadow."
+      ]
+    },
+    "label": {
+      "name": "Field label",
+      "plural": "every field label",
+      "tokens": ["--fz-label-text", "--fz-label-weight", "--fz-label-gap"],
+      "gaps": [
+        "The label column width in two-column forms (20%).",
+        "The required marker."
+      ]
+    },
+    "field": {
+      "name": "Form field",
+      "plural": "every text box, dropdown and text area",
+      "tokens": ["--fz-field-height", "--fz-field-padding-x", "--fz-field-text"],
+      "gaps": [
+        "Corner radius and border.",
+        "A text area's starting height (2.4 times the field height).",
+        "File upload, slider, colour picker and date picker controls."
+      ]
+    },
+    "value": {
+      "name": "Read-only value",
+      "plural": "every read-only value",
+      "tokens": ["--fz-field-text"],
+      "gaps": []
+    },
+    "options": {
+      "name": "Choice options",
+      "plural": "every set of radio buttons and checkboxes",
+      "tokens": ["--fz-field-text"],
+      "gaps": [
+        "The size of the radio button and checkbox.",
+        "The space between options."
+      ]
+    },
+    "help": {
+      "name": "Help text",
+      "plural": "all help text under fields",
+      "tokens": ["--fz-help-text", "--fz-help-leading", "--fz-help-max-width"],
+      "gaps": ["The space between a field and its help text."]
+    },
+    "button": {
+      "name": "Button",
+      "plural": "every button",
+      "tokens": ["--fz-control-height", "--fz-control-padding-x", "--fz-control-text"],
+      "gaps": [
+        "Small and large buttons, which keep their own sizes.",
+        "The selection bar's buttons (fixed at 28px).",
+        "Icon sizes and corner radius."
+      ]
+    },
+    "toolbar": {
+      "name": "List toolbar",
+      "plural": "the title bar, selection bar and footer of every list",
+      "tokens": ["--fz-toolbar-height", "--fz-toolbar-padding-x", "--fz-control-text"],
+      "gaps": [
+        "Their top and bottom padding.",
+        "Their height and padding at phone widths, which are fixed.",
+        "Pagination buttons."
+      ]
+    },
+    "menu": {
+      "name": "Menu item",
+      "plural": "every item in a dropdown menu",
+      "tokens": ["--fz-menu-item-height", "--fz-control-text"],
+      "gaps": ["The menu's width and padding."]
+    },
+    "header": {
+      "name": "Column headings",
+      "plural": "the heading row of every list and table",
+      "tokens": ["--fz-table-header-height", "--fz-table-header-text", "--fz-cell-padding-x"],
+      "gaps": ["The sort arrows.", "The search and filter row under the headings."]
+    },
+    "row": {
+      "name": "List row",
+      "plural": "every row in every list and table",
+      "tokens": ["--fz-row-height", "--fz-cell-padding-x", "--fz-table-text"],
+      "gaps": [
+        "Top and bottom cell padding: only the height is set, and the content is centred in it.",
+        "Rows grow to fit their content: a cell with several lines, a list of values or an edit icon makes its row taller than the row height.",
+        "The checkbox column width.",
+        "Badges and other things inside cells."
+      ]
+    },
+    "card": {
+      "name": "Card",
+      "plural": "every Formulize UI card (fz-card), in screen templates and custom code",
+      "tokens": ["--fz-card-padding", "--fz-card-gap"],
+      "gaps": [
+        "Card corner radius and shadow.",
+        "The space between cards in a card list or grid, which is set by its gap class."
+      ]
+    },
+    "drawer": {
+      "name": "Drawer",
+      "plural": "the drawer",
+      "tokens": ["--fz-drawer-padding-x", "--fz-drawer-padding-y"],
+      "gaps": [
+        "The drawer's width.",
+        "Its padding at phone widths, which is fixed.",
+        "The footer's side padding, which matches its top and bottom padding."
+      ]
+    }
+  },
+  "gaps": [
+    "Corner radii, borders and shadows, everywhere.",
+    "Small and large buttons, and the selection bar's buttons.",
+    "Phone-width spacing (title bar, cards, drawer), which is fixed.",
+    "The 44px minimum height of fields and buttons on phones.",
+    "Checkboxes, radio buttons, switches and badges.",
+    "Filter chips, pagination, the sidebar and the top bar.",
+    "Dialogs, date pickers and subform tables."
+  ],
   "tokens": {
     "--fz-title-text": {
       "group": "type",
@@ -40,7 +194,8 @@
       "description": "The size of form card, drawer and list titles.",
       "type": "text",
       "values": ["base", "lg", "xl", "2xl"],
-      "presets": { "compact": "lg", "comfortable": "xl" }
+      "presets": { "compact": "lg", "comfortable": "xl" },
+      "phone": "--fz-title-text-narrow"
     },
     "--fz-title-text-narrow": {
       "group": "type",
@@ -88,7 +243,8 @@
       "description": "The size of the text in form fields, and of read-only values.",
       "type": "text",
       "values": ["xs-plus", "sm", "sm-plus", "base"],
-      "presets": { "compact": "sm", "comfortable": "sm-plus" }
+      "presets": { "compact": "sm", "comfortable": "sm-plus" },
+      "home": "field"
     },
     "--fz-help-text": {
       "group": "type",
@@ -111,7 +267,8 @@
       "label": "Help text line length",
       "description": "The longest a line of help text can be.",
       "type": "measure",
-      "min": 45, "max": 90,
+      "min": 45,
+      "max": 90,
       "presets": { "compact": 70, "comfortable": 62 }
     },
     "--fz-control-text": {
@@ -120,7 +277,8 @@
       "description": "The size of the text on buttons, menu items and tabs.",
       "type": "text",
       "values": ["xs", "xs-plus", "sm", "sm-plus"],
-      "presets": { "compact": "xs-plus", "comfortable": "sm" }
+      "presets": { "compact": "xs-plus", "comfortable": "sm" },
+      "home": "button"
     },
     "--fz-table-text": {
       "group": "type",
@@ -143,15 +301,18 @@
       "label": "Field height",
       "description": "The height of text inputs and dropdowns. Text areas start at 2.4 times this.",
       "type": "spacing",
-      "min": 7, "max": 14,
-      "presets": { "compact": 8.5, "comfortable": 10.5 }
+      "min": 7,
+      "max": 14,
+      "presets": { "compact": 8.5, "comfortable": 10.5 },
+      "floor": { "text": "--fz-field-text", "leading": 1.5, "extra": 4 }
     },
     "--fz-field-padding-x": {
       "group": "forms",
       "label": "Field side padding",
       "description": "The space between the edge of a form field and its text.",
       "type": "spacing",
-      "min": 1.5, "max": 6,
+      "min": 1.5,
+      "max": 6,
       "presets": { "compact": 2.5, "comfortable": 3.5 }
     },
     "--fz-field-gap": {
@@ -159,7 +320,8 @@
       "label": "Space between fields",
       "description": "The space between one form field and the next.",
       "type": "spacing",
-      "min": 2, "max": 12,
+      "min": 2,
+      "max": 12,
       "presets": { "compact": 3.5, "comfortable": 6.5 }
     },
     "--fz-label-gap": {
@@ -167,7 +329,8 @@
       "label": "Space under labels",
       "description": "The space between a label and its field, when the label is above the field.",
       "type": "spacing",
-      "min": 0.5, "max": 4,
+      "min": 0.5,
+      "max": 4,
       "presets": { "compact": 1, "comfortable": 2 }
     },
     "--fz-control-height": {
@@ -175,15 +338,18 @@
       "label": "Button height",
       "description": "The height of buttons, including the save and submit buttons on forms.",
       "type": "spacing",
-      "min": 6, "max": 12,
-      "presets": { "compact": 7, "comfortable": 9 }
+      "min": 6,
+      "max": 12,
+      "presets": { "compact": 7, "comfortable": 9 },
+      "floor": { "text": "--fz-control-text", "leading": 1.5, "extra": 4 }
     },
     "--fz-control-padding-x": {
       "group": "controls",
       "label": "Button side padding",
       "description": "The space between the edge of a button and its label.",
       "type": "spacing",
-      "min": 1.5, "max": 6,
+      "min": 1.5,
+      "max": 6,
       "presets": { "compact": 2.5, "comfortable": 3.5 }
     },
     "--fz-menu-item-height": {
@@ -191,15 +357,18 @@
       "label": "Menu item height",
       "description": "The height of each item in a dropdown menu.",
       "type": "spacing",
-      "min": 6, "max": 12,
-      "presets": { "compact": 7, "comfortable": 8.5 }
+      "min": 6,
+      "max": 12,
+      "presets": { "compact": 7, "comfortable": 8.5 },
+      "floor": { "text": "--fz-control-text", "leading": 1.375, "extra": 4 }
     },
     "--fz-tab-padding-y": {
       "group": "controls",
       "label": "Tab top and bottom padding",
       "description": "The space above and below the label of a tab.",
       "type": "spacing",
-      "min": 0, "max": 3,
+      "min": 0,
+      "max": 3,
       "presets": { "compact": 0.5, "comfortable": 1.5 }
     },
     "--fz-tab-padding-x": {
@@ -207,7 +376,8 @@
       "label": "Tab side padding",
       "description": "The space either side of the label of a tab.",
       "type": "spacing",
-      "min": 1.5, "max": 6,
+      "min": 1.5,
+      "max": 6,
       "presets": { "compact": 2.5, "comfortable": 3.5 }
     },
     "--fz-row-height": {
@@ -215,39 +385,48 @@
       "label": "Row height",
       "description": "The height of rows in lists and tables. Rows grow to fit text that wraps.",
       "type": "spacing",
-      "min": 6, "max": 16,
-      "presets": { "compact": 8, "comfortable": 13 }
+      "min": 6,
+      "max": 16,
+      "presets": { "compact": 8, "comfortable": 13 },
+      "floor": { "text": "--fz-table-text", "leading": 1.5, "extra": 6 }
     },
     "--fz-cell-padding-x": {
       "group": "lists",
       "label": "Cell side padding",
       "description": "The space either side of the content of a list or table cell.",
       "type": "spacing",
-      "min": 1, "max": 6,
-      "presets": { "compact": 2, "comfortable": 4 }
+      "min": 1,
+      "max": 6,
+      "presets": { "compact": 2, "comfortable": 4 },
+      "home": "row"
     },
     "--fz-table-header-height": {
       "group": "lists",
       "label": "Header row height",
       "description": "The height of the row of column headings.",
       "type": "spacing",
-      "min": 6, "max": 14,
-      "presets": { "compact": 8, "comfortable": 10 }
+      "min": 6,
+      "max": 14,
+      "presets": { "compact": 8, "comfortable": 10 },
+      "floor": { "text": "--fz-table-header-text", "leading": 1.5, "extra": 6 }
     },
     "--fz-toolbar-height": {
       "group": "lists",
       "label": "Toolbar height",
       "description": "The height of a list's title bar and selection bar.",
       "type": "spacing",
-      "min": 10, "max": 20,
-      "presets": { "compact": 12, "comfortable": 16 }
+      "min": 10,
+      "max": 20,
+      "presets": { "compact": 13, "comfortable": 16 },
+      "floor": { "token": "--fz-control-height", "plus": 6 }
     },
     "--fz-toolbar-padding-x": {
       "group": "lists",
       "label": "Toolbar side padding",
       "description": "The space either side of a list's title bar, selection bar and footer.",
       "type": "spacing",
-      "min": 2, "max": 10,
+      "min": 2,
+      "max": 10,
       "presets": { "compact": 4, "comfortable": 6 }
     },
     "--fz-card-padding": {
@@ -255,7 +434,8 @@
       "label": "Card padding",
       "description": "The space inside a card, and above and below a form card's header.",
       "type": "spacing",
-      "min": 2, "max": 10,
+      "min": 2,
+      "max": 10,
       "presets": { "compact": 3, "comfortable": 5 }
     },
     "--fz-card-gap": {
@@ -263,7 +443,8 @@
       "label": "Space inside cards",
       "description": "The space between the things in a card.",
       "type": "spacing",
-      "min": 1, "max": 8,
+      "min": 1,
+      "max": 8,
       "presets": { "compact": 2, "comfortable": 4 }
     },
     "--fz-form-padding": {
@@ -271,7 +452,8 @@
       "label": "Form padding",
       "description": "The space inside a form card, either side of its header, and around the page controls of a multi-page form.",
       "type": "spacing",
-      "min": 2, "max": 12,
+      "min": 2,
+      "max": 12,
       "presets": { "compact": 4, "comfortable": 8 }
     },
     "--fz-drawer-padding-x": {
@@ -279,7 +461,8 @@
       "label": "Drawer side padding",
       "description": "The space either side of the drawer's content.",
       "type": "spacing",
-      "min": 2, "max": 10,
+      "min": 2,
+      "max": 10,
       "presets": { "compact": 4, "comfortable": 6 }
     },
     "--fz-drawer-padding-y": {
@@ -287,7 +470,8 @@
       "label": "Drawer top and bottom padding",
       "description": "The space above and below the drawer's header and footer.",
       "type": "spacing",
-      "min": 2, "max": 8,
+      "min": 2,
+      "max": 8,
       "presets": { "compact": 3, "comfortable": 5 }
     },
     "--fz-page-padding": {
@@ -295,7 +479,8 @@
       "label": "Page padding",
       "description": "The space around the main content of the page: around a form screen, and around simple pages such as the login page.",
       "type": "spacing",
-      "min": 2, "max": 12,
+      "min": 2,
+      "max": 12,
       "presets": { "compact": 4, "comfortable": 6 }
     }
   }
