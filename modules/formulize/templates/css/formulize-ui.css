@@ -529,16 +529,17 @@
 .fz-field {
   display: flex;
   flex-direction: column;
-  gap: calc(var(--fz-spacing) * 1.5);
+  gap: var(--fz-label-gap);
 }
 .fz-field__label {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   font-family: var(--fz-font-heading);
-  font-size: var(--fz-text-sm);
-  font-weight: var(--fz-font-weight-semibold);
+  font-size: var(--fz-label-text);
+  font-weight: var(--fz-label-weight);
   line-height: var(--fz-leading-snug);
+  text-wrap: pretty;
   color: var(--fz-color-text);
 }
 /* On a <fieldset>, for a group of choices, with a <legend class="fz-field__label">:
@@ -552,7 +553,7 @@
 }
 .fz-field__label:where(legend) {
   padding: 0;
-  margin-bottom: calc(var(--fz-spacing) * 1.5);
+  margin-bottom: var(--fz-label-gap);
 }
 /* The required marker, inside the label. */
 .fz-field__req {
@@ -569,8 +570,9 @@
 }
 .fz-field__help {
   margin: 0;
-  font-size: var(--fz-text-xs);
-  line-height: var(--fz-leading-snug);
+  max-width: var(--fz-help-max-width);
+  font-size: var(--fz-help-text);
+  line-height: var(--fz-help-leading);
   color: var(--fz-color-text-muted);
 }
 /* Label beside the control, lined up with its first line; the two stack when
@@ -584,7 +586,7 @@
 .fz-field--horizontal > :where(.fz-field__label) {
   flex: 1 1 var(--fz-field-label-width);
   align-self: flex-start;
-  padding-top: calc((var(--fz-field-height) - var(--fz-text-sm) * var(--fz-leading-snug)) / 2);
+  padding-top: calc((var(--fz-field-height) - var(--fz-label-text) * var(--fz-leading-snug)) / 2);
 }
 .fz-field--horizontal > :where(.fz-field__body) {
   flex: 99999 1 0;
@@ -603,13 +605,13 @@
   width: 100%;
   height: var(--fz-field-height);
   margin: 0;
-  padding: 0 calc(var(--fz-spacing) * 3);
+  padding: 0 var(--fz-field-padding-x);
   border: 1px solid var(--fz-color-border-strong);
   border-radius: var(--fz-radius-md);
   background: var(--fz-color-surface);
   color: var(--fz-color-text);
   font: inherit;
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-field-text);
   line-height: var(--fz-leading-normal);
   outline: none;
   appearance: none;
@@ -665,7 +667,7 @@
 .fz-textarea {
   height: auto;
   min-height: calc(var(--fz-field-height) * 2.4);
-  padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3);
+  padding: calc(var(--fz-spacing) * 2) var(--fz-field-padding-x);
   resize: vertical;
 }
 
@@ -702,10 +704,10 @@
 .fz-input-group__addon {
   display: inline-flex;
   align-items: center;
-  padding: 0 calc(var(--fz-spacing) * 3);
+  padding: 0 var(--fz-field-padding-x);
   background: var(--fz-color-surface-2);
   color: var(--fz-color-text-subtle);
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-field-text);
   white-space: nowrap;
   user-select: none;
   border-inline-end: 1px solid var(--fz-color-border);
@@ -781,7 +783,7 @@
   align-items: center;
   gap: calc(var(--fz-spacing) * 2);
   color: var(--fz-color-text);
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-field-text);
   line-height: var(--fz-leading-normal);
   cursor: pointer;
 }
