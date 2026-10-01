@@ -208,7 +208,7 @@ function formulize_uiCatalog() {
     $sections[] = array(
         'id' => 'tokens',
         'title' => 'Tokens',
-        'intro' => 'Tokens are the CSS custom properties that hold the design\'s values. Use them in your own CSS and style attributes instead of fixed values, so your styles follow the theme and the Appearance page: color: `var(--fz-color-text-muted)`. Sizes are given at the default settings; they are in rem, so they grow with the browser\'s and the user\'s font size.',
+        'intro' => 'Tokens are the CSS custom properties that hold the design\'s values. Use them in your own CSS and style attributes instead of fixed values, so your styles follow the theme and the Appearance page: color: `var(--fz-color-text-muted)`. Sizes are given at the default settings; they are in rem, so they grow with the browser\'s font size.',
         'entries' => array(
             array(
                 'id' => 'tokens-colour',
@@ -1116,7 +1116,7 @@ CODE
                 'summary' => 'Formulize UI sets a neutral default for every token. A theme gives them its own values in a `:root` rule, and the colours and font set on the Appearance page then override the theme\'s.',
                 'notes' => array(
                     'Set the tokens, rather than restyling the classes: every class is built on them, so the theme\'s look reaches all of them at once, and the Appearance page keeps working.',
-                    'The sizes are in rem, so the browser\'s and the user\'s font size scales them. Keep a theme\'s own sizes in rem too.',
+                    'The sizes are in rem, so the browser\'s font size scales them. Keep a theme\'s own sizes in rem too.',
                 ),
                 'code' => array(
                     array(
