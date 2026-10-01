@@ -61,108 +61,14 @@ $headingFontMap = formulize_appearanceHeadingFontMap($selectedTheme);
 // the settings as they stand, read out of the theme's generated stylesheet
 $settings = formulize_getAppearanceSettings($selectedTheme);
 
-// delete an uploaded appearance file a theme is using, when it is being removed or
-// replaced. Only a file in the theme's own appearance folder is deleted: a file still
-// sitting in the legacy uploads/appearance folder predates per-theme settings and can be
-// shared with another theme, so it is left alone and simply stops being referenced.
-function formulize_deleteAppearanceUploadedFile($file, $theme) {
-    $path = formulize_locateAppearanceFile($file, $theme);
-    if($path AND strpos($path, formulize_getAppearanceDir($theme) . '/') === 0) {
-        unlink($path);
-    }
-}
-
-// The images that can be uploaded on this page: the logo in the site header, and the
-// favicon in the browser tab. They are handled identically - the file goes in the
-// theme's appearance folder and the stylesheet records which file is in use - so each
-// one is just a description of its own form fields and the image types it accepts.
-// The favicon also takes .ico, which browsers only ever want for a favicon.
-function formulize_appearanceUploads() {
-    $imageTypes = array(
-        'image/png' => 'png',
-        'image/jpeg' => 'jpg',
-        'image/gif' => 'gif',
-        'image/svg+xml' => 'svg',
-        'image/webp' => 'webp',
-    );
-    return array(
-        'appearance_logo' => array(
-            'noun' => 'logo',
-            'filePrefix' => 'formulize-appearance-logo-',
-            'types' => $imageTypes,
-            'typesLabel' => 'PNG, JPEG, GIF, SVG, or WebP',
-        ),
-        'appearance_favicon' => array(
-            'noun' => 'favicon',
-            'filePrefix' => 'formulize-appearance-favicon-',
-            'types' => $imageTypes + array(
-                'image/vnd.microsoft.icon' => 'ico',
-                'image/x-icon' => 'ico',
-            ),
-            'typesLabel' => 'PNG, ICO, SVG, GIF, JPEG, or WebP',
-        ),
-    );
-}
-
 if(isset($_POST['appearance_save']) OR isset($_POST['appearance_reset'])) {
 
-    // build the settings to write, starting from the defaults, which is also exactly
-    // what a reset writes
-    $submitted = formulize_defaultAppearanceSettings();
-
-    if(isset($_POST['appearance_save'])) {
-        foreach($colourMap as $key => $colour) {
-            $submitted['appearance_' . $key] = isset($_POST['appearance_' . $key]) ? $_POST['appearance_' . $key] : '';
-        }
-        $submitted['appearance_font'] = isset($_POST['appearance_font']) ? $_POST['appearance_font'] : '';
-        $submitted['appearance_customfont'] = isset($_POST['appearance_customfont']) ? $_POST['appearance_customfont'] : '';
-        $submitted['appearance_headingfont'] = isset($_POST['appearance_headingfont']) ? $_POST['appearance_headingfont'] : '';
-        $submitted['appearance_headingcustomfont'] = isset($_POST['appearance_headingcustomfont']) ? $_POST['appearance_headingcustomfont'] : '';
-        // a theme not built on the size tokens isn't offered the Size setting, so the
-        // form has no field for it; keep what was there rather than clearing it
-        $submitted['appearance_size'] = isset($_POST['appearance_size']) ? $_POST['appearance_size'] : $settings['appearance_size'];
-        // the advanced size settings aren't on this form, so saving it keeps them;
-        // a reset clears them along with everything else
-        $submitted['appearance_sizeoverrides'] = $settings['appearance_sizeoverrides'];
-        foreach(array_keys(formulize_appearanceUploads()) as $uploadSetting) {
-            $submitted[$uploadSetting] = $settings[$uploadSetting]; // kept unless removed or replaced below
-        }
-        if($submitted['appearance_font'] == 'custom' AND !formulize_sanitizeAppearanceFontFamily($submitted['appearance_customfont'])) {
-            $errors[] = "Please enter a Google Font name to use a custom font. The default font has been kept.";
-        }
-        if($submitted['appearance_headingfont'] == 'custom' AND !formulize_sanitizeAppearanceFontFamily($submitted['appearance_headingcustomfont'])) {
-            $errors[] = "Please enter a Google Font name to use a custom secondary font. Headings and labels have been left following the main font.";
-        }
-    }
-
-    // The logo and the favicon are images, so they can't be values in the stylesheet the
-    // way the colours and the font are. The files are kept beside the stylesheet in the
-    // theme's appearance folder, and the stylesheet records which file is in use, so the
-    // stylesheet is still the one place the settings are read from.
-    foreach(formulize_appearanceUploads() as $uploadSetting => $upload) {
-        $field = $uploadSetting . '_file';
-        $newFile = '';
-        if(isset($_FILES[$field]) AND $_FILES[$field]['error'] == UPLOAD_ERR_OK) {
-            $mimeType = mime_content_type($_FILES[$field]['tmp_name']);
-            if(isset($upload['types'][$mimeType])) {
-                $fileName = $upload['filePrefix'] . time() . '.' . $upload['types'][$mimeType];
-                $appearanceDir = formulize_prepareAppearanceDir($selectedTheme);
-                if($appearanceDir AND move_uploaded_file($_FILES[$field]['tmp_name'], $appearanceDir . '/' . $fileName)) {
-                    $newFile = $fileName;
-                } else {
-                    $errors[] = "Could not move the uploaded " . $upload['noun'] . " into " . formulize_getAppearanceDir($selectedTheme) . ". Check the folder permissions.";
-                }
-            } else {
-                $errors[] = "The " . $upload['noun'] . " must be a " . $upload['typesLabel'] . " image.";
-            }
-        }
-        // the old file only goes when there is something to put in its place, or the admin
-        // asked for it to go, so a rejected upload leaves the current file alone
-        if($newFile OR isset($_POST['appearance_reset']) OR isset($_POST[$uploadSetting . '_remove'])) {
-            formulize_deleteAppearanceUploadedFile($settings[$uploadSetting], $selectedTheme);
-            $submitted[$uploadSetting] = $newFile;
-        }
-    }
+    // build the settings to write: a reset writes the defaults, and a save what the
+    // form asks for. The logo and the favicon are files, uploaded or removed here.
+    $submitted = isset($_POST['appearance_save'])
+        ? formulize_appearanceSubmittedSettings($_POST, $settings, $selectedTheme, $errors)
+        : formulize_defaultAppearanceSettings();
+    $submitted = formulize_saveAppearanceUploads($submitted, $settings, $selectedTheme, isset($_POST['appearance_reset']), $errors);
 
     // writing the stylesheet is the save: if it can't be written, nothing was saved,
     // so say that rather than reporting success the settings didn't survive
@@ -199,24 +105,9 @@ foreach($headingFontMap as $key => $font) {
     $headingFonts[] = array('key' => $key, 'label' => $font['label']);
 }
 
-// What each choice actually renders as, for the preview. The default choice is the
-// theme's own --fz-font-sans (Geist on Lyris, Poppins on Anari), not the font map's
-// nominal Geist stack, so previewing "default" shows the theme being edited. 'custom'
-// carries nothing: the browser builds it from whatever family name has been typed in.
-$themeTokens = formulize_appearanceThemeTokens($selectedTheme);
-$fontStacks = array();
-foreach($fontMap as $key => $font) {
-    if($key == 'custom') {
-        $fontStacks[$key] = array('stack' => '', 'google' => '');
-    } elseif($key == 'geist') {
-        $fontStacks[$key] = array(
-            'stack' => isset($themeTokens['--fz-font-sans']) ? $themeTokens['--fz-font-sans'] : $font['stack'],
-            'google' => str_replace(' ', '+', formulize_appearanceThemeFontName($selectedTheme)) . ':wght@400;500;600;700',
-        );
-    } else {
-        $fontStacks[$key] = array('stack' => $font['stack'], 'google' => $font['google'] ? $font['google'] : '');
-    }
-}
+// What each choice actually renders as, for the preview: see
+// formulize_appearanceFontPreviewStacks().
+$fontStacks = formulize_appearanceFontPreviewStacks($selectedTheme);
 
 $sizes = array();
 foreach(formulize_appearanceSizePresets() as $key => $label) {
@@ -251,11 +142,12 @@ $adminPage['currentHeadingCustomFont'] = $settings['appearance_headingcustomfont
 $adminPage['fontStacksJson'] = json_encode($fontStacks);
 $adminPage['sizes'] = $sizes;
 $adminPage['currentSize'] = $settings['appearance_size'];
-$adminPage['hasSizeOverrides'] = ($settings['appearance_sizeoverrides'] !== '');
 $adminPage['themeUsesSizes'] = formulize_appearanceThemeUsesSizes($selectedTheme);
-// the advanced size editor, for a theme that provides sample screens to preview the sizes on
-$adminPage['sizesUrl'] = ($adminPage['themeUsesSizes'] AND formulize_getAppearancePreviewScreens($selectedTheme))
-    ? XOOPS_URL . '/modules/formulize/appearance_sizes.php?theme=' . urlencode($selectedTheme) : '';
+// the advanced editor, for a theme built on the component tokens that provides
+// sample screens to preview them on; and the parts that have settings of their own
+// there, which the settings on this page don't change
+$adminPage['editorUrl'] = formulize_getAppearanceEditorUrl($selectedTheme);
+$adminPage['overrideParts'] = implode(', ', formulize_appearanceOverrideParts($settings));
 $adminPage['logoUrl'] = $uploadUrls['appearance_logo'];
 $adminPage['faviconUrl'] = $uploadUrls['appearance_favicon'];
 $adminPage['saved'] = $saved;

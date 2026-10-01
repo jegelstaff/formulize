@@ -7,7 +7,7 @@
 # component size map (modules/formulize/include/appearance_tokens.json): that its
 # preset values are ones their tokens can have, and that formulize-ui.css
 # declares a Default for every token in it, and that the themes' sample screens
-# for the advanced size editor (themes/*/appearance_preview) mark only parts the
+# for the advanced editor (themes/*/appearance_preview) mark only parts the
 # map has.
 #
 # Runs only when one of the two files changes. GitHub's Ubuntu runners have PHP
