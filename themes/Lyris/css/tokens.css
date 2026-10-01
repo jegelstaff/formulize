@@ -63,8 +63,7 @@
 
   /* Base font size: the root font size, applied to `html` in style.css, that the
      type scale and the spacing below are expressed as a proportion of. Changing
-     it makes the whole interface bigger or smaller together, which is what a
-     user's own profile font size setting does (see theme.html). */
+     it makes the whole interface bigger or smaller together. */
   --formulize-font-size-base: 16px;
 
   /* This theme is built on Formulize UI's component size tokens (field height,

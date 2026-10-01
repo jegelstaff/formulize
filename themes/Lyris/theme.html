@@ -54,17 +54,6 @@
 
 <{includeq file="$theme_name/session-timeout-warning.html"}>
 
-<{php}>
-global $xoopsUser;
-if ($xoopsUser) {
-    $profile_handler = xoops_getmodulehandler('profile', 'profile');
-    $profile = $profile_handler->get($xoopsUser->getVar('uid'));
-    if ($fontsize = $profile->getVar('fontsize')) {
-        print '<style>html { font-size: ' . $fontsize . '; }</style>';
-    }
-}
-<{/php}>
-
 <div class="lyris-app" id="lyris-app" data-sidebar-default="<{if $xoops_requesturi|strstr:'/modules/formulize/application.php'}>open<{else}>closed<{/if}>">
 
   <script>
