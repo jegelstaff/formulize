@@ -253,6 +253,9 @@ $adminPage['sizes'] = $sizes;
 $adminPage['currentSize'] = $settings['appearance_size'];
 $adminPage['hasSizeOverrides'] = ($settings['appearance_sizeoverrides'] !== '');
 $adminPage['themeUsesSizes'] = formulize_appearanceThemeUsesSizes($selectedTheme);
+// the advanced size editor, for a theme that provides sample screens to preview the sizes on
+$adminPage['sizesUrl'] = ($adminPage['themeUsesSizes'] AND formulize_getAppearancePreviewScreens($selectedTheme))
+    ? XOOPS_URL . '/modules/formulize/appearance_sizes.php?theme=' . urlencode($selectedTheme) : '';
 $adminPage['logoUrl'] = $uploadUrls['appearance_logo'];
 $adminPage['faviconUrl'] = $uploadUrls['appearance_favicon'];
 $adminPage['saved'] = $saved;

@@ -96,6 +96,37 @@ function formulize_appearanceTokenAllows($map, $token, $value) {
 }
 
 /**
+ * The size of each text step at the default 16px root, in px: the values of
+ * the --fz-text-* tokens in formulize-ui.css.
+ *
+ * @return array step => px
+ */
+function formulize_appearanceTextPx() {
+    return array('xs' => 12, 'xs-plus' => 13, 'sm' => 14, 'sm-plus' => 15, 'base' => 16, 'lg' => 18, 'xl' => 20, '2xl' => 24, '3xl' => 30);
+}
+
+/**
+ * The least a token with a floor can usefully be, given the other tokens'
+ * values: one line of a text token at a line height plus extra px, rounded up
+ * to a half step; or another token plus a number of steps. The advanced size
+ * editor works this out the same way (include/js/appearance_sizes.js).
+ *
+ * @param array $floor the token's floor, from the map
+ * @param array $values token => value, for the tokens the floor refers to
+ * @return float|null the floor in steps, or null if a value it needs is missing
+ */
+function formulize_appearanceTokenFloor($floor, $values) {
+    if (isset($floor['text'])) {
+        $px = formulize_appearanceTextPx();
+        if (!isset($values[$floor['text']], $px[$values[$floor['text']]])) {
+            return null;
+        }
+        return ceil(($px[$values[$floor['text']]] * $floor['leading'] + $floor['extra']) / 4 * 2) / 2;
+    }
+    return isset($values[$floor['token']]) ? $values[$floor['token']] + $floor['plus'] : null;
+}
+
+/**
  * A token's value written as CSS.
  *
  * @param string $typeName the token's type: spacing, text, weight, leading or measure
@@ -179,7 +210,10 @@ function formulize_appearanceTokenDeclarations($css) {
  * Check the map against formulize-ui.css: every token has a known group and
  * type, its own limits are values its type can have, every preset value is
  * inside the token's limits, and every token has a Default in formulize-ui.css,
- * written in the form its type is written in and inside its limits.
+ * written in the form its type is written in and inside its limits. Also the
+ * advanced size editor's parts: each token's phone token, home part and floor
+ * are well formed, every token a part names exists, and every token can be
+ * reached from a part.
  *
  * @param array $map the map, from formulize_appearanceTokenMap()
  * @param string $css the contents of formulize-ui.css
@@ -213,6 +247,25 @@ function formulize_appearanceCheckTokenMap($map, $css) {
                 $problems[] = "The size token $token has a $preset value, " . json_encode($value) . ", outside what it can be set to.";
             }
         }
+        foreach (array('phone' => 'phone token', 'home' => 'home part') as $field => $noun) {
+            if (!isset($entry[$field])) {
+                continue;
+            }
+            $ok = ($field == 'phone')
+                ? (isset($map['tokens'][$entry[$field]]) AND $map['tokens'][$entry[$field]]['type'] == $entry['type'])
+                : (isset($map['components'][$entry[$field]]) AND in_array($token, $map['components'][$entry[$field]]['tokens']));
+            if (!$ok) {
+                $problems[] = "The size token $token has a $noun, '" . $entry[$field] . "', that isn't " . ($field == 'phone' ? "a size token of the same type" : "a part that lists it") . ".";
+            }
+        }
+        if (isset($entry['floor'])) {
+            $floor = $entry['floor'];
+            $ref = isset($floor['text']) ? $floor['text'] : (isset($floor['token']) ? $floor['token'] : '');
+            $refType = isset($map['tokens'][$ref]) ? $map['tokens'][$ref]['type'] : '';
+            if ($entry['type'] != 'spacing' OR !(isset($floor['text']) ? ($refType == 'text' AND isset($floor['leading'], $floor['extra'])) : ($refType == 'spacing' AND isset($floor['plus'])))) {
+                $problems[] = "The size token $token has a floor that isn't one of the two kinds: a text token with a leading and extra px, or a spacing token plus a number of steps.";
+            }
+        }
         if (!isset($declared[$token])) {
             $problems[] = "The size token $token has no Default: formulize-ui.css doesn't declare it on :root.";
         } else {
@@ -221,6 +274,87 @@ function formulize_appearanceCheckTokenMap($map, $css) {
                 $problems[] = "The size token $token's Default in formulize-ui.css, '" . $declared[$token] . "', is outside what it can be set to.";
             } elseif ($default === null OR !formulize_appearanceTokenValueIsValid($type, $default)) {
                 $problems[] = "The size token $token is declared in formulize-ui.css as '" . $declared[$token] . "', which isn't a " . $entry['type'] . " value written the way the Appearance page writes one (eg: " . formulize_appearanceTokenCss($entry['type'], isset($type['values']) ? $type['values'][0] : $type['min']) . ").";
+            }
+        }
+    }
+    // every preset, and the Defaults, keep to the floors: a value under its floor
+    // would change nothing, since the thing it sizes is held taller by its contents
+    $defaults = array();
+    foreach ($map['tokens'] as $token => $entry) {
+        $parsed = isset($declared[$token]) ? formulize_appearanceTokenParse($entry['type'], $declared[$token]) : null;
+        if ($parsed !== null) {
+            $defaults[$token] = $parsed;
+        }
+    }
+    foreach (array('default' => 'Default', 'compact' => 'Compact', 'comfortable' => 'Comfortable') as $preset => $presetName) {
+        $values = $defaults;
+        foreach ($map['tokens'] as $token => $entry) {
+            if ($preset != 'default' AND isset($entry['presets'][$preset])) {
+                $values[$token] = $entry['presets'][$preset];
+            }
+        }
+        foreach ($map['tokens'] as $token => $entry) {
+            if (isset($entry['floor'], $values[$token])) {
+                $floor = formulize_appearanceTokenFloor($entry['floor'], $values);
+                if ($floor !== null AND $values[$token] < $floor) {
+                    $problems[] = "At $presetName, the size token $token is " . formulize_appearanceTokenNumber($values[$token]) . ", under its floor of " . formulize_appearanceTokenNumber($floor) . " steps, so it would change nothing.";
+                }
+            }
+        }
+    }
+    // the parts of the interface the advanced size editor selects: every token they
+    // name exists, and every token is in a part, or is another token's phone token
+    $inPart = array();
+    foreach (isset($map['components']) ? $map['components'] : array() as $key => $component) {
+        foreach (array('name', 'plural', 'tokens', 'gaps') as $field) {
+            if (!isset($component[$field])) {
+                $problems[] = "The part $key has no $field.";
+            }
+        }
+        foreach (isset($component['tokens']) ? $component['tokens'] : array() as $token) {
+            if (!isset($map['tokens'][$token])) {
+                $problems[] = "The part $key names a size token, $token, that appearance_tokens.json doesn't have.";
+            }
+            $inPart[$token] = true;
+        }
+    }
+    foreach ($map['tokens'] as $token => $entry) {
+        if (isset($entry['phone'])) {
+            $inPart[$entry['phone']] = true;
+        }
+    }
+    foreach (array_keys($map['tokens']) as $token) {
+        if (!isset($inPart[$token])) {
+            $problems[] = "The size token $token isn't in any part, so the advanced size editor has no way to reach it.";
+        }
+    }
+    if (empty($map['screens'])) {
+        $problems[] = "appearance_tokens.json lists no sample screens.";
+    }
+    return $problems;
+}
+
+/**
+ * Check a theme's sample screens for the advanced size editor: every part they
+ * mark with data-fz-part is a part in the map, and every file is named after a
+ * screen in the map, or starts with an underscore (a piece the samples include).
+ *
+ * @param array $map the map, from formulize_appearanceTokenMap()
+ * @param string $dir the theme's appearance_preview folder
+ * @param string $theme the theme's name, for the messages
+ * @return array problems, as sentences; empty if there are none
+ */
+function formulize_appearanceCheckPreviewSamples($map, $dir, $theme) {
+    $problems = array();
+    foreach (glob($dir . '/*.html') as $file) {
+        $name = basename($file, '.html');
+        if ($name[0] != '_' AND !isset($map['screens'][$name])) {
+            $problems[] = "The $theme theme has a sample screen, $name.html, that isn't one of the screens in appearance_tokens.json.";
+        }
+        preg_match_all('/data-fz-part="([^"]*)"/', file_get_contents($file), $parts);
+        foreach (array_unique($parts[1]) as $part) {
+            if (!isset($map['components'][$part])) {
+                $problems[] = "The $theme theme's sample " . basename($file) . " marks a part, '$part', that isn't one of the parts in appearance_tokens.json.";
             }
         }
     }

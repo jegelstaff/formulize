@@ -368,6 +368,104 @@ function formulize_appearanceThemeUsesSizes($theme = null) {
 }
 
 /**
+ * The Default value of each size token for a theme: what formulize-ui.css
+ * declares on :root, overridden by anything the theme declares on :root in its
+ * own css/tokens.css. This is what the advanced size editor shows as Default,
+ * and what a preset or override is measured against.
+ *
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return array token => value, as appearance_tokens.json writes values
+ */
+function formulize_appearanceSizeDefaults($theme = null) {
+    $theme = formulize_resolveAppearanceTheme($theme);
+    $map = formulize_appearanceTokenMap();
+    $declared = formulize_appearanceTokenDeclarations((string) @file_get_contents(XOOPS_ROOT_PATH . '/modules/formulize/templates/css/formulize-ui.css'));
+    $themeTokens = ICMS_THEME_PATH . '/' . $theme . '/css/tokens.css';
+    if ($theme AND is_file($themeTokens)) {
+        $declared = array_merge($declared, formulize_appearanceTokenDeclarations((string) @file_get_contents($themeTokens)));
+    }
+    $defaults = array();
+    foreach ($map['tokens'] as $token => $entry) {
+        $value = isset($declared[$token]) ? formulize_appearanceTokenParse($entry['type'], $declared[$token]) : null;
+        if ($value !== null) {
+            $defaults[$token] = $value;
+        }
+    }
+    return $defaults;
+}
+
+/**
+ * The folder a theme keeps its sample screens for the advanced size editor in:
+ * appearance_preview, in the theme's own folder. Each sample is an HTML file
+ * named after one of the screens in appearance_tokens.json (form.html,
+ * list.html...); files starting with an underscore are pieces the samples
+ * include (see formulize_renderAppearancePreview).
+ *
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return string the folder's path
+ */
+function formulize_getAppearancePreviewDir($theme = null) {
+    return ICMS_THEME_PATH . '/' . formulize_resolveAppearanceTheme($theme) . '/appearance_preview';
+}
+
+/**
+ * The sample screens a theme provides, in the order appearance_tokens.json
+ * lists them.
+ *
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return array screen key => its name, eg: 'form' => 'Form'
+ */
+function formulize_getAppearancePreviewScreens($theme = null) {
+    $map = formulize_appearanceTokenMap();
+    $dir = formulize_getAppearancePreviewDir($theme);
+    $screens = array();
+    foreach (isset($map['screens']) ? $map['screens'] : array() as $key => $name) {
+        if (is_file($dir . '/' . $key . '.html')) {
+            $screens[$key] = $name;
+        }
+    }
+    return $screens;
+}
+
+/**
+ * The markup of one of a theme's sample screens, ready to put in a page's body.
+ * A sample can include a piece shared with other samples by naming it in double
+ * braces: {{list}} is the contents of _list.html in the same folder. {{logo_url}}
+ * and {{site_name}} are the theme's logo (the uploaded one, or the theme's own
+ * images/logo.png) and the site's name. Pieces can include other pieces, a few
+ * levels deep.
+ *
+ * @param string $screen a screen key, eg: 'form'
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return string the markup, or '' if the theme has no such sample
+ */
+function formulize_renderAppearancePreview($screen, $theme = null) {
+    global $xoopsConfig;
+    $theme = formulize_resolveAppearanceTheme($theme);
+    $screens = formulize_getAppearancePreviewScreens($theme);
+    if (!isset($screens[$screen])) {
+        return '';
+    }
+    $dir = formulize_getAppearancePreviewDir($theme);
+    $html = (string) file_get_contents($dir . '/' . $screen . '.html');
+    $logo = formulize_getAppearanceLogoUrl($theme);
+    $values = array(
+        'logo_url' => htmlspecialchars($logo ? $logo : XOOPS_URL . '/themes/' . $theme . '/images/logo.png', ENT_QUOTES),
+        'site_name' => htmlspecialchars(isset($xoopsConfig['sitename']) ? $xoopsConfig['sitename'] : '', ENT_QUOTES),
+    );
+    for ($depth = 0; $depth < 4; $depth++) {
+        $html = preg_replace_callback('/\{\{([a-z][a-z0-9_]*)\}\}/', function ($match) use ($values, $dir) {
+            if (isset($values[$match[1]])) {
+                return $values[$match[1]];
+            }
+            $piece = $dir . '/_' . $match[1] . '.html';
+            return is_file($piece) ? (string) file_get_contents($piece) : '';
+        }, $html);
+    }
+    return $html;
+}
+
+/**
  * Validate a Size preset.
  *
  * @param string $value the submitted preset
