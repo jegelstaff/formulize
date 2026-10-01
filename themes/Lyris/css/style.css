@@ -32,9 +32,7 @@ body {
    are rem, so every text size in this stylesheet follows this one declaration,
    and moving it moves all of them together.
 
-   Two layers get a say: the theme's own default (--formulize-font-size-base in
-   tokens.css), and a user's personal font size preference, which theme.html
-   prints as an inline style further down the document and so wins. The
+   The theme's own default is --formulize-font-size-base in tokens.css. The
    Appearance page's Size preset sets the component sizes instead, not this. */
 html {
   font-size: var(--formulize-font-size-base);
