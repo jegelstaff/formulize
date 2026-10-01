@@ -52,6 +52,24 @@
         </div>
     </fieldset>
 
+    <{* Size: a preset for the component size tokens (see
+       include/appearance_tokens.json). Default sets nothing. Only for themes
+       built on those tokens (formulize_appearanceThemeUsesSizes). *}>
+    <{if $adminPage.themeUsesSizes}>
+    <fieldset class="formulize-appearance-group">
+        <legend>Size</legend>
+        <div class="formulize-appearance-field">
+            <label for="appearance_size">Size preset</label>
+            <select name="appearance_size" id="appearance_size">
+            <{foreach from=$adminPage.sizes item=size}>
+                <option value="<{$size.key}>" <{if $adminPage.currentSize == $size.key}>selected="selected"<{/if}>><{$size.label}></option>
+            <{/foreach}>
+            </select>
+            <span class="formulize-appearance-hint">How big and how roomy the interface is: titles, labels and text, the height of form fields, buttons and the rows of lists, and the space in forms, cards and the drawer. Compact fits more on the screen; Comfortable is larger and easier to read and tap.<{if $adminPage.hasSizeOverrides}> Some sizes have been set individually in the advanced settings, and those are kept whichever size is chosen here.<{/if}></span>
+        </div>
+    </fieldset>
+    <{/if}>
+
     <fieldset class="formulize-appearance-group">
         <legend>Font</legend>
 
@@ -97,32 +115,6 @@
             <span class="formulize-appearance-font-preview-sample formulize-appearance-font-preview-sample--heading">The quick brown fox jumps over the lazy dog</span>
         </div>
 
-        <{* Text size: the size the standard content text renders at, which is what
-           an admin means by "font size". The root font size that actually produces
-           it is worked out from this and written into the generated stylesheet -
-           see the Text size functions in include/appearance.php. *}>
-        <div class="formulize-appearance-field">
-            <label for="appearance_fontsize">Text and interface size</label>
-            <select name="appearance_fontsize" id="appearance_fontsize" onchange="appearanceUpdateFontPreviews();">
-            <{foreach from=$adminPage.fontSizes item=size}>
-                <option value="<{$size.key}>" <{if $adminPage.currentFontSize == $size.key}>selected="selected"<{/if}>><{$size.label}></option>
-            <{/foreach}>
-            </select>
-            <span class="formulize-appearance-hint">The size of the standard text in lists and content. Everything else is in proportion to it - other text, the space between things, buttons and form fields - so the whole interface gets bigger or smaller with it. Individual users can still override it with the font size setting in their own profile. This theme's own default is <{$adminPage.defaultFontSize}>.</span>
-        </div>
-    </fieldset>
-
-    <fieldset class="formulize-appearance-group">
-        <legend>Density</legend>
-        <div class="formulize-appearance-field">
-            <label for="appearance_density">Spacing and sizing</label>
-            <select name="appearance_density" id="appearance_density">
-            <{foreach from=$adminPage.densities item=density}>
-                <option value="<{$density.key}>" <{if $adminPage.currentDensity == $density.key}>selected="selected"<{/if}>><{$density.label}></option>
-            <{/foreach}>
-            </select>
-            <span class="formulize-appearance-hint">How much space there is between things, and how tall buttons, form fields and the rows of lists are. Tight fits more on the screen; comfortable is roomier and easier to tap. Text size is not affected.<{if !$adminPage.themeUsesDensity}> The <{$adminPage.selected_theme}> theme does not use this setting, so it only affects Formulize UI classes used in templates.<{/if}></span>
-        </div>
     </fieldset>
 
     <fieldset class="formulize-appearance-group">
@@ -239,7 +231,6 @@ function appearanceResolveFont(selectId, customId) {
 }
 
 function appearanceUpdateFontPreviews() {
-    var size = document.getElementById('appearance_fontsize');
     var main = appearanceResolveFont('appearance_font', 'appearance_customfont');
     var headingSelect = document.getElementById('appearance_headingfont');
     // "same as the main font" is the default secondary choice, and it previews as
@@ -259,12 +250,6 @@ function appearanceUpdateFontPreviews() {
             sample.style.fontFamily = font.stack;
         } else {
             sample.style.fontFamily = '';
-        }
-        // The samples are shown at the chosen text size. That size is the standard
-        // content text size, so the sample is literally the size the words in lists
-        // and content will come out at - which is what makes it worth previewing.
-        if (size && size.value) {
-            box.style.fontSize = size.value;
         }
     });
 }
