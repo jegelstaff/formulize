@@ -2014,6 +2014,8 @@ body:has(#formulize-masquerade-block) {
      --fz-label-text:       14px / 600 (--fz-label-weight)
      --fz-field-text:       14px
      --fz-help-text:        13px / 1.5 (--fz-help-leading), at most 65ch wide
+     --fz-help-gap:         6px     field to its help text
+     --fz-option-gap:       2px     between options, each on its own line
    Components read those tokens directly; nothing here re-declares them, so a
    token set on a container reaches the fields inside it. On phones, field
    heights have a floor (--lyris-tap-min: see the mobile form block).
@@ -2270,7 +2272,9 @@ body:has(#formulize-masquerade-block) {
   color: var(--fz-color-text-muted);
   line-height: var(--fz-help-leading);
   max-width: var(--fz-help-max-width);
-  margin: 2px 0 0;
+  /* --fz-help-gap below the field: one step of it is the field body's own gap
+     (formulize-ui.css), so this is the rest */
+  margin: calc(var(--fz-help-gap) - var(--fz-spacing)) 0 0;
 }
 
 /* The 2FA "Forget Remembered Devices" button and its help text sit outside a
@@ -2389,7 +2393,9 @@ body:has(#formulize-masquerade-block) {
 .lyris-form-screen .col2:has(input[type="radio"]),
 .lyris-form-screen .col2:has(input[type="checkbox"]) {
   display: block;
-  line-height: 1.6;        /* vertical rhythm between <br>-separated options */
+  /* vertical rhythm between <br>-separated options: a line of option text, plus
+     --fz-option-gap (2px at Default) */
+  line-height: calc(var(--fz-field-text) * 1.5 + var(--fz-option-gap));
 }
 
 .lyris-form-screen .col2 input[type="radio"]:where(:not([class*="fz-"])),

@@ -352,7 +352,7 @@ function formulize_appearanceSizePresets() {
 
 /**
  * Whether a theme is built on the component size tokens, so that the Size preset
- * and the advanced size settings change how it looks. A theme says so itself, by
+ * and the advanced editor change how it looks. A theme says so itself, by
  * declaring --formulize-size-tokens with its other tokens (Lyris does, in
  * css/tokens.css). A theme that doesn't, such as Anari, styles most of its
  * markup with its own fixed sizes, so offering it a Size setting that changed
@@ -370,7 +370,7 @@ function formulize_appearanceThemeUsesSizes($theme = null) {
 /**
  * The Default value of each size token for a theme: what formulize-ui.css
  * declares on :root, overridden by anything the theme declares on :root in its
- * own css/tokens.css. This is what the advanced size editor shows as Default,
+ * own css/tokens.css. This is what the advanced editor shows as Default,
  * and what a preset or override is measured against.
  *
  * @param string|null $theme theme folder name, defaults to the active theme
@@ -395,7 +395,7 @@ function formulize_appearanceSizeDefaults($theme = null) {
 }
 
 /**
- * The folder a theme keeps its sample screens for the advanced size editor in:
+ * The folder a theme keeps its sample screens for the advanced editor in:
  * appearance_preview, in the theme's own folder. Each sample is an HTML file
  * named after one of the screens in appearance_tokens.json (form.html,
  * list.html...); files starting with an underscore are pieces the samples
@@ -478,17 +478,17 @@ function formulize_sanitizeAppearanceSize($value) {
 }
 
 /**
- * Validate the advanced size overrides: a JSON object of size token => value,
- * the values written the way appearance_tokens.json writes them (a number of
- * spacing steps, a text step, a weight...). Tokens that aren't in the map, and
- * values outside what a token can be set to (its own limits), are dropped, so
- * nothing arbitrary reaches the stylesheet. Kept as JSON, in token order, so the same overrides always read
- * and write the same way.
+ * Validate the overrides set in the advanced editor: a JSON object of token =>
+ * value, the values written the way appearance_tokens.json writes them (a
+ * number of spacing steps, a text step, a weight...). Tokens that aren't in the
+ * map, and values outside what a token can be set to (its own limits), are
+ * dropped, so nothing arbitrary reaches the stylesheet. Kept as JSON, in token
+ * order, so the same overrides always read and write the same way.
  *
  * @param mixed $value the overrides, as a JSON string or an array
  * @return string the clean overrides as JSON, or '' when there are none
  */
-function formulize_sanitizeAppearanceSizeOverrides($value) {
+function formulize_sanitizeAppearanceOverrides($value) {
     $overrides = is_array($value) ? $value : json_decode((string) $value, true);
     if (!is_array($overrides)) {
         return '';
@@ -515,7 +515,7 @@ function formulize_sanitizeAppearanceSizeOverrides($value) {
 function formulize_getAppearanceSizeValues($settings) {
     $map = formulize_appearanceTokenMap();
     $preset = isset($settings['appearance_size']) ? $settings['appearance_size'] : '';
-    $overrides = json_decode(isset($settings['appearance_sizeoverrides']) ? (string) $settings['appearance_sizeoverrides'] : '', true);
+    $overrides = json_decode(isset($settings['appearance_overrides']) ? (string) $settings['appearance_overrides'] : '', true);
     $overrides = is_array($overrides) ? $overrides : array();
     $values = array();
     foreach ($map['tokens'] as $token => $entry) {
@@ -535,7 +535,7 @@ function formulize_getAppearanceSizeValues($settings) {
  */
 function formulize_appearanceSettingNames() {
     $names = array('appearance_font', 'appearance_customfont', 'appearance_headingfont',
-        'appearance_headingcustomfont', 'appearance_size', 'appearance_sizeoverrides',
+        'appearance_headingcustomfont', 'appearance_size', 'appearance_overrides',
         'appearance_logo', 'appearance_favicon');
     // the definition, not the theme-aware map: the setting names are the same for every
     // theme, and only the defaults differ, so there is no theme to resolve here
@@ -554,6 +554,239 @@ function formulize_appearanceSettingNames() {
  */
 function formulize_defaultAppearanceSettings() {
     return array_fill_keys(formulize_appearanceSettingNames(), '');
+}
+
+/**
+ * The settings a submitted Appearance form asks for: the Appearance page's, or
+ * the advanced editor's, which has the same fields. Colours and fonts are taken
+ * as submitted (an empty or missing one means the default); the Size preset and
+ * the advanced editor's overrides are kept as they are when the form has no
+ * field for them, since the Appearance page has none for the overrides, and none
+ * for the Size preset on a theme not built on the size tokens. The logo and the
+ * favicon are kept too: formulize_saveAppearanceUploads() replaces or removes
+ * them.
+ *
+ * @param array $post the submitted form, ie: $_POST
+ * @param array $current the theme's settings as they stand
+ * @param string $theme theme folder name
+ * @param array $errors gets a message for each font chosen as "Other Google
+ *                      Font" with no usable name, which falls back to the default
+ * @return array settings array, not yet sanitized
+ */
+function formulize_appearanceSubmittedSettings($post, $current, $theme, &$errors) {
+    $submitted = formulize_defaultAppearanceSettings();
+    foreach (array_keys(formulize_appearanceColourMap($theme)) as $key) {
+        $submitted['appearance_' . $key] = isset($post['appearance_' . $key]) ? (string) $post['appearance_' . $key] : '';
+    }
+    foreach (array('appearance_font', 'appearance_customfont', 'appearance_headingfont', 'appearance_headingcustomfont') as $name) {
+        $submitted[$name] = isset($post[$name]) ? (string) $post[$name] : '';
+    }
+    foreach (array('appearance_size', 'appearance_overrides') as $name) {
+        $submitted[$name] = isset($post[$name]) ? (string) $post[$name] : $current[$name];
+    }
+    foreach (array_keys(formulize_appearanceUploads()) as $name) {
+        $submitted[$name] = $current[$name];
+    }
+    if ($submitted['appearance_font'] == 'custom' AND !formulize_sanitizeAppearanceFontFamily($submitted['appearance_customfont'])) {
+        $errors[] = "Please enter a Google Font name to use a custom font. The default font has been kept.";
+    }
+    if ($submitted['appearance_headingfont'] == 'custom' AND !formulize_sanitizeAppearanceFontFamily($submitted['appearance_headingcustomfont'])) {
+        $errors[] = "Please enter a Google Font name to use a custom secondary font. Headings and labels have been left following the main font.";
+    }
+    return $submitted;
+}
+
+/**
+ * The images that can be uploaded for a theme: the logo in the site header, and
+ * the favicon in the browser tab. They are handled identically - the file goes
+ * in the theme's appearance folder and the stylesheet records which file is in
+ * use - so each one is just a description of its own form fields and the image
+ * types it accepts. The favicon also takes .ico, which browsers only ever want
+ * for a favicon.
+ *
+ * The form fields are <setting>_file for the upload, and <setting>_remove to go
+ * back to the theme's own image.
+ *
+ * @return array setting name => array with 'noun', 'filePrefix', 'types' (mime
+ *               type => extension) and 'typesLabel'
+ */
+function formulize_appearanceUploads() {
+    $imageTypes = array(
+        'image/png' => 'png',
+        'image/jpeg' => 'jpg',
+        'image/gif' => 'gif',
+        'image/svg+xml' => 'svg',
+        'image/webp' => 'webp',
+    );
+    return array(
+        'appearance_logo' => array(
+            'noun' => 'logo',
+            'filePrefix' => 'formulize-appearance-logo-',
+            'types' => $imageTypes,
+            'typesLabel' => 'PNG, JPEG, GIF, SVG, or WebP',
+        ),
+        'appearance_favicon' => array(
+            'noun' => 'favicon',
+            'filePrefix' => 'formulize-appearance-favicon-',
+            'types' => $imageTypes + array(
+                'image/vnd.microsoft.icon' => 'ico',
+                'image/x-icon' => 'ico',
+            ),
+            'typesLabel' => 'PNG, ICO, SVG, GIF, JPEG, or WebP',
+        ),
+    );
+}
+
+/**
+ * Delete an uploaded appearance file a theme is using, when it is being removed
+ * or replaced. Only a file in the theme's own appearance folder is deleted: a
+ * file still sitting in the legacy uploads/appearance folder predates per-theme
+ * settings and can be shared with another theme, so it is left alone and simply
+ * stops being referenced.
+ *
+ * @param string $file the file name, as the settings record it
+ * @param string $theme theme folder name
+ */
+function formulize_deleteAppearanceUploadedFile($file, $theme) {
+    $path = formulize_locateAppearanceFile($file, $theme);
+    if ($path AND strpos($path, formulize_getAppearanceDir($theme) . '/') === 0) {
+        unlink($path);
+    }
+}
+
+/**
+ * Take the logo and favicon uploads of a submitted Appearance form, from the
+ * Appearance page or the advanced editor. The logo and the favicon are images,
+ * so they can't be values in the stylesheet the way the colours and the font
+ * are: the files are kept beside the stylesheet in the theme's appearance
+ * folder, and the stylesheet records which file is in use, so the stylesheet is
+ * still the one place the settings are read from.
+ *
+ * The old file only goes when there is something to put in its place, or it was
+ * asked to go (<setting>_remove, or a reset), so a rejected upload leaves the
+ * current file alone.
+ *
+ * @param array $submitted the settings being saved; its logo and favicon are
+ *                         set to the new file, or '' when removed
+ * @param array $current the theme's settings as they stand
+ * @param string $theme theme folder name
+ * @param boolean $reset whether everything is being reset to the defaults
+ * @param array $errors gets a message for each upload that couldn't be taken
+ * @return array $submitted, with the logo and favicon settled
+ */
+function formulize_saveAppearanceUploads($submitted, $current, $theme, $reset, &$errors) {
+    foreach (formulize_appearanceUploads() as $uploadSetting => $upload) {
+        $field = $uploadSetting . '_file';
+        $newFile = '';
+        if (isset($_FILES[$field]) AND $_FILES[$field]['error'] == UPLOAD_ERR_OK) {
+            $mimeType = mime_content_type($_FILES[$field]['tmp_name']);
+            if (isset($upload['types'][$mimeType])) {
+                $fileName = $upload['filePrefix'] . time() . '.' . $upload['types'][$mimeType];
+                $appearanceDir = formulize_prepareAppearanceDir($theme);
+                if ($appearanceDir AND move_uploaded_file($_FILES[$field]['tmp_name'], $appearanceDir . '/' . $fileName)) {
+                    $newFile = $fileName;
+                } else {
+                    $errors[] = "Could not move the uploaded " . $upload['noun'] . " into " . formulize_getAppearanceDir($theme) . ". Check the folder permissions.";
+                }
+            } else {
+                $errors[] = "The " . $upload['noun'] . " must be a " . $upload['typesLabel'] . " image.";
+            }
+        }
+        if ($newFile OR $reset OR !empty($_POST[$uploadSetting . '_remove'])) {
+            formulize_deleteAppearanceUploadedFile($current[$uploadSetting], $theme);
+            $submitted[$uploadSetting] = $newFile;
+        }
+    }
+    return $submitted;
+}
+
+/**
+ * What each main font choice renders as, for previewing it before it is saved:
+ * the font-family value a save would write, and the Google Fonts css2 family
+ * parameter to load it with ('' when there is nothing to load). The default
+ * choice is the theme's own --fz-font-sans (Geist on Lyris, Poppins on Anari),
+ * not the font map's nominal Geist stack, so previewing "default" shows the
+ * theme being edited. 'custom' carries nothing: it is built from whatever
+ * family name has been typed in.
+ *
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return array font key => array with 'stack' and 'google'
+ */
+function formulize_appearanceFontPreviewStacks($theme = null) {
+    $themeTokens = formulize_appearanceThemeTokens($theme);
+    $stacks = array();
+    foreach (formulize_appearanceFontMap($theme) as $key => $font) {
+        if ($key == 'custom') {
+            $stacks[$key] = array('stack' => '', 'google' => '');
+        } elseif ($key == 'geist') {
+            $stacks[$key] = array(
+                'stack' => isset($themeTokens['--fz-font-sans']) ? $themeTokens['--fz-font-sans'] : $font['stack'],
+                'google' => str_replace(' ', '+', formulize_appearanceThemeFontName($theme)) . ':wght@400;500;600;700',
+            );
+        } else {
+            $stacks[$key] = array('stack' => $font['stack'], 'google' => $font['google'] ? $font['google'] : '');
+        }
+    }
+    return $stacks;
+}
+
+/**
+ * The address of the advanced editor for a theme, or '' when the theme can't be
+ * edited there: it has to be built on Formulize UI's component tokens, and
+ * provide sample screens to preview them on. Lyris does; Anari doesn't.
+ *
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return string the URL, or ''
+ */
+function formulize_getAppearanceEditorUrl($theme = null) {
+    $theme = formulize_resolveAppearanceTheme($theme);
+    if (!formulize_appearanceThemeUsesSizes($theme) OR !formulize_getAppearancePreviewScreens($theme)) {
+        return '';
+    }
+    return XOOPS_URL . '/modules/formulize/appearance_editor.php?theme=' . urlencode($theme);
+}
+
+/**
+ * The parts of the interface that have settings of their own from the advanced
+ * editor, by name, eg: "List row". Each changed token counts for the part it
+ * belongs to first (its home), so a token shared by several parts is named once.
+ *
+ * @param array $settings appearance settings, already sanitized
+ * @return array part names, in the order of appearance_tokens.json's parts
+ */
+function formulize_appearanceOverrideParts($settings) {
+    $overrides = json_decode(isset($settings['appearance_overrides']) ? (string) $settings['appearance_overrides'] : '', true);
+    if (!is_array($overrides) OR !$overrides) {
+        return array();
+    }
+    $map = formulize_appearanceTokenMap();
+    $desktopOf = array();
+    foreach ($map['tokens'] as $token => $entry) {
+        if (isset($entry['phone'])) {
+            $desktopOf[$entry['phone']] = $token;
+        }
+    }
+    $homes = array();
+    foreach (array_keys($overrides) as $token) {
+        $token = isset($desktopOf[$token]) ? $desktopOf[$token] : $token;
+        if (isset($map['tokens'][$token]['home'])) {
+            $homes[$map['tokens'][$token]['home']] = true;
+            continue;
+        }
+        foreach ($map['components'] as $key => $component) {
+            if (in_array($token, $component['tokens'])) {
+                $homes[$key] = true;
+                break;
+            }
+        }
+    }
+    $names = array();
+    foreach ($map['components'] as $key => $component) {
+        if (isset($homes[$key])) {
+            $names[] = $component['name'];
+        }
+    }
+    return $names;
 }
 
 /**
@@ -712,7 +945,7 @@ function formulize_sanitizeAppearanceSettings($values, $theme = null) {
     $clean['appearance_headingcustomfont'] = ($headingFont == 'custom') ? $headingCustomFont : '';
     // Default is recorded as nothing, like every other default
     $clean['appearance_size'] = formulize_sanitizeAppearanceSize(isset($values['appearance_size']) ? $values['appearance_size'] : '');
-    $clean['appearance_sizeoverrides'] = formulize_sanitizeAppearanceSizeOverrides(isset($values['appearance_sizeoverrides']) ? $values['appearance_sizeoverrides'] : '');
+    $clean['appearance_overrides'] = formulize_sanitizeAppearanceOverrides(isset($values['appearance_overrides']) ? $values['appearance_overrides'] : '');
     // the logo and the favicon are bare filenames in the theme's appearance folder,
     // never paths
     foreach (array('appearance_logo', 'appearance_favicon') as $fileSetting) {
@@ -1182,7 +1415,7 @@ function formulize_appearanceDirIsWritable($theme = null) {
  * The CSS custom property overrides the current settings call for: the font
  * stack when a non-default font is chosen, the secondary font stack when a
  * separate one is chosen for headings and labels, the component size tokens
- * the Size preset and the advanced size settings set, and the colour tokens
+ * the Size preset and the advanced editor set, and the colour tokens
  * (with their derived variants) for every colour that differs from the design
  * defaults.
  *

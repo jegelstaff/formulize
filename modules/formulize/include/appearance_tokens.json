@@ -1,5 +1,5 @@
 {
-  "about": "The sizes the Appearance page's Size presets and advanced settings can change: the one place their Compact and Comfortable values are kept. Default is not here: it is the value the CSS declares (modules/formulize/templates/css/formulize-ui.css, or a theme's own tokens). Each token's type says how its values are written in CSS; the token's own min and max (in the type's steps), or its list of values, are what it can be set to, chosen so that every value in the range changes how things look. Read by modules/formulize/include/appearance_tokens.php. The screens, components and gaps are for the advanced size editor (modules/formulize/appearance_sizes.php): the sample screens a theme can provide, the parts of the interface that can be selected in them and the tokens that size each part, and what can't be adjusted yet. A token's phone is the token used for it at 768px and below; its home is the part a shared token belongs to; its floor is the least it can be given another token's value (one line of a text token at a line height, plus extra px; or another token plus a number of steps).",
+  "about": "The sizes the Appearance page's Size presets and advanced settings can change: the one place their Compact and Comfortable values are kept. Default is not here: it is the value the CSS declares (modules/formulize/templates/css/formulize-ui.css, or a theme's own tokens). Each token's type says how its values are written in CSS; the token's own min and max (in the type's steps), or its list of values, are what it can be set to, chosen so that every value in the range changes how things look. Read by modules/formulize/include/appearance_tokens.php. The screens, components and gaps are for the advanced editor (modules/formulize/appearance_editor.php): the sample screens a theme can provide, the parts of the interface that can be selected in them and the tokens of each part, and what can't be adjusted yet. A part with a site setting is one of the Appearance page's own settings rather than a set of tokens (the logo). A token's phone is the token used for it at 768px and below; its home is the part a shared token belongs to; its floor is the least it can be given another token's value (one line of a text token at a line height, plus extra px; or another token plus a number of steps).",
   "types": {
     "spacing": {
       "description": "A number of spacing steps (--fz-spacing, 0.25rem), in half steps.",
@@ -40,6 +40,13 @@
     "cards": "Cards"
   },
   "components": {
+    "logo": {
+      "name": "Logo",
+      "plural": "the logo at the top of every page",
+      "site": "logo",
+      "tokens": [],
+      "gaps": []
+    },
     "page": {
       "name": "Page",
       "plural": "every page",
@@ -68,7 +75,7 @@
     "form": {
       "name": "Form card",
       "plural": "every form",
-      "tokens": ["--fz-form-padding", "--fz-card-padding", "--fz-field-gap"],
+      "tokens": ["--fz-form-padding", "--fz-card-padding"],
       "gaps": [
         "The space between form cards.",
         "Card padding at phone widths, which is fixed.",
@@ -87,7 +94,7 @@
     "field": {
       "name": "Form field",
       "plural": "every text box, dropdown and text area",
-      "tokens": ["--fz-field-height", "--fz-field-padding-x", "--fz-field-text"],
+      "tokens": ["--fz-field-height", "--fz-field-padding-x", "--fz-field-text", "--fz-field-gap"],
       "gaps": [
         "Corner radius and border.",
         "A text area's starting height (2.4 times the field height).",
@@ -97,23 +104,23 @@
     "value": {
       "name": "Read-only value",
       "plural": "every read-only value",
-      "tokens": ["--fz-field-text"],
+      "tokens": ["--fz-field-text", "--fz-field-gap"],
       "gaps": []
     },
     "options": {
       "name": "Choice options",
       "plural": "every set of radio buttons and checkboxes",
-      "tokens": ["--fz-field-text"],
+      "tokens": ["--fz-field-text", "--fz-option-gap", "--fz-field-gap"],
       "gaps": [
         "The size of the radio button and checkbox.",
-        "The space between options."
+        "Choice options in screen templates built with Formulize UI's fz-choice-group, which keep their own spacing."
       ]
     },
     "help": {
       "name": "Help text",
       "plural": "all help text under fields",
-      "tokens": ["--fz-help-text", "--fz-help-leading", "--fz-help-max-width"],
-      "gaps": ["The space between a field and its help text."]
+      "tokens": ["--fz-help-text", "--fz-help-leading", "--fz-help-max-width", "--fz-help-gap"],
+      "gaps": []
     },
     "button": {
       "name": "Button",
@@ -318,11 +325,12 @@
     "--fz-field-gap": {
       "group": "forms",
       "label": "Space between fields",
-      "description": "The space between one form field and the next.",
+      "description": "The space between one form field and the next, in forms and in the drawer.",
       "type": "spacing",
       "min": 2,
       "max": 12,
-      "presets": { "compact": 3.5, "comfortable": 6.5 }
+      "presets": { "compact": 3.5, "comfortable": 6.5 },
+      "home": "field"
     },
     "--fz-label-gap": {
       "group": "forms",
@@ -332,6 +340,24 @@
       "min": 0.5,
       "max": 4,
       "presets": { "compact": 1, "comfortable": 2 }
+    },
+    "--fz-help-gap": {
+      "group": "forms",
+      "label": "Space above help text",
+      "description": "The space between a field and its help text.",
+      "type": "spacing",
+      "min": 0,
+      "max": 4,
+      "presets": { "compact": 1, "comfortable": 2 }
+    },
+    "--fz-option-gap": {
+      "group": "forms",
+      "label": "Space between options",
+      "description": "The space between the radio buttons or checkboxes of one field, when each is on a line of its own.",
+      "type": "spacing",
+      "min": 0,
+      "max": 4,
+      "presets": { "compact": 0, "comfortable": 1 }
     },
     "--fz-control-height": {
       "group": "controls",

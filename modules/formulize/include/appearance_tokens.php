@@ -109,7 +109,7 @@ function formulize_appearanceTextPx() {
  * The least a token with a floor can usefully be, given the other tokens'
  * values: one line of a text token at a line height plus extra px, rounded up
  * to a half step; or another token plus a number of steps. The advanced size
- * editor works this out the same way (include/js/appearance_sizes.js).
+ * editor works this out the same way (include/js/appearance_editor.js).
  *
  * @param array $floor the token's floor, from the map
  * @param array $values token => value, for the tokens the floor refers to
@@ -211,7 +211,7 @@ function formulize_appearanceTokenDeclarations($css) {
  * type, its own limits are values its type can have, every preset value is
  * inside the token's limits, and every token has a Default in formulize-ui.css,
  * written in the form its type is written in and inside its limits. Also the
- * advanced size editor's parts: each token's phone token, home part and floor
+ * advanced editor's parts: each token's phone token, home part and floor
  * are well formed, every token a part names exists, and every token can be
  * reached from a part.
  *
@@ -302,7 +302,7 @@ function formulize_appearanceCheckTokenMap($map, $css) {
             }
         }
     }
-    // the parts of the interface the advanced size editor selects: every token they
+    // the parts of the interface the advanced editor selects: every token they
     // name exists, and every token is in a part, or is another token's phone token
     $inPart = array();
     foreach (isset($map['components']) ? $map['components'] : array() as $key => $component) {
@@ -325,7 +325,7 @@ function formulize_appearanceCheckTokenMap($map, $css) {
     }
     foreach (array_keys($map['tokens']) as $token) {
         if (!isset($inPart[$token])) {
-            $problems[] = "The size token $token isn't in any part, so the advanced size editor has no way to reach it.";
+            $problems[] = "The size token $token isn't in any part, so the advanced editor has no way to reach it.";
         }
     }
     if (empty($map['screens'])) {
@@ -335,7 +335,7 @@ function formulize_appearanceCheckTokenMap($map, $css) {
 }
 
 /**
- * Check a theme's sample screens for the advanced size editor: every part they
+ * Check a theme's sample screens for the advanced editor: every part they
  * mark with data-fz-part is a part in the map, and every file is named after a
  * screen in the map, or starts with an underscore (a piece the samples include).
  *

@@ -171,6 +171,8 @@
   --fz-field-padding-x:   calc(var(--fz-spacing) * 3);
   --fz-field-gap:         calc(var(--fz-spacing) * 5.5);  /* between fields: 22px */
   --fz-label-gap:         calc(var(--fz-spacing) * 1.5);  /* label above its field: 6px */
+  --fz-help-gap:          calc(var(--fz-spacing) * 1.5);  /* a field to its help text: 6px */
+  --fz-option-gap:        calc(var(--fz-spacing) * 0.5);  /* between options, each on its own line: 2px */
 
   /* Buttons and controls */
   --fz-control-height:    calc(var(--fz-spacing) * 8);    /* 32px */
@@ -569,7 +571,8 @@
   min-width: 0;
 }
 .fz-field__help {
-  margin: 0;
+  /* --fz-help-gap below the control, one step of which is the body's own gap */
+  margin: calc(var(--fz-help-gap) - var(--fz-spacing)) 0 0;
   max-width: var(--fz-help-max-width);
   font-size: var(--fz-help-text);
   line-height: var(--fz-help-leading);
