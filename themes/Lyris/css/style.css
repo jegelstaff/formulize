@@ -56,26 +56,34 @@ body {
    whether one has been picked. Only the family is set here: size, weight and
    colour stay with the rules that own those elements. */
 h1, h2, h3, h4, h5, h6,
+.lyris-form-screen .formulize-grid-caption {
+  font-family: var(--fz-font-heading);
+}
+
+/* Field labels and titles have a font of their own, which is the secondary font
+   unless the advanced editor sets it to the main one (--fz-label-font, and
+   --fz-title-font in the title rule below). */
 .fz-field__label,
 .form-label,
 .xoops-form-element-caption,
-.xoops-form-element-caption-required,
-.lyris-form-screen .formulize-grid-caption,
-.formulize-drawer__title {
-  font-family: var(--fz-font-heading);
+.xoops-form-element-caption-required {
+  font-family: var(--fz-label-font);
 }
 
 /* ---------- Titles ----------
    The form card title, the right drawer's title and the list title bar's title
    share one style, from the Formulize UI title tokens (--fz-title-*), so they
-   follow the Appearance page's Size preset together: 20px/600 at Default. At
+   follow the Appearance page's Size preset and advanced editor together:
+   20px/600 at Default. At
    the mobile breakpoint they use the narrow title size. */
 .lyris-form-card .fz-card__title,
 .formulize-drawer__title,
 .lyris-list__title {
+  font-family: var(--fz-title-font);
   font-size: var(--fz-title-text);
   font-weight: var(--fz-title-weight);
   line-height: var(--fz-title-leading);
+  color: var(--fz-title-color);
 }
 
 @media (max-width: 768px) {
@@ -277,11 +285,11 @@ body:not(#formulize):not(.formulize-screen) .lyris-main {
    ============================================================ */
 
 .formulize-drawer {
-  --formulize-drawer-bg:       var(--fz-color-surface);
+  --formulize-drawer-bg:       var(--fz-drawer-bg);
   --formulize-drawer-fg:       var(--fz-color-text);
   --formulize-drawer-border:   var(--fz-color-border);
   --formulize-drawer-muted:    var(--fz-color-text-muted);
-  --formulize-drawer-foot-bg:  var(--fz-color-surface-2);
+  --formulize-drawer-foot-bg:  var(--fz-drawer-foot-bg);
   --formulize-drawer-shadow:   var(--fz-shadow-lg);
   --formulize-drawer-radius:   var(--fz-radius-md);
 
@@ -366,12 +374,13 @@ body:not(#formulize):not(.formulize-screen) .lyris-main {
 .formulize-drawer .formulize-drawer__btn {
   height: var(--fz-control-height);
   padding: 0 var(--fz-control-padding-x);
+  font-family: var(--fz-control-font);
   font-size: var(--fz-control-text);
   font-weight: 500;
-  border-radius: var(--fz-radius-md);
-  border: 1px solid var(--fz-color-border-strong);
-  background: var(--fz-color-surface);
-  color: var(--fz-color-text);
+  border-radius: var(--fz-button-radius);
+  border: 1px solid var(--fz-button-border);
+  background: var(--fz-button-bg);
+  color: var(--fz-button-text);
   transition: background-color var(--fz-duration-fast) var(--fz-ease-out),
               border-color var(--fz-duration-fast) var(--fz-ease-out),
               color var(--fz-duration-fast) var(--fz-ease-out);
@@ -390,13 +399,13 @@ body:not(#formulize):not(.formulize-screen) .lyris-main {
 .formulize-drawer .formulize-drawer__btn--ghost {
   background: transparent;
   border-color: transparent;
-  color: var(--fz-color-text);
+  color: var(--fz-button-text);
 }
 
 .formulize-drawer .formulize-drawer__btn--ghost:hover {
   background: var(--fz-color-surface-3);
   border-color: transparent;
-  color: var(--fz-color-text);
+  color: var(--fz-button-text);
 }
 
 /* Restated after the base rule above, which would otherwise put the padding
@@ -633,7 +642,7 @@ textarea {
 .lyris-list__titlebar {
   flex-wrap: nowrap;
   padding: calc(var(--fz-spacing) * 3) var(--fz-toolbar-padding-x);
-  background: var(--fz-color-surface);
+  background: var(--fz-toolbar-bg);
   border-bottom: 1px solid var(--fz-color-border);
   min-height: var(--fz-toolbar-height);
   flex-shrink: 0;
@@ -657,11 +666,12 @@ textarea {
   justify-content: center;
   height: var(--fz-control-height);
   padding: 0 var(--fz-control-padding-x);
-  border-radius: var(--fz-radius-md);
-  border: 1px solid var(--fz-color-border-strong);
-  background: var(--fz-color-surface);
-  color: var(--fz-color-text);
+  border-radius: var(--fz-button-radius);
+  border: 1px solid var(--fz-button-border);
+  background: var(--fz-button-bg);
+  color: var(--fz-button-text);
   font: inherit;
+  font-family: var(--fz-control-font);
   font-size: var(--fz-control-text);
   font-weight: 500;
   cursor: pointer;
@@ -673,13 +683,13 @@ textarea {
 
 /* Add entry — primary */
 .lyris-list__titlebar #formulize_addButton {
-  background: var(--fz-color-accent);
-  color: var(--fz-color-on-accent);
-  border-color: var(--fz-color-accent);
+  background: var(--fz-button-primary-bg);
+  color: var(--fz-button-primary-text);
+  border-color: var(--fz-button-primary-bg);
 }
 .lyris-list__titlebar #formulize_addButton:hover {
-  background: var(--fz-color-accent-hover);
-  border-color: var(--fz-color-accent-hover);
+  background: var(--fz-button-primary-hover);
+  border-color: var(--fz-button-primary-hover);
 }
 
 /* More actions (...) — ghost icon button */
@@ -737,8 +747,9 @@ textarea {
   border: 0;
   background: transparent;
   font: inherit;
+  font-family: var(--fz-control-font);
   font-size: var(--fz-control-text);
-  color: var(--fz-color-text);
+  color: var(--fz-menu-text);
   border-radius: var(--fz-radius-sm);
   cursor: pointer;
   text-align: left;
@@ -770,6 +781,8 @@ textarea {
   border: 0;
   border-radius: var(--fz-radius-sm);
   background: transparent;
+  color: var(--fz-menu-text);
+  font-family: var(--fz-control-font);
   font-weight: inherit;
 }
 .lyris-list__action-panel input[type="button"].formulize_button:hover,
@@ -780,8 +793,8 @@ textarea {
 
 /* Popover components (shared across dropdown contexts) */
 .lyris-pop {
-  background: var(--fz-color-surface);
-  border-radius: var(--fz-radius-lg);
+  background: var(--fz-menu-bg);
+  border-radius: var(--fz-menu-radius);
   box-shadow: var(--fz-shadow-lg);
   border: 1px solid var(--fz-color-border);
   padding: calc(var(--fz-spacing) * 1);
@@ -798,8 +811,9 @@ textarea {
   border: 0;
   background: transparent;
   font: inherit;
+  font-family: var(--fz-control-font);
   font-size: var(--fz-control-text);
-  color: var(--fz-color-text);
+  color: var(--fz-menu-text);
   border-radius: var(--fz-radius-sm);
   cursor: pointer;
   text-align: left;
@@ -869,9 +883,9 @@ textarea {
   left: 0;
   z-index: 200;
   min-width: 15rem;
-  background: var(--fz-color-surface);
+  background: var(--fz-menu-bg);
   border: 1px solid var(--fz-color-border);
-  border-radius: var(--fz-radius-lg);
+  border-radius: var(--fz-menu-radius);
   box-shadow: var(--fz-shadow-lg);
   padding: calc(var(--fz-spacing) * 1) 0;
   flex-direction: column;
@@ -1014,8 +1028,9 @@ textarea {
   justify-content: space-between;
   gap: calc(var(--fz-spacing) * 4);
   padding: calc(var(--fz-spacing) * 3) var(--fz-toolbar-padding-x);
-  background: var(--fz-color-surface);
+  background: var(--fz-toolbar-bg);
   border-top: 1px solid var(--fz-color-border);
+  font-family: var(--fz-control-font);
   font-size: var(--fz-control-text);
   color: var(--fz-color-text-muted);
   flex-shrink: 0;
@@ -1192,8 +1207,10 @@ textarea {
   text-align: left;
   vertical-align: middle;
   padding: 0 var(--fz-cell-padding-x);
-  border-bottom: 1px solid var(--fz-color-border);
-  background: var(--fz-color-surface);
+  border-bottom: 1px solid var(--fz-row-border);
+  background: var(--fz-row-bg);
+  color: var(--fz-row-text);
+  font-family: var(--fz-table-font);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1206,11 +1223,12 @@ textarea {
 .lyris-list-table thead th,
 .lyris-list-table .lyris-header-row th {
   height: var(--fz-table-header-height);
+  font-family: var(--fz-table-header-font);
   font-weight: 600;
   font-size: var(--fz-table-header-text);
-  color: var(--fz-color-text-muted);
-  background: var(--fz-color-surface-2);
-  border-bottom-color: var(--fz-color-border-strong);
+  color: var(--fz-header-text);
+  background: var(--fz-header-bg);
+  border-bottom-color: var(--fz-header-border);
 }
 
 .lyris-list-table thead th {
@@ -1219,7 +1237,7 @@ textarea {
   z-index: 2;
 }
 
-.lyris-list-table tbody tr:hover td { background: var(--fz-color-surface-2); }
+.lyris-list-table tbody tr:hover td { background: var(--fz-row-hover); }
 .lyris-list-table tbody tr[aria-selected="true"] td { background: var(--fz-color-accent-soft); }
 
 .lyris-list-table--cozy tbody td { height: var(--fz-row-height); } /* follows the density: 40px at standard */
@@ -2041,9 +2059,9 @@ body:has(#formulize-masquerade-block) {
 .lyris-form,
 .lyris-form-screen {
   --lyris-field-padding-y:     calc(var(--fz-spacing) * 2);
-  --lyris-field-radius:        var(--fz-radius-md);   /* 6px */
+  --lyris-field-radius:        var(--fz-field-radius); /* 6px at Default */
   --lyris-label-column-width:  13.75rem;
-  --lyris-required-color:      var(--fz-color-danger);
+  --lyris-required-color:      var(--fz-required-color);
 }
 
 /* ---------- Formulize UI's form controls ----------
@@ -2082,7 +2100,11 @@ body:has(#formulize-masquerade-block) {
 .lyris-form-screen textarea:where(:not([class*="fz-"])) {
   height: max(var(--fz-field-height), var(--lyris-tap-min));
   padding: 0 var(--fz-field-padding-x);
+  font-family: var(--fz-field-font);
   font-size: var(--fz-field-text);
+  color: var(--fz-field-color);
+  background-color: var(--fz-field-bg);
+  border-color: var(--fz-field-border);
   border-radius: var(--lyris-field-radius);
   width: 100%;
 }
@@ -2175,11 +2197,14 @@ body:has(#formulize-masquerade-block) {
   gap: 0;
   padding: 0;
   margin-bottom: calc(var(--fz-spacing) * 4);
+  background: var(--fz-form-bg);
+  border-color: var(--fz-form-border);
+  border-radius: var(--fz-form-radius);
 }
 
 .lyris-form-card__header {
   padding: var(--fz-card-padding) var(--fz-form-padding);
-  border-bottom: 1px solid var(--fz-color-border);
+  border-bottom: 1px solid var(--fz-form-border);
 }
 
 .lyris-form-card__body {
@@ -2222,7 +2247,7 @@ body:has(#formulize-masquerade-block) {
   gap: calc(var(--fz-spacing) * 1.5);
   font-size: var(--fz-label-text);
   font-weight: var(--fz-label-weight);
-  color: var(--fz-color-text);
+  color: var(--fz-label-color);
   line-height: var(--fz-leading-snug); /* the two-column .col1 padding below assumes this */
   text-wrap: pretty;
   /* label-to-control gap supplied by the .form-row gap */
@@ -2238,7 +2263,7 @@ body:has(#formulize-masquerade-block) {
 /* ---------- Required indicator ---------- */
 
 .form-label .fz-field__req {
-  color: var(--lyris-required-color, var(--fz-color-danger));
+  color: var(--lyris-required-color, var(--fz-required-color));
   font-weight: 700;
   font-size: 0.95em;
 }
@@ -2248,7 +2273,7 @@ body:has(#formulize-masquerade-block) {
 .form-label span[style*="color:red"] {
   font-weight: 700;
   font-size: 0.95em;
-  color: var(--lyris-required-color, var(--fz-color-danger)) !important;
+  color: var(--lyris-required-color, var(--fz-required-color)) !important;
 }
 
 /* ---------- Body wrapper ---------- */
@@ -2258,6 +2283,10 @@ body:has(#formulize-masquerade-block) {
   flex-direction: column;
   gap: calc(var(--fz-spacing) * 1);
   min-width: 0;
+  /* a read-only value is the body's own text; fields, options and help text
+     set their own */
+  font-family: var(--fz-field-font);
+  color: var(--fz-value-color);
 }
 
 /* ---------- Help text ---------- */
@@ -2268,8 +2297,9 @@ body:has(#formulize-masquerade-block) {
    the form is already narrower than that, so the cap has no effect there.
    Anari caps its help text the same way, at 700px. */
 .form-help-text {
+  font-family: var(--fz-help-font);
   font-size: var(--fz-help-text);
-  color: var(--fz-color-text-muted);
+  color: var(--fz-help-color);
   line-height: var(--fz-help-leading);
   max-width: var(--fz-help-max-width);
   /* --fz-help-gap below the field: one step of it is the field body's own gap
@@ -2407,7 +2437,7 @@ body:has(#formulize-masquerade-block) {
   height: auto;
   margin: 0 calc(var(--fz-spacing) * 2) 0 0;       /* 8px gap between control and its label */
   vertical-align: middle;
-  accent-color: var(--fz-color-accent);
+  accent-color: var(--fz-option-accent);
   cursor: pointer;
 }
 
@@ -2426,8 +2456,9 @@ body:has(#formulize-masquerade-block) {
 .lyris-form-screen .fz-field__body input[type="checkbox"]:where(:not([class*="fz-"])) + label {
   display: inline;
   font-weight: 400;
+  font-family: var(--fz-field-font);
   font-size: var(--fz-field-text);
-  color: var(--fz-color-text);
+  color: var(--fz-field-color);
   cursor: pointer;
   vertical-align: middle;
 }
@@ -2742,11 +2773,12 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
   font-size: var(--fz-control-text);
   font-weight: 500;
   line-height: 1.4;
-  color: var(--fz-color-text-muted);
+  font-family: var(--fz-control-font);
+  color: var(--fz-tab-text);
   text-decoration: none;
-  border: 1px solid var(--fz-color-border);
-  border-radius: var(--fz-radius-full, 999px);
-  background: var(--fz-color-surface);
+  border: 1px solid var(--fz-tab-border);
+  border-radius: var(--fz-tab-radius);
+  background: var(--fz-tab-bg);
   transition: color var(--fz-duration-fast) var(--fz-ease-out),
               border-color var(--fz-duration-fast) var(--fz-ease-out),
               background-color var(--fz-duration-fast) var(--fz-ease-out);
@@ -2759,9 +2791,9 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
 }
 
 .pill-tabs__item--active {
-  color: var(--fz-color-on-accent);
-  background: var(--fz-color-accent);
-  border-color: var(--fz-color-accent);
+  color: var(--fz-tab-active-text);
+  background: var(--fz-tab-active-bg);
+  border-color: var(--fz-tab-active-bg);
 }
 
 /* NOTE: Formulize core (modules/formulize/templates/css/formulize.css) styles
@@ -2786,10 +2818,11 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
   font-size: var(--fz-control-text);
   font-weight: 500 !important;
   line-height: 1;
-  border-radius: var(--fz-radius-md);
-  border: 1px solid var(--fz-color-border-strong);
-  background-color: var(--fz-color-surface) !important;
-  color: var(--fz-color-text) !important;
+  font-family: var(--fz-control-font);
+  border-radius: var(--fz-button-radius);
+  border: 1px solid var(--fz-button-border);
+  background-color: var(--fz-button-bg) !important;
+  color: var(--fz-button-text) !important;
   cursor: pointer;
   white-space: nowrap;
   transition: background-color var(--fz-duration-fast) var(--fz-ease-out),
@@ -2820,16 +2853,16 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
 .formulizeThemeForm .formulize-form-submit-button[name^="save"],
 .formulize-drawer__body .formulize-form-submit-button[name^="save"],
 .formulize-drawer__foot .formulize-form-submit-button[name^="save"] {
-  background-color: var(--fz-color-accent) !important;
-  color: var(--fz-color-on-accent) !important;
-  border-color: var(--fz-color-accent);
+  background-color: var(--fz-button-primary-bg) !important;
+  color: var(--fz-button-primary-text) !important;
+  border-color: var(--fz-button-primary-bg);
 }
 
 .formulizeThemeForm .formulize-form-submit-button[name^="save"]:hover,
 .formulize-drawer__body .formulize-form-submit-button[name^="save"]:hover,
 .formulize-drawer__foot .formulize-form-submit-button[name^="save"]:hover {
-  background-color: var(--fz-color-accent-hover) !important;
-  border-color: var(--fz-color-accent-hover);
+  background-color: var(--fz-button-primary-hover) !important;
+  border-color: var(--fz-button-primary-hover);
 }
 
 /* The drawer footer's sizing is the mobile #multipage-controls sizing (see the
@@ -2873,11 +2906,11 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
   min-width: 0 !important;
   height: var(--fz-control-height) !important;
   font-size: var(--fz-control-text) !important;
-  color: var(--fz-color-text) !important;
+  color: var(--fz-button-text) !important;
 }
 /* Re-assert legible on-accent text for the Save-family primary after the reset. */
 #multipage-controls .formulize-form-submit-button[name^="save"] {
-  color: var(--fz-color-on-accent) !important;
+  color: var(--fz-button-primary-text) !important;
 }
 
 /* ---------- Admin-only "edit element" link ----------
@@ -2949,7 +2982,7 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
    ============================================================ */
 
 .lyris-form-screen {
-  --lyris-field-radius: var(--fz-radius-md);
+  --lyris-field-radius: var(--fz-field-radius);
 }
 
 /* ---------- File upload → drop-area look (.lyris-droparea) ----------
@@ -3607,11 +3640,12 @@ input[type="button"]:not([class*="fz-"]):not(.formulize_button) {
   gap: calc(var(--fz-spacing) * 1.5);
   height: var(--fz-control-height);
   padding: 0 var(--fz-control-padding-x);
-  border-radius: var(--fz-radius-md);
-  border: 1px solid var(--fz-color-border-strong);
-  background: var(--fz-color-surface);
-  color: var(--fz-color-text);
+  border-radius: var(--fz-button-radius);
+  border: 1px solid var(--fz-button-border);
+  background: var(--fz-button-bg);
+  color: var(--fz-button-text);
   font: inherit;
+  font-family: var(--fz-control-font);
   font-size: var(--fz-control-text);
   font-weight: 500;
   line-height: 1;
@@ -3672,11 +3706,12 @@ input[type="button"].formulize_button {
   gap: calc(var(--fz-spacing) * 1.5);
   height: var(--fz-control-height);
   padding: 0 var(--fz-control-padding-x);
-  border-radius: var(--fz-radius-md);
-  border: 1px solid var(--fz-color-border-strong);
-  background: var(--fz-color-surface);
-  color: var(--fz-color-text);
+  border-radius: var(--fz-button-radius);
+  border: 1px solid var(--fz-button-border);
+  background: var(--fz-button-bg);
+  color: var(--fz-button-text);
   font: inherit;
+  font-family: var(--fz-control-font);
   font-size: var(--fz-control-text);
   font-weight: 500;
   line-height: 1;

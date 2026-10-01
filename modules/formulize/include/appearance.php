@@ -1440,6 +1440,8 @@ function formulize_getAppearanceCssOverrides($settings = null, $theme = null) {
         $map = formulize_appearanceTokenMap();
         foreach (formulize_getAppearanceSizeValues($settings) as $token => $value) {
             $overrides[$token] = formulize_appearanceTokenCss($map['tokens'][$token]['type'], $value);
+            // and the tokens that follow it, such as the main button's hover colour
+            $overrides = array_merge($overrides, formulize_appearanceDerivedCss($map['tokens'][$token], $overrides[$token]));
         }
     }
     foreach (formulize_appearanceColourMap($theme) as $key => $colour) {

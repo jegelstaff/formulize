@@ -108,9 +108,12 @@ The Anari theme has both files, if you want an example.
 ## 5. Offer the Size preset and the advanced editor (optional)
 
 The Appearance page's [Size preset and advanced editor](/documentation/appearance_editor/) change
-Formulize UI's component tokens (`--fz-field-height`, `--fz-row-height`, `--fz-title-text` and the
-rest). They only do anything in a theme whose own CSS styles things with those tokens, so a theme says
-when it does, and only then does the Appearance page offer them.
+Formulize UI's component tokens: sizes (`--fz-field-height`, `--fz-row-height`, `--fz-title-text`),
+fonts (`--fz-label-font`), colours (`--fz-button-bg`, `--fz-header-bg`) and corners
+(`--fz-field-radius`), and the rest. They only do anything in a theme whose own CSS styles things with
+those tokens, so a theme says when it does, and only then does the Appearance page offer them. Each
+colour and font token defaults to the palette colour or font it stands for, so a theme that uses them
+looks the same until one is changed.
 
 **Opt in** by declaring `--formulize-size-tokens` on `:root` in your `css/tokens.css`:
 

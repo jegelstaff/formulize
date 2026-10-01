@@ -45,10 +45,20 @@ then each part's own settings, each with **Reset**, and **Show** to select the p
 ### One part at a time
 
 - **Click anything in the preview** to select it: a button, a form field, a label, a list row, a
-  title, the logo. Every one of that thing is outlined, and its settings appear on the right.
+  title, the logo. Every one of that thing is outlined, and its settings appear on the right, in up
+  to four groups: **Text** (its font, size, weight and colour), **Colours** (its background,
+  border and the like), **Corners**, and **Size and spacing**.
 - **A change applies to every one of them on the site**, not just the one you clicked. Changing the
   button height changes the buttons in lists, in forms and in the drawer. The panel lists the sample
   screens the part appears on; click one to see it there.
+- **A part's font** is the main font or the secondary font, whichever the Site-wide tab sets them
+  to. Titles and labels start on the secondary font, everything else on the main one.
+- **A part's colours** start as one of the site's colours, such as Primary or Muted text, and keep
+  following it when the site's colours change. Pick another of the site's colours, or a colour of the
+  part's own. The panel warns when text on a background would be hard to read. The main button's
+  hover colour is a darker shade of whatever colour it is given.
+- **Corners** can be anything from square to well rounded; buttons and page tabs can be fully
+  rounded too.
 - **The spacing of a form is on its fields.** Select a field to change the space between fields;
   help text, for the space above it; choice options, for the space between them; a label, for the
   space below it.
@@ -62,12 +72,13 @@ then each part's own settings, each with **Reset**, and **Show** to select the p
 - A part's sizes stay as you set them when you pick another Size preset.
 
 Each part's **Not adjustable yet** list says which of its settings can't be changed here yet, such as
-corner radii, small and large buttons, and the fixed spacing at phone widths.
+shadows, hover colours other than the main button's, small and large buttons, and the fixed spacing
+at phone widths.
 
 ### Saving
 
 **Save** saves everything in the editor: the site-wide settings, any new logo or favicon, and the
-parts' own settings. **Reset changes** puts everything back to the theme's own, logo and favicon
+parts' own settings. The editor stays as it was, on the same screen, width and selection. **Reset changes** puts everything back to the theme's own, logo and favicon
 included, in the editor; nothing changes on the site until you save.
 
 A reset on the Appearance page clears the parts' own settings too. While parts have settings of their
@@ -79,5 +90,5 @@ A theme opts in by declaring `--formulize-size-tokens` in its tokens, and provid
 for the preview. See [What Formulize expects from a theme](/documentation/themes/).
 
 The settings themselves are the component tokens of [Formulize UI](/documentation/formulize_ui/):
-use them in your own CSS (`height: var(--fz-control-height)`) and your styles follow these settings
-too.
+use them in your own CSS (`height: var(--fz-control-height)`, `background: var(--fz-button-bg)`,
+`font-family: var(--fz-label-font)`) and your styles follow these settings too.

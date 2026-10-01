@@ -46,25 +46,61 @@ $pageUrl = formulize_getAppearanceEditorUrl($theme);
 $errors = array();
 $settings = formulize_getAppearanceSettings($theme);
 
+// What the editor starts from, and what a save sends back to it: the settings
+// as they stand, in the editor's terms.
+function formulize_appearanceEditorState($settings, $theme) {
+	$colours = array();
+	foreach (formulize_appearanceColourMap($theme) as $key => $colour) {
+		$colours[$key] = $settings['appearance_' . $key] ? $settings['appearance_' . $key] : $colour['default'];
+	}
+	$uploads = array();
+	foreach (array_keys(formulize_appearanceUploads()) as $uploadSetting) {
+		$uploads[$uploadSetting] = (string) formulize_getAppearanceFileUrl(formulize_locateAppearanceFile($settings[$uploadSetting], $theme), $theme);
+	}
+	$overrides = json_decode($settings['appearance_overrides'], true);
+	return array(
+		'preset' => $settings['appearance_size'],
+		'overrides' => (is_array($overrides) AND $overrides) ? $overrides : new stdClass(), // an object, even when empty
+		'colours' => $colours,
+		'fonts' => array(
+			'main' => $settings['appearance_font'] ? $settings['appearance_font'] : 'geist',
+			'maincustom' => $settings['appearance_customfont'],
+			'heading' => $settings['appearance_headingfont'] ? $settings['appearance_headingfont'] : 'geist',
+			'headingcustom' => $settings['appearance_headingcustomfont'],
+		),
+		'uploads' => $uploads,
+	);
+}
+
 // Saving: every setting, as the Appearance page saves them, and the logo and
-// favicon if they were replaced or removed. Then back here, so a reload doesn't
-// post again.
+// favicon if they were replaced or removed. The editor saves in the background
+// (appearance_editor_ajax), and gets back what was saved, so it stays where it
+// was; without scripts the form posts as usual and comes back here, so a reload
+// doesn't post again. A background save sends X-Requested-With, which keeps the
+// page's token good for the next save.
+$saved = false;
 if (isset($_POST['appearance_editor_save']) AND $pageUrl) {
 	if (!$GLOBALS['xoopsSecurity']->check(true, false, 'formulize_appearance_editor_token')) {
-		$errors[] = 'Nothing was saved, because the page had been open too long. Make the changes again and save.';
+		$errors[] = 'Nothing was saved, because the page had been open too long. Reload the page, make the changes again and save.';
 	} else {
 		$submitted = formulize_appearanceSubmittedSettings($_POST, $settings, $theme, $errors);
 		$submitted = formulize_saveAppearanceUploads($submitted, $settings, $theme, false, $errors);
 		$submitted = formulize_sanitizeAppearanceSettings($submitted, $theme);
 		if (formulize_regenerateAppearanceCss($submitted, $theme)) {
-			if (!$errors) {
-				header('Location: ' . $pageUrl . '&saved=1');
-				exit();
-			}
-			$settings = $submitted; // saved, but with something left out: say what, and show what was saved
+			$saved = true;
+			$settings = $submitted;
 		} else {
 			$errors[] = 'Nothing was saved. The ' . $theme . " theme's settings are kept in its generated stylesheet, and that file could not be written to " . formulize_getAppearanceDir($theme) . '. Make that folder writable by the web server and save again.';
 		}
+	}
+	if (isset($_POST['appearance_editor_ajax'])) {
+		header('Content-Type: application/json; charset=utf-8');
+		echo json_encode(array('saved' => $saved, 'errors' => $errors, 'state' => formulize_appearanceEditorState($settings, $theme)), JSON_UNESCAPED_SLASHES);
+		exit();
+	}
+	if ($saved AND !$errors) {
+		header('Location: ' . $pageUrl . '&saved=1');
+		exit();
 	}
 }
 
@@ -74,7 +110,7 @@ $defaults = formulize_appearanceSizeDefaults($theme);
 foreach ($map['tokens'] as $token => $entry) {
 	$map['tokens'][$token]['default'] = isset($defaults[$token]) ? $defaults[$token] : null;
 }
-$overrides = json_decode($settings['appearance_overrides'], true);
+$state = formulize_appearanceEditorState($settings, $theme);
 
 // The colours, with the CSS each one writes: the editor previews a colour by
 // setting those properties on the preview, and puts back what the theme itself
@@ -85,7 +121,6 @@ foreach (formulize_appearanceColourMap($theme) as $key => $colour) {
 		'label' => $colour['label'],
 		'description' => $colour['description'],
 		'default' => $colour['default'],
-		'value' => $settings['appearance_' . $key] ? $settings['appearance_' . $key] : $colour['default'],
 		'tokens' => $colour['tokens'],
 	);
 }
@@ -104,13 +139,12 @@ foreach ($colours as $colour) {
 		$restore[$token] = isset($themeTokens[$token]) ? $themeTokens[$token] : null;
 	}
 }
-foreach (array('--fz-font-sans', '--fz-font-heading') as $token) {
+foreach (array_merge(array('--fz-font-sans', '--fz-font-heading'), array_map(function ($colour) { return $colour['css']; }, $map['colours'])) as $token) {
 	$restore[$token] = isset($themeTokens[$token]) ? $themeTokens[$token] : null;
 }
 $uploads = array();
 foreach (formulize_appearanceUploads() as $uploadSetting => $upload) {
 	$uploads[$uploadSetting] = array(
-		'url' => (string) formulize_getAppearanceFileUrl(formulize_locateAppearanceFile($settings[$uploadSetting], $theme), $theme),
 		'accept' => implode(',', array_unique(array_keys($upload['types']))),
 		'types' => $upload['typesLabel'],
 	);
@@ -124,19 +158,15 @@ $editorData = array(
 		'components' => $map['components'],
 		'gaps' => $map['gaps'],
 		'tokens' => $map['tokens'],
+		'colours' => $map['colours'],
 	),
 	'presets' => formulize_appearanceSizePresets(),
-	'preset' => $settings['appearance_size'],
-	'overrides' => (is_array($overrides) AND $overrides) ? $overrides : new stdClass(), // an object, even when empty
+	'state' => $state,
 	'colours' => $colours,
 	'fonts' => array(
 		'main' => $fonts,
 		'heading' => $headingFonts,
 		'stacks' => formulize_appearanceFontPreviewStacks($theme),
-		'font' => $settings['appearance_font'] ? $settings['appearance_font'] : 'geist',
-		'customfont' => $settings['appearance_customfont'],
-		'headingfont' => $settings['appearance_headingfont'] ? $settings['appearance_headingfont'] : 'geist',
-		'headingcustomfont' => $settings['appearance_headingcustomfont'],
 	),
 	'restore' => $restore,
 	'uploads' => $uploads,
@@ -189,8 +219,10 @@ header('Content-Type: text/html; charset=utf-8');
 			<button type="submit" class="formulize-editor__btn formulize-editor__btn--primary" name="appearance_editor_save" value="1" id="formulize-editor-save">Save</button>
 		</form>
 	</header>
+	<div id="formulize-editor-messages">
 	<?php foreach ($errors as $error) { ?><p class="formulize-editor__message formulize-editor__message--error" role="alert"><?php echo htmlspecialchars($error, ENT_QUOTES); ?></p><?php } ?>
-	<?php if (isset($_GET['saved']) AND !$errors) { ?><p class="formulize-editor__message" role="status" id="formulize-editor-saved">Saved. These settings now apply across the site in the <?php echo htmlspecialchars($theme, ENT_QUOTES); ?> theme.</p><?php } ?>
+	<?php if (isset($_GET['saved']) AND !$errors) { ?><p class="formulize-editor__message" role="status">Saved. These settings now apply across the site in the <?php echo htmlspecialchars($theme, ENT_QUOTES); ?> theme.</p><?php } ?>
+	</div>
 	<div class="formulize-editor__main">
 		<section class="formulize-editor__stage" aria-label="Preview">
 			<div class="formulize-editor__bar">

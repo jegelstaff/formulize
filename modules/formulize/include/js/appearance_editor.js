@@ -5,16 +5,20 @@
 // custom properties on its root element, so the preview always shows exactly
 // the values being edited. Clicking a part of the preview (anything with
 // data-fz-part) selects that part: every one of it is outlined, and the
-// inspector shows its settings, which apply to every one of it on the site.
-// With nothing selected, the inspector shows the site-wide settings (the
-// Appearance page's: logo, colours, fonts and the Size preset) and, on its
-// other tab, everything that has been changed.
+// inspector shows its settings (its fonts, colours, corners and sizes), which
+// apply to every one of it on the site. With nothing selected, the inspector
+// shows the site-wide settings (the Appearance page's: logo, colours, fonts and
+// the Size preset) and, on its other tab, everything that has been changed.
 //
 // Everything about the parts comes from include/appearance_tokens.json, passed
 // in as formulizeAppearanceEditor.map: the tokens' types and limits, the parts
-// of the interface and the tokens of each, what can't be adjusted yet, which
-// token has a separate value on phones, and the floors that depend on other
-// tokens. The colours and fonts are the Appearance page's own.
+// of the interface and the tokens of each, the site's colours a part can use,
+// what can't be adjusted yet, which token has a separate value on phones, and
+// the floors that depend on other tokens. The site-wide colours and fonts are
+// the Appearance page's own.
+//
+// Save sends the form in the background and takes back what was saved, so the
+// editor stays exactly where it was.
 
 (function () {
 	'use strict';
@@ -25,9 +29,11 @@
 
 	// the text steps' sizes at the default 16px root (formulize-ui.css)
 	var TEXT_PX = { 'xs': 12, 'xs-plus': 13, 'sm': 14, 'sm-plus': 15, 'base': 16, 'lg': 18, 'xl': 20, '2xl': 24, '3xl': 30 };
+	var FULL = 999; // a fully rounded corner
 	var ICON = {
 		desktop: '<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><rect x="2" y="3" width="16" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 17h6M10 14v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
-		phone: '<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><rect x="5.5" y="2" width="9" height="16" rx="1.8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M9 15.2h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
+		phone: '<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><rect x="5.5" y="2" width="9" height="16" rx="1.8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M9 15.2h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+		warn: '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M8 1.8l6.5 11.4h-13z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 6.3v3.2M8 11.4v.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
 	};
 	// Heights a theme may keep larger than the token at some widths (Lyris keeps
 	// fields 44px tall on phones, for tapping): the editor measures the first of
@@ -36,13 +42,23 @@
 		'--fz-field-height': '[data-fz-part="field"]:not(textarea):not(select[multiple])',
 		'--fz-control-height': '[data-fz-part="button"]:not(.fz-btn--icon):not(.formulize-drawer__btn--icon)'
 	};
+	// text on a background, which the inspector warns about when it is hard to
+	// read (WCAG AA: 4.5:1, or 3:1 for large text such as titles)
+	var CONTRAST = [
+		['--fz-button-primary-text', '--fz-button-primary-bg'], ['--fz-button-text', '--fz-button-bg'],
+		['--fz-tab-active-text', '--fz-tab-active-bg'], ['--fz-tab-text', '--fz-tab-bg'],
+		['--fz-title-color', '--fz-form-bg', true], ['--fz-label-color', '--fz-form-bg'], ['--fz-help-color', '--fz-form-bg'],
+		['--fz-value-color', '--fz-form-bg'], ['--fz-field-color', '--fz-field-bg'], ['--fz-menu-text', '--fz-menu-bg'],
+		['--fz-header-text', '--fz-header-bg'], ['--fz-row-text', '--fz-row-bg'], ['--fz-row-text', '--fz-row-hover']
+	];
+	var SECTIONS = [['text', 'Text'], ['colour', 'Colours'], ['shape', 'Corners'], ['space', 'Size and spacing']];
 	var UPLOADS = { appearance_logo: 'Logo', appearance_favicon: 'Favicon' };
 
 	var state = {
-		preset: DATA.preset || '',
-		overrides: Array.isArray(DATA.overrides) ? {} : copy(DATA.overrides || {}),
+		preset: '',
+		overrides: {},
 		colours: {},
-		fonts: { main: DATA.fonts.font, maincustom: DATA.fonts.customfont, heading: DATA.fonts.headingfont, headingcustom: DATA.fonts.headingcustomfont },
+		fonts: {},
 		// per upload: a newly chosen file's preview address, or removed (back to the theme's own)
 		uploads: { appearance_logo: { file: '', removed: false }, appearance_favicon: { file: '', removed: false } },
 		raised: {},
@@ -51,9 +67,11 @@
 		sel: null,
 		origin: null,
 		tab: 'site',
-		dirty: false
+		openColour: null,
+		dirty: false,
+		saving: false
 	};
-	Object.keys(DATA.colours).forEach(function (key) { state.colours[key] = DATA.colours[key].value; });
+	var savedUploads = {}; // the logo and favicon as saved: their addresses
 	var partsOn = {}; // screen => { part: true }, from the samples' markup
 
 	var $ = function (id) { return document.getElementById(id); };
@@ -63,36 +81,57 @@
 	function copy(o) { return JSON.parse(JSON.stringify(o)); }
 	function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 	function entry(token) { return MAP.tokens[token]; }
+	function type(token) { return entry(token).type; }
 	function presetName(key) { return DATA.presets[key] || DATA.presets['']; }
 	function has(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
+	function lower(s) { return s.charAt(0).toLowerCase() + s.slice(1); }
+
+	// take on the settings as saved: when the page opens, and after a save
+	function adopt(saved) {
+		state.preset = saved.preset || '';
+		state.overrides = Array.isArray(saved.overrides) ? {} : copy(saved.overrides || {});
+		state.colours = copy(saved.colours);
+		state.fonts = copy(saved.fonts);
+		savedUploads = copy(saved.uploads);
+	}
+	adopt(DATA.state);
 
 	/* ---- values ---- */
+	function isSize(token) { return ['spacing', 'text', 'weight', 'leading', 'measure'].indexOf(type(token)) !== -1; }
 	function presetValue(token) {
 		var e = entry(token);
-		return (state.preset !== '' && e.presets[state.preset] !== undefined) ? e.presets[state.preset] : e['default'];
+		return (state.preset !== '' && e.presets && e.presets[state.preset] !== undefined) ? e.presets[state.preset] : e['default'];
 	}
 	function value(token) { return has(state.overrides, token) ? state.overrides[token] : presetValue(token); }
 	function changed(token) { return has(state.overrides, token); }
+	// what a value is measured against: the preset's, for a size, or the theme's own
+	function baseName(token) { return isSize(token) ? presetName(state.preset) : 'The theme’s'; }
 	function css(token, v) {
-		var t = entry(token).type;
+		var t = type(token);
 		if (t === 'spacing') { return 'calc(var(--fz-spacing) * ' + v + ')'; }
 		if (t === 'text') { return 'var(--fz-text-' + v + ')'; }
 		if (t === 'measure') { return v + 'ch'; }
+		if (t === 'font') { return v === 'secondary' ? 'var(--fz-font-heading)' : 'var(--fz-font-sans)'; }
+		if (t === 'colour') { return MAP.colours[v] ? 'var(' + MAP.colours[v].css + ')' : v; }
+		if (t === 'radius') { return v + 'px'; }
 		return String(v);
 	}
 	function show(token, v) {
-		var t = entry(token).type;
+		var t = type(token);
 		if (t === 'spacing') { return (Math.round(v * 4 * 100) / 100) + 'px'; }
 		if (t === 'text') { return TEXT_PX[v] + 'px'; }
 		if (t === 'measure') { return v + ' characters'; }
+		if (t === 'font') { return (v === 'secondary' ? 'Secondary font' : 'Main font') + ' (' + fontName(v) + ')'; }
+		if (t === 'colour') { return MAP.colours[v] ? MAP.colours[v].label : String(v).toUpperCase(); }
+		if (t === 'radius') { return Number(v) >= FULL ? 'Fully rounded' : v + 'px'; }
 		return String(v);
 	}
-	function lower(s) { return s.charAt(0).toLowerCase() + s.slice(1); }
 
 	// the token's own limits, raised by its floor when another token's value calls for it
 	function limits(token) {
 		var e = entry(token), l = {};
 		if (e.values) { l.values = e.values; return l; }
+		if (e.min === undefined) { return l; } // a font or a colour
 		l.min = e.min; l.max = e.max;
 		var f = e.floor;
 		if (f) {
@@ -122,8 +161,42 @@
 		});
 	}
 
+	/* ---- colours ---- */
+	function hex6(h) {
+		h = String(h || '').trim().toLowerCase();
+		if (/^#[0-9a-f]{3}$/.test(h)) { h = '#' + h[1] + h[1] + h[2] + h[2] + h[3] + h[3]; }
+		return /^#[0-9a-f]{6}$/.test(h) ? h : null;
+	}
+	function mixHex(a, pct, b) {
+		var p = function (h) { return [1, 3, 5].map(function (i) { return parseInt(h.substr(i, 2), 16); }); };
+		var x = p(a), y = p(b), w = pct / 100;
+		return '#' + x.map(function (c, i) { var n = Math.round(c * w + y[i] * (1 - w)); return (n < 16 ? '0' : '') + n.toString(16); }).join('');
+	}
+	// a colour template from the Appearance page's colour map, worked out for one base colour
+	function fromTemplate(template, base) {
+		if (template === '%s') { return base; }
+		var m = /color-mix\(in srgb,\s*%s\s+(\d+)%%?,\s*(#[0-9a-fA-F]{3,6})\)/.exec(template || '');
+		return m ? mixHex(base, Number(m[1]), hex6(m[2])) : base;
+	}
+	// what one of the site's colours (primary, text-muted...) looks like right now
+	function refHex(name) {
+		var c = MAP.colours[name];
+		if (!c) { return hex6(name) || '#000000'; }
+		var site = c.from && DATA.colours[c.from];
+		if (site && colourChanged(c.from)) { return fromTemplate(site.tokens[c.css], hex6(state.colours[c.from])); }
+		var declared = hex6(DATA.restore[c.css]);
+		if (declared) { return declared; }
+		return site ? fromTemplate(site.tokens[c.css], hex6(site['default'])) : '#ffffff';
+	}
+	function tokenHex(token) { return refHex(value(token)); }
+	function luminance(h) {
+		return [1, 3, 5].map(function (i) { var c = parseInt(h.substr(i, 2), 16) / 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); })
+			.reduce(function (s, c, i) { return s + c * [0.2126, 0.7152, 0.0722][i]; }, 0);
+	}
+	function contrast(a, b) { var x = luminance(a), y = luminance(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
+
 	/* ---- the site-wide settings ---- */
-	function colourChanged(key) { return state.colours[key].toLowerCase() !== DATA.colours[key]['default'].toLowerCase(); }
+	function colourChanged(key) { return String(state.colours[key]).toLowerCase() !== String(DATA.colours[key]['default']).toLowerCase(); }
 	function fontLabel(list, key) {
 		var f = DATA.fonts[list].filter(function (x) { return x.key === key; })[0];
 		return f ? f.label : key;
@@ -145,10 +218,15 @@
 		if (state.fonts[which] === 'custom') { return customName(which) || 'Other Google Font (no name yet)'; }
 		return fontLabel(which === 'main' ? 'main' : 'heading', state.fonts[which]).replace(/ \(default\)$/, '');
 	}
+	// the name of the font a part set to the main or secondary font is in
+	function fontName(role) {
+		var main = fontShown('main');
+		return (role === 'secondary' && fontChanged('heading')) ? fontShown('heading') : main;
+	}
 	function uploadChanged(key) { return !!(state.uploads[key].file || state.uploads[key].removed); }
 	function uploadUrl(key) {
 		var u = state.uploads[key];
-		return u.file || (u.removed ? '' : DATA.uploads[key].url);
+		return u.file || (u.removed ? '' : savedUploads[key]);
 	}
 
 	/* ---- parts ---- */
@@ -161,6 +239,17 @@
 	function home(token) {
 		var t = DESKTOP_OF[token] || token;
 		return entry(t).home || usedBy(t)[0];
+	}
+	function section(token) {
+		var t = type(token);
+		if (t === 'colour') { return entry(token).text ? 'text' : 'colour'; }
+		return { text: 'text', weight: 'text', leading: 'text', font: 'text', radius: 'shape' }[t] || 'space';
+	}
+	// a setting's name where its part isn't already said, as in the Changes list:
+	// "Button: Background", rather than just "Background"
+	function fullLabel(token) {
+		var e = entry(token);
+		return isSize(token) ? e.label : MAP.components[home(token)].name + ': ' + lower(e.label);
 	}
 
 	/* ---- the preview ---- */
@@ -192,7 +281,6 @@
 		var d = doc();
 		if (!d || !d.documentElement) { return; }
 		var root = d.documentElement;
-		Object.keys(MAP.tokens).forEach(function (token) { root.style.setProperty(token, css(token, value(token))); });
 		Object.keys(DATA.colours).forEach(function (key) {
 			var c = DATA.colours[key];
 			Object.keys(c.tokens).forEach(function (token) {
@@ -205,6 +293,16 @@
 			if (font && fontChanged(pair[0])) { root.style.setProperty(pair[1], font.stack); }
 			else { restore(root, pair[1]); }
 			if (font) { loadFont(d, font.google); }
+		});
+		// every part's own settings, and the tokens that follow them (the main
+		// button's hover colour), which are put back to their Default otherwise
+		Object.keys(MAP.tokens).forEach(function (token) {
+			var e = entry(token), v = css(token, value(token));
+			root.style.setProperty(token, v);
+			Object.keys(e.derived || {}).forEach(function (d) {
+				if (changed(token)) { root.style.setProperty(d, e.derived[d].split('%s').join(v)); }
+				else { root.style.removeProperty(d); }
+			});
 		});
 		var logo = d.querySelector('[data-fz-part="logo"] img');
 		if (logo) { logo.src = uploadUrl('appearance_logo') || DATA.themeLogoUrl; }
@@ -261,25 +359,52 @@
 	});
 
 	/* ---- the inspector: a part's settings ---- */
+	// a corner that can be fully rounded has one more stop at the end of its slider
+	function sliderValue(token, v) { return (type(token) === 'radius' && Number(v) >= FULL) ? entry(token).max + 1 : v; }
+	function fromSlider(token, v) { return (type(token) === 'radius' && entry(token).full && Number(v) > entry(token).max) ? FULL : Number(v); }
+	function sliderMax(token, l) { return (type(token) === 'radius' && entry(token).full) ? l.max + 1 : l.max; }
 	function widgetFor(token, id) {
-		var e = entry(token), l = limits(token), v = value(token);
+		var e = entry(token), t = e.type, l = limits(token), v = value(token);
+		if (t === 'font') {
+			return { widget: '<div class="formulize-editor__seg formulize-editor__seg--full formulize-editor__seg--fonts" role="group" aria-labelledby="' + id + '">' + ['main', 'secondary'].map(function (r) {
+				return '<button type="button" data-token="' + token + '" data-v="' + r + '" aria-pressed="' + (v === r) + '">' + (r === 'main' ? 'Main font' : 'Secondary font') +
+					'<small>' + esc(fontName(r)) + (r === 'secondary' && !fontChanged('heading') ? ', the same as the main font' : '') + '</small></button>';
+			}).join('') + '</div>', range: '', bare: true };
+		}
+		if (t === 'colour') {
+			var open = state.openColour === token, hex = tokenHex(token), c = MAP.colours[v];
+			var w = '<button type="button" class="formulize-editor__cw" id="' + id + '" data-cw="' + token + '" aria-expanded="' + open + '"><span class="formulize-editor__swatch" style="background:' + hex + '"></span>' +
+				'<span class="formulize-editor__cw-name">' + esc(show(token, v)) + '</span><span class="formulize-editor__cw-from">' + (c ? (c.from ? 'from ' + esc(DATA.colours[c.from].label) : 'the theme’s') : 'its own') + '</span><span class="formulize-editor__cw-chev" aria-hidden="true">⌄</span></button>';
+			if (open) {
+				w += '<div class="formulize-editor__cw-pop"><p class="formulize-editor__cw-head">The site’s colours</p><div class="formulize-editor__cw-grid">' + MAP.types.colour.values.map(function (name) {
+					return '<button type="button" class="formulize-editor__cw-opt" data-token="' + token + '" data-v="' + name + '" aria-pressed="' + (v === name) + '"><span class="formulize-editor__swatch" style="background:' + refHex(name) + '"></span><span>' + esc(MAP.colours[name].label) + '</span></button>';
+				}).join('') + '</div>' +
+				'<p class="formulize-editor__cw-head">A colour of its own</p><div class="formulize-editor__cw-custom"><input type="color" data-token="' + token + '" data-custom="1" value="' + hex + '" aria-label="Pick a colour"><input type="text" data-token="' + token + '" data-hex="1" value="' + hex + '" aria-label="Hex colour" spellcheck="false" maxlength="7"><span>Doesn’t follow the site’s colours.</span></div></div>';
+			}
+			return { widget: w, range: '', bare: true };
+		}
 		if (l.values) {
 			return { widget: '<select id="' + id + '" data-token="' + token + '">' + l.values.map(function (x) {
-				return '<option value="' + esc(x) + '"' + (String(x) === String(v) ? ' selected' : '') + '>' + esc(x) + (e.type === 'text' ? ' · ' + TEXT_PX[x] + 'px' : '') + '</option>';
+				return '<option value="' + esc(x) + '"' + (String(x) === String(v) ? ' selected' : '') + '>' + esc(x) + (t === 'text' ? ' · ' + TEXT_PX[x] + 'px' : '') + '</option>';
 			}).join('') + '</select>', range: '' };
 		}
-		var step = MAP.types[e.type].step;
+		var step = MAP.types[t].step, max = sliderMax(token, l), sv = sliderValue(token, v);
 		return {
-			widget: '<button type="button" class="formulize-editor__step" data-token="' + token + '" data-d="-1" aria-label="Smaller"' + (v <= l.min ? ' disabled' : '') + '>−</button>' +
-				'<input type="range" id="' + id + '" data-token="' + token + '" min="' + l.min + '" max="' + l.max + '" step="' + step + '" value="' + v + '">' +
-				'<button type="button" class="formulize-editor__step" data-token="' + token + '" data-d="1" aria-label="Larger"' + (v >= l.max ? ' disabled' : '') + '>+</button>',
-			range: '<div class="formulize-editor__range"><span>' + show(token, l.min) + '</span><span>' + show(token, l.max) + '</span></div>'
+			widget: '<button type="button" class="formulize-editor__step" data-token="' + token + '" data-d="-1" aria-label="Smaller"' + (sv <= l.min ? ' disabled' : '') + '>−</button>' +
+				'<input type="range" id="' + id + '" data-token="' + token + '" min="' + l.min + '" max="' + max + '" step="' + step + '" value="' + sv + '">' +
+				'<button type="button" class="formulize-editor__step" data-token="' + token + '" data-d="1" aria-label="Larger"' + (sv >= max ? ' disabled' : '') + '>+</button>',
+			range: '<div class="formulize-editor__range"><span>' + show(token, l.min) + '</span><span>' + show(token, fromSlider(token, max)) + '</span></div>'
 		};
 	}
+	// the value, and what it is measured against; a font or a colour shows its
+	// value in its control, so only says so when it has been changed
 	function valHtml(token) {
-		var v = value(token);
-		return '<b>' + show(token, v) + '</b><span class="formulize-editor__from">' +
-			(changed(token) ? 'changed · ' + esc(presetName(state.preset)) + ' is ' + show(token, presetValue(token)) : 'from ' + esc(presetName(state.preset))) + '</span>';
+		var v = value(token), t = type(token);
+		var from = changed(token)
+			? 'changed · ' + (isSize(token) ? baseName(token) : lower(baseName(token))) + ' is ' + show(token, presetValue(token))
+			: (isSize(token) ? 'from ' + presetName(state.preset) : 'the theme’s own');
+		if (t === 'colour' || t === 'font') { return changed(token) ? '<span class="formulize-editor__from">' + esc(from) + '</span>' : ''; }
+		return '<b>' + esc(show(token, v)) + '</b><span class="formulize-editor__from">' + esc(from) + '</span>';
 	}
 	function measuredHeight(token) {
 		var d = doc(), sel = MEASURED[token];
@@ -287,15 +412,23 @@
 		var el = d.querySelector(sel);
 		return el ? Math.round(el.getBoundingClientRect().height) : 0;
 	}
-	function note(text, icon) {
-		return '<p class="formulize-editor__note">' + (icon ? ICON[icon] : '') + '<span>' + esc(text) + '</span></p>';
+	function note(text, icon, kind) {
+		return '<p class="formulize-editor__note' + (kind ? ' formulize-editor__note--' + kind : '') + '">' + (icon ? ICON[icon] : '') + '<span>' + text + '</span></p>';
 	}
 	function notesHtml(token) {
 		var l = limits(token), v = value(token), notes = '';
-		if (state.raised[token]) { notes += note('Raised to ' + show(token, v) + ' so it fits ' + l.why + '.'); }
-		else if (l.why && v === l.min) { notes += note('This is as small as it goes with ' + l.why + '.'); }
+		if (state.raised[token]) { notes += note(esc('Raised to ' + show(token, v) + ' so it fits ' + l.why + '.')); }
+		else if (l.why && v === l.min) { notes += note(esc('This is as small as it goes with ' + l.why + '.')); }
 		var h = measuredHeight(token);
-		if (h && h > v * 4 + 1) { notes += note('Shown at ' + h + 'px here: the theme keeps it at least that tall at this width.', state.phone ? 'phone' : ''); }
+		if (h && h > v * 4 + 1) { notes += note(esc('Shown at ' + h + 'px here: the theme keeps it at least that tall at this width.'), state.phone ? 'phone' : ''); }
+		CONTRAST.forEach(function (pair) {
+			if (pair[0] !== token && pair[1] !== token) { return; }
+			var ratio = contrast(tokenHex(pair[0]), tokenHex(pair[1])), need = pair[2] ? 3 : 4.5;
+			if (ratio >= need) { return; }
+			var other = pair[0] === token ? pair[1] : pair[0];
+			notes += note(esc((pair[0] === token ? 'This text on ' + lower(fullLabel(other)) : lower(fullLabel(other)).replace(/^./, function (c) { return c.toUpperCase(); }) + ' on this') +
+				' has a contrast of ') + '<b>' + ratio.toFixed(1) + ':1</b>' + esc('. Text needs ' + need + ':1 to be easy to read.'), 'warn', 'bad');
+		});
 		return notes;
 	}
 	function control(token) {
@@ -314,10 +447,11 @@
 			inner = '<div class="formulize-editor__devs">' + row(token, 'desktop', 'Desktop') + row(phone, 'phone', 'Phones (768px and below)') + '</div>';
 		} else {
 			w = widgetFor(token, id);
-			inner = '<div class="formulize-editor__widget">' + w.widget + '</div>' + w.range + '<div class="formulize-editor__val">' + valHtml(token) + '</div>' + notesHtml(token);
+			inner = (w.bare ? w.widget : '<div class="formulize-editor__widget">' + w.widget + '</div>') + w.range + '<div class="formulize-editor__val">' + valHtml(token) + '</div>' + notesHtml(token);
 		}
-		return '<div class="formulize-editor__ctl' + (resets.length ? ' is-changed' : '') + '">' +
-			'<div class="formulize-editor__ctl-head"><label for="' + id + '">' + esc(e.label) + '</label>' + (resets.length ? '<button type="button" class="formulize-editor__link" data-reset="' + resets.join(' ') + '">Reset</button>' : '') + '</div>' +
+		var labelTag = (e.type === 'font') ? '<span class="formulize-editor__lbl" id="' + id + '">' + esc(e.label) + '</span>' : '<label for="' + id + '">' + esc(e.label) + '</label>';
+		return '<div class="formulize-editor__ctl' + (resets.length ? ' is-changed' : '') + '" data-ctl="' + token + '">' +
+			'<div class="formulize-editor__ctl-head">' + labelTag + (resets.length ? '<button type="button" class="formulize-editor__link" data-reset="' + resets.join(' ') + '">Reset</button>' : '') + '</div>' +
 			'<p class="formulize-editor__desc">' + esc(phone ? e.description.replace(/\.$/, '') + ', on desktop and on phones.' : e.description) + '</p>' + inner +
 			(others.length ? '<p class="formulize-editor__shared">Also changes ' + esc(others.join(', ')) + '.</p>' : '') +
 		'</div>';
@@ -325,6 +459,12 @@
 	function gapsBlock(list) {
 		if (!list || !list.length) { return ''; }
 		return '<details class="formulize-editor__gaps"><summary>Not adjustable yet</summary><ul>' + list.map(function (g) { return '<li>' + esc(g) + '</li>'; }).join('') + '</ul></details>';
+	}
+	function partBlock(c) {
+		return SECTIONS.map(function (s) {
+			var tokens = c.tokens.filter(function (t) { return section(t) === s[0]; });
+			return tokens.length ? sect(s[1]) + tokens.map(control).join('') : '';
+		}).join('') + gapsBlock(c.gaps);
 	}
 
 	/* ---- the inspector: the site-wide settings ---- */
@@ -347,8 +487,8 @@
 		var list = which === 'main' ? 'main' : 'heading', id = 'formulize-editor-font-' + which;
 		var isCustom = state.fonts[which] === 'custom';
 		var desc = which === 'main'
-			? 'Body text, tables, buttons and form controls.'
-			: 'Headings, form labels, and the drawer’s title. Leave it on the main font to use one font throughout.';
+			? 'Fields, buttons, lists and help text, and any other part set to the main font.'
+			: 'Titles and field labels, and any other part set to the secondary font. Leave it on the main font to use one font throughout.';
 		return '<div class="formulize-editor__ctl' + (fontChanged(which) ? ' is-changed' : '') + '">' +
 			'<div class="formulize-editor__ctl-head"><label for="' + id + '">' + (which === 'main' ? 'Main font' : 'Secondary font') + '</label>' + (fontChanged(which) ? '<button type="button" class="formulize-editor__link" data-font-reset="' + which + '">Reset</button>' : '') + '</div>' +
 			'<p class="formulize-editor__desc">' + desc + '</p>' +
@@ -360,7 +500,7 @@
 		'</div>';
 	}
 	function siteBlock() {
-		var h = '<p class="formulize-editor__intro">The same settings as the Appearance page. Every part of the interface follows them, except for anything changed on the part itself: click anything in the preview to change just that part.</p>';
+		var h = '<p class="formulize-editor__intro">The same settings as the Appearance page. Every part of the interface follows them, except for anything changed on the part itself: click anything in the preview to change just that part, its fonts, colours, corners and sizes.</p>';
 		h += sect('Logo') + uploadBlock('appearance_logo') + uploadBlock('appearance_favicon');
 		h += sect('Colours') + Object.keys(DATA.colours).map(function (key) {
 			var c = DATA.colours[key], id = 'formulize-editor-colour-' + key;
@@ -403,15 +543,16 @@
 			h += sect('Site-wide') + site.map(function (c) {
 				return '<div class="formulize-editor__chg"><span class="formulize-editor__chg-name">' + esc(c.name) + '</span>' +
 					'<span class="formulize-editor__chg-acts"><button type="button" class="formulize-editor__link" data-site-reset="' + esc(c.reset) + '">' + esc(c.resetLabel || 'Reset') + '</button></span>' +
-					'<span class="formulize-editor__chg-val">' + (c.swatch ? '<span class="formulize-editor__swatch" style="background:' + esc(c.swatch) + '"></span>' : '') + '<b>' + esc(c.val) + '</b></span></div>';
+					'<span class="formulize-editor__chg-val">' + (c.swatch ? '<span class="formulize-editor__swatch formulize-editor__swatch--sm" style="background:' + esc(c.swatch) + '"></span>' : '') + '<b>' + esc(c.val) + '</b></span></div>';
 			}).join('');
 		}
 		if (parts.length) {
-			h += sect('Parts, on top of the ' + presetName(state.preset) + ' preset') + parts.map(function (token) {
-				return '<div class="formulize-editor__chg"><span class="formulize-editor__chg-name">' + (DESKTOP_OF[token] ? ICON.phone + ' ' : '') + esc(entry(token).label) + '</span>' +
+			h += sect('Parts') + parts.map(function (token) {
+				return '<div class="formulize-editor__chg"><span class="formulize-editor__chg-name">' + (DESKTOP_OF[token] ? ICON.phone + ' ' : '') + esc(fullLabel(token)) + '</span>' +
 					'<span class="formulize-editor__chg-acts"><button type="button" class="formulize-editor__link formulize-editor__link--plain" data-select="' + home(token) + '">Show</button><button type="button" class="formulize-editor__link" data-reset="' + token + '">Reset</button></span>' +
 					'<span class="formulize-editor__chg-part">' + esc(usedBy(token).map(function (k) { return MAP.components[k].name; }).join(', ')) + '</span>' +
-					'<span class="formulize-editor__chg-val"><b>' + show(token, value(token)) + '</b> · ' + esc(presetName(state.preset)) + ' is ' + show(token, presetValue(token)) + '</span></div>';
+					'<span class="formulize-editor__chg-val">' + (type(token) === 'colour' ? '<span class="formulize-editor__swatch formulize-editor__swatch--sm" style="background:' + tokenHex(token) + '"></span>' : '') +
+						'<b>' + esc(show(token, value(token))) + '</b> · ' + esc(baseName(token)) + ' is ' + esc(show(token, presetValue(token))) + '</span></div>';
 			}).join('');
 		}
 		return h;
@@ -427,7 +568,7 @@
 				'<div class="formulize-editor__scope">' + (c.site
 					? '<span>A site-wide setting: it changes <strong>' + esc(c.plural) + '</strong>.</span>'
 					: '<span>Changes apply to <strong>' + esc(c.plural) + '</strong> on the site, not just the one you clicked.' + (where ? ' Used on these screens, outlined in each:' : '') + '</span>' + (where ? '<div class="formulize-editor__where">' + where + '</div>' : '')) + '</div>';
-			body.innerHTML = c.site === 'logo' ? uploadBlock('appearance_logo') + uploadBlock('appearance_favicon') : c.tokens.map(control).join('') + gapsBlock(c.gaps);
+			body.innerHTML = c.site === 'logo' ? uploadBlock('appearance_logo') + uploadBlock('appearance_favicon') : partBlock(c);
 		} else {
 			var n = changeCount();
 			head.innerHTML = '<div class="formulize-editor__kicker">Nothing selected</div>' +
@@ -445,38 +586,51 @@
 		var n = changeCount(), count = $('formulize-editor-count');
 		count.hidden = n === 0; count.textContent = n + (n === 1 ? ' change' : ' changes');
 		$('formulize-editor-reset').disabled = n === 0;
-		// keep focus on the control being used across the re-render
-		var f = document.activeElement, attrs = ['data-token', 'data-d', 'data-colour', 'data-font', 'data-custom-font', 'data-preset', 'data-tab'];
+		// keep focus, and the inspector's scroll position, across the re-render
+		var f = document.activeElement, attrs = ['data-token', 'data-d', 'data-v', 'data-cw', 'data-custom', 'data-hex', 'data-colour', 'data-font', 'data-custom-font', 'data-preset', 'data-tab'];
 		var key = (f && f.getAttribute && (body.contains(f) || head.contains(f))) ? attrs.map(function (a) { return f.getAttribute(a) || ''; }) : null;
+		var scroll = body.parentNode.scrollTop;
 		renderInspector();
+		body.parentNode.scrollTop = scroll;
 		if (key && key.join('')) {
 			var again = Array.prototype.filter.call(document.querySelectorAll('#formulize-editor-insp-head *, #formulize-editor-insp-body *'), function (el) {
 				return el.tagName === f.tagName && attrs.every(function (a, i) { return (el.getAttribute(a) || '') === key[i]; });
 			})[0];
-			if (again && !again.disabled) { again.focus(); }
+			if (again && !again.disabled) { again.focus({ preventScroll: true }); }
 		}
 	}
 	function touch() { state.dirty = true; }
 	function store(token, v) {
-		v = entry(token).type === 'text' ? v : Number(v);
+		var t = type(token);
+		v = (t === 'text' || t === 'font' || t === 'colour') ? String(v) : fromSlider(token, v);
 		if (v === presetValue(token)) { delete state.overrides[token]; } else { state.overrides[token] = v; }
 		touch();
 	}
 	function setValue(token, v) { store(token, v); render(); pulse(); }
-	// while a slider is dragged, only the preview and that setting's value change:
-	// rebuilding the inspector would replace the slider under the pointer
+	// while a slider or a colour picker is dragged, only the preview and that
+	// setting's value change: rebuilding the inspector would replace the control
+	// under the pointer
 	function dragValue(input) {
 		var token = input.getAttribute('data-token');
 		store(token, input.value); enforce(); applyTokens();
 		var ctl = input.closest('.formulize-editor__ctl');
 		ctl.querySelector('.formulize-editor__val').innerHTML = valHtml(token);
 		ctl.classList.toggle('is-changed', changed(token));
+		var cw = ctl.querySelector('.formulize-editor__cw');
+		if (cw) {
+			cw.querySelector('.formulize-editor__swatch').style.background = tokenHex(token);
+			cw.querySelector('.formulize-editor__cw-name').textContent = show(token, value(token));
+			cw.querySelector('.formulize-editor__cw-from').textContent = 'its own';
+			Array.prototype.forEach.call(ctl.querySelectorAll('.formulize-editor__cw-opt'), function (o) { o.setAttribute('aria-pressed', 'false'); });
+			var other = ctl.querySelector(input.getAttribute('data-hex') ? '[data-custom]' : '[data-hex]');
+			if (other) { other.value = tokenHex(token); }
+		}
 	}
 	// changing the phone value shows the phone preview, and the desktop value the desktop one
 	function deviceFor(token) { return DESKTOP_OF[token] ? 'phone' : (PHONE_OF[token] ? 'desktop' : null); }
 
 	function select(part, origin) {
-		state.sel = part; state.origin = origin;
+		state.sel = part; state.origin = origin; state.openColour = null;
 		if (part && partsOn[state.screen] && Object.keys(partsOn[state.screen]).length && !partsOn[state.screen][part]) {
 			var s = Object.keys(MAP.screens).filter(function (x) { return partsOn[x] && partsOn[x][part]; })[0];
 			if (s) { goScreen(s); }
@@ -518,22 +672,29 @@
 		}
 		if (a('data-custom-font')) { state.fonts[a('data-custom-font') + 'custom'] = el.value; touch(); applyTokens(); return; }
 		var token = a('data-token'); if (!token) { return; }
-		if (el.type === 'range') { dragValue(el); } else { setWidth(deviceFor(token)); setValue(token, el.value); }
+		if (a('data-hex')) { if (hex6(el.value) && el.value.length === 7) { el.value = hex6(el.value); dragValue(el); } return; }
+		if (el.type === 'range' || a('data-custom')) { dragValue(el); } else { setWidth(deviceFor(token)); setValue(token, el.value); }
 	});
 	body.addEventListener('change', function (ev) {
 		var el = ev.target, a = function (n) { return el.getAttribute && el.getAttribute(n); };
-		if (el.type === 'range' || a('data-colour') || a('data-custom-font')) { render(); pulse(); }
+		if (el.type === 'range' || a('data-colour') || a('data-custom-font') || a('data-custom') || a('data-hex')) { render(); pulse(); }
 		else if (a('data-font')) { state.fonts[a('data-font')] = el.value; touch(); render(); }
 	});
 	body.addEventListener('click', function (ev) {
 		var b = ev.target.closest('button'); if (!b) { return; }
-		var a = function (n) { return b.getAttribute(n); }, parts;
+		var a = function (n) { return b.getAttribute(n); }, parts, token;
 		if (a('data-reset')) {
 			a('data-reset').split(' ').forEach(function (t) { delete state.overrides[t]; });
 			touch(); render(); pulse();
 		} else if (a('data-d')) {
-			var token = a('data-token'), l = limits(token);
-			setValue(token, Math.min(l.max, Math.max(l.min, value(token) + Number(a('data-d')) * MAP.types[entry(token).type].step)));
+			token = a('data-token');
+			var l = limits(token), max = sliderMax(token, l), sv = Number(sliderValue(token, value(token)));
+			setValue(token, Math.min(max, Math.max(l.min, sv + Number(a('data-d')) * MAP.types[type(token)].step)));
+		} else if (a('data-cw')) {
+			state.openColour = state.openColour === a('data-cw') ? null : a('data-cw'); render();
+		} else if (a('data-v') && a('data-token')) {
+			if (b.classList.contains('formulize-editor__cw-opt')) { state.openColour = null; } // a colour picked: done
+			setValue(a('data-token'), a('data-v'));
 		} else if (a('data-select')) {
 			select(a('data-select'), null);
 		} else if (a('data-preset') !== null) {
@@ -546,7 +707,7 @@
 			resetUpload(a('data-upload-undo')); touch(); render();
 		} else if (a('data-upload-remove')) {
 			resetUpload(a('data-upload-remove'));
-			state.uploads[a('data-upload-remove')].removed = !!DATA.uploads[a('data-upload-remove')].url; touch(); render();
+			state.uploads[a('data-upload-remove')].removed = !!savedUploads[a('data-upload-remove')]; touch(); render();
 		} else if (a('data-site-reset')) {
 			parts = a('data-site-reset').split(':');
 			if (parts[0] === 'colour') { state.colours[parts[1]] = DATA.colours[parts[1]]['default']; }
@@ -593,13 +754,26 @@
 		state.overrides = {}; state.preset = '';
 		Object.keys(DATA.colours).forEach(function (key) { state.colours[key] = DATA.colours[key]['default']; });
 		resetFont('main'); resetFont('heading');
-		Object.keys(UPLOADS).forEach(function (key) { resetUpload(key); state.uploads[key].removed = !!DATA.uploads[key].url; });
+		Object.keys(UPLOADS).forEach(function (key) { resetUpload(key); state.uploads[key].removed = !!savedUploads[key]; });
 		touch(); render();
 	});
 
-	// saving: every setting goes in the form's hidden fields
-	var submitting = false;
-	$('formulize-editor-form').addEventListener('submit', function () {
+	/* ---- saving ---- */
+	// a message under the header, which a save replaces
+	function message(text, error) {
+		var box = $('formulize-editor-messages');
+		box.innerHTML = '';
+		(Array.isArray(text) ? text : [text]).forEach(function (t) {
+			var p = document.createElement('p');
+			p.className = 'formulize-editor__message' + (error ? ' formulize-editor__message--error' : '');
+			p.setAttribute('role', error ? 'alert' : 'status');
+			p.textContent = t;
+			box.appendChild(p);
+		});
+		if (!error) { clearTimeout(message.timer); message.timer = setTimeout(function () { box.innerHTML = ''; }, 5000); }
+	}
+	// every setting goes in the form's hidden fields
+	function fillForm(form) {
 		enforce();
 		var values = {
 			appearance_size: state.preset,
@@ -612,15 +786,46 @@
 			appearance_favicon_remove: state.uploads.appearance_favicon.removed ? '1' : ''
 		};
 		Object.keys(DATA.colours).forEach(function (key) { values['appearance_' + key] = state.colours[key]; });
-		Array.prototype.forEach.call(this.querySelectorAll('[data-setting]'), function (input) {
+		Array.prototype.forEach.call(form.querySelectorAll('[data-setting]'), function (input) {
 			input.value = has(values, input.getAttribute('data-setting')) ? values[input.getAttribute('data-setting')] : '';
 		});
-		submitting = true;
+	}
+	var submitting = false;
+	$('formulize-editor-form').addEventListener('submit', function (ev) {
+		var form = this;
+		fillForm(form);
+		if (!window.fetch || !window.FormData) { submitting = true; return; } // the form posts, and the page comes back
+		ev.preventDefault();
+		if (state.saving) { return; }
+		state.saving = true;
+		var save = $('formulize-editor-save');
+		save.disabled = true; save.textContent = 'Saving…';
+		var data = new FormData(form);
+		data.append('appearance_editor_save', '1');
+		data.append('appearance_editor_ajax', '1');
+		fetch(form.action, { method: 'POST', body: data, credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+			.then(function (r) { return r.json(); })
+			.then(function (result) {
+				if (result.saved) {
+					// what was saved is what the editor now starts from: a custom font with
+					// no name, for one, comes back as the theme's own
+					Object.keys(UPLOADS).forEach(function (key) { resetUpload(key); });
+					adopt(result.state);
+					state.dirty = false;
+				}
+				if (result.errors && result.errors.length) { message(result.errors, true); }
+				else { message('Saved. These settings now apply across the site in the ' + DATA.theme + ' theme.'); }
+				render();
+			})['catch'](function () {
+				message('Nothing was saved: the site didn’t answer. Check your connection and save again.', true);
+			}).then(function () {
+				state.saving = false; save.disabled = false; save.textContent = 'Save';
+			});
 	});
 	window.addEventListener('beforeunload', function (ev) {
 		if (state.dirty && !submitting) { ev.preventDefault(); ev.returnValue = ''; }
 	});
-	var saved = $('formulize-editor-saved');
+	var saved = document.querySelector('#formulize-editor-messages [role="status"]');
 	if (saved) { setTimeout(function () { saved.hidden = true; }, 5000); }
 
 	goScreen(state.screen);

@@ -199,6 +199,88 @@
 
 
 /* ============================================================
+   Component fonts, colours and corners
+   ============================================================
+
+   Which font each kind of text is set in, the colours of each part of the
+   interface, and their corners. Like the sizes above, components read these,
+   so setting one changes that part everywhere; the Appearance page's advanced
+   editor sets them, and what each can be set to is in appearance_tokens.json.
+
+   Each one defaults to the site-wide setting it has always followed: a font is
+   the main font (--fz-font-sans) or the secondary one (--fz-font-heading), and
+   a colour is one of the palette's, so changing the palette still changes every
+   part that hasn't been given a colour of its own. Keep them written that way
+   (var(--fz-font-...), var(--fz-color-...), var(--fz-radius-...) or px), so
+   the Appearance page can read them.
+
+   --fz-button-primary-hover isn't set directly: it follows
+   --fz-button-primary-bg, darkened, when that is changed. */
+:root {
+  /* Fonts */
+  --fz-title-font:        var(--fz-font-heading);  /* form card, list and drawer titles */
+  --fz-label-font:        var(--fz-font-heading);  /* field labels */
+  --fz-field-font:        var(--fz-font-sans);     /* fields, read-only values, choice options */
+  --fz-help-font:         var(--fz-font-sans);
+  --fz-control-font:      var(--fz-font-sans);     /* buttons, tabs, menus, list toolbars */
+  --fz-table-font:        var(--fz-font-sans);     /* list and table cells */
+  --fz-table-header-font: var(--fz-font-sans);     /* column headings */
+
+  /* Text colours */
+  --fz-title-color:       var(--fz-color-text);
+  --fz-label-color:       var(--fz-color-text);
+  --fz-required-color:    var(--fz-color-danger);
+  --fz-field-color:       var(--fz-color-text);    /* in fields, and choice options */
+  --fz-value-color:       var(--fz-color-text);    /* read-only values */
+  --fz-help-color:        var(--fz-color-text-muted);
+
+  /* Forms */
+  --fz-field-bg:          var(--fz-color-surface);
+  --fz-field-border:      var(--fz-color-border-strong);
+  --fz-field-radius:      var(--fz-radius-md);
+  --fz-option-accent:     var(--fz-color-accent);  /* a chosen radio button or checkbox */
+  --fz-form-bg:           var(--fz-color-surface);
+  --fz-form-border:       var(--fz-color-border);
+  --fz-form-radius:       var(--fz-radius-lg);
+
+  /* Buttons and controls */
+  --fz-button-bg:           var(--fz-color-surface);
+  --fz-button-text:         var(--fz-color-text);
+  --fz-button-border:       var(--fz-color-border-strong);
+  --fz-button-primary-bg:   var(--fz-color-accent);
+  --fz-button-primary-text: var(--fz-color-on-accent);
+  --fz-button-primary-hover: var(--fz-color-accent-hover);
+  --fz-button-radius:       var(--fz-radius-md);
+  --fz-tab-bg:              var(--fz-color-surface);
+  --fz-tab-text:            var(--fz-color-text-muted);
+  --fz-tab-border:          var(--fz-color-border);
+  --fz-tab-active-bg:       var(--fz-color-accent);
+  --fz-tab-active-text:     var(--fz-color-on-accent);
+  --fz-tab-radius:          var(--fz-radius-full);
+  --fz-menu-bg:             var(--fz-color-surface);
+  --fz-menu-text:           var(--fz-color-text);
+  --fz-menu-radius:         var(--fz-radius-lg);
+
+  /* Lists */
+  --fz-toolbar-bg:        var(--fz-color-surface);
+  --fz-header-bg:         var(--fz-color-surface-2);
+  --fz-header-text:       var(--fz-color-text-muted);
+  --fz-header-border:     var(--fz-color-border-strong);
+  --fz-row-bg:            var(--fz-color-surface);
+  --fz-row-text:          var(--fz-color-text);
+  --fz-row-hover:         var(--fz-color-surface-2);
+  --fz-row-border:        var(--fz-color-border);
+
+  /* Cards and the drawer */
+  --fz-card-bg:           var(--fz-color-surface);
+  --fz-card-border:       var(--fz-color-border);
+  --fz-card-radius:       var(--fz-radius-lg);
+  --fz-drawer-bg:         var(--fz-color-surface);
+  --fz-drawer-foot-bg:    var(--fz-color-surface-2);
+}
+
+
+/* ============================================================
    Layout classes
    ============================================================
 
@@ -394,11 +476,12 @@
   /* as wide as its label: some themes give every button a minimum width */
   min-width: 0;
   padding: 0 var(--fz-control-padding-x);
-  border-radius: var(--fz-radius-md);
-  border: 1px solid var(--fz-color-border-strong);
-  background: var(--fz-color-surface);
-  color: var(--fz-color-text);
+  border-radius: var(--fz-button-radius);
+  border: 1px solid var(--fz-button-border);
+  background: var(--fz-button-bg);
+  color: var(--fz-button-text);
   font: inherit;
+  font-family: var(--fz-control-font);
   font-size: var(--fz-control-text);
   font-weight: var(--fz-font-weight-medium);
   line-height: var(--fz-leading-normal);
@@ -421,13 +504,13 @@
 
 /* The main action: usually one per area. */
 .fz-btn--primary {
-  background: var(--fz-color-accent);
-  color: var(--fz-color-on-accent);
-  border-color: var(--fz-color-accent);
+  background: var(--fz-button-primary-bg);
+  color: var(--fz-button-primary-text);
+  border-color: var(--fz-button-primary-bg);
 }
 .fz-btn--primary:hover {
-  background: var(--fz-color-accent-hover);
-  border-color: var(--fz-color-accent-hover);
+  background: var(--fz-button-primary-hover);
+  border-color: var(--fz-button-primary-hover);
 }
 /* A destructive action, such as delete. */
 .fz-btn--danger {
@@ -537,12 +620,12 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-family: var(--fz-font-heading);
+  font-family: var(--fz-label-font);
   font-size: var(--fz-label-text);
   font-weight: var(--fz-label-weight);
   line-height: var(--fz-leading-snug);
   text-wrap: pretty;
-  color: var(--fz-color-text);
+  color: var(--fz-label-color);
 }
 /* On a <fieldset>, for a group of choices, with a <legend class="fz-field__label">:
    no border, padding or margin of the fieldset's own. A legend sits outside the
@@ -559,7 +642,7 @@
 }
 /* The required marker, inside the label. */
 .fz-field__req {
-  color: var(--fz-color-danger);
+  color: var(--fz-required-color);
   font-weight: var(--fz-font-weight-bold);
   font-size: 0.95em;
 }
@@ -574,9 +657,10 @@
   /* --fz-help-gap below the control, one step of which is the body's own gap */
   margin: calc(var(--fz-help-gap) - var(--fz-spacing)) 0 0;
   max-width: var(--fz-help-max-width);
+  font-family: var(--fz-help-font);
   font-size: var(--fz-help-text);
   line-height: var(--fz-help-leading);
-  color: var(--fz-color-text-muted);
+  color: var(--fz-help-color);
 }
 /* Label beside the control, lined up with its first line; the two stack when
    the control would get narrower than half the field. */
@@ -609,11 +693,12 @@
   height: var(--fz-field-height);
   margin: 0;
   padding: 0 var(--fz-field-padding-x);
-  border: 1px solid var(--fz-color-border-strong);
-  border-radius: var(--fz-radius-md);
-  background: var(--fz-color-surface);
-  color: var(--fz-color-text);
+  border: 1px solid var(--fz-field-border);
+  border-radius: var(--fz-field-radius);
+  background: var(--fz-field-bg);
+  color: var(--fz-field-color);
   font: inherit;
+  font-family: var(--fz-field-font);
   font-size: var(--fz-field-text);
   line-height: var(--fz-leading-normal);
   outline: none;
@@ -812,9 +897,9 @@
   gap: var(--fz-gap);
   min-width: 0;
   padding: var(--fz-card-padding);
-  background: var(--fz-color-surface);
-  border: 1px solid var(--fz-color-border);
-  border-radius: var(--fz-radius-lg);
+  background: var(--fz-card-bg);
+  border: 1px solid var(--fz-card-border);
+  border-radius: var(--fz-card-radius);
   box-shadow: var(--fz-shadow-sm);
   color: var(--fz-color-text);
   line-height: var(--fz-leading-normal);
@@ -926,28 +1011,30 @@
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
+  font-family: var(--fz-table-font);
   font-size: var(--fz-table-text);
   line-height: var(--fz-leading-normal);
-  color: var(--fz-color-text);
+  color: var(--fz-row-text);
 }
 .fz-table :where(th, td) {
   padding: 0 var(--fz-cell-padding-x);
   text-align: start;
   vertical-align: middle;
-  border-bottom: 1px solid var(--fz-color-border);
+  border-bottom: 1px solid var(--fz-row-border);
   /* its own surface, so the table reads the same on the page as in a card */
-  background: var(--fz-color-surface);
+  background: var(--fz-row-bg);
 }
 .fz-table :where(tbody td) {
   height: var(--fz-row-height);
 }
 .fz-table :where(thead th) {
   height: var(--fz-table-header-height);
+  font-family: var(--fz-table-header-font);
   font-size: var(--fz-table-header-text);
   font-weight: var(--fz-font-weight-semibold);
-  color: var(--fz-color-text-muted);
-  background: var(--fz-color-surface-2);
-  border-bottom-color: var(--fz-color-border-strong);
+  color: var(--fz-header-text);
+  background: var(--fz-header-bg);
+  border-bottom-color: var(--fz-header-border);
 }
 .fz-table--striped :where(tbody tr:nth-child(even) td) {
   background: var(--fz-color-surface-3);
