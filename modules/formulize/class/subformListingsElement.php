@@ -56,15 +56,20 @@ class formulizeSubformListingsElement extends formulizeElement {
 	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
+		$elementsInRowRequirement = $update ? "Optional. Leave out to keep the current elements" : "Required";
+		$examples = $update ? "
+**Examples:**
+- Change which elements from the source form are shown, to elements 101, 102 and 105, and sort the entries by the value of element 105: { elementsInRow: [101, 102, 105], sortingElement: 105 }
+- Open entries in the drawer for viewing/editing, instead of in the full screen: { entryViewingMode: 'drawer' }" : "
+**Example:**
+- A 'Listings' Subform Interface that shows the values of elements 101, 102, 103, and 104, from connected entries in form 97. Sort the entries by the value of element 101. Open entries in the drawer for viewing/editing: { sourceForm: 97, elementsInRow: [101, 102, 103, 104], sortingElement: 101, entryViewingMode: 'drawer' }";
 		$descriptionAndExamples = "
 **Subform Interface Type:** Listings (subformListings).
 **Description:** This Subform Interface provides a list view of connected entries. Each entry shows up as a row in a table, with a clickable icon to open up the full entry for viewing or editing. This is best for situations when users simply need to see a listing of entries, and/or when forms have a too many elements for comfortably showing in editable rows (generally more than 5).
 **Properties:**
 - all the common properties for Subform Interfaces, plus:
-- elementsInRow (Required. An array of element ids, indicating which elements from the source form should be shown in the list view. The values of these elements will be shown in each row. The values will not be editable, they will be shown as plain text.)
-- entryViewingMode (Optional. A string, either 'off', 'form_screen' or 'modal'. If 'off', then there are no clickable icons for opening up each connected entry for viewing/editing. If 'full_screen' then there are clickable icons, and they will cause the page to reload with the correct Form Screen for showing the connected entry. If 'modal' then there are clickable icons, and they will open the entry in the right slide-out drawer, over the page (this option is named 'modal' for backwards compatibility; it used to be a modal popup box). Default is 'full_screen'. For small forms, 'modal' is usually best. For large forms, 'full_screen' is usually best. If a user should not be able to view/edit the embedded entries, or does not need to, then set this to 'off'.
-**Example:**
-- A 'Listings' Subform Interface that shows the values of elements 101, 102, 103, and 104, from connected entries in form 97. Sort the entries by the value of element 101. Open entries in the drawer for viewing/editing: { sourceForm: 97, elementsInRow: [101, 102, 103, 104], sortingElement: 101, entryViewingMode: 'modal' }";
+- elementsInRow ($elementsInRowRequirement. An array of element ids, indicating which elements from the source form should be shown in the list view. The values of these elements will be shown in each row. The values will not be editable, they will be shown as plain text.)
+- entryViewingMode (Optional. A string, either 'off', 'full_screen' or 'drawer'. If 'off', then there are no clickable icons for opening up each connected entry for viewing/editing. If 'full_screen' then there are clickable icons, and they will cause the page to reload with the correct Form Screen for showing the connected entry. If 'drawer' then there are clickable icons, and they will open the entry in a drawer that slides out from the right, over the page. Default is 'full_screen'. For small forms, 'drawer' is usually best. For large forms, 'full_screen' is usually best. If a user should not be able to view/edit the embedded entries, or does not need to, then set this to 'off'.$examples";
 		return $descriptionAndExamples;
 	}
 
@@ -100,14 +105,19 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 	 */
 	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null, $formId = null) {
 
-		$elementTypeName = strtolower(str_ireplace(['formulize', 'element'], "", static::class));
+		// static::class is the handler class here, ie: formulizeSubformEditableRowElementHandler, so strip 'ElementHandler' as a whole to get the type name, ie: subformeditablerow
+		$elementTypeName = strtolower(str_ireplace(['formulize', 'ElementHandler'], "", static::class));
 
 		if(isset($properties['sourceForm']) AND $properties['sourceForm'] > 0) {
 			$form_handler = xoops_getmodulehandler('forms', 'formulize');
 			$sourceFid = intval($properties['sourceForm']);
 			if($sourceFormObject = $form_handler->get($sourceFid)) {
-				$ele_value[0] = $sourceFid;
 				$elementObject = $elementIdentifier ? _getElementObject($elementIdentifier) : false;
+				// the source form is chosen once, when the subform interface is created, the same as in the admin UI. Other settings depend on it, such as the screen used to display the entries, and the elements shown in each row.
+				if($elementObject AND intval($ele_value[0]) AND intval($ele_value[0]) != $sourceFid) {
+					throw new Exception("The source form of a Subform Interface cannot be changed after it is created. This one shows entries from form ".intval($ele_value[0]).". To show entries from form $sourceFid instead, create a new Subform Interface.");
+				}
+				$ele_value[0] = $sourceFid;
 				$hostFid = $elementObject ? intval($elementObject->getVar('fid')) : intval($formId);
 				$existingConnection = false;
 				if($hostFid) {
@@ -161,21 +171,32 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 		if(isset($properties['disabledElementsInRow']) AND is_array($properties['disabledElementsInRow']) AND count($properties['disabledElementsInRow']) > 0) {
 			$ele_value['disabledelements'] = implode(',', array_map('intval', $properties['disabledElementsInRow']));
 		}
-		if(isset($properties['entryViewingMode']) AND in_array($properties['entryViewingMode'], ['off','form_screen','modal'])) {
-			switch($properties['entryViewingMode']) {
+		if(isset($properties['entryViewingMode'])) {
+			switch((string) $properties['entryViewingMode']) { // as a string, so that a loose comparison cannot match true to 'off'
 				case 'off':
 					$ele_value[3] = 0;
 					break;
-				case 'form_screen':
+				case 'full_screen':
 					$ele_value[3] = $elementTypeName == 'subformeditablerow' ? 4 : 1;
 					break;
-				case 'modal':
+				case 'drawer':
 					$ele_value[3] = $elementTypeName == 'subformeditablerow' ? 3 : 2;
 					break;
+				default:
+					throw new Exception("entryViewingMode must be 'off', 'full_screen' or 'drawer'. '".strip_tags(htmlspecialchars((string) $properties['entryViewingMode']))."' is not one of those.");
 			}
 		}
-		if(isset($properties['fullFormMode']) AND in_array($properties['fullFormMode'], ['collapsable','not_collapsable'])) {
-			$ele_value[8] = $properties['fullFormMode'];
+		if(isset($properties['fullFormMode'])) {
+			// listings and editable rows store 'row' in the same setting, so letting this through would turn them into a broken full form
+			if($elementTypeName != 'subformfullform') {
+				throw new Exception("fullFormMode only applies to Full Form subform interfaces (subformFullForm).");
+			}
+			// stored as 'form' (collapsable accordions) or 'flatform' (embedded one after the other), which is what the rendering code looks for
+			$fullFormModes = ['collapsable' => 'form', 'not_collapsable' => 'flatform'];
+			if(!isset($fullFormModes[(string) $properties['fullFormMode']])) {
+				throw new Exception("fullFormMode must be 'collapsable' or 'not_collapsable'. '".strip_tags(htmlspecialchars((string) $properties['fullFormMode']))."' is not one of those.");
+			}
+			$ele_value[8] = $fullFormModes[(string) $properties['fullFormMode']];
 		}
 		return [
 			'ele_value' => $ele_value,

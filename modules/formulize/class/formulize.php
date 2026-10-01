@@ -292,14 +292,17 @@ class formulizeHandler {
 	 */
 	public static function mcpElementPropertiesBaseDescriptionAndExamplesForSubforms($update = false) {
 
+		// the source form is chosen once, at creation, so it is not offered when updating at all
+		$sourceFormDescription = $update ? "" : "
+- sourceForm (int, the form ID of the form to be displayed in this Subform Interface. This cannot be changed later. If the source form is not already connected to this form, a new Linked Dropdown List will be created in the source form, and it will be linked to the Principal Identifer in this form. For example, if a Cities form is embedded in a Provinces form, and there is no existing connection between them, then a Linked Dropdown List will be added to the Cities form that links to the Province form's principal identifier.)";
+
 		$description = "
 **Overview:**
 - Subform Interfaces are used to provide an interface in one form, that shows the entries in another form. They are designed to work with forms that are connected in a one to many relationship, such as Each Province has many Cities, or Each Budget has many Budget Line Items, etc.
 **Important notes:**
 - Subform Interfaces do not store user data. They are a collection of settings that control how the entries in the 'many' form are to be displayed and managed, when viewed from the 'one' form.
 - Subform Interfaces are very powerful tools for supporting complex data management scenarios. They allow users to manage entire sets of data through one screen, instead of having to manage each individual entry separately.
-**Properties common to all Subform Interfaces:**
-- sourceForm (int, the form ID of the form to be displayed in this Subform Interface. If the source form is not already connected to this form, a new Linked Dropdown List will be created in the source form, and it will be linked to the Principal Identifer in this form. For example, if a Cities form is embedded in a Provinces form, and there is no existing connection between them, then a Linked Dropdown List will be added to the Cities form that links to the Province form's principal identifier.)
+**Properties common to all Subform Interfaces:**$sourceFormDescription
 - sortingElement (int, the element ID of an element in the source form to sort the entries by. If not specified, entries will be shown in creation order.)
 - sortingDirection (string, either 'ASC' or 'DESC', indicating if the entries should be sorted in ascending or descending order. Default is 'ASC'.)
 - showAddButton (int, either 1 or 0, indicating if an Add Entry button should be shown to users, if they have permission to add entries in the source form. Default is 1. Set to 0 if this Subform Interface should never include an Add Entry button.)

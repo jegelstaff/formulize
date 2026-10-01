@@ -2,13 +2,15 @@ const { test, expect } = require('@playwright/test');
 import { dbQuery, dbPrefix, getSystemConfig, setSystemConfig, getUserByLogin, login, deleteMuseumForm } from '../../utils';
 
 // A Subform Interface shows entries from a source form, so the two forms have to be connected. When they
-// are not, the create and update subform tools promise to connect them: a linked element is made in the
-// source form, pointing at the Principal Identifier of the form the Subform Interface is in, and that
-// connection is recorded in the Primary Relationship. These tests hold the tools to that promise.
+// are not, the create subform tool promises to connect them: a linked element is made in the source form,
+// pointing at the Principal Identifier of the form the Subform Interface is in, and that connection is
+// recorded in the Primary Relationship. These tests hold the tool to that promise. Both halves have to be
+// checked: the tool used to skip the whole thing, because a new element has no form to read yet, and when
+// it did make the linked element, it never recorded the connection, so the Subform Interface had nothing to
+// show. It reported success either way.
 //
-// Both halves have to be checked. The create tool used to skip the whole thing, because a new element has
-// no form to read yet, and the update tool made the linked element but never recorded the connection, so
-// the Subform Interface had nothing to show. Each tool reported success either way.
+// The source form is fixed once the Subform Interface exists, as in the admin UI, so the update tool has to
+// refuse to change it.
 //
 // The forms made here are deleted through the admin UI at the end, which also makes this the place that
 // checks form deletion: that it removes everything attached to a form (permissions, groupscope settings,
@@ -321,31 +323,45 @@ test.describe('MCP subform tools connect the forms they join', () => {
 
 		// The existing connection has to be found, not duplicated. On create the check has only the form
 		// id passed in to go on, since the new element does not exist yet.
-		await callToolOk(request, 'create_subform_interface', {
+		const editableRow = await callToolOk(request, 'create_subform_interface', {
 			form_id: parentFid,
 			type: 'subformEditableRow',
 			caption: 'Children again',
-			properties: { sourceForm: childFid, elementsInRow: [childElementId] }
+			properties: { sourceForm: childFid, elementsInRow: [childElementId], entryViewingMode: 'drawer' }
 		});
 		expect(linkedElementsIn(childFid, parentFid).length).toBe(1);
 		expect(primaryRelationshipLinks(parentFid, childFid).length).toBe(1);
+
+		// Editable rows store the viewing mode differently from listings: 3 is the drawer with new entries
+		// added as rows, where 2 would be the listings drawer, which opens new entries in the drawer instead.
+		// The type check behind this once never matched, so editable rows always got the listings value.
+		expect(Number(editableRow.properties['3'])).toBe(3);
 	});
 
-	test('update_subform_interface connects a new source form', async ({ request }) => {
+	test('update_subform_interface refuses to change the source form, and changes nothing', async ({ request }) => {
+		// The source form is chosen when a Subform Interface is created, as in the admin UI. Other settings
+		// depend on it, such as the screen that displays the entries, so switching it later would leave those
+		// pointing at the old form.
 		expect(subformId, 'the first test should have made the subform').toBeTruthy();
 		const other = await makeFormWithTextBox(request, 'Other Child', false);
-		expect(primaryRelationshipLinks(parentFid, other.fid)).toEqual([]);
+		const elementsBefore = dbQuery(`SELECT ele_id, ele_value FROM ${dbPrefix()}_formulize WHERE ele_id = ${subformId} OR id_form = ${other.fid} ORDER BY ele_id`);
 
-		await callToolOk(request, 'update_subform_interface', {
+		const { error } = await callTool(request, 'update_subform_interface', {
 			element_identifier: subformId,
 			properties: { sourceForm: other.fid, elementsInRow: [other.elementId] }
 		});
+		expect(error, 'the tool should refuse').not.toBeNull();
+		expect(error.message).toContain('cannot be changed');
 
-		const linked = linkedElementsIn(other.fid, parentFid);
-		expect(linked.length, 'one linked element should be made in the new source form').toBe(1);
-		expect(primaryRelationshipLinks(parentFid, other.fid)).toEqual([
-			{ form1: parentFid, form2: other.fid, key1: parentPiId, key2: linked[0], rel: 2 }
-		]);
+		// The Subform Interface still shows the original form, and nothing was made in, or connected to, the other one
+		expect(dbQuery(`SELECT ele_id, ele_value FROM ${dbPrefix()}_formulize WHERE ele_id = ${subformId} OR id_form = ${other.fid} ORDER BY ele_id`)).toEqual(elementsBefore);
+		expect(primaryRelationshipLinks(parentFid, other.fid)).toEqual([]);
+
+		// Naming the source form it already has is not a change, so an update that repeats it still works
+		await callToolOk(request, 'update_subform_interface', {
+			element_identifier: subformId,
+			properties: { sourceForm: childFid, entryViewingMode: 'drawer' }
+		});
 	});
 
 	test('a form with no Principal Identifier is refused, and nothing is left behind', async ({ request }) => {
