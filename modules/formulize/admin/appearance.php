@@ -118,8 +118,10 @@ if(isset($_POST['appearance_save']) OR isset($_POST['appearance_reset'])) {
         $submitted['appearance_customfont'] = isset($_POST['appearance_customfont']) ? $_POST['appearance_customfont'] : '';
         $submitted['appearance_headingfont'] = isset($_POST['appearance_headingfont']) ? $_POST['appearance_headingfont'] : '';
         $submitted['appearance_headingcustomfont'] = isset($_POST['appearance_headingcustomfont']) ? $_POST['appearance_headingcustomfont'] : '';
-        $submitted['appearance_fontsize'] = isset($_POST['appearance_fontsize']) ? $_POST['appearance_fontsize'] : '';
-        $submitted['appearance_density'] = isset($_POST['appearance_density']) ? $_POST['appearance_density'] : '';
+        $submitted['appearance_size'] = isset($_POST['appearance_size']) ? $_POST['appearance_size'] : '';
+        // the advanced size settings aren't on this form, so saving it keeps them;
+        // a reset clears them along with everything else
+        $submitted['appearance_sizeoverrides'] = $settings['appearance_sizeoverrides'];
         foreach(array_keys(formulize_appearanceUploads()) as $uploadSetting) {
             $submitted[$uploadSetting] = $settings[$uploadSetting]; // kept unless removed or replaced below
         }
@@ -214,19 +216,9 @@ foreach($fontMap as $key => $font) {
     }
 }
 
-// The sizes on offer are the size the standard content text renders at, not the root
-// font size underneath it, and they are the selected theme's: each theme sets its
-// content text at a different step of its own scale. See the Text size group of
-// functions in include/appearance.php for the translation between the two.
-$fontSizes = array();
-foreach(formulize_appearanceFontSizeMap($selectedTheme) as $size => $label) {
-    $fontSizes[] = array('key' => $size, 'label' => $label);
-}
-$defaultFontSize = formulize_appearanceThemeContentSize($selectedTheme);
-
-$densities = array();
-foreach(formulize_appearanceDensityMap() as $key => $density) {
-    $densities[] = array('key' => $key, 'label' => $density['label']);
+$sizes = array();
+foreach(formulize_appearanceSizePresets() as $key => $label) {
+    $sizes[] = array('key' => $key, 'label' => $label);
 }
 
 // The logo can still be sitting in the legacy uploads/appearance folder on a site
@@ -255,12 +247,9 @@ $adminPage['headingFonts'] = $headingFonts;
 $adminPage['currentHeadingFont'] = $settings['appearance_headingfont'] ? $settings['appearance_headingfont'] : 'geist';
 $adminPage['currentHeadingCustomFont'] = $settings['appearance_headingcustomfont'];
 $adminPage['fontStacksJson'] = json_encode($fontStacks);
-$adminPage['fontSizes'] = $fontSizes;
-$adminPage['defaultFontSize'] = $defaultFontSize;
-$adminPage['currentFontSize'] = $settings['appearance_fontsize'] ? $settings['appearance_fontsize'] : $defaultFontSize;
-$adminPage['densities'] = $densities;
-$adminPage['currentDensity'] = $settings['appearance_density'] ? $settings['appearance_density'] : 'standard';
-$adminPage['themeUsesDensity'] = formulize_appearanceThemeUsesDensity($selectedTheme);
+$adminPage['sizes'] = $sizes;
+$adminPage['currentSize'] = $settings['appearance_size'];
+$adminPage['hasSizeOverrides'] = ($settings['appearance_sizeoverrides'] !== '');
 $adminPage['logoUrl'] = $uploadUrls['appearance_logo'];
 $adminPage['faviconUrl'] = $uploadUrls['appearance_favicon'];
 $adminPage['saved'] = $saved;
