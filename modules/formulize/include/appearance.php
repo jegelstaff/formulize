@@ -383,8 +383,8 @@ function formulize_sanitizeAppearanceSize($value) {
  * Validate the advanced size overrides: a JSON object of size token => value,
  * the values written the way appearance_tokens.json writes them (a number of
  * spacing steps, a text step, a weight...). Tokens that aren't in the map, and
- * values their type can't have, are dropped, so nothing arbitrary reaches the
- * stylesheet. Kept as JSON, in token order, so the same overrides always read
+ * values outside what a token can be set to (its own limits), are dropped, so
+ * nothing arbitrary reaches the stylesheet. Kept as JSON, in token order, so the same overrides always read
  * and write the same way.
  *
  * @param mixed $value the overrides, as a JSON string or an array
@@ -398,7 +398,7 @@ function formulize_sanitizeAppearanceSizeOverrides($value) {
     $map = formulize_appearanceTokenMap();
     $clean = array();
     foreach ($map['tokens'] as $token => $entry) {
-        if (isset($overrides[$token]) AND formulize_appearanceTokenValueIsValid($map['types'][$entry['type']], $overrides[$token])) {
+        if (isset($overrides[$token]) AND formulize_appearanceTokenAllows($map, $token, $overrides[$token])) {
             // numbers stay numbers and text steps stay names, as in the map
             $clean[$token] = is_numeric($overrides[$token]) ? $overrides[$token] + 0 : (string) $overrides[$token];
         }

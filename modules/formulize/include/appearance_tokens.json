@@ -1,5 +1,5 @@
 {
-  "about": "The sizes the Appearance page's Size presets and advanced settings can change: the one place their Compact and Comfortable values are kept. Default is not here: it is the value the CSS declares (modules/formulize/templates/css/formulize-ui.css, or a theme's own tokens). Each token's type says what values it can have and how they are written in CSS. Read by modules/formulize/include/appearance_tokens.php.",
+  "about": "The sizes the Appearance page's Size presets and advanced settings can change: the one place their Compact and Comfortable values are kept. Default is not here: it is the value the CSS declares (modules/formulize/templates/css/formulize-ui.css, or a theme's own tokens). Each token's type says how its values are written in CSS; the token's own min and max (in the type's steps), or its list of values, are what it can be set to, chosen so that every value in the range changes how things look. Read by modules/formulize/include/appearance_tokens.php.",
   "types": {
     "spacing": {
       "description": "A number of spacing steps (--fz-spacing, 0.25rem), in half steps.",
@@ -39,6 +39,7 @@
       "label": "Title size",
       "description": "The size of form card, drawer and list titles.",
       "type": "text",
+      "values": ["base", "lg", "xl", "2xl"],
       "presets": { "compact": "lg", "comfortable": "xl" }
     },
     "--fz-title-text-narrow": {
@@ -46,6 +47,7 @@
       "label": "Title size on phones",
       "description": "The size of titles at 768px wide and below.",
       "type": "text",
+      "values": ["sm", "base", "lg", "xl"],
       "presets": { "compact": "base", "comfortable": "lg" }
     },
     "--fz-title-weight": {
@@ -53,6 +55,7 @@
       "label": "Title weight",
       "description": "The weight of titles.",
       "type": "weight",
+      "values": [500, 600, 700],
       "presets": {}
     },
     "--fz-title-leading": {
@@ -60,6 +63,7 @@
       "label": "Title line height",
       "description": "The line height of titles that wrap.",
       "type": "leading",
+      "values": [1.25, 1.3, 1.375, 1.45],
       "presets": {}
     },
     "--fz-label-text": {
@@ -67,6 +71,7 @@
       "label": "Label size",
       "description": "The size of form field labels.",
       "type": "text",
+      "values": ["xs", "xs-plus", "sm", "sm-plus", "base"],
       "presets": { "compact": "xs-plus", "comfortable": "sm-plus" }
     },
     "--fz-label-weight": {
@@ -74,6 +79,7 @@
       "label": "Label weight",
       "description": "The weight of form field labels.",
       "type": "weight",
+      "values": [400, 500, 600, 700],
       "presets": { "compact": 600, "comfortable": 500 }
     },
     "--fz-field-text": {
@@ -81,6 +87,7 @@
       "label": "Field text size",
       "description": "The size of the text in form fields, and of read-only values.",
       "type": "text",
+      "values": ["xs-plus", "sm", "sm-plus", "base"],
       "presets": { "compact": "sm", "comfortable": "sm-plus" }
     },
     "--fz-help-text": {
@@ -88,6 +95,7 @@
       "label": "Help text size",
       "description": "The size of the help text under form fields, and of character counters.",
       "type": "text",
+      "values": ["xs", "xs-plus", "sm"],
       "presets": { "compact": "xs", "comfortable": "xs-plus" }
     },
     "--fz-help-leading": {
@@ -95,6 +103,7 @@
       "label": "Help text line height",
       "description": "The line height of help text.",
       "type": "leading",
+      "values": [1.375, 1.45, 1.5, 1.625],
       "presets": { "compact": 1.45, "comfortable": 1.5 }
     },
     "--fz-help-max-width": {
@@ -102,6 +111,7 @@
       "label": "Help text line length",
       "description": "The longest a line of help text can be.",
       "type": "measure",
+      "min": 45, "max": 90,
       "presets": { "compact": 70, "comfortable": 62 }
     },
     "--fz-control-text": {
@@ -109,6 +119,7 @@
       "label": "Button text size",
       "description": "The size of the text on buttons, menu items and tabs.",
       "type": "text",
+      "values": ["xs", "xs-plus", "sm", "sm-plus"],
       "presets": { "compact": "xs-plus", "comfortable": "sm" }
     },
     "--fz-table-text": {
@@ -116,6 +127,7 @@
       "label": "Table text size",
       "description": "The size of the text in list and table cells.",
       "type": "text",
+      "values": ["xs", "xs-plus", "sm", "sm-plus"],
       "presets": { "compact": "xs-plus", "comfortable": "sm" }
     },
     "--fz-table-header-text": {
@@ -123,6 +135,7 @@
       "label": "Table header size",
       "description": "The size of the column headings in lists and tables.",
       "type": "text",
+      "values": ["xs", "xs-plus", "sm"],
       "presets": { "compact": "xs", "comfortable": "xs-plus" }
     },
     "--fz-field-height": {
@@ -130,6 +143,7 @@
       "label": "Field height",
       "description": "The height of text inputs and dropdowns. Text areas start at 2.4 times this.",
       "type": "spacing",
+      "min": 7, "max": 14,
       "presets": { "compact": 8.5, "comfortable": 10.5 }
     },
     "--fz-field-padding-x": {
@@ -137,6 +151,7 @@
       "label": "Field side padding",
       "description": "The space between the edge of a form field and its text.",
       "type": "spacing",
+      "min": 1.5, "max": 6,
       "presets": { "compact": 2.5, "comfortable": 3.5 }
     },
     "--fz-field-gap": {
@@ -144,6 +159,7 @@
       "label": "Space between fields",
       "description": "The space between one form field and the next.",
       "type": "spacing",
+      "min": 2, "max": 12,
       "presets": { "compact": 3.5, "comfortable": 6.5 }
     },
     "--fz-label-gap": {
@@ -151,6 +167,7 @@
       "label": "Space under labels",
       "description": "The space between a label and its field, when the label is above the field.",
       "type": "spacing",
+      "min": 0.5, "max": 4,
       "presets": { "compact": 1, "comfortable": 2 }
     },
     "--fz-control-height": {
@@ -158,6 +175,7 @@
       "label": "Button height",
       "description": "The height of buttons, including the save and submit buttons on forms.",
       "type": "spacing",
+      "min": 6, "max": 12,
       "presets": { "compact": 7, "comfortable": 9 }
     },
     "--fz-control-padding-x": {
@@ -165,6 +183,7 @@
       "label": "Button side padding",
       "description": "The space between the edge of a button and its label.",
       "type": "spacing",
+      "min": 1.5, "max": 6,
       "presets": { "compact": 2.5, "comfortable": 3.5 }
     },
     "--fz-menu-item-height": {
@@ -172,6 +191,7 @@
       "label": "Menu item height",
       "description": "The height of each item in a dropdown menu.",
       "type": "spacing",
+      "min": 6, "max": 12,
       "presets": { "compact": 7, "comfortable": 8.5 }
     },
     "--fz-tab-padding-y": {
@@ -179,6 +199,7 @@
       "label": "Tab top and bottom padding",
       "description": "The space above and below the label of a tab.",
       "type": "spacing",
+      "min": 0, "max": 3,
       "presets": { "compact": 0.5, "comfortable": 1.5 }
     },
     "--fz-tab-padding-x": {
@@ -186,6 +207,7 @@
       "label": "Tab side padding",
       "description": "The space either side of the label of a tab.",
       "type": "spacing",
+      "min": 1.5, "max": 6,
       "presets": { "compact": 2.5, "comfortable": 3.5 }
     },
     "--fz-row-height": {
@@ -193,6 +215,7 @@
       "label": "Row height",
       "description": "The height of rows in lists and tables. Rows grow to fit text that wraps.",
       "type": "spacing",
+      "min": 6, "max": 16,
       "presets": { "compact": 8, "comfortable": 13 }
     },
     "--fz-cell-padding-x": {
@@ -200,6 +223,7 @@
       "label": "Cell side padding",
       "description": "The space either side of the content of a list or table cell.",
       "type": "spacing",
+      "min": 1, "max": 6,
       "presets": { "compact": 2, "comfortable": 4 }
     },
     "--fz-table-header-height": {
@@ -207,6 +231,7 @@
       "label": "Header row height",
       "description": "The height of the row of column headings.",
       "type": "spacing",
+      "min": 6, "max": 14,
       "presets": { "compact": 8, "comfortable": 10 }
     },
     "--fz-toolbar-height": {
@@ -214,6 +239,7 @@
       "label": "Toolbar height",
       "description": "The height of a list's title bar and selection bar.",
       "type": "spacing",
+      "min": 10, "max": 20,
       "presets": { "compact": 12, "comfortable": 16 }
     },
     "--fz-toolbar-padding-x": {
@@ -221,6 +247,7 @@
       "label": "Toolbar side padding",
       "description": "The space either side of a list's title bar, selection bar and footer.",
       "type": "spacing",
+      "min": 2, "max": 10,
       "presets": { "compact": 4, "comfortable": 6 }
     },
     "--fz-card-padding": {
@@ -228,6 +255,7 @@
       "label": "Card padding",
       "description": "The space inside a card, and above and below a form card's header.",
       "type": "spacing",
+      "min": 2, "max": 10,
       "presets": { "compact": 3, "comfortable": 5 }
     },
     "--fz-card-gap": {
@@ -235,6 +263,7 @@
       "label": "Space inside cards",
       "description": "The space between the things in a card.",
       "type": "spacing",
+      "min": 1, "max": 8,
       "presets": { "compact": 2, "comfortable": 4 }
     },
     "--fz-form-padding": {
@@ -242,6 +271,7 @@
       "label": "Form padding",
       "description": "The space inside a form card, either side of its header, and around the page controls of a multi-page form.",
       "type": "spacing",
+      "min": 2, "max": 12,
       "presets": { "compact": 4, "comfortable": 8 }
     },
     "--fz-drawer-padding-x": {
@@ -249,6 +279,7 @@
       "label": "Drawer side padding",
       "description": "The space either side of the drawer's content.",
       "type": "spacing",
+      "min": 2, "max": 10,
       "presets": { "compact": 4, "comfortable": 6 }
     },
     "--fz-drawer-padding-y": {
@@ -256,6 +287,7 @@
       "label": "Drawer top and bottom padding",
       "description": "The space above and below the drawer's header and footer.",
       "type": "spacing",
+      "min": 2, "max": 8,
       "presets": { "compact": 3, "comfortable": 5 }
     },
     "--fz-page-padding": {
@@ -263,6 +295,7 @@
       "label": "Page padding",
       "description": "The space around the main content of the page: around a form screen, and around simple pages such as the login page.",
       "type": "spacing",
+      "min": 2, "max": 12,
       "presets": { "compact": 4, "comfortable": 6 }
     }
   }

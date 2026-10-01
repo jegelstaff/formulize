@@ -66,7 +66,14 @@ function formulize_uiSizeTokens() {
                 $values[] = $name . ' ' . formulize_uiSizeTokenValue($entry['type'], $entry['presets'][$preset]);
             }
         }
-        $tokens[$token] = $entry['description'] . ($values ? ' ' . implode(', ', $values) . '.' : '');
+        if (isset($entry['values'])) {
+            $range = 'Can be ' . implode(', ', array_map(function ($v) use ($entry) { return formulize_uiSizeTokenValue($entry['type'], $v); }, $entry['values'])) . '.';
+        } elseif (isset($entry['min'], $entry['max'])) {
+            $range = 'Can be ' . formulize_uiSizeTokenValue($entry['type'], $entry['min']) . ' to ' . formulize_uiSizeTokenValue($entry['type'], $entry['max']) . '.';
+        } else {
+            $range = '';
+        }
+        $tokens[$token] = $entry['description'] . ($values ? ' ' . implode(', ', $values) . '.' : '') . ($range ? ' ' . $range : '');
     }
     return $tokens;
 }

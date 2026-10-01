@@ -65,6 +65,37 @@ function formulize_appearanceTokenValueIsValid($type, $value) {
 }
 
 /**
+ * Whether a value is one a particular token can be set to: one its type can
+ * have, and inside the token's own limits, its min and max or its list of
+ * values. The limits are what the Appearance page offers, chosen so that every
+ * value in them changes how things look.
+ *
+ * @param array $map the map, from formulize_appearanceTokenMap()
+ * @param string $token the token, eg: --fz-field-height
+ * @param mixed $value the value, as the map writes values
+ * @return boolean
+ */
+function formulize_appearanceTokenAllows($map, $token, $value) {
+    if (!isset($map['tokens'][$token]) OR !isset($map['types'][$map['tokens'][$token]['type']])) {
+        return false;
+    }
+    $entry = $map['tokens'][$token];
+    if (!formulize_appearanceTokenValueIsValid($map['types'][$entry['type']], $value)) {
+        return false;
+    }
+    if (isset($entry['values'])) {
+        return in_array((string) $value, array_map('strval', $entry['values']), true);
+    }
+    if (isset($entry['min']) AND (float) $value < $entry['min']) {
+        return false;
+    }
+    if (isset($entry['max']) AND (float) $value > $entry['max']) {
+        return false;
+    }
+    return true;
+}
+
+/**
  * A token's value written as CSS.
  *
  * @param string $typeName the token's type: spacing, text, weight, leading or measure
@@ -146,8 +177,9 @@ function formulize_appearanceTokenDeclarations($css) {
 
 /**
  * Check the map against formulize-ui.css: every token has a known group and
- * type, every preset value is one its type can have, and every token has a
- * Default in formulize-ui.css, written in the form its type is written in.
+ * type, its own limits are values its type can have, every preset value is
+ * inside the token's limits, and every token has a Default in formulize-ui.css,
+ * written in the form its type is written in and inside its limits.
  *
  * @param array $map the map, from formulize_appearanceTokenMap()
  * @param string $css the contents of formulize-ui.css
@@ -165,16 +197,29 @@ function formulize_appearanceCheckTokenMap($map, $css) {
             continue;
         }
         $type = $map['types'][$entry['type']];
+        if (isset($entry['values'])) {
+            foreach ($entry['values'] as $value) {
+                if (!formulize_appearanceTokenValueIsValid($type, $value)) {
+                    $problems[] = "The size token $token lists a value, " . json_encode($value) . ", that a " . $entry['type'] . " token can't have.";
+                }
+            }
+        } elseif (!isset($entry['min']) OR !isset($entry['max'])) {
+            $problems[] = "The size token $token has no limits: give it a min and a max, or a list of values.";
+        } elseif (!formulize_appearanceTokenValueIsValid($type, $entry['min']) OR !formulize_appearanceTokenValueIsValid($type, $entry['max']) OR $entry['min'] > $entry['max']) {
+            $problems[] = "The size token $token has limits, " . json_encode($entry['min']) . " to " . json_encode($entry['max']) . ", that aren't a range of " . $entry['type'] . " values.";
+        }
         foreach ($entry['presets'] as $preset => $value) {
-            if (!formulize_appearanceTokenValueIsValid($type, $value)) {
-                $problems[] = "The size token $token has a $preset value, " . json_encode($value) . ", that a " . $entry['type'] . " token can't have.";
+            if (!formulize_appearanceTokenAllows($map, $token, $value)) {
+                $problems[] = "The size token $token has a $preset value, " . json_encode($value) . ", outside what it can be set to.";
             }
         }
         if (!isset($declared[$token])) {
             $problems[] = "The size token $token has no Default: formulize-ui.css doesn't declare it on :root.";
         } else {
             $default = formulize_appearanceTokenParse($entry['type'], $declared[$token]);
-            if ($default === null OR !formulize_appearanceTokenValueIsValid($type, $default)) {
+            if ($default !== null AND formulize_appearanceTokenValueIsValid($type, $default) AND !formulize_appearanceTokenAllows($map, $token, $default)) {
+                $problems[] = "The size token $token's Default in formulize-ui.css, '" . $declared[$token] . "', is outside what it can be set to.";
+            } elseif ($default === null OR !formulize_appearanceTokenValueIsValid($type, $default)) {
                 $problems[] = "The size token $token is declared in formulize-ui.css as '" . $declared[$token] . "', which isn't a " . $entry['type'] . " value written the way the Appearance page writes one (eg: " . formulize_appearanceTokenCss($entry['type'], isset($type['values']) ? $type['values'][0] : $type['min']) . ").";
             }
         }
