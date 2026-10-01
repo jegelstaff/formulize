@@ -1137,8 +1137,10 @@ button.formulize-ai-copy-btn:active {
 	--formulize-drawer-foot-bg: #f6f6f6;
 	--formulize-drawer-shadow: -8px 0 24px rgba(0, 0, 0, 0.18);
 	--formulize-drawer-radius: 4px;
-	--formulize-drawer-pad-x: 20px;
-	--formulize-drawer-pad-y: 16px;
+	/* Formulize UI's drawer padding (formulize-ui.css), which the Appearance
+	   page's Size preset changes; the fallbacks are its Default. */
+	--formulize-drawer-pad-x: var(--fz-drawer-padding-x, 20px);
+	--formulize-drawer-pad-y: var(--fz-drawer-padding-y, 16px);
 	--formulize-drawer-z: 31;
 
 	position: fixed;

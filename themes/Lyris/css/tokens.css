@@ -145,9 +145,6 @@
   --lyris-tap-min:        0px;
   --lyris-field-text-min: 0px;
 
-  /* List rows: side padding of a cell */
-  --lyris-row-padding-x: calc(var(--fz-spacing) * 3);
-
   /* Motion */
   --fz-ease-out: cubic-bezier(.2,.7,.3,1);
   --fz-duration-fast: 120ms;
