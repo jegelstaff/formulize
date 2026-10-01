@@ -67,6 +67,27 @@ h1, h2, h3, h4, h5, h6,
   font-family: var(--fz-font-heading);
 }
 
+/* ---------- Titles ----------
+   The form card title, the right drawer's title and the list title bar's title
+   share one style, from the Formulize UI title tokens (--fz-title-*), so they
+   follow the Appearance page's Size preset together: 20px/600 at Default. At
+   the mobile breakpoint they use the narrow title size. */
+.lyris-form-card .fz-card__title,
+.formulize-drawer__title,
+.lyris-list__title {
+  font-size: var(--fz-title-text);
+  font-weight: var(--fz-title-weight);
+  line-height: var(--fz-title-leading);
+}
+
+@media (max-width: 768px) {
+  .lyris-form-card .fz-card__title,
+  .formulize-drawer__title,
+  .lyris-list__title {
+    font-size: var(--fz-title-text-narrow);
+  }
+}
+
 /* ============================================================
    App shell
    ============================================================ */
@@ -319,10 +340,6 @@ body:not(#formulize):not(.formulize-screen) .lyris-main {
 
 .formulize-drawer__head {
   gap: calc(var(--fz-spacing) * 2);
-}
-
-.formulize-drawer__title {
-  font-size: var(--fz-text-xl);
 }
 
 .formulize-drawer__loading {
@@ -678,11 +695,10 @@ textarea {
 }
 .lyris-list__titlebar #formulize_moreActionsButton:hover { background: var(--fz-color-surface-3); }
 
+/* Size, weight and line height come from the shared title style (see
+   "Titles" near the top). */
 .lyris-list__title {
-  font-size: var(--fz-text-xl);
-  font-weight: 600;
   letter-spacing: -0.01em;
-  line-height: var(--fz-leading-tight);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1873,10 +1889,6 @@ body:has(#formulize-masquerade-block) {
     min-height: 3rem;
   }
 
-  .lyris-list__title {
-    font-size: var(--fz-text-base);
-  }
-
   /* view switcher beside the title: just the icon, as a square icon button
      (the active view's name stays in the button's accessible name) */
   .lyris-list__titlebar .lyris-view-switcher__toggle {
@@ -1996,13 +2008,20 @@ body:has(#formulize-masquerade-block) {
    They are additive: list-screen inputs and filters keep their
    existing 32px `.fz-input`-equivalent baseline.
 
-   Design spec (forms.css):
-     --lyris-field-height:      38px    (.lyris-form default, at standard density)
-     --lyris-field-padding-x:  12px
-     --lyris-field-radius: 6px
-     --lyris-field-gap:    18px    vertical gap between field rows
-     --lyris-label-gap:    6px     label-to-field gap
-     --lyris-label-text:   1rem (~16px, #32)
+   Sizes come from the Formulize UI component size tokens (formulize-ui.css),
+   which the Appearance page's Size preset and advanced settings change. At
+   Default:
+     --fz-field-height:     38px    field height
+     --fz-field-padding-x:  12px
+     --fz-field-gap:        22px    vertical gap between field rows
+     --fz-label-gap:        6px     label-to-field gap (single column)
+     --fz-label-text:       14px / 600 (--fz-label-weight)
+     --fz-field-text:       14px
+     --fz-help-text:        13px / 1.5 (--fz-help-leading), at most 65ch wide
+   Components read those tokens directly; nothing here re-declares them, so a
+   token set on a container reaches the fields inside it. On phones, field
+   heights and field text have floors (--lyris-tap-min, --lyris-field-text-min:
+   see the mobile form block).
 
    HTML anatomy output by Lyris form templates:
      .fz-card.lyris-form-card > .lyris-form-card__header + .lyris-form-card__body > .form-container
@@ -2013,10 +2032,10 @@ body:has(#formulize-masquerade-block) {
    ============================================================ */
 
 /* ---------- Field metrics: .lyris-form ----------
-   `.lyris-form` carries the form's field metrics. The height, the padding and the
-   gap between fields follow the density set on the Appearance page, through
-   the Formulize UI tokens (see formulize-ui.css): 38px / 12px / 18px at
-   standard density, the values these were fixed at before density existed.
+   `.lyris-form` carries Lyris's own field metrics, the ones the Appearance
+   page doesn't set: the textarea's top and bottom padding, the radius, the
+   label column width and the required marker's colour. The sizes the
+   Appearance page sets are Formulize UI's tokens (see above).
 
    `.lyris-form-screen` retains the same vars as an additive alias, including inside
    the right drawer, whose body is wrapped in `.lyris-form-screen` by the theme's
@@ -2024,16 +2043,9 @@ body:has(#formulize-masquerade-block) {
 
 .lyris-form,
 .lyris-form-screen {
-  --lyris-field-height:        var(--fz-field-height);
-  --lyris-field-padding-x:     calc(var(--fz-spacing) * 3);
   --lyris-field-padding-y:     calc(var(--fz-spacing) * 2);
   --lyris-field-radius:        var(--fz-radius-md);   /* 6px */
-  --lyris-field-gap:           calc(var(--fz-spacing) * 4.5);
-  --lyris-field-text:          var(--fz-text-sm);
-  --lyris-label-text:          1.1rem; /* ~16px, scales with root font-size (#32) */
-  --lyris-label-gap:           calc(var(--fz-spacing) * 1.5);
   --lyris-label-column-width:  13.75rem;
-  --lyris-help-text:           var(--fz-text-xs);
   --lyris-required-color:      var(--fz-color-danger);
 }
 
@@ -2071,9 +2083,9 @@ body:has(#formulize-masquerade-block) {
 .lyris-form-screen input:where(:not([class*="fz-"])):not([type]),
 .lyris-form-screen select:where(:not([class*="fz-"])),
 .lyris-form-screen textarea:where(:not([class*="fz-"])) {
-  height: var(--lyris-field-height);
-  padding: 0 var(--lyris-field-padding-x);
-  font-size: var(--lyris-field-text);
+  height: max(var(--fz-field-height), var(--lyris-tap-min));
+  padding: 0 var(--fz-field-padding-x);
+  font-size: max(var(--fz-field-text), var(--lyris-field-text-min));
   border-radius: var(--lyris-field-radius);
   width: 100%;
 }
@@ -2081,8 +2093,8 @@ body:has(#formulize-masquerade-block) {
 .lyris-form textarea:where(:not([class*="fz-"])),
 .lyris-form-screen textarea:where(:not([class*="fz-"])) {
   height: auto;
-  min-height: calc(var(--lyris-field-height) * 2.4);
-  padding: var(--lyris-field-padding-y) var(--lyris-field-padding-x);
+  min-height: calc(max(var(--fz-field-height), var(--lyris-tap-min)) * 2.4);
+  padding: var(--lyris-field-padding-y) var(--fz-field-padding-x);
 }
 
 /* Character / word limit counter sits under the textarea and is right-aligned
@@ -2101,6 +2113,11 @@ body:has(#formulize-masquerade-block) {
 .lyris-form .formulize-limit-counter,
 .lyris-form-screen .formulize-limit-counter {
   max-width: none;
+  /* Sized and spaced like the help text. Not capped at the help text's
+     --fz-help-max-width, though: it is right-aligned to the textarea, so a
+     cap would pull it back off the textarea's right edge (see above). */
+  font-size: var(--fz-help-text);
+  line-height: var(--fz-help-leading);
 }
 
 /* Selects: preserve the chevron background already set by the base rule */
@@ -2122,7 +2139,7 @@ body:has(#formulize-masquerade-block) {
    10em core gives it in modules/formulize/templates/css/formulize.css. */
 .lyris-form .subform_button_controls > input[type="text"],
 .lyris-form-screen .subform_button_controls > input[type="text"] {
-  width: calc(2ch + 2 * var(--lyris-field-padding-x) + 2px);
+  width: calc(2ch + 2 * var(--fz-field-padding-x) + 2px);
   margin: 0 calc(var(--fz-spacing) * 2);
 }
 
@@ -2145,7 +2162,7 @@ body:has(#formulize-masquerade-block) {
    and the fz- exclusion inside :where() so they add none. */
 .lyris-form input[type="text"]:where([name^="other["]:not([class*="fz-"])),
 .lyris-form-screen input[type="text"]:where([name^="other["]:not([class*="fz-"])) {
-  width: calc(var(--formulize-other-chars) * 0.5em + 2 * var(--lyris-field-padding-x) + 2px);
+  width: calc(var(--formulize-other-chars) * 0.5em + 2 * var(--fz-field-padding-x) + 2px);
   max-width: 100%;
   vertical-align: middle;
 }
@@ -2191,8 +2208,8 @@ body:has(#formulize-masquerade-block) {
 .form-row {
   display: flex;
   flex-direction: column;
-  gap: var(--lyris-label-gap, calc(var(--fz-spacing) * 1.5));
-  margin-bottom: var(--lyris-field-gap, calc(var(--fz-spacing) * 4.5));
+  gap: var(--fz-label-gap);           /* label to field, single column */
+  margin-bottom: var(--fz-field-gap); /* between rows */
   position: relative;
 }
 
@@ -2206,11 +2223,19 @@ body:has(#formulize-masquerade-block) {
   display: inline-flex;
   align-items: center;
   gap: calc(var(--fz-spacing) * 1.5);
-  font-size: var(--lyris-label-text, var(--fz-text-xs-plus));
-  font-weight: 600;
+  font-size: var(--fz-label-text);
+  font-weight: var(--fz-label-weight);
   color: var(--fz-color-text);
-  line-height: var(--fz-leading-snug);
+  line-height: var(--fz-leading-snug); /* the two-column .col1 padding below assumes this */
+  text-wrap: pretty;
   /* label-to-control gap supplied by the .form-row gap */
+}
+
+/* A label above its field (the single-column layout) stops at a readable
+   line length. Two-column labels are held to their column instead; at the
+   mobile breakpoint those stack too, and get the same cap there. */
+.form-row:not(:has(> .col1)) > .form-label {
+  max-width: 60ch;
 }
 
 /* ---------- Required indicator ---------- */
@@ -2240,22 +2265,17 @@ body:has(#formulize-masquerade-block) {
 
 /* ---------- Help text ---------- */
 
-.form-help-text {
-  font-size: var(--lyris-help-text, var(--fz-text-xs));
-  color: var(--fz-color-text-muted);
-  line-height: 1.45;
-  margin: 2px 0 0;
-}
-
 /* Long help text is hard to read when it runs the full width of the form on a
-   wide monitor (issue #962). On desktop it wraps at about 70 characters, within
-   the 60-80 character range that reads comfortably. On mobile the form is
-   already narrower than that, so the help text keeps the full width. Anari caps
-   its help text the same way, at 700px. */
-@media (min-width: 769px) {
-  .form-help-text {
-    max-width: 70ch;
-  }
+   wide monitor (issue #962), so it wraps at --fz-help-max-width: 65ch at
+   Default, within the 60-80 character range that reads comfortably. On mobile
+   the form is already narrower than that, so the cap has no effect there.
+   Anari caps its help text the same way, at 700px. */
+.form-help-text {
+  font-size: var(--fz-help-text);
+  color: var(--fz-color-text-muted);
+  line-height: var(--fz-help-leading);
+  max-width: var(--fz-help-max-width);
+  margin: 2px 0 0;
 }
 
 /* The 2FA "Forget Remembered Devices" button and its help text sit outside a
@@ -2276,7 +2296,7 @@ body:has(#formulize-masquerade-block) {
 .lyris-form--label-left .fz-field__label {
   width: var(--lyris-label-column-width, 13.75rem);
   flex: none;
-  padding-top: calc((var(--lyris-field-height) - var(--lyris-label-text) * 1.35) / 2);
+  padding-top: calc((max(var(--fz-field-height), var(--lyris-tap-min)) - var(--fz-label-text) * var(--fz-leading-snug)) / 2);
   justify-content: flex-start;
 }
 .lyris-form--label-left .fz-field__body {
@@ -2324,7 +2344,9 @@ body:has(#formulize-masquerade-block) {
   min-width: 0;
   display: flex;
   align-items: flex-start;
-  padding-top: var(--lyris-field-padding-y, calc(var(--fz-spacing) * 2)); /* align label with control's text line */
+  /* Centre the label's first line (see .form-label's line height) on the
+     field beside it, whatever the field height. */
+  padding-top: calc((max(var(--fz-field-height), var(--lyris-tap-min)) - var(--fz-label-text) * var(--fz-leading-snug)) / 2);
 }
 
 .col1 .form-label {
@@ -2334,6 +2356,27 @@ body:has(#formulize-masquerade-block) {
 .col2 {
   flex: 1 1 auto;        /* fill the remaining width (ignore inline `width: auto`) */
   min-width: 0;
+}
+
+/* ---------- Read-only values ----------
+   A field shown read-only, or a disabled one, renders its value as plain text
+   (or <nobr>/<output>) in the field's body, with no control in it. The value is
+   set at the field text size, so it matches what a control would show. The
+   :has() test is what tells such a body from one holding a control: anything a
+   person can type in, pick from or press, or a table (a subform, say). */
+.form-row > .fz-field__body:not(:has(input:not([type="hidden"]), select, textarea, button, table, iframe, [contenteditable])) {
+  font-size: max(var(--fz-field-text), var(--lyris-field-text-min));
+  line-height: var(--fz-leading-normal);
+}
+
+/* In the two-column layout the value's first line is centred on the same line
+   a field's centre would be on, which is where the label's first line is
+   centred too (see .col1). Wide screens only: the mobile layout stacks the
+   columns, and drops both paddings. */
+@media (min-width: 769px) {
+  .form-row > .col2:not(:has(input:not([type="hidden"]), select, textarea, button, table, iframe, [contenteditable])) {
+    padding-top: calc((var(--fz-field-height) - var(--fz-field-text) * var(--fz-leading-normal)) / 2);
+  }
 }
 
 /* ---------- Radio / checkbox option groups (elementtemplate2 + others) ----------
@@ -2382,7 +2425,7 @@ body:has(#formulize-masquerade-block) {
 .lyris-form-screen .fz-field__body input[type="checkbox"]:where(:not([class*="fz-"])) + label {
   display: inline;
   font-weight: 400;
-  font-size: var(--lyris-field-text, var(--fz-text-sm));
+  font-size: max(var(--fz-field-text), var(--lyris-field-text-min));
   color: var(--fz-color-text);
   cursor: pointer;
   vertical-align: middle;
@@ -2884,7 +2927,7 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
    working. */
 .form-row > [data-lastpass-icon-root] {
   margin-inline-start: calc(var(--fz-spacing) * -6) !important;
-  margin-block-start: calc(-1 * var(--lyris-label-gap, calc(var(--fz-spacing) * 1.5))) !important;
+  margin-block-start: calc(-1 * var(--fz-label-gap)) !important;
 }
 
 /* ============================================================
@@ -2905,8 +2948,6 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
    ============================================================ */
 
 .lyris-form-screen {
-  --lyris-field-height:      var(--fz-field-height);
-  --lyris-field-padding-x:   calc(var(--fz-spacing) * 3);
   --lyris-field-radius: var(--fz-radius-md);
 }
 
@@ -3114,8 +3155,8 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
 .lyris-form-screen input[type="color"] {
   -webkit-appearance: none;
   appearance: none;
-  width: var(--lyris-field-height);
-  height: var(--lyris-field-height);
+  width: max(var(--fz-field-height), var(--lyris-tap-min));
+  height: max(var(--fz-field-height), var(--lyris-tap-min));
   padding: calc(var(--fz-spacing) * 0.75);
   background: var(--fz-color-surface);
   border: 1px solid var(--fz-color-border-strong);
@@ -3210,12 +3251,12 @@ input[type="time"] { font-family: var(--fz-font-sans); }
 
 /* ---------- Multi-select Listbox (<select multiple>) → .lyris-listbox ----------
    A `<select multiple size="N">` must show N rows; the shared single-select
-   rule forces `height: var(--lyris-field-height)` which clips it to one row and hides the
+   rule forces `height: max(var(--fz-field-height), var(--lyris-tap-min))` which clips it to one row and hides the
    chevron background awkwardly. Restyle multi-selects as the design's scrollable
    listbox surface: auto height, padded rows, accent-soft selected state. */
 .lyris-form-screen select[multiple] {
   height: auto;
-  min-height: calc(var(--lyris-field-height) * 2.4);
+  min-height: calc(max(var(--fz-field-height), var(--lyris-tap-min)) * 2.4);
   max-height: 13.75rem;
   padding: calc(var(--fz-spacing) * 1);
   overflow-y: auto;
@@ -3233,7 +3274,7 @@ input[type="time"] { font-family: var(--fz-font-sans); }
 .lyris-form-screen select[multiple] option {
   padding: calc(var(--fz-spacing) * 1.75) calc(var(--fz-spacing) * 2.5);
   border-radius: var(--fz-radius-sm);
-  font-size: var(--lyris-field-text);
+  font-size: max(var(--fz-field-text), var(--lyris-field-text-min));
   color: var(--fz-color-text);
 }
 .lyris-form-screen select[multiple] option:checked {
@@ -3258,10 +3299,10 @@ input[type="time"] { font-family: var(--fz-font-sans); }
 
 /* The autocomplete text input → Lyris field metrics and colours. */
 .lyris-form-screen input.formulize_autocomplete {
-  height: var(--lyris-field-height);
-  padding: 0 calc(var(--fz-spacing) * 9) 0 var(--lyris-field-padding-x);
+  height: max(var(--fz-field-height), var(--lyris-tap-min));
+  padding: 0 calc(var(--fz-spacing) * 9) 0 var(--fz-field-padding-x);
   font: inherit;
-  font-size: var(--lyris-field-text);
+  font-size: max(var(--fz-field-text), var(--lyris-field-text-min));
   color: var(--fz-color-text);
   background: var(--fz-color-surface);
   border: 1px solid var(--fz-color-border-strong);
@@ -3388,11 +3429,13 @@ input[type="time"] { font-family: var(--fz-font-sans); }
    ============================================================ */
 
 @media (max-width: 768px) {
-  .lyris-form,
-  .lyris-form-screen {
-    --lyris-field-height:     max(var(--fz-field-height), 2.75rem);   /* iOS tap target: never under 44px, whatever the density */
-    --lyris-field-text:  1rem;   /* prevent iOS auto-zoom */
-    --lyris-field-gap:   calc(var(--fz-spacing) * 4);
+  /* Floors for form fields on phones (0 on wider screens, in tokens.css):
+     fields are never under 44px tall, a comfortable tap target, and their text
+     is never under 16px, below which iOS zooms in on the field. Whatever the
+     Size preset. */
+  :root {
+    --lyris-tap-min:        2.75rem;
+    --lyris-field-text-min: 1rem;
   }
 
   .lyris-form-card__body {
@@ -3409,13 +3452,17 @@ input[type="time"] { font-family: var(--fz-font-sans); }
   .form-row:has(> .col1) {
     flex-direction: column;
     align-items: stretch;
-    gap: var(--lyris-label-gap, calc(var(--fz-spacing) * 1.5));
+    gap: var(--fz-label-gap);
   }
 
   .col1 {
     min-height: auto;
     width: 100% !important;
     padding-top: 0; /* no left-label top nudge when stacked */
+  }
+
+  .col1 .form-label {
+    max-width: 60ch; /* stacked above its field: same cap as single column */
   }
 
   .col2 {
@@ -4484,7 +4531,7 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
    Scoped to `.lyris-form-screen`, which both the drawer body and the full screen
    form/multiPage toptemplates emit, so a grid looks the same either way.
 
-   Spacing uses the static `--s-*` scale rather than `--lyris-field-gap`, so it is
+   Spacing uses the static `--s-*` scale rather than `--fz-field-gap`, so it is
    unaffected by the density change in PR #116 (field-gap 12px -> 18px). The
    width comes from the core `width: 100%` plus `width: 100%` on the controls
    below, so the last column ends flush with the right hand edge of the field
@@ -4511,7 +4558,7 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
 /* Caption, when the element shows its heading above the grid instead of in
    the label column. */
 .lyris-form-screen .formulize-grid-caption {
-  font-size: var(--lyris-label-text, 1.1rem);
+  font-size: var(--fz-label-text);
   font-weight: 600;
   color: var(--fz-color-text);
   margin-bottom: calc(var(--fz-spacing) * 2);
