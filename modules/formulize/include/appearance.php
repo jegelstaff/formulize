@@ -351,6 +351,23 @@ function formulize_appearanceSizePresets() {
 }
 
 /**
+ * Whether a theme is built on the component size tokens, so that the Size preset
+ * and the advanced size settings change how it looks. A theme says so itself, by
+ * declaring --formulize-size-tokens with its other tokens (Lyris does, in
+ * css/tokens.css). A theme that doesn't, such as Anari, styles most of its
+ * markup with its own fixed sizes, so offering it a Size setting that changed
+ * only a few things would be confusing: the Appearance page leaves the setting
+ * out for it, and no sizes are written into its stylesheet.
+ *
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return boolean
+ */
+function formulize_appearanceThemeUsesSizes($theme = null) {
+    $tokens = formulize_appearanceThemeTokens($theme);
+    return isset($tokens['--formulize-size-tokens']);
+}
+
+/**
  * Validate a Size preset.
  *
  * @param string $value the submitted preset
@@ -1088,9 +1105,11 @@ function formulize_getAppearanceCssOverrides($settings = null, $theme = null) {
     if ($font['heading']) {
         $overrides['--fz-font-heading'] = $font['heading'];
     }
-    $map = formulize_appearanceTokenMap();
-    foreach (formulize_getAppearanceSizeValues($settings) as $token => $value) {
-        $overrides[$token] = formulize_appearanceTokenCss($map['tokens'][$token]['type'], $value);
+    if (formulize_appearanceThemeUsesSizes($theme)) {
+        $map = formulize_appearanceTokenMap();
+        foreach (formulize_getAppearanceSizeValues($settings) as $token => $value) {
+            $overrides[$token] = formulize_appearanceTokenCss($map['tokens'][$token]['type'], $value);
+        }
     }
     foreach (formulize_appearanceColourMap($theme) as $key => $colour) {
         $value = formulize_sanitizeAppearanceColour($settings['appearance_' . $key]);

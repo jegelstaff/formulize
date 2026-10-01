@@ -118,7 +118,9 @@ if(isset($_POST['appearance_save']) OR isset($_POST['appearance_reset'])) {
         $submitted['appearance_customfont'] = isset($_POST['appearance_customfont']) ? $_POST['appearance_customfont'] : '';
         $submitted['appearance_headingfont'] = isset($_POST['appearance_headingfont']) ? $_POST['appearance_headingfont'] : '';
         $submitted['appearance_headingcustomfont'] = isset($_POST['appearance_headingcustomfont']) ? $_POST['appearance_headingcustomfont'] : '';
-        $submitted['appearance_size'] = isset($_POST['appearance_size']) ? $_POST['appearance_size'] : '';
+        // a theme not built on the size tokens isn't offered the Size setting, so the
+        // form has no field for it; keep what was there rather than clearing it
+        $submitted['appearance_size'] = isset($_POST['appearance_size']) ? $_POST['appearance_size'] : $settings['appearance_size'];
         // the advanced size settings aren't on this form, so saving it keeps them;
         // a reset clears them along with everything else
         $submitted['appearance_sizeoverrides'] = $settings['appearance_sizeoverrides'];
@@ -250,6 +252,7 @@ $adminPage['fontStacksJson'] = json_encode($fontStacks);
 $adminPage['sizes'] = $sizes;
 $adminPage['currentSize'] = $settings['appearance_size'];
 $adminPage['hasSizeOverrides'] = ($settings['appearance_sizeoverrides'] !== '');
+$adminPage['themeUsesSizes'] = formulize_appearanceThemeUsesSizes($selectedTheme);
 $adminPage['logoUrl'] = $uploadUrls['appearance_logo'];
 $adminPage['faviconUrl'] = $uploadUrls['appearance_favicon'];
 $adminPage['saved'] = $saved;

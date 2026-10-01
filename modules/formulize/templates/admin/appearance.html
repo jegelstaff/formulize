@@ -53,7 +53,9 @@
     </fieldset>
 
     <{* Size: a preset for the component size tokens (see
-       include/appearance_tokens.json). Default sets nothing. *}>
+       include/appearance_tokens.json). Default sets nothing. Only for themes
+       built on those tokens (formulize_appearanceThemeUsesSizes). *}>
+    <{if $adminPage.themeUsesSizes}>
     <fieldset class="formulize-appearance-group">
         <legend>Size</legend>
         <div class="formulize-appearance-field">
@@ -66,6 +68,7 @@
             <span class="formulize-appearance-hint">How big and how roomy the interface is: titles, labels and text, the height of form fields, buttons and the rows of lists, and the space in forms, cards and the drawer. Compact fits more on the screen; Comfortable is larger and easier to read and tap.<{if $adminPage.hasSizeOverrides}> Some sizes have been set individually in the advanced settings, and those are kept whichever size is chosen here.<{/if}></span>
         </div>
     </fieldset>
+    <{/if}>
 
     <fieldset class="formulize-appearance-group">
         <legend>Font</legend>

@@ -67,6 +67,11 @@
      user's own profile font size setting does (see theme.html). */
   --formulize-font-size-base: 16px;
 
+  /* This theme is built on Formulize UI's component size tokens (field height,
+     row height, title size...), so the Appearance page offers its Size setting
+     for it. A theme that doesn't declare this isn't offered the setting. */
+  --formulize-size-tokens: 1;
+
   /* The size scales below are Formulize UI's, the same in every theme (see
      modules/formulize/templates/css/formulize-ui.css), because markup that
      implementers write depends on them: they are Tailwind CSS's values. They are
