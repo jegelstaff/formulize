@@ -1324,13 +1324,16 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 					foreach($elementsToDraw as $thisele) {
 						$value = $data_handler->getElementValueInEntry($sub_ent, $thisele);
 						$element_object = _getElementObject($thisele);
-						$value = prepvalues($value, $element_object->getVar("ele_handle"), $sub_ent);
-						if (is_array($value))
-							$value = implode(" - ", $value); // may be an array if the element allows multiple selections (checkboxes, multiselect list boxes, etc)
-						// normalize-then-escape: undoAllHTMLChars decodes any entities already in the stored/intake-escaped
-						// value so we don't double-encode, but the result is then RAW entry data (user-submitted, not
-						// admin-authored), so it must be escaped before going into $col_two below. Do not drop this call.
-						$headerValues[] = htmlspecialchars(undoAllHTMLChars($value));
+						$headerHandle = $element_object->getVar("ele_handle");
+						$value = prepvalues($value, $headerHandle, $sub_ent); // may be an array if the element allows multiple selections (checkboxes, multiselect list boxes, etc)
+						// The header is a read-only display of entry data, so it follows the read-only rule: PURIFY, not escape.
+						// See formulizeElementsHandler::makeValueSafeForReadOnlyDisplay(). That is also how these same values are
+						// shown when this subform is drawn as rows (the elements are rendered disabled), so both modes agree.
+						// undoAllHTMLChars first decodes any entities in the stored/intake-escaped value, so the purifier sees the
+						// raw markup rather than encoded text. Multi-value parts are passed as an array and joined by the
+						// method, so each part is made safe on its own and our " - " joiner is never filtered as content.
+						$value = is_array($value) ? array_map(function($part) { return is_string($part) ? undoAllHTMLChars($part) : $part; }, $value) : undoAllHTMLChars($value);
+						$headerValues[] = $element_handler->makeValueSafeForReadOnlyDisplay($value, $headerHandle, $sub_ent, " - ");
 					}
 					$headerToWrite = implode(" &mdash; ", $headerValues);
 					if(str_replace(" &mdash; ", "", $headerToWrite) == "") {
