@@ -4338,12 +4338,39 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
   margin-top: calc(var(--fz-spacing) * 2);
 }
 
+/* Rounded corners (issue #990): the table takes the same radius as the form
+   fields around it (--lyris-field-radius), so the two change together if the
+   radius scale changes. A collapsed-border table ignores border-radius, so borders
+   are kept separate with no spacing; the cells only draw a bottom rule, so the
+   lines look the same as before. The corner cells are rounded 1px less than the
+   table (inside its border) so a header band or a hovered first/last row can't
+   paint past the curve. Nothing is clipped with overflow, so controls in the
+   rows (date pickers, autocomplete menus) can still spill out of the table. */
 .lyris-form-screen .formulize-subform-table {
+  --lyris-subform-table-radius: var(--lyris-field-radius, var(--fz-radius-md));
+  --lyris-subform-cell-radius: max(0px, calc(var(--lyris-subform-table-radius) - 1px));
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   border: 1px solid var(--fz-color-border);
-  border-radius: var(--fz-radius-md);
+  border-radius: var(--lyris-subform-table-radius);
   font-size: var(--fz-text-xs-plus);
+}
+
+.lyris-form-screen .formulize-subform-table > tbody > tr:first-child > :first-child {
+  border-top-left-radius: var(--lyris-subform-cell-radius);
+}
+
+.lyris-form-screen .formulize-subform-table > tbody > tr:first-child > :last-child {
+  border-top-right-radius: var(--lyris-subform-cell-radius);
+}
+
+.lyris-form-screen .formulize-subform-table > tbody > tr:last-child > :first-child {
+  border-bottom-left-radius: var(--lyris-subform-cell-radius);
+}
+
+.lyris-form-screen .formulize-subform-table > tbody > tr:last-child > :last-child {
+  border-bottom-right-radius: var(--lyris-subform-cell-radius);
 }
 
 .lyris-form-screen .formulize-subform-table > tbody > tr > th,
