@@ -28,6 +28,22 @@
     <p class="formulize-appearance-notice formulize-appearance-notice-error"><{$error}></p>
     <{/foreach}>
 
+    <{* The advanced editor: everything on this page and more, one part of the
+       interface at a time, on a live preview. Only for themes that can be edited
+       there (formulize_getAppearanceEditorUrl). *}>
+    <{if $adminPage.editorUrl}>
+    <div class="formulize-appearance-editor">
+        <div class="formulize-appearance-editor-text">
+            <h3>Advanced editor</h3>
+            <p>Change colours, fonts, sizes and the logo one part of the interface at a time, such as buttons, field labels or list rows, and see the result on sample forms, lists and the drawer as you go.</p>
+            <{if $adminPage.overrideParts}>
+            <p class="formulize-appearance-editor-note">Some parts have settings of their own from the advanced editor (<{$adminPage.overrideParts}>). The settings below don't change those parts' own settings.</p>
+            <{/if}>
+        </div>
+        <a class="formulize-appearance-editor-open" href="<{$adminPage.editorUrl}>" onclick="return appearanceLeaveForEditor();">Open the advanced editor</a>
+    </div>
+    <{/if}>
+
     <form id="appearance" name="appearance" method="post" enctype="multipart/form-data">
 
     <{* keeps a save on the theme that is being edited, whichever one that is *}>
@@ -65,14 +81,8 @@
                 <option value="<{$size.key}>" <{if $adminPage.currentSize == $size.key}>selected="selected"<{/if}>><{$size.label}></option>
             <{/foreach}>
             </select>
-            <span class="formulize-appearance-hint">How big and how roomy the interface is: titles, labels and text, the height of form fields, buttons and the rows of lists, and the space in forms, cards and the drawer. Compact fits more on the screen; Comfortable is larger and easier to read and tap.<{if $adminPage.hasSizeOverrides}> Some sizes have been set individually in the advanced settings, and those are kept whichever size is chosen here.<{/if}></span>
+            <span class="formulize-appearance-hint">How big and how roomy the interface is: titles, labels and text, the height of form fields, buttons and the rows of lists, and the space in forms, cards and the drawer. Compact fits more on the screen; Comfortable is larger and easier to read and tap.</span>
         </div>
-        <{if $adminPage.sizesUrl}>
-        <div class="formulize-appearance-field">
-            <a href="<{$adminPage.sizesUrl}>">Adjust individual sizes</a>
-            <span class="formulize-appearance-hint">Change the size of one part of the interface, such as buttons, form fields or list rows, on a live preview of the theme. Save any changes here first: the advanced settings page saves only sizes.</span>
-        </div>
-        <{/if}>
     </fieldset>
     <{/if}>
 
@@ -179,6 +189,15 @@
 </div>
 
 <script>
+// Opening the advanced editor leaves this page, so changes made here and not yet
+// saved would be lost: check first.
+var appearanceChanged = false;
+document.getElementById('appearance').addEventListener('input', function () { appearanceChanged = true; });
+document.getElementById('appearance').addEventListener('change', function () { appearanceChanged = true; });
+function appearanceLeaveForEditor() {
+    return !appearanceChanged || confirm('You have changes on this page that are not saved. Open the advanced editor anyway, and lose them?');
+}
+
 // Switching theme reloads this page for that theme, the same way the Theme Editor's
 // theme picker does. Unsaved edits belong to the theme that is being left, so they
 // are not carried across.

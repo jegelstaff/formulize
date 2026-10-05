@@ -105,12 +105,15 @@ Two optional files let you adjust how your theme looks when embedded:
 
 The Anari theme has both files, if you want an example.
 
-## 5. Offer the Appearance page's size settings (optional)
+## 5. Offer the Size preset and the advanced editor (optional)
 
-The Appearance page's [size settings](/documentation/appearance_sizes/) change Formulize UI's
-component size tokens (`--fz-field-height`, `--fz-row-height`, `--fz-title-text` and the rest). They
-only do anything in a theme whose own CSS sizes things with those tokens, so a theme says when it
-does, and only then does the Appearance page offer them.
+The Appearance page's [Size preset and advanced editor](/documentation/appearance_editor/) change
+Formulize UI's component tokens: sizes (`--fz-field-height`, `--fz-row-height`, `--fz-title-text`),
+fonts (`--fz-label-font`), colours (`--fz-button-bg`, `--fz-header-bg`) and corners
+(`--fz-field-radius`), and the rest. They only do anything in a theme whose own CSS styles things with
+those tokens, so a theme says when it does, and only then does the Appearance page offer them. Each
+colour and font token defaults to the palette colour or font it stands for, so a theme that uses them
+looks the same until one is changed.
 
 **Opt in** by declaring `--formulize-size-tokens` on `:root` in your `css/tokens.css`:
 
@@ -120,10 +123,10 @@ does, and only then does the Appearance page offer them.
 }
 ```
 
-**Provide sample screens** for the advanced size editor's preview, in an `appearance_preview` folder
+**Provide sample screens** for the advanced editor's preview, in an `appearance_preview` folder
 in your theme. Each is an HTML file named after a screen: `form.html`, `list.html`, `drawer.html` and
 `cards.html`. Provide the ones that suit your theme; the editor shows the ones it finds, and without
-any, the Appearance page doesn't link to it. A sample is the markup your theme puts in `<body>` for
+any, the Appearance page doesn't offer it. A sample is the markup your theme puts in `<body>` for
 that kind of page, written out with sample content, and it is shown with your `css/reset.css`, your
 `css/style.css` and your generated appearance stylesheet, in a `<body>` with the id `formulize` and
 the class `formulize-screen`. No scripts run in it.
@@ -134,10 +137,12 @@ Mark each part of the sample that can be selected with `data-fz-part`, naming th
 <input type="button" class="formulize-form-submit-button" value="Save" data-fz-part="button">
 ```
 
-The parts, and the tokens each one is sized by, are the `components` in
-`modules/formulize/include/appearance_tokens.json`: `page`, `tabs`, `title`, `form`, `label`,
-`field`, `value` (a read-only value), `options` (radio buttons and checkboxes), `help`, `button`,
-`toolbar`, `menu`, `header` (column headings), `row`, `card` and `drawer`.
+The parts, and the tokens of each one, are the `components` in
+`modules/formulize/include/appearance_tokens.json`: `logo` (the link around your logo image),
+`page`, `tabs`, `title`, `form`, `label`, `field`, `value` (a read-only value), `options` (radio
+buttons and checkboxes), `help`, `button`, `toolbar`, `menu`, `header` (column headings), `row`,
+`card` and `drawer`. The editor shows a new logo by changing the `src` of the image inside the
+`logo` part.
 
 Pieces shared between samples go in files starting with an underscore, and are included by name in
 double braces: `{{list}}` is the contents of `_list.html`. `{{logo_url}}` and `{{site_name}}` are your
