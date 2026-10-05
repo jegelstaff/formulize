@@ -151,26 +151,27 @@ the class `open` on the element with that id, for showing a menu.
 
 Lyris's samples, in `themes/Lyris/appearance_preview/`, are a complete example.
 
-## 6. Offer the Content width setting (optional)
+## 6. Offer the Page width setting (optional)
 
-The Appearance page's Layout section can keep the main content to a maximum width, rather than full
-width, which is the default. The setting sets `--formulize-content-max-width` to a width in pixels.
-Laying the content out to that width is up to the theme, so a theme says when it does, and only then
-does the Appearance page offer the setting.
+The Page width setting, in the Size group on the Appearance page and in the advanced editor, keeps
+pages to a maximum width on a wide screen, or lets them use the full width of the window. It sets
+`--formulize-content-max-width`: a width in pixels, or `100%` for full width. Laying the page out to
+that width is up to the theme, so a theme says when it does, and only then is the setting offered.
 
-**Opt in** by declaring `--formulize-content-max-width` on `:root` in your `css/tokens.css`, as
-`100%`, which is full width:
+**Opt in** by declaring `--formulize-content-max-width` on `:root` in your `css/tokens.css`. What you
+declare is your theme's own width, which is what the setting starts at and what a reset goes back to:
+a width in pixels, or `100%` to start at full width. Lyris declares 1200 pixels:
 
 ```css
 :root {
-  --formulize-content-max-width: 100%;
+  --formulize-content-max-width: 1200px;
 }
 ```
 
 Then use it as the maximum width of your content. Lyris keeps the content at the left, beside its
-sidebar, and lets the bars along the top and bottom of lists and forms run the full width, with their
-buttons lined up with the edge of the content; see the "Content width" section at the end of
-`themes/Lyris/css/style.css`.
+sidebar, and lets its header and the bars along the top and bottom of lists and forms run the full
+width, with their links and buttons lined up with the edge of the content; see the "Content width"
+section at the end of `themes/Lyris/css/style.css`.
 
 ## Checking your theme
 

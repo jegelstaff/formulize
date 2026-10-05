@@ -4567,11 +4567,11 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
 /* ============================================================
    Content width
    ------------------------------------------------------------
-   --formulize-content-max-width (css/tokens.css) is how wide the content of a
-   list or form screen can get: 100%, full width, unless the Appearance page's
-   Content width setting gives it a maximum width in pixels. The content stays at
-   the left, beside the sidebar, and what is left of `.lyris-main` to its right is
-   page background.
+   --formulize-content-max-width (css/tokens.css) is how wide a page can get:
+   1200px, unless the Appearance page's Page width setting sets another width,
+   or 100%, full width. The content of list and form screens stays at the left,
+   beside the sidebar, and what is left of `.lyris-main` to its right is page
+   background.
 
    The bars along the top and bottom of a list (title bar, selection bar,
    pagination footer) and the form's action bar (`#multipage-controls`) still run
@@ -4581,10 +4581,14 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
    are full width, so 100% in the padding is the bar's own width, and at full
    width (100%) the extra is 0px and nothing moves.
 
-   Not on phones (768px and under), where the content always uses the whole
-   screen and these bars have their own padding, and not in the drawer or an
-   embedded screen (`.formulize-inline`), which are narrower than any maximum.
-   The drawer, popups and the pages outside list and form screens (the home page,
+   The site header does the same on every page: it runs the full width of the
+   window, over the sidebar, so the content ends the sidebar's width further in
+   while the sidebar is open, and its links end there.
+
+   Not on phones (768px and under), where pages always use the whole screen and
+   these bars have their own padding, and not in the drawer or an embedded
+   screen (`.formulize-inline`), which are narrower than any maximum. The drawer,
+   popups and the content of pages outside list and form screens (the home page,
    account pages) are left at full width.
    ============================================================ */
 @media (min-width: 769px) {
@@ -4609,6 +4613,17 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
 
   body:not(.formulize-inline) #multipage-controls {
     padding-right: calc(var(--fz-form-padding) + max(0px, 100% - var(--formulize-content-max-width)));
+  }
+
+  /* the header's 100% is the window's width (`.lyris-app`), and the content
+     starts after the sidebar while it is open */
+  .lyris-header {
+    --lyris-content-start: 0px;
+    padding-right: calc(var(--fz-spacing) * 4 + max(0px, 100% - var(--lyris-content-start) - var(--formulize-content-max-width)));
+  }
+
+  .lyris-app:has(> .lyris-app__body > .lyris-sidebar):not(.lyris-app--sidebar-closed) .lyris-header {
+    --lyris-content-start: var(--lyris-sidebar-width);
   }
 
 }

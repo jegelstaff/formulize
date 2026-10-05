@@ -17,8 +17,8 @@
 // screens (appearance_preview.php) and an inspector: click a part of the
 // preview, such as a button or a list row, and the inspector shows that part's
 // settings, which apply to every one of it on the site. With nothing selected,
-// it shows the site-wide settings (the logo, colours, fonts and Size preset, as
-// on the Appearance page), and everything that has been changed.
+// it shows the site-wide settings (the logo, colours, fonts, Size preset and page
+// width, as on the Appearance page), and everything that has been changed.
 //
 // It saves the same settings the Appearance page does, the same way (see
 // formulize_appearanceSubmittedSettings), plus the parts' own settings
@@ -60,6 +60,8 @@ function formulize_appearanceEditorState($settings, $theme) {
 	$overrides = json_decode($settings['appearance_overrides'], true);
 	return array(
 		'preset' => $settings['appearance_size'],
+		// 'full', or a maximum width in pixels: the one chosen, or the theme's own
+		'contentWidth' => formulize_appearanceContentWidth($settings, $theme),
 		'overrides' => (is_array($overrides) AND $overrides) ? $overrides : new stdClass(), // an object, even when empty
 		'colours' => $colours,
 		'fonts' => array(
@@ -150,6 +152,17 @@ foreach (formulize_appearanceUploads() as $uploadSetting => $upload) {
 	);
 }
 
+// The page width, for a theme that lays its pages out to one: the theme's own,
+// which is what a reset goes back to, and the limits of the width box. The
+// preview puts the theme's own declaration back (restore) when the width is the
+// theme's own.
+$contentWidth = null;
+if (formulize_appearanceThemeUsesContentWidth($theme)) {
+	$contentWidth = formulize_appearanceContentWidthLimits();
+	$contentWidth['theme'] = formulize_appearanceContentWidthDefault($theme);
+	$restore['--formulize-content-max-width'] = $themeTokens['--formulize-content-max-width'];
+}
+
 $editorData = array(
 	'theme' => $theme,
 	'map' => array(
@@ -161,6 +174,7 @@ $editorData = array(
 		'colours' => $map['colours'],
 	),
 	'presets' => formulize_appearanceSizePresets(),
+	'contentWidth' => $contentWidth,
 	'state' => $state,
 	'colours' => $colours,
 	'fonts' => array(
@@ -205,9 +219,11 @@ header('Content-Type: text/html; charset=utf-8');
 		<form class="formulize-editor__actions" method="post" enctype="multipart/form-data" action="<?php echo htmlspecialchars($pageUrl, ENT_QUOTES); ?>" id="formulize-editor-form">
 			<?php echo $GLOBALS['xoopsSecurity']->getTokenHTML('formulize_appearance_editor_token'); ?>
 			<input type="hidden" name="theme" value="<?php echo htmlspecialchars($theme, ENT_QUOTES); ?>">
-			<?php // every setting is filled in from the editor when the form is sent
+			<?php // every setting is filled in from the editor when the form is sent; the
+			// page width only for a theme that has one, so a save keeps it otherwise
 			foreach (array_merge(array_map(function ($key) { return 'appearance_' . $key; }, array_keys($colours)),
-				array('appearance_font', 'appearance_customfont', 'appearance_headingfont', 'appearance_headingcustomfont', 'appearance_size', 'appearance_overrides', 'appearance_logo_remove', 'appearance_favicon_remove')) as $name) { ?>
+				array('appearance_font', 'appearance_customfont', 'appearance_headingfont', 'appearance_headingcustomfont', 'appearance_size', 'appearance_overrides', 'appearance_logo_remove', 'appearance_favicon_remove'),
+				$contentWidth ? array('appearance_contentwidth') : array()) as $name) { ?>
 			<input type="hidden" name="<?php echo $name; ?>" data-setting="<?php echo $name; ?>" value="">
 			<?php } ?>
 			<?php // the uploads are chosen from the inspector, which labels these

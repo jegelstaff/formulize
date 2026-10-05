@@ -69,11 +69,15 @@
     </fieldset>
 
     <{* Size: a preset for the component size tokens (see
-       include/appearance_tokens.json). Default sets nothing. Only for themes
-       built on those tokens (formulize_appearanceThemeUsesSizes). *}>
-    <{if $adminPage.themeUsesSizes}>
+       include/appearance_tokens.json), for themes built on those tokens
+       (formulize_appearanceThemeUsesSizes), and the page width, for themes that
+       lay their pages out to a maximum width
+       (formulize_appearanceThemeUsesContentWidth). Default and the theme's own
+       width set nothing. The width box only counts with "Maximum width" chosen. *}>
+    <{if $adminPage.themeUsesSizes || $adminPage.themeUsesContentWidth}>
     <fieldset class="formulize-appearance-group">
         <legend>Size</legend>
+        <{if $adminPage.themeUsesSizes}>
         <div class="formulize-appearance-field">
             <label for="appearance_size">Size preset</label>
             <select name="appearance_size" id="appearance_size">
@@ -83,23 +87,16 @@
             </select>
             <span class="formulize-appearance-hint">How big and how roomy the interface is: titles, labels and text, the height of form fields, buttons and the rows of lists, and the space in forms, cards and the drawer. Compact fits more on the screen; Comfortable is larger and easier to read and tap.</span>
         </div>
-    </fieldset>
-    <{/if}>
-
-    <{* Layout: how wide the main content can get. Full width sets nothing. Only for
-       themes that lay their content out to a maximum width
-       (formulize_appearanceThemeUsesContentWidth). The width box only counts with
-       "Maximum width" chosen. *}>
-    <{if $adminPage.themeUsesContentWidth}>
-    <fieldset class="formulize-appearance-group">
-        <legend>Layout</legend>
+        <{/if}>
+        <{if $adminPage.themeUsesContentWidth}>
         <div class="formulize-appearance-field" role="radiogroup" aria-labelledby="appearance_contentwidth_label">
-            <label id="appearance_contentwidth_label">Content width</label>
-            <label class="formulize-appearance-checkbox"><input type="radio" name="appearance_contentwidth_mode" value="full" <{if !$adminPage.contentWidthMax}>checked="checked"<{/if}> onchange="appearanceToggleContentWidth();" /> Full width</label>
+            <label id="appearance_contentwidth_label">Page width</label>
             <label class="formulize-appearance-checkbox"><input type="radio" name="appearance_contentwidth_mode" value="max" <{if $adminPage.contentWidthMax}>checked="checked"<{/if}> onchange="appearanceToggleContentWidth();" /> Maximum width
                 <input type="number" id="appearance_contentwidth" name="appearance_contentwidth" value="<{$adminPage.contentWidth}>" min="<{$adminPage.contentWidthLimits.min}>" max="<{$adminPage.contentWidthLimits.max}>" step="1" aria-label="Maximum width, in pixels" /> pixels</label>
-            <span class="formulize-appearance-hint">How wide forms and lists can get. Full width uses the whole window. A maximum width keeps them from stretching across a wide screen: they stay beside the menu, and the bars along the bottom of lists and forms line their buttons up with them. On phones, the content always uses the whole screen.</span>
+            <label class="formulize-appearance-checkbox"><input type="radio" name="appearance_contentwidth_mode" value="full" <{if !$adminPage.contentWidthMax}>checked="checked"<{/if}> onchange="appearanceToggleContentWidth();" /> Full width</label>
+            <span class="formulize-appearance-hint">How wide pages can get. A maximum width keeps forms, lists and the links along the top of the page from stretching across a wide screen: they stay beside the menu, and the bars along the top and bottom of lists and forms line their buttons up with them. Full width uses the whole window. The theme's own is <{$adminPage.contentWidthDefault}>. On phones, pages always use the whole screen.</span>
         </div>
+        <{/if}>
     </fieldset>
     <{/if}>
 
@@ -236,7 +233,7 @@ function appearanceToggleCustomFont() {
 }
 appearanceToggleCustomFont();
 
-// The width box only counts with "Maximum width" chosen, so it is only editable then.
+// The page width box only counts with "Maximum width" chosen, so it is only editable then.
 function appearanceToggleContentWidth() {
     var max = document.querySelector('#appearance input[name=appearance_contentwidth_mode][value=max]');
     var width = document.getElementById('appearance_contentwidth');
