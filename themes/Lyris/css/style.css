@@ -1353,11 +1353,11 @@ a.de-edit-icon:hover::before {
    ============================================================ */
 
 /* View mode: layout is handled globally now (PR #135 review) — core
-   formulize.css lays the pencil cell out as a flex row and right-aligns
-   the pencil against the cell edge for every theme, so the Lyris-only
+   formulize.css lays the pencil cell out as a flex row with the pencil at the
+   left, just before the value (issue #987), for every theme, so the Lyris-only
    float/indent overrides that used to live here are gone. Anything left
    under .lyris-list-table here must stay cosmetic: a layout override scoped to
-   .lyris-list-table outranks the core rules and would un-do the right alignment. */
+   .lyris-list-table outranks the core rules and would un-do that alignment. */
 
 /* Pencil glyph colour is handled globally now (issue #61) — see the
    `a.loe-edit-entry::before, a.de-edit-icon::before` block above. */
