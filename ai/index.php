@@ -247,6 +247,8 @@ window.formulizeAI.strings = {
     toolCallError:     <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_CALL_ERROR); ?>,
     toolCallTruncated: <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_CALL_TRUNCATED); ?>,
     toolArgsInvalid:   <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_ARGS_INVALID); ?>,
+    toolCallRepeated:  <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_CALL_REPEATED); ?>,
+    tooManyRounds:     <?php echo json_encode(_MD_FORMULIZE_AI_TOO_MANY_ROUNDS); ?>,
     outputLimitNoProgress: <?php echo json_encode(_MD_FORMULIZE_AI_OUTPUT_LIMIT_NO_PROGRESS); ?>,
     failedAfterTools:  <?php echo json_encode(_MD_FORMULIZE_AI_FAILED_AFTER_TOOLS); ?>,
     replyCutOff:       <?php echo json_encode(_MD_FORMULIZE_AI_REPLY_CUT_OFF); ?>,
@@ -392,6 +394,12 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
     // model to split its work into smaller calls, before giving up on the turn. Without a
     // bound, a model that keeps overrunning would loop forever.
     const MAX_TRUNCATION_RECOVERIES = 2;
+
+    // The most requests to the provider one message can lead to. Each round of tool calls is
+    // one more request, so this is what stops a model that never finishes - one that keeps
+    // trying variations of a failing call, say - from running until someone clicks Stop.
+    // Comfortably above what real work needs: the full 162-game season took 9.
+    const MAX_TOOL_ROUNDS = 50;
 
     // Opt-in diagnostics for working out what went wrong on a turn: each request to the
     // provider and each tool call is logged to the browser console. Turned on per browser with
@@ -1506,6 +1514,38 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         }
     }
 
+    // Run one tool call the model asked for, showing it in the chat, and return the text that
+    // goes back to the model as its result, and whether the tool actually ran.
+    //
+    // A call identical to one that already failed this turn - same tool, same arguments - is
+    // not run again: it would only fail the same way, and models sometimes repeat a failing
+    // call over and over. The model is told why instead, matching the instruction it gets
+    // from the Formulize MCP server never to repeat a failed call unchanged. A call that
+    // differs in any way is always run. failedCalls is the turn's record of failed calls.
+    async function runToolCall(name, args, failedCalls) {
+        const key = name + ' ' + JSON.stringify(args || {});
+        const toolBlock = addToolRequest(name, args);
+        if (failedCalls.has(key)) {
+            aiDebug(`tool ${name} not run: an identical call already failed`);
+            addToolResponse(toolBlock, { error: { message: S.toolCallRepeated } });
+            return { text: S.toolCallRepeated, ran: false };
+        }
+        const result = await executeTool(name, args);
+        addToolResponse(toolBlock, result.raw);
+        if (!result.raw || result.raw.error) {
+            failedCalls.add(key);
+        }
+        return { text: result.text, ran: true };
+    }
+
+    // Count one more request to the provider for this message, stopping at MAX_TOOL_ROUNDS
+    function nextRound(rounds) {
+        if (rounds >= MAX_TOOL_ROUNDS) {
+            throw new Error(t(S.tooManyRounds, { count: MAX_TOOL_ROUNDS }));
+        }
+        return rounds + 1;
+    }
+
     // Which of a reply's tool calls to refuse, when the reply was cut off at the output limit.
     // Only the last call can be incomplete - the model had moved on past every earlier one -
     // so the earlier ones are run as normal, and the last is answered with an error telling
@@ -1619,6 +1659,8 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
 
         const historyLength = geminiHistory.length;
         let toolsRan = 0;
+        const failedCalls = new Set(); // see runToolCall()
+        let rounds = 1; // requests to the provider for this message - see nextRound()
         try {
             let contents = trimHistoryToLimit(geminiHistory, getContextLimit(), geminiTurnSize);
             let data = await callGemini(contents);
@@ -1649,11 +1691,9 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
                         if (i === cutOffIndex) {
                             resultText = S.toolCallTruncated;
                         } else {
-                            const toolBlock = addToolRequest(call.name, call.args || {});
-                            const toolResult = await executeTool(call.name, call.args || {});
-                            addToolResponse(toolBlock, toolResult.raw);
+                            const toolResult = await runToolCall(call.name, call.args || {}, failedCalls);
                             resultText = toolResult.text;
-                            toolsRan++;
+                            if (toolResult.ran) toolsRan++;
                         }
                         responseParts.push({
                             functionResponse: { name: call.name, response: { content: resultText } }
@@ -1669,6 +1709,7 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
                     break;
                 }
 
+                rounds = nextRound(rounds);
                 contents = trimHistoryToLimit(geminiHistory, getContextLimit(), geminiTurnSize);
                 data = await callGemini(contents);
                 if (userStopped) throw new DOMException('User stopped', 'AbortError');
@@ -1737,6 +1778,8 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
 
         const newMessages = [];
         let toolsRan = 0;
+        const failedCalls = new Set(); // see runToolCall()
+        let rounds = 1; // requests to the provider for this message - see nextRound()
         try {
             let response = await callClaude(messagesForApi);
             let truncations = 0;
@@ -1762,11 +1805,14 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
                             toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: S.toolCallTruncated, is_error: true });
                             continue;
                         }
-                        const toolBlock = addToolRequest(block.name, block.input);
-                        const result = await executeTool(block.name, block.input);
-                        addToolResponse(toolBlock, result.raw);
-                        toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: result.text });
-                        toolsRan++;
+                        const result = await runToolCall(block.name, block.input, failedCalls);
+                        const toolResult = { type: 'tool_result', tool_use_id: block.id, content: result.text };
+                        if (result.ran) {
+                            toolsRan++;
+                        } else {
+                            toolResult.is_error = true;
+                        }
+                        toolResults.push(toolResult);
                     }
                     newMessages.push({ role: 'user', content: toolResults });
                     truncations = nextTruncationCount(truncations, cutOff, toolsRan > ranBefore);
@@ -1786,6 +1832,7 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
                 // Built on messagesForApi, not claudeHistory, so that every round of the loop
                 // carries this turn's attachments and activity context, and stays within the
                 // history limit, exactly as the first round did.
+                rounds = nextRound(rounds);
                 response = await callClaude([...messagesForApi, ...newMessages]);
             }
 
@@ -2038,6 +2085,8 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
 
         const newMessages = [];
         let toolsRan = 0;
+        const failedCalls = new Set(); // see runToolCall()
+        let rounds = 1; // requests to the provider for this message - see nextRound()
         try {
             let response = await callFn(messagesForApi);
             let choice = response.choices[0];
@@ -2069,11 +2118,9 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
                             newMessages.push({ role: 'tool', tool_call_id: toolCall.id, content: S.toolArgsInvalid });
                             continue;
                         }
-                        const toolBlock = addToolRequest(toolCall.function.name, args);
-                        const result = await executeTool(toolCall.function.name, args);
-                        addToolResponse(toolBlock, result.raw);
+                        const result = await runToolCall(toolCall.function.name, args, failedCalls);
                         newMessages.push({ role: 'tool', tool_call_id: toolCall.id, content: result.text });
-                        toolsRan++;
+                        if (result.ran) toolsRan++;
                     }
                     truncations = nextTruncationCount(truncations, cutOff, toolsRan > ranBefore);
                 } else if (cutOff && !(message.content || '').trim()) {
@@ -2086,6 +2133,7 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
 
                 // Built on messagesForApi, not history, so that every round of the loop carries
                 // this turn's attachments and activity context, as the first round did.
+                rounds = nextRound(rounds);
                 response = await callFn([...messagesForApi, ...newMessages]);
                 choice = response.choices[0];
                 message = choice.message;
