@@ -223,7 +223,7 @@ Use list_applications for a list of every application in the system; this tool i
 			],
 			'create_entries' => [
 				'name' => 'create_entries',
-				'description' => 'Create one or more new entries in a Formulize form. Returns success status and new entry IDs. Formulize may automatically add default values for required elements, if they have default values defined. Do not be concerned about required elements unless this tool returns an error saying that required elements are missing.',
+				'description' => 'Create one or more new entries in a Formulize form. Returns success status and new entry IDs. Formulize may automatically add default values for required elements, if they have default values defined. Do not be concerned about required elements unless this tool returns an error saying that required elements are missing. To create a large number of entries, spread them across several calls of no more than about 25 entries each (fewer if the entries have many elements or long text values), rather than one very large call.',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
@@ -255,7 +255,7 @@ Use list_applications for a list of every application in the system; this tool i
 			],
 			'update_entries' => [
 				'name' => 'update_entries',
-				'description' => 'Update an existing entry or entries in a Formulize form.',
+				'description' => 'Update an existing entry or entries in a Formulize form. To update a large number of entries, spread them across several calls of no more than about 25 entries each (fewer if you are changing many elements or long text values), rather than one very large call.',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
@@ -287,12 +287,12 @@ Use list_applications for a list of every application in the system; this tool i
 			'get_entries_from_form' => [
 				'name' => 'get_entries_from_form',
 						'description' =>
-'Retrieve entries from a form with optional filtering, sorting, and pagination. Supports both simple entry ID lookup and complex multi-condition filtering. Returns data in a structured format suitable for analysis or display. It is strongly recommended to use filtering to limit the results you get back, so that it doesn\'t return too many entries at once. You can filter by multiple elements at once, and you should when possible, to reduce the size of the dataset amd exclude irrelevant entries. You can filter for non-blank values with the "{BLANK}" search term.
+'Retrieve entries from a form with optional filtering, sorting, and pagination. Supports both simple entry ID lookup and complex multi-condition filtering. Returns data in a structured format suitable for analysis or display. It is strongly recommended to use filtering to limit the results you get back, so that it doesn\'t return too many entries at once. You can filter by multiple elements at once, and you should when possible, to reduce the size of the dataset amd exclude irrelevant entries. You can filter for non-blank values with the "{BLANK}" search term. Results come back 100 entries at a time by default. When a form has many entries, page through them with limitSize and limitStart rather than asking for them all at once.
 
 Examples:
 - Get specific entry: {"form_id": 5, "filter": 526}
 - Search by name: {"form_id": 5, "filter": [{"element": "name", "operator": "LIKE", "value": "John"}]}
-- Get all the entries with a non-blank value in the "email" field: {"form_id": 5, "filter": [{"element": "email", "operator": "!=", "value": "{BLANK}"}], "limitSize": null}
+- Get all the entries with a non-blank value in the "email" field, when you know there are not many of them: {"form_id": 5, "filter": [{"element": "email", "operator": "!=", "value": "{BLANK}"}], "limitSize": null}
 - Multiple conditions: {"form_id": 5, "filter": [{"element": "age", "operator": ">=", "value": "18"}, {"element": "status", "operator": "=", "value": "active"}], "and_or": "AND"}
 - Grouping conditions, ex. status = active AND (region = east OR region = west): {"form_id": 5, "filter": [{"element": "status", "operator": "=", "value": "active"}, {"any": [{"element": "region", "operator": "=", "value": "east"}, {"element": "region", "operator": "=", "value": "west"}]}]}
 - Entries with no matching _connected_ entry (has no effect with only a single form), ex. donors who have given no artifacts from the BCE era (includes donors with no artifacts at all): {"form_id": 6, "relationship_id": -1, "filter": [{"none": [{"element": "artifacts_era", "operator": "=", "value": "BCE"}]}]}',

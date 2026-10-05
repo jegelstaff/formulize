@@ -122,6 +122,17 @@ define('_MD_FORMULIZE_AI_CONTEXT_HEADER',         '[Recent Formulize activity ac
 define('_MD_FORMULIZE_AI_OLLAMA_TIMEOUT',         'Ollama request timed out — is Ollama running? If your page is served over HTTPS, browsers block requests to localhost (Private Network Access policy).');
 define('_MD_FORMULIZE_AI_OPENAI_TIMEOUT',         'OpenAI request timed out.');
 
+// A response that came back from the web server instead of the AI provider
+define('_MD_FORMULIZE_AI_GATEWAY_TIMEOUT',        'HTTP {status}: the web server stopped waiting for the AI provider to respond. Try asking for less at once. If this keeps happening, your administrator may need to raise the web server\'s timeout.');
+define('_MD_FORMULIZE_AI_NON_JSON',               'HTTP {status}: the server returned an unexpected response.');
+define('_MD_FORMULIZE_AI_NON_JSON_UPLOAD',        'HTTP {status}: the server returned an unexpected response. If you attached a large file, your administrator may need to raise upload_max_filesize / post_max_size in the PHP configuration, or LimitRequestBody in the Apache configuration.');
+
+// Replies that ended without the usual written answer
+define('_MD_FORMULIZE_AI_REPLY_CUT_OFF',          'This reply was cut off because it reached the length limit for a single response.');
+define('_MD_FORMULIZE_AI_NO_WRITTEN_REPLY',       'The AI finished without writing a reply.');
+define('_MD_FORMULIZE_AI_NO_WRITTEN_REPLY_TOOLS', 'The AI finished without writing a reply. It used {count} tool(s) - expand the tool boxes above to see what they did.');
+define('_MD_FORMULIZE_AI_OUTPUT_LIMIT_GAVE_UP',   'The AI kept reaching the length limit for a single response, even after being asked to split the work into smaller steps. Try asking for less at once.');
+
 // Settings panel
 define('_MD_FORMULIZE_AI_HISTORY_LIMIT_LABEL',        'History limit (chars)');
 define('_MD_FORMULIZE_AI_HISTORY_LIMIT_TITLE',        'Maximum characters of conversation history sent per request.');
@@ -131,3 +142,9 @@ define('_MD_FORMULIZE_AI_HISTORY_LIMIT_CONFIRM',  "Changing the history limit af
 
 // System prompt sent to AI
 define('_MD_FORMULIZE_AI_SYSTEM_PROMPT',          'You are the Formulize AI Assistant. You help users manage their data in Formulize. You have access to tools that can interact with the Formulize data and configuration. Be concise and helpful.');
+
+// Sent to the AI in place of a tool result, or recorded in its history, when a turn goes wrong
+define('_MD_FORMULIZE_AI_TOOL_CALL_TRUNCATED',    'This tool call was not run: your response reached the output limit and this call was cut off. Split the work into several smaller calls, and make them one per response, because the limit applies to everything in a single response.');
+define('_MD_FORMULIZE_AI_OUTPUT_LIMIT_NO_PROGRESS', '[Your previous response reached the output limit before you made a tool call or wrote a reply, so it was discarded and nothing was done. Do not work out the whole task in advance. Start now with a small first step, and plan each next step after you see the result of the one before.]');
+define('_MD_FORMULIZE_AI_TOOL_ARGS_INVALID',      'This tool call was not run: its arguments were not valid JSON.');
+define('_MD_FORMULIZE_AI_FAILED_AFTER_TOOLS',     '[This request failed after the tool calls above had already run, so whatever they did has taken effect. The failure was: {error}]');

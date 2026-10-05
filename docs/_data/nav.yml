@@ -56,6 +56,8 @@
       url: /ai/setup-mcp
     - label: Advanced configuration
       url: /ai/advanced-setup
+    - label: Troubleshooting
+      url: /ai/debugging
     - label: MCP tools reference
       url: /ai/mcp-reference/
 

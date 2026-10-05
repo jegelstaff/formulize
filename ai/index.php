@@ -244,6 +244,18 @@ window.formulizeAI.strings = {
     toolNoOutput:      <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_NO_OUTPUT); ?>,
     toolResponseError: <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_RESPONSE_ERROR); ?>,
     toolNetError:      <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_NET_ERROR); ?>,
+    toolCallError:     <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_CALL_ERROR); ?>,
+    toolCallTruncated: <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_CALL_TRUNCATED); ?>,
+    toolArgsInvalid:   <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_ARGS_INVALID); ?>,
+    outputLimitNoProgress: <?php echo json_encode(_MD_FORMULIZE_AI_OUTPUT_LIMIT_NO_PROGRESS); ?>,
+    failedAfterTools:  <?php echo json_encode(_MD_FORMULIZE_AI_FAILED_AFTER_TOOLS); ?>,
+    replyCutOff:       <?php echo json_encode(_MD_FORMULIZE_AI_REPLY_CUT_OFF); ?>,
+    noWrittenReply:    <?php echo json_encode(_MD_FORMULIZE_AI_NO_WRITTEN_REPLY); ?>,
+    noWrittenReplyTools: <?php echo json_encode(_MD_FORMULIZE_AI_NO_WRITTEN_REPLY_TOOLS); ?>,
+    outputLimitGaveUp: <?php echo json_encode(_MD_FORMULIZE_AI_OUTPUT_LIMIT_GAVE_UP); ?>,
+    gatewayTimeout:    <?php echo json_encode(_MD_FORMULIZE_AI_GATEWAY_TIMEOUT); ?>,
+    nonJson:           <?php echo json_encode(_MD_FORMULIZE_AI_NON_JSON); ?>,
+    nonJsonUpload:     <?php echo json_encode(_MD_FORMULIZE_AI_NON_JSON_UPLOAD); ?>,
     copyBtnTitle:      <?php echo json_encode(_MD_FORMULIZE_AI_COPY_BTN_TITLE); ?>,
     copyLabel:         <?php echo json_encode(_MD_FORMULIZE_AI_COPY_BTN_LABEL); ?>,
     evtSavedNew:       <?php echo json_encode(_MD_FORMULIZE_AI_EVENT_SAVED_NEW); ?>,
@@ -367,6 +379,60 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
     // Used as the fallback when a model's own context window isn't known (see modelContextWindows below -
     // Gemini's models endpoint reports a real one per model; the other providers' do not).
     const CONTEXT_WINDOW_DEFAULTS = adminConfig.contextWindowDefaults || {};
+
+    // The most a single Claude response may contain, in tokens. Claude requires a limit on
+    // every request; the other providers default to the model's own maximum when none is
+    // sent, so they are sent none. 16000 is Anthropic's guidance for a request that is not
+    // streamed: much higher, and a long reply risks a timeout somewhere between here and the
+    // provider, because nothing arrives until the whole reply is finished. A reply that
+    // reaches the limit is handled rather than lost - see the tool loops below.
+    const CLAUDE_MAX_TOKENS = 16000;
+
+    // How many replies in a row may be cut off at the output limit, each time telling the
+    // model to split its work into smaller calls, before giving up on the turn. Without a
+    // bound, a model that keeps overrunning would loop forever.
+    const MAX_TRUNCATION_RECOVERIES = 2;
+
+    // Opt-in diagnostics for working out what went wrong on a turn: each request to the
+    // provider and each tool call is logged to the browser console. Turned on per browser with
+    // localStorage.setItem('formulize_ai_debug', '1') and a reload - see the AI debugging page
+    // on formulize.org. When it is off, nothing is logged.
+    const AI_DEBUG = (() => {
+        try { return localStorage.getItem('formulize_ai_debug') === '1'; } catch (e) { return false; }
+    })();
+    let debugRound = 0; // requests to the provider so far this turn, so the log reads round 1, 2, ...
+
+    // console.log rather than console.debug: Chrome and Edge hide debug-level messages unless
+    // the console is set to show them, and the person reading this has already opted in
+    function aiDebug(...args) {
+        if (AI_DEBUG) console.log('[Formulize AI]', ...args);
+    }
+
+    function debugLogRound(provider, requestChars, startedAt, status, details) {
+        aiDebug(`${provider} round ${++debugRound}`, Object.assign({
+            requestChars,
+            elapsedMs: Math.round(performance.now() - startedAt),
+            status
+        }, details));
+    }
+
+    // Debug only: a deliberately small output limit, so the handling of cut-off replies can be
+    // exercised without having to ask for something enormous. 0 means no override.
+    function debugMaxTokensOverride() {
+        if (!AI_DEBUG) return 0;
+        const n = parseInt(localStorage.getItem('formulize_ai_max_tokens'), 10);
+        return n > 0 ? n : 0;
+    }
+
+    // The proxy always answers in JSON, so a response that is not JSON came from somewhere
+    // else - usually the web server or a gateway in front of it, giving up on a slow request.
+    // Say what most likely happened rather than reporting a parse error.
+    function nonJsonResponseError(status, hadAttachments) {
+        if (status === 502 || status === 503 || status === 504) {
+            return new Error(t(S.gatewayTimeout, { status }));
+        }
+        return new Error(t(hadAttachments ? S.nonJsonUpload : S.nonJson, { status }));
+    }
 
     // id -> context window (characters), for whichever models the last discovery reported one for.
     // Rebuilt on every discoverModels() call (see populateModelSelect), so it always reflects the
@@ -507,10 +573,13 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
             return null;
         };
 
-        // No trimming if the first in-context message is still the original first message
+        // No trimming if the first in-context message is still the original first message.
+        // startsWith rather than equality: on the first message of a conversation, the copy
+        // that was sent also carries the activity context appended to its end.
         const firstContent = turnText(messagesForApi[0]);
         if (!firstContent) return;
-        if (firstContent === turnText(firstOriginalTurn)) return;
+        const firstOriginalContent = turnText(firstOriginalTurn);
+        if (firstOriginalContent !== null && firstContent.startsWith(firstOriginalContent)) return;
 
         // Find the DOM element for the first in-context user message via text search
         const searchText = firstContent.slice(0, 100);
@@ -552,11 +621,15 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         return (typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content)).length;
     }
 
-    // A turn that answers a tool call. Gemini sends these with role 'user', so the
-    // "start on a user turn" rule alone would happily leave one stranded at the front
-    // with nothing to answer — which the API rejects.
+    // A turn that answers a tool call. Gemini and Claude both send these with role 'user',
+    // so the "start on a user turn" rule alone would happily leave one stranded at the front
+    // with nothing to answer — which the API rejects. (OpenAI-compatible tool answers have
+    // role 'tool', which that rule already skips.)
     function isToolResponseTurn(msg) {
-        return Array.isArray(msg.parts) && msg.parts.some(p => p.functionResponse);
+        if (Array.isArray(msg.parts)) {
+            return msg.parts.some(p => p.functionResponse);
+        }
+        return Array.isArray(msg.content) && msg.content.some(b => b.type === 'tool_result');
     }
 
     // Trim message history to fit within maxChars. Always keeps at least the last message.
@@ -1344,6 +1417,7 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
 
         isSending = true;
         userStopped = false;
+        debugRound = 0;
         currentAbortController = new AbortController();
         sendBtn.style.display = 'none';
         stopBtn.style.display = '';
@@ -1404,6 +1478,64 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         }
     }
 
+    // --- Shared by every provider's send path ---
+
+    // Show a turn's final reply. A turn can legitimately end without any text - the reply was
+    // cut off at the output limit before any was written, or the model stopped after its tool
+    // calls without saying anything - and an empty bubble looks like something failed to
+    // display, so those get a notice instead.
+    async function renderFinalReply(text, { cutOff = false, toolsRan = 0 } = {}) {
+        const hasText = text.trim() !== '';
+        if (hasText) {
+            const scrollBefore = chatWindow.scrollTop;
+            const heightBefore = chatWindow.scrollHeight;
+            const aiMsg = addMessage(S.senderAI, S.thinking + '...', 'ai');
+            chatWindow.scrollTop = scrollBefore + (chatWindow.scrollHeight - heightBefore);
+            await typewriterEffect(aiMsg.querySelector('.ai-markdown') || aiMsg.lastElementChild, text);
+            recordMessage(S.senderAI, text, 'ai');
+        }
+        let notice = '';
+        if (cutOff) {
+            notice = S.replyCutOff;
+        } else if (!hasText) {
+            notice = toolsRan > 0 ? t(S.noWrittenReplyTools, { count: toolsRan }) : S.noWrittenReply;
+        }
+        if (notice) {
+            addMessage(S.senderSystem, notice, 'system');
+            recordMessage(S.senderSystem, notice, 'system');
+        }
+    }
+
+    // Which of a reply's tool calls to refuse, when the reply was cut off at the output limit.
+    // Only the last call can be incomplete - the model had moved on past every earlier one -
+    // so the earlier ones are run as normal, and the last is answered with an error telling
+    // the model to split the work up, rather than run with arguments that may be cut short.
+    // Models often respond to a cut-off by splitting the work into several calls in the SAME
+    // reply, which overruns again since the limit covers the whole reply; running the
+    // complete ones means each cut-off round still gets something done.
+    function cutOffToolCallIndex(calls) {
+        return calls.length - 1;
+    }
+
+    // Count the cut-off rounds in a row that got nothing done, and give up past the limit.
+    // A cut-off round that still ran some of its calls made progress, so it resets the count:
+    // only a model that keeps overrunning without getting anything done is stopped.
+    function nextTruncationCount(count, cutOff, madeProgress) {
+        if (!cutOff || madeProgress) return 0;
+        if (count + 1 > MAX_TRUNCATION_RECOVERIES) throw new Error(S.outputLimitGaveUp);
+        return count + 1;
+    }
+
+    // When a turn fails partway through its tool loop, the tool calls that already ran may
+    // have written data. Rolling the history back to before the user's message would leave
+    // the model unaware of that, and asking again would repeat the work - creating the same
+    // entries a second time. So each send path keeps the completed call/result exchanges in
+    // its history, followed by this note in the assistant's turn. It only rolls back fully
+    // when no tool ran.
+    function failedAfterToolsNote(error) {
+        return t(S.failedAfterTools, { error: userStopped ? S.stoppedMsg : error.message });
+    }
+
     // --- Gemini path ---
 
     // Gemini's tool declarations. Its schema is close to, but not the same as, the one
@@ -1436,14 +1568,31 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         // The model rides in the query string; the proxy puts it in the URL path, which
         // is where Gemini wants it.
         body.model = modelNameInput.value.trim() || 'gemini-2.0-flash';
+        const maxTokensOverride = debugMaxTokensOverride();
+        if (maxTokensOverride) body.generationConfig = { maxOutputTokens: maxTokensOverride };
 
+        const requestBody = JSON.stringify(body);
+        const startedAt = performance.now();
         const response = await fetch(AI_URL('ai_proxy.php?provider=gemini&op=chat'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
+            body: requestBody,
             signal: currentAbortController?.signal
         });
-        const data = await response.json();
+        let data;
+        try {
+            data = await response.json();
+        } catch (_) {
+            debugLogRound('gemini', requestBody.length, startedAt, response.status, { nonJson: true });
+            throw nonJsonResponseError(response.status, contents.some(c => (c.parts || []).some(p => p.inlineData)));
+        }
+        const candidate = data.candidates?.[0];
+        debugLogRound('gemini', requestBody.length, startedAt, response.status, {
+            finishReason: candidate?.finishReason,
+            parts: (candidate?.content?.parts || []).map(p => Object.keys(p)[0]),
+            usage: data.usageMetadata,
+            error: data.error?.message
+        });
         if (!response.ok) {
             throw new Error(data.error?.message || `HTTP ${response.status}`);
         }
@@ -1469,35 +1618,62 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         geminiHistory.push({ role: 'user', parts: userParts });
 
         const historyLength = geminiHistory.length;
+        let toolsRan = 0;
         try {
             let contents = trimHistoryToLimit(geminiHistory, getContextLimit(), geminiTurnSize);
             let data = await callGemini(contents);
             if (userStopped) throw new DOMException('User stopped', 'AbortError');
 
-            let parts = data.candidates?.[0]?.content?.parts || [];
+            let candidate = data.candidates?.[0];
+            let parts = candidate?.content?.parts || [];
             let calls = parts.filter(p => p.functionCall);
+            let truncations = 0;
 
-            while (calls.length > 0) {
-                // Keep the model's turn verbatim: a functionResponse is only valid
-                // immediately after the functionCall it answers.
-                geminiHistory.push({ role: 'model', parts });
+            for (;;) {
+                const cutOff = candidate?.finishReason === 'MAX_TOKENS';
 
-                const responseParts = [];
-                for (const part of calls) {
-                    const call = part.functionCall;
-                    const toolBlock = addToolRequest(call.name, call.args || {});
-                    const toolResult = await executeTool(call.name, call.args || {});
-                    addToolResponse(toolBlock, toolResult.raw);
-                    responseParts.push({
-                        functionResponse: { name: call.name, response: { content: toolResult.text } }
-                    });
+                if (calls.length > 0) {
+                    // A reply cut off at the output limit - see cutOffToolCallIndex() for which
+                    // of its calls are run
+                    const cutOffIndex = cutOff ? cutOffToolCallIndex(calls) : -1;
+                    const ranBefore = toolsRan;
+
+                    // Keep the model's turn verbatim: a functionResponse is only valid
+                    // immediately after the functionCall it answers.
+                    geminiHistory.push({ role: 'model', parts });
+
+                    const responseParts = [];
+                    for (const [i, part] of calls.entries()) {
+                        const call = part.functionCall;
+                        let resultText;
+                        if (i === cutOffIndex) {
+                            resultText = S.toolCallTruncated;
+                        } else {
+                            const toolBlock = addToolRequest(call.name, call.args || {});
+                            const toolResult = await executeTool(call.name, call.args || {});
+                            addToolResponse(toolBlock, toolResult.raw);
+                            resultText = toolResult.text;
+                            toolsRan++;
+                        }
+                        responseParts.push({
+                            functionResponse: { name: call.name, response: { content: resultText } }
+                        });
+                    }
+                    geminiHistory.push({ role: 'user', parts: responseParts });
+                    truncations = nextTruncationCount(truncations, cutOff, toolsRan > ranBefore);
+                } else if (cutOff && !parts.some(p => p.text && p.text.trim())) {
+                    // Cut off before calling a tool or writing a word - see the Claude path
+                    geminiHistory.push({ role: 'user', parts: [{ text: S.outputLimitNoProgress }] });
+                    truncations = nextTruncationCount(truncations, true, false);
+                } else {
+                    break;
                 }
-                geminiHistory.push({ role: 'user', parts: responseParts });
 
                 contents = trimHistoryToLimit(geminiHistory, getContextLimit(), geminiTurnSize);
                 data = await callGemini(contents);
                 if (userStopped) throw new DOMException('User stopped', 'AbortError');
-                parts = data.candidates?.[0]?.content?.parts || [];
+                candidate = data.candidates?.[0];
+                parts = candidate?.content?.parts || [];
                 calls = parts.filter(p => p.functionCall);
             }
 
@@ -1505,18 +1681,21 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
             geminiHistory.push({ role: 'model', parts });
 
             loadingMsg.remove();
-            const scrollBeforeGemini = chatWindow.scrollTop;
-            const heightBeforeGemini = chatWindow.scrollHeight;
-            const geminiMsg = addMessage(S.senderAI, S.thinking + '...', 'ai');
-            chatWindow.scrollTop = scrollBeforeGemini + (chatWindow.scrollHeight - heightBeforeGemini);
-            await typewriterEffect(geminiMsg.querySelector('.ai-markdown') || geminiMsg.lastElementChild, finalText);
-            recordMessage(S.senderAI, finalText, 'ai');
+            await renderFinalReply(finalText, { cutOff: candidate?.finishReason === 'MAX_TOKENS', toolsRan });
             updateContextCutoffMarker(contents, geminiHistory[0]);
         } catch (error) {
-            // Roll back every turn this message added, not just the first one — the tool
-            // loop may have pushed several before failing.
-            geminiHistory.length = historyLength - 1;
-            lastGeminiActivityCount = prevActivityCount;
+            if (toolsRan > 0) {
+                // Keep the exchanges that ran - see failedAfterToolsNote(). The tool loop only
+                // calls the provider once a model turn's responses are in place, so the history
+                // already ends on a complete exchange; the note goes after it as a model turn,
+                // which keeps the turns alternating.
+                geminiHistory.push({ role: 'model', parts: [{ text: failedAfterToolsNote(error) }] });
+            } else {
+                // Roll back every turn this message added, not just the first one — the
+                // tool loop may have pushed several before failing.
+                geminiHistory.length = historyLength - 1;
+                lastGeminiActivityCount = prevActivityCount;
+            }
             throw error;
         }
     }
@@ -1556,28 +1735,61 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
             }
         }
 
+        const newMessages = [];
+        let toolsRan = 0;
         try {
             let response = await callClaude(messagesForApi);
-            const newMessages = [];
+            let truncations = 0;
 
-            while (response.stop_reason === 'tool_use') {
-                newMessages.push({ role: 'assistant', content: response.content });
+            for (;;) {
+                const content = response.content || [];
+                const toolUses = content.filter(b => b.type === 'tool_use');
+                const cutOff = response.stop_reason === 'max_tokens';
 
-                const toolResults = [];
-                for (const block of response.content) {
-                    if (block.type === 'tool_use') {
+                if (response.stop_reason === 'tool_use' || (cutOff && toolUses.length > 0)) {
+                    // A reply cut off at the output limit can end partway through a tool call.
+                    // It still has to be answered - every tool_use needs a tool_result, or the
+                    // API rejects the conversation from then on. See cutOffToolCallIndex() for
+                    // which calls are run and which one is refused.
+                    const cutOffIndex = cutOff ? cutOffToolCallIndex(toolUses) : -1;
+                    const ranBefore = toolsRan;
+
+                    newMessages.push({ role: 'assistant', content });
+
+                    const toolResults = [];
+                    for (const [i, block] of toolUses.entries()) {
+                        if (i === cutOffIndex) {
+                            toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: S.toolCallTruncated, is_error: true });
+                            continue;
+                        }
                         const toolBlock = addToolRequest(block.name, block.input);
                         const result = await executeTool(block.name, block.input);
                         addToolResponse(toolBlock, result.raw);
                         toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: result.text });
+                        toolsRan++;
                     }
+                    newMessages.push({ role: 'user', content: toolResults });
+                    truncations = nextTruncationCount(truncations, cutOff, toolsRan > ranBefore);
+                } else if (cutOff && !content.some(b => b.type === 'text' && b.text.trim())) {
+                    // Cut off before calling a tool or writing a word. That is usually the model
+                    // still thinking the whole task through: on a big job it can spend the entire
+                    // output limit planning. Nothing in the reply is worth keeping, so it is left
+                    // out of the history, and the model is told to start in small steps instead.
+                    // The same count of cut-off rounds bounds how often this can repeat. (The
+                    // same is done for the other providers below.)
+                    newMessages.push({ role: 'user', content: S.outputLimitNoProgress });
+                    truncations = nextTruncationCount(truncations, true, false);
+                } else {
+                    break;
                 }
 
-                newMessages.push({ role: 'user', content: toolResults });
-                response = await callClaude([...claudeHistory, ...newMessages]);
+                // Built on messagesForApi, not claudeHistory, so that every round of the loop
+                // carries this turn's attachments and activity context, and stays within the
+                // history limit, exactly as the first round did.
+                response = await callClaude([...messagesForApi, ...newMessages]);
             }
 
-            const textContent = response.content
+            const textContent = (response.content || [])
                 .filter(b => b.type === 'text')
                 .map(b => b.text)
                 .join('\n');
@@ -1586,15 +1798,19 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
             for (const m of newMessages) claudeHistory.push(m);
 
             loadingMsg.remove();
-            const scrollBeforeClaude = chatWindow.scrollTop;
-            const heightBeforeClaude = chatWindow.scrollHeight;
-            const claudeMsg = addMessage(S.senderAI, S.thinking + '...', 'ai');
-            chatWindow.scrollTop = scrollBeforeClaude + (chatWindow.scrollHeight - heightBeforeClaude);
-            await typewriterEffect(claudeMsg.querySelector('.ai-markdown') || claudeMsg.lastElementChild, textContent);
-            recordMessage(S.senderAI, textContent, 'ai');
+            await renderFinalReply(textContent, { cutOff: response.stop_reason === 'max_tokens', toolsRan });
             updateContextCutoffMarker(messagesForApi, claudeHistory[0]);
         } catch (error) {
-            claudeHistory.pop();
+            if (toolsRan > 0) {
+                // Keep the exchanges that ran - see failedAfterToolsNote(). If the last
+                // assistant turn's calls never got their results, it is dropped, as an
+                // unanswered tool_use would make the API reject the conversation.
+                if (newMessages.length && newMessages[newMessages.length - 1].role === 'assistant') newMessages.pop();
+                for (const m of newMessages) claudeHistory.push(m);
+                claudeHistory.push({ role: 'assistant', content: failedAfterToolsNote(error) });
+            } else {
+                claudeHistory.pop();
+            }
             throw error;
         }
     }
@@ -1608,7 +1824,19 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
             input_schema: tool.inputSchema || { type: 'object', properties: {} }
         }));
 
-        const bodyBase = { model: modelName, max_tokens: 4096, system: dynamicSystemPrompt };
+        // Every request repeats the tool definitions, the system prompt and the conversation so
+        // far - the API keeps no state between requests - so caching is what keeps that cheap.
+        // The marker on the system prompt caches the tools and system prompt, which never
+        // change during a conversation. The top-level marker caches the whole request, which
+        // the next round of a tool loop starts with. (It is not reused by the next message,
+        // because the activity context appended to the newest message is not kept in history,
+        // but the system prompt marker still is.)
+        const bodyBase = {
+            model: modelName,
+            max_tokens: debugMaxTokensOverride() || CLAUDE_MAX_TOKENS,
+            system: [{ type: 'text', text: dynamicSystemPrompt, cache_control: { type: 'ephemeral' } }],
+            cache_control: { type: 'ephemeral' }
+        };
         if (claudeTools.length > 0) bodyBase.tools = claudeTools;
 
         // If any message block carries inline base64 file data, send the files as binary
@@ -1623,6 +1851,7 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         );
 
         let fetchInit;
+        let requestJson; // the JSON part of the request, for the debug log's size figure
 
         if (hasInlineFiles) {
             const fd = new FormData();
@@ -1645,27 +1874,39 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
                 return { ...msg, content: processedContent };
             }));
 
-            fd.append('payload', JSON.stringify({ ...bodyBase, messages: processedMessages }));
+            requestJson = JSON.stringify({ ...bodyBase, messages: processedMessages });
+            fd.append('payload', requestJson);
             // No explicit Content-Type header — browser sets multipart/form-data with the correct boundary
             fetchInit = { method: 'POST', body: fd, signal: currentAbortController?.signal };
         } else {
+            requestJson = JSON.stringify({ ...bodyBase, messages });
             fetchInit = {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...bodyBase, messages }),
+                body: requestJson,
                 signal: currentAbortController?.signal
             };
         }
 
         // No key header — the proxy loads the key server-side from the DB.
+        const startedAt = performance.now();
         const response = await fetch(AI_URL('ai_proxy.php?provider=claude&op=chat'), fetchInit);
 
         let data;
         try {
             data = await response.json();
         } catch (_) {
-            throw new Error(`HTTP ${response.status} — server returned a non-JSON response. If you attached a large file, try adjusting upload_max_filesize / post_max_size in PHP config, or LimitRequestBody in Apache config.`);
+            debugLogRound('claude', requestJson.length, startedAt, response.status, { nonJson: true });
+            throw nonJsonResponseError(response.status, hasInlineFiles);
         }
+        debugLogRound('claude', requestJson.length, startedAt, response.status, {
+            stop_reason: data.stop_reason,
+            blocks: (data.content || []).map(b => b.type === 'tool_use'
+                ? `tool_use ${b.name} (${JSON.stringify(b.input || {}).length} chars)`
+                : b.type),
+            usage: data.usage,
+            error: data.error?.message
+        });
         if (!response.ok) {
             throw new Error(data.error?.message || `HTTP ${response.status}`);
         }
@@ -1695,6 +1936,13 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         const messagesWithSystem = [{ role: 'system', content: dynamicSystemPrompt }, ...messages];
         const body = { model: modelName, messages: messagesWithSystem, stream: false };
         if (tools.length > 0) body.tools = tools;
+        const maxTokensOverride = debugMaxTokensOverride();
+        if (maxTokensOverride) {
+            // OpenAI's current models take max_completion_tokens and reject max_tokens;
+            // Ollama's OpenAI-compatible endpoint takes max_tokens.
+            body[provider === 'openai' ? 'max_completion_tokens' : 'max_tokens'] = maxTokensOverride;
+        }
+        const requestBody = JSON.stringify(body);
 
         const timeoutController = new AbortController();
         const timer = setTimeout(() => timeoutController.abort(), timeoutMs);
@@ -1706,19 +1954,38 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
             ? AbortSignal.any(signals)
             : timeoutController.signal;
 
+        const startedAt = performance.now();
         try {
             const response = await fetch(url, {
                 method: 'POST',
                 headers,
-                body: JSON.stringify(body),
+                body: requestBody,
                 signal: fetchSignal
             });
             clearTimeout(timer);
-            if (!response.ok) {
-                const err = await response.text();
-                throw new Error(`HTTP ${response.status}: ${err}`);
+            const responseText = await response.text();
+            let data;
+            try {
+                data = JSON.parse(responseText);
+            } catch (_) {
+                debugLogRound(provider, requestBody.length, startedAt, response.status, { nonJson: true });
+                if (!response.ok) {
+                    const hadAttachments = messages.some(m => Array.isArray(m.content));
+                    throw nonJsonResponseError(response.status, hadAttachments);
+                }
+                throw new Error(t(S.nonJson, { status: response.status }));
             }
-            return response.json();
+            const choice = data.choices?.[0];
+            debugLogRound(provider, requestBody.length, startedAt, response.status, {
+                finish_reason: choice?.finish_reason,
+                toolCalls: choice?.message?.tool_calls?.length || 0,
+                usage: data.usage,
+                error: data.error?.message
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${data.error?.message || responseText}`);
+            }
+            return data;
         } catch (error) {
             clearTimeout(timer);
             if (error.name === 'AbortError') {
@@ -1769,40 +2036,77 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
             }
         }
 
+        const newMessages = [];
+        let toolsRan = 0;
         try {
             let response = await callFn(messagesForApi);
-            let message = response.choices[0].message;
-            const newMessages = [];
+            let choice = response.choices[0];
+            let message = choice.message;
+            let truncations = 0;
 
-            while (response.choices[0].finish_reason === 'tool_calls' && message.tool_calls) {
-                newMessages.push({ role: 'assistant', content: message.content || '', tool_calls: message.tool_calls });
+            for (;;) {
+                // 'length' is a reply cut off at the output limit
+                const cutOff = choice.finish_reason === 'length';
 
-                for (const toolCall of message.tool_calls) {
-                    // OpenAI-compatible APIs return tool arguments as a JSON string
-                    const args = JSON.parse(toolCall.function.arguments);
-                    const toolBlock = addToolRequest(toolCall.function.name, args);
-                    const result = await executeTool(toolCall.function.name, args);
-                    addToolResponse(toolBlock, result.raw);
-                    newMessages.push({ role: 'tool', tool_call_id: toolCall.id, content: result.text });
+                if ((choice.finish_reason === 'tool_calls' || cutOff) && message.tool_calls?.length) {
+                    // See cutOffToolCallIndex() for which calls of a cut-off reply are run.
+                    // Every call still gets a response.
+                    const cutOffIndex = cutOff ? cutOffToolCallIndex(message.tool_calls) : -1;
+                    const ranBefore = toolsRan;
+
+                    newMessages.push({ role: 'assistant', content: message.content || '', tool_calls: message.tool_calls });
+
+                    for (const [i, toolCall] of message.tool_calls.entries()) {
+                        if (i === cutOffIndex) {
+                            newMessages.push({ role: 'tool', tool_call_id: toolCall.id, content: S.toolCallTruncated });
+                            continue;
+                        }
+                        // OpenAI-compatible APIs return tool arguments as a JSON string
+                        let args;
+                        try {
+                            args = JSON.parse(toolCall.function.arguments || '{}');
+                        } catch (_) {
+                            newMessages.push({ role: 'tool', tool_call_id: toolCall.id, content: S.toolArgsInvalid });
+                            continue;
+                        }
+                        const toolBlock = addToolRequest(toolCall.function.name, args);
+                        const result = await executeTool(toolCall.function.name, args);
+                        addToolResponse(toolBlock, result.raw);
+                        newMessages.push({ role: 'tool', tool_call_id: toolCall.id, content: result.text });
+                        toolsRan++;
+                    }
+                    truncations = nextTruncationCount(truncations, cutOff, toolsRan > ranBefore);
+                } else if (cutOff && !(message.content || '').trim()) {
+                    // Cut off before calling a tool or writing a word - see the Claude path
+                    newMessages.push({ role: 'user', content: S.outputLimitNoProgress });
+                    truncations = nextTruncationCount(truncations, true, false);
+                } else {
+                    break;
                 }
 
-                response = await callFn([...history, ...newMessages]);
-                message = response.choices[0].message;
+                // Built on messagesForApi, not history, so that every round of the loop carries
+                // this turn's attachments and activity context, as the first round did.
+                response = await callFn([...messagesForApi, ...newMessages]);
+                choice = response.choices[0];
+                message = choice.message;
             }
 
             newMessages.push({ role: 'assistant', content: message.content || '' });
             for (const m of newMessages) history.push(m);
 
             loadingMsg.remove();
-            const scrollBeforeOAI = chatWindow.scrollTop;
-            const heightBeforeOAI = chatWindow.scrollHeight;
-            const aiMsg = addMessage(S.senderAI, S.thinking + '...', 'ai');
-            chatWindow.scrollTop = scrollBeforeOAI + (chatWindow.scrollHeight - heightBeforeOAI);
-            await typewriterEffect(aiMsg.querySelector('.ai-markdown') || aiMsg.lastElementChild, message.content || '(no response)');
-            recordMessage(S.senderAI, message.content || '(no response)', 'ai');
+            await renderFinalReply(message.content || '', { cutOff: choice.finish_reason === 'length', toolsRan });
             updateContextCutoffMarker(messagesForApi, history[0]);
         } catch (error) {
-            history.pop();
+            if (toolsRan > 0) {
+                // Keep the exchanges that ran - see failedAfterToolsNote(). The provider is only
+                // called again once every call in a round has its response, so newMessages
+                // always ends on a complete exchange here.
+                for (const m of newMessages) history.push(m);
+                history.push({ role: 'assistant', content: failedAfterToolsNote(error) });
+            } else {
+                history.pop();
+            }
             throw error;
         }
     }
@@ -1833,7 +2137,9 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         return callOpenAICompat(messages, {
             provider: 'openai',
             defaultModel: 'gpt-4o',
-            timeoutMs: 60000,
+            // Matches the proxy's own wait for OpenAI (see ai_providers.php), so a long reply
+            // is not abandoned here while the server is still waiting for it
+            timeoutMs: 600000,
             timeoutMsg: S.openaiTimeout
         });
     }
@@ -1875,6 +2181,18 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
     // --- Shared MCP tool executor (same for all providers) ---
 
     async function executeTool(name, args) {
+        const startedAt = performance.now();
+        const result = await executeToolRequest(name, args);
+        aiDebug(`tool ${name}`, {
+            argsChars: JSON.stringify(args || {}).length,
+            resultChars: result.text.length,
+            elapsedMs: Math.round(performance.now() - startedAt),
+            error: result.raw?.error?.message || (result.raw ? undefined : result.text)
+        });
+        return result;
+    }
+
+    async function executeToolRequest(name, args) {
         try {
             const response = await fetch(MCP_URL('/mcp'), {
                 method: 'POST',

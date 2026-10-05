@@ -34,5 +34,6 @@ The embedded AI assistant can also be used with local language models, via <a hr
 
 ---
 
+- [Troubleshooting the embedded AI assistant](../ai/debugging)
 - [Setup an external AI assistant via MCP](../ai/setup-mcp)
 - [Read more about AI and Formulize](../ai/)

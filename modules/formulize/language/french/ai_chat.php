@@ -109,6 +109,17 @@ define('_MD_FORMULIZE_AI_CONTEXT_HEADER',         '[Activité Formulize récente
 define('_MD_FORMULIZE_AI_OLLAMA_TIMEOUT',         'Délai d\'attente Ollama dépassé — Ollama est-il en cours d\'exécution ? Si votre page est servie via HTTPS, les navigateurs bloquent les requêtes vers localhost (politique d\'accès au réseau privé).');
 define('_MD_FORMULIZE_AI_OPENAI_TIMEOUT',         'Délai d\'attente de la requête OpenAI dépassé.');
 
+// Réponse venue du serveur web plutôt que du fournisseur d'IA
+define('_MD_FORMULIZE_AI_GATEWAY_TIMEOUT',        'HTTP {status} : le serveur web a cessé d\'attendre la réponse du fournisseur d\'IA. Essayez d\'en demander moins à la fois. Si le problème persiste, votre administrateur devra peut-être augmenter le délai d\'attente du serveur web.');
+define('_MD_FORMULIZE_AI_NON_JSON',               'HTTP {status} : le serveur a renvoyé une réponse inattendue.');
+define('_MD_FORMULIZE_AI_NON_JSON_UPLOAD',        'HTTP {status} : le serveur a renvoyé une réponse inattendue. Si vous avez joint un fichier volumineux, votre administrateur devra peut-être augmenter upload_max_filesize / post_max_size dans la configuration PHP, ou LimitRequestBody dans la configuration Apache.');
+
+// Réponses terminées sans la réponse écrite habituelle
+define('_MD_FORMULIZE_AI_REPLY_CUT_OFF',          'Cette réponse a été interrompue, car elle a atteint la longueur maximale d\'une réponse.');
+define('_MD_FORMULIZE_AI_NO_WRITTEN_REPLY',       'L\'IA a terminé sans écrire de réponse.');
+define('_MD_FORMULIZE_AI_NO_WRITTEN_REPLY_TOOLS', 'L\'IA a terminé sans écrire de réponse. Elle a utilisé {count} outil(s) - dépliez les encadrés d\'outils ci-dessus pour voir ce qu\'ils ont fait.');
+define('_MD_FORMULIZE_AI_OUTPUT_LIMIT_GAVE_UP',   'L\'IA a atteint à plusieurs reprises la longueur maximale d\'une réponse, même après avoir été invitée à diviser le travail en étapes plus petites. Essayez d\'en demander moins à la fois.');
+
 // Panneau de paramètres
 define('_MD_FORMULIZE_AI_HISTORY_LIMIT_LABEL',        'Limite d\'historique (car.)');
 define('_MD_FORMULIZE_AI_HISTORY_LIMIT_TITLE',        'Nombre maximum de caractères d\'historique de conversation envoyés par requête.');
@@ -118,3 +129,9 @@ define('_MD_FORMULIZE_AI_HISTORY_LIMIT_CONFIRM',  "Modifier la limite d'historiq
 
 // Invite système envoyée à l'IA
 define('_MD_FORMULIZE_AI_SYSTEM_PROMPT',          'Vous êtes l\'Assistant IA Formulize. Vous aidez les utilisateurs à gérer leurs données dans Formulize. Vous avez accès à des outils permettant d\'interagir avec les données et la configuration de Formulize. Soyez concis et utile.');
+
+// Envoyés à l'IA à la place d'un résultat d'outil, ou consignés dans son historique, quand un tour se passe mal
+define('_MD_FORMULIZE_AI_TOOL_CALL_TRUNCATED',    'Cet appel d\'outil n\'a pas été exécuté : votre réponse a atteint la limite de sortie et cet appel a été coupé. Divisez le travail en plusieurs appels plus petits, et faites-en un par réponse, car la limite s\'applique à l\'ensemble d\'une même réponse.');
+define('_MD_FORMULIZE_AI_OUTPUT_LIMIT_NO_PROGRESS', '[Votre réponse précédente a atteint la limite de sortie avant que vous ne fassiez un appel d\'outil ou n\'écriviez une réponse ; elle a donc été écartée et rien n\'a été fait. Ne planifiez pas toute la tâche à l\'avance. Commencez maintenant par une petite première étape, et planifiez chaque étape suivante après avoir vu le résultat de la précédente.]');
+define('_MD_FORMULIZE_AI_TOOL_ARGS_INVALID',      'Cet appel d\'outil n\'a pas été exécuté : ses arguments n\'étaient pas du JSON valide.');
+define('_MD_FORMULIZE_AI_FAILED_AFTER_TOOLS',     '[Cette requête a échoué après l\'exécution des appels d\'outils ci-dessus ; leurs effets sont donc déjà appliqués. L\'échec : {error}]');
