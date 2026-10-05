@@ -151,6 +151,27 @@ the class `open` on the element with that id, for showing a menu.
 
 Lyris's samples, in `themes/Lyris/appearance_preview/`, are a complete example.
 
+## 6. Offer the Content width setting (optional)
+
+The Appearance page's Layout section can keep the main content to a maximum width, rather than full
+width, which is the default. The setting sets `--formulize-content-max-width` to a width in pixels.
+Laying the content out to that width is up to the theme, so a theme says when it does, and only then
+does the Appearance page offer the setting.
+
+**Opt in** by declaring `--formulize-content-max-width` on `:root` in your `css/tokens.css`, as
+`100%`, which is full width:
+
+```css
+:root {
+  --formulize-content-max-width: 100%;
+}
+```
+
+Then use it as the maximum width of your content. Lyris keeps the content at the left, beside its
+sidebar, and lets the bars along the top and bottom of lists and forms run the full width, with their
+buttons lined up with the edge of the content; see the "Content width" section at the end of
+`themes/Lyris/css/style.css`.
+
 ## Checking your theme
 
 Open a long form in your theme, scroll down, and save it. You should be returned to where you were

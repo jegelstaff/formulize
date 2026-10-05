@@ -151,4 +151,9 @@
      `- var(--lyris-masquerade-height)` below is a no-op unless someone is masquerading. */
   --lyris-masquerade-height: 0px;
   --lyris-sidebar-width: 13.75rem;
+  /* How wide the main content can get: 100% is full width. The Appearance page's
+     Content width setting sets a maximum width in pixels instead, and declaring
+     this is what has it offer that setting for this theme. The content stays at
+     the left, beside the sidebar; see the "Content width" section in style.css. */
+  --formulize-content-max-width: 100%;
 }

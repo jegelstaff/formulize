@@ -148,6 +148,14 @@ $adminPage['themeUsesSizes'] = formulize_appearanceThemeUsesSizes($selectedTheme
 // there, which the settings on this page don't change
 $adminPage['editorUrl'] = formulize_getAppearanceEditorUrl($selectedTheme);
 $adminPage['overrideParts'] = implode(', ', formulize_appearanceOverrideParts($settings));
+// Content width: full width, or a maximum width in pixels, for a theme that lays
+// its content out to one (formulize_appearanceThemeUsesContentWidth). The width box
+// starts at the default width while the content is full width.
+$contentWidthLimits = formulize_appearanceContentWidthLimits();
+$adminPage['themeUsesContentWidth'] = formulize_appearanceThemeUsesContentWidth($selectedTheme);
+$adminPage['contentWidthMax'] = ($settings['appearance_contentwidth'] !== '');
+$adminPage['contentWidth'] = $settings['appearance_contentwidth'] !== '' ? $settings['appearance_contentwidth'] : $contentWidthLimits['default'];
+$adminPage['contentWidthLimits'] = $contentWidthLimits;
 $adminPage['logoUrl'] = $uploadUrls['appearance_logo'];
 $adminPage['faviconUrl'] = $uploadUrls['appearance_favicon'];
 $adminPage['saved'] = $saved;

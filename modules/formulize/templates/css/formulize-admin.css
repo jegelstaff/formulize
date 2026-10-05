@@ -2686,6 +2686,10 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 	width: 270px;
 	max-width: 100%;
 }
+.formulize-appearance .formulize-appearance-field input[type=number] {
+	width: 6em;
+	margin-left: 0.4em;
+}
 .formulize-appearance .formulize-appearance-hint {
 	display: block;
 	margin-top: 0.3em;

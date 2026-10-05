@@ -4563,3 +4563,52 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
 .applinks p {
 	padding-left: 0.5em;
 }
+
+/* ============================================================
+   Content width
+   ------------------------------------------------------------
+   --formulize-content-max-width (css/tokens.css) is how wide the content of a
+   list or form screen can get: 100%, full width, unless the Appearance page's
+   Content width setting gives it a maximum width in pixels. The content stays at
+   the left, beside the sidebar, and what is left of `.lyris-main` to its right is
+   page background.
+
+   The bars along the top and bottom of a list (title bar, selection bar,
+   pagination footer) and the form's action bar (`#multipage-controls`) still run
+   the full width of `.lyris-main`, so they read as the screen's chrome, but their
+   contents are kept to the content: each takes the width beyond the maximum as
+   extra right padding, so its buttons end where the content ends. Their parents
+   are full width, so 100% in the padding is the bar's own width, and at full
+   width (100%) the extra is 0px and nothing moves.
+
+   Not on phones (768px and under), where the content always uses the whole
+   screen and these bars have their own padding, and not in the drawer or an
+   embedded screen (`.formulize-inline`), which are narrower than any maximum.
+   The drawer, popups and the pages outside list and form screens (the home page,
+   account pages) are left at full width.
+   ============================================================ */
+@media (min-width: 769px) {
+
+  body:not(.formulize-inline) .lyris-list__body {
+    max-width: var(--formulize-content-max-width);
+  }
+
+  body:not(.formulize-inline) .lyris-list__titlebar,
+  body:not(.formulize-inline) .lyris-selection-bar,
+  body:not(.formulize-inline) .lyris-list__footer {
+    padding-right: calc(var(--fz-toolbar-padding-x) + max(0px, 100% - var(--formulize-content-max-width)));
+  }
+
+  /* the form card and the page tabs above it keep their side gutters inside the
+     maximum width */
+  body:not(.formulize-inline) .lyris-main .lyris-form-screen,
+  body:not(.formulize-inline) .lyris-main #pageNavTable,
+  body:not(.formulize-inline) .lyris-main .pageNavTable {
+    max-width: calc(var(--formulize-content-max-width) - 2 * var(--fz-page-padding));
+  }
+
+  body:not(.formulize-inline) #multipage-controls {
+    padding-right: calc(var(--fz-form-padding) + max(0px, 100% - var(--formulize-content-max-width)));
+  }
+
+}

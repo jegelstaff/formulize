@@ -86,6 +86,23 @@
     </fieldset>
     <{/if}>
 
+    <{* Layout: how wide the main content can get. Full width sets nothing. Only for
+       themes that lay their content out to a maximum width
+       (formulize_appearanceThemeUsesContentWidth). The width box only counts with
+       "Maximum width" chosen. *}>
+    <{if $adminPage.themeUsesContentWidth}>
+    <fieldset class="formulize-appearance-group">
+        <legend>Layout</legend>
+        <div class="formulize-appearance-field" role="radiogroup" aria-labelledby="appearance_contentwidth_label">
+            <label id="appearance_contentwidth_label">Content width</label>
+            <label class="formulize-appearance-checkbox"><input type="radio" name="appearance_contentwidth_mode" value="full" <{if !$adminPage.contentWidthMax}>checked="checked"<{/if}> onchange="appearanceToggleContentWidth();" /> Full width</label>
+            <label class="formulize-appearance-checkbox"><input type="radio" name="appearance_contentwidth_mode" value="max" <{if $adminPage.contentWidthMax}>checked="checked"<{/if}> onchange="appearanceToggleContentWidth();" /> Maximum width
+                <input type="number" id="appearance_contentwidth" name="appearance_contentwidth" value="<{$adminPage.contentWidth}>" min="<{$adminPage.contentWidthLimits.min}>" max="<{$adminPage.contentWidthLimits.max}>" step="1" aria-label="Maximum width, in pixels" /> pixels</label>
+            <span class="formulize-appearance-hint">How wide forms and lists can get. Full width uses the whole window. A maximum width keeps them from stretching across a wide screen: they stay beside the menu, and the bars along the bottom of lists and forms line their buttons up with them. On phones, the content always uses the whole screen.</span>
+        </div>
+    </fieldset>
+    <{/if}>
+
     <fieldset class="formulize-appearance-group">
         <legend>Font</legend>
 
@@ -218,6 +235,16 @@ function appearanceToggleCustomFont() {
     });
 }
 appearanceToggleCustomFont();
+
+// The width box only counts with "Maximum width" chosen, so it is only editable then.
+function appearanceToggleContentWidth() {
+    var max = document.querySelector('#appearance input[name=appearance_contentwidth_mode][value=max]');
+    var width = document.getElementById('appearance_contentwidth');
+    if (max && width) {
+        width.disabled = !max.checked;
+    }
+}
+appearanceToggleContentWidth();
 
 /* ---------------------------------------------------------------------------
    Live font preview
