@@ -4614,3 +4614,90 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
 .applinks p {
 	padding-left: 0.5em;
 }
+
+/* ============================================================
+   Content width
+   ------------------------------------------------------------
+   --formulize-content-max-width (css/tokens.css) is how wide a page can get:
+   1200px, unless the Appearance page's Page width setting sets another width,
+   or 100%, full width. The content of list and form screens stays at the left,
+   beside the sidebar, and what is left of `.lyris-main` to its right is page
+   background.
+
+   The bars along the top and bottom of a list (title bar, selection bar,
+   pagination footer) and the form's action bar (`#multipage-controls`) still run
+   the full width of `.lyris-main`, so they read as the screen's chrome, but their
+   contents are kept to the content: each takes the width beyond the maximum as
+   extra right padding, so its buttons end where the content ends. Their parents
+   are full width, so 100% in the padding is the bar's own width, and at full
+   width (100%) the extra is 0px and nothing moves.
+
+   The site header does the same on every page: it runs the full width of the
+   window, over the sidebar, so the content ends the sidebar's width further in
+   while the sidebar is open, and its links end there.
+
+   Not on phones (768px and under), where pages always use the whole screen and
+   these bars have their own padding, and not in the drawer or an embedded
+   screen (`.formulize-inline`), which are narrower than any maximum. The drawer,
+   popups and the content of pages outside list and form screens (the home page,
+   account pages) are left at full width.
+   ============================================================ */
+@media (min-width: 769px) {
+
+  body:not(.formulize-inline) .lyris-list__body {
+    max-width: var(--formulize-content-max-width);
+  }
+
+  body:not(.formulize-inline) .lyris-list__titlebar,
+  body:not(.formulize-inline) .lyris-selection-bar,
+  body:not(.formulize-inline) .lyris-list__footer {
+    padding-right: calc(var(--fz-toolbar-padding-x) + max(0px, 100% - var(--formulize-content-max-width)));
+  }
+
+  /* the form card and the page tabs above it keep their side gutters inside the
+     maximum width */
+  body:not(.formulize-inline) .lyris-main .lyris-form-screen,
+  body:not(.formulize-inline) .lyris-main #pageNavTable,
+  body:not(.formulize-inline) .lyris-main .pageNavTable {
+    max-width: calc(var(--formulize-content-max-width) - 2 * var(--fz-page-padding));
+  }
+
+  body:not(.formulize-inline) #multipage-controls {
+    padding-right: calc(var(--fz-form-padding) + max(0px, 100% - var(--formulize-content-max-width)));
+  }
+
+  /* the header's 100% is the window's width (`.lyris-app`), and the content
+     starts after the sidebar while it is open */
+  .lyris-header {
+    --lyris-content-start: 0px;
+    padding-right: calc(var(--fz-spacing) * 4 + max(0px, 100% - var(--lyris-content-start) - var(--formulize-content-max-width)));
+  }
+
+  .lyris-app:has(> .lyris-app__body > .lyris-sidebar):not(.lyris-app--sidebar-closed) .lyris-header {
+    --lyris-content-start: var(--lyris-sidebar-width);
+  }
+
+  /* Lists in a card, while pages are kept to a maximum width (the body has
+     .lyris-max-width, from theme.html), so that a list's entries don't float in
+     the page background beside the empty space to their right. The card is the
+     form card's: the same surface, border, corners and shadow, and the same
+     gutter around it, so a list's card and a form's line up. It has no padding of
+     its own, so the rows, their lines and the sticky column headings reach its
+     edges, and it still scrolls, both ways, inside its border. It is as tall as
+     its entries, up to the space between the title bar and the footer, and the
+     footer stays at the bottom. At full width, lists are as they were. */
+  body.lyris-max-width:not(.formulize-inline) .lyris-list__body {
+    flex: 0 1 auto;
+    max-width: calc(var(--formulize-content-max-width) - 2 * var(--fz-page-padding));
+    margin: var(--fz-page-padding);
+    background: var(--fz-card-bg);
+    border: 1px solid var(--fz-card-border);
+    border-radius: var(--fz-card-radius);
+    box-shadow: var(--fz-shadow-sm);
+  }
+
+  body.lyris-max-width:not(.formulize-inline) .lyris-list__footer {
+    margin-top: auto;
+  }
+
+}
