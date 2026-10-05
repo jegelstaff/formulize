@@ -57,6 +57,11 @@ if ($appearanceCss AND is_file($appearanceCss)) {
 	$stylesheets[] = substr($appearanceCss, strlen(XOOPS_ROOT_PATH));
 }
 
+// formulize-max-width on the body while pages are kept to a maximum width, as
+// a theme puts it on its own pages (see "Offer the Page width setting" in
+// docs/themes.md); the editor turns it on and off as the width is changed
+$maxWidth = (formulize_appearanceThemeUsesContentWidth($theme) AND formulize_appearanceContentWidth(formulize_getAppearanceSettings($theme), $theme) != 'full');
+
 header('Content-Type: text/html; charset=utf-8');
 header('X-Frame-Options: SAMEORIGIN');
 ?><!DOCTYPE html>
@@ -70,7 +75,7 @@ header('X-Frame-Options: SAMEORIGIN');
 	echo '<link rel="stylesheet" type="text/css" media="all" href="' . XOOPS_URL . htmlspecialchars($path, ENT_QUOTES) . '?v=' . formulize_get_file_version($path) . '">' . "\n";
 } ?>
 </head>
-<body id="formulize" class="en formulize-screen formulize-appearance-preview">
+<body id="formulize" class="en formulize-screen formulize-appearance-preview<?php echo $maxWidth ? ' formulize-max-width' : ''; ?>">
 <?php echo $markup; ?>
 </body>
 </html>
