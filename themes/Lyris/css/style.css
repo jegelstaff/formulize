@@ -4626,4 +4626,27 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
     --lyris-content-start: var(--lyris-sidebar-width);
   }
 
+  /* Lists in a card, while pages are kept to a maximum width (the body has
+     .lyris-max-width, from theme.html), so that a list's entries don't float in
+     the page background beside the empty space to their right. The card is the
+     form card's: the same surface, border, corners and shadow, and the same
+     gutter around it, so a list's card and a form's line up. It has no padding of
+     its own, so the rows, their lines and the sticky column headings reach its
+     edges, and it still scrolls, both ways, inside its border. It is as tall as
+     its entries, up to the space between the title bar and the footer, and the
+     footer stays at the bottom. At full width, lists are as they were. */
+  body.lyris-max-width:not(.formulize-inline) .lyris-list__body {
+    flex: 0 1 auto;
+    max-width: calc(var(--formulize-content-max-width) - 2 * var(--fz-page-padding));
+    margin: var(--fz-page-padding);
+    background: var(--fz-card-bg);
+    border: 1px solid var(--fz-card-border);
+    border-radius: var(--fz-card-radius);
+    box-shadow: var(--fz-shadow-sm);
+  }
+
+  body.lyris-max-width:not(.formulize-inline) .lyris-list__footer {
+    margin-top: auto;
+  }
+
 }
