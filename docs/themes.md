@@ -151,6 +151,28 @@ the class `open` on the element with that id, for showing a menu.
 
 Lyris's samples, in `themes/Lyris/appearance_preview/`, are a complete example.
 
+## 6. Offer the Page width setting (optional)
+
+The Page width setting, in the Size group on the Appearance page and in the advanced editor, keeps
+pages to a maximum width on a wide screen, or lets them use the full width of the window. It sets
+`--formulize-content-max-width`: a width in pixels, or `100%` for full width. Laying the page out to
+that width is up to the theme, so a theme says when it does, and only then is the setting offered.
+
+**Opt in** by declaring `--formulize-content-max-width` on `:root` in your `css/tokens.css`. What you
+declare is your theme's own width, which is what the setting starts at and what a reset goes back to:
+a width in pixels, or `100%` to start at full width. Lyris declares 1200 pixels:
+
+```css
+:root {
+  --formulize-content-max-width: 1200px;
+}
+```
+
+Then use it as the maximum width of your content. Lyris keeps the content at the left, beside its
+sidebar, and lets its header and the bars along the top and bottom of lists and forms run the full
+width, with their links and buttons lined up with the edge of the content; see the "Content width"
+section at the end of `themes/Lyris/css/style.css`.
+
 ## Checking your theme
 
 Open a long form in your theme, scroll down, and save it. You should be returned to where you were

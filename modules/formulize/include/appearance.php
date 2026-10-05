@@ -25,9 +25,9 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// Appearance settings: colours, fonts, size, logo, and favicon, configured on the
-// Appearance page in the Formulize admin UI, and rendered by themes as CSS custom
-// property overrides on :root.
+// Appearance settings: colours, fonts, size, page width, logo, and favicon,
+// configured on the Appearance page in the Formulize admin UI, and rendered by
+// themes as CSS custom property overrides on :root.
 //
 // Settings are kept per theme, in the theme's own generated stylesheet. That
 // stylesheet, and any uploaded logo or favicon, live in an "appearance" folder inside the
@@ -368,6 +368,90 @@ function formulize_appearanceThemeUsesSizes($theme = null) {
 }
 
 /**
+ * The narrowest and widest the maximum page width can be set to, in pixels, and
+ * the width the Appearance page and the advanced editor offer for a maximum width
+ * when the page is at full width.
+ *
+ * @return array with 'min', 'max' and 'default'
+ */
+function formulize_appearanceContentWidthLimits() {
+    return array('min' => 600, 'max' => 3840, 'default' => 1200);
+}
+
+/**
+ * Whether a theme can keep its pages to a maximum width, so that the Page width
+ * setting (appearance_contentwidth, on the Appearance page and in the advanced
+ * editor) changes how it looks. A theme says so itself, by declaring
+ * --formulize-content-max-width with its other tokens (Lyris does, in
+ * css/tokens.css) and reading it in its layout. A theme that doesn't, such as
+ * Anari, isn't offered the setting, and no width is written into its stylesheet.
+ *
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return boolean
+ */
+function formulize_appearanceThemeUsesContentWidth($theme = null) {
+    $tokens = formulize_appearanceThemeTokens($theme);
+    return isset($tokens['--formulize-content-max-width']);
+}
+
+/**
+ * A page width as a whole number of pixels within the limits.
+ *
+ * @param string $value the width
+ * @return string the width, or '' when it isn't one
+ */
+function formulize_appearanceContentWidthPixels($value) {
+    $value = trim((string) $value);
+    $limits = formulize_appearanceContentWidthLimits();
+    return (ctype_digit($value) AND $value >= $limits['min'] AND $value <= $limits['max']) ? (string) (int) $value : '';
+}
+
+/**
+ * A theme's own page width, which is what it has until another is chosen: the
+ * width in pixels it declares for --formulize-content-max-width (Lyris declares
+ * 1200px), or 'full' when it declares 100%, or doesn't declare the token.
+ *
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return string a width in pixels, eg: '1200', or 'full'
+ */
+function formulize_appearanceContentWidthDefault($theme = null) {
+    $tokens = formulize_appearanceThemeTokens($theme);
+    $declared = isset($tokens['--formulize-content-max-width']) ? $tokens['--formulize-content-max-width'] : '';
+    $width = preg_match('/^(\d+)px$/', $declared, $match) ? formulize_appearanceContentWidthPixels($match[1]) : '';
+    return $width !== '' ? $width : 'full';
+}
+
+/**
+ * Validate a page width: 'full', or a maximum width as a whole number of pixels
+ * within the limits. The theme's own width is recorded as nothing, like every
+ * other default, so the setting is only written when it differs from the theme,
+ * and 'full' is recorded for full width in a theme whose own width is a maximum.
+ * Anything else is the theme's own width too.
+ *
+ * @param string $value the submitted width
+ * @param string|null $theme the theme the width is for, whose own width is the
+ *                           default. Defaults to the active theme.
+ * @return string the width, 'full', or '' (the theme's own)
+ */
+function formulize_sanitizeAppearanceContentWidth($value, $theme = null) {
+    $value = strtolower(trim((string) $value));
+    $value = ($value === 'full') ? 'full' : formulize_appearanceContentWidthPixels($value);
+    return ($value === formulize_appearanceContentWidthDefault($theme)) ? '' : $value;
+}
+
+/**
+ * The page width a theme's settings call for: the one chosen, or the theme's own.
+ *
+ * @param array $settings appearance settings, already sanitized
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return string a width in pixels, eg: '1200', or 'full'
+ */
+function formulize_appearanceContentWidth($settings, $theme = null) {
+    $width = isset($settings['appearance_contentwidth']) ? (string) $settings['appearance_contentwidth'] : '';
+    return $width !== '' ? $width : formulize_appearanceContentWidthDefault($theme);
+}
+
+/**
  * The Default value of each size token for a theme: what formulize-ui.css
  * declares on :root, overridden by anything the theme declares on :root in its
  * own css/tokens.css. This is what the advanced editor shows as Default,
@@ -536,7 +620,7 @@ function formulize_getAppearanceSizeValues($settings) {
 function formulize_appearanceSettingNames() {
     $names = array('appearance_font', 'appearance_customfont', 'appearance_headingfont',
         'appearance_headingcustomfont', 'appearance_size', 'appearance_overrides',
-        'appearance_logo', 'appearance_favicon');
+        'appearance_contentwidth', 'appearance_logo', 'appearance_favicon');
     // the definition, not the theme-aware map: the setting names are the same for every
     // theme, and only the defaults differ, so there is no theme to resolve here
     foreach (array_keys(formulize_appearanceColourMapDefinition()) as $key) {
@@ -559,10 +643,11 @@ function formulize_defaultAppearanceSettings() {
 /**
  * The settings a submitted Appearance form asks for: the Appearance page's, or
  * the advanced editor's, which has the same fields. Colours and fonts are taken
- * as submitted (an empty or missing one means the default); the Size preset and
- * the advanced editor's overrides are kept as they are when the form has no
- * field for them, since the Appearance page has none for the overrides, and none
- * for the Size preset on a theme not built on the size tokens. The logo and the
+ * as submitted (an empty or missing one means the default); the Size preset, the
+ * advanced editor's overrides and the page width are kept as they are when the
+ * form has no field for them, since the Appearance page has none for the
+ * overrides, and neither page offers the Size preset or the page width to a
+ * theme that isn't built for them. The logo and the
  * favicon are kept too: formulize_saveAppearanceUploads() replaces or removes
  * them.
  *
@@ -570,7 +655,8 @@ function formulize_defaultAppearanceSettings() {
  * @param array $current the theme's settings as they stand
  * @param string $theme theme folder name
  * @param array $errors gets a message for each font chosen as "Other Google
- *                      Font" with no usable name, which falls back to the default
+ *                      Font" with no usable name, which falls back to the default,
+ *                      and for a maximum page width that can't be used
  * @return array settings array, not yet sanitized
  */
 function formulize_appearanceSubmittedSettings($post, $current, $theme, &$errors) {
@@ -581,8 +667,20 @@ function formulize_appearanceSubmittedSettings($post, $current, $theme, &$errors
     foreach (array('appearance_font', 'appearance_customfont', 'appearance_headingfont', 'appearance_headingcustomfont') as $name) {
         $submitted[$name] = isset($post[$name]) ? (string) $post[$name] : '';
     }
-    foreach (array('appearance_size', 'appearance_overrides') as $name) {
+    foreach (array('appearance_size', 'appearance_overrides', 'appearance_contentwidth') as $name) {
         $submitted[$name] = isset($post[$name]) ? (string) $post[$name] : $current[$name];
+    }
+    // the Appearance page asks for the page width as a choice, full width or a
+    // maximum width, and the width itself, which only counts with the second. The
+    // advanced editor sends the width, or 'full', as appearance_contentwidth.
+    if (isset($post['appearance_contentwidth_mode'])) {
+        $submitted['appearance_contentwidth'] = ($post['appearance_contentwidth_mode'] == 'max') ? $submitted['appearance_contentwidth'] : 'full';
+        if ($post['appearance_contentwidth_mode'] == 'max' AND formulize_appearanceContentWidthPixels($submitted['appearance_contentwidth']) === '') {
+            $limits = formulize_appearanceContentWidthLimits();
+            $default = formulize_appearanceContentWidthDefault($theme);
+            $errors[] = "Please enter a maximum page width from " . $limits['min'] . " to " . $limits['max'] . " pixels. The page width has been left as the theme has it: " . ($default == 'full' ? "full width" : "a maximum width of " . $default . " pixels") . ".";
+            $submitted['appearance_contentwidth'] = '';
+        }
     }
     foreach (array_keys(formulize_appearanceUploads()) as $name) {
         $submitted[$name] = $current[$name];
@@ -946,6 +1044,9 @@ function formulize_sanitizeAppearanceSettings($values, $theme = null) {
     // Default is recorded as nothing, like every other default
     $clean['appearance_size'] = formulize_sanitizeAppearanceSize(isset($values['appearance_size']) ? $values['appearance_size'] : '');
     $clean['appearance_overrides'] = formulize_sanitizeAppearanceOverrides(isset($values['appearance_overrides']) ? $values['appearance_overrides'] : '');
+    // the theme's own page width (1200 pixels in Lyris) is recorded as nothing, and
+    // full width, in a theme with a maximum width of its own, as 'full'
+    $clean['appearance_contentwidth'] = formulize_sanitizeAppearanceContentWidth(isset($values['appearance_contentwidth']) ? $values['appearance_contentwidth'] : '', $theme);
     // the logo and the favicon are bare filenames in the theme's appearance folder,
     // never paths
     foreach (array('appearance_logo', 'appearance_favicon') as $fileSetting) {
@@ -1443,6 +1544,11 @@ function formulize_getAppearanceCssOverrides($settings = null, $theme = null) {
             // and the tokens that follow it, such as the main button's hover colour
             $overrides = array_merge($overrides, formulize_appearanceDerivedCss($map['tokens'][$token], $overrides[$token]));
         }
+    }
+    // only a page width other than the theme's own is recorded, so the theme's
+    // declaration applies otherwise
+    if (!empty($settings['appearance_contentwidth']) AND formulize_appearanceThemeUsesContentWidth($theme)) {
+        $overrides['--formulize-content-max-width'] = ($settings['appearance_contentwidth'] == 'full') ? '100%' : $settings['appearance_contentwidth'] . 'px';
     }
     foreach (formulize_appearanceColourMap($theme) as $key => $colour) {
         $value = formulize_sanitizeAppearanceColour($settings['appearance_' . $key]);

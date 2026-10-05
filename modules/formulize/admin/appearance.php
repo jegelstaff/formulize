@@ -148,6 +148,17 @@ $adminPage['themeUsesSizes'] = formulize_appearanceThemeUsesSizes($selectedTheme
 // there, which the settings on this page don't change
 $adminPage['editorUrl'] = formulize_getAppearanceEditorUrl($selectedTheme);
 $adminPage['overrideParts'] = implode(', ', formulize_appearanceOverrideParts($settings));
+// Page width, in the Size group: full width, or a maximum width in pixels, for a
+// theme that lays its pages out to one (formulize_appearanceThemeUsesContentWidth).
+// The width box starts at the default width while the page is at full width.
+$contentWidthLimits = formulize_appearanceContentWidthLimits();
+$contentWidth = formulize_appearanceContentWidth($settings, $selectedTheme);
+$contentWidthDefault = formulize_appearanceContentWidthDefault($selectedTheme);
+$adminPage['themeUsesContentWidth'] = formulize_appearanceThemeUsesContentWidth($selectedTheme);
+$adminPage['contentWidthMax'] = ($contentWidth != 'full');
+$adminPage['contentWidth'] = $contentWidth != 'full' ? $contentWidth : $contentWidthLimits['default'];
+$adminPage['contentWidthLimits'] = $contentWidthLimits;
+$adminPage['contentWidthDefault'] = $contentWidthDefault == 'full' ? 'full width' : 'a maximum width of ' . $contentWidthDefault . ' pixels';
 $adminPage['logoUrl'] = $uploadUrls['appearance_logo'];
 $adminPage['faviconUrl'] = $uploadUrls['appearance_favicon'];
 $adminPage['saved'] = $saved;

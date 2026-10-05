@@ -7,8 +7,9 @@
 // data-fz-part) selects that part: every one of it is outlined, and the
 // inspector shows its settings (its fonts, colours, corners and sizes), which
 // apply to every one of it on the site. With nothing selected, the inspector
-// shows the site-wide settings (the Appearance page's: logo, colours, fonts and
-// the Size preset) and, on its other tab, everything that has been changed.
+// shows the site-wide settings (the Appearance page's: logo, colours, fonts, the
+// Size preset and the page width) and, on its other tab, everything that has been
+// changed.
 //
 // Everything about the parts comes from include/appearance_tokens.json, passed
 // in as formulizeAppearanceEditor.map: the tokens' types and limits, the parts
@@ -53,9 +54,13 @@
 	];
 	var SECTIONS = [['text', 'Text'], ['colour', 'Colours'], ['shape', 'Corners'], ['space', 'Size and spacing']];
 	var UPLOADS = { appearance_logo: 'Logo', appearance_favicon: 'Favicon' };
+	// the page width, for a theme that has one: its limits, and the theme's own
+	// width ('full', or pixels), which is the default
+	var WIDTH = DATA.contentWidth;
 
 	var state = {
 		preset: '',
+		contentWidth: '', // 'full', or a maximum width in pixels
 		overrides: {},
 		colours: {},
 		fonts: {},
@@ -89,6 +94,7 @@
 	// take on the settings as saved: when the page opens, and after a save
 	function adopt(saved) {
 		state.preset = saved.preset || '';
+		state.contentWidth = WIDTH ? String(saved.contentWidth || WIDTH.theme) : '';
 		state.overrides = Array.isArray(saved.overrides) ? {} : copy(saved.overrides || {});
 		state.colours = copy(saved.colours);
 		state.fonts = copy(saved.fonts);
@@ -196,6 +202,8 @@
 	function contrast(a, b) { var x = luminance(a), y = luminance(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
 
 	/* ---- the site-wide settings ---- */
+	function widthChanged() { return !!WIDTH && state.contentWidth !== WIDTH.theme; }
+	function widthName(w) { return w === 'full' ? 'Full width' : 'Maximum width, ' + w + ' pixels'; }
 	function colourChanged(key) { return String(state.colours[key]).toLowerCase() !== String(DATA.colours[key]['default']).toLowerCase(); }
 	function fontLabel(list, key) {
 		var f = DATA.fonts[list].filter(function (x) { return x.key === key; })[0];
@@ -304,6 +312,10 @@
 				else { root.style.removeProperty(d); }
 			});
 		});
+		if (WIDTH) {
+			if (widthChanged()) { root.style.setProperty('--formulize-content-max-width', state.contentWidth === 'full' ? '100%' : state.contentWidth + 'px'); }
+			else { restore(root, '--formulize-content-max-width'); }
+		}
 		var logo = d.querySelector('[data-fz-part="logo"] img');
 		if (logo) { logo.src = uploadUrl('appearance_logo') || DATA.themeLogoUrl; }
 	}
@@ -515,7 +527,26 @@
 			'<div class="formulize-editor__seg formulize-editor__seg--full" role="group" aria-labelledby="formulize-editor-preset-label">' + Object.keys(DATA.presets).map(function (key) {
 				return '<button type="button" data-preset="' + esc(key) + '" aria-pressed="' + (state.preset === key) + '">' + esc(DATA.presets[key]) + '</button>';
 			}).join('') + '</div></div>';
+		if (WIDTH) { h += widthBlock(); }
 		return h;
+	}
+	// the page width: a maximum width in pixels, or full width
+	function widthBlock() {
+		var full = state.contentWidth === 'full';
+		return '<div class="formulize-editor__ctl' + (widthChanged() ? ' is-changed' : '') + '"><div class="formulize-editor__ctl-head"><span class="formulize-editor__lbl" id="formulize-editor-width-label">Page width</span>' +
+				(widthChanged() ? '<button type="button" class="formulize-editor__link" data-site-reset="contentwidth">Reset</button>' : '') + '</div>' +
+			'<p class="formulize-editor__desc">How wide pages can get on a wide screen. A maximum width keeps forms, lists and the links along the top of the page beside the menu. The theme’s own is ' + esc(lower(widthName(WIDTH.theme))) + '. The preview is narrower than most screens, so it may not show the difference.</p>' +
+			'<div class="formulize-editor__seg formulize-editor__seg--full" role="group" aria-labelledby="formulize-editor-width-label">' +
+				'<button type="button" data-cwidth="max" aria-pressed="' + !full + '">Maximum width</button>' +
+				'<button type="button" data-cwidth="full" aria-pressed="' + full + '">Full width</button></div>' +
+			(full ? '' : '<label class="formulize-editor__custom-font"><span>Maximum width, in pixels, from ' + WIDTH.min + ' to ' + WIDTH.max + '</span><input type="number" data-cwidth-px="1" min="' + WIDTH.min + '" max="' + WIDTH.max + '" step="1" value="' + esc(state.contentWidth) + '"></label>') +
+		'</div>';
+	}
+	// a width typed in, kept to the limits; anything that isn't a number leaves it as it was
+	function setWidthPx(v) {
+		var n = Math.round(Number(v));
+		if (String(v).trim() === '' || !isFinite(n)) { return; }
+		state.contentWidth = String(Math.min(WIDTH.max, Math.max(WIDTH.min, n)));
 	}
 	// everything that differs from the theme's own, site-wide and on parts
 	function siteChanges() {
@@ -531,13 +562,14 @@
 		if (fontChanged('main')) { list.push({ name: 'Main font', val: fontShown('main'), reset: 'font:main' }); }
 		if (fontChanged('heading')) { list.push({ name: 'Secondary font', val: fontShown('heading'), reset: 'font:heading' }); }
 		if (state.preset !== '') { list.push({ name: 'Size preset', val: presetName(state.preset), reset: 'preset' }); }
+		if (widthChanged()) { list.push({ name: 'Page width', val: widthName(state.contentWidth) + ' · the theme’s is ' + lower(widthName(WIDTH.theme)), reset: 'contentwidth' }); }
 		return list;
 	}
 	function changeCount() { return siteChanges().length + Object.keys(state.overrides).length; }
 	function changesBlock() {
 		var site = siteChanges(), parts = Object.keys(state.overrides), h = '';
 		if (!site.length && !parts.length) {
-			return '<div class="formulize-editor__empty"><p>Nothing has been changed: everything is as the theme has it.</p><p>Change the logo, colours, fonts and Size preset under Site-wide, or click anything in the preview, such as a button, a field or a list row, to change just that part. A change to a part applies to every one of it on the site.</p></div>';
+			return '<div class="formulize-editor__empty"><p>Nothing has been changed: everything is as the theme has it.</p><p>Change the logo, colours, fonts, Size preset' + (WIDTH ? ' and page width' : '') + ' under Site-wide, or click anything in the preview, such as a button, a field or a list row, to change just that part. A change to a part applies to every one of it on the site.</p></div>';
 		}
 		if (site.length) {
 			h += sect('Site-wide') + site.map(function (c) {
@@ -587,7 +619,7 @@
 		count.hidden = n === 0; count.textContent = n + (n === 1 ? ' change' : ' changes');
 		$('formulize-editor-reset').disabled = n === 0;
 		// keep focus, and the inspector's scroll position, across the re-render
-		var f = document.activeElement, attrs = ['data-token', 'data-d', 'data-v', 'data-cw', 'data-custom', 'data-hex', 'data-colour', 'data-font', 'data-custom-font', 'data-preset', 'data-tab'];
+		var f = document.activeElement, attrs = ['data-token', 'data-d', 'data-v', 'data-cw', 'data-custom', 'data-hex', 'data-colour', 'data-font', 'data-custom-font', 'data-preset', 'data-cwidth', 'data-cwidth-px', 'data-tab'];
 		var key = (f && f.getAttribute && (body.contains(f) || head.contains(f))) ? attrs.map(function (a) { return f.getAttribute(a) || ''; }) : null;
 		var scroll = body.parentNode.scrollTop;
 		renderInspector();
@@ -679,6 +711,7 @@
 		var el = ev.target, a = function (n) { return el.getAttribute && el.getAttribute(n); };
 		if (el.type === 'range' || a('data-colour') || a('data-custom-font') || a('data-custom') || a('data-hex')) { render(); pulse(); }
 		else if (a('data-font')) { state.fonts[a('data-font')] = el.value; touch(); render(); }
+		else if (a('data-cwidth-px')) { setWidthPx(el.value); touch(); render(); }
 	});
 	body.addEventListener('click', function (ev) {
 		var b = ev.target.closest('button'); if (!b) { return; }
@@ -699,6 +732,11 @@
 			select(a('data-select'), null);
 		} else if (a('data-preset') !== null) {
 			state.preset = a('data-preset'); touch(); render();
+		} else if (a('data-cwidth')) {
+			// a maximum width starts at the theme's own, or the usual one when that is full width
+			if (a('data-cwidth') === 'full') { state.contentWidth = 'full'; }
+			else if (state.contentWidth === 'full') { state.contentWidth = WIDTH.theme !== 'full' ? WIDTH.theme : String(WIDTH['default']); }
+			touch(); render();
 		} else if (a('data-colour-reset')) {
 			state.colours[a('data-colour-reset')] = DATA.colours[a('data-colour-reset')]['default']; touch(); render();
 		} else if (a('data-font-reset')) {
@@ -713,6 +751,7 @@
 			if (parts[0] === 'colour') { state.colours[parts[1]] = DATA.colours[parts[1]]['default']; }
 			else if (parts[0] === 'font') { resetFont(parts[1]); }
 			else if (parts[0] === 'preset') { state.preset = ''; }
+			else if (parts[0] === 'contentwidth') { state.contentWidth = WIDTH.theme; }
 			else if (parts[0] === 'upload') {
 				if (uploadChanged(parts[1])) { resetUpload(parts[1]); } else { state.uploads[parts[1]].removed = true; }
 			}
@@ -750,8 +789,9 @@
 	});
 	// back to the theme's own for everything; nothing is saved until Save
 	$('formulize-editor-reset').addEventListener('click', function () {
-		if (!window.confirm('Put everything back to how the ' + DATA.theme + ' theme has it: the logo and favicon, colours, fonts, Size preset and every part’s own settings? Nothing changes on the site until you save.')) { return; }
+		if (!window.confirm('Put everything back to how the ' + DATA.theme + ' theme has it: the logo and favicon, colours, fonts, Size preset' + (WIDTH ? ', page width' : '') + ' and every part’s own settings? Nothing changes on the site until you save.')) { return; }
 		state.overrides = {}; state.preset = '';
+		if (WIDTH) { state.contentWidth = WIDTH.theme; }
 		Object.keys(DATA.colours).forEach(function (key) { state.colours[key] = DATA.colours[key]['default']; });
 		resetFont('main'); resetFont('heading');
 		Object.keys(UPLOADS).forEach(function (key) { resetUpload(key); state.uploads[key].removed = !!savedUploads[key]; });
@@ -777,6 +817,7 @@
 		enforce();
 		var values = {
 			appearance_size: state.preset,
+			appearance_contentwidth: state.contentWidth,
 			appearance_overrides: Object.keys(state.overrides).length ? JSON.stringify(state.overrides) : '',
 			appearance_font: state.fonts.main,
 			appearance_customfont: state.fonts.main === 'custom' ? state.fonts.maincustom : '',
