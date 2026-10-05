@@ -12,8 +12,9 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// The size tokens: the sizes the Appearance page's Size presets and advanced
-// settings can change, kept in appearance_tokens.json beside this file. That
+// The component tokens: the sizes, fonts, colours and corners the Appearance
+// page's Size presets and advanced editor can change, kept in
+// appearance_tokens.json beside this file. That
 // file is data only; this is what reads it: what values each type of token can
 // have, how a value is written in CSS, and how a value written in CSS is read
 // back, which is how a token's Default is found (it is whatever the CSS
@@ -51,7 +52,11 @@ function formulize_appearanceTokenMap() {
 function formulize_appearanceTokenValueIsValid($type, $value) {
     if (isset($type['values'])) {
         // compared as strings, so that 600 and "600", or 1.5 and "1.5", are the same value
-        return in_array((string) $value, array_map('strval', $type['values']), true);
+        if (in_array((string) $value, array_map('strval', $type['values']), true)) {
+            return true;
+        }
+        // a colour of its own, rather than one of the site's
+        return !empty($type['custom']) AND is_string($value) AND preg_match('/^#[0-9a-f]{6}$/', $value);
     }
     if (!is_numeric($value)) {
         return false;
@@ -86,6 +91,10 @@ function formulize_appearanceTokenAllows($map, $token, $value) {
     if (isset($entry['values'])) {
         return in_array((string) $value, array_map('strval', $entry['values']), true);
     }
+    // fully rounded, for a corner that can be
+    if ($entry['type'] == 'radius' AND !empty($entry['full']) AND (float) $value == 999) {
+        return true;
+    }
     if (isset($entry['min']) AND (float) $value < $entry['min']) {
         return false;
     }
@@ -109,7 +118,7 @@ function formulize_appearanceTextPx() {
  * The least a token with a floor can usefully be, given the other tokens'
  * values: one line of a text token at a line height plus extra px, rounded up
  * to a half step; or another token plus a number of steps. The advanced size
- * editor works this out the same way (include/js/appearance_sizes.js).
+ * editor works this out the same way (include/js/appearance_editor.js).
  *
  * @param array $floor the token's floor, from the map
  * @param array $values token => value, for the tokens the floor refers to
@@ -129,12 +138,21 @@ function formulize_appearanceTokenFloor($floor, $values) {
 /**
  * A token's value written as CSS.
  *
- * @param string $typeName the token's type: spacing, text, weight, leading or measure
+ * @param string $typeName the token's type: spacing, text, weight, leading,
+ *                         measure, font, colour or radius
  * @param mixed $value a value the type can have (see formulize_appearanceTokenValueIsValid)
- * @return string the CSS, eg: calc(var(--fz-spacing) * 8.5), var(--fz-text-sm), 65ch
+ * @return string the CSS, eg: calc(var(--fz-spacing) * 8.5), var(--fz-text-sm),
+ *                65ch, var(--fz-font-heading), var(--fz-color-accent), #0b6e4f, 6px
  */
 function formulize_appearanceTokenCss($typeName, $value) {
     switch ($typeName) {
+        case 'font':
+            return $value == 'secondary' ? 'var(--fz-font-heading)' : 'var(--fz-font-sans)';
+        case 'colour':
+            $map = formulize_appearanceTokenMap();
+            return isset($map['colours'][$value]) ? 'var(' . $map['colours'][$value]['css'] . ')' : strtolower((string) $value);
+        case 'radius':
+            return formulize_appearanceTokenNumber($value) . 'px';
         case 'spacing':
             return 'calc(var(--fz-spacing) * ' . formulize_appearanceTokenNumber($value) . ')';
         case 'text':
@@ -159,6 +177,25 @@ function formulize_appearanceTokenCss($typeName, $value) {
 function formulize_appearanceTokenParse($typeName, $css) {
     $css = trim($css);
     switch ($typeName) {
+        case 'font':
+            return $css == 'var(--fz-font-heading)' ? 'secondary' : ($css == 'var(--fz-font-sans)' ? 'main' : null);
+        case 'colour':
+            if (preg_match('/^#[0-9a-fA-F]{6}$/', $css)) {
+                return strtolower($css);
+            }
+            $map = formulize_appearanceTokenMap();
+            foreach (isset($map['colours']) ? $map['colours'] : array() as $name => $colour) {
+                if ($css == 'var(' . $colour['css'] . ')') {
+                    return $name;
+                }
+            }
+            return null;
+        case 'radius':
+            if (preg_match('/^([0-9]+(?:\.[0-9]+)?)px$/', $css, $match)) {
+                return (float) $match[1];
+            }
+            $map = formulize_appearanceTokenMap();
+            return (preg_match('/^var\((--fz-radius-[a-z]+)\)$/', $css, $match) AND isset($map['radii'][$match[1]])) ? (float) $map['radii'][$match[1]] : null;
         case 'spacing':
             return preg_match('/^calc\(\s*var\(--fz-spacing\)\s*\*\s*([0-9]+(?:\.[0-9]+)?)\s*\)$/', $css, $match) ? (float) $match[1] : null;
         case 'text':
@@ -198,7 +235,7 @@ function formulize_appearanceTokenDeclarations($css) {
     foreach ($rules[1] as $body) {
         preg_match_all('/(--fz-[a-z0-9-]+)\s*:\s*([^;]+);/', $body, $declarations, PREG_SET_ORDER);
         foreach ($declarations as $declaration) {
-            if (isset($map['tokens'][$declaration[1]])) {
+            if (isset($map['tokens'][$declaration[1]]) OR in_array($declaration[1], formulize_appearanceDerivedTokens($map))) {
                 $declared[$declaration[1]] = trim($declaration[2]);
             }
         }
@@ -207,11 +244,48 @@ function formulize_appearanceTokenDeclarations($css) {
 }
 
 /**
+ * The tokens that follow another token rather than being set themselves, such
+ * as the main button's hover colour, which is a darker shade of the main
+ * button's colour: a token's derived, a template for each with %s for the
+ * token's value. Written whenever the token is set (see
+ * formulize_appearanceDerivedCss), and declared with a Default in
+ * formulize-ui.css like the rest.
+ *
+ * @param array $map the map, from formulize_appearanceTokenMap()
+ * @return array of derived token names
+ */
+function formulize_appearanceDerivedTokens($map) {
+    $derived = array();
+    foreach ($map['tokens'] as $entry) {
+        if (isset($entry['derived'])) {
+            $derived = array_merge($derived, array_keys($entry['derived']));
+        }
+    }
+    return $derived;
+}
+
+/**
+ * The CSS for the tokens that follow a token which has been set: each of its
+ * derived templates, with the token's CSS value in place of %s.
+ *
+ * @param array $entry the token's entry in the map
+ * @param string $css the token's value, written as CSS
+ * @return array derived token => its CSS
+ */
+function formulize_appearanceDerivedCss($entry, $css) {
+    $derived = array();
+    foreach (isset($entry['derived']) ? $entry['derived'] : array() as $token => $template) {
+        $derived[$token] = str_replace('%s', $css, $template);
+    }
+    return $derived;
+}
+
+/**
  * Check the map against formulize-ui.css: every token has a known group and
  * type, its own limits are values its type can have, every preset value is
  * inside the token's limits, and every token has a Default in formulize-ui.css,
  * written in the form its type is written in and inside its limits. Also the
- * advanced size editor's parts: each token's phone token, home part and floor
+ * advanced editor's parts: each token's phone token, home part and floor
  * are well formed, every token a part names exists, and every token can be
  * reached from a part.
  *
@@ -237,12 +311,14 @@ function formulize_appearanceCheckTokenMap($map, $css) {
                     $problems[] = "The size token $token lists a value, " . json_encode($value) . ", that a " . $entry['type'] . " token can't have.";
                 }
             }
+        } elseif (isset($type['values'])) {
+            // a font or a colour: anything its type can be
         } elseif (!isset($entry['min']) OR !isset($entry['max'])) {
             $problems[] = "The size token $token has no limits: give it a min and a max, or a list of values.";
         } elseif (!formulize_appearanceTokenValueIsValid($type, $entry['min']) OR !formulize_appearanceTokenValueIsValid($type, $entry['max']) OR $entry['min'] > $entry['max']) {
             $problems[] = "The size token $token has limits, " . json_encode($entry['min']) . " to " . json_encode($entry['max']) . ", that aren't a range of " . $entry['type'] . " values.";
         }
-        foreach ($entry['presets'] as $preset => $value) {
+        foreach (isset($entry['presets']) ? $entry['presets'] : array() as $preset => $value) {
             if (!formulize_appearanceTokenAllows($map, $token, $value)) {
                 $problems[] = "The size token $token has a $preset value, " . json_encode($value) . ", outside what it can be set to.";
             }
@@ -302,7 +378,7 @@ function formulize_appearanceCheckTokenMap($map, $css) {
             }
         }
     }
-    // the parts of the interface the advanced size editor selects: every token they
+    // the parts of the interface the advanced editor selects: every token they
     // name exists, and every token is in a part, or is another token's phone token
     $inPart = array();
     foreach (isset($map['components']) ? $map['components'] : array() as $key => $component) {
@@ -325,17 +401,28 @@ function formulize_appearanceCheckTokenMap($map, $css) {
     }
     foreach (array_keys($map['tokens']) as $token) {
         if (!isset($inPart[$token])) {
-            $problems[] = "The size token $token isn't in any part, so the advanced size editor has no way to reach it.";
+            $problems[] = "The size token $token isn't in any part, so the advanced editor has no way to reach it.";
         }
     }
     if (empty($map['screens'])) {
         $problems[] = "appearance_tokens.json lists no sample screens.";
     }
+    // the site's colours a part can use, and the tokens that follow others
+    foreach (isset($map['types']['colour']['values']) ? $map['types']['colour']['values'] : array() as $name) {
+        if (!isset($map['colours'][$name]['css'], $map['colours'][$name]['label'])) {
+            $problems[] = "The colour $name has no label or CSS in appearance_tokens.json's colours.";
+        }
+    }
+    foreach (formulize_appearanceDerivedTokens($map) as $token) {
+        if (!isset($declared[$token])) {
+            $problems[] = "The token $token, which follows another, has no Default: formulize-ui.css doesn't declare it on :root.";
+        }
+    }
     return $problems;
 }
 
 /**
- * Check a theme's sample screens for the advanced size editor: every part they
+ * Check a theme's sample screens for the advanced editor: every part they
  * mark with data-fz-part is a part in the map, and every file is named after a
  * screen in the map, or starts with an underscore (a piece the samples include).
  *

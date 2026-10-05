@@ -1,5 +1,5 @@
 {
-  "about": "The sizes the Appearance page's Size presets and advanced settings can change: the one place their Compact and Comfortable values are kept. Default is not here: it is the value the CSS declares (modules/formulize/templates/css/formulize-ui.css, or a theme's own tokens). Each token's type says how its values are written in CSS; the token's own min and max (in the type's steps), or its list of values, are what it can be set to, chosen so that every value in the range changes how things look. Read by modules/formulize/include/appearance_tokens.php. The screens, components and gaps are for the advanced size editor (modules/formulize/appearance_sizes.php): the sample screens a theme can provide, the parts of the interface that can be selected in them and the tokens that size each part, and what can't be adjusted yet. A token's phone is the token used for it at 768px and below; its home is the part a shared token belongs to; its floor is the least it can be given another token's value (one line of a text token at a line height, plus extra px; or another token plus a number of steps).",
+  "about": "The component tokens the Appearance page's Size presets and advanced editor can change: the sizes, fonts, colours and corners of the parts of the interface, and the one place the sizes' Compact and Comfortable values are kept. Default is not here: it is the value the CSS declares (modules/formulize/templates/css/formulize-ui.css, or a theme's own tokens). Each token's type says how its values are written in CSS; the token's own min and max (in the type's steps), or its list of values, are what it can be set to, chosen so that every value in the range changes how things look. Read by modules/formulize/include/appearance_tokens.php. The screens, components and gaps are for the advanced editor (modules/formulize/appearance_editor.php): the sample screens a theme can provide, the parts of the interface that can be selected in them and the tokens of each part, and what can't be adjusted yet. A part with a site setting is one of the Appearance page's own settings rather than a set of tokens (the logo). A colour token's value is one of the site's colours (colours) or #rrggbb; its text says it is a text colour. A token's derived are the tokens written from it when it is set, %s being its value. A token's phone is the token used for it at 768px and below; its home is the part a shared token belongs to; its floor is the least it can be given another token's value (one line of a text token at a line height, plus extra px; or another token plus a number of steps).",
   "types": {
     "spacing": {
       "description": "A number of spacing steps (--fz-spacing, 0.25rem), in half steps.",
@@ -24,14 +24,51 @@
       "min": 40,
       "max": 90,
       "step": 1
+    },
+    "font": {
+      "description": "The font a kind of text is set in: the main font (--fz-font-sans) or the secondary font (--fz-font-heading), as the Appearance page sets them.",
+      "values": ["main", "secondary"]
+    },
+    "colour": {
+      "description": "A colour: one of the site's colours, by its name in colours below, which follows the Appearance page's colours; or a colour of its own, as #rrggbb.",
+      "values": ["primary", "primary-soft", "on-primary", "page", "surface", "surface-2", "surface-3", "text", "text-muted", "text-subtle", "border", "border-strong", "success", "warning", "danger", "info"],
+      "custom": true
+    },
+    "radius": {
+      "description": "A corner radius, in px. 999 is fully rounded, for a token whose full is true.",
+      "min": 0,
+      "max": 999,
+      "step": 1
     }
   },
+  "colours": {
+    "primary": { "label": "Primary", "css": "--fz-color-accent", "from": "primary" },
+    "primary-soft": { "label": "Primary, light", "css": "--fz-color-accent-soft", "from": "primary" },
+    "on-primary": { "label": "Text on Primary", "css": "--fz-color-on-accent" },
+    "page": { "label": "Page background", "css": "--fz-color-page", "from": "background" },
+    "surface": { "label": "Surface", "css": "--fz-color-surface", "from": "surface" },
+    "surface-2": { "label": "Surface, shaded", "css": "--fz-color-surface-2", "from": "surface" },
+    "surface-3": { "label": "Surface, darker", "css": "--fz-color-surface-3", "from": "surface" },
+    "text": { "label": "Text", "css": "--fz-color-text", "from": "text" },
+    "text-muted": { "label": "Muted text", "css": "--fz-color-text-muted", "from": "text" },
+    "text-subtle": { "label": "Subtle text", "css": "--fz-color-text-subtle", "from": "text" },
+    "border": { "label": "Borders", "css": "--fz-color-border", "from": "border" },
+    "border-strong": { "label": "Strong borders", "css": "--fz-color-border-strong", "from": "border" },
+    "success": { "label": "Success", "css": "--fz-color-success", "from": "success" },
+    "warning": { "label": "Warning", "css": "--fz-color-warning", "from": "warning" },
+    "danger": { "label": "Danger", "css": "--fz-color-danger", "from": "danger" },
+    "info": { "label": "Info", "css": "--fz-color-info", "from": "info" }
+  },
+  "radii": { "--fz-radius-sm": 4, "--fz-radius-md": 6, "--fz-radius-lg": 8, "--fz-radius-xl": 12, "--fz-radius-full": 999 },
   "groups": {
     "type": "Type",
     "forms": "Forms",
     "controls": "Buttons and controls",
     "lists": "Lists",
-    "surfaces": "Cards, drawers and the page"
+    "surfaces": "Cards, drawers and the page",
+    "fonts": "Fonts",
+    "colours": "Colours",
+    "corners": "Corners"
   },
   "screens": {
     "form": "Form",
@@ -40,6 +77,13 @@
     "cards": "Cards"
   },
   "components": {
+    "logo": {
+      "name": "Logo",
+      "plural": "the logo at the top of every page",
+      "site": "logo",
+      "tokens": [],
+      "gaps": []
+    },
     "page": {
       "name": "Page",
       "plural": "every page",
@@ -49,86 +93,149 @@
     "tabs": {
       "name": "Page tabs",
       "plural": "the page tabs of every multi-page form",
-      "tokens": ["--fz-tab-padding-y", "--fz-tab-padding-x", "--fz-control-text"],
-      "gaps": [
-        "The space between tabs, and below the tab strip.",
-        "Tab corner radius.",
-        "The drawer's page tabs."
-      ]
+      "tokens": [
+        "--fz-control-font",
+        "--fz-tab-text",
+        "--fz-tab-bg",
+        "--fz-tab-border",
+        "--fz-tab-active-bg",
+        "--fz-tab-active-text",
+        "--fz-tab-radius",
+        "--fz-tab-padding-y",
+        "--fz-tab-padding-x",
+        "--fz-control-text"
+      ],
+      "gaps": ["The space between tabs, and below the tab strip.", "The drawer's page tabs."]
     },
     "title": {
       "name": "Title",
       "plural": "every form card, list and drawer title",
-      "tokens": ["--fz-title-text", "--fz-title-weight", "--fz-title-leading"],
-      "gaps": [
-        "Letter spacing.",
-        "Headings inside text elements and screen templates."
-      ]
+      "tokens": [
+        "--fz-title-font",
+        "--fz-title-color",
+        "--fz-title-text",
+        "--fz-title-weight",
+        "--fz-title-leading"
+      ],
+      "gaps": ["Letter spacing.", "Headings inside text elements and screen templates."]
     },
     "form": {
       "name": "Form card",
       "plural": "every form",
-      "tokens": ["--fz-form-padding", "--fz-card-padding", "--fz-field-gap"],
+      "tokens": [
+        "--fz-form-bg",
+        "--fz-form-border",
+        "--fz-form-radius",
+        "--fz-form-padding",
+        "--fz-card-padding"
+      ],
       "gaps": [
         "The space between form cards.",
         "Card padding at phone widths, which is fixed.",
-        "Card corner radius and shadow."
+        "The card's shadow."
       ]
     },
     "label": {
       "name": "Field label",
       "plural": "every field label",
-      "tokens": ["--fz-label-text", "--fz-label-weight", "--fz-label-gap"],
-      "gaps": [
-        "The label column width in two-column forms (20%).",
-        "The required marker."
-      ]
+      "tokens": [
+        "--fz-label-font",
+        "--fz-label-color",
+        "--fz-required-color",
+        "--fz-label-text",
+        "--fz-label-weight",
+        "--fz-label-gap"
+      ],
+      "gaps": ["The label column width in two-column forms (20%)."]
     },
     "field": {
       "name": "Form field",
       "plural": "every text box, dropdown and text area",
-      "tokens": ["--fz-field-height", "--fz-field-padding-x", "--fz-field-text"],
+      "tokens": [
+        "--fz-field-font",
+        "--fz-field-color",
+        "--fz-field-bg",
+        "--fz-field-border",
+        "--fz-field-radius",
+        "--fz-field-height",
+        "--fz-field-padding-x",
+        "--fz-field-text",
+        "--fz-field-gap"
+      ],
       "gaps": [
-        "Corner radius and border.",
         "A text area's starting height (2.4 times the field height).",
-        "File upload, slider, colour picker and date picker controls."
+        "File upload, slider, colour picker and date picker controls.",
+        "The focus ring, which follows Primary."
       ]
     },
     "value": {
       "name": "Read-only value",
       "plural": "every read-only value",
-      "tokens": ["--fz-field-text"],
+      "tokens": ["--fz-field-font", "--fz-value-color", "--fz-field-text", "--fz-field-gap"],
       "gaps": []
     },
     "options": {
       "name": "Choice options",
       "plural": "every set of radio buttons and checkboxes",
-      "tokens": ["--fz-field-text"],
+      "tokens": [
+        "--fz-field-font",
+        "--fz-field-color",
+        "--fz-option-accent",
+        "--fz-field-text",
+        "--fz-option-gap",
+        "--fz-field-gap"
+      ],
       "gaps": [
         "The size of the radio button and checkbox.",
-        "The space between options."
+        "Choice options in screen templates built with Formulize UI's fz-choice-group, which keep their own spacing."
       ]
     },
     "help": {
       "name": "Help text",
       "plural": "all help text under fields",
-      "tokens": ["--fz-help-text", "--fz-help-leading", "--fz-help-max-width"],
-      "gaps": ["The space between a field and its help text."]
+      "tokens": [
+        "--fz-help-font",
+        "--fz-help-color",
+        "--fz-help-text",
+        "--fz-help-leading",
+        "--fz-help-max-width",
+        "--fz-help-gap"
+      ],
+      "gaps": []
     },
     "button": {
       "name": "Button",
       "plural": "every button",
-      "tokens": ["--fz-control-height", "--fz-control-padding-x", "--fz-control-text"],
+      "tokens": [
+        "--fz-control-font",
+        "--fz-button-text",
+        "--fz-button-bg",
+        "--fz-button-border",
+        "--fz-button-primary-bg",
+        "--fz-button-primary-text",
+        "--fz-button-radius",
+        "--fz-control-height",
+        "--fz-control-padding-x",
+        "--fz-control-text"
+      ],
       "gaps": [
         "Small and large buttons, which keep their own sizes.",
         "The selection bar's buttons (fixed at 28px).",
-        "Icon sizes and corner radius."
+        "Icon sizes.",
+        "Hover colours: the main button's is a darker shade of its own colour, and the others' are the theme's.",
+        "Danger buttons, which follow Danger."
       ]
     },
     "toolbar": {
       "name": "List toolbar",
       "plural": "the title bar, selection bar and footer of every list",
-      "tokens": ["--fz-toolbar-height", "--fz-toolbar-padding-x", "--fz-control-text"],
+      "tokens": [
+        "--fz-control-font",
+        "--fz-toolbar-bg",
+        "--fz-toolbar-height",
+        "--fz-toolbar-padding-x",
+        "--fz-control-text"
+      ],
       "gaps": [
         "Their top and bottom padding.",
         "Their height and padding at phone widths, which are fixed.",
@@ -138,39 +245,70 @@
     "menu": {
       "name": "Menu item",
       "plural": "every item in a dropdown menu",
-      "tokens": ["--fz-menu-item-height", "--fz-control-text"],
-      "gaps": ["The menu's width and padding."]
+      "tokens": [
+        "--fz-control-font",
+        "--fz-menu-text",
+        "--fz-menu-bg",
+        "--fz-menu-radius",
+        "--fz-menu-item-height",
+        "--fz-control-text"
+      ],
+      "gaps": ["The menu's width and padding.", "The selected item, which follows Primary."]
     },
     "header": {
       "name": "Column headings",
       "plural": "the heading row of every list and table",
-      "tokens": ["--fz-table-header-height", "--fz-table-header-text", "--fz-cell-padding-x"],
+      "tokens": [
+        "--fz-table-header-font",
+        "--fz-header-text",
+        "--fz-header-bg",
+        "--fz-header-border",
+        "--fz-table-header-height",
+        "--fz-table-header-text",
+        "--fz-cell-padding-x"
+      ],
       "gaps": ["The sort arrows.", "The search and filter row under the headings."]
     },
     "row": {
       "name": "List row",
       "plural": "every row in every list and table",
-      "tokens": ["--fz-row-height", "--fz-cell-padding-x", "--fz-table-text"],
+      "tokens": [
+        "--fz-table-font",
+        "--fz-row-text",
+        "--fz-row-bg",
+        "--fz-row-hover",
+        "--fz-row-border",
+        "--fz-row-height",
+        "--fz-cell-padding-x",
+        "--fz-table-text"
+      ],
       "gaps": [
         "Top and bottom cell padding: only the height is set, and the content is centred in it.",
         "Rows grow to fit their content: a cell with several lines, a list of values or an edit icon makes its row taller than the row height.",
         "The checkbox column width.",
-        "Badges and other things inside cells."
+        "Badges and other things inside cells.",
+        "Selected rows, which follow Primary."
       ]
     },
     "card": {
       "name": "Card",
       "plural": "every Formulize UI card (fz-card), in screen templates and custom code",
-      "tokens": ["--fz-card-padding", "--fz-card-gap"],
+      "tokens": [
+        "--fz-card-bg",
+        "--fz-card-border",
+        "--fz-card-radius",
+        "--fz-card-padding",
+        "--fz-card-gap"
+      ],
       "gaps": [
-        "Card corner radius and shadow.",
-        "The space between cards in a card list or grid, which is set by its gap class."
+        "The space between cards in a card list or grid, which is set by its gap class.",
+        "The card's shadow."
       ]
     },
     "drawer": {
       "name": "Drawer",
       "plural": "the drawer",
-      "tokens": ["--fz-drawer-padding-x", "--fz-drawer-padding-y"],
+      "tokens": ["--fz-drawer-bg", "--fz-drawer-foot-bg", "--fz-drawer-padding-x", "--fz-drawer-padding-y"],
       "gaps": [
         "The drawer's width.",
         "Its padding at phone widths, which is fixed.",
@@ -179,7 +317,8 @@
     }
   },
   "gaps": [
-    "Corner radii, borders and shadows, everywhere.",
+    "Shadows, everywhere, and the colours of anything not listed under a part.",
+    "Fonts other than the main and secondary fonts, for a part.",
     "Small and large buttons, and the selection bar's buttons.",
     "Phone-width spacing (title bar, cards, drawer), which is fixed.",
     "The 44px minimum height of fields and buttons on phones.",
@@ -318,11 +457,12 @@
     "--fz-field-gap": {
       "group": "forms",
       "label": "Space between fields",
-      "description": "The space between one form field and the next.",
+      "description": "The space between one form field and the next, in forms and in the drawer.",
       "type": "spacing",
       "min": 2,
       "max": 12,
-      "presets": { "compact": 3.5, "comfortable": 6.5 }
+      "presets": { "compact": 3.5, "comfortable": 6.5 },
+      "home": "field"
     },
     "--fz-label-gap": {
       "group": "forms",
@@ -332,6 +472,24 @@
       "min": 0.5,
       "max": 4,
       "presets": { "compact": 1, "comfortable": 2 }
+    },
+    "--fz-help-gap": {
+      "group": "forms",
+      "label": "Space above help text",
+      "description": "The space between a field and its help text.",
+      "type": "spacing",
+      "min": 0,
+      "max": 4,
+      "presets": { "compact": 1, "comfortable": 2 }
+    },
+    "--fz-option-gap": {
+      "group": "forms",
+      "label": "Space between options",
+      "description": "The space between the radio buttons or checkboxes of one field, when each is on a line of its own.",
+      "type": "spacing",
+      "min": 0,
+      "max": 4,
+      "presets": { "compact": 0, "comfortable": 1 }
     },
     "--fz-control-height": {
       "group": "controls",
@@ -482,6 +640,323 @@
       "min": 2,
       "max": 12,
       "presets": { "compact": 4, "comfortable": 6 }
+    },
+    "--fz-title-font": {
+      "group": "fonts",
+      "label": "Font",
+      "description": "The font of form card, list and drawer titles.",
+      "type": "font"
+    },
+    "--fz-label-font": {
+      "group": "fonts",
+      "label": "Font",
+      "description": "The font of field labels.",
+      "type": "font"
+    },
+    "--fz-field-font": {
+      "group": "fonts",
+      "label": "Font",
+      "description": "The font of what is typed in fields, read-only values and choice options.",
+      "type": "font",
+      "home": "field"
+    },
+    "--fz-help-font": {
+      "group": "fonts",
+      "label": "Font",
+      "description": "The font of help text under fields.",
+      "type": "font"
+    },
+    "--fz-control-font": {
+      "group": "fonts",
+      "label": "Font",
+      "description": "The font of buttons, page tabs, menus and list toolbars.",
+      "type": "font",
+      "home": "button"
+    },
+    "--fz-table-font": {
+      "group": "fonts",
+      "label": "Font",
+      "description": "The font of the text in list and table rows.",
+      "type": "font"
+    },
+    "--fz-table-header-font": {
+      "group": "fonts",
+      "label": "Font",
+      "description": "The font of column headings.",
+      "type": "font"
+    },
+    "--fz-title-color": {
+      "group": "colours",
+      "label": "Colour",
+      "description": "The colour of titles.",
+      "type": "colour",
+      "text": true
+    },
+    "--fz-label-color": {
+      "group": "colours",
+      "label": "Colour",
+      "description": "The colour of field labels.",
+      "type": "colour",
+      "text": true
+    },
+    "--fz-required-color": {
+      "group": "colours",
+      "label": "Required marker",
+      "description": "The colour of the * after a required field's label.",
+      "type": "colour",
+      "text": true
+    },
+    "--fz-field-color": {
+      "group": "colours",
+      "label": "Colour",
+      "description": "The colour of what is typed in fields, and of choice options.",
+      "type": "colour",
+      "text": true,
+      "home": "field"
+    },
+    "--fz-value-color": {
+      "group": "colours",
+      "label": "Colour",
+      "description": "The colour of read-only values.",
+      "type": "colour",
+      "text": true
+    },
+    "--fz-help-color": {
+      "group": "colours",
+      "label": "Colour",
+      "description": "The colour of help text.",
+      "type": "colour",
+      "text": true
+    },
+    "--fz-field-bg": {
+      "group": "colours",
+      "label": "Background",
+      "description": "The background of text boxes, dropdowns and text areas.",
+      "type": "colour"
+    },
+    "--fz-field-border": {
+      "group": "colours",
+      "label": "Border",
+      "description": "The border of text boxes, dropdowns and text areas.",
+      "type": "colour"
+    },
+    "--fz-option-accent": {
+      "group": "colours",
+      "label": "Chosen",
+      "description": "The colour of a chosen radio button or checkbox.",
+      "type": "colour"
+    },
+    "--fz-form-bg": {
+      "group": "colours",
+      "label": "Background",
+      "description": "The background of form cards.",
+      "type": "colour"
+    },
+    "--fz-form-border": {
+      "group": "colours",
+      "label": "Border",
+      "description": "The border of form cards, and the line under their titles.",
+      "type": "colour"
+    },
+    "--fz-button-text": {
+      "group": "colours",
+      "label": "Text",
+      "description": "The text of buttons, other than the main one.",
+      "type": "colour",
+      "text": true
+    },
+    "--fz-button-bg": {
+      "group": "colours",
+      "label": "Background",
+      "description": "The background of buttons, other than the main one.",
+      "type": "colour"
+    },
+    "--fz-button-border": {
+      "group": "colours",
+      "label": "Border",
+      "description": "The border of buttons, other than the main one.",
+      "type": "colour"
+    },
+    "--fz-button-primary-bg": {
+      "group": "colours",
+      "label": "Main button",
+      "description": "The background of the main button, such as Save or Add. Its hover colour is a darker shade of it.",
+      "type": "colour",
+      "derived": { "--fz-button-primary-hover": "color-mix(in srgb, %s 85%, #000)" }
+    },
+    "--fz-button-primary-text": {
+      "group": "colours",
+      "label": "Main button text",
+      "description": "The text of the main button.",
+      "type": "colour"
+    },
+    "--fz-tab-text": {
+      "group": "colours",
+      "label": "Text",
+      "description": "The text of the tabs that aren't selected.",
+      "type": "colour",
+      "text": true
+    },
+    "--fz-tab-bg": {
+      "group": "colours",
+      "label": "Background",
+      "description": "The background of the tabs that aren't selected.",
+      "type": "colour"
+    },
+    "--fz-tab-border": {
+      "group": "colours",
+      "label": "Border",
+      "description": "The border of the tabs that aren't selected.",
+      "type": "colour"
+    },
+    "--fz-tab-active-bg": {
+      "group": "colours",
+      "label": "Selected tab",
+      "description": "The background of the tab for the page being shown.",
+      "type": "colour"
+    },
+    "--fz-tab-active-text": {
+      "group": "colours",
+      "label": "Selected tab text",
+      "description": "The text of the tab for the page being shown.",
+      "type": "colour"
+    },
+    "--fz-menu-text": {
+      "group": "colours",
+      "label": "Text",
+      "description": "The text of menu items.",
+      "type": "colour",
+      "text": true
+    },
+    "--fz-menu-bg": {
+      "group": "colours",
+      "label": "Background",
+      "description": "The background of dropdown menus.",
+      "type": "colour"
+    },
+    "--fz-toolbar-bg": {
+      "group": "colours",
+      "label": "Background",
+      "description": "The background of a list's title bar and footer.",
+      "type": "colour"
+    },
+    "--fz-header-text": {
+      "group": "colours",
+      "label": "Text",
+      "description": "The text of column headings.",
+      "type": "colour",
+      "text": true
+    },
+    "--fz-header-bg": {
+      "group": "colours",
+      "label": "Background",
+      "description": "The background of column headings.",
+      "type": "colour"
+    },
+    "--fz-header-border": {
+      "group": "colours",
+      "label": "Border",
+      "description": "The line under the column headings.",
+      "type": "colour"
+    },
+    "--fz-row-text": {
+      "group": "colours",
+      "label": "Text",
+      "description": "The text in list and table rows.",
+      "type": "colour",
+      "text": true
+    },
+    "--fz-row-bg": {
+      "group": "colours",
+      "label": "Background",
+      "description": "The background of list and table rows.",
+      "type": "colour"
+    },
+    "--fz-row-hover": {
+      "group": "colours",
+      "label": "Under the pointer",
+      "description": "The background of the row the pointer is over.",
+      "type": "colour"
+    },
+    "--fz-row-border": {
+      "group": "colours",
+      "label": "Divider",
+      "description": "The line between rows.",
+      "type": "colour"
+    },
+    "--fz-card-bg": {
+      "group": "colours",
+      "label": "Background",
+      "description": "The background of cards.",
+      "type": "colour"
+    },
+    "--fz-card-border": {
+      "group": "colours",
+      "label": "Border",
+      "description": "The border of cards.",
+      "type": "colour"
+    },
+    "--fz-drawer-bg": {
+      "group": "colours",
+      "label": "Background",
+      "description": "The background of the drawer.",
+      "type": "colour"
+    },
+    "--fz-drawer-foot-bg": {
+      "group": "colours",
+      "label": "Footer",
+      "description": "The background of the drawer's button bar.",
+      "type": "colour"
+    },
+    "--fz-field-radius": {
+      "group": "corners",
+      "label": "Corners",
+      "description": "The corner radius of text boxes, dropdowns and text areas.",
+      "type": "radius",
+      "min": 0,
+      "max": 16
+    },
+    "--fz-button-radius": {
+      "group": "corners",
+      "label": "Corners",
+      "description": "The corner radius of buttons.",
+      "type": "radius",
+      "min": 0,
+      "max": 16,
+      "full": true
+    },
+    "--fz-tab-radius": {
+      "group": "corners",
+      "label": "Corners",
+      "description": "The corner radius of page tabs.",
+      "type": "radius",
+      "min": 0,
+      "max": 16,
+      "full": true
+    },
+    "--fz-form-radius": {
+      "group": "corners",
+      "label": "Corners",
+      "description": "The corner radius of form cards.",
+      "type": "radius",
+      "min": 0,
+      "max": 16
+    },
+    "--fz-card-radius": {
+      "group": "corners",
+      "label": "Corners",
+      "description": "The corner radius of cards.",
+      "type": "radius",
+      "min": 0,
+      "max": 16
+    },
+    "--fz-menu-radius": {
+      "group": "corners",
+      "label": "Corners",
+      "description": "The corner radius of dropdown menus.",
+      "type": "radius",
+      "min": 0,
+      "max": 12
     }
   }
 }

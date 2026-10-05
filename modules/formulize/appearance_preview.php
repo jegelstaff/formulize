@@ -13,8 +13,10 @@
 ###############################################################################
 
 // One of a theme's sample screens, as a page of its own, for the preview in the
-// advanced size editor (appearance_sizes.php), which shows it in an iframe and
-// sets the size tokens on it as they are changed.
+// advanced editor (appearance_editor.php), which shows it in an iframe and
+// sets the settings being edited on it as they are changed: over the saved
+// ones, or back to the theme's own, which the editor also sets explicitly since
+// the saved stylesheet is loaded here.
 //
 // The sample is the theme's own markup (themes/<theme>/appearance_preview/,
 // see formulize_renderAppearancePreview), drawn with the stylesheets a real

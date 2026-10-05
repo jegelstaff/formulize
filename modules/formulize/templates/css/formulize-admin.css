@@ -2534,6 +2534,54 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 	border-color: #b3261e;
 	color: #8f1e18; }
 
+/* The way into the advanced editor, above the settings it goes beyond. */
+.formulize-appearance .formulize-appearance-editor {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 1em 1.5em;
+	margin: 0 0 1.5em 0;
+	padding: 1.1em 1.5em;
+	background: #fff;
+	border: 1px solid #ddd;
+	border-radius: 6px;
+}
+.formulize-appearance .formulize-appearance-editor-text {
+	flex: 1 1 26em;
+}
+.formulize-appearance .formulize-appearance-editor-text h3 {
+	margin: 0 0 0.3em 0;
+	font-size: 1.05em;
+	color: #333;
+}
+.formulize-appearance .formulize-appearance-editor-text p {
+	margin: 0;
+	line-height: 1.45;
+	color: #555;
+}
+.formulize-appearance .formulize-appearance-editor-text .formulize-appearance-editor-note {
+	margin-top: 0.6em;
+	padding: 0.45em 0.7em;
+	background: #fdf4e3;
+	border-radius: 4px;
+	color: #8a5610;
+}
+.formulize-appearance .formulize-appearance-editor-open {
+	display: inline-block;
+	padding: 0.55em 1.1em;
+	background: #2e3340;
+	border-radius: 5px;
+	color: #fff;
+	font-weight: bold;
+	text-decoration: none;
+	white-space: nowrap;
+}
+.formulize-appearance .formulize-appearance-editor-open:hover,
+.formulize-appearance .formulize-appearance-editor-open:focus {
+	background: #1c2029;
+	color: #fff;
+}
+
 /* Each group is a light card. The blue module-wide fieldset border would fight
    with the blue tab strip directly above the page, so these stay neutral and let
    the legends carry the hierarchy. */

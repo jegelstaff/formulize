@@ -45,17 +45,23 @@ define('FORMULIZE_UI_VERSION', '1');
 require_once __DIR__ . '/appearance_tokens.php';
 
 /**
- * The component size tokens, documented from appearance_tokens.json: each one's
- * description, its Default as formulize-ui.css declares it, and the values the
- * Compact and Comfortable presets give it.
+ * The component tokens, documented from appearance_tokens.json: each one's
+ * description, its Default as formulize-ui.css declares it, the values the
+ * Compact and Comfortable presets give it, and what it can be set to. Either
+ * the sizes, or the fonts, colours and corners (with the tokens that follow
+ * them).
  *
+ * @param boolean $sizes true for the sizes, false for the fonts, colours and corners
  * @return array token => what it is
  */
-function formulize_uiSizeTokens() {
+function formulize_uiSizeTokens($sizes = true) {
     $map = formulize_appearanceTokenMap();
     $declared = formulize_appearanceTokenDeclarations(file_get_contents(dirname(__DIR__) . '/templates/css/formulize-ui.css'));
     $tokens = array();
     foreach ($map['tokens'] as $token => $entry) {
+        if (in_array($entry['group'], array('fonts', 'colours', 'corners')) == $sizes) {
+            continue;
+        }
         $values = array();
         if (isset($declared[$token])) {
             $default = formulize_appearanceTokenParse($entry['type'], $declared[$token]);
@@ -68,12 +74,19 @@ function formulize_uiSizeTokens() {
         }
         if (isset($entry['values'])) {
             $range = 'Can be ' . implode(', ', array_map(function ($v) use ($entry) { return formulize_uiSizeTokenValue($entry['type'], $v); }, $entry['values'])) . '.';
+        } elseif ($entry['type'] == 'font') {
+            $range = 'Can be the main font or the secondary font.';
+        } elseif ($entry['type'] == 'colour') {
+            $range = 'Can be any of the site\'s colours, or a colour of its own.';
         } elseif (isset($entry['min'], $entry['max'])) {
-            $range = 'Can be ' . formulize_uiSizeTokenValue($entry['type'], $entry['min']) . ' to ' . formulize_uiSizeTokenValue($entry['type'], $entry['max']) . '.';
+            $range = 'Can be ' . formulize_uiSizeTokenValue($entry['type'], $entry['min']) . ' to ' . formulize_uiSizeTokenValue($entry['type'], $entry['max']) . (!empty($entry['full']) ? ', or fully rounded' : '') . '.';
         } else {
             $range = '';
         }
         $tokens[$token] = $entry['description'] . ($values ? ' ' . implode(', ', $values) . '.' : '') . ($range ? ' ' . $range : '');
+        foreach (isset($entry['derived']) ? $entry['derived'] : array() as $derived => $template) {
+            $tokens[$derived] = 'Follows ' . $token . ': ' . str_replace('%s', 'its value', $template) . ' when it is set. Default ' . (isset($declared[$derived]) ? $declared[$derived] : '') . '.';
+        }
     }
     return $tokens;
 }
@@ -350,6 +363,21 @@ function formulize_uiCatalog() {
     <thead><tr><th>Name</th><th>Grade</th></tr></thead>
     <tbody><tr><td>Ada</td><td>7</td></tr><tr><td>Grace</td><td>8</td></tr></tbody>
   </table>
+</div>
+HTML
+            ),
+            array(
+                'id' => 'tokens-component-colours',
+                'name' => 'Component fonts, colours and corners',
+                'summary' => 'Which font each kind of text is set in, the colours of the parts of the interface, and their corners. The components use them. Each follows a site-wide setting from the Appearance page (the main or secondary font, one of the colours) until the Appearance page\'s advanced editor gives that part its own.',
+                'tokens' => formulize_uiSizeTokens(false),
+                'notes' => array(
+                    'Use them in your own CSS so it matches the components: `background: var(--fz-button-primary-bg)`, `border-radius: var(--fz-field-radius)`, `font-family: var(--fz-label-font)`.',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-cluster">
+  <button type="button" class="fz-btn fz-btn--primary">Save</button>
+  <button type="button" class="fz-btn fz-btn--primary" style="--fz-button-primary-bg: var(--fz-color-success); --fz-button-primary-hover: var(--fz-color-success); --fz-button-radius: var(--fz-radius-full)">Approve</button>
 </div>
 HTML
             ),
