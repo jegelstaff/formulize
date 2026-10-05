@@ -9,10 +9,12 @@ if($downloadCalculationsURL AND $downloadCalculationsText) {
 
 // in fixed pixel width mode, the column cells wrap their content so the pixel widths hold instead of growing to fit it (see the Lyris style.css)
 $fixedColumnsClass = !empty($fixedColumnWidths) ? ' lyris-list-table--fixed-columns' : '';
+// in natural width mode, dropdown filters can widen their columns so the selected option is readable (see the Lyris style.css)
+$naturalColumnsClass = !empty($naturalColumnWidths) ? ' lyris-list-table--natural-columns' : '';
 
 print "
 <div class='lyris-list__body' id='formulize-list-of-entries'>
-	<table class='fz-table lyris-list-table lyris-list-table--cozy$fixedColumnsClass'>
+	<table class='fz-table lyris-list-table lyris-list-table--cozy$fixedColumnsClass$naturalColumnsClass'>
 	<thead>";
 
 		if($headersShown) {

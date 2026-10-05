@@ -2015,6 +2015,7 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 		'spacerNeeded' => $spacerNeeded,
 		'columnWidthStyle' => $columnWidthStyle,
 		'fixedColumnWidths' => ($columnWidthMode == 'fixed' AND $columnWidth) ? true : false,
+		'naturalColumnWidths' => ($columnWidthMode == 'natural' AND $isLyrisTheme) ? true : false,
 		'colspan' => $colspan,
 		'downloadCalculationsURL' => $downloadCalculationsURL,
 		'downloadCalculationsText' => $downloadCalculationsText,
