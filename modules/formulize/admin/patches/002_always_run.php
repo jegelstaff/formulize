@@ -52,6 +52,9 @@ function formulize_patch_002_always_run($prev_dbversion, $required_dbversion) {
 	// Rename any element handles containing hyphens before running other schema work.
 	// This is idempotent: handles without hyphens are untouched on repeat runs.
 	formulize_migrate_hyphenated_handles();
+	// Sites updated between 2026-07-03 and 2026-09-09 had their handles converted without their data table
+	// columns, which the migration above cannot see any more because the handles no longer have hyphens.
+	formulize_repair_hyphenated_data_columns();
 
 	// Add to the Primary Relationship any connection between forms that is missing from it.
 	// Runs on every update, because a Primary Relationship can be left incomplete by an earlier
@@ -760,6 +763,93 @@ function formulize_rename_hyphenated_data_column($fid, $oldHandle, $newHandle) {
     }
 
     return '';
+}
+
+/**
+ * Rename data table columns that were left hyphenated when their element's handle was not.
+ *
+ * Between 2026-07-03 and 2026-09-09, formulize_migrate_hyphenated_handles() renamed element handles
+ * but not the data table columns behind them. Sites updated in that window have elements called
+ * "my_handle" whose data still sits in a column called "my-handle". The migration cannot repair them,
+ * because it only looks for handles that still contain a hyphen.
+ *
+ * Hyphens have not been allowed in handles since then (see sanitize_handle_name), so a hyphenated
+ * column cannot belong to a current element. A column is renamed only when its own form has an
+ * element whose handle is exactly the column name with each hyphen replaced by an underscore.
+ * Anything else is left alone. Idempotent: once a column is renamed, it no longer has a hyphen to find.
+ */
+function formulize_repair_hyphenated_data_columns() {
+    global $xoopsDB;
+
+    // Every hyphenated column in the database, in one query. A hyphen is not a LIKE wildcard.
+    $colRes = $xoopsDB->queryF(
+        "SELECT TABLE_NAME, COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND COLUMN_NAME LIKE '%-%'"
+    );
+    if (!$colRes) {
+        print "<p>Error: could not look for data table fields with hyphens in their names: " . htmlspecialchars($xoopsDB->error()) . " Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.</p>";
+        return;
+    }
+    if ($xoopsDB->getRowsNum($colRes) == 0) {
+        return;
+    }
+
+    // The underscore version of each hyphenated column name, which is what its element would be called now
+    $hyphenatedColumns = array(); // table name => list of column names
+    $candidateHandles = array();
+    while ($row = $xoopsDB->fetchArray($colRes)) {
+        $hyphenatedColumns[$row['TABLE_NAME']][] = $row['COLUMN_NAME'];
+        $candidateHandles[str_replace('-', '_', $row['COLUMN_NAME'])] = true;
+    }
+
+    // Only the elements that have one of those handles, along with their form's handle, which names their tables
+    $eleRes = $xoopsDB->queryF(
+        "SELECT e.id_form, e.ele_handle, f.form_handle FROM " . $xoopsDB->prefix('formulize') . " AS e"
+        . " INNER JOIN " . $xoopsDB->prefix('formulize_id') . " AS f ON f.id_form = e.id_form"
+        . " WHERE f.form_handle != '' AND e.ele_handle IN (" . implode(',', array_map(array($xoopsDB, 'quoteString'), array_keys($candidateHandles))) . ")"
+    );
+    if (!$eleRes) {
+        print "<p>Error: could not look for the elements that belong to data table fields with hyphens in their names: " . htmlspecialchars($xoopsDB->error()) . " Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.</p>";
+        return;
+    }
+
+    // The columns to rename, per form. Only a column in the element's own form's data table or revisions table
+    // counts, and only on an exact match (IN compares by collation, which may ignore case). A column in both
+    // tables is listed once, since formulize_rename_hyphenated_data_column() renames it in both.
+    $repairs = array(); // fid => list of column names
+    while ($row = $xoopsDB->fetchArray($eleRes)) {
+        $fid = intval($row['id_form']);
+        $tables = array(
+            $xoopsDB->prefix('formulize_' . $row['form_handle']),
+            $xoopsDB->prefix('formulize_' . $row['form_handle'] . '_revisions'),
+        );
+        foreach ($tables as $table) {
+            if (!isset($hyphenatedColumns[$table])) {
+                continue;
+            }
+            foreach ($hyphenatedColumns[$table] as $column) {
+                if (str_replace('-', '_', $column) === $row['ele_handle'] AND (!isset($repairs[$fid]) OR !in_array($column, $repairs[$fid], true))) {
+                    $repairs[$fid][] = $column;
+                }
+            }
+        }
+    }
+
+    $headingShown = false;
+    foreach ($repairs as $fid => $columns) {
+        foreach ($columns as $column) {
+            $newHandle = str_replace('-', '_', $column);
+            if (!$headingShown) {
+                print "<h3>Renaming data table fields to match their element handles:</h3>\n";
+                $headingShown = true;
+            }
+            $columnError = formulize_rename_hyphenated_data_column($fid, $column, $newHandle);
+            if ($columnError !== '') {
+                print "<p>Error renaming the data table field <code>" . htmlspecialchars($column) . "</code> in form_id=" . intval($fid) . ": " . htmlspecialchars($columnError) . " Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.</p>\n";
+                continue;
+            }
+            print "<p>Renamed data table field: <code>" . htmlspecialchars($column) . "</code> &rarr; <code>" . htmlspecialchars($newHandle) . "</code> (form_id=" . intval($fid) . ")</p>\n";
+        }
+    }
 }
 
 
