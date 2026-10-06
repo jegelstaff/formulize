@@ -48,14 +48,19 @@ $pageUrl = formulize_getAppearanceEditorUrl($theme);
 $errors = array();
 $settings = formulize_getAppearanceSettings($theme);
 
-// The look being edited (?look=): the one applied to the site, unless another is
-// asked for. The editor edits looks; the site's own settings, which every look
-// starts from, are the Appearance page's.
+// The mode, for the whole site: simple (the look applied, and its logo, colours,
+// fonts and page width) or advanced (any look, every part of it, and looks of your
+// own), for a theme that has it.
+$hasAdvanced = formulize_appearanceThemeHasAdvancedMode($theme);
+$mode = ($hasAdvanced AND $settings['appearance_mode'] == 'advanced') ? 'advanced' : 'simple';
+
+// The look being edited: in simple mode, the one applied to the site; in advanced
+// mode, that one unless another is asked for (?look=). Default is the foundation
+// the others build on: its settings are the theme's own.
 $looks = formulize_getAppearanceLooks($theme);
-$editing = strtolower((string) (isset($_POST['look']) ? $_POST['look'] : (isset($_GET['look']) ? $_GET['look'] : '')));
-if (!isset($looks[$editing])) {
-	$editing = ($settings['appearance_look'] !== '' AND isset($looks[$settings['appearance_look']])) ? $settings['appearance_look'] : 'default';
-}
+$applied = ($settings['appearance_look'] !== '' AND isset($looks[$settings['appearance_look']])) ? $settings['appearance_look'] : 'default';
+$requested = strtolower((string) (isset($_POST['look']) ? $_POST['look'] : (isset($_GET['look']) ? $_GET['look'] : '')));
+$editing = ($mode == 'advanced' AND isset($looks[$requested])) ? $requested : $applied;
 function formulize_appearanceEditorLookUrl($pageUrl, $key) {
 	return $pageUrl . ($key !== '' ? '&look=' . urlencode($key) : '');
 }
@@ -83,6 +88,18 @@ if (isset($_POST['appearance_look_action']) AND $pageUrl) {
 				$errors[] = 'The look could not be saved: its stylesheet could not be written to ' . formulize_getAppearanceLooksDir($theme) . '. Make that folder writable by the web server and try again.';
 			}
 		}
+	} elseif ($action == 'mode') {
+		// the mode is the site's: switching it keeps everything as it is
+		$settings['appearance_mode'] = (isset($_POST['appearance_mode']) AND $_POST['appearance_mode'] == 'advanced') ? 'advanced' : '';
+		if (formulize_regenerateAppearanceCss($settings, $theme)) {
+			$go = ($settings['appearance_mode'] == 'advanced') ? $editing : '';
+		}
+	} elseif ($action == 'apply' AND isset($looks[$requested])) {
+		// apply the look asked for: in simple mode, the one chosen as the site's look
+		$settings['appearance_look'] = ($requested == 'default') ? '' : $requested;
+		if (formulize_regenerateAppearanceCss($settings, $theme)) {
+			$go = ($mode == 'advanced') ? $requested : '';
+		}
 	} elseif (($action == 'rename' OR $action == 'delete') AND $looks[$editing]['builtin']) {
 		$errors[] = $looks[$editing]['name'] . ' comes with Formulize, so it can\'t be renamed or deleted. If it has been changed, it can be reverted to how it came.';
 	} elseif ($action == 'revert') {
@@ -98,11 +115,6 @@ if (isset($_POST['appearance_look_action']) AND $pageUrl) {
 	} elseif ($action == 'delete') {
 		if (formulize_deleteAppearanceLook($theme, $editing)) {
 			$go = '';
-		}
-	} elseif ($action == 'apply') {
-		$settings['appearance_look'] = ($editing == 'default') ? '' : $editing;
-		if (formulize_regenerateAppearanceCss($settings, $theme)) {
-			$go = $editing;
 		}
 	}
 	if ($go !== null) {
@@ -149,54 +161,105 @@ function formulize_appearanceEditorLookState($settings, $theme, $key) {
 	return formulize_appearanceEditorState(formulize_getAppearanceEffectiveSettings($theme, $settings, $key), $theme);
 }
 
-// Saving the look being edited: the settings it changes, which the editor works
-// out (everything that differs from the site's own settings, which every look
-// starts from), and its own logo and favicon, which are kept unless replaced, or
-// removed to use the site's. A built-in look is saved the same way, as changed on
-// this site, and can be reverted. The editor saves in the background
-// (appearance_editor_ajax), and gets back what was saved, so it stays where it
-// was; without scripts the form posts as usual and comes back here, so a reload
-// doesn't post again. A background save sends X-Requested-With, which keeps the
-// page's token good for the next save.
+// Saving. In advanced mode: the look being edited, which for Default is the
+// theme's own settings, and for any other look the settings it changes (which the
+// editor works out: everything that differs from Default's) with its own logo and
+// favicon. A built-in look is saved the same way, as changed on this site, and can
+// be reverted. In simple mode: the look applied, its logo, colours, fonts and page
+// width, each of which goes where it comes from: to the look, if the look sets it,
+// and otherwise to Default, so a setting changed with Comfortable applied is still
+// there with Compact, and in advanced mode.
+//
+// The editor saves in the background (appearance_editor_ajax), and gets back what
+// was saved, so it stays where it was; without scripts the form posts as usual and
+// comes back here, so a reload doesn't post again. A background save sends
+// X-Requested-With, which keeps the page's token good for the next save.
 $saved = false;
 if (isset($_POST['appearance_editor_save']) AND $pageUrl) {
 	if (!$GLOBALS['xoopsSecurity']->check(true, false, 'formulize_appearance_editor_token')) {
 		$errors[] = 'Nothing was saved, because the page had been open too long. Reload the page, make the changes again and save.';
 	} else {
+		$siteWide = array_merge(array_map(function ($key) { return 'appearance_' . $key; }, array_keys(formulize_appearanceColourMap($theme))),
+			array('appearance_font', 'appearance_customfont', 'appearance_headingfont', 'appearance_headingcustomfont', 'appearance_contentwidth'));
 		$look = $looks[$editing];
-		$changes = json_decode(isset($_POST['appearance_look_settings']) ? (string) $_POST['appearance_look_settings'] : '', true);
-		$changes = is_array($changes) ? $changes : array();
-		$own = array();
-		foreach (array_keys(formulize_appearanceUploads()) as $name) {
-			$own[$name] = isset($look['settings'][$name]) ? $look['settings'][$name] : '';
-			$changes[$name] = $own[$name];
+		$submitted = formulize_appearanceSubmittedSettings($_POST, $settings, $theme, $errors);
+		// the look applied and the mode are changed by their own actions, not by Save
+		$submitted['appearance_look'] = $settings['appearance_look'];
+		$submitted['appearance_mode'] = $settings['appearance_mode'];
+		if ($mode == 'simple') {
+			// a part's own settings aren't changed in simple mode
+			$submitted['appearance_overrides'] = $settings['appearance_overrides'];
 		}
-		$changes = formulize_saveAppearanceUploads($changes, $own, $theme, false, $errors);
-		foreach (array_keys(formulize_appearanceUploads()) as $name) {
-			if ($changes[$name] === '') {
-				unset($changes[$name]); // no image of its own: the site's
+		if ($editing == 'default') {
+			$siteSettings = formulize_saveAppearanceUploads($submitted, $settings, $theme, false, $errors);
+			$lookSettings = null;
+		} else {
+			// what the look changes; in simple mode, also the settings it sets, as changed
+			// here, while the rest of the site-wide ones go to Default
+			$siteSettings = $settings;
+			if ($mode == 'simple') {
+				$lookSettings = $look['settings'];
+				foreach ($siteWide as $name) {
+					$sets = (isset($look['settings'][$name]) OR ($name == 'appearance_customfont' AND isset($look['settings']['appearance_font'])) OR ($name == 'appearance_headingcustomfont' AND isset($look['settings']['appearance_headingfont'])));
+					if ($sets) {
+						$lookSettings[$name] = $submitted[$name];
+					} else {
+						$siteSettings[$name] = $submitted[$name];
+					}
+				}
+			} else {
+				$lookSettings = json_decode(isset($_POST['appearance_look_settings']) ? (string) $_POST['appearance_look_settings'] : '', true);
+				$lookSettings = is_array($lookSettings) ? $lookSettings : array();
 			}
+			// the logo and favicon: the look's own, if it has one (or, in advanced mode, is
+			// given one), otherwise, in simple mode, Default's
+			$own = array();
+			$toLook = array();
+			$toSite = array();
+			foreach (array_keys(formulize_appearanceUploads()) as $name) {
+				$own[$name] = isset($look['settings'][$name]) ? $look['settings'][$name] : '';
+				if ($mode == 'advanced' OR $own[$name] !== '') {
+					$toLook[] = $name;
+					$lookSettings[$name] = $own[$name];
+				} else {
+					$toSite[] = $name;
+					unset($lookSettings[$name]);
+				}
+			}
+			$lookSettings = formulize_saveAppearanceUploads($lookSettings, $own, $theme, false, $errors, $toLook);
+			foreach ($toLook as $name) {
+				if ($lookSettings[$name] === '') {
+					unset($lookSettings[$name]); // no image of its own: Default's
+				}
+			}
+			$siteSettings = formulize_saveAppearanceUploads($siteSettings, $settings, $theme, false, $errors, $toSite);
 		}
-		if (formulize_saveAppearanceLook($theme, $editing, $look['name'], $changes, $look['description'])) {
+		$siteSettings = formulize_sanitizeAppearanceSettings($siteSettings, $theme);
+		if (formulize_regenerateAppearanceCss($siteSettings, $theme) AND ($lookSettings === null OR formulize_saveAppearanceLook($theme, $editing, $look['name'], $lookSettings, $look['description']))) {
 			$saved = true;
-			// the images it no longer has, now that its stylesheet doesn't name them
-			foreach ($own as $name => $file) {
-				if ($file !== '' AND (!isset($changes[$name]) OR $changes[$name] !== $file)) {
-					formulize_deleteAppearanceUploadedFile($file, $theme);
+			$settings = $siteSettings;
+			if ($lookSettings !== null) {
+				// the images the look no longer has, now that its stylesheet doesn't name them
+				foreach ($own as $name => $file) {
+					if ($file !== '' AND (!isset($lookSettings[$name]) OR $lookSettings[$name] !== $file)) {
+						formulize_deleteAppearanceUploadedFile($file, $theme);
+					}
 				}
 			}
 			$looks = formulize_getAppearanceLooks($theme, true);
 		} else {
-			$errors[] = 'Nothing was saved. The look is kept in its own stylesheet, and that could not be written to ' . formulize_getAppearanceLooksDir($theme) . '. Make that folder writable by the web server and save again.';
+			$errors[] = 'Nothing was saved: the ' . $theme . " theme's appearance files could not be written in " . formulize_getAppearanceDir($theme) . '. Make that folder writable by the web server and save again.';
 		}
 	}
 	if (isset($_POST['appearance_editor_ajax'])) {
 		header('Content-Type: application/json; charset=utf-8');
-		echo json_encode(array('saved' => $saved, 'errors' => $errors, 'edited' => $looks[$editing]['edited'], 'state' => formulize_appearanceEditorLookState($settings, $theme, $editing)), JSON_UNESCAPED_SLASHES);
+		echo json_encode(array('saved' => $saved, 'errors' => $errors,
+			'edited' => $editing == 'default' ? formulize_appearanceDefaultChanged($settings) : $looks[$editing]['edited'],
+			'state' => formulize_appearanceEditorLookState($settings, $theme, $editing)), JSON_UNESCAPED_SLASHES);
 		exit();
 	}
 	if ($saved AND !$errors) {
-		header('Location: ' . formulize_appearanceEditorLookUrl($pageUrl, $editing) . '&saved=1');
+		header('Location: ' . formulize_appearanceEditorLookUrl($pageUrl, $mode == 'advanced' ? $editing : '') . '&saved=1');
 		exit();
 	}
 }
@@ -270,9 +333,16 @@ foreach ($looks as $key => $look) {
 	if (isset($look['settings']['appearance_overrides'])) {
 		$count += count(json_decode($look['settings']['appearance_overrides'], true) ?: array()) - 1;
 	}
-	$menuLooks[] = array('key' => $key, 'name' => $look['name'], 'description' => $look['description'], 'builtin' => $look['builtin'], 'edited' => $look['edited'], 'changes' => $count);
+	$edited = ($key == 'default') ? formulize_appearanceDefaultChanged($settings) : $look['edited'];
+	$menuLooks[] = array('key' => $key, 'name' => $look['name'], 'description' => $look['description'], 'builtin' => $look['builtin'], 'edited' => $edited, 'changes' => $count);
 }
-$applied = $settings['appearance_look'] !== '' ? $settings['appearance_look'] : 'default';
+// the themes that can be edited here, for the theme picker
+$editorThemes = array();
+foreach (formulize_getAppearanceThemes() as $themeDir => $themeName) {
+	if (formulize_getAppearanceEditorUrl($themeDir)) {
+		$editorThemes[$themeDir] = $themeName;
+	}
+}
 
 $editorData = array(
 	'theme' => $theme,
@@ -287,8 +357,13 @@ $editorData = array(
 	'looks' => $lookList,
 	// what is being edited: null for the site appearance, or a look; the site
 	// appearance it starts from (base); and the looks, for the menu
-	'editing' => array('key' => $editing, 'name' => $looks[$editing]['name'], 'description' => $looks[$editing]['description'], 'builtin' => $looks[$editing]['builtin'], 'edited' => $looks[$editing]['edited']),
-	'base' => formulize_appearanceEditorState($settings, $theme),
+	'editing' => array('key' => $editing, 'name' => $looks[$editing]['name'], 'description' => $looks[$editing]['description'], 'builtin' => $looks[$editing]['builtin'],
+		'edited' => ($editing == 'default') ? formulize_appearanceDefaultChanged($settings) : $looks[$editing]['edited']),
+	// what the look is measured against: Default, the theme's own settings, for any
+	// other look in advanced mode; the theme itself, for Default and in simple mode
+	'base' => ($editing == 'default' OR $mode == 'simple') ? null : formulize_appearanceEditorState($settings, $theme),
+	'mode' => $mode,
+	'hasAdvanced' => $hasAdvanced,
 	'menuLooks' => $menuLooks,
 	'applied' => $applied,
 	'pageUrl' => $pageUrl,
@@ -316,24 +391,38 @@ header('Content-Type: text/html; charset=utf-8');
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Advanced editor - <?php echo htmlspecialchars($theme, ENT_QUOTES); ?></title>
+<title>Appearance - <?php echo htmlspecialchars($theme, ENT_QUOTES); ?></title>
 <link rel="stylesheet" type="text/css" href="<?php echo XOOPS_URL . formulize_uiStylesheetPath(); ?>">
 <link rel="stylesheet" type="text/css" href="<?php echo XOOPS_URL . $cssPath . '?v=' . formulize_get_file_version($cssPath); ?>">
 </head>
 <body class="formulize-editor">
 <?php if (!$screens) { ?>
 <main class="formulize-editor__unsupported">
-	<h1>Advanced editor</h1>
-	<p>The <?php echo htmlspecialchars($theme, ENT_QUOTES); ?> theme can't be edited in the advanced editor: it isn't built on Formulize UI's component settings<?php echo formulize_appearanceThemeUsesSizes($theme) ? ', or has no sample screens to preview them on' : ''; ?>. Its colours, fonts and logo can be changed on the Appearance page.</p>
+	<h1>Appearance</h1>
+	<p>The <?php echo htmlspecialchars($theme, ENT_QUOTES); ?> theme can't be edited here: it has no sample screens to preview its appearance on (see "What Formulize expects from a theme" in the documentation).</p>
 	<p><a href="<?php echo htmlspecialchars($appearanceUrl, ENT_QUOTES); ?>">Back to Appearance</a></p>
 </main>
 <?php } else { ?>
 <div class="formulize-editor__app">
 	<header class="formulize-editor__top">
 		<div class="formulize-editor__crumbs">
-			<a href="<?php echo htmlspecialchars($appearanceUrl, ENT_QUOTES); ?>">Appearance</a><span aria-hidden="true">/</span><h1>Advanced editor</h1>
+			<a href="<?php echo htmlspecialchars(XOOPS_URL . '/modules/formulize/admin/ui.php', ENT_QUOTES); ?>">Admin</a><span aria-hidden="true">/</span><h1>Appearance</h1>
+			<?php if (count($editorThemes) > 1) { // the theme being edited, and the others ?>
+			<select class="formulize-editor__theme-pick" id="formulize-editor-theme" aria-label="Theme">
+				<?php foreach ($editorThemes as $themeDir => $themeName) { ?>
+				<option value="<?php echo htmlspecialchars(formulize_getAppearanceEditorUrl($themeDir), ENT_QUOTES); ?>"<?php echo $themeDir == $theme ? ' selected' : ''; ?>><?php echo htmlspecialchars($themeName . ($themeDir == formulize_getDefaultAppearanceTheme() ? ' (active)' : ''), ENT_QUOTES); ?></option>
+				<?php } ?>
+			</select>
+			<?php } else { ?>
 			<span class="formulize-editor__theme" title="The theme being edited"><?php echo htmlspecialchars($theme, ENT_QUOTES); ?></span>
+			<?php } ?>
 		</div>
+		<?php if ($hasAdvanced) { // the mode, for the whole site ?>
+		<div class="formulize-editor__seg formulize-editor__mode" role="group" aria-label="Mode" id="formulize-editor-mode">
+			<button type="button" data-mode="simple" aria-pressed="<?php echo $mode == 'simple' ? 'true' : 'false'; ?>">Simple</button>
+			<button type="button" data-mode="advanced" aria-pressed="<?php echo $mode == 'advanced' ? 'true' : 'false'; ?>">Advanced</button>
+		</div>
+		<?php } ?>
 		<?php // what is being edited, and the looks: filled in by the editor's script ?>
 		<div class="formulize-editor__lookpick" id="formulize-editor-lookpick">
 			<button type="button" class="formulize-editor__look-btn" id="formulize-editor-look-btn" aria-haspopup="true" aria-expanded="false"><span>Editing</span> <b id="formulize-editor-look-name"></b><svg class="formulize-editor__look-chev" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -345,6 +434,7 @@ header('Content-Type: text/html; charset=utf-8');
 			<input type="hidden" name="look" value="<?php echo htmlspecialchars($editing, ENT_QUOTES); ?>">
 			<input type="hidden" name="appearance_look_action" value="">
 			<input type="hidden" name="appearance_look_name" value="">
+			<input type="hidden" name="appearance_mode" value="">
 		</form>
 		<div class="formulize-editor__spacer"></div>
 		<form class="formulize-editor__actions" method="post" enctype="multipart/form-data" action="<?php echo htmlspecialchars($pageUrl, ENT_QUOTES); ?>" id="formulize-editor-form">
@@ -381,7 +471,7 @@ header('Content-Type: text/html; charset=utf-8');
 					<button type="button" data-w="desktop" aria-pressed="true">Desktop</button>
 					<button type="button" data-w="phone" aria-pressed="false">Phone</button>
 				</div>
-				<span class="formulize-editor__hint" id="formulize-editor-hint">Click anything in the preview to change it.</span>
+				<span class="formulize-editor__hint" id="formulize-editor-hint"><?php echo $mode == 'simple' ? 'Change the look of the site, and its logo, colours, fonts and page width, on the right.' : 'Click anything in the preview to change it.'; ?></span>
 			</div>
 			<div class="formulize-editor__canvas" id="formulize-editor-canvas">
 				<iframe class="formulize-editor__frame" id="formulize-editor-frame" title="Preview"></iframe>

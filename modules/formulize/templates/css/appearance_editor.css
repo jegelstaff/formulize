@@ -39,6 +39,8 @@ html:has(> .formulize-editor) { height: 100%; }
 .formulize-editor__crumbs > a, .formulize-editor__crumbs > span[aria-hidden] { color: var(--fz-color-text-subtle); text-decoration: none; }
 .formulize-editor__crumbs > a:hover { text-decoration: underline; }
 .formulize-editor__crumbs h1 { margin: 0; font-size: 1.125rem; font-weight: 600; letter-spacing: -0.01em; }
+.formulize-editor__theme-pick { align-self: center; height: 30px; padding: 0 8px; border-radius: 6px; border: 1px solid var(--fz-color-border-strong); background: var(--fz-color-surface); color: var(--fz-color-text); font-size: 0.8125rem; }
+.formulize-editor__mode { align-self: center; }
 .formulize-editor__theme { font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--fz-color-border-strong); color: var(--fz-color-text-muted); align-self: center; }
 .formulize-editor__spacer { flex: 1; }
 .formulize-editor__seg { display: inline-flex; padding: 3px; gap: 2px; background: var(--fz-color-surface-2); border: 1px solid var(--fz-color-border); border-radius: 8px; }

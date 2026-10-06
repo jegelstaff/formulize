@@ -1,70 +1,62 @@
 ---
 layout: default
 permalink: documentation/appearance_editor/
-title: The Appearance Page and Its Advanced Editor
+title: The Appearance Editor
 ---
 
-# The Appearance page and its advanced editor
+# The Appearance editor
 
-The Appearance page (Admin > Appearance) sets how the interface looks, for each theme: the logo and
-favicon, the colours, the fonts, and how big and how roomy everything is. Its **advanced editor** does
-all of that too, on a live preview, and can also change one part of the interface at a time, such as
-buttons, field labels or list rows.
-
-Lyris can be edited in the advanced editor. Anari can't, and only has the Default look: its colours,
-fonts and logo are set on the Appearance page.
+**Admin > Appearance** opens the Appearance editor for a theme: a live preview of the theme's sample
+screens (a form and a list, and in Lyris also an entry open in the drawer, and a set of cards), with
+the settings beside it. Only webmasters can open it. The theme picker at the top switches between
+the themes that can be edited.
 
 ## Looks
 
-The settings on the Appearance page are the site's own appearance. A **look** is a set of changes to
-them, and one look is applied to the site, chosen with **Look** at the top of the Appearance page:
+A **look** is how the site looks: its logo and favicon, colours, fonts and page width, and how big and
+roomy everything is. One look is applied to the site.
 
-- **Default** changes nothing: the site looks the way the settings on the page have it.
+- **Default** is the foundation. Every other look builds on it: whatever a look doesn't change comes
+  from Default, and follows Default when it changes.
 - **Compact** fits more on the screen: smaller text, shorter fields, buttons and list rows, and less
   space in forms, cards and the drawer.
 - **Comfortable** is larger and roomier, and easier to read and to tap.
+- **Your own looks**, made in advanced mode, can change anything.
 
-These three come with Formulize. Whatever a look doesn't change comes from the settings on the
-Appearance page: applying Compact keeps your colours, fonts and logo. Save the Appearance page to apply
-a look across the site.
+Default, Compact and Comfortable come with Formulize. Compact and Comfortable only change sizes, so
+your logo and colours stay as they are whichever of them is applied.
 
-Looks are changed, and new ones made, in the advanced editor (see below). Looks of your own are
-offered here too.
+## Simple mode and advanced mode
 
-A look can set some of the Appearance page's own settings too, such as the colours, the logo or the
-page width. When the look applied to the site sets one, the Appearance page shows it as the look has
-it, which is what the site has, and can't change it there: it says which look sets it, with a link to
-change it in the advanced editor. Saving the page leaves those settings as they are.
+The editor is in **simple mode** or **advanced mode**, for the whole site, switched at the top. Anari
+has simple mode only.
 
-## The advanced editor
+### Simple mode
 
-**Open the advanced editor**, at the top of the Appearance page, opens a live preview of the theme's
-sample screens (a form, a list, an entry open in the drawer, and a set of cards), with the settings
-beside it. Only webmasters can open it. Save any changes on the Appearance page first: opening the
-editor leaves the page, and the page asks before losing them.
+The **Look** choice, and the site's logo and favicon, colours, fonts and page width. Choosing a look
+applies it to the site straight away; **Save** saves the rest.
 
-The editor edits **looks**. It opens on the look applied to the site, which is Default on a site
-that hasn't chosen another. The menu at the top (**Editing: Default ▾**) has every look: the ones that
-come with Formulize, marked **Built in**, and your own. The look applied to the site is marked
-**Applied**.
+A change goes where the setting comes from: to the look applied, if that look sets it, and to Default
+otherwise. Set your colours with Comfortable applied and they are Default's, so they are still there
+with Compact, and in advanced mode. If a look of your own sets its own colours, changing them here
+changes that look's, which are the ones the site is showing.
 
-While you edit a look, the preview shows the site with the look applied. Everything the look changes
-is marked, with **Reset** to go back to the Appearance page's setting; everything else says "from the
-Appearance page", and follows the Appearance page when it changes.
+### Advanced mode
 
-### Site-wide settings
+Everything in simple mode, for any look, and every part of it. The menu at the top (**Editing:
+Default ▾**) has every look: the ones that come with Formulize, marked **Built in**, and your own. The
+look applied to the site is marked **Applied**. The editor opens on it.
 
-With nothing selected in the preview, the **Site-wide** tab has what the look changes for the whole
-site: the logo and favicon, the colours, the main and secondary fonts (including any Google Font, by
-name), and the page width. They start as the Appearance page's. A look can have a logo and favicon of
-its own, or use the Appearance page's. Every part of the interface follows these, except for anything
-the look changes on the part itself.
+While you edit a look other than Default, the preview shows the site with the look applied. Everything
+the look changes is marked, with **Reset** to go back to Default's; everything else says "from
+Default". With nothing selected in the preview, the **Site-wide** tab has the look's logo and
+favicon, colours, fonts and page width.
 
 The **Changes** tab lists what you have changed and not saved yet, each with what it was when saved,
 **Undo**, and **Show** to select the part it belongs to. Opening a look, or switching to another,
 starts with no changes.
 
-### One part at a time
+### One part at a time (advanced mode)
 
 - **Click anything in the preview** to select it: a button, a form field, a label, a list row, a
   title, the logo. Every one of that thing is outlined, and its settings appear on the right, in up
@@ -100,14 +92,15 @@ at phone widths.
 
 From the menu:
 
-- **New look…** makes a look that changes nothing yet: it is the same as the Appearance page's
-  settings until you change something in it.
+- **New look…** makes a look that changes nothing yet: it is the same as Default until you change
+  something in it.
 - **Duplicate** makes a copy of the look you are editing, to change as you like. A copy isn't linked
   to the look it came from: changing one doesn't change the other.
 - **Rename** and **Delete** are for your own looks. Deleting the look applied to the site puts the
   site back on Default.
 - **Revert** is for a built-in look that has been changed on the site: it puts the look back the way
-  it came with Formulize. Your own looks have no Revert, since there is nothing they came as.
+  it came with Formulize, and for Default, the theme's own appearance, logo and favicon included.
+  Your own looks have no Revert, since there is nothing they came as.
 - **Apply to the site** applies the look you are editing. Save it first.
 
 The built-in looks are changed the same way as your own: the changed one is kept for the site, and
@@ -118,18 +111,17 @@ the theme's appearance with it applied.
 
 ### Saving
 
-**Save** saves the look you are editing, keeping only what differs from the Appearance page's
-settings. Saving the look applied to the site changes the site straight away; saving one that isn't
-applied doesn't. The editor stays as it was, on the same screen, width and selection.
+**Save** saves what you are editing. Saving the look applied to the site changes the site straight
+away; saving one that isn't applied doesn't. The editor stays as it was, on the same screen, width and
+selection.
 
-**Reset changes** throws away what you haven't saved, so the look is as it was last saved. To take
-back one of the look's own changes, use **Reset** beside the setting: it goes back to the Appearance
-page's.
+**Reset changes** throws away what you haven't saved. To take back one of a look's own changes, use
+**Reset** beside the setting.
 
 ## For theme authors
 
-A theme opts in by declaring `--formulize-size-tokens` in its tokens, and provides the sample screens
-for the preview. See [What Formulize expects from a theme](/documentation/themes/).
+A theme is edited here when it provides sample screens for the preview. Advanced mode, and Compact and
+Comfortable, are for a theme that also declares `--formulize-size-tokens` in its tokens. See [What Formulize expects from a theme](/documentation/themes/).
 
 The settings themselves are the component tokens of [Formulize UI](/documentation/formulize_ui/):
 use them in your own CSS (`height: var(--fz-control-height)`, `background: var(--fz-button-bg)`,

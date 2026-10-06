@@ -105,13 +105,17 @@ Two optional files let you adjust how your theme looks when embedded:
 
 The Anari theme has both files, if you want an example.
 
-## 5. Offer the sized looks and the advanced editor (optional)
+## 5. Work with the Appearance editor (optional)
 
-The Appearance page's [looks and advanced editor](/documentation/appearance_editor/) change
-Formulize UI's component tokens: sizes (`--fz-field-height`, `--fz-row-height`, `--fz-title-text`),
+The [Appearance editor](/documentation/appearance_editor/) edits a theme's appearance on a preview of
+sample screens the theme provides (below): a theme without them can't be edited there. In simple
+mode it changes the logo, colours, fonts and page width, which every theme that calls
+`formulize_renderAppearanceHead()` follows.
+
+Its advanced mode, and the Compact and Comfortable looks, change Formulize UI's component tokens: sizes (`--fz-field-height`, `--fz-row-height`, `--fz-title-text`),
 fonts (`--fz-label-font`), colours (`--fz-button-bg`, `--fz-header-bg`) and corners
 (`--fz-field-radius`), and the rest. They only do anything in a theme whose own CSS styles things with
-those tokens, so a theme says when it does, and only then does the Appearance page offer them. Each
+those tokens, so a theme says when it does, and only then does the editor offer them. Each
 colour and font token defaults to the palette colour or font it stands for, so a theme that uses them
 looks the same until one is changed.
 
@@ -123,10 +127,10 @@ looks the same until one is changed.
 }
 ```
 
-**Provide sample screens** for the advanced editor's preview, in an `appearance_preview` folder
+**Provide sample screens** for the editor's preview, in an `appearance_preview` folder
 in your theme. Each is an HTML file named after a screen: `form.html`, `list.html`, `drawer.html` and
 `cards.html`. Provide the ones that suit your theme; the editor shows the ones it finds, and without
-any, the Appearance page doesn't offer it. A sample is the markup your theme puts in `<body>` for
+any, the theme can't be edited there. A sample is the markup your theme puts in `<body>` for
 that kind of page, written out with sample content, and it is shown with your `css/reset.css`, your
 `css/style.css` and your generated appearance stylesheet, in a `<body>` with the id `formulize` and
 the class `formulize-screen`. No scripts run in it.
@@ -149,7 +153,9 @@ double braces: `{{list}}` is the contents of `_list.html`. `{{logo_url}}` and `{
 logo and the site's name. Clicking an element with `data-fz-toggle="some-id"` in the preview toggles
 the class `open` on the element with that id, for showing a menu.
 
-Lyris's samples, in `themes/Lyris/appearance_preview/`, are a complete example.
+Lyris's samples, in `themes/Lyris/appearance_preview/`, are a complete example. A theme edited in simple
+mode only, such as Anari (`themes/Anari/appearance_preview/`), only needs to mark its logo, as the
+`logo` part.
 
 ## 6. Offer the Page width setting (optional)
 
