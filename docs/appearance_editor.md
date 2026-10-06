@@ -126,6 +126,9 @@ the theme's appearance with it applied.
 away; saving one that isn't applied doesn't. The editor stays as it was, on the same screen, width and
 selection, and so does switching looks, applying one, or switching mode.
 
+What a save or a change to the looks did is said in a note over the bottom of the preview, which goes
+after a few seconds (not while the pointer is on it). A note about a problem stays until you close it.
+
 **Reset changes** throws away what you haven't saved. To take back one of a look's own changes, use
 **Reset** beside the setting.
 

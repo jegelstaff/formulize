@@ -1074,18 +1074,30 @@
 	}
 
 	/* ---- saving ---- */
-	// a message under the header, which a save replaces
+	// What an action or a save did, as a note over the bottom of the preview, so
+	// nothing on the page moves. A new note replaces the last. One that went well
+	// goes after a while, but not while the pointer is on it or it has focus; a
+	// problem stays until it is closed.
 	function message(text, error) {
-		var box = $('formulize-editor-messages');
+		var box = $('formulize-editor-toasts');
+		clearTimeout(message.timer);
 		box.innerHTML = '';
-		(Array.isArray(text) ? text : [text]).forEach(function (t) {
-			var p = document.createElement('p');
-			p.className = 'formulize-editor__message' + (error ? ' formulize-editor__message--error' : '');
-			p.setAttribute('role', error ? 'alert' : 'status');
-			p.textContent = t;
-			box.appendChild(p);
-		});
-		if (!error) { clearTimeout(message.timer); message.timer = setTimeout(function () { box.innerHTML = ''; }, 5000); }
+		var t = document.createElement('div');
+		t.className = 'formulize-editor__toast' + (error ? ' formulize-editor__toast--error' : '');
+		t.setAttribute('role', error ? 'alert' : 'status');
+		t.innerHTML = '<span class="formulize-editor__toast-icon" aria-hidden="true">' + (error ? '!' : '✓') + '</span><div class="formulize-editor__toast-text"></div><button type="button" class="formulize-editor__toast-close" aria-label="Close">×</button>';
+		var lines = t.querySelector('.formulize-editor__toast-text');
+		(Array.isArray(text) ? text : [text]).forEach(function (line) { var p = document.createElement('p'); p.textContent = line; lines.appendChild(p); });
+		function close() { clearTimeout(message.timer); t.classList.remove('is-shown'); setTimeout(function () { if (t.parentNode) { t.parentNode.removeChild(t); } }, 200); }
+		function later() { if (!error) { clearTimeout(message.timer); message.timer = setTimeout(close, 5000); } }
+		t.querySelector('button').addEventListener('click', close);
+		t.addEventListener('mouseenter', function () { clearTimeout(message.timer); });
+		t.addEventListener('mouseleave', later);
+		t.addEventListener('focusin', function () { clearTimeout(message.timer); });
+		t.addEventListener('focusout', later);
+		box.appendChild(t);
+		requestAnimationFrame(function () { requestAnimationFrame(function () { t.classList.add('is-shown'); }); });
+		later();
 	}
 	// every setting goes in the form's hidden fields
 	function fillForm(form) {
@@ -1162,8 +1174,9 @@
 	window.addEventListener('beforeunload', function (ev) {
 		if (isDirty() && !submitting) { ev.preventDefault(); ev.returnValue = ''; }
 	});
-	var saved = document.querySelector('#formulize-editor-messages [role="status"]');
-	if (saved) { setTimeout(function () { saved.hidden = true; }, 5000); }
+	// what the page was sent back with
+	if (DATA.errors && DATA.errors.length) { message(DATA.errors, true); }
+	else if (DATA.saved) { message('Saved. These settings now apply across the site in the ' + DATA.theme + ' theme.'); }
 
 	adopt(DATA.state);
 	var view = recallView();

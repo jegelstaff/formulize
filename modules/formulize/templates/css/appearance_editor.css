@@ -74,8 +74,7 @@ html:has(> .formulize-editor) { height: 100%; }
 /* the logo and favicon uploads: part of the form, chosen from the inspector's buttons */
 .formulize-editor__file { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 .formulize-editor__count { font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; color: var(--editor-changed); background: var(--editor-changed-soft); font-variant-numeric: tabular-nums; }
-.formulize-editor__message { margin: 0; padding: 10px 20px; background: var(--fz-color-success-soft); color: var(--fz-color-success); border-bottom: 1px solid var(--fz-color-border); }
-.formulize-editor__message--error { background: var(--fz-color-danger-soft); color: var(--fz-color-danger); }
+.formulize-editor__message { margin: 0; padding: 10px 20px; border-bottom: 1px solid var(--fz-color-border); }
 .formulize-editor__message--note { background: var(--editor-note-soft); color: var(--editor-note); }
 
 /* ---- what is being edited: the site appearance, or a look ---- */
@@ -116,7 +115,23 @@ html:has(> .formulize-editor) { height: 100%; }
 
 /* ---- body: preview + inspector ---- */
 .formulize-editor__main { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr minmax(300px, 380px); }
-.formulize-editor__stage { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.formulize-editor__stage { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+/* what an action or a save did: over the bottom of the preview, so nothing moves */
+.formulize-editor__toasts { position: absolute; left: 16px; right: 16px; bottom: 20px; z-index: 5; display: flex; justify-content: center; pointer-events: none; }
+.formulize-editor__toast {
+  pointer-events: auto; display: flex; align-items: flex-start; gap: 10px; max-width: 34rem;
+  padding: 10px 8px 10px 12px; border-radius: 8px; background: #1f2329; color: #f4f5f6;
+  box-shadow: 0 8px 24px rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.12);
+  opacity: 0; transform: translateY(8px); transition: opacity .18s ease, transform .18s ease;
+}
+.formulize-editor__toast.is-shown { opacity: 1; transform: none; }
+.formulize-editor__toast-icon { flex: none; display: inline-grid; place-items: center; width: 18px; height: 18px; margin-top: 1px; border-radius: 50%; background: #3f9d6b; color: #fff; font-size: 0.7rem; font-weight: 700; }
+.formulize-editor__toast--error .formulize-editor__toast-icon { background: #d9483b; }
+.formulize-editor__toast-text { flex: 1; min-width: 0; }
+.formulize-editor__toast-text p { margin: 0; }
+.formulize-editor__toast-text p + p { margin-top: 4px; }
+.formulize-editor__toast-close { flex: none; width: 22px; height: 22px; margin-top: -1px; border: 0; border-radius: 4px; background: transparent; color: #aab0b8; font-size: 1.1rem; line-height: 1; cursor: pointer; }
+.formulize-editor__toast-close:hover { background: rgba(255,255,255,.1); color: #fff; }
 .formulize-editor__bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 10px 16px; border-bottom: 1px solid var(--fz-color-border); background: var(--fz-color-surface); }
 .formulize-editor__tabs { display: inline-flex; gap: 2px; flex-wrap: wrap; }
 .formulize-editor__tabs button { border: 0; background: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; color: var(--fz-color-text-muted); font-size: 0.8125rem; }

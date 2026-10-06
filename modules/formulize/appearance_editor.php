@@ -391,6 +391,8 @@ $editorData = array(
 	'applied' => $applied,
 	'pageUrl' => $pageUrl,
 	'done' => isset($_GET['done']) ? (string) $_GET['done'] : '',
+	'errors' => $errors,
+	'saved' => (isset($_GET['saved']) AND !$errors),
 	'contentWidth' => $contentWidth,
 	'state' => $state,
 	'colours' => $colours,
@@ -485,12 +487,11 @@ header('Content-Type: text/html; charset=utf-8');
 	</header>
 	<?php // what stands in the way, for as long as it does
 	foreach ($notices as $notice) { ?><p class="formulize-editor__message formulize-editor__message--note"><?php echo htmlspecialchars($notice, ENT_QUOTES); ?></p><?php } ?>
-	<div id="formulize-editor-messages">
-	<?php foreach ($errors as $error) { ?><p class="formulize-editor__message formulize-editor__message--error" role="alert"><?php echo htmlspecialchars($error, ENT_QUOTES); ?></p><?php } ?>
-	<?php if (isset($_GET['saved']) AND !$errors) { ?><p class="formulize-editor__message" role="status">Saved. These settings now apply across the site in the <?php echo htmlspecialchars($theme, ENT_QUOTES); ?> theme.</p><?php } ?>
-	</div>
 	<div class="formulize-editor__main">
 		<section class="formulize-editor__stage" aria-label="Preview">
+			<?php // what an action or a save did: a note over the bottom of the preview, which
+			// moves nothing on the page (filled in by the editor's script) ?>
+			<div class="formulize-editor__toasts" id="formulize-editor-toasts"></div>
 			<div class="formulize-editor__bar">
 				<div class="formulize-editor__tabs" role="tablist" id="formulize-editor-screens"></div>
 				<div class="formulize-editor__seg" role="group" aria-label="Preview width" id="formulize-editor-width">
