@@ -1168,7 +1168,8 @@
 			})['catch'](function () {
 				message('Nothing was saved: the site didn’t answer. Check your connection and save again.', true);
 			}).then(function () {
-				state.saving = false; save.disabled = false; save.textContent = 'Save';
+				// Save is on again only if there is something left to save
+				state.saving = false; save.disabled = READONLY || changeCount() === 0; save.textContent = 'Save';
 			});
 	});
 	window.addEventListener('beforeunload', function (ev) {
