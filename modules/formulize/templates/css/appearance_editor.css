@@ -35,11 +35,21 @@ html:has(> .formulize-editor) { height: 100%; }
   display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px;
   padding: 14px 20px; background: var(--fz-color-surface); border-bottom: 1px solid var(--fz-color-border);
 }
-.formulize-editor__crumbs { display: flex; align-items: baseline; gap: 8px; min-width: 0; flex-wrap: wrap; }
+.formulize-editor__crumbs { display: flex; align-items: center; gap: 10px; min-width: 0; flex-wrap: wrap; }
 .formulize-editor__crumbs > a, .formulize-editor__crumbs > span[aria-hidden] { color: var(--fz-color-text-subtle); text-decoration: none; }
 .formulize-editor__crumbs > a:hover { text-decoration: underline; }
 .formulize-editor__crumbs h1 { margin: 0; font-size: 1.125rem; font-weight: 600; letter-spacing: -0.01em; }
-.formulize-editor__theme-pick { align-self: center; height: 30px; padding: 0 8px; border-radius: 6px; border: 1px solid var(--fz-color-border-strong); background: var(--fz-color-surface); color: var(--fz-color-text); font-size: 0.8125rem; }
+/* the theme picker: its own chevron, clear of the edge */
+.formulize-editor__theme-pick {
+  align-self: center; height: 30px; padding: 0 30px 0 10px; border-radius: 6px; border: 1px solid var(--fz-color-border-strong);
+  color: var(--fz-color-text); font-size: 0.8125rem; cursor: pointer;
+  appearance: none; -webkit-appearance: none;
+  background: var(--fz-color-surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%235b6068' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 10px center;
+}
+/* back to the Appearance tab of the admin pages */
+.formulize-editor__back { display: inline-flex; align-items: center; gap: 6px; align-self: center; text-decoration: none; color: var(--fz-color-text); padding: 0 12px 0 9px; }
+.formulize-editor__crumbs > .formulize-editor__back { color: var(--fz-color-text); }
+.formulize-editor__crumbs > .formulize-editor__back:hover { text-decoration: none; }
 .formulize-editor__mode { align-self: center; }
 .formulize-editor__theme { font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--fz-color-border-strong); color: var(--fz-color-text-muted); align-self: center; }
 .formulize-editor__spacer { flex: 1; }

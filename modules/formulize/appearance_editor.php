@@ -43,7 +43,8 @@ if (!$xoopsUser OR !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
 }
 
 $theme = formulize_resolveAppearanceTheme(isset($_POST['theme']) ? (string) $_POST['theme'] : (isset($_GET['theme']) ? (string) $_GET['theme'] : ''));
-$appearanceUrl = XOOPS_URL . '/modules/formulize/admin/ui.php?page=appearance&theme=' . urlencode($theme);
+// back to the Appearance tab of the admin pages, on this theme
+$appearanceUrl = XOOPS_URL . '/modules/formulize/admin/ui.php?page=appearance&view=stylescolors&theme=' . urlencode($theme);
 $pageUrl = formulize_getAppearanceEditorUrl($theme);
 $errors = array();
 $settings = formulize_getAppearanceSettings($theme);
@@ -344,6 +345,12 @@ foreach (formulize_getAppearanceThemes() as $themeDir => $themeName) {
 	}
 }
 
+// What the look is "changed on this site" from: the theme's own appearance, with the
+// look as it came with Formulize, for a built-in look
+$builtinLooks = formulize_appearanceBuiltinLooks();
+$cameWith = ($looks[$editing]['builtin'] AND !empty($builtinLooks[$editing])) ? $builtinLooks[$editing]['settings'] : array();
+$reference = formulize_sanitizeAppearanceSettings(formulize_mergeAppearanceLook(formulize_defaultAppearanceSettings(), $cameWith), $theme);
+
 $editorData = array(
 	'theme' => $theme,
 	'map' => array(
@@ -364,6 +371,7 @@ $editorData = array(
 	'base' => ($editing == 'default' OR $mode == 'simple') ? null : formulize_appearanceEditorState($settings, $theme),
 	'mode' => $mode,
 	'hasAdvanced' => $hasAdvanced,
+	'reference' => formulize_appearanceEditorState($reference, $theme),
 	'menuLooks' => $menuLooks,
 	'applied' => $applied,
 	'pageUrl' => $pageUrl,
@@ -406,7 +414,8 @@ header('Content-Type: text/html; charset=utf-8');
 <div class="formulize-editor__app">
 	<header class="formulize-editor__top">
 		<div class="formulize-editor__crumbs">
-			<a href="<?php echo htmlspecialchars(XOOPS_URL . '/modules/formulize/admin/ui.php', ENT_QUOTES); ?>">Admin</a><span aria-hidden="true">/</span><h1>Appearance</h1>
+			<a class="formulize-editor__btn formulize-editor__back" href="<?php echo htmlspecialchars($appearanceUrl, ENT_QUOTES); ?>" id="formulize-editor-back"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>Back to Appearance</a>
+			<h1>Appearance</h1>
 			<?php if (count($editorThemes) > 1) { // the theme being edited, and the others ?>
 			<select class="formulize-editor__theme-pick" id="formulize-editor-theme" aria-label="Theme">
 				<?php foreach ($editorThemes as $themeDir => $themeName) { ?>

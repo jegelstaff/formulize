@@ -9,7 +9,7 @@ title: The Appearance Editor
 **Admin > Appearance** opens the Appearance editor for a theme: a live preview of the theme's sample
 screens (a form and a list, and in Lyris also an entry open in the drawer, and a set of cards), with
 the settings beside it. Only webmasters can open it. The theme picker at the top switches between
-the themes that can be edited.
+the themes that can be edited, and **Back to Appearance** returns to the Appearance tab of the admin.
 
 ## Looks
 
@@ -52,9 +52,14 @@ the look changes is marked, with **Reset** to go back to Default's; everything e
 Default". With nothing selected in the preview, the **Site-wide** tab has the look's logo and
 favicon, colours, fonts and page width.
 
-The **Changes** tab lists what you have changed and not saved yet, each with what it was when saved,
-**Undo**, and **Show** to select the part it belongs to. Opening a look, or switching to another,
-starts with no changes.
+The **Changes** tab has two lists:
+
+- **Not saved yet**: what you have changed since the last save, each with what it was when saved,
+  **Undo**, and **Show** to select the part it belongs to. Opening a look, or switching to another,
+  starts with nothing here.
+- **Changed on this site**: everything that differs from the theme's own appearance, saved or not,
+  such as your logo and colours, each with what the theme's is and **Reset** to go back to it. For
+  Compact and Comfortable, it is what differs from the look as it came with Formulize.
 
 ### One part at a time (advanced mode)
 
@@ -113,7 +118,7 @@ the theme's appearance with it applied.
 
 **Save** saves what you are editing. Saving the look applied to the site changes the site straight
 away; saving one that isn't applied doesn't. The editor stays as it was, on the same screen, width and
-selection.
+selection, and so does switching looks, applying one, or switching mode.
 
 **Reset changes** throws away what you haven't saved. To take back one of a look's own changes, use
 **Reset** beside the setting.

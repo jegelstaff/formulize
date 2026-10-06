@@ -85,6 +85,16 @@
 		saving: false
 	};
 	var savedUploads = {}; // the logo and favicon as saved: their addresses
+	// Where you were (the screen, the width, what was selected, the tab and how far
+	// down the settings), kept across the page reloading for a look action, so it
+	// comes back as it was. For this browser tab only.
+	var VIEW_KEY = 'formulize-editor-view:' + DATA.theme, pendingScroll = 0;
+	function rememberView() {
+		try { sessionStorage.setItem(VIEW_KEY, JSON.stringify({ screen: state.screen, phone: state.phone, sel: state.sel, tab: state.tab, scroll: document.querySelector('.formulize-editor__insp').scrollTop })); } catch (e) {}
+	}
+	function recallView() {
+		try { var v = JSON.parse(sessionStorage.getItem(VIEW_KEY) || 'null'); sessionStorage.removeItem(VIEW_KEY); return v; } catch (e) { return null; }
+	}
 	var partsOn = {}; // screen => { part: true }, from the samples' markup
 
 	var $ = function (id) { return document.getElementById(id); };
@@ -386,6 +396,7 @@
 		d.addEventListener('mouseleave', function () { hint.innerHTML = DEFAULT_HINT; });
 		d.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') { select(null, null); } });
 		renderInspector();
+		if (pendingScroll) { body.parentNode.scrollTop = pendingScroll; pendingScroll = 0; }
 	});
 
 	// which parts each sample screen has, for "used on these screens"
@@ -634,17 +645,66 @@
 			if (has(SAVED.overrides, key)) { state.overrides[key] = SAVED.overrides[key]; } else { delete state.overrides[key]; }
 		}
 	}
-	function changesBlock() {
-		var list = unsaved();
-		if (!list.length) {
-			return '<div class="formulize-editor__empty"><p>Nothing to save: nothing has been changed since the ' + esc(EDIT ? EDIT.name : '') + ' look was last saved.</p><p>Change the logo, colours, fonts' + (WIDTH ? ' and page width' : '') + ' under Site-wide, or click anything in the preview, such as a button, a field or a list row, to change just that part. A change to a part applies to every one of it on the site.</p></div>';
+	// what is changed on this site: everything that differs from the theme's own
+	// appearance with the look as it came with Formulize (DATA.reference), saved or not
+	var REF = DATA.reference;
+	function refName() { return (EDIT && EDIT.builtin && EDIT.key !== 'default') ? EDIT.name + ' as it came' : 'The theme’s'; }
+	function changedHere() {
+		var list = [];
+		Object.keys(UPLOADS).forEach(function (key) {
+			if ((uploadUrl(key) || '') !== (REF.uploads[key] || '')) {
+				list.push({ name: UPLOADS[key], now: uploadUrl(key) ? 'An uploaded image' : 'The theme’s own' });
+			}
+		});
+		Object.keys(DATA.colours).forEach(function (key) {
+			if (String(state.colours[key]).toLowerCase() !== String(REF.colours[key]).toLowerCase()) {
+				list.push({ name: DATA.colours[key].label, swatch: state.colours[key], now: state.colours[key], was: REF.colours[key], reset: 'colour:' + key });
+			}
+		});
+		['main', 'heading'].forEach(function (which) {
+			if (state.fonts[which] !== REF.fonts[which] || (state.fonts[which] === 'custom' && customName(which) !== (REF.fonts[which + 'custom'] || ''))) {
+				list.push({ name: which === 'main' ? 'Main font' : 'Secondary font', now: fontShown(which), reset: 'font:' + which });
+			}
+		});
+		if (WIDTH && state.contentWidth !== REF.contentWidth) {
+			list.push({ name: 'Page width', now: widthName(state.contentWidth), was: widthName(REF.contentWidth), reset: 'contentwidth' });
 		}
-		return '<p class="formulize-editor__intro">Changes to the ' + esc(EDIT ? EDIT.name : '') + ' look that aren’t saved yet.</p>' + list.map(function (c) {
-			return '<div class="formulize-editor__chg"><span class="formulize-editor__chg-name">' + (c.token && DESKTOP_OF[c.token] ? ICON.phone + ' ' : '') + esc(c.name) + '</span>' +
-				'<span class="formulize-editor__chg-acts">' + (c.token ? '<button type="button" class="formulize-editor__link formulize-editor__link--plain" data-select="' + home(c.token) + '">Show</button>' : '') + '<button type="button" class="formulize-editor__link" data-undo="' + esc(c.undo) + '">Undo</button></span>' +
-				(c.token ? '<span class="formulize-editor__chg-part">' + esc(usedBy(c.token).map(function (k) { return MAP.components[k].name; }).join(', ')) + '</span>' : '') +
-				'<span class="formulize-editor__chg-val">' + (c.swatch ? '<span class="formulize-editor__swatch formulize-editor__swatch--sm" style="background:' + esc(c.swatch) + '"></span>' : '') + '<b>' + esc(c.now) + '</b>' + (c.was !== undefined ? ' · was ' + esc(c.was) : '') + '</span></div>';
-		}).join('');
+		Object.keys(MAP.tokens).forEach(function (token) {
+			var was = has(REF.overrides, token) ? REF.overrides[token] : entry(token)['default'];
+			if (String(value(token)) !== String(was)) {
+				list.push({ token: token, name: fullLabel(token), now: show(token, value(token)), was: show(token, was), swatch: type(token) === 'colour' ? tokenHex(token) : '', reset: 'token:' + token });
+			}
+		});
+		return list;
+	}
+	// put one setting back to how it is in the theme, or in the look as it came: a change
+	// like any other, saved with Save
+	function resetToReference(what) {
+		var parts = what.split(':'), kind = parts[0], key = parts.slice(1).join(':');
+		if (kind === 'colour') { state.colours[key] = REF.colours[key]; }
+		else if (kind === 'font') { state.fonts[key] = REF.fonts[key]; state.fonts[key + 'custom'] = REF.fonts[key + 'custom']; }
+		else if (kind === 'contentwidth') { state.contentWidth = REF.contentWidth; }
+		else if (kind === 'token') { store(key, has(REF.overrides, key) ? REF.overrides[key] : entry(key)['default']); }
+	}
+	function changeRow(c, button) {
+		return '<div class="formulize-editor__chg"><span class="formulize-editor__chg-name">' + (c.token && DESKTOP_OF[c.token] ? ICON.phone + ' ' : '') + esc(c.name) + '</span>' +
+			'<span class="formulize-editor__chg-acts">' + (c.token ? '<button type="button" class="formulize-editor__link formulize-editor__link--plain" data-select="' + home(c.token) + '">Show</button>' : '') + button + '</span>' +
+			(c.token ? '<span class="formulize-editor__chg-part">' + esc(usedBy(c.token).map(function (k) { return MAP.components[k].name; }).join(', ')) + '</span>' : '') +
+			'<span class="formulize-editor__chg-val">' + (c.swatch ? '<span class="formulize-editor__swatch formulize-editor__swatch--sm" style="background:' + esc(c.swatch) + '"></span>' : '') + '<b>' + esc(c.now) + '</b>' + (c.was !== undefined ? c.wasText || '' : '') + '</span></div>';
+	}
+	function changesBlock() {
+		var pending = unsaved(), here = changedHere(), h = '';
+		h += sect('Not saved yet');
+		h += pending.length ? pending.map(function (c) {
+			c.wasText = c.was !== undefined ? ' · was ' + esc(c.was) : '';
+			return changeRow(c, '<button type="button" class="formulize-editor__link" data-undo="' + esc(c.undo) + '">Undo</button>');
+		}).join('') : '<p class="formulize-editor__intro">Nothing: everything is saved.</p>';
+		h += sect('Changed on this site');
+		h += here.length ? '<p class="formulize-editor__intro">What differs from ' + esc(lower(refName())) + (refName() === 'The theme’s' ? ' own appearance' : '') + ', saved or not.</p>' + here.map(function (c) {
+			c.wasText = c.was !== undefined ? ' · ' + esc(lower(refName())) + ' is ' + esc(c.was) : '';
+			return changeRow(c, c.reset ? '<button type="button" class="formulize-editor__link" data-refreset="' + esc(c.reset) + '">Reset</button>' : '');
+		}).join('') : '<p class="formulize-editor__intro">Nothing: ' + (refName() === 'The theme’s' ? 'everything is the theme’s own appearance.' : esc(EDIT.name) + ' is as it came with Formulize.') + '</p>';
+		return h;
 	}
 
 	function renderInspector() {
@@ -827,6 +887,8 @@
 			state.uploads[a('data-upload-remove')].removed = BASE ? lookOwn(a('data-upload-remove')) : !!savedUploads[a('data-upload-remove')]; touch(); render();
 		} else if (a('data-undo')) {
 			undo(a('data-undo')); render();
+		} else if (a('data-refreset')) {
+			resetToReference(a('data-refreset')); render();
 		} else if (a('data-look-act')) {
 			ev.stopPropagation(); // it opens the looks' menu, which a click elsewhere closes
 			lookAction(a('data-look-act'));
@@ -940,6 +1002,7 @@
 	function leaving() { return !isDirty() || window.confirm('You have changes that aren’t saved. Leave them?'); }
 	function postLook(action, name, asked) {
 		if (!asked && !leaving()) { return; }
+		rememberView();
 		var form = $('formulize-editor-lookform');
 		form.querySelector('[name="appearance_look_action"]').value = action;
 		form.querySelector('[name="appearance_look_name"]').value = name || '';
@@ -961,7 +1024,7 @@
 		var b = ev.target.closest('button'); if (!b) { return; }
 		if (b.hasAttribute('data-edit')) {
 			var key = b.getAttribute('data-edit');
-			if ((EDIT ? EDIT.key : '') !== key && leaving()) { submitting = true; location.href = lookUrl(key); }
+			if ((EDIT ? EDIT.key : '') !== key && leaving()) { submitting = true; rememberView(); location.href = lookUrl(key); }
 		} else if (b.getAttribute('data-menu')) {
 			openMenu(true, b.getAttribute('data-menu') === 'back' ? '' : b.getAttribute('data-menu'));
 		} else if (b.getAttribute('data-look-act')) {
@@ -1092,6 +1155,14 @@
 	if (saved) { setTimeout(function () { saved.hidden = true; }, 5000); }
 
 	adopt(DATA.state);
+	var view = recallView();
+	if (view) {
+		if (MAP.screens[view.screen]) { state.screen = view.screen; }
+		if (view.tab === 'site' || view.tab === 'changes') { state.tab = view.tab; }
+		if (view.sel && MAP.components[view.sel] && (!SIMPLE || view.sel === 'logo')) { state.sel = view.sel; }
+		if (view.phone) { setWidth('phone'); }
+		pendingScroll = view.scroll || 0;
+	}
 	goScreen(state.screen);
 	render();
 })();
