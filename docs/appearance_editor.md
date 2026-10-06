@@ -6,10 +6,15 @@ title: The Appearance Editor
 
 # The Appearance editor
 
-**Admin > Appearance** opens the Appearance editor for a theme: a live preview of the theme's sample
-screens (a form and a list, and in Lyris also an entry open in the drawer, and a set of cards), with
-the settings beside it. Only webmasters can open it. The theme picker at the top switches between
-the themes that can be edited, and **Back to Appearance** returns to the Appearance tab of the admin.
+**Admin > Appearance > Styles and Colors** opens the Appearance editor: a live preview of the
+theme's sample screens (a form and a list, and in Lyris also an entry open in the drawer, and a set of
+cards), with the settings beside it. Only webmasters can open it. It opens on the site's theme; the
+theme picker at the top switches between the themes that can be edited, without changing which theme
+the site uses (that is in **Admin > Appearance > Settings**). **Back to Appearance** returns to the
+Appearance tab you came from.
+
+If the theme's appearance folder can't be written, or the theme doesn't use these settings, the
+editor says so at the top for as long as that is the case.
 
 ## Looks
 
@@ -28,8 +33,9 @@ your logo and colours stay as they are whichever of them is applied.
 
 ## Simple mode and advanced mode
 
-The editor is in **simple mode** or **advanced mode**, for the whole site, switched at the top. Anari
-has simple mode only.
+The editor is in **simple mode** or **advanced mode**, for the whole site, switched at the top. In
+advanced mode the header is tinted, with a coloured band along its top, so it is always clear which
+mode you are in. Anari has simple mode only.
 
 ### Simple mode
 

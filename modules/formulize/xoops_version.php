@@ -823,9 +823,6 @@ $modversion['templates'][] = array(
 $modversion['templates'][] = array(
 	'file' => 'admin/element_multiple_onoff.html',
 	'description' => '');
-$modversion['templates'][] = array(
-	'file' => 'admin/appearance.html',
-	'description' => '');
 
 
 //	Module Configs

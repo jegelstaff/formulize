@@ -73,8 +73,8 @@ copy:
 ## 4. Style screens so they still work without your header and menus
 
 An embedded screen borrows your theme's styling without its page layout. It loads your
-`css/reset.css`, if you have one, then your `css/style.css`, and then any colours, font and logo set on
-the Appearance page. It does not load your `theme.html` or your script. The `<body>` has the class
+`css/reset.css`, if you have one, then your `css/style.css`, and then any colours, font and logo set in
+the Appearance editor. It does not load your `theme.html` or your script. The `<body>` has the class
 `formulize-inline`.
 
 Two optional files let you adjust how your theme looks when embedded:
@@ -159,7 +159,7 @@ mode only, such as Anari (`themes/Anari/appearance_preview/`), only needs to mar
 
 ## 6. Offer the Page width setting (optional)
 
-The Page width setting, in the Size group on the Appearance page and in the advanced editor, keeps
+The Page width setting, in the Appearance editor's site-wide settings, keeps
 pages to a maximum width on a wide screen, or lets them use the full width of the window. It sets
 `--formulize-content-max-width`: a width in pixels, or `100%` for full width. Laying the page out to
 that width is up to the theme, so a theme says when it does, and only then is the setting offered.

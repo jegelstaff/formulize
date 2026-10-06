@@ -96,6 +96,16 @@
 		try { var v = JSON.parse(sessionStorage.getItem(VIEW_KEY) || 'null'); sessionStorage.removeItem(VIEW_KEY); return v; } catch (e) { return null; }
 	}
 	var partsOn = {}; // screen => { part: true }, from the samples' markup
+	// Back goes to the tab of the Appearance admin pages you came from, which the
+	// editor's own reloads would otherwise lose. For this browser tab only.
+	(function () {
+		var back = document.getElementById('formulize-editor-back'), from = document.referrer;
+		if (!back) { return; }
+		try {
+			if (/\/modules\/formulize\/admin\/ui\.php\?(.*&)?page=appearance(&|$)/.test(from)) { sessionStorage.setItem('formulize-editor-back', from); }
+			back.href = sessionStorage.getItem('formulize-editor-back') || back.href;
+		} catch (e) {}
+	})();
 
 	var $ = function (id) { return document.getElementById(id); };
 	var frame = $('formulize-editor-frame'), head = $('formulize-editor-insp-head'), body = $('formulize-editor-insp-body');
@@ -1056,9 +1066,10 @@
 	}
 	$('formulize-editor-applied').addEventListener('click', function (ev) { var b = ev.target.closest('[data-look-act]'); if (b) { lookAction(b.getAttribute('data-look-act')); } });
 	// what a look action did, after it comes back
-	if (DATA.done) {
+	// (switching mode says nothing: the header shows which mode it is)
+	if (DATA.done && DATA.done !== 'mode') {
 		setTimeout(function () {
-			message({ 'new': 'Made the look ' + (EDIT ? EDIT.name : '') + '. Change what you want it to change, and save.', duplicate: 'Made the look ' + (EDIT ? EDIT.name : '') + ', a copy. Change what you want it to change, and save.', rename: 'Renamed the look ' + (EDIT ? EDIT.name : '') + '.', 'delete': 'Deleted the look.', mode: SIMPLE ? 'Simple mode: the look of the site, and its logo, colours, fonts and page width.' : 'Advanced mode: every look, and every part of it.', revert: (EDIT ? EDIT.name : '') + ' is back the way it came with Formulize.', apply: (EDIT ? EDIT.name : 'Default') + ' is now applied to the site.' }[DATA.done] || 'Done.');
+			message({ 'new': 'Made the look ' + (EDIT ? EDIT.name : '') + '. Change what you want it to change, and save.', duplicate: 'Made the look ' + (EDIT ? EDIT.name : '') + ', a copy. Change what you want it to change, and save.', rename: 'Renamed the look ' + (EDIT ? EDIT.name : '') + '.', 'delete': 'Deleted the look.', revert: (EDIT ? EDIT.name : '') + ' is back the way it came with Formulize.', apply: (EDIT ? EDIT.name : 'Default') + ' is now applied to the site.' }[DATA.done] || 'Done.');
 		}, 0);
 	}
 

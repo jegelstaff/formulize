@@ -176,7 +176,7 @@ function getHomeTabs($activePage = 'home') {
         'active' => ($activePage == 'synchronize')
     );
     // Appearance is a registry-declared subject tab (see the foreach above); its
-    // Theme Settings (colours/font/logo) and Theme Editor sub-views live under it.
+    // Settings, Styles and Colors (the appearance editor) and Theme Editor live under it.
     // It used to also be duplicated here as a standalone tab pointing at
     // appearance.html — removed so it appears once, with page=appearance routing to
     // the subject handler (issue #66).

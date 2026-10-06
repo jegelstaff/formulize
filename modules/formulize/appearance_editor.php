@@ -28,8 +28,9 @@
 // include/appearance_tokens.json; the page's behaviour is
 // include/js/appearance_editor.js.
 //
-// Webmasters only, like the style guide. Linked from the top of the Appearance
-// page, for themes it can edit (formulize_getAppearanceEditorUrl).
+// Webmasters only, like the style guide. It is the Styles and Colors tab of the
+// Appearance admin pages (include/configsettings_registry.php), for themes it can
+// edit (formulize_getAppearanceEditorUrl).
 
 require_once "../../mainfile.php";
 
@@ -42,9 +43,24 @@ if (!$xoopsUser OR !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
 	exit();
 }
 
-$theme = formulize_resolveAppearanceTheme(isset($_POST['theme']) ? (string) $_POST['theme'] : (isset($_GET['theme']) ? (string) $_GET['theme'] : ''));
-// back to the Appearance tab of the admin pages, on this theme
-$appearanceUrl = XOOPS_URL . '/modules/formulize/admin/ui.php?page=appearance&view=stylescolors&theme=' . urlencode($theme);
+// the themes that can be edited here, for the theme picker
+$editorThemes = array();
+foreach (formulize_getAppearanceThemes() as $themeDir => $themeName) {
+	if (formulize_getAppearanceEditorUrl($themeDir)) {
+		$editorThemes[$themeDir] = $themeName;
+	}
+}
+// the theme asked for, or the site's, or if the site's can't be edited here, the
+// first one that can
+$askedTheme = isset($_POST['theme']) ? (string) $_POST['theme'] : (isset($_GET['theme']) ? (string) $_GET['theme'] : '');
+$theme = formulize_resolveAppearanceTheme($askedTheme);
+if ($askedTheme === '' AND !isset($editorThemes[$theme]) AND $editorThemes) {
+	reset($editorThemes);
+	$theme = key($editorThemes);
+}
+// back to the Appearance tab of the admin pages; the editor's script goes back to
+// the one you came from, if it was another
+$appearanceUrl = XOOPS_URL . '/modules/formulize/admin/ui.php?page=appearance';
 $pageUrl = formulize_getAppearanceEditorUrl($theme);
 $errors = array();
 $settings = formulize_getAppearanceSettings($theme);
@@ -266,6 +282,13 @@ if (isset($_POST['appearance_editor_save']) AND $pageUrl) {
 }
 
 $screens = $pageUrl ? formulize_getAppearancePreviewScreens($theme) : array();
+$notices = array();
+if (!formulize_appearanceDirIsWritable($theme)) {
+	$notices[] = 'Nothing can be saved for the ' . $theme . ' theme: the web server cannot write to ' . formulize_getAppearanceDir($theme) . ', and was not able to correct the permissions itself. Make that folder writable on your server.';
+}
+if (!formulize_themeSupportsAppearance($theme)) {
+	$notices[] = 'The ' . $theme . ' theme does not use these settings, so what is saved for it is kept, but won\'t change how the theme looks. A theme uses them by calling formulize_renderAppearanceHead() in its theme.html.';
+}
 $map = formulize_appearanceTokenMap();
 $defaults = formulize_appearanceSizeDefaults($theme);
 foreach ($map['tokens'] as $token => $entry) {
@@ -337,14 +360,6 @@ foreach ($looks as $key => $look) {
 	$edited = ($key == 'default') ? formulize_appearanceDefaultChanged($settings) : $look['edited'];
 	$menuLooks[] = array('key' => $key, 'name' => $look['name'], 'description' => $look['description'], 'builtin' => $look['builtin'], 'edited' => $edited, 'changes' => $count);
 }
-// the themes that can be edited here, for the theme picker
-$editorThemes = array();
-foreach (formulize_getAppearanceThemes() as $themeDir => $themeName) {
-	if (formulize_getAppearanceEditorUrl($themeDir)) {
-		$editorThemes[$themeDir] = $themeName;
-	}
-}
-
 // What the look is "changed on this site" from: the theme's own appearance, with the
 // look as it came with Formulize, for a built-in look
 $builtinLooks = formulize_appearanceBuiltinLooks();
@@ -403,7 +418,7 @@ header('Content-Type: text/html; charset=utf-8');
 <link rel="stylesheet" type="text/css" href="<?php echo XOOPS_URL . formulize_uiStylesheetPath(); ?>">
 <link rel="stylesheet" type="text/css" href="<?php echo XOOPS_URL . $cssPath . '?v=' . formulize_get_file_version($cssPath); ?>">
 </head>
-<body class="formulize-editor">
+<body class="formulize-editor<?php echo $mode == 'advanced' ? ' formulize-editor--advanced' : ''; ?>">
 <?php if (!$screens) { ?>
 <main class="formulize-editor__unsupported">
 	<h1>Appearance</h1>
@@ -468,6 +483,8 @@ header('Content-Type: text/html; charset=utf-8');
 			<button type="submit" class="formulize-editor__btn formulize-editor__btn--primary" name="appearance_editor_save" value="1" id="formulize-editor-save">Save</button>
 		</form>
 	</header>
+	<?php // what stands in the way, for as long as it does
+	foreach ($notices as $notice) { ?><p class="formulize-editor__message formulize-editor__message--note"><?php echo htmlspecialchars($notice, ENT_QUOTES); ?></p><?php } ?>
 	<div id="formulize-editor-messages">
 	<?php foreach ($errors as $error) { ?><p class="formulize-editor__message formulize-editor__message--error" role="alert"><?php echo htmlspecialchars($error, ENT_QUOTES); ?></p><?php } ?>
 	<?php if (isset($_GET['saved']) AND !$errors) { ?><p class="formulize-editor__message" role="status">Saved. These settings now apply across the site in the <?php echo htmlspecialchars($theme, ENT_QUOTES); ?> theme.</p><?php } ?>
