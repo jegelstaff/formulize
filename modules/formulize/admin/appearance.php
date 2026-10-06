@@ -61,6 +61,11 @@ $headingFontMap = formulize_appearanceHeadingFontMap($selectedTheme);
 // the settings as they stand, read out of the theme's generated stylesheet
 $settings = formulize_getAppearanceSettings($selectedTheme);
 
+// The settings the look applied to the site sets: the site has the look's value,
+// so this page shows it, can't change it, and keeps the page's own value when it
+// saves. They are changed in the advanced editor.
+$locked = formulize_appearanceLockedSettings($settings, $selectedTheme);
+
 if(isset($_POST['appearance_save']) OR isset($_POST['appearance_reset'])) {
 
     // build the settings to write: a reset writes the defaults, and a save what the
@@ -69,6 +74,11 @@ if(isset($_POST['appearance_save']) OR isset($_POST['appearance_reset'])) {
         ? formulize_appearanceSubmittedSettings($_POST, $settings, $selectedTheme, $errors)
         : formulize_defaultAppearanceSettings();
     $submitted = formulize_saveAppearanceUploads($submitted, $settings, $selectedTheme, isset($_POST['appearance_reset']), $errors);
+    if(isset($_POST['appearance_save'])) {
+        foreach($locked['names'] as $name) {
+            $submitted[$name] = $settings[$name];
+        }
+    }
 
     // writing the stylesheet is the save: if it can't be written, nothing was saved,
     // so say that rather than reporting success the settings didn't survive
@@ -80,7 +90,19 @@ if(isset($_POST['appearance_save']) OR isset($_POST['appearance_reset'])) {
 
     // show what was submitted either way, so a failed save doesn't mean retyping it
     $settings = formulize_sanitizeAppearanceSettings($submitted, $selectedTheme);
+    $locked = formulize_appearanceLockedSettings($settings, $selectedTheme);
 }
+
+// What the page shows: its own settings, and for those the applied look sets, the
+// look's values, which are what the site has.
+$shown = $settings;
+$effective = formulize_getAppearanceEffectiveSettings($selectedTheme, $settings);
+foreach($locked['names'] as $name) {
+    $shown[$name] = $effective[$name];
+}
+$isLocked = function ($names) use ($locked) {
+    return count(array_intersect((array) $names, $locked['names'])) > 0;
+};
 
 $colours = array();
 foreach($colourMap as $key => $colour) {
@@ -89,7 +111,8 @@ foreach($colourMap as $key => $colour) {
         'label' => $colour['label'],
         'description' => $colour['description'],
         'default' => $colour['default'],
-        'value' => $settings['appearance_' . $key] ? $settings['appearance_' . $key] : $colour['default'],
+        'value' => $shown['appearance_' . $key] ? $shown['appearance_' . $key] : $colour['default'],
+        'locked' => $isLocked('appearance_' . $key),
     );
 }
 
@@ -125,7 +148,7 @@ foreach(formulize_getAppearanceLooks($selectedTheme) as $key => $look) {
 $uploadUrls = array();
 foreach(array_keys(formulize_appearanceUploads()) as $uploadSetting) {
     $uploadUrls[$uploadSetting] = formulize_getAppearanceFileUrl(
-        formulize_locateAppearanceFile($settings[$uploadSetting], $selectedTheme), $selectedTheme);
+        formulize_locateAppearanceFile($shown[$uploadSetting], $selectedTheme), $selectedTheme);
 }
 
 // Warn up front if this theme's appearance folder can't be written, rather than
@@ -137,11 +160,20 @@ $appearanceDirWritable = formulize_appearanceDirIsWritable($selectedTheme);
 $adminPage['home_tabs'] = getHomeTabs('appearance');
 $adminPage['colours'] = $colours;
 $adminPage['fonts'] = $fonts;
-$adminPage['currentFont'] = $settings['appearance_font'] ? $settings['appearance_font'] : 'geist';
-$adminPage['currentCustomFont'] = $settings['appearance_customfont'];
+$adminPage['currentFont'] = $shown['appearance_font'] ? $shown['appearance_font'] : 'geist';
+$adminPage['currentCustomFont'] = $shown['appearance_customfont'];
 $adminPage['headingFonts'] = $headingFonts;
-$adminPage['currentHeadingFont'] = $settings['appearance_headingfont'] ? $settings['appearance_headingfont'] : 'geist';
-$adminPage['currentHeadingCustomFont'] = $settings['appearance_headingcustomfont'];
+$adminPage['currentHeadingFont'] = $shown['appearance_headingfont'] ? $shown['appearance_headingfont'] : 'geist';
+$adminPage['currentHeadingCustomFont'] = $shown['appearance_headingcustomfont'];
+// which of the page's settings the applied look sets, and where to change them
+$adminPage['lockedBy'] = $locked['name'];
+$adminPage['lockedUrl'] = formulize_getAppearanceEditorUrl($selectedTheme) . '&look=' . urlencode($locked['look']);
+$adminPage['anyLocked'] = count($locked['names']) > 0;
+$adminPage['lockedFont'] = $isLocked(array('appearance_font', 'appearance_customfont'));
+$adminPage['lockedHeadingFont'] = $isLocked(array('appearance_headingfont', 'appearance_headingcustomfont'));
+$adminPage['lockedWidth'] = $isLocked('appearance_contentwidth');
+$adminPage['lockedLogo'] = $isLocked('appearance_logo');
+$adminPage['lockedFavicon'] = $isLocked('appearance_favicon');
 $adminPage['fontStacksJson'] = json_encode($fontStacks);
 $adminPage['looks'] = $looks;
 $adminPage['currentLook'] = $settings['appearance_look'];
@@ -155,7 +187,7 @@ $adminPage['editorUrl'] = formulize_getAppearanceEditorUrl($selectedTheme);
 // theme that lays its pages out to one (formulize_appearanceThemeUsesContentWidth).
 // The width box starts at the default width while the page is at full width.
 $contentWidthLimits = formulize_appearanceContentWidthLimits();
-$contentWidth = formulize_appearanceContentWidth($settings, $selectedTheme);
+$contentWidth = formulize_appearanceContentWidth($shown, $selectedTheme);
 $contentWidthDefault = formulize_appearanceContentWidthDefault($selectedTheme);
 $adminPage['themeUsesContentWidth'] = formulize_appearanceThemeUsesContentWidth($selectedTheme);
 $adminPage['contentWidthMax'] = ($contentWidth != 'full');

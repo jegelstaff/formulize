@@ -403,6 +403,28 @@ function formulize_getAppearanceLooks($theme = null, $reload = false) {
 }
 
 /**
+ * The Appearance page's settings that the look applied to the site sets, which
+ * the page can't change: the look's value is what the site has, so the page shows
+ * it, and they are changed in the advanced editor. A part's own settings aren't
+ * on the page, so they don't count.
+ *
+ * @param array $settings the theme's own settings
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return array with 'look' (the applied look's key), 'name' (its name) and
+ *               'names' (the setting names it sets)
+ */
+function formulize_appearanceLockedSettings($settings, $theme = null) {
+    $looks = formulize_getAppearanceLooks($theme);
+    $key = ($settings['appearance_look'] !== '' AND isset($looks[$settings['appearance_look']])) ? $settings['appearance_look'] : 'default';
+    $names = isset($looks[$key]) ? array_keys($looks[$key]['settings']) : array();
+    return array(
+        'look' => $key,
+        'name' => isset($looks[$key]) ? $looks[$key]['name'] : '',
+        'names' => array_values(array_diff($names, array('appearance_overrides'))),
+    );
+}
+
+/**
  * The folder a theme's looks are kept in: looks, in its appearance folder. Each
  * look is a stylesheet there, named after the look's key, which records what the
  * look changes and is the theme's appearance with the look applied.

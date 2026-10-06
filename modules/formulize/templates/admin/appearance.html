@@ -60,6 +60,10 @@
             <{/foreach}>
             </select>
             <span class="formulize-appearance-hint">The look of the site. Default is the settings on this page, as they are. Compact makes everything smaller, so more fits on the screen, and Comfortable makes it larger and roomier, easier to read and tap.<{if $adminPage.madeLooks}> Looks made in the advanced editor are here too.<{/if}> Every look starts from the settings on this page: whatever a look doesn't change, such as your colours and logo, comes from them.</span>
+            <span class="formulize-appearance-locked" id="appearance_look_changed" hidden>Save to apply this look. If it sets any of the settings below, they will then be shown as it has them.</span>
+            <{if $adminPage.anyLocked}>
+            <span class="formulize-appearance-locked">The <{$adminPage.lockedBy}> look, applied to the site, sets some of the settings below in the advanced editor. They are shown as the look has them, and can only be changed there.</span>
+            <{/if}>
         </div>
     </fieldset>
     <{/if}>
@@ -72,11 +76,15 @@
         <div class="formulize-appearance-colours">
         <{foreach from=$adminPage.colours item=colour}>
             <div class="formulize-appearance-colour">
-                <input type="color" class="formulize-appearance-swatch" id="appearance_<{$colour.key}>" name="appearance_<{$colour.key}>" value="<{$colour.value}>" data-default="<{$colour.default}>" oninput="appearanceSyncResetLinks();" />
+                <input type="color" class="formulize-appearance-swatch" id="appearance_<{$colour.key}>" name="appearance_<{$colour.key}>" value="<{$colour.value}>" data-default="<{$colour.default}>" oninput="appearanceSyncResetLinks();" <{if $colour.locked}>disabled="disabled"<{/if}> />
                 <div class="formulize-appearance-colour-text">
                     <label for="appearance_<{$colour.key}>"><{$colour.label}></label>
                     <span class="formulize-appearance-hint"><{$colour.description}></span>
+                    <{if $colour.locked}>
+                    <span class="formulize-appearance-locked">Set by the <{$adminPage.lockedBy}> look, so it can't be changed here. <a href="<{$adminPage.lockedUrl}>" onclick="return appearanceLeaveForEditor();">Change it in the advanced editor</a></span>
+                    <{else}>
                     <a href="#" class="appearance-reset" onclick="document.getElementById('appearance_<{$colour.key}>').value = '<{$colour.default}>'; appearanceSyncResetLinks(); return false;">Reset to <{$colour.default}></a>
+                    <{/if}>
                 </div>
             </div>
         <{/foreach}>
@@ -93,9 +101,10 @@
         <{if $adminPage.themeUsesContentWidth}>
         <div class="formulize-appearance-field" role="radiogroup" aria-labelledby="appearance_contentwidth_label">
             <label id="appearance_contentwidth_label">Page width</label>
-            <label class="formulize-appearance-checkbox"><input type="radio" name="appearance_contentwidth_mode" value="max" <{if $adminPage.contentWidthMax}>checked="checked"<{/if}> onchange="appearanceToggleContentWidth();" /> Maximum width
-                <input type="number" id="appearance_contentwidth" name="appearance_contentwidth" value="<{$adminPage.contentWidth}>" min="<{$adminPage.contentWidthLimits.min}>" max="<{$adminPage.contentWidthLimits.max}>" step="1" aria-label="Maximum width, in pixels" /> pixels</label>
-            <label class="formulize-appearance-checkbox"><input type="radio" name="appearance_contentwidth_mode" value="full" <{if !$adminPage.contentWidthMax}>checked="checked"<{/if}> onchange="appearanceToggleContentWidth();" /> Full width</label>
+            <label class="formulize-appearance-checkbox"><input type="radio" name="appearance_contentwidth_mode" value="max" <{if $adminPage.contentWidthMax}>checked="checked"<{/if}> onchange="appearanceToggleContentWidth();" <{if $adminPage.lockedWidth}>disabled="disabled"<{/if}> /> Maximum width
+                <input type="number" id="appearance_contentwidth" name="appearance_contentwidth" value="<{$adminPage.contentWidth}>" min="<{$adminPage.contentWidthLimits.min}>" max="<{$adminPage.contentWidthLimits.max}>" step="1" aria-label="Maximum width, in pixels" <{if $adminPage.lockedWidth}>disabled="disabled" data-locked="1"<{/if}> /> pixels</label>
+            <label class="formulize-appearance-checkbox"><input type="radio" name="appearance_contentwidth_mode" value="full" <{if !$adminPage.contentWidthMax}>checked="checked"<{/if}> onchange="appearanceToggleContentWidth();" <{if $adminPage.lockedWidth}>disabled="disabled"<{/if}> /> Full width</label>
+            <{if $adminPage.lockedWidth}><span class="formulize-appearance-locked">Set by the <{$adminPage.lockedBy}> look, so it can't be changed here. <a href="<{$adminPage.lockedUrl}>" onclick="return appearanceLeaveForEditor();">Change it in the advanced editor</a></span><{/if}>
             <span class="formulize-appearance-hint">How wide pages can get. A maximum width keeps forms, lists and the links along the top of the page from stretching across a wide screen: they stay beside the menu, and the bars along the top and bottom of lists and forms line their buttons up with them. Full width uses the whole window. The theme's own is <{$adminPage.contentWidthDefault}>. On phones, pages always use the whole screen.</span>
         </div>
         <{/if}>
@@ -108,16 +117,17 @@
         <{* Main font: everything that isn't a heading or a label. *}>
         <div class="formulize-appearance-field">
             <label for="appearance_font">Main font</label>
-            <select name="appearance_font" id="appearance_font" onchange="appearanceToggleCustomFont(); appearanceUpdateFontPreviews();">
+            <select name="appearance_font" id="appearance_font" onchange="appearanceToggleCustomFont(); appearanceUpdateFontPreviews();" <{if $adminPage.lockedFont}>disabled="disabled"<{/if}>>
             <{foreach from=$adminPage.fonts item=font}>
                 <option value="<{$font.key}>" <{if $adminPage.currentFont == $font.key}>selected="selected"<{/if}>><{$font.label}></option>
             <{/foreach}>
             </select>
             <span class="formulize-appearance-hint">Used for body text, tables, buttons and form controls.</span>
+            <{if $adminPage.lockedFont}><span class="formulize-appearance-locked">Set by the <{$adminPage.lockedBy}> look, so it can't be changed here. <a href="<{$adminPage.lockedUrl}>" onclick="return appearanceLeaveForEditor();">Change it in the advanced editor</a></span><{/if}>
         </div>
         <div class="formulize-appearance-field" id="appearance_customfont_row">
             <label for="appearance_customfont">Google Font name</label>
-            <input type="text" id="appearance_customfont" name="appearance_customfont" value="<{$adminPage.currentCustomFont}>" placeholder="e.g. Roboto" oninput="appearanceUpdateFontPreviews();" />
+            <input type="text" id="appearance_customfont" name="appearance_customfont" value="<{$adminPage.currentCustomFont}>" placeholder="e.g. Roboto" oninput="appearanceUpdateFontPreviews();" <{if $adminPage.lockedFont}>disabled="disabled"<{/if}> />
             <span class="formulize-appearance-hint">Enter the exact font name as it appears on <a href="https://fonts.google.com" target="_blank">fonts.google.com</a>. The font will be loaded from Google Fonts.</span>
         </div>
         <{* The preview is a live sample rather than a saved-and-reload round trip, so a
@@ -130,16 +140,17 @@
         <{* Secondary font: headings, form labels, and the drawer's title. *}>
         <div class="formulize-appearance-field">
             <label for="appearance_headingfont">Secondary font</label>
-            <select name="appearance_headingfont" id="appearance_headingfont" onchange="appearanceToggleCustomFont(); appearanceUpdateFontPreviews();">
+            <select name="appearance_headingfont" id="appearance_headingfont" onchange="appearanceToggleCustomFont(); appearanceUpdateFontPreviews();" <{if $adminPage.lockedHeadingFont}>disabled="disabled"<{/if}>>
             <{foreach from=$adminPage.headingFonts item=font}>
                 <option value="<{$font.key}>" <{if $adminPage.currentHeadingFont == $font.key}>selected="selected"<{/if}>><{$font.label}></option>
             <{/foreach}>
             </select>
             <span class="formulize-appearance-hint">Used for headings, form labels, and the title of the drawer that opens from the right. Leave it on "same as the main font" to use one font throughout.</span>
+            <{if $adminPage.lockedHeadingFont}><span class="formulize-appearance-locked">Set by the <{$adminPage.lockedBy}> look, so it can't be changed here. <a href="<{$adminPage.lockedUrl}>" onclick="return appearanceLeaveForEditor();">Change it in the advanced editor</a></span><{/if}>
         </div>
         <div class="formulize-appearance-field" id="appearance_headingcustomfont_row">
             <label for="appearance_headingcustomfont">Google Font name</label>
-            <input type="text" id="appearance_headingcustomfont" name="appearance_headingcustomfont" value="<{$adminPage.currentHeadingCustomFont}>" placeholder="e.g. Playfair Display" oninput="appearanceUpdateFontPreviews();" />
+            <input type="text" id="appearance_headingcustomfont" name="appearance_headingcustomfont" value="<{$adminPage.currentHeadingCustomFont}>" placeholder="e.g. Playfair Display" oninput="appearanceUpdateFontPreviews();" <{if $adminPage.lockedHeadingFont}>disabled="disabled"<{/if}> />
             <span class="formulize-appearance-hint">Enter the exact font name as it appears on <a href="https://fonts.google.com" target="_blank">fonts.google.com</a>. The font will be loaded from Google Fonts.</span>
         </div>
         <div class="formulize-appearance-font-preview" id="appearance_headingfont_preview">
@@ -151,7 +162,13 @@
 
     <fieldset class="formulize-appearance-group">
         <legend>Logo and favicon</legend>
-        <{if $adminPage.logoUrl}>
+        <{if $adminPage.lockedLogo}>
+        <div class="formulize-appearance-field">
+            <label>Logo</label>
+            <{if $adminPage.logoUrl}><img class="formulize-appearance-logo" src="<{$adminPage.logoUrl}>" alt="The logo" /><{else}><span class="formulize-appearance-hint">The theme's default logo.</span><{/if}>
+            <span class="formulize-appearance-locked">Set by the <{$adminPage.lockedBy}> look, so it can't be changed here. <a href="<{$adminPage.lockedUrl}>" onclick="return appearanceLeaveForEditor();">Change it in the advanced editor</a></span>
+        </div>
+        <{elseif $adminPage.logoUrl}>
         <div class="formulize-appearance-field">
             <label>Current logo</label>
             <img class="formulize-appearance-logo" src="<{$adminPage.logoUrl}>" alt="Current logo" />
@@ -174,7 +191,13 @@
         <{* The favicon is the icon browsers show in the tab and in bookmarks. It is
            uploaded and stored exactly like the logo above, and an unset favicon means
            the theme's own built-in icon keeps being used. *}>
-        <{if $adminPage.faviconUrl}>
+        <{if $adminPage.lockedFavicon}>
+        <div class="formulize-appearance-field">
+            <label>Favicon</label>
+            <{if $adminPage.faviconUrl}><img class="formulize-appearance-favicon" src="<{$adminPage.faviconUrl}>" alt="The favicon" /><{else}><span class="formulize-appearance-hint">The theme's default favicon.</span><{/if}>
+            <span class="formulize-appearance-locked">Set by the <{$adminPage.lockedBy}> look, so it can't be changed here. <a href="<{$adminPage.lockedUrl}>" onclick="return appearanceLeaveForEditor();">Change it in the advanced editor</a></span>
+        </div>
+        <{elseif $adminPage.faviconUrl}>
         <div class="formulize-appearance-field">
             <label>Current favicon</label>
             <img class="formulize-appearance-favicon" src="<{$adminPage.faviconUrl}>" alt="Current favicon" />
@@ -214,6 +237,16 @@ function appearanceLeaveForEditor() {
     return !appearanceChanged || confirm('You have changes on this page that are not saved. Open the advanced editor anyway, and lose them?');
 }
 
+// The settings a look sets are only shown once it is applied, so a different
+// look chosen here says to save first.
+(function () {
+    var look = document.getElementById('appearance_look'), note = document.getElementById('appearance_look_changed');
+    if (look && note) {
+        var applied = look.value;
+        look.addEventListener('change', function () { note.hidden = (look.value == applied); });
+    }
+})();
+
 // Switching theme reloads this page for that theme, the same way the Theme Editor's
 // theme picker does. Unsaved edits belong to the theme that is being left, so they
 // are not carried across.
@@ -240,7 +273,7 @@ function appearanceToggleContentWidth() {
     var max = document.querySelector('#appearance input[name=appearance_contentwidth_mode][value=max]');
     var width = document.getElementById('appearance_contentwidth');
     if (max && width) {
-        width.disabled = !max.checked;
+        width.disabled = !max.checked || width.hasAttribute('data-locked');
     }
 }
 appearanceToggleContentWidth();

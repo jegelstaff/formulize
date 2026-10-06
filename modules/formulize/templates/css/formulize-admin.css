@@ -2690,6 +2690,24 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 	width: 6em;
 	margin-left: 0.4em;
 }
+/* A setting the look applied to the site sets, which is changed in the advanced editor. */
+.formulize-appearance .formulize-appearance-locked {
+	display: block;
+	margin-top: 0.4em;
+	padding: 0.35em 0.6em;
+	background: #fdf4e3;
+	border-radius: 4px;
+	font-size: 0.9em;
+	line-height: 1.4;
+	color: #8a5610;
+}
+.formulize-appearance .formulize-appearance-locked[hidden] {
+	display: none;
+}
+.formulize-appearance .formulize-appearance-locked a {
+	color: inherit;
+	font-weight: bold;
+}
 .formulize-appearance .formulize-appearance-hint {
 	display: block;
 	margin-top: 0.3em;

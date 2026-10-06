@@ -31,6 +31,11 @@ a look across the site.
 Looks are changed, and new ones made, in the advanced editor (see below). Looks of your own are
 offered here too.
 
+A look can set some of the Appearance page's own settings too, such as the colours, the logo or the
+page width. When the look applied to the site sets one, the Appearance page shows it as the look has
+it, which is what the site has, and can't change it there: it says which look sets it, with a link to
+change it in the advanced editor. Saving the page leaves those settings as they are.
+
 ## The advanced editor
 
 **Open the advanced editor**, at the top of the Appearance page, opens a live preview of the theme's
