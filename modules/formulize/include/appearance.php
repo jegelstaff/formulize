@@ -893,9 +893,140 @@ function formulize_appearanceUploads() {
  */
 function formulize_deleteAppearanceUploadedFile($file, $theme) {
     $path = formulize_locateAppearanceFile($file, $theme);
-    if ($path AND strpos($path, formulize_getAppearanceDir($theme) . '/') === 0) {
+    // a look can have the same image, as a copy of another look does: it stays
+    if ($path AND strpos($path, formulize_getAppearanceDir($theme) . '/') === 0 AND !formulize_appearanceFileInUse($file, $theme)) {
         unlink($path);
     }
+}
+
+/**
+ * Whether one of a theme's looks has an uploaded image: a logo or favicon of its
+ * own, so the file has to stay. Called once the settings that stopped using the
+ * file have been saved.
+ *
+ * @param string $file the file's name
+ * @param string $theme theme folder name
+ * @return boolean
+ */
+function formulize_appearanceFileInUse($file, $theme) {
+    foreach (formulize_getAppearanceLooks($theme, true) as $look) {
+        foreach (array_keys(formulize_appearanceUploads()) as $name) {
+            if (isset($look['settings'][$name]) AND $look['settings'][$name] === $file) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/**
+ * Whether a name can be given to a look: one the theme's looks, the built-in ones
+ * included, don't have already (not counting the look being renamed), and not
+ * too long. Names are compared without regard to case.
+ *
+ * @param string $name the name
+ * @param string $theme theme folder name
+ * @param string $except the key of the look being renamed, if one is
+ * @return string an error message, or '' if the name can be used
+ */
+function formulize_appearanceLookNameProblem($name, $theme, $except = '') {
+    if ($name === '') {
+        return 'Please give the look a name.';
+    }
+    if (strlen($name) > 60) {
+        return 'Please give the look a name of 60 characters or fewer.';
+    }
+    foreach (formulize_getAppearanceLooks($theme) as $key => $look) {
+        if ($key != $except AND strtolower($look['name']) == strtolower($name)) {
+            return 'There is already a look called ' . $look['name'] . '. Please give this one another name.';
+        }
+    }
+    return '';
+}
+
+/**
+ * A key for a new look, made from its name: lower case letters, numbers and
+ * hyphens, as its stylesheet's file name, and different from every look the
+ * theme has, the built-in ones included.
+ *
+ * @param string $name the look's name
+ * @param string $theme theme folder name
+ * @return string the key
+ */
+function formulize_appearanceNewLookKey($name, $theme) {
+    $base = trim(preg_replace('/[^a-z0-9]+/', '-', strtolower($name)), '-');
+    $base = ($base === '') ? 'look' : substr($base, 0, 40);
+    $looks = formulize_getAppearanceLooks($theme);
+    $builtin = formulize_appearanceBuiltinLooks();
+    $key = $base;
+    for ($n = 2; isset($looks[$key]) OR isset($builtin[$key]) OR is_file(formulize_getAppearanceLooksDir($theme) . '/' . $key . '.css'); $n++) {
+        $key = $base . '-' . $n;
+    }
+    return $key;
+}
+
+/**
+ * Save one of a theme's looks: its name, description and the settings it
+ * changes, in its stylesheet (formulize_buildAppearanceLookCss), which is the
+ * record of it. Then the theme's own stylesheet is rewritten, since the look may
+ * be the one applied to the site. A built-in look can't be saved.
+ *
+ * @param string $theme theme folder name
+ * @param string $key the look's key (formulize_appearanceNewLookKey for a new one)
+ * @param string $name its name
+ * @param array $settings the settings it changes (sanitized here)
+ * @param string $description what it is for, if anything
+ * @return boolean whether it was saved
+ */
+function formulize_saveAppearanceLook($theme, $key, $name, $settings, $description = '') {
+    $theme = formulize_resolveAppearanceTheme($theme);
+    $builtin = formulize_appearanceBuiltinLooks();
+    if (isset($builtin[$key]) OR !preg_match('/^[a-z0-9][a-z0-9-]*$/', $key)) {
+        return false;
+    }
+    $dir = formulize_getAppearanceLooksDir($theme);
+    if (formulize_prepareAppearanceDir($theme) === false OR (!is_dir($dir) AND !@mkdir($dir, 0775))) {
+        return false;
+    }
+    $look = array('name' => $name, 'description' => $description, 'builtin' => false, 'settings' => formulize_sanitizeAppearanceLookSettings($settings, $theme));
+    $site = formulize_getAppearanceSettings($theme);
+    if (file_put_contents($dir . '/' . $key . '.css', formulize_buildAppearanceLookCss($key, $look, $site, $theme)) === false) {
+        return false;
+    }
+    formulize_getAppearanceLooks($theme, true);
+    return formulize_regenerateAppearanceCss($site, $theme);
+}
+
+/**
+ * Delete one of a theme's looks, and the logo and favicon of its own that no
+ * other look has. If it is the look applied to the site, the site goes back to
+ * Default. A built-in look can't be deleted.
+ *
+ * @param string $theme theme folder name
+ * @param string $key the look's key
+ * @return boolean whether it was deleted
+ */
+function formulize_deleteAppearanceLook($theme, $key) {
+    $theme = formulize_resolveAppearanceTheme($theme);
+    $looks = formulize_getAppearanceLooks($theme);
+    if (!isset($looks[$key]) OR $looks[$key]['builtin']) {
+        return false;
+    }
+    $file = formulize_getAppearanceLooksDir($theme) . '/' . $key . '.css';
+    if (!@unlink($file)) {
+        return false;
+    }
+    formulize_getAppearanceLooks($theme, true);
+    foreach (array_keys(formulize_appearanceUploads()) as $name) {
+        if (!empty($looks[$key]['settings'][$name])) {
+            formulize_deleteAppearanceUploadedFile($looks[$key]['settings'][$name], $theme);
+        }
+    }
+    $site = formulize_getAppearanceSettings($theme);
+    if ($site['appearance_look'] == $key) {
+        $site['appearance_look'] = '';
+    }
+    return formulize_regenerateAppearanceCss($site, $theme);
 }
 
 /**

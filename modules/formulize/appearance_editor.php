@@ -46,6 +46,67 @@ $pageUrl = formulize_getAppearanceEditorUrl($theme);
 $errors = array();
 $settings = formulize_getAppearanceSettings($theme);
 
+// What is being edited: the theme's own appearance settings (the site
+// appearance, which every look starts from), or one of its looks (?look=).
+$looks = formulize_getAppearanceLooks($theme);
+$editing = strtolower((string) (isset($_POST['look']) ? $_POST['look'] : (isset($_GET['look']) ? $_GET['look'] : '')));
+if ($editing !== '' AND !isset($looks[$editing])) {
+	$editing = '';
+}
+function formulize_appearanceEditorLookUrl($pageUrl, $key) {
+	return $pageUrl . ($key !== '' ? '&look=' . urlencode($key) : '');
+}
+
+// The looks: a new one, a copy of the one being edited, a new name for it, deleting
+// it, or applying it to the site. Each goes back to the editor, on the look.
+if (isset($_POST['appearance_look_action']) AND $pageUrl) {
+	$action = (string) $_POST['appearance_look_action'];
+	$name = trim(preg_replace('/\s+/', ' ', (string) (isset($_POST['appearance_look_name']) ? $_POST['appearance_look_name'] : '')));
+	$go = null;
+	if (!$GLOBALS['xoopsSecurity']->check(true, false, 'formulize_appearance_editor_token')) {
+		$errors[] = 'Nothing was changed, because the page had been open too long. Please try again.';
+	} elseif ($action == 'new' OR $action == 'duplicate') {
+		if ($problem = formulize_appearanceLookNameProblem($name, $theme)) {
+			$errors[] = $problem;
+		} else {
+			// a copy, not a link: what the look being copied changes, or nothing for a new
+			// look, which starts out the same as the site appearance
+			$copy = ($action == 'duplicate' AND $editing !== '') ? $looks[$editing]['settings'] : array();
+			$key = formulize_appearanceNewLookKey($name, $theme);
+			if (formulize_saveAppearanceLook($theme, $key, $name, $copy)) {
+				$go = $key;
+			} else {
+				$errors[] = 'The look could not be saved: its stylesheet could not be written to ' . formulize_getAppearanceLooksDir($theme) . '. Make that folder writable by the web server and try again.';
+			}
+		}
+	} elseif ($editing === '' OR ($action != 'apply' AND $looks[$editing]['builtin'])) {
+		$errors[] = 'That look can\'t be changed.';
+	} elseif ($action == 'rename') {
+		if ($problem = formulize_appearanceLookNameProblem($name, $theme, $editing)) {
+			$errors[] = $problem;
+		} elseif (formulize_saveAppearanceLook($theme, $editing, $name, $looks[$editing]['settings'], $looks[$editing]['description'])) {
+			$go = $editing;
+		}
+	} elseif ($action == 'delete') {
+		if (formulize_deleteAppearanceLook($theme, $editing)) {
+			$go = '';
+		}
+	} elseif ($action == 'apply') {
+		$settings['appearance_look'] = ($editing == 'default') ? '' : $editing;
+		if (formulize_regenerateAppearanceCss($settings, $theme)) {
+			$go = $editing;
+		}
+	}
+	if ($go !== null) {
+		header('Location: ' . formulize_appearanceEditorLookUrl($pageUrl, $go) . '&done=' . urlencode($action));
+		exit();
+	}
+	if (!$errors) {
+		$errors[] = 'That could not be done: the ' . $theme . " theme's appearance files could not be written in " . formulize_getAppearanceDir($theme) . '. Make that folder writable by the web server and try again.';
+	}
+	$looks = formulize_getAppearanceLooks($theme, true);
+}
+
 // What the editor starts from, and what a save sends back to it: the settings
 // as they stand, in the editor's terms.
 function formulize_appearanceEditorState($settings, $theme) {
@@ -74,6 +135,12 @@ function formulize_appearanceEditorState($settings, $theme) {
 	);
 }
 
+// A look in the editor's terms: the site appearance with the look applied, which
+// is what the editor shows, and the settings the look itself changes.
+function formulize_appearanceEditorLookState($settings, $theme, $key) {
+	return formulize_appearanceEditorState(formulize_getAppearanceEffectiveSettings($theme, $settings, $key), $theme);
+}
+
 // Saving: every setting, as the Appearance page saves them, and the logo and
 // favicon if they were replaced or removed. The editor saves in the background
 // (appearance_editor_ajax), and gets back what was saved, so it stays where it
@@ -84,6 +151,49 @@ $saved = false;
 if (isset($_POST['appearance_editor_save']) AND $pageUrl) {
 	if (!$GLOBALS['xoopsSecurity']->check(true, false, 'formulize_appearance_editor_token')) {
 		$errors[] = 'Nothing was saved, because the page had been open too long. Reload the page, make the changes again and save.';
+	} elseif ($editing !== '') {
+		// a look: the settings it changes, which the editor works out (everything that
+		// differs from the site appearance), and its own logo and favicon, which are
+		// kept unless replaced, or removed to use the site appearance's
+		$look = $looks[$editing];
+		if ($look['builtin']) {
+			$errors[] = $look['name'] . ' comes with Formulize, so it can\'t be changed. Duplicate it to make a look of your own from it.';
+		} else {
+			$changes = json_decode(isset($_POST['appearance_look_settings']) ? (string) $_POST['appearance_look_settings'] : '', true);
+			$changes = is_array($changes) ? $changes : array();
+			$own = array();
+			foreach (array_keys(formulize_appearanceUploads()) as $name) {
+				$own[$name] = isset($look['settings'][$name]) ? $look['settings'][$name] : '';
+				$changes[$name] = $own[$name];
+			}
+			$changes = formulize_saveAppearanceUploads($changes, $own, $theme, false, $errors);
+			foreach (array_keys(formulize_appearanceUploads()) as $name) {
+				if ($changes[$name] === '') {
+					unset($changes[$name]); // no image of its own: the site appearance's
+				}
+			}
+			if (formulize_saveAppearanceLook($theme, $editing, $look['name'], $changes, $look['description'])) {
+				$saved = true;
+				// the images it no longer has, now that its stylesheet doesn't name them
+				foreach ($own as $name => $file) {
+					if ($file !== '' AND (!isset($changes[$name]) OR $changes[$name] !== $file)) {
+						formulize_deleteAppearanceUploadedFile($file, $theme);
+					}
+				}
+				$looks = formulize_getAppearanceLooks($theme, true);
+			} else {
+				$errors[] = 'Nothing was saved. The look is kept in its own stylesheet, and that could not be written to ' . formulize_getAppearanceLooksDir($theme) . '. Make that folder writable by the web server and save again.';
+			}
+		}
+		if (isset($_POST['appearance_editor_ajax'])) {
+			header('Content-Type: application/json; charset=utf-8');
+			echo json_encode(array('saved' => $saved, 'errors' => $errors, 'state' => formulize_appearanceEditorLookState($settings, $theme, $editing)), JSON_UNESCAPED_SLASHES);
+			exit();
+		}
+		if ($saved AND !$errors) {
+			header('Location: ' . formulize_appearanceEditorLookUrl($pageUrl, $editing) . '&saved=1');
+			exit();
+		}
 	} else {
 		$submitted = formulize_appearanceSubmittedSettings($_POST, $settings, $theme, $errors);
 		$submitted = formulize_saveAppearanceUploads($submitted, $settings, $theme, false, $errors);
@@ -112,7 +222,7 @@ $defaults = formulize_appearanceSizeDefaults($theme);
 foreach ($map['tokens'] as $token => $entry) {
 	$map['tokens'][$token]['default'] = isset($defaults[$token]) ? $defaults[$token] : null;
 }
-$state = formulize_appearanceEditorState($settings, $theme);
+$state = ($editing === '') ? formulize_appearanceEditorState($settings, $theme) : formulize_appearanceEditorLookState($settings, $theme, $editing);
 
 // The colours, with the CSS each one writes: the editor previews a colour by
 // setting those properties on the preview, and puts back what the theme itself
@@ -165,9 +275,19 @@ if (formulize_appearanceThemeUsesContentWidth($theme)) {
 
 // the looks the site can be given, Default (recorded as '') first
 $lookList = array();
-foreach (formulize_getAppearanceLooks($theme) as $key => $look) {
+foreach ($looks as $key => $look) {
 	$lookList[$key == 'default' ? '' : $key] = array('name' => $look['name'], 'description' => $look['description']);
 }
+// the looks for the editor's menu, by key, with how many things each changes
+$menuLooks = array();
+foreach ($looks as $key => $look) {
+	$count = count($look['settings']);
+	if (isset($look['settings']['appearance_overrides'])) {
+		$count += count(json_decode($look['settings']['appearance_overrides'], true) ?: array()) - 1;
+	}
+	$menuLooks[] = array('key' => $key, 'name' => $look['name'], 'description' => $look['description'], 'builtin' => $look['builtin'], 'changes' => $count);
+}
+$applied = $settings['appearance_look'] !== '' ? $settings['appearance_look'] : 'default';
 
 $editorData = array(
 	'theme' => $theme,
@@ -180,6 +300,14 @@ $editorData = array(
 		'colours' => $map['colours'],
 	),
 	'looks' => $lookList,
+	// what is being edited: null for the site appearance, or a look; the site
+	// appearance it starts from (base); and the looks, for the menu
+	'editing' => $editing === '' ? null : array('key' => $editing, 'name' => $looks[$editing]['name'], 'description' => $looks[$editing]['description'], 'builtin' => $looks[$editing]['builtin']),
+	'base' => $editing === '' ? null : formulize_appearanceEditorState($settings, $theme),
+	'menuLooks' => $menuLooks,
+	'applied' => $applied,
+	'pageUrl' => $pageUrl,
+	'done' => isset($_GET['done']) ? (string) $_GET['done'] : '',
 	'contentWidth' => $contentWidth,
 	'state' => $state,
 	'colours' => $colours,
@@ -221,10 +349,24 @@ header('Content-Type: text/html; charset=utf-8');
 			<a href="<?php echo htmlspecialchars($appearanceUrl, ENT_QUOTES); ?>">Appearance</a><span aria-hidden="true">/</span><h1>Advanced editor</h1>
 			<span class="formulize-editor__theme" title="The theme being edited"><?php echo htmlspecialchars($theme, ENT_QUOTES); ?></span>
 		</div>
+		<?php // what is being edited, and the looks: filled in by the editor's script ?>
+		<div class="formulize-editor__lookpick" id="formulize-editor-lookpick">
+			<button type="button" class="formulize-editor__look-btn" id="formulize-editor-look-btn" aria-haspopup="true" aria-expanded="false"><span>Editing</span> <b id="formulize-editor-look-name"></b> <span aria-hidden="true">⌄</span></button>
+			<div class="formulize-editor__look-menu" id="formulize-editor-look-menu" hidden></div>
+		</div>
+		<form method="post" action="<?php echo htmlspecialchars($pageUrl, ENT_QUOTES); ?>" id="formulize-editor-lookform" hidden>
+			<?php echo $GLOBALS['xoopsSecurity']->getTokenHTML('formulize_appearance_editor_token'); ?>
+			<input type="hidden" name="theme" value="<?php echo htmlspecialchars($theme, ENT_QUOTES); ?>">
+			<input type="hidden" name="look" value="<?php echo htmlspecialchars($editing, ENT_QUOTES); ?>">
+			<input type="hidden" name="appearance_look_action" value="">
+			<input type="hidden" name="appearance_look_name" value="">
+		</form>
 		<div class="formulize-editor__spacer"></div>
 		<form class="formulize-editor__actions" method="post" enctype="multipart/form-data" action="<?php echo htmlspecialchars($pageUrl, ENT_QUOTES); ?>" id="formulize-editor-form">
 			<?php echo $GLOBALS['xoopsSecurity']->getTokenHTML('formulize_appearance_editor_token'); ?>
 			<input type="hidden" name="theme" value="<?php echo htmlspecialchars($theme, ENT_QUOTES); ?>">
+			<input type="hidden" name="look" value="<?php echo htmlspecialchars($editing, ENT_QUOTES); ?>">
+			<input type="hidden" name="appearance_look_settings" data-setting="appearance_look_settings" value="">
 			<?php // every setting is filled in from the editor when the form is sent; the
 			// page width only for a theme that has one, so a save keeps it otherwise
 			foreach (array_merge(array_map(function ($key) { return 'appearance_' . $key; }, array_keys($colours)),
@@ -236,6 +378,7 @@ header('Content-Type: text/html; charset=utf-8');
 			foreach ($uploads as $uploadSetting => $upload) { ?>
 			<input type="file" class="formulize-editor__file" name="<?php echo $uploadSetting; ?>_file" id="formulize-editor-<?php echo $uploadSetting; ?>" accept="<?php echo htmlspecialchars($upload['accept'], ENT_QUOTES); ?>" tabindex="-1" aria-hidden="true">
 			<?php } ?>
+			<span id="formulize-editor-applied"></span>
 			<span class="formulize-editor__count" id="formulize-editor-count" hidden></span>
 			<button type="button" class="formulize-editor__btn" id="formulize-editor-reset" disabled>Reset changes</button>
 			<button type="submit" class="formulize-editor__btn formulize-editor__btn--primary" name="appearance_editor_save" value="1" id="formulize-editor-save">Save</button>

@@ -29,7 +29,10 @@ settings on the Appearance page: applying Compact keeps your colours, fonts and 
 Appearance page to apply a look across the site.
 
 A look's changes win over the site's own: with Compact applied, the sizes are Compact's, even those
-changed for a part in the advanced editor.
+changed for a part in the advanced editor. To have Compact with changes of your own, duplicate it in
+the advanced editor and change the copy.
+
+Looks of your own are made in the advanced editor (see below), and are offered here too.
 
 ## The advanced editor
 
@@ -81,11 +84,39 @@ Each part's **Not adjustable yet** list says which of its settings can't be chan
 shadows, hover colours other than the main button's, small and large buttons, and the fixed spacing
 at phone widths.
 
+### Looks of your own
+
+The menu at the top of the editor (**Editing: Site appearance**) says what you are editing: the
+**site appearance**, which is the settings on the Appearance page, or one of the **looks**. The look
+applied to the site is marked **Applied**, and the ones that come with Formulize **Built in**.
+
+- **New look…** makes a look that changes nothing yet: it is the same as the site appearance until
+  you change something in it.
+- **Duplicate** makes a copy of the look you are editing, to change as you like. A copy isn't linked
+  to the look it came from: changing one doesn't change the other. Duplicate a built-in look, such as
+  Compact, to make a look of your own from it.
+- **Rename** and **Delete** are for your own looks. Deleting the look applied to the site puts the
+  site back on Default.
+- **Apply to the site** applies the look you are editing. Save it first.
+
+While you edit a look, the preview shows the site appearance with the look applied. Everything the
+look changes is marked, with **Reset** to go back to the site appearance's; everything else says
+"from the site appearance", and follows the site appearance when it changes. A look can have a logo
+and favicon of its own, or use the site appearance's. The built-in looks open read-only.
+
+Each look is kept in its own stylesheet in the theme's `appearance/looks` folder: what it changes,
+and the theme's appearance with it applied.
+
 ### Saving
 
-**Save** saves everything in the editor: the site-wide settings, any new logo or favicon, and the
-parts' own settings. The editor stays as it was, on the same screen, width and selection. **Reset changes** puts everything back to the theme's own, logo and favicon
-included, in the editor; nothing changes on the site until you save.
+**Save** saves what you are editing: the site appearance (its site-wide settings, any new logo or
+favicon, and the parts' own settings), or the look, which keeps only what differs from the site
+appearance. Saving a look that is applied changes the site straight away; saving one that isn't
+doesn't. The editor stays as it was, on the same screen, width and selection.
+
+**Reset changes** puts everything back, in the editor: the site appearance to the theme's own, logo and
+favicon included, and a look to the site appearance, so it changes nothing. Nothing changes on the
+site until you save.
 
 A reset on the Appearance page clears the parts' own settings too. While parts have settings of their
 own, the Appearance page names them, since its settings don't change those.
