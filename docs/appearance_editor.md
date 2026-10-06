@@ -55,8 +55,9 @@ name), and the page width. They start as the Appearance page's. A look can have 
 its own, or use the Appearance page's. Every part of the interface follows these, except for anything
 the look changes on the part itself.
 
-The **Changes** tab lists everything the look changes: the site-wide settings first, then each part's
-own settings, each with **Reset**, and **Show** to select the part it belongs to.
+The **Changes** tab lists what you have changed and not saved yet, each with what it was when saved,
+**Undo**, and **Show** to select the part it belongs to. Opening a look, or switching to another,
+starts with no changes.
 
 ### One part at a time
 
@@ -116,8 +117,9 @@ the theme's appearance with it applied.
 settings. Saving the look applied to the site changes the site straight away; saving one that isn't
 applied doesn't. The editor stays as it was, on the same screen, width and selection.
 
-**Reset changes** takes back everything the look changes, in the editor, so it is the same as the
-Appearance page's settings. Nothing changes until you save.
+**Reset changes** throws away what you haven't saved, so the look is as it was last saved. To take
+back one of the look's own changes, use **Reset** beside the setting: it goes back to the Appearance
+page's.
 
 ## For theme authors
 

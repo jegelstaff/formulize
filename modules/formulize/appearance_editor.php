@@ -336,7 +336,7 @@ header('Content-Type: text/html; charset=utf-8');
 		</div>
 		<?php // what is being edited, and the looks: filled in by the editor's script ?>
 		<div class="formulize-editor__lookpick" id="formulize-editor-lookpick">
-			<button type="button" class="formulize-editor__look-btn" id="formulize-editor-look-btn" aria-haspopup="true" aria-expanded="false"><span>Editing</span> <b id="formulize-editor-look-name"></b> <span aria-hidden="true">⌄</span></button>
+			<button type="button" class="formulize-editor__look-btn" id="formulize-editor-look-btn" aria-haspopup="true" aria-expanded="false"><span>Editing</span> <b id="formulize-editor-look-name"></b><svg class="formulize-editor__look-chev" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
 			<div class="formulize-editor__look-menu" id="formulize-editor-look-menu" hidden></div>
 		</div>
 		<form method="post" action="<?php echo htmlspecialchars($pageUrl, ENT_QUOTES); ?>" id="formulize-editor-lookform" hidden>

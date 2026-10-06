@@ -96,7 +96,10 @@
 	function has(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
 	function lower(s) { return s.charAt(0).toLowerCase() + s.slice(1); }
 
-	// take on the settings as saved: when the page opens, and after a save
+	// take on the settings as saved: when the page opens, and after a save. What is
+	// saved is kept (SAVED), so the editor can tell what has changed since: its
+	// changes are those, not what the look itself changes.
+	var SAVED = null;
 	function adopt(saved) {
 		state.preset = saved.preset || '';
 		state.contentWidth = WIDTH ? String(saved.contentWidth || WIDTH.theme) : '';
@@ -104,8 +107,9 @@
 		state.colours = copy(saved.colours);
 		state.fonts = copy(saved.fonts);
 		savedUploads = copy(saved.uploads);
+		enforce(); // a look's own settings: only what differs from the Appearance page's
+		SAVED = copy({ contentWidth: state.contentWidth, overrides: state.overrides, colours: state.colours, fonts: state.fonts });
 	}
-	adopt(DATA.state);
 
 	/* ---- values ---- */
 	function isSize(token) { return ['spacing', 'text', 'weight', 'leading', 'measure'].indexOf(type(token)) !== -1; }
@@ -575,46 +579,60 @@
 		if (String(v).trim() === '' || !isFinite(n)) { return; }
 		state.contentWidth = String(Math.min(WIDTH.max, Math.max(WIDTH.min, n)));
 	}
-	// everything that differs from the theme's own, site-wide and on parts
-	function siteChanges() {
+	// what has been changed and not saved yet: each with what it is now and what it
+	// was when saved, and how to undo it (undo: 'kind:key')
+	function unsaved() {
 		var list = [];
 		Object.keys(UPLOADS).forEach(function (key) {
-			if (BASE ? (uploadChanged(key) || lookOwn(key)) : (uploadUrl(key) || uploadChanged(key))) {
-				list.push({ name: UPLOADS[key], val: state.uploads[key].file ? 'New image' : (state.uploads[key].removed ? (BASE ? 'Back to the Appearance page’s' : 'Back to the theme’s own') : (BASE ? 'This look’s own' : 'Uploaded')), reset: 'upload:' + key, resetLabel: uploadChanged(key) ? 'Undo' : (BASE ? 'Use the Appearance page’s' : 'Use the theme’s own') });
+			if (uploadChanged(key)) {
+				list.push({ name: UPLOADS[key], now: state.uploads[key].file ? 'A new image' : (BASE ? 'The Appearance page’s' : 'The theme’s own'), undo: 'upload:' + key });
 			}
 		});
 		Object.keys(DATA.colours).forEach(function (key) {
-			if (colourChanged(key)) { list.push({ name: DATA.colours[key].label, swatch: state.colours[key], val: state.colours[key] + ' · ' + lower(baseName()) + ' is ' + colourBase(key), reset: 'colour:' + key }); }
+			if (String(state.colours[key]).toLowerCase() !== String(SAVED.colours[key]).toLowerCase()) {
+				list.push({ name: DATA.colours[key].label, swatch: state.colours[key], now: state.colours[key], was: SAVED.colours[key], undo: 'colour:' + key });
+			}
 		});
-		if (fontChanged('main')) { list.push({ name: 'Main font', val: fontShown('main'), reset: 'font:main' }); }
-		if (fontChanged('heading')) { list.push({ name: 'Secondary font', val: fontShown('heading'), reset: 'font:heading' }); }
-		if (state.preset !== '') { list.push({ name: 'Look', val: lookName(state.preset), reset: 'preset' }); }
-		if (widthChanged()) { list.push({ name: 'Page width', val: widthName(state.contentWidth) + ' · ' + lower(baseName()) + ' is ' + lower(widthName(widthBase())), reset: 'contentwidth' }); }
+		['main', 'heading'].forEach(function (which) {
+			if (state.fonts[which] !== SAVED.fonts[which] || (state.fonts[which] === 'custom' && customName(which) !== (SAVED.fonts[which + 'custom'] || '').replace(/[^a-zA-Z0-9 ]/g, '').trim())) {
+				list.push({ name: which === 'main' ? 'Main font' : 'Secondary font', now: fontShown(which), undo: 'font:' + which });
+			}
+		});
+		if (WIDTH && state.contentWidth !== SAVED.contentWidth) {
+			list.push({ name: 'Page width', now: widthName(state.contentWidth), was: widthName(SAVED.contentWidth), undo: 'contentwidth' });
+		}
+		Object.keys(MAP.tokens).forEach(function (token) {
+			var was = has(SAVED.overrides, token) ? SAVED.overrides[token] : presetValue(token);
+			if (String(value(token)) !== String(was)) {
+				list.push({ token: token, name: fullLabel(token), now: show(token, value(token)), was: show(token, was), swatch: type(token) === 'colour' ? tokenHex(token) : '', undo: 'token:' + token });
+			}
+		});
 		return list;
 	}
-	function changeCount() { return siteChanges().length + Object.keys(state.overrides).length; }
+	function changeCount() { return unsaved().length; }
+	function isDirty() { return changeCount() > 0; }
+	// put one setting back to how it was saved
+	function undo(what) {
+		var parts = what.split(':'), kind = parts[0], key = parts.slice(1).join(':');
+		if (kind === 'upload') { resetUpload(key); }
+		else if (kind === 'colour') { state.colours[key] = SAVED.colours[key]; }
+		else if (kind === 'font') { state.fonts[key] = SAVED.fonts[key]; state.fonts[key + 'custom'] = SAVED.fonts[key + 'custom']; }
+		else if (kind === 'contentwidth') { state.contentWidth = SAVED.contentWidth; }
+		else if (kind === 'token') {
+			if (has(SAVED.overrides, key)) { state.overrides[key] = SAVED.overrides[key]; } else { delete state.overrides[key]; }
+		}
+	}
 	function changesBlock() {
-		var site = siteChanges(), parts = Object.keys(state.overrides), h = '';
-		if (!site.length && !parts.length) {
-			return '<div class="formulize-editor__empty"><p>' + (EDIT ? 'This look doesn’t change anything: it is the same as the Appearance page’s settings.' : 'Nothing has been changed: everything is as the theme has it.') + '</p><p>Change the logo, colours, fonts' + (WIDTH ? ', page width' : '') + ' and look under Site-wide, or click anything in the preview, such as a button, a field or a list row, to change just that part. A change to a part applies to every one of it on the site.</p></div>';
+		var list = unsaved();
+		if (!list.length) {
+			return '<div class="formulize-editor__empty"><p>Nothing to save: nothing has been changed since the ' + esc(EDIT ? EDIT.name : '') + ' look was last saved.</p><p>Change the logo, colours, fonts' + (WIDTH ? ' and page width' : '') + ' under Site-wide, or click anything in the preview, such as a button, a field or a list row, to change just that part. A change to a part applies to every one of it on the site.</p></div>';
 		}
-		if (site.length) {
-			h += sect('Site-wide') + site.map(function (c) {
-				return '<div class="formulize-editor__chg"><span class="formulize-editor__chg-name">' + esc(c.name) + '</span>' +
-					'<span class="formulize-editor__chg-acts"><button type="button" class="formulize-editor__link" data-site-reset="' + esc(c.reset) + '">' + esc(c.resetLabel || 'Reset') + '</button></span>' +
-					'<span class="formulize-editor__chg-val">' + (c.swatch ? '<span class="formulize-editor__swatch formulize-editor__swatch--sm" style="background:' + esc(c.swatch) + '"></span>' : '') + '<b>' + esc(c.val) + '</b></span></div>';
-			}).join('');
-		}
-		if (parts.length) {
-			h += sect('Parts') + parts.map(function (token) {
-				return '<div class="formulize-editor__chg"><span class="formulize-editor__chg-name">' + (DESKTOP_OF[token] ? ICON.phone + ' ' : '') + esc(fullLabel(token)) + '</span>' +
-					'<span class="formulize-editor__chg-acts"><button type="button" class="formulize-editor__link formulize-editor__link--plain" data-select="' + home(token) + '">Show</button><button type="button" class="formulize-editor__link" data-reset="' + token + '">Reset</button></span>' +
-					'<span class="formulize-editor__chg-part">' + esc(usedBy(token).map(function (k) { return MAP.components[k].name; }).join(', ')) + '</span>' +
-					'<span class="formulize-editor__chg-val">' + (type(token) === 'colour' ? '<span class="formulize-editor__swatch formulize-editor__swatch--sm" style="background:' + tokenHex(token) + '"></span>' : '') +
-						'<b>' + esc(show(token, value(token))) + '</b> · ' + esc(baseName(token)) + ' is ' + esc(show(token, presetValue(token))) + '</span></div>';
-			}).join('');
-		}
-		return h;
+		return '<p class="formulize-editor__intro">Changes to the ' + esc(EDIT ? EDIT.name : '') + ' look that aren’t saved yet.</p>' + list.map(function (c) {
+			return '<div class="formulize-editor__chg"><span class="formulize-editor__chg-name">' + (c.token && DESKTOP_OF[c.token] ? ICON.phone + ' ' : '') + esc(c.name) + '</span>' +
+				'<span class="formulize-editor__chg-acts">' + (c.token ? '<button type="button" class="formulize-editor__link formulize-editor__link--plain" data-select="' + home(c.token) + '">Show</button>' : '') + '<button type="button" class="formulize-editor__link" data-undo="' + esc(c.undo) + '">Undo</button></span>' +
+				(c.token ? '<span class="formulize-editor__chg-part">' + esc(usedBy(c.token).map(function (k) { return MAP.components[k].name; }).join(', ')) + '</span>' : '') +
+				'<span class="formulize-editor__chg-val">' + (c.swatch ? '<span class="formulize-editor__swatch formulize-editor__swatch--sm" style="background:' + esc(c.swatch) + '"></span>' : '') + '<b>' + esc(c.now) + '</b>' + (c.was !== undefined ? ' · was ' + esc(c.was) : '') + '</span></div>';
+		}).join('');
 	}
 
 	function renderInspector() {
@@ -649,9 +667,9 @@
 		enforce();
 		applyTokens();
 		var n = changeCount(), count = $('formulize-editor-count');
-		count.hidden = n === 0; count.textContent = n + (n === 1 ? ' change' : ' changes');
+		count.hidden = n === 0; count.textContent = n + (n === 1 ? ' unsaved change' : ' unsaved changes');
 		$('formulize-editor-reset').disabled = n === 0 || READONLY;
-		$('formulize-editor-save').disabled = READONLY || state.saving;
+		$('formulize-editor-save').disabled = READONLY || state.saving || n === 0;
 		drawLookHeader();
 		// keep focus, and the inspector's scroll position, across the re-render
 		var f = document.activeElement, attrs = ['data-token', 'data-d', 'data-v', 'data-cw', 'data-custom', 'data-hex', 'data-colour', 'data-font', 'data-custom-font', 'data-look', 'data-cwidth', 'data-cwidth-px', 'data-tab'];
@@ -783,6 +801,8 @@
 		} else if (a('data-upload-remove')) {
 			resetUpload(a('data-upload-remove'));
 			state.uploads[a('data-upload-remove')].removed = BASE ? lookOwn(a('data-upload-remove')) : !!savedUploads[a('data-upload-remove')]; touch(); render();
+		} else if (a('data-undo')) {
+			undo(a('data-undo')); render();
 		} else if (a('data-look-act')) {
 			ev.stopPropagation(); // it opens the looks' menu, which a click elsewhere closes
 			lookAction(a('data-look-act'));
@@ -827,18 +847,15 @@
 	Array.prototype.forEach.call(document.querySelectorAll('#formulize-editor-width button'), function (b) {
 		b.addEventListener('click', function () { setWidth(b.getAttribute('data-w')); });
 	});
-	// back to the theme's own for everything; nothing is saved until Save
+	// back to how the look was last saved
 	$('formulize-editor-reset').addEventListener('click', function () {
-		if (!window.confirm(EDIT
-			? 'Take back everything this look changes, so it is the same as the Appearance page’s settings? Nothing changes until you save.'
-			: 'Put everything back to how the ' + DATA.theme + ' theme has it: the logo and favicon, colours, fonts' + (WIDTH ? ', page width' : '') + ', the look and every part’s own settings? Nothing changes on the site until you save.')) { return; }
-		state.overrides = {};
-		if (!EDIT) { state.preset = ''; }
-		if (WIDTH) { state.contentWidth = widthBase(); }
-		Object.keys(DATA.colours).forEach(function (key) { state.colours[key] = colourBase(key); });
-		resetFont('main'); resetFont('heading');
-		Object.keys(UPLOADS).forEach(function (key) { resetUpload(key); state.uploads[key].removed = BASE ? lookOwn(key) : !!savedUploads[key]; });
-		touch(); render();
+		if (!window.confirm('Throw away the changes you haven’t saved, so the ' + (EDIT ? EDIT.name : '') + ' look is as it was last saved?')) { return; }
+		state.overrides = copy(SAVED.overrides);
+		state.colours = copy(SAVED.colours);
+		state.fonts = copy(SAVED.fonts);
+		state.contentWidth = SAVED.contentWidth;
+		Object.keys(UPLOADS).forEach(resetUpload);
+		render();
 	});
 
 	/* ---- looks: what is being edited, and the looks' menu ---- */
@@ -850,7 +867,7 @@
 		if (!EDIT) { box.innerHTML = ''; return; }
 		box.innerHTML = DATA.applied === EDIT.key
 			? '<span class="formulize-editor__applied">✓ Applied to the site</span>'
-			: '<button type="button" class="formulize-editor__btn" data-look-act="apply"' + (state.dirty ? ' disabled title="Save the look first"' : '') + '>Apply to the site</button>';
+			: '<button type="button" class="formulize-editor__btn" data-look-act="apply"' + (isDirty() ? ' disabled title="Save the look first"' : '') + '>Apply to the site</button>';
 	}
 	function drawMenu() {
 		var h = '';
@@ -895,7 +912,7 @@
 	}
 	// a look action goes to the server and back to the editor; unsaved changes would be
 	// lost, so they are asked about first
-	function leaving() { return !state.dirty || window.confirm('You have changes that aren’t saved. Leave them?'); }
+	function leaving() { return !isDirty() || window.confirm('You have changes that aren’t saved. Leave them?'); }
 	function postLook(action, name) {
 		if (!leaving()) { return; }
 		var form = $('formulize-editor-lookform');
@@ -1028,11 +1045,12 @@
 			});
 	});
 	window.addEventListener('beforeunload', function (ev) {
-		if (state.dirty && !submitting) { ev.preventDefault(); ev.returnValue = ''; }
+		if (isDirty() && !submitting) { ev.preventDefault(); ev.returnValue = ''; }
 	});
 	var saved = document.querySelector('#formulize-editor-messages [role="status"]');
 	if (saved) { setTimeout(function () { saved.hidden = true; }, 5000); }
 
+	adopt(DATA.state);
 	goScreen(state.screen);
 	render();
 })();

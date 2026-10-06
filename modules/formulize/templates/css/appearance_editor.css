@@ -65,6 +65,8 @@ html:has(> .formulize-editor) { height: 100%; }
 .formulize-editor__look-btn:hover { background: var(--fz-color-surface-2); }
 .formulize-editor__look-btn > span:first-child { color: var(--fz-color-text-subtle); }
 .formulize-editor__look-btn b { font-weight: 600; }
+.formulize-editor__look-chev { flex: none; color: var(--fz-color-text-subtle); transition: transform .15s; }
+.formulize-editor__look-btn[aria-expanded="true"] .formulize-editor__look-chev { transform: rotate(180deg); }
 .formulize-editor__look-menu { position: absolute; top: calc(100% + 6px); left: 0; z-index: 30; width: 360px; max-width: calc(100vw - 32px); max-height: 70vh; overflow: auto; padding: 6px; display: grid; gap: 2px; background: var(--fz-color-surface); border: 1px solid var(--fz-color-border); border-radius: 10px; box-shadow: var(--fz-shadow-lg); }
 .formulize-editor__look-menu[hidden] { display: none; }
 .formulize-editor__look-item { display: grid; grid-template-columns: 16px 1fr auto; gap: 8px; align-items: center; width: 100%; padding: 7px 8px; border: 0; border-radius: 6px; background: none; cursor: pointer; text-align: left; }
