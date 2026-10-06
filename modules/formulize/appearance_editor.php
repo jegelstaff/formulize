@@ -17,7 +17,7 @@
 // screens (appearance_preview.php) and an inspector: click a part of the
 // preview, such as a button or a list row, and the inspector shows that part's
 // settings, which apply to every one of it on the site. With nothing selected,
-// it shows the site-wide settings (the logo, colours, fonts, Size preset and page
+// it shows the site-wide settings (the logo, colours, fonts, the look applied and page
 // width, as on the Appearance page), and everything that has been changed.
 //
 // It saves the same settings the Appearance page does, the same way (see
@@ -59,7 +59,7 @@ function formulize_appearanceEditorState($settings, $theme) {
 	}
 	$overrides = json_decode($settings['appearance_overrides'], true);
 	return array(
-		'preset' => $settings['appearance_size'],
+		'preset' => $settings['appearance_look'], // the look applied to the site
 		// 'full', or a maximum width in pixels: the one chosen, or the theme's own
 		'contentWidth' => formulize_appearanceContentWidth($settings, $theme),
 		'overrides' => (is_array($overrides) AND $overrides) ? $overrides : new stdClass(), // an object, even when empty
@@ -163,6 +163,12 @@ if (formulize_appearanceThemeUsesContentWidth($theme)) {
 	$restore['--formulize-content-max-width'] = $themeTokens['--formulize-content-max-width'];
 }
 
+// the looks the site can be given, Default (recorded as '') first
+$lookList = array();
+foreach (formulize_getAppearanceLooks($theme) as $key => $look) {
+	$lookList[$key == 'default' ? '' : $key] = array('name' => $look['name'], 'description' => $look['description']);
+}
+
 $editorData = array(
 	'theme' => $theme,
 	'map' => array(
@@ -173,7 +179,7 @@ $editorData = array(
 		'tokens' => $map['tokens'],
 		'colours' => $map['colours'],
 	),
-	'presets' => formulize_appearanceSizePresets(),
+	'looks' => $lookList,
 	'contentWidth' => $contentWidth,
 	'state' => $state,
 	'colours' => $colours,
@@ -222,7 +228,7 @@ header('Content-Type: text/html; charset=utf-8');
 			<?php // every setting is filled in from the editor when the form is sent; the
 			// page width only for a theme that has one, so a save keeps it otherwise
 			foreach (array_merge(array_map(function ($key) { return 'appearance_' . $key; }, array_keys($colours)),
-				array('appearance_font', 'appearance_customfont', 'appearance_headingfont', 'appearance_headingcustomfont', 'appearance_size', 'appearance_overrides', 'appearance_logo_remove', 'appearance_favicon_remove'),
+				array('appearance_font', 'appearance_customfont', 'appearance_headingfont', 'appearance_headingcustomfont', 'appearance_look', 'appearance_overrides', 'appearance_logo_remove', 'appearance_favicon_remove'),
 				$contentWidth ? array('appearance_contentwidth') : array()) as $name) { ?>
 			<input type="hidden" name="<?php echo $name; ?>" data-setting="<?php echo $name; ?>" value="">
 			<?php } ?>

@@ -59,7 +59,8 @@ if ($appearanceCss AND is_file($appearanceCss)) {
 
 // formulize-max-width on the body while pages are kept to a maximum width, as
 // a theme puts it on its own pages (see "Offer the Page width setting" in
-// docs/themes.md); the editor turns it on and off as the width is changed
+// docs/themes.md); the editor turns it on and off as the width is changed. The
+// preview is the theme's own settings, without the look applied to the site.
 $maxWidth = (formulize_appearanceThemeUsesContentWidth($theme) AND formulize_appearanceContentWidth(formulize_getAppearanceSettings($theme), $theme) != 'full');
 
 header('Content-Type: text/html; charset=utf-8');

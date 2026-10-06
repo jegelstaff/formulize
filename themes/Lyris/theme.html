@@ -31,9 +31,10 @@
     $appearanceLogoUrl = formulize_getAppearanceLogoUrl();
     $this->assign('appearance_logo_url', $appearanceLogoUrl ? $appearanceLogoUrl : $this->_tpl_vars['icms_imageurl'] . 'images/logo.png');
     $this->assign('appearance_favicon_url', formulize_getAppearanceFaviconUrl());
-    // whether pages are kept to a maximum width (the Page width setting), which puts
-    // a list's entries in a card (see "Content width" at the end of css/style.css)
-    $this->assign('appearance_max_width', formulize_appearanceContentWidth(formulize_getAppearanceSettings()) != 'full');
+    // whether pages are kept to a maximum width (the Page width setting, with the look
+    // applied to the site), which puts a list's entries in a card (see "Content width"
+    // at the end of css/style.css)
+    $this->assign('appearance_max_width', formulize_appearanceContentWidth(formulize_getAppearanceEffectiveSettings()) != 'full');
     // The embedded AI assistant lives in the top bar in this theme (Anari puts it in the menu
     // block instead - see drawAIAssistantMenuSection() in modules/formulize/include/functions.php)
     $this->assign('show_ai_link', function_exists('isAIAssistantEnabled') && isAIAssistantEnabled());

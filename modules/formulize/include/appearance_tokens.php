@@ -13,7 +13,7 @@
 ###############################################################################
 
 // The component tokens: the sizes, fonts, colours and corners the Appearance
-// page's Size presets and advanced editor can change, kept in
+// page's looks and advanced editor can change, kept in
 // appearance_tokens.json beside this file. That
 // file is data only; this is what reads it: what values each type of token can
 // have, how a value is written in CSS, and how a value written in CSS is read
@@ -244,6 +244,91 @@ function formulize_appearanceTokenDeclarations($css) {
 }
 
 /**
+ * The lines that delimit a look's block in a look file: the settings it changes,
+ * with its name and description. See formulize_appearanceParseLookBlock().
+ *
+ * @return array with 'start' and 'end'
+ */
+function formulize_appearanceLookBlockMarkers() {
+    return array(
+        'start' => 'BEGIN FORMULIZE APPEARANCE LOOK v1',
+        'end' => 'END FORMULIZE APPEARANCE LOOK',
+    );
+}
+
+/**
+ * Read a look out of the block it is kept in, in a CSS comment: a built-in look's
+ * file (appearance_looks/ beside this file), or the stylesheet generated for a
+ * look made on a site. The block has its name and description, and the
+ * appearance settings the look changes, one per line, written the way a theme's
+ * appearance stylesheet writes its settings; a setting with nothing after it is
+ * changed to its default. The whole block has to be there, or there is no look.
+ *
+ * @param string $css the file's contents
+ * @return array|false array with 'name', 'description' and 'settings' (setting
+ *                     name => value, not yet validated), or false
+ */
+function formulize_appearanceParseLookBlock($css) {
+    $markers = formulize_appearanceLookBlockMarkers();
+    $start = strpos((string) $css, $markers['start']);
+    $end = ($start === false) ? false : strpos($css, $markers['end'], $start);
+    if ($start === false OR $end === false) {
+        return false;
+    }
+    $look = array('name' => '', 'description' => '', 'settings' => array());
+    foreach (explode("\n", substr($css, $start, $end - $start)) as $line) {
+        if (preg_match('/^\s*\*?\s*(name|description|appearance_[a-z]+)\s*:\s*(.*?)\s*$/', $line, $match)) {
+            if ($match[1] == 'name' OR $match[1] == 'description') {
+                $look[$match[1]] = $match[2];
+            } else {
+                $look['settings'][$match[1]] = $match[2];
+            }
+        }
+    }
+    return $look['name'] !== '' ? $look : false;
+}
+
+/**
+ * The looks that come with Formulize, from the files in appearance_looks/ beside
+ * this file: Default first, then Compact and Comfortable, then any others. Which
+ * of them a theme is offered is up to formulize_getAppearanceLooks().
+ *
+ * @return array look key (the file's name) => the look, as
+ *               formulize_appearanceParseLookBlock() reads it, or false for a
+ *               file that has no usable block
+ */
+function formulize_appearanceBuiltinLooks() {
+    static $looks = null;
+    if ($looks === null) {
+        $looks = array();
+        $files = glob(__DIR__ . '/appearance_looks/*.css');
+        $order = array('default' => 0, 'compact' => 1, 'comfortable' => 2);
+        usort($files, function ($a, $b) use ($order) {
+            $ka = basename($a, '.css');
+            $kb = basename($b, '.css');
+            $oa = isset($order[$ka]) ? $order[$ka] : 9;
+            $ob = isset($order[$kb]) ? $order[$kb] : 9;
+            return $oa == $ob ? strcmp($ka, $kb) : $oa - $ob;
+        });
+        foreach ($files as $file) {
+            $looks[basename($file, '.css')] = formulize_appearanceParseLookBlock((string) file_get_contents($file));
+        }
+    }
+    return $looks;
+}
+
+/**
+ * The component tokens a look changes, and to what: its appearance_overrides.
+ *
+ * @param array $look a look, as formulize_appearanceParseLookBlock() reads it
+ * @return array token => value
+ */
+function formulize_appearanceLookOverrides($look) {
+    $overrides = isset($look['settings']['appearance_overrides']) ? json_decode($look['settings']['appearance_overrides'], true) : array();
+    return is_array($overrides) ? $overrides : array();
+}
+
+/**
  * The tokens that follow another token rather than being set themselves, such
  * as the main button's hover colour, which is a darker shade of the main
  * button's colour: a token's derived, a template for each with %s for the
@@ -318,11 +403,6 @@ function formulize_appearanceCheckTokenMap($map, $css) {
         } elseif (!formulize_appearanceTokenValueIsValid($type, $entry['min']) OR !formulize_appearanceTokenValueIsValid($type, $entry['max']) OR $entry['min'] > $entry['max']) {
             $problems[] = "The size token $token has limits, " . json_encode($entry['min']) . " to " . json_encode($entry['max']) . ", that aren't a range of " . $entry['type'] . " values.";
         }
-        foreach (isset($entry['presets']) ? $entry['presets'] : array() as $preset => $value) {
-            if (!formulize_appearanceTokenAllows($map, $token, $value)) {
-                $problems[] = "The size token $token has a $preset value, " . json_encode($value) . ", outside what it can be set to.";
-            }
-        }
         foreach (array('phone' => 'phone token', 'home' => 'home part') as $field => $noun) {
             if (!isset($entry[$field])) {
                 continue;
@@ -362,13 +442,22 @@ function formulize_appearanceCheckTokenMap($map, $css) {
             $defaults[$token] = $parsed;
         }
     }
-    foreach (array('default' => 'Default', 'compact' => 'Compact', 'comfortable' => 'Comfortable') as $preset => $presetName) {
-        $values = $defaults;
-        foreach ($map['tokens'] as $token => $entry) {
-            if ($preset != 'default' AND isset($entry['presets'][$preset])) {
-                $values[$token] = $entry['presets'][$preset];
+    // the built-in looks: every token they change is in the map, at a value it can
+    // be set to
+    foreach (formulize_appearanceBuiltinLooks() as $key => $look) {
+        if ($look === false) {
+            $problems[] = "The built-in look $key.css has no look block, or a damaged one.";
+            continue;
+        }
+        foreach (formulize_appearanceLookOverrides($look) as $token => $value) {
+            if (!formulize_appearanceTokenAllows($map, $token, $value)) {
+                $problems[] = "The built-in look " . $look['name'] . " sets $token to " . json_encode($value) . ", which it can't be set to.";
             }
         }
+    }
+    foreach (array_filter(formulize_appearanceBuiltinLooks()) as $look) { // Default among them, which changes nothing
+        $presetName = $look['name'];
+        $values = array_merge($defaults, formulize_appearanceLookOverrides($look));
         foreach ($map['tokens'] as $token => $entry) {
             if (isset($entry['floor'], $values[$token])) {
                 $floor = formulize_appearanceTokenFloor($entry['floor'], $values);

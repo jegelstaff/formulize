@@ -11,19 +11,25 @@ favicon, the colours, the fonts, and how big and how roomy everything is. Its **
 all of that too, on a live preview, and can also change one part of the interface at a time, such as
 buttons, field labels or list rows.
 
-Lyris can be edited in the advanced editor. Anari can't, and doesn't offer the Size preset either:
-its colours, fonts and logo are set on the Appearance page.
+Lyris can be edited in the advanced editor. Anari can't, and only has the Default look: its colours,
+fonts and logo are set on the Appearance page.
 
-## The Size preset
+## Looks
 
-**Size preset** sets every size at once:
+The settings on the Appearance page are the site's own appearance. A **look** is a set of changes to
+them, and one look is applied to the site, chosen with **Look** at the top of the Appearance page:
 
+- **Default** changes nothing: the site looks the way the settings on the page have it.
 - **Compact** fits more on the screen: smaller text, shorter fields, buttons and list rows, and less
   space in forms, cards and the drawer.
-- **Default** is the theme's own sizes.
 - **Comfortable** is larger and roomier, and easier to read and to tap.
 
-Save the Appearance page to apply it across the site.
+These three come with Formulize and can't be changed. Whatever a look doesn't change comes from the
+settings on the Appearance page: applying Compact keeps your colours, fonts and logo. Save the
+Appearance page to apply a look across the site.
+
+A look's changes win over the site's own: with Compact applied, the sizes are Compact's, even those
+changed for a part in the advanced editor.
 
 ## The advanced editor
 
@@ -36,7 +42,8 @@ editor leaves the page, and the page asks before losing them.
 
 With nothing selected in the preview, the **Site-wide** tab has the Appearance page's own settings:
 the logo and favicon, the colours, the main and secondary fonts (including any Google Font, by name),
-and the Size preset. Changes show in the preview as you make them. Every part of the interface follows
+the page width, and the look applied to the site. Changes show in the preview as you make them. The
+preview is the site's own appearance, without the look applied. Every part of the interface follows
 these, except for anything changed on the part itself.
 
 The **Changes** tab lists everything that differs from the theme's own: the site-wide settings first,
@@ -69,7 +76,6 @@ then each part's own settings, each with **Reset**, and **Show** to select the p
 - **Desktop and Phone** switch the preview's width. A size with its own value on phones, such as the
   title size, shows both, and the one for the preview's width is highlighted. On phones, Lyris keeps
   fields at least 44px tall so they are easy to tap, and the panel says when that applies.
-- A part's sizes stay as you set them when you pick another Size preset.
 
 Each part's **Not adjustable yet** list says which of its settings can't be changed here yet, such as
 shadows, hover colours other than the main button's, small and large buttons, and the fixed spacing

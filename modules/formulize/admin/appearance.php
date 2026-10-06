@@ -109,9 +109,12 @@ foreach($headingFontMap as $key => $font) {
 // formulize_appearanceFontPreviewStacks().
 $fontStacks = formulize_appearanceFontPreviewStacks($selectedTheme);
 
-$sizes = array();
-foreach(formulize_appearanceSizePresets() as $key => $label) {
-    $sizes[] = array('key' => $key, 'label' => $label);
+// The looks the site can be given: Default, which is the settings on this page as
+// they are, the other looks that come with Formulize, and the looks made in the
+// advanced editor, each of which changes the settings on this page.
+$looks = array();
+foreach(formulize_getAppearanceLooks($selectedTheme) as $key => $look) {
+    $looks[] = array('key' => ($key == 'default' ? '' : $key), 'label' => $look['name'], 'description' => $look['description'], 'builtin' => $look['builtin']);
 }
 
 // The logo can still be sitting in the legacy uploads/appearance folder on a site
@@ -140,8 +143,10 @@ $adminPage['headingFonts'] = $headingFonts;
 $adminPage['currentHeadingFont'] = $settings['appearance_headingfont'] ? $settings['appearance_headingfont'] : 'geist';
 $adminPage['currentHeadingCustomFont'] = $settings['appearance_headingcustomfont'];
 $adminPage['fontStacksJson'] = json_encode($fontStacks);
-$adminPage['sizes'] = $sizes;
-$adminPage['currentSize'] = $settings['appearance_size'];
+$adminPage['looks'] = $looks;
+$adminPage['currentLook'] = $settings['appearance_look'];
+$adminPage['offerLooks'] = (count($looks) > 1); // more than Default
+$adminPage['madeLooks'] = (count(array_filter($looks, function ($look) { return !$look['builtin']; })) > 0);
 $adminPage['themeUsesSizes'] = formulize_appearanceThemeUsesSizes($selectedTheme);
 // the advanced editor, for a theme built on the component tokens that provides
 // sample screens to preview them on; and the parts that have settings of their own

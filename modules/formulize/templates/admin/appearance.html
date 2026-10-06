@@ -49,6 +49,24 @@
     <{* keeps a save on the theme that is being edited, whichever one that is *}>
     <input type="hidden" name="appearance_theme" value="<{$adminPage.selected_theme}>" />
 
+    <{* Look: the look applied to the site (formulize_getAppearanceLooks). Default
+       is the settings on this page as they are; every other look changes them.
+       Only offered when the theme has more than Default. *}>
+    <{if $adminPage.offerLooks}>
+    <fieldset class="formulize-appearance-group">
+        <legend>Look</legend>
+        <div class="formulize-appearance-field">
+            <label for="appearance_look">Look</label>
+            <select name="appearance_look" id="appearance_look">
+            <{foreach from=$adminPage.looks item=look}>
+                <option value="<{$look.key}>" <{if $adminPage.currentLook == $look.key}>selected="selected"<{/if}>><{$look.label}></option>
+            <{/foreach}>
+            </select>
+            <span class="formulize-appearance-hint">The look of the site. Default is the settings on this page, as they are. Compact makes everything smaller, so more fits on the screen, and Comfortable makes it larger and roomier, easier to read and tap.<{if $adminPage.madeLooks}> Looks made in the advanced editor are here too.<{/if}> Every look starts from the settings on this page: whatever a look doesn't change, such as your colours and logo, comes from them.</span>
+        </div>
+    </fieldset>
+    <{/if}>
+
     <fieldset class="formulize-appearance-group">
         <legend>Colours</legend>
         <{* A grid rather than a table: the swatches are of equal weight and want to sit
@@ -68,26 +86,13 @@
         </div>
     </fieldset>
 
-    <{* Size: a preset for the component size tokens (see
-       include/appearance_tokens.json), for themes built on those tokens
-       (formulize_appearanceThemeUsesSizes), and the page width, for themes that
-       lay their pages out to a maximum width
-       (formulize_appearanceThemeUsesContentWidth). Default and the theme's own
-       width set nothing. The width box only counts with "Maximum width" chosen. *}>
-    <{if $adminPage.themeUsesSizes || $adminPage.themeUsesContentWidth}>
+    <{* Size: the page width, for themes that lay their pages out to a maximum
+       width (formulize_appearanceThemeUsesContentWidth). The theme's own width
+       sets nothing. The width box only counts with "Maximum width" chosen. How big
+       and roomy things are is the look, above. *}>
+    <{if $adminPage.themeUsesContentWidth}>
     <fieldset class="formulize-appearance-group">
         <legend>Size</legend>
-        <{if $adminPage.themeUsesSizes}>
-        <div class="formulize-appearance-field">
-            <label for="appearance_size">Size preset</label>
-            <select name="appearance_size" id="appearance_size">
-            <{foreach from=$adminPage.sizes item=size}>
-                <option value="<{$size.key}>" <{if $adminPage.currentSize == $size.key}>selected="selected"<{/if}>><{$size.label}></option>
-            <{/foreach}>
-            </select>
-            <span class="formulize-appearance-hint">How big and how roomy the interface is: titles, labels and text, the height of form fields, buttons and the rows of lists, and the space in forms, cards and the drawer. Compact fits more on the screen; Comfortable is larger and easier to read and tap.</span>
-        </div>
-        <{/if}>
         <{if $adminPage.themeUsesContentWidth}>
         <div class="formulize-appearance-field" role="radiogroup" aria-labelledby="appearance_contentwidth_label">
             <label id="appearance_contentwidth_label">Page width</label>

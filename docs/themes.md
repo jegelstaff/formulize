@@ -105,9 +105,9 @@ Two optional files let you adjust how your theme looks when embedded:
 
 The Anari theme has both files, if you want an example.
 
-## 5. Offer the Size preset and the advanced editor (optional)
+## 5. Offer the sized looks and the advanced editor (optional)
 
-The Appearance page's [Size preset and advanced editor](/documentation/appearance_editor/) change
+The Appearance page's [looks and advanced editor](/documentation/appearance_editor/) change
 Formulize UI's component tokens: sizes (`--fz-field-height`, `--fz-row-height`, `--fz-title-text`),
 fonts (`--fz-label-font`), colours (`--fz-button-bg`, `--fz-header-bg`) and corners
 (`--fz-field-radius`), and the rest. They only do anything in a theme whose own CSS styles things with
@@ -183,7 +183,8 @@ setting as it changes. Lyris puts a list's entries in a card by it; its `theme.h
 ```
 
 with `$appearance_max_width` assigned in the theme's PHP as
-`formulize_appearanceContentWidth(formulize_getAppearanceSettings()) != 'full'`.
+`formulize_appearanceContentWidth(formulize_getAppearanceEffectiveSettings()) != 'full'`: the theme's
+settings with the look applied to the site, which can have a page width of its own.
 
 ## Checking your theme
 

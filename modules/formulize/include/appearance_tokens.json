@@ -1,5 +1,5 @@
 {
-  "about": "The component tokens the Appearance page's Size presets and advanced editor can change: the sizes, fonts, colours and corners of the parts of the interface, and the one place the sizes' Compact and Comfortable values are kept. Default is not here: it is the value the CSS declares (modules/formulize/templates/css/formulize-ui.css, or a theme's own tokens). Each token's type says how its values are written in CSS; the token's own min and max (in the type's steps), or its list of values, are what it can be set to, chosen so that every value in the range changes how things look. Read by modules/formulize/include/appearance_tokens.php. The screens, components and gaps are for the advanced editor (modules/formulize/appearance_editor.php): the sample screens a theme can provide, the parts of the interface that can be selected in them and the tokens of each part, and what can't be adjusted yet. A part with a site setting is one of the Appearance page's own settings rather than a set of tokens (the logo). A colour token's value is one of the site's colours (colours) or #rrggbb; its text says it is a text colour. A token's derived are the tokens written from it when it is set, %s being its value. A token's phone is the token used for it at 768px and below; its home is the part a shared token belongs to; its floor is the least it can be given another token's value (one line of a text token at a line height, plus extra px; or another token plus a number of steps).",
+  "about": "The component tokens the Appearance page's looks and advanced editor can change: the sizes, fonts, colours and corners of the parts of the interface. The values the built-in looks give them (Compact, Comfortable) are in the looks themselves, in modules/formulize/include/appearance_looks/. A token's Default is not here: it is the value the CSS declares (modules/formulize/templates/css/formulize-ui.css, or a theme's own tokens). Each token's type says how its values are written in CSS; the token's own min and max (in the type's steps), or its list of values, are what it can be set to, chosen so that every value in the range changes how things look. Read by modules/formulize/include/appearance_tokens.php. The screens, components and gaps are for the advanced editor (modules/formulize/appearance_editor.php): the sample screens a theme can provide, the parts of the interface that can be selected in them and the tokens of each part, and what can't be adjusted yet. A part with a site setting is one of the Appearance page's own settings rather than a set of tokens (the logo). A colour token's value is one of the site's colours (colours) or #rrggbb; its text says it is a text colour. A token's derived are the tokens written from it when it is set, %s being its value. A token's phone is the token used for it at 768px and below; its home is the part a shared token belongs to; its floor is the least it can be given another token's value (one line of a text token at a line height, plus extra px; or another token plus a number of steps).",
   "types": {
     "spacing": {
       "description": "A number of spacing steps (--fz-spacing, 0.25rem), in half steps.",
@@ -333,7 +333,6 @@
       "description": "The size of form card, drawer and list titles.",
       "type": "text",
       "values": ["base", "lg", "xl", "2xl"],
-      "presets": { "compact": "lg", "comfortable": "xl" },
       "phone": "--fz-title-text-narrow"
     },
     "--fz-title-text-narrow": {
@@ -341,40 +340,35 @@
       "label": "Title size on phones",
       "description": "The size of titles at 768px wide and below.",
       "type": "text",
-      "values": ["sm", "base", "lg", "xl"],
-      "presets": { "compact": "base", "comfortable": "lg" }
+      "values": ["sm", "base", "lg", "xl"]
     },
     "--fz-title-weight": {
       "group": "type",
       "label": "Title weight",
       "description": "The weight of titles.",
       "type": "weight",
-      "values": [500, 600, 700],
-      "presets": {}
+      "values": [500, 600, 700]
     },
     "--fz-title-leading": {
       "group": "type",
       "label": "Title line height",
       "description": "The line height of titles that wrap.",
       "type": "leading",
-      "values": [1.25, 1.3, 1.375, 1.45],
-      "presets": {}
+      "values": [1.25, 1.3, 1.375, 1.45]
     },
     "--fz-label-text": {
       "group": "type",
       "label": "Label size",
       "description": "The size of form field labels.",
       "type": "text",
-      "values": ["xs", "xs-plus", "sm", "sm-plus", "base"],
-      "presets": { "compact": "xs-plus", "comfortable": "sm-plus" }
+      "values": ["xs", "xs-plus", "sm", "sm-plus", "base"]
     },
     "--fz-label-weight": {
       "group": "type",
       "label": "Label weight",
       "description": "The weight of form field labels.",
       "type": "weight",
-      "values": [400, 500, 600, 700],
-      "presets": { "compact": 600, "comfortable": 500 }
+      "values": [400, 500, 600, 700]
     },
     "--fz-field-text": {
       "group": "type",
@@ -382,7 +376,6 @@
       "description": "The size of the text in form fields, and of read-only values.",
       "type": "text",
       "values": ["xs-plus", "sm", "sm-plus", "base"],
-      "presets": { "compact": "sm", "comfortable": "sm-plus" },
       "home": "field"
     },
     "--fz-help-text": {
@@ -390,16 +383,14 @@
       "label": "Help text size",
       "description": "The size of the help text under form fields, and of character counters.",
       "type": "text",
-      "values": ["xs", "xs-plus", "sm"],
-      "presets": { "compact": "xs", "comfortable": "xs-plus" }
+      "values": ["xs", "xs-plus", "sm"]
     },
     "--fz-help-leading": {
       "group": "type",
       "label": "Help text line height",
       "description": "The line height of help text.",
       "type": "leading",
-      "values": [1.375, 1.45, 1.5, 1.625],
-      "presets": { "compact": 1.45, "comfortable": 1.5 }
+      "values": [1.375, 1.45, 1.5, 1.625]
     },
     "--fz-help-max-width": {
       "group": "type",
@@ -407,8 +398,7 @@
       "description": "The longest a line of help text can be.",
       "type": "measure",
       "min": 45,
-      "max": 90,
-      "presets": { "compact": 70, "comfortable": 62 }
+      "max": 90
     },
     "--fz-control-text": {
       "group": "type",
@@ -416,7 +406,6 @@
       "description": "The size of the text on buttons, menu items and tabs.",
       "type": "text",
       "values": ["xs", "xs-plus", "sm", "sm-plus"],
-      "presets": { "compact": "xs-plus", "comfortable": "sm" },
       "home": "button"
     },
     "--fz-table-text": {
@@ -424,16 +413,14 @@
       "label": "Table text size",
       "description": "The size of the text in list and table cells.",
       "type": "text",
-      "values": ["xs", "xs-plus", "sm", "sm-plus"],
-      "presets": { "compact": "xs-plus", "comfortable": "sm" }
+      "values": ["xs", "xs-plus", "sm", "sm-plus"]
     },
     "--fz-table-header-text": {
       "group": "type",
       "label": "Table header size",
       "description": "The size of the column headings in lists and tables.",
       "type": "text",
-      "values": ["xs", "xs-plus", "sm"],
-      "presets": { "compact": "xs", "comfortable": "xs-plus" }
+      "values": ["xs", "xs-plus", "sm"]
     },
     "--fz-field-height": {
       "group": "forms",
@@ -442,7 +429,6 @@
       "type": "spacing",
       "min": 7,
       "max": 14,
-      "presets": { "compact": 8.5, "comfortable": 10.5 },
       "floor": { "text": "--fz-field-text", "leading": 1.5, "extra": 4 }
     },
     "--fz-field-padding-x": {
@@ -451,8 +437,7 @@
       "description": "The space between the edge of a form field and its text.",
       "type": "spacing",
       "min": 1.5,
-      "max": 6,
-      "presets": { "compact": 2.5, "comfortable": 3.5 }
+      "max": 6
     },
     "--fz-field-gap": {
       "group": "forms",
@@ -461,7 +446,6 @@
       "type": "spacing",
       "min": 2,
       "max": 12,
-      "presets": { "compact": 3.5, "comfortable": 6.5 },
       "home": "field"
     },
     "--fz-label-gap": {
@@ -470,8 +454,7 @@
       "description": "The space between a label and its field, when the label is above the field.",
       "type": "spacing",
       "min": 0.5,
-      "max": 4,
-      "presets": { "compact": 1, "comfortable": 2 }
+      "max": 4
     },
     "--fz-help-gap": {
       "group": "forms",
@@ -479,8 +462,7 @@
       "description": "The space between a field and its help text.",
       "type": "spacing",
       "min": 0,
-      "max": 4,
-      "presets": { "compact": 1, "comfortable": 2 }
+      "max": 4
     },
     "--fz-option-gap": {
       "group": "forms",
@@ -488,8 +470,7 @@
       "description": "The space between the radio buttons or checkboxes of one field, when each is on a line of its own.",
       "type": "spacing",
       "min": 0,
-      "max": 4,
-      "presets": { "compact": 0, "comfortable": 1 }
+      "max": 4
     },
     "--fz-control-height": {
       "group": "controls",
@@ -498,7 +479,6 @@
       "type": "spacing",
       "min": 6,
       "max": 12,
-      "presets": { "compact": 7, "comfortable": 9 },
       "floor": { "text": "--fz-control-text", "leading": 1.5, "extra": 4 }
     },
     "--fz-control-padding-x": {
@@ -507,8 +487,7 @@
       "description": "The space between the edge of a button and its label.",
       "type": "spacing",
       "min": 1.5,
-      "max": 6,
-      "presets": { "compact": 2.5, "comfortable": 3.5 }
+      "max": 6
     },
     "--fz-menu-item-height": {
       "group": "controls",
@@ -517,7 +496,6 @@
       "type": "spacing",
       "min": 6,
       "max": 12,
-      "presets": { "compact": 7, "comfortable": 8.5 },
       "floor": { "text": "--fz-control-text", "leading": 1.375, "extra": 4 }
     },
     "--fz-tab-padding-y": {
@@ -526,8 +504,7 @@
       "description": "The space above and below the label of a tab.",
       "type": "spacing",
       "min": 0,
-      "max": 3,
-      "presets": { "compact": 0.5, "comfortable": 1.5 }
+      "max": 3
     },
     "--fz-tab-padding-x": {
       "group": "controls",
@@ -535,8 +512,7 @@
       "description": "The space either side of the label of a tab.",
       "type": "spacing",
       "min": 1.5,
-      "max": 6,
-      "presets": { "compact": 2.5, "comfortable": 3.5 }
+      "max": 6
     },
     "--fz-row-height": {
       "group": "lists",
@@ -545,7 +521,6 @@
       "type": "spacing",
       "min": 6,
       "max": 16,
-      "presets": { "compact": 8, "comfortable": 13 },
       "floor": { "text": "--fz-table-text", "leading": 1.5, "extra": 6 }
     },
     "--fz-cell-padding-x": {
@@ -555,7 +530,6 @@
       "type": "spacing",
       "min": 1,
       "max": 6,
-      "presets": { "compact": 2, "comfortable": 4 },
       "home": "row"
     },
     "--fz-table-header-height": {
@@ -565,7 +539,6 @@
       "type": "spacing",
       "min": 6,
       "max": 14,
-      "presets": { "compact": 8, "comfortable": 10 },
       "floor": { "text": "--fz-table-header-text", "leading": 1.5, "extra": 6 }
     },
     "--fz-toolbar-height": {
@@ -575,7 +548,6 @@
       "type": "spacing",
       "min": 10,
       "max": 20,
-      "presets": { "compact": 13, "comfortable": 16 },
       "floor": { "token": "--fz-control-height", "plus": 6 }
     },
     "--fz-toolbar-padding-x": {
@@ -584,8 +556,7 @@
       "description": "The space either side of a list's title bar, selection bar and footer.",
       "type": "spacing",
       "min": 2,
-      "max": 10,
-      "presets": { "compact": 4, "comfortable": 6 }
+      "max": 10
     },
     "--fz-card-padding": {
       "group": "surfaces",
@@ -593,8 +564,7 @@
       "description": "The space inside a card, and above and below a form card's header.",
       "type": "spacing",
       "min": 2,
-      "max": 10,
-      "presets": { "compact": 3, "comfortable": 5 }
+      "max": 10
     },
     "--fz-card-gap": {
       "group": "surfaces",
@@ -602,8 +572,7 @@
       "description": "The space between the things in a card.",
       "type": "spacing",
       "min": 1,
-      "max": 8,
-      "presets": { "compact": 2, "comfortable": 4 }
+      "max": 8
     },
     "--fz-form-padding": {
       "group": "surfaces",
@@ -611,8 +580,7 @@
       "description": "The space inside a form card, either side of its header, and around the page controls of a multi-page form.",
       "type": "spacing",
       "min": 2,
-      "max": 12,
-      "presets": { "compact": 4, "comfortable": 8 }
+      "max": 12
     },
     "--fz-drawer-padding-x": {
       "group": "surfaces",
@@ -620,8 +588,7 @@
       "description": "The space either side of the drawer's content.",
       "type": "spacing",
       "min": 2,
-      "max": 10,
-      "presets": { "compact": 4, "comfortable": 6 }
+      "max": 10
     },
     "--fz-drawer-padding-y": {
       "group": "surfaces",
@@ -629,8 +596,7 @@
       "description": "The space above and below the drawer's header and footer.",
       "type": "spacing",
       "min": 2,
-      "max": 8,
-      "presets": { "compact": 3, "comfortable": 5 }
+      "max": 8
     },
     "--fz-page-padding": {
       "group": "surfaces",
@@ -638,8 +604,7 @@
       "description": "The space around the main content of the page: around a form screen, and around simple pages such as the login page.",
       "type": "spacing",
       "min": 2,
-      "max": 12,
-      "presets": { "compact": 4, "comfortable": 6 }
+      "max": 12
     },
     "--fz-title-font": {
       "group": "fonts",
