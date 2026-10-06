@@ -359,9 +359,6 @@
 		if (WIDTH) {
 			if (state.contentWidth !== WIDTH.theme) { root.style.setProperty('--formulize-content-max-width', state.contentWidth === 'full' ? '100%' : state.contentWidth + 'px'); }
 			else { restore(root, '--formulize-content-max-width'); }
-			// and the body's class for it, which a theme can lay pages out differently
-			// by, as Lyris puts a list in a card
-			if (d.body) { d.body.classList.toggle('formulize-max-width', state.contentWidth !== 'full'); }
 		}
 		var logo = d.querySelector('[data-fz-part="logo"] img');
 		if (logo) { logo.src = uploadUrl('appearance_logo') || DATA.themeLogoUrl; }

@@ -179,19 +179,6 @@ sidebar, and lets its header and the bars along the top and bottom of lists and 
 width, with their links and buttons lined up with the edge of the content; see the "Content width"
 section at the end of `themes/Lyris/css/style.css`.
 
-CSS can't tell a width in pixels from `100%`, so for anything that should only happen while pages
-have a maximum width, put the class `formulize-max-width` on your `<body>` when they do, and style by
-it. The advanced editor's preview has the class whenever a maximum width is set, and follows the
-setting as it changes. Lyris puts a list's entries in a card by it; its `theme.html` adds the class:
-
-```html
-<body class="...<{if $appearance_max_width}> formulize-max-width<{/if}>">
-```
-
-with `$appearance_max_width` assigned in the theme's PHP as
-`formulize_appearanceContentWidth(formulize_getAppearanceEffectiveSettings()) != 'full'`: the theme's
-settings with the look applied to the site, which can have a page width of its own.
-
 ## Checking your theme
 
 Open a long form in your theme, scroll down, and save it. You should be returned to where you were
