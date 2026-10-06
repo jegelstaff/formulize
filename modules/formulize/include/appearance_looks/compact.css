@@ -4,8 +4,9 @@
  * Formulize UI's component tokens. A look is a set of changes to a theme's own
  * appearance settings, in the same block as a look made in the advanced editor
  * (themes/<theme>/appearance/looks/), and is read by
- * formulize_getAppearanceLooks(). The built-in ones can't be changed on a site:
- * a look made from one is a copy.
+ * formulize_getAppearanceLooks(). A built-in look can be changed on a site, in
+ * the advanced editor: the changed one is kept in the theme's appearance/looks
+ * folder, and this one stays as it is, for reverting to.
  *
  * BEGIN FORMULIZE APPEARANCE LOOK v1
  * name: Compact

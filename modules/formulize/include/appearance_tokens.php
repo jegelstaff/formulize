@@ -262,11 +262,12 @@ function formulize_appearanceLookBlockMarkers() {
  * look made on a site. The block has its name and description, and the
  * appearance settings the look changes, one per line, written the way a theme's
  * appearance stylesheet writes its settings; a setting with nothing after it is
- * changed to its default. The whole block has to be there, or there is no look.
+ * changed to its default. A built-in look that has been changed on a site says
+ * so (edited: yes). The whole block has to be there, or there is no look.
  *
  * @param string $css the file's contents
- * @return array|false array with 'name', 'description' and 'settings' (setting
- *                     name => value, not yet validated), or false
+ * @return array|false array with 'name', 'description', 'edited' (boolean) and
+ *                     'settings' (setting name => value, not yet validated), or false
  */
 function formulize_appearanceParseLookBlock($css) {
     $markers = formulize_appearanceLookBlockMarkers();
@@ -275,10 +276,12 @@ function formulize_appearanceParseLookBlock($css) {
     if ($start === false OR $end === false) {
         return false;
     }
-    $look = array('name' => '', 'description' => '', 'settings' => array());
+    $look = array('name' => '', 'description' => '', 'edited' => false, 'settings' => array());
     foreach (explode("\n", substr($css, $start, $end - $start)) as $line) {
-        if (preg_match('/^\s*\*?\s*(name|description|appearance_[a-z]+)\s*:\s*(.*?)\s*$/', $line, $match)) {
-            if ($match[1] == 'name' OR $match[1] == 'description') {
+        if (preg_match('/^\s*\*?\s*(name|description|edited|appearance_[a-z]+)\s*:\s*(.*?)\s*$/', $line, $match)) {
+            if ($match[1] == 'edited') {
+                $look['edited'] = ($match[2] == 'yes');
+            } elseif ($match[1] == 'name' OR $match[1] == 'description') {
                 $look[$match[1]] = $match[2];
             } else {
                 $look['settings'][$match[1]] = $match[2];

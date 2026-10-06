@@ -54,11 +54,11 @@
 	];
 	var SECTIONS = [['text', 'Text'], ['colour', 'Colours'], ['shape', 'Corners'], ['space', 'Size and spacing']];
 	var UPLOADS = { appearance_logo: 'Logo', appearance_favicon: 'Favicon' };
-	// What is being edited: the site appearance (EDIT is null), or a look, which is
-	// a set of changes to the site appearance (BASE). A look's settings are measured
-	// against the site appearance's, and only what differs from it is the look's.
-	// A built-in look is read-only.
-	var EDIT = DATA.editing, BASE = DATA.base, READONLY = !!(EDIT && EDIT.builtin);
+	// The look being edited (EDIT), which is a set of changes to the site's own
+	// settings, the Appearance page's (BASE). A look's settings are measured against
+	// those, and only what differs from them is the look's. A built-in look is
+	// edited the same way, and can be reverted to how it came.
+	var EDIT = DATA.editing, BASE = DATA.base, READONLY = false;
 	// the page width, for a theme that has one: its limits, and the theme's own
 	// width ('full', or pixels), which is the default
 	var WIDTH = DATA.contentWidth;
@@ -109,14 +109,13 @@
 
 	/* ---- values ---- */
 	function isSize(token) { return ['spacing', 'text', 'weight', 'leading', 'measure'].indexOf(type(token)) !== -1; }
-	// what a part's setting is when the site appearance doesn't change it: the
-	// theme's own. The preview is the site appearance itself, without the look
-	// applied to the site, which is a set of changes on top of it.
+	// what a part's setting is when the look doesn't change it: the theme's own,
+	// since the site's own settings (the Appearance page's) don't set parts
 	function presetValue(token) { return (BASE && has(BASE.overrides, token)) ? BASE.overrides[token] : entry(token)['default']; }
 	function value(token) { return has(state.overrides, token) ? state.overrides[token] : presetValue(token); }
 	function changed(token) { return has(state.overrides, token); }
 	// what a value is measured against: the site appearance's, for a look, or the theme's own
-	function baseName() { return BASE ? 'The site appearance’s' : 'The theme’s'; }
+	function baseName() { return BASE ? 'The Appearance page’s' : 'The theme’s'; }
 	function css(token, v) {
 		var t = type(token);
 		if (t === 'spacing') { return 'calc(var(--fz-spacing) * ' + v + ')'; }
@@ -435,7 +434,7 @@
 		var v = value(token), t = type(token);
 		var from = changed(token)
 			? (EDIT ? 'changed by this look · ' : 'changed · ') + lower(baseName()) + ' is ' + show(token, presetValue(token))
-			: (BASE ? 'from the site appearance' : 'the theme’s own');
+			: (BASE ? 'from the Appearance page' : 'the theme’s own');
 		if (t === 'colour' || t === 'font') { return changed(token) ? '<span class="formulize-editor__from">' + esc(from) + '</span>' : ''; }
 		return '<b>' + esc(show(token, v)) + '</b><span class="formulize-editor__from">' + esc(from) + '</span>';
 	}
@@ -507,7 +506,7 @@
 		var thumb = url ? '<img src="' + esc(url) + '" alt="">' : (isLogo ? '<img src="' + esc(DATA.themeLogoUrl) + '" alt="">' : '<span>—</span>');
 		var desc = isLogo ? 'At the top left of every page.' : 'The small icon in the browser tab and in bookmarks.';
 		var status = state.uploads[key].file ? 'A new image, saved when you save.'
-			: BASE ? (lookOwn(key) && !state.uploads[key].removed ? 'This look’s own.' : 'The site appearance’s.')
+			: BASE ? (lookOwn(key) && !state.uploads[key].removed ? 'This look’s own.' : 'The Appearance page’s.')
 			: (url ? 'Uploaded.' : 'The theme’s own.');
 		var removable = BASE ? ((lookOwn(key) && !state.uploads[key].removed) || state.uploads[key].file) : url;
 		return '<div class="formulize-editor__ctl' + (uploadChanged(key) ? ' is-changed' : '') + '">' +
@@ -515,7 +514,7 @@
 			'<p class="formulize-editor__desc">' + desc + '</p>' +
 			'<div class="formulize-editor__upload"><span class="formulize-editor__thumb' + (isLogo ? '' : ' formulize-editor__thumb--icon') + '">' + thumb + '</span>' +
 				'<span class="formulize-editor__upload-acts"><label class="formulize-editor__btn formulize-editor__btn--sm" for="formulize-editor-' + key + '">Upload…</label>' +
-				(removable ? '<button type="button" class="formulize-editor__btn formulize-editor__btn--sm" data-upload-remove="' + key + '">' + (BASE ? 'Use the site appearance’s' : 'Use the theme’s own') + '</button>' : '') +
+				(removable ? '<button type="button" class="formulize-editor__btn formulize-editor__btn--sm" data-upload-remove="' + key + '">' + (BASE ? 'Use the Appearance page’s' : 'Use the theme’s own') + '</button>' : '') +
 				'<span class="formulize-editor__upload-status">' + esc(status) + ' ' + esc(DATA.uploads[key].types) + '.</span></span></div>' +
 		'</div>';
 	}
@@ -537,14 +536,14 @@
 	}
 	function siteBlock() {
 		var h = '<p class="formulize-editor__intro">' + (EDIT
-			? 'What this look changes, site-wide. Anything it doesn’t change comes from the site appearance, and follows it when that changes. Click anything in the preview to change just that part.'
+			? 'What this look changes, site-wide. Anything it doesn’t change comes from the Appearance page’s settings, and follows them when they change. Click anything in the preview to change just that part.'
 			: 'The same settings as the Appearance page: the site appearance, which every look starts from. Every part of the interface follows them, except for anything changed on the part itself: click anything in the preview to change just that part, its fonts, colours, corners and sizes.') + '</p>';
 		h += sect('Logo') + uploadBlock('appearance_logo') + uploadBlock('appearance_favicon');
 		h += sect('Colours') + Object.keys(DATA.colours).map(function (key) {
 			var c = DATA.colours[key], id = 'formulize-editor-colour-' + key;
 			return '<div class="formulize-editor__colour' + (colourChanged(key) ? ' is-changed' : '') + '"><input type="color" id="' + id + '" data-colour="' + key + '" value="' + esc(state.colours[key]) + '">' +
 				'<label for="' + id + '" class="formulize-editor__lbl">' + esc(c.label) + '</label>' +
-				(colourChanged(key) ? '<button type="button" class="formulize-editor__link" data-colour-reset="' + key + '">' + (BASE ? 'Use the site appearance’s' : 'Reset to ' + esc(c['default'])) + '</button>' : '<span class="formulize-editor__hex">' + esc(state.colours[key]) + '</span>') +
+				(colourChanged(key) ? '<button type="button" class="formulize-editor__link" data-colour-reset="' + key + '">' + (BASE ? 'Use the Appearance page’s' : 'Reset to ' + esc(c['default'])) + '</button>' : '<span class="formulize-editor__hex">' + esc(state.colours[key]) + '</span>') +
 				'<span class="formulize-editor__desc">' + esc(c.description) + '</span></div>';
 		}).join('');
 		h += sect('Fonts') + fontBlock('main') + fontBlock('heading');
@@ -581,7 +580,7 @@
 		var list = [];
 		Object.keys(UPLOADS).forEach(function (key) {
 			if (BASE ? (uploadChanged(key) || lookOwn(key)) : (uploadUrl(key) || uploadChanged(key))) {
-				list.push({ name: UPLOADS[key], val: state.uploads[key].file ? 'New image' : (state.uploads[key].removed ? (BASE ? 'Back to the site appearance’s' : 'Back to the theme’s own') : (BASE ? 'This look’s own' : 'Uploaded')), reset: 'upload:' + key, resetLabel: uploadChanged(key) ? 'Undo' : (BASE ? 'Use the site appearance’s' : 'Use the theme’s own') });
+				list.push({ name: UPLOADS[key], val: state.uploads[key].file ? 'New image' : (state.uploads[key].removed ? (BASE ? 'Back to the Appearance page’s' : 'Back to the theme’s own') : (BASE ? 'This look’s own' : 'Uploaded')), reset: 'upload:' + key, resetLabel: uploadChanged(key) ? 'Undo' : (BASE ? 'Use the Appearance page’s' : 'Use the theme’s own') });
 			}
 		});
 		Object.keys(DATA.colours).forEach(function (key) {
@@ -597,7 +596,7 @@
 	function changesBlock() {
 		var site = siteChanges(), parts = Object.keys(state.overrides), h = '';
 		if (!site.length && !parts.length) {
-			return '<div class="formulize-editor__empty"><p>' + (EDIT ? 'This look doesn’t change anything: it is the same as the site appearance.' : 'Nothing has been changed: everything is as the theme has it.') + '</p><p>Change the logo, colours, fonts' + (WIDTH ? ', page width' : '') + ' and look under Site-wide, or click anything in the preview, such as a button, a field or a list row, to change just that part. A change to a part applies to every one of it on the site.</p></div>';
+			return '<div class="formulize-editor__empty"><p>' + (EDIT ? 'This look doesn’t change anything: it is the same as the Appearance page’s settings.' : 'Nothing has been changed: everything is as the theme has it.') + '</p><p>Change the logo, colours, fonts' + (WIDTH ? ', page width' : '') + ' and look under Site-wide, or click anything in the preview, such as a button, a field or a list row, to change just that part. A change to a part applies to every one of it on the site.</p></div>';
 		}
 		if (site.length) {
 			h += sect('Site-wide') + site.map(function (c) {
@@ -637,15 +636,11 @@
 					'<button type="button" role="tab" data-tab="changes" aria-pressed="' + (state.tab === 'changes') + '" aria-selected="' + (state.tab === 'changes') + '">Changes' + (n ? ' (' + n + ')' : '') + '</button></div>';
 			body.innerHTML = state.tab === 'site' ? siteBlock() : changesBlock() + gapsBlock(MAP.gaps);
 		}
-		// the look being edited, said once above its settings; a built-in one can't be changed
-		if (READONLY) {
-			body.insertAdjacentHTML('afterbegin', '<div class="formulize-editor__lookbar formulize-editor__lookbar--ro"><p><b>' + esc(EDIT.name) + '</b> comes with Formulize, so it can’t be changed. ' + esc(EDIT.description) + '</p><p>To make a look of your own from it, duplicate it.</p>' +
-				'<button type="button" class="formulize-editor__btn formulize-editor__btn--sm" data-look-act="duplicate" data-allow="1">Duplicate ' + esc(EDIT.name) + '…</button></div>');
-			Array.prototype.forEach.call(body.querySelectorAll('input, select, textarea, button:not([data-allow]):not([data-select]), label.formulize-editor__btn'), function (el) {
-				if (el.tagName === 'LABEL') { el.hidden = true; } else { el.disabled = true; }
-			});
-		} else if (EDIT) {
-			body.insertAdjacentHTML('afterbegin', '<div class="formulize-editor__lookbar"><p>Editing the <b>' + esc(EDIT.name) + '</b> look: what it changes is marked, and everything else comes from the site appearance.</p></div>');
+		// the look being edited, said once above its settings
+		if (EDIT && !state.sel) {
+			body.insertAdjacentHTML('afterbegin', '<div class="formulize-editor__lookbar"><p>Editing the <b>' + esc(EDIT.name) + '</b> look: what it changes is marked, and everything else comes from the Appearance page’s settings.</p>' +
+				(EDIT.builtin ? '<p>' + esc(EDIT.name) + ' comes with Formulize. ' + (EDIT.edited ? 'It has been changed on this site, and can be reverted to how it came.' : 'Changes you save change it on this site, and it can always be reverted to how it came.') + '</p>' +
+					(EDIT.edited ? '<button type="button" class="formulize-editor__btn formulize-editor__btn--sm" data-look-act="revert">Revert ' + esc(EDIT.name) + '…</button>' : '') : '') + '</div>');
 		}
 	}
 
@@ -835,7 +830,7 @@
 	// back to the theme's own for everything; nothing is saved until Save
 	$('formulize-editor-reset').addEventListener('click', function () {
 		if (!window.confirm(EDIT
-			? 'Take back everything this look changes, so it is the same as the site appearance? Nothing changes until you save.'
+			? 'Take back everything this look changes, so it is the same as the Appearance page’s settings? Nothing changes until you save.'
 			: 'Put everything back to how the ' + DATA.theme + ' theme has it: the logo and favicon, colours, fonts' + (WIDTH ? ', page width' : '') + ', the look and every part’s own settings? Nothing changes on the site until you save.')) { return; }
 		state.overrides = {};
 		if (!EDIT) { state.preset = ''; }
@@ -850,7 +845,7 @@
 	var menu = $('formulize-editor-look-menu'), lookBtn = $('formulize-editor-look-btn'), menuMode = '';
 	function lookUrl(key) { return DATA.pageUrl + (key ? '&look=' + encodeURIComponent(key) : ''); }
 	function drawLookHeader() {
-		$('formulize-editor-look-name').textContent = EDIT ? EDIT.name : 'Site appearance';
+		$('formulize-editor-look-name').textContent = EDIT.name;
 		var box = $('formulize-editor-applied');
 		if (!EDIT) { box.innerHTML = ''; return; }
 		box.innerHTML = DATA.applied === EDIT.key
@@ -860,13 +855,16 @@
 	function drawMenu() {
 		var h = '';
 		if (menuMode === 'new' || menuMode === 'duplicate' || menuMode === 'rename') {
-			var intro = menuMode === 'new' ? 'A new look starts out the same as the site appearance. Change what you want it to change.'
+			var intro = menuMode === 'new' ? 'A new look starts out the same as the Appearance page’s settings. Change what you want it to change.'
 				: menuMode === 'duplicate' ? 'A copy of ' + EDIT.name + ', to change as you like. It isn’t linked to ' + EDIT.name + ': changes to one don’t change the other.'
 				: 'A new name for ' + EDIT.name + '.';
 			h = '<form class="formulize-editor__look-form" data-look-form="' + menuMode + '"><p>' + esc(intro) + '</p>' +
 				'<label><span>Name</span><input type="text" id="formulize-editor-look-input" maxlength="60" required value="' + esc(menuMode === 'rename' ? EDIT.name : menuMode === 'duplicate' ? EDIT.name + ' copy' : '') + '" placeholder="e.g. Summer program"></label>' +
 				'<p class="formulize-editor__look-err" id="formulize-editor-look-err" hidden></p>' +
 				'<div class="formulize-editor__look-row"><button type="button" class="formulize-editor__btn formulize-editor__btn--sm" data-menu="back">Cancel</button><button type="submit" class="formulize-editor__btn formulize-editor__btn--sm formulize-editor__btn--primary">' + (menuMode === 'rename' ? 'Rename' : 'Make the look') + '</button></div></form>';
+		} else if (menuMode === 'revert') {
+			h = '<div class="formulize-editor__look-form"><p>Revert <b>' + esc(EDIT.name) + '</b> to how it came with Formulize? Everything changed in it on this site goes' + (DATA.applied === EDIT.key ? ', and the site changes with it, since it is applied' : '') + '. This can’t be undone.</p>' +
+				'<div class="formulize-editor__look-row"><button type="button" class="formulize-editor__btn formulize-editor__btn--sm" data-menu="back">Cancel</button><button type="button" class="formulize-editor__btn formulize-editor__btn--sm formulize-editor__btn--danger" data-look-act="revert-yes">Revert ' + esc(EDIT.name) + '</button></div></div>';
 		} else if (menuMode === 'delete') {
 			h = '<div class="formulize-editor__look-form"><p>Delete the <b>' + esc(EDIT.name) + '</b> look?' + (DATA.applied === EDIT.key ? ' It is applied to the site, so the site goes back to Default.' : '') + ' This can’t be undone.</p>' +
 				'<div class="formulize-editor__look-row"><button type="button" class="formulize-editor__btn formulize-editor__btn--sm" data-menu="back">Cancel</button><button type="button" class="formulize-editor__btn formulize-editor__btn--sm formulize-editor__btn--danger" data-look-act="delete-yes">Delete the look</button></div></div>';
@@ -874,16 +872,16 @@
 			var item = function (key, name, small, badges, current) {
 				return '<button type="button" class="formulize-editor__look-item" data-edit="' + esc(key) + '"' + (current ? ' aria-current="true"' : '') + '><span class="formulize-editor__look-check">' + (current ? '✓' : '') + '</span><span><span class="formulize-editor__look-title">' + esc(name) + '</span><small>' + esc(small) + '</small></span><span>' + badges + '</span></button>';
 			};
-			h = item('', 'Site appearance', 'The Appearance page’s settings, which every look starts from', '', !EDIT) +
-				'<p class="formulize-editor__look-head">Looks</p>' +
+			h = '<p class="formulize-editor__look-head">Looks</p>' +
 				DATA.menuLooks.map(function (l) {
-					var badges = (DATA.applied === l.key ? '<span class="formulize-editor__badge formulize-editor__badge--on">Applied</span>' : '') + (l.builtin ? '<span class="formulize-editor__badge">Built in</span>' : '');
-					return item(l.key, l.name, l.builtin ? l.description : (l.changes ? l.changes + (l.changes === 1 ? ' change' : ' changes') + ' to the site appearance' : 'No changes yet'), badges, EDIT && EDIT.key === l.key);
+					var badges = (DATA.applied === l.key ? '<span class="formulize-editor__badge formulize-editor__badge--on">Applied</span>' : '') + (l.builtin ? '<span class="formulize-editor__badge">' + (l.edited ? 'Built in, changed' : 'Built in') + '</span>' : '');
+					return item(l.key, l.name, l.builtin ? l.description : (l.changes ? l.changes + (l.changes === 1 ? ' change' : ' changes') + ' to the Appearance page’s settings' : 'No changes yet'), badges, EDIT && EDIT.key === l.key);
 				}).join('') +
 				'<div class="formulize-editor__look-sep"></div>' +
 				'<button type="button" class="formulize-editor__look-act" data-menu="new">New look…</button>' +
 				(EDIT ? '<button type="button" class="formulize-editor__look-act" data-menu="duplicate">Duplicate ' + esc(EDIT.name) + '…</button>' : '') +
-				(EDIT && !EDIT.builtin ? '<button type="button" class="formulize-editor__look-act" data-menu="rename">Rename ' + esc(EDIT.name) + '…</button><button type="button" class="formulize-editor__look-act formulize-editor__look-act--danger" data-menu="delete">Delete ' + esc(EDIT.name) + '…</button>' : '');
+				(EDIT && !EDIT.builtin ? '<button type="button" class="formulize-editor__look-act" data-menu="rename">Rename ' + esc(EDIT.name) + '…</button><button type="button" class="formulize-editor__look-act formulize-editor__look-act--danger" data-menu="delete">Delete ' + esc(EDIT.name) + '…</button>' : '') +
+				(EDIT && EDIT.builtin && EDIT.edited ? '<button type="button" class="formulize-editor__look-act formulize-editor__look-act--danger" data-menu="revert">Revert ' + esc(EDIT.name) + '…</button>' : '');
 		}
 		menu.innerHTML = h;
 		var input = $('formulize-editor-look-input');
@@ -909,7 +907,8 @@
 	function lookAction(act) {
 		if (act === 'apply') { postLook('apply'); }
 		else if (act === 'delete-yes') { postLook('delete'); }
-		else { openMenu(true, act); } // duplicate, from the read-only note
+		else if (act === 'revert-yes') { postLook('revert'); }
+		else { openMenu(true, act); } // revert, from the note above a built-in look's settings
 	}
 	function nameTaken(name, except) {
 		return DATA.menuLooks.some(function (l) { return l.key !== except && l.name.toLowerCase() === name.toLowerCase(); });
@@ -940,7 +939,7 @@
 	// what a look action did, after it comes back
 	if (DATA.done) {
 		setTimeout(function () {
-			message({ 'new': 'Made the look ' + (EDIT ? EDIT.name : '') + '. Change what you want it to change, and save.', duplicate: 'Made the look ' + (EDIT ? EDIT.name : '') + ', a copy. Change what you want it to change, and save.', rename: 'Renamed the look ' + (EDIT ? EDIT.name : '') + '.', 'delete': 'Deleted the look.', apply: (EDIT ? EDIT.name : 'Default') + ' is now applied to the site.' }[DATA.done] || 'Done.');
+			message({ 'new': 'Made the look ' + (EDIT ? EDIT.name : '') + '. Change what you want it to change, and save.', duplicate: 'Made the look ' + (EDIT ? EDIT.name : '') + ', a copy. Change what you want it to change, and save.', rename: 'Renamed the look ' + (EDIT ? EDIT.name : '') + '.', 'delete': 'Deleted the look.', revert: (EDIT ? EDIT.name : '') + ' is back the way it came with Formulize.', apply: (EDIT ? EDIT.name : 'Default') + ' is now applied to the site.' }[DATA.done] || 'Done.');
 		}, 0);
 	}
 
@@ -973,7 +972,7 @@
 			appearance_favicon_remove: state.uploads.appearance_favicon.removed ? '1' : ''
 		};
 		Object.keys(DATA.colours).forEach(function (key) { values['appearance_' + key] = state.colours[key]; });
-		// a look: the settings that differ from the site appearance's
+		// a look: the settings that differ from the Appearance page's
 		if (EDIT) {
 			var look = {};
 			Object.keys(DATA.colours).forEach(function (key) { if (colourChanged(key)) { look['appearance_' + key] = state.colours[key]; } });
@@ -1013,6 +1012,10 @@
 					Object.keys(UPLOADS).forEach(function (key) { resetUpload(key); });
 					adopt(result.state);
 					state.dirty = false;
+					if (EDIT && result.edited !== undefined) {
+						EDIT.edited = result.edited;
+						DATA.menuLooks.forEach(function (l) { if (l.key === EDIT.key) { l.edited = result.edited; } });
+					}
 				}
 				if (result.errors && result.errors.length) { message(result.errors, true); }
 				else if (EDIT) { message('Saved the ' + EDIT.name + ' look.' + (DATA.applied === EDIT.key ? ' It is applied to the site, so the site has changed.' : ' It isn’t applied to the site, so the site hasn’t changed.')); }

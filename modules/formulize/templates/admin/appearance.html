@@ -28,17 +28,14 @@
     <p class="formulize-appearance-notice formulize-appearance-notice-error"><{$error}></p>
     <{/foreach}>
 
-    <{* The advanced editor: everything on this page and more, one part of the
-       interface at a time, on a live preview. Only for themes that can be edited
-       there (formulize_getAppearanceEditorUrl). *}>
+    <{* The advanced editor: the looks, which change the settings on this page, one
+       part of the interface at a time, on a live preview. Only for themes that can
+       be edited there (formulize_getAppearanceEditorUrl). *}>
     <{if $adminPage.editorUrl}>
     <div class="formulize-appearance-editor">
         <div class="formulize-appearance-editor-text">
             <h3>Advanced editor</h3>
-            <p>Change colours, fonts, sizes and the logo one part of the interface at a time, such as buttons, field labels or list rows, and see the result on sample forms, lists and the drawer as you go.</p>
-            <{if $adminPage.overrideParts}>
-            <p class="formulize-appearance-editor-note">Some parts have settings of their own from the advanced editor (<{$adminPage.overrideParts}>). The settings below don't change those parts' own settings.</p>
-            <{/if}>
+            <p>Change the looks of the site: their colours, fonts, sizes and logo, and those of one part of the interface at a time, such as buttons, field labels or list rows, and see the result on sample forms, lists and the drawer as you go. Every look starts from the settings on this page.</p>
         </div>
         <a class="formulize-appearance-editor-open" href="<{$adminPage.editorUrl}>" onclick="return appearanceLeaveForEditor();">Open the advanced editor</a>
     </div>

@@ -149,10 +149,8 @@ $adminPage['offerLooks'] = (count($looks) > 1); // more than Default
 $adminPage['madeLooks'] = (count(array_filter($looks, function ($look) { return !$look['builtin']; })) > 0);
 $adminPage['themeUsesSizes'] = formulize_appearanceThemeUsesSizes($selectedTheme);
 // the advanced editor, for a theme built on the component tokens that provides
-// sample screens to preview them on; and the parts that have settings of their own
-// there, which the settings on this page don't change
+// sample screens to preview them on
 $adminPage['editorUrl'] = formulize_getAppearanceEditorUrl($selectedTheme);
-$adminPage['overrideParts'] = implode(', ', formulize_appearanceOverrideParts($settings));
 // Page width, in the Size group: full width, or a maximum width in pixels, for a
 // theme that lays its pages out to one (formulize_appearanceThemeUsesContentWidth).
 // The width box starts at the default width while the page is at full width.

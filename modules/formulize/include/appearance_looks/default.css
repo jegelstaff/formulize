@@ -2,10 +2,11 @@
  *
  * One of the looks that come with Formulize, offered for every theme. Default
  * changes nothing: applied, a theme looks the way its own appearance settings
- * (the Appearance page's) have it. See compact.css.
+ * (the Appearance page's) have it. Like the other looks, it can be changed on a
+ * site in the advanced editor, and reverted to this. See compact.css.
  *
  * BEGIN FORMULIZE APPEARANCE LOOK v1
  * name: Default
- * description: The site's appearance settings, as they are.
+ * description: The Appearance page's settings, as they are.
  * END FORMULIZE APPEARANCE LOOK
  */
