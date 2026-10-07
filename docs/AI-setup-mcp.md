@@ -38,30 +38,11 @@ title: External AI Assistant Setup (MCP)
 
 6. If your AI assistant does not support MCPB extensions, you need to update the configuration of your AI assistant manually. Exactly how to do this varies from assistant to assistant:
 
-	- For Copilot in VSCode, make a file called ```mcp.json``` in the ```.vscode``` folder of your project. It should look like this
+	- For __Google Antigravity__ desktop application, you need to modify the file ```mcp_config.json```. Where is it?\
+	Windows: ```%APPDATA%\.gemini\config\mcp_config.json```\
+	macOS: ```~/.gemini/config/mcp_config.json```
 
-   ```json
-   {
-     "servers": {
-       "My Formulize MCP Server": {
-         "command": "npx",
-         "args": [
-           "-y",
-           "formulize-mcp"
-         ],
-         "env": {
-           "FORMULIZE_URL": "https://<your.formulize.site.url>",
-           "FORMULIZE_API_KEY": "<your api key from your formulize site>",
-           "FORMULIZE_SERVER_NAME": "My Formulize MCP Server"
-         }
-       }
-     }
-   }
-   ```
-
-	- Also, in VSCode you will want to go into the preferences, and under __Chat > MCP__, make sure _discovery_ is enabled.
-
-	- For Claude Desktop, if you're not using the MCPB file, modify the file ```claude_desktop_config.json```. Where is it?\
+	- For __Claude Desktop__, _if you're __not__ using the MCPB file_, modify the file ```claude_desktop_config.json```. Where is it?\
 	Windows: ```%APPDATA%\Claude\claude_desktop_config.json```\
 	macOS: ```~/Library/Application Support/Claude/claude_desktop_config.json```\
 	\
@@ -85,6 +66,29 @@ title: External AI Assistant Setup (MCP)
      }
    }
    ```
+
+	- For Copilot in VSCode, make a file called ```mcp.json``` in the ```.vscode``` folder of your project. It should look like this
+
+	```json
+	{
+		"servers": {
+			"My Formulize MCP Server": {
+				"command": "npx",
+				"args": [
+					"-y",
+					"formulize-mcp"
+				],
+				"env": {
+					"FORMULIZE_URL": "https://<your.formulize.site.url>",
+					"FORMULIZE_API_KEY": "<your api key from your formulize site>",
+					"FORMULIZE_SERVER_NAME": "My Formulize MCP Server"
+				}
+			}
+		}
+	}
+	```
+
+	- Also, in VSCode you will want to go into the preferences, and under __Chat > MCP__, make sure _discovery_ is enabled.
 
 	- The configuration for other AI assistants should be similar. You need to use ```npx``` with ```formulize-mcp```, and set the environment variables.
 
