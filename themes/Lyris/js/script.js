@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initAccordions();
   initCardToggles();
   initFormScrollSeparator();
-  initListScroll();
   showApp();
 });
 
@@ -131,84 +130,6 @@ function initFormScrollSeparator() {
   }, { passive: true });
 
   apply(); // a reloaded page can restore a non-zero scroll position
-}
-
-// On wider screens a list scrolls with the page (`.lyris-main`), between its
-// title bar and footer, which are pinned (see "Content width" in style.css). The
-// list card still scrolls sideways when the entries are wider than it, and that
-// sideways scroller is as far as position: sticky reaches, so two things are
-// done here instead:
-// - the column headings and filter row are held under the title bar while the
-//   page scrolls, by moving them down (--lyris-head-shift) as far as the card's
-//   top has gone under the title bar, and no further than the card's end;
-// - while the card's own sideways scrollbar is out of sight below the footer, a
-//   copy of it is pinned above the footer, scrolling the card as it scrolls.
-// Phones keep the list scrolling inside its own area, between pinned bars, so
-// nothing is done there; nor in the drawer or an embedded screen.
-function initListScroll() {
-  if (document.body.classList.contains('formulize-inline')) return;
-  const main = document.querySelector('.lyris-main');
-  const screen = main ? main.querySelector('.lyris-list-screen') : null;
-  const list = screen ? screen.querySelector('.lyris-list__body') : null;
-  const title = screen ? screen.querySelector('.lyris-list__titlebar') : null;
-  const footer = screen ? screen.querySelector('.lyris-list__footer') : null;
-  if (!list || !title || !footer) return;
-  const wide = window.matchMedia('(min-width: 769px)');
-
-  const bar = document.createElement('div');
-  bar.className = 'lyris-list__hscroll';
-  bar.setAttribute('aria-hidden', 'true'); // the list scrolls sideways by itself too
-  bar.hidden = true;
-  const track = document.createElement('div');
-  bar.appendChild(track);
-  footer.appendChild(bar);
-
-  let ticking = false;
-  const apply = () => {
-    ticking = false;
-    if (!wide.matches) {
-      list.style.removeProperty('--lyris-head-shift');
-      bar.hidden = true;
-      return;
-    }
-    const box = list.getBoundingClientRect();
-    const head = list.querySelector('thead');
-    const keep = (head ? head.offsetHeight : 0);
-    // the headings start inside the card's border, and tuck 1px under the title bar,
-    // so nothing passing between shows
-    const shift = Math.max(0, Math.min(title.getBoundingClientRect().bottom - box.top - list.clientTop - 1, box.height - keep));
-    list.style.setProperty('--lyris-head-shift', Math.round(shift) + 'px');
-    // the card's own scrollbar is along its bottom edge
-    const wider = list.scrollWidth > list.clientWidth + 1;
-    bar.hidden = !wider || box.bottom <= footer.getBoundingClientRect().top;
-    if (!bar.hidden) {
-      track.style.width = list.scrollWidth + 'px';
-      bar.style.width = list.clientWidth + 'px';
-      if (bar.scrollLeft !== list.scrollLeft) bar.scrollLeft = list.scrollLeft;
-    }
-  };
-  const later = () => {
-    if (ticking) return;
-    ticking = true;
-    requestAnimationFrame(apply);
-  };
-
-  // each scrolls the other; the one being scrolled is left alone
-  let leader = null;
-  const follow = (from, to) => () => {
-    if (leader && leader !== from) return;
-    leader = from;
-    to.scrollLeft = from.scrollLeft;
-    requestAnimationFrame(() => { leader = null; });
-  };
-  bar.addEventListener('scroll', follow(bar, list), { passive: true });
-  list.addEventListener('scroll', follow(list, bar), { passive: true });
-
-  main.addEventListener('scroll', later, { passive: true });
-  window.addEventListener('resize', later);
-  if (wide.addEventListener) wide.addEventListener('change', later);
-  if (window.ResizeObserver) new ResizeObserver(later).observe(list);
-  apply();
 }
 
 // ============================================================
