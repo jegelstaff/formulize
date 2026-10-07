@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initCardToggles();
   initFormScrollSeparator();
   initListScroll();
+  initFormEdges();
   showApp();
 });
 
@@ -142,7 +143,11 @@ function initFormScrollSeparator() {
 //   page scrolls, by moving them down (--lyris-head-shift) as far as the card's
 //   top has gone under the title bar, and no further than the card's end;
 // - while the card's own sideways scrollbar is out of sight below the footer, a
-//   copy of it is pinned above the footer, scrolling the card as it scrolls.
+//   copy of it is pinned above the footer, scrolling the card as it scrolls;
+// - while the card's top or bottom is out of sight under the title bar or the
+//   footer, the bar draws the card's edge at the cut (.is-over-top,
+//   .is-over-bottom; see "the card's edge" in style.css), and the headings sit
+//   just under the drawn top edge.
 // Phones keep the list scrolling inside its own area, between pinned bars, so
 // nothing is done there; nor in the drawer or an embedded screen.
 function initListScroll() {
@@ -168,22 +173,30 @@ function initListScroll() {
     ticking = false;
     if (!wide.matches) {
       list.style.removeProperty('--lyris-head-shift');
+      title.classList.remove('is-over-top');
+      footer.classList.remove('is-over-bottom');
       bar.hidden = true;
       return;
     }
     const box = list.getBoundingClientRect();
+    const gap = parseFloat(getComputedStyle(list).marginBottom) || 0; // the space between the cards
     const head = list.querySelector('thead');
     const keep = (head ? head.offsetHeight : 0);
-    // the headings start inside the card's border, and tuck 1px under the title bar,
-    // so nothing passing between shows
-    const shift = Math.max(0, Math.min(title.getBoundingClientRect().bottom - box.top - list.clientTop - 1, box.height - keep));
+    // where the card's top shows: past the gap under the title bar. Above that, its
+    // edge is drawn there, and the headings are held just inside it
+    const top = title.getBoundingClientRect().bottom + gap;
+    title.classList.toggle('is-over-top', box.top < top);
+    title.style.setProperty('--lyris-edge-bg', head ? 'var(--fz-header-bg)' : 'var(--fz-card-bg)');
+    const shift = Math.max(0, Math.min(top - box.top, box.height - keep));
     list.style.setProperty('--lyris-head-shift', Math.round(shift) + 'px');
-    // the card's own scrollbar is along its bottom edge
+    // and its bottom, short of the gap above the footer; its own sideways scrollbar
+    // is along that bottom edge
+    const under = box.bottom > footer.getBoundingClientRect().top - gap + 1;
+    footer.classList.toggle('is-over-bottom', under);
     const wider = list.scrollWidth > list.clientWidth + 1;
-    bar.hidden = !wider || box.bottom <= footer.getBoundingClientRect().top;
+    bar.hidden = !wider || !under;
     if (!bar.hidden) {
       track.style.width = list.scrollWidth + 'px';
-      bar.style.width = list.clientWidth + 'px';
       if (bar.scrollLeft !== list.scrollLeft) bar.scrollLeft = list.scrollLeft;
     }
   };
@@ -208,6 +221,40 @@ function initListScroll() {
   window.addEventListener('resize', later);
   if (wide.addEventListener) wide.addEventListener('change', later);
   if (window.ResizeObserver) new ResizeObserver(later).observe(list);
+  apply();
+}
+
+// The same edges for a form's card on wider screens: drawn under the page tabs
+// while the card's top is out of sight under them, and above the action bar
+// while its bottom is out of sight under that (see "the card's edge" in
+// style.css). Not on phones, in the drawer or in an embedded screen.
+function initFormEdges() {
+  if (document.body.classList.contains('formulize-inline')) return;
+  const main = document.querySelector('.lyris-main');
+  const form = main ? main.querySelector(':scope > #formulizeform') : null;
+  const card = form ? form.querySelector('.lyris-form-screen') : null;
+  const actions = form ? form.querySelector('#multipage-controls') : null;
+  if (!card || !actions) return;
+  const tabs = form.querySelector('#pageNavTable.pill-tabs');
+  const wide = window.matchMedia('(min-width: 769px)');
+
+  let ticking = false;
+  const apply = () => {
+    ticking = false;
+    const box = card.getBoundingClientRect();
+    if (tabs) tabs.classList.toggle('is-over-top', wide.matches && box.top < tabs.getBoundingClientRect().bottom - 1);
+    const gap = parseFloat(getComputedStyle(card).marginBottom) || 0;
+    actions.classList.toggle('is-over-bottom', wide.matches && box.bottom > actions.getBoundingClientRect().top - gap + 1);
+  };
+  const later = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(apply);
+  };
+  main.addEventListener('scroll', later, { passive: true });
+  window.addEventListener('resize', later);
+  if (wide.addEventListener) wide.addEventListener('change', later);
+  if (window.ResizeObserver) new ResizeObserver(later).observe(card);
   apply();
 }
 
