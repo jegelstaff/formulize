@@ -57,8 +57,11 @@ wide screens, and the page on phones:
 Naming it also means a reader can scroll it from anywhere on the page: over the margins beside a
 narrow column, a title bar, a bar of buttons. The wheel scrolls the named element unless the pointer
 is already over it, or over something else that scrolls on its own, such as an open menu or a wide
-table. This is `include/js/scroll_container.js`, which Formulize adds to every page; a theme that names
-nothing isn't affected.
+table. It is also left alone over a modal and its backdrop (anything with `aria-modal="true"` or
+`role="dialog"`, such as the entry drawer), so the page behind a modal stays where it is, and over a
+menu or list of options opened outside the element (`role="menu"`, `role="listbox"`, or jQuery UI's
+`.ui-menu`, as an autocomplete's suggestions are). This is `include/js/scroll_container.js`, which
+Formulize adds to every page; a theme that names nothing isn't affected.
 
 Use `none` when nothing in the page scrolls, because something outside it does:
 

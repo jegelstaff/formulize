@@ -26,8 +26,9 @@
 ###############################################################################
 
 // Appearance settings: colours, fonts, size, page width, logo, and favicon,
-// configured on the Appearance page in the Formulize admin UI, and rendered by
-// themes as CSS custom property overrides on :root.
+// configured in the appearance editor (appearance_editor.php: Admin > Appearance >
+// Styles and Colors), and rendered by themes as CSS custom property overrides on
+// :root.
 //
 // Settings are kept per theme, in the theme's own generated stylesheet. That
 // stylesheet, and any uploaded logo or favicon, live in an "appearance" folder inside the
@@ -431,7 +432,8 @@ function formulize_sanitizeAppearanceLookSettings($values, $theme = null) {
     $clean = array();
     $fonts = formulize_appearanceFontMap($theme);
     foreach (formulize_appearanceSettingNames() as $name) {
-        if (!array_key_exists($name, $values) OR $name == 'appearance_look') {
+        // which look is applied, and the editor's mode, are the site's, not a look's
+        if (!array_key_exists($name, $values) OR $name == 'appearance_look' OR $name == 'appearance_mode') {
             continue;
         }
         $value = trim((string) $values[$name]);
@@ -488,8 +490,8 @@ function formulize_mergeAppearanceLook($settings, $look) {
 /**
  * The settings a theme is shown with: its own, with the look applied to the site
  * on top. This is what pages are drawn with (the stylesheet, the logo, the
- * favicon, the page width); the Appearance page and the advanced editor edit the
- * theme's own settings and the looks (formulize_getAppearanceSettings).
+ * favicon, the page width); the appearance editor edits the theme's own settings
+ * and the looks (formulize_getAppearanceSettings).
  *
  * @param string|null $theme theme folder name, defaults to the active theme
  * @param array|null $settings the theme's own settings, defaults to the saved ones
@@ -527,7 +529,7 @@ function formulize_appearanceThemeHasAdvancedMode($theme = null) {
  * declaring --formulize-size-tokens with its other tokens (Lyris does, in
  * css/tokens.css). A theme that doesn't, such as Anari, styles most of its
  * markup with its own fixed sizes, so offering it a Size setting that changed
- * only a few things would be confusing: the Appearance page leaves the setting
+ * only a few things would be confusing: the appearance editor leaves the setting
  * out for it, and no sizes are written into its stylesheet.
  *
  * @param string|null $theme theme folder name, defaults to the active theme
@@ -540,8 +542,8 @@ function formulize_appearanceThemeUsesSizes($theme = null) {
 
 /**
  * The narrowest and widest the maximum page width can be set to, in pixels, and
- * the width the Appearance page and the advanced editor offer for a maximum width
- * when the page is at full width.
+ * the width the appearance editor offers for a maximum width when the page is at
+ * full width.
  *
  * @return array with 'min', 'max' and 'default'
  */
@@ -551,10 +553,9 @@ function formulize_appearanceContentWidthLimits() {
 
 /**
  * Whether a theme can keep its pages to a maximum width, so that the Page width
- * setting (appearance_contentwidth, on the Appearance page and in the advanced
- * editor) changes how it looks. A theme says so itself, by declaring
- * --formulize-content-max-width with its other tokens (Lyris does, in
- * css/tokens.css) and reading it in its layout. A theme that doesn't, such as
+ * setting (appearance_contentwidth, in the appearance editor) changes how it
+ * looks. A theme says so itself, by declaring --formulize-content-max-width with
+ * its other tokens (Lyris does, in css/tokens.css) and reading it in its layout. A theme that doesn't, such as
  * Anari, isn't offered the setting, and no width is written into its stylesheet.
  *
  * @param string|null $theme theme folder name, defaults to the active theme
@@ -623,6 +624,24 @@ function formulize_appearanceContentWidth($settings, $theme = null) {
 }
 
 /**
+ * What the component tokens, and the tokens that follow them, are declared as for
+ * a theme, as CSS: what formulize-ui.css declares on :root, overridden by anything
+ * the theme declares on :root in its own css/tokens.css.
+ *
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return array token => its CSS value
+ */
+function formulize_appearanceDeclaredTokens($theme = null) {
+    $theme = formulize_resolveAppearanceTheme($theme);
+    $declared = formulize_appearanceTokenDeclarations((string) @file_get_contents(XOOPS_ROOT_PATH . '/modules/formulize/templates/css/formulize-ui.css'));
+    $themeTokens = ICMS_THEME_PATH . '/' . $theme . '/css/tokens.css';
+    if ($theme AND is_file($themeTokens)) {
+        $declared = array_merge($declared, formulize_appearanceTokenDeclarations((string) @file_get_contents($themeTokens)));
+    }
+    return $declared;
+}
+
+/**
  * The Default value of each size token for a theme: what formulize-ui.css
  * declares on :root, overridden by anything the theme declares on :root in its
  * own css/tokens.css. This is what the advanced editor shows as Default,
@@ -632,13 +651,8 @@ function formulize_appearanceContentWidth($settings, $theme = null) {
  * @return array token => value, as appearance_tokens.json writes values
  */
 function formulize_appearanceSizeDefaults($theme = null) {
-    $theme = formulize_resolveAppearanceTheme($theme);
     $map = formulize_appearanceTokenMap();
-    $declared = formulize_appearanceTokenDeclarations((string) @file_get_contents(XOOPS_ROOT_PATH . '/modules/formulize/templates/css/formulize-ui.css'));
-    $themeTokens = ICMS_THEME_PATH . '/' . $theme . '/css/tokens.css';
-    if ($theme AND is_file($themeTokens)) {
-        $declared = array_merge($declared, formulize_appearanceTokenDeclarations((string) @file_get_contents($themeTokens)));
-    }
+    $declared = formulize_appearanceDeclaredTokens($theme);
     $defaults = array();
     foreach ($map['tokens'] as $token => $entry) {
         $value = isset($declared[$token]) ? formulize_appearanceTokenParse($entry['type'], $declared[$token]) : null;
@@ -823,8 +837,7 @@ function formulize_defaultAppearanceSettings() {
  * @param array $current the theme's settings as they stand
  * @param string $theme theme folder name
  * @param array $errors gets a message for each font chosen as "Other Google
- *                      Font" with no usable name, which falls back to the default,
- *                      and for a maximum page width that can't be used
+ *                      Font" with no usable name, which falls back to the default
  * @return array settings array, not yet sanitized
  */
 function formulize_appearanceSubmittedSettings($post, $current, $theme, &$errors) {
@@ -838,18 +851,8 @@ function formulize_appearanceSubmittedSettings($post, $current, $theme, &$errors
     foreach (array('appearance_look', 'appearance_mode', 'appearance_contentwidth', 'appearance_overrides') as $name) {
         $submitted[$name] = isset($post[$name]) ? (string) $post[$name] : $current[$name];
     }
-    // the Appearance page asks for the page width as a choice, full width or a
-    // maximum width, and the width itself, which only counts with the second. The
-    // advanced editor sends the width, or 'full', as appearance_contentwidth.
-    if (isset($post['appearance_contentwidth_mode'])) {
-        $submitted['appearance_contentwidth'] = ($post['appearance_contentwidth_mode'] == 'max') ? $submitted['appearance_contentwidth'] : 'full';
-        if ($post['appearance_contentwidth_mode'] == 'max' AND formulize_appearanceContentWidthPixels($submitted['appearance_contentwidth']) === '') {
-            $limits = formulize_appearanceContentWidthLimits();
-            $default = formulize_appearanceContentWidthDefault($theme);
-            $errors[] = "Please enter a maximum page width from " . $limits['min'] . " to " . $limits['max'] . " pixels. The page width has been left as the theme has it: " . ($default == 'full' ? "full width" : "a maximum width of " . $default . " pixels") . ".";
-            $submitted['appearance_contentwidth'] = '';
-        }
-    }
+    // the page width is sent as the width in pixels, kept to the limits by the
+    // editor, or 'full'
     foreach (array_keys(formulize_appearanceUploads()) as $name) {
         $submitted[$name] = $current[$name];
     }
@@ -915,22 +918,29 @@ function formulize_appearanceUploads() {
  */
 function formulize_deleteAppearanceUploadedFile($file, $theme) {
     $path = formulize_locateAppearanceFile($file, $theme);
-    // a look can have the same image, as a copy of another look does: it stays
+    // a look can have the same image, as a copy of another look does, and the theme's
+    // own settings name theirs: an image something still names stays
     if ($path AND strpos($path, formulize_getAppearanceDir($theme) . '/') === 0 AND !formulize_appearanceFileInUse($file, $theme)) {
         unlink($path);
     }
 }
 
 /**
- * Whether one of a theme's looks has an uploaded image: a logo or favicon of its
- * own, so the file has to stay. Called once the settings that stopped using the
- * file have been saved.
+ * Whether a theme's own settings (Default's), or one of its looks, has an uploaded
+ * image: a logo or favicon, so the file has to stay. Called once the settings that
+ * stopped using the file have been saved.
  *
  * @param string $file the file's name
  * @param string $theme theme folder name
  * @return boolean
  */
 function formulize_appearanceFileInUse($file, $theme) {
+    $site = formulize_getAppearanceSettings($theme);
+    foreach (array_keys(formulize_appearanceUploads()) as $name) {
+        if ($site[$name] === $file) {
+            return true;
+        }
+    }
     foreach (formulize_getAppearanceLooks($theme, true) as $look) {
         foreach (array_keys(formulize_appearanceUploads()) as $name) {
             if (isset($look['settings'][$name]) AND $look['settings'][$name] === $file) {
@@ -957,6 +967,12 @@ function formulize_appearanceLookNameProblem($name, $theme, $except = '') {
     }
     if (strlen($name) > 60) {
         return 'Please give the look a name of 60 characters or fewer.';
+    }
+    // the lines its stylesheet's block starts and ends with, which would cut the block short
+    foreach (formulize_appearanceLookBlockMarkers() as $marker) {
+        if (strpos($name, $marker) !== false) {
+            return 'Please give the look another name.';
+        }
     }
     foreach (formulize_getAppearanceLooks($theme) as $key => $look) {
         if ($key != $except AND strtolower($look['name']) == strtolower($name)) {
@@ -991,16 +1007,20 @@ function formulize_appearanceNewLookKey($name, $theme) {
  * Save one of a theme's looks: its name, description and the settings it
  * changes, in its stylesheet (formulize_buildAppearanceLookCss), which is the
  * record of it. Then the theme's own stylesheet is rewritten, since the look may
- * be the one applied to the site. A built-in look can't be saved.
+ * be the one applied to the site, unless the caller is about to rewrite it itself
+ * (the editor's Save, which writes the theme's own settings next). A built-in
+ * look is saved the same way, marked as changed on this site.
  *
  * @param string $theme theme folder name
  * @param string $key the look's key (formulize_appearanceNewLookKey for a new one)
  * @param string $name its name
  * @param array $settings the settings it changes (sanitized here)
  * @param string $description what it is for, if anything
- * @return boolean whether it was saved
+ * @param boolean $regenerate whether to rewrite the theme's own stylesheet too
+ * @return boolean whether it was saved, and the theme's own stylesheet rewritten
+ *                 when asked for
  */
-function formulize_saveAppearanceLook($theme, $key, $name, $settings, $description = '') {
+function formulize_saveAppearanceLook($theme, $key, $name, $settings, $description = '', $regenerate = true) {
     $theme = formulize_resolveAppearanceTheme($theme);
     $builtin = formulize_appearanceBuiltinLooks();
     if (!preg_match('/^[a-z0-9][a-z0-9-]*$/', $key)) {
@@ -1022,7 +1042,7 @@ function formulize_saveAppearanceLook($theme, $key, $name, $settings, $descripti
         return false;
     }
     formulize_getAppearanceLooks($theme, true);
-    return formulize_regenerateAppearanceCss($site, $theme);
+    return $regenerate ? formulize_regenerateAppearanceCss($site, $theme) : true;
 }
 
 /**
@@ -1119,27 +1139,32 @@ function formulize_deleteAppearanceLook($theme, $key) {
 }
 
 /**
- * Take the logo and favicon uploads of a submitted Appearance form, from the
- * Appearance page or the advanced editor. The logo and the favicon are images,
- * so they can't be values in the stylesheet the way the colours and the font
- * are: the files are kept beside the stylesheet in the theme's appearance
- * folder, and the stylesheet records which file is in use, so the stylesheet is
- * still the one place the settings are read from.
+ * Take the logo and favicon uploads of a submitted form, from the appearance
+ * editor. The logo and the favicon are images, so they can't be values in the
+ * stylesheet the way the colours and the font are: the files are kept beside the
+ * stylesheet in the theme's appearance folder, and the stylesheet records which
+ * file is in use, so the stylesheet is still the one place the settings are read
+ * from.
  *
- * The old file only goes when there is something to put in its place, or it was
- * asked to go (<setting>_remove, or a reset), so a rejected upload leaves the
- * current file alone.
+ * A setting only changes when there is a new file to put in its place, or the old
+ * one was asked to go (<setting>_remove), so a rejected upload leaves it alone.
+ * Nothing is deleted here: the file a setting no longer names is only deleted
+ * once the settings that stopped naming it have been written, and a new file once
+ * the save it came with has failed (formulize_deleteAppearanceUploadedFile, by
+ * the caller), so a save that fails never leaves a stylesheet naming a file that
+ * is gone.
  *
- * @param array $submitted the settings being saved; its logo and favicon are
- *                         set to the new file, or '' when removed
- * @param array $current the theme's settings as they stand
+ * Each file gets a name of its own, with some random characters as well as the
+ * time, so two uploads in the same second can't have the same name.
+ *
+ * @param array $submitted the settings being saved, with the logo and favicon as
+ *                         they stand; they are set to the new file, or '' when removed
  * @param string $theme theme folder name
- * @param boolean $reset whether everything is being reset to the defaults
  * @param array $errors gets a message for each upload that couldn't be taken
  * @param array|null $only the uploads to take (setting names), or null for both
  * @return array $submitted, with the logo and favicon settled
  */
-function formulize_saveAppearanceUploads($submitted, $current, $theme, $reset, &$errors, $only = null) {
+function formulize_saveAppearanceUploads($submitted, $theme, &$errors, $only = null) {
     foreach (formulize_appearanceUploads() as $uploadSetting => $upload) {
         if ($only !== null AND !in_array($uploadSetting, $only)) {
             continue;
@@ -1149,7 +1174,7 @@ function formulize_saveAppearanceUploads($submitted, $current, $theme, $reset, &
         if (isset($_FILES[$field]) AND $_FILES[$field]['error'] == UPLOAD_ERR_OK) {
             $mimeType = mime_content_type($_FILES[$field]['tmp_name']);
             if (isset($upload['types'][$mimeType])) {
-                $fileName = $upload['filePrefix'] . time() . '.' . $upload['types'][$mimeType];
+                $fileName = $upload['filePrefix'] . time() . '-' . bin2hex(random_bytes(4)) . '.' . $upload['types'][$mimeType];
                 $appearanceDir = formulize_prepareAppearanceDir($theme);
                 if ($appearanceDir AND move_uploaded_file($_FILES[$field]['tmp_name'], $appearanceDir . '/' . $fileName)) {
                     $newFile = $fileName;
@@ -1160,8 +1185,7 @@ function formulize_saveAppearanceUploads($submitted, $current, $theme, $reset, &
                 $errors[] = "The " . $upload['noun'] . " must be a " . $upload['typesLabel'] . " image.";
             }
         }
-        if ($newFile OR $reset OR !empty($_POST[$uploadSetting . '_remove'])) {
-            formulize_deleteAppearanceUploadedFile($current[$uploadSetting], $theme);
+        if ($newFile OR !empty($_POST[$uploadSetting . '_remove'])) {
             $submitted[$uploadSetting] = $newFile;
         }
     }
@@ -1457,10 +1481,10 @@ function formulize_buildAppearanceSettingsBlock($settings, $theme) {
     $lines = array(
         '/* Formulize appearance settings for the ' . preg_replace('/[^A-Za-z0-9._ -]/', '', (string) $theme) . ' theme.',
         ' *',
-        ' * Generated from the Appearance page in the Formulize admin UI, and rewritten',
-        ' * every time those settings are saved. The block below is where the settings',
-        ' * themselves are kept, and it is what the Appearance page reads them back out',
-        ' * of. If this file is deleted, or the block below is removed or damaged, the',
+        ' * Generated by the appearance editor (Admin > Appearance > Styles and Colors),',
+        ' * and rewritten every time those settings are saved. The block below is where',
+        ' * the settings themselves are kept, and it is what the editor reads them back',
+        ' * out of. If this file is deleted, or the block below is removed or damaged, the',
         ' * built-in defaults apply.',
         ' *',
         ' * ' . $markers['start'],
@@ -1809,7 +1833,7 @@ function formulize_getAppearanceCssPath($theme = null) {
  * it and trying to correct the permissions if not. A theme folder that the web
  * server can't write is a normal state on a locked-down deployment, so this
  * reports failure rather than raising anything: callers surface it to the admin
- * (the Appearance page) or fall back to inline styles (the theme head).
+ * (the appearance editor) or fall back to inline styles (the theme head).
  *
  * @param string|null $theme theme folder name, defaults to the active theme
  * @return string the folder path, or false if it can't be created/written
@@ -1982,19 +2006,25 @@ function formulize_buildAppearanceCssRules($settings, $theme) {
  */
 function formulize_buildAppearanceLookCss($key, $look, $settings, $theme) {
     $markers = formulize_appearanceLookBlockMarkers();
+    // the name and description are one line each, in a comment, and can't have the
+    // block's own start and end in them, which would cut the block short
+    $clean = function ($text) use ($markers) {
+        return str_replace(array("\r", "\n", '*/', $markers['start'], $markers['end']), ' ', (string) $text);
+    };
     $lines = array(
         '/* Formulize appearance look for the ' . preg_replace('/[^A-Za-z0-9._ -]/', '', (string) $theme) . ' theme.',
         ' *',
-        ' * Made in the advanced editor of the Appearance page, and rewritten whenever the',
-        ' * look, or the theme\'s appearance settings it changes, are saved. The block',
-        ' * below is the record of the look: the settings it changes. The rest of the',
-        ' * theme\'s settings come from its own appearance stylesheet.',
+        ' * Made in the appearance editor (Admin > Appearance > Styles and Colors), and',
+        ' * rewritten whenever the look, or the theme\'s appearance settings it changes,',
+        ' * are saved. The block below is the record of the look: the settings it',
+        ' * changes. The rest of the theme\'s settings come from its own appearance',
+        ' * stylesheet.',
         ' *',
         ' * ' . $markers['start'],
-        ' * name: ' . str_replace(array("\r", "\n", '*/'), ' ', $look['name']),
+        ' * name: ' . $clean($look['name']),
     );
     if ($look['description'] !== '') {
-        $lines[] = ' * description: ' . str_replace(array("\r", "\n", '*/'), ' ', $look['description']);
+        $lines[] = ' * description: ' . $clean($look['description']);
     }
     if (!empty($look['edited'])) {
         $lines[] = ' * edited: yes'; // a built-in look, changed on this site
@@ -2034,7 +2064,7 @@ function formulize_regenerateAppearanceLooks($settings, $theme) {
  * Write a theme's appearance stylesheet into that theme's appearance folder.
  * This is how appearance settings are saved: the file is the record of them, so
  * a failure here means the settings were not saved at all, and callers must say
- * so rather than reporting success (the Appearance page does, and warns about an
+ * so rather than reporting success (the appearance editor does, and warns about an
  * unwritable folder before the admin fills the form in).
  *
  * Also called lazily by formulize_renderAppearanceHead when a theme has no

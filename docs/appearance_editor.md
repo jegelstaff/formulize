@@ -57,7 +57,9 @@ look applied to the site is marked **Applied**. The editor opens on it.
 
 While you edit a look other than Default, the preview shows the site with the look applied. Everything
 the look changes is marked, with **Reset** to go back to Default's; everything else says "from
-Default". With nothing selected in the preview, the **Site-wide** tab has the look's logo and
+Default". A look can set something to the same as Default has it (Compact sets the label weight
+Default has, for one): it is still marked as the look's, and stays as it is when Default changes,
+until it is reset. With nothing selected in the preview, the **Site-wide** tab has the look's logo and
 favicon, colours, fonts and page width.
 
 The **Changes** tab has two lists:
