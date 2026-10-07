@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initAccordions();
   initCardToggles();
   initFormScrollSeparator();
-  initScrollFromAnywhere();
   showApp();
 });
 
@@ -131,47 +130,6 @@ function initFormScrollSeparator() {
   }, { passive: true });
 
   apply(); // a reloaded page can restore a non-zero scroll position
-}
-
-// On wider screens a list's entries and a long form scroll inside their cards
-// (see "Content width" in style.css), not the page, so the mouse wheel or
-// trackpad only scrolled them over the card itself. Here, scrolling anywhere
-// else on the page (the margins either side of the column, the title bar, the
-// page tabs, the bar at the bottom) scrolls the card instead. Something under
-// the pointer that scrolls on its own, such as an open menu, keeps its scroll,
-// and pinch-zoom (a wheel event with the control key) is left alone. Not on
-// phones, where the page scrolls, nor in the drawer or an embedded screen.
-function initScrollFromAnywhere() {
-  if (document.body.classList.contains('formulize-inline')) return;
-  const main = document.querySelector('.lyris-main');
-  if (!main) return;
-  const wide = window.matchMedia('(min-width: 769px)');
-
-  const scrolls = (el, dx, dy) => {
-    const style = getComputedStyle(el);
-    return (dy && /(auto|scroll)/.test(style.overflowY) && el.scrollHeight > el.clientHeight) ||
-      (dx && /(auto|scroll)/.test(style.overflowX) && el.scrollWidth > el.clientWidth);
-  };
-  // the card that scrolls on this screen, if there is one and it has somewhere to go
-  const card = (dx, dy) => {
-    const el = main.querySelector('.lyris-list__body') || main.querySelector(':scope > #formulizeform .lyris-form-screen');
-    return el && scrolls(el, dx, dy) ? el : null;
-  };
-
-  main.addEventListener('wheel', (ev) => {
-    if (!wide.matches || ev.ctrlKey || ev.defaultPrevented) return;
-    let dx = ev.deltaX, dy = ev.deltaY;
-    if (ev.shiftKey && !dx) { dx = dy; dy = 0; } // shift + wheel scrolls sideways
-    const target = card(dx, dy);
-    if (!target || target.contains(ev.target)) return; // it scrolls itself
-    for (let el = ev.target; el && el !== main; el = el.parentElement) {
-      if (el instanceof Element && scrolls(el, dx, dy)) return;
-    }
-    // lines or pages, as some mice report them, in pixels
-    const unit = ev.deltaMode === 1 ? 16 : ev.deltaMode === 2 ? target.clientHeight : 1;
-    target.scrollBy(dx * unit, dy * unit);
-    ev.preventDefault();
-  }, { passive: false });
 }
 
 // ============================================================

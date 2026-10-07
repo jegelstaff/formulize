@@ -30,7 +30,8 @@ If you don't hide and reveal the body, fire it once the page has loaded anyway.
 ## 2. Say what scrolls, if it isn't obvious
 
 Formulize saves a reader's scroll position when they save a form, and puts it back afterwards. To do
-that it has to know which element scrolls.
+that it has to know which element scrolls. And when a theme names the element, the mouse wheel or
+trackpad scrolls it from anywhere on the page, not only with the pointer over it.
 
 **Usually you don't need to do anything.** Formulize looks for the nearest ancestor of the form that
 is actually scrollable — an element taller than its own box with `overflow-y` set to `auto` or
@@ -45,12 +46,19 @@ on your `<body>` tag:
 ```
 
 The selector can name several elements, for a theme that scrolls a different one at different
-widths. Formulize uses the first of them that is scrolling at the time, and if none is, looks for one
-as if nothing were named. Lyris scrolls a form's card on wide screens and the page on phones:
+widths, or on different screens. Formulize uses the first of them that is scrolling at the time, and
+if none is, looks for one as if nothing were named. Lyris scrolls a list's entries or a form's card on
+wide screens, and the page on phones:
 
 ```html
-<body data-formulize-scroll-container=".lyris-form-screen, .lyris-main">
+<body data-formulize-scroll-container=".lyris-list__body, .lyris-form-screen, .lyris-main">
 ```
+
+Naming it also means a reader can scroll it from anywhere on the page: over the margins beside a
+narrow column, a title bar, a bar of buttons. The wheel scrolls the named element unless the pointer
+is already over it, or over something else that scrolls on its own, such as an open menu or a wide
+table. This is `include/js/scroll_container.js`, which Formulize adds to every page; a theme that names
+nothing isn't affected.
 
 Use `none` when nothing in the page scrolls, because something outside it does:
 
