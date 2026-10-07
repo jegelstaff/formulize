@@ -4619,75 +4619,94 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
    Content width
    ------------------------------------------------------------
    --formulize-content-max-width (css/tokens.css) is how wide a page can get:
-   1200px, unless the Appearance page's Page width setting sets another width,
-   or 100%, full width. The content of list and form screens stays at the left,
-   beside the sidebar, and what is left of `.lyris-main` to its right is page
-   background.
+   1200px, unless the Appearance editor's Page width sets another width, or
+   100%, full width. List and form screens keep their content to a column of
+   that width, centred in the window, with the page background either side.
 
-   The bars along the top and bottom of a list (title bar, selection bar,
-   pagination footer) and the form's action bar (`#multipage-controls`) still run
-   the full width of `.lyris-main`, so they read as the screen's chrome, but their
-   contents are kept to the content: each takes the width beyond the maximum as
-   extra right padding, so its buttons end where the content ends. Their parents
-   are full width, so 100% in the padding is the bar's own width, and at full
-   width (100%) the extra is 0px and nothing moves.
+   The column is centred in the WINDOW, not in the space beside the sidebar, so
+   opening or closing the sidebar doesn't move it, as long as there is room for
+   the sidebar beside it. When there isn't, the column moves over only as far as
+   it must to clear the sidebar. The sidebar still pushes the page; it is never
+   an overlay. `--lyris-column-start` is how far in from the left of
+   `.lyris-main` the column starts. Centred in the window, the column starts
+   (window - max width) / 2 from the window's left, and `.lyris-main` starts
+   (window - its own width) from it, so:
 
-   The site header does the same on every page: it runs the full width of the
-   window, over the sidebar, so the content ends the sidebar's width further in
-   while the sidebar is open, and its links end there.
+     max(0px, 100% - (100vw + max width) / 2)
 
-   Not on phones (768px and under), where pages always use the whole screen and
-   these bars have their own padding, and not in the drawer or an embedded
-   screen (`.formulize-inline`), which are narrower than any maximum. The drawer,
-   popups and the content of pages outside list and form screens (the home page,
-   account pages) are left at full width.
+   where 100% is `.lyris-main`'s width, wherever it is used. Measured that way it
+   follows the sidebar's width as it opens and closes, so the column stays still
+   while the sidebar slides, instead of jumping and sliding back. Each screen
+   takes it, and the room to the column's right, as side padding (the column's
+   own gutters are the children's margins, as on phones). At full width both are
+   0px, and the column is `.lyris-main`.
+
+   In the column, everything is a card on the page background:
+   - a list's title bar is a card of its own, and the selection bar, while rows
+     are checked, covers it exactly: the same place, size and corners;
+   - a list's entries are in a card as tall as they are, which scrolls inside
+     itself, both ways, when there are more than fit;
+   - a form's card is as tall as its fields, and scrolls inside itself when the
+     form is longer than fits, so it never runs under the bar below it (Lyris's
+     theme.html names it as the scroll container, so saving a long form returns
+     to where you were: data-formulize-scroll-container);
+   - a list's pagination footer and a form's action bar are the same floating
+     bar, at the bottom of the window.
+
+   The site header runs the full width of the window, with its links at the
+   window's right edge: they are the site's, not the page's.
+
+   Not on phones (768px and under), where pages use the whole screen, the bars
+   run edge to edge, and a form scrolls the page; and not in the drawer or an
+   embedded screen (`.formulize-inline`). Pages outside list and form screens
+   (the home page, account pages) are left at full width.
    ============================================================ */
 @media (min-width: 769px) {
 
-  body:not(.formulize-inline) .lyris-list__body {
-    max-width: var(--formulize-content-max-width);
+  .lyris-app {
+    --lyris-column-start: max(0px, 100% - (100vw + var(--formulize-content-max-width)) / 2);
   }
 
+  /* the column: each screen's side padding. 100% is `.lyris-main`'s width, and
+     the max width can be 100% too, which leaves 0px either side */
+  body:not(.formulize-inline) .lyris-list-screen,
+  body:not(.formulize-inline) .lyris-main > #formulizeform > .formulizeThemeForm {
+    box-sizing: border-box;
+    padding-left: var(--lyris-column-start);
+    padding-right: max(0px, 100% - var(--lyris-column-start) - var(--formulize-content-max-width));
+  }
+
+  /* ---- a list ---- */
+
+  /* the title bar, a card of its own; the selection bar takes its place */
   body:not(.formulize-inline) .lyris-list__titlebar,
-  body:not(.formulize-inline) .lyris-selection-bar,
-  body:not(.formulize-inline) .lyris-list__footer {
-    padding-right: calc(var(--fz-toolbar-padding-x) + max(0px, 100% - var(--formulize-content-max-width)));
+  body:not(.formulize-inline) .lyris-selection-bar {
+    box-sizing: border-box;
+    height: var(--fz-toolbar-height);
+    min-height: 0;
+    padding-block: 0;
+    border-radius: var(--fz-card-radius);
   }
 
-  /* the form card and the page tabs above it keep their side gutters inside the
-     maximum width */
-  body:not(.formulize-inline) .lyris-main .lyris-form-screen,
-  body:not(.formulize-inline) .lyris-main #pageNavTable,
-  body:not(.formulize-inline) .lyris-main .pageNavTable {
-    max-width: calc(var(--formulize-content-max-width) - 2 * var(--fz-page-padding));
+  body:not(.formulize-inline) .lyris-list__titlebar {
+    margin: var(--fz-page-padding) var(--fz-page-padding) 0;
+    background: var(--fz-toolbar-bg);
+    border: 1px solid var(--fz-card-border);
+    box-shadow: var(--fz-shadow-sm);
   }
 
-  body:not(.formulize-inline) #multipage-controls {
-    padding-right: calc(var(--fz-form-padding) + max(0px, 100% - var(--formulize-content-max-width)));
+  body:not(.formulize-inline) .lyris-selection-bar {
+    top: var(--fz-page-padding);
+    left: calc(var(--lyris-column-start) + var(--fz-page-padding));
+    right: calc(max(0px, 100% - var(--lyris-column-start) - var(--formulize-content-max-width)) + var(--fz-page-padding));
+    border: 1px solid var(--fz-color-text);
   }
 
-  /* the header's 100% is the window's width (`.lyris-app`), and the content
-     starts after the sidebar while it is open */
-  .lyris-header {
-    --lyris-content-start: 0px;
-    padding-right: calc(var(--fz-spacing) * 4 + max(0px, 100% - var(--lyris-content-start) - var(--formulize-content-max-width)));
-  }
-
-  .lyris-app:has(> .lyris-app__body > .lyris-sidebar):not(.lyris-app--sidebar-closed) .lyris-header {
-    --lyris-content-start: var(--lyris-sidebar-width);
-  }
-
-  /* Lists in a card, at any page width, so that a list's entries sit on a surface
-     of their own, as a form's do, rather than in the page background. The card is
-     the form card's: the same surface, border, corners and shadow, and the same
-     gutter around it, so a list's card and a form's line up. It has no padding of
-     its own, so the rows, their lines and the sticky column headings reach its
-     edges, and it still scrolls, both ways, inside its border. It is as tall as
-     its entries, up to the space between the title bar and the footer, and the
-     footer stays at the bottom. On phones, lists run edge to edge, without one. */
+  /* the entries, in a card as tall as they are, up to the space above the footer.
+     It has no padding of its own, so the rows, their lines and the sticky column
+     headings reach its edges */
   body:not(.formulize-inline) .lyris-list__body {
     flex: 0 1 auto;
-    max-width: calc(var(--formulize-content-max-width) - 2 * var(--fz-page-padding));
     margin: var(--fz-page-padding);
     background: var(--fz-card-bg);
     border: 1px solid var(--fz-card-border);
@@ -4695,8 +4714,43 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
     box-shadow: var(--fz-shadow-sm);
   }
 
-  body:not(.formulize-inline) .lyris-list__footer {
-    margin-top: auto;
+  /* ---- a form ---- */
+
+  /* the form fills `.lyris-main`, and its card scrolls inside itself, so the
+     page itself never scrolls (the chain is the one under "Bottom-anchored
+     action bar", there allowed to grow past `.lyris-main`) */
+  body:not(.formulize-inline) .lyris-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform,
+  body:not(.formulize-inline) .lyris-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform > .formulizeThemeForm {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  body:not(.formulize-inline) .lyris-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform > .formulizeThemeForm > .lyris-form-screen {
+    flex: 0 1 auto;
+    min-height: 0;
+    overflow-x: hidden; /* a form never needs to; something hidden past its edge, such as a rich text editor's tooltip, mustn't make it */
+    overflow-y: auto;
+  }
+
+  /* the card's header and body keep their height, and the card scrolls */
+  body:not(.formulize-inline) .lyris-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform > .formulizeThemeForm > .lyris-form-screen > * {
+    flex-shrink: 0;
+  }
+
+  /* ---- the floating bar: a list's footer, a form's actions ----
+     Both are toolbars, as the list's title bar is: the toolbar's background and
+     side padding (the appearance editor's Toolbar part) */
+  body:not(.formulize-inline) .lyris-main #multipage-controls {
+    padding: calc(var(--fz-spacing) * 3) var(--fz-toolbar-padding-x);
+  }
+
+  body:not(.formulize-inline) .lyris-list__footer,
+  body:not(.formulize-inline) .lyris-main #multipage-controls {
+    margin: auto var(--fz-page-padding) var(--fz-page-padding);
+    background: var(--fz-toolbar-bg);
+    border: 1px solid var(--fz-card-border);
+    border-radius: var(--fz-card-radius);
+    box-shadow: var(--fz-shadow-md);
   }
 
 }
