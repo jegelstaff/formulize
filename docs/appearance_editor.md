@@ -40,9 +40,11 @@ mode you are in. Anari has simple mode only.
 ### Simple mode
 
 The **Look** choice, and the site's logo and favicon, colours, fonts and page width. Choosing a look
-applies it to the site straight away; **Save** saves the rest.
+shows it in the preview, and keeps whatever else you have changed; nothing changes on the site until
+you **Save**, which applies the look with the rest of your changes. Until then the choice is listed
+under **Changes**, with **Undo**, and the menu marks the look the site has as **(applied)**.
 
-A change goes where the setting comes from: to the look applied, if that look sets it, and to Default
+A change goes where the setting comes from: to the look being applied, if that look sets it, and to Default
 otherwise. Set your colours with Comfortable applied and they are Default's, so they are still there
 with Compact, and in advanced mode. If a look of your own sets its own colours, changing them here
 changes that look's, which are the ones the site is showing.

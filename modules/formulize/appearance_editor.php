@@ -178,14 +178,33 @@ function formulize_appearanceEditorLookState($settings, $theme, $key) {
 	return formulize_appearanceEditorState(formulize_getAppearanceEffectiveSettings($theme, $settings, $key), $theme);
 }
 
+// What a look is "changed on this site" from, in the editor's terms: the theme's own
+// appearance, with the look as it came with Formulize, for a built-in look
+function formulize_appearanceEditorReference($looks, $theme, $key) {
+	$builtinLooks = formulize_appearanceBuiltinLooks();
+	$cameWith = ($looks[$key]['builtin'] AND !empty($builtinLooks[$key])) ? $builtinLooks[$key]['settings'] : array();
+	return formulize_appearanceEditorState(formulize_sanitizeAppearanceSettings(formulize_mergeAppearanceLook(formulize_defaultAppearanceSettings(), $cameWith), $theme), $theme);
+}
+
+// Simple mode's looks: each as the site would be with it applied, and what it is
+// changed on this site from, so that choosing one shows it in the preview, without
+// applying it until Save
+function formulize_appearanceEditorSimpleLooks($settings, $theme, $looks) {
+	$simpleLooks = array();
+	foreach (array_keys($looks) as $key) {
+		$simpleLooks[$key] = array('state' => formulize_appearanceEditorLookState($settings, $theme, $key), 'reference' => formulize_appearanceEditorReference($looks, $theme, $key));
+	}
+	return $simpleLooks;
+}
+
 // Saving. In advanced mode: the look being edited, which for Default is the
 // theme's own settings, and for any other look the settings it changes (which the
 // editor works out: everything that differs from Default's) with its own logo and
 // favicon. A built-in look is saved the same way, as changed on this site, and can
-// be reverted. In simple mode: the look applied, its logo, colours, fonts and page
-// width, each of which goes where it comes from: to the look, if the look sets it,
-// and otherwise to Default, so a setting changed with Comfortable applied is still
-// there with Compact, and in advanced mode.
+// be reverted. In simple mode: the look chosen, which Save applies to the site, and
+// its logo, colours, fonts and page width, each of which goes where it comes from:
+// to the look, if the look sets it, and otherwise to Default, so a setting changed
+// with Comfortable applied is still there with Compact, and in advanced mode.
 //
 // The editor saves in the background (appearance_editor_ajax), and gets back what
 // was saved, so it stays where it was; without scripts the form posts as usual and
@@ -198,9 +217,16 @@ if (isset($_POST['appearance_editor_save']) AND $pageUrl) {
 	} else {
 		$siteWide = array_merge(array_map(function ($key) { return 'appearance_' . $key; }, array_keys(formulize_appearanceColourMap($theme))),
 			array('appearance_font', 'appearance_customfont', 'appearance_headingfont', 'appearance_headingcustomfont', 'appearance_contentwidth'));
+		if ($mode == 'simple') {
+			// the look chosen, which is applied with the rest of what is saved
+			$chosen = isset($_POST['appearance_look']) ? strtolower((string) $_POST['appearance_look']) : $applied;
+			$editing = ($chosen !== '' AND isset($looks[$chosen])) ? $chosen : 'default';
+			$settings['appearance_look'] = ($editing == 'default') ? '' : $editing;
+		}
 		$look = $looks[$editing];
 		$submitted = formulize_appearanceSubmittedSettings($_POST, $settings, $theme, $errors);
-		// the look applied and the mode are changed by their own actions, not by Save
+		// in advanced mode, the look applied and the mode are changed by their own
+		// actions, not by Save
 		$submitted['appearance_look'] = $settings['appearance_look'];
 		$submitted['appearance_mode'] = $settings['appearance_mode'];
 		if ($mode == 'simple') {
@@ -252,6 +278,11 @@ if (isset($_POST['appearance_editor_save']) AND $pageUrl) {
 			$siteSettings = formulize_saveAppearanceUploads($siteSettings, $settings, $theme, false, $errors, $toSite);
 		}
 		$siteSettings = formulize_sanitizeAppearanceSettings($siteSettings, $theme);
+		// in simple mode, a look is only saved when something of its own changed, so a
+		// built-in look isn't marked as changed on this site when it wasn't
+		if ($mode == 'simple' AND $lookSettings !== null AND formulize_sanitizeAppearanceLookSettings($lookSettings, $theme) == $look['settings']) {
+			$lookSettings = null;
+		}
 		if (formulize_regenerateAppearanceCss($siteSettings, $theme) AND ($lookSettings === null OR formulize_saveAppearanceLook($theme, $editing, $look['name'], $lookSettings, $look['description']))) {
 			$saved = true;
 			$settings = $siteSettings;
@@ -270,9 +301,12 @@ if (isset($_POST['appearance_editor_save']) AND $pageUrl) {
 	}
 	if (isset($_POST['appearance_editor_ajax'])) {
 		header('Content-Type: application/json; charset=utf-8');
+		$applied = ($settings['appearance_look'] !== '' AND isset($looks[$settings['appearance_look']])) ? $settings['appearance_look'] : 'default';
 		echo json_encode(array('saved' => $saved, 'errors' => $errors,
 			'edited' => $editing == 'default' ? formulize_appearanceDefaultChanged($settings) : $looks[$editing]['edited'],
-			'state' => formulize_appearanceEditorLookState($settings, $theme, $editing)), JSON_UNESCAPED_SLASHES);
+			'state' => formulize_appearanceEditorLookState($settings, $theme, $editing),
+			'applied' => $applied,
+			'simpleLooks' => $mode == 'simple' ? formulize_appearanceEditorSimpleLooks($settings, $theme, $looks) : null), JSON_UNESCAPED_SLASHES);
 		exit();
 	}
 	if ($saved AND !$errors) {
@@ -360,12 +394,6 @@ foreach ($looks as $key => $look) {
 	$edited = ($key == 'default') ? formulize_appearanceDefaultChanged($settings) : $look['edited'];
 	$menuLooks[] = array('key' => $key, 'name' => $look['name'], 'description' => $look['description'], 'builtin' => $look['builtin'], 'edited' => $edited, 'changes' => $count);
 }
-// What the look is "changed on this site" from: the theme's own appearance, with the
-// look as it came with Formulize, for a built-in look
-$builtinLooks = formulize_appearanceBuiltinLooks();
-$cameWith = ($looks[$editing]['builtin'] AND !empty($builtinLooks[$editing])) ? $builtinLooks[$editing]['settings'] : array();
-$reference = formulize_sanitizeAppearanceSettings(formulize_mergeAppearanceLook(formulize_defaultAppearanceSettings(), $cameWith), $theme);
-
 $editorData = array(
 	'theme' => $theme,
 	'map' => array(
@@ -386,7 +414,8 @@ $editorData = array(
 	'base' => ($editing == 'default' OR $mode == 'simple') ? null : formulize_appearanceEditorState($settings, $theme),
 	'mode' => $mode,
 	'hasAdvanced' => $hasAdvanced,
-	'reference' => formulize_appearanceEditorState($reference, $theme),
+	'reference' => formulize_appearanceEditorReference($looks, $theme, $editing),
+	'simpleLooks' => $mode == 'simple' ? formulize_appearanceEditorSimpleLooks($settings, $theme, $looks) : null,
 	'menuLooks' => $menuLooks,
 	'applied' => $applied,
 	'pageUrl' => $pageUrl,
