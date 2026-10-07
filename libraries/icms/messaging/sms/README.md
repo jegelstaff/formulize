@@ -16,7 +16,7 @@ SmsHandler (factory)
 
 ## Using Built-in Providers
 
-### Twilio (Default)
+### Twilio
 
 Add to your trust folder configuration:
 
@@ -28,7 +28,19 @@ define('SMS_FROM_NUMBER', '+15551234567');
 
 No need to specify `SMS_PROVIDER` - Twilio is the default.
 
-### Vonage/Nexmo
+### Swift SMS Gateway
+
+Add to your trust folder configuration:
+
+```php
+define('SMS_PROVIDER', 'Swift');
+define('SMS_ACCOUNT_SID', 'your_swift_account_key');
+define('SMS_FROM_NUMBER', '15551234567');  // Optional - a dedicated number; leave out to use Swift's shared numbers
+```
+
+Swift has no secret/token, so `SMS_AUTH_TOKEN` is not used.
+
+### Vonage/Nexmo (untested)
 
 Add to your trust folder configuration:
 
@@ -99,7 +111,7 @@ define('SMS_FROM_NUMBER', 'your_from_number');
 
 ### Step 3: Test
 
-The factory will automatically load your provider. No other code changes needed!
+The factory will automatically load your provider. No other code changes needed! The next Formulize update adds it to the choices in the SMS provider setting (`formulize_update_sms_provider_options()` scans this folder). Add a `LABEL` constant to the class, e.g. `const LABEL = 'Your Service';`, to give it a friendlier name there.
 
 ## Configuration Constants Reference
 
@@ -180,8 +192,9 @@ The error will be displayed to the user or logged.
 
 ## Available Providers
 
-- **TwilioProvider** - Twilio SMS service (default)
-- **NexmoProvider** - Vonage/Nexmo SMS service (example)
+- **TwilioProvider** - Twilio SMS service
+- **SwiftProvider** - Swift SMS Gateway, Canada (untested)
+- **NexmoProvider** - Vonage/Nexmo SMS service (untested)
 
 ## Support
 

@@ -418,11 +418,11 @@ define("_MD_AM_USE_GOOGLE_ANA_DESC","");
 define("_MD_AM_SMS_PROVIDER", "SMS provider");
 define("_MD_AM_SMS_PROVIDER_DSC", "The service used to send text messages (SMS).");
 define("_MD_AM_SMS_ACCOUNT_SID", "SMS account SID / API key");
-define("_MD_AM_SMS_ACCOUNT_SID_DSC", "Account SID (Twilio) or API key (Vonage/Nexmo).");
+define("_MD_AM_SMS_ACCOUNT_SID_DSC", "Account SID (Twilio), API key (Vonage/Nexmo) or account key (Swift).");
 define("_MD_AM_SMS_AUTH_TOKEN", "SMS auth token / API secret");
-define("_MD_AM_SMS_AUTH_TOKEN_DSC", "Auth token (Twilio) or API secret (Vonage/Nexmo).");
+define("_MD_AM_SMS_AUTH_TOKEN_DSC", "Auth token (Twilio) or API secret (Vonage/Nexmo). Not used by Swift.");
 define("_MD_AM_SMS_FROM_NUMBER", "SMS from number / sender ID");
-define("_MD_AM_SMS_FROM_NUMBER_DSC", "The phone number or sender ID that text messages are sent from.");
+define("_MD_AM_SMS_FROM_NUMBER_DSC", "The phone number or sender ID that text messages are sent from. For Swift, leave this blank to use their shared numbers, or enter one of your dedicated numbers.");
 
 define("_MD_AM_AUTH2FA","Use Two-Factor Authentication");
 define("_MD_AM_AUTH2FADESC","Turn this on to give users a choice in their user profile of two-factor authentication methods");

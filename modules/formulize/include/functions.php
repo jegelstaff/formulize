@@ -13583,6 +13583,58 @@ function formulize_update_timezone_options($db) {
 }
 
 /**
+ * Get the SMS providers that are available on this site, ie: the provider classes in
+ * libraries/icms/messaging/sms/. Each file is named {Name}Provider.php, and {Name} is the value
+ * that the sms_provider setting stores and icms_messaging_SmsHandler loads. A provider class can
+ * declare a LABEL constant to give itself a friendlier name in the setting, otherwise the name is used.
+ *
+ * @return array Provider name => label, sorted by label
+ */
+function formulize_getSmsProviders() {
+	$providers = array();
+	foreach ((array) glob(ICMS_ROOT_PATH . '/libraries/icms/messaging/sms/*Provider.php') as $providerFile) {
+		$name = substr(basename($providerFile), 0, -strlen('Provider.php'));
+		if (!preg_match('/^[A-Za-z0-9]+$/', $name)) {
+			continue;
+		}
+		$providerClass = 'icms_messaging_sms_' . $name . 'Provider';
+		require_once $providerFile;
+		if (!class_exists($providerClass)) {
+			continue;
+		}
+		$providers[$name] = defined($providerClass . '::LABEL') ? constant($providerClass . '::LABEL') : $name;
+	}
+	asort($providers);
+	return $providers;
+}
+
+/**
+ * Update the options for the SMS provider setting so they match the SMS provider classes on this site.
+ * Adding a provider is then just a matter of adding its class file, and the next update makes it selectable.
+ *
+ * @param object $db Database connection object ($xoopsDB or equivalent)
+ * @return bool FALSE if the options could not be written
+ */
+function formulize_update_sms_provider_options($db) {
+	$cat = defined('ICMS_CONF_MAILER') ? ICMS_CONF_MAILER : 6;
+	$sql = "SELECT conf_id FROM " . $db->prefix("config") . " WHERE conf_name = 'sms_provider' AND conf_modid = 0 AND conf_catid = " . intval($cat);
+	if (!$res = $db->queryF($sql) OR !$row = $db->fetchRow($res)) {
+		return true; // no SMS provider setting on this site, so nothing to update
+	}
+	$confId = intval($row[0]);
+	$optionTable = $db->prefix("configoption");
+	if (!$db->queryF("DELETE FROM $optionTable WHERE conf_id = $confId")) {
+		return false;
+	}
+	foreach (formulize_getSmsProviders() as $name => $label) {
+		if (!$db->queryF("INSERT INTO $optionTable (`confop_name`, `confop_value`, `conf_id`) VALUES (" . $db->quoteString($label) . ", " . $db->quoteString($name) . ", $confId)")) {
+			return false;
+		}
+	}
+	return true;
+}
+
+/**
  * Gets the aria sort value for the current element handle
  *
  * @param string $elementHandle - handle of the element being checked

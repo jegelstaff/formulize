@@ -76,6 +76,12 @@ function formulize_patch_002_always_run($prev_dbversion, $required_dbversion) {
 	// version the site runs on rather than with anything Formulize does.
 	formulize_update_timezone_options($xoopsDB);
 
+	// Keep the choices in the SMS provider setting in step with the provider classes on disk, so a new
+	// provider becomes selectable just by adding its class file to libraries/icms/messaging/sms/.
+	if (!formulize_update_sms_provider_options($xoopsDB)) {
+		echo '<p>Warning: could not update the list of SMS providers: ' . htmlspecialchars($xoopsDB->error()) . '</p>';
+	}
+
   return true;
 }
 

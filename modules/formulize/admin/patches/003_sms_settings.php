@@ -51,7 +51,7 @@ function formulize_patch_003_sms_settings($prev_dbversion, $required_dbversion) 
         // Items are created empty (apart from the provider's default); any values a site already has
         // elsewhere are brought in afterwards, by formulize_migrate_sms_credentials().
         $items = array(
-            'sms_provider'    => array('_MD_AM_SMS_PROVIDER',    'Twilio', '_MD_AM_SMS_PROVIDER_DSC',    'select',  'text', array('Twilio' => 'Twilio', 'Nexmo (Vonage)' => 'Nexmo')),
+            'sms_provider'    => array('_MD_AM_SMS_PROVIDER',    'Twilio', '_MD_AM_SMS_PROVIDER_DSC',    'select',  'text', array()), // choices filled in below, from the provider classes
             'sms_account_sid' => array('_MD_AM_SMS_ACCOUNT_SID', '',       '_MD_AM_SMS_ACCOUNT_SID_DSC', 'textbox', 'text', array()),
             'sms_auth_token'  => array('_MD_AM_SMS_AUTH_TOKEN',  '',       '_MD_AM_SMS_AUTH_TOKEN_DSC',  'password','text', array()),
             'sms_from_number' => array('_MD_AM_SMS_FROM_NUMBER', '',       '_MD_AM_SMS_FROM_NUMBER_DSC', 'textbox', 'text', array()),
@@ -94,6 +94,13 @@ function formulize_patch_003_sms_settings($prev_dbversion, $required_dbversion) 
                     }
                 }
             }
+        }
+
+        // 002_always_run keeps the provider choices up to date on every update, but it runs before this
+        // patch, so on the update that creates the setting the choices have to be filled in here.
+        if (!formulize_update_sms_provider_options($xoopsDB)) {
+            echo '<p>003_sms_settings: failed to add the SMS provider choices: ' . htmlspecialchars($xoopsDB->error()) . '</p>';
+            return false;
         }
     }
 

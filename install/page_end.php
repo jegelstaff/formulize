@@ -91,6 +91,9 @@ include_once ICMS_ROOT_PATH . "/modules/formulize/include/functions.php";
 global $xoopsDB;
 formulize_update_timezone_options($xoopsDB);
 
+// Populate the SMS provider choices from the provider classes in libraries/icms/messaging/sms/
+formulize_update_sms_provider_options($xoopsDB);
+
 // write a lock file so the install folder is inaccessible (if not deleted automatically)
 file_put_contents(ICMS_ROOT_PATH . '/install.lock', '');
 

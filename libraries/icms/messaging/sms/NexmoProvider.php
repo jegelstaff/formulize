@@ -38,6 +38,11 @@ require_once ICMS_ROOT_PATH . '/libraries/icms/messaging/sms/ProviderInterface.p
 class icms_messaging_sms_NexmoProvider implements icms_messaging_sms_ProviderInterface {
 
 	/**
+	 * Name shown in the SMS provider setting
+	 */
+	const LABEL = 'Nexmo (Vonage)';
+
+	/**
 	 * Vonage API Key (stored in SMS_ACCOUNT_SID)
 	 * @var string
 	 */

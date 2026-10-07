@@ -111,7 +111,7 @@
 
         <h2>Using Built-in Providers</h2>
 
-        <h3>Twilio (Default)</h3>
+        <h3>Twilio</h3>
 
         <p>Add to your trust folder configuration:</p>
 
@@ -121,7 +121,17 @@ define('SMS_FROM_NUMBER', '+15551234567');</code></pre>
 
         <p>No need to specify <code>SMS_PROVIDER</code> - Twilio is the default.</p>
 
-        <h3>Vonage/Nexmo</h3>
+        <h3>Swift SMS Gateway</h3>
+
+        <p>Add to your trust folder configuration:</p>
+
+        <pre><code>define('SMS_PROVIDER', 'Swift');
+define('SMS_ACCOUNT_SID', 'your_swift_account_key');
+define('SMS_FROM_NUMBER', '15551234567');  // Optional - a dedicated number; leave out to use Swift's shared numbers</code></pre>
+
+        <p>Swift has no secret/token, so <code>SMS_AUTH_TOKEN</code> is not used.</p>
+
+        <h3>Vonage/Nexmo (untested)</h3>
 
         <p>Add to your trust folder configuration:</p>
 
@@ -187,7 +197,7 @@ define('SMS_FROM_NUMBER', 'your_from_number');</code></pre>
         <h3>Step 3: Test</h3>
 
         <div class="success">
-            <strong>The factory will automatically load your provider. No other code changes needed!</strong>
+            <strong>The factory will automatically load your provider. No other code changes needed!</strong> The next Formulize update adds it to the choices in the SMS provider setting (<code>formulize_update_sms_provider_options()</code> scans this folder). Add a <code>LABEL</code> constant to the class, e.g. <code>const LABEL = 'Your Service';</code>, to give it a friendlier name there.
         </div>
 
         <h2>Configuration Constants Reference</h2>
@@ -279,8 +289,9 @@ define('SMS_FROM_NUMBER', 'your_from_number');</code></pre>
         <h2>Available Providers</h2>
 
         <ul>
-            <li><strong>TwilioProvider</strong> - Twilio SMS service (default)</li>
-            <li><strong>NexmoProvider</strong> - Vonage/Nexmo SMS service (example)</li>
+            <li><strong>TwilioProvider</strong> - Twilio SMS service</li>
+            <li><strong>SwiftProvider</strong> - Swift SMS Gateway</li>
+						<li><strong>NexmoProvider</strong> - Vonage/Nexmo SMS service (untested)</li>
         </ul>
 
         <h2>Support</h2>

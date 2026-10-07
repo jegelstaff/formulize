@@ -29,6 +29,21 @@ define('SMS_AUTH_TOKEN', 'your_api_secret');
 define('SMS_FROM_NUMBER', 'YourBrand');  // Can be alphanumeric sender ID
 ```
 
+## Swift SMS Gateway
+
+__This provider has not been tested yet!__ Swift SMS Gateway is a Canadian SMS service. Swift sends your messages from its own shared phone numbers, so all you need is your Swift _account key_. Add these two constants to your _trust path file_. Locate your trust path by looking in _mainfile.php_ in the root of your website and checking what the path and filename are. The two constants are:
+
+```php
+define('SMS_PROVIDER', 'Swift');
+define('SMS_ACCOUNT_SID', 'your_swift_account_key');
+```
+
+If you rent a dedicated phone number from Swift and want your messages to come from that number, add it as well:
+
+```php
+define('SMS_FROM_NUMBER', '15551234567');  // optional - one of your Swift dedicated numbers
+```
+
 ## Other Providers
 
 The SMS system uses a **factory pattern** to load provider-specific implementations:
@@ -99,7 +114,7 @@ define('SMS_FROM_NUMBER', 'your_from_number');
 
 ### Step 3: Test
 
-The factory will automatically load your provider. No other code changes needed! So try it out and see how it works.
+The factory will automatically load your provider. No other code changes needed! The next time you update Formulize, your provider also appears in the list of SMS providers in the text message settings. To give it a friendlier name in that list, add a `LABEL` constant to the class, e.g. `const LABEL = 'Your Service';`. So try it out and see how it works.
 
 ## Configuration Constants Reference
 

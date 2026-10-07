@@ -10,14 +10,14 @@ INSERT INTO `REPLACE_WITH_PREFIX_configoption` (`confop_name`, `confop_value`, `
 INSERT INTO `REPLACE_WITH_PREFIX_configoption` (`confop_name`, `confop_value`, `conf_id`) SELECT 'Strict', 'Strict', `conf_id` FROM `REPLACE_WITH_PREFIX_config` WHERE `conf_name` = 'cookie_samesite';
 -- SMS messaging settings (mailer category). Mirrors patch 003_sms_settings.php so fresh
 -- installs have them too; the SMS providers read these (falling back to trust constants).
+-- The sms_provider choices are not listed here: install/page_end.php fills them in from the
+-- provider classes in libraries/icms/messaging/sms/ (formulize_update_sms_provider_options).
 -- conf_title and conf_desc must be PHP constant names (resolved by the preferences UI).
 INSERT INTO `REPLACE_WITH_PREFIX_config` (`conf_modid`, `conf_catid`, `conf_name`, `conf_title`, `conf_value`, `conf_desc`, `conf_formtype`, `conf_valuetype`, `conf_order`) VALUES
 (0, 6, 'sms_provider', '_MD_AM_SMS_PROVIDER', 'Twilio', '_MD_AM_SMS_PROVIDER_DSC', 'select', 'text', 201),
 (0, 6, 'sms_account_sid', '_MD_AM_SMS_ACCOUNT_SID', '', '_MD_AM_SMS_ACCOUNT_SID_DSC', 'textbox', 'text', 202),
 (0, 6, 'sms_auth_token', '_MD_AM_SMS_AUTH_TOKEN', '', '_MD_AM_SMS_AUTH_TOKEN_DSC', 'password', 'text', 203),
 (0, 6, 'sms_from_number', '_MD_AM_SMS_FROM_NUMBER', '', '_MD_AM_SMS_FROM_NUMBER_DSC', 'textbox', 'text', 204);
-INSERT INTO `REPLACE_WITH_PREFIX_configoption` (`confop_name`, `confop_value`, `conf_id`) SELECT 'Twilio', 'Twilio', `conf_id` FROM `REPLACE_WITH_PREFIX_config` WHERE `conf_name` = 'sms_provider';
-INSERT INTO `REPLACE_WITH_PREFIX_configoption` (`confop_name`, `confop_value`, `conf_id`) SELECT 'Nexmo (Vonage)', 'Nexmo', `conf_id` FROM `REPLACE_WITH_PREFIX_config` WHERE `conf_name` = 'sms_provider';
 INSERT INTO `REPLACE_WITH_PREFIX_config` (`conf_id`, `conf_modid`, `conf_catid`, `conf_name`, `conf_title`, `conf_value`, `conf_desc`, `conf_formtype`, `conf_valuetype`, `conf_order`) VALUES
 (1, 0, 1, 'sitename', '_MD_AM_SITENAME', 'Formulize', '_MD_AM_SITENAMEDSC', 'textbox', 'text', 0),
 (2, 0, 1, 'slogan', '_MD_AM_SLOGAN', '', '_MD_AM_SLOGANDSC', 'textbox', 'text', 1),
