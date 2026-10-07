@@ -4690,7 +4690,7 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
 
   body:not(.formulize-inline) .lyris-list__titlebar {
     margin: var(--fz-page-padding) var(--fz-page-padding) 0;
-    background: var(--fz-card-bg);
+    background: var(--fz-toolbar-bg);
     border: 1px solid var(--fz-card-border);
     box-shadow: var(--fz-shadow-sm);
   }
@@ -4736,11 +4736,17 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
     flex-shrink: 0;
   }
 
-  /* ---- the floating bar: a list's footer, a form's actions ---- */
+  /* ---- the floating bar: a list's footer, a form's actions ----
+     Both are toolbars, as the list's title bar is: the toolbar's background and
+     side padding (the appearance editor's Toolbar part) */
+  body:not(.formulize-inline) .lyris-main #multipage-controls {
+    padding: calc(var(--fz-spacing) * 3) var(--fz-toolbar-padding-x);
+  }
+
   body:not(.formulize-inline) .lyris-list__footer,
   body:not(.formulize-inline) .lyris-main #multipage-controls {
     margin: auto var(--fz-page-padding) var(--fz-page-padding);
-    background: var(--fz-card-bg);
+    background: var(--fz-toolbar-bg);
     border: 1px solid var(--fz-card-border);
     border-radius: var(--fz-card-radius);
     box-shadow: var(--fz-shadow-md);

@@ -227,8 +227,8 @@
       ]
     },
     "toolbar": {
-      "name": "List toolbar",
-      "plural": "the title bar, selection bar and footer of every list",
+      "name": "Toolbar",
+      "plural": "the title bar, selection bar and footer of every list, and the action bar of every form",
       "tokens": [
         "--fz-control-font",
         "--fz-toolbar-bg",
@@ -553,7 +553,7 @@
     "--fz-toolbar-padding-x": {
       "group": "lists",
       "label": "Toolbar side padding",
-      "description": "The space either side of a list's title bar, selection bar and footer.",
+      "description": "The space either side of a list's title bar, selection bar and footer, and of a form's action bar.",
       "type": "spacing",
       "min": 2,
       "max": 10
@@ -577,7 +577,7 @@
     "--fz-form-padding": {
       "group": "surfaces",
       "label": "Form padding",
-      "description": "The space inside a form card, either side of its header, and around the page controls of a multi-page form.",
+      "description": "The space inside a form card, and either side of its header.",
       "type": "spacing",
       "min": 2,
       "max": 12
@@ -634,7 +634,7 @@
     "--fz-control-font": {
       "group": "fonts",
       "label": "Font",
-      "description": "The font of buttons, page tabs, menus and list toolbars.",
+      "description": "The font of buttons, page tabs, menus and toolbars.",
       "type": "font",
       "home": "button"
     },
@@ -802,7 +802,7 @@
     "--fz-toolbar-bg": {
       "group": "colours",
       "label": "Background",
-      "description": "The background of a list's title bar and footer.",
+      "description": "The background of a list's title bar and footer, and of a form's action bar.",
       "type": "colour"
     },
     "--fz-header-text": {
