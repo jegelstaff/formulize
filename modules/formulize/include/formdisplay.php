@@ -2927,9 +2927,6 @@ print $codeToIncludejQueryWhenNecessary;
 // hosting it is what moves. So the element is found rather than named: the nearest ancestor of the
 // form that is actually scrollable. A theme whose markup makes that ambiguous can say so outright
 // with data-formulize-scroll-container on its body tag, and "none" there means nothing here scrolls.
-// The selector can name several elements, for a theme that scrolls different ones at different
-// widths (Lyris scrolls its form card on wide screens, and the page on phones): the first of them
-// that is scrolling is the one, and if none is, it is found as if nothing were named.
 //
 // Found rather than named on purpose. Naming themes is what this used to do, and a theme that was
 // not on the list - which is every theme written after the list - silently lost the feature instead
@@ -2940,19 +2937,13 @@ window.formulize_scrollContainer = function() {
     if(declared === 'none') {
         return null;
     }
-    var scrolls = function(el) {
-        var overflow = jQuery(el).css('overflow-y');
-        return el.scrollHeight > el.clientHeight && (overflow === 'auto' || overflow === 'scroll');
-    };
     if(declared) {
-        var named = jQuery(declared).filter(function() { return scrolls(this); }).first();
-        if(named.length) {
-            return named;
-        }
+        return jQuery(declared).length ? jQuery(declared) : jQuery(window);
     }
     var container = null;
     jQuery('#formulizeform').parents().each(function() {
-        if(scrolls(this)) {
+        var overflow = jQuery(this).css('overflow-y');
+        if(this.scrollHeight > this.clientHeight && (overflow === 'auto' || overflow === 'scroll')) {
             container = jQuery(this);
             return false; // the nearest one is the one the form sits in
         }
@@ -2981,8 +2972,8 @@ if($entryId != 'new' AND isset($_POST['yposition']) AND
             }
             container.scrollTop(".intval($_POST['yposition']).");
             // done only once it took: what scrolls may not be laid out yet when the theme reveals the
-            // page (a form card that scrolls inside itself has no height until then), and then the
-            // other attempt has another go
+            // page (in Lyris, the form has no height yet then, so nothing scrolls), and then the other
+            // attempt has another go
             restored = container.scrollTop() > 0;
         };
         window.addEventListener('formulize_pageShown', restore);

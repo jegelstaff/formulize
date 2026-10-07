@@ -4644,14 +4644,16 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
    In the column, everything is a card on the page background:
    - a list's title bar is a card of its own, and the selection bar, while rows
      are checked, covers it exactly: the same place, size and corners;
-   - a list's entries are in a card as tall as they are, which scrolls inside
-     itself, both ways, when there are more than fit;
-   - a form's card is as tall as its fields, and scrolls inside itself when the
-     form is longer than fits, so it never runs under the bar below it (Lyris's
-     theme.html names it as the scroll container, so saving a long form returns
-     to where you were: data-formulize-scroll-container);
+   - a list's entries are in a card as tall as they are, which scrolls
+     sideways when they are wider than it;
+   - a form's card is as tall as its fields;
    - a list's pagination footer and a form's action bar are the same floating
      bar, at the bottom of the window.
+
+   The page scrolls, with its scrollbar at the window's edge: a list's title
+   bar, a form's page tabs, and the bottom bar are pinned, and what scrolls
+   under them is hidden behind a strip of page background, so it ends at a
+   clean line short of each bar.
 
    The site header runs the full width of the window, with its links at the
    window's right edge: they are the site's, not the page's.
@@ -4676,7 +4678,32 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
     padding-right: max(0px, 100% - var(--lyris-column-start) - var(--formulize-content-max-width));
   }
 
-  /* ---- a list ---- */
+  /* ---- a list ----
+     The page scrolls, not the list: `.lyris-main`'s scrollbar is the window's.
+     The title bar and the footer are pinned to the top and bottom of the window
+     (position: sticky), and the entries scroll past between them. Behind each,
+     a strip of page background hides the entries going under it, so they end at
+     a clean line short of the bar. The list card still scrolls sideways when the
+     entries are wider than it; Lyris's script (initListScroll in js/script.js)
+     keeps the column headings and filter row pinned under the title bar while
+     the page scrolls (they are inside that sideways scroller, which position:
+     sticky can't reach past), and pins a sideways scrollbar above the footer
+     while the list's own is out of sight below it. */
+  #listofentries {
+    height: auto;
+    min-height: 100%;
+  }
+
+  /* a percentage of #listofentries' height, which is now auto, would be nothing,
+     so the form fills it as a flex item instead */
+  #listofentries #controls {
+    height: auto;
+    flex: 1 0 auto;
+  }
+
+  body:not(.formulize-inline) .lyris-list-screen {
+    flex: 1 0 auto;
+  }
 
   /* the title bar, a card of its own; the selection bar takes its place */
   body:not(.formulize-inline) .lyris-list__titlebar,
@@ -4686,27 +4713,33 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
     min-height: 0;
     padding-block: 0;
     border-radius: var(--fz-card-radius);
+    position: sticky;
+    top: var(--fz-page-padding);
   }
 
   body:not(.formulize-inline) .lyris-list__titlebar {
+    z-index: 6;
     margin: var(--fz-page-padding) var(--fz-page-padding) 0;
     background: var(--fz-toolbar-bg);
     border: 1px solid var(--fz-card-border);
     box-shadow: var(--fz-shadow-sm);
   }
 
+  /* right after the title bar in the markup, and pulled up over it */
   body:not(.formulize-inline) .lyris-selection-bar {
-    top: var(--fz-page-padding);
-    left: calc(var(--lyris-column-start) + var(--fz-page-padding));
-    right: calc(max(0px, 100% - var(--lyris-column-start) - var(--formulize-content-max-width)) + var(--fz-page-padding));
+    z-index: 7;
+    left: auto;
+    right: auto;
+    margin: calc(-1 * var(--fz-toolbar-height)) var(--fz-page-padding) 0;
     border: 1px solid var(--fz-color-text);
   }
 
-  /* the entries, in a card as tall as they are, up to the space above the footer.
-     It has no padding of its own, so the rows, their lines and the sticky column
-     headings reach its edges */
+  /* the entries, in a card as tall as they are. It has no padding of its own,
+     so the rows, their lines and the column headings reach its edges */
   body:not(.formulize-inline) .lyris-list__body {
-    flex: 0 1 auto;
+    flex: 0 0 auto;
+    overflow-x: auto;
+    overflow-y: hidden;
     margin: var(--fz-page-padding);
     background: var(--fz-card-bg);
     border: 1px solid var(--fz-card-border);
@@ -4714,37 +4747,53 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
     box-shadow: var(--fz-shadow-sm);
   }
 
-  /* ---- a form ---- */
-
-  /* the form fills `.lyris-main`, and its card scrolls inside itself, so the
-     page itself never scrolls (the chain is the one under "Bottom-anchored
-     action bar", there allowed to grow past `.lyris-main`) */
-  body:not(.formulize-inline) .lyris-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform,
-  body:not(.formulize-inline) .lyris-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform > .formulizeThemeForm {
-    flex: 1 1 auto;
-    min-height: 0;
+  /* the column headings and filter row, held under the title bar by the script */
+  body:not(.formulize-inline) .lyris-list__body thead th,
+  body:not(.formulize-inline) .lyris-list__body .lyris-search-row td {
+    transform: translateY(var(--lyris-head-shift, 0px));
   }
 
-  body:not(.formulize-inline) .lyris-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform > .formulizeThemeForm > .lyris-form-screen {
-    flex: 0 1 auto;
-    min-height: 0;
-    overflow: auto;
+  /* the sideways scrollbar the script pins above the footer, while the list's
+     own is out of sight; drawn, so it shows where scrollbars only show while
+     scrolling */
+  .lyris-list__hscroll {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: calc(100% + var(--fz-spacing) * 1.5);
+    height: 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-radius: 6px;
+    background: var(--fz-color-surface);
+    box-shadow: var(--fz-shadow-sm);
+    scrollbar-width: thin;
+    scrollbar-color: var(--fz-color-border-strong) transparent;
   }
 
-  /* the card's header and body keep their height, and the card scrolls */
-  body:not(.formulize-inline) .lyris-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform > .formulizeThemeForm > .lyris-form-screen > * {
-    flex-shrink: 0;
-  }
+  .lyris-list__hscroll[hidden] { display: none; }
+  .lyris-list__hscroll > div { height: 1px; }
+  .lyris-list__hscroll::-webkit-scrollbar { height: 12px; }
+  .lyris-list__hscroll::-webkit-scrollbar-thumb { border-radius: 6px; background: var(--fz-color-border-strong); }
+
+  /* ---- a form ----
+     The page scrolls, as it does on phones; the page tabs are pinned at the top
+     (under "Multipage page-nav tabs") and the action bar at the bottom. */
 
   /* ---- the floating bar: a list's footer, a form's actions ----
      Both are toolbars, as the list's title bar is: the toolbar's background and
-     side padding (the appearance editor's Toolbar part) */
+     side padding (the appearance editor's Toolbar part). Each is pinned at the
+     bottom of the window, with a strip of page background behind it and below
+     it, so what scrolls under it ends at a clean line above it. */
   body:not(.formulize-inline) .lyris-main #multipage-controls {
     padding: calc(var(--fz-spacing) * 3) var(--fz-toolbar-padding-x);
   }
 
   body:not(.formulize-inline) .lyris-list__footer,
   body:not(.formulize-inline) .lyris-main #multipage-controls {
+    position: sticky;
+    bottom: var(--fz-page-padding);
+    z-index: 6;
     margin: auto var(--fz-page-padding) var(--fz-page-padding);
     background: var(--fz-toolbar-bg);
     border: 1px solid var(--fz-card-border);
@@ -4752,4 +4801,16 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
     box-shadow: var(--fz-shadow-md);
   }
 
+  /* the strips of page background, as a second shadow of each bar's: from the
+     title bar to the top of the window, and from the bottom bar to the bottom
+     (a shadow, rather than something behind the bar, which would paint over the
+     bar's own background; and it fills the bar's rounded corners) */
+  body:not(.formulize-inline) .lyris-list__titlebar {
+    box-shadow: var(--fz-shadow-sm), 0 calc(var(--fz-page-padding) / -2) 0 calc(var(--fz-page-padding) / 2) var(--fz-color-page);
+  }
+
+  body:not(.formulize-inline) .lyris-list__footer,
+  body:not(.formulize-inline) .lyris-main #multipage-controls {
+    box-shadow: var(--fz-shadow-md), 0 calc(var(--fz-page-padding) / 2) 0 calc(var(--fz-page-padding) / 2) var(--fz-color-page);
+  }
 }

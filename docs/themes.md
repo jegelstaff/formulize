@@ -44,14 +44,6 @@ on your `<body>` tag:
 <body data-formulize-scroll-container=".my-main-pane">
 ```
 
-The selector can name several elements, for a theme that scrolls a different one at different
-widths. Formulize uses the first of them that is scrolling at the time, and if none is, looks for one
-as if nothing were named. Lyris scrolls a form's card on wide screens and the page on phones:
-
-```html
-<body data-formulize-scroll-container=".lyris-form-screen, .lyris-main">
-```
-
 Use `none` when nothing in the page scrolls, because something outside it does:
 
 ```html
@@ -184,7 +176,8 @@ a width in pixels, or `100%` to start at full width. Lyris declares 1200 pixels:
 
 Then use it as the maximum width of your content. Lyris makes list and form screens a column of that
 width, centred in the window, with each part of the screen a card in it: a list's title bar, its
-entries, a form, and a floating bar at the bottom for a list's pagination or a form's buttons. The
+entries, a form, and a floating bar at the bottom for a list's pagination or a form's buttons, with
+the title bar, a form's page tabs and the bottom bar pinned while the page scrolls under them. The
 column is centred in the window rather than beside the sidebar, so opening the sidebar doesn't move
 it unless it has to; the header's links stay at the window's edge; and phones are left full width. See
 the "Content width" section at the end of `themes/Lyris/css/style.css`.
