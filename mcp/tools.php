@@ -287,7 +287,7 @@ Use list_applications for a list of every application in the system; this tool i
 			'get_entries_from_form' => [
 				'name' => 'get_entries_from_form',
 						'description' =>
-'Retrieve entries from a form with optional filtering, sorting, and pagination. Supports both simple entry ID lookup and complex multi-condition filtering. Returns data in a structured format suitable for analysis or display. It is strongly recommended to use filtering to limit the results you get back, so that it doesn\'t return too many entries at once. You can filter by multiple elements at once, and you should when possible, to reduce the size of the dataset amd exclude irrelevant entries. You can filter for non-blank values with the "{BLANK}" search term. Results come back 100 entries at a time by default. When a form has many entries, page through them with limitSize and limitStart rather than asking for them all at once.
+'Retrieve entries from a form with optional filtering, sorting, and pagination. Supports both simple entry ID lookup and complex multi-condition filtering. Returns data in a structured format suitable for analysis or display. It is strongly recommended to use filtering to limit the results you get back, so that it doesn\'t return too many entries at once. You can filter by multiple elements at once, and you should when possible, to reduce the size of the dataset amd exclude irrelevant entries. You can filter for non-blank values with the "{BLANK}" search term. Results come back 100 entries at a time by default. When a form has many entries, page through them with limitSize and limitStart rather than asking for them all at once. Every response states how many entries were returned (entries_returned) and how many match in total (total_matching_entries), which can be far more. To find out how many entries match, you do not need to retrieve them: ask for one element with limitSize 1 and read total_matching_entries.
 
 Examples:
 - Get specific entry: {"form_id": 5, "filter": 526}
@@ -3760,7 +3760,7 @@ Do not use foreign key values with linked elements; use the readable value inste
 	 * - 'sortField': Optional. The element handle to sort the dataset by. Defaults to entry_id.
 	 * - 'sortOrder': Optional. The sort direction, either 'ASC' or 'DESC'. Defaults to 'ASC'.
 	 * - 'relationship_id': Optional. The relationship to gather through. Defaults to 0, the main form alone.
-	 * @return array An associative array containing the gathered dataset, total count, scope used, and parameters used.
+	 * @return array An associative array containing the counts of entries returned and matching, the limit, whether more are available, the gathered dataset, scope used, and parameters used.
 	 */
 	private function get_entries_from_form($arguments)
 	{
@@ -3789,14 +3789,40 @@ Do not use foreign key values with linked elements; use the readable value inste
 			);
 		}
 
+		// How many came back is not how many there are. A model asked "how many" will report
+		// whatever number it finds, so the response states both, and the limit that separates
+		// them, under names that cannot be read as each other. They come before the dataset so
+		// they are read before the entries, not after a hundred of them.
+		$entriesReturned = count($result['dataset']);
+		$totalMatching = $result['totalMatching'];
+		$limitStart = intval($result['limitStart']);
+		if ($totalMatching !== null) {
+			$moreAvailable = ($limitStart + $entriesReturned) < $totalMatching;
+		} else {
+			$moreAvailable = ($result['limitSize'] AND $entriesReturned >= $result['limitSize']);
+		}
+
+		$response = [
+			'form_id' => $result['fid'],
+			'entries_returned' => $entriesReturned,
+			'total_matching_entries' => $totalMatching === null ? 'unknown' : $totalMatching,
+			'limit_on_returned_entries' => $result['limitSize'] ? $result['limitSize'] : 'none',
+			'more_entries_available' => $moreAvailable,
+		];
+		if ($moreAvailable) {
+			$nextStart = $limitStart + $entriesReturned;
+			$response['note'] = ($totalMatching !== null
+				? 'These are entries '.($limitStart + 1).' to '.$nextStart.' of the '.$totalMatching.' that match. If you only need to know how many entries match, use total_matching_entries and do not retrieve the rest.'
+				: 'The limit was reached, so there may be more entries that match.')
+				.' To get the next entries, call again with limitStart '.$nextStart.'.';
+		}
+
 		// The raw nested dataset is returned exactly as it always has been. Models are
 		// expected to pass values through prepare_database_values_for_human_readability when
 		// they need them readable, so rendering is not shared with the Public API, which
 		// renders values itself.
-		return [
-			'form_id' => $result['fid'],
+		return $response + [
 			'dataset' => $result['dataset'],
-			'total_count' => count($result['dataset']),
 			'scope_used' => $result['scope'],
 			'parameters_used' => [
 				'elements' => $result['fieldsByForm'],

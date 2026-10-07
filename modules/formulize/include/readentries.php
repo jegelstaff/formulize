@@ -59,7 +59,8 @@ function formulize_apiFilterOperators() {
  *        - limitSize (int|null) default 100, capped at 10000, null for no limit
  *        - relationship (int) 0 for the main form alone, -1 for the primary relationship
  * @param int|object|null user The user to act as: a user object, a user id, or nothing at all for the current $xoopsUser.
- * @return array Keys: fid, formHandle, dataset, fieldsByForm, scope, and the validated
+ * @return array Keys: fid, formHandle, dataset, totalMatching (every entry that matches,
+ *         regardless of the limit, or null if it could not be counted), fieldsByForm, scope, and the validated
  *         filter/andOr/limitStart/limitSize/sortField/sortOrder/relationship values.
  * @throws FormulizeApiException
  */
@@ -174,6 +175,18 @@ function formulize_readEntries($formIdOrHandle, $options = array(), $user = null
 	// buys nothing and holds every entry in memory until the request finishes, along with the
 	// entry-to-cache-key index that is built alongside it. At the limits this endpoint allows,
 	// that is the difference between holding one dataset and being unable to let go of it.
+	//
+	// When a limit is in effect, ask getData to count every entry that matches as well, using
+	// the same flag the list of entries screens use for their page numbers. Without this, a
+	// caller only learns how many entries came back, which is the limit, not how many exist.
+	// Only when there is a limit: without one, getData takes the flag as leave to return the
+	// count in place of the data when the site's list size limit is exceeded, and the number
+	// returned is the number that matched anyway.
+	$countAllMatches = $limitSize ? true : false;
+	unset($GLOBALS['formulize_countMasterResultsForPageNumbers']);
+	if ($countAllMatches) {
+		$GLOBALS['formulize_getCountForPageNumbers'] = true;
+	}
 	$dataset = gatherDataset(
 		$fid,
 		$fieldsByForm,
@@ -188,10 +201,21 @@ function formulize_readEntries($formIdOrHandle, $options = array(), $user = null
 		bypassCache: true
 	);
 
+	// null when the count was asked for but never made, rather than a number that might be wrong
+	if ($countAllMatches) {
+		$totalMatching = isset($GLOBALS['formulize_countMasterResultsForPageNumbers']) ? intval($GLOBALS['formulize_countMasterResultsForPageNumbers']) : null;
+	} else {
+		$totalMatching = count($dataset);
+	}
+	// neither the flag nor the count may linger, or a later getData call in this request would pick them up
+	unset($GLOBALS['formulize_getCountForPageNumbers']);
+	unset($GLOBALS['formulize_countMasterResultsForPageNumbers']);
+
 	return array(
 		'fid' => $fid,
 		'formHandle' => $formHandle,
 		'dataset' => $dataset,
+		'totalMatching' => $totalMatching,
 		'fieldsByForm' => $fieldsByForm,
 		'scope' => $actualScope,
 		'filter' => $filter,
