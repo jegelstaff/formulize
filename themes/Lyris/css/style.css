@@ -4228,6 +4228,30 @@ a.google-only-login-link:focus-visible {
   font-size: var(--fz-text-sm);
 }
 
+/* Delete/clone selection checkboxes (issue #989). When "show delete/clone
+   buttons" is on, subformListingsElement.php emits each entry as a sibling pair
+   — `div.subform-deletebox` (holding `input.delbox`) then
+   `div.subform-entry-container` — so in normal block flow the checkbox sat on
+   its own line ABOVE its accordion header. A two-column grid puts each pair on
+   one row: the checkbox column shrinks to fit and the entry fills the rest.
+   `align-items: baseline` lines the checkbox up with the header's text line
+   (the entry container's first baseline), so it stays centred on the header
+   whatever the header padding, and doesn't drift when the section expands.
+   Only applied when a checkbox is actually present, so accordions without
+   selection checkboxes keep their plain full-width block layout. The hidden
+   `subform_entry_*_active` input is display:none and so takes no grid cell. */
+.subform-accordion-container.ui-accordion:has(> .subform-deletebox > input.delbox) {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+}
+.subform-accordion-container.ui-accordion > .subform-deletebox {
+  white-space: nowrap; /* keep the trailing &nbsp;&nbsp; spacer beside the checkbox */
+}
+.subform-accordion-container.ui-accordion > .subform-deletebox > input.delbox {
+  margin: 0 calc(var(--fz-spacing) * 1) 0 0;
+}
+
 /* Neutralise jQuery-UI's `.ui-widget input/select/textarea/button` Verdana
    override so embedded fields use the Lyris font like the rest of the form. */
 .subform-accordion-container.ui-accordion input,
