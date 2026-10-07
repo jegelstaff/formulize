@@ -600,7 +600,7 @@
 		var full = state.contentWidth === 'full';
 		return '<div class="formulize-editor__ctl' + (widthChanged() ? ' is-changed' : '') + '"><div class="formulize-editor__ctl-head"><span class="formulize-editor__lbl" id="formulize-editor-width-label">Page width</span>' +
 				(widthChanged() ? '<button type="button" class="formulize-editor__link" data-site-reset="contentwidth">Reset</button>' : '') + '</div>' +
-			'<p class="formulize-editor__desc">How wide pages can get on a wide screen. A maximum width keeps forms, lists and the links along the top of the page beside the menu. The theme’s own is ' + esc(lower(widthName(WIDTH.theme))) + '. The preview is narrower than most screens, so it may not show the difference.</p>' +
+			'<p class="formulize-editor__desc">How wide pages can get on a wide screen. A maximum width keeps forms and lists to a column of that width, in the middle of the window. The theme’s own is ' + esc(lower(widthName(WIDTH.theme))) + '. The preview is narrower than most screens, so it may not show the difference.</p>' +
 			'<div class="formulize-editor__seg formulize-editor__seg--full" role="group" aria-labelledby="formulize-editor-width-label">' +
 				'<button type="button" data-cwidth="max" aria-pressed="' + !full + '">Maximum width</button>' +
 				'<button type="button" data-cwidth="full" aria-pressed="' + full + '">Full width</button></div>' +
