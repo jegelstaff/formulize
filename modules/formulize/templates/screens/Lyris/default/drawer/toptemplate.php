@@ -26,11 +26,13 @@
 //   The nesting still stays: the levels mean different things, the drawer has
 //   to mirror the containers the theme's form screens emit so shared rules
 //   match, and if a density modifier is ever re-introduced as a setting it has
-//   to go on this inner element. It cannot be merged onto `.lyris-form-screen`,
-//   which re-declares --lyris-field-height/--lyris-field-padding-x later in the stylesheet and so
-//   wins on source order over any modifier placed on the same element - that
-//   was measured during PR #100 (drawer controls went 32px -> 38px while full
-//   screen stayed at 32px) and is why the two divs were never collapsed.
+//   to go on this inner element. It could not be merged onto `.lyris-form-screen`,
+//   which re-declared the field height and padding later in the stylesheet (as
+//   --lyris-field-height/--lyris-field-padding-x, since replaced by Formulize UI's
+//   --fz-field-* tokens, which nothing in Lyris re-declares) and so won on source
+//   order over any modifier placed on the same element - that was measured during
+//   PR #100 (drawer controls went 32px -> 38px while full screen stayed at 32px)
+//   and is why the two divs were never collapsed.
 //
 // The card wrapper is deliberately dropped - the drawer itself plays that part.
 

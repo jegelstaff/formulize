@@ -12,10 +12,18 @@
 //
 // Anything under the pointer that scrolls on its own (an open menu, a sidebar,
 // a wide table) keeps its scroll, the container keeps its own, and pinch-zoom
-// (a wheel event with the control key) is left alone. A theme that names
-// nothing, or "none", is not affected. Published site-wide by footer.php.
+// (a wheel event with the control key) is left alone. So is the wheel over a
+// modal, such as the entry drawer, or its backdrop: the page behind a modal
+// stays where it is, as the modal means it to. And so is the wheel over a menu
+// that has been opened outside the container (an autocomplete's list of
+// suggestions): it belongs to a field in the container, and scrolling the
+// container would leave it behind. A theme that names nothing, or "none", is
+// not affected. Published site-wide by footer.php.
 (function () {
 	'use strict';
+
+	// a modal, and its backdrop; and a menu or list of options, opened over the page
+	var LEAVE = '[aria-modal="true"], [role="dialog"], .formulize-drawer-scrim, [role="menu"], [role="listbox"], .ui-menu';
 
 	// whether an element scrolls in the direction asked
 	function scrolls(el, dx, dy) {
@@ -24,18 +32,28 @@
 			(dx && /(auto|scroll)/.test(style.overflowX) && el.scrollWidth > el.clientWidth);
 	}
 
+	// the elements the theme names, looked up once per frame: a trackpad sends many
+	// wheel events a second
+	var named = null;
+	function namedElements() {
+		if (named === null) {
+			var selector = document.body ? document.body.getAttribute('data-formulize-scroll-container') : '';
+			named = [];
+			if (selector && selector !== 'none') {
+				try {
+					named = document.querySelectorAll(selector);
+				} catch (e) {
+					// not a selector
+				}
+			}
+			window.requestAnimationFrame(function () { named = null; });
+		}
+		return named;
+	}
+
 	// the container the theme names that is scrolling, if any
 	function container(dx, dy) {
-		var named = document.body ? document.body.getAttribute('data-formulize-scroll-container') : '';
-		if (!named || named === 'none') {
-			return null;
-		}
-		var els;
-		try {
-			els = document.querySelectorAll(named);
-		} catch (e) {
-			return null; // not a selector
-		}
+		var els = namedElements();
 		for (var i = 0; i < els.length; i++) {
 			if (scrolls(els[i], dx, dy)) {
 				return els[i];
@@ -45,7 +63,7 @@
 	}
 
 	document.addEventListener('wheel', function (ev) {
-		if (ev.ctrlKey || ev.defaultPrevented) {
+		if (ev.ctrlKey || ev.defaultPrevented || !(ev.target instanceof Element) || ev.target.closest(LEAVE)) {
 			return;
 		}
 		var dx = ev.deltaX, dy = ev.deltaY;
@@ -54,7 +72,7 @@
 			dy = 0;
 		}
 		var target = container(dx, dy);
-		if (!target || !(ev.target instanceof Element) || target.contains(ev.target)) {
+		if (!target || target.contains(ev.target)) {
 			return;
 		}
 		for (var el = ev.target; el && el !== document.body && el !== document.documentElement; el = el.parentElement) {

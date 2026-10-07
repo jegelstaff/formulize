@@ -4,13 +4,13 @@
 # catalog is what the in-app style guide, the documentation site's reference
 # and the reference for AI tools are made from, so a class added to the
 # stylesheet without it would be undocumented everywhere. It also checks the
-# component size map (modules/formulize/include/appearance_tokens.json): that its
-# preset values are ones their tokens can have, and that formulize-ui.css
-# declares a Default for every token in it, and that the themes' sample screens
-# for the advanced editor (themes/*/appearance_preview) mark only parts the
-# map has.
+# component token map (modules/formulize/include/appearance_tokens.json): that
+# the built-in looks (modules/formulize/include/appearance_looks) set their tokens
+# only to values the tokens can have, that formulize-ui.css declares a Default
+# for every token in it, and that the themes' sample screens for the appearance
+# editor (themes/*/appearance_preview) mark only parts the map has.
 #
-# Runs only when one of the two files changes. GitHub's Ubuntu runners have PHP
+# Runs only when one of those files changes. GitHub's Ubuntu runners have PHP
 # installed, and the catalog depends on nothing else, so there is nothing to set
 # up. To run the same check locally:
 #
@@ -29,6 +29,7 @@ on:
       - modules/formulize/include/ui_catalog.php
       - modules/formulize/include/appearance_tokens.json
       - modules/formulize/include/appearance_tokens.php
+      - modules/formulize/include/appearance_looks/**
       - themes/*/appearance_preview/**
   push:
     branches:
@@ -38,6 +39,7 @@ on:
       - modules/formulize/include/ui_catalog.php
       - modules/formulize/include/appearance_tokens.json
       - modules/formulize/include/appearance_tokens.php
+      - modules/formulize/include/appearance_looks/**
       - themes/*/appearance_preview/**
   workflow_dispatch:
 

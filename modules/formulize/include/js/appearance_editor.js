@@ -59,6 +59,11 @@
 	// those, and only what differs from them is the look's. A built-in look is
 	// edited the same way, and can be reverted to how it came.
 	var EDIT = DATA.editing, BASE = DATA.base, READONLY = false;
+	// The parts' settings a look other than Default records itself, as saved. A look
+	// can record one that is the same as Default's (Compact sets the label weight
+	// Default has, for one), and it keeps it, rather than following Default when
+	// Default changes, unless it is reset.
+	var OWN = (BASE && EDIT && EDIT.overrides) ? EDIT.overrides : {};
 	// The mode, the site's: simple shows the look applied, with its logo, colours,
 	// fonts and page width; advanced adds every part of it, and every look.
 	var SIMPLE = DATA.mode !== 'advanced';
@@ -194,7 +199,8 @@
 			if (value(token) < l.min) { state.overrides[token] = l.min; state.raised[token] = l.why; }
 		});
 		Object.keys(state.overrides).forEach(function (t) {
-			if (state.overrides[t] === presetValue(t) && !state.raised[t]) { delete state.overrides[t]; }
+			var recorded = has(OWN, t) && String(OWN[t]) === String(state.overrides[t]);
+			if (state.overrides[t] === presetValue(t) && !state.raised[t] && !recorded) { delete state.overrides[t]; }
 		});
 	}
 
@@ -274,11 +280,22 @@
 		return (role === 'secondary' && fontThemed('heading')) ? fontShown('heading') : main;
 	}
 	function uploadChanged(key) { return !!(state.uploads[key].file || state.uploads[key].removed); }
-	// whether a look has an image of its own, rather than the site appearance's
-	function lookOwn(key) { return !!(BASE && savedUploads[key] && savedUploads[key] !== BASE.uploads[key]); }
+	// whether a look has an image of its own, rather than Default's: the look being
+	// edited, in advanced mode; the one chosen, in simple mode
+	function lookOwn(key) {
+		if (BASE) { return !!(savedUploads[key] && savedUploads[key] !== BASE.uploads[key]); }
+		var look = DATA.simpleLooks && DATA.simpleLooks[CHOSEN];
+		return !!(look && look.own && look.own[key]);
+	}
+	// what shows when the image is taken away: Default's, for a look's own, and
+	// otherwise the theme's own
+	function fallbackUrl(key) {
+		if (BASE) { return BASE.uploads[key]; }
+		return (lookOwn(key) && DATA.simpleLooks['default']) ? DATA.simpleLooks['default'].state.uploads[key] : '';
+	}
 	function uploadUrl(key) {
 		var u = state.uploads[key];
-		return u.file || (u.removed ? (BASE ? BASE.uploads[key] : '') : savedUploads[key]);
+		return u.file || (u.removed ? fallbackUrl(key) : savedUploads[key]);
 	}
 
 	/* ---- parts ---- */
@@ -347,13 +364,14 @@
 			if (font) { loadFont(d, font.google); }
 		});
 		// every part's own settings, and the tokens that follow them (the main
-		// button's hover colour), which are put back to their Default otherwise
+		// button's hover colour), which are put back to what they are declared as
+		// otherwise, not to the saved stylesheet's, which follows the look applied
 		Object.keys(MAP.tokens).forEach(function (token) {
 			var e = entry(token), v = css(token, value(token));
 			root.style.setProperty(token, v);
 			Object.keys(e.derived || {}).forEach(function (d) {
 				if (String(value(token)) !== String(e['default'])) { root.style.setProperty(d, e.derived[d].split('%s').join(v)); }
-				else { root.style.removeProperty(d); }
+				else { restore(root, d); }
 			});
 		});
 		if (WIDTH) {
@@ -531,16 +549,19 @@
 		var url = uploadUrl(key), isLogo = key === 'appearance_logo';
 		var thumb = url ? '<img src="' + esc(url) + '" alt="">' : (isLogo ? '<img src="' + esc(DATA.themeLogoUrl) + '" alt="">' : '<span>—</span>');
 		var desc = isLogo ? 'At the top left of every page.' : 'The small icon in the browser tab and in bookmarks.';
+		// a look's own image goes back to Default's; Default's, to the theme's own
+		var own = lookOwn(key), removed = state.uploads[key].removed, toDefault = BASE || own;
 		var status = state.uploads[key].file ? 'A new image, saved when you save.'
-			: BASE ? (lookOwn(key) && !state.uploads[key].removed ? 'This look’s own.' : 'Default’s.')
+			: own && !removed ? (BASE ? 'This look’s own.' : EDIT.name + '’s own.')
+			: toDefault ? 'Default’s.'
 			: (url ? 'Uploaded.' : 'The theme’s own.');
-		var removable = BASE ? ((lookOwn(key) && !state.uploads[key].removed) || state.uploads[key].file) : url;
+		var removable = toDefault ? ((own && !removed) || state.uploads[key].file) : url;
 		return '<div class="formulize-editor__ctl' + (uploadChanged(key) ? ' is-changed' : '') + '">' +
 			'<div class="formulize-editor__ctl-head"><span class="formulize-editor__lbl">' + UPLOADS[key] + '</span>' + (uploadChanged(key) ? '<button type="button" class="formulize-editor__link" data-upload-undo="' + key + '">Undo</button>' : '') + '</div>' +
 			'<p class="formulize-editor__desc">' + desc + '</p>' +
 			'<div class="formulize-editor__upload"><span class="formulize-editor__thumb' + (isLogo ? '' : ' formulize-editor__thumb--icon') + '">' + thumb + '</span>' +
 				'<span class="formulize-editor__upload-acts"><label class="formulize-editor__btn formulize-editor__btn--sm" for="formulize-editor-' + key + '">Upload…</label>' +
-				(removable ? '<button type="button" class="formulize-editor__btn formulize-editor__btn--sm" data-upload-remove="' + key + '">' + (BASE ? 'Use Default’s' : 'Use the theme’s own') + '</button>' : '') +
+				(removable ? '<button type="button" class="formulize-editor__btn formulize-editor__btn--sm" data-upload-remove="' + key + '">' + (toDefault ? 'Use Default’s' : 'Use the theme’s own') + '</button>' : '') +
 				'<span class="formulize-editor__upload-status">' + esc(status) + ' ' + esc(DATA.uploads[key].types) + '.</span></span></div>' +
 		'</div>';
 	}
@@ -622,7 +643,7 @@
 		}
 		Object.keys(UPLOADS).forEach(function (key) {
 			if (uploadChanged(key)) {
-				list.push({ name: UPLOADS[key], now: state.uploads[key].file ? 'A new image' : (BASE ? 'Default’s' : 'The theme’s own'), undo: 'upload:' + key });
+				list.push({ name: UPLOADS[key], now: state.uploads[key].file ? 'A new image' : ((BASE || lookOwn(key)) ? 'Default’s' : 'The theme’s own'), undo: 'upload:' + key });
 			}
 		});
 		Object.keys(DATA.colours).forEach(function (key) {
@@ -672,12 +693,21 @@
 	function chooseLook(key, keep) {
 		var look = DATA.simpleLooks && DATA.simpleLooks[key], info = menuLook(key);
 		if (!look || !info) { return; }
+		// a change is kept unless the look chosen sets that setting itself: then it has
+		// its own, which it is shown with (and a change to it would be saved to it)
+		var sets = function () { for (var i = 0; i < arguments.length; i++) { if ((look.sets || []).indexOf(arguments[i]) !== -1) { return true; } } return false; };
 		var colours = {}, fonts = {}, width = null;
 		if (keep) {
-			Object.keys(DATA.colours).forEach(function (k) { if (String(state.colours[k]).toLowerCase() !== String(SAVED.colours[k]).toLowerCase()) { colours[k] = state.colours[k]; } });
-			['main', 'heading'].forEach(function (w) { if (state.fonts[w] !== SAVED.fonts[w] || state.fonts[w + 'custom'] !== SAVED.fonts[w + 'custom']) { fonts[w] = [state.fonts[w], state.fonts[w + 'custom']]; } });
-			if (WIDTH && state.contentWidth !== SAVED.contentWidth) { width = state.contentWidth; }
+			Object.keys(DATA.colours).forEach(function (k) { if (!sets('appearance_' + k) && String(state.colours[k]).toLowerCase() !== String(SAVED.colours[k]).toLowerCase()) { colours[k] = state.colours[k]; } });
+			['main', 'heading'].forEach(function (w) {
+				var names = w === 'main' ? ['appearance_font', 'appearance_customfont'] : ['appearance_headingfont', 'appearance_headingcustomfont'];
+				if (!sets(names[0], names[1]) && (state.fonts[w] !== SAVED.fonts[w] || state.fonts[w + 'custom'] !== SAVED.fonts[w + 'custom'])) { fonts[w] = [state.fonts[w], state.fonts[w + 'custom']]; }
+			});
+			if (WIDTH && !sets('appearance_contentwidth') && state.contentWidth !== SAVED.contentWidth) { width = state.contentWidth; }
 		}
+		// a logo or favicon taken away was the look's that was shown: another look's
+		// is its own, or Default's. A new one chosen stays.
+		Object.keys(UPLOADS).forEach(function (k) { state.uploads[k].removed = false; });
 		adopt(look.state);
 		REF = look.reference;
 		CHOSEN = key;
@@ -1089,7 +1119,11 @@
 	}
 	if ($('formulize-editor-theme')) {
 		$('formulize-editor-theme').addEventListener('change', function () {
-			if (leaving()) { submitting = true; location.href = this.value; } else { this.value = location.href; }
+			if (leaving()) { submitting = true; location.href = this.value; }
+			else { // back to the theme being edited, the one the page came with
+				var self = this;
+				Array.prototype.forEach.call(self.options, function (o) { if (o.defaultSelected) { self.value = o.value; } });
+			}
 		});
 	}
 	$('formulize-editor-applied').addEventListener('click', function (ev) { var b = ev.target.closest('[data-look-act]'); if (b) { lookAction(b.getAttribute('data-look-act')); } });
@@ -1174,8 +1208,10 @@
 		var data = new FormData(form);
 		data.append('appearance_editor_save', '1');
 		data.append('appearance_editor_ajax', '1');
+		// no answer at all, and an answer that isn't the editor's, are told apart: the
+		// second can come after the save has been made
 		fetch(form.action, { method: 'POST', body: data, credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-			.then(function (r) { return r.json(); })
+			.then(function (r) { return r.json(); }, function () { throw new Error('offline'); })
 			.then(function (result) {
 				var lookApplied = SIMPLE && result.saved && result.applied !== DATA.applied;
 				if (result.saved) {
@@ -1189,6 +1225,8 @@
 						CHOSEN = result.applied;
 						REF = DATA.simpleLooks[CHOSEN].reference;
 					}
+					// a look's parts' settings, as saved: what was sent
+					if (BASE) { OWN = copy(state.overrides); }
 					adopt(result.state);
 					state.dirty = false;
 					if (EDIT && result.edited !== undefined) {
@@ -1201,8 +1239,10 @@
 				else if (EDIT) { message('Saved the ' + EDIT.name + ' look.' + (DATA.applied === EDIT.key ? ' It is applied to the site, so the site has changed.' : ' It isn’t applied to the site, so the site hasn’t changed.')); }
 				else { message('Saved. These settings now apply across the site in the ' + DATA.theme + ' theme.'); }
 				render();
-			})['catch'](function () {
-				message('Nothing was saved: the site didn’t answer. Check your connection and save again.', true);
+			})['catch'](function (e) {
+				message(e && e.message === 'offline'
+					? 'Nothing was saved: the site didn’t answer. Check your connection and save again.'
+					: 'The site’s answer couldn’t be read, so the changes may or may not have been saved. Reload the page to see what was saved.', true);
 			}).then(function () {
 				// Save is on again only if there is something left to save
 				state.saving = false; save.disabled = READONLY || changeCount() === 0; save.textContent = 'Save';

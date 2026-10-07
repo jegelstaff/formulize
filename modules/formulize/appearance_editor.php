@@ -119,6 +119,10 @@ if (isset($_POST['appearance_look_action']) AND $pageUrl) {
 		}
 	} elseif (($action == 'rename' OR $action == 'delete') AND $looks[$editing]['builtin']) {
 		$errors[] = $looks[$editing]['name'] . ' comes with Formulize, so it can\'t be renamed or deleted. If it has been changed, it can be reverted to how it came.';
+	} elseif ($action == 'revert' AND !$looks[$editing]['builtin']) {
+		$errors[] = $looks[$editing]['name'] . ' is a look of your own, so it has nothing to be reverted to. It can be changed, renamed or deleted.';
+	} elseif ($action == 'revert' AND $editing != 'default' AND !$looks[$editing]['edited']) {
+		$errors[] = $looks[$editing]['name'] . ' is already the way it came with Formulize, so there is nothing to revert.';
 	} elseif ($action == 'revert') {
 		if (formulize_revertAppearanceLook($theme, $editing)) {
 			$go = $editing;
@@ -188,11 +192,18 @@ function formulize_appearanceEditorReference($looks, $theme, $key) {
 
 // Simple mode's looks: each as the site would be with it applied, and what it is
 // changed on this site from, so that choosing one shows it in the preview, without
-// applying it until Save
+// applying it until Save. Also the settings each one sets itself, which a change
+// not saved yet isn't carried over to when it is chosen (it has its own), and
+// whether it has a logo and favicon of its own, rather than Default's.
 function formulize_appearanceEditorSimpleLooks($settings, $theme, $looks) {
 	$simpleLooks = array();
-	foreach (array_keys($looks) as $key) {
-		$simpleLooks[$key] = array('state' => formulize_appearanceEditorLookState($settings, $theme, $key), 'reference' => formulize_appearanceEditorReference($looks, $theme, $key));
+	foreach ($looks as $key => $look) {
+		$own = array();
+		foreach (array_keys(formulize_appearanceUploads()) as $name) {
+			$own[$name] = !empty($look['settings'][$name]);
+		}
+		$simpleLooks[$key] = array('state' => formulize_appearanceEditorLookState($settings, $theme, $key), 'reference' => formulize_appearanceEditorReference($looks, $theme, $key),
+			'sets' => array_keys($look['settings']), 'own' => $own);
 	}
 	return $simpleLooks;
 }
@@ -212,34 +223,43 @@ function formulize_appearanceEditorSimpleLooks($settings, $theme, $looks) {
 // X-Requested-With, which keeps the page's token good for the next save.
 $saved = false;
 if (isset($_POST['appearance_editor_save']) AND $pageUrl) {
+	// a background save answers with JSON alone: anything else printed while saving
+	// (a PHP notice, with errors shown) is dropped, so the editor can read the answer
+	$bufferLevel = ob_get_level();
+	if (isset($_POST['appearance_editor_ajax'])) {
+		ob_start();
+	}
 	if (!$GLOBALS['xoopsSecurity']->check(true, false, 'formulize_appearance_editor_token')) {
 		$errors[] = 'Nothing was saved, because the page had been open too long. Reload the page, make the changes again and save.';
 	} else {
 		$siteWide = array_merge(array_map(function ($key) { return 'appearance_' . $key; }, array_keys(formulize_appearanceColourMap($theme))),
 			array('appearance_font', 'appearance_customfont', 'appearance_headingfont', 'appearance_headingcustomfont', 'appearance_contentwidth'));
+		// what the theme's own settings (Default's) become; $settings stays as they
+		// stand until the save has been written
+		$siteSettings = $settings;
 		if ($mode == 'simple') {
 			// the look chosen, which is applied with the rest of what is saved
 			$chosen = isset($_POST['appearance_look']) ? strtolower((string) $_POST['appearance_look']) : $applied;
 			$editing = ($chosen !== '' AND isset($looks[$chosen])) ? $chosen : 'default';
-			$settings['appearance_look'] = ($editing == 'default') ? '' : $editing;
+			$siteSettings['appearance_look'] = ($editing == 'default') ? '' : $editing;
 		}
 		$look = $looks[$editing];
 		$submitted = formulize_appearanceSubmittedSettings($_POST, $settings, $theme, $errors);
 		// in advanced mode, the look applied and the mode are changed by their own
 		// actions, not by Save
-		$submitted['appearance_look'] = $settings['appearance_look'];
+		$submitted['appearance_look'] = $siteSettings['appearance_look'];
 		$submitted['appearance_mode'] = $settings['appearance_mode'];
 		if ($mode == 'simple') {
 			// a part's own settings aren't changed in simple mode
 			$submitted['appearance_overrides'] = $settings['appearance_overrides'];
 		}
+		$own = array(); // the look's own logo and favicon, as they stand
 		if ($editing == 'default') {
-			$siteSettings = formulize_saveAppearanceUploads($submitted, $settings, $theme, false, $errors);
+			$siteSettings = formulize_saveAppearanceUploads($submitted, $theme, $errors);
 			$lookSettings = null;
 		} else {
 			// what the look changes; in simple mode, also the settings it sets, as changed
 			// here, while the rest of the site-wide ones go to Default
-			$siteSettings = $settings;
 			if ($mode == 'simple') {
 				$lookSettings = $look['settings'];
 				foreach ($siteWide as $name) {
@@ -256,7 +276,6 @@ if (isset($_POST['appearance_editor_save']) AND $pageUrl) {
 			}
 			// the logo and favicon: the look's own, if it has one (or, in advanced mode, is
 			// given one), otherwise, in simple mode, Default's
-			$own = array();
 			$toLook = array();
 			$toSite = array();
 			foreach (array_keys(formulize_appearanceUploads()) as $name) {
@@ -269,13 +288,13 @@ if (isset($_POST['appearance_editor_save']) AND $pageUrl) {
 					unset($lookSettings[$name]);
 				}
 			}
-			$lookSettings = formulize_saveAppearanceUploads($lookSettings, $own, $theme, false, $errors, $toLook);
+			$lookSettings = formulize_saveAppearanceUploads($lookSettings, $theme, $errors, $toLook);
 			foreach ($toLook as $name) {
 				if ($lookSettings[$name] === '') {
 					unset($lookSettings[$name]); // no image of its own: Default's
 				}
 			}
-			$siteSettings = formulize_saveAppearanceUploads($siteSettings, $settings, $theme, false, $errors, $toSite);
+			$siteSettings = formulize_saveAppearanceUploads($siteSettings, $theme, $errors, $toSite);
 		}
 		$siteSettings = formulize_sanitizeAppearanceSettings($siteSettings, $theme);
 		// in simple mode, a look is only saved when something of its own changed, so a
@@ -283,30 +302,52 @@ if (isset($_POST['appearance_editor_save']) AND $pageUrl) {
 		if ($mode == 'simple' AND $lookSettings !== null AND formulize_sanitizeAppearanceLookSettings($lookSettings, $theme) == $look['settings']) {
 			$lookSettings = null;
 		}
-		if (formulize_regenerateAppearanceCss($siteSettings, $theme) AND ($lookSettings === null OR formulize_saveAppearanceLook($theme, $editing, $look['name'], $lookSettings, $look['description']))) {
+		// the images named before the save, and after it
+		$before = array();
+		$after = array();
+		foreach (array_keys(formulize_appearanceUploads()) as $name) {
+			$before[] = $settings[$name];
+			$after[] = $siteSettings[$name];
+			if ($lookSettings !== null) {
+				$before[] = $own[$name];
+				$after[] = isset($lookSettings[$name]) ? $lookSettings[$name] : '';
+			}
+		}
+		// The look first, then the theme's own settings, so that if the look can't be
+		// saved, nothing has changed. Writing the theme's own settings rewrites the
+		// site's stylesheet and every look's, so they have the look as just saved.
+		$lookSaved = ($lookSettings === null OR formulize_saveAppearanceLook($theme, $editing, $look['name'], $lookSettings, $look['description'], false));
+		$siteSaved = ($lookSaved AND formulize_regenerateAppearanceCss($siteSettings, $theme));
+		if ($siteSaved) {
 			$saved = true;
 			$settings = $siteSettings;
-			if ($lookSettings !== null) {
-				// the images the look no longer has, now that its stylesheet doesn't name them
-				foreach ($own as $name => $file) {
-					if ($file !== '' AND (!isset($lookSettings[$name]) OR $lookSettings[$name] !== $file)) {
-						formulize_deleteAppearanceUploadedFile($file, $theme);
-					}
-				}
-			}
-			$looks = formulize_getAppearanceLooks($theme, true);
 		} else {
-			$errors[] = 'Nothing was saved: the ' . $theme . " theme's appearance files could not be written in " . formulize_getAppearanceDir($theme) . '. Make that folder writable by the web server and save again.';
+			// a look that was saved, when there was one to save, and the rest not
+			$errors[] = (($lookSettings !== null AND $lookSaved) ? 'The ' . $look['name'] . " look was saved, but the site's own settings were not: the " : 'Nothing was saved: the ') . $theme . " theme's appearance files could not be written in " . formulize_getAppearanceDir($theme) . '. Make that folder writable by the web server and save again.';
 		}
+		// the images the save stopped naming, and the ones uploaded with it: each goes
+		// if no stylesheet names it now. So after a save, the ones replaced go; after
+		// one that failed, the ones uploaded with it; and after one that failed part
+		// way, whichever of them what was saved doesn't name.
+		foreach (array_merge(array_diff($before, $after), array_diff($after, $before)) as $file) {
+			if ($file !== '') {
+				formulize_deleteAppearanceUploadedFile($file, $theme);
+			}
+		}
+		$looks = formulize_getAppearanceLooks($theme, true);
 	}
 	if (isset($_POST['appearance_editor_ajax'])) {
-		header('Content-Type: application/json; charset=utf-8');
 		$applied = ($settings['appearance_look'] !== '' AND isset($looks[$settings['appearance_look']])) ? $settings['appearance_look'] : 'default';
-		echo json_encode(array('saved' => $saved, 'errors' => $errors,
+		$answer = json_encode(array('saved' => $saved, 'errors' => $errors,
 			'edited' => $editing == 'default' ? formulize_appearanceDefaultChanged($settings) : $looks[$editing]['edited'],
 			'state' => formulize_appearanceEditorLookState($settings, $theme, $editing),
 			'applied' => $applied,
 			'simpleLooks' => $mode == 'simple' ? formulize_appearanceEditorSimpleLooks($settings, $theme, $looks) : null), JSON_UNESCAPED_SLASHES);
+		while (ob_get_level() > $bufferLevel) {
+			ob_end_clean();
+		}
+		header('Content-Type: application/json; charset=utf-8');
+		echo $answer;
 		exit();
 	}
 	if ($saved AND !$errors) {
@@ -360,6 +401,13 @@ foreach ($colours as $colour) {
 foreach (array_merge(array('--fz-font-sans', '--fz-font-heading'), array_map(function ($colour) { return $colour['css']; }, $map['colours'])) as $token) {
 	$restore[$token] = isset($themeTokens[$token]) ? $themeTokens[$token] : null;
 }
+// the tokens that follow a part's setting (the main button's hover colour), as
+// declared, for when the setting is back at its Default: the saved stylesheet in
+// the preview may have them following the look applied to the site
+$declaredTokens = formulize_appearanceDeclaredTokens($theme);
+foreach (formulize_appearanceDerivedTokens($map) as $token) {
+	$restore[$token] = isset($declaredTokens[$token]) ? $declaredTokens[$token] : null;
+}
 $uploads = array();
 foreach (formulize_appearanceUploads() as $uploadSetting => $upload) {
 	$uploads[$uploadSetting] = array(
@@ -408,7 +456,10 @@ $editorData = array(
 	// what is being edited: null for the site appearance, or a look; the site
 	// appearance it starts from (base); and the looks, for the menu
 	'editing' => array('key' => $editing, 'name' => $looks[$editing]['name'], 'description' => $looks[$editing]['description'], 'builtin' => $looks[$editing]['builtin'],
-		'edited' => ($editing == 'default') ? formulize_appearanceDefaultChanged($settings) : $looks[$editing]['edited']),
+		'edited' => ($editing == 'default') ? formulize_appearanceDefaultChanged($settings) : $looks[$editing]['edited'],
+		// the parts' settings the look records itself, which it keeps even when they
+		// are the same as Default's (as a built-in look can)
+		'overrides' => (object) formulize_appearanceLookOverrides($looks[$editing])),
 	// what the look is measured against: Default, the theme's own settings, for any
 	// other look in advanced mode; the theme itself, for Default and in simple mode
 	'base' => ($editing == 'default' OR $mode == 'simple') ? null : formulize_appearanceEditorState($settings, $theme),
