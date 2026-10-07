@@ -11,7 +11,7 @@
 /* ---- Units ----
    Sizes are in rem, so they follow the browser's and the user's font size.
    Spaces (padding, margins, gaps) are steps of --fz-spacing. Sizes the
-   Appearance page's Size preset sets are Formulize UI's component size tokens
+   Appearance page's looks set are Formulize UI's component size tokens
    (--fz-field-height, --fz-row-height...). Only borders, shadows, hairlines of
    2px or less and the breakpoints are in px. Where a comment gives a size in px, it is the size at
    the default settings.
@@ -33,7 +33,7 @@ body {
    and moving it moves all of them together.
 
    The theme's own default is --formulize-font-size-base in tokens.css. The
-   Appearance page's Size preset sets the component sizes instead, not this. */
+   Appearance page's looks set the component sizes instead, not this. */
 html {
   font-size: var(--formulize-font-size-base);
 }
@@ -73,7 +73,7 @@ h1, h2, h3, h4, h5, h6,
 /* ---------- Titles ----------
    The form card title, the right drawer's title and the list title bar's title
    share one style, from the Formulize UI title tokens (--fz-title-*), so they
-   follow the Appearance page's Size preset and advanced editor together:
+   follow the Appearance page's looks and advanced editor together:
    20px/600 at Default. At
    the mobile breakpoint they use the narrow title size. */
 .lyris-form-card .fz-card__title,
@@ -2023,7 +2023,7 @@ body:has(#formulize-masquerade-block) {
    existing 32px `.fz-input`-equivalent baseline.
 
    Sizes come from the Formulize UI component size tokens (formulize-ui.css),
-   which the Appearance page's Size preset and advanced settings change. At
+   which the Appearance page's looks and advanced editor change. At
    Default:
      --fz-field-height:     38px    field height
      --fz-field-padding-x:  12px
@@ -3465,7 +3465,7 @@ input[type="time"] { font-family: var(--fz-font-sans); }
 @media (max-width: 768px) {
   /* A floor for form fields on phones (0 on wider screens, in tokens.css):
      fields are never under 44px tall, a comfortable tap target, whatever the
-     Size preset. */
+     look. */
   :root {
     --lyris-tap-min: 2.75rem;
   }
@@ -4677,16 +4677,15 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
     --lyris-content-start: var(--lyris-sidebar-width);
   }
 
-  /* Lists in a card, while pages are kept to a maximum width (the body has
-     .lyris-max-width, from theme.html), so that a list's entries don't float in
-     the page background beside the empty space to their right. The card is the
-     form card's: the same surface, border, corners and shadow, and the same
+  /* Lists in a card, at any page width, so that a list's entries sit on a surface
+     of their own, as a form's do, rather than in the page background. The card is
+     the form card's: the same surface, border, corners and shadow, and the same
      gutter around it, so a list's card and a form's line up. It has no padding of
      its own, so the rows, their lines and the sticky column headings reach its
      edges, and it still scrolls, both ways, inside its border. It is as tall as
      its entries, up to the space between the title bar and the footer, and the
-     footer stays at the bottom. At full width, lists are as they were. */
-  body.lyris-max-width:not(.formulize-inline) .lyris-list__body {
+     footer stays at the bottom. On phones, lists run edge to edge, without one. */
+  body:not(.formulize-inline) .lyris-list__body {
     flex: 0 1 auto;
     max-width: calc(var(--formulize-content-max-width) - 2 * var(--fz-page-padding));
     margin: var(--fz-page-padding);
@@ -4696,7 +4695,7 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
     box-shadow: var(--fz-shadow-sm);
   }
 
-  body.lyris-max-width:not(.formulize-inline) .lyris-list__footer {
+  body:not(.formulize-inline) .lyris-list__footer {
     margin-top: auto;
   }
 

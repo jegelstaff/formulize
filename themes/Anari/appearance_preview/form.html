@@ -1,0 +1,58 @@
+<!--
+  Sample screen for the Appearance page's editor: an entry's form, as Anari
+  draws a form screen (captured from a real one, with sample content). Anari is
+  edited in simple mode only, so the logo is the one part marked with
+  data-fz-part. See themes/Lyris/appearance_preview/form.html for how the
+  samples work.
+-->
+<div class="site-layout">
+  <div class="site-layout__main">
+    {{header}}
+    <div class="main-content">
+      <div class="container">
+        <div id="formulizeform"><form id="formulize_mainform" class="formulizeThemeForm" onsubmit="return false;">
+          <div id="pageNavTable" class="pill-tabs">
+            <a href="#" class="icon-arrow-backward pill-tabs__item navtab"> Save and Close</a>
+            <a href="#" class="pill-tabs__item navtab pill-tabs__item--active">Participant</a>
+            <a href="#" class="pill-tabs__item navtab">Program</a>
+            <a href="#" class="pill-tabs__item navtab">Health &amp; Safety</a>
+          </div>
+          <div class="card">
+            <div class="card__body">
+              <div class="form-container">
+                <div class="form-row" style="width: auto;">
+                  <label for="pva_name" class="form-label">Participant name&nbsp;<span style="color: red;">*</span></label>
+                  <input type="text" id="pva_name" size="30" value="Ada Okafor">
+                  <p class="form-help-text">As it should appear on the name tag and the certificate.</p>
+                </div>
+                <div class="form-row" style="width: auto;">
+                  <label for="pva_program" class="form-label">Program&nbsp;<span style="color: red;">*</span></label>
+                  <select id="pva_program" size="1"><option>Summer camp: Robotics</option><option>Summer camp: Coding</option></select>
+                </div>
+                <div class="form-row" style="width: auto;">
+                  <label for="pva_grade" class="form-label">Grade in September&nbsp;</label>
+                  <input type="number" id="pva_grade" class="numbers-only-textbox" value="7">
+                </div>
+                <div class="form-row" style="width: auto;">
+                  <label class="form-label">Getting to camp&nbsp;</label>
+                  <input type="radio" id="pva_t1" name="pva_t" checked><label for="pva_t1">Bus</label>
+                  <br><input type="radio" id="pva_t2" name="pva_t"><label for="pva_t2">Parent drop-off</label>
+                  <br><input type="radio" id="pva_t3" name="pva_t"><label for="pva_t3">Walking or cycling</label>
+                </div>
+                <div class="form-row" style="width: auto;">
+                  <label for="pva_notes" class="form-label">Notes for the counsellors&nbsp;</label>
+                  <textarea id="pva_notes" rows="4" cols="50"></textarea>
+                  <p class="form-help-text">Only the counsellors and the camp director can see this.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="multipage-controls">
+            <input type="button" name="save" class="formulize-form-submit-button" value="Save">
+            <input type="button" name="close" class="formulize-form-submit-button" value="Close">
+          </div>
+        </form></div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -67,9 +67,11 @@ function formulize_uiSizeTokens($sizes = true) {
             $default = formulize_appearanceTokenParse($entry['type'], $declared[$token]);
             $values[] = 'Default ' . formulize_uiSizeTokenValue($entry['type'], $default);
         }
-        foreach (array('compact' => 'Compact', 'comfortable' => 'Comfortable') as $preset => $name) {
-            if (isset($entry['presets'][$preset])) {
-                $values[] = $name . ' ' . formulize_uiSizeTokenValue($entry['type'], $entry['presets'][$preset]);
+        // what the built-in looks other than Default set it to
+        foreach (array_filter(formulize_appearanceBuiltinLooks()) as $look) {
+            $lookOverrides = formulize_appearanceLookOverrides($look);
+            if (isset($lookOverrides[$token])) {
+                $values[] = $look['name'] . ' ' . formulize_uiSizeTokenValue($entry['type'], $lookOverrides[$token]);
             }
         }
         if (isset($entry['values'])) {
@@ -292,7 +294,7 @@ function formulize_uiCatalog() {
             array(
                 'id' => 'tokens-space',
                 'name' => 'Spacing and sizes',
-                'summary' => 'One step that every space and size is a multiple of, as in Tailwind: `calc(var(--fz-spacing) * 4)` is 1rem, 16px. It is fixed, like the text sizes: the Size preset changes the component sizes, not the step.',
+                'summary' => 'One step that every space and size is a multiple of, as in Tailwind: `calc(var(--fz-spacing) * 4)` is 1rem, 16px. It is fixed, like the text sizes: the Appearance page\'s looks change the component sizes, not the step.',
                 'tokens' => array(
                     '--fz-spacing' => '0.25rem (4px).',
                     '--fz-container-2xl' => '42rem, the narrow container.',
@@ -347,10 +349,10 @@ function formulize_uiCatalog() {
             array(
                 'id' => 'tokens-sizes',
                 'name' => 'Component sizes',
-                'summary' => 'The sizes of the parts of the interface: titles, labels and field text, the heights of fields, buttons and list rows, and the space in forms, cards and the drawer. The components use them. The Appearance page\'s Size preset (Compact, Default, Comfortable) and its advanced settings change them. Steps are spacing steps, 4px each at the default settings.',
+                'summary' => 'The sizes of the parts of the interface: titles, labels and field text, the heights of fields, buttons and list rows, and the space in forms, cards and the drawer. The components use them. The Appearance page\'s looks (Default, Compact, Comfortable, and any made in its advanced editor) change them. Steps are spacing steps, 4px each at the default settings.',
                 'tokens' => formulize_uiSizeTokens(),
                 'notes' => array(
-                    'Use them in your own CSS so it matches the components and follows the Size preset: `gap: var(--fz-field-gap)`, `height: var(--fz-control-height)`.',
+                    'Use them in your own CSS so it matches the components and follows the site\'s look: `gap: var(--fz-field-gap)`, `height: var(--fz-control-height)`.',
                     'To change a size for one part of a page, set the token on its container, in a style attribute. Everything inside uses that size; the rest of the page keeps the site\'s.',
                 ),
                 'example' => <<<'HTML'
@@ -554,7 +556,7 @@ HTML
     $sections[] = array(
         'id' => 'components',
         'title' => 'Components',
-        'intro' => 'Things to build with. Each has a main class, classes for its parts, and classes for its variations. They draw everything from the tokens, so they follow the theme and the Appearance page, including its Size preset.',
+        'intro' => 'Things to build with. Each has a main class, classes for its parts, and classes for its variations. They draw everything from the tokens, so they follow the theme and the Appearance page, including the look applied to the site.',
         'entries' => array(
             array(
                 'id' => 'button',
@@ -621,7 +623,7 @@ HTML
             array(
                 'id' => 'controls',
                 'name' => 'Inputs, dropdowns and text areas',
-                'summary' => 'Text-like inputs, dropdowns and text areas, sharing one look. Their height is the field height, which the Size preset sets.',
+                'summary' => 'Text-like inputs, dropdowns and text areas, sharing one look. Their height is the field height, which the site\'s look sets.',
                 'classes' => array(
                     'fz-input' => 'An `<input>`: text, email, number, date and the like.',
                     'fz-select' => 'A `<select>`, with its own chevron.',
@@ -742,7 +744,7 @@ HTML
             array(
                 'id' => 'table',
                 'name' => 'Table',
-                'summary' => 'A plain data table: a header row, a line under each row, and rows the row height, which the Size preset sets.',
+                'summary' => 'A plain data table: a header row, a line under each row, and rows the row height, which the site\'s look sets.',
                 'classes' => array(
                     'fz-table' => 'On a `<table>`.',
                     'fz-table--striped' => 'Every other row shaded.',

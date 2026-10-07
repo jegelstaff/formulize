@@ -40,7 +40,7 @@ if (!$xoopsUser OR !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
 
 $theme = formulize_resolveAppearanceTheme(isset($_GET['theme']) ? (string) $_GET['theme'] : '');
 $screen = isset($_GET['screen']) ? (string) $_GET['screen'] : '';
-$markup = formulize_appearanceThemeUsesSizes($theme) ? formulize_renderAppearancePreview($screen, $theme) : '';
+$markup = formulize_renderAppearancePreview($screen, $theme);
 if ($markup === '') {
 	header('HTTP/1.1 404 Not Found');
 	exit();
