@@ -34,9 +34,15 @@ title: External AI Assistant Setup (MCP)
 
 6. **Configure your AI assistant**. For <a href='https://claude.ai/download' target='_blank'>Claude Desktop</a>, you can simply <a href='https://github.com/jegelstaff/formulize-mcp/releases/download/v1.4.0/formulize-mcp.mcpb' download='formulize-mcp.mcpb'>download the Formulize MCPB extension</a>, and install it in Claude. Unfortunately, the exact steps to install are changing regularly, and depend on which version of Claude you're using.
 
+	You don't need to install anything else to use the MCPB extension. Claude Desktop runs it with its own built-in copy of Node.js.
+
 	Other AI assistants might be compatible with MCPB extensions as well, now or in the future.
 
-6. If your AI assistant does not support MCPB extensions, you need to update the configuration of your AI assistant manually. Exactly how to do this varies from assistant to assistant:
+7. If your AI assistant does not support MCPB extensions, you need to update the configuration of your AI assistant manually.
+
+	First, make sure __Node.js__ is installed on your computer, because the configuration below uses its ```npx``` command. To check, open a terminal and type ```npx --version```. If you get a version number, you're all set. If not, install the LTS version from <a href='https://nodejs.org' target='_blank'>nodejs.org</a>, then restart your AI assistant so it can find ```npx```.
+
+	Exactly how to update the configuration varies from assistant to assistant:
 
 	- For __Google Antigravity__ desktop application, you need to modify the file ```mcp_config.json```. Where is it?\
 	Windows: ```%APPDATA%\.gemini\config\mcp_config.json```\
