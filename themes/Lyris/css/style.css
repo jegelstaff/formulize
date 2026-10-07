@@ -4758,13 +4758,15 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
      scrolling */
   .lyris-list__hscroll {
     position: absolute;
-    bottom: calc(100% + 1px + var(--fz-page-padding) + var(--fz-card-radius));
-    left: 4px;
-    right: 4px;
+    left: 0;
+    right: 0;
+    bottom: calc(100% + var(--fz-spacing) * 1.5);
     height: 12px;
     overflow-x: auto;
     overflow-y: hidden;
     border-radius: 6px;
+    background: var(--fz-color-surface);
+    box-shadow: var(--fz-shadow-sm);
     scrollbar-width: thin;
     scrollbar-color: var(--fz-color-border-strong) transparent;
   }
@@ -4802,72 +4804,13 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
   /* the strips of page background, as a second shadow of each bar's: from the
      title bar to the top of the window, and from the bottom bar to the bottom
      (a shadow, rather than something behind the bar, which would paint over the
-     bar's own background). A third, a ring of page background just around the
-     bar, fills its rounded corners, which the strip's own rounding leaves open */
+     bar's own background; and it fills the bar's rounded corners) */
   body:not(.formulize-inline) .lyris-list__titlebar {
-    box-shadow: var(--fz-shadow-sm), 0 calc(var(--fz-page-padding) / -2) 0 calc(var(--fz-page-padding) / 2) var(--fz-color-page), 0 0 0 calc(var(--fz-card-radius) / 2) var(--fz-color-page);
+    box-shadow: var(--fz-shadow-sm), 0 calc(var(--fz-page-padding) / -2) 0 calc(var(--fz-page-padding) / 2) var(--fz-color-page);
   }
 
   body:not(.formulize-inline) .lyris-list__footer,
   body:not(.formulize-inline) .lyris-main #multipage-controls {
-    box-shadow: var(--fz-shadow-md), 0 calc(var(--fz-page-padding) / 2) 0 calc(var(--fz-page-padding) / 2) var(--fz-color-page), 0 0 0 calc(var(--fz-card-radius) / 2) var(--fz-color-page);
-  }
-
-  /* ---- the card's edge, where it goes under a bar ----
-     While a list's or form's card is partly under a pinned bar, its own edge is
-     out of sight, and it would look as if it ran on under the bar. So the edge is
-     drawn at the cut: the card's border and rounded corners, with a strip of page
-     background between it and the bar, so the card always looks whole between
-     the bars. Lyris's script says when (.is-over-top on the title bar or the page
-     tabs, .is-over-bottom on the bottom bar), and it puts a list's column
-     headings just under the drawn edge, whose background is theirs
-     (--lyris-edge-bg), so the edge reads as the top of the heading row. */
-  body:not(.formulize-inline) .lyris-list__titlebar.is-over-top::after,
-  body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-over-top::before,
-  body:not(.formulize-inline) .lyris-list__footer.is-over-bottom::after,
-  body:not(.formulize-inline) .lyris-main #multipage-controls.is-over-bottom::after {
-    content: "";
-    position: absolute;
-    height: var(--fz-card-radius);
-    box-sizing: border-box;
-    border: 1px solid var(--fz-card-border);
-    background: var(--lyris-edge-bg, var(--fz-card-bg));
-    pointer-events: none;
-  }
-
-  /* the top edge: under the title bar, past the gap above the card */
-  body:not(.formulize-inline) .lyris-list__titlebar.is-over-top::after {
-    top: calc(100% + 1px + var(--fz-page-padding));
-    left: -1px;
-    right: -1px;
-    border-bottom: 0;
-    border-radius: var(--fz-card-radius) var(--fz-card-radius) 0 0;
-    box-shadow: 0 calc(var(--fz-page-padding) / -2) 0 calc(var(--fz-page-padding) / 2) var(--fz-color-page);
-  }
-
-  /* the top edge of a form's card: right under the page tabs */
-  body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-over-top::before {
-    top: 100%;
-    left: 0;
-    right: 0;
-    border-bottom: 0;
-    border-radius: var(--fz-card-radius) var(--fz-card-radius) 0 0;
-    box-shadow: 0 0 0 calc(var(--fz-card-radius) / 2) var(--fz-color-page);
-  }
-
-  /* and the tabs' own line along their bottom isn't needed under it */
-  body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-over-top::after {
-    opacity: 0;
-  }
-
-  /* the bottom edge: above the bottom bar, past the gap below the card */
-  body:not(.formulize-inline) .lyris-list__footer.is-over-bottom::after,
-  body:not(.formulize-inline) .lyris-main #multipage-controls.is-over-bottom::after {
-    bottom: calc(100% + 1px + var(--fz-page-padding));
-    left: -1px;
-    right: -1px;
-    border-top: 0;
-    border-radius: 0 0 var(--fz-card-radius) var(--fz-card-radius);
-    box-shadow: 0 calc(var(--fz-page-padding) / 2) 0 calc(var(--fz-page-padding) / 2) var(--fz-color-page);
+    box-shadow: var(--fz-shadow-md), 0 calc(var(--fz-page-padding) / 2) 0 calc(var(--fz-page-padding) / 2) var(--fz-color-page);
   }
 }
