@@ -9127,8 +9127,12 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
         // Detection is based on the element type as well as the raw value: a number element always
         // renders a number, because numberElement::formatDataForList coerces anything that isn't
         // numeric to zero, so a null/empty value still displays as 0, 0.0, $0.00 etc. Checking only the
-        // raw value left those cells looking like text. Values from other element types (text, derived,
-        // ...) are judged on the value itself, which is what gets formatted for display.
+        // raw value left those cells looking like text. Values from text elements (and any type that
+        // extends text), and from derived elements, are judged on the value itself, which is what gets
+        // formatted for display - those are the types that have number formatting options. Every other
+        // element type displays its value its own way, so a value that merely looks numeric there
+        // (a phone number stored as digits, a select option that is a number...) is not styled as a
+        // number. (issue #973)
         // Numbers are displayed left aligned like any other value, but their decimal points still line
         // up down the column. That works by putting every number in a column in an equal-width box and
         // pushing the number to the box's right edge, which is possible because number formatting is
@@ -9139,7 +9143,7 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
         // When no measurement is available - subform listings, the XHR inline-edit redraw path, custom
         // code calling this directly - the property is simply left off and the value falls back to
         // plain left alignment rather than being forced into a guessed box.
-        $isNumericValue = ($element_type == 'number' OR (!is_array($v) AND is_numeric(trim((string) $v))));
+        $isNumericValue = ($element_type == 'number' OR (!is_array($v) AND is_numeric(trim((string) $v)) AND elementTypeIsOrExtends((string) $element_type, array('text', 'derived'))));
         $elclass = '';
         if ($isNumericValue) {
             $elclass = ' class="formulize-numeric"';
