@@ -783,16 +783,18 @@ div[id^=cellcontents_1_] label {
      .main-cell-div > .formulize-display-element-edit-icon
                     + .formulize-display-element-contents
 
-   The pencil used to be floated to the left of the cell, with the contents
-   indented 2em to clear it. It now sits at the RIGHT edge of the cell instead,
-   on the same line as the cell text - globally, for every theme, so themes do
-   not have to re-do this layout individually.
+   The pencil sits at the LEFT of the cell, immediately before the cell text and
+   on the same line - globally, for every theme, so themes do not have to re-do
+   this layout individually. Values (numbers included, see #918) are left aligned
+   in list cells, so a left-aligned pencil keeps every editable cell reading the
+   same way: pencil, then value. (issue #987 - it previously sat against the
+   cell's right edge.)
 
-   The source order is left alone (the icon stays first, so keyboard/reading
-   order still reaches the edit trigger before the value); flexbox `order`
-   moves it to the visual end and `margin-left: auto` pins it against the
-   cell's right edge no matter how short the value is. Same flex approach the
-   .formulize-de-editing rules below use for the save/cancel controls.
+   This is just the source order laid out as a flex row: no `order` juggling, so
+   the visual order matches the keyboard/reading order. Using flex rather than
+   the old float + 2em indent keeps the contents in their own column, so wrapped
+   or multi-value contents never slide underneath the pencil. Same flex approach
+   the .formulize-de-editing rules below use for the save/cancel controls.
 
    The :has() guard keeps all of this scoped to cells that actually carry a
    pencil - ordinary cells are untouched. */
@@ -804,13 +806,10 @@ div[id^=cellcontents_1_] label {
 }
 
 .formulize-display-element-edit-icon {
-	order: 2;
-	margin: 0 0 0 auto; /* margin-left:auto pushes the pencil to the cell's right edge */
 	flex: 0 0 auto;
 }
 
 .formulize-display-element-contents {
-	order: 1;
 	flex: 1 1 auto;
 	min-width: 0; /* let long values shrink/ellipsis instead of shoving the pencil out */
 }
