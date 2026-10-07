@@ -4728,7 +4728,8 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
   body:not(.formulize-inline) .lyris-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform > .formulizeThemeForm > .lyris-form-screen {
     flex: 0 1 auto;
     min-height: 0;
-    overflow: auto;
+    overflow-x: hidden; /* a form never needs to; something hidden past its edge, such as a rich text editor's tooltip, mustn't make it */
+    overflow-y: auto;
   }
 
   /* the card's header and body keep their height, and the card scrolls */
