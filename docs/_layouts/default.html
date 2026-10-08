@@ -14,6 +14,15 @@
 
     <title>{% if page.title %}{{ page.title }} | Formulize{% else %}Formulize{% endif %}</title>
   </head>
+	<!-- Google tag (gtag.js) -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-9B8V3MW7J1"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag(){dataLayer.push(arguments);}
+		gtag('js', new Date());
+
+		gtag('config', 'G-9B8V3MW7J1');
+	</script>
   <body {% if page.custom_id %}id="{{ page.custom_id }}"{% endif %} {% if page.class %}class="{{ page.class }}"{% endif %}>
 
     {% include nav.html %}
