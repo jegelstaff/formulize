@@ -757,9 +757,11 @@
 		else if (kind === 'contentwidth') { state.contentWidth = REF.contentWidth; }
 		else if (kind === 'token') { store(key, has(REF.overrides, key) ? REF.overrides[key] : entry(key)['default']); }
 	}
+	// a part's setting has Show, which selects the part, in advanced mode only: a
+	// part's own settings aren't changed in simple mode
 	function changeRow(c, button) {
 		return '<div class="formulize-editor__chg"><span class="formulize-editor__chg-name">' + (c.token && DESKTOP_OF[c.token] ? ICON.phone + ' ' : '') + esc(c.name) + '</span>' +
-			'<span class="formulize-editor__chg-acts">' + (c.token ? '<button type="button" class="formulize-editor__link formulize-editor__link--plain" data-select="' + home(c.token) + '">Show</button>' : '') + button + '</span>' +
+			'<span class="formulize-editor__chg-acts">' + (c.token && !SIMPLE ? '<button type="button" class="formulize-editor__link formulize-editor__link--plain" data-select="' + home(c.token) + '">Show</button>' : '') + button + '</span>' +
 			(c.token ? '<span class="formulize-editor__chg-part">' + esc(usedBy(c.token).map(function (k) { return MAP.components[k].name; }).join(', ')) + '</span>' : '') +
 			'<span class="formulize-editor__chg-val">' + (c.swatch ? '<span class="formulize-editor__swatch formulize-editor__swatch--sm" style="background:' + esc(c.swatch) + '"></span>' : '') + '<b>' + esc(c.now) + '</b>' + (c.was !== undefined ? c.wasText || '' : '') + '</span></div>';
 	}
@@ -863,6 +865,8 @@
 	function deviceFor(token) { return DESKTOP_OF[token] ? 'phone' : (PHONE_OF[token] ? 'desktop' : null); }
 
 	function select(part, origin) {
+		// in simple mode, the logo is the only part there is to select
+		if (SIMPLE && part && part !== 'logo') { return; }
 		state.sel = part; state.origin = origin; state.openColour = null;
 		if (part && partsOn[state.screen] && Object.keys(partsOn[state.screen]).length && !partsOn[state.screen][part]) {
 			var s = Object.keys(MAP.screens).filter(function (x) { return partsOn[x] && partsOn[x][part]; })[0];
