@@ -243,13 +243,22 @@ Keep these in your copy:
 - the `formulize-embed-theme.marker` file, which is what tells Formulize this is an embed theme
 - the short script just after the `<body>` tag in `theme.html`, which turns off the page's own
   scrolling inside a frame
-- the script at the bottom of `theme.html`, which is how the screen reports its height to the host page
+- the script at the bottom of `theme.html`, and the line just before it that prints
+  `formulizeEmbedState`, which are how the screen reports its height to the host page, and what the
+  visitor is doing for [analytics](analytics/)
 - `session-timeout-warning.html`, including its `session-timeout-warning` id
 
 See [themes](../themes/) for more.
 
 Your copy then appears in **Theme for embedded screens**, in the preferences beside the on/off
 switch. Nothing to edit in `mainfile.php`.
+
+## Measuring embedded screens in Google Analytics
+
+Google Analytics on your page cannot see inside an embedded screen.
+[Google Analytics and embedded screens](analytics/) has a script for your page that sends Google
+Analytics an event when visitors start a form, move to another page of it, are stopped by a missing
+or invalid field, give up, and finish.
 
 ## For the developer of the host page
 
@@ -294,10 +303,11 @@ The screen fires DOM events on the iframe, so you can react without modifying th
 
 | Event | When it fires |
 |---|---|
-| `formulize:ready` | The screen is visible. Carries its height. |
+| `formulize:ready` | The screen is visible. Carries its height, and for a form, which page it is on. |
 | `formulize:resize` | The height changed — a conditional element appeared, a validation message was added, or a page turned. |
 | `formulize:scroll` | The screen is asking for a position to be brought into view. |
 | `formulize:sessionUnavailable` | The visitor's browser has kept no cookie the screen can be submitted with, so submitting would fail. Anonymous visitors whose forms still work do not trigger it. It can fire again each time the screen loads a new page. |
+| `formulize:started`, `formulize:fieldFocus`, `formulize:validationFailed`, `formulize:saved`, `formulize:completed` | What the visitor is doing with a form, for your analytics. See [Google Analytics and embedded screens](analytics/). |
 
 The events bubble, so one listener on the page covers every screen on it:
 

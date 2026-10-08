@@ -1570,6 +1570,55 @@ function formulize_embedScrollToTopScript($wrapInScriptTag = true) {
 }
 
 /**
+ * Note something about this page load for the page hosting an embedded screen to hear about.
+ *
+ * The embed theme hands what is noted here to the host page once the screen is drawn - see
+ * formulize_embedStateScript(). The first value noted for a key stands, so a screen drawn inside
+ * another one cannot overwrite what the outer one said about itself.
+ *
+ * @param string $key What is being noted, eg: 'page'
+ * @param mixed $value Anything json_encode can carry
+ * @return void
+ */
+function formulize_embedNoteState($key, $value) {
+    if (formulize_isEmbeddedRequest() AND !isset($GLOBALS['formulize_embedState'][$key])) {
+        $GLOBALS['formulize_embedState'][$key] = $value;
+    }
+}
+
+/**
+ * What the page hosting an embedded screen gets told about this page load: which screen it is,
+ * which page of it, and whether anything was saved on the way here.
+ *
+ * The embed theme prints this and turns it into messages to the host page, which is how a host page
+ * can count form views, page turns and completed submissions in its own analytics without any
+ * analytics code inside the frame. It carries nothing a visitor typed - names and numbers only.
+ *
+ * Saving is read from what readelements.php wrote on this request. That is only visible here when
+ * readelements.php ran at the top level, which it does for every screen loaded through index.php,
+ * and that is how every embedded screen is loaded.
+ *
+ * @return string A script tag setting window.formulizeEmbedState, or an empty string when this
+ *   screen is not embedded
+ */
+function formulize_embedStateScript() {
+    if (!formulize_isEmbeddedRequest()) {
+        return '';
+    }
+    $state = isset($GLOBALS['formulize_embedState']) ? $GLOBALS['formulize_embedState'] : array();
+    $screen = isset($GLOBALS['renderedFormulizeScreen']) ? $GLOBALS['renderedFormulizeScreen'] : null;
+    $state['screen'] = is_object($screen)
+        ? array('id' => intval($screen->getVar('sid')), 'title' => trans($screen->getVar('title', 'n')))
+        : null;
+    $state['saved'] = !empty($GLOBALS['formulize_allWrittenFids']);
+    $state['newEntry'] = !empty($GLOBALS['formulize_newEntryIds']);
+    // HEX_TAG so that a title containing </script> cannot close the tag this is printed in
+    return "<script type='text/javascript'>window.formulizeEmbedState = "
+        .json_encode($state, JSON_HEX_TAG | JSON_HEX_AMP)
+        .";</script>\n";
+}
+
+/**
  * Whether this request has to depart from the site's own cookie policy for a cookie to work at all.
  *
  * A browser will not send a SameSite=Lax cookie to a page inside somebody else's frame, and will not

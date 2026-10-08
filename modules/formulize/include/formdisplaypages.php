@@ -538,6 +538,18 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 		print formulize_embedScrollToTopScript();
 	}
 
+	// Embedded, the host page is told which page of the form this is, so it can follow a visitor's
+	// progress through the form, and when they reach the thanks page, which is what it can count as
+	// a finished submission. See formulize_embedStateScript().
+	if(!$elements_only) {
+		formulize_embedNoteState('page', array(
+			'number' => intval($currentPage),
+			'count' => count((array) $pages),
+			'title' => (isset($pageTitles[$currentPage]) ? trans($pageTitles[$currentPage]) : ''),
+			'thanks' => ($currentPage == $thanksPage)
+		));
+	}
+
 	// display the form if applicable...
 	if($currentPage != $thanksPage) {
 		if(count((array) $forminfo['elements'])==0) {

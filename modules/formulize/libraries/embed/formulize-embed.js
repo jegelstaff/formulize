@@ -560,6 +560,14 @@
                 addClass(frame.iframe, 'formulize-embed--no-session');
                 offerNewWindow(frame.iframe);
                 break;
+            // What the visitor is doing with the screen, for the host page's own analytics. Nothing
+            // to do here but pass them on as events - see docs/embedding_screens_analytics.md.
+            case 'formulize:started':
+            case 'formulize:fieldFocus':
+            case 'formulize:validationFailed':
+            case 'formulize:saved':
+            case 'formulize:completed':
+                break;
             default:
                 return;
         }

@@ -104,6 +104,11 @@ if($xoopsUser) {
   echo '<script src="' . $this->_tpl_vars['icms_imageurl'] . 'js/script.js?v=' . $jsVersion . '"></script>';
   <{/php}>
 
+  <{* which screen this is, which page of it, and whether this request saved anything - see
+     formulize_embedStateScript(). Printed down here, after the screen, because the page is only
+     known once the screen has been drawn. *}>
+  <{php}>echo formulize_embedStateScript();<{/php}>
+
   <script type='text/javascript'>
     // An embedded screen talks to the page hosting it over postMessage. The host can't measure a
     // document on another origin, and reaching into contentWindow only ever worked same-origin.
@@ -112,12 +117,57 @@ if($xoopsUser) {
         // gated on being embedded: a screen opened directly would otherwise stay hidden for good.
         var embedded = (window.parent !== window);
         var lastHeight = 0;
+        var state = window.formulizeEmbedState || {};
 
+        // Sent to any origin, because the browser has already settled who the parent can be: every
+        // page carries a frame-ancestors policy naming only this site and the websites an
+        // administrator listed, so no other page could have framed this one. That matters now that
+        // messages name fields as well as heights. They never carry anything the visitor typed.
         function post(type, detail) {
             if (!embedded) { return; }
-            var message = {type: type, formulize: true};
+            var message = {type: type, formulize: true, screen: state.screen || null};
             for (var key in (detail || {})) { message[key] = detail[key]; }
-            window.parent.postMessage(message, '*'); // heights only, nothing worth withholding
+            window.parent.postMessage(message, '*');
+        }
+
+        // The element a field belongs to, by its handle, read from the formulize-input-<handle>
+        // class the form puts around every element. Nothing for anything that is not part of an
+        // element - a button, a search box above a list.
+        function fieldOf(node) {
+            for (; node && node !== document.body; node = node.parentNode) {
+                var match = (typeof node.className === 'string') && /(?:^|\s)formulize-input-(\S+)/.exec(node.className);
+                if (match) {
+                    return match[1];
+                }
+            }
+            return null;
+        }
+
+        // What the visitor is doing with the form, so the host can tell when someone started filling
+        // it in, and where they were when they gave up. Field names only, never what is in them.
+        //
+        // Started means changed something, not focused something, so a form that puts the cursor in
+        // its first box on load does not count as begun by somebody who never touched it. Reported
+        // once per page load: the host decides whether a second page of the same form is a new start.
+        if (embedded) {
+            var lastField = null;
+            var started = false;
+            document.addEventListener('focusin', function(event) {
+                var field = fieldOf(event.target);
+                if (field && field !== lastField) {
+                    lastField = field;
+                    post('formulize:fieldFocus', {field: field});
+                }
+            }, true);
+            var noteStarted = function(event) {
+                var field = fieldOf(event.target);
+                if (!started && field) {
+                    started = true;
+                    post('formulize:started', {field: field});
+                }
+            };
+            document.addEventListener('input', noteStarted, true);
+            document.addEventListener('change', noteStarted, true);
         }
 
         // Measured from the content, not from scrollHeight, which can never report less than the
@@ -194,7 +244,13 @@ if($xoopsUser) {
                     var formulize_pageShown = new CustomEvent('formulize_pageShown');
                     window.dispatchEvent(formulize_pageShown);
                     reportHeight();
-                    post('formulize:ready', {height: lastHeight});
+                    post('formulize:ready', {height: lastHeight, page: state.page || null});
+                    if (state.saved) {
+                        post('formulize:saved', {newEntry: !!state.newEntry, page: state.page || null});
+                    }
+                    if (state.page && state.page.thanks) {
+                        post('formulize:completed', {page: state.page});
+                    }
                     checkSessionSurvives();
                     // Only when the screen says so - a page turn, or a search that replaced the
                     // entries. The server decides that, by the same rule it uses to decide whether
@@ -226,6 +282,36 @@ if($xoopsUser) {
                     reportHeight(); // the banner makes the document taller before the scroll lands
                     post('formulize:scroll', {top: 0});
                 }).observe(timeoutWarning, {attributes: true, attributeFilter: ['style', 'class']});
+            }
+
+            // When a form will not save because something is missing or wrong, tell the host which
+            // field. The checks each warn the visitor and then put the cursor in the field at fault,
+            // so that is the field to report. Wrapped here rather than added to the checks, which are
+            // generated for every element type and are the same on every theme.
+            //
+            // Only when the visitor was actually warned. A check that has to ask the server - whether
+            // a value is unique - also stops the save while it waits, and then saves by itself once
+            // the answer comes back, so stopping alone is not a failure.
+            var validator = window.xoopsFormValidate_formulize_mainform;
+            if (embedded && typeof validator === 'function') {
+                window.xoopsFormValidate_formulize_mainform = function() {
+                    var warned = false;
+                    var realAlert = window.alert;
+                    window.alert = function() {
+                        warned = true;
+                        return realAlert.apply(window, arguments);
+                    };
+                    var valid;
+                    try {
+                        valid = validator.apply(this, arguments);
+                    } finally {
+                        window.alert = realAlert;
+                    }
+                    if (!valid && warned) {
+                        post('formulize:validationFailed', {field: fieldOf(document.activeElement)});
+                    }
+                    return valid;
+                };
             }
 
             // subform editors centre themselves on a document as tall as all of its content, so
