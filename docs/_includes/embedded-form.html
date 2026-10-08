@@ -41,6 +41,15 @@
   window.location.search inside the frame and pre-selects the matching radio
   button. Harmless no-op on a screen with no such element and on a page with
   no ?plan= param.
+
+  GOOGLE ANALYTICS - the screen is on formulize.net, so the tag in the layout
+  cannot see inside it. The screen reports what the visitor does as events on
+  the iframe instead, and the script at the bottom turns those into Google
+  Analytics events: form_start, form_step, form_error, form_abandon,
+  form_submit, plus a key event for the screens listed in keyEvents. Field
+  names only, never anything a visitor typed. See
+  /documentation/embedding_screens/analytics/, which has the same script for
+  other sites to copy - keep the two in step.
 {% endcomment %}
 
 <div class="embed-frame">
@@ -54,3 +63,91 @@
           src="{{ site.forms_url }}/modules/formulize/index.php?sid={{ include.sid }}&amp;formulize_embed=1"></iframe>
   <script src="{{ site.forms_url }}/modules/formulize/libraries/embed/formulize-embed.js"></script>
 </div>
+<script>
+(function () {
+  // once per page, however many screens it embeds
+  if (typeof gtag !== 'function' || window.formulizeAnalyticsListening) { return; }
+  window.formulizeAnalyticsListening = true;
+
+  // Reaching the thanks page of these screens counts as a key event. 7 (unsubscribe)
+  // and 27 (report a bug) get form_submit only.
+  var keyEvents = {
+    1: ['generate_lead', {}],
+    3: ['sign_up', {method: 'hosting_request'}],
+    5: ['sign_up', {method: 'mailing_list'}]
+  };
+
+  var screens = {};
+
+  function screenFor(event) {
+    var screen = event.detail.screen || {id: 0, title: ''};
+    if (!screens[screen.id]) {
+      screens[screen.id] = {
+        id: screen.id,
+        params: {
+          form_id: 'formulize-screen-' + screen.id,
+          form_name: screen.title,
+          form_destination: event.target.src.split('?')[0]
+        },
+        page: null, lastField: null, started: false, completed: false, abandoned: false
+      };
+    }
+    return screens[screen.id];
+  }
+
+  function send(name, s, extra) {
+    var params = {}, key;
+    for (key in s.params) { params[key] = s.params[key]; }
+    for (key in (extra || {})) { params[key] = extra[key]; }
+    gtag('event', name, params);
+  }
+
+  document.addEventListener('formulize:ready', function (event) {
+    var s = screenFor(event), page = event.detail.page;
+    if (page && page.count > 1 && !page.thanks && (!s.page || s.page.number !== page.number)) {
+      send('form_step', s, {step_number: page.number, step_count: page.count, step_title: page.title});
+    }
+    s.page = page;
+  });
+
+  document.addEventListener('formulize:started', function (event) {
+    var s = screenFor(event);
+    if (!s.started) {
+      s.started = true;
+      send('form_start', s);
+    }
+  });
+
+  document.addEventListener('formulize:fieldFocus', function (event) {
+    screenFor(event).lastField = event.detail.field;
+  });
+
+  document.addEventListener('formulize:validationFailed', function (event) {
+    send('form_error', screenFor(event), {form_field: event.detail.field || '(not known)'});
+  });
+
+  document.addEventListener('formulize:completed', function (event) {
+    var s = screenFor(event);
+    if (s.completed) { return; }
+    s.completed = true;
+    send('form_submit', s);
+    if (keyEvents[s.id]) {
+      send(keyEvents[s.id][0], s, keyEvents[s.id][1]);
+    }
+  });
+
+  // started but never finished, by the time the visitor leaves the page
+  window.addEventListener('pagehide', function () {
+    for (var id in screens) {
+      var s = screens[id];
+      if (s.started && !s.completed && !s.abandoned) {
+        s.abandoned = true;
+        send('form_abandon', s, {
+          form_field: s.lastField || '(not known)',
+          step_number: s.page ? s.page.number : 1
+        });
+      }
+    }
+  });
+})();
+</script>
