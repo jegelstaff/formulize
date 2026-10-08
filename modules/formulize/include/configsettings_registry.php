@@ -198,13 +198,25 @@ return array(
     'appearance' => array(
         'name' => _AM_CFG_TAB_APPEARANCE,
         'views' => array(
-            // Styles and Colors (site colours/font/logo) is the default view; it was
-            // previously its own primary "Appearance" tab and is now relocated here
-            // as a sub-view alongside the Theme Editor (issue #66).
+            // The site's theme and footers come first, so the Appearance tab opens on them.
+            'settings' => array(
+                'name' => _AM_CFG_VIEW_APPEARANCE_SETTINGS,
+                'type' => 'settings',
+                'sections' => array(
+                    _AM_CFG_SEC_APPEARANCE => array(
+                        array('name' => 'theme_set', 'scope' => 'system'),
+                        array('name' => 'theme_admin_set', 'scope' => 'system'),
+                        array('name' => 'footer', 'scope' => 'metafooter', 'description' => _AM_CFG_DESC_FOOTER),
+                        array('name' => 'footadm', 'scope' => 'metafooter', 'description' => _AM_CFG_DESC_FOOTADM),
+                    ),
+                ),
+            ),
+            // Styles and Colors opens the appearance editor, a page of its own, where a
+            // theme's look, logo, colours, fonts and the rest are changed.
             'stylescolors' => array(
                 'name' => _AM_CFG_VIEW_APPEARANCE_STYLESCOLORS,
-                'type' => 'page',
-                'page' => 'appearance',
+                'type' => 'link',
+                'url' => '/modules/formulize/appearance_editor.php',
             ),
             'themeeditor' => array(
                 'name' => _AM_CFG_VIEW_APPEARANCE_THEMEEDITOR,
@@ -217,18 +229,6 @@ return array(
                 'name' => _AM_CFG_VIEW_APPEARANCE_STYLEGUIDE,
                 'type' => 'link',
                 'url' => '/modules/formulize/styleguide.php',
-            ),
-            'settings' => array(
-                'name' => _AM_CFG_VIEW_APPEARANCE_SETTINGS,
-                'type' => 'settings',
-                'sections' => array(
-                    _AM_CFG_SEC_APPEARANCE => array(
-                        array('name' => 'theme_set', 'scope' => 'system'),
-                        array('name' => 'theme_admin_set', 'scope' => 'system'),
-                        array('name' => 'footer', 'scope' => 'metafooter', 'description' => _AM_CFG_DESC_FOOTER),
-                        array('name' => 'footadm', 'scope' => 'metafooter', 'description' => _AM_CFG_DESC_FOOTADM),
-                    ),
-                ),
             ),
         ),
     ),

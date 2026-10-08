@@ -160,6 +160,11 @@ if (isset($xoopsOption['theme_use_smarty']) && $xoopsOption['theme_use_smarty'] 
 		}
 		$drawerJsVersion = formulize_get_file_version('/modules/formulize/include/js/drawer.js');
 		$xoTheme->addScript(XOOPS_URL . '/modules/formulize/include/js/drawer.js?v=' . $drawerJsVersion, array('type' => 'text/javascript'));
+		// The mouse wheel scrolls the element a theme names as its scroll container
+		// (data-formulize-scroll-container) from anywhere on the page, not only with
+		// the pointer over it. Does nothing for a theme that names none.
+		$scrollJsVersion = formulize_get_file_version('/modules/formulize/include/js/scroll_container.js');
+		$xoTheme->addScript(XOOPS_URL . '/modules/formulize/include/js/scroll_container.js?v=' . $scrollJsVersion, array('type' => 'text/javascript'));
 	}
 
 	// Server-side action events and the authoritative pageview. The code that builds

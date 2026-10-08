@@ -1,0 +1,98 @@
+<!--
+  Sample screen for the Appearance page's advanced editor: a multi-page
+  form, with Lyris's real form markup (as its form and multiPage screen
+  templates and Formulize's element templates render it). Each part the editor
+  can select carries data-fz-part, naming one of the parts ("components") in
+  modules/formulize/include/appearance_tokens.json. Placeholders in double
+  braces are filled in by modules/formulize/appearance_preview.php.
+-->
+<div class="lyris-app lyris-app--sidebar-closed" id="lyris-app">
+  {{header}}
+  <div class="lyris-app__body">
+    <main class="lyris-main" role="main" id="lyris-main" data-fz-part="page">
+      <div id="formulizeform"><form id="formulize_mainform" class="formulizeThemeForm" action="#" method="post" onsubmit="return false;">
+        <div id="pageNavTable" class="pill-tabs">
+          <a href="#" class="icon-arrow-backward pill-tabs__item navtab" data-fz-part="tabs"> Save and Close</a>
+          <a href="#" class="pill-tabs__item navtab pill-tabs__item--active" data-fz-part="tabs">Participant</a>
+          <a href="#" class="pill-tabs__item navtab" data-fz-part="tabs">Program</a>
+          <a href="#" class="pill-tabs__item navtab" data-fz-part="tabs">Health &amp; Safety</a>
+          <a href="#" class="pill-tabs__item navtab" data-fz-part="tabs">Review</a>
+        </div>
+        <div class="fz-card lyris-form-card lyris-form-screen" data-fz-part="form">
+          <div class="fz-card__header lyris-form-card__header">
+            <h3 class="fz-card__title" data-fz-part="title">Participant</h3>
+          </div>
+          <div class="lyris-form-card__body">
+            <div class="lyris-form lyris-form--label-top form-container">
+
+              <div class="fz-field form-row">
+                <div style="width: 20%;" class="col1">
+                  <label for="pv_name" class="fz-field__label form-label" data-fz-part="label">Participant name <span class="fz-field__req">*</span></label>
+                </div>
+                <div style="width: auto;" class="fz-field__body col2">
+                  <input type="text" id="pv_name" value="Ada Okafor" data-fz-part="field">
+                  <p class="fz-field__help form-help-text" data-fz-part="help">As it should appear on the name tag and the certificate. Use the name the participant goes by, which doesn't have to be their legal name.</p>
+                </div>
+              </div>
+
+              <div class="fz-field form-row">
+                <div style="width: 20%;" class="col1">
+                  <label for="pv_program" class="fz-field__label form-label" data-fz-part="label">Program <span class="fz-field__req">*</span></label>
+                </div>
+                <div style="width: auto;" class="fz-field__body col2">
+                  <select id="pv_program" data-fz-part="field"><option>Summer camp: Robotics</option><option>Summer camp: Coding</option><option>Girls in STEM club</option></select>
+                </div>
+              </div>
+
+              <div class="fz-field form-row">
+                <div style="width: 20%;" class="col1">
+                  <label for="pv_grade" class="fz-field__label form-label" data-fz-part="label">Grade in September</label>
+                </div>
+                <div style="width: auto;" class="fz-field__body col2">
+                  <input type="text" id="pv_grade" value="7" data-fz-part="field">
+                </div>
+              </div>
+
+              <div class="fz-field form-row">
+                <div style="width: 20%;" class="col1">
+                  <label class="fz-field__label form-label" data-fz-part="label">Registration ID</label>
+                </div>
+                <div style="width: auto;" class="fz-field__body col2" data-fz-part="value">
+                  REG-2026-0418
+                </div>
+              </div>
+
+              <div class="fz-field form-row">
+                <div style="width: 20%;" class="col1">
+                  <label class="fz-field__label form-label" data-fz-part="label">Getting to camp</label>
+                </div>
+                <div style="width: auto;" class="fz-field__body col2" data-fz-part="options">
+                  <input type="radio" id="pv_t1" name="pv_t" checked><label for="pv_t1">Bus</label>
+                  <br><input type="radio" id="pv_t2" name="pv_t"><label for="pv_t2">Parent drop-off</label>
+                  <br><input type="radio" id="pv_t3" name="pv_t"><label for="pv_t3">Walking or cycling</label>
+                </div>
+              </div>
+
+              <div class="fz-field form-row">
+                <div style="width: 20%;" class="col1">
+                  <label for="pv_notes" class="fz-field__label form-label" data-fz-part="label">Notes for the counsellors, including allergies and anything else we should know</label>
+                </div>
+                <div style="width: auto;" class="fz-field__body col2">
+                  <textarea id="pv_notes" rows="5" cols="35" data-fz-part="field"></textarea>
+                  <p class="fz-field__help form-help-text" data-fz-part="help">Only the counsellors and the camp director can see this.</p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+        <div id="multipage-controls" data-fz-part="toolbar">
+          <input type="button" class="formulize-form-submit-button" name="prev" value="Save and Close" data-fz-part="button">
+          <input type="button" class="formulize-form-submit-button" name="save" value="Save" data-fz-part="button">
+          <input type="button" class="formulize-form-submit-button" name="close" value="Close" data-fz-part="button">
+          <input type="button" class="formulize-form-submit-button" name="next" value="Save and Continue" data-fz-part="button">
+        </div>
+      </form></div>
+    </main>
+  </div>
+</div>

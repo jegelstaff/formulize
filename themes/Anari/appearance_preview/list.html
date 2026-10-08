@@ -1,0 +1,48 @@
+<!--
+  Sample screen for the Appearance page's editor: a list of entries, as Anari
+  draws a list screen (captured from a real one, with sample content). See
+  form.html.
+-->
+<div class="site-layout">
+  <div class="site-layout__main">
+    {{header}}
+    <div class="main-content">
+      <div class="container">
+        <div id="listofentries"><form name="controls" id="controls" onsubmit="return false;">
+          <div class="card list-of-entries list-of-entries-data">
+            <div class="card__header">
+              <div class="list-of-entries list-of-entries-title-and-currentview">
+                <h1>Registrations</h1>
+                <div class="currentViewList"><div class="currentViewList-caption"><b>Showing: </b></div><div class="currentViewList-list"><select size="1"><option selected>Entries by all users in all groups</option></select></div></div>
+              </div>
+              <div class="list-of-entries list-of-entries-controls">
+                <input type="button" class="formulize_button" id="formulize_addButton" value="Add registration">
+                <input type="button" class="formulize_button" id="formulize_changeColsButton" value="Change columns">
+                <input type="button" class="formulize_button" id="formulize_moreActions" value="...">
+              </div>
+            </div>
+            <div class="card__body">
+              <div class="scrollbox" id="formulize-list-of-entries">
+                <div class="list-of-entries-container">
+                  <table class="outer"><tbody>
+                <tr><td class="head formulize-controls-head">&nbsp;</td><td class="head floating-column"></td><th class="head column column0" scope="col"><div class="main-cell-div"><div class="sort-link-wrapper"><a href="#"><div>Participant</div></a></div></div></th><th class="head column column1" scope="col"><div class="main-cell-div"><div class="sort-link-wrapper"><a href="#"><div>Program</div></a></div></div></th><th class="head column column2" scope="col"><div class="main-cell-div"><div class="sort-link-wrapper"><a href="#"><div>Status</div></a></div></div></th><th class="head column column3" scope="col"><div class="main-cell-div"><div class="sort-link-wrapper"><a href="#"><div>Start date</div></a></div></div></th></tr>
+                <tr class="entry-row"><td class="head odd formulize-controls"><input type="checkbox" class="formulize_selection_checkbox"> <a href="#" class="loe-edit-entry">&nbsp;</a></td><td class="odd floating-column"></td><td class="odd column column0"><div class="main-cell-div"><span>Ada Okafor</span></div></td><td class="odd column column1"><div class="main-cell-div"><span>Summer camp: Robotics</span></div></td><td class="odd column column2"><div class="main-cell-div"><span>Submitted</span></div></td><td class="odd column column3"><div class="main-cell-div"><span>2026-07-06</span></div></td></tr>
+                <tr class="entry-row"><td class="head even formulize-controls"><input type="checkbox" class="formulize_selection_checkbox"> <a href="#" class="loe-edit-entry">&nbsp;</a></td><td class="even floating-column"></td><td class="even column column0"><div class="main-cell-div"><span>Ben Tremblay</span></div></td><td class="even column column1"><div class="main-cell-div"><span>Girls in STEM club</span></div></td><td class="even column column2"><div class="main-cell-div"><span>Draft</span></div></td><td class="even column column3"><div class="main-cell-div"><span>2026-07-13</span></div></td></tr>
+                <tr class="entry-row"><td class="head odd formulize-controls"><input type="checkbox" class="formulize_selection_checkbox"> <a href="#" class="loe-edit-entry">&nbsp;</a></td><td class="odd floating-column"></td><td class="odd column column0"><div class="main-cell-div"><span>Chloé Martin</span></div></td><td class="odd column column1"><div class="main-cell-div"><span>Summer camp: Coding</span></div></td><td class="odd column column2"><div class="main-cell-div"><span>Approved</span></div></td><td class="odd column column3"><div class="main-cell-div"><span>2026-07-06</span></div></td></tr>
+                <tr class="entry-row"><td class="head even formulize-controls"><input type="checkbox" class="formulize_selection_checkbox"> <a href="#" class="loe-edit-entry">&nbsp;</a></td><td class="even floating-column"></td><td class="even column column0"><div class="main-cell-div"><span>Dev Patel</span></div></td><td class="even column column1"><div class="main-cell-div"><span>Summer camp: Robotics</span></div></td><td class="even column column2"><div class="main-cell-div"><span>Submitted</span></div></td><td class="even column column3"><div class="main-cell-div"><span>2026-08-03</span></div></td></tr>
+                <tr class="entry-row"><td class="head odd formulize-controls"><input type="checkbox" class="formulize_selection_checkbox"> <a href="#" class="loe-edit-entry">&nbsp;</a></td><td class="odd floating-column"></td><td class="odd column column0"><div class="main-cell-div"><span>Emma Roy</span></div></td><td class="odd column column1"><div class="main-cell-div"><span>Girls in STEM club</span></div></td><td class="odd column column2"><div class="main-cell-div"><span>Under review</span></div></td><td class="odd column column3"><div class="main-cell-div"><span>2026-07-20</span></div></td></tr>
+                <tr class="entry-row"><td class="head even formulize-controls"><input type="checkbox" class="formulize_selection_checkbox"> <a href="#" class="loe-edit-entry">&nbsp;</a></td><td class="even floating-column"></td><td class="even column column0"><div class="main-cell-div"><span>Farah Haddad</span></div></td><td class="even column column1"><div class="main-cell-div"><span>Summer camp: Coding</span></div></td><td class="even column column2"><div class="main-cell-div"><span>Approved</span></div></td><td class="even column column3"><div class="main-cell-div"><span>2026-07-27</span></div></td></tr>
+                  </tbody></table>
+                </div>
+              </div>
+              <div id="formulize-list-of-entries-footer">
+                <div><span class="page-navigation-total"><span class="page-navigation-total__label">Showing entries: </span>1 to 6 of 48.</span></div>
+                <div><div class="formulize-page-navigation"><span class="page-navigation-label"><select><option selected>10 / Page</option></select></span><span>Previous</span><a href="#" class="page-navigation-active">1</a><a href="#">2</a><a href="#" class="page-navigation-next">Next</a></div></div>
+              </div>
+            </div>
+          </div>
+        </form></div>
+      </div>
+    </div>
+  </div>
+</div>

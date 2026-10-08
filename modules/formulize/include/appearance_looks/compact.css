@@ -1,0 +1,16 @@
+/* Formulize appearance look: Compact.
+ *
+ * One of the looks that come with Formulize, offered for every theme built on
+ * Formulize UI's component tokens. A look is a set of changes to a theme's own
+ * appearance settings, in the same block as a look made in the advanced editor
+ * (themes/<theme>/appearance/looks/), and is read by
+ * formulize_getAppearanceLooks(). A built-in look can be changed on a site, in
+ * the advanced editor: the changed one is kept in the theme's appearance/looks
+ * folder, and this one stays as it is, for reverting to.
+ *
+ * BEGIN FORMULIZE APPEARANCE LOOK v1
+ * name: Compact
+ * description: Smaller text, and shorter fields, buttons and list rows, with less space in forms, cards and the drawer: more fits on the screen.
+ * appearance_overrides: {"--fz-title-text":"lg","--fz-title-text-narrow":"base","--fz-label-text":"xs-plus","--fz-label-weight":600,"--fz-field-text":"sm","--fz-help-text":"xs","--fz-help-leading":1.45,"--fz-help-max-width":70,"--fz-control-text":"xs-plus","--fz-table-text":"xs-plus","--fz-table-header-text":"xs","--fz-field-height":8.5,"--fz-field-padding-x":2.5,"--fz-field-gap":3.5,"--fz-label-gap":1,"--fz-help-gap":1,"--fz-option-gap":0,"--fz-control-height":7,"--fz-control-padding-x":2.5,"--fz-menu-item-height":7,"--fz-tab-padding-y":0.5,"--fz-tab-padding-x":2.5,"--fz-row-height":8,"--fz-cell-padding-x":2,"--fz-table-header-height":8,"--fz-toolbar-height":13,"--fz-toolbar-padding-x":4,"--fz-card-padding":3,"--fz-card-gap":2,"--fz-form-padding":4,"--fz-drawer-padding-x":4,"--fz-drawer-padding-y":3,"--fz-page-padding":4}
+ * END FORMULIZE APPEARANCE LOOK
+ */

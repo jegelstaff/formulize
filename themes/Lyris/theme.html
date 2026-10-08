@@ -50,20 +50,9 @@
 		<script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
 </head>
 
-<body id="<{$icms_dirname}>" class="<{$icms_langcode}><{if isset($formulize_screen_id) && $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}><{if $smarty.get.fz_inline}> formulize-inline<{/if}>">
+<body id="<{$icms_dirname}>" class="<{$icms_langcode}><{if isset($formulize_screen_id) && $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}><{if $smarty.get.fz_inline}> formulize-inline<{/if}>" data-formulize-scroll-container=".lyris-list__body, .lyris-form-screen, .lyris-main">
 
 <{includeq file="$theme_name/session-timeout-warning.html"}>
-
-<{php}>
-global $xoopsUser;
-if ($xoopsUser) {
-    $profile_handler = xoops_getmodulehandler('profile', 'profile');
-    $profile = $profile_handler->get($xoopsUser->getVar('uid'));
-    if ($fontsize = $profile->getVar('fontsize')) {
-        print '<style>html { font-size: ' . $fontsize . '; }</style>';
-    }
-}
-<{/php}>
 
 <div class="lyris-app" id="lyris-app" data-sidebar-default="<{if $xoops_requesturi|strstr:'/modules/formulize/application.php'}>open<{else}>closed<{/if}>">
 

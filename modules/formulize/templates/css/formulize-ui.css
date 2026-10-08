@@ -67,14 +67,17 @@
   --fz-font-mono:    ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* Type scale: Tailwind's sizes, each with the line height Tailwind pairs it
-     with, plus one step of Formulize's own, xs-plus (13px), between xs and sm,
-     which Tailwind has no step for. Fixed: the same in every theme. */
+     with, plus two steps of Formulize's own that Tailwind has none for:
+     xs-plus (13px), between xs and sm, and sm-plus (15px), between sm and base.
+     Fixed: the same in every theme. */
   --fz-text-xs:                 0.75rem;
   --fz-text-xs--line-height:    1rem;
   --fz-text-xs-plus:            0.8125rem;
   --fz-text-xs-plus--line-height: 1.25rem;
   --fz-text-sm:                 0.875rem;
   --fz-text-sm--line-height:    1.25rem;
+  --fz-text-sm-plus:            0.9375rem;
+  --fz-text-sm-plus--line-height: 1.375rem;
   --fz-text-base:               1rem;
   --fz-text-base--line-height:  1.5rem;
   --fz-text-lg:                 1.125rem;
@@ -96,8 +99,9 @@
   --fz-leading-normal:  1.5;
 
   /* Spacing. Every space and size on the scale is a multiple of this step, as
-     in Tailwind: calc(var(--fz-spacing) * 4) is 1rem. The density changes it
-     (see Density, below). */
+     in Tailwind: calc(var(--fz-spacing) * 4) is 1rem. Fixed, like the type
+     scale: the Appearance page's sizes change the component sizes below, not
+     this. */
   --fz-spacing: 0.25rem;
 
   /* Shape and depth */
@@ -126,31 +130,153 @@
 
 
 /* ============================================================
-   Density
+   Component sizes
    ============================================================
 
-   How much space there is, and how tall buttons, form fields and list rows
-   are. The Appearance page sets it for the whole site, by setting
-   --fz-spacing; these classes set it for one part of a page.
+   The sizes of the parts of the interface: how big titles, labels and field
+   text are, how tall fields, buttons and list rows are, and how much space
+   there is in forms, cards and the drawer. Components read these, so setting
+   one changes that part everywhere, and nothing else.
 
-   The heights are worked out from --fz-spacing, and are declared again on each
-   density class, not only on :root: a custom property that uses var() is worked
-   out once, where it is declared, and the elements inside inherit the result,
-   not the formula. Declared only on :root, the heights would stay at the page's
-   density inside a container with a different one.
+   These are the Default values. The Appearance page's Size presets (Compact,
+   Comfortable) and its advanced settings replace them, in the stylesheet it
+   generates; the presets' values, and what each token can be set to, are in
+   modules/formulize/include/appearance_tokens.json. Keep each value written
+   the way that file's type for it is written (a number of spacing steps, a text
+   step, a weight, a line height, a number of ch), so the Appearance page can
+   read it; ui_catalog.php --check makes sure of it.
+
+   To change a size for one part of a page, set the token on its container:
+   style="--fz-row-height: calc(var(--fz-spacing) * 8)".
    ============================================================ */
 
-.fz-density-tight       { --fz-spacing: 0.21875rem; }  /* 3.5px at a 16px base */
-.fz-density-standard    { --fz-spacing: 0.25rem; }     /* 4px */
-.fz-density-comfortable { --fz-spacing: 0.28125rem; }  /* 4.5px */
+:root {
+  /* Type */
+  --fz-title-text:        var(--fz-text-xl);       /* form card, drawer and list titles: 20px */
+  --fz-title-text-narrow: var(--fz-text-base);     /* titles at 768px wide and below: 16px */
+  --fz-title-weight:      600;
+  --fz-title-leading:     1.25;
+  --fz-label-text:        var(--fz-text-sm);       /* form labels: 14px */
+  --fz-label-weight:      600;
+  --fz-field-text:        var(--fz-text-sm);       /* text in form fields, and read-only values */
+  --fz-help-text:         var(--fz-text-xs-plus);  /* help text and character counters: 13px */
+  --fz-help-leading:      1.5;
+  --fz-help-max-width:    65ch;
+  --fz-control-text:      var(--fz-text-xs-plus);  /* buttons, menu items, tabs */
+  --fz-table-text:        var(--fz-text-xs-plus);  /* list and table cells */
+  --fz-table-header-text: var(--fz-text-xs);       /* column headings */
 
-:root,
-.fz-density-tight,
-.fz-density-standard,
-.fz-density-comfortable {
-  --fz-control-height: calc(var(--fz-spacing) * 8);    /* buttons: 32px at standard */
-  --fz-field-height:   calc(var(--fz-spacing) * 9.5);  /* form fields: 38px */
-  --fz-row-height:     calc(var(--fz-spacing) * 10);   /* list rows: 40px */
+  /* Forms */
+  --fz-field-height:      calc(var(--fz-spacing) * 9.5);  /* 38px */
+  --fz-field-padding-x:   calc(var(--fz-spacing) * 3);
+  --fz-field-gap:         calc(var(--fz-spacing) * 5.5);  /* between fields: 22px */
+  --fz-label-gap:         calc(var(--fz-spacing) * 1.5);  /* label above its field: 6px */
+  --fz-help-gap:          calc(var(--fz-spacing) * 1.5);  /* a field to its help text: 6px */
+  --fz-option-gap:        calc(var(--fz-spacing) * 0.5);  /* between options, each on its own line: 2px */
+
+  /* Buttons and controls */
+  --fz-control-height:    calc(var(--fz-spacing) * 8);    /* 32px */
+  --fz-control-padding-x: calc(var(--fz-spacing) * 3);
+  --fz-menu-item-height:  calc(var(--fz-spacing) * 7.5);  /* 30px */
+  --fz-tab-padding-y:     calc(var(--fz-spacing) * 1);
+  --fz-tab-padding-x:     calc(var(--fz-spacing) * 3);
+
+  /* Lists */
+  --fz-row-height:          calc(var(--fz-spacing) * 10);  /* 40px */
+  --fz-cell-padding-x:      calc(var(--fz-spacing) * 3);
+  --fz-table-header-height: calc(var(--fz-spacing) * 9);   /* 36px */
+  --fz-toolbar-height:      calc(var(--fz-spacing) * 14);  /* list title and selection bars: 56px */
+  --fz-toolbar-padding-x:   calc(var(--fz-spacing) * 5);
+
+  /* Cards, drawers and the page */
+  --fz-card-padding:      calc(var(--fz-spacing) * 4);
+  --fz-card-gap:          calc(var(--fz-spacing) * 3);
+  --fz-form-padding:      calc(var(--fz-spacing) * 6);
+  --fz-drawer-padding-x:  calc(var(--fz-spacing) * 5);
+  --fz-drawer-padding-y:  calc(var(--fz-spacing) * 4);
+  --fz-page-padding:      calc(var(--fz-spacing) * 5);
+}
+
+
+/* ============================================================
+   Component fonts, colours and corners
+   ============================================================
+
+   Which font each kind of text is set in, the colours of each part of the
+   interface, and their corners. Like the sizes above, components read these,
+   so setting one changes that part everywhere; the Appearance page's advanced
+   editor sets them, and what each can be set to is in appearance_tokens.json.
+
+   Each one defaults to the site-wide setting it has always followed: a font is
+   the main font (--fz-font-sans) or the secondary one (--fz-font-heading), and
+   a colour is one of the palette's, so changing the palette still changes every
+   part that hasn't been given a colour of its own. Keep them written that way
+   (var(--fz-font-...), var(--fz-color-...), var(--fz-radius-...) or px), so
+   the Appearance page can read them.
+
+   --fz-button-primary-hover isn't set directly: it follows
+   --fz-button-primary-bg, darkened, when that is changed. */
+:root {
+  /* Fonts */
+  --fz-title-font:        var(--fz-font-heading);  /* form card, list and drawer titles */
+  --fz-label-font:        var(--fz-font-heading);  /* field labels */
+  --fz-field-font:        var(--fz-font-sans);     /* fields, read-only values, choice options */
+  --fz-help-font:         var(--fz-font-sans);
+  --fz-control-font:      var(--fz-font-sans);     /* buttons, tabs, menus, list toolbars */
+  --fz-table-font:        var(--fz-font-sans);     /* list and table cells */
+  --fz-table-header-font: var(--fz-font-sans);     /* column headings */
+
+  /* Text colours */
+  --fz-title-color:       var(--fz-color-text);
+  --fz-label-color:       var(--fz-color-text);
+  --fz-required-color:    var(--fz-color-danger);
+  --fz-field-color:       var(--fz-color-text);    /* in fields, and choice options */
+  --fz-value-color:       var(--fz-color-text);    /* read-only values */
+  --fz-help-color:        var(--fz-color-text-muted);
+
+  /* Forms */
+  --fz-field-bg:          var(--fz-color-surface);
+  --fz-field-border:      var(--fz-color-border-strong);
+  --fz-field-radius:      var(--fz-radius-md);
+  --fz-option-accent:     var(--fz-color-accent);  /* a chosen radio button or checkbox */
+  --fz-form-bg:           var(--fz-color-surface);
+  --fz-form-border:       var(--fz-color-border);
+  --fz-form-radius:       var(--fz-radius-lg);
+
+  /* Buttons and controls */
+  --fz-button-bg:           var(--fz-color-surface);
+  --fz-button-text:         var(--fz-color-text);
+  --fz-button-border:       var(--fz-color-border-strong);
+  --fz-button-primary-bg:   var(--fz-color-accent);
+  --fz-button-primary-text: var(--fz-color-on-accent);
+  --fz-button-primary-hover: var(--fz-color-accent-hover);
+  --fz-button-radius:       var(--fz-radius-md);
+  --fz-tab-bg:              var(--fz-color-surface);
+  --fz-tab-text:            var(--fz-color-text-muted);
+  --fz-tab-border:          var(--fz-color-border);
+  --fz-tab-active-bg:       var(--fz-color-accent);
+  --fz-tab-active-text:     var(--fz-color-on-accent);
+  --fz-tab-radius:          var(--fz-radius-full);
+  --fz-menu-bg:             var(--fz-color-surface);
+  --fz-menu-text:           var(--fz-color-text);
+  --fz-menu-radius:         var(--fz-radius-lg);
+
+  /* Lists */
+  --fz-toolbar-bg:        var(--fz-color-surface);
+  --fz-header-bg:         var(--fz-color-surface-2);
+  --fz-header-text:       var(--fz-color-text-muted);
+  --fz-header-border:     var(--fz-color-border-strong);
+  --fz-row-bg:            var(--fz-color-surface);
+  --fz-row-text:          var(--fz-color-text);
+  --fz-row-hover:         var(--fz-color-surface-2);
+  --fz-row-border:        var(--fz-color-border);
+
+  /* Cards and the drawer */
+  --fz-card-bg:           var(--fz-color-surface);
+  --fz-card-border:       var(--fz-color-border);
+  --fz-card-radius:       var(--fz-radius-lg);
+  --fz-drawer-bg:         var(--fz-color-surface);
+  --fz-drawer-foot-bg:    var(--fz-color-surface-2);
 }
 
 
@@ -324,8 +450,8 @@
 
    Things to build with. Each has a main class, classes for its parts
    (fz-card__title) and for its variations (fz-card--interactive), and draws
-   everything from the tokens, so it follows the theme, the Appearance page and
-   the density. They come before the utilities, so a utility can adjust one.
+   everything from the tokens, so it follows the theme and the Appearance page,
+   including its Size preset. They come before the utilities, so a utility can adjust one.
 
    Elements inside a component that have no class of their own (a description
    list's dt and dd) are selected through :where(), so that every selector here
@@ -339,7 +465,7 @@
 /* ---- Button ---------------------------------------------------------------
    An action: a <button>, an <a>, or an <input type="submit">. A secondary
    button by default; one modifier for the kind, and one for the size. Its
-   height follows the density. */
+   height is the control height. */
 .fz-btn {
   box-sizing: border-box;
   display: inline-flex;
@@ -349,13 +475,14 @@
   height: var(--fz-control-height);
   /* as wide as its label: some themes give every button a minimum width */
   min-width: 0;
-  padding: 0 calc(var(--fz-spacing) * 3);
-  border-radius: var(--fz-radius-md);
-  border: 1px solid var(--fz-color-border-strong);
-  background: var(--fz-color-surface);
-  color: var(--fz-color-text);
+  padding: 0 var(--fz-control-padding-x);
+  border-radius: var(--fz-button-radius);
+  border: 1px solid var(--fz-button-border);
+  background: var(--fz-button-bg);
+  color: var(--fz-button-text);
   font: inherit;
-  font-size: var(--fz-text-xs-plus);
+  font-family: var(--fz-control-font);
+  font-size: var(--fz-control-text);
   font-weight: var(--fz-font-weight-medium);
   line-height: var(--fz-leading-normal);
   cursor: pointer;
@@ -377,13 +504,13 @@
 
 /* The main action: usually one per area. */
 .fz-btn--primary {
-  background: var(--fz-color-accent);
-  color: var(--fz-color-on-accent);
-  border-color: var(--fz-color-accent);
+  background: var(--fz-button-primary-bg);
+  color: var(--fz-button-primary-text);
+  border-color: var(--fz-button-primary-bg);
 }
 .fz-btn--primary:hover {
-  background: var(--fz-color-accent-hover);
-  border-color: var(--fz-color-accent-hover);
+  background: var(--fz-button-primary-hover);
+  border-color: var(--fz-button-primary-hover);
 }
 /* A destructive action, such as delete. */
 .fz-btn--danger {
@@ -487,17 +614,18 @@
 .fz-field {
   display: flex;
   flex-direction: column;
-  gap: calc(var(--fz-spacing) * 1.5);
+  gap: var(--fz-label-gap);
 }
 .fz-field__label {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-family: var(--fz-font-heading);
-  font-size: var(--fz-text-sm);
-  font-weight: var(--fz-font-weight-semibold);
+  font-family: var(--fz-label-font);
+  font-size: var(--fz-label-text);
+  font-weight: var(--fz-label-weight);
   line-height: var(--fz-leading-snug);
-  color: var(--fz-color-text);
+  text-wrap: pretty;
+  color: var(--fz-label-color);
 }
 /* On a <fieldset>, for a group of choices, with a <legend class="fz-field__label">:
    no border, padding or margin of the fieldset's own. A legend sits outside the
@@ -510,11 +638,11 @@
 }
 .fz-field__label:where(legend) {
   padding: 0;
-  margin-bottom: calc(var(--fz-spacing) * 1.5);
+  margin-bottom: var(--fz-label-gap);
 }
 /* The required marker, inside the label. */
 .fz-field__req {
-  color: var(--fz-color-danger);
+  color: var(--fz-required-color);
   font-weight: var(--fz-font-weight-bold);
   font-size: 0.95em;
 }
@@ -526,10 +654,13 @@
   min-width: 0;
 }
 .fz-field__help {
-  margin: 0;
-  font-size: var(--fz-text-xs);
-  line-height: var(--fz-leading-snug);
-  color: var(--fz-color-text-muted);
+  /* --fz-help-gap below the control, one step of which is the body's own gap */
+  margin: calc(var(--fz-help-gap) - var(--fz-spacing)) 0 0;
+  max-width: var(--fz-help-max-width);
+  font-family: var(--fz-help-font);
+  font-size: var(--fz-help-text);
+  line-height: var(--fz-help-leading);
+  color: var(--fz-help-color);
 }
 /* Label beside the control, lined up with its first line; the two stack when
    the control would get narrower than half the field. */
@@ -542,7 +673,7 @@
 .fz-field--horizontal > :where(.fz-field__label) {
   flex: 1 1 var(--fz-field-label-width);
   align-self: flex-start;
-  padding-top: calc((var(--fz-field-height) - var(--fz-text-sm) * var(--fz-leading-snug)) / 2);
+  padding-top: calc((var(--fz-field-height) - var(--fz-label-text) * var(--fz-leading-snug)) / 2);
 }
 .fz-field--horizontal > :where(.fz-field__body) {
   flex: 99999 1 0;
@@ -551,7 +682,7 @@
 
 /* ---- Form controls ----------------------------------------------------------
    fz-input (a text-like <input>: text, email, number, date…), fz-select and
-   fz-textarea share one look: the field height, which follows the density, a
+   fz-textarea share one look: the field height, a
    border that darkens on hover, and the focus ring. aria-invalid="true" marks
    one as invalid. */
 .fz-input,
@@ -561,13 +692,14 @@
   width: 100%;
   height: var(--fz-field-height);
   margin: 0;
-  padding: 0 calc(var(--fz-spacing) * 3);
-  border: 1px solid var(--fz-color-border-strong);
-  border-radius: var(--fz-radius-md);
-  background: var(--fz-color-surface);
-  color: var(--fz-color-text);
+  padding: 0 var(--fz-field-padding-x);
+  border: 1px solid var(--fz-field-border);
+  border-radius: var(--fz-field-radius);
+  background: var(--fz-field-bg);
+  color: var(--fz-field-color);
   font: inherit;
-  font-size: var(--fz-text-sm);
+  font-family: var(--fz-field-font);
+  font-size: var(--fz-field-text);
   line-height: var(--fz-leading-normal);
   outline: none;
   appearance: none;
@@ -623,7 +755,7 @@
 .fz-textarea {
   height: auto;
   min-height: calc(var(--fz-field-height) * 2.4);
-  padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3);
+  padding: calc(var(--fz-spacing) * 2) var(--fz-field-padding-x);
   resize: vertical;
 }
 
@@ -660,10 +792,10 @@
 .fz-input-group__addon {
   display: inline-flex;
   align-items: center;
-  padding: 0 calc(var(--fz-spacing) * 3);
+  padding: 0 var(--fz-field-padding-x);
   background: var(--fz-color-surface-2);
   color: var(--fz-color-text-subtle);
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-field-text);
   white-space: nowrap;
   user-select: none;
   border-inline-end: 1px solid var(--fz-color-border);
@@ -739,7 +871,7 @@
   align-items: center;
   gap: calc(var(--fz-spacing) * 2);
   color: var(--fz-color-text);
-  font-size: var(--fz-text-sm);
+  font-size: var(--fz-field-text);
   line-height: var(--fz-leading-normal);
   cursor: pointer;
 }
@@ -757,17 +889,17 @@
    A surface for one thing: an entry, a summary, a group of fields. Its
    children are stacked 3 steps apart, with their own margins removed. */
 .fz-card {
-  --fz-gap: calc(var(--fz-spacing) * 3);
+  --fz-gap: var(--fz-card-gap);
   position: relative;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: var(--fz-gap);
   min-width: 0;
-  padding: calc(var(--fz-spacing) * 4);
-  background: var(--fz-color-surface);
-  border: 1px solid var(--fz-color-border);
-  border-radius: var(--fz-radius-lg);
+  padding: var(--fz-card-padding);
+  background: var(--fz-card-bg);
+  border: 1px solid var(--fz-card-border);
+  border-radius: var(--fz-card-radius);
   box-shadow: var(--fz-shadow-sm);
   color: var(--fz-color-text);
   line-height: var(--fz-leading-normal);
@@ -872,35 +1004,37 @@
 
 /* ---- Table ------------------------------------------------------------------
    A plain data table: a header row, a line under each row, and rows the row
-   height, which follows the density. On a <table>. fz-table--striped shades
+   height. On a <table>. fz-table--striped shades
    every other row. For a table wider than its container, wrap it in an
    element with fz-overflow-x-auto. */
 .fz-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  font-size: var(--fz-text-xs-plus);
+  font-family: var(--fz-table-font);
+  font-size: var(--fz-table-text);
   line-height: var(--fz-leading-normal);
-  color: var(--fz-color-text);
+  color: var(--fz-row-text);
 }
 .fz-table :where(th, td) {
-  padding: 0 calc(var(--fz-spacing) * 3);
+  padding: 0 var(--fz-cell-padding-x);
   text-align: start;
   vertical-align: middle;
-  border-bottom: 1px solid var(--fz-color-border);
+  border-bottom: 1px solid var(--fz-row-border);
   /* its own surface, so the table reads the same on the page as in a card */
-  background: var(--fz-color-surface);
+  background: var(--fz-row-bg);
 }
 .fz-table :where(tbody td) {
   height: var(--fz-row-height);
 }
 .fz-table :where(thead th) {
-  height: calc(var(--fz-spacing) * 9);
-  font-size: var(--fz-text-xs);
+  height: var(--fz-table-header-height);
+  font-family: var(--fz-table-header-font);
+  font-size: var(--fz-table-header-text);
   font-weight: var(--fz-font-weight-semibold);
-  color: var(--fz-color-text-muted);
-  background: var(--fz-color-surface-2);
-  border-bottom-color: var(--fz-color-border-strong);
+  color: var(--fz-header-text);
+  background: var(--fz-header-bg);
+  border-bottom-color: var(--fz-header-border);
 }
 .fz-table--striped :where(tbody tr:nth-child(even) td) {
   background: var(--fz-color-surface-3);
@@ -1166,7 +1300,8 @@
    (fz-m-4 fz-mt-0 leaves the top margin at 0).
 
    Spacing steps are the scale's: 0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 16, each a
-   multiple of --fz-spacing, so they follow the density. s and e are start and
+   multiple of --fz-spacing. They are fixed, as in Tailwind: the Size preset
+   changes the component sizes, not the utilities. s and e are start and
    end, which follow the text direction; l and r are always left and right. In
    a site with right-to-left languages, prefer s and e.
    ============================================================ */

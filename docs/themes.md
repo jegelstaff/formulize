@@ -30,7 +30,8 @@ If you don't hide and reveal the body, fire it once the page has loaded anyway.
 ## 2. Say what scrolls, if it isn't obvious
 
 Formulize saves a reader's scroll position when they save a form, and puts it back afterwards. To do
-that it has to know which element scrolls.
+that it has to know which element scrolls. And when a theme names the element, the mouse wheel or
+trackpad scrolls it from anywhere on the page, not only with the pointer over it.
 
 **Usually you don't need to do anything.** Formulize looks for the nearest ancestor of the form that
 is actually scrollable — an element taller than its own box with `overflow-y` set to `auto` or
@@ -43,6 +44,24 @@ on your `<body>` tag:
 ```html
 <body data-formulize-scroll-container=".my-main-pane">
 ```
+
+The selector can name several elements, for a theme that scrolls a different one at different
+widths, or on different screens. Formulize uses the first of them that is scrolling at the time, and
+if none is, looks for one as if nothing were named. Lyris scrolls a list's entries or a form's card on
+wide screens, and the page on phones:
+
+```html
+<body data-formulize-scroll-container=".lyris-list__body, .lyris-form-screen, .lyris-main">
+```
+
+Naming it also means a reader can scroll it from anywhere on the page: over the margins beside a
+narrow column, a title bar, a bar of buttons. The wheel scrolls the named element unless the pointer
+is already over it, or over something else that scrolls on its own, such as an open menu or a wide
+table. It is also left alone over a modal and its backdrop (anything with `aria-modal="true"` or
+`role="dialog"`, such as the entry drawer), so the page behind a modal stays where it is, and over a
+menu or list of options opened outside the element (`role="menu"`, `role="listbox"`, or jQuery UI's
+`.ui-menu`, as an autocomplete's suggestions are). This is `include/js/scroll_container.js`, which
+Formulize adds to every page; a theme that names nothing isn't affected.
 
 Use `none` when nothing in the page scrolls, because something outside it does:
 
@@ -73,8 +92,8 @@ copy:
 ## 4. Style screens so they still work without your header and menus
 
 An embedded screen borrows your theme's styling without its page layout. It loads your
-`css/reset.css`, if you have one, then your `css/style.css`, and then any colours, font and logo set on
-the Appearance page. It does not load your `theme.html` or your script. The `<body>` has the class
+`css/reset.css`, if you have one, then your `css/style.css`, and then any colours, font and logo set in
+the Appearance editor. It does not load your `theme.html` or your script. The `<body>` has the class
 `formulize-inline`.
 
 Two optional files let you adjust how your theme looks when embedded:
@@ -104,6 +123,82 @@ Two optional files let you adjust how your theme looks when embedded:
   ```
 
 The Anari theme has both files, if you want an example.
+
+## 5. Work with the Appearance editor (optional)
+
+The [Appearance editor](/documentation/appearance_editor/) edits a theme's appearance on a preview of
+sample screens the theme provides (below): a theme without them can't be edited there. In simple
+mode it changes the logo, colours, fonts and page width, which every theme that calls
+`formulize_renderAppearanceHead()` follows.
+
+Its advanced mode, and the Compact and Comfortable looks, change Formulize UI's component tokens: sizes (`--fz-field-height`, `--fz-row-height`, `--fz-title-text`),
+fonts (`--fz-label-font`), colours (`--fz-button-bg`, `--fz-header-bg`) and corners
+(`--fz-field-radius`), and the rest. They only do anything in a theme whose own CSS styles things with
+those tokens, so a theme says when it does, and only then does the editor offer them. Each
+colour and font token defaults to the palette colour or font it stands for, so a theme that uses them
+looks the same until one is changed.
+
+**Opt in** by declaring `--formulize-size-tokens` on `:root` in your `css/tokens.css`:
+
+```css
+:root {
+  --formulize-size-tokens: 1;
+}
+```
+
+**Provide sample screens** for the editor's preview, in an `appearance_preview` folder
+in your theme. Each is an HTML file named after a screen: `form.html`, `list.html`, `drawer.html` and
+`cards.html`. Provide the ones that suit your theme; the editor shows the ones it finds, and without
+any, the theme can't be edited there. A sample is the markup your theme puts in `<body>` for
+that kind of page, written out with sample content, and it is shown with your `css/reset.css`, your
+`css/style.css` and your generated appearance stylesheet, in a `<body>` with the id `formulize` and
+the class `formulize-screen`. No scripts run in it.
+
+Mark each part of the sample that can be selected with `data-fz-part`, naming the part:
+
+```html
+<input type="button" class="formulize-form-submit-button" value="Save" data-fz-part="button">
+```
+
+The parts, and the tokens of each one, are the `components` in
+`modules/formulize/include/appearance_tokens.json`: `logo` (the link around your logo image),
+`page`, `tabs`, `title`, `form`, `label`, `field`, `value` (a read-only value), `options` (radio
+buttons and checkboxes), `help`, `button`, `toolbar`, `menu`, `header` (column headings), `row`,
+`card` and `drawer`. The editor shows a new logo by changing the `src` of the image inside the
+`logo` part.
+
+Pieces shared between samples go in files starting with an underscore, and are included by name in
+double braces: `{{list}}` is the contents of `_list.html`. `{{logo_url}}` and `{{site_name}}` are your
+logo and the site's name. Clicking an element with `data-fz-toggle="some-id"` in the preview toggles
+the class `open` on the element with that id, for showing a menu.
+
+Lyris's samples, in `themes/Lyris/appearance_preview/`, are a complete example. A theme edited in simple
+mode only, such as Anari (`themes/Anari/appearance_preview/`), only needs to mark its logo, as the
+`logo` part.
+
+## 6. Offer the Page width setting (optional)
+
+The Page width setting, in the Appearance editor's site-wide settings, keeps
+pages to a maximum width on a wide screen, or lets them use the full width of the window. It sets
+`--formulize-content-max-width`: a width in pixels, or `100%` for full width. Laying the page out to
+that width is up to the theme, so a theme says when it does, and only then is the setting offered.
+
+**Opt in** by declaring `--formulize-content-max-width` on `:root` in your `css/tokens.css`. What you
+declare is your theme's own width, which is what the setting starts at and what a reset goes back to:
+a width in pixels, or `100%` to start at full width. Lyris declares 1200 pixels:
+
+```css
+:root {
+  --formulize-content-max-width: 1200px;
+}
+```
+
+Then use it as the maximum width of your content. Lyris makes list and form screens a column of that
+width, centred in the window, with each part of the screen a card in it: a list's title bar, its
+entries, a form, and a floating bar at the bottom for a list's pagination or a form's buttons. The
+column is centred in the window rather than beside the sidebar, so opening the sidebar doesn't move
+it unless it has to; the header's links stay at the window's edge; and phones are left full width. See
+the "Content width" section at the end of `themes/Lyris/css/style.css`.
 
 ## Checking your theme
 

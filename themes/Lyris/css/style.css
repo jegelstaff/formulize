@@ -9,10 +9,11 @@
    ---- */
 
 /* ---- Units ----
-   Sizes are in rem, so they follow the Appearance page's Text and interface
-   size. Spaces (padding, margins, gaps) are steps of --fz-spacing, so they also
-   follow the density. Only borders, shadows, hairlines of 2px or less and the
-   breakpoints are in px. Where a comment gives a size in px, it is the size at
+   Sizes are in rem, so they follow the browser's and the user's font size.
+   Spaces (padding, margins, gaps) are steps of --fz-spacing. Sizes the
+   Appearance page's looks set are Formulize UI's component size tokens
+   (--fz-field-height, --fz-row-height...). Only borders, shadows, hairlines of
+   2px or less and the breakpoints are in px. Where a comment gives a size in px, it is the size at
    the default settings.
    ---- */
 
@@ -31,11 +32,8 @@ body {
    are rem, so every text size in this stylesheet follows this one declaration,
    and moving it moves all of them together.
 
-   Three layers get a say, in this order: the theme's own default
-   (--formulize-font-size-base in tokens.css), the site-wide Text size setting on the
-   Appearance page (which overrides that token in the generated appearance.css),
-   and finally a user's personal font size preference, which theme.html prints as
-   an inline style further down the document and so wins over both. */
+   The theme's own default is --formulize-font-size-base in tokens.css. The
+   Appearance page's looks set the component sizes instead, not this. */
 html {
   font-size: var(--formulize-font-size-base);
 }
@@ -58,13 +56,42 @@ body {
    whether one has been picked. Only the family is set here: size, weight and
    colour stay with the rules that own those elements. */
 h1, h2, h3, h4, h5, h6,
+.lyris-form-screen .formulize-grid-caption {
+  font-family: var(--fz-font-heading);
+}
+
+/* Field labels and titles have a font of their own, which is the secondary font
+   unless the advanced editor sets it to the main one (--fz-label-font, and
+   --fz-title-font in the title rule below). */
 .fz-field__label,
 .form-label,
 .xoops-form-element-caption,
-.xoops-form-element-caption-required,
-.lyris-form-screen .formulize-grid-caption,
-.formulize-drawer__title {
-  font-family: var(--fz-font-heading);
+.xoops-form-element-caption-required {
+  font-family: var(--fz-label-font);
+}
+
+/* ---------- Titles ----------
+   The form card title, the right drawer's title and the list title bar's title
+   share one style, from the Formulize UI title tokens (--fz-title-*), so they
+   follow the Appearance page's looks and advanced editor together:
+   20px/600 at Default. At
+   the mobile breakpoint they use the narrow title size. */
+.lyris-form-card .fz-card__title,
+.formulize-drawer__title,
+.lyris-list__title {
+  font-family: var(--fz-title-font);
+  font-size: var(--fz-title-text);
+  font-weight: var(--fz-title-weight);
+  line-height: var(--fz-title-leading);
+  color: var(--fz-title-color);
+}
+
+@media (max-width: 768px) {
+  .lyris-form-card .fz-card__title,
+  .formulize-drawer__title,
+  .lyris-list__title {
+    font-size: var(--fz-title-text-narrow);
+  }
 }
 
 /* ============================================================
@@ -209,7 +236,7 @@ h1, h2, h3, h4, h5, h6,
    their body id is. Pages that merely embed a screen inside their own wrapper and
    chrome (signup.php) never set the signal, so they keep the gutter. */
 body:not(#formulize):not(.formulize-screen) .lyris-main {
-  padding: calc(var(--fz-spacing) * 6) calc(var(--fz-spacing) * 6) 0;
+  padding: var(--fz-page-padding) var(--fz-page-padding) 0;
 }
 
 /* Inline / drawer-iframe mode — header and sidebar suppressed via theme.html.
@@ -258,15 +285,13 @@ body:not(#formulize):not(.formulize-screen) .lyris-main {
    ============================================================ */
 
 .formulize-drawer {
-  --formulize-drawer-bg:       var(--fz-color-surface);
+  --formulize-drawer-bg:       var(--fz-drawer-bg);
   --formulize-drawer-fg:       var(--fz-color-text);
   --formulize-drawer-border:   var(--fz-color-border);
   --formulize-drawer-muted:    var(--fz-color-text-muted);
-  --formulize-drawer-foot-bg:  var(--fz-color-surface-2);
+  --formulize-drawer-foot-bg:  var(--fz-drawer-foot-bg);
   --formulize-drawer-shadow:   var(--fz-shadow-lg);
   --formulize-drawer-radius:   var(--fz-radius-md);
-  --formulize-drawer-pad-x:    calc(var(--fz-spacing) * 5);
-  --formulize-drawer-pad-y:    calc(var(--fz-spacing) * 4);
 
   /* Lifted above the masquerade bar so the drawer's footer buttons stay clickable. */
   bottom: var(--lyris-masquerade-height);
@@ -321,10 +346,6 @@ body:not(#formulize):not(.formulize-screen) .lyris-main {
   gap: calc(var(--fz-spacing) * 2);
 }
 
-.formulize-drawer__title {
-  font-size: var(--fz-text-xl);
-}
-
 .formulize-drawer__loading {
   padding: calc(var(--fz-spacing) * 6);
 }
@@ -335,7 +356,7 @@ body:not(#formulize):not(.formulize-screen) .lyris-main {
    `.formulize-form-submit-button` children. Core already sets these in px; they are
    restated in Lyris's tokens so the two bars stay tied together if the scale moves. */
 .formulize-drawer__foot {
-  padding: calc(var(--fz-spacing) * 4);
+  padding: var(--fz-drawer-padding-y);
   gap: calc(var(--fz-spacing) * 2);
 }
 
@@ -352,13 +373,14 @@ body:not(#formulize):not(.formulize-screen) .lyris-main {
    down this file. */
 .formulize-drawer .formulize-drawer__btn {
   height: var(--fz-control-height);
-  padding: 0 calc(var(--fz-spacing) * 3);
-  font-size: var(--fz-text-xs-plus);
+  padding: 0 var(--fz-control-padding-x);
+  font-family: var(--fz-control-font);
+  font-size: var(--fz-control-text);
   font-weight: 500;
-  border-radius: var(--fz-radius-md);
-  border: 1px solid var(--fz-color-border-strong);
-  background: var(--fz-color-surface);
-  color: var(--fz-color-text);
+  border-radius: var(--fz-button-radius);
+  border: 1px solid var(--fz-button-border);
+  background: var(--fz-button-bg);
+  color: var(--fz-button-text);
   transition: background-color var(--fz-duration-fast) var(--fz-ease-out),
               border-color var(--fz-duration-fast) var(--fz-ease-out),
               color var(--fz-duration-fast) var(--fz-ease-out);
@@ -377,13 +399,13 @@ body:not(#formulize):not(.formulize-screen) .lyris-main {
 .formulize-drawer .formulize-drawer__btn--ghost {
   background: transparent;
   border-color: transparent;
-  color: var(--fz-color-text);
+  color: var(--fz-button-text);
 }
 
 .formulize-drawer .formulize-drawer__btn--ghost:hover {
   background: var(--fz-color-surface-3);
   border-color: transparent;
-  color: var(--fz-color-text);
+  color: var(--fz-button-text);
 }
 
 /* Restated after the base rule above, which would otherwise put the padding
@@ -518,7 +540,7 @@ textarea:where(:not([class*="fz-"])) {
   height: var(--fz-control-height);
   padding: 0 calc(var(--fz-spacing) * 2.5);
   font: inherit;
-  font-size: var(--fz-text-xs-plus);
+  font-size: var(--fz-control-text);
   font-family: var(--fz-font-sans);
   color: var(--fz-color-text);
   background: var(--fz-color-surface);
@@ -619,10 +641,10 @@ textarea {
    truncating with an ellipsis (see .lyris-list__title). */
 .lyris-list__titlebar {
   flex-wrap: nowrap;
-  padding: calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 5);
-  background: var(--fz-color-surface);
+  padding: calc(var(--fz-spacing) * 3) var(--fz-toolbar-padding-x);
+  background: var(--fz-toolbar-bg);
   border-bottom: 1px solid var(--fz-color-border);
-  min-height: 3.5rem;
+  min-height: var(--fz-toolbar-height);
   flex-shrink: 0;
 }
 
@@ -643,13 +665,14 @@ textarea {
   align-items: center;
   justify-content: center;
   height: var(--fz-control-height);
-  padding: 0 calc(var(--fz-spacing) * 3);
-  border-radius: var(--fz-radius-md);
-  border: 1px solid var(--fz-color-border-strong);
-  background: var(--fz-color-surface);
-  color: var(--fz-color-text);
+  padding: 0 var(--fz-control-padding-x);
+  border-radius: var(--fz-button-radius);
+  border: 1px solid var(--fz-button-border);
+  background: var(--fz-button-bg);
+  color: var(--fz-button-text);
   font: inherit;
-  font-size: var(--fz-text-xs-plus);
+  font-family: var(--fz-control-font);
+  font-size: var(--fz-control-text);
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
@@ -660,13 +683,13 @@ textarea {
 
 /* Add entry — primary */
 .lyris-list__titlebar #formulize_addButton {
-  background: var(--fz-color-accent);
-  color: var(--fz-color-on-accent);
-  border-color: var(--fz-color-accent);
+  background: var(--fz-button-primary-bg);
+  color: var(--fz-button-primary-text);
+  border-color: var(--fz-button-primary-bg);
 }
 .lyris-list__titlebar #formulize_addButton:hover {
-  background: var(--fz-color-accent-hover);
-  border-color: var(--fz-color-accent-hover);
+  background: var(--fz-button-primary-hover);
+  border-color: var(--fz-button-primary-hover);
 }
 
 /* More actions (...) — ghost icon button */
@@ -678,11 +701,10 @@ textarea {
 }
 .lyris-list__titlebar #formulize_moreActionsButton:hover { background: var(--fz-color-surface-3); }
 
+/* Size, weight and line height come from the shared title style (see
+   "Titles" near the top). */
 .lyris-list__title {
-  font-size: var(--fz-text-xl);
-  font-weight: 600;
   letter-spacing: -0.01em;
-  line-height: var(--fz-leading-tight);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -720,13 +742,14 @@ textarea {
   display: flex;
   align-items: center;
   width: 100%;
-  height: 1.875rem;
+  height: var(--fz-menu-item-height);
   padding: 0 calc(var(--fz-spacing) * 2);
   border: 0;
   background: transparent;
   font: inherit;
-  font-size: var(--fz-text-xs-plus);
-  color: var(--fz-color-text);
+  font-family: var(--fz-control-font);
+  font-size: var(--fz-control-text);
+  color: var(--fz-menu-text);
   border-radius: var(--fz-radius-sm);
   cursor: pointer;
   text-align: left;
@@ -753,11 +776,13 @@ textarea {
    `.lyris-list__footer`, not this panel, so they are untouched. */
 .lyris-list__action-panel input[type="button"].formulize_button,
 .lyris-list__action-panel input[type="submit"].formulize_button {
-  height: 1.875rem;
+  height: var(--fz-menu-item-height);
   padding: 0 calc(var(--fz-spacing) * 2);
   border: 0;
   border-radius: var(--fz-radius-sm);
   background: transparent;
+  color: var(--fz-menu-text);
+  font-family: var(--fz-control-font);
   font-weight: inherit;
 }
 .lyris-list__action-panel input[type="button"].formulize_button:hover,
@@ -768,8 +793,8 @@ textarea {
 
 /* Popover components (shared across dropdown contexts) */
 .lyris-pop {
-  background: var(--fz-color-surface);
-  border-radius: var(--fz-radius-lg);
+  background: var(--fz-menu-bg);
+  border-radius: var(--fz-menu-radius);
   box-shadow: var(--fz-shadow-lg);
   border: 1px solid var(--fz-color-border);
   padding: calc(var(--fz-spacing) * 1);
@@ -781,13 +806,14 @@ textarea {
   align-items: center;
   gap: calc(var(--fz-spacing) * 2);
   width: 100%;
-  min-height: 1.875rem;
+  min-height: var(--fz-menu-item-height);
   padding: calc(var(--fz-spacing) * 1.25) calc(var(--fz-spacing) * 2);
   border: 0;
   background: transparent;
   font: inherit;
-  font-size: var(--fz-text-xs-plus);
-  color: var(--fz-color-text);
+  font-family: var(--fz-control-font);
+  font-size: var(--fz-control-text);
+  color: var(--fz-menu-text);
   border-radius: var(--fz-radius-sm);
   cursor: pointer;
   text-align: left;
@@ -821,7 +847,7 @@ textarea {
   border-radius: var(--fz-radius-md);
   background: transparent;
   color: var(--fz-color-text-muted);
-  font-size: var(--fz-text-xs-plus);
+  font-size: var(--fz-control-text);
   font-weight: 500;
 }
 .lyris-list__titlebar .lyris-view-switcher__toggle:hover,
@@ -857,9 +883,9 @@ textarea {
   left: 0;
   z-index: 200;
   min-width: 15rem;
-  background: var(--fz-color-surface);
+  background: var(--fz-menu-bg);
   border: 1px solid var(--fz-color-border);
-  border-radius: var(--fz-radius-lg);
+  border-radius: var(--fz-menu-radius);
   box-shadow: var(--fz-shadow-lg);
   padding: calc(var(--fz-spacing) * 1) 0;
   flex-direction: column;
@@ -880,11 +906,11 @@ textarea {
   left: 0;
   right: 0;
   z-index: 10;
-  padding: calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 5);
+  padding: calc(var(--fz-spacing) * 3) var(--fz-toolbar-padding-x);
   background: var(--fz-color-text);
   color: var(--fz-color-page);
   border-bottom: 1px solid var(--fz-color-text);
-  min-height: 3.5rem;
+  min-height: var(--fz-toolbar-height);
 }
 
 .lyris-selection-bar.is-active {
@@ -930,7 +956,7 @@ textarea {
   border: 1px solid rgba(255,255,255,.18);
   color: #fff;
   font: inherit;
-  font-size: var(--fz-text-xs-plus);
+  font-size: var(--fz-control-text);
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
@@ -1001,10 +1027,11 @@ textarea {
   align-items: center;
   justify-content: space-between;
   gap: calc(var(--fz-spacing) * 4);
-  padding: calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 5);
-  background: var(--fz-color-surface);
+  padding: calc(var(--fz-spacing) * 3) var(--fz-toolbar-padding-x);
+  background: var(--fz-toolbar-bg);
   border-top: 1px solid var(--fz-color-border);
-  font-size: var(--fz-text-xs-plus);
+  font-family: var(--fz-control-font);
+  font-size: var(--fz-control-text);
   color: var(--fz-color-text-muted);
   flex-shrink: 0;
 }
@@ -1121,7 +1148,7 @@ textarea {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  font-size: var(--fz-text-xs-plus);
+  font-size: var(--fz-table-text);
   table-layout: auto;
 }
 
@@ -1179,9 +1206,11 @@ textarea {
 .lyris-list-table td {
   text-align: left;
   vertical-align: middle;
-  padding: 0 var(--lyris-row-padding-x);
-  border-bottom: 1px solid var(--fz-color-border);
-  background: var(--fz-color-surface);
+  padding: 0 var(--fz-cell-padding-x);
+  border-bottom: 1px solid var(--fz-row-border);
+  background: var(--fz-row-bg);
+  color: var(--fz-row-text);
+  font-family: var(--fz-table-font);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1193,12 +1222,13 @@ textarea {
    top one. Only the top header row in the thead is sticky. */
 .lyris-list-table thead th,
 .lyris-list-table .lyris-header-row th {
-  height: 2.25rem;
+  height: var(--fz-table-header-height);
+  font-family: var(--fz-table-header-font);
   font-weight: 600;
-  font-size: var(--fz-text-xs);
-  color: var(--fz-color-text-muted);
-  background: var(--fz-color-surface-2);
-  border-bottom-color: var(--fz-color-border-strong);
+  font-size: var(--fz-table-header-text);
+  color: var(--fz-header-text);
+  background: var(--fz-header-bg);
+  border-bottom-color: var(--fz-header-border);
 }
 
 .lyris-list-table thead th {
@@ -1207,7 +1237,7 @@ textarea {
   z-index: 2;
 }
 
-.lyris-list-table tbody tr:hover td { background: var(--fz-color-surface-2); }
+.lyris-list-table tbody tr:hover td { background: var(--fz-row-hover); }
 .lyris-list-table tbody tr[aria-selected="true"] td { background: var(--fz-color-accent-soft); }
 
 .lyris-list-table--cozy tbody td { height: var(--fz-row-height); } /* follows the density: 40px at standard */
@@ -1228,11 +1258,11 @@ textarea {
    bleeding through. */
 .lyris-search-row td {
   position: sticky;
-  top: var(--lyris-thead-height, 2.25rem);
+  top: var(--lyris-thead-height, var(--fz-table-header-height));
   z-index: 2;
   background: var(--fz-color-surface-2);
   /* Vertical breathing room so the filter inputs aren't flush against the
-     row edges; keep the base horizontal --lyris-row-padding-x. */
+     row edges; keep the base horizontal --fz-cell-padding-x. */
   padding-top: calc(var(--fz-spacing) * 2);
   padding-bottom: calc(var(--fz-spacing) * 2);
 }
@@ -1873,10 +1903,6 @@ body:has(#formulize-masquerade-block) {
     min-height: 3rem;
   }
 
-  .lyris-list__title {
-    font-size: var(--fz-text-base);
-  }
-
   /* view switcher beside the title: just the icon, as a square icon button
      (the active view's name stays in the button's accessible name) */
   .lyris-list__titlebar .lyris-view-switcher__toggle {
@@ -1982,7 +2008,7 @@ body:has(#formulize-masquerade-block) {
      include .lyris-list-table in the selector chain. */
   .lyris-list-table .lyris-search-row .lyris-cb,
   .lyris-list-table .lyris-search-row .column0 {
-    top: var(--lyris-thead-height, 2.25rem);
+    top: var(--lyris-thead-height, var(--fz-table-header-height));
     z-index: 3;
   }
 }
@@ -1996,13 +2022,21 @@ body:has(#formulize-masquerade-block) {
    They are additive: list-screen inputs and filters keep their
    existing 32px `.fz-input`-equivalent baseline.
 
-   Design spec (forms.css):
-     --lyris-field-height:      38px    (.lyris-form default, at standard density)
-     --lyris-field-padding-x:  12px
-     --lyris-field-radius: 6px
-     --lyris-field-gap:    18px    vertical gap between field rows
-     --lyris-label-gap:    6px     label-to-field gap
-     --lyris-label-text:   1rem (~16px, #32)
+   Sizes come from the Formulize UI component size tokens (formulize-ui.css),
+   which the Appearance page's looks and advanced editor change. At
+   Default:
+     --fz-field-height:     38px    field height
+     --fz-field-padding-x:  12px
+     --fz-field-gap:        22px    vertical gap between field rows
+     --fz-label-gap:        6px     label-to-field gap (single column)
+     --fz-label-text:       14px / 600 (--fz-label-weight)
+     --fz-field-text:       14px
+     --fz-help-text:        13px / 1.5 (--fz-help-leading), at most 65ch wide
+     --fz-help-gap:         6px     field to its help text
+     --fz-option-gap:       2px     between options, each on its own line
+   Components read those tokens directly; nothing here re-declares them, so a
+   token set on a container reaches the fields inside it. On phones, field
+   heights have a floor (--lyris-tap-min: see the mobile form block).
 
    HTML anatomy output by Lyris form templates:
      .fz-card.lyris-form-card > .lyris-form-card__header + .lyris-form-card__body > .form-container
@@ -2013,10 +2047,10 @@ body:has(#formulize-masquerade-block) {
    ============================================================ */
 
 /* ---------- Field metrics: .lyris-form ----------
-   `.lyris-form` carries the form's field metrics. The height, the padding and the
-   gap between fields follow the density set on the Appearance page, through
-   the Formulize UI tokens (see formulize-ui.css): 38px / 12px / 18px at
-   standard density, the values these were fixed at before density existed.
+   `.lyris-form` carries Lyris's own field metrics, the ones the Appearance
+   page doesn't set: the textarea's top and bottom padding, the radius, the
+   label column width and the required marker's colour. The sizes the
+   Appearance page sets are Formulize UI's tokens (see above).
 
    `.lyris-form-screen` retains the same vars as an additive alias, including inside
    the right drawer, whose body is wrapped in `.lyris-form-screen` by the theme's
@@ -2024,17 +2058,10 @@ body:has(#formulize-masquerade-block) {
 
 .lyris-form,
 .lyris-form-screen {
-  --lyris-field-height:        var(--fz-field-height);
-  --lyris-field-padding-x:     calc(var(--fz-spacing) * 3);
   --lyris-field-padding-y:     calc(var(--fz-spacing) * 2);
-  --lyris-field-radius:        var(--fz-radius-md);   /* 6px */
-  --lyris-field-gap:           calc(var(--fz-spacing) * 4.5);
-  --lyris-field-text:          var(--fz-text-sm);
-  --lyris-label-text:          1.1rem; /* ~16px, scales with root font-size (#32) */
-  --lyris-label-gap:           calc(var(--fz-spacing) * 1.5);
+  --lyris-field-radius:        var(--fz-field-radius); /* 6px at Default */
   --lyris-label-column-width:  13.75rem;
-  --lyris-help-text:           var(--fz-text-xs);
-  --lyris-required-color:      var(--fz-color-danger);
+  --lyris-required-color:      var(--fz-required-color);
 }
 
 /* ---------- Formulize UI's form controls ----------
@@ -2071,9 +2098,13 @@ body:has(#formulize-masquerade-block) {
 .lyris-form-screen input:where(:not([class*="fz-"])):not([type]),
 .lyris-form-screen select:where(:not([class*="fz-"])),
 .lyris-form-screen textarea:where(:not([class*="fz-"])) {
-  height: var(--lyris-field-height);
-  padding: 0 var(--lyris-field-padding-x);
-  font-size: var(--lyris-field-text);
+  height: max(var(--fz-field-height), var(--lyris-tap-min));
+  padding: 0 var(--fz-field-padding-x);
+  font-family: var(--fz-field-font);
+  font-size: var(--fz-field-text);
+  color: var(--fz-field-color);
+  background-color: var(--fz-field-bg);
+  border-color: var(--fz-field-border);
   border-radius: var(--lyris-field-radius);
   width: 100%;
 }
@@ -2081,8 +2112,8 @@ body:has(#formulize-masquerade-block) {
 .lyris-form textarea:where(:not([class*="fz-"])),
 .lyris-form-screen textarea:where(:not([class*="fz-"])) {
   height: auto;
-  min-height: calc(var(--lyris-field-height) * 2.4);
-  padding: var(--lyris-field-padding-y) var(--lyris-field-padding-x);
+  min-height: calc(max(var(--fz-field-height), var(--lyris-tap-min)) * 2.4);
+  padding: var(--lyris-field-padding-y) var(--fz-field-padding-x);
 }
 
 /* Character / word limit counter sits under the textarea and is right-aligned
@@ -2101,6 +2132,11 @@ body:has(#formulize-masquerade-block) {
 .lyris-form .formulize-limit-counter,
 .lyris-form-screen .formulize-limit-counter {
   max-width: none;
+  /* Sized and spaced like the help text. Not capped at the help text's
+     --fz-help-max-width, though: it is right-aligned to the textarea, so a
+     cap would pull it back off the textarea's right edge (see above). */
+  font-size: var(--fz-help-text);
+  line-height: var(--fz-help-leading);
 }
 
 /* Selects: preserve the chevron background already set by the base rule */
@@ -2122,7 +2158,7 @@ body:has(#formulize-masquerade-block) {
    10em core gives it in modules/formulize/templates/css/formulize.css. */
 .lyris-form .subform_button_controls > input[type="text"],
 .lyris-form-screen .subform_button_controls > input[type="text"] {
-  width: calc(2ch + 2 * var(--lyris-field-padding-x) + 2px);
+  width: calc(2ch + 2 * var(--fz-field-padding-x) + 2px);
   margin: 0 calc(var(--fz-spacing) * 2);
 }
 
@@ -2145,7 +2181,7 @@ body:has(#formulize-masquerade-block) {
    and the fz- exclusion inside :where() so they add none. */
 .lyris-form input[type="text"]:where([name^="other["]:not([class*="fz-"])),
 .lyris-form-screen input[type="text"]:where([name^="other["]:not([class*="fz-"])) {
-  width: calc(var(--formulize-other-chars) * 0.5em + 2 * var(--lyris-field-padding-x) + 2px);
+  width: calc(var(--formulize-other-chars) * 0.5em + 2 * var(--fz-field-padding-x) + 2px);
   max-width: 100%;
   vertical-align: middle;
 }
@@ -2161,15 +2197,18 @@ body:has(#formulize-masquerade-block) {
   gap: 0;
   padding: 0;
   margin-bottom: calc(var(--fz-spacing) * 4);
+  background: var(--fz-form-bg);
+  border-color: var(--fz-form-border);
+  border-radius: var(--fz-form-radius);
 }
 
 .lyris-form-card__header {
-  padding: calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 6);
-  border-bottom: 1px solid var(--fz-color-border);
+  padding: var(--fz-card-padding) var(--fz-form-padding);
+  border-bottom: 1px solid var(--fz-form-border);
 }
 
 .lyris-form-card__body {
-  padding: calc(var(--fz-spacing) * 6);
+  padding: var(--fz-form-padding);
 }
 
 /* ---------- Form container & field rows ---------- */
@@ -2191,8 +2230,8 @@ body:has(#formulize-masquerade-block) {
 .form-row {
   display: flex;
   flex-direction: column;
-  gap: var(--lyris-label-gap, calc(var(--fz-spacing) * 1.5));
-  margin-bottom: var(--lyris-field-gap, calc(var(--fz-spacing) * 4.5));
+  gap: var(--fz-label-gap);           /* label to field, single column */
+  margin-bottom: var(--fz-field-gap); /* between rows */
   position: relative;
 }
 
@@ -2206,17 +2245,25 @@ body:has(#formulize-masquerade-block) {
   display: inline-flex;
   align-items: center;
   gap: calc(var(--fz-spacing) * 1.5);
-  font-size: var(--lyris-label-text, var(--fz-text-xs-plus));
-  font-weight: 600;
-  color: var(--fz-color-text);
-  line-height: var(--fz-leading-snug);
+  font-size: var(--fz-label-text);
+  font-weight: var(--fz-label-weight);
+  color: var(--fz-label-color);
+  line-height: var(--fz-leading-snug); /* the two-column .col1 padding below assumes this */
+  text-wrap: pretty;
   /* label-to-control gap supplied by the .form-row gap */
+}
+
+/* A label above its field (the single-column layout) stops at a readable
+   line length. Two-column labels are held to their column instead; at the
+   mobile breakpoint those stack too, and get the same cap there. */
+.form-row:not(:has(> .col1)) > .form-label {
+  max-width: 60ch;
 }
 
 /* ---------- Required indicator ---------- */
 
 .form-label .fz-field__req {
-  color: var(--lyris-required-color, var(--fz-color-danger));
+  color: var(--lyris-required-color, var(--fz-required-color));
   font-weight: 700;
   font-size: 0.95em;
 }
@@ -2226,7 +2273,7 @@ body:has(#formulize-masquerade-block) {
 .form-label span[style*="color:red"] {
   font-weight: 700;
   font-size: 0.95em;
-  color: var(--lyris-required-color, var(--fz-color-danger)) !important;
+  color: var(--lyris-required-color, var(--fz-required-color)) !important;
 }
 
 /* ---------- Body wrapper ---------- */
@@ -2236,26 +2283,28 @@ body:has(#formulize-masquerade-block) {
   flex-direction: column;
   gap: calc(var(--fz-spacing) * 1);
   min-width: 0;
+  /* a read-only value is the body's own text; fields, options and help text
+     set their own */
+  font-family: var(--fz-field-font);
+  color: var(--fz-value-color);
 }
 
 /* ---------- Help text ---------- */
 
-.form-help-text {
-  font-size: var(--lyris-help-text, var(--fz-text-xs));
-  color: var(--fz-color-text-muted);
-  line-height: 1.45;
-  margin: 2px 0 0;
-}
-
 /* Long help text is hard to read when it runs the full width of the form on a
-   wide monitor (issue #962). On desktop it wraps at about 70 characters, within
-   the 60-80 character range that reads comfortably. On mobile the form is
-   already narrower than that, so the help text keeps the full width. Anari caps
-   its help text the same way, at 700px. */
-@media (min-width: 769px) {
-  .form-help-text {
-    max-width: 70ch;
-  }
+   wide monitor (issue #962), so it wraps at --fz-help-max-width: 65ch at
+   Default, within the 60-80 character range that reads comfortably. On mobile
+   the form is already narrower than that, so the cap has no effect there.
+   Anari caps its help text the same way, at 700px. */
+.form-help-text {
+  font-family: var(--fz-help-font);
+  font-size: var(--fz-help-text);
+  color: var(--fz-help-color);
+  line-height: var(--fz-help-leading);
+  max-width: var(--fz-help-max-width);
+  /* --fz-help-gap below the field: one step of it is the field body's own gap
+     (formulize-ui.css), so this is the rest */
+  margin: calc(var(--fz-help-gap) - var(--fz-spacing)) 0 0;
 }
 
 /* The 2FA "Forget Remembered Devices" button and its help text sit outside a
@@ -2276,7 +2325,7 @@ body:has(#formulize-masquerade-block) {
 .lyris-form--label-left .fz-field__label {
   width: var(--lyris-label-column-width, 13.75rem);
   flex: none;
-  padding-top: calc((var(--lyris-field-height) - var(--lyris-label-text) * 1.35) / 2);
+  padding-top: calc((max(var(--fz-field-height), var(--lyris-tap-min)) - var(--fz-label-text) * var(--fz-leading-snug)) / 2);
   justify-content: flex-start;
 }
 .lyris-form--label-left .fz-field__body {
@@ -2324,7 +2373,9 @@ body:has(#formulize-masquerade-block) {
   min-width: 0;
   display: flex;
   align-items: flex-start;
-  padding-top: var(--lyris-field-padding-y, calc(var(--fz-spacing) * 2)); /* align label with control's text line */
+  /* Centre the label's first line (see .form-label's line height) on the
+     field beside it, whatever the field height. */
+  padding-top: calc((max(var(--fz-field-height), var(--lyris-tap-min)) - var(--fz-label-text) * var(--fz-leading-snug)) / 2);
 }
 
 .col1 .form-label {
@@ -2334,6 +2385,27 @@ body:has(#formulize-masquerade-block) {
 .col2 {
   flex: 1 1 auto;        /* fill the remaining width (ignore inline `width: auto`) */
   min-width: 0;
+}
+
+/* ---------- Read-only values ----------
+   A field shown read-only, or a disabled one, renders its value as plain text
+   (or <nobr>/<output>) in the field's body, with no control in it. The value is
+   set at the field text size, so it matches what a control would show. The
+   :has() test is what tells such a body from one holding a control: anything a
+   person can type in, pick from or press, or a table (a subform, say). */
+.form-row > .fz-field__body:not(:has(input:not([type="hidden"]), select, textarea, button, table, iframe, [contenteditable])) {
+  font-size: var(--fz-field-text);
+  line-height: var(--fz-leading-normal);
+}
+
+/* In the two-column layout the value's first line is centred on the same line
+   a field's centre would be on, which is where the label's first line is
+   centred too (see .col1). Wide screens only: the mobile layout stacks the
+   columns, and drops both paddings. */
+@media (min-width: 769px) {
+  .form-row > .col2:not(:has(input:not([type="hidden"]), select, textarea, button, table, iframe, [contenteditable])) {
+    padding-top: calc((var(--fz-field-height) - var(--fz-field-text) * var(--fz-leading-normal)) / 2);
+  }
 }
 
 /* ---------- Radio / checkbox option groups (elementtemplate2 + others) ----------
@@ -2351,7 +2423,9 @@ body:has(#formulize-masquerade-block) {
 .lyris-form-screen .col2:has(input[type="radio"]),
 .lyris-form-screen .col2:has(input[type="checkbox"]) {
   display: block;
-  line-height: 1.6;        /* vertical rhythm between <br>-separated options */
+  /* vertical rhythm between <br>-separated options: a line of option text, plus
+     --fz-option-gap (2px at Default) */
+  line-height: calc(var(--fz-field-text) * 1.5 + var(--fz-option-gap));
 }
 
 .lyris-form-screen .col2 input[type="radio"]:where(:not([class*="fz-"])),
@@ -2363,7 +2437,7 @@ body:has(#formulize-masquerade-block) {
   height: auto;
   margin: 0 calc(var(--fz-spacing) * 2) 0 0;       /* 8px gap between control and its label */
   vertical-align: middle;
-  accent-color: var(--fz-color-accent);
+  accent-color: var(--fz-option-accent);
   cursor: pointer;
 }
 
@@ -2382,8 +2456,9 @@ body:has(#formulize-masquerade-block) {
 .lyris-form-screen .fz-field__body input[type="checkbox"]:where(:not([class*="fz-"])) + label {
   display: inline;
   font-weight: 400;
-  font-size: var(--lyris-field-text, var(--fz-text-sm));
-  color: var(--fz-color-text);
+  font-family: var(--fz-field-font);
+  font-size: var(--fz-field-text);
+  color: var(--fz-field-color);
   cursor: pointer;
   vertical-align: middle;
 }
@@ -2490,8 +2565,8 @@ body:not(.formulize-inline) .lyris-main:has(> #formulizeform .formulizeThemeForm
 body:not(.formulize-inline) .lyris-main .lyris-form-screen,
 body:not(.formulize-inline) .lyris-main #pageNavTable,
 body:not(.formulize-inline) .lyris-main .pageNavTable {
-  margin-left: calc(var(--fz-spacing) * 5);
-  margin-right: calc(var(--fz-spacing) * 5);
+  margin-left: var(--fz-page-padding);
+  margin-right: var(--fz-page-padding);
 }
 
 /* The page-nav strip keeps a zero bottom margin: when it is the sticky
@@ -2527,11 +2602,11 @@ body:not(.formulize-inline) .lyris-main .pageNavTable {
    is inset by one consistent value on all four sides and the spacing does not
    depend on the form's density tokens (which issue #113 / PR #116 changes). */
 body:not(.formulize-inline) .lyris-main .lyris-form-screen {
-  margin-bottom: calc(var(--fz-spacing) * 5);
+  margin-bottom: var(--fz-page-padding);
 }
 
 body:not(.formulize-inline) .lyris-main:not(:has(#pageNavTable, .pageNavTable)) .lyris-form-screen {
-  margin-top: calc(var(--fz-spacing) * 5);
+  margin-top: var(--fz-page-padding);
 }
 
 #multipage-controls {
@@ -2546,7 +2621,7 @@ body:not(.formulize-inline) .lyris-main:not(:has(#pageNavTable, .pageNavTable)) 
      the auto margin below opens the gap between the two clusters. */
   justify-content: flex-end;
   gap: calc(var(--fz-spacing) * 2);
-  padding: calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 6);
+  padding: var(--fz-card-padding) var(--fz-form-padding);
   /* Push the bar to the bottom of the flex-filled form column on short forms. */
   margin-top: auto;
   border-top: 1px solid var(--fz-color-border);
@@ -2591,7 +2666,7 @@ body:not(.formulize-inline) .lyris-main:not(:has(#pageNavTable, .pageNavTable)) 
 }
 
 #multipage-controls #page-selector select {
-  height: calc(var(--fz-spacing) * 8.5);
+  height: var(--fz-control-height);
 }
 
 /* ---------- Multipage page-nav tabs (#pageNavTable.pill-tabs) ----------
@@ -2694,15 +2769,16 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
   display: inline-flex;
   align-items: center;
   gap: calc(var(--fz-spacing) * 1);
-  padding: calc(var(--fz-spacing) * 1) calc(var(--fz-spacing) * 3);
-  font-size: var(--fz-text-xs-plus);
+  padding: var(--fz-tab-padding-y) var(--fz-tab-padding-x);
+  font-size: var(--fz-control-text);
   font-weight: 500;
   line-height: 1.4;
-  color: var(--fz-color-text-muted);
+  font-family: var(--fz-control-font);
+  color: var(--fz-tab-text);
   text-decoration: none;
-  border: 1px solid var(--fz-color-border);
-  border-radius: var(--fz-radius-full, 999px);
-  background: var(--fz-color-surface);
+  border: 1px solid var(--fz-tab-border);
+  border-radius: var(--fz-tab-radius);
+  background: var(--fz-tab-bg);
   transition: color var(--fz-duration-fast) var(--fz-ease-out),
               border-color var(--fz-duration-fast) var(--fz-ease-out),
               background-color var(--fz-duration-fast) var(--fz-ease-out);
@@ -2715,9 +2791,9 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
 }
 
 .pill-tabs__item--active {
-  color: var(--fz-color-on-accent);
-  background: var(--fz-color-accent);
-  border-color: var(--fz-color-accent);
+  color: var(--fz-tab-active-text);
+  background: var(--fz-tab-active-bg);
+  border-color: var(--fz-tab-active-bg);
 }
 
 /* NOTE: Formulize core (modules/formulize/templates/css/formulize.css) styles
@@ -2735,17 +2811,18 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
 .formulizeThemeForm .formulize-form-submit-button,
 .formulize-drawer__body .formulize-form-submit-button,
 .formulize-drawer__foot .formulize-form-submit-button {
-  height: calc(var(--fz-spacing) * 8.5) !important;
+  height: var(--fz-control-height) !important;
   min-width: 0 !important;
   width: auto;
-  padding: 0 calc(var(--fz-spacing) * 4);
-  font-size: var(--fz-text-xs-plus);
+  padding: 0 var(--fz-control-padding-x);
+  font-size: var(--fz-control-text);
   font-weight: 500 !important;
   line-height: 1;
-  border-radius: var(--fz-radius-md);
-  border: 1px solid var(--fz-color-border-strong);
-  background-color: var(--fz-color-surface) !important;
-  color: var(--fz-color-text) !important;
+  font-family: var(--fz-control-font);
+  border-radius: var(--fz-button-radius);
+  border: 1px solid var(--fz-button-border);
+  background-color: var(--fz-button-bg) !important;
+  color: var(--fz-button-text) !important;
   cursor: pointer;
   white-space: nowrap;
   transition: background-color var(--fz-duration-fast) var(--fz-ease-out),
@@ -2776,16 +2853,16 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
 .formulizeThemeForm .formulize-form-submit-button[name^="save"],
 .formulize-drawer__body .formulize-form-submit-button[name^="save"],
 .formulize-drawer__foot .formulize-form-submit-button[name^="save"] {
-  background-color: var(--fz-color-accent) !important;
-  color: var(--fz-color-on-accent) !important;
-  border-color: var(--fz-color-accent);
+  background-color: var(--fz-button-primary-bg) !important;
+  color: var(--fz-button-primary-text) !important;
+  border-color: var(--fz-button-primary-bg);
 }
 
 .formulizeThemeForm .formulize-form-submit-button[name^="save"]:hover,
 .formulize-drawer__body .formulize-form-submit-button[name^="save"]:hover,
 .formulize-drawer__foot .formulize-form-submit-button[name^="save"]:hover {
-  background-color: var(--fz-color-accent-hover) !important;
-  border-color: var(--fz-color-accent-hover);
+  background-color: var(--fz-button-primary-hover) !important;
+  border-color: var(--fz-button-primary-hover);
 }
 
 /* The drawer footer's sizing is the mobile #multipage-controls sizing (see the
@@ -2808,8 +2885,8 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
    `.formulizeThemeForm .formulize-form-submit-button` above (PR #127 review). */
 .formulize-drawer--wide .formulize-drawer__foot .formulize-form-submit-button {
   flex: 0 0 auto;
-  height: calc(var(--fz-spacing) * 8.5) !important;
-  padding: 0 calc(var(--fz-spacing) * 4);
+  height: var(--fz-control-height) !important;
+  padding: 0 var(--fz-control-padding-x);
 }
 
 /* On multi-page forms the bar also holds #prev ("Save and Close") and #next
@@ -2827,13 +2904,13 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
   text-shadow: none !important;
   width: auto !important;
   min-width: 0 !important;
-  height: calc(var(--fz-spacing) * 8.5) !important;
-  font-size: var(--fz-text-xs-plus) !important;
-  color: var(--fz-color-text) !important;
+  height: var(--fz-control-height) !important;
+  font-size: var(--fz-control-text) !important;
+  color: var(--fz-button-text) !important;
 }
 /* Re-assert legible on-accent text for the Save-family primary after the reset. */
 #multipage-controls .formulize-form-submit-button[name^="save"] {
-  color: var(--fz-color-on-accent) !important;
+  color: var(--fz-button-primary-text) !important;
 }
 
 /* ---------- Admin-only "edit element" link ----------
@@ -2884,7 +2961,7 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
    working. */
 .form-row > [data-lastpass-icon-root] {
   margin-inline-start: calc(var(--fz-spacing) * -6) !important;
-  margin-block-start: calc(-1 * var(--lyris-label-gap, calc(var(--fz-spacing) * 1.5))) !important;
+  margin-block-start: calc(-1 * var(--fz-label-gap)) !important;
 }
 
 /* ============================================================
@@ -2905,9 +2982,7 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
    ============================================================ */
 
 .lyris-form-screen {
-  --lyris-field-height:      var(--fz-field-height);
-  --lyris-field-padding-x:   calc(var(--fz-spacing) * 3);
-  --lyris-field-radius: var(--fz-radius-md);
+  --lyris-field-radius: var(--fz-field-radius);
 }
 
 /* ---------- File upload → drop-area look (.lyris-droparea) ----------
@@ -3114,8 +3189,8 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
 .lyris-form-screen input[type="color"] {
   -webkit-appearance: none;
   appearance: none;
-  width: var(--lyris-field-height);
-  height: var(--lyris-field-height);
+  width: max(var(--fz-field-height), var(--lyris-tap-min));
+  height: max(var(--fz-field-height), var(--lyris-tap-min));
   padding: calc(var(--fz-spacing) * 0.75);
   background: var(--fz-color-surface);
   border: 1px solid var(--fz-color-border-strong);
@@ -3210,12 +3285,12 @@ input[type="time"] { font-family: var(--fz-font-sans); }
 
 /* ---------- Multi-select Listbox (<select multiple>) → .lyris-listbox ----------
    A `<select multiple size="N">` must show N rows; the shared single-select
-   rule forces `height: var(--lyris-field-height)` which clips it to one row and hides the
+   rule forces `height: max(var(--fz-field-height), var(--lyris-tap-min))` which clips it to one row and hides the
    chevron background awkwardly. Restyle multi-selects as the design's scrollable
    listbox surface: auto height, padded rows, accent-soft selected state. */
 .lyris-form-screen select[multiple] {
   height: auto;
-  min-height: calc(var(--lyris-field-height) * 2.4);
+  min-height: calc(max(var(--fz-field-height), var(--lyris-tap-min)) * 2.4);
   max-height: 13.75rem;
   padding: calc(var(--fz-spacing) * 1);
   overflow-y: auto;
@@ -3233,7 +3308,7 @@ input[type="time"] { font-family: var(--fz-font-sans); }
 .lyris-form-screen select[multiple] option {
   padding: calc(var(--fz-spacing) * 1.75) calc(var(--fz-spacing) * 2.5);
   border-radius: var(--fz-radius-sm);
-  font-size: var(--lyris-field-text);
+  font-size: var(--fz-field-text);
   color: var(--fz-color-text);
 }
 .lyris-form-screen select[multiple] option:checked {
@@ -3258,10 +3333,10 @@ input[type="time"] { font-family: var(--fz-font-sans); }
 
 /* The autocomplete text input → Lyris field metrics and colours. */
 .lyris-form-screen input.formulize_autocomplete {
-  height: var(--lyris-field-height);
-  padding: 0 calc(var(--fz-spacing) * 9) 0 var(--lyris-field-padding-x);
+  height: max(var(--fz-field-height), var(--lyris-tap-min));
+  padding: 0 calc(var(--fz-spacing) * 9) 0 var(--fz-field-padding-x);
   font: inherit;
-  font-size: var(--lyris-field-text);
+  font-size: var(--fz-field-text);
   color: var(--fz-color-text);
   background: var(--fz-color-surface);
   border: 1px solid var(--fz-color-border-strong);
@@ -3388,11 +3463,11 @@ input[type="time"] { font-family: var(--fz-font-sans); }
    ============================================================ */
 
 @media (max-width: 768px) {
-  .lyris-form,
-  .lyris-form-screen {
-    --lyris-field-height:     max(var(--fz-field-height), 2.75rem);   /* iOS tap target: never under 44px, whatever the density */
-    --lyris-field-text:  1rem;   /* prevent iOS auto-zoom */
-    --lyris-field-gap:   calc(var(--fz-spacing) * 4);
+  /* A floor for form fields on phones (0 on wider screens, in tokens.css):
+     fields are never under 44px tall, a comfortable tap target, whatever the
+     look. */
+  :root {
+    --lyris-tap-min: 2.75rem;
   }
 
   .lyris-form-card__body {
@@ -3409,13 +3484,17 @@ input[type="time"] { font-family: var(--fz-font-sans); }
   .form-row:has(> .col1) {
     flex-direction: column;
     align-items: stretch;
-    gap: var(--lyris-label-gap, calc(var(--fz-spacing) * 1.5));
+    gap: var(--fz-label-gap);
   }
 
   .col1 {
     min-height: auto;
     width: 100% !important;
     padding-top: 0; /* no left-label top nudge when stacked */
+  }
+
+  .col1 .form-label {
+    max-width: 60ch; /* stacked above its field: same cap as single column */
   }
 
   .col2 {
@@ -3560,13 +3639,14 @@ input[type="button"]:not([class*="fz-"]):not(.formulize_button) {
   justify-content: center;
   gap: calc(var(--fz-spacing) * 1.5);
   height: var(--fz-control-height);
-  padding: 0 calc(var(--fz-spacing) * 3);
-  border-radius: var(--fz-radius-md);
-  border: 1px solid var(--fz-color-border-strong);
-  background: var(--fz-color-surface);
-  color: var(--fz-color-text);
+  padding: 0 var(--fz-control-padding-x);
+  border-radius: var(--fz-button-radius);
+  border: 1px solid var(--fz-button-border);
+  background: var(--fz-button-bg);
+  color: var(--fz-button-text);
   font: inherit;
-  font-size: var(--fz-text-xs-plus);
+  font-family: var(--fz-control-font);
+  font-size: var(--fz-control-text);
   font-weight: 500;
   line-height: 1;
   cursor: pointer;
@@ -3625,13 +3705,14 @@ input[type="button"].formulize_button {
   justify-content: center;
   gap: calc(var(--fz-spacing) * 1.5);
   height: var(--fz-control-height);
-  padding: 0 calc(var(--fz-spacing) * 3);
-  border-radius: var(--fz-radius-md);
-  border: 1px solid var(--fz-color-border-strong);
-  background: var(--fz-color-surface);
-  color: var(--fz-color-text);
+  padding: 0 var(--fz-control-padding-x);
+  border-radius: var(--fz-button-radius);
+  border: 1px solid var(--fz-button-border);
+  background: var(--fz-button-bg);
+  color: var(--fz-button-text);
   font: inherit;
-  font-size: var(--fz-text-xs-plus);
+  font-family: var(--fz-control-font);
+  font-size: var(--fz-control-text);
   font-weight: 500;
   line-height: 1;
   cursor: pointer;
@@ -4076,13 +4157,13 @@ a.google-only-login-link:focus-visible {
   gap: calc(var(--fz-spacing) * 1.5);
   height: var(--fz-control-height);
   margin: 0;
-  padding: 0 calc(var(--fz-spacing) * 3);
+  padding: 0 var(--fz-control-padding-x);
   border: 1px solid var(--fz-color-border-strong);
   border-radius: var(--fz-radius-md);
   background: var(--fz-color-surface);
   color: var(--fz-color-text);
   font-family: var(--fz-font-sans);
-  font-size: var(--fz-text-xs-plus);
+  font-size: var(--fz-control-text);
   font-weight: 500;
   line-height: 1;
   cursor: pointer;
@@ -4484,7 +4565,7 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
    Scoped to `.lyris-form-screen`, which both the drawer body and the full screen
    form/multiPage toptemplates emit, so a grid looks the same either way.
 
-   Spacing uses the static `--s-*` scale rather than `--lyris-field-gap`, so it is
+   Spacing uses the static `--s-*` scale rather than `--fz-field-gap`, so it is
    unaffected by the density change in PR #116 (field-gap 12px -> 18px). The
    width comes from the core `width: 100%` plus `width: 100%` on the controls
    below, so the last column ends flush with the right hand edge of the field
@@ -4511,7 +4592,7 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
 /* Caption, when the element shows its heading above the grid instead of in
    the label column. */
 .lyris-form-screen .formulize-grid-caption {
-  font-size: var(--lyris-label-text, 1.1rem);
+  font-size: var(--fz-label-text);
   font-weight: 600;
   color: var(--fz-color-text);
   margin-bottom: calc(var(--fz-spacing) * 2);
@@ -4532,4 +4613,144 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
 
 .applinks p {
 	padding-left: 0.5em;
+}
+
+/* ============================================================
+   Content width
+   ------------------------------------------------------------
+   --formulize-content-max-width (css/tokens.css) is how wide a page can get:
+   1200px, unless the Appearance editor's Page width sets another width, or
+   100%, full width. List and form screens keep their content to a column of
+   that width, centred in the window, with the page background either side.
+
+   The column is centred in the WINDOW, not in the space beside the sidebar, so
+   opening or closing the sidebar doesn't move it, as long as there is room for
+   the sidebar beside it. When there isn't, the column moves over only as far as
+   it must to clear the sidebar. The sidebar still pushes the page; it is never
+   an overlay. `--lyris-column-start` is how far in from the left of
+   `.lyris-main` the column starts. Centred in the window, the column starts
+   (window - max width) / 2 from the window's left, and `.lyris-main` starts
+   (window - its own width) from it, so:
+
+     max(0px, 100% - (100vw + max width) / 2)
+
+   where 100% is `.lyris-main`'s width, wherever it is used. Measured that way it
+   follows the sidebar's width as it opens and closes, so the column stays still
+   while the sidebar slides, instead of jumping and sliding back. Each screen
+   takes it, and the room to the column's right, as side padding (the column's
+   own gutters are the children's margins, as on phones). At full width both are
+   0px, and the column is `.lyris-main`.
+
+   In the column, everything is a card on the page background:
+   - a list's title bar is a card of its own, and the selection bar, while rows
+     are checked, covers it exactly: the same place, size and corners;
+   - a list's entries are in a card as tall as they are, which scrolls inside
+     itself, both ways, when there are more than fit;
+   - a form's card is as tall as its fields, and scrolls inside itself when the
+     form is longer than fits, so it never runs under the bar below it (Lyris's
+     theme.html names it as the scroll container, so saving a long form returns
+     to where you were: data-formulize-scroll-container);
+   - a list's pagination footer and a form's action bar are the same floating
+     bar, at the bottom of the window.
+
+   The site header runs the full width of the window, with its links at the
+   window's right edge: they are the site's, not the page's.
+
+   Not on phones (768px and under), where pages use the whole screen, the bars
+   run edge to edge, and a form scrolls the page; and not in the drawer or an
+   embedded screen (`.formulize-inline`). Pages outside list and form screens
+   (the home page, account pages) are left at full width.
+   ============================================================ */
+@media (min-width: 769px) {
+
+  .lyris-app {
+    --lyris-column-start: max(0px, 100% - (100vw + var(--formulize-content-max-width)) / 2);
+  }
+
+  /* the column: each screen's side padding. 100% is `.lyris-main`'s width, and
+     the max width can be 100% too, which leaves 0px either side */
+  body:not(.formulize-inline) .lyris-list-screen,
+  body:not(.formulize-inline) .lyris-main > #formulizeform > .formulizeThemeForm {
+    box-sizing: border-box;
+    padding-left: var(--lyris-column-start);
+    padding-right: max(0px, 100% - var(--lyris-column-start) - var(--formulize-content-max-width));
+  }
+
+  /* ---- a list ---- */
+
+  /* the title bar, a card of its own; the selection bar takes its place */
+  body:not(.formulize-inline) .lyris-list__titlebar,
+  body:not(.formulize-inline) .lyris-selection-bar {
+    box-sizing: border-box;
+    height: var(--fz-toolbar-height);
+    min-height: 0;
+    padding-block: 0;
+    border-radius: var(--fz-card-radius);
+  }
+
+  body:not(.formulize-inline) .lyris-list__titlebar {
+    margin: var(--fz-page-padding) var(--fz-page-padding) 0;
+    background: var(--fz-toolbar-bg);
+    border: 1px solid var(--fz-card-border);
+    box-shadow: var(--fz-shadow-sm);
+  }
+
+  body:not(.formulize-inline) .lyris-selection-bar {
+    top: var(--fz-page-padding);
+    left: calc(var(--lyris-column-start) + var(--fz-page-padding));
+    right: calc(max(0px, 100% - var(--lyris-column-start) - var(--formulize-content-max-width)) + var(--fz-page-padding));
+    border: 1px solid var(--fz-color-text);
+  }
+
+  /* the entries, in a card as tall as they are, up to the space above the footer.
+     It has no padding of its own, so the rows, their lines and the sticky column
+     headings reach its edges */
+  body:not(.formulize-inline) .lyris-list__body {
+    flex: 0 1 auto;
+    margin: var(--fz-page-padding);
+    background: var(--fz-card-bg);
+    border: 1px solid var(--fz-card-border);
+    border-radius: var(--fz-card-radius);
+    box-shadow: var(--fz-shadow-sm);
+  }
+
+  /* ---- a form ---- */
+
+  /* the form fills `.lyris-main`, and its card scrolls inside itself, so the
+     page itself never scrolls (the chain is the one under "Bottom-anchored
+     action bar", there allowed to grow past `.lyris-main`) */
+  body:not(.formulize-inline) .lyris-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform,
+  body:not(.formulize-inline) .lyris-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform > .formulizeThemeForm {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  body:not(.formulize-inline) .lyris-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform > .formulizeThemeForm > .lyris-form-screen {
+    flex: 0 1 auto;
+    min-height: 0;
+    overflow-x: hidden; /* a form never needs to; something hidden past its edge, such as a rich text editor's tooltip, mustn't make it */
+    overflow-y: auto;
+  }
+
+  /* the card's header and body keep their height, and the card scrolls */
+  body:not(.formulize-inline) .lyris-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform > .formulizeThemeForm > .lyris-form-screen > * {
+    flex-shrink: 0;
+  }
+
+  /* ---- the floating bar: a list's footer, a form's actions ----
+     Both are toolbars, as the list's title bar is: the toolbar's background and
+     side padding (the appearance editor's Toolbar part) */
+  body:not(.formulize-inline) .lyris-main #multipage-controls {
+    padding: calc(var(--fz-spacing) * 3) var(--fz-toolbar-padding-x);
+  }
+
+  body:not(.formulize-inline) .lyris-list__footer,
+  body:not(.formulize-inline) .lyris-main #multipage-controls {
+    margin: auto var(--fz-page-padding) var(--fz-page-padding);
+    background: var(--fz-toolbar-bg);
+    border: 1px solid var(--fz-card-border);
+    border-radius: var(--fz-card-radius);
+    box-shadow: var(--fz-shadow-md);
+  }
+
 }

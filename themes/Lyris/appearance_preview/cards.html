@@ -1,0 +1,36 @@
+<!--
+  Sample screen for the Appearance page's advanced editor: Formulize UI
+  cards, the way a screen template or custom code might lay out a set of
+  entries, built only from Formulize UI's public classes. See form.html for how
+  the samples work.
+-->
+<div class="lyris-app lyris-app--sidebar-closed" id="lyris-app">
+  {{header}}
+  <div class="lyris-app__body">
+    <main class="lyris-main" role="main" id="lyris-main" data-fz-part="page">
+      <div class="fz-stack fz-p-6">
+        <h1 class="lyris-list__title" data-fz-part="title">Programs this summer</h1>
+        <div class="fz-grid-list">
+          <div class="fz-card" data-fz-part="card">
+            <div class="fz-card__header"><p class="fz-card__title">Robotics camp</p><span class="fz-badge fz-badge--success">Open</span></div>
+            <p class="fz-card__subtitle">July 6 to 10 · Ages 10 to 13</p>
+            <p>Build and program a robot that can find its way through a maze.</p>
+            <div class="fz-card__footer"><button type="button" class="fz-btn fz-btn--primary" data-fz-part="button">Register</button><button type="button" class="fz-btn" data-fz-part="button">Details</button></div>
+          </div>
+          <div class="fz-card" data-fz-part="card">
+            <div class="fz-card__header"><p class="fz-card__title">Coding camp</p><span class="fz-badge fz-badge--warning">3 places left</span></div>
+            <p class="fz-card__subtitle">July 13 to 17 · Ages 9 to 12</p>
+            <p>Make a game in a week, then show it to everyone on Friday.</p>
+            <div class="fz-card__footer"><button type="button" class="fz-btn fz-btn--primary" data-fz-part="button">Register</button><button type="button" class="fz-btn" data-fz-part="button">Details</button></div>
+          </div>
+          <div class="fz-card" data-fz-part="card">
+            <div class="fz-card__header"><p class="fz-card__title">Girls in STEM club</p><span class="fz-badge">Waiting list</span></div>
+            <p class="fz-card__subtitle">Saturdays from September · Grades 6 to 8</p>
+            <p>Hands-on experiments with chemistry, circuits and code, led by women working in STEM.</p>
+            <div class="fz-card__footer"><button type="button" class="fz-btn" data-fz-part="button">Join the waiting list</button></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>

@@ -1,0 +1,87 @@
+<div id="listofentries"><form id="controls" name="controls" action="#" method="post" onsubmit="return false;">
+<div class="lyris-list-screen">
+  <div class="fz-toolbar lyris-list__titlebar" data-fz-part="toolbar">
+    <div class="fz-toolbar__start">
+      <h1 class="lyris-list__title" data-fz-part="title">Registrations</h1>
+      <div class="lyris-view-switcher">
+        <button type="button" class="fz-btn fz-btn--ghost lyris-view-switcher__toggle" data-fz-part="button" data-fz-toggle="pv-view-panel">
+          <svg class="lyris-view-switcher__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"></rect><rect x="14" y="3" width="7" height="5" rx="1"></rect><rect x="14" y="12" width="7" height="9" rx="1"></rect><rect x="3" y="16" width="7" height="5" rx="1"></rect></svg>
+          <span class="lyris-view-switcher__label">All registrations</span>
+          <svg class="lyris-view-switcher__chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+        </button>
+        <div id="pv-view-panel" class="lyris-view-switcher__panel lyris-panel">
+          <div class="lyris-pop__group">Standard views:</div>
+          <button type="button" class="lyris-pop__item" data-fz-part="menu">My registrations</button>
+          <button type="button" class="lyris-pop__item" data-fz-part="menu">My group's registrations</button>
+          <button type="button" class="lyris-pop__item lyris-pop__item--active" aria-current="true" data-fz-part="menu">All registrations</button>
+        </div>
+      </div>
+    </div>
+    <div class="fz-toolbar__end">
+      <input type="button" class="formulize_button" id="formulize_addButton" value="Add registration" data-fz-part="button">
+      <button type="button" class="fz-btn fz-btn--ghost fz-btn--icon" id="formulize_moreActionsButton" aria-label="More actions" data-fz-part="button">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle></svg>
+      </button>
+    </div>
+  </div>
+  <div class="lyris-list__body">
+    <table class="fz-table lyris-list-table lyris-list-table--cozy" style="--lyris-thead-height: 36px;">
+      <thead><tr class="lyris-header-row" data-fz-part="header">
+        <th class="lyris-cb"></th>
+        <th class="column column0" scope="col">Participant</th>
+        <th class="column column1" scope="col">Program</th>
+        <th class="column column2" scope="col">Status</th>
+        <th class="column column3" scope="col">Start date</th>
+      </tr></thead>
+      <tbody>
+        <tr class="entry-row" aria-selected="false" data-fz-part="row">
+          <td class="lyris-cb"><input type="checkbox" class="formulize_selection_checkbox"> <a href="#" class="loe-edit-entry" title="View this entry">&nbsp;</a></td>
+          <td class="column column0 odd"><div class="main-cell-div"><span>Ada Okafor</span></div></td>
+          <td class="column column1 odd"><div class="main-cell-div"><span>Summer camp: Robotics</span></div></td>
+          <td class="column column2 odd"><div class="main-cell-div"><span>Submitted</span></div></td>
+          <td class="column column3 odd"><div class="main-cell-div"><span>2026-07-06</span></div></td>
+        </tr>
+        <tr class="entry-row" aria-selected="false" data-fz-part="row">
+          <td class="lyris-cb"><input type="checkbox" class="formulize_selection_checkbox"> <a href="#" class="loe-edit-entry" title="View this entry">&nbsp;</a></td>
+          <td class="column column0 even"><div class="main-cell-div"><span>Ben Tremblay</span></div></td>
+          <td class="column column1 even"><div class="main-cell-div"><span>Girls in STEM club</span></div></td>
+          <td class="column column2 even"><div class="main-cell-div"><span>Draft</span></div></td>
+          <td class="column column3 even"><div class="main-cell-div"><span>2026-07-13</span></div></td>
+        </tr>
+        <tr class="entry-row" aria-selected="false" data-fz-part="row">
+          <td class="lyris-cb"><input type="checkbox" class="formulize_selection_checkbox"> <a href="#" class="loe-edit-entry" title="View this entry">&nbsp;</a></td>
+          <td class="column column0 odd"><div class="main-cell-div"><span>Chloé Martin</span></div></td>
+          <td class="column column1 odd"><div class="main-cell-div"><span>Summer camp: Coding</span></div></td>
+          <td class="column column2 odd"><div class="main-cell-div"><span>Approved</span></div></td>
+          <td class="column column3 odd"><div class="main-cell-div"><span>2026-07-06</span></div></td>
+        </tr>
+        <tr class="entry-row" aria-selected="false" data-fz-part="row">
+          <td class="lyris-cb"><input type="checkbox" class="formulize_selection_checkbox"> <a href="#" class="loe-edit-entry" title="View this entry">&nbsp;</a></td>
+          <td class="column column0 even"><div class="main-cell-div"><span>Dev Patel</span></div></td>
+          <td class="column column1 even"><div class="main-cell-div"><span>Summer camp: Robotics</span></div></td>
+          <td class="column column2 even"><div class="main-cell-div"><span>Submitted</span></div></td>
+          <td class="column column3 even"><div class="main-cell-div"><span>2026-08-03</span></div></td>
+        </tr>
+        <tr class="entry-row" aria-selected="false" data-fz-part="row">
+          <td class="lyris-cb"><input type="checkbox" class="formulize_selection_checkbox"> <a href="#" class="loe-edit-entry" title="View this entry">&nbsp;</a></td>
+          <td class="column column0 odd"><div class="main-cell-div"><span>Emma Roy</span></div></td>
+          <td class="column column1 odd"><div class="main-cell-div"><span>Girls in STEM club</span></div></td>
+          <td class="column column2 odd"><div class="main-cell-div"><span>Under review</span></div></td>
+          <td class="column column3 odd"><div class="main-cell-div"><span>2026-07-20</span></div></td>
+        </tr>
+        <tr class="entry-row" aria-selected="false" data-fz-part="row">
+          <td class="lyris-cb"><input type="checkbox" class="formulize_selection_checkbox"> <a href="#" class="loe-edit-entry" title="View this entry">&nbsp;</a></td>
+          <td class="column column0 even"><div class="main-cell-div"><span>Farah Haddad</span></div></td>
+          <td class="column column1 even"><div class="main-cell-div"><span>Summer camp: Coding</span></div></td>
+          <td class="column column2 even"><div class="main-cell-div"><span>Approved</span></div></td>
+          <td class="column column3 even"><div class="main-cell-div"><span>2026-07-27</span></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="lyris-list__footer" data-fz-part="toolbar">
+    <div class="lyris-list__footer-start"><span class="page-navigation-total"><span class="page-navigation-total__label">Showing entries: </span>1 to 6 of 48.</span></div>
+    <div class="lyris-list__footer-end"><div class="lyris-pagination"><div class="lyris-pagination__nav"><span class="lyris-pagination__status"><span class="lyris-pagination__status-label">Page </span>1 of 8</span><div class="lyris-pagination__pages"><span class="fz-btn fz-btn--sm lyris-pagination__page lyris-pagination__page--active" aria-current="page">1</span><button type="button" class="fz-btn fz-btn--ghost fz-btn--sm lyris-pagination__page">2</button><button type="button" class="fz-btn fz-btn--ghost fz-btn--sm lyris-pagination__page">3</button><span class="lyris-pagination__ellipsis" aria-hidden="true">…</span><button type="button" class="fz-btn fz-btn--ghost fz-btn--sm lyris-pagination__page">8</button></div></div></div></div>
+  </div>
+</div>
+</form></div>
