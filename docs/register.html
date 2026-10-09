@@ -1,0 +1,22 @@
+---
+layout: default
+permalink: register/
+title: Register
+full_width: true
+description: Register for a Formulize event.
+---
+
+{% comment %}
+  Carries the "Registration" screen from formulize.net, embedded: form 25
+  (Registrations), screen 61, so sid=61.
+{% endcomment %}
+
+<div class="band-head" style="max-width: 68ch;">
+  <h1 style="margin-top: var(--space-3);">Register for an event</h1>
+</div>
+
+<section class="band">
+  {% include embedded-form.html
+     sid="61"
+     title="Register for an event" %}
+</section>
