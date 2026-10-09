@@ -93,7 +93,7 @@ function getFormFramework($formframe, $mainform=0) {
 		$frid = intval($formframe);
 		$fid = intval($mainform);
 		$formIdentifier = $mainform;
-		if (!$frid) {
+		if (!$frid AND $formframe !== 0 AND $formframe !== "0") { // if the relationship identifier was a name, convert to the id
 			$frameIDQueryResult = q("SELECT frame_id FROM " . $xoopsDB->prefix("formulize_frameworks") . " WHERE frame_name='" . formulize_db_escape($formframe) . "'");
 			if(count($frameIDQueryResult) == 0 OR !$frid = intval($frameIDQueryResult[0]['frame_id'])) {
 				throw new Exception("Cannot identify relationship using this text '".strip_tags(htmlspecialchars($formframe))."'");
