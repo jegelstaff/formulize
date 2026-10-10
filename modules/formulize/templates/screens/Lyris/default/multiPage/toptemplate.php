@@ -33,6 +33,6 @@ print "
         }
 
         print "
-        <div class='lyris-form-card__body'>
+        <div class='lyris-form-card__body'>".($introductoryText ? "<div class='formulize-screen-intro ck-content'>$introductoryText</div>" : "")."
             <div class='lyris-form lyris-form--label-top form-container'>
 ";

@@ -41,6 +41,17 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 class formulizeTemplateScreen extends formulizeScreen {
 
+	// see formulizeScreen::screenTypeName
+	public static function screenTypeName() {
+		return defined('_AM_SCREEN_SETTINGS_KIND_TEMPLATE') ? _AM_SCREEN_SETTINGS_KIND_TEMPLATE : 'Template'; // not every language has it
+	}
+
+	// the template is the whole of the screen, so introductory text would go in it, not above it
+	public static function screenTypeHasIntroductoryText() {
+		return false;
+	}
+
+
     function __construct() {
         parent::__construct();
         $this->initVar("custom_code", XOBJ_DTYPE_TXTAREA);

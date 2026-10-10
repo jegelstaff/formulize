@@ -151,10 +151,17 @@
      `- var(--lyris-masquerade-height)` below is a no-op unless someone is masquerading. */
   --lyris-masquerade-height: 0px;
   --lyris-sidebar-width: 13.75rem;
+  /* The space between a page's contents and the edges of the main area, which
+     the page frame takes as padding (see "The page frame" in style.css). The
+     Appearance editor's Page padding; smaller on phones (see "Mobile" there). */
+  --lyris-gutter: var(--fz-page-padding);
+  /* How far in bare content has to be on a page whose frame has no gutter. Only
+     phones have such pages, and give this a value (see "Mobile" in style.css). */
+  --lyris-inset: 0px;
   /* How wide pages can get: a maximum width in pixels, or 100% for full width.
      The Page width setting (in the Appearance editor) sets another width, or
      100%, and declaring this is what has it offered for this theme. This
-     declaration is the theme's own width, the default. List and form screens are
+     declaration is the theme's own width, the default. Formulize's pages are
      a column of this width, centred in the window; see the "Content width"
      section in style.css. */
   --formulize-content-max-width: 1200px;

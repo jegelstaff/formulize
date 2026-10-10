@@ -52,6 +52,70 @@ class formulizeScreen extends FormulizeObject {
 		$this->initVar('rewriteruleAddress', XOBJ_DTYPE_TXTBOX, '', false, 255);
         $this->initVar('embedOrigins', XOBJ_DTYPE_TXTBOX, '', false, 1000);
         $this->initVar('rewriteruleElement', XOBJ_DTYPE_INT, '', true);
+        // the screen's Appearance tab: the look the screen's page is shown with ('' is the site's look),
+        // how wide the page can be ('look', as the look sets it, or 'full'), and the introductory text
+        // the default templates print above the screen's content, which is markup the administrator
+        // wrote, edited in a rich text editor or, when toptextcode is 1, as code
+        $this->initVar('look', XOBJ_DTYPE_TXTBOX, '', false, 100);
+        $this->initVar('pagewidth', XOBJ_DTYPE_TXTBOX, '', false, 10);
+        $this->initVar('toptext', XOBJ_DTYPE_TXTAREA, '', false);
+        $this->initVar('toptextcode', XOBJ_DTYPE_INT, 0, false);
+	}
+
+	/**
+	 * What this type of screen is called in the admin UI. Each type of screen overrides this, and the
+	 * types of screen there are, with their names, are read from the screen classes themselves (see
+	 * formulize_getScreenTypes), so a new type of screen is offered wherever the types are listed
+	 * without anything else being changed.
+	 *
+	 * @return string the name, for display
+	 */
+	public static function screenTypeName() {
+		return '';
+	}
+
+	/**
+	 * How wide a page this type of screen has when the site has not said: 'look', as wide as the look
+	 * applied to the screen allows, or 'full', the full width of the window. The site's own choice for
+	 * each type is in the Default Screen Widths setting (see formulize_defaultPageWidthForScreenType).
+	 *
+	 * @return string 'look' or 'full'
+	 */
+	public static function defaultPageWidth() {
+		return 'look';
+	}
+
+	/**
+	 * Whether this type of screen is offered where the types of screen are listed. A type that is kept
+	 * only for screens that already exist says no unless the site has some.
+	 *
+	 * @return boolean
+	 */
+	public static function screenTypeOffered() {
+		return true;
+	}
+
+	/**
+	 * Whether this type of screen has introductory text: whether its templates have a place to print
+	 * it. A type whose template is the whole of the screen, such as a template screen, has nowhere to
+	 * put it but the template itself.
+	 *
+	 * @return boolean
+	 */
+	public static function screenTypeHasIntroductoryText() {
+		return true;
+	}
+
+	/**
+	 * The introductory text, ready to print above the screen's content: the markup the administrator
+	 * wrote, translated if it has translations in it. It is not purified, because only an administrator
+	 * who can edit the screen's templates can write it, and it is as much the screen's markup as they are.
+	 *
+	 * @return string the markup, or '' when there is none
+	 */
+	public function introductoryText() {
+		$text = trim((string) $this->getVar('toptext', 'n'));
+		return $text === '' ? '' : trans($text);
 	}
 
     static function normalize_values($key, $value) {
@@ -387,10 +451,17 @@ class formulizeScreenHandler {
         foreach ($screen->cleanVars as $k => $v) {
             ${$k} = $v;
         }
+        // A new screen that hasn't been given a page width starts with the one the site sets for its type of
+        // screen, whoever is making it: the admin UI, an AI tool, or a form making its default screens.
+        if ($pagewidth !== 'full' AND $pagewidth !== 'look') {
+            $pagewidth = $sid ? 'look' : formulize_defaultPageWidthForScreenType($type);
+            $screen->assignVar('pagewidth', $pagewidth);
+        }
+        $toptextcode = $toptextcode ? 1 : 0;
         if (!$sid) {
-            $sql = sprintf("INSERT INTO %s (screen_handle, title, fid, frid, type, useToken, anonNeedsPasscode, theme, rewriteruleAddress, rewriteruleElement, embedOrigins) VALUES (%s, %s, %u, %d, %s, %u, %u, %s, %s, %u, %s)", $this->db->prefix('formulize_screen'), $this->db->quoteString($screen_handle), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode, $this->db->quoteString($theme), $this->db->quoteString($rewriteruleAddress), $rewriteruleElement, $this->db->quoteString($embedOrigins));
+            $sql = sprintf("INSERT INTO %s (screen_handle, title, fid, frid, type, useToken, anonNeedsPasscode, theme, rewriteruleAddress, rewriteruleElement, embedOrigins, look, pagewidth, toptext, toptextcode) VALUES (%s, %s, %u, %d, %s, %u, %u, %s, %s, %u, %s, %s, %s, %s, %u)", $this->db->prefix('formulize_screen'), $this->db->quoteString($screen_handle), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode, $this->db->quoteString($theme), $this->db->quoteString($rewriteruleAddress), $rewriteruleElement, $this->db->quoteString($embedOrigins), $this->db->quoteString($look), $this->db->quoteString($pagewidth), $this->db->quoteString($toptext), $toptextcode);
         } else {
-            $sql = sprintf("UPDATE %s SET screen_handle = %s, title = %s, fid = %u, frid = %d, type = %s, useToken = %u, anonNeedsPasscode = %u, theme = %s, rewriteruleAddress = %s, rewriteruleElement = %u, embedOrigins = %s WHERE sid = %u", $this->db->prefix('formulize_screen'), $this->db->quoteString($screen_handle), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode, $this->db->quoteString($theme), $this->db->quoteString($rewriteruleAddress), $rewriteruleElement, $this->db->quoteString($embedOrigins), $sid);
+            $sql = sprintf("UPDATE %s SET screen_handle = %s, title = %s, fid = %u, frid = %d, type = %s, useToken = %u, anonNeedsPasscode = %u, theme = %s, rewriteruleAddress = %s, rewriteruleElement = %u, embedOrigins = %s, look = %s, pagewidth = %s, toptext = %s, toptextcode = %u WHERE sid = %u", $this->db->prefix('formulize_screen'), $this->db->quoteString($screen_handle), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $anonNeedsPasscode, $this->db->quoteString($theme), $this->db->quoteString($rewriteruleAddress), $rewriteruleElement, $this->db->quoteString($embedOrigins), $this->db->quoteString($look), $this->db->quoteString($pagewidth), $this->db->quoteString($toptext), $toptextcode, $sid);
         }
 				if($force){
 					$result = $this->db->queryF($sql);
@@ -547,6 +618,76 @@ class formulizeScreenHandler {
 		return $references;
 	}
 
+}
+
+/**
+ * The types of screen there are, read from the screen classes: each type is a file in class/ named for
+ * the type and ending in Screen.php (listOfEntriesScreen.php is the listOfEntries type), whose class
+ * says what the type is called and how it starts out (see formulizeScreen::screenTypeName and the
+ * methods after it). So a new type of screen is listed wherever the types are, with nothing else to
+ * change. A type that is not offered on this site (formulizeScreen::screenTypeOffered) is left out.
+ *
+ * @return array type => array('name' => the type's name, 'pagewidth' => its default page width,
+ *               'introtext' => whether it has introductory text), in the order the types are usually
+ *               listed in: lists and forms first, then the rest by name
+ */
+function formulize_getScreenTypes() {
+	static $types = null;
+	if ($types !== null) {
+		return $types;
+	}
+	include_once file_exists($languageFile) ? $languageFile : XOOPS_ROOT_PATH . '/modules/formulize/language/english/admin.php';
+	$types = array();
+	foreach (glob(XOOPS_ROOT_PATH . '/modules/formulize/class/*Screen.php') ?: array() as $file) {
+		$type = substr(basename($file), 0, -strlen('Screen.php'));
+		// the base class's file is screen.php, which a case-insensitive file system matches too
+		if ($type === '' OR !preg_match('/^[a-z][A-Za-z0-9]*$/', $type)) {
+			continue;
+		}
+		include_once $file;
+		$class = 'formulize' . ucfirst($type) . 'Screen';
+		if (!class_exists($class) OR !is_subclass_of($class, 'formulizeScreen') OR !$class::screenTypeOffered()) {
+			continue;
+		}
+		$types[$type] = array(
+			'name' => $class::screenTypeName() ? $class::screenTypeName() : $type,
+			'pagewidth' => $class::defaultPageWidth() == 'full' ? 'full' : 'look',
+			'introtext' => $class::screenTypeHasIntroductoryText() ? true : false,
+		);
+	}
+	$first = array_flip(array('listOfEntries', 'multiPage', 'form'));
+	uksort($types, function ($a, $b) use ($first, $types) {
+		$aFirst = isset($first[$a]) ? $first[$a] : 99;
+		$bFirst = isset($first[$b]) ? $first[$b] : 99;
+		return $aFirst != $bFirst ? $aFirst - $bFirst : strcasecmp($types[$a]['name'], $types[$b]['name']);
+	});
+	return $types;
+}
+
+/**
+ * The page width a new screen of a type starts with: the site's choice for the type, in the Default
+ * Screen Widths setting, or if the site hasn't made one, the type's own default.
+ *
+ * @param string $type the type of screen, eg: 'listOfEntries'
+ * @return string 'look' (as wide as the look allows) or 'full' (the full width of the window)
+ */
+function formulize_defaultPageWidthForScreenType($type) {
+	static $siteDefaults = null;
+	if ($siteDefaults === null) {
+		$config_handler = xoops_gethandler('config');
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+		$siteDefaults = (isset($formulizeConfig['formulizeScreenWidthDefaults']) AND is_array($formulizeConfig['formulizeScreenWidthDefaults']))
+			? $formulizeConfig['formulizeScreenWidthDefaults']
+			: array();
+	}
+	if (isset($siteDefaults[$type]) AND ($siteDefaults[$type] === 'full' OR $siteDefaults[$type] === 'look')) {
+		return $siteDefaults[$type];
+	}
+	$class = 'formulize' . ucfirst((string) $type) . 'Screen';
+	if (preg_match('/^[a-z][A-Za-z0-9]*$/', (string) $type) AND file_exists(XOOPS_ROOT_PATH . '/modules/formulize/class/' . $type . 'Screen.php')) {
+		include_once XOOPS_ROOT_PATH . '/modules/formulize/class/' . $type . 'Screen.php';
+	}
+	return (class_exists($class) AND is_subclass_of($class, 'formulizeScreen') AND $class::defaultPageWidth() == 'full') ? 'full' : 'look';
 }
 
 function getDefaultTemplate($templateName, $type, $theme="") {

@@ -41,6 +41,12 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 class formulizeCalendarScreen extends formulizeScreen {
 
+	// see formulizeScreen::screenTypeName
+	public static function screenTypeName() {
+		return defined('_AM_SCREEN_SETTINGS_KIND_CALENDAR') ? _AM_SCREEN_SETTINGS_KIND_CALENDAR : 'Calendar'; // not every language has it
+	}
+
+
 	function __construct() {
 		parent::__construct();
         $this->initVar("caltype", XOBJ_DTYPE_TXTBOX, NULL, false, 100);
@@ -200,6 +206,11 @@ class formulizeCalendarScreenHandler extends formulizeScreenHandler {
         ob_start();
         eval(substr(file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/templates/screens/'.$theme.'/'.$screen->getVar('sid').'/bottomtemplate.php'), 5));
         $bottomtemplate = ob_get_clean();
+        // the screen's introductory text, from its Appearance tab, above whatever the top template has: a
+        // calendar has no default templates for it to be a variable in
+        if ($introductoryText = $screen->introductoryText()) {
+            $toptemplate = "<div class='formulize-screen-intro ck-content'>$introductoryText</div>\n" . $toptemplate;
+        }
 
         $GLOBALS['formulize_screenCurrentlyRendering'] = $screen;
 				$viewHandles = $dateHandles; // need some way of specifying which handle to use, currently missing from the UI!

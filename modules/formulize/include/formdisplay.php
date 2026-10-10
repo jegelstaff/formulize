@@ -146,7 +146,9 @@ class formulize_themeForm extends XoopsThemeForm {
 
         // top template
         $template = $this->getTemplate('toptemplate');
-        $ret .= $this->processTemplate($template, array('formTitle'=>$this->getTitle()));
+        // the screen's introductory text, from its Appearance tab, which the default top template prints
+        $introductoryText = (is_object($this->screen) AND method_exists($this->screen, 'introductoryText')) ? $this->screen->introductoryText() : '';
+        $ret .= $this->processTemplate($template, array('formTitle'=>$this->getTitle(), 'introductoryText'=>$introductoryText));
 
         // render elements
 		$hidden = '';

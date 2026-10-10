@@ -10,8 +10,14 @@ if($downloadCalculationsURL AND $downloadCalculationsText) {
 // in fixed pixel width mode, the column cells wrap their content so the pixel widths hold instead of growing to fit it (see the Lyris style.css)
 $fixedColumnsClass = !empty($fixedColumnWidths) ? ' lyris-list-table--fixed-columns' : '';
 
+// Introductory text, from the screen's Appearance tab: the administrator's own markup. It is in the entries'
+// scrolling area, above the table, so it is there in full when the list opens and scrolls out of the way as
+// the reader moves down to the entries, when the column headings reach the top and stay there
+$introductoryTextMarkup = $introductoryText ? "<div class='formulize-screen-intro lyris-list__intro ck-content'>$introductoryText</div>" : "";
+
 print "
 <div class='lyris-list__body' id='formulize-list-of-entries'>
+	$introductoryTextMarkup
 	<table class='fz-table lyris-list-table lyris-list-table--cozy$fixedColumnsClass'>
 	<thead>";
 

@@ -136,6 +136,29 @@ after a few seconds (not while the pointer is on it). A note about a problem sta
 **Reset changes** throws away what you haven't saved. To take back one of a look's own changes, use
 **Reset** beside the setting.
 
+## One screen with its own look or width
+
+Each screen has an **Appearance** tab, between **Settings** and **Relationships**. On it:
+
+- **Look** shows the screen with a look other than the site's: Compact for a long list, say. *Site
+  default* follows the site, whichever look is applied to it. The link under it opens this editor on
+  the look, to change it; a change to a look changes every screen that uses it.
+- **Page width** lets the screen use the full width of the window on a large screen, whatever the
+  look's page width is. A list with many columns usually needs this.
+- **Introductory text** is shown above the screen: instructions, or anything people should read
+  first. It is all shown, however long it is. In a list it sits above the entries, and scrolls away
+  as people scroll down to them, leaving the column headings at the top. Write it in the rich text
+  editor, or choose **Edit as code** to write the HTML yourself. If you have changed the screen's
+  templates, it shows only where one of your templates has `$introductoryText`. Template screens
+  don't have it, since their template is the whole screen.
+- **Templates**, on the sub-tab beside the options, are the screen's templates. Template screens keep
+  their templates on a tab of their own.
+
+The page width a new screen starts with is in **Admin > Appearance > Settings**, under **Default
+Screen Widths**: one choice for each type of screen. Lists start at the full width of the window, and
+the other types at the look's page width, until you change it. Screens you have already made keep the
+width they have.
+
 ## For theme authors
 
 A theme is edited here when it provides sample screens for the preview. Advanced mode, and Compact and

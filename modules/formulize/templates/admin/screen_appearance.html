@@ -1,0 +1,219 @@
+<{* form elements must be named with their object name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a property of an object to update *}>
+<{* securitytoken should be part of the form *}>
+<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we are inserting/updating on *}>
+
+<{* The Options form is the tab's own. On a screen whose templates are kept here too, it is the first of two
+   sub-tabs, and the Templates tab is the second, with its own form, which the Save button sends as well. *}>
+<{capture name=appearanceOptions}>
+<form id="form-<{$number}>" class="formulize-admin-form">
+<{$securitytoken}>
+<input type="hidden" name="formulize_admin_handler" value="screen_appearance">
+<input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
+<input type="hidden" name="aid" value="<{$content.aid}>">
+
+<div class="panel-content content">
+
+  <fieldset>
+    <legend><{$smarty.const._AM_SCREEN_APPEARANCE_LOOK_LEGEND}></legend>
+
+    <{if $content.looks|@count > 1}>
+    <div class="form-item">
+      <label for="screens-look"><{$smarty.const._AM_SCREEN_APPEARANCE_LOOK}></label>
+      <select id="screens-look" name="screens-look" data-site-look="<{$content.siteLook}>">
+        <option value=""<{if $content.look eq ''}> selected="selected"<{/if}>><{$content.siteLookLabel}></option>
+        <{foreach from=$content.looks key=lookKey item=lookName}>
+        <option value="<{$lookKey}>"<{if $content.look eq $lookKey}> selected="selected"<{/if}>><{$lookName}></option>
+        <{/foreach}>
+      </select>
+      <div class="description">
+        <{$smarty.const._AM_SCREEN_APPEARANCE_LOOK_DESC}>
+        <{if $content.editorUrl}>
+        <br><a id="formulize-screen-look-edit" href="<{$content.editorUrl}>" data-editor-url="<{$content.editorUrl}>" target="_blank"><{$smarty.const._AM_SCREEN_APPEARANCE_LOOK_EDIT}></a>
+        <{/if}>
+      </div>
+    </div>
+    <{/if}>
+
+    <{if $content.usesWidth}>
+    <{if $content.looks|@count > 1}><br><{/if}>
+    <div class="form-item">
+      <label for="screens-pagewidth-look"><{$smarty.const._AM_SCREEN_APPEARANCE_WIDTH}></label>
+      <div class="form-radios">
+        <label for="screens-pagewidth-look"><input type="radio" id="screens-pagewidth-look" name="screens-pagewidth" value="look"<{if $content.pagewidth eq 'look'}> checked="checked"<{/if}>/><{$smarty.const._AM_SCREEN_APPEARANCE_WIDTH_LOOK}></label>
+      </div>
+      <div class="form-radios">
+        <label for="screens-pagewidth-full"><input type="radio" id="screens-pagewidth-full" name="screens-pagewidth" value="full"<{if $content.pagewidth eq 'full'}> checked="checked"<{/if}>/><{$smarty.const._AM_SCREEN_APPEARANCE_WIDTH_FULL}></label>
+      </div>
+      <div class="description"><{$smarty.const._AM_SCREEN_APPEARANCE_WIDTH_DESC}></div>
+    </div>
+    <{/if}>
+
+    <{if $content.looks|@count <= 1 AND !$content.usesWidth}>
+    <p><{$smarty.const._AM_SCREEN_APPEARANCE_NOTHEME}></p>
+    <{/if}>
+  </fieldset>
+
+  <{if $content.hasIntroText}>
+  <fieldset>
+    <legend><{$smarty.const._AM_SCREEN_APPEARANCE_INTRO}></legend>
+    <div class="form-item">
+      <div class="description"><{$smarty.const._AM_SCREEN_APPEARANCE_INTRO_DESC}></div>
+      <p><button type="button" id="formulize-screen-intro-toggle"
+        data-to-code="<{$smarty.const._AM_SCREEN_APPEARANCE_INTRO_CODE}>"
+        data-to-rich="<{$smarty.const._AM_SCREEN_APPEARANCE_INTRO_RICH}>"
+        data-confirm="<{$smarty.const._AM_SCREEN_APPEARANCE_INTRO_TORICH_CONFIRM}>"></button></p>
+      <input type="hidden" id="screens-toptextcode" name="screens-toptextcode" value="<{$content.toptextcode}>">
+      <textarea id="screens-toptext" name="screens-toptext" rows="10" style="width: 100%;"><{$content.toptext}></textarea>
+    </div>
+  </fieldset>
+  <{/if}>
+
+</div>
+</form>
+<{/capture}>
+
+<{if $content.templatesTemplate}>
+<div id="formulize-screen-appearance-tabs">
+  <ul>
+    <li><a href="#formulize-screen-appearance-options"><{$smarty.const._AM_SCREEN_APPEARANCE_OPTIONS}></a></li>
+    <li><a href="#formulize-screen-appearance-templates"><{$content.templatesName}></a></li>
+  </ul>
+  <div id="formulize-screen-appearance-options">
+<{$smarty.capture.appearanceOptions}>
+  </div>
+  <div id="formulize-screen-appearance-templates">
+<{include file=$content.templatesTemplate content=$content.templates number="templates"}>
+  </div>
+</div>
+<{else}>
+<{$smarty.capture.appearanceOptions}>
+<{/if}>
+
+<{if $content.hasIntroText}>
+<script type="text/javascript" src="<{$xoops_url}>/editors/CKEditor/ckeditor.js"></script>
+<{/if}>
+<script type="text/javascript">
+// Written for jQuery 1.4.2, which the admin UI runs on: bind, not on; attr, not data.
+$(document).ready(function() {
+
+  // The sub-tabs, when the screen's templates are here. The one that is open goes in the form the admin UI
+  // posts when it reloads the page (choosing a theme or seeding templates does that), so the page comes back
+  // to it. The code boxes in a sub-tab are drawn while it is hidden, and need refreshing when it is shown.
+  var appearanceTabs = $('#formulize-screen-appearance-tabs');
+  if (appearanceTabs.length) {
+    var subtabField = $('<input type="hidden" name="appearance_subtab" value="<{$content.subtab}>">');
+    $('form[name=scrollposition]').append(subtabField);
+    appearanceTabs.tabs({
+      selected: <{$content.subtab}>,
+      select: function(event, ui) { subtabField.val(ui.index); },
+      show: refreshCodemirrors
+    });
+  }
+
+  // The link to the appearance editor opens it on the look this screen is set to, or the site's when it
+  // follows the site's.
+  var lookSelect = $('#screens-look');
+  var lookEditLink = $('#formulize-screen-look-edit');
+  function updateLookEditLink() {
+    var key = lookSelect.val() ? lookSelect.val() : lookSelect.attr('data-site-look');
+    lookEditLink.attr('href', lookEditLink.attr('data-editor-url') + '&look=' + encodeURIComponent(key));
+  }
+  if (lookSelect.length && lookEditLink.length) {
+    lookSelect.bind('change', updateLookEditLink);
+    updateLookEditLink();
+  }
+
+  // The introductory text is edited in the rich text editor, or as code. The editor keeps only the
+  // markup it understands, so text saved as code opens as code, and is never put through the editor
+  // unless someone asks for that. Whichever is in use keeps the textarea up to date, since the textarea
+  // is what the Save button sends.
+  var textarea = document.getElementById('screens-toptext');
+  if (!textarea) {
+    return;
+  }
+  var modeField = $('#screens-toptextcode');
+  var toggle = $('#formulize-screen-intro-toggle');
+  var richEditor = null;
+  var codeEditor = null;
+
+  function markUnsaved() {
+    setDisplay('savewarning', 'block');
+  }
+
+  function startCode() {
+    codeEditor = CodeMirror.fromTextArea(textarea, {
+      lineNumbers: true,
+      matchBrackets: true,
+      mode: "text/html",
+      indentUnit: 2,
+      indentWithTabs: true,
+      enterMode: "keep",
+      tabMode: "shift",
+      lineWrapping: true,
+      onChange: function(instance) {
+        markUnsaved();
+        instance.save();
+      }
+    });
+    codemirrors.push(codeEditor); // refreshed with the admin UI's others, when the tab is shown
+    codeEditor.refresh();
+    modeField.val(1);
+    toggle.text(toggle.attr('data-to-rich'));
+  }
+
+  function startRich() {
+    if (typeof ClassicEditor === 'undefined') { // the editor's script didn't load
+      startCode();
+      return;
+    }
+    modeField.val(0);
+    toggle.text(toggle.attr('data-to-code'));
+    ClassicEditor.create(textarea).then(function(editor) {
+      richEditor = editor;
+      editor.model.document.on('change:data', function() {
+        textarea.value = editor.getData();
+        markUnsaved();
+      });
+    }).catch(function(error) {
+      console.error(error);
+      startCode();
+    });
+  }
+
+  toggle.bind('click', function() {
+    if (richEditor) {
+      var editor = richEditor;
+      var markup = editor.getData();
+      richEditor = null;
+      editor.destroy().then(function() {
+        textarea.value = markup;
+        startCode();
+        markUnsaved();
+      });
+    } else if (codeEditor) {
+      if (!confirm(toggle.attr('data-confirm'))) {
+        return false;
+      }
+      codeEditor.save();
+      codeEditor.toTextArea();
+      for (var i = 0; i < codemirrors.length; i++) {
+        if (codemirrors[i] === codeEditor) {
+          codemirrors.splice(i, 1);
+          break;
+        }
+      }
+      codeEditor = null;
+      startRich();
+      markUnsaved();
+    }
+    return false;
+  });
+
+  if (modeField.val() == 1) {
+    startCode();
+  } else {
+    startRich();
+  }
+});
+</script>

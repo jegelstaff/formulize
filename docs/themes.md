@@ -128,40 +128,42 @@ The Anari theme has both files, if you want an example.
 
 Every page should have the same space between its content and the edges of the window, your header
 and your menu, whatever is on the page. Formulize has several types of screen (list of entries, form,
-multi-page form, template, calendar and map), and more will be added. None of them should look
-different from the others in this, and neither should the pages that are not screens, such as an
-application's menu page.
+template, calendar and map), and more will be added. None of them should look different from the
+others in this, and neither should the pages that are not screens, such as an application's menu
+page.
 
-Formulize doesn't supply that space, and there is no wrapper common to every type of screen to put it
-on: each type prints its own markup. So make the space the default for your main content area, and
-don't make it depend on the type of screen. A rule that lists the types it applies to leaves out the
-next type that is added.
+Formulize doesn't supply that space, and no type of screen brings its own. Your theme does, in one
+place: put a wrapper around all the content in your `theme.html`, and give it padding.
 
-The simplest way is a wrapper with padding around all the content in your `theme.html`, as Anari has.
-Then there is nothing more to do.
+```html
+<main class="my-main">
+  <div class="my-page">
+    <{$icms_contents}>
+  </div>
+</main>
+```
 
-Your own screen templates may build the space into the screen instead. Lyris's list and form templates
-do: a list's title bar, entries and footer each carry the space themselves, because the title bar and
-footer stay put while the entries scroll. Padding on the main content area as well would double it, so
-a page drawn with those templates gets none there. Every page still ends up with the same space; what
-differs is where it comes from.
+```css
+.my-page {
+  padding: var(--fz-page-padding);
+}
+```
 
-Decide that by which templates drew the screen, not by the screen's type. A list screen is a list
-screen whichever templates draw it, and one with custom templates written for another theme has no
-space built in, so it needs the default like any other page. The way to tell is the markup your
-templates print. Lyris gives its main content area `--fz-page-padding` (the Appearance editor's Page
-padding) unless it finds the class its own list or form template prints (`lyris-list-screen` or
-`lyris-form-screen`) inside the wrapper Formulize puts around a list or a form (`#listofentries` or
-`#formulizeform`), directly inside the main area. See the rules after "Main content" in
-`themes/Lyris/css/style.css`.
+`--fz-page-padding` is the Appearance editor's Page padding, so the space follows that setting. Then
+there is nothing more to do: a new type of screen gets the space without any change to your theme,
+and a screen inside another (a template screen's code can call `displayForm` or `displayEntries`) is
+not inset twice, because neither has space of its own.
 
-A check like this has one gap. A custom template that keeps your wrapper class but replaces the parts
-inside it gets no space from either place. Such a template should drop the class, or keep the parts.
+Don't put the space on the parts of a screen instead, in your screen templates. A screen drawn with
+other templates would have none, and a screen inside another would have it twice.
 
-A screen can have another inside it: a template screen's code can call `displayForm` or
-`displayEntries`, or a screen handler's `render` method. If your list and form screens take space at
-the edges of the page when they are the page, take it off them when they are inside something else, or
-they are inset twice.
+On a phone you may want less space, or want your list and form screens to use the whole width of the
+screen. Make the padding smaller there, and take it off only for the pages you mean. Lyris does both:
+see "The page frame" and "Mobile" in `themes/Lyris/css/style.css`. Content should never touch the
+edge of the screen, so anything that reaches the edge needs padding of its own inside it.
+
+If your embed stylesheet or your `embed-content.html` (above) is used, leave the space out there:
+the page your screen is embedded in supplies it.
 
 ## 6. Work with the Appearance editor (optional)
 
@@ -232,12 +234,18 @@ a width in pixels, or `100%` to start at full width. Lyris declares 1200 pixels:
 }
 ```
 
-Then use it as the maximum width of your content. Lyris makes list and form screens a column of that
-width, centred in the window, with each part of the screen a card in it: a list's title bar, its
-entries, a form, and a floating bar at the bottom for a list's pagination or a form's buttons. The
-column is centred in the window rather than beside the sidebar, so opening the sidebar doesn't move
-it unless it has to; the header's links stay at the window's edge; and phones are left full width. See
-the "Content width" section at the end of `themes/Lyris/css/style.css`.
+Then use it as the maximum width of your content, on the wrapper that has the space at the page's
+edges (section 5), so that every type of screen is kept to it and none needs anything of its own.
+Lyris makes its pages a column of that width, centred in the window. In it, each part of a list or a
+form is a card: a list's title bar, its entries, a form, and a floating bar at the bottom for a
+list's pagination or a form's buttons. The column is centred in the window rather than beside the
+sidebar, so opening the sidebar doesn't move it unless it has to; the header's links stay at the
+window's edge; and phones are left full width. See the "Content width" section at the end of
+`themes/Lyris/css/style.css`.
+
+A screen can be set to use the full width whatever the site's setting is, on the screen's Appearance
+tab. Formulize sets `--formulize-content-max-width` to `100%` on that screen's page, so a theme that
+uses the property as above has nothing more to do.
 
 ## Checking your theme
 

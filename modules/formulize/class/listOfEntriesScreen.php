@@ -40,6 +40,17 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 class formulizeListOfEntriesScreen extends formulizeScreen {
 
+	// see formulizeScreen::screenTypeName
+	public static function screenTypeName() {
+		return defined('_AM_SCREEN_SETTINGS_KIND_LIST') ? _AM_SCREEN_SETTINGS_KIND_LIST : 'List'; // not every language has it
+	}
+
+	// a list usually needs the room for its columns, so it has the full width of the window unless the site says otherwise
+	public static function defaultPageWidth() {
+		return 'full';
+	}
+
+
     // the pixel width used in 'fixed' columnwidthmode when no width has been set
     const DEFAULT_FIXED_COLUMN_WIDTH = 250;
     function __construct() {

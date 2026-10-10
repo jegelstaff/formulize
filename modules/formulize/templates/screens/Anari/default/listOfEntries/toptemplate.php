@@ -50,3 +50,8 @@ $submitButton
         </div>
 
 ";
+
+// Introductory text, from the screen's Appearance tab: the administrator's own markup, above the entries
+if ($introductoryText) {
+    print "<div class='formulize-screen-intro ck-content'>$introductoryText</div>\n";
+}

@@ -218,8 +218,9 @@ function formulize_uiCatalog() {
                 'notes' => array(
                     'The templates of any type of screen: list and form screens, template screens, and the rest.',
                     'Derived values whose value is HTML, and Full Width Content and Captioned Content elements (under Text for display).',
+                    'A screen\'s introductory text, on its Appearance tab. Choose Edit as code there: the rich text editor keeps its own formatting, not classes.',
                     'A theme\'s own templates and stylesheets.',
-                    'The theme puts the same space around every page, whatever type of screen is on it. So nothing you write for a screen needs space of its own at the edges of the page: start at the edge of what you are given.',
+                    'The theme puts the same space around every page, whatever type of screen is on it, and keeps the page to the site\'s page width. So nothing you write for a screen needs space of its own at the edges of the page, or a width to keep to: start at the edge of what you are given.',
                     'In Lyris the classes match the rest of the interface. In older themes, such as Anari, they use that theme\'s colours and fonts but may not match its other styles.',
                     'AI tools connected to Formulize through MCP can read this whole reference: it is the `formulize_ui` topic of the `get_documentation` tool, which is available to users who can write custom code.',
                 ),
@@ -492,6 +493,9 @@ HTML
                 'id' => 'container',
                 'name' => 'Container',
                 'summary' => 'Centres content at a comfortable maximum width, with space at the sides.',
+                'notes' => array(
+                    'A screen doesn\'t need one to keep to the page: the theme already gives every page its space at the edges and its width. Use a container for something that should be narrower than the page it is on, such as text to read (`fz-container--narrow`). It adds space at its own sides, so what is in it sits a little further in than the rest of the page.',
+                ),
                 'classes' => array(
                     'fz-container' => 'At most 72rem wide, centred.',
                     'fz-container--narrow' => 'At most 42rem: for forms and reading.',
@@ -1342,6 +1346,9 @@ CODE
                 'id' => 'recipe-form-intro',
                 'name' => 'An introduction to a form',
                 'summary' => 'Instructions at the top of a form, set apart from the fields. Put the HTML in a Full Width Content element, under Text for display.',
+                'notes' => array(
+                    'For instructions above a whole screen, of any type, put the same HTML in the screen\'s introductory text, on its Appearance tab, edited as code. Nothing has to be added to the form, and a list, a map or a calendar can have one too.',
+                ),
                 'example' => <<<'HTML'
 <div class="fz-callout">
   <p class="fz-callout__title">Before you start</p>
@@ -1355,7 +1362,7 @@ HTML
                 'summary' => 'A template screen that sums up a form\'s entries, with a count for each status in a row of cards. The template screen\'s code gathers the numbers; its template lays them out.',
                 'notes' => array(
                     'In the template, `<{$name}>` prints a variable the code set. The values are prepared in the code, escaped, so the template only arranges them.',
-                    'The theme puts the usual space around the edges of the page, so the template needs none of its own there. `fz-container` keeps the dashboard to a comfortable width and centres it; leave it out and the dashboard uses the full width.',
+                    'The theme puts the usual space around the edges of the page, and keeps the page to the site\'s page width, so the template needs neither: it starts at the edge of what it is given, and lines up with the list and form screens beside it. No `fz-container` is needed.',
                 ),
                 'example' => <<<'HTML'
 <div class="fz-stack fz-gap-6">
@@ -1393,7 +1400,7 @@ CODE
                     array(
                         'label' => 'Template screen template',
                         'code' => <<<'CODE'
-<div class="fz-container fz-stack fz-gap-6">
+<div class="fz-stack fz-gap-6">
   <div class="fz-toolbar">
     <div class="fz-toolbar__start"><h2 class="fz-text-xl fz-font-semibold">Applications</h2></div>
   </div>

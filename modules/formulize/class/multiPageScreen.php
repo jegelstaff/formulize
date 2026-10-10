@@ -40,6 +40,12 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 class formulizeMultiPageScreen extends formulizeScreen {
 
+	// see formulizeScreen::screenTypeName
+	public static function screenTypeName() {
+		return defined('_AM_SCREEN_SETTINGS_KIND_FORM') ? _AM_SCREEN_SETTINGS_KIND_FORM : 'Form'; // not every language has it
+	}
+
+
 	function __construct() {
 		parent::__construct();
 		$this->initVar("introtext", XOBJ_DTYPE_TXTAREA);

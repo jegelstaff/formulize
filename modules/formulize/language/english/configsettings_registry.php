@@ -72,6 +72,9 @@ define('_AM_CFG_SEC_AVAILABILITY', 'Availability');
 
 // --- Section headings: Appearance > Settings ---
 define('_AM_CFG_SEC_APPEARANCE', 'Appearance');
+define('_AM_CFG_SEC_SCREENWIDTHS', 'Default Screen Widths');
+define('_AM_CFG_SCREENWIDTH_LOOK', 'Defined by the active Look');
+define('_AM_CFG_SCREENWIDTH_FULL', 'Use full screen width');
 
 // --- Section headings: Settings > Advanced ---
 define('_AM_CFG_SEC_PUBLIC_API', 'Public API');

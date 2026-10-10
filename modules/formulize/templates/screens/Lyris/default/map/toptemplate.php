@@ -2,6 +2,11 @@
 
 print "<h1>$title</h1>";
 
+// Introductory text, from the screen's Appearance tab: the administrator's own markup, under the heading
+if ($introductoryText) {
+	print "<div class='formulize-screen-intro ck-content'>$introductoryText</div>";
+}
+
 // If there are filters, display them above the map
 if (!empty($filters)) {
 

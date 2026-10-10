@@ -34,11 +34,13 @@
 		  <label for="screens-type"><{$smarty.const._AM_SCREEN_SETTINGS_KIND}></label>
 
 	    <select id="screens-type" size="1" name="screens-type"<{if $content.sid neq 'new'}> disabled<{/if}>>
-		    <option value="listOfEntries"<{if $content.type eq 'listOfEntries'}> selected="selected"<{/if}>><{$smarty.const._AM_SCREEN_SETTINGS_KIND_LIST}></option>
-		    <option value="multiPage"<{if $content.type eq 'multiPage'}> selected="selected"<{/if}>><{$smarty.const._AM_SCREEN_SETTINGS_KIND_FORM}></option>
-          <option value="template"<{if $content.type eq 'template'}> selected="selected"<{/if}>><{$smarty.const._AM_SCREEN_SETTINGS_KIND_TEMPLATE}></option>
-          <option value="calendar"<{if $content.type eq 'calendar'}> selected="selected"<{/if}>><{$smarty.const._AM_SCREEN_SETTINGS_KIND_CALENDAR}></option>
-          <option value="map"<{if $content.type eq 'map'}> selected="selected"<{/if}>><{$smarty.const._AM_SCREEN_SETTINGS_KIND_MAP}></option>
+		    <{* the types of screen there are, read from the screen classes (formulize_getScreenTypes). A legacy form screen is
+		        only listed on one, since new forms are made as multi-page screens *}>
+		    <{foreach from=$content.screenTypes key=screenType item=screenTypeInfo}>
+		    <{if $screenType neq 'form' OR $content.type eq 'form'}>
+		    <option value="<{$screenType}>"<{if $content.type eq $screenType}> selected="selected"<{/if}>><{$screenTypeInfo.name}></option>
+		    <{/if}>
+		    <{/foreach}>
 	    </select>
 			<{if $content.sid neq 'new'}>
 				<input type="hidden" name="screens-type" value="<{$content.type}>">
