@@ -9,7 +9,7 @@ title: What Formulize Expects From a Theme
 # What Formulize expects from a theme
 
 A Formulize theme is an ordinary ImpressCMS theme, and most of it is yours to design however you
-like. There are three things Formulize looks for. Get these right and forms, lists and maps behave
+like. There are a few things Formulize looks for. Get these right and forms, lists and maps behave
 correctly in your theme; miss them and those things quietly stop working rather than raising an
 error.
 
@@ -124,7 +124,37 @@ Two optional files let you adjust how your theme looks when embedded:
 
 The Anari theme has both files, if you want an example.
 
-## 5. Work with the Appearance editor (optional)
+## 5. Give every page the same space at its edges
+
+Every page should have the same space between its content and the edges of the window, your header
+and your menu, whatever is on the page. Formulize has several types of screen (list of entries, form,
+multi-page form, template, calendar and map), and more will be added. None of them should look
+different from the others in this, and neither should the pages that are not screens, such as an
+application's menu page.
+
+Formulize doesn't supply that space, and there is no wrapper common to every type of screen to put it
+on: each type prints its own markup. So make the space the default for your main content area, and
+don't make it depend on the type of screen. A rule that lists the types it applies to leaves out the
+next type that is added.
+
+The simplest way is a wrapper with padding around all the content in your `theme.html`, as Anari has.
+Then there is nothing more to do.
+
+If some of your own screens run edge to edge and manage their own space, as Lyris's list and form
+screens do, make those the exception to the default, and tell them by the markup your templates give
+them, not by the screen's type. A list or form screen can have custom templates that don't use your
+markup (templates written for another theme, for example), and it needs the default space like any
+other page. Lyris gives its main content area `--fz-page-padding` (the Appearance editor's Page
+padding), unless the page itself is one of Lyris's list or form screens: `#listofentries` or
+`#formulizeform` directly inside the main area, with Lyris's own list or form markup in it. See the
+rules after "Main content" in `themes/Lyris/css/style.css`.
+
+A screen can have another inside it: a template screen's code can call `displayForm` or
+`displayEntries`, or a screen handler's `render` method. If your list and form screens take space at
+the edges of the page when they are the page, take it off them when they are inside something else, or
+they are inset twice.
+
+## 6. Work with the Appearance editor (optional)
 
 The [Appearance editor](/documentation/appearance_editor/) edits a theme's appearance on a preview of
 sample screens the theme provides (below): a theme without them can't be edited there. In simple
@@ -176,7 +206,7 @@ Lyris's samples, in `themes/Lyris/appearance_preview/`, are a complete example. 
 mode only, such as Anari (`themes/Anari/appearance_preview/`), only needs to mark its logo, as the
 `logo` part.
 
-## 6. Offer the Page width setting (optional)
+## 7. Offer the Page width setting (optional)
 
 The Page width setting, in the Appearance editor's site-wide settings, keeps
 pages to a maximum width on a wide screen, or lets them use the full width of the window. It sets
@@ -205,3 +235,8 @@ the "Content width" section at the end of `themes/Lyris/css/style.css`.
 Open a long form in your theme, scroll down, and save it. You should be returned to where you were
 rather than to the top of the page. If you are not, the theme is either not firing
 `formulize_pageShown` or scrolling an element Formulize could not find.
+
+Open a screen of each type you have, and an application's menu page. On every one, the content should
+have the same space around it, not sit against the edge of the window or your header. If you have a
+template screen with a form or a list inside it, check that the form or list lines up with the rest of
+that page, not further in.

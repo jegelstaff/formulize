@@ -216,9 +216,10 @@ function formulize_uiCatalog() {
                 'name' => 'Where you can use it',
                 'summary' => 'Anywhere Formulize outputs your HTML, in any theme.',
                 'notes' => array(
-                    'List screen and form screen templates, and template screens.',
+                    'The templates of any type of screen: list and form screens, template screens, and the rest.',
                     'Derived values whose value is HTML, and Full Width Content and Captioned Content elements (under Text for display).',
                     'A theme\'s own templates and stylesheets.',
+                    'The theme puts the same space around every page, whatever type of screen is on it. So nothing you write for a screen needs space of its own at the edges of the page: start at the edge of what you are given.',
                     'In Lyris the classes match the rest of the interface. In older themes, such as Anari, they use that theme\'s colours and fonts but may not match its other styles.',
                     'AI tools connected to Formulize through MCP can read this whole reference: it is the `formulize_ui` topic of the `get_documentation` tool, which is available to users who can write custom code.',
                 ),
@@ -1354,7 +1355,7 @@ HTML
                 'summary' => 'A template screen that sums up a form\'s entries, with a count for each status in a row of cards. The template screen\'s code gathers the numbers; its template lays them out.',
                 'notes' => array(
                     'In the template, `<{$name}>` prints a variable the code set. The values are prepared in the code, escaped, so the template only arranges them.',
-                    '`fz-container` centres the dashboard and gives it space at the sides, since a template screen has only what its template gives it.',
+                    'The theme puts the usual space around the edges of the page, so the template needs none of its own there. `fz-container` keeps the dashboard to a comfortable width and centres it; leave it out and the dashboard uses the full width.',
                 ),
                 'example' => <<<'HTML'
 <div class="fz-stack fz-gap-6">
@@ -1392,7 +1393,7 @@ CODE
                     array(
                         'label' => 'Template screen template',
                         'code' => <<<'CODE'
-<div class="fz-container fz-py-6 fz-stack fz-gap-6">
+<div class="fz-container fz-stack fz-gap-6">
   <div class="fz-toolbar">
     <div class="fz-toolbar__start"><h2 class="fz-text-xl fz-font-semibold">Applications</h2></div>
   </div>
