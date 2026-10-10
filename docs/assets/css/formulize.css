@@ -3515,6 +3515,51 @@ sup.fn { color: var(--color-accent-600); font-weight: 700; }
 .formulize-ui-nobreak,
 .formulize-ui-name > span { white-space: nowrap; }
 .formulize-ui-reference :where(p, li) > code { overflow-wrap: anywhere; }
+/* An example as it looks: a frame holding a page of its own, with Formulize UI's
+   stylesheet, above the example's code. The layout's script sets each frame's
+   height to what is in it; without the script it is this tall, and scrolls. */
+.formulize-ui-example-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
+}
+/* The themes the examples can be shown in: on every example, so the switch is
+   beside whichever one is being read. The pressed one is the theme showing. */
+.formulize-ui-theme-switch { display: inline-flex; gap: 4px; }
+.formulize-ui-theme-switch[hidden] { display: none; }
+.formulize-ui-theme-switch button {
+  padding: 2px var(--space-2);
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  line-height: 1.6;
+  letter-spacing: var(--tracking);
+  color: var(--color-neutral-700);
+  background: var(--color-neutral-200);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.formulize-ui-theme-switch button:hover { background: var(--color-accent-100); color: var(--color-accent-800); }
+.formulize-ui-theme-switch button[aria-pressed="true"] {
+  color: #ffffff;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+.formulize-ui-preview {
+  margin: 0 0 var(--space-2);
+  border: 1px dashed color-mix(in srgb, var(--color-text) 30%, transparent);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.formulize-ui-preview iframe {
+  display: block;
+  width: 100%;
+  height: 12rem;
+  border: 0;
+}
 .formulize-ui-pager {
   display: flex;
   flex-wrap: wrap;
