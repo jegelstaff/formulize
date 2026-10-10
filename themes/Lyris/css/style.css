@@ -244,15 +244,20 @@ body:not(#formulize):not(.formulize-screen) .lyris-main {
    pages that are not screens, such as an application's menu page. A screen type
    needs nothing of its own to get it, and nothing here names one.
 
-   The one exception is a page that IS one of Lyris's own list or form screens.
-   Those run edge to edge and manage their own insets (see "List screen" and the
-   form screen sections below), so `.lyris-main` leaves them to it. They are told
-   by their markup, not by the screen's type:
+   Every page gets the same gutter. What differs is where it comes from. A list
+   or form screen drawn with Lyris's templates already has it: the title bar,
+   the entries and the footer of a list, and the card and action bar of a form,
+   each carry the gutter themselves, because the layout pins some of them and
+   scrolls others (see "List screen" and the form screen sections below). Padding
+   on `.lyris-main` as well would double it, so those pages get none here.
+
+   Which templates drew the screen is told from the markup they printed, at the
+   top of the page, since nothing else says:
    - `.lyris-main > #listofentries` with a `.lyris-list-screen` in it;
    - `.lyris-main > #formulizeform` with a `.lyris-form-screen` in it.
-   A list or form screen whose templates don't use that markup (custom templates
-   written for another theme, typically) is therefore not an exception, and gets
-   the gutter like any other page.
+   It is not told from the screen's type. A list or form screen drawn with other
+   templates (custom ones written for another theme, typically) is the same type
+   of screen, has no gutter of its own, and gets it here like any other page.
 
    Not in the drawer or an inline frame (`.formulize-inline`), where whatever is
    around the content supplies the space. */

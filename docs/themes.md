@@ -140,14 +140,23 @@ next type that is added.
 The simplest way is a wrapper with padding around all the content in your `theme.html`, as Anari has.
 Then there is nothing more to do.
 
-If some of your own screens run edge to edge and manage their own space, as Lyris's list and form
-screens do, make those the exception to the default, and tell them by the markup your templates give
-them, not by the screen's type. A list or form screen can have custom templates that don't use your
-markup (templates written for another theme, for example), and it needs the default space like any
-other page. Lyris gives its main content area `--fz-page-padding` (the Appearance editor's Page
-padding), unless the page itself is one of Lyris's list or form screens: `#listofentries` or
-`#formulizeform` directly inside the main area, with Lyris's own list or form markup in it. See the
-rules after "Main content" in `themes/Lyris/css/style.css`.
+Your own screen templates may build the space into the screen instead. Lyris's list and form templates
+do: a list's title bar, entries and footer each carry the space themselves, because the title bar and
+footer stay put while the entries scroll. Padding on the main content area as well would double it, so
+a page drawn with those templates gets none there. Every page still ends up with the same space; what
+differs is where it comes from.
+
+Decide that by which templates drew the screen, not by the screen's type. A list screen is a list
+screen whichever templates draw it, and one with custom templates written for another theme has no
+space built in, so it needs the default like any other page. The way to tell is the markup your
+templates print. Lyris gives its main content area `--fz-page-padding` (the Appearance editor's Page
+padding) unless it finds the class its own list or form template prints (`lyris-list-screen` or
+`lyris-form-screen`) inside the wrapper Formulize puts around a list or a form (`#listofentries` or
+`#formulizeform`), directly inside the main area. See the rules after "Main content" in
+`themes/Lyris/css/style.css`.
+
+A check like this has one gap. A custom template that keeps your wrapper class but replaces the parts
+inside it gets no space from either place. Such a template should drop the class, or keep the parts.
 
 A screen can have another inside it: a template screen's code can call `displayForm` or
 `displayEntries`, or a screen handler's `render` method. If your list and form screens take space at
