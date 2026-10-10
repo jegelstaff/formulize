@@ -239,44 +239,78 @@ body:not(#formulize):not(.formulize-screen) .lyris-main {
   padding: var(--fz-page-padding) var(--fz-page-padding) 0;
 }
 
-/* Only the Lyris list and form screens manage their own insets, though. Everything
-   else a Formulize page can put in `.lyris-main` arrives with none, and was left
-   butting against the header and the sidebar by the exclusion above:
-   - a template screen, whose output is wrapped in `.formulize-template-screen-contents`
-     and nothing else;
-   - a list screen with custom templates that don't use the `.lyris-list-screen`
-     markup (templates written for another theme, typically);
-   - module pages that are not screens at all, such as the application menu page.
+/* On Formulize pages the gutter is the rule too, whatever is on the page: every
+   type of screen, the ones there are and the ones still to come, and the module
+   pages that are not screens, such as an application's menu page. A screen type
+   needs nothing of its own to get it, and nothing here names one.
 
-   A template screen takes the gutter on its own wrapper, because it can have a
-   form inside it (its code can call displayForm, or a form screen handler's
-   render method), and the page must not lose its gutter when it does. The rest
-   take the gutter on `.lyris-main`, when there is no Lyris list or form screen in it.
+   The one exception is a page that IS one of Lyris's own list or form screens.
+   Those run edge to edge and manage their own insets (see "List screen" and the
+   form screen sections below), so `.lyris-main` leaves them to it. They are told
+   by their markup, not by the screen's type:
+   - `.lyris-main > #listofentries` with a `.lyris-list-screen` in it;
+   - `.lyris-main > #formulizeform` with a `.lyris-form-screen` in it.
+   A list or form screen whose templates don't use that markup (custom templates
+   written for another theme, typically) is therefore not an exception, and gets
+   the gutter like any other page.
 
    Not in the drawer or an inline frame (`.formulize-inline`), where whatever is
    around the content supplies the space. */
-body:not(.formulize-inline) .lyris-main > .formulize-template-screen-contents,
-body:not(.formulize-inline):is(#formulize, .formulize-screen) .lyris-main:not(:has(.lyris-list-screen, .lyris-form-screen, > .formulize-template-screen-contents)) {
-  box-sizing: border-box;
+body:not(.formulize-inline):is(#formulize, .formulize-screen) .lyris-main:not(:has(> #listofentries .lyris-list-screen, > #formulizeform .lyris-form-screen)) {
   padding: var(--fz-page-padding);
 }
 
-/* A form inside a template screen is part of that page's content, not the page:
-   the wrapper's gutter is already around it, so the form, its page tabs and its
+/* A Lyris form that is inside something else on the page, not the page itself, is
+   part of that page's content: a template screen's code can call displayForm or
+   a form screen handler's render method, and other screen types may do the same.
+   The page's gutter is already around it, so the form, its page tabs and its
    action bar give up the page-level insets they take as a screen of their own
    (the side margins, and the top margin of a form with no tabs above it), or
-   they would be inset twice. The selectors repeat the ones that set those
-   margins, further down, with the wrapper added, so they outweigh them. */
-body:not(.formulize-inline) .lyris-main > .formulize-template-screen-contents .lyris-form-screen,
-body:not(.formulize-inline) .lyris-main > .formulize-template-screen-contents #pageNavTable,
-body:not(.formulize-inline) .lyris-main > .formulize-template-screen-contents .pageNavTable,
-body:not(.formulize-inline) .lyris-main > .formulize-template-screen-contents #multipage-controls {
+   they would be inset twice. "Inside something else" is: under a child of
+   `.lyris-main` other than the page-level form wrapper, `#formulizeform`. */
+body:not(.formulize-inline) .lyris-main > :not(#formulizeform) .lyris-form-screen,
+body:not(.formulize-inline) .lyris-main > :not(#formulizeform) #pageNavTable,
+body:not(.formulize-inline) .lyris-main > :not(#formulizeform) .pageNavTable,
+body:not(.formulize-inline) .lyris-main > :not(#formulizeform) #multipage-controls {
   margin-left: 0;
   margin-right: 0;
 }
 
-body:not(.formulize-inline) .lyris-main:not(:has(#pageNavTable, .pageNavTable)) > .formulize-template-screen-contents .lyris-form-screen {
+body:not(.formulize-inline) .lyris-main:not(:has(#pageNavTable, .pageNavTable)) > :not(#formulizeform) .lyris-form-screen {
   margin-top: 0;
+}
+
+/* The same goes for a Lyris list inside something else on the page (a template
+   screen's code can call displayEntries, or a list screen handler's render
+   method): under a child of `.lyris-main` other than the page-level list
+   wrapper, `#listofentries`. It keeps to the width it is given, not the page's
+   centred column, and its title bar, entries and footer keep the space between
+   them but not the space at the page's edges. It needs no height of its own:
+   with no fixed-height ancestor it is as tall as its entries, and the page scrolls. */
+body:not(.formulize-inline) .lyris-main > :not(#listofentries) .lyris-list-screen {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+body:not(.formulize-inline) .lyris-main > :not(#listofentries) .lyris-list__titlebar,
+body:not(.formulize-inline) .lyris-main > :not(#listofentries) .lyris-list__body,
+body:not(.formulize-inline) .lyris-main > :not(#listofentries) .lyris-list__footer {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+body:not(.formulize-inline) .lyris-main > :not(#listofentries) .lyris-list__titlebar {
+  margin-top: 0;
+}
+
+body:not(.formulize-inline) .lyris-main > :not(#listofentries) .lyris-list__footer {
+  margin-bottom: 0;
+}
+
+body:not(.formulize-inline) .lyris-main > :not(#listofentries) .lyris-selection-bar {
+  top: 0;
+  left: 0;
+  right: 0;
 }
 
 /* Inline / drawer-iframe mode — header and sidebar suppressed via theme.html.
