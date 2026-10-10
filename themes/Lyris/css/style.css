@@ -2673,6 +2673,13 @@ body:not(.formulize-inline) .lyris-main:not(:has(#pageNavTable, .pageNavTable)) 
   box-shadow: 0 -1px 0 var(--fz-color-border), var(--fz-shadow-sm);
 }
 
+/* A form with every button turned off (they can all be set to {NOBUTTON}, and the
+   form can supply its own buttons as elements) still gets the bar, with nothing
+   in it. Without this it shows as an empty floating strip under the form. */
+#multipage-controls:not(:has(*)) {
+  display: none;
+}
+
 /* Page meta inside the action bar: "Page X of Y" indicator and the jump-to
    selector read as muted meta, not competing with the buttons. They are emitted
    first, and whichever of them comes last takes the auto right margin so it
