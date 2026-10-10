@@ -1214,14 +1214,16 @@
    (display: contents) and the labels, bars and figures line up in columns. */
 .fz-bar-list {
   display: grid;
-  grid-template-columns: max-content minmax(0, 1fr) max-content;
+  /* a label wraps rather than take more than half the width, so on a phone a
+     long one leaves room for its bar */
+  grid-template-columns: fit-content(50%) minmax(0, 1fr) max-content;
   align-items: center;
   gap: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3);
   line-height: var(--fz-leading-normal);
 }
 /* a second figure after the first: a count and a percentage, say */
 .fz-bar-list--two-values {
-  grid-template-columns: max-content minmax(0, 1fr) max-content max-content;
+  grid-template-columns: fit-content(50%) minmax(0, 1fr) max-content max-content;
 }
 .fz-bar-list__row {
   --fz-tone: var(--fz-color-accent);
@@ -1258,6 +1260,32 @@
   white-space: nowrap;
 }
 
+/* ---- Progress -----------------------------------------------------------------
+   One bar, as long as how far something has got: a score out of a total, steps
+   done, money raised against a goal. Its width is set in a style attribute.
+   The tone is the bar's colour, as it is a bar list's. For several bars side
+   by side with their labels and figures, use the bar list instead. */
+.fz-progress {
+  --fz-tone: var(--fz-color-accent);
+  box-sizing: border-box;
+  display: block;
+  height: calc(var(--fz-spacing) * 2.5);
+  border-radius: var(--fz-radius-full);
+  background: var(--fz-color-surface-3);
+  overflow: hidden;
+}
+.fz-progress--info    { --fz-tone: var(--fz-color-info); }
+.fz-progress--success { --fz-tone: var(--fz-color-success); }
+.fz-progress--warning { --fz-tone: var(--fz-color-warning); }
+.fz-progress--danger  { --fz-tone: var(--fz-color-danger); }
+.fz-progress--neutral { --fz-tone: var(--fz-color-text-subtle); }
+.fz-progress__bar {
+  display: block;
+  height: 100%;
+  border-radius: var(--fz-radius-full);
+  background: var(--fz-tone);
+}
+
 /* ---- Disclosure ---------------------------------------------------------------
    Something that opens in place to show more. On a <details>: its <summary> is
    what is clicked, and the rest is what opens. fz-disclosure--plain has no box
@@ -1282,6 +1310,60 @@
   border: 0;
   border-radius: 0;
   background: none;
+}
+
+/* ---- Tabs ---------------------------------------------------------------------
+   A row of tabs, each showing one panel of a page in place of the others. The
+   tabs are buttons in a role="tablist"; the one shown has aria-selected="true".
+   Panels are fz-tab-panel, and the ones not shown have the hidden attribute.
+   A panel is a plain box: lay out what is in it with a stack inside it, as on
+   paper the panels are shown as blocks. Switching them takes a few lines of
+   script, kept with the page. On paper the tabs go and every panel prints, one
+   after another. */
+.fz-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--fz-spacing) * 2);
+}
+.fz-tabs__tab {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--fz-spacing) * 1);
+  padding: var(--fz-tab-padding-y) var(--fz-tab-padding-x);
+  border: 1px solid var(--fz-tab-border);
+  border-radius: var(--fz-tab-radius);
+  background: var(--fz-tab-bg);
+  color: var(--fz-tab-text);
+  font: inherit;
+  font-family: var(--fz-control-font);
+  font-size: var(--fz-control-text);
+  font-weight: var(--fz-font-weight-medium);
+  line-height: var(--fz-leading-normal);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: color var(--fz-duration-fast) var(--fz-ease-out),
+              border-color var(--fz-duration-fast) var(--fz-ease-out),
+              background-color var(--fz-duration-fast) var(--fz-ease-out);
+}
+.fz-tabs__tab:hover {
+  color: var(--fz-color-text);
+  border-color: var(--fz-color-border-strong);
+  background: var(--fz-color-surface-2);
+}
+.fz-tabs__tab:focus-visible { outline: none; box-shadow: var(--fz-focus-ring); }
+.fz-tabs__tab[aria-selected="true"] {
+  color: var(--fz-tab-active-text);
+  border-color: var(--fz-tab-active-bg);
+  background: var(--fz-tab-active-bg);
+}
+@media print {
+  .fz-tabs { display: none; }
+  .fz-tab-panel[hidden] { display: block; }
+  .fz-tab-panel + .fz-tab-panel { margin-block-start: calc(var(--fz-spacing) * 8); }
 }
 
 /* ---- Embed --------------------------------------------------------------------
@@ -1387,9 +1469,9 @@
   width: 100%;
   aspect-ratio: 1;
   padding: var(--fz-spacing);
-  border: 1px solid color-mix(in srgb, var(--fz-tone) 45%, transparent);
+  border: 1px solid color-mix(in srgb, var(--fz-tone) 70%, transparent);
   border-radius: var(--fz-radius-md);
-  background: color-mix(in srgb, var(--fz-tone) 30%, var(--fz-color-surface));
+  background: color-mix(in srgb, var(--fz-tone) 50%, var(--fz-color-surface));
   color: var(--fz-color-text);
   font: inherit;
   font-weight: var(--fz-font-weight-medium);
@@ -1921,3 +2003,15 @@
   .fz-break-before-page  { break-before: page; }
   .fz-break-inside-avoid { break-inside: avoid; }
 }
+
+/* ============================================================
+   Hidden
+   ============================================================
+
+   The hidden attribute hides anything with one of these classes, even one
+   whose class gives it a display of its own: a card or a stack is a flex box,
+   which would otherwise win over the browser's own rule for hidden. Last in the
+   file, so it beats every class above it; [hidden] weighs as much as a class.
+   ============================================================ */
+
+[hidden]:where([class*="fz-"]) { display: none; }

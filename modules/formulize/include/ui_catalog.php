@@ -333,7 +333,7 @@ function formulize_uiCatalog() {
                     '--fz-sidebar-width' => 'On `fz-with-sidebar`: the width of the side. 16rem.',
                     '--fz-switcher-threshold' => 'On `fz-switcher`: the width below which its children stack. 32rem.',
                     '--fz-field-label-width' => 'On `fz-field--horizontal`: the width of the label. 12rem.',
-                    '--fz-tone' => 'On `fz-badge`, `fz-callout`, `fz-bar-list__row` or `fz-matrix__cell`: the colour, for a tone of your own when none of the tone modifiers is the right one, such as the steps of a scale. Set it in a style attribute, or in a class of your own. Set `--fz-tone-soft` with it on a badge or a callout.',
+                    '--fz-tone' => 'On `fz-badge`, `fz-callout`, `fz-bar-list__row`, `fz-progress` or `fz-matrix__cell`: the colour, for a tone of your own when none of the tone modifiers is the right one, such as the steps of a scale. Set it in a style attribute, or in a class of your own. Set `--fz-tone-soft` with it on a badge or a callout.',
                     '--fz-tone-soft' => 'On `fz-badge` or `fz-callout`: the pale tint that goes with `--fz-tone`.',
                 ),
             ),
@@ -921,6 +921,26 @@ HTML
 HTML
             ),
             array(
+                'id' => 'progress',
+                'name' => 'Progress',
+                'summary' => 'One bar, as long as how far something has got: a score out of a total, steps done, money raised against a goal.',
+                'classes' => array(
+                    'fz-progress' => 'The track. Give it `role="progressbar"` and the `aria-valuenow`, `aria-valuemin` and `aria-valuemax` it shows, or put the figure beside it in text.',
+                    'fz-progress--{info,success,warning,danger,neutral}' => 'The bar in a status colour, or grey. It is the accent colour otherwise.',
+                    'fz-progress__bar' => 'The bar. Give it its width as a percentage, in a style attribute.',
+                ),
+                'notes' => array(
+                    'For several bars side by side, each with its label and figure, use the bar list.',
+                    'For a colour that is not one of the status colours, set `--fz-tone` on the track.',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-stack fz-gap-2" style="max-width: 20rem">
+  <p><span class="fz-text-2xl fz-font-semibold fz-tabular-nums">$12,480</span> <span class="fz-text-muted">of $20,000 raised</span></p>
+  <div class="fz-progress fz-progress--success" role="progressbar" aria-valuenow="62" aria-valuemin="0" aria-valuemax="100"><span class="fz-progress__bar" style="width: 62%"></span></div>
+</div>
+HTML
+            ),
+            array(
                 'id' => 'disclosure',
                 'name' => 'Disclosure',
                 'summary' => 'Something that opens in place to show more: the detail behind a summary, a list that is usually not needed.',
@@ -945,6 +965,39 @@ HTML
     <summary>Reviews (1)</summary>
     <p class="fz-text-muted">Reviewed on September 12, 2026. No changes needed.</p>
   </details>
+</div>
+HTML
+            ),
+            array(
+                'id' => 'tabs',
+                'name' => 'Tabs',
+                'summary' => 'A row of tabs, each showing one part of a page in place of the others: the overview, the answers and the assessment of one report.',
+                'classes' => array(
+                    'fz-tabs' => 'The row of tabs. Give it `role="tablist"` and an `aria-label`.',
+                    'fz-tabs__tab' => 'One tab: a `<button type="button">` with `role="tab"`, `aria-controls` naming its panel, and `aria-selected="true"` on the one that is shown and `"false"` on the others.',
+                    'fz-tab-panel' => 'What a tab shows. Give it `role="tabpanel"` and an id, and the `hidden` attribute when its tab is not the one selected.',
+                ),
+                'notes' => array(
+                    'Switching tabs takes a few lines of script, kept with the page: when a tab is clicked, set `aria-selected` on each tab and `hidden` on each panel.',
+                    'On paper the tabs are left out and every panel prints, one after the other, so a printed copy has all of it.',
+                    'Use tabs for parts of one thing that are read separately. For a choice that filters or changes what a list shows, use buttons with `aria-pressed`, or a choice.',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-stack fz-gap-4">
+  <div class="fz-tabs" role="tablist" aria-label="Report">
+    <button type="button" class="fz-tabs__tab" role="tab" aria-controls="tab-overview" aria-selected="true">Overview</button>
+    <button type="button" class="fz-tabs__tab" role="tab" aria-controls="tab-interview" aria-selected="false">Interview</button>
+    <button type="button" class="fz-tabs__tab" role="tab" aria-controls="tab-assessment" aria-selected="false">Assessment</button>
+  </div>
+  <div class="fz-tab-panel" id="tab-overview" role="tabpanel">
+    <p>Met with the program lead on October 2. Enrolment is up on last year.</p>
+  </div>
+  <div class="fz-tab-panel" id="tab-interview" role="tabpanel" hidden>
+    <p>The answers to each interview question.</p>
+  </div>
+  <div class="fz-tab-panel" id="tab-assessment" role="tabpanel" hidden>
+    <p>The rating, and the reasons for it.</p>
+  </div>
 </div>
 HTML
             ),
