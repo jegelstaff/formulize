@@ -49,8 +49,12 @@ module Jekyll
       nil
     end
 
+    # On Windows a program's file has an extension (docker.exe), listed in PATHEXT.
     def self.command_exists?(name)
-      ENV["PATH"].to_s.split(File::PATH_SEPARATOR).any? { |dir| File.executable?(File.join(dir, name)) }
+      extensions = [""] + ENV["PATHEXT"].to_s.split(";")
+      ENV["PATH"].to_s.split(File::PATH_SEPARATOR).any? do |dir|
+        extensions.any? { |extension| File.executable?(File.join(dir, name + extension)) }
+      end
     end
 
     def self.container_running?

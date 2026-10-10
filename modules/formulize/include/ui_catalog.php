@@ -1130,6 +1130,9 @@ HTML
                     'fz-hide-on-mobile' => 'Hidden on screens narrower than 48rem (768px).',
                     'fz-show-on-mobile' => 'Hidden on screens 48rem and wider.',
                 ),
+                'notes' => array(
+                    'The `hidden` attribute hides any element that has a Formulize UI class, whatever the class is: a card, a stack or a button with `hidden` is not shown. Use it for what a script shows and hides, such as a panel that opens beside a list. The script sets and removes the attribute, and the classes stay as they are.',
+                ),
             ),
             array(
                 'id' => 'u-width',
@@ -1475,6 +1478,36 @@ button:where(:not([class*="fz-"])),
 input[type="submit"]:where(:not([class*="fz-"])) {
   min-width: 8rem;
   border-radius: 0;
+}
+CODE
+                    ),
+                ),
+            ),
+            array(
+                'id' => 'theme-print',
+                'name' => 'Printing',
+                'summary' => 'A page can be made for printing with the Print classes, which decide what of the page\'s own content is on paper. The theme does the rest: on paper it leaves out its own header and menus, and lets the content run on over as many sheets as it needs.',
+                'notes' => array(
+                    'In an `@media print` rule, hide the parts of the theme that are for getting around the site: the header, the menus, the footer.',
+                    'Anything the theme makes scroll on screen stops at its own bottom edge on paper. Give it `height: auto` and `overflow: visible` there, so it is as tall as what is in it.',
+                    'Take the space at the edges of the page off as well: the sheet\'s own margin does that on paper.',
+                    'These rules have to win over the theme\'s own layout whatever it is, so `!important` is at home in them.',
+                ),
+                'code' => array(
+                    array(
+                        'label' => 'In the theme\'s stylesheet',
+                        'code' => <<<'CODE'
+@media print {
+  .mytheme-header,
+  .mytheme-menu,
+  .mytheme-footer {
+    display: none !important;
+  }
+  .mytheme-content {
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
 }
 CODE
                     ),
