@@ -1312,6 +1312,28 @@ textarea {
   box-sizing: border-box;
 }
 
+/* Dropdown filters in 'natural' width columns (issue #985). A natural column can be
+   much narrower than a dropdown filter's options (a short heading over short values),
+   and a dropdown squeezed to that width cuts off the option that's selected. So in
+   this mode a cell holding a dropdown is put back into the column-width calculation
+   (instead of width:0, see the filter row comment above), and the dropdown takes its
+   own width, which is enough to show its longest option, but at least the cell width.
+   max-width caps it at 15rem (about 30 characters), so a very long option can't push
+   the column out without limit. Past that the selected text is cut off with an
+   ellipsis. This deliberately widens the column when the filters are shown. Text
+   boxes keep the width:0 behaviour, and so do the 'full' and 'fixed' modes, where
+   the column width comes from the container or the configured pixel width. */
+.lyris-list-table--natural-columns .lyris-search-row .main-cell-div:has(select) {
+  width: auto;
+}
+
+.lyris-list-table--natural-columns .lyris-search-row select {
+  width: auto;
+  min-width: 100%;
+  max-width: 15rem;
+  text-overflow: ellipsis;
+}
+
 /* Checkbox / controls column: one fixed width, its padding plus room for its
    checkbox and edit icon (about 50.5px, depending on the font's space width;
    52px leaves a little over), so it is the same with or without rows. On a
