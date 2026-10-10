@@ -4877,6 +4877,7 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
   .lyris-app,
   .lyris-app__body,
   .lyris-main,
+  .lyris-page,
   #listofentries,
   #listofentries #controls,
   .lyris-list-screen,
@@ -4891,6 +4892,13 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
   .lyris-main {
     padding: 0 !important;
     background: none;
+  }
+
+  /* the page frame has the gutter and the page-width column on screen (see "The
+     page frame"), and is at least as tall as the window: none of that on paper */
+  .lyris-page {
+    min-height: 0 !important;
+    padding: 0 !important;
   }
 
 }
