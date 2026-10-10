@@ -289,6 +289,8 @@ function formulize_uiCatalog() {
                     '--fz-leading-tight' => '1.25',
                     '--fz-leading-snug' => '1.375',
                     '--fz-leading-normal' => '1.5',
+                    '--fz-tracking-wide' => '0.025em: slightly wider letter spacing.',
+                    '--fz-tracking-wider' => '0.05em: wider letter spacing, for small capitals.',
                 ),
             ),
             array(
@@ -331,6 +333,8 @@ function formulize_uiCatalog() {
                     '--fz-sidebar-width' => 'On `fz-with-sidebar`: the width of the side. 16rem.',
                     '--fz-switcher-threshold' => 'On `fz-switcher`: the width below which its children stack. 32rem.',
                     '--fz-field-label-width' => 'On `fz-field--horizontal`: the width of the label. 12rem.',
+                    '--fz-tone' => 'On `fz-badge`, `fz-callout`, `fz-bar-list__row`, `fz-progress` or `fz-matrix__cell`: the colour, for a tone of your own when none of the tone modifiers is the right one, such as the steps of a scale. Set it in a style attribute, or in a class of your own. Set `--fz-tone-soft` with it on a badge or a callout.',
+                    '--fz-tone-soft' => 'On `fz-badge` or `fz-callout`: the pale tint that goes with `--fz-tone`.',
                 ),
             ),
             array(
@@ -342,8 +346,6 @@ function formulize_uiCatalog() {
                     '--fz-gap-x' => 'Set by the `fz-gap-x-`* utilities.',
                     '--fz-gap-y' => 'Set by the `fz-gap-y-`* utilities.',
                     '--fz-auto-grid-max' => 'Set by the --max-N modifiers of `fz-auto-grid` and `fz-grid-list`.',
-                    '--fz-tone' => 'Set by the tone modifiers of `fz-badge` and `fz-callout`.',
-                    '--fz-tone-soft' => 'Set by the tone modifiers of `fz-badge` and `fz-callout`.',
                 ),
             ),
             array(
@@ -748,6 +750,7 @@ HTML
                 'classes' => array(
                     'fz-table' => 'On a `<table>`.',
                     'fz-table--striped' => 'Every other row shaded.',
+                    'fz-table--multiline' => 'For rows whose cells hold more than a line, such as a title over a description: the cells line up at the top, with space above and below.',
                 ),
                 'notes' => array(
                     'For a table wider than its container, wrap it in an element with `fz-overflow-x-auto`.',
@@ -772,9 +775,11 @@ HTML
                     'fz-badge' => 'A neutral badge, with a grey dot.',
                     'fz-badge--{accent,info,success,warning,danger}' => 'A coloured tint and dot.',
                     'fz-badge--plain' => 'No dot.',
+                    'fz-badge--icon' => 'A circle, for an icon on its own. Every one is the same size, so a column of them lines up. No dot.',
                 ),
                 'notes' => array(
                     'The colour is in the tint and the dot; the text stays the normal text colour, so it is readable in every theme. The word should say what the status is: don\'t rely on the colour alone.',
+                    'An icon on its own says nothing to someone who cannot see it, or does not know it. Give an icon badge a `title`, and the same words inside it in an element with `fz-sr-only`.',
                 ),
                 'example' => <<<'HTML'
 <div class="fz-cluster">
@@ -784,6 +789,7 @@ HTML
   <span class="fz-badge fz-badge--success">Approved</span>
   <span class="fz-badge fz-badge--danger">Rejected</span>
   <span class="fz-badge fz-badge--accent fz-badge--plain">12 new</span>
+  <span class="fz-badge fz-badge--icon fz-badge--warning" title="Featured">&#9733;<span class="fz-sr-only">Featured</span></span>
 </div>
 HTML
             ),
@@ -832,6 +838,9 @@ HTML
                     'fz-dl' => 'Terms and values side by side.',
                     'fz-dl--stacked' => 'Each term above its value.',
                 ),
+                'notes' => array(
+                    'In a derived value, put the class on a `<div>` around the `<dl>` instead: `<div class="fz-dl"><dl>...</dl></div>`. A derived value\'s HTML is filtered before it is shown, and the filter takes the class off a `<dl>` but leaves it on a `<div>`.',
+                ),
                 'example' => <<<'HTML'
 <div class="fz-switcher">
   <dl class="fz-dl">
@@ -860,6 +869,228 @@ HTML
   <p>They will appear here once students start submitting them.</p>
   <button type="button" class="fz-btn fz-btn--primary">Share the form</button>
 </div>
+HTML
+            ),
+            array(
+                'id' => 'bar-list',
+                'name' => 'Bar list',
+                'summary' => 'A few things compared by a number: for each, a label, a bar as long as its share, and the figure. For a breakdown by status or by category on a dashboard.',
+                'classes' => array(
+                    'fz-bar-list' => 'The list.',
+                    'fz-bar-list--two-values' => 'Each row has two figures after its bar, such as a count and a percentage.',
+                    'fz-bar-list__row' => 'One thing: its label, its bar and its figure. The bar is the accent colour.',
+                    'fz-bar-list__row--{info,success,warning,danger,neutral}' => 'The bar in a status colour, or grey.',
+                    'fz-bar-list__label' => 'What the row is. It can hold an icon or a badge as well as text.',
+                    'fz-bar-list__track' => 'The full width a bar could be.',
+                    'fz-bar-list__bar' => 'The bar. Give it its width as a percentage, in a style attribute.',
+                    'fz-bar-list__value' => 'A figure.',
+                ),
+                'notes' => array(
+                    'It is made of `<div>` and `<span>` elements, in this order in each row: label, track with the bar in it, then the figures.',
+                    'The figure says what the bar shows, so the bar itself needs no text of its own.',
+                    'For a colour that is not one of the status colours, such as the steps of a scale, set `--fz-tone` on the row.',
+                    'Work out the percentages in your code. The bar\'s width is the share of the whole; use the share of the largest one instead to compare the rows with each other.',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-bar-list fz-bar-list--two-values">
+  <div class="fz-bar-list__row fz-bar-list__row--success">
+    <span class="fz-bar-list__label">Approved</span>
+    <span class="fz-bar-list__track"><span class="fz-bar-list__bar" style="width: 52%"></span></span>
+    <span class="fz-bar-list__value">31</span>
+    <span class="fz-bar-list__value fz-font-normal fz-text-muted">52%</span>
+  </div>
+  <div class="fz-bar-list__row fz-bar-list__row--warning">
+    <span class="fz-bar-list__label">Under review</span>
+    <span class="fz-bar-list__track"><span class="fz-bar-list__bar" style="width: 20%"></span></span>
+    <span class="fz-bar-list__value">12</span>
+    <span class="fz-bar-list__value fz-font-normal fz-text-muted">20%</span>
+  </div>
+  <div class="fz-bar-list__row fz-bar-list__row--danger">
+    <span class="fz-bar-list__label">Rejected</span>
+    <span class="fz-bar-list__track"><span class="fz-bar-list__bar" style="width: 8%"></span></span>
+    <span class="fz-bar-list__value">5</span>
+    <span class="fz-bar-list__value fz-font-normal fz-text-muted">8%</span>
+  </div>
+  <div class="fz-bar-list__row fz-bar-list__row--neutral">
+    <span class="fz-bar-list__label">Draft</span>
+    <span class="fz-bar-list__track"><span class="fz-bar-list__bar" style="width: 20%"></span></span>
+    <span class="fz-bar-list__value">12</span>
+    <span class="fz-bar-list__value fz-font-normal fz-text-muted">20%</span>
+  </div>
+</div>
+HTML
+            ),
+            array(
+                'id' => 'progress',
+                'name' => 'Progress',
+                'summary' => 'One bar, as long as how far something has got: a score out of a total, steps done, money raised against a goal.',
+                'classes' => array(
+                    'fz-progress' => 'The track. Give it `role="progressbar"` and the `aria-valuenow`, `aria-valuemin` and `aria-valuemax` it shows, or put the figure beside it in text.',
+                    'fz-progress--{info,success,warning,danger,neutral}' => 'The bar in a status colour, or grey. It is the accent colour otherwise.',
+                    'fz-progress__bar' => 'The bar. Give it its width as a percentage, in a style attribute.',
+                ),
+                'notes' => array(
+                    'For several bars side by side, each with its label and figure, use the bar list.',
+                    'For a colour that is not one of the status colours, set `--fz-tone` on the track.',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-stack fz-gap-2" style="max-width: 20rem">
+  <p><span class="fz-text-2xl fz-font-semibold fz-tabular-nums">$12,480</span> <span class="fz-text-muted">of $20,000 raised</span></p>
+  <div class="fz-progress fz-progress--success" role="progressbar" aria-valuenow="62" aria-valuemin="0" aria-valuemax="100"><span class="fz-progress__bar" style="width: 62%"></span></div>
+</div>
+HTML
+            ),
+            array(
+                'id' => 'disclosure',
+                'name' => 'Disclosure',
+                'summary' => 'Something that opens in place to show more: the detail behind a summary, a list that is usually not needed.',
+                'classes' => array(
+                    'fz-disclosure' => 'On a `<details>`. Its `<summary>` is what is clicked, and the rest is what opens.',
+                    'fz-disclosure--plain' => 'No box of its own: for one that is inside a card.',
+                ),
+                'notes' => array(
+                    'Say in the summary what is inside, and how much of it if that helps: "Rankings (3)".',
+                    'Add the `open` attribute to a `<details>` to have it start open.',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-stack fz-gap-2">
+  <details class="fz-disclosure">
+    <summary>Mitigations (2)</summary>
+    <ul>
+      <li>Two staff are present at every session.</li>
+      <li>Sessions are held in rooms with a window in the door.</li>
+    </ul>
+  </details>
+  <details class="fz-disclosure" open>
+    <summary>Reviews (1)</summary>
+    <p class="fz-text-muted">Reviewed on September 12, 2026. No changes needed.</p>
+  </details>
+</div>
+HTML
+            ),
+            array(
+                'id' => 'tabs',
+                'name' => 'Tabs',
+                'summary' => 'A row of tabs, each showing one part of a page in place of the others: the overview, the answers and the assessment of one report.',
+                'classes' => array(
+                    'fz-tabs' => 'The row of tabs. Give it `role="tablist"` and an `aria-label`.',
+                    'fz-tabs__tab' => 'One tab: a `<button type="button">` with `role="tab"`, `aria-controls` naming its panel, and `aria-selected="true"` on the one that is shown and `"false"` on the others.',
+                    'fz-tab-panel' => 'What a tab shows. Give it `role="tabpanel"` and an id, and the `hidden` attribute when its tab is not the one selected.',
+                ),
+                'notes' => array(
+                    'Switching tabs takes a few lines of script, kept with the page: when a tab is clicked, set `aria-selected` on each tab and `hidden` on each panel.',
+                    'On paper the tabs are left out and every panel prints, one after the other, so a printed copy has all of it.',
+                    'Use tabs for parts of one thing that are read separately. For a choice that filters or changes what a list shows, use buttons with `aria-pressed`, or a choice.',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-stack fz-gap-4">
+  <div class="fz-tabs" role="tablist" aria-label="Report">
+    <button type="button" class="fz-tabs__tab" role="tab" aria-controls="tab-overview" aria-selected="true">Overview</button>
+    <button type="button" class="fz-tabs__tab" role="tab" aria-controls="tab-interview" aria-selected="false">Interview</button>
+    <button type="button" class="fz-tabs__tab" role="tab" aria-controls="tab-assessment" aria-selected="false">Assessment</button>
+  </div>
+  <div class="fz-tab-panel" id="tab-overview" role="tabpanel">
+    <p>Met with the program lead on October 2. Enrolment is up on last year.</p>
+  </div>
+  <div class="fz-tab-panel" id="tab-interview" role="tabpanel" hidden>
+    <p>The answers to each interview question.</p>
+  </div>
+  <div class="fz-tab-panel" id="tab-assessment" role="tabpanel" hidden>
+    <p>The rating, and the reasons for it.</p>
+  </div>
+</div>
+HTML
+            ),
+            array(
+                'id' => 'embed',
+                'name' => 'Embed',
+                'summary' => 'Something from elsewhere shown in the page: a map, a video, another site\'s page. It has a shape of its own, so the page doesn\'t jump when what is in it arrives.',
+                'classes' => array(
+                    'fz-embed' => 'Around an `<iframe>`, `<video>` or `<img>`, which fills it. Wide: 16 by 9.',
+                    'fz-embed--square' => 'Square.',
+                ),
+                'notes' => array(
+                    'Give an `<iframe>` a `title` that says what it shows.',
+                    'It is as wide as the space it is in. To limit it, put it in a column of a layout class, or give it a `max-width` in a style attribute.',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-embed" style="max-width: 24rem">
+  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 9'%3E%3Crect width='16' height='9' fill='%23d1d1cb'/%3E%3C/svg%3E" alt="A grey rectangle, standing in for a map">
+</div>
+HTML
+            ),
+            array(
+                'id' => 'prose',
+                'name' => 'Prose',
+                'summary' => 'Running text that someone wrote: an article, instructions, an agreement, the contents of a rich text field. Its paragraphs, headings and lists are sized and spaced for reading.',
+                'classes' => array(
+                    'fz-prose' => 'On the element around the text.',
+                ),
+                'notes' => array(
+                    'The elements inside need no classes: write ordinary `<p>`, `<h2>`, `<ul>` and `<blockquote>`. That makes it the way to show text that came from an editor, and to give text headings and lists in a derived value, where the elements inside cannot keep classes of their own.',
+                    'It is as wide as the space it is in. Long lines are hard to read, so put it in `fz-container fz-container--narrow`, or in a column.',
+                    'It is for text. Lay out a page with the layout classes, not with this.',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-prose">
+  <h2>Before the first session</h2>
+  <p>Thank you for hosting a workshop. This page sets out what we bring, and what we ask of you.</p>
+  <h3>We will bring</h3>
+  <ul>
+    <li>All the materials for each activity</li>
+    <li>Two instructors, who arrive 30 minutes early to set up</li>
+  </ul>
+  <h3>We ask that you</h3>
+  <ol>
+    <li>Have a room with tables and a sink nearby</li>
+    <li>Tell us about any allergies in the group</li>
+  </ol>
+  <blockquote>A teacher stays in the room for the whole session.</blockquote>
+</div>
+HTML
+            ),
+            array(
+                'id' => 'matrix',
+                'name' => 'Matrix',
+                'summary' => 'A grid of cells, each coloured by what it stands for: a risk matrix, a heat map, a chart of what is free and what is taken.',
+                'classes' => array(
+                    'fz-matrix' => 'On a `<table>`. Its columns are all the same width.',
+                    'fz-matrix__cell' => 'A cell: on a `<span>` inside the `<td>`, or on a `<button>` there when the cell can be chosen. Square, and grey.',
+                    'fz-matrix__cell--{info,success,warning,danger}' => 'A cell in a status colour.',
+                    'fz-matrix__cell--selected' => 'The cell that is chosen, or the one a value falls in: outlined.',
+                    'fz-matrix__cell--muted' => 'Faded: a cell that is beside the point while others are being looked at.',
+                ),
+                'notes' => array(
+                    'Give the rows and columns their headings with `<th>`, and say in each cell what it stands for: the colour alone is not enough.',
+                    'The colour is a tint, and the text stays the normal text colour, as in a badge.',
+                    'For colours that are not the status colours, such as the steps of a scale, set `--fz-tone` on the cell.',
+                ),
+                'example' => <<<'HTML'
+<table class="fz-matrix" style="max-width: 24rem">
+  <thead>
+    <tr><td></td><th scope="col">Minor</th><th scope="col">Moderate</th><th scope="col">Major</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">Unlikely</th>
+      <td><span class="fz-matrix__cell fz-matrix__cell--success">Low</span></td>
+      <td><span class="fz-matrix__cell fz-matrix__cell--success">Low</span></td>
+      <td><span class="fz-matrix__cell fz-matrix__cell--warning">Medium</span></td>
+    </tr>
+    <tr>
+      <th scope="row">Possible</th>
+      <td><span class="fz-matrix__cell fz-matrix__cell--success">Low</span></td>
+      <td><span class="fz-matrix__cell fz-matrix__cell--warning fz-matrix__cell--selected">Medium</span></td>
+      <td><span class="fz-matrix__cell fz-matrix__cell--danger">High</span></td>
+    </tr>
+    <tr>
+      <th scope="row">Likely</th>
+      <td><span class="fz-matrix__cell fz-matrix__cell--warning">Medium</span></td>
+      <td><span class="fz-matrix__cell fz-matrix__cell--danger">High</span></td>
+      <td><span class="fz-matrix__cell fz-matrix__cell--danger">High</span></td>
+    </tr>
+  </tbody>
+</table>
 HTML
             ),
         ),
@@ -899,6 +1130,9 @@ HTML
                     'fz-hide-on-mobile' => 'Hidden on screens narrower than 48rem (768px).',
                     'fz-show-on-mobile' => 'Hidden on screens 48rem and wider.',
                 ),
+                'notes' => array(
+                    'The `hidden` attribute hides any element that has a Formulize UI class, whatever the class is: a card, a stack or a button with `hidden` is not shown. Use it for what a script shows and hides, such as a panel that opens beside a list. The script sets and removes the attribute, and the classes stay as they are.',
+                ),
             ),
             array(
                 'id' => 'u-width',
@@ -926,6 +1160,8 @@ HTML
                     'fz-text-nowrap' => 'Never wraps.',
                     'fz-wrap-break-word' => 'Long words and URLs break rather than overflow.',
                     'fz-tabular-nums' => 'Figures of equal width, so columns of numbers line up.',
+                    'fz-uppercase' => 'Capitals.',
+                    'fz-tracking-{wide,wider}' => 'Wider letter spacing. With `fz-uppercase`, a small size and `fz-text-muted`, the small label over a figure or a group.',
                 ),
                 'example' => <<<'HTML'
 <div class="fz-stack fz-gap-2">
@@ -966,6 +1202,34 @@ HTML
                     'fz-overflow-{auto,x-auto,hidden}' => 'Scroll when needed, scroll sideways only, or clip.',
                     'fz-list-none' => 'No bullets or numbers.',
                 ),
+            ),
+            array(
+                'id' => 'u-print',
+                'name' => 'Print',
+                'summary' => 'For a page that is meant to be printed, such as a schedule or a confirmation: what shows on paper, and where the sheets break.',
+                'classes' => array(
+                    'fz-print-only' => 'Only on paper: a logo, a line for a signature.',
+                    'fz-print-hidden' => 'Only on screen: the Print button, links back into the site.',
+                    'fz-break-before-page' => 'Starts a new sheet.',
+                    'fz-break-inside-avoid' => 'Kept together on one sheet, when it fits on one.',
+                ),
+                'notes' => array(
+                    'A theme leaves its own header and menus off the printout, so these are only for your own content.',
+                    'A print button is a link or a button that calls `window.print()`. Give it `fz-print-hidden`.',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-stack">
+  <div class="fz-toolbar fz-border-b fz-pb-3">
+    <div class="fz-toolbar__start"><h2 class="fz-text-xl fz-font-semibold">Workshop schedule</h2></div>
+    <div class="fz-toolbar__end">
+      <span class="fz-print-only fz-text-muted">Printed copy</span>
+      <button type="button" class="fz-btn fz-print-hidden" onclick="window.print()">Print</button>
+    </div>
+  </div>
+  <p>Thursday, 3:30 to 5pm, in the library.</p>
+  <p class="fz-break-before-page">This paragraph starts the second sheet.</p>
+</div>
+HTML
             ),
         ),
     );
@@ -1214,6 +1478,36 @@ button:where(:not([class*="fz-"])),
 input[type="submit"]:where(:not([class*="fz-"])) {
   min-width: 8rem;
   border-radius: 0;
+}
+CODE
+                    ),
+                ),
+            ),
+            array(
+                'id' => 'theme-print',
+                'name' => 'Printing',
+                'summary' => 'A page can be made for printing with the Print classes, which decide what of the page\'s own content is on paper. The theme does the rest: on paper it leaves out its own header and menus, and lets the content run on over as many sheets as it needs.',
+                'notes' => array(
+                    'In an `@media print` rule, hide the parts of the theme that are for getting around the site: the header, the menus, the footer.',
+                    'Anything the theme makes scroll on screen stops at its own bottom edge on paper. Give it `height: auto` and `overflow: visible` there, so it is as tall as what is in it.',
+                    'Take the space at the edges of the page off as well: the sheet\'s own margin does that on paper.',
+                    'These rules have to win over the theme\'s own layout whatever it is, so `!important` is at home in them.',
+                ),
+                'code' => array(
+                    array(
+                        'label' => 'In the theme\'s stylesheet',
+                        'code' => <<<'CODE'
+@media print {
+  .mytheme-header,
+  .mytheme-menu,
+  .mytheme-footer {
+    display: none !important;
+  }
+  .mytheme-content {
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
 }
 CODE
                     ),

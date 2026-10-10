@@ -163,6 +163,16 @@ environment's `formulize-web-1` container. With neither, the pages are left out
 of that build and the plugin logs an error. The catalog is outside `docs/`, so
 `jekyll serve` doesn't rebuild when it changes; restart it to see a change.
 
+Each example is shown as it looks, above its code. It is in a frame, as a page
+of its own, so this site's styles and Formulize UI's can't reach each other. The
+plugin copies three stylesheets from the application into the site for the
+frames to use: `formulize-ui.css`, and the `tokens.css` of the Lyris and Anari
+themes, which is where a theme gives the tokens its values. The buttons beside
+each example switch every frame between the two themes, and the choice is kept
+in the browser. A script in the `formulize-ui` layout makes each frame as tall
+as what is in it. To show the examples in another theme, add it to `THEMES` in
+the plugin.
+
 A separate workflow, `formulize-ui-check.yml`, runs the catalog's `--check` on
 every pull request that changes `formulize-ui.css` or the catalog. It fails if
 a class or token is in one but not the other, or if an example uses one that

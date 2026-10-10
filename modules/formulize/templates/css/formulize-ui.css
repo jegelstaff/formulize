@@ -98,6 +98,9 @@
   --fz-leading-snug:    1.375;
   --fz-leading-normal:  1.5;
 
+  --fz-tracking-wide:   0.025em;
+  --fz-tracking-wider:  0.05em;
+
   /* Spacing. Every space and size on the scale is a multiple of this step, as
      in Tailwind: calc(var(--fz-spacing) * 4) is 1rem. Fixed, like the type
      scale: the Appearance page's sizes change the component sizes below, not
@@ -1039,6 +1042,13 @@
 .fz-table--striped :where(tbody tr:nth-child(even) td) {
   background: var(--fz-color-surface-3);
 }
+/* For rows whose cells hold more than a line: a title over a description, a
+   list. The cells line up at the top, and have space above and below, since the
+   row height no longer centres a single line in them. */
+.fz-table--multiline :where(tbody td) {
+  padding-block: calc(var(--fz-spacing) * 3);
+  vertical-align: top;
+}
 
 /* ---- Badge ------------------------------------------------------------------
    A short label: a status, a category, a count. The tone is in the tint and the
@@ -1071,6 +1081,15 @@
   background: var(--fz-tone);
 }
 .fz-badge--plain::before { content: none; }
+/* An icon on its own: a circle, the same size whatever the icon, so a column of
+   them lines up, and what follows them does too. No dot. */
+.fz-badge--icon {
+  flex: none;
+  justify-content: center;
+  aspect-ratio: 1;
+  padding: 0;
+}
+.fz-badge--icon::before { content: none; }
 .fz-badge--accent  { --fz-tone: var(--fz-color-accent);  --fz-tone-soft: var(--fz-color-accent-soft); }
 .fz-badge--info    { --fz-tone: var(--fz-color-info);    --fz-tone-soft: var(--fz-color-info-soft); }
 .fz-badge--success { --fz-tone: var(--fz-color-success); --fz-tone-soft: var(--fz-color-success-soft); }
@@ -1131,7 +1150,11 @@
 /* ---- Description list -------------------------------------------------------
    Labelled values: an entry's fields in a card, a summary. On a <dl>; each
    <dt>/<dd> pair may be wrapped in a <div>. Terms and values side by side;
-   fz-dl--stacked puts each term above its value. */
+   fz-dl--stacked puts each term above its value.
+
+   It can also go on a <div> around the <dl>. That is for a derived value, whose
+   HTML is filtered before it is shown: the filter takes the class off a <dl>,
+   and leaves it on a <div>. */
 .fz-dl {
   display: grid;
   /* terms take the width they need, but never more than 40%, so values keep
@@ -1141,7 +1164,7 @@
   margin: 0;
   line-height: var(--fz-leading-normal);
 }
-.fz-dl > :where(div) { display: contents; }
+.fz-dl > :where(div, dl) { display: contents; }
 .fz-dl :where(dt) {
   margin: 0;
   color: var(--fz-color-text-muted);
@@ -1180,6 +1203,293 @@
   font-size: var(--fz-text-base);
   font-weight: var(--fz-font-weight-semibold);
 }
+
+/* ---- Bar list -----------------------------------------------------------------
+   A few things compared by a number: for each, a label, a bar as long as its
+   share, and the figure. A breakdown by status or by category, on a dashboard.
+   Each row is one thing, and its bar's width is its percentage, set in a style
+   attribute. The tone is the bar's colour, as it is a badge's tint.
+
+   Made of <div> and <span>, not a list, so the rows can be the grid's own rows
+   (display: contents) and the labels, bars and figures line up in columns. */
+.fz-bar-list {
+  display: grid;
+  /* a label wraps rather than take more than half the width, so on a phone a
+     long one leaves room for its bar */
+  grid-template-columns: fit-content(50%) minmax(0, 1fr) max-content;
+  align-items: center;
+  gap: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3);
+  line-height: var(--fz-leading-normal);
+}
+/* a second figure after the first: a count and a percentage, say */
+.fz-bar-list--two-values {
+  grid-template-columns: fit-content(50%) minmax(0, 1fr) max-content max-content;
+}
+.fz-bar-list__row {
+  --fz-tone: var(--fz-color-accent);
+  display: contents;
+}
+.fz-bar-list__row--info    { --fz-tone: var(--fz-color-info); }
+.fz-bar-list__row--success { --fz-tone: var(--fz-color-success); }
+.fz-bar-list__row--warning { --fz-tone: var(--fz-color-warning); }
+.fz-bar-list__row--danger  { --fz-tone: var(--fz-color-danger); }
+.fz-bar-list__row--neutral { --fz-tone: var(--fz-color-text-subtle); }
+.fz-bar-list__label {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--fz-spacing) * 2);
+  font-weight: var(--fz-font-weight-medium);
+}
+.fz-bar-list__track {
+  display: block;
+  height: calc(var(--fz-spacing) * 2.5);
+  border-radius: var(--fz-radius-full);
+  background: var(--fz-color-surface-3);
+  overflow: hidden;
+}
+.fz-bar-list__bar {
+  display: block;
+  height: 100%;
+  border-radius: var(--fz-radius-full);
+  background: var(--fz-tone);
+}
+.fz-bar-list__value {
+  font-weight: var(--fz-font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  white-space: nowrap;
+}
+
+/* ---- Progress -----------------------------------------------------------------
+   One bar, as long as how far something has got: a score out of a total, steps
+   done, money raised against a goal. Its width is set in a style attribute.
+   The tone is the bar's colour, as it is a bar list's. For several bars side
+   by side with their labels and figures, use the bar list instead. */
+.fz-progress {
+  --fz-tone: var(--fz-color-accent);
+  box-sizing: border-box;
+  display: block;
+  height: calc(var(--fz-spacing) * 2.5);
+  border-radius: var(--fz-radius-full);
+  background: var(--fz-color-surface-3);
+  overflow: hidden;
+}
+.fz-progress--info    { --fz-tone: var(--fz-color-info); }
+.fz-progress--success { --fz-tone: var(--fz-color-success); }
+.fz-progress--warning { --fz-tone: var(--fz-color-warning); }
+.fz-progress--danger  { --fz-tone: var(--fz-color-danger); }
+.fz-progress--neutral { --fz-tone: var(--fz-color-text-subtle); }
+.fz-progress__bar {
+  display: block;
+  height: 100%;
+  border-radius: var(--fz-radius-full);
+  background: var(--fz-tone);
+}
+
+/* ---- Disclosure ---------------------------------------------------------------
+   Something that opens in place to show more. On a <details>: its <summary> is
+   what is clicked, and the rest is what opens. fz-disclosure--plain has no box
+   of its own, for one that is inside a card. */
+.fz-disclosure {
+  box-sizing: border-box;
+  padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3);
+  border: 1px solid var(--fz-color-border);
+  border-radius: var(--fz-radius-md);
+  background: var(--fz-color-surface-2);
+  line-height: var(--fz-leading-normal);
+}
+.fz-disclosure > :where(summary) {
+  cursor: pointer;
+  font-weight: var(--fz-font-weight-medium);
+}
+.fz-disclosure > :where(:not(summary)) {
+  margin-block: calc(var(--fz-spacing) * 2) 0;
+}
+.fz-disclosure--plain {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+
+/* ---- Tabs ---------------------------------------------------------------------
+   A row of tabs, each showing one panel of a page in place of the others. The
+   tabs are buttons in a role="tablist"; the one shown has aria-selected="true".
+   Panels are fz-tab-panel, and the ones not shown have the hidden attribute.
+   A panel is a plain box: lay out what is in it with a stack inside it, as on
+   paper the panels are shown as blocks. Switching them takes a few lines of
+   script, kept with the page. On paper the tabs go and every panel prints, one
+   after another. */
+.fz-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--fz-spacing) * 2);
+}
+.fz-tabs__tab {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--fz-spacing) * 1);
+  padding: var(--fz-tab-padding-y) var(--fz-tab-padding-x);
+  border: 1px solid var(--fz-tab-border);
+  border-radius: var(--fz-tab-radius);
+  background: var(--fz-tab-bg);
+  color: var(--fz-tab-text);
+  font: inherit;
+  font-family: var(--fz-control-font);
+  font-size: var(--fz-control-text);
+  font-weight: var(--fz-font-weight-medium);
+  line-height: var(--fz-leading-normal);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: color var(--fz-duration-fast) var(--fz-ease-out),
+              border-color var(--fz-duration-fast) var(--fz-ease-out),
+              background-color var(--fz-duration-fast) var(--fz-ease-out);
+}
+.fz-tabs__tab:hover {
+  color: var(--fz-color-text);
+  border-color: var(--fz-color-border-strong);
+  background: var(--fz-color-surface-2);
+}
+.fz-tabs__tab:focus-visible { outline: none; box-shadow: var(--fz-focus-ring); }
+.fz-tabs__tab[aria-selected="true"] {
+  color: var(--fz-tab-active-text);
+  border-color: var(--fz-tab-active-bg);
+  background: var(--fz-tab-active-bg);
+}
+@media print {
+  .fz-tabs { display: none; }
+  .fz-tab-panel[hidden] { display: block; }
+  .fz-tab-panel + .fz-tab-panel { margin-block-start: calc(var(--fz-spacing) * 8); }
+}
+
+/* ---- Embed --------------------------------------------------------------------
+   Something from elsewhere shown in the page: a map, a video, another site's
+   form. Around an <iframe>, <video> or <img>, which fills it. The embed has a
+   shape of its own, wide by default, so the page doesn't jump when what is in
+   it arrives. */
+.fz-embed {
+  box-sizing: border-box;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid var(--fz-color-border);
+  border-radius: var(--fz-radius-lg);
+  background: var(--fz-color-surface-2);
+}
+.fz-embed > :where(iframe, video, img) {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.fz-embed--square { aspect-ratio: 1; }
+
+/* ---- Prose --------------------------------------------------------------------
+   Running text that someone wrote: an article, instructions, an agreement, the
+   contents of a rich text field. Its paragraphs, headings and lists are sized
+   and spaced for reading, whatever markup they came with. The elements inside
+   need no classes of their own, which is the point: the text can come from an
+   editor, and it can be in a derived value, where they could not keep any. */
+.fz-prose {
+  line-height: var(--fz-leading-normal);
+  overflow-wrap: break-word;
+}
+.fz-prose > :where(*) { margin-block: 0; }
+.fz-prose > :where(* + *) { margin-block-start: calc(var(--fz-spacing) * 4); }
+.fz-prose :where(h1, h2, h3, h4, h5, h6) {
+  font-weight: var(--fz-font-weight-semibold);
+  line-height: var(--fz-leading-tight);
+}
+.fz-prose :where(h1) { font-size: var(--fz-text-2xl); }
+.fz-prose :where(h2) { font-size: var(--fz-text-xl); }
+.fz-prose :where(h3) { font-size: var(--fz-text-lg); }
+.fz-prose :where(h4, h5, h6) { font-size: var(--fz-text-base); }
+/* more space above a heading than below it, so it belongs to what follows */
+.fz-prose > :where(h1, h2, h3, h4, h5, h6):where(:not(:first-child)) {
+  margin-block-start: calc(var(--fz-spacing) * 8);
+}
+.fz-prose :where(ul, ol) {
+  margin-block-end: 0;
+  padding-inline-start: calc(var(--fz-spacing) * 6);
+}
+.fz-prose :where(ul) { list-style-type: disc; }
+.fz-prose :where(ul ul) { list-style-type: circle; }
+.fz-prose :where(ol) { list-style-type: decimal; }
+.fz-prose :where(li) { margin-block: 0; }
+.fz-prose :where(li + li, li > ul, li > ol) { margin-block-start: var(--fz-spacing); }
+.fz-prose :where(blockquote) {
+  margin-inline: 0;
+  padding-inline-start: calc(var(--fz-spacing) * 4);
+  border-inline-start: 3px solid var(--fz-color-border-strong);
+  color: var(--fz-color-text-muted);
+}
+.fz-prose :where(hr) {
+  border: 0;
+  border-top: 1px solid var(--fz-color-border);
+}
+.fz-prose :where(img, video) {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ---- Matrix -------------------------------------------------------------------
+   A grid of cells, each coloured by what it stands for: a risk matrix, a heat
+   map, a chart of what is free and what is taken. On a <table>, so the rows and
+   columns have their headings; each cell's colour is on an element inside its
+   <td> (a <span>, or a <button> when the cell can be chosen).
+
+   The tone is a tint, as it is a badge's, and the text stays the normal text
+   colour, so a cell reads the same whatever colours the theme or the
+   Appearance page uses. */
+.fz-matrix {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: var(--fz-spacing);
+  font-size: var(--fz-text-sm);
+  line-height: var(--fz-leading-tight);
+}
+.fz-matrix :where(th) {
+  padding: calc(var(--fz-spacing) * 2) var(--fz-spacing);
+  font-weight: var(--fz-font-weight-medium);
+  text-align: center;
+  vertical-align: middle;
+  color: var(--fz-color-text-muted);
+}
+.fz-matrix :where(td) { padding: 0; }
+.fz-matrix__cell {
+  --fz-tone: var(--fz-color-text-subtle);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: var(--fz-spacing);
+  border: 1px solid color-mix(in srgb, var(--fz-tone) 70%, transparent);
+  border-radius: var(--fz-radius-md);
+  background: color-mix(in srgb, var(--fz-tone) 50%, var(--fz-color-surface));
+  color: var(--fz-color-text);
+  font: inherit;
+  font-weight: var(--fz-font-weight-medium);
+  text-align: center;
+}
+.fz-matrix__cell--info    { --fz-tone: var(--fz-color-info); }
+.fz-matrix__cell--success { --fz-tone: var(--fz-color-success); }
+.fz-matrix__cell--warning { --fz-tone: var(--fz-color-warning); }
+.fz-matrix__cell--danger  { --fz-tone: var(--fz-color-danger); }
+/* the cell that is chosen, or the one a value falls in */
+.fz-matrix__cell--selected {
+  outline: 2px solid var(--fz-color-text);
+  outline-offset: 2px;
+  font-weight: var(--fz-font-weight-bold);
+}
+/* a cell that is beside the point, while others are being looked at */
+.fz-matrix__cell--muted { opacity: 0.4; }
+:where(button).fz-matrix__cell { cursor: pointer; }
 
 @media (prefers-reduced-motion: reduce) {
   .fz-btn,
@@ -1624,6 +1934,12 @@
 .fz-wrap-break-word { overflow-wrap: break-word; }
 .fz-tabular-nums    { font-variant-numeric: tabular-nums; }
 
+/* Capitals, and wider letter spacing to go with them: together with a small
+   size and a muted colour, the small label over a figure or a group. */
+.fz-uppercase       { text-transform: uppercase; }
+.fz-tracking-wide   { letter-spacing: var(--fz-tracking-wide); }
+.fz-tracking-wider  { letter-spacing: var(--fz-tracking-wider); }
+
 /* ---- Background ---- */
 .fz-bg-page         { background-color: var(--fz-color-page); }
 .fz-bg-surface      { background-color: var(--fz-color-surface); }
@@ -1674,3 +1990,28 @@
 
 /* ---- Lists ---- */
 .fz-list-none { list-style-type: none; }
+
+/* ---- Print ---- */
+/* For a page that is meant to be printed: what is only on paper (a logo, say),
+   what is only on screen (the Print button), where a new sheet starts, and what
+   must not be split across two. Tailwind does these with its print: variant;
+   there are no variants here, so they are classes. */
+.fz-print-only { display: none; }
+@media print {
+  .fz-print-only         { display: revert; }
+  .fz-print-hidden       { display: none; }
+  .fz-break-before-page  { break-before: page; }
+  .fz-break-inside-avoid { break-inside: avoid; }
+}
+
+/* ============================================================
+   Hidden
+   ============================================================
+
+   The hidden attribute hides anything with one of these classes, even one
+   whose class gives it a display of its own: a card or a stack is a flex box,
+   which would otherwise win over the browser's own rule for hidden. Last in the
+   file, so it beats every class above it; [hidden] weighs as much as a class.
+   ============================================================ */
+
+[hidden]:where([class*="fz-"]) { display: none; }

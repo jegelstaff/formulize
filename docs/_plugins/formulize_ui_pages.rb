@@ -6,8 +6,9 @@
 # The catalog, modules/formulize/include/ui_catalog.php, is the one place the
 # classes and tokens are documented; the in-app style guide renders the same
 # catalog. So nothing here is written by hand: this runs the catalog with --json
-# on every build and turns what it prints into pages. Nothing it produces is
-# committed.
+# on every build and turns what it prints into pages. Each example is shown as
+# it looks, above its code, with the application's own formulize-ui.css, which
+# is copied into the site beside the pages. Nothing it produces is committed.
 #
 # It needs PHP. It uses php if it is installed, as it is on GitHub's runners,
 # and otherwise the local development environment's web container (see
@@ -26,12 +27,38 @@ require "rouge"
 module Jekyll
   module FormulizeUi
     CATALOG = File.join("modules", "formulize", "include", "ui_catalog.php").freeze
+    STYLESHEET = File.join("modules", "formulize", "templates", "css", "formulize-ui.css").freeze
     CONTAINER = "formulize-web-1".freeze
     PAGES_DIR = File.join("documentation", "formulize_ui").freeze
 
+    # The themes the examples can be shown in, the first one unless the reader
+    # chooses another. What a theme gives Formulize UI is its values for the
+    # tokens, which are all in its tokens.css, and its font. "base" is what the
+    # theme's own stylesheet sets on the body, which text with no class takes.
+    THEMES = [
+      {
+        "id" => "lyris",
+        "name" => "Lyris",
+        "tokens" => File.join("themes", "Lyris", "css", "tokens.css"),
+        "font" => "https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap",
+        "base" => "body { font-size: var(--fz-text-sm); line-height: var(--fz-leading-normal); }"
+      },
+      {
+        "id" => "anari",
+        "name" => "Anari",
+        "tokens" => File.join("themes", "Anari", "css", "tokens.css"),
+        "font" => "https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap",
+        "base" => "body { line-height: 1; }"
+      }
+    ].freeze
+    THEME_STORAGE_KEY = "formulize_ui_theme".freeze
+
+    def self.repo_root
+      File.expand_path("../..", __dir__)
+    end
+
     # The catalog as a hash, or nil when PHP can't be found or the catalog fails.
     def self.load_catalog
-      repo_root = File.expand_path("../..", __dir__)
       commands = []
       commands << ["php", "-d", "xdebug.mode=off", File.join(repo_root, CATALOG), "--json"] if command_exists?("php")
       commands << ["docker", "exec", CONTAINER, "php", "-d", "xdebug.mode=off", File.join("/var/www/html", CATALOG), "--json"] if container_running?
@@ -49,8 +76,12 @@ module Jekyll
       nil
     end
 
+    # On Windows a program's file has an extension (docker.exe), listed in PATHEXT.
     def self.command_exists?(name)
-      ENV["PATH"].to_s.split(File::PATH_SEPARATOR).any? { |dir| File.executable?(File.join(dir, name)) }
+      extensions = [""] + ENV["PATHEXT"].to_s.split(";")
+      ENV["PATH"].to_s.split(File::PATH_SEPARATOR).any? do |dir|
+        extensions.any? { |extension| File.executable?(File.join(dir, name + extension)) }
+      end
     end
 
     def self.container_running?
@@ -93,8 +124,65 @@ module Jekyll
       %(<div class="language-#{language} highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#{formatted}</code></pre></div></div>)
     end
 
+    # An example as it looks: a page of its own in a frame, with Formulize UI's
+    # stylesheet and a theme's tokens and font, and nothing else, so this site's
+    # styles and Formulize UI's can't reach each other. Every theme's tokens are
+    # in the page, and all but the chosen one are switched off: the page reads
+    # the reader's choice when it loads, and the layout's script calls
+    # formulizeUiTheme() in each frame when the reader changes it. Both themes
+    # take the margins off everything, so the page does too. The example's links
+    # go nowhere. The layout's script makes each frame as tall as what is in it.
+    def self.preview(example, name, stylesheet_url, themes)
+      theme_styles = themes.map do |theme|
+        id = CGI.escapeHTML(theme["id"])
+        <<~HTML.strip
+          <link rel="stylesheet" data-theme="#{id}" href="#{CGI.escapeHTML(theme["font"])}">
+          <link rel="stylesheet" data-theme="#{id}" href="#{CGI.escapeHTML(theme["tokens_url"])}">
+          <style data-theme="#{id}">#{theme["base"]}</style>
+        HTML
+      end.join("\n")
+      document = <<~HTML
+        <!doctype html>
+        <html lang="en">
+        <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="#{CGI.escapeHTML(stylesheet_url)}">
+        <style>
+        *:not(dialog) { margin: 0; }
+        html { background: var(--fz-color-page); }
+        body {
+          padding: calc(var(--fz-spacing) * 5);
+          color: var(--fz-color-text);
+          font-family: var(--fz-font-sans);
+        }
+        </style>
+        #{theme_styles}
+        <script>
+        function formulizeUiTheme(theme) {
+          var styles = document.querySelectorAll("[data-theme]");
+          var known = Array.prototype.some.call(styles, function (style) { return style.getAttribute("data-theme") === theme; });
+          if (!known) { theme = #{themes.first["id"].to_json}; }
+          Array.prototype.forEach.call(styles, function (style) { style.disabled = style.getAttribute("data-theme") !== theme; });
+        }
+        (function () {
+          var theme = "";
+          try { theme = localStorage.getItem(#{THEME_STORAGE_KEY.to_json}) || ""; } catch (e) {}
+          formulizeUiTheme(theme);
+        })();
+        </script>
+        </head>
+        <body>
+        #{example.to_s.strip}
+        <script>document.addEventListener("click", function (event) { if (event.target.closest("a")) { event.preventDefault(); } });</script>
+        </body>
+        </html>
+      HTML
+      %(<div class="formulize-ui-preview"><iframe title="#{CGI.escapeHTML(name.to_s)}: the example, as it looks" srcdoc="#{CGI.escapeHTML(document)}"></iframe></div>)
+    end
+
     # A section with its text turned into HTML, for the layout to arrange.
-    def self.section_for_page(section)
+    def self.section_for_page(section, stylesheet_url, themes)
       {
         "id" => section["id"],
         "title" => section["title"],
@@ -113,6 +201,7 @@ module Jekyll
               }
             end,
             "notes_html" => (entry["notes"] || []).map { |note| text(note) },
+            "preview_html" => (entry["example"] ? preview(entry["example"], entry["name"], stylesheet_url, themes) : nil),
             # a recipe's example is its result, which the code blocks produce;
             # there, the example's own markup isn't shown
             "example_html" => (entry["example"] && !entry["code"] ? code_block(entry["example"]) : nil),
@@ -132,6 +221,20 @@ module Jekyll
     end
   end
 
+  # A stylesheet copied into the site from where it lives in the application,
+  # for the examples to be shown with: Formulize UI's, and each theme's tokens.
+  class FormulizeUiStylesheet < StaticFile
+    def initialize(site, source_path, destination_dir, destination_name = nil)
+      super(site, File.dirname(source_path), "", File.basename(source_path))
+      @destination_dir = destination_dir
+      @destination_name = destination_name || File.basename(source_path)
+    end
+
+    def destination(dest)
+      @site.in_dest_dir(dest, @destination_dir, @destination_name)
+    end
+  end
+
   class FormulizeUiPages < Generator
     safe true
     priority :normal
@@ -145,11 +248,28 @@ module Jekyll
         return
       end
 
-      overview, *sections = catalog["sections"].map { |section| FormulizeUi.section_for_page(section) }
+      stylesheet = File.join(FormulizeUi.repo_root, FormulizeUi::STYLESHEET)
+      site.static_files << FormulizeUiStylesheet.new(site, stylesheet, FormulizeUi::PAGES_DIR)
+      # the time it last changed, so a browser doesn't show the examples with an old copy
+      stylesheet_url = "#{site.baseurl}/#{FormulizeUi::PAGES_DIR}/#{File.basename(stylesheet)}?v=#{File.mtime(stylesheet).to_i}"
+
+      themes = FormulizeUi::THEMES.map do |theme|
+        tokens = File.join(FormulizeUi.repo_root, theme["tokens"])
+        name = "#{theme['id']}-tokens.css"
+        site.static_files << FormulizeUiStylesheet.new(site, tokens, FormulizeUi::PAGES_DIR, name)
+        theme.merge("tokens_url" => "#{site.baseurl}/#{FormulizeUi::PAGES_DIR}/#{name}?v=#{File.mtime(tokens).to_i}")
+      end
+
+      overview, *sections = catalog["sections"].map { |section| FormulizeUi.section_for_page(section, stylesheet_url, themes) }
       contents = sections.map do |section|
         { "title" => section["title"], "intro_html" => section["intro_html"], "url" => "/#{FormulizeUi::PAGES_DIR}/#{section['id']}/" }
       end
-      common = { "formulize_ui_version" => catalog["version"], "formulize_ui_contents" => contents }
+      common = {
+        "formulize_ui_version" => catalog["version"],
+        "formulize_ui_contents" => contents,
+        "formulize_ui_themes" => themes.map { |theme| { "id" => theme["id"], "name" => theme["name"] } },
+        "formulize_ui_theme_storage_key" => FormulizeUi::THEME_STORAGE_KEY
+      }
 
       site.pages << FormulizeUiPage.new(site, FormulizeUi::PAGES_DIR, common.merge(
         "title" => catalog["title"],

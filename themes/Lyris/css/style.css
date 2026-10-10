@@ -4754,3 +4754,49 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
   }
 
 }
+
+/* ============================================================
+   Print
+   ------------------------------------------------------------
+   On screen the page is a fixed shell: the header and the menu stay put, and the
+   content scrolls inside `.lyris-main`, or inside a list's entries or a form's
+   card. Paper has no scrolling, so printed as it is, a page would stop at the
+   bottom of the window, with the header and the menu on it.
+
+   On paper the shell goes: the header, the menu and the masquerade bar are left
+   off, and everything that scrolls on screen is as tall as what is in it, so the
+   content runs on over as many sheets as it needs. The gutter comes off too: the
+   sheet's own margin is the space around the content.
+
+   This is what makes a page fit to print at all. What a page shows only on paper
+   or only on screen is its own business: the fz-print-only and fz-print-hidden
+   classes (Formulize UI) are for that.
+   ============================================================ */
+@media print {
+
+  .lyris-header,
+  .lyris-sidebar,
+  #formulize-masquerade-block {
+    display: none !important;
+  }
+
+  .lyris-app,
+  .lyris-app__body,
+  .lyris-main,
+  #listofentries,
+  #listofentries #controls,
+  .lyris-list-screen,
+  .lyris-list__body,
+  .lyris-form-screen {
+    display: block !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .lyris-main {
+    padding: 0 !important;
+    background: none;
+  }
+
+}
