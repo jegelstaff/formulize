@@ -1417,7 +1417,7 @@ CODE
     $sections[] = array(
         'id' => 'themes',
         'title' => 'For theme authors',
-        'intro' => 'How a theme works with Formulize UI: giving the tokens its values, loading the stylesheet, and keeping its own rules from getting in the way of the classes.',
+        'intro' => 'How a theme works with Formulize UI: giving the tokens its values, loading the stylesheet, keeping its own rules from getting in the way of the classes, and framing the page that everything is on.',
         'entries' => array(
             array(
                 'id' => 'theme-tokens',
@@ -1486,6 +1486,42 @@ button:where(:not([class*="fz-"])),
 input[type="submit"]:where(:not([class*="fz-"])) {
   min-width: 8rem;
   border-radius: 0;
+}
+CODE
+                    ),
+                ),
+            ),
+            array(
+                'id' => 'theme-frame',
+                'name' => 'Framing the page',
+                'summary' => 'The space at the edges of a page, and how wide a page can get, are the theme\'s to supply, in one place, for every page. No type of screen brings its own, and what people write for a screen starts at the edge of what the theme gives it.',
+                'notes' => array(
+                    'Put one wrapper around all of a page\'s content in `theme.html`, and give it `padding: var(--fz-page-padding)`, the Appearance page\'s Page padding. Every type of screen then has the same space, including the types added later, and a screen inside another is not inset twice.',
+                    'To offer the Page width setting, keep the same wrapper to `--formulize-content-max-width`. A screen set to the full width has that property at `100%` on its own page.',
+                    'Make the wrapper its own element, inside the part of the page that scrolls, and leave the scrolling part without padding.',
+                    'Don\'t put the page\'s space on the parts of a screen, in screen templates: a screen drawn with other templates would have none.',
+                    'On a phone the space can be smaller, and a screen made of bars and cards can run to the edges of the screen, as long as nothing in it touches them.',
+                    'The whole of this, with what Lyris does, is in What Formulize expects from a theme, in the documentation.',
+                ),
+                'code' => array(
+                    array(
+                        'label' => 'In theme.html',
+                        'code' => <<<'CODE'
+<main class="mytheme-content">
+  <div class="mytheme-page">
+    <{$icms_contents}>
+  </div>
+</main>
+CODE
+                    ),
+                    array(
+                        'label' => 'In the theme\'s stylesheet',
+                        'code' => <<<'CODE'
+.mytheme-page {
+  box-sizing: border-box;
+  max-width: var(--formulize-content-max-width);
+  margin-inline: auto;
+  padding: var(--fz-page-padding);
 }
 CODE
                     ),

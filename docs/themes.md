@@ -154,6 +154,10 @@ there is nothing more to do: a new type of screen gets the space without any cha
 and a screen inside another (a template screen's code can call `displayForm` or `displayEntries`) is
 not inset twice, because neither has space of its own.
 
+Make the wrapper its own element, inside the part of your page that scrolls, and leave the scrolling
+part without padding. Then the wrapper is also the place to keep pages to a maximum width (section
+7), and anything your theme pins to the top or bottom of the scrolling part is not pushed in by it.
+
 Don't put the space on the parts of a screen instead, in your screen templates. A screen drawn with
 other templates would have none, and a screen inside another would have it twice.
 
@@ -242,6 +246,20 @@ list's pagination or a form's buttons. The column is centred in the window rathe
 sidebar, so opening the sidebar doesn't move it unless it has to; the header's links stay at the
 window's edge; and phones are left full width. See the "Content width" section at the end of
 `themes/Lyris/css/style.css`.
+
+If your theme has a menu beside the content and you want the column centred in the window, not in
+the space beside the menu, the wrapper is what makes that possible. The room to leave either side
+depends on how wide the content area is, and in CSS a percentage in an element's padding is measured
+against its parent, not itself. So the content area can't work it out for itself, but the wrapper
+inside it can: on the wrapper, `100%` is the content area's width.
+
+A page that fills the window and scrolls inside itself, as Lyris's lists and forms do, needs the
+wrapper to be exactly as tall as the scrolling part. Give the wrapper `min-height: 100%` for every
+page, and `height: 100%` only on the pages that fill the window. Every other page is then as tall as
+its content, and the page scrolls.
+
+On paper, take the wrapper's padding and height off again, with the rest of your theme's layout (see
+Printing, under For theme authors, in [Formulize UI](/documentation/formulize_ui/)).
 
 A screen can be set to use the full width whatever the site's setting is, on the screen's Appearance
 tab. Formulize sets `--formulize-content-max-width` to `100%` on that screen's page, so a theme that
