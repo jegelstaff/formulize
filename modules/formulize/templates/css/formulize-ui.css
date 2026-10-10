@@ -98,6 +98,9 @@
   --fz-leading-snug:    1.375;
   --fz-leading-normal:  1.5;
 
+  --fz-tracking-wide:   0.025em;
+  --fz-tracking-wider:  0.05em;
+
   /* Spacing. Every space and size on the scale is a multiple of this step, as
      in Tailwind: calc(var(--fz-spacing) * 4) is 1rem. Fixed, like the type
      scale: the Appearance page's sizes change the component sizes below, not
@@ -1039,6 +1042,13 @@
 .fz-table--striped :where(tbody tr:nth-child(even) td) {
   background: var(--fz-color-surface-3);
 }
+/* For rows whose cells hold more than a line: a title over a description, a
+   list. The cells line up at the top, and have space above and below, since the
+   row height no longer centres a single line in them. */
+.fz-table--multiline :where(tbody td) {
+  padding-block: calc(var(--fz-spacing) * 3);
+  vertical-align: top;
+}
 
 /* ---- Badge ------------------------------------------------------------------
    A short label: a status, a category, a count. The tone is in the tint and the
@@ -1179,6 +1189,86 @@
   color: var(--fz-color-text);
   font-size: var(--fz-text-base);
   font-weight: var(--fz-font-weight-semibold);
+}
+
+/* ---- Bar list -----------------------------------------------------------------
+   A few things compared by a number: for each, a label, a bar as long as its
+   share, and the figure. A breakdown by status or by category, on a dashboard.
+   Each row is one thing, and its bar's width is its percentage, set in a style
+   attribute. The tone is the bar's colour, as it is a badge's tint.
+
+   Made of <div> and <span>, not a list, so the rows can be the grid's own rows
+   (display: contents) and the labels, bars and figures line up in columns. */
+.fz-bar-list {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+  align-items: center;
+  gap: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3);
+  line-height: var(--fz-leading-normal);
+}
+/* a second figure after the first: a count and a percentage, say */
+.fz-bar-list--two-values {
+  grid-template-columns: max-content minmax(0, 1fr) max-content max-content;
+}
+.fz-bar-list__row {
+  --fz-tone: var(--fz-color-accent);
+  display: contents;
+}
+.fz-bar-list__row--info    { --fz-tone: var(--fz-color-info); }
+.fz-bar-list__row--success { --fz-tone: var(--fz-color-success); }
+.fz-bar-list__row--warning { --fz-tone: var(--fz-color-warning); }
+.fz-bar-list__row--danger  { --fz-tone: var(--fz-color-danger); }
+.fz-bar-list__row--neutral { --fz-tone: var(--fz-color-text-subtle); }
+.fz-bar-list__label {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--fz-spacing) * 2);
+  font-weight: var(--fz-font-weight-medium);
+}
+.fz-bar-list__track {
+  display: block;
+  height: calc(var(--fz-spacing) * 2.5);
+  border-radius: var(--fz-radius-full);
+  background: var(--fz-color-surface-3);
+  overflow: hidden;
+}
+.fz-bar-list__bar {
+  display: block;
+  height: 100%;
+  border-radius: var(--fz-radius-full);
+  background: var(--fz-tone);
+}
+.fz-bar-list__value {
+  font-weight: var(--fz-font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  white-space: nowrap;
+}
+
+/* ---- Disclosure ---------------------------------------------------------------
+   Something that opens in place to show more. On a <details>: its <summary> is
+   what is clicked, and the rest is what opens. fz-disclosure--plain has no box
+   of its own, for one that is inside a card. */
+.fz-disclosure {
+  box-sizing: border-box;
+  padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3);
+  border: 1px solid var(--fz-color-border);
+  border-radius: var(--fz-radius-md);
+  background: var(--fz-color-surface-2);
+  line-height: var(--fz-leading-normal);
+}
+.fz-disclosure > :where(summary) {
+  cursor: pointer;
+  font-weight: var(--fz-font-weight-medium);
+}
+.fz-disclosure > :where(:not(summary)) {
+  margin-block: calc(var(--fz-spacing) * 2) 0;
+}
+.fz-disclosure--plain {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1623,6 +1713,12 @@
 .fz-text-nowrap     { white-space: nowrap; }
 .fz-wrap-break-word { overflow-wrap: break-word; }
 .fz-tabular-nums    { font-variant-numeric: tabular-nums; }
+
+/* Capitals, and wider letter spacing to go with them: together with a small
+   size and a muted colour, the small label over a figure or a group. */
+.fz-uppercase       { text-transform: uppercase; }
+.fz-tracking-wide   { letter-spacing: var(--fz-tracking-wide); }
+.fz-tracking-wider  { letter-spacing: var(--fz-tracking-wider); }
 
 /* ---- Background ---- */
 .fz-bg-page         { background-color: var(--fz-color-page); }

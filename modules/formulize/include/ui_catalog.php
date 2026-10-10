@@ -289,6 +289,8 @@ function formulize_uiCatalog() {
                     '--fz-leading-tight' => '1.25',
                     '--fz-leading-snug' => '1.375',
                     '--fz-leading-normal' => '1.5',
+                    '--fz-tracking-wide' => '0.025em: slightly wider letter spacing.',
+                    '--fz-tracking-wider' => '0.05em: wider letter spacing, for small capitals.',
                 ),
             ),
             array(
@@ -331,6 +333,8 @@ function formulize_uiCatalog() {
                     '--fz-sidebar-width' => 'On `fz-with-sidebar`: the width of the side. 16rem.',
                     '--fz-switcher-threshold' => 'On `fz-switcher`: the width below which its children stack. 32rem.',
                     '--fz-field-label-width' => 'On `fz-field--horizontal`: the width of the label. 12rem.',
+                    '--fz-tone' => 'On `fz-badge`, `fz-callout` or `fz-bar-list__row`: the colour, for a tone of your own when none of the tone modifiers is the right one, such as the steps of a scale. Set it in a style attribute, or in a class of your own. Set `--fz-tone-soft` with it on a badge or a callout.',
+                    '--fz-tone-soft' => 'On `fz-badge` or `fz-callout`: the pale tint that goes with `--fz-tone`.',
                 ),
             ),
             array(
@@ -342,8 +346,6 @@ function formulize_uiCatalog() {
                     '--fz-gap-x' => 'Set by the `fz-gap-x-`* utilities.',
                     '--fz-gap-y' => 'Set by the `fz-gap-y-`* utilities.',
                     '--fz-auto-grid-max' => 'Set by the --max-N modifiers of `fz-auto-grid` and `fz-grid-list`.',
-                    '--fz-tone' => 'Set by the tone modifiers of `fz-badge` and `fz-callout`.',
-                    '--fz-tone-soft' => 'Set by the tone modifiers of `fz-badge` and `fz-callout`.',
                 ),
             ),
             array(
@@ -748,6 +750,7 @@ HTML
                 'classes' => array(
                     'fz-table' => 'On a `<table>`.',
                     'fz-table--striped' => 'Every other row shaded.',
+                    'fz-table--multiline' => 'For rows whose cells hold more than a line, such as a title over a description: the cells line up at the top, with space above and below.',
                 ),
                 'notes' => array(
                     'For a table wider than its container, wrap it in an element with `fz-overflow-x-auto`.',
@@ -862,6 +865,83 @@ HTML
 </div>
 HTML
             ),
+            array(
+                'id' => 'bar-list',
+                'name' => 'Bar list',
+                'summary' => 'A few things compared by a number: for each, a label, a bar as long as its share, and the figure. For a breakdown by status or by category on a dashboard.',
+                'classes' => array(
+                    'fz-bar-list' => 'The list.',
+                    'fz-bar-list--two-values' => 'Each row has two figures after its bar, such as a count and a percentage.',
+                    'fz-bar-list__row' => 'One thing: its label, its bar and its figure. The bar is the accent colour.',
+                    'fz-bar-list__row--{info,success,warning,danger,neutral}' => 'The bar in a status colour, or grey.',
+                    'fz-bar-list__label' => 'What the row is. It can hold an icon or a badge as well as text.',
+                    'fz-bar-list__track' => 'The full width a bar could be.',
+                    'fz-bar-list__bar' => 'The bar. Give it its width as a percentage, in a style attribute.',
+                    'fz-bar-list__value' => 'A figure.',
+                ),
+                'notes' => array(
+                    'It is made of `<div>` and `<span>` elements, in this order in each row: label, track with the bar in it, then the figures.',
+                    'The figure says what the bar shows, so the bar itself needs no text of its own.',
+                    'For a colour that is not one of the status colours, such as the steps of a scale, set `--fz-tone` on the row.',
+                    'Work out the percentages in your code. The bar\'s width is the share of the whole; use the share of the largest one instead to compare the rows with each other.',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-bar-list fz-bar-list--two-values">
+  <div class="fz-bar-list__row fz-bar-list__row--success">
+    <span class="fz-bar-list__label">Approved</span>
+    <span class="fz-bar-list__track"><span class="fz-bar-list__bar" style="width: 52%"></span></span>
+    <span class="fz-bar-list__value">31</span>
+    <span class="fz-bar-list__value fz-font-normal fz-text-muted">52%</span>
+  </div>
+  <div class="fz-bar-list__row fz-bar-list__row--warning">
+    <span class="fz-bar-list__label">Under review</span>
+    <span class="fz-bar-list__track"><span class="fz-bar-list__bar" style="width: 20%"></span></span>
+    <span class="fz-bar-list__value">12</span>
+    <span class="fz-bar-list__value fz-font-normal fz-text-muted">20%</span>
+  </div>
+  <div class="fz-bar-list__row fz-bar-list__row--danger">
+    <span class="fz-bar-list__label">Rejected</span>
+    <span class="fz-bar-list__track"><span class="fz-bar-list__bar" style="width: 8%"></span></span>
+    <span class="fz-bar-list__value">5</span>
+    <span class="fz-bar-list__value fz-font-normal fz-text-muted">8%</span>
+  </div>
+  <div class="fz-bar-list__row fz-bar-list__row--neutral">
+    <span class="fz-bar-list__label">Draft</span>
+    <span class="fz-bar-list__track"><span class="fz-bar-list__bar" style="width: 20%"></span></span>
+    <span class="fz-bar-list__value">12</span>
+    <span class="fz-bar-list__value fz-font-normal fz-text-muted">20%</span>
+  </div>
+</div>
+HTML
+            ),
+            array(
+                'id' => 'disclosure',
+                'name' => 'Disclosure',
+                'summary' => 'Something that opens in place to show more: the detail behind a summary, a list that is usually not needed.',
+                'classes' => array(
+                    'fz-disclosure' => 'On a `<details>`. Its `<summary>` is what is clicked, and the rest is what opens.',
+                    'fz-disclosure--plain' => 'No box of its own: for one that is inside a card.',
+                ),
+                'notes' => array(
+                    'Say in the summary what is inside, and how much of it if that helps: "Rankings (3)".',
+                    'Add the `open` attribute to a `<details>` to have it start open.',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-stack fz-gap-2">
+  <details class="fz-disclosure">
+    <summary>Mitigations (2)</summary>
+    <ul>
+      <li>Two staff are present at every session.</li>
+      <li>Sessions are held in rooms with a window in the door.</li>
+    </ul>
+  </details>
+  <details class="fz-disclosure" open>
+    <summary>Reviews (1)</summary>
+    <p class="fz-text-muted">Reviewed on September 12, 2026. No changes needed.</p>
+  </details>
+</div>
+HTML
+            ),
         ),
     );
 
@@ -926,6 +1006,8 @@ HTML
                     'fz-text-nowrap' => 'Never wraps.',
                     'fz-wrap-break-word' => 'Long words and URLs break rather than overflow.',
                     'fz-tabular-nums' => 'Figures of equal width, so columns of numbers line up.',
+                    'fz-uppercase' => 'Capitals.',
+                    'fz-tracking-{wide,wider}' => 'Wider letter spacing. With `fz-uppercase`, a small size and `fz-text-muted`, the small label over a figure or a group.',
                 ),
                 'example' => <<<'HTML'
 <div class="fz-stack fz-gap-2">
