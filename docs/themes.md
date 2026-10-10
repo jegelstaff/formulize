@@ -9,7 +9,7 @@ title: What Formulize Expects From a Theme
 # What Formulize expects from a theme
 
 A Formulize theme is an ordinary ImpressCMS theme, and most of it is yours to design however you
-like. There are three things Formulize looks for. Get these right and forms, lists and maps behave
+like. There are a few things Formulize looks for. Get these right and forms, lists and maps behave
 correctly in your theme; miss them and those things quietly stop working rather than raising an
 error.
 
@@ -124,7 +124,52 @@ Two optional files let you adjust how your theme looks when embedded:
 
 The Anari theme has both files, if you want an example.
 
-## 5. Work with the Appearance editor (optional)
+## 5. Give every page the same space at its edges
+
+Every page should have the same space between its content and the edges of the window, your header
+and your menu, whatever is on the page. Formulize has several types of screen (list of entries, form,
+template, calendar and map), and more will be added. None of them should look different from the
+others in this, and neither should the pages that are not screens, such as an application's menu
+page.
+
+Formulize doesn't supply that space, and no type of screen brings its own. Your theme does, in one
+place: put a wrapper around all the content in your `theme.html`, and give it padding.
+
+```html
+<main class="my-main">
+  <div class="my-page">
+    <{$icms_contents}>
+  </div>
+</main>
+```
+
+```css
+.my-page {
+  padding: var(--fz-page-padding);
+}
+```
+
+`--fz-page-padding` is the Appearance editor's Page padding, so the space follows that setting. Then
+there is nothing more to do: a new type of screen gets the space without any change to your theme,
+and a screen inside another (a template screen's code can call `displayForm` or `displayEntries`) is
+not inset twice, because neither has space of its own.
+
+Make the wrapper its own element, inside the part of your page that scrolls, and leave the scrolling
+part without padding. Then the wrapper is also the place to keep pages to a maximum width (section
+7), and anything your theme pins to the top or bottom of the scrolling part is not pushed in by it.
+
+Don't put the space on the parts of a screen instead, in your screen templates. A screen drawn with
+other templates would have none, and a screen inside another would have it twice.
+
+On a phone you may want less space, or want your list and form screens to use the whole width of the
+screen. Make the padding smaller there, and take it off only for the pages you mean. Lyris does both:
+see "The page frame" and "Mobile" in `themes/Lyris/css/style.css`. Content should never touch the
+edge of the screen, so anything that reaches the edge needs padding of its own inside it.
+
+If your embed stylesheet or your `embed-content.html` (above) is used, leave the space out there:
+the page your screen is embedded in supplies it.
+
+## 6. Work with the Appearance editor (optional)
 
 The [Appearance editor](/documentation/appearance_editor/) edits a theme's appearance on a preview of
 sample screens the theme provides (below): a theme without them can't be edited there. In simple
@@ -176,7 +221,7 @@ Lyris's samples, in `themes/Lyris/appearance_preview/`, are a complete example. 
 mode only, such as Anari (`themes/Anari/appearance_preview/`), only needs to mark its logo, as the
 `logo` part.
 
-## 6. Offer the Page width setting (optional)
+## 7. Offer the Page width setting (optional)
 
 The Page width setting, in the Appearance editor's site-wide settings, keeps
 pages to a maximum width on a wide screen, or lets them use the full width of the window. It sets
@@ -193,15 +238,40 @@ a width in pixels, or `100%` to start at full width. Lyris declares 1200 pixels:
 }
 ```
 
-Then use it as the maximum width of your content. Lyris makes list and form screens a column of that
-width, centred in the window, with each part of the screen a card in it: a list's title bar, its
-entries, a form, and a floating bar at the bottom for a list's pagination or a form's buttons. The
-column is centred in the window rather than beside the sidebar, so opening the sidebar doesn't move
-it unless it has to; the header's links stay at the window's edge; and phones are left full width. See
-the "Content width" section at the end of `themes/Lyris/css/style.css`.
+Then use it as the maximum width of your content, on the wrapper that has the space at the page's
+edges (section 5), so that every type of screen is kept to it and none needs anything of its own.
+Lyris makes its pages a column of that width, centred in the window. In it, each part of a list or a
+form is a card: a list's title bar, its entries, a form, and a floating bar at the bottom for a
+list's pagination or a form's buttons. The column is centred in the window rather than beside the
+sidebar, so opening the sidebar doesn't move it unless it has to; the header's links stay at the
+window's edge; and phones are left full width. See the "Content width" section at the end of
+`themes/Lyris/css/style.css`.
+
+If your theme has a menu beside the content and you want the column centred in the window, not in
+the space beside the menu, the wrapper is what makes that possible. The room to leave either side
+depends on how wide the content area is, and in CSS a percentage in an element's padding is measured
+against its parent, not itself. So the content area can't work it out for itself, but the wrapper
+inside it can: on the wrapper, `100%` is the content area's width.
+
+A page that fills the window and scrolls inside itself, as Lyris's lists and forms do, needs the
+wrapper to be exactly as tall as the scrolling part. Give the wrapper `min-height: 100%` for every
+page, and `height: 100%` only on the pages that fill the window. Every other page is then as tall as
+its content, and the page scrolls.
+
+On paper, take the wrapper's padding and height off again, with the rest of your theme's layout (see
+Printing, under For theme authors, in [Formulize UI](/documentation/formulize_ui/)).
+
+A screen can be set to use the full width whatever the site's setting is, on the screen's Appearance
+tab. Formulize sets `--formulize-content-max-width` to `100%` on that screen's page, so a theme that
+uses the property as above has nothing more to do.
 
 ## Checking your theme
 
 Open a long form in your theme, scroll down, and save it. You should be returned to where you were
 rather than to the top of the page. If you are not, the theme is either not firing
 `formulize_pageShown` or scrolling an element Formulize could not find.
+
+Open a screen of each type you have, and an application's menu page. On every one, the content should
+have the same space around it, not sit against the edge of the window or your header. If you have a
+template screen with a form or a list inside it, check that the form or list lines up with the rest of
+that page, not further in.

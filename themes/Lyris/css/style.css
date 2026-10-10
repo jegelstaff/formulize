@@ -221,22 +221,31 @@ h1, h2, h3, h4, h5, h6,
   background: var(--fz-color-page);
 }
 
-/* Simple / system pages (login, register, lostpass, ...) drop their raw
-   content straight into .lyris-main with no wrapper, so it butts against the
-   viewport edge. Give those pages a horizontal (and top) gutter. Formulize
-   app/list screens (body#formulize) are full-bleed by design — the titlebar,
-   list body and pagination manage their own insets — so they're excluded.
+/* ---- The page frame ----
+   Everything a page shows is inside `.lyris-page`, which theme.html puts around
+   the contents, in `.lyris-main`. It gives every page the same space at its
+   edges, the gutter, whatever is on the page: every type of screen, the ones
+   there are and the ones still to come, the module pages that are not screens
+   (an application's menu page), and the system pages (login, register, ...). A
+   screen needs nothing of its own to get it, and nothing here names a type of
+   screen. A screen that is inside another (a template screen's code can call
+   displayForm or displayEntries) has the page's gutter around it already, and
+   takes none of its own.
 
-   `.formulize-screen` is excluded for the same reason. A page can render a bare
-   Formulize screen while living outside the module — edituser.php is one, and its
-   body id is "system" — and that content manages its own insets too
-   (`.lyris-form-screen` takes a calc(var(--fz-spacing) * 5) side margin, `#multipage-controls` is
-   deliberately full-bleed). The body class is the theme's existing "this content
-   is a Formulize screen" signal, so keying off it covers those pages whatever
-   their body id is. Pages that merely embed a screen inside their own wrapper and
-   chrome (signup.php) never set the signal, so they keep the gutter. */
-body:not(#formulize):not(.formulize-screen) .lyris-main {
-  padding: var(--fz-page-padding) var(--fz-page-padding) 0;
+   The gutter is `--lyris-gutter`: the Appearance editor's Page padding, and
+   less on phones (see "Mobile", which also has the pages that use the whole
+   screen there). On wider screens the frame keeps Formulize's pages to the page
+   width as well, centred in the window (see "Content width", at the end of
+   this file).
+
+   `.lyris-main` is still the element that scrolls. The frame is at least as
+   tall as it, and exactly as tall on a page that fills the window and scrolls
+   inside itself: a list (see "List screen") and a form (see "Bottom-anchored
+   action bar"). */
+.lyris-page {
+  box-sizing: border-box;
+  min-height: 100%;
+  padding: var(--lyris-gutter);
 }
 
 /* Inline / drawer-iframe mode — header and sidebar suppressed via theme.html.
@@ -260,6 +269,14 @@ body:not(#formulize):not(.formulize-screen) .lyris-main {
 
 .formulize-inline .lyris-main {
   overflow: visible;
+}
+
+/* Whatever is around the content supplies the space here: the drawer's body, or
+   the page a screen is embedded in. And the frame is as tall as its content,
+   not the window, which in an embedded screen's frame is the content's height. */
+.formulize-inline .lyris-page {
+  min-height: 0;
+  padding: 0;
 }
 
 /* ============================================================
@@ -605,8 +622,17 @@ textarea {
    List screen
    ============================================================ */
 
-/* The core list wrappers (#listofentries > form#controls) sit between .lyris-main and
-   .lyris-list-screen. They must carry the height through so the screen can fill the
+/* A page that is a list fills the window: the page frame is exactly as tall as
+   the main scroll area, not just at least as tall, so the list has a height to
+   fill. A list inside something else on the page (a template screen's code can
+   call displayEntries) has no such ancestor, so it is as tall as its entries,
+   and the page scrolls. */
+body:not(.formulize-inline) .lyris-page:has(> #listofentries .lyris-list-screen) {
+  height: 100%;
+}
+
+/* The core list wrappers (#listofentries > form#controls) sit between the page frame
+   and .lyris-list-screen. They must carry the height through so the screen can fill the
    main scroll area and pin its footer; otherwise height:100% resolves against an
    auto-height parent and collapses to the content height. */
 #listofentries,
@@ -1128,6 +1154,50 @@ textarea {
     color: var(--fz-color-text-muted);
     user-select: none;
   }
+}
+
+/* ============================================================
+   Introductory text
+   ------------------------------------------------------------
+   A screen's introductory text (its Appearance tab), which the default
+   templates print above the screen's content: above a list's entries, at the
+   top of a form's card, under a map's heading. It is the administrator's own
+   markup, so only the space around it is set here.
+
+   It is never cut short: all of it is shown, however long it is, and it is
+   in what scrolls, so it scrolls out of the way as the reader moves on to the
+   rest of the screen. A form's fields and a map scroll with the page or the
+   form's card, and so does the text above them.
+   ============================================================ */
+
+/* In `:where()`, so these have no weight: the markup is the administrator's,
+   and a Formulize UI class on it (`fz-mt-4` on its first element, say) has to
+   win over what is only a default. */
+:where(.formulize-screen-intro) {
+  margin-bottom: calc(var(--fz-spacing) * 4);
+}
+
+:where(.formulize-screen-intro > :first-child) {
+  margin-top: 0;
+}
+
+:where(.formulize-screen-intro > :last-child) {
+  margin-bottom: 0;
+}
+
+/* In a list, the bars stay where they are and only the entries scroll, so it
+   is in with the entries, above the table: there in full when the list opens,
+   with the column headings under it, and scrolled away as the reader moves
+   down, when the headings reach the top and stay there. It has the padding
+   the entries' card doesn't, and stays put when a wide table is scrolled
+   sideways, since it is as wide as the card's visible part. */
+.lyris-list__intro {
+  position: sticky;
+  left: 0;
+  box-sizing: border-box;
+  margin: 0;
+  padding: var(--fz-card-padding);
+  border-bottom: 1px solid var(--fz-color-border);
 }
 
 /* ============================================================
@@ -1889,6 +1959,29 @@ body:has(#formulize-masquerade-block) {
     height: 1.5rem;
   }
 
+  /* ---- The page frame: a smaller gutter, and none on a list or a form ----
+     The gutter is no more than the side padding the header and the bars have
+     here, so what is on a page lines up with what is in them. */
+
+  :root {
+    --lyris-gutter: min(var(--fz-page-padding), calc(var(--fz-spacing) * 3));
+  }
+
+  /* A page that is a list or a form drawn with Lyris's templates uses the whole
+     screen: its bars, its entries and its card run edge to edge, and their own
+     padding keeps what is in them off the glass. This is the one place the
+     theme looks at what is on the page, and it goes by the markup those
+     templates print, at the top of the page, not by the type of screen: a list
+     or form drawn with other templates has no such parts, and keeps the gutter.
+
+     Bare content on such a page (the page-nav strip's pills) has no gutter
+     around it and no padding of its own, so it takes `--lyris-inset`, the
+     gutter this page would have had. */
+  body:not(.formulize-inline) .lyris-page:has(> #listofentries .lyris-list-screen, > #formulizeform .lyris-form-screen) {
+    --lyris-inset: var(--lyris-gutter);
+    padding: 0;
+  }
+
   /* ---- Right drawer: tighter body gutter (the component already makes it
      full-width and drops the resize handle at this breakpoint) ---- */
 
@@ -2512,101 +2605,70 @@ body:has(#formulize-masquerade-block) {
    where the form is SHORTER than the screen, nothing scrolls, so the bar just
    sat at its natural (mid-page) position — the reported large-resolution bug.
 
-   Fix: make the full-page form chain a flex column that fills `.lyris-main`, then
+   Fix: make the full-page form chain a flex column that fills the page frame
+   (`.lyris-page`, which is at least as tall as `.lyris-main`), then
    let the bar's `margin-top:auto` push it to the bottom of the filled column on
    short forms, while `position:sticky; bottom:0` keeps it pinned while long
    forms scroll. Both cases hold at any resolution.
 
-   Scope: `:has()` limits the flex-fill to `.lyris-main` instances that actually
-   contain a full-page form action bar (`#formulizeform ... .formulizeThemeForm
+   Scope: `:has()` limits the flex-fill to a page frame that actually
+   contains a full-page form action bar (`#formulizeform ... .formulizeThemeForm
    #multipage-controls`). List screens (no `#multipage-controls`) and the right
    drawer (its body is a separate elements-only endpoint that never renders
    `#multipage-controls`; it builds its own `.formulize-drawer__foot`) are untouched.
    `.formulize-inline` (drawer-iframe context) is excluded — that `.lyris-main` is
    `overflow:visible` and lays out in normal page flow. */
 
-body:not(.formulize-inline) .lyris-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) {
+body:not(.formulize-inline) .lyris-page:has(> #formulizeform .formulizeThemeForm #multipage-controls) {
   display: flex;
   flex-direction: column;
 }
 
-body:not(.formulize-inline) .lyris-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform {
+body:not(.formulize-inline) .lyris-page:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform {
   flex: 1 0 auto;
   display: flex;
   flex-direction: column;
   min-height: 0;
 }
 
-body:not(.formulize-inline) .lyris-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform > .formulizeThemeForm {
+body:not(.formulize-inline) .lyris-page:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform > .formulizeThemeForm {
   flex: 1 0 auto;
   display: flex;
   flex-direction: column;
 }
 
-/* ---------- Horizontal gutter for form-screen content (review item B) ----------
-   `.lyris-form-screen` (the form card) and `#pageNavTable` (the multipage page-nav
-   strip) are laid out full width inside `.lyris-main`, so they butted flush against
-   the left/right container edges. Inset them by the same outer gutter (calc(var(--fz-spacing) * 5),
-   20px — the same horizontal gutter the list-screen title/footer bars use) so
-   they breathe from the container sides and stay visually aligned with each other.
+/* ---------- Space around the form card ----------
+   The page frame (`.lyris-page`) supplies the space at the page's edges, so the
+   form card, the page-nav strip and the action bar take none of their own
+   there. What is left is the space between them.
 
-   Deliberately EXCLUDED: `#multipage-controls` (the bottom-anchored action bar).
-   Like the list-screen sticky footer (`.lyris-list__footer`) and the drawer footer
-   (`.formulize-drawer__foot`), that bar is meant to be full-bleed — it spans edge-to-edge
-   of `.lyris-main` with its own inner `padding` (calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 6)) providing the
-   content inset. Adding a side margin here gave it an unwanted gutter, so it is
-   left out of this rule.
+   The card keeps a gutter below it, so that scrolled to the end, the last field
+   never sits against the action bar. The margin is outside the card, so it is
+   page background above the bar, and because the bar is a normal (sticky) item
+   at the end of the flex column, nothing is ever hidden behind it.
 
-   Scoped to `body:not(.formulize-inline) .lyris-main` (the same guard the sticky action-bar
-   fix uses): list screens have no `.lyris-form-screen`, and when a form renders in
-   the right drawer / inline iframe (`.formulize-inline`, body padded by
-   `.formulize-drawer__body { padding: calc(var(--fz-spacing) * 5) }`) we must NOT add a second gutter — so the
-   drawer and its `.formulize-drawer__foot` are unaffected. */
-body:not(.formulize-inline) .lyris-main .lyris-form-screen,
-body:not(.formulize-inline) .lyris-main #pageNavTable,
-body:not(.formulize-inline) .lyris-main .pageNavTable {
-  margin-left: var(--fz-page-padding);
-  margin-right: var(--fz-page-padding);
+   Scoped to `body:not(.formulize-inline) .lyris-main` (the same guard the sticky
+   action-bar fix uses), so a form in the right drawer or an inline frame is
+   unaffected. */
+body:not(.formulize-inline) .lyris-main .lyris-form-screen {
+  margin-bottom: var(--lyris-gutter);
 }
 
 /* The page-nav strip keeps a zero bottom margin: when it is the sticky
    `.pill-tabs` bar its own `padding-bottom` supplies the space below the pills
    (and the `::after` separator has to anchor to the true bottom edge), so an
    outer margin here would open a gap of scrolled content between the pinned
-   strip and the form card. */
+   strip and the form card.
+
+   Its side padding is `--lyris-inset`, which is 0 except on a phone, where a
+   form page's frame has no gutter and the strip runs edge to edge: the pills
+   are kept in from the glass, and the strip's background still spans the
+   screen while it is pinned. */
 body:not(.formulize-inline) .lyris-main #pageNavTable,
 body:not(.formulize-inline) .lyris-main .pageNavTable {
   margin-bottom: 0;
-}
-
-/* ---------- Vertical gutter for the form card (issue #121 items 1 and 3) ----
-   `.lyris-main` on a form screen has no padding of its own, so the form card was
-   flush against both ends of the scroll area.
-
-   Bottom (item 3): the card butted directly against the sticky
-   `#multipage-controls` action bar — scrolled to the end, the last field sat
-   0px from the bar's top edge. A bottom margin gives the card the same
-   breathing room from the bar that it already has from the container sides.
-   The margin is outside the card, so it is transparent page background above
-   the bar, and because the bar is a normal (sticky) item at the end of the
-   flex column, nothing is ever hidden behind it.
-
-   Top (item 1): only screens that render top-level tabs got any top spacing,
-   and they got it from the sticky strip's own `padding-top` — the card is the
-   strip's next sibling. On a screen with no tabs (e.g. sid 1009) the card
-   started at the very top of the scroll area. Give it the same gutter, but
-   ONLY when there is no nav strip above it, so tabbed screens keep the pinned
-   strip flush at `top: 0` and are left exactly as they were.
-
-   Both use calc(var(--fz-spacing) * 5), the same token as the horizontal gutter above, so the card
-   is inset by one consistent value on all four sides and the spacing does not
-   depend on the form's density tokens (which issue #113 / PR #116 changes). */
-body:not(.formulize-inline) .lyris-main .lyris-form-screen {
-  margin-bottom: var(--fz-page-padding);
-}
-
-body:not(.formulize-inline) .lyris-main:not(:has(#pageNavTable, .pageNavTable)) .lyris-form-screen {
-  margin-top: var(--fz-page-padding);
+  padding-left: var(--lyris-inset);
+  padding-right: var(--lyris-inset);
 }
 
 #multipage-controls {
@@ -2631,6 +2693,13 @@ body:not(.formulize-inline) .lyris-main:not(:has(#pageNavTable, .pageNavTable)) 
   z-index: 5;
   background: var(--fz-color-surface);
   box-shadow: 0 -1px 0 var(--fz-color-border), var(--fz-shadow-sm);
+}
+
+/* A form with every button turned off (they can all be set to {NOBUTTON}, and the
+   form can supply its own buttons as elements) still gets the bar, with nothing
+   in it. Without this it shows as an empty floating strip under the form. */
+#multipage-controls:not(:has(*)) {
+  display: none;
 }
 
 /* Page meta inside the action bar: "Page X of Y" indicator and the jump-to
@@ -2689,10 +2758,10 @@ body:not(.formulize-inline) .lyris-main:not(:has(#pageNavTable, .pageNavTable)) 
    defeat `position:sticky`). Pin the tabs to the top of that scroll area so
    they stay reachable while a long form body scrolls.
 
-   `top:0`: `.lyris-main` for a form screen (`body#formulize`) has no top padding,
-   and the app header lives OUTSIDE `.lyris-main` (it is a sibling above
+   `top:0`: the app header lives OUTSIDE `.lyris-main` (it is a sibling above
    `.lyris-app__body`), so 0 is flush with the top of the scroll viewport — no
-   fixed/sticky header sits above it inside this container.
+   fixed/sticky header sits above it inside this container. The page frame's
+   top gutter is above the strip until the page scrolls, and scrolls away.
 
    `z-index:4`: above scrolling form fields (the admin "edit element" link is
    z-index 2) but below the sticky bottom action bar `#multipage-controls`
@@ -2704,9 +2773,10 @@ body:not(.formulize-inline) .lyris-main:not(:has(#pageNavTable, .pageNavTable)) 
    scrolling content would show through once pinned. Paint it with the page
    background and reveal a hairline + soft shadow along its bottom edge as the
    form scrolls underneath — a "separator that fades in on scroll".
-   Negative side margins on the ::after let the separator span the full width
-   of the scroll area even though the strip itself keeps the 20px content
-   gutter shared with the form card.
+   Negative side offsets on the ::after let the separator span the page's
+   gutter as well as the strip, which sits inside it: the gutter, less the
+   strip's own side padding (`--lyris-inset`), which is all of it on a phone,
+   where the strip already runs edge to edge.
 
    Issue #121 item 2: this used to be driven by a scroll-driven animation
    (`animation-timeline: scroll(nearest block)`) behind an
@@ -2743,8 +2813,8 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs {
 body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs::after {
   content: "";
   position: absolute;
-  left: calc(-1 * calc(var(--fz-spacing) * 5));
-  right: calc(-1 * calc(var(--fz-spacing) * 5));
+  left: calc(var(--lyris-inset) - var(--lyris-gutter));
+  right: calc(var(--lyris-inset) - var(--lyris-gutter));
   bottom: 0;
   height: 1px;
   background: var(--fz-color-border);
@@ -3476,6 +3546,14 @@ input[type="time"] { font-family: var(--fz-font-sans); }
 
   .lyris-form-card__header {
     padding: calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 4);
+  }
+
+  /* The card of a form that is the page runs edge to edge (see "The page
+     frame" in the Mobile section above): no sides to draw, or corners to round. */
+  body:not(.formulize-inline) .lyris-page > #formulizeform .lyris-form-screen {
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0;
   }
 
   /* Left-label two-column layout collapses to stacked single-column (label
@@ -4620,8 +4698,12 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
    ------------------------------------------------------------
    --formulize-content-max-width (css/tokens.css) is how wide a page can get:
    1200px, unless the Appearance editor's Page width sets another width, or
-   100%, full width. List and form screens keep their content to a column of
-   that width, centred in the window, with the page background either side.
+   100%, full width. A screen can be set to use the full width on its own (the
+   screen's Appearance tab), which makes it 100% on that screen's page. The
+   page frame (`.lyris-page`, see "The page frame") keeps Formulize's pages to a
+   column of that width, centred in the window, with the page background either
+   side. Every type of screen is in the column, and needs nothing of its own to
+   be: nothing here names one.
 
    The column is centred in the WINDOW, not in the space beside the sidebar, so
    opening or closing the sidebar doesn't move it, as long as there is room for
@@ -4634,14 +4716,15 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
 
      max(0px, 100% - (100vw + max width) / 2)
 
-   where 100% is `.lyris-main`'s width, wherever it is used. Measured that way it
-   follows the sidebar's width as it opens and closes, so the column stays still
-   while the sidebar slides, instead of jumping and sliding back. Each screen
-   takes it, and the room to the column's right, as side padding (the column's
-   own gutters are the children's margins, as on phones). At full width both are
-   0px, and the column is `.lyris-main`.
+   where 100% is `.lyris-main`'s width, which is what a percentage in the
+   frame's padding is measured against. Measured that way it follows the
+   sidebar's width as it opens and closes, so the column stays still while the
+   sidebar slides, instead of jumping and sliding back. The frame takes it, and
+   the room to the column's right (`--lyris-column-end`), as side padding, with
+   its gutter on top, which is inside the column. At full width both are 0px,
+   and the column is `.lyris-main`.
 
-   In the column, everything is a card on the page background:
+   In the column, a list and a form are cards on the page background:
    - a list's title bar is a card of its own, and the selection bar, while rows
      are checked, covers it exactly: the same place, size and corners;
    - a list's entries are in a card as tall as they are, which scrolls inside
@@ -4658,27 +4741,28 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
 
    Not on phones (768px and under), where pages use the whole screen, the bars
    run edge to edge, and a form scrolls the page; and not in the drawer or an
-   embedded screen (`.formulize-inline`). Pages outside list and form screens
-   (the home page, account pages) are left at full width.
+   embedded screen (`.formulize-inline`). The system's own pages (login, account
+   pages) are left at full width.
    ============================================================ */
 @media (min-width: 769px) {
 
   .lyris-app {
     --lyris-column-start: max(0px, 100% - (100vw + var(--formulize-content-max-width)) / 2);
+    --lyris-column-end: max(0px, 100% - var(--lyris-column-start) - var(--formulize-content-max-width));
   }
 
-  /* the column: each screen's side padding. 100% is `.lyris-main`'s width, and
-     the max width can be 100% too, which leaves 0px either side */
-  body:not(.formulize-inline) .lyris-list-screen,
-  body:not(.formulize-inline) .lyris-main > #formulizeform > .formulizeThemeForm {
-    box-sizing: border-box;
-    padding-left: var(--lyris-column-start);
-    padding-right: max(0px, 100% - var(--lyris-column-start) - var(--formulize-content-max-width));
+  /* the column: the frame's side padding, with its gutter on top. 100% is
+     `.lyris-main`'s width, and the max width can be 100% too, which leaves 0px
+     either side */
+  body:is(#formulize, .formulize-screen):not(.formulize-inline) .lyris-page {
+    padding-left: calc(var(--lyris-column-start) + var(--lyris-gutter));
+    padding-right: calc(var(--lyris-column-end) + var(--lyris-gutter));
   }
 
   /* ---- a list ---- */
 
-  /* the title bar, a card of its own; the selection bar takes its place */
+  /* the title bar, a card of its own; the selection bar takes its place (it is
+     placed over the top of the list, where the title bar is) */
   body:not(.formulize-inline) .lyris-list__titlebar,
   body:not(.formulize-inline) .lyris-selection-bar {
     box-sizing: border-box;
@@ -4689,25 +4773,22 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
   }
 
   body:not(.formulize-inline) .lyris-list__titlebar {
-    margin: var(--fz-page-padding) var(--fz-page-padding) 0;
     background: var(--fz-toolbar-bg);
     border: 1px solid var(--fz-card-border);
     box-shadow: var(--fz-shadow-sm);
   }
 
   body:not(.formulize-inline) .lyris-selection-bar {
-    top: var(--fz-page-padding);
-    left: calc(var(--lyris-column-start) + var(--fz-page-padding));
-    right: calc(max(0px, 100% - var(--lyris-column-start) - var(--formulize-content-max-width)) + var(--fz-page-padding));
     border: 1px solid var(--fz-color-text);
   }
 
   /* the entries, in a card as tall as they are, up to the space above the footer.
      It has no padding of its own, so the rows, their lines and the sticky column
-     headings reach its edges */
+     headings reach its edges. Its margin is the space between it and the bars
+     above and below, not space at the page's edges, which the frame supplies */
   body:not(.formulize-inline) .lyris-list__body {
     flex: 0 1 auto;
-    margin: var(--fz-page-padding);
+    margin: var(--lyris-gutter) 0;
     background: var(--fz-card-bg);
     border: 1px solid var(--fz-card-border);
     border-radius: var(--fz-card-radius);
@@ -4716,16 +4797,21 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
 
   /* ---- a form ---- */
 
-  /* the form fills `.lyris-main`, and its card scrolls inside itself, so the
-     page itself never scrolls (the chain is the one under "Bottom-anchored
-     action bar", there allowed to grow past `.lyris-main`) */
-  body:not(.formulize-inline) .lyris-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform,
-  body:not(.formulize-inline) .lyris-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform > .formulizeThemeForm {
+  /* a page that is a form fills the window: the frame is exactly as tall as
+     `.lyris-main`, the form fills the frame, and its card scrolls inside itself,
+     so the page itself never scrolls (the chain is the one under
+     "Bottom-anchored action bar", there allowed to grow past `.lyris-main`) */
+  body:not(.formulize-inline) .lyris-page:has(> #formulizeform .formulizeThemeForm #multipage-controls) {
+    height: 100%;
+  }
+
+  body:not(.formulize-inline) .lyris-page:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform,
+  body:not(.formulize-inline) .lyris-page:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform > .formulizeThemeForm {
     flex: 1 1 auto;
     min-height: 0;
   }
 
-  body:not(.formulize-inline) .lyris-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform > .formulizeThemeForm > .lyris-form-screen {
+  body:not(.formulize-inline) .lyris-page:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform > .formulizeThemeForm > .lyris-form-screen {
     flex: 0 1 auto;
     min-height: 0;
     overflow-x: hidden; /* a form never needs to; something hidden past its edge, such as a rich text editor's tooltip, mustn't make it */
@@ -4733,20 +4819,28 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
   }
 
   /* the card's header and body keep their height, and the card scrolls */
-  body:not(.formulize-inline) .lyris-main:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform > .formulizeThemeForm > .lyris-form-screen > * {
+  body:not(.formulize-inline) .lyris-page:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform > .formulizeThemeForm > .lyris-form-screen > * {
     flex-shrink: 0;
+  }
+
+  /* the page-nav strip, above the card: the page doesn't scroll here, so it is
+     never pinned, and the frame's gutter is the space above it */
+  body:not(.formulize-inline) .lyris-page:has(> #formulizeform .formulizeThemeForm #multipage-controls) > #formulizeform #pageNavTable.pill-tabs {
+    position: relative;
+    padding-top: 0;
   }
 
   /* ---- the floating bar: a list's footer, a form's actions ----
      Both are toolbars, as the list's title bar is: the toolbar's background and
-     side padding (the appearance editor's Toolbar part) */
+     side padding (the appearance editor's Toolbar part). The frame's gutter is
+     the space below and beside them */
   body:not(.formulize-inline) .lyris-main #multipage-controls {
     padding: calc(var(--fz-spacing) * 3) var(--fz-toolbar-padding-x);
   }
 
   body:not(.formulize-inline) .lyris-list__footer,
   body:not(.formulize-inline) .lyris-main #multipage-controls {
-    margin: auto var(--fz-page-padding) var(--fz-page-padding);
+    margin-top: auto;
     background: var(--fz-toolbar-bg);
     border: 1px solid var(--fz-card-border);
     border-radius: var(--fz-card-radius);
@@ -4783,6 +4877,7 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
   .lyris-app,
   .lyris-app__body,
   .lyris-main,
+  .lyris-page,
   #listofentries,
   #listofentries #controls,
   .lyris-list-screen,
@@ -4797,6 +4892,13 @@ body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
   .lyris-main {
     padding: 0 !important;
     background: none;
+  }
+
+  /* the page frame has the gutter and the page-width column on screen (see "The
+     page frame"), and is at least as tall as the window: none of that on paper */
+  .lyris-page {
+    min-height: 0 !important;
+    padding: 0 !important;
   }
 
 }

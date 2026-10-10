@@ -26,6 +26,6 @@ print "
         }
 
         print "
-        <div class='card__body'>
+        <div class='card__body'>".($introductoryText ? "<div class='formulize-screen-intro ck-content'>$introductoryText</div>" : "")."
             <div class='form-container'>
 ";

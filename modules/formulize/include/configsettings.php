@@ -205,6 +205,9 @@ function formulize_configFormElementHtml($config) {
         case 'aitools':
             return formulize_configAiToolsFieldHtml($name, $value);
 
+        case 'screenwidths':
+            return formulize_configScreenWidthsFieldHtml($name, $value);
+
         case 'yesno':
             $ele = new icms_form_elements_Radioyn('', $name, $value, _YES, _NO);
             break;
@@ -452,6 +455,39 @@ function formulize_configAiToolsFieldHtml($name, $value) {
     }
     $html .= "</div>";
 
+    return $html;
+}
+
+/**
+ * Render the page width that each type of screen starts with: a row for each type, with a dropdown,
+ * as wide as the look allows or the full width of the window.
+ *
+ * The types come from the screen classes (formulize_getScreenTypes), so a new type of screen is listed
+ * here as soon as it exists, and the setting is one array, type => width, however many types there
+ * are. A type the site has never chosen for shows its class's own default. Every row always posts, so
+ * the setting is never saved empty (see formulize_configAiToolsFieldHtml for why that matters).
+ *
+ * @param string $name The conf_name (formulizeScreenWidthDefaults)
+ * @param mixed $value The stored choices, type => 'look' or 'full'
+ * @return string HTML for the control
+ */
+function formulize_configScreenWidthsFieldHtml($name, $value) {
+    include_once XOOPS_ROOT_PATH . '/modules/formulize/class/screen.php';
+    formulize_configSettingsRegistry(); // defines the _AM_CFG_* strings used below
+
+    $safeName = htmlspecialchars($name);
+    $html = "<div class='formulize-config-screenwidths'>";
+    foreach (formulize_getScreenTypes() as $type => $info) {
+        $safeType = htmlspecialchars($type);
+        $width = formulize_defaultPageWidthForScreenType($type);
+        $html .= "<div class='formulize-config-screenwidths__row'>"
+            . "<label for='{$safeName}_{$safeType}'>" . htmlspecialchars($info['name']) . "</label> "
+            . "<select id='{$safeName}_{$safeType}' name='{$safeName}[{$safeType}]'>"
+            . "<option value='look'" . ($width == 'look' ? " selected='selected'" : '') . ">" . _AM_CFG_SCREENWIDTH_LOOK . "</option>"
+            . "<option value='full'" . ($width == 'full' ? " selected='selected'" : '') . ">" . _AM_CFG_SCREENWIDTH_FULL . "</option>"
+            . "</select></div>";
+    }
+    $html .= "</div>";
     return $html;
 }
 

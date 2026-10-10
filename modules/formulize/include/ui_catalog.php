@@ -216,9 +216,11 @@ function formulize_uiCatalog() {
                 'name' => 'Where you can use it',
                 'summary' => 'Anywhere Formulize outputs your HTML, in any theme.',
                 'notes' => array(
-                    'List screen and form screen templates, and template screens.',
+                    'The templates of any type of screen: list and form screens, template screens, and the rest.',
                     'Derived values whose value is HTML, and Full Width Content and Captioned Content elements (under Text for display).',
+                    'A screen\'s introductory text, on its Appearance tab. Choose Edit as code there: the rich text editor keeps its own formatting, not classes.',
                     'A theme\'s own templates and stylesheets.',
+                    'The theme puts the same space around every page, whatever type of screen is on it, and keeps the page to the site\'s page width. So nothing you write for a screen needs space of its own at the edges of the page, or a width to keep to: start at the edge of what you are given.',
                     'In Lyris the classes match the rest of the interface. In older themes, such as Anari, they use that theme\'s colours and fonts but may not match its other styles.',
                     'AI tools connected to Formulize through MCP can read this whole reference: it is the `formulize_ui` topic of the `get_documentation` tool, which is available to users who can write custom code.',
                 ),
@@ -491,6 +493,9 @@ HTML
                 'id' => 'container',
                 'name' => 'Container',
                 'summary' => 'Centres content at a comfortable maximum width, with space at the sides.',
+                'notes' => array(
+                    'A screen doesn\'t need one to keep to the page: the theme already gives every page its space at the edges and its width. Use a container for something that should be narrower than the page it is on, such as text to read (`fz-container--narrow`). It adds space at its own sides, so what is in it sits a little further in than the rest of the page.',
+                ),
                 'classes' => array(
                     'fz-container' => 'At most 72rem wide, centred.',
                     'fz-container--narrow' => 'At most 42rem: for forms and reading.',
@@ -1341,6 +1346,9 @@ CODE
                 'id' => 'recipe-form-intro',
                 'name' => 'An introduction to a form',
                 'summary' => 'Instructions at the top of a form, set apart from the fields. Put the HTML in a Full Width Content element, under Text for display.',
+                'notes' => array(
+                    'For instructions above a whole screen, of any type, put the same HTML in the screen\'s introductory text, on its Appearance tab, edited as code. Nothing has to be added to the form, and a list, a map or a calendar can have one too.',
+                ),
                 'example' => <<<'HTML'
 <div class="fz-callout">
   <p class="fz-callout__title">Before you start</p>
@@ -1354,7 +1362,7 @@ HTML
                 'summary' => 'A template screen that sums up a form\'s entries, with a count for each status in a row of cards. The template screen\'s code gathers the numbers; its template lays them out.',
                 'notes' => array(
                     'In the template, `<{$name}>` prints a variable the code set. The values are prepared in the code, escaped, so the template only arranges them.',
-                    '`fz-container` centres the dashboard and gives it space at the sides, since a template screen has only what its template gives it.',
+                    'The theme puts the usual space around the edges of the page, and keeps the page to the site\'s page width, so the template needs neither: it starts at the edge of what it is given, and lines up with the list and form screens beside it. No `fz-container` is needed.',
                 ),
                 'example' => <<<'HTML'
 <div class="fz-stack fz-gap-6">
@@ -1392,7 +1400,7 @@ CODE
                     array(
                         'label' => 'Template screen template',
                         'code' => <<<'CODE'
-<div class="fz-container fz-py-6 fz-stack fz-gap-6">
+<div class="fz-stack fz-gap-6">
   <div class="fz-toolbar">
     <div class="fz-toolbar__start"><h2 class="fz-text-xl fz-font-semibold">Applications</h2></div>
   </div>
@@ -1409,7 +1417,7 @@ CODE
     $sections[] = array(
         'id' => 'themes',
         'title' => 'For theme authors',
-        'intro' => 'How a theme works with Formulize UI: giving the tokens its values, loading the stylesheet, and keeping its own rules from getting in the way of the classes.',
+        'intro' => 'How a theme works with Formulize UI: giving the tokens its values, loading the stylesheet, keeping its own rules from getting in the way of the classes, and framing the page that everything is on.',
         'entries' => array(
             array(
                 'id' => 'theme-tokens',
@@ -1478,6 +1486,42 @@ button:where(:not([class*="fz-"])),
 input[type="submit"]:where(:not([class*="fz-"])) {
   min-width: 8rem;
   border-radius: 0;
+}
+CODE
+                    ),
+                ),
+            ),
+            array(
+                'id' => 'theme-frame',
+                'name' => 'Framing the page',
+                'summary' => 'The space at the edges of a page, and how wide a page can get, are the theme\'s to supply, in one place, for every page. No type of screen brings its own, and what people write for a screen starts at the edge of what the theme gives it.',
+                'notes' => array(
+                    'Put one wrapper around all of a page\'s content in `theme.html`, and give it `padding: var(--fz-page-padding)`, the Appearance page\'s Page padding. Every type of screen then has the same space, including the types added later, and a screen inside another is not inset twice.',
+                    'To offer the Page width setting, keep the same wrapper to `--formulize-content-max-width`. A screen set to the full width has that property at `100%` on its own page.',
+                    'Make the wrapper its own element, inside the part of the page that scrolls, and leave the scrolling part without padding.',
+                    'Don\'t put the page\'s space on the parts of a screen, in screen templates: a screen drawn with other templates would have none.',
+                    'On a phone the space can be smaller, and a screen made of bars and cards can run to the edges of the screen, as long as nothing in it touches them.',
+                    'The whole of this, with what Lyris does, is in What Formulize expects from a theme, in the documentation.',
+                ),
+                'code' => array(
+                    array(
+                        'label' => 'In theme.html',
+                        'code' => <<<'CODE'
+<main class="mytheme-content">
+  <div class="mytheme-page">
+    <{$icms_contents}>
+  </div>
+</main>
+CODE
+                    ),
+                    array(
+                        'label' => 'In the theme\'s stylesheet',
+                        'code' => <<<'CODE'
+.mytheme-page {
+  box-sizing: border-box;
+  max-width: var(--formulize-content-max-width);
+  margin-inline: auto;
+  padding: var(--fz-page-padding);
 }
 CODE
                     ),

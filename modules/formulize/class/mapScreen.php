@@ -35,6 +35,12 @@ require_once XOOPS_ROOT_PATH.'/modules/formulize/class/screen.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 class formulizeMapScreen extends formulizeScreen {
+
+	// see formulizeScreen::screenTypeName
+	public static function screenTypeName() {
+		return defined('_AM_SCREEN_SETTINGS_KIND_MAP') ? _AM_SCREEN_SETTINGS_KIND_MAP : 'Map'; // not every language has it
+	}
+
     function __construct() {
         parent::__construct();
         $this->initVar("dobr", XOBJ_DTYPE_INT, 1, false);

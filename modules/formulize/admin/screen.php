@@ -51,6 +51,7 @@ $settings['passcodes'] = $passcode_handler->getThisScreenPasscodes($screen_id);
 $config_handler = $config_handler = xoops_gethandler('config');
 $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 $settings['embeddingAllowed'] = formulize_embeddingAllowed(); // a new screen has this question too
+$settings['screenTypes'] = formulize_getScreenTypes();
 if ($screen_id == "new") {
     $settings['type'] = 'listOfEntries';
     $settings['frid'] = 0;
@@ -642,6 +643,64 @@ if(!file_exists($themeDefaultPath)) {
     $templates['seedtemplates'] = str_replace($themeFolder.'/default', 'default', $themeDefaultPath);
 }
 
+// the Appearance tab: the look and the width of the screen's page, and its introductory text. The looks
+// are the site theme's, since that is the theme the screen's page is shown in, not the admin's
+$appearance = array();
+if ($screen_id != "new") {
+    include_once XOOPS_ROOT_PATH . '/modules/formulize/include/appearance.php';
+    $appearanceTheme = formulize_getDefaultAppearanceTheme();
+    $appearance['looks'] = array();
+    $appearance['siteLookLabel'] = '';
+    $appearance['siteLook'] = '';
+    $appearance['editorUrl'] = '';
+    $appearance['usesWidth'] = false;
+    if ($appearanceTheme AND formulize_themeSupportsAppearance($appearanceTheme)) {
+        $looks = formulize_getAppearanceLooks($appearanceTheme);
+        $siteAppearance = formulize_getAppearanceSettings($appearanceTheme);
+        $siteLook = ($siteAppearance['appearance_look'] !== '' AND isset($looks[$siteAppearance['appearance_look']])) ? $siteAppearance['appearance_look'] : 'default';
+        foreach ($looks as $lookKey => $look) {
+					if($lookKey != $siteLook) {
+          	$appearance['looks'][$lookKey] = htmlspecialchars($look['name']);
+					}
+        }
+        $appearance['siteLookLabel'] = sprintf(_AM_SCREEN_APPEARANCE_LOOK_SITE, htmlspecialchars(isset($looks[$siteLook]) ? $looks[$siteLook]['name'] : ''));
+        $appearance['siteLook'] = $siteLook;
+        $appearance['editorUrl'] = formulize_getAppearanceEditorUrl($appearanceTheme);
+        $appearance['usesWidth'] = formulize_appearanceThemeUsesContentWidth($appearanceTheme);
+    }
+    // a look that has since been deleted is shown as the site's, which is what the page falls back to
+    $appearance['look'] = isset($appearance['looks'][$screen->getVar('look')]) ? $screen->getVar('look') : '';
+    $appearance['pagewidth'] = $screen->getVar('pagewidth') == 'full' ? 'full' : 'look';
+    $screenTypes = formulize_getScreenTypes();
+    $appearance['hasIntroText'] = isset($screenTypes[$settings['type']]) ? $screenTypes[$settings['type']]['introtext'] : true;
+    $appearance['toptext'] = htmlspecialchars((string) $screen->getVar('toptext', 'n'));
+    $appearance['toptextcode'] = $screen->getVar('toptextcode') ? 1 : 0;
+    $appearance['type'] = $settings['type'];
+    // A screen's templates are part of how it looks, so they are a sub-tab of Appearance, beside its options.
+    // Not on a template screen, whose template is the screen itself, and keeps a tab of its own.
+    $templatesTabs = array(
+        'listOfEntries' => array('db:admin/screen_list_templates.html', _AM_FORM_SCREEN_TEMPLATES),
+        'form' => array('db:admin/screen_form_templates.html', _AM_FORM_SCREEN_TEMPLATES),
+        'multiPage' => array('db:admin/screen_multipage_templates.html', _AM_FORM_SCREEN_TEMPLATES),
+        'calendar' => array('db:admin/screen_calendar_templates.html', _AM_CAL_SCREEN_TEMPLATES),
+        'map' => array('db:admin/screen_map_templates.html', _AM_FORM_SCREEN_TEMPLATES),
+    );
+    $appearance['templatesTemplate'] = '';
+    $appearance['templatesName'] = '';
+    $appearance['subtab'] = 0;
+    if (isset($templatesTabs[$settings['type']])) {
+        list($appearance['templatesTemplate'], $appearance['templatesName']) = $templatesTabs[$settings['type']];
+        // back on the sub-tab that was open, after a reload; or on Templates when it is asked for by name,
+        // as the top-level tab it used to be (ui.php finds no tab by that name, so leaves this choice alone)
+        if (isset($_POST['appearance_subtab']) AND $_POST['appearance_subtab'] !== '') {
+            $appearance['subtab'] = intval($_POST['appearance_subtab']) ? 1 : 0;
+        } elseif (isset($_GET['tab']) AND $_GET['tab'] == 'templates') {
+            $appearance['subtab'] = 1;
+            $adminPage['tabselected'] = 1; // Appearance, the second tab
+        }
+    }
+}
+
 // common values should be assigned to all tabs
 $common['name'] = $screenName;
 $common['title'] = $screenName; // oops, we've got two copies of this data floating around...standardize sometime
@@ -668,6 +727,12 @@ $adminPage['tabs'][1] = array(
 
 
 if ($screen_id != "new") {
+    $appearance['templates'] = $templates + $common;
+    $adminPage['tabs'][] = array(
+        'name'      => _AM_SCREEN_APPEARANCE,
+        'template'  => "db:admin/screen_appearance.html",
+        'content'   => $appearance + $common
+    );
     $adminPage['tabs'][] = array(
         'name' => _AM_APP_RELATIONSHIPS,
         'template' => "db:admin/screen_relationships.html",
@@ -680,11 +745,6 @@ if ($screen_id != "new" && $settings['type'] == 'form') {
         'name'      => _AM_ELE_OPT,
         'template'  => "db:admin/screen_form_options.html",
         'content'   => $options + $common
-    );
-     $adminPage['tabs'][] = array(
-        'name'      => _AM_FORM_SCREEN_TEMPLATES,
-        'template'  => "db:admin/screen_form_templates.html",
-        'content'   => $templates + $common
     );
 
 }
@@ -708,11 +768,6 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
         'content'   => $multipagePages + $common
     );
 
-    $adminPage['tabs'][] = array(
-        'name'      => _AM_FORM_SCREEN_TEMPLATES,
-        'template'  => "db:admin/screen_multipage_templates.html",
-        'content'   => $templates + $common
-    );
 }
 
 if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
@@ -740,11 +795,6 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
         'content'   => $custom + $common
     );
 
-    $adminPage['tabs'][] = array(
-        'name'      => _AM_FORM_SCREEN_TEMPLATES,
-        'template'  => "db:admin/screen_list_templates.html",
-        'content'   => $templates + $common
-    );
 }
 
 
@@ -768,11 +818,6 @@ if ($screen_id != "new" && $settings['type'] == 'calendar') {
         'content'   => $data + $common
     );
 
-    $adminPage['tabs'][] = array(
-        'name'      => _AM_CAL_SCREEN_TEMPLATES,
-        'template'  => "db:admin/screen_calendar_templates.html",
-        'content'   => $templates + $common
-    );
 }
 
 if ($screen_id != "new" && $settings['type'] == 'map') {
@@ -782,11 +827,6 @@ if ($screen_id != "new" && $settings['type'] == 'map') {
         'content'   => $mapSettings + $common
     );
 
-    $adminPage['tabs'][] = array(
-        'name'      => _AM_FORM_SCREEN_TEMPLATES,
-        'template'  => "db:admin/screen_map_templates.html",
-        'content'   => $templates + $common
-    );
 }
 
 

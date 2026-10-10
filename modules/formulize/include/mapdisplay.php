@@ -342,6 +342,8 @@ HTML;
         'title'              => $title,
         'filters'            => $filters,
         'filter_button_text' => $filter_button_text,
+        // the screen's introductory text, from its Appearance tab, which the default top template prints
+        'introductoryText'   => $screen ? $screen->introductoryText() : '',
     ));
     echo "</form>\n";
     formulize_screenMapTemplate($screen, 'map', array('renderedMap' => $renderedMap));

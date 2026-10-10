@@ -2452,6 +2452,16 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
+/* Default Screen Widths: a row for each type of screen, its name beside its dropdown */
+.formulize-config-settings .formulize-config-screenwidths__row {
+	display: flex;
+	align-items: center;
+	gap: 0.8em;
+	margin-bottom: 0.4em;
+}
+.formulize-config-settings .formulize-config-screenwidths__row label {
+	min-width: 9em;
+}
 .formulize-config-settings .formulize-config-aitools-empty {
 	font-size: 0.9em;
 	color: #777;

@@ -4563,6 +4563,9 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 
 	$publishedFilters = is_array($settings['pubfilters']) ? $settings['pubfilters'] : array();
 
+	// the screen's introductory text, from its Appearance tab, which the default top template prints
+	$introductoryText = $screen ? $screen->introductoryText() : '';
+
 	$thisTemplate = getTemplateToRender($type.'template', $screenOrScreenType);
 	if($thisTemplate != "") {
 

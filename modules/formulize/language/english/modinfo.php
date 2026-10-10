@@ -266,6 +266,8 @@ define("_MI_formulize_AITOOLACCESS_ALL", "All tools");
 define("_MI_formulize_AITOOLACCESS_CUSTOM", "Choose individual tools...");
 
 define("_MI_formulize_AITOOLLIST", "Tools people can use");
+define("_MI_formulize_SCREENWIDTHDEFAULTS", "Page width of new screens");
+define("_MI_formulize_SCREENWIDTHDEFAULTS_DESC", "How wide the page is for each type of screen you make from now on. Screens you have already made keep the width they have, and you can change it for any screen on its Appearance tab.");
 define("_MI_formulize_AITOOLLIST_DESC", "Tick the tools the AI is allowed to use. This list is read from the AI tools this system actually has, so it stays current as tools are added. People still only get the tools their own permissions allow - ticking a tool here does not grant anyone access they would not otherwise have.");
 
 define("_MI_formulize_REVISIONSFORALLFORMS", "Turn on revision history for all forms");

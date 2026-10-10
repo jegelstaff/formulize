@@ -209,6 +209,9 @@ return array(
                         array('name' => 'footer', 'scope' => 'metafooter', 'description' => _AM_CFG_DESC_FOOTER),
                         array('name' => 'footadm', 'scope' => 'metafooter', 'description' => _AM_CFG_DESC_FOOTADM),
                     ),
+                    _AM_CFG_SEC_SCREENWIDTHS => array(
+                        array('name' => 'formulizeScreenWidthDefaults', 'scope' => 'formulize'),
+                    ),
                 ),
             ),
             // Styles and Colors opens the appearance editor, a page of its own, where a

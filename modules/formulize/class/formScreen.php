@@ -41,6 +41,25 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 class formulizeFormScreen extends formulizeScreen {
 
+	// see formulizeScreen::screenTypeName
+	public static function screenTypeName() {
+		return defined('_AM_SCREEN_SETTINGS_KIND_LEGACYFORM') ? _AM_SCREEN_SETTINGS_KIND_LEGACYFORM : 'Legacy form'; // not every language has it
+	}
+
+	// kept for the screens that already exist: new forms are multi-page screens, so a site is only offered
+	// this type if it has some of these
+	public static function screenTypeOffered() {
+		global $xoopsDB;
+		static $offered = null;
+		if ($offered === null) {
+			$result = $xoopsDB->query("SELECT COUNT(*) FROM " . $xoopsDB->prefix('formulize_screen') . " WHERE type = 'form'");
+			$row = $result ? $xoopsDB->fetchRow($result) : array(0);
+			$offered = ($row[0] > 0);
+		}
+		return $offered;
+	}
+
+
 	function __construct() {
 		parent::__construct();
 		$this->initVar("donedest", XOBJ_DTYPE_TXTBOX, NULL, false, 255);

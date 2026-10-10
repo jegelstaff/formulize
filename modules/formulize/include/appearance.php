@@ -1757,7 +1757,8 @@ function formulize_locateAppearanceFile($file, $theme = null) {
  * @return string path of the logo file, or '' when no custom logo is set
  */
 function formulize_getAppearanceLogoPath($theme = null) {
-    $settings = formulize_getAppearanceEffectiveSettings($theme); // the look applied may have a logo of its own
+    // the look applied may have a logo of its own, and the page's screen may have a look of its own
+    $settings = formulize_getAppearanceEffectiveSettings($theme, null, formulize_appearancePageLook($theme));
     // stored as a bare filename in the theme's appearance folder
     return formulize_locateAppearanceFile($settings['appearance_logo'], $theme);
 }
@@ -1782,7 +1783,7 @@ function formulize_getAppearanceLogoUrl($theme = null) {
  * @return string path of the favicon file, or '' when no custom favicon is set
  */
 function formulize_getAppearanceFaviconPath($theme = null) {
-    $settings = formulize_getAppearanceEffectiveSettings($theme);
+    $settings = formulize_getAppearanceEffectiveSettings($theme, null, formulize_appearancePageLook($theme));
     return formulize_locateAppearanceFile($settings['appearance_favicon'], $theme);
 }
 
@@ -2038,9 +2039,11 @@ function formulize_buildAppearanceLookCss($key, $look, $settings, $theme) {
 }
 
 /**
- * Write the stylesheets of a theme's looks (every look but Default, which is the
- * theme's own stylesheet), for the theme's settings as they now stand. Called
- * whenever those are saved, so a look's stylesheet is never behind them.
+ * Write the stylesheets of a theme's looks, for the theme's settings as they now
+ * stand. Called whenever those are saved, so a look's stylesheet is never behind
+ * them. Default's is written too, although the theme's own stylesheet is Default
+ * on a site that has it applied, for a screen that is set to Default on a site
+ * that has another look applied.
  *
  * @param array $settings the theme's own settings, sanitized
  * @param string $theme theme folder name
@@ -2053,9 +2056,7 @@ function formulize_regenerateAppearanceLooks($settings, $theme) {
     }
     $written = true;
     foreach (formulize_getAppearanceLooks($theme) as $key => $look) {
-        if ($key != 'default') {
-            $written = (file_put_contents($dir . '/' . $key . '.css', formulize_buildAppearanceLookCss($key, $look, $settings, $theme)) !== false) AND $written;
-        }
+        $written = (file_put_contents($dir . '/' . $key . '.css', formulize_buildAppearanceLookCss($key, $look, $settings, $theme)) !== false) AND $written;
     }
     return $written;
 }
@@ -2126,15 +2127,72 @@ function formulize_renderAppearanceHead() {
         $cssExists = formulize_regenerateAppearanceCss(formulize_getAppearanceSettings($theme), $theme);
     }
     $html = '';
-    $font = formulize_getAppearanceFont(formulize_getAppearanceEffectiveSettings($theme));
+    // the page's screen can have a look of its own, which is shown with that look's stylesheet in place of
+    // the theme's own: each look's stylesheet is the whole of the theme's appearance with the look applied
+    $pageLook = formulize_appearancePageLook($theme);
+    $font = formulize_getAppearanceFont(formulize_getAppearanceEffectiveSettings($theme, null, $pageLook));
     if ($font['url']) {
         $html .= '<link rel="preconnect" href="https://fonts.googleapis.com" />' . "\n";
         $html .= '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />' . "\n";
     }
-    if ($cssExists) {
+    $lookCssPath = $pageLook !== null ? formulize_getAppearanceLooksDir($theme) . '/' . $pageLook . '.css' : '';
+    if ($lookCssPath AND !file_exists($lookCssPath)) {
+        formulize_regenerateAppearanceLooks(formulize_getAppearanceSettings($theme), $theme); // not written since the look was made, or since Default got one
+        clearstatcache(true, $lookCssPath);
+    }
+    if ($lookCssPath AND file_exists($lookCssPath)) {
+        $html .= '<link rel="stylesheet" type="text/css" media="all" href="' . formulize_getAppearanceUrl($theme) . '/looks/' . $pageLook . '.css?v=' . filemtime($lookCssPath) . '" />' . "\n";
+    } elseif ($lookCssPath) {
+        $html .= '<style type="text/css" media="all">' . "\n" . formulize_buildAppearanceCssRules(formulize_getAppearanceEffectiveSettings($theme, null, $pageLook), $theme) . "\n" . '</style>' . "\n";
+    } elseif ($cssExists) {
         $html .= '<link rel="stylesheet" type="text/css" media="all" href="' . formulize_getAppearanceUrl($theme) . '/appearance.css?v=' . filemtime($cssPath) . '" />' . "\n";
     } else {
         $html .= '<style type="text/css" media="all">' . "\n" . formulize_buildAppearanceCss(formulize_getAppearanceSettings($theme), $theme) . "\n" . '</style>' . "\n";
     }
+    // a screen set to use the full width of the window, whatever its look allows. After the stylesheet,
+    // so it wins; a theme that keeps its pages to the page width uses this property to do it
+    $pageScreen = formulize_appearancePageScreen();
+    if ($pageScreen AND $pageScreen->getVar('pagewidth') == 'full' AND formulize_appearanceThemeUsesContentWidth($theme)) {
+        $html .= '<style type="text/css" media="all">:root { --formulize-content-max-width: 100%; }</style>' . "\n";
+    }
     return $html;
+}
+
+/**
+ * The screen that a page is, if it is one: the one Formulize rendered as the page, whose id it gives
+ * the theme as formulize_screen_id (see initialize.php). Not a screen inside another, such as a form
+ * a template screen's code displays: the page's appearance is the outer screen's.
+ *
+ * @return object|null the screen, or null when the page is not a screen
+ */
+function formulize_appearancePageScreen() {
+    global $xoopsTpl;
+    static $screens = array();
+    $sid = is_object($xoopsTpl) ? intval($xoopsTpl->get_template_vars('formulize_screen_id')) : 0;
+    if (!$sid) {
+        return null;
+    }
+    if (!array_key_exists($sid, $screens)) {
+        $screen_handler = xoops_getmodulehandler('screen', 'formulize');
+        $screen = $screen_handler->get($sid);
+        $screens[$sid] = $screen ? $screen : null;
+    }
+    return $screens[$sid];
+}
+
+/**
+ * The look a page is shown with, when it isn't the look applied to the site: the look the page's
+ * screen is set to (on its Appearance tab), if the theme has that look.
+ *
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return string|null the look's key, or null for the site's look
+ */
+function formulize_appearancePageLook($theme = null) {
+    $screen = formulize_appearancePageScreen();
+    $look = $screen ? (string) $screen->getVar('look') : '';
+    if ($look === '') {
+        return null;
+    }
+    $looks = formulize_getAppearanceLooks($theme);
+    return isset($looks[$look]) ? $look : null;
 }

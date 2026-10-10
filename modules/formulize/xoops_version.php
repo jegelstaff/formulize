@@ -39,7 +39,7 @@ $modversion = array(
 	'license' => "GPL-2.0",
 	'image' => "images/formulize.gif",
 	'dirname' => "formulize",
-	'dbversion' => 22,
+	'dbversion' => 23,
 	'onUpdate' => "include/on_update.php"
 );
 
@@ -528,6 +528,9 @@ $modversion['templates'][] = array(
 	'description' => '');
 $modversion['templates'][] = array(
 	'file' => 'admin/screen_settings.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/screen_appearance.html',
 	'description' => '');
 $modversion['templates'][] = array(
 	'file' => 'admin/screen_relationships.html',
@@ -1212,6 +1215,18 @@ $modversion['config'][] = array(
 	'title' => '_MI_formulize_AITOOLLIST',
 	'description' => '_MI_formulize_AITOOLLIST_DESC',
 	'formtype' => 'aitools',
+	'valuetype' => 'array',
+	'default' => array(),
+);
+// The page width each type of screen starts with, as type => 'look' or 'full'. Rendered by a
+// Formulize-specific formtype that lists the types of screen read from the screen classes, so a new
+// type is offered without a new setting. A type with no entry starts with its class's own default
+// (see formulize_defaultPageWidthForScreenType).
+$modversion['config'][] = array(
+	'name' => 'formulizeScreenWidthDefaults',
+	'title' => '_MI_formulize_SCREENWIDTHDEFAULTS',
+	'description' => '_MI_formulize_SCREENWIDTHDEFAULTS_DESC',
+	'formtype' => 'screenwidths',
 	'valuetype' => 'array',
 	'default' => array(),
 );
