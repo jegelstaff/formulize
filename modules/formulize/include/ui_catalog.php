@@ -333,7 +333,7 @@ function formulize_uiCatalog() {
                     '--fz-sidebar-width' => 'On `fz-with-sidebar`: the width of the side. 16rem.',
                     '--fz-switcher-threshold' => 'On `fz-switcher`: the width below which its children stack. 32rem.',
                     '--fz-field-label-width' => 'On `fz-field--horizontal`: the width of the label. 12rem.',
-                    '--fz-tone' => 'On `fz-badge`, `fz-callout` or `fz-bar-list__row`: the colour, for a tone of your own when none of the tone modifiers is the right one, such as the steps of a scale. Set it in a style attribute, or in a class of your own. Set `--fz-tone-soft` with it on a badge or a callout.',
+                    '--fz-tone' => 'On `fz-badge`, `fz-callout`, `fz-bar-list__row` or `fz-matrix__cell`: the colour, for a tone of your own when none of the tone modifiers is the right one, such as the steps of a scale. Set it in a style attribute, or in a class of your own. Set `--fz-tone-soft` with it on a badge or a callout.',
                     '--fz-tone-soft' => 'On `fz-badge` or `fz-callout`: the pale tint that goes with `--fz-tone`.',
                 ),
             ),
@@ -838,6 +838,9 @@ HTML
                     'fz-dl' => 'Terms and values side by side.',
                     'fz-dl--stacked' => 'Each term above its value.',
                 ),
+                'notes' => array(
+                    'In a derived value, put the class on a `<div>` around the `<dl>` instead: `<div class="fz-dl"><dl>...</dl></div>`. A derived value\'s HTML is filtered before it is shown, and the filter takes the class off a `<dl>` but leaves it on a `<div>`.',
+                ),
                 'example' => <<<'HTML'
 <div class="fz-switcher">
   <dl class="fz-dl">
@@ -943,6 +946,98 @@ HTML
     <p class="fz-text-muted">Reviewed on September 12, 2026. No changes needed.</p>
   </details>
 </div>
+HTML
+            ),
+            array(
+                'id' => 'embed',
+                'name' => 'Embed',
+                'summary' => 'Something from elsewhere shown in the page: a map, a video, another site\'s page. It has a shape of its own, so the page doesn\'t jump when what is in it arrives.',
+                'classes' => array(
+                    'fz-embed' => 'Around an `<iframe>`, `<video>` or `<img>`, which fills it. Wide: 16 by 9.',
+                    'fz-embed--square' => 'Square.',
+                ),
+                'notes' => array(
+                    'Give an `<iframe>` a `title` that says what it shows.',
+                    'It is as wide as the space it is in. To limit it, put it in a column of a layout class, or give it a `max-width` in a style attribute.',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-embed" style="max-width: 24rem">
+  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 9'%3E%3Crect width='16' height='9' fill='%23d1d1cb'/%3E%3C/svg%3E" alt="A grey rectangle, standing in for a map">
+</div>
+HTML
+            ),
+            array(
+                'id' => 'prose',
+                'name' => 'Prose',
+                'summary' => 'Running text that someone wrote: an article, instructions, an agreement, the contents of a rich text field. Its paragraphs, headings and lists are sized and spaced for reading.',
+                'classes' => array(
+                    'fz-prose' => 'On the element around the text.',
+                ),
+                'notes' => array(
+                    'The elements inside need no classes: write ordinary `<p>`, `<h2>`, `<ul>` and `<blockquote>`. That makes it the way to show text that came from an editor, and to give text headings and lists in a derived value, where the elements inside cannot keep classes of their own.',
+                    'It is as wide as the space it is in. Long lines are hard to read, so put it in `fz-container fz-container--narrow`, or in a column.',
+                    'It is for text. Lay out a page with the layout classes, not with this.',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-prose">
+  <h2>Before the first session</h2>
+  <p>Thank you for hosting a workshop. This page sets out what we bring, and what we ask of you.</p>
+  <h3>We will bring</h3>
+  <ul>
+    <li>All the materials for each activity</li>
+    <li>Two instructors, who arrive 30 minutes early to set up</li>
+  </ul>
+  <h3>We ask that you</h3>
+  <ol>
+    <li>Have a room with tables and a sink nearby</li>
+    <li>Tell us about any allergies in the group</li>
+  </ol>
+  <blockquote>A teacher stays in the room for the whole session.</blockquote>
+</div>
+HTML
+            ),
+            array(
+                'id' => 'matrix',
+                'name' => 'Matrix',
+                'summary' => 'A grid of cells, each coloured by what it stands for: a risk matrix, a heat map, a chart of what is free and what is taken.',
+                'classes' => array(
+                    'fz-matrix' => 'On a `<table>`. Its columns are all the same width.',
+                    'fz-matrix__cell' => 'A cell: on a `<span>` inside the `<td>`, or on a `<button>` there when the cell can be chosen. Square, and grey.',
+                    'fz-matrix__cell--{info,success,warning,danger}' => 'A cell in a status colour.',
+                    'fz-matrix__cell--selected' => 'The cell that is chosen, or the one a value falls in: outlined.',
+                    'fz-matrix__cell--muted' => 'Faded: a cell that is beside the point while others are being looked at.',
+                ),
+                'notes' => array(
+                    'Give the rows and columns their headings with `<th>`, and say in each cell what it stands for: the colour alone is not enough.',
+                    'The colour is a tint, and the text stays the normal text colour, as in a badge.',
+                    'For colours that are not the status colours, such as the steps of a scale, set `--fz-tone` on the cell.',
+                ),
+                'example' => <<<'HTML'
+<table class="fz-matrix" style="max-width: 24rem">
+  <thead>
+    <tr><td></td><th scope="col">Minor</th><th scope="col">Moderate</th><th scope="col">Major</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">Unlikely</th>
+      <td><span class="fz-matrix__cell fz-matrix__cell--success">Low</span></td>
+      <td><span class="fz-matrix__cell fz-matrix__cell--success">Low</span></td>
+      <td><span class="fz-matrix__cell fz-matrix__cell--warning">Medium</span></td>
+    </tr>
+    <tr>
+      <th scope="row">Possible</th>
+      <td><span class="fz-matrix__cell fz-matrix__cell--success">Low</span></td>
+      <td><span class="fz-matrix__cell fz-matrix__cell--warning fz-matrix__cell--selected">Medium</span></td>
+      <td><span class="fz-matrix__cell fz-matrix__cell--danger">High</span></td>
+    </tr>
+    <tr>
+      <th scope="row">Likely</th>
+      <td><span class="fz-matrix__cell fz-matrix__cell--warning">Medium</span></td>
+      <td><span class="fz-matrix__cell fz-matrix__cell--danger">High</span></td>
+      <td><span class="fz-matrix__cell fz-matrix__cell--danger">High</span></td>
+    </tr>
+  </tbody>
+</table>
 HTML
             ),
         ),
@@ -1051,6 +1146,34 @@ HTML
                     'fz-overflow-{auto,x-auto,hidden}' => 'Scroll when needed, scroll sideways only, or clip.',
                     'fz-list-none' => 'No bullets or numbers.',
                 ),
+            ),
+            array(
+                'id' => 'u-print',
+                'name' => 'Print',
+                'summary' => 'For a page that is meant to be printed, such as a schedule or a confirmation: what shows on paper, and where the sheets break.',
+                'classes' => array(
+                    'fz-print-only' => 'Only on paper: a logo, a line for a signature.',
+                    'fz-print-hidden' => 'Only on screen: the Print button, links back into the site.',
+                    'fz-break-before-page' => 'Starts a new sheet.',
+                    'fz-break-inside-avoid' => 'Kept together on one sheet, when it fits on one.',
+                ),
+                'notes' => array(
+                    'A theme leaves its own header and menus off the printout, so these are only for your own content.',
+                    'A print button is a link or a button that calls `window.print()`. Give it `fz-print-hidden`.',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-stack">
+  <div class="fz-toolbar fz-border-b fz-pb-3">
+    <div class="fz-toolbar__start"><h2 class="fz-text-xl fz-font-semibold">Workshop schedule</h2></div>
+    <div class="fz-toolbar__end">
+      <span class="fz-print-only fz-text-muted">Printed copy</span>
+      <button type="button" class="fz-btn fz-print-hidden" onclick="window.print()">Print</button>
+    </div>
+  </div>
+  <p>Thursday, 3:30 to 5pm, in the library.</p>
+  <p class="fz-break-before-page">This paragraph starts the second sheet.</p>
+</div>
+HTML
             ),
         ),
     );

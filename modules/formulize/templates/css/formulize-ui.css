@@ -1150,7 +1150,11 @@
 /* ---- Description list -------------------------------------------------------
    Labelled values: an entry's fields in a card, a summary. On a <dl>; each
    <dt>/<dd> pair may be wrapped in a <div>. Terms and values side by side;
-   fz-dl--stacked puts each term above its value. */
+   fz-dl--stacked puts each term above its value.
+
+   It can also go on a <div> around the <dl>. That is for a derived value, whose
+   HTML is filtered before it is shown: the filter takes the class off a <dl>,
+   and leaves it on a <div>. */
 .fz-dl {
   display: grid;
   /* terms take the width they need, but never more than 40%, so values keep
@@ -1160,7 +1164,7 @@
   margin: 0;
   line-height: var(--fz-leading-normal);
 }
-.fz-dl > :where(div) { display: contents; }
+.fz-dl > :where(div, dl) { display: contents; }
 .fz-dl :where(dt) {
   margin: 0;
   color: var(--fz-color-text-muted);
@@ -1279,6 +1283,131 @@
   border-radius: 0;
   background: none;
 }
+
+/* ---- Embed --------------------------------------------------------------------
+   Something from elsewhere shown in the page: a map, a video, another site's
+   form. Around an <iframe>, <video> or <img>, which fills it. The embed has a
+   shape of its own, wide by default, so the page doesn't jump when what is in
+   it arrives. */
+.fz-embed {
+  box-sizing: border-box;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid var(--fz-color-border);
+  border-radius: var(--fz-radius-lg);
+  background: var(--fz-color-surface-2);
+}
+.fz-embed > :where(iframe, video, img) {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.fz-embed--square { aspect-ratio: 1; }
+
+/* ---- Prose --------------------------------------------------------------------
+   Running text that someone wrote: an article, instructions, an agreement, the
+   contents of a rich text field. Its paragraphs, headings and lists are sized
+   and spaced for reading, whatever markup they came with. The elements inside
+   need no classes of their own, which is the point: the text can come from an
+   editor, and it can be in a derived value, where they could not keep any. */
+.fz-prose {
+  line-height: var(--fz-leading-normal);
+  overflow-wrap: break-word;
+}
+.fz-prose > :where(*) { margin-block: 0; }
+.fz-prose > :where(* + *) { margin-block-start: calc(var(--fz-spacing) * 4); }
+.fz-prose :where(h1, h2, h3, h4, h5, h6) {
+  font-weight: var(--fz-font-weight-semibold);
+  line-height: var(--fz-leading-tight);
+}
+.fz-prose :where(h1) { font-size: var(--fz-text-2xl); }
+.fz-prose :where(h2) { font-size: var(--fz-text-xl); }
+.fz-prose :where(h3) { font-size: var(--fz-text-lg); }
+.fz-prose :where(h4, h5, h6) { font-size: var(--fz-text-base); }
+/* more space above a heading than below it, so it belongs to what follows */
+.fz-prose > :where(h1, h2, h3, h4, h5, h6):where(:not(:first-child)) {
+  margin-block-start: calc(var(--fz-spacing) * 8);
+}
+.fz-prose :where(ul, ol) {
+  margin-block-end: 0;
+  padding-inline-start: calc(var(--fz-spacing) * 6);
+}
+.fz-prose :where(ul) { list-style-type: disc; }
+.fz-prose :where(ul ul) { list-style-type: circle; }
+.fz-prose :where(ol) { list-style-type: decimal; }
+.fz-prose :where(li) { margin-block: 0; }
+.fz-prose :where(li + li, li > ul, li > ol) { margin-block-start: var(--fz-spacing); }
+.fz-prose :where(blockquote) {
+  margin-inline: 0;
+  padding-inline-start: calc(var(--fz-spacing) * 4);
+  border-inline-start: 3px solid var(--fz-color-border-strong);
+  color: var(--fz-color-text-muted);
+}
+.fz-prose :where(hr) {
+  border: 0;
+  border-top: 1px solid var(--fz-color-border);
+}
+.fz-prose :where(img, video) {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ---- Matrix -------------------------------------------------------------------
+   A grid of cells, each coloured by what it stands for: a risk matrix, a heat
+   map, a chart of what is free and what is taken. On a <table>, so the rows and
+   columns have their headings; each cell's colour is on an element inside its
+   <td> (a <span>, or a <button> when the cell can be chosen).
+
+   The tone is a tint, as it is a badge's, and the text stays the normal text
+   colour, so a cell reads the same whatever colours the theme or the
+   Appearance page uses. */
+.fz-matrix {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: var(--fz-spacing);
+  font-size: var(--fz-text-sm);
+  line-height: var(--fz-leading-tight);
+}
+.fz-matrix :where(th) {
+  padding: calc(var(--fz-spacing) * 2) var(--fz-spacing);
+  font-weight: var(--fz-font-weight-medium);
+  text-align: center;
+  vertical-align: middle;
+  color: var(--fz-color-text-muted);
+}
+.fz-matrix :where(td) { padding: 0; }
+.fz-matrix__cell {
+  --fz-tone: var(--fz-color-text-subtle);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: var(--fz-spacing);
+  border: 1px solid color-mix(in srgb, var(--fz-tone) 45%, transparent);
+  border-radius: var(--fz-radius-md);
+  background: color-mix(in srgb, var(--fz-tone) 30%, var(--fz-color-surface));
+  color: var(--fz-color-text);
+  font: inherit;
+  font-weight: var(--fz-font-weight-medium);
+  text-align: center;
+}
+.fz-matrix__cell--info    { --fz-tone: var(--fz-color-info); }
+.fz-matrix__cell--success { --fz-tone: var(--fz-color-success); }
+.fz-matrix__cell--warning { --fz-tone: var(--fz-color-warning); }
+.fz-matrix__cell--danger  { --fz-tone: var(--fz-color-danger); }
+/* the cell that is chosen, or the one a value falls in */
+.fz-matrix__cell--selected {
+  outline: 2px solid var(--fz-color-text);
+  outline-offset: 2px;
+  font-weight: var(--fz-font-weight-bold);
+}
+/* a cell that is beside the point, while others are being looked at */
+.fz-matrix__cell--muted { opacity: 0.4; }
+:where(button).fz-matrix__cell { cursor: pointer; }
 
 @media (prefers-reduced-motion: reduce) {
   .fz-btn,
@@ -1779,3 +1908,16 @@
 
 /* ---- Lists ---- */
 .fz-list-none { list-style-type: none; }
+
+/* ---- Print ---- */
+/* For a page that is meant to be printed: what is only on paper (a logo, say),
+   what is only on screen (the Print button), where a new sheet starts, and what
+   must not be split across two. Tailwind does these with its print: variant;
+   there are no variants here, so they are classes. */
+.fz-print-only { display: none; }
+@media print {
+  .fz-print-only         { display: revert; }
+  .fz-print-hidden       { display: none; }
+  .fz-break-before-page  { break-before: page; }
+  .fz-break-inside-avoid { break-inside: avoid; }
+}
