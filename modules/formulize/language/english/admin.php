@@ -1211,7 +1211,7 @@ define("_AM_SCREEN_APPEARANCE", "Appearance");
 define("_AM_SCREEN_APPEARANCE_OPTIONS", "Options");
 define("_AM_SCREEN_APPEARANCE_LOOK_LEGEND", "Look and page width");
 define("_AM_SCREEN_APPEARANCE_LOOK", "Look");
-define("_AM_SCREEN_APPEARANCE_LOOK_SITE", "Site default (currently %s)");
+define("_AM_SCREEN_APPEARANCE_LOOK_SITE", "%s (active Look for site)");
 define("_AM_SCREEN_APPEARANCE_LOOK_DESC", "The colours, fonts and sizes this screen is shown with. Looks are made and changed on the Appearance page.");
 define("_AM_SCREEN_APPEARANCE_LOOK_EDIT", "Edit this Look (affects the whole site, not just this screen)");
 define("_AM_SCREEN_APPEARANCE_WIDTH", "Page width");

@@ -659,7 +659,9 @@ if ($screen_id != "new") {
         $siteAppearance = formulize_getAppearanceSettings($appearanceTheme);
         $siteLook = ($siteAppearance['appearance_look'] !== '' AND isset($looks[$siteAppearance['appearance_look']])) ? $siteAppearance['appearance_look'] : 'default';
         foreach ($looks as $lookKey => $look) {
-            $appearance['looks'][$lookKey] = htmlspecialchars($look['name']);
+					if($lookKey != $siteLook) {
+          	$appearance['looks'][$lookKey] = htmlspecialchars($look['name']);
+					}
         }
         $appearance['siteLookLabel'] = sprintf(_AM_SCREEN_APPEARANCE_LOOK_SITE, htmlspecialchars(isset($looks[$siteLook]) ? $looks[$siteLook]['name'] : ''));
         $appearance['siteLook'] = $siteLook;
