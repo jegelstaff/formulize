@@ -239,6 +239,46 @@ body:not(#formulize):not(.formulize-screen) .lyris-main {
   padding: var(--fz-page-padding) var(--fz-page-padding) 0;
 }
 
+/* Only the Lyris list and form screens manage their own insets, though. Everything
+   else a Formulize page can put in `.lyris-main` arrives with none, and was left
+   butting against the header and the sidebar by the exclusion above:
+   - a template screen, whose output is wrapped in `.formulize-template-screen-contents`
+     and nothing else;
+   - a list screen with custom templates that don't use the `.lyris-list-screen`
+     markup (templates written for another theme, typically);
+   - module pages that are not screens at all, such as the application menu page.
+
+   A template screen takes the gutter on its own wrapper, because it can have a
+   form inside it (its code can call displayForm, or a form screen handler's
+   render method), and the page must not lose its gutter when it does. The rest
+   take the gutter on `.lyris-main`, when there is no Lyris list or form screen in it.
+
+   Not in the drawer or an inline frame (`.formulize-inline`), where whatever is
+   around the content supplies the space. */
+body:not(.formulize-inline) .lyris-main > .formulize-template-screen-contents,
+body:not(.formulize-inline):is(#formulize, .formulize-screen) .lyris-main:not(:has(.lyris-list-screen, .lyris-form-screen, > .formulize-template-screen-contents)) {
+  box-sizing: border-box;
+  padding: var(--fz-page-padding);
+}
+
+/* A form inside a template screen is part of that page's content, not the page:
+   the wrapper's gutter is already around it, so the form, its page tabs and its
+   action bar give up the page-level insets they take as a screen of their own
+   (the side margins, and the top margin of a form with no tabs above it), or
+   they would be inset twice. The selectors repeat the ones that set those
+   margins, further down, with the wrapper added, so they outweigh them. */
+body:not(.formulize-inline) .lyris-main > .formulize-template-screen-contents .lyris-form-screen,
+body:not(.formulize-inline) .lyris-main > .formulize-template-screen-contents #pageNavTable,
+body:not(.formulize-inline) .lyris-main > .formulize-template-screen-contents .pageNavTable,
+body:not(.formulize-inline) .lyris-main > .formulize-template-screen-contents #multipage-controls {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+body:not(.formulize-inline) .lyris-main:not(:has(#pageNavTable, .pageNavTable)) > .formulize-template-screen-contents .lyris-form-screen {
+  margin-top: 0;
+}
+
 /* Inline / drawer-iframe mode — header and sidebar suppressed via theme.html.
    This mode scrolls the document itself rather than `.lyris-main`, so the
    masquerade allowance is taken as padding on the body instead of by shrinking
