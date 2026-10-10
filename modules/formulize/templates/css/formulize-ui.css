@@ -1081,6 +1081,15 @@
   background: var(--fz-tone);
 }
 .fz-badge--plain::before { content: none; }
+/* An icon on its own: a circle, the same size whatever the icon, so a column of
+   them lines up, and what follows them does too. No dot. */
+.fz-badge--icon {
+  flex: none;
+  justify-content: center;
+  aspect-ratio: 1;
+  padding: 0;
+}
+.fz-badge--icon::before { content: none; }
 .fz-badge--accent  { --fz-tone: var(--fz-color-accent);  --fz-tone-soft: var(--fz-color-accent-soft); }
 .fz-badge--info    { --fz-tone: var(--fz-color-info);    --fz-tone-soft: var(--fz-color-info-soft); }
 .fz-badge--success { --fz-tone: var(--fz-color-success); --fz-tone-soft: var(--fz-color-success-soft); }

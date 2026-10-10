@@ -775,9 +775,11 @@ HTML
                     'fz-badge' => 'A neutral badge, with a grey dot.',
                     'fz-badge--{accent,info,success,warning,danger}' => 'A coloured tint and dot.',
                     'fz-badge--plain' => 'No dot.',
+                    'fz-badge--icon' => 'A circle, for an icon on its own. Every one is the same size, so a column of them lines up. No dot.',
                 ),
                 'notes' => array(
                     'The colour is in the tint and the dot; the text stays the normal text colour, so it is readable in every theme. The word should say what the status is: don\'t rely on the colour alone.',
+                    'An icon on its own says nothing to someone who cannot see it, or does not know it. Give an icon badge a `title`, and the same words inside it in an element with `fz-sr-only`.',
                 ),
                 'example' => <<<'HTML'
 <div class="fz-cluster">
@@ -787,6 +789,7 @@ HTML
   <span class="fz-badge fz-badge--success">Approved</span>
   <span class="fz-badge fz-badge--danger">Rejected</span>
   <span class="fz-badge fz-badge--accent fz-badge--plain">12 new</span>
+  <span class="fz-badge fz-badge--icon fz-badge--warning" title="Featured">&#9733;<span class="fz-sr-only">Featured</span></span>
 </div>
 HTML
             ),
