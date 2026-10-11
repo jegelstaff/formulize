@@ -10,8 +10,8 @@
 				var newTitle = $("#screens-pagetitle_"+dialogEditingPage).val();
 				var saveWarningDisplay = $("#popupsavewarning").css("display");
 				if(saveWarningDisplay == "none") {
-					$("#drawer-4-"+dialogEditingPage+" .accordion-name").empty();
-					$("#drawer-4-"+dialogEditingPage+" .accordion-name").append(newTitle);
+					multipagePageDrawer(dialogEditingPage).find(".accordion-name").empty();
+					multipagePageDrawer(dialogEditingPage).find(".accordion-name").append(newTitle);
 				}
 			}
 		});
@@ -21,6 +21,12 @@
     cache: false
   });
 
+
+  // the accordion and its drawers are numbered by this tab's position, which moves whenever a tab is added before it
+  // so nothing should refer to them by a literal number. The page settings popup uses this too.
+  function multipagePageDrawer(pageNumber) {
+    return $("#drawer-<{$number}>-"+pageNumber);
+  }
 
   function editPageSettings(pageNumber) {
 		$("#dialog-page-settings-content").empty();
@@ -83,10 +89,10 @@
 	});
 
     $(".savebutton").click(function () {
-        $("[name=pageorder]").val($("#accordion-5").sortable('serialize'));
+        $("[name=pageorder]").val($("#accordion-<{$number}>").sortable('serialize'));
     });
 
-    $("#accordion-5").bind( "sortupdate", function(event, ui) {
+    $("#accordion-<{$number}>").bind( "sortupdate", function(event, ui) {
         setDisplay('savewarning','block');
     });
 </script>

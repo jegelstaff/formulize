@@ -81,7 +81,8 @@ foreach($pages as $pageNumber=>$pageElements) {
 }
 
 // get the new order of the elements...
-$newOrder = explode("drawer-5[]=", str_replace("&", "", $_POST['pageorder']));
+// the number in drawer-N is the position of the pages tab, which moves whenever a tab is added before it, so match any number
+$newOrder = preg_split('/drawer-\d+\[\]=/', str_replace("&", "", $_POST['pageorder']));
 unset($newOrder[0]);
 
 

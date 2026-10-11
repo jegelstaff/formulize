@@ -267,10 +267,10 @@ $(".conditionsdelete").click(function () {
 							alert(data);
 						}
 					}
-					$('div#drawer-5-<{$pageIndex}> span.accordion-name').text(getLocalizedText($('input#screens-pagetitle_<{$pageIndex}>').val()));
+					multipagePageDrawer(<{$pageIndex}>).find('span.accordion-name').text(getLocalizedText($('input#screens-pagetitle_<{$pageIndex}>').val()));
 					$.get('<{$smarty.const.XOOPS_URL}>/modules/formulize/admin/multipageScreenGeneratePageItemDescription.php?sid=<{$sid}>&page=<{$pageIndex}>', function(data) {
-						$('div#drawer-5-<{$pageIndex}> div.accordion-content').empty();
-						$('div#drawer-5-<{$pageIndex}> div.accordion-content').append(data);
+						multipagePageDrawer(<{$pageIndex}>).find('div.accordion-content').empty();
+						multipagePageDrawer(<{$pageIndex}>).find('div.accordion-content').append(data);
 					});
 					window.document.getElementById('popupsavewarning').style.display = 'none';
 					$('#dialog-page-settings').fadeTo(1, 1);
