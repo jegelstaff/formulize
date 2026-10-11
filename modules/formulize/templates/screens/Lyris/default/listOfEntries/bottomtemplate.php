@@ -152,6 +152,18 @@ function fzSelectView(value, isStandard) {
         }).observe(headerRow);
     }
 
+    // "Hide repeating data" switch: the list template marks each cell whose contents
+    // match the cell above with .same-contents-as-prior-cell; the switch blanks them all
+    // by toggling one class on the table.
+    function initRepeatDataToggle() {
+        var toggle = document.getElementById('toggleRepeatData');
+        var table  = document.querySelector('.lyris-list-table');
+        if (!toggle || !table) return;
+        toggle.addEventListener('change', function () {
+            table.classList.toggle('lyris-list-table--hide-repeats', toggle.checked);
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         // Unbind Formulize's default checkbox→panel handler; selection bar handles it instead.
         if (typeof jQuery !== 'undefined') {
@@ -171,6 +183,7 @@ function fzSelectView(value, isStandard) {
         });
         initFilterToggle();
         initStickyFilterOffset();
+        initRepeatDataToggle();
     });
 }());
 </script>

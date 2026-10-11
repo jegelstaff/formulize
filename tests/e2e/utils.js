@@ -268,6 +268,23 @@ export async function waitForWorkingMessage(page) {
 }
 
 /**
+ * Open every form's section in the "Change columns" popup, as a person would by clicking each one's
+ * heading. The popup shows the columns of each form in a box that opens and closes, and only those
+ * with a column already chosen start open (see generateTidyElementList in
+ * modules/formulize/include/functions.php). The checkboxes in a closed one can't be clicked.
+ *
+ * A section's checkboxes are then found by the form's name: popup.getByRole('group', { name: 'Exhibits', exact: true }).
+ *
+ * @param {import('@playwright/test').Page} popup The "Change columns" popup page
+ */
+export async function openAllColumnSections(popup) {
+	const closed = popup.locator('details:not([open]) > summary');
+	while (await closed.count() > 0) {
+		await closed.first().click();
+	}
+}
+
+/**
  * Submit the "Change columns" popup, applying the boxes ticked in it.
  *
  * The popup's own button hands the column list to the opener and then calls window.self.close()

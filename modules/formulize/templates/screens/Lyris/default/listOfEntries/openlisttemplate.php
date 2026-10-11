@@ -58,9 +58,9 @@ print "
 
 		if($modCalcsButton AND $cancelCalcsButton AND $toggleCalcsButton) {
 			print "
-			<tr>
-				<td class='head' colspan='$colspan'>$modCalcsButton&nbsp;&nbsp;$cancelCalcsButton&nbsp;&nbsp;$toggleCalcsButton</td>
-			<tr>";
+			<tr class='lyris-calc-controls'>
+				<td class='head' colspan='$colspan'><div class='fz-cluster'>$modCalcsButton $cancelCalcsButton $toggleCalcsButton</div></td>
+			</tr>";
 		}
 
 print "</thead><tbody>";

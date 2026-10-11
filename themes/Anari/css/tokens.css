@@ -75,9 +75,30 @@
   --fz-color-info-soft:      #E6EBF1;
 
   /* Typography. --fz-font-sans is what the Appearance page's font setting
-     overrides; the Poppins webfont this theme ships with is requested in
-     theme.html and simply goes unused when another font is chosen. */
+     overrides. */
   --fz-font-sans: Poppins, Helvetica, Verdana, sans-serif;
+
+  /* Poppins is a webfont: it is downloaded from Google Fonts, one file for each
+     weight. These are the weights to download, so list every font-weight that
+     style.css uses: 400 (regular), 500 and 600. A weight that is used but not
+     listed is drawn with the nearest one that is, which is how this theme's few
+     uses of bold (700) come out as 600.
+
+     Declaring the weights is also what has the font fetched at all. That is done
+     by the appearance stylesheet Formulize generates for the theme, and only
+     while no other font has been chosen on the Appearance page (see
+     formulize_appearanceThemeWebfont() in modules/formulize/include/appearance.php).
+     That stylesheet is on every page that takes on this theme's appearance, so
+     the font is too: the pages theme.html draws, the list of entries popups, and
+     embedded screens. */
+  --formulize-font-weights: 400 500 600;
+
+  /* The text sizes of Formulize UI's tables (fz-table), such as the tables of
+     calculation results under a list: this theme's lists set their headings and
+     their entries at the size of the rest of the page's text, not smaller, as
+     Formulize UI does by default. */
+  --fz-table-text: 1rem;
+  --fz-table-header-text: 1rem;
 
   /* The secondary font, used for headings, form labels, and the drawer's title.
      Follows --fz-font-sans unless the Appearance page has been given a second font

@@ -1311,6 +1311,27 @@
   border-radius: 0;
   background: none;
 }
+/* It opens and closes by growing and shrinking, in a browser that can animate
+   to and from a height of auto; in others it opens and closes at once. What
+   opens is clipped only a few pixels outside it, so the focus rings of the
+   controls in it are not cut off. */
+.fz-disclosure::details-content {
+  block-size: 0;
+  overflow: clip;
+  overflow-clip-margin: 4px;
+}
+.fz-disclosure[open]::details-content {
+  block-size: auto;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .fz-disclosure {
+    interpolate-size: allow-keywords;
+  }
+  .fz-disclosure::details-content {
+    transition: block-size var(--fz-duration) var(--fz-ease-out),
+                content-visibility var(--fz-duration) allow-discrete;
+  }
+}
 
 /* ---- Tabs ---------------------------------------------------------------------
    A row of tabs, each showing one panel of a page in place of the others. The

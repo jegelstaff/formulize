@@ -71,8 +71,7 @@ function importCsv($csv_name, $regfid, $validateOverride, $pkColumn=false) {
 
     echo "<b>** Finished</b><br><br>";
 
-    echo "<br><br>";
-    echo "<b><a href=\"\" onclick=\"javascript:history.back(-1);return false;\">" . _formulize_DE_IMPORT_BACK . "</a></b></div>";
+    echo "<p><a class='fz-btn' href=\"\" onclick=\"javascript:history.back(-1);return false;\">" . _formulize_DE_IMPORT_BACK . "</a></p>";
 }
 
 

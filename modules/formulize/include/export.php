@@ -47,59 +47,44 @@ $fid = intval($_GET['fid']);
 $frid = intval($_GET['frid']);
 
 if (!isset($_POST['metachoice']) AND !isset($formulize_doingManualExport)) {
-    print "<HTML>";
-    print "<head>";
-    print "<meta http-equiv='Content-Type' content='text/html;charset=utf-8' />\n";
-    print "<title>" . _formulize_DE_EXPORT . "</title>\n";
-    print "<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-1.4.2.min.js'></script>\n";
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/popup_functions.php";
+    ob_start();
     ?>
     <script type='text/javascript'>
-        jQuery(window).on('load', function() {
-            jQuery('#show_hide_advanced').click(function() {
-                if (jQuery('#advanced_options').css('display') == 'none') {
-                    jQuery('#advanced_options').animate({height:'toggle'}, 400);
-                    jQuery(this).text('<?php print _formulize_DE_EXPORT_HIDE_ADVANCED; ?>');
-                } else {
-                    jQuery('#advanced_options').animate({height:'toggle'}, 400);
-                    jQuery(this).text('<?php print _formulize_DE_EXPORT_SHOW_ADVANCED; ?>');
-                }
-                return false;
+        window.addEventListener('load', function() {
+            var advancedOptions = document.getElementById('advanced_options');
+            advancedOptions.addEventListener('toggle', function() {
+                advancedOptions.querySelector('summary').textContent = advancedOptions.open ? '<?php print _formulize_DE_EXPORT_HIDE_ADVANCED; ?>' : '<?php print _formulize_DE_EXPORT_SHOW_ADVANCED; ?>';
             });
-            jQuery('[name=exportsubmit]').click(function() {
-                jQuery(this).attr('disabled', 'disabled');
-                jQuery('body').fadeTo(1, 0.25);
-                jQuery('#metachoiceform').submit(); // some browsers won't complete the submit action natively after the button is disabled
-                return false;
-            })
+            var exportForm = document.getElementById('metachoiceform');
+            exportForm.addEventListener('submit', function() {
+                exportForm.elements['exportsubmit'].disabled = true;
+                document.body.style.opacity = 0.25;
+            });
         });
     </script>
     <?php
-    print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"" . XOOPS_URL . "/xoops.css\" />\n";
-    $themecss = xoops_getcss();
-    print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
+    formulize_popupHeader(_formulize_DE_EXPORT, ob_get_clean());
 
-    print "</head>";
-    print "<body class=\"formulize-popup\" style=\"background: white; margin-top:20px;\"><center>";
-    print "<table width=100%><tr><td width=5%></td><td width=90%>";
-    print "<form id=\"metachoiceform\" name=\"metachoiceform\" action=\"".getCurrentURL() . "\" method=\"post\">\n";
-
-    print "<table class='outer popup'><tr><th>"._formulize_DE_EXPORT_TITLE."</th></tr><tr><td>\n";
+    print "<form id=\"metachoiceform\" name=\"metachoiceform\" action=\"".getCurrentURL() . "\" method=\"post\" class=\"fz-card\">\n";
+    print "<h1 class='fz-card__title'>"._formulize_DE_EXPORT_TITLE."</h1>\n";
 
     if ($_GET['type'] == "update") {
         print "<p>"._formulize_DE_IMPORT_DATATEMP4." <a href=\"\" onclick=\"javascript:window.opener.showPop('" . XOOPS_URL . "/modules/formulize/include/import.php?fid=$fid&eq=".intval($_GET['eq'])."');return false;\">"._formulize_DE_IMPORT_DATATEMP5."</a></p>\n";
         print "<p>"._formulize_DE_IMPORT_DATATEMP3."</p>\n";
     }
 
-    print "<center>\n";
-    print "<p><input type=\"submit\" name=\"exportsubmit\" value=\""._formulize_DE_EXPORT_MAKEFILE."\"></p>\n";
+    print "<div class='fz-cluster'><input type=\"submit\" class=\"fz-btn fz-btn--primary\" name=\"exportsubmit\" value=\""._formulize_DE_EXPORT_MAKEFILE."\"></div>\n";
 
-    print "<p><a href='' id='show_hide_advanced'>"._formulize_DE_EXPORT_SHOW_ADVANCED."</a></p>";
-    print "</center>\n";
-    print "<div id='advanced_options' style='display: none; border:1px solid #aaa;border-radius:5px;padding:0 1em;margin-bottom:1em;'>";
+    print "<details class='fz-disclosure' id='advanced_options'>\n";
+    print "<summary>"._formulize_DE_EXPORT_SHOW_ADVANCED."</summary>\n";
+    print "<div class='fz-stack'>\n";
 
     if (!isset($_GET['type'])) {
-        print "<p><input type=\"radio\" name=\"metachoice\" value=\"1\">"._formulize_DB_EXPORT_METAYES."</input>\n<br>\n";
-        print "<input type=\"radio\" name=\"metachoice\" value=\"0\" checked>"._formulize_DB_EXPORT_METANO."</input>\n</p>\n";
+        print "<div class='fz-choice-group'>\n";
+        print formulize_popupChoice('radio', 'metachoice', 1, _formulize_DB_EXPORT_METAYES);
+        print formulize_popupChoice('radio', 'metachoice', 0, _formulize_DB_EXPORT_METANO, true);
+        print "</div>\n";
     } else {
         print "<input type=\"hidden\" name=\"metachoice\" value=\"0\">\n";
     }
@@ -108,18 +93,16 @@ if (!isset($_POST['metachoice']) AND !isset($formulize_doingManualExport)) {
     $config_handler = xoops_gethandler('config');
     $formulizeModule = $module_handler->getByDirname("formulize");
     $formulizeConfig = $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
-    $excelChecked = $formulizeConfig['downloadDefaultToExcel'] == 1 ? "checked" : "";
-    print "<p><label>"._formulize_DB_EXPORT_TO_EXCEL." <input type=\"checkbox\" name=\"excel\" value=\"1\" $excelChecked></input></label></p>\n";
+    print "<div class='fz-choice-group'>\n";
+    print formulize_popupChoice('checkbox', 'excel', 1, _formulize_DB_EXPORT_TO_EXCEL, $formulizeConfig['downloadDefaultToExcel'] == 1);
+    print "</div>\n";
 
-    print "<p>"._formulize_DB_EXPORT_NULL_OPTION." <input type=\"text\" name=\"nullOption\" value=\"\"></input></p>\n";
+    print formulize_popupField(_formulize_DB_EXPORT_NULL_OPTION, "<input type=\"text\" class=\"fz-input\" name=\"nullOption\" id=\"nullOption\" value=\"\">", '', 'nullOption');
 
+    print "</div>\n</details>\n";
+    print "</form>\n";
 
-    print "</div>\n</td></tr></table>";
-    print "</form>";
-
-    print "</td><td width=5%></td></tr></table>";
-    print "</center></body>";
-    print "</HTML>";
+    formulize_popupFooter();
 } elseif(!isset($formulize_doingManualExport)) {
 
     // 1. need to pickup the full query that was used for the dataset on the page where the button was clicked

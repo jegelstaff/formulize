@@ -413,6 +413,7 @@ define("_formulize_DE_SAVE_LASTLOADED", "Vues les plus récentes utilisées");
 define("_formulize_DE_SAVE_LOCKCONTROLS", "Sécuriser les recherches?");
 define("_formulize_DE_SAVE_LOCKCONTROLS_HELP1", "<span style=\"font-weight: bold;\">La securisation:</span>");
 define("_formulize_DE_SAVE_LOCKCONTROLS_HELP2", "<span style=\"font-weight: normal;\">Certaines actions comme les recherches avancées peuvent dévoiler des informations pour lesquelles l'utilisateur n'a pas les autorisations. Activer cette option permet de remedier a ce souci, sans bloquer les personnes autorisees.</span>");
+define("_formulize_DE_SAVE_ADVANCED", "Options avancées");
 define("_formulize_DE_SAVE_USE_FEATURES", "Quelles fonctionnalités de la liste doivent être enregistrées ?");
 define("_formulize_DE_SAVE_UF_SCOPE", "Portée (entrées par quels groupes/utilisateur(s)");
 define("_formulize_DE_SAVE_UF_COLS", "Colonnes");

@@ -99,11 +99,6 @@ if($xoopsUser) {
   <{/if}>
 
 
-  <{php}>
-  $jsVersion = formulize_get_file_version('/themes/' . $this->_tpl_vars['theme_name'] . '/js/script.js');
-  echo '<script src="' . $this->_tpl_vars['icms_imageurl'] . 'js/script.js?v=' . $jsVersion . '"></script>';
-  <{/php}>
-
   <{* which screen this is, which page of it, and whether this request saved anything - see
      formulize_embedStateScript(). Printed down here, after the screen, because the page is only
      known once the screen has been drawn. *}>

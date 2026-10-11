@@ -1005,6 +1005,9 @@ class formulizeAdvancedCalculationHandler {
     include_once XOOPS_ROOT_PATH.'/class/xoopsform/formselect.php';
 
     $hideLabel = false;
+    $form_ele = null;
+    $dateClasses = '';
+    $controlId = '';
 
 
     // load the advanced calculation (procedure)
@@ -1049,7 +1052,8 @@ class formulizeAdvancedCalculationHandler {
 	$form_ele = new XoopsFormHidden($elementName, $dateValue);
       } else {
 	$form_ele = new XoopsFormTextDateSelect("", $elementName, 15, $dateValue);
-	$form_ele->setExtra(' class="'. $elementUnderlyingField . '" ');
+	$dateClasses = 'fz-input ' . $elementUnderlyingField;
+	$controlId = $elementName;
       }
       $selected = date("Y-m-d", (int)$dateValue);
       // special catch for dates without a year, which is valid for OCANDS multi year groupings with only quarters specified
@@ -1094,7 +1098,8 @@ class formulizeAdvancedCalculationHandler {
         }
       }
       $form_ele->addOptionArray($options);
-      $form_ele->setExtra(' class="'. $elementUnderlyingField . '" ');
+      $form_ele->setExtra(' class="fz-select '. $elementUnderlyingField . '" ');
+      $controlId = $elementName;
     } else if( $kind == 3 ) {
       $selected = array();
       $elementName = $acid . "_" . $fltr_grp["handle"];
@@ -1111,14 +1116,14 @@ class formulizeAdvancedCalculationHandler {
         }
         $option_value = explode( "|", $definedOption );
         if( count((array)  $option_value ) == 2 ) {
-          $tmp_html .= '<input type="checkbox" id="' . $elementArrayName . '" class="'. $elementUnderlyingField . ' ' . $elementName . '" name="' . $elementArrayName . '" value="1"' . $checked . '>';
-          $tmp_html .= $option_value[1] . "<br>";
+          $tmp_html .= '<label class="fz-choice"><input type="checkbox" id="' . $elementArrayName . '" class="fz-checkbox '. $elementUnderlyingField . ' ' . $elementName . '" name="' . $elementArrayName . '" value="1"' . $checked . '> ';
+          $tmp_html .= $option_value[1] . "</label>";
           if( $value == 1 ) {
             $selected[] = trim($option_value[1]);
           }
         } else {
-          $tmp_html .= '<input type="checkbox" id="' . $elementArrayName . '" class="'. $elementUnderlyingField . ' ' . $elementName . '" name="' . $elementArrayName . '" value="1"' . $checked . '>';
-          $tmp_html .= $definedOption . "<br>";
+          $tmp_html .= '<label class="fz-choice"><input type="checkbox" id="' . $elementArrayName . '" class="fz-checkbox '. $elementUnderlyingField . ' ' . $elementName . '" name="' . $elementArrayName . '" value="1"' . $checked . '> ';
+          $tmp_html .= $definedOption . "</label>";
           if( $value == 1 ) {
             $selected[] = trim($definedOption);
           }
@@ -1128,6 +1133,7 @@ class formulizeAdvancedCalculationHandler {
       if( count((array)  $selected ) == 0 ) {
         $selected = "All";
       }
+      $tmp_html = '<div class="fz-choice-group">' . $tmp_html . '</div>';
     } else if($kind == 4) { // textbox
 	$elementName = $acid . "_" . $fltr_grp["handle"];
 	$value = (isset($_POST[$elementName])) ? $_POST[$elementName] : ( (isset($_GET[$elementName])) ? $_GET[$elementName] : "" );
@@ -1135,13 +1141,17 @@ class formulizeAdvancedCalculationHandler {
 	    $form_ele = new XoopsFormHidden($elementName, $value);
 	} else {
 	    $form_ele = new XoopsFormText('', $elementName, 20, 255, $value);
-	    $form_ele->setExtra(' class="'. $elementUnderlyingField . '" ');
+	    $form_ele->setExtra(' class="fz-input '. $elementUnderlyingField . '" ');
+	    $controlId = $elementName;
 	}
       $selected = $value;
     }
 
     if( $form_ele ) {
       $html = $form_ele->render();
+      if($dateClasses) {
+        $html = str_replace('class="icms-date-box"', 'class="icms-date-box ' . $dateClasses . '"', $html);
+      }
     } else {
       if( $tmp_html ) {
         $html = $tmp_html;
@@ -1152,7 +1162,8 @@ class formulizeAdvancedCalculationHandler {
 
     $labelText = $hideLabel ? "" : $fltr_grp["fltr_label"];
 
-    return array( "label"=>$labelText, "html"=>$html, "selected"=>$selected );
+    // id: the control the label is for, or '' for a set of checkboxes (or a hidden value), which has none of its own
+    return array( "label"=>$labelText, "html"=>$html, "selected"=>$selected, "id"=>$controlId );
   }
 
   // takes the filter and grouping option settings as input and checks them and the current status to determine if the value is on or off
@@ -1210,26 +1221,26 @@ class formulizeAdvancedCalculationHandler {
       $checked = '';
     }
     $elementUnderlyingField = $fltr_grp["form"] ? "element".$fltr_grp["form"] : "no-underlying-element";
-    $html = '<input type="checkbox" id="' . $elementArrayName . '" class="'. $elementUnderlyingField . ' ' .  $elementName . '_'.$fltr_grp_index.'" name="' . $elementArrayName . '" value="' . $fltr_grp_index . '"' . $checked . '>';
+    $html = '<input type="checkbox" id="' . $elementArrayName . '" class="fz-checkbox '. $elementUnderlyingField . ' ' .  $elementName . '_'.$fltr_grp_index.'" name="' . $elementArrayName . '" value="' . $fltr_grp_index . '"' . $checked . '>';
 
-    // for checkboxes, add some jquery so we can autoselect the grouping option if the user selects more than one choice
+    // for checkboxes, a script so the grouping option is ticked when the user ticks more than one choice
     if($fltr_grp["type"]["kind"] == 3) {
-	$jQuery = "
-\n\n<script type='text/javascript'>
-
-jQuery(document).ready(function() {
-    jQuery('.".$acid . "_" . $fltr_grp["handle"]."').click(function() {
-	if(jQuery('.".$acid . "_" . $fltr_grp["handle"].":checked').length > 1) {
-	    jQuery('.".$elementName."_".$fltr_grp_index."').prop('checked', true);
-	} else {
-	    jQuery('.".$elementName."_".$fltr_grp_index."').prop('checked', false);
-	}
+	// getElementsByClassName, since the class names start with a number, which a CSS selector can't
+	$script = "
+<script type='text/javascript'>
+document.addEventListener('click', function(e) {
+    var choices = document.getElementsByClassName('".$acid . "_" . $fltr_grp["handle"]."');
+    if(Array.prototype.indexOf.call(choices, e.target) == -1) {
+        return;
+    }
+    var ticked = Array.prototype.filter.call(choices, function(box) { return box.checked; }).length;
+    Array.prototype.forEach.call(document.getElementsByClassName('".$elementName."_".$fltr_grp_index."'), function(box) {
+        box.checked = ticked > 1;
     });
 });
-
-</script>\n\n
+</script>
 ";
-	$html .= $jQuery;
+	$html .= $script;
     }
 
     return array( "label"=>$fltr_grp["grp_label"], "html"=>$html );

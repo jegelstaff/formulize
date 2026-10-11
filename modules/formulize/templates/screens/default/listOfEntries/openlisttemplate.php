@@ -110,7 +110,10 @@ function drawHeaderRow($headers, $checkBoxesShown, $viewEntryLinksShown, $column
 							// NEEDS DEBUGGING - display of lock column doesn't work smoothly, icon doesn't show up when it should either?
 							$lockColumnClass = in_array($columnNumber, $lockedColumns) ? 'lockcolumn heading-locked' : 'lockcolumn heading-unlocked';
 							$cell .= "<a href='' id='lockcolumn_$columnNumber' class='$lockColumnClass' title='"._formulize_DE_FREEZECOLUMN."'></a>\n";
-							$cell .= "<a href='' class='header-info-link' onclick='javascript:showPop(\"".XOOPS_URL."/modules/formulize/include/moreinfo.php?col=$elementHandle\");return false;' title='"._formulize_DE_MOREINFO."'></a>\n";
+							// more info is about an element of the form, which a metadata column (creation date, and so on) isn't
+							if(!isMetaDataField($elementHandle)) {
+								$cell .= "<a href='' class='header-info-link' onclick='javascript:showPop(\"".XOOPS_URL."/modules/formulize/include/moreinfo.php?col=$elementHandle\");return false;' title='"._formulize_DE_MOREINFO."'></a>\n";
+							}
 						}
 						$cell .= clickableSortLink($elementHandle, trans($headingText)); // create the clickable sort text, with icon if applicable
 					$cell .= "

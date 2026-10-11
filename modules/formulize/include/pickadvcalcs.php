@@ -44,6 +44,7 @@ if( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['lan
 }
 
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
+include_once XOOPS_ROOT_PATH.'/modules/formulize/include/popup_functions.php';
 
 
 // Set some required variables
@@ -84,15 +85,9 @@ if( !$scheck = security_check( $fid, "", $uid, "", $groups, $mid, $gperm_handler
 // build advanced calculation list
 $advanced_calculation_handler = xoops_getmodulehandler('advancedCalculation', 'formulize');
 $list = $advanced_calculation_handler->getList($fid);
+
+ob_start();
 ?>
-<html>
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=<?php print _CHARSET; ?>" />
-    <title><?php print _formulize_DE_PICKCALCS; ?></title>
-
-    <link rel="stylesheet" type="text/css" media="screen" href="<?php print XOOPS_URL ?>/xoops.css" />
-    <link rel="stylesheet" type="text/css" media="screen" href="<?php print xoops_getcss() ?>" />
-
     <script type="text/javascript" src="<?php print XOOPS_URL ?>/include/xoops.js"></script>
 <?php
 	include_once XOOPS_ROOT_PATH."/include/calendarjs.php";
@@ -100,7 +95,7 @@ $list = $advanced_calculation_handler->getList($fid);
     <script>
 <?php
   if( $acid ) {
-    print "current_acid = {$acid};\n";
+    print "current_acid = " . intval($acid) . ";\n";
   } else {
     print "current_acid = null;\n";
   }
@@ -146,50 +141,47 @@ $list = $advanced_calculation_handler->getList($fid);
 	    window.self.close();
     }
     </script>
-  </head>
-  <body class="formulize-popup" style="background: white; margin-top:20px;">
-    <center>
-      <table>
 <?php
+formulize_popupHeader(_formulize_DE_PICKCALCS, ob_get_clean());
+
+// each procedure is a card. Clicking one picks it, and the one that is picked shows its options.
+print "<h1 class='fz-text-lg fz-font-semibold'>" . _formulize_DE_PICKCALCS . "</h1>\n";
+print "<ul class='fz-card-list'>\n";
 foreach( $list as $index => $value ) {
-?>
-        <tr>
-          <td class="<?php print ( ( $index %2 ) ? 'even' : 'odd' ); ?>" style="border-bottom: 1px solid black; cursor: pointer" onclick="selectAdvCalc(<?php print $value['acid']; ?>)">
-            <strong><?php print $value['name']; ?></strong>
-            <br/>
-            <?php print $value['description'];
-if( $acid == $value['acid'] ) {
-  $procedures_handler = xoops_getmodulehandler('advancedCalculation', 'formulize');
-  $allFiltersAndGroupings = $procedures_handler->getAllFiltersAndGroupings($acid);
-?>
-<br><br>
-<form id="procedure_<?php print $acid; ?>">
-<table><tr><td>
-<?php
-foreach($allFiltersAndGroupings["filters"] as $thisFilter) {
-  print "<b>" . $thisFilter['label'] . "</b><br>";
-  print $thisFilter['html'] . "<br>";
+  if( $acid == $value['acid'] ) {
+    $procedures_handler = xoops_getmodulehandler('advancedCalculation', 'formulize');
+    $allFiltersAndGroupings = $procedures_handler->getAllFiltersAndGroupings($acid);
+    print "<li class='fz-card'>\n";
+    print "<h2 class='fz-card__title'>" . $value['name'] . "</h2>\n";
+    print "<p class='fz-text-muted'>" . $value['description'] . "</p>\n";
+    // the controls of the filters and groupings are made by the procedure itself, so they have the theme's own look
+    print "<form id='procedure_" . intval($acid) . "' class='fz-stack'>\n";
+    print "<div class='fz-switcher'>\n";
+    if( count((array) $allFiltersAndGroupings["filters"]) > 0 ) {
+      print "<div class='fz-stack fz-gap-3'>\n";
+      foreach($allFiltersAndGroupings["filters"] as $thisFilter) {
+        print formulize_popupField($thisFilter['label'], $thisFilter['html'], '', $thisFilter['id']);
+      }
+      print "</div>\n";
+    }
+    if( count((array) $allFiltersAndGroupings["groupings"]) > 0 ) {
+      print "<div class='fz-choice-group'>\n";
+      foreach($allFiltersAndGroupings["groupings"] as $thisGrouping) {
+        print "<label class='fz-choice'>" . $thisGrouping['html'] . " " . $thisGrouping['label'] . "</label>\n";
+      }
+      print "</div>\n";
+    }
+    print "</div>\n";
+    print "<div class='fz-cluster'><input type='button' class='fz-btn fz-btn--primary' value='Go' onclick='selectAdvCalc2( " . intval($acid) . " );' /></div>\n";
+    print "</form>\n";
+    print "</li>\n";
+  } else {
+    print "<li class='fz-card fz-card--interactive'>\n";
+    print "<h2 class='fz-card__title'><a class='fz-card__link' href='" . htmlspecialchars($_SERVER['REQUEST_URI'] . "&acid=" . intval($value['acid'])) . "' onclick='selectAdvCalc(" . intval($value['acid']) . ");return false;'>" . $value['name'] . "</a></h2>\n";
+    print "<p class='fz-text-muted'>" . $value['description'] . "</p>\n";
+    print "</li>\n";
+  }
 }
-?>
-</td><td>
-<?php
-foreach($allFiltersAndGroupings["groupings"] as $thisGrouping) {
-  print $thisGrouping['html'];
-  print " <b>" . $thisGrouping['label'] . "</b><br>";
-}
-?>
-</td></tr></table>
-  <input type="button" value="Go" onclick="selectAdvCalc2( <?php print $acid; ?> );" />
-</form>
-<?php
-}
-?>
-          </td>
-        </tr>
-<?php
-}
-?>
-      </table>
-    </center>
-  </body>
-</html>
+print "</ul>\n";
+
+formulize_popupFooter();

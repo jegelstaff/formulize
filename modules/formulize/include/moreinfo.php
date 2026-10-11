@@ -40,42 +40,46 @@ if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['la
   include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php";
 }
 
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/popup_functions.php";
+
+// Only for someone who could have this element as a column in a list: they must be able to
+// view its form, the element must be displayed to one of their groups, and a private element
+// is only for those who can view private elements. Those are the tests getAllColList and
+// getUserAccountColList make. Anyone else is told the same thing whether or not there is
+// such an element, so nothing can be learned about elements by asking for them here.
+global $xoopsUser;
+$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 $element_handler = xoops_getmodulehandler('elements', 'formulize');
-if(!$elementObject = $element_handler->get($_GET['col'])) {
-	exit("Element not found");
+$elementObject = (isset($_GET['col']) AND is_scalar($_GET['col'])) ? $element_handler->get($_GET['col']) : false;
+$fid = is_object($elementObject) ? intval($elementObject->getVar('id_form')) : 0;
+if(!$fid
+	OR !security_check($fid)
+	OR !$element_handler->isElementVisibleForUser($elementObject, $xoopsUser)
+	OR ($elementObject->getVar('ele_private') AND !formulize_userCanViewPrivateElements($fid, $groups))) {
+	print "<p>" . _NO_PERM . "</p>";
+	exit;
 }
 
-print "<HTML>";
-print "<head>";
-print "<title>" . _formulize_DE_MOREINFO_TITLE . "</title>\n";
-print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"" . XOOPS_URL . "/xoops.css\" />\n";
-$themecss = xoops_getcss();
-print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
-print "</head>";
-print "<body class=\"formulize-popup\" style=\"background: white; margin-top:20px;\"><center>";
-print "<table width=100%><tr><td width=5%></td><td width=90%>";
-?>
-<br><br>
-<table class="outer">
-  <tr><td class="head"><center><p>
-  <?php print _formulize_DE_MOREINFO_QUESTION."<br>".trans($elementObject->getVar('ele_caption')); ?>
-  </p><center></td></tr>
-  <?php
-  // radio buttons and everything that extends them (yn, and custom radio-based types) have a
-  // list of options we can show. getListOptions returns them keyed by display-ready text, since
-  // some types store codes rather than display text in their ele_value keys (yn stores 1/2).
-  if(anyRadioElementType($elementObject)) {
-      print "<tr><td class=\"odd\"><p><b>"._formulize_DE_MOREINFO_OPTIONS."</b></p>\n";
-      print "<ul>\n";
-			$ele_uitext=$elementObject->getVar('ele_uitext');
-      foreach($elementObject->getListOptions() as $optionLabel=>$selected) {
+formulize_popupHeader(_formulize_DE_MOREINFO_TITLE);
+
+print "<div class='fz-card'>\n";
+print "<h1 class='fz-card__title'>" . _formulize_DE_MOREINFO_TITLE . "</h1>\n";
+print "<dl class='fz-dl fz-dl--stacked'>\n";
+print "<div><dt>" . _formulize_DE_MOREINFO_QUESTION . "</dt><dd>" . trans($elementObject->getVar('ele_caption')) . "</dd></div>\n";
+// radio buttons and everything that extends them (yn, and custom radio-based types) have a
+// list of options we can show. getListOptions returns them keyed by display-ready text, since
+// some types store codes rather than display text in their ele_value keys (yn stores 1/2).
+if(anyRadioElementType($elementObject)) {
+    print "<div><dt>" . _formulize_DE_MOREINFO_OPTIONS . "</dt>\n";
+    print "<dd><div class='fz-prose'><ul>\n";
+    $ele_uitext=$elementObject->getVar('ele_uitext');
+    foreach($elementObject->getListOptions() as $optionLabel=>$selected) {
         $optionText = isset($ele_uitext[$optionLabel]) ? trans($optionLabel) ." &mdash; ".trans($ele_uitext[$optionLabel]) : trans($optionLabel);
         print "<li>$optionText</li>\n";
-      }
-      print "</ul></td></tr>\n";
-  }
-print "</table>\n";
+    }
+    print "</ul></div></dd></div>\n";
+}
+print "</dl>\n";
+print "</div>\n";
 
-print "</td><td width=5%></td></tr></table>";
-print "</center></body>";
-print "</HTML>";
+formulize_popupFooter();

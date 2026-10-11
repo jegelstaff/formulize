@@ -84,13 +84,18 @@ class formulizeFramework extends XoopsObject {
     // usage: list($side, $onMainForm) = $framework->whatSideIsHandleOn($handleOrElementId, $mainformFid);
 	function whatSideIsHandleOn($key, $mainformFid) {
 		static $cachedHandles = array();
+
+		// 1. figure out the form of the $key that was passed
+		// A metadata column (creation_uid, creation_datetime, and so on) is not an element, and belongs to the
+		// main form, as it does in getCalcHandleAndFidAlias. This is worked out on every call, not only the
+		// first for a key, because the second thing returned depends on it as well as the side does.
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		$elementObject = $element_handler->get($key);
+		$targetFid = $elementObject ? $elementObject->getVar('id_form') : $mainformFid;
+
 		if(!isset($cachedHandles[$key])) {
 
-			// 1. figure out the form of the $key that was passed
 			// 2. check the form1 and form2 properties of the links to see which side that form is on
-			$element_handler = xoops_getmodulehandler('elements', 'formulize');
-			$elementObject = $element_handler->get($key);
-			$targetFid = $elementObject->getVar('id_form');
 
 			foreach($this->getVar('links') as $thisLink) {
 				if($thisLink->getVar('form1') == $targetFid) {

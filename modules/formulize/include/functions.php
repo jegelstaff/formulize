@@ -9914,6 +9914,9 @@ function convertVariableSearchToLiteral($v, $requestKeyToUse) {
  * and elsewhere. The idea is to show columns based on their forms, in a way
  * that mimics the links in the active relationships
  *
+ * The list brings its own behaviour with it: a range of columns can be ticked or
+ * unticked by clicking one and SHIFT-clicking another (see formulize_columnListScript).
+ *
  * @param int $mainformFid The main form ID
  * @param array $cols - An array of column data, as returned from the getAllColList function (keyed by form ID and each value an array of metadata for a given element)
  * @param array $selectedCols - Optional. An array of the selected column handles
@@ -9921,7 +9924,10 @@ function convertVariableSearchToLiteral($v, $requestKeyToUse) {
  */
 function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
 
-    $html = "<div>";
+    // the hint is help text about the list, so it has the help text's look wherever the list is: under a
+    // field's own help text, as in the Save view popup, it reads as more of the same
+    $html = "<div class='fz-stack fz-gap-3 formulize-column-list'>
+    <p class='fz-field__help'>To select a range of columns, click the first one, then SHIFT-click on the last one.</p>";
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $counter = 0;
     $prevFid = 0;
@@ -9932,6 +9938,7 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
         }
         $formObject = $form_handler->get($thisFid);
         $boxeshtml = "";
+        $anySelected = false;
         // Add user account elements, which getAllColList cannot report because they hold no
         // column of their own. getUserAccountColList applies the rules about which of them this
         // user may use, the same ones the list screens and the Public API go by.
@@ -9975,86 +9982,106 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
             $counter++;
             $fidCounter++;
             $selected = in_array($column['ele_handle'], $selectedCols) ? "checked='checked'" : "";
+            $anySelected = ($anySelected OR $selected);
             $text = (isset($column['ele_colhead']) AND $column['ele_colhead'] != "") ? printSmart(trans($column['ele_colhead']), 75) : printSmart(trans(strip_tags($column['ele_caption'])), 75);
-            $boxeshtml .= "<input type='checkbox' name='popnewcols[]' id='popnewcols".$counter."' class='colbox' value=\"{$column['ele_handle']}\" $selected />&nbsp;&nbsp;&nbsp;<label for='popnewcols".$counter."'>$text</label><br />\n";
+            // colbox is what the popups' scripts, and the range selection, find the boxes by
+            $boxeshtml .= "<label class='fz-choice'><input type='checkbox' name='popnewcols[]' id='popnewcols".$counter."' class='fz-checkbox colbox' value=\"{$column['ele_handle']}\" $selected /> $text</label>\n";
         }
+				// A box for each form, which opens and closes. It starts open when one of its columns is chosen.
+				$open = $anySelected ? " open" : "";
 				$html .= "
-				  <fieldset class='elements-checkbox-fieldset'>
-				 		<legend class='elements-checkbox-legend'>
-							<button
-								onclick='toggleCols($thisFid);return false;'
-								id='id-change-columns-toggle-header-".$thisFid."'
-								class='toggle-button-change-columns'
-								aria-expanded='true'
-								aria-controls='id-change-columns-toggle-panel-".$thisFid."'
-								data-accordion-header
-								type='button'
-					>
-								".$formObject->getVar('title')." <span id='arrow-up' aria-label='up arrow'>&and;</span><span id='arrow-down' aria-label='down arrow'>&or;</span>
-							</button>
-						</legend>
-						<div
-							class='elements-checkbox-list'
-							id='id-change-columns-toggle-panel-".$thisFid."'
-							aria-labelledby='id-change-columns-toggle-header-".$thisFid."'
-						>
+					<details class='fz-disclosure'$open>
+						<summary class='fz-font-semibold' id='formulize-columns-section-".$thisFid."'>".$formObject->getVar('title')."</summary>
+						<div class='fz-choice-group' role='group' aria-labelledby='formulize-columns-section-".$thisFid."'>
 							".$boxeshtml."
 						</div>
-					</fieldset>
+					</details>
 				";
     }
-    $html .="</div>
+    $html .= "</div>";
 
-    <style>
-			button.toggle-button-change-columns {
-				font-family: inherit;
-				font-size: 100%;
-				line-height: 1.15;
-				margin: 0 0 10px 0;
-				padding: 0;
-				padding-top: 1em;
-				font-weight: bold;
-				color: #666;
-				background-color: inherit !important;
-				border: 0;
-				box-shadow: none;
-			}
+    return $html . formulize_columnListScript();
 
-			.elements-checkbox-list {
-				max-height: 10000px;
-			}
+}
 
-			button[aria-expanded='true'] span#arrow-up {
-				display: inline;
-			}
-			button[aria-expanded='false'] span#arrow-up {
-				display: none;
-			}
-			button[aria-expanded='true'] span#arrow-down {
-				display: none;
-			}
-			button[aria-expanded='false'] span#arrow-down {
-				display: inline;
-			}
-
-			.elements-checkbox-list {
-					transition: all 1s ease 0.25s;
-			}
-    </style>
-
-    <script type='text/javascript'>
-    function toggleCols(fid) {
-				const toggleHeader = document.querySelector('#id-change-columns-toggle-header-' + fid);
-				const togglePanel = document.querySelector('#id-change-columns-toggle-panel-' + fid);
-				let expanded = toggleHeader.getAttribute('aria-expanded') === 'true' || false;
-				toggleHeader.setAttribute('aria-expanded', !expanded);
-				togglePanel.hidden = expanded;
+/**
+ * The script for selecting a range of columns in a list made by generateTidyElementList: click one
+ * column, then SHIFT-click another, on the box or on its name, and every column from the one to the
+ * other takes the state of the one clicked last. Only the columns in sections that are open are
+ * changed, and only in the list that was clicked, if a page has more than one.
+ *
+ * A click on a column's name is a click on its label. Browsers don't agree on what a SHIFT-click on
+ * a label does: some follow it with a click on the box that doesn't say SHIFT was down, and Firefox
+ * doesn't click the box at all, taking it as selecting text. So a SHIFT-click on a name is handled
+ * here, the box ticked or unticked by this script, and the browser's own response to it is stopped.
+ *
+ * @return string The script, the first time it is asked for on a page, and nothing after that
+ */
+function formulize_columnListScript() {
+    static $printed = false;
+    if($printed) {
+        return "";
     }
-    </script>
-    ";
+    $printed = true;
+    return "
+<script type='text/javascript'>
+(function() {
 
-    return $html;
+    // the box a click is on, or whose name it is on, in a column list
+    function boxClicked(target) {
+        if(!target.closest || !target.closest('.formulize-column-list')) {
+            return null;
+        }
+        if(target.closest('.colbox')) {
+            return target.closest('.colbox');
+        }
+        var label = target.closest('label');
+        return label ? label.querySelector('.colbox') : null;
+    }
 
+    // the boxes in a list that a range can take in: the ones in sections that are open, so nothing out of sight is changed
+    function boxesInView(list) {
+        return Array.prototype.filter.call(list.getElementsByClassName('colbox'), function(box) {
+            var section = box.closest('details');
+            return !section || section.open;
+        });
+    }
+
+    // a SHIFT-click on a column's name would also highlight all the text between it and the last click
+    document.addEventListener('mousedown', function(e) {
+        if(e.shiftKey && boxClicked(e.target) && !e.target.closest('.colbox')) {
+            e.preventDefault();
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        var box = boxClicked(e.target);
+        if(!box) {
+            return;
+        }
+        var onName = (e.target !== box);
+        if(onName && !e.shiftKey) {
+            return; // the browser clicks the box next, and that click is the one handled
+        }
+        if(onName) {
+            e.preventDefault();
+            box.checked = !box.checked;
+        }
+        var list = box.closest('.formulize-column-list');
+        var boxes = boxesInView(list);
+        var lastClicked = list.formulizeLastClicked;
+        if(e.shiftKey && lastClicked && boxes.indexOf(lastClicked) != -1) {
+            var start = boxes.indexOf(box);
+            var end = boxes.indexOf(lastClicked);
+            boxes.slice(Math.min(start, end), Math.max(start, end) + 1).forEach(function(rangeBox) {
+                rangeBox.checked = box.checked;
+            });
+        }
+        list.formulizeLastClicked = box;
+    });
+})();
+</script>
+";
 }
 
 

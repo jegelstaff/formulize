@@ -1312,6 +1312,104 @@ body:not(.formulize-inline) .lyris-page:has(> #listofentries .lyris-list-screen)
 
 .lyris-list-table--cozy tbody td { height: var(--fz-row-height); } /* follows the density: 40px at standard */
 
+/* "Hide repeating data" switch (#toggleRepeatData, wired up in the Lyris bottom template)
+   swaps cells that repeat the cell above for a faded ditto mark. Lyris rows have no cell
+   boxes, so a plain blank would read as "no value"; the ditto says "same as above". The cell
+   itself stays visible so its background still follows row hover and selection. Bare text
+   fades by the cell's colour; elements inside (links such as the creator/modifier names,
+   images) fade by opacity and end up hidden, so they can't be clicked or tabbed to. The real
+   value stays in the DOM, so screen readers still read it, and the ditto has empty alt text. */
+.lyris-list-table {
+  --lyris-repeat-fade: 400ms; /* how long values and dittos take to fade in and out */
+}
+.lyris-list-table td.same-contents-as-prior-cell {
+  transition: color var(--lyris-repeat-fade) var(--fz-ease-out);
+}
+.lyris-list-table td.same-contents-as-prior-cell * {
+  transition: opacity var(--lyris-repeat-fade) var(--fz-ease-out), visibility var(--lyris-repeat-fade);
+}
+.lyris-list-table--hide-repeats td.same-contents-as-prior-cell { color: transparent; }
+.lyris-list-table--hide-repeats td.same-contents-as-prior-cell * { opacity: 0; visibility: hidden; }
+
+/* Anchor for the ditto, which sits a quarter of the way into the cell: indented from where the
+   left-aligned values start, so it reads as "same as above", but not so far over that it drifts
+   away from them in wide columns. In narrow columns it never sits left of the cell padding,
+   where the values begin. :where() keeps this weaker than the
+   narrow-screen rule that pins .column0 with position: sticky, and a sticky cell anchors the
+   ditto just as well. */
+:where(.lyris-list-table) td.same-contents-as-prior-cell { position: relative; }
+.lyris-list-table td.same-contents-as-prior-cell::after {
+  content: '"';
+  content: '"' / "";
+  position: absolute;
+  left: max(var(--fz-cell-padding-x), 25%);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--fz-color-text-subtle);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity var(--lyris-repeat-fade) var(--fz-ease-out), visibility var(--lyris-repeat-fade);
+}
+.lyris-list-table--hide-repeats td.same-contents-as-prior-cell::after { opacity: 1; visibility: visible; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lyris-list-table td.same-contents-as-prior-cell,
+  .lyris-list-table td.same-contents-as-prior-cell *,
+  .lyris-list-table td.same-contents-as-prior-cell::after {
+    transition: none;
+  }
+}
+
+/* ---- Calculations ----
+   When calculations have been asked for, the list has a row of buttons for them
+   under its column headings (lyris-calc-controls, in the open list template) and
+   the results after the entries (lyris-calc-table, in the close list template).
+
+   The results are core markup (printResults in entriesdisplay.php): table rows of
+   two cells, td.even for what was calculated and td.odd for its results, under a
+   td.formulize-calc-heading row naming the element. What is in the cells is
+   Formulize UI (fz-table, fz-dl), which needs nothing from here. Both parts line
+   up with the list's title bar, by the same space at the sides. */
+.lyris-list-table .lyris-calc-controls td {
+  padding: calc(var(--fz-spacing) * 3) var(--fz-toolbar-padding-x);
+  overflow: visible; /* a button's focus ring is not cut off */
+}
+
+.lyris-calc-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-family: var(--fz-table-font);
+  font-size: var(--fz-table-text);
+  color: var(--fz-row-text);
+}
+
+/* Only this table's own cells: a plain `td` would reach into the tables of
+   results that are inside them. */
+.lyris-calc-table > tbody > tr > td {
+  padding: calc(var(--fz-spacing) * 3) var(--fz-toolbar-padding-x);
+  vertical-align: top;
+  border-bottom: 1px solid var(--fz-row-border);
+  background: var(--fz-row-bg);
+}
+
+/* The element the calculations under it are on: a band like the column headings. */
+.lyris-calc-table > tbody > tr > td.formulize-calc-heading {
+  padding-block: calc(var(--fz-spacing) * 2);
+  font-family: var(--fz-table-header-font);
+  font-size: var(--fz-text-sm);
+  font-weight: 600;
+  color: var(--fz-color-text);
+  background: var(--fz-header-bg);
+  border-bottom-color: var(--fz-header-border);
+}
+
+/* What was calculated, beside its results. */
+.lyris-calc-table > tbody > tr > td.even {
+  width: 18rem;
+}
+
 /* Filter / search row.
    The table uses auto layout, where a column's width is the widest content in any of
    its cells. Left unstyled, the search controls render at their intrinsic widths and,
@@ -4425,33 +4523,23 @@ a.google-only-login-link:focus-visible {
    showPop() -> window.open() (see modules/formulize/include/entriesdisplay.php):
    Save view (save.php), calculations (pickcalcs.php / pickadvcalcs.php),
    notifications (setnot.php), change columns (changecols.php), change scope
-   (changescope.php), plus import.php / export.php. Each of these renders as a
-   standalone document that loads ONLY the theme stylesheet, not the Lyris page
-   chrome. Each popup emits `<body class="formulize-popup">` so these rules target
-   that class directly instead of the fragile inline-style attribute selector.
+   (changescope.php), more info (moreinfo.php), plus import.php / export.php.
+   Each of these is a standalone document, without the Lyris page chrome, made by
+   formulize_popupHeader() (modules/formulize/include/popup_functions.php), which
+   loads formulize-ui.css, this stylesheet and the Appearance settings. Their
+   content is built with Formulize UI's classes, so all they take from here is
+   the space at the edges of the page, on `<body class="formulize-popup">`.
 
-   Their content is a standard xoopsThemeForm (`.xo-theme-form > table.outer`
-   with `td.head` label cells and `td.even` field cells) which Lyris otherwise
-   leaves unstyled, so under the new theme the rows sit flush against each other
-   and the whole form hugs the window edges. The rules below add page padding
-   plus per-row vertical rhythm and a gap between the label and field columns. */
+   The body is as tall as the window everywhere else in this theme (see Base, at
+   the top), where the parts of the page do the scrolling. A popup is one page
+   that scrolls as a whole, so here the body grows with what is in it. Left at
+   the window's height, a popup longer than the window ran out past the body's
+   bottom padding, and ended flush against the bottom of the window. */
 body.formulize-popup {
+  height: auto;
+  min-height: 100%;
   padding: calc(var(--fz-spacing) * 6) calc(var(--fz-spacing) * 8) calc(var(--fz-spacing) * 10);
   box-sizing: border-box;
-}
-body.formulize-popup .xo-theme-form table.outer > tbody > tr > th,
-body.formulize-popup .xo-theme-form table.outer > tbody > tr > td {
-  padding: calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 4);
-  vertical-align: top;
-}
-/* A little more separation between the label column and its field. */
-body.formulize-popup .xo-theme-form table.outer > tbody > tr > td.head {
-  padding-right: calc(var(--fz-spacing) * 6);
-}
-/* Give the form title a touch more room beneath it. */
-body.formulize-popup .xo-theme-form table.outer > tbody > tr > th {
-  padding-bottom: calc(var(--fz-spacing) * 4);
-  text-align: center;
 }
 
 /* ---------- Subform elements (issue #57) ----------

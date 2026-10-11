@@ -1945,19 +1945,19 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 		$calc_blanks = $settings['calc_blanks'];
 		$calc_grouping = $settings['calc_grouping'];
 
-		$modCalcsButton = "<input type='button' style='width: 140px;' name='mod_calculations'
+		$modCalcsButton = "<input type='button' name='mod_calculations'
 			value='"._formulize_DE_MODCALCS."' onclick=\"javascript:showPop('".XOOPS_URL.
 			"/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=$calc_cols&calc_calcs=$calc_calcs&calc_blanks=$calc_blanks&calc_grouping=".
 			urlencode($calc_grouping)."&cols=".urlencode(implode(",",$cols))."');\"></input>";
 
-		$cancelCalcsButton = "<input type='button' style='width: 140px;' name='cancelcalcs'
+		$cancelCalcsButton = "<input type='button' name='cancelcalcs'
 			value='"._formulize_DE_CANCELCALCS."' onclick=\"javascript:cancelCalcs();\"></input>";
 
 		if($settings['hcalc']) {
-			$toggleCalcsButton = "<input type='button' style='width: 140px;' name='hidelist'
+			$toggleCalcsButton = "<input type='button' name='hidelist'
 				value='"._formulize_DE_HIDELIST."' onclick=\"javascript:hideList();\"></input>";
 		} else {
-			$toggleCalcsButton = "<input type='button' style='width: 140px;' name='showlist'
+			$toggleCalcsButton = "<input type='button' name='showlist'
 				value='"._formulize_DE_SHOWLIST."' onclick=\"javascript:showList();\"></input>";
 		}
 	}
@@ -2843,13 +2843,9 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	  }
 	  $allGroupings[] = "`$galias$ghandle`";
 	  $groupByClause .= "`$galias$ghandle`";
-	  if($ghandle == "creation_uid" OR $ghandle == "mod_uid") {
-		  $innerGroupingSelect .= ", (SELECT CASE usertable.name WHEN '' THEN usertable.uname ELSE usertable.name END FROM ". DBPRE."users as usertable WHERE usertable.uid = ".$galias.".`".$ghandle."`) as `inner$galias$ghandle`";
-		  $innerGroupingSelectAvgCount .= ", (SELECT CASE usertable.name WHEN '' THEN usertable.uname ELSE usertable.name END FROM ". DBPRE."users as usertable WHERE usertable.uid = ".$galias.".`".$ghandle."`) as `inner$galias$ghandle`";
-	  } else {
-		  $innerGroupingSelect .= ", $galias.`$ghandle` as `inner$galias$ghandle`";
-		  $innerGroupingSelectAvgCount .= ", $galias.`$ghandle` as `inner$galias$ghandle`";
-	  }
+	  // grouping by who made or last modified the entry is done on the user's name, not their id
+	  $innerGroupingSelect .= ", ".calcGroupingSQL($ghandle, $galias)." as `inner$galias$ghandle`";
+	  $innerGroupingSelectAvgCount .= ", ".calcGroupingSQL($ghandle, $galias)." as `inner$galias$ghandle`";
 	  $outerGroupingSelect .= ", `inner$galias$ghandle` as `$galias$ghandle`";
 	  $outerGroupingSelectAvgCount .= ", `inner$galias$ghandle` as `$galias$ghandle`";
 	}
@@ -3028,7 +3024,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 			$groupingValues[$cols[$i]][$calc][$calcId][] = convertRawValuesToRealValues($thisResult["$galias$ghandle"], $handle, true);
 		  }
 		}
-		$masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_MIN . ": ".formulize_numberFormat($thisResult["$fidAlias$handle"], $handle);
+		$masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_MIN . ": ".calcDisplayValue($thisResult["$fidAlias$handle"], $handle);
         $masterResultsRaw[$cols[$i]][$calc][$calcId]['min'] = $thisResult["$fidAlias$handle"];
 		break;
 		  case "max":
@@ -3038,7 +3034,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 			$groupingValues[$cols[$i]][$calc][$calcId][] = convertRawValuesToRealValues($thisResult["$galias$ghandle"], $handle, true);
 		  }
 		}
-		$masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_MAX . ": ".formulize_numberFormat($thisResult["$fidAlias$handle"], $handle);
+		$masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_MAX . ": ".calcDisplayValue($thisResult["$fidAlias$handle"], $handle);
         $masterResultsRaw[$cols[$i]][$calc][$calcId]['max'] = $thisResult["$fidAlias$handle"];
 		break;
 		  case "count":
@@ -3070,11 +3066,14 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		  if($thisGrouping != "none" AND $thisGrouping != "") {
 			list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
 			//print $thisResult["$galias$ghandle"] . "<br>";
+			// compare what the groups were made on (calcGroupingSQL), which for the user columns is the name
+			// and not the id in the column, or no entry would be found to be in the group
+			$groupingSQL = calcGroupingSQL($ghandle, $galias);
 			if($thisResult["$galias$ghandle"] == "") {
-			  $groupingWhere[] = "($galias.`$ghandle` = '".$thisResult["$galias$ghandle"]."' OR $galias.`$ghandle` IS NULL)";
+			  $groupingWhere[] = "($groupingSQL = '' OR $groupingSQL IS NULL)";
 			  $groupingValuesFound[] = _formulize_BLANK_KEYWORD;
 			} else {
-			  $groupingWhere[] = "$galias.`$ghandle` = '".$thisResult["$galias$ghandle"]."'";
+			  $groupingWhere[] = "$groupingSQL = '".formulize_db_escape($thisResult["$galias$ghandle"])."'";
 			  $groupingValuesFound[] = $thisResult["$galias$ghandle"];
 			}
 		  }
@@ -3144,7 +3143,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		  if($thisGrouping != "none" AND $thisGrouping != "") {
 		list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
 		$foundValues .= $modeData["$galias$ghandle"]."xyz";
-		$modeCountsTemp[$modeData["$galias$ghandle"]] = "$galias.`$ghandle`";
+		$modeCountsTemp[$modeData["$galias$ghandle"]] = calcGroupingSQL($ghandle, $galias); // what the groups were made on, as above
 		  }
 		}
 		if(!isset($foundModeValue[$foundValues])) { // this is a new combination
@@ -3154,7 +3153,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		  } else {
 		$modeCounts[$modeIndexer]['none'] = 'none';
 		  }
-		  $masterResults[$cols[$i]][$calc][$modeIndexer] .= "REPLACE WITH MEDIAN"._formulize_DE_CALC_MODE . ": ".formulize_numberFormat($modeData["$fidAlias$handle"], $handle);
+		  $masterResults[$cols[$i]][$calc][$modeIndexer] .= "REPLACE WITH MEDIAN"._formulize_DE_CALC_MODE . ": ".calcDisplayValue($modeData["$fidAlias$handle"], $handle);
 		  $modeIndexer++;
 		}
 	  }
@@ -3166,7 +3165,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		foreach($thisModeGrouping as $modeGrouping=>$modeHandle) {
 		  // first we need to get the full count for this group of results
 		  // need to convert grouping values into the where clause for the percentile calculations
-		  $groupingWhere .= $modeHandle === 'none' ? "" : " AND ($modeHandle = '$modeGrouping')";
+		  $groupingWhere .= $modeHandle === 'none' ? "" : " AND ($modeHandle = '".formulize_db_escape($modeGrouping)."')";
 		}
 		$countSQL = "SELECT count(tempElement) as `count$fidAlias$handle` FROM (SELECT distinct($fidAlias.`entry_id`), $fidAlias.`$handle` as tempElement $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere) as tempQuery";
 		//print "<br>$countSQL<br>";
@@ -3204,14 +3203,16 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		$perPair[] = $per25Array["$fidAlias$handle"];
 		if(!$start) { $per25Results .= ", "; }
 		$start = false;
-		$per25Results .= formulize_numberFormat($per25Array["$fidAlias$handle"], $handle);
+		$per25Results .= calcDisplayValue($per25Array["$fidAlias$handle"], $handle);
 		}
 		if(count((array) $perPair) < 2) {
+		  $allPerResults .= $per25Results;
+		} elseif($perPair[0] != $perPair[1] AND (!is_numeric($perPair[0]) OR !is_numeric($perPair[1]) OR calcHandleHoldsUserIds($handle))) { // two different values that are text or users, not numbers: there is nothing part way between them, so show them both
 		  $allPerResults .= $per25Results;
 		} elseif($perPair[0] != $perPair[1]) { // we have multiple values at the median/percentile point, so figure out the weighted average
 		  $allPerResults .= formulize_numberFormat(($per25Fraction * ($perPair[1]-$perPair[0])) + $perPair[0], $handle, "", 2) . " ($per25Results)";
 		} else { // multiple, equal values at median/percentile point
-		  $allPerResults .= formulize_numberFormat($perPair[0], $handle);
+		  $allPerResults .= calcDisplayValue($perPair[0], $handle);
 		}
 		$allPerResults .= "<br>";
 		$allPerResults .= _formulize_DE_CALC_MEDIAN.": ";
@@ -3221,14 +3222,16 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		$perPair[] = $per50Array["$fidAlias$handle"];
 		if(!$start) { $per50Results .= ", "; }
 		$start = false;
-		$per50Results .= formulize_numberFormat($per50Array["$fidAlias$handle"], $handle);
+		$per50Results .= calcDisplayValue($per50Array["$fidAlias$handle"], $handle);
 		}
 		if(count((array) $perPair) < 2) {
+		  $allPerResults .= $per50Results;
+		} elseif($perPair[0] != $perPair[1] AND (!is_numeric($perPair[0]) OR !is_numeric($perPair[1]) OR calcHandleHoldsUserIds($handle))) { // two different values that are text or users, not numbers: there is nothing part way between them, so show them both
 		  $allPerResults .= $per50Results;
 		} elseif($perPair[0] != $perPair[1]) { // we have multiple values at the median/percentile point, so figure out the average
 		  $allPerResults .= formulize_numberFormat(($per50Fraction * ($perPair[1]-$perPair[0])) + $perPair[0], $handle, "", 2) . " ($per50Results)";
 		} else { // multiple, equal values at median/percentile point
-		  $allPerResults .= formulize_numberFormat($perPair[0], $handle);
+		  $allPerResults .= calcDisplayValue($perPair[0], $handle);
 		}
 		$allPerResults .= "<br>";
 		$allPerResults .= _formulize_DE_CALC_MEDIAN75.": ";
@@ -3238,14 +3241,16 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		$perPair[] = $per75Array["$fidAlias$handle"];
 		if(!$start) { $per75Results .= ", "; }
 		$start = false;
-		$per75Results .= formulize_numberFormat($per75Array["$fidAlias$handle"], $handle);
+		$per75Results .= calcDisplayValue($per75Array["$fidAlias$handle"], $handle);
 		}
 		if(count((array) $perPair) < 2) {
+		  $allPerResults .= $per75Results;
+		} elseif($perPair[0] != $perPair[1] AND (!is_numeric($perPair[0]) OR !is_numeric($perPair[1]) OR calcHandleHoldsUserIds($handle))) { // two different values that are text or users, not numbers: there is nothing part way between them, so show them both
 		  $allPerResults .= $per75Results;
 		} elseif($perPair[0] != $perPair[1]) { // we have multiple values at the median/percential point, so figure out the average
 		  $allPerResults .= formulize_numberFormat(($per75Fraction * ($perPair[1]-$perPair[0])) + $perPair[0], $handle, "", 2) . " ($per75Results)";
 		} else { // multiple, equal values at median/percentile point
-		  $allPerResults .= formulize_numberFormat($perPair[0], $handle);
+		  $allPerResults .= calcDisplayValue($perPair[0], $handle);
 		}
 		$allPerResults .= "<br><br>";
 		//print $medianResults."<br><br>";
@@ -3256,9 +3261,9 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	  foreach($groupCounts as $groupCountData) {
 		$start = true;
 		if($groupCountData['countValue'] == $groupCountData['responseCountValue'] AND $start) {
-		  $typeout = "<table cellpadding=3>\n<tr><td style=\"vertical-align: top; padding-right: 1em;\"><u>" . _formulize_DE_PER_ITEM . "</u></td><td style=\"vertical-align: top; padding-right: 1em;\"><u>" . _formulize_DE_PER_COUNT . "</u></td><td style=\"vertical-align: top; padding-right: 1em; padding-right: 1em;\"><u>" . _formulize_DE_PER_PERCENT . "</u></td></tr>\n";
+		  $typeout = "<table class='fz-table fz-w-auto'>\n<thead><tr><th scope='col'>" . _formulize_DE_PER_ITEM . "</th><th scope='col' class='fz-text-end'>" . _formulize_DE_PER_COUNT . "</th><th scope='col' class='fz-text-end'>" . _formulize_DE_PER_PERCENT . "</th></tr></thead>\n<tbody>\n";
 		} else {
-		  $typeout = "<table cellpadding=3>\n<tr><td style=\"vertical-align: top; padding-right: 1em;\"><u>" . _formulize_DE_PER_ITEM . "</u></td><td style=\"vertical-align: top; padding-right: 1em;\"><u>" . _formulize_DE_PER_COUNT . "</u></td><td style=\"vertical-align: top; padding-right: 1em; padding-right: 1em;\"><u>" . _formulize_DE_PER_PERCENTRESPONSES . "</u></td><td style=\"vertical-align: top; padding-right: 1em;\"><u>" . _formulize_DE_PER_PERCENTENTRIES . "</u></td></tr>\n";
+		  $typeout = "<table class='fz-table fz-w-auto'>\n<thead><tr><th scope='col'>" . _formulize_DE_PER_ITEM . "</th><th scope='col' class='fz-text-end'>" . _formulize_DE_PER_COUNT . "</th><th scope='col' class='fz-text-end'>" . _formulize_DE_PER_PERCENTRESPONSES . "</th><th scope='col' class='fz-text-end'>" . _formulize_DE_PER_PERCENTENTRIES . "</th></tr></thead>\n<tbody>\n";
 		}
 		// replace the indivText with a corresponding name, if we have any on file
 		$nameReplacementMap = array();
@@ -3279,15 +3284,16 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		foreach($indivCounts[$cols[$i]][$calc][$groupCountData['indexerToUse']] as $indivText=>$indivTotal) {
 		  if(count((array) $nameReplacementMap)>0) { $indivText = $nameReplacementMap[$indivText]; } // swap in a name for this user, if applicable
 		  if($groupCountData['countValue'] == $groupCountData['responseCountValue']) {
-		$typeout .= "<tr><td style=\"vertical-align: top;\">$indivText</td><td style=\"vertical-align: top;\">$indivTotal</td><td style=\"vertical-align: top;\">".($groupCountData['countValue'] ? round(($indivTotal/$groupCountData['countValue'])*100,2) : '-')."%</td></tr>\n";
+		$typeout .= "<tr><td>$indivText</td><td class='fz-text-end fz-tabular-nums'>$indivTotal</td><td class='fz-text-end fz-tabular-nums'>".($groupCountData['countValue'] ? round(($indivTotal/$groupCountData['countValue'])*100,2) : '-')."%</td></tr>\n";
 		  } else {
-		$typeout .= "<tr><td style=\"vertical-align: top;\">$indivText</td><td style=\"vertical-align: top;\">$indivTotal</td><td style=\"vertical-align: top;\">".round(($indivTotal/$groupCountData['responseCountValue'])*100,2)."%</td><td style=\"vertical-align: top;\">".($groupCountData['countValue'] ? round(($indivTotal/$groupCountData['countValue'])*100,2) : '-')."%</td></tr>\n";
+		$typeout .= "<tr><td>$indivText</td><td class='fz-text-end fz-tabular-nums'>$indivTotal</td><td class='fz-text-end fz-tabular-nums'>".round(($indivTotal/$groupCountData['responseCountValue'])*100,2)."%</td><td class='fz-text-end fz-tabular-nums'>".($groupCountData['countValue'] ? round(($indivTotal/$groupCountData['countValue'])*100,2) : '-')."%</td></tr>\n";
 		  }
 		}
+		// the totals, in the table's foot
 		if($groupCountData['countValue'] == $groupCountData['responseCountValue']) {
-		  $typeout .= "<tr><td style=\"vertical-align: top;\"><hr>" . _formulize_DE_PER_TOTAL . "</td><td style=\"vertical-align: top;\"><hr>".($groupCountData['countValue'] ? $groupCountData['countValue'] : '-')."</td><td style=\"vertical-align: top;\"><hr>100%</td></tr>\n</table>\n";
+		  $typeout .= "</tbody>\n<tfoot><tr><td class='fz-font-semibold'>" . _formulize_DE_PER_TOTAL . "</td><td class='fz-text-end fz-tabular-nums fz-font-semibold'>".($groupCountData['countValue'] ? $groupCountData['countValue'] : '-')."</td><td class='fz-text-end fz-tabular-nums fz-font-semibold'>100%</td></tr></tfoot>\n</table>\n";
 		} else {
-		  $typeout .= "<tr><td style=\"vertical-align: top;\"><hr>" . _formulize_DE_PER_TOTAL . "</td><td style=\"vertical-align: top;\"><hr>".$groupCountData['responseCountValue']. " " ._formulize_DE_PER_TOTALRESPONSES."<br>".$groupCountData['countValue']. " " ._formulize_DE_PER_TOTALENTRIES."</td><td style=\"vertical-align: top;\"><hr>100%</td><td style=\"vertical-align: top;\"><hr>" .($groupCountData['countValue'] ? round($groupCountData['responseCountValue']/$groupCountData['countValue'], 2) : '-'). " " . _formulize_DE_PER_RESPONSESPERENTRY . "</td></tr>\n</table>";
+		  $typeout .= "</tbody>\n<tfoot><tr><td class='fz-font-semibold'>" . _formulize_DE_PER_TOTAL . "</td><td class='fz-text-end fz-tabular-nums fz-font-semibold'>".$groupCountData['responseCountValue']. " " ._formulize_DE_PER_TOTALRESPONSES."<br>".$groupCountData['countValue']. " " ._formulize_DE_PER_TOTALENTRIES."</td><td class='fz-text-end fz-tabular-nums fz-font-semibold'>100%</td><td class='fz-text-end fz-tabular-nums fz-font-semibold'>" .($groupCountData['countValue'] ? round($groupCountData['responseCountValue']/$groupCountData['countValue'], 2) : '-'). " " . _formulize_DE_PER_RESPONSESPERENTRY . "</td></tr></tfoot>\n</table>";
 		}
 		$masterResults[$cols[$i]][$calc][$groupCountData['indexerToUse']] = $typeout;
 	  }
@@ -3429,21 +3435,57 @@ function calcParseBlanksSetting($setting) {
 }
 
 
+// Whether a column that calculations can be done on holds user ids: who made the entry, or who last modified it.
+// uid and proxyid are the old names of those columns.
+function calcHandleHoldsUserIds($handle) {
+	return in_array($handle, array("creation_uid", "mod_uid", "uid", "proxyid"), true);
+}
+
+// The name to show for a user in the results of a calculation, in place of their id: their full name, or their
+// username when they have no full name. That is the name results are grouped by too (see calcGroupingSQL).
+// Nothing for no value at all, which is what a calculation over no entries gives.
+function calcUserName($uid) {
+	static $names = array();
+	if($uid === null OR $uid === "") {
+		return "";
+	}
+	if(!isset($names[$uid])) {
+		$member_handler = xoops_gethandler('member');
+		$names[$uid] = _FORM_ANON_USER;
+		if($userObject = $member_handler->getUser(intval($uid))) {
+			$names[$uid] = $userObject->getVar('name') ? $userObject->getVar('name') : $userObject->getVar('uname');
+		}
+	}
+	return $names[$uid];
+}
+
+// A value from a column, as the results of a calculation show it: the user's name where the column holds
+// user ids, and otherwise the value with the number formatting of its element.
+function calcDisplayValue($value, $handle) {
+	return calcHandleHoldsUserIds($handle) ? calcUserName($value) : formulize_numberFormat($value, $handle);
+}
+
+// The SQL for the value that results are grouped by, from a column: the column itself, or for the columns that
+// hold a user id, that user's name. The name is what the groups are made on, so it is also what has to be
+// compared when a query picks out the entries of one group.
+function calcGroupingSQL($ghandle, $galias) {
+	if($ghandle == "creation_uid" OR $ghandle == "mod_uid") {
+		return "(SELECT CASE usertable.name WHEN '' THEN usertable.uname ELSE usertable.name END FROM ". DBPRE."users as usertable WHERE usertable.uid = ".$galias.".`".$ghandle."`)";
+	}
+	return "$galias.`$ghandle`";
+}
+
 // THIS FUNCTION TAKES THE VALUE AND THE HANDLE AND FIGURES OUT WHAT THE VALUE PLUS UITEXT WOULD BE
 // This is only used when determining the item values for percentage breakdown calculations
 function calcValuePlusText($value, $handle, $col, $calc, $groupingValue) {
 
+  // the user columns are metadata fields too, so they have to be caught before the rest of those are passed over
+  if(calcHandleHoldsUserIds($handle)) {
+	return calcUserName($value);
+  }
 	$dataHandler = new formulizeDataHandler();
 	if(in_array($handle, $dataHandler->metadataFields)) {
   	return $value;
-  }
-  if($handle == "uid" OR $handle=="proxyid" OR $handle == "creation_uid" OR $handle == "mod_uid") {
-	$member_handler = xoops_gethandler('member');
-    $nameToDisplay = _FORM_ANON_USER;
-    if($userObject = $member_handler->getUser($value)) {
-        $nameToDisplay = $userObject->getVar('name') ? $userObject->getVar('name') : $userObject->getVar('uname');
-    }
-	return $nameToDisplay;
   }
   if($handle == "email" AND strstr($value, "@")) { // creator e-mail metadata field will be treated as having handle "email" in the calculation SQL, so we need this special condition
 	return $value;
@@ -3513,7 +3555,7 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 					$calc_name = _formulize_DE_CALC_PER;
 					break;
 			}
-			$output .= "<p><b>$calc_name</b></p>\n";
+			$output .= "<div class='fz-stack fz-gap-1'>\n<p><b>$calc_name</b></p>\n";
 			switch($blankSettings[$elementId][$calc]) {
 				case "all":
 					$bsetting = _formulize_DE_INCLBLANKS;
@@ -3549,7 +3591,11 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 					}
 					break;
 			}
-			$output .= "<p class='formulize_blank_setting'>$bsetting</p>\n</td>\n";
+			$output .= "<p class='formulize_blank_setting fz-text-muted'>$bsetting</p>\n</div>\n</td>\n";
+
+			// The results are Formulize UI tables and lists, inside the rows that the list templates and
+			// the downloaded file both wrap in a table of their own. count-total, count-unique and
+			// sum-total are kept on every cell of a figure, so one of them can be hidden with a line of CSS.
 
 			// start of right hand column for calculation results
 			if($calc == "count") {
@@ -3559,7 +3605,7 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 						$theseGroupSettings = explode("!@^%*", $groupingSettings[$elementId][$calc]);
 						$firstGroupSettingText = printSmart(trans(getCalcHandleText($theseGroupSettings[0], true)),150);
 
-						$output .= "<table style='width: auto;'><tr><th>$firstGroupSettingText</th><td class='count-total' style='padding-left: 2em;'><center><b>"._formulize_DE_CALC_NUMENTRIES."</b><center></td><td class='count-unique' style='padding-left: 2em;'><center><b>"._formulize_DE_CALC_NUMUNIQUE."</b><center></td></tr>\n";
+						$output .= "<table class='fz-table fz-w-auto formulize-calc-results'><thead><tr><th scope='col'>$firstGroupSettingText</th><th scope='col' class='count-total fz-text-end'>"._formulize_DE_CALC_NUMENTRIES."</th><th scope='col' class='count-unique fz-text-end'>"._formulize_DE_CALC_NUMUNIQUE."</th></tr></thead>\n<tbody>\n";
 
 						$totalCount = 0;
 						$totalUnique = 0;
@@ -3568,17 +3614,18 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 										if($thisGroupSetting === "none") { continue; }
 										$elementMetaData = formulize_getElementMetaData($thisGroupSetting, false);
 										$groupText = formulize_handleRandomAndDateText(formulize_swapUIText($groupingValues[$elementId][$calc][$group][$id], unserialize($elementMetaData['ele_uitext'])));
-										$output .= "<tr><td>".printSmart(trans($groupText),150)."</td><td class='count-total' style='text-align: right;'>".$rawResult['count']."</td><td class='count-unique' style='text-align: right;'>".$rawResult['countunique']."</td></tr>";
+										if(calcHandleHoldsUserIds($thisGroupSetting) AND ($groupText == "" OR $groupText == _formulize_BLANK_KEYWORD)) { $groupText = _FORM_ANON_USER; } // entries made by no user: anonymous ones
+										$output .= "<tr><td>".printSmart(trans($groupText),150)."</td><td class='count-total fz-text-end fz-tabular-nums'>".$rawResult['count']."</td><td class='count-unique fz-text-end fz-tabular-nums'>".$rawResult['countunique']."</td></tr>\n";
 										$totalCount += $rawResult['count'];
 										$totalUnique += $rawResult['countunique'];
 								}
 						}
 
-						$output .= "<tr><td style='border-top: 1px solid black;'><b>"._formulize_DE_CALC_GRANDTOTAL."</b></td><td style='border-top: 1px solid black; text-align: right;' class='count-total'><b>$totalCount</b></td><td style='border-top: 1px solid black; text-align: right;' class='count-unique'><b>$totalUnique</b></td></tr>\n";
+						$output .= "</tbody>\n<tfoot><tr><td class='fz-font-semibold'>"._formulize_DE_CALC_GRANDTOTAL."</td><td class='count-total fz-text-end fz-tabular-nums fz-font-semibold'>$totalCount</td><td class='count-unique fz-text-end fz-tabular-nums fz-font-semibold'>$totalUnique</td></tr></tfoot>\n";
 						$output .= "</table>";
 				} else {
 						$rawResult = $masterResultsRaw[$elementId][$calc][0];
-						$output .= "<div class='count-total'><p><b>"._formulize_DE_CALC_NUMENTRIES." . . . ".$rawResult['count']."</b></p></div><div class='count-unique'><p><b>"._formulize_DE_CALC_NUMUNIQUE." . . . ".$rawResult['countunique']."</b></p></div>\n";
+						$output .= "<dl class='fz-dl formulize-calc-results'><div class='count-total'><dt>"._formulize_DE_CALC_NUMENTRIES."</dt><dd class='fz-tabular-nums'>".$rawResult['count']."</dd></div><div class='count-unique'><dt>"._formulize_DE_CALC_NUMUNIQUE."</dt><dd class='fz-tabular-nums'>".$rawResult['countunique']."</dd></div></dl>\n";
 				}
 
 				$output .= "</td></tr>"; // end of the main row, and the specific cell with the calculations results
@@ -3592,24 +3639,25 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 					$theseGroupSettings = explode("!@^%*", $groupingSettings[$elementId][$calc]);
 					$firstGroupSettingText = printSmart(trans(getCalcHandleText($theseGroupSettings[0], true)),150);
 
-					$output .= "<table style='width: auto;'><tr><th>$firstGroupSettingText</th><td class='sum-total' style='padding-left: 2em;'><center><b>"._formulize_DE_CALC_SUM."</b><center></td></tr>\n";
+					$output .= "<table class='fz-table fz-w-auto formulize-calc-results'><thead><tr><th scope='col'>$firstGroupSettingText</th><th scope='col' class='sum-total fz-text-end'>"._formulize_DE_CALC_SUM."</th></tr></thead>\n<tbody>\n";
 					$totalSum = 0;
 					foreach($masterResultsRaw[$elementId][$calc] as $group=>$rawResult) {
 							foreach($theseGroupSettings as $id=>$thisGroupSetting) {
 									if($thisGroupSetting === "none") { continue; }
 									$elementMetaData = formulize_getElementMetaData($thisGroupSetting, false);
 									$groupText = formulize_handleRandomAndDateText(formulize_swapUIText($groupingValues[$elementId][$calc][$group][$id], unserialize($elementMetaData['ele_uitext'])));
-									$output .= "<tr><td>".printSmart(trans($groupText),150)."</td><td class='sum-total' style='text-align: right;'>".formulize_numberFormat($rawResult['sum'],$handle)."</td></tr>";
+									if(calcHandleHoldsUserIds($thisGroupSetting) AND ($groupText == "" OR $groupText == _formulize_BLANK_KEYWORD)) { $groupText = _FORM_ANON_USER; } // entries made by no user: anonymous ones
+									$output .= "<tr><td>".printSmart(trans($groupText),150)."</td><td class='sum-total fz-text-end fz-tabular-nums'>".formulize_numberFormat($rawResult['sum'],$handle)."</td></tr>\n";
 									$totalSum += $rawResult['sum'];
 							}
 					}
 
-					$output .= "<tr><td style='border-top: 1px solid black;'><b>"._formulize_DE_CALC_GRANDTOTAL."</b></td><td style='border-top: 1px solid black; text-align: right;' class='sum-total'><b>".formulize_numberFormat($totalSum,$handle)."</b></td></tr>\n";
+					$output .= "</tbody>\n<tfoot><tr><td class='fz-font-semibold'>"._formulize_DE_CALC_GRANDTOTAL."</td><td class='sum-total fz-text-end fz-tabular-nums fz-font-semibold'>".formulize_numberFormat($totalSum,$handle)."</td></tr></tfoot>\n";
 					$output .= "</table>";
 
 				} else {
 					$rawResult = $masterResultsRaw[$elementId][$calc][0];
-					$output .= "<div class='sum-total'><p><b>"._formulize_DE_CALC_SUM." . . . ".formulize_numberFormat($rawResult['sum'],$handle)."</b></p></div>\n";
+					$output .= "<dl class='fz-dl formulize-calc-results'><div class='sum-total'><dt>"._formulize_DE_CALC_SUM."</dt><dd class='fz-tabular-nums'>".formulize_numberFormat($rawResult['sum'],$handle)."</dd></div></dl>\n";
 				}
 				$output .= "</td></tr>"; // end of the main row, and the specific cell with the calculations results
 
@@ -3619,24 +3667,25 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 		//foreach($result as $resultID=>$thisResult) {
 		  if(!$start) { $output .= "<tr>\n"; }
 		  $start=0;
-		  $output .= "<td class=odd>\n";
-		  //if(count((array) $groups)>1) { // OR count((array) $groups)>1) { // output the heading section for this group of results
-			$output .= "<p><b>";
-			$start2 = true;
+		  $output .= "<td class=odd>\n<div class='fz-stack fz-gap-2'>\n";
+		  // the heading for this group of results, when the results are grouped
+			$groupHeading = "";
 			foreach(explode("!@^%*", $groupingSettings[$elementId][$calc]) as $id=>$thisGroupSetting) {
 			  if($thisGroupSetting === "none") { continue; }
-			  if(!$start2) {
-				$output .= "<br>\n";
+			  if($groupHeading) {
+				$groupHeading .= "<br>\n";
 			  }
-			  $start2 = false;
 			  $elementMetaData = formulize_getElementMetaData($thisGroupSetting, false);
 			  $groupText = formulize_handleRandomAndDateText(formulize_swapUIText($groupingValues[$elementId][$calc][$group][$id], unserialize($elementMetaData['ele_uitext'])));
-			  $output .= printSmart(trans(getCalcHandleText($thisGroupSetting, true)),150) . ": " . printSmart(trans($groupText),150) . "\n";
+			  if(calcHandleHoldsUserIds($thisGroupSetting) AND ($groupText == "" OR $groupText == _formulize_BLANK_KEYWORD)) { $groupText = _FORM_ANON_USER; } // entries made by no user: anonymous ones
+			  $groupHeading .= printSmart(trans(getCalcHandleText($thisGroupSetting, true)),150) . ": " . printSmart(trans($groupText),150) . "\n";
 			}
-			$output .= "</b></p>\n";
-		  //}
-		  $output .= "<p>$result</p>\n";
-		  $output .= "</td></tr>\n";
+			if($groupHeading) {
+				$output .= "<p><b>".$groupHeading."</b></p>\n";
+			}
+		  // a table for the percentage breakdown (made in performCalcs), and lines of text for the others
+		  $output .= "<div class='formulize-calc-results'>$result</div>\n";
+		  $output .= "</div>\n</td></tr>\n";
 		//}
 		}
 	}
@@ -3685,6 +3734,7 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 <meta charset='UTF-8'>
 <meta name=\"generator\" content=\"Formulize -- form creation and data management\" />
 <title>" . _formulize_DE_EXPORTCALC_TITLE . " '".trans($title)."'</title>
+<link rel=\"stylesheet\" type=\"text/css\" href=\"" . XOOPS_URL . formulize_uiStylesheetPath() . "\" />
 <style type=\"text/css\">
 .outer {border: 1px solid silver;}
 .head { background-color: $head; padding: 5px; font-weight: bold; }

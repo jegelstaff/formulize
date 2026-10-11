@@ -191,6 +191,35 @@ looks the same until one is changed.
 }
 ```
 
+**If your theme's own font comes from Google Fonts**, say which weights of it to download, with your
+other tokens:
+
+```css
+:root {
+  --fz-font-sans: Poppins, Helvetica, sans-serif;
+  --formulize-font-weights: 400 500 600;
+}
+```
+
+`--formulize-font-weights` is a list of numbers with spaces between them. Each number is a
+`font-weight` that your stylesheet uses: 400 is regular, 700 is bold, and the others are the steps
+around them. A webfont is a separate file for each weight, and only the weights you list are
+downloaded.
+
+- List every weight your CSS uses. Text set in a weight you left out is shown in the nearest weight
+  you did list: with `400 500 600`, bold (700) text is shown at 600.
+- List only weights the font has. Its page on Google Fonts shows them. If you list one it doesn't
+  have, the font isn't loaded at all.
+- Leave out the weights you don't use. Each one is another file for the browser to fetch.
+
+The font that is loaded is the first one named in `--fz-font-sans`, so that name has to be its name
+on Google Fonts. It is loaded on every page that has your theme's appearance: the pages your
+`theme.html` draws, the popups of the list screens, and screens embedded in another site. When
+another font is chosen in the Appearance editor, yours is no longer loaded.
+
+Don't load the font in `theme.html` as well. A theme that leaves `--formulize-font-weights` out gets
+Geist, the font Lyris uses.
+
 **Provide sample screens** for the editor's preview, in an `appearance_preview` folder
 in your theme. Each is an HTML file named after a screen: `form.html`, `list.html`, `drawer.html` and
 `cards.html`. Provide the ones that suit your theme; the editor shows the ones it finds, and without

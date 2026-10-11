@@ -251,12 +251,44 @@ function formulize_appearanceThemeFontName($theme = null) {
 }
 
 /**
+ * The webfont a theme's own font is fetched as, when no font has been chosen on
+ * the Appearance page: the family parameter for the Google Fonts css2 API.
+ *
+ * A theme whose own font is a Google webfont other than Geist says so by
+ * declaring the weights it uses, in --formulize-font-weights with its other
+ * tokens (Anari does: "400 500 600", for Poppins). A webfont is a file for each
+ * weight, and those are the ones fetched: text in any other weight is drawn with
+ * the nearest of them. The family is the first one
+ * in its --fz-font-sans. The font then arrives with the generated appearance
+ * stylesheet, which is on every page that takes on the theme's appearance: the
+ * pages the theme draws, the list of entries popups, and embedded screens. A
+ * theme that loaded its font from its own theme.html would have it only on the
+ * first of those.
+ *
+ * A theme that declares no weights gets Geist, which is Lyris's font.
+ *
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return string the family parameter, eg: 'Poppins:wght@400;500;600'
+ */
+function formulize_appearanceThemeWebfont($theme = null) {
+    $tokens = formulize_appearanceThemeTokens($theme);
+    if (isset($tokens['--formulize-font-weights']) AND preg_match('/^\d{3}(\s+\d{3})*$/', $tokens['--formulize-font-weights'])) {
+        // the API takes each weight once, lightest first, and refuses the request otherwise
+        $weights = array_unique(array_map('intval', preg_split('/\s+/', $tokens['--formulize-font-weights'])));
+        sort($weights);
+        return str_replace(' ', '+', formulize_appearanceThemeFontName($theme)) . ':wght@' . implode(';', $weights);
+    }
+    return 'Geist:wght@400;500;600;700';
+}
+
+/**
  * Curated font choices. 'google' is the family parameter for the Google Fonts
  * css2 API (false when no webfont needs loading), 'stack' is the CSS
  * font-family value for --fz-font-sans.
  *
  * The first choice is "leave the theme's own font alone", which is why its
- * label names the theme's font rather than a fixed one: on Lyris that is Geist,
+ * label names the theme's font rather than a fixed one, and its webfont is the
+ * theme's own (formulize_appearanceThemeWebfont): on Lyris that is Geist,
  * on Anari it is Poppins. Its key stays 'geist' because that key is written
  * into saved settings, and nothing is recorded for the default anyway.
  *
@@ -268,7 +300,7 @@ function formulize_appearanceFontMap($theme = null) {
     return array(
         'geist' => array(
             'label' => formulize_appearanceThemeFontName($theme) . ' (default)',
-            'google' => 'Geist:wght@400;500;600;700',
+            'google' => formulize_appearanceThemeWebfont($theme),
             'stack' => "'Geist', $fallback",
         ),
         'system' => array(
@@ -1213,7 +1245,7 @@ function formulize_appearanceFontPreviewStacks($theme = null) {
         } elseif ($key == 'geist') {
             $stacks[$key] = array(
                 'stack' => isset($themeTokens['--fz-font-sans']) ? $themeTokens['--fz-font-sans'] : $font['stack'],
-                'google' => str_replace(' ', '+', formulize_appearanceThemeFontName($theme)) . ':wght@400;500;600;700',
+                'google' => formulize_appearanceThemeWebfont($theme),
             );
         } else {
             $stacks[$key] = array('stack' => $font['stack'], 'google' => $font['google'] ? $font['google'] : '');
@@ -1434,11 +1466,13 @@ function formulize_sanitizeAppearanceSettings($values, $theme = null) {
  * and are no longer written from the theme's own settings.
  * Generation 6: the theme's own settings are the Default look, which every other
  * look builds on, and have a part's own settings again.
+ * Generation 7: the webfont fetched when no font has been chosen is the theme's
+ * own (Poppins on Anari), where it was Geist whatever the theme.
  *
  * @return string the whole comment, one line
  */
 function formulize_appearanceCssGenerationMarker() {
-    return '/* Formulize appearance stylesheet, generation 6 */';
+    return '/* Formulize appearance stylesheet, generation 7 */';
 }
 
 /**
@@ -1601,12 +1635,14 @@ function formulize_getAppearanceSettings($theme = null, $saved = null) {
  *
  * @param string $choice       font key as saved in the settings
  * @param string $customFamily family name for the 'custom' choice
+ * @param string|null $theme   the theme the choice is for, whose own font the default
+ *                             choice is. Defaults to the active theme.
  * @return array with 'key' (the choice actually resolved to), 'google'
  *               (css2 family parameter, or false when no webfont is needed) and
  *               'stack' (the css font-family value)
  */
-function formulize_resolveAppearanceFontChoice($choice, $customFamily) {
-    $fonts = formulize_appearanceFontMap();
+function formulize_resolveAppearanceFontChoice($choice, $customFamily, $theme = null) {
+    $fonts = formulize_appearanceFontMap($theme);
     $choice = isset($fonts[$choice]) ? $choice : 'geist';
     $googleFamily = $fonts[$choice]['google'];
     $stack = $fonts[$choice]['stack'];
@@ -1632,18 +1668,22 @@ function formulize_resolveAppearanceFontChoice($choice, $customFamily) {
  * the family the main font already brings in.
  *
  * @param array|null $settings appearance settings to use, defaults to the saved ones
+ * @param string|null $theme the theme the settings are for, whose own font is the
+ *                           default. Defaults to the active theme.
  * @return array with 'url' (string|false), 'stack' (string|false when default)
  *               and 'heading' (string|false when headings follow the main font)
  */
-function formulize_getAppearanceFont($settings = null) {
-    $settings = is_array($settings) ? $settings : formulize_getAppearanceSettings();
+function formulize_getAppearanceFont($settings = null, $theme = null) {
+    $settings = is_array($settings) ? $settings : formulize_getAppearanceSettings($theme);
     $font = formulize_resolveAppearanceFontChoice(
         isset($settings['appearance_font']) ? $settings['appearance_font'] : '',
-        isset($settings['appearance_customfont']) ? $settings['appearance_customfont'] : ''
+        isset($settings['appearance_customfont']) ? $settings['appearance_customfont'] : '',
+        $theme
     );
     $heading = formulize_resolveAppearanceFontChoice(
         isset($settings['appearance_headingfont']) ? $settings['appearance_headingfont'] : '',
-        isset($settings['appearance_headingcustomfont']) ? $settings['appearance_headingcustomfont'] : ''
+        isset($settings['appearance_headingcustomfont']) ? $settings['appearance_headingcustomfont'] : '',
+        $theme
     );
     // 'geist' on the secondary font means "follow the main font", so it brings nothing
     // of its own, and neither does picking the same family the main font already fetched
@@ -1898,7 +1938,7 @@ function formulize_appearanceDirIsWritable($theme = null) {
 function formulize_getAppearanceCssOverrides($settings = null, $theme = null) {
     $settings = is_array($settings) ? $settings : formulize_getAppearanceSettings($theme);
     $overrides = array();
-    $font = formulize_getAppearanceFont($settings);
+    $font = formulize_getAppearanceFont($settings, $theme);
     if ($font['stack']) {
         $overrides['--fz-font-sans'] = $font['stack'];
     }
@@ -1976,7 +2016,7 @@ function formulize_buildAppearanceCss($settings = null, $theme = null) {
  * @return string the CSS
  */
 function formulize_buildAppearanceCssRules($settings, $theme) {
-    $font = formulize_getAppearanceFont($settings);
+    $font = formulize_getAppearanceFont($settings, $theme);
     $css = formulize_appearanceCssGenerationMarker() . "\n";
     if ($font['url']) {
         $css .= '@import url("' . $font['url'] . '");' . "\n";
@@ -2130,7 +2170,7 @@ function formulize_renderAppearanceHead() {
     // the page's screen can have a look of its own, which is shown with that look's stylesheet in place of
     // the theme's own: each look's stylesheet is the whole of the theme's appearance with the look applied
     $pageLook = formulize_appearancePageLook($theme);
-    $font = formulize_getAppearanceFont(formulize_getAppearanceEffectiveSettings($theme, null, $pageLook));
+    $font = formulize_getAppearanceFont(formulize_getAppearanceEffectiveSettings($theme, null, $pageLook), $theme);
     if ($font['url']) {
         $html .= '<link rel="preconnect" href="https://fonts.googleapis.com" />' . "\n";
         $html .= '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />' . "\n";

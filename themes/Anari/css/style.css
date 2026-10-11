@@ -2369,11 +2369,15 @@ img, svg {
   margin: 0;
 }
 
+/* 600, not 500: a font with only a regular and a bold draws 500 as regular, so
+   bold text would not look bold at all. This theme's own fallbacks are like
+   that (Helvetica, Verdana), and they are what shows when Poppins can't be
+   fetched. 600 is drawn bold in those, and as Poppins's own 600 otherwise. */
 b,
 strong,
-.text--bold
+.text--bold,
 .text--strong {
-  font-weight: 500;
+  font-weight: 600;
 }
 
 i,
@@ -3302,7 +3306,10 @@ span.formulize-masquerade-help {
 .list-of-entries table.outer tr:not(.entry-row) .head {
     border-bottom: 1px solid var(--light-border-color);
 }
-.list-of-entries table.outer td:not(.head) {
+/* The cells of the list, and of the calculation results after it. Not the cells
+   of a Formulize UI table inside one of them (fz-table, which the calculation
+   results are drawn with): those have lines of their own. */
+.list-of-entries table.outer td:not(.head):where(:not(.fz-table td)) {
     border-top: 1px dotted var(--light-border-color);
     border-left: 1px dotted var(--light-border-color);
 }
@@ -3314,10 +3321,19 @@ span.formulize-masquerade-help {
 	color: var(--text-color);
 	transition: visibility 0.4s linear, color 0.4s linear;
 }
+/* Elements inside the cell (links such as the creator/modifier names, images) keep their own
+   colour, so they fade by opacity and end up hidden, out of reach of clicks and tabbing. */
+.list-of-entries table.outer td.same-contents-as-prior-cell * {
+	transition: opacity 0.4s linear, visibility 0.4s linear;
+}
 .list-of-entries table.outer td.hide-same-contents-as-prior-cell {
 	border-top: 0 !important;
-	color: white !important;
+	color: transparent !important;
 	content-visibility: hidden !important;
+}
+.list-of-entries table.outer td.hide-same-contents-as-prior-cell * {
+	opacity: 0;
+	visibility: hidden;
 }
 .list-of-entries table.outer tr.entry-row td.column0 {
 	border-left: 0;
@@ -3688,120 +3704,15 @@ table.outer th {
     text-align: left;
 }
 
-/* compatibility for list of entries popups */
-
-form[name='newcolform'] p {
-    margin-top: 1em;
-}
-
-form[name='newcolform'] p,
-#saveoptions p {
-    font-weight: bold;
-    margin-bottom: 1em;
-    color:  var(--accent-color);
-}
-
-table.popup,
-#setnot table.outer,
-#notlist table.outer,
-#pickcalc table.outer,
-#saveoptions table.outer,
-#advscope table.outer {
-    width: 100%;
-}
-table.popup th,
-#setnot table.outer th,
-#notlist table.outer th,
-#pickcalc table.outer th,
-#saveoptions table.outer th,
-#advscope table.outer th {
-    text-align: center;
-    font-weight: bold;
-}
-
-#setnot table.outer .xoops-form-element-caption,
-#pickcalc table.outer .xoops-form-element-caption,
-#saveoptions table.outer .xoops-form-element-caption,
-#advscope table.outer .xoops-form-element-caption{
-    color: black;
-
-}
-#setnot table.outer .caption-marker,
-#notlist table.outer .caption-marker,
-#pickcalc table.outer .caption-marker,
-#saveoptions table.outer .caption-marker,
-#advscope table.outer .caption-marker {
-    display: none;
-}
-
-#pickcalc table.outer td.head,
-#saveoptions table.outer td.head,
-#advscope table.outer td.head {
-    vertical-align: top;
-}
-.requested-calcs .xoops-form-element-caption {
-    font-weight: bold;
-}
-#pickcalc .exclude-options {
-    width: 14em;
-}
-#pickcalc .exclude-options-custom {
-    width: 8em;
-    margin-left: 1em;
-    padding: 0.2em;
-    border: 1px solid;
-}
-#pickcalc .first-grouping,
-#pickcalc .exclude-options {
-    margin-bottom: 1em;
-}
+/* The list of entries popups (change columns, save view and the rest) are built
+   with Formulize UI's classes, in a page of their own made by
+   formulize_popupHeader(), and need nothing from here. */
 
 table.outer td.formulize-calc-heading {
     font-size: 115%;
     font-weight: bold;
     line-height: 0;
     padding-bottom: 1em;
-}
-
-#setnot table.outer td.head {
-    width: 35%;
-}
-#setnot table.outer select {
-    margin-bottom: 1em;
-}
-#setnot table.outer input[type='radio'] {
-    margin-top: 1em;
-}
-#setnot table.outer #new_element {
-    width: 11.5em;
-}
-#setnot table.outer #new_op {
-    width: 5em;
-}
-#setnot table.outer #new_term {
-    width: 7em;
-    border: 1px solid;
-    margin-top: 0.5em;
-    padding: 0.1em;
-}
-
-form[name='metachoiceform'] td p {
-    margin-top: 1em;
-}
-#advanced_options {
-    margin-top: 1em;
-}
-#advanced_options p input[type='text'] {
-    width: auto;
-    border: 1px solid var(--fz-color-border-strong);
-    padding: 0.1em;
-    margin-bottom: 1em;
-}
-#import-instructions p,
-#import-instructions ul,
-#import-instructions input,
-#setnot table.outer p {
-    margin-top: 1em;
 }
 
 .appcatspacer {

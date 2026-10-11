@@ -72,6 +72,7 @@ global $xoopsConfig;
 
 global $xoopsDB, $xoopsUser;
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
+include_once XOOPS_ROOT_PATH.'/modules/formulize/include/popup_functions.php';
 
 	// Set some required variables
 	$mid = getFormulizeModId();
@@ -218,39 +219,21 @@ foreach($cols as $f=>$vs) {
 	}
 }
 
-include_once XOOPS_ROOT_PATH . "/class/xoopsformloader.php";
+formulize_popupHeader(_formulize_DE_SETNOT);
 
-print "<HTML>";
-print "<head>";
-print "<meta http-equiv=\"Content-Type\" content=\"text/html; charset="._CHARSET."\" />";
-print "<title>" . _formulize_DE_SETNOT . "</title>\n";
-print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"" . XOOPS_URL . "/xoops.css\" />\n";
-$themecss = xoops_getcss();
-//$themecss = substr($themecss, 0, -6);
-//$themecss .= ".css";
-print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
-
-print "</head>";
-print "<body class=\"formulize-popup\" style=\"background: white; margin-top:20px;\"><center>";
-print "<table width=100%><tr><td width=5%></td><td width=90%>";
-$setnot = new xoopsThemeForm(_formulize_DE_SETNOT, 'setnot', XOOPS_URL."/modules/formulize/include/setnot.php?fid=$fid");
+print "<form id='setnot' name='setnot' class='fz-card' method='post' action='" . XOOPS_URL."/modules/formulize/include/setnot.php?fid=$fid'>\n";
+print "<h1 class='fz-card__title'>" . _formulize_DE_SETNOT . "</h1>\n";
 
 if(!isset($_POST['setwhen'])) {
 	$_POST['setwhen'] = 'new_entry';
 }
 
 $notblurb = $canSetNots ? _formulize_DE_SETNOT_WHEN : _formulize_DE_SETNOT_TOME_WHEN;
-$setwhen = new xoopsFormElementTray($notblurb, "<br />");
-$setwhen_created = new xoopsFormRadio('', 'setwhen', $_POST['setwhen']);
-$setwhen_created->addOption('new_entry', _formulize_DE_SETNOT_WHEN_NEW);
-$setwhen_updated = new xoopsFormRadio('', 'setwhen', $_POST['setwhen']);
-$setwhen_updated->addOption('update_entry', _formulize_DE_SETNOT_WHEN_UPDATE);
-$setwhen_deleted = new xoopsFormRadio('', 'setwhen', $_POST['setwhen']);
-$setwhen_deleted->addOption('delete_entry', _formulize_DE_SETNOT_WHEN_DELETE);
-$setwhen->addElement($setwhen_created);
-$setwhen->addElement($setwhen_updated);
-$setwhen->addElement($setwhen_deleted);
-$setnot->addElement($setwhen);
+print formulize_popupField($notblurb, "<div class='fz-choice-group'>\n"
+	. formulize_popupChoice('radio', 'setwhen', 'new_entry', _formulize_DE_SETNOT_WHEN_NEW, $_POST['setwhen'] == 'new_entry')
+	. formulize_popupChoice('radio', 'setwhen', 'update_entry', _formulize_DE_SETNOT_WHEN_UPDATE, $_POST['setwhen'] == 'update_entry')
+	. formulize_popupChoice('radio', 'setwhen', 'delete_entry', _formulize_DE_SETNOT_WHEN_DELETE, $_POST['setwhen'] == 'delete_entry')
+	. "</div>\n");
 
 if($canSetNots) {
 
@@ -258,86 +241,44 @@ if($canSetNots) {
 		$_POST['setwho'] = $xoopsUser->getVar('uid');
 	}
 
-	$setwho = new xoopsFormElementTray(_formulize_DE_SETNOT_WHO, "<br />");
-	$setwho_me = new xoopsFormRadio('', 'setwho', $_POST['setwho']);
-	$setwho_me->addOption($uid, _formulize_DE_SETNOT_WHO_ME);
-
-	$setwho_curuser = new xoopsFormRadio('', 'setwho', $_POST['setwho']);
-	$setwho_curuser->addOption('curuser', _formulize_DE_SETNOT_WHO_CURUSER);
-
+	// each choice that needs more detail has the control for it beside it, and using that control picks the choice.
+	// The script finds the choice by its position among the setwho radio buttons, so their order here matters.
 	// creator and users identified in an element, these options added Feb 7 2008 by jwe
-	$setwho_creator = new xoopsFormRadio('', 'setwho', $_POST['setwho']);
-	$setwho_creator->addOption('creator', _formulize_DE_SETNOT_WHO_CREATOR);
-
-	$setwho_elementlist = new xoopsFormSelect('', 'ele_id', $_POST['ele_id'], 1);
-	$setwho_elementlist->setExtra("onfocus=\"javascript:window.document.setnot.setwho[3].checked=true\"");
-	$setwho_elementlist->addOptionArray($element_options);
-	$elementlist = $setwho_elementlist->render();
-	$setwho_elementuids = new xoopsFormRadio('', 'setwho', $_POST['setwho']);
-	$setwho_elementuids->addOption('elementuids', _formulize_DE_SETNOT_WHO_ELEMENTUIDS.$elementlist);
-
-	$setwho_linkcreatorlist = new xoopsFormSelect('', 'lc_ele_id', $_POST['lc_ele_id'], 1);
-	$setwho_linkcreatorlist->setExtra("onfocus=\"javascript:window.document.setnot.setwho[4].checked=true\"");
-	$setwho_linkcreatorlist->addOptionArray($linkcreator_options);
-	$linkcreatorlist = $setwho_linkcreatorlist->render();
-	$setwho_linkcreator = new xoopsFormRadio('', 'setwho', $_POST['setwho']);
-	$setwho_linkcreator->addOption('linkcreator', _formulize_DE_SETNOT_WHO_LINKCREATOR.$linkcreatorlist);
-
-	$setwho_elementemaillist = new xoopsFormSelect('', 'email_ele_id', $_POST['email_ele_id'], 1);
-	$setwho_elementemaillist->setExtra("onfocus=\"javascript:window.document.setnot.setwho[5].checked=true\"");
-	$setwho_elementemaillist->addOptionArray($elementemail_options);
-	$elementemaillist = $setwho_elementemaillist->render();
-	$setwho_elementemail = new xoopsFormRadio('', 'setwho', $_POST['setwho']);
-	$setwho_elementemail->addOption('elementemail', _formulize_DE_SETNOT_WHO_ELEMENTEMAIL.$elementemaillist);
-
-	$setwho_grouplist = new xoopsFormSelect('', 'gid', $_POST['gid'], 1);
-	$setwho_grouplist->setExtra("onfocus=\"javascript:window.document.setnot.setwho[6].checked=true\"");
-	$setwho_grouplist->addOptionArray($group_options);
-	$grouplist = $setwho_grouplist->render();
-	$setwho_group = new xoopsFormRadio('', 'setwho', $_POST['setwho']);
-	$setwho_group->addOption('groupid', _formulize_DE_SETNOT_WHO_GROUP.$grouplist);
-
-    $setwho_arbitrary = new xoopsFormRadio('', 'setwho', $_POST['setwho']);
-    $arbitraryEmailBox = new xoopsFormText('', 'arbitrary', 50, 255, $_POST['arbitrary']);
-    $arbitraryEmailBox = $arbitraryEmailBox->render();
-    $setwho_arbitrary->addOption('arbitrary', _formulize_DE_SETNOT_WHO_ARBITRARY.$arbitraryEmailBox);
-
-	$setwho->addElement($setwho_me);
-	$setwho->addElement($setwho_curuser);
-	$setwho->addElement($setwho_creator);
-	$setwho->addElement($setwho_elementuids);
-	$setwho->addElement($setwho_linkcreator);
-	$setwho->addElement($setwho_elementemail);
-	$setwho->addElement($setwho_group);
-    $setwho->addElement($setwho_arbitrary);
-	$setnot->addElement($setwho);
+	$setwho = "<div class='fz-choice-group'>\n";
+	$setwho .= formulize_popupChoice('radio', 'setwho', $uid, _formulize_DE_SETNOT_WHO_ME, $_POST['setwho'] == $uid);
+	$setwho .= formulize_popupChoice('radio', 'setwho', 'curuser', _formulize_DE_SETNOT_WHO_CURUSER, $_POST['setwho'] == 'curuser');
+	$setwho .= formulize_popupChoice('radio', 'setwho', 'creator', _formulize_DE_SETNOT_WHO_CREATOR, $_POST['setwho'] == 'creator');
+	$setwho .= "<div class='fz-cluster'>" . formulize_popupChoice('radio', 'setwho', 'elementuids', _formulize_DE_SETNOT_WHO_ELEMENTUIDS, $_POST['setwho'] == 'elementuids')
+		. formulize_popupSelect('ele_id', $element_options, $_POST['ele_id'], "aria-label='" . htmlspecialchars(trim(_formulize_DE_SETNOT_WHO_ELEMENTUIDS)) . "' onfocus=\"javascript:window.document.setnot.setwho[3].checked=true\"", 'fz-w-auto') . "</div>\n";
+	$setwho .= "<div class='fz-cluster'>" . formulize_popupChoice('radio', 'setwho', 'linkcreator', _formulize_DE_SETNOT_WHO_LINKCREATOR, $_POST['setwho'] == 'linkcreator')
+		. formulize_popupSelect('lc_ele_id', $linkcreator_options, $_POST['lc_ele_id'], "aria-label='" . htmlspecialchars(trim(_formulize_DE_SETNOT_WHO_LINKCREATOR)) . "' onfocus=\"javascript:window.document.setnot.setwho[4].checked=true\"", 'fz-w-auto') . "</div>\n";
+	$setwho .= "<div class='fz-cluster'>" . formulize_popupChoice('radio', 'setwho', 'elementemail', _formulize_DE_SETNOT_WHO_ELEMENTEMAIL, $_POST['setwho'] == 'elementemail')
+		. formulize_popupSelect('email_ele_id', $elementemail_options, $_POST['email_ele_id'], "aria-label='" . htmlspecialchars(trim(_formulize_DE_SETNOT_WHO_ELEMENTEMAIL)) . "' onfocus=\"javascript:window.document.setnot.setwho[5].checked=true\"", 'fz-w-auto') . "</div>\n";
+	$setwho .= "<div class='fz-cluster'>" . formulize_popupChoice('radio', 'setwho', 'groupid', _formulize_DE_SETNOT_WHO_GROUP, $_POST['setwho'] == 'groupid')
+		. formulize_popupSelect('gid', $group_options, $_POST['gid'], "aria-label='" . htmlspecialchars(trim(_formulize_DE_SETNOT_WHO_GROUP)) . "' onfocus=\"javascript:window.document.setnot.setwho[6].checked=true\"", 'fz-w-auto') . "</div>\n";
+	$setwho .= "<div class='fz-cluster'>" . formulize_popupChoice('radio', 'setwho', 'arbitrary', _formulize_DE_SETNOT_WHO_ARBITRARY, $_POST['setwho'] == 'arbitrary')
+		. "<input type='text' class='fz-input fz-w-auto' name='arbitrary' id='arbitrary' size='50' maxlength='255' value='" . htmlspecialchars($_POST['arbitrary']) . "' aria-label='" . htmlspecialchars(trim(_formulize_DE_SETNOT_WHO_ARBITRARY)) . "' onfocus=\"javascript:window.document.setnot.setwho[7].checked=true\" /></div>\n";
+	$setwho .= "</div>\n";
+	print formulize_popupField(_formulize_DE_SETNOT_WHO, $setwho);
 }
 
 if(!isset($_POST['setfor'])) {
 	$_POST['setfor'] = 'all';
 }
 
-$setfor = new xoopsFormElementTray(_formulize_DE_SETNOT_FOR, "<br />");
-$setfor_all = new xoopsFormRadio('', 'setfor', $_POST['setfor']);
-$setfor_all->addOption('all', _formulize_DE_SETNOT_FOR_ALL);
-
 // process existing conditions...
 
+$conditionlist = "";
 if($_POST['addcon']) {
 	for($i=0;$i<count((array) $_POST['elements']);$i++) {
-		$setnot->addElement(new xoopsFormHidden('elements[]', $_POST['elements'][$i]));
-		$setnot->addElement(new xoopsFormHidden('ops[]', $_POST['ops'][$i]));
-		$setnot->addElement(new xoopsFormHidden('terms[]', $_POST['terms'][$i]));
-		$conditionlist .= "<p>".$options[$_POST['elements'][$i]] . " " . $_POST['ops'][$i] . " " . $_POST['terms'][$i] . "</p>";
+		print "<input type='hidden' name='elements[]' value='" . htmlspecialchars($_POST['elements'][$i]) . "' />\n";
+		print "<input type='hidden' name='ops[]' value='" . htmlspecialchars($_POST['ops'][$i]) . "' />\n";
+		print "<input type='hidden' name='terms[]' value='" . htmlspecialchars($_POST['terms'][$i]) . "' />\n";
+		$conditionlist .= "<p>".$options[$_POST['elements'][$i]] . " " . htmlspecialchars($_POST['ops'][$i]) . " " . htmlspecialchars($_POST['terms'][$i]) . "</p>";
 	}
 }
 
 // setup the operator boxes...
-$opterm = new xoopsFormElementTray('', "&nbsp;&nbsp;");
-$element = new xoopsFormSelect('', 'new_element');
-$element->setExtra("onfocus=\"javascript:window.document.setnot.setfor[1].checked=true\"");
-$element->addOptionArray($options);
-$op = new xoopsFormSelect('', 'new_op');
 $ops['='] = "=";
 $ops['NOT'] = "NOT";
 $ops['>'] = ">";
@@ -346,42 +287,37 @@ $ops['>='] = ">=";
 $ops['<='] = "<=";
 $ops['LIKE'] = "LIKE";
 $ops['NOT LIKE'] = "NOT LIKE";
-$op->addOptionArray($ops);
-$op->setExtra("onfocus=\"javascript:window.document.setnot.setfor[1].checked=true\"");
-$term = new xoopsFormText('', 'new_term', 10, 255);
-$term->setExtra("onfocus=\"javascript:window.document.setnot.setfor[1].checked=true\"");
-$opterm->addElement($element);
-$opterm->addElement($op);
-$opterm->addElement($term);
+$ops = array_map('htmlspecialchars', $ops);
+// using any of the condition controls picks the choice that they belong to
+$pickConditions = "onfocus=\"javascript:window.document.setnot.setfor[1].checked=true\"";
+$conditionui = "<div class='fz-stack fz-gap-1'>" . $conditionlist . "</div><div class='fz-cluster'>"
+	. formulize_popupSelect('new_element', $options, array(), "aria-label='" . htmlspecialchars(_formulize_DE_SETNOT_FOR_CON) . "' $pickConditions", 'fz-w-auto')
+	. formulize_popupSelect('new_op', $ops, array(), "aria-label='" . htmlspecialchars(_formulize_DE_SETNOT_FOR_CON) . "' $pickConditions", 'fz-w-auto')
+	. "<input type='text' class='fz-input fz-w-auto' name='new_term' id='new_term' size='10' maxlength='255' value='' aria-label='" . htmlspecialchars(_formulize_DE_SETNOT_FOR_CON) . "' $pickConditions />"
+	. "<input type='submit' class='fz-btn' name='addcon' id='addcon' value='" . _formulize_DE_SETNOT_ADDCON . "' $pickConditions />"
+	. "</div>\n";
 
-$addcon = new xoopsFormButton('', 'addcon', _formulize_DE_SETNOT_ADDCON, 'submit');
-$addcon->setExtra("onfocus=\"javascript:window.document.setnot.setfor[1].checked=true\"");
-
-$conditionui = "$conditionlist <p>" . $opterm->render() . "</p>" . $addcon->render();
-
-$setfor_con = new xoopsFormRadio('' , 'setfor', $_POST['setfor']);
-$setfor_con->addOption('con', _formulize_DE_SETNOT_FOR_CON.$conditionui);
-$setfor->addElement($setfor_all);
-$setfor->addElement($setfor_con);
-$setnot->addElement($setfor);
+print formulize_popupField(_formulize_DE_SETNOT_FOR, "<div class='fz-choice-group'>\n"
+	. formulize_popupChoice('radio', 'setfor', 'all', _formulize_DE_SETNOT_FOR_ALL, $_POST['setfor'] == 'all')
+	. formulize_popupChoice('radio', 'setfor', 'con', _formulize_DE_SETNOT_FOR_CON, $_POST['setfor'] == 'con')
+	. "</div>\n"
+	. $conditionui);
 
 if($canSetNots) {
-	$setnot_cust_template = new xoopsFormText(_formulize_DE_SETNOT_TEMP, 'template', 50, 255, $_POST['template']);
-	$setnot_cust_template->setDescription(_formulize_DE_SETNOT_TEMP_DESC);
-	$setnot->addElement($setnot_cust_template);
-	$setnot->addElement(new xoopsFormText(_formulize_DE_SETNOT_SUBJ, 'subject', 50, 255, $_POST['subject']));
+	print formulize_popupField(_formulize_DE_SETNOT_TEMP, "<input type='text' class='fz-input' name='template' id='template' size='50' maxlength='255' value='" . htmlspecialchars($_POST['template']) . "' />", _formulize_DE_SETNOT_TEMP_DESC, 'template');
+	print formulize_popupField(_formulize_DE_SETNOT_SUBJ, "<input type='text' class='fz-input' name='subject' id='subject' size='50' maxlength='255' value='" . htmlspecialchars($_POST['subject']) . "' />", '', 'subject');
 }
 
-$setnot->addElement(new xoopsFormButton('', 'save', _formulize_DE_SETNOT_SAVE, 'submit'));
+print "<div class='fz-cluster'><input type='submit' class='fz-btn fz-btn--primary' name='save' id='save' value='" . _formulize_DE_SETNOT_SAVE . "' /></div>\n";
 
-print $setnot->render();
+print "</form>\n";
 
 // if there are notifications to show
 if(!$noNots) {
 
-	print "<br />\n";
-
-	$notlist = new xoopsThemeForm(_formulize_DE_NOTLIST, 'notlist', XOOPS_URL."/modules/formulize/include/setnot.php?fid=$fid");
+	print "<form id='notlist' name='notlist' class='fz-card' method='post' action='" . XOOPS_URL."/modules/formulize/include/setnot.php?fid=$fid'>\n";
+	print "<h2 class='fz-card__title'>" . _formulize_DE_NOTLIST . "</h2>\n";
+	$text = "";
 	foreach($nots as $thisnot) {
 		$text .= _formulize_DE_NOT_WHENTEXT;
 		switch($thisnot['not_cons_event']) {
@@ -437,7 +373,7 @@ if(!$noNots) {
 				if(!$start) {
 					$text .= _formluize_DE_NOT_CONTEXTAND;
 				}
-				$text .= $options[$elements[$i]] . " " . $ops[$i] . " " . $terms[$i];
+				$text .= $options[$elements[$i]] . " " . htmlspecialchars($ops[$i]) . " " . htmlspecialchars($terms[$i]);
 				$start =0;
 			}
 		}
@@ -450,21 +386,18 @@ if(!$noNots) {
 			$text .= "<br />" . _formulize_DE_NOT_SUBJTEXT . "'" . str_replace(array("[","]"), " ", $thisnot['not_cons_subject']) . "'.";
 		}
 
-		$delbutton = new xoopsFormButton('', 'delete_'.$thisnot['not_cons_id'], _formulize_DELETE, 'submit');
-		$anot = new xoopsFormLabel($delbutton->render(), $text);
-		$notlist->addElement($anot);
-		unset($anot);
-		unset($delbutton);
+		// each notification: what it is, and the button that deletes it
+		print "<div class='fz-flex fz-items-start fz-gap-4 fz-border-t fz-pt-3'>
+		<p class='fz-flex-1 fz-min-w-0 fz-m-0'>" . $text . "</p>
+		<input type='submit' class='fz-btn fz-btn--danger fz-btn--sm fz-flex-none' name='delete_" . intval($thisnot['not_cons_id']) . "' id='delete_" . intval($thisnot['not_cons_id']) . "' value='" . _formulize_DELETE . "' />
+		</div>\n";
 		$text = "";
 	}
-	print $notlist->render();
+	print "</form>\n";
 
 }
 
-
-print "</td><td width=5%></td></tr></table>";
-print "</center></body>";
-print "</HTML>";
+formulize_popupFooter();
 
 
 // this function returns all the current notifications for a form, including notifications for other groups if the user has permission to set such things

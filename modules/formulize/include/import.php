@@ -109,22 +109,23 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 // course.  It's essentially a compartmentalized extension of the main "list of entries" UI.
 
 
-print "<HTML>";
-print "<head>";
-print "<meta http-equiv=\"Content-Type\" content=\"text/html; charset="._CHARSET."\" />";
-print "<title>" . _formulize_DE_IMPORTDATA . "</title>\n";
+include_once XOOPS_ROOT_PATH.'/modules/formulize/include/popup_functions.php';
 
-print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"" . XOOPS_URL . "/xoops.css\" />\n";
-$themecss = xoops_getcss();
-//$themecss = substr($themecss, 0, -6);
-//$themecss .= ".css";
-print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
+formulize_popupHeader(_formulize_DE_IMPORTDATA, "
+<script type='text/javascript'>
+function usePkValidate() {
+	if(document.getElementsByName('pkColumn')[0].value == '"._formulize_ENTRY_ID."') {
+		document.getElementsByName('usePkColumnAsEntryId')[0].checked = false;
+		document.getElementsByName('usePkColumnAsEntryId')[0].disabled = true;
+	} else {
+		document.getElementsByName('usePkColumnAsEntryId')[0].disabled = false;
+	}
+}
+</script>
+");
 
-print "</head>";
-print "<body class=\"formulize-popup\" style=\"background: white; margin-top:20px;\"><center>";
-print "<table width=100%><tr><td width=5%></td><td width=90%>";
-
-print "<table id='import-instructions' class='outer popup'><tr><th colspan=2>" . _formulize_DE_IMPORT . "</th></tr>";
+print "<div id='import-instructions' class='fz-card'>\n";
+print "<h1 class='fz-card__title'>" . _formulize_DE_IMPORT . "</h1>\n";
 
 define("IMPORT_WRITE", true);
 define("IMPORT_DEBUG", false);
@@ -146,10 +147,11 @@ $csv_name = @$_FILES['csv_name']['tmp_name'];
 if($csv_name != "")
 {
 	//$csv_name = "../import/$csv_name.csv";
-	print "<tr><td class=head><p>" . _formulize_DE_IMPORT_RESULTS . "</p></td><td class=odd>\n";
+	print "<h2 class='fz-field__label'>" . _formulize_DE_IMPORT_RESULTS . "</h2>\n";
+	print "<div class='fz-prose'>\n";
 	$validateOverride = $_POST['validatedata'] == 0 ? true : false;
 	importCsv(array($_FILES['csv_name']['name'], $csv_name), $regfid, $validateOverride, $_POST['pkColumn']);
-	print "</td></tr>\n";
+	print "</div>\n";
 } else {
 
 	// provide a blank template, and a blank update template
@@ -171,19 +173,28 @@ if($csv_name != "")
 		$pkOptions .= "<option value='".str_replace('"', "#&quot;", $header)."'>$header</option>\n";
 	}
 
-	print "<tr><td class=head><p>" . _formulize_DE_IMPORT_STEP1 . "</p></td><td class=even>";
-	print "<a href=$blank_template target=_blank>" . _formulize_DE_IMPORT_BLANK2 . "</a> <b>" . _formulize_DE_IMPORT_OR . "</b> <a href=\"".XOOPS_URL."/makecsv.php?fid=$fid&includeMetadata=1\">" . _formulize_DE_IMPORT_DATATEMP2 . "</a></td></tr>\n";
-	print "<tr><td class=head><p>" . _formulize_DE_IMPORT_STEP2 . "</p></td>".
-	"<td class=even><p><form method=\"post\" ENCTYPE=\"multipart/form-data\" accept-charset=\"UTF-8\"><input type=\"file\" name=\"csv_name\" size=\"40\" /><br>
-	<input type=\"checkbox\" name=\"validatedata\" value=\"1\" checked>&nbsp;"._formulize_DE_IMPORT_VALIDATEDATA."<br>
-	<input type=\"checkbox\" name=\"updatederived\" value=\"1\" checked>&nbsp;"._formulize_DE_IMPORT_UPDATEDERIVED."<br>
-	<input type=\"checkbox\" name=\"sendnotifications\" value=\"1\" checked>&nbsp;"._formulize_DE_IMPORT_SENDNOTIFICATIONS."<br><br>
-	"._formulize_DE_IMPORT_IDENTIFIER_COLUMN."<select name='pkColumn' onchange=\"usePkValidate()\">".$pkOptions."</select><br>
-	<input type=\"checkbox\" name=\"usePkColumnAsEntryId\" value=\"1\" disabled>&nbsp;"._formulize_DE_IMPORT_USEPKASID."<br></p>
-	<p><input type=\"submit\" value=\"" . _formulize_DE_IMPORT_GO . "\"></p>
-	</form></td></tr>\n";
+	print formulize_popupField(_formulize_DE_IMPORT_STEP1,
+		"<div class='fz-cluster'><a class='fz-btn' href=$blank_template target=_blank>" . _formulize_DE_IMPORT_BLANK2 . "</a> <span class='fz-font-semibold'>" . _formulize_DE_IMPORT_OR . "</span> <a class='fz-btn' href=\"".XOOPS_URL."/makecsv.php?fid=$fid&includeMetadata=1\">" . _formulize_DE_IMPORT_DATATEMP2 . "</a></div>");
 
-	print "<tr><td class=head><p>" . _formulize_DE_IMPORT_STEP3 . "</p></td><td class=even>" . _formulize_DE_IMPORT_INSTRUCTIONS;
+	// the file input has no Formulize UI class, as there is none for one: it is the browser's own
+	print "<form method=\"post\" ENCTYPE=\"multipart/form-data\" accept-charset=\"UTF-8\" class=\"fz-stack\">\n";
+	print formulize_popupField(_formulize_DE_IMPORT_STEP2,
+		"<input type=\"file\" name=\"csv_name\" id=\"csv_name\" size=\"40\" />
+		<div class='fz-choice-group fz-mt-2'>\n"
+		. formulize_popupChoice('checkbox', 'validatedata', 1, _formulize_DE_IMPORT_VALIDATEDATA, true)
+		. formulize_popupChoice('checkbox', 'updatederived', 1, _formulize_DE_IMPORT_UPDATEDERIVED, true)
+		. formulize_popupChoice('checkbox', 'sendnotifications', 1, _formulize_DE_IMPORT_SENDNOTIFICATIONS, true)
+		. "</div>\n", '', 'csv_name');
+	print formulize_popupField(_formulize_DE_IMPORT_IDENTIFIER_COLUMN,
+		"<select class='fz-select' name='pkColumn' id='pkColumn' onchange=\"usePkValidate()\">".$pkOptions."</select>
+		<div class='fz-choice-group fz-mt-2'>\n"
+		. formulize_popupChoice('checkbox', 'usePkColumnAsEntryId', 1, _formulize_DE_IMPORT_USEPKASID, false, 'disabled')
+		. "</div>\n", '', 'pkColumn');
+	print "<div class='fz-cluster'><input type=\"submit\" class=\"fz-btn fz-btn--primary\" value=\"" . _formulize_DE_IMPORT_GO . "\"></div>
+	</form>\n";
+
+	print "<h2 class='fz-field__label'>" . _formulize_DE_IMPORT_STEP3 . "</h2>\n";
+	print "<div class='fz-prose'>" . _formulize_DE_IMPORT_INSTRUCTIONS;
 
 	if($regfid == $fid) {
 		print _formulize_DE_IMPORT_INSTNEWPROFILE;
@@ -191,31 +202,11 @@ if($csv_name != "")
 		print _formulize_DE_IMPORT_INSTNEW;
 	}
 
-	print _formulize_DE_IMPORT_INSTUPDATE . "</td></tr>\n";
+	print _formulize_DE_IMPORT_INSTUPDATE . "</div>\n";
 
 
 }
 
-print "</table>";
-print "</td><td width=5%></td></tr></table>";
-print "</center>
+print "</div>\n";
 
-<script>
-function usePkValidate() {
-	if(document.getElementsByName('pkColumn')[0].value == '"._formulize_ENTRY_ID."') {
-		document.getElementsByName('usePkColumnAsEntryId')[0].checked = false;
-		document.getElementsByName('usePkColumnAsEntryId')[0].disabled = true;
-	} else {
-		document.getElementsByName('usePkColumnAsEntryId')[0].disabled = false;
-	}
-}
-</script>
-
-<style>
-b {
-font-weight: bold;
-}
-</style>
-
-</body>";
-print "</HTML>";
+formulize_popupFooter();

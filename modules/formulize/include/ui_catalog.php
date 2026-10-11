@@ -956,6 +956,7 @@ HTML
                 'notes' => array(
                     'Say in the summary what is inside, and how much of it if that helps: "Rankings (3)".',
                     'Add the `open` attribute to a `<details>` to have it start open.',
+                    'It grows and shrinks as it opens and closes, unless the person has asked their computer for less motion. Some browsers open and close it at once.',
                 ),
                 'example' => <<<'HTML'
 <div class="fz-stack fz-gap-2">

@@ -33,7 +33,6 @@
 // this file generates the change columns popup
 
 // this function writes in the Javascript for changing columns
-// thanks to https://stackoverflow.com/users/54838/bc for the shift click checkbox code snippet: https://stackoverflow.com/questions/659508/how-can-i-shift-select-multiple-checkboxes-like-gmail
 function changeColJavascript() {
 ?>
 <script type='text/javascript'>
@@ -61,29 +60,6 @@ function updateCols(formObj) {
     }
 }
 
-$(document).ready(function() {
-    var $chkboxes = $('.colbox');
-    var lastChecked = null;
-    $chkboxes.click(function(e) {
-        if(!lastChecked) {
-            lastChecked = this;
-            return;
-        }
-
-        if(e.shiftKey) {
-            var start = $chkboxes.index(this);
-            var end = $chkboxes.index(lastChecked);
-
-            $chkboxes.slice(Math.min(start,end), Math.max(start,end)+ 1).prop('checked', lastChecked.checked);
-
-        }
-
-        lastChecked = this;
-    });
-});
-
-
-
 -->
 </script>
 <?php
@@ -101,6 +77,7 @@ if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['la
 
 global $xoopsDB, $xoopsUser;
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
+include_once XOOPS_ROOT_PATH.'/modules/formulize/include/popup_functions.php';
 
 // Set some required variables
 $mid = getFormulizeModId();
@@ -124,38 +101,26 @@ if (!$scheck = security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler)
 
 $cols = getAllColList($fid, $frid, $groups); // $groups indicates that we only want columns which are visible to the current user
 
-print "<HTML>";
-print "<head>";
-print "<meta http-equiv=\"Content-Type\" content=\"text/html; charset="._CHARSET."\" />";
-print "<title>" . _formulize_DE_PICKNEWCOLS . "</title>";
-
-print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"" . XOOPS_URL . "/xoops.css\" />\n";
-$themecss = xoops_getcss();
-print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
-print "<script type='text/javascript' src='".XOOPS_URL."/libraries/jquery/jquery.js'></script>\n";
+ob_start();
 changeColJavascript();
+formulize_popupHeader(_formulize_DE_PICKNEWCOLS, ob_get_clean());
 
-print "</head>";
-print "<body class=\"formulize-popup\" style=\"background: white; margin-top:20px;\"><center>";
-print "<table style=\"width: 100%;\" role=\"presentation\"><tr><td style=\"width: 5%;\"></td><td style=\"width: 90%;\">";
-print "<form name=newcolform action=\"" . XOOPS_URL . "\" method=post>\n";
-print "<table class='outer popup' role='presentation'>";
-print "<tr><th colspan=2>" . _formulize_DE_PICKNEWCOLS . "</th></tr>";
-print "<tr><td class=head style=\"position: fixed; width: 280px;text-align: center;\"><br>
-<input style=\"width: 241px;\" type=button name=newcolbutton value=\"" . _formulize_DE_CHANGECOLS . "\" onclick=\"javascript:updateCols(this.form);\"></input>
-<br><br><hr><br>
-<input type='button' name='clearall' style='cursor: pointer;' value='". _formulize_DE_CLEAR_ALL."'
+print "<form name='newcolform' action=\"" . XOOPS_URL . "\" method='post' class='fz-card'>\n";
+print "<h1 class='fz-card__title'>" . _formulize_DE_PICKNEWCOLS . "</h1>\n";
+// the buttons stay in view while the list of columns, which can be long, scrolls under them
+print "<div class='fz-toolbar fz-bg-surface fz-py-3 fz-border-b' style='position: sticky; top: 0; z-index: 1;'>
+<div class='fz-toolbar__start'>
+<input type='button' class='fz-btn fz-btn--primary' name='newcolbutton' value=\"" . _formulize_DE_CHANGECOLS . "\" onclick=\"javascript:updateCols(this.form);\" />
+</div>
+<div class='fz-toolbar__end'>
+<input type='button' class='fz-btn' name='clearall' value='". _formulize_DE_CLEAR_ALL."'
 onclick=\"var boxes = document.getElementsByClassName('colbox');for(var i=0;i<boxes.length;i++){boxes[i].checked = false;}\" />
-<br><br>
-<input type='reset' name='reset' style='cursor: pointer; width: 241px; white-space: normal;' value='". _formulize_DE_RESET_COLS."' />
-<br><br><hr><br>To select a range of columns, click the first one, then SHIFT-click on the last one.</td>
-<td class=even style='width: 100%; padding-left: 300px;'>";
+<input type='reset' class='fz-btn' name='reset' value='". _formulize_DE_RESET_COLS."' />
+</div>
+</div>\n";
 
 print generateTidyElementList($fid, $cols, $selectedCols);
 
-print "</td></tr>\n";
+print "</form>\n";
 
-print "</table>\n</form>";
-print "</td><td style=\"width: 5%;\"></td></tr></table>\n";
-print "</center></body>\n";
-print "</HTML>\n";
+formulize_popupFooter();

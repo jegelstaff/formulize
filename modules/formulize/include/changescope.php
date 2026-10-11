@@ -45,13 +45,13 @@ function updateScope(formObj) {
 
 	var grps;
 	var start=1;
-	for (var i=0; i < formObj.elements[0].options.length; i++) {
-		if (formObj.elements[0].options[i].selected) {
+	for (var i=0; i < formObj.elements['newscope[]'].options.length; i++) {
+		if (formObj.elements['newscope[]'].options[i].selected) {
 			if(start) {
-				grps = "," + formObj.elements[0].options[i].value + ",";
+				grps = "," + formObj.elements['newscope[]'].options[i].value + ",";
 				start = 0;
 			} else {
-				grps = grps + formObj.elements[0].options[i].value + ",";
+				grps = grps + formObj.elements['newscope[]'].options[i].value + ",";
 			}
 		}
 	}
@@ -86,6 +86,7 @@ global $xoopsConfig;
 
 global $xoopsDB, $xoopsUser;
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
+include_once XOOPS_ROOT_PATH.'/modules/formulize/include/popup_functions.php';
 
 	// Set some required variables
 	$mid = getFormulizeModId();
@@ -149,39 +150,19 @@ if($globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, 
 	exit("Error: no advanced scope permission detected.");
 }
 
-include_once XOOPS_ROOT_PATH . "/class/xoopsformloader.php";
-
-print "<HTML>";
-print "<head>";
-print "<meta http-equiv=\"Content-Type\" content=\"text/html; charset="._CHARSET."\" />";
-print "<title>" . _formulize_DE_PICKASCOPE . "</title>\n";
-
+ob_start();
 scopeJavascript();
+formulize_popupHeader(_formulize_DE_PICKASCOPE, ob_get_clean());
 
-print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"" . XOOPS_URL . "/xoops.css\" />\n";
-$themecss = xoops_getcss();
-//$themecss = substr($themecss, 0, -6);
-//$themecss .= ".css";
-print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
-
-print "</head>\n";
-print "<body class=\"formulize-popup\" style=\"background: white; margin-top:20px;\"><center>";
-print "<table style=\"width: 100%;\"><tr><td style=\"width: 5%;\"></td><td style=\"width: 90%;\">";
-$advscope = new xoopsThemeForm(_formulize_DE_PICKASCOPE, 'advscope', XOOPS_URL."/modules/formulize/include/advscope.php?fid=$fid&frid=$frid");
+print "<form id='advscope' name='advscope' class='fz-card' method='post' action='" . XOOPS_URL."/modules/formulize/include/advscope.php?fid=$fid&frid=$frid'>\n";
+print "<h1 class='fz-card__title'>" . _formulize_DE_PICKASCOPE . "</h1>\n";
 
 $gcount = count((array) $availgroups);
 $size = ($gcount<10) ? $gcount : 10 ;
-$grouplist = new xoopsFormSelect(_formulize_DE_AVAILGROUPS, 'newscope', $curgroups, $size, true);
-$grouplist->addOptionArray($availgroups);
+print formulize_popupField(_formulize_DE_AVAILGROUPS, formulize_popupSelect('newscope[]', $availgroups, $curgroups, "size='$size' multiple='multiple'"), '', 'newscope');
 
-$doneButton = new xoopsFormButton('', 'done', _formulize_DE_USETHISSCOPE, 'button');
-$doneButton->setExtra("onclick=\"javascript:updateScope(this.form);return false;\"");
+print "<div class='fz-cluster'><input type='button' class='fz-btn fz-btn--primary' name='done' id='done' value='" . _formulize_DE_USETHISSCOPE . "' onclick=\"javascript:updateScope(this.form);return false;\" /></div>\n";
 
-$advscope->addElement($grouplist);
-$advscope->addElement($doneButton);
+print "</form>\n";
 
-print $advscope->render();
-
-print "</td><td style=\"width: 5%;\"></td></tr></table>\n";
-print "</center></body>\n";
-print "</HTML>";
+formulize_popupFooter();

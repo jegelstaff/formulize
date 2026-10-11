@@ -2,7 +2,6 @@
 
 document.addEventListener('DOMContentLoaded', () => {
   initSidebar();
-  initAccordions();
   initCardToggles();
   initFormScrollSeparator();
   showApp();
@@ -63,23 +62,6 @@ function initSidebar() {
     if (sidebar && !sidebar.contains(e.target) && !toggle.contains(e.target)) {
       setSidebarState(true);
     }
-  });
-}
-
-// ============================================================
-// Accordion (accessible toggle via data-accordion-header)
-// ============================================================
-
-function initAccordions() {
-  document.querySelectorAll('[data-accordion-header]').forEach((header) => {
-    const target = header.parentElement && header.parentElement.nextElementSibling;
-    if (!target) return;
-    header.addEventListener('click', (e) => {
-      e.preventDefault();
-      const expanded = header.getAttribute('aria-expanded') === 'true';
-      header.setAttribute('aria-expanded', String(!expanded));
-      target.hidden = expanded;
-    });
   });
 }
 

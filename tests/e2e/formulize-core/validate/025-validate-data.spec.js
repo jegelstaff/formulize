@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, waitForWorkingMessage, applyColumnChanges } from '../../utils';
+import { login, waitForWorkingMessage, applyColumnChanges, openAllColumnSections } from '../../utils';
 
 test.describe('Validate Data', () => {
 	test('Check the Romain Coin record is complete', async ({ page }) => {
@@ -8,6 +8,7 @@ test.describe('Validate Data', () => {
 		await page.getByRole('button', { name: 'Change columns' }).click();
 		const page3 = await popupPromise;
 		await page3.bringToFront();
+		await openAllColumnSections(page3);
 
   	await page3.getByText('Entry ID').click();
   	await page3.getByRole('checkbox', { name: 'Date of acquisition' }).check();
@@ -30,19 +31,19 @@ test.describe('Validate Data', () => {
 		await page3.getByRole('checkbox', { name: 'First name' }).check();
 		await page3.getByRole('checkbox', { name: 'Last name' }).check();
 		await page3.getByRole('checkbox', { name: 'Organization name' }).check();
-		await page3.getByRole('group', { name: 'Donors up arrow' }).getByLabel('Name', { exact: true }).check();
+		await page3.getByRole('group', { name: 'Donors', exact: true }).getByLabel('Name', { exact: true }).check();
 		await page3.getByRole('checkbox', { name: 'Phone number' }).check();
 		await page3.getByRole('checkbox', { name: 'Email address' }).check();
 		await page3.getByRole('checkbox', { name: 'Street address' }).check();
 		await page3.getByRole('checkbox', { name: 'Province' }).check();
 		await page3.getByRole('checkbox', { name: 'Postal code' }).check();
 		await page3.getByRole('checkbox', { name: 'Favourite colour' }).check();
-		await page3.getByRole('group', { name: 'Collections up arrow' }).getByLabel('Name').check();
+		await page3.getByRole('group', { name: 'Collections', exact: true }).getByLabel('Name').check();
 		await page3.getByRole('checkbox', { name: 'Backgrounder / Resume' }).check();
 		await page3.getByRole('checkbox', { name: 'Suitable audience' }).check();
-		await page3.getByRole('group', { name: 'Exhibits up arrow' }).getByLabel('Name').check();
+		await page3.getByRole('group', { name: 'Exhibits', exact: true }).getByLabel('Name').check();
 		await page3.getByRole('checkbox', { name: 'Curator' }).check();
-		await page3.getByRole('group', { name: 'Exhibits up arrow' }).getByLabel('Collections').check();
+		await page3.getByRole('group', { name: 'Exhibits', exact: true }).getByLabel('Collections').check();
 		await page3.getByRole('checkbox', { name: 'Artifacts' }).check();
 		await page3.getByRole('checkbox', { name: 'Respondent name' }).check();
 		await page3.getByRole('checkbox', { name: 'Exhibit' }).check();
@@ -100,10 +101,11 @@ test.describe('Validate Data', () => {
 		await page.getByRole('button', { name: 'Change columns' }).click();
 		const page3 = await popupPromise;
 		await page3.bringToFront();
+		await openAllColumnSections(page3);
 
   	await page3.getByRole('checkbox', { name: 'Full description' }).check();
 		await page3.getByRole('checkbox', { name: 'Width' }).check();
-		await page3.getByRole('group', { name: 'Collections up arrow' }).getByLabel('Name').check();
+		await page3.getByRole('group', { name: 'Collections', exact: true }).getByLabel('Name').check();
 		await applyColumnChanges(page3);
 
 		await page.locator('input[name="search_artifacts_full_description"]').fill('canoe');
@@ -232,6 +234,7 @@ test.describe('Validate Data', () => {
 		await page.getByRole('button', { name: 'Change columns' }).click();
 		const page3 = await popupPromise;
 		await page3.bringToFront();
+		await openAllColumnSections(page3);
 		await page3.getByRole('checkbox', { name: 'ID Number' }).check();
 		await page3.getByRole('checkbox', { name: 'Short name' }).check();
 		await applyColumnChanges(page3);

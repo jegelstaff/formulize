@@ -7,9 +7,6 @@
  * scrolling area.
  */
 
-/* this theme's font, which theme.html loads and which an embedded screen does not get from there */
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap");
-
 .site-layout__main {
   width: 100%;
   height: auto;

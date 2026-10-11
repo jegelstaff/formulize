@@ -42,7 +42,7 @@ function saveJavascript($pubflag) {
 
 function newSaveView(formObj) {
 
-	var saveElement = formObj.elements[0]; // element 0 is the save drop down box.  This will change if the form layout changes.
+	var saveElement = formObj.elements['savethis'];
 	for (var i=0; i < saveElement.options.length; i++) {
 		if (saveElement.options[i].selected) {
 			window.document.saveoptions.viewselection.value = saveElement.options[i].value;
@@ -52,7 +52,7 @@ function newSaveView(formObj) {
 }
 
 function saveSettings(formObj) {
-	var saveElement = formObj.elements[0]; // element 0 is the save drop down box.  This will change if the form layout changes.
+	var saveElement = formObj.elements['savethis'];
 	for (var i=0; i < saveElement.options.length; i++) {
 		if (saveElement.options[i].selected) {
 			var newid = saveElement.options[i].value;
@@ -158,11 +158,6 @@ if($pubflag) {
 	window.self.close();
 }
 
-onload = function () {
-	window.document.getElementById('checkemall').style.display = 'none';
-	window.document.querySelectorAll('label[for="checkemall"]')[0].style.display = 'none';
-}
-
 -->
 </script>
 
@@ -183,6 +178,7 @@ global $xoopsConfig, $xoopsDB;
 
 global $xoopsDB, $xoopsUser;
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
+include_once XOOPS_ROOT_PATH.'/modules/formulize/include/popup_functions.php';
 
 	// Set some required variables
 	$mid = getFormulizeModId();
@@ -231,30 +227,6 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 
 // main body of page goes here...
-include_once XOOPS_ROOT_PATH . "/class/xoopsformloader.php";
-
-print "<HTML>";
-print "<head>";
-print "<meta http-equiv=\"Content-Type\" content=\"text/html; charset="._CHARSET."\" />";
-print "<title>" . _formulize_DE_SAVEVIEW . "</title>\n";
-
-
-print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"" . XOOPS_URL . "/xoops.css\" />\n";
-$themecss = xoops_getcss();
-//$themecss = substr($themecss, 0, -6);
-//$themecss .= ".css";
-print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
-
-print "<style>\n";
-print ".caption-marker { display: none; }\n";
-print "</style>\n";
-
-print "</head>";
-print "<body class=\"formulize-popup\" style=\"background: white; margin-top:20px;\"><center>";
-print "<table width=100%><tr><td width=5%></td><td width=90%>";
-
-
-$saveform = new xoopsThemeForm(_formulize_DE_SAVEVIEW, 'saveoptions', XOOPS_URL."/modules/formulize/include/save.php?fid=$fid&frid=$frid&lastloaded=$lastloaded&cols=$getcols&currentview=$currentview");
 
 // need to build the list of available reports that can be saved.
 // available are all their own saved reports, plus all published IF they have can update others turned on.
@@ -274,12 +246,7 @@ if($update_other_reports = $gperm_handler->checkRight("update_other_reports", $f
 
 list($saveoptions, $defaultSave) = makeSaveList($s_reports, $ns_reports, $other_p_reports, $other_np_reports, $lastloaded, $viewselection);
 
-$savelist = new xoopsFormSelect(_formulize_DE_SAVE_USECURRENT, 'savethis', $defaultSave);
-$savelist->setExtra("onchange=\"javascript:newSaveView(this.form);;\"");
-$savelist->addOptionArray($saveoptions);
-
-
-$scope = new xoopsFormRadio(_formulize_DE_SAVE_SCOPE, 'scope', $_GET['currentview']);
+$savelist = formulize_popupSelect('savethis', $saveoptions, $defaultSave, "onchange=\"javascript:newSaveView(this.form);;\"");
 
 if($publish_reports OR $publish_globalscope) {
 	$s1 = _formulize_DE_SAVE_SCOPE1;
@@ -293,20 +260,12 @@ if($publish_reports OR $publish_globalscope) {
 	$s3 = _formulize_DE_SAVE_SCOPE3_SELF;
 	$s4 = _formulize_DE_SAVE_SCOPE4_SELF;
 }
-if($view_groupscope OR $view_globalscope OR $specificgroups) {
-	$scope->addOption("mine", $s1 . "<br>");
-} else {
-	$scope->addOption("mine", $s1);
+$scopeoptions = array("mine" => $s1);
+if($view_groupscope AND !$loadOnlyView) {
+	$scopeoptions["group"] = $s2;
 }
-if($view_groupscope AND ($view_globalscope OR $specificgroups) AND !$loadOnlyView) {
-	$scope->addOption("group", $s2 . "<br>");
-} elseif($view_groupscope AND !$loadOnlyView) {
-	$scope->addOption("group", $s2);
-}
-if($view_globalscope AND $specificgroups AND !$loadOnlyView) {
-	$scope->addOption("all", $s3 . "<br>");
-} elseif($view_globalscope AND !$loadOnlyView) {
-	$scope->addOption("all", $s3);
+if($view_globalscope AND !$loadOnlyView) {
+	$scopeoptions["all"] = $s3;
 }
 if($specificgroups) {
 	if(substr($_GET['currentview'], 0, 17) == ",onlymembergroups") {
@@ -320,21 +279,17 @@ if($specificgroups) {
 		$plainSpecGroups = $_GET['currentview'];
 		$memberonlySpecGroups = ",onlymembergroups".$_GET['currentview'];
 	}
+	$scopeoptions[$plainSpecGroups] = $s4 . printSmart($groupNames, 100);
 	if($publish_reports OR $publish_globalscope) {
-		$scope->addOption($plainSpecGroups, $s4 . printSmart($groupNames, 100) . "<br>");
-		$scope->addOption($memberonlySpecGroups, $s5 . printSmart($groupNames, 100)); // add special flag that is used to control whether to include only groups that the viewer is a member of
-	} else {
-		$scope->addOption($plainSpecGroups, $s4 . printSmart($groupNames, 100));
+		$scopeoptions[$memberonlySpecGroups] = $s5 . printSmart($groupNames, 100); // add special flag that is used to control whether to include only groups that the viewer is a member of
 	}
 }
 
-//$scopeoptions->addElement($scope1);
-//if($scope2) { $scopeoptions->addElement($scope2); }
-//if($scope3) { $scopeoptions->addElement($scope3); }
-//if($scope4) { $scopeoptions->addElement($scope4); }
-
-$saveform->addElement($savelist);
-$saveform->addElement($scope);
+$scope = "<div class='fz-choice-group'>\n";
+foreach($scopeoptions as $scopeValue=>$scopeLabel) {
+	$scope .= formulize_popupChoice('radio', 'scope', $scopeValue, $scopeLabel, $scopeValue == $_GET['currentview']);
+}
+$scope .= "</div>\n";
 
 // add in list of groups if they have publishing options
 // 1. get list of groups they can publish to
@@ -363,6 +318,16 @@ if($publish_globalscope) {
 }
 
 if(count((array) $publishgroups) > 1 ) { $pubflag = 1; }
+
+ob_start();
+saveJavascript($pubflag);
+formulize_popupHeader(_formulize_DE_SAVEVIEW, ob_get_clean());
+
+print "<form id='saveoptions' name='saveoptions' class='fz-card' method='post' action='" . htmlspecialchars(XOOPS_URL."/modules/formulize/include/save.php?fid=$fid&frid=$frid&lastloaded=$lastloaded&cols=$getcols&currentview=$currentview") . "'>\n";
+print "<h1 class='fz-card__title'>" . _formulize_DE_SAVEVIEW . "</h1>\n";
+
+print formulize_popupField(_formulize_DE_SAVE_USECURRENT, $savelist, '', 'savethis');
+print formulize_popupField(_formulize_DE_SAVE_SCOPE, $scope);
 
 // write in publishing options if any...
 if($pubflag) {
@@ -395,68 +360,64 @@ if($pubflag) {
 
 	$size = count((array) $publishgroups);
 	if($size > 7) { $size = 7; }
-	$pubgrouplist = new xoopsFormSelect(_formulize_DE_SAVE_PUBGROUPS, 'pubgrouplist', $lastpubgroups, $size, true);
-	$pubgrouplist->addOptionArray($publishgroups);
+	print formulize_popupField(_formulize_DE_SAVE_PUBGROUPS, formulize_popupSelect('pubgrouplist[]', $publishgroups, $lastpubgroups, "size='$size' multiple='multiple'"), '', 'pubgrouplist');
 
-	$lockcontrols = new xoopsFormElementTray(_formulize_DE_SAVE_LOCKCONTROLS, "<br>");
-	$yes = new xoopsFormRadio('', 'lockcontrols', $currentlock);
-	$yes->addOption("1", _YES);
-	$no = new xoopsFormRadio('', 'lockcontrols', $currentlock);
-	$no->addOption("0", _NO);
-	$lockcontrols->addElement($yes);
-	$lockcontrols->addElement($no);
-
-	$saveform->addElement($pubgrouplist);
-
-	$sv_use_features = new XoopsFormCheckBox(_formulize_DE_SAVE_USE_FEATURES, 'features_list', $features_list, '<br>');
-	$sv_use_features->addOptionArray(array(
+	$sv_use_features = "<div class='fz-choice-group'>\n";
+	foreach(array(
 		'scope'=>_formulize_DE_SAVE_UF_SCOPE,
 		'cols'=>_formulize_DE_SAVE_UF_COLS,
 		'searches'=>_formulize_DE_SAVE_UF_SEARCHES,
 		'sort'=>_formulize_DE_SAVE_UF_SORT,
 		'calcs'=>_formulize_DE_SAVE_UF_CALCS,
 		'epp'=>_formulize_DE_SAVE_UF_EPP,
-	));
-	$saveform->addElement($sv_use_features);
+	) as $feature=>$featureLabel) {
+		$sv_use_features .= formulize_popupChoice('checkbox', 'features_list[]', $feature, $featureLabel, in_array($feature, (array) $features_list));
+	}
+	$sv_use_features .= "</div>\n";
+	$advanced = formulize_popupField(_formulize_DE_SAVE_USE_FEATURES, $sv_use_features);
 
-	$searches_are_fundamental_question = new XoopsFormRadio(_formulize_DE_SAVE_SEARCHES_FUNDAMENTAL, 'searches_are_fundamental', $searches_are_fundamental, '<br>');
-	$searches_are_fundamental_question->addOptionArray(array(
-		0=>_formulize_DE_SAVE_SEARCHES_NOT_FUNDAMENTAL,
-		1=>_formulize_DE_SAVE_SEARCHES_ARE_FUNDAMENTAL
-	));
-	$saveform->addElement($searches_are_fundamental_question);
+	$searches_are_fundamental_question = "<div class='fz-choice-group'>\n"
+		. formulize_popupChoice('radio', 'searches_are_fundamental', 0, _formulize_DE_SAVE_SEARCHES_NOT_FUNDAMENTAL, $searches_are_fundamental == 0)
+		. formulize_popupChoice('radio', 'searches_are_fundamental', 1, _formulize_DE_SAVE_SEARCHES_ARE_FUNDAMENTAL, $searches_are_fundamental == 1)
+		. "</div>\n";
+	$advanced .= formulize_popupField(_formulize_DE_SAVE_SEARCHES_FUNDAMENTAL, $searches_are_fundamental_question);
 
     // get the pubfilters for the viewselection
     $pubfilters = q("SELECT sv_pubfilters FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id = '" . substr($viewselection, 1) . "'");
     $pubfilters = $pubfilters[0]['sv_pubfilters'] ? explode(",",$pubfilters[0]['sv_pubfilters']) : array();
-    $filterChoices = new xoopsFormLabel(_formulize_DE_SAVE_PUBFILTERS, generateTidyElementList($fid, getAllColList($fid, $frid, $groups), $pubfilters));
-    $filterChoices->setDescription(_formulize_DE_SAVE_PUBFILTERS_DESC);
-    $saveform->addElement($filterChoices);
+    // the help text goes above the list of elements, which can be long
+    $advanced .= formulize_popupField(_formulize_DE_SAVE_PUBFILTERS, "<p class='fz-field__help'>" . _formulize_DE_SAVE_PUBFILTERS_DESC . "</p>" . generateTidyElementList($fid, getAllColList($fid, $frid, $groups), $pubfilters));
 
-	$saveform->addElement($lockcontrols);
+	$lockcontrols = "<div class='fz-choice-group'>\n"
+		. formulize_popupChoice('radio', 'lockcontrols', 1, _YES, $currentlock == 1)
+		. formulize_popupChoice('radio', 'lockcontrols', 0, _NO, $currentlock == 0)
+		. "</div>\n";
+	$advanced .= formulize_popupField(_formulize_DE_SAVE_LOCKCONTROLS, $lockcontrols, _formulize_DE_SAVE_LOCKCONTROLS_HELP1 . " " . _formulize_DE_SAVE_LOCKCONTROLS_HELP2);
+
+	// The settings above are not often needed, so they are out of the way, in a box that opens and closes.
+	// It starts open when the view being replaced has any of them set differently from a new view's, so
+	// that nobody saves over settings they can't see.
+	$defaultFeatures = explode(',','scope,cols,searches,sort,calcs,epp');
+	$advancedSettingsChanged = (
+		(is_array($features_list) AND count(array_diff($defaultFeatures, $features_list)) > 0)
+		OR $searches_are_fundamental == 1
+		OR count($pubfilters) > 0
+		OR $currentlock == 0
+	);
+	print "<details class='fz-disclosure'" . ($advancedSettingsChanged ? " open" : "") . ">\n";
+	print "<summary>" . _formulize_DE_SAVE_ADVANCED . "</summary>\n";
+	print "<div class='fz-stack'>\n" . $advanced . "</div>\n";
+	print "</details>\n";
 
 }
 
-$viewselection = new xoopsFormHidden("viewselection", "");
-$saveform->addElement($viewselection);
+print "<input type='hidden' name='viewselection' id='viewselection' value='' />\n";
 
+print "<div class='fz-cluster'><input type='button' class='fz-btn fz-btn--primary' name='submitx' id='submitx' value='" . _formulize_DE_SAVE_BUTTON . "' onclick=\"javascript:saveSettings(this.form);\" /></div>\n";
 
-$subButton = new xoopsFormButton('', 'submitx', _formulize_DE_SAVE_BUTTON, 'button');
-$subButton->setExtra("onclick=\"javascript:saveSettings(this.form);\"");
-$saveform->addElement($subButton);
+print "</form>\n";
 
-if($pubflag) {
-
- 	$saveform->insertBreak(_formulize_DE_SAVE_LOCKCONTROLS_HELP1 . " " . _formulize_DE_SAVE_LOCKCONTROLS_HELP2, "head");
-}
-
-saveJavascript($pubflag);
-
-print $saveform->render();
-
-print "</td><td width=5%></td></tr></table>";
-print "</center></body>";
-print "</HTML>";
+formulize_popupFooter();
 
 
 // THIS FUNCTION RETURNS THE ARRAY OF OPTIONS FOR THE SAVE BOX, PLUS THE DEFAULT SELECTION
