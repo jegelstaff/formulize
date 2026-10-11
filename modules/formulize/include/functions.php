@@ -4238,13 +4238,10 @@ function getSingle($fid, $uid, $groups=null, $member_handler=null, $gperm_handle
 			$foundEntries = $data_handler->findAllEntriesForGroups($intersect_groups);
     }
 
-		// if user has one entry in a single entry form, we declare that entry
-		// if there's more than one entry found, then we can't declare an entry, and the system should treat this as a multi entry situation for this user
-		$count = count($foundEntries);
-		if($count == 1) {
+		// if one or more entries are found in a single entry form, we declare the first one (lowest entry id, since the lookups are ordered by entry id)
+		// more than one entry should not normally happen, but can if entries were imported, made by proxy, or had their ownership changed
+		if(count($foundEntries) > 0) {
 			$single['entry'] = $foundEntries[0];
-		} if($count > 1) {
-			$single['flag'] = 0;
 		}
 
     return $single;
