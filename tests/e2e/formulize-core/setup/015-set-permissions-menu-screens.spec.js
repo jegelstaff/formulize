@@ -283,7 +283,8 @@ test.describe('Set columns and elements for screens', () => {
 		await page.locator('div[id^=form-details-box-]').nth(2).getByRole('link', { name: 'Screens' }).click();
   	await page.getByRole('link', { name: 'Donor', exact: true }).click();
 		await page.getByRole('link', { name: 'Options' }).click();
-  	await page.locator('#form-3 label').filter({ hasText: /^No$/ }).locator('#screens-printall').check();
+		// By name and value, not by '#form-N': the number is the tab's position, which moves whenever a tab is added
+		await page.locator('input[name="screens-printall"][value="0"]').check();
 		await saveAdminForm(page);
   	await page.getByRole('link', { name: 'Pages' }).click();
   	await page.getByRole('link', { name: 'Edit this page' }).click();
