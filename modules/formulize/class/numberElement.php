@@ -348,11 +348,15 @@ class formulizeNumberElementHandler extends formulizeTextElementHandler {
 		$this->clickable = false;
 		$this->dataIsHtml = false; // plain text value - gets HTML-escaped by the canonical path
 		$this->length = 100;
-		// A number element only ever holds a number, so coerce to one (0 if somehow not) - this keeps
-		// any unexpected content from flowing through, while preserving decimals when present.
+		// A number element holds a number or nothing (an empty box is saved as NULL), so nothing is shown
+		// as blank, not as 0, which would look like a real value. Anything else is coerced to a number
+		// (0 if somehow not one) - this keeps any unexpected content from flowing through, while
+		// preserving decimals when present.
 		// formulize_numberFormat then applies the element's own decimal/separator/prefix config.
 		$value = trim((string) $value);
-		if(!is_numeric($value)) {
+		if($value === '') {
+			return formulizeElementsHandler::formatDataForList('', $handle, $entry_id, $textWidth);
+		} elseif(!is_numeric($value)) {
 			$value = 0;
 		} elseif(strpos($value, '.') !== false) {
 			$value = floatval($value);

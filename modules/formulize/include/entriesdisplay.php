@@ -990,11 +990,14 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
  	list($data, $regeneratePageNumbers, $filterToCompare, $flatScope) = formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fid, $scope, $screen, $currentURL, (isset($_POST['forcequery']) ? intval($_POST['forcequery']) : 0));
 
 	// determine which form IDs are in the dataset, for use by clone UI and other features
-	// we can just look at the first entry, since all entries in the dataset will have the same fids (or should!!)
+	// have to look at every entry, since a form only appears in entries that have something connected to them in that form
 	$GLOBALS['formulize_LOErendering_fidsInUse'] = array();
-	if(isset($data) AND is_array($data) AND !empty($data) AND $firstEntry = reset($data)) {
-		$firstEntryIds = getEntryIds($firstEntry, fidAsKeys: true);
-		$GLOBALS['formulize_LOErendering_fidsInUse'] = array_keys($firstEntryIds);
+	if(isset($data) AND is_array($data)) {
+		$fidsInUse = array();
+		foreach($data as $thisEntry) {
+			$fidsInUse += getEntryIds($thisEntry, fidAsKeys: true);
+		}
+		$GLOBALS['formulize_LOErendering_fidsInUse'] = array_keys($fidsInUse);
 	}
 
 	//formulize_benchmark("after gathering dataset/before generating calcs");
@@ -2137,15 +2140,8 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 							continue;
 						}
 						$numericValue = trim((string) $numericValue);
-						if($numericValue === "") {
-							// number elements coerce an empty value to zero when they format it
-							// for a list, so an empty cell still displays as 0, 0.00, $0.00 etc.
-							if($numericColType != "number") {
-								continue;
-							}
-							$numericValue = "0";
-						} elseif(!is_numeric($numericValue)) {
-							continue;
+						if($numericValue === "" OR !is_numeric($numericValue)) {
+							continue; // empty values display as blank, including in number elements, so they take no width
 						}
 						$numericValue = $numericValue + 0;
 						if($numericColMin === null OR $numericValue < $numericColMin) {

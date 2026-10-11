@@ -1195,7 +1195,7 @@ define('_AM_EGS_SEARCH_PLACEHOLDER', 'Search by name...');
 define('_AM_ENTRY_GROUP_NOTICE', 'Disabled permissions are inherited from the template for all %s. You cannot change them, but you can set additional permissions.');
 define('_AM_ENTRY_GROUP_CONDITIONS_LABEL', 'Visibility conditions:');
 
-define("_AM_FORMULIZE_SELFREF_SUBFORM", "This form (self-reference)");
+define("_AM_FORMULIZE_SELFREF_SUBFORM", "%s (this form - self reference - experimental)"); // %s is the title of the form
 
 // Screen settings page (templates/admin/screen_settings.html)
 define("_AM_SCREEN_SETTINGS_LEGEND", "Settings for the Screen:");

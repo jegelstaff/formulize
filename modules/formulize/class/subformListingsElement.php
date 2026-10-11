@@ -457,21 +457,28 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 		global $xoopsDB;
 		$allFormsQuery = q("SELECT id_form, form_title FROM ".$xoopsDB->prefix("formulize_id")." ORDER BY form_title");
 		$allForms = array(_AM_FORMLINK_PICK);
+		$selfRefLabel = '';
 		foreach($allFormsQuery as $thisForm) {
-			if($thisForm['id_form'] == intval($fid)) { continue; } // added at the end instead, so it sorts last with a special label
+			if($thisForm['id_form'] == intval($fid)) { // added at the end instead, so it sorts last with a special label
+				$selfRefLabel = sprintf(_AM_FORMULIZE_SELFREF_SUBFORM, $thisForm['form_title']);
+				continue;
+			}
 			$allForms[$thisForm['id_form']] = $thisForm['form_title'];
 		}
-		$allForms[$fid] = _AM_FORMULIZE_SELFREF_SUBFORM; // self-referential connections: a form can be its own subform
 		$validForms1 = q("SELECT t1.fl_form1_id, t2.form_title FROM " . $xoopsDB->prefix("formulize_framework_links") . " AS t1, " . $xoopsDB->prefix("formulize_id") . " AS t2 WHERE t1.fl_form2_id=" . intval($fid) . " AND t1.fl_unified_display=1 AND t1.fl_relationship != 1 AND t1.fl_form1_id=t2.id_form");
 		$validForms2 = q("SELECT t1.fl_form2_id, t2.form_title FROM " . $xoopsDB->prefix("formulize_framework_links") . " AS t1, " . $xoopsDB->prefix("formulize_id") . " AS t2 WHERE t1.fl_form1_id=" . intval($fid) . " AND t1.fl_unified_display=1 AND t1.fl_relationship != 1 AND t1.fl_form2_id=t2.id_form");
 		$validForms = array();
 		foreach($validForms1 as $vf1) {
-				$validForms[$vf1['fl_form1_id']] = $vf1['fl_form2_id'] == intval($fid) ? _AM_FORMULIZE_SELFREF_SUBFORM : $vf1['form_title'];
+				$validForms[$vf1['fl_form1_id']] = $vf1['fl_form1_id'] == intval($fid) ? $selfRefLabel : $vf1['form_title'];
 		}
 		foreach($validForms2 as $vf2) {
 				if (!isset($validForms[$vf2['fl_form2_id']])) {
-						$validForms[$vf2['fl_form2_id']] = $vf2['fl_form2_id'] == intval($fid) ? _AM_FORMULIZE_SELFREF_SUBFORM : $vf2['form_title'];
+						$validForms[$vf2['fl_form2_id']] = $vf2['fl_form2_id'] == intval($fid) ? $selfRefLabel : $vf2['form_title'];
 				}
+		}
+		// a form can be its own subform, but only offer that when the form is already connected to itself (ie: it has a linked element pointing to itself), so it's a deliberate choice and not something to stumble into...and keep offering it for a subform that already uses it
+		if(isset($validForms[intval($fid)]) OR intval($ele_value[0]) == intval($fid)) {
+			$allForms[$fid] = $selfRefLabel; // added at the end, so it sorts last with its special label
 		}
 		$allForms['new'] = _AM_ELE_SUBFORM_NEW;
 		$dataToSendToTemplate['allforms'] = $allForms;
@@ -1097,6 +1104,10 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
         $ignoreFormSubmitted = true;
     } else {
         $defaultblanks = intval($defaultblanks);
+    }
+    // no blanks when a form is its own subform...the blank entries and the main entry would be new entries in the same form, and saving those together is not supported yet (the main entry gets treated as one of the blanks)
+    if($subform_id == $fid) {
+        $defaultblanks = 0;
     }
 
 	if((!isset($_POST['form_submitted']) OR !$_POST['form_submitted'] OR $ignoreFormSubmitted) AND count((array) $sub_entries[$subform_id]) == 0 AND $defaultblanks > 0 AND ($rowsOrForms == "row"  OR $rowsOrForms =='')) {

@@ -2705,9 +2705,13 @@ function deleteEntry($entry_id, $frid, $fid, $excludeFids=array()) {
                 if ($ent AND !in_array($thisfid, (array) $excludeFids)) {
                     // look for any subsub links...they have to be defined as part of the relationship in effect
                     $sublinkresults = checkForLinks($frid, array($thisfid), $thisfid, array($thisfid=>array($ent)), $unified_display, $unified_delete);
-                    foreach($sublinkresults['sub_entries'] as $subfid=>$subent) {
-                        deleteIdReq($subent, $subfid);
-                        $deletedEntries[$subfid][] = $subent;
+                    foreach($sublinkresults['sub_entries'] as $subfid=>$subents) {
+                        foreach($subents as $subent) { // an array of entry ids per form, same as $linkresults['sub_entries'] above...passing the array to deleteIdReq would intval it to 1 and delete entry 1!
+                            if ($subent) {
+                                deleteIdReq($subent, $subfid);
+                                $deletedEntries[$subfid][] = $subent;
+                            }
+                        }
                     }
                     deleteIdReq($ent, $thisfid);
                     $deletedEntries[$thisfid][] = $ent;
@@ -9139,6 +9143,21 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
         $localIds = array($localIds);
     }
     $countOfValue = count((array) $value);
+    // A cell with several values, some of them empty, shows each empty one as a faded dash, with "No
+    // value" for screen readers, instead of a bare bullet. The empty one keeps its place in the list,
+    // so the values still line up with the values from the same records in the other columns. When
+    // every value is empty, the cell is drawn the same as a single empty value.
+    $emptyValueIds = array();
+    foreach ($value as $valueId=>$v) {
+        if ($v === null OR (is_string($v) AND trim($v) === '')) {
+            $emptyValueIds[$valueId] = true;
+        }
+    }
+    if ($countOfValue > 1 AND count($emptyValueIds) == $countOfValue) {
+        $firstValueId = array_key_first($value);
+        $value = array($firstValueId => $value[$firstValueId]);
+        $countOfValue = 1;
+    }
     $counter = 1;
     static $cachedFormIds = array();
     static $cachedElementIds = array();
@@ -9168,12 +9187,17 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
         $output .= '<ul class="main-cell-list">';
     }
     foreach ($value as $valueId=>$v) {
+        if ($useList AND isset($emptyValueIds[$valueId])) {
+            $output .= '<li class="main-cell-empty" title="' . _formulize_LIST_NO_VALUE . '"><span aria-hidden="true">&ndash;</span><span class="fz-sr-only">' . _formulize_LIST_NO_VALUE . '</span></li>';
+            $counter++;
+            continue;
+        }
         // Numeric values are marked with a class so themes decide how (and whether) to align them,
         // instead of a hardcoded inline style. (closes #131)
-        // Detection is based on the element type as well as the raw value: a number element always
-        // renders a number, because numberElement::formatDataForList coerces anything that isn't
-        // numeric to zero, so a null/empty value still displays as 0, 0.0, $0.00 etc. Checking only the
-        // raw value left those cells looking like text. Values from text elements (and any type that
+        // Detection is based on the element type as well as the raw value: a number element renders a
+        // number for anything that isn't empty, because numberElement::formatDataForList coerces
+        // anything that isn't numeric to zero. An empty value displays as blank, so it gets no class.
+        // Checking only the raw value left those cells looking like text. Values from text elements (and any type that
         // extends text), and from derived elements, are judged on the value itself, which is what gets
         // formatted for display - those are the types that have number formatting options. Every other
         // element type displays its value its own way, so a value that merely looks numeric there
@@ -9189,7 +9213,7 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
         // When no measurement is available - subform listings, the XHR inline-edit redraw path, custom
         // code calling this directly - the property is simply left off and the value falls back to
         // plain left alignment rather than being forced into a guessed box.
-        $isNumericValue = ($element_type == 'number' OR (!is_array($v) AND is_numeric(trim((string) $v)) AND elementTypeIsOrExtends((string) $element_type, array('text', 'derived'))));
+        $isNumericValue = (($element_type == 'number' AND !is_array($v) AND trim((string) $v) !== '') OR (!is_array($v) AND is_numeric(trim((string) $v)) AND elementTypeIsOrExtends((string) $element_type, array('text', 'derived'))));
         $elclass = '';
         if ($isNumericValue) {
             $elclass = ' class="formulize-numeric"';

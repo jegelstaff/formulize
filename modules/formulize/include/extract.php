@@ -1062,7 +1062,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			$whereClause = "AND $whereClause";
 		}
 
-		// create the per-group filters, if any, that apply to this user...only available when all XOOPS is invoked, not available when extract.php is being direct included
+		// create the per-group filters, if any, that apply to this user
 		global $xoopsDB;
 		$perGroupFilter = "";
 		$perGroupFiltersPerForms = array(); // used with exists clauses and other per-form situations
@@ -1072,6 +1072,9 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			$perGroupFiltersPerForms[$fid] = $perGroupFilter;
 			if ($frid) {
 				foreach ($linkformids as $id => $thisLinkFid) {
+					if ($thisLinkFid == $fid) {
+						continue; // a form linked to itself would overwrite the main form's clause with one that uses its fN alias, which is not in scope in the count and calculation queries...the self-join gets its own clause when the join is made below
+					}
 					$perGroupFiltersPerForms[$thisLinkFid] = $form_handler->getPerGroupFilterWhereClause($thisLinkFid, "f" . $id);
 				}
 			}
@@ -1093,28 +1096,21 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 
 				// IGNORE recursive connections if...
 				// 1. they are not 'parent' connections
-				// OR 2. we are looking for a single entry in the main form, but it is not the same as an entry we just submitted
-				// OR 3. we are looking for a single entry in the main form, that is not the parent entry in the recursive relationship
-				// OR 4. we are looking for a single entry in the main form, that is the parent entry but it has no children in the recursive relationship
+				// OR 2. we are not looking for a single entry in the main form (ie: a list of entries), because the children would be mixed into the same bucket as the main entries, and entries with no children would get an empty record in that bucket
+				// OR 3. we are looking for a single entry in the main form, but it is not the same as an entry we just submitted
+				// OR 4. we are looking for a single entry in the main form, that is not the parent entry in the recursive relationship
+				// OR 5. we are looking for a single entry in the main form, that is the parent entry but it has no children in the recursive relationship
 				// THIS MEANS WE CANNOT HAVE RECURSIVE ONE-TO-ONE CONNECTIONS!
 				// Probably for the best? would there be some kind of silly looping going on there?
+				$singleEntryFilterValue = $linkedFid == $fid ? formulize_filterHasSingleEntry($filter) : false;
 				if ($linkedFid == $fid
 					AND (
 						!$linkisparent[$id]
-						OR (
-							$singleEntryFilterValue = formulize_filterHasSingleEntry($filter)
-							AND (
-								!isset($_POST['ventry'])
-								OR $_POST['ventry'] != $singleEntryFilterValue
-								OR (
-									$_POST['ventry'] == $singleEntryFilterValue
-									AND (
-										entryIsParentInRecursiveRelationship($singleEntryFilterValue, $linkselfids[$id]) == false
-										OR entryHasChildrenInRecursiveRelationship($singleEntryFilterValue, $linkselfids[$id]) == false
-									)
-								)
-							)
-						)
+						OR !$singleEntryFilterValue
+						OR !isset($_POST['ventry'])
+						OR $_POST['ventry'] != $singleEntryFilterValue
+						OR entryIsParentInRecursiveRelationship($singleEntryFilterValue, $linkselfids[$id]) == false
+						OR entryHasChildrenInRecursiveRelationship($singleEntryFilterValue, $linkselfids[$id]) == false
 					)
 				) {
 					//print "Ignoring $linkedFid when fid is $fid and linkisparent: ".$linkisparent[$id].' - ventry: '.$_POST['ventry']." - filter: $filter<br>";
@@ -1148,14 +1144,16 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 					$newexistsJoinText = $existsJoinText ? " $andor " : "";
 					$newexistsJoinText .= " EXISTS(SELECT 1 FROM " . DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$formAliasId WHERE "; // set this up also so we have it available for one to many/many to one calculations that require it
 					$newJoinText = formulize_generateJoinSQL($id, $formAliasId, $linkcommonvalue, $linkselfids, $linktargetids);
-					if (isset($perGroupFiltersPerForms[$linkedFid])) {
+					if ($linkedFid == $fid) {
+						$newJoinText .= $form_handler->getPerGroupFilterWhereClause($linkedFid, "f" . $formAliasId); // self-join is not in the per-form map, since its clause would replace the main form's, see above
+					} elseif (isset($perGroupFiltersPerForms[$linkedFid])) {
 						$newJoinText .= $perGroupFiltersPerForms[$linkedFid];
 					}
 					$joinTextIndex["f" . $formAliasId] = $newJoinText;
 					$joinText .= $newJoinText;
 					$hasOneSideFilters = (isset($oneSideFilters[$linkedFid]) AND is_array($oneSideFilters[$linkedFid]) AND count($oneSideFilters[$linkedFid]) > 0);
 					$hasEmptySetFilters = (isset($emptySetFilters[$linkedFid]) AND is_array($emptySetFilters[$linkedFid]) AND count($emptySetFilters[$linkedFid]) > 0);
-					if (($hasOneSideFilters OR $hasEmptySetFilters) AND $linkedFid != $fid) { // only setup the existsJoinText when there is a where clause that applies to this form...otherwise, we don't care, this form is not relevant to the query that the calculations will do (except maybe when the mainform is not the one-side form...but that's another story). Also, don't do this with self-referential connections, which will make the data array messy because there will be multiple values for certain fields, due to repeats in the query results due to fields being included multiple times, ugh.
+					if (($hasOneSideFilters OR $hasEmptySetFilters) AND $linkedFid != $fid) { // only setup the existsJoinText when there is a where clause that applies to this form...otherwise, we don't care, this form is not relevant to the query that the calculations will do (except maybe when the mainform is not the one-side form...but that's another story). Also, don't do this with self-referential connections: the filters for this form are the main form's own filters, which are already applied to main directly, and wrapping them in an exists clause on the self-join would also require every matching main entry to have a connected entry in the same form, so entries with no children would drop out of the count and the calculations.
 						// If this linked form is entries_are_users and any filter references its EAU table aliases,
 						// inject those joins inside the EXISTS subquery (before the WHERE).
 						$existsEauJoins = "";
@@ -1635,7 +1633,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			} else {
 				// Primary sort is on main form. Only include parts safe for the temp table INSERT
 				// (same constraint as $entryIdQuery: no connected-form aliases).
-				$orderByToUse = $frameworkSafeOrderByParts
+				$orderByToUse = !empty($frameworkSafeOrderByParts)
 					? " ORDER BY " . implode(", ", $frameworkSafeOrderByParts) . " "
 					: " ORDER BY main.entry_id ";
 				$useAsSortSubQuery = "  @rownum:=@rownum+1 $ownerGroupsSortSelect $creatorEmailSortSelect $profileSortSelect, "; // need to add a counter as the first field, used as the master sorting key
@@ -2158,6 +2156,7 @@ function processGetDataResults($resultData)
 					$fieldNames[$resultColIndex] = $xoopsDB->getFieldName($thisRes, $resultColIndex);
 				}
 			}
+			$skipTheseFormAliasesForThisResult = array(); // if we find a null entry_id for a linked form, we need to skip all the data for that form in this result, because it's not a real entry
 			$creatorAllowsEmailViewing = null;
 			$creatorUid = null;
 			foreach ($masterQueryArray as $resultColIndex => $value) {
@@ -2196,9 +2195,14 @@ function processGetDataResults($resultData)
 					$curFormId = $curFormAlias == 'main' ? $fid : $linkformids[substr($curFormAlias, 1)]; // the table aliases are based on the keys of the linked forms in the linkformids array, so if we get the number out of the table alias, that key will give us the form id of the linked form as stored in the linkformids array
 					$curFormHandle = $formHandlesById[$curFormId] ??= getFormHandle($curFormId);
 					if (strstr($field, 'entry_id')) {
-						$entryIdIndex[$curFormAlias] = $value;
-						if ($curFormAlias == 'main' and !in_array($value, $totalMainFormEntryIdIndex)) {
-							$totalMainFormEntryIdIndex[] = $value;
+						if($value !== null) {
+							$entryIdIndex[$curFormAlias] = $value;
+							if ($curFormAlias == 'main' and !in_array($value, $totalMainFormEntryIdIndex)) {
+								$totalMainFormEntryIdIndex[] = $value;
+							}
+						} else { // entry id is null, so something exotic is going on like a link to a link, and there is a non-value returned as part of the SQL query because that's what SQL likes to do sometimes when there's no matching entries in a join, so we need to bail on this entry because it's not a real entry
+							$skipTheseFormAliasesForThisResult[$curFormAlias] = true;
+							continue;
 						}
 					}
 					if ($curFormAlias == 'main') {
@@ -2234,6 +2238,9 @@ function processGetDataResults($resultData)
 					if($eauFormAlias == 'main' && isset($writtenMains[$entryIdIndex['main']])) {
 						continue; // skip if this main entry has already been fully written
 					}
+					if(isset($skipTheseFormAliasesForThisResult[$eauFormAlias])) {
+						continue; // no linked entry in this result, and $entryIdIndex still holds the previous result's entry id for this alias
+					}
 					static $eauPropertyToType = array(
 						'uid'           => 'uid',
 						'login_name'    => 'username',
@@ -2266,7 +2273,11 @@ function processGetDataResults($resultData)
 					continue;
 				}
 				// Check to see if this is a main entry that has already been catalogued, and if so, then skip it
-				if ($curFormAlias == "main" and isset($writtenMains[$entryIdIndex['main']])) {
+				// Or if we're skipping this form alias for this result because the entry_id was null
+				if (
+					($curFormAlias == "main" AND isset($writtenMains[$entryIdIndex['main']]))
+					OR isset($skipTheseFormAliasesForThisResult[$curFormAlias])
+				) {
 					continue;
 				}
 				$masterResults[$masterIndexer][$curFormHandle][$entryIdIndex[$curFormAlias]][$elementHandle] = $value;
@@ -4422,6 +4433,7 @@ function getValue($entry, $handle, $datasetKey = null, $localEntryId = null, $ra
 	if (!$formHandle OR !isset($entry[$formHandle]) OR !is_array($entry[$formHandle])) {
 		$formHandle = getFormHandleFromEntry($entry, $handle);
 		if (!$formHandle) {
+			$GLOBALS['formulize_mostRecentLocalId'] = null; // otherwise callers would read the local id left over from the previous call
 			return ""; // the handle is not part of the entry at all
 		}
 	}
@@ -4634,11 +4646,11 @@ function getEntryIds($entry, $formIdOrHandle = "", $datasetKey = null, $fidAsKey
 				$formObject = $form_handler->get($formHandle);
 				$key = $formObject->getVar('fid');
 			}
-			$entryIds[$key] = is_array($entry[$formHandle]) ? array_keys($entry[$formHandle]) : array();
+			$entryIds[$key] = (isset($entry[$formHandle]) AND is_array($entry[$formHandle])) ? array_keys($entry[$formHandle]) : array(); // a form with no entries connected to this entry is not in the entry at all
 		}
 	} else {
 		$formHandle = getFormHandleFromFormId($formIdOrHandle); // may or may not be a form handle, so we'll just cover our bases...
-		if (is_array($entry[$formHandle])) {
+		if (isset($entry[$formHandle]) AND is_array($entry[$formHandle])) {
 			$entryIds = array_keys($entry[$formHandle]);
 		}
 	}

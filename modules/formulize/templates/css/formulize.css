@@ -982,6 +982,12 @@ div[id^=cellcontents_1_] label {
 	margin: 0;
 }
 
+/* an empty value among other values in the same cell, shown as a faded dash (the bullet fades with it) */
+#listofentries div.main-cell-div ul.main-cell-list > li.main-cell-empty {
+	color: var(--fz-color-text-muted, #5b6068);
+	opacity: 0.6;
+}
+
 .formulize-text-for-display p,
 .formulize-text-for-display h1,
 .formulize-text-for-display h2,

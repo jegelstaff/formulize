@@ -692,6 +692,8 @@ define('_AM_EGS_SEARCH_PLACEHOLDER', 'Rechercher par nom...');
 define('_AM_ENTRY_GROUP_NOTICE', 'Les permissions désactivées ne peuvent pas être modifiées. Elles sont héritées du modèle pour tous les %s.');
 define('_AM_ENTRY_GROUP_CONDITIONS_LABEL', 'Conditions de visibilité :');
 
+define("_AM_FORMULIZE_SELFREF_SUBFORM", "%s (ce formulaire - auto-référence - expérimental)"); // %s is the title of the form
+
 
 // Page des réglages de l'écran (templates/admin/screen_settings.html)
 define("_AM_SCREEN_SETTINGS_LEGEND", "Réglages de l'écran :");

@@ -319,6 +319,7 @@ define("_formulize_FD_ABOUT", "About this entry:");
 define("_formulize_FD_CREATED", "Created by: ");
 define("_formulize_FD_MODIFIED", "Modified by: ");
 define("_formulize_FD_NEWENTRY", "This is a new entry that has not been saved yet.");
+define("_formulize_LIST_NO_VALUE", "No value");
 
 define("_formulize_ADD", "Add");
 define("_formulize_ADD_ONE", "Add One");
