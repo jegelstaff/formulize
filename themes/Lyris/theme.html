@@ -54,7 +54,10 @@
 
 <{includeq file="$theme_name/session-timeout-warning.html"}>
 
-<div class="lyris-app" id="lyris-app" data-sidebar-default="<{if $xoops_requesturi|strstr:'/modules/formulize/application.php'}>open<{else}>closed<{/if}>">
+<{* The login block is in the sidebar, so someone who is not logged in gets the
+   sidebar open by default on every page, and data-sidebar-anon keeps their state
+   apart from the saved preference of the people who log in on this browser. *}>
+<div class="lyris-app" id="lyris-app" data-sidebar-default="<{if !$xoops_isuser || $xoops_requesturi|strstr:'/modules/formulize/application.php'}>open<{else}>closed<{/if}>"<{if !$xoops_isuser}> data-sidebar-anon<{/if}>>
 
   <script>
   // Apply the saved sidebar state before first paint, so restoring a closed
@@ -64,7 +67,26 @@
   (function () {
     try {
       var app = document.getElementById('lyris-app');
-      var saved = localStorage.getItem('lyris-sidebar-closed');
+      // same choice of storage as initSidebar() makes
+      var anon = app.hasAttribute('data-sidebar-anon');
+      var store = anon ? sessionStorage : localStorage;
+      if (anon) {
+        // Landing on the site while not logged in starts over, with the sidebar
+        // open, whatever was done on an earlier visit in this tab. A landing is a
+        // page that was not reached from another page of this site (a typed
+        // address, a bookmark, a link from elsewhere), and not a reload or a
+        // step back to one. If the referrer is withheld, every page is a
+        // landing, which leaves the sidebar open: the safe way to be wrong.
+        var nav = performance.getEntriesByType('navigation')[0];
+        var fromThisSite = document.referrer.indexOf(location.origin + '/') === 0;
+        if (!fromThisSite && (!nav || nav.type === 'navigate')) {
+          store.removeItem('lyris-sidebar-closed');
+        }
+      } else {
+        // ...and so does logging out, or the session timing out
+        sessionStorage.removeItem('lyris-sidebar-closed');
+      }
+      var saved = store.getItem('lyris-sidebar-closed');
       var defaultOpen = app.getAttribute('data-sidebar-default') === 'open';
       var closed = saved !== null ? saved === 'true' : !defaultOpen;
       if (closed && window.innerWidth > 768) {

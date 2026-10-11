@@ -20,6 +20,14 @@ function initSidebar() {
   const STORAGE_KEY = 'lyris-sidebar-closed';
   const isMobile = () => window.innerWidth <= 768;
 
+  // The saved state is a lasting preference for someone who is logged in. For
+  // someone who is not (data-sidebar-anon, from theme.html) it lasts only for the
+  // visit: the login block is in the sidebar, so each arrival at the site has to
+  // start with the sidebar open, whatever was saved on this browser before, and
+  // closing it should still hold from page to page on that visit. The script in
+  // theme.html clears it on a landing, before this reads it.
+  const storage = () => ('sidebarAnon' in app.dataset ? sessionStorage : localStorage);
+
   function setSidebarState(closed) {
     if (isMobile()) {
       app.classList.toggle('lyris-app--sidebar-open', !closed);
@@ -29,7 +37,7 @@ function initSidebar() {
       app.classList.remove('lyris-app--sidebar-open');
     }
     toggle.setAttribute('aria-expanded', String(!closed));
-    try { localStorage.setItem(STORAGE_KEY, String(closed)); } catch (_) { /* ignore */ }
+    try { storage().setItem(STORAGE_KEY, String(closed)); } catch (_) { /* ignore */ }
   }
 
   toggle.addEventListener('click', () => {
@@ -42,7 +50,7 @@ function initSidebar() {
   // Restore saved state on desktop; use data attribute default otherwise
   if (!isMobile()) {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = storage().getItem(STORAGE_KEY);
       const defaultOpen = app.dataset.sidebarDefault === 'open';
       setSidebarState(saved !== null ? saved === 'true' : !defaultOpen);
     } catch (_) { /* ignore */ }
