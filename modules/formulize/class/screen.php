@@ -636,7 +636,6 @@ function formulize_getScreenTypes() {
 	if ($types !== null) {
 		return $types;
 	}
-	include_once file_exists($languageFile) ? $languageFile : XOOPS_ROOT_PATH . '/modules/formulize/language/english/admin.php';
 	$types = array();
 	foreach (glob(XOOPS_ROOT_PATH . '/modules/formulize/class/*Screen.php') ?: array() as $file) {
 		$type = substr(basename($file), 0, -strlen('Screen.php'));
