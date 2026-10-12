@@ -553,6 +553,50 @@ class FormulizeMCP
 	}
 
 	/**
+	 * The MCP server as the embedded AI assistant's page sees it, for the person signed in.
+	 *
+	 * Builds the same tools a session-authenticated request to mcp/index.php would get:
+	 * the registry for this person's groups (so webmaster-only tools are there only for
+	 * webmasters), reduced to what an administrator allows the assistant. Nothing is
+	 * served from here. ai/index.php prints embeddedAssistantStartup() into the page, so
+	 * the page starts with its tools and instructions instead of asking for them once it
+	 * has loaded. Every tool call still goes through mcp/index.php, which applies the
+	 * same rules again.
+	 *
+	 * The caller must define FORMULIZE_MCP_REGISTRY_ONLY before including this file, as
+	 * for any other use of the registry, so the page's output buffers are left alone.
+	 *
+	 * @param object $user The signed-in user
+	 * @return FormulizeMCP
+	 */
+	public static function forEmbeddedAssistant($user) {
+		$mcp = new FormulizeMCP(null, true, $user->getGroups());
+		$mcp->authViaSession = true;
+		$mcp->authenticatedUser = $user;
+		$mcp->authenticatedUid = $user->getVar('uid');
+		include_once XOOPS_ROOT_PATH . '/modules/formulize/include/aiadminconfig.php';
+		$mcp->tools = formulizeAI_filterToolsForSession($mcp->tools);
+		return $mcp;
+	}
+
+	/**
+	 * What the embedded assistant needs to start: the tools it may offer the model, and
+	 * the instructions the init tool would return, which become part of the system prompt.
+	 * The init tool itself and the easter eggs are left out, since neither ever reaches
+	 * the model.
+	 *
+	 * @return array ['tools' => array of tool definitions, 'instructions' => string]
+	 */
+	public function embeddedAssistantStartup() {
+		$sets = formulizeAI_toolSets();
+		$hidden = array_flip(array_merge($sets['initTools'], $sets['easterEggs'], [$this->mcpRequest['localServerName']]));
+		return [
+			'tools' => array_values(array_diff_key($this->tools, $hidden)),
+			'instructions' => $this->getInitializeInstructions()
+		];
+	}
+
+	/**
 	 * Handle capabilities endpoint (for MCP discovery)
 	 */
 	private function handleCapabilities()

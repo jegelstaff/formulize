@@ -337,6 +337,7 @@ function formulize_uiCatalog() {
                     '--fz-field-label-width' => 'On `fz-field--horizontal`: the width of the label. 12rem.',
                     '--fz-tone' => 'On `fz-badge`, `fz-callout`, `fz-bar-list__row`, `fz-progress` or `fz-matrix__cell`: the colour, for a tone of your own when none of the tone modifiers is the right one, such as the steps of a scale. Set it in a style attribute, or in a class of your own. Set `--fz-tone-soft` with it on a badge or a callout.',
                     '--fz-tone-soft' => 'On `fz-badge` or `fz-callout`: the pale tint that goes with `--fz-tone`.',
+                    '--fz-code-block-max-height' => 'On `fz-code-block`: the tallest it can be, after which it scrolls. No limit unless it is set.',
                 ),
             ),
             array(
@@ -531,6 +532,8 @@ HTML
                     'fz-flex' => '`display: flex`',
                     'fz-inline-flex' => '`display: inline-flex`',
                     'fz-grid' => '`display: grid`',
+                    'fz-sticky' => '`position: sticky`: held at an edge of whatever it scrolls in, such as a table\'s header row or the buttons at the foot of a panel that scrolls. Use it with `fz-top-0` or `fz-bottom-0`.',
+                    'fz-{top,bottom}-0' => 'With `fz-sticky`: the edge it is held at.',
                     'fz-flex-{row,col}' => 'Children in a row, or a column.',
                     'fz-flex-{wrap,nowrap}' => 'Wrap onto new lines, or don\'t.',
                     'fz-flex-1' => 'On a child: grow and shrink, ignoring its own size.',
@@ -1028,12 +1031,13 @@ HTML
             array(
                 'id' => 'prose',
                 'name' => 'Prose',
-                'summary' => 'Running text that someone wrote: an article, instructions, an agreement, the contents of a rich text field. Its paragraphs, headings and lists are sized and spaced for reading.',
+                'summary' => 'Running text that someone wrote: an article, instructions, an agreement, the contents of a rich text field, a reply from the AI assistant. Its paragraphs, headings, lists, code and tables are sized and spaced for reading.',
                 'classes' => array(
                     'fz-prose' => 'On the element around the text.',
                 ),
                 'notes' => array(
-                    'The elements inside need no classes: write ordinary `<p>`, `<h2>`, `<ul>` and `<blockquote>`. That makes it the way to show text that came from an editor, and to give text headings and lists in a derived value, where the elements inside cannot keep classes of their own.',
+                    'The elements inside need no classes: write ordinary `<p>`, `<h2>`, `<ul>`, `<blockquote>`, `<code>`, `<pre>` and `<table>`. That makes it the way to show text that came from an editor, and to give text headings and lists in a derived value, where the elements inside cannot keep classes of their own.',
+                    'A code block (`<pre>`) and a table wider than the text scroll sideways, rather than making the page wider.',
                     'It is as wide as the space it is in. Long lines are hard to read, so put it in `fz-container fz-container--narrow`, or in a column.',
                     'It is for text. Lay out a page with the layout classes, not with this.',
                 ),
@@ -1052,6 +1056,34 @@ HTML
     <li>Tell us about any allergies in the group</li>
   </ol>
   <blockquote>A teacher stays in the room for the whole session.</blockquote>
+  <h3>Times</h3>
+  <table>
+    <thead><tr><th>Session</th><th>Arrive by</th></tr></thead>
+    <tbody><tr><td>Morning</td><td>8:30am</td></tr><tr><td>Afternoon</td><td>12:30pm</td></tr></tbody>
+  </table>
+  <p>Book through the <code>workshops</code> form.</p>
+</div>
+HTML
+            ),
+            array(
+                'id' => 'code-block',
+                'name' => 'Code block',
+                'summary' => 'Code, data or a log shown on its own: an example to copy, the response from a web service, the output of a script.',
+                'classes' => array(
+                    'fz-code-block' => 'On a `<pre>`: monospaced, its lines kept as they were written, scrolling sideways when one is too long.',
+                    'fz-code-block--wrap' => 'Long lines wrap instead, for data such as JSON, where a line can be very long.',
+                ),
+                'notes' => array(
+                    'For code in running text, such as instructions with a command in them, use `fz-prose`, which styles the `<pre>` and `<code>` inside it.',
+                    'To cap the height, set `--fz-code-block-max-height` on it, in a style attribute: it scrolls inside that height.',
+                    'Escape what goes inside it, with `htmlspecialchars()` in PHP, so the code shows as text.',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-stack fz-gap-3">
+  <pre class="fz-code-block"><code>&lt;div class="fz-card"&gt;
+  &lt;h3 class="fz-card__title"&gt;Robotics club&lt;/h3&gt;
+&lt;/div&gt;</code></pre>
+  <pre class="fz-code-block fz-code-block--wrap" style="--fz-code-block-max-height: 6rem">{ "form_id": 12, "title": "Applications", "elements": [ { "handle": "applications_student", "type": "text" }, { "handle": "applications_school", "type": "text" }, { "handle": "applications_status", "type": "radio" } ] }</pre>
 </div>
 HTML
             ),
@@ -1142,12 +1174,14 @@ HTML
             ),
             array(
                 'id' => 'u-width',
-                'name' => 'Width',
-                'summary' => 'Width, and whether an element can shrink.',
+                'name' => 'Width and height',
+                'summary' => 'Width and height, and whether an element can shrink.',
                 'classes' => array(
                     'fz-w-{full,auto,fit}' => 'The full width of its container, its natural width, or the width of its content.',
                     'fz-max-w-full' => 'Never wider than its container.',
                     'fz-min-w-0' => 'On a child of a flex or grid container: may get narrower than its content. `fz-truncate` needs it there.',
+                    'fz-h-full' => 'The full height of its container, when the container has a height of its own.',
+                    'fz-min-h-0' => 'On a child of a flex or grid container: may get shorter than its content. A part that scrolls, in a column of a set height, needs it, or it makes the column taller instead of scrolling.',
                 ),
             ),
             array(
@@ -1205,7 +1239,7 @@ HTML
                 'name' => 'Overflow and lists',
                 'summary' => 'What happens to content that doesn\'t fit, and list markers.',
                 'classes' => array(
-                    'fz-overflow-{auto,x-auto,hidden}' => 'Scroll when needed, scroll sideways only, or clip.',
+                    'fz-overflow-{auto,x-auto,y-auto,hidden}' => 'Scroll when needed, scroll sideways only, scroll up and down only, or clip.',
                     'fz-list-none' => 'No bullets or numbers.',
                 ),
             ),

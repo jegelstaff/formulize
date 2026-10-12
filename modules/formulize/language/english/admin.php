@@ -974,7 +974,7 @@ define("_AM_FORMULIZE_SCREEN_LOE_DESC_ENTRIESPERPAGE", "Set to '0' to have all e
 define("_AM_FORMULIZE_SCREEN_LOE_EDITDESTINATION", "Where should the edit icon open the entry form?");
 define("_AM_FORMULIZE_SCREEN_LOE_EDITDESTINATION_DRAWER", "In the right-side drawer");
 define("_AM_FORMULIZE_SCREEN_LOE_EDITDESTINATION_SCREEN", "On the full form screen");
-define("_AM_FORMULIZE_SCREEN_LOE_DESC_EDITDESTINATION", "The drawer option only applies to themes that support the right-side drawer (such as Lyris). On other themes the edit icon always opens the full form screen.");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_EDITDESTINATION", "The drawer slides out from the right, over the list, so people can edit an entry without leaving the list. The Add button opens new entries there too.");
 define("_AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN", "What screen should be used to display individual entries when users click on them?");
 define("_AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN_DEFAULT", "Use the default version of this form");
 define("_AM_FORMULIZE_SCREEN_LOE_VIEWENTRYPAGEWORKS", "Pageworks page");

@@ -14036,9 +14036,12 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
  * Returns both an HTML string (for non-template menu mode) and a structured data array
  * (for template menu mode). Returns array(false, false) if the AI Assistant is not enabled.
  *
- * Lyris has no menu item at all: it puts AI in the theme's top bar instead, and opens the
- * assistant in the right slide-out drawer rather than navigating to /ai/ as a full page.
- * See themes/Lyris/theme.html and themes/Lyris/js/script.js.
+ * The link carries the js-open-ai class, so the drawer component (include/js/drawer.js)
+ * opens the assistant in the right slide-out drawer, over the page the person is on. Its
+ * href still goes to /ai/, the assistant as a full page, for a new tab or without scripts.
+ *
+ * Lyris has no menu item at all: it puts the same js-open-ai link in the theme's top bar
+ * instead. See themes/Lyris/theme.html.
  *
  * @return array Two-element array: [string|false $htmlContent, array|false $dataArray]
  */
@@ -14059,14 +14062,16 @@ function drawAIAssistantMenuSection() {
 
 	$title = 'Use AI';
 
-	$block = "<a class=\"menuMain$menuActive\" href=\"$aiUrl\">$title</a>";
+	$block = "<a class=\"menuMain$menuActive js-open-ai\" href=\"$aiUrl\">$title</a>";
 
 	$data = array(
 		'url' => $aiUrl,
 		'title' => $title,
 		'active' => ($isActive ? 1 : 0),
 		'target' => '',
-		'icon' => ''
+		'icon' => '',
+		// added to the link's class by templates/blocks/menu.html
+		'linkClass' => 'js-open-ai'
 	);
 
 	return array($block, $data);

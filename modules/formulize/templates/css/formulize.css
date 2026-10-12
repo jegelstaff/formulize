@@ -1386,36 +1386,60 @@ div.subform_button_controls div.subform-filter-search input[type=text] {
 	width: 10em;
 }
 
-/* AI Chat tool selection preset buttons */
-button.formulize-ai-tool-group-btn {
-	min-width: 185px;
-}
-button.formulize-ai-tool-util-btn {
-	min-width: 185px;
-}
+/* ---- The embedded AI assistant (ai/index.php) -------------------------------
+   Built from Formulize UI classes; what is here is only what is particular to
+   this interface: the side space that lines up with the drawer's header, the
+   share of the frame the settings may take, the width of your messages, the
+   message box that grows as you type, and the settings' roll-down. Tokens only,
+   so it follows the theme and the Appearance page.
 
-/* AI Chat tool readout copy buttons (Parameters/Response sections) - sized to their
-   content, not the theme's default button min-width (e.g. Anari sets 200px). The
-   :hover/:focus/:active variants are listed explicitly (not just inherited from the base
-   rule) so their specificity matches the theme's own button:hover/:focus/:active rules
-   (e.g. Anari swaps in a dark background on focus) - otherwise which one wins is down to
-   stylesheet order rather than intent. */
-button.formulize-ai-copy-btn,
-button.formulize-ai-copy-btn:hover,
-button.formulize-ai-copy-btn:focus,
-button.formulize-ai-copy-btn:active {
-	min-width: 0;
-	width: auto;
-	padding: 2px 8px;
-	font-size: 0.82em;
-	font-weight: normal;
-	line-height: 1.4;
-	border-radius: 3px;
-	color: #555;
-	background: none;
-	border: 1px solid #c8dff7;
-	box-shadow: none;
-	cursor: pointer;
+   Nothing here sets `display` on an element the page shows and hides, because
+   these rules load after formulize-ui.css and would beat its [hidden] rule. */
+.formulize-ai {
+	--formulize-ai-pad-x: calc(var(--fz-spacing) * 4);
+	box-sizing: border-box;
+	color: var(--fz-color-text);
+}
+/* In the drawer, the side space is the drawer's own, so the assistant lines up
+   with the drawer's header. */
+.formulize-ai--drawer {
+	--formulize-ai-pad-x: var(--formulize-drawer-pad-x, calc(var(--fz-spacing) * 4));
+}
+.formulize-ai__band {
+	padding: calc(var(--fz-spacing) * 3) var(--formulize-ai-pad-x);
+}
+/* The settings can be taller than the frame (a long list of tools, in the drawer),
+   so they scroll within a share of it and always leave the chat and the message box
+   in view. Their Save and Close row is sticky, and brings its own space below. */
+.formulize-ai__settings {
+	max-height: 60%;
+	padding-bottom: 0;
+}
+.formulize-ai__chat {
+	overflow-anchor: none;
+	padding: calc(var(--fz-spacing) * 4) var(--formulize-ai-pad-x);
+}
+.formulize-ai-message--user {
+	max-width: 85%;
+}
+/* The message box: starts at about two lines and grows as it is typed in, up to
+   a limit, after which it scrolls. The script sets the height in between. */
+.formulize-ai__input {
+	min-height: calc(var(--fz-field-height) * 1.6);
+	max-height: 10rem;
+	padding-block: calc(var(--fz-spacing) * 2);
+	resize: none;
+	overflow-y: hidden;
+}
+@keyframes formulize-ai-roll-down {
+	from { opacity: 0; transform: translateY(-10px) scaleY(0.88); transform-origin: top; }
+	to   { opacity: 1; transform: translateY(0) scaleY(1); transform-origin: top; }
+}
+.formulize-ai-roll-down {
+	animation: formulize-ai-roll-down var(--fz-duration) var(--fz-ease-out) both;
+}
+@media (prefers-reduced-motion: reduce) {
+	.formulize-ai-roll-down { animation: none; }
 }
 
 /* Textarea word/character limit counter */
@@ -1613,6 +1637,12 @@ button.formulize-ai-copy-btn:active {
 	padding: 8px var(--formulize-drawer-pad-x);
 	border-bottom: 1px solid var(--formulize-drawer-border);
 	flex-shrink: 0;
+}
+
+/* display:flex above would otherwise beat the UA's [hidden] rule, leaving an empty
+   strip under the header in the AI panel and on forms without page tabs */
+.formulize-drawer__tabs[hidden] {
+	display: none;
 }
 
 .formulize-drawer__tab {

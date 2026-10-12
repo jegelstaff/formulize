@@ -6,16 +6,16 @@ define('_MD_FORMULIZE_MUST_BE_LOGGED_IN',        'Vous devez être connecté pou
 define('_MD_FORMULIZE_AI_NOT_ENABLED',           'L\'Assistant IA intégré n\'est pas activé dans ce système Formulize.');
 
 // En-tête / panneau de paramètres
-define('_MD_FORMULIZE_AI_PAGE_TITLE',             'Gwynian - L\'Assistant IA Formulize');
+define('_MD_FORMULIZE_AI_PAGE_TITLE',             'IA Formulize');
 define('_MD_FORMULIZE_AI_TOGGLE_SETTINGS_TITLE',  'Afficher/masquer les paramètres');
-define('_MD_FORMULIZE_AI_SETTINGS_CLOSE',         'Fermer ✕');
-define('_MD_FORMULIZE_AI_PROVIDER_LABEL',         'Fournisseur :');
+define('_MD_FORMULIZE_AI_SETTINGS_CLOSE',         'Fermer');
+define('_MD_FORMULIZE_AI_PROVIDER_LABEL',         'Fournisseur');
 define('_MD_FORMULIZE_AI_PROVIDER_CLAUDE',        'Claude (Anthropic)');
 define('_MD_FORMULIZE_AI_PROVIDER_GEMINI',        'Gemini (Google)');
 define('_MD_FORMULIZE_AI_PROVIDER_OPENAI',        'GPT (OpenAI)');
 define('_MD_FORMULIZE_AI_PROVIDER_OLLAMA',        'Ollama (Local)');
-define('_MD_FORMULIZE_AI_MODEL_LABEL',            'Modèle :');
-define('_MD_FORMULIZE_AI_API_KEY_LABEL',          'Clé API :');
+define('_MD_FORMULIZE_AI_MODEL_LABEL',            'Modèle');
+define('_MD_FORMULIZE_AI_API_KEY_LABEL',          'Clé API');
 define('_MD_FORMULIZE_AI_API_KEY_PLACEHOLDER',    'Entrez votre clé API');
 define('_MD_FORMULIZE_AI_API_KEY_SAVED',          'Clé enregistrée — entrez une nouvelle clé pour modifier');
 define('_MD_FORMULIZE_AI_API_KEY_OLLAMA',         'Aucune clé requise');
@@ -24,7 +24,7 @@ define('_MD_FORMULIZE_AI_SETTINGS_GUIDE_KEY',     'Entrez votre clé API ci-dess
 define('_MD_FORMULIZE_AI_SETTINGS_GUIDE_TOOLS',   'Choisissez des outils et enregistrez');
 define('_MD_FORMULIZE_AI_NEW_CONVERSATION_BTN',   'Nouvelle conversation');
 define('_MD_FORMULIZE_AI_NEW_CONVERSATION_MSG',   'Nouvelle conversation démarrée.');
-define('_MD_FORMULIZE_AI_ACTIVE_TOOLS_LABEL',     'Outils actifs :');
+define('_MD_FORMULIZE_AI_ACTIVE_TOOLS_LABEL',     'Outils actifs');
 define('_MD_FORMULIZE_AI_TOOLS_ALL_BTN',          'Tous');
 define('_MD_FORMULIZE_AI_TOOLS_NONE_BTN',         'Aucun');
 define('_MD_FORMULIZE_AI_TOOLS_READ_DATA',        'Lire les données');
@@ -33,6 +33,8 @@ define('_MD_FORMULIZE_AI_TOOLS_MANAGE_FORMS',     'Gérer les formulaires');
 
 // Zone de saisie
 define('_MD_FORMULIZE_AI_CHAT_PLACEHOLDER',       'Posez-moi une question sur Formulize...');
+define('_MD_FORMULIZE_AI_ATTACH_TITLE',            'Joindre des fichiers');
+define('_MD_FORMULIZE_AI_REMOVE_ATTACHMENT',       'Retirer {name}');
 define('_MD_FORMULIZE_AI_SEND_BTN',               'Envoyer');
 define('_MD_FORMULIZE_AI_STOP_BTN',               'Arrêter');
 define('_MD_FORMULIZE_AI_STOPPED_MSG',            'Réponse arrêtée.');
@@ -40,8 +42,8 @@ define('_MD_FORMULIZE_AI_STOPPED_MSG',            'Réponse arrêtée.');
 // Panneau d'activité
 define('_MD_FORMULIZE_AI_ACTIVITY_TOGGLE_TITLE',  'Afficher/masquer le panneau de contexte');
 define('_MD_FORMULIZE_AI_ACTIVITY_LABEL',         'Contexte d\'activité');
-define('_MD_FORMULIZE_AI_ACTIVITY_SHOW',          '▶ afficher ce que l\'IA voit');
-define('_MD_FORMULIZE_AI_ACTIVITY_HIDE',          '▼ masquer');
+define('_MD_FORMULIZE_AI_ACTIVITY_SHOW',          'afficher ce que l\'IA voit');
+define('_MD_FORMULIZE_AI_ACTIVITY_HIDE',          'masquer');
 define('_MD_FORMULIZE_AI_ACTIVITY_FOOTER',        'Mis à jour en direct depuis tous les onglets · 30 dernières min · Ajouté à chaque message');
 
 // Statut / MCP
@@ -77,8 +79,6 @@ define('_MD_FORMULIZE_AI_THINKING',               'Réflexion');
 define('_MD_FORMULIZE_AI_TOOL_PENDING',           '⏳ Outil : ');
 define('_MD_FORMULIZE_AI_TOOL_OK',                '⚙ Outil : ');
 define('_MD_FORMULIZE_AI_TOOL_ERROR',             '⚠ Outil : ');
-define('_MD_FORMULIZE_AI_TOOL_EXPAND',            '▶ développer');
-define('_MD_FORMULIZE_AI_TOOL_COLLAPSE',          '▼ réduire');
 define('_MD_FORMULIZE_AI_TOOL_PARAMS_LABEL',      'Paramètres :');
 define('_MD_FORMULIZE_AI_TOOL_NO_PARAMS',         '(aucun paramètre)');
 define('_MD_FORMULIZE_AI_TOOL_RESPONSE_LABEL',    'Réponse :');

@@ -92,17 +92,9 @@ function formulize_styleguideText($text) {
 	border-radius: var(--fz-radius-lg);
 	box-sizing: border-box;
 }
+/* The code is an fz-code-block; this only places the Copy button over its corner */
 .formulize-styleguide__code {
 	position: relative;
-}
-.formulize-styleguide__code pre {
-	margin: 0;
-	padding: calc(var(--fz-spacing) * 4);
-	padding-right: calc(var(--fz-spacing) * 20);
-	overflow: auto;
-	background: var(--fz-color-surface-3);
-	border-radius: var(--fz-radius-md);
-	white-space: pre;
 }
 .formulize-styleguide__copy {
 	position: absolute;
@@ -183,7 +175,7 @@ function formulize_styleguideText($text) {
 						</div>
 						<?php /* a recipe's example is its result; its code, below, is what to copy */ if (empty($entry['code'])) { ?>
 						<div class="formulize-styleguide__code">
-							<pre><code><?php echo htmlspecialchars(rtrim($entry['example']), ENT_QUOTES); ?></code></pre>
+							<pre class="fz-code-block fz-pe-16"><code><?php echo htmlspecialchars(rtrim($entry['example']), ENT_QUOTES); ?></code></pre>
 							<button type="button" class="fz-btn fz-btn--sm formulize-styleguide__copy" data-formulize-styleguide-copy>Copy</button>
 						</div>
 						<?php } ?>
@@ -193,7 +185,7 @@ function formulize_styleguideText($text) {
 						<div class="fz-stack fz-gap-2">
 							<p class="fz-text-sm fz-font-semibold"><?php echo htmlspecialchars($code['label']); ?></p>
 							<div class="formulize-styleguide__code">
-								<pre><code><?php echo htmlspecialchars(rtrim($code['code']), ENT_QUOTES); ?></code></pre>
+								<pre class="fz-code-block fz-pe-16"><code><?php echo htmlspecialchars(rtrim($code['code']), ENT_QUOTES); ?></code></pre>
 								<button type="button" class="fz-btn fz-btn--sm formulize-styleguide__copy" data-formulize-styleguide-copy>Copy</button>
 							</div>
 						</div>

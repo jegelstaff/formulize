@@ -24,16 +24,46 @@ if ($aiDrawerMode) {
     }
 }
 
-$_aiCssFull = XOOPS_ROOT_PATH . '/modules/formulize/templates/css/formulize.css';
-$_aiCssVer  = file_exists($_aiCssFull) ? filemtime($_aiCssFull) : 0;
-$_aiCssHref = XOOPS_URL . '/modules/formulize/templates/css/formulize.css?v=' . $_aiCssVer;
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+
+$_aiCssPath = '/modules/formulize/templates/css/formulize.css';
+$_aiCssHref = XOOPS_URL . $_aiCssPath . '?v=' . formulize_get_file_version($_aiCssPath);
 global $xoTheme;
 if ($aiDrawerMode) {
     // No <head> to add to in fragment mode, and the host page may not be a Formulize
-    // page at all, so ship the stylesheet with the fragment.
-    print '<link rel="stylesheet" type="text/css" href="' . htmlspecialchars($_aiCssHref, ENT_QUOTES) . '">' . "\n";
+    // page at all, so the fragment brings Formulize's stylesheet - but only when the
+    // host has not loaded it already. A second copy linked here, at the end of the
+    // body, would come after the theme's stylesheet in the cascade and undo every theme
+    // rule that is level with one of Formulize's: the theme's skin for the drawer
+    // itself, for one. When it is added, it goes straight after formulize-ui.css,
+    // which every theme loads, so the order is the one every other page has.
+    // formulize-ui.css itself is never brought: its :root defaults would override the
+    // theme's tokens.
+    ?>
+<script>
+(function () {
+    var path = <?php echo json_encode($_aiCssPath); ?>;
+    var links = document.querySelectorAll('link[rel="stylesheet"]');
+    var uiLink = null;
+    for (var i = 0; i < links.length; i++) {
+        if (links[i].href.indexOf(path) !== -1) { return; }
+        if (links[i].href.indexOf('/formulize-ui.css') !== -1) { uiLink = links[i]; }
+    }
+    var link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = <?php echo json_encode($_aiCssHref); ?>;
+    if (uiLink) {
+        uiLink.parentNode.insertBefore(link, uiLink.nextSibling);
+    } else {
+        document.head.insertBefore(link, document.head.firstChild);
+    }
+}());
+</script>
+    <?php
 } elseif ($xoTheme) {
-    $xoTheme->addStylesheet('/modules/formulize/templates/css/formulize.css?v=' . $_aiCssVer);
+    // Formulize UI first, then Formulize's own stylesheet, as on the module's pages.
+    $xoTheme->addStylesheet(formulize_uiStylesheetPath());
+    $xoTheme->addStylesheet($_aiCssPath . '?v=' . formulize_get_file_version($_aiCssPath));
 }
 
 /**
@@ -53,7 +83,7 @@ include_once (file_exists($_aiChatLangFile) ? $_aiChatLangFile : XOOPS_ROOT_PATH
 
 // Ensure the user is logged in for the PoC to work with session auth
 if (!$xoopsUser) {
-    echo "<div class='errorMsg'>" . _MD_FORMULIZE_MUST_BE_LOGGED_IN . "</div>";
+    echo "<div class='fz-callout fz-callout--warning'><p>" . _MD_FORMULIZE_MUST_BE_LOGGED_IN . "</p></div>";
     aiPageFooter();
     exit();
 }
@@ -61,10 +91,9 @@ if (!$xoopsUser) {
 // The embedded AI Assistant must be enabled in Formulize preferences. The MCP endpoint
 // enforces this too (session callers require the AI Assistant pref), but guard the page
 // itself so a disabled assistant doesn't present a chat UI whose tool calls would fail.
-include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/aiadminconfig.php";
 if (!isAIAssistantEnabled()) {
-    echo "<div class='errorMsg'>" . _MD_FORMULIZE_AI_NOT_ENABLED . "</div>";
+    echo "<div class='fz-callout fz-callout--warning'><p>" . _MD_FORMULIZE_AI_NOT_ENABLED . "</p></div>";
     aiPageFooter();
     exit();
 }
@@ -76,131 +105,125 @@ if (!isAIAssistantEnabled()) {
 // ever needs to know whether a key exists - see formulizeAI_adminConfigForClient().
 ?>
 
-<style>
-@keyframes formulize-roll-down {
-    from { opacity: 0; transform: translateY(-10px) scaleY(0.88); transform-origin: top; }
-    to   { opacity: 1; transform: translateY(0)     scaleY(1);    transform-origin: top; }
-}
-.formulize-roll-down { animation: formulize-roll-down 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
-
-/* In the drawer the panel is the page: fill it rather than centring a fixed-width
-   column, and lose the rounded corners that only made sense floating on a page. */
-.ai-in-drawer > div:first-child { border-radius: 0; }
-.ai-in-drawer #activity-panel,
-.ai-in-drawer #activity-toggle-bar { border-radius: 0; }
-</style>
-
 <?php
-// On a normal page the chat is a centred fixed-width column; in the drawer it fills the
-// panel. The difference has to be in the inline style, since an inline rule would beat
-// anything the ai-in-drawer class could say.
-$_aiBoxStyle = $aiDrawerMode
-    ? 'height: 100%;'
-    : 'max-width: 1000px; margin: 20px auto;';
+// Built from Formulize UI classes (modules/formulize/include/ui_catalog.php), so it takes
+// the theme's look and the Appearance page's settings in Lyris and Anari alike. What the
+// classes have no word for is in formulize.css, under the formulize-ai- names.
+//
+// On its own page the assistant is a card in a centred column, sized to the window by the
+// script at the end. In the drawer it fills the panel, under the drawer's own header,
+// which already carries the title.
+$_aiFrameClass = $aiDrawerMode ? 'formulize-ai--drawer fz-h-full' : 'fz-border fz-rounded-lg fz-bg-surface fz-overflow-hidden';
+if (!$aiDrawerMode) {
+    echo '<div class="fz-container">';
+}
 ?>
-<div id="ai-assistant-container"<?php if ($aiDrawerMode) { echo ' class="ai-in-drawer"'; } ?> style="<?php echo $_aiBoxStyle; ?> font-family: sans-serif; display: flex; flex-direction: column;">
-    <div style="background: #007cba; color: white; padding: 15px; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
-        <h2 style="margin: 0; color: white;"><?php echo _MD_FORMULIZE_AI_PAGE_TITLE; ?></h2>
-        <div style="display: flex; gap: 8px; align-items: center;">
-            <div id="new-conversation-btn" style="font-size: 0.8em; background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 4px; cursor: pointer; user-select: none;"><?php echo _MD_FORMULIZE_AI_NEW_CONVERSATION_BTN; ?></div>
-            <div id="settings-toggle" title="<?php echo _MD_FORMULIZE_AI_TOGGLE_SETTINGS_TITLE; ?>" style="font-size: 0.8em; background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 4px; cursor: pointer; user-select: none; display: flex; gap: 8px; align-items: center;">
-                <span id="mcp-status"><?php echo _MD_FORMULIZE_AI_INITIALIZING; ?></span>
-                <span style="opacity: 0.75; font-size: 1.1em;">⚙</span>
-            </div>
+<div id="ai-assistant-container" class="formulize-ai <?php echo $_aiFrameClass; ?> fz-flex fz-flex-col fz-min-h-0 fz-text-sm">
+    <div class="formulize-ai__band fz-toolbar fz-border-b">
+        <?php if (!$aiDrawerMode) { ?>
+        <div class="fz-toolbar__start">
+            <h2 class="fz-text-xl fz-font-semibold"><?php echo _MD_FORMULIZE_AI_PAGE_TITLE; ?></h2>
+        </div>
+        <?php } ?>
+        <div class="fz-toolbar__end fz-min-w-0">
+            <button type="button" id="settings-toggle" class="fz-btn fz-btn--ghost fz-btn--sm fz-max-w-full" aria-expanded="false" aria-controls="settings-panel" title="<?php echo htmlspecialchars(_MD_FORMULIZE_AI_TOGGLE_SETTINGS_TITLE); ?>">
+                <svg class="fz-shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <span id="mcp-status" class="fz-truncate fz-min-w-0"><?php echo _MD_FORMULIZE_AI_INITIALIZING; ?></span>
+            </button>
+            <button type="button" id="new-conversation-btn" class="fz-btn fz-btn--sm"><?php echo _MD_FORMULIZE_AI_NEW_CONVERSATION_BTN; ?></button>
         </div>
     </div>
 
-    <div id="settings-panel" style="background: #f8f9fa; border: 1px solid #ddd; border-top: none; padding: 15px; display: none; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+    <div id="settings-panel" class="formulize-ai__band formulize-ai__settings fz-stack fz-shrink-0 fz-overflow-y-auto fz-bg-surface-2 fz-border-b" hidden>
         <!-- Shown instead of the editable fields when an administrator has configured the
              assistant. Filled in by applyAdminConfigToUI(). -->
-        <div id="admin-readonly" style="display: none; flex: 0 0 100%; flex-direction: column; gap: 6px;">
-            <div style="font-size: 0.85em; color: #555;"><?php echo _MD_FORMULIZE_AI_SET_BY_ADMIN; ?></div>
-            <div id="admin-readonly-rows" style="display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 0.9em;"></div>
+        <div id="admin-readonly" class="fz-stack fz-gap-2" hidden>
+            <p class="fz-text-muted"><?php echo _MD_FORMULIZE_AI_SET_BY_ADMIN; ?></p>
+            <dl id="admin-readonly-rows" class="fz-dl"></dl>
         </div>
-        <div id="provider-field" style="display: flex; flex-direction: column; gap: 3px;">
-            <label for="provider-select" style="font-weight: bold; font-size: 0.85em;"><?php echo _MD_FORMULIZE_AI_PROVIDER_LABEL; ?></label>
-            <select id="provider-select" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                <option value="claude"><?php echo _MD_FORMULIZE_AI_PROVIDER_CLAUDE; ?></option>
-                <option value="gemini"><?php echo _MD_FORMULIZE_AI_PROVIDER_GEMINI; ?></option>
-                <option value="openai"><?php echo _MD_FORMULIZE_AI_PROVIDER_OPENAI; ?></option>
-                <option value="ollama"><?php echo _MD_FORMULIZE_AI_PROVIDER_OLLAMA; ?></option>
-            </select>
-        </div>
-        <div id="model-field" style="display: flex; flex-direction: column; gap: 3px; flex: 2; min-width: 180px;">
-            <label for="model-name" style="font-weight: bold; font-size: 0.85em;"><?php echo _MD_FORMULIZE_AI_MODEL_LABEL; ?></label>
-            <select id="model-name" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"></select>
-        </div>
-        <div id="apikey-field" style="display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 140px;">
-            <label for="ai-api-key" style="font-weight: bold; font-size: 0.85em;"><?php echo _MD_FORMULIZE_AI_API_KEY_LABEL; ?></label>
-            <input type="password" id="ai-api-key" placeholder="<?php echo _MD_FORMULIZE_AI_API_KEY_PLACEHOLDER; ?>" autocomplete="new-password" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
-        </div>
-        <div id="context-limit-field" style="display: flex; flex-direction: column; gap: 3px;">
-            <label for="context-limit" style="font-weight: bold; font-size: 0.85em;"><?php echo _MD_FORMULIZE_AI_HISTORY_LIMIT_LABEL; ?></label>
-            <input type="number" id="context-limit" min="4000" step="1000"
-                   title="<?php echo htmlspecialchars(_MD_FORMULIZE_AI_HISTORY_LIMIT_TITLE, ENT_QUOTES); ?>"
-                   style="width: 120px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-        </div>
-        <div id="tool-selection-panel" style="display: none; flex: 0 0 100%; border-top: 1px solid #ddd; padding-top: 10px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
-                <span style="font-weight: bold; font-size: 0.85em;"><?php echo _MD_FORMULIZE_AI_ACTIVE_TOOLS_LABEL; ?> <span id="tool-selection-count"></span></span>
-                <div id="tool-buttons" style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-                    <button id="tool-group-read" class="formulize-ai-tool-group-btn" style="padding: 3px 8px; font-size: 0.8em; background: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_TOOLS_READ_DATA; ?></button>
-                    <button id="tool-group-write" class="formulize-ai-tool-group-btn" style="padding: 3px 8px; font-size: 0.8em; background: #fd7e14; color: white; border: none; border-radius: 3px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_TOOLS_WRITE_DATA; ?></button>
-                    <button id="tool-group-manage" class="formulize-ai-tool-group-btn" style="padding: 3px 8px; font-size: 0.8em; background: #6f42c1; color: white; border: none; border-radius: 3px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_TOOLS_MANAGE_FORMS; ?></button>
-                    <span style="opacity: 0.3; font-size: 0.9em;">|</span>
-                    <button id="tool-select-all" class="formulize-ai-tool-util-btn" style="padding: 3px 8px; font-size: 0.8em; background: #007cba; color: white; border: none; border-radius: 3px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_TOOLS_ALL_BTN; ?></button>
-                    <button id="tool-select-none" class="formulize-ai-tool-util-btn" style="padding: 3px 8px; font-size: 0.8em; background: #6c757d; color: white; border: none; border-radius: 3px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_TOOLS_NONE_BTN; ?></button>
+        <div id="settings-fields" class="fz-auto-grid">
+            <div class="fz-field">
+                <label class="fz-field__label" for="provider-select"><?php echo _MD_FORMULIZE_AI_PROVIDER_LABEL; ?></label>
+                <div class="fz-field__body">
+                    <select id="provider-select" class="fz-select">
+                        <option value="claude"><?php echo _MD_FORMULIZE_AI_PROVIDER_CLAUDE; ?></option>
+                        <option value="gemini"><?php echo _MD_FORMULIZE_AI_PROVIDER_GEMINI; ?></option>
+                        <option value="openai"><?php echo _MD_FORMULIZE_AI_PROVIDER_OPENAI; ?></option>
+                        <option value="ollama"><?php echo _MD_FORMULIZE_AI_PROVIDER_OLLAMA; ?></option>
+                    </select>
                 </div>
             </div>
-            <div id="tool-selection-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(185px, 1fr)); gap: 2px 16px;"></div>
+            <div class="fz-field">
+                <label class="fz-field__label" for="model-name"><?php echo _MD_FORMULIZE_AI_MODEL_LABEL; ?></label>
+                <div class="fz-field__body"><select id="model-name" class="fz-select"></select></div>
+            </div>
+            <div class="fz-field">
+                <label class="fz-field__label" for="ai-api-key"><?php echo _MD_FORMULIZE_AI_API_KEY_LABEL; ?></label>
+                <div class="fz-field__body">
+                    <input type="password" id="ai-api-key" class="fz-input" placeholder="<?php echo htmlspecialchars(_MD_FORMULIZE_AI_API_KEY_PLACEHOLDER); ?>" autocomplete="new-password">
+                </div>
+            </div>
+            <div class="fz-field">
+                <label class="fz-field__label" for="context-limit"><?php echo _MD_FORMULIZE_AI_HISTORY_LIMIT_LABEL; ?></label>
+                <div class="fz-field__body">
+                    <input type="number" id="context-limit" class="fz-input" min="4000" step="1000" title="<?php echo htmlspecialchars(_MD_FORMULIZE_AI_HISTORY_LIMIT_TITLE); ?>">
+                </div>
+            </div>
         </div>
-        <div id="settings-buttons" style="flex: 0 0 100%; border-top: 1px solid #ddd; padding-top: 10px; display: flex; gap: 8px; align-items: center;">
-            <button id="save-settings" style="padding: 8px 15px; background: #007cba; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;"><?php echo _MD_FORMULIZE_AI_SAVE_SETTINGS_BTN; ?></button>
-            <button id="close-settings" style="padding: 8px 15px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_SETTINGS_CLOSE; ?></button>
+        <div id="tool-selection-panel" class="fz-stack fz-gap-3 fz-border-t fz-pt-3" hidden>
+            <div class="fz-toolbar">
+                <div class="fz-toolbar__start">
+                    <span class="fz-font-semibold"><?php echo _MD_FORMULIZE_AI_ACTIVE_TOOLS_LABEL; ?></span>
+                    <span id="tool-selection-count" class="fz-badge fz-badge--plain fz-tabular-nums"></span>
+                </div>
+                <div id="tool-buttons" class="fz-toolbar__end">
+                    <button type="button" id="tool-group-read" class="fz-btn fz-btn--sm"><?php echo _MD_FORMULIZE_AI_TOOLS_READ_DATA; ?></button>
+                    <button type="button" id="tool-group-write" class="fz-btn fz-btn--sm"><?php echo _MD_FORMULIZE_AI_TOOLS_WRITE_DATA; ?></button>
+                    <button type="button" id="tool-group-manage" class="fz-btn fz-btn--sm"><?php echo _MD_FORMULIZE_AI_TOOLS_MANAGE_FORMS; ?></button>
+                    <button type="button" id="tool-select-all" class="fz-btn fz-btn--ghost fz-btn--sm fz-ms-2"><?php echo _MD_FORMULIZE_AI_TOOLS_ALL_BTN; ?></button>
+                    <button type="button" id="tool-select-none" class="fz-btn fz-btn--ghost fz-btn--sm"><?php echo _MD_FORMULIZE_AI_TOOLS_NONE_BTN; ?></button>
+                </div>
+            </div>
+            <div id="tool-selection-list" class="fz-auto-grid fz-auto-grid--narrow fz-gap-x-4 fz-gap-y-1 fz-text-xs-plus" style="--fz-auto-grid-min: 11rem"></div>
+        </div>
+        <div id="settings-buttons" class="fz-sticky fz-bottom-0 fz-cluster fz-border-t fz-pt-3 fz-pb-3 fz-bg-surface-2">
+            <button type="button" id="save-settings" class="fz-btn fz-btn--primary"><?php echo _MD_FORMULIZE_AI_SAVE_SETTINGS_BTN; ?></button>
+            <button type="button" id="close-settings" class="fz-btn"><?php echo _MD_FORMULIZE_AI_SETTINGS_CLOSE; ?></button>
         </div>
     </div>
 
-    <div id="chat-window" style="flex: 1; min-height: 0; overflow-y: auto; background: white; border: 1px solid #ddd; border-top: none; padding: 20px; display: flex; flex-direction: column; gap: 15px;"></div>
+    <div id="chat-window" class="formulize-ai__chat fz-flex fz-flex-col fz-gap-4 fz-flex-1 fz-min-h-0 fz-overflow-y-auto fz-bg-surface"></div>
 
-    <div style="background: #f8f9fa; border: 1px solid #ddd; border-top: none; padding: 10px 15px 12px; border-radius: 0; display: flex; flex-direction: column; gap: 6px;">
-        <div style="display: flex; gap: 10px; align-items: stretch;">
-            <button id="attach-btn" type="button" title="Upload files" style="min-width: 42px; width: 42px; height: 42px; padding: 0; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1.3em; line-height: 1; flex-shrink: 0; align-self: center;">+</button>
-            <textarea id="user-input" placeholder="<?php echo _MD_FORMULIZE_AI_CHAT_PLACEHOLDER; ?>" style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; resize: none; height: 60px;"></textarea>
-            <button id="send-btn" style="padding: 0 25px; background: #007cba; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;"><?php echo _MD_FORMULIZE_AI_SEND_BTN; ?></button>
-            <button id="stop-btn" style="display:none; padding: 0 25px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;"><?php echo _MD_FORMULIZE_AI_STOP_BTN; ?></button>
+    <div class="formulize-ai__band fz-stack fz-gap-2 fz-border-t fz-bg-surface-2">
+        <div class="fz-flex fz-items-end fz-gap-2">
+            <button type="button" id="attach-btn" class="fz-btn fz-btn--icon fz-shrink-0" title="<?php echo htmlspecialchars(_MD_FORMULIZE_AI_ATTACH_TITLE); ?>" aria-label="<?php echo htmlspecialchars(_MD_FORMULIZE_AI_ATTACH_TITLE); ?>">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            </button>
+            <textarea id="user-input" class="fz-textarea formulize-ai__input fz-flex-1" rows="2" placeholder="<?php echo htmlspecialchars(_MD_FORMULIZE_AI_CHAT_PLACEHOLDER); ?>" aria-label="<?php echo htmlspecialchars(_MD_FORMULIZE_AI_CHAT_PLACEHOLDER); ?>"></textarea>
+            <button type="button" id="send-btn" class="fz-btn fz-btn--primary fz-shrink-0"><?php echo _MD_FORMULIZE_AI_SEND_BTN; ?></button>
+            <button type="button" id="stop-btn" class="fz-btn fz-btn--danger fz-shrink-0" hidden><?php echo _MD_FORMULIZE_AI_STOP_BTN; ?></button>
         </div>
-        <div id="attachment-strip" style="display:none; flex-wrap: wrap; gap: 6px; justify-content: flex-start;"></div>
+        <div id="attachment-strip" class="fz-cluster fz-gap-2" hidden></div>
     </div>
-    <input type="file" id="file-attach-input" style="display:none" accept=".pdf,image/*" multiple>
+    <input type="file" id="file-attach-input" accept=".pdf,image/*" multiple hidden>
 
-    <div id="activity-toggle-bar" title="<?php echo _MD_FORMULIZE_AI_ACTIVITY_TOGGLE_TITLE; ?>" style="background: #eef2f5; border: 1px solid #ddd; border-top: none; padding: 7px 15px; border-radius: 0 0 8px 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.8em; color: #555; user-select: none;">
-        <span><?php echo _MD_FORMULIZE_AI_ACTIVITY_LABEL; ?> &nbsp;<span id="activity-count" style="background: #6c757d; color: white; padding: 1px 7px; border-radius: 10px; font-size: 0.85em;">0</span></span>
-        <span id="activity-arrow" style="font-size: 0.85em; opacity: 0.7;"><?php echo _MD_FORMULIZE_AI_ACTIVITY_SHOW; ?></span>
-    </div>
-    <div id="activity-panel" style="display: none; background: #fafafa; border: 1px solid #ddd; border-top: none; border-radius: 0 0 8px 8px; max-height: 220px; overflow-y: auto;">
-        <div id="activity-list" style="padding: 8px 15px; font-size: 0.78em; font-family: monospace; display: flex; flex-direction: column; gap: 3px;"></div>
-        <div style="padding: 6px 15px; font-size: 0.72em; color: #888; border-top: 1px solid #eee;"><?php echo _MD_FORMULIZE_AI_ACTIVITY_FOOTER; ?></div>
-    </div>
+    <details id="activity-panel" class="formulize-ai__band fz-disclosure fz-disclosure--plain fz-border-t fz-bg-surface-2 fz-text-xs-plus">
+        <summary title="<?php echo htmlspecialchars(_MD_FORMULIZE_AI_ACTIVITY_TOGGLE_TITLE); ?>">
+            <span class="fz-text-muted"><?php echo _MD_FORMULIZE_AI_ACTIVITY_LABEL; ?></span>
+            <span id="activity-count" class="fz-badge fz-badge--plain fz-tabular-nums">0</span>
+            <span id="activity-arrow" class="fz-text-subtle fz-font-normal"><?php echo _MD_FORMULIZE_AI_ACTIVITY_SHOW; ?></span>
+        </summary>
+        <div class="fz-stack fz-gap-2">
+            <div id="activity-list" class="fz-stack fz-gap-1 fz-font-mono fz-text-xs fz-overflow-y-auto" style="max-height: 12rem"></div>
+            <p class="fz-text-xs fz-text-subtle"><?php echo _MD_FORMULIZE_AI_ACTIVITY_FOOTER; ?></p>
+        </div>
+    </details>
 </div>
-
-<style>
-#chat-window { overflow-anchor: none; }
-.ai-markdown { margin-top: 4px; }
-.ai-markdown p { margin: 0 0 8px 0; }
-.ai-markdown p:last-child { margin-bottom: 0; }
-.ai-markdown ul, .ai-markdown ol { margin: 4px 0 8px 18px; padding: 0; }
-.ai-markdown li { margin: 2px 0; }
-.ai-markdown h1, .ai-markdown h2, .ai-markdown h3, .ai-markdown h4 { margin: 10px 0 4px 0; font-size: 1em; }
-.ai-markdown code { background: rgba(0,0,0,0.07); padding: 1px 4px; border-radius: 3px; font-family: monospace; font-size: 0.9em; }
-.ai-markdown pre { background: #2b2b2b; color: #f8f8f2; padding: 10px 12px; border-radius: 5px; margin: 8px 0; white-space: pre-wrap; word-break: break-word; }
-.ai-markdown pre code { background: none; padding: 0; color: inherit; font-size: 0.88em; }
-.ai-markdown blockquote { border-left: 3px solid #aaa; margin: 8px 0; padding: 2px 12px; color: #555; }
-.ai-markdown table { border-collapse: collapse; margin: 8px 0; font-size: 0.9em; }
-.ai-markdown th, .ai-markdown td { border: 1px solid #ccc; padding: 4px 8px; }
-.ai-markdown th { background: #e9ecef; }
-.ai-markdown a { color: #007cba; }
-.ai-markdown hr { border: none; border-top: 1px solid #ddd; margin: 8px 0; }
-</style>
+<?php
+if (!$aiDrawerMode) {
+    echo '</div>';
+}
+?>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
 <script type="text/javascript">
@@ -235,8 +258,6 @@ window.formulizeAI.strings = {
     toolPending:       <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_PENDING); ?>,
     toolOk:            <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_OK); ?>,
     toolError:         <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_ERROR); ?>,
-    toolExpand:        <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_EXPAND); ?>,
-    toolCollapse:      <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_COLLAPSE); ?>,
     toolParamsLabel:   <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_PARAMS_LABEL); ?>,
     toolNoParams:      <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_NO_PARAMS); ?>,
     toolResponseLabel: <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_RESPONSE_LABEL); ?>,
@@ -260,6 +281,7 @@ window.formulizeAI.strings = {
     nonJsonUpload:     <?php echo json_encode(_MD_FORMULIZE_AI_NON_JSON_UPLOAD); ?>,
     copyBtnTitle:      <?php echo json_encode(_MD_FORMULIZE_AI_COPY_BTN_TITLE); ?>,
     copyLabel:         <?php echo json_encode(_MD_FORMULIZE_AI_COPY_BTN_LABEL); ?>,
+    removeAttachment:  <?php echo json_encode(_MD_FORMULIZE_AI_REMOVE_ATTACHMENT); ?>,
     evtSavedNew:       <?php echo json_encode(_MD_FORMULIZE_AI_EVENT_SAVED_NEW); ?>,
     evtSaved:          <?php echo json_encode(_MD_FORMULIZE_AI_EVENT_SAVED); ?>,
     evtDeleted:        <?php echo json_encode(_MD_FORMULIZE_AI_EVENT_DELETED); ?>,
@@ -295,6 +317,25 @@ window.formulizeAI.strings = {
 // Resolved in PHP because the MCP server enforces the tool list server-side; this is
 // the same data, handed to the browser so the UI agrees with what is actually allowed.
 window.formulizeAI.adminConfig = <?php echo json_encode(formulizeAI_adminConfigForClient((int)$xoopsUser->getVar('uid'))); ?>;
+<?php
+// The tools this person may use, and the instructions that start every conversation,
+// built here with the page rather than asked of the MCP server once it has loaded: the
+// same registry and the same administrator filter the MCP endpoint applies (see
+// FormulizeMCP::forEmbeddedAssistant). If building them fails for any reason, the page
+// is left to ask the MCP server as it used to.
+$_aiStartup = null;
+try {
+    if (!defined('FORMULIZE_MCP_REGISTRY_ONLY')) {
+        define('FORMULIZE_MCP_REGISTRY_ONLY', 1);
+    }
+    include_once XOOPS_ROOT_PATH . '/mcp/mcp.php';
+    $_aiStartup = FormulizeMCP::forEmbeddedAssistant($xoopsUser)->embeddedAssistantStartup();
+} catch (Throwable $e) {
+    error_log('Formulize AI assistant: could not build the tool list with the page: ' . $e->getMessage());
+    $_aiStartup = null;
+}
+?>
+window.formulizeAI.startup = <?php echo json_encode($_aiStartup, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE); ?>;
 // Absolute, because in drawer mode this script runs inside whatever page the drawer was
 // opened from - relative paths would resolve against that page's directory, not /ai/.
 window.formulizeAI.urls = {
@@ -323,6 +364,8 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
     const MCP_URL = (path) => (URLS.mcp  || '') + path;
     const IN_DRAWER = !!window.formulizeAI.inDrawer;
     const TOOL_SETS = adminConfig.toolSets || {};
+    // The tools and system instructions, built with the page; null if that failed
+    const STARTUP = window.formulizeAI.startup || null;
 
     // Whether a key is stored for each provider. Not the key itself — no API key ever
     // reaches this page. Updated in place when one is saved, so the UI reflects it
@@ -463,9 +506,9 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
     }
 
     function slideDown(el) {
-        el.classList.remove('formulize-roll-down');
+        el.classList.remove('formulize-ai-roll-down');
         void el.offsetWidth; // force reflow so the animation restarts each time
-        el.classList.add('formulize-roll-down');
+        el.classList.add('formulize-ai-roll-down');
     }
 
     function updateInputState() {
@@ -486,8 +529,7 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         }
         const ready = credentialsReady && !!model;
         userInput.disabled = !ready;
-        sendBtn.disabled = !ready;
-        sendBtn.style.opacity = ready ? '' : '0.5';
+        sendBtn.disabled = !ready; // fz-btn fades a disabled button
     }
 
     // Reshape the settings panel to match what an administrator has locked down. Anything
@@ -500,10 +542,7 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
 
         const rows = [];
         if (locked) {
-            ['provider-field', 'model-field', 'apikey-field', 'context-limit-field'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.style.display = 'none';
-            });
+            document.getElementById('settings-fields').hidden = true;
             rows.push([S.roProvider, adminConfig.provider]);
             rows.push([S.roModel, adminConfig.model || '—']);
             if (adminConfig.contextLimit) {
@@ -512,7 +551,7 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         }
         if (toolsLocked) {
             const buttons = document.getElementById('tool-buttons');
-            if (buttons) buttons.style.display = 'none';
+            if (buttons) buttons.hidden = true;
         }
 
         const readonly = document.getElementById('admin-readonly');
@@ -520,20 +559,19 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         if (rows.length > 0) {
             rowsEl.innerHTML = '';
             rows.forEach(([label, value]) => {
-                const row = document.createElement('div');
-                const strong = document.createElement('strong');
-                strong.innerText = label + ': ';
-                row.appendChild(strong);
-                row.appendChild(document.createTextNode(value));
-                rowsEl.appendChild(row);
+                const dt = document.createElement('dt');
+                dt.textContent = label;
+                const dd = document.createElement('dd');
+                dd.textContent = value;
+                rowsEl.append(dt, dd);
             });
-            readonly.style.display = 'flex';
+            readonly.hidden = false;
         }
 
         // With nothing left to change, a Save button would be a lie.
         if (locked && toolsLocked) {
             const save = document.getElementById('save-settings');
-            if (save) save.style.display = 'none';
+            if (save) save.hidden = true;
         }
 
         // An administrator can pick a provider and forget the key. Without this the page
@@ -553,10 +591,8 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
 
         // Save is always enabled — the handler validates before acting
         saveBtn.disabled = false;
-        saveBtn.style.opacity = '';
         // Close is only enabled once credentials have been confirmed saved
         closeBtn.disabled = !returning;
-        closeBtn.style.opacity = returning ? '' : '0.5';
     }
 
     // Update the visual context-window cutoff marker in the chat DOM.
@@ -593,7 +629,7 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         const searchText = firstContent.slice(0, 100);
         let cutoffEl = null;
         for (const el of chatWindow.children) {
-            if (el.classList.contains('user') && (el.textContent || '').includes(searchText)) {
+            if (el.classList.contains('formulize-ai-message--user') && (el.textContent || '').includes(searchText)) {
                 cutoffEl = el;
                 break;
             }
@@ -618,7 +654,7 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         // Insert the cutoff notice
         const marker = document.createElement('div');
         marker.id = 'context-cutoff-marker';
-        marker.style.cssText = 'align-self: stretch; text-align: center; font-size: 0.75em; color: #856404; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 4px 10px; margin: 4px 0;';
+        marker.className = 'fz-callout fz-callout--warning fz-text-xs fz-text-center';
         marker.textContent = S.contextCutoffMsg;
         chatWindow.insertBefore(marker, cutoffEl);
     }
@@ -791,44 +827,41 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
 
     // --- Activity panel ---
 
-    const activityToggleBar = document.getElementById('activity-toggle-bar');
-    const activityPanel     = document.getElementById('activity-panel');
+    const activityPanel     = document.getElementById('activity-panel'); // a <details>
     const activityList      = document.getElementById('activity-list');
     const activityCount     = document.getElementById('activity-count');
     const activityArrow     = document.getElementById('activity-arrow');
 
-    const KIND_COLORS = {
-        server: '#e8f4fd',
-        admin:  '#fff3cd',
-        view:   '#f0f0f0',
-        save:   '#d4edda',
-        delete: '#fde8e8',
-        error:  '#f8d7da',
-        other:  '#f8f9fa'
+    // Each kind of event is tinted with one of the theme's status colours
+    const KIND_CLASSES = {
+        server: 'fz-bg-info-soft',
+        admin:  'fz-bg-warning-soft',
+        view:   'fz-bg-surface-3',
+        save:   'fz-bg-success-soft',
+        delete: 'fz-bg-danger-soft',
+        error:  'fz-bg-danger-soft',
+        other:  'fz-bg-surface'
     };
 
     function refreshActivityPanel() {
         const log = getDeduplicatedLog().slice().reverse(); // newest first
         activityCount.textContent = log.length;
-        activityCount.style.background = log.length > 0 ? '#007cba' : '#6c757d';
+        activityCount.classList.toggle('fz-badge--accent', log.length > 0);
 
         activityList.innerHTML = '';
         log.forEach(e => {
             const d = describeEvent(e);
             const row = document.createElement('div');
-            row.style.cssText = `padding: 2px 6px; border-radius: 3px; background: ${KIND_COLORS[d.kind] || KIND_COLORS.other}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;`;
+            row.className = 'fz-truncate fz-rounded-sm fz-px-2 ' + (KIND_CLASSES[d.kind] || KIND_CLASSES.other);
             row.title = `[${d.time}] ${d.text}`;
             row.textContent = `[${d.time}] ${d.text}`;
             activityList.appendChild(row);
         });
     }
 
-    activityToggleBar.addEventListener('click', () => {
-        const open = activityPanel.style.display !== 'none';
-        activityPanel.style.display = open ? 'none' : 'block';
-        activityToggleBar.style.borderRadius = open ? '0 0 8px 8px' : '0';
-        activityArrow.textContent = open ? S.activityShow : S.activityHide;
-        if (!open) refreshActivityPanel();
+    activityPanel.addEventListener('toggle', () => {
+        activityArrow.textContent = activityPanel.open ? S.activityHide : S.activityShow;
+        if (activityPanel.open) refreshActivityPanel();
     });
 
     // Live update from other tabs — the `storage` event fires in every tab
@@ -1022,6 +1055,15 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
 
         // Seed the select immediately with saved/default so the rest of the page can read a value
         populateModelSelect([{ id: savedModel, name: savedModel }], savedModel);
+
+        // When an administrator has chosen the provider and model, that is the model, and
+        // the field that would list the others is not even shown - so there is nothing to
+        // ask the provider.
+        if (adminConfig.providerLocked) {
+            updateInputState();
+            return;
+        }
+
         modelNameInput.disabled = true;
 
         try {
@@ -1064,8 +1106,7 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         const hasSavedKey = !!keyPresent[p];
         apiKeyInput.placeholder = isOllama ? S.apiKeyOllama : (hasSavedKey ? S.apiKeySaved : S.apiKeyPlaceholder);
         apiKeyInput.value = ''; // actual key lives server-side only, never in the field
-        apiKeyInput.disabled = isOllama;
-        apiKeyInput.style.opacity = isOllama ? '0.45' : '';
+        apiKeyInput.disabled = isOllama; // fz-input greys out a disabled field
         updateContextLimitDisplay();
         discoverModels();
     }
@@ -1093,14 +1134,16 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
     applyAdminConfigToUI(); // before the first discovery, so hidden fields never flash
     updateProviderHints(); // Apply on load — also triggers initial model discovery
 
-    document.getElementById('settings-toggle').addEventListener('click', () => {
+    // Show or hide the settings panel, keeping the button that opens it in step
+    function setSettingsOpen(open) {
         const panel = document.getElementById('settings-panel');
-        if (panel.style.display === 'none') {
-            panel.style.display = 'flex';
-            slideDown(panel);
-        } else {
-            panel.style.display = 'none';
-        }
+        panel.hidden = !open;
+        document.getElementById('settings-toggle').setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (open) slideDown(panel);
+    }
+
+    document.getElementById('settings-toggle').addEventListener('click', () => {
+        setSettingsOpen(document.getElementById('settings-panel').hidden);
     });
 
     // Bring back the conversation this user left behind, if any. Done before the setup
@@ -1115,9 +1158,7 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         initializeMCP();
     } else {
         // First visit: open settings panel and show welcome, but still pre-fetch tools in background
-        const _settingsPanel = document.getElementById('settings-panel');
-        _settingsPanel.style.display = 'flex';
-        slideDown(_settingsPanel);
+        setSettingsOpen(true);
         addMessage(S.senderSystem, S.welcomeMsg, 'system');
         refreshSettingsUI();
         initializeMCP(false); // silently pre-fetch; panel stays hidden until Save is clicked
@@ -1180,7 +1221,7 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         // With the tools chosen for everyone, the list is already exactly what is allowed
         // (the server filtered it), so a "12 of 12" reads as noise.
         if (adminConfig.toolsLocked) {
-            countEl.innerText = `(${total})`;
+            countEl.innerText = `${total}`;
             mcpStatus.innerText = t(S.lockedToolsStatus, { total, model });
             document.getElementById('settings-toggle').title = S.setByAdminTitle;
             return;
@@ -1197,7 +1238,7 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         const list = document.getElementById('tool-selection-list');
 
         if (availableTools.length === 0) {
-            panel.style.display = 'none';
+            panel.hidden = true;
             return;
         }
 
@@ -1210,12 +1251,12 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
             list.innerHTML = '';
             availableTools.forEach(tool => {
                 const item = document.createElement('div');
+                item.className = 'fz-truncate';
                 item.innerText = tool.name;
                 item.title = tool.description || tool.name;
-                item.style.cssText = 'padding: 2px 0; font-size: 0.82em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
                 list.appendChild(item);
             });
-            panel.style.display = 'block';
+            panel.hidden = false;
             slideDown(panel);
             updateToolCount();
             return;
@@ -1234,11 +1275,12 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         list.innerHTML = '';
         availableTools.forEach(tool => {
             const label = document.createElement('label');
+            label.className = 'fz-choice fz-min-w-0 fz-text-xs-plus';
             label.title = tool.description || '';
-            label.style.cssText = 'display: flex; align-items: baseline; gap: 6px; padding: 2px 0; cursor: pointer; font-size: 0.82em; overflow: hidden;';
 
             const cb = document.createElement('input');
             cb.type = 'checkbox';
+            cb.className = 'fz-checkbox fz-shrink-0';
             cb.dataset.toolName = tool.name;
             cb.checked = selectedToolNames.has(tool.name);
             cb.addEventListener('change', () => {
@@ -1249,8 +1291,8 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
             });
 
             const name = document.createElement('span');
+            name.className = 'fz-truncate fz-min-w-0';
             name.innerText = tool.name;
-            name.style.cssText = 'overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;';
             name.title = tool.description || tool.name;
 
             label.appendChild(cb);
@@ -1287,45 +1329,62 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
             };
         });
 
-        panel.style.display = 'block';
+        panel.hidden = false;
         slideDown(panel);
         updateToolCount();
     }
 
-    // renderPanel = false: silently pre-fetch capabilities into availableTools without showing the panel.
-    // renderPanel = true (default): fetch and immediately render/show the tool panel.
-    async function initializeMCP(renderPanel = true) {
-        const provider = providerSelect.value;
-        try {
-            if (renderPanel) mcpStatus.innerText = S.fetchingTools;
+    // The fallback for initializeMCP(), when the page came without its tools
+    async function fetchToolsFromServer() {
+        const response = await fetch(MCP_URL('/capabilities'));
+        const data = await response.json();
 
-            const response = await fetch(MCP_URL('/capabilities'));
-            const data = await response.json();
+        const capabilities = data.result?.capabilities || data.capabilities;
+        const rawTools = capabilities?.tools || [];
 
-            const capabilities = data.result?.capabilities || data.capabilities;
-            const rawTools = capabilities?.tools || [];
+        // Strip easter eggs and find initialization tool
+        availableTools = rawTools.filter(t => !EASTER_EGGS.has(t.name));
 
-            // Strip easter eggs and find initialization tool
-            availableTools = rawTools.filter(t => !EASTER_EGGS.has(t.name));
-
-            // Call the first init tool found, embed its instructions in the system prompt, then remove it.
-            // The tool returns JSON: { instructions: "...", authenticated_user: {...} }
-            for (const initName of INIT_TOOLS) {
-                const initTool = availableTools.find(t => t.name === initName);
-                if (initTool) {
-                    const initResult = await executeTool(initName, {});
-                    const rawText = initResult.raw?.result?.content?.[0]?.text;
-                    if (rawText) {
-                        try {
-                            const parsed = JSON.parse(rawText);
-                            dynamicSystemPrompt = SYSTEM_PROMPT + '\n\n' + (parsed.instructions || rawText);
-                        } catch (e) {
-                            dynamicSystemPrompt = SYSTEM_PROMPT + '\n\n' + rawText;
-                        }
+        // Call the first init tool found, embed its instructions in the system prompt, then remove it.
+        // The tool returns JSON: { instructions: "...", authenticated_user: {...} }
+        for (const initName of INIT_TOOLS) {
+            const initTool = availableTools.find(t => t.name === initName);
+            if (initTool) {
+                const initResult = await executeTool(initName, {});
+                const rawText = initResult.raw?.result?.content?.[0]?.text;
+                if (rawText) {
+                    try {
+                        const parsed = JSON.parse(rawText);
+                        dynamicSystemPrompt = SYSTEM_PROMPT + '\n\n' + (parsed.instructions || rawText);
+                    } catch (e) {
+                        dynamicSystemPrompt = SYSTEM_PROMPT + '\n\n' + rawText;
                     }
-                    availableTools = availableTools.filter(t => t.name !== initName);
-                    break;
                 }
+                availableTools = availableTools.filter(t => t.name !== initName);
+                break;
+            }
+        }
+    }
+
+    // The tools this person may use, and the instructions that go into the system prompt.
+    // Normally both came with the page (window.formulizeAI.startup, built by
+    // FormulizeMCP::forEmbeddedAssistant), so nothing is asked of the server here, and
+    // the tools are in place before anyone can send a message. Only when the page could
+    // not build them does this ask the MCP server, as it used to: its capabilities for the
+    // tools, then the init tool for the instructions.
+    //
+    // renderPanel = false: load the tools without showing the panel (a first visit, before
+    // the settings are saved). renderPanel = true (default): show the tool panel as well.
+    async function initializeMCP(renderPanel = true) {
+        try {
+            if (STARTUP) {
+                availableTools = (STARTUP.tools || []).filter(t => !EASTER_EGGS.has(t.name) && !INIT_TOOLS.includes(t.name));
+                if (STARTUP.instructions) {
+                    dynamicSystemPrompt = SYSTEM_PROMPT + '\n\n' + STARTUP.instructions;
+                }
+            } else {
+                if (renderPanel) mcpStatus.innerText = S.fetchingTools;
+                await fetchToolsFromServer();
             }
 
             if (renderPanel) {
@@ -1356,7 +1415,7 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
     document.getElementById('new-conversation-btn').addEventListener('click', startNewConversation);
 
     document.getElementById('close-settings').addEventListener('click', () => {
-        document.getElementById('settings-panel').style.display = 'none';
+        setSettingsOpen(false);
     });
 
     stopBtn.addEventListener('click', () => {
@@ -1387,21 +1446,26 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
     function renderAttachmentStrip() {
         attachmentStrip.innerHTML = '';
         if (pendingAttachments.length === 0) {
-            attachmentStrip.style.display = 'none';
+            attachmentStrip.hidden = true;
             return;
         }
-        attachmentStrip.style.display = 'flex';
+        attachmentStrip.hidden = false;
         pendingAttachments.forEach((att, i) => {
+            // A badge holding the file's name and a small button that removes it
             const chip = document.createElement('span');
-            chip.style.cssText = 'display:inline-flex;align-items:center;gap:4px;max-width:200px;overflow:hidden;background:#e8f4fd;border:1px solid #b8d9f0;border-radius:12px;padding:4px 6px 4px 10px;font-size:0.82em;';
+            chip.className = 'fz-badge fz-badge--accent fz-badge--plain';
+            chip.style.maxWidth = '15rem';
             const icon = att.type === 'application/pdf' ? '📄' : att.type.startsWith('image/') ? '🖼️' : '📎';
             const label = document.createElement('span');
-            label.style.cssText = 'flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+            label.className = 'fz-truncate fz-min-w-0';
             label.textContent = icon + ' ' + att.name;
+            label.title = att.name;
             const rm = document.createElement('button');
             rm.type = 'button';
+            rm.className = 'fz-btn fz-btn--ghost fz-btn--icon fz-shrink-0';
+            rm.style.setProperty('--fz-control-height', 'calc(var(--fz-spacing) * 4.5)');
+            rm.setAttribute('aria-label', t(S.removeAttachment, { name: att.name }));
             rm.textContent = '×';
-            rm.style.cssText = 'background:none;border:none;cursor:pointer;color:#888;font-size:1em;padding:0 2px;line-height:1;flex-shrink:0;min-width:auto';
             rm.addEventListener('click', () => { pendingAttachments.splice(i, 1); renderAttachmentStrip(); });
             chip.append(label, rm);
             attachmentStrip.appendChild(chip);
@@ -1427,24 +1491,24 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         userStopped = false;
         debugRound = 0;
         currentAbortController = new AbortController();
-        sendBtn.style.display = 'none';
-        stopBtn.style.display = '';
+        sendBtn.hidden = true;
+        stopBtn.hidden = false;
         userInput.disabled = true;
 
         const userBubble = addMessage(S.senderYou, text, 'user');
         recordMessage(S.senderYou, text, 'user');
         if (attachments.length > 0) {
             const attNote = document.createElement('div');
-            attNote.style.cssText = 'margin-top: 4px; font-size: 0.8em; opacity: 0.8;';
+            attNote.className = 'fz-text-xs fz-text-muted';
             attNote.textContent = attachments.map(a => (a.type === 'application/pdf' ? '📄' : a.type.startsWith('image/') ? '🖼️' : '📎') + ' ' + a.name).join('  ');
             userBubble.appendChild(attNote);
         }
         userInput.value = '';
-        userInput.style.height = '60px';
+        fitInputToText();
 
         const loadingMsg = addMessage(S.senderAI, S.thinking + '.', 'ai');
         // Animate the dots while waiting for the response
-        const _thinkingEl = loadingMsg.querySelector('.ai-markdown') || loadingMsg.lastElementChild;
+        const _thinkingEl = loadingMsg.querySelector('.formulize-ai-reply') || loadingMsg.lastElementChild;
         _thinkingEl.style.minWidth = '6rem'; // prevent bubble resizing as dots animate
         let _dotCount = 1;
         const _dotsInterval = setInterval(() => {
@@ -1476,8 +1540,8 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         } finally {
             isSending = false;
             currentAbortController = null;
-            sendBtn.style.display = '';
-            stopBtn.style.display = 'none';
+            sendBtn.hidden = false;
+            stopBtn.hidden = true;
             updateInputState();
             if (!userInput.disabled) userInput.focus();
             // One save per turn, whatever happened: on success it captures the reply, and
@@ -1499,7 +1563,7 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
             const heightBefore = chatWindow.scrollHeight;
             const aiMsg = addMessage(S.senderAI, S.thinking + '...', 'ai');
             chatWindow.scrollTop = scrollBefore + (chatWindow.scrollHeight - heightBefore);
-            await typewriterEffect(aiMsg.querySelector('.ai-markdown') || aiMsg.lastElementChild, text);
+            await typewriterEffect(aiMsg.querySelector('.formulize-ai-reply') || aiMsg.lastElementChild, text);
             recordMessage(S.senderAI, text, 'ai');
         }
         let notice = '';
@@ -2263,22 +2327,19 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
 
     // A small icon+label button that copies whatever getText() returns at click time (not
     // at creation time), so it stays correct after addToolResponse() later fills in the pre.
-    // Sizing/spacing lives in formulize.css (.formulize-ai-copy-btn) rather than inline
-    // styles, since themes (e.g. Anari) set a `min-width` on bare <button> elements that
-    // inline styles here don't touch.
     function makeCopyButton(getText) {
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'formulize-ai-copy-btn';
+        btn.className = 'fz-btn fz-btn--ghost fz-btn--sm';
         btn.title = S.copyBtnTitle;
 
         const icon = document.createElement('span');
+        icon.setAttribute('aria-hidden', 'true');
         icon.innerText = '📋';
         btn.appendChild(icon);
-        btn.appendChild(document.createTextNode(' ' + S.copyLabel));
+        btn.appendChild(document.createTextNode(S.copyLabel));
 
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation(); // don't toggle the collapsible header
+        btn.addEventListener('click', () => {
             navigator.clipboard.writeText(getText()).then(() => {
                 icon.innerText = '✓';
                 setTimeout(() => { icon.innerText = '📋'; }, 1200);
@@ -2287,92 +2348,74 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         return btn;
     }
 
-    function addToolRequest(name, args) {
-        const msgDiv = document.createElement('div');
-        msgDiv.style.cssText = 'align-self: stretch; background: #f0f7ff; border: 1px solid #c8dff7; border-radius: 8px; font-size: 0.82em;';
-        msgDiv.dataset.toolName = name;
-
-        const header = document.createElement('div');
-        header.style.cssText = 'padding: 6px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #e8f4fd; border-bottom: 1px solid #c8dff7; border-radius: 8px 8px 0 0;';
-
-        const titleSpan = document.createElement('span');
-        titleSpan.style.fontFamily = 'monospace';
-        titleSpan.innerText = S.toolPending + name;
-
-        const toggleSpan = document.createElement('span');
-        toggleSpan.style.cssText = 'font-size: 0.85em; color: #555; white-space: nowrap;';
-        toggleSpan.innerText = S.toolExpand;
-
-        header.appendChild(titleSpan);
-        header.appendChild(toggleSpan);
-
-        const body = document.createElement('div');
-        body.style.display = 'none';
-        body.style.cssText = 'display: none; padding: 8px 12px; font-family: monospace;';
-
-        const paramsPre = document.createElement('pre');
-        paramsPre.style.cssText = 'background: #f8f9fa; padding: 6px 8px; border-radius: 4px; white-space: pre-wrap; word-break: break-word; margin: 0 0 10px 0; font-size: 1em;';
-        paramsPre.textContent = args && Object.keys(args).length > 0 ? JSON.stringify(args, null, 2) : S.toolNoParams;
-
-        const paramsLabel = document.createElement('div');
-        paramsLabel.style.cssText = 'font-weight: bold; margin-bottom: 4px; color: #444; display: flex; justify-content: space-between; align-items: center;';
-        const paramsLabelText = document.createElement('span');
-        paramsLabelText.innerText = S.toolParamsLabel;
-        paramsLabel.appendChild(paramsLabelText);
-        paramsLabel.appendChild(makeCopyButton(() => paramsPre.textContent));
-
-        const responsePre = document.createElement('pre');
-        responsePre.style.cssText = 'background: #f8f9fa; padding: 6px 8px; border-radius: 4px; white-space: pre-wrap; word-break: break-word; margin: 0; font-size: 1em; color: #888;';
-        responsePre.textContent = S.toolWaiting;
-
-        const responseLabel = document.createElement('div');
-        responseLabel.style.cssText = 'font-weight: bold; margin-bottom: 4px; color: #555; display: flex; justify-content: space-between; align-items: center;';
-        const responseLabelText = document.createElement('span');
-        responseLabelText.innerText = S.toolResponseLabel;
-        responseLabel.appendChild(responseLabelText);
-        responseLabel.appendChild(makeCopyButton(() => responsePre.textContent));
-
-        body.appendChild(paramsLabel);
-        body.appendChild(paramsPre);
-        body.appendChild(responseLabel);
-        body.appendChild(responsePre);
-
-        msgDiv._header = header;
-        msgDiv._titleSpan = titleSpan;
-        msgDiv._responseLabel = responseLabel;
-        msgDiv._responseLabelText = responseLabelText;
-        msgDiv._responsePre = responsePre;
-
-        header.addEventListener('click', () => {
-            const expanded = body.style.display !== 'none';
-            body.style.display = expanded ? 'none' : 'block';
-            toggleSpan.innerText = expanded ? S.toolExpand : S.toolCollapse;
-        });
-
-        msgDiv.appendChild(header);
-        msgDiv.appendChild(body);
-        chatWindow.appendChild(msgDiv);
-        chatWindow.scrollTop = chatWindow.scrollHeight;
-        return msgDiv;
+    // One labelled section of a tool block: a heading with a copy button, over a pre
+    function makeToolSection(labelText, pre) {
+        const section = document.createElement('div');
+        section.className = 'fz-stack fz-gap-1';
+        const row = document.createElement('div');
+        row.className = 'fz-flex fz-items-center fz-justify-between fz-gap-2';
+        const label = document.createElement('span');
+        label.className = 'fz-font-semibold';
+        label.innerText = labelText;
+        row.append(label, makeCopyButton(() => pre.textContent));
+        section.append(row, pre);
+        section._label = label;
+        return section;
     }
 
-    function addToolResponse(msgDiv, raw) {
-        const hasError = raw && raw.error;
-        const name = msgDiv.dataset.toolName;
+    // A tool call, as a disclosure: the summary says which tool and how it went, and
+    // opening it shows the parameters sent and the response that came back.
+    function addToolRequest(name, args) {
+        const block = document.createElement('details');
+        block.className = 'formulize-ai-tool fz-disclosure fz-text-xs-plus';
+        block.dataset.toolName = name;
 
-        // Update header
-        msgDiv._header.style.background = hasError ? '#fdf0f0' : '#e8f4fd';
-        msgDiv._header.style.borderBottomColor = hasError ? '#f5c6cb' : '#c8dff7';
-        msgDiv._titleSpan.innerText = (hasError ? S.toolError : S.toolOk) + name;
-        msgDiv.style.borderColor = hasError ? '#f5c6cb' : '#c8dff7';
+        const summary = document.createElement('summary');
+        const status = document.createElement('span');
+        status.innerText = S.toolPending;
+        const toolName = document.createElement('span');
+        toolName.className = 'fz-font-mono';
+        toolName.innerText = name;
+        summary.append(status, toolName);
 
-        // Update response section
-        msgDiv._responseLabel.style.color = hasError ? '#721c24' : '#155724';
-        msgDiv._responseLabelText.innerText = hasError ? S.toolResponseError : S.toolResponseLabel;
+        const paramsPre = document.createElement('pre');
+        // JSON that can run to thousands of lines: it wraps, and scrolls inside a box of
+        // its own rather than lengthening the chat
+        paramsPre.className = 'fz-code-block fz-code-block--wrap fz-text-xs';
+        paramsPre.style.setProperty('--fz-code-block-max-height', '20rem');
+        paramsPre.textContent = args && Object.keys(args).length > 0 ? JSON.stringify(args, null, 2) : S.toolNoParams;
 
-        const responsePre = msgDiv._responsePre;
-        responsePre.style.background = hasError ? '#f8d7da' : '#d4edda';
-        responsePre.style.color = '';
+        const responsePre = document.createElement('pre');
+        responsePre.className = 'fz-code-block fz-code-block--wrap fz-text-xs fz-text-subtle';
+        responsePre.style.setProperty('--fz-code-block-max-height', '20rem');
+        responsePre.textContent = S.toolWaiting;
+
+        const body = document.createElement('div');
+        body.className = 'fz-stack fz-gap-3';
+        const responseSection = makeToolSection(S.toolResponseLabel, responsePre);
+        body.append(makeToolSection(S.toolParamsLabel, paramsPre), responseSection);
+
+        block._status = status;
+        block._responseLabel = responseSection._label;
+        block._responsePre = responsePre;
+
+        block.append(summary, body);
+        chatWindow.appendChild(block);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+        return block;
+    }
+
+    function addToolResponse(block, raw) {
+        const hasError = !!(raw && raw.error);
+
+        block._status.innerText = hasError ? S.toolError : S.toolOk;
+        block.classList.toggle('fz-border-danger', hasError);
+        block._responseLabel.innerText = hasError ? S.toolResponseError : S.toolResponseLabel;
+        block._responseLabel.classList.toggle('fz-text-danger', hasError);
+
+        const responsePre = block._responsePre;
+        responsePre.classList.remove('fz-text-subtle');
+        responsePre.classList.toggle('fz-bg-danger-soft', hasError);
 
         if (hasError) {
             responsePre.textContent = JSON.stringify(raw.error, null, 2);
@@ -2431,47 +2474,45 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         }
     }
 
+    // A message in the chat. Yours is a bubble at the end of the line; the AI's reply is
+    // running text across the chat (fz-prose: its markdown is paragraphs, lists, code and
+    // tables); notices are callouts. The sender is always in the text, for screen readers
+    // and for the context-cutoff search, but shown only on the AI's replies and on errors.
     function addMessage(sender, text, type) {
         const msgDiv = document.createElement('div');
-        msgDiv.className = `message ${type}`;
+        const senderEl = document.createElement(type === 'error' ? 'p' : 'span');
 
-        const senderSpan = document.createElement('strong');
-        senderSpan.innerText = sender + ': ';
-        msgDiv.appendChild(senderSpan);
+        if (type === 'user') {
+            msgDiv.className = 'formulize-ai-message formulize-ai-message--user fz-self-end fz-bg-accent-soft fz-rounded-xl fz-px-4 fz-py-2 fz-wrap-break-word';
+            senderEl.className = 'fz-sr-only';
+            senderEl.innerText = sender + ': ';
+        } else if (type === 'ai') {
+            msgDiv.className = 'formulize-ai-message formulize-ai-message--ai fz-stack fz-gap-1';
+            senderEl.className = 'fz-text-xs fz-font-semibold fz-text-muted';
+            senderEl.innerText = sender;
+        } else if (type === 'error') {
+            msgDiv.className = 'formulize-ai-message formulize-ai-message--error fz-callout fz-callout--danger fz-wrap-break-word';
+            msgDiv.setAttribute('role', 'alert');
+            senderEl.className = 'fz-callout__title';
+            senderEl.innerText = sender;
+        } else {
+            msgDiv.className = 'formulize-ai-message formulize-ai-message--system fz-callout fz-callout--info fz-text-xs-plus fz-wrap-break-word';
+            msgDiv.setAttribute('role', 'status');
+            senderEl.className = 'fz-sr-only';
+            senderEl.innerText = sender + ': ';
+        }
+        msgDiv.appendChild(senderEl);
 
         if (type === 'ai' && typeof marked !== 'undefined') {
             const contentDiv = document.createElement('div');
-            contentDiv.className = 'ai-markdown';
+            contentDiv.className = 'formulize-ai-reply fz-prose';
             const rawHtml = marked.parse(text, { breaks: false });
             contentDiv.innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(rawHtml) : rawHtml;
             msgDiv.appendChild(contentDiv);
         } else {
-            const textSpan = document.createElement('span');
-            textSpan.innerText = text;
-            msgDiv.appendChild(textSpan);
-        }
-
-        msgDiv.style.padding = '10px 15px';
-        msgDiv.style.borderRadius = '10px';
-        msgDiv.style.maxWidth = '80%';
-
-        if (type === 'user') {
-            msgDiv.style.alignSelf = 'flex-end';
-            msgDiv.style.background = '#007cba';
-            msgDiv.style.color = 'white';
-        } else if (type === 'ai') {
-            msgDiv.style.alignSelf = 'flex-start';
-            msgDiv.style.background = '#f1f3f5';
-            msgDiv.style.border = '1px solid #dee2e6';
-        } else if (type === 'system') {
-            msgDiv.style.alignSelf = 'center';
-            msgDiv.style.background = '#fff3cd';
-            msgDiv.style.color = '#856404';
-            msgDiv.style.fontSize = '0.8em';
-        } else if (type === 'error') {
-            msgDiv.style.alignSelf = 'center';
-            msgDiv.style.background = '#f8d7da';
-            msgDiv.style.color = '#721c24';
+            const textEl = document.createElement(type === 'user' ? 'span' : 'p');
+            textEl.innerText = text;
+            msgDiv.appendChild(textEl);
         }
 
         chatWindow.appendChild(msgDiv);
@@ -2487,16 +2528,16 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         }
     });
 
-    userInput.addEventListener('input', () => {
+    // Grow the message box with what is typed in it. Its least and greatest heights are
+    // in formulize.css (.formulize-ai__input); past the greatest, it scrolls.
+    function fitInputToText() {
         userInput.style.height = 'auto';
-        userInput.style.height = (userInput.scrollHeight) + 'px';
-        if (userInput.scrollHeight > 150) {
-            userInput.style.height = '150px';
-            userInput.style.overflowY = 'auto';
-        } else {
-            userInput.style.overflowY = 'hidden';
-        }
-    });
+        const borders = userInput.offsetHeight - userInput.clientHeight;
+        userInput.style.height = (userInput.scrollHeight + borders) + 'px';
+        const max = parseFloat(getComputedStyle(userInput).maxHeight);
+        userInput.style.overflowY = (max && userInput.scrollHeight + borders > max) ? 'auto' : 'hidden';
+    }
+    userInput.addEventListener('input', fitInputToText);
 
     // Sizing the chat to the viewport is a full-page concern. In the drawer the panel
     // already gives the container its height (height:100% into a flex column), and the

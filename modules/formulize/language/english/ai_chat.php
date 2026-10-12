@@ -6,25 +6,25 @@ define('_MD_FORMULIZE_MUST_BE_LOGGED_IN',        'You must be logged in to use t
 define('_MD_FORMULIZE_AI_NOT_ENABLED',           'The embedded AI Assistant is not enabled in this Formulize system.');
 
 // Header / settings panel
-define('_MD_FORMULIZE_AI_PAGE_TITLE',             'Gwynian - The Formulize AI Assistant');
+define('_MD_FORMULIZE_AI_PAGE_TITLE',             'Formulize AI');
 define('_MD_FORMULIZE_AI_TOGGLE_SETTINGS_TITLE',  'Toggle settings');
-define('_MD_FORMULIZE_AI_SETTINGS_CLOSE',         'Close ✕');
-define('_MD_FORMULIZE_AI_PROVIDER_LABEL',         'Provider:');
+define('_MD_FORMULIZE_AI_SETTINGS_CLOSE',         'Close');
+define('_MD_FORMULIZE_AI_PROVIDER_LABEL',         'Provider');
 define('_MD_FORMULIZE_AI_PROVIDER_CLAUDE',        'Claude (Anthropic)');
 define('_MD_FORMULIZE_AI_PROVIDER_GEMINI',        'Gemini (Google)');
 define('_MD_FORMULIZE_AI_PROVIDER_OPENAI',        'GPT (OpenAI)');
 define('_MD_FORMULIZE_AI_PROVIDER_OLLAMA',        'Ollama (Local)');
-define('_MD_FORMULIZE_AI_MODEL_LABEL',            'Model:');
-define('_MD_FORMULIZE_AI_API_KEY_LABEL',          'API Key:');
+define('_MD_FORMULIZE_AI_MODEL_LABEL',            'Model');
+define('_MD_FORMULIZE_AI_API_KEY_LABEL',          'API key');
 define('_MD_FORMULIZE_AI_API_KEY_PLACEHOLDER',    'Enter your API Key');
 define('_MD_FORMULIZE_AI_API_KEY_SAVED',          'Key saved — enter new key to change');
 define('_MD_FORMULIZE_AI_API_KEY_OLLAMA',         'No key needed');
 define('_MD_FORMULIZE_AI_SAVE_SETTINGS_BTN',      'Save Settings');
 define('_MD_FORMULIZE_AI_SETTINGS_GUIDE_KEY',     'Enter your API key above to continue');
 define('_MD_FORMULIZE_AI_SETTINGS_GUIDE_TOOLS',   'Choose tools and Save Settings');
-define('_MD_FORMULIZE_AI_NEW_CONVERSATION_BTN',   'Start a new Conversation');
+define('_MD_FORMULIZE_AI_NEW_CONVERSATION_BTN',   'New conversation');
 define('_MD_FORMULIZE_AI_NEW_CONVERSATION_MSG',   'New conversation started.');
-define('_MD_FORMULIZE_AI_ACTIVE_TOOLS_LABEL',     'Active Tools:');
+define('_MD_FORMULIZE_AI_ACTIVE_TOOLS_LABEL',     'Active tools');
 define('_MD_FORMULIZE_AI_TOOLS_ALL_BTN',          'All');
 define('_MD_FORMULIZE_AI_TOOLS_NONE_BTN',         'None');
 define('_MD_FORMULIZE_AI_TOOLS_READ_DATA',        'Read data');
@@ -33,6 +33,8 @@ define('_MD_FORMULIZE_AI_TOOLS_MANAGE_FORMS',     'Manage forms');
 
 // Chat input
 define('_MD_FORMULIZE_AI_CHAT_PLACEHOLDER',       'Ask me anything about Formulize...');
+define('_MD_FORMULIZE_AI_ATTACH_TITLE',            'Attach files');
+define('_MD_FORMULIZE_AI_REMOVE_ATTACHMENT',       'Remove {name}');
 define('_MD_FORMULIZE_AI_SEND_BTN',               'Send');
 define('_MD_FORMULIZE_AI_STOP_BTN',               'Stop');
 define('_MD_FORMULIZE_AI_STOPPED_MSG',            'Response stopped.');
@@ -40,8 +42,8 @@ define('_MD_FORMULIZE_AI_STOPPED_MSG',            'Response stopped.');
 // Activity panel
 define('_MD_FORMULIZE_AI_ACTIVITY_TOGGLE_TITLE',  'Toggle activity context panel');
 define('_MD_FORMULIZE_AI_ACTIVITY_LABEL',         'Activity Context');
-define('_MD_FORMULIZE_AI_ACTIVITY_SHOW',          '▶ show what the AI sees');
-define('_MD_FORMULIZE_AI_ACTIVITY_HIDE',          '▼ hide');
+define('_MD_FORMULIZE_AI_ACTIVITY_SHOW',          'show what the AI sees');
+define('_MD_FORMULIZE_AI_ACTIVITY_HIDE',          'hide');
 define('_MD_FORMULIZE_AI_ACTIVITY_FOOTER',        'Updates live from all open tabs · Last 30 min · Appended to every AI message');
 
 // Status / MCP
@@ -90,8 +92,6 @@ define('_MD_FORMULIZE_AI_THINKING',               'Thinking');
 define('_MD_FORMULIZE_AI_TOOL_PENDING',           '⏳ Tool: ');
 define('_MD_FORMULIZE_AI_TOOL_OK',                '⚙ Tool: ');
 define('_MD_FORMULIZE_AI_TOOL_ERROR',             '⚠ Tool: ');
-define('_MD_FORMULIZE_AI_TOOL_EXPAND',            '▶ expand');
-define('_MD_FORMULIZE_AI_TOOL_COLLAPSE',          '▼ collapse');
 define('_MD_FORMULIZE_AI_TOOL_PARAMS_LABEL',      'Parameters:');
 define('_MD_FORMULIZE_AI_TOOL_NO_PARAMS',         '(no parameters)');
 define('_MD_FORMULIZE_AI_TOOL_RESPONSE_LABEL',    'Response:');

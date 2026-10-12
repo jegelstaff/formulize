@@ -2354,13 +2354,20 @@ input::-ms-thumb {
   }
 }
 
-/* Restates the body font on the elements that browsers give a font of their
-   own (form controls, tables) and on the jQuery UI widgets that ship their
-   own family. Goes through --fz-font-sans rather than naming Poppins, so the
-   Appearance page's font setting reaches these elements too: they cover
-   nearly all the text on a page, so a hardcoded family here would override
-   the chosen font everywhere it matters. */
-div, span, textarea, select, p, input, th, td, .ui-widget div, .ui-widget span, .ui-widget textarea, .ui-widget select, .ui-widget p, .ui-widget input, .ui-widget th, .ui-widget td {
+/* Restates the body font where it would not otherwise arrive: on the form controls,
+   which browsers give a font of their own, and on the containers of the libraries
+   that ship a family of their own, jQuery UI's widgets (Verdana) and jGrowl's
+   notifications (Tahoma). Everything else inherits the body font. That is what lets
+   a font set on a container reach what is inside it: fz-font-mono, the Appearance
+   page's secondary font on a label or a title, a code block. Restating the font on
+   every div, span and p, as this rule used to, cut that off at the first one.
+
+   Goes through --fz-font-sans rather than naming Poppins, so the Appearance page's
+   font setting reaches these elements too. The library stylesheets whose fonts this
+   replaces load before this one, so the same weight is enough. */
+textarea, select, input,
+.ui-widget, .ui-widget textarea, .ui-widget select, .ui-widget input, .ui-widget button,
+div.jGrowl div.jGrowl-notification, div.jGrowl .ui-state-highlight, div.jGrowl div.jGrowl-closer {
   font-family: var(--fz-font-sans);
 }
 

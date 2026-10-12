@@ -1319,11 +1319,20 @@
     // class and a real href to /ai/ (so it still works as a full page without JS);
     // the drawer takes it over here.
     function bindAILink() {
-        var aiLink = document.querySelector('.js-open-ai');
-        if (!aiLink) { return; }
-        aiLink.addEventListener('click', function (e) {
-            e.preventDefault();
-            openAIInDrawer();
+        Array.prototype.forEach.call(document.querySelectorAll('.js-open-ai'), function (aiLink) {
+            aiLink.addEventListener('click', function (e) {
+                e.preventDefault();
+                // On the assistant's own page (/ai/) it is already open, full size. A second
+                // copy in the drawer would share its element ids and break both, so the link
+                // just takes the person to the message box there.
+                var fullPage = document.getElementById('ai-assistant-container');
+                if (fullPage && !fullPage.closest('.formulize-drawer')) {
+                    var input = document.getElementById('user-input');
+                    if (input && !input.disabled) { input.focus(); }
+                    return;
+                }
+                openAIInDrawer();
+            });
         });
     }
 

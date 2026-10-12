@@ -20,6 +20,14 @@ function initHamburgerMenu() {
     evt.preventDefault();
     flyoutMenu.classList.remove('site-layout__sidebar--open');
   });
+  // The menu's AI link opens the assistant in the drawer, over the page, so the menu
+  // closes behind it instead of staying open under the drawer (on a phone, the menu is
+  // a panel over the page)
+  Array.prototype.forEach.call(document.querySelectorAll('.js-flyout-menu .js-open-ai'), function (aiLink) {
+    aiLink.addEventListener('click', function () {
+      flyoutMenu.classList.remove('site-layout__sidebar--open');
+    });
+  });
   var login_button = document.querySelector('#block_login_form input[type=submit]');
   if (login_button) {
     login_button.addEventListener('click', function(evt) {
