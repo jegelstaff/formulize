@@ -497,9 +497,13 @@ window.formulizeFilterPopoverSettings = window.formulizeFilterPopoverSettings ||
 		});
 		picker.body.appendChild(columns);
 
-		// formulize_buildDateRangeFilter's handlers have already written the typed dates into the hidden field by now
-		[picker.start, picker.end].forEach(function (input) {
-			input.addEventListener('change', function () { picker.markShortcuts(); });
+		// formulize_buildDateRangeFilter's handlers hear typed dates on the document: they write them into the hidden
+		// field as they change, and put the two in order when a box is left. Listening on the window, which hears both
+		// last, sees the dates they settled on.
+		['change', 'focusout'].forEach(function (type) {
+			window.addEventListener(type, function (event) {
+				if(event.target === picker.start || event.target === picker.end) { picker.markShortcuts(); }
+			});
 		});
 		picker.updateTrigger();
 	}

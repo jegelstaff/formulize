@@ -2630,31 +2630,51 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
                 $().click(function() {
                     $('.formulize_daterange').change();
                 });
-                // keep the range the right way round: a From with no To, or a From after To, carries To along to it,
-                // and a To before From brings From back to it. A year under 1000 is a date still being typed (typing
-                // 2026 passes through 0002, 0020 and 0202), so those are left alone until the year is whole.
-                $(\"[id^='formulize_daterange_sta_'],[id^='formulize_daterange_end_']\").change(function() {
-                    var id = new String($(this).attr('id'));
-                    var handle = id.substr(24);
-                    var changedStart = id.substr(0, 24) == 'formulize_daterange_sta_';
-                    var startBox = $('#formulize_daterange_sta_'+handle);
-                    var endBox = $('#formulize_daterange_end_'+handle);
-                    var start = startBox.val();
-                    var end = endBox.val() == '"._DATE_DEFAULT."' ? '' : endBox.val();
-                    var whole = function(date) { return date && parseInt(date.substr(0, 4), 10) >= 1000; };
-                    if(changedStart && whole(start) && (!end || (whole(end) && start > end))) {
-                        end = start;
-                        endBox.val(end);
-                    } else if(!changedStart && whole(end) && whole(start) && end < start) {
-                        start = end;
-                        startBox.val(start);
-                    }
+                // As the dates change, they go into the search. Typing passes through dates nobody meant, though:
+                // changing October to November by typing 1 then 1 passes through January, and browsers report each
+                // one. So the range is only put the right way round once a box is left, when its date is the one meant:
+                // a From with no To, or a From after To, carries To along to it, and a To before From brings From
+                // back to it. A year under 1000 is left alone, as one still being typed or mistyped.
+                // This script is only printed once, after the first date range on the page, so the handlers go on
+                // the document, where they hear every date range, including ones further down the page.
+                var formulizeDateRangeSearch = function(handle) {
+                    var start = $('#formulize_daterange_sta_'+handle).val();
+                    var end = $('#formulize_daterange_end_'+handle).val() == '"._DATE_DEFAULT."' ? '' : $('#formulize_daterange_end_'+handle).val();
 										start = start ? '>='+start : '';
 										end = end ? '<='+end : '';
 										var connector = (start && end) ? '//' : '';
                     $('#formulize_hidden_daterange_'+handle).val(start+connector+end);
                     $('#formulize_daterange_button_'+handle).show(200);
-                });
+                };
+                var formulizeDateRangeChange = function() {
+                    formulizeDateRangeSearch(new String($(this).attr('id')).substr(24));
+                };
+                var formulizeDateRangeLeave = function() {
+                    var id = new String($(this).attr('id'));
+                    var handle = id.substr(24);
+                    var leftStart = id.substr(0, 24) == 'formulize_daterange_sta_';
+                    var startBox = $('#formulize_daterange_sta_'+handle);
+                    var endBox = $('#formulize_daterange_end_'+handle);
+                    var start = startBox.val();
+                    var end = endBox.val() == '"._DATE_DEFAULT."' ? '' : endBox.val();
+                    var whole = function(date) { return date && parseInt(date.substr(0, 4), 10) >= 1000; };
+                    if(leftStart && whole(start) && (!end || (whole(end) && start > end))) {
+                        endBox.val(start);
+                    } else if(!leftStart && whole(end) && whole(start) && end < start) {
+                        startBox.val(end);
+                    } else {
+                        return;
+                    }
+                    formulizeDateRangeSearch(handle);
+                };
+                var formulizeDateRangeBoxes = \"[id^='formulize_daterange_sta_'],[id^='formulize_daterange_end_']\";
+                if($.fn.on) {
+                    $(document).on('change', formulizeDateRangeBoxes, formulizeDateRangeChange);
+                    $(document).on('focusout', formulizeDateRangeBoxes, formulizeDateRangeLeave);
+                } else { // jQuery before 1.7
+                    $(document).delegate(formulizeDateRangeBoxes, 'change', formulizeDateRangeChange);
+                    $(document).delegate(formulizeDateRangeBoxes, 'focusout', formulizeDateRangeLeave);
+                }
                 </script>";
             }
             // each label wraps its date, so clicking the word focuses the date. formulize.css puts the word beside the date when there's room, and above it when there isn't
