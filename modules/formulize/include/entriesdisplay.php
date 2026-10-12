@@ -2630,11 +2630,14 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
                 $().click(function() {
                     $('.formulize_daterange').change();
                 });
-                // As the dates change, they go into the search. Typing passes through dates nobody meant, though:
-                // changing October to November by typing 1 then 1 passes through January, and browsers report each
-                // one. So the range is only put the right way round once a box is left, when its date is the one meant:
-                // a From with no To, or a From after To, carries To along to it, and a To before From brings From
-                // back to it. A year under 1000 is left alone, as one still being typed or mistyped.
+                // As the dates change, they go into the search, and the range is put the right way round: a From with
+                // no To, or a From after To, carries To along to it, and a To before From brings From back to it.
+                // A date picked from the calendar or stepped with the arrow keys is a whole date, so that happens at
+                // once. Typing passes through dates nobody meant, though: changing October to November by typing 1
+                // then 1 passes through January, and browsers report each one. So after a key that types into the
+                // date, the range waits until typing pauses for a second, about when browsers take a part of a date
+                // as finished themselves, or until the box is left, whichever comes first. A year under 1000 is left
+                // alone, as one still being typed or mistyped.
                 // This script is only printed once, after the first date range on the page, so the handlers go on
                 // the document, where they hear every date range, including ones further down the page.
                 var formulizeDateRangeSearch = function(handle) {
@@ -2646,33 +2649,60 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
                     $('#formulize_hidden_daterange_'+handle).val(start+connector+end);
                     $('#formulize_daterange_button_'+handle).show(200);
                 };
-                var formulizeDateRangeChange = function() {
-                    formulizeDateRangeSearch(new String($(this).attr('id')).substr(24));
-                };
-                var formulizeDateRangeLeave = function() {
-                    var id = new String($(this).attr('id'));
+                var formulizeDateRangeOrder = function(box) {
+                    clearTimeout(box.formulizeOrderTimer);
+                    var id = new String(box.id);
                     var handle = id.substr(24);
-                    var leftStart = id.substr(0, 24) == 'formulize_daterange_sta_';
+                    var isStart = id.substr(0, 24) == 'formulize_daterange_sta_';
                     var startBox = $('#formulize_daterange_sta_'+handle);
                     var endBox = $('#formulize_daterange_end_'+handle);
                     var start = startBox.val();
                     var end = endBox.val() == '"._DATE_DEFAULT."' ? '' : endBox.val();
                     var whole = function(date) { return date && parseInt(date.substr(0, 4), 10) >= 1000; };
-                    if(leftStart && whole(start) && (!end || (whole(end) && start > end))) {
-                        endBox.val(start);
-                    } else if(!leftStart && whole(end) && whole(start) && end < start) {
-                        startBox.val(end);
+                    var moved;
+                    if(isStart && whole(start) && (!end || (whole(end) && start > end))) {
+                        moved = endBox.val(start)[0];
+                    } else if(!isStart && whole(end) && whole(start) && end < start) {
+                        moved = startBox.val(end)[0];
                     } else {
                         return;
                     }
-                    formulizeDateRangeSearch(handle);
+                    // the moved box reports its change too, so the search, and anything else listening, hears about it
+                    moved.dispatchEvent(new Event('change', { bubbles: true }));
+                };
+                var formulizeDateRangeChange = function() {
+                    var box = this;
+                    formulizeDateRangeSearch(new String(box.id).substr(24));
+                    clearTimeout(box.formulizeOrderTimer);
+                    if(box.formulizeTyping) {
+                        box.formulizeTyping = false;
+                        box.formulizeOrderTimer = setTimeout(function() { formulizeDateRangeOrder(box); }, 1000);
+                    } else {
+                        formulizeDateRangeOrder(box);
+                    }
+                };
+                // keys that type into a date (digits, letters for month names, deleting) mark the change they make as
+                // typing; arrow keys step to whole dates, and the mouse picks them
+                var formulizeDateRangeKey = function(event) {
+                    var key = (event.originalEvent && event.originalEvent.key) ? event.originalEvent.key : '';
+                    this.formulizeTyping = (key.length == 1 || key == 'Backspace' || key == 'Delete');
+                };
+                var formulizeDateRangePoint = function() {
+                    this.formulizeTyping = false;
+                };
+                var formulizeDateRangeLeave = function() {
+                    formulizeDateRangeOrder(this);
                 };
                 var formulizeDateRangeBoxes = \"[id^='formulize_daterange_sta_'],[id^='formulize_daterange_end_']\";
                 if($.fn.on) {
                     $(document).on('change', formulizeDateRangeBoxes, formulizeDateRangeChange);
+                    $(document).on('keydown', formulizeDateRangeBoxes, formulizeDateRangeKey);
+                    $(document).on('mousedown', formulizeDateRangeBoxes, formulizeDateRangePoint);
                     $(document).on('focusout', formulizeDateRangeBoxes, formulizeDateRangeLeave);
                 } else { // jQuery before 1.7
                     $(document).delegate(formulizeDateRangeBoxes, 'change', formulizeDateRangeChange);
+                    $(document).delegate(formulizeDateRangeBoxes, 'keydown', formulizeDateRangeKey);
+                    $(document).delegate(formulizeDateRangeBoxes, 'mousedown', formulizeDateRangePoint);
                     $(document).delegate(formulizeDateRangeBoxes, 'focusout', formulizeDateRangeLeave);
                 }
                 </script>";
