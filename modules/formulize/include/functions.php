@@ -6754,20 +6754,36 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
 
 		$defaultValue = parseUserAndToday($defaultValue, $elementObject ? $elementObject->getVar('ele_handle') : $element_identifier);
 
+    // Each checkbox filter's options form one set of OR'd conditions, named by $multiCounter so that sets from different
+    // filters are combined with AND. The set is written ORSET12:, the form the search reads with any number of digits.
+    // The older form, ORSET1, has no delimiter and the search reads exactly one character of it, so from the tenth
+    // checkbox filter on a page (one is made for every column with a search other than a box) the set came out wrong.
+    // Values in the older form, like ones in saved views, are rewritten in the new form as they're read here, so their
+    // boxes come back ticked, and unticking them takes them out of the search.
+    $orset = "ORSET$multiCounter:";
+    $keyedOrset = function($value) {
+        return is_string($value) ? preg_replace('/ORSET(\d)(?=[^:\d])/', 'ORSET$1:', $value) : $value;
+    };
+    $postedSearch = isset($_POST[$id]) ? (string) $keyedOrset($_POST[$id]) : '';
+    $gotSearch = isset($_GET[$id]) ? (string) $keyedOrset($_GET[$id]) : '';
+    if($multi) {
+        $defaultValue = $keyedOrset($defaultValue);
+    }
+
     if($multi) { // create the hidden field that will get the value assigned for submission
         $defaultHiddenValue = "";
         if(isset($_POST[$id])) {
-            $defaultHiddenValue = htmlspecialchars(strip_tags($_POST[$id]), ENT_QUOTES);
+            $defaultHiddenValue = htmlspecialchars(strip_tags($postedSearch), ENT_QUOTES);
         } elseif(isset($_GET[$id])) {
-            $defaultHiddenValue = htmlspecialchars(strip_tags($_GET[$id]), ENT_QUOTES);
+            $defaultHiddenValue = htmlspecialchars(strip_tags($gotSearch), ENT_QUOTES);
         } elseif($defaultValue) {
             if(is_string($defaultValue) AND substr($defaultValue,0,5)=="ORSET" AND substr($defaultValue, -2) == "//") {
                 $defaultHiddenValue = $defaultValue;
             } elseif(is_string($defaultValue)) {
-                $defaultHiddenValue = "ORSET$multiCounter$ORSETOperator".$defaultValue."//";
+                $defaultHiddenValue = "$orset$ORSETOperator".$defaultValue."//";
             } elseif(is_array($defaultValue)) {
                 foreach($defaultValue as $dv) {
-                    $defaultHiddenValue .= "ORSET$multiCounter$ORSETOperator".$dv."//";
+                    $defaultHiddenValue .= "$orset$ORSETOperator".$dv."//";
                 }
             }
         }
@@ -6800,12 +6816,12 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
                 $counter++;
                 $checked = "";
                 $selected = "";
-                $checkboxOption = "ORSET$multiCounter={BLANK}//";
+                $checkboxOption = "$orset={BLANK}//";
                 if(isset($_POST[$id])) {
-                    $checked = strstr($_POST[$id], $checkboxOption) ? "checked" : "";
+                    $checked = strstr($postedSearch, $checkboxOption) ? "checked" : "";
                     $selected = $_POST[$id] === 'qsf_0_{BLANK}' ? "selected" : "";
                 }
-                $filter .= $multi ? "<label class='formulize-multifilter-option' for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='ORSET$multiCounter={BLANK}//' $checked onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'".$checkboxOption."'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('".$checkboxOption."', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\"><span>"._SHOW_BLANKS."</span></label>\n" : "<option value=\"qsf_".$counter."_{BLANK}\" $selected>"._SHOW_BLANKS."</option>\n";
+                $filter .= $multi ? "<label class='formulize-multifilter-option' for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$checkboxOption."' $checked onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'".$checkboxOption."'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('".$checkboxOption."', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\"><span>"._SHOW_BLANKS."</span></label>\n" : "<option value=\"qsf_".$counter."_{BLANK}\" $selected>"._SHOW_BLANKS."</option>\n";
             }
         } else {
             // not a filter for core use on list of entries screen, so if multi, set default text to "Any", otherwise use the "Choose an option" default, unless the user has specified something
@@ -7106,11 +7122,11 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
                 if($multi) {
                     $checked = "";
                     if($_POST[$id] != "none" AND $_GET[$id] != "none") {
-                        $checked = (strstr($_POST[$id], "ORSET$multiCounter$ORSETOperator".$option."//") OR strstr($_GET[$id], "ORSET$multiCounter$ORSETOperator".$option."//")) ? "checked" : "";
+                        $checked = (strstr($postedSearch, "$orset$ORSETOperator".$option."//") OR strstr($gotSearch, "$orset$ORSETOperator".$option."//")) ? "checked" : "";
                         $anythingChecked = $checked ? true : $anythingChecked;
                         $checked = (!$anythingChecked AND in_array($option, $defaultValue)) ? "checked" : $checked;
                     }
-                    $filter .= "<label class='formulize-multifilter-option' for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$option."' $checked onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'ORSET$multiCounter$ORSETOperator".$option."//'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('ORSET$multiCounter$ORSETOperator".$option."//', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\"><span>".$labeloption."</span></label>\n";
+                    $filter .= "<label class='formulize-multifilter-option' for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$option."' $checked onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'$orset$ORSETOperator".$option."//'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('$orset$ORSETOperator".$option."//', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\"><span>".$labeloption."</span></label>\n";
                 } else {
                     $selected = ($_POST[$id] == $option OR $_GET[$id] == $option) ? "selected" : "";
                     $selected = (!$selected AND in_array($option, $defaultValue)) ? "selected" : $selected;
@@ -7121,17 +7137,17 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
                     $option = str_replace(":", "", _formulize_OPT_OTHER);
                 }
                 if($multi) {
-                    $option = "ORSET$multiCounter$ORSETOperator".$option."//";
+                    $option = "$orset$ORSETOperator".$option."//";
                 }
                 if ((isset($_POST[$id]) OR isset($_GET[$id])) AND $defaultValue !== false) {
                     if ($formDOMId == "{listofentries}") {
-                        if($multi AND strstr("ORSET$multiCounter$ORSETOperator".$defaultValue."//", $option)) { // the whole overrides as counter idea... so old, multi filters are not going to work with that...
+                        if($multi AND strstr("$orset$ORSETOperator".$defaultValue."//", $option)) { // the whole overrides as counter idea... so old, multi filters are not going to work with that...
                             $selected = "checked";
                         } elseif ( (is_numeric($defaultValue) AND $defaultValue == $counter) OR (!is_numeric($defaultValue) AND ($defaultValue === $option OR $defaultValue === '='.$option)) ) {
                             $selected = "selected";
                         }
                     } else {
-                        if($multi AND (strstr($_POST[$id], $option) OR strstr($_GET[$id],$option))) {
+                        if($multi AND (strstr($postedSearch, $option) OR strstr($gotSearch, $option))) {
                             $selected = "checked";
                         } elseif($_POST[$id] == $option OR $_GET[$id] == $option) {
                            $selected = "selected";
