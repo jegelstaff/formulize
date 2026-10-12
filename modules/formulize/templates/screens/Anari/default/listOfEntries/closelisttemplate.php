@@ -14,7 +14,7 @@ if($calculationResults) {
 }
 
 if($noDataFound) {
-	print "<br /><p>$noDataFound</p>";
+	print "<div class='fz-empty fz-my-5'><p class='fz-empty__title'>$noDataFound</p></div>";
 }
 
 // close the divs opened in the open list template
