@@ -3497,10 +3497,40 @@ input[name='pickdiffgroup'] {
 	border: 0px !important;
 }
 
-/* quickSearchFilters lining up right with search boxes */
-.list-of-entries-container table.outer td[id^=celladdress_1_] select {
-    position: relative;
-    top: 0.5em;
+/* The column search row: the search boxes, the dropdown filters, and the checkbox and date range filters' popover
+   buttons (filterpopovers.js) are all the same box, a line underneath and the text centred in the same height, so
+   whichever kind of filter a column has, their tops, text and lines all line up. */
+#listofentries td[id^=celladdress_1_] input[type=text],
+#listofentries td[id^=celladdress_1_] select,
+#listofentries td[id^=celladdress_1_] .formulize-filter-trigger {
+    box-sizing: border-box;
+    height: 2.25em;
+    min-height: 0;
+    margin: 0;
+    padding: 0.5em 0.25em 0;
+    border: 0;
+    border-bottom: 1px solid var(--fz-color-border-strong);
+    border-radius: 0;
+    background: transparent;
+    font-size: 1rem;
+    line-height: normal; /* what the browser lays out the text of inputs and selects at, whatever is set here, so the buttons' text sits where theirs does */
+}
+
+/* a filter showing its default, with no search in effect, is muted, as the popover buttons are (formulize.css) */
+#listofentries td[id^=celladdress_1_] select:has(option[value=""]:checked) {
+    color: var(--fz-color-text-muted);
+}
+#listofentries td[id^=celladdress_1_] select option {
+    color: var(--text-color);
+}
+
+/* The filter popover panels take the list's 16px text, so their dates and buttons come up from the Formulize UI
+   sizes (14px and 12px), which are drawn for 13px lists, to keep the same proportions */
+.formulize-filter-panel .fz-input {
+    font-size: 1rem;
+}
+.formulize-filter-panel .fz-btn {
+    font-size: var(--fz-text-sm);
 }
 
 /* give inline table elements 100% of space */
