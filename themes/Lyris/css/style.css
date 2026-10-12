@@ -4858,6 +4858,330 @@ body.formulize-popup {
   line-height: 1;
 }
 
+/* ---------- Subform frame ----------
+   On Lyris, core draws every subform element in a frame of its own
+   (`.lyris-subform`, see the end of drawSubLinks() in
+   modules/formulize/class/subformListingsElement.php), whichever way its
+   entries are shown: rows in a table, an accordion of forms, or forms laid out
+   flat. The frame is a small list of entries:
+
+     .lyris-subform__top     the header, and the selection bar that covers it
+       .lyris-subform__head    caption, number of entries and help text at the
+                               start; the filter box and the Add control at the end
+       .lyris-subform__selbar  the list's selection bar (.lyris-selection-bar),
+                               shown while entries are checked
+     .lyris-subform__body    the entries, or a line saying there are none
+     .lyris-subform__foot    the page navigation, when the entries are paged
+
+   The Delete and Clone buttons live in the selection bar, which is placed over
+   the header and is exactly as big, so checking an entry moves nothing. Before,
+   they appeared beside the Add button and could push the entries down.
+
+   The same in the drawer and full screen. These rules come after the drawer's
+   own subform rules above, and win where the two meet (the drawer's smaller
+   buttons, and their margins, have no place in the header's row). */
+
+.lyris-subform {
+  --lyris-subform-radius: var(--lyris-field-radius, var(--fz-radius-md));
+  --lyris-subform-inner-radius: max(0px, calc(var(--lyris-subform-radius) - 1px));
+  --lyris-subform-padding-x: calc(var(--fz-spacing) * 3.5);
+  min-width: 0;
+  border: 1px solid var(--fz-color-border);
+  border-radius: var(--lyris-subform-radius);
+  background: var(--fz-color-surface);
+}
+
+.lyris-subform__top {
+  position: relative;
+}
+
+/* The header. It wraps when there isn't room for both ends (in the drawer, say,
+   with a filter box), and the selection bar covers it at whatever height it is. */
+.lyris-subform__head {
+  box-sizing: border-box;
+  min-height: calc(var(--fz-spacing) * 13);
+  padding: calc(var(--fz-spacing) * 2.5) var(--lyris-subform-padding-x);
+  border-bottom: 1px solid var(--fz-color-border);
+  border-radius: var(--lyris-subform-inner-radius) var(--lyris-subform-inner-radius) 0 0;
+  background: var(--fz-toolbar-bg);
+}
+
+.lyris-subform__heading {
+  flex: 1 1 auto;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 0;
+}
+
+.lyris-subform__title {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--fz-spacing) * 2);
+  max-width: 100%;
+}
+
+.lyris-subform .lyris-subform__title .subform-caption {
+  margin: 0;
+  padding: 0;
+  font-size: var(--fz-text-sm);
+  line-height: var(--fz-text-sm--line-height);
+  font-weight: 600;
+  color: var(--fz-color-text);
+}
+
+.lyris-subform__count {
+  padding: 0 calc(var(--fz-spacing) * 2);
+  border-radius: var(--fz-radius-full);
+  background: var(--fz-color-surface-3);
+  color: var(--fz-color-text-muted);
+  font-size: var(--fz-text-xs);
+  line-height: var(--fz-text-xs-plus--line-height);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.lyris-subform .lyris-subform__heading .subform-helptext {
+  margin: 0;
+  color: var(--fz-color-text-muted);
+  font-size: var(--fz-text-xs);
+  line-height: var(--fz-text-xs--line-height);
+}
+
+/* The controls: nothing in the row has a margin of its own, the gap spaces them */
+.lyris-subform .subform_button_controls input[type="button"],
+.lyris-subform .subform_button_controls input[type="text"] {
+  height: var(--fz-control-height);
+  margin: 0;
+}
+
+/* the filter box comes before the Add control; its label is its placeholder */
+.lyris-subform .subform_button_controls .subform-filter-search {
+  order: -1;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--fz-spacing) * 1.5);
+  margin: 0;
+}
+
+/* "Add [3] entries": the button, the count box and the text after it, joined
+   into one control that reads as a sentence, so it is plain what the number is
+   for. The outline is the group's; the three parts are divided by rules. */
+.lyris-subform__add {
+  display: inline-flex;
+  align-items: stretch;
+  overflow: hidden;
+  border: 1px solid var(--fz-color-border-strong);
+  border-radius: var(--fz-button-radius, var(--fz-radius-md));
+  background: var(--fz-color-surface);
+}
+
+.lyris-subform__add:focus-within {
+  border-color: var(--fz-color-focus);
+  box-shadow: var(--fz-focus-ring);
+}
+
+.lyris-subform .subform_button_controls .lyris-subform__add > input[type="button"],
+.lyris-subform .subform_button_controls .lyris-subform__add > input[type="text"] {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.lyris-subform .subform_button_controls .lyris-subform__add > input[type="text"] {
+  box-sizing: content-box;
+  width: 2ch;
+  min-width: 0;
+  padding: 0 calc(var(--fz-spacing) * 2.5);
+  border-inline: 1px solid var(--fz-color-border-strong);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.lyris-subform__add-unit {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 calc(var(--fz-spacing) * 3);
+  background: var(--fz-color-surface-2);
+  color: var(--fz-color-text);
+  font-size: var(--fz-control-text);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* The selection bar. It is the list's bar, so its colours and its buttons come
+   from .lyris-selection-bar; only its place is set here: over the header and
+   the frame's border around it, in place of the list's own height and card. */
+.lyris-subform .lyris-selection-bar.lyris-subform__selbar {
+  top: -1px;
+  left: -1px;
+  right: -1px;
+  bottom: 0;
+  height: auto;
+  min-height: 0;
+  flex-wrap: nowrap;
+  padding: calc(var(--fz-spacing) * 2.5) var(--lyris-subform-padding-x);
+  border: 1px solid var(--fz-color-text);
+  border-radius: var(--lyris-subform-radius) var(--lyris-subform-radius) 0 0;
+}
+
+.lyris-subform .lyris-subform__selbar .lyris-selection-bar__actions {
+  flex-wrap: nowrap;
+}
+
+/* Delete is the danger button, and comes last, as on a list (which gives its
+   own Delete this look by id). Clear is the outlined button. */
+.lyris-selection-bar.lyris-subform__selbar input[name="deletesubs"] {
+  order: 1;
+  background: rgba(255,90,90,.14);
+  border-color: rgba(255,120,120,.35);
+  color: #ffbaba;
+}
+.lyris-selection-bar.lyris-subform__selbar input[name="deletesubs"]:hover {
+  background: rgba(255,90,90,.22);
+  border-color: rgba(255,120,120,.5);
+  color: #fff;
+}
+.lyris-selection-bar.lyris-subform__selbar input.lyris-subform__clear {
+  background: transparent;
+  border-color: rgba(255,255,255,.25);
+  color: rgba(255,255,255,.85);
+}
+.lyris-selection-bar.lyris-subform__selbar input.lyris-subform__clear:hover {
+  background: rgba(255,255,255,.10);
+  border-color: rgba(255,255,255,.45);
+  color: #fff;
+}
+
+/* No entries */
+.lyris-subform__empty {
+  margin: 0;
+  padding: calc(var(--fz-spacing) * 6) calc(var(--fz-spacing) * 4);
+  color: var(--fz-color-text-muted);
+  font-size: var(--fz-text-xs-plus);
+  text-align: center;
+}
+.lyris-subform--empty .formulize-subform-table-scrollbox {
+  display: none;
+}
+
+/* The page navigation */
+.lyris-subform__foot {
+  display: flex;
+  justify-content: flex-end;
+  padding: calc(var(--fz-spacing) * 1.5) var(--lyris-subform-padding-x);
+  border-top: 1px solid var(--fz-color-border);
+  color: var(--fz-color-text-muted);
+  font-size: var(--fz-text-xs-plus);
+}
+.lyris-subform__foot .formulize-page-navigation {
+  margin: 0;
+  padding: 0;
+  background: none;
+}
+.lyris-subform__foot .formulize-page-navigation a.page-navigation-active {
+  border-color: var(--fz-color-accent-soft-2);
+  background: var(--fz-color-accent-soft);
+  color: var(--fz-color-accent-text);
+}
+
+/* Rows in a table: the frame is the table's border now, and the header is above
+   it, so only the bottom corners are rounded, and only when no footer follows. */
+.lyris-subform .formulize-subform-table-scrollbox {
+  margin-top: 0;
+}
+.lyris-subform .formulize-subform-table {
+  --lyris-subform-cell-radius: 0px;
+  border: 0;
+  border-radius: 0;
+}
+.lyris-subform:not(:has(> .lyris-subform__foot)) > .lyris-subform__body .formulize-subform-table > tbody > tr:last-child > :first-child {
+  border-bottom-left-radius: var(--lyris-subform-inner-radius);
+}
+.lyris-subform:not(:has(> .lyris-subform__foot)) > .lyris-subform__body .formulize-subform-table > tbody > tr:last-child > :last-child {
+  border-bottom-right-radius: var(--lyris-subform-inner-radius);
+}
+.lyris-subform .formulize-subform-table > tbody > tr > .subentry-delete-cell {
+  padding-left: var(--lyris-subform-padding-x);
+}
+/* a checked row, tinted as on a list */
+.lyris-subform .formulize-subform-table > tbody > tr:has(> .subentry-delete-cell > .delbox:checked) > td {
+  background: var(--fz-color-accent-soft);
+}
+
+/* Forms, in an accordion or laid out flat: each entry is a row of the frame,
+   divided from the next by a rule, in place of a bordered bar of its own. Its
+   checkbox is in a column at the start of the row (core emits it as a sibling
+   before the entry, see the accordion's own rules above). */
+.lyris-subform :is(.subform-accordion-container, .subform-flatform-container):has(> .subform-deletebox > input.delbox) {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: stretch;
+}
+.lyris-subform :is(.subform-accordion-container, .subform-flatform-container) > .subform-entry-container,
+.lyris-subform :is(.subform-accordion-container, .subform-flatform-container):has(> .subform-deletebox > input.delbox) > .subform-deletebox {
+  border-bottom: 1px solid var(--fz-color-border);
+}
+.lyris-subform :is(.subform-accordion-container, .subform-flatform-container) > .subform-entry-container:last-child,
+.lyris-subform :is(.subform-accordion-container, .subform-flatform-container):has(> .subform-deletebox > input.delbox) > .subform-deletebox:nth-last-child(2) {
+  border-bottom: 0;
+}
+.lyris-subform :is(.subform-accordion-container, .subform-flatform-container) > .subform-deletebox:has(> input.delbox) {
+  display: flex;
+  align-items: flex-start;
+  padding: calc(var(--fz-spacing) * 3.5) 0 0 var(--lyris-subform-padding-x);
+  font-size: 0; /* the spaces core puts after the box */
+}
+.lyris-subform :is(.subform-accordion-container, .subform-flatform-container) > .subform-deletebox > input.delbox {
+  margin: 0;
+}
+
+.lyris-subform .subform-accordion-container.ui-accordion .subform-header.ui-accordion-header {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.lyris-subform .subform-accordion-container.ui-accordion .subform-header.ui-accordion-header:is(.ui-state-hover, .ui-state-focus) {
+  background: var(--fz-color-surface-2);
+}
+.lyris-subform .subform-accordion-container.ui-accordion .subform-header.ui-accordion-header.ui-state-active {
+  background: var(--fz-color-accent-soft);
+}
+.lyris-subform .subform-accordion-container.ui-accordion .accordion-content.ui-accordion-content {
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--fz-color-border);
+  border-radius: 0;
+}
+/* A checked entry is tinted like a checked row, and so is an open one (its
+   header already is). The checkbox's cell is as tall as the whole entry, form
+   and all when it is open, so its tint is drawn only as deep as the header:
+   the header's line of text and the padding above and below it. */
+.lyris-subform .subform-accordion-container.ui-accordion > .subform-deletebox:has(> input.delbox:checked) + .subform-entry-container > .subform-header.ui-accordion-header {
+  background: var(--fz-color-accent-soft);
+}
+.lyris-subform .subform-accordion-container > .subform-deletebox:has(> input.delbox:checked),
+.lyris-subform .subform-accordion-container > .subform-deletebox:has(+ .subform-entry-container > .ui-state-active) {
+  background: linear-gradient(var(--fz-color-accent-soft), var(--fz-color-accent-soft)) no-repeat;
+  background-size: 100% calc(var(--fz-text-sm--line-height) + var(--fz-spacing) * 6);
+}
+
+/* Flat forms: the entry's name is a heading above its form. Core nests the name's
+   <p> in another, which browsers split into empty paragraphs either side of it. */
+.lyris-subform .subform-flatform > p:empty {
+  display: none;
+}
+.lyris-subform .subform-flatform > .flatform-name {
+  margin: 0;
+  padding: calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 4);
+  font-size: var(--fz-text-sm);
+  font-weight: 600;
+}
+.lyris-subform .subform-flatform > .accordion-content {
+  padding: 0 calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 4);
+}
+
 /* ---------- "Table of elements" (grid) element (issue #119) ----------
    Core renders this element as divs in a CSS grid rather than a <table>; the
    column tracks, the gap and the ARIA roles all come from
