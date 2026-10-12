@@ -2630,35 +2630,35 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
                 $().click(function() {
                     $('.formulize_daterange').change();
                 });
+                // keep the range the right way round: a From with no To, or a From after To, carries To along to it,
+                // and a To before From brings From back to it. A year under 1000 is a date still being typed (typing
+                // 2026 passes through 0002, 0020 and 0202), so those are left alone until the year is whole.
                 $(\"[id^='formulize_daterange_sta_'],[id^='formulize_daterange_end_']\").change(function() {
                     var id = new String($(this).attr('id'));
                     var handle = id.substr(24);
-                    var start = $('#formulize_daterange_sta_'+handle).val();
-                    var end = $('#formulize_daterange_end_'+handle).val();
+                    var changedStart = id.substr(0, 24) == 'formulize_daterange_sta_';
+                    var startBox = $('#formulize_daterange_sta_'+handle);
+                    var endBox = $('#formulize_daterange_end_'+handle);
+                    var start = startBox.val();
+                    var end = endBox.val() == '"._DATE_DEFAULT."' ? '' : endBox.val();
+                    var whole = function(date) { return date && parseInt(date.substr(0, 4), 10) >= 1000; };
+                    if(changedStart && whole(start) && (!end || (whole(end) && start > end))) {
+                        end = start;
+                        endBox.val(end);
+                    } else if(!changedStart && whole(end) && whole(start) && end < start) {
+                        start = end;
+                        startBox.val(start);
+                    }
 										start = start ? '>='+start : '';
 										end = end ? '<='+end : '';
 										var connector = (start && end) ? '//' : '';
                     $('#formulize_hidden_daterange_'+handle).val(start+connector+end);
                     $('#formulize_daterange_button_'+handle).show(200);
                 });
-                $(\"[id^='formulize_daterange_sta_']\").change(function() {
-                    var id = new String($(this).attr('id'));
-                    var handle = id.substr(24);
-                    var start = $('#formulize_daterange_sta_'+handle).val();
-                    var end = $('#formulize_daterange_end_'+handle).val();
-										if((end == '' || end == '"._DATE_DEFAULT."') && start) {
-                    	$('#formulize_daterange_end_'+handle).val(start);
-											end = start;
-											start = '>='+start;
-											end = '<='+end;
-											var connector = '//';
-                      $('#formulize_hidden_daterange_'+handle).val(start+connector+end);
-                      $('#formulize_daterange_button_'+handle).show(200);
-										}
-                });
                 </script>";
             }
-            return '<div>'._formulize_FROM.' <div style="display: flex;">'.$startDateElement->render(). "</div><br>"._formulize_TO . " <div style='display: flex;'>" . $endDateElement->render() . "</div><br>\n<input type=button style='display: none;' id='formulize_daterange_button_".$handle."' class='formulize-small-button' name=qdrGoButton value='" . _formulize_SUBMITTEXT . "' onclick=\"javascript:showLoading();\"></input>\n<input type='hidden' id='formulize_hidden_daterange_".$handle."' name='search_".$handle."' value='".htmlspecialchars($search_text)."' ></input></div>\n$js";
+            // each label wraps its date, so clicking the word focuses the date. formulize.css puts the word beside the date when there's room, and above it when there isn't
+            return "<div class='formulize-daterange'>\n<label class='formulize-daterange-field'><span>"._formulize_FROM."</span>".$startDateElement->render()."</label>\n<label class='formulize-daterange-field'><span>"._formulize_TO."</span>".$endDateElement->render()."</label>\n<input type=button style='display: none;' id='formulize_daterange_button_".$handle."' class='formulize-small-button formulize-filter-apply' name=qdrGoButton value='" . _formulize_SUBMITTEXT . "' onclick=\"javascript:showLoading();\"></input>\n<input type='hidden' id='formulize_hidden_daterange_".$handle."' name='search_".$handle."' value='".htmlspecialchars($search_text)."' ></input></div>\n$js";
         }
     }
     return "";
@@ -3762,6 +3762,43 @@ function interfaceJavascript($fid, $frid, $currentview, $useWorking, $useXhr, $l
 
 	$autocompleteJsVersion = formulize_get_file_version('/modules/formulize/include/js/autocomplete.js');
 	print "<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/include/js/autocomplete.js?v=".$autocompleteJsVersion."'></script>";
+
+	// the checkbox and date range filters in the column search cells open as popovers (see filterpopovers.js)
+	$filterPopoverLang = array(
+		'anyDate' => _formulize_FILTERPOP_ANY_DATE,
+		'selected' => _formulize_FILTERPOP_SELECTED,
+		'find' => _formulize_FILTERPOP_FIND,
+		'noMatches' => _formulize_FILTERPOP_NO_MATCHES,
+		'apply' => _formulize_SUBMITTEXT,
+		'clear' => _formulize_FILTERPOP_CLEAR,
+		'cancel' => _formulize_FILTERPOP_CANCEL,
+		'fromDate' => _formulize_FILTERPOP_FROM_DATE,
+		'untilDate' => _formulize_FILTERPOP_UNTIL_DATE,
+		'from' => _formulize_FROM,
+		'to' => _formulize_TO,
+		'today' => _formulize_FILTERPOP_TODAY,
+		'lastMonday' => _formulize_FILTERPOP_LAST_MONDAY,
+		'firstOfMonth' => _formulize_FILTERPOP_FIRST_OF_MONTH,
+		'daysAgo' => _formulize_FILTERPOP_DAYS_AGO,
+		'jan1' => _formulize_FILTERPOP_JAN_1,
+		'nextFriday' => _formulize_FILTERPOP_NEXT_FRIDAY,
+		'lastOfMonth' => _formulize_FILTERPOP_LAST_OF_MONTH,
+		'daysFromNow' => _formulize_FILTERPOP_DAYS_FROM_NOW,
+		'dec31' => _formulize_FILTERPOP_DEC_31,
+		'numberOfDays' => _formulize_FILTERPOP_NUMBER_OF_DAYS,
+		'typeSearch' => _formulize_FILTERPOP_TYPE_SEARCH,
+		'pickInstead' => _formulize_FILTERPOP_PICK_INSTEAD,
+	);
+	// webmasters can swap a popover for a box to type any search term into, like {TODAY-7}; the script remembers
+	// that per screen, so screen tells it which screen this is (or which form, for a list with no screen)
+	global $xoopsUser;
+	$filterPopoverSettings = array(
+		'typeSearch' => ($xoopsUser AND in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())),
+		'screen' => $screen ? 'sid'.$screen->getVar('sid') : 'fid'.intval($fid),
+	);
+	$filterPopoversJsVersion = formulize_get_file_version('/modules/formulize/include/js/filterpopovers.js');
+	print "<script type='text/javascript'>window.formulizeFilterPopoverLang = ".json_encode($filterPopoverLang)."; window.formulizeFilterPopoverSettings = ".json_encode($filterPopoverSettings).";</script>\n";
+	print "<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/include/js/filterpopovers.js?v=".$filterPopoversJsVersion."'></script>";
 
 	global $formulizeRemoveEntryIdentifier;
 	if($formulizeRemoveEntryIdentifier) {

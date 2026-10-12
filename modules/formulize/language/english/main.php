@@ -946,3 +946,26 @@ define("_formulize_AUTOCOMPLETE_REMOVE", "Remove");
 define("_formulize_AUTOCOMPLETE_REMOVE_ITEM", "Remove %s");
 define("_formulize_AUTOCOMPLETE_CONFIRM_MESSAGE", "Remove %s from the selected items?");
 define("_formulize_AUTOCOMPLETE_CONFIRM_MESSAGE_GENERIC", "Remove this item from the selected items?");
+
+// Popover pickers for the checkbox and date range filters in a list's column search cells
+define("_formulize_FILTERPOP_ANY_DATE", "Any date");
+define("_formulize_FILTERPOP_SELECTED", "%s selected");
+define("_formulize_FILTERPOP_FIND", "Find");
+define("_formulize_FILTERPOP_NO_MATCHES", "Nothing matches");
+define("_formulize_FILTERPOP_CLEAR", "Clear");
+define("_formulize_FILTERPOP_CANCEL", "Cancel");
+// the date shortcuts: the From ones, then the To ones. %s is where the box for the number of days goes
+define("_formulize_FILTERPOP_TODAY", "Today");
+define("_formulize_FILTERPOP_LAST_MONDAY", "Last Monday");
+define("_formulize_FILTERPOP_FIRST_OF_MONTH", "First of this month");
+define("_formulize_FILTERPOP_DAYS_AGO", "%s days ago");
+define("_formulize_FILTERPOP_JAN_1", "Jan 1 this year");
+define("_formulize_FILTERPOP_NEXT_FRIDAY", "Next Friday");
+define("_formulize_FILTERPOP_LAST_OF_MONTH", "Last day of this month");
+define("_formulize_FILTERPOP_DAYS_FROM_NOW", "%s days from now");
+define("_formulize_FILTERPOP_DEC_31", "Dec 31 this year");
+define("_formulize_FILTERPOP_NUMBER_OF_DAYS", "Number of days");
+define("_formulize_FILTERPOP_TYPE_SEARCH", "Type a search term");
+define("_formulize_FILTERPOP_PICK_INSTEAD", "Pick instead of typing");
+define("_formulize_FILTERPOP_FROM_DATE", "From %s");
+define("_formulize_FILTERPOP_UNTIL_DATE", "Until %s");

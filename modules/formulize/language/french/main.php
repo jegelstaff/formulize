@@ -708,5 +708,28 @@ define("_formulize_EMBED_SIGNIN_NEWTAB", "La connexion doit se faire dans son pr
 define("_formulize_EMBED_NOPERM_ACCOUNT", "Vous êtes connecté, mais cet écran n'est pas accessible à votre compte. Si vous pensez qu'il devrait l'être, contactez la personne qui gère ce site.");
 define("_formulize_EMBED_OPEN_NEWWINDOW", "Ouvrir dans une nouvelle fenêtre");
 
+// Popover pickers for the checkbox and date range filters in a list's column search cells
+define("_formulize_FILTERPOP_ANY_DATE", "N'importe quelle date");
+define("_formulize_FILTERPOP_SELECTED", "%s sélectionnés");
+define("_formulize_FILTERPOP_FIND", "Rechercher");
+define("_formulize_FILTERPOP_NO_MATCHES", "Aucun résultat");
+define("_formulize_FILTERPOP_CLEAR", "Effacer");
+define("_formulize_FILTERPOP_CANCEL", "Annuler");
+// the date shortcuts: the From ones, then the To ones. %s is where the box for the number of days goes
+define("_formulize_FILTERPOP_TODAY", "Aujourd'hui");
+define("_formulize_FILTERPOP_LAST_MONDAY", "Lundi dernier");
+define("_formulize_FILTERPOP_FIRST_OF_MONTH", "Premier jour du mois");
+define("_formulize_FILTERPOP_DAYS_AGO", "Il y a %s jours");
+define("_formulize_FILTERPOP_JAN_1", "1er janvier de cette année");
+define("_formulize_FILTERPOP_NEXT_FRIDAY", "Vendredi prochain");
+define("_formulize_FILTERPOP_LAST_OF_MONTH", "Dernier jour du mois");
+define("_formulize_FILTERPOP_DAYS_FROM_NOW", "Dans %s jours");
+define("_formulize_FILTERPOP_DEC_31", "31 décembre de cette année");
+define("_formulize_FILTERPOP_NUMBER_OF_DAYS", "Nombre de jours");
+define("_formulize_FILTERPOP_TYPE_SEARCH", "Saisir un terme de recherche");
+define("_formulize_FILTERPOP_PICK_INSTEAD", "Choisir plutôt que saisir");
+define("_formulize_FILTERPOP_FROM_DATE", "À partir du %s");
+define("_formulize_FILTERPOP_UNTIL_DATE", "Jusqu'au %s");
+
 
 include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/main.php';

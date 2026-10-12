@@ -1472,12 +1472,25 @@ body:not(.formulize-inline) .lyris-page:has(> #listofentries .lyris-list-screen)
   font-variant-numeric: tabular-nums;
 }
 
-.lyris-search-row input:not([type="checkbox"]):not([type="radio"]),
+/* The #listofentries prefix is needed to outrank formulize.css's
+   `#listofentries div.main-cell-div input { width: 80% }`. */
+#listofentries .lyris-search-row input:not([type="checkbox"]):not([type="radio"]),
 .lyris-search-row select,
 .lyris-search-row textarea {
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
+}
+
+/* Filters of different heights (a checkbox list beside a select) line up along the top of the
+   row, rather than each floating in the middle of it. */
+.lyris-search-row td {
+  vertical-align: top;
+}
+
+/* Date inputs: trim the side padding so a full date and its calendar icon fit a narrow column. */
+#listofentries .lyris-search-row input[type="date"] {
+  padding-inline: calc(var(--fz-spacing) * 1.5);
 }
 
 /* Checkbox / controls column: one fixed width, its padding plus room for its
@@ -3794,7 +3807,9 @@ input[type="time"] { font-family: var(--fz-font-sans); }
    - `:not(:where(.auto_multi_remove, [class*="lyris-"]))` for the autocomplete chip's × icon
      button. `:where()` contributes ZERO specificity, so this exemption removes
      the button from the blanket rule's match set without nudging the rule's
-     specificity up for anything else. The same `:where()` also exempts
+     specificity up for anything else. The list filters' popover trigger
+     (`.formulize-filter-trigger`, see filterpopovers.js) is exempted in the
+     same list. The same `:where()` also exempts
      Lyris's own classes (`lyris-`): anything carrying one is styled by its own
      rules, as the `fz-` exemption does for Formulize UI. (The view switcher's
      menu items were `fz-pop__item` until phase 3a renamed them `lyris-`, which
@@ -3806,7 +3821,7 @@ input[type="time"] { font-family: var(--fz-font-sans); }
    source order — silently re-breaking a previously fixed component.
    ============================================================ */
 
-button:not([class*="fz-"]):not([class*="formulize_button"]):not([class*="formulize-drawer__btn"]):not([class*="formulize-drawer__tab"]):not(:where(.auto_multi_remove, [class*="lyris-"])),
+button:not([class*="fz-"]):not([class*="formulize_button"]):not([class*="formulize-drawer__btn"]):not([class*="formulize-drawer__tab"]):not(:where(.auto_multi_remove, .formulize-filter-trigger, [class*="lyris-"])),
 input[type="submit"]:not([class*="fz-"]),
 input[type="reset"]:not([class*="fz-"]),
 input[type="button"]:not([class*="fz-"]):not(.formulize_button) {
@@ -3835,7 +3850,7 @@ input[type="button"]:not([class*="fz-"]):not(.formulize_button) {
               color var(--fz-duration-fast) var(--fz-ease-out);
 }
 
-button:not([class*="fz-"]):not([class*="formulize_button"]):not([class*="formulize-drawer__btn"]):not([class*="formulize-drawer__tab"]):not(:where(.auto_multi_remove, [class*="lyris-"])):hover,
+button:not([class*="fz-"]):not([class*="formulize_button"]):not([class*="formulize-drawer__btn"]):not([class*="formulize-drawer__tab"]):not(:where(.auto_multi_remove, .formulize-filter-trigger, [class*="lyris-"])):hover,
 input[type="submit"]:not([class*="fz-"]):hover,
 input[type="reset"]:not([class*="fz-"]):hover,
 input[type="button"]:not([class*="fz-"]):not(.formulize_button):hover {
@@ -3843,7 +3858,7 @@ input[type="button"]:not([class*="fz-"]):not(.formulize_button):hover {
   border-color: var(--fz-color-text-muted);
 }
 
-button:not([class*="fz-"]):not([class*="formulize_button"]):not([class*="formulize-drawer__btn"]):not([class*="formulize-drawer__tab"]):not(:where(.auto_multi_remove, [class*="lyris-"])):focus-visible,
+button:not([class*="fz-"]):not([class*="formulize_button"]):not([class*="formulize-drawer__btn"]):not([class*="formulize-drawer__tab"]):not(:where(.auto_multi_remove, .formulize-filter-trigger, [class*="lyris-"])):focus-visible,
 input[type="submit"]:not([class*="fz-"]):focus-visible,
 input[type="reset"]:not([class*="fz-"]):focus-visible,
 input[type="button"]:not([class*="fz-"]):not(.formulize_button):focus-visible {
