@@ -1050,26 +1050,21 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
     // and the add and filter controls, a selection bar that covers the header while entries are checked (so the delete
     // and clone buttons never push the entries down when they appear), then the entries, then the page navigation.
     // The frame is put together at the end of this function, and its structure is styled in formulize.css.
-    // This is the markup for every theme. The exceptions are the Anari theme, whose layout and styling are built
-    // on the older markup, and the printable view: they get the older markup, with no frame.
-    global $xoopsConfig;
-    $anariTheme = (isset($xoopsConfig['theme_set']) AND $xoopsConfig['theme_set'] == 'Anari');
-    $subformFrame = (!$anariTheme AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php"));
-    $selectionButtonSpacer = $subformFrame ? "" : "&nbsp;&nbsp;&nbsp;";
-    $selectionButtonStyle = $subformFrame ? "" : " style='display: none;'";
+    // The markup is the same in every theme, and in the printable view, where there are simply no controls,
+    // checkboxes or selection bar to put in it. Themes skin it in their own stylesheets.
     $subEntriesDrawn = 0;
     $subBlanksDrawn = false;
 
     $col_two = "
-				<div id='subform_button_controls_$subform_id$subformElementId$subformInstance' class='subform_button_controls".($subformFrame ? " fz-toolbar__end" : "")."'>";
+				<div id='subform_button_controls_$subform_id$subformElementId$subformInstance' class='subform_button_controls fz-toolbar__end'>";
 
     $deleteButton = "";
 		if(((count((array) $sub_entries[$subform_id])>0 AND $sub_entries[$subform_id][0] != "") OR $sub_entry_new OR is_array($sub_entry_written)) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
 			if((!isset($subform_element_object->ele_value["show_delete_button"]) OR $subform_element_object->ele_value["show_delete_button"]) AND ($gperm_handler->checkRight("delete_own_entry", $subform_id, $groups, $mid) OR $gperm_handler->checkRight("delete_group_entries", $subform_id, $groups, $mid) OR $gperm_handler->checkRight("delete_other_entries", $subform_id, $groups, $mid))) {
-				$deleteButton = "$selectionButtonSpacer<input class='subform-delete-clone-buttons$subformElementId$subformInstance'$selectionButtonStyle type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del($subform_id, '$viewType', ".intval($_GET['subformElementId']).", '$fid', '$entry');\">";
+				$deleteButton = "<input class='subform-delete-clone-buttons$subformElementId$subformInstance' type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del($subform_id, '$viewType', ".intval($_GET['subformElementId']).", '$fid', '$entry');\">";
 			}
 			if((!isset($subform_element_object->ele_value["show_clone_button"]) OR $subform_element_object->ele_value["show_clone_button"]) AND $gperm_handler->checkRight("add_own_entry", $subform_id, $groups, $mid)) {
-				$deleteButton .= "$selectionButtonSpacer<input class='subform-delete-clone-buttons$subformElementId$subformInstance'$selectionButtonStyle type=button name=clonesubs value='" . _formulize_CLONE_CHECKED . "' onclick=\"javascript:sub_clone($subform_id, '$viewType', ".intval($_GET['subformElementId']).", '$fid', '$entry');\">";
+				$deleteButton .= "<input class='subform-delete-clone-buttons$subformElementId$subformInstance' type=button name=clonesubs value='" . _formulize_CLONE_CHECKED . "' onclick=\"javascript:sub_clone($subform_id, '$viewType', ".intval($_GET['subformElementId']).", '$fid', '$entry');\">";
 			}
 		}
 
@@ -1101,7 +1096,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
         } elseif(!$sub_single) {
             $use_simple_add_one_button = (isset($subform_element_object->ele_value["simple_add_one_button"]) ? 1 == $subform_element_object->ele_value["simple_add_one_button"] : false);
             // in the frame, the button, the count box and the text after it are one joined control that reads as a sentence: Add [3] entries
-            $subformAddGroup = ($subformFrame AND $allowed_to_add_entries AND !$hidingAddEntries AND !$use_simple_add_one_button);
+            $subformAddGroup = ($allowed_to_add_entries AND !$hidingAddEntries AND !$use_simple_add_one_button);
             if($subformAddGroup) {
                 $col_two .= "<span class='formulize-subform__add'>";
             }
@@ -1115,9 +1110,6 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                 $col_two .= $subformAddGroup ? "<span class='formulize-subform__add-unit'>$addEntriesText</span></span>" : $addEntriesText;
             }
         }
-        if(!$subformFrame) { // in the frame, these go in the selection bar
-            $col_two .= $deleteButton;
-        }
     }
 
 		// hacking in a filter for existing entries
@@ -1125,23 +1117,17 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 			$filterElementObject = $element_handler->get($subform_element_object->ele_value["UserFilterByElement"]);
       $filterSearchLabel = sprintf(_formulize_SUBFORM_FILTER_SEARCH, ($subform_element_object->ele_value[4] ? $filterElementObject->getVar('ele_caption') : $filterElementObject->getUIName()));
       $filterSearchValue = htmlspecialchars(strip_tags(str_replace("'","&#039;",$_POST['subformFilterBox_'.$subformInstance])));
-      if($subformFrame) {
-        // in the frame's header there is no room for the sentence beside the box, so it is the box's placeholder
-        $filterSearchLabel = htmlspecialchars(strip_tags(rtrim($filterSearchLabel, ': ')), ENT_QUOTES);
-        $col_two .= "<div class='subform-filter-search'><input type='text' name='subformFilterBox_$subformInstance' value='$filterSearchValue' placeholder='$filterSearchLabel' title='$filterSearchLabel' aria-label='$filterSearchLabel' onkeypress='javascript: if(event.keyCode == 13) validateAndSubmit();'/><input type='button' value='"._formulize_SUBFORM_FILTER_GO."' onclick='validateAndSubmit();' /></div>";
-      } else {
-        $col_two .= "<div class='subform-filter-search'>".$filterSearchLabel."<input type='text' name='subformFilterBox_$subformInstance' value='".$filterSearchValue."' onkeypress='javascript: if(event.keyCode == 13) validateAndSubmit();'/>&nbsp;&nbsp;&nbsp;<input type='button' value='"._formulize_SUBFORM_FILTER_GO."' onclick='validateAndSubmit();' /></div>";
-      }
+      // in the frame's header there is no room for the sentence beside the box, so it is the box's placeholder
+      $filterSearchLabel = htmlspecialchars(strip_tags(rtrim($filterSearchLabel, ': ')), ENT_QUOTES);
+      $col_two .= "<div class='subform-filter-search'><input type='text' name='subformFilterBox_$subformInstance' value='$filterSearchValue' placeholder='$filterSearchLabel' title='$filterSearchLabel' aria-label='$filterSearchLabel' onkeypress='javascript: if(event.keyCode == 13) validateAndSubmit();'/><input type='button' value='"._formulize_SUBFORM_FILTER_GO."' onclick='validateAndSubmit();' /></div>";
+
 		}
 
 		$col_two .= "</div>";
 
-	$frameControls = "";
-	if($subformFrame) {
-		// everything so far is the controls, which go in the frame's header. From here on, $col_two is the entries.
-		$frameControls = $col_two;
-		$col_two = "";
-	}
+	// everything so far is the controls, which go in the frame's header. From here on, $col_two is the entries.
+	$frameControls = $col_two;
+	$col_two = "";
 	$subEntriesBeforeLimit = count((array) $sub_entries[$subform_id]);
 
 	// construct the limit based on what is passed in via $numberOfEntriesToDisplay and $firstRowToDisplay
@@ -1163,20 +1149,14 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 		$pageNav = formulize_buildPageNavMarkup('gotoSubPage'.$subformElementId.$subformInstance, $numberOfEntriesToDisplay, $firstRowToDisplay, $firstDisplayPageNumber, $lastDisplayPageNumber, $lastPageNumber, _formulize_DMULTI_PAGE.":");
 	}
 
-	if(!$subformFrame) { // in the frame, the page navigation goes in the footer
-		$col_two .= $pageNav; // figured out above
-	}
+	// $pageNav goes in the frame's footer, see the end of the function
 
-	// Row subform tables use the same 'natural' column sizing as list views (issue #920, following #919), except on Anari:
-	// each column hugs its content (width: 1% on the cells, see the Lyris style.css), and a trailing unstyled
-	// spacer cell absorbs the leftover width, so a table narrower than its container still visually reaches
-	// the far edge. This is the same .formulize-spacer mechanism that entriesdisplay.php uses for list views.
-	$subformSpacerHeaderCell = "";
-	$subformSpacerCell = "";
-	if(!$anariTheme) {
-		$subformSpacerHeaderCell = "<th class='formulize-spacer'></th>\n";
-		$subformSpacerCell = "<td class='formulize-spacer'></td>\n";
-	}
+	// Each row of a subform table ends in an unstyled spacer cell, the same .formulize-spacer mechanism that
+	// entriesdisplay.php uses for list views (issue #920, following #919). A theme that sizes the columns to their
+	// content (width: 1% on the cells, see the Lyris style.css) has the spacer absorb the leftover width, so a table
+	// narrower than its container still visually reaches the far edge. A theme that doesn't can hide it.
+	$subformSpacerHeaderCell = "<th class='formulize-spacer'></th>\n";
+	$subformSpacerCell = "<td class='formulize-spacer'></td>\n";
 
 	if($rowsOrForms=="row" OR $rowsOrForms =='') {
 		$subformTableScopeId = "formulize-subform-table-scrollbox-$subform_id$subformElementId$subformInstance";
@@ -1372,8 +1352,8 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 					if(!$drawnHeadersOnce) {
 						$col_two .= "<tr>";
                         if ($sub_ent !== "new" AND $deleteButton AND $userCouldDeleteOrClone AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
-                            // in the frame, a box that checks or unchecks every entry (see formulizeSubformSelectAll below)
-                            $selectAllBox = $subformFrame ? "<input type='checkbox' class='formulize-subform__select-all' aria-label='".htmlspecialchars(_formulize_DE_SELALL, ENT_QUOTES)."' title='".htmlspecialchars(_formulize_DE_SELALL, ENT_QUOTES)."' onclick='formulizeSubformSelectAll($subformElementId$subformInstance, this.checked);'>" : "";
+                            // a box that checks or unchecks every entry (see formulizeSubformSelectAll below)
+                            $selectAllBox = "<input type='checkbox' class='formulize-subform__select-all' aria-label='".htmlspecialchars(_formulize_DE_SELALL, ENT_QUOTES)."' title='".htmlspecialchars(_formulize_DE_SELALL, ENT_QUOTES)."' onclick='formulizeSubformSelectAll($subformElementId$subformInstance, this.checked);'>";
                             $col_two .= "<th class='subentry-delete-cell'>$selectAllBox</th>\n";
                         }
                         if($showViewButtons AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) { $col_two .= "<th class='subentry-view-cell'></th>\n"; }
@@ -1512,46 +1492,44 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 		$col_two .= "</div>\n";
 	}
 
-	if($subformFrame) {
-		$frameInstance = $subformElementId.$subformInstance;
-		$frameMode = ($rowsOrForms == 'row' OR $rowsOrForms == '') ? 'row' : $rowsOrForms;
-		// the number of entries, beside the caption: all of them when they are paged, and none when the rows are blanks waiting to be filled in
-		$frameCount = "";
-		if($subEntriesDrawn AND !$subBlanksDrawn) {
-			$frameCount = "<span class='formulize-subform__count'>".($limitClause ? $subEntriesBeforeLimit : $subEntriesDrawn)."</span>";
-		}
-		$frameEmpty = "";
-		if(!$subEntriesDrawn) {
-			$frameEmpty = "<p class='formulize-subform__empty'>".(defined('_formulize_SUBFORM_NO_ENTRIES') ? _formulize_SUBFORM_NO_ENTRIES : 'No entries yet')."</p>";
-		}
-		// the selection bar, placed over this subform's header while entries are checked
-		$frameSelectionBar = "";
-		if($deleteButton) {
-			$frameSelectionBar = "
-			<div class='fz-toolbar formulize-subform__selbar'>
-				<div class='fz-toolbar__start'>
-					<input type='button' class='formulize-subform__clear' value='".htmlspecialchars(_formulize_FILTERPOP_CLEAR, ENT_QUOTES)."' onclick='formulizeSubformSelectAll($frameInstance, false);'>
-					<span class='formulize-subform__selection-count'></span>
-				</div>
-				<div class='fz-toolbar__end'>$deleteButton</div>
-			</div>";
-		}
-		$col_two = "
-		<div class='formulize-subform formulize-subform--$frameMode".($subEntriesDrawn ? "" : " formulize-subform--empty")."' id='formulize-subform-$frameInstance'>
-			<div class='formulize-subform__top'>
-				<div class='fz-toolbar formulize-subform__head'>
-					<div class='fz-toolbar__start formulize-subform__heading'>
-						<div class='formulize-subform__title'>$col_one_caption$frameCount</div>
-						$helpText
-					</div>
-					$frameControls
-				</div>$frameSelectionBar
-			</div>
-			<div class='formulize-subform__body'>$col_two$frameEmpty</div>
-			".($pageNav ? "<div class='formulize-subform__foot'>$pageNav</div>" : "")."
-		</div>";
-		$col_one = ""; // the caption is in the frame's header
+	$frameInstance = $subformElementId.$subformInstance;
+	$frameMode = ($rowsOrForms == 'row' OR $rowsOrForms == '') ? 'row' : $rowsOrForms;
+	// the number of entries, beside the caption: all of them when they are paged, and none when the rows are blanks waiting to be filled in
+	$frameCount = "";
+	if($subEntriesDrawn AND !$subBlanksDrawn) {
+		$frameCount = "<span class='formulize-subform__count'>".($limitClause ? $subEntriesBeforeLimit : $subEntriesDrawn)."</span>";
 	}
+	$frameEmpty = "";
+	if(!$subEntriesDrawn) {
+		$frameEmpty = "<p class='formulize-subform__empty'>".(defined('_formulize_SUBFORM_NO_ENTRIES') ? _formulize_SUBFORM_NO_ENTRIES : 'No entries yet')."</p>";
+	}
+	// the selection bar, placed over this subform's header while entries are checked
+	$frameSelectionBar = "";
+	if($deleteButton) {
+		$frameSelectionBar = "
+		<div class='fz-toolbar formulize-subform__selbar'>
+			<div class='fz-toolbar__start'>
+				<input type='button' class='formulize-subform__clear' value='".htmlspecialchars(_formulize_FILTERPOP_CLEAR, ENT_QUOTES)."' onclick='formulizeSubformSelectAll($frameInstance, false);'>
+				<span class='formulize-subform__selection-count'></span>
+			</div>
+			<div class='fz-toolbar__end'>$deleteButton</div>
+		</div>";
+	}
+	$col_two = "
+	<div class='formulize-subform formulize-subform--$frameMode".($subEntriesDrawn ? "" : " formulize-subform--empty")."' id='formulize-subform-$frameInstance'>
+		<div class='formulize-subform__top'>
+			<div class='fz-toolbar formulize-subform__head'>
+				<div class='fz-toolbar__start formulize-subform__heading'>
+					<div class='formulize-subform__title'>$col_one_caption$frameCount</div>
+					$helpText
+				</div>
+				$frameControls
+			</div>$frameSelectionBar
+		</div>
+		<div class='formulize-subform__body'>$col_two$frameEmpty</div>
+		".($pageNav ? "<div class='formulize-subform__foot'>$pageNav</div>" : "")."
+	</div>";
+	$col_one = ""; // the caption is in the frame's header
 
 	  $subformJS = '';
     if($rowsOrForms=='form') { // if we're doing accordions, put in the JS, otherwise it's flat-forms
@@ -1576,41 +1554,27 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             });
         ";
     }
-    if($subformFrame) {
-        // In the frame, checking an entry shows the selection bar over the subform's header, with the number checked.
-        // Only this subform's own boxes count, not those of a subform nested in one of its entries.
-        $subformJS .= "
-        function formulizeSubformBoxes(frame) {
-            return frame.find('.delbox').filter(function() { return jQuery(this).closest('.formulize-subform')[0] === frame[0]; });
-        }
-        function showHideDeleteClone(elementInstance) {
-            var frame = jQuery('#formulize-subform-'+elementInstance);
-            var boxes = formulizeSubformBoxes(frame);
-            var checked = boxes.filter(':checked').length;
-            var bar = frame.children('.formulize-subform__top').children('.formulize-subform__selbar');
-            bar.toggleClass('is-active', checked > 0);
-            bar.find('.formulize-subform__selection-count').text(".json_encode(_formulize_FILTERPOP_SELECTED).".replace('%s', checked));
-            frame.find('.formulize-subform__select-all').filter(function() { return jQuery(this).closest('.formulize-subform')[0] === frame[0]; }).prop('checked', checked > 0 && checked == boxes.length);
-        }
-        function formulizeSubformSelectAll(elementInstance, state) {
-            formulizeSubformBoxes(jQuery('#formulize-subform-'+elementInstance)).prop('checked', state);
-            showHideDeleteClone(elementInstance);
-        }
-        jQuery(function() { showHideDeleteClone('".$subformElementId.$subformInstance."'); }); // boxes the browser kept checked across a reload
-        ";
-    } else {
-        $subformJS .= "
-        function showHideDeleteClone(elementInstance) {
-            var checkedBoxes = jQuery(\".delbox:checked\");
-            if(jQuery(\".subform-delete-clone-buttons\"+elementInstance).css(\"display\") == \"none\" &&
-            checkedBoxes.length > 0) {
-                jQuery(\".subform-delete-clone-buttons\"+elementInstance).show(200);
-            } else if(checkedBoxes.length == 0) {
-                jQuery(\".subform-delete-clone-buttons\"+elementInstance).hide(200);
-            }
-        }
-        ";
+    // In the frame, checking an entry shows the selection bar over the subform's header, with the number checked.
+    // Only this subform's own boxes count, not those of a subform nested in one of its entries.
+    $subformJS .= "
+    function formulizeSubformBoxes(frame) {
+        return frame.find('.delbox').filter(function() { return jQuery(this).closest('.formulize-subform')[0] === frame[0]; });
     }
+    function showHideDeleteClone(elementInstance) {
+        var frame = jQuery('#formulize-subform-'+elementInstance);
+        var boxes = formulizeSubformBoxes(frame);
+        var checked = boxes.filter(':checked').length;
+        var bar = frame.children('.formulize-subform__top').children('.formulize-subform__selbar');
+        bar.toggleClass('is-active', checked > 0);
+        bar.find('.formulize-subform__selection-count').text(".json_encode(_formulize_FILTERPOP_SELECTED).".replace('%s', checked));
+        frame.find('.formulize-subform__select-all').filter(function() { return jQuery(this).closest('.formulize-subform')[0] === frame[0]; }).prop('checked', checked > 0 && checked == boxes.length);
+    }
+    function formulizeSubformSelectAll(elementInstance, state) {
+        formulizeSubformBoxes(jQuery('#formulize-subform-'+elementInstance)).prop('checked', state);
+        showHideDeleteClone(elementInstance);
+    }
+    if(window.jQuery) { jQuery(function() { showHideDeleteClone('".$subformElementId.$subformInstance."'); }); } // boxes the browser kept checked across a reload (the printable view loads no jQuery, and has no boxes)
+    ";
     $subformJS .= "
 				function gotoSubPage".$subformElementId.$subformInstance."(firstRecordOrdinalOfPage) {
 					jQuery.post(FORMULIZE.XOOPS_URL+'/modules/formulize/formulize_xhr_responder.php?uid='+FORMULIZE.XOOPS_UID+'&op=get_element_row_html&elementId=".$subformElementId."&entryId=".$entry."&fid=".$fid."&frid=".$frid."', { formulizeFirstRowToDisplay: firstRecordOrdinalOfPage, formulizeSubformPagingInstance: ".$subformElementId.$subformInstance." }, function(data) {

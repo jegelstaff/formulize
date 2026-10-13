@@ -2011,6 +2011,106 @@ div.subform-entry-container .ui-widget-content {
     background: none;
 }
 
+/* ---- The subform frame ----
+   Core draws every subform element in a frame (.formulize-subform): a header
+   with the caption and the Add control, a selection bar that covers the header
+   while entries are checked, then the entries. Its structure is styled in
+   modules/formulize/templates/css/formulize.css, on the tokens this theme
+   shares, so the frame already wears Anari's colours. What is here fits Anari's
+   own subform styling (above, and under "table.formulize-subform-table") into
+   it: the spacing and offsets those rules gave a subform that stood on its own
+   have no place inside a frame that supplies the spacing itself. */
+.formulize-subform {
+  --formulize-subform-radius: 4px; /* the cards' */
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+/* the header is as wide as the frame */
+.formulize-subform .formulize-subform__head {
+  width: 100%;
+}
+
+/* the controls are a row of the header, with no margins of their own */
+.formulize-subform div.subform_button_controls {
+  margin: 0;
+}
+.formulize-subform div.subform_button_controls input[type="text"] {
+  margin-left: 0;
+}
+
+/* the selection bar's buttons are as wide as their text, not the theme's fixed
+   button width, and don't glow */
+.formulize-subform .formulize-subform__top .formulize-subform__selbar input[type="button"] {
+  width: auto;
+  min-width: 0;
+  box-shadow: none;
+}
+
+/* Rows in a table: the table fills the frame, which is its outer border, so the
+   cells keep only the dotted rules between them. The spacer cell core ends each
+   row with is for themes that size columns to their content; not this one. */
+.formulize-subform table.formulize-subform-table {
+  width: 100%;
+}
+.formulize-subform .formulize-subform-table > tbody > tr > .formulize-spacer {
+  display: none;
+}
+.formulize-subform .formulize-subform-table > tbody > tr > :first-child {
+  border-left: 0;
+  padding-left: var(--formulize-subform-padding-x);
+}
+.formulize-subform .formulize-subform-table > tbody > tr > :nth-last-child(2) {
+  border-right: 0;
+}
+.formulize-subform .formulize-subform-table > tbody > tr:last-child > td {
+  border-bottom: 0;
+}
+.formulize-subform .formulize-subform-table > tbody > tr > .subentry-delete-cell,
+.formulize-subform .formulize-subform-table > tbody > tr > .subentry-view-cell {
+  width: 1%;
+}
+
+/* Forms, in an accordion or laid out flat: each entry is a row of the frame */
+.formulize-subform .subform-accordion-container,
+.formulize-subform .subform-flatform-container {
+  margin-top: 0;
+}
+.formulize-subform .subform-entry-container {
+  top: 0;
+  margin-left: 0;
+  margin-bottom: 0;
+}
+.formulize-subform .subform-deletebox {
+  height: auto;
+}
+/* the checkbox, level with the entry's name in this theme's taller header */
+.formulize-subform .formulize-subform__body > :is(.subform-accordion-container, .subform-flatform-container) > .subform-deletebox:has(> input.delbox) {
+  padding-top: 1.25rem;
+}
+.formulize-subform .subform-entry-container .accordion-name {
+  top: 0;
+}
+.formulize-subform .subform-flatform {
+  padding-bottom: 0;
+}
+div.formulize-subform div.subform-entry-container .ui-state-default,
+div.formulize-subform div.subform-entry-container .ui-state-active,
+div.formulize-subform div.subform-entry-container .ui-widget-content {
+  border: 0;
+  border-radius: 0;
+}
+/* the theme makes every .ui-state-default as tall as its container, and an
+   entry in the frame has a definite height (it is a row of a grid), which would
+   make its header as tall as the whole entry */
+div.formulize-subform div.subform-entry-container .ui-accordion-header {
+  height: auto;
+  margin: 0;
+}
+div.formulize-subform div.subform-entry-container .ui-accordion-content {
+  border-top: 1px solid var(--fz-color-border);
+}
+
 
 .card {
   background: var(--fz-color-surface);
