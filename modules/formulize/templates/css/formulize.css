@@ -960,6 +960,13 @@ div#formulize-printpreview div.formulize-subform-table-scrollbox {
 		overflow-y: visible !important;
 }
 
+/* In the printable view, the forms of a subform's entries are drawn straight
+   into the frame, with no accordion around them, so the frame gives them their
+   space from its edges. */
+div#formulize-printpreview .formulize-subform:not(.formulize-subform--row) > .formulize-subform__body {
+	padding: 1em;
+}
+
 div#formulize-printpreview div#multipage-controls {
 	display: none !important
 }
