@@ -4931,15 +4931,26 @@ body.formulize-popup {
   border-top: 1px solid var(--fz-color-border);
   border-radius: 0;
 }
+/* Pointing at an entry's header, or at its checkbox, tints the whole row, checkbox
+   cell included, the way a checked or open entry is tinted throughout. (The
+   rules for a checked and an open entry follow, and win.) */
+.formulize-subform .subform-accordion-container > .subform-deletebox:has(+ .subform-entry-container > :is(.ui-state-hover, .ui-state-focus)),
+.formulize-subform .subform-accordion-container > .subform-deletebox:has(> input.delbox):hover {
+  background: var(--fz-color-surface-2);
+}
+.formulize-subform .subform-accordion-container.ui-accordion > .subform-deletebox:has(> input.delbox:not(:checked)):hover + .subform-entry-container > .subform-header.ui-accordion-header:not(.ui-state-active) {
+  background: var(--fz-color-surface-2);
+}
 /* A checked entry is tinted like a checked row, and so is an open one (its
-   header already is). The checkbox's cell is as tall as the whole entry, form
-   and all when it is open, so its tint is drawn only as deep as the header:
-   the header's line of text and the padding above and below it. */
-.formulize-subform .subform-accordion-container.ui-accordion > .subform-deletebox:has(> input.delbox:checked) + .subform-entry-container > .subform-header.ui-accordion-header {
+   header already is). */
+.formulize-subform .subform-accordion-container.ui-accordion > .subform-deletebox:has(> input.delbox:checked) + .subform-entry-container > .subform-header.ui-accordion-header,
+.formulize-subform .subform-accordion-container > .subform-deletebox:has(> input.delbox:checked) {
   background: var(--fz-color-accent-soft);
 }
-.formulize-subform .subform-accordion-container > .subform-deletebox:has(> input.delbox:checked),
-.formulize-subform .subform-accordion-container > .subform-deletebox:has(+ .subform-entry-container > .ui-state-active) {
+/* The checkbox's cell is as tall as the whole entry, form and all when it is
+   open, so there its tint is drawn only as deep as the header: the header's
+   line of text and the padding above and below it. */
+.formulize-subform .subform-accordion-container.ui-accordion > .subform-deletebox:has(+ .subform-entry-container > .ui-state-active) {
   background: linear-gradient(var(--fz-color-accent-soft), var(--fz-color-accent-soft)) no-repeat;
   background-size: 100% calc(var(--fz-text-sm--line-height) + var(--fz-spacing) * 6);
 }
