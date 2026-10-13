@@ -1046,20 +1046,22 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
         $addViewType = 'Modal';
     }
 
-    // On Lyris, a subform is drawn in a frame of its own, like a small list: a header holding the caption and the
-    // add and filter controls, a selection bar that covers the header while entries are checked (so the delete and
-    // clone buttons never push the entries down when they appear), then the entries, then the page navigation.
-    // The frame is put together at the end of this function. Other themes, and the printable view, get the same
-    // markup as always.
+    // A subform is drawn in a frame of its own (.formulize-subform), like a small list: a header holding the caption
+    // and the add and filter controls, a selection bar that covers the header while entries are checked (so the delete
+    // and clone buttons never push the entries down when they appear), then the entries, then the page navigation.
+    // The frame is put together at the end of this function, and its structure is styled in formulize.css.
+    // This is the markup for every theme. The exceptions are the Anari theme, whose layout and styling are built
+    // on the older markup, and the printable view: they get the older markup, with no frame.
     global $xoopsConfig;
-    $lyrisFrame = (isset($xoopsConfig['theme_set']) AND $xoopsConfig['theme_set'] == 'Lyris' AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php"));
-    $selectionButtonSpacer = $lyrisFrame ? "" : "&nbsp;&nbsp;&nbsp;";
-    $selectionButtonStyle = $lyrisFrame ? "" : " style='display: none;'";
+    $anariTheme = (isset($xoopsConfig['theme_set']) AND $xoopsConfig['theme_set'] == 'Anari');
+    $subformFrame = (!$anariTheme AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php"));
+    $selectionButtonSpacer = $subformFrame ? "" : "&nbsp;&nbsp;&nbsp;";
+    $selectionButtonStyle = $subformFrame ? "" : " style='display: none;'";
     $subEntriesDrawn = 0;
     $subBlanksDrawn = false;
 
     $col_two = "
-				<div id='subform_button_controls_$subform_id$subformElementId$subformInstance' class='subform_button_controls".($lyrisFrame ? " fz-toolbar__end" : "")."'>";
+				<div id='subform_button_controls_$subform_id$subformElementId$subformInstance' class='subform_button_controls".($subformFrame ? " fz-toolbar__end" : "")."'>";
 
     $deleteButton = "";
 		if(((count((array) $sub_entries[$subform_id])>0 AND $sub_entries[$subform_id][0] != "") OR $sub_entry_new OR is_array($sub_entry_written)) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
@@ -1098,10 +1100,10 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             $col_two .= "<input type=button name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$subform_id', 1, ".$subformElementId.$subformInstance.", '$frid', '$fid', '$entry', '$subformElementId', '$addViewType', ".(isset($_GET['subformElementId']) ? intval($_GET['subformElementId']) : 0).");\">";
         } elseif(!$sub_single) {
             $use_simple_add_one_button = (isset($subform_element_object->ele_value["simple_add_one_button"]) ? 1 == $subform_element_object->ele_value["simple_add_one_button"] : false);
-            // on Lyris, the button, the count box and the text after it are one joined control that reads as a sentence: Add [3] entries
-            $lyrisAddGroup = ($lyrisFrame AND $allowed_to_add_entries AND !$hidingAddEntries AND !$use_simple_add_one_button);
-            if($lyrisAddGroup) {
-                $col_two .= "<span class='lyris-subform__add'>";
+            // in the frame, the button, the count box and the text after it are one joined control that reads as a sentence: Add [3] entries
+            $subformAddGroup = ($subformFrame AND $allowed_to_add_entries AND !$hidingAddEntries AND !$use_simple_add_one_button);
+            if($subformAddGroup) {
+                $col_two .= "<span class='formulize-subform__add'>";
             }
             if($allowed_to_add_entries AND !$hidingAddEntries) {
                 $col_two .= "<input type=button name=addsub value='".($use_simple_add_one_button ? trans($subform_element_object->ele_value['simple_add_one_button_text']) : _formulize_ADD)."' onclick=\"javascript:add_sub('$subform_id', jQuery('#addsubentries".$subform_id.$subformElementId.$subformInstance."').val(), ".$subformElementId.$subformInstance.", '$frid', '$fid', '$entry', '$subformElementId', '$addViewType', ".(isset($_GET['subformElementId']) ? intval($_GET['subformElementId']) : 0).");\">";
@@ -1110,10 +1112,10 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                 $col_two .= "<input type=\"hidden\" name=addsubentries$subform_id$subformElementId$subformInstance id=addsubentries$subform_id$subformElementId$subformInstance value=\"1\">";
             } elseif($allowed_to_add_entries AND !$hidingAddEntries) {
                 $col_two .= "<input type=text name=addsubentries$subform_id$subformElementId$subformInstance id=addsubentries$subform_id$subformElementId$subformInstance value=1 size=2 maxlength=2>";
-                $col_two .= $lyrisAddGroup ? "<span class='lyris-subform__add-unit'>$addEntriesText</span></span>" : $addEntriesText;
+                $col_two .= $subformAddGroup ? "<span class='formulize-subform__add-unit'>$addEntriesText</span></span>" : $addEntriesText;
             }
         }
-        if(!$lyrisFrame) { // on Lyris, these go in the selection bar
+        if(!$subformFrame) { // in the frame, these go in the selection bar
             $col_two .= $deleteButton;
         }
     }
@@ -1123,7 +1125,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 			$filterElementObject = $element_handler->get($subform_element_object->ele_value["UserFilterByElement"]);
       $filterSearchLabel = sprintf(_formulize_SUBFORM_FILTER_SEARCH, ($subform_element_object->ele_value[4] ? $filterElementObject->getVar('ele_caption') : $filterElementObject->getUIName()));
       $filterSearchValue = htmlspecialchars(strip_tags(str_replace("'","&#039;",$_POST['subformFilterBox_'.$subformInstance])));
-      if($lyrisFrame) {
+      if($subformFrame) {
         // in the frame's header there is no room for the sentence beside the box, so it is the box's placeholder
         $filterSearchLabel = htmlspecialchars(strip_tags(rtrim($filterSearchLabel, ': ')), ENT_QUOTES);
         $col_two .= "<div class='subform-filter-search'><input type='text' name='subformFilterBox_$subformInstance' value='$filterSearchValue' placeholder='$filterSearchLabel' title='$filterSearchLabel' aria-label='$filterSearchLabel' onkeypress='javascript: if(event.keyCode == 13) validateAndSubmit();'/><input type='button' value='"._formulize_SUBFORM_FILTER_GO."' onclick='validateAndSubmit();' /></div>";
@@ -1134,10 +1136,10 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 
 		$col_two .= "</div>";
 
-	$lyrisControls = "";
-	if($lyrisFrame) {
+	$frameControls = "";
+	if($subformFrame) {
 		// everything so far is the controls, which go in the frame's header. From here on, $col_two is the entries.
-		$lyrisControls = $col_two;
+		$frameControls = $col_two;
 		$col_two = "";
 	}
 	$subEntriesBeforeLimit = count((array) $sub_entries[$subform_id]);
@@ -1161,17 +1163,17 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 		$pageNav = formulize_buildPageNavMarkup('gotoSubPage'.$subformElementId.$subformInstance, $numberOfEntriesToDisplay, $firstRowToDisplay, $firstDisplayPageNumber, $lastDisplayPageNumber, $lastPageNumber, _formulize_DMULTI_PAGE.":");
 	}
 
-	if(!$lyrisFrame) { // on Lyris, the page navigation goes in the frame's footer
+	if(!$subformFrame) { // in the frame, the page navigation goes in the footer
 		$col_two .= $pageNav; // figured out above
 	}
 
-	// On Lyris, row subform tables use the same 'natural' column sizing as list views (issue #920, following #919):
+	// Row subform tables use the same 'natural' column sizing as list views (issue #920, following #919), except on Anari:
 	// each column hugs its content (width: 1% on the cells, see the Lyris style.css), and a trailing unstyled
 	// spacer cell absorbs the leftover width, so a table narrower than its container still visually reaches
 	// the far edge. This is the same .formulize-spacer mechanism that entriesdisplay.php uses for list views.
 	$subformSpacerHeaderCell = "";
 	$subformSpacerCell = "";
-	if(isset($xoopsConfig['theme_set']) AND $xoopsConfig['theme_set'] == 'Lyris') {
+	if(!$anariTheme) {
 		$subformSpacerHeaderCell = "<th class='formulize-spacer'></th>\n";
 		$subformSpacerCell = "<td class='formulize-spacer'></td>\n";
 	}
@@ -1370,8 +1372,8 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 					if(!$drawnHeadersOnce) {
 						$col_two .= "<tr>";
                         if ($sub_ent !== "new" AND $deleteButton AND $userCouldDeleteOrClone AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
-                            // on Lyris, a box that checks or unchecks every entry (see lyrisSubformSelectAll below)
-                            $selectAllBox = $lyrisFrame ? "<input type='checkbox' class='lyris-subform__select-all' aria-label='".htmlspecialchars(_formulize_DE_SELALL, ENT_QUOTES)."' title='".htmlspecialchars(_formulize_DE_SELALL, ENT_QUOTES)."' onclick='lyrisSubformSelectAll($subformElementId$subformInstance, this.checked);'>" : "";
+                            // in the frame, a box that checks or unchecks every entry (see formulizeSubformSelectAll below)
+                            $selectAllBox = $subformFrame ? "<input type='checkbox' class='formulize-subform__select-all' aria-label='".htmlspecialchars(_formulize_DE_SELALL, ENT_QUOTES)."' title='".htmlspecialchars(_formulize_DE_SELALL, ENT_QUOTES)."' onclick='formulizeSubformSelectAll($subformElementId$subformInstance, this.checked);'>" : "";
                             $col_two .= "<th class='subentry-delete-cell'>$selectAllBox</th>\n";
                         }
                         if($showViewButtons AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) { $col_two .= "<th class='subentry-view-cell'></th>\n"; }
@@ -1510,43 +1512,43 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 		$col_two .= "</div>\n";
 	}
 
-	if($lyrisFrame) {
-		$lyrisInstance = $subformElementId.$subformInstance;
-		$lyrisMode = ($rowsOrForms == 'row' OR $rowsOrForms == '') ? 'row' : $rowsOrForms;
+	if($subformFrame) {
+		$frameInstance = $subformElementId.$subformInstance;
+		$frameMode = ($rowsOrForms == 'row' OR $rowsOrForms == '') ? 'row' : $rowsOrForms;
 		// the number of entries, beside the caption: all of them when they are paged, and none when the rows are blanks waiting to be filled in
-		$lyrisCount = "";
+		$frameCount = "";
 		if($subEntriesDrawn AND !$subBlanksDrawn) {
-			$lyrisCount = "<span class='lyris-subform__count'>".($limitClause ? $subEntriesBeforeLimit : $subEntriesDrawn)."</span>";
+			$frameCount = "<span class='formulize-subform__count'>".($limitClause ? $subEntriesBeforeLimit : $subEntriesDrawn)."</span>";
 		}
-		$lyrisEmpty = "";
+		$frameEmpty = "";
 		if(!$subEntriesDrawn) {
-			$lyrisEmpty = "<p class='lyris-subform__empty'>".(defined('_formulize_SUBFORM_NO_ENTRIES') ? _formulize_SUBFORM_NO_ENTRIES : 'No entries yet')."</p>";
+			$frameEmpty = "<p class='formulize-subform__empty'>".(defined('_formulize_SUBFORM_NO_ENTRIES') ? _formulize_SUBFORM_NO_ENTRIES : 'No entries yet')."</p>";
 		}
-		// the selection bar: the same bar as a list's (lyris-selection-bar), placed over this subform's header while entries are checked
-		$lyrisSelectionBar = "";
+		// the selection bar, placed over this subform's header while entries are checked
+		$frameSelectionBar = "";
 		if($deleteButton) {
-			$lyrisSelectionBar = "
-			<div class='fz-toolbar lyris-selection-bar lyris-subform__selbar'>
-				<div class='fz-toolbar__start lyris-selection-bar__start'>
-					<input type='button' class='lyris-subform__clear' value='".htmlspecialchars(_formulize_FILTERPOP_CLEAR, ENT_QUOTES)."' onclick='lyrisSubformSelectAll($lyrisInstance, false);'>
-					<span class='js-selection-count lyris-subform__selection-count'></span>
+			$frameSelectionBar = "
+			<div class='fz-toolbar formulize-subform__selbar'>
+				<div class='fz-toolbar__start'>
+					<input type='button' class='formulize-subform__clear' value='".htmlspecialchars(_formulize_FILTERPOP_CLEAR, ENT_QUOTES)."' onclick='formulizeSubformSelectAll($frameInstance, false);'>
+					<span class='formulize-subform__selection-count'></span>
 				</div>
-				<div class='fz-toolbar__end lyris-selection-bar__actions'>$deleteButton</div>
+				<div class='fz-toolbar__end'>$deleteButton</div>
 			</div>";
 		}
 		$col_two = "
-		<div class='lyris-subform lyris-subform--$lyrisMode".($subEntriesDrawn ? "" : " lyris-subform--empty")."' id='lyris-subform-$lyrisInstance'>
-			<div class='lyris-subform__top'>
-				<div class='fz-toolbar lyris-subform__head'>
-					<div class='fz-toolbar__start lyris-subform__heading'>
-						<div class='lyris-subform__title'>$col_one_caption$lyrisCount</div>
+		<div class='formulize-subform formulize-subform--$frameMode".($subEntriesDrawn ? "" : " formulize-subform--empty")."' id='formulize-subform-$frameInstance'>
+			<div class='formulize-subform__top'>
+				<div class='fz-toolbar formulize-subform__head'>
+					<div class='fz-toolbar__start formulize-subform__heading'>
+						<div class='formulize-subform__title'>$col_one_caption$frameCount</div>
 						$helpText
 					</div>
-					$lyrisControls
-				</div>$lyrisSelectionBar
+					$frameControls
+				</div>$frameSelectionBar
 			</div>
-			<div class='lyris-subform__body'>$col_two$lyrisEmpty</div>
-			".($pageNav ? "<div class='lyris-subform__foot'>$pageNav</div>" : "")."
+			<div class='formulize-subform__body'>$col_two$frameEmpty</div>
+			".($pageNav ? "<div class='formulize-subform__foot'>$pageNav</div>" : "")."
 		</div>";
 		$col_one = ""; // the caption is in the frame's header
 	}
@@ -1574,24 +1576,24 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             });
         ";
     }
-    if($lyrisFrame) {
-        // On Lyris, checking an entry shows the selection bar over the subform's header, with the number checked.
+    if($subformFrame) {
+        // In the frame, checking an entry shows the selection bar over the subform's header, with the number checked.
         // Only this subform's own boxes count, not those of a subform nested in one of its entries.
         $subformJS .= "
-        function lyrisSubformBoxes(frame) {
-            return frame.find('.delbox').filter(function() { return jQuery(this).closest('.lyris-subform')[0] === frame[0]; });
+        function formulizeSubformBoxes(frame) {
+            return frame.find('.delbox').filter(function() { return jQuery(this).closest('.formulize-subform')[0] === frame[0]; });
         }
         function showHideDeleteClone(elementInstance) {
-            var frame = jQuery('#lyris-subform-'+elementInstance);
-            var boxes = lyrisSubformBoxes(frame);
+            var frame = jQuery('#formulize-subform-'+elementInstance);
+            var boxes = formulizeSubformBoxes(frame);
             var checked = boxes.filter(':checked').length;
-            var bar = frame.children('.lyris-subform__top').children('.lyris-subform__selbar');
+            var bar = frame.children('.formulize-subform__top').children('.formulize-subform__selbar');
             bar.toggleClass('is-active', checked > 0);
-            bar.find('.lyris-subform__selection-count').text(".json_encode(_formulize_FILTERPOP_SELECTED).".replace('%s', checked));
-            frame.find('.lyris-subform__select-all').filter(function() { return jQuery(this).closest('.lyris-subform')[0] === frame[0]; }).prop('checked', checked > 0 && checked == boxes.length);
+            bar.find('.formulize-subform__selection-count').text(".json_encode(_formulize_FILTERPOP_SELECTED).".replace('%s', checked));
+            frame.find('.formulize-subform__select-all').filter(function() { return jQuery(this).closest('.formulize-subform')[0] === frame[0]; }).prop('checked', checked > 0 && checked == boxes.length);
         }
-        function lyrisSubformSelectAll(elementInstance, state) {
-            lyrisSubformBoxes(jQuery('#lyris-subform-'+elementInstance)).prop('checked', state);
+        function formulizeSubformSelectAll(elementInstance, state) {
+            formulizeSubformBoxes(jQuery('#formulize-subform-'+elementInstance)).prop('checked', state);
             showHideDeleteClone(elementInstance);
         }
         jQuery(function() { showHideDeleteClone('".$subformElementId.$subformInstance."'); }); // boxes the browser kept checked across a reload
