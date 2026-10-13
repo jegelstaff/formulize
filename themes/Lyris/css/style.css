@@ -134,7 +134,9 @@ h1, h2, h3, h4, h5, h6,
 }
 
 .lyris-header__brand img {
-  height: 1.75rem;
+  /* the header's height less 10px above and below (28px at Default), so a
+     taller header (the Appearance editor's Top bar height) has a larger logo */
+  height: calc(var(--lyris-header-height) - 1.25rem);
   width: auto;
   display: block;
 }
@@ -2056,7 +2058,14 @@ body:has(#formulize-masquerade-block) {
     z-index: 19;
   }
 
-  /* ---- Header: tighter chrome ---- */
+  /* ---- Header: tighter chrome ----
+     The header keeps its 48px here whatever the Top bar height is, so a tall
+     header doesn't take the room a phone has for the page. The sidebar and
+     its overlay, above, open under it. */
+
+  :root {
+    --lyris-header-height: 3rem;
+  }
 
   .lyris-header {
     padding: 0 calc(var(--fz-spacing) * 3);

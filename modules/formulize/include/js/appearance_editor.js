@@ -790,7 +790,8 @@
 				'<div class="formulize-editor__scope">' + (c.site
 					? '<span>A site-wide setting: it changes <strong>' + esc(c.plural) + '</strong>.</span>'
 					: '<span>Changes apply to <strong>' + esc(c.plural) + '</strong> on the site, not just the one you clicked.' + (where ? ' Used on these screens, outlined in each:' : '') + '</span>' + (where ? '<div class="formulize-editor__where">' + where + '</div>' : '')) + '</div>';
-			body.innerHTML = c.site === 'logo' ? uploadBlock('appearance_logo') + uploadBlock('appearance_favicon') : partBlock(c);
+			// the logo's images, and in advanced mode its tokens too (the top bar's height, which it is sized from)
+			body.innerHTML = c.site === 'logo' ? uploadBlock('appearance_logo') + uploadBlock('appearance_favicon') + (SIMPLE ? '' : partBlock(c)) : partBlock(c);
 		} else {
 			var n = changeCount();
 			head.innerHTML = '<div class="formulize-editor__kicker">Nothing selected</div>' +

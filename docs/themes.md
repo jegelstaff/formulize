@@ -191,6 +191,15 @@ looks the same until one is changed.
 }
 ```
 
+**If your theme has a bar across the top of every page with the logo in it**, give the bar
+`height: var(--fz-topbar-height)` and size the logo from it, so the advanced editor's Top bar
+height makes the logo larger too. Lyris's logo is the bar's height less 10px above and below:
+
+```css
+.my-topbar { height: var(--fz-topbar-height); }
+.my-topbar img { height: calc(var(--fz-topbar-height) - 1.25rem); width: auto; }
+```
+
 **If your theme's own font comes from Google Fonts**, say which weights of it to download, with your
 other tokens:
 

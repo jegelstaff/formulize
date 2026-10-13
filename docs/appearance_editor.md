@@ -88,6 +88,9 @@ The **Changes** tab has two lists:
   hover colour is a darker shade of whatever colour it is given.
 - **Corners** can be anything from square to well rounded; buttons and page tabs can be fully
   rounded too.
+- **The logo is as tall as the top bar allows.** Select the logo, or the page, to change the top
+  bar's height: a taller bar has a larger logo. On phones, Lyris keeps the bar and the logo at their
+  usual size.
 - **The spacing of a form is on its fields.** Select a field to change the space between fields;
   help text, for the space above it; choice options, for the space between them; a label, for the
   space below it.
