@@ -3478,20 +3478,8 @@ function markupNameAttr($renderedMarkupName) {
 // governingElements is array with keys that are the DOM ids of the elements that govern other elements, and the values are arrays of the elements being governed
 function drawJavascriptForConditionalElements($conditionalElements, $governingElements, $oneToOneElements, $oneToOneMetaData=false, $elementScreenIds=false, $elementIsSimpleDisplayCondition=false) {
 
-    // This code relies on conditional.js, which is included once per request, with the first block of this code that
-    // is generated (see _drawJavascriptForConditionalElements). That is not always the first block in the page: the
-    // blocks of forms nested in a subform can be generated first and placed later. On a full page that makes no
-    // difference, since nothing here runs until every script has loaded. In a fragment loaded into the drawer, the
-    // scripts run one after another, as they come, with the document long since ready, so a block that comes before
-    // the include would run before conditional.js has. It would fail, and under the jQuery in use (1.12) a ready
-    // callback that throws while the document is ready stops every later ready callback on the page from running:
-    // the accordion of a subform further down never opened. So the block waits until conditional.js is there.
     $initCode = "
-jQuery(document).ready(function formulizeConditionalInit() {
-	if(typeof governedElements === 'undefined' || typeof assignConditionalHTML === 'undefined') {
-		window.setTimeout(formulizeConditionalInit, 50);
-		return;
-	}
+jQuery(document).ready(function() {
 	var conditionalElements = new Array('".implode("', '",$conditionalElements)."');
 	";
 	$topKey = 0;
