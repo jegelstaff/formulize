@@ -320,3 +320,34 @@ function destroyCKEditor(editorID)
         delete CKEditors[editorID];
     }
 }
+
+// Run the setup code for the conditional elements on the page.
+// Each block of setup code that formdisplay.php generates (see drawJavascriptForConditionalElements) fills the arrays
+// declared at the top of this file and calls functions declared in it, so it must not run until this file has. The
+// blocks cannot count on coming after this file in the page, so they do not run themselves: each adds its setup
+// function to window.formulizeConditionalSetup, which is a plain array until this file loads.
+// Here, the array is replaced with an object whose push() runs a function instead of keeping it, and then whatever
+// was already waiting in the array is run, in the order it was added. So a block that came before this file runs
+// now, and a block that comes after it, on this page or in a fragment loaded into it later, runs as it is added.
+// Each function runs once the document is ready, which is when the setup code has always run.
+(function() {
+	function runSetup(setup) {
+		if(typeof setup === 'function') {
+			jQuery(document).ready(setup);
+		}
+	}
+	var waiting = window.formulizeConditionalSetup;
+	window.formulizeConditionalSetup = {
+		push: function() {
+			for(var i = 0; i < arguments.length; i++) {
+				runSetup(arguments[i]);
+			}
+		}
+	};
+	// if this file runs a second time on the same page, the queue is already the object above, with nothing waiting
+	if(Array.isArray(waiting)) {
+		for(var i = 0; i < waiting.length; i++) {
+			runSetup(waiting[i]);
+		}
+	}
+})();

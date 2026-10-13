@@ -3472,8 +3472,21 @@ function markupNameAttr($renderedMarkupName) {
 // governingElements is array with keys that are the DOM ids of the elements that govern other elements, and the values are arrays of the elements being governed
 function drawJavascriptForConditionalElements($conditionalElements, $governingElements, $oneToOneElements, $oneToOneMetaData=false, $elementScreenIds=false, $elementIsSimpleDisplayCondition=false) {
 
+    // This setup code relies on conditional.js: it fills the arrays declared there, and calls assignConditionalHTML.
+    // conditional.js is included once per request, with the first block of setup code that is generated (see
+    // _drawJavascriptForConditionalElements). That is not always the first block in the page: a block for a form nested
+    // in a subform can be generated first and placed later. On a full page that makes no difference, since nothing here
+    // runs until the document is ready, and every script has loaded by then. In a fragment loaded into the drawer, the
+    // scripts run one after another, as they come, with the document long since ready, so a block ahead of the include
+    // would run before conditional.js had. It failed ("governedElements is not defined"), and under the jQuery in use
+    // (1.12) a ready callback that throws while the document is ready stops every later ready callback on the page
+    // from running: the accordion of a subform further down the fragment never opened.
+    // So a block does not run itself. It adds its setup function to a queue, window.formulizeConditionalSetup, and
+    // conditional.js runs what is waiting in the queue when it loads, and from then on runs whatever is added to it
+    // (see the end of conditional.js). Either way the function runs once the document is ready, as it always has.
     $initCode = "
-jQuery(document).ready(function() {
+window.formulizeConditionalSetup = window.formulizeConditionalSetup || [];
+window.formulizeConditionalSetup.push(function() {
 	var conditionalElements = new Array('".implode("', '",$conditionalElements)."');
 	";
 	$topKey = 0;
@@ -3524,7 +3537,7 @@ jQuery(document).ready(function() {
     });\n";
     }
 
-// end the document ready and continue with functions
+// end the setup function, and the call that adds it to the queue
     $initCode .= "});\n";
 
     print _drawJavascriptForConditionalElements($initCode);
