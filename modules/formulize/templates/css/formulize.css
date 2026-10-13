@@ -1643,6 +1643,18 @@ div.subform_button_controls div.subform-filter-search input[type=text] {
   margin: 0;
 }
 
+/* An open accordion entry is as tall as its form (heightStyle: 'content'), so
+   it never needs to scroll, but jQuery UI makes it overflow: auto all the same.
+   Anything in the form that reaches past its edge then gave the entry a
+   scrollbar of its own: the tooltip of the last button on a rich text editor's
+   toolbar, which is in the page, out of sight, until the button is pointed at,
+   was enough for a horizontal one. Visible overflow also lets date pickers and
+   autocomplete lists open past the entry's edge. (While an entry opens or
+   closes, jQuery UI hides the overflow itself, inline.) */
+.formulize-subform .subform-accordion-container .accordion-content.ui-accordion-content {
+  overflow: visible;
+}
+
 /* Flat forms: the entry's name is a heading above its form. Core nests the name's
    <p> in another, which browsers split into empty paragraphs either side of it. */
 .formulize-subform .subform-flatform > p:empty {
