@@ -32,6 +32,14 @@ require_once "../../mainfile.php";
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/common.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/appearance.php';
 
+// disable the debugger/logger
+if (isset(icms::$logger)) {
+    icms::$logger->disableLogger();
+}
+while (ob_get_level()) {
+    ob_end_clean();
+}
+
 global $xoopsUser;
 $gperm_handler = xoops_gethandler('groupperm');
 if (!$xoopsUser OR !$gperm_handler->checkRight('module_admin', getFormulizeModId(), $xoopsUser->getGroups(), 1)) {

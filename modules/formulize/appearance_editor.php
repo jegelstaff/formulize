@@ -38,6 +38,14 @@ require_once "../../mainfile.php";
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/common.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/appearance.php';
 
+// disable the debugger/logger
+if (isset(icms::$logger)) {
+    icms::$logger->disableLogger();
+}
+while (ob_get_level()) {
+    ob_end_clean();
+}
+
 // the same people as the rest of the Formulize admin pages: the module's admins
 global $xoopsUser, $xoopsConfig;
 $gperm_handler = xoops_gethandler('groupperm');
@@ -235,8 +243,6 @@ if (isset($_POST['appearance_editor_save']) AND $pageUrl) {
 	// (a PHP notice, with errors shown) is dropped, so the editor can read the answer
 	$bufferLevel = ob_get_level();
 	if (isset($_POST['appearance_editor_ajax'])) {
-		// with debug mode on, the logger would add its output after the answer
-		icms::$logger->disableLogger();
 		ob_start();
 	}
 	if ($saveLocked) {
