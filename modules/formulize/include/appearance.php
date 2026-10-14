@@ -808,7 +808,8 @@ function formulize_appearanceLookSize($looks, $key, $theme) {
  * @return array of arrays with 'kind' (logo, favicon, colours, fonts, width, sizes,
  *               parts), 'label', 'detail' (words, or ''), 'phrase' (for a sentence:
  *               "2 colours"), and for the logo and favicon 'image' (a URL, or '' for
- *               the theme's own), for the colours 'swatches' (label => hex)
+ *               the theme's own), for the colours 'swatches' (label => hex), for
+ *               the parts 'count' (how many parts)
  */
 function formulize_appearanceLookSummary($looks, $key, $theme) {
     $settings = $looks[$key]['settings'];
@@ -883,7 +884,7 @@ function formulize_appearanceLookSummary($looks, $key, $theme) {
         }
         $names = array_keys($names);
         $detail = implode(', ', array_slice($names, 0, 3)) . (count($names) > 3 ? ' and ' . (count($names) - 3) . ' more' : '');
-        $items[] = array('kind' => 'parts', 'label' => count($names) == 1 ? 'Part' : 'Parts', 'detail' => $detail, 'phrase' => $count(count($parts), 'part change', 'part changes'));
+        $items[] = array('kind' => 'parts', 'label' => count($names) == 1 ? 'Part' : 'Parts', 'detail' => $detail, 'count' => count($names), 'phrase' => $count(count($parts), 'part change', 'part changes'));
     }
     return $items;
 }

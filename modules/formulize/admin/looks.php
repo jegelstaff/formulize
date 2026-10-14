@@ -114,8 +114,33 @@ function formulize_looksIcon($kind) {
 		'width' => '<path d="M2 8h12M4.5 5.5 2 8l2.5 2.5M11.5 5.5 14 8l-2.5 2.5"/>',
 		'sizes' => '<rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M5.5 10.5l5-5M7 5.5h3.5V9"/>',
 		'parts' => '<path d="M2.5 5h5M10.5 5h3M2.5 11h2M7.5 11h6"/><circle cx="9" cy="5" r="1.5"/><circle cx="6" cy="11" r="1.5"/>',
+		'branding' => '<path d="M8 2a6 6 0 0 0 0 12c.9 0 1.4-.6 1.4-1.3 0-.4-.2-.7-.4-1-.2-.2-.4-.5-.4-.9 0-.7.6-1.3 1.3-1.3h1.4A2.7 2.7 0 0 0 14 6.8C14 4.1 11.3 2 8 2z"/><circle cx="5" cy="7" r=".6"/><circle cx="7.5" cy="4.8" r=".6"/><circle cx="10.5" cy="5.5" r=".6"/>',
+		'layout' => '<rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M5.5 10.5l5-5M7 5.5h3.5V9"/>',
 	);
 	return '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . (isset($paths[$kind]) ? $paths[$kind] : '') . '</svg>';
+}
+
+// What a look changes, in three kinds a person thinks in, for its row: its branding
+// (logo, favicon, colours, fonts), its layout (named by what it is: a size, "Custom
+// size", "Page width", or "Layout" for both), and its parts, with how many. A short,
+// fixed set of words, so it always fits.
+function formulize_looksCategories($summary) {
+	$kinds = array();
+	foreach ($summary as $item) {
+		$kinds[$item['kind']] = $item;
+	}
+	$categories = array();
+	if (array_intersect_key($kinds, array_flip(array('logo', 'favicon', 'colours', 'fonts')))) {
+		$categories[] = array('icon' => 'branding', 'text' => 'Branding');
+	}
+	if (isset($kinds['sizes']) OR isset($kinds['width'])) {
+		$sizeText = isset($kinds['sizes']) ? (strpos($kinds['sizes']['detail'], 'Custom') === 0 ? 'Custom size' : $kinds['sizes']['detail']) : '';
+		$categories[] = array('icon' => 'layout', 'text' => (isset($kinds['sizes']) AND isset($kinds['width'])) ? 'Layout' : (isset($kinds['width']) ? 'Page width' : $sizeText));
+	}
+	if (isset($kinds['parts'])) {
+		$categories[] = array('icon' => 'parts', 'text' => $kinds['parts']['count'] . ($kinds['parts']['count'] == 1 ? ' part' : ' parts'));
+	}
+	return $categories;
 }
 
 // A screen's Appearance tab, in the admin pages
@@ -228,14 +253,12 @@ ob_start();
 .formulize-looks__more small { color: var(--fz-color-text-muted); font-size: var(--fz-text-xs); }
 .formulize-looks__more--quiet > span:first-child { color: var(--fz-color-text-muted); }
 .formulize-looks__col-base { width: 10rem; }
-.formulize-looks__col-changes { width: 12rem; min-width: 12rem; }
-/* the kinds of change a look makes: an icon each, in the same place in every row */
-.formulize-looks__changes-btn { gap: calc(var(--fz-spacing) * 1); margin-inline-start: calc(var(--fz-spacing) * -3); font-weight: var(--fz-font-weight-normal); }
-.formulize-looks__kind { display: grid; place-items: center; flex: none; width: calc(var(--fz-spacing) * 5.5); height: calc(var(--fz-spacing) * 5.5); border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3); color: var(--fz-color-text-muted); }
-.formulize-looks__kind svg { width: calc(var(--fz-spacing) * 3.5); height: calc(var(--fz-spacing) * 3.5); }
-.formulize-looks__kind--none { background: none; }
-/* on the site look's tinted row, white tiles, as its badge is */
-.formulize-looks__site .formulize-looks__kind:not(.formulize-looks__kind--none) { background: var(--fz-color-surface); }
+.formulize-looks__col-changes { width: 19rem; min-width: 19rem; }
+/* what a look changes, in a few words, each with a small icon */
+.formulize-looks__changes-btn { gap: calc(var(--fz-spacing) * 2); margin-inline-start: calc(var(--fz-spacing) * -3); font-weight: var(--fz-font-weight-normal); white-space: nowrap; }
+.formulize-looks__category { display: inline-flex; align-items: center; gap: calc(var(--fz-spacing) * 1.25); }
+.formulize-looks__category svg { flex: none; width: calc(var(--fz-spacing) * 3.5); height: calc(var(--fz-spacing) * 3.5); color: var(--fz-color-text-muted); }
+.formulize-looks__dot { color: var(--fz-color-text-subtle); }
 .formulize-looks__col-used { width: 13rem; }
 .formulize-looks__col-actions { width: 8.5rem; }
 .formulize-looks__actions { display: inline-flex; justify-content: flex-end; gap: calc(var(--fz-spacing) * 1.5); width: 100%; }
@@ -342,23 +365,18 @@ ob_start();
 					<td><?php echo $look['base'] !== '' ? formulize_looksH($looks[$look['base']]['name']) : '<span class="fz-text-subtle">Nothing</span>'; ?></td>
 					<td>
 						<?php
-						// the kinds of change the look makes, each in its own place, so a column of them lines up
-						$kinds = array();
-						foreach ($summary as $item) {
-							$kinds[$item['kind']] = $item;
-						}
+						// what the look changes, in three kinds, in words; the popover has the rest
+						$categories = formulize_looksCategories($summary);
 						$phrases = array_map(function ($item) { return $item['phrase']; }, $summary);
 						?>
 						<button type="button" class="fz-btn fz-btn--ghost fz-btn--sm formulize-looks__changes-btn" popovertarget="<?php echo $id; ?>-base" style="anchor-name: --<?php echo $id; ?>-base" aria-label="<?php echo formulize_looksH($phrases ? 'Changes: ' . implode(', ', $phrases) : 'No changes'); ?>">
-							<?php if (!$summary) { ?>
+							<?php if (!$categories) { ?>
 							<span class="fz-text-subtle">No changes</span>
-							<?php } else {
-								foreach (array('logo', 'favicon', 'colours', 'fonts', 'width', 'sizes', 'parts') as $kind) {
-									echo isset($kinds[$kind])
-										? '<span class="formulize-looks__kind" title="' . formulize_looksH($kinds[$kind]['label']) . '">' . formulize_looksIcon($kind) . '</span>'
-										: '<span class="formulize-looks__kind formulize-looks__kind--none"></span>';
-								}
-							} ?>
+							<?php } ?>
+							<?php foreach ($categories as $index => $category) { ?>
+							<?php if ($index) { ?><span class="formulize-looks__dot" aria-hidden="true">·</span><?php } ?>
+							<span class="formulize-looks__category"><?php echo formulize_looksIcon($category['icon']); ?><?php echo formulize_looksH($category['text']); ?></span>
+							<?php } ?>
 						</button>
 						<div class="fz-popover formulize-looks__about" id="<?php echo $id; ?>-base" popover style="position-anchor: --<?php echo $id; ?>-base">
 							<?php if ($chain) { ?>
