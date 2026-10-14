@@ -13513,28 +13513,65 @@ function formulize_uiStylesheetPath() {
 }
 
 /**
- * The link tag for the Formulize UI stylesheet, for a theme to print in its head
- * so that the classes work on every page it draws, including the pages outside
- * the Formulize module (the home page, the account pages).
+ * The Formulize UI script: what its popovers, menus and dialogs need in browsers
+ * that can't yet do it on their own (opening a dialog from a button with
+ * commandfor, placing a popover beside its button). It does nothing in browsers
+ * that can. It goes wherever the stylesheet goes.
  *
- * Empty on the pages where Formulize has already added the stylesheet to the
- * theme's head (every page that loads Formulize's own stylesheet), so that it
- * is never loaded twice. Print it before the theme's own stylesheets, so the
+ * @return string Path relative to XOOPS_URL, with a cache-busting version
+ */
+function formulize_uiScriptPath() {
+	$path = '/modules/formulize/libraries/formulize-ui.js';
+	return $path . '?v=' . formulize_get_file_version($path);
+}
+
+/**
+ * Add Formulize UI, its stylesheet and its script, to the head of the page the
+ * theme is drawing. Every page of Formulize's own that uses the classes calls
+ * this, before adding Formulize's own stylesheet.
+ *
+ * @return void
+ */
+function formulize_uiAddToTheme() {
+	global $xoTheme;
+	if (is_object($xoTheme)) {
+		$xoTheme->addStylesheet(formulize_uiStylesheetPath());
+		$xoTheme->addScript(formulize_uiScriptPath());
+	}
+}
+
+/**
+ * The tags for Formulize UI, its stylesheet and its script, for a theme to print
+ * in its head so that the classes work on every page it draws, including the
+ * pages outside the Formulize module (the home page, the account pages).
+ *
+ * Leaves out what Formulize has already added to the theme's head (on every page
+ * that loads Formulize's own stylesheet, see formulize_uiAddToTheme()), so that
+ * nothing is loaded twice. Print it before the theme's own stylesheets, so the
  * theme's styling comes after it in the cascade, as it does on those pages.
  *
- * @return string HTML, or '' when the stylesheet is already in the head
+ * @return string HTML, or '' when both are already in the head
  */
 function formulize_uiStylesheetLink() {
 	global $xoTheme;
-	$path = explode('?', formulize_uiStylesheetPath())[0];
-	if (is_object($xoTheme) AND !empty($xoTheme->metas['stylesheet'])) {
-		foreach (array_keys($xoTheme->metas['stylesheet']) as $src) {
-			if (explode('?', $src)[0] == $path) {
-				return '';
+	$inHead = function ($type, $path) use ($xoTheme) {
+		if (is_object($xoTheme) AND !empty($xoTheme->metas[$type])) {
+			foreach (array_keys($xoTheme->metas[$type]) as $src) {
+				if (explode('?', $src)[0] == explode('?', $path)[0]) {
+					return true;
+				}
 			}
 		}
+		return false;
+	};
+	$html = '';
+	if (!$inHead('stylesheet', formulize_uiStylesheetPath())) {
+		$html .= '<link rel="stylesheet" type="text/css" media="all" href="' . XOOPS_URL . formulize_uiStylesheetPath() . '" />' . "\n";
 	}
-	return '<link rel="stylesheet" type="text/css" media="all" href="' . XOOPS_URL . formulize_uiStylesheetPath() . '" />' . "\n";
+	if (!$inHead('script', formulize_uiScriptPath())) {
+		$html .= '<script type="text/javascript" src="' . XOOPS_URL . formulize_uiScriptPath() . '"></script>' . "\n";
+	}
+	return $html;
 }
 
 /**

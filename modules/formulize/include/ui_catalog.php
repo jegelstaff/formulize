@@ -1025,7 +1025,7 @@ HTML
                 'notes' => array(
                     'The browser opens and closes it, with no script: it closes when anything else is clicked, or Esc is pressed.',
                     'Pair it with its button by an anchor name, so it opens beside the button: `style="anchor-name: --screens-3"` on the button, and `style="position-anchor: --screens-3"` on the popover. Each pair needs a name of its own, starting with two dashes.',
-                    'It opens under the button, lined up with its start, and moves above it, or across, when there isn\'t room. In a browser from before 2026 that can\'t place it beside the button (Firefox before 147), it opens in the middle of the window.',
+                    'It opens under the button, lined up with its start, and moves above it, or across, when there isn\'t room. Browsers place it there themselves; in one from before they did (Safari before 26, Firefox before 147), Formulize\'s own script, `formulize-ui.js`, does it.',
                     'Keep it short, and put nothing in it that has to be seen: it is for the detail behind something already on the page.',
                 ),
                 'example' => <<<'HTML'
@@ -1086,7 +1086,7 @@ HTML
                     'fz-dialog__footer' => 'Its buttons, at the end, with the main one last. It stays in view if the dialog is long enough to scroll.',
                 ),
                 'notes' => array(
-                    'The browser opens and closes it, with no script. A button with `commandfor` and `command="close"` closes it, and so does Esc. Browsers from before December 2025 (Firefox before 144, Safari before 26.2) ignore `commandfor`: where they matter, open it with a line of script too, `dialog.showModal()`. Add `closedby="any"` to the `<dialog>` to have a click outside it close it too, in browsers that do that.',
+                    'The browser opens and closes it, with no script of yours. A button with `commandfor` and `command="close"` closes it, and so does Esc. In a browser from before `commandfor` (Safari before 26.2, Firefox before 144), Formulize\'s own script, `formulize-ui.js`, does what those buttons ask. Add `closedby="any"` to the `<dialog>` to have a click outside it close it too, in browsers that do that.',
                     'The page under it can\'t be scrolled or clicked while it is open, and when it closes, the keyboard is back on the button that opened it.',
                     'Put the header, body and footer in a `<form method="dialog">` and its submit button closes the dialog, with the button\'s `value` as the dialog\'s `returnValue`. For a form that is sent to the server, use an ordinary `<form>` instead.',
                     'Say what the main button does: "Delete look", not "OK".',
@@ -1632,9 +1632,10 @@ CODE
             array(
                 'id' => 'theme-loading',
                 'name' => 'Loading the stylesheet',
-                'summary' => 'Formulize adds `formulize-ui.css` to its own pages. A theme adds it to every other page by calling `formulize_uiStylesheetLink()` in its `theme.html`, before the theme\'s own stylesheet.',
+                'summary' => 'Formulize adds `formulize-ui.css` to its own pages, with its small script, `formulize-ui.js`. A theme adds them to every other page by calling `formulize_uiStylesheetLink()` in its `theme.html`, before the theme\'s own stylesheet.',
                 'notes' => array(
-                    'The function returns nothing on a page that already has the stylesheet, so it is never loaded twice.',
+                    'The function leaves out whatever the page already has, so nothing is loaded twice.',
+                    'The script is for browsers that can\'t yet do everything popovers, menus and dialogs need on their own: in them, it opens dialogs from buttons with `commandfor`, and places popovers beside their buttons. In browsers that can, it does nothing.',
                     'The order matters: `formulize-ui.css` first, then Formulize\'s own stylesheet, then the theme\'s. Where a theme rule and a class have the same weight, the theme wins.',
                 ),
                 'code' => array(
