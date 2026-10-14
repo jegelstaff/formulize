@@ -806,9 +806,10 @@ function formulize_appearanceLookSize($looks, $key, $theme) {
  * @param string $key the look's key
  * @param string $theme theme folder name
  * @return array of arrays with 'kind' (logo, favicon, colours, fonts, width, sizes,
- *               parts), 'label', 'detail' (words, or ''), 'phrase' (for a sentence:
- *               "2 colours"), and for the logo and favicon 'image' (a URL, or '' for
- *               the theme's own), for the colours 'swatches' (label => hex)
+ *               parts), 'label', 'detail' (words, or ''), 'short' (a word or two, for
+ *               a row: "Compact"), 'phrase' (for a sentence: "2 colours"), and for the
+ *               logo and favicon 'image' (a URL, or '' for the theme's own), for the
+ *               colours 'swatches' (label => hex)
  */
 function formulize_appearanceLookSummary($looks, $key, $theme) {
     $settings = $looks[$key]['settings'];
@@ -818,7 +819,7 @@ function formulize_appearanceLookSummary($looks, $key, $theme) {
     foreach (array('appearance_logo' => array('logo', 'Logo'), 'appearance_favicon' => array('favicon', 'Favicon')) as $name => $kind) {
         if (isset($settings[$name])) {
             $url = $settings[$name] !== '' ? (string) formulize_getAppearanceFileUrl(formulize_locateAppearanceFile($settings[$name], $theme), $theme) : '';
-            $items[] = array('kind' => $kind[0], 'label' => $kind[1], 'detail' => $url === '' ? $themeOwn : '', 'image' => $url, 'phrase' => strtolower($kind[1]));
+            $items[] = array('kind' => $kind[0], 'label' => $kind[1], 'detail' => $url === '' ? $themeOwn : '', 'short' => $kind[1], 'image' => $url, 'phrase' => strtolower($kind[1]));
         }
     }
     $swatches = array();
@@ -828,7 +829,7 @@ function formulize_appearanceLookSummary($looks, $key, $theme) {
         }
     }
     if ($swatches) {
-        $items[] = array('kind' => 'colours', 'label' => 'Colours', 'detail' => '', 'swatches' => $swatches, 'phrase' => $count(count($swatches), 'colour', 'colours'));
+        $items[] = array('kind' => 'colours', 'label' => 'Colours', 'detail' => '', 'short' => $count(count($swatches), 'colour', 'colours'), 'swatches' => $swatches, 'phrase' => $count(count($swatches), 'colour', 'colours'));
     }
     $fonts = array();
     $fontMap = formulize_appearanceFontMap($theme);
@@ -838,18 +839,22 @@ function formulize_appearanceLookSummary($looks, $key, $theme) {
         }
         return ($choice === '' OR !isset($fontMap[$choice])) ? $themeOwn : trim(preg_replace('/\s*\(.*\)$/', '', $fontMap[$choice]['label']));
     };
+    $firstFont = '';
     if (isset($settings['appearance_font'])) {
+        $firstFont = $fontName($settings['appearance_font'], isset($settings['appearance_customfont']) ? $settings['appearance_customfont'] : '');
         $fonts[] = $fontName($settings['appearance_font'], isset($settings['appearance_customfont']) ? $settings['appearance_customfont'] : '');
     }
     if (isset($settings['appearance_headingfont'])) {
-        $fonts[] = ($settings['appearance_headingfont'] === '' ? 'the main font' : $fontName($settings['appearance_headingfont'], isset($settings['appearance_headingcustomfont']) ? $settings['appearance_headingcustomfont'] : '')) . ' for headings';
+        $heading = $settings['appearance_headingfont'] === '' ? 'the main font' : $fontName($settings['appearance_headingfont'], isset($settings['appearance_headingcustomfont']) ? $settings['appearance_headingcustomfont'] : '');
+        $fonts[] = $heading . ' for headings';
+        $firstFont = $firstFont !== '' ? $firstFont : ($settings['appearance_headingfont'] === '' ? 'Heading font' : $heading);
     }
     if ($fonts) {
-        $items[] = array('kind' => 'fonts', 'label' => count($fonts) == 1 ? 'Font' : 'Fonts', 'detail' => implode(', ', $fonts), 'phrase' => count($fonts) == 1 ? 'font' : 'fonts');
+        $items[] = array('kind' => 'fonts', 'label' => count($fonts) == 1 ? 'Font' : 'Fonts', 'detail' => implode(', ', $fonts), 'short' => $firstFont, 'phrase' => count($fonts) == 1 ? 'font' : 'fonts');
     }
     if (isset($settings['appearance_contentwidth'])) {
         $width = $settings['appearance_contentwidth'];
-        $items[] = array('kind' => 'width', 'label' => 'Page width', 'detail' => $width === 'full' ? 'Full width' : ($width === '' ? $themeOwn : $width . 'px at most'), 'phrase' => 'page width');
+        $items[] = array('kind' => 'width', 'label' => 'Page width', 'detail' => $width === 'full' ? 'Full width' : ($width === '' ? $themeOwn : $width . 'px at most'), 'short' => $width === 'full' ? 'Full width' : ($width === '' ? 'Page width' : $width . 'px'), 'phrase' => 'page width');
     }
     $overrides = formulize_appearanceLookOverrides($settings);
     $sizeTokens = array_flip(formulize_appearanceSizeTokens());
@@ -858,7 +863,7 @@ function formulize_appearanceLookSummary($looks, $key, $theme) {
         $size = formulize_appearanceLookSize($looks, $key, $theme);
         $named = formulize_appearanceSizes($theme);
         $detail = isset($named[$size]) ? $named[$size]['name'] : 'Custom · ' . $count($sizes, 'size', 'sizes');
-        $items[] = array('kind' => 'sizes', 'label' => 'Size', 'detail' => $detail, 'phrase' => isset($named[$size]) ? $named[$size]['name'] . ' sizes' : $count($sizes, 'size', 'sizes'));
+        $items[] = array('kind' => 'sizes', 'label' => 'Size', 'detail' => $detail, 'short' => isset($named[$size]) ? $named[$size]['name'] : 'Custom sizes', 'phrase' => isset($named[$size]) ? $named[$size]['name'] . ' sizes' : $count($sizes, 'size', 'sizes'));
     }
     $parts = array_diff_key($overrides, $sizeTokens);
     if ($parts) {
@@ -882,9 +887,23 @@ function formulize_appearanceLookSummary($looks, $key, $theme) {
         }
         $names = array_keys($names);
         $detail = implode(', ', array_slice($names, 0, 3)) . (count($names) > 3 ? ' and ' . (count($names) - 3) . ' more' : '');
-        $items[] = array('kind' => 'parts', 'label' => count($names) == 1 ? 'Part' : 'Parts', 'detail' => $detail, 'phrase' => $count(count($parts), 'part change', 'part changes'));
+        $items[] = array('kind' => 'parts', 'label' => count($names) == 1 ? 'Part' : 'Parts', 'detail' => $detail, 'short' => $count(count($names), 'part', 'parts'), 'phrase' => $count(count($parts), 'part change', 'part changes'));
     }
     return $items;
+}
+
+/**
+ * A look's changes in the order a row shows them, the most telling first: its
+ * branding (logo, colours), then its size, fonts, page width and parts, and its
+ * favicon last.
+ *
+ * @param array $summary from formulize_appearanceLookSummary()
+ * @return array the same items, reordered
+ */
+function formulize_appearanceLookSummaryByImportance($summary) {
+    $order = array_flip(array('logo', 'colours', 'sizes', 'fonts', 'width', 'parts', 'favicon'));
+    usort($summary, function ($a, $b) use ($order) { return $order[$a['kind']] - $order[$b['kind']]; });
+    return $summary;
 }
 
 /**
