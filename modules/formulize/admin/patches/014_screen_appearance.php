@@ -4,7 +4,7 @@ if (!defined('XOOPS_ROOT_PATH')) {
 }
 
 // Adds the settings on a screen's Appearance tab to the screen table:
-// - look: the look the screen's page is shown with, by its key; '' is the look applied to the site;
+// - look: the look the screen's page is shown with, by its key; '' is the site look;
 // - pagewidth: how wide the screen's page can be, 'look' (as wide as the look allows) or 'full';
 // - toptext: introductory text, markup printed above the screen's content by the default templates;
 // - toptextcode: 1 when the introductory text is edited as code rather than in the rich text editor.
