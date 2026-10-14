@@ -1102,6 +1102,45 @@ function formulize_setAppearanceSiteLook($theme, $key) {
 }
 
 /**
+ * Save what a look changes itself, from the appearance editor: its own settings,
+ * in place of the ones it had. Its name, description and base stay as they are.
+ *
+ * @param string $theme theme folder name
+ * @param string $key the look's key
+ * @param array $settings what the look is to change itself
+ * @return string '' when saved, or what went wrong
+ */
+function formulize_saveAppearanceLookSettings($theme, $key, $settings) {
+    $looks = formulize_getAppearanceLooks($theme);
+    if (!isset($looks[$key])) {
+        return 'That look is gone, so nothing was saved.';
+    }
+    $looks[$key]['settings'] = formulize_sanitizeAppearanceLookSettings($settings, $theme);
+    return formulize_saveAppearanceLooks($theme, $looks);
+}
+
+/**
+ * What a change to a look reaches: whether the site, which it does when the look
+ * is the site look or one the site look is based on, and how many screens, set to
+ * the look or to a look based on it.
+ *
+ * @param string $theme theme folder name
+ * @param string $key the look's key
+ * @return array with 'site' (boolean) and 'screens' (how many)
+ */
+function formulize_appearanceLookReach($theme, $key) {
+    $looks = formulize_getAppearanceLooks($theme);
+    $reached = array_merge(array($key), formulize_appearanceLookDescendants($looks, $key));
+    $screens = 0;
+    foreach (formulize_appearanceLookScreens() as $lookKey => $list) {
+        if (in_array($lookKey, $reached, true)) {
+            $screens += count($list);
+        }
+    }
+    return array('site' => in_array(formulize_getAppearanceSiteLook($theme), $reached, true), 'screens' => $screens);
+}
+
+/**
  * Delete a look, and the logo and favicon of its own that no other look has. The
  * look the site uses can't be deleted, nor a look others are based on. Screens set
  * to it use the site's look instead: on the site's own theme, they are set back
@@ -1459,47 +1498,6 @@ function formulize_appearanceSettingNames() {
  */
 function formulize_defaultAppearanceSettings() {
     return array_fill_keys(formulize_appearanceSettingNames(), '');
-}
-
-/**
- * The settings a submitted form asks for, for the theme's own appearance settings,
- * of the look being edited: from the
- * appearance editor. Colours and fonts are taken as submitted (an empty or
- * missing one means the default); the page width and
- * a part's own settings are kept as they are when the form has no field for
- * them. The logo and the favicon are kept too: formulize_saveAppearanceUploads()
- * replaces or removes them.
- *
- * @param array $post the submitted form, ie: $_POST
- * @param array $current the theme's settings as they stand
- * @param string $theme theme folder name
- * @param array $errors gets a message for each font chosen as "Other Google
- *                      Font" with no usable name, which falls back to the default
- * @return array settings array, not yet sanitized
- */
-function formulize_appearanceSubmittedSettings($post, $current, $theme, &$errors) {
-    $submitted = formulize_defaultAppearanceSettings();
-    foreach (array_keys(formulize_appearanceColourMap($theme)) as $key) {
-        $submitted['appearance_' . $key] = isset($post['appearance_' . $key]) ? (string) $post['appearance_' . $key] : '';
-    }
-    foreach (array('appearance_font', 'appearance_customfont', 'appearance_headingfont', 'appearance_headingcustomfont') as $name) {
-        $submitted[$name] = isset($post[$name]) ? (string) $post[$name] : '';
-    }
-    foreach (array('appearance_contentwidth', 'appearance_overrides') as $name) {
-        $submitted[$name] = isset($post[$name]) ? (string) $post[$name] : $current[$name];
-    }
-    // the page width is sent as the width in pixels, kept to the limits by the
-    // editor, or 'full'
-    foreach (array_keys(formulize_appearanceUploads()) as $name) {
-        $submitted[$name] = $current[$name];
-    }
-    if ($submitted['appearance_font'] == 'custom' AND !formulize_sanitizeAppearanceFontFamily($submitted['appearance_customfont'])) {
-        $errors[] = "Please enter a Google Font name to use a custom font. The default font has been kept.";
-    }
-    if ($submitted['appearance_headingfont'] == 'custom' AND !formulize_sanitizeAppearanceFontFamily($submitted['appearance_headingcustomfont'])) {
-        $errors[] = "Please enter a Google Font name to use a custom secondary font. Headings and labels have been left following the main font.";
-    }
-    return $submitted;
 }
 
 /**
