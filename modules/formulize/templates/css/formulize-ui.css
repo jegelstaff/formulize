@@ -1411,7 +1411,12 @@
   box-shadow: var(--fz-shadow-lg);
   color: var(--fz-menu-text);
   font-size: var(--fz-text-sm);
+  font-weight: var(--fz-font-weight-normal);
   line-height: var(--fz-leading-normal);
+  /* it floats over the page, but is still inside whatever its button is in, such
+     as a table cell that doesn't wrap: it takes none of that */
+  text-align: start;
+  white-space: normal;
 }
 /* Beside its button, in a browser that can place it there; in one that can't,
    it opens in the middle of the window, where the browser puts a popover. */
@@ -1510,7 +1515,10 @@
   background: var(--fz-drawer-bg);
   box-shadow: var(--fz-shadow-lg);
   color: var(--fz-color-text);
+  font-weight: var(--fz-font-weight-normal);
   line-height: var(--fz-leading-normal);
+  text-align: start;
+  white-space: normal;
 }
 .fz-dialog::backdrop { background: var(--fz-color-overlay); }
 .fz-dialog--wide { width: min(48rem, calc(100vw - var(--fz-spacing) * 8)); }

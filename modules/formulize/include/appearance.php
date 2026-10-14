@@ -25,23 +25,22 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// Appearance settings: colours, fonts, size, page width, logo, and favicon,
-// configured in the appearance editor (appearance_editor.php: Admin > Appearance >
-// Styles and Colors), and rendered by themes as CSS custom property overrides on
-// :root.
+// Appearance: the looks a theme's pages are shown with (colours, fonts, sizes, page
+// width, logo and favicon), managed on the Looks tab (admin/looks.php: Admin >
+// Appearance > Looks) and changed in the appearance editor (appearance_editor.php),
+// and rendered by themes as CSS custom property overrides on :root.
 //
-// Settings are kept per theme, in the theme's own generated stylesheet. That
-// stylesheet, and any uploaded logo or favicon, live in an "appearance" folder inside the
-// theme's folder, ie: themes/Lyris/appearance/. That folder is inside the web
-// root and is not access-protected the way uploads/ usually is, so the files are
-// reachable by the browser wherever the site is deployed.
+// Looks are kept per theme, in generated stylesheets in an "appearance" folder
+// inside the theme's folder, ie: themes/Lyris/appearance/, with any uploaded logos
+// and favicons. That folder is inside the web root and is not access-protected the
+// way uploads/ usually is, so the files are reachable by the browser wherever the
+// site is deployed.
 //
-// The generated stylesheet is the record of the settings: it carries them in a
-// machine-readable block at the top of the file, which is what the Appearance
-// page reads back. There is nothing else to keep in sync, per-theme settings
-// fall out of per-theme files, and deleting a theme's appearance folder is all
-// it takes to put that theme back to the defaults. See
-// formulize_buildAppearanceSettingsBlock() and formulize_readAppearanceCssSettings().
+// The generated stylesheets are the record of the looks: each carries a
+// machine-readable block at the top, which is what is read back. There is nothing
+// else to keep in sync, per-theme looks fall out of per-theme files, and deleting
+// a theme's appearance folder is all it takes to put that theme back to its own
+// appearance. See the Looks section below.
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/appearance_tokens.php";
@@ -366,81 +365,120 @@ function formulize_appearanceHeadingFontMap($theme = null) {
     return $fonts;
 }
 
+// ---------------------------------------------------------------------------
+// Looks
+//
+// A look is how pages look: the logo and favicon, colours, fonts, page width,
+// and the size of every part. Each theme has its own looks. A new theme starts
+// with one, Default. A look is based on another look, or on nothing (it starts
+// from the theme's own settings), and records only what it changes itself:
+// everything else comes from its base, and from that look's base, and so on. So
+// the looks of a theme form a tree, and a change to a look reaches every look
+// based on it.
+//
+// The site uses one look (formulize_getAppearanceSiteLook), and a screen can use
+// another (formulize_appearancePageLook). Each look is kept in its own stylesheet
+// in the theme's appearance/looks folder: a block with its name, its base and
+// what it changes, which is the record of it, then the CSS of the look as pages
+// are shown with it. The theme's appearance.css records which look the site uses,
+// and is that look's CSS. Looks are managed on the Looks tab (admin/looks.php).
+// ---------------------------------------------------------------------------
+
 /**
- * The looks a theme can be given. A look is a set of changes to a theme's own
- * appearance settings (the Appearance page's, which every look starts from), and
- * one look is applied to the site at a time (appearance_look). Whatever a look
- * doesn't change comes from those settings, and follows them when they change.
- *
- * The looks that come with Formulize are first: Default, which changes nothing,
- * for every theme; and Compact and Comfortable, which change the component
- * sizes, for a theme built on them (formulize_appearanceThemeUsesSizes). They
- * are kept in include/appearance_looks/. They can be changed on a site, like any
- * other look, and reverted to how they came (formulize_revertAppearanceLook): a
- * changed one is kept in the theme's appearance/looks folder, marked edited, and
- * the one that came with Formulize is left as it is. Then the looks made for
- * the theme in the advanced editor, by name, each kept in its own stylesheet in
- * that folder too (see formulize_buildAppearanceLookCss).
+ * A theme's looks, by key, from the stylesheets in its appearance/looks folder.
+ * A theme with none yet is given Default (see formulize_appearanceCreateDefaultLook).
+ * A look whose base is gone, or is the look itself or one based on it (which only
+ * a hand-edited file could do), is read as having no base.
  *
  * @param string|null $theme theme folder name, defaults to the active theme
- * @param boolean $reload read the theme's looks again, after one has been saved
- * @return array look key => array with 'name', 'description', 'builtin',
- *               'edited' (a built-in look changed on the site) and 'settings',
- *               the settings the look changes (setting name => value, see
- *               formulize_sanitizeAppearanceLookSettings)
+ * @param boolean $reload read the theme's looks again, after one has changed
+ * @return array look key => array with 'name', 'description', 'base' (a look's
+ *               key, or '' for none) and 'settings', the settings the look
+ *               changes itself (see formulize_sanitizeAppearanceLookSettings).
+ *               Default first, then by name.
  */
 function formulize_getAppearanceLooks($theme = null, $reload = false) {
-    static $looks = array();
+    static $cache = array();
     $theme = formulize_resolveAppearanceTheme($theme);
-    if (isset($looks[$theme]) AND !$reload) {
-        return $looks[$theme];
+    if (isset($cache[$theme]) AND !$reload) {
+        return $cache[$theme];
     }
-    $looks[$theme] = array();
-    $builtin = formulize_appearanceBuiltinLooks();
-    foreach ($builtin as $key => $look) {
-        // the looks that change sizes are only for a theme that has them
-        if ($look === false OR ($key != 'default' AND !formulize_appearanceThemeUsesSizes($theme))) {
-            continue;
-        }
-        // changed on this site: the changed one, in the theme's looks folder. Not
-        // Default, which is the foundation: its settings are the theme's own (see
-        // formulize_appearanceDefaultChanged).
-        $here = ($key == 'default') ? false : formulize_appearanceParseLookBlock((string) @file_get_contents(formulize_getAppearanceLooksDir($theme) . '/' . $key . '.css'));
-        $edited = ($here !== false AND $here['edited']);
-        $looks[$theme][$key] = array(
-            'name' => $look['name'],
-            'description' => $look['description'],
-            'builtin' => true,
-            'edited' => $edited,
-            'settings' => formulize_sanitizeAppearanceLookSettings($edited ? $here['settings'] : $look['settings'], $theme),
-        );
-    }
-    $made = array();
+    $looks = array();
     foreach (glob(formulize_getAppearanceLooksDir($theme) . '/*.css') ?: array() as $file) {
         $key = basename($file, '.css');
-        if (isset($builtin[$key]) OR !preg_match('/^[a-z0-9][a-z0-9-]*$/', $key)) {
-            continue; // a built-in look's generated stylesheet, or not a look's
+        if (!preg_match('/^[a-z0-9][a-z0-9-]*$/', $key)) {
+            continue;
         }
-        $look = formulize_appearanceParseLookBlock((string) @file_get_contents($file));
-        if ($look !== false) {
-            $made[$key] = array(
-                'name' => $look['name'],
-                'description' => $look['description'],
-                'builtin' => false,
-                'edited' => false,
-                'settings' => formulize_sanitizeAppearanceLookSettings($look['settings'], $theme),
+        $block = formulize_appearanceParseLookBlock((string) @file_get_contents($file));
+        if ($block !== false) {
+            $looks[$key] = array(
+                'name' => $block['name'],
+                'description' => $block['description'],
+                'base' => strtolower($block['base']),
+                'settings' => formulize_sanitizeAppearanceLookSettings($block['settings'], $theme),
             );
         }
     }
-    uasort($made, function ($a, $b) { return strcasecmp($a['name'], $b['name']); });
-    $looks[$theme] += $made;
-    return $looks[$theme];
+    if (!$looks) {
+        $cache[$theme] = formulize_appearanceCreateDefaultLook($theme);
+        return $cache[$theme];
+    }
+    // a base that is gone, or that would go round in a circle, is no base
+    foreach (array_keys($looks) as $key) {
+        if ($looks[$key]['base'] !== '' AND !isset($looks[$looks[$key]['base']])) {
+            $looks[$key]['base'] = '';
+        }
+    }
+    foreach (array_keys($looks) as $key) {
+        $seen = array($key => true);
+        for ($at = $looks[$key]['base']; $at !== ''; $at = $looks[$at]['base']) {
+            if (isset($seen[$at])) {
+                $looks[$key]['base'] = '';
+                break;
+            }
+            $seen[$at] = true;
+        }
+    }
+    uksort($looks, function ($a, $b) use ($looks) {
+        if ($a == 'default' OR $b == 'default') {
+            return $a == 'default' ? -1 : 1;
+        }
+        return strcasecmp($looks[$a]['name'], $looks[$b]['name']);
+    });
+    $cache[$theme] = $looks;
+    return $looks;
+}
+
+/**
+ * Give a theme that has no looks yet its first: Default, with no base. It takes
+ * whatever appearance settings the theme had before looks were kept this way:
+ * those in its appearance.css, or in the module's configs before that (see
+ * formulize_getLegacyAppearanceSettings). Its stylesheet, and the theme's, are
+ * written straight away, where the folder can be written; otherwise it is only in
+ * this request, and the theme's pages use the inline CSS fallback.
+ *
+ * @param string $theme theme folder name
+ * @return array the theme's looks: just Default
+ */
+function formulize_appearanceCreateDefaultLook($theme) {
+    $values = formulize_readAppearanceCssValues(formulize_getAppearanceCssPath($theme));
+    $values = ($values === false) ? formulize_getLegacyAppearanceSettings($theme) : $values;
+    $own = array();
+    foreach (formulize_sanitizeAppearanceLookSettings($values, $theme) as $name => $value) {
+        if ($value !== '') {
+            $own[$name] = $value;
+        }
+    }
+    $looks = array('default' => array('name' => 'Default', 'description' => '', 'base' => '', 'settings' => $own));
+    if (formulize_prepareAppearanceDir($theme) !== false) {
+        formulize_writeAppearanceLookFiles($theme, $looks, 'default');
+    }
+    return $looks;
 }
 
 /**
  * The folder a theme's looks are kept in: looks, in its appearance folder. Each
- * look is a stylesheet there, named after the look's key, which records what the
- * look changes and is the theme's appearance with the look applied.
+ * look is a stylesheet there, named after the look's key.
  *
  * @param string|null $theme theme folder name, defaults to the active theme
  * @return string the folder's path
@@ -450,10 +488,10 @@ function formulize_getAppearanceLooksDir($theme = null) {
 }
 
 /**
- * Validate the settings a look changes. Unlike a theme's own settings, where
- * nothing is recorded for a default, a look records each setting it changes, the
- * default included: a look can put a colour the site has changed back to the
- * theme's own. So each setting the look has is kept, as a valid value, or
+ * Validate the settings a look changes. Unlike the settings a look resolves to,
+ * where nothing is recorded for a default, a look records each setting it
+ * changes, the default included: a look can put a colour its base changed back
+ * to the theme's own. So each setting the look has is kept, as a valid value, or
  * dropped if it can't be one; an empty value means the default.
  *
  * @param array $values setting name => value
@@ -464,13 +502,15 @@ function formulize_sanitizeAppearanceLookSettings($values, $theme = null) {
     $clean = array();
     $fonts = formulize_appearanceFontMap($theme);
     foreach (formulize_appearanceSettingNames() as $name) {
-        // which look is applied, and the editor's mode, are the site's, not a look's
-        if (!array_key_exists($name, $values) OR $name == 'appearance_look' OR $name == 'appearance_mode') {
+        if (!array_key_exists($name, $values)) {
             continue;
         }
         $value = trim((string) $values[$name]);
         if ($name == 'appearance_overrides') {
-            $clean[$name] = formulize_sanitizeAppearanceOverrides($value);
+            $value = formulize_sanitizeAppearanceOverrides($value);
+            if ($value !== '') {
+                $clean[$name] = $value;
+            }
         } elseif ($name == 'appearance_font' OR $name == 'appearance_headingfont') {
             if ($value === '' OR isset($fonts[$value])) {
                 $clean[$name] = $value;
@@ -492,21 +532,20 @@ function formulize_sanitizeAppearanceLookSettings($values, $theme = null) {
 }
 
 /**
- * A theme's settings with a look applied: each setting the look changes replaces
- * the theme's own, except the component tokens (appearance_overrides), which are
- * merged, token by token, so a look that changes the row height keeps the
- * theme's own button colour. A font and its Google Font name go together.
+ * Settings with what a look changes put on top: each setting the look changes
+ * replaces the one underneath, except the component tokens (appearance_overrides),
+ * which are merged, token by token, so a look that changes the row height keeps
+ * the button colour of the look it is based on. A font and its Google Font name
+ * go together.
  *
- * @param array $settings the theme's own settings
+ * @param array $settings the settings underneath
  * @param array $look the settings the look changes
  * @return array settings array, not yet sanitized
  */
 function formulize_mergeAppearanceLook($settings, $look) {
     foreach ($look as $name => $value) {
         if ($name == 'appearance_overrides') {
-            $own = json_decode((string) $settings[$name], true);
-            $changes = json_decode((string) $value, true);
-            $merged = array_merge(is_array($own) ? $own : array(), is_array($changes) ? $changes : array());
+            $merged = array_merge(formulize_appearanceLookOverrides($settings), formulize_appearanceLookOverrides($look));
             $settings[$name] = $merged ? json_encode($merged, JSON_UNESCAPED_SLASHES) : '';
         } else {
             $settings[$name] = $value;
@@ -520,26 +559,603 @@ function formulize_mergeAppearanceLook($settings, $look) {
 }
 
 /**
- * The settings a theme is shown with: its own, with the look applied to the site
- * on top. This is what pages are drawn with (the stylesheet, the logo, the
- * favicon, the page width); the appearance editor edits the theme's own settings
- * and the looks (formulize_getAppearanceSettings).
+ * The keys of the looks a look is based on, the furthest first, and the look
+ * itself last.
+ *
+ * @param array $looks a theme's looks (formulize_getAppearanceLooks)
+ * @param string $key the look's key
+ * @return array of look keys
+ */
+function formulize_appearanceLookChain($looks, $key) {
+    $chain = array();
+    for ($at = $key; $at !== '' AND isset($looks[$at]) AND !in_array($at, $chain); $at = $looks[$at]['base']) {
+        array_unshift($chain, $at);
+    }
+    return $chain;
+}
+
+/**
+ * The keys of the looks based on a look, directly, by name; or of the looks
+ * based on nothing, Default first, for ''.
+ *
+ * @param array $looks a theme's looks (formulize_getAppearanceLooks)
+ * @param string $key the look's key, or ''
+ * @return array of look keys
+ */
+function formulize_appearanceLookChildren($looks, $key) {
+    $children = array();
+    foreach ($looks as $childKey => $look) {
+        if ($look['base'] === $key) {
+            $children[] = $childKey; // already Default first, then by name
+        }
+    }
+    return $children;
+}
+
+/**
+ * The keys of every look based on a look, directly or through others.
+ *
+ * @param array $looks a theme's looks (formulize_getAppearanceLooks)
+ * @param string $key the look's key
+ * @return array of look keys
+ */
+function formulize_appearanceLookDescendants($looks, $key) {
+    $found = array();
+    foreach (formulize_appearanceLookChildren($looks, $key) as $child) {
+        $found[] = $child;
+        $found = array_merge($found, formulize_appearanceLookDescendants($looks, $child));
+    }
+    return $found;
+}
+
+/**
+ * A theme's looks in the order of a tree: each look followed by the looks based
+ * on it. For each, what a tree needs to draw its row (see fz-tree in
+ * formulize-ui.css): how deep it is, the levels its row carries a line straight
+ * through for, whether it is the last of the looks with its base, and whether
+ * any look is based on it.
+ *
+ * @param array $looks a theme's looks (formulize_getAppearanceLooks)
+ * @return array of arrays with 'key', 'depth', 'through' (levels), 'last' and 'parent'
+ */
+function formulize_appearanceLookTree($looks) {
+    $rows = array();
+    $walk = function ($key, $depth, $through) use (&$walk, &$rows, $looks) {
+        $siblings = formulize_appearanceLookChildren($looks, $looks[$key]['base']);
+        $last = (end($siblings) === $key);
+        $children = formulize_appearanceLookChildren($looks, $key);
+        $rows[] = array('key' => $key, 'depth' => $depth, 'through' => $through, 'last' => $last, 'parent' => (bool) $children);
+        $next = ($depth > 0 AND !$last) ? array_merge($through, array($depth - 1)) : $through;
+        foreach ($children as $child) {
+            $walk($child, $depth + 1, $next);
+        }
+    };
+    foreach (formulize_appearanceLookChildren($looks, '') as $root) {
+        $walk($root, 0, array());
+    }
+    return $rows;
+}
+
+/**
+ * The settings a look resolves to, that pages are shown with: what every look in
+ * its chain changes, from the furthest base to the look itself, on top of the
+ * theme's own settings.
  *
  * @param string|null $theme theme folder name, defaults to the active theme
- * @param array|null $settings the theme's own settings, defaults to the saved ones
- * @param string|null $lookKey the look to apply, defaults to the one the settings name
+ * @param string|null $key the look's key, defaults to the look the site uses
  * @return array settings array, sanitized
  */
-function formulize_getAppearanceEffectiveSettings($theme = null, $settings = null, $lookKey = null) {
+function formulize_getAppearanceLookSettings($theme = null, $key = null) {
     $theme = formulize_resolveAppearanceTheme($theme);
-    $settings = is_array($settings) ? $settings : formulize_getAppearanceSettings($theme);
-    $lookKey = ($lookKey === null) ? (string) $settings['appearance_look'] : $lookKey;
-    $lookKey = ($lookKey === '') ? 'default' : $lookKey; // Default, applied, is recorded as nothing
     $looks = formulize_getAppearanceLooks($theme);
-    if (isset($looks[$lookKey])) {
-        $settings = formulize_mergeAppearanceLook($settings, $looks[$lookKey]['settings']);
+    $key = ($key === null OR !isset($looks[$key])) ? formulize_getAppearanceSiteLook($theme) : $key;
+    return formulize_appearanceResolveLook($looks, $key, $theme);
+}
+
+/**
+ * The settings a look resolves to, from a given set of looks: the ones being
+ * saved, which may not be the ones on disk yet.
+ *
+ * @param array $looks a theme's looks
+ * @param string $key the look's key
+ * @param string $theme theme folder name
+ * @return array settings array, sanitized
+ */
+function formulize_appearanceResolveLook($looks, $key, $theme) {
+    $settings = formulize_defaultAppearanceSettings();
+    foreach (formulize_appearanceLookChain($looks, $key) as $at) {
+        $settings = formulize_mergeAppearanceLook($settings, $looks[$at]['settings']);
     }
     return formulize_sanitizeAppearanceSettings($settings, $theme);
+}
+
+/**
+ * The settings a theme's pages are shown with: those of a look, by default the one
+ * the site uses. Kept for the code that asked for the theme's effective settings
+ * when there was one set of them.
+ *
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @param string|null $lookKey the look, defaults to the one the site uses
+ * @return array settings array, sanitized
+ */
+function formulize_getAppearanceEffectiveSettings($theme = null, $lookKey = null) {
+    return formulize_getAppearanceLookSettings($theme, $lookKey);
+}
+
+/**
+ * The look a theme's site uses: the one its appearance.css records, if the theme
+ * still has it; otherwise Default, or if Default has been deleted, the first look
+ * with no base.
+ *
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return string the look's key
+ */
+function formulize_getAppearanceSiteLook($theme = null) {
+    $theme = formulize_resolveAppearanceTheme($theme);
+    $looks = formulize_getAppearanceLooks($theme);
+    $values = formulize_readAppearanceCssValues(formulize_getAppearanceCssPath($theme));
+    $key = ($values !== false AND isset($values['appearance_look'])) ? strtolower($values['appearance_look']) : '';
+    if (isset($looks[$key])) {
+        return $key;
+    }
+    if (isset($looks['default'])) {
+        return 'default';
+    }
+    $roots = formulize_appearanceLookChildren($looks, '');
+    return $roots ? $roots[0] : (string) key($looks);
+}
+
+// ---------------------------------------------------------------------------
+// Sizes: Standard (a theme's own), Compact and Comfortable. Not looks: each is a
+// set of values for the component size tokens, which choosing it writes into a
+// look. See formulize_appearanceSizePresets() in appearance_tokens.php.
+// ---------------------------------------------------------------------------
+
+/**
+ * The sizes a look can be given, for a theme that has them: Standard first.
+ *
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return array size key => array with 'name' and 'description'; empty for a
+ *               theme without the size tokens
+ */
+function formulize_appearanceSizes($theme = null) {
+    if (!formulize_appearanceThemeUsesSizes($theme)) {
+        return array();
+    }
+    $sizes = array('standard' => array('name' => 'Standard', 'description' => 'The theme\'s own sizes.'));
+    foreach (array_filter(formulize_appearanceSizePresets()) as $key => $preset) {
+        $sizes[$key] = array('name' => $preset['name'], 'description' => $preset['description']);
+    }
+    return $sizes;
+}
+
+/**
+ * The tokens a size sets: every token any of the presets sets.
+ *
+ * @return array of token names
+ */
+function formulize_appearanceSizeTokens() {
+    $tokens = array();
+    foreach (array_filter(formulize_appearanceSizePresets()) as $preset) {
+        $tokens = array_merge($tokens, array_keys($preset['overrides']));
+    }
+    return array_values(array_unique($tokens));
+}
+
+/**
+ * The values a size gives the size tokens: a preset's own, or for Standard, the
+ * theme's own (what formulize-ui.css and the theme's tokens.css declare).
+ *
+ * @param string $size the size's key
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return array token => value, as appearance_tokens.json writes values
+ */
+function formulize_appearanceSizeValues($size, $theme = null) {
+    $presets = formulize_appearanceSizePresets();
+    if ($size != 'standard') {
+        return !empty($presets[$size]) ? $presets[$size]['overrides'] : array();
+    }
+    $defaults = formulize_appearanceSizeDefaults($theme);
+    $values = array();
+    foreach (formulize_appearanceSizeTokens() as $token) {
+        if (isset($defaults[$token])) {
+            $values[$token] = $defaults[$token];
+        }
+    }
+    return $values;
+}
+
+/**
+ * Which size a look's own settings give it: none (it sets no size of its own, so
+ * its sizes are its base's), a size whose values it has exactly, or custom.
+ *
+ * @param array $settings the settings a look changes itself
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return string '' for none, a size's key, or 'custom'
+ */
+function formulize_appearanceLookSize($settings, $theme = null) {
+    $own = array_intersect_key(formulize_appearanceLookOverrides($settings), array_flip(formulize_appearanceSizeTokens()));
+    if (!$own) {
+        return '';
+    }
+    foreach (array_keys(formulize_appearanceSizes($theme)) as $size) {
+        $values = formulize_appearanceSizeValues($size, $theme);
+        if ($own == $values) {
+            return $size;
+        }
+    }
+    return 'custom';
+}
+
+/**
+ * What a look changes itself, in a few words for a person: its own logo, how many
+ * colours, its sizes (by name, when they are one of the sizes), how many other
+ * parts, and so on.
+ *
+ * @param array $settings the settings a look changes itself
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return array of short phrases, eg: 'Logo', '2 colours', 'Compact sizes'
+ */
+function formulize_appearanceLookChanges($settings, $theme = null) {
+    $changes = array();
+    $count = function ($n, $one, $many) { return $n . ' ' . ($n == 1 ? $one : $many); };
+    if (isset($settings['appearance_logo'])) {
+        $changes[] = 'Logo';
+    }
+    if (isset($settings['appearance_favicon'])) {
+        $changes[] = 'Favicon';
+    }
+    $colours = 0;
+    foreach (array_keys(formulize_appearanceColourMapDefinition()) as $key) {
+        $colours += isset($settings['appearance_' . $key]) ? 1 : 0;
+    }
+    if ($colours) {
+        $changes[] = $count($colours, 'colour', 'colours');
+    }
+    if (isset($settings['appearance_font']) OR isset($settings['appearance_headingfont'])) {
+        $changes[] = 'Fonts';
+    }
+    if (isset($settings['appearance_contentwidth'])) {
+        $changes[] = 'Page width';
+    }
+    $overrides = formulize_appearanceLookOverrides($settings);
+    $sizeTokens = array_flip(formulize_appearanceSizeTokens());
+    $sizes = count(array_intersect_key($overrides, $sizeTokens));
+    if ($sizes) {
+        $size = formulize_appearanceLookSize($settings, $theme);
+        $named = formulize_appearanceSizes($theme);
+        $changes[] = isset($named[$size]) ? $named[$size]['name'] . ' sizes' : $count($sizes, 'size', 'sizes');
+    }
+    $parts = count(array_diff_key($overrides, $sizeTokens));
+    if ($parts) {
+        $changes[] = $count($parts, 'part', 'parts');
+    }
+    return $changes;
+}
+
+// ---------------------------------------------------------------------------
+// Managing looks. Each of these checks what it is asked to do, does it, and
+// writes the theme's stylesheets again, and says why when it can't.
+// ---------------------------------------------------------------------------
+
+/**
+ * Write a theme's looks: each look's stylesheet, and the theme's appearance.css,
+ * which records the look the site uses and is that look's CSS. Every one is
+ * written, since a change to a look reaches every look based on it.
+ *
+ * @param string $theme theme folder name
+ * @param array $looks the theme's looks, as they are to be
+ * @param string $siteLook the key of the look the site is to use
+ * @return boolean whether every file was written
+ */
+function formulize_writeAppearanceLookFiles($theme, $looks, $siteLook) {
+    $dir = formulize_getAppearanceLooksDir($theme);
+    if (formulize_prepareAppearanceDir($theme) === false OR (!is_dir($dir) AND !@mkdir($dir, 0775))) {
+        return false;
+    }
+    $written = true;
+    foreach ($looks as $key => $look) {
+        $written = (file_put_contents($dir . '/' . $key . '.css', formulize_buildAppearanceLookCss($key, $looks, $theme)) !== false) AND $written;
+    }
+    $cssPath = formulize_getAppearanceCssPath($theme);
+    $written = (file_put_contents($cssPath, formulize_buildAppearanceCss($theme, $looks, $siteLook)) !== false) AND $written;
+    clearstatcache(true, $cssPath); // the file's mtime is read right after this
+    return $written;
+}
+
+/**
+ * Save a theme's looks as they are to be: write their files, and read them again.
+ *
+ * @param string $theme theme folder name
+ * @param array $looks the theme's looks, as they are to be
+ * @param string|null $siteLook the look the site is to use, defaults to the one it uses
+ * @return string '' when saved, or what went wrong
+ */
+function formulize_saveAppearanceLooks($theme, $looks, $siteLook = null) {
+    $siteLook = ($siteLook === null) ? formulize_getAppearanceSiteLook($theme) : $siteLook;
+    if (!formulize_writeAppearanceLookFiles($theme, $looks, $siteLook)) {
+        formulize_getAppearanceLooks($theme, true);
+        return 'The ' . $theme . " theme's looks could not be saved: the web server cannot write to " . formulize_getAppearanceDir($theme) . '. Make that folder writable and try again.';
+    }
+    formulize_getAppearanceLooks($theme, true);
+    return '';
+}
+
+/**
+ * Whether a name can be given to a look: one none of the theme's looks has
+ * already (not counting the look being renamed), and not too long. Names are
+ * compared without regard to case.
+ *
+ * @param string $name the name
+ * @param string $theme theme folder name
+ * @param string $except the key of the look being renamed, if one is
+ * @return string an error message, or '' if the name can be used
+ */
+function formulize_appearanceLookNameProblem($name, $theme, $except = '') {
+    if ($name === '') {
+        return 'Please give the look a name.';
+    }
+    if (strlen($name) > 60) {
+        return 'Please give the look a name of 60 characters or fewer.';
+    }
+    // the lines its stylesheet's block starts and ends with, which would cut the block short
+    foreach (formulize_appearanceLookBlockMarkers() as $marker) {
+        if (strpos($name, $marker) !== false) {
+            return 'Please give the look another name.';
+        }
+    }
+    foreach (formulize_getAppearanceLooks($theme) as $key => $look) {
+        if ($key != $except AND strtolower($look['name']) == strtolower($name)) {
+            return $theme . ' already has a look called ' . $look['name'] . '. Please give this one another name.';
+        }
+    }
+    return '';
+}
+
+/**
+ * A name as a person typed it, made tidy: spaces trimmed and runs of them made one.
+ *
+ * @param string $name the name as typed
+ * @return string the name
+ */
+function formulize_appearanceCleanLookName($name) {
+    return trim(preg_replace('/\s+/', ' ', (string) $name));
+}
+
+/**
+ * A key for a new look, made from its name: lower case letters, numbers and
+ * hyphens, as its stylesheet's file name, and different from every look the
+ * theme has, and every file in its looks folder.
+ *
+ * @param string $name the look's name
+ * @param string $theme theme folder name
+ * @return string the key
+ */
+function formulize_appearanceNewLookKey($name, $theme) {
+    $base = trim(preg_replace('/[^a-z0-9]+/', '-', strtolower($name)), '-');
+    $base = ($base === '') ? 'look' : substr($base, 0, 40);
+    $looks = formulize_getAppearanceLooks($theme);
+    $key = $base;
+    for ($n = 2; isset($looks[$key]) OR is_file(formulize_getAppearanceLooksDir($theme) . '/' . $key . '.css'); $n++) {
+        $key = $base . '-' . $n;
+    }
+    return $key;
+}
+
+/**
+ * Make a look. It is based on a look, or on nothing, and changes nothing, so it
+ * looks like its base, unless it is given a size: that size's values are written
+ * into it.
+ *
+ * @param string $theme theme folder name
+ * @param string $name its name
+ * @param string $base the key of the look it is based on, or '' for nothing
+ * @param string $size a size's key (formulize_appearanceSizes), or '' for its base's
+ * @param string $key set to the new look's key
+ * @return string '' when made, or what went wrong
+ */
+function formulize_createAppearanceLook($theme, $name, $base, $size, &$key = null) {
+    $looks = formulize_getAppearanceLooks($theme);
+    $name = formulize_appearanceCleanLookName($name);
+    if ($problem = formulize_appearanceLookNameProblem($name, $theme)) {
+        return $problem;
+    }
+    if ($base !== '' AND !isset($looks[$base])) {
+        return 'The look to base it on is gone. Please choose another.';
+    }
+    $settings = array();
+    $sizes = formulize_appearanceSizes($theme);
+    // a size is written into the look; Standard needs nothing written into a look based on nothing
+    if ($size !== '' AND isset($sizes[$size]) AND !($size == 'standard' AND $base === '')) {
+        $settings['appearance_overrides'] = json_encode(formulize_appearanceSizeValues($size, $theme), JSON_UNESCAPED_SLASHES);
+    }
+    $key = formulize_appearanceNewLookKey($name, $theme);
+    $looks[$key] = array('name' => $name, 'description' => '', 'base' => $base, 'settings' => formulize_sanitizeAppearanceLookSettings($settings, $theme));
+    return formulize_saveAppearanceLooks($theme, $looks);
+}
+
+/**
+ * Copy a look: a look with the same base, and the same changes of its own. It
+ * looks the same, but doesn't follow the look it was copied from. The looks based
+ * on that look aren't copied.
+ *
+ * @param string $theme theme folder name
+ * @param string $from the key of the look to copy
+ * @param string $name the copy's name
+ * @param string $key set to the copy's key
+ * @return string '' when made, or what went wrong
+ */
+function formulize_duplicateAppearanceLook($theme, $from, $name, &$key = null) {
+    $looks = formulize_getAppearanceLooks($theme);
+    if (!isset($looks[$from])) {
+        return 'That look is gone.';
+    }
+    $name = formulize_appearanceCleanLookName($name);
+    if ($problem = formulize_appearanceLookNameProblem($name, $theme)) {
+        return $problem;
+    }
+    $key = formulize_appearanceNewLookKey($name, $theme);
+    $looks[$key] = array('name' => $name, 'description' => $looks[$from]['description'], 'base' => $looks[$from]['base'], 'settings' => $looks[$from]['settings']);
+    return formulize_saveAppearanceLooks($theme, $looks);
+}
+
+/**
+ * Give a look another name. Its key, which screens and other looks know it by,
+ * stays the same.
+ *
+ * @param string $theme theme folder name
+ * @param string $key the look's key
+ * @param string $name its new name
+ * @return string '' when renamed, or what went wrong
+ */
+function formulize_renameAppearanceLook($theme, $key, $name) {
+    $looks = formulize_getAppearanceLooks($theme);
+    if (!isset($looks[$key])) {
+        return 'That look is gone.';
+    }
+    $name = formulize_appearanceCleanLookName($name);
+    if ($problem = formulize_appearanceLookNameProblem($name, $theme, $key)) {
+        return $problem;
+    }
+    $looks[$key]['name'] = $name;
+    return formulize_saveAppearanceLooks($theme, $looks);
+}
+
+/**
+ * Base a look on another look, or on nothing. It keeps what it changes itself,
+ * and takes everything else from its new base; a change of its own that is the
+ * same as the new base's is dropped, and follows the new base from then on. The
+ * looks based on it move with it. It can't be based on itself, or on a look
+ * based on it.
+ *
+ * @param string $theme theme folder name
+ * @param string $key the look's key
+ * @param string $base the key of its new base, or '' for nothing
+ * @return string '' when done, or what went wrong
+ */
+function formulize_rebaseAppearanceLook($theme, $key, $base) {
+    $looks = formulize_getAppearanceLooks($theme);
+    if (!isset($looks[$key])) {
+        return 'That look is gone.';
+    }
+    if ($base !== '' AND !isset($looks[$base])) {
+        return 'The look to base it on is gone. Please choose another.';
+    }
+    if ($base === $key OR in_array($base, formulize_appearanceLookDescendants($looks, $key), true)) {
+        return $looks[$key]['name'] . ' can\'t be based on ' . ($base === $key ? 'itself' : $looks[$base]['name'] . ', which is based on it') . '.';
+    }
+    if ($base === $looks[$key]['base']) {
+        return '';
+    }
+    // what the new base resolves to, unsanitized and sanitized, to compare each change with
+    $under = formulize_defaultAppearanceSettings();
+    foreach (($base === '' ? array() : formulize_appearanceLookChain($looks, $base)) as $at) {
+        $under = formulize_mergeAppearanceLook($under, $looks[$at]['settings']);
+    }
+    $baseSettings = formulize_sanitizeAppearanceSettings($under, $theme);
+    $baseTokens = formulize_appearanceLookOverrides($baseSettings) + formulize_appearanceSizeDefaults($theme);
+    $own = $looks[$key]['settings'];
+    foreach ($own as $name => $value) {
+        if ($name == 'appearance_overrides') {
+            $tokens = formulize_appearanceLookOverrides($own);
+            foreach ($tokens as $token => $tokenValue) {
+                if (isset($baseTokens[$token]) AND $baseTokens[$token] == $tokenValue) {
+                    unset($tokens[$token]);
+                }
+            }
+            if ($tokens) {
+                $own[$name] = json_encode($tokens, JSON_UNESCAPED_SLASHES);
+            } else {
+                unset($own[$name]);
+            }
+        } elseif ($name != 'appearance_customfont' AND $name != 'appearance_headingcustomfont') {
+            $with = formulize_sanitizeAppearanceSettings(formulize_mergeAppearanceLook($under, array_intersect_key($own, array_flip(array($name, 'appearance_customfont', 'appearance_headingcustomfont')))), $theme);
+            if ($with[$name] === $baseSettings[$name]) {
+                unset($own[$name]);
+                if ($name == 'appearance_font') {
+                    unset($own['appearance_customfont']);
+                } elseif ($name == 'appearance_headingfont') {
+                    unset($own['appearance_headingcustomfont']);
+                }
+            }
+        }
+    }
+    $looks[$key]['base'] = $base;
+    $looks[$key]['settings'] = $own;
+    return formulize_saveAppearanceLooks($theme, $looks);
+}
+
+/**
+ * Use a look for the site: every page of the theme's, except a screen set to
+ * another look.
+ *
+ * @param string $theme theme folder name
+ * @param string $key the look's key
+ * @return string '' when done, or what went wrong
+ */
+function formulize_setAppearanceSiteLook($theme, $key) {
+    $looks = formulize_getAppearanceLooks($theme);
+    if (!isset($looks[$key])) {
+        return 'That look is gone.';
+    }
+    return formulize_saveAppearanceLooks($theme, $looks, $key);
+}
+
+/**
+ * Delete a look, and the logo and favicon of its own that no other look has. The
+ * look the site uses can't be deleted, nor a look others are based on. Screens set
+ * to it use the site's look instead: on the site's own theme, they are set back
+ * to it; on another theme they keep its key, and fall back to the site's look as
+ * any screen does whose look its theme doesn't have.
+ *
+ * @param string $theme theme folder name
+ * @param string $key the look's key
+ * @return string '' when deleted, or what went wrong
+ */
+function formulize_deleteAppearanceLook($theme, $key) {
+    $looks = formulize_getAppearanceLooks($theme);
+    if (!isset($looks[$key])) {
+        return '';
+    }
+    if ($key == formulize_getAppearanceSiteLook($theme)) {
+        return $looks[$key]['name'] . ' is the site look, so it can\'t be deleted. Change the site look first.';
+    }
+    if ($children = formulize_appearanceLookChildren($looks, $key)) {
+        return $looks[$key]['name'] . ' can\'t be deleted while other looks are based on it. Change what they are based on first.';
+    }
+    if (!@unlink(formulize_getAppearanceLooksDir($theme) . '/' . $key . '.css')) {
+        return 'The look could not be deleted: the web server cannot change ' . formulize_getAppearanceLooksDir($theme) . '. Make that folder writable and try again.';
+    }
+    $gone = $looks[$key];
+    unset($looks[$key]);
+    $problem = formulize_saveAppearanceLooks($theme, $looks);
+    foreach (array_keys(formulize_appearanceUploads()) as $name) {
+        if (!empty($gone['settings'][$name])) {
+            formulize_deleteAppearanceUploadedFile($gone['settings'][$name], $theme);
+        }
+    }
+    if ($theme == formulize_getDefaultAppearanceTheme()) {
+        global $xoopsDB;
+        $xoopsDB->queryF('UPDATE ' . $xoopsDB->prefix('formulize_screen') . " SET look = '' WHERE look = " . $xoopsDB->quoteString($key));
+    }
+    return $problem;
+}
+
+/**
+ * The screens set to a look of their own, by the look's key: what the Looks page
+ * shows as each look's Used by. A screen's look is a key, the same whatever the
+ * site's theme: it is the theme the page is shown in that has the look, or not.
+ *
+ * @return array look key => list of arrays with 'sid', 'fid' and 'title'
+ */
+function formulize_appearanceLookScreens() {
+    global $xoopsDB;
+    $screens = array();
+    $result = $xoopsDB->query('SELECT sid, fid, title, look FROM ' . $xoopsDB->prefix('formulize_screen') . " WHERE look != '' ORDER BY title");
+    while ($result AND $row = $xoopsDB->fetchArray($result)) {
+        $screens[$row['look']][] = array('sid' => (int) $row['sid'], 'fid' => (int) $row['fid'], 'title' => (string) $row['title']);
+    }
+    return $screens;
 }
 
 /**
@@ -556,8 +1172,8 @@ function formulize_appearanceThemeHasAdvancedMode($theme = null) {
 }
 
 /**
- * Whether a theme is built on the component size tokens, so that the looks that
- * change sizes (Compact, Comfortable) and the advanced editor change how it looks. A theme says so itself, by
+ * Whether a theme is built on the component size tokens, so that the sizes
+ * (Standard, Compact, Comfortable) and the advanced editor change how it looks. A theme says so itself, by
  * declaring --formulize-size-tokens with its other tokens (Lyris does, in
  * css/tokens.css). A theme that doesn't, such as Anari, styles most of its
  * markup with its own fixed sizes, so offering it a Size setting that changed
@@ -767,19 +1383,6 @@ function formulize_renderAppearancePreview($screen, $theme = null) {
 }
 
 /**
- * Validate the look applied to the site.
- *
- * @param string $value the look's key
- * @param string|null $theme theme folder name, defaults to the active theme
- * @return string the look's key, or '' (Default) if the theme has no such look
- */
-function formulize_sanitizeAppearanceLook($value, $theme = null) {
-    $value = strtolower(trim((string) $value));
-    $looks = formulize_getAppearanceLooks($theme);
-    return ($value != 'default' AND isset($looks[$value])) ? $value : '';
-}
-
-/**
  * Validate the overrides set in the advanced editor: a JSON object of token =>
  * value, the values written the way appearance_tokens.json writes them (a
  * number of spacing steps, a text step, a weight...). Tokens that aren't in the
@@ -808,7 +1411,7 @@ function formulize_sanitizeAppearanceOverrides($value) {
 
 /**
  * The value each component token gets from a theme's settings, before it is
- * written as CSS: the ones set in the advanced editor, or by the look applied
+ * written as CSS: the ones a look sets, itself or through the looks it is based on
  * (see formulize_getAppearanceEffectiveSettings). Tokens that aren't set are
  * left out, so the CSS's own Default applies.
  *
@@ -829,13 +1432,15 @@ function formulize_getAppearanceSizeValues($settings) {
 }
 
 /**
- * The names of all the appearance settings, ie: the keys of a settings array
+ * The names of all the appearance settings, ie: the keys of a settings array:
+ * everything a look can change. Which look the site uses is recorded apart from
+ * them (see formulize_getAppearanceSiteLook).
  *
  * @return array of setting names
  */
 function formulize_appearanceSettingNames() {
     $names = array('appearance_font', 'appearance_customfont', 'appearance_headingfont',
-        'appearance_headingcustomfont', 'appearance_look', 'appearance_mode', 'appearance_overrides',
+        'appearance_headingcustomfont', 'appearance_overrides',
         'appearance_contentwidth', 'appearance_logo', 'appearance_favicon');
     // the definition, not the theme-aware map: the setting names are the same for every
     // theme, and only the defaults differ, so there is no theme to resolve here
@@ -858,9 +1463,9 @@ function formulize_defaultAppearanceSettings() {
 
 /**
  * The settings a submitted form asks for, for the theme's own appearance settings,
- * which are the Default look, the one every other look builds on: from the
+ * of the look being edited: from the
  * appearance editor. Colours and fonts are taken as submitted (an empty or
- * missing one means the default); the look applied, the mode, the page width and
+ * missing one means the default); the page width and
  * a part's own settings are kept as they are when the form has no field for
  * them. The logo and the favicon are kept too: formulize_saveAppearanceUploads()
  * replaces or removes them.
@@ -880,7 +1485,7 @@ function formulize_appearanceSubmittedSettings($post, $current, $theme, &$errors
     foreach (array('appearance_font', 'appearance_customfont', 'appearance_headingfont', 'appearance_headingcustomfont') as $name) {
         $submitted[$name] = isset($post[$name]) ? (string) $post[$name] : '';
     }
-    foreach (array('appearance_look', 'appearance_mode', 'appearance_contentwidth', 'appearance_overrides') as $name) {
+    foreach (array('appearance_contentwidth', 'appearance_overrides') as $name) {
         $submitted[$name] = isset($post[$name]) ? (string) $post[$name] : $current[$name];
     }
     // the page width is sent as the width in pixels, kept to the limits by the
@@ -958,21 +1563,15 @@ function formulize_deleteAppearanceUploadedFile($file, $theme) {
 }
 
 /**
- * Whether a theme's own settings (Default's), or one of its looks, has an uploaded
- * image: a logo or favicon, so the file has to stay. Called once the settings that
- * stopped using the file have been saved.
+ * Whether one of a theme's looks has an uploaded image, a logo or favicon, so the
+ * file has to stay. Called once the looks that stopped using the file have been
+ * saved. A copy of a look has the same images as the look it was copied from.
  *
  * @param string $file the file's name
  * @param string $theme theme folder name
  * @return boolean
  */
 function formulize_appearanceFileInUse($file, $theme) {
-    $site = formulize_getAppearanceSettings($theme);
-    foreach (array_keys(formulize_appearanceUploads()) as $name) {
-        if ($site[$name] === $file) {
-            return true;
-        }
-    }
     foreach (formulize_getAppearanceLooks($theme, true) as $look) {
         foreach (array_keys(formulize_appearanceUploads()) as $name) {
             if (isset($look['settings'][$name]) AND $look['settings'][$name] === $file) {
@@ -981,193 +1580,6 @@ function formulize_appearanceFileInUse($file, $theme) {
         }
     }
     return false;
-}
-
-/**
- * Whether a name can be given to a look: one the theme's looks, the built-in ones
- * included, don't have already (not counting the look being renamed), and not
- * too long. Names are compared without regard to case.
- *
- * @param string $name the name
- * @param string $theme theme folder name
- * @param string $except the key of the look being renamed, if one is
- * @return string an error message, or '' if the name can be used
- */
-function formulize_appearanceLookNameProblem($name, $theme, $except = '') {
-    if ($name === '') {
-        return 'Please give the look a name.';
-    }
-    if (strlen($name) > 60) {
-        return 'Please give the look a name of 60 characters or fewer.';
-    }
-    // the lines its stylesheet's block starts and ends with, which would cut the block short
-    foreach (formulize_appearanceLookBlockMarkers() as $marker) {
-        if (strpos($name, $marker) !== false) {
-            return 'Please give the look another name.';
-        }
-    }
-    foreach (formulize_getAppearanceLooks($theme) as $key => $look) {
-        if ($key != $except AND strtolower($look['name']) == strtolower($name)) {
-            return 'There is already a look called ' . $look['name'] . '. Please give this one another name.';
-        }
-    }
-    return '';
-}
-
-/**
- * A key for a new look, made from its name: lower case letters, numbers and
- * hyphens, as its stylesheet's file name, and different from every look the
- * theme has, the built-in ones included.
- *
- * @param string $name the look's name
- * @param string $theme theme folder name
- * @return string the key
- */
-function formulize_appearanceNewLookKey($name, $theme) {
-    $base = trim(preg_replace('/[^a-z0-9]+/', '-', strtolower($name)), '-');
-    $base = ($base === '') ? 'look' : substr($base, 0, 40);
-    $looks = formulize_getAppearanceLooks($theme);
-    $builtin = formulize_appearanceBuiltinLooks();
-    $key = $base;
-    for ($n = 2; isset($looks[$key]) OR isset($builtin[$key]) OR is_file(formulize_getAppearanceLooksDir($theme) . '/' . $key . '.css'); $n++) {
-        $key = $base . '-' . $n;
-    }
-    return $key;
-}
-
-/**
- * Save one of a theme's looks: its name, description and the settings it
- * changes, in its stylesheet (formulize_buildAppearanceLookCss), which is the
- * record of it. Then the theme's own stylesheet is rewritten, since the look may
- * be the one applied to the site, unless the caller is about to rewrite it itself
- * (the editor's Save, which writes the theme's own settings next). A built-in
- * look is saved the same way, marked as changed on this site.
- *
- * @param string $theme theme folder name
- * @param string $key the look's key (formulize_appearanceNewLookKey for a new one)
- * @param string $name its name
- * @param array $settings the settings it changes (sanitized here)
- * @param string $description what it is for, if anything
- * @param boolean $regenerate whether to rewrite the theme's own stylesheet too
- * @return boolean whether it was saved, and the theme's own stylesheet rewritten
- *                 when asked for
- */
-function formulize_saveAppearanceLook($theme, $key, $name, $settings, $description = '', $regenerate = true) {
-    $theme = formulize_resolveAppearanceTheme($theme);
-    $builtin = formulize_appearanceBuiltinLooks();
-    if (!preg_match('/^[a-z0-9][a-z0-9-]*$/', $key)) {
-        return false;
-    }
-    // a built-in look keeps its name and description, and is marked as changed
-    $isBuiltin = !empty($builtin[$key]);
-    if ($isBuiltin) {
-        $name = $builtin[$key]['name'];
-        $description = $builtin[$key]['description'];
-    }
-    $dir = formulize_getAppearanceLooksDir($theme);
-    if (formulize_prepareAppearanceDir($theme) === false OR (!is_dir($dir) AND !@mkdir($dir, 0775))) {
-        return false;
-    }
-    $look = array('name' => $name, 'description' => $description, 'builtin' => $isBuiltin, 'edited' => $isBuiltin, 'settings' => formulize_sanitizeAppearanceLookSettings($settings, $theme));
-    $site = formulize_getAppearanceSettings($theme);
-    if (file_put_contents($dir . '/' . $key . '.css', formulize_buildAppearanceLookCss($key, $look, $site, $theme)) === false) {
-        return false;
-    }
-    formulize_getAppearanceLooks($theme, true);
-    return $regenerate ? formulize_regenerateAppearanceCss($site, $theme) : true;
-}
-
-/**
- * Whether Default, the foundation every other look builds on, has been changed:
- * whether the theme's own settings have anything in them, other than which look
- * is applied and the editor's mode.
- *
- * @param array $settings the theme's own settings
- * @return boolean
- */
-function formulize_appearanceDefaultChanged($settings) {
-    foreach ($settings as $name => $value) {
-        if ($value !== '' AND $name != 'appearance_look' AND $name != 'appearance_mode') {
-            return true;
-        }
-    }
-    return false;
-}
-
-/**
- * Put a built-in look that has been changed on the site back to how it came with
- * Formulize: its changed stylesheet goes, with any logo and favicon of its own
- * that no other look has, and the one it came with applies again.
- *
- * @param string $theme theme folder name
- * @param string $key the look's key
- * @return boolean whether it was reverted
- */
-function formulize_revertAppearanceLook($theme, $key) {
-    $theme = formulize_resolveAppearanceTheme($theme);
-    // Default is the theme's own settings: reverting it puts every one back to the
-    // theme's, the logo and favicon included, and keeps the look applied and the mode
-    if ($key == 'default') {
-        $settings = formulize_getAppearanceSettings($theme);
-        $reverted = formulize_defaultAppearanceSettings();
-        $reverted['appearance_look'] = $settings['appearance_look'];
-        $reverted['appearance_mode'] = $settings['appearance_mode'];
-        if (!formulize_regenerateAppearanceCss($reverted, $theme)) {
-            return false;
-        }
-        foreach (array_keys(formulize_appearanceUploads()) as $name) {
-            if ($settings[$name] !== '') {
-                formulize_deleteAppearanceUploadedFile($settings[$name], $theme);
-            }
-        }
-        return true;
-    }
-    $looks = formulize_getAppearanceLooks($theme);
-    if (!isset($looks[$key]) OR !$looks[$key]['builtin'] OR !$looks[$key]['edited']) {
-        return false;
-    }
-    if (!@unlink(formulize_getAppearanceLooksDir($theme) . '/' . $key . '.css')) {
-        return false;
-    }
-    formulize_getAppearanceLooks($theme, true);
-    foreach (array_keys(formulize_appearanceUploads()) as $name) {
-        if (!empty($looks[$key]['settings'][$name])) {
-            formulize_deleteAppearanceUploadedFile($looks[$key]['settings'][$name], $theme);
-        }
-    }
-    return formulize_regenerateAppearanceCss(formulize_getAppearanceSettings($theme), $theme);
-}
-
-/**
- * Delete one of a theme's looks, and the logo and favicon of its own that no
- * other look has. If it is the look applied to the site, the site goes back to
- * Default. A built-in look can't be deleted.
- *
- * @param string $theme theme folder name
- * @param string $key the look's key
- * @return boolean whether it was deleted
- */
-function formulize_deleteAppearanceLook($theme, $key) {
-    $theme = formulize_resolveAppearanceTheme($theme);
-    $looks = formulize_getAppearanceLooks($theme);
-    if (!isset($looks[$key]) OR $looks[$key]['builtin']) {
-        return false;
-    }
-    $file = formulize_getAppearanceLooksDir($theme) . '/' . $key . '.css';
-    if (!@unlink($file)) {
-        return false;
-    }
-    formulize_getAppearanceLooks($theme, true);
-    foreach (array_keys(formulize_appearanceUploads()) as $name) {
-        if (!empty($looks[$key]['settings'][$name])) {
-            formulize_deleteAppearanceUploadedFile($looks[$key]['settings'][$name], $theme);
-        }
-    }
-    $site = formulize_getAppearanceSettings($theme);
-    if ($site['appearance_look'] == $key) {
-        $site['appearance_look'] = '';
-    }
-    return formulize_regenerateAppearanceCss($site, $theme);
 }
 
 /**
@@ -1425,13 +1837,6 @@ function formulize_sanitizeAppearanceSettings($values, $theme = null) {
     }
     $clean['appearance_headingfont'] = ($headingFont == 'geist') ? '' : $headingFont;
     $clean['appearance_headingcustomfont'] = ($headingFont == 'custom') ? $headingCustomFont : '';
-    // the look applied to the site; Default is recorded as nothing, like every other
-    // default. A Size preset, from before the presets became looks, is that look.
-    $look = isset($values['appearance_look']) ? $values['appearance_look'] : (isset($values['appearance_size']) ? $values['appearance_size'] : '');
-    $clean['appearance_look'] = formulize_sanitizeAppearanceLook($look, $theme);
-    // the editor's mode, for the whole site: simple, recorded as nothing, or advanced,
-    // for a theme that has it
-    $clean['appearance_mode'] = (isset($values['appearance_mode']) AND $values['appearance_mode'] == 'advanced' AND formulize_appearanceThemeHasAdvancedMode($theme)) ? 'advanced' : '';
     $clean['appearance_overrides'] = formulize_sanitizeAppearanceOverrides(isset($values['appearance_overrides']) ? $values['appearance_overrides'] : '');
     // the theme's own page width (1200 pixels in Lyris) is recorded as nothing, and
     // full width, in a theme with a maximum width of its own, as 'full'
@@ -1468,11 +1873,13 @@ function formulize_sanitizeAppearanceSettings($values, $theme = null) {
  * look builds on, and have a part's own settings again.
  * Generation 7: the webfont fetched when no font has been chosen is the theme's
  * own (Poppins on Anari), where it was Geist whatever the theme.
+ * Generation 8: looks are a tree, Default among them, and the theme's own
+ * stylesheet records which look the site uses and is that look's CSS.
  *
  * @return string the whole comment, one line
  */
 function formulize_appearanceCssGenerationMarker() {
-    return '/* Formulize appearance stylesheet, generation 7 */';
+    return '/* Formulize appearance stylesheet, generation 8 */';
 }
 
 /**
@@ -1491,65 +1898,48 @@ function formulize_appearanceSettingsBlockMarkers() {
 }
 
 /**
- * Build the settings block that goes at the top of a theme's generated
- * stylesheet, as a CSS comment. This block is where a theme's appearance
- * settings are recorded, and formulize_readAppearanceCssSettings() reads them
- * back out of it.
+ * Build the block at the top of a theme's appearance.css, as a CSS comment: the
+ * record of which look the site uses. Each look's own stylesheet has the record
+ * of that look (see formulize_buildAppearanceLookCss).
  *
- * A comment block, rather than the custom properties further down the file, is
- * what carries the settings, for two reasons. The properties are derived (a
- * single colour produces half a dozen color-mix() tokens) so reversing them
- * would be guesswork, and not every setting is a CSS value in the first place:
- * the chosen font is a key into our own list, and the logo is a filename. One
- * block holds all of them in the form they were entered in.
+ * A comment block, rather than anything in the CSS further down, so that it can
+ * be read back as it was written (see formulize_readAppearanceCssValues).
  *
- * Only settings that differ from the defaults are written, so a theme left
- * alone gets an empty block, which reads back as "everything default".
- *
- * @param array $settings the settings to record, already sanitized
+ * @param string $siteLook the key of the look the site uses
  * @param string $theme theme folder name, for the human-readable heading
  * @return string the CSS comment block, no trailing newline
  */
-function formulize_buildAppearanceSettingsBlock($settings, $theme) {
+function formulize_buildAppearanceSettingsBlock($siteLook, $theme) {
     $markers = formulize_appearanceSettingsBlockMarkers();
-    $lines = array(
-        '/* Formulize appearance settings for the ' . preg_replace('/[^A-Za-z0-9._ -]/', '', (string) $theme) . ' theme.',
+    return implode("\n", array(
+        '/* Formulize appearance for the ' . preg_replace('/[^A-Za-z0-9._ -]/', '', (string) $theme) . ' theme.',
         ' *',
-        ' * Generated by the appearance editor (Admin > Appearance > Styles and Colors),',
-        ' * and rewritten every time those settings are saved. The block below is where',
-        ' * the settings themselves are kept, and it is what the editor reads them back',
-        ' * out of. If this file is deleted, or the block below is removed or damaged, the',
-        ' * built-in defaults apply.',
+        ' * Written by Formulize whenever the theme\'s looks change (Admin > Appearance >',
+        ' * Looks). The block below records the look the site uses, and the CSS after it',
+        ' * is that look\'s. Each look is kept in its own stylesheet, in the looks folder',
+        ' * beside this file. If this file is deleted, it is written again.',
         ' *',
         ' * ' . $markers['start'],
-    );
-    foreach (formulize_appearanceSettingNames() as $name) {
-        if (isset($settings[$name]) AND $settings[$name] !== '') {
-            $lines[] = ' * ' . $name . ': ' . $settings[$name];
-        }
-    }
-    $lines[] = ' * ' . $markers['end'];
-    $lines[] = ' */';
-    return implode("\n", $lines);
+        ' * appearance_look: ' . preg_replace('/[^a-z0-9-]/', '', (string) $siteLook),
+        ' * ' . $markers['end'],
+        ' */',
+    ));
 }
 
 /**
- * Read the appearance settings back out of a generated stylesheet.
+ * Read the values in the block at the top of a theme's appearance.css, as they
+ * were written: the look the site uses, and in a stylesheet written before looks
+ * were kept apart, the theme's own appearance settings, which become Default's
+ * (see formulize_appearanceCreateDefaultLook).
  *
  * The whole block has to be there: if the start marker is missing the file was
- * not written by us (or predates the format), and if the end marker is missing
- * the file was truncated part way through the settings. Either way the answer
- * is "no settings here", so the caller falls back to the defaults rather than
- * applying whichever half of the settings happened to survive. Individual
- * values are validated by formulize_sanitizeAppearanceSettings(), so a single
- * mangled line costs that one setting and nothing else.
+ * not written by us, and if the end marker is missing it was cut short. Either
+ * way the answer is "nothing here". Whoever uses a value validates it.
  *
  * @param string $path path of the stylesheet to read
- * @param string|null $theme the theme the stylesheet belongs to, whose own
- *                           palette is what counts as default when validating
- * @return array|false settings array, or false when the file has no usable settings block
+ * @return array|false setting name => value, or false when the file has no usable block
  */
-function formulize_readAppearanceCssSettings($path, $theme = null) {
+function formulize_readAppearanceCssValues($path) {
     if (!$path OR !is_file($path)) {
         return false;
     }
@@ -1569,7 +1959,7 @@ function formulize_readAppearanceCssSettings($path, $theme = null) {
             $values[$match[1]] = $match[2];
         }
     }
-    return formulize_sanitizeAppearanceSettings($values, $theme);
+    return $values;
 }
 
 /**
@@ -1604,27 +1994,14 @@ function formulize_getLegacyAppearanceSettings($theme) {
 }
 
 /**
- * A theme's appearance settings, read out of that theme's generated stylesheet,
- * falling back to the settings a pre-upgrade site left in the module configs,
- * and to the defaults. Empty string means "use the default". Cached per theme
- * for the request.
+ * The appearance settings a theme's pages are shown with: those of the look the
+ * site uses (see formulize_getAppearanceLookSettings for any other look).
  *
  * @param string|null $theme theme folder name, defaults to the theme rendering the page
- * @param array|null $saved settings just written, which replace the ones read
  * @return array setting name => value (all setting names present)
  */
-function formulize_getAppearanceSettings($theme = null, $saved = null) {
-    static $cache = array();
-    $theme = formulize_resolveAppearanceTheme($theme);
-    // just written (formulize_regenerateAppearanceCss): what is read from now on
-    if (is_array($saved)) {
-        $cache[$theme] = $saved;
-    }
-    if (!isset($cache[$theme])) {
-        $settings = formulize_readAppearanceCssSettings(formulize_getAppearanceCssPath($theme), $theme);
-        $cache[$theme] = ($settings === false) ? formulize_getLegacyAppearanceSettings($theme) : $settings;
-    }
-    return $cache[$theme];
+function formulize_getAppearanceSettings($theme = null) {
+    return formulize_getAppearanceLookSettings($theme);
 }
 
 /**
@@ -1797,8 +2174,8 @@ function formulize_locateAppearanceFile($file, $theme = null) {
  * @return string path of the logo file, or '' when no custom logo is set
  */
 function formulize_getAppearanceLogoPath($theme = null) {
-    // the look applied may have a logo of its own, and the page's screen may have a look of its own
-    $settings = formulize_getAppearanceEffectiveSettings($theme, null, formulize_appearancePageLook($theme));
+    // the page's screen may have a look of its own, with a logo of its own
+    $settings = formulize_getAppearanceEffectiveSettings($theme, formulize_appearancePageLook($theme));
     // stored as a bare filename in the theme's appearance folder
     return formulize_locateAppearanceFile($settings['appearance_logo'], $theme);
 }
@@ -1823,7 +2200,7 @@ function formulize_getAppearanceLogoUrl($theme = null) {
  * @return string path of the favicon file, or '' when no custom favicon is set
  */
 function formulize_getAppearanceFaviconPath($theme = null) {
-    $settings = formulize_getAppearanceEffectiveSettings($theme, null, formulize_appearancePageLook($theme));
+    $settings = formulize_getAppearanceEffectiveSettings($theme, formulize_appearancePageLook($theme));
     return formulize_locateAppearanceFile($settings['appearance_favicon'], $theme);
 }
 
@@ -1926,7 +2303,7 @@ function formulize_appearanceDirIsWritable($theme = null) {
  * The CSS custom property overrides the current settings call for: the font
  * stack when a non-default font is chosen, the secondary font stack when a
  * separate one is chosen for headings and labels, the component size tokens
- * the advanced editor and the look applied set, and the colour tokens
+ * a look sets, and the colour tokens
  * (with their derived variants) for every colour that differs from the design
  * defaults.
  *
@@ -1972,46 +2349,31 @@ function formulize_getAppearanceCssOverrides($settings = null, $theme = null) {
 }
 
 /**
- * Build a theme's appearance stylesheet for a set of settings: the settings
- * themselves as a comment block at the top (see
- * formulize_buildAppearanceSettingsBlock), followed by the webfont import and
- * the custom property overrides they call for.
+ * Build a theme's appearance.css: the record of which look the site uses (see
+ * formulize_buildAppearanceSettingsBlock), followed by that look's CSS.
  *
- * Assembled here in PHP rather than from a Smarty template, deliberately. This
- * file is the record of a theme's appearance settings, so it has to come out
- * complete every single time, and a template could not promise that: Smarty
- * compiles templates into templates_c and only re-checks the source when the
- * "update module templates from file" setting is on, which on a normal site it
- * is not. A site that had generated a stylesheet under an earlier version of
- * Formulize would keep rendering that version's template until templates_c was
- * cleared by hand, silently dropping the settings block from every stylesheet
- * it wrote from then on - and with it the record of the uploaded logo, whose
- * filename that block is the only place to keep. The colours would still look
- * right (they are custom properties further down the file, which the older
- * template still emitted), so nothing would look wrong until someone noticed
- * their logo had stopped appearing. Building the file in PHP means the code
- * that writes it and the code that reads it back can never fall out of step.
+ * Assembled here in PHP rather than from a Smarty template, deliberately: this
+ * file and each look's are the record of the theme's appearance, so they have to
+ * come out complete every time, and Smarty only re-checks a template's source
+ * when the "update module templates from file" setting is on. Building the files
+ * in PHP means the code that writes them and the code that reads them back can
+ * never fall out of step.
  *
- * @param array|null $settings appearance settings to use, defaults to the theme's saved ones
- * @param string|null $theme   theme folder name, defaults to the active theme
+ * @param string $theme theme folder name
+ * @param array $looks the theme's looks, as they are to be
+ * @param string $siteLook the key of the look the site uses
  * @return string the CSS
  */
-function formulize_buildAppearanceCss($settings = null, $theme = null) {
-    $theme = formulize_resolveAppearanceTheme($theme);
-    $settings = is_array($settings)
-        ? formulize_sanitizeAppearanceSettings($settings, $theme)
-        : formulize_getAppearanceSettings($theme);
-    // the settings block records the theme's own settings, and the look applied to
-    // the site; the CSS is the two together
-    return formulize_buildAppearanceSettingsBlock($settings, $theme) . "\n"
-        . formulize_buildAppearanceCssRules(formulize_getAppearanceEffectiveSettings($theme, $settings), $theme);
+function formulize_buildAppearanceCss($theme, $looks, $siteLook) {
+    return formulize_buildAppearanceSettingsBlock($siteLook, $theme) . "\n"
+        . formulize_buildAppearanceCssRules(formulize_appearanceResolveLook($looks, $siteLook, $theme), $theme);
 }
 
 /**
  * The CSS for a set of settings, after a stylesheet's settings block: the
  * generation marker, the webfont import, and the custom properties they set.
  *
- * @param array $settings appearance settings, sanitized: a theme's, with a look applied
+ * @param array $settings appearance settings, sanitized: a look's, as it resolves
  * @param string $theme theme folder name
  * @return string the CSS
  */
@@ -2034,18 +2396,18 @@ function formulize_buildAppearanceCssRules($settings, $theme) {
 
 /**
  * Build the stylesheet for one of a theme's looks: the look's own block, which is
- * the record of a look made in the advanced editor (its name, description and the
- * settings it changes, see formulize_appearanceParseLookBlock), followed by the
- * CSS for the theme's settings with the look applied. A page, or later a screen,
- * that is to have the look can use the stylesheet in place of the theme's own.
+ * the record of it (its name, description, base and the settings it changes, see
+ * formulize_appearanceParseLookBlock), followed by the CSS of the look as pages
+ * are shown with it. A screen set to the look uses this stylesheet in place of
+ * the theme's appearance.css.
  *
  * @param string $key the look's key
- * @param array $look the look, as formulize_getAppearanceLooks() has it
- * @param array $settings the theme's own settings, sanitized
+ * @param array $looks the theme's looks, as they are to be
  * @param string $theme theme folder name
  * @return string the CSS
  */
-function formulize_buildAppearanceLookCss($key, $look, $settings, $theme) {
+function formulize_buildAppearanceLookCss($key, $looks, $theme) {
+    $look = $looks[$key];
     $markers = formulize_appearanceLookBlockMarkers();
     // the name and description are one line each, in a comment, and can't have the
     // block's own start and end in them, which would cut the block short
@@ -2055,11 +2417,10 @@ function formulize_buildAppearanceLookCss($key, $look, $settings, $theme) {
     $lines = array(
         '/* Formulize appearance look for the ' . preg_replace('/[^A-Za-z0-9._ -]/', '', (string) $theme) . ' theme.',
         ' *',
-        ' * Made in the appearance editor (Admin > Appearance > Styles and Colors), and',
-        ' * rewritten whenever the look, or the theme\'s appearance settings it changes,',
-        ' * are saved. The block below is the record of the look: the settings it',
-        ' * changes. The rest of the theme\'s settings come from its own appearance',
-        ' * stylesheet.',
+        ' * Written by Formulize whenever the theme\'s looks change (Admin > Appearance >',
+        ' * Looks). The block below is the record of the look: its name, the look it is',
+        ' * based on, if any, and what it changes itself. The CSS after it is the look',
+        ' * as pages are shown with it.',
         ' *',
         ' * ' . $markers['start'],
         ' * name: ' . $clean($look['name']),
@@ -2067,74 +2428,34 @@ function formulize_buildAppearanceLookCss($key, $look, $settings, $theme) {
     if ($look['description'] !== '') {
         $lines[] = ' * description: ' . $clean($look['description']);
     }
-    if (!empty($look['edited'])) {
-        $lines[] = ' * edited: yes'; // a built-in look, changed on this site
+    if ($look['base'] !== '') {
+        $lines[] = ' * base: ' . $look['base'];
     }
     foreach ($look['settings'] as $name => $value) {
         $lines[] = rtrim(' * ' . $name . ': ' . str_replace('*/', '', $value));
     }
     $lines[] = ' * ' . $markers['end'];
     $lines[] = ' */';
-    return implode("\n", $lines) . "\n" . formulize_buildAppearanceCssRules(formulize_getAppearanceEffectiveSettings($theme, $settings, $key), $theme);
+    return implode("\n", $lines) . "\n" . formulize_buildAppearanceCssRules(formulize_appearanceResolveLook($looks, $key, $theme), $theme);
 }
 
 /**
- * Write the stylesheets of a theme's looks, for the theme's settings as they now
- * stand. Called whenever those are saved, so a look's stylesheet is never behind
- * them. Default's is written too, although the theme's own stylesheet is Default
- * on a site that has it applied, for a screen that is set to Default on a site
- * that has another look applied.
+ * Write a theme's appearance files again, as its looks stand: each look's
+ * stylesheet and the theme's appearance.css. The files are the record of the
+ * looks, so a failure here means nothing was saved, and callers must say so.
  *
- * @param array $settings the theme's own settings, sanitized
- * @param string $theme theme folder name
- * @return boolean whether every one was written
+ * Also called by formulize_renderAppearanceHead when the theme's appearance.css
+ * is missing, or was written by an earlier generation of this code.
+ *
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return boolean whether every file was written
  */
-function formulize_regenerateAppearanceLooks($settings, $theme) {
-    $dir = formulize_getAppearanceLooksDir($theme);
-    if (!is_dir($dir) AND !@mkdir($dir, 0775)) {
-        return false;
-    }
-    $written = true;
-    foreach (formulize_getAppearanceLooks($theme) as $key => $look) {
-        $written = (file_put_contents($dir . '/' . $key . '.css', formulize_buildAppearanceLookCss($key, $look, $settings, $theme)) !== false) AND $written;
-    }
-    return $written;
-}
-
-/**
- * Write a theme's appearance stylesheet into that theme's appearance folder.
- * This is how appearance settings are saved: the file is the record of them, so
- * a failure here means the settings were not saved at all, and callers must say
- * so rather than reporting success (the appearance editor does, and warns about an
- * unwritable folder before the admin fills the form in).
- *
- * Also called lazily by formulize_renderAppearanceHead when a theme has no
- * stylesheet yet. The file is always generated, even with all-default settings,
- * so themes can link it unconditionally (the default file just imports the
- * default webfont).
- *
- * @param array|null $settings appearance settings to write, defaults to the
- *                             theme's current ones
- * @param string|null $theme   theme folder name, defaults to the active theme
- * @return boolean whether the file was written successfully
- */
-function formulize_regenerateAppearanceCss($settings = null, $theme = null) {
+function formulize_regenerateAppearanceCss($theme = null) {
     $theme = formulize_resolveAppearanceTheme($theme);
-    $dir = formulize_prepareAppearanceDir($theme);
-    if ($dir === false) {
+    if (formulize_prepareAppearanceDir($theme) === false) {
         return false;
     }
-    $settings = is_array($settings) ? formulize_sanitizeAppearanceSettings($settings, $theme) : formulize_getAppearanceSettings($theme);
-    $css = formulize_buildAppearanceCss($settings, $theme);
-    $written = (file_put_contents($dir . '/appearance.css', $css) !== false);
-    clearstatcache(true, $dir . '/appearance.css'); // the file's existence and mtime are read right after this
-    if ($written) {
-        formulize_getAppearanceSettings($theme, $settings); // so the rest of this request reads them, not the ones before
-    }
-    // the looks' stylesheets are the theme's settings with each look applied, so they
-    // follow; the theme's own stylesheet is the record, and what a save depends on
-    formulize_regenerateAppearanceLooks($settings, $theme);
-    return $written;
+    return formulize_writeAppearanceLookFiles($theme, formulize_getAppearanceLooks($theme), formulize_getAppearanceSiteLook($theme));
 }
 
 /**
@@ -2164,30 +2485,30 @@ function formulize_renderAppearanceHead() {
     if (!$cssExists OR !$cssIsCurrent) {
         // settings are read before the file is written, so the values that go into it
         // are the ones this page is already rendering with, legacy or default
-        $cssExists = formulize_regenerateAppearanceCss(formulize_getAppearanceSettings($theme), $theme);
+        $cssExists = formulize_regenerateAppearanceCss($theme);
     }
     $html = '';
     // the page's screen can have a look of its own, which is shown with that look's stylesheet in place of
-    // the theme's own: each look's stylesheet is the whole of the theme's appearance with the look applied
+    // the theme's own: each look's stylesheet is the whole of the theme's appearance with the look
     $pageLook = formulize_appearancePageLook($theme);
-    $font = formulize_getAppearanceFont(formulize_getAppearanceEffectiveSettings($theme, null, $pageLook), $theme);
+    $font = formulize_getAppearanceFont(formulize_getAppearanceEffectiveSettings($theme, $pageLook), $theme);
     if ($font['url']) {
         $html .= '<link rel="preconnect" href="https://fonts.googleapis.com" />' . "\n";
         $html .= '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />' . "\n";
     }
     $lookCssPath = $pageLook !== null ? formulize_getAppearanceLooksDir($theme) . '/' . $pageLook . '.css' : '';
     if ($lookCssPath AND !file_exists($lookCssPath)) {
-        formulize_regenerateAppearanceLooks(formulize_getAppearanceSettings($theme), $theme); // not written since the look was made, or since Default got one
+        formulize_regenerateAppearanceCss($theme); // the theme's files are behind its looks
         clearstatcache(true, $lookCssPath);
     }
     if ($lookCssPath AND file_exists($lookCssPath)) {
         $html .= '<link rel="stylesheet" type="text/css" media="all" href="' . formulize_getAppearanceUrl($theme) . '/looks/' . $pageLook . '.css?v=' . filemtime($lookCssPath) . '" />' . "\n";
     } elseif ($lookCssPath) {
-        $html .= '<style type="text/css" media="all">' . "\n" . formulize_buildAppearanceCssRules(formulize_getAppearanceEffectiveSettings($theme, null, $pageLook), $theme) . "\n" . '</style>' . "\n";
+        $html .= '<style type="text/css" media="all">' . "\n" . formulize_buildAppearanceCssRules(formulize_getAppearanceEffectiveSettings($theme, $pageLook), $theme) . "\n" . '</style>' . "\n";
     } elseif ($cssExists) {
         $html .= '<link rel="stylesheet" type="text/css" media="all" href="' . formulize_getAppearanceUrl($theme) . '/appearance.css?v=' . filemtime($cssPath) . '" />' . "\n";
     } else {
-        $html .= '<style type="text/css" media="all">' . "\n" . formulize_buildAppearanceCss(formulize_getAppearanceSettings($theme), $theme) . "\n" . '</style>' . "\n";
+        $html .= '<style type="text/css" media="all">' . "\n" . formulize_buildAppearanceCssRules(formulize_getAppearanceSettings($theme), $theme) . "\n" . '</style>' . "\n";
     }
     // a screen set to use the full width of the window, whatever its look allows. After the stylesheet,
     // so it wins; a theme that keeps its pages to the page width uses this property to do it
@@ -2221,7 +2542,7 @@ function formulize_appearancePageScreen() {
 }
 
 /**
- * The look a page is shown with, when it isn't the look applied to the site: the look the page's
+ * The look a page is shown with, when it isn't the site look: the look the page's
  * screen is set to (on its Appearance tab), if the theme has that look.
  *
  * @param string|null $theme theme folder name, defaults to the active theme

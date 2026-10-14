@@ -65,13 +65,12 @@ function formulize_uiSizeTokens($sizes = true) {
         $values = array();
         if (isset($declared[$token])) {
             $default = formulize_appearanceTokenParse($entry['type'], $declared[$token]);
-            $values[] = 'Default ' . formulize_uiSizeTokenValue($entry['type'], $default);
+            $values[] = ($sizes ? 'Standard ' : 'Default ') . formulize_uiSizeTokenValue($entry['type'], $default);
         }
-        // what the built-in looks other than Default set it to
-        foreach (array_filter(formulize_appearanceBuiltinLooks()) as $look) {
-            $lookOverrides = formulize_appearanceLookOverrides($look);
-            if (isset($lookOverrides[$token])) {
-                $values[] = $look['name'] . ' ' . formulize_uiSizeTokenValue($entry['type'], $lookOverrides[$token]);
+        // what the size presets other than Standard (the Default) set it to
+        foreach (array_filter(formulize_appearanceSizePresets()) as $preset) {
+            if (isset($preset['overrides'][$token])) {
+                $values[] = $preset['name'] . ' ' . formulize_uiSizeTokenValue($entry['type'], $preset['overrides'][$token]);
             }
         }
         if (isset($entry['values'])) {

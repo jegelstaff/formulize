@@ -21,7 +21,6 @@
     <div class="form-item">
       <label for="screens-look"><{$smarty.const._AM_SCREEN_APPEARANCE_LOOK}></label>
       <select id="screens-look" name="screens-look" data-site-look="<{$content.siteLook}>">
-        <option value=""<{if $content.look eq ''}> selected="selected"<{/if}>><{$content.siteLookLabel}></option>
         <{foreach from=$content.looks key=lookKey item=lookName}>
         <option value="<{$lookKey}>"<{if $content.look eq $lookKey}> selected="selected"<{/if}>><{$lookName}></option>
         <{/foreach}>
