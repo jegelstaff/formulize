@@ -650,23 +650,24 @@ if ($screen_id != "new") {
     include_once XOOPS_ROOT_PATH . '/modules/formulize/include/appearance.php';
     $appearanceTheme = formulize_getDefaultAppearanceTheme();
     $appearance['looks'] = array();
-    $appearance['siteLookLabel'] = '';
     $appearance['siteLook'] = '';
     $appearance['editorUrl'] = '';
     $appearance['usesWidth'] = false;
     if ($appearanceTheme AND formulize_themeSupportsAppearance($appearanceTheme)) {
         $looks = formulize_getAppearanceLooks($appearanceTheme);
         $siteLook = formulize_getAppearanceSiteLook($appearanceTheme);
-        // every look, as the Looks tab has them: each under the look it is based on, indented
+        // every look, as the Looks tab has them: each under the look it is based on, indented. The site
+        // look is in its place, as '': a screen set to it follows the site, whichever look that is
         foreach (formulize_appearanceLookTree($looks) as $row) {
-            $appearance['looks'][$row['key']] = str_repeat('&emsp;', $row['depth']) . htmlspecialchars($looks[$row['key']]['name']);
+            $isSiteLook = ($row['key'] === $siteLook);
+            $name = htmlspecialchars($looks[$row['key']]['name']);
+            $appearance['looks'][$isSiteLook ? '' : $row['key']] = str_repeat('&emsp;', $row['depth']) . ($isSiteLook ? sprintf(_AM_SCREEN_APPEARANCE_LOOK_SITE, $name) : $name);
         }
-        $appearance['siteLookLabel'] = sprintf(_AM_SCREEN_APPEARANCE_LOOK_SITE, htmlspecialchars(isset($looks[$siteLook]) ? $looks[$siteLook]['name'] : ''));
         $appearance['siteLook'] = $siteLook;
         $appearance['editorUrl'] = formulize_getAppearanceEditorUrl($appearanceTheme);
         $appearance['usesWidth'] = formulize_appearanceThemeUsesContentWidth($appearanceTheme);
     }
-    // a look that has since been deleted is shown as the site's, which is what the page falls back to
+    // a look that has since been deleted, or the site look itself, is shown as the site's
     $appearance['look'] = isset($appearance['looks'][$screen->getVar('look')]) ? $screen->getVar('look') : '';
     $appearance['pagewidth'] = $screen->getVar('pagewidth') == 'full' ? 'full' : 'look';
     $screenTypes = formulize_getScreenTypes();
