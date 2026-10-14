@@ -338,6 +338,9 @@ function formulize_uiCatalog() {
                     '--fz-tone' => 'On `fz-badge`, `fz-callout`, `fz-bar-list__row`, `fz-progress` or `fz-matrix__cell`: the colour, for a tone of your own when none of the tone modifiers is the right one, such as the steps of a scale. Set it in a style attribute, or in a class of your own. Set `--fz-tone-soft` with it on a badge or a callout.',
                     '--fz-tone-soft' => 'On `fz-badge` or `fz-callout`: the pale tint that goes with `--fz-tone`.',
                     '--fz-code-block-max-height' => 'On `fz-code-block`: the tallest it can be, after which it scrolls. No limit unless it is set.',
+                    '--fz-depth' => 'On `fz-tree__cell`: how deep its row is in the tree, 0 for a row at the top. Every row needs it.',
+                    '--fz-level' => 'On `fz-tree__line`: the depth of the column the line is drawn in. See Tree for which level each line has.',
+                    '--fz-tree-indent' => 'On `fz-tree`: how far each level is indented. 6 steps (24px).',
                 ),
             ),
             array(
@@ -1007,6 +1010,155 @@ HTML
   <div class="fz-tab-panel" id="tab-assessment" role="tabpanel" hidden>
     <p>The rating, and the reasons for it.</p>
   </div>
+</div>
+HTML
+            ),
+            array(
+                'id' => 'popover',
+                'name' => 'Popover',
+                'summary' => 'A panel that floats over the page beside the button that opens it: more about a value, a short list. Nothing on the page moves when it opens.',
+                'classes' => array(
+                    'fz-popover' => 'On an element with the `popover` attribute and an id. The `<button>` that opens it has `popovertarget` set to that id.',
+                    'fz-popover__title' => 'A small heading inside it, for each part of what it shows.',
+                    'fz-popover__sep' => 'On an `<hr>`: a line between parts.',
+                ),
+                'notes' => array(
+                    'The browser opens and closes it, with no script: it closes when anything else is clicked, or Esc is pressed.',
+                    'Pair it with its button by an anchor name, so it opens beside the button: `style="anchor-name: --screens-3"` on the button, and `style="position-anchor: --screens-3"` on the popover. Each pair needs a name of its own, starting with two dashes.',
+                    'It opens under the button, lined up with its start, and moves above it, or across, when there isn\'t room. In a browser from before 2026 that can\'t place it beside the button (Firefox before 147), it opens in the middle of the window.',
+                    'Keep it short, and put nothing in it that has to be seen: it is for the detail behind something already on the page.',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-cluster">
+  <button type="button" class="fz-btn" popovertarget="example-popover" style="anchor-name: --example-popover">3 screens</button>
+  <div class="fz-popover" id="example-popover" popover style="position-anchor: --example-popover">
+    <p class="fz-popover__title">Screens set to Events</p>
+    <ul class="fz-list-none fz-p-0 fz-m-0">
+      <li>Event registration</li>
+      <li>Volunteer sign-up</li>
+      <li>Event check-in</li>
+    </ul>
+    <hr class="fz-popover__sep">
+    <p class="fz-text-muted">A change to Events changes all three.</p>
+  </div>
+</div>
+HTML
+            ),
+            array(
+                'id' => 'menu',
+                'name' => 'Menu',
+                'summary' => 'A list of actions in a popover, opened by a button: the less common things that can be done to one item.',
+                'classes' => array(
+                    'fz-menu' => 'Beside `fz-popover`, on the popover.',
+                    'fz-menu__item' => 'One action: a `<button type="button">`, or an `<a>` for going somewhere.',
+                    'fz-menu__item--danger' => 'A destructive action, such as delete.',
+                    'fz-menu__note' => 'A line under an item\'s name that says more about it, in a `<span>` inside the item.',
+                    'fz-menu__sep' => 'On an `<hr>`: a line between groups of items.',
+                ),
+                'notes' => array(
+                    'Open and pair it as a popover. Tab moves between the items.',
+                    'An item can open a dialog with `commandfor` and `command="show-modal"`; the menu closes as the dialog opens. An item that does something on the page needs a line of script, which closes the menu with `hidePopover()` too.',
+                    'A disabled item, or one with `aria-disabled="true"`, is faded and can\'t be clicked.',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-cluster">
+  <button type="button" class="fz-btn" popovertarget="example-menu" style="anchor-name: --example-menu">Edit</button>
+  <div class="fz-popover fz-menu" id="example-menu" popover style="position-anchor: --example-menu">
+    <button type="button" class="fz-menu__item">Simple editor<span class="fz-menu__note">Logo, colours, fonts, page width and size</span></button>
+    <button type="button" class="fz-menu__item">Advanced editor<span class="fz-menu__note">Every part, one at a time</span></button>
+    <hr class="fz-menu__sep">
+    <button type="button" class="fz-menu__item">Duplicate</button>
+    <button type="button" class="fz-menu__item fz-menu__item--danger">Delete</button>
+  </div>
+</div>
+HTML
+            ),
+            array(
+                'id' => 'dialog',
+                'name' => 'Dialog',
+                'summary' => 'A question or a short form over the page, which waits until it is answered: making something, confirming a deletion.',
+                'classes' => array(
+                    'fz-dialog' => 'On a `<dialog>` with an id. The `<button>` that opens it has `commandfor` set to that id and `command="show-modal"`.',
+                    'fz-dialog--wide' => 'Wider, for a form with more in it.',
+                    'fz-dialog__header' => 'The top: its title, and anything beside it.',
+                    'fz-dialog__title' => 'The title: an `<h2>`. Give the dialog `aria-labelledby` with its id.',
+                    'fz-dialog__body' => 'What it says or asks: text, fields. Its children are stacked.',
+                    'fz-dialog__footer' => 'Its buttons, at the end, with the main one last. It stays in view if the dialog is long enough to scroll.',
+                ),
+                'notes' => array(
+                    'The browser opens and closes it, with no script. A button with `commandfor` and `command="close"` closes it, and so does Esc. Browsers from before December 2025 (Firefox before 144, Safari before 26.2) ignore `commandfor`: where they matter, open it with a line of script too, `dialog.showModal()`. Add `closedby="any"` to the `<dialog>` to have a click outside it close it too, in browsers that do that.',
+                    'The page under it can\'t be scrolled or clicked while it is open, and when it closes, the keyboard is back on the button that opened it.',
+                    'Put the header, body and footer in a `<form method="dialog">` and its submit button closes the dialog, with the button\'s `value` as the dialog\'s `returnValue`. For a form that is sent to the server, use an ordinary `<form>` instead.',
+                    'Say what the main button does: "Delete look", not "OK".',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-cluster">
+  <button type="button" class="fz-btn fz-btn--danger" commandfor="example-dialog" command="show-modal">Delete Events…</button>
+  <dialog class="fz-dialog" id="example-dialog" aria-labelledby="example-dialog-title">
+    <form method="dialog">
+      <div class="fz-dialog__header">
+        <h2 class="fz-dialog__title" id="example-dialog-title">Delete Events?</h2>
+      </div>
+      <div class="fz-dialog__body">
+        <p>These screens use Events, and will use the site look instead:</p>
+        <ul>
+          <li>Event registration</li>
+          <li>Volunteer sign-up</li>
+        </ul>
+        <p class="fz-text-muted">This can't be undone.</p>
+      </div>
+      <div class="fz-dialog__footer">
+        <button type="button" class="fz-btn" commandfor="example-dialog" command="close">Cancel</button>
+        <button type="submit" class="fz-btn fz-btn--danger" value="delete">Delete look</button>
+      </div>
+    </form>
+  </dialog>
+</div>
+HTML
+            ),
+            array(
+                'id' => 'tree',
+                'name' => 'Tree',
+                'summary' => 'A table whose rows are nested under other rows, with lines joining each row to the one it is under: things based on other things, parts of a whole.',
+                'classes' => array(
+                    'fz-tree' => 'Beside `fz-table`, on the `<table>`. Its rows have no lines between them, and the one the pointer is on is shaded. One line of text a row.',
+                    'fz-tree__cell' => 'The first cell of each row, with `style="--fz-depth: N"`: 0 for a row at the top, 1 for a row under it, and so on.',
+                    'fz-tree__line' => 'An empty `<span>` in the cell: a line straight down through the row, for a row above it with a later row next to it. One for each such row, with `--fz-level` set to that row\'s depth less one.',
+                    'fz-tree__line--elbow' => 'The line into the row, from the row it is under. `--fz-level` is the row\'s depth less one. Every row but the top ones has one.',
+                    'fz-tree__line--stem' => 'The line down from the row to the first row under it. `--fz-level` is the row\'s depth. Only on a row with rows under it.',
+                ),
+                'notes' => array(
+                    'The lines are worked out from the rows, so they are usually written by whatever writes the rows: a loop in a template, or the code that builds the page.',
+                    'A row that is not the last one under its row has a straight `fz-tree__line` beside its elbow, at the same level, to carry the line on to the next one.',
+                    'For a tree wider than its container, wrap it in an element with `fz-overflow-x-auto`, as for any table.',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-card fz-card--flush fz-overflow-x-auto">
+  <table class="fz-table fz-tree">
+    <thead><tr><th>Look</th><th>Used by</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="fz-tree__cell" style="--fz-depth: 0"><span class="fz-tree__line fz-tree__line--stem" style="--fz-level: 0"></span>Default</td>
+        <td>The site</td>
+      </tr>
+      <tr>
+        <td class="fz-tree__cell" style="--fz-depth: 1"><span class="fz-tree__line fz-tree__line--elbow" style="--fz-level: 0"></span><span class="fz-tree__line" style="--fz-level: 0"></span><span class="fz-tree__line fz-tree__line--stem" style="--fz-level: 1"></span>Events</td>
+        <td>3 screens</td>
+      </tr>
+      <tr>
+        <td class="fz-tree__cell" style="--fz-depth: 2"><span class="fz-tree__line" style="--fz-level: 0"></span><span class="fz-tree__line fz-tree__line--elbow" style="--fz-level: 1"></span>Events, compact</td>
+        <td>2 screens</td>
+      </tr>
+      <tr>
+        <td class="fz-tree__cell" style="--fz-depth: 1"><span class="fz-tree__line fz-tree__line--elbow" style="--fz-level: 0"></span>Reports</td>
+        <td>2 screens</td>
+      </tr>
+      <tr>
+        <td class="fz-tree__cell" style="--fz-depth: 0">Partner portal</td>
+        <td>1 screen</td>
+      </tr>
+    </tbody>
+  </table>
 </div>
 HTML
             ),
