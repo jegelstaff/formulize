@@ -61,9 +61,12 @@ foreach (array('reset.css', 'style.css') as $file) {
 		$stylesheets[] = '/themes/' . $theme . '/css/' . $file;
 	}
 }
-$appearanceCss = formulize_getAppearanceCssPath($theme);
-if ($appearanceCss AND is_file($appearanceCss)) {
-	$stylesheets[] = substr($appearanceCss, strlen(XOOPS_ROOT_PATH));
+// the look being edited, as saved, which the editor shows its changes on; or the site look
+$looks = formulize_getAppearanceLooks($theme);
+$look = isset($_GET['look']) ? strtolower((string) $_GET['look']) : '';
+$lookCss = isset($looks[$look]) ? formulize_getAppearanceLooksDir($theme) . '/' . $look . '.css' : formulize_getAppearanceCssPath($theme);
+if ($lookCss AND is_file($lookCss)) {
+	$stylesheets[] = substr($lookCss, strlen(XOOPS_ROOT_PATH));
 }
 
 header('Content-Type: text/html; charset=utf-8');

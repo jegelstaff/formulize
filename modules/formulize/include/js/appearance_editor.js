@@ -1,4 +1,5 @@
-// The advanced editor (modules/formulize/appearance_editor.php).
+// The appearance editor (modules/formulize/appearance_editor.php): one look, in
+// the simple editor or the advanced one, switched in place.
 //
 // The page shows one of the theme's sample screens in an iframe
 // (appearance_preview.php) and sets the settings being edited on it, as inline
@@ -7,9 +8,9 @@
 // data-fz-part) selects that part: every one of it is outlined, and the
 // inspector shows its settings (its fonts, colours, corners and sizes), which
 // apply to every one of it on the site. With nothing selected, the inspector
-// shows the site-wide settings (the Appearance page's: logo, colours, fonts, the
-// look applied to the site and the page width) and, on its other tab, everything that has been
-// changed.
+// shows the look's site-wide settings (logo, colours, fonts, page width, and in the
+// simple editor its size) and, on its other tab, what has changed: what hasn't
+// been saved, and what the look changes from the look it is based on.
 //
 // Everything about the parts comes from include/appearance_tokens.json, passed
 // in as formulizeAppearanceEditor.map: the tokens' types and limits, the parts
@@ -54,25 +55,22 @@
 	];
 	var SECTIONS = [['text', 'Text'], ['colour', 'Colours'], ['shape', 'Corners'], ['space', 'Size and spacing']];
 	var UPLOADS = { appearance_logo: 'Logo', appearance_favicon: 'Favicon' };
-	// The look being edited (EDIT), which is a set of changes to the site's own
-	// settings, the Appearance page's (BASE). A look's settings are measured against
-	// those, and only what differs from them is the look's. A built-in look is
-	// edited the same way, and can be reverted to how it came.
+	// The look being edited (EDIT), measured against the look it is based on (BASE),
+	// as that resolves, or against the theme's own appearance when it is based on
+	// nothing (BASE is null). Only what differs is the look's own.
 	var EDIT = DATA.editing, BASE = DATA.base, READONLY = false;
-	// The parts' settings a look other than Default records itself, as saved. A look
-	// can record one that is the same as Default's (Compact sets the label weight
-	// Default has, for one), and it keeps it, rather than following Default when
-	// Default changes, unless it is reset.
-	var OWN = (BASE && EDIT && EDIT.overrides) ? EDIT.overrides : {};
-	// The mode, the site's: simple shows the look applied, with its logo, colours,
-	// fonts and page width; advanced adds every part of it, and every look.
+	// The parts' settings the look records itself, as saved. It can record one that is
+	// the same as its base's, and it keeps it, rather than following its base when
+	// that changes, unless it is reset.
+	var OWN = (EDIT && EDIT.overrides) ? EDIT.overrides : {};
+	// The simple editor (the look's logo, colours, fonts, page width and size) or the
+	// advanced one (every part of it too). Switched in place: see setMode.
 	var SIMPLE = DATA.mode !== 'advanced';
 	// the page width, for a theme that has one: its limits, and the theme's own
 	// width ('full', or pixels), which is the default
 	var WIDTH = DATA.contentWidth;
 
 	var state = {
-		preset: '',
 		contentWidth: '', // 'full', or a maximum width in pixels
 		overrides: {},
 		colours: {},
@@ -90,37 +88,16 @@
 		saving: false
 	};
 	var savedUploads = {}; // the logo and favicon as saved: their addresses
-	// Where you were (the screen, the width, what was selected, the tab and how far
-	// down the settings), kept across the page reloading for a look action, so it
-	// comes back as it was. For this browser tab only.
-	var VIEW_KEY = 'formulize-editor-view:' + DATA.theme, pendingScroll = 0;
-	function rememberView() {
-		try { sessionStorage.setItem(VIEW_KEY, JSON.stringify({ screen: state.screen, phone: state.phone, sel: state.sel, tab: state.tab, scroll: document.querySelector('.formulize-editor__insp').scrollTop })); } catch (e) {}
-	}
-	function recallView() {
-		try { var v = JSON.parse(sessionStorage.getItem(VIEW_KEY) || 'null'); sessionStorage.removeItem(VIEW_KEY); return v; } catch (e) { return null; }
-	}
 	var partsOn = {}; // screen => { part: true }, from the samples' markup
-	// Back goes to the tab of the Appearance admin pages you came from, which the
-	// editor's own reloads would otherwise lose. For this browser tab only.
-	(function () {
-		var back = document.getElementById('formulize-editor-back'), from = document.referrer;
-		if (!back) { return; }
-		try {
-			if (/\/modules\/formulize\/admin\/ui\.php\?(.*&)?page=appearance(&|$)/.test(from)) { sessionStorage.setItem('formulize-editor-back', from); }
-			back.href = sessionStorage.getItem('formulize-editor-back') || back.href;
-		} catch (e) {}
-	})();
-
 	var $ = function (id) { return document.getElementById(id); };
 	var frame = $('formulize-editor-frame'), head = $('formulize-editor-insp-head'), body = $('formulize-editor-insp-body');
 	var hint = $('formulize-editor-hint'), DEFAULT_HINT = hint.innerHTML;
+	var frameStyle = null; // the editor's own styles in the preview, which depend on the editor
 
 	function copy(o) { return JSON.parse(JSON.stringify(o)); }
 	function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 	function entry(token) { return MAP.tokens[token]; }
 	function type(token) { return entry(token).type; }
-	function lookName(key) { return (DATA.looks[key] || DATA.looks['']).name; }
 	function has(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
 	function lower(s) { return s.charAt(0).toLowerCase() + s.slice(1); }
 
@@ -129,25 +106,23 @@
 	// changes are those, not what the look itself changes.
 	var SAVED = null;
 	function adopt(saved) {
-		state.preset = saved.preset || '';
 		state.contentWidth = WIDTH ? String(saved.contentWidth || WIDTH.theme) : '';
 		state.overrides = Array.isArray(saved.overrides) ? {} : copy(saved.overrides || {});
 		state.colours = copy(saved.colours);
 		state.fonts = copy(saved.fonts);
 		savedUploads = copy(saved.uploads);
-		enforce(); // a look's own settings: only what differs from the Appearance page's
+		enforce(); // the look's own settings: only what differs from its base's
 		SAVED = copy({ contentWidth: state.contentWidth, overrides: state.overrides, colours: state.colours, fonts: state.fonts });
 	}
 
 	/* ---- values ---- */
 	function isSize(token) { return ['spacing', 'text', 'weight', 'leading', 'measure'].indexOf(type(token)) !== -1; }
-	// what a part's setting is when the look doesn't change it: the theme's own,
-	// since the site's own settings (the Appearance page's) don't set parts
+	// what a part's setting is when the look doesn't change it: its base's, or the theme's own
 	function presetValue(token) { return (BASE && has(BASE.overrides, token)) ? BASE.overrides[token] : entry(token)['default']; }
 	function value(token) { return has(state.overrides, token) ? state.overrides[token] : presetValue(token); }
 	function changed(token) { return has(state.overrides, token); }
-	// what a value is measured against: the site appearance's, for a look, or the theme's own
-	function baseName() { return BASE ? 'Default’s' : 'The theme’s'; }
+	// what a value is measured against, in a sentence: the base's, or the theme's own
+	function baseName() { return BASE ? EDIT.baseName + '’s' : 'the theme’s'; }
 	function css(token, v) {
 		var t = type(token);
 		if (t === 'spacing') { return 'calc(var(--fz-spacing) * ' + v + ')'; }
@@ -280,19 +255,12 @@
 		return (role === 'secondary' && fontThemed('heading')) ? fontShown('heading') : main;
 	}
 	function uploadChanged(key) { return !!(state.uploads[key].file || state.uploads[key].removed); }
-	// whether a look has an image of its own, rather than Default's: the look being
-	// edited, in advanced mode; the one chosen, in simple mode
+	// whether the look has an image of its own, rather than its base's (or the theme's)
 	function lookOwn(key) {
-		if (BASE) { return !!(savedUploads[key] && savedUploads[key] !== BASE.uploads[key]); }
-		var look = DATA.simpleLooks && DATA.simpleLooks[CHOSEN];
-		return !!(look && look.own && look.own[key]);
+		return BASE ? !!(savedUploads[key] && savedUploads[key] !== BASE.uploads[key]) : !!savedUploads[key];
 	}
-	// what shows when the image is taken away: Default's, for a look's own, and
-	// otherwise the theme's own
-	function fallbackUrl(key) {
-		if (BASE) { return BASE.uploads[key]; }
-		return (lookOwn(key) && DATA.simpleLooks['default']) ? DATA.simpleLooks['default'].state.uploads[key] : '';
-	}
+	// what shows when the look's own image is taken away: its base's, or the theme's own
+	function fallbackUrl(key) { return BASE ? BASE.uploads[key] : ''; }
 	function uploadUrl(key) {
 		var u = state.uploads[key];
 		return u.file || (u.removed ? fallbackUrl(key) : savedUploads[key]);
@@ -325,8 +293,10 @@
 	function doc() { try { return frame.contentDocument; } catch (e) { return null; } }
 	function frameUrl(screen) { return DATA.previewUrl + encodeURIComponent(screen); }
 
-	var FRAME_CSS =
-		(SIMPLE ? '[data-fz-part="logo"] { cursor: pointer; }' : '[data-fz-part] { cursor: pointer; }') +
+	// the editor's own styles in the preview: what can be clicked, and what is selected
+	function frameCss() { return FRAME_CSS_BASE.replace('%parts%', SIMPLE ? '[data-fz-part="logo"]' : '[data-fz-part]'); }
+	var FRAME_CSS_BASE =
+		'%parts% { cursor: pointer; }' +
 		'[data-fz-part].formulize-editor-hover { outline: 1px dashed #3b6fd8 !important; outline-offset: 2px; }' +
 		'[data-fz-part].formulize-editor-sel { outline: 2px solid #3b6fd8 !important; outline-offset: 2px; }' +
 		'[data-fz-part].formulize-editor-sel.formulize-editor-origin { outline-width: 3px !important; }' +
@@ -397,7 +367,7 @@
 	}
 	frame.addEventListener('load', function () {
 		var d = doc(); if (!d || !d.documentElement) { return; }
-		var style = d.createElement('style'); style.textContent = FRAME_CSS; d.head.appendChild(style);
+		frameStyle = d.createElement('style'); frameStyle.textContent = frameCss(); d.head.appendChild(frameStyle);
 		applyTokens(); markSelection();
 		// in the preview, every click selects: links don't go anywhere, buttons
 		// don't press, fields don't take focus
@@ -421,7 +391,6 @@
 		d.addEventListener('mouseleave', function () { hint.innerHTML = DEFAULT_HINT; });
 		d.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') { select(null, null); } });
 		renderInspector();
-		if (pendingScroll) { body.parentNode.scrollTop = pendingScroll; pendingScroll = 0; }
 	});
 
 	// which parts each sample screen has, for "used on these screens"
@@ -477,8 +446,8 @@
 	function valHtml(token) {
 		var v = value(token), t = type(token);
 		var from = changed(token)
-			? (EDIT ? 'changed by this look · ' : 'changed · ') + lower(baseName()) + ' is ' + show(token, presetValue(token))
-			: (BASE ? 'from Default' : 'the theme’s own');
+			? 'changed by this look · ' + baseName() + ' is ' + show(token, presetValue(token))
+			: (BASE ? 'from ' + EDIT.baseName : 'the theme’s own');
 		if (t === 'colour' || t === 'font') { return changed(token) ? '<span class="formulize-editor__from">' + esc(from) + '</span>' : ''; }
 		return '<b>' + esc(show(token, v)) + '</b><span class="formulize-editor__from">' + esc(from) + '</span>';
 	}
@@ -549,19 +518,19 @@
 		var url = uploadUrl(key), isLogo = key === 'appearance_logo';
 		var thumb = url ? '<img src="' + esc(url) + '" alt="">' : (isLogo ? '<img src="' + esc(DATA.themeLogoUrl) + '" alt="">' : '<span>—</span>');
 		var desc = isLogo ? 'At the top left of every page.' : 'The small icon in the browser tab and in bookmarks.';
-		// a look's own image goes back to Default's; Default's, to the theme's own
-		var own = lookOwn(key), removed = state.uploads[key].removed, toDefault = BASE || own;
+		// the look's own image goes back to its base's, or to the theme's own
+		var own = lookOwn(key), removed = state.uploads[key].removed;
 		var status = state.uploads[key].file ? 'A new image, saved when you save.'
-			: own && !removed ? (BASE ? 'This look’s own.' : EDIT.name + '’s own.')
-			: toDefault ? 'Default’s.'
-			: (url ? 'Uploaded.' : 'The theme’s own.');
-		var removable = toDefault ? ((own && !removed) || state.uploads[key].file) : url;
+			: own && !removed ? 'This look’s own.'
+			: BASE ? EDIT.baseName + '’s.'
+			: 'The theme’s own.';
+		var removable = (own && !removed) || state.uploads[key].file;
 		return '<div class="formulize-editor__ctl' + (uploadChanged(key) ? ' is-changed' : '') + '">' +
 			'<div class="formulize-editor__ctl-head"><span class="formulize-editor__lbl">' + UPLOADS[key] + '</span>' + (uploadChanged(key) ? '<button type="button" class="formulize-editor__link" data-upload-undo="' + key + '">Undo</button>' : '') + '</div>' +
 			'<p class="formulize-editor__desc">' + desc + '</p>' +
 			'<div class="formulize-editor__upload"><span class="formulize-editor__thumb' + (isLogo ? '' : ' formulize-editor__thumb--icon') + '">' + thumb + '</span>' +
 				'<span class="formulize-editor__upload-acts"><label class="formulize-editor__btn formulize-editor__btn--sm" for="formulize-editor-' + key + '">Upload…</label>' +
-				(removable ? '<button type="button" class="formulize-editor__btn formulize-editor__btn--sm" data-upload-remove="' + key + '">' + (toDefault ? 'Use Default’s' : 'Use the theme’s own') + '</button>' : '') +
+				(removable ? '<button type="button" class="formulize-editor__btn formulize-editor__btn--sm" data-upload-remove="' + key + '">' + (BASE ? 'Use ' + esc(EDIT.baseName) + '’s' : 'Use the theme’s own') + '</button>' : '') +
 				'<span class="formulize-editor__upload-status">' + esc(status) + ' ' + esc(DATA.uploads[key].types) + '.</span></span></div>' +
 		'</div>';
 	}
@@ -582,39 +551,59 @@
 		'</div>';
 	}
 	function siteBlock() {
-		var h = '';
-		var choice = SIMPLE ? lookChoice() : '';
-		if (choice) {
-			h += sect('Look') + choice;
-		}
-		h += '<p class="formulize-editor__intro">' + (SIMPLE
-			? 'The logo, colours, fonts' + (WIDTH ? ' and page width' : '') + ' of the site.' + (choice ? ' They stay as they are whichever look you choose, unless the look has its own.' : '')
-			: BASE ? 'What this look changes, site-wide. Anything it doesn’t change comes from Default, and follows Default when it changes. Click anything in the preview to change just that part.'
-			: 'Default’s logo, colours, fonts and page width, which every other look builds on. Click anything in the preview to change just that part.') + '</p>';
+		var h = '<p class="formulize-editor__intro">This look’s logo, colours, fonts' + (WIDTH ? ', page width' : '') + (SIMPLE && DATA.sizes.length ? ' and size' : '') + '. ' +
+			(BASE ? 'Anything it doesn’t change comes from ' + esc(EDIT.baseName) + ', and follows it when it changes.' : 'Anything it doesn’t change is the theme’s own.') +
+			(SIMPLE ? '' : ' Click anything in the preview to change just that part.') + '</p>';
 		h += sect('Logo') + uploadBlock('appearance_logo') + uploadBlock('appearance_favicon');
 		h += sect('Colours') + Object.keys(DATA.colours).map(function (key) {
 			var c = DATA.colours[key], id = 'formulize-editor-colour-' + key;
 			return '<div class="formulize-editor__colour' + (colourChanged(key) ? ' is-changed' : '') + '"><input type="color" id="' + id + '" data-colour="' + key + '" value="' + esc(state.colours[key]) + '">' +
 				'<label for="' + id + '" class="formulize-editor__lbl">' + esc(c.label) + '</label>' +
-				(colourChanged(key) ? '<button type="button" class="formulize-editor__link" data-colour-reset="' + key + '">' + (BASE ? 'Use Default’s' : 'Reset to ' + esc(c['default'])) + '</button>' : '<span class="formulize-editor__hex">' + esc(state.colours[key]) + '</span>') +
+				(colourChanged(key) ? '<button type="button" class="formulize-editor__link" data-colour-reset="' + key + '">' + (BASE ? 'Use ' + esc(EDIT.baseName) + '’s' : 'Reset to ' + esc(c['default'])) + '</button>' : '<span class="formulize-editor__hex">' + esc(state.colours[key]) + '</span>') +
 				'<span class="formulize-editor__desc">' + esc(c.description) + '</span></div>';
 		}).join('');
 		h += sect('Fonts') + fontBlock('main') + fontBlock('heading');
-		if (WIDTH) { h += sect('Size') + widthBlock(); }
+		if (SIMPLE && DATA.sizes.length) { h += sect('Size') + sizeBlock(); }
+		if (WIDTH) { h += sect('Page') + widthBlock(); }
 		return h;
 	}
-	// simple mode's look: the one chosen, shown in the preview, and applied to the site
-	// when saved
-	function lookChoice() {
-		if (DATA.menuLooks.length < 2) { return ''; }
-		var changed = CHOSEN !== DATA.applied;
-		return '<div class="formulize-editor__ctl' + (changed ? ' is-changed' : '') + '"><div class="formulize-editor__ctl-head"><label for="formulize-editor-look">Look</label>' +
-				(changed ? '<button type="button" class="formulize-editor__link" data-undo="look">Undo</button>' : '') + '</div>' +
-			'<p class="formulize-editor__desc">How big and roomy the site is: Default, Compact, which fits more on the screen, or Comfortable, which is larger and easier to read and tap' + (DATA.menuLooks.length > 3 ? ', or one of your own looks' : '') + '. The preview shows the one you choose; saving applies it to the site.' +
-				(changed ? ' The site has ' + esc(menuLook(DATA.applied).name) + ' until then.' : '') + '</p>' +
-			'<div class="formulize-editor__widget"><select id="formulize-editor-look" data-look="1">' + DATA.menuLooks.map(function (l) {
-				return '<option value="' + esc(l.key) + '"' + (l.key === CHOSEN ? ' selected' : '') + '>' + esc(l.name) + (l.key === DATA.applied ? ' (applied)' : '') + '</option>';
-			}).join('') + '</select></div></div>';
+	// The look's size, in the simple editor: the sizes that come with Formulize, whose
+	// values choosing one writes into the look; the same as its base, which sets none of
+	// them; or custom, when they have been changed in the advanced editor.
+	function sizeOf(key) { return DATA.sizes.filter(function (z) { return z.key === key; })[0]; }
+	function currentSize() {
+		if (!DATA.sizeTokens.some(changed)) { return BASE ? '' : 'standard'; }
+		var match = DATA.sizes.filter(function (z) {
+			return DATA.sizeTokens.every(function (t) { return !has(z.values, t) || String(value(t)) === String(z.values[t]); });
+		})[0];
+		return match ? match.key : 'custom';
+	}
+	function chooseSize(key) {
+		if (currentSize() === 'custom' && !window.confirm('Its sizes have been changed in the advanced editor. Replace them with ' + (key ? sizeOf(key).name : 'the same as ' + EDIT.baseName) + '?')) { render(); return; }
+		DATA.sizeTokens.forEach(function (t) { delete state.overrides[t]; });
+		if (key) { var z = sizeOf(key); Object.keys(z.values).forEach(function (t) { state.overrides[t] = z.values[t]; }); }
+		touch(); render();
+	}
+	function sizeBlock() {
+		var now = currentSize(), saved = savedSize();
+		var options = (BASE ? [['', 'The same as ' + EDIT.baseName]] : []).concat(DATA.sizes.map(function (z) { return [z.key, z.name]; }));
+		var custom = now === 'custom';
+		var desc = now === 'custom' ? 'Its sizes have been changed one by one in the advanced editor. Choosing a size replaces them.'
+			: now === '' ? 'It has the sizes of ' + EDIT.baseName + ', and follows them when they change.'
+			: sizeOf(now).description;
+		return '<div class="formulize-editor__ctl' + (now !== saved ? ' is-changed' : '') + '"><div class="formulize-editor__ctl-head"><label for="formulize-editor-size">Size</label></div>' +
+			'<p class="formulize-editor__desc">' + esc(desc) + '</p>' +
+			'<div class="formulize-editor__widget"><select id="formulize-editor-size" data-size="1">' + options.map(function (o) {
+				return '<option value="' + esc(o[0]) + '"' + (o[0] === now ? ' selected' : '') + '>' + esc(o[1]) + '</option>';
+			}).join('') + (custom ? '<option value="custom" selected disabled>Custom (changed in the advanced editor)</option>' : '') + '</select></div></div>';
+	}
+	// the size as saved, so the choice shows as changed until it is saved
+	function savedSize() {
+		var keep = state.overrides;
+		state.overrides = copy(SAVED.overrides);
+		var size = currentSize();
+		state.overrides = keep;
+		return size;
 	}
 	// the page width: a maximum width in pixels, or full width
 	function widthBlock() {
@@ -638,12 +627,9 @@
 	// was when saved, and how to undo it (undo: 'kind:key')
 	function unsaved() {
 		var list = [];
-		if (SIMPLE && CHOSEN !== DATA.applied) {
-			list.push({ name: 'Look', now: menuLook(CHOSEN).name, was: menuLook(DATA.applied).name, undo: 'look' });
-		}
 		Object.keys(UPLOADS).forEach(function (key) {
 			if (uploadChanged(key)) {
-				list.push({ name: UPLOADS[key], now: state.uploads[key].file ? 'A new image' : ((BASE || lookOwn(key)) ? 'Default’s' : 'The theme’s own'), undo: 'upload:' + key });
+				list.push({ name: UPLOADS[key], now: state.uploads[key].file ? 'A new image' : (BASE ? EDIT.baseName + '’s' : 'The theme’s own'), undo: 'upload:' + key });
 			}
 		});
 		Object.keys(DATA.colours).forEach(function (key) {
@@ -673,7 +659,6 @@
 	function undo(what) {
 		var parts = what.split(':'), kind = parts[0], key = parts.slice(1).join(':');
 		if (kind === 'upload') { resetUpload(key); }
-		else if (kind === 'look') { chooseLook(DATA.applied, true); }
 		else if (kind === 'colour') { state.colours[key] = SAVED.colours[key]; }
 		else if (kind === 'font') { state.fonts[key] = SAVED.fonts[key]; state.fonts[key + 'custom'] = SAVED.fonts[key + 'custom']; }
 		else if (kind === 'contentwidth') { state.contentWidth = SAVED.contentWidth; }
@@ -681,45 +666,11 @@
 			if (has(SAVED.overrides, key)) { state.overrides[key] = SAVED.overrides[key]; } else { delete state.overrides[key]; }
 		}
 	}
-	// what is changed on this site: everything that differs from the theme's own
-	// appearance with the look as it came with Formulize (DATA.reference), saved or not
+	// What the look changes: everything that differs from the look it is based on, as
+	// that resolves, or from the theme's own appearance (DATA.reference), saved or not.
 	var REF = DATA.reference;
-
-	// Simple mode's look: the one chosen (CHOSEN), which the preview shows, and which
-	// Save applies to the site; until then it is a change like any other. Choosing
-	// one keeps what has been changed and not saved.
-	var CHOSEN = DATA.applied;
-	function menuLook(key) { for (var i = 0; i < DATA.menuLooks.length; i++) { if (DATA.menuLooks[i].key === key) { return DATA.menuLooks[i]; } } return null; }
-	function chooseLook(key, keep) {
-		var look = DATA.simpleLooks && DATA.simpleLooks[key], info = menuLook(key);
-		if (!look || !info) { return; }
-		// a change is kept unless the look chosen sets that setting itself: then it has
-		// its own, which it is shown with (and a change to it would be saved to it)
-		var sets = function () { for (var i = 0; i < arguments.length; i++) { if ((look.sets || []).indexOf(arguments[i]) !== -1) { return true; } } return false; };
-		var colours = {}, fonts = {}, width = null;
-		if (keep) {
-			Object.keys(DATA.colours).forEach(function (k) { if (!sets('appearance_' + k) && String(state.colours[k]).toLowerCase() !== String(SAVED.colours[k]).toLowerCase()) { colours[k] = state.colours[k]; } });
-			['main', 'heading'].forEach(function (w) {
-				var names = w === 'main' ? ['appearance_font', 'appearance_customfont'] : ['appearance_headingfont', 'appearance_headingcustomfont'];
-				if (!sets(names[0], names[1]) && (state.fonts[w] !== SAVED.fonts[w] || state.fonts[w + 'custom'] !== SAVED.fonts[w + 'custom'])) { fonts[w] = [state.fonts[w], state.fonts[w + 'custom']]; }
-			});
-			if (WIDTH && !sets('appearance_contentwidth') && state.contentWidth !== SAVED.contentWidth) { width = state.contentWidth; }
-		}
-		// a logo or favicon taken away was the look's that was shown: another look's
-		// is its own, or Default's. A new one chosen stays.
-		Object.keys(UPLOADS).forEach(function (k) { state.uploads[k].removed = false; });
-		adopt(look.state);
-		REF = look.reference;
-		CHOSEN = key;
-		state.preset = key === 'default' ? '' : key;
-		EDIT = { key: key, name: info.name, description: info.description, builtin: info.builtin, edited: info.edited };
-		Object.keys(colours).forEach(function (k) { state.colours[k] = colours[k]; });
-		Object.keys(fonts).forEach(function (w) { state.fonts[w] = fonts[w][0]; state.fonts[w + 'custom'] = fonts[w][1]; });
-		if (width !== null) { state.contentWidth = width; }
-	}
-	function refName() { return (EDIT && EDIT.builtin && EDIT.key !== 'default') ? EDIT.name + ' as it came' : 'The theme’s'; }
-	// the same, within a sentence: a look's name keeps its capital
-	function refText() { return refName() === 'The theme’s' ? 'the theme’s' : refName(); }
+	// what it is measured against, in a sentence
+	function refText() { return BASE ? EDIT.baseName : 'the theme’s own appearance'; }
 	function changedHere() {
 		var list = [];
 		Object.keys(UPLOADS).forEach(function (key) {
@@ -772,11 +723,11 @@
 			c.wasText = c.was !== undefined ? ' · was ' + esc(c.was) : '';
 			return changeRow(c, '<button type="button" class="formulize-editor__link" data-undo="' + esc(c.undo) + '">Undo</button>');
 		}).join('') : '<p class="formulize-editor__intro">Nothing: everything is saved.</p>';
-		h += sect('Changed on this site');
-		h += here.length ? '<p class="formulize-editor__intro">What differs from ' + esc(refText()) + (refName() === 'The theme’s' ? ' own appearance' : '') + ', saved or not.</p>' + here.map(function (c) {
-			c.wasText = c.was !== undefined ? ' · ' + esc(refText()) + ' is ' + esc(c.was) : '';
+		h += sect('What ' + EDIT.name + ' changes');
+		h += here.length ? '<p class="formulize-editor__intro">What differs from ' + esc(refText()) + ', saved or not.</p>' + here.map(function (c) {
+			c.wasText = c.was !== undefined ? ' · ' + esc(BASE ? EDIT.baseName + '’s' : 'the theme’s') + ' is ' + esc(c.was) : '';
 			return changeRow(c, c.reset ? '<button type="button" class="formulize-editor__link" data-refreset="' + esc(c.reset) + '">Reset</button>' : '');
-		}).join('') : '<p class="formulize-editor__intro">Nothing: ' + (refName() === 'The theme’s' ? 'everything is the theme’s own appearance.' : esc(EDIT.name) + ' is as it came with Formulize.') + '</p>';
+		}).join('') : '<p class="formulize-editor__intro">Nothing: it is the same as ' + esc(refText()) + '.</p>';
 		return h;
 	}
 
@@ -800,17 +751,6 @@
 					'<button type="button" role="tab" data-tab="changes" aria-pressed="' + (state.tab === 'changes') + '" aria-selected="' + (state.tab === 'changes') + '">Changes' + (n ? ' (' + n + ')' : '') + '</button></div>';
 			body.innerHTML = state.tab === 'site' ? siteBlock() : changesBlock() + gapsBlock(MAP.gaps);
 		}
-		// the look being edited, said once above its settings
-		if (!SIMPLE && !state.sel) {
-			var isDefault = EDIT.key === 'default';
-			body.insertAdjacentHTML('afterbegin', '<div class="formulize-editor__lookbar"><p>' + (isDefault
-				? 'Editing <b>Default</b>, the look every other look builds on: what they don’t change comes from here.'
-				: 'Editing the <b>' + esc(EDIT.name) + '</b> look: what it changes is marked, and everything else comes from Default.') + '</p>' +
-				(EDIT.builtin ? '<p>' + (isDefault
-					? (EDIT.edited ? 'Reverting it puts the theme’s own appearance back.' : 'It is the theme’s own appearance.')
-					: esc(EDIT.name) + ' comes with Formulize. ' + (EDIT.edited ? 'It has been changed on this site, and can be reverted to how it came.' : 'Changes you save change it on this site, and it can always be reverted to how it came.')) + '</p>' +
-					(EDIT.edited ? '<button type="button" class="formulize-editor__btn formulize-editor__btn--sm" data-look-act="revert">Revert ' + esc(EDIT.name) + '…</button>' : '') : '') + '</div>');
-		}
 	}
 
 	/* ---- applying changes ---- */
@@ -821,9 +761,9 @@
 		count.hidden = n === 0; count.textContent = n + (n === 1 ? ' unsaved change' : ' unsaved changes');
 		$('formulize-editor-reset').disabled = n === 0 || READONLY;
 		$('formulize-editor-save').disabled = READONLY || state.saving || n === 0;
-		drawLookHeader();
+		drawLive();
 		// keep focus, and the inspector's scroll position, across the re-render
-		var f = document.activeElement, attrs = ['data-token', 'data-d', 'data-v', 'data-cw', 'data-custom', 'data-hex', 'data-colour', 'data-font', 'data-custom-font', 'data-look', 'data-cwidth', 'data-cwidth-px', 'data-tab'];
+		var f = document.activeElement, attrs = ['data-token', 'data-d', 'data-v', 'data-cw', 'data-custom', 'data-hex', 'data-colour', 'data-font', 'data-custom-font', 'data-size', 'data-cwidth', 'data-cwidth-px', 'data-tab'];
 		var key = (f && f.getAttribute && (body.contains(f) || head.contains(f))) ? attrs.map(function (a) { return f.getAttribute(a) || ''; }) : null;
 		var scroll = body.parentNode.scrollTop;
 		renderInspector();
@@ -920,10 +860,7 @@
 		var el = ev.target, a = function (n) { return el.getAttribute && el.getAttribute(n); };
 		if (el.type === 'range' || a('data-colour') || a('data-custom-font') || a('data-custom') || a('data-hex')) { render(); pulse(); }
 		else if (a('data-font')) { state.fonts[a('data-font')] = el.value; touch(); render(); }
-		else if (a('data-look')) {
-			// a look chosen in simple mode is shown in the preview, and applied when saved
-			chooseLook(el.value, true); render();
-		}
+		else if (a('data-size')) { chooseSize(el.value); }
 		else if (a('data-cwidth-px')) { setWidthPx(el.value); touch(); render(); }
 	});
 	body.addEventListener('click', function (ev) {
@@ -956,19 +893,15 @@
 			resetUpload(a('data-upload-undo')); touch(); render();
 		} else if (a('data-upload-remove')) {
 			resetUpload(a('data-upload-remove'));
-			state.uploads[a('data-upload-remove')].removed = BASE ? lookOwn(a('data-upload-remove')) : !!savedUploads[a('data-upload-remove')]; touch(); render();
+			state.uploads[a('data-upload-remove')].removed = lookOwn(a('data-upload-remove')); touch(); render();
 		} else if (a('data-undo')) {
 			undo(a('data-undo')); render();
 		} else if (a('data-refreset')) {
 			resetToReference(a('data-refreset')); render();
-		} else if (a('data-look-act')) {
-			ev.stopPropagation(); // it opens the looks' menu, which a click elsewhere closes
-			lookAction(a('data-look-act'));
 		} else if (a('data-site-reset')) {
 			parts = a('data-site-reset').split(':');
 			if (parts[0] === 'colour') { state.colours[parts[1]] = colourBase(parts[1]); }
 			else if (parts[0] === 'font') { resetFont(parts[1]); }
-			else if (parts[0] === 'preset') { state.preset = ''; }
 			else if (parts[0] === 'contentwidth') { state.contentWidth = widthBase(); }
 			else if (parts[0] === 'upload') {
 				if (uploadChanged(parts[1])) { resetUpload(parts[1]); } else { state.uploads[parts[1]].removed = true; }
@@ -1007,8 +940,7 @@
 	});
 	// back to how the look was last saved
 	$('formulize-editor-reset').addEventListener('click', function () {
-		if (!window.confirm(SIMPLE ? 'Throw away the changes you haven’t saved?' : 'Throw away the changes you haven’t saved, so the ' + (EDIT ? EDIT.name : '') + ' look is as it was last saved?')) { return; }
-		if (SIMPLE && CHOSEN !== DATA.applied) { chooseLook(DATA.applied, false); }
+		if (!window.confirm('Throw away the changes you haven’t saved, so ' + EDIT.name + ' is as it was last saved?')) { return; }
 		state.overrides = copy(SAVED.overrides);
 		state.colours = copy(SAVED.colours);
 		state.fonts = copy(SAVED.fonts);
@@ -1017,127 +949,44 @@
 		render();
 	});
 
-	/* ---- looks: what is being edited, and the looks' menu ---- */
-	var menu = $('formulize-editor-look-menu'), lookBtn = $('formulize-editor-look-btn'), menuMode = '';
-	function lookUrl(key) { return DATA.pageUrl + (key ? '&look=' + encodeURIComponent(key) : ''); }
-	function drawLookHeader() {
-		$('formulize-editor-look-name').textContent = EDIT.name;
-		var box = $('formulize-editor-applied');
-		$('formulize-editor-lookpick').hidden = SIMPLE;
-		if (SIMPLE) { box.innerHTML = ''; return; }
-		box.innerHTML = DATA.applied === EDIT.key
-			? '<span class="formulize-editor__applied">✓ Applied to the site</span>'
-			: '<button type="button" class="formulize-editor__btn" data-look-act="apply"' + (isDirty() ? ' disabled title="Save the look first"' : '') + '>Apply to the site</button>';
+	/* ---- the simple editor and the advanced one ---- */
+	// Switched in place: what hasn't been saved stays. The address says which, so a
+	// reload comes back to it.
+	function setMode(advanced) {
+		if (advanced === !SIMPLE) { return; }
+		SIMPLE = !advanced;
+		document.body.classList.toggle('formulize-editor--advanced', advanced);
+		Array.prototype.forEach.call(document.querySelectorAll('#formulize-editor-mode [data-mode]'), function (b) {
+			b.setAttribute('aria-pressed', String((b.getAttribute('data-mode') === 'advanced') === advanced));
+		});
+		$('formulize-editor-mode-field').value = advanced ? 'advanced' : 'simple';
+		try { var url = new URL(location.href); url.searchParams.set('mode', advanced ? 'advanced' : 'simple'); history.replaceState(null, '', url.toString()); } catch (e) {}
+		DEFAULT_HINT = advanced ? 'Click anything in the preview to change it.' : 'Change the look’s logo, colours, fonts, page width and size on the right.';
+		hint.innerHTML = DEFAULT_HINT;
+		if (frameStyle) { frameStyle.textContent = frameCss(); }
+		// in the simple editor, the logo is the only part there is to select
+		if (SIMPLE && state.sel && state.sel !== 'logo') { state.sel = null; state.origin = null; markSelection(); }
+		render();
 	}
-	function drawMenu() {
-		var h = '';
-		if (menuMode === 'new' || menuMode === 'duplicate' || menuMode === 'rename') {
-			var intro = menuMode === 'new' ? 'A new look starts out the same as Default, which every look builds on. Change what you want it to change.'
-				: menuMode === 'duplicate' ? 'A copy of ' + EDIT.name + ', to change as you like. It isn’t linked to ' + EDIT.name + ': changes to one don’t change the other.'
-				: 'A new name for ' + EDIT.name + '.';
-			h = '<form class="formulize-editor__look-form" data-look-form="' + menuMode + '"><p>' + esc(intro) + '</p>' +
-				'<label><span>Name</span><input type="text" id="formulize-editor-look-input" maxlength="60" required value="' + esc(menuMode === 'rename' ? EDIT.name : menuMode === 'duplicate' ? EDIT.name + ' copy' : '') + '" placeholder="e.g. Summer program"></label>' +
-				'<p class="formulize-editor__look-err" id="formulize-editor-look-err" hidden></p>' +
-				'<div class="formulize-editor__look-row"><button type="button" class="formulize-editor__btn formulize-editor__btn--sm" data-menu="back">Cancel</button><button type="submit" class="formulize-editor__btn formulize-editor__btn--sm formulize-editor__btn--primary">' + (menuMode === 'rename' ? 'Rename' : 'Make the look') + '</button></div></form>';
-		} else if (menuMode === 'revert') {
-			h = '<div class="formulize-editor__look-form"><p>Revert <b>' + esc(EDIT.name) + '</b> to how it came with Formulize? Everything changed in it on this site goes' + (DATA.applied === EDIT.key ? ', and the site changes with it, since it is applied' : '') + '. This can’t be undone.</p>' +
-				'<div class="formulize-editor__look-row"><button type="button" class="formulize-editor__btn formulize-editor__btn--sm" data-menu="back">Cancel</button><button type="button" class="formulize-editor__btn formulize-editor__btn--sm formulize-editor__btn--danger" data-look-act="revert-yes">Revert ' + esc(EDIT.name) + '</button></div></div>';
-		} else if (menuMode === 'delete') {
-			h = '<div class="formulize-editor__look-form"><p>Delete the <b>' + esc(EDIT.name) + '</b> look?' + (DATA.applied === EDIT.key ? ' It is applied to the site, so the site goes back to Default.' : '') + ' This can’t be undone.</p>' +
-				'<div class="formulize-editor__look-row"><button type="button" class="formulize-editor__btn formulize-editor__btn--sm" data-menu="back">Cancel</button><button type="button" class="formulize-editor__btn formulize-editor__btn--sm formulize-editor__btn--danger" data-look-act="delete-yes">Delete the look</button></div></div>';
-		} else {
-			var item = function (key, name, small, badges, current) {
-				return '<button type="button" class="formulize-editor__look-item" data-edit="' + esc(key) + '"' + (current ? ' aria-current="true"' : '') + '><span class="formulize-editor__look-check">' + (current ? '✓' : '') + '</span><span><span class="formulize-editor__look-title">' + esc(name) + '</span><small>' + esc(small) + '</small></span><span>' + badges + '</span></button>';
-			};
-			h = '<p class="formulize-editor__look-head">Looks</p>' +
-				DATA.menuLooks.map(function (l) {
-					var badges = (DATA.applied === l.key ? '<span class="formulize-editor__badge formulize-editor__badge--on">Applied</span>' : '') + (l.builtin ? '<span class="formulize-editor__badge">' + (l.edited ? 'Built in, changed' : 'Built in') + '</span>' : '');
-					return item(l.key, l.name, l.builtin ? l.description : (l.changes ? l.changes + (l.changes === 1 ? ' change' : ' changes') + ' to Default' : 'No changes yet'), badges, EDIT && EDIT.key === l.key);
-				}).join('') +
-				'<div class="formulize-editor__look-sep"></div>' +
-				'<button type="button" class="formulize-editor__look-act" data-menu="new">New look…</button>' +
-				(EDIT ? '<button type="button" class="formulize-editor__look-act" data-menu="duplicate">Duplicate ' + esc(EDIT.name) + '…</button>' : '') +
-				(EDIT && !EDIT.builtin ? '<button type="button" class="formulize-editor__look-act" data-menu="rename">Rename ' + esc(EDIT.name) + '…</button><button type="button" class="formulize-editor__look-act formulize-editor__look-act--danger" data-menu="delete">Delete ' + esc(EDIT.name) + '…</button>' : '') +
-				(EDIT && EDIT.builtin && EDIT.edited ? '<button type="button" class="formulize-editor__look-act formulize-editor__look-act--danger" data-menu="revert">Revert ' + esc(EDIT.name) + '…</button>' : '');
-		}
-		menu.innerHTML = h;
-		var input = $('formulize-editor-look-input');
-		if (input) { input.focus(); input.select(); }
-	}
-	function openMenu(open, mode) {
-		menuMode = mode || '';
-		menu.hidden = !open;
-		lookBtn.setAttribute('aria-expanded', String(open));
-		if (open) { drawMenu(); }
-	}
-	// a look action goes to the server and back to the editor; unsaved changes would be
-	// lost, so they are asked about first
-	function leaving() { return !isDirty() || window.confirm('You have changes that aren’t saved. Leave them?'); }
-	function postLook(action, name, asked) {
-		if (!asked && !leaving()) { return; }
-		rememberView();
-		var form = $('formulize-editor-lookform');
-		form.querySelector('[name="appearance_look_action"]').value = action;
-		form.querySelector('[name="appearance_look_name"]').value = name || '';
-		submitting = true;
-		form.submit();
-	}
-	function lookAction(act) {
-		if (act === 'apply') { postLook('apply'); }
-		else if (act === 'delete-yes') { postLook('delete'); }
-		else if (act === 'revert-yes') { postLook('revert'); }
-		else { openMenu(true, act); } // revert, from the note above a built-in look's settings
-	}
-	function nameTaken(name, except) {
-		return DATA.menuLooks.some(function (l) { return l.key !== except && l.name.toLowerCase() === name.toLowerCase(); });
-	}
-	lookBtn.addEventListener('click', function (ev) { ev.stopPropagation(); openMenu(menu.hidden); });
-	menu.addEventListener('click', function (ev) {
-		ev.stopPropagation(); // the menu redraws itself, so the click would otherwise read as one outside it
-		var b = ev.target.closest('button'); if (!b) { return; }
-		if (b.hasAttribute('data-edit')) {
-			var key = b.getAttribute('data-edit');
-			if ((EDIT ? EDIT.key : '') !== key && leaving()) { submitting = true; rememberView(); location.href = lookUrl(key); }
-		} else if (b.getAttribute('data-menu')) {
-			openMenu(true, b.getAttribute('data-menu') === 'back' ? '' : b.getAttribute('data-menu'));
-		} else if (b.getAttribute('data-look-act')) {
-			lookAction(b.getAttribute('data-look-act'));
-		}
-	});
-	menu.addEventListener('submit', function (ev) {
-		ev.preventDefault();
-		var mode = ev.target.getAttribute('data-look-form'), name = $('formulize-editor-look-input').value.replace(/\s+/g, ' ').trim(), err = $('formulize-editor-look-err');
-		var problem = !name ? 'Please give the look a name.' : nameTaken(name, mode === 'rename' ? EDIT.key : null) ? 'There is already a look with that name.' : '';
-		if (problem) { err.textContent = problem; err.hidden = false; return; }
-		postLook(mode, name);
-	});
-	document.addEventListener('click', function (ev) { if (!menu.hidden && !ev.target.closest('#formulize-editor-lookpick')) { openMenu(false); } });
-	document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && !menu.hidden) { openMenu(false); lookBtn.focus(); } });
-	// the mode, for the whole site, and the theme being edited
 	if ($('formulize-editor-mode')) {
 		$('formulize-editor-mode').addEventListener('click', function (ev) {
 			var b = ev.target.closest('[data-mode]');
-			if (!b || b.getAttribute('aria-pressed') === 'true' || !leaving()) { return; }
-			$('formulize-editor-lookform').querySelector('[name="appearance_mode"]').value = b.getAttribute('data-mode');
-			postLook('mode', '', true);
+			if (b) { setMode(b.getAttribute('data-mode') === 'advanced'); }
 		});
 	}
-	if ($('formulize-editor-theme')) {
-		$('formulize-editor-theme').addEventListener('change', function () {
-			if (leaving()) { submitting = true; location.href = this.value; }
-			else { // back to the theme being edited, the one the page came with
-				var self = this;
-				Array.prototype.forEach.call(self.options, function (o) { if (o.defaultSelected) { self.value = o.value; } });
-			}
-		});
+
+	// What saving changes, beside Save, when the look is in use: the site, which uses it
+	// or a look based on it, and the screens set to it or to a look based on it.
+	function reachText() {
+		var r = DATA.reach, screens = r.screens ? r.screens + (r.screens === 1 ? ' screen' : ' screens') : '';
+		if (!r.site && !screens) { return ''; }
+		var what = r.site ? 'the site' + (screens ? ' and ' + screens : '') : screens;
+		return r.site && !r.siteTheme ? what + ' when ' + DATA.theme + ' is the site’s theme' : what;
 	}
-	$('formulize-editor-applied').addEventListener('click', function (ev) { var b = ev.target.closest('[data-look-act]'); if (b) { lookAction(b.getAttribute('data-look-act')); } });
-	// what a look action did, after it comes back
-	// (switching mode says nothing: the header shows which mode it is)
-	if (DATA.done && DATA.done !== 'mode') {
-		setTimeout(function () {
-			message({ 'new': 'Made the look ' + (EDIT ? EDIT.name : '') + '. Change what you want it to change, and save.', duplicate: 'Made the look ' + (EDIT ? EDIT.name : '') + ', a copy. Change what you want it to change, and save.', rename: 'Renamed the look ' + (EDIT ? EDIT.name : '') + '.', 'delete': 'Deleted the look.', revert: (EDIT ? EDIT.name : '') + ' is back the way it came with Formulize.', apply: (EDIT ? EDIT.name : 'Default') + ' is now applied to the site.' }[DATA.done] || 'Done.');
-		}, 0);
+	function drawLive() {
+		var live = $('formulize-editor-live'), text = reachText();
+		live.hidden = !text;
+		live.textContent = text ? 'Saving changes ' + text : '';
 	}
 
 	/* ---- saving ---- */
@@ -1169,33 +1018,22 @@
 	// every setting goes in the form's hidden fields
 	function fillForm(form) {
 		enforce();
+		// what the look changes itself: what differs from its base, or from the theme's own
+		var look = {};
+		Object.keys(DATA.colours).forEach(function (key) { if (colourChanged(key)) { look['appearance_' + key] = state.colours[key]; } });
+		['main', 'heading'].forEach(function (which) {
+			if (fontChanged(which)) {
+				look[which === 'main' ? 'appearance_font' : 'appearance_headingfont'] = state.fonts[which] === 'geist' ? '' : state.fonts[which];
+				look[which === 'main' ? 'appearance_customfont' : 'appearance_headingcustomfont'] = state.fonts[which] === 'custom' ? state.fonts[which + 'custom'] : '';
+			}
+		});
+		if (widthChanged()) { look.appearance_contentwidth = state.contentWidth === WIDTH.theme ? '' : state.contentWidth; }
+		if (Object.keys(state.overrides).length) { look.appearance_overrides = JSON.stringify(state.overrides); }
 		var values = {
-			appearance_look: state.preset,
-			appearance_contentwidth: state.contentWidth,
-			appearance_overrides: Object.keys(state.overrides).length ? JSON.stringify(state.overrides) : '',
-			appearance_font: state.fonts.main,
-			appearance_customfont: state.fonts.main === 'custom' ? state.fonts.maincustom : '',
-			appearance_headingfont: state.fonts.heading,
-			appearance_headingcustomfont: state.fonts.heading === 'custom' ? state.fonts.headingcustom : '',
+			appearance_look_settings: JSON.stringify(look),
 			appearance_logo_remove: state.uploads.appearance_logo.removed ? '1' : '',
 			appearance_favicon_remove: state.uploads.appearance_favicon.removed ? '1' : ''
 		};
-		Object.keys(DATA.colours).forEach(function (key) { values['appearance_' + key] = state.colours[key]; });
-		// a look other than Default, in advanced mode: the settings that differ from Default's.
-		// Default, and simple mode, send the settings themselves.
-		if (!SIMPLE && EDIT.key !== 'default') {
-			var look = {};
-			Object.keys(DATA.colours).forEach(function (key) { if (colourChanged(key)) { look['appearance_' + key] = state.colours[key]; } });
-			['main', 'heading'].forEach(function (which) {
-				if (fontChanged(which)) {
-					look[which === 'main' ? 'appearance_font' : 'appearance_headingfont'] = state.fonts[which] === 'geist' ? '' : state.fonts[which];
-					look[which === 'main' ? 'appearance_customfont' : 'appearance_headingcustomfont'] = state.fonts[which] === 'custom' ? state.fonts[which + 'custom'] : '';
-				}
-			});
-			if (widthChanged()) { look.appearance_contentwidth = state.contentWidth === WIDTH.theme ? '' : state.contentWidth; }
-			if (Object.keys(state.overrides).length) { look.appearance_overrides = JSON.stringify(state.overrides); }
-			values.appearance_look_settings = JSON.stringify(look);
-		}
 		Array.prototype.forEach.call(form.querySelectorAll('[data-setting]'), function (input) {
 			input.value = has(values, input.getAttribute('data-setting')) ? values[input.getAttribute('data-setting')] : '';
 		});
@@ -1218,31 +1056,17 @@
 		fetch(form.action, { method: 'POST', body: data, credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
 			.then(function (r) { return r.json(); }, function () { throw new Error('offline'); })
 			.then(function (result) {
-				var lookApplied = SIMPLE && result.saved && result.applied !== DATA.applied;
 				if (result.saved) {
 					// what was saved is what the editor now starts from: a custom font with
 					// no name, for one, comes back as the theme's own
 					Object.keys(UPLOADS).forEach(function (key) { resetUpload(key); });
-					if (SIMPLE && result.simpleLooks) {
-						// the look chosen is now the one applied, and every look builds on what was saved
-						DATA.applied = result.applied;
-						DATA.simpleLooks = result.simpleLooks;
-						CHOSEN = result.applied;
-						REF = DATA.simpleLooks[CHOSEN].reference;
-					}
-					// a look's parts' settings, as saved: what was sent
-					if (BASE) { OWN = copy(state.overrides); }
+					// the parts' settings the look records, as saved
+					OWN = result.own || {};
 					adopt(result.state);
 					state.dirty = false;
-					if (EDIT && result.edited !== undefined) {
-						EDIT.edited = result.edited;
-						DATA.menuLooks.forEach(function (l) { if (l.key === EDIT.key) { l.edited = result.edited; } });
-					}
 				}
 				if (result.errors && result.errors.length) { message(result.errors, true); }
-				else if (SIMPLE) { message(lookApplied ? 'Saved. ' + EDIT.name + ' is now applied to the site.' : 'Saved. The site has changed.'); }
-				else if (EDIT) { message('Saved the ' + EDIT.name + ' look.' + (DATA.applied === EDIT.key ? ' It is applied to the site, so the site has changed.' : ' It isn’t applied to the site, so the site hasn’t changed.')); }
-				else { message('Saved. These settings now apply across the site in the ' + DATA.theme + ' theme.'); }
+				else { message(savedText()); }
 				render();
 			})['catch'](function (e) {
 				message(e && e.message === 'offline'
@@ -1256,19 +1080,16 @@
 	window.addEventListener('beforeunload', function (ev) {
 		if (isDirty() && !submitting) { ev.preventDefault(); ev.returnValue = ''; }
 	});
+	// what a save did: what it changed, when the look is in use
+	function savedText() {
+		var text = reachText();
+		return 'Saved ' + EDIT.name + '.' + (text ? ' This changed ' + text + '.' : '');
+	}
 	// what the page was sent back with
 	if (DATA.errors && DATA.errors.length) { message(DATA.errors, true); }
-	else if (DATA.saved) { message('Saved. These settings now apply across the site in the ' + DATA.theme + ' theme.'); }
+	else if (DATA.saved) { message(savedText()); }
 
 	adopt(DATA.state);
-	var view = recallView();
-	if (view) {
-		if (MAP.screens[view.screen]) { state.screen = view.screen; }
-		if (view.tab === 'site' || view.tab === 'changes') { state.tab = view.tab; }
-		if (view.sel && MAP.components[view.sel] && (!SIMPLE || view.sel === 'logo')) { state.sel = view.sel; }
-		if (view.phone) { setWidth('phone'); }
-		pendingScroll = view.scroll || 0;
-	}
 	goScreen(state.screen);
 	render();
 })();
