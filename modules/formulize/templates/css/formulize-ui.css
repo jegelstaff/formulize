@@ -1430,6 +1430,8 @@
 }
 .fz-popover > :where(*) { margin-block: 0; }
 .fz-popover > :where(* + *) { margin-block-start: calc(var(--fz-spacing) * 2); }
+/* what a heading heads sits close under it, so it reads as the heading's */
+.fz-popover > :where(.fz-popover__title + *) { margin-block-start: calc(var(--fz-spacing) * 1); }
 /* A small heading inside it, for each part of what it shows */
 .fz-popover__title {
   margin: 0;

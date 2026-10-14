@@ -2581,6 +2581,15 @@ html:has(.formulize-admin-ui) {
 .admin-ui .fz-cluster > p,
 .admin-ui .fz-card > p,
 .admin-ui .fz-callout > p,
-.admin-ui .fz-popover > p,
 .admin-ui .fz-dialog__body > p {
   margin-top: 0; }
+
+/* and a popover, which spaces what is in it with a margin, as formulize-ui.css does */
+.admin-ui .fz-popover > p {
+  margin-top: 0; }
+
+.admin-ui .fz-popover > * + p {
+  margin-top: calc(var(--fz-spacing) * 2); }
+
+.admin-ui .fz-popover > .fz-popover__title + * {
+  margin-top: calc(var(--fz-spacing) * 1); }
