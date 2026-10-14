@@ -81,14 +81,14 @@
       "name": "Logo",
       "plural": "the logo at the top of every page",
       "site": "logo",
-      "tokens": [],
-      "gaps": []
+      "tokens": ["--fz-topbar-height"],
+      "gaps": ["The logo's height at phone widths, which is fixed."]
     },
     "page": {
       "name": "Page",
       "plural": "every page",
-      "tokens": ["--fz-page-padding"],
-      "gaps": ["The top bar height and the sidebar width.", "Sidebar menu items."]
+      "tokens": ["--fz-page-padding", "--fz-topbar-height"],
+      "gaps": ["The top bar height at phone widths, which is fixed.", "The sidebar width.", "Sidebar menu items."]
     },
     "tabs": {
       "name": "Page tabs",
@@ -320,10 +320,10 @@
     "Shadows, everywhere, and the colours of anything not listed under a part.",
     "Fonts other than the main and secondary fonts, for a part.",
     "Small and large buttons, and the selection bar's buttons.",
-    "Phone-width spacing (title bar, cards, drawer), which is fixed.",
+    "Phone-width spacing (title bar, cards, drawer) and the top bar's height on phones, which are fixed.",
     "The 44px minimum height of fields and buttons on phones.",
     "Checkboxes, radio buttons, switches and badges.",
-    "Filter chips, pagination, the sidebar and the top bar.",
+    "Filter chips, pagination, the sidebar, and the top bar other than its height.",
     "Dialogs, date pickers and subform tables."
   ],
   "tokens": {
@@ -605,6 +605,16 @@
       "type": "spacing",
       "min": 2,
       "max": 12
+    },
+    "--fz-topbar-height": {
+      "group": "surfaces",
+      "label": "Top bar height",
+      "description": "The height of the bar across the top of every page. The logo in it grows and shrinks with it.",
+      "type": "spacing",
+      "min": 10,
+      "max": 30,
+      "floor": { "token": "--fz-control-height", "plus": 2 },
+      "home": "page"
     },
     "--fz-title-font": {
       "group": "fonts",

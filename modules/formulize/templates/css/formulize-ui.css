@@ -198,6 +198,7 @@
   --fz-drawer-padding-x:  calc(var(--fz-spacing) * 5);
   --fz-drawer-padding-y:  calc(var(--fz-spacing) * 4);
   --fz-page-padding:      calc(var(--fz-spacing) * 5);
+  --fz-topbar-height:     calc(var(--fz-spacing) * 12);  /* the bar across the top of the page, with the logo: 48px */
 }
 
 
