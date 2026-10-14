@@ -766,21 +766,31 @@ function formulize_appearanceSizeValues($size, $theme = null) {
 }
 
 /**
- * Which size a look's own settings give it: none (it sets no size of its own, so
- * its sizes are its base's), a size whose values it has exactly, or custom.
+ * Which size a look has: none of its own (it sets no size, so its sizes are its
+ * base's), a size whose values it has, or custom. Measured on the look as it
+ * resolves, since a value the same as its base's isn't kept as its own: a look
+ * made Compact over Standard keeps only the values that differ.
  *
- * @param array $settings the settings a look changes itself
- * @param string|null $theme theme folder name, defaults to the active theme
- * @return string '' for none, a size's key, or 'custom'
+ * @param array $looks a theme's looks
+ * @param string $key the look's key
+ * @param string $theme theme folder name
+ * @return string '' for none of its own, a size's key, or 'custom'
  */
-function formulize_appearanceLookSize($settings, $theme = null) {
-    $own = array_intersect_key(formulize_appearanceLookOverrides($settings), array_flip(formulize_appearanceSizeTokens()));
-    if (!$own) {
+function formulize_appearanceLookSize($looks, $key, $theme) {
+    $sizeTokens = formulize_appearanceSizeTokens();
+    if (!array_intersect_key(formulize_appearanceLookOverrides($looks[$key]['settings']), array_flip($sizeTokens))) {
         return '';
     }
+    $resolved = formulize_appearanceLookOverrides(formulize_appearanceResolveLook($looks, $key, $theme)) + formulize_appearanceSizeDefaults($theme);
     foreach (array_keys(formulize_appearanceSizes($theme)) as $size) {
-        $values = formulize_appearanceSizeValues($size, $theme);
-        if ($own == $values) {
+        $matches = true;
+        foreach (formulize_appearanceSizeValues($size, $theme) as $token => $value) {
+            if (!isset($resolved[$token]) OR $resolved[$token] != $value) {
+                $matches = false;
+                break;
+            }
+        }
+        if ($matches) {
             return $size;
         }
     }
@@ -788,49 +798,108 @@ function formulize_appearanceLookSize($settings, $theme = null) {
 }
 
 /**
- * What a look changes itself, in a few words for a person: its own logo, how many
- * colours, its sizes (by name, when they are one of the sizes), how many other
- * parts, and so on.
+ * What a look changes itself, for a person to take in at a glance: each kind of
+ * change (its logo, favicon, colours, fonts, page width, sizes and parts), with what
+ * it changes it to. The Looks tab lists these.
  *
- * @param array $settings the settings a look changes itself
- * @param string|null $theme theme folder name, defaults to the active theme
- * @return array of short phrases, eg: 'Logo', '2 colours', 'Compact sizes'
+ * @param array $looks a theme's looks
+ * @param string $key the look's key
+ * @param string $theme theme folder name
+ * @return array of arrays with 'kind' (logo, favicon, colours, fonts, width, sizes,
+ *               parts), 'label', 'detail' (words, or ''), 'phrase' (for a sentence:
+ *               "2 colours"), and for the logo and favicon 'image' (a URL, or '' for
+ *               the theme's own), for the colours 'swatches' (label => hex), for
+ *               the parts 'count' (how many parts)
  */
-function formulize_appearanceLookChanges($settings, $theme = null) {
-    $changes = array();
+function formulize_appearanceLookSummary($looks, $key, $theme) {
+    $settings = $looks[$key]['settings'];
     $count = function ($n, $one, $many) { return $n . ' ' . ($n == 1 ? $one : $many); };
-    if (isset($settings['appearance_logo'])) {
-        $changes[] = 'Logo';
+    $themeOwn = $theme . '\'s own';
+    $items = array();
+    foreach (array('appearance_logo' => array('logo', 'Logo'), 'appearance_favicon' => array('favicon', 'Favicon')) as $name => $kind) {
+        if (isset($settings[$name])) {
+            $url = $settings[$name] !== '' ? (string) formulize_getAppearanceFileUrl(formulize_locateAppearanceFile($settings[$name], $theme), $theme) : '';
+            $items[] = array('kind' => $kind[0], 'label' => $kind[1], 'detail' => $url === '' ? $themeOwn : '', 'image' => $url, 'phrase' => strtolower($kind[1]));
+        }
     }
-    if (isset($settings['appearance_favicon'])) {
-        $changes[] = 'Favicon';
+    $swatches = array();
+    foreach (formulize_appearanceColourMap($theme) as $colourKey => $colour) {
+        if (isset($settings['appearance_' . $colourKey])) {
+            $swatches[$colour['label']] = $settings['appearance_' . $colourKey] !== '' ? $settings['appearance_' . $colourKey] : $colour['default'];
+        }
     }
-    $colours = 0;
-    foreach (array_keys(formulize_appearanceColourMapDefinition()) as $key) {
-        $colours += isset($settings['appearance_' . $key]) ? 1 : 0;
+    if ($swatches) {
+        $items[] = array('kind' => 'colours', 'label' => 'Colours', 'detail' => '', 'swatches' => $swatches, 'phrase' => $count(count($swatches), 'colour', 'colours'));
     }
-    if ($colours) {
-        $changes[] = $count($colours, 'colour', 'colours');
+    $fonts = array();
+    $fontMap = formulize_appearanceFontMap($theme);
+    $fontName = function ($choice, $custom) use ($fontMap, $themeOwn) {
+        if ($choice === 'custom') {
+            return $custom;
+        }
+        return ($choice === '' OR !isset($fontMap[$choice])) ? $themeOwn : trim(preg_replace('/\s*\(.*\)$/', '', $fontMap[$choice]['label']));
+    };
+    if (isset($settings['appearance_font'])) {
+        $fonts[] = $fontName($settings['appearance_font'], isset($settings['appearance_customfont']) ? $settings['appearance_customfont'] : '');
     }
-    if (isset($settings['appearance_font']) OR isset($settings['appearance_headingfont'])) {
-        $changes[] = 'Fonts';
+    if (isset($settings['appearance_headingfont'])) {
+        $heading = $settings['appearance_headingfont'] === '' ? 'the main font' : $fontName($settings['appearance_headingfont'], isset($settings['appearance_headingcustomfont']) ? $settings['appearance_headingcustomfont'] : '');
+        $fonts[] = $heading . ' for headings';
+    }
+    if ($fonts) {
+        $items[] = array('kind' => 'fonts', 'label' => count($fonts) == 1 ? 'Font' : 'Fonts', 'detail' => implode(', ', $fonts), 'phrase' => count($fonts) == 1 ? 'font' : 'fonts');
     }
     if (isset($settings['appearance_contentwidth'])) {
-        $changes[] = 'Page width';
+        $width = $settings['appearance_contentwidth'];
+        $items[] = array('kind' => 'width', 'label' => 'Page width', 'detail' => $width === 'full' ? 'Full width' : ($width === '' ? $themeOwn : $width . 'px at most'), 'phrase' => 'page width');
     }
     $overrides = formulize_appearanceLookOverrides($settings);
     $sizeTokens = array_flip(formulize_appearanceSizeTokens());
     $sizes = count(array_intersect_key($overrides, $sizeTokens));
     if ($sizes) {
-        $size = formulize_appearanceLookSize($settings, $theme);
+        $size = formulize_appearanceLookSize($looks, $key, $theme);
         $named = formulize_appearanceSizes($theme);
-        $changes[] = isset($named[$size]) ? $named[$size]['name'] . ' sizes' : $count($sizes, 'size', 'sizes');
+        $detail = isset($named[$size]) ? $named[$size]['name'] : 'Custom · ' . $count($sizes, 'size', 'sizes');
+        $items[] = array('kind' => 'sizes', 'label' => 'Size', 'detail' => $detail, 'phrase' => isset($named[$size]) ? $named[$size]['name'] . ' sizes' : $count($sizes, 'size', 'sizes'));
     }
-    $parts = count(array_diff_key($overrides, $sizeTokens));
+    $parts = array_diff_key($overrides, $sizeTokens);
     if ($parts) {
-        $changes[] = $count($parts, 'part', 'parts');
+        // the parts they belong to, by name, in the order the editor has them
+        $map = formulize_appearanceTokenMap();
+        $desktop = array();
+        foreach ($map['tokens'] as $token => $entry) {
+            if (isset($entry['phone'])) {
+                $desktop[$entry['phone']] = $token;
+            }
+        }
+        $names = array();
+        foreach ($map['components'] as $component) {
+            foreach (array_keys($parts) as $token) {
+                $token = isset($desktop[$token]) ? $desktop[$token] : $token;
+                if (in_array($token, $component['tokens'], true)) {
+                    $names[$component['name']] = true;
+                    break;
+                }
+            }
+        }
+        $names = array_keys($names);
+        $detail = implode(', ', array_slice($names, 0, 3)) . (count($names) > 3 ? ' and ' . (count($names) - 3) . ' more' : '');
+        $items[] = array('kind' => 'parts', 'label' => count($names) == 1 ? 'Part' : 'Parts', 'detail' => $detail, 'count' => count($names), 'phrase' => $count(count($parts), 'part change', 'part changes'));
     }
-    return $changes;
+    return $items;
+}
+
+/**
+ * What a look changes itself, in a few words for a sentence: "logo, 2 colours,
+ * Compact sizes".
+ *
+ * @param array $looks a theme's looks
+ * @param string $key the look's key
+ * @param string $theme theme folder name
+ * @return array of short phrases
+ */
+function formulize_appearanceLookChanges($looks, $key, $theme) {
+    return array_map(function ($item) { return $item['phrase']; }, formulize_appearanceLookSummary($looks, $key, $theme));
 }
 
 // ---------------------------------------------------------------------------
