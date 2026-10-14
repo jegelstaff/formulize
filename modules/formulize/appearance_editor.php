@@ -235,7 +235,7 @@ foreach (array_merge(array('--fz-font-sans', '--fz-font-heading'), array_map(fun
 }
 // the tokens that follow a part's setting (the main button's hover colour), as
 // declared, for when the setting is back at its Default: the saved stylesheet in
-// the preview may have them following the look applied to the site
+// the preview may have them following the site look
 $declaredTokens = formulize_appearanceDeclaredTokens($theme);
 foreach (formulize_appearanceDerivedTokens($map) as $token) {
 	$restore[$token] = isset($declaredTokens[$token]) ? $declaredTokens[$token] : null;

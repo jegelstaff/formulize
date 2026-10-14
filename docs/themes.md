@@ -171,12 +171,13 @@ the page your screen is embedded in supplies it.
 
 ## 6. Work with the Appearance editor (optional)
 
-The [Appearance editor](/documentation/appearance_editor/) edits a theme's appearance on a preview of
-sample screens the theme provides (below): a theme without them can't be edited there. In simple
-mode it changes the logo, colours, fonts and page width, which every theme that calls
+A theme's [looks](/documentation/appearance_editor/) are edited in the Appearance editor, on a
+preview of sample screens the theme provides (below): a theme without them has no looks to edit. The
+simple editor changes a look's logo, colours, fonts and page width, which every theme that calls
 `formulize_renderAppearanceHead()` follows.
 
-Its advanced mode, and the Compact and Comfortable looks, change Formulize UI's component tokens: sizes (`--fz-field-height`, `--fz-row-height`, `--fz-title-text`),
+The advanced editor, and the sizes (Standard, Compact and Comfortable), change Formulize UI's
+component tokens: sizes (`--fz-field-height`, `--fz-row-height`, `--fz-title-text`),
 fonts (`--fz-label-font`), colours (`--fz-button-bg`, `--fz-header-bg`) and corners
 (`--fz-field-radius`), and the rest. They only do anything in a theme whose own CSS styles things with
 those tokens, so a theme says when it does, and only then does the editor offer them. Each
