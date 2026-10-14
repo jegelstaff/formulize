@@ -656,8 +656,7 @@ if ($screen_id != "new") {
     $appearance['usesWidth'] = false;
     if ($appearanceTheme AND formulize_themeSupportsAppearance($appearanceTheme)) {
         $looks = formulize_getAppearanceLooks($appearanceTheme);
-        $siteAppearance = formulize_getAppearanceSettings($appearanceTheme);
-        $siteLook = ($siteAppearance['appearance_look'] !== '' AND isset($looks[$siteAppearance['appearance_look']])) ? $siteAppearance['appearance_look'] : 'default';
+        $siteLook = formulize_getAppearanceSiteLook($appearanceTheme);
         foreach ($looks as $lookKey => $look) {
 					if($lookKey != $siteLook) {
           	$appearance['looks'][$lookKey] = htmlspecialchars($look['name']);

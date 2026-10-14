@@ -214,12 +214,12 @@ return array(
                     ),
                 ),
             ),
-            // Styles and Colors opens the appearance editor, a page of its own, where a
-            // theme's look, logo, colours, fonts and the rest are changed.
-            'stylescolors' => array(
-                'name' => _AM_CFG_VIEW_APPEARANCE_STYLESCOLORS,
+            // Looks opens the Looks page, a page of its own in the site's theme, where a
+            // theme's looks are managed, and opened in the appearance editor.
+            'looks' => array(
+                'name' => _AM_CFG_VIEW_APPEARANCE_LOOKS,
                 'type' => 'link',
-                'url' => '/modules/formulize/appearance_editor.php',
+                'url' => '/modules/formulize/looks.php',
             ),
             'themeeditor' => array(
                 'name' => _AM_CFG_VIEW_APPEARANCE_THEMEEDITOR,
