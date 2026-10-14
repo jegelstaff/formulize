@@ -35,7 +35,7 @@ include_once XOOPS_ROOT_PATH . '/header.php';
 
 global $xoTheme;
 if ($xoTheme) {
-	$xoTheme->addStylesheet(formulize_uiStylesheetPath());
+	formulize_uiAddToTheme();
 }
 
 $catalog = formulize_uiCatalog();

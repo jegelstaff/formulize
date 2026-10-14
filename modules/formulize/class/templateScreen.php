@@ -166,7 +166,7 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
         if($xoTheme) {
             $cssVersion = formulize_get_file_version(self::FORMULIZE_CSS_FILE);
             $jsVersion = formulize_get_file_version(self::FORMULIZE_JS_FILE);
-            $xoTheme->addStylesheet(formulize_uiStylesheetPath());
+            formulize_uiAddToTheme();
             $xoTheme->addStylesheet(self::FORMULIZE_CSS_FILE . "?v=" . $cssVersion);
             $xoTheme->addScript(self::FORMULIZE_JS_FILE . "?v=" . $jsVersion);
         }
