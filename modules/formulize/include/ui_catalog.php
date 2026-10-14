@@ -1064,6 +1064,7 @@ HTML
                     'fz-menu__item' => 'One action: a `<button type="button">`, or an `<a>` for going somewhere.',
                     'fz-menu__item--danger' => 'A destructive action, such as delete.',
                     'fz-menu__note' => 'A line under an item\'s name that says more about it, in a `<span>` inside the item.',
+                    'fz-menu__icon' => 'An icon before an item\'s name: a `<span>` around an `<svg>`, first in the item. The name and its note line up beside it.',
                     'fz-menu__sep' => 'On an `<hr>`: a line between groups of items.',
                 ),
                 'notes' => array(
@@ -1075,8 +1076,8 @@ HTML
 <div class="fz-cluster">
   <button type="button" class="fz-btn" popovertarget="example-menu" style="anchor-name: --example-menu">Edit</button>
   <div class="fz-popover fz-menu" id="example-menu" popover style="position-anchor: --example-menu">
-    <button type="button" class="fz-menu__item">Simple editor<span class="fz-menu__note">Logo, colours, fonts, page width and size</span></button>
-    <button type="button" class="fz-menu__item">Advanced editor<span class="fz-menu__note">Every part, one at a time</span></button>
+    <button type="button" class="fz-menu__item"><span class="fz-menu__icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 2.5l3 3L6 13H3v-3z"/></svg></span>Simple editor<span class="fz-menu__note">Logo, colours, fonts, page width and size</span></button>
+    <button type="button" class="fz-menu__item"><span class="fz-menu__icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2.5l9.5 4-4 1.5-1.5 4z"/></svg></span>Advanced editor<span class="fz-menu__note">Every part, one at a time</span></button>
     <hr class="fz-menu__sep">
     <button type="button" class="fz-menu__item">Duplicate</button>
     <button type="button" class="fz-menu__item fz-menu__item--danger">Delete</button>

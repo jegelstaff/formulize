@@ -2565,6 +2565,12 @@ html:has(.formulize-admin-ui) {
   border-color: var(--fz-color-focus);
   background-color: var(--fz-field-bg); }
 
+/* the admin's links (.admin-ui a) are blue; a Formulize UI menu item that is a
+   link is the menu's colour */
+.admin-ui a.fz-menu__item,
+.ui-widget-content a.fz-menu__item {
+  color: var(--fz-menu-text); }
+
 /* the admin's lists (#xo-canvas-content ul and li) are indented and numbered;
    a Formulize UI list (fz-list-none) isn't */
 #xo-canvas-content .fz-list-none {
@@ -2581,6 +2587,15 @@ html:has(.formulize-admin-ui) {
 .admin-ui .fz-cluster > p,
 .admin-ui .fz-card > p,
 .admin-ui .fz-callout > p,
-.admin-ui .fz-popover > p,
 .admin-ui .fz-dialog__body > p {
   margin-top: 0; }
+
+/* and a popover, which spaces what is in it with a margin, as formulize-ui.css does */
+.admin-ui .fz-popover > p {
+  margin-top: 0; }
+
+.admin-ui .fz-popover > * + p {
+  margin-top: calc(var(--fz-spacing) * 2); }
+
+.admin-ui .fz-popover > .fz-popover__title + * {
+  margin-top: calc(var(--fz-spacing) * 1); }

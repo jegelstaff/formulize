@@ -103,6 +103,62 @@ function formulize_looksH($text) {
 	return htmlspecialchars((string) $text, ENT_QUOTES);
 }
 
+// The icon for each kind of change a look makes, in the Based on popover: 16px, in
+// the text's colour
+function formulize_looksIcon($kind) {
+	$paths = array(
+		'logo' => '<rect x="2" y="3" width="12" height="10" rx="1.5"/><circle cx="6" cy="6.5" r="1"/><path d="M14 11l-3.5-3.5L4 13"/>',
+		'favicon' => '<rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M2 6.5h12"/><path d="M4.5 4.75h.01M6.5 4.75h.01"/>',
+		'colours' => '<path d="M8 2.5s4 4.2 4 7a4 4 0 0 1-8 0c0-2.8 4-7 4-7z"/>',
+		'fonts' => '<path d="M3 4.5V3h10v1.5M8 3v10M6 13h4"/>',
+		'width' => '<path d="M2 8h12M4.5 5.5 2 8l2.5 2.5M11.5 5.5 14 8l-2.5 2.5"/>',
+		'sizes' => '<rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M5.5 10.5l5-5M7 5.5h3.5V9"/>',
+		'parts' => '<path d="M2.5 5h5M10.5 5h3M2.5 11h2M7.5 11h6"/><circle cx="9" cy="5" r="1.5"/><circle cx="6" cy="11" r="1.5"/>',
+		'branding' => '<path d="M8 2a6 6 0 0 0 0 12c.9 0 1.4-.6 1.4-1.3 0-.4-.2-.7-.4-1-.2-.2-.4-.5-.4-.9 0-.7.6-1.3 1.3-1.3h1.4A2.7 2.7 0 0 0 14 6.8C14 4.1 11.3 2 8 2z"/><circle cx="5" cy="7" r=".6"/><circle cx="7.5" cy="4.8" r=".6"/><circle cx="10.5" cy="5.5" r=".6"/>',
+		'layout' => '<rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M5.5 10.5l5-5M7 5.5h3.5V9"/>',
+		// where a look is used
+		'site' => '<circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c1.8 1.7 2.6 3.7 2.6 6S9.8 12.3 8 14M8 2C6.2 3.7 5.4 5.7 5.4 8s.8 4.3 2.6 6"/>',
+		'screen' => '<rect x="2" y="2.5" width="12" height="11" rx="1.5"/><path d="M2 5.5h12M4.5 8h7M4.5 10.5h4"/>',
+		// what can be done to a look
+		'simple' => '<path d="M10.5 2.5l3 3L6 13H3v-3z"/>',
+		'advanced' => '<path d="M3 2.5l9.5 4-4 1.5-1.5 4z"/>',
+		'add' => '<path d="M8 3v10M3 8h10"/>',
+		'duplicate' => '<rect x="5" y="5" width="8.5" height="8.5" rx="1.5"/><path d="M11 5V3.5A1 1 0 0 0 10 2.5H3.5a1 1 0 0 0-1 1V10a1 1 0 0 0 1 1H5"/>',
+		'rename' => '<path d="M2.5 8.6V3.5a1 1 0 0 1 1-1h5.1l5 5a1 1 0 0 1 0 1.4l-4.1 4.1a1 1 0 0 1-1.4 0z"/><circle cx="5.5" cy="5.5" r=".6"/>',
+		'rebase' => '<circle cx="4.5" cy="3.5" r="1.5"/><circle cx="4.5" cy="12.5" r="1.5"/><circle cx="11.5" cy="5.5" r="1.5"/><path d="M4.5 5v6M11.5 7c0 2.5-2 3.5-7 4"/>',
+		'delete' => '<path d="M2.5 4.5h11M6 4.5V3a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5v1.5M4 4.5l.7 8.6a1 1 0 0 0 1 .9h4.6a1 1 0 0 0 1-.9l.7-8.6"/>',
+	);
+	return '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . (isset($paths[$kind]) ? $paths[$kind] : '') . '</svg>';
+}
+
+// What a look changes, in three kinds a person thinks in, for its row: its branding
+// (logo, favicon, colours, fonts), its layout (named by what it is: a size, "Custom
+// size", "Page width", or "Layout" for both), and its parts, with how many. A short,
+// fixed set of words, so it always fits.
+function formulize_looksCategories($summary) {
+	$kinds = array();
+	foreach ($summary as $item) {
+		$kinds[$item['kind']] = $item;
+	}
+	$categories = array();
+	if (array_intersect_key($kinds, array_flip(array('logo', 'favicon', 'colours', 'fonts')))) {
+		$categories[] = array('icon' => 'branding', 'text' => 'Branding');
+	}
+	if (isset($kinds['sizes']) OR isset($kinds['width'])) {
+		$sizeText = isset($kinds['sizes']) ? (strpos($kinds['sizes']['detail'], 'Custom') === 0 ? 'Custom size' : $kinds['sizes']['detail']) : '';
+		$categories[] = array('icon' => 'layout', 'text' => (isset($kinds['sizes']) AND isset($kinds['width'])) ? 'Layout' : (isset($kinds['width']) ? 'Page width' : $sizeText));
+	}
+	if (isset($kinds['parts'])) {
+		$categories[] = array('icon' => 'parts', 'text' => $kinds['parts']['count'] . ($kinds['parts']['count'] == 1 ? ' part' : ' parts'));
+	}
+	return $categories;
+}
+
+// An icon for a menu item (Formulize UI's fz-menu__icon)
+function formulize_looksMenuIcon($kind) {
+	return '<span class="fz-menu__icon" aria-hidden="true">' . formulize_looksIcon($kind) . '</span>';
+}
+
 // A screen's Appearance tab, in the admin pages
 function formulize_looksScreenUrl($screen) {
 	return XOOPS_URL . '/modules/formulize/admin/ui.php?page=screen&fid=' . $screen['fid'] . '&sid=' . $screen['sid'] . '&tab=appearance';
@@ -212,12 +268,31 @@ ob_start();
 .formulize-looks__more > span:first-child { text-decoration: underline dotted var(--fz-color-text-subtle); text-underline-offset: 3px; }
 .formulize-looks__more small { color: var(--fz-color-text-muted); font-size: var(--fz-text-xs); }
 .formulize-looks__more--quiet > span:first-child { color: var(--fz-color-text-muted); }
-.formulize-looks__col-base { width: 11rem; }
+.formulize-looks__col-base { width: 10rem; }
+.formulize-looks__col-changes { width: 19rem; min-width: 19rem; }
+/* what a look changes, in a few words, each with a small icon */
+.formulize-looks__changes-btn { gap: calc(var(--fz-spacing) * 2); margin-inline-start: calc(var(--fz-spacing) * -3); font-weight: var(--fz-font-weight-normal); white-space: nowrap; }
+.formulize-looks__category { display: inline-flex; align-items: center; gap: calc(var(--fz-spacing) * 1.25); }
+.formulize-looks__category svg { flex: none; width: calc(var(--fz-spacing) * 3.5); height: calc(var(--fz-spacing) * 3.5); color: var(--fz-color-text-muted); }
+.formulize-looks__dot { color: var(--fz-color-text-subtle); }
 .formulize-looks__col-used { width: 13rem; }
 .formulize-looks__col-actions { width: 8.5rem; }
 .formulize-looks__actions { display: inline-flex; justify-content: flex-end; gap: calc(var(--fz-spacing) * 1.5); width: 100%; }
-.formulize-looks__chain { display: flex; flex-wrap: wrap; gap: calc(var(--fz-spacing) * 1.5); }
-.formulize-looks__chain span[aria-hidden] { color: var(--fz-color-text-subtle); }
+/* the Based on popover: the looks it is based on, and what it changes, a row for each kind */
+.formulize-looks__about { min-width: 17rem; }
+.formulize-looks__chain { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--fz-spacing) * 1.5); font-weight: var(--fz-font-weight-medium); }
+.formulize-looks__chain span[aria-hidden] { color: var(--fz-color-text-subtle); font-weight: var(--fz-font-weight-normal); }
+.formulize-looks__changes { grid-template-columns: max-content minmax(0, 1fr); align-items: center; gap: calc(var(--fz-spacing) * 2.5) calc(var(--fz-spacing) * 5); font-size: var(--fz-text-xs-plus); }
+.formulize-looks__changes dt { display: flex; align-items: center; gap: calc(var(--fz-spacing) * 2.5); color: var(--fz-color-text); white-space: nowrap; }
+.formulize-looks__changes dd { color: var(--fz-color-text-muted); }
+.formulize-looks__icon { display: grid; place-items: center; flex: none; width: calc(var(--fz-spacing) * 6.5); height: calc(var(--fz-spacing) * 6.5); border-radius: var(--fz-radius-md); background: var(--fz-color-surface-3); color: var(--fz-color-text-muted); }
+.formulize-looks__thumb { display: block; max-width: 6rem; max-height: calc(var(--fz-spacing) * 6.5); border-radius: var(--fz-radius-sm); }
+.formulize-looks__swatches { display: flex; flex-wrap: wrap; gap: calc(var(--fz-spacing) * 1.5); }
+.formulize-looks__swatch { width: calc(var(--fz-spacing) * 4.5); height: calc(var(--fz-spacing) * 4.5); border-radius: var(--fz-radius-full); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12); }
+/* a screen's name in a popover, in the text's colour (the admin pages' links are blue) */
+.formulize-looks a.formulize-looks__link { color: var(--fz-color-text); text-decoration: none; }
+.formulize-looks a.formulize-looks__link:hover { text-decoration: underline; }
+.formulize-looks__foot { padding-top: calc(var(--fz-spacing) * 2.5); border-top: 1px solid var(--fz-color-border); color: var(--fz-color-text-subtle); font-size: var(--fz-text-xs); }
 .formulize-looks__choices { max-height: 18rem; overflow: auto; padding: calc(var(--fz-spacing) * 2); border: 1px solid var(--fz-color-border); border-radius: var(--fz-radius-md); }
 .formulize-looks__choices .fz-choice { padding-inline-start: calc(var(--d, 0) * var(--fz-spacing) * 5); }
 </style>
@@ -270,7 +345,7 @@ ob_start();
 	<?php if ($looks) { ?>
 	<div class="fz-card fz-card--flush fz-overflow-x-auto">
 		<table class="fz-table fz-tree" aria-label="<?php echo formulize_looksH($theme); ?>'s looks">
-			<thead><tr><th scope="col">Look</th><th scope="col" class="formulize-looks__col-base">Based on</th><th scope="col" class="formulize-looks__col-used">Used by</th><th scope="col" class="formulize-looks__col-actions"><span class="fz-sr-only">Actions</span></th></tr></thead>
+			<thead><tr><th scope="col">Look</th><th scope="col" class="formulize-looks__col-base">Based on</th><th scope="col" class="formulize-looks__col-changes">Changes</th><th scope="col" class="formulize-looks__col-used">Used by</th><th scope="col" class="formulize-looks__col-actions"><span class="fz-sr-only">Actions</span></th></tr></thead>
 			<tbody>
 			<?php foreach ($tree as $row) {
 				$key = $row['key'];
@@ -279,7 +354,7 @@ ob_start();
 				$id = 'looks-' . $key;
 				$chain = formulize_appearanceLookChain($looks, $key);
 				array_pop($chain); // the look itself
-				$changes = formulize_appearanceLookChanges($look['settings'], $theme);
+				$summary = formulize_appearanceLookSummary($looks, $key, $theme);
 				$from = $look['base'] !== '' ? $looks[$look['base']]['name'] : $theme . '\'s own settings';
 				$screens = isset($lookScreens[$key]) ? $lookScreens[$key] : array();
 				$through = array();
@@ -288,48 +363,69 @@ ob_start();
 						$through[] = $screen + array('via' => $looks[$descendant]['name']);
 					}
 				}
-				// the marks: a look with a base that has a logo, colours or fonts of its own
-				$marks = array();
-				if ($look['base'] !== '') {
-					if (isset($look['settings']['appearance_logo']) OR isset($look['settings']['appearance_favicon'])) { $marks[] = 'Own logo'; }
-					foreach (array_keys(formulize_appearanceColourMapDefinition()) as $colourKey) {
-						if (isset($look['settings']['appearance_' . $colourKey])) { $marks[] = 'Own colours'; break; }
-					}
-					if (isset($look['settings']['appearance_font']) OR isset($look['settings']['appearance_headingfont'])) { $marks[] = 'Own fonts'; }
-				}
 				$lines = '';
 				foreach ($row['through'] as $level) {
-					$lines .= '<span class="fz-tree__line" style="--fz-level: ' . $level . '"></span>';
+					$lines .= '<span class="fz-tree__line" aria-hidden="true" style="--fz-level: ' . $level . '"></span>';
 				}
 				if ($row['depth'] > 0) {
-					$lines .= '<span class="fz-tree__line fz-tree__line--elbow" style="--fz-level: ' . ($row['depth'] - 1) . '"></span>';
+					$lines .= '<span class="fz-tree__line fz-tree__line--elbow" aria-hidden="true" style="--fz-level: ' . ($row['depth'] - 1) . '"></span>';
 					if (!$row['last']) {
-						$lines .= '<span class="fz-tree__line" style="--fz-level: ' . ($row['depth'] - 1) . '"></span>';
+						$lines .= '<span class="fz-tree__line" aria-hidden="true" style="--fz-level: ' . ($row['depth'] - 1) . '"></span>';
 					}
 				}
 				if ($row['parent']) {
-					$lines .= '<span class="fz-tree__line fz-tree__line--stem" style="--fz-level: ' . $row['depth'] . '"></span>';
+					$lines .= '<span class="fz-tree__line fz-tree__line--stem" aria-hidden="true" style="--fz-level: ' . $row['depth'] . '"></span>';
 				}
 			?>
 				<tr<?php echo $isSite ? ' class="formulize-looks__site"' : ''; ?>>
 					<td class="fz-tree__cell" style="--fz-depth: <?php echo $row['depth']; ?>"><?php echo $lines; ?><span class="formulize-looks__name"><strong><?php echo formulize_looksH($look['name']); ?></strong><?php
 						if ($isSite) { echo '<span class="fz-badge fz-badge--accent">Site look</span>'; }
-						foreach ($marks as $mark) { echo '<span class="fz-badge fz-badge--plain">' . $mark . '</span>'; }
 					?></span></td>
+					<td><?php echo $look['base'] !== '' ? formulize_looksH($looks[$look['base']]['name']) : '<span class="fz-text-subtle">Nothing</span>'; ?></td>
 					<td>
-						<button type="button" class="fz-btn fz-btn--ghost fz-btn--sm formulize-looks__more<?php echo $look['base'] === '' ? ' formulize-looks__more--quiet' : ''; ?>" popovertarget="<?php echo $id; ?>-base" style="anchor-name: --<?php echo $id; ?>-base"><span><?php echo $look['base'] !== '' ? formulize_looksH($looks[$look['base']]['name']) : 'Nothing'; ?></span></button>
-						<div class="fz-popover" id="<?php echo $id; ?>-base" popover style="position-anchor: --<?php echo $id; ?>-base">
-							<p class="fz-popover__title">Based on</p>
-							<?php if ($chain) { ?>
-							<p class="formulize-looks__chain"><?php echo implode('<span aria-hidden="true">›</span>', array_map(function ($at) use ($looks) { return '<span>' . formulize_looksH($looks[$at]['name']) . '</span>'; }, $chain)); ?></p>
-							<?php } else { ?>
-							<p>Nothing. It starts from <?php echo formulize_looksH($theme); ?>'s own settings.</p>
+						<?php
+						// what the look changes, in three kinds, in words; the popover has the rest
+						$categories = formulize_looksCategories($summary);
+						$phrases = array_map(function ($item) { return $item['phrase']; }, $summary);
+						?>
+						<button type="button" class="fz-btn fz-btn--ghost fz-btn--sm formulize-looks__changes-btn" popovertarget="<?php echo $id; ?>-base" style="anchor-name: --<?php echo $id; ?>-base" aria-label="<?php echo formulize_looksH($phrases ? 'Changes: ' . implode(', ', $phrases) : 'No changes'); ?>">
+							<?php if (!$categories) { ?>
+							<span class="fz-text-subtle">No changes</span>
 							<?php } ?>
+							<?php foreach ($categories as $index => $category) { ?>
+							<?php if ($index) { ?><span class="formulize-looks__dot" aria-hidden="true">·</span><?php } ?>
+							<span class="formulize-looks__category"><?php echo formulize_looksIcon($category['icon']); ?><?php echo formulize_looksH($category['text']); ?></span>
+							<?php } ?>
+						</button>
+						<div class="fz-popover formulize-looks__about" id="<?php echo $id; ?>-base" popover style="position-anchor: --<?php echo $id; ?>-base">
+							<?php if ($chain) { ?>
+							<p class="fz-popover__title">Based on</p>
+							<p class="formulize-looks__chain"><?php echo implode('<span aria-hidden="true">›</span>', array_map(function ($at) use ($looks) { return '<span>' . formulize_looksH($looks[$at]['name']) . '</span>'; }, $chain)); ?></p>
 							<hr class="fz-popover__sep">
-							<p class="fz-popover__title">What <?php echo formulize_looksH($look['name']); ?> changes</p>
-							<?php if ($changes) { ?>
-							<ul class="fz-list-none fz-p-0 fz-m-0"><?php foreach ($changes as $change) { echo '<li>' . formulize_looksH($change) . '</li>'; } ?></ul>
-							<p class="fz-text-muted">Everything else comes from <?php echo formulize_looksH($from); ?>.</p>
+							<?php } ?>
+							<p class="fz-popover__title">Changes</p>
+							<?php if ($summary) { ?>
+							<dl class="fz-dl formulize-looks__changes">
+								<?php foreach ($summary as $item) { ?>
+								<div>
+									<dt><span class="formulize-looks__icon"><?php echo formulize_looksIcon($item['kind']); ?></span><?php echo formulize_looksH($item['label']); ?></dt>
+									<dd><?php
+									if (!empty($item['image'])) {
+										echo '<img class="formulize-looks__thumb" src="' . formulize_looksH($item['image']) . '" alt="' . formulize_looksH($look['name'] . '\'s ' . strtolower($item['label'])) . '">';
+									} elseif (!empty($item['swatches'])) {
+										echo '<span class="formulize-looks__swatches">';
+										foreach ($item['swatches'] as $colourLabel => $hex) {
+											echo '<span class="formulize-looks__swatch" style="background: ' . formulize_looksH($hex) . '" title="' . formulize_looksH($colourLabel . ' ' . $hex) . '"></span>';
+										}
+										echo '</span><span class="fz-sr-only">' . formulize_looksH(implode(', ', array_keys($item['swatches']))) . '</span>';
+									} else {
+										echo formulize_looksH($item['detail']);
+									}
+									?></dd>
+								</div>
+								<?php } ?>
+							</dl>
+							<p class="formulize-looks__foot">Everything else comes from <?php echo formulize_looksH($from); ?>.</p>
 							<?php } else { ?>
 							<p class="fz-text-muted">Nothing yet: it looks the same as <?php echo formulize_looksH($from); ?>.</p>
 							<?php } ?>
@@ -342,21 +438,40 @@ ob_start();
 						<button type="button" class="fz-btn fz-btn--ghost fz-btn--sm formulize-looks__more" popovertarget="<?php echo $id; ?>-used" style="anchor-name: --<?php echo $id; ?>-used"><span><?php
 							echo $isSite ? 'The site' . ($screens ? ', ' . count($screens) . (count($screens) == 1 ? ' screen' : ' screens') : '') : ($screens ? count($screens) . (count($screens) == 1 ? ' screen' : ' screens') : 'No screens');
 						?></span><?php echo $through ? '<small>+' . count($through) . ' indirectly</small>' : ''; ?></button>
-						<div class="fz-popover" id="<?php echo $id; ?>-used" popover style="position-anchor: --<?php echo $id; ?>-used">
+						<div class="fz-popover formulize-looks__about" id="<?php echo $id; ?>-used" popover style="position-anchor: --<?php echo $id; ?>-used">
 							<?php if ($isSite) { ?>
 							<p class="fz-popover__title">The site</p>
-							<p><?php echo $isSiteTheme ? 'Every page, except screens set to another look. ' . $onSiteLook . ($onSiteLook == 1 ? ' screen uses' : ' screens use') . ' the site look.' : 'When ' . formulize_looksH($theme) . ' is the site\'s theme.'; ?></p>
+							<dl class="fz-dl formulize-looks__changes">
+								<div>
+									<dt><span class="formulize-looks__icon"><?php echo formulize_looksIcon('site'); ?></span>Every page</dt>
+									<dd><?php echo $isSiteTheme ? $onSiteLook . ($onSiteLook == 1 ? ' screen follows it' : ' screens follow it') : 'when ' . formulize_looksH($theme) . ' is the site\'s theme'; ?></dd>
+								</div>
+							</dl>
 							<?php } ?>
 							<?php if ($screens) { ?>
 							<?php if ($isSite) { ?><hr class="fz-popover__sep"><?php } ?>
-							<p class="fz-popover__title">Screens set to <?php echo formulize_looksH($look['name']); ?></p>
-							<ul class="fz-list-none fz-p-0 fz-m-0"><?php foreach ($screens as $screen) { echo '<li><a href="' . formulize_looksH(formulize_looksScreenUrl($screen)) . '">' . formulize_looksH($screen['title']) . '</a></li>'; } ?></ul>
+							<p class="fz-popover__title">Screens set to it</p>
+							<dl class="fz-dl formulize-looks__changes">
+								<?php foreach ($screens as $screen) { ?>
+								<div>
+									<dt><span class="formulize-looks__icon"><?php echo formulize_looksIcon('screen'); ?></span><a class="formulize-looks__link" href="<?php echo formulize_looksH(formulize_looksScreenUrl($screen)); ?>"><?php echo formulize_looksH($screen['title']); ?></a></dt>
+									<dd></dd>
+								</div>
+								<?php } ?>
+							</dl>
 							<?php } ?>
 							<?php if ($through) { ?>
 							<?php if ($isSite OR $screens) { ?><hr class="fz-popover__sep"><?php } ?>
-							<p class="fz-popover__title">Indirectly, through looks based on it</p>
-							<ul class="fz-list-none fz-p-0 fz-m-0"><?php foreach ($through as $screen) { echo '<li><a href="' . formulize_looksH(formulize_looksScreenUrl($screen)) . '">' . formulize_looksH($screen['title']) . '</a> <span class="fz-text-muted fz-text-xs">· ' . formulize_looksH($screen['via']) . '</span></li>'; } ?></ul>
-							<p class="fz-text-muted">A change to <?php echo formulize_looksH($look['name']); ?> reaches these too, except where their look sets its own.</p>
+							<p class="fz-popover__title">Through looks based on it</p>
+							<dl class="fz-dl formulize-looks__changes">
+								<?php foreach ($through as $screen) { ?>
+								<div>
+									<dt><span class="formulize-looks__icon"><?php echo formulize_looksIcon('screen'); ?></span><a class="formulize-looks__link" href="<?php echo formulize_looksH(formulize_looksScreenUrl($screen)); ?>"><?php echo formulize_looksH($screen['title']); ?></a></dt>
+									<dd>via <?php echo formulize_looksH($screen['via']); ?></dd>
+								</div>
+								<?php } ?>
+							</dl>
+							<p class="formulize-looks__foot">A change to <?php echo formulize_looksH($look['name']); ?> reaches these too, except where their look sets its own.</p>
 							<?php } ?>
 						</div>
 						<?php } ?>
@@ -365,24 +480,24 @@ ob_start();
 						<span class="formulize-looks__actions">
 							<button type="button" class="fz-btn fz-btn--sm" popovertarget="<?php echo $id; ?>-edit" style="anchor-name: --<?php echo $id; ?>-edit">Edit</button>
 							<div class="fz-popover fz-menu" id="<?php echo $id; ?>-edit" popover style="position-anchor: --<?php echo $id; ?>-edit">
-								<a class="fz-menu__item" href="<?php echo formulize_looksH($editorUrl . '&look=' . urlencode($key) . '&mode=simple'); ?>">Simple editor<span class="fz-menu__note">Logo, colours, fonts, page width<?php echo $sizes ? ' and size' : ''; ?></span></a>
+								<a class="fz-menu__item" href="<?php echo formulize_looksH($editorUrl . '&look=' . urlencode($key) . '&mode=simple'); ?>"><?php echo formulize_looksMenuIcon('simple'); ?>Simple editor<span class="fz-menu__note">Logo, colours, fonts, page width<?php echo $sizes ? ' and size' : ''; ?></span></a>
 								<?php if ($hasAdvanced) { ?>
-								<a class="fz-menu__item" href="<?php echo formulize_looksH($editorUrl . '&look=' . urlencode($key) . '&mode=advanced'); ?>">Advanced editor<span class="fz-menu__note">Every part, one at a time</span></a>
+								<a class="fz-menu__item" href="<?php echo formulize_looksH($editorUrl . '&look=' . urlencode($key) . '&mode=advanced'); ?>"><?php echo formulize_looksMenuIcon('advanced'); ?>Advanced editor<span class="fz-menu__note">Every part, one at a time</span></a>
 								<?php } else { ?>
 								<span class="fz-menu__item" aria-disabled="true"><span class="fz-menu__note"><?php echo formulize_looksH($theme); ?> has the simple editor only.</span></span>
 								<?php } ?>
 							</div>
 							<button type="button" class="fz-btn fz-btn--sm fz-btn--icon fz-btn--ghost" popovertarget="<?php echo $id; ?>-more" style="anchor-name: --<?php echo $id; ?>-more" aria-label="More for <?php echo formulize_looksH($look['name']); ?>"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3.5" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="12.5" cy="8" r="1.3" fill="currentColor"/></svg></button>
 							<div class="fz-popover fz-menu" id="<?php echo $id; ?>-more" popover style="position-anchor: --<?php echo $id; ?>-more">
-								<button type="button" class="fz-menu__item" commandfor="looks-create" command="show-modal" data-looks-base="<?php echo formulize_looksH($key); ?>">Create look based on this</button>
-								<button type="button" class="fz-menu__item" commandfor="<?php echo $id; ?>-duplicate" command="show-modal">Duplicate</button>
-								<button type="button" class="fz-menu__item" commandfor="<?php echo $id; ?>-rename" command="show-modal">Rename</button>
-								<button type="button" class="fz-menu__item" commandfor="<?php echo $id; ?>-rebase" command="show-modal">Change base</button>
+								<button type="button" class="fz-menu__item" commandfor="looks-create" command="show-modal" data-looks-base="<?php echo formulize_looksH($key); ?>"><?php echo formulize_looksMenuIcon('add'); ?>Create look based on this</button>
+								<button type="button" class="fz-menu__item" commandfor="<?php echo $id; ?>-duplicate" command="show-modal"><?php echo formulize_looksMenuIcon('duplicate'); ?>Duplicate</button>
+								<button type="button" class="fz-menu__item" commandfor="<?php echo $id; ?>-rename" command="show-modal"><?php echo formulize_looksMenuIcon('rename'); ?>Rename</button>
+								<button type="button" class="fz-menu__item" commandfor="<?php echo $id; ?>-rebase" command="show-modal"><?php echo formulize_looksMenuIcon('rebase'); ?>Change base</button>
 								<hr class="fz-menu__sep">
 								<?php if (!$isSite) { ?>
-								<button type="button" class="fz-menu__item" commandfor="<?php echo $id; ?>-site" command="show-modal">Set as site look<?php echo $isSiteTheme ? '' : ' for ' . formulize_looksH($theme); ?></button>
+								<button type="button" class="fz-menu__item" commandfor="<?php echo $id; ?>-site" command="show-modal"><?php echo formulize_looksMenuIcon('site'); ?>Set as site look<?php echo $isSiteTheme ? '' : ' for ' . formulize_looksH($theme); ?></button>
 								<?php } ?>
-								<button type="button" class="fz-menu__item fz-menu__item--danger" commandfor="<?php echo $id; ?>-delete" command="show-modal">Delete</button>
+								<button type="button" class="fz-menu__item fz-menu__item--danger" commandfor="<?php echo $id; ?>-delete" command="show-modal"><?php echo formulize_looksMenuIcon('delete'); ?>Delete</button>
 							</div>
 						</span>
 					</td>
@@ -463,7 +578,7 @@ ob_start();
 	$id = 'looks-' . $key;
 	$name = formulize_looksH($look['name']);
 	$children = formulize_appearanceLookChildren($looks, $key);
-	$changes = array_map('strtolower', formulize_appearanceLookChanges($look['settings'], $theme));
+	$changes = formulize_appearanceLookChanges($looks, $key, $theme);
 	$screens = isset($lookScreens[$key]) ? $lookScreens[$key] : array();
 ?>
 <dialog class="fz-dialog" id="<?php echo $id; ?>-duplicate" aria-labelledby="<?php echo $id; ?>-duplicate-title">
