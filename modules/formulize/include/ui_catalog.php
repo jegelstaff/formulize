@@ -160,6 +160,16 @@ function formulize_uiExpandPattern($pattern) {
  *   'tokens'   custom property => its value, or what it is
  *   'notes'    a list of sentences
  *   'example'  HTML, rendered live in the style guide and shown as code
+ *   'code'     a list of code blocks, each a 'label' and its 'code', shown as code
+ *              only (a recipe's example is then the result they produce)
+ *   'example_height'  the least height the example needs, in rem ('16rem'),
+ *              for what opens over it: a popover, a menu, a dialog. These open
+ *              above the page, not in it, so they add nothing to its height; the
+ *              documentation site shows each example in a frame as tall as its
+ *              page, and never shorter than this. The in-app style guide shows
+ *              examples in the page itself, where they have the whole window,
+ *              so it doesn't use it. The check below insists on rem, so it
+ *              grows and shrinks with the example, as the example's sizes do.
  *
  * @return array
  */
@@ -1043,6 +1053,8 @@ HTML
   </div>
 </div>
 HTML
+                ,
+                'example_height' => '14rem',
             ),
             array(
                 'id' => 'menu',
@@ -1072,6 +1084,8 @@ HTML
   </div>
 </div>
 HTML
+                ,
+                'example_height' => '16rem',
             ),
             array(
                 'id' => 'dialog',
@@ -1115,6 +1129,8 @@ HTML
   </dialog>
 </div>
 HTML
+                ,
+                'example_height' => '26rem',
             ),
             array(
                 'id' => 'tree',
@@ -1842,6 +1858,20 @@ function formulize_uiCheckCatalog($catalog, $css) {
         }
         foreach (array_diff($documented[$kind], $defined[$kind]) as $name) {
             $problems[] = "The $noun $name is in the catalog but not in formulize-ui.css.";
+        }
+    }
+    // An example's height is rem, and only for an entry with an example to show.
+    foreach ($catalog['sections'] as $section) {
+        foreach ($section['entries'] as $entry) {
+            if (!isset($entry['example_height'])) {
+                continue;
+            }
+            if (!preg_match('/^\d+(\.\d+)?rem$/', (string) $entry['example_height'])) {
+                $problems[] = "The example height of $entry[name], " . var_export($entry['example_height'], true) . ", is not a number of rem, such as '16rem'.";
+            }
+            if (empty($entry['example'])) {
+                $problems[] = "$entry[name] has an example height, but no example.";
+            }
         }
     }
     // A class name is fz- not preceded by a dash or a word character (which would

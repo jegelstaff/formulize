@@ -7,8 +7,9 @@
 # classes and tokens are documented; the in-app style guide renders the same
 # catalog. So nothing here is written by hand: this runs the catalog with --json
 # on every build and turns what it prints into pages. Each example is shown as
-# it looks, above its code, with the application's own formulize-ui.css, which
-# is copied into the site beside the pages. Nothing it produces is committed.
+# it looks, above its code, with the application's own formulize-ui.css and
+# formulize-ui.js, which are copied into the site beside the pages. Nothing it
+# produces is committed.
 #
 # It needs PHP. It uses php if it is installed, as it is on GitHub's runners,
 # and otherwise the local development environment's web container (see
@@ -28,6 +29,7 @@ module Jekyll
   module FormulizeUi
     CATALOG = File.join("modules", "formulize", "include", "ui_catalog.php").freeze
     STYLESHEET = File.join("modules", "formulize", "templates", "css", "formulize-ui.css").freeze
+    SCRIPT = File.join("modules", "formulize", "libraries", "formulize-ui.js").freeze
     CONTAINER = "formulize-web-1".freeze
     PAGES_DIR = File.join("documentation", "formulize_ui").freeze
 
@@ -125,14 +127,17 @@ module Jekyll
     end
 
     # An example as it looks: a page of its own in a frame, with Formulize UI's
-    # stylesheet and a theme's tokens and font, and nothing else, so this site's
-    # styles and Formulize UI's can't reach each other. Every theme's tokens are
+    # stylesheet and script and a theme's tokens and font, and nothing else, so
+    # this site's styles and Formulize UI's can't reach each other. The script is
+    # what popovers and dialogs need in browsers that can't yet do it all. Every theme's tokens are
     # in the page, and all but the chosen one are switched off: the page reads
     # the reader's choice when it loads, and the layout's script calls
     # formulizeUiTheme() in each frame when the reader changes it. Both themes
     # take the margins off everything, so the page does too. The example's links
-    # go nowhere. The layout's script makes each frame as tall as what is in it.
-    def self.preview(example, name, stylesheet_url, themes)
+    # go nowhere. The layout's script makes each frame as tall as what is in it,
+    # and never shorter than the entry's example_height: room for what opens
+    # over the page (a popover, a dialog), which adds nothing to its height.
+    def self.preview(example, name, assets, themes, height = nil)
       theme_styles = themes.map do |theme|
         id = CGI.escapeHTML(theme["id"])
         <<~HTML.strip
@@ -147,10 +152,11 @@ module Jekyll
         <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="#{CGI.escapeHTML(stylesheet_url)}">
+        <link rel="stylesheet" href="#{CGI.escapeHTML(assets["stylesheet"])}">
+        <script src="#{CGI.escapeHTML(assets["script"])}"></script>
         <style>
         *:not(dialog) { margin: 0; }
-        html { background: var(--fz-color-page); }
+        html { background: var(--fz-color-page);#{height ? " min-height: #{height};" : ""} }
         body {
           padding: calc(var(--fz-spacing) * 5);
           color: var(--fz-color-text);
@@ -182,7 +188,7 @@ module Jekyll
     end
 
     # A section with its text turned into HTML, for the layout to arrange.
-    def self.section_for_page(section, stylesheet_url, themes)
+    def self.section_for_page(section, assets, themes)
       {
         "id" => section["id"],
         "title" => section["title"],
@@ -201,7 +207,7 @@ module Jekyll
               }
             end,
             "notes_html" => (entry["notes"] || []).map { |note| text(note) },
-            "preview_html" => (entry["example"] ? preview(entry["example"], entry["name"], stylesheet_url, themes) : nil),
+            "preview_html" => (entry["example"] ? preview(entry["example"], entry["name"], assets, themes, entry["example_height"]) : nil),
             # a recipe's example is its result, which the code blocks produce;
             # there, the example's own markup isn't shown
             "example_html" => (entry["example"] && !entry["code"] ? code_block(entry["example"]) : nil),
@@ -221,9 +227,10 @@ module Jekyll
     end
   end
 
-  # A stylesheet copied into the site from where it lives in the application,
-  # for the examples to be shown with: Formulize UI's, and each theme's tokens.
-  class FormulizeUiStylesheet < StaticFile
+  # A file copied into the site from where it lives in the application, for the
+  # examples to be shown with: Formulize UI's stylesheet and script, and each
+  # theme's tokens.
+  class FormulizeUiAsset < StaticFile
     def initialize(site, source_path, destination_dir, destination_name = nil)
       super(site, File.dirname(source_path), "", File.basename(source_path))
       @destination_dir = destination_dir
@@ -248,19 +255,21 @@ module Jekyll
         return
       end
 
-      stylesheet = File.join(FormulizeUi.repo_root, FormulizeUi::STYLESHEET)
-      site.static_files << FormulizeUiStylesheet.new(site, stylesheet, FormulizeUi::PAGES_DIR)
-      # the time it last changed, so a browser doesn't show the examples with an old copy
-      stylesheet_url = "#{site.baseurl}/#{FormulizeUi::PAGES_DIR}/#{File.basename(stylesheet)}?v=#{File.mtime(stylesheet).to_i}"
+      # each with the time it last changed, so a browser doesn't show the examples with an old copy
+      assets = { "stylesheet" => FormulizeUi::STYLESHEET, "script" => FormulizeUi::SCRIPT }.transform_values do |path|
+        file = File.join(FormulizeUi.repo_root, path)
+        site.static_files << FormulizeUiAsset.new(site, file, FormulizeUi::PAGES_DIR)
+        "#{site.baseurl}/#{FormulizeUi::PAGES_DIR}/#{File.basename(file)}?v=#{File.mtime(file).to_i}"
+      end
 
       themes = FormulizeUi::THEMES.map do |theme|
         tokens = File.join(FormulizeUi.repo_root, theme["tokens"])
         name = "#{theme['id']}-tokens.css"
-        site.static_files << FormulizeUiStylesheet.new(site, tokens, FormulizeUi::PAGES_DIR, name)
+        site.static_files << FormulizeUiAsset.new(site, tokens, FormulizeUi::PAGES_DIR, name)
         theme.merge("tokens_url" => "#{site.baseurl}/#{FormulizeUi::PAGES_DIR}/#{name}?v=#{File.mtime(tokens).to_i}")
       end
 
-      overview, *sections = catalog["sections"].map { |section| FormulizeUi.section_for_page(section, stylesheet_url, themes) }
+      overview, *sections = catalog["sections"].map { |section| FormulizeUi.section_for_page(section, assets, themes) }
       contents = sections.map do |section|
         { "title" => section["title"], "intro_html" => section["intro_html"], "url" => "/#{FormulizeUi::PAGES_DIR}/#{section['id']}/" }
       end
