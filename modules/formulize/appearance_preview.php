@@ -25,15 +25,24 @@
 // appearance stylesheet, so its colours, fonts and saved sizes show. No
 // scripts: the editor handles every click in the preview itself.
 //
-// Webmasters only, like the editor.
+// Formulize module admins only, like the editor.
 
 require_once "../../mainfile.php";
 
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/common.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/appearance.php';
 
+// disable the debugger/logger
+if (isset(icms::$logger)) {
+    icms::$logger->disableLogger();
+}
+while (ob_get_level()) {
+    ob_end_clean();
+}
+
 global $xoopsUser;
-if (!$xoopsUser OR !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
+$gperm_handler = xoops_gethandler('groupperm');
+if (!$xoopsUser OR !$gperm_handler->checkRight('module_admin', getFormulizeModId(), $xoopsUser->getGroups(), 1)) {
 	header('HTTP/1.1 403 Forbidden');
 	exit();
 }

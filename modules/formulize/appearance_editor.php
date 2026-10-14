@@ -28,7 +28,8 @@
 // include/appearance_tokens.json; the page's behaviour is
 // include/js/appearance_editor.js.
 //
-// Webmasters only, like the style guide. It is the Styles and Colors tab of the
+// Formulize module admins only, and nothing is saved while the system is locked,
+// like the rest of the admin pages. It is the Styles and Colors tab of the
 // Appearance admin pages (include/configsettings_registry.php), for themes it can
 // edit (formulize_getAppearanceEditorUrl).
 
@@ -37,11 +38,24 @@ require_once "../../mainfile.php";
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/common.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/appearance.php';
 
+// disable the debugger/logger
+if (isset(icms::$logger)) {
+    icms::$logger->disableLogger();
+}
+while (ob_get_level()) {
+    ob_end_clean();
+}
+
+// the same people as the rest of the Formulize admin pages: the module's admins
 global $xoopsUser, $xoopsConfig;
-if (!$xoopsUser OR !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
+$gperm_handler = xoops_gethandler('groupperm');
+if (!$xoopsUser OR !$gperm_handler->checkRight('module_admin', getFormulizeModId(), $xoopsUser->getGroups(), 1)) {
 	redirect_header(XOOPS_URL, 3, _NOPERM);
 	exit();
 }
+// with the system locked (the isSaveLocked preference), nothing is saved here either
+$saveLocked = sendSaveLockPrefToTemplate();
+$saveLockedError = 'Nothing was changed, because this system is locked. Turn off the lock in the Formulize preferences to make changes.';
 
 // the themes that can be edited here, for the theme picker
 $editorThemes = array();
@@ -89,7 +103,9 @@ if (isset($_POST['appearance_look_action']) AND $pageUrl) {
 	$action = (string) $_POST['appearance_look_action'];
 	$name = trim(preg_replace('/\s+/', ' ', (string) (isset($_POST['appearance_look_name']) ? $_POST['appearance_look_name'] : '')));
 	$go = null;
-	if (!$GLOBALS['xoopsSecurity']->check(true, false, 'formulize_appearance_editor_token')) {
+	if ($saveLocked) {
+		$errors[] = $saveLockedError;
+	} elseif (!$GLOBALS['xoopsSecurity']->check(true, false, 'formulize_appearance_editor_token')) {
 		$errors[] = 'Nothing was changed, because the page had been open too long. Please try again.';
 	} elseif ($action == 'new' OR $action == 'duplicate') {
 		if ($problem = formulize_appearanceLookNameProblem($name, $theme)) {
@@ -229,7 +245,9 @@ if (isset($_POST['appearance_editor_save']) AND $pageUrl) {
 	if (isset($_POST['appearance_editor_ajax'])) {
 		ob_start();
 	}
-	if (!$GLOBALS['xoopsSecurity']->check(true, false, 'formulize_appearance_editor_token')) {
+	if ($saveLocked) {
+		$errors[] = $saveLockedError;
+	} elseif (!$GLOBALS['xoopsSecurity']->check(true, false, 'formulize_appearance_editor_token')) {
 		$errors[] = 'Nothing was saved, because the page had been open too long. Reload the page, make the changes again and save.';
 	} else {
 		$siteWide = array_merge(array_map(function ($key) { return 'appearance_' . $key; }, array_keys(formulize_appearanceColourMap($theme))),
@@ -358,6 +376,9 @@ if (isset($_POST['appearance_editor_save']) AND $pageUrl) {
 
 $screens = $pageUrl ? formulize_getAppearancePreviewScreens($theme) : array();
 $notices = array();
+if ($saveLocked) {
+	$notices[] = 'Nothing can be saved, because this system is locked. Turn off the lock in the Formulize preferences to make changes.';
+}
 if (!formulize_appearanceDirIsWritable($theme)) {
 	$notices[] = 'Nothing can be saved for the ' . $theme . ' theme: the web server cannot write to ' . formulize_getAppearanceDir($theme) . ', and was not able to correct the permissions itself. Make that folder writable on your server.';
 }
