@@ -121,6 +121,17 @@
                         </div>
                     </div>
                     </div>
+
+                    <div class="form-item" id="new-entry-mode-wrapper"<{if $content.ele_value[3] OR $content.ele_value[6] eq 'hideaddentries' OR $content.ele_value[6] eq ''}> style="display:none;"<{/if}>>
+                    <div class="new-entry-mode-inner">
+                        <p>When there are no View buttons, how should new entries appear?</p>
+                        <div class="form-radios">
+                            <label for="elements-ele_value[new_entry_mode]-drawer"><input type="radio" id="elements-ele_value[new_entry_mode]-drawer" name="elements-ele_value[new_entry_mode]" value="drawer"<{if $content.ele_value.new_entry_mode eq 'drawer'}> checked="checked"<{/if}>/>New entries show up in the drawer</label><br>
+                            <label for="elements-ele_value[new_entry_mode]-row"><input type="radio" id="elements-ele_value[new_entry_mode]-row" name="elements-ele_value[new_entry_mode]" value="row"<{if $content.ele_value.new_entry_mode ne 'drawer' AND $content.ele_value.new_entry_mode ne 'full_screen'}> checked="checked"<{/if}>/>New entries show up as new rows</label><br>
+                            <label for="elements-ele_value[new_entry_mode]-full_screen"><input type="radio" id="elements-ele_value[new_entry_mode]-full_screen" name="elements-ele_value[new_entry_mode]" value="full_screen"<{if $content.ele_value.new_entry_mode eq 'full_screen'}> checked="checked"<{/if}>/>New entries are displayed full screen</label>
+                        </div>
+                    </div>
+                    </div>
 										<br />
 
 										<{if $content.typeIsSubformEditableRow}>
@@ -361,31 +372,51 @@
 		// No/Pen/Magnifying-glass choice is off or on, animated the same way as the
 		// showWhen dependencies on the module's grouped Settings pages (see fzShow/fzHide
 		// in include/configsettings.php): slide open then fade in, or fade out then slide up.
+		// When the View icon is off but users can add entries, the new-entry-mode choices
+		// take the place of the view-button-mode choices, since we still need to know where
+		// new entries should appear.
 		var fzEditIconStyleDur = 250;
-		function fzEditIconStyleShow() {
-			var $wrapper = $("#view-button-mode-wrapper");
-			var $inner = $wrapper.find(".view-button-mode-inner");
+		// remember which state each wrapper is headed for, so a change to one control doesn't
+		// replay the animation on a wrapper that is already showing (or hidden)
+		$("#view-button-mode-wrapper, #new-entry-mode-wrapper").each(function() {
+			$(this).data("fzShown", this.style.display != "none");
+		});
+		function fzEditIconStyleShow(wrapperId) {
+			var $wrapper = $("#"+wrapperId);
+			if($wrapper.data("fzShown")) { return; }
+			$wrapper.data("fzShown", true);
+			var $inner = $wrapper.children().first();
 			$wrapper.stop(true, true);
 			$inner.stop(true, true).css("opacity", 0);
 			$wrapper.slideDown(fzEditIconStyleDur, function() {
 				$inner.animate({opacity: 1}, fzEditIconStyleDur);
 			});
 		}
-		function fzEditIconStyleHide() {
-			var $wrapper = $("#view-button-mode-wrapper");
-			var $inner = $wrapper.find(".view-button-mode-inner");
+		function fzEditIconStyleHide(wrapperId) {
+			var $wrapper = $("#"+wrapperId);
+			if(!$wrapper.data("fzShown")) { return; }
+			$wrapper.data("fzShown", false);
+			var $inner = $wrapper.children().first();
 			$wrapper.stop(true, true);
 			$inner.stop(true, true).animate({opacity: 0}, fzEditIconStyleDur, function() {
 				$wrapper.slideUp(fzEditIconStyleDur);
 			});
 		}
-		$("input[name=elements-ele_value\\[edit_icon_style\\]]").change(function() {
-			if($(this).val() == '<{$smarty.const.FORMULIZE_EDIT_ICON_STYLE_OFF}>') {
-				fzEditIconStyleHide();
+		function fzUpdateViewAndNewEntryModes() {
+			var iconsOff = $("input[name=elements-ele_value\\[edit_icon_style\\]]:checked").val() == '<{$smarty.const.FORMULIZE_EDIT_ICON_STYLE_OFF}>';
+			var addButtonOn = $("input[name=elements-ele_value\\[6\\]]:checked").val() != 'hideaddentries';
+			if(iconsOff) {
+				fzEditIconStyleHide("view-button-mode-wrapper");
 			} else {
-				fzEditIconStyleShow();
+				fzEditIconStyleShow("view-button-mode-wrapper");
 			}
-		});
+			if(iconsOff && addButtonOn) {
+				fzEditIconStyleShow("new-entry-mode-wrapper");
+			} else {
+				fzEditIconStyleHide("new-entry-mode-wrapper");
+			}
+		}
+		$("input[name=elements-ele_value\\[edit_icon_style\\]], input[name=elements-ele_value\\[6\\]]").change(fzUpdateViewAndNewEntryModes);
 
     removeNonDisplayedElementsFromDisabledList()
 

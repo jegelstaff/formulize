@@ -53,7 +53,8 @@ class formulizeSubformEditableRowElement extends formulizeSubformListingsElement
 		$examples = $update ? "
 **Examples:**
 - Add element 74 to the end of each row, and make element 66 read-only: { elementsInRow: [52, 66, 71, 74], disabledElementsInRow: [66] }
-- Stop showing a Delete button, and add clickable icons that open each entry in the drawer: { showDeleteButton: 0, entryViewingMode: 'drawer' }" : "
+- Stop showing a Delete button, and add clickable icons that open each entry in the drawer: { showDeleteButton: 0, entryViewingMode: 'drawer' }
+- Keep editing entries in the rows only, without clickable icons, but open new entries in the drawer so all their elements can be filled in: { entryViewingMode: 'drawer_for_new_entries_only' }" : "
 **Examples:**
 - An 'Editable Row' Subform Interface that shows elements 52, 66 and 71 from connected entries in form 7. Sort the entries by the value of element 52. Do not show a Delete button. Open entries in the drawer for viewing/editing: { sourceForm: 7, elementsInRow: [52, 66, 71], sortingElement: 52, showDeleteButton: 0, entryViewingMode: 'drawer' }
 - An 'Editable Row' Subform Interface that shows elements 12 to 17 from connected entries in form 3. Open entries in the full screen for viewing/editing. Disable elements 12 and 13 in the row: { sourceForm: 3, elementsInRow: [12, 13, 14, 15, 16, 17], disabledElementsInRow: [12, 13], entryViewingMode: 'full_screen' }";
@@ -64,7 +65,7 @@ class formulizeSubformEditableRowElement extends formulizeSubformListingsElement
 - all the common properties for Subform Interfaces, plus:
 - elementsInRow ($elementsInRowRequirement. An array of element ids, indicating which elements from the source form should be shown in each row.)
 - disabledElementsInRow (Optional. An array of element ids, indicating which elements in the row should be disabled (not editable). Default is an empty array, meaning all elements in the row are editable.)
-- entryViewingMode (Optional. A string, either 'off', 'full_screen' or 'drawer'. Default is 'off', which means there are no clickable icons for opening up each source form entry for viewing/editing. If 'full_screen' then there are clickable icons, and they will cause the page to reload with the correct Form Screen for showing the source form entry. If 'drawer' then there are clickable icons, and they will open the entry in a drawer that slides out from the right, over the page. For small forms, 'drawer' is usually best. For large forms, 'full_screen' is usually best. If a user should not be able to view/edit the source form entries, or does not need to, then set this to 'off'.$examples";
+- entryViewingMode (Optional. A string, either 'off', 'full_screen', 'drawer',  'full_screen_for_new_entries_only', or 'drawer_for_new_entries_only'. Default is 'off', which means there are no clickable icons for opening up each source form entry for viewing/editing, and new entries show up as rows. If 'full_screen' then there are clickable icons, and they will cause the page to reload with the correct Form Screen for showing the source form entry. If 'drawer' then there are clickable icons, and they will open the entry in a drawer that slides out from the right, over the page. For small forms, 'drawer' is usually best. For large forms, 'full_screen' is usually best. If a user should not be able to view/edit the source form entries, or does not need to, then set this to 'off'. The 'full_screen_for_new_entries_only' and 'drawer_for_new_entries_only' are intended for situations where there should be no clickable icons, but new entries should open up in the full screen or the drawer for users to fill in.)$examples";
 		return $descriptionAndExamples;
 	}
 

@@ -1544,7 +1544,8 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 								if($plainScreenObject->getVar('type') == 'multiPage') {
 										$subformElementEleValue = $candidate->getVar('ele_value');
 										$subformId = $subformElementEleValue[0];
-										if($subformElementEleValue[3] == 1 AND isset($formulize_newSubformEntries[$subformId])) {
+										$newEntriesFullScreen = ($subformElementEleValue[3] == 1 OR (!$subformElementEleValue[3] AND isset($subformElementEleValue['new_entry_mode']) AND $subformElementEleValue['new_entry_mode'] == 'full_screen'));
+										if($newEntriesFullScreen AND isset($formulize_newSubformEntries[$subformId])) {
 												$newSubEntry = $formulize_newSubformEntries[$subformId][0]; // go to the first entry created in the subform
 												$newSubEntryScreen_handler = xoops_getmodulehandler($plainScreenObject->getVar('type').'Screen', 'formulize');
 												$subScreenObject = $newSubEntryScreen_handler->get($subformDisplayScreen);

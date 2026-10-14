@@ -60,7 +60,8 @@ class formulizeSubformListingsElement extends formulizeElement {
 		$examples = $update ? "
 **Examples:**
 - Change which elements from the source form are shown, to elements 101, 102 and 105, and sort the entries by the value of element 105: { elementsInRow: [101, 102, 105], sortingElement: 105 }
-- Open entries in the drawer for viewing/editing, instead of in the full screen: { entryViewingMode: 'drawer' }" : "
+- Open entries in the drawer for viewing/editing, instead of in the full screen: { entryViewingMode: 'drawer' }
+- Remove the clickable icons for viewing/editing entries, but still open new entries in the drawer so users can fill them in: { entryViewingMode: 'drawer_for_new_entries_only' }" : "
 **Example:**
 - A 'Listings' Subform Interface that shows the values of elements 101, 102, 103, and 104, from connected entries in form 97. Sort the entries by the value of element 101. Open entries in the drawer for viewing/editing: { sourceForm: 97, elementsInRow: [101, 102, 103, 104], sortingElement: 101, entryViewingMode: 'drawer' }";
 		$descriptionAndExamples = "
@@ -69,7 +70,7 @@ class formulizeSubformListingsElement extends formulizeElement {
 **Properties:**
 - all the common properties for Subform Interfaces, plus:
 - elementsInRow ($elementsInRowRequirement. An array of element ids, indicating which elements from the source form should be shown in the list view. The values of these elements will be shown in each row. The values will not be editable, they will be shown as plain text.)
-- entryViewingMode (Optional. A string, either 'off', 'full_screen' or 'drawer'. If 'off', then there are no clickable icons for opening up each connected entry for viewing/editing. If 'full_screen' then there are clickable icons, and they will cause the page to reload with the correct Form Screen for showing the connected entry. If 'drawer' then there are clickable icons, and they will open the entry in a drawer that slides out from the right, over the page. Default is 'full_screen'. For small forms, 'drawer' is usually best. For large forms, 'full_screen' is usually best. If a user should not be able to view/edit the embedded entries, or does not need to, then set this to 'off'.$examples";
+- entryViewingMode (Optional. A string, either 'full_screen', 'drawer', 'off', 'full_screen_for_new_entries_only' or 'drawer_for_new_entries_only'. Default is 'full_screen', which means there are clickable icons, and they will cause the page to reload with the correct Form Screen for showing the connected entry. New entries open the same way. If 'drawer' then there are clickable icons, and they will open the entry in a drawer that slides out from the right, over the page. New entries open the same way. If 'off', then there are no clickable icons for opening up each connected entry for viewing/editing, and new entries show up as rows. For small forms, 'drawer' is usually best. For large forms, 'full_screen' is usually best. If a user should not be able to view/edit the connected entries, or does not need to, then set this to 'off'. The 'full_screen_for_new_entries_only' and 'drawer_for_new_entries_only' values are intended for situations where there should be no clickable icons, but new entries should open up in the full screen or the drawer for users to fill in. Since the rows in this Subform Interface are not editable, use one of these instead of 'off' if users need to add new entries.)$examples";
 		return $descriptionAndExamples;
 	}
 
@@ -172,18 +173,28 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 			$ele_value['disabledelements'] = implode(',', array_map('intval', $properties['disabledElementsInRow']));
 		}
 		if(isset($properties['entryViewingMode'])) {
+			// with icons, 'full_screen' and 'drawer' keep the type's way of showing new entries: Listings open them the same way, Editable Rows add them as rows
 			switch((string) $properties['entryViewingMode']) { // as a string, so that a loose comparison cannot match true to 'off'
-				case 'off':
-					$ele_value[3] = 0;
-					break;
 				case 'full_screen':
 					$ele_value[3] = $elementTypeName == 'subformeditablerow' ? 4 : 1;
 					break;
 				case 'drawer':
 					$ele_value[3] = $elementTypeName == 'subformeditablerow' ? 3 : 2;
 					break;
+				case 'off':
+					$ele_value[3] = 0;
+					$ele_value['new_entry_mode'] = 'row';
+					break;
+				case 'drawer_for_new_entries_only':
+					$ele_value[3] = 0;
+					$ele_value['new_entry_mode'] = 'drawer';
+					break;
+				case 'full_screen_for_new_entries_only':
+					$ele_value[3] = 0;
+					$ele_value['new_entry_mode'] = 'full_screen';
+					break;
 				default:
-					throw new Exception("entryViewingMode must be 'off', 'full_screen' or 'drawer'. '".strip_tags(htmlspecialchars((string) $properties['entryViewingMode']))."' is not one of those.");
+					throw new Exception("entryViewingMode must be 'full_screen', 'drawer', 'off', 'full_screen_for_new_entries_only' or 'drawer_for_new_entries_only'. '".strip_tags(htmlspecialchars((string) $properties['entryViewingMode']))."' is not one of those.");
 			}
 		}
 		if(isset($properties['fullFormMode'])) {
@@ -435,6 +446,7 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 			$ele_value[1] = ''; // elements to show in the subform. A comma separated list of element ids
 			$ele_value[2] = 0; // show no entries by default, otherwise it's a number of blanks to show
 			$ele_value[3] = 1; // 0 - do not show the View Entry link at all, editing only by inline editing of elements, if it is an editable row subform, 1 - edit entries, and open new entries, in the full form, 2- edit entries, and open new entries, in a modal, 3 - edit entries by modal (new entries show up as rows), 4 - edit entries by full screen (new entries show up as rows)
+			$ele_value['new_entry_mode'] = 'row'; // only when ele_value[3] is 0 (no View buttons): where new entries appear. 'drawer', 'row' or 'full_screen'
 			$ele_value[4] = 0; // use column headings. 1 means use captions
 			$ele_value[5] = 0; // active user will be owner (1 means mainform entry owner will be owner)
 			$ele_value[6] = 'subform'; // showing add entries UI requires permission in subform. 'parent' means requires permission in the main form. 'hideaddentries' means don't show Add entry UI.
@@ -625,6 +637,11 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 				$ele_value[3] = FORMULIZE_EDIT_ICON_STYLE_OFF;
 			} elseif(!$_POST['elements-ele_value'][3]) {
 				$ele_value[3] = 1; // safety net: icons are on, but no view-button-mode radio was submitted
+			}
+			// where new entries appear when there are no View buttons (ele_value[3] is 0). Kept even while
+			// View buttons are on, so the choice survives turning them off and on again.
+			if(!isset($ele_value['new_entry_mode']) OR !in_array($ele_value['new_entry_mode'], array('drawer', 'row', 'full_screen'), true)) {
+				$ele_value['new_entry_mode'] = 'row';
 			}
 			// handle the "start" value, formerlly the blanks value (ele_value[2])
 			// $_POST['subform_start'] will be 'empty', 'blanks', or 'prepop'
@@ -1023,6 +1040,10 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
     // wire as target_sub_open_modal, which existing custom code may post.
     $viewType = ($showViewButtons == 2 OR $showViewButtons == 3) ? 'Modal' : '';
     $addViewType = ($showViewButtons == 2) ? 'Modal' : '';
+    // without View buttons, the element's new_entry_mode says whether new entries open in the drawer
+    if(!$showViewButtons AND $subform_element_object AND isset($subform_element_object->ele_value['new_entry_mode']) AND $subform_element_object->ele_value['new_entry_mode'] == 'drawer') {
+        $addViewType = 'Modal';
+    }
 
     $col_two = "
 				<div id='subform_button_controls_$subform_id$subformElementId$subformInstance' class='subform_button_controls'>";
