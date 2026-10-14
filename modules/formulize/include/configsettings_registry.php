@@ -214,12 +214,12 @@ return array(
                     ),
                 ),
             ),
-            // Looks opens the Looks page, a page of its own in the site's theme, where a
-            // theme's looks are managed, and opened in the appearance editor.
+            // Looks, where a theme's looks are managed, and opened in the appearance
+            // editor (admin/looks.php).
             'looks' => array(
                 'name' => _AM_CFG_VIEW_APPEARANCE_LOOKS,
-                'type' => 'link',
-                'url' => '/modules/formulize/looks.php',
+                'type' => 'page',
+                'page' => 'looks',
             ),
             'themeeditor' => array(
                 'name' => _AM_CFG_VIEW_APPEARANCE_THEMEEDITOR,

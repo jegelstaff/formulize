@@ -26,7 +26,7 @@
 ###############################################################################
 
 // Appearance: the looks a theme's pages are shown with (colours, fonts, sizes, page
-// width, logo and favicon), managed on the Looks page (looks.php: Admin >
+// width, logo and favicon), managed on the Looks tab (admin/looks.php: Admin >
 // Appearance > Looks) and changed in the appearance editor (appearance_editor.php),
 // and rendered by themes as CSS custom property overrides on :root.
 //
@@ -381,7 +381,7 @@ function formulize_appearanceHeadingFontMap($theme = null) {
 // in the theme's appearance/looks folder: a block with its name, its base and
 // what it changes, which is the record of it, then the CSS of the look as pages
 // are shown with it. The theme's appearance.css records which look the site uses,
-// and is that look's CSS. Looks are managed on the Looks page (looks.php).
+// and is that look's CSS. Looks are managed on the Looks tab (admin/looks.php).
 // ---------------------------------------------------------------------------
 
 /**

@@ -1517,18 +1517,19 @@ div.form-listing-box .no-bullets {
 th a {
   display: block; }
 
-.ui-tabs-panel .content table {
+/* not on a Formulize UI table (fz-table), which has its own look: see the end of this file */
+.ui-tabs-panel .content table:not([class*="fz-"]) {
   width: 80%;
   border: 1px solid #0085b6;
   border-collapse: collapse; }
 
-.ui-tabs-panel .content table th {
+.ui-tabs-panel .content table:not([class*="fz-"]) th {
   font-weight: normal;
   background-color: #0085b6 !important;
   color: white !important;
   background: none; }
 
-.ui-tabs-panel .content table th, .ui-tabs-panel .content table td {
+.ui-tabs-panel .content table:not([class*="fz-"]) th, .ui-tabs-panel .content table:not([class*="fz-"]) td {
   padding: 0.2em 0.3em;
   text-align: left; }
 
@@ -2521,3 +2522,47 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 .formulize-admin-codeblock-copy:hover {
 	background: #eef3f6;
 }
+
+/* Formulize UI in the admin pages (formulize-ui.css, which a tab built with it
+   loads, such as Appearance > Looks). The rules above, and the admin theme's
+   own, style every table heading, field and paragraph, some of them
+   !important, and outweigh Formulize UI's single classes. These give its
+   components their own look back, from its tokens. */
+.admin-ui .fz-table thead {
+  border: 0; }
+
+.admin-ui .fz-table th {
+  border: 0;
+  border-bottom: 1px solid var(--fz-header-border); }
+
+.admin-ui .fz-table th {
+  background: var(--fz-header-bg) !important;
+  color: var(--fz-header-text) !important; }
+
+.admin-ui .fz-input,
+.admin-ui .fz-select,
+.admin-ui .fz-textarea {
+  padding-inline: var(--fz-field-padding-x);
+  border: 1px solid var(--fz-field-border);
+  background: var(--fz-field-bg);
+  font-family: var(--fz-field-font);
+  font-size: var(--fz-field-text); }
+
+.admin-ui .fz-select {
+  padding-right: 30px;
+  background: var(--fz-field-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235b6068' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 8px center; }
+
+.admin-ui .fz-input:focus,
+.admin-ui .fz-select:focus,
+.admin-ui .fz-textarea:focus {
+  border-color: var(--fz-color-focus);
+  background-color: var(--fz-field-bg); }
+
+/* the components that space what is in them with a gap */
+.admin-ui .fz-stack > p,
+.admin-ui .fz-cluster > p,
+.admin-ui .fz-card > p,
+.admin-ui .fz-callout > p,
+.admin-ui .fz-popover > p,
+.admin-ui .fz-dialog__body > p {
+  margin-top: 0; }
