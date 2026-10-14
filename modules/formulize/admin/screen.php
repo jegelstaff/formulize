@@ -657,10 +657,9 @@ if ($screen_id != "new") {
     if ($appearanceTheme AND formulize_themeSupportsAppearance($appearanceTheme)) {
         $looks = formulize_getAppearanceLooks($appearanceTheme);
         $siteLook = formulize_getAppearanceSiteLook($appearanceTheme);
-        foreach ($looks as $lookKey => $look) {
-					if($lookKey != $siteLook) {
-          	$appearance['looks'][$lookKey] = htmlspecialchars($look['name']);
-					}
+        // every look, as the Looks tab has them: each under the look it is based on, indented
+        foreach (formulize_appearanceLookTree($looks) as $row) {
+            $appearance['looks'][$row['key']] = str_repeat('&emsp;', $row['depth']) . htmlspecialchars($looks[$row['key']]['name']);
         }
         $appearance['siteLookLabel'] = sprintf(_AM_SCREEN_APPEARANCE_LOOK_SITE, htmlspecialchars(isset($looks[$siteLook]) ? $looks[$siteLook]['name'] : ''));
         $appearance['siteLook'] = $siteLook;

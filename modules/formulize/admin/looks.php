@@ -203,6 +203,8 @@ ob_start();
 .formulize-looks__context .fz-select { width: auto; min-width: 11rem; text-align: start; }
 .formulize-looks__site td { background: var(--fz-color-accent-soft); }
 .formulize-looks__site:hover td { background: var(--fz-color-accent-soft-2); }
+/* the Site look badge would be the same tint as its row: on the row, it's a white pill */
+.formulize-looks__site .fz-badge--accent { --fz-tone-soft: var(--fz-color-surface); }
 .formulize-looks__name { display: inline-flex; align-items: center; gap: calc(var(--fz-spacing) * 2); vertical-align: middle; }
 .formulize-looks__name strong { font-weight: var(--fz-font-weight-semibold); }
 /* a value that opens a popover with more about it: a ghost button, its text lined up with the column's */
@@ -331,8 +333,6 @@ ob_start();
 							<?php } else { ?>
 							<p class="fz-text-muted">Nothing yet: it looks the same as <?php echo formulize_looksH($from); ?>.</p>
 							<?php } ?>
-							<hr class="fz-popover__sep">
-							<button type="button" class="fz-btn fz-btn--sm" commandfor="<?php echo $id; ?>-rebase" command="show-modal">Change base</button>
 						</div>
 					</td>
 					<td>
