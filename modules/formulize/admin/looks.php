@@ -220,7 +220,7 @@ ob_start();
 .formulize-looks__choices .fz-choice { padding-inline-start: calc(var(--d, 0) * var(--fz-spacing) * 5); }
 </style>
 
-<div class="formulize-looks fz-stack fz-gap-5">
+<div class="formulize-looks formulize-admin-ui fz-stack fz-gap-5">
 
 	<div class="fz-stack fz-gap-3">
 		<div class="fz-toolbar">
@@ -238,8 +238,9 @@ ob_start();
 				</form>
 				<?php if ($looksCount > 1) { ?>
 				<div class="fz-cluster fz-gap-2">
-					<span class="formulize-looks__context-label" id="looks-site-label"><?php echo $isSiteTheme ? 'Site look' : 'Site look when ' . formulize_looksH($theme) . ' is active'; ?></span>
-					<button type="button" class="fz-select" aria-labelledby="looks-site-label looks-site-button" id="looks-site-button" commandfor="looks-site" command="show-modal"><?php echo formulize_looksH($looks[$siteLook]['name']); ?></button>
+					<span class="formulize-looks__context-label"><?php echo $isSiteTheme ? 'Site look:' : 'Site look when ' . formulize_looksH($theme) . ' is active:'; ?></span>
+					<strong class="fz-font-semibold"><?php echo formulize_looksH($looks[$siteLook]['name']); ?></strong>
+					<button type="button" class="fz-btn fz-btn--sm" id="looks-site-button" commandfor="looks-site" command="show-modal">Change site look</button>
 				</div>
 				<?php } ?>
 			</div>
