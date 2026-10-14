@@ -661,7 +661,7 @@ function formulizeMultipageSaveAndLeaveText($saveAndContinueButtonText, $origina
 	$prevButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['prevButtonText'])) ? $saveAndContinueButtonText['prevButtonText'] : '';
 	// A genuine subform render carries the parent it has to go back to, as an array of
 	// originalFid/originalEntry. The elements-only endpoint also sets this flag to a bare
-	// true, but only to switch on the conditional-element Javascript, so testing for the
+	// true, but only to keep displayForm out of its full page subform navigation, so testing for the
 	// array is what distinguishes actually being in a sub entry from that reuse.
 	if(is_array($formulize_displayingSubform)) {
 		return $prevButtonText ? trans($prevButtonText) : trans(_formulize_SAVE_AND_GOBACK);

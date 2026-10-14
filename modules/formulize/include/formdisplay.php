@@ -1734,9 +1734,14 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 				}
 			}
 		}
-		// if there are elements we need to pay attention to, draw the necessary javascript code
-		// unless we're doing an embedded 'elements only form' -- unless we're doing that for displaying a subform entry specifically as its own thing (as part of a modal for example (and only example right now))
-		if(count((array) $formulize_governingElements)> 0 AND (!$formElementsOnly OR (isset($formulize_displayingSubform) AND $formulize_displayingSubform == true))) {
+		// if there are elements we need to pay attention to, draw the necessary javascript code, once, for the outermost form on the page
+		// Sub entries drawn inline by a full form subform element (accordions) are nested renders that reach this point BEFORE the form
+		// they're inside of, and their output is buffered into that form's markup, so if they drew the code, conditional.js would land
+		// after the outer form's init code that needs it. Their governing elements accumulate in the globals above, so the outer form draws them too.
+		// Elements only forms are normally embedded in a page that handles this, except in the drawer, where the elements only form is the outermost form.
+		$renderingInlineSubformEntry = isset($GLOBALS['formulize_inlineSubformFrid']);
+		$renderingInDrawer = (isset($GLOBALS['formulize_elementsOnly_wrapperTemplateType']) AND $GLOBALS['formulize_elementsOnly_wrapperTemplateType'] === 'drawer');
+		if(count((array) $formulize_governingElements)> 0 AND !$renderingInlineSubformEntry AND (!$formElementsOnly OR $renderingInDrawer)) {
 			drawJavascriptForConditionalElements(array_keys($GLOBALS['formulize_renderedElementHasConditions']), $formulize_governingElements, $formulize_oneToOneElements, $formulize_oneToOneMetaData, $formulize_elementScreenIds, $formulize_elementIsSimpleDisplayCondition);
 		}
 
