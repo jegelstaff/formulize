@@ -1451,7 +1451,7 @@
 /* ---- Menu ---------------------------------------------------------------------
    A list of actions, in a popover: fz-menu goes beside fz-popover. Each action
    is an fz-menu__item, a <button> or an <a>, with a note under it if it needs
-   one. Tab moves between the items. */
+   one, and an icon before it if it has one. Tab moves between the items. */
 .fz-menu {
   min-width: 12rem;
   padding: calc(var(--fz-spacing) * 1);
@@ -1490,6 +1490,25 @@
   color: var(--fz-color-text-subtle);
   font-size: var(--fz-text-xs);
 }
+/* An icon before an item's name, first in the item: beside the name and its
+   note, which line up with the other items' whether they have one or not. */
+.fz-menu__item:has(> .fz-menu__icon) {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: calc(var(--fz-spacing) * 2.5);
+}
+.fz-menu__icon {
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: calc(var(--fz-spacing) * 4);
+  height: calc(var(--fz-spacing) * 4);
+  color: var(--fz-color-text-muted);
+}
+.fz-menu__icon > :where(svg) { width: 100%; height: 100%; }
+/* a destructive item's icon is its colour too */
+.fz-menu__item--danger > :where(.fz-menu__icon) { color: inherit; }
 .fz-menu__sep {
   height: 0;
   margin: calc(var(--fz-spacing) * 1) 2px;

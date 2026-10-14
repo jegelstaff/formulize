@@ -2565,6 +2565,12 @@ html:has(.formulize-admin-ui) {
   border-color: var(--fz-color-focus);
   background-color: var(--fz-field-bg); }
 
+/* the admin's links (.admin-ui a) are blue; a Formulize UI menu item that is a
+   link is the menu's colour */
+.admin-ui a.fz-menu__item,
+.ui-widget-content a.fz-menu__item {
+  color: var(--fz-menu-text); }
+
 /* the admin's lists (#xo-canvas-content ul and li) are indented and numbered;
    a Formulize UI list (fz-list-none) isn't */
 #xo-canvas-content .fz-list-none {
