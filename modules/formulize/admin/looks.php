@@ -47,11 +47,11 @@ if (isset($_POST['looks_action'])) {
 	$base = isset($_POST['base']) ? strtolower((string) $_POST['base']) : '';
 	$problem = '';
 	if (!isset($themes[$theme])) {
-		$problem = 'Nothing was changed: that theme\'s looks can\'t be managed here.';
+		$problem = _AM_APPEARANCE_LOOKS_ERR_THEME;
 	} elseif (sendSaveLockPrefToTemplate()) {
-		$problem = 'Nothing was changed, because this system is locked. Turn off the lock in the Formulize preferences to make changes.';
+		$problem = _AM_APPEARANCE_LOOKS_ERR_LOCKED;
 	} elseif (!$GLOBALS['xoopsSecurity']->check(true, false, 'formulize_looks_token')) {
-		$problem = 'Nothing was changed, because the page had been open too long. Please try again.';
+		$problem = _AM_APPEARANCE_LOOKS_ERR_TOKEN;
 	} elseif ($action == 'create') {
 		$problem = formulize_createAppearanceLook($theme, $name, $base, isset($_POST['size']) ? (string) $_POST['size'] : '', $key);
 	} elseif ($action == 'duplicate') {
@@ -68,7 +68,7 @@ if (isset($_POST['looks_action'])) {
 		$problem = formulize_deleteAppearanceLook($theme, $key);
 		$key = $deletedName; // the look is gone, so the message names it
 	} else {
-		$problem = 'Nothing was changed: that isn\'t something that can be done to a look.';
+		$problem = _AM_APPEARANCE_LOOKS_ERR_ACTION;
 	}
 	header('Location: ' . $back . ($problem === '' ? '&done=' . urlencode($action) . '&look=' . urlencode($key) : '&problem=' . urlencode($problem)));
 	exit();
@@ -101,6 +101,15 @@ function formulize_looksTabUrl($theme = '') {
 
 function formulize_looksH($text) {
 	return htmlspecialchars((string) $text, ENT_QUOTES);
+}
+
+// Words from the language file, as HTML, with their blanks (%s, or %1$s in a
+// translation that orders them differently) filled in with what follows, which is
+// HTML already: formulize_looksT(_AM_APPEARANCE_LOOKS_DELETE_TITLE, $name)
+function formulize_looksT($text) {
+	$args = func_get_args();
+	$args[0] = formulize_looksH($text);
+	return call_user_func_array('sprintf', $args);
 }
 
 // The icon for each kind of change a look makes, in the Based on popover: 16px, in
@@ -142,14 +151,14 @@ function formulize_looksCategories($summary) {
 	}
 	$categories = array();
 	if (array_intersect_key($kinds, array_flip(array('logo', 'favicon', 'colours', 'fonts')))) {
-		$categories[] = array('icon' => 'branding', 'text' => 'Branding');
+		$categories[] = array('icon' => 'branding', 'text' => _AM_APPEARANCE_LOOKS_BRANDING);
 	}
 	if (isset($kinds['sizes']) OR isset($kinds['width'])) {
-		$sizeText = isset($kinds['sizes']) ? (strpos($kinds['sizes']['detail'], 'Custom') === 0 ? 'Custom size' : $kinds['sizes']['detail']) : '';
-		$categories[] = array('icon' => 'layout', 'text' => (isset($kinds['sizes']) AND isset($kinds['width'])) ? 'Layout' : (isset($kinds['width']) ? 'Page width' : $sizeText));
+		$sizeText = isset($kinds['sizes']) ? ($kinds['sizes']['size'] == 'custom' ? _AM_APPEARANCE_LOOKS_CUSTOM_SIZE : $kinds['sizes']['detail']) : '';
+		$categories[] = array('icon' => 'layout', 'text' => (isset($kinds['sizes']) AND isset($kinds['width'])) ? _AM_APPEARANCE_LOOKS_LAYOUT : (isset($kinds['width']) ? _AM_APPEARANCE_LOOKS_PAGE_WIDTH : $sizeText));
 	}
 	if (isset($kinds['parts'])) {
-		$categories[] = array('icon' => 'parts', 'text' => $kinds['parts']['count'] . ($kinds['parts']['count'] == 1 ? ' part' : ' parts'));
+		$categories[] = array('icon' => 'parts', 'text' => sprintf($kinds['parts']['count'] == 1 ? _AM_APPEARANCE_LOOKS_PART : _AM_APPEARANCE_LOOKS_PARTS, $kinds['parts']['count']));
 	}
 	return $categories;
 }
@@ -167,12 +176,12 @@ function formulize_looksScreenUrl($screen) {
 // The looks as options of a select, in the order of the tree, indented, with
 // Nothing first; the looks in $exclude can't be chosen
 function formulize_looksBaseOptions($tree, $looks, $theme, $selected, $exclude = array()) {
-	$html = '<option value=""' . ($selected === '' ? ' selected' : '') . '>Nothing: start from ' . formulize_looksH($theme) . '\'s own settings</option>';
+	$html = '<option value=""' . ($selected === '' ? ' selected' : '') . '>' . formulize_looksT(_AM_APPEARANCE_LOOKS_BASE_NOTHING, formulize_looksH($theme)) . '</option>';
 	foreach ($tree as $row) {
 		$off = in_array($row['key'], $exclude, true);
 		$html .= '<option value="' . formulize_looksH($row['key']) . '"' . ($row['key'] === $selected ? ' selected' : '') . ($off ? ' disabled' : '') . '>'
 			. str_repeat('&emsp;', $row['depth']) . formulize_looksH($looks[$row['key']]['name'])
-			. ($off ? ($row['key'] === $exclude[0] ? ' (this look)' : ' (based on this look)') : '') . '</option>';
+			. ($off ? ' ' . formulize_looksH($row['key'] === $exclude[0] ? _AM_APPEARANCE_LOOKS_BASE_THIS : _AM_APPEARANCE_LOOKS_BASE_DESCENDANT) : '') . '</option>';
 	}
 	return $html;
 }
@@ -223,27 +232,27 @@ if (isset($_GET['done']) AND $problem === '') {
 	$doneKey = isset($_GET['look']) ? (string) $_GET['look'] : '';
 	$doneName = isset($looks[$doneKey]) ? $looks[$doneKey]['name'] : $doneKey;
 	$messages = array(
-		'create' => 'Created %s.',
-		'duplicate' => 'Created %s, a copy.',
-		'rename' => 'Renamed it %s.',
-		'rebase' => 'Changed what %s is based on.',
-		'site' => '%s is now the site look' . ($isSiteTheme ? '.' : ' for ' . $theme . '.'),
-		'delete' => 'Deleted %s.',
+		'create' => _AM_APPEARANCE_LOOKS_DONE_CREATE,
+		'duplicate' => _AM_APPEARANCE_LOOKS_DONE_DUPLICATE,
+		'rename' => _AM_APPEARANCE_LOOKS_DONE_RENAME,
+		'rebase' => _AM_APPEARANCE_LOOKS_DONE_REBASE,
+		'site' => $isSiteTheme ? _AM_APPEARANCE_LOOKS_DONE_SITE : _AM_APPEARANCE_LOOKS_DONE_SITE_THEME,
+		'delete' => _AM_APPEARANCE_LOOKS_DONE_DELETE,
 	);
 	if (isset($messages[$_GET['done']])) {
-		$message = sprintf($messages[$_GET['done']], $doneName);
+		$message = sprintf($messages[$_GET['done']], $doneName, $theme);
 	}
 }
 
 $notices = array();
 if ($saveLocked) {
-	$notices[] = 'Nothing can be changed, because this system is locked. Turn off the lock in the Formulize preferences to make changes.';
+	$notices[] = _AM_APPEARANCE_LOOKS_LOCKED;
 }
 if ($theme !== '' AND !formulize_appearanceDirIsWritable($theme)) {
-	$notices[] = 'Nothing can be changed for the ' . $theme . ' theme: the web server cannot write to ' . formulize_getAppearanceDir($theme) . '. Make that folder writable on your server.';
+	$notices[] = sprintf(_AM_APPEARANCE_LOOKS_NOT_WRITABLE, $theme, formulize_getAppearanceDir($theme));
 }
 if (!$themes) {
-	$notices[] = 'None of the themes installed here has looks to manage: a theme has them when it provides sample screens for the appearance editor.';
+	$notices[] = _AM_APPEARANCE_LOOKS_NO_THEMES;
 }
 
 ob_start();
@@ -305,31 +314,31 @@ ob_start();
 				<form method="get" action="<?php echo formulize_looksH(XOOPS_URL . '/modules/formulize/admin/ui.php'); ?>" class="fz-cluster fz-gap-2">
 					<input type="hidden" name="page" value="appearance">
 					<input type="hidden" name="view" value="looks">
-					<label for="looks-theme" class="formulize-looks__context-label">Theme</label>
+					<label for="looks-theme" class="formulize-looks__context-label"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_THEME); ?></label>
 					<select id="looks-theme" name="theme" class="fz-select" onchange="this.form.submit()">
 						<?php foreach ($themes as $themeDir => $themeName) { ?>
-						<option value="<?php echo formulize_looksH($themeDir); ?>"<?php echo $themeDir === $theme ? ' selected' : ''; ?>><?php echo formulize_looksH($themeName) . ($themeDir === $siteTheme ? ' (active)' : ''); ?></option>
+						<option value="<?php echo formulize_looksH($themeDir); ?>"<?php echo $themeDir === $theme ? ' selected' : ''; ?>><?php echo formulize_looksH($themeDir === $siteTheme ? sprintf(_AM_APPEARANCE_LOOKS_THEME_ACTIVE, $themeName) : $themeName); ?></option>
 						<?php } ?>
 					</select>
-					<noscript><button type="submit" class="fz-btn">Show</button></noscript>
+					<noscript><button type="submit" class="fz-btn"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_SHOW); ?></button></noscript>
 				</form>
 				<?php if ($looksCount > 1) { ?>
 				<div class="fz-cluster fz-gap-2">
-					<span class="formulize-looks__context-label"><?php echo $isSiteTheme ? 'Site look:' : 'Site look when ' . formulize_looksH($theme) . ' is active:'; ?></span>
+					<span class="formulize-looks__context-label"><?php echo $isSiteTheme ? formulize_looksH(_AM_APPEARANCE_LOOKS_SITE_LOOK_IS) : formulize_looksT(_AM_APPEARANCE_LOOKS_SITE_LOOK_IS_THEME, formulize_looksH($theme)); ?></span>
 					<strong class="fz-font-semibold"><?php echo formulize_looksH($looks[$siteLook]['name']); ?></strong>
-					<button type="button" class="fz-btn fz-btn--sm" id="looks-site-button" commandfor="looks-site" command="show-modal">Change site look</button>
+					<button type="button" class="fz-btn fz-btn--sm" id="looks-site-button" commandfor="looks-site" command="show-modal"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_CHANGE_SITE); ?></button>
 				</div>
 				<?php } ?>
 			</div>
-			<div class="fz-toolbar__end"><button type="button" class="fz-btn fz-btn--primary" commandfor="looks-create" command="show-modal" data-looks-base="<?php echo isset($looks['default']) ? 'default' : ''; ?>">Create new look</button></div>
+			<div class="fz-toolbar__end"><button type="button" class="fz-btn fz-btn--primary" commandfor="looks-create" command="show-modal" data-looks-base="<?php echo isset($looks['default']) ? 'default' : ''; ?>"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_CREATE); ?></button></div>
 		</div>
-		<p class="fz-text-muted" style="max-width: 46rem">A look is the logo, colours, fonts, page width and sizes that pages are shown with. The site uses one look, and a screen can use another. A look based on another follows it, except for what it changes itself.</p>
+		<p class="fz-text-muted" style="max-width: 46rem"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_INTRO); ?></p>
 	</div>
 
 	<?php if (!$isSiteTheme AND $theme !== '') { ?>
 	<div class="fz-callout fz-callout--info">
-		<p class="fz-callout__title">You're looking at <?php echo formulize_looksH($theme); ?>'s looks.</p>
-		<p>The site's theme is <?php echo formulize_looksH($siteTheme); ?>. Choosing a theme here doesn't change it; that's in <a href="<?php echo formulize_looksH(XOOPS_URL . '/modules/formulize/admin/ui.php?page=appearance&view=settings'); ?>">Appearance › Settings</a>.</p>
+		<p class="fz-callout__title"><?php echo formulize_looksT(_AM_APPEARANCE_LOOKS_OTHER_THEME_TITLE, formulize_looksH($theme)); ?></p>
+		<p><?php echo formulize_looksT(_AM_APPEARANCE_LOOKS_OTHER_THEME, formulize_looksH($siteTheme), '<a href="' . formulize_looksH(XOOPS_URL . '/modules/formulize/admin/ui.php?page=appearance&view=settings') . '">' . formulize_looksH(_AM_APPEARANCE_LOOKS_SETTINGS_LINK) . '</a>'); ?></p>
 	</div>
 	<?php } ?>
 	<?php foreach ($notices as $notice) { ?>
@@ -344,8 +353,8 @@ ob_start();
 
 	<?php if ($looks) { ?>
 	<div class="fz-card fz-card--flush fz-overflow-x-auto">
-		<table class="fz-table fz-tree" aria-label="<?php echo formulize_looksH($theme); ?>'s looks">
-			<thead><tr><th scope="col">Look</th><th scope="col" class="formulize-looks__col-base">Based on</th><th scope="col" class="formulize-looks__col-changes">Changes</th><th scope="col" class="formulize-looks__col-used">Used by</th><th scope="col" class="formulize-looks__col-actions"><span class="fz-sr-only">Actions</span></th></tr></thead>
+		<table class="fz-table fz-tree" aria-label="<?php echo formulize_looksT(_AM_APPEARANCE_LOOKS_TABLE, formulize_looksH($theme)); ?>">
+			<thead><tr><th scope="col"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_COL_LOOK); ?></th><th scope="col" class="formulize-looks__col-base"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_COL_BASE); ?></th><th scope="col" class="formulize-looks__col-changes"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_COL_CHANGES); ?></th><th scope="col" class="formulize-looks__col-used"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_COL_USED); ?></th><th scope="col" class="formulize-looks__col-actions"><span class="fz-sr-only"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_COL_ACTIONS); ?></span></th></tr></thead>
 			<tbody>
 			<?php foreach ($tree as $row) {
 				$key = $row['key'];
@@ -355,7 +364,7 @@ ob_start();
 				$chain = formulize_appearanceLookChain($looks, $key);
 				array_pop($chain); // the look itself
 				$summary = formulize_appearanceLookSummary($looks, $key, $theme);
-				$from = $look['base'] !== '' ? $looks[$look['base']]['name'] : $theme . '\'s own settings';
+				$from = $look['base'] !== '' ? $looks[$look['base']]['name'] : sprintf(_AM_APPEARANCE_LOOKS_THEME_SETTINGS, $theme);
 				$screens = isset($lookScreens[$key]) ? $lookScreens[$key] : array();
 				$through = array();
 				foreach (formulize_appearanceLookDescendants($looks, $key) as $descendant) {
@@ -379,18 +388,18 @@ ob_start();
 			?>
 				<tr<?php echo $isSite ? ' class="formulize-looks__site"' : ''; ?>>
 					<td class="fz-tree__cell" style="--fz-depth: <?php echo $row['depth']; ?>"><?php echo $lines; ?><span class="formulize-looks__name"><strong><?php echo formulize_looksH($look['name']); ?></strong><?php
-						if ($isSite) { echo '<span class="fz-badge fz-badge--accent">Site look</span>'; }
+						if ($isSite) { echo '<span class="fz-badge fz-badge--accent">' . formulize_looksH(_AM_APPEARANCE_LOOKS_SITE_LOOK) . '</span>'; }
 					?></span></td>
-					<td><?php echo $look['base'] !== '' ? formulize_looksH($looks[$look['base']]['name']) : '<span class="fz-text-subtle">Nothing</span>'; ?></td>
+					<td><?php echo $look['base'] !== '' ? formulize_looksH($looks[$look['base']]['name']) : '<span class="fz-text-subtle">' . formulize_looksH(_AM_APPEARANCE_LOOKS_NOTHING) . '</span>'; ?></td>
 					<td>
 						<?php
 						// what the look changes, in three kinds, in words; the popover has the rest
 						$categories = formulize_looksCategories($summary);
 						$phrases = array_map(function ($item) { return $item['phrase']; }, $summary);
 						?>
-						<button type="button" class="fz-btn fz-btn--ghost fz-btn--sm formulize-looks__changes-btn" popovertarget="<?php echo $id; ?>-base" style="anchor-name: --<?php echo $id; ?>-base" aria-label="<?php echo formulize_looksH($phrases ? 'Changes: ' . implode(', ', $phrases) : 'No changes'); ?>">
+						<button type="button" class="fz-btn fz-btn--ghost fz-btn--sm formulize-looks__changes-btn" popovertarget="<?php echo $id; ?>-base" style="anchor-name: --<?php echo $id; ?>-base" aria-label="<?php echo formulize_looksH($phrases ? sprintf(_AM_APPEARANCE_LOOKS_CHANGES_ARE, implode(', ', $phrases)) : _AM_APPEARANCE_LOOKS_NO_CHANGES); ?>">
 							<?php if (!$categories) { ?>
-							<span class="fz-text-subtle">No changes</span>
+							<span class="fz-text-subtle"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_NO_CHANGES); ?></span>
 							<?php } ?>
 							<?php foreach ($categories as $index => $category) { ?>
 							<?php if ($index) { ?><span class="formulize-looks__dot" aria-hidden="true">·</span><?php } ?>
@@ -399,11 +408,11 @@ ob_start();
 						</button>
 						<div class="fz-popover formulize-looks__about" id="<?php echo $id; ?>-base" popover style="position-anchor: --<?php echo $id; ?>-base">
 							<?php if ($chain) { ?>
-							<p class="fz-popover__title">Based on</p>
+							<p class="fz-popover__title"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_BASED_ON); ?></p>
 							<p class="formulize-looks__chain"><?php echo implode('<span aria-hidden="true">›</span>', array_map(function ($at) use ($looks) { return '<span>' . formulize_looksH($looks[$at]['name']) . '</span>'; }, $chain)); ?></p>
 							<hr class="fz-popover__sep">
 							<?php } ?>
-							<p class="fz-popover__title">Changes</p>
+							<p class="fz-popover__title"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_CHANGES); ?></p>
 							<?php if ($summary) { ?>
 							<dl class="fz-dl formulize-looks__changes">
 								<?php foreach ($summary as $item) { ?>
@@ -411,7 +420,7 @@ ob_start();
 									<dt><span class="formulize-looks__icon"><?php echo formulize_looksIcon($item['kind']); ?></span><?php echo formulize_looksH($item['label']); ?></dt>
 									<dd><?php
 									if (!empty($item['image'])) {
-										echo '<img class="formulize-looks__thumb" src="' . formulize_looksH($item['image']) . '" alt="' . formulize_looksH($look['name'] . '\'s ' . strtolower($item['label'])) . '">';
+										echo '<img class="formulize-looks__thumb" src="' . formulize_looksH($item['image']) . '" alt="' . formulize_looksH(sprintf(_AM_APPEARANCE_LOOKS_IMAGE, $look['name'], $item['phrase'])) . '">';
 									} elseif (!empty($item['swatches'])) {
 										echo '<span class="formulize-looks__swatches">';
 										foreach ($item['swatches'] as $colourLabel => $hex) {
@@ -425,32 +434,35 @@ ob_start();
 								</div>
 								<?php } ?>
 							</dl>
-							<p class="formulize-looks__foot">Everything else comes from <?php echo formulize_looksH($from); ?>.</p>
+							<p class="formulize-looks__foot"><?php echo formulize_looksT(_AM_APPEARANCE_LOOKS_EVERYTHING_ELSE, formulize_looksH($from)); ?></p>
 							<?php } else { ?>
-							<p class="fz-text-muted">Nothing yet: it looks the same as <?php echo formulize_looksH($from); ?>.</p>
+							<p class="fz-text-muted"><?php echo formulize_looksT(_AM_APPEARANCE_LOOKS_NOTHING_YET, formulize_looksH($from)); ?></p>
 							<?php } ?>
 						</div>
 					</td>
 					<td>
 						<?php if (!$isSite AND !$screens AND !$through) { ?>
-						<span class="fz-text-subtle">Not used</span>
+						<span class="fz-text-subtle"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_NOT_USED); ?></span>
 						<?php } else { ?>
 						<button type="button" class="fz-btn fz-btn--ghost fz-btn--sm formulize-looks__more" popovertarget="<?php echo $id; ?>-used" style="anchor-name: --<?php echo $id; ?>-used"><span><?php
-							echo $isSite ? 'The site' . ($screens ? ', ' . count($screens) . (count($screens) == 1 ? ' screen' : ' screens') : '') : ($screens ? count($screens) . (count($screens) == 1 ? ' screen' : ' screens') : 'No screens');
-						?></span><?php echo $through ? '<small>+' . count($through) . ' indirectly</small>' : ''; ?></button>
+							$n = count($screens);
+							echo formulize_looksH($isSite
+								? ($n ? sprintf($n == 1 ? _AM_APPEARANCE_LOOKS_USED_SITE_SCREEN : _AM_APPEARANCE_LOOKS_USED_SITE_SCREENS, $n) : _AM_APPEARANCE_LOOKS_USED_SITE)
+								: ($n ? sprintf($n == 1 ? _AM_APPEARANCE_LOOKS_USED_SCREEN : _AM_APPEARANCE_LOOKS_USED_SCREENS, $n) : _AM_APPEARANCE_LOOKS_USED_NO_SCREENS));
+						?></span><?php echo $through ? '<small>' . formulize_looksT(_AM_APPEARANCE_LOOKS_INDIRECTLY, count($through)) . '</small>' : ''; ?></button>
 						<div class="fz-popover formulize-looks__about" id="<?php echo $id; ?>-used" popover style="position-anchor: --<?php echo $id; ?>-used">
 							<?php if ($isSite) { ?>
-							<p class="fz-popover__title">The site</p>
+							<p class="fz-popover__title"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_THE_SITE); ?></p>
 							<dl class="fz-dl formulize-looks__changes">
 								<div>
-									<dt><span class="formulize-looks__icon"><?php echo formulize_looksIcon('site'); ?></span>Every page</dt>
-									<dd><?php echo $isSiteTheme ? $onSiteLook . ($onSiteLook == 1 ? ' screen follows it' : ' screens follow it') : 'when ' . formulize_looksH($theme) . ' is the site\'s theme'; ?></dd>
+									<dt><span class="formulize-looks__icon"><?php echo formulize_looksIcon('site'); ?></span><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_EVERY_PAGE); ?></dt>
+									<dd><?php echo $isSiteTheme ? formulize_looksT($onSiteLook == 1 ? _AM_APPEARANCE_LOOKS_FOLLOWS_IT : _AM_APPEARANCE_LOOKS_FOLLOW_IT, $onSiteLook) : formulize_looksT(_AM_APPEARANCE_LOOKS_WHEN_THEME, formulize_looksH($theme)); ?></dd>
 								</div>
 							</dl>
 							<?php } ?>
 							<?php if ($screens) { ?>
 							<?php if ($isSite) { ?><hr class="fz-popover__sep"><?php } ?>
-							<p class="fz-popover__title">Screens set to it</p>
+							<p class="fz-popover__title"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_SET_TO_IT); ?></p>
 							<dl class="fz-dl formulize-looks__changes">
 								<?php foreach ($screens as $screen) { ?>
 								<div>
@@ -462,42 +474,42 @@ ob_start();
 							<?php } ?>
 							<?php if ($through) { ?>
 							<?php if ($isSite OR $screens) { ?><hr class="fz-popover__sep"><?php } ?>
-							<p class="fz-popover__title">Through looks based on it</p>
+							<p class="fz-popover__title"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_THROUGH); ?></p>
 							<dl class="fz-dl formulize-looks__changes">
 								<?php foreach ($through as $screen) { ?>
 								<div>
 									<dt><span class="formulize-looks__icon"><?php echo formulize_looksIcon('screen'); ?></span><a class="formulize-looks__link" href="<?php echo formulize_looksH(formulize_looksScreenUrl($screen)); ?>"><?php echo formulize_looksH($screen['title']); ?></a></dt>
-									<dd>via <?php echo formulize_looksH($screen['via']); ?></dd>
+									<dd><?php echo formulize_looksT(_AM_APPEARANCE_LOOKS_VIA, formulize_looksH($screen['via'])); ?></dd>
 								</div>
 								<?php } ?>
 							</dl>
-							<p class="formulize-looks__foot">A change to <?php echo formulize_looksH($look['name']); ?> reaches these too, except where their look sets its own.</p>
+							<p class="formulize-looks__foot"><?php echo formulize_looksT(_AM_APPEARANCE_LOOKS_REACHES, formulize_looksH($look['name'])); ?></p>
 							<?php } ?>
 						</div>
 						<?php } ?>
 					</td>
 					<td>
 						<span class="formulize-looks__actions">
-							<button type="button" class="fz-btn fz-btn--sm" popovertarget="<?php echo $id; ?>-edit" style="anchor-name: --<?php echo $id; ?>-edit">Edit</button>
+							<button type="button" class="fz-btn fz-btn--sm" popovertarget="<?php echo $id; ?>-edit" style="anchor-name: --<?php echo $id; ?>-edit"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_EDIT); ?></button>
 							<div class="fz-popover fz-menu" id="<?php echo $id; ?>-edit" popover style="position-anchor: --<?php echo $id; ?>-edit">
-								<a class="fz-menu__item" href="<?php echo formulize_looksH($editorUrl . '&look=' . urlencode($key) . '&mode=simple'); ?>"><?php echo formulize_looksMenuIcon('simple'); ?>Simple editor<span class="fz-menu__note">Logo, colours, fonts, page width<?php echo $sizes ? ' and size' : ''; ?></span></a>
+								<a class="fz-menu__item" href="<?php echo formulize_looksH($editorUrl . '&look=' . urlencode($key) . '&mode=simple'); ?>"><?php echo formulize_looksMenuIcon('simple') . formulize_looksH(_AM_APPEARANCE_LOOKS_SIMPLE); ?><span class="fz-menu__note"><?php echo formulize_looksH($sizes ? _AM_APPEARANCE_LOOKS_SIMPLE_NOTE_SIZE : _AM_APPEARANCE_LOOKS_SIMPLE_NOTE); ?></span></a>
 								<?php if ($hasAdvanced) { ?>
-								<a class="fz-menu__item" href="<?php echo formulize_looksH($editorUrl . '&look=' . urlencode($key) . '&mode=advanced'); ?>"><?php echo formulize_looksMenuIcon('advanced'); ?>Advanced editor<span class="fz-menu__note">Every part, one at a time</span></a>
+								<a class="fz-menu__item" href="<?php echo formulize_looksH($editorUrl . '&look=' . urlencode($key) . '&mode=advanced'); ?>"><?php echo formulize_looksMenuIcon('advanced') . formulize_looksH(_AM_APPEARANCE_LOOKS_ADVANCED); ?><span class="fz-menu__note"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_ADVANCED_NOTE); ?></span></a>
 								<?php } else { ?>
-								<span class="fz-menu__item" aria-disabled="true"><span class="fz-menu__note"><?php echo formulize_looksH($theme); ?> has the simple editor only.</span></span>
+								<span class="fz-menu__item" aria-disabled="true"><span class="fz-menu__note"><?php echo formulize_looksT(_AM_APPEARANCE_LOOKS_SIMPLE_ONLY, formulize_looksH($theme)); ?></span></span>
 								<?php } ?>
 							</div>
-							<button type="button" class="fz-btn fz-btn--sm fz-btn--icon fz-btn--ghost" popovertarget="<?php echo $id; ?>-more" style="anchor-name: --<?php echo $id; ?>-more" aria-label="More for <?php echo formulize_looksH($look['name']); ?>"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3.5" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="12.5" cy="8" r="1.3" fill="currentColor"/></svg></button>
+							<button type="button" class="fz-btn fz-btn--sm fz-btn--icon fz-btn--ghost" popovertarget="<?php echo $id; ?>-more" style="anchor-name: --<?php echo $id; ?>-more" aria-label="<?php echo formulize_looksT(_AM_APPEARANCE_LOOKS_MORE, formulize_looksH($look['name'])); ?>"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3.5" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="12.5" cy="8" r="1.3" fill="currentColor"/></svg></button>
 							<div class="fz-popover fz-menu" id="<?php echo $id; ?>-more" popover style="position-anchor: --<?php echo $id; ?>-more">
-								<button type="button" class="fz-menu__item" commandfor="looks-create" command="show-modal" data-looks-base="<?php echo formulize_looksH($key); ?>"><?php echo formulize_looksMenuIcon('add'); ?>Create look based on this</button>
-								<button type="button" class="fz-menu__item" commandfor="<?php echo $id; ?>-duplicate" command="show-modal"><?php echo formulize_looksMenuIcon('duplicate'); ?>Duplicate</button>
-								<button type="button" class="fz-menu__item" commandfor="<?php echo $id; ?>-rename" command="show-modal"><?php echo formulize_looksMenuIcon('rename'); ?>Rename</button>
-								<button type="button" class="fz-menu__item" commandfor="<?php echo $id; ?>-rebase" command="show-modal"><?php echo formulize_looksMenuIcon('rebase'); ?>Change base</button>
+								<button type="button" class="fz-menu__item" commandfor="looks-create" command="show-modal" data-looks-base="<?php echo formulize_looksH($key); ?>"><?php echo formulize_looksMenuIcon('add') . formulize_looksH(_AM_APPEARANCE_LOOKS_CREATE_BASED); ?></button>
+								<button type="button" class="fz-menu__item" commandfor="<?php echo $id; ?>-duplicate" command="show-modal"><?php echo formulize_looksMenuIcon('duplicate') . formulize_looksH(_AM_APPEARANCE_LOOKS_DUPLICATE); ?></button>
+								<button type="button" class="fz-menu__item" commandfor="<?php echo $id; ?>-rename" command="show-modal"><?php echo formulize_looksMenuIcon('rename') . formulize_looksH(_AM_APPEARANCE_LOOKS_RENAME); ?></button>
+								<button type="button" class="fz-menu__item" commandfor="<?php echo $id; ?>-rebase" command="show-modal"><?php echo formulize_looksMenuIcon('rebase') . formulize_looksH(_AM_APPEARANCE_LOOKS_REBASE); ?></button>
 								<hr class="fz-menu__sep">
 								<?php if (!$isSite) { ?>
-								<button type="button" class="fz-menu__item" commandfor="<?php echo $id; ?>-site" command="show-modal"><?php echo formulize_looksMenuIcon('site'); ?>Set as site look<?php echo $isSiteTheme ? '' : ' for ' . formulize_looksH($theme); ?></button>
+								<button type="button" class="fz-menu__item" commandfor="<?php echo $id; ?>-site" command="show-modal"><?php echo formulize_looksMenuIcon('site') . ($isSiteTheme ? formulize_looksH(_AM_APPEARANCE_LOOKS_SET_SITE) : formulize_looksT(_AM_APPEARANCE_LOOKS_SET_SITE_THEME, formulize_looksH($theme))); ?></button>
 								<?php } ?>
-								<button type="button" class="fz-menu__item fz-menu__item--danger" commandfor="<?php echo $id; ?>-delete" command="show-modal"><?php echo formulize_looksMenuIcon('delete'); ?>Delete</button>
+								<button type="button" class="fz-menu__item fz-menu__item--danger" commandfor="<?php echo $id; ?>-delete" command="show-modal"><?php echo formulize_looksMenuIcon('delete') . formulize_looksH(_AM_APPEARANCE_LOOKS_DELETE); ?></button>
 							</div>
 						</span>
 					</td>
@@ -516,35 +528,35 @@ ob_start();
 <dialog class="fz-dialog" id="looks-create" aria-labelledby="looks-create-title">
 	<form method="post" action="<?php echo formulize_looksH($postUrl); ?>">
 		<?php echo formulize_looksFormFields('create', $theme); ?>
-		<div class="fz-dialog__header"><h2 class="fz-dialog__title" id="looks-create-title">Create new look</h2></div>
+		<div class="fz-dialog__header"><h2 class="fz-dialog__title" id="looks-create-title"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_CREATE); ?></h2></div>
 		<div class="fz-dialog__body">
 			<div class="fz-field">
-				<label class="fz-field__label" for="looks-create-name">Name</label>
+				<label class="fz-field__label" for="looks-create-name"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_NAME); ?></label>
 				<div class="fz-field__body"><input class="fz-input" id="looks-create-name" name="name" type="text" maxlength="60" required autocomplete="off"></div>
 			</div>
 			<div class="fz-field">
-				<label class="fz-field__label" for="looks-create-base">Based on</label>
+				<label class="fz-field__label" for="looks-create-base"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_BASED_ON); ?></label>
 				<div class="fz-field__body">
 					<select class="fz-select" id="looks-create-base" name="base"><?php echo formulize_looksBaseOptions($tree, $looks, $theme, isset($looks['default']) ? 'default' : ''); ?></select>
-					<p class="fz-field__help">The new look follows its base, except for what you change in it.</p>
+					<p class="fz-field__help"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_CREATE_BASE_HELP); ?></p>
 				</div>
 			</div>
 			<?php if ($sizes) { ?>
 			<fieldset class="fz-field">
-				<legend class="fz-field__label">Size</legend>
+				<legend class="fz-field__label"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_SIZE); ?></legend>
 				<div class="fz-choice-group">
-					<label class="fz-choice"><input class="fz-radio" type="radio" name="size" value="" checked> <span>The same as its base</span></label>
+					<label class="fz-choice"><input class="fz-radio" type="radio" name="size" value="" checked> <span><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_SIZE_SAME); ?></span></label>
 					<?php foreach ($sizes as $sizeKey => $size) { ?>
 					<label class="fz-choice"><input class="fz-radio" type="radio" name="size" value="<?php echo formulize_looksH($sizeKey); ?>"> <span><?php echo formulize_looksH($size['name']); ?> <span class="fz-text-muted">· <?php echo formulize_looksH($size['description']); ?></span></span></label>
 					<?php } ?>
 				</div>
-				<p class="fz-field__help">A size is a starting point: its values are written into the new look, which you can then change.</p>
+				<p class="fz-field__help"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_SIZE_HELP); ?></p>
 			</fieldset>
 			<?php } ?>
 		</div>
 		<div class="fz-dialog__footer">
-			<button type="button" class="fz-btn" commandfor="looks-create" command="close">Cancel</button>
-			<button type="submit" class="fz-btn fz-btn--primary">Create look</button>
+			<button type="button" class="fz-btn" commandfor="looks-create" command="close"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_CANCEL); ?></button>
+			<button type="submit" class="fz-btn fz-btn--primary"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_CREATE_SUBMIT); ?></button>
 		</div>
 	</form>
 </dialog>
@@ -553,20 +565,20 @@ ob_start();
 <dialog class="fz-dialog" id="looks-site" aria-labelledby="looks-site-title">
 	<form method="post" action="<?php echo formulize_looksH($postUrl); ?>">
 		<?php echo formulize_looksFormFields('site', $theme); ?>
-		<div class="fz-dialog__header"><h2 class="fz-dialog__title" id="looks-site-title">Change site look<?php echo $isSiteTheme ? '' : ' for ' . formulize_looksH($theme); ?></h2></div>
+		<div class="fz-dialog__header"><h2 class="fz-dialog__title" id="looks-site-title"><?php echo $isSiteTheme ? formulize_looksH(_AM_APPEARANCE_LOOKS_CHANGE_SITE) : formulize_looksT(_AM_APPEARANCE_LOOKS_CHANGE_SITE_THEME, formulize_looksH($theme)); ?></h2></div>
 		<div class="fz-dialog__body">
 			<fieldset class="fz-field">
-				<legend class="fz-field__label">Every page uses the site look, except screens set to another</legend>
+				<legend class="fz-field__label"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_SITE_LEGEND); ?></legend>
 				<div class="fz-choice-group formulize-looks__choices">
 					<?php foreach ($tree as $row) { ?>
-					<label class="fz-choice" style="--d: <?php echo $row['depth']; ?>"><input class="fz-radio" type="radio" name="look" value="<?php echo formulize_looksH($row['key']); ?>"<?php echo $row['key'] === $siteLook ? ' checked' : ''; ?>> <span><?php echo formulize_looksH($looks[$row['key']]['name']) . ($row['key'] === $siteLook ? ' <span class="fz-text-muted">· now</span>' : ''); ?></span></label>
+					<label class="fz-choice" style="--d: <?php echo $row['depth']; ?>"><input class="fz-radio" type="radio" name="look" value="<?php echo formulize_looksH($row['key']); ?>"<?php echo $row['key'] === $siteLook ? ' checked' : ''; ?>> <span><?php echo formulize_looksH($looks[$row['key']]['name']) . ($row['key'] === $siteLook ? ' <span class="fz-text-muted">· ' . formulize_looksH(_AM_APPEARANCE_LOOKS_NOW) . '</span>' : ''); ?></span></label>
 					<?php } ?>
 				</div>
 			</fieldset>
 		</div>
 		<div class="fz-dialog__footer">
-			<button type="button" class="fz-btn" commandfor="looks-site" command="close">Cancel</button>
-			<button type="submit" class="fz-btn fz-btn--primary">Set as site look</button>
+			<button type="button" class="fz-btn" commandfor="looks-site" command="close"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_CANCEL); ?></button>
+			<button type="submit" class="fz-btn fz-btn--primary"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_SET_SITE); ?></button>
 		</div>
 	</form>
 </dialog>
@@ -579,58 +591,59 @@ ob_start();
 	$name = formulize_looksH($look['name']);
 	$children = formulize_appearanceLookChildren($looks, $key);
 	$changes = formulize_appearanceLookChanges($looks, $key, $theme);
+	$changeList = $changes ? formulize_looksT(_AM_APPEARANCE_LOOKS_LIST, formulize_looksH(implode(', ', $changes))) : '';
 	$screens = isset($lookScreens[$key]) ? $lookScreens[$key] : array();
 ?>
 <dialog class="fz-dialog" id="<?php echo $id; ?>-duplicate" aria-labelledby="<?php echo $id; ?>-duplicate-title">
 	<form method="post" action="<?php echo formulize_looksH($postUrl); ?>">
 		<?php echo formulize_looksFormFields('duplicate', $theme, $key); ?>
-		<div class="fz-dialog__header"><h2 class="fz-dialog__title" id="<?php echo $id; ?>-duplicate-title">Duplicate <?php echo $name; ?></h2></div>
+		<div class="fz-dialog__header"><h2 class="fz-dialog__title" id="<?php echo $id; ?>-duplicate-title"><?php echo formulize_looksT(_AM_APPEARANCE_LOOKS_DUPLICATE_TITLE, $name); ?></h2></div>
 		<div class="fz-dialog__body">
 			<div class="fz-field">
-				<label class="fz-field__label" for="<?php echo $id; ?>-duplicate-name">Name</label>
-				<div class="fz-field__body"><input class="fz-input" id="<?php echo $id; ?>-duplicate-name" name="name" type="text" maxlength="60" required autocomplete="off" value="<?php echo formulize_looksH($look['name'] . ' copy'); ?>"></div>
+				<label class="fz-field__label" for="<?php echo $id; ?>-duplicate-name"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_NAME); ?></label>
+				<div class="fz-field__body"><input class="fz-input" id="<?php echo $id; ?>-duplicate-name" name="name" type="text" maxlength="60" required autocomplete="off" value="<?php echo formulize_looksH(sprintf(_AM_APPEARANCE_LOOKS_COPY_NAME, $look['name'])); ?>"></div>
 			</div>
-			<p>The copy is based on <?php echo $look['base'] !== '' ? formulize_looksH($looks[$look['base']]['name']) : 'nothing'; ?>, like <?php echo $name; ?>, and starts with <?php echo $name; ?>'s own changes<?php echo $changes ? ' (' . formulize_looksH(implode(', ', $changes)) . ')' : ''; ?>. It looks the same, but won't follow <?php echo $name; ?> after this.</p>
-			<?php if ($children) { ?><p class="fz-text-muted">The looks based on <?php echo $name; ?> aren't copied.</p><?php } ?>
+			<p><?php echo formulize_looksT(_AM_APPEARANCE_LOOKS_DUPLICATE_TEXT, formulize_looksH($look['base'] !== '' ? $looks[$look['base']]['name'] : _AM_APPEARANCE_LOOKS_DUPLICATE_NOTHING), $name, $changeList); ?></p>
+			<?php if ($children) { ?><p class="fz-text-muted"><?php echo formulize_looksT(_AM_APPEARANCE_LOOKS_DUPLICATE_CHILDREN, $name); ?></p><?php } ?>
 		</div>
 		<div class="fz-dialog__footer">
-			<button type="button" class="fz-btn" commandfor="<?php echo $id; ?>-duplicate" command="close">Cancel</button>
-			<button type="submit" class="fz-btn fz-btn--primary">Duplicate</button>
+			<button type="button" class="fz-btn" commandfor="<?php echo $id; ?>-duplicate" command="close"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_CANCEL); ?></button>
+			<button type="submit" class="fz-btn fz-btn--primary"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_DUPLICATE); ?></button>
 		</div>
 	</form>
 </dialog>
 <dialog class="fz-dialog" id="<?php echo $id; ?>-rename" aria-labelledby="<?php echo $id; ?>-rename-title">
 	<form method="post" action="<?php echo formulize_looksH($postUrl); ?>">
 		<?php echo formulize_looksFormFields('rename', $theme, $key); ?>
-		<div class="fz-dialog__header"><h2 class="fz-dialog__title" id="<?php echo $id; ?>-rename-title">Rename <?php echo $name; ?></h2></div>
+		<div class="fz-dialog__header"><h2 class="fz-dialog__title" id="<?php echo $id; ?>-rename-title"><?php echo formulize_looksT(_AM_APPEARANCE_LOOKS_RENAME_TITLE, $name); ?></h2></div>
 		<div class="fz-dialog__body">
 			<div class="fz-field">
-				<label class="fz-field__label" for="<?php echo $id; ?>-rename-name">Name</label>
+				<label class="fz-field__label" for="<?php echo $id; ?>-rename-name"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_NAME); ?></label>
 				<div class="fz-field__body"><input class="fz-input" id="<?php echo $id; ?>-rename-name" name="name" type="text" maxlength="60" required autocomplete="off" value="<?php echo $name; ?>"></div>
 			</div>
-			<p class="fz-text-muted">Screens and looks that use it keep using it.</p>
+			<p class="fz-text-muted"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_RENAME_TEXT); ?></p>
 		</div>
 		<div class="fz-dialog__footer">
-			<button type="button" class="fz-btn" commandfor="<?php echo $id; ?>-rename" command="close">Cancel</button>
-			<button type="submit" class="fz-btn fz-btn--primary">Rename</button>
+			<button type="button" class="fz-btn" commandfor="<?php echo $id; ?>-rename" command="close"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_CANCEL); ?></button>
+			<button type="submit" class="fz-btn fz-btn--primary"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_RENAME); ?></button>
 		</div>
 	</form>
 </dialog>
 <dialog class="fz-dialog" id="<?php echo $id; ?>-rebase" aria-labelledby="<?php echo $id; ?>-rebase-title">
 	<form method="post" action="<?php echo formulize_looksH($postUrl); ?>">
 		<?php echo formulize_looksFormFields('rebase', $theme, $key); ?>
-		<div class="fz-dialog__header"><h2 class="fz-dialog__title" id="<?php echo $id; ?>-rebase-title">Change what <?php echo $name; ?> is based on</h2></div>
+		<div class="fz-dialog__header"><h2 class="fz-dialog__title" id="<?php echo $id; ?>-rebase-title"><?php echo formulize_looksT(_AM_APPEARANCE_LOOKS_REBASE_TITLE, $name); ?></h2></div>
 		<div class="fz-dialog__body">
 			<div class="fz-field">
-				<label class="fz-field__label" for="<?php echo $id; ?>-rebase-base">Based on</label>
+				<label class="fz-field__label" for="<?php echo $id; ?>-rebase-base"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_BASED_ON); ?></label>
 				<div class="fz-field__body"><select class="fz-select" id="<?php echo $id; ?>-rebase-base" name="base"><?php echo formulize_looksBaseOptions($tree, $looks, $theme, $look['base'], array_merge(array($key), formulize_appearanceLookDescendants($looks, $key))); ?></select></div>
 			</div>
-			<p><?php echo $name; ?> keeps its own changes<?php echo $changes ? ' (' . formulize_looksH(implode(', ', $changes)) . ')' : ''; ?>, and takes everything else from its new base. Any of its changes that are the same as the new base's are dropped.</p>
-			<?php if ($children) { ?><p class="fz-text-muted">The looks based on <?php echo $name; ?> move with it.</p><?php } ?>
+			<p><?php echo formulize_looksT(_AM_APPEARANCE_LOOKS_REBASE_TEXT, $name, $changeList); ?></p>
+			<?php if ($children) { ?><p class="fz-text-muted"><?php echo formulize_looksT(_AM_APPEARANCE_LOOKS_REBASE_CHILDREN, $name); ?></p><?php } ?>
 		</div>
 		<div class="fz-dialog__footer">
-			<button type="button" class="fz-btn" commandfor="<?php echo $id; ?>-rebase" command="close">Cancel</button>
-			<button type="submit" class="fz-btn fz-btn--primary">Change base</button>
+			<button type="button" class="fz-btn" commandfor="<?php echo $id; ?>-rebase" command="close"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_CANCEL); ?></button>
+			<button type="submit" class="fz-btn fz-btn--primary"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_REBASE); ?></button>
 		</div>
 	</form>
 </dialog>
@@ -638,49 +651,49 @@ ob_start();
 <dialog class="fz-dialog" id="<?php echo $id; ?>-site" aria-labelledby="<?php echo $id; ?>-site-title">
 	<form method="post" action="<?php echo formulize_looksH($postUrl); ?>">
 		<?php echo formulize_looksFormFields('site', $theme, $key); ?>
-		<div class="fz-dialog__header"><h2 class="fz-dialog__title" id="<?php echo $id; ?>-site-title">Set <?php echo $name; ?> as the site look?</h2></div>
+		<div class="fz-dialog__header"><h2 class="fz-dialog__title" id="<?php echo $id; ?>-site-title"><?php echo formulize_looksT(_AM_APPEARANCE_LOOKS_SITE_TITLE, $name); ?></h2></div>
 		<div class="fz-dialog__body">
-			<p><?php echo $isSiteTheme ? 'Every page will use ' . $name . ', except screens set to another look.' : 'When ' . formulize_looksH($theme) . ' is the site\'s theme, every page will use ' . $name . ', except screens set to another look.'; ?> It is <?php echo formulize_looksH($looks[$siteLook]['name']); ?> now.</p>
+			<p><?php echo ($isSiteTheme ? formulize_looksT(_AM_APPEARANCE_LOOKS_SITE_TEXT, $name) : formulize_looksT(_AM_APPEARANCE_LOOKS_SITE_TEXT_THEME, formulize_looksH($theme), $name)) . ' ' . formulize_looksT(_AM_APPEARANCE_LOOKS_SITE_NOW, formulize_looksH($looks[$siteLook]['name'])); ?></p>
 		</div>
 		<div class="fz-dialog__footer">
-			<button type="button" class="fz-btn" commandfor="<?php echo $id; ?>-site" command="close">Cancel</button>
-			<button type="submit" class="fz-btn fz-btn--primary">Set as site look</button>
+			<button type="button" class="fz-btn" commandfor="<?php echo $id; ?>-site" command="close"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_CANCEL); ?></button>
+			<button type="submit" class="fz-btn fz-btn--primary"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_SET_SITE); ?></button>
 		</div>
 	</form>
 </dialog>
 <?php } ?>
 <dialog class="fz-dialog" id="<?php echo $id; ?>-delete" aria-labelledby="<?php echo $id; ?>-delete-title">
 	<?php if ($key === $siteLook) { ?>
-	<div class="fz-dialog__header"><h2 class="fz-dialog__title" id="<?php echo $id; ?>-delete-title"><?php echo $name; ?> can't be deleted</h2></div>
-	<div class="fz-dialog__body"><p><?php echo $name; ?> is the <?php echo $isSiteTheme ? 'site look' : 'site look for ' . formulize_looksH($theme); ?>. Change the site look first, then delete it.</p></div>
+	<div class="fz-dialog__header"><h2 class="fz-dialog__title" id="<?php echo $id; ?>-delete-title"><?php echo formulize_looksT(_AM_APPEARANCE_LOOKS_DELETE_CANT_TITLE, $name); ?></h2></div>
+	<div class="fz-dialog__body"><p><?php echo $isSiteTheme ? formulize_looksT(_AM_APPEARANCE_LOOKS_DELETE_SITE, $name) : formulize_looksT(_AM_APPEARANCE_LOOKS_DELETE_SITE_THEME, $name, formulize_looksH($theme)); ?></p></div>
 	<div class="fz-dialog__footer">
-		<?php if ($looksCount > 1) { ?><button type="button" class="fz-btn" commandfor="looks-site" command="show-modal">Change site look</button><?php } ?>
-		<button type="button" class="fz-btn fz-btn--primary" commandfor="<?php echo $id; ?>-delete" command="close">Close</button>
+		<?php if ($looksCount > 1) { ?><button type="button" class="fz-btn" commandfor="looks-site" command="show-modal"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_CHANGE_SITE); ?></button><?php } ?>
+		<button type="button" class="fz-btn fz-btn--primary" commandfor="<?php echo $id; ?>-delete" command="close"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_CLOSE); ?></button>
 	</div>
 	<?php } elseif ($children) { ?>
-	<div class="fz-dialog__header"><h2 class="fz-dialog__title" id="<?php echo $id; ?>-delete-title"><?php echo $name; ?> can't be deleted yet</h2></div>
+	<div class="fz-dialog__header"><h2 class="fz-dialog__title" id="<?php echo $id; ?>-delete-title"><?php echo formulize_looksT(_AM_APPEARANCE_LOOKS_DELETE_YET_TITLE, $name); ?></h2></div>
 	<div class="fz-dialog__body">
-		<p><?php echo count($children) == 1 ? '1 look is' : count($children) . ' looks are'; ?> based on <?php echo $name; ?>:</p>
+		<p><?php echo count($children) == 1 ? formulize_looksT(_AM_APPEARANCE_LOOKS_DELETE_CHILD, $name) : formulize_looksT(_AM_APPEARANCE_LOOKS_DELETE_CHILDREN, count($children), $name); ?></p>
 		<ul><?php foreach ($children as $child) { echo '<li>' . formulize_looksH($looks[$child]['name']) . '</li>'; } ?></ul>
-		<p>Change what <?php echo count($children) == 1 ? 'it is' : 'they are'; ?> based on, or delete <?php echo count($children) == 1 ? 'it' : 'them'; ?>, first.</p>
+		<p><?php echo formulize_looksH(count($children) == 1 ? _AM_APPEARANCE_LOOKS_DELETE_CHILD_FIRST : _AM_APPEARANCE_LOOKS_DELETE_CHILDREN_FIRST); ?></p>
 	</div>
-	<div class="fz-dialog__footer"><button type="button" class="fz-btn fz-btn--primary" commandfor="<?php echo $id; ?>-delete" command="close">Close</button></div>
+	<div class="fz-dialog__footer"><button type="button" class="fz-btn fz-btn--primary" commandfor="<?php echo $id; ?>-delete" command="close"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_CLOSE); ?></button></div>
 	<?php } else { ?>
 	<form method="post" action="<?php echo formulize_looksH($postUrl); ?>">
 		<?php echo formulize_looksFormFields('delete', $theme, $key); ?>
-		<div class="fz-dialog__header"><h2 class="fz-dialog__title" id="<?php echo $id; ?>-delete-title">Delete <?php echo $name; ?>?</h2></div>
+		<div class="fz-dialog__header"><h2 class="fz-dialog__title" id="<?php echo $id; ?>-delete-title"><?php echo formulize_looksT(_AM_APPEARANCE_LOOKS_DELETE_TITLE, $name); ?></h2></div>
 		<div class="fz-dialog__body">
 			<?php if ($screens) { ?>
-			<p>These screens use <?php echo $name; ?>, and will use the site look, <?php echo formulize_looksH($looks[$siteLook]['name']); ?>, instead:</p>
+			<p><?php echo formulize_looksT(_AM_APPEARANCE_LOOKS_DELETE_SCREENS, $name, formulize_looksH($looks[$siteLook]['name'])); ?></p>
 			<ul><?php foreach ($screens as $screen) { echo '<li>' . formulize_looksH($screen['title']) . '</li>'; } ?></ul>
 			<?php } else { ?>
-			<p>Nothing uses <?php echo $name; ?>.</p>
+			<p><?php echo formulize_looksT(_AM_APPEARANCE_LOOKS_DELETE_UNUSED, $name); ?></p>
 			<?php } ?>
-			<p class="fz-text-muted">This can't be undone.</p>
+			<p class="fz-text-muted"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_DELETE_UNDONE); ?></p>
 		</div>
 		<div class="fz-dialog__footer">
-			<button type="button" class="fz-btn" commandfor="<?php echo $id; ?>-delete" command="close">Cancel</button>
-			<button type="submit" class="fz-btn fz-btn--danger">Delete look</button>
+			<button type="button" class="fz-btn" commandfor="<?php echo $id; ?>-delete" command="close"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_CANCEL); ?></button>
+			<button type="submit" class="fz-btn fz-btn--danger"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_DELETE_SUBMIT); ?></button>
 		</div>
 	</form>
 	<?php } ?>
