@@ -87,10 +87,11 @@ class formulizeAutocompleteLinkedElementHandler extends formulizeSelectLinkedEle
 	 * @param array $properties The properties to validate
 	 * @param array $ele_value The ele_value settings for this element, if applicable. Should be set by the caller, to the current ele_value settings of the element, if this is an existing element.
 	 * @param int|string|object $elementIdentifier The element id, handle or object of the element for which we're validating the properties.
+	 * @param int $formId The id of the form the element is in. Needed when creating, because a new element does not exist yet, so its form cannot be read from it.
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
-	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null) {
-		list($ele_value) = array_values(formulizeSelectLinkedElementHandler::validateEleValuePublicAPIProperties($properties, $ele_value)); // array_values will take the values in the associative array and assign them to the list variables correctly, since list expects numeric keys
+	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null, $formId = null) {
+		list($ele_value, $notes) = array_values(formulizeSelectLinkedElementHandler::validateEleValuePublicAPIProperties($properties, $ele_value, $elementIdentifier, $formId)); // array_values will take the values in the associative array and assign them to the list variables correctly, since list expects numeric keys
 		if(isset($properties['allowMultipleSelections'])) {
 			$ele_value[ELE_VALUE_SELECT_MULTIPLE] = $properties['allowMultipleSelections'];
 		}
@@ -98,7 +99,21 @@ class formulizeAutocompleteLinkedElementHandler extends formulizeSelectLinkedEle
 			$ele_value[ELE_VALUE_SELECT_AUTOCOMPLETEALLOWSNEW] = $properties['allowNewValues'];
 		}
 		return [
-			'ele_value' => $ele_value
+			'ele_value' => $ele_value,
+			'notes' => $notes
+		];
+	}
+
+	/**
+	 * Report this element's settings using the same properties that validateEleValuePublicAPIProperties accepts
+	 * @param array $element The element's fields, keyed by column name, with serialized fields already unserialized
+	 * @return array The properties, keyed by their public names
+	 */
+	public static function readPublicAPIProperties($element) {
+		$ele_value = $element['ele_value'] ?? [];
+		return parent::readPublicAPIProperties($element) + [
+			'allowNewValues' => intval($ele_value[ELE_VALUE_SELECT_AUTOCOMPLETEALLOWSNEW] ?? 0),
+			'allowMultipleSelections' => intval($ele_value[ELE_VALUE_SELECT_MULTIPLE] ?? 0),
 		];
 	}
 

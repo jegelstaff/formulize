@@ -662,18 +662,41 @@ trait resources {
 				continue;
 			}
 			$row[$field] = ($row[$field] === '' OR $row[$field] === null) ? [] : unserialize($row[$field]);
-			// both of these are built by parseSubmittedConditions(), so both are stored as parallel arrays
-			// and both need converting into something readable
-			if($field == 'ele_filtersettings' OR $field == 'ele_disabledconditions') {
-				$row[$field] = $this->tidyUpOldConditionsArrayFormat($row[$field]);
-			}
 		}
 		$additionalFields = [
 			'element_id' => $row['ele_id'],
 			'form_id' => $row['id_form']
 		];
+		// the settings the update tools can change, in exactly the shape those tools accept, so a setting can be
+		// read, changed and sent back - and so the AI assistant can see which settings exist, even unused ones.
+		// Done before anything below alters the row, so it gets the same values as an element object's getValues(null, 'n')
+		if($properties = $this->publicElementProperties($row)) {
+			$additionalFields['properties'] = $properties;
+		}
+		// both of these are built by parseSubmittedConditions(), so both are stored as parallel arrays
+		// and both need converting into something readable
+		foreach(['ele_filtersettings', 'ele_disabledconditions'] as $field) {
+			if(isset($row[$field])) {
+				$row[$field] = $this->tidyUpOldConditionsArrayFormat($row[$field]);
+			}
+		}
 		unset($row['ele_id'], $row['id_form']);
 		return $additionalFields + $row;
+	}
+
+	/**
+	 * The settings of an element, using the public property names that the create and update element tools accept.
+	 * Only element types whose handler can report them this way are included.
+	 * @param array $element The element's fields, keyed by column name, with serialized fields already unserialized
+	 *        (a row from the elements table, or an element object's getValues(null, 'n'))
+	 * @return array|null The properties, or null if this element type does not report them
+	 */
+	private function publicElementProperties($element) {
+		$elementTypeHandler = xoops_getmodulehandler(($element['ele_type'] ?? '').'Element', 'formulize');
+		if(!$elementTypeHandler OR !method_exists($elementTypeHandler, 'readPublicAPIProperties') OR !is_array($element['ele_value'] ?? null)) {
+			return null;
+		}
+		return $elementTypeHandler::readPublicAPIProperties($element);
 	}
 
 	/**
@@ -1980,23 +2003,7 @@ That makes the template groups the right place to set and change permissions tha
 	 * @return array The tidied up conditions array
 	 */
 	private function tidyUpOldConditionsArrayFormat($conditions) {
-		$tidiedConditions = [];
-		if(is_array($conditions) AND count($conditions) > 0 AND !empty($conditions[0])) {
-			$elements = $conditions[0];
-			$operators = $conditions[1];
-			$values = $conditions[2];
-			$types = $conditions[3];
-			$length = count($elements);
-			for($i = 0; $i < $length; $i++) {
-				$condition = [
-					'element' => formulizeHandler::resolveElementHandle($elements[$i]),
-					'operator' => $operators[$i],
-					'value' => $values[$i],
-					'type' => ($types[$i] == 'all' ? 'match-all' : 'match-one-or-more')
-				];
-				$tidiedConditions[] = $condition;
-			}
-		}
+		$tidiedConditions = formulizeHandler::readableConditionList($conditions);
 		return empty($tidiedConditions) ? $conditions : $tidiedConditions;
 	}
 

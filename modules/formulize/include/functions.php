@@ -6233,6 +6233,46 @@ function formulize_writeEntry($values, $entry_id="new", $action="replace", $prox
 
 
 /**
+ * The conditions in a subform element's filter that synchExistingSubformEntries() keeps in sync: the = and 'match all'
+ * conditions whose value is a { } reference to an element. When an end user saves the main entry, the element in each
+ * of these conditions is set to match the referenced element, in all the connected entries. The MCP server reports
+ * these to AI assistants rather than doing the sync, so both use this to agree on which conditions qualify.
+ * @param object $subformElementObject A subform element
+ * @return array One item per qualifying condition: 'element' is the condition's element object (in the subform's
+ *         source form), 'reference' is the referenced element's object, and 'term' is the { } term itself. Empty
+ *         when the subform element's sync is turned off, or none of its conditions qualify.
+ */
+function formulize_subformSyncConditions($subformElementObject) {
+    $syncConditions = array();
+    $ele_value = $subformElementObject->getVar('ele_value');
+    // do not synchronize when the subform element has specifically turned off this feature!
+    if((isset($ele_value['enforceFilterChanges']) AND $ele_value['enforceFilterChanges'] == 0) OR !isset($ele_value[7][1]) OR !is_array($ele_value[7][1])) {
+        return $syncConditions;
+    }
+    $subformConditions = $ele_value[7];
+    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+    foreach($subformConditions[1] as $i=>$thisOp) {
+        $term = (string) $subformConditions[2][$i];
+        if($thisOp != "=" OR $subformConditions[3][$i] == "oom" OR substr($term, 0, 1) != "{" OR substr($term, -1) != "}") {
+            continue;
+        }
+        // if there is a { } term that is not a reference to an element (ie: a URL parameter), then we don't want to write anything!
+        if(!$referenceElementObject = $element_handler->get(substr($term, 1, -1))) {
+            continue;
+        }
+        if(!$conditionElementObject = $element_handler->get($subformConditions[0][$i])) {
+            continue;
+        }
+        $syncConditions[] = array(
+            'element' => $conditionElementObject,
+            'reference' => $referenceElementObject,
+            'term' => $term
+        );
+    }
+    return $syncConditions;
+}
+
+/**
  * Synchronize existing subform entries with their parent form. Can only run once per page load.
  *
  * Synchs values of elements in subforms with the values of elements in mainforms, based on = operators in any subform element conditions that exist in the mainform.
@@ -6253,50 +6293,41 @@ function synchExistingSubformEntries($frid) {
                 $elementTypes = $formObject->getVar('elementTypes');
                 if($subformElementIds = array_keys(array_filter($elementTypes, function($value) { return str_contains($value, 'subform'); }))) {
                     // okay, then loop through all the mainform entries that were saved/updated
-                    $subEntriesForThismain = array();
+                    $subEntriesForThisMain = array();
                     foreach($mainFormEntryIds as $entry_id) {
                         // get the linked subform entries, if we haven't already...
                         if(!isset($subEntriesForThisMain[$entry_id])) {
-                            $subEntriesForThismain[$entry_id] = checkForLinks($frid, array($fid), $fid, array($fid=>array($entry_id)), true); // final true means only unified display relationships are used
+                            $subEntriesForThisMain[$entry_id] = checkForLinks($frid, array($fid), $fid, array($fid=>array($entry_id)), true); // final true means only unified display relationships are used
                         }
-                        $checkForLinksResults = $subEntriesForThismain[$entry_id];
+                        $checkForLinksResults = $subEntriesForThisMain[$entry_id];
                         // check to see which subform element conditions we will care about
                         foreach($subformElementIds as $ele_id) {
                             if($subformElementObject = $element_handler->get($ele_id)) {
-																$ele_value = $subformElementObject->getVar('ele_value');
-																// do not synchronize when the subform element has specifically turned off this feature!
-																if(isset($ele_value['enforceFilterChanges']) AND $ele_value['enforceFilterChanges'] == 0) { continue; }
-																$subformConditions = $ele_value[7];
-																$subformId = $ele_value[0];
-																//print 'subform id is'.$subformId;
-																if(is_array($subformConditions)) {
-																		// loop through all the subform entries in the form this subform element uses, that are linked the mainform entry based on the declared form relationship
-																		foreach($checkForLinksResults['sub_entries'][$subformId] as $subformEntryId) {
-																				$filterValues = array();
-																				foreach ($subformConditions[1] as $i=>$thisOp) {
-																						// for every condition that we actually care about...
-																						if ($thisOp == "=" AND $subformConditions[3][$i] != "oom" AND substr($subformConditions[2][$i],0,1) == "{" AND substr($subformConditions[2][$i],-1)=="}") {
-																								// foreach condition that is an = and 'match all' condition, prep the values for writing, and then update the entry
-																								$conditionElementObject = $element_handler->get($subformConditions[0][$i]);
-																								// check to see if the element we're writing to is linked and not snapshot, and pointing to the same form that a dynamic reference belongs to, if so use the mainform entry id
-																								$dynamicRefElement = $element_handler->get(substr($subformConditions[2][$i], 1, -1));
-																								$conditionElementEleValue = $conditionElementObject->getVar('ele_value');
-																								$conditionElementLinkProperties = explode("#*=:*", (string) $conditionElementEleValue[2]);
-																								if($dynamicRefElement AND $conditionElementObject->isLinked AND !$conditionElementEleValue['snapshot'] AND $dynamicRefElement->getVar('id_form') == $conditionElementLinkProperties[0]) {
-																										$filterValues[$subformConditions[0][$i]] = $entry_id;
-																								} elseif($dynamicRefElement) {
-																										$filterValues[$subformConditions[0][$i]] = prepareLiteralTextForDB($conditionElementObject, $subformConditions[2][$i], $entry_id);
-																								} else {
-																										continue; // if there is a { } term that is not a reference to an element, then we don't want to write anything!
-																								}
-																						}
-																				}
-																				if(count((array) $filterValues)) {
-																						formulize_writeEntry($filterValues, $subformEntryId);
-																				}
-																		}
-																}
-														}
+                                // the conditions we actually care about: = and 'match all', with a { } reference to an element
+                                if(!$syncConditions = formulize_subformSyncConditions($subformElementObject)) {
+                                    continue;
+                                }
+                                $ele_value = $subformElementObject->getVar('ele_value');
+                                $subformId = $ele_value[0];
+                                // prep the values for writing - they depend only on the mainform entry, so they are the same for all its subform entries
+                                $filterValues = array();
+                                foreach($syncConditions as $syncCondition) {
+                                    $conditionElementObject = $syncCondition['element'];
+                                    $dynamicRefElement = $syncCondition['reference'];
+                                    // check to see if the element we're writing to is linked and not snapshot, and pointing to the same form that a dynamic reference belongs to, if so use the mainform entry id
+                                    // (only linked elements have link properties - in other list elements, ele_value[2] is the array of options)
+                                    $conditionElementEleValue = $conditionElementObject->getVar('ele_value');
+                                    if($conditionElementObject->isLinked AND !($conditionElementEleValue['snapshot'] ?? 0) AND $dynamicRefElement->getVar('id_form') == explode("#*=:*", (string) $conditionElementEleValue[2])[0]) {
+                                        $filterValues[$conditionElementObject->getVar('ele_id')] = $entry_id;
+                                    } else {
+                                        $filterValues[$conditionElementObject->getVar('ele_id')] = prepareLiteralTextForDB($conditionElementObject, $syncCondition['term'], $entry_id);
+                                    }
+                                }
+                                // then update all the subform entries in the form this subform element uses, that are linked the mainform entry based on the declared form relationship
+                                foreach($checkForLinksResults['sub_entries'][$subformId] ?? array() as $subformEntryId) {
+                                    formulize_writeEntry($filterValues, $subformEntryId);
+                                }
+                            }
                         }
                     }
                 }

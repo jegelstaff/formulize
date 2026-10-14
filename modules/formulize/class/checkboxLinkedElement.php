@@ -33,6 +33,7 @@ if(class_exists("formulizeCheckboxLinkedElement")) {
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/checkboxElement.php";
+require_once XOOPS_ROOT_PATH . "/modules/formulize/class/selectLinkedElement.php"; // shares the linked element property handling
 
 class formulizeCheckboxLinkedElement extends formulizeCheckboxElement {
 
@@ -79,9 +80,10 @@ class formulizeCheckboxLinkedElementHandler extends formulizeCheckboxElementHand
 	 * @param array $properties The properties to validate
 	 * @param array $ele_value The ele_value settings for this element, if applicable. Should be set by the caller, to the current ele_value settings of the element, if this is an existing element.
 	 * @param int|string|object $elementIdentifier The element id, handle or object of the element for which we're validating the properties.
+	 * @param int $formId The id of the form the element is in. Needed when creating, because a new element does not exist yet, so its form cannot be read from it.
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
-	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null) {
+	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null, $formId = null) {
 		$sourceElementObject = null;
 		if(isset($properties['sourceElement']) AND !$sourceElementObject = _getElementObject($properties['sourceElement'])) {
 			throw new Exception("You must provide a valid sourceElement property for the linked dropdown list element");
@@ -89,8 +91,23 @@ class formulizeCheckboxLinkedElementHandler extends formulizeCheckboxElementHand
 		if($sourceElementObject) {
 			$ele_value[ELE_VALUE_SELECT_OPTIONS] = $sourceElementObject->getVar('fid')."#*=:*".$sourceElementObject->getVar('ele_handle'); // by convention all linked elements use ELE_VALUE_SELECT_OPTIONS (2) as the key in ele_value to store the source element reference, so they can all extend this class and use this method
 		}
+		$notes = [];
+		$ele_value = formulizeSelectLinkedElementHandler::applySourceEntryFilter($properties, $ele_value, $elementIdentifier, $formId, $notes);
 		return [
 			'ele_value' => $ele_value,
+			'ele_delim' => formulizeBaseClassForListsElementHandler::delimiterFromPublicAPIProperties($properties, _getElementObject($elementIdentifier)),
+			'notes' => $notes
+		];
+	}
+
+	/**
+	 * Report this element's settings using the same properties that validateEleValuePublicAPIProperties accepts
+	 * @param array $element The element's fields, keyed by column name, with serialized fields already unserialized
+	 * @return array The properties, keyed by their public names
+	 */
+	public static function readPublicAPIProperties($element) {
+		return formulizeSelectLinkedElementHandler::readPublicAPIProperties($element) + [
+			'delimiter' => formulizeBaseClassForListsElementHandler::delimiterForPublicAPI($element['ele_delim'] ?? ''),
 		];
 	}
 

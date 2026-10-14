@@ -258,9 +258,11 @@ class formulizeHandler {
 - Some Linked elements can support multiple selections by the user (for example, Checkboxes, Autocomplete Lists with allowMultipleSelections turned on). These Linked elements will represent many-to-many relationships between forms. For example, if there is a form called Participants, and a form called Activities, the Participants form can have a Linked Checkboxes element that points to a Text Box called 'Name' in the Activities form. This way, when entering a new Participant, the user can check the boxes for all the Activities that the person is participating in. This is a more complex situation, and not all Linked element types support multiple selections.
 **Properties common to all Linked elements:**
 - sourceElement (int or string, the element ID or element handle of an element in another form. The options displayed in this Linked element will be based on the values entered into this source element. Element ID numbers and handles are globally unique, so the form can be determined based on the element reference alone.)
+- sourceEntryFilter (optional, conditions that limit which entries in the source form are offered as options. See the sourceEntryFilter property in the schema.)
 **Basic examples:**
 - A Linked element with options drawn from the values entered in element 7 (element IDs are globally unique and so imply a certain form): { sourceElement: 7 }
-- A Linked element with options drawn from the values entered in the element with handle 'provinces_name' (element handles are globally unique as well): { sourceElement: 'provinces_name' }";
+- A Linked element with options drawn from the values entered in the element with handle 'provinces_name' (element handles are globally unique as well): { sourceElement: 'provinces_name' }
+- A Linked element in a Stores form, offering only the cities in the province chosen in the store's 'stores_province' element: { sourceElement: 'cities_name', sourceEntryFilter: [ { element: 'cities_province', operator: '=', value: '{stores_province}' } ] }";
 		return $description;
 	}
 
@@ -306,7 +308,9 @@ class formulizeHandler {
 - sortingElement (int, the element ID of an element in the source form to sort the entries by. If not specified, entries will be shown in creation order.)
 - sortingDirection (string, either 'ASC' or 'DESC', indicating if the entries should be sorted in ascending or descending order. Default is 'ASC'.)
 - showAddButton (int, either 1 or 0, indicating if an Add Entry button should be shown to users, if they have permission to add entries in the source form. Default is 1. Set to 0 if this Subform Interface should never include an Add Entry button.)
-- showDeleteButton (int, either 1 or 0, indicating if a Delete Entry button should be shown to users, if they have permission to delete entries in the source form. Default is 1. Set to 0 if this Subform Interface should never include a Delete Entry button.)";
+- showDeleteButton (int, either 1 or 0, indicating if a Delete Entry button should be shown to users, if they have permission to delete entries in the source form. Default is 1. Set to 0 if this Subform Interface should never include a Delete Entry button.)
+- sourceEntryFilter (optional, conditions that limit which of the connected entries are shown. See the sourceEntryFilter property in the schema.)
+- keepFilteredValuesInSync (int, either 1 or 0. Defaults to 1. Only set to 0 in unusual circumstances. See the keepFilteredValuesInSync property in the schema.)";
 		return $description;
 	}
 
@@ -801,6 +805,98 @@ class formulizeHandler {
 			$types[] = (isset($rule['type']) AND $rule['type'] === 'match-one-or-more') ? 'oom' : 'all';
 		}
 		return array(0=>$elements, 1=>$ops, 2=>$terms, 3=>$types);
+	}
+
+	/**
+	 * Turn the internal condition storage array (0=>elements, 1=>ops, 2=>terms, 3=>types) back into a friendly list
+	 * of rules. The read-side counterpart of buildConditionStorageArray(), so that a setting read through the MCP
+	 * server comes back in exactly the shape the tools accept for writing it.
+	 * @param array $conditions The 4 parallel arrays.
+	 * @return array List of { element, operator, value, type } rules, or an empty array when there are none.
+	 */
+	public static function readableConditionList($conditions) {
+		$rules = array();
+		if(is_array($conditions) AND !empty($conditions[0]) AND is_array($conditions[0])) {
+			foreach(array_values($conditions[0]) as $i => $eleRef) {
+				$rules[] = array(
+					'element' => self::resolveElementHandle($eleRef),
+					'operator' => $conditions[1][$i],
+					'value' => $conditions[2][$i],
+					'type' => ($conditions[3][$i] == 'all' ? 'match-all' : 'match-one-or-more')
+				);
+			}
+		}
+		return $rules;
+	}
+
+	/**
+	 * Build the stored filter that limits which entries a linked element or a subform interface draws from its
+	 * source form. The rules are checked first, because a rule that cannot work is otherwise stored without
+	 * complaint and then silently skipped when the filter runs - so the likely mistakes come back as errors that
+	 * say how to fix them.
+	 * @param array $rules List of { element, operator, value, type } rules. An empty list removes the filter.
+	 * @param int $sourceFid The form whose entries are being filtered. Condition elements must be in this form.
+	 * @param int $hostFid The form the linked element or subform interface is in. {handle} values refer to elements in this form.
+	 * @param array $notes Gets an explanation added for each rule that is valid, but may not do what was intended.
+	 * @throws Exception if a rule cannot work
+	 * @return array The 4 parallel arrays, or an empty array when there are no rules.
+	 */
+	public static function buildSourceEntryFilter($rules, $sourceFid, $hostFid, &$notes = array()) {
+		if(!is_array($rules)) {
+			throw new Exception("sourceEntryFilter must be a list of conditions, or an empty list to remove the filter.");
+		}
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$sourceFormObject = $sourceFid ? $form_handler->get($sourceFid) : false;
+		$hostFormObject = $hostFid ? $form_handler->get($hostFid) : false;
+		if(!$sourceFormObject OR !$hostFormObject) {
+			throw new Exception("sourceEntryFilter can only be set once the source of the entries is known. Set sourceElement (for linked elements) or sourceForm (for subform interfaces) in the same request, or first.");
+		}
+		$sourceTitle = $sourceFormObject->getVar('title');
+		$hostTitle = $hostFormObject->getVar('title');
+		$sourceHandles = implode(', ', $sourceFormObject->getVar('elementHandles'));
+		$hostHandles = implode(', ', $hostFormObject->getVar('elementHandles'));
+		foreach(array_values($rules) as $i => $rule) {
+			$position = $i + 1;
+			$eleRef = $rule['element'] ?? '';
+			if(!isMetaDataField($eleRef)) {
+				if(!$conditionElementObject = _getElementObject($eleRef)) {
+					throw new Exception("sourceEntryFilter condition $position: there is no element '".FormulizeObject::sanitize_handle_name((string) $eleRef)."'. Conditions check the entries in '$sourceTitle' (form $sourceFid), so use one of its elements: $sourceHandles");
+				}
+				$conditionHandle = $conditionElementObject->getVar('ele_handle');
+				if($conditionElementObject->getVar('fid') != $sourceFid) {
+					$message = "sourceEntryFilter condition $position: '$conditionHandle' is not in '$sourceTitle' (form $sourceFid). Conditions check the entries in '$sourceTitle', so use one of its elements: $sourceHandles.";
+					// the likeliest mistake: naming the element in this form that the source entries should match
+					if($conditionElementObject->getVar('fid') == $hostFid) {
+						$message .= " To compare against '$conditionHandle' in the entry being edited, put it in braces as the value instead: {".$conditionHandle."}";
+					}
+					throw new Exception($message);
+				}
+			}
+			if(!in_array($rule['operator'] ?? '', array('=', '>', '<', '>=', '<=', '!=', 'LIKE', 'NOT LIKE', 'IN'))) {
+				throw new Exception("sourceEntryFilter condition $position: the operator is not valid. Valid operators are =, >, <, >=, <=, !=, LIKE, NOT LIKE, IN");
+			}
+			if(!in_array($rule['type'] ?? 'match-all', array('match-all', 'match-one-or-more'))) {
+				throw new Exception("sourceEntryFilter condition $position: the type is not valid. Valid types are match-all, match-one-or-more");
+			}
+			$value = (string) ($rule['value'] ?? '');
+			if(strlen($value) < 3 OR substr($value, 0, 1) != '{' OR substr($value, -1) != '}') {
+				continue;
+			}
+			// a { } value is a keyword, an element in the entry being edited, or a URL/POST parameter - anything else
+			// is skipped by buildConditionsFilterSQL() when the filter runs
+			$term = substr($value, 1, -1);
+			if(in_array($term, array('USER', 'USER_ID', 'USERID', 'BLANK', 'ID', 'NOW')) OR substr($term, 0, 5) == 'TODAY') {
+				continue;
+			}
+			if(!is_numeric($term) AND $termElementObject = _getElementObject($term)) {
+				if($termElementObject->getVar('fid') != $hostFid) {
+					throw new Exception("sourceEntryFilter condition $position: {".$term."} is an element in form ".$termElementObject->getVar('fid').", but a value in braces refers to the entry being edited, which is in '$hostTitle' (form $hostFid). Use one of its elements: $hostHandles");
+				}
+			} else {
+				$notes[] = "sourceEntryFilter condition $position: {".$term."} is not an element in '$hostTitle', or a keyword such as {USER} or {TODAY}, so it will be read from a parameter called '$term' in the page's URL or posted data. When there is no such parameter, this condition is ignored. If you meant an element, use one of these: $hostHandles";
+			}
+		}
+		return self::buildConditionStorageArray($rules);
 	}
 
 	/**

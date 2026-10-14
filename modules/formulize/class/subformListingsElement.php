@@ -198,9 +198,51 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 			}
 			$ele_value[8] = $fullFormModes[(string) $properties['fullFormMode']];
 		}
+		$notes = [];
+		if(array_key_exists('sourceEntryFilter', $properties)) {
+			$elementObject = $elementIdentifier ? _getElementObject($elementIdentifier) : false;
+			$hostFid = $elementObject ? intval($elementObject->getVar('fid')) : intval($formId);
+			$ele_value[7] = formulizeHandler::buildSourceEntryFilter($properties['sourceEntryFilter'] ?? [], intval($ele_value[0] ?? 0), $hostFid, $notes);
+		}
+		if(isset($properties['keepFilteredValuesInSync'])) {
+			$ele_value['enforceFilterChanges'] = $properties['keepFilteredValuesInSync'] ? 1 : 0;
+		}
 		return [
 			'ele_value' => $ele_value,
+			'notes' => $notes
 		];
+	}
+
+	/**
+	 * Report this element's settings using the same properties that validateEleValuePublicAPIProperties accepts,
+	 * so that an AI assistant can read a setting, change it, and send it back unaltered in shape.
+	 * @param array $element The element's fields, keyed by column name, with serialized fields already unserialized
+	 * @return array The properties, keyed by their public names
+	 */
+	public static function readPublicAPIProperties($element) {
+		$ele_value = $element['ele_value'] ?? [];
+		// static::class is the handler class here, ie: formulizeSubformEditableRowElementHandler, the same as in validateEleValuePublicAPIProperties
+		$elementTypeName = strtolower(str_ireplace(['formulize', 'ElementHandler'], "", static::class));
+		$viewingModes = $elementTypeName == 'subformeditablerow'
+			? [0 => 'off', 4 => 'full_screen', 3 => 'drawer']
+			: [0 => 'off', 1 => 'full_screen', 2 => 'drawer'];
+		$properties = [
+			'sourceForm' => intval($ele_value[0] ?? 0),
+			'elementsInRow' => array_values(array_filter(array_map('intval', explode(',', (string) ($ele_value[1] ?? ''))))),
+			'sortingElement' => intval($ele_value['SortingElement'] ?? 0),
+			'sortingDirection' => ($ele_value['SortingDirection'] ?? 'ASC') == 'DESC' ? 'DESC' : 'ASC',
+			'showAddButton' => ($ele_value[6] ?? 'subform') == 'hideaddentries' ? 0 : 1,
+			'showDeleteButton' => intval($ele_value['show_delete_button'] ?? 1),
+			'disabledElementsInRow' => array_values(array_filter(array_map('intval', explode(',', (string) ($ele_value['disabledelements'] ?? ''))))),
+			'entryViewingMode' => $viewingModes[intval($ele_value[3] ?? 0)] ?? null,
+			'sourceEntryFilter' => formulizeHandler::readableConditionList($ele_value[7] ?? []),
+			'keepFilteredValuesInSync' => intval($ele_value['enforceFilterChanges'] ?? 1),
+		];
+		if($elementTypeName == 'subformfullform') {
+			$properties['fullFormMode'] = ($ele_value[8] ?? 'form') == 'flatform' ? 'not_collapsable' : 'collapsable';
+		}
+		// a viewing mode set in the admin UI that has no public name is left out, rather than reported wrongly
+		return array_filter($properties, function($value) { return $value !== null; });
 	}
 
 	/**

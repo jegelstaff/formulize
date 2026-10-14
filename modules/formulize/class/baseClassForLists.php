@@ -69,6 +69,23 @@ class formulizeBaseClassForListsElementHandler extends formulizeElementsHandler 
 				throw new Exception("Could not change existing user submitted values to match the new options, for element '".$elementObject->getVar('ele_caption')."' (id: ".$elementObject->getVar('ele_id').")");
 			}
 		}
+		return [
+			'ele_value' => $ele_value,
+			'ele_uitext' => $uiText,
+			'ele_delim' => self::delimiterFromPublicAPIProperties($properties, $elementObject)
+		];
+	}
+
+	/**
+	 * Work out the ele_delim setting from the public delimiter property, if one was provided. Separate from
+	 * validateEleValuePublicAPIProperties so that element types which use a delimiter, but not the rest of that
+	 * method's handling of options (ie: checkboxLinked, whose ele_value[2] is a source element, not a list of options),
+	 * can use it too.
+	 * @param array $properties The properties being validated
+	 * @param object|false $elementObject The element being updated, or false when one is being created
+	 * @return string The ele_delim setting - the current one, or the system default for a new element, when no delimiter was provided
+	 */
+	public static function delimiterFromPublicAPIProperties($properties, $elementObject) {
 		$config_handler = xoops_gethandler('config');
 		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 		$delimiter = $elementObject ? $elementObject->getVar('ele_delim') : $formulizeConfig['delimeter']; // yes, misspelled in the preferences :(
@@ -84,11 +101,21 @@ class formulizeBaseClassForListsElementHandler extends formulizeElementsHandler 
 					$delimiter = $properties['delimiter'];
 			}
 		}
-		return [
-			'ele_value' => $ele_value,
-			'ele_uitext' => $uiText,
-			'ele_delim' => $delimiter
-		];
+		return $delimiter;
+	}
+
+	/**
+	 * Report an ele_delim setting as the public delimiter property - the reverse of delimiterFromPublicAPIProperties
+	 * @param string $ele_delim The element's ele_delim setting
+	 * @return string 'linebreak', 'space', or the custom delimiter itself
+	 */
+	public static function delimiterForPublicAPI($ele_delim) {
+		if($ele_delim == "br") {
+			return 'linebreak';
+		} elseif($ele_delim == str_repeat("&nbsp;", 5)) {
+			return 'space';
+		}
+		return (string) $ele_delim;
 	}
 
 	/**

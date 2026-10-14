@@ -163,6 +163,8 @@ The form may also include \'entry_description\', \'usage_notes\' and \'data_conv
 				'name' => 'get_element_details',
 				'description' => 'Get the full settings of one or more specific elements in a form. Use this after get_form_details, which lists every element in a form but only gives you their id, handle, caption and type. This tool gives you everything else about the elements you name: the options in a list, the alternative text shown for those options, whether the element is required, which groups can see it, the conditions that control when it is displayed or disabled, and the type-specific settings that vary from one kind of element to another.
 
+For some kinds of element, the result includes \'properties\': the settings in exactly the format that the update tool for that kind of element accepts, including settings that are not in use yet. To change a setting, edit it there and send it back in the update tool\'s properties. \'ele_value\' is the raw form of the same settings, as stored in the database.
+
 Ask for several elements in one call rather than one at a time. If some of the elements you ask for cannot be found, the ones that were found are still returned, and the ones that were not are reported back to you so you can correct them.',
 				'inputSchema' => [
 					'type' => 'object',
@@ -3445,6 +3447,48 @@ Do not use foreign key values with linked elements; use the readable value inste
 	}
 
 	/**
+	 * Build the JSON schema for the properties that limit which entries a linked element or a subform interface draws
+	 * from its source form. These go in the schema of the tool's 'properties' object, rather than only in the tool
+	 * description, because clients may truncate long descriptions and then the model would never learn they exist.
+	 * The conditions reuse the display_conditions item schema, so the model meets one condition format everywhere,
+	 * with the descriptions changed to say which form the elements belong to, and what a value in braces refers to.
+	 * @param string $category The element category, 'linked' or 'subforms'
+	 * @param bool $isUpdate Whether this is for an update tool (true) or a create tool (false)
+	 * @return array JSON schema for each property, keyed by property name
+	 */
+	private function sourceEntryFilterSchema($category, $isUpdate = false) {
+		if($category == 'linked') {
+			$limits = 'which entries in the source form are offered as options';
+			$entryBeingEdited = 'the entry being edited';
+			$example = 'Example, a Linked element in a Stores form that only offers the cities in the province chosen in the store\'s \'stores_province\' element: [ { "element": "cities_province", "operator": "=", "value": "{stores_province}", "type": "match-all" } ]';
+		} else {
+			$limits = 'which of the connected entries are shown';
+			$entryBeingEdited = 'the entry this Subform Interface appears in';
+			$example = 'Example, a Subform Interface in a Projects form that shows only the tasks that are not closed, and keeps each task\'s client the same as the project\'s: [ { "element": "tasks_status", "operator": "!=", "value": "Closed", "type": "match-all" }, { "element": "tasks_client", "operator": "=", "value": "{projects_client}", "type": "match-all" } ]';
+		}
+		$conditionItems = $this->displayConditionsSchema('element')['items'];
+		$conditionItems['properties']['element']['description'] = 'An element in the source form, provided as an element handle or id. Its value in each source entry is checked.';
+		$conditionItems['properties']['value']['description'] .= " To compare against a value in $entryBeingEdited, use the handle of that element in braces, for example {orders_customer}.";
+		$schema = [
+			'sourceEntryFilter' => [
+				'type' => 'array',
+				'description' => "Optional. Conditions that limit $limits. Same format as display_conditions, except that each condition checks an element in the source form, and a value can be the handle of an element in $entryBeingEdited, in braces. "
+					.($isUpdate ? "Omit to leave the current filter unchanged; use [] to remove it." : "Omit for no filter.")
+					."\n$example",
+				'items' => $conditionItems
+			]
+		];
+		if($category == 'subforms') {
+			$schema['keepFilteredValuesInSync'] = [
+				'type' => 'integer',
+				'enum' => [0, 1],
+				'description' => "Optional. Default is 1. __New__ entries added through a Subform Interface are __always__ given the values in the match-all '=' conditions of its sourceEntryFilter, so they match the filter. For conditions with {handles} in braces, this is a useful way to propagate values from the main entry into sub entries. When this setting is 1, those {handle} values are also applied to all existing connected entries whenever the main entry is saved in a form in a browser by an end user, so the entries continue to match the main entry. When this setting is 0, existing connected entries are _not_ changed. Only set it to 0 in unusual circumstances, when such a divergence is a valid part of the workflow."
+			];
+		}
+		return $schema;
+	}
+
+	/**
 	 * Create a new form element in a form
 	 * Various tool names for different categories of elements, based on the getElementTypeReadableNames method
 	 * in the formulizeHandler class.
@@ -3694,6 +3738,7 @@ Do not use foreign key values with linked elements; use the readable value inste
 		// that are merged into the $elementObjectProperties array
 		// this allows each element type to handle its own properties and validation
 		$propertiesPreparedByTheElement = [];
+		$notes = [];
 		$elementTypeHandler = xoops_getmodulehandler($type.'Element', 'formulize');
 		if(method_exists($elementTypeHandler, 'validateEleValuePublicAPIProperties')) {
 			$ele_value = $elementObject ? $elementObject->getVar('ele_value') : $elementTypeHandler->getDefaultEleValue();
@@ -3704,6 +3749,11 @@ Do not use foreign key values with linked elements; use the readable value inste
 				// for example, if it should create a subform interface in the source form
 				$makeSubformInterface = $propertiesPreparedByTheElement['upsertParams']['makeSubformInterface'] ?? false;
 				unset($propertiesPreparedByTheElement['upsertParams']); // remove so it won't affect the object properties!
+			}
+			if(isset($propertiesPreparedByTheElement['notes'])) {
+				// explanations for the AI assistant, about settings that were accepted but may not do what was intended
+				$notes = $propertiesPreparedByTheElement['notes'];
+				unset($propertiesPreparedByTheElement['notes']); // remove so it won't affect the object properties!
 			}
 		}
 
@@ -3727,9 +3777,13 @@ Do not use foreign key values with linked elements; use the readable value inste
 			'column_heading' => $elementObject->getVar('ele_colhead'),
 			'help_text_for_users' => $elementObject->getVar('ele_desc'),
 			'required' => $elementObject->getVar('ele_required') ? true : false,
-			'properties' => $elementObject->getVar('ele_value'),
+			// in the same shape this tool accepts, when the element type can report it that way
+			'properties' => $this->publicElementProperties($elementObject->getValues(null, 'n')) ?? $elementObject->getVar('ele_value'),
 			'display_conditions' => $this->tidyUpOldConditionsArrayFormat($elementObject->getVar('ele_filtersettings'))
 		];
+		if(!empty($notes)) {
+			$returnValue['notes'] = $notes;
+		}
 
 		// add ui text if there is any
 		if(!empty($elementObject->getVar('ele_uitext'))) {
@@ -6419,6 +6473,47 @@ Do not use foreign key values with linked elements; use the readable value inste
 	}
 
 	/**
+	 * Find the conditions in a form's subform interfaces that keep connected entries matching the main entry. When an
+	 * end user saves the main entry in a browser, synchExistingSubformEntries() copies the main entry's value into the
+	 * connected entries for each of these. The tools do not do that behind the AI assistant's back - they report it,
+	 * so the assistant can decide whether the connected entries should change too.
+	 * @param int $formId The main form
+	 * @return array One item per condition, with the subform element, its source form, the element in the source
+	 *         form that would be written ('sub_handle'), and the element in the main form it would copy ('main_handle')
+	 */
+	private function syncedSubformFilterReferences($formId) {
+		$references = [];
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		if(!$formObject = $form_handler->get($formId)) {
+			return $references;
+		}
+		foreach((array) $formObject->getVar('elementTypes') as $elementId => $elementType) {
+			if(!str_contains((string) $elementType, 'subform') OR !$subformElementObject = $element_handler->get($elementId)) {
+				continue;
+			}
+			$sourceFid = intval($subformElementObject->getVar('ele_value')[0] ?? 0);
+			$sourceFormObject = $form_handler->get($sourceFid);
+			// the same conditions synchExistingSubformEntries() syncs, of which only references to this form's own
+			// elements can be changed by writing entries in this form
+			foreach(formulize_subformSyncConditions($subformElementObject) as $syncCondition) {
+				if($syncCondition['reference']->getVar('id_form') != $formId) {
+					continue;
+				}
+				$references[] = [
+					'subform_element_id' => $elementId,
+					'subform_caption' => $subformElementObject->getVar('ele_caption', 'n'),
+					'source_form_id' => $sourceFid,
+					'source_form_title' => $sourceFormObject ? $sourceFormObject->getVar('title') : '',
+					'sub_handle' => $syncCondition['element']->getVar('ele_handle'),
+					'main_handle' => $syncCondition['reference']->getVar('ele_handle'),
+				];
+			}
+		}
+		return $references;
+	}
+
+	/**
 	 * Write entry data to a form (used by both create and update tools)
 	 * The form id is not actually required in the underlying formulize_writeEntry function, because the element references are globally unique and the form can be derived from them.
 	 * However, this method still validates that the form exists and that the elements are part of the form, which is useful since the AI assistant might have hallucinated elements!
@@ -6619,6 +6714,21 @@ Do not use foreign key values with linked elements; use the readable value inste
 		$changedEntryIds = []; // only entries whose data actually changed, for notifications
 		$userIdsFromSubmission = []; // entryId => userId for entries where processUserAccountSubmission ran
 
+		// When an end user saves an entry in a browser, subform interfaces can copy some of its values into the
+		// connected entries (see syncedSubformFilterReferences). That does not happen here, so note the values it
+		// depends on before writing, and afterwards report any that changed.
+		$syncedReferences = $operation == 'update' ? $this->syncedSubformFilterReferences($formId) : [];
+		$watchedHandles = array_unique(array_column($syncedReferences, 'main_handle'));
+		$watchedValuesBefore = [];
+		if(!empty($watchedHandles)) {
+			$watchDataHandler = new formulizeDataHandler($formId);
+			foreach($preparedData as $watchEntryId => $entryData) {
+				foreach(array_intersect($watchedHandles, array_keys($entryData)) as $handle) {
+					$watchedValuesBefore[$watchEntryId][$handle] = $watchDataHandler->getElementValueInEntry($watchEntryId, $handle);
+				}
+			}
+		}
+
 		// Step 3: Write the entries
 		// keys are entry ids when updating, or sequential integers when creating
 		foreach(array_keys($preparedData) as $i) {
@@ -6728,6 +6838,28 @@ Do not use foreign key values with linked elements; use the readable value inste
 			'form_id' => $formId,
 			'data_written_to_entries' => $preparedData,
 		];
+
+		// report the changes that would have been copied into connected entries, had they been made in a browser
+		$changedWatchedEntries = []; // handle => entry ids whose value changed
+		foreach($watchedValuesBefore as $watchEntryId => $handles) {
+			foreach($handles as $handle => $before) {
+				if((string) $watchDataHandler->getElementValueInEntry($watchEntryId, $handle) !== (string) $before) {
+					$changedWatchedEntries[$handle][] = $watchEntryId;
+				}
+			}
+		}
+		$notes = [];
+		foreach($syncedReferences as $reference) {
+			if(empty($changedWatchedEntries[$reference['main_handle']])) {
+				continue;
+			}
+			$entryIds = $changedWatchedEntries[$reference['main_handle']];
+			$entryText = count($entryIds) > 1 ? 'entries '.implode(', ', $entryIds) : 'entry '.$entryIds[0];
+			$notes[] = "'".$reference['main_handle']."' changed in $entryText. When an end user makes that change in a form in a browser, the '".$reference['subform_caption']."' Subform Interface (element ".$reference['subform_element_id'].") forces '".$reference['sub_handle']."' to match it, in all the connected entries in '".$reference['source_form_title']."' (form ".$reference['source_form_id']."), so they keep matching the main entry. That is a convenience for users working in a browser, and it was not done here because you're editing entries directly. If you intend this to happen, update those connected entries too.";
+		}
+		if(!empty($notes)) {
+			$response['notes'] = $notes;
+		}
 
 		return $response;
 	}
@@ -7131,6 +7263,14 @@ Do not use foreign key values with linked elements; use the readable value inste
 				'display_conditions' => $this->displayConditionsSchema('element', false, true)
 			];
 
+			// properties that are documented in the schema of the 'properties' object, not only in the tool description
+			$namedPropertiesCreate = [];
+			$namedPropertiesUpdate = [];
+			if($category == 'linked' OR $category == 'subforms') {
+				$namedPropertiesCreate = ['properties' => $this->sourceEntryFilterSchema($category, false)];
+				$namedPropertiesUpdate = ['properties' => $this->sourceEntryFilterSchema($category, true)];
+			}
+
 			$formElementTools[] = [
 				'name' => 'create_'.str_replace(' ', '_', strtolower($singularCategoryName)),
 				'description' => $creationDescription,
@@ -7154,7 +7294,7 @@ Do not use foreign key values with linked elements; use the readable value inste
 								'type' => 'object',
 								'description' => "Required. Additional configuration settings for the $singularCategoryName. The available properties depend on the element type. See the tool description for examples of what properties are needed for different element types.",
 								'additionalProperties' => true
-							],
+							] + $namedPropertiesCreate,
 						] + $commonDataElementPropertiesForThisCategory + $creationDataElementPropertiesForThisCategory + $displayConditionsCreate + $orderProperty + $dataTypePropertyForThisCategory,
 					'required' => ['form_id', 'type', 'caption', 'properties']
 				]
@@ -7190,9 +7330,9 @@ Do not use foreign key values with linked elements; use the readable value inste
 						],
 						'properties' => [
 							'type' => 'object',
-							'description' => "Optional. Updated configuration settings for the $singularCategoryName. The available properties depend on the element type. See the tool description for examples of what properties are needed for different element types. Use the get_form_details tool to see all the element types for the existing elements.",
+							'description' => "Optional. Updated configuration settings for the $singularCategoryName. The available properties depend on the element type. See the tool description for examples of what properties are needed for different element types. Use the get_element_details tool to see the current settings, in the same format.",
 							'additionalProperties' => true
-						],
+						] + $namedPropertiesUpdate,
 					] + $commonDataElementPropertiesForThisCategory + [
 						'display' => [
 							'type' => 'boolean',

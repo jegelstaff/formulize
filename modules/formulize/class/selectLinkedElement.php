@@ -66,6 +66,7 @@ class formulizeSelectLinkedElement extends formulizeSelectElement {
 **Description:** A dropdown list where the options are drawn from the values entered in another element in another form. The user can select one choice.
 **Properties:**
 - all the common properties for Linked elements";
+		return $descriptionAndExamples;
 	}
 }
 
@@ -83,9 +84,10 @@ class formulizeSelectLinkedElementHandler extends formulizeSelectElementHandler 
 	 * @param array $properties The properties to validate
 	 * @param array $ele_value The ele_value settings for this element, if applicable. Should be set by the caller, to the current ele_value settings of the element, if this is an existing element.
 	 * @param int|string|object $elementIdentifier The element id, handle or object of the element for which we're validating the properties.
+	 * @param int $formId The id of the form the element is in. Needed when creating, because a new element does not exist yet, so its form cannot be read from it.
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
-	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null) {
+	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null, $formId = null) {
 		$sourceElementObject = null;
 		if(isset($properties['sourceElement']) AND !$sourceElementObject = _getElementObject($properties['sourceElement'])) {
 			throw new Exception("You must provide a valid sourceElement property for the linked dropdown list element");
@@ -93,8 +95,50 @@ class formulizeSelectLinkedElementHandler extends formulizeSelectElementHandler 
 		if($sourceElementObject) {
 			$ele_value[ELE_VALUE_SELECT_OPTIONS] = $sourceElementObject->getVar('fid')."#*=:*".$sourceElementObject->getVar('ele_handle'); // by convention all linked elements use ELE_VALUE_SELECT_OPTIONS (2) as the key in ele_value to store the source element reference, so they can all extend this class and use this method
 		}
+		$notes = [];
+		$ele_value = self::applySourceEntryFilter($properties, $ele_value, $elementIdentifier, $formId, $notes);
 		return [
 			'ele_value' => $ele_value,
+			'notes' => $notes
+		];
+	}
+
+	/**
+	 * Store the sourceEntryFilter property, if one was provided, as the filter on the linked element's source entries.
+	 * Static so that linked element types which do not extend this class (ie: checkboxLinked) can use it too.
+	 * @param array $properties The properties being validated
+	 * @param array $ele_value The ele_value settings, with the source element already updated if a new one was provided
+	 * @param int|string|object $elementIdentifier The element being updated, if any
+	 * @param int $formId The id of the form the element is in, for when it is being created
+	 * @param array $notes Gets explanations added to it, for conditions that are valid but may not do what was intended
+	 * @return array The ele_value settings, with the filter applied
+	 */
+	public static function applySourceEntryFilter($properties, $ele_value, $elementIdentifier, $formId, &$notes) {
+		if(!array_key_exists('sourceEntryFilter', $properties)) {
+			return $ele_value;
+		}
+		$elementObject = $elementIdentifier ? _getElementObject($elementIdentifier) : false;
+		$hostFid = $elementObject ? intval($elementObject->getVar('fid')) : intval($formId);
+		$sourceFid = intval(explode("#*=:*", (string) ($ele_value[ELE_VALUE_SELECT_OPTIONS] ?? ''))[0]);
+		$ele_value[ELE_VALUE_SELECT_LINK_FILTERS] = formulizeHandler::buildSourceEntryFilter($properties['sourceEntryFilter'] ?? [], $sourceFid, $hostFid, $notes);
+		return $ele_value;
+	}
+
+	/**
+	 * Report this element's settings using the same properties that validateEleValuePublicAPIProperties accepts,
+	 * so that an AI assistant can read a setting, change it, and send it back unaltered in shape.
+	 * Takes the whole element rather than only its ele_value, because some public properties are stored in other
+	 * columns (ie: delimiter in ele_delim). Static so that linked element types which do not extend this class (ie:
+	 * checkboxLinked) can use it too.
+	 * @param array $element The element's fields, keyed by column name, with serialized fields already unserialized
+	 * @return array The properties, keyed by their public names
+	 */
+	public static function readPublicAPIProperties($element) {
+		$ele_value = $element['ele_value'] ?? [];
+		$sourceParts = explode("#*=:*", (string) ($ele_value[ELE_VALUE_SELECT_OPTIONS] ?? ''));
+		return [
+			'sourceElement' => $sourceParts[1] ?? '',
+			'sourceEntryFilter' => formulizeHandler::readableConditionList($ele_value[ELE_VALUE_SELECT_LINK_FILTERS] ?? []),
 		];
 	}
 
