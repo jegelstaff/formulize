@@ -118,28 +118,6 @@ function formulize_looksIcon($kind) {
 	return '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . (isset($paths[$kind]) ? $paths[$kind] : '') . '</svg>';
 }
 
-// The changes that fit in a row of the Changes column, from the first, roughly
-// measured in rem: a logo's thumbnail, a stack of swatches, or a word as wide as its
-// letters, each after a dot, and room kept for "+N" when any are left over. The first
-// always shows; a word too long for the column gets an ellipsis.
-function formulize_looksFitChanges($items, $room = 13.5) {
-	$shown = array();
-	$used = 0;
-	foreach ($items as $index => $item) {
-		$width = !empty($item['image']) ? ($item['kind'] == 'logo' ? 3.5 : 1.25)
-			: (!empty($item['swatches']) ? 1 + 0.6 * (min(3, count($item['swatches'])) - 1)
-			: 0.38 * strlen($item['short']));
-		$width += $index ? 1 : 0; // the dot before it
-		$reserve = ($index < count($items) - 1) ? 1.75 : 0; // "+N", if more come after it
-		if ($shown AND $used + $width + $reserve > $room) {
-			break;
-		}
-		$shown[] = $item;
-		$used += $width;
-	}
-	return $shown;
-}
-
 // A screen's Appearance tab, in the admin pages
 function formulize_looksScreenUrl($screen) {
 	return XOOPS_URL . '/modules/formulize/admin/ui.php?page=screen&fid=' . $screen['fid'] . '&sid=' . $screen['sid'] . '&tab=appearance';
@@ -250,18 +228,14 @@ ob_start();
 .formulize-looks__more small { color: var(--fz-color-text-muted); font-size: var(--fz-text-xs); }
 .formulize-looks__more--quiet > span:first-child { color: var(--fz-color-text-muted); }
 .formulize-looks__col-base { width: 10rem; }
-.formulize-looks__col-changes { width: 16rem; min-width: 16rem; }
-/* a look's changes in a row: one line, a few compact tokens, then how many more */
-.formulize-looks__changes-btn { gap: calc(var(--fz-spacing) * 1.5); max-width: 100%; margin-inline-start: calc(var(--fz-spacing) * -3); overflow: hidden; font-weight: var(--fz-font-weight-normal); white-space: nowrap; }
-.formulize-looks__dot { color: var(--fz-color-text-subtle); }
-.formulize-looks__word { overflow: hidden; text-overflow: ellipsis; max-width: 8rem; }
-.formulize-looks__mini { display: block; flex: none; border-radius: var(--fz-radius-sm); }
-.formulize-looks__mini--logo { max-width: 3.5rem; max-height: calc(var(--fz-spacing) * 4.5); }
-.formulize-looks__mini--favicon { width: calc(var(--fz-spacing) * 4); height: calc(var(--fz-spacing) * 4); }
-.formulize-looks__stack { display: inline-flex; flex: none; }
-.formulize-looks__stack .formulize-looks__swatch { width: calc(var(--fz-spacing) * 3.5); height: calc(var(--fz-spacing) * 3.5); box-shadow: 0 0 0 2px var(--fz-color-surface), inset 0 0 0 1px rgba(0, 0, 0, 0.12); }
-.formulize-looks__stack .formulize-looks__swatch + .formulize-looks__swatch { margin-inline-start: calc(var(--fz-spacing) * -1); }
-.formulize-looks__extra { flex: none; padding: 0 calc(var(--fz-spacing) * 1.5); border-radius: var(--fz-radius-full); background: var(--fz-color-surface-3); color: var(--fz-color-text-muted); font-size: var(--fz-text-xs); line-height: calc(var(--fz-spacing) * 4.5); }
+.formulize-looks__col-changes { width: 12rem; min-width: 12rem; }
+/* the kinds of change a look makes: an icon each, in the same place in every row */
+.formulize-looks__changes-btn { gap: calc(var(--fz-spacing) * 1); margin-inline-start: calc(var(--fz-spacing) * -3); font-weight: var(--fz-font-weight-normal); }
+.formulize-looks__kind { display: grid; place-items: center; flex: none; width: calc(var(--fz-spacing) * 5.5); height: calc(var(--fz-spacing) * 5.5); border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3); color: var(--fz-color-text-muted); }
+.formulize-looks__kind svg { width: calc(var(--fz-spacing) * 3.5); height: calc(var(--fz-spacing) * 3.5); }
+.formulize-looks__kind--none { background: none; }
+/* on the site look's tinted row, white tiles, as its badge is */
+.formulize-looks__site .formulize-looks__kind:not(.formulize-looks__kind--none) { background: var(--fz-color-surface); }
 .formulize-looks__col-used { width: 13rem; }
 .formulize-looks__col-actions { width: 8.5rem; }
 .formulize-looks__actions { display: inline-flex; justify-content: flex-end; gap: calc(var(--fz-spacing) * 1.5); width: 100%; }
@@ -339,7 +313,6 @@ ob_start();
 				$chain = formulize_appearanceLookChain($looks, $key);
 				array_pop($chain); // the look itself
 				$summary = formulize_appearanceLookSummary($looks, $key, $theme);
-				$byImportance = formulize_appearanceLookSummaryByImportance($summary);
 				$from = $look['base'] !== '' ? $looks[$look['base']]['name'] : $theme . '\'s own settings';
 				$screens = isset($lookScreens[$key]) ? $lookScreens[$key] : array();
 				$through = array();
@@ -369,32 +342,23 @@ ob_start();
 					<td><?php echo $look['base'] !== '' ? formulize_looksH($looks[$look['base']]['name']) : '<span class="fz-text-subtle">Nothing</span>'; ?></td>
 					<td>
 						<?php
-						// the changes, the most telling first, as many as fit the column, then how many more
-						$shown = formulize_looksFitChanges($byImportance);
-						$more = count($byImportance) - count($shown);
-						$phrases = array_map(function ($item) { return $item['phrase']; }, $byImportance);
+						// the kinds of change the look makes, each in its own place, so a column of them lines up
+						$kinds = array();
+						foreach ($summary as $item) {
+							$kinds[$item['kind']] = $item;
+						}
+						$phrases = array_map(function ($item) { return $item['phrase']; }, $summary);
 						?>
 						<button type="button" class="fz-btn fz-btn--ghost fz-btn--sm formulize-looks__changes-btn" popovertarget="<?php echo $id; ?>-base" style="anchor-name: --<?php echo $id; ?>-base" aria-label="<?php echo formulize_looksH($phrases ? 'Changes: ' . implode(', ', $phrases) : 'No changes'); ?>">
-							<?php if (!$byImportance) { ?>
+							<?php if (!$summary) { ?>
 							<span class="fz-text-subtle">No changes</span>
-							<?php } ?>
-							<?php foreach ($shown as $index => $item) {
-								if ($index) { echo '<span class="formulize-looks__dot" aria-hidden="true">·</span>'; }
-								if (!empty($item['image'])) {
-									echo '<img class="formulize-looks__mini formulize-looks__mini--' . $item['kind'] . '" src="' . formulize_looksH($item['image']) . '" alt="">';
-								} elseif (!empty($item['swatches'])) {
-									echo '<span class="formulize-looks__stack" aria-hidden="true">';
-									foreach (array_slice($item['swatches'], 0, 3) as $hex) {
-										echo '<span class="formulize-looks__swatch" style="background: ' . formulize_looksH($hex) . '"></span>';
-									}
-									echo '</span>'; // the popover has every one
-								} else {
-									echo '<span class="formulize-looks__word">' . formulize_looksH($item['short']) . '</span>';
+							<?php } else {
+								foreach (array('logo', 'favicon', 'colours', 'fonts', 'width', 'sizes', 'parts') as $kind) {
+									echo isset($kinds[$kind])
+										? '<span class="formulize-looks__kind" title="' . formulize_looksH($kinds[$kind]['label']) . '">' . formulize_looksIcon($kind) . '</span>'
+										: '<span class="formulize-looks__kind formulize-looks__kind--none"></span>';
 								}
 							} ?>
-							<?php if ($more) { ?>
-							<span class="formulize-looks__extra">+<?php echo $more; ?></span>
-							<?php } ?>
 						</button>
 						<div class="fz-popover formulize-looks__about" id="<?php echo $id; ?>-base" popover style="position-anchor: --<?php echo $id; ?>-base">
 							<?php if ($chain) { ?>
