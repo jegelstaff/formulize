@@ -98,8 +98,10 @@ function callCheckCondition(name, callHistory = []) {
 								if (typeof window['formulize_initializeAutocomplete'+handle] === 'function') {
 									window['formulize_initializeAutocomplete'+handle]();
 								}
-								if (typeof window['formulize_conditionalElementUpdate'+partsArray[3]] === 'function') {
-									window['formulize_conditionalElementUpdate'+partsArray[3]]();
+								// element id comes from the handle being rendered (de_fid_entry_elementId), not the global partsArray, which holds whatever checkCondition processed last
+								var renderedElementId = handle.split('_')[3];
+								if (typeof window['formulize_conditionalElementUpdate'+renderedElementId] === 'function') {
+									window['formulize_conditionalElementUpdate'+renderedElementId](handle);
 								}
 							}
 							// Update stored HTML when rendering
