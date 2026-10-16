@@ -1,11 +1,14 @@
 # Uploaded files are user content and must never be executed as server-side scripts.
 # The primary control below is an access denial (works on any PHP SAPI: mod_php, CGI, FastCGI, PHP-FPM).
-# The php_admin_flag lines are wrapped in <IfModule> guards on purpose: php_flag / php_value / php_admin_*
-# directives are only valid when PHP runs as an Apache module (mod_php). On FastCGI/FPM/CGI they raise a
-# 500 "Invalid command" — the guards make them a no-op there instead. Do not un-guard them.
+# The php_flag lines are wrapped in <IfModule> guards on purpose: php_flag directives are only valid when
+# PHP runs as an Apache module (mod_php); on FastCGI/FPM/CGI the guards make them a no-op. Use php_flag,
+# NOT php_admin_flag: the php_admin_* forms are rejected in .htaccess context and raise a fatal parse error
+# that makes the WHOLE folder return 500 (every file, not just scripts). Do not un-guard these lines.
 
 # 1) Deny direct web access to server-side script types (matches double extensions too, e.g. x.php.jpg).
-<FilesMatch "(?i)\.(php|php3|php4|php5|php7|php8|phps|phtml|pht|phar|cgi|pl|py|jsp|jspx|asp|aspx|sh|htaccess|htpasswd)($|\.)">
+# This list is kept in step with formulizeFileUploadElementHandler::BLOCKED_EXTENSIONS (the set refused on
+# upload); tests/blocked_extensions_sync_test.php fails if they drift. Update both together.
+<FilesMatch "(?i)\.(php|php3|php4|php5|php7|php8|phps|phtml|pht|phar|cgi|fcgi|pl|py|pyw|wsgi|rb|erb|rhtml|lua|sh|jsp|jspx|asp|aspx|ashx|asmx|ascx|asax|cshtml|vbhtml|config|cfm|cfc|cfml|shtml|shtm|stm|htaccess|htpasswd)($|\.)">
 	<IfModule mod_authz_core.c>
 		Require all denied
 	</IfModule>
@@ -17,17 +20,17 @@
 
 # 2) Belt-and-suspenders: if PHP is running as mod_php, turn its engine off for this directory.
 <IfModule mod_php.c>
-	php_admin_flag engine off
+	php_flag engine off
 </IfModule>
 <IfModule mod_php7.c>
-	php_admin_flag engine off
+	php_flag engine off
 </IfModule>
 <IfModule mod_php8.c>
-	php_admin_flag engine off
+	php_flag engine off
 </IfModule>
 
 # 3) Strip any handler/type mapping that could route these extensions to an interpreter.
 <IfModule mod_mime.c>
-	RemoveHandler .php .php3 .php4 .php5 .php7 .php8 .phps .phtml .pht .phar .cgi .pl .py
-	RemoveType .php .php3 .php4 .php5 .php7 .php8 .phps .phtml .pht .phar .cgi .pl .py
+	RemoveHandler .php .php3 .php4 .php5 .php7 .php8 .phps .phtml .pht .phar .cgi .fcgi .pl .py .pyw .wsgi .rb .erb .rhtml .lua .sh .jsp .jspx .asp .aspx .ashx .asmx .ascx .asax .cshtml .vbhtml .cfm .cfc .cfml .shtml .shtm .stm
+	RemoveType .php .php3 .php4 .php5 .php7 .php8 .phps .phtml .pht .phar .cgi .fcgi .pl .py .pyw .wsgi .rb .erb .rhtml .lua .sh .jsp .jspx .asp .aspx .ashx .asmx .ascx .asax .cshtml .vbhtml .cfm .cfc .cfml .shtml .shtm .stm
 </IfModule>

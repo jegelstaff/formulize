@@ -73,6 +73,12 @@ location ~ /\.git {
 
 To check that it worked, go to ```https://www.mysite.com/.git/config``` in a web browser (use your own site's address). You should see a "Not Found" page. If the browser shows or downloads a file instead, the ```.git``` folder is still accessible, so check the setting above before going any further.
 
+### Important: make sure the uploads folder can't run files
+
+Files that people upload to your forms are stored in the ```uploads``` folder. Formulize already does two things to stop those files being run as programs: it refuses uploads of executable file types, and it ships an ```.htaccess``` file that blocks execution on Apache. Some servers, like nginx, ignore ```.htaccess```, so you should confirm that your server will not run files from the ```uploads``` folder, and set it up to prevent this if it does.
+
+See [making sure the uploads folder can't run files](../deploying_a_website/uploads_not_executable) for how to check it and how to fix it on Apache and nginx.
+
 ### Next steps
 
 Regardless of how you get the files on your server, the next steps are the same:

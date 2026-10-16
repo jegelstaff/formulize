@@ -10,6 +10,8 @@ define("_formulize_MSG_FORM", ' Form: ');
 //next two added by jwe 7/23/04
 define("_formulize_INFO_RECEIVED", "Your information has been received.");
 define("_formulize_NO_PERMISSION", "You do not have permission to view this form.");
+define("_formulize_SAVE_REFUSED_TITLE", "Your changes were not saved.");
+define("_formulize_SAVE_REFUSED_MESSAGE", "This can happen when a page has been open for a long time. Reload the page and try again.");
 define("_formulize_NO_PERM", "You do not have permission to view this form.");
 define("_NO_PERM", "You do not have permission to view this part of the website.");
 define("_formulize_MSG_SENT", "Your message has been sent.");

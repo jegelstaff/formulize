@@ -243,6 +243,20 @@ class formulizeHandler {
 	}
 
 	/**
+	 * Static function to provide the overview of selector elements for the mcp server
+	 * Selector elements share no properties, so this only says what kinds of elements are in the category, so that an
+	 * AI assistant looking for something like a place to attach a file knows to look here.
+	 * @param bool|int $update True if this is being called as part of building the properties for Updating, as opposed to properties for Creating. Default is false (Creating).
+	 * @return string The overview
+	 */
+	public static function mcpElementPropertiesBaseDescriptionAndExamplesForSelectors($update = false) {
+		return "
+**Overview:** Selector elements are specialized inputs for particular kinds of values: dates, times, numbers picked with a range slider, and files uploaded by users. Each type has its own properties, listed below.
+
+";
+	}
+
+	/**
 	 * Static function to provide the common properties and examples used by all 'linked' elements for with the mcp server
 	 * Follows the convention of properties used publically (MCP, Public API, etc).
 	 * @param bool|int $update True if this is being called as part of building the properties for Updating, as opposed to properties for Creating. Default is false (Creating).
@@ -2428,7 +2442,7 @@ class formulizeHandler {
 
 	/**
 	 * Validate that an element type is supported via the MCP (AI) tools, ie: that it has the mcpElementPropertiesDescriptionAndExamples static method.
-	 * This is a narrower check than validateElementType() - not all valid element types are exposed to MCP/AI tooling (eg: fileUpload, userAccount*,
+	 * This is a narrower check than validateElementType() - not all valid element types are exposed to MCP/AI tooling (eg: colorpick, userAccount*,
 	 * and other system elements are valid but not MCP-discoverable). Use this only when validating input that is coming from the MCP tools.
 	 * @param string $elementType The element type to validate - passed by reference so we can correct the case if needed
 	 * @param string|null $requestedCategory Optional. If provided, a case insensitive double check of elements with this static $category designation will be attempted

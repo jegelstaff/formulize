@@ -360,6 +360,22 @@ ob_start();
 	<button type="button" id="permrefresh" /><?php echo BUTTON_REFRESH; ?></button>
 </ul>
 <?php } else { echo '<div id="rootperms">'.CHECKING_PERMISSIONS .'<br /><ul class="diags"><li class="success">'.ALL_PERM_OK.'</li></ul></div>';} ?>
+<?php
+// Check that the uploads folder - where files people upload to forms are stored - cannot be used to run
+// programs. The hardened uploads/.htaccess that ships with Formulize prevents this on Apache when
+// AllowOverride is on, but nginx and other servers ignore it, so this measures it live rather than assuming.
+// Only warns on a positive result, so a site this cannot reach over HTTP stays quiet instead of alarming.
+if ($ctrl->validRootPath) {
+	$uploadsProbeFile = $ctrl->xoopsRootPath.'/modules/formulize/include/uploads_execution_probe.php';
+	if (file_exists($uploadsProbeFile)) {
+		include_once $uploadsProbeFile;
+		if (formulize_probeUploadsExecution($ctrl->xoopsRootPath.'/uploads', $ctrl->xoopsUrl.'/uploads') == 'executable') {
+			echo '<div id="uploadsexec" class="diags"><ul><li class="failure"><strong>'
+				. UPLOADS_EXECUTABLE_WARNING_TITLE . '</strong><br />' . UPLOADS_EXECUTABLE_WARNING . '</li></ul></div>';
+		}
+	}
+}
+?>
 
 </fieldset>
 <br />

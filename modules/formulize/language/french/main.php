@@ -561,6 +561,8 @@ define("_formulize_MSG_UNSENT","Veuillez joindre un fichier dont la taille est i
 define("_formulize_MSG_UNTYPE","Vous ne pouvez pas joindre ce type de fichier.<br>Les types autorisés sont : ");
 define("_formulize_NEWFORMADDED","Nouveau formulaire ajouté avec succès!");
 define("_formulize_NO_PERMISSION", "Vous ne disposez pas des autorisations vous permettant de pouvoir afficher ce formulaire.");
+define("_formulize_SAVE_REFUSED_TITLE", "Vos modifications n'ont pas été enregistrées.");
+define("_formulize_SAVE_REFUSED_MESSAGE", "Cela peut arriver lorsqu'une page est restée ouverte longtemps. Rechargez la page et réessayez.");
 define("_formulize_NONE", "Aucun");
 define("_formulize_NOREPORTSAVAIL", "Vu par défaut");
 define("_formulize_NOSUBNAME", "Entrée: ");
