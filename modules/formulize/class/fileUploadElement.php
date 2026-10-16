@@ -135,7 +135,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         if($isDisabled) {
             $displayName = $ele_value[4];
             $url = $this->createFileURL($element, $entry_id, serialize(array('name'=>$ele_value[3], 'isfile'=>$ele_value[5])));
-            $link = $this->createDownloadLink($element, $url, $displayName);
+            $link = $this->createDownloadLink($element, $url, $displayName).$this->imageFileNameLabel($displayName);
             $formElement = new xoopsFormLabel($caption, $link);
         } else {
             // create the file upload element, and also a hidden element with the correct markup name.  That hidden value will trigger the correct saving logic, and is necessary because file upload elements are excluded from POST.
@@ -181,7 +181,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                 }
                 // have to spoof the raw value from the database, in order to generate the URL for use in the download link, since that's what the URL method is expecting
                 $fakeRawValue = serialize(array('name'=>$ele_value[3], 'isfile'=>$ele_value[5]));
-                $introToUploadBox .= "<div id='formulize_fileStatus_".$element->getVar('ele_id')."_$entry_id' class='no-print formulize-fileupload-element'>".$this->createDownloadLink($element, $this->createFileURL($element, $entry_id, $fakeRawValue), $ele_value[4])." &mdash; <a class='formulize_fileUploadDeleteButton' href='' onclick='warnAboutFileDelete(\"".str_replace("de_","formulize_",$markupName)."\", \"".$element->getVar('ele_id')."\", \"$entry_id\");return false;'>" . _DELETE . "</a></div>";
+                $introToUploadBox .= "<div id='formulize_fileStatus_".$element->getVar('ele_id')."_$entry_id' class='no-print formulize-fileupload-element'>".$this->createDownloadLink($element, $this->createFileURL($element, $entry_id, $fakeRawValue), $ele_value[4]).$this->imageFileNameLabel($ele_value[4])." &mdash; <a class='formulize_fileUploadDeleteButton' href='' onclick='warnAboutFileDelete(\"".str_replace("de_","formulize_",$markupName)."\", \"".$element->getVar('ele_id')."\", \"$entry_id\");return false;'>" . _DELETE . "</a></div>";
             } else {
                 $introToUploadBox = "<div id='formulize_fileStatus_".$element->getVar('ele_id')."_$entry_id' class='no-print formulize-fileupload-element'></div>";
             }
@@ -483,6 +483,16 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         } else {
             return "<a href='".$url."'>".$linkContents."</a>";
         }
+    }
+
+    // An image is shown in a form as its thumbnail, which on its own leaves no way to tell what the file is called.
+    // So in a form, the name follows the thumbnail. Other files are already shown by name, as the link itself.
+    // Only used when rendering the element in a form; lists show the thumbnail alone.
+    function imageFileNameLabel($displayName) {
+        if(!fileNameHasImageExtension($displayName)) {
+            return "";
+        }
+        return " <span class='formulize-fileupload-name'>".htmlspecialchars(strip_tags($displayName))."</span>";
     }
 
     // this method will return the displayName for a file (ie: remove the obscuring timestamp on the front, if any)
