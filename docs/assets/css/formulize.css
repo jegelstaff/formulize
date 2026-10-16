@@ -3277,6 +3277,11 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   .news-list > li > a,
   .news-list > li.news-list-row { flex-direction: column; gap: var(--space-1); }
   .news-list time { flex: none; }
+  /* The card is at most 360px here, which leaves about 150px of text beside
+     the floated thumbnail - a headline word that doesn't fit in that drops
+     below the image and leaves an image-height gap mid-headline. Stacked
+     above the text instead, as .post-teaser-thumb already is on /news. */
+  .news-card-thumb { float: none; max-width: 100%; max-height: 200px; margin: 0 0 var(--space-4) 0; }
   /* One column for everything below this width, without exception.
 
      Two columns of a 560px viewport is about 240px each, and about 110px once
