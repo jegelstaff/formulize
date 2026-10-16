@@ -23,7 +23,7 @@ Generally, this check is performed internally by all Formulize screens and you d
 
 ## Parameters
 
-__$form_id__ - the id number of the form to be checked<br>
+__$form_id__ - the id number of the form to be checked. Use the form's [ID constant](/documentation/form_id_constants/), such as _ORDERS_FORM_ID_ for a form with the handle _orders_.<br>
 __$entry_id__ - Optional. The id number of the entry to be checked. If not specified, the function only checks if the user can access the form.<br>
 __$user_id__ - Optional. The id number of the user to be checked. If not specified, this defaults to the user of the current session, ie: the logged in user.
 
@@ -34,8 +34,8 @@ Returns __true__ or __false__, depending if the user has access to the form, or 
 ## Examples
 
 ~~~php
-// Check if the current user has access to form 6
-if(security_check(6) {
+// Check if the current user has access to the Orders form
+if(security_check(ORDERS_FORM_ID)) {
     echo "User has access!";
 } else {
     echo "User does not have access!";
@@ -43,8 +43,8 @@ if(security_check(6) {
 ~~~
 
 ~~~php
-// Check if the current user has access to entry 99 in form 6
-if(security_check(6, 99) {
+// Check if the current user has access to entry 99 in the Orders form
+if(security_check(ORDERS_FORM_ID, 99)) {
     echo "User has access!";
 } else {
     echo "User does not have access!";
@@ -52,8 +52,8 @@ if(security_check(6, 99) {
 ~~~
 
 ~~~php
-// Check if user 17 has access to entry 99 in form 6
-if(security_check(6, 99, 17) {
+// Check if user 17 has access to entry 99 in the Orders form
+if(security_check(ORDERS_FORM_ID, 99, 17)) {
     echo "User has access!";
 } else {
     echo "User does not have access!";

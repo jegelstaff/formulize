@@ -48,7 +48,7 @@ If the query fails, then page execution terminates and an error message is displ
 // write a new entry in the database
 $values = array(
     'survey_first_name'=>'John',
-    'survey_last_name'='Smith'
+    'survey_last_name'=>'Smith'
 );
 formulize_writeEntry($values);
 ~~~
@@ -62,11 +62,10 @@ formulize_writeEntry($values, 6);
 ~~~
 
 ~~~php
-// get the entry id of the 'Toronto' entry in form 6 (a catalogue of cities),
+// get the entry id of the 'Toronto' entry in the Cities form,
 // and write a new entry in a survey form, with 'Toronto' as the value for a
-// linked element that points to form 6
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+// linked element that points to the Cities form
+$dataHandler = new formulizeDataHandler(CITIES_FORM_ID);
 $entry_id = $dataHandler->findFirstEntryWithValue('cities_name', 'Toronto');
 formulize_writeEntry(array('survey_city_name'=>$entry_id));
 ~~~
@@ -75,7 +74,7 @@ formulize_writeEntry(array('survey_city_name'=>$entry_id));
 // Write a new entry to the database, and record the owner as user 24
 $values = array(
     'survey_first_name'=>'John',
-    'survey_last_name'='Smith'
+    'survey_last_name'=>'Smith'
 );
 formulize_writeEntry($values, proxyUser: 24);
 ~~~
@@ -85,7 +84,7 @@ formulize_writeEntry($values, proxyUser: 24);
 // not the result of a form submission
 $values = array(
     'survey_first_name'=>'John',
-    'survey_last_name'='Smith'
+    'survey_last_name'=>'Smith'
 );
 formulize_writeEntry($values, forceUpdate: true);
 ~~~

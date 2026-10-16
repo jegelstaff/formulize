@@ -44,11 +44,9 @@ print viewEntryLink('Edit this record', override_screen_id: 993);
 ~~~php
 // Inside Template screen code, make links to edit entries that have been gathered
 // The second parameter is required in order to identify which entry the link should go to
-$relationship_id = 0;
-$form_id = 12;
-$data = getData($relationship_id, $form_id);
+$data = gatherDataset(ARTICLES_FORM_ID, frid: 0);
 foreach($data as $entry) {
-    print viewEntryLink(display($entry, 'title'), $entry);
-    print display($entry, 'summary');
+    print viewEntryLink(getValue($entry, 'title'), $entry);
+    print getValue($entry, 'summary');
 }
 ~~~

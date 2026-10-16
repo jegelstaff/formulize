@@ -30,24 +30,21 @@ Returns __false__ if the query fails.
 ## Examples
 
 ~~~php
-// find the all the values for the 'cities' element in form 6
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+// find all the values for the 'cities' element in the Customers form
+$dataHandler = new formulizeDataHandler(CUSTOMERS_FORM_ID);
 $values = $dataHandler->findAllValuesForField('cities');
 ~~~
 
 ~~~php
-// find the all the values for the 'cities' element in form 6, created by groups 5 and 10.
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+// find all the values for the 'cities' element in the Customers form, created by groups 5 and 10.
+$dataHandler = new formulizeDataHandler(CUSTOMERS_FORM_ID);
 $scope_group_ids = array(5, 10);
 $values = $dataHandler->findAllValuesForField('cities', scope_group_ids: $scope_group_ids);
 ~~~
 
 ~~~php
 // same as above, but in ascending order
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+$dataHandler = new formulizeDataHandler(CUSTOMERS_FORM_ID);
 $scope_group_ids = array(5, 10);
 $values = $dataHandler->findAllValuesForField('cities', 'ASC', $scope_group_ids);
 ~~~

@@ -30,8 +30,7 @@ Returns __false__ if the query failed, or if the query found no records in the d
 ## Example
 
 ~~~php
-// find the first entry belonging to either group 499 or 526, in form 6
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+// find the first entry belonging to either group 499 or 526, in the Orders form
+$dataHandler = new formulizeDataHandler(ORDERS_FORM_ID);
 $entry_id = $dataHandler->findFirstEntryForGroups(array(499, 526));
 ~~~

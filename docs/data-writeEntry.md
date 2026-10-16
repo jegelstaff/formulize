@@ -42,13 +42,12 @@ If the query fails, page execution terminates and an error is displayed.
 ## Examples
 
 ~~~php
-// write a new entry in the database in form 6
+// write a new entry in the database in the Survey form
 $values = array(
     'survey_first_name'=>'John',
-    'survey_last_name'='Smith'
+    'survey_last_name'=>'Smith'
 );
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+$dataHandler = new formulizeDataHandler(SURVEY_FORM_ID);
 $entry_id = $dataHandler->writeEntry("new", $values);
 ~~~
 
@@ -58,7 +57,6 @@ $entry_id = $dataHandler->writeEntry("new", $values);
 $values = array(
     'survey_first_name'=>'Jonathan'
 );
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+$dataHandler = new formulizeDataHandler(SURVEY_FORM_ID);
 $entry_id = $dataHandler->writeEntry(29, $values, update_metadata: false);
 ~~~

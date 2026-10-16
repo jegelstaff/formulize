@@ -1314,6 +1314,8 @@ There is no syntax checking when you save, and an error here affects every page 
 					'name' => 'get_documentation',
 					'description' => 'Read Formulize\'s reference documentation for the PHP functions and the formulizeDataHandler class and its methods, available to custom code (see update_form_code and update_application_code) - what each one does, its parameters, its return value, and examples. This covers the storage formats and data access patterns that update_form_code and update_application_code describe as "consult the reference documentation" for.
 
+The form_id_constants topic explains the constants that hold each form\'s id number, such as ORDERS_FORM_ID. Use them in code wherever a form id is needed, instead of a number.
+
 The formulize_ui topic is the reference for Formulize UI, the CSS classes and tokens to use in any HTML you write for Formulize, such as a derived value that outputs HTML or the content of a Full Width Content or Captioned Content element. Read it before writing HTML or CSS, and use only the classes it lists.
 
 Call with no arguments to get the list of topics, each with a one-line summary. Call again with \'topic\' set to one of those names to get its full reference page.',
@@ -1479,6 +1481,7 @@ Call with no arguments to get the list of topics, each with a one-line summary. 
 	private function documentationCatalog() {
 		return [
 			'formulizeDataHandler' => 'data_handler.md',
+			'form_id_constants' => 'form_id_constants.md',
 			'formulize_updateDerivedValues' => 'function-formulize_updateDerivedValues.md',
 			'formulize_writeEntry' => 'function-formulize_writeEntry.md',
 			'gatherDataset' => 'function-gatherDataset.md',

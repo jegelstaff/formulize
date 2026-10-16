@@ -29,9 +29,8 @@ Returns __false__ if the given element does not have a value, or if the query fa
 ## Example
 
 ~~~php
-// check if the order_details form element has a value in entry 19 in form 6
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+// check if the order_details form element has a value in entry 19 in the Orders form
+$dataHandler = new formulizeDataHandler(ORDERS_FORM_ID);
 $entry_id = 19;
 $element_handle = "order_details";
 if($dataHandler->elementHasValueInEntry($entry_id, $element_handle)) {

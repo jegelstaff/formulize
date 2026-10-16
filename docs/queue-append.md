@@ -32,8 +32,7 @@ Returns __the number of bytes written to the file__ if writing to the queue was 
 // loop through a series of entries and add code to the queue that will
 // update the derived values for each one
 
-$formId = 6;
-$dataHandler = new formulizeDataHandler($formId);
+$dataHandler = new formulizeDataHandler(ORDERS_FORM_ID);
 $userIds = array(24, 36, 38);
 $entryIds = $dataHandler->findAllEntriesForUsers($userIds);
 
@@ -41,14 +40,16 @@ $queueHandler = xoops_getModuleHandler('queue', 'formulize');
 $queue = $queueHandler->create('my-queue');
 
 foreach($entryIds as $entryId) {
-    // Note that $entryId and $formId will be inserted into this string as their
-    // literal values because variables in double quotes are evaluated by PHP when
-    // strings are assigned.
+    // Note that $entryId will be inserted into this string as its literal value
+    // because variables in double quotes are evaluated by PHP when strings are
+    // assigned.
     // This is important because when the queue is processed, only the code in the
     // string is executed, and the declared value of the variables above will not
-    // be available, so by ensuring the literal values are part of the string,
-    // the code will explicitly reference the correct entry and form.
-    $code = "formulize_updateDerivedValues($entryId, $formId)";
-    $queueHandler->append($queue, $code, "Updating derived values in entry $entryId in form $formId");
+    // be available, so by ensuring the literal value is part of the string,
+    // the code will explicitly reference the correct entry.
+    // ORDERS_FORM_ID is a form ID constant, so it can be written into the string
+    // by name. Form ID constants are available when the queue is processed too.
+    $code = "formulize_updateDerivedValues($entryId, ORDERS_FORM_ID)";
+    $queueHandler->append($queue, $code, "Updating derived values in entry $entryId in the Orders form");
 }
 ~~~
