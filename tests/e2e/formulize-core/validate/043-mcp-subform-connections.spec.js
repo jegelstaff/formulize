@@ -335,7 +335,14 @@ test.describe('MCP subform tools connect the forms they join', () => {
 		// Editable rows store the viewing mode differently from listings: 3 is the drawer with new entries
 		// added as rows, where 2 would be the listings drawer, which opens new entries in the drawer instead.
 		// The type check behind this once never matched, so editable rows always got the listings value.
-		expect(Number(editableRow.properties['3'])).toBe(3);
+		// The tool reports settings by their public names, which would hide a wrong stored value if the
+		// reporting code had the same mistake, so the stored value is read from the database. Key 3 of the
+		// serialized ele_value, with the value 3 stored as an int or a string.
+		const [[storedEleValue]] = dbQuery(
+			`SELECT ele_value FROM ${dbPrefix()}_formulize WHERE ele_id = ${parseInt(editableRow.element_id, 10)}`
+		);
+		expect(storedEleValue).toMatch(/i:3;(?:i:3|s:1:"3");/);
+		expect(editableRow.properties.entryViewingMode).toBe('drawer');
 	});
 
 	test('update_subform_interface refuses to change the source form, and changes nothing', async ({ request }) => {
