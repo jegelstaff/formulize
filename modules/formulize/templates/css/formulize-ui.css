@@ -1421,6 +1421,9 @@
 }
 .fz-prose > :where(*) { margin-block: 0; }
 .fz-prose > :where(* + *) { margin-block-start: calc(var(--fz-spacing) * 4); }
+/* text with line breaks and no paragraphs, as an editor or nl2br() leaves it: a break is not a block,
+   and the space above would make every line break look like a blank line, more so in Firefox */
+.fz-prose > :where(br) { margin-block: 0; }
 .fz-prose :where(h1, h2, h3, h4, h5, h6) {
   font-weight: var(--fz-font-weight-semibold);
   line-height: var(--fz-leading-tight);

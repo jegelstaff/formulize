@@ -28,11 +28,9 @@ if (!is_object(icms::$user)) {
 			echo implode('<br />', icms::$security->getErrors());
 			exit();
 		}
-		$size = count($_POST['msg_id']);
-		$msg =& $_POST['msg_id'];
-		for ($i = 0; $i < $size; $i++) {
-			$pm =& $pm_handler->get($msg[$i]);
-			if ($pm->getVar('to_userid') == icms::$user->getVar('uid')) {
+		foreach ((array) $_POST['msg_id'] as $msg_id) {
+			$pm = $pm_handler->get((int) $msg_id);
+			if (is_object($pm) && $pm->getVar('to_userid') == icms::$user->getVar('uid')) {
 				$pm_handler->delete($pm);
 			}
 			unset($pm);
@@ -43,49 +41,67 @@ if (!is_object(icms::$user)) {
 	$criteria = new icms_db_criteria_Item('to_userid', (int) (icms::$user->getVar('uid')));
 	$criteria->setOrder('DESC');
 	$pm_arr =& $pm_handler->getObjects($criteria);
-	echo "<form id='prvmsg' method='post' action='viewpmsg.php'>";
-	echo "<table border='0' cellspacing='1' cellpadding='4' width='100%' class='outer'>\n";
-	echo "<tr><th colspan='4' class='pm-table-title'><h1>" . _PM_PRIVATEMESSAGE . "</h1></th></tr>\n";
-	echo "<tr class='pm-table-header'><th>"
-	. "<input name='allbox' id='allbox' onclick='xoopsCheckAll(\"prvmsg\", \"allbox\");'"
-	. "type='checkbox' value='Check All' /></th><th>&nbsp;</th><th>"
-	. _PM_DATE . "</th><th>" . _PM_SUBJECT . "</th></tr>\n";
 	$total_messages = count($pm_arr);
+
+	// the confirmation text goes into a script string inside an attribute, and some translations write it with HTML entities
+	$confirmDelete = htmlspecialchars("return confirm(" . json_encode(html_entity_decode(_PM_DELETE_CONFIRM_MULTIPLE, ENT_QUOTES, _CHARSET)) . ");");
+
+	echo "<form id='prvmsg' class='fz-stack' method='post' action='viewpmsg.php'>\n";
+	echo "<div class='fz-toolbar'>\n";
+	echo "<div class='fz-toolbar__start'><h1 class='fz-text-xl fz-font-semibold'>" . _PM_PRIVATEMESSAGE . "</h1></div>\n";
+	echo "<div class='fz-toolbar__end'>";
+	if ($total_messages > 0) {
+		echo icms::$security->getTokenHTML()
+			. "<button type='submit' class='fz-btn fz-btn--danger' name='delete_messages' value='1' onclick='" . $confirmDelete . "'>" . _PM_DELETE . "</button>";
+	}
+	// a new message is written in the message popup; without script, the link opens it in this window
+	echo "<a href='pmlite.php?send=1' class='fz-btn fz-btn--primary' onclick='openWithSelfMain(this.href, \"pmlite\", 800, 680); return false;'>" . _PM_NEWMESSAGE . "</a>";
+	echo "</div>\n";
+	echo "</div>\n";
+
 	if ($total_messages == 0) {
-		echo "<tr><td class='even pm-no-messages' colspan='4'>" . _PM_YOUDONTHAVE . "</td></tr>";
-		$display = 0;
+		echo "<div class='fz-empty'><p class='fz-empty__title'>" . _PM_YOUDONTHAVE . "</p></div>\n";
 	} else {
-		$display = 1;
-	}
-
-	for ($i = 0; $i < $total_messages; $i++) {
-		$class = ($i % 2 == 0) ? 'even' : 'odd';
-		echo "<tr class='pm-message-row $class'>"
-		. "<td class='pm-checkbox'><input type='checkbox' id='message_"
-		. $pm_arr[$i]->getVar('msg_id') . "' name='msg_id[]' value='" . $pm_arr[$i]->getVar('msg_id') . "' /></td>\n";
-		if ($pm_arr[$i]->getVar('read_msg') == 1) {
-			echo "<td class='pm-status'>&nbsp;</td>\n";
-		} else {
-			echo "<td class='pm-status pm-status-unread'>"
-			. "<i class='fas fa-envelope inbox-link__icon inbox-link__icon--unread'></i>"
-			. "<span class='inbox-link__badge inbox-link__badge--table'>●</span></td>\n";
+		echo "<div class='fz-card fz-card--flush fz-overflow-x-auto'>\n";
+		echo "<table class='fz-table'>\n";
+		echo "<thead><tr>"
+			. "<th class='fz-w-fit'><input type='checkbox' class='fz-checkbox' name='allbox' id='allbox' aria-label='" . _PM_SELECTALL . "' onclick='xoopsCheckAll(\"prvmsg\", \"allbox\");' /></th>"
+			. "<th class='fz-hide-on-mobile'>" . _PM_FROM . "</th>"
+			. "<th>" . _PM_SUBJECT . "</th>"
+			. "<th class='fz-hide-on-mobile'>" . _PM_DATE . "</th>"
+			. "</tr></thead>\n";
+		echo "<tbody>\n";
+		$senders = array();
+		for ($i = 0; $i < $total_messages; $i++) {
+			$from_userid = (int) $pm_arr[$i]->getVar('from_userid');
+			if (!isset($senders[$from_userid])) {
+				$senders[$from_userid] = icms_member_user_Object::getUnameFromId($from_userid);
+			}
+			$from = $senders[$from_userid];
+			$msg_id = (int) $pm_arr[$i]->getVar('msg_id');
+			$unread = $pm_arr[$i]->getVar('read_msg') != 1;
+			$msg_time = $pm_arr[$i]->getVar('msg_time');
+			$adjusted_time = $msg_time + formulize_getUserUTCOffsetSecs(icms::$user, $msg_time);
+			// readpmsg.php pages through the messages oldest first, so this one's place in that order
+			$readUrl = "readpmsg.php?start=" . (int) ($total_messages - $i - 1) . "&amp;total_messages=" . (int) $total_messages;
+			$sent = formatTimestamp($adjusted_time, 'm');
+			// on a phone the sender and the date go under the subject, so the subject has the width of the table
+			echo "<tr>"
+				. "<td><input type='checkbox' class='fz-checkbox' name='msg_id[]' id='message_$msg_id' value='$msg_id' aria-labelledby='subject_$msg_id' /></td>"
+				. "<td class='fz-hide-on-mobile'>" . $from . "</td>"
+				. "<td><div class='fz-cluster'>"
+				. "<a href='$readUrl' id='subject_$msg_id'" . ($unread ? " class='fz-font-semibold'" : "") . ">" . $pm_arr[$i]->getVar('subject') . "</a>"
+				. ($unread ? "<span class='fz-badge fz-badge--accent'>" . _PM_NOTREAD . "</span>" : "")
+				. "</div>"
+				. "<p class='fz-show-on-mobile fz-text-xs fz-text-muted fz-tabular-nums'>" . $from . " &middot; " . $sent . "</p>"
+				. "</td>"
+				. "<td class='fz-hide-on-mobile fz-text-nowrap fz-text-muted fz-tabular-nums'>" . $sent . "</td>"
+				. "</tr>\n";
 		}
-		$msg_time = $pm_arr[$i]->getVar('msg_time');
-		$user_offset = formulize_getUserUTCOffsetSecs(icms::$user, $msg_time);
-		$adjusted_time = $msg_time + $user_offset;
-		echo "<td class='pm-date'>"
-		. formatTimestamp($adjusted_time, format: 'm') . "</td>";
-		echo "<td class='pm-subject'><a href='readpmsg.php?start="
-		. (int) (($total_messages-$i-1)) . "&amp;total_messages="
-		. (int) $total_messages . "'>" . $pm_arr[$i]->getVar('subject') . "</a></td></tr>";
+		echo "</tbody>\n";
+		echo "</table>\n";
+		echo "</div>\n";
 	}
-
-	if ($display == 1) {
-		echo "<tr class='foot pm-table-footer'><td colspan='4'>"
-		. "<input type='submit' class='formButton' name='delete_messages' value='"
-		. _PM_DELETE . "' onclick='return confirm(\""._PM_DELETE_CONFIRM_MULTIPLE."\");' />" . icms::$security->getTokenHTML() . "</td></tr></table></form>";
-	} else {
-		echo "</table></form>";
-	}
+	echo "</form>\n";
 	include 'footer.php';
 }

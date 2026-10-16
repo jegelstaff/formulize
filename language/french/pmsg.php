@@ -1,7 +1,7 @@
 <?php
 // Page: pmsg.php
 //traduction CPascalWeb
-// Fichier readpmsg.php 
+// Fichier readpmsg.php
 define("_PM_DELETED","Votre (vos) message(s) a (ont) &eacute;t&eacute; effac&eacute;(s)");
 define("_PM_PRIVATEMESSAGE","Message priv&eacute;");
 define("_PM_INBOX","Mes Messages");
@@ -15,7 +15,7 @@ define("_PM_PROFILE","Profil");
 define("_PM_PREVIOUS","Message pr&eacute;c&eacute;dent");
 define("_PM_NEXT","Message suivant");
 
-//Fichier pmlite.php 
+//Fichier pmlite.php
 define("_PM_SORRY","D&eacute;sol&eacute;! Vous n'&ecirc;tes pas un utilisateur enregistr&eacute;.");
 define("_PM_REGISTERNOW","Inscrivez-vous maintenant !");
 define("_PM_GOBACK","Retour");
@@ -32,7 +32,7 @@ define("_PM_CLEAR","Vider");
 define("_PM_CANCELSEND","Annuler");
 define("_PM_SUBMIT","Valider");
 
-//Fichier viewpmsg.php 
+//Fichier viewpmsg.php
 define("_PM_SUBJECT","Sujet");
 define("_PM_DATE","Date");
 define("_PM_NOTREAD","Pas lu");
@@ -46,4 +46,8 @@ define("_PM_MESSAGEPOSTED_EMAILSUBJ","[%s] Notification de message priv�");
 // Messages de confirmation de suppression
 define("_PM_DELETE_CONFIRM_SINGLE", "&Ecirc;tes-vous s&ucirc;r de vouloir supprimer ce message?");
 define("_PM_DELETE_CONFIRM_MULTIPLE", "&Ecirc;tes-vous s&ucirc;r de vouloir supprimer le(s) message(s) s&eacute;lectionn&eacute;(s)?");
+
+// Bo&icirc;te de r&eacute;ception et fen&ecirc;tre de message
+define("_PM_SELECTALL", "S&eacute;lectionner tous les messages");
+define("_PM_NEWMESSAGE", "Nouveau message");
 ?>

@@ -41,57 +41,68 @@ if (!is_object(icms::$user)) {
 	$criteria->setStart($start);
 	$criteria->setSort('msg_time');
 	$pm_arr =& $pm_handler->getObjects($criteria);
-	if (empty($pm_arr)) {
-		echo '<h1>'._PM_PRIVATEMESSAGE.'</h1>';
-		echo '<p>'._PM_YOUDONTHAVE.'</p>';
-	} else {
-		if (!$pm_handler->setRead($pm_arr[0])) {
-			//echo "failed";
-		}
 
-		$poster = new icms_member_user_Object((int) $pm_arr[0]->getVar("from_userid"));
-		if (!$poster->isActive()) {
-			$poster = false;
-		}
+	echo "<div class='fz-stack'>\n";
+	if (empty($pm_arr)) {
+		echo "<div class='fz-toolbar'><div class='fz-toolbar__start'><h1 class='fz-text-xl fz-font-semibold'>" . _PM_PRIVATEMESSAGE . "</h1></div></div>\n";
+		echo "<div class='fz-empty'><p class='fz-empty__title'>" . _PM_YOUDONTHAVE . "</p><a href='viewpmsg.php' class='fz-btn'>" . _PM_INBOX . "</a></div>\n";
+	} else {
+		$pm = $pm_arr[0];
+		$pm_handler->setRead($pm);
 
 		// Convert timestamp to user's timezone
-		$msg_time = $pm_arr[0]->getVar("msg_time");
+		$msg_time = $pm->getVar("msg_time");
 		$user_offset = formulize_getUserUTCOffsetSecs(icms::$user, $msg_time);
 		$adjusted_time = $msg_time + $user_offset;
 
-		echo "<div class='pm-breadcrumbs'><a href='viewpmsg.php'>Inbox</a> &raquo; ".$pm_arr[0]->getVar("subject")."</div>";
-		echo "<form action='readpmsg.php' method='post' name='delete".$pm_arr[0]->getVar("msg_id")."'>
-			<table border='0' cellpadding='4' cellspacing='1' class='outer' width='100%'>
-			<tr><th><h1>".$pm_arr[0]->getVar("subject")."</h1></th></tr>
-			<tr class='even'>
-			<td><strong>"._PM_SENTC."</strong> ".formatTimestamp($adjusted_time, 'm')."</td></tr>
-			<tr class='even'><td>\n";
-		$var = $pm_arr[0]->getVar('msg_text', 'N');
-		echo icms_core_DataFilter::checkVar($var, 'html', 'output') . "</td></tr>
-			<tr class='foot'><td>";
-		echo "<input type='hidden' name='delete' value='1' />";
-		echo icms::$security->getTokenHTML();
-		echo "<input type='hidden' name='msg_id' value='".$pm_arr[0]->getVar("msg_id")."' />";
-		echo "<input type='submit' class='formButton' value='"._PM_DELETE."' onclick='return confirm(\""._PM_DELETE_CONFIRM_SINGLE."\");' />";
-		echo "</td></tr><tr><td class='pm-navigation'>";
+		// Previous is the older message, and Next the newer one, as readpmsg.php pages through them oldest first
 		$previous = $start - 1;
 		$next = $start + 1;
-		echo "<span class='pm-nav-item'>";
-		if ($previous >= 0) {
-			echo "<a href='readpmsg.php?start=". (int) ($previous)."&amp;total_messages=". (int) ($total_messages)."'>"._PM_PREVIOUS."</a>";
-		} else {
-			echo _PM_PREVIOUS;
+		$previousLink = $previous >= 0
+			? "<a href='readpmsg.php?start=" . (int) $previous . "&amp;total_messages=" . (int) $total_messages . "' class='fz-btn fz-btn--sm'>" . _PM_PREVIOUS . "</a>"
+			: "<span class='fz-btn fz-btn--sm' aria-disabled='true'>" . _PM_PREVIOUS . "</span>";
+		$nextLink = $next < $total_messages
+			? "<a href='readpmsg.php?start=" . (int) $next . "&amp;total_messages=" . (int) $total_messages . "' class='fz-btn fz-btn--sm'>" . _PM_NEXT . "</a>"
+			: "<span class='fz-btn fz-btn--sm' aria-disabled='true'>" . _PM_NEXT . "</span>";
+
+		// the confirmation text goes into a script string inside an attribute, and some translations write it with HTML entities
+		$confirmDelete = htmlspecialchars("return confirm(" . json_encode(html_entity_decode(_PM_DELETE_CONFIRM_SINGLE, ENT_QUOTES, _CHARSET)) . ");");
+
+		echo "<nav class='fz-toolbar' aria-label='" . _PM_PRIVATEMESSAGE . "'>\n";
+		echo "<div class='fz-toolbar__start'><a href='viewpmsg.php' class='fz-btn fz-btn--ghost fz-btn--sm'>&larr; " . _PM_INBOX . "</a></div>\n";
+		echo "<div class='fz-toolbar__end'>" . $previousLink . $nextLink . "</div>\n";
+		echo "</nav>\n";
+
+		// the sender can be replied to while their account is active, unless it is your own, as on a notification of something you did
+		$from_userid = (int) $pm->getVar("from_userid");
+		$poster = icms::handler('icms_member')->getUser($from_userid);
+		$canReply = is_object($poster) && $poster->isActive() && $from_userid != icms::$user->getVar('uid');
+
+		echo "<article class='fz-card'>\n";
+		echo "<div class='fz-card__header'><div>"
+			. "<h1 class='fz-card__title'>" . $pm->getVar("subject") . "</h1>"
+			. "<p class='fz-card__subtitle'>" . _PM_FROMC . icms_member_user_Object::getUnameFromId($from_userid) . " &middot; " . _PM_SENTC . formatTimestamp($adjusted_time, 'm') . "</p>"
+			. "</div></div>\n";
+		// a message typed as plain text keeps its line breaks; one written in HTML has its own
+		$msg_text = $pm->getVar('msg_text', 'N');
+		if ($msg_text == strip_tags($msg_text)) {
+			$msg_text = nl2br($msg_text);
 		}
-		echo "</span><span class='pm-nav-separator'> | </span>";
-		echo "<span class='pm-nav-item'>";
-		if ($next < $total_messages) {
-			echo "<a href='readpmsg.php?start=". (int) ($next)."&amp;total_messages=". (int) ($total_messages)."'>"._PM_NEXT."</a>";
-		} else {
-			echo _PM_NEXT;
+		echo "<div class='fz-prose fz-wrap-break-word'>" . icms_core_DataFilter::checkVar($msg_text, 'html', 'output') . "</div>\n";
+		echo "<div class='fz-card__footer'>";
+		if ($canReply) {
+			// the reply is written in the message popup; without script, the link opens it in this window
+			echo "<a href='pmlite.php?reply=1&amp;msg_id=" . (int) $pm->getVar("msg_id") . "' class='fz-btn fz-btn--primary fz-btn--sm' onclick='openWithSelfMain(this.href, \"pmlite\", 800, 680); return false;'>" . _PM_REPLY . "</a>";
 		}
-		echo "</span><span class='pm-nav-separator'> | </span>";
-		echo "<span class='pm-nav-item'><a href='viewpmsg.php'>Inbox</a></span>";
-		echo "</td></tr></table></form>\n";
+		echo "<form class='fz-ms-auto' action='readpmsg.php' method='post' name='delete" . (int) $pm->getVar("msg_id") . "'>"
+			. "<input type='hidden' name='delete' value='1' />"
+			. icms::$security->getTokenHTML()
+			. "<input type='hidden' name='msg_id' value='" . (int) $pm->getVar("msg_id") . "' />"
+			. "<button type='submit' class='fz-btn fz-btn--danger fz-btn--sm' onclick='" . $confirmDelete . "'>" . _PM_DELETE . "</button>"
+			. "</form>";
+		echo "</div>\n";
+		echo "</article>\n";
 	}
+	echo "</div>\n";
 	include "footer.php";
 }

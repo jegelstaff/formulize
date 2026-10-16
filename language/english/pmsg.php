@@ -47,4 +47,8 @@ define("_PM_MESSAGEPOSTED_EMAILSUBJ","[%s] Private Message Notification");
 // Delete confirmation messages
 define("_PM_DELETE_CONFIRM_SINGLE", "Are you sure you want to delete this message?");
 define("_PM_DELETE_CONFIRM_MULTIPLE", "Are you sure you want to delete the selected message(s)?");
+
+// Inbox and message popup
+define("_PM_SELECTALL", "Select all messages");
+define("_PM_NEWMESSAGE", "New message");
 ?>
