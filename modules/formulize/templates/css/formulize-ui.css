@@ -1388,6 +1388,248 @@
   .fz-tab-panel + .fz-tab-panel { margin-block-start: calc(var(--fz-spacing) * 8); }
 }
 
+/* ---- Popover ------------------------------------------------------------------
+   A panel that floats over the page beside the button that opens it: more about
+   a value, a short list. On an element with the popover attribute, opened by a
+   <button> whose popovertarget names it; the browser opens and closes it, and
+   closes it when something else is clicked or Esc is pressed, with no script.
+   Nothing on the page moves when it opens. It sits under its button, lined up
+   with the button's start, and moves above it or across when there isn't room.
+   To be placed beside its button, the two are paired by an anchor name: give
+   the button style="anchor-name: --x" and the popover style="position-anchor:
+   --x", with a name of their own. */
+.fz-popover {
+  box-sizing: border-box;
+  margin: auto;
+  max-width: min(24rem, calc(100vw - var(--fz-spacing) * 4));
+  max-height: min(28rem, calc(100vh - var(--fz-spacing) * 4));
+  overflow: auto;
+  padding: calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 4);
+  border: 1px solid var(--fz-color-border);
+  border-radius: var(--fz-menu-radius);
+  background: var(--fz-menu-bg);
+  box-shadow: var(--fz-shadow-lg);
+  color: var(--fz-menu-text);
+  font-size: var(--fz-text-sm);
+  font-weight: var(--fz-font-weight-normal);
+  line-height: var(--fz-leading-normal);
+  /* it floats over the page, but is still inside whatever its button is in, such
+     as a table cell that doesn't wrap: it takes none of that */
+  text-align: start;
+  white-space: normal;
+}
+/* Beside its button, in a browser that can place it there; in one that can't,
+   it opens in the middle of the window, where the browser puts a popover. */
+@supports (position-area: block-end) {
+  .fz-popover {
+    inset: auto;
+    margin: calc(var(--fz-spacing) * 1) 0;
+    position-area: block-end span-inline-end;
+    position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
+  }
+}
+.fz-popover > :where(*) { margin-block: 0; }
+.fz-popover > :where(* + *) { margin-block-start: calc(var(--fz-spacing) * 2); }
+/* what a heading heads sits close under it, so it reads as the heading's */
+.fz-popover > :where(.fz-popover__title + *) { margin-block-start: calc(var(--fz-spacing) * 1); }
+/* A small heading inside it, for each part of what it shows */
+.fz-popover__title {
+  margin: 0;
+  color: var(--fz-color-text-subtle);
+  font-size: var(--fz-text-xs);
+  font-weight: var(--fz-font-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+/* A line between parts */
+.fz-popover__sep {
+  height: 0;
+  border: 0;
+  border-top: 1px solid var(--fz-color-border);
+}
+
+/* ---- Menu ---------------------------------------------------------------------
+   A list of actions, in a popover: fz-menu goes beside fz-popover. Each action
+   is an fz-menu__item, a <button> or an <a>, with a note under it if it needs
+   one, and an icon before it if it has one. Tab moves between the items. */
+.fz-menu {
+  min-width: 12rem;
+  padding: calc(var(--fz-spacing) * 1);
+}
+.fz-menu > :where(* + *) { margin-block-start: 0; }
+.fz-menu__item {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1px;
+  width: 100%;
+  min-height: var(--fz-menu-item-height);
+  padding: calc(var(--fz-spacing) * 1.5) calc(var(--fz-spacing) * 2.5);
+  border: 0;
+  border-radius: var(--fz-radius-sm);
+  background: transparent;
+  color: var(--fz-menu-text);
+  font: inherit;
+  font-family: var(--fz-control-font);
+  font-size: var(--fz-control-text);
+  line-height: var(--fz-leading-snug);
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.fz-menu__item:hover { background: var(--fz-color-surface-3); }
+.fz-menu__item:focus-visible { outline: none; background: var(--fz-color-surface-3); box-shadow: var(--fz-focus-ring); }
+.fz-menu__item:disabled,
+.fz-menu__item[aria-disabled="true"] { color: var(--fz-color-text-subtle); cursor: default; pointer-events: none; }
+.fz-menu__item--danger { color: var(--fz-color-danger); }
+.fz-menu__note {
+  color: var(--fz-color-text-subtle);
+  font-size: var(--fz-text-xs);
+}
+/* An icon before an item's name, first in the item: beside the name and its
+   note, which line up with the other items' whether they have one or not. */
+.fz-menu__item:has(> .fz-menu__icon) {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: calc(var(--fz-spacing) * 2.5);
+}
+.fz-menu__icon {
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: calc(var(--fz-spacing) * 4);
+  height: calc(var(--fz-spacing) * 4);
+  color: var(--fz-color-text-muted);
+}
+.fz-menu__icon > :where(svg) { width: 100%; height: 100%; }
+/* a destructive item's icon is its colour too */
+.fz-menu__item--danger > :where(.fz-menu__icon) { color: inherit; }
+.fz-menu__sep {
+  height: 0;
+  margin: calc(var(--fz-spacing) * 1) 2px;
+  border: 0;
+  border-top: 1px solid var(--fz-color-border);
+}
+
+/* ---- Dialog -------------------------------------------------------------------
+   A question or a short form, over the page, which waits until it is answered:
+   making something, confirming a deletion. On a <dialog>, opened by a <button>
+   with commandfor naming it and command="show-modal", and closed by one with
+   command="close", or by Esc; the browser does both, with no script. Inside it,
+   fz-dialog__header, __body and __footer, which can be inside a <form>. The page
+   under it can't be scrolled while it is open. */
+.fz-dialog {
+  box-sizing: border-box;
+  margin: auto;
+  width: min(32rem, calc(100vw - var(--fz-spacing) * 8));
+  max-height: calc(100vh - var(--fz-spacing) * 8);
+  padding: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--fz-card-border);
+  border-radius: var(--fz-radius-xl);
+  background: var(--fz-drawer-bg);
+  box-shadow: var(--fz-shadow-lg);
+  color: var(--fz-color-text);
+  font-weight: var(--fz-font-weight-normal);
+  line-height: var(--fz-leading-normal);
+  text-align: start;
+  white-space: normal;
+}
+.fz-dialog::backdrop { background: var(--fz-color-overlay); }
+.fz-dialog--wide { width: min(48rem, calc(100vw - var(--fz-spacing) * 8)); }
+.fz-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--fz-spacing) * 3);
+  padding: calc(var(--fz-drawer-padding-y) + var(--fz-spacing)) var(--fz-drawer-padding-x) 0;
+}
+.fz-dialog__title {
+  margin: 0;
+  color: var(--fz-title-color);
+  font-family: var(--fz-title-font);
+  font-size: var(--fz-text-lg);
+  font-weight: var(--fz-title-weight);
+  line-height: var(--fz-title-leading);
+}
+.fz-dialog__body {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--fz-spacing) * 4);
+  padding: var(--fz-drawer-padding-y) var(--fz-drawer-padding-x);
+}
+.fz-dialog__body > * { margin-block: 0; }
+/* The buttons, at the end; it stays in view when the dialog scrolls */
+.fz-dialog__footer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: calc(var(--fz-spacing) * 2);
+  padding: var(--fz-drawer-padding-y) var(--fz-drawer-padding-x);
+  border-top: 1px solid var(--fz-color-border);
+  background: var(--fz-drawer-foot-bg);
+}
+/* The page doesn't scroll under an open dialog. A page that scrolls inside one
+   of its own elements, as Lyris's does, already stays still; this stops a page
+   that scrolls the window. No space is kept for the window's scrollbar, which
+   would move a page of the first kind sideways. */
+:where(html:has(.fz-dialog:modal)) {
+  overflow: hidden;
+}
+
+/* ---- Tree ---------------------------------------------------------------------
+   An fz-table whose rows are nested under other rows: fz-tree goes beside
+   fz-table. Lines join each row to the one it is under. The rows have no lines
+   between them, so nothing crosses the tree's; a row is picked out when the
+   pointer is on it. One line of text a row, centred.
+   The first cell of each row is an fz-tree__cell, with --fz-depth set to how
+   deep the row is (0 for the top), and in it the row's lines, each an empty
+   <span> with --fz-level set to the depth of the row it comes down from:
+     fz-tree__line--elbow  into this row, from the row it is under (level: depth - 1)
+     fz-tree__line         straight through this row, to a later row under the
+                           same one: one for each row above this one, this one
+                           included, with a later row next to it (level: that
+                           row's depth - 1)
+     fz-tree__line--stem   down from this row to the first row under it (level: depth) */
+.fz-tree {
+  --fz-tree-indent: calc(var(--fz-spacing) * 6);
+}
+.fz-tree :where(tbody td) {
+  border-bottom: 0;
+  white-space: nowrap;
+}
+.fz-tree :where(tbody tr:hover td) { background: var(--fz-row-hover); }
+.fz-tree__cell {
+  --fz-depth: 0;
+  position: relative;
+  padding-inline-start: calc(var(--fz-cell-padding-x) + var(--fz-depth) * var(--fz-tree-indent));
+}
+.fz-tree__line {
+  --fz-level: 0;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  inset-inline-start: calc(var(--fz-cell-padding-x) + var(--fz-level) * var(--fz-tree-indent) + var(--fz-spacing) * 2);
+  width: 0;
+  border-inline-start: 1px solid var(--fz-color-border-strong);
+  pointer-events: none;
+}
+.fz-tree__line--elbow {
+  bottom: 50%;
+  width: calc(var(--fz-tree-indent) - var(--fz-spacing) * 3);
+  border-bottom: 1px solid var(--fz-color-border-strong);
+  border-end-start-radius: 5px;
+}
+.fz-tree__line--stem { top: calc(50% + var(--fz-spacing) * 3); }
+
 /* ---- Embed --------------------------------------------------------------------
    Something from elsewhere shown in the page: a map, a video, another site's
    form. Around an <iframe>, <video> or <img>, which fills it. The embed has a
