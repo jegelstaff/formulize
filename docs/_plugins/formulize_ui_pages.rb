@@ -64,7 +64,8 @@ module Jekyll
       commands << ["docker", "exec", CONTAINER, "php", "-d", "xdebug.mode=off", File.join("/var/www/html", CATALOG), "--json"] if container_running?
 
       commands.each do |command|
-        output, errors, status = Open3.capture3(*command)
+        output, errors, status = capture(command, 60)
+        next if status.nil?
         if status.success?
           return JSON.parse(output)
         end
@@ -86,8 +87,27 @@ module Jekyll
 
     def self.container_running?
       return false unless command_exists?("docker")
-      output, _errors, status = Open3.capture3("docker", "ps", "--filter", "name=^#{CONTAINER}$", "--format", "{{.Names}}")
-      status.success? && output.strip == CONTAINER
+      output, _errors, status = capture(["docker", "ps", "--filter", "name=^#{CONTAINER}$", "--format", "{{.Names}}"], 10)
+      !status.nil? && status.success? && output.strip == CONTAINER
+    end
+
+    # Open3.capture3 with a time limit. When Docker Desktop is stuck, every
+    # docker command waits forever rather than failing, and so did the whole
+    # build, with nothing in the log after the step before this one. Gives
+    # back nil for the status when the command was stopped.
+    def self.capture(command, seconds)
+      Open3.popen3(*command) do |stdin, stdout, stderr, wait|
+        stdin.close
+        # rescue: a stopped command's pipes are closed under these threads
+        output = Thread.new { stdout.read rescue nil }
+        errors = Thread.new { stderr.read rescue nil }
+        unless wait.join(seconds)
+          Jekyll.logger.warn "Formulize UI", "Stopped `#{command.first(2).join(' ')}` after #{seconds} seconds without an answer. If Docker is installed, it may need restarting."
+          Process.kill("KILL", wait.pid) rescue nil
+          return [nil, nil, nil]
+        end
+        [output.value, errors.value, wait.value]
+      end
     end
 
     # Catalog text marks code the way Markdown does, in backticks. A short
