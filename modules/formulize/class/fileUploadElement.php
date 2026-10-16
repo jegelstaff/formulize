@@ -72,7 +72,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
     // can organize template data into two top level keys, advanced-tab-values and options-tab-values, if there are some options for the element type that appear on the Advanced tab in the admin UI. This requires an additional template file with _advanced.html as the end of the name. Text elements have an example.
 	function adminPrepare($element) {
         if(!$element) {
-            $ele_value = array(10,'doc,docx,xls,xlsx,ppt,pptx,csv,txt,pdf,jpg,jpeg,gif,png,odt,ods,odp'); // nothing has been saved yet, so let's set a default of 10MB, and some default file types
+            $ele_value = array(10,'doc,docx,xls,xlsx,ppt,pptx,csv,txt,pdf,jpg,jpeg,gif,png,webp,odt,ods,odp'); // nothing has been saved yet, so let's set a default of 10MB, and some default file types
             $directLinkNo = " checked ";
             $directLinkYes = "";
         } else {
@@ -593,14 +593,18 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 								$image = imagecreatefrompng($path);
 								break;
 							case 'webp':
-								$image = imagecreatefromwebp($path);
+								// PHP's GD library can be built without WebP support, in which case the function does not exist
+								if(function_exists('imagecreatefromwebp')) {
+									$image = imagecreatefromwebp($path);
+								}
 								break;
 							case 'jpg':
 							case 'jpeg':
 								$image = imagecreatefromjpeg($path);
 								break;
 						}
-						$exif = exif_read_data($path);
+						// the exif extension is optional in PHP, so without it the thumbnail is made without correcting the orientation
+						$exif = function_exists('exif_read_data') ? exif_read_data($path) : false;
 						if ($image) {
 							if($exif AND isset($exif['Orientation']))	{
 								$orientation = $exif['Orientation'];
@@ -618,7 +622,9 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 									imagepng($image, $thumbPath);
 									break;
 								case 'webp':
-									imagewebp($image, $thumbPath);
+									if(function_exists('imagewebp')) {
+										imagewebp($image, $thumbPath);
+									}
 									break;
 								case 'jpg':
 								case 'jpeg':
@@ -627,7 +633,11 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 							}
 						}
 					}
-					$url = $thumbUrl;
+					// If no thumbnail could be made (animated WebP, which GD cannot read, no WebP support in GD, a damaged file, etc.)
+					// keep the URL of the original image, which the thumbnail class constrains to thumbnail size anyway
+					if(file_exists($thumbPath)) {
+						$url = $thumbUrl;
+					}
 				}
 			} catch (Exception $e) {
 				return ["success" => false, "result" => _formulize_COULD_NOT_GENERATE_THUMBNAIL . ' (' . $e->getMessage() . ')'];

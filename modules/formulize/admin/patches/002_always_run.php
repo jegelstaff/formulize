@@ -72,6 +72,9 @@ function formulize_patch_002_always_run($prev_dbversion, $required_dbversion) {
 	formulize_warn_about_element_containers_missing_element_class();
 	formulize_repair_custom_openlisttemplate_functions();
 
+	// The PHP the site runs on can change between updates, so check for the optional image support every time
+	formulize_warn_about_missing_image_support();
+
 	// Keep the timezone list in step with PHP's timezone database, which changes with the PHP
 	// version the site runs on rather than with anything Formulize does.
 	formulize_update_timezone_options($xoopsDB);
@@ -179,6 +182,29 @@ function formulize_warn_about_element_containers_missing_element_class() {
 	if(count($missingElementClass) > 0) {
 		$ecoMessage = "You have one or more 'elementcontainero.php' files which are missing the \$elementClass variable used in Formulize 8.1+.\n\nThe normal usage looks like this:\n\nprint \"<div class='form-row \$elementClass' \$style id='\$elementContainerId'>\";\n\nThe 'Office Use Only' layout at the bottom of forms will not work correctly on the affected screens until these files are updated.\n\nThe affected files are:\n\n" . implode("\n", $missingElementClass);
 		echo '<script>alert(' . json_encode($ecoMessage) . ');</script>';
+	}
+}
+
+/**
+ * Warn the webmaster if PHP lacks the optional image support that file upload elements use for thumbnails.
+ *
+ * Both are parts of the server's PHP installation, not Formulize, so all we can do is point them out.
+ * Thumbnails work without them (see formulizeFileUploadElementHandler::getThumbnailUrl), just not as well.
+ *
+ * @return void
+ */
+function formulize_warn_about_missing_image_support() {
+	$missing = array();
+	if(!function_exists('imagecreatefromwebp') OR !function_exists('imagewebp')) {
+		$missing[] = '<li><b>WebP support in the GD extension.</b> WebP images uploaded to forms appear at full size, scaled down by the browser, instead of as small thumbnails. Pages that show many WebP images will be slower to load. The images themselves upload and download normally.</li>';
+	}
+	if(!function_exists('exif_read_data')) {
+		$missing[] = '<li><b>The exif extension.</b> Thumbnails of photos taken with phones and cameras may appear sideways or upside down. The photos themselves are not affected.</li>';
+	}
+	if($missing) {
+		echo '<h3>Image support missing from PHP on this server:</h3>';
+		echo '<p>Formulize will keep working, but images uploaded to forms will not display as well as they could, because the PHP installation on this server is missing:</p><ul>' . implode('', $missing) . '</ul>';
+		echo '<p>To fix this, ask your hosting provider or server administrator to enable the items above for the version of PHP that runs this website. Then run the Formulize update again, and this message will no longer appear.</p>';
 	}
 }
 
