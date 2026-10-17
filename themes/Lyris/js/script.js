@@ -46,6 +46,21 @@ function initSidebar() {
     setSidebarState(closed);
   });
 
+  // Sign in, in the header (.js-open-login): the login block is in the sidebar,
+  // so open the sidebar on it, ready to type the username, rather than going to
+  // a page where the sidebar may well be closed. A site whose sidebar has no
+  // login block keeps the link's own address.
+  document.querySelectorAll('.js-open-login').forEach((link) => {
+    link.addEventListener('click', (e) => {
+      const username = document.querySelector('#lyris-sidebar input[name="uname"]');
+      if (!username) return;
+      e.preventDefault();
+      setSidebarState(false);
+      // once the sidebar has opened, so the field is on screen
+      setTimeout(() => username.focus(), 250);
+    });
+  });
+
   // Restore saved state on desktop; use data attribute default otherwise
   if (!isMobile()) {
     try {
@@ -53,13 +68,27 @@ function initSidebar() {
       const defaultOpen = app.dataset.sidebarDefault === 'open';
       setSidebarState(saved !== null ? saved === 'true' : !defaultOpen);
     } catch (_) { /* ignore */ }
+  } else if ('sidebarAnon' in app.dataset) {
+    // On a phone the sidebar slides in over the page, and is closed until it is
+    // asked for. Someone who is not logged in still needs to find the login
+    // block in it, so the first page of their visit opens it for them, as the
+    // wider layout does. Only the first: open over every page, it would cover
+    // the pages they came to read, so it is recorded as closed straight away,
+    // and the next page starts with it closed.
+    try {
+      if (storage().getItem(STORAGE_KEY) === null && app.dataset.sidebarDefault === 'open') {
+        setSidebarState(false);
+        storage().setItem(STORAGE_KEY, 'true');
+      }
+    } catch (_) { /* ignore */ }
   }
 
   // Close mobile sidebar on outside click
   document.addEventListener('click', (e) => {
     if (!isMobile() || !app.classList.contains('lyris-app--sidebar-open')) return;
     const sidebar = document.getElementById('lyris-sidebar');
-    if (sidebar && !sidebar.contains(e.target) && !toggle.contains(e.target)) {
+    // not a tap on Sign in either, which opens it
+    if (sidebar && !sidebar.contains(e.target) && !toggle.contains(e.target) && !(e.target.closest && e.target.closest('.js-open-login'))) {
       setSidebarState(true);
     }
   });

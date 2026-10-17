@@ -102,8 +102,14 @@ h1, h2, h3, h4, h5, h6,
   display: flex;
   flex-direction: column;
   /* Stops short of the viewport bottom while masquerading, so the bar does not
-     cover the shell's sticky bottom chrome. See the "Masquerade bar" section. */
+     cover the shell's sticky bottom chrome. See the "Masquerade bar" section.
+     dvh, the height that can be seen right now: in a phone's browser, vh is the
+     height with the address bar hidden, and the shell never scrolls the page, so
+     the address bar never hides, and with vh the bottom of the shell, and the
+     bars at the foot of forms and lists, would sit under the browser's own bar.
+     vh first, for a browser that doesn't know dvh. */
   height: calc(100vh - var(--lyris-masquerade-height));
+  height: calc(100dvh - var(--lyris-masquerade-height));
   overflow: hidden;
 }
 
@@ -261,6 +267,7 @@ h1, h2, h3, h4, h5, h6,
 .formulize-inline .lyris-app {
   height: auto;
   min-height: calc(100vh - var(--lyris-masquerade-height));
+  min-height: calc(100dvh - var(--lyris-masquerade-height));
   overflow: visible;
 }
 
@@ -1770,6 +1777,77 @@ a.de-edit-icon:hover::before {
   background: var(--fz-color-surface-3);
 }
 
+/* ---- The header on phones ----
+   On a phone the header's links (AI, Admin, Install app, the inbox, the
+   account, signing in and out) are too small and too close together to tap.
+   So theme.html puts them again at the top of the menu, as menu items, with the
+   inbox's name beside its icon and its unread count as a badge, and here the
+   header's own are hidden. Only where there is a menu to put them in: a page
+   without the sidebar keeps them in the header. Wider screens show the
+   header's own.
+
+   That leaves the header three things, arranged as phone apps arrange theirs:
+   the back button at the left, where people look for it on an iPhone and on
+   Android (it is only there in the installed app, and the left is otherwise
+   empty, like an app's first screen), the logo in the middle, and the menu
+   button at the right, at the other end from back so that neither is tapped
+   for the other. The menu then slides in from the right, from its button.
+   The header's start group gives up its own box (display: contents), so that
+   its three children are placed in the header's columns. */
+.lyris-sidebar .lyris-sidebar__account {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .lyris-sidebar .lyris-sidebar__account {
+    display: flex;
+    padding: calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3);
+    border-bottom: 1px solid var(--fz-color-border);
+  }
+
+  .lyris-app:has(.lyris-sidebar) .lyris-header__end {
+    display: none;
+  }
+
+  .lyris-header {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+  }
+
+  .lyris-header__start {
+    display: contents;
+  }
+
+  .lyris-header [data-formulize-app-back] {
+    grid-column: 1;
+    justify-self: start;
+  }
+
+  .lyris-header__brand {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: center;
+  }
+
+  .lyris-header__nav-toggle,
+  .lyris-header__end {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  /* .lyris-app as well, to outweigh the off-canvas rules in "Mobile", which come
+     later; .lyris-app--sidebar-open .lyris-sidebar, later still, still slides it in */
+  .lyris-app .lyris-sidebar {
+    left: auto;
+    right: 0;
+    transform: translateX(100%);
+    border-right: 0;
+    border-left: 1px solid var(--fz-color-border);
+  }
+}
+
 /* Open/close iconography for top-level group headers.
    menu.html renders a group with children as <details>/<summary>, so the
    open/closed state is already native — the chevron only has to follow the
@@ -1791,8 +1869,11 @@ a.de-edit-icon:hover::before {
   content: '';
   flex: none;
   margin-left: auto;
-  width: 0.875rem;
-  height: 0.875rem;
+  /* a little larger than the 14px chevron the mask draws, so the box's edges are
+     transparent: rotated, as it is while the group is closed, a box the mask
+     fills to its edges can show a hairline along one of them in Firefox */
+  width: 1rem;
+  height: 1rem;
   background-color: currentColor;
   opacity: 0.45;
   -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center / 14px 14px no-repeat;
@@ -4959,6 +5040,51 @@ body.formulize-popup {
     box-shadow: var(--fz-shadow-md);
   }
 
+}
+
+/* ============================================================
+   A phone's notch and home bar
+   ------------------------------------------------------------
+   theme.html lets the page run under a phone's notch or camera and its home bar
+   (viewport-fit=cover), so that the header's colour goes all the way to the top
+   of the screen. That is in a browser tab as well as in the site installed as
+   an app. The shell is then kept clear of those parts: the header is padded
+   down from the top, and the shell in from the sides and up from the bottom, so
+   the sticky bars at the foot of lists and forms end above the home bar.
+
+   These rules apply on every page, in every layout. They change nothing where
+   there is nothing to keep clear of: the --fz-safe-area-* tokens are the size
+   of those parts, and 0 on a computer, on a phone without them, and wherever
+   the browser's own bars already cover them. In a browser tab they are mostly
+   0 too, but not always: in landscape, Safari on an iPhone gives the side with
+   the notch an inset, and the home bar can give one at the bottom. The installed
+   app is where all of them come into play, since nothing of the browser is left
+   around the page.
+
+   The menu and its overlay open under the header on a phone, so they move down
+   with it. The back button in the header (theme.html) is fz-show-in-app, and
+   only in the installed app.
+
+   After "Mobile", so the header's padding here wins over the narrower padding
+   set there.
+   ============================================================ */
+.lyris-app {
+  padding: 0 var(--fz-safe-area-right) var(--fz-safe-area-bottom) var(--fz-safe-area-left);
+}
+
+.lyris-header {
+  height: calc(var(--lyris-header-height) + var(--fz-safe-area-top));
+  padding-top: var(--fz-safe-area-top);
+}
+
+@media (max-width: 768px) {
+  .lyris-sidebar {
+    top: calc(var(--lyris-header-height) + var(--fz-safe-area-top));
+  }
+
+  .lyris-app--sidebar-open::after {
+    top: calc(var(--lyris-header-height) + var(--fz-safe-area-top));
+  }
 }
 
 /* ============================================================
