@@ -67,6 +67,7 @@ define('_AM_CFG_SEC_AVAILABILITY', 'Disponibilité');
 
 // --- Titres des sections : Paramètres > Avancé ---
 define('_AM_CFG_SEC_PUBLIC_API', 'API publique');
+define('_AM_CFG_SEC_INSTALL_AS_APP', 'Installation comme application');
 define('_AM_CFG_SEC_SESSIONS_COOKIES', 'Sessions et cookies');
 define('_AM_CFG_SEC_DEBUGGING', 'Débogage');
 define('_AM_CFG_SEC_BASEMENT', 'Réglages avancés (ne touchez pas sauf nécessité absolue)');

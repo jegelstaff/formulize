@@ -125,6 +125,15 @@
   --fz-container-6xl: 72rem;
   --fz-container-7xl: 80rem;
 
+  /* The parts of the screen a phone keeps for itself: its notch or camera, and
+     the bar at the bottom for going home. 0 everywhere else, and in a browser
+     tab unless the page asks to run into those parts (viewport-fit=cover). A
+     theme pads its header, its sides and its bottom edge by these. */
+  --fz-safe-area-top:    env(safe-area-inset-top, 0px);
+  --fz-safe-area-right:  env(safe-area-inset-right, 0px);
+  --fz-safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --fz-safe-area-left:   env(safe-area-inset-left, 0px);
+
   /* Motion */
   --fz-ease-out:      cubic-bezier(.2,.7,.3,1);
   --fz-duration-fast: 120ms;
@@ -1587,6 +1596,49 @@
 .fz-matrix__cell--muted { opacity: 0.4; }
 :where(button).fz-matrix__cell { cursor: pointer; }
 
+/* ---- Dialog -------------------------------------------------------------------
+   A box over the page that has to be dealt with before going on: on a <dialog>,
+   opened with showModal(), which dims the page behind it, keeps the keyboard
+   inside it, and closes it with Escape. A <form method="dialog"> around its
+   buttons closes it without any script. */
+.fz-dialog {
+  --fz-gap: calc(var(--fz-spacing) * 4);
+  box-sizing: border-box;
+  width: min(calc(var(--fz-spacing) * 112), calc(100vw - var(--fz-spacing) * 8));
+  max-height: calc(100vh - var(--fz-spacing) * 8);
+  max-height: calc(100dvh - var(--fz-spacing) * 8);
+  padding: calc(var(--fz-spacing) * 6);
+  border: 1px solid var(--fz-color-border);
+  border-radius: var(--fz-radius-xl);
+  background: var(--fz-color-surface);
+  box-shadow: var(--fz-shadow-lg);
+  color: var(--fz-color-text);
+  font-family: var(--fz-font-sans);
+  line-height: var(--fz-leading-normal);
+  overflow: auto;
+}
+.fz-dialog[open] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fz-gap);
+}
+.fz-dialog > * { margin-block: 0; }
+.fz-dialog::backdrop { background: var(--fz-color-overlay); }
+.fz-dialog__title {
+  margin: 0;
+  font-family: var(--fz-font-heading);
+  font-size: var(--fz-text-lg);
+  line-height: var(--fz-text-lg--line-height);
+  font-weight: var(--fz-font-weight-semibold);
+}
+.fz-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: calc(var(--fz-spacing) * 2);
+  margin: 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .fz-btn,
   .fz-toggle,
@@ -1971,6 +2023,18 @@
 }
 @media (min-width: 48rem) {
   .fz-show-on-mobile { display: none; }
+}
+
+/* The site installed as an app, in a window of its own with no browser address
+   bar or buttons around it (standalone, as on an iPhone or iPad): what that
+   window needs and a browser tab doesn't, such as a back button, and the other
+   way round. Chrome and Edge give the app's window back and reload buttons of
+   their own (minimal-ui), so there these behave as in a browser tab. */
+@media not all and (display-mode: standalone) {
+  .fz-show-in-app { display: none; }
+}
+@media (display-mode: standalone) {
+  .fz-hide-in-app { display: none; }
 }
 
 /* ---- Width and height ---- */

@@ -23,7 +23,9 @@
     <meta name="copyright" content="<{$icms_meta_copyright}>" />
     <meta name="generator" content="Formulize" />
 
-    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1">
+    <{* viewport-fit=cover: the page runs under a phone's notch and home bar, and the header and the
+       sides are padded clear of them (see "A phone's notch and home bar" in css/style.css) *}>
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, viewport-fit=cover">
 
     <!-- Module Header -->
     <{$icms_module_header}>
@@ -102,7 +104,7 @@ if($xoopsUser) {
 		<{elseif !isset($openMenuClass)}>
 		<{assign var=openMenuClass value=''}>
     <{/if}>
-    <div class="site-layout__sidebar js-flyout-menu <{$openMenuClass}>">
+    <div class="site-layout__sidebar js-flyout-menu <{$openMenuClass}>"<{if !$xoops_isuser}> data-sidebar-anon<{/if}>>
 
       <div class="sidebar">
 
@@ -123,6 +125,30 @@ if($xoopsUser) {
           </div>
 
         </div>
+
+        <{* The header's links again, at the top of the menu, for phones: there the header has room
+           for the back button, the logo and the menu button, and the links are hidden in it (see
+           "The header on phones" in css/style.css). Wider screens show the header's own, and not
+           these. The AI assistant is already in the menu, as its own section. *}>
+        <ul class="main-menu anari-menu-account">
+          <{if $xoops_isadmin}>
+          <li class="main-menu__item"><a class="main-menu__item-link" href="<{if isset($modifyScreenUrl) && $modifyScreenUrl}><{$modifyScreenUrl}><{else}><{$icms_url}>/modules/formulize/admin/ui.php<{/if}>">Admin</a></li>
+          <{/if}>
+          <li class="main-menu__item" data-formulize-install-app hidden><a class="main-menu__item-link" href="#" role="button">Install app</a></li>
+          <{if $xoops_isuser}>
+            <{if $show_inbox_link}>
+            <li class="main-menu__item">
+              <a class="main-menu__item-link" href="<{$icms_url}>/viewpmsg.php">
+                <i class="fas fa-envelope main-menu__item-link-icon" aria-hidden="true"></i>Inbox
+                <{if $unread_pm_count > 0}><span class="fz-badge fz-badge--danger fz-ms-auto"><{$unread_pm_count}><span class="fz-sr-only"> unread</span></span><{/if}>
+              </a>
+            </li>
+            <{/if}>
+          <li class="main-menu__item"><a class="main-menu__item-link" href="<{$icms_url}>/edituser.php">Edit Account</a></li>
+          <li class="main-menu__item"><a class="main-menu__item-link" href="<{$icms_url}>/user.php?op=logout">Logout</a></li>
+          <{/if}>
+          <{* No Login here: the login block is in this menu already *}>
+        </ul>
 
         <!-- MENU -->
 
@@ -145,6 +171,13 @@ if($xoopsUser) {
           <div class="site-header__layout">
             <!-- Menu icon -->
             <div id='burger-and-logo'>
+                <{* Back: only in the site installed as an app, whose window has no back button of
+                   its own, and only when there is a page to go back to (formulize-app.js shows it) *}>
+                <button type="button" class="fz-btn fz-btn--ghost fz-btn--icon fz-show-in-app fz-self-center fz-me-2" data-formulize-app-back aria-label="Back" hidden>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="15 18 9 12 15 6"/>
+                  </svg>
+                </button>
                 <a href="#" class="hamburger-menu-icon js-site-menu-open-trigger">
                   <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16">
@@ -167,6 +200,8 @@ if($xoopsUser) {
                   <{if $xoops_isadmin}>
                   <a class="user-actions__link" href="<{if isset($modifyScreenUrl) && $modifyScreenUrl}><{$modifyScreenUrl}><{else}><{$icms_url}>/modules/formulize/admin/ui.php<{/if}>" title="admin">Admin</a>
                   <{/if}>
+                  <{* Install app: hidden until the browser can install the site from it (pwa.js) *}>
+                  <a class="user-actions__link" href="#" role="button" data-formulize-install-app hidden>Install app</a>
                   <{if $xoops_isuser}>
                   <{if $show_inbox_link}>
                   <a class="user-actions__link inbox-link" href="<{$icms_url}>/viewpmsg.php" title="Inbox<{if $unread_pm_count > 0}> (<{$unread_pm_count}> unread)<{/if}>">
@@ -180,7 +215,8 @@ if($xoopsUser) {
                   <a class="user-actions__link" href="<{$icms_url}>/edituser.php" title="Edit Account">Edit Account</a>
                   <a class="user-actions__link" href="<{$icms_url}>/user.php?op=logout" title="Logout">Logout</a>
                   <{elseif !isset($openMenuClass) OR !$openMenuClass }>
-                  <a class="user-actions__link" href="<{if isset($formulize_signin_url) && $formulize_signin_url}><{$formulize_signin_url}><{else}><{$icms_url}><{$formulize_redirect}><{/if}>" title="Login">Login</a>
+                  <{* js-open-login: opens the menu on its login block, when it has one (js/script.js) *}>
+                  <a class="user-actions__link js-open-login" href="<{if isset($formulize_signin_url) && $formulize_signin_url}><{$formulize_signin_url}><{else}><{$icms_url}><{$formulize_redirect}><{/if}>" title="Login">Login</a>
                   <{/if}>
 
               </div>
