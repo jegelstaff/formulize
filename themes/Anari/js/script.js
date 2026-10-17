@@ -28,6 +28,46 @@ function initHamburgerMenu() {
       flyoutMenu.classList.remove('site-layout__sidebar--open');
     });
   });
+  // On a phone the open menu covers part of the page, which is dimmed behind it
+  // (css/style.css), and a tap anywhere outside the menu closes it, as in Lyris.
+  // Not a tap on what opens it: the menu button and Login.
+  document.addEventListener('click', function (evt) {
+    if (window.innerWidth > 767 || !flyoutMenu.classList.contains('site-layout__sidebar--open')) {
+      return;
+    }
+    if (flyoutMenu.contains(evt.target) || triggerOpenButton.contains(evt.target) || (evt.target.closest && evt.target.closest('.js-open-login'))) {
+      return;
+    }
+    flyoutMenu.classList.remove('site-layout__sidebar--open');
+  });
+  // Login, in the header (.js-open-login): the login block is in the menu, so
+  // open the menu on it, ready to type the username, rather than going to a page
+  // where the menu is closed. A site whose menu has no login block keeps the
+  // link's own address.
+  Array.prototype.forEach.call(document.querySelectorAll('.js-open-login'), function (link) {
+    link.addEventListener('click', function (evt) {
+      var username = flyoutMenu.querySelector('input[name="uname"]');
+      if (!username) {
+        return;
+      }
+      evt.preventDefault();
+      flyoutMenu.classList.add('site-layout__sidebar--open');
+      // once the menu has slid in, so the field is on screen
+      setTimeout(function () { username.focus(); }, 550);
+    });
+  });
+  // On a phone, someone who is not logged in has to find the login block in the
+  // menu, so the first page they open in this tab opens the menu for them, once.
+  // Only the first: open over every page, it would cover the pages they came to
+  // read. 767px is the width below which this theme lays pages out for phones.
+  if ('sidebarAnon' in flyoutMenu.dataset && window.innerWidth <= 767) {
+    try {
+      if (!sessionStorage.getItem('anari-menu-shown')) {
+        sessionStorage.setItem('anari-menu-shown', '1');
+        flyoutMenu.classList.add('site-layout__sidebar--open');
+      }
+    } catch (e) { /* storage blocked: leave the menu closed */ }
+  }
   var login_button = document.querySelector('#block_login_form input[type=submit]');
   if (login_button) {
     login_button.addEventListener('click', function(evt) {

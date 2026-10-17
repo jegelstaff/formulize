@@ -313,6 +313,7 @@ function formulize_uiCatalog() {
                     '--fz-container-2xl' => '42rem, the narrow container.',
                     '--fz-container-6xl' => '72rem, the container.',
                     '--fz-container-7xl' => '80rem, the wide container.',
+                    '--fz-safe-area-{top,right,bottom,left}' => 'The parts of a phone\'s screen kept for its notch or camera and for the bar at the bottom. 0 everywhere else. A theme pads its header, its sides and its bottom edge by these, so nothing is hidden under them when the site is installed as an app.',
                 ),
             ),
             array(
@@ -1338,6 +1339,31 @@ HTML
 </table>
 HTML
             ),
+            array(
+                'id' => 'dialog',
+                'name' => 'Dialog',
+                'summary' => 'A box over the page that has to be dealt with before going on: a question, a confirmation, or a few steps to follow. On a `<dialog>`.',
+                'classes' => array(
+                    'fz-dialog' => 'The dialog: a card over the page, which is dimmed behind it.',
+                    'fz-dialog__title' => 'Its heading.',
+                    'fz-dialog__actions' => 'Its buttons, at the end of the row. Put them in a `<form method="dialog">` with this class, and a button in it closes the dialog without any script.',
+                ),
+                'notes' => array(
+                    'Open it with the dialog\'s `showModal()`, never with the `open` attribute: `showModal()` dims the page, keeps the keyboard inside the dialog, and lets Escape close it.',
+                    'Give the `<dialog>` an aria-labelledby that points at its title, so screen readers announce it.',
+                ),
+                'example' => <<<'HTML'
+<button type="button" class="fz-btn" onclick="document.getElementById('sg-dialog').showModal()">Open the dialog</button>
+<dialog class="fz-dialog" id="sg-dialog" aria-labelledby="sg-dialog-title">
+  <h2 class="fz-dialog__title" id="sg-dialog-title">Delete this entry?</h2>
+  <p>The entry and its history are removed for everyone. This cannot be undone.</p>
+  <form method="dialog" class="fz-dialog__actions">
+    <button class="fz-btn">Cancel</button>
+    <button class="fz-btn fz-btn--danger">Delete</button>
+  </form>
+</dialog>
+HTML
+            ),
         ),
     );
 
@@ -1374,6 +1400,8 @@ HTML
                     'fz-sr-only' => 'Hidden on screen but read by screen readers: a label for something only an icon shows.',
                     'fz-hide-on-mobile' => 'Hidden on screens narrower than 48rem (768px).',
                     'fz-show-on-mobile' => 'Hidden on screens 48rem and wider.',
+                    'fz-show-in-app' => 'Shown only when the site is installed as an app and running in a window with no browser buttons at all, as on an iPhone or iPad: a back button, for instance. Chrome and Edge give the app\'s window back and reload buttons of their own, and there it stays hidden.',
+                    'fz-hide-in-app' => 'Hidden when the site is installed as an app and running in a window with no browser buttons.',
                 ),
                 'notes' => array(
                     'The `hidden` attribute hides any element that has a Formulize UI class, whatever the class is: a card, a stack or a button with `hidden` is not shown. Use it for what a script shows and hides, such as a panel that opens beside a list. The script sets and removes the attribute, and the classes stay as they are.',

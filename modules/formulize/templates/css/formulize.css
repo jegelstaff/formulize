@@ -1517,6 +1517,9 @@ div.subform_button_controls div.subform-filter-search input[type=text] {
 	z-index: var(--formulize-drawer-z);
 	display: flex;
 	flex-direction: column;
+	/* clear of a phone's notch and home bar, when the site is installed as an app and the page
+	   runs under them (Formulize UI's safe area tokens, 0 everywhere else) */
+	padding: var(--fz-safe-area-top, 0px) var(--fz-safe-area-right, 0px) var(--fz-safe-area-bottom, 0px) 0;
 	animation: formulize-drawer-in 180ms ease;
 }
 
