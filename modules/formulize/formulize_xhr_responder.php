@@ -81,6 +81,7 @@ if($op != "check_for_unique_value"
 	 AND $op != 'entry_group_search'
 	 AND $op != 'render_conditions_filter_ui'
 	 AND $op != 'embed_session_check'
+	 AND $op != 'get_element_usage'
   ) {
   exit();
 }
@@ -136,6 +137,41 @@ switch($op) {
 		$parsedFilterConditions = $deleteKey ? parseSubmittedConditions($filterName, $deleteKey) : parseSubmittedConditions($filterName);
 		$filterConditions = is_array($parsedFilterConditions) ? $parsedFilterConditions[0] : "";
 		print formulize_createFilterUI($filterConditions, $filterName, $filterFid, "form-".$filterFid, $filterFrid);
+		break;
+
+	// Returns, as JSON, where an element is used and what deleting it would cost.
+	// Asked for on demand by the Usage and Delete links on the form Elements tab, because the report reads every
+	// screen, every element's settings and every custom code file - far too much to run for each row of a form's
+	// element list when the page loads.
+	// Errors come back as JSON with an error key and a matching HTTP status, so the dialog can show the reason.
+	case 'get_element_usage':
+		header('Content-Type: application/json');
+		if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/admin.php")) {
+			include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/admin.php";
+		} else {
+			include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/admin.php";
+		}
+		if(!$xoopsUser) {
+			http_response_code(403);
+			print json_encode(array('error' => _AM_ELE_USAGE_ERROR_LOGIN));
+			break;
+		}
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		$usageElementId = isset($_GET['ele_id']) ? intval($_GET['ele_id']) : 0;
+		if(!$usageElementId OR !$usageElementObject = $element_handler->get($usageElementId)) {
+			http_response_code(404);
+			print json_encode(array('error' => _AM_ELE_USAGE_ERROR_NOELEMENT));
+			break;
+		}
+		// the report exposes how a form is put together, so it is gated on the same permission as editing the form,
+		// which is what the links that open it are gated on too
+		$gperm_handler = xoops_gethandler('groupperm');
+		if(!$gperm_handler->checkRight("edit_form", $usageElementObject->getVar('fid'), $xoopsUser->getGroups(), getFormulizeModId())) {
+			http_response_code(403);
+			print json_encode(array('error' => _AM_ELE_USAGE_ERROR_PERMISSION));
+			break;
+		}
+		print json_encode($element_handler->elementUsageReport($usageElementObject));
 		break;
 
 	case 'get_form_screens_for_form':

@@ -625,7 +625,7 @@ export async function addElementForm(page, type) {
  *
  * Delete no longer raises a native confirm(). It opens the element usage dialog (the markup and
  * the click handlers are in templates/admin/form_elements.html), which fetches a report from
- * admin/element_usage.php saying where the element is used and what deleting it would cost —
+ * the get_element_usage op of formulize_xhr_responder.php saying where the element is used and what deleting it would cost —
  * screens it appears on, other elements that depend on it, references in code — and only offers
  * the button that carries the deletion out once that report has arrived. So a delete is now:
  * open the element's accordion, click Delete, wait for the report, then confirm.
