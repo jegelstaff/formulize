@@ -92,7 +92,7 @@
 		phone: false,
 		sel: null,
 		origin: null,
-		tab: 'site',
+		changesTab: 'unsaved', // the Changes panel's list: 'unsaved', or 'base' (what the look changes from its base)
 		openColour: null,
 		dirty: false,
 		saving: false
@@ -747,19 +747,29 @@
 			(c.token ? '<span class="formulize-editor__chg-part">' + esc(usedBy(c.token).map(function (k) { return MAP.components[k].name; }).join(', ')) + '</span>' : '') +
 			'<span class="formulize-editor__chg-val">' + (c.swatch ? '<span class="formulize-editor__swatch formulize-editor__swatch--sm" style="background:' + esc(c.swatch) + '"></span>' : '') + '<b>' + esc(c.now) + '</b>' + (c.was !== undefined ? c.wasText || '' : '') + '</span></div>';
 	}
-	function changesBlock() {
-		var pending = unsaved(), here = changedHere(), h = '';
-		h += sect(lang('NOT_SAVED'));
-		h += pending.length ? pending.map(function (c) {
-			c.wasText = c.was !== undefined ? ' · ' + esc(lang('WAS', c.was)) : '';
-			return changeRow(c, '<button type="button" class="formulize-editor__link" data-undo="' + esc(c.undo) + '">' + langHtml('UNDO') + '</button>');
-		}).join('') : '<p class="formulize-editor__intro">' + langHtml('ALL_SAVED') + '</p>';
-		h += sect(lang('WHAT_CHANGES', EDIT.name));
-		h += here.length ? '<p class="formulize-editor__intro">' + esc(lang('DIFFERS', refText())) + '</p>' + here.map(function (c) {
-			c.wasText = c.was !== undefined ? ' · ' + esc(lang('BASE_IS', baseName(), c.was)) : '';
-			return changeRow(c, c.reset ? '<button type="button" class="formulize-editor__link" data-refreset="' + esc(c.reset) + '">' + langHtml('RESET') + '</button>' : '');
-		}).join('') : '<p class="formulize-editor__intro">' + esc(lang('SAME_AS_REF', refText())) + '</p>';
-		return h;
+	// The Changes panel, opened from the top bar: what hasn't been saved, with Undo and
+	// Undo all; and what the look changes from its base, saved or not, with Reset.
+	var changesPanel = $('formulize-editor-changes-panel');
+	function renderChanges() {
+		var pending = unsaved(), here = changedHere(), onUnsaved = state.changesTab === 'unsaved', h = '';
+		$('formulize-editor-changes-head').innerHTML = '<div class="formulize-editor__seg formulize-editor__seg--full" role="tablist">' +
+			'<button type="button" role="tab" data-changes-tab="unsaved" aria-pressed="' + onUnsaved + '" aria-selected="' + onUnsaved + '">' + (pending.length ? langHtml('NOT_SAVED_COUNT', pending.length) : langHtml('NOT_SAVED')) + '</button>' +
+			'<button type="button" role="tab" data-changes-tab="base" aria-pressed="' + !onUnsaved + '" aria-selected="' + !onUnsaved + '">' + esc(BASE ? lang('CHANGES_FROM', EDIT.baseName) : lang('CHANGES_FROM_THEME', DATA.theme)) + '</button></div>';
+		if (onUnsaved) {
+			h = pending.length ? pending.map(function (c) {
+				c.wasText = c.was !== undefined ? ' · ' + esc(lang('WAS', c.was)) : '';
+				return changeRow(c, '<button type="button" class="formulize-editor__link" data-undo="' + esc(c.undo) + '">' + langHtml('UNDO') + '</button>');
+			}).join('') : '<p class="formulize-editor__intro">' + langHtml('ALL_SAVED') + '</p>';
+		} else {
+			h = here.length ? '<p class="formulize-editor__intro">' + esc(lang('DIFFERS', refText())) + '</p>' + here.map(function (c) {
+				c.wasText = c.was !== undefined ? ' · ' + esc(lang('BASE_IS', baseName(), c.was)) : '';
+				return changeRow(c, c.reset ? '<button type="button" class="formulize-editor__link" data-refreset="' + esc(c.reset) + '">' + langHtml('RESET') + '</button>' : '');
+			}).join('') : '<p class="formulize-editor__intro">' + esc(lang('SAME_AS_REF', refText())) + '</p>';
+		}
+		$('formulize-editor-changes-body').innerHTML = h;
+		var foot = $('formulize-editor-changes-foot');
+		foot.hidden = !onUnsaved;
+		foot.innerHTML = onUnsaved ? '<button type="button" class="formulize-editor__btn" data-undo-all="1"' + (pending.length && !READONLY ? '' : ' disabled') + '>' + langHtml('UNDO_ALL') + '</button>' : '';
 	}
 
 	function renderInspector() {
@@ -775,12 +785,9 @@
 			// the logo's images, and in advanced mode its tokens too (the top bar's height, which it is sized from)
 			body.innerHTML = c.site === 'logo' ? uploadBlock('appearance_logo') + uploadBlock('appearance_favicon') + (SIMPLE ? '' : partBlock(c)) : partBlock(c);
 		} else {
-			var n = changeCount();
-			head.innerHTML = '<div class="formulize-editor__kicker">' + langHtml('NOTHING_SELECTED') + '</div>' +
-				'<div class="formulize-editor__seg formulize-editor__seg--full" role="tablist" aria-label="' + langHtml('SETTINGS') + '">' +
-					'<button type="button" role="tab" data-tab="site" aria-pressed="' + (state.tab === 'site') + '" aria-selected="' + (state.tab === 'site') + '">' + langHtml('TAB_SITE') + '</button>' +
-					'<button type="button" role="tab" data-tab="changes" aria-pressed="' + (state.tab === 'changes') + '" aria-selected="' + (state.tab === 'changes') + '">' + (n ? langHtml('TAB_CHANGES_COUNT', n) : langHtml('TAB_CHANGES')) + '</button></div>';
-			body.innerHTML = state.tab === 'site' ? siteBlock() : changesBlock() + gapsBlock(MAP.gaps);
+			// the look's own settings; what has changed is in the Changes panel
+			head.innerHTML = '<div class="formulize-editor__kicker">' + langHtml('NOTHING_SELECTED') + '</div><div class="formulize-editor__title"><h2>' + langHtml('TAB_SITE') + '</h2></div>';
+			body.innerHTML = siteBlock() + (SIMPLE ? '' : gapsBlock(MAP.gaps));
 		}
 	}
 
@@ -789,12 +796,13 @@
 		enforce();
 		applyTokens();
 		var n = changeCount(), count = $('formulize-editor-count');
-		count.hidden = n === 0; count.textContent = lang(n === 1 ? 'UNSAVED_CHANGE' : 'UNSAVED_CHANGES', n);
-		$('formulize-editor-reset').disabled = n === 0 || READONLY;
+		count.hidden = n === 0; count.textContent = n;
+		$('formulize-editor-changes').setAttribute('aria-label', n ? lang('CHANGES') + ', ' + lang(n === 1 ? 'UNSAVED_CHANGE' : 'UNSAVED_CHANGES', n) : lang('CHANGES'));
+		renderChanges();
 		$('formulize-editor-save').disabled = READONLY || state.saving || n === 0;
 		drawLive();
 		// keep focus, and the inspector's scroll position, across the re-render
-		var f = document.activeElement, attrs = ['data-token', 'data-d', 'data-v', 'data-cw', 'data-custom', 'data-hex', 'data-colour', 'data-font', 'data-custom-font', 'data-size', 'data-cwidth', 'data-cwidth-px', 'data-tab'];
+		var f = document.activeElement, attrs = ['data-token', 'data-d', 'data-v', 'data-cw', 'data-custom', 'data-hex', 'data-colour', 'data-font', 'data-custom-font', 'data-size', 'data-cwidth', 'data-cwidth-px'];
 		var key = (f && f.getAttribute && (body.contains(f) || head.contains(f))) ? attrs.map(function (a) { return f.getAttribute(a) || ''; }) : null;
 		var scroll = body.parentNode.scrollTop;
 		renderInspector();
@@ -944,9 +952,19 @@
 		var b = ev.target.closest('button'); if (!b) { return; }
 		if (b.getAttribute('data-deselect')) { select(null, null); }
 		else if (b.getAttribute('data-goto')) { goScreen(b.getAttribute('data-goto')); }
-		else if (b.getAttribute('data-tab')) { state.tab = b.getAttribute('data-tab'); render(); }
 	});
-	document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && state.sel) { select(null, null); } });
+	// the Changes panel: its tabs, Show (which closes it to show the part), Undo, Reset and Undo all
+	changesPanel.addEventListener('click', function (ev) {
+		var b = ev.target.closest('button'); if (!b) { return; }
+		var a = function (n) { return b.getAttribute(n); };
+		if (a('data-changes-tab')) { state.changesTab = a('data-changes-tab'); renderChanges(); changesPanel.querySelector('[data-changes-tab="' + state.changesTab + '"]').focus(); }
+		else if (a('data-select')) { changesPanel.hidePopover(); select(a('data-select'), null); }
+		else if (a('data-undo')) { undo(a('data-undo')); render(); changesPanel.focus(); }
+		else if (a('data-refreset')) { resetToReference(a('data-refreset')); render(); changesPanel.focus(); }
+		else if (a('data-undo-all')) { undoAll(); }
+	});
+	// Esc closes an open panel first, and only then lets go of the selected part
+	document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && state.sel && !document.querySelector('.fz-popover:popover-open')) { select(null, null); } });
 	$('formulize-editor-canvas').addEventListener('click', function (ev) { if (ev.target === ev.currentTarget) { select(null, null); } });
 	// a logo or favicon chosen from the inspector shows in the preview straight away
 	Object.keys(UPLOADS).forEach(function (key) {
@@ -970,7 +988,7 @@
 		b.addEventListener('click', function () { setWidth(b.getAttribute('data-w')); });
 	});
 	// back to how the look was last saved
-	$('formulize-editor-reset').addEventListener('click', function () {
+	function undoAll() {
 		if (!window.confirm(lang('RESET_CONFIRM', EDIT.name))) { return; }
 		state.overrides = copy(SAVED.overrides);
 		state.colours = copy(SAVED.colours);
@@ -978,7 +996,7 @@
 		state.contentWidth = SAVED.contentWidth;
 		Object.keys(UPLOADS).forEach(resetUpload);
 		render();
-	});
+	}
 
 	/* ---- the simple editor and the advanced one ---- */
 	// Switched in place: what hasn't been saved stays. The address says which, so a

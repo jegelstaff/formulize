@@ -176,12 +176,17 @@ at phone widths.
 
 ### Changes
 
-With nothing selected, the **Changes** tab has two lists:
+**Changes**, at the top beside Save, says how many changes you haven't saved, and opens a panel with
+two lists. The panel on the right is left for settings: with nothing selected, it has the look's own.
 
 - **Not saved yet**: what you have changed since the last save, each with what it was, **Undo**, and
-  in the advanced editor **Show**, to select the part it belongs to.
-- **What the look changes**: everything that differs from its base (or from the theme's own
-  appearance), saved or not, each with what the base has and **Reset** to go back to it.
+  in the advanced editor **Show**, which closes the panel and selects the part it belongs to.
+  **Undo all** throws away everything you haven't saved.
+- **Changes from** the look's base (or from the theme's own settings, for a look based on nothing):
+  everything that differs from it, saved or not, each with what the base has and **Reset** to go
+  back to it.
+
+Clicking anywhere else, or Esc, closes the panel.
 
 ### Saving
 
@@ -190,8 +195,6 @@ Save: *Saving changes the site and 3 screens*, say. It counts the site when the 
 or one the site look is based on, and the screens set to the look or to a look based on it. When
 nothing uses the look, it says nothing, and a save changes nothing anyone sees until the look is
 used.
-
-**Reset changes** throws away what you haven't saved.
 
 What a save did is said in a note over the bottom of the preview, which goes after a few seconds (not
 while the pointer is on it). A note about a problem stays until you close it.
