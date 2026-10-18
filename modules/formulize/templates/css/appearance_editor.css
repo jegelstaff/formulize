@@ -82,6 +82,8 @@ html:has(> .formulize-editor) { height: 100%; }
 .formulize-editor__changes .formulize-editor__count { padding: 0 7px; line-height: 18px; }
 .formulize-editor__changes-panel { width: 24rem; max-height: min(40rem, calc(100vh - 6rem)); }
 .formulize-editor__changes-panel .formulize-editor__chg:first-child { border-top: 0; }
+/* it takes the focus after an Undo or a Reset, so the focus stays in it; it isn't a control */
+.formulize-editor__changes-panel:focus { outline: none; }
 .formulize-editor__changes-panel .formulize-editor__intro { margin: 0 0 6px; padding: 0 8px; }
 .formulize-editor__changes-panel .formulize-editor__intro:only-child { margin: 0; }
 .formulize-editor__message { margin: 0; padding: 10px 20px; border-bottom: 1px solid var(--fz-color-border); }
@@ -224,6 +226,8 @@ html:has(> .formulize-editor) { height: 100%; }
 .formulize-editor__chg-val { grid-column: 1 / -1; font: 0.75rem var(--fz-font-mono); color: var(--fz-color-text-muted); }
 .formulize-editor__chg-val b { color: var(--editor-changed); font-weight: 500; }
 .formulize-editor__chg-acts { display: flex; gap: 4px; }
+/* a saved change that has been changed again, or reset, and not saved yet */
+.formulize-editor__chg-note { grid-column: 1 / -1; justify-self: start; font-size: 0.6875rem; font-weight: 500; padding: 0 6px; border-radius: 999px; color: var(--editor-changed); background: var(--editor-changed-soft); }
 
 @media (max-width: 900px) {
   .formulize-editor__main { grid-template-columns: 1fr; grid-template-rows: auto auto; overflow: auto; }

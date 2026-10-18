@@ -257,9 +257,11 @@
 		if (state.fonts[which] !== BASE.fonts[which]) { return !(state.fonts[which] === 'custom' && !customName(which)); }
 		return state.fonts[which] === 'custom' && customName(which) !== (BASE.fonts[which + 'custom'] || '').replace(/[^a-zA-Z0-9 ]/g, '').trim();
 	}
-	function fontShown(which) {
-		if (state.fonts[which] === 'custom') { return customName(which) || lang('UNNAMED_FONT'); }
-		return fontLabel(which === 'main' ? 'main' : 'heading', state.fonts[which]);
+	function fontShown(which) { return fontShownIn(state.fonts, which); }
+	// the same, for a set of fonts other than the ones being edited (those saved)
+	function fontShownIn(fonts, which) {
+		if (fonts[which] === 'custom') { return (fonts[which + 'custom'] || '').replace(/[^a-zA-Z0-9 ]/g, '').trim() || lang('UNNAMED_FONT'); }
+		return fontLabel(which === 'main' ? 'main' : 'heading', fonts[which]);
 	}
 	// the name of the font a part set to the main or secondary font is in
 	function fontName(role) {
@@ -696,35 +698,41 @@
 			if (has(SAVED.overrides, key)) { state.overrides[key] = SAVED.overrides[key]; } else { delete state.overrides[key]; }
 		}
 	}
-	// What the look changes: everything that differs from the look it is based on, as
-	// that resolves, or from the theme's own appearance (DATA.reference), saved or not.
+	// What the look changes, as saved: everything in it that differs from the look it is
+	// based on, as that resolves, or from the theme's own appearance (DATA.reference).
+	// What hasn't been saved is in the other list; a saved change that has been changed
+	// again, or reset, says so (pending, reset), until it is saved.
 	var REF = DATA.reference;
 	// what it is measured against, in a sentence
 	function refText() { return BASE ? EDIT.baseName : lang('THEME_APPEARANCE'); }
-	function changedHere() {
+	function savedHere() {
 		var list = [];
 		Object.keys(UPLOADS).forEach(function (key) {
-			if ((uploadUrl(key) || '') !== (REF.uploads[key] || '')) {
-				list.push({ name: UPLOADS[key], now: uploadUrl(key) ? lang('UPLOADED_IMAGE') : lang('THEME_OWN_CAP') });
+			if ((savedUploads[key] || '') !== (REF.uploads[key] || '')) {
+				list.push({ name: UPLOADS[key], now: savedUploads[key] ? lang('UPLOADED_IMAGE') : lang('THEME_OWN_CAP'), pending: uploadChanged(key) });
 			}
 		});
 		Object.keys(DATA.colours).forEach(function (key) {
-			if (String(state.colours[key]).toLowerCase() !== String(REF.colours[key]).toLowerCase()) {
-				list.push({ name: DATA.colours[key].label, swatch: state.colours[key], now: state.colours[key], was: REF.colours[key], reset: 'colour:' + key });
+			var saved = String(SAVED.colours[key]).toLowerCase(), ref = String(REF.colours[key]).toLowerCase(), now = String(state.colours[key]).toLowerCase();
+			if (saved !== ref) {
+				list.push({ name: DATA.colours[key].label, swatch: SAVED.colours[key], now: SAVED.colours[key], was: REF.colours[key], reset: 'colour:' + key, pending: now !== saved, isReset: now === ref });
 			}
 		});
 		['main', 'heading'].forEach(function (which) {
-			if (state.fonts[which] !== REF.fonts[which] || (state.fonts[which] === 'custom' && customName(which) !== (REF.fonts[which + 'custom'] || ''))) {
-				list.push({ name: lang(which === 'main' ? 'MAIN_FONT' : 'SECONDARY_FONT'), now: fontShown(which), reset: 'font:' + which });
+			var same = function (a, b) { return a[which] === b[which] && (a[which] !== 'custom' || (a[which + 'custom'] || '') === (b[which + 'custom'] || '')); };
+			if (!same(SAVED.fonts, REF.fonts)) {
+				list.push({ name: lang(which === 'main' ? 'MAIN_FONT' : 'SECONDARY_FONT'), now: fontShownIn(SAVED.fonts, which), reset: 'font:' + which, pending: !same(state.fonts, SAVED.fonts), isReset: same(state.fonts, REF.fonts) });
 			}
 		});
-		if (WIDTH && state.contentWidth !== REF.contentWidth) {
-			list.push({ name: lang('WIDTH'), now: widthName(state.contentWidth), was: widthName(REF.contentWidth), reset: 'contentwidth' });
+		if (WIDTH && SAVED.contentWidth !== REF.contentWidth) {
+			list.push({ name: lang('WIDTH'), now: widthName(SAVED.contentWidth), was: widthName(REF.contentWidth), reset: 'contentwidth', pending: state.contentWidth !== SAVED.contentWidth, isReset: state.contentWidth === REF.contentWidth });
 		}
 		Object.keys(MAP.tokens).forEach(function (token) {
-			var was = has(REF.overrides, token) ? REF.overrides[token] : entry(token)['default'];
-			if (String(value(token)) !== String(was)) {
-				list.push({ token: token, name: fullLabel(token), now: show(token, value(token)), was: show(token, was), swatch: type(token) === 'colour' ? tokenHex(token) : '', reset: 'token:' + token });
+			var saved = has(SAVED.overrides, token) ? SAVED.overrides[token] : presetValue(token);
+			var ref = has(REF.overrides, token) ? REF.overrides[token] : entry(token)['default'];
+			if (String(saved) !== String(ref)) {
+				list.push({ token: token, name: fullLabel(token), now: show(token, saved), was: show(token, ref), swatch: type(token) === 'colour' ? refHex(saved) : '', reset: 'token:' + token,
+					pending: String(value(token)) !== String(saved), isReset: String(value(token)) === String(ref) });
 			}
 		});
 		return list;
@@ -744,17 +752,20 @@
 		return '<div class="formulize-editor__chg"><span class="formulize-editor__chg-name">' + (c.token && DESKTOP_OF[c.token] ? ICON.phone + ' ' : '') + esc(c.name) + '</span>' +
 			'<span class="formulize-editor__chg-acts">' + (c.token && !SIMPLE ? '<button type="button" class="formulize-editor__link formulize-editor__link--plain" data-select="' + home(c.token) + '">' + langHtml('SHOW') + '</button>' : '') + button + '</span>' +
 			(c.token ? '<span class="formulize-editor__chg-part">' + esc(usedBy(c.token).map(function (k) { return MAP.components[k].name; }).join(', ')) + '</span>' : '') +
-			'<span class="formulize-editor__chg-val">' + (c.swatch ? '<span class="formulize-editor__swatch formulize-editor__swatch--sm" style="background:' + esc(c.swatch) + '"></span>' : '') + '<b>' + esc(c.now) + '</b>' + (c.was !== undefined ? c.wasText || '' : '') + '</span></div>';
+			'<span class="formulize-editor__chg-val">' + (c.swatch ? '<span class="formulize-editor__swatch formulize-editor__swatch--sm" style="background:' + esc(c.swatch) + '"></span>' : '') + '<b>' + esc(c.now) + '</b>' + (c.was !== undefined ? c.wasText || '' : '') + '</span>' +
+			(c.note ? '<span class="formulize-editor__chg-note">' + esc(c.note) + '</span>' : '') + '</div>';
 	}
 	// The two panels of changes, each opened by its button in the top bar: what the look
 	// changes from its base, saved or not, with Reset; and what hasn't been saved, with
 	// Undo and Undo all.
 	var changesPanels = [$('formulize-editor-diff-panel'), $('formulize-editor-unsaved-panel')];
 	function renderChanges() {
-		var pending = unsaved(), here = changedHere();
+		var pending = unsaved(), here = savedHere();
 		$('formulize-editor-diff-body').innerHTML = here.length ? '<p class="formulize-editor__intro">' + esc(lang('DIFFERS', refText())) + '</p>' + here.map(function (c) {
 			c.wasText = c.was !== undefined ? ' · ' + esc(lang('BASE_IS', baseName(), c.was)) : '';
-			return changeRow(c, c.reset ? '<button type="button" class="formulize-editor__link" data-refreset="' + esc(c.reset) + '">' + langHtml('RESET') + '</button>' : '');
+			c.note = c.isReset ? lang('RESET_NOT_SAVED') : (c.pending ? lang('CHANGED_NOT_SAVED') : '');
+			// a reset already made has nothing more to reset; undoing it is in the other list
+			return changeRow(c, c.reset && !c.isReset ? '<button type="button" class="formulize-editor__link" data-refreset="' + esc(c.reset) + '">' + langHtml('RESET') + '</button>' : '');
 		}).join('') : '<p class="formulize-editor__intro">' + esc(lang('SAME_AS_REF', refText())) + '</p>';
 		$('formulize-editor-unsaved-body').innerHTML = pending.length ? pending.map(function (c) {
 			c.wasText = c.was !== undefined ? ' · ' + esc(lang('WAS', c.was)) : '';

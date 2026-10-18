@@ -179,9 +179,10 @@ at phone widths.
 Two buttons at the top, beside Save, each open a list. The panel on the right is left for settings:
 with nothing selected, it has the look's own.
 
-- **What's changed**: everything the look changes from its base (or from the theme's own settings,
-  for a look based on nothing), saved or not, each with what the base has and **Reset** to go back
-  to it.
+- **Saved changes**: what the look, as saved, changes from its base (or from the theme's own
+  settings, for a look based on nothing), each with what the base has and **Reset** to go back to
+  it. What you haven't saved isn't here, it's in the other list; a saved change you have changed
+  again, or reset, says so until you save.
 - **Unsaved changes**, with how many there are: what you have changed since the last save, each with
   what it was and **Undo**. **Undo all** throws away everything you haven't saved. With nothing to undo, it
   can't be opened.
