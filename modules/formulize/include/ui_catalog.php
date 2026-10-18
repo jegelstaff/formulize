@@ -59,7 +59,7 @@ function formulize_uiSizeTokens($sizes = true) {
     $declared = formulize_appearanceTokenDeclarations(file_get_contents(dirname(__DIR__) . '/templates/css/formulize-ui.css'));
     $tokens = array();
     foreach ($map['tokens'] as $token => $entry) {
-        if (in_array($entry['group'], array('fonts', 'colours', 'corners')) == $sizes) {
+        if (in_array($entry['group'], array('fonts', 'colours', 'corners', 'lines')) == $sizes) {
             continue;
         }
         $values = array();
@@ -74,7 +74,7 @@ function formulize_uiSizeTokens($sizes = true) {
             }
         }
         if (isset($entry['values'])) {
-            $range = 'Can be ' . implode(', ', array_map(function ($v) use ($entry) { return formulize_uiSizeTokenValue($entry['type'], $v); }, $entry['values'])) . '.';
+            $range = 'Can be ' . implode(', ', array_map(function ($v) use ($entry) { return formulize_uiSizeTokenValue($entry['type'], $v) . (isset($entry['labels'][$v]) ? ' (' . $entry['labels'][$v] . ')' : ''); }, $entry['values'])) . '.';
         } elseif ($entry['type'] == 'font') {
             $range = 'Can be the main font or the secondary font.';
         } elseif ($entry['type'] == 'colour') {
@@ -366,7 +366,7 @@ function formulize_uiCatalog() {
             array(
                 'id' => 'tokens-sizes',
                 'name' => 'Component sizes',
-                'summary' => 'The sizes of the parts of the interface: titles, labels and field text, the heights of fields, buttons and list rows, and the space in forms, cards and the drawer. The components use them. The Appearance page\'s looks (Default, Compact, Comfortable, and any made in its advanced editor) change them. Steps are spacing steps, 4px each at the default settings.',
+                'summary' => 'The sizes of the parts of the interface: titles, labels and field text, the heights of fields, buttons and list rows, the space in forms, cards and the drawer, and the size and spacing of written content (`fz-content` and `fz-prose`). The components use them. The Appearance page\'s looks (Default, Compact, Comfortable, and any made in its advanced editor) change them. Steps are spacing steps, 4px each at the default settings.',
                 'tokens' => formulize_uiSizeTokens(),
                 'notes' => array(
                     'Use them in your own CSS so it matches the components and follows the site\'s look: `gap: var(--fz-field-gap)`, `height: var(--fz-control-height)`.',
@@ -388,7 +388,7 @@ HTML
             array(
                 'id' => 'tokens-component-colours',
                 'name' => 'Component fonts, colours and corners',
-                'summary' => 'Which font each kind of text is set in, the colours of the parts of the interface, and their corners. The components use them. Each follows a site-wide setting from the Appearance page (the main or secondary font, one of the colours) until the Appearance page\'s advanced editor gives that part its own.',
+                'summary' => 'Which font each kind of text is set in, the colours of the parts of the interface, and their corners; and for written content, its link underlines, list markers and the thickness of its lines. The components use them. Each follows a site-wide setting from the Appearance page (the main or secondary font, one of the colours) until the Appearance page\'s advanced editor gives that part its own.',
                 'tokens' => formulize_uiSizeTokens(false),
                 'notes' => array(
                     'Use them in your own CSS so it matches the components: `background: var(--fz-button-primary-bg)`, `border-radius: var(--fz-field-radius)`, `font-family: var(--fz-label-font)`.',
@@ -1727,6 +1727,33 @@ CODE
   margin-inline: auto;
   padding: var(--fz-page-padding);
 }
+CODE
+                    ),
+                ),
+            ),
+            array(
+                'id' => 'theme-content',
+                'name' => 'Marking the content area',
+                'summary' => 'A theme puts `fz-content` on the element around a page\'s contents, inside its own header, menus and footer. Text there then follows the look\'s written-content tokens, which the Appearance page\'s advanced editor sets on its Text page: its running text, and its headings, links, lists, block quotes and separator lines.',
+                'classes' => array(
+                    'fz-content' => 'On the element around a page\'s contents, such as the one around `<{$icms_contents}>`.',
+                ),
+                'notes' => array(
+                    'Running text takes its size, line height, font and colour from it, as anything inside does that has none of its own.',
+                    'The headings, links, lists, block quotes and separator lines it styles are those with no class of their own. One with a class is part of a component, which has its own styles, so the components are left alone.',
+                    'The rules have the weight of an element selector, so a theme\'s own rule with a class still wins.',
+                    'Text in `fz-prose` follows the same tokens, with or without `fz-content` around it.',
+                    'Without it, a theme\'s text looks as the theme styles it, and the Text page\'s settings don\'t reach it.',
+                ),
+                'code' => array(
+                    array(
+                        'label' => 'In theme.html',
+                        'code' => <<<'CODE'
+<main class="my-theme-main">
+  <div class="my-theme-page fz-content">
+    <{$icms_contents}>
+  </div>
+</main>
 CODE
                     ),
                 ),

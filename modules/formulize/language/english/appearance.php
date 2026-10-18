@@ -323,6 +323,7 @@ define('_AM_APPEARANCE_EDITOR_JS_MAX_WIDTH_PX', 'Maximum width, %s pixels');
 define('_AM_APPEARANCE_EDITOR_JS_SECTION_TEXT', 'Text');
 define('_AM_APPEARANCE_EDITOR_JS_SECTION_COLOURS', 'Colours');
 define('_AM_APPEARANCE_EDITOR_JS_SECTION_CORNERS', 'Corners');
+define('_AM_APPEARANCE_EDITOR_JS_SECTION_LINES', 'Lines');
 define('_AM_APPEARANCE_EDITOR_JS_SECTION_SPACE', 'Size and spacing');
 define('_AM_APPEARANCE_EDITOR_JS_RESET', 'Reset');
 define('_AM_APPEARANCE_EDITOR_JS_UNDO', 'Undo');
