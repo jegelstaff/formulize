@@ -156,7 +156,8 @@
      the bar actually being in the document) gives it a real value, so every
      `- var(--lyris-masquerade-height)` below is a no-op unless someone is masquerading. */
   --lyris-masquerade-height: 0px;
-  --lyris-sidebar-width: 13.75rem;
+  /* the Appearance editor's Side menu width */
+  --lyris-sidebar-width: var(--fz-sidemenu-width);
   /* The space between a page's contents and the edges of the main area, which
      the page frame takes as padding (see "The page frame" in style.css). The
      Appearance editor's Page padding; smaller on phones (see "Mobile" there). */

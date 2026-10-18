@@ -59,7 +59,9 @@
 		['--fz-tab-active-text', '--fz-tab-active-bg'], ['--fz-tab-text', '--fz-tab-bg'],
 		['--fz-title-color', '--fz-form-bg', true], ['--fz-label-color', '--fz-form-bg'], ['--fz-help-color', '--fz-form-bg'],
 		['--fz-value-color', '--fz-form-bg'], ['--fz-field-color', '--fz-field-bg'], ['--fz-menu-text', '--fz-menu-bg'],
-		['--fz-header-text', '--fz-header-bg'], ['--fz-row-text', '--fz-row-bg'], ['--fz-row-text', '--fz-row-hover']
+		['--fz-header-text', '--fz-header-bg'], ['--fz-row-text', '--fz-row-bg'], ['--fz-row-text', '--fz-row-hover'],
+		['--fz-sidemenu-color', '--fz-sidemenu-bg'], ['--fz-sidemenu-color', '--fz-sidemenu-hover-bg'], ['--fz-sidemenu-sub-color', '--fz-sidemenu-bg'],
+		['--fz-sidemenu-active-color', '--fz-sidemenu-active-bg'], ['--fz-sidemenu-active-color', '--fz-sidemenu-sub-active-bg']
 	];
 	var SECTIONS = [['text', lang('SECTION_TEXT')], ['colour', lang('SECTION_COLOURS')], ['shape', lang('SECTION_CORNERS')], ['line', lang('SECTION_LINES')], ['space', lang('SECTION_SPACE')]];
 	var UPLOADS = { appearance_logo: lang('LOGO'), appearance_favicon: lang('FAVICON') };
