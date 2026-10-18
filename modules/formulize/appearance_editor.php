@@ -356,15 +356,18 @@ header('Content-Type: text/html; charset=utf-8');
 			<?php } ?>
 			<?php // when a save goes live: filled in by the editor's script ?>
 			<span class="formulize-editor__live" id="formulize-editor-live" hidden></span>
-			<?php // what hasn't been saved, and what the look changes from its base: a panel,
+			<?php // what the look changes from its base, and what hasn't been saved: each a panel,
 			// filled in by the editor's script ?>
-			<button type="button" class="formulize-editor__btn formulize-editor__changes" id="formulize-editor-changes" popovertarget="formulize-editor-changes-panel" style="anchor-name: --formulize-editor-changes"><?php echo htmlspecialchars(_AM_APPEARANCE_EDITOR_JS_CHANGES, ENT_QUOTES); ?><span class="formulize-editor__count" id="formulize-editor-count" hidden></span></button>
+			<button type="button" class="formulize-editor__btn formulize-editor__changes" id="formulize-editor-diff" popovertarget="formulize-editor-diff-panel" style="anchor-name: --formulize-editor-diff"><span class="formulize-editor__changes-name"><?php echo htmlspecialchars($base !== '' ? sprintf(_AM_APPEARANCE_EDITOR_JS_CHANGES_FROM, $looks[$base]['name']) : sprintf(_AM_APPEARANCE_EDITOR_JS_CHANGES_FROM_THEME, $theme), ENT_QUOTES); ?></span></button>
+			<button type="button" class="formulize-editor__btn formulize-editor__changes" id="formulize-editor-unsaved" popovertarget="formulize-editor-unsaved-panel" style="anchor-name: --formulize-editor-unsaved"><?php echo htmlspecialchars(_AM_APPEARANCE_EDITOR_JS_UNSAVED, ENT_QUOTES); ?><span class="formulize-editor__count" id="formulize-editor-count" hidden></span></button>
 			<button type="submit" class="formulize-editor__btn formulize-editor__btn--primary" name="appearance_editor_save" value="1" id="formulize-editor-save"><?php echo htmlspecialchars(_AM_APPEARANCE_EDITOR_JS_SAVE, ENT_QUOTES); ?></button>
 		</form>
-		<div class="fz-popover fz-popover--panel formulize-editor__changes-panel" id="formulize-editor-changes-panel" popover tabindex="-1" role="dialog" aria-label="<?php echo htmlspecialchars(_AM_APPEARANCE_EDITOR_JS_CHANGES, ENT_QUOTES); ?>" style="position-anchor: --formulize-editor-changes">
-			<div class="fz-popover__head" id="formulize-editor-changes-head"></div>
-			<div class="fz-popover__body" id="formulize-editor-changes-body"></div>
-			<div class="fz-popover__foot" id="formulize-editor-changes-foot"></div>
+		<div class="fz-popover fz-popover--panel formulize-editor__changes-panel" id="formulize-editor-diff-panel" popover tabindex="-1" role="dialog" aria-labelledby="formulize-editor-diff" style="position-anchor: --formulize-editor-diff">
+			<div class="fz-popover__body" id="formulize-editor-diff-body"></div>
+		</div>
+		<div class="fz-popover fz-popover--panel formulize-editor__changes-panel" id="formulize-editor-unsaved-panel" popover tabindex="-1" role="dialog" aria-label="<?php echo htmlspecialchars(_AM_APPEARANCE_EDITOR_JS_UNSAVED, ENT_QUOTES); ?>" style="position-anchor: --formulize-editor-unsaved">
+			<div class="fz-popover__body" id="formulize-editor-unsaved-body"></div>
+			<div class="fz-popover__foot" id="formulize-editor-unsaved-foot"></div>
 		</div>
 	</header>
 	<?php // what stands in the way, for as long as it does

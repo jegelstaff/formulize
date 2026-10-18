@@ -176,17 +176,17 @@ at phone widths.
 
 ### Changes
 
-**Changes**, at the top beside Save, says how many changes you haven't saved, and opens a panel with
-two lists. The panel on the right is left for settings: with nothing selected, it has the look's own.
+Two buttons at the top, beside Save, each open a list. The panel on the right is left for settings:
+with nothing selected, it has the look's own.
 
-- **Not saved yet**: what you have changed since the last save, each with what it was, **Undo**, and
-  in the advanced editor **Show**, which closes the panel and selects the part it belongs to.
-  **Undo all** throws away everything you haven't saved.
-- **Changes from** the look's base (or from the theme's own settings, for a look based on nothing):
-  everything that differs from it, saved or not, each with what the base has and **Reset** to go
-  back to it.
+- **Changes from** the look's base (*Changes from Default*), or from the theme's own settings for a
+  look based on nothing: everything that differs from it, saved or not, each with what the base has
+  and **Reset** to go back to it.
+- **Unsaved changes**, with how many there are: what you have changed since the last save, each with
+  what it was and **Undo**. **Undo all** throws away everything you haven't saved.
 
-Clicking anywhere else, or Esc, closes the panel.
+In the advanced editor, each change to a part has **Show**, which closes the list and selects the
+part. Clicking anywhere else, or Esc, closes a list.
 
 ### Saving
 

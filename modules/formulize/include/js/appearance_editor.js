@@ -92,7 +92,6 @@
 		phone: false,
 		sel: null,
 		origin: null,
-		changesTab: 'unsaved', // the Changes panel's list: 'unsaved', or 'base' (what the look changes from its base)
 		openColour: null,
 		dirty: false,
 		saving: false
@@ -747,29 +746,21 @@
 			(c.token ? '<span class="formulize-editor__chg-part">' + esc(usedBy(c.token).map(function (k) { return MAP.components[k].name; }).join(', ')) + '</span>' : '') +
 			'<span class="formulize-editor__chg-val">' + (c.swatch ? '<span class="formulize-editor__swatch formulize-editor__swatch--sm" style="background:' + esc(c.swatch) + '"></span>' : '') + '<b>' + esc(c.now) + '</b>' + (c.was !== undefined ? c.wasText || '' : '') + '</span></div>';
 	}
-	// The Changes panel, opened from the top bar: what hasn't been saved, with Undo and
-	// Undo all; and what the look changes from its base, saved or not, with Reset.
-	var changesPanel = $('formulize-editor-changes-panel');
+	// The two panels of changes, each opened by its button in the top bar: what the look
+	// changes from its base, saved or not, with Reset; and what hasn't been saved, with
+	// Undo and Undo all.
+	var changesPanels = [$('formulize-editor-diff-panel'), $('formulize-editor-unsaved-panel')];
 	function renderChanges() {
-		var pending = unsaved(), here = changedHere(), onUnsaved = state.changesTab === 'unsaved', h = '';
-		$('formulize-editor-changes-head').innerHTML = '<div class="formulize-editor__seg formulize-editor__seg--full" role="tablist">' +
-			'<button type="button" role="tab" data-changes-tab="unsaved" aria-pressed="' + onUnsaved + '" aria-selected="' + onUnsaved + '">' + (pending.length ? langHtml('NOT_SAVED_COUNT', pending.length) : langHtml('NOT_SAVED')) + '</button>' +
-			'<button type="button" role="tab" data-changes-tab="base" aria-pressed="' + !onUnsaved + '" aria-selected="' + !onUnsaved + '">' + esc(BASE ? lang('CHANGES_FROM', EDIT.baseName) : lang('CHANGES_FROM_THEME', DATA.theme)) + '</button></div>';
-		if (onUnsaved) {
-			h = pending.length ? pending.map(function (c) {
-				c.wasText = c.was !== undefined ? ' · ' + esc(lang('WAS', c.was)) : '';
-				return changeRow(c, '<button type="button" class="formulize-editor__link" data-undo="' + esc(c.undo) + '">' + langHtml('UNDO') + '</button>');
-			}).join('') : '<p class="formulize-editor__intro">' + langHtml('ALL_SAVED') + '</p>';
-		} else {
-			h = here.length ? '<p class="formulize-editor__intro">' + esc(lang('DIFFERS', refText())) + '</p>' + here.map(function (c) {
-				c.wasText = c.was !== undefined ? ' · ' + esc(lang('BASE_IS', baseName(), c.was)) : '';
-				return changeRow(c, c.reset ? '<button type="button" class="formulize-editor__link" data-refreset="' + esc(c.reset) + '">' + langHtml('RESET') + '</button>' : '');
-			}).join('') : '<p class="formulize-editor__intro">' + esc(lang('SAME_AS_REF', refText())) + '</p>';
-		}
-		$('formulize-editor-changes-body').innerHTML = h;
-		var foot = $('formulize-editor-changes-foot');
-		foot.hidden = !onUnsaved;
-		foot.innerHTML = onUnsaved ? '<button type="button" class="formulize-editor__btn" data-undo-all="1"' + (pending.length && !READONLY ? '' : ' disabled') + '>' + langHtml('UNDO_ALL') + '</button>' : '';
+		var pending = unsaved(), here = changedHere();
+		$('formulize-editor-diff-body').innerHTML = here.length ? '<p class="formulize-editor__intro">' + esc(lang('DIFFERS', refText())) + '</p>' + here.map(function (c) {
+			c.wasText = c.was !== undefined ? ' · ' + esc(lang('BASE_IS', baseName(), c.was)) : '';
+			return changeRow(c, c.reset ? '<button type="button" class="formulize-editor__link" data-refreset="' + esc(c.reset) + '">' + langHtml('RESET') + '</button>' : '');
+		}).join('') : '<p class="formulize-editor__intro">' + esc(lang('SAME_AS_REF', refText())) + '</p>';
+		$('formulize-editor-unsaved-body').innerHTML = pending.length ? pending.map(function (c) {
+			c.wasText = c.was !== undefined ? ' · ' + esc(lang('WAS', c.was)) : '';
+			return changeRow(c, '<button type="button" class="formulize-editor__link" data-undo="' + esc(c.undo) + '">' + langHtml('UNDO') + '</button>');
+		}).join('') : '<p class="formulize-editor__intro">' + langHtml('ALL_SAVED') + '</p>';
+		$('formulize-editor-unsaved-foot').innerHTML = '<button type="button" class="formulize-editor__btn" data-undo-all="1"' + (pending.length && !READONLY ? '' : ' disabled') + '>' + langHtml('UNDO_ALL') + '</button>';
 	}
 
 	function renderInspector() {
@@ -797,7 +788,7 @@
 		applyTokens();
 		var n = changeCount(), count = $('formulize-editor-count');
 		count.hidden = n === 0; count.textContent = n;
-		$('formulize-editor-changes').setAttribute('aria-label', n ? lang('CHANGES') + ', ' + lang(n === 1 ? 'UNSAVED_CHANGE' : 'UNSAVED_CHANGES', n) : lang('CHANGES'));
+		$('formulize-editor-unsaved').setAttribute('aria-label', n ? lang(n === 1 ? 'UNSAVED_CHANGE' : 'UNSAVED_CHANGES', n) : lang('UNSAVED'));
 		renderChanges();
 		$('formulize-editor-save').disabled = READONLY || state.saving || n === 0;
 		drawLive();
@@ -953,15 +944,16 @@
 		if (b.getAttribute('data-deselect')) { select(null, null); }
 		else if (b.getAttribute('data-goto')) { goScreen(b.getAttribute('data-goto')); }
 	});
-	// the Changes panel: its tabs, Show (which closes it to show the part), Undo, Reset and Undo all
-	changesPanel.addEventListener('click', function (ev) {
-		var b = ev.target.closest('button'); if (!b) { return; }
-		var a = function (n) { return b.getAttribute(n); };
-		if (a('data-changes-tab')) { state.changesTab = a('data-changes-tab'); renderChanges(); changesPanel.querySelector('[data-changes-tab="' + state.changesTab + '"]').focus(); }
-		else if (a('data-select')) { changesPanel.hidePopover(); select(a('data-select'), null); }
-		else if (a('data-undo')) { undo(a('data-undo')); render(); changesPanel.focus(); }
-		else if (a('data-refreset')) { resetToReference(a('data-refreset')); render(); changesPanel.focus(); }
-		else if (a('data-undo-all')) { undoAll(); }
+	// the panels of changes: Show (which closes the panel to show the part), Undo, Reset and Undo all
+	changesPanels.forEach(function (panel) {
+		panel.addEventListener('click', function (ev) {
+			var b = ev.target.closest('button'); if (!b) { return; }
+			var a = function (n) { return b.getAttribute(n); };
+			if (a('data-select')) { panel.hidePopover(); select(a('data-select'), null); }
+			else if (a('data-undo')) { undo(a('data-undo')); render(); panel.focus(); }
+			else if (a('data-refreset')) { resetToReference(a('data-refreset')); render(); panel.focus(); }
+			else if (a('data-undo-all')) { undoAll(); }
+		});
 	});
 	// Esc closes an open panel first, and only then lets go of the selected part
 	document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && state.sel && !document.querySelector('.fz-popover:popover-open')) { select(null, null); } });

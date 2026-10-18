@@ -387,12 +387,10 @@ define('_AM_APPEARANCE_EDITOR_JS_MAX_WIDTH', 'Maximum width');
 define('_AM_APPEARANCE_EDITOR_JS_WIDTH_PX', 'Maximum width, in pixels, from %1$s to %2$s');
 
 // the Changes tab
-define('_AM_APPEARANCE_EDITOR_JS_NOT_SAVED', 'Not saved yet');
-define('_AM_APPEARANCE_EDITOR_JS_NOT_SAVED_COUNT', 'Not saved yet (%s)');
-define('_AM_APPEARANCE_EDITOR_JS_CHANGES_FROM', 'Changes from %s'); // %s is the look it is based on
+define('_AM_APPEARANCE_EDITOR_JS_CHANGES_FROM', 'Changes from %s'); // the top bar's button, which lists them; %s is the look it is based on
 define('_AM_APPEARANCE_EDITOR_JS_CHANGES_FROM_THEME', 'Changes from %s’s own'); // %s is the theme, for a look based on nothing
 define('_AM_APPEARANCE_EDITOR_JS_UNDO_ALL', 'Undo all');
-define('_AM_APPEARANCE_EDITOR_JS_CHANGES', 'Changes');
+define('_AM_APPEARANCE_EDITOR_JS_UNSAVED', 'Unsaved changes'); // the top bar's button, which lists them
 define('_AM_APPEARANCE_EDITOR_JS_ALL_SAVED', 'Nothing: everything is saved.');
 define('_AM_APPEARANCE_EDITOR_JS_WAS', 'was %s');
 define('_AM_APPEARANCE_EDITOR_JS_NEW_IMAGE', 'A new image');
