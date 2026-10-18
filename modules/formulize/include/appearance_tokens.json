@@ -1,5 +1,5 @@
 {
-  "about": "The component tokens a look can change, in the advanced editor: the sizes, fonts, colours and corners of the parts of the interface. The values the sizes give them (Compact, Comfortable; Standard is the CSS's own) are in modules/formulize/include/appearance_sizes/. A token's Default is not here: it is the value the CSS declares (modules/formulize/templates/css/formulize-ui.css, or a theme's own tokens). Each token's type says how its values are written in CSS; the token's own min and max (in the type's steps), or its list of values, are what it can be set to, chosen so that every value in the range changes how things look. Read by modules/formulize/include/appearance_tokens.php. The screens, components and gaps are for the advanced editor (modules/formulize/appearance_editor.php): the sample screens a theme can provide, the parts of the interface that can be selected in them and the tokens of each part, and what can't be adjusted yet. A part with a site setting is one of a look's site-wide settings rather than a set of tokens (the logo). A colour token's value is one of the site's colours (colours) or #rrggbb; its text says it is a text colour. A keyword token's labels name each of its values. A token's derived are the tokens written from it when it is set, %s being its value. A token's phone is the token used for it at 768px and below; its home is the part a shared token belongs to; its floor is the least it can be given another token's value (one line of a text token at a line height, plus extra px; or another token plus a number of steps).",
+  "about": "The component tokens a look can change, in the advanced editor: the sizes, fonts, colours and corners of the parts of the interface. The values the sizes give them (Compact, Comfortable; Standard is the CSS's own) are in modules/formulize/include/appearance_sizes/. A token's Default is not here: it is the value the CSS declares (modules/formulize/templates/css/formulize-ui.css, or a theme's own tokens). Each token's type says how its values are written in CSS; the token's own min and max (in the type's steps), or its list of values, are what it can be set to, chosen so that every value in the range changes how things look. Read by modules/formulize/include/appearance_tokens.php. The screens, components and gaps are for the advanced editor (modules/formulize/appearance_editor.php): the sample screens a theme can provide, the parts of the interface that can be selected in them and the tokens of each part, and what can't be adjusted yet. A part with a site setting is one of a look's site-wide settings rather than a set of tokens (the logo). A part that is a region of the page (the page, the side menu) is outlined inside its edges when it is pointed at or selected, since its edges are under what is beside it. A colour token's value is one of the site's colours (colours) or #rrggbb; its text says it is a text colour. A keyword token's labels name each of its values. A token's derived are the tokens written from it when it is set, %s being its value. A token's phone is the token used for it at 768px and below; its home is the part a shared token belongs to; its floor is the least it can be given another token's value (one line of a text token at a line height, plus extra px; or another token plus a number of steps).",
   "types": {
     "spacing": {
       "description": "A number of spacing steps (--fz-spacing, 0.25rem), in half steps.",
@@ -102,6 +102,7 @@
     "page": {
       "name": "Page",
       "plural": "every page",
+      "region": true,
       "tokens": ["--fz-page-padding", "--fz-topbar-height"],
       "gaps": ["The top bar height at phone widths, which is fixed."]
     },
@@ -399,14 +400,15 @@
     "sidemenu": {
       "name": "Side menu",
       "plural": "the side menu on every page",
+      "region": true,
       "tokens": ["--fz-sidemenu-bg", "--fz-sidemenu-border", "--fz-sidemenu-width", "--fz-sidemenu-padding-x", "--fz-sidemenu-padding-y"],
       "gaps": ["Block titles, such as the name of a block above its links.", "Its shadow, when it opens over the page on a phone."]
     },
     "sidemenu-link": {
       "name": "Menu link",
       "plural": "every link and group name in the side menu",
-      "tokens": ["--fz-sidemenu-font", "--fz-sidemenu-color", "--fz-sidemenu-hover-bg", "--fz-sidemenu-item-radius", "--fz-sidemenu-text", "--fz-sidemenu-weight", "--fz-sidemenu-item-padding-y", "--fz-sidemenu-item-padding-x"],
-      "gaps": ["Icons beside links.", "The space between links.", "The arrow beside a group's name, which follows its text colour."]
+      "tokens": ["--fz-sidemenu-font", "--fz-sidemenu-color", "--fz-sidemenu-hover-bg", "--fz-sidemenu-item-radius", "--fz-sidemenu-text", "--fz-sidemenu-weight", "--fz-sidemenu-item-padding-y", "--fz-sidemenu-item-padding-x", "--fz-sidemenu-item-gap"],
+      "gaps": ["Icons beside links.", "The arrow beside a group's name, which follows its text colour."]
     },
     "sidemenu-group": {
       "name": "Group link",
@@ -1397,6 +1399,14 @@
       "type": "spacing",
       "min": 0.5,
       "max": 4
+    },
+    "--fz-sidemenu-item-gap": {
+      "group": "sidemenu",
+      "label": "Space between menu links",
+      "description": "The space between one link and the next, and between the links in a group, without making the links bigger. 0 leaves a hairline between them.",
+      "type": "spacing",
+      "min": 0,
+      "max": 6
     },
     "--fz-sidemenu-item-padding-x": {
       "group": "sidemenu",

@@ -309,7 +309,13 @@
 	// the editor's own styles in the preview: what can be clicked, and what is selected.
 	// What is hovered, selected or pulsing is marked with data-fz-editor, not a class,
 	// so a part keeps its styles: written content is styled when it has no class.
-	function frameCss() { return FRAME_CSS_BASE.replace('%parts%', SIMPLE ? '[data-fz-part="logo"]' : '[data-fz-part]'); }
+	// A part that is a region of the page (the page, the side menu) is outlined
+	// inside its edges, which are under what is beside it.
+	function frameCss() {
+		var regions = Object.keys(MAP.components).filter(function (k) { return MAP.components[k].region; }).map(function (k) { return '[data-fz-part="' + k + '"]'; });
+		return FRAME_CSS_BASE.replace('%parts%', SIMPLE ? '[data-fz-part="logo"]' : '[data-fz-part]') +
+			(regions.length ? ':is(' + regions.join(', ') + '):is([data-fz-editor~="hover"], [data-fz-editor~="sel"]) { outline-offset: -3px !important; }' : '');
+	}
 	var FRAME_CSS_BASE =
 		'%parts% { cursor: pointer; }' +
 		'[data-fz-part][data-fz-editor~="hover"] { outline: 1px dashed #3b6fd8 !important; outline-offset: 2px; }' +

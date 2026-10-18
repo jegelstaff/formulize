@@ -200,8 +200,11 @@ h1, h2, h3, h4, h5, h6,
 
 /* ---- Sidebar ---- */
 
+/* Its width is the Appearance editor's Side menu width. It is read here rather
+   than through a variable of Lyris's own in tokens.css: style.css @imports that
+   without a version, so a browser can keep an old copy of it after an update. */
 .lyris-sidebar {
-  width: var(--lyris-sidebar-width);
+  width: var(--fz-sidemenu-width);
   flex-shrink: 0;
   overflow-y: auto;
   overflow-x: hidden;
@@ -1747,7 +1750,7 @@ a.de-edit-icon:hover::before {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: calc(1px + var(--fz-sidemenu-item-gap));
 }
 
 .main-menu__item {
@@ -1876,7 +1879,7 @@ a.main-menu__item-link--active::before {
   padding: 0 0 0 calc(var(--fz-spacing) * 2);
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: calc(1px + var(--fz-sidemenu-item-gap));
   /* The vertical guide line down the left of a group's children. */
   border-left: 1px solid var(--fz-sidemenu-guide);
 }
@@ -2047,7 +2050,7 @@ body:has(#formulize-masquerade-block) {
     /* stops above the masquerade bar; 0 otherwise -- see "Masquerade bar" */
     bottom: var(--lyris-masquerade-height);
     /* override the desktop collapsed state on mobile */
-    width: var(--lyris-sidebar-width) !important;
+    width: var(--fz-sidemenu-width) !important;
     z-index: 20;
     transform: translateX(-100%);
     transition: transform var(--fz-duration) var(--fz-ease-out);

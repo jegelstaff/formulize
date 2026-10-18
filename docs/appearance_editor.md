@@ -156,7 +156,7 @@ Everything in the simple editor, except the size, and every part of the interfac
   each level has its own size and weight. A link's hover colour is a darker shade of its colour.
 - **The side menu has a page of its own, Side menu.** Select the menu for its width, background,
   border and padding; a link, for the font, size, weight, colour, padding and corners of every link
-  and group name; a link in a group, for their size, colour and indent, and the line beside them; and
+  and group name, and the space between them; a link in a group, for their size, colour and indent, and the line beside them; and
   the link to the page you're on, for how it stands out: its background (on its own, and in a group),
   text colour, weight, and the short line beside it.
 - **The spacing of a form is on its fields.** Select a field to change the space between fields;

@@ -233,6 +233,7 @@
   --fz-sidemenu-weight:         500;
   --fz-sidemenu-item-padding-x: calc(var(--fz-spacing) * 2);
   --fz-sidemenu-item-padding-y: calc(var(--fz-spacing) * 1.5);
+  --fz-sidemenu-item-gap:       calc(var(--fz-spacing) * 0);    /* between links, on top of 1px */
   --fz-sidemenu-active-weight:  600;                            /* the link to the page you're on */
   --fz-sidemenu-sub-text:       var(--fz-text-xs);              /* the links in a group: 12px */
   --fz-sidemenu-sub-indent:     calc(var(--fz-spacing) * 3);
