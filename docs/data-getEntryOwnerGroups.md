@@ -25,15 +25,13 @@ Returns __an array of distinct group ids__. Returns __false__ if the query faile
 ## Examples
 
 ~~~php
-// Get all the groups associated with entry 44 in form 6
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+// Get all the groups associated with entry 44 in the Orders form
+$dataHandler = new formulizeDataHandler(ORDERS_FORM_ID);
 $group_ids = $dataHandler->getEntryOwnerGroups(44);
 ~~~
 
 ~~~php
-// Get all the groups associated with any entry in form 6
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+// Get all the groups associated with any entry in the Orders form
+$dataHandler = new formulizeDataHandler(ORDERS_FORM_ID);
 $group_ids = $dataHandler->getEntryOwnerGroups();
 ~~~

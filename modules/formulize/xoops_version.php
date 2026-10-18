@@ -39,7 +39,7 @@ $modversion = array(
 	'license' => "GPL-2.0",
 	'image' => "images/formulize.gif",
 	'dirname' => "formulize",
-	'dbversion' => 23,
+	'dbversion' => 24,
 	'onUpdate' => "include/on_update.php"
 );
 
@@ -1316,6 +1316,14 @@ $modversion['config'][] = array(
 	'formtype' => 'textsarea',
 	'valuetype' => 'text',
 	'default' => '',
+);
+$modversion['config'][] = array(
+	'name' => 'formulizeRemoteFileFetching',
+	'title' => '_MI_formulize_REMOTEFILEFETCHING',
+	'description' => '_MI_formulize_REMOTEFILEFETCHING_DESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 1,
 );
 
 // The basement...

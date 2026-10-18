@@ -20,7 +20,7 @@
 // What the popup windows of the list of entries screens have in common: the page
 // they are drawn in, and the Formulize UI markup of their fields and controls.
 // Used by changecols.php, changescope.php, pickcalcs.php, pickadvcalcs.php, save.php, setnot.php,
-// export.php, import.php and moreinfo.php.
+// export.php, import.php and moreinfo.php; and by pmlite.php in the site root, the private message popup.
 //
 // A popup is a page of its own, opened with showPop(), which no theme draws. So it
 // has to ask for what a theme's page would give it: the Formulize UI stylesheet,

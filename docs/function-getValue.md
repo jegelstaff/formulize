@@ -36,9 +36,8 @@ There can also be multiple values for _handle_ if there are multiple underlying 
 ## Examples
 
 ~~~php
-// gather all the data in form 6 alone, no connections
-$formId = 6;
-$data = gatherDataset($formId, frid: 0);
+// gather all the fruit alone, no connections
+$data = gatherDataset(FRUIT_FORM_ID, frid: 0);
 
 // Iterate through the data and for each entry in a dataset, print out the value of 'fruit_name'
 // Dataset entries may be made up of underlying entries from one or more forms
@@ -48,11 +47,10 @@ foreach($data as $entry) {
 ~~~
 
 ~~~php
-// Gather all the data in form 11 (orders), plus connected forms in the Primary Relationship
+// Gather all the orders, plus connected forms in the Primary Relationship
 // Print out all the fruit from each order (there may be multiple fruit entries in each item
 // in the dataset)
-$orderFormId = 11;
-$data = gatherDataset($orderFormId);
+$data = gatherDataset(ORDERS_FORM_ID);
 foreach($data as $entry) {
 	$fruit = getValue($entry, 'fruit_name');
 	if(is_array($fruit)) {
@@ -64,15 +62,13 @@ foreach($data as $entry) {
 ~~~
 
 ~~~php
-// Gather all the data in form 6 (fruit), plus connected forms in the Primary
+// Gather all the fruit, plus connected forms in the Primary
 // Relationship. For each fruit, print out some order info for the first order
 // in the dataset associated with that fruit. Isolate the first order based on
 // the underlying entry ids of the Orders form, within each item in the dataset.
-$fruitFormId = 6;
-$orderFormId = 11;
-$data = gatherDataset($fruitFormId);
+$data = gatherDataset(FRUIT_FORM_ID);
 foreach($data as $entry) {
-	$orderFormEntryIds = getEntryids($entry, $orderFormId);
+	$orderFormEntryIds = getEntryIds($entry, ORDERS_FORM_ID);
 	$firstOrderEntryId = $orderFormEntryIds[0];
 	$firstOrderDate = getValue($entry, 'order_date', localEntryId: $firstOrderEntryId);
 	$firstOrderIncoTerms = getValue($entry, 'order_incoterms', localEntryId: $firstOrderEntryId);
@@ -85,8 +81,7 @@ foreach($data as $entry) {
 // Imagine the fruit element in each order is linked to the Fruit form. Get the raw
 // value of that element which will be the entry id of the Fruit record in the database
 // (a foreign key).
-$orderFormId = 11;
-$data = gatherDataset($orderFormId, array($orderFormId=>array('order_fruit')), frid: 0);
+$data = gatherDataset(ORDERS_FORM_ID, array(ORDERS_FORM_ID=>array('order_fruit')), frid: 0);
 foreach($data as $entry) {
 	$fruitEntryId = getValue($entry, 'order_fruit', raw: true);
 	print "The entry id in the database of the fruit that was ordered, is: $fruitEntryId";

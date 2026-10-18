@@ -32,23 +32,20 @@ Returns __false__ if the element identifier is invalid, or if the query fails, o
 
 ~~~php
 // find the last entry created that has 'blue' as the value
-// for the 'colour' element, in form 6
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+// for the 'colour' element, in the Products form
+$dataHandler = new formulizeDataHandler(PRODUCTS_FORM_ID);
 $entry_id = $dataHandler->findLastEntryWithValue('colour', 'blue');
 ~~~
 
 ~~~php
 // find the last entry created where the value for element 33
-// is greater than 100, in form 6
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+// is greater than 100, in the Products form
+$dataHandler = new formulizeDataHandler(PRODUCTS_FORM_ID);
 $entry_id = $dataHandler->findLastEntryWithValue(33, 100, ">");
 ~~~
 
 ~~~php
-// find the last entry created where the order_customer value is 56, in form 6
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+// find the last entry created where the order_customer value is 56, in the Orders form
+$dataHandler = new formulizeDataHandler(ORDERS_FORM_ID);
 $entry_id = $dataHandler->findLastEntryWithValue('order_customer', 56);
 ~~~

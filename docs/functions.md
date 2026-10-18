@@ -19,6 +19,8 @@ Formulize has a lot of functions that you can use. The original code made hardly
 
 Almost all the functions are contained in the large file located at __/modules/formulize/include/functions.php__. The location of each function is shown on its documentation page.
 
+When a function asks for a form id, use the form's [ID constant](/documentation/form_id_constants/), such as _ORDERS_FORM_ID_ for a form with the handle _orders_.
+
 You can use any Formulize function throughout Formulize, for example in derived value formulas, or in screen templates. If you are writing your own PHP file and want to use Formulize functions, you just need to make sure you have bootstrapped the system with __mainfile.php__ in the root foolder, and included the __/modules/formulize/include/common.php__ file. See below for an example.
 
 Examples:
@@ -42,8 +44,8 @@ $entry_id = formulize_writeEntry($values, forceUpdate: true);
 
 ~~~php
 // getCurrentURL function - check the current URL for a particular string
-if(strstr(getCurrentURL(), 'fid=6')) {
-    print "This page is displaying form 6";
+if(strstr(getCurrentURL(), 'fid='.ORDERS_FORM_ID)) {
+    print "This page is displaying the Orders form";
 }
 ~~~
 

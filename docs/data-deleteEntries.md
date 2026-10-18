@@ -24,16 +24,14 @@ Returns __true__ if the entry or entries were deleted. Returns __false__ if the 
 ## Examples
 
 ~~~php
-// delete entry 19 in form 6
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+// delete entry 19 in the Orders form
+$dataHandler = new formulizeDataHandler(ORDERS_FORM_ID);
 $dataHandler->deleteEntries(19);
 ~~~
 
 ~~~php
-// delete a series of entries in form 6
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+// delete a series of entries in the Orders form
+$dataHandler = new formulizeDataHandler(ORDERS_FORM_ID);
 $entries = array(19, 20, 21);
 $dataHandler->deleteEntries($entries);
 ~~~

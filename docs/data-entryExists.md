@@ -24,9 +24,8 @@ Returns __true__ if the entry exists, __false__ if the entry does not exist.
 ## Example
 
 ~~~php
-// does entry 19 exist in form 6
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+// does entry 19 exist in the Orders form
+$dataHandler = new formulizeDataHandler(ORDERS_FORM_ID);
 if($dataHandler->entryExists(19)) {
     echo "It exists!";
 }

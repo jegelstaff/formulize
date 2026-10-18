@@ -99,10 +99,10 @@ include_once "mainfile.php";
 // include the Formulize functions file, which in turn will include all other parts of the Formulize API
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 
-// setup a data handler for form id number 6
-$data_handler = new formulizeDataHandler(6);
+// setup a data handler for the Profiles form
+$data_handler = new formulizeDataHandler(PROFILES_FORM_ID);
 
-// get the entry ids in form 6 which have 'John Smith' as the value for a field 'profile_name'
+// get the entry ids in the Profiles form which have 'John Smith' as the value for a field 'profile_name'
 $entries = $data_handler->findAllEntriesWithValue("profile_name", "John Smith");
 ~~~
 

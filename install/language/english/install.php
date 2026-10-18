@@ -120,6 +120,8 @@ define( "CHECKING_PERMISSIONS", "Checking file and directory permissions..." ); 
 define( "IS_NOT_WRITABLE", "%s is NOT writable." ); // L83
 define( "IS_WRITABLE", "%s is writable." ); // L84
 define( "ALL_PERM_OK", "All Permissions are correct." );
+define( "UPLOADS_EXECUTABLE_WARNING_TITLE", "Security warning: the uploads folder can run programs" );
+define( "UPLOADS_EXECUTABLE_WARNING", "This server will run a program saved in the <strong>uploads</strong> folder. Files that people upload to your forms are stored there, so this must be fixed before your site is used: someone who can upload a file could upload a program and then run it. Formulize installs an <strong>.htaccess</strong> file in that folder to prevent this. On an Apache server, make sure <strong>AllowOverride</strong> is set to <strong>FileInfo Limit</strong> (or <strong>All</strong>) for this website, so that file takes effect. On nginx or another server, <strong>.htaccess</strong> is ignored, so add a rule to the server configuration that stops the <strong>uploads</strong> folder running PHP or other scripts. There is more about this in the deployment documentation at formulize.org." );
 
 define( "READY_CREATE_TABLES", "No ImpressCMS tables were detected.<br />The installer is now ready to create the ImpressCMS system tables.<br />Press <em>next</em> to proceed." );
 define( "XOOPS_TABLES_FOUND", "The ImpressCMS system tables already exists in your database.<br />Press <em>next</em> to go to the next step." ); // L131

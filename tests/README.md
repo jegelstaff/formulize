@@ -13,6 +13,9 @@ behaviour. CI runs them *before* the e2e suite, since they have nothing to wait 
 * `normalize_then_escape_test.php`
 * `date_search_test.php`
 * `empty_set_search_test.php`
+* `blocked_extensions_sync_test.php` - the list of never-executable script extensions, written out in
+  `BLOCKED_EXTENSIONS`, `uploads/.htaccess`, the fallback copy in `uploads_execution_probe.php` and the copy
+  in `docs/uploads_not_executable.md`, is the same set everywhere. Fails if any copy drifts from the constant.
 
 **Integrity tests against a built system** boot the application and read the live database, so CI runs
 them *after* the e2e suite, when the setup specs have finished building the museum system.

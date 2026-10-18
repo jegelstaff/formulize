@@ -327,6 +327,8 @@ return array(
                         // MCP first: it is a simple on/off with no configuration of its own
                         // beyond the shared instructions field at the bottom.
                         array('name' => 'formulizeMCPServerEnabled', 'scope' => 'formulize'),
+                        // not tied to the MCP setting, because the Public API will receive files the same way
+                        array('name' => 'formulizeRemoteFileFetching', 'scope' => 'formulize'),
 
                         array('name' => 'formulizeAIAssistantEnabled', 'scope' => 'formulize'),
                         array(

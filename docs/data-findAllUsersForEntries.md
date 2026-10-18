@@ -25,18 +25,16 @@ Returns __an array of user ids__, or __false__ if the query failed.
 ## Example
 
 ~~~php
-// find the users who created the declared series of entries in form 6
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+// find the users who created the declared series of entries in the Orders form
+$dataHandler = new formulizeDataHandler(ORDERS_FORM_ID);
 $entries = array(19, 20, 21);
 $creation_user_ids = $dataHandler->findAllUsersForEntries($entries);
 ~~~
 
 ~~~php
-// find the users who created the declared series of entries in form 6
+// find the users who created the declared series of entries in the Orders form
 // only if the users are in the declared 'managers' array
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+$dataHandler = new formulizeDataHandler(ORDERS_FORM_ID);
 $entries = array(19, 20, 21);
 $managers = array(105, 121, 287);
 $creation_user_ids = $dataHandler->findAllUsersForEntries($entries, $managers);

@@ -21,7 +21,7 @@ Creates a valid scope that can be passed to the [gatherDataset](../gatherDataset
 
 __$currentView__ - Can be one of the strings: _mine_, _group_, or _all_, signifying "the user's entries," or "their group's entries," or "all entries." The highest possible scope available to the user, based on their permissions, will be used. Can also be a comma separated list of group ids instead, or a single group id, to declare a specific scope based on that particular set of groups. If you want the specified group ids to be limited to just the groups the user is a member of, put _onlymembergroups_ as the first item in the comma separated list.<br>
 __$userIdOrObject__ - The user id or object that represents the user for whom the scope is being built. Their permissions on the form will be taken into account to ensure the scope is limited to the data they have access to. If an invalid user id or object is passed, then the "anonymous user" is used, ie: user 0, no user, member of the Anonymous Users group.<br>
-__$fid__ - The id number of the form for which the scope is being built.<br>
+__$fid__ - The id number of the form for which the scope is being built. Use the form's [ID constant](/documentation/form_id_constants/), such as _ORDERS_FORM_ID_ for a form with the handle _orders_.<br>
 
 ## Return Values
 
@@ -32,27 +32,25 @@ Key zero, the returned scope, can be passed directly into the [gatherDataset](..
 ## Examples
 
 ~~~php
-// Create the most permissive scope possible for user 12 on form 6,
+// Create the most permissive scope possible for user 12 on the Orders form,
 // based on their permissions
 $userId = 12;
-$formId = 6;
 $currentView = 'all'; // try to go big
-list($scope, $currentView) = buildScope($currentView, $userId, $formId);
+list($scope, $currentView) = buildScope($currentView, $userId, ORDERS_FORM_ID);
 if($currentView != 'all') {
 	print "Scope was reduced from 'all' based on the user's permissions";
 }
 ~~~
 
 ~~~php
-// Find the group ids that make up 'group scope' for user 12 on form 6
-// ie: which groups are 'their groups' for the purposes of seeing entries in form 6
+// Find the group ids that make up 'group scope' for user 12 on the Orders form
+// ie: which groups are 'their groups' for the purposes of seeing entries in the Orders form
 // Note: if the user does not have any group level visibility permission on the form,
 // then the scope will be reduced to only their own entries
 $userId = 12;
-$formId = 6;
 $currentView = 'group';
-list($scope, $currentView) = buildScope($currentView, $userId, $formId);
-print "'Group Scope' groups for $userId on $formId are:";
+list($scope, $currentView) = buildScope($currentView, $userId, ORDERS_FORM_ID);
+print "'Group Scope' groups for user $userId on the Orders form are:";
 print_r($scope);
 ~~~
 
@@ -60,10 +58,9 @@ print_r($scope);
 // Print out the order numbers from the Orders form, for all the orders that belong
 // to the currently logged in user's group(s)
 global $xoopsUser; // the logged in user object, or empty if no one is logged in
-$orderFormId = 6;
 $currentView = 'group';
-list($scope, $currentView) = buildScope($currentView, $xoopsUser, $orderFormId);
-$data = gatherDataset($orderFormId, scope: $scope);
+list($scope, $currentView) = buildScope($currentView, $xoopsUser, ORDERS_FORM_ID);
+$data = gatherDataset(ORDERS_FORM_ID, scope: $scope);
 foreach($data as $entry) {
 	print "Order Number: ".getValue($entry, 'order_number');
 }
@@ -72,15 +69,13 @@ foreach($data as $entry) {
 ~~~php
 // Make the scope based on groups 17 and 33
 global $xoopsUser; // the logged in user object, or empty if no one is logged in
-$orderFormId = 6;
 $currentView = '17,33';
-list($scope, $currentView) = buildScope($currentView, $xoopsUser, $orderFormId);
+list($scope, $currentView) = buildScope($currentView, $xoopsUser, ORDERS_FORM_ID);
 ~~~
 
 ~~~php
 // Make the scope based on groups 17 and 33, as long as the user is a member of those groups
 global $xoopsUser; // the logged in user object, or empty if no one is logged in
-$orderFormId = 6;
 $currentView = 'onlymembergroups,17,33';
-list($scope, $currentView) = buildScope($currentView, $xoopsUser, $orderFormId);
+list($scope, $currentView) = buildScope($currentView, $xoopsUser, ORDERS_FORM_ID);
 ~~~

@@ -30,24 +30,21 @@ Returns __false__ if the query fails, or the element identifier is invalid.
 ## Example
 
 ~~~php
-// find the entries that have 'foo' as the value for the element 'bar', in form 6
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+// find the entries that have 'foo' as the value for the element 'bar', in the Products form
+$dataHandler = new formulizeDataHandler(PRODUCTS_FORM_ID);
 $entry_ids = $dataHandler->findAllEntriesWithValue('bar', 'foo');
 ~~~
 
 ~~~php
-// find the entries that contain 'foo' in the value for the element 'bar', in form 6
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+// find the entries that contain 'foo' in the value for the element 'bar', in the Products form
+$dataHandler = new formulizeDataHandler(PRODUCTS_FORM_ID);
 $entry_ids = $dataHandler->findAllEntriesWithValue('bar', '%foo%', operator: 'LIKE');
 ~~~
 
 ~~~php
 // find the entries that contain 'foo' in the value for the element 'bar',
-// created by either group 526 or 707, in form 6
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+// created by either group 526 or 707, in the Products form
+$dataHandler = new formulizeDataHandler(PRODUCTS_FORM_ID);
 $scope_group_ids = array(526, 707);
 $entry_ids = $dataHandler->findAllEntriesWithValue(
     element_identifier: 'bar',

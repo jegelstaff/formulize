@@ -20,7 +20,7 @@ Updates all the derived values in the specified entry in the specified form. Opt
 ## Parameters
 
 __$entry_id_or_filter__ - either an entry id number, or a valid filter for the getData function, as specified in [older Formulize documentation](../../../files/Using_Formulize-Pageworks_to_Make_Custom_Applications.pdf). If a filter is specified, the derived values will be updated on all entries found by the filter.<br>
-__$fid__ - the form id of the form the entry belongs to<br>
+__$fid__ - the form id of the form the entry belongs to. Use the form's [ID constant](/documentation/form_id_constants/), such as _ORDERS_FORM_ID_ for a form with the handle _orders_.<br>
 __$frid__ - Optional - the form relationship id that represents the dataset within which the derived values should be updated. If not specified, only data from the entry itself will be available and in scope when the derived values are updated. If a relationship is specified then all the data from connected forms will be in scope when the derived values are updated. Use -1 to include all the connected forms, based on the _Primary Relationship_, which is a special relationship that Formulize automatically maintains to represent all the connections in the system.
 
 ## Return Values
@@ -29,21 +29,21 @@ Returns __null__
 
 ## Examples
 
-~~~
-// update all the derived values in entry 7 in form 88
-formulize_updateDerivedValues(7, 88);
+~~~php
+// update all the derived values in entry 7 in the People form
+formulize_updateDerivedValues(7, PEOPLE_FORM_ID);
 ~~~
 
-~~~
-// update all the derived values in entry 7 in form 88, and make sure all the data
+~~~php
+// update all the derived values in entry 7 in the People form, and make sure all the data
 // connected to that entry within relationship 12 is available when the derived
 // values are updated
-formulize_updateDerivedValues(7, 88, 12);
+formulize_updateDerivedValues(7, PEOPLE_FORM_ID, frid: 12);
 ~~~
 
-~~~
-// update all the derived values in form 88 where the value of the
+~~~php
+// update all the derived values in the People form where the value of the
 // full_name element contains 'John'
 $filter = "full_name/**/John";
-formulize_updateDerivedValues($filter, 88);
+formulize_updateDerivedValues($filter, PEOPLE_FORM_ID);
 ~~~

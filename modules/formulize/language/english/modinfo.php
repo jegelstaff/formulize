@@ -227,6 +227,8 @@ define("_MI_formulize_AIASSISTANTGROUPS_DESC", "Select which groups of users are
 
 define("_MI_formulize_MCPSERVERENABLED", "Enable AI integration via MCP, for external AI Assistants");
 define("_MI_formulize_MCPSERVERENABLED_DESC", "MCP (Model Context Protocol) is a way of connecting external AI assistants, like Claude Desktop, Copilot, etc, to Formulize. With MCP, those AI assistants can read information from Formulize and help you configure Formulize. To use AI inside Formulize without any external client, use the Embedded AI Assistant setting instead.".$mcpServerInstructions);
+define("_MI_formulize_REMOTEFILEFETCHING", "Allow files to be fetched from web addresses");
+define("_MI_formulize_REMOTEFILEFETCHING_DESC", "When this is on, AI assistants connected through MCP can put a file into a file upload element by giving the web address of the file, and this site downloads it. The address must be publicly available. Addresses on your own network, or on this server, are always refused. Downloaded files are checked the same way as files uploaded in a form.<br><br>When this is off, files can still be sent along with the request itself, but not fetched from a web address.");
 
 define("_MI_formulize_SYSTEM_SPECIFIC_INSTRUCTIONS", "System Specific Instructions for the AI Assistant");
 define("_MI_formulize_SYSTEM_SPECIFIC_INSTRUCTIONS_DESC", "You can provide specific context to the AI assistant about what your Formulize system is used for and how it is configured. Basic concepts like forms, elements, screens, users, groups, etc, have already been explained to the AI assistant. This is your chance to provide more specific context about the purpose and workflows of your system, to help the AI assistant help you better.<style>

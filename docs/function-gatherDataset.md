@@ -47,8 +47,8 @@ You can interate over the items in a dataset with __foreach__ in PHP, and you ca
 
 ## Parameters
 
-__$fid__ - The id number of the main form in the dataset.<br>
-__$elementHandles__ - Optional. An array of element handles to include in the result set. By default all elements are included. To limit the dataset to only certain elements, use a multidimensional array, where the top level keys are form ids, and the values are an array of element handles in that form.<br>
+__$fid__ - The id number of the main form in the dataset. Use the form's [ID constant](/documentation/form_id_constants/), such as _ORDERS_FORM_ID_ for a form with the handle _orders_.<br>
+__$elementHandles__ - Optional. An array of element handles to include in the result set. By default all elements are included. To limit the dataset to only certain elements, use a multidimensional array, where the top level keys are form ids (or form ID constants), and the values are an array of element handles in that form.<br>
 __$filter__ - Optional. An entry id in the main form of a single entry to gather, or a valid filter string or array of strings. See the examples for more details. Defaults to no filter.<br>
 __$andOr__ - Optional. A boolean operator to use between multiple filters. Defaults to _AND_.<br>
 __$scope__ - Optional. An array of group ids that should be used to limit the data included in the dataset. Can also be an arbitrary SQL string that will be appended to the end of the query. Defaults to an empty string (so there will be no scope restrictions by default). Use the function [buildScope](../buildScope) to create a scope based on a particular user's permissions.<br>
@@ -67,85 +67,76 @@ You can interate over the items in a dataset with __foreach__ in PHP, and you ca
 
 ## Examples
 
+These examples use [form ID constants](/documentation/form_id_constants/), which hold each form's id number under a name based on the form's handle. They assume a Fruit form, with the handle `fruit`, connected to an Orders form, with the handle `orders`.
+
 ~~~php
-// gather all the data in form 6, plus connected forms in the Primary Relationship
-$formId = 6;
-$data = gatherDataset($formId);
+// gather all the orders, plus connected forms in the Primary Relationship
+$data = gatherDataset(ORDERS_FORM_ID);
 ~~~
 
 ~~~php
-// gather all the data in form 6 for only entry 99, plus connected forms
-// in the Primary Relationship
-// filter can be an ID number to isolate one entry
-$formId = 6;
+// gather only order entry 99, plus connected forms in the Primary Relationship
+// filter can be an entry id to isolate one entry
 $entryId = 99;
-$data = gatherDataset($formId, filter: $entryId);
+$data = gatherDataset(ORDERS_FORM_ID, filter: $entryId);
 ~~~
 
 ~~~php
-// gather all the data in form 6, plus connected forms in the Primary Relationship
+// gather all the orders, plus connected forms in the Primary Relationship
 // limit the data to only data belonging to group 17
-$formId = 6;
 $groupId = 17;
 $scope = array($groupId);
-$data = gatherDataset($formId, scope: $scope);
+$data = gatherDataset(ORDERS_FORM_ID, scope: $scope);
 ~~~
 
 ~~~php
-// gather all the data in form 6, plus connected forms in the Primary Relationship
+// gather all the fruit, plus connected forms in the Primary Relationship
 // limit the data to only data where the value of the element 'fruit_name'
 // is precisely 'Strawberries'
 // filter strings use /**/ to separate component parts
 // the final component is the operator. Defaults to LIKE if not specified.
-$formId = 6;
-$filter = "fruit_type/**/Strawberries/**/=";
-$data = gatherDataset($formId, filter: $filter);
+$filter = "fruit_name/**/Strawberries/**/=";
+$data = gatherDataset(FRUIT_FORM_ID, filter: $filter);
 ~~~
 
 ~~~php
-// gather all the data in form 6, plus connected forms in the Primary Relationship
+// gather all the fruit, plus connected forms in the Primary Relationship
 // limit the data to only data where the value of the element 'fruit_name'
 // contains the word 'berries'
 // ie: Strawberries, Blueberries, etc
 // filter strings use /**/ to separate component parts
-$formId = 6;
 $filter = "fruit_name/**/berries";
-$data = gatherDataset($formId, filter: $filter);
+$data = gatherDataset(FRUIT_FORM_ID, filter: $filter);
 ~~~
 
 ~~~php
-// Gather all the data in form 6, plus connected forms in the Primary Relationship
+// Gather all the fruit, plus connected forms in the Primary Relationship
 // Limit the data to only data where the value of the element 'fruit_name' is like 'berries'
 // Include only the elements 'order_date' and 'fruit_name' in the dataset.
-// The elements are in different forms.
-$fruitFormId = 6;
-$orderFormId = 11;
+// The elements are in different forms, so the keys of the array are the form ids.
 $elementHandles = array(
-	$fruitFormId=>array(
+	FRUIT_FORM_ID=>array(
 		'fruit_name'
 	),
-	$orderFormId=>array(
+	ORDERS_FORM_ID=>array(
 		'order_date'
 	)
 );
 $filter = "fruit_name/**/Berries";
-$data = gatherDataset($fruitFormId, $elementHandles, $filter);
+$data = gatherDataset(FRUIT_FORM_ID, $elementHandles, $filter);
 // no named parameter necessary because those are the first three params in order
 ~~~
 
 ~~~php
-// gather all the data in form 6 only, no other forms included
-$formId = 6;
-$data = gatherDataset($formId, frid: 0);
+// gather all the fruit only, no other forms included
+$data = gatherDataset(FRUIT_FORM_ID, frid: 0);
 ~~~
 
 ~~~php
-// Gather all the data in form 11, plus connected forms in the Primary Relationship
-// Note the inverse main form compared to prior examples
-$fruitFormId = 6;
-$orderFormId = 11;
+// Gather all the orders, plus connected forms in the Primary Relationship
+// Note the inverse main form compared to the prior examples
 $filter = "fruit_name/**/berries";
-$data = gatherDataset($orderFormId, filter: $filter);
+$data = gatherDataset(ORDERS_FORM_ID, filter: $filter);
 
 // Loop through the dataset and generate a set of prices for orders, and the berries included in them
 $orderPriceAndContents = array();
@@ -159,66 +150,61 @@ foreach($data as $entry) {
 ~~~
 
 ~~~php
-// gather all the data in form 6, plus connected forms in the Primary Relationship
+// gather all the orders, plus connected forms in the Primary Relationship
 // limit the data to only data where the value of the element 'order_price'
 // is higher than 100
 // filter strings use /**/ to separate component parts
 // the final component is the operator. Defaults to LIKE if not specified.
-$formId = 6;
 $filter = "order_price/**/100/**/>";
-$data = gatherDataset($formId, filter: $filter);
+$data = gatherDataset(ORDERS_FORM_ID, filter: $filter);
 ~~~
 
 ~~~php
-// Gather all the data in form 6, plus connected forms in the Primary Relationship
+// Gather all the orders, plus connected forms in the Primary Relationship
 // Limit the data to only data where the value of the element 'order_price'
 // is higher than 100 and lower than 200
 // Filter strings use /**/ to separate component parts
 // The final component is the operator. Defaults to LIKE if not specified.
 // Multiple filter strings can be concatenated with ][
-$formId = 6;
 $filter = "order_price/**/100/**/>][order_price/**/200/**/<";
-$data = gatherDataset($formId, filter: $filter);
+$data = gatherDataset(ORDERS_FORM_ID, filter: $filter);
 ~~~
 
 ~~~php
-// Gather all the data in form 6, plus connected forms in the Primary Relationship
+// Gather all the fruit, plus connected forms in the Primary Relationship
 // Limit the data to only data where the value of the element 'fruit_name' is
 // 'Bananas' or 'Oranges'
 // Filter strings use /**/ to separate component parts
 // The final component is the operator. Defaults to LIKE if not specified.
 // Multiple filter strings can be concatenated with ][
 // The andOr parameter controls how multiple terms are interpretted
-$formId = 6;
 $filter = "fruit_name/**/Bananas/**/=][fruit_name/**/Oranges/**/=";
-$data = gatherDataset($formId, filter: $filter, andOr: "OR");
+$data = gatherDataset(FRUIT_FORM_ID, filter: $filter, andOr: "OR");
 ~~~
 
 ~~~php
-// Gather all the data in form 6, plus connected forms in the Primary Relationship
+// Gather all the orders, plus connected forms in the Primary Relationship
 // Limit the data to only data where the value of the element 'order_date' is
 // in the year 2029
 // Filter strings use /**/ to separate component parts
 // The final component is the operator. Defaults to LIKE if not specified.
-$formId = 6;
 $filter = "order_date/**/2029";
-$data = gatherDataset($formId, filter: $filter);
+$data = gatherDataset(ORDERS_FORM_ID, filter: $filter);
 ~~~
 
 ~~~php
-// Gather all the data in form 6, plus connected forms in the Primary Relationship
+// Gather all the orders, plus connected forms in the Primary Relationship
 // Limit the data to only data where the value of the element 'order_date' is
 // between Jan 1 2029 and Mar 31 2029
 // Filter strings use /**/ to separate component parts
 // The final component is the operator. Defaults to LIKE if not specified.
 // Multiple filter strings can be concatenated with ][
-$formId = 6;
 $filter = "order_date/**/2029-01-01/**/>=][order_date/**/2029-03-31/**/<=";
-$data = gatherDataset($formId, filter: $filter);
+$data = gatherDataset(ORDERS_FORM_ID, filter: $filter);
 ~~~
 
 ~~~php
-// Gather all the data in form 6, plus connected forms in the Primary Relationship
+// Gather all the orders, plus connected forms in the Primary Relationship
 // Limit the data to only data where the value of the element 'order_date' is
 // between Jan 1 2029 and Mar 31 2029, or where the status is pending
 // Filter strings use /**/ to separate component parts
@@ -229,14 +215,13 @@ $data = gatherDataset($formId, filter: $filter);
 // The andOr parameter is used between the different parts of the array, and
 // the first item in each lower level array determines how multiple terms within
 // that filter are interpreted.
-$formId = 6;
 $statusFilter = "order_status/**/Pending/**/=";
 $dateFilter = "order_date/**/2029-01-01/**/>=][order_date/**/2029-03-31/**/<=";
 $filter = array(
 	0 => array("AND", $statusFilter),
 	1 => array("AND", $dateFilter)
 );
-$data = gatherDataset($formId, filter: $filter, andOr: "OR");
+$data = gatherDataset(ORDERS_FORM_ID, filter: $filter, andOr: "OR");
 
 //essentially, this results in the query structure:
 // ( order_status = Pending OR ( order_date >= Jan 1 2029 AND order_date <= Mar 31 2029 ) )

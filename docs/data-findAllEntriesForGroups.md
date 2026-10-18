@@ -30,8 +30,7 @@ Returns __false__ if the query failed.
 ## Example
 
 ~~~php
-// find all the entry ids in form 6, belonging to either group 499 or 526
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+// find all the entry ids in the Orders form, belonging to either group 499 or 526
+$dataHandler = new formulizeDataHandler(ORDERS_FORM_ID);
 $entry_id = $dataHandler->findAllEntriesForGroups(array(499, 526));
 ~~~

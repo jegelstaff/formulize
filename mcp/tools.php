@@ -1314,6 +1314,8 @@ There is no syntax checking when you save, and an error here affects every page 
 					'name' => 'get_documentation',
 					'description' => 'Read Formulize\'s reference documentation for the PHP functions and the formulizeDataHandler class and its methods, available to custom code (see update_form_code and update_application_code) - what each one does, its parameters, its return value, and examples. This covers the storage formats and data access patterns that update_form_code and update_application_code describe as "consult the reference documentation" for.
 
+The form_id_constants topic explains the constants that hold each form\'s id number, such as ORDERS_FORM_ID. Use them in code wherever a form id is needed, instead of a number.
+
 The formulize_ui topic is the reference for Formulize UI, the CSS classes and tokens to use in any HTML you write for Formulize, such as a derived value that outputs HTML or the content of a Full Width Content or Captioned Content element. Read it before writing HTML or CSS, and use only the classes it lists.
 
 Call with no arguments to get the list of topics, each with a one-line summary. Call again with \'topic\' set to one of those names to get its full reference page.',
@@ -1370,12 +1372,15 @@ Call with no arguments to get the list of topics, each with a one-line summary. 
 	 * @return string The description text
 	 */
 	private function createUpdateEntriesDataItemsDescription($operation) {
+		include_once XOOPS_ROOT_PATH.'/modules/formulize/include/fileintake.php';
 		$operation = $operation == "create" ? "save" : "update";
 		$text = "Data to $operation as key-value pairs. Keys must be valid element handles from the form";
 		$text .= $operation == "update" ? " and must include 'entry_id'. " : ". ";
 		$text .= "Use get_form_details to find valid handles. ";
 		$text .= $operation == "update" ? "Only specified elements will be updated; others remain unchanged. " : "This tool will automatically create default values for any elements that are not specified, if they have default values defined in the Formulize configuration. ";
 		$text .= "Date elements store data in YYYY-MM-DD format. Time elements store data in 24 hour format (hh:mm). Duration elements store data in minutes. Elements that allow multiple selections, such as checkboxes and autocomplete lists configured to allow more than one value, store data as an array of values. For linked elements and user list elements, this tool will convert readable values to their internal ids; you DO NOT need to figure out the internal ids yourself.";
+		$text .= " File upload elements take a file in one of these forms: a URL, as a string; an object with a url and optionally a filename, eg: {\"url\": \"https://example.com/download/123\", \"filename\": \"report.pdf\"} (include the filename when the URL does not end in the file's name); or an object with content_base64 and a filename, eg: {\"content_base64\": \"JVBERi0x...\", \"filename\": \"report.pdf\"}. A URL must be publicly available to anyone, without signing in, and must lead directly to the file, not to a page that shows it. Prefer a URL for files larger than a few megabytes, because base64 content makes the request about a third larger than the file. The file must be one of the types the element allows, and no larger than its maximum size (see get_element_details). At most ".formulize_fileIntakeMaxFilesPerRequest()." files can be sent in one request.";
+		$text .= $operation == "update" ? " Replacing a file deletes the one the entry had before. Use null to remove a file." : "";
 		return $text;
 	}
 
@@ -1476,6 +1481,7 @@ Call with no arguments to get the list of topics, each with a one-line summary. 
 	private function documentationCatalog() {
 		return [
 			'formulizeDataHandler' => 'data_handler.md',
+			'form_id_constants' => 'form_id_constants.md',
 			'formulize_updateDerivedValues' => 'function-formulize_updateDerivedValues.md',
 			'formulize_writeEntry' => 'function-formulize_writeEntry.md',
 			'gatherDataset' => 'function-gatherDataset.md',
@@ -3661,6 +3667,16 @@ Do not use foreign key values with linked elements; use the readable value inste
 		}
 		if($data_type AND !in_array($data_type, $validDataTypes)) {
 			throw new FormulizeMCPException('Invalid data_type: '.$data_type, 'invalid_data', context: ['valid_data_types' => ['text', 'int(x)', 'decimal(x,y)', 'date', 'datetime', 'time', 'char(x)', 'varchar(x)'] ]);
+		}
+		// Some element types fix their own data type, because the values they store depend on it (ie: dates, or the
+		// serialized records of file upload elements). On creation that type always wins, but on update a data_type
+		// would convert the column and could destroy the existing data, so it is refused.
+		if($data_type AND $elementObject
+			AND isset($elementObject->needsDataType) AND $elementObject->needsDataType === false
+			AND !empty($elementObject->overrideDataType)
+			AND !method_exists($elementObject, 'getDefaultDataType')
+			AND strtolower($data_type) != strtolower($elementObject->overrideDataType)) {
+			throw new FormulizeMCPException("The data type of this element cannot be changed. It is always stored as ".$elementObject->overrideDataType.", because the values it stores depend on that. Leave out data_type.", 'invalid_data');
 		}
 
 		// validate that display conditions have valid element references, operators, and types
@@ -6456,7 +6472,13 @@ Do not use foreign key values with linked elements; use the readable value inste
 	 * @return array An associative array with the result of the create operation, including success status, form ID, entry ID, action performed, and any additional information such as new entry ID if created.
 	 */
 	private function create_entries($arguments) {
-		return $this->writeFormEntries(intval($arguments['form_id']), 'create', $arguments['data'] ?? [], -1, $arguments['proxy_user_id'] ?? null);
+		include_once XOOPS_ROOT_PATH.'/modules/formulize/include/fileintake.php';
+		$stagedFiles = [];
+		try {
+			return $this->writeFormEntries(intval($arguments['form_id']), 'create', $arguments['data'] ?? [], -1, $arguments['proxy_user_id'] ?? null, $stagedFiles);
+		} finally {
+			formulize_discardStagedFiles($stagedFiles); // any file that did not make it into an entry
+		}
 	}
 
 	/**
@@ -6469,7 +6491,13 @@ Do not use foreign key values with linked elements; use the readable value inste
 	 * @return array An associative array with the result of the create operation, including success status, form ID, entry ID, action performed, and any additional information such as new entry ID if created.
 	 */
 	private function update_entries($arguments) {
-		return $this->writeFormEntries(intval($arguments['form_id']), 'update', $arguments['data'] ?? [], -1, $arguments['proxy_user_id'] ?? null);
+		include_once XOOPS_ROOT_PATH.'/modules/formulize/include/fileintake.php';
+		$stagedFiles = [];
+		try {
+			return $this->writeFormEntries(intval($arguments['form_id']), 'update', $arguments['data'] ?? [], -1, $arguments['proxy_user_id'] ?? null, $stagedFiles);
+		} finally {
+			formulize_discardStagedFiles($stagedFiles); // any file that did not make it into an entry
+		}
 	}
 
 	/**
@@ -6528,11 +6556,16 @@ Do not use foreign key values with linked elements; use the readable value inste
 	 * @param array $data The data to write. Each value is an array of key-value pairs, representing the element handles and values of the data to store. If $operation is 'update', entry_id must be a key and the value is the entry ID to update.
 	 * @param int $relationshipId The ID of the relationship to use for derived value calculations. Defaults to -1 for the Primary Relationship, which includes all connected forms.
 	 * @param int|null $proxyUserId Optional. Write the entry/entries on behalf of this user id instead of the currently authenticated user. Must be a candidate owner for the form, per getListOfCandidateOwnersForFormEntries; otherwise an invalid_data exception is thrown.
+	 * @param array $stagedFiles Passed by reference. Files for File Upload elements are fetched and checked before any entry is written, and wait here, keyed by entry key and element handle, until their entry has been written. The caller must pass what is left to formulize_discardStagedFiles when this returns or throws, so temporary files are not left behind.
 	 * @return array An associative array with the result of the write operation, including success status.
 	 * @throws Exception If there is an error during the write operation, such as permission issues, form not found, invalid element handles, or failure to prepare data for storage.
 	 */
-	private function writeFormEntries($formId, $operation, $data, $relationshipId = -1, $proxyUserId = null)
+	private function writeFormEntries($formId, $operation, $data, $relationshipId = -1, $proxyUserId = null, &$stagedFiles = [])
 	{
+		include_once XOOPS_ROOT_PATH.'/modules/formulize/include/fileintake.php';
+		$filesToRemove = []; // entry key => element handles, for file values given as null or ""
+		$stagedFileCount = 0;
+		$fileNotes = [];
 
 		// Validate data
 		if (!is_array($data) || empty($data)) {
@@ -6639,6 +6672,30 @@ Do not use foreign key values with linked elements; use the readable value inste
 				// Handle array values by converting strings to single value arrays, looping through each item, and concatenating results back into string if required for the given element type
 				// There is a great deal of validation and correction that can and should be done here, similar to when import operation is done, to convert a value that makes sense in that context, into the proper format for storage, ie: turn strings into foreign key ids, check that values are actually options for the given checkbox series or dropdown list, etc.
 				$elementObject = _getElementObject($elementHandle);
+
+				// Files are fetched or decoded and checked now, before anything is written, so a bad file stops the
+				// whole request while nothing has changed. They are put in place once their entry has been written.
+				if($elementObject->getVar('ele_type') == 'fileUpload') {
+					if(($value !== null AND $value !== '') AND $stagedFileCount >= formulize_fileIntakeMaxFilesPerRequest()) {
+						throw new FormulizeMCPException('A single request can include at most '.formulize_fileIntakeMaxFilesPerRequest().' files. Send the rest in another request.', 'invalid_data');
+					}
+					try {
+						$staged = formulize_stageFileForElement($value, $elementObject);
+					} catch (FormulizeApiException $e) {
+						$entryDescriptor = $entryId === 'new' ? 'new entry '.($i + 1) : "entry $entryId";
+						throw new FormulizeMCPException("The file for '$elementHandle' in $entryDescriptor was not accepted. ".$e->getMessage(), $this->mapApiExceptionType($e->getType()));
+					}
+					if(!empty($staged['clear'])) {
+						$preparedData[$preparedDataKey][$elementHandle] = null;
+						$filesToRemove[$preparedDataKey][] = $elementHandle;
+					} else {
+						$stagedFiles[$preparedDataKey][$elementHandle] = $staged;
+						$stagedFileCount++;
+						$preparedData[$preparedDataKey][$elementHandle] = formulize_storedFileRecord($staged);
+					}
+					continue;
+				}
+
 				if($elementObject->canHaveMultipleValues) {
 					if(!is_array($value)) {
 						throw new FormulizeMCPException('Element '.$elementHandle.' requires values to be provided as an array', 'invalid_data');
@@ -6791,6 +6848,28 @@ Do not use foreign key values with linked elements; use the readable value inste
 				updateOwnerForFormEntry($formId, $proxyUserId, $finalEntryId);
 			}
 
+			// Put files in place now that the entry has an id, and report them by name and address rather than by the stored record
+			if($finalEntryId) {
+				foreach($filesToRemove[$i] ?? [] as $fileHandle) {
+					formulize_removeFileForEntry(_getElementObject($fileHandle), $finalEntryId);
+				}
+				$fileUploadHandler = xoops_getmodulehandler('fileUploadElement', 'formulize');
+				foreach($stagedFiles[$i] ?? [] as $fileHandle => $staged) {
+					$fileElementObject = _getElementObject($fileHandle);
+					if(formulize_commitStagedFile($staged, $fileElementObject, $finalEntryId)) {
+						$preparedData[$i][$fileHandle] = [
+							'file_name' => $staged['displayName'],
+							'url' => $fileUploadHandler->createFileURL($fileElementObject, $finalEntryId, $preparedData[$i][$fileHandle]),
+						];
+					} else {
+						// the same as a failed upload in a form: the entry is left with no file
+						formulize_writeEntry([$fileHandle => null], $finalEntryId);
+						$preparedData[$i][$fileHandle] = null;
+						$fileNotes[] = "The file for '$fileHandle' in entry $finalEntryId could not be saved on the server, so the entry has no file for it. Try again, and if it keeps happening, ask the webmaster to check that the uploads folder can be written to.";
+					}
+				}
+			}
+
 			// Step 4: Update derived values
 			if($finalEntryId) {
 				formulize_updateDerivedValues($finalEntryId, $formId, $relationshipId);
@@ -6848,7 +6927,7 @@ Do not use foreign key values with linked elements; use the readable value inste
 				}
 			}
 		}
-		$notes = [];
+		$notes = $fileNotes;
 		foreach($syncedReferences as $reference) {
 			if(empty($changedWatchedEntries[$reference['main_handle']])) {
 				continue;

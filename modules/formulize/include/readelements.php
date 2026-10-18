@@ -106,6 +106,13 @@ $updateOwnerNewOwnerId = null;
 // loop through POST and catalogue everything that we need to do something with
 foreach($_POST as $k=>$v) {
 
+	// check the token before acting on any cue (it is only actually checked once, at the first cue)
+	if((substr($k, 0, 6) == "decue_" OR substr($k, 0, 9) == "desubform")
+		AND !formulize_readElementsSecurityCheckPassed((isset($screen) AND $screen) ? $screen : null, $mid)) {
+		print formulize_userMessage(_formulize_SAVE_REFUSED_MESSAGE, 'danger', _formulize_SAVE_REFUSED_TITLE);
+		return false;
+	}
+
     // record all the present entries, which are sent from standard rendered forms (created in the writeHiddenSettings function)
     if(substr($k, 0, 5) == 'form_' AND substr($k, -15) == '_rendered_entry') {
         $presentFid = intval(str_replace('form_','',str_replace('_rendered_entry','',$k)));
@@ -226,27 +233,6 @@ $formulize_allSubmittedEntryIds = array();
 $formulize_newSubformBlankElementIds = array();
 $formulize_allWrittenFids = array();
 $notEntriesList = array();
-if(count((array) $formulize_elementData) > 0 ) { // do security check if it looks like we're going to be writing things...
-	$cururl = getCurrentURL();
-	$module_handler =& xoops_gethandler('module');
-	$config_handler =& xoops_gethandler('config');
-  $formulizeModule =& $module_handler->getByDirname("formulize");
-  $formulizeConfig =& $config_handler->getConfigsByCat(0, $mid);
-  $modulePrefUseToken = $formulizeConfig['useToken'];
-	$useToken = (isset($screen) AND $screen) ? $screen->getVar('useToken') : $modulePrefUseToken;
-	if(isset($GLOBALS['xoopsSecurity']) AND $useToken) { // avoid security check for versions of XOOPS that don't have that feature, or for when it's turned off
-		$GLOBALS['formulize_securityCheckPassed'] = false;
-		if ($GLOBALS['xoopsSecurity']->check()) {
-			$GLOBALS['formulize_securityCheckPassed'] = true;
-		} elseif($GLOBALS['xoopsSecurity']->validateToken($_POST["detoken_".$elementMetaData[1]."_".$elementMetaData[2]."_".$elementMetaData[3]], name: 'formulize_display_element_token')) {
-			$GLOBALS['formulize_securityCheckPassed'] = true;
-		}
-		if($GLOBALS['formulize_securityCheckPassed'] == false) {
-			print "<b>Error: the data you submitted could not be saved in the database.</b>";
-			return false;
-		}
-	}
-}
 
 foreach($formulize_elementData as $elementFid=>$entryData) { // for every form we found data for...
 
@@ -593,6 +579,45 @@ if($overrideFrid) {
 }
 
 return $formulize_allWrittenEntryIds;
+
+// this function checks the security token of a submission. It must run before anything in the submission is acted on,
+// because preparing the submitted values already changes things: uploaded files are moved into place, and user accounts
+// and groups are written directly.
+// When a single element is saved on its own, it carries its own token, named after its cue. The last cue in the
+// submission is the one whose token is checked.
+// The token is only checked on the first call, since checking it uses it up. Later calls return the same answer.
+// $screen is the screen in effect, if any, which can turn the token off for itself
+// $mid is the Formulize module id
+// returns true if the submission can be acted on
+function formulize_readElementsSecurityCheckPassed($screen, $mid) {
+	static $passed = null;
+	if($passed !== null) {
+		return $passed;
+	}
+	$config_handler = xoops_gethandler('config');
+	$formulizeConfig = $config_handler->getConfigsByCat(0, $mid);
+	$useToken = $screen ? $screen->getVar('useToken') : $formulizeConfig['useToken'];
+	if(!isset($GLOBALS['xoopsSecurity']) OR !$useToken) {
+		$passed = true; // versions of XOOPS that don't have the security feature, or the token is turned off
+		return $passed;
+	}
+	$GLOBALS['formulize_securityCheckPassed'] = false;
+	if($GLOBALS['xoopsSecurity']->check()) {
+		$GLOBALS['formulize_securityCheckPassed'] = true;
+	} else {
+		$lastCueMetaData = null;
+		foreach(array_keys($_POST) as $key) {
+			if(substr($key, 0, 6) == "decue_" OR substr($key, 0, 9) == "desubform") {
+				$lastCueMetaData = explode("_", $key);
+			}
+		}
+		if($lastCueMetaData AND $GLOBALS['xoopsSecurity']->validateToken($_POST["detoken_".$lastCueMetaData[1]."_".$lastCueMetaData[2]."_".$lastCueMetaData[3]] ?? '', name: 'formulize_display_element_token')) {
+			$GLOBALS['formulize_securityCheckPassed'] = true;
+		}
+	}
+	$passed = $GLOBALS['formulize_securityCheckPassed'];
+	return $passed;
+}
 
 // this function handles triggering the after Saving Logic of custom elements after each entry is written to the database
 // values are the element handle->data value pairs that were written to the database

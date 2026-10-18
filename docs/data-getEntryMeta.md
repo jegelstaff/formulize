@@ -31,9 +31,8 @@ Returns __false__ if the query failed.
 ## Example
 
 ~~~php
-// get metadata for entry 19 exist in form 6
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+// get metadata for entry 19 in the Orders form
+$dataHandler = new formulizeDataHandler(ORDERS_FORM_ID);
 list($creation_datetime, $mod_datetime, $creation_uid, $mod_uid) = $dataHandler->getEntryMeta(19);
 
 // convert the creation datetime to a PHP DateTime object, based on the timezone of the server

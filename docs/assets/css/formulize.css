@@ -2297,15 +2297,115 @@ h1 + .band {
 }
 /* News entry image: floats beside the body text instead of sitting full-width
    above it, so the headline reads first and the body starts right under it,
-   wrapping around the image while there's text left to wrap. */
-.prose img.news-entry-image {
+   wrapping around the image while there's text left to wrap. The class is on
+   whichever element is outermost: the captioned card (<figure>) when the image
+   has a Description, the enlarge <button>, or the image itself, and the image
+   fills it. */
+.prose .news-entry-image {
   float: right;
   width: 45%;
   max-width: 320px;
   margin: 0 0 var(--space-4) var(--space-6);
 }
+.prose .news-entry-image img { width: 100%; margin: 0; }
+/* Images in the body of a news story (marked up by mark_up_body_images in
+   _plugins/news_pages.rb) sit in the same right-hand column as the story's own
+   image, with the same gutter, and clear: right stacks them under it rather
+   than beside it. They are capped at that column's size but not stretched to
+   fill it, so a small image is never blown up and blurred. .news-float is on
+   whichever element is outermost: the <figure> when the image has one, the
+   enlarge <button>, or the image itself. A caption sets the figure's width,
+   up to the same cap. */
+.prose .news-float {
+  float: right;
+  clear: right;
+  max-width: min(45%, 320px);
+  margin: 0 0 var(--space-4) var(--space-6);
+}
+.prose .news-figure { width: max-content; }
+.prose .news-float img { max-width: 100%; margin: 0; }
+.prose .news-figure figcaption,
+.prose .news-entry-image figcaption {
+  margin-top: var(--space-2);
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--color-neutral-700);
+}
+/* A captioned image is a card, so the caption reads as belonging to the image
+   and not as the start of the text beside it. The image keeps its own black
+   border inside the card. An image with no caption stays bare. */
+.prose .news-figure--captioned {
+  padding: var(--space-2);
+  background: var(--color-neutral-100);
+  border: 1px solid var(--color-neutral-300);
+  border-radius: var(--radius-md);
+}
+.prose .news-figure--captioned figcaption {
+  padding: 0 var(--space-1);
+}
+/* Every image on a story page - its own and any in the body - has a black
+   border. Only here: the cards on the home page and the news index, and the
+   images on documentation pages, keep the light .prose img border. */
+.post-body .prose img { border-color: var(--color-text); }
 @media (max-width: 600px) {
-  .prose img.news-entry-image { float: none; width: 100%; max-width: none; margin: 0 0 var(--space-4); }
+  .prose .news-entry-image { float: none; width: 100%; max-width: none; margin: 0 0 var(--space-4); }
+  .prose .news-float { float: none; max-width: 100%; margin: 0 0 var(--space-4); }
+}
+
+/* Click to enlarge, on story pages. Entirely HTML: the plugin wraps an image
+   in a <button popovertarget> when the image file is wider than the column it
+   is shown in, and writes the enlarged copy as a [popover] that the browser
+   opens, closes on Escape or a click outside, and dims the page behind. */
+.news-image-zoom {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: zoom-in;
+}
+.image-lightbox {
+  max-width: none;
+  max-height: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: visible;
+}
+.image-lightbox::backdrop { background: rgba(0, 0, 0, 0.85); }
+.prose .image-lightbox img {
+  display: block;
+  max-width: 95vw;
+  max-height: 90vh;
+  width: auto;
+  height: auto;
+  margin: 0;
+  border: 1px solid var(--color-text);
+  background: var(--color-neutral-100);
+}
+.image-lightbox-close {
+  position: fixed;
+  top: var(--space-4);
+  right: var(--space-4);
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--color-text);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  cursor: pointer;
+}
+.image-lightbox-close svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
 }
 /* Floats inside .post-body's .prose shouldn't bleed past the divider below it. */
 .post-body hr { clear: both; }
@@ -3177,6 +3277,11 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   .news-list > li > a,
   .news-list > li.news-list-row { flex-direction: column; gap: var(--space-1); }
   .news-list time { flex: none; }
+  /* The card is at most 360px here, which leaves about 150px of text beside
+     the floated thumbnail - a headline word that doesn't fit in that drops
+     below the image and leaves an image-height gap mid-headline. Stacked
+     above the text instead, as .post-teaser-thumb already is on /news. */
+  .news-card-thumb { float: none; max-width: 100%; max-height: 200px; margin: 0 0 var(--space-4) 0; }
   /* One column for everything below this width, without exception.
 
      Two columns of a 560px viewport is about 240px each, and about 110px once

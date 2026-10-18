@@ -29,20 +29,18 @@ Returns __false__ if the query failed or if the element identifier is invalid, o
 ## Example
 
 ~~~php
-// get the value of the order_details element from entry 19 in form 6
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+// get the value of the order_details element from entry 19 in the Orders form
+$dataHandler = new formulizeDataHandler(ORDERS_FORM_ID);
 $entry_id = 19;
 $element_handle = "order_details";
 $order_details = $dataHandler->getElementValueInEntry($entry_id, $element_handle);
 ~~~
 
 ~~~php
-// get the value of order_customer from entry 19 in form 6
+// get the value of order_customer from entry 19 in the Orders form
 // imagine order_customer is a linked selectbox pointing to
 // the customer name in a customer form
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+$dataHandler = new formulizeDataHandler(ORDERS_FORM_ID);
 $entry_id = 19;
 $element_handle = "order_customer";
 $order_customer = $dataHandler->getElementValueInEntry($entry_id, $element_handle);
@@ -59,11 +57,10 @@ var_dump($order_customer); // $order_customer is now the name from entry 56 of t
 ~~~
 
 ~~~php
-// get the value of order_categories from entry 19 in form 6
+// get the value of order_categories from entry 19 in the Orders form
 // imagine order_categories is a checkbox series where multiple categories can be selected
 // imagine the categories 'Rush Order' and 'Repeat Customer' are selected
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+$dataHandler = new formulizeDataHandler(ORDERS_FORM_ID);
 $entry_id = 19;
 $element_handle = "order_categories";
 // order_categories will be a raw value containing all the categories selected

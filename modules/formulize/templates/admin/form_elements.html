@@ -194,11 +194,18 @@ function formulizeShowElementUsage(target, forDeletion, inlink) {
 	<{* $.ajax with an error callback, not $.getJSON(...).error() - this admin UI runs jQuery 1.4.2, where
 	an ajax call returns a bare XMLHttpRequest and the deferred methods do not exist yet. *}>
 	$.ajax({
-	url: 'element_usage.php',
+	url: window.icms_url + '/modules/formulize/formulize_xhr_responder.php',
 	dataType: 'json',
-	data: { ele_id: target },
-	error: function() {
-		dialog.html('<p>' + formulizeUsageEscape(formulizeUsageText.failed) + '</p>');
+	data: { op: 'get_element_usage', uid: window.icms_userid, ele_id: target },
+	error: function(xhr) {
+		<{* a refusal (not logged in, no such element, no permission) arrives as JSON with an error status, and
+		in 1.4.2 the error callback gets only the raw request, so the reason is read from it here *}>
+		var reason = formulizeUsageText.failed;
+		try {
+			var reply = JSON.parse(xhr.responseText);
+			if(reply && reply.error) { reason = reply.error; }
+		} catch(e) {}
+		dialog.html('<p>' + formulizeUsageEscape(reason) + '</p>');
 	},
 	success: function(report) {
 		if(!report || report.error) {

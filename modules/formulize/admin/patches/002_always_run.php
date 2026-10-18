@@ -72,6 +72,13 @@ function formulize_patch_002_always_run($prev_dbversion, $required_dbversion) {
 	formulize_warn_about_element_containers_missing_element_class();
 	formulize_repair_custom_openlisttemplate_functions();
 
+	// The PHP the site runs on can change between updates, so check for the optional image support every time
+	formulize_warn_about_missing_image_support();
+
+	// The web server config can change between updates too, so check every time that the uploads folder,
+	// where files people upload are stored, cannot be used to run programs.
+	formulize_warn_about_executable_uploads_folder();
+
 	// Keep the timezone list in step with PHP's timezone database, which changes with the PHP
 	// version the site runs on rather than with anything Formulize does.
 	formulize_update_timezone_options($xoopsDB);
@@ -180,6 +187,74 @@ function formulize_warn_about_element_containers_missing_element_class() {
 		$ecoMessage = "You have one or more 'elementcontainero.php' files which are missing the \$elementClass variable used in Formulize 8.1+.\n\nThe normal usage looks like this:\n\nprint \"<div class='form-row \$elementClass' \$style id='\$elementContainerId'>\";\n\nThe 'Office Use Only' layout at the bottom of forms will not work correctly on the affected screens until these files are updated.\n\nThe affected files are:\n\n" . implode("\n", $missingElementClass);
 		echo '<script>alert(' . json_encode($ecoMessage) . ');</script>';
 	}
+}
+
+/**
+ * Warn the webmaster if PHP lacks the optional image support that file upload elements use for thumbnails.
+ *
+ * Both are parts of the server's PHP installation, not Formulize, so all we can do is point them out.
+ * Thumbnails work without them (see formulizeFileUploadElementHandler::getThumbnailUrl), just not as well.
+ *
+ * @return void
+ */
+function formulize_warn_about_missing_image_support() {
+	$missing = array();
+	if(!function_exists('imagecreatefromwebp') OR !function_exists('imagewebp')) {
+		$missing[] = '<li><b>WebP support in the GD extension.</b> WebP images uploaded to forms appear at full size, scaled down by the browser, instead of as small thumbnails. Pages that show many WebP images will be slower to load. The images themselves upload and download normally.</li>';
+	}
+	if(!function_exists('exif_read_data')) {
+		$missing[] = '<li><b>The exif extension.</b> Thumbnails of photos taken with phones and cameras may appear sideways or upside down. The photos themselves are not affected.</li>';
+	}
+	if($missing) {
+		echo '<h3>Image support missing from PHP on this server:</h3>';
+		echo '<p>Formulize will keep working, but images uploaded to forms will not display as well as they could, because the PHP installation on this server is missing:</p><ul>' . implode('', $missing) . '</ul>';
+		echo '<p>To fix this, ask your hosting provider or server administrator to enable the items above for the version of PHP that runs this website. Then run the Formulize update again, and this message will no longer appear.</p>';
+	}
+}
+
+/**
+ * Warn if the web server will run programs saved in the uploads folder.
+ *
+ * Files that people upload to forms are stored in uploads. A server that executes code from there lets
+ * someone upload a program and then run it, so this is a serious security problem. A hardened
+ * uploads/.htaccess ships with Formulize to prevent it, but nginx and other servers ignore .htaccess, and
+ * Apache ignores it when AllowOverride is off, so whether it is actually taking effect is checked live on
+ * every update. Nothing is said unless execution is positively confirmed.
+ *
+ * @return void
+ */
+function formulize_warn_about_executable_uploads_folder() {
+	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/uploads_execution_probe.php';
+	$uploadsDir = XOOPS_ROOT_PATH.'/uploads';
+	if(formulize_probeUploadsExecution($uploadsDir, XOOPS_URL.'/uploads') !== 'executable') {
+		return; // 'safe', or could not be confirmed - say nothing rather than raise a false alarm
+	}
+	$htaccessPath = $uploadsDir.'/.htaccess';
+	echo '<h3>Security warning: the uploads folder can run programs</h3>';
+	echo '<p>Files that people upload to your forms are stored in the <code>uploads</code> folder, and this '
+		. 'server will <strong>run a program saved there</strong>. That means someone who can upload a file '
+		. 'could upload a program and then run it on your server. This should be fixed before your site is used.</p>';
+	if(is_file($htaccessPath)) {
+		// the protection ships with Formulize, so if the folder still runs code, the server is ignoring it
+		echo '<p>Formulize installs protection for this folder (the <code>.htaccess</code> file in it), but '
+			. 'this server is not applying it:</p><ul>'
+			. '<li><strong>Apache:</strong> allow <code>.htaccess</code> files to take effect for this folder, '
+			. 'by setting <code>AllowOverride</code> to <code>FileInfo Limit</code> (or <code>All</code>) for the '
+			. 'website in the server configuration.</li>'
+			. '<li><strong>nginx or another server:</strong> <code>.htaccess</code> is ignored, so add a rule to '
+			. 'the server configuration that stops the <code>uploads</code> folder running PHP or other scripts.</li>'
+			. '</ul>';
+	} else {
+		// the shipped protection is missing, which is itself likely why the folder runs code
+		echo '<p>The <code>.htaccess</code> file that normally protects this folder is missing. On an Apache '
+			. 'server, create <code>uploads/.htaccess</code> with the following, then run the update again:</p>';
+		echo '<pre>'.htmlspecialchars(formulize_uploadsHardeningHtaccess($uploadsDir)).'</pre>';
+		echo '<p>On nginx or another server, add a rule to the server configuration that stops the '
+			. '<code>uploads</code> folder running PHP or other scripts.</p>';
+	}
+	echo '<p>There is more about this in the <a href="https://formulize.org/documentation/deploying_a_website/" '
+		. 'target="_blank" rel="noopener">deployment documentation</a>. Once it is fixed, run the Formulize update '
+		. 'again, and this message will no longer appear.</p>';
 }
 
 /**

@@ -15,13 +15,14 @@ full_width: true
   </header>
 
   <div class="prose">
-    {%- if entry.image %}
     {%- comment -%}
-      Floats as part of the body flow (see .news-entry-image in formulize.css)
-      so the headline stays full width above it and the text wraps around it.
+      The story's own image, if it has one. Floats as part of the body flow
+      (see .news-entry-image in formulize.css) so the headline stays full width
+      above it and the text wraps around it. Written by main_image_html in
+      _plugins/news_pages.rb, which also makes it enlargeable when the file is
+      bigger than it is shown here.
     {%- endcomment %}
-    <img class="news-entry-image" src="{{ entry.image }}" alt="">
-    {%- endif %}
+    {{ entry.image_html }}
 
     {{ entry.body_html }}
 

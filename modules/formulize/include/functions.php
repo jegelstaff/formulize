@@ -14195,3 +14195,33 @@ function drawAIAssistantMenuSection() {
 
 	return array($block, $data);
 }
+
+/**
+ * Is this request being made by Javascript in the background, rather than by the browser loading a page?
+ * True for jQuery's ajax requests, which say so in the X-Requested-With header, and for direct calls to
+ * readelements.php, which only ever happen in the background (the same check include/common.php makes).
+ *
+ * @return bool
+ */
+function formulize_isAjaxRequest() {
+	return ((isset($_SERVER['HTTP_X_REQUESTED_WITH']) AND strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')
+		OR strstr(getCurrentURL(), "/modules/formulize/include/readelements.php"));
+}
+
+/**
+ * A message for the user, such as an error when saving, as a Formulize UI callout. In a background request the
+ * message is returned as plain text instead, since whoever made the request shows it as text, ie: in an alert.
+ *
+ * @param string $message The message. Plain text, which is escaped here.
+ * @param string $tone Optional. info, success, warning or danger. Default is danger.
+ * @param string $title Optional. A short first line, in bold, saying what happened.
+ * @return string The callout markup, or the plain text of the message in a background request
+ */
+function formulize_userMessage($message, $tone = 'danger', $title = '') {
+	if(formulize_isAjaxRequest()) {
+		return trim($title.' '.$message);
+	}
+	$tone = in_array($tone, array('info', 'success', 'warning', 'danger')) ? $tone : 'danger';
+	$titleMarkup = $title ? "<p class='fz-callout__title'>".htmlspecialchars($title)."</p>" : "";
+	return "<div class='fz-callout fz-callout--$tone' role='status'>$titleMarkup<p>".htmlspecialchars($message)."</p></div>";
+}

@@ -32,17 +32,15 @@ Returns __false__ if the uids and entry_ids parameters do not have an equal numb
 ## Examples
 
 ~~~php
-// Update the entry ownership information for entry 71 in form 6, to be user 399
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+// Update the entry ownership information for entry 71 in the Orders form, to be user 399
+$dataHandler = new formulizeDataHandler(ORDERS_FORM_ID);
 $dataHandler->setEntryOwnerGroups(399, 71);
 ~~~
 
 ~~~php
 // Update the entry ownership information for entries 71 through 75
-// in form 6, to all be user 399
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+// in the Orders form, to all be user 399
+$dataHandler = new formulizeDataHandler(ORDERS_FORM_ID);
 $uids = array(399, 399, 399, 399, 399);
 $entry_ids = array(71, 72, 73, 74, 75);
 $dataHandler->setEntryOwnerGroups($uids, $entry_ids);
@@ -51,8 +49,7 @@ $dataHandler->setEntryOwnerGroups($uids, $entry_ids);
 ~~~php
 // Make a new entry and set its ownership to user 12
 // ** It's easier to just use the formulize_writeEntry function instead **
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+$dataHandler = new formulizeDataHandler(PEOPLE_FORM_ID);
 $values = array(
     'first_name' => 'John',
     'last_name' => 'Smith'

@@ -28,8 +28,7 @@ Returns __false__ if the query failed or if the element identifier is invalid, o
 ## Example
 
 ~~~php
-// find the entries created by a user 29 in form 6
-$form_id = 6;
-$dataHandler = new formulizeDataHandler($form_id);
+// find the entries created by a user 29 in the Orders form
+$dataHandler = new formulizeDataHandler(ORDERS_FORM_ID);
 $entry_ids = $dataHandler->findAllEntriesForUsers(29);
 ~~~

@@ -34,21 +34,46 @@ if (empty($_GET['refresh'] ) && isset($_POST['op']) && $_POST['op'] != "submit")
 	echo "<html><head><meta http-equiv='Refresh' content='0; url=".$jump."' /></head><body></body></html>";
 	exit();
 }
-xoops_header();
+
+// drawn as one of the Formulize popups, so it looks like the rest of the site in whichever theme is in use
+include_once XOOPS_ROOT_PATH . '/modules/formulize/include/popup_functions.php';
+
+/**
+ * A caption from the language file as a field label: without the colon some of them end with
+ *
+ * @param string $caption the caption, such as _PM_SUBJECTC
+ * @return string HTML
+ */
+function pmlite_label($caption) {
+	return rtrim(str_replace('&nbsp;', ' ', $caption), ': ');
+}
+
+/**
+ * A message in a callout, with buttons below it
+ *
+ * @param string $tone the callout's variation: success or danger
+ * @param string $message the message, as HTML
+ * @param string $buttons the buttons, as HTML
+ * @return string HTML
+ */
+function pmlite_result($tone, $message, $buttons) {
+	return "<div class='fz-callout fz-callout--" . $tone . "' role='status'>" . $message . "</div>\n"
+		. "<div class='fz-cluster'>" . $buttons . "</div>\n";
+}
+
+$goBackButton = "<button type='button' class='fz-btn' onclick='history.go(-1);'>" . _PM_GOBACK . "</button>";
+$closeButton = "<button type='button' class='fz-btn fz-btn--ghost' onclick='window.close();'>" . _CLOSE . "</button>";
+
+// the user picker's links to search for more users use xoops.js, which no theme puts in a popup
+formulize_popupHeader(_PM_PRIVATEMESSAGE, "<script type='text/javascript' src='" . ICMS_URL . "/include/xoops.js'></script>\n");
 if (icms::$user) {
 	if (isset($_POST['op']) && $_POST['op'] == "submit") {
-		if (!icms::$security->check()) {
-			$security_error = true;
-		}
 		$res = icms::$xoopsDB->query("SELECT COUNT(*) FROM ".icms::$xoopsDB->prefix("users")." WHERE uid='". (int) ($_POST['to_userid'])."'");
 		list($count) = icms::$xoopsDB->fetchRow($res);
-		if ($count != 1) {
-			echo "<br /><br /><div><h4>"._PM_USERNOEXIST."<br />";
-			echo _PM_PLZTRYAGAIN."</h4><br />";
-			if (isset($security_error) && $security_error == true) {
-				echo implode('<br />', icms::$security->getErrors());
-			}
-			echo "[ <a href='javascript:history.go(-1)'>"._PM_GOBACK."</a> ]</div>";
+		if (!icms::$security->check()) {
+			echo pmlite_result('danger', "<p>" . implode('<br />', icms::$security->getErrors()) . "</p>", $goBackButton);
+		} elseif ($count != 1) {
+			echo pmlite_result('danger', "<p class='fz-callout__title'>" . _PM_USERNOEXIST . "</p><p>" . _PM_PLZTRYAGAIN . "</p>", $goBackButton);
 		} else {
 			$pm_handler = icms::handler('icms_data_privmessage');
 			$pm =& $pm_handler->create();
@@ -57,8 +82,7 @@ if (icms::$user) {
 			$pm->setVar("to_userid", (int) ($_POST['to_userid']));
 			$pm->setVar("from_userid", (int) (icms::$user->getVar("uid")));
 			if (!$pm_handler->insert($pm)) {
-				echo $pm->getHtmlErrors();
-				echo "<br /><a href='javascript:history.go(-1)'>"._PM_GOBACK."</a>";
+				echo pmlite_result('danger', $pm->getHtmlErrors(), $goBackButton);
 			} else {
 				// Send a Private Message email notification
 				$userHandler = icms::handler('icms_member_user');
@@ -87,80 +111,66 @@ if (icms::$user) {
 					$xoopsMailer->setSubject(sprintf(_PM_MESSAGEPOSTED_EMAILSUBJ, $icmsConfig['sitename']));
 					$xoopsMailer->send();
 				}
-				echo "<br /><br /><div style='text-align:center;'><h4>"._PM_MESSAGEPOSTED."</h4><br />
-					<a href=\"javascript:window.opener.location='".ICMS_URL."/viewpmsg.php';window.close();\">"._PM_CLICKHERE."</a><br /><br />
-					<a href=\"javascript:window.close();\">"._PM_ORCLOSEWINDOW."</a></div>";
+				// this page is usually a popup, but some links open it in the main window, where there is no opener to send to the inbox
+				$inboxButton = "<a href='" . ICMS_URL . "/viewpmsg.php' class='fz-btn fz-btn--primary' onclick='if (window.opener) { window.opener.location = this.href; window.close(); return false; }'>" . _PM_INBOX . "</a>";
+				echo pmlite_result('success', "<p>" . _PM_MESSAGEPOSTED . "</p>", $inboxButton . $closeButton);
 			}
 		}
 	} elseif ($reply == 1 || $send == 1 || $send2 == 1) {
+		$message = '';
+		$subject = '';
 		if ($reply == 1) {
 			$pm_handler = icms::handler('icms_data_privmessage');
 			$pm =& $pm_handler->get($msg_id);
-			if ($pm->getVar("to_userid") == (int) (icms::$user->getVar('uid'))) {
+			if (is_object($pm) && $pm->getVar("to_userid") == (int) (icms::$user->getVar('uid'))) {
 				$pm_uname = icms_member_user_Object::getUnameFromId($pm->getVar("from_userid"));
 				$message  = "[quote]\n";
 				$message .= sprintf(_PM_USERWROTE,$pm_uname);
 				$message .= "\n".$pm->getVar("msg_text", "E")."\n[/quote]";
+				$subject = $pm->getVar('subject', 'E');
+				if (!preg_match("/^Re:/i",$subject)) {
+					$subject = 'Re: '.$subject;
+				}
 			} else {
 				unset($pm);
 				$reply = $send2 = 0;
+				$send = 1;
 			}
 		}
-		echo "<form action='pmlite.php' method='post' name='coolsus'>\n";
-		echo "<table width='300' align='center' class='outer'><tr><td class='head' width='25%'>"._PM_TO."</td>";
+
+		echo "<form action='pmlite.php' method='post' name='coolsus' class='fz-card'>\n";
+		echo "<div class='fz-card__header'><div>";
+		echo "<h1 class='fz-card__title'>" . ($reply == 1 ? _PM_REPLY : _PM_NEWMESSAGE) . "</h1>";
+		// a reply, or a message from a link on someone's profile, already has its recipient
 		if ($reply == 1) {
-			echo "<td class='even'><input type='hidden' name='to_userid' value='".$pm->getVar("from_userid")."' />".$pm_uname."</td>";
+			echo "<p class='fz-card__subtitle'>" . _PM_TO . $pm_uname . "</p>";
 		} elseif ($send2 == 1) {
-			$to_username = icms_member_user_Object::getUnameFromId($to_userid);
-			echo "<td class='even'><input type='hidden' name='to_userid' value='".$to_userid."' />".$to_username."</td>";
+			echo "<p class='fz-card__subtitle'>" . _PM_TO . icms_member_user_Object::getUnameFromId($to_userid) . "</p>";
+		}
+		echo "</div></div>\n";
+		if ($reply == 1) {
+			echo "<input type='hidden' name='to_userid' value='" . (int) $pm->getVar("from_userid") . "' />\n";
+		} elseif ($send2 == 1) {
+			echo "<input type='hidden' name='to_userid' value='" . $to_userid . "' />\n";
 		} else {
 			$user_sel = new icms_form_elements_select_User("", "to_userid");
-			echo "<td class='even'>".$user_sel->render();
-			echo "</td>";
+			$user_sel_elements = $user_sel->getElements();
+			$user_sel_elements[0]->setExtra("class='fz-select'");
+			echo formulize_popupField(pmlite_label(_PM_TO), $user_sel->render(), '', 'to_userid');
 		}
-		echo "</tr>";
-		echo "<tr><td class='head' width='25%'>"._PM_SUBJECTC."</td>";
-		if ($reply == 1) {
-			$subject = $pm->getVar('subject', 'E');
-			if (!preg_match("/^Re:/i",$subject)) {
-				$subject = 'Re: '.$subject;
-			}
-			echo "<td class='even'><input type='text' name='subject' value='".$subject."' size='30' maxlength='100' /></td>";
-		} else {
-			echo "<td class='even'><input type='text' name='subject' size='30' maxlength='100' /></td>";
-		}
-		echo "</tr>";
-		echo "<tr valign='top'><td class='head' width='25%'>"._PM_MESSAGEC."</td>";
-		echo "<td class='even'>";
-		if ($reply == 1) {
-			$pm_handler = icms::handler('icms_data_privmessage');
-			$pm =& $pm_handler->get($msg_id);
-			if ($pm->getVar("to_userid") == (int) (icms::$user->getVar('uid'))) {
-				$pm_uname = icms_member_user_Object::getUnameFromId($pm->getVar("from_userid"));
-				$message  = "[quote]\n";
-				$message .= sprintf(_PM_USERWROTE,$pm_uname);
-				$message .= "\n".$pm->getVar("msg_text", "E")."\n[/quote]";
-			} else {
-				unset($pm);
-				$reply = $send2 = 0;
-			}
-			$textarea = new icms_form_elements_Dhtmltextarea(_PM_MESSAGEC, 'message', $message);
-		} else {
-			$textarea = new icms_form_elements_Dhtmltextarea(_PM_MESSAGEC, 'message', '');
-		}
-		echo $textarea->render();
-		echo "</td>";
-		echo "</tr>";
-		echo "<tr><td class='head'>&nbsp;</td><td class='even'>
-        <input type='hidden' name='op' value='submit' />".icms::$security->getTokenHTML()."
-        <input type='submit' class='formButton' name='submit' value='"._PM_SUBMIT."' />&nbsp;
-        <input type='reset' class='formButton' value='"._PM_CLEAR."' />
-        &nbsp;<input type='button' class='formButton' name='cancel' value='"._PM_CANCELSEND."' onclick='javascript:window.close();' />
-        </td></tr></table>\n";
+		echo formulize_popupField(pmlite_label(_PM_SUBJECTC), "<input type='text' class='fz-input' name='subject' id='subject' value='" . $subject . "' maxlength='100' />", '', 'subject');
+		echo formulize_popupField(pmlite_label(_PM_MESSAGEC), "<textarea class='fz-textarea' name='message' id='message' rows='10'>" . $message . "</textarea>", '', 'message');
+		echo "<div class='fz-card__footer'>"
+			. "<input type='hidden' name='op' value='submit' />" . icms::$security->getTokenHTML()
+			. "<button type='submit' class='fz-btn fz-btn--primary' name='submit' value='1'>" . _PM_SUBMIT . "</button>"
+			. "<button type='reset' class='fz-btn'>" . _PM_CLEAR . "</button>"
+			. "<button type='button' class='fz-btn fz-btn--ghost' name='cancel' onclick='window.close();'>" . _PM_CANCELSEND . "</button>"
+			. "</div>\n";
 		echo "</form>\n";
 	}
 } else {
-	echo "<div>"._PM_SORRY."<br /><br /><a href='".ICMS_URL."/register.php'>"._PM_REGISTERNOW."</a>.</div>";
+	echo "<div class='fz-callout'><p>" . _PM_SORRY . "</p></div>\n";
+	echo "<div class='fz-cluster'><a href='" . ICMS_URL . "/register.php' class='fz-btn fz-btn--primary'>" . _PM_REGISTERNOW . "</a></div>\n";
 }
 
-xoops_footer();
+formulize_popupFooter();

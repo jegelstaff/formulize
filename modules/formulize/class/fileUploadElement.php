@@ -48,6 +48,29 @@ class formulizeFileUploadElement extends formulizeElement {
         parent::__construct();
     }
 
+	/**
+	 * Static function to provide the mcp server with the schema for the properties that can be used with the create_form_element and update_form_element tools
+	 * Concerned with the properties for the ele_value property of the element object
+	 * Follows the convention of properties used publically (MCP, Public API, etc).
+	 * @param bool|int $update True if this is being called as part of building the properties for Updating, as opposed to properties for Creating. Default is false (Creating).
+	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
+	 */
+	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
+		$defaultExtensions = formulizeFileUploadElementHandler::DEFAULT_EXTENSIONS;
+		$blockedExtensions = implode(', ', formulizeFileUploadElementHandler::BLOCKED_EXTENSIONS);
+		return
+"**Element:** File Upload Box (fileUpload)
+**Description:** Lets users attach one file to an entry. The file can be downloaded from the entry in forms and in lists of entries. Images are shown as thumbnails.
+**Properties:**
+- allowedExtensions (string, a comma separated list of the file extensions users may upload, eg: \"pdf,docx,jpg\". Default is \"$defaultExtensions\". An empty string allows every type of file, which is not recommended. These types are always refused, whatever this setting says: $blockedExtensions.)
+- maxFileSize (number, the largest file users may upload, in megabytes. Default is 10.)
+- allowDirectLinks (boolean, default false. When true, files are served from a plain web address, so anyone who knows the address can download the file without logging in. When false, files are only available through links in Formulize, which check that the user has permission to see the entry. Only set this to true if the files are meant to be public.)
+**Examples:**
+- A box for uploading a resume as a PDF or Word document: { allowedExtensions: \"pdf,doc,docx\" }
+- A box for uploading a photo, up to 5 MB: { allowedExtensions: \"jpg,jpeg,png,gif,webp\", maxFileSize: 5 }
+- A box for uploading files that will be shared publicly: { allowedExtensions: \"pdf\", allowDirectLinks: true }";
+	}
+
 }
 
 #[AllowDynamicProperties]
@@ -62,9 +85,272 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         $this->db =& $db;
     }
 
+    // the file types offered by default, when a new element is made
+    const DEFAULT_EXTENSIONS = 'doc,docx,xls,xlsx,ppt,pptx,csv,txt,pdf,jpg,jpeg,gif,png,webp,odt,ods,odp';
+
+    // File types that are never accepted, whatever an element allows, because some web server somewhere might
+    // run them as a program. This is the canonical list: uploads/.htaccess (and the fallback copy in
+    // include/uploads_execution_probe.php, and the copy printed in docs/uploads_not_executable.md) deny the
+    // same set at the server, and tests/blocked_extensions_sync_test.php fails if any of them drift from this.
+    // A deny list can never be complete - it is a backstop. The real gates are the per-element allowed-types
+    // list, serving non-direct-link files through download.php (readfile, never executed), and the server
+    // being configured not to run anything in the uploads folder at all.
+    const BLOCKED_EXTENSIONS = array(
+        'php','php3','php4','php5','php7','php8','phps','phtml','pht','phar',  // PHP
+        'cgi','fcgi','pl','py','pyw','wsgi','rb','erb','rhtml','lua','sh',     // CGI, Perl, Python, Ruby, Lua, shell
+        'jsp','jspx',                                                          // Java
+        'asp','aspx','ashx','asmx','ascx','asax','cshtml','vbhtml','config',   // ASP / ASP.NET (incl. web.config on IIS)
+        'cfm','cfc','cfml',                                                    // ColdFusion
+        'shtml','shtm','stm',                                                  // Server Side Includes
+        'htaccess','htpasswd'                                                  // Apache config that could re-enable any of the above
+    );
+
+    /**
+     * The blocked extensions as an alternation for a regular expression, eg: php|php3|cgi. This is how the
+     * uploads/.htaccess FilesMatch rule denies the same set that BLOCKED_EXTENSIONS refuses on upload, from
+     * one source. tests/blocked_extensions_sync_test.php uses this to check the shipped .htaccess has not drifted.
+     * @return string
+     */
+    public static function blockedExtensionsRegex() {
+        return implode('|', self::BLOCKED_EXTENSIONS);
+    }
+
     function create() {
         return new formulizeFileUploadElement();
     }
+
+	public function getDefaultEleValue() {
+		return array(
+			0 => 10, // maximum file size in megabytes
+			1 => self::DEFAULT_EXTENSIONS, // allowed extensions, blank means all
+			2 => 0 // whether files can be linked to directly
+		);
+	}
+
+	/**
+	 * Validate properties for this element type, based on the structure used publically (MCP, Public API, etc).
+	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
+	 * properties are the contents of the ele_value property on the object
+	 * @param array $properties The properties to validate
+	 * @param array $ele_value The ele_value settings for this element, if applicable. Should be set by the caller, to the current ele_value settings of the element, if this is an existing element.
+	 * @param int|string|object $elementIdentifier The element id, handle or object of the element for which we're validating the properties.
+	 * @return array An array of properties ready for the object, ie: ele_value, plus notes for the AI assistant about settings that may not do what was intended
+	 * @throws Exception if a property has a value that cannot be used
+	 */
+	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null) {
+		$notes = array();
+		if(array_key_exists('allowedExtensions', $properties)) {
+			$extensions = $this->normalizeExtensionList($properties['allowedExtensions']);
+			$blocked = array_values(array_intersect($extensions, self::BLOCKED_EXTENSIONS));
+			if($blocked) {
+				$extensions = array_values(array_diff($extensions, self::BLOCKED_EXTENSIONS));
+				if(empty($extensions)) {
+					// an empty list means every type is allowed, which is the opposite of what was asked for
+					throw new Exception("allowedExtensions only contained types that are never accepted (".implode(', ', $blocked)."). Provide at least one other extension.");
+				}
+				$notes[] = "These extensions were left out of allowedExtensions, because files of these types are never accepted: ".implode(', ', $blocked).".";
+			}
+			$ele_value[1] = implode(',', $extensions);
+			if($ele_value[1] === '') {
+				$notes[] = "allowedExtensions is empty, so users can upload every type of file (apart from the types that are never accepted). To restrict it, provide a list of extensions.";
+			}
+		}
+		if(array_key_exists('maxFileSize', $properties)) {
+			if(!is_numeric($properties['maxFileSize']) OR $properties['maxFileSize'] <= 0) {
+				throw new Exception("maxFileSize must be a number of megabytes greater than 0.");
+			}
+			$ele_value[0] = $properties['maxFileSize'] + 0;
+			$phpLimit = self::phpUploadLimitBytes();
+			if($phpLimit AND $ele_value[0] * 1048576 > $phpLimit) {
+				$notes[] = "This server's PHP settings limit uploads from a browser to ".round($phpLimit / 1048576, 1)." MB, so larger files will be refused when users upload them in a form, even though the element allows up to ".$ele_value[0]." MB.";
+			}
+		}
+		if(array_key_exists('allowDirectLinks', $properties)) {
+			$ele_value[2] = filter_var($properties['allowDirectLinks'], FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
+		}
+		if(empty($ele_value[0])) {
+			$ele_value[0] = 10; // the same default the admin UI enforces
+		}
+		$result = array('ele_value' => $ele_value);
+		if($notes) {
+			$result['notes'] = $notes;
+		}
+		return $result;
+	}
+
+	/**
+	 * Report this element's settings using the same properties that validateEleValuePublicAPIProperties accepts,
+	 * so that an AI assistant can read a setting, change it, and send it back unaltered in shape.
+	 * @param array $element The element's fields, keyed by column name, with serialized fields already unserialized
+	 * @return array The properties, keyed by their public names
+	 */
+	public static function readPublicAPIProperties($element) {
+		$ele_value = $element['ele_value'] ?? array();
+		return array(
+			'allowedExtensions' => (string) ($ele_value[1] ?? ''),
+			'maxFileSize' => (isset($ele_value[0]) AND is_numeric($ele_value[0]) AND $ele_value[0] > 0) ? $ele_value[0] + 0 : 10,
+			'allowDirectLinks' => !empty($ele_value[2]),
+		);
+	}
+
+	/**
+	 * Turn a list of extensions, as a comma separated string or an array, into a clean list: lowercase, no dots or spaces, no duplicates
+	 * @param string|array $extensions The extensions
+	 * @return array The cleaned up extensions
+	 */
+	function normalizeExtensionList($extensions) {
+		if(!is_array($extensions)) {
+			$extensions = explode(',', (string) $extensions);
+		}
+		$cleaned = array();
+		foreach($extensions as $extension) {
+			$extension = strtolower(str_replace(array(' ', '.'), '', trim((string) $extension)));
+			if($extension !== '' AND !in_array($extension, $cleaned)) {
+				$cleaned[] = $extension;
+			}
+		}
+		return $cleaned;
+	}
+
+	/**
+	 * The largest upload PHP will accept from a browser, which is the smaller of upload_max_filesize and post_max_size
+	 * @return int The limit in bytes, or 0 if there is no limit
+	 */
+	static function phpUploadLimitBytes() {
+		$limits = array();
+		foreach(array('upload_max_filesize', 'post_max_size') as $setting) {
+			$bytes = self::iniSizeToBytes(ini_get($setting));
+			if($bytes > 0) {
+				$limits[] = $bytes;
+			}
+		}
+		return $limits ? min($limits) : 0;
+	}
+
+	/**
+	 * Convert a size from php.ini, like 8M or 1G, into bytes
+	 * @param string $size The size as written in php.ini
+	 * @return int The number of bytes. 0 or less means no limit.
+	 */
+	static function iniSizeToBytes($size) {
+		$size = trim((string) $size);
+		if(!preg_match('/^(-?\d+)\s*([KMG]?)/i', $size, $matches)) {
+			return 0;
+		}
+		$bytes = (int) $matches[1];
+		switch(strtoupper($matches[2])) { // each case falls through to the next, multiplying as it goes
+			case 'G':
+				$bytes *= 1024;
+			case 'M':
+				$bytes *= 1024;
+			case 'K':
+				$bytes *= 1024;
+		}
+		return $bytes;
+	}
+
+	/**
+	 * Check a file against the element's settings, and the types that are never accepted. Used for files uploaded
+	 * through a form, and files arriving another way (see include/fileintake.php).
+	 * @param object $element The element object
+	 * @param string $fileName The name of the file, which provides the extension
+	 * @param string $filePath Where the file is on disk now, so its contents can be checked
+	 * @param string $claimedMimeType Optional. The type that whoever sent the file says it is, ie: what the browser reported
+	 * @return bool|string True if the file is acceptable, otherwise the reason it is not: 'no_extension', 'blocked', 'not_allowed', 'html_mismatch' or 'type_mismatch'
+	 */
+	function checkFileAgainstElementSettings($element, $fileName, $filePath, $claimedMimeType = '') {
+		// mimetype map - thanks to https://stackoverflow.com/questions/7519393/php-mime-types-list-of-mime-types-publically-available
+		// file defines $mime_types_map, array of key=>value pairs that is extensions and mime types
+		include XOOPS_ROOT_PATH."/modules/formulize/include/mime_types_map.php";
+		$dotPos = strrpos($fileName, '.');
+		if(!$dotPos) { // no dot, or only a leading dot as in .htaccess
+			return 'no_extension';
+		}
+		$extension = strtolower(substr($fileName, $dotPos+1));
+		if(in_array($extension, self::BLOCKED_EXTENSIONS)) {
+			return 'blocked';
+		}
+		$ele_value = $element->getVar('ele_value');
+		$allowedExtensions = str_replace(array(" ","."),"",strtolower(trim($ele_value[1])));
+		if($allowedExtensions AND !in_array($extension, explode(",", $allowedExtensions))) {
+			return 'not_allowed';
+		}
+		$deducedMimeType = mime_content_type($filePath);
+		$extensionMimeType = isset($mime_types_map[$extension]) ? $mime_types_map[$extension] : false;
+		// catalogue the mime type if it wasn't in our list
+		$this->logMissingMimeType($extension, $deducedMimeType, $mime_types_map);
+		if($claimedMimeType) {
+			$this->logMissingMimeType($extension, $claimedMimeType, $mime_types_map);
+		}
+		// A file whose contents are a web page, carrying an extension that is not for web pages, is almost
+		// always a sign in page or a viewer returned in place of the real file (over URL intake), or an
+		// attempt to get HTML/script onto the server under a harmless looking name. Refused whatever the
+		// element allows, and ahead of the checks below so an unknown extension cannot excuse it.
+		if($deducedMimeType == 'text/html' AND !in_array($extension, array('html','htm','xhtml'))) {
+			return 'html_mismatch';
+		}
+		// if we accept all files, or this is a type that we don't have records for (at least it matched literal extension), or some of the mime type info is in agreement (if the extension type is a mismatch, maybe the claimed type can redeem things?)
+		if(!$allowedExtensions
+			OR !$extensionMimeType
+			OR in_array($deducedMimeType, $extensionMimeType)
+			OR ($claimedMimeType AND $claimedMimeType == $deducedMimeType)) {
+			return true;
+		}
+		return 'type_mismatch';
+	}
+
+	/**
+	 * The name a file is stored under. When users cannot link directly to files, a random prefix is added, so the
+	 * location of the file cannot be guessed. getFileDisplayName removes it again.
+	 * @param object $element The element object
+	 * @param string $originalName The name of the file as it arrived
+	 * @return string The name to store the file under
+	 */
+	function storedFileName($element, $originalName) {
+		$ele_value = $element->getVar('ele_value');
+		$safeName = basename($originalName);
+		if($ele_value[2]) {
+			return $safeName;
+		}
+		// random_int, not mt_rand: when direct links are off, this prefix is the only thing that stops the
+		// file's web address being guessed, so it must not be predictable from other prefixes the site issued
+		$obscureFile = '';
+		for ($i = 0; $i < 20; $i++) {
+			$obscureFile .= random_int(0, 9);
+		}
+		return $obscureFile."+---+".$safeName;
+	}
+
+	/**
+	 * The folder where the file for one entry is kept
+	 * @param object $element The element object
+	 * @param int $entryId The entry id
+	 * @return string The full path to the folder
+	 */
+	function entryFolderPath($element, $entryId) {
+		return XOOPS_ROOT_PATH."/uploads/formulize_".$element->getVar('id_form')."_".intval($entryId)."_".$element->getVar('ele_id');
+	}
+
+	/**
+	 * Put a file into a folder in uploads, creating the folder if necessary
+	 * @param string $folderLocation The full path of the folder
+	 * @param string $sourcePath Where the file is now
+	 * @param string $storedName The name to store it under, from storedFileName
+	 * @param bool $isHttpUpload True if the file was uploaded through a form, so it must be moved with move_uploaded_file
+	 * @return bool|string True on success, otherwise 'no_location' if the folder could not be made, or 'lost' if the file could not be moved
+	 */
+	function placeFile($folderLocation, $sourcePath, $storedName, $isHttpUpload = false) {
+		if(!file_exists($folderLocation) AND !mkdir($folderLocation)) {
+			return 'no_location';
+		}
+		$destination = $folderLocation."/".$storedName;
+		$moveResult = $isHttpUpload ? move_uploaded_file($sourcePath, $destination) : rename($sourcePath, $destination);
+		if($moveResult AND !$isHttpUpload) {
+			// temporary files are made readable by their owner only, so give it the permissions an uploaded file would get
+			chmod($destination, 0666 & ~umask());
+		}
+		return $moveResult ? true : 'lost';
+	}
 
     // this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
     // it receives the element object and returns an array of data that will go to the admin UI template
@@ -72,7 +358,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
     // can organize template data into two top level keys, advanced-tab-values and options-tab-values, if there are some options for the element type that appear on the Advanced tab in the admin UI. This requires an additional template file with _advanced.html as the end of the name. Text elements have an example.
 	function adminPrepare($element) {
         if(!$element) {
-            $ele_value = array(10,'doc,docx,xls,xlsx,ppt,pptx,csv,txt,pdf,jpg,jpeg,gif,png,odt,ods,odp'); // nothing has been saved yet, so let's set a default of 10MB, and some default file types
+            $ele_value = $this->getDefaultEleValue(); // nothing has been saved yet, so let's set a default of 10MB, and some default file types
             $directLinkNo = " checked ";
             $directLinkYes = "";
         } else {
@@ -135,7 +421,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         if($isDisabled) {
             $displayName = $ele_value[4];
             $url = $this->createFileURL($element, $entry_id, serialize(array('name'=>$ele_value[3], 'isfile'=>$ele_value[5])));
-            $link = $this->createDownloadLink($element, $url, $displayName);
+            $link = $this->createDownloadLink($element, $url, $displayName).$this->imageFileNameLabel($displayName);
             $formElement = new xoopsFormLabel($caption, $link);
         } else {
             // create the file upload element, and also a hidden element with the correct markup name.  That hidden value will trigger the correct saving logic, and is necessary because file upload elements are excluded from POST.
@@ -181,7 +467,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                 }
                 // have to spoof the raw value from the database, in order to generate the URL for use in the download link, since that's what the URL method is expecting
                 $fakeRawValue = serialize(array('name'=>$ele_value[3], 'isfile'=>$ele_value[5]));
-                $introToUploadBox .= "<div id='formulize_fileStatus_".$element->getVar('ele_id')."_$entry_id' class='no-print formulize-fileupload-element'>".$this->createDownloadLink($element, $this->createFileURL($element, $entry_id, $fakeRawValue), $ele_value[4])." &mdash; <a class='formulize_fileUploadDeleteButton' href='' onclick='warnAboutFileDelete(\"".str_replace("de_","formulize_",$markupName)."\", \"".$element->getVar('ele_id')."\", \"$entry_id\");return false;'>" . _DELETE . "</a></div>";
+                $introToUploadBox .= "<div id='formulize_fileStatus_".$element->getVar('ele_id')."_$entry_id' class='no-print formulize-fileupload-element'>".$this->createDownloadLink($element, $this->createFileURL($element, $entry_id, $fakeRawValue), $ele_value[4]).$this->imageFileNameLabel($ele_value[4])." &mdash; <a class='formulize_fileUploadDeleteButton' href='' onclick='warnAboutFileDelete(\"".str_replace("de_","formulize_",$markupName)."\", \"".$element->getVar('ele_id')."\", \"$entry_id\");return false;'>" . _DELETE . "</a></div>";
             } else {
                 $introToUploadBox = "<div id='formulize_fileStatus_".$element->getVar('ele_id')."_$entry_id' class='no-print formulize-fileupload-element'></div>";
             }
@@ -236,46 +522,9 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 	// $subformBlankCounter is the counter for the subform blank entries, if applicable
 	function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
 
-        // mimetype map - thanks to https://stackoverflow.com/questions/7519393/php-mime-types-list-of-mime-types-publically-available
-        // file defines $mime_types_map, array of key=>value pairs that is extensions and mime types
-        include XOOPS_ROOT_PATH."/modules/formulize/include/mime_types_map.php";
-
         $fileKey = 'fileupload_'.$value;
         if($_FILES[$fileKey]['error'] == 0) {
-            // get the extension for the uploaded file
-            $dotPos = 0;
-            $fileExtensionOK = false;
-            while($location = strpos($_FILES[$fileKey]['name'],".",$dotPos+1)) {
-                $dotPos = $location;
-            }
-            if($dotPos) {
-                $extension = strtolower(substr($_FILES[$fileKey]['name'],$dotPos+1));
-                $ele_value = $element->getVar('ele_value');
-                $allowedExtensions = str_replace(array(" ","."),"",strtolower(trim($ele_value[1])));
-                $blockedExtensions = array('php','php3','php4','php5','php7','php8','phps','phtml','pht','phar','cgi','pl','py','jsp','jspx','asp','aspx','sh','htaccess','htpasswd');
-                if(!in_array($extension, $blockedExtensions) AND (!$allowedExtensions OR in_array($extension,explode(",",$allowedExtensions)))) {
-                    $deducedMimeType = mime_content_type($_FILES[$fileKey]['tmp_name']);
-                    $browserMimeType = $_FILES[$fileKey]['type'];
-                    $extensionMimeType = isset($mime_types_map[$extension]) ? $mime_types_map[$extension] : false;
-                    // if we accept all files, or this is a type that we don't have records for (at least it matched literal extension), or some of the mime type info is in agreement (if the extension type is a mismatch, maybe the browser type can redeem things?)
-                    if(!$allowedExtensions
-                        OR !$extensionMimeType
-                        OR in_array($deducedMimeType, $extensionMimeType)
-                        OR $browserMimeType == $deducedMimeType) {
-                        $fileExtensionOK = true;
-                    }
-                }
-            }
-            // catalogue the mime type if it wasn't in our list
-            $this->logMissingMimeType($extension,$deducedMimeType,$mime_types_map);
-            $this->logMissingMimeType($extension,$browserMimeType,$mime_types_map);
-            if($fileExtensionOK) {
-                $ele_value = $element->getVar('ele_value');
-                $obscureFile = '';
-								for ($i = 0; $i < 20; $i++) {
-										$obscureFile .= mt_rand(0, 9);
-								}
-								$obscureFile = $ele_value[2] ? "" : $obscureFile."+---+";
+            if($this->checkFileAgainstElementSettings($element, $_FILES[$fileKey]['name'], $_FILES[$fileKey]['tmp_name'], $_FILES[$fileKey]['type']) === true) {
                 // if it's a blank subform entry that we're saving, do things a bit differently...elements are named differently in markup in this case
                 if(strstr($value, "desubform")) {
                     $underscorePos = strpos($value, "_"); // everything after the first underscore is the normal identifier for the element
@@ -284,33 +533,27 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                     $replacementString = "de_";
                 }
                 $folderLocation = XOOPS_ROOT_PATH."/uploads/".str_replace($replacementString,"formulize_",$value);
-                $folderExists = file_exists($folderLocation);
-                if(!$folderExists) {
-                    $folderExists = mkdir($folderLocation);
-                }
-                if($folderExists) {
-                    $safeUploadName = basename($_FILES[$fileKey]['name']);
-                    $moveResult = move_uploaded_file($_FILES[$fileKey]['tmp_name'],$folderLocation."/$obscureFile".$safeUploadName);
-                    if($moveResult) {
-                        $value = array();
-                        $value['name'] = $obscureFile.$safeUploadName;
-                        $value['isfile'] = true; // second array position will indicate that we have a real file here
-                        $value['type'] = $_FILES[$fileKey]['type']; // save the mime type for later use
-                        $value['size'] = $_FILES[$fileKey]['size']; // save the size for later use
-                        if(strstr($folderLocation, "_new_")) {
-                            $GLOBALS['formulize_afterSavingLogicRequired'][$element->getVar('ele_id')] = $element->getVar('ele_type'); // set the flag that will trigger a post-save operation when we can rename the folder where the file resides to match the newly assigned entry id
-                        }
-                    } else {
-                        $value = _AM_UPLOAD_LOST;
-                        print "<p><b>$value</b></p>";
+                $storedName = $this->storedFileName($element, $_FILES[$fileKey]['name']);
+                $placeResult = $this->placeFile($folderLocation, $_FILES[$fileKey]['tmp_name'], $storedName, isHttpUpload: true);
+                if($placeResult === true) {
+                    $value = array();
+                    $value['name'] = $storedName;
+                    $value['isfile'] = true; // second array position will indicate that we have a real file here
+                    $value['type'] = $_FILES[$fileKey]['type']; // save the mime type for later use
+                    $value['size'] = $_FILES[$fileKey]['size']; // save the size for later use
+                    if(strstr($folderLocation, "_new_")) {
+                        $GLOBALS['formulize_afterSavingLogicRequired'][$element->getVar('ele_id')] = $element->getVar('ele_type'); // set the flag that will trigger a post-save operation when we can rename the folder where the file resides to match the newly assigned entry id
                     }
+                } elseif($placeResult == 'lost') {
+                    $value = _AM_UPLOAD_LOST;
+                    print formulize_userMessage($value);
                 } else {
                     $value = _AM_UPLOAD_NOLOCATION;
-                    print "<p><b>$value</b></p>";
+                    print formulize_userMessage($value);
                 }
             } else {
-                $value = _AM_UPLOAD_ERROR_MIMETYPES . $element->getVar('ele_caption')."'";
-                print "<p><b>$value</b></p>";
+                $value = _AM_UPLOAD_ERROR_MIMETYPES . strip_tags($element->getVar('ele_caption', 'n'))."'";
+                print formulize_userMessage($value);
             }
         } elseif($_FILES[$fileKey]['error'] == UPLOAD_ERR_NO_FILE) {
             list($fieldtype, $de, $form_id, $entry_id, $element_id) = explode('_', $fileKey);
@@ -485,6 +728,16 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         }
     }
 
+    // An image is shown in a form as its thumbnail, which on its own leaves no way to tell what the file is called.
+    // So in a form, the name follows the thumbnail. Other files are already shown by name, as the link itself.
+    // Only used when rendering the element in a form; lists show the thumbnail alone.
+    function imageFileNameLabel($displayName) {
+        if(!fileNameHasImageExtension($displayName)) {
+            return "";
+        }
+        return " <span class='formulize-fileupload-name'>".htmlspecialchars(strip_tags($displayName))."</span>";
+    }
+
     // this method will return the displayName for a file (ie: remove the obscuring timestamp on the front, if any)
     function getFileDisplayName($fileName) {
 			  $fileNameParts = explode("+---+",$fileName);
@@ -583,14 +836,18 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 								$image = imagecreatefrompng($path);
 								break;
 							case 'webp':
-								$image = imagecreatefromwebp($path);
+								// PHP's GD library can be built without WebP support, in which case the function does not exist
+								if(function_exists('imagecreatefromwebp')) {
+									$image = imagecreatefromwebp($path);
+								}
 								break;
 							case 'jpg':
 							case 'jpeg':
 								$image = imagecreatefromjpeg($path);
 								break;
 						}
-						$exif = exif_read_data($path);
+						// the exif extension is optional in PHP, so without it the thumbnail is made without correcting the orientation
+						$exif = function_exists('exif_read_data') ? exif_read_data($path) : false;
 						if ($image) {
 							if($exif AND isset($exif['Orientation']))	{
 								$orientation = $exif['Orientation'];
@@ -608,7 +865,9 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 									imagepng($image, $thumbPath);
 									break;
 								case 'webp':
-									imagewebp($image, $thumbPath);
+									if(function_exists('imagewebp')) {
+										imagewebp($image, $thumbPath);
+									}
 									break;
 								case 'jpg':
 								case 'jpeg':
@@ -617,7 +876,11 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 							}
 						}
 					}
-					$url = $thumbUrl;
+					// If no thumbnail could be made (animated WebP, which GD cannot read, no WebP support in GD, a damaged file, etc.)
+					// keep the URL of the original image, which the thumbnail class constrains to thumbnail size anyway
+					if(file_exists($thumbPath)) {
+						$url = $thumbUrl;
+					}
 				}
 			} catch (Exception $e) {
 				return ["success" => false, "result" => _formulize_COULD_NOT_GENERATE_THUMBNAIL . ' (' . $e->getMessage() . ')'];

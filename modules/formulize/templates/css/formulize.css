@@ -1195,6 +1195,13 @@ div[id^=cellcontents_1_] label {
   border: 1px solid black;
 }
 
+/* The name shown after an uploaded image's thumbnail in a form. Uploaded file
+   names are often long and unbroken (screenshots, camera files), and the field
+   can be a narrow column of a subform row. */
+.formulize-fileupload-name {
+  overflow-wrap: anywhere;
+}
+
 /* ---------- "Table of elements" (grid) element - issue #119 ----------
    This element renders as divs laid out with CSS grid instead of a <table>.
 
