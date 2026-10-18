@@ -389,7 +389,7 @@ define('_AM_APPEARANCE_EDITOR_JS_WIDTH_PX', 'Maximum width, in pixels, from %1$s
 // the Changes tab
 define('_AM_APPEARANCE_EDITOR_JS_WHATS_CHANGED', 'What’s changed'); // the top bar's button, which lists what the look changes from its base
 define('_AM_APPEARANCE_EDITOR_JS_UNDO_ALL', 'Undo all');
-define('_AM_APPEARANCE_EDITOR_JS_EDITS', 'Edits'); // the top bar's button, which lists the edits made since the last save, to undo them
+define('_AM_APPEARANCE_EDITOR_JS_UNSAVED', 'Unsaved changes'); // the top bar's button, which lists the changes made since the last save, to undo them
 define('_AM_APPEARANCE_EDITOR_JS_ALL_SAVED', 'Nothing: everything is saved.');
 define('_AM_APPEARANCE_EDITOR_JS_WAS', 'was %s');
 define('_AM_APPEARANCE_EDITOR_JS_NEW_IMAGE', 'A new image');

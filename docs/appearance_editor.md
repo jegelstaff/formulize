@@ -182,8 +182,8 @@ with nothing selected, it has the look's own.
 - **What's changed**: everything the look changes from its base (or from the theme's own settings,
   for a look based on nothing), saved or not, each with what the base has and **Reset** to go back
   to it.
-- **Edits**, with how many there are: what you have changed since the last save, each with what it
-  was and **Undo**. **Undo all** throws away everything you haven't saved. With nothing to undo, it
+- **Unsaved changes**, with how many there are: what you have changed since the last save, each with
+  what it was and **Undo**. **Undo all** throws away everything you haven't saved. With nothing to undo, it
   can't be opened.
 
 In the advanced editor, each change to a part has **Show**, which closes the list and selects the
