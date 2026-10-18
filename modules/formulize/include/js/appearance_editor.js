@@ -61,7 +61,7 @@
 		['--fz-value-color', '--fz-form-bg'], ['--fz-field-color', '--fz-field-bg'], ['--fz-menu-text', '--fz-menu-bg'],
 		['--fz-header-text', '--fz-header-bg'], ['--fz-row-text', '--fz-row-bg'], ['--fz-row-text', '--fz-row-hover']
 	];
-	var SECTIONS = [['text', lang('SECTION_TEXT')], ['colour', lang('SECTION_COLOURS')], ['shape', lang('SECTION_CORNERS')], ['space', lang('SECTION_SPACE')]];
+	var SECTIONS = [['text', lang('SECTION_TEXT')], ['colour', lang('SECTION_COLOURS')], ['shape', lang('SECTION_CORNERS')], ['line', lang('SECTION_LINES')], ['space', lang('SECTION_SPACE')]];
 	var UPLOADS = { appearance_logo: lang('LOGO'), appearance_favicon: lang('FAVICON') };
 	// The look being edited (EDIT), measured against the look it is based on (BASE),
 	// as that resolves, or against the theme's own appearance when it is based on
@@ -138,7 +138,7 @@
 		if (t === 'measure') { return v + 'ch'; }
 		if (t === 'font') { return v === 'secondary' ? 'var(--fz-font-heading)' : 'var(--fz-font-sans)'; }
 		if (t === 'colour') { return MAP.colours[v] ? 'var(' + MAP.colours[v].css + ')' : v; }
-		if (t === 'radius') { return v + 'px'; }
+		if (t === 'radius' || t === 'line') { return v + 'px'; }
 		return String(v);
 	}
 	function show(token, v) {
@@ -149,6 +149,8 @@
 		if (t === 'font') { return lang('FONT_IS', lang(v === 'secondary' ? 'SECONDARY_FONT' : 'MAIN_FONT'), fontName(v)); }
 		if (t === 'colour') { return MAP.colours[v] ? MAP.colours[v].label : String(v).toUpperCase(); }
 		if (t === 'radius') { return Number(v) >= FULL ? lang('FULLY_ROUNDED') : v + 'px'; }
+		if (t === 'line') { return v + 'px'; }
+		if (t === 'keyword') { return (entry(token).labels && entry(token).labels[v]) || String(v); }
 		return String(v);
 	}
 
@@ -289,7 +291,7 @@
 	function section(token) {
 		var t = type(token);
 		if (t === 'colour') { return entry(token).text ? 'text' : 'colour'; }
-		return { text: 'text', weight: 'text', leading: 'text', font: 'text', radius: 'shape' }[t] || 'space';
+		return { text: 'text', weight: 'text', leading: 'text', font: 'text', keyword: 'text', radius: 'shape', line: 'line' }[t] || 'space';
 	}
 	// a setting's name where its part isn't already said, as in the Changes list:
 	// "Button: Background", rather than just "Background"
@@ -302,16 +304,18 @@
 	function doc() { try { return frame.contentDocument; } catch (e) { return null; } }
 	function frameUrl(screen) { return DATA.previewUrl + encodeURIComponent(screen); }
 
-	// the editor's own styles in the preview: what can be clicked, and what is selected
+	// the editor's own styles in the preview: what can be clicked, and what is selected.
+	// What is hovered, selected or pulsing is marked with data-fz-editor, not a class,
+	// so a part keeps its styles: written content is styled when it has no class.
 	function frameCss() { return FRAME_CSS_BASE.replace('%parts%', SIMPLE ? '[data-fz-part="logo"]' : '[data-fz-part]'); }
 	var FRAME_CSS_BASE =
 		'%parts% { cursor: pointer; }' +
-		'[data-fz-part].formulize-editor-hover { outline: 1px dashed #3b6fd8 !important; outline-offset: 2px; }' +
-		'[data-fz-part].formulize-editor-sel { outline: 2px solid #3b6fd8 !important; outline-offset: 2px; }' +
-		'[data-fz-part].formulize-editor-sel.formulize-editor-origin { outline-width: 3px !important; }' +
+		'[data-fz-part][data-fz-editor~="hover"] { outline: 1px dashed #3b6fd8 !important; outline-offset: 2px; }' +
+		'[data-fz-part][data-fz-editor~="sel"] { outline: 2px solid #3b6fd8 !important; outline-offset: 2px; }' +
+		'[data-fz-part][data-fz-editor~="sel"][data-fz-editor~="origin"] { outline-width: 3px !important; }' +
 		'@keyframes formulize-editor-pulse { from { box-shadow: 0 0 0 0 rgba(59,111,216,.45); } to { box-shadow: 0 0 0 10px rgba(59,111,216,0); } }' +
-		'[data-fz-part].formulize-editor-pulse { animation: formulize-editor-pulse .7s ease-out; }' +
-		'@media (prefers-reduced-motion: reduce) { [data-fz-part].formulize-editor-pulse { animation: none; } }';
+		'[data-fz-part][data-fz-editor~="pulse"] { animation: formulize-editor-pulse .7s ease-out; }' +
+		'@media (prefers-reduced-motion: reduce) { [data-fz-part][data-fz-editor~="pulse"] { animation: none; } }';
 
 	// a property the theme declares itself, put back when a setting returns to the
 	// theme's own; the saved stylesheet in the preview would otherwise still apply
@@ -360,18 +364,24 @@
 		var logo = d.querySelector('[data-fz-part="logo"] img');
 		if (logo) { logo.src = uploadUrl('appearance_logo') || DATA.themeLogoUrl; }
 	}
+	// add or remove one of the editor's marks on a part in the preview
+	function mark(el, name, on) {
+		var marks = (el.getAttribute('data-fz-editor') || '').split(' ').filter(function (m) { return m && m !== name; });
+		if (on) { marks.push(name); }
+		if (marks.length) { el.setAttribute('data-fz-editor', marks.join(' ')); } else { el.removeAttribute('data-fz-editor'); }
+	}
 	function markSelection() {
 		var d = doc(); if (!d) { return; }
 		Array.prototype.forEach.call(d.querySelectorAll('[data-fz-part]'), function (el) {
 			var on = el.getAttribute('data-fz-part') === state.sel;
-			el.classList.toggle('formulize-editor-sel', on);
-			el.classList.toggle('formulize-editor-origin', on && el === state.origin);
+			mark(el, 'sel', on);
+			mark(el, 'origin', on && el === state.origin);
 		});
 	}
 	function pulse() {
 		var d = doc(); if (!d || !state.sel) { return; }
 		Array.prototype.forEach.call(d.querySelectorAll('[data-fz-part="' + state.sel + '"]'), function (el) {
-			el.classList.remove('formulize-editor-pulse'); void el.offsetWidth; el.classList.add('formulize-editor-pulse');
+			mark(el, 'pulse', false); void el.offsetWidth; mark(el, 'pulse', true);
 		});
 	}
 	frame.addEventListener('load', function () {
@@ -390,11 +400,11 @@
 			select(el && MAP.components[el.getAttribute('data-fz-part')] ? el.getAttribute('data-fz-part') : null, el);
 		}, true);
 		d.addEventListener('mouseover', function (ev) {
-			Array.prototype.forEach.call(d.querySelectorAll('.formulize-editor-hover'), function (x) { x.classList.remove('formulize-editor-hover'); });
+			Array.prototype.forEach.call(d.querySelectorAll('[data-fz-editor~="hover"]'), function (x) { mark(x, 'hover', false); });
 			// in simple mode, only the logo is a part to click: everything else is the site's
 			var el = ev.target.closest ? ev.target.closest(SIMPLE ? '[data-fz-part="logo"]' : '[data-fz-part]') : null;
 			var c = el && MAP.components[el.getAttribute('data-fz-part')];
-			if (c) { el.classList.add('formulize-editor-hover'); hint.innerHTML = langHtml('HINT_PART', '<b>' + esc(c.name) + '</b>', esc(c.plural)); }
+			if (c) { mark(el, 'hover', true); hint.innerHTML = langHtml('HINT_PART', '<b>' + esc(c.name) + '</b>', esc(c.plural)); }
 			else { hint.innerHTML = DEFAULT_HINT; }
 		});
 		d.addEventListener('mouseleave', function () { hint.innerHTML = DEFAULT_HINT; });
@@ -439,7 +449,7 @@
 		}
 		if (l.values) {
 			return { widget: '<select id="' + id + '" data-token="' + token + '">' + l.values.map(function (x) {
-				return '<option value="' + esc(x) + '"' + (String(x) === String(v) ? ' selected' : '') + '>' + esc(x) + (t === 'text' ? ' · ' + TEXT_PX[x] + 'px' : '') + '</option>';
+				return '<option value="' + esc(x) + '"' + (String(x) === String(v) ? ' selected' : '') + '>' + esc(t === 'keyword' ? show(token, x) : x) + (t === 'text' ? ' · ' + TEXT_PX[x] + 'px' : '') + '</option>';
 			}).join('') + '</select>', range: '' };
 		}
 		var step = MAP.types[t].step, max = sliderMax(token, l), sv = sliderValue(token, v);
@@ -790,7 +800,7 @@
 	function touch() { state.dirty = true; }
 	function store(token, v) {
 		var t = type(token);
-		v = (t === 'text' || t === 'font' || t === 'colour') ? String(v) : fromSlider(token, v);
+		v = (t === 'text' || t === 'font' || t === 'colour' || t === 'keyword') ? String(v) : fromSlider(token, v);
 		if (v === presetValue(token)) { delete state.overrides[token]; } else { state.overrides[token] = v; }
 		touch();
 	}

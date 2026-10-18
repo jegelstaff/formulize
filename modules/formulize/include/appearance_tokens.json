@@ -1,5 +1,5 @@
 {
-  "about": "The component tokens a look can change, in the advanced editor: the sizes, fonts, colours and corners of the parts of the interface. The values the sizes give them (Compact, Comfortable; Standard is the CSS's own) are in modules/formulize/include/appearance_sizes/. A token's Default is not here: it is the value the CSS declares (modules/formulize/templates/css/formulize-ui.css, or a theme's own tokens). Each token's type says how its values are written in CSS; the token's own min and max (in the type's steps), or its list of values, are what it can be set to, chosen so that every value in the range changes how things look. Read by modules/formulize/include/appearance_tokens.php. The screens, components and gaps are for the advanced editor (modules/formulize/appearance_editor.php): the sample screens a theme can provide, the parts of the interface that can be selected in them and the tokens of each part, and what can't be adjusted yet. A part with a site setting is one of a look's site-wide settings rather than a set of tokens (the logo). A colour token's value is one of the site's colours (colours) or #rrggbb; its text says it is a text colour. A token's derived are the tokens written from it when it is set, %s being its value. A token's phone is the token used for it at 768px and below; its home is the part a shared token belongs to; its floor is the least it can be given another token's value (one line of a text token at a line height, plus extra px; or another token plus a number of steps).",
+  "about": "The component tokens a look can change, in the advanced editor: the sizes, fonts, colours and corners of the parts of the interface. The values the sizes give them (Compact, Comfortable; Standard is the CSS's own) are in modules/formulize/include/appearance_sizes/. A token's Default is not here: it is the value the CSS declares (modules/formulize/templates/css/formulize-ui.css, or a theme's own tokens). Each token's type says how its values are written in CSS; the token's own min and max (in the type's steps), or its list of values, are what it can be set to, chosen so that every value in the range changes how things look. Read by modules/formulize/include/appearance_tokens.php. The screens, components and gaps are for the advanced editor (modules/formulize/appearance_editor.php): the sample screens a theme can provide, the parts of the interface that can be selected in them and the tokens of each part, and what can't be adjusted yet. A part with a site setting is one of a look's site-wide settings rather than a set of tokens (the logo). A colour token's value is one of the site's colours (colours) or #rrggbb; its text says it is a text colour. A keyword token's labels name each of its values. A token's derived are the tokens written from it when it is set, %s being its value. A token's phone is the token used for it at 768px and below; its home is the part a shared token belongs to; its floor is the least it can be given another token's value (one line of a text token at a line height, plus extra px; or another token plus a number of steps).",
   "types": {
     "spacing": {
       "description": "A number of spacing steps (--fz-spacing, 0.25rem), in half steps.",
@@ -39,6 +39,16 @@
       "min": 0,
       "max": 999,
       "step": 1
+    },
+    "keyword": {
+      "description": "A CSS keyword, such as a list's markers or whether links are underlined: one of the token's own values, which its labels name.",
+      "values": ["underline", "none", "disc", "circle", "square", "decimal", "decimal-leading-zero", "lower-alpha", "upper-alpha", "lower-roman", "upper-roman"]
+    },
+    "line": {
+      "description": "The thickness of a line, in px.",
+      "min": 0,
+      "max": 8,
+      "step": 1
     }
   },
   "colours": {
@@ -68,13 +78,16 @@
     "surfaces": "Cards, drawers and the page",
     "fonts": "Fonts",
     "colours": "Colours",
-    "corners": "Corners"
+    "corners": "Corners",
+    "content": "Written content",
+    "lines": "Lines and markers"
   },
   "screens": {
     "form": "Form",
     "list": "List",
     "drawer": "Drawer",
-    "cards": "Cards"
+    "cards": "Cards",
+    "text": "Text"
   },
   "components": {
     "logo": {
@@ -117,7 +130,7 @@
         "--fz-title-weight",
         "--fz-title-leading"
       ],
-      "gaps": ["Letter spacing.", "Headings inside text elements and screen templates."]
+      "gaps": ["Letter spacing."]
     },
     "form": {
       "name": "Form card",
@@ -314,6 +327,72 @@
         "Its padding at phone widths, which is fixed.",
         "The footer's side padding, which matches its top and bottom padding."
       ]
+    },
+    "paragraph": {
+      "name": "Paragraph",
+      "plural": "every paragraph, and all running text, in a page's content",
+      "tokens": ["--fz-paragraph-font", "--fz-paragraph-color", "--fz-paragraph-text", "--fz-paragraph-leading", "--fz-paragraph-gap"],
+      "gaps": ["Letter spacing and alignment.", "Paragraphs with a class of their own, which are part of something else, such as a card."]
+    },
+    "h1": {
+      "name": "Heading 1",
+      "plural": "every level 1 heading in a page's content",
+      "tokens": ["--fz-heading-font", "--fz-heading-color", "--fz-h1-text", "--fz-h1-weight", "--fz-heading-leading", "--fz-heading-space-above", "--fz-heading-space-below"],
+      "gaps": ["Letter spacing.", "Headings with a class of their own, such as the titles of forms, lists and cards (see Title)."]
+    },
+    "h2": {
+      "name": "Heading 2",
+      "plural": "every level 2 heading in a page's content",
+      "tokens": ["--fz-heading-font", "--fz-heading-color", "--fz-h2-text", "--fz-h2-weight", "--fz-heading-leading", "--fz-heading-space-above", "--fz-heading-space-below"],
+      "gaps": ["Letter spacing.", "Headings with a class of their own, such as the titles of forms, lists and cards (see Title)."]
+    },
+    "h3": {
+      "name": "Heading 3",
+      "plural": "every level 3 heading in a page's content",
+      "tokens": ["--fz-heading-font", "--fz-heading-color", "--fz-h3-text", "--fz-h3-weight", "--fz-heading-leading", "--fz-heading-space-above", "--fz-heading-space-below"],
+      "gaps": ["Letter spacing.", "Headings with a class of their own, such as the titles of forms, lists and cards (see Title)."]
+    },
+    "h4": {
+      "name": "Heading 4",
+      "plural": "every level 4 heading in a page's content",
+      "tokens": ["--fz-heading-font", "--fz-heading-color", "--fz-h4-text", "--fz-h4-weight", "--fz-heading-leading", "--fz-heading-space-above", "--fz-heading-space-below"],
+      "gaps": ["Letter spacing.", "Headings with a class of their own, such as the titles of forms, lists and cards (see Title)."]
+    },
+    "h5": {
+      "name": "Heading 5",
+      "plural": "every level 5 heading in a page's content",
+      "tokens": ["--fz-heading-font", "--fz-heading-color", "--fz-h5-text", "--fz-h5-weight", "--fz-heading-leading", "--fz-heading-space-above", "--fz-heading-space-below"],
+      "gaps": ["Letter spacing.", "Headings with a class of their own, such as the titles of forms, lists and cards (see Title)."]
+    },
+    "h6": {
+      "name": "Heading 6",
+      "plural": "every level 6 heading in a page's content",
+      "tokens": ["--fz-heading-font", "--fz-heading-color", "--fz-h6-text", "--fz-h6-weight", "--fz-heading-leading", "--fz-heading-space-above", "--fz-heading-space-below"],
+      "gaps": ["Letter spacing.", "Headings with a class of their own, such as the titles of forms, lists and cards (see Title)."]
+    },
+    "link": {
+      "name": "Link",
+      "plural": "every link in a page's content",
+      "tokens": ["--fz-link-color", "--fz-link-underline", "--fz-link-hover-underline"],
+      "gaps": ["Links with a class of their own, such as buttons and menu items.", "Visited links, which look like the others.", "The hover colour, which is a darker shade of the link's colour."]
+    },
+    "list": {
+      "name": "List",
+      "plural": "every bulleted and numbered list in a page's content",
+      "tokens": ["--fz-list-marker-color", "--fz-list-bullet", "--fz-list-number", "--fz-list-indent", "--fz-list-gap"],
+      "gaps": ["Lists with a class of their own, such as menus.", "Lists inside lists, which look like the list they are in."]
+    },
+    "quote": {
+      "name": "Block quote",
+      "plural": "every block quote in a page's content",
+      "tokens": ["--fz-quote-color", "--fz-quote-border", "--fz-quote-line", "--fz-quote-indent"],
+      "gaps": ["The quote's font and size, which are the running text's."]
+    },
+    "rule": {
+      "name": "Separator line",
+      "plural": "every separator line (hr) in a page's content",
+      "tokens": ["--fz-rule-color", "--fz-rule-line", "--fz-rule-space"],
+      "gaps": ["Dashed and dotted lines."]
     }
   },
   "gaps": [
@@ -930,6 +1009,280 @@
       "label": "Corners",
       "description": "The corner radius of dropdown menus.",
       "type": "radius",
+      "min": 0,
+      "max": 12
+    },
+    "--fz-paragraph-font": {
+      "group": "fonts",
+      "label": "Font",
+      "description": "The font of running text in a page's content.",
+      "type": "font"
+    },
+    "--fz-paragraph-color": {
+      "group": "colours",
+      "label": "Colour",
+      "description": "The colour of running text.",
+      "type": "colour",
+      "text": true
+    },
+    "--fz-paragraph-text": {
+      "group": "content",
+      "label": "Paragraph size",
+      "description": "The size of running text in a page's content: paragraphs, lists, and anything else without a size of its own.",
+      "type": "text",
+      "values": ["xs-plus", "sm", "sm-plus", "base", "lg"]
+    },
+    "--fz-paragraph-leading": {
+      "group": "content",
+      "label": "Paragraph line height",
+      "description": "The space between the lines of running text, as a multiple of its size.",
+      "type": "leading",
+      "values": [1.375, 1.45, 1.5, 1.625, 1.75]
+    },
+    "--fz-paragraph-gap": {
+      "group": "content",
+      "label": "Space between paragraphs",
+      "description": "The space between paragraphs, lists and block quotes that follow one another.",
+      "type": "spacing",
+      "min": 0,
+      "max": 8
+    },
+    "--fz-heading-font": {
+      "group": "fonts",
+      "label": "Font",
+      "description": "The font of headings in a page's content, at every level.",
+      "type": "font",
+      "home": "h1"
+    },
+    "--fz-heading-color": {
+      "group": "colours",
+      "label": "Colour",
+      "description": "The colour of headings, at every level.",
+      "type": "colour",
+      "text": true,
+      "home": "h1"
+    },
+    "--fz-heading-leading": {
+      "group": "content",
+      "label": "Heading line height",
+      "description": "The space between the lines of a heading that wraps, at every level.",
+      "type": "leading",
+      "values": [1.25, 1.3, 1.375, 1.45, 1.5],
+      "home": "h1"
+    },
+    "--fz-heading-space-above": {
+      "group": "content",
+      "label": "Space above headings",
+      "description": "The space above a heading, at every level, unless it is the first thing in what it's in.",
+      "type": "spacing",
+      "min": 0,
+      "max": 16,
+      "home": "h1"
+    },
+    "--fz-heading-space-below": {
+      "group": "content",
+      "label": "Space below headings",
+      "description": "The space between a heading and what follows it, at every level.",
+      "type": "spacing",
+      "min": 0,
+      "max": 8,
+      "home": "h1"
+    },
+    "--fz-h1-text": {
+      "group": "content",
+      "label": "Heading 1 size",
+      "description": "The size of level 1 headings.",
+      "type": "text",
+      "values": ["sm", "sm-plus", "base", "lg", "xl", "2xl", "3xl"]
+    },
+    "--fz-h1-weight": {
+      "group": "content",
+      "label": "Heading 1 weight",
+      "description": "The weight of level 1 headings.",
+      "type": "weight",
+      "values": [400, 500, 600, 700]
+    },
+    "--fz-h2-text": {
+      "group": "content",
+      "label": "Heading 2 size",
+      "description": "The size of level 2 headings.",
+      "type": "text",
+      "values": ["sm", "sm-plus", "base", "lg", "xl", "2xl", "3xl"]
+    },
+    "--fz-h2-weight": {
+      "group": "content",
+      "label": "Heading 2 weight",
+      "description": "The weight of level 2 headings.",
+      "type": "weight",
+      "values": [400, 500, 600, 700]
+    },
+    "--fz-h3-text": {
+      "group": "content",
+      "label": "Heading 3 size",
+      "description": "The size of level 3 headings.",
+      "type": "text",
+      "values": ["sm", "sm-plus", "base", "lg", "xl", "2xl", "3xl"]
+    },
+    "--fz-h3-weight": {
+      "group": "content",
+      "label": "Heading 3 weight",
+      "description": "The weight of level 3 headings.",
+      "type": "weight",
+      "values": [400, 500, 600, 700]
+    },
+    "--fz-h4-text": {
+      "group": "content",
+      "label": "Heading 4 size",
+      "description": "The size of level 4 headings.",
+      "type": "text",
+      "values": ["sm", "sm-plus", "base", "lg", "xl", "2xl", "3xl"]
+    },
+    "--fz-h4-weight": {
+      "group": "content",
+      "label": "Heading 4 weight",
+      "description": "The weight of level 4 headings.",
+      "type": "weight",
+      "values": [400, 500, 600, 700]
+    },
+    "--fz-h5-text": {
+      "group": "content",
+      "label": "Heading 5 size",
+      "description": "The size of level 5 headings.",
+      "type": "text",
+      "values": ["sm", "sm-plus", "base", "lg", "xl", "2xl", "3xl"]
+    },
+    "--fz-h5-weight": {
+      "group": "content",
+      "label": "Heading 5 weight",
+      "description": "The weight of level 5 headings.",
+      "type": "weight",
+      "values": [400, 500, 600, 700]
+    },
+    "--fz-h6-text": {
+      "group": "content",
+      "label": "Heading 6 size",
+      "description": "The size of level 6 headings.",
+      "type": "text",
+      "values": ["sm", "sm-plus", "base", "lg", "xl", "2xl", "3xl"]
+    },
+    "--fz-h6-weight": {
+      "group": "content",
+      "label": "Heading 6 weight",
+      "description": "The weight of level 6 headings.",
+      "type": "weight",
+      "values": [400, 500, 600, 700]
+    },
+    "--fz-link-color": {
+      "group": "colours",
+      "label": "Colour",
+      "description": "The colour of links in a page's content. Its hover colour is a darker shade of it.",
+      "type": "colour",
+      "text": true,
+      "derived": { "--fz-link-hover-color": "color-mix(in srgb, %s 80%, #000)" }
+    },
+    "--fz-link-underline": {
+      "group": "lines",
+      "label": "Underline",
+      "description": "Whether links are underlined.",
+      "type": "keyword",
+      "values": ["underline", "none"],
+      "labels": { "underline": "Underlined", "none": "Not underlined" }
+    },
+    "--fz-link-hover-underline": {
+      "group": "lines",
+      "label": "Underline on hover",
+      "description": "Whether a link is underlined while the pointer is over it.",
+      "type": "keyword",
+      "values": ["underline", "none"],
+      "labels": { "underline": "Underlined", "none": "Not underlined" }
+    },
+    "--fz-list-marker-color": {
+      "group": "colours",
+      "label": "Marker colour",
+      "description": "The colour of the bullets and numbers.",
+      "type": "colour",
+      "text": true
+    },
+    "--fz-list-bullet": {
+      "group": "lines",
+      "label": "Bullets",
+      "description": "The marker before each item in a bulleted list.",
+      "type": "keyword",
+      "values": ["disc", "circle", "square", "none"],
+      "labels": { "disc": "Filled circles", "circle": "Hollow circles", "square": "Squares", "none": "None" }
+    },
+    "--fz-list-number": {
+      "group": "lines",
+      "label": "Numbering",
+      "description": "How the items in a numbered list are numbered.",
+      "type": "keyword",
+      "values": ["decimal", "decimal-leading-zero", "lower-alpha", "upper-alpha", "lower-roman", "upper-roman"],
+      "labels": { "decimal": "1, 2, 3", "decimal-leading-zero": "01, 02, 03", "lower-alpha": "a, b, c", "upper-alpha": "A, B, C", "lower-roman": "i, ii, iii", "upper-roman": "I, II, III" }
+    },
+    "--fz-list-indent": {
+      "group": "content",
+      "label": "List indent",
+      "description": "How far a list's items are from the edge, which leaves room for their bullets or numbers.",
+      "type": "spacing",
+      "min": 3,
+      "max": 12
+    },
+    "--fz-list-gap": {
+      "group": "content",
+      "label": "Space between list items",
+      "description": "The space between a list's items.",
+      "type": "spacing",
+      "min": 0,
+      "max": 4
+    },
+    "--fz-quote-color": {
+      "group": "colours",
+      "label": "Colour",
+      "description": "The colour of the text in a block quote.",
+      "type": "colour",
+      "text": true
+    },
+    "--fz-quote-border": {
+      "group": "colours",
+      "label": "Line colour",
+      "description": "The colour of the line beside a block quote.",
+      "type": "colour"
+    },
+    "--fz-quote-line": {
+      "group": "lines",
+      "label": "Line thickness",
+      "description": "The thickness of the line beside a block quote. 0 has no line.",
+      "type": "line",
+      "min": 0,
+      "max": 8
+    },
+    "--fz-quote-indent": {
+      "group": "content",
+      "label": "Block quote indent",
+      "description": "The space between the line and the quote's text.",
+      "type": "spacing",
+      "min": 0,
+      "max": 8
+    },
+    "--fz-rule-color": {
+      "group": "colours",
+      "label": "Colour",
+      "description": "The colour of separator lines.",
+      "type": "colour"
+    },
+    "--fz-rule-line": {
+      "group": "lines",
+      "label": "Thickness",
+      "description": "The thickness of separator lines.",
+      "type": "line",
+      "min": 1,
+      "max": 6
+    },
+    "--fz-rule-space": {
+      "group": "content",
+      "label": "Space around separator lines",
+      "description": "The space above and below a separator line.",
+      "type": "spacing",
       "min": 0,
       "max": 12
     }
