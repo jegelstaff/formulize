@@ -102,7 +102,7 @@ advanced editor. A look whose sizes have been changed that way has a *Custom* si
 changes that look, and nothing else. **Back to Looks** returns to the tab.
 
 The editor shows the look on a live preview of sample screens (a form and a list, and in Lyris also
-an entry open in the drawer, a set of cards, and a page of text), with its settings beside it. **Desktop** and
+an entry open in the drawer, a set of cards, a page of text, and the side menu), with its settings beside it. **Desktop** and
 **Phone** switch the preview's width.
 
 **Simple** and **Advanced** at the top switch between the two editors at any time, keeping whatever
@@ -154,6 +154,11 @@ Everything in the simple editor, except the size, and every part of the interfac
   a card's title or a menu. Paragraphs set the size, line height, font and colour of all the running
   text. The headings share a font, a colour, a line height and the space above and below them, and
   each level has its own size and weight. A link's hover colour is a darker shade of its colour.
+- **The side menu has a page of its own, Side menu.** Select the menu for its width, background,
+  border and padding; a link, for the font, size, weight, colour, padding and corners of every link
+  and group name, and the space between them; a link in a group, for their size, colour and indent, and the line beside them; and
+  the link to the page you're on, for how it stands out: its background (on its own, and in a group),
+  text colour, weight, and the short line beside it.
 - **The spacing of a form is on its fields.** Select a field to change the space between fields;
   help text, for the space above it; choice options, for the space between them; a label, for the
   space below it.

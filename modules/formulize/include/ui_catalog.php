@@ -366,7 +366,7 @@ function formulize_uiCatalog() {
             array(
                 'id' => 'tokens-sizes',
                 'name' => 'Component sizes',
-                'summary' => 'The sizes of the parts of the interface: titles, labels and field text, the heights of fields, buttons and list rows, the space in forms, cards and the drawer, and the size and spacing of written content (`fz-content` and `fz-prose`). The components use them. The Appearance page\'s looks (Default, Compact, Comfortable, and any made in its advanced editor) change them. Steps are spacing steps, 4px each at the default settings.',
+                'summary' => 'The sizes of the parts of the interface: titles, labels and field text, the heights of fields, buttons and list rows, the space in forms, cards and the drawer, the size and spacing of written content (`fz-content` and `fz-prose`), and the side menu\'s (`--fz-sidemenu-`*, for a theme\'s menu of links down the side of the page). The components use them. The Appearance page\'s looks (Default, Compact, Comfortable, and any made in its advanced editor) change them. Steps are spacing steps, 4px each at the default settings.',
                 'tokens' => formulize_uiSizeTokens(),
                 'notes' => array(
                     'Use them in your own CSS so it matches the components and follows the site\'s look: `gap: var(--fz-field-gap)`, `height: var(--fz-control-height)`.',
@@ -388,7 +388,7 @@ HTML
             array(
                 'id' => 'tokens-component-colours',
                 'name' => 'Component fonts, colours and corners',
-                'summary' => 'Which font each kind of text is set in, the colours of the parts of the interface, and their corners; and for written content, its link underlines, list markers and the thickness of its lines. The components use them. Each follows a site-wide setting from the Appearance page (the main or secondary font, one of the colours) until the Appearance page\'s advanced editor gives that part its own.',
+                'summary' => 'Which font each kind of text is set in, the colours of the parts of the interface, and their corners; and for written content, its link underlines, list markers and the thickness of its lines; and the side menu\'s fonts, colours and corners. The components use them. Each follows a site-wide setting from the Appearance page (the main or secondary font, one of the colours) until the Appearance page\'s advanced editor gives that part its own.',
                 'tokens' => formulize_uiSizeTokens(false),
                 'notes' => array(
                     'Use them in your own CSS so it matches the components: `background: var(--fz-button-primary-bg)`, `border-radius: var(--fz-field-radius)`, `font-family: var(--fz-label-font)`.',

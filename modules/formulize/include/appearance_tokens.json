@@ -1,10 +1,10 @@
 {
-  "about": "The component tokens a look can change, in the advanced editor: the sizes, fonts, colours and corners of the parts of the interface. The values the sizes give them (Compact, Comfortable; Standard is the CSS's own) are in modules/formulize/include/appearance_sizes/. A token's Default is not here: it is the value the CSS declares (modules/formulize/templates/css/formulize-ui.css, or a theme's own tokens). Each token's type says how its values are written in CSS; the token's own min and max (in the type's steps), or its list of values, are what it can be set to, chosen so that every value in the range changes how things look. Read by modules/formulize/include/appearance_tokens.php. The screens, components and gaps are for the advanced editor (modules/formulize/appearance_editor.php): the sample screens a theme can provide, the parts of the interface that can be selected in them and the tokens of each part, and what can't be adjusted yet. A part with a site setting is one of a look's site-wide settings rather than a set of tokens (the logo). A colour token's value is one of the site's colours (colours) or #rrggbb; its text says it is a text colour. A keyword token's labels name each of its values. A token's derived are the tokens written from it when it is set, %s being its value. A token's phone is the token used for it at 768px and below; its home is the part a shared token belongs to; its floor is the least it can be given another token's value (one line of a text token at a line height, plus extra px; or another token plus a number of steps).",
+  "about": "The component tokens a look can change, in the advanced editor: the sizes, fonts, colours and corners of the parts of the interface. The values the sizes give them (Compact, Comfortable; Standard is the CSS's own) are in modules/formulize/include/appearance_sizes/. A token's Default is not here: it is the value the CSS declares (modules/formulize/templates/css/formulize-ui.css, or a theme's own tokens). Each token's type says how its values are written in CSS; the token's own min and max (in the type's steps), or its list of values, are what it can be set to, chosen so that every value in the range changes how things look. Read by modules/formulize/include/appearance_tokens.php. The screens, components and gaps are for the advanced editor (modules/formulize/appearance_editor.php): the sample screens a theme can provide, the parts of the interface that can be selected in them and the tokens of each part, and what can't be adjusted yet. A part with a site setting is one of a look's site-wide settings rather than a set of tokens (the logo). A part that is a region of the page (the page, the side menu) is outlined inside its edges when it is pointed at or selected, since its edges are under what is beside it. A colour token's value is one of the site's colours (colours) or #rrggbb; its text says it is a text colour. A keyword token's labels name each of its values. A token's derived are the tokens written from it when it is set, %s being its value. A token's phone is the token used for it at 768px and below; its home is the part a shared token belongs to; its floor is the least it can be given another token's value (one line of a text token at a line height, plus extra px; or another token plus a number of steps).",
   "types": {
     "spacing": {
       "description": "A number of spacing steps (--fz-spacing, 0.25rem), in half steps.",
       "min": 0,
-      "max": 32,
+      "max": 80,
       "step": 0.5
     },
     "text": {
@@ -80,14 +80,16 @@
     "colours": "Colours",
     "corners": "Corners",
     "content": "Written content",
-    "lines": "Lines and markers"
+    "lines": "Lines and markers",
+    "sidemenu": "The side menu"
   },
   "screens": {
     "form": "Form",
     "list": "List",
     "drawer": "Drawer",
     "cards": "Cards",
-    "text": "Text"
+    "text": "Text",
+    "sidemenu": "Side menu"
   },
   "components": {
     "logo": {
@@ -100,8 +102,9 @@
     "page": {
       "name": "Page",
       "plural": "every page",
+      "region": true,
       "tokens": ["--fz-page-padding", "--fz-topbar-height"],
-      "gaps": ["The top bar height at phone widths, which is fixed.", "The sidebar width.", "Sidebar menu items."]
+      "gaps": ["The top bar height at phone widths, which is fixed."]
     },
     "tabs": {
       "name": "Page tabs",
@@ -393,6 +396,31 @@
       "plural": "every separator line (hr) in a page's content",
       "tokens": ["--fz-rule-color", "--fz-rule-line", "--fz-rule-space"],
       "gaps": ["Dashed and dotted lines."]
+    },
+    "sidemenu": {
+      "name": "Side menu",
+      "plural": "the side menu on every page",
+      "region": true,
+      "tokens": ["--fz-sidemenu-bg", "--fz-sidemenu-border", "--fz-sidemenu-width", "--fz-sidemenu-padding-x", "--fz-sidemenu-padding-y"],
+      "gaps": ["Block titles, such as the name of a block above its links.", "Its shadow, when it opens over the page on a phone."]
+    },
+    "sidemenu-link": {
+      "name": "Menu link",
+      "plural": "every link and group name in the side menu",
+      "tokens": ["--fz-sidemenu-font", "--fz-sidemenu-color", "--fz-sidemenu-hover-bg", "--fz-sidemenu-item-radius", "--fz-sidemenu-text", "--fz-sidemenu-weight", "--fz-sidemenu-item-padding-y", "--fz-sidemenu-item-padding-x", "--fz-sidemenu-item-gap"],
+      "gaps": ["Icons beside links.", "The arrow beside a group's name, which follows its text colour."]
+    },
+    "sidemenu-group": {
+      "name": "Group link",
+      "plural": "every link inside a group in the side menu",
+      "tokens": ["--fz-sidemenu-sub-color", "--fz-sidemenu-guide", "--fz-sidemenu-sub-text", "--fz-sidemenu-sub-indent"],
+      "gaps": ["Their font, weight, padding and corners, which are the menu links'."]
+    },
+    "sidemenu-current": {
+      "name": "Current page",
+      "plural": "the side menu's link to the current page",
+      "tokens": ["--fz-sidemenu-active-color", "--fz-sidemenu-active-bg", "--fz-sidemenu-sub-active-bg", "--fz-sidemenu-active-marker", "--fz-sidemenu-active-weight"],
+      "gaps": ["Its shadow."]
     }
   },
   "gaps": [
@@ -402,7 +430,7 @@
     "Phone-width spacing (title bar, cards, drawer) and the top bar's height on phones, which are fixed.",
     "The 44px minimum height of fields and buttons on phones.",
     "Checkboxes, radio buttons, switches and badges.",
-    "Filter chips, pagination, the sidebar, and the top bar other than its height.",
+    "Filter chips, pagination, and the top bar other than its height.",
     "Dialogs, date pickers and subform tables."
   ],
   "tokens": {
@@ -1285,6 +1313,168 @@
       "type": "spacing",
       "min": 0,
       "max": 12
+    },
+    "--fz-sidemenu-bg": {
+      "group": "colours",
+      "label": "Background",
+      "description": "The side menu's background.",
+      "type": "colour"
+    },
+    "--fz-sidemenu-border": {
+      "group": "colours",
+      "label": "Border",
+      "description": "The line between the side menu and the page.",
+      "type": "colour"
+    },
+    "--fz-sidemenu-width": {
+      "group": "sidemenu",
+      "label": "Side menu width",
+      "description": "How wide the side menu is when it is open.",
+      "type": "spacing",
+      "min": 40,
+      "max": 80
+    },
+    "--fz-sidemenu-padding-x": {
+      "group": "sidemenu",
+      "label": "Side menu padding, sides",
+      "description": "The space between the side menu's edges and its links.",
+      "type": "spacing",
+      "min": 0,
+      "max": 6
+    },
+    "--fz-sidemenu-padding-y": {
+      "group": "sidemenu",
+      "label": "Side menu padding, top and bottom",
+      "description": "The space above the first link and below the last.",
+      "type": "spacing",
+      "min": 0,
+      "max": 8
+    },
+    "--fz-sidemenu-font": {
+      "group": "fonts",
+      "label": "Font",
+      "description": "The font of the side menu's links.",
+      "type": "font"
+    },
+    "--fz-sidemenu-color": {
+      "group": "colours",
+      "label": "Text",
+      "description": "The colour of the side menu's links, and of a group's links with the pointer over them.",
+      "type": "colour",
+      "text": true
+    },
+    "--fz-sidemenu-hover-bg": {
+      "group": "colours",
+      "label": "Hover background",
+      "description": "The background of a link with the pointer over it.",
+      "type": "colour"
+    },
+    "--fz-sidemenu-item-radius": {
+      "group": "corners",
+      "label": "Corners",
+      "description": "The corner radius of the side menu's links, which shows on the current page's and the one under the pointer.",
+      "type": "radius",
+      "min": 0,
+      "max": 12,
+      "full": true
+    },
+    "--fz-sidemenu-text": {
+      "group": "sidemenu",
+      "label": "Menu link size",
+      "description": "The size of the side menu's links and group names.",
+      "type": "text",
+      "values": ["xs", "xs-plus", "sm", "sm-plus", "base"]
+    },
+    "--fz-sidemenu-weight": {
+      "group": "sidemenu",
+      "label": "Menu link weight",
+      "description": "The weight of the side menu's links and group names.",
+      "type": "weight",
+      "values": [400, 500, 600, 700]
+    },
+    "--fz-sidemenu-item-padding-y": {
+      "group": "sidemenu",
+      "label": "Menu link padding, top and bottom",
+      "description": "The space above and below each link's text, which sets how tall the links are.",
+      "type": "spacing",
+      "min": 0.5,
+      "max": 4
+    },
+    "--fz-sidemenu-item-gap": {
+      "group": "sidemenu",
+      "label": "Space between menu links",
+      "description": "The space between one link and the next, and between the links in a group, without making the links bigger. 0 leaves a hairline between them.",
+      "type": "spacing",
+      "min": 0,
+      "max": 6
+    },
+    "--fz-sidemenu-item-padding-x": {
+      "group": "sidemenu",
+      "label": "Menu link padding, sides",
+      "description": "The space before and after each link's text.",
+      "type": "spacing",
+      "min": 0,
+      "max": 5
+    },
+    "--fz-sidemenu-sub-color": {
+      "group": "colours",
+      "label": "Text",
+      "description": "The colour of the links in a group.",
+      "type": "colour",
+      "text": true
+    },
+    "--fz-sidemenu-guide": {
+      "group": "colours",
+      "label": "Guide line",
+      "description": "The line down the side of a group's links.",
+      "type": "colour"
+    },
+    "--fz-sidemenu-sub-text": {
+      "group": "sidemenu",
+      "label": "Group link size",
+      "description": "The size of the links in a group.",
+      "type": "text",
+      "values": ["xs", "xs-plus", "sm", "sm-plus", "base"]
+    },
+    "--fz-sidemenu-sub-indent": {
+      "group": "sidemenu",
+      "label": "Group indent",
+      "description": "How far a group's links are indented under the group's name.",
+      "type": "spacing",
+      "min": 0,
+      "max": 8
+    },
+    "--fz-sidemenu-active-color": {
+      "group": "colours",
+      "label": "Text",
+      "description": "The colour of the link to the page you're on, and of the name of the group it is in.",
+      "type": "colour",
+      "text": true
+    },
+    "--fz-sidemenu-active-bg": {
+      "group": "colours",
+      "label": "Background",
+      "description": "The background of the link to the page you're on.",
+      "type": "colour"
+    },
+    "--fz-sidemenu-sub-active-bg": {
+      "group": "colours",
+      "label": "Background in a group",
+      "description": "The background of the link to the page you're on, when it is in a group.",
+      "type": "colour"
+    },
+    "--fz-sidemenu-active-marker": {
+      "group": "colours",
+      "label": "Marker",
+      "description": "The short line beside the link to the page you're on.",
+      "type": "colour"
+    },
+    "--fz-sidemenu-active-weight": {
+      "group": "sidemenu",
+      "label": "Current page weight",
+      "description": "The weight of the link to the page you're on, and of the name of the group it is in.",
+      "type": "weight",
+      "values": [400, 500, 600, 700]
     }
   }
 }

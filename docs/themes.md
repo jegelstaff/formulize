@@ -230,6 +230,11 @@ another font is chosen in the Appearance editor, yours is no longer loaded.
 Don't load the font in `theme.html` as well. A theme that leaves `--formulize-font-weights` out gets
 Geist, the font Lyris uses.
 
+**If your theme has a menu of links down the side of the page**, style it with the side menu tokens
+(`--fz-sidemenu-width`, `--fz-sidemenu-bg`, `--fz-sidemenu-text`, `--fz-sidemenu-active-bg` and the
+rest), so the editor's Side menu page changes it. Their defaults are Lyris's. Lyris's rules for its
+sidebar and for Formulize's menu block (`.main-menu`) are an example.
+
 **Mark your content area** with the class `fz-content`, on the element around a page's contents,
 inside your header, menus and footer. Text there then follows the look's written content: the
 paragraphs, headings, links, lists, block quotes and separator lines on the editor's Text page.
@@ -250,7 +255,7 @@ shows a screen's contents outside it.
 
 **Provide sample screens** for the editor's preview, in an `appearance_preview` folder
 in your theme. Each is an HTML file named after a screen: `form.html`, `list.html`, `drawer.html`,
-`cards.html` and `text.html`. Provide the ones that suit your theme; the editor shows the ones it finds, and without
+`cards.html`, `text.html` and `sidemenu.html`. Provide the ones that suit your theme; the editor shows the ones it finds, and without
 any, the theme can't be edited there. A sample is the markup your theme puts in `<body>` for
 that kind of page, written out with sample content, and it is shown with your `css/reset.css`, your
 `css/style.css` and your generated appearance stylesheet, in a `<body>` with the id `formulize` and
@@ -266,8 +271,10 @@ The parts, and the tokens of each one, are the `components` in
 `modules/formulize/include/appearance_tokens.json`: `logo` (the link around your logo image),
 `page`, `tabs`, `title`, `form`, `label`, `field`, `value` (a read-only value), `options` (radio
 buttons and checkboxes), `help`, `button`, `toolbar`, `menu`, `header` (column headings), `row`,
-`card` and `drawer`; and for written content, `paragraph`, `h1` to `h6`, `link`, `list`, `quote`
-and `rule` (a separator line). The editor shows a new logo by changing the `src` of the image inside the
+`card` and `drawer`; for written content, `paragraph`, `h1` to `h6`, `link`, `list`, `quote`
+and `rule` (a separator line); and for the side menu, `sidemenu` (the menu itself),
+`sidemenu-link`, `sidemenu-group` (a link in a group) and `sidemenu-current` (the link to the page
+you're on). The editor shows a new logo by changing the `src` of the image inside the
 `logo` part.
 
 Pieces shared between samples go in files starting with an underscore, and are included by name in

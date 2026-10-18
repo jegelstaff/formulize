@@ -223,6 +223,20 @@
   --fz-list-gap:            calc(var(--fz-spacing) * 1);  /* between a list's items: 4px */
   --fz-quote-indent:        calc(var(--fz-spacing) * 4);  /* 16px */
   --fz-rule-space:          calc(var(--fz-spacing) * 4);  /* above and below a separator line: 16px */
+
+  /* The side menu: a theme's menu of links down the side of the page, from
+     Formulize's menu block (main-menu, main-menu__item-link...) */
+  --fz-sidemenu-width:         calc(var(--fz-spacing) * 55);   /* 220px */
+  --fz-sidemenu-padding-x:     calc(var(--fz-spacing) * 2);
+  --fz-sidemenu-padding-y:     calc(var(--fz-spacing) * 4);
+  --fz-sidemenu-text:           var(--fz-text-xs-plus);         /* its links: 13px */
+  --fz-sidemenu-weight:         500;
+  --fz-sidemenu-item-padding-x: calc(var(--fz-spacing) * 2);
+  --fz-sidemenu-item-padding-y: calc(var(--fz-spacing) * 1.5);
+  --fz-sidemenu-item-gap:       calc(var(--fz-spacing) * 0);    /* between links, on top of 1px */
+  --fz-sidemenu-active-weight:  600;                            /* the link to the page you're on */
+  --fz-sidemenu-sub-text:       var(--fz-text-xs);              /* the links in a group: 12px */
+  --fz-sidemenu-sub-indent:     calc(var(--fz-spacing) * 3);
 }
 
 
@@ -256,6 +270,7 @@
   --fz-table-font:        var(--fz-font-sans);     /* list and table cells */
   --fz-table-header-font: var(--fz-font-sans);     /* column headings */
   --fz-paragraph-font:    var(--fz-font-sans);     /* running text */
+  --fz-sidemenu-font:      var(--fz-font-sans);     /* the side menu */
   --fz-heading-font:      var(--fz-font-heading);  /* headings in running text */
 
   /* Text colours */
@@ -311,6 +326,19 @@
   --fz-card-radius:       var(--fz-radius-lg);
   --fz-drawer-bg:         var(--fz-color-surface);
   --fz-drawer-foot-bg:    var(--fz-color-surface-2);
+
+  /* The side menu */
+  --fz-sidemenu-bg:            var(--fz-color-surface-2);
+  --fz-sidemenu-border:        var(--fz-color-border);
+  --fz-sidemenu-color:         var(--fz-color-text);
+  --fz-sidemenu-hover-bg:      var(--fz-color-surface-3);
+  --fz-sidemenu-item-radius:   var(--fz-radius-md);
+  --fz-sidemenu-active-bg:     var(--fz-color-surface);
+  --fz-sidemenu-active-color:  var(--fz-color-text);
+  --fz-sidemenu-active-marker: var(--fz-color-accent);
+  --fz-sidemenu-sub-color:     var(--fz-color-text-muted);
+  --fz-sidemenu-sub-active-bg: var(--fz-color-accent-soft);
+  --fz-sidemenu-guide:         var(--fz-color-border);
 
   /* Written content */
   --fz-link-color:         var(--fz-color-accent);
