@@ -59,7 +59,9 @@
 		['--fz-tab-active-text', '--fz-tab-active-bg'], ['--fz-tab-text', '--fz-tab-bg'],
 		['--fz-title-color', '--fz-form-bg', true], ['--fz-label-color', '--fz-form-bg'], ['--fz-help-color', '--fz-form-bg'],
 		['--fz-value-color', '--fz-form-bg'], ['--fz-field-color', '--fz-field-bg'], ['--fz-menu-text', '--fz-menu-bg'],
-		['--fz-header-text', '--fz-header-bg'], ['--fz-row-text', '--fz-row-bg'], ['--fz-row-text', '--fz-row-hover']
+		['--fz-header-text', '--fz-header-bg'], ['--fz-row-text', '--fz-row-bg'], ['--fz-row-text', '--fz-row-hover'],
+		['--fz-sidemenu-color', '--fz-sidemenu-bg'], ['--fz-sidemenu-color', '--fz-sidemenu-hover-bg'], ['--fz-sidemenu-sub-color', '--fz-sidemenu-bg'],
+		['--fz-sidemenu-active-color', '--fz-sidemenu-active-bg'], ['--fz-sidemenu-active-color', '--fz-sidemenu-sub-active-bg']
 	];
 	var SECTIONS = [['text', lang('SECTION_TEXT')], ['colour', lang('SECTION_COLOURS')], ['shape', lang('SECTION_CORNERS')], ['line', lang('SECTION_LINES')], ['space', lang('SECTION_SPACE')]];
 	var UPLOADS = { appearance_logo: lang('LOGO'), appearance_favicon: lang('FAVICON') };
@@ -307,7 +309,13 @@
 	// the editor's own styles in the preview: what can be clicked, and what is selected.
 	// What is hovered, selected or pulsing is marked with data-fz-editor, not a class,
 	// so a part keeps its styles: written content is styled when it has no class.
-	function frameCss() { return FRAME_CSS_BASE.replace('%parts%', SIMPLE ? '[data-fz-part="logo"]' : '[data-fz-part]'); }
+	// A part that is a region of the page (the page, the side menu) is outlined
+	// inside its edges, which are under what is beside it.
+	function frameCss() {
+		var regions = Object.keys(MAP.components).filter(function (k) { return MAP.components[k].region; }).map(function (k) { return '[data-fz-part="' + k + '"]'; });
+		return FRAME_CSS_BASE.replace('%parts%', SIMPLE ? '[data-fz-part="logo"]' : '[data-fz-part]') +
+			(regions.length ? ':is(' + regions.join(', ') + '):is([data-fz-editor~="hover"], [data-fz-editor~="sel"]) { outline-offset: -3px !important; }' : '');
+	}
 	var FRAME_CSS_BASE =
 		'%parts% { cursor: pointer; }' +
 		'[data-fz-part][data-fz-editor~="hover"] { outline: 1px dashed #3b6fd8 !important; outline-offset: 2px; }' +

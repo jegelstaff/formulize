@@ -1,0 +1,75 @@
+<!--
+  Sample screen for the Appearance page's advanced editor: the side menu, open,
+  with Lyris's real sidebar markup (theme.html and blockszone.html) around the
+  markup Formulize's menu block renders (modules/formulize/templates/blocks/
+  menu.html): links, a group that is open with the page you're on in it, and a
+  group that is closed. It is open on phones too, over the page, as it is when
+  someone opens it there. The page beside it is grey placeholder blocks, with
+  no parts, so the menu is all there is to change here. See form.html for how
+  the samples work.
+-->
+<div class="lyris-app lyris-app--sidebar-open" id="lyris-app">
+  {{header}}
+  <div class="lyris-app__body">
+    <aside class="lyris-sidebar" id="lyris-sidebar" role="navigation" aria-label="Main navigation" data-fz-part="sidemenu">
+      <div class="xo-blockszone x2-secondary xo-canvas-column" id="xo-canvas-leftcolumn">
+        <div class="xo-block formulize">
+          <div class="xo-blockcontent">
+            <ul id="mainmenu" class="main-menu">
+              <li class="main-menu__item">
+                <a href="#" class="main-menu__item-link" data-fz-part="sidemenu-link">Home</a>
+              </li>
+              <details class="main-menu__item main-menu__item--disclosure" open>
+                <summary class="main-menu__item-link main-menu__item-link--active" data-fz-part="sidemenu-link">Programs</summary>
+                <ul class="main-menu__subitems">
+                  <li class="main-menu__item main-menu__subitem">
+                    <a href="#" class="main-menu__item-link main-menu__item-link--active" data-fz-part="sidemenu-current">Summer camps</a>
+                  </li>
+                  <li class="main-menu__item main-menu__subitem">
+                    <a href="#" class="main-menu__item-link" data-fz-part="sidemenu-group">After-school clubs</a>
+                  </li>
+                  <li class="main-menu__item main-menu__subitem">
+                    <a href="#" class="main-menu__item-link" data-fz-part="sidemenu-group">Workshops</a>
+                  </li>
+                </ul>
+              </details>
+              <li class="main-menu__item">
+                <a href="#" class="main-menu__item-link" data-fz-part="sidemenu-link">Registrations</a>
+              </li>
+              <details class="main-menu__item main-menu__item--disclosure">
+                <summary class="main-menu__item-link" data-fz-part="sidemenu-link">Volunteers</summary>
+                <ul class="main-menu__subitems">
+                  <li class="main-menu__item main-menu__subitem">
+                    <a href="#" class="main-menu__item-link" data-fz-part="sidemenu-group">Schedule</a>
+                  </li>
+                </ul>
+              </details>
+              <li class="main-menu__item">
+                <a href="#" class="main-menu__item-link" data-fz-part="sidemenu-link">Reports</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </aside>
+    <main class="lyris-main" role="main" id="lyris-main">
+      <div class="lyris-page fz-content">
+        <div class="fz-stack" aria-hidden="true">
+          <div class="fz-card" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; padding: calc(var(--fz-spacing) * 5);">
+            <span style="display: block; width: 180px; height: 18px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span>
+            <span style="display: block; width: 120px; height: 30px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span>
+          </div>
+          <div class="fz-card" style="padding: 0; overflow: hidden;">
+            <div style="padding: calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 5);"><span style="display: block; width: 40%; height: 8px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span></div>
+            <div style="display: flex; gap: 8%; padding: calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 5); border-top: 1px solid var(--fz-color-border);"><span style="display: block; width: 22%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span><span style="display: block; width: 30%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span><span style="display: block; width: 14%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span></div>
+            <div style="display: flex; gap: 8%; padding: calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 5); border-top: 1px solid var(--fz-color-border);"><span style="display: block; width: 18%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span><span style="display: block; width: 26%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span><span style="display: block; width: 12%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span></div>
+            <div style="display: flex; gap: 8%; padding: calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 5); border-top: 1px solid var(--fz-color-border);"><span style="display: block; width: 25%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span><span style="display: block; width: 22%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span><span style="display: block; width: 16%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span></div>
+            <div style="display: flex; gap: 8%; padding: calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 5); border-top: 1px solid var(--fz-color-border);"><span style="display: block; width: 20%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span><span style="display: block; width: 34%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span><span style="display: block; width: 10%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span></div>
+            <div style="display: flex; gap: 8%; padding: calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 5); border-top: 1px solid var(--fz-color-border);"><span style="display: block; width: 16%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span><span style="display: block; width: 28%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span><span style="display: block; width: 14%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span></div>
+            <div style="display: flex; gap: 8%; padding: calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 5); border-top: 1px solid var(--fz-color-border);"><span style="display: block; width: 24%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span><span style="display: block; width: 20%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span><span style="display: block; width: 12%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
