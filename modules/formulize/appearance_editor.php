@@ -56,7 +56,7 @@ if (!$xoopsUser OR !$gperm_handler->checkRight('module_admin', getFormulizeModId
 }
 // with the system locked (the isSaveLocked preference), nothing is saved here either
 $saveLocked = sendSaveLockPrefToTemplate();
-$saveLockedError = 'Nothing was saved, because this system is locked. Turn off the lock in the Formulize preferences to make changes.';
+$saveLockedError = _AM_APPEARANCE_EDITOR_ERR_LOCKED;
 
 // The look being edited, of the theme asked for: the one asked for, or the site look
 $theme = formulize_resolveAppearanceTheme(isset($_POST['theme']) ? (string) $_POST['theme'] : (isset($_GET['theme']) ? (string) $_GET['theme'] : ''));
@@ -125,7 +125,7 @@ if (isset($_POST['appearance_editor_save']) AND $pageUrl) {
 	if ($saveLocked) {
 		$errors[] = $saveLockedError;
 	} elseif (!$GLOBALS['xoopsSecurity']->check(true, false, 'formulize_appearance_editor_token')) {
-		$errors[] = 'Nothing was saved, because the page had been open too long. Reload the page, make the changes again and save.';
+		$errors[] = _AM_APPEARANCE_EDITOR_ERR_TOKEN;
 	} else {
 		$own = json_decode(isset($_POST['appearance_look_settings']) ? (string) $_POST['appearance_look_settings'] : '', true);
 		$own = is_array($own) ? $own : array();
@@ -181,13 +181,13 @@ if (isset($_POST['appearance_editor_save']) AND $pageUrl) {
 $screens = $pageUrl ? formulize_getAppearancePreviewScreens($theme) : array();
 $notices = array();
 if ($saveLocked) {
-	$notices[] = 'Nothing can be saved, because this system is locked. Turn off the lock in the Formulize preferences to make changes.';
+	$notices[] = _AM_APPEARANCE_EDITOR_LOCKED;
 }
 if (!formulize_appearanceDirIsWritable($theme)) {
-	$notices[] = 'Nothing can be saved for the ' . $theme . ' theme: the web server cannot write to ' . formulize_getAppearanceDir($theme) . ', and was not able to correct the permissions itself. Make that folder writable on your server.';
+	$notices[] = sprintf(_AM_APPEARANCE_EDITOR_NOT_WRITABLE, $theme, formulize_getAppearanceDir($theme));
 }
 if (!formulize_themeSupportsAppearance($theme)) {
-	$notices[] = 'The ' . $theme . ' theme does not use these settings, so what is saved for it is kept, but won\'t change how the theme looks. A theme uses them by calling formulize_renderAppearanceHead() in its theme.html.';
+	$notices[] = sprintf(_AM_APPEARANCE_EDITOR_UNSUPPORTED, $theme);
 }
 $map = formulize_appearanceTokenMap();
 $defaults = formulize_appearanceSizeDefaults($theme);
@@ -217,11 +217,11 @@ foreach (formulize_appearanceColourMap($theme) as $key => $colour) {
 }
 $fonts = array();
 foreach (formulize_appearanceFontMap($theme) as $key => $font) {
-	$fonts[] = array('key' => $key, 'label' => $font['label']);
+	$fonts[] = array('key' => $key, 'label' => $font['label'], 'name' => $font['name']);
 }
 $headingFonts = array();
 foreach (formulize_appearanceHeadingFontMap($theme) as $key => $font) {
-	$headingFonts[] = array('key' => $key, 'label' => $font['label']);
+	$headingFonts[] = array('key' => $key, 'label' => $font['label'], 'name' => $font['name']);
 }
 $themeTokens = formulize_appearanceThemeTokens($theme);
 $restore = array();
@@ -297,42 +297,45 @@ $editorData = array(
 	'uploads' => $uploads,
 	'themeLogoUrl' => XOOPS_URL . '/themes/' . rawurlencode($theme) . '/images/logo.png',
 	'previewUrl' => XOOPS_URL . '/modules/formulize/appearance_preview.php?theme=' . urlencode($theme) . '&look=' . urlencode($editing) . '&screen=',
+	// the script's words: the language file's _AM_APPEARANCE_EDITOR_JS_ constants, by
+	// the rest of their names
+	'text' => formulize_scriptText('_AM_APPEARANCE_EDITOR_JS_'),
 );
 
 $cssPath = '/modules/formulize/templates/css/appearance_editor.css';
 $jsPath = '/modules/formulize/include/js/appearance_editor.js';
 header('Content-Type: text/html; charset=utf-8');
 ?><!DOCTYPE html>
-<html lang="en">
+<html lang="<?php echo defined('_LANGCODE') ? _LANGCODE : 'en'; ?>">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Appearance - <?php echo htmlspecialchars($theme, ENT_QUOTES); ?></title>
+<title><?php echo htmlspecialchars(sprintf(_AM_APPEARANCE_EDITOR_TITLE, $theme), ENT_QUOTES); ?></title>
 <link rel="stylesheet" type="text/css" href="<?php echo XOOPS_URL . formulize_uiStylesheetPath(); ?>">
 <link rel="stylesheet" type="text/css" href="<?php echo XOOPS_URL . $cssPath . '?v=' . formulize_get_file_version($cssPath); ?>">
 </head>
 <body class="formulize-editor<?php echo $mode == 'advanced' ? ' formulize-editor--advanced' : ''; ?>">
 <?php if (!$screens) { ?>
 <main class="formulize-editor__unsupported">
-	<h1>Appearance</h1>
-	<p>The <?php echo htmlspecialchars($theme, ENT_QUOTES); ?> theme can't be edited here: it has no sample screens to preview its appearance on (see "What Formulize expects from a theme" in the documentation).</p>
-	<p><a href="<?php echo htmlspecialchars($looksUrl, ENT_QUOTES); ?>">Back to Looks</a></p>
+	<h1><?php echo htmlspecialchars(_AM_APPEARANCE_EDITOR_HEADING, ENT_QUOTES); ?></h1>
+	<p><?php echo htmlspecialchars(sprintf(_AM_APPEARANCE_EDITOR_NO_SAMPLES, $theme), ENT_QUOTES); ?></p>
+	<p><a href="<?php echo htmlspecialchars($looksUrl, ENT_QUOTES); ?>"><?php echo htmlspecialchars(_AM_APPEARANCE_EDITOR_BACK, ENT_QUOTES); ?></a></p>
 </main>
 <?php } else { ?>
 <div class="formulize-editor__app">
 	<header class="formulize-editor__top">
 		<div class="formulize-editor__crumbs">
-			<a class="formulize-editor__btn formulize-editor__back" href="<?php echo htmlspecialchars($looksUrl, ENT_QUOTES); ?>" id="formulize-editor-back"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>Back to Looks</a>
+			<a class="formulize-editor__btn formulize-editor__back" href="<?php echo htmlspecialchars($looksUrl, ENT_QUOTES); ?>" id="formulize-editor-back"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><?php echo htmlspecialchars(_AM_APPEARANCE_EDITOR_BACK, ENT_QUOTES); ?></a>
 			<div class="formulize-editor__editing">
 				<h1><?php echo htmlspecialchars($looks[$editing]['name'], ENT_QUOTES); ?></h1>
-				<span><?php echo htmlspecialchars($theme, ENT_QUOTES); ?> · <?php echo $base !== '' ? 'based on ' . htmlspecialchars($looks[$base]['name'], ENT_QUOTES) : 'based on nothing'; ?></span>
+				<span><?php echo htmlspecialchars($base !== '' ? sprintf(_AM_APPEARANCE_EDITOR_BASED_ON, $theme, $looks[$base]['name']) : sprintf(_AM_APPEARANCE_EDITOR_BASED_ON_NOTHING, $theme), ENT_QUOTES); ?></span>
 			</div>
 		</div>
 		<?php if ($hasAdvanced) { // the simple editor or the advanced one, switched in place ?>
-		<div class="formulize-editor__seg formulize-editor__mode" role="group" aria-label="Editor" id="formulize-editor-mode">
-			<button type="button" data-mode="simple" aria-pressed="<?php echo $mode == 'simple' ? 'true' : 'false'; ?>">Simple</button>
-			<button type="button" data-mode="advanced" aria-pressed="<?php echo $mode == 'advanced' ? 'true' : 'false'; ?>">Advanced</button>
+		<div class="formulize-editor__seg formulize-editor__mode" role="group" aria-label="<?php echo htmlspecialchars(_AM_APPEARANCE_EDITOR_MODE, ENT_QUOTES); ?>" id="formulize-editor-mode">
+			<button type="button" data-mode="simple" aria-pressed="<?php echo $mode == 'simple' ? 'true' : 'false'; ?>"><?php echo htmlspecialchars(_AM_APPEARANCE_EDITOR_SIMPLE, ENT_QUOTES); ?></button>
+			<button type="button" data-mode="advanced" aria-pressed="<?php echo $mode == 'advanced' ? 'true' : 'false'; ?>"><?php echo htmlspecialchars(_AM_APPEARANCE_EDITOR_ADVANCED, ENT_QUOTES); ?></button>
 		</div>
 		<?php } ?>
 		<div class="formulize-editor__spacer"></div>
@@ -354,36 +357,37 @@ header('Content-Type: text/html; charset=utf-8');
 			<?php // when a save goes live: filled in by the editor's script ?>
 			<span class="formulize-editor__live" id="formulize-editor-live" hidden></span>
 			<span class="formulize-editor__count" id="formulize-editor-count" hidden></span>
-			<button type="button" class="formulize-editor__btn" id="formulize-editor-reset" disabled>Reset changes</button>
-			<button type="submit" class="formulize-editor__btn formulize-editor__btn--primary" name="appearance_editor_save" value="1" id="formulize-editor-save">Save</button>
+			<button type="button" class="formulize-editor__btn" id="formulize-editor-reset" disabled><?php echo htmlspecialchars(_AM_APPEARANCE_EDITOR_RESET, ENT_QUOTES); ?></button>
+			<button type="submit" class="formulize-editor__btn formulize-editor__btn--primary" name="appearance_editor_save" value="1" id="formulize-editor-save"><?php echo htmlspecialchars(_AM_APPEARANCE_EDITOR_JS_SAVE, ENT_QUOTES); ?></button>
 		</form>
 	</header>
 	<?php // what stands in the way, for as long as it does
 	foreach ($notices as $notice) { ?><p class="formulize-editor__message formulize-editor__message--note"><?php echo htmlspecialchars($notice, ENT_QUOTES); ?></p><?php } ?>
 	<div class="formulize-editor__main">
-		<section class="formulize-editor__stage" aria-label="Preview">
+		<section class="formulize-editor__stage" aria-label="<?php echo htmlspecialchars(_AM_APPEARANCE_EDITOR_PREVIEW, ENT_QUOTES); ?>">
 			<?php // what an action or a save did: a note over the bottom of the preview, which
 			// moves nothing on the page (filled in by the editor's script) ?>
 			<div class="formulize-editor__toasts" id="formulize-editor-toasts"></div>
 			<div class="formulize-editor__bar">
 				<div class="formulize-editor__tabs" role="tablist" id="formulize-editor-screens"></div>
-				<div class="formulize-editor__seg" role="group" aria-label="Preview width" id="formulize-editor-width">
-					<button type="button" data-w="desktop" aria-pressed="true">Desktop</button>
-					<button type="button" data-w="phone" aria-pressed="false">Phone</button>
+				<div class="formulize-editor__seg" role="group" aria-label="<?php echo htmlspecialchars(_AM_APPEARANCE_EDITOR_PREVIEW_WIDTH, ENT_QUOTES); ?>" id="formulize-editor-width">
+					<button type="button" data-w="desktop" aria-pressed="true"><?php echo htmlspecialchars(_AM_APPEARANCE_EDITOR_JS_DESKTOP, ENT_QUOTES); ?></button>
+					<button type="button" data-w="phone" aria-pressed="false"><?php echo htmlspecialchars(_AM_APPEARANCE_EDITOR_PHONE, ENT_QUOTES); ?></button>
 				</div>
-				<span class="formulize-editor__hint" id="formulize-editor-hint"><?php echo $mode == 'simple' ? 'Change the look\'s logo, colours, fonts, page width and size on the right.' : 'Click anything in the preview to change it.'; ?></span>
+				<span class="formulize-editor__hint" id="formulize-editor-hint"><?php echo htmlspecialchars($mode == 'simple' ? _AM_APPEARANCE_EDITOR_JS_HINT_SIMPLE : _AM_APPEARANCE_EDITOR_JS_HINT_ADVANCED, ENT_QUOTES); ?></span>
 			</div>
 			<div class="formulize-editor__canvas" id="formulize-editor-canvas">
-				<iframe class="formulize-editor__frame" id="formulize-editor-frame" title="Preview"></iframe>
+				<iframe class="formulize-editor__frame" id="formulize-editor-frame" title="<?php echo htmlspecialchars(_AM_APPEARANCE_EDITOR_PREVIEW, ENT_QUOTES); ?>"></iframe>
 			</div>
 		</section>
-		<aside class="formulize-editor__insp" aria-label="Settings" aria-live="polite">
+		<aside class="formulize-editor__insp" aria-label="<?php echo htmlspecialchars(_AM_APPEARANCE_EDITOR_SETTINGS, ENT_QUOTES); ?>" aria-live="polite">
 			<div class="formulize-editor__insp-head" id="formulize-editor-insp-head"></div>
 			<div class="formulize-editor__insp-body" id="formulize-editor-insp-body"></div>
 		</aside>
 	</div>
 </div>
 <script>var formulizeAppearanceEditor = <?php echo json_encode($editorData, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS); ?>;</script>
+<script src="<?php echo XOOPS_URL . formulize_textScriptPath(); ?>"></script>
 <script src="<?php echo XOOPS_URL . $jsPath . '?v=' . formulize_get_file_version($jsPath); ?>"></script>
 <?php } ?>
 </body>

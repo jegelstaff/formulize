@@ -45,6 +45,10 @@
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/appearance_tokens.php";
 
+// The words of the looks, the Looks tab and the editor: the site's language's, or
+// English when there is no translation of them
+icms_loadLanguageFile('formulize', 'appearance');
+
 /**
  * The custom properties a theme defines in its own stylesheet, ie: the palette
  * it looks like before any appearance settings are applied. Read out of the
@@ -139,8 +143,8 @@ function formulize_appearanceColourMap($theme = null) {
 function formulize_appearanceColourMapDefinition() {
     return array(
         'primary' => array(
-            'label' => 'Primary',
-            'description' => 'Buttons, links, selected rows, focus rings',
+            'label' => _AM_APPEARANCE_COLOUR_PRIMARY,
+            'description' => _AM_APPEARANCE_COLOUR_PRIMARY_DESC,
             'default' => '#2e3340',
             'tokens' => array(
                 '--fz-color-accent' => '%s',
@@ -153,16 +157,16 @@ function formulize_appearanceColourMapDefinition() {
             ),
         ),
         'background' => array(
-            'label' => 'Page background',
-            'description' => 'The backdrop behind all content',
+            'label' => _AM_APPEARANCE_COLOUR_BACKGROUND,
+            'description' => _AM_APPEARANCE_COLOUR_BACKGROUND_DESC,
             'default' => '#f7f7f5',
             'tokens' => array(
                 '--fz-color-page' => '%s',
             ),
         ),
         'surface' => array(
-            'label' => 'Surface',
-            'description' => 'Cards, tables, panels and other raised areas',
+            'label' => _AM_APPEARANCE_COLOUR_SURFACE,
+            'description' => _AM_APPEARANCE_COLOUR_SURFACE_DESC,
             'default' => '#ffffff',
             'tokens' => array(
                 '--fz-color-surface' => '%s',
@@ -171,8 +175,8 @@ function formulize_appearanceColourMapDefinition() {
             ),
         ),
         'text' => array(
-            'label' => 'Text',
-            'description' => 'Main text colour; muted and subtle text are derived from it',
+            'label' => _AM_APPEARANCE_COLOUR_TEXT,
+            'description' => _AM_APPEARANCE_COLOUR_TEXT_DESC,
             'default' => '#14161a',
             'tokens' => array(
                 '--fz-color-text' => '%s',
@@ -181,8 +185,8 @@ function formulize_appearanceColourMapDefinition() {
             ),
         ),
         'border' => array(
-            'label' => 'Borders',
-            'description' => 'Dividers and outlines; strong borders are derived',
+            'label' => _AM_APPEARANCE_COLOUR_BORDER,
+            'description' => _AM_APPEARANCE_COLOUR_BORDER_DESC,
             'default' => '#e6e6e1',
             'tokens' => array(
                 '--fz-color-border' => '%s',
@@ -190,8 +194,8 @@ function formulize_appearanceColourMapDefinition() {
             ),
         ),
         'success' => array(
-            'label' => 'Success',
-            'description' => 'Positive statuses and badges',
+            'label' => _AM_APPEARANCE_COLOUR_SUCCESS,
+            'description' => _AM_APPEARANCE_COLOUR_SUCCESS_DESC,
             'default' => '#2a7a4f',
             'tokens' => array(
                 '--fz-color-success' => '%s',
@@ -199,8 +203,8 @@ function formulize_appearanceColourMapDefinition() {
             ),
         ),
         'warning' => array(
-            'label' => 'Warning',
-            'description' => 'Caution statuses and badges',
+            'label' => _AM_APPEARANCE_COLOUR_WARNING,
+            'description' => _AM_APPEARANCE_COLOUR_WARNING_DESC,
             'default' => '#a86a14',
             'tokens' => array(
                 '--fz-color-warning' => '%s',
@@ -208,8 +212,8 @@ function formulize_appearanceColourMapDefinition() {
             ),
         ),
         'danger' => array(
-            'label' => 'Danger',
-            'description' => 'Errors, destructive actions',
+            'label' => _AM_APPEARANCE_COLOUR_DANGER,
+            'description' => _AM_APPEARANCE_COLOUR_DANGER_DESC,
             'default' => '#b3261e',
             'tokens' => array(
                 '--fz-color-danger' => '%s',
@@ -217,8 +221,8 @@ function formulize_appearanceColourMapDefinition() {
             ),
         ),
         'info' => array(
-            'label' => 'Info',
-            'description' => 'Informational statuses and badges',
+            'label' => _AM_APPEARANCE_COLOUR_INFO,
+            'description' => _AM_APPEARANCE_COLOUR_INFO_DESC,
             'default' => '#2e5fa8',
             'tokens' => array(
                 '--fz-color-info' => '%s',
@@ -292,53 +296,63 @@ function formulize_appearanceThemeWebfont($theme = null) {
  * into saved settings, and nothing is recorded for the default anyway.
  *
  * @param string|null $theme theme folder name, defaults to the active theme
- * @return array font key => array with 'label', 'google', 'stack'
+ * @return array font key => array with 'label', 'name' (the label without its
+ *               note), 'google', 'stack'
  */
 function formulize_appearanceFontMap($theme = null) {
     $fallback = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
     return array(
         'geist' => array(
-            'label' => formulize_appearanceThemeFontName($theme) . ' (default)',
+            'label' => sprintf(_AM_APPEARANCE_FONT_DEFAULT, formulize_appearanceThemeFontName($theme)),
+            'name' => formulize_appearanceThemeFontName($theme),
             'google' => formulize_appearanceThemeWebfont($theme),
             'stack' => "'Geist', $fallback",
         ),
         'system' => array(
-            'label' => 'System UI (no webfont)',
+            'label' => _AM_APPEARANCE_FONT_SYSTEM_LABEL,
+            'name' => _AM_APPEARANCE_FONT_SYSTEM,
             'google' => false,
             'stack' => $fallback,
         ),
         'inter' => array(
             'label' => 'Inter',
+            'name' => 'Inter',
             'google' => 'Inter:wght@400;500;600;700',
             'stack' => "'Inter', $fallback",
         ),
         'source-sans' => array(
             'label' => 'Source Sans 3',
+            'name' => 'Source Sans 3',
             'google' => 'Source+Sans+3:wght@400;500;600;700',
             'stack' => "'Source Sans 3', $fallback",
         ),
         'ibm-plex' => array(
             'label' => 'IBM Plex Sans',
+            'name' => 'IBM Plex Sans',
             'google' => 'IBM+Plex+Sans:wght@400;500;600;700',
             'stack' => "'IBM Plex Sans', $fallback",
         ),
         'nunito-sans' => array(
             'label' => 'Nunito Sans',
+            'name' => 'Nunito Sans',
             'google' => 'Nunito+Sans:wght@400;500;600;700',
             'stack' => "'Nunito Sans', $fallback",
         ),
         'public-sans' => array(
             'label' => 'Public Sans',
+            'name' => 'Public Sans',
             'google' => 'Public+Sans:wght@400;500;600;700',
             'stack' => "'Public Sans', $fallback",
         ),
         'work-sans' => array(
             'label' => 'Work Sans',
+            'name' => 'Work Sans',
             'google' => 'Work+Sans:wght@400;500;600;700',
             'stack' => "'Work Sans', $fallback",
         ),
         'custom' => array(
-            'label' => 'Other Google Font…',
+            'label' => _AM_APPEARANCE_FONT_CUSTOM,
+            'name' => _AM_APPEARANCE_FONT_CUSTOM,
             'google' => null, // built at runtime from the appearance_customfont setting
             'stack' => null,
         ),
@@ -357,11 +371,13 @@ function formulize_appearanceFontMap($theme = null) {
  * font only does anything when it is different from the first.
  *
  * @param string|null $theme theme folder name, defaults to the active theme
- * @return array font key => array with 'label', 'google', 'stack'
+ * @return array font key => array with 'label', 'name' (the label without its
+ *               note), 'google', 'stack'
  */
 function formulize_appearanceHeadingFontMap($theme = null) {
     $fonts = formulize_appearanceFontMap($theme);
-    $fonts['geist']['label'] = 'Same as the main font (default)';
+    $fonts['geist']['label'] = sprintf(_AM_APPEARANCE_FONT_DEFAULT, _AM_APPEARANCE_FONT_HEADING_SAME);
+    $fonts['geist']['name'] = _AM_APPEARANCE_FONT_HEADING_SAME;
     return $fonts;
 }
 
@@ -469,7 +485,7 @@ function formulize_appearanceCreateDefaultLook($theme) {
             $own[$name] = $value;
         }
     }
-    $looks = array('default' => array('name' => 'Default', 'description' => '', 'base' => '', 'settings' => $own));
+    $looks = array('default' => array('name' => _AM_APPEARANCE_LOOK_DEFAULT, 'description' => '', 'base' => '', 'settings' => $own));
     if (formulize_prepareAppearanceDir($theme) !== false) {
         formulize_writeAppearanceLookFiles($theme, $looks, 'default');
     }
@@ -722,9 +738,14 @@ function formulize_appearanceSizes($theme = null) {
     if (!formulize_appearanceThemeUsesSizes($theme)) {
         return array();
     }
-    $sizes = array('standard' => array('name' => 'Standard', 'description' => 'The theme\'s own sizes.'));
+    $sizes = array('standard' => array('name' => _AM_APPEARANCE_SIZE_STANDARD, 'description' => _AM_APPEARANCE_SIZE_STANDARD_DESC));
+    // a preset's words are in its file, and in the language file, which has the say
     foreach (array_filter(formulize_appearanceSizePresets()) as $key => $preset) {
-        $sizes[$key] = array('name' => $preset['name'], 'description' => $preset['description']);
+        $constant = '_AM_APPEARANCE_SIZE_' . strtoupper(str_replace('-', '_', $key));
+        $sizes[$key] = array(
+            'name' => defined($constant) ? constant($constant) : $preset['name'],
+            'description' => defined($constant . '_DESC') ? constant($constant . '_DESC') : $preset['description'],
+        );
     }
     return $sizes;
 }
@@ -809,17 +830,18 @@ function formulize_appearanceLookSize($looks, $key, $theme) {
  *               parts), 'label', 'detail' (words, or ''), 'phrase' (for a sentence:
  *               "2 colours"), and for the logo and favicon 'image' (a URL, or '' for
  *               the theme's own), for the colours 'swatches' (label => hex), for
- *               the parts 'count' (how many parts)
+ *               the sizes 'size' (a size's key, or 'custom'), for the parts 'count'
+ *               (how many parts)
  */
 function formulize_appearanceLookSummary($looks, $key, $theme) {
     $settings = $looks[$key]['settings'];
-    $count = function ($n, $one, $many) { return $n . ' ' . ($n == 1 ? $one : $many); };
-    $themeOwn = $theme . '\'s own';
+    $count = function ($n, $one, $many) { return sprintf($n == 1 ? $one : $many, $n); };
+    $themeOwn = sprintf(_AM_APPEARANCE_CHANGE_THEME_OWN, $theme);
     $items = array();
-    foreach (array('appearance_logo' => array('logo', 'Logo'), 'appearance_favicon' => array('favicon', 'Favicon')) as $name => $kind) {
+    foreach (array('appearance_logo' => array('logo', _AM_APPEARANCE_CHANGE_LOGO, _AM_APPEARANCE_PHRASE_LOGO), 'appearance_favicon' => array('favicon', _AM_APPEARANCE_CHANGE_FAVICON, _AM_APPEARANCE_PHRASE_FAVICON)) as $name => $kind) {
         if (isset($settings[$name])) {
             $url = $settings[$name] !== '' ? (string) formulize_getAppearanceFileUrl(formulize_locateAppearanceFile($settings[$name], $theme), $theme) : '';
-            $items[] = array('kind' => $kind[0], 'label' => $kind[1], 'detail' => $url === '' ? $themeOwn : '', 'image' => $url, 'phrase' => strtolower($kind[1]));
+            $items[] = array('kind' => $kind[0], 'label' => $kind[1], 'detail' => $url === '' ? $themeOwn : '', 'image' => $url, 'phrase' => $kind[2]);
         }
     }
     $swatches = array();
@@ -829,7 +851,7 @@ function formulize_appearanceLookSummary($looks, $key, $theme) {
         }
     }
     if ($swatches) {
-        $items[] = array('kind' => 'colours', 'label' => 'Colours', 'detail' => '', 'swatches' => $swatches, 'phrase' => $count(count($swatches), 'colour', 'colours'));
+        $items[] = array('kind' => 'colours', 'label' => _AM_APPEARANCE_CHANGE_COLOURS, 'detail' => '', 'swatches' => $swatches, 'phrase' => $count(count($swatches), _AM_APPEARANCE_PHRASE_COLOUR, _AM_APPEARANCE_PHRASE_COLOURS));
     }
     $fonts = array();
     $fontMap = formulize_appearanceFontMap($theme);
@@ -837,21 +859,21 @@ function formulize_appearanceLookSummary($looks, $key, $theme) {
         if ($choice === 'custom') {
             return $custom;
         }
-        return ($choice === '' OR !isset($fontMap[$choice])) ? $themeOwn : trim(preg_replace('/\s*\(.*\)$/', '', $fontMap[$choice]['label']));
+        return ($choice === '' OR !isset($fontMap[$choice])) ? $themeOwn : $fontMap[$choice]['name'];
     };
     if (isset($settings['appearance_font'])) {
         $fonts[] = $fontName($settings['appearance_font'], isset($settings['appearance_customfont']) ? $settings['appearance_customfont'] : '');
     }
     if (isset($settings['appearance_headingfont'])) {
-        $heading = $settings['appearance_headingfont'] === '' ? 'the main font' : $fontName($settings['appearance_headingfont'], isset($settings['appearance_headingcustomfont']) ? $settings['appearance_headingcustomfont'] : '');
-        $fonts[] = $heading . ' for headings';
+        $heading = $settings['appearance_headingfont'] === '' ? _AM_APPEARANCE_CHANGE_MAIN_FONT : $fontName($settings['appearance_headingfont'], isset($settings['appearance_headingcustomfont']) ? $settings['appearance_headingcustomfont'] : '');
+        $fonts[] = sprintf(_AM_APPEARANCE_CHANGE_HEADINGS, $heading);
     }
     if ($fonts) {
-        $items[] = array('kind' => 'fonts', 'label' => count($fonts) == 1 ? 'Font' : 'Fonts', 'detail' => implode(', ', $fonts), 'phrase' => count($fonts) == 1 ? 'font' : 'fonts');
+        $items[] = array('kind' => 'fonts', 'label' => count($fonts) == 1 ? _AM_APPEARANCE_CHANGE_FONT : _AM_APPEARANCE_CHANGE_FONTS, 'detail' => implode(', ', $fonts), 'phrase' => count($fonts) == 1 ? _AM_APPEARANCE_PHRASE_FONT : _AM_APPEARANCE_PHRASE_FONTS);
     }
     if (isset($settings['appearance_contentwidth'])) {
         $width = $settings['appearance_contentwidth'];
-        $items[] = array('kind' => 'width', 'label' => 'Page width', 'detail' => $width === 'full' ? 'Full width' : ($width === '' ? $themeOwn : $width . 'px at most'), 'phrase' => 'page width');
+        $items[] = array('kind' => 'width', 'label' => _AM_APPEARANCE_CHANGE_WIDTH, 'detail' => $width === 'full' ? _AM_APPEARANCE_CHANGE_FULL_WIDTH : ($width === '' ? $themeOwn : sprintf(_AM_APPEARANCE_CHANGE_AT_MOST, $width)), 'phrase' => _AM_APPEARANCE_PHRASE_WIDTH);
     }
     $overrides = formulize_appearanceLookOverrides($settings);
     $sizeTokens = array_flip(formulize_appearanceSizeTokens());
@@ -859,8 +881,9 @@ function formulize_appearanceLookSummary($looks, $key, $theme) {
     if ($sizes) {
         $size = formulize_appearanceLookSize($looks, $key, $theme);
         $named = formulize_appearanceSizes($theme);
-        $detail = isset($named[$size]) ? $named[$size]['name'] : 'Custom · ' . $count($sizes, 'size', 'sizes');
-        $items[] = array('kind' => 'sizes', 'label' => 'Size', 'detail' => $detail, 'phrase' => isset($named[$size]) ? $named[$size]['name'] . ' sizes' : $count($sizes, 'size', 'sizes'));
+        $detail = isset($named[$size]) ? $named[$size]['name'] : sprintf(_AM_APPEARANCE_CHANGE_CUSTOM_SIZE, $count($sizes, _AM_APPEARANCE_PHRASE_SIZE, _AM_APPEARANCE_PHRASE_SIZES));
+        $items[] = array('kind' => 'sizes', 'label' => _AM_APPEARANCE_CHANGE_SIZE, 'detail' => $detail, 'size' => isset($named[$size]) ? $size : 'custom',
+            'phrase' => isset($named[$size]) ? sprintf(_AM_APPEARANCE_PHRASE_NAMED_SIZE, $named[$size]['name']) : $count($sizes, _AM_APPEARANCE_PHRASE_SIZE, _AM_APPEARANCE_PHRASE_SIZES));
     }
     $parts = array_diff_key($overrides, $sizeTokens);
     if ($parts) {
@@ -883,8 +906,9 @@ function formulize_appearanceLookSummary($looks, $key, $theme) {
             }
         }
         $names = array_keys($names);
-        $detail = implode(', ', array_slice($names, 0, 3)) . (count($names) > 3 ? ' and ' . (count($names) - 3) . ' more' : '');
-        $items[] = array('kind' => 'parts', 'label' => count($names) == 1 ? 'Part' : 'Parts', 'detail' => $detail, 'count' => count($names), 'phrase' => $count(count($parts), 'part change', 'part changes'));
+        $detail = implode(', ', array_slice($names, 0, 3));
+        $detail = count($names) > 3 ? sprintf(_AM_APPEARANCE_CHANGE_MORE, $detail, count($names) - 3) : $detail;
+        $items[] = array('kind' => 'parts', 'label' => count($names) == 1 ? _AM_APPEARANCE_CHANGE_PART : _AM_APPEARANCE_CHANGE_PARTS, 'detail' => $detail, 'count' => count($names), 'phrase' => $count(count($parts), _AM_APPEARANCE_PHRASE_PART, _AM_APPEARANCE_PHRASE_PARTS));
     }
     return $items;
 }
@@ -944,7 +968,7 @@ function formulize_saveAppearanceLooks($theme, $looks, $siteLook = null) {
     $siteLook = ($siteLook === null) ? formulize_getAppearanceSiteLook($theme) : $siteLook;
     if (!formulize_writeAppearanceLookFiles($theme, $looks, $siteLook)) {
         formulize_getAppearanceLooks($theme, true);
-        return 'The ' . $theme . " theme's looks could not be saved: the web server cannot write to " . formulize_getAppearanceDir($theme) . '. Make that folder writable and try again.';
+        return sprintf(_AM_APPEARANCE_ERR_NOT_SAVED, $theme, formulize_getAppearanceDir($theme));
     }
     formulize_getAppearanceLooks($theme, true);
     return '';
@@ -962,20 +986,20 @@ function formulize_saveAppearanceLooks($theme, $looks, $siteLook = null) {
  */
 function formulize_appearanceLookNameProblem($name, $theme, $except = '') {
     if ($name === '') {
-        return 'Please give the look a name.';
+        return _AM_APPEARANCE_ERR_NAME_EMPTY;
     }
     if (strlen($name) > 60) {
-        return 'Please give the look a name of 60 characters or fewer.';
+        return _AM_APPEARANCE_ERR_NAME_LONG;
     }
     // the lines its stylesheet's block starts and ends with, which would cut the block short
     foreach (formulize_appearanceLookBlockMarkers() as $marker) {
         if (strpos($name, $marker) !== false) {
-            return 'Please give the look another name.';
+            return _AM_APPEARANCE_ERR_NAME_BAD;
         }
     }
     foreach (formulize_getAppearanceLooks($theme) as $key => $look) {
         if ($key != $except AND strtolower($look['name']) == strtolower($name)) {
-            return $theme . ' already has a look called ' . $look['name'] . '. Please give this one another name.';
+            return sprintf(_AM_APPEARANCE_ERR_NAME_TAKEN, $theme, $look['name']);
         }
     }
     return '';
@@ -1030,7 +1054,7 @@ function formulize_createAppearanceLook($theme, $name, $base, $size, &$key = nul
         return $problem;
     }
     if ($base !== '' AND !isset($looks[$base])) {
-        return 'The look to base it on is gone. Please choose another.';
+        return _AM_APPEARANCE_ERR_BASE_GONE;
     }
     $settings = array();
     $sizes = formulize_appearanceSizes($theme);
@@ -1057,7 +1081,7 @@ function formulize_createAppearanceLook($theme, $name, $base, $size, &$key = nul
 function formulize_duplicateAppearanceLook($theme, $from, $name, &$key = null) {
     $looks = formulize_getAppearanceLooks($theme);
     if (!isset($looks[$from])) {
-        return 'That look is gone.';
+        return _AM_APPEARANCE_ERR_LOOK_GONE;
     }
     $name = formulize_appearanceCleanLookName($name);
     if ($problem = formulize_appearanceLookNameProblem($name, $theme)) {
@@ -1080,7 +1104,7 @@ function formulize_duplicateAppearanceLook($theme, $from, $name, &$key = null) {
 function formulize_renameAppearanceLook($theme, $key, $name) {
     $looks = formulize_getAppearanceLooks($theme);
     if (!isset($looks[$key])) {
-        return 'That look is gone.';
+        return _AM_APPEARANCE_ERR_LOOK_GONE;
     }
     $name = formulize_appearanceCleanLookName($name);
     if ($problem = formulize_appearanceLookNameProblem($name, $theme, $key)) {
@@ -1105,13 +1129,13 @@ function formulize_renameAppearanceLook($theme, $key, $name) {
 function formulize_rebaseAppearanceLook($theme, $key, $base) {
     $looks = formulize_getAppearanceLooks($theme);
     if (!isset($looks[$key])) {
-        return 'That look is gone.';
+        return _AM_APPEARANCE_ERR_LOOK_GONE;
     }
     if ($base !== '' AND !isset($looks[$base])) {
-        return 'The look to base it on is gone. Please choose another.';
+        return _AM_APPEARANCE_ERR_BASE_GONE;
     }
     if ($base === $key OR in_array($base, formulize_appearanceLookDescendants($looks, $key), true)) {
-        return $looks[$key]['name'] . ' can\'t be based on ' . ($base === $key ? 'itself' : $looks[$base]['name'] . ', which is based on it') . '.';
+        return $base === $key ? sprintf(_AM_APPEARANCE_ERR_BASE_SELF, $looks[$key]['name']) : sprintf(_AM_APPEARANCE_ERR_BASE_DESCENDANT, $looks[$key]['name'], $looks[$base]['name']);
     }
     if ($base === $looks[$key]['base']) {
         return '';
@@ -1165,7 +1189,7 @@ function formulize_rebaseAppearanceLook($theme, $key, $base) {
 function formulize_setAppearanceSiteLook($theme, $key) {
     $looks = formulize_getAppearanceLooks($theme);
     if (!isset($looks[$key])) {
-        return 'That look is gone.';
+        return _AM_APPEARANCE_ERR_LOOK_GONE;
     }
     return formulize_saveAppearanceLooks($theme, $looks, $key);
 }
@@ -1182,7 +1206,7 @@ function formulize_setAppearanceSiteLook($theme, $key) {
 function formulize_saveAppearanceLookSettings($theme, $key, $settings) {
     $looks = formulize_getAppearanceLooks($theme);
     if (!isset($looks[$key])) {
-        return 'That look is gone, so nothing was saved.';
+        return _AM_APPEARANCE_ERR_LOOK_GONE_UNSAVED;
     }
     $looks[$key]['settings'] = formulize_sanitizeAppearanceLookSettings($settings, $theme);
     return formulize_saveAppearanceLooks($theme, $looks);
@@ -1226,13 +1250,13 @@ function formulize_deleteAppearanceLook($theme, $key) {
         return '';
     }
     if ($key == formulize_getAppearanceSiteLook($theme)) {
-        return $looks[$key]['name'] . ' is the site look, so it can\'t be deleted. Change the site look first.';
+        return sprintf(_AM_APPEARANCE_ERR_DELETE_SITE, $looks[$key]['name']);
     }
     if ($children = formulize_appearanceLookChildren($looks, $key)) {
-        return $looks[$key]['name'] . ' can\'t be deleted while other looks are based on it. Change what they are based on first.';
+        return sprintf(_AM_APPEARANCE_ERR_DELETE_CHILDREN, $looks[$key]['name']);
     }
     if (!@unlink(formulize_getAppearanceLooksDir($theme) . '/' . $key . '.css')) {
-        return 'The look could not be deleted: the web server cannot change ' . formulize_getAppearanceLooksDir($theme) . '. Make that folder writable and try again.';
+        return sprintf(_AM_APPEARANCE_ERR_NOT_DELETED, formulize_getAppearanceLooksDir($theme));
     }
     $gone = $looks[$key];
     unset($looks[$key]);
@@ -1593,19 +1617,19 @@ function formulize_appearanceUploads() {
     );
     return array(
         'appearance_logo' => array(
-            'noun' => 'logo',
+            'noun' => _AM_APPEARANCE_UPLOAD_LOGO,
             'filePrefix' => 'formulize-appearance-logo-',
             'types' => $imageTypes,
-            'typesLabel' => 'PNG, JPEG, GIF, SVG, or WebP',
+            'typesLabel' => _AM_APPEARANCE_UPLOAD_LOGO_TYPES,
         ),
         'appearance_favicon' => array(
-            'noun' => 'favicon',
+            'noun' => _AM_APPEARANCE_UPLOAD_FAVICON,
             'filePrefix' => 'formulize-appearance-favicon-',
             'types' => $imageTypes + array(
                 'image/vnd.microsoft.icon' => 'ico',
                 'image/x-icon' => 'ico',
             ),
-            'typesLabel' => 'PNG, ICO, SVG, GIF, JPEG, or WebP',
+            'typesLabel' => _AM_APPEARANCE_UPLOAD_FAVICON_TYPES,
         ),
     );
 }
@@ -1690,10 +1714,10 @@ function formulize_saveAppearanceUploads($submitted, $theme, &$errors, $only = n
                 if ($appearanceDir AND move_uploaded_file($_FILES[$field]['tmp_name'], $appearanceDir . '/' . $fileName)) {
                     $newFile = $fileName;
                 } else {
-                    $errors[] = "Could not move the uploaded " . $upload['noun'] . " into " . formulize_getAppearanceDir($theme) . ". Check the folder permissions.";
+                    $errors[] = sprintf(_AM_APPEARANCE_UPLOAD_NOT_MOVED, $upload['noun'], formulize_getAppearanceDir($theme));
                 }
             } else {
-                $errors[] = "The " . $upload['noun'] . " must be a " . $upload['typesLabel'] . " image.";
+                $errors[] = sprintf(_AM_APPEARANCE_UPLOAD_WRONG_TYPE, $upload['noun'], $upload['typesLabel']);
             }
         }
         if ($newFile OR !empty($_POST[$uploadSetting . '_remove'])) {
