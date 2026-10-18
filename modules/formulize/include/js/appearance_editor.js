@@ -788,7 +788,11 @@
 		applyTokens();
 		var n = changeCount(), count = $('formulize-editor-count');
 		count.hidden = n === 0; count.textContent = n;
-		$('formulize-editor-unsaved').setAttribute('aria-label', n ? lang(n === 1 ? 'UNSAVED_CHANGE' : 'UNSAVED_CHANGES', n) : lang('UNSAVED'));
+		// Edits is for undoing: with nothing to undo it is disabled, and its panel closes
+		var edits = $('formulize-editor-unsaved');
+		edits.disabled = n === 0;
+		edits.setAttribute('aria-label', n ? lang('EDITS') + ', ' + lang(n === 1 ? 'UNSAVED_CHANGE' : 'UNSAVED_CHANGES', n) : lang('EDITS'));
+		if (n === 0 && changesPanels[1].matches(':popover-open')) { changesPanels[1].hidePopover(); }
 		renderChanges();
 		$('formulize-editor-save').disabled = READONLY || state.saving || n === 0;
 		drawLive();

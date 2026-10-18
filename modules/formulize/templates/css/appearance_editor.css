@@ -72,8 +72,13 @@ html:has(> .formulize-editor) { height: 100%; }
 .formulize-editor__live { font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; color: var(--editor-note); background: var(--editor-note-soft); }
 .formulize-editor__count { font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; color: var(--editor-changed); background: var(--editor-changed-soft); font-variant-numeric: tabular-nums; }
 /* the Changes button, with how many changes haven't been saved, and the panel it opens */
-.formulize-editor__changes { display: inline-flex; align-items: center; gap: 6px; max-width: 16rem; }
-.formulize-editor__changes-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.formulize-editor__changes { display: inline-flex; align-items: center; gap: 6px; }
+.formulize-editor__changes[disabled] { opacity: .5; cursor: default; }
+/* the chevron says it opens something, and turns while it is open */
+.formulize-editor__chev { flex: none; margin-inline-end: -4px; opacity: .7; transition: transform .15s ease-out; }
+.formulize-editor__top:has(#formulize-editor-diff-panel:popover-open) #formulize-editor-diff .formulize-editor__chev,
+.formulize-editor__top:has(#formulize-editor-unsaved-panel:popover-open) #formulize-editor-unsaved .formulize-editor__chev { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { .formulize-editor__chev { transition: none; } }
 .formulize-editor__changes .formulize-editor__count { padding: 0 7px; line-height: 18px; }
 .formulize-editor__changes-panel { width: 24rem; max-height: min(40rem, calc(100vh - 6rem)); }
 .formulize-editor__changes-panel .formulize-editor__chg:first-child { border-top: 0; }

@@ -179,11 +179,12 @@ at phone widths.
 Two buttons at the top, beside Save, each open a list. The panel on the right is left for settings:
 with nothing selected, it has the look's own.
 
-- **Changes from** the look's base (*Changes from Default*), or from the theme's own settings for a
-  look based on nothing: everything that differs from it, saved or not, each with what the base has
-  and **Reset** to go back to it.
-- **Unsaved changes**, with how many there are: what you have changed since the last save, each with
-  what it was and **Undo**. **Undo all** throws away everything you haven't saved.
+- **What's changed**: everything the look changes from its base (or from the theme's own settings,
+  for a look based on nothing), saved or not, each with what the base has and **Reset** to go back
+  to it.
+- **Edits**, with how many there are: what you have changed since the last save, each with what it
+  was and **Undo**. **Undo all** throws away everything you haven't saved. With nothing to undo, it
+  can't be opened.
 
 In the advanced editor, each change to a part has **Show**, which closes the list and selects the
 part. Clicking anywhere else, or Esc, closes a list.
