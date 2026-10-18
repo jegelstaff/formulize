@@ -4,7 +4,9 @@
   markup Formulize's menu block renders (modules/formulize/templates/blocks/
   menu.html): links, a group that is open with the page you're on in it, and a
   group that is closed. It is open on phones too, over the page, as it is when
-  someone opens it there. See form.html for how the samples work.
+  someone opens it there. The page beside it is grey placeholder blocks, with
+  no parts, so the menu is all there is to change here. See form.html for how
+  the samples work.
 -->
 <div class="lyris-app lyris-app--sidebar-open" id="lyris-app">
   {{header}}
@@ -52,7 +54,21 @@
     </aside>
     <main class="lyris-main" role="main" id="lyris-main">
       <div class="lyris-page fz-content">
-        {{list}}
+        <div class="fz-stack" aria-hidden="true">
+          <div class="fz-card" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; padding: calc(var(--fz-spacing) * 5);">
+            <span style="display: block; width: 180px; height: 18px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span>
+            <span style="display: block; width: 120px; height: 30px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span>
+          </div>
+          <div class="fz-card" style="padding: 0; overflow: hidden;">
+            <div style="padding: calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 5);"><span style="display: block; width: 40%; height: 8px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span></div>
+            <div style="display: flex; gap: 8%; padding: calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 5); border-top: 1px solid var(--fz-color-border);"><span style="display: block; width: 22%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span><span style="display: block; width: 30%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span><span style="display: block; width: 14%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span></div>
+            <div style="display: flex; gap: 8%; padding: calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 5); border-top: 1px solid var(--fz-color-border);"><span style="display: block; width: 18%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span><span style="display: block; width: 26%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span><span style="display: block; width: 12%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span></div>
+            <div style="display: flex; gap: 8%; padding: calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 5); border-top: 1px solid var(--fz-color-border);"><span style="display: block; width: 25%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span><span style="display: block; width: 22%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span><span style="display: block; width: 16%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span></div>
+            <div style="display: flex; gap: 8%; padding: calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 5); border-top: 1px solid var(--fz-color-border);"><span style="display: block; width: 20%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span><span style="display: block; width: 34%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span><span style="display: block; width: 10%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span></div>
+            <div style="display: flex; gap: 8%; padding: calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 5); border-top: 1px solid var(--fz-color-border);"><span style="display: block; width: 16%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span><span style="display: block; width: 28%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span><span style="display: block; width: 14%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span></div>
+            <div style="display: flex; gap: 8%; padding: calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 5); border-top: 1px solid var(--fz-color-border);"><span style="display: block; width: 24%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span><span style="display: block; width: 20%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span><span style="display: block; width: 12%; height: 10px; border-radius: var(--fz-radius-sm); background: var(--fz-color-surface-3);"></span></div>
+          </div>
+        </div>
       </div>
     </main>
   </div>
