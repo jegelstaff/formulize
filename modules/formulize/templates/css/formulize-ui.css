@@ -1519,11 +1519,49 @@
   border: 0;
   border-top: 1px solid var(--fz-color-border);
 }
+/* A panel: a popover that holds a small form, such as a filter, with a head
+   (fz-popover__head, optional), a body that scrolls when there is more than fits
+   (fz-popover__body), and a foot that stays in view with its buttons
+   (fz-popover__foot). It can be as wide as the window, less a margin, for a
+   form that needs more room than a popover's usual width. */
+.fz-popover--panel {
+  max-width: calc(100vw - var(--fz-spacing) * 4);
+  overflow: hidden;
+  padding: 0;
+}
+.fz-popover--panel:popover-open {
+  display: flex;
+  flex-direction: column;
+}
+.fz-popover--panel > :where(* + *) { margin-block-start: 0; }
+.fz-popover__head {
+  flex: none;
+  padding: calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 3) 0;
+}
+.fz-popover__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 3);
+}
+.fz-popover__foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: calc(var(--fz-spacing) * 2);
+  padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3);
+  border-top: 1px solid var(--fz-color-border);
+}
 
 /* ---- Menu ---------------------------------------------------------------------
    A list of actions, in a popover: fz-menu goes beside fz-popover. Each action
    is an fz-menu__item, a <button> or an <a>, with a note under it if it needs
-   one, and an icon before it if it has one. Tab moves between the items. */
+   one, and an icon before it if it has one. Tab moves between the items. The
+   one that is in effect, such as the view a list is showing, has
+   aria-current="true". A group of items can have a small heading
+   (fz-popover__title). */
 .fz-menu {
   min-width: 12rem;
   padding: calc(var(--fz-spacing) * 1);
@@ -1558,6 +1596,16 @@
 .fz-menu__item:disabled,
 .fz-menu__item[aria-disabled="true"] { color: var(--fz-color-text-subtle); cursor: default; pointer-events: none; }
 .fz-menu__item--danger { color: var(--fz-color-danger); }
+.fz-menu__item[aria-current]:not([aria-current="false"]) {
+  background: var(--fz-color-accent-soft);
+  color: var(--fz-color-accent-text);
+  font-weight: var(--fz-font-weight-medium);
+}
+.fz-menu__item[aria-current]:not([aria-current="false"]):hover { background: var(--fz-color-accent-soft-2); }
+/* a group's heading lines up with the items' text */
+.fz-menu > .fz-popover__title {
+  padding: calc(var(--fz-spacing) * 1.5) calc(var(--fz-spacing) * 2.5) calc(var(--fz-spacing) * 0.5);
+}
 .fz-menu__note {
   color: var(--fz-color-text-subtle);
   font-size: var(--fz-text-xs);

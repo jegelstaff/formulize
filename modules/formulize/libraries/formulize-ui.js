@@ -140,13 +140,21 @@
 		};
 
 		// Whether the browser put it where it belongs: under its button, or above
-		// it when there isn't room under it, and across from it.
+		// it when there isn't room under it; and lined up with the button's start,
+		// or across from it when there isn't room for that (Safari 26 lines it up
+		// with the button's end in a cell of a table that scrolls, with room).
 		var besideAnchor = function (popover) {
 			var anchor = anchorOf(popover);
 			if (!anchor) {
 				return true;
 			}
 			var a = anchor.getBoundingClientRect(), r = popover.getBoundingClientRect();
+			var rtl = getComputedStyle(popover).direction === 'rtl';
+			var atStart = rtl ? Math.abs(r.right - a.right) <= 2 : Math.abs(r.left - a.left) <= 2;
+			var roomAtStart = rtl ? a.right - r.width >= edge : a.left + r.width <= doc.documentElement.clientWidth - edge;
+			if (!atStart && roomAtStart) {
+				return false;
+			}
 			var across = r.left < a.right && r.right > a.left;
 			var roomBelow = a.bottom + gap + r.height <= window.innerHeight - edge;
 			if (Math.abs(r.top - a.bottom) <= gap + 2) {
