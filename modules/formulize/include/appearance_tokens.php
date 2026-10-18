@@ -139,10 +139,11 @@ function formulize_appearanceTokenFloor($floor, $values) {
  * A token's value written as CSS.
  *
  * @param string $typeName the token's type: spacing, text, weight, leading,
- *                         measure, font, colour or radius
+ *                         measure, font, colour, radius, keyword or line
  * @param mixed $value a value the type can have (see formulize_appearanceTokenValueIsValid)
  * @return string the CSS, eg: calc(var(--fz-spacing) * 8.5), var(--fz-text-sm),
- *                65ch, var(--fz-font-heading), var(--fz-color-accent), #0b6e4f, 6px
+ *                65ch, var(--fz-font-heading), var(--fz-color-accent), #0b6e4f, 6px,
+ *                underline
  */
 function formulize_appearanceTokenCss($typeName, $value) {
     switch ($typeName) {
@@ -152,7 +153,11 @@ function formulize_appearanceTokenCss($typeName, $value) {
             $map = formulize_appearanceTokenMap();
             return isset($map['colours'][$value]) ? 'var(' . $map['colours'][$value]['css'] . ')' : strtolower((string) $value);
         case 'radius':
+        case 'line':
             return formulize_appearanceTokenNumber($value) . 'px';
+        case 'keyword':
+            // one of the type's own list, so a plain word
+            return (string) $value;
         case 'spacing':
             return 'calc(var(--fz-spacing) * ' . formulize_appearanceTokenNumber($value) . ')';
         case 'text':
@@ -196,6 +201,10 @@ function formulize_appearanceTokenParse($typeName, $css) {
             }
             $map = formulize_appearanceTokenMap();
             return (preg_match('/^var\((--fz-radius-[a-z]+)\)$/', $css, $match) AND isset($map['radii'][$match[1]])) ? (float) $map['radii'][$match[1]] : null;
+        case 'line':
+            return preg_match('/^([0-9]+)px$/', $css, $match) ? (float) $match[1] : null;
+        case 'keyword':
+            return preg_match('/^[a-z-]+$/', $css) ? $css : null;
         case 'spacing':
             return preg_match('/^calc\(\s*var\(--fz-spacing\)\s*\*\s*([0-9]+(?:\.[0-9]+)?)\s*\)$/', $css, $match) ? (float) $match[1] : null;
         case 'text':

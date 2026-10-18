@@ -102,7 +102,7 @@ advanced editor. A look whose sizes have been changed that way has a *Custom* si
 changes that look, and nothing else. **Back to Looks** returns to the tab.
 
 The editor shows the look on a live preview of sample screens (a form and a list, and in Lyris also
-an entry open in the drawer, and a set of cards), with its settings beside it. **Desktop** and
+an entry open in the drawer, a set of cards, and a page of text), with its settings beside it. **Desktop** and
 **Phone** switch the preview's width.
 
 **Simple** and **Advanced** at the top switch between the two editors at any time, keeping whatever
@@ -130,8 +130,9 @@ Everything in the simple editor, except the size, and every part of the interfac
 
 - **Click anything in the preview** to select it: a button, a form field, a label, a list row, a
   title, the logo. Every one of that thing is outlined, and its settings appear on the right, in up
-  to four groups: **Text** (its font, size, weight and colour), **Colours** (its background,
-  border and the like), **Corners**, and **Size and spacing**.
+  to five groups: **Text** (its font, size, weight and colour), **Colours** (its background,
+  border and the like), **Corners**, **Lines** (the thickness of a line, such as a separator), and
+  **Size and spacing**.
 - **A change applies to every one of them in the look**, not just the one you clicked. Changing the
   button height changes the buttons in lists, in forms and in the drawer. The panel lists the sample
   screens the part appears on; click one to see it there.
@@ -146,6 +147,13 @@ Everything in the simple editor, except the size, and every part of the interfac
 - **The logo is as tall as the top bar allows.** Select the logo, or the page, to change the top
   bar's height: a taller bar has a larger logo. On phones, Lyris keeps the bar and the logo at their
   usual size.
+- **Written content has a page of its own, Text.** It has the parts of the text a page shows:
+  paragraphs, headings at each of their six levels, links, bulleted and numbered lists, block quotes
+  and separator lines. They are the ones in a page's content, such as a text element on a form, a
+  screen template or a page of instructions, and not those that are part of something else, such as
+  a card's title or a menu. Paragraphs set the size, line height, font and colour of all the running
+  text. The headings share a font, a colour, a line height and the space above and below them, and
+  each level has its own size and weight. A link's hover colour is a darker shade of its colour.
 - **The spacing of a form is on its fields.** Select a field to change the space between fields;
   help text, for the space above it; choice options, for the space between them; a label, for the
   space below it.

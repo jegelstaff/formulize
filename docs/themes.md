@@ -230,9 +230,27 @@ another font is chosen in the Appearance editor, yours is no longer loaded.
 Don't load the font in `theme.html` as well. A theme that leaves `--formulize-font-weights` out gets
 Geist, the font Lyris uses.
 
+**Mark your content area** with the class `fz-content`, on the element around a page's contents,
+inside your header, menus and footer. Text there then follows the look's written content: the
+paragraphs, headings, links, lists, block quotes and separator lines on the editor's Text page.
+Only those with no class of their own are styled, so components keep theirs, and the rules weigh no
+more than an element selector, so your own rules with a class still win. Without it, your text looks
+as your CSS styles it.
+
+```html
+<main class="my-main">
+  <div class="my-page fz-content">
+    <{$icms_contents}>
+  </div>
+</main>
+```
+
+Put it on your embed theme's content area too (`embed-content.html`), and on any other element that
+shows a screen's contents outside it.
+
 **Provide sample screens** for the editor's preview, in an `appearance_preview` folder
-in your theme. Each is an HTML file named after a screen: `form.html`, `list.html`, `drawer.html` and
-`cards.html`. Provide the ones that suit your theme; the editor shows the ones it finds, and without
+in your theme. Each is an HTML file named after a screen: `form.html`, `list.html`, `drawer.html`,
+`cards.html` and `text.html`. Provide the ones that suit your theme; the editor shows the ones it finds, and without
 any, the theme can't be edited there. A sample is the markup your theme puts in `<body>` for
 that kind of page, written out with sample content, and it is shown with your `css/reset.css`, your
 `css/style.css` and your generated appearance stylesheet, in a `<body>` with the id `formulize` and
@@ -248,7 +266,8 @@ The parts, and the tokens of each one, are the `components` in
 `modules/formulize/include/appearance_tokens.json`: `logo` (the link around your logo image),
 `page`, `tabs`, `title`, `form`, `label`, `field`, `value` (a read-only value), `options` (radio
 buttons and checkboxes), `help`, `button`, `toolbar`, `menu`, `header` (column headings), `row`,
-`card` and `drawer`. The editor shows a new logo by changing the `src` of the image inside the
+`card` and `drawer`; and for written content, `paragraph`, `h1` to `h6`, `link`, `list`, `quote`
+and `rule` (a separator line). The editor shows a new logo by changing the `src` of the image inside the
 `logo` part.
 
 Pieces shared between samples go in files starting with an underscore, and are included by name in

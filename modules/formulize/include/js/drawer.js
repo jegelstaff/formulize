@@ -150,7 +150,7 @@
             // be submitted with them. Built by renderPageTabs; hidden when the screen is
             // not configured for tabs, or the form has only one page.
             '<nav class="formulize-drawer__tabs" aria-label="' + escapeAttr(S().formPages) + '" hidden></nav>' +
-            '<div class="formulize-drawer__body"></div>' +
+            '<div class="formulize-drawer__body fz-content"></div>' +
             // The AI assistant gets its own body so viewing an entry doesn't destroy
             // the conversation: both panels persist, and the drawer shows one or the other.
             '<div class="formulize-drawer__body formulize-drawer__body--ai" hidden></div>' +

@@ -199,6 +199,30 @@
   --fz-drawer-padding-y:  calc(var(--fz-spacing) * 4);
   --fz-page-padding:      calc(var(--fz-spacing) * 5);
   --fz-topbar-height:     calc(var(--fz-spacing) * 12);  /* the bar across the top of the page, with the logo: 48px */
+
+  /* Written content: the text in a page's content area (fz-content) and in fz-prose */
+  --fz-paragraph-text:      var(--fz-text-sm);       /* running text: 14px */
+  --fz-paragraph-leading:   1.5;
+  --fz-paragraph-gap:       calc(var(--fz-spacing) * 4);  /* between paragraphs, lists and quotes: 16px */
+  --fz-heading-leading:     1.25;
+  --fz-heading-space-above: calc(var(--fz-spacing) * 8);  /* 32px */
+  --fz-heading-space-below: calc(var(--fz-spacing) * 4);  /* 16px */
+  --fz-h1-text:             var(--fz-text-2xl);      /* 24px */
+  --fz-h1-weight:           600;
+  --fz-h2-text:             var(--fz-text-xl);       /* 20px */
+  --fz-h2-weight:           600;
+  --fz-h3-text:             var(--fz-text-lg);       /* 18px */
+  --fz-h3-weight:           600;
+  --fz-h4-text:             var(--fz-text-base);     /* 16px */
+  --fz-h4-weight:           600;
+  --fz-h5-text:             var(--fz-text-base);
+  --fz-h5-weight:           600;
+  --fz-h6-text:             var(--fz-text-base);
+  --fz-h6-weight:           600;
+  --fz-list-indent:         calc(var(--fz-spacing) * 6);  /* 24px */
+  --fz-list-gap:            calc(var(--fz-spacing) * 1);  /* between a list's items: 4px */
+  --fz-quote-indent:        calc(var(--fz-spacing) * 4);  /* 16px */
+  --fz-rule-space:          calc(var(--fz-spacing) * 4);  /* above and below a separator line: 16px */
 }
 
 
@@ -219,7 +243,9 @@
    the Appearance page can read them.
 
    --fz-button-primary-hover isn't set directly: it follows
-   --fz-button-primary-bg, darkened, when that is changed. */
+   --fz-button-primary-bg, darkened, when that is changed, and
+   --fz-link-hover-color follows --fz-link-color the same way. A few are
+   keywords (an underline, a list's markers) or a line's thickness in px. */
 :root {
   /* Fonts */
   --fz-title-font:        var(--fz-font-heading);  /* form card, list and drawer titles */
@@ -229,6 +255,8 @@
   --fz-control-font:      var(--fz-font-sans);     /* buttons, tabs, menus, list toolbars */
   --fz-table-font:        var(--fz-font-sans);     /* list and table cells */
   --fz-table-header-font: var(--fz-font-sans);     /* column headings */
+  --fz-paragraph-font:    var(--fz-font-sans);     /* running text */
+  --fz-heading-font:      var(--fz-font-heading);  /* headings in running text */
 
   /* Text colours */
   --fz-title-color:       var(--fz-color-text);
@@ -237,6 +265,8 @@
   --fz-field-color:       var(--fz-color-text);    /* in fields, and choice options */
   --fz-value-color:       var(--fz-color-text);    /* read-only values */
   --fz-help-color:        var(--fz-color-text-muted);
+  --fz-paragraph-color:   var(--fz-color-text);
+  --fz-heading-color:     var(--fz-color-text);
 
   /* Forms */
   --fz-field-bg:          var(--fz-color-surface);
@@ -281,6 +311,20 @@
   --fz-card-radius:       var(--fz-radius-lg);
   --fz-drawer-bg:         var(--fz-color-surface);
   --fz-drawer-foot-bg:    var(--fz-color-surface-2);
+
+  /* Written content */
+  --fz-link-color:         var(--fz-color-accent);
+  --fz-link-hover-color:   var(--fz-color-accent-hover);
+  --fz-link-underline:     underline;
+  --fz-link-hover-underline: underline;
+  --fz-list-bullet:        disc;
+  --fz-list-number:        decimal;
+  --fz-list-marker-color:  var(--fz-color-text);
+  --fz-quote-color:        var(--fz-color-text-muted);
+  --fz-quote-border:       var(--fz-color-border-strong);
+  --fz-quote-line:         3px;
+  --fz-rule-color:         var(--fz-color-border);
+  --fz-rule-line:          1px;
 }
 
 
@@ -1651,48 +1695,131 @@
 }
 .fz-embed--square { aspect-ratio: 1; }
 
+/* ---- Content ------------------------------------------------------------------
+   The part of a page that shows what the page is for: a theme puts fz-content on
+   the element around a page's contents, inside its own header, menus and
+   footer. Text there follows the look's written-content tokens: its running
+   text, and the headings, links, lists, block quotes and separator lines that
+   have no class of their own. An element with a class is part of a component,
+   which has its own styles, so the selectors only reach bare elements, with
+   little weight: an element selector's, or a little more for the space around
+   elements, so that it beats a reset's margin: 0. A theme's rule with a class
+   still wins. */
+.fz-content {
+  font-family: var(--fz-paragraph-font);
+  font-size: var(--fz-paragraph-text);
+  line-height: var(--fz-paragraph-leading);
+  color: var(--fz-paragraph-color);
+}
+:where(.fz-content) :is(h1, h2, h3, h4, h5, h6):where(:not([class])) {
+  font-family: var(--fz-heading-font);
+  line-height: var(--fz-heading-leading);
+  color: var(--fz-heading-color);
+}
+:where(.fz-content) h1:where(:not([class])) { font-size: var(--fz-h1-text); font-weight: var(--fz-h1-weight); }
+:where(.fz-content) h2:where(:not([class])) { font-size: var(--fz-h2-text); font-weight: var(--fz-h2-weight); }
+:where(.fz-content) h3:where(:not([class])) { font-size: var(--fz-h3-text); font-weight: var(--fz-h3-weight); }
+:where(.fz-content) h4:where(:not([class])) { font-size: var(--fz-h4-text); font-weight: var(--fz-h4-weight); }
+:where(.fz-content) h5:where(:not([class])) { font-size: var(--fz-h5-text); font-weight: var(--fz-h5-weight); }
+:where(.fz-content) h6:where(:not([class])) { font-size: var(--fz-h6-text); font-weight: var(--fz-h6-weight); }
+/* more space above a heading than below it, so it belongs to what follows */
+:where(.fz-content) :is(h1, h2, h3, h4, h5, h6):where(:not([class])):not(:first-child) { margin-block-start: var(--fz-heading-space-above); }
+:where(.fz-content) :is(h1, h2, h3, h4, h5, h6):where(:not([class])):not(:last-child) { margin-block-end: var(--fz-heading-space-below); }
+:where(.fz-content) :is(p, ul, ol, blockquote):where(:not([class])) + :is(p, ul, ol, blockquote):where(:not([class])) {
+  margin-block-start: var(--fz-paragraph-gap);
+}
+:where(.fz-content) a:where(:not([class])) {
+  color: var(--fz-link-color);
+  text-decoration-line: var(--fz-link-underline);
+}
+:where(.fz-content) a:where(:not([class])):hover {
+  color: var(--fz-link-hover-color);
+  text-decoration-line: var(--fz-link-hover-underline);
+}
+:where(.fz-content) :is(ul, ol):where(:not([class])) {
+  margin-block-end: 0;
+  padding-inline-start: var(--fz-list-indent);
+}
+:where(.fz-content) ul:where(:not([class])) { list-style-type: var(--fz-list-bullet); }
+:where(.fz-content) ol:where(:not([class])) { list-style-type: var(--fz-list-number); }
+:where(.fz-content) :is(ul, ol):where(:not([class])) > li + li { margin-block-start: var(--fz-list-gap); }
+:where(.fz-content) :is(ul, ol):where(:not([class])) > li::marker { color: var(--fz-list-marker-color); }
+:where(.fz-content) blockquote:where(:not([class])) {
+  margin-inline: 0;
+  padding-inline-start: var(--fz-quote-indent);
+  border-inline-start: var(--fz-quote-line) solid var(--fz-quote-border);
+  color: var(--fz-quote-color);
+}
+:where(.fz-content) hr:where(:not([class])) {
+  height: 0;
+  border: 0;
+  border-block-start: var(--fz-rule-line) solid var(--fz-rule-color);
+}
+:where(.fz-content) hr:not([class]) { margin-block: var(--fz-rule-space); }
+
 /* ---- Prose --------------------------------------------------------------------
    Running text that someone wrote: an article, instructions, an agreement, the
    contents of a rich text field. Its paragraphs, headings and lists are sized
    and spaced for reading, whatever markup they came with. The elements inside
    need no classes of their own, which is the point: the text can come from an
-   editor, and it can be in a derived value, where they could not keep any. */
+   editor, and it can be in a derived value, where they could not keep any. Its
+   text takes its size, font and colour from around it (fz-content gives them
+   the look's), and its elements follow the same written-content tokens as
+   fz-content's, whatever classes they have. */
 .fz-prose {
-  line-height: var(--fz-leading-normal);
+  line-height: var(--fz-paragraph-leading);
   overflow-wrap: break-word;
 }
 .fz-prose > :where(*) { margin-block: 0; }
-.fz-prose > :where(* + *) { margin-block-start: calc(var(--fz-spacing) * 4); }
+.fz-prose > :where(* + *) { margin-block-start: var(--fz-paragraph-gap); }
 .fz-prose :where(h1, h2, h3, h4, h5, h6) {
-  font-weight: var(--fz-font-weight-semibold);
-  line-height: var(--fz-leading-tight);
+  font-family: var(--fz-heading-font);
+  line-height: var(--fz-heading-leading);
+  color: var(--fz-heading-color);
 }
-.fz-prose :where(h1) { font-size: var(--fz-text-2xl); }
-.fz-prose :where(h2) { font-size: var(--fz-text-xl); }
-.fz-prose :where(h3) { font-size: var(--fz-text-lg); }
-.fz-prose :where(h4, h5, h6) { font-size: var(--fz-text-base); }
+.fz-prose :where(h1) { font-size: var(--fz-h1-text); font-weight: var(--fz-h1-weight); }
+.fz-prose :where(h2) { font-size: var(--fz-h2-text); font-weight: var(--fz-h2-weight); }
+.fz-prose :where(h3) { font-size: var(--fz-h3-text); font-weight: var(--fz-h3-weight); }
+.fz-prose :where(h4) { font-size: var(--fz-h4-text); font-weight: var(--fz-h4-weight); }
+.fz-prose :where(h5) { font-size: var(--fz-h5-text); font-weight: var(--fz-h5-weight); }
+.fz-prose :where(h6) { font-size: var(--fz-h6-text); font-weight: var(--fz-h6-weight); }
 /* more space above a heading than below it, so it belongs to what follows */
 .fz-prose > :where(h1, h2, h3, h4, h5, h6):where(:not(:first-child)) {
-  margin-block-start: calc(var(--fz-spacing) * 8);
+  margin-block-start: var(--fz-heading-space-above);
+}
+.fz-prose > :where(h1, h2, h3, h4, h5, h6) + :where(*) {
+  margin-block-start: var(--fz-heading-space-below);
+}
+.fz-prose :where(a) {
+  color: var(--fz-link-color);
+  text-decoration-line: var(--fz-link-underline);
+}
+.fz-prose :where(a:hover) {
+  color: var(--fz-link-hover-color);
+  text-decoration-line: var(--fz-link-hover-underline);
 }
 .fz-prose :where(ul, ol) {
   margin-block-end: 0;
-  padding-inline-start: calc(var(--fz-spacing) * 6);
+  padding-inline-start: var(--fz-list-indent);
 }
-.fz-prose :where(ul) { list-style-type: disc; }
-.fz-prose :where(ul ul) { list-style-type: circle; }
-.fz-prose :where(ol) { list-style-type: decimal; }
+.fz-prose :where(ul) { list-style-type: var(--fz-list-bullet); }
+.fz-prose :where(ol) { list-style-type: var(--fz-list-number); }
 .fz-prose :where(li) { margin-block: 0; }
-.fz-prose :where(li + li, li > ul, li > ol) { margin-block-start: var(--fz-spacing); }
+.fz-prose :where(li + li, li > ul, li > ol) { margin-block-start: var(--fz-list-gap); }
+.fz-prose :where(li)::marker { color: var(--fz-list-marker-color); }
 .fz-prose :where(blockquote) {
   margin-inline: 0;
-  padding-inline-start: calc(var(--fz-spacing) * 4);
-  border-inline-start: 3px solid var(--fz-color-border-strong);
-  color: var(--fz-color-text-muted);
+  padding-inline-start: var(--fz-quote-indent);
+  border-inline-start: var(--fz-quote-line) solid var(--fz-quote-border);
+  color: var(--fz-quote-color);
 }
 .fz-prose :where(hr) {
+  height: 0;
   border: 0;
-  border-top: 1px solid var(--fz-color-border);
+  border-block-start: var(--fz-rule-line) solid var(--fz-rule-color);
+}
+.fz-prose > :where(hr), .fz-prose > :where(hr) + :where(*) {
+  margin-block-start: var(--fz-rule-space);
 }
 .fz-prose :where(img, video) {
   max-width: 100%;
