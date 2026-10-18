@@ -78,6 +78,11 @@ from that look's base, and so on. So:
 - **A change to a look reaches every look based on it**, except where that look changes the same
   thing itself. Change the logo on Default, and every look based on Default has the new logo, unless
   it has a logo of its own.
+- **A look only keeps what differs from its base.** Set something to the same as its base has, and
+  the look follows its base for it from then on. The same happens when its base is changed to match
+  it: say Events has a title size of its own, 24px, and Default's title size is changed to 24px too.
+  Events then follows Default for its title size, so when Default's changes again, Events' does too.
+  Everything a look keeps is in its **Saved changes**.
 - **A look can change anything**, its branding included. Most looks keep their base's logo and
   colours and change only sizes or parts. A look with its own logo or colours is for when some screens
   should look different: a public form with a partner's branding, say. Its Changes say *Branding*.

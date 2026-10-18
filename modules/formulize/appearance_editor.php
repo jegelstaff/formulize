@@ -163,8 +163,7 @@ if (isset($_POST['appearance_editor_save']) AND $pageUrl) {
 	}
 	if (isset($_POST['appearance_editor_ajax'])) {
 		$answer = json_encode(array('saved' => $saved, 'errors' => $errors,
-			'state' => formulize_appearanceEditorState(formulize_appearanceResolveLook($looks, $editing, $theme), $theme),
-			'own' => (object) formulize_appearanceLookOverrides($looks[$editing]['settings'])), JSON_UNESCAPED_SLASHES);
+			'state' => formulize_appearanceEditorState(formulize_appearanceResolveLook($looks, $editing, $theme), $theme)), JSON_UNESCAPED_SLASHES);
 		while (ob_get_level() > $bufferLevel) {
 			ob_end_clean();
 		}
@@ -269,10 +268,8 @@ $editorData = array(
 		'tokens' => $map['tokens'],
 		'colours' => $map['colours'],
 	),
-	// the look being edited, the look it is based on, and the parts' settings it records
-	// itself, which it keeps even when they are the same as its base's
-	'editing' => array('key' => $editing, 'name' => $looks[$editing]['name'], 'base' => $base, 'baseName' => $base !== '' ? $looks[$base]['name'] : '',
-		'overrides' => (object) formulize_appearanceLookOverrides($looks[$editing]['settings'])),
+	// the look being edited, and the look it is based on
+	'editing' => array('key' => $editing, 'name' => $looks[$editing]['name'], 'base' => $base, 'baseName' => $base !== '' ? $looks[$base]['name'] : ''),
 	// what the look is measured against: its base as it resolves, or null for the theme's own
 	'base' => $base !== '' ? formulize_appearanceEditorReference($looks, $editing, $theme) : null,
 	'reference' => formulize_appearanceEditorReference($looks, $editing, $theme),

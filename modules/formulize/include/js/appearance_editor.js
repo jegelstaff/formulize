@@ -70,10 +70,6 @@
 	// as that resolves, or against the theme's own appearance when it is based on
 	// nothing (BASE is null). Only what differs is the look's own.
 	var EDIT = DATA.editing, BASE = DATA.base, READONLY = false;
-	// The parts' settings the look records itself, as saved. It can record one that is
-	// the same as its base's, and it keeps it, rather than following its base when
-	// that changes, unless it is reset.
-	var OWN = (EDIT && EDIT.overrides) ? EDIT.overrides : {};
 	// The simple editor (the look's logo, colours, fonts, page width and size) or the
 	// advanced one (every part of it too). Switched in place: see setMode.
 	var SIMPLE = DATA.mode !== 'advanced';
@@ -185,9 +181,9 @@
 			if (l.min === undefined) { return; }
 			if (value(token) < l.min) { state.overrides[token] = l.min; state.raised[token] = l.why; }
 		});
+		// a look records only what differs from its base, and follows its base in the rest
 		Object.keys(state.overrides).forEach(function (t) {
-			var recorded = has(OWN, t) && String(OWN[t]) === String(state.overrides[t]);
-			if (state.overrides[t] === presetValue(t) && !state.raised[t] && !recorded) { delete state.overrides[t]; }
+			if (String(state.overrides[t]) === String(presetValue(t)) && !state.raised[t]) { delete state.overrides[t]; }
 		});
 	}
 
@@ -1117,8 +1113,6 @@
 					// what was saved is what the editor now starts from: a custom font with
 					// no name, for one, comes back as the theme's own
 					Object.keys(UPLOADS).forEach(function (key) { resetUpload(key); });
-					// the parts' settings the look records, as saved
-					OWN = result.own || {};
 					adopt(result.state);
 					state.dirty = false;
 				}

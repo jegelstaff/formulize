@@ -966,6 +966,13 @@ function formulize_writeAppearanceLookFiles($theme, $looks, $siteLook) {
  */
 function formulize_saveAppearanceLooks($theme, $looks, $siteLook = null) {
     $siteLook = ($siteLook === null) ? formulize_getAppearanceSiteLook($theme) : $siteLook;
+    // each look records only what differs from its base (formulize_appearanceLookDifferences);
+    // dropping what is the same as a base changes nothing about how any look resolves,
+    // so each is measured against the looks as they were given
+    $given = $looks;
+    foreach (array_keys($looks) as $key) {
+        $looks[$key]['settings'] = formulize_appearanceLookDifferences($given, $key, $theme);
+    }
     if (!formulize_writeAppearanceLookFiles($theme, $looks, $siteLook)) {
         formulize_getAppearanceLooks($theme, true);
         return sprintf(_AM_APPEARANCE_ERR_NOT_SAVED, $theme, formulize_getAppearanceDir($theme));
@@ -1117,7 +1124,8 @@ function formulize_renameAppearanceLook($theme, $key, $name) {
 /**
  * Base a look on another look, or on nothing. It keeps what it changes itself,
  * and takes everything else from its new base; a change of its own that is the
- * same as the new base's is dropped, and follows the new base from then on. The
+ * same as the new base's is dropped, and follows the new base from then on (see
+ * formulize_appearanceLookDifferences, which every save applies). The
  * looks based on it move with it. It can't be based on itself, or on a look
  * based on it.
  *
@@ -1140,9 +1148,29 @@ function formulize_rebaseAppearanceLook($theme, $key, $base) {
     if ($base === $looks[$key]['base']) {
         return '';
     }
-    // what the new base resolves to, unsanitized and sanitized, to compare each change with
+    $looks[$key]['base'] = $base;
+    return formulize_saveAppearanceLooks($theme, $looks);
+}
+
+/**
+ * What a look sets itself that differs from its base: its own settings, without
+ * any that are the same as the look it is based on, as that resolves, or as the
+ * theme's own settings for a look with no base look. A look only records what
+ * differs from its base, so it follows its base in everything else, including
+ * when the base changes later. Every write of a theme's looks keeps them so
+ * (formulize_saveAppearanceLooks), whatever made the value the same as the base's:
+ * a change to the look, a change to its base, or a new base.
+ *
+ * @param array $looks a theme's looks
+ * @param string $key the look's key
+ * @param string $theme theme folder name
+ * @return array the look's settings, without those that are the same as its base's
+ */
+function formulize_appearanceLookDifferences($looks, $key, $theme) {
+    $base = $looks[$key]['base'];
+    // what its base resolves to, unsanitized and sanitized, to compare each setting with
     $under = formulize_defaultAppearanceSettings();
-    foreach (($base === '' ? array() : formulize_appearanceLookChain($looks, $base)) as $at) {
+    foreach (($base === '' OR !isset($looks[$base])) ? array() : formulize_appearanceLookChain($looks, $base) as $at) {
         $under = formulize_mergeAppearanceLook($under, $looks[$at]['settings']);
     }
     $baseSettings = formulize_sanitizeAppearanceSettings($under, $theme);
@@ -1173,9 +1201,7 @@ function formulize_rebaseAppearanceLook($theme, $key, $base) {
             }
         }
     }
-    $looks[$key]['base'] = $base;
-    $looks[$key]['settings'] = $own;
-    return formulize_saveAppearanceLooks($theme, $looks);
+    return $own;
 }
 
 /**
