@@ -1519,6 +1519,41 @@
   border: 0;
   border-top: 1px solid var(--fz-color-border);
 }
+/* A panel: a popover that holds a small form, such as a filter, with a head
+   (fz-popover__head, optional), a body that scrolls when there is more than fits
+   (fz-popover__body), and a foot that stays in view with its buttons
+   (fz-popover__foot). It can be as wide as the window, less a margin, for a
+   form that needs more room than a popover's usual width. */
+.fz-popover--panel {
+  max-width: calc(100vw - var(--fz-spacing) * 4);
+  overflow: hidden;
+  padding: 0;
+}
+.fz-popover--panel:popover-open {
+  display: flex;
+  flex-direction: column;
+}
+.fz-popover--panel > :where(* + *) { margin-block-start: 0; }
+.fz-popover__head {
+  flex: none;
+  padding: calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 3) 0;
+}
+.fz-popover__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 3);
+}
+.fz-popover__foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: calc(var(--fz-spacing) * 2);
+  padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3);
+  border-top: 1px solid var(--fz-color-border);
+}
 
 /* ---- Menu ---------------------------------------------------------------------
    A list of actions, in a popover: fz-menu goes beside fz-popover. Each action
