@@ -746,7 +746,22 @@ body:not(.formulize-inline) .lyris-page:has(> #listofentries .lyris-list-screen)
   position: relative;
 }
 
-/* More-actions dropdown */
+/* The list's menus, the view switcher's and More actions, are Formulize UI
+   popovers with menus (fz-popover fz-menu, see the list templates); only their
+   widths are Lyris's. The More actions items are the buttons core renders,
+   input.formulize_button, made into menu items below. */
+.lyris-list__actions-menu { min-width: 13.75rem; }
+/* a column, so the menu is as wide as its widest item: as block children the
+   inputs' width: 100% would take it to the popover's widest */
+.lyris-list__actions-menu:popover-open {
+  display: flex;
+  flex-direction: column;
+}
+.lyris-view-switcher__menu { min-width: 15rem; }
+
+/* More-actions dropdown, and the view switcher's further down, as they were
+   before they were popovers: for a screen with its own copy of the list
+   templates from then (lyris-panel, lyris-pop__*). */
 .lyris-list__action-panel {
   display: none;
   position: absolute;
@@ -767,9 +782,9 @@ body:not(.formulize-inline) .lyris-page:has(> #listofentries .lyris-list-screen)
 }
 
 /* Formulize-generated buttons inside the dropdown styled as pop items */
-.lyris-list__action-panel input[type="button"],
-.lyris-list__action-panel input[type="submit"],
-.lyris-list__action-panel .formulize_button {
+:is(.lyris-list__action-panel, .lyris-list__actions-menu) input[type="button"],
+:is(.lyris-list__action-panel, .lyris-list__actions-menu) input[type="submit"],
+:is(.lyris-list__action-panel, .lyris-list__actions-menu) .formulize_button {
   display: flex;
   align-items: center;
   width: 100%;
@@ -787,9 +802,9 @@ body:not(.formulize-inline) .lyris-page:has(> #listofentries .lyris-list-screen)
   white-space: nowrap;
 }
 
-.lyris-list__action-panel input[type="button"]:hover,
-.lyris-list__action-panel input[type="submit"]:hover,
-.lyris-list__action-panel .formulize_button:hover {
+:is(.lyris-list__action-panel, .lyris-list__actions-menu) input[type="button"]:hover,
+:is(.lyris-list__action-panel, .lyris-list__actions-menu) input[type="submit"]:hover,
+:is(.lyris-list__action-panel, .lyris-list__actions-menu) .formulize_button:hover {
   background: var(--fz-color-surface-3);
 }
 
@@ -805,8 +820,8 @@ body:not(.formulize-inline) .lyris-page:has(> #listofentries .lyris-list-screen)
    higher specificity (0,3,1) so it wins regardless of source order. Additive
    and Lyris-scoped; the inline-edit save/go buttons live in
    `.lyris-list__footer`, not this panel, so they are untouched. */
-.lyris-list__action-panel input[type="button"].formulize_button,
-.lyris-list__action-panel input[type="submit"].formulize_button {
+:is(.lyris-list__action-panel, .lyris-list__actions-menu) input[type="button"].formulize_button,
+:is(.lyris-list__action-panel, .lyris-list__actions-menu) input[type="submit"].formulize_button {
   height: var(--fz-menu-item-height);
   padding: 0 calc(var(--fz-spacing) * 2);
   border: 0;
@@ -816,13 +831,15 @@ body:not(.formulize-inline) .lyris-page:has(> #listofentries .lyris-list-screen)
   font-family: var(--fz-control-font);
   font-weight: inherit;
 }
-.lyris-list__action-panel input[type="button"].formulize_button:hover,
-.lyris-list__action-panel input[type="submit"].formulize_button:hover {
+:is(.lyris-list__action-panel, .lyris-list__actions-menu) input[type="button"].formulize_button:hover,
+:is(.lyris-list__action-panel, .lyris-list__actions-menu) input[type="submit"].formulize_button:hover {
   background: var(--fz-color-surface-3);
   border-color: transparent;
 }
 
-/* Popover components (shared across dropdown contexts) */
+/* Popover components (shared across dropdown contexts), as they were before the
+   list's menus were Formulize UI menus (fz-menu): for a screen with its own copy
+   of the list templates from then. */
 .lyris-pop {
   background: var(--fz-menu-bg);
   border-radius: var(--fz-menu-radius);
@@ -882,7 +899,8 @@ body:not(.formulize-inline) .lyris-page:has(> #listofentries .lyris-list-screen)
   font-weight: 500;
 }
 .lyris-list__titlebar .lyris-view-switcher__toggle:hover,
-.lyris-list__titlebar .lyris-view-switcher__toggle[aria-expanded="true"] {
+.lyris-list__titlebar .lyris-view-switcher__toggle[aria-expanded="true"],
+.lyris-list__titlebar .lyris-view-switcher:has(> .fz-popover:popover-open) .lyris-view-switcher__toggle {
   background: var(--fz-color-surface-3);
   color: var(--fz-color-text);
 }
@@ -895,7 +913,8 @@ body:not(.formulize-inline) .lyris-page:has(> #listofentries .lyris-list-screen)
   opacity: .7;
   transition: transform var(--fz-duration-fast) var(--fz-ease-out);
 }
-.lyris-view-switcher__toggle[aria-expanded="true"] .lyris-view-switcher__chevron {
+.lyris-view-switcher__toggle[aria-expanded="true"] .lyris-view-switcher__chevron,
+.lyris-view-switcher:has(> .fz-popover:popover-open) .lyris-view-switcher__chevron {
   transform: rotate(180deg);
 }
 

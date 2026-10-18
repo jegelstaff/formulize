@@ -403,7 +403,8 @@
 		d.addEventListener('click', function (ev) {
 			ev.preventDefault(); ev.stopPropagation();
 			var toggle = ev.target.closest ? ev.target.closest('[data-fz-toggle]') : null;
-			if (toggle) { var panel = d.getElementById(toggle.getAttribute('data-fz-toggle')); if (panel) { panel.classList.toggle('open'); } }
+			// a sample's menu: a popover (popover="manual", so it stays open while its items are changed), or a panel that opens with a class
+			if (toggle) { var panel = d.getElementById(toggle.getAttribute('data-fz-toggle')); if (panel) { if (panel.hasAttribute('popover') && panel.togglePopover) { panel.togglePopover(); } else { panel.classList.toggle('open'); } } }
 			var el = ev.target.closest ? ev.target.closest(SIMPLE ? '[data-fz-part="logo"]' : '[data-fz-part]') : null;
 			select(el && MAP.components[el.getAttribute('data-fz-part')] ? el.getAttribute('data-fz-part') : null, el);
 		}, true);

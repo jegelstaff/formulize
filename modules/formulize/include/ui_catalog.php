@@ -1107,6 +1107,9 @@ HTML
                     'Open and pair it as a popover. Tab moves between the items.',
                     'An item can open a dialog with `commandfor` and `command="show-modal"`; the menu closes as the dialog opens. An item that does something on the page needs a line of script, which closes the menu with `hidePopover()` too.',
                     'A disabled item, or one with `aria-disabled="true"`, is faded and can\'t be clicked.',
+                    'The item that is in effect, such as the view a list is showing, has `aria-current="true"`, and is shown selected.',
+                    'A group of items can have a small heading: an `fz-popover__title`, which lines up with the items\' names. Put an `fz-menu__sep` between groups.',
+                    'Lyris\'s list screens use menus for their view switcher and More actions. Formulize\'s own list buttons, `<input type="button" class="formulize_button">`, are made into items there by Lyris\'s own rules.',
                 ),
                 'example' => <<<'HTML'
 <div class="fz-cluster">
