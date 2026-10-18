@@ -279,8 +279,9 @@ you're on). The editor shows a new logo by changing the `src` of the image insid
 
 Pieces shared between samples go in files starting with an underscore, and are included by name in
 double braces: `{{list}}` is the contents of `_list.html`. `{{logo_url}}` and `{{site_name}}` are your
-logo and the site's name. Clicking an element with `data-fz-toggle="some-id"` in the preview toggles
-the class `open` on the element with that id, for showing a menu.
+logo and the site's name. Clicking an element with `data-fz-toggle="some-id"` in the preview opens or closes
+the element with that id, for showing a menu: a popover (give it `popover="manual"`, so it stays open
+while its items are being changed), or anything else, which gets the class `open`.
 
 Lyris's samples, in `themes/Lyris/appearance_preview/`, are a complete example. A theme edited in simple
 mode only, such as Anari (`themes/Anari/appearance_preview/`), only needs to mark its logo, as the

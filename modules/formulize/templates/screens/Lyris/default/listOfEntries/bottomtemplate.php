@@ -16,38 +16,15 @@ if ($messageText) {
 ?>
 
 <script>
-// Generic panel system: buttons with [data-lyris-panel="id"] toggle panels by ID.
-// All toggleable panels must carry the lyris-panel class. Triggers that carry
-// aria-expanded have it kept in step with their panel; Escape closes an open
-// panel and returns focus to its trigger.
+// The view switcher and More actions are Formulize UI popovers with menus (fz-popover fz-menu): their buttons open
+// and close them, and the browser closes them when something else is clicked or Esc is pressed. Using an item closes
+// its menu too, which the browser leaves to the page.
 function fzCloseLyrisPanels() {
-    document.querySelectorAll('.lyris-panel.open').forEach(function (p) { p.classList.remove('open'); });
-    document.querySelectorAll('[data-lyris-panel][aria-expanded]').forEach(function (t) { t.setAttribute('aria-expanded', 'false'); });
+    document.querySelectorAll('.lyris-list-screen .fz-menu:popover-open').forEach(function (menu) { menu.hidePopover(); });
 }
 document.addEventListener('click', function (e) {
-    var trigger = e.target.closest('[data-lyris-panel]');
-    var inPanel = e.target.closest('.lyris-panel');
-    if (trigger) {
-        var panelId = trigger.getAttribute('data-lyris-panel');
-        var panel   = document.getElementById(panelId);
-        if (!panel) return;
-        var opening = !panel.classList.contains('open');
-        fzCloseLyrisPanels();
-        if (opening) {
-            panel.classList.add('open');
-            if (trigger.hasAttribute('aria-expanded')) { trigger.setAttribute('aria-expanded', 'true'); }
-        }
-    } else if (!inPanel) {
-        fzCloseLyrisPanels();
-    }
-});
-document.addEventListener('keydown', function (e) {
-    if (e.key !== 'Escape') return;
-    var open = document.querySelector('.lyris-panel.open');
-    if (!open) return;
-    var trigger = document.querySelector('[data-lyris-panel="' + open.id + '"]');
-    fzCloseLyrisPanels();
-    if (trigger) { trigger.focus(); }
+    var item = e.target.closest('.lyris-list-screen .fz-menu :is(.fz-menu__item, input[type="button"], input[type="submit"])');
+    if (item) { fzCloseLyrisPanels(); }
 });
 
 // Selects a view: updates the hidden currentview input and submits the form.

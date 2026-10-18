@@ -1056,6 +1056,42 @@ HTML
                 'example_height' => '14rem',
             ),
             array(
+                'id' => 'popover-panel',
+                'name' => 'Popover panel',
+                'summary' => 'A popover that holds a small form, such as a filter: a few choices to make, with buttons at the foot to apply them or not. Its body scrolls when there is more than fits, and its foot stays in view.',
+                'classes' => array(
+                    'fz-popover--panel' => 'Beside `fz-popover`, on the popover.',
+                    'fz-popover__head' => 'Optional: what stays at the top while the body scrolls, such as a box to find a choice.',
+                    'fz-popover__body' => 'The choices.',
+                    'fz-popover__foot' => 'The buttons, at the end of the row.',
+                ),
+                'notes' => array(
+                    'Open and pair it as a popover. Clicking elsewhere and Esc close it as they close any popover, so treat that as Cancel: listen for its `toggle` event, and put back anything the panel changed.',
+                    'It can be wider than a popover usually is, up to the width of the window less a margin, for a form that needs the room. Give it a `min-width` for that.',
+                    'The list filters for checkboxes and date ranges are panels (`include/js/filterpopovers.js`).',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-cluster">
+  <button type="button" class="fz-btn" popovertarget="example-panel" style="anchor-name: --example-panel">Status: Any</button>
+  <div class="fz-popover fz-popover--panel" id="example-panel" popover style="position-anchor: --example-panel; min-width: 16rem">
+    <div class="fz-popover__body">
+      <div class="fz-choice-group">
+        <label class="fz-choice"><input type="checkbox" class="fz-checkbox"> Draft</label>
+        <label class="fz-choice"><input type="checkbox" class="fz-checkbox" checked> Submitted</label>
+        <label class="fz-choice"><input type="checkbox" class="fz-checkbox"> Approved</label>
+      </div>
+    </div>
+    <div class="fz-popover__foot">
+      <button type="button" class="fz-btn fz-btn--sm" popovertarget="example-panel" popovertargetaction="hide">Cancel</button>
+      <button type="button" class="fz-btn fz-btn--sm fz-btn--primary">Apply</button>
+    </div>
+  </div>
+</div>
+HTML
+                ,
+                'example_height' => '14rem',
+            ),
+            array(
                 'id' => 'menu',
                 'name' => 'Menu',
                 'summary' => 'A list of actions in a popover, opened by a button: the less common things that can be done to one item.',
@@ -1071,6 +1107,9 @@ HTML
                     'Open and pair it as a popover. Tab moves between the items.',
                     'An item can open a dialog with `commandfor` and `command="show-modal"`; the menu closes as the dialog opens. An item that does something on the page needs a line of script, which closes the menu with `hidePopover()` too.',
                     'A disabled item, or one with `aria-disabled="true"`, is faded and can\'t be clicked.',
+                    'The item that is in effect, such as the view a list is showing, has `aria-current="true"`, and is shown selected.',
+                    'A group of items can have a small heading: an `fz-popover__title`, which lines up with the items\' names. Put an `fz-menu__sep` between groups.',
+                    'Lyris\'s list screens use menus for their view switcher and More actions. Formulize\'s own list buttons, `<input type="button" class="formulize_button">`, are made into items there by Lyris\'s own rules.',
                 ),
                 'example' => <<<'HTML'
 <div class="fz-cluster">
