@@ -13575,6 +13575,41 @@ function formulize_uiStylesheetLink() {
 }
 
 /**
+ * The words a script shows, from the language files: every constant whose name
+ * starts with $prefix, keyed by the rest of its name. With the prefix
+ * '_AM_APPEARANCE_EDITOR_JS_', the constant _AM_APPEARANCE_EDITOR_JS_SAVE is SAVE.
+ *
+ * Load the language file that defines them first. Pass the result to the page as
+ * JSON, and to formulizeText() in the script (libraries/formulize-text.js), which
+ * gives each word back by its key, with its blanks filled in. See "Translating
+ * text" in the docs (docs/translating_text.md).
+ *
+ * @param string $prefix The start of the constants' names, ending in _JS_ by convention
+ * @return array The words, by key
+ */
+function formulize_scriptText($prefix) {
+	$constants = get_defined_constants(true);
+	$text = array();
+	foreach ($constants['user'] as $name => $value) {
+		if (strpos($name, $prefix) === 0) {
+			$text[substr($name, strlen($prefix))] = $value;
+		}
+	}
+	return $text;
+}
+
+/**
+ * The script that gives a page's scripts their words, from formulize_scriptText():
+ * formulizeText(). It can be loaded twice, harmlessly.
+ *
+ * @return string Path relative to XOOPS_URL, with a cache-busting version
+ */
+function formulize_textScriptPath() {
+	$path = '/modules/formulize/libraries/formulize-text.js';
+	return $path . '?v=' . formulize_get_file_version($path);
+}
+
+/**
  * The URL of Formulize's "saving" animation, in the site's language where there is one.
  *
  * Full screen this is what showSavingGraphic() reveals over the dimmed form while a save

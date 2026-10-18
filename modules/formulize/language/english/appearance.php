@@ -261,7 +261,8 @@ define('_AM_APPEARANCE_EDITOR_UNSUPPORTED', 'The %s theme does not use these set
 
 // ---- The appearance editor's script (include/js/appearance_editor.js) ---------
 // Every constant starting _AM_APPEARANCE_EDITOR_JS_ goes to the script, which knows
-// it by the rest of its name: _AM_APPEARANCE_EDITOR_JS_SAVE is SAVE there.
+// it by the rest of its name: _AM_APPEARANCE_EDITOR_JS_SAVE is SAVE there (see
+// formulize_scriptText() and "Translating text" in the docs).
 
 // the page
 define('_AM_APPEARANCE_EDITOR_JS_SAVE', 'Save');

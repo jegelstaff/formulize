@@ -99,19 +99,6 @@ function formulize_appearanceEditorState($settings, $theme) {
 	);
 }
 
-// The words the editor's script uses: every _AM_APPEARANCE_EDITOR_JS_ constant in the
-// language file, by the rest of its name (_AM_APPEARANCE_EDITOR_JS_SAVE is SAVE)
-function formulize_appearanceEditorText() {
-	$constants = get_defined_constants(true);
-	$text = array();
-	foreach ($constants['user'] as $name => $value) {
-		if (strpos($name, '_AM_APPEARANCE_EDITOR_JS_') === 0) {
-			$text[substr($name, strlen('_AM_APPEARANCE_EDITOR_JS_'))] = $value;
-		}
-	}
-	return $text;
-}
-
 // What the look is measured against, in the editor's terms: the look it is based on,
 // as it resolves; or for a look based on nothing, the theme's own appearance
 function formulize_appearanceEditorReference($looks, $key, $theme) {
@@ -312,7 +299,7 @@ $editorData = array(
 	'previewUrl' => XOOPS_URL . '/modules/formulize/appearance_preview.php?theme=' . urlencode($theme) . '&look=' . urlencode($editing) . '&screen=',
 	// the script's words: the language file's _AM_APPEARANCE_EDITOR_JS_ constants, by
 	// the rest of their names
-	'text' => formulize_appearanceEditorText(),
+	'text' => formulize_scriptText('_AM_APPEARANCE_EDITOR_JS_'),
 );
 
 $cssPath = '/modules/formulize/templates/css/appearance_editor.css';
@@ -400,6 +387,7 @@ header('Content-Type: text/html; charset=utf-8');
 	</div>
 </div>
 <script>var formulizeAppearanceEditor = <?php echo json_encode($editorData, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS); ?>;</script>
+<script src="<?php echo XOOPS_URL . formulize_textScriptPath(); ?>"></script>
 <script src="<?php echo XOOPS_URL . $jsPath . '?v=' . formulize_get_file_version($jsPath); ?>"></script>
 <?php } ?>
 </body>

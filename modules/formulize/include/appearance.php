@@ -47,12 +47,7 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/include/appearance_tokens.php
 
 // The words of the looks, the Looks tab and the editor: the site's language's, or
 // English when there is no translation of them
-global $xoopsConfig;
-if (!defined('_AM_APPEARANCE_LOOK_DEFAULT')) {
-    $appearanceLanguage = XOOPS_ROOT_PATH . '/modules/formulize/language/' . (isset($xoopsConfig['language']) ? $xoopsConfig['language'] : 'english') . '/appearance.php';
-    include_once file_exists($appearanceLanguage) ? $appearanceLanguage : XOOPS_ROOT_PATH . '/modules/formulize/language/english/appearance.php';
-    unset($appearanceLanguage);
-}
+icms_loadLanguageFile('formulize', 'appearance');
 
 /**
  * The custom properties a theme defines in its own stylesheet, ie: the palette

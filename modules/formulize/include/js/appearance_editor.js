@@ -28,22 +28,14 @@
 	var DATA = window.formulizeAppearanceEditor;
 	if (!DATA) { return; }
 	var MAP = DATA.map;
-	// The editor's words, from the language file (DATA.text: its
-	// _AM_APPEARANCE_EDITOR_JS_ constants, by the rest of their names). lang() gives
-	// them as text, langHtml() as HTML; each fills in their blanks (%s, or %1$s in a
-	// translation that orders them differently, and %% for a % sign) with what follows,
-	// which for langHtml() is HTML already: langHtml('APPLIES_TO', '<strong>' + esc(c.plural) + '</strong>').
-	var TEXT = DATA.text || {};
-	function fill(words, args) {
-		var next = 0;
-		return words.replace(/%%|%(?:(\d+)\$)?s/g, function (m, n) {
-			if (m === '%%') { return '%'; }
-			var v = args[n ? n - 1 : next++];
-			return v === undefined ? '' : String(v);
-		});
-	}
-	function lang(key) { return fill(has(TEXT, key) ? String(TEXT[key]) : key, Array.prototype.slice.call(arguments, 1)); }
-	function langHtml(key) { return fill(esc(has(TEXT, key) ? TEXT[key] : key), Array.prototype.slice.call(arguments, 1)); }
+	// The editor's words, from the language file: its _AM_APPEARANCE_EDITOR_JS_
+	// constants, by the rest of their names (formulize_scriptText() and
+	// libraries/formulize-text.js). lang() gives them as text, langHtml() as HTML, with
+	// their blanks filled in by what follows, which for langHtml() is HTML already:
+	// langHtml('APPLIES_TO', '<strong>' + esc(c.plural) + '</strong>').
+	var TEXT = window.formulizeText(DATA.text);
+	var lang = TEXT.text;
+	var langHtml = TEXT.html;
 
 	// the text steps' sizes at the default 16px root (formulize-ui.css)
 	var TEXT_PX = { 'xs': 12, 'xs-plus': 13, 'sm': 14, 'sm-plus': 15, 'base': 16, 'lg': 18, 'xl': 20, '2xl': 24, '3xl': 30 };
