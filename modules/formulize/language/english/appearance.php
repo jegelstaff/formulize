@@ -291,12 +291,12 @@ define('_AM_APPEARANCE_EDITOR_JS_UNREADABLE', 'The site’s answer couldn’t be
 // the inspector's head
 define('_AM_APPEARANCE_EDITOR_JS_SELECTED', 'Selected');
 define('_AM_APPEARANCE_EDITOR_JS_DESELECT', 'Deselect');
-define('_AM_APPEARANCE_EDITOR_JS_SITE_WIDE_PART', 'A site-wide setting: it changes %s.');
+define('_AM_APPEARANCE_EDITOR_JS_BRANDING_PART', 'Part of the look’s branding: it changes %s.');
 define('_AM_APPEARANCE_EDITOR_JS_APPLIES_TO', 'Changes apply to %s on the site, not just the one you clicked.');
 define('_AM_APPEARANCE_EDITOR_JS_USED_ON', 'Used on these screens, outlined in each:');
 define('_AM_APPEARANCE_EDITOR_JS_NOTHING_SELECTED', 'Nothing selected');
 define('_AM_APPEARANCE_EDITOR_JS_SETTINGS', 'Settings');
-define('_AM_APPEARANCE_EDITOR_JS_TAB_SITE', 'Site-wide');
+define('_AM_APPEARANCE_EDITOR_JS_BRANDING_LAYOUT', 'Branding and layout'); // the look's own settings: logo, colours, fonts, page width
 
 // values, and what they are measured against
 define('_AM_APPEARANCE_EDITOR_JS_POSSESSIVE', '%s’s');
@@ -343,7 +343,7 @@ define('_AM_APPEARANCE_EDITOR_JS_BOTH_DEVICES', '%s, on desktop and on phones.')
 define('_AM_APPEARANCE_EDITOR_JS_ALSO_CHANGES', 'Also changes %s.');
 define('_AM_APPEARANCE_EDITOR_JS_NOT_ADJUSTABLE', 'Not adjustable yet');
 
-// the site-wide settings
+// branding and layout: the look's own settings
 define('_AM_APPEARANCE_EDITOR_JS_INTRO', 'This look’s logo, colours and fonts.');
 define('_AM_APPEARANCE_EDITOR_JS_INTRO_WIDTH', 'This look’s logo, colours, fonts and page width.');
 define('_AM_APPEARANCE_EDITOR_JS_INTRO_SIZE', 'This look’s logo, colours, fonts and size.');

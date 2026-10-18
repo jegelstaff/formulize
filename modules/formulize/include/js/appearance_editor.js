@@ -8,16 +8,17 @@
 // data-fz-part) selects that part: every one of it is outlined, and the
 // inspector shows its settings (its fonts, colours, corners and sizes), which
 // apply to every one of it on the site. With nothing selected, the inspector
-// shows the look's site-wide settings (logo, colours, fonts, page width, and in the
-// simple editor its size) and, on its other tab, what has changed: what hasn't
-// been saved, and what the look changes from the look it is based on.
+// shows the look's branding and layout (logo, colours, fonts, page width, and in
+// the simple editor its size). What has changed is in two panels from the top bar:
+// what the look, as saved, changes from the look it is based on, and what hasn't
+// been saved.
 //
 // Everything about the parts comes from include/appearance_tokens.json, passed
 // in as formulizeAppearanceEditor.map: the tokens' types and limits, the parts
 // of the interface and the tokens of each, the site's colours a part can use,
 // what can't be adjusted yet, which token has a separate value on phones, and
-// the floors that depend on other tokens. The site-wide colours and fonts are
-// the Appearance page's own.
+// the floors that depend on other tokens. The look's colours and fonts (its
+// branding) are the Appearance page's own.
 //
 // Save sends the form in the background and takes back what was saved, so the
 // editor stays exactly where it was.
@@ -224,7 +225,7 @@
 	}
 	function contrast(a, b) { var x = luminance(a), y = luminance(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
 
-	/* ---- the site-wide settings ---- */
+	/* ---- branding and layout: the look's own settings ---- */
 	function widthBase() { return BASE ? BASE.contentWidth : WIDTH.theme; }
 	function widthChanged() { return !!WIDTH && state.contentWidth !== widthBase(); }
 	function widthName(w) { return w === 'full' ? lang('FULL_WIDTH') : lang('MAX_WIDTH_PX', w); }
@@ -543,7 +544,7 @@
 		}).join('') + gapsBlock(c.gaps);
 	}
 
-	/* ---- the inspector: the site-wide settings ---- */
+	/* ---- the inspector: branding and layout ---- */
 	function sect(label) { return '<p class="formulize-editor__sect">' + esc(label) + '</p>'; }
 	function uploadBlock(key) {
 		var url = uploadUrl(key), isLogo = key === 'appearance_logo';
@@ -782,13 +783,13 @@
 			}).join('');
 			head.innerHTML = '<div class="formulize-editor__kicker">' + langHtml('SELECTED') + '</div><div class="formulize-editor__title"><h2>' + esc(c.name) + '</h2><button type="button" class="formulize-editor__x" data-deselect="1" aria-label="' + langHtml('DESELECT') + '">✕</button></div>' +
 				'<div class="formulize-editor__scope">' + (c.site
-					? '<span>' + langHtml('SITE_WIDE_PART', '<strong>' + esc(c.plural) + '</strong>') + '</span>'
+					? '<span>' + langHtml('BRANDING_PART', '<strong>' + esc(c.plural) + '</strong>') + '</span>'
 					: '<span>' + langHtml('APPLIES_TO', '<strong>' + esc(c.plural) + '</strong>') + (where ? ' ' + langHtml('USED_ON') : '') + '</span>' + (where ? '<div class="formulize-editor__where">' + where + '</div>' : '')) + '</div>';
 			// the logo's images, and in advanced mode its tokens too (the top bar's height, which it is sized from)
 			body.innerHTML = c.site === 'logo' ? uploadBlock('appearance_logo') + uploadBlock('appearance_favicon') + (SIMPLE ? '' : partBlock(c)) : partBlock(c);
 		} else {
 			// the look's own settings; what has changed is in the Changes panel
-			head.innerHTML = '<div class="formulize-editor__kicker">' + langHtml('NOTHING_SELECTED') + '</div><div class="formulize-editor__title"><h2>' + langHtml('TAB_SITE') + '</h2></div>';
+			head.innerHTML = '<div class="formulize-editor__kicker">' + langHtml('NOTHING_SELECTED') + '</div><div class="formulize-editor__title"><h2>' + langHtml('BRANDING_LAYOUT') + '</h2></div>';
 			body.innerHTML = siteBlock() + (SIMPLE ? '' : gapsBlock(MAP.gaps));
 		}
 	}
