@@ -356,10 +356,19 @@ header('Content-Type: text/html; charset=utf-8');
 			<?php } ?>
 			<?php // when a save goes live: filled in by the editor's script ?>
 			<span class="formulize-editor__live" id="formulize-editor-live" hidden></span>
-			<span class="formulize-editor__count" id="formulize-editor-count" hidden></span>
-			<button type="button" class="formulize-editor__btn" id="formulize-editor-reset" disabled><?php echo htmlspecialchars(_AM_APPEARANCE_EDITOR_RESET, ENT_QUOTES); ?></button>
+			<?php // what the look changes from its base, and what hasn't been saved: each a panel,
+			// filled in by the editor's script ?>
+			<button type="button" class="formulize-editor__btn formulize-editor__changes" id="formulize-editor-diff" popovertarget="formulize-editor-diff-panel" style="anchor-name: --formulize-editor-diff"><?php echo htmlspecialchars(_AM_APPEARANCE_EDITOR_JS_SAVED_CHANGES, ENT_QUOTES); ?><svg class="formulize-editor__chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+			<button type="button" class="formulize-editor__btn formulize-editor__changes" id="formulize-editor-unsaved" popovertarget="formulize-editor-unsaved-panel" style="anchor-name: --formulize-editor-unsaved" disabled><?php echo htmlspecialchars(_AM_APPEARANCE_EDITOR_JS_UNSAVED, ENT_QUOTES); ?><span class="formulize-editor__count" id="formulize-editor-count" hidden></span><svg class="formulize-editor__chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
 			<button type="submit" class="formulize-editor__btn formulize-editor__btn--primary" name="appearance_editor_save" value="1" id="formulize-editor-save"><?php echo htmlspecialchars(_AM_APPEARANCE_EDITOR_JS_SAVE, ENT_QUOTES); ?></button>
 		</form>
+		<div class="fz-popover fz-popover--panel formulize-editor__changes-panel" id="formulize-editor-diff-panel" popover tabindex="-1" role="dialog" aria-labelledby="formulize-editor-diff" style="position-anchor: --formulize-editor-diff">
+			<div class="fz-popover__body" id="formulize-editor-diff-body"></div>
+		</div>
+		<div class="fz-popover fz-popover--panel formulize-editor__changes-panel" id="formulize-editor-unsaved-panel" popover tabindex="-1" role="dialog" aria-labelledby="formulize-editor-unsaved" style="position-anchor: --formulize-editor-unsaved">
+			<div class="fz-popover__body" id="formulize-editor-unsaved-body"></div>
+			<div class="fz-popover__foot" id="formulize-editor-unsaved-foot"></div>
+		</div>
 	</header>
 	<?php // what stands in the way, for as long as it does
 	foreach ($notices as $notice) { ?><p class="formulize-editor__message formulize-editor__message--note"><?php echo htmlspecialchars($notice, ENT_QUOTES); ?></p><?php } ?>
@@ -388,6 +397,7 @@ header('Content-Type: text/html; charset=utf-8');
 </div>
 <script>var formulizeAppearanceEditor = <?php echo json_encode($editorData, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS); ?>;</script>
 <script src="<?php echo XOOPS_URL . formulize_textScriptPath(); ?>"></script>
+<script src="<?php echo XOOPS_URL . formulize_uiScriptPath(); ?>"></script>
 <script src="<?php echo XOOPS_URL . $jsPath . '?v=' . formulize_get_file_version($jsPath); ?>"></script>
 <?php } ?>
 </body>

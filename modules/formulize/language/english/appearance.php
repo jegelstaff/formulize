@@ -248,7 +248,6 @@ define('_AM_APPEARANCE_EDITOR_BASED_ON_NOTHING', '%s · based on nothing');
 define('_AM_APPEARANCE_EDITOR_MODE', 'Editor');
 define('_AM_APPEARANCE_EDITOR_SIMPLE', 'Simple');
 define('_AM_APPEARANCE_EDITOR_ADVANCED', 'Advanced');
-define('_AM_APPEARANCE_EDITOR_RESET', 'Reset changes');
 define('_AM_APPEARANCE_EDITOR_PREVIEW', 'Preview');
 define('_AM_APPEARANCE_EDITOR_PREVIEW_WIDTH', 'Preview width');
 define('_AM_APPEARANCE_EDITOR_PHONE', 'Phone');
@@ -298,8 +297,6 @@ define('_AM_APPEARANCE_EDITOR_JS_USED_ON', 'Used on these screens, outlined in e
 define('_AM_APPEARANCE_EDITOR_JS_NOTHING_SELECTED', 'Nothing selected');
 define('_AM_APPEARANCE_EDITOR_JS_SETTINGS', 'Settings');
 define('_AM_APPEARANCE_EDITOR_JS_TAB_SITE', 'Site-wide');
-define('_AM_APPEARANCE_EDITOR_JS_TAB_CHANGES', 'Changes');
-define('_AM_APPEARANCE_EDITOR_JS_TAB_CHANGES_COUNT', 'Changes (%s)');
 
 // values, and what they are measured against
 define('_AM_APPEARANCE_EDITOR_JS_POSSESSIVE', '%s’s');
@@ -390,13 +387,16 @@ define('_AM_APPEARANCE_EDITOR_JS_MAX_WIDTH', 'Maximum width');
 define('_AM_APPEARANCE_EDITOR_JS_WIDTH_PX', 'Maximum width, in pixels, from %1$s to %2$s');
 
 // the Changes tab
-define('_AM_APPEARANCE_EDITOR_JS_NOT_SAVED', 'Not saved yet');
+define('_AM_APPEARANCE_EDITOR_JS_SAVED_CHANGES', 'Saved changes'); // the top bar's button, which lists what the look, as saved, changes from its base
+define('_AM_APPEARANCE_EDITOR_JS_UNDO_ALL', 'Undo all');
+define('_AM_APPEARANCE_EDITOR_JS_UNSAVED', 'Unsaved changes'); // the top bar's button, which lists the changes made since the last save, to undo them
 define('_AM_APPEARANCE_EDITOR_JS_ALL_SAVED', 'Nothing: everything is saved.');
 define('_AM_APPEARANCE_EDITOR_JS_WAS', 'was %s');
 define('_AM_APPEARANCE_EDITOR_JS_NEW_IMAGE', 'A new image');
 define('_AM_APPEARANCE_EDITOR_JS_UPLOADED_IMAGE', 'An uploaded image');
 define('_AM_APPEARANCE_EDITOR_JS_SHOW', 'Show');
-define('_AM_APPEARANCE_EDITOR_JS_WHAT_CHANGES', 'What %s changes');
-define('_AM_APPEARANCE_EDITOR_JS_DIFFERS', 'What differs from %s, saved or not.');
+define('_AM_APPEARANCE_EDITOR_JS_DIFFERS', 'The saved settings that differ from %s.');
+define('_AM_APPEARANCE_EDITOR_JS_CHANGED_NOT_SAVED', 'Changed again, not saved yet');
+define('_AM_APPEARANCE_EDITOR_JS_RESET_NOT_SAVED', 'Reset, not saved yet');
 define('_AM_APPEARANCE_EDITOR_JS_BASE_IS', '%1$s is %2$s');
-define('_AM_APPEARANCE_EDITOR_JS_SAME_AS_REF', 'Nothing: it is the same as %s.');
+define('_AM_APPEARANCE_EDITOR_JS_SAME_AS_REF', 'Nothing saved differs from %s.');
