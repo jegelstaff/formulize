@@ -92,7 +92,6 @@
 		phone: false,
 		sel: null,
 		origin: null,
-		tab: 'site',
 		openColour: null,
 		dirty: false,
 		saving: false
@@ -258,9 +257,11 @@
 		if (state.fonts[which] !== BASE.fonts[which]) { return !(state.fonts[which] === 'custom' && !customName(which)); }
 		return state.fonts[which] === 'custom' && customName(which) !== (BASE.fonts[which + 'custom'] || '').replace(/[^a-zA-Z0-9 ]/g, '').trim();
 	}
-	function fontShown(which) {
-		if (state.fonts[which] === 'custom') { return customName(which) || lang('UNNAMED_FONT'); }
-		return fontLabel(which === 'main' ? 'main' : 'heading', state.fonts[which]);
+	function fontShown(which) { return fontShownIn(state.fonts, which); }
+	// the same, for a set of fonts other than the ones being edited (those saved)
+	function fontShownIn(fonts, which) {
+		if (fonts[which] === 'custom') { return (fonts[which + 'custom'] || '').replace(/[^a-zA-Z0-9 ]/g, '').trim() || lang('UNNAMED_FONT'); }
+		return fontLabel(which === 'main' ? 'main' : 'heading', fonts[which]);
 	}
 	// the name of the font a part set to the main or secondary font is in
 	function fontName(role) {
@@ -697,35 +698,41 @@
 			if (has(SAVED.overrides, key)) { state.overrides[key] = SAVED.overrides[key]; } else { delete state.overrides[key]; }
 		}
 	}
-	// What the look changes: everything that differs from the look it is based on, as
-	// that resolves, or from the theme's own appearance (DATA.reference), saved or not.
+	// What the look changes, as saved: everything in it that differs from the look it is
+	// based on, as that resolves, or from the theme's own appearance (DATA.reference).
+	// What hasn't been saved is in the other list; a saved change that has been changed
+	// again, or reset, says so (pending, reset), until it is saved.
 	var REF = DATA.reference;
 	// what it is measured against, in a sentence
 	function refText() { return BASE ? EDIT.baseName : lang('THEME_APPEARANCE'); }
-	function changedHere() {
+	function savedHere() {
 		var list = [];
 		Object.keys(UPLOADS).forEach(function (key) {
-			if ((uploadUrl(key) || '') !== (REF.uploads[key] || '')) {
-				list.push({ name: UPLOADS[key], now: uploadUrl(key) ? lang('UPLOADED_IMAGE') : lang('THEME_OWN_CAP') });
+			if ((savedUploads[key] || '') !== (REF.uploads[key] || '')) {
+				list.push({ name: UPLOADS[key], now: savedUploads[key] ? lang('UPLOADED_IMAGE') : lang('THEME_OWN_CAP'), pending: uploadChanged(key) });
 			}
 		});
 		Object.keys(DATA.colours).forEach(function (key) {
-			if (String(state.colours[key]).toLowerCase() !== String(REF.colours[key]).toLowerCase()) {
-				list.push({ name: DATA.colours[key].label, swatch: state.colours[key], now: state.colours[key], was: REF.colours[key], reset: 'colour:' + key });
+			var saved = String(SAVED.colours[key]).toLowerCase(), ref = String(REF.colours[key]).toLowerCase(), now = String(state.colours[key]).toLowerCase();
+			if (saved !== ref) {
+				list.push({ name: DATA.colours[key].label, swatch: SAVED.colours[key], now: SAVED.colours[key], was: REF.colours[key], reset: 'colour:' + key, pending: now !== saved, isReset: now === ref });
 			}
 		});
 		['main', 'heading'].forEach(function (which) {
-			if (state.fonts[which] !== REF.fonts[which] || (state.fonts[which] === 'custom' && customName(which) !== (REF.fonts[which + 'custom'] || ''))) {
-				list.push({ name: lang(which === 'main' ? 'MAIN_FONT' : 'SECONDARY_FONT'), now: fontShown(which), reset: 'font:' + which });
+			var same = function (a, b) { return a[which] === b[which] && (a[which] !== 'custom' || (a[which + 'custom'] || '') === (b[which + 'custom'] || '')); };
+			if (!same(SAVED.fonts, REF.fonts)) {
+				list.push({ name: lang(which === 'main' ? 'MAIN_FONT' : 'SECONDARY_FONT'), now: fontShownIn(SAVED.fonts, which), reset: 'font:' + which, pending: !same(state.fonts, SAVED.fonts), isReset: same(state.fonts, REF.fonts) });
 			}
 		});
-		if (WIDTH && state.contentWidth !== REF.contentWidth) {
-			list.push({ name: lang('WIDTH'), now: widthName(state.contentWidth), was: widthName(REF.contentWidth), reset: 'contentwidth' });
+		if (WIDTH && SAVED.contentWidth !== REF.contentWidth) {
+			list.push({ name: lang('WIDTH'), now: widthName(SAVED.contentWidth), was: widthName(REF.contentWidth), reset: 'contentwidth', pending: state.contentWidth !== SAVED.contentWidth, isReset: state.contentWidth === REF.contentWidth });
 		}
 		Object.keys(MAP.tokens).forEach(function (token) {
-			var was = has(REF.overrides, token) ? REF.overrides[token] : entry(token)['default'];
-			if (String(value(token)) !== String(was)) {
-				list.push({ token: token, name: fullLabel(token), now: show(token, value(token)), was: show(token, was), swatch: type(token) === 'colour' ? tokenHex(token) : '', reset: 'token:' + token });
+			var saved = has(SAVED.overrides, token) ? SAVED.overrides[token] : presetValue(token);
+			var ref = has(REF.overrides, token) ? REF.overrides[token] : entry(token)['default'];
+			if (String(saved) !== String(ref)) {
+				list.push({ token: token, name: fullLabel(token), now: show(token, saved), was: show(token, ref), swatch: type(token) === 'colour' ? refHex(saved) : '', reset: 'token:' + token,
+					pending: String(value(token)) !== String(saved), isReset: String(value(token)) === String(ref) });
 			}
 		});
 		return list;
@@ -745,21 +752,26 @@
 		return '<div class="formulize-editor__chg"><span class="formulize-editor__chg-name">' + (c.token && DESKTOP_OF[c.token] ? ICON.phone + ' ' : '') + esc(c.name) + '</span>' +
 			'<span class="formulize-editor__chg-acts">' + (c.token && !SIMPLE ? '<button type="button" class="formulize-editor__link formulize-editor__link--plain" data-select="' + home(c.token) + '">' + langHtml('SHOW') + '</button>' : '') + button + '</span>' +
 			(c.token ? '<span class="formulize-editor__chg-part">' + esc(usedBy(c.token).map(function (k) { return MAP.components[k].name; }).join(', ')) + '</span>' : '') +
-			'<span class="formulize-editor__chg-val">' + (c.swatch ? '<span class="formulize-editor__swatch formulize-editor__swatch--sm" style="background:' + esc(c.swatch) + '"></span>' : '') + '<b>' + esc(c.now) + '</b>' + (c.was !== undefined ? c.wasText || '' : '') + '</span></div>';
+			'<span class="formulize-editor__chg-val">' + (c.swatch ? '<span class="formulize-editor__swatch formulize-editor__swatch--sm" style="background:' + esc(c.swatch) + '"></span>' : '') + '<b>' + esc(c.now) + '</b>' + (c.was !== undefined ? c.wasText || '' : '') + '</span>' +
+			(c.note ? '<span class="formulize-editor__chg-note">' + esc(c.note) + '</span>' : '') + '</div>';
 	}
-	function changesBlock() {
-		var pending = unsaved(), here = changedHere(), h = '';
-		h += sect(lang('NOT_SAVED'));
-		h += pending.length ? pending.map(function (c) {
+	// The two panels of changes, each opened by its button in the top bar: what the look
+	// changes from its base, saved or not, with Reset; and what hasn't been saved, with
+	// Undo and Undo all.
+	var changesPanels = [$('formulize-editor-diff-panel'), $('formulize-editor-unsaved-panel')];
+	function renderChanges() {
+		var pending = unsaved(), here = savedHere();
+		$('formulize-editor-diff-body').innerHTML = here.length ? '<p class="formulize-editor__intro">' + esc(lang('DIFFERS', refText())) + '</p>' + here.map(function (c) {
+			c.wasText = c.was !== undefined ? ' · ' + esc(lang('BASE_IS', baseName(), c.was)) : '';
+			c.note = c.isReset ? lang('RESET_NOT_SAVED') : (c.pending ? lang('CHANGED_NOT_SAVED') : '');
+			// a reset already made has nothing more to reset; undoing it is in the other list
+			return changeRow(c, c.reset && !c.isReset ? '<button type="button" class="formulize-editor__link" data-refreset="' + esc(c.reset) + '">' + langHtml('RESET') + '</button>' : '');
+		}).join('') : '<p class="formulize-editor__intro">' + esc(lang('SAME_AS_REF', refText())) + '</p>';
+		$('formulize-editor-unsaved-body').innerHTML = pending.length ? pending.map(function (c) {
 			c.wasText = c.was !== undefined ? ' · ' + esc(lang('WAS', c.was)) : '';
 			return changeRow(c, '<button type="button" class="formulize-editor__link" data-undo="' + esc(c.undo) + '">' + langHtml('UNDO') + '</button>');
 		}).join('') : '<p class="formulize-editor__intro">' + langHtml('ALL_SAVED') + '</p>';
-		h += sect(lang('WHAT_CHANGES', EDIT.name));
-		h += here.length ? '<p class="formulize-editor__intro">' + esc(lang('DIFFERS', refText())) + '</p>' + here.map(function (c) {
-			c.wasText = c.was !== undefined ? ' · ' + esc(lang('BASE_IS', baseName(), c.was)) : '';
-			return changeRow(c, c.reset ? '<button type="button" class="formulize-editor__link" data-refreset="' + esc(c.reset) + '">' + langHtml('RESET') + '</button>' : '');
-		}).join('') : '<p class="formulize-editor__intro">' + esc(lang('SAME_AS_REF', refText())) + '</p>';
-		return h;
+		$('formulize-editor-unsaved-foot').innerHTML = '<button type="button" class="formulize-editor__btn" data-undo-all="1"' + (pending.length && !READONLY ? '' : ' disabled') + '>' + langHtml('UNDO_ALL') + '</button>';
 	}
 
 	function renderInspector() {
@@ -775,12 +787,9 @@
 			// the logo's images, and in advanced mode its tokens too (the top bar's height, which it is sized from)
 			body.innerHTML = c.site === 'logo' ? uploadBlock('appearance_logo') + uploadBlock('appearance_favicon') + (SIMPLE ? '' : partBlock(c)) : partBlock(c);
 		} else {
-			var n = changeCount();
-			head.innerHTML = '<div class="formulize-editor__kicker">' + langHtml('NOTHING_SELECTED') + '</div>' +
-				'<div class="formulize-editor__seg formulize-editor__seg--full" role="tablist" aria-label="' + langHtml('SETTINGS') + '">' +
-					'<button type="button" role="tab" data-tab="site" aria-pressed="' + (state.tab === 'site') + '" aria-selected="' + (state.tab === 'site') + '">' + langHtml('TAB_SITE') + '</button>' +
-					'<button type="button" role="tab" data-tab="changes" aria-pressed="' + (state.tab === 'changes') + '" aria-selected="' + (state.tab === 'changes') + '">' + (n ? langHtml('TAB_CHANGES_COUNT', n) : langHtml('TAB_CHANGES')) + '</button></div>';
-			body.innerHTML = state.tab === 'site' ? siteBlock() : changesBlock() + gapsBlock(MAP.gaps);
+			// the look's own settings; what has changed is in the Changes panel
+			head.innerHTML = '<div class="formulize-editor__kicker">' + langHtml('NOTHING_SELECTED') + '</div><div class="formulize-editor__title"><h2>' + langHtml('TAB_SITE') + '</h2></div>';
+			body.innerHTML = siteBlock() + (SIMPLE ? '' : gapsBlock(MAP.gaps));
 		}
 	}
 
@@ -789,12 +798,17 @@
 		enforce();
 		applyTokens();
 		var n = changeCount(), count = $('formulize-editor-count');
-		count.hidden = n === 0; count.textContent = lang(n === 1 ? 'UNSAVED_CHANGE' : 'UNSAVED_CHANGES', n);
-		$('formulize-editor-reset').disabled = n === 0 || READONLY;
+		count.hidden = n === 0; count.textContent = n;
+		// Unsaved changes is for undoing them: with nothing to undo it is disabled, and its panel closes
+		var edits = $('formulize-editor-unsaved');
+		edits.disabled = n === 0;
+		edits.setAttribute('aria-label', n ? lang(n === 1 ? 'UNSAVED_CHANGE' : 'UNSAVED_CHANGES', n) : lang('UNSAVED'));
+		if (n === 0 && changesPanels[1].matches(':popover-open')) { changesPanels[1].hidePopover(); }
+		renderChanges();
 		$('formulize-editor-save').disabled = READONLY || state.saving || n === 0;
 		drawLive();
 		// keep focus, and the inspector's scroll position, across the re-render
-		var f = document.activeElement, attrs = ['data-token', 'data-d', 'data-v', 'data-cw', 'data-custom', 'data-hex', 'data-colour', 'data-font', 'data-custom-font', 'data-size', 'data-cwidth', 'data-cwidth-px', 'data-tab'];
+		var f = document.activeElement, attrs = ['data-token', 'data-d', 'data-v', 'data-cw', 'data-custom', 'data-hex', 'data-colour', 'data-font', 'data-custom-font', 'data-size', 'data-cwidth', 'data-cwidth-px'];
 		var key = (f && f.getAttribute && (body.contains(f) || head.contains(f))) ? attrs.map(function (a) { return f.getAttribute(a) || ''; }) : null;
 		var scroll = body.parentNode.scrollTop;
 		renderInspector();
@@ -944,9 +958,20 @@
 		var b = ev.target.closest('button'); if (!b) { return; }
 		if (b.getAttribute('data-deselect')) { select(null, null); }
 		else if (b.getAttribute('data-goto')) { goScreen(b.getAttribute('data-goto')); }
-		else if (b.getAttribute('data-tab')) { state.tab = b.getAttribute('data-tab'); render(); }
 	});
-	document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && state.sel) { select(null, null); } });
+	// the panels of changes: Show (which closes the panel to show the part), Undo, Reset and Undo all
+	changesPanels.forEach(function (panel) {
+		panel.addEventListener('click', function (ev) {
+			var b = ev.target.closest('button'); if (!b) { return; }
+			var a = function (n) { return b.getAttribute(n); };
+			if (a('data-select')) { panel.hidePopover(); select(a('data-select'), null); }
+			else if (a('data-undo')) { undo(a('data-undo')); render(); panel.focus(); }
+			else if (a('data-refreset')) { resetToReference(a('data-refreset')); render(); panel.focus(); }
+			else if (a('data-undo-all')) { undoAll(); }
+		});
+	});
+	// Esc closes an open panel first, and only then lets go of the selected part
+	document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && state.sel && !document.querySelector('.fz-popover:popover-open')) { select(null, null); } });
 	$('formulize-editor-canvas').addEventListener('click', function (ev) { if (ev.target === ev.currentTarget) { select(null, null); } });
 	// a logo or favicon chosen from the inspector shows in the preview straight away
 	Object.keys(UPLOADS).forEach(function (key) {
@@ -970,7 +995,7 @@
 		b.addEventListener('click', function () { setWidth(b.getAttribute('data-w')); });
 	});
 	// back to how the look was last saved
-	$('formulize-editor-reset').addEventListener('click', function () {
+	function undoAll() {
 		if (!window.confirm(lang('RESET_CONFIRM', EDIT.name))) { return; }
 		state.overrides = copy(SAVED.overrides);
 		state.colours = copy(SAVED.colours);
@@ -978,7 +1003,7 @@
 		state.contentWidth = SAVED.contentWidth;
 		Object.keys(UPLOADS).forEach(resetUpload);
 		render();
-	});
+	}
 
 	/* ---- the simple editor and the advanced one ---- */
 	// Switched in place: what hasn't been saved stays. The address says which, so a
