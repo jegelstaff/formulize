@@ -46,7 +46,7 @@ Each look is a row. A look based on another is listed under it, indented, with a
   - **Duplicate**: a look with the same base and the same changes as this one. It looks the same,
     but it doesn't follow this look afterwards, and the looks based on this one aren't copied.
   - **Rename**. Screens and looks that use it keep using it.
-  - **Change base**: base it on another look, or on nothing. It keeps its own changes and takes
+  - **Change base**: base it on another look, or on no base look. It keeps its own changes and takes
     everything else from its new base; any of its changes that are the same as the new base's are
     dropped. The looks based on it move with it. It can't be based on itself, or on a look based
     on it.
@@ -60,15 +60,15 @@ Each look is a row. A look based on another is listed under it, indented, with a
 **Create new look** asks for:
 
 - a **name**;
-- what it is **based on**: one of the theme's looks, or *Nothing*, to start from the theme's own
-  appearance;
+- what it is **based on**: one of the theme's looks, or *No base look*, to start from the theme
+  itself (*the Lyris theme*);
 - its **size**: the same as its base, or *Standard*, *Compact* or *Comfortable* (see Sizes below).
 
 A new look changes nothing yet, apart from its size, so it looks just like its base until you edit it.
 
 ## How looks build on each other
 
-A theme starts with one look, **Default**, which is based on nothing. Default is an ordinary look:
+A theme starts with one look, **Default**, which has no base look. Default is an ordinary look:
 you can rename it, change it, or delete it, once another look is the site look and no look is based
 on it.
 
@@ -111,7 +111,8 @@ simple editor only.
 
 Everything is measured against the look's base. A setting the look doesn't change says it comes from
 its base (*from Default*), and one it does change has a way back to its base's (*Use Default's*, or
-**Reset**). For a look based on nothing, it is measured against the theme's own appearance.
+**Reset**). For a look with no base look, it is measured against the theme itself (*from the Lyris
+theme*).
 
 ### The simple editor
 
@@ -179,8 +180,8 @@ at phone widths.
 Two buttons at the top, beside Save, each open a list. The panel on the right is left for settings:
 with nothing selected, it has the look's own, under **Branding and layout**.
 
-- **Saved changes**: what the look, as saved, changes from its base (or from the theme's own
-  settings, for a look based on nothing), each with what the base has and **Reset** to go back to
+- **Saved changes**: what the look, as saved, changes from its base (or from the theme, for a look
+  with no base look), each with what the base has and **Reset** to go back to
   it. What you haven't saved isn't here, it's in the other list; a saved change you have changed
   again, or reset, says so until you save.
 - **Unsaved changes**, with how many there are: what you have changed since the last save, each with

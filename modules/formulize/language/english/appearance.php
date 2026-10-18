@@ -65,7 +65,7 @@ define('_AM_APPEARANCE_CHANGE_WIDTH', 'Page width');
 define('_AM_APPEARANCE_CHANGE_SIZE', 'Size');
 define('_AM_APPEARANCE_CHANGE_PART', 'Part');
 define('_AM_APPEARANCE_CHANGE_PARTS', 'Parts');
-define('_AM_APPEARANCE_CHANGE_THEME_OWN', '%s\'s own');
+define('_AM_APPEARANCE_CHANGE_THEME_OWN', 'The %s theme\'s'); // a logo, font or width that is the theme's
 define('_AM_APPEARANCE_CHANGE_MAIN_FONT', 'the main font');
 define('_AM_APPEARANCE_CHANGE_HEADINGS', '%s for headings');
 define('_AM_APPEARANCE_CHANGE_FULL_WIDTH', 'Full width');
@@ -140,8 +140,8 @@ define('_AM_APPEARANCE_LOOKS_COL_CHANGES', 'Changes');
 define('_AM_APPEARANCE_LOOKS_COL_USED', 'Used by');
 define('_AM_APPEARANCE_LOOKS_COL_ACTIONS', 'Actions');
 define('_AM_APPEARANCE_LOOKS_SITE_LOOK', 'Site look');
-define('_AM_APPEARANCE_LOOKS_NOTHING', 'Nothing');
-define('_AM_APPEARANCE_LOOKS_THEME_SETTINGS', '%s\'s own settings');
+define('_AM_APPEARANCE_LOOKS_NOTHING', 'No base look');
+define('_AM_APPEARANCE_LOOKS_THEME_SETTINGS', 'the %s theme'); // what a look with no base look starts from, in a sentence
 
 // the Changes column, and its popover
 define('_AM_APPEARANCE_LOOKS_BRANDING', 'Branding');
@@ -198,7 +198,7 @@ define('_AM_APPEARANCE_LOOKS_DELETE', 'Delete');
 define('_AM_APPEARANCE_LOOKS_NAME', 'Name');
 define('_AM_APPEARANCE_LOOKS_CANCEL', 'Cancel');
 define('_AM_APPEARANCE_LOOKS_CLOSE', 'Close');
-define('_AM_APPEARANCE_LOOKS_BASE_NOTHING', 'Nothing: start from %s\'s own settings');
+define('_AM_APPEARANCE_LOOKS_BASE_NOTHING', 'No base look: start from the %s theme');
 define('_AM_APPEARANCE_LOOKS_BASE_THIS', '(this look)');
 define('_AM_APPEARANCE_LOOKS_BASE_DESCENDANT', '(based on this look)');
 define('_AM_APPEARANCE_LOOKS_CREATE_BASE_HELP', 'The new look follows its base, except for what you change in it.');
@@ -212,7 +212,7 @@ define('_AM_APPEARANCE_LOOKS_LIST', ' (%s)'); // what a look changes, after its 
 define('_AM_APPEARANCE_LOOKS_DUPLICATE_TITLE', 'Duplicate %s');
 define('_AM_APPEARANCE_LOOKS_COPY_NAME', '%s copy');
 define('_AM_APPEARANCE_LOOKS_DUPLICATE_TEXT', 'The copy is based on %1$s, like %2$s, and starts with %2$s\'s own changes%3$s. It looks the same, but won\'t follow %2$s after this.');
-define('_AM_APPEARANCE_LOOKS_DUPLICATE_NOTHING', 'nothing');
+define('_AM_APPEARANCE_LOOKS_DUPLICATE_TEXT_NO_BASE', 'The copy has no base look, like %1$s, and starts with %1$s\'s own changes%2$s. It looks the same, but won\'t follow %1$s after this.');
 define('_AM_APPEARANCE_LOOKS_DUPLICATE_CHILDREN', 'The looks based on %s aren\'t copied.');
 define('_AM_APPEARANCE_LOOKS_RENAME_TITLE', 'Rename %s');
 define('_AM_APPEARANCE_LOOKS_RENAME_TEXT', 'Screens and looks that use it keep using it.');
@@ -244,7 +244,7 @@ define('_AM_APPEARANCE_EDITOR_HEADING', 'Appearance');
 define('_AM_APPEARANCE_EDITOR_NO_SAMPLES', 'The %s theme can\'t be edited here: it has no sample screens to preview its appearance on (see "What Formulize expects from a theme" in the documentation).');
 define('_AM_APPEARANCE_EDITOR_BACK', 'Back to Looks');
 define('_AM_APPEARANCE_EDITOR_BASED_ON', '%1$s · based on %2$s');
-define('_AM_APPEARANCE_EDITOR_BASED_ON_NOTHING', '%s · based on nothing');
+define('_AM_APPEARANCE_EDITOR_BASED_ON_NOTHING', '%s · no base look');
 define('_AM_APPEARANCE_EDITOR_MODE', 'Editor');
 define('_AM_APPEARANCE_EDITOR_SIMPLE', 'Simple');
 define('_AM_APPEARANCE_EDITOR_ADVANCED', 'Advanced');
@@ -300,10 +300,10 @@ define('_AM_APPEARANCE_EDITOR_JS_BRANDING_LAYOUT', 'Branding and layout'); // th
 
 // values, and what they are measured against
 define('_AM_APPEARANCE_EDITOR_JS_POSSESSIVE', '%s’s');
-define('_AM_APPEARANCE_EDITOR_JS_THEMES', 'the theme’s');
-define('_AM_APPEARANCE_EDITOR_JS_THEME_OWN', 'the theme’s own');
-define('_AM_APPEARANCE_EDITOR_JS_THEME_OWN_CAP', 'The theme’s own');
-define('_AM_APPEARANCE_EDITOR_JS_THEME_APPEARANCE', 'the theme’s own appearance');
+define('_AM_APPEARANCE_EDITOR_JS_THEMES', 'the %s theme’s'); // %s is the theme, for a look with no base look
+define('_AM_APPEARANCE_EDITOR_JS_THEME_OWN', 'from the %s theme');
+define('_AM_APPEARANCE_EDITOR_JS_THEME_OWN_CAP', 'The %s theme’s');
+define('_AM_APPEARANCE_EDITOR_JS_THEME_APPEARANCE', 'the %s theme');
 define('_AM_APPEARANCE_EDITOR_JS_FROM', 'from %s');
 define('_AM_APPEARANCE_EDITOR_JS_CHANGED_BY', 'changed by this look · %1$s is %2$s');
 define('_AM_APPEARANCE_EDITOR_JS_CHARACTERS', '%s characters');
@@ -349,7 +349,7 @@ define('_AM_APPEARANCE_EDITOR_JS_INTRO_WIDTH', 'This look’s logo, colours, fon
 define('_AM_APPEARANCE_EDITOR_JS_INTRO_SIZE', 'This look’s logo, colours, fonts and size.');
 define('_AM_APPEARANCE_EDITOR_JS_INTRO_WIDTH_SIZE', 'This look’s logo, colours, fonts, page width and size.');
 define('_AM_APPEARANCE_EDITOR_JS_INTRO_BASE', 'Anything it doesn’t change comes from %s, and follows it when it changes.');
-define('_AM_APPEARANCE_EDITOR_JS_INTRO_THEME', 'Anything it doesn’t change is the theme’s own.');
+define('_AM_APPEARANCE_EDITOR_JS_INTRO_THEME', 'Anything it doesn’t change comes from the %s theme.');
 define('_AM_APPEARANCE_EDITOR_JS_INTRO_CLICK', 'Click anything in the preview to change just that part.');
 define('_AM_APPEARANCE_EDITOR_JS_SECTION_LOGO', 'Logo');
 define('_AM_APPEARANCE_EDITOR_JS_SECTION_FONTS', 'Fonts');
@@ -363,10 +363,10 @@ define('_AM_APPEARANCE_EDITOR_JS_UPLOAD', 'Upload…');
 define('_AM_APPEARANCE_EDITOR_JS_UPLOAD_NEW', 'A new image, saved when you save.');
 define('_AM_APPEARANCE_EDITOR_JS_UPLOAD_OWN', 'This look’s own.');
 define('_AM_APPEARANCE_EDITOR_JS_UPLOAD_BASE', '%s’s.');
-define('_AM_APPEARANCE_EDITOR_JS_UPLOAD_THEME', 'The theme’s own.');
+define('_AM_APPEARANCE_EDITOR_JS_UPLOAD_THEME', 'The %s theme’s.');
 define('_AM_APPEARANCE_EDITOR_JS_UPLOAD_STATUS', '%1$s %2$s.'); // whose image it is, then the kinds of file it can be
 define('_AM_APPEARANCE_EDITOR_JS_USE_BASE', 'Use %s’s');
-define('_AM_APPEARANCE_EDITOR_JS_USE_THEME', 'Use the theme’s own');
+define('_AM_APPEARANCE_EDITOR_JS_USE_THEME', 'Use the %s theme’s');
 define('_AM_APPEARANCE_EDITOR_JS_RESET_TO', 'Reset to %s');
 define('_AM_APPEARANCE_EDITOR_JS_MAIN_FONT_DESC', 'Fields, buttons, lists and help text, and any other part set to the main font.');
 define('_AM_APPEARANCE_EDITOR_JS_SECONDARY_FONT_DESC', 'Titles and field labels, and any other part set to the secondary font. Leave it on the main font to use one font throughout.');
@@ -382,7 +382,7 @@ define('_AM_APPEARANCE_EDITOR_JS_SIZE_CUSTOM_DESC', 'Its sizes have been changed
 define('_AM_APPEARANCE_EDITOR_JS_SIZE_BASE_DESC', 'It has the sizes of %s, and follows them when they change.');
 define('_AM_APPEARANCE_EDITOR_JS_SIZE_CONFIRM', 'Its sizes have been changed in the advanced editor. Replace them with %s?');
 define('_AM_APPEARANCE_EDITOR_JS_WIDTH', 'Page width');
-define('_AM_APPEARANCE_EDITOR_JS_WIDTH_DESC', 'How wide pages can get on a wide screen. A maximum width keeps forms and lists to a column of that width, in the middle of the window. The theme’s own is %s. The preview is narrower than most screens, so it may not show the difference.');
+define('_AM_APPEARANCE_EDITOR_JS_WIDTH_DESC', 'How wide pages can get on a wide screen. A maximum width keeps forms and lists to a column of that width, in the middle of the window. The %2$s theme’s is %1$s. The preview is narrower than most screens, so it may not show the difference.');
 define('_AM_APPEARANCE_EDITOR_JS_MAX_WIDTH', 'Maximum width');
 define('_AM_APPEARANCE_EDITOR_JS_WIDTH_PX', 'Maximum width, in pixels, from %1$s to %2$s');
 
