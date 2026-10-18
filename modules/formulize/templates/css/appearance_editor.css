@@ -1,6 +1,6 @@
 /* The advanced editor (modules/formulize/appearance_editor.php): a live
    preview of the theme's sample screens, and an inspector for the part of it
-   that is selected, or for the site-wide settings. Built on Formulize UI's tokens; the classes are formulize-,
+   that is selected, or for the look's branding and layout. Built on Formulize UI's tokens; the classes are formulize-,
    since the page is Formulize's own. */
 
 .formulize-editor {
@@ -175,7 +175,7 @@ html:has(> .formulize-editor) { height: 100%; }
 .formulize-editor__dev.is-active .formulize-editor__dev-icon { color: var(--editor-sel); }
 .formulize-editor__dev-name { font-size: 0.78rem; color: var(--fz-color-text-muted); }
 .formulize-editor__dev > .formulize-editor__widget, .formulize-editor__dev > .formulize-editor__val, .formulize-editor__dev > .formulize-editor__note { grid-column: 1 / -1; }
-/* site-wide settings */
+/* branding and layout: the look's own settings */
 .formulize-editor__upload { display: flex; align-items: center; gap: 12px; padding: 10px; border: 1px solid var(--fz-color-border); border-radius: 8px; background: var(--fz-color-surface-2); }
 .formulize-editor__thumb { flex: none; width: 120px; height: 44px; display: grid; place-items: center; background: #fff; border: 1px solid var(--fz-color-border); border-radius: 6px; overflow: hidden; color: var(--fz-color-text-subtle); }
 .formulize-editor__thumb--icon { width: 44px; }

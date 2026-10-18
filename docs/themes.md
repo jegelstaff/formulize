@@ -289,7 +289,7 @@ mode only, such as Anari (`themes/Anari/appearance_preview/`), only needs to mar
 
 ## 7. Offer the Page width setting (optional)
 
-The Page width setting, in the Appearance editor's site-wide settings, keeps
+The Page width setting, in the Appearance editor's Branding and layout, keeps
 pages to a maximum width on a wide screen, or lets them use the full width of the window. It sets
 `--formulize-content-max-width`: a width in pixels, or `100%` for full width. Laying the page out to
 that width is up to the theme, so a theme says when it does, and only then is the setting offered.

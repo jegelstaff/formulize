@@ -249,7 +249,7 @@
    so setting one changes that part everywhere; the Appearance page's advanced
    editor sets them, and what each can be set to is in appearance_tokens.json.
 
-   Each one defaults to the site-wide setting it has always followed: a font is
+   Each one defaults to the look's setting it has always followed: a font is
    the main font (--fz-font-sans) or the secondary one (--fz-font-heading), and
    a colour is one of the palette's, so changing the palette still changes every
    part that hasn't been given a colour of its own. Keep them written that way

@@ -388,7 +388,7 @@ HTML
             array(
                 'id' => 'tokens-component-colours',
                 'name' => 'Component fonts, colours and corners',
-                'summary' => 'Which font each kind of text is set in, the colours of the parts of the interface, and their corners; and for written content, its link underlines, list markers and the thickness of its lines; and the side menu\'s fonts, colours and corners. The components use them. Each follows a site-wide setting from the Appearance page (the main or secondary font, one of the colours) until the Appearance page\'s advanced editor gives that part its own.',
+                'summary' => 'Which font each kind of text is set in, the colours of the parts of the interface, and their corners; and for written content, its link underlines, list markers and the thickness of its lines; and the side menu\'s fonts, colours and corners. The components use them. Each follows one of the look\'s branding settings on the Appearance page (the main or secondary font, one of the colours) until the Appearance page\'s advanced editor gives that part its own.',
                 'tokens' => formulize_uiSizeTokens(false),
                 'notes' => array(
                     'Use them in your own CSS so it matches the components: `background: var(--fz-button-primary-bg)`, `border-radius: var(--fz-field-radius)`, `font-family: var(--fz-label-font)`.',

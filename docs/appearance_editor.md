@@ -177,7 +177,7 @@ at phone widths.
 ### Changes
 
 Two buttons at the top, beside Save, each open a list. The panel on the right is left for settings:
-with nothing selected, it has the look's own.
+with nothing selected, it has the look's own, under **Branding and layout**.
 
 - **Saved changes**: what the look, as saved, changes from its base (or from the theme's own
   settings, for a look based on nothing), each with what the base has and **Reset** to go back to
