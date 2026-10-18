@@ -603,7 +603,7 @@ ob_start();
 				<label class="fz-field__label" for="<?php echo $id; ?>-duplicate-name"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_NAME); ?></label>
 				<div class="fz-field__body"><input class="fz-input" id="<?php echo $id; ?>-duplicate-name" name="name" type="text" maxlength="60" required autocomplete="off" value="<?php echo formulize_looksH(sprintf(_AM_APPEARANCE_LOOKS_COPY_NAME, $look['name'])); ?>"></div>
 			</div>
-			<p><?php echo formulize_looksT(_AM_APPEARANCE_LOOKS_DUPLICATE_TEXT, formulize_looksH($look['base'] !== '' ? $looks[$look['base']]['name'] : _AM_APPEARANCE_LOOKS_DUPLICATE_NOTHING), $name, $changeList); ?></p>
+			<p><?php echo $look['base'] !== '' ? formulize_looksT(_AM_APPEARANCE_LOOKS_DUPLICATE_TEXT, formulize_looksH($looks[$look['base']]['name']), $name, $changeList) : formulize_looksT(_AM_APPEARANCE_LOOKS_DUPLICATE_TEXT_NO_BASE, $name, $changeList); ?></p>
 			<?php if ($children) { ?><p class="fz-text-muted"><?php echo formulize_looksT(_AM_APPEARANCE_LOOKS_DUPLICATE_CHILDREN, $name); ?></p><?php } ?>
 		</div>
 		<div class="fz-dialog__footer">

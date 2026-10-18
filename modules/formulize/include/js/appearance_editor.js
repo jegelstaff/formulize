@@ -132,7 +132,7 @@
 	function value(token) { return has(state.overrides, token) ? state.overrides[token] : presetValue(token); }
 	function changed(token) { return has(state.overrides, token); }
 	// what a value is measured against, in a sentence: the base's, or the theme's own
-	function baseName() { return BASE ? lang('POSSESSIVE', EDIT.baseName) : lang('THEMES'); }
+	function baseName() { return BASE ? lang('POSSESSIVE', EDIT.baseName) : lang('THEMES', DATA.theme); }
 	function css(token, v) {
 		var t = type(token);
 		if (t === 'spacing') { return 'calc(var(--fz-spacing) * ' + v + ')'; }
@@ -449,7 +449,7 @@
 		if (t === 'colour') {
 			var open = state.openColour === token, hex = tokenHex(token), c = MAP.colours[v];
 			var w = '<button type="button" class="formulize-editor__cw" id="' + id + '" data-cw="' + token + '" aria-expanded="' + open + '"><span class="formulize-editor__swatch" style="background:' + hex + '"></span>' +
-				'<span class="formulize-editor__cw-name">' + esc(show(token, v)) + '</span><span class="formulize-editor__cw-from">' + esc(c ? (c.from ? lang('FROM', DATA.colours[c.from].label) : lang('THEMES')) : lang('COLOUR_OWN')) + '</span><span class="formulize-editor__cw-chev" aria-hidden="true">⌄</span></button>';
+				'<span class="formulize-editor__cw-name">' + esc(show(token, v)) + '</span><span class="formulize-editor__cw-from">' + esc(c ? (c.from ? lang('FROM', DATA.colours[c.from].label) : lang('THEMES', DATA.theme)) : lang('COLOUR_OWN')) + '</span><span class="formulize-editor__cw-chev" aria-hidden="true">⌄</span></button>';
 			if (open) {
 				w += '<div class="formulize-editor__cw-pop"><p class="formulize-editor__cw-head">' + langHtml('SITE_COLOURS') + '</p><div class="formulize-editor__cw-grid">' + MAP.types.colour.values.map(function (name) {
 					return '<button type="button" class="formulize-editor__cw-opt" data-token="' + token + '" data-v="' + name + '" aria-pressed="' + (v === name) + '"><span class="formulize-editor__swatch" style="background:' + refHex(name) + '"></span><span>' + esc(MAP.colours[name].label) + '</span></button>';
@@ -477,7 +477,7 @@
 		var v = value(token), t = type(token);
 		var from = changed(token)
 			? lang('CHANGED_BY', baseName(), show(token, presetValue(token)))
-			: (BASE ? lang('FROM', EDIT.baseName) : lang('THEME_OWN'));
+			: (BASE ? lang('FROM', EDIT.baseName) : lang('THEME_OWN', DATA.theme));
 		if (t === 'colour' || t === 'font') { return changed(token) ? '<span class="formulize-editor__from">' + esc(from) + '</span>' : ''; }
 		return '<b>' + esc(show(token, v)) + '</b><span class="formulize-editor__from">' + esc(from) + '</span>';
 	}
@@ -555,14 +555,14 @@
 		var status = state.uploads[key].file ? lang('UPLOAD_NEW')
 			: own && !removed ? lang('UPLOAD_OWN')
 			: BASE ? lang('UPLOAD_BASE', EDIT.baseName)
-			: lang('UPLOAD_THEME');
+			: lang('UPLOAD_THEME', DATA.theme);
 		var removable = (own && !removed) || state.uploads[key].file;
 		return '<div class="formulize-editor__ctl' + (uploadChanged(key) ? ' is-changed' : '') + '">' +
 			'<div class="formulize-editor__ctl-head"><span class="formulize-editor__lbl">' + esc(UPLOADS[key]) + '</span>' + (uploadChanged(key) ? '<button type="button" class="formulize-editor__link" data-upload-undo="' + key + '">' + langHtml('UNDO') + '</button>' : '') + '</div>' +
 			'<p class="formulize-editor__desc">' + desc + '</p>' +
 			'<div class="formulize-editor__upload"><span class="formulize-editor__thumb' + (isLogo ? '' : ' formulize-editor__thumb--icon') + '">' + thumb + '</span>' +
 				'<span class="formulize-editor__upload-acts"><label class="formulize-editor__btn formulize-editor__btn--sm" for="formulize-editor-' + key + '">' + langHtml('UPLOAD') + '</label>' +
-				(removable ? '<button type="button" class="formulize-editor__btn formulize-editor__btn--sm" data-upload-remove="' + key + '">' + esc(BASE ? lang('USE_BASE', EDIT.baseName) : lang('USE_THEME')) + '</button>' : '') +
+				(removable ? '<button type="button" class="formulize-editor__btn formulize-editor__btn--sm" data-upload-remove="' + key + '">' + esc(BASE ? lang('USE_BASE', EDIT.baseName) : lang('USE_THEME', DATA.theme)) + '</button>' : '') +
 				'<span class="formulize-editor__upload-status">' + esc(lang('UPLOAD_STATUS', status, DATA.uploads[key].types)) + '</span></span></div>' +
 		'</div>';
 	}
@@ -584,7 +584,7 @@
 		var sized = SIMPLE && DATA.sizes.length;
 		var h = '<p class="formulize-editor__intro">' + esc([
 			lang(WIDTH ? (sized ? 'INTRO_WIDTH_SIZE' : 'INTRO_WIDTH') : (sized ? 'INTRO_SIZE' : 'INTRO')),
-			BASE ? lang('INTRO_BASE', EDIT.baseName) : lang('INTRO_THEME'),
+			BASE ? lang('INTRO_BASE', EDIT.baseName) : lang('INTRO_THEME', DATA.theme),
 			SIMPLE ? '' : lang('INTRO_CLICK')
 		].join(' ').trim()) + '</p>';
 		h += sect(lang('SECTION_LOGO')) + uploadBlock('appearance_logo') + uploadBlock('appearance_favicon');
@@ -643,7 +643,7 @@
 		var full = state.contentWidth === 'full';
 		return '<div class="formulize-editor__ctl' + (widthChanged() ? ' is-changed' : '') + '"><div class="formulize-editor__ctl-head"><span class="formulize-editor__lbl" id="formulize-editor-width-label">' + langHtml('WIDTH') + '</span>' +
 				(widthChanged() ? '<button type="button" class="formulize-editor__link" data-site-reset="contentwidth">' + langHtml('RESET') + '</button>' : '') + '</div>' +
-			'<p class="formulize-editor__desc">' + esc(lang('WIDTH_DESC', lower(widthName(WIDTH.theme)))) + '</p>' +
+			'<p class="formulize-editor__desc">' + esc(lang('WIDTH_DESC', lower(widthName(WIDTH.theme)), DATA.theme)) + '</p>' +
 			'<div class="formulize-editor__seg formulize-editor__seg--full" role="group" aria-labelledby="formulize-editor-width-label">' +
 				'<button type="button" data-cwidth="max" aria-pressed="' + !full + '">' + langHtml('MAX_WIDTH') + '</button>' +
 				'<button type="button" data-cwidth="full" aria-pressed="' + full + '">' + langHtml('FULL_WIDTH') + '</button></div>' +
@@ -662,7 +662,7 @@
 		var list = [];
 		Object.keys(UPLOADS).forEach(function (key) {
 			if (uploadChanged(key)) {
-				list.push({ name: UPLOADS[key], now: state.uploads[key].file ? lang('NEW_IMAGE') : (BASE ? lang('POSSESSIVE', EDIT.baseName) : lang('THEME_OWN_CAP')), undo: 'upload:' + key });
+				list.push({ name: UPLOADS[key], now: state.uploads[key].file ? lang('NEW_IMAGE') : (BASE ? lang('POSSESSIVE', EDIT.baseName) : lang('THEME_OWN_CAP', DATA.theme)), undo: 'upload:' + key });
 			}
 		});
 		Object.keys(DATA.colours).forEach(function (key) {
@@ -705,12 +705,12 @@
 	// again, or reset, says so (pending, reset), until it is saved.
 	var REF = DATA.reference;
 	// what it is measured against, in a sentence
-	function refText() { return BASE ? EDIT.baseName : lang('THEME_APPEARANCE'); }
+	function refText() { return BASE ? EDIT.baseName : lang('THEME_APPEARANCE', DATA.theme); }
 	function savedHere() {
 		var list = [];
 		Object.keys(UPLOADS).forEach(function (key) {
 			if ((savedUploads[key] || '') !== (REF.uploads[key] || '')) {
-				list.push({ name: UPLOADS[key], now: savedUploads[key] ? lang('UPLOADED_IMAGE') : lang('THEME_OWN_CAP'), pending: uploadChanged(key) });
+				list.push({ name: UPLOADS[key], now: savedUploads[key] ? lang('UPLOADED_IMAGE') : lang('THEME_OWN_CAP', DATA.theme), pending: uploadChanged(key) });
 			}
 		});
 		Object.keys(DATA.colours).forEach(function (key) {
