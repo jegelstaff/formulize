@@ -332,7 +332,9 @@ function formulize_addAppHeadTags() {
     include_once XOOPS_ROOT_PATH . '/modules/formulize/include/appearance.php';
     $theme = formulize_getActiveAppearanceTheme();
     $colours = formulize_pwaColours($theme, formulize_appearancePageLook($theme));
-    $xoTheme->addLink('manifest', formulize_pwaPath('/modules/formulize/pwa/manifest.php'));
+    // browsers fetch a manifest without credentials unless asked to, so a site behind a password
+    // (HTTP Basic Auth, as dev sites often are) would refuse it, and the site couldn't be installed
+    $xoTheme->addLink('manifest', formulize_pwaPath('/modules/formulize/pwa/manifest.php'), array('crossorigin' => 'use-credentials'));
     $xoTheme->addMeta('meta', 'theme-color', $colours['theme']);
     $xoTheme->addLink('apple-touch-icon', formulize_getPWAIconUrl(180));
     $config = array(
