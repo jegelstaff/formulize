@@ -1339,31 +1339,6 @@ HTML
 </table>
 HTML
             ),
-            array(
-                'id' => 'dialog',
-                'name' => 'Dialog',
-                'summary' => 'A box over the page that has to be dealt with before going on: a question, a confirmation, or a few steps to follow. On a `<dialog>`.',
-                'classes' => array(
-                    'fz-dialog' => 'The dialog: a card over the page, which is dimmed behind it.',
-                    'fz-dialog__title' => 'Its heading.',
-                    'fz-dialog__actions' => 'Its buttons, at the end of the row. Put them in a `<form method="dialog">` with this class, and a button in it closes the dialog without any script.',
-                ),
-                'notes' => array(
-                    'Open it with the dialog\'s `showModal()`, never with the `open` attribute: `showModal()` dims the page, keeps the keyboard inside the dialog, and lets Escape close it.',
-                    'Give the `<dialog>` an aria-labelledby that points at its title, so screen readers announce it.',
-                ),
-                'example' => <<<'HTML'
-<button type="button" class="fz-btn" onclick="document.getElementById('sg-dialog').showModal()">Open the dialog</button>
-<dialog class="fz-dialog" id="sg-dialog" aria-labelledby="sg-dialog-title">
-  <h2 class="fz-dialog__title" id="sg-dialog-title">Delete this entry?</h2>
-  <p>The entry and its history are removed for everyone. This cannot be undone.</p>
-  <form method="dialog" class="fz-dialog__actions">
-    <button class="fz-btn">Cancel</button>
-    <button class="fz-btn fz-btn--danger">Delete</button>
-  </form>
-</dialog>
-HTML
-            ),
         ),
     );
 

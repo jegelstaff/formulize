@@ -346,6 +346,10 @@ through `<{$icms_module_header}>`, which every theme prints:
 - in a window with no browser buttons, as on an iPhone or iPad, a thin bar across the top of the
   screen while the next page loads, in the accent colour
 
+And for people who are signed in, the Formulize menu block ends with an item that installs the site,
+or shows the steps to follow on an iPhone, an iPad or a Mac, wherever the browser can install it. A
+theme that shows the menu block has it.
+
 Chrome and Edge open the app with back and reload buttons in its title bar. Safari opens it with no
 buttons at all, so the page has to supply a way back, which is point 3 below.
 
@@ -390,22 +394,11 @@ can be harder to find your way around in:
    </button>
    ```
 
-4. **Offer to install it.** Put an Install app item with your account links, styled like them.
-   Formulize removes `hidden` where the browser can install the site, and makes it install the site,
-   or show the steps to follow on an iPhone, an iPad or a Mac:
-
-   ```html
-   <a class="mytheme-account-link" href="#" role="button" data-formulize-install-app hidden>Install app</a>
-   ```
-
-   If your link's class gives it a `display` of its own, add `.mytheme-account-link[hidden] { display: none; }`,
-   or the browser's rule for `hidden` loses to it.
-
-Anari and Lyris do all four. See "A phone's notch and home bar" and "The header on phones" in each theme's `css/style.css`.
+Anari and Lyris do all three. See "A phone's notch and home bar" and "The header on phones" in each theme's `css/style.css`.
 
 On a phone, a header has little room, and the app makes that more noticeable, since the header is
 the only bar the app's window has. On phones Anari and Lyris put their links (the account links, the
-inbox, Install app) at the top of their menu instead, and arrange their header as phone apps do: the
+inbox) at the top of their menu instead, and arrange their header as phone apps do: the
 back button at the left, where people look for it, the logo in the middle, and the menu button at
 the right, at the other end from back, with the menu sliding in from that side. See "The header on
 phones" in each theme's `css/style.css`.

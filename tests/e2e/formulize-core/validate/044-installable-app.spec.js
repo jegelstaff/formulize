@@ -1,6 +1,6 @@
-const { test, expect } = require('@playwright/test');
-import { getSystemConfig, setSystemConfig } from '../../utils';
-import { E2E_TEST_BASE_URL } from '../config';
+const { test, expect, devices } = require('@playwright/test');
+import { getSystemConfig, setSystemConfig, login } from '../../utils';
+import { E2E_TEST_BASE_URL, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD } from '../config';
 
 // The site installed as an app (a progressive web app): the manifest, the head tags that make a page
 // installable, and the service worker, which does nothing but show a page saying the device is offline
@@ -114,6 +114,45 @@ test.describe('Installing the site as an app', () => {
 		await expect(page.locator('.fz-empty__title')).toHaveCount(0);
 	});
 
+	test('there is no install item for anyone who is not signed in', async ({ page }) => {
+		for (const url of ['/', '/user.php']) {
+			await page.goto(url);
+			expect(await page.locator('[data-formulize-install-app]').count(), url).toBe(0);
+		}
+	});
+
+	test('signed in on an iPhone, the last item in the menu shows the steps, and is not in the installed app', async ({ browser }) => {
+		// the iPhone's user agent and size, in Chromium: the item is chosen by user agent, and on an
+		// iPhone it shows the steps rather than waiting for an event Chromium won't fire in a test
+		const { defaultBrowserType, ...iPhone } = devices['iPhone 13'];
+		const context = await browser.newContext({ ...iPhone, baseURL: E2E_TEST_BASE_URL });
+		const page = await context.newPage();
+		try {
+			await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+			await page.goto('/modules/formulize/');
+			const item = page.locator('#mainmenu > li').last();
+			expect(await item.getAttribute('data-formulize-install-app')).not.toBeNull();
+			expect(await item.evaluate(el => el.hidden)).toBe(false);
+			await expect(item).toHaveText('Add this site to your home screen');
+			// clicked in the page, because on a phone the menu is closed
+			await item.evaluate(el => el.querySelector('a').click());
+			const dialog = page.locator('#formulize-install-app-dialog');
+			await expect(dialog.locator('.fz-dialog__title')).toHaveText('Add this site to your home screen');
+			expect(await dialog.evaluate(el => el.matches(':modal'))).toBe(true);
+			await dialog.locator('.fz-dialog__footer button').click();
+			expect(await dialog.evaluate(el => el.open)).toBe(false);
+
+			// never offered in the app itself
+			await context.addInitScript(() => {
+				Object.defineProperty(navigator, 'standalone', { get: () => true });
+			});
+			await page.reload();
+			expect(await page.locator('#mainmenu > li').last().evaluate(el => el.hidden)).toBe(true);
+		} finally {
+			await context.close();
+		}
+	});
+
 	test('in the installed app, the back button and links to new windows stay in the app', async ({ page, context }) => {
 		// Playwright can't put a page in standalone mode, so stand in iOS's own signal for it
 		await page.addInitScript(() => {
@@ -122,8 +161,6 @@ test.describe('Installing the site as an app', () => {
 		await page.goto('/user.php');
 		await page.goto('/');
 		expect(await page.evaluate(() => window.formulize.isInstalledApp())).toBe(true);
-		// the install item is never offered in the app itself
-		expect(await page.locator('[data-formulize-install-app]').first().evaluate(el => el.hidden)).toBe(true);
 		// there is a page to go back to, so the back button is unhidden
 		const back = page.locator('[data-formulize-app-back]').first();
 		expect(await back.evaluate(el => el.hidden)).toBe(false);

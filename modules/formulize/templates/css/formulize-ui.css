@@ -1657,6 +1657,9 @@
   margin: auto;
   width: min(32rem, calc(100vw - var(--fz-spacing) * 8));
   max-height: calc(100vh - var(--fz-spacing) * 8);
+  /* the part of the screen that is showing, which on a phone is less than 100vh while the browser's
+     toolbars are there; 100vh above for the browsers without dvh */
+  max-height: calc(100dvh - var(--fz-spacing) * 8);
   padding: 0;
   overflow: auto;
   overscroll-behavior: contain;
@@ -2043,49 +2046,6 @@
 /* a cell that is beside the point, while others are being looked at */
 .fz-matrix__cell--muted { opacity: 0.4; }
 :where(button).fz-matrix__cell { cursor: pointer; }
-
-/* ---- Dialog -------------------------------------------------------------------
-   A box over the page that has to be dealt with before going on: on a <dialog>,
-   opened with showModal(), which dims the page behind it, keeps the keyboard
-   inside it, and closes it with Escape. A <form method="dialog"> around its
-   buttons closes it without any script. */
-.fz-dialog {
-  --fz-gap: calc(var(--fz-spacing) * 4);
-  box-sizing: border-box;
-  width: min(calc(var(--fz-spacing) * 112), calc(100vw - var(--fz-spacing) * 8));
-  max-height: calc(100vh - var(--fz-spacing) * 8);
-  max-height: calc(100dvh - var(--fz-spacing) * 8);
-  padding: calc(var(--fz-spacing) * 6);
-  border: 1px solid var(--fz-color-border);
-  border-radius: var(--fz-radius-xl);
-  background: var(--fz-color-surface);
-  box-shadow: var(--fz-shadow-lg);
-  color: var(--fz-color-text);
-  font-family: var(--fz-font-sans);
-  line-height: var(--fz-leading-normal);
-  overflow: auto;
-}
-.fz-dialog[open] {
-  display: flex;
-  flex-direction: column;
-  gap: var(--fz-gap);
-}
-.fz-dialog > * { margin-block: 0; }
-.fz-dialog::backdrop { background: var(--fz-color-overlay); }
-.fz-dialog__title {
-  margin: 0;
-  font-family: var(--fz-font-heading);
-  font-size: var(--fz-text-lg);
-  line-height: var(--fz-text-lg--line-height);
-  font-weight: var(--fz-font-weight-semibold);
-}
-.fz-dialog__actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: calc(var(--fz-spacing) * 2);
-  margin: 0;
-}
 
 @media (prefers-reduced-motion: reduce) {
   .fz-btn,

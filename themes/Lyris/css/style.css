@@ -1804,8 +1804,8 @@ a.de-edit-icon:hover::before {
 }
 
 /* ---- The header on phones ----
-   On a phone the header's links (AI, Admin, Install app, the inbox, the
-   account, signing in and out) are too small and too close together to tap.
+   On a phone the header's links (AI, Admin, the inbox, the account,
+   signing in and out) are too small and too close together to tap.
    So theme.html puts them again at the top of the menu, as menu items, with the
    inbox's name beside its icon and its unread count as a badge, and here the
    header's own are hidden. Only where there is a menu to put them in: a page

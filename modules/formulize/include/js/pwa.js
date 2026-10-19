@@ -1,10 +1,13 @@
 /*
- * The Install app item in the theme's menu, [data-formulize-install-app]. Only on the pages where the
- * site can be installed as an app (formulize_pwaFeaturesApply()), after formulize-app.js, and with
+ * The install item at the end of the Formulize menu, [data-formulize-install-app], which is only there
+ * for people who are signed in (formulize_pwaInstallMenuSection()). Only on the pages where the site
+ * can be installed as an app (formulize_pwaFeaturesApply()), after formulize-app.js, and with
  * window.formulize.pwa set by formulize_addAppHeadTags().
  *
  * The item starts hidden, and is shown only where installing can actually be done from it, and never
- * in the installed app itself:
+ * in the installed app itself. It says what it does in the words the browser uses: Add this site to
+ * your home screen on phones and tablets, Add this site to your Dock in Safari on a Mac, and Install
+ * this site as an app on other computers.
  *  - Chrome, Edge, Samsung Internet: when the browser says the site can be installed, and the item
  *    then installs it
  *  - Safari on iPhone and iPad (and every other browser there, which is Safari underneath), and
@@ -12,8 +15,8 @@
  *    with the steps to follow in the browser's own menus
  *  - Firefox: not offered. It installs sites through its own menus, where it can.
  *
- * No pop-ups and no reminders: the browser's own install prompt is held back too, and the item is the
- * only way in.
+ * The browser's own install prompt is left alone: Chrome on Android shows its banner as usual, and
+ * the item is a way in that is always there, for when that has been dismissed.
  */
 (function () {
 	'use strict';
@@ -22,9 +25,10 @@
 	var strings = (formulize.pwa && formulize.pwa.strings) || {};
 	var installPrompt = null;
 
-	// The one place the browser is identified by its user agent: the browsers that can't install a
-	// site from a page, and only for showing the steps.
-	function manualInstallPlatform() {
+	// The one place the browser is identified by its user agent, only to choose the item's words, and
+	// the steps for the browsers that can't install a site from a page:
+	// 'ios' and 'macSafari' show the steps, 'android' installs, and '' is any other browser
+	function platform() {
 		var ua = window.navigator.userAgent;
 		if (/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && window.navigator.maxTouchPoints > 1)) {
 			return 'ios';
@@ -34,7 +38,26 @@
 		if (safari && parseInt(safari[1], 10) >= 17) {
 			return 'macSafari';
 		}
+		if (/Android/.test(ua)) {
+			return 'android';
+		}
 		return '';
+	}
+
+	function showsSteps() {
+		return platform() === 'ios' || platform() === 'macSafari';
+	}
+
+	function label() {
+		switch (platform()) {
+			case 'ios':
+			case 'android':
+				return strings.installPhone || 'Add this site to your home screen';
+			case 'macSafari':
+				return strings.installDock || 'Add this site to your Dock';
+			default:
+				return strings.installComputer || 'Install this site as an app';
+		}
 	}
 
 	function items() {
@@ -51,32 +74,37 @@
 		});
 	}
 
-	function showSteps(platform) {
+	function element(tag, className, parent) {
+		var node = document.createElement(tag);
+		if (className) {
+			node.className = className;
+		}
+		if (parent) {
+			parent.appendChild(node);
+		}
+		return node;
+	}
+
+	// The Formulize UI dialog: header, body and footer in a <form method="dialog">, so the button
+	// closes it with no script. Opened from here rather than by a commandfor button, because the item
+	// only shows the steps when the browser can't install the site itself.
+	function showSteps() {
 		var dialog = document.getElementById('formulize-install-app-dialog');
 		if (!dialog) {
-			dialog = document.createElement('dialog');
+			dialog = element('dialog', 'fz-dialog', document.body);
 			dialog.id = 'formulize-install-app-dialog';
-			dialog.className = 'fz-dialog';
 			dialog.setAttribute('aria-labelledby', 'formulize-install-app-dialog-title');
-			var title = document.createElement('h2');
+			var form = element('form', '', dialog);
+			form.method = 'dialog';
+			var title = element('h2', 'fz-dialog__title', element('div', 'fz-dialog__header', form));
 			title.id = 'formulize-install-app-dialog-title';
-			title.className = 'fz-dialog__title';
-			title.textContent = strings.installTitle || 'Install this site as an app';
-			var steps = document.createElement('p');
-			steps.textContent = platform === 'ios'
+			title.textContent = label();
+			element('p', '', element('div', 'fz-dialog__body', form)).textContent = platform() === 'ios'
 				? (strings.installIOS || "Tap the Share button in Safari's toolbar, then choose Add to Home Screen.")
 				: (strings.installMacSafari || "In Safari's File menu, choose Add to Dock.");
-			var actions = document.createElement('form');
-			actions.method = 'dialog';
-			actions.className = 'fz-dialog__actions';
-			var close = document.createElement('button');
-			close.className = 'fz-btn fz-btn--primary';
+			var close = element('button', 'fz-btn fz-btn--primary', element('div', 'fz-dialog__footer', form));
+			close.type = 'submit';
 			close.textContent = strings.close || 'OK';
-			actions.appendChild(close);
-			dialog.appendChild(title);
-			dialog.appendChild(steps);
-			dialog.appendChild(actions);
-			document.body.appendChild(dialog);
 		}
 		dialog.showModal();
 	}
@@ -88,13 +116,13 @@
 			installPrompt = null;
 			showItems(false); // a prompt can only be shown once
 			prompt.prompt();
-		} else if (manualInstallPlatform()) {
-			showSteps(manualInstallPlatform());
+		} else if (showsSteps()) {
+			showSteps();
 		}
 	}
 
+	// Kept for the item, without preventDefault(), which would hold back Chrome's own banner
 	window.addEventListener('beforeinstallprompt', function (event) {
-		event.preventDefault(); // no banner: the item is the way in
 		installPrompt = event;
 		if (!formulize.isInstalledApp()) {
 			showItems(true);
@@ -108,9 +136,14 @@
 
 	function setUp() {
 		Array.prototype.forEach.call(items(), function (item) {
+			// the item is the link, or holds it, as in the menu
+			var link = item.tagName === 'A' ? item : item.querySelector('a');
+			if (link) {
+				link.textContent = label();
+			}
 			item.addEventListener('click', install);
 		});
-		if (!formulize.isInstalledApp() && (installPrompt || manualInstallPlatform())) {
+		if (!formulize.isInstalledApp() && (installPrompt || showsSteps())) {
 			showItems(true);
 		}
 	}

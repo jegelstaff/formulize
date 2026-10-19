@@ -26,8 +26,8 @@
 				</ul>
 			</details>
 		<{else}>
-			<li class="main-menu__item">
-				<a href="<{$links.url}>" target="<{$links.target}>" class="main-menu__item-link<{if $links.active}> main-menu__item-link--active<{/if}><{if isset($links.linkClass) AND $links.linkClass}> <{$links.linkClass}><{/if}>">
+			<li class="main-menu__item"<{if isset($links.itemAttributes) AND $links.itemAttributes}> <{$links.itemAttributes}><{/if}>>
+				<a href="<{$links.url}>" target="<{$links.target}>" class="main-menu__item-link<{if $links.active}> main-menu__item-link--active<{/if}><{if isset($links.linkClass) AND $links.linkClass}> <{$links.linkClass}><{/if}>"<{if isset($links.linkAttributes) AND $links.linkAttributes}> <{$links.linkAttributes}><{/if}>>
 					<{if $links.icon}>
 						<span class="main-menu__item-link-icon" aria-hidden="true">
 							<{$links.icon}>

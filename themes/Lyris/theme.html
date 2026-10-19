@@ -134,8 +134,6 @@
       <{if $xoops_isadmin}>
       <a class="lyris-header__action-link" href="<{if isset($modifyScreenUrl) && $modifyScreenUrl}><{$modifyScreenUrl}><{else}><{$icms_url}>/modules/formulize/admin/ui.php<{/if}>">Admin</a>
       <{/if}>
-      <{* Install app: hidden until the browser can install the site from it (pwa.js) *}>
-      <a class="lyris-header__action-link" href="#" role="button" data-formulize-install-app hidden>Install app</a>
       <{if $xoops_isuser}>
         <{if $show_inbox_link}>
         <a class="lyris-header__action-link lyris-header__inbox" href="<{$icms_url}>/viewpmsg.php"
@@ -165,7 +163,9 @@
     <aside class="lyris-sidebar" id="lyris-sidebar" role="navigation" aria-label="Main navigation">
       <{* The header's links again, at the top of the menu, for phones: there the header has room
          for the menu button and the logo, and the links are hidden in it (see "Mobile" in
-         css/style.css). Wider screens show the header's own, and not these. *}>
+         css/style.css). Wider screens show the header's own, and not these. Only for people who
+         are signed in: every link in it is theirs. *}>
+      <{if $xoops_isuser}>
       <ul class="main-menu lyris-sidebar__account">
         <{if $xoops_isuser && $show_ai_link}>
         <li class="main-menu__item"><a class="main-menu__item-link js-open-ai" href="<{$icms_url}>/ai/">AI</a></li>
@@ -173,7 +173,6 @@
         <{if $xoops_isadmin}>
         <li class="main-menu__item"><a class="main-menu__item-link" href="<{if isset($modifyScreenUrl) && $modifyScreenUrl}><{$modifyScreenUrl}><{else}><{$icms_url}>/modules/formulize/admin/ui.php<{/if}>">Admin</a></li>
         <{/if}>
-        <li class="main-menu__item" data-formulize-install-app hidden><a class="main-menu__item-link" href="#" role="button">Install app</a></li>
         <{if $xoops_isuser}>
           <{if $show_inbox_link}>
           <li class="main-menu__item">
@@ -192,6 +191,7 @@
         <{/if}>
         <{* No Sign in here: the login block is in this menu already *}>
       </ul>
+      <{/if}>
       <{includeq file="$theme_name/blockszone.html" blocks=$xoBlocks.canvas_left
           zoneClass='xo-canvas-column' zoneId='xo-canvas-leftcolumn'
       }>

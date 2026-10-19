@@ -129,12 +129,13 @@ if($xoopsUser) {
         <{* The header's links again, at the top of the menu, for phones: there the header has room
            for the back button, the logo and the menu button, and the links are hidden in it (see
            "The header on phones" in css/style.css). Wider screens show the header's own, and not
-           these. The AI assistant is already in the menu, as its own section. *}>
+           these. The AI assistant is already in the menu, as its own section. Only for people who are
+           signed in: every link in it is theirs. *}>
+        <{if $xoops_isuser}>
         <ul class="main-menu anari-menu-account">
           <{if $xoops_isadmin}>
           <li class="main-menu__item"><a class="main-menu__item-link" href="<{if isset($modifyScreenUrl) && $modifyScreenUrl}><{$modifyScreenUrl}><{else}><{$icms_url}>/modules/formulize/admin/ui.php<{/if}>">Admin</a></li>
           <{/if}>
-          <li class="main-menu__item" data-formulize-install-app hidden><a class="main-menu__item-link" href="#" role="button">Install app</a></li>
           <{if $xoops_isuser}>
             <{if $show_inbox_link}>
             <li class="main-menu__item">
@@ -149,6 +150,7 @@ if($xoopsUser) {
           <{/if}>
           <{* No Login here: the login block is in this menu already *}>
         </ul>
+        <{/if}>
 
         <!-- MENU -->
 
@@ -200,8 +202,6 @@ if($xoopsUser) {
                   <{if $xoops_isadmin}>
                   <a class="user-actions__link" href="<{if isset($modifyScreenUrl) && $modifyScreenUrl}><{$modifyScreenUrl}><{else}><{$icms_url}>/modules/formulize/admin/ui.php<{/if}>" title="admin">Admin</a>
                   <{/if}>
-                  <{* Install app: hidden until the browser can install the site from it (pwa.js) *}>
-                  <a class="user-actions__link" href="#" role="button" data-formulize-install-app hidden>Install app</a>
                   <{if $xoops_isuser}>
                   <{if $show_inbox_link}>
                   <a class="user-actions__link inbox-link" href="<{$icms_url}>/viewpmsg.php" title="Inbox<{if $unread_pm_count > 0}> (<{$unread_pm_count}> unread)<{/if}>">

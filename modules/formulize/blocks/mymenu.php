@@ -58,6 +58,7 @@ function block_formulizeMENU_show() {
 
 	list($ugContent, $ugData) = drawUsersAndGroupsMenuSection();
 	list($aiContent, $aiData) = drawAIAssistantMenuSection();
+	list($installContent, $installData) = formulize_pwaInstallMenuSection();
 
 	$hasMenuEntries = count((array)$menuTexts) > 0;
 	$hasUgSection = ($ugContent !== false);
@@ -84,6 +85,12 @@ function block_formulizeMENU_show() {
 		if ($hasAiSection) {
 			$innerContent .= $aiContent;
 			$menuData[] = $aiData;
+		}
+
+		// last, but never a reason to show the menu on its own (excluded from If above)
+		if ($installContent !== false) {
+			$innerContent .= $installContent;
+			$menuData[] = $installData;
 		}
 
 		$block['content'] = "<table cellspacing='0' border='0'><tr><td id=\"mainmenu\">" . $innerContent . "</td></tr></table>";

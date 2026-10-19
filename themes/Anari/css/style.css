@@ -682,8 +682,8 @@ table:first-child div.applinks h1 {
 }
 
 /* ---- The header on phones ----
-   On a phone the header's links (Admin, Install app, the inbox, Edit Account,
-   Login and Logout) are too small and too close together to tap. So
+   On a phone the header's links (Admin, the inbox, Edit Account, Login and
+   Logout) are too small and too close together to tap. So
    theme.html puts them again at the top of the menu, as menu items, with the
    inbox's name beside its icon and its unread count as a badge, and here the
    header's own are hidden. Wider screens show the header's own.

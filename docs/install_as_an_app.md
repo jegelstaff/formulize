@@ -16,17 +16,21 @@ shows a page saying you're offline, with a **Try again** button.
 
 ## Installing it
 
-Look for **Install app** next to your account links at the top of the page. On a phone, open the
-site's menu: it is at the top of the menu, with your account links. It only appears where your
-browser can install the site. Once the site is installed, it doesn't appear in the app.
+Sign in, open the site's menu, and look at the bottom of it. The item there is named for what it
+does on your device. It only appears where your browser can install the site, and once the site is
+installed, it doesn't appear in the app.
 
 | Where | What to do |
 |---|---|
-| **Chrome or Edge on a computer** | Click **Install app**, then **Install**. The app opens in its own window, and you can pin it to your taskbar or dock. |
-| **Chrome or Samsung Internet on Android** | Tap **Install app**, then **Install**. The app's icon appears on your home screen. |
-| **iPhone or iPad** | Tap **Install app** and follow the steps it shows: tap the Share button in Safari's toolbar, then **Add to Home Screen**. If it isn't in the list, scroll down to find it. |
-| **Safari on a Mac** | Click **Install app** and follow the steps it shows: in Safari's **File** menu, choose **Add to Dock**. This needs Safari 17 or later. |
-| **Firefox** | There is no **Install app** item. On Android, use **Add to Home screen** in Firefox's own menu. On a computer, use Chrome, Edge or Safari to install the site. |
+| **Chrome or Edge on a computer** | Click **Install this site as an app**, then **Install**. The app opens in its own window, and you can pin it to your taskbar or dock. |
+| **Chrome or Samsung Internet on Android** | Tap **Add this site to your home screen**, then **Install**. The app's icon appears on your home screen. Chrome may also offer it in a banner at the bottom of the screen. |
+| **iPhone or iPad** | Tap **Add this site to your home screen** and follow the steps it shows: tap the Share button in Safari's toolbar, then **Add to Home Screen**. If it isn't in the list, scroll down to find it. |
+| **Safari on a Mac** | Click **Add this site to your Dock** and follow the steps it shows: in Safari's **File** menu, choose **Add to Dock**. This needs Safari 17 or later. |
+| **Firefox** | There is no item in the menu. On Android, use **Add to Home screen** in Firefox's own menu. On a computer, use Chrome, Edge or Safari to install the site. |
+
+You can also install the site without signing in, from your browser's own menu: **Install page as
+app** in Chrome, **Apps** then **Install this site as an app** in Edge, or the steps above on an
+iPhone, an iPad or a Mac.
 
 On an iPhone or iPad, the app keeps its own sign-in, separate from Safari, so you'll be asked to
 sign in the first time you open it.

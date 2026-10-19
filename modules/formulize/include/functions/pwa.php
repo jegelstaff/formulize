@@ -27,8 +27,8 @@ if (!defined('XOOPS_ROOT_PATH')) {
  * Every one of those features asks this, and nothing tests the conditions itself:
  *  - the manifest link, the theme-color and apple-touch-icon tags, and the script that registers the
  *    service worker, all added to the head by formulize_addAppHeadTags()
- *  - the Install app item in the theme's menu, which pwa.js shows, and pwa.js is only on the pages
- *    where this is true
+ *  - the install item at the end of the Formulize menu (formulize_pwaInstallMenuSection()), which
+ *    pwa.js shows, and pwa.js is only on the pages where this is true
  *  - when push notifications are added, the item that turns them on for a device
  * A feature added later belongs on this list.
  *
@@ -144,7 +144,7 @@ function formulize_pwaSiteTheme() {
  */
 function formulize_pwaColours($theme = null, $lookKey = null) {
     include_once XOOPS_ROOT_PATH . '/modules/formulize/include/appearance.php';
-    $settings = formulize_getAppearanceEffectiveSettings($theme, null, $lookKey);
+    $settings = formulize_getAppearanceLookSettings($theme, $lookKey);
     $map = formulize_appearanceColourMap($theme);
     $colours = array();
     foreach (array('theme' => 'surface', 'background' => 'background') as $use => $key) {
@@ -312,8 +312,8 @@ function formulize_pwaOfflinePage() {
  *
  * Where the site can be installed: the manifest, the colour of the window's title bar (the top bar
  * colour of the look this page is drawn with, so a screen with a look of its own has a title bar
- * that matches it), the iPhone and iPad icon, pwa.js for the Install app item, and the registration
- * of the service worker.
+ * that matches it), the iPhone and iPad icon, pwa.js for the install item in the menu, and the
+ * registration of the service worker.
  */
 function formulize_addAppHeadTags() {
     global $xoTheme;
@@ -339,7 +339,9 @@ function formulize_addAppHeadTags() {
         'serviceWorker' => formulize_pwaPath('/modules/formulize/pwa/sw.php'),
         'scope' => $sitePath,
         'strings' => array(
-            'installTitle' => _formulize_PWA_INSTALL_TITLE,
+            'installPhone' => _formulize_PWA_INSTALL_PHONE,
+            'installDock' => _formulize_PWA_INSTALL_DOCK,
+            'installComputer' => _formulize_PWA_INSTALL_COMPUTER,
             'installIOS' => _formulize_PWA_INSTALL_IOS,
             'installMacSafari' => _formulize_PWA_INSTALL_MAC_SAFARI,
             'close' => _formulize_PWA_INSTALL_CLOSE,
@@ -353,4 +355,41 @@ function formulize_addAppHeadTags() {
         . ".catch(function (error) { if (window.console) { console.warn('The service worker for the installed app could not be registered:', error); } });"
         . ' }); }');
     $xoTheme->addScript(XOOPS_URL . '/modules/formulize/include/js/pwa.js?v=' . formulize_get_file_version('/modules/formulize/include/js/pwa.js'), array('type' => 'text/javascript'));
+}
+
+/**
+ * The item at the end of the Formulize menu that installs the site as an app, or shows the steps for
+ * the browsers that can't install it from a page. Only for people who are signed in, and only on the
+ * pages where the site can be installed. Anyone else can still install it from the browser's own
+ * menu, or from the banner Chrome shows on Android.
+ *
+ * It starts hidden. pwa.js shows it where the browser can install the site, gives it the words that
+ * browser uses (home screen, Dock, or app), and never shows it in the installed app.
+ *
+ * Built for both menu templates, like the menu's other sections (see block_formulizeMENU_show()).
+ * The old template's link goes in a <div>, so that the link's own class can't give it a display that
+ * wins over hidden.
+ *
+ * @return array the HTML for the old menu template, and the item for templates/blocks/menu.html; or
+ *               false and false when there is no item
+ */
+function formulize_pwaInstallMenuSection() {
+    global $xoopsUser;
+    if (!$xoopsUser OR !formulize_pwaFeaturesApply()) {
+        return array(false, false);
+    }
+    formulize_pwaLoadLanguage();
+    $title = htmlspecialchars(_formulize_PWA_INSTALL_COMPUTER);
+    $block = "<div data-formulize-install-app hidden><a class=\"menuMain\" href=\"#\" role=\"button\">$title</a></div>";
+    $data = array(
+        'url' => '#',
+        'title' => $title,
+        'active' => 0,
+        'target' => '',
+        'icon' => '',
+        // added to the <li> and its link by templates/blocks/menu.html
+        'itemAttributes' => 'data-formulize-install-app hidden',
+        'linkAttributes' => 'role="button"',
+    );
+    return array($block, $data);
 }
