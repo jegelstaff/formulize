@@ -314,6 +314,11 @@ CANONICAL;
 		if ($funcPos === false) {
 			continue;
 		}
+		// Already guarded, either by a previous run of this repair or by hand, so it cannot cause a fatal
+		// error. Wrapping it again would nest another guard around it on every update.
+		if (preg_match('/function_exists\s*\(\s*[\'"]getAriaSort[\'"]\s*\)/i', $ariaContent)) {
+			continue;
+		}
 		// Walk back to include any preceding docblock
 		$blockStart = $funcPos;
 		$beforeFunc = substr($ariaContent, 0, $funcPos);
@@ -381,6 +386,7 @@ CANONICAL;
 
 	// Scan custom per-screen openlisttemplate.php files for the old version of clickableSortLink().
 	// The function signature is the same but the implementation changed to support multi-column sorting.
+	// Only custom templates for the Anari theme are checked, since the replacement is Anari's markup.
 	// If the file has the old canonical version, replace it automatically.
 	// If the file has a customised version, leave it alone but warn the user.
 	$sortLinkAutoFixed = [];
@@ -440,6 +446,11 @@ NEWVERSION;
 	// Re-use the same files array from the getAriaSort scan above
 	foreach ($ariaFiles as $sortLinkFilePath) {
 		if (!is_numeric(basename(dirname($sortLinkFilePath)))) {
+			continue;
+		}
+		// Custom templates live in screens/{theme}/{sid}/. The replacement is the Anari version, so only
+		// Anari's custom templates get it. Other themes have their own markup for this function.
+		if (basename(dirname(dirname($sortLinkFilePath))) !== 'Anari') {
 			continue;
 		}
 		$sortLinkContent = file_get_contents($sortLinkFilePath);
@@ -502,6 +513,11 @@ NEWVERSION;
 		// Normalize the function body only (without any preceding comment) for comparison
 		$slFuncBody = substr($sortLinkContent, $slFuncPos, $slBlockEnd - $slFuncPos + 1);
 		$slFuncNormalized = preg_replace('/\s+/', '', $slFuncBody);
+		// Already passes the shift key to sort_data, so it supports multi-column sorting: the new version
+		// put there by a previous run of this repair, or a copy of a current default/Lyris template.
+		if (strpos($slFuncBody, 'shiftKey') !== false) {
+			continue;
+		}
 		if ($slFuncNormalized !== $sortLinkOldCanonical) {
 			// Customised — leave file untouched, warn the user
 			$sortLinkMismatch[] = $sortLinkFilePath;
