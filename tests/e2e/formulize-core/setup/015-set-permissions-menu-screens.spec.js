@@ -189,7 +189,7 @@ test.describe('Set Permissions', () => {
 	  await page.getByText('No, only permission to view').click();
 		await saveAdminForm(page);
 		await page.goto('/');
-		await page.getByText('Logout').click();
+		await page.getByRole('link', { name: 'Logout' }).click();
 		// The Survey multipage screen is sid=16 now: the 4 forms 005 creates
 		// (Departments, System Groups, Staff, System Users) consume screen ids
 		// 1-6, shifting the museum screens up by 6 (was sid=10 pre-005-rewrite).

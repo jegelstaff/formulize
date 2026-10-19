@@ -125,7 +125,7 @@ test.describe('Installation of Formulize', () => {
 		await page.locator('input[name="uname"]').fill((E2E_TEST_ADMIN_USERNAME || 'admin'));
 		await page.locator('input[name="pass"]').fill((E2E_TEST_ADMIN_PASSWORD || 'password'));
 		await page.getByRole('button', { name: 'Login' }).click();
-		await expect(page.getByText('Edit Account')).toBeVisible();
+		await expect(page.getByRole('link', { name: 'Edit Account' })).toBeVisible();
 		await page.goto('/modules/system/admin.php?fct=preferences&op=show&confcat_id=1');
 		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
 		await closeSiteNo.check();
