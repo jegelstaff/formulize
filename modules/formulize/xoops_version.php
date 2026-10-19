@@ -39,7 +39,7 @@ $modversion = array(
 	'license' => "GPL-2.0",
 	'image' => "images/formulize.gif",
 	'dirname' => "formulize",
-	'dbversion' => 24,
+	'dbversion' => 25,
 	'onUpdate' => "include/on_update.php"
 );
 
@@ -1300,6 +1300,24 @@ $modversion['config'][] = array(
 	'formtype' => 'embedtheme',
 	'valuetype' => 'text',
 	'default' => 'formulize_embed',
+);
+// Installing the site as an app on a phone or computer (a progressive web app). See
+// formulize_pwaFeaturesApply() in include/functions.php.
+$modversion['config'][] = array(
+	'name' => 'formulizePWAEnabled',
+	'title' => '_MI_formulize_PWAENABLED',
+	'description' => '_MI_formulize_PWAENABLED_DESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 1,
+);
+$modversion['config'][] = array(
+	'name' => 'formulizePWAShortName',
+	'title' => '_MI_formulize_PWASHORTNAME',
+	'description' => '_MI_formulize_PWASHORTNAME_DESC',
+	'formtype' => 'textbox',
+	'valuetype' => 'text',
+	'default' => '',
 );
 $modversion['config'][] = array(
 	'name' => 'formulizePublicAPIEnabled',

@@ -14225,3 +14225,7 @@ function formulize_userMessage($message, $tone = 'danger', $title = '') {
 	$titleMarkup = $title ? "<p class='fz-callout__title'>".htmlspecialchars($title)."</p>" : "";
 	return "<div class='fz-callout fz-callout--$tone' role='status'>$titleMarkup<p>".htmlspecialchars($message)."</p></div>";
 }
+
+// functions.php is split into files of related functions, in include/functions, which are all
+// required here. They are part of this file, and nothing else should include them directly.
+require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions/pwa.php';

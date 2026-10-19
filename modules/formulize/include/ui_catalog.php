@@ -313,6 +313,7 @@ function formulize_uiCatalog() {
                     '--fz-container-2xl' => '42rem, the narrow container.',
                     '--fz-container-6xl' => '72rem, the container.',
                     '--fz-container-7xl' => '80rem, the wide container.',
+                    '--fz-safe-area-{top,right,bottom,left}' => 'The parts of a phone\'s screen kept for its notch or camera and for the bar at the bottom. 0 everywhere else. A theme pads its header, its sides and its bottom edge by these, so nothing is hidden under them when the site is installed as an app.',
                 ),
             ),
             array(
@@ -1374,6 +1375,8 @@ HTML
                     'fz-sr-only' => 'Hidden on screen but read by screen readers: a label for something only an icon shows.',
                     'fz-hide-on-mobile' => 'Hidden on screens narrower than 48rem (768px).',
                     'fz-show-on-mobile' => 'Hidden on screens 48rem and wider.',
+                    'fz-show-in-app' => 'Shown only when the site is installed as an app and running in a window with no browser buttons at all, as on an iPhone or iPad: a back button, for instance. Chrome and Edge give the app\'s window back and reload buttons of their own, and there it stays hidden.',
+                    'fz-hide-in-app' => 'Hidden when the site is installed as an app and running in a window with no browser buttons.',
                 ),
                 'notes' => array(
                     'The `hidden` attribute hides any element that has a Formulize UI class, whatever the class is: a card, a stack or a button with `hidden` is not shown. Use it for what a script shows and hides, such as a panel that opens beside a list. The script sets and removes the attribute, and the classes stay as they are.',

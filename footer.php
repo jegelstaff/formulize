@@ -178,6 +178,12 @@ if (isset($xoopsOption['theme_use_smarty']) && $xoopsOption['theme_use_smarty'] 
 		}
 	}
 
+	// The site installed as an app on a phone or computer: what its window needs on every page, and
+	// where the site can be installed, the manifest, title bar colour, icon and service worker. Here,
+	// once the whole page has been built, because the title bar takes the colour of the look this
+	// page's screen is drawn with.
+	formulize_addAppHeadTags();
+
     $xoTheme->render();
 }
 

@@ -331,6 +331,78 @@ A screen can be set to use the full width whatever the site's setting is, on the
 tab. Formulize sets `--formulize-content-max-width` to `100%` on that screen's page, so a theme that
 uses the property as above has nothing more to do.
 
+## 8. Look right when the site is installed as an app (optional)
+
+People can [install a Formulize site as an app](/documentation/install_as_an_app/) on their phone or
+computer. It then opens in a window of its own, with no address bar or browser buttons around it.
+
+**What every theme gets without doing anything.** Formulize adds these to the head of every page,
+through `<{$icms_module_header}>`, which every theme prints:
+
+- the link to the app's manifest, with the site's name, icons and colours
+- the title bar colour, from the Appearance settings of the look the page is drawn with
+- the icon for iPhones and iPads
+- the service worker, which shows a page saying the device is offline when a page can't be loaded
+- in a window with no browser buttons, as on an iPhone or iPad, a thin bar across the top of the
+  screen while the next page loads, in the accent colour
+
+And for people who are signed in, the Formulize menu block ends with an item that installs the site,
+or shows the steps to follow on an iPhone, an iPad or a Mac, wherever the browser can install it. A
+theme that shows the menu block has it.
+
+Chrome and Edge open the app with back and reload buttons in its title bar. Safari opens it with no
+buttons at all, so the page has to supply a way back, which is point 3 below.
+
+Don't add a manifest link, a `theme-color` meta tag or a service worker of your own. They would
+compete with Formulize's, and an embedded screen must not get any of them, which Formulize already
+takes care of.
+
+**What to add so it looks finished.** Without these, an installed app works, but looks plainer and
+can be harder to find your way around in:
+
+1. **Let the page use the whole screen.** Add `viewport-fit=cover` to the viewport meta tag:
+
+   ```html
+   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+   ```
+
+2. **Keep clear of the phone's notch and home bar.** With `viewport-fit=cover`, the page runs under
+   them, so pad your header, your sides and your bottom edge by the Formulize UI tokens
+   `--fz-safe-area-top`, `--fz-safe-area-right`, `--fz-safe-area-bottom` and `--fz-safe-area-left`.
+   They are 0 wherever there is nothing to keep clear of, so the padding only appears where it is
+   needed:
+
+   ```css
+   .mytheme-header {
+     padding-top: var(--fz-safe-area-top);
+   }
+   ```
+
+   Anything fixed to an edge of the window, such as a menu that slides in under the header, has to
+   move by the same amount.
+
+3. **Give the app a back button.** On an iPhone or iPad the app's window has no back button, and
+   there is no back gesture. Put this in your header. `fz-show-in-app` shows it only in a window
+   with no browser buttons, so not in Chrome or Edge, which have their own. Formulize removes
+   `hidden` once there is a page to go back to, and makes it go back:
+
+   ```html
+   <button type="button" class="fz-btn fz-btn--ghost fz-btn--icon fz-show-in-app" data-formulize-app-back aria-label="Back" hidden>
+     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+       <polyline points="15 18 9 12 15 6"/>
+     </svg>
+   </button>
+   ```
+
+Anari and Lyris do all three. See "A phone's notch and home bar" and "The header on phones" in each theme's `css/style.css`.
+
+On a phone, a header has little room, and the app makes that more noticeable, since the header is
+the only bar the app's window has. On phones Anari and Lyris put their links (the account links, the
+inbox) at the top of their menu instead, and arrange their header as phone apps do: the
+back button at the left, where people look for it, the logo in the middle, and the menu button at
+the right, at the other end from back, with the menu sliding in from that side. See "The header on
+phones" in each theme's `css/style.css`.
+
 ## Checking your theme
 
 Open a long form in your theme, scroll down, and save it. You should be returned to where you were

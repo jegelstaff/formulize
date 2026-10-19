@@ -492,6 +492,14 @@ return array(
                             'showWhen' => array('name' => 'formulizeEmbeddingEnabled', 'value' => 1),
                         ),
                     ),
+                    _AM_CFG_SEC_INSTALL_AS_APP => array(
+                        array('name' => 'formulizePWAEnabled', 'scope' => 'formulize'),
+                        array(
+                            'name' => 'formulizePWAShortName',
+                            'scope' => 'formulize',
+                            'showWhen' => array('name' => 'formulizePWAEnabled', 'value' => 1),
+                        ),
+                    ),
                     _AM_CFG_SEC_SESSIONS_COOKIES => array(
                         array('name' => 'session_expire', 'scope' => 'system'),
                         array('name' => 'session_name', 'scope' => 'system', 'description' => _AM_CFG_DESC_SESSION_NAME),

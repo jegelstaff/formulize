@@ -6,7 +6,9 @@
 
     <title><{if $xoops_pagetitle !=''}><{$xoops_pagetitle}> : <{/if}><{$icms_sitename}></title>
     <meta http-equiv="content-type" content="text/html; charset=<{$icms_charset}>" />
-    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1" />
+    <{* viewport-fit=cover: the page runs under a phone's notch and home bar, and the header, the
+       sides and the bottom are padded clear of them (see "A phone's notch and home bar" in css/style.css) *}>
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, viewport-fit=cover" />
     <meta name="robots" content="<{$icms_meta_robots}>" />
     <meta name="keywords" content="<{$icms_meta_keywords}>" />
     <meta name="description" content="<{$icms_meta_description}>" />
@@ -101,6 +103,13 @@
   <header class="lyris-header" role="banner">
 
     <div class="lyris-header__start">
+      <{* Back: only in the site installed as an app, whose window has no back button of its own,
+         and only when there is a page to go back to (formulize-app.js shows it) *}>
+      <button type="button" class="fz-btn fz-btn--ghost fz-btn--icon fz-show-in-app" data-formulize-app-back aria-label="Back" hidden>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
       <{if $xoBlocks.canvas_left}>
       <button class="fz-btn fz-btn--ghost fz-btn--icon lyris-header__nav-toggle js-sidebar-toggle"
               aria-label="Toggle navigation"
@@ -139,7 +148,8 @@
         <a class="lyris-header__action-link" href="<{$icms_url}>/edituser.php">Account</a>
         <a class="lyris-header__action-link" href="<{$icms_url}>/user.php?op=logout">Sign out</a>
       <{else}>
-        <a class="lyris-header__action-link" href="<{if isset($formulize_signin_url) && $formulize_signin_url}><{$formulize_signin_url}><{else}><{$icms_url}><{$formulize_redirect}><{/if}>">Sign in</a>
+        <{* js-open-login: opens the sidebar on its login block, when it has one (js/script.js) *}>
+        <a class="lyris-header__action-link js-open-login" href="<{if isset($formulize_signin_url) && $formulize_signin_url}><{$formulize_signin_url}><{else}><{$icms_url}><{$formulize_redirect}><{/if}>">Sign in</a>
       <{/if}>
     </div>
 
@@ -151,6 +161,37 @@
 
     <{if $xoBlocks.canvas_left && !$smarty.get.fz_inline}>
     <aside class="lyris-sidebar" id="lyris-sidebar" role="navigation" aria-label="Main navigation">
+      <{* The header's links again, at the top of the menu, for phones: there the header has room
+         for the menu button and the logo, and the links are hidden in it (see "Mobile" in
+         css/style.css). Wider screens show the header's own, and not these. Only for people who
+         are signed in: every link in it is theirs. *}>
+      <{if $xoops_isuser}>
+      <ul class="main-menu lyris-sidebar__account">
+        <{if $xoops_isuser && $show_ai_link}>
+        <li class="main-menu__item"><a class="main-menu__item-link js-open-ai" href="<{$icms_url}>/ai/">AI</a></li>
+        <{/if}>
+        <{if $xoops_isadmin}>
+        <li class="main-menu__item"><a class="main-menu__item-link" href="<{if isset($modifyScreenUrl) && $modifyScreenUrl}><{$modifyScreenUrl}><{else}><{$icms_url}>/modules/formulize/admin/ui.php<{/if}>">Admin</a></li>
+        <{/if}>
+        <{if $xoops_isuser}>
+          <{if $show_inbox_link}>
+          <li class="main-menu__item">
+            <a class="main-menu__item-link" href="<{$icms_url}>/viewpmsg.php">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+              Inbox
+              <{if $unread_pm_count > 0}><span class="fz-badge fz-badge--danger fz-ms-auto"><{$unread_pm_count}><span class="fz-sr-only"> unread</span></span><{/if}>
+            </a>
+          </li>
+          <{/if}>
+        <li class="main-menu__item"><a class="main-menu__item-link" href="<{$icms_url}>/edituser.php">Account</a></li>
+        <li class="main-menu__item"><a class="main-menu__item-link" href="<{$icms_url}>/user.php?op=logout">Sign out</a></li>
+        <{/if}>
+        <{* No Sign in here: the login block is in this menu already *}>
+      </ul>
+      <{/if}>
       <{includeq file="$theme_name/blockszone.html" blocks=$xoBlocks.canvas_left
           zoneClass='xo-canvas-column' zoneId='xo-canvas-leftcolumn'
       }>
