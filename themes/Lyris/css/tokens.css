@@ -170,4 +170,10 @@
      a column of this width, centred in the window; see the "Content width"
      section in style.css. */
   --formulize-content-max-width: 1200px;
+  /* Where that column sits in the window: the share of the room beside it that
+     is on its left, 0 (left), 0.5 (centre) or 1 (right). The Alignment setting
+     (in the Appearance editor, with the page width) sets another, and declaring
+     this is what has it offered for this theme. style.css falls back to 0.5
+     without it. */
+  --formulize-content-align: 0.5;
 }

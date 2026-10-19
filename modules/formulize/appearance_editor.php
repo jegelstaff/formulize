@@ -87,6 +87,8 @@ function formulize_appearanceEditorState($settings, $theme) {
 	return array(
 		// 'full', or a maximum width in pixels: the one chosen, or the theme's own
 		'contentWidth' => formulize_appearanceContentWidth($settings, $theme),
+		// 'left', 'center' or 'right': where a page narrower than the window sits in it
+		'contentAlign' => formulize_appearanceContentAlign($settings, $theme),
 		'overrides' => (is_array($overrides) AND $overrides) ? $overrides : new stdClass(), // an object, even when empty
 		'colours' => $colours,
 		'fonts' => array(
@@ -256,6 +258,13 @@ if (formulize_appearanceThemeUsesContentWidth($theme)) {
 	$contentWidth = formulize_appearanceContentWidthLimits();
 	$contentWidth['theme'] = formulize_appearanceContentWidthDefault($theme);
 	$restore['--formulize-content-max-width'] = $themeTokens['--formulize-content-max-width'];
+	// and where a page narrower than the window sits in it, for a theme that can place
+	// it: the theme's own, and each alignment's value for --formulize-content-align
+	if (formulize_appearanceThemeUsesContentAlign($theme)) {
+		$contentWidth['align'] = formulize_appearanceContentAlignDefault($theme);
+		$contentWidth['aligns'] = formulize_appearanceContentAligns();
+		$restore['--formulize-content-align'] = $themeTokens['--formulize-content-align'];
+	}
 }
 
 $editorData = array(

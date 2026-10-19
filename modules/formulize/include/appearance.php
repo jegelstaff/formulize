@@ -535,6 +535,8 @@ function formulize_sanitizeAppearanceLookSettings($values, $theme = null) {
             $clean[$name] = formulize_sanitizeAppearanceFontFamily($value);
         } elseif ($name == 'appearance_contentwidth') {
             $clean[$name] = formulize_sanitizeAppearanceContentWidth($value, $theme);
+        } elseif ($name == 'appearance_contentalign') {
+            $clean[$name] = formulize_sanitizeAppearanceContentAlign($value, $theme);
         } elseif ($name == 'appearance_logo' OR $name == 'appearance_favicon') {
             $file = basename($value);
             if ($file === '' OR preg_match('/^[A-Za-z0-9][A-Za-z0-9._-]*$/', $file)) {
@@ -871,9 +873,18 @@ function formulize_appearanceLookSummary($looks, $key, $theme) {
     if ($fonts) {
         $items[] = array('kind' => 'fonts', 'label' => count($fonts) == 1 ? _AM_APPEARANCE_CHANGE_FONT : _AM_APPEARANCE_CHANGE_FONTS, 'detail' => implode(', ', $fonts), 'phrase' => count($fonts) == 1 ? _AM_APPEARANCE_PHRASE_FONT : _AM_APPEARANCE_PHRASE_FONTS);
     }
-    if (isset($settings['appearance_contentwidth'])) {
-        $width = $settings['appearance_contentwidth'];
-        $items[] = array('kind' => 'width', 'label' => _AM_APPEARANCE_CHANGE_WIDTH, 'detail' => $width === 'full' ? _AM_APPEARANCE_CHANGE_FULL_WIDTH : ($width === '' ? $themeOwn : sprintf(_AM_APPEARANCE_CHANGE_AT_MOST, $width)), 'phrase' => _AM_APPEARANCE_PHRASE_WIDTH);
+    if (isset($settings['appearance_contentwidth']) OR isset($settings['appearance_contentalign'])) {
+        // the page width, and where a page narrower than the window sits in it
+        $details = array();
+        if (isset($settings['appearance_contentwidth'])) {
+            $width = $settings['appearance_contentwidth'];
+            $details[] = $width === 'full' ? _AM_APPEARANCE_CHANGE_FULL_WIDTH : ($width === '' ? $themeOwn : sprintf(_AM_APPEARANCE_CHANGE_AT_MOST, $width));
+        }
+        if (isset($settings['appearance_contentalign'])) {
+            $align = $settings['appearance_contentalign'];
+            $details[] = $align === '' ? sprintf(_AM_APPEARANCE_CHANGE_ALIGN_THEME, $theme) : constant('_AM_APPEARANCE_CHANGE_ALIGN_' . strtoupper($align));
+        }
+        $items[] = array('kind' => 'width', 'label' => _AM_APPEARANCE_CHANGE_WIDTH, 'detail' => implode(', ', $details), 'phrase' => _AM_APPEARANCE_PHRASE_WIDTH);
     }
     $overrides = formulize_appearanceLookOverrides($settings);
     $sizeTokens = array_flip(formulize_appearanceSizeTokens());
@@ -1430,6 +1441,78 @@ function formulize_appearanceContentWidth($settings, $theme = null) {
 }
 
 /**
+ * Where a page narrower than the window can sit in it: on the left, in the
+ * middle or on the right. Each is written as --formulize-content-align, the share
+ * of the room beside the page that is on its left: 0, 0.5 or 1. A theme lays
+ * its pages out with it (Lyris, in its "Content width" rules).
+ *
+ * @return array alignment => its value for --formulize-content-align
+ */
+function formulize_appearanceContentAligns() {
+    return array('left' => '0', 'center' => '0.5', 'right' => '1');
+}
+
+/**
+ * Whether a theme can place a page narrower than the window on its left, in its
+ * middle or on its right, so that the Alignment setting (appearance_contentalign,
+ * beside the page width in the appearance editor) changes how it looks. A theme
+ * says so by declaring --formulize-content-align with its other tokens, as Lyris
+ * does in css/tokens.css, and laying its pages out with it. It needs the page
+ * width too, since only a page narrower than the window has anywhere to go.
+ *
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return boolean
+ */
+function formulize_appearanceThemeUsesContentAlign($theme = null) {
+    $tokens = formulize_appearanceThemeTokens($theme);
+    return isset($tokens['--formulize-content-align']) AND formulize_appearanceThemeUsesContentWidth($theme);
+}
+
+/**
+ * A theme's own alignment: the one it declares for --formulize-content-align (Lyris
+ * declares 0.5, the middle), or the middle when it declares something else.
+ *
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return string 'left', 'center' or 'right'
+ */
+function formulize_appearanceContentAlignDefault($theme = null) {
+    $tokens = formulize_appearanceThemeTokens($theme);
+    $declared = isset($tokens['--formulize-content-align']) ? trim($tokens['--formulize-content-align']) : '';
+    foreach (formulize_appearanceContentAligns() as $align => $value) {
+        if ($declared !== '' AND is_numeric($declared) AND (float) $declared == (float) $value) {
+            return $align;
+        }
+    }
+    return 'center';
+}
+
+/**
+ * Validate an alignment: 'left', 'center' or 'right'. The theme's own is recorded
+ * as nothing, like every other default, and so is anything else.
+ *
+ * @param string $value the submitted alignment
+ * @param string|null $theme the theme it is for, whose own alignment is the default
+ * @return string the alignment, or '' (the theme's own)
+ */
+function formulize_sanitizeAppearanceContentAlign($value, $theme = null) {
+    $value = strtolower(trim((string) $value));
+    $aligns = formulize_appearanceContentAligns();
+    return (!isset($aligns[$value]) OR $value === formulize_appearanceContentAlignDefault($theme)) ? '' : $value;
+}
+
+/**
+ * The alignment a theme's settings call for: the one chosen, or the theme's own.
+ *
+ * @param array $settings appearance settings, already sanitized
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return string 'left', 'center' or 'right'
+ */
+function formulize_appearanceContentAlign($settings, $theme = null) {
+    $align = isset($settings['appearance_contentalign']) ? (string) $settings['appearance_contentalign'] : '';
+    return $align !== '' ? $align : formulize_appearanceContentAlignDefault($theme);
+}
+
+/**
  * What the component tokens, and the tokens that follow them, are declared as for
  * a theme, as CSS: what formulize-ui.css declares on :root, overridden by anything
  * the theme declares on :root in its own css/tokens.css.
@@ -1599,7 +1682,7 @@ function formulize_getAppearanceSizeValues($settings) {
 function formulize_appearanceSettingNames() {
     $names = array('appearance_font', 'appearance_customfont', 'appearance_headingfont',
         'appearance_headingcustomfont', 'appearance_overrides',
-        'appearance_contentwidth', 'appearance_logo', 'appearance_favicon');
+        'appearance_contentwidth', 'appearance_contentalign', 'appearance_logo', 'appearance_favicon');
     // the definition, not the theme-aware map: the setting names are the same for every
     // theme, and only the defaults differ, so there is no theme to resolve here
     foreach (array_keys(formulize_appearanceColourMapDefinition()) as $key) {
@@ -1958,6 +2041,8 @@ function formulize_sanitizeAppearanceSettings($values, $theme = null) {
     // the theme's own page width (1200 pixels in Lyris) is recorded as nothing, and
     // full width, in a theme with a maximum width of its own, as 'full'
     $clean['appearance_contentwidth'] = formulize_sanitizeAppearanceContentWidth(isset($values['appearance_contentwidth']) ? $values['appearance_contentwidth'] : '', $theme);
+    // and where a page narrower than the window sits in it, the theme's own (the middle, in Lyris) as nothing
+    $clean['appearance_contentalign'] = formulize_sanitizeAppearanceContentAlign(isset($values['appearance_contentalign']) ? $values['appearance_contentalign'] : '', $theme);
     // the logo and the favicon are bare filenames in the theme's appearance folder,
     // never paths
     foreach (array('appearance_logo', 'appearance_favicon') as $fileSetting) {
@@ -2453,6 +2538,12 @@ function formulize_getAppearanceCssOverrides($settings = null, $theme = null) {
     // declaration applies otherwise
     if (!empty($settings['appearance_contentwidth']) AND formulize_appearanceThemeUsesContentWidth($theme)) {
         $overrides['--formulize-content-max-width'] = ($settings['appearance_contentwidth'] == 'full') ? '100%' : $settings['appearance_contentwidth'] . 'px';
+    }
+    // and only an alignment other than the theme's own: the share of the room beside
+    // the page that is on its left (see formulize_appearanceContentAligns)
+    if (!empty($settings['appearance_contentalign']) AND formulize_appearanceThemeUsesContentAlign($theme)) {
+        $aligns = formulize_appearanceContentAligns();
+        $overrides['--formulize-content-align'] = $aligns[$settings['appearance_contentalign']];
     }
     foreach (formulize_appearanceColourMap($theme) as $key => $colour) {
         $value = formulize_sanitizeAppearanceColour($settings['appearance_' . $key]);

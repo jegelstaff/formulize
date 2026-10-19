@@ -70,6 +70,10 @@ define('_AM_APPEARANCE_CHANGE_MAIN_FONT', 'the main font');
 define('_AM_APPEARANCE_CHANGE_HEADINGS', '%s for headings');
 define('_AM_APPEARANCE_CHANGE_FULL_WIDTH', 'Full width');
 define('_AM_APPEARANCE_CHANGE_AT_MOST', '%spx at most');
+define('_AM_APPEARANCE_CHANGE_ALIGN_LEFT', 'on the left');
+define('_AM_APPEARANCE_CHANGE_ALIGN_CENTER', 'in the centre');
+define('_AM_APPEARANCE_CHANGE_ALIGN_RIGHT', 'on the right');
+define('_AM_APPEARANCE_CHANGE_ALIGN_THEME', 'where the %s theme puts it');
 define('_AM_APPEARANCE_CHANGE_CUSTOM_SIZE', 'Custom · %s');
 define('_AM_APPEARANCE_CHANGE_MORE', '%1$s and %2$s more');
 define('_AM_APPEARANCE_PHRASE_LOGO', 'logo');
@@ -382,7 +386,15 @@ define('_AM_APPEARANCE_EDITOR_JS_SIZE_CUSTOM_DESC', 'Its sizes have been changed
 define('_AM_APPEARANCE_EDITOR_JS_SIZE_BASE_DESC', 'It has the sizes of %s, and follows them when they change.');
 define('_AM_APPEARANCE_EDITOR_JS_SIZE_CONFIRM', 'Its sizes have been changed in the advanced editor. Replace them with %s?');
 define('_AM_APPEARANCE_EDITOR_JS_WIDTH', 'Page width');
-define('_AM_APPEARANCE_EDITOR_JS_WIDTH_DESC', 'How wide pages can get on a wide screen. A maximum width keeps forms and lists to a column of that width, in the middle of the window. The %2$s theme’s is %1$s. The preview is narrower than most screens, so it may not show the difference.');
+define('_AM_APPEARANCE_EDITOR_JS_WIDTH_DESC', 'How wide pages can get on a wide screen. A maximum width keeps forms and lists to a column of that width, placed by Alignment. The %2$s theme’s is %1$s. The preview is narrower than most screens, so it may not show the difference.');
+define('_AM_APPEARANCE_EDITOR_JS_ALIGN', 'Alignment');
+define('_AM_APPEARANCE_EDITOR_JS_ALIGN_DESC', 'Where pages sit on a screen wider than they are. The %2$s theme puts them %1$s.');
+define('_AM_APPEARANCE_EDITOR_JS_ALIGN_LEFT', 'Left');
+define('_AM_APPEARANCE_EDITOR_JS_ALIGN_CENTER', 'Centre');
+define('_AM_APPEARANCE_EDITOR_JS_ALIGN_RIGHT', 'Right');
+define('_AM_APPEARANCE_EDITOR_JS_ALIGN_AT_LEFT', 'on the left');
+define('_AM_APPEARANCE_EDITOR_JS_ALIGN_AT_CENTER', 'in the centre');
+define('_AM_APPEARANCE_EDITOR_JS_ALIGN_AT_RIGHT', 'on the right');
 define('_AM_APPEARANCE_EDITOR_JS_MAX_WIDTH', 'Maximum width');
 define('_AM_APPEARANCE_EDITOR_JS_WIDTH_PX', 'Maximum width, in pixels, from %1$s to %2$s');
 
