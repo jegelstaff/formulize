@@ -54,6 +54,7 @@ function formulize_popupHeader($title, $headContent = '') {
     print "<title>" . $title . "</title>\n";
     // the same order as on a page the theme draws: Formulize UI, the theme, then the Appearance settings
     print "<link rel=\"stylesheet\" type=\"text/css\" media=\"all\" href=\"" . XOOPS_URL . formulize_uiStylesheetPath() . "\" />\n";
+    print "<script type=\"text/javascript\" src=\"" . XOOPS_URL . formulize_uiScriptPath() . "\"></script>\n";
     print "<link rel=\"stylesheet\" type=\"text/css\" media=\"all\" href=\"" . $themeCss . "?v=" . $themeCssVersion . "\" />\n";
     print formulize_renderAppearanceHead();
     print $headContent;

@@ -171,12 +171,13 @@ the page your screen is embedded in supplies it.
 
 ## 6. Work with the Appearance editor (optional)
 
-The [Appearance editor](/documentation/appearance_editor/) edits a theme's appearance on a preview of
-sample screens the theme provides (below): a theme without them can't be edited there. In simple
-mode it changes the logo, colours, fonts and page width, which every theme that calls
+A theme's [looks](/documentation/appearance_editor/) are edited in the Appearance editor, on a
+preview of sample screens the theme provides (below): a theme without them has no looks to edit. The
+simple editor changes a look's logo, colours, fonts and page width, which every theme that calls
 `formulize_renderAppearanceHead()` follows.
 
-Its advanced mode, and the Compact and Comfortable looks, change Formulize UI's component tokens: sizes (`--fz-field-height`, `--fz-row-height`, `--fz-title-text`),
+The advanced editor, and the sizes (Standard, Compact and Comfortable), change Formulize UI's
+component tokens: sizes (`--fz-field-height`, `--fz-row-height`, `--fz-title-text`),
 fonts (`--fz-label-font`), colours (`--fz-button-bg`, `--fz-header-bg`) and corners
 (`--fz-field-radius`), and the rest. They only do anything in a theme whose own CSS styles things with
 those tokens, so a theme says when it does, and only then does the editor offer them. Each
@@ -229,9 +230,32 @@ another font is chosen in the Appearance editor, yours is no longer loaded.
 Don't load the font in `theme.html` as well. A theme that leaves `--formulize-font-weights` out gets
 Geist, the font Lyris uses.
 
+**If your theme has a menu of links down the side of the page**, style it with the side menu tokens
+(`--fz-sidemenu-width`, `--fz-sidemenu-bg`, `--fz-sidemenu-text`, `--fz-sidemenu-active-bg` and the
+rest), so the editor's Side menu page changes it. Their defaults are Lyris's. Lyris's rules for its
+sidebar and for Formulize's menu block (`.main-menu`) are an example.
+
+**Mark your content area** with the class `fz-content`, on the element around a page's contents,
+inside your header, menus and footer. Text there then follows the look's written content: the
+paragraphs, headings, links, lists, block quotes and separator lines on the editor's Text page.
+Only those with no class of their own are styled, so components keep theirs, and the rules weigh no
+more than an element selector, so your own rules with a class still win. Without it, your text looks
+as your CSS styles it.
+
+```html
+<main class="my-main">
+  <div class="my-page fz-content">
+    <{$icms_contents}>
+  </div>
+</main>
+```
+
+Put it on your embed theme's content area too (`embed-content.html`), and on any other element that
+shows a screen's contents outside it.
+
 **Provide sample screens** for the editor's preview, in an `appearance_preview` folder
-in your theme. Each is an HTML file named after a screen: `form.html`, `list.html`, `drawer.html` and
-`cards.html`. Provide the ones that suit your theme; the editor shows the ones it finds, and without
+in your theme. Each is an HTML file named after a screen: `form.html`, `list.html`, `drawer.html`,
+`cards.html`, `text.html` and `sidemenu.html`. Provide the ones that suit your theme; the editor shows the ones it finds, and without
 any, the theme can't be edited there. A sample is the markup your theme puts in `<body>` for
 that kind of page, written out with sample content, and it is shown with your `css/reset.css`, your
 `css/style.css` and your generated appearance stylesheet, in a `<body>` with the id `formulize` and
@@ -247,13 +271,17 @@ The parts, and the tokens of each one, are the `components` in
 `modules/formulize/include/appearance_tokens.json`: `logo` (the link around your logo image),
 `page`, `tabs`, `title`, `form`, `label`, `field`, `value` (a read-only value), `options` (radio
 buttons and checkboxes), `help`, `button`, `toolbar`, `menu`, `header` (column headings), `row`,
-`card` and `drawer`. The editor shows a new logo by changing the `src` of the image inside the
+`card` and `drawer`; for written content, `paragraph`, `h1` to `h6`, `link`, `list`, `quote`
+and `rule` (a separator line); and for the side menu, `sidemenu` (the menu itself),
+`sidemenu-link`, `sidemenu-group` (a link in a group) and `sidemenu-current` (the link to the page
+you're on). The editor shows a new logo by changing the `src` of the image inside the
 `logo` part.
 
 Pieces shared between samples go in files starting with an underscore, and are included by name in
 double braces: `{{list}}` is the contents of `_list.html`. `{{logo_url}}` and `{{site_name}}` are your
-logo and the site's name. Clicking an element with `data-fz-toggle="some-id"` in the preview toggles
-the class `open` on the element with that id, for showing a menu.
+logo and the site's name. Clicking an element with `data-fz-toggle="some-id"` in the preview opens or closes
+the element with that id, for showing a menu: a popover (give it `popover="manual"`, so it stays open
+while its items are being changed), or anything else, which gets the class `open`.
 
 Lyris's samples, in `themes/Lyris/appearance_preview/`, are a complete example. A theme edited in simple
 mode only, such as Anari (`themes/Anari/appearance_preview/`), only needs to mark its logo, as the
@@ -261,7 +289,7 @@ mode only, such as Anari (`themes/Anari/appearance_preview/`), only needs to mar
 
 ## 7. Offer the Page width setting (optional)
 
-The Page width setting, in the Appearance editor's site-wide settings, keeps
+The Page width setting, in the Appearance editor's Branding and layout, keeps
 pages to a maximum width on a wide screen, or lets them use the full width of the window. It sets
 `--formulize-content-max-width`: a width in pixels, or `100%` for full width. Laying the page out to
 that width is up to the theme, so a theme says when it does, and only then is the setting offered.

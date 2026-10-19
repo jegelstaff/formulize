@@ -39,11 +39,11 @@ if ($moreActionsButton AND ($hasEntriesSection OR $hasViewSection OR $hasOtherSe
   print "
       <div class='lyris-list__more-wrap'>
         $moreActionsButton
-        <div id='more-action-buttons' class='lyris-list__action-panel lyris-panel'>";
+        <div id='more-action-buttons' class='fz-popover fz-menu lyris-list__actions-menu' popover style='position-anchor: --more-action-buttons'>";
 
   if ($hasEntriesSection) {
     print "
-          <div class='lyris-pop__group'>Entries</div>
+          <p class='fz-popover__title'>Entries</p>
           $addMultiButton
           $addProxyButton
           $importButton
@@ -51,9 +51,9 @@ if ($moreActionsButton AND ($hasEntriesSection OR $hasViewSection OR $hasOtherSe
   }
 
   if ($hasViewSection) {
-    if ($hasEntriesSection) { print "\n          <div class='lyris-pop__sep'></div>"; }
+    if ($hasEntriesSection) { print "\n          <hr class='fz-menu__sep'>"; }
     print "
-          <div class='lyris-pop__group'>View</div>
+          <p class='fz-popover__title'>View</p>
           $changeColsButton
           $saveViewButton
           $resetViewButton
@@ -61,7 +61,7 @@ if ($moreActionsButton AND ($hasEntriesSection OR $hasViewSection OR $hasOtherSe
   }
 
   if ($hasOtherSection) {
-    if ($hasEntriesSection OR $hasViewSection) { print "\n          <div class='lyris-pop__sep'></div>"; }
+    if ($hasEntriesSection OR $hasViewSection) { print "\n          <hr class='fz-menu__sep'>"; }
     print "
           $calcButton
           $proceduresButton

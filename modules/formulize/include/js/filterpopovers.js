@@ -7,8 +7,10 @@
 // panel's Apply submits exactly what the in-cell Apply would have. The panel only drafts a search: the button keeps
 // showing the one in effect until Apply, and Cancel (or Escape, or clicking elsewhere) puts the draft back.
 //
-// The hidden fields stay in the cell, inside the list's form. Everything else moves to a panel on the body, placed
-// with position: fixed, so the table's scrolling and the theme's stacking can't clip it.
+// The hidden fields stay in the cell, inside the list's form. Everything else moves to a panel on the body: a
+// Formulize UI popover (fz-popover fz-popover--panel), which the browser shows over everything else, beside its button,
+// so the table's scrolling and the theme's stacking can't clip it. The browser also closes it when something else is
+// clicked or Esc is pressed, and closes any other one when it opens; formulize-ui.js places it in browsers that can't.
 //
 // Webmasters get a "Type a search term" button in the panel, which swaps the popover for an ordinary search box (the
 // hidden field itself, made visible), so they can type terms the panel can't make, like {TODAY-7}. That choice is
@@ -54,7 +56,6 @@ window.formulizeFilterPopoverSettings = window.formulizeFilterPopoverSettings ||
 	var lang = window.formulizeFilterPopoverLang;
 	var settings = window.formulizeFilterPopoverSettings;
 	var FIND_THRESHOLD = 12; // a list with more options than this gets a find box
-	var openPicker = null;
 	var panelCounter = 0;
 
 	var caretIcon = '<svg class="formulize-filter-trigger-caret" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
@@ -143,7 +144,7 @@ window.formulizeFilterPopoverSettings = window.formulizeFilterPopoverSettings ||
 		picker.filter = filter;
 		picker.hidden = hidden;
 		picker.makePicker = makePicker;
-		picker.minWidth = 288; // px; the date range panel needs more, for two dates and two columns of shortcuts
+		picker.minWidth = 288; // px, or the button's width if that is more; the date range panel needs more, for two dates and two columns of shortcuts
 		picker.ownApply = filter.querySelector('.formulize-filter-apply');
 
 		picker.trigger = makeButton('formulize-filter-trigger');
@@ -151,15 +152,20 @@ window.formulizeFilterPopoverSettings = window.formulizeFilterPopoverSettings ||
 		picker.trigger.setAttribute('aria-expanded', 'false');
 		picker.triggerText = make('span', 'formulize-filter-trigger-text');
 
-		picker.panel = make('div', 'formulize-filter-panel');
+		picker.panel = make('div', 'fz-popover fz-popover--panel formulize-filter-panel');
 		picker.panel.id = 'formulize-filter-panel-' + (++panelCounter);
+		picker.panel.setAttribute('popover', 'auto');
 		picker.panel.setAttribute('role', 'dialog');
 		picker.panel.setAttribute('aria-label', columnName(cell));
-		picker.panel.hidden = true;
+		picker.trigger.setAttribute('popovertarget', picker.panel.id);
 		picker.trigger.setAttribute('aria-controls', picker.panel.id);
-		picker.top = make('div', 'formulize-filter-panel-top');
-		picker.body = make('div', 'formulize-filter-panel-body');
-		var foot = make('div', 'formulize-filter-panel-foot');
+		// paired by an anchor name, so the popover is placed beside its button
+		var anchor = '--formulize-filter-' + panelCounter;
+		picker.trigger.setAttribute('style', 'anchor-name: ' + anchor);
+		picker.panel.setAttribute('style', 'position-anchor: ' + anchor);
+		picker.top = make('div', 'fz-popover__head formulize-filter-panel-top');
+		picker.body = make('div', 'fz-popover__body formulize-filter-panel-body');
+		var foot = make('div', 'fz-popover__foot formulize-filter-panel-foot');
 		var cancelButton = makeButton('fz-btn fz-btn--sm formulize-filter-cancel', lang.cancel);
 		var applyButton = makeButton('fz-btn fz-btn--sm fz-btn--primary formulize-filter-panel-apply', lang.apply);
 		if(settings.typeSearch) {
@@ -177,32 +183,51 @@ window.formulizeFilterPopoverSettings = window.formulizeFilterPopoverSettings ||
 		filter.parentNode.insertBefore(picker.trigger, filter);
 		document.body.appendChild(picker.panel);
 
-		picker.trigger.addEventListener('click', function () {
-			if(openPicker === picker) { picker.close(true); } else { picker.open(); }
+		// The button opens and closes it (popovertarget), and the browser closes it when something else is clicked
+		// or Esc is pressed. Opening takes a snapshot of the filter; closing any way but Apply puts it back.
+		picker.panel.addEventListener('beforetoggle', function (event) {
+			if(event.newState === 'open') { picker.opening(); }
 		});
+		picker.panel.addEventListener('toggle', function (event) {
+			if(event.newState === 'open') { picker.opened(); } else { picker.closed(); }
+		});
+		// heard on the document, since what was clicked in the panel doesn't always have the focus (Safari)
+		document.addEventListener('keydown', function (event) {
+			if(event.key === 'Escape' && picker.panel.matches(':popover-open')) { picker.escaped = true; }
+		}, true);
 		cancelButton.addEventListener('click', function () { picker.close(true); });
 		applyButton.addEventListener('click', function () { picker.apply(); });
 	}
 
-	Picker.prototype.open = function () {
-		if(openPicker) { openPicker.close(true); }
-		openPicker = this;
+	Picker.prototype.opening = function () {
 		this.snapshot = this.takeSnapshot();
+		this.restoreOnClose = true;
+		this.escaped = false;
 		this.beforeOpen();
-		this.panel.hidden = false;
+		this.panel.style.minWidth = Math.min(Math.max(this.trigger.getBoundingClientRect().width, this.minWidth), document.documentElement.clientWidth - 16) + 'px';
+	};
+
+	Picker.prototype.opened = function () {
 		this.trigger.setAttribute('aria-expanded', 'true');
-		this.place();
 		var first = this.firstFocus();
 		if(first) { first.focus(); }
 	};
 
-	// restore puts the filter back the way it was when the panel opened, which is what Cancel, Escape and
-	// clicking elsewhere all mean
+	// closed by the browser: something else was clicked, Esc was pressed, or the button was pressed again
+	Picker.prototype.closed = function () {
+		this.trigger.setAttribute('aria-expanded', 'false');
+		if(this.restoreOnClose && this.snapshot) { this.restoreSnapshot(this.snapshot); }
+		this.restoreOnClose = false;
+		this.updateTrigger();
+		// back to its button after Esc, which Safari doesn't do itself, since it doesn't focus a clicked button
+		if(this.escaped && document.contains(this.trigger)) { this.trigger.focus(); }
+	};
+
+	// restore puts the filter back the way it was when the panel opened, which is what Cancel means
 	Picker.prototype.close = function (restore) {
 		if(restore && this.snapshot) { this.restoreSnapshot(this.snapshot); }
-		this.panel.hidden = true;
-		this.trigger.setAttribute('aria-expanded', 'false');
-		if(openPicker === this) { openPicker = null; }
+		this.restoreOnClose = false;
+		if(this.panel.matches(':popover-open')) { this.panel.hidePopover(); }
 		this.updateTrigger();
 	};
 
@@ -211,6 +236,7 @@ window.formulizeFilterPopoverSettings = window.formulizeFilterPopoverSettings ||
 			this.close(false); // nothing changed, so there's nothing to reload for
 			return;
 		}
+		this.restoreOnClose = false;
 		this.panel.querySelectorAll('button').forEach(function (button) { button.disabled = true; });
 		this.ownApply.click(); // the filter's own Apply, hidden in the panel, submits the list as it always has
 	};
@@ -275,21 +301,6 @@ window.formulizeFilterPopoverSettings = window.formulizeFilterPopoverSettings ||
 		row.appendChild(back);
 		return hidden;
 	}
-
-	Picker.prototype.place = function () {
-		var rect = this.trigger.getBoundingClientRect();
-		var viewWidth = document.documentElement.clientWidth;
-		var viewHeight = window.innerHeight;
-		var width = Math.min(Math.max(rect.width, this.minWidth), viewWidth - 16);
-		var spaceBelow = viewHeight - rect.bottom - 12;
-		var spaceAbove = rect.top - 12;
-		var above = spaceBelow < 280 && spaceAbove > spaceBelow;
-		this.panel.style.width = width + 'px';
-		this.panel.style.left = Math.min(Math.max(8, rect.left), viewWidth - width - 8) + 'px';
-		this.panel.style.maxHeight = Math.max(160, Math.min(above ? spaceAbove : spaceBelow, 460)) + 'px';
-		this.panel.style.top = above ? '' : (rect.bottom + 6) + 'px';
-		this.panel.style.bottom = above ? (viewHeight - rect.top + 6) + 'px' : '';
-	};
 
 	// more is how many other choices there are beyond the one named, shown as a "+2" badge
 	Picker.prototype.setTrigger = function (text, isDefault, more, title) {
@@ -633,28 +644,6 @@ window.formulizeFilterPopoverSettings = window.formulizeFilterPopoverSettings ||
 			if(dates && dates.querySelector('.formulize-filter-apply') && dates.querySelector('input[type="hidden"]')) {
 				start(DateRangePicker, cell, dates, dates.querySelector('input[type="hidden"]'));
 			}
-		});
-		if(!cells.length) { return; }
-
-		// a press anywhere outside the open panel and its button puts things back and closes it, like Cancel
-		document.addEventListener('mousedown', function (event) {
-			if(openPicker && !openPicker.panel.contains(event.target) && !openPicker.trigger.contains(event.target)) {
-				openPicker.close(true);
-			}
-		}, true);
-		document.addEventListener('keydown', function (event) {
-			if(openPicker && event.key === 'Escape') {
-				var trigger = openPicker.trigger;
-				openPicker.close(true);
-				trigger.focus();
-			}
-		});
-		// keep the panel with its button as the page or the table scrolls, but not when the panel's own list scrolls
-		document.addEventListener('scroll', function (event) {
-			if(openPicker && !openPicker.panel.contains(event.target)) { openPicker.place(); }
-		}, true);
-		window.addEventListener('resize', function () {
-			if(openPicker) { openPicker.place(); }
 		});
 	}
 

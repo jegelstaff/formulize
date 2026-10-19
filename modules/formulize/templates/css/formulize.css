@@ -777,45 +777,15 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
   flex: none;
 }
 
+/* The panel is a Formulize UI popover (fz-popover fz-popover--panel, see filterpopovers.js), which gives it its
+   frame, its place beside its button and its head, body and foot. Its text is the size of the list's. */
 .formulize-filter-panel {
-  position: fixed;
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-  background: var(--fz-color-surface, #fff);
-  color: var(--fz-color-text, #14161a);
-  border: 1px solid var(--fz-color-border-strong, #d1d1cb);
-  border-radius: var(--fz-radius-lg, 0.5rem);
-  box-shadow: 0 10px 30px rgba(15, 17, 21, 0.16), 0 1px 3px rgba(15, 17, 21, 0.08);
   font-size: var(--fz-table-text, 0.8125rem);
   line-height: 1.4;
-  text-align: left;
 }
 
-.formulize-filter-panel[hidden],
 .formulize-filter-panel [hidden] {
   display: none !important;
-}
-
-.formulize-filter-panel-top {
-  padding: 0.6em 0.6em 0.2em;
-}
-
-.formulize-filter-panel-body {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 0.4em 0.6em 0.6em;
-}
-
-.formulize-filter-panel-foot {
-  display: flex;
-  align-items: center;
-  gap: 0.5em;
-  padding: 0.5em 0.6em;
-  border-top: 1px solid var(--fz-color-border, #e6e6e1);
 }
 
 .formulize-filter-spacer {
@@ -1348,29 +1318,31 @@ div[id^=cellcontents_1_] label {
 	opacity: 0.6;
 }
 
-.formulize-text-for-display p,
-.formulize-text-for-display h1,
-.formulize-text-for-display h2,
-.formulize-text-for-display h3,
-.formulize-text-for-display h4,
-.formulize-text-for-display h5,
-.formulize-text-for-display h6,
-.formulize-text-for-display blockquote,
-.formulize-text-for-display li {
+/* Text elements' paragraphs, headings and lists, in a theme with no content area
+   (fz-content): in one, they follow the look's written-content tokens instead */
+.formulize-text-for-display:not(.fz-content *) p,
+.formulize-text-for-display:not(.fz-content *) h1,
+.formulize-text-for-display:not(.fz-content *) h2,
+.formulize-text-for-display:not(.fz-content *) h3,
+.formulize-text-for-display:not(.fz-content *) h4,
+.formulize-text-for-display:not(.fz-content *) h5,
+.formulize-text-for-display:not(.fz-content *) h6,
+.formulize-text-for-display:not(.fz-content *) blockquote,
+.formulize-text-for-display:not(.fz-content *) li {
 	margin-bottom: 0.5em;
 }
-.formulize-text-for-display blockquote {
+.formulize-text-for-display:not(.fz-content *) blockquote {
 	margin-left: 1.0em;
 	padding-left: 0.7em;
 	border-left: 3px solid #ccc;
 }
-.formulize-text-for-display ol {
+.formulize-text-for-display:not(.fz-content *) ol {
 	list-style: decimal;
 }
-.formulize-text-for-display ul {
+.formulize-text-for-display:not(.fz-content *) ul {
 	list-style: disc;
 }
-.formulize-text-for-display ul, .formulize-text-for-display ol {
+.formulize-text-for-display:not(.fz-content *) ul, .formulize-text-for-display:not(.fz-content *) ol {
 	list-style-position: outside;
 	margin-left: 1.0em;
 	padding-left: 1em;

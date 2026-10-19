@@ -59,23 +59,22 @@ function formulize_uiSizeTokens($sizes = true) {
     $declared = formulize_appearanceTokenDeclarations(file_get_contents(dirname(__DIR__) . '/templates/css/formulize-ui.css'));
     $tokens = array();
     foreach ($map['tokens'] as $token => $entry) {
-        if (in_array($entry['group'], array('fonts', 'colours', 'corners')) == $sizes) {
+        if (in_array($entry['group'], array('fonts', 'colours', 'corners', 'lines')) == $sizes) {
             continue;
         }
         $values = array();
         if (isset($declared[$token])) {
             $default = formulize_appearanceTokenParse($entry['type'], $declared[$token]);
-            $values[] = 'Default ' . formulize_uiSizeTokenValue($entry['type'], $default);
+            $values[] = ($sizes ? 'Standard ' : 'Default ') . formulize_uiSizeTokenValue($entry['type'], $default);
         }
-        // what the built-in looks other than Default set it to
-        foreach (array_filter(formulize_appearanceBuiltinLooks()) as $look) {
-            $lookOverrides = formulize_appearanceLookOverrides($look);
-            if (isset($lookOverrides[$token])) {
-                $values[] = $look['name'] . ' ' . formulize_uiSizeTokenValue($entry['type'], $lookOverrides[$token]);
+        // what the size presets other than Standard (the Default) set it to
+        foreach (array_filter(formulize_appearanceSizePresets()) as $preset) {
+            if (isset($preset['overrides'][$token])) {
+                $values[] = $preset['name'] . ' ' . formulize_uiSizeTokenValue($entry['type'], $preset['overrides'][$token]);
             }
         }
         if (isset($entry['values'])) {
-            $range = 'Can be ' . implode(', ', array_map(function ($v) use ($entry) { return formulize_uiSizeTokenValue($entry['type'], $v); }, $entry['values'])) . '.';
+            $range = 'Can be ' . implode(', ', array_map(function ($v) use ($entry) { return formulize_uiSizeTokenValue($entry['type'], $v) . (isset($entry['labels'][$v]) ? ' (' . $entry['labels'][$v] . ')' : ''); }, $entry['values'])) . '.';
         } elseif ($entry['type'] == 'font') {
             $range = 'Can be the main font or the secondary font.';
         } elseif ($entry['type'] == 'colour') {
@@ -160,6 +159,16 @@ function formulize_uiExpandPattern($pattern) {
  *   'tokens'   custom property => its value, or what it is
  *   'notes'    a list of sentences
  *   'example'  HTML, rendered live in the style guide and shown as code
+ *   'code'     a list of code blocks, each a 'label' and its 'code', shown as code
+ *              only (a recipe's example is then the result they produce)
+ *   'example_height'  the least height the example needs, in rem ('16rem'),
+ *              for what opens over it: a popover, a menu, a dialog. These open
+ *              above the page, not in it, so they add nothing to its height; the
+ *              documentation site shows each example in a frame as tall as its
+ *              page, and never shorter than this. The in-app style guide shows
+ *              examples in the page itself, where they have the whole window,
+ *              so it doesn't use it. The check below insists on rem, so it
+ *              grows and shrinks with the example, as the example's sizes do.
  *
  * @return array
  */
@@ -338,6 +347,9 @@ function formulize_uiCatalog() {
                     '--fz-tone' => 'On `fz-badge`, `fz-callout`, `fz-bar-list__row`, `fz-progress` or `fz-matrix__cell`: the colour, for a tone of your own when none of the tone modifiers is the right one, such as the steps of a scale. Set it in a style attribute, or in a class of your own. Set `--fz-tone-soft` with it on a badge or a callout.',
                     '--fz-tone-soft' => 'On `fz-badge` or `fz-callout`: the pale tint that goes with `--fz-tone`.',
                     '--fz-code-block-max-height' => 'On `fz-code-block`: the tallest it can be, after which it scrolls. No limit unless it is set.',
+                    '--fz-depth' => 'On `fz-tree__cell`: how deep its row is in the tree, 0 for a row at the top. Every row needs it.',
+                    '--fz-level' => 'On `fz-tree__line`: the depth of the column the line is drawn in. See Tree for which level each line has.',
+                    '--fz-tree-indent' => 'On `fz-tree`: how far each level is indented. 6 steps (24px).',
                 ),
             ),
             array(
@@ -354,7 +366,7 @@ function formulize_uiCatalog() {
             array(
                 'id' => 'tokens-sizes',
                 'name' => 'Component sizes',
-                'summary' => 'The sizes of the parts of the interface: titles, labels and field text, the heights of fields, buttons and list rows, and the space in forms, cards and the drawer. The components use them. The Appearance page\'s looks (Default, Compact, Comfortable, and any made in its advanced editor) change them. Steps are spacing steps, 4px each at the default settings.',
+                'summary' => 'The sizes of the parts of the interface: titles, labels and field text, the heights of fields, buttons and list rows, the space in forms, cards and the drawer, the size and spacing of written content (`fz-content` and `fz-prose`), and the side menu\'s (`--fz-sidemenu-`*, for a theme\'s menu of links down the side of the page). The components use them. The Appearance page\'s looks (Default, Compact, Comfortable, and any made in its advanced editor) change them. Steps are spacing steps, 4px each at the default settings.',
                 'tokens' => formulize_uiSizeTokens(),
                 'notes' => array(
                     'Use them in your own CSS so it matches the components and follows the site\'s look: `gap: var(--fz-field-gap)`, `height: var(--fz-control-height)`.',
@@ -376,7 +388,7 @@ HTML
             array(
                 'id' => 'tokens-component-colours',
                 'name' => 'Component fonts, colours and corners',
-                'summary' => 'Which font each kind of text is set in, the colours of the parts of the interface, and their corners. The components use them. Each follows a site-wide setting from the Appearance page (the main or secondary font, one of the colours) until the Appearance page\'s advanced editor gives that part its own.',
+                'summary' => 'Which font each kind of text is set in, the colours of the parts of the interface, and their corners; and for written content, its link underlines, list markers and the thickness of its lines; and the side menu\'s fonts, colours and corners. The components use them. Each follows one of the look\'s branding settings on the Appearance page (the main or secondary font, one of the colours) until the Appearance page\'s advanced editor gives that part its own.',
                 'tokens' => formulize_uiSizeTokens(false),
                 'notes' => array(
                     'Use them in your own CSS so it matches the components: `background: var(--fz-button-primary-bg)`, `border-radius: var(--fz-field-radius)`, `font-family: var(--fz-label-font)`.',
@@ -1011,6 +1023,201 @@ HTML
 HTML
             ),
             array(
+                'id' => 'popover',
+                'name' => 'Popover',
+                'summary' => 'A panel that floats over the page beside the button that opens it: more about a value, a short list. Nothing on the page moves when it opens.',
+                'classes' => array(
+                    'fz-popover' => 'On an element with the `popover` attribute and an id. The `<button>` that opens it has `popovertarget` set to that id.',
+                    'fz-popover__title' => 'A small heading inside it, for each part of what it shows.',
+                    'fz-popover__sep' => 'On an `<hr>`: a line between parts.',
+                ),
+                'notes' => array(
+                    'The browser opens and closes it, with no script: it closes when anything else is clicked, or Esc is pressed.',
+                    'Pair it with its button by an anchor name, so it opens beside the button: `style="anchor-name: --screens-3"` on the button, and `style="position-anchor: --screens-3"` on the popover. Each pair needs a name of its own, starting with two dashes.',
+                    'It opens under the button, lined up with its start, and moves above it, or across, when there isn\'t room. Browsers place it there themselves; in one from before they did (Safari before 26, Firefox before 147), Formulize\'s own script, `formulize-ui.js`, does it.',
+                    'Keep it short, and put nothing in it that has to be seen: it is for the detail behind something already on the page.',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-cluster">
+  <button type="button" class="fz-btn" popovertarget="example-popover" style="anchor-name: --example-popover">3 screens</button>
+  <div class="fz-popover" id="example-popover" popover style="position-anchor: --example-popover">
+    <p class="fz-popover__title">Screens set to Events</p>
+    <ul class="fz-list-none fz-p-0 fz-m-0">
+      <li>Event registration</li>
+      <li>Volunteer sign-up</li>
+      <li>Event check-in</li>
+    </ul>
+    <hr class="fz-popover__sep">
+    <p class="fz-text-muted">A change to Events changes all three.</p>
+  </div>
+</div>
+HTML
+                ,
+                'example_height' => '14rem',
+            ),
+            array(
+                'id' => 'popover-panel',
+                'name' => 'Popover panel',
+                'summary' => 'A popover that holds a small form, such as a filter: a few choices to make, with buttons at the foot to apply them or not. Its body scrolls when there is more than fits, and its foot stays in view.',
+                'classes' => array(
+                    'fz-popover--panel' => 'Beside `fz-popover`, on the popover.',
+                    'fz-popover__head' => 'Optional: what stays at the top while the body scrolls, such as a box to find a choice.',
+                    'fz-popover__body' => 'The choices.',
+                    'fz-popover__foot' => 'The buttons, at the end of the row.',
+                ),
+                'notes' => array(
+                    'Open and pair it as a popover. Clicking elsewhere and Esc close it as they close any popover, so treat that as Cancel: listen for its `toggle` event, and put back anything the panel changed.',
+                    'It can be wider than a popover usually is, up to the width of the window less a margin, for a form that needs the room. Give it a `min-width` for that.',
+                    'The list filters for checkboxes and date ranges are panels (`include/js/filterpopovers.js`).',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-cluster">
+  <button type="button" class="fz-btn" popovertarget="example-panel" style="anchor-name: --example-panel">Status: Any</button>
+  <div class="fz-popover fz-popover--panel" id="example-panel" popover style="position-anchor: --example-panel; min-width: 16rem">
+    <div class="fz-popover__body">
+      <div class="fz-choice-group">
+        <label class="fz-choice"><input type="checkbox" class="fz-checkbox"> Draft</label>
+        <label class="fz-choice"><input type="checkbox" class="fz-checkbox" checked> Submitted</label>
+        <label class="fz-choice"><input type="checkbox" class="fz-checkbox"> Approved</label>
+      </div>
+    </div>
+    <div class="fz-popover__foot">
+      <button type="button" class="fz-btn fz-btn--sm" popovertarget="example-panel" popovertargetaction="hide">Cancel</button>
+      <button type="button" class="fz-btn fz-btn--sm fz-btn--primary">Apply</button>
+    </div>
+  </div>
+</div>
+HTML
+                ,
+                'example_height' => '14rem',
+            ),
+            array(
+                'id' => 'menu',
+                'name' => 'Menu',
+                'summary' => 'A list of actions in a popover, opened by a button: the less common things that can be done to one item.',
+                'classes' => array(
+                    'fz-menu' => 'Beside `fz-popover`, on the popover.',
+                    'fz-menu__item' => 'One action: a `<button type="button">`, or an `<a>` for going somewhere.',
+                    'fz-menu__item--danger' => 'A destructive action, such as delete.',
+                    'fz-menu__note' => 'A line under an item\'s name that says more about it, in a `<span>` inside the item.',
+                    'fz-menu__icon' => 'An icon before an item\'s name: a `<span>` around an `<svg>`, first in the item. The name and its note line up beside it.',
+                    'fz-menu__sep' => 'On an `<hr>`: a line between groups of items.',
+                ),
+                'notes' => array(
+                    'Open and pair it as a popover. Tab moves between the items.',
+                    'An item can open a dialog with `commandfor` and `command="show-modal"`; the menu closes as the dialog opens. An item that does something on the page needs a line of script, which closes the menu with `hidePopover()` too.',
+                    'A disabled item, or one with `aria-disabled="true"`, is faded and can\'t be clicked.',
+                    'The item that is in effect, such as the view a list is showing, has `aria-current="true"`, and is shown selected.',
+                    'A group of items can have a small heading: an `fz-popover__title`, which lines up with the items\' names. Put an `fz-menu__sep` between groups.',
+                    'Lyris\'s list screens use menus for their view switcher and More actions. Formulize\'s own list buttons, `<input type="button" class="formulize_button">`, are made into items there by Lyris\'s own rules.',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-cluster">
+  <button type="button" class="fz-btn" popovertarget="example-menu" style="anchor-name: --example-menu">Edit</button>
+  <div class="fz-popover fz-menu" id="example-menu" popover style="position-anchor: --example-menu">
+    <button type="button" class="fz-menu__item"><span class="fz-menu__icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 2.5l3 3L6 13H3v-3z"/></svg></span>Simple editor<span class="fz-menu__note">Logo, colours, fonts, page width and size</span></button>
+    <button type="button" class="fz-menu__item"><span class="fz-menu__icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2.5l9.5 4-4 1.5-1.5 4z"/></svg></span>Advanced editor<span class="fz-menu__note">Every part, one at a time</span></button>
+    <hr class="fz-menu__sep">
+    <button type="button" class="fz-menu__item">Duplicate</button>
+    <button type="button" class="fz-menu__item fz-menu__item--danger">Delete</button>
+  </div>
+</div>
+HTML
+                ,
+                'example_height' => '16rem',
+            ),
+            array(
+                'id' => 'dialog',
+                'name' => 'Dialog',
+                'summary' => 'A question or a short form over the page, which waits until it is answered: making something, confirming a deletion.',
+                'classes' => array(
+                    'fz-dialog' => 'On a `<dialog>` with an id. The `<button>` that opens it has `commandfor` set to that id and `command="show-modal"`.',
+                    'fz-dialog--wide' => 'Wider, for a form with more in it.',
+                    'fz-dialog__header' => 'The top: its title, and anything beside it.',
+                    'fz-dialog__title' => 'The title: an `<h2>`. Give the dialog `aria-labelledby` with its id.',
+                    'fz-dialog__body' => 'What it says or asks: text, fields. Its children are stacked.',
+                    'fz-dialog__footer' => 'Its buttons, at the end, with the main one last. It stays in view if the dialog is long enough to scroll.',
+                ),
+                'notes' => array(
+                    'The browser opens and closes it, with no script of yours. A button with `commandfor` and `command="close"` closes it, and so does Esc. In a browser from before `commandfor` (Safari before 26.2, Firefox before 144), Formulize\'s own script, `formulize-ui.js`, does what those buttons ask. Add `closedby="any"` to the `<dialog>` to have a click outside it close it too, in browsers that do that.',
+                    'The page under it can\'t be scrolled or clicked while it is open, and when it closes, the keyboard is back on the button that opened it.',
+                    'Put the header, body and footer in a `<form method="dialog">` and its submit button closes the dialog, with the button\'s `value` as the dialog\'s `returnValue`. For a form that is sent to the server, use an ordinary `<form>` instead.',
+                    'Say what the main button does: "Delete look", not "OK".',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-cluster">
+  <button type="button" class="fz-btn fz-btn--danger" commandfor="example-dialog" command="show-modal">Delete Events…</button>
+  <dialog class="fz-dialog" id="example-dialog" aria-labelledby="example-dialog-title">
+    <form method="dialog">
+      <div class="fz-dialog__header">
+        <h2 class="fz-dialog__title" id="example-dialog-title">Delete Events?</h2>
+      </div>
+      <div class="fz-dialog__body">
+        <p>These screens use Events, and will use the site look instead:</p>
+        <ul>
+          <li>Event registration</li>
+          <li>Volunteer sign-up</li>
+        </ul>
+        <p class="fz-text-muted">This can't be undone.</p>
+      </div>
+      <div class="fz-dialog__footer">
+        <button type="button" class="fz-btn" commandfor="example-dialog" command="close">Cancel</button>
+        <button type="submit" class="fz-btn fz-btn--danger" value="delete">Delete look</button>
+      </div>
+    </form>
+  </dialog>
+</div>
+HTML
+                ,
+                'example_height' => '26rem',
+            ),
+            array(
+                'id' => 'tree',
+                'name' => 'Tree',
+                'summary' => 'A table whose rows are nested under other rows, with lines joining each row to the one it is under: things based on other things, parts of a whole.',
+                'classes' => array(
+                    'fz-tree' => 'Beside `fz-table`, on the `<table>`. Its rows have no lines between them, and the one the pointer is on is shaded. One line of text a row.',
+                    'fz-tree__cell' => 'The first cell of each row, with `style="--fz-depth: N"`: 0 for a row at the top, 1 for a row under it, and so on.',
+                    'fz-tree__line' => 'An empty `<span>` in the cell: a line straight down through the row, for a row above it with a later row next to it. One for each such row, with `--fz-level` set to that row\'s depth less one.',
+                    'fz-tree__line--elbow' => 'The line into the row, from the row it is under. `--fz-level` is the row\'s depth less one. Every row but the top ones has one.',
+                    'fz-tree__line--stem' => 'The line down from the row to the first row under it. `--fz-level` is the row\'s depth. Only on a row with rows under it.',
+                ),
+                'notes' => array(
+                    'The lines are worked out from the rows, so they are usually written by whatever writes the rows: a loop in a template, or the code that builds the page.',
+                    'A row that is not the last one under its row has a straight `fz-tree__line` beside its elbow, at the same level, to carry the line on to the next one.',
+                    'For a tree wider than its container, wrap it in an element with `fz-overflow-x-auto`, as for any table.',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-card fz-card--flush fz-overflow-x-auto">
+  <table class="fz-table fz-tree">
+    <thead><tr><th>Look</th><th>Used by</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="fz-tree__cell" style="--fz-depth: 0"><span class="fz-tree__line fz-tree__line--stem" style="--fz-level: 0"></span>Default</td>
+        <td>The site</td>
+      </tr>
+      <tr>
+        <td class="fz-tree__cell" style="--fz-depth: 1"><span class="fz-tree__line fz-tree__line--elbow" style="--fz-level: 0"></span><span class="fz-tree__line" style="--fz-level: 0"></span><span class="fz-tree__line fz-tree__line--stem" style="--fz-level: 1"></span>Events</td>
+        <td>3 screens</td>
+      </tr>
+      <tr>
+        <td class="fz-tree__cell" style="--fz-depth: 2"><span class="fz-tree__line" style="--fz-level: 0"></span><span class="fz-tree__line fz-tree__line--elbow" style="--fz-level: 1"></span>Events, compact</td>
+        <td>2 screens</td>
+      </tr>
+      <tr>
+        <td class="fz-tree__cell" style="--fz-depth: 1"><span class="fz-tree__line fz-tree__line--elbow" style="--fz-level: 0"></span>Reports</td>
+        <td>2 screens</td>
+      </tr>
+      <tr>
+        <td class="fz-tree__cell" style="--fz-depth: 0">Partner portal</td>
+        <td>1 screen</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+HTML
+            ),
+            array(
                 'id' => 'embed',
                 'name' => 'Embed',
                 'summary' => 'Something from elsewhere shown in the page: a map, a video, another site\'s page. It has a shape of its own, so the page doesn\'t jump when what is in it arrives.',
@@ -1480,9 +1687,10 @@ CODE
             array(
                 'id' => 'theme-loading',
                 'name' => 'Loading the stylesheet',
-                'summary' => 'Formulize adds `formulize-ui.css` to its own pages. A theme adds it to every other page by calling `formulize_uiStylesheetLink()` in its `theme.html`, before the theme\'s own stylesheet.',
+                'summary' => 'Formulize adds `formulize-ui.css` to its own pages, with its small script, `formulize-ui.js`. A theme adds them to every other page by calling `formulize_uiStylesheetLink()` in its `theme.html`, before the theme\'s own stylesheet.',
                 'notes' => array(
-                    'The function returns nothing on a page that already has the stylesheet, so it is never loaded twice.',
+                    'The function leaves out whatever the page already has, so nothing is loaded twice.',
+                    'The script is for browsers that can\'t yet do everything popovers, menus and dialogs need on their own: in them, it opens dialogs from buttons with `commandfor`, and places popovers beside their buttons. In browsers that can, it does nothing.',
                     'The order matters: `formulize-ui.css` first, then Formulize\'s own stylesheet, then the theme\'s. Where a theme rule and a class have the same weight, the theme wins.',
                 ),
                 'code' => array(
@@ -1558,6 +1766,33 @@ CODE
   margin-inline: auto;
   padding: var(--fz-page-padding);
 }
+CODE
+                    ),
+                ),
+            ),
+            array(
+                'id' => 'theme-content',
+                'name' => 'Marking the content area',
+                'summary' => 'A theme puts `fz-content` on the element around a page\'s contents, inside its own header, menus and footer. Text there then follows the look\'s written-content tokens, which the Appearance page\'s advanced editor sets on its Text page: its running text, and its headings, links, lists, block quotes and separator lines.',
+                'classes' => array(
+                    'fz-content' => 'On the element around a page\'s contents, such as the one around `<{$icms_contents}>`.',
+                ),
+                'notes' => array(
+                    'Running text takes its size, line height, font and colour from it, as anything inside does that has none of its own.',
+                    'The headings, links, lists, block quotes and separator lines it styles are those with no class of their own. One with a class is part of a component, which has its own styles, so the components are left alone.',
+                    'The rules have the weight of an element selector, so a theme\'s own rule with a class still wins.',
+                    'Text in `fz-prose` follows the same tokens, with or without `fz-content` around it.',
+                    'Without it, a theme\'s text looks as the theme styles it, and the Text page\'s settings don\'t reach it.',
+                ),
+                'code' => array(
+                    array(
+                        'label' => 'In theme.html',
+                        'code' => <<<'CODE'
+<main class="my-theme-main">
+  <div class="my-theme-page fz-content">
+    <{$icms_contents}>
+  </div>
+</main>
 CODE
                     ),
                 ),
@@ -1689,6 +1924,20 @@ function formulize_uiCheckCatalog($catalog, $css) {
         }
         foreach (array_diff($documented[$kind], $defined[$kind]) as $name) {
             $problems[] = "The $noun $name is in the catalog but not in formulize-ui.css.";
+        }
+    }
+    // An example's height is rem, and only for an entry with an example to show.
+    foreach ($catalog['sections'] as $section) {
+        foreach ($section['entries'] as $entry) {
+            if (!isset($entry['example_height'])) {
+                continue;
+            }
+            if (!preg_match('/^\d+(\.\d+)?rem$/', (string) $entry['example_height'])) {
+                $problems[] = "The example height of $entry[name], " . var_export($entry['example_height'], true) . ", is not a number of rem, such as '16rem'.";
+            }
+            if (empty($entry['example'])) {
+                $problems[] = "$entry[name] has an example height, but no example.";
+            }
         }
     }
     // A class name is fz- not preceded by a dash or a word character (which would

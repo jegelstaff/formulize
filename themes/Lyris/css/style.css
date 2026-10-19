@@ -200,13 +200,16 @@ h1, h2, h3, h4, h5, h6,
 
 /* ---- Sidebar ---- */
 
+/* Its width is the Appearance editor's Side menu width. It is read here rather
+   than through a variable of Lyris's own in tokens.css: style.css @imports that
+   without a version, so a browser can keep an old copy of it after an update. */
 .lyris-sidebar {
-  width: var(--lyris-sidebar-width);
+  width: var(--fz-sidemenu-width);
   flex-shrink: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  background: var(--fz-color-surface-2);
-  border-right: 1px solid var(--fz-color-border);
+  background: var(--fz-sidemenu-bg);
+  border-right: 1px solid var(--fz-sidemenu-border);
   transition: width var(--fz-duration) var(--fz-ease-out);
 }
 
@@ -743,7 +746,22 @@ body:not(.formulize-inline) .lyris-page:has(> #listofentries .lyris-list-screen)
   position: relative;
 }
 
-/* More-actions dropdown */
+/* The list's menus, the view switcher's and More actions, are Formulize UI
+   popovers with menus (fz-popover fz-menu, see the list templates); only their
+   widths are Lyris's. The More actions items are the buttons core renders,
+   input.formulize_button, made into menu items below. */
+.lyris-list__actions-menu { min-width: 13.75rem; }
+/* a column, so the menu is as wide as its widest item: as block children the
+   inputs' width: 100% would take it to the popover's widest */
+.lyris-list__actions-menu:popover-open {
+  display: flex;
+  flex-direction: column;
+}
+.lyris-view-switcher__menu { min-width: 15rem; }
+
+/* More-actions dropdown, and the view switcher's further down, as they were
+   before they were popovers: for a screen with its own copy of the list
+   templates from then (lyris-panel, lyris-pop__*). */
 .lyris-list__action-panel {
   display: none;
   position: absolute;
@@ -764,9 +782,9 @@ body:not(.formulize-inline) .lyris-page:has(> #listofentries .lyris-list-screen)
 }
 
 /* Formulize-generated buttons inside the dropdown styled as pop items */
-.lyris-list__action-panel input[type="button"],
-.lyris-list__action-panel input[type="submit"],
-.lyris-list__action-panel .formulize_button {
+:is(.lyris-list__action-panel, .lyris-list__actions-menu) input[type="button"],
+:is(.lyris-list__action-panel, .lyris-list__actions-menu) input[type="submit"],
+:is(.lyris-list__action-panel, .lyris-list__actions-menu) .formulize_button {
   display: flex;
   align-items: center;
   width: 100%;
@@ -784,9 +802,9 @@ body:not(.formulize-inline) .lyris-page:has(> #listofentries .lyris-list-screen)
   white-space: nowrap;
 }
 
-.lyris-list__action-panel input[type="button"]:hover,
-.lyris-list__action-panel input[type="submit"]:hover,
-.lyris-list__action-panel .formulize_button:hover {
+:is(.lyris-list__action-panel, .lyris-list__actions-menu) input[type="button"]:hover,
+:is(.lyris-list__action-panel, .lyris-list__actions-menu) input[type="submit"]:hover,
+:is(.lyris-list__action-panel, .lyris-list__actions-menu) .formulize_button:hover {
   background: var(--fz-color-surface-3);
 }
 
@@ -802,8 +820,8 @@ body:not(.formulize-inline) .lyris-page:has(> #listofentries .lyris-list-screen)
    higher specificity (0,3,1) so it wins regardless of source order. Additive
    and Lyris-scoped; the inline-edit save/go buttons live in
    `.lyris-list__footer`, not this panel, so they are untouched. */
-.lyris-list__action-panel input[type="button"].formulize_button,
-.lyris-list__action-panel input[type="submit"].formulize_button {
+:is(.lyris-list__action-panel, .lyris-list__actions-menu) input[type="button"].formulize_button,
+:is(.lyris-list__action-panel, .lyris-list__actions-menu) input[type="submit"].formulize_button {
   height: var(--fz-menu-item-height);
   padding: 0 calc(var(--fz-spacing) * 2);
   border: 0;
@@ -813,13 +831,15 @@ body:not(.formulize-inline) .lyris-page:has(> #listofentries .lyris-list-screen)
   font-family: var(--fz-control-font);
   font-weight: inherit;
 }
-.lyris-list__action-panel input[type="button"].formulize_button:hover,
-.lyris-list__action-panel input[type="submit"].formulize_button:hover {
+:is(.lyris-list__action-panel, .lyris-list__actions-menu) input[type="button"].formulize_button:hover,
+:is(.lyris-list__action-panel, .lyris-list__actions-menu) input[type="submit"].formulize_button:hover {
   background: var(--fz-color-surface-3);
   border-color: transparent;
 }
 
-/* Popover components (shared across dropdown contexts) */
+/* Popover components (shared across dropdown contexts), as they were before the
+   list's menus were Formulize UI menus (fz-menu): for a screen with its own copy
+   of the list templates from then. */
 .lyris-pop {
   background: var(--fz-menu-bg);
   border-radius: var(--fz-menu-radius);
@@ -879,7 +899,8 @@ body:not(.formulize-inline) .lyris-page:has(> #listofentries .lyris-list-screen)
   font-weight: 500;
 }
 .lyris-list__titlebar .lyris-view-switcher__toggle:hover,
-.lyris-list__titlebar .lyris-view-switcher__toggle[aria-expanded="true"] {
+.lyris-list__titlebar .lyris-view-switcher__toggle[aria-expanded="true"],
+.lyris-list__titlebar .lyris-view-switcher:has(> .fz-popover:popover-open) .lyris-view-switcher__toggle {
   background: var(--fz-color-surface-3);
   color: var(--fz-color-text);
 }
@@ -892,7 +913,8 @@ body:not(.formulize-inline) .lyris-page:has(> #listofentries .lyris-list-screen)
   opacity: .7;
   transition: transform var(--fz-duration-fast) var(--fz-ease-out);
 }
-.lyris-view-switcher__toggle[aria-expanded="true"] .lyris-view-switcher__chevron {
+.lyris-view-switcher__toggle[aria-expanded="true"] .lyris-view-switcher__chevron,
+.lyris-view-switcher:has(> .fz-popover:popover-open) .lyris-view-switcher__chevron {
   transform: rotate(180deg);
 }
 
@@ -1702,7 +1724,10 @@ a.de-edit-icon:hover::before {
 
 /* ============================================================
    Sidebar nav content
-   ============================================================ */
+   ============================================================
+
+   Sized and coloured by Formulize UI's side menu tokens (--fz-sidemenu-*), which
+   the Appearance editor's Side menu page sets. */
 
 /* Container injected by blockszone.html */
 #xo-canvas-leftcolumn {
@@ -1710,7 +1735,7 @@ a.de-edit-icon:hover::before {
 }
 
 .xo-blockszone {
-  padding: calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 2);
+  padding: var(--fz-sidemenu-padding-y) var(--fz-sidemenu-padding-x);
   display: flex;
   flex-direction: column;
   gap: calc(var(--fz-spacing) * 4);
@@ -1744,7 +1769,7 @@ a.de-edit-icon:hover::before {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: calc(1px + var(--fz-sidemenu-item-gap));
 }
 
 .main-menu__item {
@@ -1755,11 +1780,12 @@ a.de-edit-icon:hover::before {
   display: flex;
   align-items: center;
   gap: calc(var(--fz-spacing) * 2);
-  padding: calc(var(--fz-spacing) * 1.5) calc(var(--fz-spacing) * 2);
-  border-radius: var(--fz-radius-md);
-  font-size: var(--fz-text-xs-plus);
-  font-weight: 500;
-  color: var(--fz-color-text);
+  padding: var(--fz-sidemenu-item-padding-y) var(--fz-sidemenu-item-padding-x);
+  border-radius: var(--fz-sidemenu-item-radius);
+  font-family: var(--fz-sidemenu-font);
+  font-size: var(--fz-sidemenu-text);
+  font-weight: var(--fz-sidemenu-weight);
+  color: var(--fz-sidemenu-color);
   text-decoration: none;
   transition: background var(--fz-duration-fast) var(--fz-ease-out);
   line-height: var(--fz-leading-snug);
@@ -1767,7 +1793,7 @@ a.de-edit-icon:hover::before {
 }
 
 .main-menu__item-link:hover {
-  background: var(--fz-color-surface-3);
+  background: var(--fz-sidemenu-hover-bg);
 }
 
 /* Open/close iconography for top-level group headers.
@@ -1828,7 +1854,7 @@ a.de-edit-icon:hover::before {
    nested <ul class="main-menu__subitems"> below is reset to no padding, so the
    sub-item's left edge lines up with its .main-menu__item positioning origin. */
 a.main-menu__item-link--active {
-  background: var(--fz-color-surface);
+  background: var(--fz-sidemenu-active-bg);
   box-shadow: var(--fz-shadow-xs);
 }
 
@@ -1840,13 +1866,14 @@ a.main-menu__item-link--active::before {
   bottom: 0.375rem;
   width: 2px;
   border-radius: var(--fz-radius-full);
-  background: var(--fz-color-accent);
+  background: var(--fz-sidemenu-active-marker);
 }
 
 /* Active state applied to any item (leaf link or group header) just gets the
-   bolder label weight. */
+   bolder label weight, and the current page's text colour. */
 .main-menu__item-link--active {
-  font-weight: 600;
+  font-weight: var(--fz-sidemenu-active-weight);
+  color: var(--fz-sidemenu-active-color);
 }
 
 .main-menu__item-link-icon {
@@ -1867,13 +1894,13 @@ a.main-menu__item-link--active::before {
    a group read as one visually grouped branch hanging off their parent. */
 .main-menu__subitems {
   list-style: none;
-  margin: calc(var(--fz-spacing) * 1) 0 calc(var(--fz-spacing) * 1) calc(var(--fz-spacing) * 3);
+  margin: calc(var(--fz-spacing) * 1) 0 calc(var(--fz-spacing) * 1) var(--fz-sidemenu-sub-indent);
   padding: 0 0 0 calc(var(--fz-spacing) * 2);
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: calc(1px + var(--fz-sidemenu-item-gap));
   /* The vertical guide line down the left of a group's children. */
-  border-left: 1px solid var(--fz-color-border);
+  border-left: 1px solid var(--fz-sidemenu-guide);
 }
 
 .main-menu__subitem {
@@ -1881,13 +1908,16 @@ a.main-menu__item-link--active::before {
 }
 
 .main-menu__subitem .main-menu__item-link {
-  font-size: var(--fz-text-xs);
-  color: var(--fz-color-text-muted);
+  font-size: var(--fz-sidemenu-sub-text);
+  color: var(--fz-sidemenu-sub-color);
 }
 
-.main-menu__subitem .main-menu__item-link:hover,
+.main-menu__subitem .main-menu__item-link:hover {
+  color: var(--fz-sidemenu-color);
+}
+
 .main-menu__subitem .main-menu__item-link--active {
-  color: var(--fz-color-text);
+  color: var(--fz-sidemenu-active-color);
 }
 
 /* Active child. The generic active rule above gives every active leaf link a
@@ -1897,7 +1927,7 @@ a.main-menu__item-link--active::before {
    a second competing colour — --fz-color-accent-soft is derived from the deployment's
    configured accent on the Appearance admin page, so this follows branding. */
 .main-menu__subitem a.main-menu__item-link--active {
-  background: var(--fz-color-accent-soft);
+  background: var(--fz-sidemenu-sub-active-bg);
 }
 
 /* ...and its accent pipe moves out onto the guide line, so the rail itself
@@ -2039,7 +2069,7 @@ body:has(#formulize-masquerade-block) {
     /* stops above the masquerade bar; 0 otherwise -- see "Masquerade bar" */
     bottom: var(--lyris-masquerade-height);
     /* override the desktop collapsed state on mobile */
-    width: var(--lyris-sidebar-width) !important;
+    width: var(--fz-sidemenu-width) !important;
     z-index: 20;
     transform: translateX(-100%);
     transition: transform var(--fz-duration) var(--fz-ease-out);

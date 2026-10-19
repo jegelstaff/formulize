@@ -199,6 +199,44 @@
   --fz-drawer-padding-y:  calc(var(--fz-spacing) * 4);
   --fz-page-padding:      calc(var(--fz-spacing) * 5);
   --fz-topbar-height:     calc(var(--fz-spacing) * 12);  /* the bar across the top of the page, with the logo: 48px */
+
+  /* Written content: the text in a page's content area (fz-content) and in fz-prose */
+  --fz-paragraph-text:      var(--fz-text-sm);       /* running text: 14px */
+  --fz-paragraph-leading:   1.5;
+  --fz-paragraph-gap:       calc(var(--fz-spacing) * 4);  /* between paragraphs, lists and quotes: 16px */
+  --fz-heading-leading:     1.25;
+  --fz-heading-space-above: calc(var(--fz-spacing) * 8);  /* 32px */
+  --fz-heading-space-below: calc(var(--fz-spacing) * 4);  /* 16px */
+  --fz-h1-text:             var(--fz-text-2xl);      /* 24px */
+  --fz-h1-weight:           600;
+  --fz-h2-text:             var(--fz-text-xl);       /* 20px */
+  --fz-h2-weight:           600;
+  --fz-h3-text:             var(--fz-text-lg);       /* 18px */
+  --fz-h3-weight:           600;
+  --fz-h4-text:             var(--fz-text-base);     /* 16px */
+  --fz-h4-weight:           600;
+  --fz-h5-text:             var(--fz-text-base);
+  --fz-h5-weight:           600;
+  --fz-h6-text:             var(--fz-text-base);
+  --fz-h6-weight:           600;
+  --fz-list-indent:         calc(var(--fz-spacing) * 6);  /* 24px */
+  --fz-list-gap:            calc(var(--fz-spacing) * 1);  /* between a list's items: 4px */
+  --fz-quote-indent:        calc(var(--fz-spacing) * 4);  /* 16px */
+  --fz-rule-space:          calc(var(--fz-spacing) * 4);  /* above and below a separator line: 16px */
+
+  /* The side menu: a theme's menu of links down the side of the page, from
+     Formulize's menu block (main-menu, main-menu__item-link...) */
+  --fz-sidemenu-width:         calc(var(--fz-spacing) * 55);   /* 220px */
+  --fz-sidemenu-padding-x:     calc(var(--fz-spacing) * 2);
+  --fz-sidemenu-padding-y:     calc(var(--fz-spacing) * 4);
+  --fz-sidemenu-text:           var(--fz-text-xs-plus);         /* its links: 13px */
+  --fz-sidemenu-weight:         500;
+  --fz-sidemenu-item-padding-x: calc(var(--fz-spacing) * 2);
+  --fz-sidemenu-item-padding-y: calc(var(--fz-spacing) * 1.5);
+  --fz-sidemenu-item-gap:       calc(var(--fz-spacing) * 0);    /* between links, on top of 1px */
+  --fz-sidemenu-active-weight:  600;                            /* the link to the page you're on */
+  --fz-sidemenu-sub-text:       var(--fz-text-xs);              /* the links in a group: 12px */
+  --fz-sidemenu-sub-indent:     calc(var(--fz-spacing) * 3);
 }
 
 
@@ -211,7 +249,7 @@
    so setting one changes that part everywhere; the Appearance page's advanced
    editor sets them, and what each can be set to is in appearance_tokens.json.
 
-   Each one defaults to the site-wide setting it has always followed: a font is
+   Each one defaults to the look's setting it has always followed: a font is
    the main font (--fz-font-sans) or the secondary one (--fz-font-heading), and
    a colour is one of the palette's, so changing the palette still changes every
    part that hasn't been given a colour of its own. Keep them written that way
@@ -219,7 +257,9 @@
    the Appearance page can read them.
 
    --fz-button-primary-hover isn't set directly: it follows
-   --fz-button-primary-bg, darkened, when that is changed. */
+   --fz-button-primary-bg, darkened, when that is changed, and
+   --fz-link-hover-color follows --fz-link-color the same way. A few are
+   keywords (an underline, a list's markers) or a line's thickness in px. */
 :root {
   /* Fonts */
   --fz-title-font:        var(--fz-font-heading);  /* form card, list and drawer titles */
@@ -229,6 +269,9 @@
   --fz-control-font:      var(--fz-font-sans);     /* buttons, tabs, menus, list toolbars */
   --fz-table-font:        var(--fz-font-sans);     /* list and table cells */
   --fz-table-header-font: var(--fz-font-sans);     /* column headings */
+  --fz-paragraph-font:    var(--fz-font-sans);     /* running text */
+  --fz-sidemenu-font:      var(--fz-font-sans);     /* the side menu */
+  --fz-heading-font:      var(--fz-font-heading);  /* headings in running text */
 
   /* Text colours */
   --fz-title-color:       var(--fz-color-text);
@@ -237,6 +280,8 @@
   --fz-field-color:       var(--fz-color-text);    /* in fields, and choice options */
   --fz-value-color:       var(--fz-color-text);    /* read-only values */
   --fz-help-color:        var(--fz-color-text-muted);
+  --fz-paragraph-color:   var(--fz-color-text);
+  --fz-heading-color:     var(--fz-color-text);
 
   /* Forms */
   --fz-field-bg:          var(--fz-color-surface);
@@ -281,6 +326,33 @@
   --fz-card-radius:       var(--fz-radius-lg);
   --fz-drawer-bg:         var(--fz-color-surface);
   --fz-drawer-foot-bg:    var(--fz-color-surface-2);
+
+  /* The side menu */
+  --fz-sidemenu-bg:            var(--fz-color-surface-2);
+  --fz-sidemenu-border:        var(--fz-color-border);
+  --fz-sidemenu-color:         var(--fz-color-text);
+  --fz-sidemenu-hover-bg:      var(--fz-color-surface-3);
+  --fz-sidemenu-item-radius:   var(--fz-radius-md);
+  --fz-sidemenu-active-bg:     var(--fz-color-surface);
+  --fz-sidemenu-active-color:  var(--fz-color-text);
+  --fz-sidemenu-active-marker: var(--fz-color-accent);
+  --fz-sidemenu-sub-color:     var(--fz-color-text-muted);
+  --fz-sidemenu-sub-active-bg: var(--fz-color-accent-soft);
+  --fz-sidemenu-guide:         var(--fz-color-border);
+
+  /* Written content */
+  --fz-link-color:         var(--fz-color-accent);
+  --fz-link-hover-color:   var(--fz-color-accent-hover);
+  --fz-link-underline:     underline;
+  --fz-link-hover-underline: underline;
+  --fz-list-bullet:        disc;
+  --fz-list-number:        decimal;
+  --fz-list-marker-color:  var(--fz-color-text);
+  --fz-quote-color:        var(--fz-color-text-muted);
+  --fz-quote-border:       var(--fz-color-border-strong);
+  --fz-quote-line:         3px;
+  --fz-rule-color:         var(--fz-color-border);
+  --fz-rule-line:          1px;
 }
 
 
@@ -1388,6 +1460,296 @@
   .fz-tab-panel + .fz-tab-panel { margin-block-start: calc(var(--fz-spacing) * 8); }
 }
 
+/* ---- Popover ------------------------------------------------------------------
+   A panel that floats over the page beside the button that opens it: more about
+   a value, a short list. On an element with the popover attribute, opened by a
+   <button> whose popovertarget names it; the browser opens and closes it, and
+   closes it when something else is clicked or Esc is pressed, with no script.
+   Nothing on the page moves when it opens. It sits under its button, lined up
+   with the button's start, and moves above it or across when there isn't room.
+   To be placed beside its button, the two are paired by an anchor name: give
+   the button style="anchor-name: --x" and the popover style="position-anchor:
+   --x", with a name of their own. */
+.fz-popover {
+  box-sizing: border-box;
+  margin: auto;
+  max-width: min(24rem, calc(100vw - var(--fz-spacing) * 4));
+  max-height: min(28rem, calc(100vh - var(--fz-spacing) * 4));
+  overflow: auto;
+  padding: calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 4);
+  border: 1px solid var(--fz-color-border);
+  border-radius: var(--fz-menu-radius);
+  background: var(--fz-menu-bg);
+  box-shadow: var(--fz-shadow-lg);
+  color: var(--fz-menu-text);
+  font-size: var(--fz-text-sm);
+  font-weight: var(--fz-font-weight-normal);
+  line-height: var(--fz-leading-normal);
+  /* it floats over the page, but is still inside whatever its button is in, such
+     as a table cell that doesn't wrap: it takes none of that */
+  text-align: start;
+  white-space: normal;
+}
+/* Beside its button, in a browser that can place it there; in one that can't,
+   it opens in the middle of the window, where the browser puts a popover. */
+@supports (position-area: block-end) {
+  .fz-popover {
+    inset: auto;
+    margin: calc(var(--fz-spacing) * 1) 0;
+    position-area: block-end span-inline-end;
+    position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
+  }
+}
+.fz-popover > :where(*) { margin-block: 0; }
+.fz-popover > :where(* + *) { margin-block-start: calc(var(--fz-spacing) * 2); }
+/* what a heading heads sits close under it, so it reads as the heading's */
+.fz-popover > :where(.fz-popover__title + *) { margin-block-start: calc(var(--fz-spacing) * 1); }
+/* A small heading inside it, for each part of what it shows */
+.fz-popover__title {
+  margin: 0;
+  color: var(--fz-color-text-subtle);
+  font-size: var(--fz-text-xs);
+  font-weight: var(--fz-font-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+/* A line between parts */
+.fz-popover__sep {
+  height: 0;
+  border: 0;
+  border-top: 1px solid var(--fz-color-border);
+}
+/* A panel: a popover that holds a small form, such as a filter, with a head
+   (fz-popover__head, optional), a body that scrolls when there is more than fits
+   (fz-popover__body), and a foot that stays in view with its buttons
+   (fz-popover__foot). It can be as wide as the window, less a margin, for a
+   form that needs more room than a popover's usual width. */
+.fz-popover--panel {
+  max-width: calc(100vw - var(--fz-spacing) * 4);
+  overflow: hidden;
+  padding: 0;
+}
+.fz-popover--panel:popover-open {
+  display: flex;
+  flex-direction: column;
+}
+.fz-popover--panel > :where(* + *) { margin-block-start: 0; }
+.fz-popover__head {
+  flex: none;
+  padding: calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 3) 0;
+}
+.fz-popover__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 3);
+}
+.fz-popover__foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: calc(var(--fz-spacing) * 2);
+  padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3);
+  border-top: 1px solid var(--fz-color-border);
+}
+
+/* ---- Menu ---------------------------------------------------------------------
+   A list of actions, in a popover: fz-menu goes beside fz-popover. Each action
+   is an fz-menu__item, a <button> or an <a>, with a note under it if it needs
+   one, and an icon before it if it has one. Tab moves between the items. The
+   one that is in effect, such as the view a list is showing, has
+   aria-current="true". A group of items can have a small heading
+   (fz-popover__title). */
+.fz-menu {
+  min-width: 12rem;
+  padding: calc(var(--fz-spacing) * 1);
+}
+.fz-menu > :where(* + *) { margin-block-start: 0; }
+.fz-menu__item {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1px;
+  width: 100%;
+  min-height: var(--fz-menu-item-height);
+  padding: calc(var(--fz-spacing) * 1.5) calc(var(--fz-spacing) * 2.5);
+  border: 0;
+  border-radius: var(--fz-radius-sm);
+  background: transparent;
+  color: var(--fz-menu-text);
+  font: inherit;
+  font-family: var(--fz-control-font);
+  font-size: var(--fz-control-text);
+  line-height: var(--fz-leading-snug);
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.fz-menu__item:hover { background: var(--fz-color-surface-3); }
+.fz-menu__item:focus-visible { outline: none; background: var(--fz-color-surface-3); box-shadow: var(--fz-focus-ring); }
+.fz-menu__item:disabled,
+.fz-menu__item[aria-disabled="true"] { color: var(--fz-color-text-subtle); cursor: default; pointer-events: none; }
+.fz-menu__item--danger { color: var(--fz-color-danger); }
+.fz-menu__item[aria-current]:not([aria-current="false"]) {
+  background: var(--fz-color-accent-soft);
+  color: var(--fz-color-accent-text);
+  font-weight: var(--fz-font-weight-medium);
+}
+.fz-menu__item[aria-current]:not([aria-current="false"]):hover { background: var(--fz-color-accent-soft-2); }
+/* a group's heading lines up with the items' text */
+.fz-menu > .fz-popover__title {
+  padding: calc(var(--fz-spacing) * 1.5) calc(var(--fz-spacing) * 2.5) calc(var(--fz-spacing) * 0.5);
+}
+.fz-menu__note {
+  color: var(--fz-color-text-subtle);
+  font-size: var(--fz-text-xs);
+}
+/* An icon before an item's name, first in the item: beside the name and its
+   note, which line up with the other items' whether they have one or not. */
+.fz-menu__item:has(> .fz-menu__icon) {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: calc(var(--fz-spacing) * 2.5);
+}
+.fz-menu__icon {
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: calc(var(--fz-spacing) * 4);
+  height: calc(var(--fz-spacing) * 4);
+  color: var(--fz-color-text-muted);
+}
+.fz-menu__icon > :where(svg) { width: 100%; height: 100%; }
+/* a destructive item's icon is its colour too */
+.fz-menu__item--danger > :where(.fz-menu__icon) { color: inherit; }
+.fz-menu__sep {
+  height: 0;
+  margin: calc(var(--fz-spacing) * 1) 2px;
+  border: 0;
+  border-top: 1px solid var(--fz-color-border);
+}
+
+/* ---- Dialog -------------------------------------------------------------------
+   A question or a short form, over the page, which waits until it is answered:
+   making something, confirming a deletion. On a <dialog>, opened by a <button>
+   with commandfor naming it and command="show-modal", and closed by one with
+   command="close", or by Esc; the browser does both, with no script. Inside it,
+   fz-dialog__header, __body and __footer, which can be inside a <form>. The page
+   under it can't be scrolled while it is open. */
+.fz-dialog {
+  box-sizing: border-box;
+  margin: auto;
+  width: min(32rem, calc(100vw - var(--fz-spacing) * 8));
+  max-height: calc(100vh - var(--fz-spacing) * 8);
+  padding: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--fz-card-border);
+  border-radius: var(--fz-radius-xl);
+  background: var(--fz-drawer-bg);
+  box-shadow: var(--fz-shadow-lg);
+  color: var(--fz-color-text);
+  font-weight: var(--fz-font-weight-normal);
+  line-height: var(--fz-leading-normal);
+  text-align: start;
+  white-space: normal;
+}
+.fz-dialog::backdrop { background: var(--fz-color-overlay); }
+.fz-dialog--wide { width: min(48rem, calc(100vw - var(--fz-spacing) * 8)); }
+.fz-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--fz-spacing) * 3);
+  padding: calc(var(--fz-drawer-padding-y) + var(--fz-spacing)) var(--fz-drawer-padding-x) 0;
+}
+.fz-dialog__title {
+  margin: 0;
+  color: var(--fz-title-color);
+  font-family: var(--fz-title-font);
+  font-size: var(--fz-text-lg);
+  font-weight: var(--fz-title-weight);
+  line-height: var(--fz-title-leading);
+}
+.fz-dialog__body {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--fz-spacing) * 4);
+  padding: var(--fz-drawer-padding-y) var(--fz-drawer-padding-x);
+}
+.fz-dialog__body > * { margin-block: 0; }
+/* The buttons, at the end; it stays in view when the dialog scrolls */
+.fz-dialog__footer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: calc(var(--fz-spacing) * 2);
+  padding: var(--fz-drawer-padding-y) var(--fz-drawer-padding-x);
+  border-top: 1px solid var(--fz-color-border);
+  background: var(--fz-drawer-foot-bg);
+}
+/* The page doesn't scroll under an open dialog. A page that scrolls inside one
+   of its own elements, as Lyris's does, already stays still; this stops a page
+   that scrolls the window. No space is kept for the window's scrollbar, which
+   would move a page of the first kind sideways. */
+:where(html:has(.fz-dialog:modal)) {
+  overflow: hidden;
+}
+
+/* ---- Tree ---------------------------------------------------------------------
+   An fz-table whose rows are nested under other rows: fz-tree goes beside
+   fz-table. Lines join each row to the one it is under. The rows have no lines
+   between them, so nothing crosses the tree's; a row is picked out when the
+   pointer is on it. One line of text a row, centred.
+   The first cell of each row is an fz-tree__cell, with --fz-depth set to how
+   deep the row is (0 for the top), and in it the row's lines, each an empty
+   <span> with --fz-level set to the depth of the row it comes down from:
+     fz-tree__line--elbow  into this row, from the row it is under (level: depth - 1)
+     fz-tree__line         straight through this row, to a later row under the
+                           same one: one for each row above this one, this one
+                           included, with a later row next to it (level: that
+                           row's depth - 1)
+     fz-tree__line--stem   down from this row to the first row under it (level: depth) */
+.fz-tree {
+  --fz-tree-indent: calc(var(--fz-spacing) * 6);
+}
+.fz-tree :where(tbody td) {
+  border-bottom: 0;
+  white-space: nowrap;
+}
+.fz-tree :where(tbody tr:hover td) { background: var(--fz-row-hover); }
+.fz-tree__cell {
+  --fz-depth: 0;
+  position: relative;
+  padding-inline-start: calc(var(--fz-cell-padding-x) + var(--fz-depth) * var(--fz-tree-indent));
+}
+.fz-tree__line {
+  --fz-level: 0;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  inset-inline-start: calc(var(--fz-cell-padding-x) + var(--fz-level) * var(--fz-tree-indent) + var(--fz-spacing) * 2);
+  width: 0;
+  border-inline-start: 1px solid var(--fz-color-border-strong);
+  pointer-events: none;
+}
+.fz-tree__line--elbow {
+  bottom: 50%;
+  width: calc(var(--fz-tree-indent) - var(--fz-spacing) * 3);
+  border-bottom: 1px solid var(--fz-color-border-strong);
+  border-end-start-radius: 5px;
+}
+.fz-tree__line--stem { top: calc(50% + var(--fz-spacing) * 3); }
+
 /* ---- Embed --------------------------------------------------------------------
    Something from elsewhere shown in the page: a map, a video, another site's
    form. Around an <iframe>, <video> or <img>, which fills it. The embed has a
@@ -1409,51 +1771,134 @@
 }
 .fz-embed--square { aspect-ratio: 1; }
 
+/* ---- Content ------------------------------------------------------------------
+   The part of a page that shows what the page is for: a theme puts fz-content on
+   the element around a page's contents, inside its own header, menus and
+   footer. Text there follows the look's written-content tokens: its running
+   text, and the headings, links, lists, block quotes and separator lines that
+   have no class of their own. An element with a class is part of a component,
+   which has its own styles, so the selectors only reach bare elements, with
+   little weight: an element selector's, or a little more for the space around
+   elements, so that it beats a reset's margin: 0. A theme's rule with a class
+   still wins. */
+.fz-content {
+  font-family: var(--fz-paragraph-font);
+  font-size: var(--fz-paragraph-text);
+  line-height: var(--fz-paragraph-leading);
+  color: var(--fz-paragraph-color);
+}
+:where(.fz-content) :is(h1, h2, h3, h4, h5, h6):where(:not([class])) {
+  font-family: var(--fz-heading-font);
+  line-height: var(--fz-heading-leading);
+  color: var(--fz-heading-color);
+}
+:where(.fz-content) h1:where(:not([class])) { font-size: var(--fz-h1-text); font-weight: var(--fz-h1-weight); }
+:where(.fz-content) h2:where(:not([class])) { font-size: var(--fz-h2-text); font-weight: var(--fz-h2-weight); }
+:where(.fz-content) h3:where(:not([class])) { font-size: var(--fz-h3-text); font-weight: var(--fz-h3-weight); }
+:where(.fz-content) h4:where(:not([class])) { font-size: var(--fz-h4-text); font-weight: var(--fz-h4-weight); }
+:where(.fz-content) h5:where(:not([class])) { font-size: var(--fz-h5-text); font-weight: var(--fz-h5-weight); }
+:where(.fz-content) h6:where(:not([class])) { font-size: var(--fz-h6-text); font-weight: var(--fz-h6-weight); }
+/* more space above a heading than below it, so it belongs to what follows */
+:where(.fz-content) :is(h1, h2, h3, h4, h5, h6):where(:not([class])):not(:first-child) { margin-block-start: var(--fz-heading-space-above); }
+:where(.fz-content) :is(h1, h2, h3, h4, h5, h6):where(:not([class])):not(:last-child) { margin-block-end: var(--fz-heading-space-below); }
+:where(.fz-content) :is(p, ul, ol, blockquote):where(:not([class])) + :is(p, ul, ol, blockquote):where(:not([class])) {
+  margin-block-start: var(--fz-paragraph-gap);
+}
+:where(.fz-content) a:where(:not([class])) {
+  color: var(--fz-link-color);
+  text-decoration-line: var(--fz-link-underline);
+}
+:where(.fz-content) a:where(:not([class])):hover {
+  color: var(--fz-link-hover-color);
+  text-decoration-line: var(--fz-link-hover-underline);
+}
+:where(.fz-content) :is(ul, ol):where(:not([class])) {
+  margin-block-end: 0;
+  padding-inline-start: var(--fz-list-indent);
+}
+:where(.fz-content) ul:where(:not([class])) { list-style-type: var(--fz-list-bullet); }
+:where(.fz-content) ol:where(:not([class])) { list-style-type: var(--fz-list-number); }
+:where(.fz-content) :is(ul, ol):where(:not([class])) > li + li { margin-block-start: var(--fz-list-gap); }
+:where(.fz-content) :is(ul, ol):where(:not([class])) > li::marker { color: var(--fz-list-marker-color); }
+:where(.fz-content) blockquote:where(:not([class])) {
+  margin-inline: 0;
+  padding-inline-start: var(--fz-quote-indent);
+  border-inline-start: var(--fz-quote-line) solid var(--fz-quote-border);
+  color: var(--fz-quote-color);
+}
+:where(.fz-content) hr:where(:not([class])) {
+  height: 0;
+  border: 0;
+  border-block-start: var(--fz-rule-line) solid var(--fz-rule-color);
+}
+:where(.fz-content) hr:not([class]) { margin-block: var(--fz-rule-space); }
+
 /* ---- Prose --------------------------------------------------------------------
    Running text that someone wrote: an article, instructions, an agreement, the
    contents of a rich text field. Its paragraphs, headings and lists are sized
    and spaced for reading, whatever markup they came with. The elements inside
    need no classes of their own, which is the point: the text can come from an
-   editor, and it can be in a derived value, where they could not keep any. */
+   editor, and it can be in a derived value, where they could not keep any. Its
+   text takes its size, font and colour from around it (fz-content gives them
+   the look's), and its elements follow the same written-content tokens as
+   fz-content's, whatever classes they have. */
 .fz-prose {
-  line-height: var(--fz-leading-normal);
+  line-height: var(--fz-paragraph-leading);
   overflow-wrap: break-word;
 }
 .fz-prose > :where(*) { margin-block: 0; }
-.fz-prose > :where(* + *) { margin-block-start: calc(var(--fz-spacing) * 4); }
+.fz-prose > :where(* + *) { margin-block-start: var(--fz-paragraph-gap); }
 /* text with line breaks and no paragraphs, as an editor or nl2br() leaves it: a break is not a block,
    and the space above would make every line break look like a blank line, more so in Firefox */
 .fz-prose > :where(br) { margin-block: 0; }
 .fz-prose :where(h1, h2, h3, h4, h5, h6) {
-  font-weight: var(--fz-font-weight-semibold);
-  line-height: var(--fz-leading-tight);
+  font-family: var(--fz-heading-font);
+  line-height: var(--fz-heading-leading);
+  color: var(--fz-heading-color);
 }
-.fz-prose :where(h1) { font-size: var(--fz-text-2xl); }
-.fz-prose :where(h2) { font-size: var(--fz-text-xl); }
-.fz-prose :where(h3) { font-size: var(--fz-text-lg); }
-.fz-prose :where(h4, h5, h6) { font-size: var(--fz-text-base); }
+.fz-prose :where(h1) { font-size: var(--fz-h1-text); font-weight: var(--fz-h1-weight); }
+.fz-prose :where(h2) { font-size: var(--fz-h2-text); font-weight: var(--fz-h2-weight); }
+.fz-prose :where(h3) { font-size: var(--fz-h3-text); font-weight: var(--fz-h3-weight); }
+.fz-prose :where(h4) { font-size: var(--fz-h4-text); font-weight: var(--fz-h4-weight); }
+.fz-prose :where(h5) { font-size: var(--fz-h5-text); font-weight: var(--fz-h5-weight); }
+.fz-prose :where(h6) { font-size: var(--fz-h6-text); font-weight: var(--fz-h6-weight); }
 /* more space above a heading than below it, so it belongs to what follows */
 .fz-prose > :where(h1, h2, h3, h4, h5, h6):where(:not(:first-child)) {
-  margin-block-start: calc(var(--fz-spacing) * 8);
+  margin-block-start: var(--fz-heading-space-above);
+}
+.fz-prose > :where(h1, h2, h3, h4, h5, h6) + :where(*) {
+  margin-block-start: var(--fz-heading-space-below);
+}
+.fz-prose :where(a) {
+  color: var(--fz-link-color);
+  text-decoration-line: var(--fz-link-underline);
+}
+.fz-prose :where(a:hover) {
+  color: var(--fz-link-hover-color);
+  text-decoration-line: var(--fz-link-hover-underline);
 }
 .fz-prose :where(ul, ol) {
   margin-block-end: 0;
-  padding-inline-start: calc(var(--fz-spacing) * 6);
+  padding-inline-start: var(--fz-list-indent);
 }
-.fz-prose :where(ul) { list-style-type: disc; }
-.fz-prose :where(ul ul) { list-style-type: circle; }
-.fz-prose :where(ol) { list-style-type: decimal; }
+.fz-prose :where(ul) { list-style-type: var(--fz-list-bullet); }
+.fz-prose :where(ol) { list-style-type: var(--fz-list-number); }
 .fz-prose :where(li) { margin-block: 0; }
-.fz-prose :where(li + li, li > ul, li > ol) { margin-block-start: var(--fz-spacing); }
+.fz-prose :where(li + li, li > ul, li > ol) { margin-block-start: var(--fz-list-gap); }
+.fz-prose :where(li)::marker { color: var(--fz-list-marker-color); }
 .fz-prose :where(blockquote) {
   margin-inline: 0;
-  padding-inline-start: calc(var(--fz-spacing) * 4);
-  border-inline-start: 3px solid var(--fz-color-border-strong);
-  color: var(--fz-color-text-muted);
+  padding-inline-start: var(--fz-quote-indent);
+  border-inline-start: var(--fz-quote-line) solid var(--fz-quote-border);
+  color: var(--fz-quote-color);
 }
 .fz-prose :where(hr) {
+  height: 0;
   border: 0;
-  border-top: 1px solid var(--fz-color-border);
+  border-block-start: var(--fz-rule-line) solid var(--fz-rule-color);
+}
+.fz-prose > :where(hr), .fz-prose > :where(hr) + :where(*) {
+  margin-block-start: var(--fz-rule-space);
 }
 .fz-prose :where(img, video) {
   max-width: 100%;
