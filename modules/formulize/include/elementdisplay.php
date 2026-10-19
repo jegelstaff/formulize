@@ -150,13 +150,31 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
             if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName")) {
 				list($lockUid, $lockUsername) = explode(",", file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName"));
 				if($lockUid != $user_id) {
-                    if (count((array) $lockedEntries) == 0) { // first time here, make the warning label
+                    // first time here, make the warning label
+                    // not when an element is redrawn on its own after the page has loaded (conditional elements, derived values), since the reply is JSON and the page has had its chance to show the label already
+                    if (count((array) $lockedEntries) == 0 AND !isset($GLOBALS['formulize_asynchronousElementRendering'])) {
                         $label = json_encode(sprintf(_formulize_ENTRY_IS_LOCKED, $lockUsername));
+                        // Later requests can put their markup into a page that is already showing, each with this label of its own: the drawer, and subform rows redrawn after the drawer saves.
+                        // So the label goes at the top of the drawer when it is in the drawer, since the locked entry is the one in the drawer, and otherwise above the form,
+                        // and only where there isn't one already.
                         print <<<EOF
 <script type='text/javascript'>
-$(document).ready(function() {
-    jQuery("<div id=\"formulize-entry-lock-message\"><i id=\"formulize-entry-lock-icon\" class=\"icon-lock\"></i><p>"+$label+"</p></div>").insertBefore("#formulizeform");
-});
+(function(lockScript) {
+    jQuery(document).ready(function() {
+        var drawerBody = lockScript ? jQuery(lockScript).closest('.formulize-drawer__body') : jQuery();
+        var container = drawerBody.length ? drawerBody : jQuery('#formulizeform').parent();
+        if(container.length == 0 || container.children('.formulize-entry-lock-message').length > 0) {
+            return;
+        }
+        var lockMessage = jQuery('<div class="fz-callout fz-callout--warning fz-mb-4 formulize-entry-lock-message" role="status"><p></p></div>');
+        lockMessage.children('p').text($label);
+        if(drawerBody.length) {
+            drawerBody.prepend(lockMessage);
+        } else {
+            lockMessage.insertBefore('#formulizeform');
+        }
+    });
+})(document.currentScript);
 </script>
 EOF;
 					}

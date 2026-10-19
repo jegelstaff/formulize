@@ -592,7 +592,13 @@ test.describe('Data entry for Survey', () => {
 			await page.getByLabel('Which was your favourite').selectOption(favourite);
 			await page.getByLabel('How would you rate the').selectOption(rating);
 			await saveFormulizeForm(page);
-			await page.goto('/'); // clear entry locks
+			// After saving, the survey is drawn again with the saved entry, which locks the entry.
+			// The lock is released when that page is left, so it must finish loading first:
+			// leaving while it is still loading leaves the entry locked for the staff tests below.
+			await expect(page.getByRole('textbox', { name: 'Your name' })).toHaveValue(name);
+			await page.waitForFunction(() => typeof window.formulize_clearEntryLocks === 'function');
+			await page.goto('/'); // leaving the form clears the entry lock
+			await expect(page.getByRole('textbox', { name: 'Your name' })).not.toBeVisible();
 			})
 	})
 })

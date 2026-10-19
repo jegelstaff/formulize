@@ -15,6 +15,10 @@
  *
  * Only page loads are looked at, and only plain ones (GET): a form being submitted, and every request
  * a page makes for itself, are not touched. A page in a frame is passed straight through.
+ *
+ * The one exception is a request sent as the page is closing (keepalive, which sendBeacon uses too),
+ * such as the one that releases the entries a form locked. The worker sends those itself. Left alone,
+ * Chrome hands them back to the page to send, and the page is already gone, so they are never sent.
  */
 (function () {
 	'use strict';
@@ -63,6 +67,10 @@
 
 	self.addEventListener('fetch', function (event) {
 		var request = event.request;
+		if (request.keepalive) {
+			event.respondWith(fetch(request));
+			return;
+		}
 		if (request.method !== 'GET') {
 			return;
 		}

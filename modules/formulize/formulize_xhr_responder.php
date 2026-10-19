@@ -663,9 +663,9 @@ switch($op) {
 // CONDITIONAL SUBFORMS DON'T WORK WHEN SUBFORM IS SET TO ACCORDIONS! JS won't kick in if element is not visible at initial pageload (because of document ready around the instantiation of the accordion section?)
 function renderElement($elementObject, $entryId, $frid, $screenObject) {
 
-	$GLOBALS['formulize_asynchronousRendering'][$elementObject->getVar('ele_handle')] = true;
+	$GLOBALS['formulize_asynchronousElementRendering'][$elementObject->getVar('ele_handle')] = true;
 	$deReturnValue = displayElement("", $elementObject, $entryId, false, $screenObject, null, false); // false, means it's not a noSave element, null, false means no prevEntry data passed in, and do not render the element on screen
-	unset($GLOBALS['formulize_asynchronousRendering']);
+	unset($GLOBALS['formulize_asynchronousElementRendering']);
 
 	// element is allowed, so prep some stuff for rendering...
 	if(is_array($deReturnValue)) {
