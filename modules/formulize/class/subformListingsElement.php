@@ -1449,13 +1449,16 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 
 					if(!strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
                         $flatformClass = ($rowsOrForms == 'flatform') ? 'subform-flatform' : '';
-						$col_two .= "<div class=\"subform-deletebox\">$deleteBox</div><div class=\"subform-entry-container $flatformClass\" id=\"subform-".$subform_id."-"."$sub_ent\"><p class=\"subform-header\">";
+						$col_two .= "<div class=\"subform-deletebox\">$deleteBox</div><div class=\"subform-entry-container $flatformClass\" id=\"subform-".$subform_id."-"."$sub_ent\">";
                         if($rowsOrForms == 'flatform') {
-                            $col_two .= "<p class=\"flatform-name\">".$headerToWrite."</p>";
+                            // the entry's name, over its form: one element of its own, since a
+                            // paragraph can't hold another, and a heading's level isn't known here
+                            $col_two .= "<div class=\"subform-header flatform-name\">".$headerToWrite."</div>";
                         } else {
-                            $col_two .= "<a class=\"accordion-name-anchor\" href=\"#\"><span class=\"accordion-name\">".$headerToWrite."</span></a>";
+                            // the accordion's header, which jQuery UI finds by p.subform-header
+                            $col_two .= "<p class=\"subform-header\"><a class=\"accordion-name-anchor\" href=\"#\"><span class=\"accordion-name\">".$headerToWrite."</span></a></p>";
                         }
-                        $col_two .= "</p><div class=\"accordion-content content\">";
+                        $col_two .= "<div class=\"accordion-content content\">";
 					}
 					ob_start();
 					$GLOBALS['formulize_inlineSubformFrid'] = $frid;

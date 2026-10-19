@@ -1655,11 +1655,7 @@ div.subform_button_controls div.subform-filter-search input[type=text] {
   overflow: visible;
 }
 
-/* Flat forms: the entry's name is a heading above its form. Core nests the name's
-   <p> in another, which browsers split into empty paragraphs either side of it. */
-.formulize-subform .subform-flatform > p:empty {
-  display: none;
-}
+/* Flat forms: the entry's name is a heading above its form */
 .formulize-subform .subform-flatform > .flatform-name {
   margin: 0;
   padding: calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 4);
