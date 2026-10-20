@@ -11023,7 +11023,10 @@ function formulize_parseSearchesIntoFilter($searches) {
 					break;
 				case 'orset':
 					$addToItsOwnORFilter = true;
-					$ownORFilterKey = $groupPrefix['key'];
+					// "SET" in front keeps the key truthy and non-numeric: a bare "0" (the first checkbox filter on a page) would fail the
+					// if($ownORFilterKey) test below and scatter that set's terms into AND'd groups of one, and a numeric key would collide
+					// with the auto-numbered groups that {BLANK} and unkeyed ORSET terms are appended under
+					$ownORFilterKey = $groupPrefix['key'] === '' ? '' : 'SET' . $groupPrefix['key'];
 					break;
 				case 'or':
 					$addToORFilter = true;
