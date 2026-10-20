@@ -74,6 +74,7 @@ if(isset($formulize_screen_id) AND is_numeric($formulize_screen_id)) {
 }
 
 // get the default menu link for the current user, and set the fid or sid based on it
+$fidIsStartPage = false;
 if( !$fid AND !$sid) {
 	include_once XOOPS_ROOT_PATH."/modules/formulize/class/applications.php";
 	list($fid,$sid,$defaultMenuLinkUrl) = formulizeApplicationMenuLinksHandler::getDefaultScreenForUser();
@@ -81,12 +82,15 @@ if( !$fid AND !$sid) {
 		header('Location: '.$defaultMenuLinkUrl);
 		exit();
 	}
-	// a default menu link can point directly at a raw form (fid) rather than a screen; resolve it to
-	// the form's assigned default list/form screen so it can render via the screen path below, which
-	// (unlike the raw fid path further down) is available to anons too
-	if(!$sid AND $fid) {
-		$sid = determineScreenForUserFromFid($fid);
-	}
+	$fidIsStartPage = true;
+}
+
+// A form asked for by itself (fid) rather than through a screen is drawn by the raw fid path further
+// down, which anons can't use. So resolve it to the form's assigned default list/form screen, which
+// renders via the screen path below, when it's someone's start page, and whenever an anon asks for
+// one, such as by following a menu link to a form.
+if($fid AND !$sid AND ($fidIsStartPage OR !$xoopsUser)) {
+	$sid = determineScreenForUserFromFid($fid);
 }
 
 $screen_handler = xoops_getmodulehandler('screen', 'formulize');
@@ -342,6 +346,11 @@ if (!$rendered AND $uid) {
 		} else {
 			print "<p>"._formulize_NO_PERMISSION."</p>\n";
 		}
+	} elseif($fid AND !$sid) {
+		// A form they may see, asked for by itself, which has no default screen to show it to them through
+		// (see where the fid is resolved to a screen, near the top). Say so, rather than leave them on the
+		// homepage with no idea why the link they followed went there.
+		print "<div class=\"fz-callout fz-callout--warning\"><p>"._formulize_ANON_FORM_HAS_NO_SCREEN."</p></div>\n";
 	} else {
 		// boot the user to the homepage. Anons will be able to login there.
 		header("location: ".XOOPS_URL);

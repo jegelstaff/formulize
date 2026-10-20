@@ -149,6 +149,50 @@ global $xoopsDB;
         }
 
 		/**
+		 * The groups that can see a menu link, or at least one menu link in any application. The menu
+		 * counterpart of the core permission handler's getGroupIds().
+		 * @param int $menuId The menu link to ask about, or 0 for any menu link
+		 * @param int|array|null $onlyGroupIds Limit the answer to these groups, or null for all groups
+		 * @return array The group ids
+		 * @throws Exception if the menu permissions could not be read
+		 */
+		function getGroupIds($menuId = 0, $onlyGroupIds = null) {
+			$conditions = array();
+			if($menuId = intval($menuId)) {
+				$conditions[] = "menu_id = $menuId";
+			}
+			if($onlyGroupIds !== null) {
+				$onlyGroupIds = array_filter(array_map('intval', (array) $onlyGroupIds));
+				if(!$onlyGroupIds) {
+					return array();
+				}
+				$conditions[] = "group_id IN (".implode(',', $onlyGroupIds).")";
+			}
+			$sql = "SELECT DISTINCT group_id FROM ".$this->db->prefix("formulize_menu_permissions");
+			if($conditions) {
+				$sql .= " WHERE ".implode(" AND ", $conditions);
+			}
+			if(!$result = $this->db->query($sql)) {
+				throw new Exception("Could not read menu item permissions. SQL dump:\n" . $sql . "\n".$this->db->error());
+			}
+			$groupIds = array();
+			while($row = $this->db->fetchArray($result)) {
+				$groupIds[] = intval($row['group_id']);
+			}
+			return $groupIds;
+		}
+
+		/**
+		 * Whether a group can see at least one menu link, in any application.
+		 * @param int $groupId The group to check
+		 * @return bool True if at least one menu link is visible to the group
+		 * @throws Exception if the menu permissions could not be read
+		 */
+		function groupCanSeeAnyMenuLink($groupId) {
+			return count($this->getGroupIds(0, $groupId)) > 0;
+		}
+
+		/**
 		 * Returns an array of the fid,sid,url representing the default menu link for the current user
 		 * @return array An array containing the form id and screen id and url of any default menu link found
 		 */
@@ -559,18 +603,9 @@ class formulizeApplicationsHandler {
 						throw new Exception("Could not insert Menu Item permissions.".$linkValues[4]." SQL dump:\n" . $permissionsql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
 					}
           $defaultScreen = 0;
-					if($groupid == XOOPS_GROUP_ANONYMOUS) {
-						// set visibility on the menu block to include anonymous users since there is a menu item visible to them
-						$gperm_handler = xoops_gethandler('groupperm');
-						$formMenuBlockId = 24; // enforced by the override script in the installer
-						if(count($this->getAnonRightsToFormMenuBlock()) == 0) {
-							if($gperm_handler->addRight('block_read', $formMenuBlockId, XOOPS_GROUP_ANONYMOUS, 1) == false) {
-								throw new Exception("Could not add anonymous group permission for menu block. ".$xoopsDB->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
-							}
-						}
-					}
 				}
 			}
+			$this->syncAnonymousAccessToFormMenuBlock($force);
 		}
 	}
     //end of insertMenuLink()
@@ -620,6 +655,8 @@ class formulizeApplicationsHandler {
                     $defaultScreen = 0;
            		  }
         	 }
+			// the item's groups may have gained or lost Anonymous
+			$this->syncAnonymousAccessToFormMenuBlock();
 		}
 	}
 
@@ -840,33 +877,39 @@ class formulizeApplicationsHandler {
 			}
 		}
 
-		// check if there are any menu items left that are visible to anonymous users. If not, set the menu block visibility to exclude anonymous users
-		$sql = "SELECT COUNT(*) AS anon_count FROM ".$xoopsDB->prefix("formulize_menu_permissions")." WHERE `group_id` = ".intval(XOOPS_GROUP_ANONYMOUS);
-		if($result = $xoopsDB->query($sql)) {
-			$row = $xoopsDB->fetchArray($result);
-			if(intval($row['anon_count']) === 0) {
-				if($anonRightsToFormMenuBlock = $this->getAnonRightsToFormMenuBlock()) {
-					$gperm_handler = xoops_gethandler('groupperm');
-					foreach($anonRightsToFormMenuBlock as $right) {
-						$gperm_handler->delete($right);
-					}
-				}
-			}
-		}
+		$this->syncAnonymousAccessToFormMenuBlock();
 	}
 
 	/**
-	 * Get the anonymous group permission objects for the menu block, if any exist
-	 * @return array An array of group permission objects for the menu block, or an empty array if none exist
+	 * Let anonymous users read the Form Menu block if, and only if, at least one menu item is visible to
+	 * them. Without the block they could not see the item, and with it but no items they would get an
+	 * empty menu. Called after every change to which groups can see menu items.
+	 * @param bool $force Whether to write with queryF, for callers that write their menu items that way
+	 * @return void
+	 * @throws Exception if the block permission could not be written
 	 */
-	function getAnonRightsToFormMenuBlock() {
-		$gperm_handler = xoops_gethandler('groupperm');
+	function syncAnonymousAccessToFormMenuBlock($force=false) {
+		global $xoopsDB;
 		$formMenuBlockId = 24; // enforced by the override script in the installer
-		$criteria = new icms_db_criteria_Compo(new icms_db_criteria_Item('gperm_itemid', $formMenuBlockId));
-		$criteria->add(new icms_db_criteria_Item('gperm_modid', 1));
-		$criteria->add(new icms_db_criteria_Item('gperm_name', 'block_read'));
-		$criteria->add(new icms_db_criteria_Item('gperm_groupid', XOOPS_GROUP_ANONYMOUS));
-		return $gperm_handler->getObjects($criteria);
+		$gperm_handler = xoops_gethandler('groupperm');
+		$menuLinksHandler = xoops_getmodulehandler('applicationMenuLinks', 'formulize');
+		$hasMenuItems = $menuLinksHandler->groupCanSeeAnyMenuLink(XOOPS_GROUP_ANONYMOUS);
+		$canReadMenuBlock = $gperm_handler->checkRight('block_read', $formMenuBlockId, XOOPS_GROUP_ANONYMOUS, 1, false);
+		if($hasMenuItems == $canReadMenuBlock) {
+			return;
+		}
+		if($hasMenuItems) {
+			$written = $gperm_handler->addRight('block_read', $formMenuBlockId, XOOPS_GROUP_ANONYMOUS, 1, $force);
+		} else {
+			$criteria = new icms_db_criteria_Compo(new icms_db_criteria_Item('gperm_name', 'block_read'));
+			$criteria->add(new icms_db_criteria_Item('gperm_itemid', $formMenuBlockId));
+			$criteria->add(new icms_db_criteria_Item('gperm_modid', 1));
+			$criteria->add(new icms_db_criteria_Item('gperm_groupid', XOOPS_GROUP_ANONYMOUS));
+			$written = $gperm_handler->deleteAll($criteria, $force);
+		}
+		if(!$written) {
+			throw new Exception("Could not update anonymous access to the menu block. ".$xoopsDB->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+		}
 	}
 
 	// added Oct 2013 W.R.

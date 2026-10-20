@@ -30,6 +30,11 @@ them *after* the e2e suite, when the setup specs have finished building the muse
   `formulizeSavedViewsHandler`. Saved views hold several lists tied to each other only by position, and
   names people typed, so the checks are that everything survives the trip verbatim and in step. Also
   transactional.
+* `menu_permissions_test.php` - which groups can see a menu item, through
+  `formulizeApplicationMenuLinksHandler::getGroupIds()` and `groupCanSeeAnyMenuLink()`, and Anonymous's access
+  to the menu block, which has to follow whether any menu item is visible to Anonymous. Checks every way an
+  item's groups change - adding an item, changing one, deleting one - plus the start page lookup. Builds its own
+  menu item inside a transaction it rolls back.
 * `element_code_files_test.php` - the code files that captionedContent, fullWidthContent, text, number,
   textarea and derived elements keep in `modules/formulize/code/`. Saving an element sets `ele_value`
   twice, so each type is checked for both halves of the contract: the file on disk is right, *and* the

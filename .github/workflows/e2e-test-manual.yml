@@ -128,6 +128,10 @@ jobs:
       if: ${{ !inputs.test_filter }}
       run: docker exec formulize-web-1 php /var/www/html/tests/saved_views_test.php
 
+    - name: PHP integrity tests (menu item groups and the menu block)
+      if: ${{ !inputs.test_filter }}
+      run: docker exec formulize-web-1 php /var/www/html/tests/menu_permissions_test.php
+
     # Also after the suite rather than before it, but for a different reason than the two above: it needs
     # nothing the museum system contains, but it does need the application booted to build element
     # objects at all, and the install happens in the setup specs. It reads and writes no data - every

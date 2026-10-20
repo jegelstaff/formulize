@@ -207,15 +207,16 @@ class icms_member_groupperm_Handler extends icms_core_ObjectHandler {
 	 * Delete all permissions by a certain criteria
 	 *
 	 * @param	object  $criteria   {@link icms_db_criteria_Element}
+	 * @param	bool    $force      Whether to write with queryF, as insert() does
 	 *
 	 * @return	bool    TRUE on success
 	 */
-	public function deleteAll($criteria = null) {
+	public function deleteAll($criteria = null, $force = false) {
 		$sql = sprintf("DELETE FROM %s", icms::$xoopsDB->prefix('group_permission'));
 		if (isset($criteria) && is_subclass_of($criteria, 'icms_db_criteria_Element')) {
 			$sql .= ' ' . $criteria->renderWhere();
 		}
-		if (!$result = icms::$xoopsDB->query($sql)) {
+		if (!$result = ($force ? icms::$xoopsDB->queryF($sql) : icms::$xoopsDB->query($sql))) {
 			return false;
 		}
 		return true;
@@ -304,16 +305,17 @@ class icms_member_groupperm_Handler extends icms_core_ObjectHandler {
 	 * @param	int     $gperm_itemid     ID of an item
 	 * @param	int     $gperm_groupid    ID of a group
 	 * @param	int     $gperm_modid      ID of a module
+	 * @param	bool    $force            Whether to write with queryF (see insert())
 	 *
 	 * @return	bool    TRUE if success
 	 */
-	public function addRight($gperm_name, $gperm_itemid, $gperm_groupid, $gperm_modid = 1) {
+	public function addRight($gperm_name, $gperm_itemid, $gperm_groupid, $gperm_modid = 1, $force = false) {
 		$perm =& $this->create();
 		$perm->setVar('gperm_name', $gperm_name);
 		$perm->setVar('gperm_groupid', $gperm_groupid);
 		$perm->setVar('gperm_itemid', $gperm_itemid);
 		$perm->setVar('gperm_modid', $gperm_modid);
-		return $this->insert($perm);
+		return $this->insert($perm, $force);
 	}
 
 	/**
