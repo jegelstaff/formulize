@@ -128,7 +128,11 @@ The look's **logo** and **favicon**, its **colours**, its main and secondary **f
   been changed one by one in the advanced editor, it says *Custom*, and choosing a size asks before
   replacing them.
 - **Page width** is how wide pages can get on a wide screen: a maximum width, which keeps forms and
-  lists to a column of that width in the middle of the window, or the full width of the window.
+  lists to a column of that width, or the full width of the window.
+- **Alignment**, with a maximum width, is where that column sits on a screen wider than it is:
+  **Left**, against the side menu; **Centre**, in the middle of the window, where Lyris puts it; or
+  **Right**, against the window's right edge. Centred, the column stays put when the side menu opens
+  or closes; on the left, it moves with the menu.
 
 ### The advanced editor
 

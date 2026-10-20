@@ -4928,18 +4928,23 @@ body.formulize-popup {
    side. Every type of screen is in the column, and needs nothing of its own to
    be: nothing here names one.
 
-   The column is centred in the WINDOW, not in the space beside the sidebar, so
+   The column is placed in the WINDOW, not in the space beside the sidebar, so
    opening or closing the sidebar doesn't move it, as long as there is room for
    the sidebar beside it. When there isn't, the column moves over only as far as
    it must to clear the sidebar. The sidebar still pushes the page; it is never
-   an overlay. `--lyris-column-start` is how far in from the left of
-   `.lyris-main` the column starts. Centred in the window, the column starts
-   (window - max width) / 2 from the window's left, and `.lyris-main` starts
-   (window - its own width) from it, so:
+   an overlay. Where in the window is the Appearance editor's Alignment,
+   `--formulize-content-align`: the share of the room beside the column that is
+   on its left, 0 (left), 0.5 (centre, the theme's own) or 1 (right).
+   `--lyris-column-start` is how far in from the left of `.lyris-main` the
+   column starts. In the window, the column starts align * (window - max width)
+   from the window's left, and `.lyris-main` starts (window - its own width)
+   from it, so:
 
-     max(0px, 100% - (100vw + max width) / 2)
+     max(0px, align * (100vw - max width) - (100vw - 100%))
 
-   where 100% is `.lyris-main`'s width, which is what a percentage in the
+   which, centred (align 0.5), is 100% - (100vw + max width) / 2. On the left,
+   it is 0px, against the sidebar; on the right, the room beside the column.
+   100% is `.lyris-main`'s width, which is what a percentage in the
    frame's padding is measured against. Measured that way it follows the
    sidebar's width as it opens and closes, so the column stays still while the
    sidebar slides, instead of jumping and sliding back. The frame takes it, and
@@ -4970,7 +4975,7 @@ body.formulize-popup {
 @media (min-width: 769px) {
 
   .lyris-app {
-    --lyris-column-start: max(0px, 100% - (100vw + var(--formulize-content-max-width)) / 2);
+    --lyris-column-start: max(0px, var(--formulize-content-align, 0.5) * (100vw - var(--formulize-content-max-width)) - (100vw - 100%));
     --lyris-column-end: max(0px, 100% - var(--lyris-column-start) - var(--formulize-content-max-width));
   }
 

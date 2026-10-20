@@ -74,11 +74,15 @@
 	// advanced one (every part of it too). Switched in place: see setMode.
 	var SIMPLE = DATA.mode !== 'advanced';
 	// the page width, for a theme that has one: its limits, and the theme's own
-	// width ('full', or pixels), which is the default
+	// width ('full', or pixels), which is the default; and for a theme that can
+	// place a page narrower than the window, its own alignment (WIDTH.align) and
+	// each alignment's value for --formulize-content-align (WIDTH.aligns)
 	var WIDTH = DATA.contentWidth;
+	var ALIGN = !!(WIDTH && WIDTH.align);
 
 	var state = {
 		contentWidth: '', // 'full', or a maximum width in pixels
+		contentAlign: '', // 'left', 'center' or 'right': where a page narrower than the window sits in it
 		overrides: {},
 		colours: {},
 		fonts: {},
@@ -113,12 +117,13 @@
 	var SAVED = null;
 	function adopt(saved) {
 		state.contentWidth = WIDTH ? String(saved.contentWidth || WIDTH.theme) : '';
+		state.contentAlign = ALIGN ? String(saved.contentAlign || WIDTH.align) : '';
 		state.overrides = Array.isArray(saved.overrides) ? {} : copy(saved.overrides || {});
 		state.colours = copy(saved.colours);
 		state.fonts = copy(saved.fonts);
 		savedUploads = copy(saved.uploads);
 		enforce(); // the look's own settings: only what differs from its base's
-		SAVED = copy({ contentWidth: state.contentWidth, overrides: state.overrides, colours: state.colours, fonts: state.fonts });
+		SAVED = copy({ contentWidth: state.contentWidth, contentAlign: state.contentAlign, overrides: state.overrides, colours: state.colours, fonts: state.fonts });
 	}
 
 	/* ---- values ---- */
@@ -225,6 +230,9 @@
 	function widthBase() { return BASE ? BASE.contentWidth : WIDTH.theme; }
 	function widthChanged() { return !!WIDTH && state.contentWidth !== widthBase(); }
 	function widthName(w) { return w === 'full' ? lang('FULL_WIDTH') : lang('MAX_WIDTH_PX', w); }
+	function alignBase() { return BASE ? BASE.contentAlign : WIDTH.align; }
+	function alignChanged() { return ALIGN && state.contentAlign !== alignBase(); }
+	function alignName(a) { return lang('ALIGN_' + String(a).toUpperCase()); }
 	function colourBase(key) { return BASE ? BASE.colours[key] : DATA.colours[key]['default']; }
 	function colourChanged(key) { return String(state.colours[key]).toLowerCase() !== String(colourBase(key)).toLowerCase(); }
 	// for the preview, which is drawn against the theme's own: whether it differs from that
@@ -366,6 +374,10 @@
 		if (WIDTH) {
 			if (state.contentWidth !== WIDTH.theme) { root.style.setProperty('--formulize-content-max-width', state.contentWidth === 'full' ? '100%' : state.contentWidth + 'px'); }
 			else { restore(root, '--formulize-content-max-width'); }
+		}
+		if (ALIGN) {
+			if (state.contentAlign !== WIDTH.align) { root.style.setProperty('--formulize-content-align', WIDTH.aligns[state.contentAlign]); }
+			else { restore(root, '--formulize-content-align'); }
 		}
 		var logo = d.querySelector('[data-fz-part="logo"] img');
 		if (logo) { logo.src = uploadUrl('appearance_logo') || DATA.themeLogoUrl; }
@@ -593,7 +605,7 @@
 		}).join('');
 		h += sect(lang('SECTION_FONTS')) + fontBlock('main') + fontBlock('heading');
 		if (sized) { h += sect(lang('SECTION_SIZE')) + sizeBlock(); }
-		if (WIDTH) { h += sect(lang('SECTION_PAGE')) + widthBlock(); }
+		if (WIDTH) { h += sect(lang('SECTION_PAGE')) + widthBlock() + (ALIGN && state.contentWidth !== 'full' ? alignBlock() : ''); }
 		return h;
 	}
 	// The look's size, in the simple editor: the sizes that come with Formulize, whose
@@ -646,6 +658,16 @@
 			(full ? '' : '<label class="formulize-editor__custom-font"><span>' + langHtml('WIDTH_PX', WIDTH.min, WIDTH.max) + '</span><input type="number" data-cwidth-px="1" min="' + WIDTH.min + '" max="' + WIDTH.max + '" step="1" value="' + esc(state.contentWidth) + '"></label>') +
 		'</div>';
 	}
+	// where a page narrower than the window sits in it: only with a maximum width,
+	// since a page as wide as the window has nowhere else to go
+	function alignBlock() {
+		return '<div class="formulize-editor__ctl' + (alignChanged() ? ' is-changed' : '') + '"><div class="formulize-editor__ctl-head"><span class="formulize-editor__lbl" id="formulize-editor-align-label">' + langHtml('ALIGN') + '</span>' +
+				(alignChanged() ? '<button type="button" class="formulize-editor__link" data-site-reset="contentalign">' + langHtml('RESET') + '</button>' : '') + '</div>' +
+			'<p class="formulize-editor__desc">' + esc(lang('ALIGN_DESC', lang('ALIGN_AT_' + WIDTH.align.toUpperCase()), DATA.theme)) + '</p>' +
+			'<div class="formulize-editor__seg formulize-editor__seg--full" role="group" aria-labelledby="formulize-editor-align-label">' +
+				['left', 'center', 'right'].map(function (a) { return '<button type="button" data-calign="' + a + '" aria-pressed="' + (state.contentAlign === a) + '">' + esc(alignName(a)) + '</button>'; }).join('') +
+			'</div></div>';
+	}
 	// a width typed in, kept to the limits; anything that isn't a number leaves it as it was
 	function setWidthPx(v) {
 		var n = Math.round(Number(v));
@@ -674,6 +696,9 @@
 		if (WIDTH && state.contentWidth !== SAVED.contentWidth) {
 			list.push({ name: lang('WIDTH'), now: widthName(state.contentWidth), was: widthName(SAVED.contentWidth), undo: 'contentwidth' });
 		}
+		if (ALIGN && state.contentAlign !== SAVED.contentAlign) {
+			list.push({ name: lang('ALIGN'), now: alignName(state.contentAlign), was: alignName(SAVED.contentAlign), undo: 'contentalign' });
+		}
 		Object.keys(MAP.tokens).forEach(function (token) {
 			var was = has(SAVED.overrides, token) ? SAVED.overrides[token] : presetValue(token);
 			if (String(value(token)) !== String(was)) {
@@ -691,6 +716,7 @@
 		else if (kind === 'colour') { state.colours[key] = SAVED.colours[key]; }
 		else if (kind === 'font') { state.fonts[key] = SAVED.fonts[key]; state.fonts[key + 'custom'] = SAVED.fonts[key + 'custom']; }
 		else if (kind === 'contentwidth') { state.contentWidth = SAVED.contentWidth; }
+		else if (kind === 'contentalign') { state.contentAlign = SAVED.contentAlign; }
 		else if (kind === 'token') {
 			if (has(SAVED.overrides, key)) { state.overrides[key] = SAVED.overrides[key]; } else { delete state.overrides[key]; }
 		}
@@ -724,6 +750,9 @@
 		if (WIDTH && SAVED.contentWidth !== REF.contentWidth) {
 			list.push({ name: lang('WIDTH'), now: widthName(SAVED.contentWidth), was: widthName(REF.contentWidth), reset: 'contentwidth', pending: state.contentWidth !== SAVED.contentWidth, isReset: state.contentWidth === REF.contentWidth });
 		}
+		if (ALIGN && SAVED.contentAlign !== REF.contentAlign) {
+			list.push({ name: lang('ALIGN'), now: alignName(SAVED.contentAlign), was: alignName(REF.contentAlign), reset: 'contentalign', pending: state.contentAlign !== SAVED.contentAlign, isReset: state.contentAlign === REF.contentAlign });
+		}
 		Object.keys(MAP.tokens).forEach(function (token) {
 			var saved = has(SAVED.overrides, token) ? SAVED.overrides[token] : presetValue(token);
 			var ref = has(REF.overrides, token) ? REF.overrides[token] : entry(token)['default'];
@@ -741,6 +770,7 @@
 		if (kind === 'colour') { state.colours[key] = REF.colours[key]; }
 		else if (kind === 'font') { state.fonts[key] = REF.fonts[key]; state.fonts[key + 'custom'] = REF.fonts[key + 'custom']; }
 		else if (kind === 'contentwidth') { state.contentWidth = REF.contentWidth; }
+		else if (kind === 'contentalign') { state.contentAlign = REF.contentAlign; }
 		else if (kind === 'token') { store(key, has(REF.overrides, key) ? REF.overrides[key] : entry(key)['default']); }
 	}
 	// a part's setting has Show, which selects the part, in advanced mode only: a
@@ -805,7 +835,7 @@
 		$('formulize-editor-save').disabled = READONLY || state.saving || n === 0;
 		drawLive();
 		// keep focus, and the inspector's scroll position, across the re-render
-		var f = document.activeElement, attrs = ['data-token', 'data-d', 'data-v', 'data-cw', 'data-custom', 'data-hex', 'data-colour', 'data-font', 'data-custom-font', 'data-size', 'data-cwidth', 'data-cwidth-px'];
+		var f = document.activeElement, attrs = ['data-token', 'data-d', 'data-v', 'data-cw', 'data-custom', 'data-hex', 'data-colour', 'data-font', 'data-custom-font', 'data-size', 'data-cwidth', 'data-cwidth-px', 'data-calign'];
 		var key = (f && f.getAttribute && (body.contains(f) || head.contains(f))) ? attrs.map(function (a) { return f.getAttribute(a) || ''; }) : null;
 		var scroll = body.parentNode.scrollTop;
 		renderInspector();
@@ -927,6 +957,8 @@
 			if (a('data-cwidth') === 'full') { state.contentWidth = 'full'; }
 			else if (state.contentWidth === 'full') { state.contentWidth = WIDTH.theme !== 'full' ? WIDTH.theme : String(WIDTH['default']); }
 			touch(); render();
+		} else if (a('data-calign')) {
+			state.contentAlign = a('data-calign'); touch(); render();
 		} else if (a('data-colour-reset')) {
 			state.colours[a('data-colour-reset')] = colourBase(a('data-colour-reset')); touch(); render();
 		} else if (a('data-font-reset')) {
@@ -945,6 +977,7 @@
 			if (parts[0] === 'colour') { state.colours[parts[1]] = colourBase(parts[1]); }
 			else if (parts[0] === 'font') { resetFont(parts[1]); }
 			else if (parts[0] === 'contentwidth') { state.contentWidth = widthBase(); }
+			else if (parts[0] === 'contentalign') { state.contentAlign = alignBase(); }
 			else if (parts[0] === 'upload') {
 				if (uploadChanged(parts[1])) { resetUpload(parts[1]); } else { state.uploads[parts[1]].removed = true; }
 			}
@@ -998,6 +1031,7 @@
 		state.colours = copy(SAVED.colours);
 		state.fonts = copy(SAVED.fonts);
 		state.contentWidth = SAVED.contentWidth;
+		state.contentAlign = SAVED.contentAlign;
 		Object.keys(UPLOADS).forEach(resetUpload);
 		render();
 	}
@@ -1081,6 +1115,7 @@
 			}
 		});
 		if (widthChanged()) { look.appearance_contentwidth = state.contentWidth === WIDTH.theme ? '' : state.contentWidth; }
+		if (alignChanged()) { look.appearance_contentalign = state.contentAlign === WIDTH.align ? '' : state.contentAlign; }
 		if (Object.keys(state.overrides).length) { look.appearance_overrides = JSON.stringify(state.overrides); }
 		var values = {
 			appearance_look_settings: JSON.stringify(look),

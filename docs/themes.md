@@ -306,7 +306,8 @@ a width in pixels, or `100%` to start at full width. Lyris declares 1200 pixels:
 
 Then use it as the maximum width of your content, on the wrapper that has the space at the page's
 edges (section 5), so that every type of screen is kept to it and none needs anything of its own.
-Lyris makes its pages a column of that width, centred in the window. In it, each part of a list or a
+Lyris makes its pages a column of that width, centred in the window unless a look aligns it
+otherwise (below). In it, each part of a list or a
 form is a card: a list's title bar, its entries, a form, and a floating bar at the bottom for a
 list's pagination or a form's buttons. The column is centred in the window rather than beside the
 sidebar, so opening the sidebar doesn't move it unless it has to; the header's links stay at the
@@ -330,6 +331,29 @@ Printing, under For theme authors, in [Formulize UI](/documentation/formulize_ui
 A screen can be set to use the full width whatever the site's setting is, on the screen's Appearance
 tab. Formulize sets `--formulize-content-max-width` to `100%` on that screen's page, so a theme that
 uses the property as above has nothing more to do.
+
+**Where the column sits** is the Alignment setting, beside the page width: on the left, in the
+centre, or on the right of the window. It sets `--formulize-content-align`, the share of the room
+beside the column that is on its left: `0`, `0.5` or `1`. Opt in by declaring it too, with your own
+alignment; Lyris declares the centre:
+
+```css
+:root {
+  --formulize-content-max-width: 1200px;
+  --formulize-content-align: 0.5;
+}
+```
+
+Then place the column with it. Lyris's column starts this far in from the left of its content area,
+where `100%` is the content area's width:
+
+```css
+max(0px, var(--formulize-content-align, 0.5) * (100vw - var(--formulize-content-max-width)) - (100vw - 100%))
+```
+
+That is the room beside the column in the window, shared out by the alignment, less the side menu's
+width. Centred, at `0.5`, it comes to `100% - (100vw + max width) / 2`. Give `var()` a fallback, as here, in case a browser still has
+an older copy of your `tokens.css`.
 
 ## 8. Look right when the site is installed as an app (optional)
 
