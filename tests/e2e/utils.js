@@ -1274,3 +1274,255 @@ export function getTokenUses(key) {
 export function deleteToken(key) {
 	dbQuery(`DELETE FROM ${dbPrefix()}_formulize_tokens WHERE tokenkey = '${key.replace(/[^A-Za-z0-9]/g, '')}'`);
 }
+
+// ============================================================================
+// Appearance: the site's theme, and the Lyris theme's looks
+// ----------------------------------------------------------------------------
+// The suite runs on Anari. The specs that test Lyris's looks and the appearance
+// editor (setup/1xx-lyris-*) run at the end of the setup specs, one at a time, and
+// the validate specs run after them, four at once, all expecting the site as it was.
+// So whatever one of those specs changes globally, it puts back in an afterAll,
+// which runs whether its tests passed or failed: the site's theme (getSiteTheme /
+// restoreSiteTheme), Lyris's site look (getSiteLookKey / setSiteLook), and the looks
+// it made, which are all named e2e-something (deleteLooksNamed). The shipped Default
+// look is never edited.
+// ============================================================================
+
+const SAFE_THEME = /^[A-Za-z0-9_-]+$/;
+
+/**
+ * The site's theme as it stands, to put back with restoreSiteTheme(): the theme pages
+ * are shown in (theme_set), the theme webmasters are shown instead (theme_admin_set:
+ * include/common.php switches a webmaster to it), and each user's own theme, which
+ * Admin > Appearance > Settings sets to the site's theme whenever that is changed.
+ * @returns {{site: string, admin: string, users: Array<[number, string]>}}
+ */
+export function getSiteTheme() {
+	return {
+		site: getSystemConfig('theme_set'),
+		admin: getSystemConfig('theme_admin_set'),
+		users: dbQuery(`SELECT uid, theme FROM ${dbPrefix()}_users`).map(r => [parseInt(r[0], 10), r[1] === 'NULL' ? '' : r[1]]),
+	};
+}
+
+/**
+ * Show the whole site in a theme, for everyone, webmasters included: what saving
+ * Admin > Appearance > Settings with that theme in both of its theme choices does.
+ * For the specs' own setup and teardown, where going through the page every time
+ * would only add ways to fail; 110-lyris-theme-switch-and-restore goes through it.
+ * @param {string} theme a theme's folder name, e.g. 'Lyris'
+ */
+export function setSiteThemeInDb(theme) {
+	if (!SAFE_THEME.test(theme)) throw new Error(`Not a theme name: ${theme}`);
+	setSystemConfig('theme_set', theme);
+	setSystemConfig('theme_admin_set', theme);
+	dbQuery(`UPDATE ${dbPrefix()}_users SET theme = '${theme}'`);
+}
+
+/**
+ * Put the site's theme back as getSiteTheme() found it.
+ * @param {{site: string, admin: string, users: Array<[number, string]>}} state
+ */
+export function restoreSiteTheme(state) {
+	for (const theme of [state.site, state.admin]) {
+		if (!SAFE_THEME.test(theme)) throw new Error(`Not a theme name: ${theme}`);
+	}
+	setSystemConfig('theme_set', state.site);
+	setSystemConfig('theme_admin_set', state.admin);
+	const byTheme = {};
+	for (const [uid, theme] of state.users) {
+		(byTheme[theme] = byTheme[theme] || []).push(uid);
+	}
+	for (const theme of Object.keys(byTheme)) {
+		dbQuery(`UPDATE ${dbPrefix()}_users SET theme = '${sqlEscape(theme)}' WHERE uid IN (${byTheme[theme].join(',')})`);
+	}
+}
+
+export const LYRIS_LOOKS_URL = '/modules/formulize/admin/ui.php?page=appearance&view=looks&theme=Lyris';
+
+/**
+ * Open the Looks tab (Admin > Appearance > Looks) on the Lyris theme's looks.
+ * @param {object} page Playwright page
+ */
+export async function openLooksTab(page) {
+	await page.goto(LYRIS_LOOKS_URL);
+	await expect(page.locator('#looks-create')).toBeAttached();
+	await expect(page.locator('table.fz-tree')).toBeVisible();
+}
+
+/**
+ * A look's row on the Looks tab, found by the look's name.
+ * @param {object} page Playwright page
+ * @param {string} name the look's name
+ */
+export function lookRow(page, name) {
+	return page.locator('table.fz-tree tbody tr').filter({
+		has: page.locator('.formulize-looks__name strong').getByText(name, { exact: true }),
+	});
+}
+
+/**
+ * A look's key (its stylesheet's name, which screens and other looks know it by), read off its row:
+ * each row's controls are named after it (looks-<key>-more).
+ * @param {object} page Playwright page, on the Looks tab
+ * @param {string} name the look's name
+ * @returns {Promise<string>}
+ */
+export async function lookKey(page, name) {
+	const target = await lookRow(page, name).locator('button[popovertarget$="-more"]').getAttribute('popovertarget');
+	return target.replace(/^looks-/, '').replace(/-more$/, '');
+}
+
+/**
+ * Make a Lyris look with Create new look on the Looks tab.
+ * @param {object} page Playwright page
+ * @param {string} name its name
+ * @param {{base?: string|null, size?: string}} [opts] base: the key of the look to base it on, or '' for
+ *   no base look; left as the dialog has it (Default) when null. size: 'standard', 'compact' or
+ *   'comfortable', or '' for the same as its base.
+ * @returns {Promise<string>} the new look's key
+ */
+export async function createLook(page, name, opts = {}) {
+	const { base = null, size = '' } = opts;
+	await openLooksTab(page);
+	await page.getByRole('button', { name: 'Create new look', exact: true }).click();
+	const dialog = page.locator('#looks-create');
+	await expect(dialog).toBeVisible();
+	await dialog.locator('#looks-create-name').fill(name);
+	if (base !== null) {
+		await dialog.locator('#looks-create-base').selectOption(base);
+	}
+	if (size) {
+		await dialog.locator(`input[name="size"][value="${size}"]`).check();
+	}
+	await dialog.getByRole('button', { name: 'Create look', exact: true }).click();
+	await expect(page.locator('.fz-callout--success')).toHaveText(`Created ${name}.`);
+	return lookKey(page, name);
+}
+
+/**
+ * Open one of a look's dialogs from its row's ⋯ menu (Duplicate, Rename, Change base, Set as site look,
+ * Delete, Create look based on this), and return the dialog.
+ * @param {object} page Playwright page, on the Looks tab
+ * @param {string} name the look's name
+ * @param {string} item the menu item's text
+ */
+export async function openLookMenuItem(page, name, item) {
+	const row = lookRow(page, name);
+	await row.getByRole('button', { name: `More for ${name}` }).click();
+	const menu = row.locator('.fz-menu[id$="-more"]');
+	await expect(menu).toBeVisible();
+	const button = menu.getByRole('button', { name: item, exact: true });
+	const target = await button.getAttribute('commandfor');
+	await button.click();
+	const dialog = page.locator(`dialog#${target}`);
+	await expect(dialog).toBeVisible();
+	return dialog;
+}
+
+/**
+ * The key of the Lyris look the site uses: the row with the Site look badge.
+ * @param {object} page Playwright page
+ * @returns {Promise<string>}
+ */
+export async function getSiteLookKey(page) {
+	await openLooksTab(page);
+	const target = await page.locator('tr.formulize-looks__site button[popovertarget$="-more"]').getAttribute('popovertarget');
+	return target.replace(/^looks-/, '').replace(/-more$/, '');
+}
+
+/**
+ * Make a Lyris look the site look, with Change site look on the Looks tab.
+ * @param {object} page Playwright page
+ * @param {string} key the look's key
+ */
+export async function setSiteLook(page, key) {
+	if (await getSiteLookKey(page) === key) {
+		return;
+	}
+	await page.locator('#looks-site-button').click();
+	const dialog = page.locator('#looks-site');
+	await expect(dialog).toBeVisible();
+	await dialog.locator(`input[name="look"][value="${key}"]`).check();
+	await dialog.getByRole('button', { name: 'Set as site look', exact: true }).click();
+	await expect(page.locator('.fz-callout--success')).toContainText('is now the site look');
+	expect(await getSiteLookKey(page)).toBe(key);
+}
+
+/**
+ * Delete every Lyris look whose name starts with a prefix, through the Looks tab, the looks based on
+ * another before it, and let go of any screen still set to one (a look deleted while Lyris isn't the
+ * site's theme keeps its screens' setting). For cleaning up after a spec: call it in an afterAll, after
+ * putting the site look back.
+ * @param {object} page Playwright page
+ * @param {string} prefix e.g. 'e2e-'
+ */
+export async function deleteLooksNamed(page, prefix) {
+	for (let attempt = 0; attempt < 30; attempt++) {
+		await openLooksTab(page);
+		// the deepest of them in the tree first: nothing is based on it
+		const looks = await page.locator('table.fz-tree tbody tr').evaluateAll((rows, prefix) => rows.map(row => ({
+			name: row.querySelector('.formulize-looks__name strong').textContent,
+			depth: parseInt(row.querySelector('.fz-tree__cell').style.getPropertyValue('--fz-depth'), 10) || 0,
+		})).filter(look => look.name.startsWith(prefix)).sort((a, b) => b.depth - a.depth), prefix);
+		if (!looks.length) {
+			break;
+		}
+		const dialog = await openLookMenuItem(page, looks[0].name, 'Delete');
+		await dialog.getByRole('button', { name: 'Delete look', exact: true }).click();
+		await expect(page.locator('.fz-callout--success')).toHaveText(`Deleted ${looks[0].name}.`);
+	}
+	dbQuery(`UPDATE ${dbPrefix()}_formulize_screen SET look = '' WHERE look LIKE '${sqlEscape(prefix)}%'`);
+}
+
+/**
+ * Read a Lyris look's stylesheet, as the site serves it: the record of the look at the top (its name,
+ * base and what it changes itself), and the whole file. Null when the look has no stylesheet.
+ * @param {object} page Playwright page
+ * @param {string} key the look's key
+ * @returns {Promise<{record: Object<string, string>, css: string}|null>}
+ */
+export async function readLookFile(page, key) {
+	const response = await page.request.get(`/themes/Lyris/appearance/looks/${key}.css?e2e=${Date.now()}`);
+	if (response.status() === 404) {
+		return null;
+	}
+	expect(response.ok()).toBeTruthy();
+	const css = await response.text();
+	const block = css.split('BEGIN FORMULIZE APPEARANCE LOOK')[1].split('END FORMULIZE APPEARANCE LOOK')[0];
+	const record = {};
+	for (const line of block.split('\n').slice(1)) {
+		const match = line.match(/^\s*\*\s*([a-z_]+):\s?(.*)$/);
+		if (match) {
+			record[match[1]] = match[2];
+		}
+	}
+	return { record, css };
+}
+
+/**
+ * Open the appearance editor on a Lyris look, and wait until the preview is showing the look: the editor
+ * sets every part's setting on the preview's root element once the preview has loaded.
+ * @param {object} page Playwright page
+ * @param {string} key the look's key
+ * @param {string} [mode] 'simple' or 'advanced'
+ */
+export async function openAppearanceEditor(page, key, mode = 'simple') {
+	await page.goto(`/modules/formulize/appearance_editor.php?theme=Lyris&look=${encodeURIComponent(key)}&mode=${mode}`);
+	await expect(page.frameLocator('#formulize-editor-frame').locator('html')).toHaveAttribute('style', /--fz-control-height/);
+	await expect(page.locator('#formulize-editor-insp-head h2')).toBeVisible();
+}
+
+/**
+ * Save the look open in the appearance editor, and wait for the note saying it was saved.
+ * @param {object} page Playwright page
+ * @param {string} name the look's name
+ */
+export async function saveAppearanceEditor(page, name) {
+	const save = page.locator('#formulize-editor-save');
+	await expect(save).toBeEnabled();
+	await save.click();
+	await expect(page.locator('.formulize-editor__toast[role="status"]')).toContainText(`Saved ${name}.`);
+	await expect(save).toHaveText('Save');
+	await expect(save).toBeDisabled();
+}
