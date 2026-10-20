@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD } from '../config';
-import { login, clearEntryLocks, ensureMainMenuOpen } from '../../utils';
+import { login, ensureMainMenuOpen } from '../../utils';
 
 // Companion to the "Users and Groups" menu-disclosure test in
 // setup/005-create-users-and-groups.spec.js. Covers the same CSS-only
@@ -21,8 +21,8 @@ test.describe('Museum menu section disclosure (webmaster)', () => {
 	test('Museum menu section is closed on users.php, expands on click without navigating, then auto-expands on its own page', async ({ page }) => {
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
 		await page.goto('/modules/formulize/users.php');
+		// users.php locks the users it lists. Leaving it for Artifacts below releases them.
 		await expect(page.locator('#formulize_addButton')).toBeVisible();
-		await clearEntryLocks(page);
 		await ensureMainMenuOpen(page);
 
 		const artifactsLink = page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true });
@@ -45,8 +45,5 @@ test.describe('Museum menu section disclosure (webmaster)', () => {
 		// expanded on load, with no click needed to reveal the sub-links again.
 		await ensureMainMenuOpen(page);
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true })).toBeVisible();
-
-		await page.goto('/modules/formulize/users.php');
-		await clearEntryLocks(page);
 	});
 });

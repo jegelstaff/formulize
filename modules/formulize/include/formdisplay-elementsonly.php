@@ -415,9 +415,18 @@ function removeDrawerEntryLocks() {
 ".formulize_javascriptForRemovingEntryLocks()."
 }
 
-jQuery(window).on('unload', function() {
+// Leaving the page releases the locks of the form showing at the time. This script runs in the page
+// again for every form shown, so each one replaces the function that does it, and the listener that
+// calls it is only added once.
+window.removeDrawerEntryLocksOnLeave = function() {
     ".formulize_javascriptForRemovingEntryLocks('unload')."
-});
+};
+if (!window.removeDrawerEntryLocksOnLeaveIsListening) {
+    window.removeDrawerEntryLocksOnLeaveIsListening = true;
+    window.addEventListener('pagehide', function() {
+        window.removeDrawerEntryLocksOnLeave();
+    });
+}
 </script>";
 
 // This request renders no footer, so nothing else would ever hand the browser the events

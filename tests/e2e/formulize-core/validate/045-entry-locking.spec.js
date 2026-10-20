@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, ensureMainMenuOpen, clearEntryLocks } from '../../utils';
+import { login, ensureMainMenuOpen, leavePage } from '../../utils';
 import { E2E_TEST_BASE_URL, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD } from '../config';
 
 // Entry locking: while someone has an entry open in a form, anyone else who opens it gets a message
@@ -29,16 +29,14 @@ async function openRomanCoin(page) {
 	await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
 	await page.getByRole('row', { name: 'M001' }).getByRole('link').first().click();
 	await expect(page.locator('.formulize-label-artifacts_short_name')).toBeVisible();
-	// the lock message is added when the document is ready, which is also when this is defined
-	await page.waitForFunction(() => typeof window.formulize_clearEntryLocks === 'function');
+	// the lock message is added when the document is ready
+	await page.waitForLoadState('load');
 }
 
 // Leaving the page releases any lock this page took. The page sends that request as it goes away,
-// and nothing waits for it, so release it first and wait for that, or the next person to open the
-// entry could get there before the request does.
+// and it has been handled by the time the next page has loaded.
 async function leave(page) {
-	await clearEntryLocks(page);
-	await page.goto('/');
+	await leavePage(page);
 	await expect(page.locator('.formulize-label-artifacts_short_name')).not.toBeVisible();
 }
 
@@ -70,10 +68,10 @@ test.describe('Entry locking', () => {
 
 	let pages = [];
 
-	// release whatever is still held, so a failure here doesn't leave Roman Coin locked
+	// leave whatever is still open, so a failure here doesn't leave Roman Coin locked
 	test.afterEach(async () => {
 		for (const page of pages) {
-			await clearEntryLocks(page).catch(() => {});
+			await leavePage(page).catch(() => {});
 			await page.context().close();
 		}
 		pages = [];

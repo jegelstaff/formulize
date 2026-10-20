@@ -65,7 +65,7 @@ The ones you will want first:
 | `waitForAdminPageReady(page)` | Wait for the admin UI wrapper, which starts hidden and is revealed on window load |
 | `applyColumnChanges(popup)` | Submit the "Change columns" popup, tolerating the fact that the popup destroys itself as a result of the click |
 | `addElementForm(page, type)`, `openElementAccordion`, `deleteElement` | Build and edit elements without re-deriving the admin UI's markup |
-| `clearEntryLocks(page)` | Release the entry locks this page is holding |
+| `leavePage(page, url)` | Leave the page the way a person does, once it has finished loading, so the entries it locked are released |
 | `dbQuery(sql)`, `getSystemConfig`, `setSystemConfig`, `getUserByLogin` | Read and write the test database directly, through `docker exec`, for the handful of things a browser cannot reach |
 
 `ElementType` in the same file maps every element type to the tab and heading the admin UI shows for it, which is what `addElementForm` uses.
@@ -80,11 +80,15 @@ The ones you will want first:
 
 Formulize locks an entry while someone has it open, so that two people do not overwrite each other. A test that opens an entry and then simply ends still holds that lock, and the next test that wants the same entry — quite possibly in a different spec file, run minutes later — fails with no obvious connection to the test that caused it.
 
-So a test that opens an entry must leave it: navigate away at the end, or call `clearEntryLocks(page)`. Where a whole describe block opens entries, put it in an `afterEach`:
+The page releases its locks as it goes away, so a test that opens an entry must leave it the way a person would: click a link, or go to another page with `leavePage(page, url)`. Then check something on the page you arrive at. The lock is released by the time that page has loaded. A test that just ends doesn't count as leaving, because closing the browser doesn't release the locks.
+
+Wait for the page to finish loading before you leave it. A page that is still loading isn't ready to release its locks yet. `leavePage` does that wait for you. If you leave by clicking a link instead, call `await page.waitForLoadState('load')` first.
+
+Where a whole describe block opens entries, leave in an `afterEach`:
 
 ```js
 test.afterEach(async ({ page }) => {
-	await clearEntryLocks(page);
+	await leavePage(page);
 });
 ```
 

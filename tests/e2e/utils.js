@@ -1066,12 +1066,20 @@ export async function setMenuEntryGroups(page, appName, accordionName, groupsSel
 		`after ${retries} attempts; last persisted selection was ${JSON.stringify(lastSelected)}`);
 }
 
-export async function clearEntryLocks(page) {
-	await page.evaluate(async () => {
-		if (typeof window.formulize_clearEntryLocks === 'function') {
-			await window.formulize_clearEntryLocks();
-		}
-	});
+/**
+ * Leave the page by going somewhere else, the way a person does, so the entries it locked are released.
+ *
+ * A form showing an entry for editing locks it, and the page releases the lock as it goes away. So a test that
+ * opens an entry must leave it, or the next person to open the entry finds it locked. Closing the browser at the
+ * end of a test doesn't count as leaving. The page can only release its locks once it has finished loading, so
+ * this waits for that first. The release is sent as the page goes away, and in practice it has been handled by
+ * the time the next page has loaded, which page.goto waits for.
+ *
+ * @param {string} url - Where to go. Assert something on that page afterwards, as after any navigation.
+ */
+export async function leavePage(page, url = '/') {
+	await page.waitForLoadState('load');
+	await page.goto(url);
 }
 
 /**

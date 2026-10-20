@@ -9127,11 +9127,16 @@ function formulize_javascriptForRemovingEntryLocks($unload=false) {
         $cachedJS['unload'] = "var fd = new FormData();\n";
         $cachedJS['unload'] .= "fd.append('formulize_entry_lock_token', '".$token."');\n";
         $cachedJS['unload'] .= "fd.append('formulize_entry_lock_uid', '".$uid."');\n";
-        $cachedJS['unload'] .= "return fetch('".XOOPS_URL."/modules/formulize/formulize_deleteEntryLock.php', {method:'POST', body:fd, keepalive:true});\n";
+        $cachedJS['unload'] .= "fetch('".XOOPS_URL."/modules/formulize/formulize_deleteEntryLock.php', {method:'POST', body:fd, keepalive:true});\n";
         // can do cleaner with jQuery since this runs inside the page while it exists
-        $cachedJS['jQuery'] = "jQuery.post('".XOOPS_URL."/modules/formulize/formulize_deleteEntryLock.php', {\n";
-        $cachedJS['jQuery'] .= "    'formulize_entry_lock_token': '".$token."',\n";
-        $cachedJS['jQuery'] .= "    'formulize_entry_lock_uid': '".$uid."',\n";
+        // synchronous, so whatever comes next (the drawer loading the next form, which locks entries of its own) can't overtake the release
+        $cachedJS['jQuery'] = "jQuery.ajax({\n";
+        $cachedJS['jQuery'] .= "    type: 'POST',\n";
+        $cachedJS['jQuery'] .= "    url: '".XOOPS_URL."/modules/formulize/formulize_deleteEntryLock.php',\n";
+        $cachedJS['jQuery'] .= "    data: {\n";
+        $cachedJS['jQuery'] .= "        'formulize_entry_lock_token': '".$token."',\n";
+        $cachedJS['jQuery'] .= "        'formulize_entry_lock_uid': '".$uid."'\n";
+        $cachedJS['jQuery'] .= "    },\n";
         $cachedJS['jQuery'] .= "    async: false\n});\n";
     }
     return $unload ? $cachedJS['unload'] : $cachedJS['jQuery'];

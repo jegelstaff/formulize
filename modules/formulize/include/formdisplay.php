@@ -2919,10 +2919,9 @@ window.onbeforeunload = function (e) {
     }
 };
 
-window.formulize_clearEntryLocks = function() {
+window.addEventListener('pagehide', function() {
     <?php print formulize_javascriptForRemovingEntryLocks('unload'); ?>
-};
-window.addEventListener('pagehide', window.formulize_clearEntryLocks);
+});
 
 <?php
 global $codeToIncludejQueryWhenNecessary;

@@ -2409,10 +2409,9 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 	if(is_array($entriesThatHaveBeenLockedThisPageLoad) AND count((array) $entriesThatHaveBeenLockedThisPageLoad) > 0) {
 		?>
 		<script type='text/javascript'>
-			window.formulize_clearEntryLocks = function() {
+			window.addEventListener('pagehide', function() {
 				<?php print formulize_javascriptForRemovingEntryLocks('unload'); ?>
-			};
-			window.addEventListener('pagehide', window.formulize_clearEntryLocks);
+			});
 		</script>
 		<?php
 	}

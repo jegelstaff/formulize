@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveFormulizeForm, conditionalElementReady, openElementAccordion, saveAdminForm, applyColumnChanges, openAllColumnSections } from '../../utils';
+import { login, saveFormulizeForm, conditionalElementReady, openElementAccordion, saveAdminForm, applyColumnChanges, openAllColumnSections, ensureMainMenuOpen, leavePage } from '../../utils';
 
 test.describe('Validate menu entries', () => {
 	test('Validate menu entries for ahstaff', async ({ page }) => {
@@ -596,8 +596,7 @@ test.describe('Data entry for Survey', () => {
 			// The lock is released when that page is left, so it must finish loading first:
 			// leaving while it is still loading leaves the entry locked for the staff tests below.
 			await expect(page.getByRole('textbox', { name: 'Your name' })).toHaveValue(name);
-			await page.waitForFunction(() => typeof window.formulize_clearEntryLocks === 'function');
-			await page.goto('/'); // leaving the form clears the entry lock
+			await leavePage(page); // leaving the form clears the entry lock
 			await expect(page.getByRole('textbox', { name: 'Your name' })).not.toBeVisible();
 			})
 	})
@@ -695,6 +694,11 @@ test.describe('New donation inside Donor record', () => {
 		await page.getByRole('row', { name: 'Candide - first edition' }).getByRole('link').click();
 		await expect(page.getByRole('radio', { name: 'Yes' })).toBeChecked();
 		await expect(page.locator('.form-row:has(.formulize-label-artifacts_donor) select option[selected]')).toContainText('François-Marie Arouet');
+		// leave the entry, which releases the lock on it
+		await page.waitForLoadState('load');
+		await ensureMainMenuOpen(page);
+		await page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true }).click();
+		await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
 	}),
 	test('Verify Add button limitation setting works as expected', async ({ page }) => {
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
@@ -713,6 +717,9 @@ test.describe('New donation inside Donor record', () => {
 	  await page.getByRole('link', { name: 'Donated Artifacts', exact: true }).click();
 		await expect(page.getByText('Candide')).toBeVisible(); // check for something that is in the page, to make sure that the page has actually loaded... the not.toBeVisible() check below is not sufficient, because it will pass if the page hasn't totally finished loading yet and it's not visible just because of timing issues
 		await expect(page.getByText('Add new artifact')).not.toBeVisible();
+		// The subform draws the donor's artifacts as forms the webmaster can edit, which locks them, Roman Coin among them.
+		// Leaving the page releases them, so let it finish loading first, and then leave.
+		await page.waitForLoadState('load');
 		await page.getByRole('link', { name: 'Admin' }).click();
 		await page.getByRole('link', { name: 'Museum' }).click();
 	  await page.getByRole('link', { name: 'Elements' }).nth(2).click();
@@ -727,6 +734,11 @@ test.describe('New donation inside Donor record', () => {
 		await page.getByRole('row', { name: 'François-Marie Arouet' }).getByRole('link').first().click();
 	  await page.getByRole('link', { name: 'Donated Artifacts', exact: true }).click();
 		await expect(page.getByText('Add new artifact')).toBeVisible();
+		// leave, as above, or 045 finds Roman Coin locked by the webmaster
+		await page.waitForLoadState('load');
+		await ensureMainMenuOpen(page);
+		await page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true }).click();
+		await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
 	})
 })
 
