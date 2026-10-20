@@ -724,7 +724,7 @@ h1 + .band {
    glance with nothing pointing at it, and green is the only other colour in
    the header - it is the rule underneath - so it reads as a marker rather
    than as a slightly stronger hover. */
-.main-nav a {
+.main-nav li a {
   display: block;
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-md);
@@ -734,7 +734,7 @@ h1 + .band {
   font-weight: 500;
   white-space: nowrap;
 }
-.main-nav a:hover { background: var(--color-accent-100); color: var(--color-accent-900); }
+.main-nav li a:hover { background: var(--color-accent-100); color: var(--color-accent-900); }
 /* .nav-section-current is the same marker on a top-level item whose section
    you are somewhere inside - see the comment in _includes/nav.html for what
    counts as inside. It is deliberately the identical green rather than a
@@ -742,8 +742,8 @@ h1 + .band {
    am I in", and a half-strength answer to that just reads as a rendering
    glitch next to the full-strength one on the dropdown item. Only ever one
    top-level item carries it, so there is nothing for it to compete with. */
-.main-nav a[aria-current="page"],
-.main-nav a.nav-section-current {
+.main-nav li a[aria-current="page"],
+.main-nav li a.nav-section-current {
   background: var(--color-accent-2-200);
   color: var(--color-accent-900);
 }
@@ -836,6 +836,9 @@ h1 + .band {
    this GitHub button just matches every other .btn-secondary on the site
    instead of being a one-off. */
 .btn-icon { width: 16px; height: 16px; flex: none; }
+/* The copy of the buttons inside the menu (see nav.html) - mobile only, shown
+   in the max-width: 1060px block. */
+.nav-cta { display: none; }
 
 /* no-JS mobile menu toggle */
 .nav-toggle { display: none; }
@@ -3189,8 +3192,21 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
     overscroll-behavior: contain;
   }
   .main-nav ul { flex-direction: column; align-items: stretch; gap: 0; padding-bottom: var(--space-3); }
-  .main-nav a { padding: var(--space-3); border-radius: var(--radius-md); }
+  .main-nav li a { padding: var(--space-3); border-radius: var(--radius-md); }
   .header-cta .btn-secondary { display: none; }
+  /* The header buttons again, at the bottom of the open menu, standing in
+     for whichever of them the bar has dropped: GitHub from here down, and Get
+     Formulize as well below 560px. Get Formulize is still in the bar above
+     that, so its menu copy stays hidden until the 560px block shows it -
+     otherwise the open menu showed it twice, once in each place. */
+  .main-nav .nav-cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-3) var(--space-3);
+    border-top: 1px solid var(--color-divider);
+  }
+  .main-nav .nav-cta .btn-primary { display: none; }
 
   /* No room for a floating dropdown on a phone-width menu, and no separate
      disclosure control either - the top-level link doubles as one (see the
@@ -3410,6 +3426,9 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
      padding. */
   .header-cta { display: none; }
   .nav-toggle-label { margin-left: auto; }
+  /* ...and comes back at the bottom of the open menu instead, beside GitHub
+     (hidden there above this width - see the 1060px block). */
+  .main-nav .nav-cta .btn-primary { display: inline-flex; }
   /* The bar above the open menu is shorter here - no tagline line, a
      smaller logo, and one row rather than two - so the menu can claim more
      of the viewport. 100px is measured: the open menu's top is 78px down at
