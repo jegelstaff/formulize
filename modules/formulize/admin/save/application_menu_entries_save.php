@@ -62,9 +62,13 @@
 					$_POST['reload_settings'] = 1;
 					$menuLinkAdded = true;
 				}	else {
-					if(isset($menuLinkObjects[$linkValues[0]])) {
-						$touchedMenuGroupIds = array_merge($touchedMenuGroupIds, $parseGroupIdString($menuLinkObjects[$linkValues[0]]->getVar('permissions')), $parseGroupIdString($menuLinkObjects[$linkValues[0]]->getVar('default_screen')));
+					// the link was deleted, or moved to another application, since the page was loaded (deleting a form
+					// takes its links with it), so leave it alone and reload the page to show the links as they are now
+					if(!isset($menuLinkObjects[$linkValues[0]])) {
+						$_POST['reload_settings'] = 1;
+						continue;
 					}
+					$touchedMenuGroupIds = array_merge($touchedMenuGroupIds, $parseGroupIdString($menuLinkObjects[$linkValues[0]]->getVar('permissions')), $parseGroupIdString($menuLinkObjects[$linkValues[0]]->getVar('default_screen')));
 					$application_handler->updateMenuLink($appid, $menuitems);
 					if($menuLinkObjects[$linkValues[0]]->getVar('link_text', 'n') != $linkValues[1]) { // unescaped, since we're comparing against the raw value the user submitted
 						$_POST['reload_settings'] = 1;
@@ -87,23 +91,22 @@
 	    $newOrder[] = count((array) $newOrder); // assign the current count, to a new key (so the key and value will be the same, to represent the most recent menu entry)
 	}
 			// newOrder will have keys corresponding to the new order, and values corresponding to the old order
+			// if the number of links doesn't match, links were added or deleted elsewhere since the page was loaded,
+			// so the order can't be matched up with the links; leave it alone and reload the page to show the links as they are now
 			if(count((array) $Links) != count((array) $newOrder)) {
-				print "Error: the number of links being saved did not match the number of links already in the database";
-				return;
-			}
+				$_POST['reload_settings'] = 1;
+			} else {
+				// modify links
+				$oldOrderNumber = 0;
+				foreach($Links as $link) {
+					$newOrderNumber = array_search(($oldOrderNumber),$newOrder);
+					$link->assignVar('rank',$newOrderNumber);
+					$oldOrderNumber++;
+				}
 
-			// modify links
-			$oldOrderNumber = 0;
-			$needReload = 0;
-			foreach($Links as $link) {
-				$menu_id = $link->getVar('menu_id');
-				$newOrderNumber = array_search(($oldOrderNumber),$newOrder);
-				$link->assignVar('rank',$newOrderNumber);
-				$oldOrderNumber++;
+				// presist changes
+				$application_handler->updateSorting($Links);
 			}
-
-			// presist changes
-			$application_handler->updateSorting($Links);
 		}
 
     // added Oct 2013 W.R.
