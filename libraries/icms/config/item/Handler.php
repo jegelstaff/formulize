@@ -179,15 +179,44 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
 			curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
 			curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
 			curl_setopt($curl, CURLINFO_HEADER_OUT, true);
+			$testedViaApiKeyHeader = false;
 
 			// The MCP server and the Public API both authenticate with an Authorization header,
 			// so both need to know whether this server passes that header through to PHP at all.
 			if($config->getVar('conf_name') == 'formulizeMCPServerEnabled'
 				OR $config->getVar('conf_name') == 'formulizePublicAPIEnabled') {
 				// Add a test Authorization header to verify it passes through
-				curl_setopt($curl, CURLOPT_HTTPHEADER, array(
-					'Authorization: Bearer test-header-passthrough-check'
-				));
+				$testHeaders = array('Authorization: Bearer test-header-passthrough-check');
+				// If the site is behind HTTP Basic Auth, this request would be refused by the web
+				// server before reaching the MCP server, so forward the administrator's own Basic
+				// credentials and put the test key in X-Formulize-API-Key instead, the same way an
+				// external client would have to on this site. The Public API does not read that
+				// header (yet), so it keeps the Bearer test.
+				if($config->getVar('conf_name') == 'formulizeMCPServerEnabled') {
+					$incomingAuth = '';
+					if(function_exists('getallheaders')) {
+						foreach(getallheaders() as $headerName => $headerValue) {
+							if(strtolower($headerName) === 'authorization') {
+								$incomingAuth = $headerValue;
+								break;
+							}
+						}
+					}
+					if(!$incomingAuth) {
+						$incomingAuth = $_SERVER['HTTP_AUTHORIZATION'] ?? ($_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '');
+					}
+					if(!preg_match('/^Basic\s/i', $incomingAuth) AND isset($_SERVER['PHP_AUTH_USER']) AND isset($_SERVER['PHP_AUTH_PW'])) {
+						$incomingAuth = 'Basic '.base64_encode($_SERVER['PHP_AUTH_USER'].':'.$_SERVER['PHP_AUTH_PW']);
+					}
+					if(preg_match('/^Basic\s/i', $incomingAuth)) {
+						$testHeaders = array(
+							'Authorization: '.$incomingAuth,
+							'X-Formulize-API-Key: test-header-passthrough-check'
+						);
+						$testedViaApiKeyHeader = true;
+					}
+				}
+				curl_setopt($curl, CURLOPT_HTTPHEADER, $testHeaders);
 				curl_setopt($curl, CURLOPT_TIMEOUT, 10); // MCP server might take a moment to respond
 			}
 
@@ -226,8 +255,9 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
 					// (see mcp/mcp.php), so a valid response here is proof the header gets through,
 					// and worth recording for the warnings that ask about it elsewhere. Only the
 					// positive: a failure here could equally be the MCP server being unreachable or
-					// broken, which says nothing about the header either way.
-					if($validResponse) {
+					// broken, which says nothing about the header either way. Nor when the test key
+					// went in X-Formulize-API-Key, which proves nothing about Authorization.
+					if($validResponse AND !$testedViaApiKeyHeader) {
 						include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 						formulize_recordAuthHeaderPassthrough(true);
 					}

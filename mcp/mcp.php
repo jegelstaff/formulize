@@ -86,7 +86,10 @@ class FormulizeMCP
 		$this->db = $this->getFormulizeDatabase();
 		$authHeader = $this->getAuthorizationHeader();
 
-		if ($authHeader == 'Bearer test-header-passthrough-check') {
+		// The test key can arrive either way: as a Bearer token, or in X-Formulize-API-Key
+		// when the enable check is forwarding the administrator's Basic Auth credentials
+		// (see libraries/icms/config/item/Handler.php)
+		if ($authHeader == 'Bearer test-header-passthrough-check' || $this->getApiKeyHeader() == 'test-header-passthrough-check') {
 			$this->canBeEnabled = true;
 		}
 
@@ -163,7 +166,7 @@ class FormulizeMCP
 		// CORS headers
 		header('Access-Control-Allow-Origin: *');
 		header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-		header('Access-Control-Allow-Headers: Content-Type, Authorization');
+		header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Formulize-API-Key');
 		header('Access-Control-Max-Age: 0');
 
 		// Set the HTTP response code
@@ -278,26 +281,36 @@ class FormulizeMCP
 			$this->allowUnauthenticatedRequests = true;
 		}
 
-		// Check for Authorization header
+		// The API key can come in X-Formulize-API-Key, which takes precedence. That leaves the
+		// Authorization header free for sites behind HTTP Basic Auth, where it carries the web
+		// server's credentials and has nothing to do with Formulize.
+		$key = $this->getApiKeyHeader();
 		$authHeader = $this->getAuthorizationHeader();
 
-		if (empty($authHeader) AND !$this->allowUnauthenticatedRequests) {
-			throw new FormulizeMCPException(
-				'Missing Authorization header',
-				'authentication_error',
-			);
-		}
+		if (!$key) {
+			if (empty($authHeader) AND !$this->allowUnauthenticatedRequests) {
+				throw new FormulizeMCPException(
+					'Missing Authorization header',
+					'authentication_error',
+				);
+			}
 
-		// Extract API key from "Bearer {api_key}" format
-		if (!preg_match('/Bearer\s+(.+)/', $authHeader, $matches) AND !$this->allowUnauthenticatedRequests) {
-			throw new FormulizeMCPException(
-				'Invalid Authorization header format. Use: Bearer {api_key}',
-				'authentication_error',
-			);
+			// Extract API key from "Bearer {api_key}" format
+			if (preg_match('/Bearer\s+(.+)/', $authHeader, $matches)) {
+				$key = trim($matches[1]);
+			} elseif (!$this->allowUnauthenticatedRequests) {
+				if (preg_match('/^Basic\s/i', $authHeader)) {
+					throw new FormulizeMCPException(
+						'The Authorization header holds Basic Auth credentials, so send your Formulize API key in the X-Formulize-API-Key header',
+						'authentication_error',
+					);
+				}
+				throw new FormulizeMCPException(
+					'Invalid Authorization header format. Use: Bearer {api_key}, or send the key in the X-Formulize-API-Key header',
+					'authentication_error',
+				);
+			}
 		}
-
-		// Isolate the key
-		$key = trim($matches[1]);
 
 		if (!$this->allowUnauthenticatedRequests || ($key && $key !== 'test-header-passthrough-check')) {
 			$uid = $this->getUidFromAPIKey($key);
@@ -342,6 +355,29 @@ class FormulizeMCP
 			return $_SERVER['HTTP_AUTHORIZATION'];
 		} elseif (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
 			return $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+		}
+		return '';
+	}
+
+	/**
+	 * Get the API key from the X-Formulize-API-Key header, if one was sent
+	 *
+	 * Custom headers reach PHP as HTTP_ variables under every SAPI, so unlike Authorization
+	 * this one is not stripped by CGI/FastCGI configurations
+	 *
+	 * @return string The trimmed header value or an empty string if not set
+	 */
+	private function getApiKeyHeader()
+	{
+		if (isset($_SERVER['HTTP_X_FORMULIZE_API_KEY'])) {
+			return trim($_SERVER['HTTP_X_FORMULIZE_API_KEY']);
+		}
+		if (function_exists('getallheaders')) {
+			foreach (getallheaders() as $name => $value) {
+				if (strtolower($name) === 'x-formulize-api-key') {
+					return trim($value);
+				}
+			}
 		}
 		return '';
 	}
