@@ -56,18 +56,6 @@ function initHamburgerMenu() {
       setTimeout(function () { username.focus(); }, 550);
     });
   });
-  // On a phone, someone who is not logged in has to find the login block in the
-  // menu, so the first page they open in this tab opens the menu for them, once.
-  // Only the first: open over every page, it would cover the pages they came to
-  // read. 767px is the width below which this theme lays pages out for phones.
-  if ('sidebarAnon' in flyoutMenu.dataset && window.innerWidth <= 767) {
-    try {
-      if (!sessionStorage.getItem('anari-menu-shown')) {
-        sessionStorage.setItem('anari-menu-shown', '1');
-        flyoutMenu.classList.add('site-layout__sidebar--open');
-      }
-    } catch (e) { /* storage blocked: leave the menu closed */ }
-  }
   var login_button = document.querySelector('#block_login_form input[type=submit]');
   if (login_button) {
     login_button.addEventListener('click', function(evt) {

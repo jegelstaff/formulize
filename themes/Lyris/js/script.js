@@ -61,25 +61,16 @@ function initSidebar() {
     });
   });
 
-  // Restore saved state on desktop; use data attribute default otherwise
+  // Restore saved state on desktop; use data attribute default otherwise. On a
+  // phone the sidebar slides in over the page, so it stays closed until it is
+  // asked for. Not even for someone who is not logged in: the login block is
+  // only in it on the pages its block settings give it (the top page, by
+  // default), and Sign in opens it there.
   if (!isMobile()) {
     try {
       const saved = storage().getItem(STORAGE_KEY);
       const defaultOpen = app.dataset.sidebarDefault === 'open';
       setSidebarState(saved !== null ? saved === 'true' : !defaultOpen);
-    } catch (_) { /* ignore */ }
-  } else if ('sidebarAnon' in app.dataset) {
-    // On a phone the sidebar slides in over the page, and is closed until it is
-    // asked for. Someone who is not logged in still needs to find the login
-    // block in it, so the first page of their visit opens it for them, as the
-    // wider layout does. Only the first: open over every page, it would cover
-    // the pages they came to read, so it is recorded as closed straight away,
-    // and the next page starts with it closed.
-    try {
-      if (storage().getItem(STORAGE_KEY) === null && app.dataset.sidebarDefault === 'open') {
-        setSidebarState(false);
-        storage().setItem(STORAGE_KEY, 'true');
-      }
     } catch (_) { /* ignore */ }
   }
 
