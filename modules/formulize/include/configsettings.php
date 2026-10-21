@@ -177,7 +177,7 @@ function formulize_configFormElementHtml($config) {
     // nothing on the page saying why.
     if ($name === 'formulizeMCPServerEnabled') {
         $ele = new icms_form_elements_Radioyn('', $name, $value, _YES, _NO);
-        return $ele->render() . formulize_mcpAuthHeaderWarningHtml();
+        return $ele->render() . formulize_mcpEnableCheckFailureHtml() . formulize_mcpAuthHeaderWarningHtml();
     }
 
     // The websites allowed to frame the whole site, plus a note about any entry that is being

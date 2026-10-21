@@ -2,7 +2,13 @@
 
 require_once '../mainfile.php';
 include_once XOOPS_ROOT_PATH . '/mcp/mcp.php';
-$server = new FormulizeMCP();
+// The server needs a Formulize login or an API key, so this page does too
+try {
+	$server = new FormulizeMCP();
+} catch (FormulizeMCPException $e) {
+	FormulizeMCP::sendResponse('<!DOCTYPE html><html><head><title>Formulize MCP Server</title></head><body><p>Log in to Formulize to see the documentation for its MCP server.</p></body></html>', 401, [], false);
+	exit;
+}
 
 ?>
 
@@ -69,14 +75,12 @@ $server = new FormulizeMCP();
 
 	<div class="endpoint">
 		<h3><span class="method">GET</span> /capabilities</h3>
-		<p>MCP server capabilities and authentication info</p>
-		<p><a href="<?php echo $server->baseUrl; ?>/capabilities">View capabilities</a></p>
+		<p>The tools, resources and prompts available to the user whose API key is sent. Requires an API key, like /mcp.</p>
 	</div>
 
 	<div class="endpoint">
 		<h3><span class="method">GET</span> /health</h3>
-		<p>Health check endpoint</p>
-		<p><a href="<?php echo $server->baseUrl; ?>/health">Check health</a></p>
+		<p>Health check endpoint, including details about the system. Requires an API key, like /mcp.</p>
 	</div>
 
 	<h2>Authentication:</h2>
@@ -94,11 +98,7 @@ $server = new FormulizeMCP();
   -H "Content-Type: application/json" \
   -H "X-Formulize-API-Key: YOUR_FORMULIZE_API_KEY" \
   -d '{"jsonrpc":"2.0","method":"tools/list","params":{},"id":1}'</pre>
-		<p>When the MCP Server preference is turned on, Formulize checks that it can reach its own MCP server, and it forwards your Basic Auth credentials to get through. If your server does not pass those credentials to PHP (common with PHP-FPM unless <code>CGIPassAuth On</code> is set), the check is refused and the preference will not stay on. In that case, let the server reach itself without Basic Auth, or exempt the <code>/mcp/</code> folder from Basic Auth. For example, in Apache:</p>
-		<pre>&lt;RequireAny&gt;
-    Require ip 127.0.0.1 ::1
-    Require valid-user
-&lt;/RequireAny&gt;</pre>
+		<p>When the MCP Server preference is turned on, Formulize checks that it can reach its own MCP server, and it forwards your Basic Auth credentials to get through. If your server does not pass those credentials to PHP (common with PHP-FPM unless <code>CGIPassAuth On</code> is set), the web server refuses the check, and Formulize lets the preference stay on anyway, since it cannot test any further from inside. The first real test is then an external client connecting.</p>
 	</div>
 
 	<h2>Available Capabilities:</h2>

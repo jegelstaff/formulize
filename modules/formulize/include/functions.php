@@ -13065,6 +13065,50 @@ function formulize_mcpAuthHeaderWarningHtml($maxAgeSeconds = 300) {
 }
 
 /**
+ * Remember why the MCP Server setting was just switched back off, or forget it.
+ *
+ * The enable check in icms_config_item_Handler::insert runs while the preference is being
+ * saved, and its only lever is setting the value back to 0, so on its own a failure presents as
+ * a preference that will not save. This carries the reason over to the preferences page.
+ *
+ * @param string|null $reason What went wrong, as the end of a sentence beginning "...because",
+ *                            or null to clear a previous failure
+ * @return void
+ */
+function formulize_recordMCPEnableCheckFailure($reason) {
+    if($reason === null) {
+        unset($_SESSION['formulize_mcpEnableCheckFailure']);
+    } else {
+        $_SESSION['formulize_mcpEnableCheckFailure'] = array('reason' => $reason, 'time' => time());
+    }
+}
+
+/**
+ * Explain why the MCP Server setting was switched back off, if it just was.
+ *
+ * Shown once, and only for a few minutes after the failed save, since it describes a single
+ * attempt rather than the state of the server.
+ *
+ * @return string HTML for the warning, or an empty string when there is nothing to report
+ */
+function formulize_mcpEnableCheckFailureHtml() {
+    if(!isset($_SESSION['formulize_mcpEnableCheckFailure'])) {
+        return '';
+    }
+    $failure = $_SESSION['formulize_mcpEnableCheckFailure'];
+    unset($_SESSION['formulize_mcpEnableCheckFailure']);
+    if((time() - intval($failure['time'])) > 600) {
+        return '';
+    }
+    return formulize_settingsWarningStylesHtml()
+        ."<div class='formulize-settings-warning'>"
+        ."<b>The MCP Server setting was switched back off.</b>"
+        ."<p>When you saved it, Formulize checked that its MCP server could be reached, and the check "
+        ."failed because ".htmlspecialchars($failure['reason'])."</p>"
+        ."</div>";
+}
+
+/**
  * The "test it again" button, and the script that drives it.
  *
  * Someone who has just edited their server configuration needs to find out whether it worked

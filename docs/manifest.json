@@ -5,7 +5,7 @@ layout: null
   "manifest_version": "0.2",
   "name": "formulize-mcp",
   "display_name": "Formulize",
-  "version": "1.3.4",
+  "version": "1.5.0",
   "description": "A local MCP server for connecting to Formulize, the open source data management platform.",
   "long_description": "Formulize lets people organize their data and customize the workflows around their data. Many Formulize users are not developers, they are power users who understand how their systems should work, and they can use Formulize to configure their database applications, instead of programming them. With this MCP server, people can connect AI assistants to their Formulize system, have conversations about their data, and get their AI assistant to help in configuring Formulize. Through MCP, people will be able to simply outline their use cases and business processes, and then the AI assistant can use tools in Formulize to create the applications they have imagined. People can also have AI assistants validate, summarize, and help manage their data, and even add data to the database based on the context and prompts provided by users.",
   "author": {
@@ -30,7 +30,9 @@ layout: null
         "FORMULIZE_API_KEY": "${user_config.FORMULIZE_API_KEY}",
         "FORMULIZE_SERVER_NAME": "${user_config.FORMULIZE_SERVER_NAME}",
         "FORMULIZE_DEBUG": "${user_config.FORMULIZE_DEBUG}",
-        "FORMULIZE_TIMEOUT": "${user_config.FORMULIZE_TIMEOUT}"
+        "FORMULIZE_TIMEOUT": "${user_config.FORMULIZE_TIMEOUT}",
+        "FORMULIZE_BASIC_AUTH_USER": "${user_config.FORMULIZE_BASIC_AUTH_USER}",
+        "FORMULIZE_BASIC_AUTH_PASSWORD": "${user_config.FORMULIZE_BASIC_AUTH_PASSWORD}"
       }
     }
   },
@@ -88,6 +90,20 @@ layout: null
       "sensitive": false,
       "default": 30000,
       "min": 0
+    },
+    "FORMULIZE_BASIC_AUTH_USER": {
+      "type": "string",
+      "title": "Basic Auth username",
+      "description": "Only needed if your Formulize system is behind HTTP Basic Auth, where the web server asks for a username and password before you reach Formulize. This is not your Formulize username.",
+      "required": false,
+      "sensitive": false
+    },
+    "FORMULIZE_BASIC_AUTH_PASSWORD": {
+      "type": "string",
+      "title": "Basic Auth password",
+      "description": "The password that goes with the Basic Auth username.",
+      "required": false,
+      "sensitive": true
     }
   },
   "keywords": [

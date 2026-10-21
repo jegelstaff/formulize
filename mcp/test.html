@@ -423,8 +423,14 @@
             </div>
             <div class="form-group" id="apiKeyGroup">
                 <label for="apiKey">API Key (32-character hex):</label>
-                <input type="text" id="apiKey" placeholder="Enter your Formulize API key (leave blank to test without auth)" />
-                <small>Leave blank to test server without authentication</small>
+                <input type="text" id="apiKey" placeholder="Enter your Formulize API key" />
+                <small>Every request in External mode needs an API key, including /health and /capabilities</small>
+            </div>
+            <div class="form-group">
+                <label for="basicAuthUser">Basic Auth (optional, only if the web server asks for a username and password before Formulize):</label>
+                <input type="text" id="basicAuthUser" placeholder="Username" autocomplete="off" style="margin-bottom: 5px;" />
+                <input type="password" id="basicAuthPassword" placeholder="Password" autocomplete="new-password" />
+                <small>In External mode the browser does not send the Basic Auth credentials you logged in with, so enter them here. In Session mode it does, so enter them only to use different ones. When these are filled in, the API key is sent in the X-Formulize-API-Key header instead of the Authorization header.</small>
             </div>
         </div>
 
@@ -982,19 +988,18 @@
 
                 const headers = {
                     'Content-Type': 'application/json',
-                    'Cache-Control': 'no-cache'
+                    'Cache-Control': 'no-cache',
+                    ...buildAuthHeaders(isSessionMode)
                 };
 
                 if (!isSessionMode && apiKey && apiKey.trim()) {
-                    headers['Authorization'] = `Bearer ${apiKey}`;
-                    console.log('Authorization header added:', `Bearer ${apiKey.substring(0, 8)}...`);
+                    console.log('API key added:', `${apiKey.substring(0, 8)}...`);
                 } else if (isSessionMode) {
                     console.log('Session mode - using browser session cookie, no API key');
                 } else {
-                    console.log('No API key provided - sending without Authorization header');
+                    console.log('No API key provided');
                 }
-
-                console.log('Final headers:', headers);
+                console.log('Basic Auth credentials:', headers['Authorization']?.startsWith('Basic ') ? 'entered on this page' : 'none entered');
 
                 const response = await fetch(mcpUrl, {
                     method: 'POST',
@@ -1023,10 +1028,12 @@
                 if (requestGeneration !== responseGeneration) return null;
 
                 if (!response.ok) {
+                    const hint = basicAuthHint(response, isSessionMode);
                     showResponse({
                         status: 'HTTP Error',
                         httpStatus: response.status,
                         statusText: response.statusText,
+                        ...(hint ? { hint } : {}),
                         response: data,
                         timestamp: new Date().toISOString()
                     }, true, title, accumulate);
@@ -1052,10 +1059,52 @@
                     timestamp: new Date().toISOString(),
                     apiKeyProvided: !!apiKey,
                     apiKeyLength: apiKey ? apiKey.length : 0,
+                    basicAuthProvided: !!document.getElementById('basicAuthUser').value,
                     serverUrl: mcpUrl
                 }, true, title, accumulate);
                 return null;
             }
+        }
+
+        // The API key always goes in X-Formulize-API-Key. Authorization carries Basic Auth
+        // credentials entered on this page, for a web server in front of Formulize, or else the
+        // API key as a Bearer token too, for Formulize versions that only read Authorization.
+        // In Session mode no key is sent, and the browser sends the Basic Auth credentials it
+        // already has unless different ones are entered here.
+        function buildAuthHeaders(isSessionMode) {
+            const headers = {};
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const basicUser = document.getElementById('basicAuthUser').value;
+            const basicPassword = document.getElementById('basicAuthPassword').value;
+
+            if (!isSessionMode && apiKey) {
+                headers['X-Formulize-API-Key'] = apiKey;
+            }
+
+            if (basicUser) {
+                // btoa only takes Latin-1, so encode as UTF-8 first
+                const bytes = new TextEncoder().encode(`${basicUser}:${basicPassword}`);
+                headers['Authorization'] = 'Basic ' + btoa(String.fromCharCode(...bytes));
+            } else if (!isSessionMode && apiKey) {
+                headers['Authorization'] = `Bearer ${apiKey}`;
+            }
+
+            return headers;
+        }
+
+        // A 401 carrying WWW-Authenticate: Basic comes from the web server, not Formulize, whose
+        // own 401s do not send that header
+        function basicAuthHint(response, isSessionMode) {
+            const challenge = response.headers.get('WWW-Authenticate') || '';
+            if (response.status !== 401 || !/^Basic\b/i.test(challenge)) {
+                return null;
+            }
+            if (document.getElementById('basicAuthUser').value) {
+                return 'The web server refused the Basic Auth credentials entered on this page.';
+            }
+            return isSessionMode
+                ? 'The web server is asking for Basic Auth credentials. Enter them in the Basic Auth fields above.'
+                : 'The web server is asking for Basic Auth credentials. In External mode the browser does not send the ones you logged in with, so enter them in the Basic Auth fields above.';
         }
 
         async function testEndpoint(endpoint, method = 'GET', body = null, accumulate = false) {
@@ -1073,12 +1122,9 @@
 
             try {
                 const headers = {
-                    'Cache-Control': 'no-cache'
+                    'Cache-Control': 'no-cache',
+                    ...buildAuthHeaders(isSessionMode)
                 };
-
-                if (!isSessionMode && apiKey && apiKey.trim()) {
-                    headers['Authorization'] = `Bearer ${apiKey}`;
-                }
 
                 if (method === 'POST') {
                     headers['Content-Type'] = 'application/json';
@@ -1100,11 +1146,13 @@
                     data = responseText;
                 }
 
+                const hint = response.ok ? null : basicAuthHint(response, isSessionMode);
                 showResponse({
                     endpoint: endpoint,
                     method: method,
                     status: response.status,
                     statusText: response.statusText,
+                    ...(hint ? { hint } : {}),
                     headers: Object.fromEntries(response.headers.entries()),
                     body: data
                 }, !response.ok, `${method} ${endpoint}`, accumulate);
@@ -1593,6 +1641,11 @@
             if (authMode === 'apikey') {
                 refreshAvailableOptions(); // now that there's a key, we can get the lists of tools, prompts and resources
             }
+        });
+
+        // New Basic Auth credentials may let the lists of tools, prompts and resources load
+        document.getElementById('basicAuthPassword').addEventListener('change', function() {
+            refreshAvailableOptions();
         });
     </script>
 </body>

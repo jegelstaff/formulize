@@ -40,7 +40,6 @@ class FormulizeMCP
 	public $canBeEnabled = false;
 	private $authViaSession = false;
 	private $authViaApiKey = false;
-	private $allowUnauthenticatedRequests = false;
 	public $tools;
 	public $resources;
 	public $prompts;
@@ -96,14 +95,11 @@ class FormulizeMCP
 		// Gate access by authentication type, so each preference controls only its own surface:
 		// - session-authenticated callers (the embedded AI assistant) require the AI Assistant pref
 		// - API-key callers (external MCP clients) require the MCP Server pref
-		// - unauthenticated MCP discovery endpoints (capabilities, etc.) are part of the
-		//   external client surface, so they follow the MCP Server pref. The auth-header
-		//   passthrough test is handled separately via canBeEnabled above.
+		// Nothing else is ever enabled. The only unauthenticated request that gets this far is
+		// the enable check's test value, which is answered via canBeEnabled above.
 		if ($this->authViaSession) {
 			$this->enabled = isAIAssistantEnabled();
 		} elseif ($this->authViaApiKey) {
-			$this->enabled = isMCPServerEnabled();
-		} elseif ($this->allowUnauthenticatedRequests) {
 			$this->enabled = isMCPServerEnabled();
 		}
 
@@ -163,7 +159,10 @@ class FormulizeMCP
 		header('ETag: "' . uniqid() . '"');
 		header('Vary: *');
 
-		// CORS headers
+		// CORS headers. The wildcard origin lets browser pages on other sites call this server
+		// without cookies, ie: with an API key. Browsers never accept a wildcard for requests that
+		// carry cookies, and the session CSRF protection in authenticateRequest() depends on that:
+		// do not add Access-Control-Allow-Credentials, or echo back the request's Origin.
 		header('Access-Control-Allow-Origin: *');
 		header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 		header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Formulize-API-Key');
@@ -254,16 +253,8 @@ class FormulizeMCP
 	{
 		global $xoopsUser, $icmsUser;
 
-		// Check for active session first (for embedded AI)
-		if ($xoopsUser) {
-			$this->authViaSession = true;
-			$this->authenticatedUser = $xoopsUser;
-			$this->authenticatedUid = $xoopsUser->getVar('uid');
-			$this->userGroups = $xoopsUser->getGroups();
-			return true;
-		}
-
-		// Handle CORS preflight
+		// Handle CORS preflight. Browsers never send cookies or credentials with a preflight,
+		// so it is answered before any authentication, session included.
 		if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 			throw new FormulizeMCPException(
 				'Preflight request successful',
@@ -271,16 +262,33 @@ class FormulizeMCP
 			);
 		}
 
-		// Only authenticate requests for mcp
-		if ($method === 'GET' && (
-			substr($path, -7) === '/health' ||
-			substr($path, -13) === '/capabilities' ||
-			substr($path, -4) === '/docs' ||
-			substr($path, -4) !== '/mcp')
-		) {
-			$this->allowUnauthenticatedRequests = true;
+		// Check for active session (for embedded AI)
+		if ($xoopsUser) {
+			// Protection against cross-site request forgery. Another site can make the browser
+			// POST here with this session's cookie (whenever the cookie is SameSite=None, or from
+			// a sibling subdomain even under Lax), but without a CORS preflight it can only send
+			// the "simple" content types: form-urlencoded, multipart/form-data, or text/plain,
+			// which can be made to carry a JSON body. Sending application/json from another site
+			// requires a preflight, and the browser only goes ahead if the preflight answer names
+			// that site's origin and allows credentials, which sendResponse() never does. So a
+			// session POST with any other content type is refused. This depends on the CORS
+			// headers in sendResponse(): never allow credentials there, or this stops working.
+			if ($method === 'POST' && stripos($_SERVER['CONTENT_TYPE'] ?? '', 'application/json') !== 0) {
+				throw new FormulizeMCPException(
+					'Requests made with a Formulize session must send Content-Type: application/json',
+					'authentication_error',
+				);
+			}
+			$this->authViaSession = true;
+			$this->authenticatedUser = $xoopsUser;
+			$this->authenticatedUid = $xoopsUser->getVar('uid');
+			$this->userGroups = $xoopsUser->getGroups();
+			return true;
 		}
 
+		// Without a session, every request needs an API key: /mcp, and also /health and
+		// /capabilities, which describe the system and the tools available to the key's user.
+		//
 		// The API key can come in X-Formulize-API-Key, which takes precedence. That leaves the
 		// Authorization header free for sites behind HTTP Basic Auth, where it carries the web
 		// server's credentials and has nothing to do with Formulize.
@@ -288,9 +296,9 @@ class FormulizeMCP
 		$authHeader = $this->getAuthorizationHeader();
 
 		if (!$key) {
-			if (empty($authHeader) AND !$this->allowUnauthenticatedRequests) {
+			if (empty($authHeader)) {
 				throw new FormulizeMCPException(
-					'Missing Authorization header',
+					'Missing API key. Send it in the X-Formulize-API-Key header, or as Authorization: Bearer {api_key}',
 					'authentication_error',
 				);
 			}
@@ -298,13 +306,12 @@ class FormulizeMCP
 			// Extract API key from "Bearer {api_key}" format
 			if (preg_match('/Bearer\s+(.+)/', $authHeader, $matches)) {
 				$key = trim($matches[1]);
-			} elseif (!$this->allowUnauthenticatedRequests) {
-				if (preg_match('/^Basic\s/i', $authHeader)) {
-					throw new FormulizeMCPException(
-						'The Authorization header holds Basic Auth credentials, so send your Formulize API key in the X-Formulize-API-Key header',
-						'authentication_error',
-					);
-				}
+			} elseif (preg_match('/^Basic\s/i', $authHeader)) {
+				throw new FormulizeMCPException(
+					'The Authorization header holds Basic Auth credentials, so send your Formulize API key in the X-Formulize-API-Key header',
+					'authentication_error',
+				);
+			} else {
 				throw new FormulizeMCPException(
 					'Invalid Authorization header format. Use: Bearer {api_key}, or send the key in the X-Formulize-API-Key header',
 					'authentication_error',
@@ -312,31 +319,30 @@ class FormulizeMCP
 			}
 		}
 
-		if (!$this->allowUnauthenticatedRequests || ($key && $key !== 'test-header-passthrough-check')) {
-			$uid = $this->getUidFromAPIKey($key);
-			if ($uid === false) {
-				throw new FormulizeMCPException(
-					'Invalid or expired API key',
-					'authentication_error',
-				);
-			}
-			$member_handler = xoops_gethandler('member');
-			if ($uidObject = $member_handler->getUser($uid)) {
-				$this->authViaApiKey = true;
-				$this->userGroups = $uidObject->getGroups();
-				$this->authenticatedUser = $uidObject;
-				$this->authenticatedUid = $uid;
-
-				// Set global user context as Formulize does
-				$xoopsUser = $uidObject;
-				$icmsUser = $uidObject;
-			} else {
-				$this->authenticatedUser = null;
-				$this->authenticatedUid = 0;
-				$this->userGroups = array(XOOPS_GROUP_ANONYMOUS);
-				return false;
-			}
+		// The test value sent by the enable check in icms_config_item_Handler::insert. It is not a
+		// key and authenticates nobody: the request carries on unauthenticated, so it is never
+		// enabled, and mcp/index.php answers only whether the server could be enabled (see
+		// canBeEnabled in the constructor). That proves the header reached PHP, and nothing more.
+		if ($key === 'test-header-passthrough-check') {
+			return true;
 		}
+
+		$uid = $this->getUidFromAPIKey($key);
+		$member_handler = xoops_gethandler('member');
+		if ($uid === false OR !($uidObject = $member_handler->getUser($uid))) {
+			throw new FormulizeMCPException(
+				'Invalid or expired API key',
+				'authentication_error',
+			);
+		}
+		$this->authViaApiKey = true;
+		$this->userGroups = $uidObject->getGroups();
+		$this->authenticatedUser = $uidObject;
+		$this->authenticatedUid = $uid;
+
+		// Set global user context as Formulize does
+		$xoopsUser = $uidObject;
+		$icmsUser = $uidObject;
 
 		return true;
 	}

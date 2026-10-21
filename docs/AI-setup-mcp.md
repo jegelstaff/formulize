@@ -32,7 +32,7 @@ title: External AI Assistant Setup (MCP)
 
 5. **Share the API key _securely_**. Use a secure communication channel to distribute the API keys, or meet in person. The API keys give access to Formulize in exactly the same way as logging in with someone's username and password, so __do not send them via e-mail__ or other insecure means!
 
-6. **Configure your AI assistant**. For <a href='https://claude.ai/download' target='_blank'>Claude Desktop</a>, you can simply <a href='https://github.com/jegelstaff/formulize-mcp/releases/download/v1.4.0/formulize-mcp.mcpb' download='formulize-mcp.mcpb'>download the Formulize MCPB extension</a>, and install it in Claude. Unfortunately, the exact steps to install are changing regularly, and depend on which version of Claude you're using.
+6. **Configure your AI assistant**. For <a href='https://claude.ai/download' target='_blank'>Claude Desktop</a>, you can simply <a href='https://github.com/jegelstaff/formulize-mcp/releases/download/v1.5.0/formulize-mcp.mcpb' download='formulize-mcp.mcpb'>download the Formulize MCPB extension</a>, and install it in Claude. Unfortunately, the exact steps to install are changing regularly, and depend on which version of Claude you're using.
 
 	You don't need to install anything else to use the MCPB extension. Claude Desktop runs it with its own built-in copy of Node.js.
 
@@ -102,7 +102,7 @@ title: External AI Assistant Setup (MCP)
 
 ## Options
 
-There are five options you can configure in your AI assistant, for working with Formulize.
+There are seven options you can configure in your AI assistant, for working with Formulize.
 
 The MCPB extension will give you a user interface to fill in with these options.
 
@@ -113,6 +113,14 @@ If you are manually configuring through a .json file, you need to include the op
 - FORMULIZE_SERVER_NAME - Recommended - The name of your server. Although the name may be stated already higher up in the .json file, including the name as an environment variable will help the AI understand your system.
 - FORMULIZE_DEBUG - Optional - Either _true_ or _false_. Defaults to _false_.
 - FORMULIZE_TIMEOUT - Optional - Timeout in milliseconds. Defaults to _30000_.
+- FORMULIZE_BASIC_AUTH_USER - Optional - If your Formulize system is behind HTTP Basic Auth (the web server asks for a username and password before you even reach Formulize), the username for that. This is not your Formulize username.
+- FORMULIZE_BASIC_AUTH_PASSWORD - Optional - The password that goes with FORMULIZE_BASIC_AUTH_USER.
+
+### Formulize systems behind Basic Auth
+
+Normally the API key is sent in two headers: the _Authorization_ header (as a Bearer token) and the _X-Formulize-API-Key_ header. When Basic Auth credentials are configured, the _Authorization_ header is used for the Basic Auth credentials instead, and the API key is sent only in the _X-Formulize-API-Key_ header. This requires Formulize 8.30 or later.
+
+Do not put the Basic Auth credentials in FORMULIZE_URL (ie: ```https://username:password@myformulize.com```). The MCP server will refuse to start if you do. Use the options above instead.
 
 ## Advanced Configuration
 

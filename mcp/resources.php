@@ -4,7 +4,8 @@ trait resources {
 
 	/**
 	 * Register available MCP resources
-	 * Presently, only webmasters can access resources.
+	 * Resources are read through the same functions as the equivalent tools, so each one is limited
+	 * by the user's permissions in the same way. Reaching them at all needs an API key or a session.
 	 * Sets the resources property of the FormulizeMCP class
 	 * @return void
 	 */

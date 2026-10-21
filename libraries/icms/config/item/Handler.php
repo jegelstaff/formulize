@@ -170,7 +170,7 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
 					$url = $correctXOOP_URL.'/formulize-public-api/v1/status/formulize_check_if_public_api_is_properly_enabled_please'; // will resolve based on DNS available to server, so Docker gets confused by localhost!
 					break;
 				case 'formulizeMCPServerEnabled':
-					$url = $correctXOOP_URL.'/mcp/?endpoint=health'; // Direct path to MCP server health check
+					$url = $correctXOOP_URL.'/mcp/index.php/health'; // The health endpoint, addressed the same way MCP clients address it
 					break;
 			}
 
@@ -220,8 +220,19 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
 				curl_setopt($curl, CURLOPT_TIMEOUT, 10); // MCP server might take a moment to respond
 			}
 
+			// Keep the response headers, so a web server asking for Basic Auth can be recognized
+			$responseHeaders = array();
+			curl_setopt($curl, CURLOPT_HEADERFUNCTION, function($curl, $headerLine) use (&$responseHeaders) {
+				$headerParts = explode(':', $headerLine, 2);
+				if(count($headerParts) == 2) {
+					$responseHeaders[strtolower(trim($headerParts[0]))] = trim($headerParts[1]);
+				}
+				return strlen($headerLine);
+			});
+
 			$response = curl_exec($curl);
 			$httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+			$curlError = curl_error($curl);
 			curl_close($curl);
 
 			// Validate response based on the service type
@@ -248,18 +259,50 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
 					break;
 				case 'formulizeMCPServerEnabled':
 					$json = json_decode($response);
-					// MCP server should return JSON with status, and HTTP 200
-					// Even if auth fails, it should respond with JSON structure indicating the server is working
+					// The MCP server should answer HTTP 200, with JSON saying canBeEnabled. The test value
+					// authenticates nobody, so mcp/index.php answers that whether or not the setting is
+					// already on (see authenticateRequest in mcp/mcp.php).
 					$validResponse = ($httpCode == 200 AND is_object($json) AND isset($json->status) AND $json->status == 'canBeEnabled');
+					// The web server in front of Formulize asked for Basic Auth credentials, and either
+					// PHP could not see the administrator's to forward them (common with PHP-FPM), or
+					// they were refused. The request never reached the MCP server, so there is nothing
+					// more to learn here, but external clients will bring their own credentials and
+					// send the API key in X-Formulize-API-Key, so let the setting stay on rather than
+					// make it impossible to turn on behind Basic Auth. Formulize's own 401s do not send
+					// WWW-Authenticate, so this cannot be mistaken for the MCP server refusing a key.
+					$behindBasicAuth = false;
+					if(!$validResponse AND $httpCode == 401
+						AND isset($responseHeaders['www-authenticate'])
+						AND preg_match('/^Basic\b/i', $responseHeaders['www-authenticate'])) {
+						$validResponse = true;
+						$behindBasicAuth = true;
+					}
+					include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 					// canBeEnabled is set only when the test Authorization header actually arrived
 					// (see mcp/mcp.php), so a valid response here is proof the header gets through,
 					// and worth recording for the warnings that ask about it elsewhere. Only the
 					// positive: a failure here could equally be the MCP server being unreachable or
 					// broken, which says nothing about the header either way. Nor when the test key
-					// went in X-Formulize-API-Key, which proves nothing about Authorization.
-					if($validResponse AND !$testedViaApiKeyHeader) {
-						include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
+					// went in X-Formulize-API-Key, or the web server answered for the MCP server,
+					// neither of which proves anything about Authorization.
+					if($validResponse AND !$testedViaApiKeyHeader AND !$behindBasicAuth) {
 						formulize_recordAuthHeaderPassthrough(true);
+					}
+					// Say why the setting is about to be switched back off, so the preferences page
+					// can show it instead of the setting silently refusing to save
+					if($validResponse) {
+						formulize_recordMCPEnableCheckFailure(null);
+					} elseif($response === false) {
+						formulize_recordMCPEnableCheckFailure("this server could not connect to its own MCP server at $url".($curlError ? " ($curlError)" : '').'.');
+					} else {
+						$reason = "the test request to $url got HTTP $httpCode";
+						if(is_object($json) AND isset($json->error->message)) {
+							$reason .= ', with the message "'.$json->error->message.'"';
+						}
+						if($httpCode == 503 AND is_object($json) AND isset($json->error->type) AND $json->error->type == 'server_disabled') {
+							$reason .= '. That means the test Authorization header did not reach the MCP server';
+						}
+						formulize_recordMCPEnableCheckFailure($reason.'.');
 					}
 					break;
 			}
