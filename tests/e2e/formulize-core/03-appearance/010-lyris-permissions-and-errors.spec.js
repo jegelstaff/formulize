@@ -10,14 +10,14 @@ test.use({ baseURL: E2E_TEST_BASE_URL });
 // ============================================================
 // Lyris appearance (1 of 8) - who can change a look, and what happens when a change can't be made
 // ============================================================
-// The Lyris specs (100-170) test the Looks tab (Admin > Appearance > Looks) and the appearance editor
-// on the Lyris theme. They are the last of the setup specs, after everything the rest of the setup
-// builds, and they put back whatever they change before the validate specs, which expect the site as
-// it was, start: see "Appearance" in utils.js. This one is first so that the suite stops straight away
+// The appearance specs (010-080) test the Looks tab (Admin > Appearance > Looks) and the appearance
+// editor on the Lyris theme. They run one at a time, after the setup and validate specs, on the
+// finished museum system, and they put back whatever they change, so the site is as it was for what
+// runs after them: see "Appearance" in utils.js. This one is first so that the suite stops straight away
 // when the pages are open to the wrong people, or when a change that couldn't be made is reported as
 // made (playwright.config.js stops at the first failure).
 //
-// It needs a user who isn't a Formulize admin (curator1, from 005), and changes nothing on the site:
+// It needs a user who isn't a Formulize admin (curator1, from 01-setup/005), and changes nothing on the site:
 // the only look it makes, e2e-errors, is deleted at the end, and the system lock it turns on is turned
 // off again in the same test.
 

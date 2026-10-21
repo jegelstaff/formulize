@@ -1279,8 +1279,8 @@ export function deleteToken(key) {
 // Appearance: the site's theme, and the Lyris theme's looks
 // ----------------------------------------------------------------------------
 // The suite runs on Anari. The specs that test Lyris's looks and the appearance
-// editor (setup/1xx-lyris-*) run at the end of the setup specs, one at a time, and
-// the validate specs run after them, four at once, all expecting the site as it was.
+// editor (formulize-core/03-appearance) run after the setup and validate specs, one
+// at a time, and the PHP integrity tests run after them, against the built system.
 // So whatever one of those specs changes globally, it puts back in an afterAll,
 // which runs whether its tests passed or failed: the site's theme (getSiteTheme /
 // restoreSiteTheme), Lyris's site look (getSiteLookKey / setSiteLook), and the looks
@@ -1309,7 +1309,7 @@ export function getSiteTheme() {
  * Show the whole site in a theme, for everyone, webmasters included: what saving
  * Admin > Appearance > Settings with that theme in both of its theme choices does.
  * For the specs' own setup and teardown, where going through the page every time
- * would only add ways to fail; 110-lyris-theme-switch-and-restore goes through it.
+ * would only add ways to fail; 03-appearance/020-lyris-theme-switch-and-restore goes through it.
  * @param {string} theme a theme's folder name, e.g. 'Lyris'
  */
 export function setSiteThemeInDb(theme) {

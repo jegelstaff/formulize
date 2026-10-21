@@ -5,7 +5,7 @@ import { login, saveAdminForm, waitForAdminPageReady, openElementAccordion, setC
 // the content contains $value it is treated as code: setVar writes it out to
 // modules/formulize/code/<ele_type>_<handle>.php and getVar reads it back from there, so the file is where
 // the content really lives. Everything in this file is about that code path - plain HTML, which is what the
-// Survey Intro element is created with in setup/010, never goes near any of it.
+// Survey Intro element is created with in 01-setup/010, never goes near any of it.
 //
 // The bug this protects against: saving an element sets ele_value TWICE - once in the type handler's
 // adminSave(), and again inside upsertElementSchemaAndResources(), which is handed whatever the first pass
@@ -16,7 +16,7 @@ import { login, saveAdminForm, waitForAdminPageReady, openElementAccordion, setC
 // So this spec changes the Survey Intro's content from HTML to code, saves it twice (the second save is an
 // element that already has a code file and a blank stored value - a different starting state, and the one
 // an admin hits when editing content they saved earlier), and then loads the survey the way
-// setup/020-data-entry.spec.js does to check the content is on screen.
+// 01-setup/020-data-entry.spec.js does to check the content is on screen.
 //
 // It asserts the SENTENCE THE CODE COMPUTES rather than the heading, and that matters: a fullWidthContent
 // element falls back to displaying its caption when its content is blank ($useCaptionAsContentFallback),
@@ -94,7 +94,7 @@ test('Static content saved as PHP code is kept, over two saves', async ({ page }
 });
 
 test('The survey form shows the value the static content code computes', async ({ page }) => {
-	// Anonymous, the same way setup/020-data-entry.spec.js reaches the survey, including its fallback for
+	// Anonymous, the same way 01-setup/020-data-entry.spec.js reaches the survey, including its fallback for
 	// when the rewrite rule is not in effect.
 	let loaded = false;
 	try {

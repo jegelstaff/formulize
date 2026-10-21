@@ -15,7 +15,7 @@ test.use({ baseURL: E2E_TEST_BASE_URL });
 // site look, and delete, with what can't be done refused. Its popovers say what each look changes, and
 // what uses it.
 //
-// The site is on Lyris while this runs (switched in the database, see 110), so that the tab is about
+// The site is on Lyris while this runs (switched in the database, see 020), so that the tab is about
 // the site's own theme. The tests build on each other, in order, using looks named e2e-..., which the
 // afterAll deletes, after putting back the site look and letting go of the screen it borrows, and then
 // it puts the site's theme back.

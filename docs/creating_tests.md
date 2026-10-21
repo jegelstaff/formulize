@@ -19,16 +19,18 @@ tests/e2e/
   utils.js                 the helpers every spec uses
   formulize-core/
     config.js              the admin credentials and base URL for the core suite
-    setup/                 build the museum system, in order, one worker
-    validate/              interrogate what setup built, in parallel
+    01-setup/              build the museum system, in order, one worker
+    02-validate/           interrogate what setup built, in parallel
+    03-appearance/         change the site's look, then put it back, in order, one worker
 ```
 
-Core Formulize tests go in `formulize-core/setup/` or `formulize-core/validate/`. Tests for your own site or application go in a directory of their own inside `tests/e2e/`, named for the site.
+Core Formulize tests go in `formulize-core/01-setup/`, `formulize-core/02-validate/` or `formulize-core/03-appearance/`. The folders are numbered in the order they run. Tests for your own site or application go in a directory of their own inside `tests/e2e/`, named for the site.
 
-Which of the two core folders a spec belongs in is a question about what it needs, not about what it checks:
+Which of the core folders a spec belongs in is a question about what it needs, not about what it checks:
 
-* **`setup/`** if it builds something later specs depend on — a form, a user, a permission, a menu. These run in file-name order, on a single worker, and each one assumes everything numbered below it has already happened.
-* **`validate/`** if it only reads or exercises the finished system. These run four-way parallel in CI, in no guaranteed order.
+* **`01-setup/`** if it builds something later specs depend on — a form, a user, a permission, a menu. These run in file-name order, on a single worker, and each one assumes everything numbered below it has already happened.
+* **`02-validate/`** if it only reads or exercises the finished system. These run four-way parallel in CI, in no guaranteed order.
+* **`03-appearance/`** if it tests the site's look — the Lyris theme, its looks and the appearance editor. These switch the whole site to another theme while they run, which would break any validate spec running at the same moment, so they run in a step of their own, after the validate specs, on a single worker, in file-name order. Each one puts back whatever it changes in an `afterAll`, using the helpers under "Appearance" in `utils.js`.
 
 File names start with a number, and the number is the running order within the folder. Leave gaps — the existing files go up in fives and ones precisely so a new spec can be slotted between two others without renumbering the suite.
 
@@ -96,7 +98,7 @@ Note that `users.php` renders System Users form elements for every user it lists
 
 ### CI runs the validate suite four ways parallel
 
-`playwright.config.js` sets `fullyParallel: false` and `workers: 1`, which is what you get locally. **CI overrides both** — the validate step runs `npx playwright test formulize-core/validate --workers=4 --fully-parallel`. A spec whose tests depend on each other therefore passes on your machine and fails in CI, which is the worst way to find out.
+`playwright.config.js` sets `fullyParallel: false` and `workers: 1`, which is what you get locally. **CI overrides both** — the validate step runs `npx playwright test formulize-core/02-validate --workers=4 --fully-parallel`. A spec whose tests depend on each other therefore passes on your machine and fails in CI, which is the worst way to find out.
 
 If the tests in a file must run in order, in the same worker, say so in the file:
 
@@ -130,7 +132,7 @@ Run the one file, headed, with the timeout off:
 
 ```
 cd tests/e2e
-npx playwright test formulize-core/validate/030-mcp-working.spec.js --headed --timeout=0
+npx playwright test formulize-core/02-validate/030-mcp-working.spec.js --headed --timeout=0
 ```
 
 Failures keep a trace and a video. The trace viewer shows the DOM, the network and the console at every step, and is almost always faster than adding `console.log`:

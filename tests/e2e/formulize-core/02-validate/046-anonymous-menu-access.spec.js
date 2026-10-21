@@ -10,13 +10,13 @@ import { E2E_TEST_BASE_URL, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD } f
 // an existing item to Anonymous Users in the admin UI and taking it away again. Changing an existing item is
 // the path that used to leave the menu block out of step.
 //
-// The museum system gives Anonymous no menu items (setup/015), so anonymous visitors start with no menu.
+// The museum system gives Anonymous no menu items (01-setup/015), so anonymous visitors start with no menu.
 //
 // The tests run in order in one worker: each one depends on the one before it. CI runs the validate suite
 // with --workers=4 --fully-parallel, which overrides the serial defaults in playwright.config.js.
 test.describe.configure({ mode: 'serial' });
 
-// The groups setup/015 gives every Museum menu item, which the Surveys item goes back to at the end
+// The groups 01-setup/015 gives every Museum menu item, which the Surveys item goes back to at the end
 const museumMenuGroups = ['Webmasters', 'Departments - All Users'];
 
 // Set the Surveys menu item's groups as the webmaster, in a context of its own, so that the page the

@@ -15,7 +15,7 @@ test.use({ baseURL: E2E_TEST_BASE_URL });
 // fewer ways to fail, and each puts the theme back in an afterAll.
 //
 // Whatever happens here, the afterAll puts the site's theme back as it found it, and checks that it did,
-// so the validate specs never start on the wrong theme.
+// so nothing that runs after it starts on the wrong theme.
 
 const SETTINGS_URL = '/modules/formulize/admin/ui.php?page=appearance&view=settings';
 let original = null;
