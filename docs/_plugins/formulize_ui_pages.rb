@@ -80,10 +80,16 @@ module Jekyll
     end
 
     # On Windows a program's file has an extension (docker.exe), listed in PATHEXT.
+    # There, a folder counts as executable, and an empty entry in PATH (from a
+    # trailing ;) joins to /php, the drive's root: so C:\PHP, PHP's own folder,
+    # looked like the program. Only a file is.
     def self.command_exists?(name)
       extensions = [""] + ENV["PATHEXT"].to_s.split(";")
-      ENV["PATH"].to_s.split(File::PATH_SEPARATOR).any? do |dir|
-        extensions.any? { |extension| File.executable?(File.join(dir, name + extension)) }
+      ENV["PATH"].to_s.split(File::PATH_SEPARATOR).reject(&:empty?).any? do |dir|
+        extensions.any? do |extension|
+          path = File.join(dir, name + extension)
+          File.file?(path) && File.executable?(path)
+        end
       end
     end
 
@@ -110,6 +116,9 @@ module Jekyll
         end
         [output.value, errors.value, wait.value]
       end
+    rescue SystemCallError => e
+      Jekyll.logger.warn "Formulize UI", "Couldn't run `#{command.first}`: #{e.message}"
+      [nil, nil, nil]
     end
 
     # Catalog text marks code the way Markdown does, in backticks. A short
