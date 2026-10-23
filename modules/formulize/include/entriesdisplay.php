@@ -4390,19 +4390,31 @@ function pageJump(page) {
 	showLoading();
 }
 
+<?php
+// set the scroll position when first loading, but only if it still applies to the page we're rendering (see $restoreScrollPosition where interfaceJavascript is called)
+// The listener goes on now, not once the window has loaded: themes fire formulize_pageShown at different times (Lyris on DOMContentLoaded, before load; Anari after load), and an event that has already fired is never heard. The load handler covers a theme that does not fire it at all. The first of them that manages to scroll wins, as with the form's own restore in formdisplay.php.
+if($restoreScrollPosition) {
+	print "
+(function() {
+	var restored = false;
+	var restore = function() {
+		var list = jQuery('#formulize-list-of-entries');
+		if(restored || !list.length) {
+			return;
+		}
+		list.scrollTop(".intval($_POST['formulize_scrollx']).");
+		list.scrollLeft(".intval($_POST['formulize_scrolly']).");
+		// done only once it took, in case the list was not laid out yet, and then the other attempt has another go
+		restored = list.scrollTop() > 0 || list.scrollLeft() > 0;
+	};
+	window.addEventListener('formulize_pageShown', restore);
+	jQuery(window).on('load', function() { setTimeout(restore, 200); });
+})();
+";
+}
+?>
+
 jQuery(window).on('load', function() {
-
-	<?php
-	// set the scroll position when first loading, but only if it still applies to the page we're rendering (see $restoreScrollPosition where interfaceJavascript is called)
-	if($restoreScrollPosition) {
-		print "
-		window.addEventListener('formulize_pageShown', function () {
-      jQuery('#formulize-list-of-entries').scrollTop(".intval($_POST['formulize_scrollx']).");
-			jQuery('#formulize-list-of-entries').scrollLeft(".intval($_POST['formulize_scrolly']).");
-    });";
-	}
-
-	?>
 
 	var saveButtonOffset = jQuery('#floating-list-of-entries-save-button').offset();
 	if (saveButtonOffset) {

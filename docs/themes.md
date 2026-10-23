@@ -27,49 +27,56 @@ your theme never fires it, a reader who saves a long form is returned to the top
 
 If you don't hide and reveal the body, fire it once the page has loaded anyway.
 
-## 2. Say what scrolls, if it isn't obvious
+## 2. Name the element that scrolls
 
-Formulize saves a reader's scroll position when they save a form, and puts it back afterwards. To do
-that it has to know which element scrolls. And when a theme names the element, the mouse wheel or
-trackpad scrolls it from anywhere on the page, not only with the pointer over it.
-
-**Usually you don't need to do anything.** Formulize looks for the nearest ancestor of the form that
-is actually scrollable — an element taller than its own box with `overflow-y` set to `auto` or
-`scroll` — and falls back to the window. A theme that scrolls the window, and a theme that scrolls a
-main content pane, both work without being told.
-
-Declare it when that guess would be wrong — several nested scrollable elements, say. Put the selector
-on your `<body>` tag:
+Put a selector for the element that scrolls your pages' content on your `<body>` tag:
 
 ```html
 <body data-formulize-scroll-container=".my-main-pane">
 ```
 
+Naming it gives readers two things:
+
+- **They keep their place when they save.** Formulize saves a reader's scroll position when they save
+  a form, and puts it back in the element you named.
+- **The mouse wheel or trackpad scrolls your content from anywhere on the page**, not only with the
+  pointer over it: over the margins beside a narrow column, a title bar, a bar of buttons. Only a
+  theme that names its scrolling element gets this. If your theme scrolls the window itself, the
+  browser already does it for you.
+
+The wheel scrolls the named element unless the pointer is already over it, or over something else
+that scrolls on its own, such as an open menu or a wide table. It is also left alone over a modal and
+its backdrop (anything with `aria-modal="true"` or `role="dialog"`, such as the entry drawer), so the
+page behind a modal stays where it is, and over a menu or list of options opened outside the element
+(`role="menu"`, `role="listbox"`, or jQuery UI's `.ui-menu`, as an autocomplete's suggestions are).
+This is `include/js/scroll_container.js`, which Formulize adds to every page.
+
 The selector can name several elements, for a theme that scrolls a different one at different
-widths, or on different screens. Formulize uses the first of them that is scrolling at the time, and
-if none is, looks for one as if nothing were named. Lyris scrolls a list's entries or a form's card on
-wide screens, and the page on phones:
+widths, or on different screens. Formulize uses the first of them that is scrolling at the time. Lyris
+scrolls a list's entries or a form's card on wide screens, and the page on phones:
 
 ```html
 <body data-formulize-scroll-container=".lyris-list__body, .lyris-form-screen, .lyris-main">
 ```
 
-Naming it also means a reader can scroll it from anywhere on the page: over the margins beside a
-narrow column, a title bar, a bar of buttons. The wheel scrolls the named element unless the pointer
-is already over it, or over something else that scrolls on its own, such as an open menu or a wide
-table. It is also left alone over a modal and its backdrop (anything with `aria-modal="true"` or
-`role="dialog"`, such as the entry drawer), so the page behind a modal stays where it is, and over a
-menu or list of options opened outside the element (`role="menu"`, `role="listbox"`, or jQuery UI's
-`.ui-menu`, as an autocomplete's suggestions are). This is `include/js/scroll_container.js`, which
-Formulize adds to every page; a theme that names nothing isn't affected.
-
-Use `none` when nothing in the page scrolls, because something outside it does:
+Use `none` when nothing in the page scrolls, because something outside it does, as in a theme for
+embedded screens:
 
 ```html
 <body data-formulize-scroll-container="none">
 ```
 
 Then Formulize will not try to save or restore a position at all.
+
+### If your theme names nothing
+
+Readers still keep their place when they save. Formulize looks for the nearest element around the
+form that scrolls, and falls back to the window. It does the same when none of the elements you
+named is scrolling at the time. Anari relies on this.
+
+It is a catch-all, so that themes that don't name their scrolling element keep working. It is not a
+substitute for naming it: in a theme with several scrolling elements it can pick the wrong one, and
+the wheel scrolls only what is under the pointer.
 
 ## 3. Embed themes need a marker file
 
@@ -431,7 +438,11 @@ phones" in each theme's `css/style.css`.
 
 Open a long form in your theme, scroll down, and save it. You should be returned to where you were
 rather than to the top of the page. If you are not, the theme is either not firing
-`formulize_pageShown` or scrolling an element Formulize could not find.
+`formulize_pageShown` or scrolling an element Formulize could not find; name that element on your
+`<body>` tag (see "Name the element that scrolls" above).
+
+Point at the space beside your content, or at a title bar, and use the mouse wheel. The content should
+scroll. If it doesn't, your theme scrolls an element it hasn't named.
 
 Open a screen of each type you have, and an application's menu page. On every one, the content should
 have the same space around it, not sit against the edge of the window or your header. If you have a

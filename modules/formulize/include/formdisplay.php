@@ -2929,18 +2929,20 @@ print $codeToIncludejQueryWhenNecessary;
 
 // Which element scrolls, so that a saved position can be put back where it came from.
 //
-// Every theme answers this differently - Anari scrolls .main-content, Lyris scrolls .lyris-main, older
-// themes scroll the window itself, and an embedded screen scrolls nothing at all because the page
-// hosting it is what moves. So the element is found rather than named: the nearest ancestor of the
-// form that is actually scrollable. A theme whose markup makes that ambiguous can say so outright
-// with data-formulize-scroll-container on its body tag, and "none" there means nothing here scrolls.
-// The selector can name several elements, for a theme that scrolls different ones at different
-// widths (Lyris scrolls its form card on wide screens, and the page on phones): the first of them
-// that is scrolling is the one, and if none is, it is found as if nothing were named.
+// A theme says which, with data-formulize-scroll-container on its body tag. That is the convention,
+// Lyris follows it, and it is what docs/themes.md asks of a theme: naming the element also lets the
+// mouse wheel scroll it from anywhere on the page (include/js/scroll_container.js), which nothing
+// else here can do. The selector can name several elements, for a theme that scrolls different ones
+// at different widths (Lyris scrolls its form card on wide screens, and the page on phones): the
+// first of them that is scrolling is the one. "none" means nothing here scrolls, as in an embedded
+// screen, where the page hosting it is what moves.
 //
-// Found rather than named on purpose. Naming themes is what this used to do, and a theme that was
-// not on the list - which is every theme written after the list - silently lost the feature instead
-// of breaking loudly enough for anyone to notice.
+// A theme that names nothing, or none of whose named elements is scrolling right now, falls back to
+// a search: the nearest ancestor of the form that is actually scrollable, or else the window. That
+// is the catch-all for themes that do not follow the convention, Anari among them (it scrolls
+// .main-content on wide screens and the window on phones), so that they still put a reader back
+// where they were. It replaced a list of theme names here, which every theme written after the list
+// silently fell off.
 print "
 window.formulize_scrollContainer = function() {
     var declared = jQuery('body').attr('data-formulize-scroll-container');

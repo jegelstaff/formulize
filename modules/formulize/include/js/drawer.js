@@ -313,6 +313,7 @@
     function closeDrawer() {
         if (!drawer) { return; }
         hideDrawerBusy();
+        stopHoldingScroll();
         drawer.hidden = true;
         scrim.hidden = true;
         document.documentElement.style.overflow = '';
@@ -458,6 +459,50 @@
         bodyEl.classList.remove('formulize-drawer__body--entering');
     }
 
+    // ---- Scroll position -------------------------------------------------------
+
+    // Put a reloaded form back where the one it replaced was scrolled to, and keep it there
+    // until the form has finished taking shape. The fragment's scripts have run by the time
+    // it first goes back, but some of what they start finishes later and changes the form's
+    // height: a rich text editor taking over its textarea, conditional elements arriving from
+    // the server, images loading. Any of those can move the form under the reader, or leave
+    // it short of the position because the form was not yet tall enough to scroll that far.
+    // So the position is put back every time the form's height changes, until the height has
+    // held still for SCROLL_SETTLE_MS, or the reader scrolls, clicks, touches or types, at
+    // which point the reader is in charge. Full screen does the same with a second attempt
+    // once the page has loaded (the yposition restore in formdisplay.php).
+    var SCROLL_SETTLE_MS = 1500;
+    var releaseScrollHold = null;
+
+    function holdScrollPosition(top) {
+        stopHoldingScroll();
+        bodyEl.scrollTop = top;
+        if (!top || typeof ResizeObserver === 'undefined') { return; }
+        var settled = setTimeout(stopHoldingScroll, SCROLL_SETTLE_MS);
+        var observer = new ResizeObserver(function () {
+            bodyEl.scrollTop = top;
+            clearTimeout(settled);
+            settled = setTimeout(stopHoldingScroll, SCROLL_SETTLE_MS);
+        });
+        // not 'scroll': setting scrollTop here fires that too
+        var takeOver = ['wheel', 'touchstart', 'pointerdown', 'keydown'];
+        releaseScrollHold = function () {
+            observer.disconnect();
+            clearTimeout(settled);
+            takeOver.forEach(function (type) { bodyEl.removeEventListener(type, stopHoldingScroll); });
+        };
+        // the body is a fixed size; it is what is inside it that grows
+        Array.prototype.forEach.call(bodyEl.children, function (child) { observer.observe(child); });
+        takeOver.forEach(function (type) { bodyEl.addEventListener(type, stopHoldingScroll, { passive: true }); });
+    }
+
+    function stopHoldingScroll() {
+        if (releaseScrollHold) {
+            releaseScrollHold();
+            releaseScrollHold = null;
+        }
+    }
+
     // ---- Fragment loading ------------------------------------------------------
 
     // Fetch a server-rendered fragment into a drawer panel and run its scripts. The
@@ -501,12 +546,22 @@
     // submit the page and show its own saving graphic. Every other load shows the working
     // animation. Either way the form being left stays on screen, faded, until the new one
     // fades in over it.
-    function fetchIntoDrawer(url, fetchOpts) {
+    //
+    // keepScroll puts the new form back at the scroll position of the one being left, for
+    // a load that re-renders the same page (a save that stays, a subform delete or clone).
+    // Full screen does the same through yposition, and only when the save lands on the page
+    // it came from; every other load starts at the top. See holdScrollPosition.
+    function fetchIntoDrawer(url, fetchOpts, keepScroll) {
         if (!bodyEl) { return Promise.resolve(null); }
+        var scrollTo = keepScroll ? bodyEl.scrollTop : 0;
+        stopHoldingScroll(); // the form a previous load was holding in place is on its way out
         var saving = !!(fetchOpts && String(fetchOpts.method || '').toUpperCase() === 'POST');
         showDrawerBusy(saving);
-        pruneDeadEditors();
-        return loadFragmentInto(bodyEl, url, fetchOpts, S().loadFailed, { keepContent: true, onArrive: holdBodyForFadeIn })
+        var arrive = function () {
+            holdBodyForFadeIn();
+            pruneDeadEditors(); // only now: the form being left keeps its editors while it waits, faded
+        };
+        return loadFragmentInto(bodyEl, url, fetchOpts, S().loadFailed, { keepContent: true, onArrive: arrive })
             .then(function () {
                 // Each freshly loaded form starts as unchanged. The endpoint only defines
                 // formulizechanged when it is undefined, so reset it here to clear any value
@@ -528,7 +583,7 @@
                 renderPageTabs();
                 renderEntryFooter();
                 updateBackButton();
-                bodyEl.scrollTop = 0;
+                holdScrollPosition(scrollTo);
                 fadeInBody();
                 return meta;
             })
@@ -961,15 +1016,19 @@
         if (backBtn) { backBtn.hidden = drawerStack.length === 0; }
     }
 
-    // Drop CKEditor instances whose textarea was removed with the previous fragment.
-    // The endpoint's init code skips ids already present in window.CKEditors, so a
-    // dead instance would otherwise block the editor from initialising when the same
-    // entry is loaded again (e.g. descend into a sub entry, go back, descend again).
+    // Drop CKEditor instances whose textarea was removed with a previous fragment, or is
+    // about to be: this runs as a new fragment arrives, while the form it replaces is still
+    // in the drawer body (fetchIntoDrawer keeps it on screen through the load), so every
+    // editor in the body is on its way out too. The endpoint's init code skips ids already
+    // present in window.CKEditors, so a dead instance would otherwise block the editor from
+    // initialising when the same entry is rendered again: after a save that stays, the rich
+    // text field came back as a bare textarea; or descend into a sub entry, go back, descend
+    // again.
     function pruneDeadEditors() {
         if (!window.CKEditors) { return; }
         Object.keys(window.CKEditors).forEach(function (id) {
             var el = document.getElementById(id);
-            if (!el || !document.body.contains(el)) {
+            if (!el || !document.body.contains(el) || bodyEl.contains(el)) {
                 try {
                     var destroyed = window.CKEditors[id].destroy();
                     if (destroyed && typeof destroyed.catch === 'function') { destroyed.catch(function () {}); }
@@ -1082,7 +1141,7 @@
         fd.append('formulize_save', '1');
         savedDuringSession = true;
         releaseEntryLocks(); // the re-render acquires its own
-        fetchIntoDrawer(buildEntryUrl(currentFrame.params), { method: 'POST', body: fd });
+        fetchIntoDrawer(buildEntryUrl(currentFrame.params), { method: 'POST', body: fd }, true);
     }
 
     // Save and leave the entry. At the top level this closes the drawer and refreshes
@@ -1133,7 +1192,8 @@
         }
 
         releaseEntryLocks(); // release the current page's locks before swapping it out
-        fetchIntoDrawer(url, opts);
+        // a save in place (saveAndStay) asks for the page it is on, and stays where it was scrolled
+        fetchIntoDrawer(url, opts, parseInt(targetPage, 10) === parseInt(currentEntryNav.currentPage, 10));
         return true;
     }
 
@@ -1255,7 +1315,7 @@
         var p = currentFrame ? currentFrame.params : {};
         var page = (currentFrame && currentFrame.page > 1) ? currentFrame.page : 0;
         releaseEntryLocks();
-        fetchIntoDrawer(buildEntryUrl(p, page), { method: 'POST', body: fd });
+        fetchIntoDrawer(buildEntryUrl(p, page), { method: 'POST', body: fd }, true);
     }
 
     // ---- Closing ---------------------------------------------------------------
