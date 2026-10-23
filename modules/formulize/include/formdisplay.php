@@ -642,8 +642,16 @@ class formulize_elementsOnlyForm extends formulize_themeForm {
 		list($ret, $hidden) = $this->_drawElements($this->getElements(), $ret, $hidden);
 
         if($wrapperTop) {
+            // the drawer's bottomtemplate lays out the drawer's buttons, as the multiPage
+            // bottomtemplate lays out the full screen bar
+            $wrapperVariables = $wrapperType == 'drawer' ? formulize_drawerButtonTemplateVariables() : array();
             if($wrapperBottom = getDefaultTemplate('bottomtemplate', $wrapperType)) {
-                $ret .= $this->processTemplate($wrapperBottom);
+                $ret .= $this->processTemplate($wrapperBottom, $wrapperVariables);
+                // a theme's drawer bottomtemplate from before it laid out the buttons still
+                // gets them, in the default order (the order of the variables)
+                if($wrapperType == 'drawer' AND strpos($wrapperBottom, 'formulize-drawer-buttons') === false) {
+                    $ret .= "<div class='formulize-drawer-buttons'>".implode(' ', $wrapperVariables)."</div>";
+                }
             }
         } elseif($elementsInTable) {
             $ret .= '</table>';
@@ -1630,11 +1638,11 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		if (!$formElementsOnly) {
 			$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $entry, $fids, $formframe, $mainform, $entry, $elements_allowed, $allDoneOverride, $printall, $screen);
     } else {
-			// Elements-only renders draw no button tray -- the host draws its own controls.
-			// Record the button configuration instead, so the host (the right slide-out
-			// drawer) presents the same buttons, with the same configured text, as the full
-			// screen form would. Multipage screens record their own, richer version of this
-			// first, in formdisplaypages.php.
+			// Elements-only renders draw no button tray. Record the button configuration
+			// instead, so the right slide-out drawer's bottomtemplate presents the same
+			// buttons, with the same configured text, as the full screen form would.
+			// Multipage screens record their own, richer version of this first, in
+			// formdisplaypages.php.
 			formulize_recordElementsOnlyButtonMeta($go_back, $currentURL, $button_text, $settings, $entry, $fids, $formframe, $mainform, $elements_allowed, $allDoneOverride, $printall, $screen);
     }
 
@@ -1829,8 +1837,8 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 // Work out which form-level buttons a screen presents, and what each one is labelled.
 // This is the single source of truth for that decision. The full page rendering
 // (addSubmitButton, below) builds its button tray from it, and elements-only renders
-// publish it as JSON so a host that draws its own controls -- the right slide-out
-// drawer -- shows the same buttons, with the same configured text, as the full screen
+// record it for the right slide-out drawer's buttons (formulize_drawerButtonTemplateVariables),
+// so the drawer shows the same buttons, with the same configured text, as the full screen
 // form does. Nothing else is allowed to decide which form buttons exist.
 //
 // Returns an ordered map of button name => label, using the same names the full page
@@ -1952,37 +1960,97 @@ function formulize_registerElementsOnlyButtonMeta($key, $meta) {
 	}
 }
 
-// The JSON block the elements-only endpoint emits so the host can read the button
-// configuration of the form it asked for. Empty string when nothing was recorded.
-function formulize_elementsOnlyButtonMetaJs($screen, $fid) {
-	$key = formulize_elementsOnlyButtonMetaKey($screen, $fid);
-	if(!isset($GLOBALS['formulize_elementsOnlyButtonMeta'][$key])) {
+// The recorded button configuration of the form the elements-only endpoint was asked for,
+// which it names in $GLOBALS['formulize_elementsOnly_buttonMetaKey'] before rendering. Null
+// when nothing was recorded for it.
+function formulize_requestedElementsOnlyButtonMeta() {
+	$key = isset($GLOBALS['formulize_elementsOnly_buttonMetaKey']) ? $GLOBALS['formulize_elementsOnly_buttonMetaKey'] : '';
+	return ($key AND isset($GLOBALS['formulize_elementsOnlyButtonMeta'][$key])) ? $GLOBALS['formulize_elementsOnlyButtonMeta'][$key] : null;
+}
+
+// The drawer's buttons, as variables for the theme's drawer bottomtemplate, which lays them
+// out in a .formulize-drawer-buttons container in whatever order the theme likes, just as its
+// multiPage bottomtemplate lays out the full screen bar. The drawer moves them into its
+// footer and gives each one its action by its name:
+//
+//   printableViewButton  printbutton  open the printable view
+//   saveAndLeaveButton   leave        save and close the drawer
+//   previousPageButton   prev         save this page and go back one
+//   savePageButton       save         save and stay
+//   closePageButton      close        leave without saving (back to the parent, in a sub entry)
+//   nextPageButton       next         save this page and go on (or save and close, on the last)
+//
+// A sub entry opened inside the drawer (the drawer says so with insub=1) always has a way
+// back to its parent: when the screen has no close button, a Back button takes that slot.
+//
+// Every variable is empty except for the form the drawer asked for. Subform entries rendered
+// inline inside it use the same templates, and must not get its buttons.
+function formulize_drawerButtonTemplateVariables() {
+	$slots = array(
+		'printbutton' => 'printableViewButton',
+		'leave'       => 'saveAndLeaveButton',
+		'prev'        => 'previousPageButton',
+		'save'        => 'savePageButton',
+		'close'       => 'closePageButton',
+		'next'        => 'nextPageButton',
+	);
+	$variables = array_fill_keys(array_values($slots), '');
+	$meta = formulize_requestedElementsOnlyButtonMeta();
+	if(!$meta OR isset($GLOBALS['formulize_inlineSubformFrid'])) {
+		return $variables;
+	}
+	$buttons = $meta['buttons'];
+	if(!isset($buttons['close']) AND isset($_GET['insub']) AND $_GET['insub']) {
+		$buttons['close'] = defined('_BACK') ? _BACK : 'Back';
+	}
+	foreach($slots as $slot=>$variable) {
+		if(isset($buttons[$slot]) AND $buttons[$slot]) {
+			$label = htmlspecialchars($buttons[$slot], ENT_QUOTES);
+			// no id: the page behind the drawer may already have the full screen bar's #prev
+			// and #next, and no onclick: the drawer gives each button its action by name
+			$variables[$variable] = "<input type='button' class='formulize-form-submit-button' name='$slot' value='$label' title='$label'>";
+		}
+	}
+	return $variables;
+}
+
+// The JSON block the elements-only endpoint emits with what the printable view button posts,
+// for the form it was asked for. The drawer builds that request itself, since its fragment is
+// injected inside a form and a nested one would be dropped. Empty string when the form has no
+// printable view button.
+function formulize_elementsOnlyPrintableViewJs() {
+	$meta = formulize_requestedElementsOnlyButtonMeta();
+	if(!$meta OR !isset($meta['buttons']['printbutton'])) {
 		return '';
 	}
-	return "<script type=\"application/json\" class=\"formulize-form-buttons\">"
-		.json_encode($GLOBALS['formulize_elementsOnlyButtonMeta'][$key])."</script>\n";
+	return "<script type=\"application/json\" class=\"formulize-printable-view\">"
+		.json_encode(array('action'=>$meta['printAction'], 'fields'=>$meta['printFields']))."</script>\n";
 }
 
 // Work out the button configuration of an elements-only render and record it. The drawer
-// builds its footer from what this produces, so the buttons it offers -- and their text --
-// are the screen's configured ones, exactly as on the full screen form.
+// gets its buttons from what this produces, so the buttons it offers -- and their text --
+// are the screen's configured ones, exactly as on the full screen form. Recorded as the
+// drawer's slots (see formulize_drawerButtonTemplateVariables) => label.
 function formulize_recordElementsOnlyButtonMeta($go_back, $currentURL, $button_text, $settings, $entry, $fids, $formframe, $mainform, $elements_allowed, $allDoneOverride, $printall, $screen) {
 
 	global $xoopsUser;
 	$fid = $fids[key($fids)]; // get first element in array, might not be keyed as 0 :(
 	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 
-	$buttons = formulize_resolveFormButtons($button_text, $go_back, $fid, $uid, $entry, $allDoneOverride, $printall, $currentURL, _formulize_SAVE);
+	$resolvedButtons = formulize_resolveFormButtons($button_text, $go_back, $fid, $uid, $entry, $allDoneOverride, $printall, $currentURL, _formulize_SAVE);
 
+	$buttons = array();
+	foreach(array('printableview'=>'printbutton', 'saveandleave'=>'leave', 'save'=>'save', 'done'=>'close') as $buttonName=>$slot) {
+		if(isset($resolvedButtons[$buttonName])) {
+			$buttons[$slot] = trans($resolvedButtons[$buttonName]);
+		}
+	}
 	$meta = array(
-		'printableView' => isset($buttons['printableview']) ? trans($buttons['printableview']) : null,
-		'save'          => isset($buttons['save'])          ? trans($buttons['save'])          : null,
-		'saveAndLeave'  => isset($buttons['saveandleave'])  ? trans($buttons['saveandleave'])  : null,
-		'done'          => isset($buttons['done'])          ? trans($buttons['done'])          : null,
-		'printAction'   => null,
-		'printFields'   => null,
+		'buttons'     => $buttons,
+		'printAction' => null,
+		'printFields' => null,
 	);
-	if($meta['printableView']) {
+	if(isset($buttons['printbutton'])) {
 		$meta['printAction'] = XOOPS_URL . "/modules/formulize/printview.php";
 		// no security token: printview.php does not check one (its check is commented out
 		// in core), and the full page rendering's token would not survive being handed to
