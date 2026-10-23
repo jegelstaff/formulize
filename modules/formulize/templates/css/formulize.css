@@ -1693,7 +1693,9 @@ div.formulize-office-use-only-start-hidden {
    toolbar, which is in the page, out of sight, until the button is pointed at,
    was enough for a horizontal one. Visible overflow also lets date pickers and
    autocomplete lists open past the entry's edge. (While an entry opens or
-   closes, jQuery UI hides the overflow itself, inline.) */
+   closes, jQuery UI hides the overflow itself, inline. Some versions leave it
+   hidden once the entry is open, so the accordion clears it then: see the
+   accordion's activate option in drawSubLinks().) */
 .formulize-subform .subform-accordion-container .accordion-content.ui-accordion-content {
   overflow: visible;
 }

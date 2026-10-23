@@ -1597,7 +1597,10 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                         $subformJS .= 'false';
                     }
                     $subformJS .= ",
-                    header: \"> div > p.subform-header\"
+                    header: \"> div > p.subform-header\",
+                    // some versions of jQuery UI leave the overflow they hide while an entry opens on it once it is open,
+                    // which would keep the entry from showing what reaches past its edge (see formulize.css)
+                    activate: function(event, ui) { ui.newPanel.css('overflow', ''); }
                 });
                 jQuery(\"#subform-$subformElementId$subformInstance\").fadeIn();
             });
