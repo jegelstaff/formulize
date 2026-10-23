@@ -1360,9 +1360,8 @@ body:not(.formulize-inline) .lyris-page:has(> #listofentries .lyris-list-screen)
 /* Anchor for the ditto, which sits a quarter of the way into the cell: indented from where the
    left-aligned values start, so it reads as "same as above", but not so far over that it drifts
    away from them in wide columns. In narrow columns it never sits left of the cell padding,
-   where the values begin. :where() keeps this weaker than the
-   narrow-screen rule that pins .column0 with position: sticky, and a sticky cell anchors the
-   ditto just as well. */
+   where the values begin. :where() keeps this weaker than any rule that gives a cell
+   position: sticky, and a sticky cell anchors the ditto just as well. */
 :where(.lyris-list-table) td.same-contents-as-prior-cell { position: relative; }
 .lyris-list-table td.same-contents-as-prior-cell::after {
   content: '"';
@@ -2287,49 +2286,10 @@ body:has(#formulize-masquerade-block) {
     display: inline;
   }
 
-  /* ---- Table: pan columns horizontally; the checkbox column and the
-     first data column stay pinned on the left so rows remain identifiable.
+  /* Table: no columns are pinned on the left, so the whole table, checkbox
+     and first data column included, pans together when it scrolls sideways.
      Horizontal scrolling comes from .lyris-list__body (overflow: auto) once
-     the nowrap cells force the table wider than the viewport. ---- */
-
-  .lyris-list-table .lyris-cb,
-  .lyris-list-table .column0 {
-    position: sticky;
-    left: 0;
-    z-index: 1;
-  }
-
-  /* first data column sits after the checkbox column when present */
-  .lyris-list-table .lyris-cb ~ .column0 {
-    left: var(--lyris-cb-width);
-  }
-
-  /* divider shadow marks the edge of the pinned columns; cap their width
-     so long first-column content can't eat the whole viewport */
-  .lyris-list-table .column0 {
-    box-shadow: 1px 0 0 var(--fz-color-border);
-    max-width: 45vw;
-  }
-
-  /* pinned header cells: sticky both ways, above row headers (z 2) and
-     pinned body cells (z 1) */
-  .lyris-list-table thead .lyris-cb,
-  .lyris-list-table thead .column0 {
-    top: 0;
-    z-index: 3;
-  }
-
-  /* Filter row cells that are also left-pinned (lyris-cb and column0) need
-     top:36px to clear the column-header row and z-index:3 to sit above
-     both the top-sticky filter row (z 2) and the left-sticky body cells
-     (z 1) — they're pinned in both axes simultaneously.
-     Specificity must beat .lyris-list-table thead .lyris-cb (3 selectors), so we
-     include .lyris-list-table in the selector chain. */
-  .lyris-list-table .lyris-search-row .lyris-cb,
-  .lyris-list-table .lyris-search-row .column0 {
-    top: var(--lyris-thead-height, var(--fz-table-header-height));
-    z-index: 3;
-  }
+     the nowrap cells force the table wider than the viewport. */
 }
 
 /* ============================================================
