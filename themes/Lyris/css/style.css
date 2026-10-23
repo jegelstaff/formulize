@@ -2478,8 +2478,7 @@ body:has(#formulize-masquerade-block) {
    density's own horizontal padding, so it tracks the compact/comfortable field
    metrics instead of a hardcoded px width. Scoped with a child combinator so it
    only ever hits the count box, which is a direct child of the controls row; the
-   filter-search box sits inside a nested div.subform-filter-search and keeps the
-   10em core gives it in modules/formulize/templates/css/formulize.css. */
+   filter box is not in the controls row at all (see "Subform frame" below). */
 .lyris-form .subform_button_controls > input[type="text"],
 .lyris-form-screen .subform_button_controls > input[type="text"] {
   width: calc(2ch + 2 * var(--fz-field-padding-x) + 2px);
@@ -4875,16 +4874,19 @@ body.formulize-popup {
    the header's row. */
 .formulize-subform .subform_button_controls input[type="button"],
 .formulize-subform .subform_button_controls input[type="text"],
+.formulize-subform .formulize-subform__filter input[type="text"],
 .formulize-drawer .formulize-subform .subform_button_controls input[type="button"],
-.formulize-drawer .formulize-subform .subform_button_controls input[type="text"] {
+.formulize-drawer .formulize-subform .subform_button_controls input[type="text"],
+.formulize-drawer .formulize-subform .formulize-subform__filter input[type="text"] {
   height: var(--fz-control-height);
   margin: 0;
 }
 
-.formulize-subform__foot .formulize-page-navigation a.page-navigation-active {
-  border-color: var(--fz-color-accent-soft-2);
-  background: var(--fz-color-accent-soft);
-  color: var(--fz-color-accent-text);
+/* The footer of paged entries reads as a list's footer does (its page controls
+   are the list's, see pageNavControls). */
+.formulize-subform__foot {
+  font-family: var(--fz-control-font);
+  font-size: var(--fz-control-text);
 }
 
 /* Rows in a table: the frame is the table's border now, and the header is above

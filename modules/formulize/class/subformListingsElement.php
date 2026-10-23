@@ -859,6 +859,13 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	// check for adding of a sub entry, and handle accordingly -- added September 4 2006
 	global $formulize_subformInstance;
 	$subformInstance = $formulize_subformInstance+1;
+	// a subform redrawn on its own (by its page links or its filter, see formulizeSubformRedraw below) keeps the instance
+	// number it has on the page, since the paging and filter values it posts are keyed by that number. Only the subform
+	// being redrawn takes it, not a copy of the same element nested in one of its entries.
+	if($subformElementId AND isset($_POST['formulizeSubformRedrawElement']) AND intval($_POST['formulizeSubformRedrawElement']) == $subformElementId AND isset($_POST['formulizeSubformRedrawInstance'])) {
+		$subformInstance = intval($_POST['formulizeSubformRedrawInstance']);
+		unset($_POST['formulizeSubformRedrawElement']);
+	}
 	$formulize_subformInstance = $subformInstance;
 	$element_handler = xoops_getmodulehandler('elements', 'formulize');
 
@@ -1092,7 +1099,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 
     if (($allowed_to_add_entries OR $deleteButton) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
         if ($allowed_to_add_entries AND !$hidingAddEntries AND count((array) $sub_entries[$subform_id]) == 1 AND $sub_entries[$subform_id][0] === "" AND $sub_single) {
-            $col_two .= "<input type=button name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$subform_id', 1, ".$subformElementId.$subformInstance.", '$frid', '$fid', '$entry', '$subformElementId', '$addViewType', ".(isset($_GET['subformElementId']) ? intval($_GET['subformElementId']) : 0).");\">";
+            $col_two .= "<input type=button class='formulize-subform__add-button' name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$subform_id', 1, ".$subformElementId.$subformInstance.", '$frid', '$fid', '$entry', '$subformElementId', '$addViewType', ".(isset($_GET['subformElementId']) ? intval($_GET['subformElementId']) : 0).");\">";
         } elseif(!$sub_single) {
             $use_simple_add_one_button = (isset($subform_element_object->ele_value["simple_add_one_button"]) ? 1 == $subform_element_object->ele_value["simple_add_one_button"] : false);
             // in the frame, the button, the count box and the text after it are one joined control that reads as a sentence: Add [3] entries
@@ -1101,7 +1108,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                 $col_two .= "<span class='formulize-subform__add'>";
             }
             if($allowed_to_add_entries AND !$hidingAddEntries) {
-                $col_two .= "<input type=button name=addsub value='".($use_simple_add_one_button ? trans($subform_element_object->ele_value['simple_add_one_button_text']) : _formulize_ADD)."' onclick=\"javascript:add_sub('$subform_id', jQuery('#addsubentries".$subform_id.$subformElementId.$subformInstance."').val(), ".$subformElementId.$subformInstance.", '$frid', '$fid', '$entry', '$subformElementId', '$addViewType', ".(isset($_GET['subformElementId']) ? intval($_GET['subformElementId']) : 0).");\">";
+                $col_two .= "<input type=button class='formulize-subform__add-button' name=addsub value='".($use_simple_add_one_button ? trans($subform_element_object->ele_value['simple_add_one_button_text']) : _formulize_ADD)."' onclick=\"javascript:add_sub('$subform_id', jQuery('#addsubentries".$subform_id.$subformElementId.$subformInstance."').val(), ".$subformElementId.$subformInstance.", '$frid', '$fid', '$entry', '$subformElementId', '$addViewType', ".(isset($_GET['subformElementId']) ? intval($_GET['subformElementId']) : 0).");\">";
             }
             if ($allowed_to_add_entries AND !$hidingAddEntries AND $use_simple_add_one_button) {
                 $col_two .= "<input type=\"hidden\" name=addsubentries$subform_id$subformElementId$subformInstance id=addsubentries$subform_id$subformElementId$subformInstance value=\"1\">";
@@ -1112,18 +1119,23 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
         }
     }
 
-		// hacking in a filter for existing entries
-    if($subform_element_object AND isset($subform_element_object->ele_value["UserFilterByElement"]) AND $subform_element_object->ele_value["UserFilterByElement"]) {
-			$filterElementObject = $element_handler->get($subform_element_object->ele_value["UserFilterByElement"]);
-      $filterSearchLabel = sprintf(_formulize_SUBFORM_FILTER_SEARCH, ($subform_element_object->ele_value[4] ? $filterElementObject->getVar('ele_caption') : $filterElementObject->getUIName()));
-      $filterSearchValue = htmlspecialchars(strip_tags(str_replace("'","&#039;",$_POST['subformFilterBox_'.$subformInstance])));
-      // in the frame's header there is no room for the sentence beside the box, so it is the box's placeholder
-      $filterSearchLabel = htmlspecialchars(strip_tags(rtrim($filterSearchLabel, ': ')), ENT_QUOTES);
-      $col_two .= "<div class='subform-filter-search'><input type='text' name='subformFilterBox_$subformInstance' value='$filterSearchValue' placeholder='$filterSearchLabel' title='$filterSearchLabel' aria-label='$filterSearchLabel' onkeypress='javascript: if(event.keyCode == 13) validateAndSubmit();'/><input type='button' value='"._formulize_SUBFORM_FILTER_GO."' onclick='validateAndSubmit();' /></div>";
-
-		}
-
 		$col_two .= "</div>";
+
+		// a filter for existing entries. It is a search box at the end of the frame's header, before the Add control and
+		// divided from it. Enter applies it, by redrawing just this subform (formulizeSubformRedraw below), so nothing is
+		// saved and it works the same in the drawer. The printable view has no controls.
+		$frameFilter = "";
+    if($subform_element_object AND isset($subform_element_object->ele_value["UserFilterByElement"]) AND $subform_element_object->ele_value["UserFilterByElement"] AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
+			$filterElementObject = $element_handler->get($subform_element_object->ele_value["UserFilterByElement"]);
+      $filterElementName = ($subform_element_object->ele_value[4] ? $filterElementObject->getVar('ele_caption') : $filterElementObject->getUIName());
+      $filterSearchValue = htmlspecialchars(strip_tags(str_replace("'","&#039;",$_POST['subformFilterBox_'.$subformInstance])));
+      // in the frame's header there is no room for the sentence beside the box, so the box has a short placeholder,
+      // and the sentence is its label for screen readers and its tooltip
+      $filterSearchLabel = htmlspecialchars(strip_tags(rtrim(sprintf(_formulize_SUBFORM_FILTER_SEARCH, $filterElementName), ': ')), ENT_QUOTES);
+      $filterSearchPlaceholder = htmlspecialchars(strip_tags(sprintf(defined('_formulize_SUBFORM_FILTER_PLACEHOLDER') ? _formulize_SUBFORM_FILTER_PLACEHOLDER : 'Filter by %s', $filterElementName)), ENT_QUOTES);
+      $filterSearchIcon = "<svg class='formulize-subform__filter-icon' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='11' cy='11' r='7'/><path d='m20 20-3.5-3.5'/></svg>";
+      $frameFilter = "<div class='subform-filter-search formulize-subform__filter'>$filterSearchIcon<input type='text' name='subformFilterBox_$subformInstance' value='$filterSearchValue' placeholder='$filterSearchPlaceholder' title='$filterSearchLabel' aria-label='$filterSearchLabel' autocomplete='off' onkeydown=\"if(event.key == 'Enter') { event.preventDefault(); formulizeSubformRedraw".$subformElementId.$subformInstance."({}); }\"/></div>";
+		}
 
 	// everything so far is the controls, which go in the frame's header. From here on, $col_two is the entries.
 	$frameControls = $col_two;
@@ -1146,7 +1158,40 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 		$lastDisplayPageNumber = ($firstRowToDisplay / $numberOfEntriesToDisplay) + 1 + 4;
 		$firstDisplayPageNumber = $firstDisplayPageNumber < 1 ? 1 : $firstDisplayPageNumber;
 		$lastDisplayPageNumber = $lastDisplayPageNumber > $lastPageNumber ? $lastPageNumber : $lastDisplayPageNumber;
-		$pageNav = formulize_buildPageNavMarkup('gotoSubPage'.$subformElementId.$subformInstance, $numberOfEntriesToDisplay, $firstRowToDisplay, $firstDisplayPageNumber, $lastDisplayPageNumber, $lastPageNumber, _formulize_DMULTI_PAGE.":");
+		// the controls are the ones a list of entries has, from the theme's pageNavControls template, so a paged subform
+		// looks like a paged list in every theme. Beside them, as on a list, which entries are showing.
+		$currentPageNumber = intval($firstRowToDisplay / $numberOfEntriesToDisplay) + 1;
+		$pageStarts = array();
+		for($pageNumber = 1; $pageNumber <= $lastPageNumber; $pageNumber++) {
+			$pageStarts[$pageNumber] = ($pageNumber - 1) * $numberOfEntriesToDisplay;
+		}
+		$firstEntryNumber = $firstRowToDisplay + 1;
+		$lastEntryNumber = min($firstRowToDisplay + $numberOfEntriesToDisplay, $subEntriesBeforeLimit);
+		$pageNavFunction = 'gotoSubPage'.$subformElementId.$subformInstance;
+		if(!function_exists('renderVariableTemplate')) { include_once XOOPS_ROOT_PATH.'/modules/formulize/class/screen.php'; }
+		$pageNavControls = renderVariableTemplate('pageNavControls', 'listOfEntries', array(
+			'currentPage'            => $currentPageNumber,
+			'totalPages'             => $lastPageNumber,
+			'numberPerPage'          => $numberOfEntriesToDisplay,
+			'totalEntries'           => $subEntriesBeforeLimit,
+			'pageStart'              => $firstRowToDisplay,
+			'firstEntry'             => $firstEntryNumber,
+			'lastEntry'              => $lastEntryNumber,
+			'firstDisplayPage'       => $firstDisplayPageNumber,
+			'lastDisplayPage'        => $lastDisplayPageNumber,
+			'pageStarts'             => $pageStarts,
+			'jsFunction'             => $pageNavFunction,
+			'entriesPerPageSelector' => null,
+		));
+		if($pageNavControls === false) {
+			$pageNavControls = formulize_buildPageNavMarkup($pageNavFunction, $numberOfEntriesToDisplay, $firstRowToDisplay, $firstDisplayPageNumber, $lastDisplayPageNumber, $lastPageNumber, _formulize_DMULTI_PAGE.":");
+		}
+		$totalFormat = _AM_FORMULIZE_LOE_TOTAL;
+		$firstPlaceholder = strpos($totalFormat, '%d');
+		$totalLabel = $firstPlaceholder !== false ? substr($totalFormat, 0, $firstPlaceholder) : '';
+		$totalNumbersFormat = $firstPlaceholder !== false ? substr($totalFormat, $firstPlaceholder) : $totalFormat;
+		$pageNavTotal = "<span class=\"page-navigation-total\"><span class=\"page-navigation-total__label\">".$totalLabel."</span>".sprintf($totalNumbersFormat, $firstEntryNumber, $lastEntryNumber, $subEntriesBeforeLimit)."</span>";
+		$pageNav = "<div class='formulize-subform__foot-start'>$pageNavTotal</div><div class='formulize-subform__foot-end'>$pageNavControls</div>";
 	}
 
 	// $pageNav goes in the frame's footer, see the end of the function
@@ -1526,6 +1571,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 					<div class='formulize-subform__title'>$col_one_caption$frameCount</div>
 					$helpText
 				</div>
+				$frameFilter
 				$frameControls
 			</div>$frameSelectionBar
 		</div>
@@ -1579,13 +1625,25 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
     if(window.jQuery) { jQuery(function() { showHideDeleteClone('".$subformElementId.$subformInstance."'); }); } // boxes the browser kept checked across a reload (the printable view loads no jQuery, and has no boxes)
     ";
     $subformJS .= "
-				function gotoSubPage".$subformElementId.$subformInstance."(firstRecordOrdinalOfPage) {
-					jQuery.post(FORMULIZE.XOOPS_URL+'/modules/formulize/formulize_xhr_responder.php?uid='+FORMULIZE.XOOPS_UID+'&op=get_element_row_html&elementId=".$subformElementId."&entryId=".$entry."&fid=".$fid."&frid=".$frid."', { formulizeFirstRowToDisplay: firstRecordOrdinalOfPage, formulizeSubformPagingInstance: ".$subformElementId.$subformInstance." }, function(data) {
+				// redraw just this subform, for its page links and its filter. Nothing is saved, so it works the same on a
+				// full screen and in the drawer. The redrawn subform keeps this instance number, which the filter box's name
+				// and the paging values are keyed by, and the filter in the box is applied to every page.
+				function formulizeSubformRedraw".$subformElementId.$subformInstance."(params) {
+					var filterBox = jQuery('#formulize-subform-".$subformElementId.$subformInstance." input[name=\"subformFilterBox_".$subformInstance."\"]');
+					params.formulizeSubformRedrawElement = ".$subformElementId.";
+					params.formulizeSubformRedrawInstance = ".$subformInstance.";
+					if(filterBox.length) {
+						params.subformFilterBox_".$subformInstance." = filterBox.val();
+					}
+					jQuery.post(FORMULIZE.XOOPS_URL+'/modules/formulize/formulize_xhr_responder.php?uid='+FORMULIZE.XOOPS_UID+'&op=get_element_row_html&elementId=".$subformElementId."&entryId=".$entry."&fid=".$fid."&frid=".$frid."', params, function(data) {
 						if(data) {
 							jQuery('#formulize-de_".$fid."_".$entry."_".$subformElementId."').empty();
 							jQuery('#formulize-de_".$fid."_".$entry."_".$subformElementId."').append(JSON.parse(data).elements[0].data);
 						}
 					});
+				}
+				function gotoSubPage".$subformElementId.$subformInstance."(firstRecordOrdinalOfPage) {
+					formulizeSubformRedraw".$subformElementId.$subformInstance."({ formulizeFirstRowToDisplay: firstRecordOrdinalOfPage, formulizeSubformPagingInstance: ".$subformElementId.$subformInstance." });
 				}
     ";
     $col_two .= "

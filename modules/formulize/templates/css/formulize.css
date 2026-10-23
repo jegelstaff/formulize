@@ -1349,14 +1349,6 @@ div.formulize-office-use-only-start-hidden {
 		display: none;
 }
 
-.subform-filter-search {
-	margin-bottom: 0.5em;
-	margin-top: 0.5em;
-}
-div.subform_button_controls div.subform-filter-search input[type=text] {
-	width: 10em;
-}
-
 /* ---- The subform frame -------------------------------------------------------
    Every subform element is drawn in a frame of its own (see the end of
    drawSubLinks() in modules/formulize/class/subformListingsElement.php),
@@ -1369,7 +1361,8 @@ div.subform_button_controls div.subform-filter-search input[type=text] {
        .formulize-subform__selbar  shown while entries are checked: Clear, the
                                    number checked, Clone and Delete
      .formulize-subform__body    the entries, or a line saying there are none
-     .formulize-subform__foot    the page navigation, when the entries are paged
+     .formulize-subform__foot    when the entries are paged: which are showing,
+                                 and the page navigation, as on a list
 
    The Delete and Clone buttons live in the selection bar, which is placed over
    the header and is exactly as big, so checking an entry moves nothing.
@@ -1377,7 +1370,7 @@ div.subform_button_controls div.subform-filter-search input[type=text] {
    Structure is core's, built on Formulize UI's tokens, so the frame works in any
    theme as it is. A theme skins what it draws inside (its table, its accordion)
    and may set --formulize-subform-radius and --formulize-subform-padding-x.
-   The Anari theme does not get this markup at all; it keeps the older one. */
+   Every theme gets this markup, the printable view too. */
 
 .formulize-subform {
   --formulize-subform-radius: var(--fz-radius-md);
@@ -1454,13 +1447,53 @@ div.subform_button_controls div.subform-filter-search input[type=text] {
   margin: 0;
 }
 
-/* the filter box comes before the Add control; its label is its placeholder */
-.formulize-subform .subform_button_controls .subform-filter-search {
-  order: -1;
+/* The filter box is at the end of the header, before the Add control, and a
+   rule divides them: one finds entries, the other makes them. It is a search
+   box: the icon is inside it, its label is its placeholder, and Enter applies
+   it. Its height is the theme's, as the controls' is. It is not one of the
+   controls (themes size a text box among them as Add's count box). */
+.formulize-subform__filter {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: calc(var(--fz-spacing) * 1.5);
+  flex: 0 1 16em;
+  min-width: 10em;
+  margin: 0 0 0 auto;
+}
+.formulize-subform__filter + .subform_button_controls {
+  margin-inline-start: 0;
+}
+.formulize-subform__filter + .subform_button_controls:has(> input, > span)::before {
+  content: "";
+  align-self: center;
+  width: 1px;
+  height: calc(var(--fz-spacing) * 5);
+  margin-inline: calc(var(--fz-spacing) * 1);
+  background: var(--fz-color-border-strong);
+}
+.formulize-subform .formulize-subform__filter input[type="text"] {
+  box-sizing: border-box;
+  width: 100%;
   margin: 0;
+  padding-inline-start: calc(var(--fz-spacing) * 8);
+}
+.formulize-subform__filter-icon {
+  position: absolute;
+  inset-inline-start: calc(var(--fz-spacing) * 2.5);
+  color: var(--fz-color-text-muted);
+  pointer-events: none;
+}
+
+/* Add is the subform's main action, so it is a primary button, as a list's
+   Add button is. Only its colours are set here: its size is the theme's. */
+.formulize-subform .subform_button_controls input[type="button"].formulize-subform__add-button {
+  border-color: var(--fz-button-primary-bg);
+  background: var(--fz-button-primary-bg);
+  color: var(--fz-button-primary-text);
+}
+.formulize-subform .subform_button_controls input[type="button"].formulize-subform__add-button:hover {
+  border-color: var(--fz-button-primary-hover);
+  background: var(--fz-button-primary-hover);
 }
 
 /* "Add [3] entries": the button, the count box and the text after it, joined
@@ -1602,14 +1635,24 @@ div.subform_button_controls div.subform-filter-search input[type=text] {
   display: none;
 }
 
-/* The page navigation */
+/* The footer, when the entries are paged. As on a list: which entries are
+   showing at the start, and the page navigation, from the theme's
+   pageNavControls template, at the end. */
 .formulize-subform__foot {
   display: flex;
-  justify-content: flex-end;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--fz-spacing) * 2);
   padding: calc(var(--fz-spacing) * 1.5) var(--formulize-subform-padding-x);
   border-top: 1px solid var(--fz-color-border);
+  border-radius: 0 0 var(--formulize-subform-inner-radius) var(--formulize-subform-inner-radius);
+  background: var(--fz-toolbar-bg);
   color: var(--fz-color-text-muted);
   font-size: var(--fz-text-xs-plus);
+}
+.formulize-subform__foot-end {
+  margin-inline-start: auto;
 }
 .formulize-subform__foot .formulize-page-navigation {
   margin: 0;

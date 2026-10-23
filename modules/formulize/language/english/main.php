@@ -341,6 +341,7 @@ define("_formulize_SUBFORM_VIEW", "View");
 define("_formulize_SUBFORM_FILTER_GO","Go");
 define("_formulize_SUBFORM_NO_ENTRIES","No entries yet");
 define("_formulize_SUBFORM_FILTER_SEARCH","Filter by '%s' using this value:");
+define("_formulize_SUBFORM_FILTER_PLACEHOLDER","Filter by %s");
 define("_AM_ELE_SUBFORM_NEWENTRY_LABEL", "New entry");
 define("_formulize_SAVE", "Save");
 define("_formulize_SAVE_AND_GOBACK", "Save and Go Back");
