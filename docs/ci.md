@@ -25,10 +25,11 @@ What a run does, in order:
 3. Brings up the application with `docker compose up -d --build` — a real Apache, PHP and MariaDB, exactly the same [Docker setup](../deploying_locally) used for local development. The database starts genuinely empty; nothing is seeded.
 4. Runs the **standalone PHP logic tests** — password hashing, `{element_handle}` reference binding, normalize-then-escape form sinks, `EMPTYSET` searches and search-term prefixes, partial date searches. These need nothing but PHP, so they run first and fail fast.
 5. Installs the Playwright dependencies and the Chromium browser.
-6. Runs the **setup specs** — `npx playwright test formulize-core/setup --workers=1`. These install Formulize from scratch and build the museum sample system. One worker, in file-name order, because each depends on the last.
-7. Runs the **validate specs** — `npx playwright test formulize-core/validate --workers=4 --fully-parallel`. These interrogate the system the setup specs built. This step is why a spec whose tests depend on each other has to say `test.describe.configure({ mode: 'serial' })` — see [Creating Tests](../version_control/testing/creating_tests).
-8. Runs the **PHP integrity tests** — element reference scan, saved views round trip, element code files. These need the finished system, so they come last.
-9. Dumps the database and collects the files the run produced, then tears the containers down.
+6. Runs the **setup specs** — `npx playwright test formulize-core/01-setup --workers=1`. These install Formulize from scratch and build the museum sample system. One worker, in file-name order, because each depends on the last.
+7. Runs the **validate specs** — `npx playwright test formulize-core/02-validate --workers=4 --fully-parallel`. These interrogate the system the setup specs built. This step is why a spec whose tests depend on each other has to say `test.describe.configure({ mode: 'serial' })` — see [Creating Tests](../version_control/testing/creating_tests).
+8. Runs the **appearance specs** — `npx playwright test formulize-core/03-appearance --workers=1`. These test the Lyris theme's looks and the appearance editor, switching the whole site to Lyris and back, so they run after the validate specs, on one worker, not alongside anything else.
+9. Runs the **PHP integrity tests** — element reference scan, saved views round trip, element code files. These need the finished system, so they come last.
+10. Dumps the database and collects the files the run produced, then tears the containers down.
 
 Steps 7 to 9 are skipped when the manual run is given a test filter, because a partly built system is not the system they are asking about.
 

@@ -21,11 +21,13 @@ Between them they install Formulize from scratch, build a complete sample applic
 
 The e2e suite is not a collection of independent checks against a fixture. It builds a system, in order, and then interrogates what it built.
 
-The specs in `tests/e2e/formulize-core/setup/` run first and in sequence. They run the installer, create users and groups, create forms and elements of every type, set permissions, build menus and screens, and enter data. What they produce is the **museum system** — a small collection-management application, with artifacts, donors, collections, exhibits and survey responses.
+The specs in `tests/e2e/formulize-core/01-setup/` run first and in sequence. They run the installer, create users and groups, create forms and elements of every type, set permissions, build menus and screens, and enter data. What they produce is the **museum system** — a small collection-management application, with artifacts, donors, collections, exhibits and survey responses.
 
-The specs in `tests/e2e/formulize-core/validate/` run afterwards, and in parallel. They read and exercise the system the setup specs built: that the data is right, that permissions actually isolate one department from another, that derived values update, that the MCP tools answer, that the Public API reads, that user-supplied content cannot inject script into a list.
+The specs in `tests/e2e/formulize-core/02-validate/` run afterwards, and in parallel. They read and exercise the system the setup specs built: that the data is right, that permissions actually isolate one department from another, that derived values update, that the MCP tools answer, that the Public API reads, that user-supplied content cannot inject script into a list.
 
-This is why the two folders are run as two separate steps rather than as one suite. The setup specs depend on each other and on their order; the validate specs depend only on the finished system.
+The specs in `tests/e2e/formulize-core/03-appearance/` run last, one at a time. They test the Lyris theme's looks and the appearance editor, and they switch the whole site to Lyris while they do, so they can't share the system with anything else that is running. Each one puts the site back as it found it.
+
+This is why the three folders are run as three separate steps rather than as one suite. The setup specs depend on each other and on their order; the validate specs depend only on the finished system; the appearance specs need the finished system to themselves. The folders are numbered in the order they run.
 
 ## Running the tests locally
 
@@ -67,7 +69,7 @@ To run only the core suite, or only one file, or only one test:
 
 ```
 npm run test:core
-npx playwright test formulize-core/validate/025-validate-data.spec.js
+npx playwright test formulize-core/02-validate/025-validate-data.spec.js
 npx playwright test -g "Check the Romain Coin record is complete"
 ```
 

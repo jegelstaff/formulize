@@ -3,13 +3,13 @@ import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD } from '../config';
 import { login, ensureMainMenuOpen } from '../../utils';
 
 // Companion to the "Users and Groups" menu-disclosure test in
-// setup/005-create-users-and-groups.spec.js. Covers the same CSS-only
+// 01-setup/005-create-users-and-groups.spec.js. Covers the same CSS-only
 // <details>/<summary> disclosure behaviour (see menu.html and
 // drawMenuSection() in mymenu.php), but for the "Museum" application
 // section instead of the Users/Groups section.
 //
 // Only meaningful for a webmaster. A webmaster sees two top-level menu
-// entries -- the "Staff Management" app created in setup/005, plus "Museum"
+// entries -- the "Staff Management" app created in 01-setup/005, plus "Museum"
 // -- so Museum's expand/collapse state is driven by which page is active
 // rather than being force-expanded (drawMenuSection()'s $forceOpen only
 // kicks in when there's a single top-level application). A regular museum

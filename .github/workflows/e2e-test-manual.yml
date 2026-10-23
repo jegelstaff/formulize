@@ -55,9 +55,11 @@ jobs:
         cache: 'npm'
         cache-dependency-path: tests/e2e/package-lock.json
 
+    # themes/Lyris: the appearance specs (formulize-core/03-appearance) save looks, which the web server writes
+    # to themes/Lyris/appearance, a folder it makes the first time.
     - name: Set file/directory permissions
       run: |
-        chmod 777 trust uploads modules templates_c cache themes tokens logs modules/formulize/cache modules/formulize/code modules/formulize/export modules/formulize/language/english/mail_template modules/formulize/queue modules/formulize/temp modules/formulize/templates/screens modules/formulize/upload mainfile.php ~/work/formulize/formulize
+        chmod 777 trust uploads modules templates_c cache themes themes/Lyris tokens logs modules/formulize/cache modules/formulize/code modules/formulize/export modules/formulize/language/english/mail_template modules/formulize/queue modules/formulize/temp modules/formulize/templates/screens modules/formulize/upload mainfile.php ~/work/formulize/formulize
 
     - name: Stop existing containers (if any)
       run: |
@@ -105,13 +107,20 @@ jobs:
           echo "Running filtered tests: ${{ inputs.test_filter }}"
           npx playwright test ${{ inputs.test_filter }}
         else
-          npx playwright test formulize-core/setup --workers=1
+          npx playwright test formulize-core/01-setup --workers=1
         fi
       working-directory: tests/e2e
 
     - name: Run Playwright validation tests (concurrent)
       if: ${{ !inputs.test_filter }}
-      run: npx playwright test formulize-core/validate --workers=4 --fully-parallel
+      run: npx playwright test formulize-core/02-validate --workers=4 --fully-parallel
+      working-directory: tests/e2e
+
+    # After the validate specs, and on one worker: the appearance specs switch the whole site to Lyris while
+    # they run, and put it back when they're done.
+    - name: Run Playwright appearance tests (sequential)
+      if: ${{ !inputs.test_filter }}
+      run: npx playwright test formulize-core/03-appearance --workers=1
       working-directory: tests/e2e
 
     # This one runs after the suite rather than before it, unlike the PHP tests above: it checks what

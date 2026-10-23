@@ -22,7 +22,7 @@
  * WHAT THIS DOES NOT COVER
  * - insertMenuLink()'s $force writes during a GET request. The request method is fixed when the application
  *   boots, so one run can't be both; this runs as a POST, where forced and unforced writes both go through.
- * - What anonymous visitors actually see. validate/046-anonymous-menu-access.spec.js checks that in the
+ * - What anonymous visitors actually see. 02-validate/046-anonymous-menu-access.spec.js checks that in the
  *   browser.
  *
  * Usage:

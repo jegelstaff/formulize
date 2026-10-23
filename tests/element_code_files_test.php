@@ -44,7 +44,7 @@
  * WHAT THIS DOES NOT COVER
  * The admin save path itself, and whether the content survives all the way to the screen - those need a
  * browser and a built system, and are covered by
- * tests/e2e/formulize-core/validate/041-static-content-code-files.spec.js, which turns the museum system's
+ * tests/e2e/formulize-core/02-validate/041-static-content-code-files.spec.js, which turns the museum system's
  * Survey Intro element into PHP code, saves it twice, and checks the value that code computes appears on
  * the survey form.
  *

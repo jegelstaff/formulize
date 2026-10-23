@@ -14,7 +14,7 @@ import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, addElem
 // catalogue (formulizeCKEditorIDs) of the elements that are actually supposed to be editors,
 // including ones currently hidden by a condition, and initializeCKEditor guards on it.
 //
-// This lives in setup/ rather than validate/ because it creates elements. The validate specs
+// This lives in 01-setup/ rather than 02-validate/ because it creates elements. The validate specs
 // run 4-way parallel in CI, where creating elements on a shared form would race with them;
 // the setup specs run sequentially (--workers=1). It is numbered after 020 so that the donor
 // entries created there are not disturbed by the new elements.

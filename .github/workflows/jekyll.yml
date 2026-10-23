@@ -91,7 +91,7 @@ jobs:
       - name: Install Formulize (Playwright)
         working-directory: /home/runner/work/formulize/formulize/tests/e2e
         continue-on-error: true
-        run: npx playwright test formulize-core/setup/001-install-formulize.spec.js
+        run: npx playwright test formulize-core/01-setup/001-install-formulize.spec.js
       - name: Dump MCP tool schemas from PHP
         # Runs the real registerTools() code (see mcp/dump_tools_for_docs.php) so
         # tool docs reflect actual resolved schemas - including the create/update
