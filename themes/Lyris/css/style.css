@@ -1521,9 +1521,7 @@ body:not(.formulize-inline) .lyris-page:has(> #listofentries .lyris-list-screen)
 /* Checkbox / controls column: one fixed width, its padding plus room for its
    checkbox and edit icon (about 50.5px, depending on the font's space width;
    52px leaves a little over), so it is the same with or without rows. On a
-   phone the first data column is pinned at this same offset (see Mobile
-   below): if the two differed, the pinned column overlapped the icons when
-   scrolled, or left a gap and misaligned the headers when the list was empty. */
+   phone this column stays pinned on the left (see Mobile below). */
 .lyris-list-table {
   --lyris-cb-width: calc(var(--fz-spacing) * 4 + 3.25rem);
 }
@@ -2286,10 +2284,37 @@ body:has(#formulize-masquerade-block) {
     display: inline;
   }
 
-  /* Table: no columns are pinned on the left, so the whole table, checkbox
-     and first data column included, pans together when it scrolls sideways.
+  /* ---- Table: pan columns horizontally; the checkbox / controls column
+     (selection checkbox and edit-entry icon) stays pinned on the left so a
+     row can always be selected or opened, while every data column, the
+     first one included, pans with the table (#1034).
      Horizontal scrolling comes from .lyris-list__body (overflow: auto) once
-     the nowrap cells force the table wider than the viewport. */
+     the nowrap cells force the table wider than the viewport. ---- */
+
+  /* divider shadow marks the edge of the pinned column */
+  .lyris-list-table .lyris-cb {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    box-shadow: 1px 0 0 var(--fz-color-border);
+  }
+
+  /* pinned header cell: sticky both ways, above row headers (z 2) and
+     pinned body cells (z 1) */
+  .lyris-list-table thead .lyris-cb {
+    top: 0;
+    z-index: 3;
+  }
+
+  /* The filter row's pinned cell needs top:36px to clear the column-header
+     row and z-index:3 to sit above both the top-sticky filter row (z 2) and
+     the left-sticky body cells (z 1), since it is pinned in both axes.
+     Specificity must beat .lyris-list-table thead .lyris-cb (3 selectors), so
+     .lyris-list-table is included in the selector chain. */
+  .lyris-list-table .lyris-search-row .lyris-cb {
+    top: var(--lyris-thead-height, var(--fz-table-header-height));
+    z-index: 3;
+  }
 }
 
 /* ============================================================
