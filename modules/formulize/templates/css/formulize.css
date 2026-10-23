@@ -1854,7 +1854,8 @@ div.subform_button_controls div.subform-filter-search input[type=text] {
 /* The footer tray is the full screen form's action bar (#multipage-controls) at a
    mobile viewport, and is deliberately built from the same parts: same flex row,
    same wrap, same 16px padding and 8px gap, and buttons that are literally the same
-   `input.formulize-form-submit-button` elements (see makeButton in drawer.js).
+   `input.formulize-form-submit-button` elements (from the theme's drawer
+   bottomtemplate; see formulize_drawerButtonTemplateVariables in formdisplay.php).
    The drawer is a mobile-width surface at every window size -- 390px minimum, and
    only ever a fraction of the window -- so it takes that mobile layout
    unconditionally rather than behind a media query.

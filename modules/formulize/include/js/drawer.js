@@ -66,8 +66,6 @@
     // window.formulize.drawerStrings (PHP does exactly that from the language files).
     // Merged lazily, on first use, so the host's script tag can come after this file.
     var DEFAULT_STRINGS = {
-        save:            'Save',
-        cancel:          'Cancel',
         back:            'Back',
         close:           'Close panel',
         loading:         'Loading…',
@@ -326,11 +324,9 @@
     // formulize-multipage-nav metadata the endpoint emits; null for single-page forms.
     var currentEntryNav = null;
 
-    // formulize-form-buttons metadata the endpoint emits: which form buttons this screen is
-    // configured to present, and what each is called. It is the server's answer, made by
-    // the same code that builds the full screen form's button tray, so the drawer never
-    // decides for itself which buttons exist or what they say.
-    var currentEntryButtons = null;
+    // formulize-printable-view metadata the endpoint emits: where the printable view button
+    // posts, and what. Null when the form has no printable view button.
+    var currentPrintableView = null;
 
     // Whether anything has been saved since this drawer session opened. A save that
     // leaves the drawer open still has to be reflected in the list behind it when the
@@ -366,10 +362,10 @@
         try { return JSON.parse(el.textContent); } catch (e) { return null; }
     }
 
-    // Read the form-button metadata the endpoint emits (null when absent).
-    function readButtonMeta() {
+    // Read the printable view metadata the endpoint emits (null when absent).
+    function readPrintableViewMeta() {
         if (!bodyEl) { return null; }
-        var el = bodyEl.querySelector('script.formulize-form-buttons');
+        var el = bodyEl.querySelector('script.formulize-printable-view');
         if (!el) { return null; }
         try { return JSON.parse(el.textContent); } catch (e) { return null; }
     }
@@ -398,6 +394,8 @@
         if (p.entryFid)  { params.push('entry_fid=' + encodeURIComponent(p.entryFid)); }
         if (p.entryFrid) { params.push('entry_frid=' + encodeURIComponent(p.entryFrid)); }
         if (page)      { params.push('page=' + encodeURIComponent(page)); }
+        // a sub entry: the server gives it a Back button when its screen has no close button
+        if (drawerStack.length) { params.push('insub=1'); }
         params.push('formname=' + FORM_NAME);
         return (base || moduleBase + ENDPOINT) + '?' + params.join('&');
     }
@@ -582,7 +580,7 @@
                 // left over from a previous drawer session.
                 window.formulizechanged = 0;
                 currentEntryNav = readNavMeta();
-                currentEntryButtons = readButtonMeta();
+                currentPrintableView = readPrintableViewMeta();
                 var meta = readDrawerMeta();
                 if (meta && typeof meta.title === 'string') { titleEl.textContent = meta.title; }
                 if (meta && currentFrame) {
@@ -693,14 +691,11 @@
 
     // ---- Footer ----------------------------------------------------------------
 
-    // Build the drawer footer controls for the loaded entry form.
-    //
-    // Which buttons exist, and what each is called, is decided by the server and handed
-    // over as metadata: formulize-form-buttons carries the screen's form-level buttons (the same
-    // ones addSubmitButton renders full screen -- printable view, save, save and leave,
-    // done/close, resolved from the screen's own settings), and formulize-multipage-nav carries
-    // the paging controls. Nothing here invents a button or a label; the English strings
-    // remain only as a fallback for a host that publishes no metadata at all.
+    // The footer's buttons come from the theme's drawer bottomtemplate, as the full screen
+    // bar's come from its multiPage bottomtemplate: the server decides which buttons the
+    // form has and what each says, the template puts them in the theme's order, and the
+    // drawer moves them into the footer and gives each one its action (renderEntryFooter).
+    // formulize-multipage-nav carries the paging state the actions and the tab strip need.
     //
     // Draw the multi-page tab strip, mirroring the full screen form's tabs: one tab per
     // reachable page, in page order, the current one marked. The server decides which
@@ -708,10 +703,8 @@
     // screen strip uses, so the two surfaces always show the same tabs.
     //
     // Unlike the full screen strip there is no leading "save and leave" tab: that is not
-    // a page. Where the screen's button set already carries a leave action (page one's
-    // "prev" slot) the footer has it; where the screen offers no nav buttons at all
-    // (navstyle 1) the footer picks it up from the form button metadata instead. Either
-    // way it is a button, and only ever in one place.
+    // a page. The server makes it the footer's save and leave button instead, so it is a
+    // button, and only ever in one place.
     function renderPageTabs() {
         if (!tabsEl) { return; }
         tabsEl.innerHTML = '';
@@ -762,19 +755,6 @@
         if (!goToPage(targetPage)) { showDrawerNotice(S().fixPageErrors); }
     }
 
-    // The Previous/Next controls follow the screen's navstyle, as they do full screen:
-    // present when it asks for buttons (0) or for tabs and buttons (2), absent when it
-    // asks for tabs alone (1) because the tab strip above now provides the navigation.
-    // The one deviation is navstyle 3, which offers no navigation at all: full screen
-    // gets away with that because page URLs and the jump-to selector remain reachable in
-    // a full page, whereas in the drawer it would strand the user on page one.
-    function drawerShowsNavButtons(nav) {
-        // keyed off whether the strip is actually drawn, not merely configured: if every
-        // page but this one is conditioned away the tabs collapse, and the buttons are
-        // then the only way left to move
-        return !!nav && (nav.showNavButtons || !drawerTabsVisible(nav));
-    }
-
     // A screen configured for buttons only (navstyle 0) or for no navigation at all
     // (navstyle 3) gets no tabs here, exactly as it gets none full screen. Neither does a
     // form with only one reachable page, so a single page form is untouched.
@@ -784,34 +764,6 @@
 
     function renderEntryFooter() {
         if (!footEl || drawerMode === 'ai') { return; } // the AI panel has its own controls
-        appendEntryFooterControls();
-        applyThemeButtonOrder();
-    }
-
-    // The order of the footer's buttons is the theme's to choose, as the order of the full
-    // screen bar is: a theme's multiPage bottomtemplate lays out the bar's slots however it
-    // likes, and its drawer toptemplate says the same thing to the drawer by putting
-    // data-formulize-button-order on its wrapper, a space separated list of slot names
-    // (prev, save, close, next, printbutton). Lyris names "prev close next save", so Save
-    // comes last. Buttons in slots the list leaves out keep their places ahead of the ones
-    // it names, and with no list at all the footer keeps the order it was built in.
-    function applyThemeButtonOrder() {
-        var holder = bodyEl ? bodyEl.querySelector('[data-formulize-button-order]') : null;
-        if (!holder) { return; }
-        var order = holder.getAttribute('data-formulize-button-order').trim().split(/\s+/);
-        var buttons = Array.prototype.slice.call(footEl.querySelectorAll('.formulize-form-submit-button'));
-        buttons.map(function (btn, index) {
-            return { btn: btn, rank: order.indexOf(btn.name), index: index };
-        }).sort(function (a, b) {
-            return (a.rank - b.rank) || (a.index - b.index);
-        }).forEach(function (item) {
-            // the buttons all follow the notice and page meta, so moving each to the end
-            // in turn lays them out in order without disturbing those
-            footEl.appendChild(item.btn);
-        });
-    }
-
-    function appendEntryFooterControls() {
         footEl.innerHTML = '';
 
         // What came back is not a form - an error, or word that the entry can't be shown - so
@@ -824,18 +776,14 @@
         footEl.appendChild(notice);
 
         var nav = currentEntryNav;
-        var multiPage = nav && nav.totalPages > 1;
         var inSub = drawerStack.length > 0;
-        // Fallback for a host that publishes no button metadata: the plain save/cancel
-        // pair the drawer offered before the screen's configuration reached it.
-        var buttons = currentEntryButtons || { save: S().save, done: S().cancel };
 
         // Page meta leads, as it does in the full screen bar (the Lyris bottomtemplate
         // emits $pageIndicator/$pageSelector before any button). With tabs on show the
         // strip already says which page you are on, so the footer does not repeat it.
         // (The non-tab case is where a combined page indicator/selector control belongs
         // - see issue #109.)
-        if (multiPage && !drawerTabsVisible(nav)) {
+        if (nav && nav.totalPages > 1 && !drawerTabsVisible(nav)) {
             var indicator = document.createElement('span');
             indicator.className = 'formulize-drawer__page-indicator';
             indicator.textContent = (nav.pageWord || S().page) + ' ' + nav.currentPage + ' ' +
@@ -843,96 +791,47 @@
             footEl.appendChild(indicator);
         }
 
-        // The tray is laid out in the full screen action bar's order. The multiPage
-        // bottomtemplate emits `$pageIndicator $pageSelector $previousPageButton
-        // $savePageButton $closePageButton $nextPageButton`, so: page meta, then
-        // previous, save, close, next. Following that here is what makes the two
-        // surfaces read the same, rather than the drawer's old close/save-and-close/
-        // save/next ordering. The printable view button has no slot in that bar (full
-        // screen puts it in its own #formulize-button-controls tray), so it leads. A
-        // theme whose bar uses another order says so, and applyThemeButtonOrder
-        // rearranges the buttons to match once they are built.
-        if (buttons.printableView && buttons.printAction) {
-            footEl.appendChild(makeButton(buttons.printableView, 'printbutton', openPrintableView));
-        }
-
-        var navButtons = drawerShowsNavButtons(nav);
-        // The screen's button set for the page being shown, computed server side by
-        // formulize_multipageButtonSet() — the very same call the full screen action bar
-        // is built from — and published in formulize-multipage-nav as ordered {slot, text}
-        // pairs. Rendering it verbatim is what makes the drawer's footer the full screen
-        // footer: on the kitchen sink screen that is "Save and Close / Save / Close /
-        // Save and Continue" on page one, "Save and Go Back / Save / Close / Save and
-        // Continue" in the middle, and "... / Save and Finish" on the last page, because
-        // that is what the screen's own settings resolve to there.
-        //
-        // This replaces the drawer's old assembly of a button set out of two separate
-        // pieces of metadata, which past page one produced a previous-page control AND a
-        // save-and-leave control where full screen shows only the first (the button-set
-        // difference flagged in the previous round of this review).
-        var navSet = (multiPage && navButtons && nav.buttons && nav.buttons.length) ? nav.buttons : null;
-
-        if (navSet) {
-            navSet.forEach(function (slotButton) {
-                footEl.appendChild(makeButton(slotButton.text, slotButton.slot,
-                                              navSlotAction(slotButton.slot, nav, inSub)));
+        // Then the buttons, in the order the theme's drawer bottomtemplate printed them.
+        // They are `<input type="button" class="formulize-form-submit-button">` named for
+        // what they do, the same element the full screen bar uses, so everything visual
+        // comes from the rules the themes already apply to that bar, including the role
+        // colours keyed off the name (Lyris paints `[name^="save"]` accent). Subform entries
+        // rendered inline in the form print the template too, with no buttons in it, so
+        // every container goes once its buttons are out.
+        Array.prototype.slice.call(bodyEl.querySelectorAll('.formulize-drawer-buttons')).forEach(function (container) {
+            Array.prototype.slice.call(container.querySelectorAll('.formulize-form-submit-button')).forEach(function (btn) {
+                btn.addEventListener('click', footerAction(btn.name, nav, inSub));
+                footEl.appendChild(btn);
             });
-            // A screen with no close button still needs a way out of a sub entry.
-            if (inSub && !navSet.some(function (b) { return b.slot === 'close'; })) {
-                footEl.appendChild(makeButton(S().back, 'close', goBack));
-            }
-            return;
-        }
-
-        // No multipage button set to follow: either a single page form, or a screen whose
-        // navstyle asks for tabs alone (navstyle 1), where full screen has no prev/next
-        // controls and offers save-and-leave as the leading tab of its tab strip instead.
-        // The drawer's strip carries pages only, so that control becomes a footer button
-        // here — in the bar's "prev" slot, which is literally where full screen puts the
-        // leave action when it renders it as a button.
-        if (buttons.saveAndLeave) {
-            footEl.appendChild(makeButton(buttons.saveAndLeave, 'prev', saveEntryFromDrawer));
-        }
-
-        // Save means save, as it does full screen: the entry is written and stays open for
-        // more editing. This is the one accent/primary control in the bar, because it is
-        // the one full screen paints that way (Lyris keys off name^="save").
-        if (buttons.save) {
-            footEl.appendChild(makeButton(buttons.save, 'save', saveAndStay));
-        }
-
-        // The done/close button leaves without saving. Inside a sub entry that means
-        // returning to the parent, which is what the same button does full screen. A
-        // screen with no close button still gets the Back control, so there is always a
-        // way out of a sub entry. Both are the bar's name="close" slot.
-        if (buttons.done) {
-            footEl.appendChild(makeButton(buttons.done, 'close', inSub ? goBack : closeEntryDrawer));
-        } else if (inSub) {
-            footEl.appendChild(makeButton(S().back, 'close', goBack));
-        }
+            container.parentNode.removeChild(container);
+        });
     }
 
-    // What each slot of the multipage button set does, mirroring the onclick
-    // generatePrevNextButtonMarkup() gives the same-named button full screen:
+    // What each footer button does, by its name (see formulize_drawerButtonTemplateVariables
+    // in formdisplay.php), mirroring what the same button does full screen:
     //
-    //   prev   submitForm(previousPage) — save this page and go back one. On page one
-    //          there is no previous page, and full screen instead sends the user to the
-    //          thanks page (submitForm(thanksPage, 1)), which is the save-and-leave the
-    //          screen's leaveButtonText labels it with.
-    //   save   submitForm(currentPage, currentPage) — save in place, stay here.
-    //   close  verifyDone() — leave without saving, confirming first if there are edits.
-    //          In a sub entry "leaving" is returning to the parent, exactly as full
-    //          screen's close does there.
-    //   next   submitForm(nextPage) — save this page and go on; when the next page is
-    //          the thanks page this is the finish action, which in the drawer means
-    //          saving and closing (the thanks page renders empty in elements-only mode,
-    //          so there is nothing to show).
-    function navSlotAction(slot, nav, inSub) {
-        switch (slot) {
+    //   printbutton  the printable view, in a new window.
+    //   leave        save and leave. Full screen's page one previous button and the leading
+    //                tab of a tabbed screen send the user to the thanks page; the drawer
+    //                saves and closes.
+    //   prev         submitForm(previousPage) — save this page and go back one.
+    //   save         submitForm(currentPage, currentPage) — save in place, stay here.
+    //   close        verifyDone() — leave without saving, confirming first if there are
+    //                edits. In a sub entry "leaving" is returning to the parent, exactly as
+    //                full screen's close does there, and it is the Back button when the
+    //                screen has no close button.
+    //   next         submitForm(nextPage) — save this page and go on; when the next page is
+    //                the thanks page this is the finish action, which in the drawer means
+    //                saving and closing (the thanks page renders empty in elements-only
+    //                mode, so there is nothing to show).
+    function footerAction(name, nav, inSub) {
+        switch (name) {
+            case 'printbutton':
+                return openPrintableView;
+            case 'leave':
+                return saveEntryFromDrawer;
             case 'prev':
-                return nav.previousPage
-                    ? function () { goToPage(nav.previousPage); }
-                    : saveEntryFromDrawer;
+                return function () { goToPage(nav.previousPage); };
             case 'save':
                 return saveAndStay;
             case 'close':
@@ -948,12 +847,12 @@
     // the fragment is injected inside the drawer's own form, and a nested form would be
     // dropped by the parser.
     function openPrintableView() {
-        var buttons = currentEntryButtons;
-        if (!buttons || !buttons.printAction) { return; }
-        var fields = buttons.printFields || {};
+        var printableView = currentPrintableView;
+        if (!printableView || !printableView.action) { return; }
+        var fields = printableView.fields || {};
         var form = document.createElement('form');
         form.method = 'post';
-        form.action = buttons.printAction;
+        form.action = printableView.action;
         form.target = '_blank';
         form.style.display = 'none';
         Object.keys(fields).forEach(function (name) {
@@ -966,33 +865,6 @@
         document.body.appendChild(form);
         form.submit();
         document.body.removeChild(form);
-    }
-
-    // A footer control, built as the very same thing the full screen form builds: an
-    // `<input type="button" class="formulize-form-submit-button">` carrying the name of
-    // the action bar slot it fills (`prev`, `save`, `close`, `next`, plus `printbutton`
-    // for the printable view). Everything visual then comes from the rules the themes
-    // already apply to the full screen bar -- including the role colours, which are keyed
-    // off the name (Lyris paints `[name^="save"]` accent and leaves the rest bordered
-    // secondary; Anari gives them all its one button colour). That is the point: the
-    // drawer no longer has a button scheme of its own to get out of step. The previous
-    // `formulize-drawer__btn--primary/--ghost` variants were a drawer-only invention with
-    // no counterpart full screen, and painting them all `--primary` (the earlier response
-    // to this review) only made the mismatch uniform.
-    //
-    // Deliberately no `id`: full screen's #prev/#next ids carry core's arrow-image
-    // treatment, and the drawer opens on top of a page that may already own those ids.
-    function makeButton(label, name, onClick) {
-        var btn = document.createElement('input');
-        btn.type = 'button';
-        btn.className = 'formulize-form-submit-button';
-        btn.name = name;
-        btn.value = label;
-        // A very long configured label still ellipsises at the drawer's narrowest, so
-        // keep the whole text reachable as a tooltip.
-        btn.title = label;
-        btn.addEventListener('click', onClick);
-        return btn;
     }
 
     // Briefly surface a message in the drawer footer (e.g. "No changes to save").
@@ -1138,7 +1010,7 @@
         releaseEntryLocks();
         closeDrawer();
         currentEntryNav = null;
-        currentEntryButtons = null;
+        currentPrintableView = null;
         drawerStack = [];
         currentFrame = null;
         updateBackButton();
@@ -1335,6 +1207,7 @@
         var url = writeAddress(form) +
             '?fid=' + encodeURIComponent(parentFid) +
             '&frid=' + encodeURIComponent(parentFrid) +
+            '&insub=1' + // the new sub entry comes back in this response
             '&formname=' + FORM_NAME;
 
         releaseEntryLocks();
@@ -1383,7 +1256,7 @@
         releaseEntryLocks();
         if (footEl) { footEl.innerHTML = ''; }
         currentEntryNav = null;
-        currentEntryButtons = null;
+        currentPrintableView = null;
         drawerStack = [];
         currentFrame = null;
         updateBackButton();
