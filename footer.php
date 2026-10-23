@@ -149,14 +149,15 @@ if (isset($xoopsOption['theme_use_smarty']) && $xoopsOption['theme_use_smarty'] 
 			$xoTheme->addScript('', array('type' => 'text/javascript'),
 				'window.formulize = window.formulize || {}; window.formulize.drawerStrings = ' . json_encode($drawerStrings) . ';');
 		}
-		// The saving animation the drawer shows while one of its XHR saves is in flight.
-		// It is the very same asset full screen reveals over the dimmed form (resolved by
-		// the shared formulize_savingGraphicUrl()), published here because the drawer
-		// builds its own chrome in Javascript and has no server-rendered markup to carry
-		// an <img> in.
+		// The animations the drawer shows while one of its XHR saves or loads is in flight.
+		// They are the very same assets full screen shows (resolved by the shared
+		// formulize_savingGraphicUrl() and formulize_workingGraphicUrl()), published here
+		// because the drawer builds its own chrome in Javascript and has no server-rendered
+		// markup to carry an <img> in.
 		if (function_exists('formulize_savingGraphicUrl')) {
 			$xoTheme->addScript('', array('type' => 'text/javascript'),
-				'window.formulize = window.formulize || {}; window.formulize.savingGraphicUrl = ' . json_encode(formulize_savingGraphicUrl()) . ';');
+				'window.formulize = window.formulize || {}; window.formulize.savingGraphicUrl = ' . json_encode(formulize_savingGraphicUrl())
+				. '; window.formulize.workingGraphicUrl = ' . json_encode(formulize_workingGraphicUrl()) . ';');
 		}
 		$drawerJsVersion = formulize_get_file_version('/modules/formulize/include/js/drawer.js');
 		$xoTheme->addScript(XOOPS_URL . '/modules/formulize/include/js/drawer.js?v=' . $drawerJsVersion, array('type' => 'text/javascript'));

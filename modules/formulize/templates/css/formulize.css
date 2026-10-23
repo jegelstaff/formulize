@@ -1785,46 +1785,70 @@ div.subform_button_controls div.subform-filter-search input[type=text] {
 	text-align: center;
 }
 
-/* Formulize's saving animation over the drawer while one of its saves is in flight.
-   Full screen the equivalent is #savingmessage, which showSavingGraphic() reveals
-   after dropping #formulizeform to 0.5 opacity; this does the same to the drawer's
-   form, and freezes the tabs and the footer buttons the way full screen disables
-   .formulize-form-submit-button for the duration. Built by drawer.js (search for
-   showDrawerSaving); the <img> inside it is the very same saving-<language>.gif.
+/* While the drawer waits on the server (formulize-drawer--busy, set by showDrawerBusy in
+   drawer.js), what it is showing stays put, faded back and closed to clicks, under
+   Formulize's animation: saving-<language>.gif for a save, working-<language>.gif for a
+   load, the same files full screen shows in #savingmessage and #workingmessage. New
+   content then fades in, from nothing, as it replaces what was there
+   (formulize-drawer__body--entering is the held, invisible state it starts in), and the
+   tabs and footer come back up from faded with it.
 
-   This is geometry plus the default-Formulize gif, nothing more, exactly as the core
-   rules for #savingmessage are. A theme that replaces the saving animation restyles
-   this class alongside #savingmessage / #workingmessage in its own stylesheet, which
-   loads after this one -- Lyris does, hiding the gif and drawing its spinner (see
-   "Loading overlay" in themes/Lyris/css/style.css). Themes that do not, like Anari,
-   get what is here. Keep the img and the box separable so a theme can swap the
-   animation without having to restate the drawer-scoped positioning. */
-.formulize-drawer__saving {
+   The animation waits a moment before it appears, so a load that comes back quickly just
+   fades the form a little and brings the next one in, without flashing it. It does not
+   cover the header, which stays clickable while loading (Back, close); a save also holds
+   the header (formulize-drawer--saving), as full screen holds the whole page.
+
+   A theme that replaces Formulize's animations restyles .formulize-drawer__busy alongside
+   #savingmessage / #workingmessage in its own stylesheet, which loads after this one --
+   Lyris hides the gif and draws its spinner (see "Loading overlay" in
+   themes/Lyris/css/style.css). Themes that do not, like Anari, get the gifs. The fading
+   is here, so every theme gets the same timing. The img and the box are kept separable
+   so a theme can swap the animation without restating the drawer-scoped positioning. */
+.formulize-drawer__body,
+.formulize-drawer__tabs,
+.formulize-drawer__foot {
+	transition: opacity 400ms var(--fz-ease-out, ease-out);
+}
+
+.formulize-drawer--busy .formulize-drawer__body,
+.formulize-drawer--busy .formulize-drawer__tabs,
+.formulize-drawer--busy .formulize-drawer__foot {
+	opacity: 0.35;
+	pointer-events: none;
+}
+
+.formulize-drawer--saving .formulize-drawer__head {
+	pointer-events: none;
+}
+
+/* after the busy rules, so it wins while both apply */
+.formulize-drawer .formulize-drawer__body--entering {
+	opacity: 0;
+	transition: none;
+}
+
+.formulize-drawer__busy {
 	position: absolute;
 	inset: 0;
 	z-index: 2;
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	pointer-events: none;
+	opacity: 0;
+	visibility: hidden;
+	transition: opacity 200ms var(--fz-ease-out, ease-out), visibility 0s linear 200ms;
 }
 
-.formulize-drawer__saving[hidden] {
-	display: none;
+.formulize-drawer--busy .formulize-drawer__busy {
+	opacity: 1;
+	visibility: visible;
+	transition: opacity 200ms var(--fz-ease-out, ease-out) 250ms, visibility 0s linear 250ms;
 }
 
-.formulize-drawer__saving img {
+.formulize-drawer__busy img {
 	max-width: 80%;
 	height: auto;
-}
-
-.formulize-drawer--saving .formulize-drawer__body {
-	opacity: 0.5;
-}
-
-.formulize-drawer--saving .formulize-drawer__foot,
-.formulize-drawer--saving .formulize-drawer__tabs {
-	opacity: 0.5;
-	pointer-events: none;
 }
 
 /* The footer tray is the full screen form's action bar (#multipage-controls) at a

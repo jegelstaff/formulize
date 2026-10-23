@@ -468,33 +468,28 @@ h1, h2, h3, h4, h5, h6,
   backdrop-filter: blur(1px);
 }
 
-/* The drawer's save-in-place overlay (.formulize-drawer__saving, built by
-   showDrawerSaving() in include/js/drawer.js) is the drawer's equivalent of
-   #savingmessage, and holds the same legacy saving gif. It has to be restyled here
-   for the same reason the two ids above are: core formulize.css only gives it
-   geometry, so left alone it shows the raw default-Formulize gif — i.e. Anari's
-   look — while everything around it in Lyris is spinning the Lyris spinner
-   (PR #127 review).
+/* The drawer's busy indicator (.formulize-drawer__busy, built by showDrawerBusy() in
+   include/js/drawer.js) is the drawer's equivalent of #savingmessage and
+   #workingmessage, and holds the same legacy gifs. It has to be restyled here for the
+   same reason the two ids above are: core formulize.css only gives it geometry, so
+   left alone it shows the raw default-Formulize gifs — i.e. Anari's look — while
+   everything around it in Lyris is spinning the Lyris spinner (PR #127 review).
 
-   Only the skin is taken here, not the geometry: core positions this one
-   absolute/inset:0 inside the drawer, which is correct — a save in the drawer must
-   block the drawer, not the whole viewport the way a full-page submit does. So this
-   adds the same wash and the same spinner on top of the drawer-scoped box, rather
-   than restating the position/inset/z-index of the fixed full-screen overlays. */
-.formulize-drawer__saving {
-  background: rgba(255, 255, 255, 0.40);
-  backdrop-filter: blur(1px);
-}
-
+   Only the spinner is taken here, not the wash: core already fades the drawer's form,
+   tabs and footer back while it is busy, the same in every theme, and a wash over the
+   whole box would fade them twice and grey out the header too, which stays usable
+   while a form loads. Nor the geometry: core positions this one absolute/inset:0
+   inside the drawer, which is correct — the drawer waits, not the whole viewport the
+   way a full-page submit does. */
 #workingmessage img,
 #savingmessage img,
-.formulize-drawer__saving img {
+.formulize-drawer__busy img {
   display: none;
 }
 
 #workingmessage::after,
 #savingmessage::after,
-.formulize-drawer__saving::after {
+.formulize-drawer__busy::after {
   content: "";
   position: absolute;
   top: 50%;
@@ -515,7 +510,7 @@ h1, h2, h3, h4, h5, h6,
 @media (prefers-reduced-motion: reduce) {
   #workingmessage::after,
   #savingmessage::after,
-  .formulize-drawer__saving::after {
+  .formulize-drawer__busy::after {
     animation-duration: 1.6s;
   }
 }

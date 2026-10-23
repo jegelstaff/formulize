@@ -13699,12 +13699,36 @@ function formulize_textScriptPath() {
  * @return string Absolute URL of the saving animation
  */
 function formulize_savingGraphicUrl() {
+	return formulize_languageGraphicUrl('saving');
+}
+
+/**
+ * The URL of Formulize's "working" animation, in the site's language where there is one.
+ *
+ * Full screen this is what shows in #workingmessage while a list reloads (see
+ * entriesdisplay.php). The right drawer shows it while it loads a form, for the same
+ * reason it shows the saving animation while it saves (see formulize_savingGraphicUrl).
+ *
+ * @return string Absolute URL of the working animation
+ */
+function formulize_workingGraphicUrl() {
+	return formulize_languageGraphicUrl('working');
+}
+
+/**
+ * The URL of one of Formulize's language specific animations, images/<name>-<language>.gif,
+ * falling back to the english one when the site's language has none.
+ *
+ * @param string $name The animation, ie: saving or working
+ * @return string Absolute URL of the animation
+ */
+function formulize_languageGraphicUrl($name) {
 	global $xoopsConfig;
 	$language = isset($xoopsConfig['language']) ? $xoopsConfig['language'] : 'english';
-	if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/images/saving-".$language.".gif")) {
-		return XOOPS_URL."/modules/formulize/images/saving-".$language.".gif";
+	if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/images/".$name."-".$language.".gif")) {
+		return XOOPS_URL."/modules/formulize/images/".$name."-".$language.".gif";
 	}
-	return XOOPS_URL."/modules/formulize/images/saving-english.gif";
+	return XOOPS_URL."/modules/formulize/images/".$name."-english.gif";
 }
 
 // prints a scoped inline <style> block overriding one of the formulize icon CSS custom

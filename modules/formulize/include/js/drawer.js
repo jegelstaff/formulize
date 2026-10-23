@@ -111,7 +111,7 @@
 
     var drawer = null, scrim = null, titleEl = null, bodyEl = null, aiBodyEl = null,
         footEl = null, backBtn = null, closeBtn = null, resizeHandle = null, tabsEl = null,
-        savingEl = null;
+        busyEl = null;
 
     var ICON_BACK  = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>';
     var ICON_CLOSE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
@@ -155,11 +155,11 @@
             // the conversation: both panels persist, and the drawer shows one or the other.
             '<div class="formulize-drawer__body formulize-drawer__body--ai" hidden></div>' +
             '<div class="formulize-drawer__foot"></div>' +
-            // Formulize's saving animation, shown over the dimmed form while one of the
-            // drawer's saves is in flight. Full screen this is #savingmessage, revealed by
-            // showSavingGraphic() (drawJavascript in formdisplay.php); the drawer saves
-            // over XHR and so needs its own copy of the same asset in its own chrome.
-            '<div class="formulize-drawer__saving" aria-hidden="true" hidden></div>';
+            // Formulize's saving or working animation, shown over the faded form while the
+            // drawer waits on the server (see showDrawerBusy). Full screen these are
+            // #savingmessage and #workingmessage; the drawer saves and loads over XHR and so
+            // needs its own copy of the same assets in its own chrome.
+            '<div class="formulize-drawer__busy" aria-hidden="true"></div>';
 
         document.body.appendChild(scrim);
         document.body.appendChild(drawer);
@@ -172,7 +172,7 @@
         backBtn      = drawer.querySelector('.formulize-drawer__back');
         closeBtn     = drawer.querySelector('.formulize-drawer__close');
         resizeHandle = drawer.querySelector('.formulize-drawer__resize-handle');
-        savingEl     = drawer.querySelector('.formulize-drawer__saving');
+        busyEl       = drawer.querySelector('.formulize-drawer__busy');
 
         closeBtn.addEventListener('click', closeCurrentDrawer);
         backBtn.addEventListener('click', handleBack);
@@ -312,7 +312,7 @@
 
     function closeDrawer() {
         if (!drawer) { return; }
-        hideDrawerSaving();
+        hideDrawerBusy();
         drawer.hidden = true;
         scrim.hidden = true;
         document.documentElement.style.overflow = '';
@@ -387,48 +387,75 @@
         return moduleBase + ENDPOINT + '?' + params.join('&');
     }
 
-    // ---- Saving animation ------------------------------------------------------
+    // ---- Busy: saving and loading ----------------------------------------------
 
-    // Formulize's saving animation, the same one full screen shows: showSavingGraphic()
-    // dims #formulizeform and reveals #savingmessage, which holds
-    // images/saving-<language>.gif. The drawer saves over XHR rather than by submitting
-    // the page, so it never had that markup and its saves were silent (PR #127 review).
-    // The <img> is created on first use so a drawer session that never saves never
-    // fetches the asset; footer.php publishes the URL through
-    // window.formulize.savingGraphicUrl (resolved by formulize_savingGraphicUrl(), the
-    // same function drawJavascript uses), with the english file as the fallback for a
-    // host that publishes nothing.
-    function showDrawerSaving() {
-        if (!savingEl) { return; }
-        if (!savingEl.firstChild) {
-            var img = document.createElement('img');
-            img.src = (window.formulize && window.formulize.savingGraphicUrl) ||
-                      (moduleBase + '/modules/formulize/images/saving-english.gif');
+    // While the drawer waits on the server, whatever it is showing stays where it is, faded
+    // back and closed to clicks, under Formulize's animation: the saving one for a save, the
+    // working one for a load, as full screen shows #savingmessage when a form is submitted
+    // and #workingmessage when a list reloads. A theme that replaces those animations
+    // replaces this one too (Lyris draws its spinner instead). The fading, and the short
+    // wait before the animation appears so a quick load doesn't flash it, are in the
+    // stylesheet (.formulize-drawer--busy).
+    //
+    // A save followed by a load - a changed entry going into a sub entry, saving and then
+    // leaving - stays busy from the one into the other, so it reads as one wait rather than
+    // two. The drawer is busy again before anything paints in between.
+    //
+    // The <img> is created on first use, so a drawer session that never waits never fetches
+    // the files. footer.php publishes their URLs (formulize_savingGraphicUrl() and
+    // formulize_workingGraphicUrl(), the same files full screen uses), with the english
+    // files as the fallback for a host that publishes nothing.
+    function showDrawerBusy(saving) {
+        if (!drawer || !busyEl) { return; }
+        var img = busyEl.querySelector('img');
+        if (!img) {
+            img = document.createElement('img');
             img.alt = '';
-            savingEl.appendChild(img);
+            busyEl.appendChild(img);
         }
-        savingEl.hidden = false;
-        drawer.classList.add('formulize-drawer--saving');
+        var graphic = saving ? 'saving' : 'working';
+        var url = (window.formulize && window.formulize[graphic + 'GraphicUrl']) ||
+                  (moduleBase + '/modules/formulize/images/' + graphic + '-english.gif');
+        if (img.getAttribute('src') !== url) { img.setAttribute('src', url); }
+        drawer.classList.add('formulize-drawer--busy');
+        // a save holds the whole drawer, header included, as full screen does; a load can
+        // still be left, by Back or by closing the drawer
+        drawer.classList.toggle('formulize-drawer--saving', !!saving);
     }
 
-    function hideDrawerSaving() {
-        if (savingEl) { savingEl.hidden = true; }
-        if (drawer) { drawer.classList.remove('formulize-drawer--saving'); }
+    function hideDrawerBusy() {
+        if (drawer) { drawer.classList.remove('formulize-drawer--busy', 'formulize-drawer--saving'); }
     }
 
     // Run a promise-returning request with the saving animation up for its duration.
     // Every write the drawer makes goes through here, so there is one place that decides
     // what "saving" looks like and none of the callers have to remember to clear it.
     function whileSaving(run) {
-        showDrawerSaving();
-        var done = function (v) { hideDrawerSaving(); return v; };
-        var failed = function (e) { hideDrawerSaving(); throw e; };
+        showDrawerBusy(true);
+        var done = function (v) { hideDrawerBusy(); return v; };
+        var failed = function (e) { hideDrawerBusy(); throw e; };
         try {
             return Promise.resolve(run()).then(done, failed);
         } catch (e) {
-            hideDrawerSaving();
+            hideDrawerBusy();
             throw e;
         }
+    }
+
+    // New content in the drawer body fades in rather than appearing all at once. It is held
+    // invisible from the moment it arrives (holdBodyForFadeIn, just before it goes in), while
+    // its scripts run and the tabs and footer are rebuilt around it, and then let go
+    // (fadeInBody), so it comes in whole. The tabs and footer come back from faded with it.
+    function holdBodyForFadeIn() {
+        if (bodyEl) { bodyEl.classList.add('formulize-drawer__body--entering'); }
+    }
+
+    function fadeInBody() {
+        if (!bodyEl) { return; }
+        bodyEl.classList.add('formulize-drawer__body--entering');
+        hideDrawerBusy();
+        void bodyEl.offsetHeight; // settle the held state, so letting go of it is a transition
+        bodyEl.classList.remove('formulize-drawer__body--entering');
     }
 
     // ---- Fragment loading ------------------------------------------------------
@@ -438,21 +465,26 @@
     // it, and each layers its own bookkeeping on top. Rejects if the load failed,
     // having already put a message in the panel.
     //
-    // `keepContent` leaves what is already in the panel alone until the new fragment
-    // arrives, instead of blanking it to the "Loading…" placeholder. That is what a
-    // save uses: full screen leaves the form on screen, dimmed, under the saving
-    // animation, and swapping it for the word "Loading" would hide the animation behind
-    // an empty panel.
-    function loadFragmentInto(targetEl, url, fetchOpts, failureMessage, keepContent) {
-        if (!keepContent) {
+    // options, all optional:
+    //   keepContent - leave what is already in the panel alone until the new fragment
+    //                 arrives, instead of blanking it to the "Loading…" placeholder. Entry
+    //                 forms use it: the form being left stays on screen, faded, under the
+    //                 busy animation (see showDrawerBusy).
+    //   onArrive    - called just before the fragment, or the failure message, goes into
+    //                 the panel.
+    function loadFragmentInto(targetEl, url, fetchOpts, failureMessage, options) {
+        options = options || {};
+        if (!options.keepContent) {
             targetEl.innerHTML = '<div class="formulize-drawer__loading">' + S().loading + '</div>';
         }
+        var arrive = function () { if (typeof options.onArrive === 'function') { options.onArrive(); } };
         var opts = fetchOpts || {};
         opts.credentials = 'same-origin';
         return fetch(url, opts)
             .then(function (r) { return r.text(); })
-            .then(function (html) { return injectFragment(targetEl, html); })
+            .then(function (html) { arrive(); return injectFragment(targetEl, html); })
             .catch(function (e) {
+                arrive();
                 targetEl.innerHTML = '<div class="formulize-drawer__loading">' + failureMessage + '</div>';
                 throw e;
             });
@@ -463,18 +495,19 @@
     // control). Every drawer load — open, page turn, subform descend, back — funnels
     // through here. Returns a promise of the formulize-drawer-meta object (null on failure).
     // A POST is always a write: the fragment endpoint runs readelements.php before it
-    // renders. So every drawer load that carries one raises the saving animation, which
+    // renders. So every drawer load that carries one shows the saving animation, which
     // covers save-in-place, a page hop that saves the page it is leaving, and the subform
     // add/delete/clone round trips -- the same set of actions that make full screen
-    // submit the page and show its own saving graphic.
+    // submit the page and show its own saving graphic. Every other load shows the working
+    // animation. Either way the form being left stays on screen, faded, until the new one
+    // fades in over it.
     function fetchIntoDrawer(url, fetchOpts) {
         if (!bodyEl) { return Promise.resolve(null); }
         var saving = !!(fetchOpts && String(fetchOpts.method || '').toUpperCase() === 'POST');
-        if (saving) { showDrawerSaving(); }
+        showDrawerBusy(saving);
         pruneDeadEditors();
-        return loadFragmentInto(bodyEl, url, fetchOpts, S().loadFailed, saving)
+        return loadFragmentInto(bodyEl, url, fetchOpts, S().loadFailed, { keepContent: true, onArrive: holdBodyForFadeIn })
             .then(function () {
-                hideDrawerSaving();
                 // Each freshly loaded form starts as unchanged. The endpoint only defines
                 // formulizechanged when it is undefined, so reset it here to clear any value
                 // left over from a previous drawer session.
@@ -496,12 +529,13 @@
                 renderEntryFooter();
                 updateBackButton();
                 bodyEl.scrollTop = 0;
+                fadeInBody();
                 return meta;
             })
             .catch(function () {
                 // loadFragmentInto has already put the failure message in the panel;
                 // callers just need the null.
-                hideDrawerSaving();
+                fadeInBody();
                 return null;
             });
     }
