@@ -155,8 +155,10 @@ if (isset($_POST['appearance_editor_save']) AND $pageUrl) {
 			$errors[] = $problem;
 		}
 		// the images the save stopped naming, and after a save that failed, the ones
-		// uploaded with it: each goes if no look names it now
-		foreach (array_merge(array_diff($before, $after), array_diff($after, $before)) as $file) {
+		// uploaded with it: each goes if no look names it now. Both lists are keyed by
+		// the setting's name, so they are merged by value, or the second's would
+		// replace the first's.
+		foreach (array_merge(array_values(array_diff($before, $after)), array_values(array_diff($after, $before))) as $file) {
 			if ($file !== '') {
 				formulize_deleteAppearanceUploadedFile($file, $theme);
 			}

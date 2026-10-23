@@ -894,7 +894,8 @@ body:not(.formulize-inline) .lyris-page:has(> #listofentries .lyris-list-screen)
   max-width: 18rem;
   padding: 0 calc(var(--fz-spacing) * 2);
   border: 1px solid transparent;
-  border-radius: var(--fz-radius-md);
+  /* a button, so it has the buttons' corners, as a look sets them */
+  border-radius: var(--fz-button-radius);
   background: transparent;
   color: var(--fz-color-text-muted);
   font-size: var(--fz-control-text);
