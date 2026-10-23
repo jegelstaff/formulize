@@ -221,9 +221,12 @@ class formulize_themeForm extends XoopsThemeForm {
         global $actionFunctionName;
         $js .= "    jQuery('#".$this->getName()."').attr('action', ".$actionFunctionName."());\n";
         if($this->tokenName) {
+            // only this form's own token: every form's token has the same name, and filling in another
+            // form's (a drawer opened over this page, the printable view form) gives it this form's token.
+            // Whichever form is submitted first then uses it up, and the other one's next save is refused.
             $js .= "    jQuery(document).on('focusin click touchstart', 'p.auto_multi, input, select, textarea, div', function() {\n";
             $js .= "        setTimeout(function() {\n";
-            $js .= "            jQuery('input[name=\"".$this->tokenName."\"]').val(\"".$this->tokenVal."\");\n";
+            $js .= "            jQuery('#".$this->getName()." input[name=\"".$this->tokenName."\"]').val(\"".$this->tokenVal."\");\n";
             $js .= "        }, 269);\n";
             $js .= "    });\n";
         }

@@ -343,12 +343,74 @@ if($screen) {
 }
 $renderedElements = ob_get_clean();
 
+// The form goes out the way a full screen form does (see formulize_themeForm in formdisplay.php):
+// with an empty security token, and addressed to a honeypot. A bot that loads a drawer and submits
+// what it finds, on a public form for instance, has nothing to submit that will be accepted, and
+// nowhere real to submit it to.
+//
+// The drawer sends every write to the addresses the form carries (see writeAddress and
+// saveAddress in drawer.js): action for a write that renders the form again, data-save-action for
+// one that only saves. The real ones go in when someone first interacts with the form, before the
+// click that does it reaches anything inside the form, so a button in the form, like a subform's
+// Add, already writes to them. Until then they are not here to be read whole: each is split at a
+// random point in its file name into two variables with made up names, and a function with a made
+// up name puts them back together. The token is filled in a moment after the interaction, as full screen does.
+// Bound to the form element itself, so the listeners go with the form when the drawer loads the
+// next one.
+$tokenElement = new icms_form_elements_Hiddentoken();
+$tokenValue = $tokenElement->getValue();
+$tokenElement->setValue('');
+$honeypotAddress = 'https://bit.ly/2R05JVq';
+$madeUpName = function() {
+    return substr(str_shuffle('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, random_int(15,20));
+};
+$joinFunctionName = $madeUpName();
+$addressPieces = '';
+$setAddresses = '';
+foreach(array(
+    'action' => XOOPS_URL.'/modules/formulize/include/formdisplay-elementsonly.php',
+    'data-save-action' => XOOPS_URL.'/modules/formulize/include/readelements.php') as $attribute=>$address) {
+    // split inside the file name, before its extension, so neither piece names the endpoint
+    $split = random_int(strrpos($address, '/')+3, strrpos($address, '.')-2);
+    $firstPiece = $madeUpName();
+    $secondPiece = $madeUpName();
+    $addressPieces .= "    var $firstPiece = \"".str_replace('"', '%22', substr($address, 0, $split))."\";\n";
+    $addressPieces .= "    var $secondPiece = \"".str_replace('"', '%22', substr($address, $split))."\";\n";
+    $setAddresses .= "        form.setAttribute('$attribute', $joinFunctionName($firstPiece, $secondPiece));\n";
+}
+$tokenJs = "<script type='text/javascript'>
+(function() {
+    var form = document.getElementById('".$formname."');
+    if(!form) { return; }
+".$addressPieces."    function $joinFunctionName(a, b) {
+        return a + b;
+    }
+    var setAddresses = function() {
+".$setAddresses."    };
+    var fillToken = function() {
+        setTimeout(function() {
+            var token = form.querySelector('input[name=\"".$tokenElement->getName()."\"]');
+            if(token) { token.value = '".$tokenValue."'; }
+        }, 269);
+    };
+    ['focusin', 'click', 'touchstart'].forEach(function(type) {
+        form.addEventListener(type, setAddresses, true);
+        form.addEventListener(type, fillToken);
+    });
+    // The drawer's own requests are the only way this form is sent. Pressing enter in a field would
+    // otherwise send it to its action as a page of its own.
+    form.addEventListener('submit', function(e) { e.preventDefault(); });
+})();
+</script>\n";
+
 // the rendered elements, with the security token, and token for deleting entry locks
-$formHtml = "<form id='".htmlspecialchars($formname)."' data-fid='".intval($fid)."' data-frid='".intval($frid)."'>\n"
+$formHtml = "<form id='".htmlspecialchars($formname)."' data-fid='".intval($fid)."' data-frid='".intval($frid)."'"
+    ." action='".$honeypotAddress."' data-save-action='".$honeypotAddress."' method='post' enctype='multipart/form-data'>\n"
     .$renderedElements
-    .$GLOBALS['xoopsSecurity']->getTokenHTML()
+    .$tokenElement->render()
     ."<input type='hidden' name='formulize_entry_lock_token' value='".getEntryLockSecurityToken()."'>"
-    ."</form>\n";
+    ."</form>\n"
+    .$tokenJs;
 
 // Which form buttons this screen presents, and what each is called. Decided by the same
 // core code that builds the full screen form's button tray (see formulize_resolveFormButtons

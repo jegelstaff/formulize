@@ -44,8 +44,9 @@
 
     // ---- Configuration ---------------------------------------------------------
 
+    // Where forms are loaded from. Writes go to the addresses each form carries instead; see
+    // writeAddress and saveAddress.
     var ENDPOINT      = '/modules/formulize/include/formdisplay-elementsonly.php';
-    var SAVE_ENDPOINT = '/modules/formulize/include/readelements.php';
     var FORM_NAME     = 'formulize_drawer';
     // drawer=1 makes the AI page render as a bare fragment (no theme, no header/footer)
     var AI_ENDPOINT   = '/ai/?drawer=1';
@@ -373,8 +374,21 @@
         try { return JSON.parse(el.textContent); } catch (e) { return null; }
     }
 
-    // Build an endpoint URL from frame params (+ optional page for multi-page forms).
-    function buildEntryUrl(p, page) {
+    // Where a form's writes go. The endpoint sends each form out addressed to a honeypot, as a
+    // full screen form is, and puts the real addresses on it when someone first interacts with
+    // it (see formdisplay-elementsonly.php), so a write sent before anyone has goes nowhere.
+    // writeAddress is for a write that renders the form again, saveAddress for one that only saves.
+    function writeAddress(form) {
+        return form.getAttribute('action');
+    }
+
+    function saveAddress(form) {
+        return form.getAttribute('data-save-action');
+    }
+
+    // Build an endpoint URL from frame params (+ optional page for multi-page forms). A write
+    // passes the form's writeAddress as base; a load leaves it out.
+    function buildEntryUrl(p, page, base) {
         var params = [];
         if (p.fid)     { params.push('fid=' + encodeURIComponent(p.fid)); }
         if (p.frid)    { params.push('frid=' + encodeURIComponent(p.frid)); }
@@ -385,7 +399,7 @@
         if (p.entryFrid) { params.push('entry_frid=' + encodeURIComponent(p.entryFrid)); }
         if (page)      { params.push('page=' + encodeURIComponent(page)); }
         params.push('formname=' + FORM_NAME);
-        return moduleBase + ENDPOINT + '?' + params.join('&');
+        return (base || moduleBase + ENDPOINT) + '?' + params.join('&');
     }
 
     // ---- Busy: saving and loading ----------------------------------------------
@@ -1046,7 +1060,7 @@
     function saveCurrentPage(form) {
         // hidden inputs (tokens) must be enabled so they are included in the FormData
         form.querySelectorAll('input[type="hidden"]').forEach(function (i) { i.disabled = false; });
-        var saveUrl = moduleBase + SAVE_ENDPOINT +
+        var saveUrl = saveAddress(form) +
             '?fid='  + encodeURIComponent(form.getAttribute('data-fid') || '') +
             '&frid=' + encodeURIComponent(form.getAttribute('data-frid') || 0);
         return whileSaving(function () {
@@ -1141,7 +1155,7 @@
         fd.append('formulize_save', '1');
         savedDuringSession = true;
         releaseEntryLocks(); // the re-render acquires its own
-        fetchIntoDrawer(buildEntryUrl(currentFrame.params), { method: 'POST', body: fd }, true);
+        fetchIntoDrawer(buildEntryUrl(currentFrame.params, 0, writeAddress(form)), { method: 'POST', body: fd }, true);
     }
 
     // Save and leave the entry. At the top level this closes the drawer and refreshes
@@ -1181,7 +1195,7 @@
             fid:     form.getAttribute('data-fid') || '',
             frid:    form.getAttribute('data-frid') || 0,
             entryId: currentEntryNav.entryId || ''
-        }, targetPage) + '&prevpage=' + encodeURIComponent(currentEntryNav.currentPage);
+        }, targetPage, changed ? writeAddress(form) : '') + '&prevpage=' + encodeURIComponent(currentEntryNav.currentPage);
 
         var opts = null;
         if (changed) {
@@ -1288,7 +1302,7 @@
         fd.set('numsubents', args.numEntries || 1);
         if (formHasChanges() || !parentEntryId) { fd.set('formulize_save', '1'); }
 
-        var url = moduleBase + ENDPOINT +
+        var url = writeAddress(form) +
             '?fid=' + encodeURIComponent(parentFid) +
             '&frid=' + encodeURIComponent(parentFrid) +
             '&formname=' + FORM_NAME;
@@ -1315,7 +1329,7 @@
         var p = currentFrame ? currentFrame.params : {};
         var page = (currentFrame && currentFrame.page > 1) ? currentFrame.page : 0;
         releaseEntryLocks();
-        fetchIntoDrawer(buildEntryUrl(p, page), { method: 'POST', body: fd }, true);
+        fetchIntoDrawer(buildEntryUrl(p, page, writeAddress(form)), { method: 'POST', body: fd }, true);
     }
 
     // ---- Closing ---------------------------------------------------------------
