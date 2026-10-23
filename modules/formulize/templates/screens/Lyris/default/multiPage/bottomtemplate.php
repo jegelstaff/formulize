@@ -6,9 +6,8 @@
 // visual order all agree — the alignment itself is done in the theme's CSS
 // (`#multipage-controls`), not by reversing the flex direction here.
 //
-// Save comes last, at the far right. The drawer's footer follows the same order,
-// because Lyris's drawer toptemplate names it in data-formulize-button-order, so
-// change the two together.
+// Save comes last, at the far right. Lyris's drawer bottomtemplate puts the
+// drawer's buttons in the same order, so change the two together.
 
 print "
 <div style='clear: both;'></div>

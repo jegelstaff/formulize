@@ -325,6 +325,10 @@ $subformStubsJs = "<script type='text/javascript'>
 // The render prints as it goes, deep in displayForm() and the screen handlers, so it is caught here
 // to go into the response with the rest
 ob_start();
+// Which form the drawer asked for. The drawer's bottomtemplate draws the buttons of this form
+// alone, so a subform rendered inside it cannot answer for it (see
+// formulize_drawerButtonTemplateVariables in formdisplay.php).
+$GLOBALS['formulize_elementsOnly_buttonMetaKey'] = formulize_elementsOnlyButtonMetaKey($screen, $fid);
 if($screen) {
 	// NB: this used to overwrite the screen's navstyle and showpageselector to suppress the
 	// navigation chrome. Both were already inert - every read of them lives inside the
@@ -412,12 +416,9 @@ $formHtml = "<form id='".htmlspecialchars($formname)."' data-fid='".intval($fid)
     ."</form>\n"
     .$tokenJs;
 
-// Which form buttons this screen presents, and what each is called. Decided by the same
-// core code that builds the full screen form's button tray (see formulize_resolveFormButtons
-// in formdisplay.php), recorded during the render above, and published here for the form
-// that was actually asked for - so a subform rendered inside it cannot answer for it. The
-// drawer builds its footer from this, which is what keeps the two surfaces consistent.
-$buttonMeta = formulize_elementsOnlyButtonMetaJs($screen, $fid);
+// What the printable view button posts, for the drawer to send (see
+// formulize_elementsOnlyPrintableViewJs in formdisplay.php).
+$printableViewJs = formulize_elementsOnlyPrintableViewJs();
 
 // Rich-text (CKEditor) bootstrap. In a full page load formdisplay.php's drawJavascript()
 // loads the CKEditor library (via $xoTheme->addScript) and emits the initializeCKEditor /
@@ -536,7 +537,7 @@ print $saveMessages
     .$drawerMeta
     .$subformStubsJs
     .$formHtml
-    .$buttonMeta
+    .$printableViewJs
     .$editorJs
     .$officeUseOnlyJs
     .$validationJs
