@@ -784,6 +784,34 @@
 
     function renderEntryFooter() {
         if (!footEl || drawerMode === 'ai') { return; } // the AI panel has its own controls
+        appendEntryFooterControls();
+        applyThemeButtonOrder();
+    }
+
+    // The order of the footer's buttons is the theme's to choose, as the order of the full
+    // screen bar is: a theme's multiPage bottomtemplate lays out the bar's slots however it
+    // likes, and its drawer toptemplate says the same thing to the drawer by putting
+    // data-formulize-button-order on its wrapper, a space separated list of slot names
+    // (prev, save, close, next, printbutton). Lyris names "prev close next save", so Save
+    // comes last. Buttons in slots the list leaves out keep their places ahead of the ones
+    // it names, and with no list at all the footer keeps the order it was built in.
+    function applyThemeButtonOrder() {
+        var holder = bodyEl ? bodyEl.querySelector('[data-formulize-button-order]') : null;
+        if (!holder) { return; }
+        var order = holder.getAttribute('data-formulize-button-order').trim().split(/\s+/);
+        var buttons = Array.prototype.slice.call(footEl.querySelectorAll('.formulize-form-submit-button'));
+        buttons.map(function (btn, index) {
+            return { btn: btn, rank: order.indexOf(btn.name), index: index };
+        }).sort(function (a, b) {
+            return (a.rank - b.rank) || (a.index - b.index);
+        }).forEach(function (item) {
+            // the buttons all follow the notice and page meta, so moving each to the end
+            // in turn lays them out in order without disturbing those
+            footEl.appendChild(item.btn);
+        });
+    }
+
+    function appendEntryFooterControls() {
         footEl.innerHTML = '';
 
         // What came back is not a form - an error, or word that the entry can't be shown - so
@@ -815,13 +843,15 @@
             footEl.appendChild(indicator);
         }
 
-        // The tray is laid out in the full screen action bar's order. The Lyris multiPage
+        // The tray is laid out in the full screen action bar's order. The multiPage
         // bottomtemplate emits `$pageIndicator $pageSelector $previousPageButton
-        // $closePageButton $nextPageButton $savePageButton`, so: page meta, then
-        // previous, close, next, and Save last (issue #1055). Following that here is
-        // what makes the two surfaces read the same. The printable view button has no
-        // slot in that bar (full screen puts it in its own #formulize-button-controls
-        // tray), so it leads.
+        // $savePageButton $closePageButton $nextPageButton`, so: page meta, then
+        // previous, save, close, next. Following that here is what makes the two
+        // surfaces read the same, rather than the drawer's old close/save-and-close/
+        // save/next ordering. The printable view button has no slot in that bar (full
+        // screen puts it in its own #formulize-button-controls tray), so it leads. A
+        // theme whose bar uses another order says so, and applyThemeButtonOrder
+        // rearranges the buttons to match once they are built.
         if (buttons.printableView && buttons.printAction) {
             footEl.appendChild(makeButton(buttons.printableView, 'printbutton', openPrintableView));
         }
@@ -830,11 +860,11 @@
         // The screen's button set for the page being shown, computed server side by
         // formulize_multipageButtonSet() — the very same call the full screen action bar
         // is built from — and published in formulize-multipage-nav as ordered {slot, text}
-        // pairs. Rendering that set, with Save moved to the end, is what makes the drawer's
-        // footer the full screen footer: on the kitchen sink screen that is "Save and
-        // Close / Close / Save and Continue / Save" on page one, "Save and Go Back / Close
-        // / Save and Continue / Save" in the middle, and "... / Save and Finish / Save" on
-        // the last page, because that is what the screen's own settings resolve to there.
+        // pairs. Rendering it verbatim is what makes the drawer's footer the full screen
+        // footer: on the kitchen sink screen that is "Save and Close / Save / Close /
+        // Save and Continue" on page one, "Save and Go Back / Save / Close / Save and
+        // Continue" in the middle, and "... / Save and Finish" on the last page, because
+        // that is what the screen's own settings resolve to there.
         //
         // This replaces the drawer's old assembly of a button set out of two separate
         // pieces of metadata, which past page one produced a previous-page control AND a
@@ -843,21 +873,13 @@
         var navSet = (multiPage && navButtons && nav.buttons && nav.buttons.length) ? nav.buttons : null;
 
         if (navSet) {
-            // Save is held back and appended last, so it is the final button in the
-            // tray whatever order the slots arrive in (issue #1055).
-            var saveSlotButton = null;
             navSet.forEach(function (slotButton) {
-                var btn = makeButton(slotButton.text, slotButton.slot,
-                                     navSlotAction(slotButton.slot, nav, inSub));
-                if (slotButton.slot === 'save') { saveSlotButton = btn; return; }
-                footEl.appendChild(btn);
+                footEl.appendChild(makeButton(slotButton.text, slotButton.slot,
+                                              navSlotAction(slotButton.slot, nav, inSub)));
             });
             // A screen with no close button still needs a way out of a sub entry.
             if (inSub && !navSet.some(function (b) { return b.slot === 'close'; })) {
                 footEl.appendChild(makeButton(S().back, 'close', goBack));
-            }
-            if (saveSlotButton) {
-                footEl.appendChild(saveSlotButton);
             }
             return;
         }
@@ -872,6 +894,13 @@
             footEl.appendChild(makeButton(buttons.saveAndLeave, 'prev', saveEntryFromDrawer));
         }
 
+        // Save means save, as it does full screen: the entry is written and stays open for
+        // more editing. This is the one accent/primary control in the bar, because it is
+        // the one full screen paints that way (Lyris keys off name^="save").
+        if (buttons.save) {
+            footEl.appendChild(makeButton(buttons.save, 'save', saveAndStay));
+        }
+
         // The done/close button leaves without saving. Inside a sub entry that means
         // returning to the parent, which is what the same button does full screen. A
         // screen with no close button still gets the Back control, so there is always a
@@ -880,14 +909,6 @@
             footEl.appendChild(makeButton(buttons.done, 'close', inSub ? goBack : closeEntryDrawer));
         } else if (inSub) {
             footEl.appendChild(makeButton(S().back, 'close', goBack));
-        }
-
-        // Save means save, as it does full screen: the entry is written and stays open for
-        // more editing. This is the one accent/primary control in the bar, because it is
-        // the one full screen paints that way (Lyris keys off name^="save"). It is the
-        // last button in the tray, as it is in the full screen bar (issue #1055).
-        if (buttons.save) {
-            footEl.appendChild(makeButton(buttons.save, 'save', saveAndStay));
         }
     }
 

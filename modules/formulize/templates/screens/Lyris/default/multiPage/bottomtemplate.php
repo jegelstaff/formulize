@@ -6,9 +6,9 @@
 // visual order all agree — the alignment itself is done in the theme's CSS
 // (`#multipage-controls`), not by reversing the flex direction here.
 //
-// Save is the last button in the bar (issue #1055), so the primary action sits at
-// the far right. The right drawer's footer (drawer.js renderEntryFooter) puts it
-// last too, so the two surfaces keep the same order.
+// Save comes last, at the far right. The drawer's footer follows the same order,
+// because Lyris's drawer toptemplate names it in data-formulize-button-order, so
+// change the two together.
 
 print "
 <div style='clear: both;'></div>
