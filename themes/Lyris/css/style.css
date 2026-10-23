@@ -2473,8 +2473,7 @@ body:has(#formulize-masquerade-block) {
    density's own horizontal padding, so it tracks the compact/comfortable field
    metrics instead of a hardcoded px width. Scoped with a child combinator so it
    only ever hits the count box, which is a direct child of the controls row; the
-   filter-search box sits inside a nested div.subform-filter-search and keeps the
-   10em core gives it in modules/formulize/templates/css/formulize.css. */
+   filter box is not in the controls row at all (see "Subform frame" below). */
 .lyris-form .subform_button_controls > input[type="text"],
 .lyris-form-screen .subform_button_controls > input[type="text"] {
   width: calc(2ch + 2 * var(--fz-field-padding-x) + 2px);
@@ -4851,6 +4850,106 @@ body.formulize-popup {
 .lyris-form-screen .formulize-subform-table a.loe-edit-entry {
   display: inline-block;
   line-height: 1;
+}
+
+/* ---------- Subform frame ----------
+   Core draws every subform element in a frame (`.formulize-subform`), and its
+   structure, header, selection bar and Add control are styled in
+   modules/formulize/templates/css/formulize.css. What is here is Lyris's part:
+   the frame takes the fields' radius, and the table and the accordion that
+   Lyris skins above are fitted into it. The same in the drawer and full screen. */
+
+.formulize-subform {
+  --formulize-subform-radius: var(--lyris-field-radius, var(--fz-radius-md));
+}
+
+/* The header's controls are the height of Lyris's buttons, the boxes among them
+   too (a field is taller). The same in the drawer, whose smaller subform
+   buttons and their margins (see "Subform elements" above) have no place in
+   the header's row. */
+.formulize-subform .subform_button_controls input[type="button"],
+.formulize-subform .subform_button_controls input[type="text"],
+.formulize-subform .formulize-subform__filter input[type="text"],
+.formulize-drawer .formulize-subform .subform_button_controls input[type="button"],
+.formulize-drawer .formulize-subform .subform_button_controls input[type="text"],
+.formulize-drawer .formulize-subform .formulize-subform__filter input[type="text"] {
+  height: var(--fz-control-height);
+  margin: 0;
+}
+
+/* The footer of paged entries reads as a list's footer does (its page controls
+   are the list's, see pageNavControls). */
+.formulize-subform__foot {
+  font-family: var(--fz-control-font);
+  font-size: var(--fz-control-text);
+}
+
+/* Rows in a table: the frame is the table's border now, and the header is above
+   it, so only the bottom corners are rounded, and only when no footer follows. */
+.formulize-subform .formulize-subform-table-scrollbox {
+  margin-top: 0;
+}
+.formulize-subform .formulize-subform-table {
+  --formulize-subform-cell-radius: 0px;
+  border: 0;
+  border-radius: 0;
+}
+.formulize-subform:not(:has(> .formulize-subform__foot)) > .formulize-subform__body .formulize-subform-table > tbody > tr:last-child > :first-child {
+  border-bottom-left-radius: var(--formulize-subform-inner-radius);
+}
+.formulize-subform:not(:has(> .formulize-subform__foot)) > .formulize-subform__body .formulize-subform-table > tbody > tr:last-child > :last-child {
+  border-bottom-right-radius: var(--formulize-subform-inner-radius);
+}
+.formulize-subform .formulize-subform-table > tbody > tr > .subentry-delete-cell {
+  padding-left: var(--formulize-subform-padding-x);
+}
+/* a checked row, tinted as on a list */
+.formulize-subform .formulize-subform-table > tbody > tr:has(> .subentry-delete-cell > .delbox:checked) > td {
+  background: var(--fz-color-accent-soft);
+}
+
+/* The accordion: each entry is a row of the frame, divided from the next by a
+   rule (core's), in place of a bordered bar of its own. */
+.formulize-subform .subform-accordion-container.ui-accordion .subform-header.ui-accordion-header {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.formulize-subform .subform-accordion-container.ui-accordion .subform-header.ui-accordion-header:is(.ui-state-hover, .ui-state-focus) {
+  background: var(--fz-color-surface-2);
+}
+.formulize-subform .subform-accordion-container.ui-accordion .subform-header.ui-accordion-header.ui-state-active {
+  background: var(--fz-color-accent-soft);
+}
+.formulize-subform .subform-accordion-container.ui-accordion .accordion-content.ui-accordion-content {
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--fz-color-border);
+  border-radius: 0;
+}
+/* Pointing at an entry's header, or at its checkbox, tints the whole row, checkbox
+   cell included, the way a checked or open entry is tinted throughout. (The
+   rules for a checked and an open entry follow, and win.) */
+.formulize-subform .subform-accordion-container > .subform-deletebox:has(+ .subform-entry-container > :is(.ui-state-hover, .ui-state-focus)),
+.formulize-subform .subform-accordion-container > .subform-deletebox:has(> input.delbox):hover {
+  background: var(--fz-color-surface-2);
+}
+.formulize-subform .subform-accordion-container.ui-accordion > .subform-deletebox:has(> input.delbox:not(:checked)):hover + .subform-entry-container > .subform-header.ui-accordion-header:not(.ui-state-active) {
+  background: var(--fz-color-surface-2);
+}
+/* A checked entry is tinted like a checked row, and so is an open one (its
+   header already is). */
+.formulize-subform .subform-accordion-container.ui-accordion > .subform-deletebox:has(> input.delbox:checked) + .subform-entry-container > .subform-header.ui-accordion-header,
+.formulize-subform .subform-accordion-container > .subform-deletebox:has(> input.delbox:checked) {
+  background: var(--fz-color-accent-soft);
+}
+/* The checkbox's cell is as tall as the whole entry, form and all when it is
+   open, so there its tint is drawn only as deep as the header: the header's
+   line of text and the padding above and below it. */
+.formulize-subform .subform-accordion-container.ui-accordion > .subform-deletebox:has(+ .subform-entry-container > .ui-state-active) {
+  background: linear-gradient(var(--fz-color-accent-soft), var(--fz-color-accent-soft)) no-repeat;
+  background-size: 100% calc(var(--fz-text-sm--line-height) + var(--fz-spacing) * 6);
 }
 
 /* ---------- "Table of elements" (grid) element (issue #119) ----------

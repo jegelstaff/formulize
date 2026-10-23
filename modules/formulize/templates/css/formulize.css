@@ -915,6 +915,13 @@ div#formulize-printpreview div.formulize-subform-table-scrollbox {
 		overflow-y: visible !important;
 }
 
+/* In the printable view, the forms of a subform's entries are drawn straight
+   into the frame, with no accordion around them, so the frame gives them their
+   space from its edges. */
+div#formulize-printpreview .formulize-subform:not(.formulize-subform--row) > .formulize-subform__body {
+	padding: 1em;
+}
+
 div#formulize-printpreview div#multipage-controls {
 	display: none !important
 }
@@ -1342,12 +1349,366 @@ div.formulize-office-use-only-start-hidden {
 		display: none;
 }
 
-.subform-filter-search {
-	margin-bottom: 0.5em;
-	margin-top: 0.5em;
+/* ---- The subform frame -------------------------------------------------------
+   Every subform element is drawn in a frame of its own (see the end of
+   drawSubLinks() in modules/formulize/class/subformListingsElement.php),
+   whichever way its entries are shown: rows in a table, an accordion of forms,
+   or forms laid out flat. The frame is a small list of entries:
+
+     .formulize-subform__top     the header, and the selection bar that covers it
+       .formulize-subform__head    caption, number of entries and help text at the
+                                   start; the filter box and the Add control at the end
+       .formulize-subform__selbar  shown while entries are checked: Clear, the
+                                   number checked, Clone and Delete
+     .formulize-subform__body    the entries, or a line saying there are none
+     .formulize-subform__foot    when the entries are paged: which are showing,
+                                 and the page navigation, as on a list
+
+   The Delete and Clone buttons live in the selection bar, which is placed over
+   the header and is exactly as big, so checking an entry moves nothing.
+
+   Structure is core's, built on Formulize UI's tokens, so the frame works in any
+   theme as it is. A theme skins what it draws inside (its table, its accordion)
+   and may set --formulize-subform-radius and --formulize-subform-padding-x.
+   Every theme gets this markup, the printable view too. */
+
+.formulize-subform {
+  --formulize-subform-radius: var(--fz-radius-md);
+  --formulize-subform-inner-radius: max(0px, calc(var(--formulize-subform-radius) - 1px));
+  --formulize-subform-padding-x: calc(var(--fz-spacing) * 3.5);
+  min-width: 0;
+  border: 1px solid var(--fz-color-border);
+  border-radius: var(--formulize-subform-radius);
+  background: var(--fz-color-surface);
 }
-div.subform_button_controls div.subform-filter-search input[type=text] {
-	width: 10em;
+
+.formulize-subform__top {
+  position: relative;
+}
+
+/* The header. It wraps when there isn't room for both ends (in the drawer, say,
+   with a filter box), and the selection bar covers it at whatever height it is. */
+.formulize-subform__head {
+  box-sizing: border-box;
+  min-height: calc(var(--fz-spacing) * 13);
+  padding: calc(var(--fz-spacing) * 2.5) var(--formulize-subform-padding-x);
+  border-bottom: 1px solid var(--fz-color-border);
+  border-radius: var(--formulize-subform-inner-radius) var(--formulize-subform-inner-radius) 0 0;
+  background: var(--fz-toolbar-bg);
+}
+
+.formulize-subform__heading {
+  flex: 1 1 auto;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 0;
+}
+
+.formulize-subform__title {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--fz-spacing) * 2);
+  max-width: 100%;
+}
+
+.formulize-subform .formulize-subform__title .subform-caption {
+  margin: 0;
+  padding: 0;
+  font-size: var(--fz-text-sm);
+  line-height: var(--fz-text-sm--line-height);
+  font-weight: 600;
+  color: var(--fz-color-text);
+}
+
+.formulize-subform__count {
+  padding: 0 calc(var(--fz-spacing) * 2);
+  border-radius: var(--fz-radius-full);
+  background: var(--fz-color-surface-3);
+  color: var(--fz-color-text-muted);
+  font-size: var(--fz-text-xs);
+  line-height: var(--fz-text-xs-plus--line-height);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.formulize-subform .formulize-subform__heading .subform-helptext {
+  margin: 0;
+  color: var(--fz-color-text-muted);
+  font-size: var(--fz-text-xs);
+  line-height: var(--fz-text-xs--line-height);
+}
+
+/* The controls: nothing in the row has a margin of its own, the gap spaces
+   them. Their size is the theme's: a button here is as big as the theme's
+   buttons are. */
+.formulize-subform .subform_button_controls input[type="button"],
+.formulize-subform .subform_button_controls input[type="text"] {
+  margin: 0;
+}
+
+/* The filter box is at the end of the header, before the Add control, and a
+   rule divides them: one finds entries, the other makes them. It is a search
+   box: the icon is inside it, its label is its placeholder, and Enter applies
+   it. Its height is the theme's, as the controls' is. It is not one of the
+   controls (themes size a text box among them as Add's count box). */
+.formulize-subform__filter {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 0 1 16em;
+  min-width: 10em;
+  margin: 0 0 0 auto;
+}
+.formulize-subform__filter + .subform_button_controls {
+  margin-inline-start: 0;
+}
+.formulize-subform__filter + .subform_button_controls:has(> input, > span)::before {
+  content: "";
+  align-self: center;
+  width: 1px;
+  height: calc(var(--fz-spacing) * 5);
+  margin-inline: calc(var(--fz-spacing) * 1);
+  background: var(--fz-color-border-strong);
+}
+.formulize-subform .formulize-subform__filter input[type="text"] {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding-inline-start: calc(var(--fz-spacing) * 8);
+}
+.formulize-subform__filter-icon {
+  position: absolute;
+  inset-inline-start: calc(var(--fz-spacing) * 2.5);
+  color: var(--fz-color-text-muted);
+  pointer-events: none;
+}
+
+/* Add is the subform's main action, so it is a primary button, as a list's
+   Add button is. Only its colours are set here: its size is the theme's. */
+.formulize-subform .subform_button_controls input[type="button"].formulize-subform__add-button {
+  border-color: var(--fz-button-primary-bg);
+  background: var(--fz-button-primary-bg);
+  color: var(--fz-button-primary-text);
+}
+.formulize-subform .subform_button_controls input[type="button"].formulize-subform__add-button:hover {
+  border-color: var(--fz-button-primary-hover);
+  background: var(--fz-button-primary-hover);
+}
+
+/* "Add [3] entries": the button, the count box and the text after it, joined
+   into one control that reads as a sentence, so it is plain what the number is
+   for. The outline is the group's; the three parts are divided by rules. */
+.formulize-subform__add {
+  display: inline-flex;
+  align-items: stretch;
+  overflow: hidden;
+  border: 1px solid var(--fz-color-border-strong);
+  border-radius: var(--fz-button-radius, var(--fz-radius-md));
+  background: var(--fz-color-surface);
+}
+
+.formulize-subform__add:focus-within {
+  border-color: var(--fz-color-focus);
+  box-shadow: var(--fz-focus-ring);
+}
+
+.formulize-subform .subform_button_controls .formulize-subform__add > input[type="button"],
+.formulize-subform .subform_button_controls .formulize-subform__add > input[type="text"] {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.formulize-subform .subform_button_controls .formulize-subform__add > input[type="text"] {
+  box-sizing: content-box;
+  width: 2ch;
+  min-width: 0;
+  padding: 0 calc(var(--fz-spacing) * 2.5);
+  border-inline: 1px solid var(--fz-color-border-strong);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.formulize-subform__add-unit {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 calc(var(--fz-spacing) * 3);
+  background: var(--fz-color-surface-2);
+  color: var(--fz-color-text);
+  font-size: var(--fz-control-text);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* The selection bar: hidden until an entry is checked, then placed over the
+   header and the frame's border around it. Dark, with pill buttons, like the
+   bar a list of entries shows while rows are checked. */
+.formulize-subform .formulize-subform__selbar {
+  display: none;
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  right: -1px;
+  bottom: 0;
+  z-index: 10;
+  flex-wrap: nowrap;
+  padding: calc(var(--fz-spacing) * 2.5) var(--formulize-subform-padding-x);
+  border: 1px solid var(--fz-color-text);
+  border-radius: var(--formulize-subform-radius) var(--formulize-subform-radius) 0 0;
+  background: var(--fz-color-text);
+  color: var(--fz-color-page);
+}
+.formulize-subform .formulize-subform__selbar.is-active {
+  display: flex;
+}
+.formulize-subform__selbar > .fz-toolbar__start,
+.formulize-subform__selbar > .fz-toolbar__end {
+  flex-wrap: nowrap;
+}
+.formulize-subform__selection-count {
+  font-size: var(--fz-text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.formulize-subform .formulize-subform__top .formulize-subform__selbar input[type="button"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.75rem;
+  margin: 0;
+  padding: 0 calc(var(--fz-spacing) * 3);
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: var(--fz-radius-full);
+  background: rgba(255,255,255,.10);
+  color: #fff;
+  font: inherit;
+  font-size: var(--fz-control-text);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.formulize-subform .formulize-subform__top .formulize-subform__selbar input[type="button"]:hover {
+  background: rgba(255,255,255,.18);
+  border-color: rgba(255,255,255,.28);
+  color: #fff;
+}
+.formulize-subform .formulize-subform__top .formulize-subform__selbar input[type="button"]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255,255,255,.35);
+}
+/* Delete is the danger button, and comes last. Clear is the outlined button.
+   (The buttons are selected through the frame, its top and the bar so that they
+   outrank a theme's own rules for a bare input[type="button"], whichever
+   stylesheet loads last.) */
+.formulize-subform .formulize-subform__top .formulize-subform__selbar input[name="deletesubs"] {
+  order: 1;
+  background: rgba(255,90,90,.14);
+  border-color: rgba(255,120,120,.35);
+  color: #ffbaba;
+}
+.formulize-subform .formulize-subform__top .formulize-subform__selbar input[name="deletesubs"]:hover {
+  background: rgba(255,90,90,.22);
+  border-color: rgba(255,120,120,.5);
+  color: #fff;
+}
+.formulize-subform .formulize-subform__top .formulize-subform__selbar input.formulize-subform__clear {
+  background: transparent;
+  border-color: rgba(255,255,255,.25);
+  color: rgba(255,255,255,.85);
+}
+.formulize-subform .formulize-subform__top .formulize-subform__selbar input.formulize-subform__clear:hover {
+  background: rgba(255,255,255,.10);
+  border-color: rgba(255,255,255,.45);
+  color: #fff;
+}
+
+/* No entries */
+.formulize-subform__empty {
+  margin: 0;
+  padding: calc(var(--fz-spacing) * 6) calc(var(--fz-spacing) * 4);
+  color: var(--fz-color-text-muted);
+  font-size: var(--fz-text-xs-plus);
+  text-align: center;
+}
+.formulize-subform--empty .formulize-subform-table-scrollbox {
+  display: none;
+}
+
+/* The footer, when the entries are paged. As on a list: which entries are
+   showing at the start, and the page navigation, from the theme's
+   pageNavControls template, at the end. */
+.formulize-subform__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--fz-spacing) * 2);
+  padding: calc(var(--fz-spacing) * 1.5) var(--formulize-subform-padding-x);
+  border-top: 1px solid var(--fz-color-border);
+  border-radius: 0 0 var(--formulize-subform-inner-radius) var(--formulize-subform-inner-radius);
+  background: var(--fz-toolbar-bg);
+  color: var(--fz-color-text-muted);
+  font-size: var(--fz-text-xs-plus);
+}
+.formulize-subform__foot-end {
+  margin-inline-start: auto;
+}
+.formulize-subform__foot .formulize-page-navigation {
+  margin: 0;
+  padding: 0;
+  background: none;
+}
+
+/* Forms, in an accordion or laid out flat: each entry is a row of the frame,
+   divided from the next by a rule, in place of a bordered bar of its own. Its
+   checkbox is in a column at the start of the row (it is emitted as a sibling before the entry). */
+.formulize-subform .formulize-subform__body > :is(.subform-accordion-container, .subform-flatform-container):has(> .subform-deletebox > input.delbox) {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: stretch;
+}
+.formulize-subform .formulize-subform__body > :is(.subform-accordion-container, .subform-flatform-container) > .subform-entry-container,
+.formulize-subform .formulize-subform__body > :is(.subform-accordion-container, .subform-flatform-container):has(> .subform-deletebox > input.delbox) > .subform-deletebox {
+  border-bottom: 1px solid var(--fz-color-border);
+}
+.formulize-subform .formulize-subform__body > :is(.subform-accordion-container, .subform-flatform-container) > .subform-entry-container:last-child,
+.formulize-subform .formulize-subform__body > :is(.subform-accordion-container, .subform-flatform-container):has(> .subform-deletebox > input.delbox) > .subform-deletebox:nth-last-child(2) {
+  border-bottom: 0;
+}
+.formulize-subform .formulize-subform__body > :is(.subform-accordion-container, .subform-flatform-container) > .subform-deletebox:has(> input.delbox) {
+  display: flex;
+  align-items: flex-start;
+  padding: calc(var(--fz-spacing) * 3.5) 0 0 var(--formulize-subform-padding-x);
+  font-size: 0; /* the spaces core puts after the box */
+}
+.formulize-subform .formulize-subform__body > :is(.subform-accordion-container, .subform-flatform-container) > .subform-deletebox > input.delbox {
+  margin: 0;
+}
+
+/* An open accordion entry is as tall as its form (heightStyle: 'content'), so
+   it never needs to scroll, but jQuery UI makes it overflow: auto all the same.
+   Anything in the form that reaches past its edge then gave the entry a
+   scrollbar of its own: the tooltip of the last button on a rich text editor's
+   toolbar, which is in the page, out of sight, until the button is pointed at,
+   was enough for a horizontal one. Visible overflow also lets date pickers and
+   autocomplete lists open past the entry's edge. (While an entry opens or
+   closes, jQuery UI hides the overflow itself, inline. Some versions leave it
+   hidden once the entry is open, so the accordion clears it then: see the
+   accordion's activate option in drawSubLinks().) */
+.formulize-subform .subform-accordion-container .accordion-content.ui-accordion-content {
+  overflow: visible;
+}
+
+/* Flat forms: the entry's name is a heading above its form */
+.formulize-subform .subform-flatform > .flatform-name {
+  margin: 0;
+  padding: calc(var(--fz-spacing) * 3) calc(var(--fz-spacing) * 4);
+  font-size: var(--fz-text-sm);
+  font-weight: 600;
+}
+.formulize-subform .subform-flatform > .accordion-content {
+  padding: 0 calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 4);
 }
 
 /* ---- The embedded AI assistant (ai/index.php) -------------------------------
