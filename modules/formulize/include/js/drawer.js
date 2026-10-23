@@ -784,6 +784,34 @@
 
     function renderEntryFooter() {
         if (!footEl || drawerMode === 'ai') { return; } // the AI panel has its own controls
+        appendEntryFooterControls();
+        applyThemeButtonOrder();
+    }
+
+    // The order of the footer's buttons is the theme's to choose, as the order of the full
+    // screen bar is: a theme's multiPage bottomtemplate lays out the bar's slots however it
+    // likes, and its drawer toptemplate says the same thing to the drawer by putting
+    // data-formulize-button-order on its wrapper, a space separated list of slot names
+    // (prev, save, close, next, printbutton). Lyris names "prev close next save", so Save
+    // comes last. Buttons in slots the list leaves out keep their places ahead of the ones
+    // it names, and with no list at all the footer keeps the order it was built in.
+    function applyThemeButtonOrder() {
+        var holder = bodyEl ? bodyEl.querySelector('[data-formulize-button-order]') : null;
+        if (!holder) { return; }
+        var order = holder.getAttribute('data-formulize-button-order').trim().split(/\s+/);
+        var buttons = Array.prototype.slice.call(footEl.querySelectorAll('.formulize-form-submit-button'));
+        buttons.map(function (btn, index) {
+            return { btn: btn, rank: order.indexOf(btn.name), index: index };
+        }).sort(function (a, b) {
+            return (a.rank - b.rank) || (a.index - b.index);
+        }).forEach(function (item) {
+            // the buttons all follow the notice and page meta, so moving each to the end
+            // in turn lays them out in order without disturbing those
+            footEl.appendChild(item.btn);
+        });
+    }
+
+    function appendEntryFooterControls() {
         footEl.innerHTML = '';
 
         // What came back is not a form - an error, or word that the entry can't be shown - so
@@ -821,7 +849,9 @@
         // previous, save, close, next. Following that here is what makes the two
         // surfaces read the same, rather than the drawer's old close/save-and-close/
         // save/next ordering. The printable view button has no slot in that bar (full
-        // screen puts it in its own #formulize-button-controls tray), so it leads.
+        // screen puts it in its own #formulize-button-controls tray), so it leads. A
+        // theme whose bar uses another order says so, and applyThemeButtonOrder
+        // rearranges the buttons to match once they are built.
         if (buttons.printableView && buttons.printAction) {
             footEl.appendChild(makeButton(buttons.printableView, 'printbutton', openPrintableView));
         }

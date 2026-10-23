@@ -434,6 +434,26 @@ back button at the left, where people look for it, the logo in the middle, and t
 the right, at the other end from back, with the menu sliding in from that side. See "The header on
 phones" in each theme's `css/style.css`.
 
+## 9. Put the form buttons in your own order (optional)
+
+The buttons at the bottom of a form screen are laid out by your theme's multiPage screen template,
+`modules/formulize/templates/screens/<Theme>/default/multiPage/bottomtemplate.php`. It prints each
+button where you put its variable: `$previousPageButton`, `$savePageButton`, `$closePageButton` and
+`$nextPageButton`. Without a template of your own, the order is previous, save, close, next.
+
+The drawer, where entries open over a list, builds its own row of buttons, in that same order. If
+your template puts them in a different order, tell the drawer by adding
+`data-formulize-button-order` to the outer element of your drawer template,
+`modules/formulize/templates/screens/<Theme>/default/drawer/toptemplate.php`. List the buttons by
+name, separated by spaces: `prev`, `save`, `close` and `next`. Lyris puts Save last, at the right:
+
+```html
+<div class="my-form-screen" data-formulize-button-order="prev close next save">
+```
+
+A button you leave out of the list goes ahead of the ones you name. The printable view button is
+called `printbutton`, and comes first unless you name it.
+
 ## Checking your theme
 
 Open a long form in your theme, scroll down, and save it. You should be returned to where you were

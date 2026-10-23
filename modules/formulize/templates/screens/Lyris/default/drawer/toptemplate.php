@@ -35,8 +35,12 @@
 //   and is why the two divs were never collapsed.
 //
 // The card wrapper is deliberately dropped - the drawer itself plays that part.
+//
+// data-formulize-button-order lays out the drawer's footer buttons in the order
+// Lyris's multiPage bottomtemplate gives the full screen bar, with Save last (see
+// applyThemeButtonOrder in modules/formulize/include/js/drawer.js).
 
 print "
-<div class='lyris-form-screen formulize-drawer-form'>
+<div class='lyris-form-screen formulize-drawer-form' data-formulize-button-order='prev close next save'>
 <div class='lyris-form lyris-form--label-top form-container'>
 ";
