@@ -228,6 +228,14 @@ class formulizeScreenHandler {
 	// that insert() can recognize it and swap in a handle made from the sid the database has just assigned
 	const TEMPORARY_HANDLE_PREFIX = 'temporary_screen_handle_';
 
+	// A copy of the typed screen object get() made last, for the type handler's get() of the same screen to take,
+	// so code that still fetches a screen in two steps (through this handler, then again through the type's) does
+	// not query for it twice. It lives only until the next get() of any kind, insert() or delete(), so it never
+	// outlives the line of code that follows; and it is a copy, so changes made to the object get() returned
+	// don't come along with it. Held with the sid and the class of the handler that made it, since only that
+	// same handler's get() would have made the same object: array('sid' => ..., 'handlerClass' => ..., 'screen' => ...)
+	private static $typedScreenHandoff = null;
+
 	var $db;
 	function __construct(&$db) {
 		$this->db =& $db;
@@ -238,6 +246,19 @@ class formulizeScreenHandler {
 			$instance = new formulizeScreenHandler($db);
 		}
 		return $instance;
+	}
+
+	// Called first by each type handler's get(): the object this handler's get() just made for this handler's
+	// get() above, if it is this screen and this handler's class made it, else false. $this is the type handler
+	// doing the get(), so a handler that extends another one only ever takes what it made itself. Either way the
+	// handoff is used up.
+	protected function takeTypedScreenHandoff($sid) {
+		$handoff = self::$typedScreenHandoff;
+		self::$typedScreenHandoff = null;
+		if ($handoff AND $handoff['sid'] == $sid AND $handoff['handlerClass'] === get_class($this)) {
+			return $handoff['screen'];
+		}
+		return false;
 	}
 	function create() {
 		return new formulizeScreen();
@@ -404,7 +425,14 @@ class formulizeScreenHandler {
 		return $screens;
 	}
 
+	// Returns the screen as an object of its own type (formulizeMultiPageScreen, etc), carrying that type's settings
+	// as well as the ones every screen has, the way the elements handler returns elements of their own type. So one
+	// get() through this handler is enough; there is no need to get the screen again through its type's handler.
+	// Falls back to a plain formulizeScreen when the type has no class, or the screen has no row of the type's settings.
+	// Only this handler hands off to the type's: a type handler that doesn't have its own get() runs this code too,
+	// and gets the plain object rather than handing off to itself forever.
 	function get($sid_or_screen_handle) {
+		self::$typedScreenHandoff = null;
 		if (is_numeric($sid_or_screen_handle)) {
 			$sql = 'SELECT * FROM '.$this->db->prefix('formulize_screen').' WHERE sid='.intval($sid_or_screen_handle);
 		} else {
@@ -415,8 +443,18 @@ class formulizeScreenHandler {
 		}
 		$numrows = $this->db->getRowsNum($result);
 		if ($numrows == 1) {
+				$row = $this->db->fetchArray($result);
+				$type = (string) $row['type'];
+				if (get_class($this) === 'formulizeScreenHandler'
+					AND preg_match('/^[a-z][A-Za-z0-9]*$/', $type)
+					AND file_exists(XOOPS_ROOT_PATH.'/modules/formulize/class/'.$type.'Screen.php')
+					AND $typeHandler = xoops_getmodulehandler($type.'Screen', 'formulize')
+					AND $typedScreen = $typeHandler->get($row['sid'])) {
+					self::$typedScreenHandoff = array('sid' => intval($row['sid']), 'handlerClass' => get_class($typeHandler), 'screen' => clone $typedScreen);
+					return $typedScreen;
+				}
 				$screen = new formulizeScreen();
-				$screen->assignVars($this->db->fetchArray($result));
+				$screen->assignVars($row);
 				return $screen;
 		}
 		return false;
@@ -424,7 +462,8 @@ class formulizeScreenHandler {
 
 
 	function delete($sid, $type) {
- 		$sql1 = "DELETE FROM " . $this->db->prefix("formulize_screen") . " WHERE sid=" . intval($sid);
+		self::$typedScreenHandoff = null;
+ 		$sql1 ="DELETE FROM " . $this->db->prefix("formulize_screen") . " WHERE sid=" . intval($sid);
 		$sql2 = "DELETE FROM " . $this->db->prefix("formulize_screen_".strtolower($type)) . " WHERE sid=" . intval($sid);
 		if(!$result = $this->db->query($sql1)) {
 			return false;
@@ -437,6 +476,7 @@ class formulizeScreenHandler {
 
 	// TO BE CALLED FROM WITHIN THE CHILD CLASS AND THEN RETURNS SCREEN OBJECT, WHICH WILL HAVE THE CORRECT sid IN PLACE NOW
 	function insert($screen, $force=false) {
+		self::$typedScreenHandoff = null;
 		if (!is_a($screen, 'formulizeScreen')) {
             return false;
         }

@@ -77,7 +77,7 @@ $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS)
 $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 
 if( !$scheck = security_check( $fid, "", $uid, "", $groups, $mid, $gperm_handler ) ) {
-	print "<p>" . _NO_PERM . "</p>";
+	print formulize_noPermissionMessage();
 	exit;
 }
 

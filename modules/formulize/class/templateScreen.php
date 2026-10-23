@@ -126,6 +126,9 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 
     function get($sid) {
         $sid = intval($sid);
+        if ($screen = $this->takeTypedScreenHandoff($sid)) {
+            return $screen;
+        }
         if ($sid > 0) {
             $sql = 'SELECT * FROM '.$this->db->prefix('formulize_screen').' AS t1, '. $this->db->prefix('formulize_screen_template').' AS t2 WHERE t1.sid='.$sid.' AND t1.sid=t2.sid';
             if (!$result = $this->db->query($sql)) {

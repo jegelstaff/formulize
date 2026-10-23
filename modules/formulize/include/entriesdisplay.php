@@ -83,7 +83,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	// verified at the page level, so skip the normal view_form security check
 	$isCompositeMode = isset($GLOBALS['formulize_compositeDataMode']);
 	if((!isset($GLOBALS['formulize_systemAdminPermissionVerified']) OR !$GLOBALS['formulize_systemAdminPermissionVerified']) && !$scheck = security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler)) {
-		print "<p>" . _NO_PERM . "</p>";
+		print formulize_noPermissionMessage();
 		return;
 	}
 
@@ -942,14 +942,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				if(isset($_SESSION['formulize_passCode_'.$screen->getVar('sid')])) {
 					$_SESSION['formulize_passCode_'.$displayScreen->getVar('sid')] = $_SESSION['formulize_passCode_'.$screen->getVar('sid')];
 				}
-				if(!$_POST['overridescreen'] AND $displayScreen->getVar('fid') != $fid) {
-					// display screen is for another form in the active relationship, so figure out what all the entries are, and display the first entry in the set that's for the form this screen is based on
-					$dataSetEntries = checkForLinks($frid, array($fid), $fid, array($fid=>array($this_ent))); // returns array of the forms and entries in the dataset
-					if(in_array($displayScreen->getVar('fid'),$dataSetEntries['fids'])) {
-							$this_ent = $dataSetEntries['entries'][$displayScreen->getVar('fid')][0]; // first entry for the screen's form, in this dataset - see formdisplay.php for more detailed example of usage of checkforlinks
-					} elseif(isset($dataSetEntries['sub_fids']) AND in_array($displayScreen->getVar('fid'),$dataSetEntries['sub_fids'])) {
-							throw new Exception('Cannot yet determine the correct subform entry to display in the alternate form display screen specified in the list\'s settings.');
-					}
+				if(!$_POST['overridescreen']) {
+					// display screen may be for another form in the active relationship, in which case show the entry in the set that's for the form this screen is based on
+					$this_ent = determineViewEntryScreenEntryId($frid, $fid, $this_ent, $displayScreen);
 				}
 				$viewEntryScreen_handler->render($displayScreen, $this_ent, $settings);
 				global $renderedFormulizeScreen; // picked up at the end of initialize.php so we set the right info in the template when the whole page is rendered
@@ -4467,11 +4462,15 @@ print "</script>";
 // default) emits nothing and leaves the navigation exactly as it was.
 $isListScreen = ($screen AND is_object($screen) AND $screen->getVar('type') === 'listOfEntries');
 if($isListScreen AND $screen->getVar('editdestination') === 'drawer') {
+    // The drawer opens entries in the same screen full screen does (the list's "screen
+    // for viewing entries", or else the form's default form screen). Without the sid the
+    // drawer only knows the fid and always falls back to the form's default screen.
     print "<script type='text/javascript'>
 if(window.formulize && window.formulize.drawer) {
     window.formulize.drawer.initListView(".json_encode(array(
         'fid' => intval($screen->getVar('fid') ? $screen->getVar('fid') : $fid),
         'frid' => intval($screen->getVar('frid') ? $screen->getVar('frid') : $frid),
+        'sid' => intval(determineViewEntryScreen($screen, $fid)),
         'editDestination' => 'drawer',
     )).");
 }

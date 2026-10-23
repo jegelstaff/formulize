@@ -11864,6 +11864,31 @@ function determineViewEntryScreen($screen, $fid) {
 }
 
 /**
+ * The entry a view entry screen should show, when that screen is on a different form from the
+ * list the entry was picked from. The screen shows the first entry in the picked entry's dataset
+ * that belongs to the screen's form. Full screen and the drawer both open entries through this.
+ *
+ * @param int $frid The relationship the list is using
+ * @param int $fid The list's form, which the entry belongs to
+ * @param int|string $entryId The entry picked in the list
+ * @param object $screen The view entry screen
+ * @return int|string The entry to show in the screen, or $entryId unchanged if the screen is on the list's form
+ */
+function determineViewEntryScreenEntryId($frid, $fid, $entryId, $screen) {
+    $screenFid = $screen->getVar('fid');
+    if($screenFid == $fid) {
+        return $entryId;
+    }
+    $dataSetEntries = checkForLinks($frid, array($fid), $fid, array($fid=>array($entryId))); // returns array of the forms and entries in the dataset
+    if(in_array($screenFid, $dataSetEntries['fids'])) {
+        $entryId = $dataSetEntries['entries'][$screenFid][0]; // first entry for the screen's form, in this dataset - see formdisplay.php for more detailed example of usage of checkforlinks
+    } elseif(isset($dataSetEntries['sub_fids']) AND in_array($screenFid, $dataSetEntries['sub_fids'])) {
+        throw new Exception('Cannot yet determine the correct subform entry to display in the alternate form display screen specified in the list\'s settings.');
+    }
+    return $entryId;
+}
+
+/**
  * @return string JavaScript function to check for Chrome browser and set autocomplete attribute to prevent autofill issues
  */
 function checkForChrome() {
@@ -14267,15 +14292,41 @@ function formulize_isAjaxRequest() {
  * @param string $message The message. Plain text, which is escaped here.
  * @param string $tone Optional. info, success, warning or danger. Default is danger.
  * @param string $title Optional. A short first line, in bold, saying what happened.
+ * @param string $linkUrl Optional. A page to go to next, such as one to sign in on, offered after the message as a
+ * link. Left out of the plain text of a background request, which has nowhere to show a link.
+ * @param string $linkText Optional. The text of that link. Plain text, which is escaped here.
  * @return string The callout markup, or the plain text of the message in a background request
  */
-function formulize_userMessage($message, $tone = 'danger', $title = '') {
+function formulize_userMessage($message, $tone = 'danger', $title = '', $linkUrl = '', $linkText = '') {
 	if(formulize_isAjaxRequest()) {
 		return trim($title.' '.$message);
 	}
 	$tone = in_array($tone, array('info', 'success', 'warning', 'danger')) ? $tone : 'danger';
 	$titleMarkup = $title ? "<p class='fz-callout__title'>".htmlspecialchars($title)."</p>" : "";
-	return "<div class='fz-callout fz-callout--$tone' role='status'>$titleMarkup<p>".htmlspecialchars($message)."</p></div>";
+	$linkMarkup = ($linkUrl AND $linkText) ? "<p><a href='".htmlspecialchars($linkUrl)."'>".htmlspecialchars($linkText)."</a></p>" : "";
+	return "<div class='fz-callout fz-callout--$tone' role='status'>$titleMarkup<p>".htmlspecialchars($message)."</p>$linkMarkup</div>";
+}
+
+/**
+ * The message for someone who may not see what they asked for, shown on the page in place of it. Every place that
+ * turns someone away with a message on the page, rather than redirecting them, says so through this, so they all
+ * say it the same way.
+ *
+ * @param string $message Optional. The message. Default is _NO_PERM, ie: "You do not have permission to view this
+ * part of the website."
+ * @param string $loginUrl Optional. A page to sign in on, offered with the message as a link, for someone who is
+ * not signed in.
+ * @return string The message, from formulize_userMessage
+ */
+function formulize_noPermissionMessage($message = '', $loginUrl = '') {
+	$message = $message ? $message : _NO_PERM;
+	$linkText = $loginUrl ? _LOGIN : '';
+	return formulize_userMessage(
+		message: $message,
+		tone: 'warning',
+		linkUrl: $loginUrl,
+		linkText: $linkText
+	);
 }
 
 // functions.php is split into files of related functions, in include/functions, which are all

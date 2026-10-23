@@ -95,7 +95,7 @@ function displayCalendar($formframes, $mainforms, $viewHandles, $dateHandles, $f
 
     foreach($fids as $thisFid) { // check that the user is allowed to see all the fids
         if(!$scheck = security_check($thisFid, "", $uid, "", $groups, $mid, $gperm_handler)) {
-            print "<p>" . _NO_PERM . "</p>";
+            print formulize_noPermissionMessage();
             return;
         }
     }

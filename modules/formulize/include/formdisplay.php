@@ -1146,7 +1146,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
     if(isset($_POST['goto_sfid']) AND is_numeric($_POST['goto_sfid']) AND $_POST['goto_sfid'] > 0) {
     } else {
         if(!$scheck = security_check($fid, $entry, $uid, $owner, $groups) AND !$viewallforms) {
-            print "<p>" . _NO_PERM . "</p>";
+            print formulize_noPermissionMessage();
             return;
         }
 
@@ -1283,7 +1283,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		$info_received_msg = 0;// never display this message when a subform is displayed the first time.
 		if($entry) { $info_continue = 1; }
 		if(!$scheck = security_check($fid, $entries[$fid][0], $uid, $owner, $groups, $mid, $gperm_handler) AND !$viewallforms) {
-			print "<p>" . _NO_PERM . "</p>";
+			print formulize_noPermissionMessage();
 			return;
 		}
         // setup all fids/entries/subfids/subentries based on new fid and entry

@@ -89,7 +89,7 @@ function displayGrid($fid, $entry_id, $rowcaps, $colcaps, $title="", $orientatio
 
 	if(!$calledInternal) {
 		if(!$scheck = security_check($fid, $entry_id, $uid, $owner, $groups, $mid, $gperm_handler)) {
-			print "<p>" . _NO_PERM . "</p>";
+			print formulize_noPermissionMessage();
 			return;
 		}
 	}

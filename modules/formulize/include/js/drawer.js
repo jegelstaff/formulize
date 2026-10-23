@@ -340,7 +340,9 @@
     // currentFrame describes the entry loaded now; drawerStack holds its ancestors,
     // deepest last, so Back can restore each parent (re-fetched, so subform tables
     // reflect edits made below them).
-    // frame: { params: {sid, fid, frid, entryId, subformElementId}, page, title }
+    // frame: { params: {sid, fid, frid, entryId, subformElementId, entryFid, entryFrid}, page, title }
+    // entryFid/entryFrid name the form and relationship entryId belongs to, when that may
+    // not be the screen's form (an entry picked in a list); they only last until the first load.
     var drawerStack = [];
     var currentFrame = null;
 
@@ -378,6 +380,8 @@
         if (p.sid)     { params.push('sid=' + encodeURIComponent(p.sid)); }
         if (p.entryId) { params.push('entry_id=' + encodeURIComponent(p.entryId)); }
         if (p.subformElementId) { params.push('subformElementId=' + encodeURIComponent(p.subformElementId)); }
+        if (p.entryFid)  { params.push('entry_fid=' + encodeURIComponent(p.entryFid)); }
+        if (p.entryFrid) { params.push('entry_frid=' + encodeURIComponent(p.entryFrid)); }
         if (page)      { params.push('page=' + encodeURIComponent(page)); }
         params.push('formname=' + FORM_NAME);
         return moduleBase + ENDPOINT + '?' + params.join('&');
@@ -483,6 +487,9 @@
                     // sync what the server actually rendered (it resolves screens/new ids itself)
                     if (meta.fid) { currentFrame.params.fid = meta.fid; }
                     if (meta.entryId && meta.entryId !== 'new') { currentFrame.params.entryId = meta.entryId; }
+                    // the entry id is now the rendered form's own, so it must not be mapped again
+                    delete currentFrame.params.entryFid;
+                    delete currentFrame.params.entryFrid;
                 }
                 if (currentFrame) { currentFrame.page = currentEntryNav ? currentEntryNav.currentPage : 0; }
                 renderPageTabs();
@@ -500,7 +507,7 @@
     }
 
     // Load a Formulize form/entry into the drawer as an editable, elements-only form.
-    // opts: { fid, frid, entryId, sid }. The form submits in the standard Formulize
+    // opts: { fid, frid, entryId, sid, entryFid, entryFrid }. The form submits in the standard Formulize
     // manner (POST to readelements.php) rather than navigating a full page.
     function openEntryInDrawer(opts) {
         if (typeof jQuery === 'undefined') { return; }
@@ -509,7 +516,8 @@
         drawerStack = [];
         savedDuringSession = false;
         currentFrame = { params: { fid: opts.fid, frid: opts.frid, sid: opts.sid, entryId: opts.entryId,
-                                   subformElementId: opts.subformElementId }, page: 0 };
+                                   subformElementId: opts.subformElementId,
+                                   entryFid: opts.entryFid, entryFrid: opts.entryFrid }, page: 0 };
         openDrawer({ title: opts.title || '' });
         updateBackButton();
         fetchIntoDrawer(buildEntryUrl(currentFrame.params));
@@ -674,6 +682,11 @@
     function renderEntryFooter() {
         if (!footEl || drawerMode === 'ai') { return; } // the AI panel has its own controls
         footEl.innerHTML = '';
+
+        // What came back is not a form - an error, or word that the entry can't be shown - so
+        // there is nothing to save or page through, and the header's close and Back are all it
+        // needs. Left empty, the footer is hidden altogether (.formulize-drawer__foot:empty).
+        if (!bodyEl || !bodyEl.querySelector('form')) { return; }
 
         var notice = document.createElement('span');
         notice.className = 'formulize-drawer__notice';
@@ -1271,7 +1284,8 @@
     // screen's "edit destination" setting, so no theme template has to know anything
     // about the drawer to get this behaviour.
     //
-    // config: { fid, frid, editDestination }
+    // config: { fid, frid, sid, editDestination } - sid is the screen the list opens
+    // entries in full screen; a screen passed to goDetails() overrides it, as it does there.
     function initListView(config) {
         config = config || {};
         // 'screen' leaves Formulize's default goDetails/addNew in place, so the edit
@@ -1279,7 +1293,16 @@
         if (config.editDestination !== 'drawer') { return; }
 
         function openEntry(entryId, sid) {
-            openEntryInDrawer({ fid: config.fid, frid: config.frid, entryId: entryId, sid: sid });
+            if (sid) {
+                // a screen named by the template's own link: the entry id is the template's
+                // to get right for that screen's form, so full screen shows it as given
+                openEntryInDrawer({ fid: config.fid, frid: config.frid, entryId: entryId, sid: sid });
+                return;
+            }
+            // the list's configured screen may be on another form in the relationship;
+            // the endpoint maps the list's entry onto that form, as full screen does
+            openEntryInDrawer({ fid: config.fid, frid: config.frid, entryId: entryId, sid: config.sid || '',
+                                entryFid: config.fid, entryFrid: config.frid });
         }
 
         // Formulize's list markup calls goDetails(entry, screen) from the edit icon's

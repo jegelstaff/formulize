@@ -56,7 +56,7 @@ if(!$fid
 	OR !security_check($fid)
 	OR !$element_handler->isElementVisibleForUser($elementObject, $xoopsUser)
 	OR ($elementObject->getVar('ele_private') AND !formulize_userCanViewPrivateElements($fid, $groups))) {
-	print "<p>" . _NO_PERM . "</p>";
+	print formulize_noPermissionMessage();
 	exit;
 }
 

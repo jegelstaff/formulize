@@ -134,11 +134,8 @@ if($fid AND !$view_form = $gperm_handler->checkRight("view_form", $fid, $groups,
         // A host system (ie: Drupal) can set formulizeHostSystemLoginUrl so we can offer its login page
         // to a visitor who is not logged in. We print a link rather than redirecting: the host has
         // already begun composing its response, so a redirect here would truncate it.
-        if(isset($GLOBALS['formulizeHostSystemLoginUrl']) AND $GLOBALS['formulizeHostSystemLoginUrl'] AND !$xoopsUser) {
-            print "<p>"._formulize_NO_PERMISSION." <a href=\"".htmlspecialchars($GLOBALS['formulizeHostSystemLoginUrl'], ENT_QUOTES)."\">"._LOGIN."</a></p>\n";
-        } else {
-            print "<p>"._formulize_NO_PERMISSION."</p>\n";
-        }
+        $hostLoginUrl = (isset($GLOBALS['formulizeHostSystemLoginUrl']) AND !$xoopsUser) ? $GLOBALS['formulizeHostSystemLoginUrl'] : '';
+        print formulize_noPermissionMessage(_formulize_NO_PERMISSION, $hostLoginUrl);
         return;
     }
 }
@@ -249,7 +246,7 @@ if ($screen) {
 			}
     } else {
         $_SESSION['formulize_passcodeFailed'] = true;
-        print "<p>"._formulize_NO_PERM."</p>";
+        print formulize_noPermissionMessage(_formulize_NO_PERM);
     }
     $rendered = true;
 }
@@ -341,11 +338,7 @@ if (!$rendered AND $uid) {
 	// has already begun composing its response, so either one would truncate the page. Show the message
 	// and hand control back instead, with a link to the host's login page if it gave us one.
 	if(isset($formulize_screen_id) OR isset($GLOBALS['formulizeHostSystemUserId'])) {
-		if(isset($GLOBALS['formulizeHostSystemLoginUrl']) AND $GLOBALS['formulizeHostSystemLoginUrl']) {
-			print "<p>"._formulize_NO_PERMISSION." <a href=\"".htmlspecialchars($GLOBALS['formulizeHostSystemLoginUrl'], ENT_QUOTES)."\">"._LOGIN."</a></p>\n";
-		} else {
-			print "<p>"._formulize_NO_PERMISSION."</p>\n";
-		}
+		print formulize_noPermissionMessage(_formulize_NO_PERMISSION, isset($GLOBALS['formulizeHostSystemLoginUrl']) ? $GLOBALS['formulizeHostSystemLoginUrl'] : '');
 	} elseif($fid AND !$sid) {
 		// A form they may see, asked for by itself, which has no default screen to show it to them through
 		// (see where the fid is resolved to a screen, near the top). Say so, rather than leave them on the

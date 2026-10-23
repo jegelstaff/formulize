@@ -17,6 +17,10 @@
 //   subformElementId - when loading a sub entry from a subform element (fid = the sub's
 //               form id), resolves the screen configured on that element
 //               (get_display_screen_for_subform) instead of the form's default screen.
+//   entry_fid / entry_frid - the form and relationship entry_id belongs to, when that may
+//               not be the screen's form (an entry picked in a list whose view entry screen
+//               is on another form). The entry is mapped onto the screen's form the way full
+//               screen does it (determineViewEntryScreenEntryId).
 //
 // Subform actions (POST, mirroring the flags core's full-page flow uses):
 //   target_sub / target_sub_fid / target_sub_frid / target_sub_mainformentry /
@@ -47,32 +51,11 @@ if(!$formname) {
     $formname = 'formulize_drawer';
 }
 
-// Resolve a screen id to a renderable screen object, deriving fid/frid from the
-// screen's own configuration (so the host saves against the right form). Used for
-// the initial render and again when a subform action switches the render target.
-function formulize_elementsOnly_resolveScreen($sid, &$fid, &$frid, &$renderHandler) {
-    $screen = null;
-    if($sid) {
-        $screen_handler = xoops_getmodulehandler('screen', 'formulize');
-        if($screenMeta = $screen_handler->get($sid)) {
-            $fid  = $screenMeta->getVar('fid')  ? $screenMeta->getVar('fid')  : $fid;
-            $frid = $screenMeta->getVar('frid') ? $screenMeta->getVar('frid') : $frid;
-            $renderHandler = xoops_getmodulehandler($screenMeta->getVar('type').'Screen', 'formulize');
-            $screen = $renderHandler->get($screenMeta->getVar('sid'));
-        }
-    }
-    return $screen;
-}
-
 // Loading a sub entry (drawer edit-sub flow): resolve the screen configured on the
-// subform element, the same way the subform modal endpoint does. Gate the requested
-// entry since this is a directly-reachable endpoint.
+// subform element, the same way the subform modal endpoint does. Whether the user may
+// see the entry is checked when it is rendered, as it is for every entry shown here.
 $subformElementId = isset($_GET['subformElementId']) ? intval($_GET['subformElementId']) : 0;
 if(!$sid AND $fid AND $subformElementId) {
-    if(!security_check($fid, $entry_id)) {
-        print "<p>"._NO_PERM."</p>";
-        exit();
-    }
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
     if($subformElementObject = $element_handler->get($subformElementId)) {
         if($resolvedSid = get_display_screen_for_subform($subformElementObject)) {
@@ -82,10 +65,10 @@ if(!$sid AND $fid AND $subformElementId) {
 }
 
 // When no screen is supplied, fall back to the form's default form screen so the
-// entry renders through that screen's templates (via renderHandler) rather than the
-// plain displayForm() output. Callers like the list drawer only pass fid, so this
-// is where the screen gets resolved. If the form has no default screen configured,
-// $sid stays 0 and we render with displayForm() below.
+// entry renders through that screen's templates rather than the plain displayForm()
+// output. The list drawer passes the screen its list opens entries in, so this is for
+// callers that pass only a fid. If the form has no default screen configured, $sid
+// stays 0 and we render with displayForm() below.
 if(!$sid AND $fid) {
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     if($formObject = $form_handler->get($fid)) {
@@ -93,8 +76,24 @@ if(!$sid AND $fid) {
     }
 }
 
-$renderHandler = null;
-$screen = formulize_elementsOnly_resolveScreen($sid, $fid, $frid, $renderHandler);
+// A screen renders, and the host saves, against the screen's own form and relationship, as
+// full screen does. So from here on $fid and $frid are what is being rendered, which is not
+// necessarily what the request asked for.
+$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+if($screen = ($sid ? $screen_handler->get($sid) : false)) {
+    $fid  = $screen->getVar('fid');
+    $frid = $screen->getVar('frid');
+}
+
+// An entry picked in a list, opening in a screen on another form in the list's relationship:
+// show the entry in that dataset which is on the screen's form, as full screen does. Whether
+// the user may see that entry is checked when it is rendered.
+$entryFid  = isset($_GET['entry_fid'])  ? intval($_GET['entry_fid'])  : 0;
+$entryFrid = isset($_GET['entry_frid']) ? intval($_GET['entry_frid']) : 0;
+if($screen AND $entry_id AND $entryFid AND $entryFid != $screen->getVar('fid')) {
+    $entry_id = determineViewEntryScreenEntryId($entryFrid, $entryFid, $entry_id, $screen);
+    $entry_id = (is_numeric($entry_id) AND $entry_id > 0) ? intval($entry_id) : "";
+}
 
 // Multi-page navigation: the drawer drives paging through this endpoint. `page` is the
 // page to render and `prevpage` is the page being left, which we encode as "page-sid"
@@ -106,8 +105,17 @@ $screen = formulize_elementsOnly_resolveScreen($sid, $fid, $frid, $renderHandler
 $targetPage = isset($_REQUEST['page'])     ? intval($_REQUEST['page'])     : 0;
 $prevPage   = isset($_REQUEST['prevpage']) ? intval($_REQUEST['prevpage']) : 0;
 
+// Nothing is printed until the end of the file, where the response is put together from the
+// pieces worked out on the way. So what the response says can depend on everything that
+// happened, and an error part way through (which the catch-all handler in include/common.php
+// turns into a message) leaves nothing half-printed ahead of it.
+$saveMessages = '';
 if(isset($_POST['formulize_save']) AND $_POST['formulize_save']) {
-    include XOOPS_ROOT_PATH.'/modules/formulize/include/readelements.php'; // saves the posted page, sets the saved/new entry id globals
+    // readelements.php saves the posted page and sets the saved/new entry id globals. If it
+    // refuses the save it says so, and that message leads the response.
+    ob_start();
+    include XOOPS_ROOT_PATH.'/modules/formulize/include/readelements.php';
+    $saveMessages = ob_get_clean();
     // A save that created the entry leaves the client knowing it only as 'new'. Resolve the
     // real id here so the re-render shows the entry that was just written rather than a
     // fresh blank form - the same resolution displayFormPages does for later pages, which
@@ -161,8 +169,11 @@ if($targetSub) {
     if($subformElementObject AND $resolvedSid = get_display_screen_for_subform($subformElementObject)) {
         $sid = intval($resolvedSid);
     }
-    $renderHandler = null;
-    $screen = formulize_elementsOnly_resolveScreen($sid, $fid, $frid, $renderHandler);
+    $screen_handler = xoops_getmodulehandler('screen', 'formulize');
+    if($screen = ($sid ? $screen_handler->get($sid) : false)) {
+        $fid  = $screen->getVar('fid');
+        $frid = $screen->getVar('frid');
+    }
     // page state posted along with the parent's fields belongs to the parent, not the sub
     unset($_POST['formulize_currentPage'], $_POST['formulize_prevPage']);
     $targetPage = 0;
@@ -176,6 +187,17 @@ if($screen AND $targetPage > 0) {
     }
 }
 
+// Whether the user may see the entry. displayForm() decides this too, when it renders, and that is
+// what keeps the entry from being shown. Deciding it here as well is so that a refusal is all the
+// response says: rendered, a refusal comes back inside the form, and the drawer shows the form's
+// buttons under it as though there were something to save. Only for an entry that exists: for a
+// new one, displayForm() first works out which entry a one-entry-per-user form means, so only it
+// can say.
+if($entry_id AND !security_check($fid, $entry_id)) {
+    print $saveMessages.formulize_noPermissionMessage();
+    exit();
+}
+
 // In elements-only mode Formulize normally assumes the form is embedded in a host
 // page that already bootstrapped the form JS (FORMULIZE, the jQuery show/hide
 // override, conditional element handling). The drawer is opened from a list page
@@ -183,7 +205,7 @@ if($screen AND $targetPage > 0) {
 // is guarded so repeated drawer opens don't stack wrappers.
 global $xoopsUser;
 $bootstrapUid = $xoopsUser ? intval($xoopsUser->getVar('uid')) : 0;
-print "<script type='text/javascript'>
+$bootstrapJs = "<script type='text/javascript'>
 if(!window.formulizeShowHideOverrideApplied) {
     (function (\$) {
         \$.each(['show', 'hide'], function (i, ev) {
@@ -239,7 +261,7 @@ if($screen) {
 // entryId/fid let the host track what is actually loaded (the add-new flow renders a
 // just-created sub entry the client has never seen); parentEntryId reports the resolved
 // parent id so a host that opened a brand-new parent can fix up its navigation state.
-print "<script type=\"application/json\" class=\"formulize-drawer-meta\">".json_encode(array(
+$drawerMeta = "<script type=\"application/json\" class=\"formulize-drawer-meta\">".json_encode(array(
     'title' => $drawerTitle,
     'fid' => intval($fid),
     'entryId' => $entry_id ? intval($entry_id) : 'new',
@@ -261,7 +283,7 @@ print "<script type=\"application/json\" class=\"formulize-drawer-meta\">".json_
 // the page's own subform tables exactly as before. Installed once per page - a second
 // fragment load (paging, drilling deeper) must not wrap the wrapper and lose the
 // original.
-print "<script type='text/javascript'>
+$subformStubsJs = "<script type='text/javascript'>
 (function() {
     var subformHook = function(action, args) {
         if(window.formulize && window.formulize.drawer && typeof window.formulize.drawer.subformAction === 'function') {
@@ -300,8 +322,9 @@ print "<script type='text/javascript'>
 })();
 </script>\n";
 
-print "<form id='".htmlspecialchars($formname, ENT_QUOTES)."' data-fid='".intval($fid)."' data-frid='".intval($frid)."'>\n";
-
+// The render prints as it goes, deep in displayForm() and the screen handlers, so it is caught here
+// to go into the response with the rest
+ob_start();
 if($screen) {
 	// NB: this used to overwrite the screen's navstyle and showpageselector to suppress the
 	// navigation chrome. Both were already inert - every read of them lives inside the
@@ -313,23 +336,26 @@ if($screen) {
 	// this the screen renders its full multi-page layout, whose pages are hidden divs
 	// driven by navigation JS that never initializes in the drawer's AJAX inject, so
 	// nothing is visible. elements_only flattens the pages and drops that chrome.
+	$renderHandler = xoops_getmodulehandler($screen->getVar('type').'Screen', 'formulize');
 	$renderHandler->render($screen, $entry_id, null, true);
 } else {
-	$renderResult = displayForm($fid, $entry_id, "", "", "", "", "formElementsOnly");
+	displayForm($fid, $entry_id, "", "", "", "", "formElementsOnly");
 }
+$renderedElements = ob_get_clean();
 
-// add security token, and token for deleting entry locks
-print $GLOBALS['xoopsSecurity']->getTokenHTML();
-print "<input type='hidden' name='formulize_entry_lock_token' value='".getEntryLockSecurityToken()."'>";
-
-print "</form>\n";
+// the rendered elements, with the security token, and token for deleting entry locks
+$formHtml = "<form id='".htmlspecialchars($formname)."' data-fid='".intval($fid)."' data-frid='".intval($frid)."'>\n"
+    .$renderedElements
+    .$GLOBALS['xoopsSecurity']->getTokenHTML()
+    ."<input type='hidden' name='formulize_entry_lock_token' value='".getEntryLockSecurityToken()."'>"
+    ."</form>\n";
 
 // Which form buttons this screen presents, and what each is called. Decided by the same
 // core code that builds the full screen form's button tray (see formulize_resolveFormButtons
 // in formdisplay.php), recorded during the render above, and published here for the form
 // that was actually asked for - so a subform rendered inside it cannot answer for it. The
 // drawer builds its footer from this, which is what keeps the two surfaces consistent.
-print formulize_elementsOnlyButtonMetaJs($screen, $fid);
+$buttonMeta = formulize_elementsOnlyButtonMetaJs($screen, $fid);
 
 // Rich-text (CKEditor) bootstrap. In a full page load formdisplay.php's drawJavascript()
 // loads the CKEditor library (via $xoTheme->addScript) and emits the initializeCKEditor /
@@ -341,10 +367,11 @@ print formulize_elementsOnlyButtonMetaJs($screen, $fid);
 // The library is emitted as a separate <script src> node so the host's fragment injector (see
 // themes/Lyris/js/script.js injectFragment) loads it before the following inline init runs — the
 // ordering a normal document gives for free but innerHTML/.load() do not.
+$editorJs = '';
 if(!empty($GLOBALS['formulize_CKEditors'])) {
     $editorIds = array_values(array_unique((array) $GLOBALS['formulize_CKEditors']));
 
-    print "<script type='text/javascript' src='".XOOPS_URL."/editors/CKEditor/ckeditor.js'></script>\n";
+    $editorJs .= "<script type='text/javascript' src='".XOOPS_URL."/editors/CKEditor/ckeditor.js'></script>\n";
 
     $initCalls = '';
     $updateBody = '';
@@ -356,7 +383,7 @@ if(!empty($GLOBALS['formulize_CKEditors'])) {
         $updateBody .= "        }\n";
     }
 
-    print "<script type='text/javascript'>
+    $editorJs .= "<script type='text/javascript'>
     // Guarded so repeated drawer opens (or a host page that already has editors) do not clobber
     // existing instances. updateCKEditors() is redefined each open to target the current fields;
     // the drawer's save/validate path calls it before submitting to flush editor content back into
@@ -393,7 +420,7 @@ if(!empty($GLOBALS['formulize_CKEditors'])) {
 // officeUseOnlyToggle() via inline onclick. Without this re-emit the drawer button throws
 // "officeUseOnlyToggle is not defined". Defined on window so it survives the fragment injector
 // re-creating <script> nodes; harmless if the host page has already defined it.
-print "<script type='text/javascript'>
+$officeUseOnlyJs = "<script type='text/javascript'>
 window.officeUseOnlyToggle = function() {
 	jQuery('.formulize-office-use-only-toggle').toggle();
 	jQuery('.formulize-office-use-only-content').toggle(250);
@@ -404,11 +431,11 @@ window.officeUseOnlyToggle = function() {
 // validation + entry-lock cleanup helpers, keyed to this form's name so multiple
 // elements-only forms can coexist on a page.
 // NOTE: elements-only validation does not currently support unique value checks.
-print "<script type='text/javascript'>
+$validationJs = "<script type='text/javascript'>
 function xoopsFormValidate_".$formname."(myform) {
-";
-print trim(implode("\n\r", (array) $GLOBALS['formulize_elementsOnlyForm_validationCode']));
-print "\n\r return true;
+"
+.trim(implode("\n\r", (array) $GLOBALS['formulize_elementsOnlyForm_validationCode']))
+."\n\r return true;
 }
 
 function removeDrawerEntryLocks() {
@@ -437,6 +464,18 @@ if (!window.removeDrawerEntryLocksOnLeaveIsListening) {
 // event and records which form/entry was actually shown. The drawer title is passed
 // explicitly, since document.title still names the host page, not this fragment.
 require_once XOOPS_ROOT_PATH.'/modules/formulize/include/writeToFormulizeLog.php';
-if($activityLogJs = formulize_activityLogJs($drawerTitle)) {
-    print "\n<script type=\"text/javascript\">".$activityLogJs."</script>\n";
+$activityLogJs = '';
+if($activityLog = formulize_activityLogJs($drawerTitle)) {
+    $activityLogJs = "\n<script type=\"text/javascript\">".$activityLog."</script>\n";
 }
+
+print $saveMessages
+    .$bootstrapJs
+    .$drawerMeta
+    .$subformStubsJs
+    .$formHtml
+    .$buttonMeta
+    .$editorJs
+    .$officeUseOnlyJs
+    .$validationJs
+    .$activityLogJs;

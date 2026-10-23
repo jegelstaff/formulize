@@ -91,7 +91,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 	// additional check to see if the user has import_data permission for this form
 	if(!$scheck = security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler) OR !$import_data = $gperm_handler->checkRight("import_data", $fid, $groups, $mid)) {
-		print "<p>" . _NO_PERM . "</p>";
+		print formulize_noPermissionMessage();
 		exit;
 	}
 

@@ -103,7 +103,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/popup_functions.php';
 	$curscope = $_GET['scope'];
 
 	if(!$scheck = security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler)) {
-		print "<p>" . _NO_PERM . "</p>";
+		print formulize_noPermissionMessage();
 		exit;
 	}
 

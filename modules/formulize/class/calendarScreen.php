@@ -150,6 +150,9 @@ class formulizeCalendarScreenHandler extends formulizeScreenHandler {
 	// 	THIS METHOD MIGHT BE MOVED UP A LEVEL TO THE PARENT CLASS
 	function get($sid) {
 		$sid = intval($sid);
+		if ($screen = $this->takeTypedScreenHandoff($sid)) {
+			return $screen;
+		}
 		if ($sid > 0) {
 			$sql = 'SELECT * FROM '.$this->db->prefix('formulize_screen').' AS t1, '. $this->db->prefix('formulize_screen_calendar').' AS t2 WHERE t1.sid='.$sid.' AND t1.sid=t2.sid';
 			if (!$result = $this->db->query($sql)) {
