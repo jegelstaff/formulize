@@ -46,6 +46,11 @@ trait formulizeElementReferenceScanTrait {
 	 * Does a stored element reference point at this element? A reference can be an id or a handle, because
 	 * different settings store different ones and some hold legacy values from before a format changed, so
 	 * both are accepted everywhere rather than per setting.
+	 *
+	 * Handles are compared in their canonical form - see canonicalHandle() - so a reference written before
+	 * handles were lowercased, or before hyphens were turned into underscores, is still recognised as the
+	 * element it was written for.
+	 *
 	 * @param mixed $reference The stored reference.
 	 * @param int $elementId The element's id.
 	 * @param string $handle The element's handle.
@@ -55,7 +60,23 @@ trait formulizeElementReferenceScanTrait {
 		if(is_array($reference) OR is_object($reference) OR $reference === '' OR $reference === null) {
 			return false;
 		}
-		return (is_numeric($reference) AND intval($reference) === $elementId) OR ((string) $reference === (string) $handle);
+		return (is_numeric($reference) AND intval($reference) === $elementId) OR (self::canonicalHandle($reference) === self::canonicalHandle($handle));
+	}
+
+	/**
+	 * The form a handle takes today, for comparing a stored reference with an element's handle.
+	 *
+	 * Handles have changed shape twice. Since 2025-10 they are lowercase (sanitize_handle_name), and since
+	 * 2026-07 they cannot contain hyphens, which became underscores. Neither change rewrote every place a
+	 * handle had been written down, so a stored reference can still say Institutions_Name or my-handle for
+	 * the element now called institutions_name or my_handle. Folding case and hyphens is exactly those two
+	 * changes and nothing more, so no two current handles can share a canonical form.
+	 *
+	 * @param mixed $handle A handle, or a stored reference to one.
+	 * @return string
+	 */
+	public static function canonicalHandle($handle) {
+		return strtolower(str_replace('-', '_', (string) $handle));
 	}
 
 	/**

@@ -205,12 +205,13 @@ class formulizeSavedViewsHandler {
 		$references = array();
 		// the LIKE clauses are a coarse filter only. An underscore is a single character wildcard in LIKE and
 		// handles are full of them, so this deliberately catches more rows than it needs to and the precise
-		// test happens below.
+		// test happens below. That looseness is also what lets a sort column written before handles lost their
+		// capitals and hyphens be found: the collation ignores case, and the underscores match the hyphens.
 		$sql = "SELECT sv_id, sv_name, sv_oldcols, sv_quicksearches, sv_sort, sv_calc_cols, sv_calc_calcs,
 			sv_calc_blanks, sv_calc_grouping FROM ".$this->db->prefix('formulize_saved_views')."
 			WHERE sv_oldcols LIKE ".$this->db->quoteString('%'.$handle.'%')."
 			OR sv_calc_cols LIKE ".$this->db->quoteString('%'.intval($elementId).'%')."
-			OR sv_sort = ".$this->db->quoteString($handle);
+			OR sv_sort LIKE ".$this->db->quoteString($handle);
 		if(!$result = $this->db->query($sql)) {
 			return $references;
 		}
@@ -239,7 +240,7 @@ class formulizeSavedViewsHandler {
 				$usedAs[] = 'a calculation';
 			}
 
-			if((string) $row['sv_sort'] === (string) $handle) {
+			if($this->referencePointsAtElement($row['sv_sort'], $elementId, $handle) AND !is_numeric($row['sv_sort'])) { // the sort column is always a handle, never an id
 				$updates['sv_sort'] = ''; // the list falls back to its default order
 				$usedAs[] = 'the column it is sorted by';
 			}
