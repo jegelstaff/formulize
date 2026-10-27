@@ -521,8 +521,8 @@ CREATE TABLE formulize_ai_keys (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
-CREATE TABLE formulize_automations (
-  automation_id int(11) unsigned NOT NULL auto_increment,
+CREATE TABLE formulize_rules (
+  rule_id int(11) unsigned NOT NULL auto_increment,
   fid int(11) NOT NULL default 0,
   name varchar(255) NOT NULL default '',
   trigger_type varchar(50) NOT NULL default '',
@@ -531,13 +531,13 @@ CREATE TABLE formulize_automations (
   steps mediumtext NULL,
   active tinyint(1) NOT NULL default 1,
   weight int(11) NOT NULL default 0,
-  PRIMARY KEY (`automation_id`),
+  PRIMARY KEY (`rule_id`),
   INDEX i_fid_trigger (`fid`, `trigger_type`)
 ) ENGINE=InnoDB;
 
-CREATE TABLE formulize_automation_outbox (
+CREATE TABLE formulize_rule_outbox (
   outbox_id int(11) unsigned NOT NULL auto_increment,
-  automation_id int(11) NOT NULL default 0,
+  rule_id int(11) NOT NULL default 0,
   fid int(11) NOT NULL default 0,
   entry_id int(11) NOT NULL default 0,
   event varchar(50) NOT NULL default '',
@@ -553,13 +553,13 @@ CREATE TABLE formulize_automation_outbox (
   delivered_at datetime NULL default NULL,
   PRIMARY KEY (`outbox_id`),
   INDEX i_status_next (`status`, `next_attempt_at`),
-  INDEX i_automation_id (`automation_id`),
+  INDEX i_rule_id (`rule_id`),
   INDEX i_fid (`fid`)
 ) ENGINE=InnoDB;
 
-CREATE TABLE formulize_automation_log (
+CREATE TABLE formulize_rule_log (
   log_id int(11) unsigned NOT NULL auto_increment,
-  automation_id int(11) NOT NULL default 0,
+  rule_id int(11) NOT NULL default 0,
   fid int(11) NOT NULL default 0,
   entry_id int(11) NOT NULL default 0,
   event varchar(50) NOT NULL default '',
@@ -567,6 +567,6 @@ CREATE TABLE formulize_automation_log (
   outcome text NULL,
   created_at datetime NULL default NULL,
   PRIMARY KEY (`log_id`),
-  INDEX i_automation_id (`automation_id`),
+  INDEX i_rule_id (`rule_id`),
   INDEX i_created_at (`created_at`)
 ) ENGINE=InnoDB;

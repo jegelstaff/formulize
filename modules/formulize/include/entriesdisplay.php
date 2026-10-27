@@ -4947,7 +4947,7 @@ function processClickedCustomButton($clickedElements, $clickedValues, $clickedAc
 		global $xoopsUser;
 		$customButtonUid = $xoopsUser ? intval($xoopsUser->getVar('uid')) : 0;
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
-		// a button with no effects of its own can still set off automations (see the Automations tab of the form)
+		// a button with no effects of its own can still set off rules (see the Rules tab of the form)
 		$buttonHasEffects = ($clickedElements AND $clickedElements[0] AND $elementObject = $element_handler->get($clickedElements[0]));
 		$formId = $buttonHasEffects ? $elementObject->getVar('id_form') : ($screen ? $screen->getVar('fid') : 0);
 		if(!$buttonHasEffects) {

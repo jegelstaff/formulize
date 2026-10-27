@@ -1,8 +1,8 @@
-<{* When an automation ran, and what happened *}>
-<div class="panel-content content automation-activity">
+<{* When a rule ran, and what happened *}>
+<div class="panel-content content rule-activity">
 	<h2>Recent activity</h2>
 	<{if $content.log|@count == 0}>
-		<p><i>This automation hasn't run yet.</i></p>
+		<p><i>This rule hasn't run yet.</i></p>
 	<{else}>
 	<table>
 		<tr><th>When</th><th>Event</th><th>Entry</th><th>User</th><th>What happened</th></tr>
@@ -37,6 +37,6 @@
 	<{/if}>
 </div>
 <style>
-	.automation-activity table { border-collapse: collapse; width: 100%; }
-	.automation-activity th, .automation-activity td { text-align: left; vertical-align: top; padding: 0.4em 0.6em; border-bottom: 1px solid rgba(128,128,128,0.25); }
+	.rule-activity table { border-collapse: collapse; width: 100%; }
+	.rule-activity th, .rule-activity td { text-align: left; vertical-align: top; padding: 0.4em 0.6em; border-bottom: 1px solid rgba(128,128,128,0.25); }
 </style>

@@ -26,7 +26,7 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// this file handles the buttons on the Automations tab of a form: turning automations on and off, cloning, deleting, converting
+// this file handles the buttons on the Rules tab of a form: turning rules on and off, cloning, deleting, converting
 // notifications from the notifications popup, and sending webhooks
 
 // if we aren't coming from what appears to be save.php, then return nothing
@@ -46,49 +46,49 @@ if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
 	return;
 }
 
-include_once XOOPS_ROOT_PATH.'/modules/formulize/include/automations_admin.php';
-$automations_handler = xoops_getmodulehandler('automations', 'formulize');
+include_once XOOPS_ROOT_PATH.'/modules/formulize/include/rules_admin.php';
+$rules_handler = xoops_getmodulehandler('rules', 'formulize');
 $reload = false;
 
-// only act on automations that belong to this form
-$automationOfThisForm = function($automationId) use ($automations_handler, $fid) {
-	$automation = $automations_handler->get(intval($automationId));
-	return ($automation AND $automation['fid'] == $fid) ? $automation : false;
+// only act on rules that belong to this form
+$ruleOfThisForm = function($ruleId) use ($rules_handler, $fid) {
+	$rule = $rules_handler->get(intval($ruleId));
+	return ($rule AND $rule['fid'] == $fid) ? $rule : false;
 };
 
-if($_POST['automations_toggle'] AND $automation = $automationOfThisForm($_POST['automations_toggle'])) {
-	$automation['active'] = $automation['active'] ? 0 : 1;
-	$automations_handler->insert($automation);
+if($_POST['rules_toggle'] AND $rule = $ruleOfThisForm($_POST['rules_toggle'])) {
+	$rule['active'] = $rule['active'] ? 0 : 1;
+	$rules_handler->insert($rule);
 	$reload = true;
 }
 
-if($_POST['automations_clone'] AND $automation = $automationOfThisForm($_POST['automations_clone'])) {
-	if(!$automations_handler->cloneAutomation($automation['automation_id'])) {
-		print "Error: could not clone the automation.";
+if($_POST['rules_clone'] AND $rule = $ruleOfThisForm($_POST['rules_clone'])) {
+	if(!$rules_handler->cloneRule($rule['rule_id'])) {
+		print "Error: could not clone the rule.";
 	}
 	$reload = true;
 }
 
-if($_POST['automations_delete'] AND $automation = $automationOfThisForm($_POST['automations_delete'])) {
-	if(!$automations_handler->delete($automation['automation_id'])) {
-		print "Error: could not delete the automation.";
+if($_POST['rules_delete'] AND $rule = $ruleOfThisForm($_POST['rules_delete'])) {
+	if(!$rules_handler->delete($rule['rule_id'])) {
+		print "Error: could not delete the rule.";
 	}
 	$reload = true;
 }
 
-if($_POST['automations_convert_notification']) {
-	if(!formulize_convertPopupNotificationToAutomation(intval($_POST['automations_convert_notification']), $fid)) {
-		print "Error: could not convert the notification into an automation.";
+if($_POST['rules_convert_notification']) {
+	if(!formulize_convertPopupNotificationToRule(intval($_POST['rules_convert_notification']), $fid)) {
+		print "Error: could not convert the notification into a rule.";
 	}
 	$reload = true;
 }
 
-if($_POST['automations_send_pending'] OR $_POST['automations_retry_item']) {
-	if($_POST['automations_retry_item']) {
-		$outboxIds = array(intval($_POST['automations_retry_item']));
+if($_POST['rules_send_pending'] OR $_POST['rules_retry_item']) {
+	if($_POST['rules_retry_item']) {
+		$outboxIds = array(intval($_POST['rules_retry_item']));
 	} else {
 		$outboxIds = array();
-		if($res = $xoopsDB->query("SELECT outbox_id FROM ".$xoopsDB->prefix('formulize_automation_outbox')." WHERE fid = $fid AND status IN ('pending', 'sending') ORDER BY outbox_id LIMIT 50")) {
+		if($res = $xoopsDB->query("SELECT outbox_id FROM ".$xoopsDB->prefix('formulize_rule_outbox')." WHERE fid = $fid AND status IN ('pending', 'sending') ORDER BY outbox_id LIMIT 50")) {
 			while($row = $xoopsDB->fetchRow($res)) {
 				$outboxIds[] = intval($row[0]);
 			}
@@ -96,30 +96,30 @@ if($_POST['automations_send_pending'] OR $_POST['automations_retry_item']) {
 	}
 	// only deliveries for this form
 	$outboxIds = array_filter($outboxIds, function($outboxId) use ($xoopsDB, $fid) {
-		$res = $xoopsDB->query("SELECT fid FROM ".$xoopsDB->prefix('formulize_automation_outbox')." WHERE outbox_id = ".intval($outboxId));
+		$res = $xoopsDB->query("SELECT fid FROM ".$xoopsDB->prefix('formulize_rule_outbox')." WHERE outbox_id = ".intval($outboxId));
 		$row = $res ? $xoopsDB->fetchRow($res) : false;
 		return $row AND intval($row[0]) == $fid;
 	});
 	if($outboxIds) {
-		formulize_automationProcessOutbox(count($outboxIds), $outboxIds);
+		formulize_ruleProcessOutbox(count($outboxIds), $outboxIds);
 	}
 	$reload = true;
 }
 
-if($_POST['automations_move_procedure']) {
+if($_POST['rules_move_procedure']) {
 	// this runs after the Procedures tab's own save in the same round, so its textarea can't put the code back
-	if(!$movedAutomationId = formulize_moveProcedureIntoAutomation($formObject, strval($_POST['automations_move_procedure']))) {
-		print "Error: could not move the procedure's code into an automation.";
+	if(!$movedRuleId = formulize_moveProcedureIntoRule($formObject, strval($_POST['rules_move_procedure']))) {
+		print "Error: could not move the procedure's code into a rule.";
 	} else {
-		print "/* eval */ window.location = '".XOOPS_URL."/modules/formulize/admin/ui.php?page=automation&aid=$aid&fid=$fid&automation_id=$movedAutomationId';";
+		print "/* eval */ window.location = '".XOOPS_URL."/modules/formulize/admin/ui.php?page=rule&aid=$aid&fid=$fid&rule_id=$movedRuleId';";
 		return;
 	}
 }
 
-if($_POST['automations_goto']) {
-	$automationId = $_POST['automations_goto'] === 'new' ? 'new' : intval($_POST['automations_goto']);
-	$startingPoint = preg_replace('/[^a-z_]/', '', strval($_POST['automations_starting_point'] ?? ''));
-	print "/* eval */ window.location = '".XOOPS_URL."/modules/formulize/admin/ui.php?page=automation&aid=$aid&fid=$fid&automation_id=$automationId".($startingPoint ? "&starting_point=$startingPoint" : "")."';";
+if($_POST['rules_goto']) {
+	$ruleId = $_POST['rules_goto'] === 'new' ? 'new' : intval($_POST['rules_goto']);
+	$startingPoint = preg_replace('/[^a-z_]/', '', strval($_POST['rules_starting_point'] ?? ''));
+	print "/* eval */ window.location = '".XOOPS_URL."/modules/formulize/admin/ui.php?page=rule&aid=$aid&fid=$fid&rule_id=$ruleId".($startingPoint ? "&starting_point=$startingPoint" : "")."';";
 } elseif($reload) {
 	print "/* eval */ reloadWithScrollPosition();";
 }

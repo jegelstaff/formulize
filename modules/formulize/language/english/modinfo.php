@@ -221,8 +221,8 @@ if(!$mcpEnabled) {
 
 define("_MI_formulize_AIASSISTANTENABLED",  "Enable the Embedded AI Assistant, inside Formulize");
 define("_MI_formulize_AIASSISTANTENABLED_DESC", "Enable an embedded AI Assistant, so that you can use AI right inside this Formulize system without Claude Desktop or any other external tool. When this is on, a <i>Use AI</i> link appears in the Formulize menu.<br><br>To use AI in this way, you will need an API key <i>from an AI provider</i>, or you will need to have a local model available through Ollama.<br><br>Learn more: <a href='https://formulize.org/ai/setup-embedded' target='_blank'>https://formulize.org/ai/setup-embedded</a>");
-define("_MI_formulize_AIAUTOMATIONENABLED", "Enable AI in automations");
-define("_MI_formulize_AIAUTOMATIONENABLED_DESC", "Let automations (on the Automations tab of each form) send entries to an AI model, with a prompt, and use the reply: write it into an entry, put it in a notification, and so on. For example, summarize each new entry, or sort it into a category.<br><br>Automations run without anybody signed in to an AI provider, so they need a <b>site-wide</b> provider and key: choose a provider below (not <i>user specified</i>), and save its API key. Every entry an automation sends goes to that provider.");
+define("_MI_formulize_AIRULESENABLED", "Enable AI in rules");
+define("_MI_formulize_AIRULESENABLED_DESC", "Let rules (on the Rules tab of each form) send entries to an AI model, with a prompt, and use the reply: write it into an entry, put it in a notification, and so on. For example, summarize each new entry, or sort it into a category.<br><br>Rules run without anybody signed in to an AI provider, so they need a <b>site-wide</b> provider and key: choose a provider below (not <i>user specified</i>), and save its API key. Every entry a rule sends goes to that provider.");
 
 define("_MI_formulize_AIASSISTANTGROUPS", "Groups that can use the embedded AI assistant");
 define("_MI_formulize_AIASSISTANTGROUPS_DESC", "Select which groups of users are allowed to use the embedded AI assistant. If no groups are selected, no one will be able to use it.");

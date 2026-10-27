@@ -84,9 +84,9 @@ $modversion['tables'] = array(
 	"formulize_tokens",
   "formulize_digest_data",
   "formulize_passcodes",
-  "formulize_automations",
-  "formulize_automation_outbox",
-  "formulize_automation_log",
+  "formulize_rules",
+  "formulize_rule_outbox",
+  "formulize_rule_log",
   "tfa_codes"
 );
 
@@ -518,16 +518,16 @@ $modversion['templates'][] = array(
 	'file' => 'admin/form_advanced_calculations.html',
 	'description' => '');
 $modversion['templates'][] = array(
-	'file' => 'admin/form_automations.html',
+	'file' => 'admin/form_rules.html',
 	'description' => '');
 $modversion['templates'][] = array(
-	'file' => 'admin/automation.html',
+	'file' => 'admin/rule.html',
 	'description' => '');
 $modversion['templates'][] = array(
-	'file' => 'admin/automation_activity.html',
+	'file' => 'admin/rule_activity.html',
 	'description' => '');
 $modversion['templates'][] = array(
-	'file' => 'admin/automation_values.html',
+	'file' => 'admin/rule_values.html',
 	'description' => '');
 $modversion['templates'][] = array(
 	'file' => 'admin/application_relationships.html',
@@ -1139,11 +1139,11 @@ $modversion['config'][] = array(
 	'valuetype' => 'array',
 	'default' => array(1),
 );
-// AI in automations: the "Ask AI" step, using the site-wide provider, model and key (see include/automations.php)
+// AI in rules: the "Ask AI" step, using the site-wide provider, model and key (see include/rules.php)
 $modversion['config'][] = array(
-	'name' => 'formulizeAIAutomationEnabled',
-	'title' => '_MI_formulize_AIAUTOMATIONENABLED',
-	'description' => '_MI_formulize_AIAUTOMATIONENABLED_DESC',
+	'name' => 'formulizeAIRulesEnabled',
+	'title' => '_MI_formulize_AIRULESENABLED',
+	'description' => '_MI_formulize_AIRULESENABLED_DESC',
 	'formtype' => 'yesno',
 	'valuetype' => 'int',
 	'default' => 0,
@@ -1527,11 +1527,11 @@ if(isset($GLOBALS['formulize_notificationSubjectOverride'])) {
 	$modversion['notification']['event'][3]['mail_subject'] = $GLOBALS['formulize_notificationSubjectOverride'];
 }
 
-// every 5 minutes, send webhooks and run background automations that are waiting or due to be retried (see include/automations.php)
+// every 5 minutes, send webhooks and run background rules that are waiting or due to be retried (see include/rules.php)
 $modversion['autotasks'][] = array(
 	'enabled' => '1',
 	'repeat' => '0',
 	'interval' => '5',
 	'onfinish' => '0',
-	'name' => 'Formulize automations: webhooks and background work',
-	'code' => 'include/automations_autotask.php');
+	'name' => 'Formulize rules: webhooks and background work',
+	'code' => 'include/rules_autotask.php');

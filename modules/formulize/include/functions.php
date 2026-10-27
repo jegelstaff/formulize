@@ -14399,5 +14399,5 @@ function formulize_noPermissionMessage($message = '', $loginUrl = '') {
 // required here. They are part of this file, and nothing else should include them directly.
 // progressive web app: stuff for Formulize to be operate as one
 require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions/pwa.php';
-// automations: what happens when entries are created, updated, deleted, or custom buttons are clicked
-include_once XOOPS_ROOT_PATH."/modules/formulize/include/automations.php";
+// rules: what happens when entries are created, updated, deleted, or custom buttons are clicked
+include_once XOOPS_ROOT_PATH."/modules/formulize/include/rules.php";
