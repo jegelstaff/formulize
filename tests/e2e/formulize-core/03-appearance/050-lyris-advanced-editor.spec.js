@@ -160,7 +160,7 @@ test.describe('The advanced editor', () => {
 		await expect(page.locator('#formulize-editor-count')).toBeHidden();
 	});
 
-	// The List sample's view switcher (the "All registrations" menu in the title bar) is a button too, so
+	// The List sample's view switcher (the "All artifacts" menu in the title bar) is a button too, so
 	// it has the buttons' corners (themes/Lyris/css/style.css, .lyris-list__titlebar
 	// .lyris-view-switcher__toggle), in the preview and on a list
 	test('A change to the buttons\' corners reaches every button on the List sample', async ({ page }) => {

@@ -214,6 +214,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			if($value === null AND is_numeric($entry_id)) {
 				$ele_value = $element->getVar('ele_value');
 				if(isset($ele_value['defaultValueSource']) AND $ele_value['defaultValueSource']) {
+					$dataHandler = new formulizeDataHandler($element->getVar('fid'));
 					$value = $dataHandler->getElementValueInEntry($entry_id, intval($ele_value['defaultValueSource']));
 				}
 			}

@@ -14,6 +14,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta content="width=device-width, initial-scale=1" name="viewport">
     <meta name="description" content="{{ page.description | default: site.description }}">
+    {% if page.noindex %}<meta name="robots" content="noindex, nofollow">{% endif %}
 
     <link rel="stylesheet" href="{{ "/assets/css/formulize.css" | relative_url }}">
     <link rel="stylesheet" href="{{ "/assets/css/style.css?v=" | append: site.github.build_revision | relative_url }}">
