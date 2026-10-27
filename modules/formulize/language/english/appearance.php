@@ -131,7 +131,7 @@ define('_AM_APPEARANCE_LOOKS_SITE_LOOK_IS_THEME', 'Site look when %s is active:'
 define('_AM_APPEARANCE_LOOKS_CHANGE_SITE', 'Change site look');
 define('_AM_APPEARANCE_LOOKS_CHANGE_SITE_THEME', 'Change site look for %s');
 define('_AM_APPEARANCE_LOOKS_CREATE', 'Create new look');
-define('_AM_APPEARANCE_LOOKS_INTRO', 'A look is the logo, colours, fonts, page width and sizes that pages are shown with. The site uses one look, and a screen can use another. A look based on another follows it, except for what it changes itself.');
+define('_AM_APPEARANCE_LOOKS_INTRO', 'A look is the logo, colours, fonts, page width and sizes that pages are shown with. A look can be applied to the entire site, or to individual screens. Looks can be children of other looks and inherit the settings from their parents.');
 define('_AM_APPEARANCE_LOOKS_OTHER_THEME_TITLE', 'You\'re looking at %s\'s looks.');
 define('_AM_APPEARANCE_LOOKS_OTHER_THEME', 'The site\'s theme is %1$s. Choosing a theme here doesn\'t change it; that\'s in %2$s.');
 define('_AM_APPEARANCE_LOOKS_SETTINGS_LINK', 'Appearance › Settings');

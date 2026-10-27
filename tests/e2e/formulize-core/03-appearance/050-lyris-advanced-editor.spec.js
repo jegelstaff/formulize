@@ -161,7 +161,7 @@ test.describe('The advanced editor', () => {
 	});
 
 	// PRODUCT BUG, so fixme until it is fixed: the List sample marks its view switcher (the "All
-	// registrations" menu in the title bar) as a Button part, so it is outlined and listed as a button, but
+	// artifacts" menu in the title bar) as a Button part, so it is outlined and listed as a button, but
 	// Lyris gives it the corners of --fz-radius-md (themes/Lyris/css/style.css, .lyris-list__titlebar
 	// .lyris-view-switcher__toggle), so a change to the buttons' corners doesn't reach it, in the preview or
 	// on a list. Either the sample shouldn't call it a button, or it should have the buttons' corners.

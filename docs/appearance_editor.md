@@ -8,7 +8,7 @@ title: Looks and the Appearance editor
 
 A **look** is how your site's pages look: the logo and favicon, the colours, the fonts, how wide the
 pages can get, and the size of everything, from text to fields, buttons and list rows. Each theme
-has its own looks. The site uses one of them, and a screen can use another.
+has its own looks. A look can be applied to the entire site, or to individual screens.
 
 Looks are managed on **Admin > Appearance > Looks**, and changed in the **Appearance editor**, which
 opens from there. Only Formulize admins can use them.
