@@ -14442,5 +14442,5 @@ function formulize_quickSearchTypeNames() {
 // progressive web app: stuff for Formulize to be operate as one
 require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions/pwa.php';
 require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions/linked_sources.php';
-// automations: what happens when entries are created, updated, deleted, or custom buttons are clicked
-require_once XOOPS_ROOT_PATH."/modules/formulize/include/automations.php";
+// rules: what happens when entries are created, updated, deleted, or custom buttons are clicked
+require_once XOOPS_ROOT_PATH."/modules/formulize/include/rules.php";

@@ -26,7 +26,7 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// this file saves the editor for one automation (admin/automation.php, templates/admin/automation.html)
+// this file saves the editor for one rule (admin/rule.php, templates/admin/rule.html)
 
 // if we aren't coming from what appears to be save.php, then return nothing
 if(!isset($processedValues)) {
@@ -35,7 +35,7 @@ if(!isset($processedValues)) {
 
 $fid = intval($_POST['formulize_admin_fid']);
 $aid = intval($_POST['formulize_admin_aid']);
-$automationId = $_POST['formulize_admin_key'] === 'new' ? 'new' : intval($_POST['formulize_admin_key']);
+$ruleId = $_POST['formulize_admin_key'] === 'new' ? 'new' : intval($_POST['formulize_admin_key']);
 
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 $formObject = $form_handler->get($fid);
@@ -46,42 +46,42 @@ if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
 	return;
 }
 
-include_once XOOPS_ROOT_PATH.'/modules/formulize/include/automations_admin.php';
-$automations_handler = xoops_getmodulehandler('automations', 'formulize');
-if($automationId === 'new') {
-	$automation = $automations_handler->create($fid);
-} elseif(!($automation = $automations_handler->get($automationId)) OR $automation['fid'] != $fid) {
-	print "Error: this automation doesn't exist, or belongs to another form.";
+include_once XOOPS_ROOT_PATH.'/modules/formulize/include/rules_admin.php';
+$rules_handler = xoops_getmodulehandler('rules', 'formulize');
+if($ruleId === 'new') {
+	$rule = $rules_handler->create($fid);
+} elseif(!($rule = $rules_handler->get($ruleId)) OR $rule['fid'] != $fid) {
+	print "Error: this rule doesn't exist, or belongs to another form.";
 	return;
 }
-$previousSteps = array_values((array) $automation['steps']);
-$reload = !empty($_POST['automation_reload']);
+$previousSteps = array_values((array) $rule['steps']);
+$reload = !empty($_POST['rule_reload']);
 
-// the automation itself
-$automation['name'] = trim(strval($_POST['automation_name'] ?? '')) !== '' ? trim(strval($_POST['automation_name'])) : 'New automation';
-$automation['active'] = !empty($_POST['automation_active']) ? 1 : 0;
-$triggerTypes = formulizeAutomationsHandler::triggerTypes();
-$automation['trigger_type'] = isset($triggerTypes[$_POST['automation_trigger_type'] ?? '']) ? $_POST['automation_trigger_type'] : $automation['trigger_type'];
-$elementOptions = formulize_automationElementOptions($fid);
-$automation['trigger_settings'] = array();
-if(in_array($automation['trigger_type'], array('update_entry', 'save_entry'))) {
-	$automation['trigger_settings']['watch'] = array_values(array_intersect((array) ($_POST['automation_watch'] ?? array()), array_keys($elementOptions)));
+// the rule itself
+$rule['name'] = trim(strval($_POST['rule_name'] ?? '')) !== '' ? trim(strval($_POST['rule_name'])) : 'New rule';
+$rule['active'] = !empty($_POST['rule_active']) ? 1 : 0;
+$triggerTypes = formulizeRulesHandler::triggerTypes();
+$rule['trigger_type'] = isset($triggerTypes[$_POST['rule_trigger_type'] ?? '']) ? $_POST['rule_trigger_type'] : $rule['trigger_type'];
+$elementOptions = formulize_ruleElementOptions($fid);
+$rule['trigger_settings'] = array();
+if(in_array($rule['trigger_type'], array('update_entry', 'save_entry'))) {
+	$rule['trigger_settings']['watch'] = array_values(array_intersect((array) ($_POST['rule_watch'] ?? array()), array_keys($elementOptions)));
 }
-if($automation['trigger_type'] == 'button_click' AND !empty($_POST['automation_button'])) {
-	list($buttonSid, $buttonHandle) = array_pad(explode('|', strval($_POST['automation_button']), 2), 2, '');
-	$automation['trigger_settings']['sid'] = intval($buttonSid);
-	$automation['trigger_settings']['button'] = $buttonHandle;
+if($rule['trigger_type'] == 'button_click' AND !empty($_POST['rule_button'])) {
+	list($buttonSid, $buttonHandle) = array_pad(explode('|', strval($_POST['rule_button']), 2), 2, '');
+	$rule['trigger_settings']['sid'] = intval($buttonSid);
+	$rule['trigger_settings']['button'] = $buttonHandle;
 }
 
 // which entries
-$parsedConditions = parseSubmittedConditions('automationconditions', 'automationconditionsdelete');
+$parsedConditions = parseSubmittedConditions('ruleconditions', 'ruleconditionsdelete');
 if(is_array($parsedConditions)) {
-	list($automation['conditions'], $conditionsReload) = $parsedConditions;
+	list($rule['conditions'], $conditionsReload) = $parsedConditions;
 	$reload = ($reload || $conditionsReload);
 }
 
 // then
-$stepTypes = formulizeAutomationsHandler::stepTypes();
+$stepTypes = formulizeRulesHandler::stepTypes();
 $steps = array();
 $postedSteps = (array) ($_POST['steps'] ?? array());
 ksort($postedSteps, SORT_NUMERIC);
@@ -179,34 +179,34 @@ foreach($postedSteps as $index => $posted) {
 }
 
 // changes to the list of steps and values
-if(($_POST['automation_remove_value'] ?? '') !== '') {
-	list($stepIndex, $valueIndex) = array_map('intval', array_pad(explode('_', $_POST['automation_remove_value']), 2, 0));
+if(($_POST['rule_remove_value'] ?? '') !== '') {
+	list($stepIndex, $valueIndex) = array_map('intval', array_pad(explode('_', $_POST['rule_remove_value']), 2, 0));
 	if(isset($steps[$stepIndex]['values'][$valueIndex])) {
 		unset($steps[$stepIndex]['values'][$valueIndex]);
 		$steps[$stepIndex]['values'] = array_values($steps[$stepIndex]['values']);
 	}
 }
-if(($_POST['automation_add_value'] ?? '') !== '' AND isset($steps[intval($_POST['automation_add_value'])])) {
-	$steps[intval($_POST['automation_add_value'])]['values'][] = array('element' => '', 'value' => '', 'mode' => 'replace');
+if(($_POST['rule_add_value'] ?? '') !== '' AND isset($steps[intval($_POST['rule_add_value'])])) {
+	$steps[intval($_POST['rule_add_value'])]['values'][] = array('element' => '', 'value' => '', 'mode' => 'replace');
 }
-if(($_POST['automation_remove_step'] ?? '') !== '' AND isset($steps[intval($_POST['automation_remove_step'])])) {
-	unset($steps[intval($_POST['automation_remove_step'])]);
+if(($_POST['rule_remove_step'] ?? '') !== '' AND isset($steps[intval($_POST['rule_remove_step'])])) {
+	unset($steps[intval($_POST['rule_remove_step'])]);
 	$steps = array_values($steps);
 }
-if(($_POST['automation_move_step'] ?? '') !== '') {
-	$moveIndex = intval($_POST['automation_move_step']);
+if(($_POST['rule_move_step'] ?? '') !== '') {
+	$moveIndex = intval($_POST['rule_move_step']);
 	if($moveIndex > 0 AND isset($steps[$moveIndex])) {
 		$moving = $steps[$moveIndex];
 		$steps[$moveIndex] = $steps[$moveIndex - 1];
 		$steps[$moveIndex - 1] = $moving;
 	}
 }
-if(isset($stepTypes[$_POST['automation_add_step'] ?? ''])) {
-	$newType = $_POST['automation_add_step'];
+if(isset($stepTypes[$_POST['rule_add_step'] ?? ''])) {
+	$newType = $_POST['rule_add_step'];
 	$newStep = array('type' => $newType);
-	if($defaultOutputName = formulizeAutomationsHandler::defaultOutputName($newType)) {
+	if($defaultOutputName = formulizeRulesHandler::defaultOutputName($newType)) {
 		// don't reuse a name an earlier step already has
-		$usedNames = array_filter(array_map('formulize_automationOutputName', $steps));
+		$usedNames = array_filter(array_map('formulize_ruleOutputName', $steps));
 		$newStep['output'] = $defaultOutputName;
 		for($n = 2; in_array($newStep['output'], $usedNames); $n++) {
 			$newStep['output'] = $defaultOutputName.'_'.$n;
@@ -244,17 +244,17 @@ if(isset($stepTypes[$_POST['automation_add_step'] ?? ''])) {
 	}
 	$steps[] = $newStep;
 }
-$automation['steps'] = $steps;
+$rule['steps'] = $steps;
 
-if(!$savedAutomationId = $automations_handler->insert($automation)) {
-	print "Error: could not save the automation: ".$xoopsDB->error();
+if(!$savedRuleId = $rules_handler->insert($rule)) {
+	print "Error: could not save the rule: ".$xoopsDB->error();
 	return;
 }
 
-if($automationId === 'new') {
-	print "/* eval */ window.location = '".XOOPS_URL."/modules/formulize/admin/ui.php?page=automation&aid=$aid&fid=$fid&automation_id=$savedAutomationId';";
-} elseif(intval($_POST['automation_test'] ?? 0) > 0) {
-	$testOutcome = formulize_testAutomation($automations_handler->get($savedAutomationId), intval($_POST['automation_test']));
+if($ruleId === 'new') {
+	print "/* eval */ window.location = '".XOOPS_URL."/modules/formulize/admin/ui.php?page=rule&aid=$aid&fid=$fid&rule_id=$savedRuleId';";
+} elseif(intval($_POST['rule_test'] ?? 0) > 0) {
+	$testOutcome = formulize_testRule($rules_handler->get($savedRuleId), intval($_POST['rule_test']));
 	print "/* eval */ alert(".json_encode($testOutcome)."); reloadWithScrollPosition();";
 } elseif($reload) {
 	print "/* eval */ reloadWithScrollPosition();";

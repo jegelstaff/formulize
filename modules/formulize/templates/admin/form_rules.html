@@ -1,0 +1,211 @@
+<{* The Rules tab of a form: rules, notifications from the notifications popup, and background work *}>
+<{* form elements must be named with their object name hyphen field name, other elements must not have hyphens *}>
+
+<form class="formulize-admin-form">
+<input type="hidden" name="formulize_admin_handler" value="form_rules">
+<input type="hidden" name="formulize_admin_key" value="<{$content.fid}>">
+<input type="hidden" name="formulize_admin_aid" value="<{$content.aid}>">
+<input type="hidden" name="rules_goto" value="">
+<input type="hidden" name="rules_toggle" value="">
+<input type="hidden" name="rules_delete" value="">
+<input type="hidden" name="rules_clone" value="">
+<input type="hidden" name="rules_convert_notification" value="">
+<input type="hidden" name="rules_send_pending" value="">
+<input type="hidden" name="rules_retry_item" value="">
+<input type="hidden" name="rules_starting_point" value="">
+<input type="hidden" name="rules_move_procedure" value="">
+
+<div class="panel-content content rules-tab">
+
+	<p>Rules say what should happen automatically when something happens to entries in this form: <b>when</b> an entry is created, updated, saved or deleted, or a custom button is clicked, <b>which entries</b> it applies to, and <b>what happens</b>, in steps: send a notification, update or create entries, ask AI, send a webhook to another system, or run code. Later steps can use what earlier steps produced.</p>
+
+	<h2><a class="rules-show-starting-points" href=""><img src="../images/filenew2.png"> Create a new rule</a></h2>
+
+	<div class="rules-starting-points" style="display: none;">
+		<p>Pick a starting point. You can change everything about it afterwards.</p>
+		<{foreach from=$content.starting_point_groups key=groupName item=startingPoints}>
+		<h3><{$groupName}></h3>
+		<div class="rules-starting-point-cards">
+			<{foreach from=$startingPoints item=startingPoint}>
+			<a href="" class="rules-starting-point<{if $startingPoint.unavailable}> rules-starting-point-unavailable<{/if}>" target="<{$startingPoint.key}>" <{if $startingPoint.unavailable}>data-unavailable="1"<{/if}>>
+				<b><{$startingPoint.title}></b>
+				<span><{$startingPoint.description}></span>
+				<{if $startingPoint.unavailable}><span><i>Turn on AI in rules in Settings, AI, to use this.</i></span><{/if}>
+			</a>
+			<{/foreach}>
+		</div>
+		<{/foreach}>
+		<h3>Something else</h3>
+		<div class="rules-starting-point-cards">
+			<a href="" class="rules-starting-point" target=""><b>Start from scratch</b><span>Choose the trigger and add the steps yourself.</span></a>
+		</div>
+	</div>
+
+	<{if $content.procedures|@count > 0}>
+	<h2>Code on the Procedures tab</h2>
+	<p>This form has code in its procedures. You can move it into a rule, where it runs the same way, and can have conditions and other steps. The procedure is emptied, so the code doesn't run twice.</p>
+	<div class="form-item">
+	<table>
+		<{foreach from=$content.procedures item=procedure}>
+		<tr>
+			<td><b><{$procedure.label}></b>, <{$procedure.lines}> line<{if $procedure.lines != 1}>s<{/if}> of code</td>
+			<td style="white-space: nowrap;"><input type="button" class="rules-move-procedure" target="<{$procedure.key}>" value="Move into a rule"></td>
+		</tr>
+		<{/foreach}>
+	</table>
+	</div>
+	<p><small>After Saving code in a rule runs once, when the whole save is finished and derived values are up to date. On the Procedures tab it runs every time the entry is written, which can be more than once in a save.</small></p>
+	<{/if}>
+
+	<h2>Rules</h2>
+	<{if $content.rules|@count == 0}>
+		<p><i>There are no rules for this form yet.</i></p>
+	<{else}>
+	<div class="form-item">
+		<table class="rules-list">
+			<tr>
+				<th>Rule</th>
+				<th>When</th>
+				<th>Which entries</th>
+				<th>Then</th>
+				<th>On</th>
+				<th></th>
+			</tr>
+			<{foreach from=$content.rules item=rule}>
+			<tr class="<{if !$rule.active}>rules-off<{/if}>">
+				<td><a class="rules-edit" target="<{$rule.rule_id}>" href=""><img src="../images/kedit.png"> <{$rule.name|escape}></a>
+					<{if $rule.last_run}><br><small>Last ran <{$rule.last_run}></small><{/if}></td>
+				<td><{$rule.trigger|escape}></td>
+				<td><{$rule.conditions|escape}></td>
+				<td><{foreach from=$rule.steps item=stepSummary}><div><{$stepSummary|escape}></div><{/foreach}></td>
+				<td><input type="checkbox" class="rules-toggle" target="<{$rule.rule_id}>" <{if $rule.active}>checked<{/if}> aria-label="Turn this rule on or off"></td>
+				<td style="white-space: nowrap;">
+					<a class="rules-clone" target="<{$rule.rule_id}>" href=""><img src="../images/clone.gif"> Clone</a>&nbsp;&nbsp;
+					<a class="rules-delete" target="<{$rule.rule_id}>" href=""><img src="../images/editdelete.gif"> Delete</a>
+				</td>
+			</tr>
+			<{/foreach}>
+		</table>
+	</div>
+	<{/if}>
+
+	<h2>Notifications set up in the notifications popup</h2>
+	<{if $content.popup_notifications|@count == 0}>
+		<p><i>None.</i> People can still subscribe themselves to notifications using the notifications popup on list screens.</p>
+	<{else}>
+		<p>These notifications were set up for other people in the notifications popup on a list screen. Converting one makes a rule that does the same thing, where you can change it, add conditions and other steps, and see when it runs. The notification is then removed from the popup, so it isn't sent twice.</p>
+		<div class="form-item">
+		<table>
+			<{foreach from=$content.popup_notifications item=notification}>
+			<tr>
+				<td><{$notification.summary|escape}></td>
+				<td style="white-space: nowrap;"><input type="button" class="rules-convert-notification" target="<{$notification.id}>" value="Convert to a rule"></td>
+			</tr>
+			<{/foreach}>
+		</table>
+		</div>
+	<{/if}>
+	<{if $content.personal_subscriptions > 0}>
+		<p><{$content.personal_subscriptions}> personal notification subscription<{if $content.personal_subscriptions != 1}>s<{/if}> made by users for themselves, in the popup, also apply to this form.</p>
+	<{/if}>
+
+	<h2>Webhooks and background work</h2>
+	<{if $content.outbox_items|@count == 0}>
+		<p><i>No webhooks have been sent, and no rules have run in the background, for this form.</i></p>
+	<{else}>
+		<{if $content.pending_outbox_items > 0}>
+			<p><{$content.pending_outbox_items}> waiting to be sent, run or retried. <input type="button" class="rules-send-pending" value="Do them now"></p>
+		<{/if}>
+		<div class="form-item">
+		<table class="rules-outbox">
+			<tr><th>#</th><th>Created</th><th>Rule</th><th>Kind</th><th>Event</th><th>Entry</th><th>To</th><th>Status</th><th>Tries</th><th>Result</th><th></th></tr>
+			<{foreach from=$content.outbox_items item=outboxItem}>
+			<tr>
+				<td><{$outboxItem.outbox_id}></td>
+				<td style="white-space: nowrap;"><{$outboxItem.created_at}></td>
+				<td><{$outboxItem.rule_name|escape}></td>
+				<td><{if $outboxItem.channel == 'rule'}>Rule run in the background<{else}>Webhook<{/if}></td>
+				<td><{$outboxItem.event|escape}></td>
+				<td><{$outboxItem.entry_id}></td>
+				<td style="word-break: break-all;"><{$outboxItem.target|escape}></td>
+				<td><b><{if $outboxItem.status == 'delivered'}><{if $outboxItem.channel == 'rule'}>done<{else}>delivered<{/if}><{else}><{$outboxItem.status|escape}><{/if}></b><{if $outboxItem.status == 'pending' AND $outboxItem.attempts > 0}><br><small>next try <{$outboxItem.next_attempt_at}></small><{/if}></td>
+				<td><{$outboxItem.attempts}></td>
+				<td><{if $outboxItem.response_code}>HTTP <{$outboxItem.response_code}><{/if}><{if $outboxItem.last_error}><br><small><{$outboxItem.last_error|escape|truncate:200}></small><{/if}></td>
+				<td><{if $outboxItem.status != 'delivered'}><a class="rules-retry-item" target="<{$outboxItem.outbox_id}>" href="">Send now</a><{/if}></td>
+			</tr>
+			<{/foreach}>
+		</table>
+		</div>
+		<p><small>Rules that ask AI run in the background, after the page that triggered them has been sent. Webhooks are sent right after the event. Both are retried with increasing delays (1 minute, 5 minutes, 30 minutes, 2 hours, 12 hours) if they fail. Retries happen every few minutes while people are using the site, when you click "Do them now" or "Send now" here, or when a cron job calls <code><{$smarty.const.XOOPS_URL}>/formulize-public-api/v1/queue/all/process</code>.</small></p>
+	<{/if}>
+
+</div>
+</form>
+
+<style>
+	.rules-tab table { border-collapse: collapse; width: 100%; }
+	.rules-tab th, .rules-tab td { text-align: left; vertical-align: top; padding: 0.4em 0.6em; border-bottom: 1px solid rgba(128,128,128,0.25); }
+	.rules-tab tr.rules-off td { opacity: 0.55; }
+	.rules-tab .rules-starting-point-cards { display: flex; flex-wrap: wrap; gap: 0.75em; margin-bottom: 1em; }
+	.rules-tab .rules-starting-point { display: block; width: 17em; padding: 0.75em 1em; border: 1px solid rgba(128,128,128,0.4); border-radius: 6px; text-decoration: none; color: inherit; }
+	.rules-tab .rules-starting-point:hover { border-color: currentColor; }
+	.rules-tab .rules-starting-point b { display: block; margin-bottom: 0.3em; }
+	.rules-tab .rules-starting-point span { display: block; font-size: 0.9em; opacity: 0.85; }
+	.rules-tab .rules-starting-point-unavailable { opacity: 0.5; cursor: default; }
+</style>
+
+<script type="text/javascript">
+$(".rules-show-starting-points").click(function() {
+	$(".rules-starting-points").toggle();
+	return false;
+});
+$(".rules-starting-point").click(function() {
+	if($(this).attr('data-unavailable')) {
+		return false;
+	}
+	$("[name=rules_goto]").val('new');
+	$("[name=rules_starting_point]").val($(this).attr('target'));
+	$(".savebutton").click();
+	return false;
+});
+$(".rules-move-procedure").click(function() {
+	if(confirm("Move this code into a new rule? The procedure will be emptied, and the rule will run the code instead.")) {
+		$("[name=rules_move_procedure]").val($(this).attr('target'));
+		$(".savebutton").click();
+	}
+});
+$(".rules-edit").click(function() {
+	$("[name=rules_goto]").val($(this).attr('target'));
+	$(".savebutton").click();
+	return false;
+});
+$(".rules-toggle").click(function() {
+	$("[name=rules_toggle]").val($(this).attr('target'));
+	$(".savebutton").click();
+});
+$(".rules-clone").click(function() {
+	$("[name=rules_clone]").val($(this).attr('target'));
+	$(".savebutton").click();
+	return false;
+});
+$(".rules-delete").click(function() {
+	if(confirm("Delete this rule? This can't be undone.")) {
+		$("[name=rules_delete]").val($(this).attr('target'));
+		$(".savebutton").click();
+	}
+	return false;
+});
+$(".rules-convert-notification").click(function() {
+	$("[name=rules_convert_notification]").val($(this).attr('target'));
+	$(".savebutton").click();
+});
+$(".rules-send-pending").click(function() {
+	$("[name=rules_send_pending]").val(1);
+	$(".savebutton").click();
+});
+$(".rules-retry-item").click(function() {
+	$("[name=rules_retry_item]").val($(this).attr('target'));
+	$(".savebutton").click();
+	return false;
+});
+</script>

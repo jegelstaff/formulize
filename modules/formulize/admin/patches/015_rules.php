@@ -3,17 +3,17 @@ if (!defined('XOOPS_ROOT_PATH')) {
     exit();
 }
 
-// Adds the tables behind the Automations tab on forms (see automations-plan.md):
-// - formulize_automations: each automation is a trigger (new/updated/saved/deleted entry, or a custom button click),
+// Adds the tables behind the Rules tab on forms (see rules-plan.md):
+// - formulize_rules: each rule is a trigger (new/updated/saved/deleted entry, or a custom button click),
 //   conditions for which entries it applies to, and a list of steps (notify, update entries, create an entry,
 //   send a webhook);
-// - formulize_automation_outbox: webhooks, and automations queued to run in the background, so they can be retried and their progress seen;
-// - formulize_automation_log: a record of each time an automation ran, shown on the automation's Activity tab.
+// - formulize_rule_outbox: webhooks, and rules queued to run in the background, so they can be retried and their progress seen;
+// - formulize_rule_log: a record of each time a rule ran, shown on the rule's Activity tab.
 //
 // A new site gets these from sql/mysql.sql.
 //
 // Gated to run once, when the stored dbversion is below 25.
-function formulize_patch_015_automations($prev_dbversion, $required_dbversion) {
+function formulize_patch_015_rules($prev_dbversion, $required_dbversion) {
     global $xoopsDB;
 
     if ($prev_dbversion >= 25) {
@@ -21,8 +21,8 @@ function formulize_patch_015_automations($prev_dbversion, $required_dbversion) {
     }
 
     $tables = array(
-        'formulize_automations' => "(
-            automation_id int(11) unsigned NOT NULL auto_increment,
+        'formulize_rules' => "(
+            rule_id int(11) unsigned NOT NULL auto_increment,
             fid int(11) NOT NULL default 0,
             name varchar(255) NOT NULL default '',
             trigger_type varchar(50) NOT NULL default '',
@@ -31,12 +31,12 @@ function formulize_patch_015_automations($prev_dbversion, $required_dbversion) {
             steps mediumtext NULL,
             active tinyint(1) NOT NULL default 1,
             weight int(11) NOT NULL default 0,
-            PRIMARY KEY (`automation_id`),
+            PRIMARY KEY (`rule_id`),
             INDEX i_fid_trigger (`fid`, `trigger_type`)
         ) ENGINE=InnoDB",
-        'formulize_automation_outbox' => "(
+        'formulize_rule_outbox' => "(
             outbox_id int(11) unsigned NOT NULL auto_increment,
-            automation_id int(11) NOT NULL default 0,
+            rule_id int(11) NOT NULL default 0,
             fid int(11) NOT NULL default 0,
             entry_id int(11) NOT NULL default 0,
             event varchar(50) NOT NULL default '',
@@ -52,12 +52,12 @@ function formulize_patch_015_automations($prev_dbversion, $required_dbversion) {
             delivered_at datetime NULL default NULL,
             PRIMARY KEY (`outbox_id`),
             INDEX i_status_next (`status`, `next_attempt_at`),
-            INDEX i_automation_id (`automation_id`),
+            INDEX i_rule_id (`rule_id`),
             INDEX i_fid (`fid`)
         ) ENGINE=InnoDB",
-        'formulize_automation_log' => "(
+        'formulize_rule_log' => "(
             log_id int(11) unsigned NOT NULL auto_increment,
-            automation_id int(11) NOT NULL default 0,
+            rule_id int(11) NOT NULL default 0,
             fid int(11) NOT NULL default 0,
             entry_id int(11) NOT NULL default 0,
             event varchar(50) NOT NULL default '',
@@ -65,19 +65,19 @@ function formulize_patch_015_automations($prev_dbversion, $required_dbversion) {
             outcome text NULL,
             created_at datetime NULL default NULL,
             PRIMARY KEY (`log_id`),
-            INDEX i_automation_id (`automation_id`),
+            INDEX i_rule_id (`rule_id`),
             INDEX i_created_at (`created_at`)
         ) ENGINE=InnoDB",
     );
 
     foreach ($tables as $table => $definition) {
         if (!$xoopsDB->queryF("CREATE TABLE IF NOT EXISTS " . $xoopsDB->prefix($table) . " $definition")) {
-            echo '<p>015_automations: could not create the ' . $table . ' table: ' . htmlspecialchars($xoopsDB->error()) . '</p>';
+            echo '<p>015_rules: could not create the ' . $table . ' table: ' . htmlspecialchars($xoopsDB->error()) . '</p>';
             return false;
         }
     }
 
-    echo '<p>Added the Automations tab to forms, where you can set up what happens when entries are created,'
+    echo '<p>Added the Rules tab to forms, where you can set up what happens when entries are created,'
         . ' updated or deleted, or when a custom button is clicked: send notifications, update or create entries,'
         . ' and send webhooks.</p>';
     return true;

@@ -244,4 +244,4 @@ http_response_code($httpCode);
 header('Content-Length: ' . strlen($response));
 echo $response;
 
-// formulizeAI_proxyCurl() lives in ai_providers.php, so server-side callers (automations) share it
+// formulizeAI_proxyCurl() lives in ai_providers.php, so server-side callers (rules) share it

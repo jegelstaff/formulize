@@ -365,7 +365,7 @@ function formulizeAI_proxyCurl($url, $headers, $body = null, $timeout = 300) {
 // Server-side send/receive
 //
 // The embedded assistant builds its requests in the browser and the proxy passes them
-// through. Server-side features (automations, so far) need the same providers without a
+// through. Server-side features (rules, so far) need the same providers without a
 // browser: formulizeAI_complete() is one complete, non-streaming exchange - a prompt in,
 // text out - with the site-wide provider, model and key from Settings -> AI.
 // --------------------------------------------------------------------------

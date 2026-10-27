@@ -1,10 +1,10 @@
-<{* The values an Update entries or Create an entry step writes. Included by automation.html with step and content *}>
+<{* The values an Update entries or Create an entry step writes. Included by rule.html with step and content *}>
 <div class="form-item">
 	<label>Values</label>
 	<{if $step.values|@count == 0}>
 		<p><i>No values yet.</i></p>
 	<{else}>
-	<table class="automation-values">
+	<table class="rule-values">
 		<{foreach from=$step.values item=valueSetting}>
 		<tr>
 			<td>
@@ -22,11 +22,11 @@
 				<{/if}>
 			</td>
 			<td><input type="text" name="steps[<{$step.index}>][values][<{$valueSetting.index}>][value]" value="<{$valueSetting.value|escape}>" size="40" aria-label="Value"></td>
-			<td><a href="" class="automation-remove-value" target="<{$step.index}>_<{$valueSetting.index}>"><img src="../images/editdelete.gif" alt="Remove this value"></a></td>
+			<td><a href="" class="rule-remove-value" target="<{$step.index}>_<{$valueSetting.index}>"><img src="../images/editdelete.gif" alt="Remove this value"></a></td>
 		</tr>
 		<{/foreach}>
 	</table>
 	<{/if}>
-	<input type="button" class="automation-add-value" target="<{$step.index}>" value="Add a value">
+	<input type="button" class="rule-add-value" target="<{$step.index}>" value="Add a value">
 	<div class="description"><p>Type a value, or the text of one of the element's options. <code>{handle}</code> on its own copies the value of an element in the entry the event is about, and inside other text it is replaced with that value. <code>{ID}</code> is the id of the entry the event is about (put it in a linked element to connect the entries). <code>{USER}</code> and <code>{TODAY}</code> also work. Leave the value empty to clear the element.</p></div>
 </div>
