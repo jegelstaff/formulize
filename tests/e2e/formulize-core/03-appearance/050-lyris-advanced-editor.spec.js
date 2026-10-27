@@ -148,7 +148,7 @@ test.describe('The advanced editor', () => {
 		await expect(page.locator('#formulize-editor-count')).toHaveText('1');
 
 		// the screens it is on are listed; on another, its buttons have the new corners too (the list's Add
-		// button: see the fixme test below for the one there that doesn't)
+		// button: see the test below for every button there)
 		await showListSample(page);
 		const add = preview(page).locator('#formulize_addButton');
 		await expect(add).toHaveAttribute('data-fz-part', 'button');
@@ -160,12 +160,10 @@ test.describe('The advanced editor', () => {
 		await expect(page.locator('#formulize-editor-count')).toBeHidden();
 	});
 
-	// PRODUCT BUG, so fixme until it is fixed: the List sample marks its view switcher (the "All
-	// artifacts" menu in the title bar) as a Button part, so it is outlined and listed as a button, but
-	// Lyris gives it the corners of --fz-radius-md (themes/Lyris/css/style.css, .lyris-list__titlebar
-	// .lyris-view-switcher__toggle), so a change to the buttons' corners doesn't reach it, in the preview or
-	// on a list. Either the sample shouldn't call it a button, or it should have the buttons' corners.
-	test.fixme('A change to the buttons\' corners reaches every button on the List sample', async ({ page }) => {
+	// The List sample's view switcher (the "All artifacts" menu in the title bar) is a button too, so
+	// it has the buttons' corners (themes/Lyris/css/style.css, .lyris-list__titlebar
+	// .lyris-view-switcher__toggle), in the preview and on a list
+	test('A change to the buttons\' corners reaches every button on the List sample', async ({ page }) => {
 		await selectButton(page);
 		const corners = control(page, '--fz-button-radius');
 		const radius = parseInt(await corners.locator('.formulize-editor__val b').textContent(), 10);

@@ -95,8 +95,8 @@ async function uploadLogoAndFavicon(page) {
 	return saved;
 }
 
-// Delete the images this spec uploaded that are still there: see the fixme test below for why a save
-// that takes one away leaves it behind. Deleting the look deletes the ones it still names.
+// Delete the images this spec uploaded that are still there, should a test have stopped before the save
+// that takes them away. Deleting the look deletes the ones it still names.
 function deleteLeftoverUploads() {
 	for (const file of uploaded) {
 		if (/^formulize-appearance-(logo|favicon)-[0-9a-f-]+\.png$/.test(file)) {
@@ -268,14 +268,8 @@ test.describe('The simple editor', () => {
 		await expect(logo).toHaveAttribute('src', themeLogo);
 	});
 
-	// PRODUCT BUG, so fixme until it is fixed: an image a save stops naming is meant to be deleted
-	// (appearance_editor.php: "the images the save stopped naming ... each goes if no look names it now").
-	// It isn't, because the list of them is array_merge(array_diff($before, $after), array_diff($after,
-	// $before)), and both arrays are keyed by the setting's name, so the second one's values (the new
-	// images, or '' for one taken away) replace the first one's (the images no longer named). A logo taken
-	// away, or replaced, stays in the theme's appearance folder for good. The afterAll deletes the ones
-	// this spec leaves behind.
-	test.fixme('An image taken away is deleted from the server, once no look names it', async ({ page }) => {
+	// An image a save stops naming is deleted, once no look names it (a copy of a look has the same images)
+	test('An image taken away is deleted from the server, once no look names it', async ({ page }) => {
 		await openAppearanceEditor(page, key);
 		const saved = await uploadLogoAndFavicon(page);
 		await openAppearanceEditor(page, key);
