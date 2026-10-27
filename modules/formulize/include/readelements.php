@@ -564,7 +564,7 @@ formulizeHandler::processEauGroupMembershipsForWrittenEntries($formulize_allWrit
 foreach($notEntriesList as $notEvent=>$notDetails) {
 	foreach($notDetails as $notFid=>$notEntries) {
 		$notEntries = array_unique($notEntries);
-		sendNotifications($notFid, $notEvent, $notEntries);
+		formulize_dispatchEntryEvent($notFid, $notEvent, $notEntries);
 	}
 }
 

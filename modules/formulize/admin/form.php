@@ -1117,6 +1117,12 @@ if ($fid != "new") {
     $adminPage['tabs'][$i]['template'] = "db:admin/form_advanced_calculations.html";
     $adminPage['tabs'][$i]['content'] = $advanced_calculations + $common;
     $i++;
+
+    include_once XOOPS_ROOT_PATH.'/modules/formulize/include/automations_admin.php';
+    $adminPage['tabs'][$i]['name'] = "Automations";
+    $adminPage['tabs'][$i]['template'] = "db:admin/form_automations.html";
+    $adminPage['tabs'][$i]['content'] = formulize_automationsTabContent($fid) + $common;
+    $i++;
 }
 $adminPage['pagetitle'] = _AM_APP_FORM.$formName;
 $adminPage['ai_meta_json'] = json_encode(array('form_handle' => $form_handle));

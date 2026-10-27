@@ -1,0 +1,42 @@
+<{* When an automation ran, and what happened *}>
+<div class="panel-content content automation-activity">
+	<h2>Recent activity</h2>
+	<{if $content.log|@count == 0}>
+		<p><i>This automation hasn't run yet.</i></p>
+	<{else}>
+	<table>
+		<tr><th>When</th><th>Event</th><th>Entry</th><th>User</th><th>What happened</th></tr>
+		<{foreach from=$content.log item=logRow}>
+		<tr>
+			<td style="white-space: nowrap;"><{$logRow.created_at}></td>
+			<td><{$logRow.event|escape}></td>
+			<td><{$logRow.entry_id}></td>
+			<td><{$logRow.user|escape}></td>
+			<td><{foreach from=$logRow.outcome_lines item=line}><div><{$line|escape}></div><{/foreach}></td>
+		</tr>
+		<{/foreach}>
+	</table>
+	<{/if}>
+
+	<{if $content.outbox_items|@count > 0}>
+	<h2>Webhook deliveries</h2>
+	<table>
+		<tr><th>#</th><th>Created</th><th>Entry</th><th>To</th><th>Status</th><th>Tries</th><th>Result</th></tr>
+		<{foreach from=$content.outbox_items item=outboxItem}>
+		<tr>
+			<td><{$outboxItem.outbox_id}></td>
+			<td style="white-space: nowrap;"><{$outboxItem.created_at}></td>
+			<td><{$outboxItem.entry_id}></td>
+			<td style="word-break: break-all;"><{$outboxItem.target|escape}></td>
+			<td><b><{$outboxItem.status|escape}></b><{if $outboxItem.status == 'pending' AND $outboxItem.attempts > 0}><br><small>next try <{$outboxItem.next_attempt_at}></small><{/if}></td>
+			<td><{$outboxItem.attempts}></td>
+			<td><{if $outboxItem.response_code}>HTTP <{$outboxItem.response_code}><{/if}><{if $outboxItem.last_error}><br><small><{$outboxItem.last_error|escape|truncate:200}></small><{/if}></td>
+		</tr>
+		<{/foreach}>
+	</table>
+	<{/if}>
+</div>
+<style>
+	.automation-activity table { border-collapse: collapse; width: 100%; }
+	.automation-activity th, .automation-activity td { text-align: left; vertical-align: top; padding: 0.4em 0.6em; border-bottom: 1px solid rgba(128,128,128,0.25); }
+</style>

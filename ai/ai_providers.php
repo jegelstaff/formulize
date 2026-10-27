@@ -308,3 +308,200 @@ function formulizeAI_expandFileRefs($node, $expander, $files, &$errors) {
     }
     return $node;
 }
+
+/**
+ * One place for every outbound call, so timeouts and error handling cannot drift apart
+ * between providers.
+ *
+ * Nothing here streams: every provider is asked for a complete response and we wait for
+ * the whole body. So CURLOPT_TIMEOUT is the right bound - it caps the total wait, which
+ * is exactly the thing worth capping. (A streaming transport would need LOW_SPEED_LIMIT
+ * and LOW_SPEED_TIME instead, since a slow stream is alive rather than stuck.)
+ *
+ * CURLOPT_CONNECTTIMEOUT covers only TCP and TLS setup, so it never cuts into the time
+ * the model spends thinking.
+ *
+ * There is no way to tell "the model is still thinking" from "the connection is dead":
+ * in a non-streaming request no bytes flow in either case, so any bound is a policy
+ * rather than a detection. Two things make the choice easy anyway:
+ *
+ *   - The browser gives up first and shows its own message, and aborting a fetch does
+ *     not stop this request. So by the time this timeout matters the person has already
+ *     moved on; it is not cutting anybody's answer short, only reclaiming the worker.
+ *   - The hosted providers have ceilings of their own (Anthropic ends non-streaming
+ *     requests around ten minutes and tells you to stream past that), so for those the
+ *     value below is nearly unreachable.
+ *
+ * Previously there was no bound at all: cURL waits forever by default, and PHP's
+ * max_execution_time does not count time spent inside an external call, so a black-holed
+ * connection held a worker until TCP keepalive gave up - two hours, by default.
+ *
+ * @param string $url
+ * @param array $headers
+ * @param string|null $body POST body, or null for a GET
+ * @param int $timeout Seconds to wait for the complete response
+ * @return array array($responseBody, $httpCode, $curlErrorString)
+ */
+function formulizeAI_proxyCurl($url, $headers, $body = null, $timeout = 300) {
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+    if ($body !== null) {
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+    }
+
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    curl_close($ch);
+
+    return array($response, $httpCode, $error);
+}
+
+// --------------------------------------------------------------------------
+// Server-side send/receive
+//
+// The embedded assistant builds its requests in the browser and the proxy passes them
+// through. Server-side features (automations, so far) need the same providers without a
+// browser: formulizeAI_complete() is one complete, non-streaming exchange - a prompt in,
+// text out - with the site-wide provider, model and key from Settings -> AI.
+// --------------------------------------------------------------------------
+
+/**
+ * A failure talking to an AI provider. isRetryable() says whether trying again later
+ * might work (the provider was busy, rate limited, or unreachable), as opposed to a
+ * problem with the configuration or the request that will fail the same way again.
+ */
+class FormulizeAIException extends Exception {
+    private $retryable;
+    public function __construct($message, $retryable = false) {
+        parent::__construct($message);
+        $this->retryable = $retryable;
+    }
+    public function isRetryable() {
+        return $this->retryable;
+    }
+}
+
+/**
+ * Send a prompt to the site's AI model and get back its reply, from server-side code.
+ *
+ * Uses the site-wide provider, model and key from Settings -> AI. A provider left as
+ * "user specified" has no site-wide key, so it can't be used here.
+ *
+ * @param string $system Instructions for the model (the system prompt), or ''
+ * @param string $prompt The message to send
+ * @param array $options Optional: 'max_tokens' (default 2048), 'json' (true to ask for a JSON reply), 'timeout' (seconds)
+ * @return array 'text' => the reply, 'provider', 'model', 'stop_reason', 'usage' (provider's own usage data, if any)
+ * @throws FormulizeAIException
+ */
+function formulizeAI_complete($system, $prompt, $options = array()) {
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/aiadminconfig.php";
+    $config = formulizeAI_adminConfig();
+    if (!$config['providerLocked']) {
+        throw new FormulizeAIException('No site-wide AI provider is chosen. In Settings, AI, choose a provider (not "user specified"), and save its API key.');
+    }
+    $provider = $config['provider'];
+    $model = $config['model'];
+    $adapter = formulizeAI_providerAdapter($provider);
+    if (!$adapter) {
+        throw new FormulizeAIException("Unknown AI provider '$provider'.");
+    }
+    $apiKey = '';
+    if ($provider !== 'ollama') {
+        $apiKey = formulizeAI_loadKey(FORMULIZE_AI_SYSTEM_UID, $provider);
+        if (!$apiKey) {
+            throw new FormulizeAIException('No site-wide API key is saved for the AI provider. Add one in Settings, AI.');
+        }
+    }
+    $maxTokens = isset($options['max_tokens']) ? max(16, intval($options['max_tokens'])) : 2048;
+    $json = !empty($options['json']);
+    if ($json) {
+        $system = trim($system . "\n\nRespond with a single JSON object only, with no other text before or after it.");
+    }
+
+    switch ($provider) {
+        case 'claude':
+            $body = array('model' => $model, 'max_tokens' => $maxTokens, 'messages' => array(array('role' => 'user', 'content' => $prompt)));
+            if ($system !== '') {
+                $body['system'] = $system;
+            }
+            break;
+        case 'gemini':
+            $body = array(
+                'contents' => array(array('role' => 'user', 'parts' => array(array('text' => $prompt)))),
+                'generationConfig' => array('maxOutputTokens' => $maxTokens),
+            );
+            if ($system !== '') {
+                $body['systemInstruction'] = array('parts' => array(array('text' => $system)));
+            }
+            if ($json) {
+                $body['generationConfig']['responseMimeType'] = 'application/json';
+            }
+            break;
+        default: // openai, and ollama's OpenAI-compatible endpoint
+            $messages = array();
+            if ($system !== '') {
+                $messages[] = array('role' => 'system', 'content' => $system);
+            }
+            $messages[] = array('role' => 'user', 'content' => $prompt);
+            $body = array('model' => $model, 'messages' => $messages);
+            // OpenAI's current models take max_completion_tokens and reject max_tokens; Ollama takes max_tokens
+            $body[$provider === 'openai' ? 'max_completion_tokens' : 'max_tokens'] = $maxTokens;
+            if ($json) {
+                $body['response_format'] = array('type' => 'json_object');
+            }
+    }
+
+    $endpoint = formulizeAI_resolveEndpoint($adapter['chat'], $apiKey, $model, $config['ollamaBaseUrl']);
+    $timeout = isset($options['timeout']) ? intval($options['timeout']) : min(300, isset($adapter['timeout']) ? $adapter['timeout'] : 300);
+    list($response, $httpCode, $curlError) = formulizeAI_proxyCurl(
+        $endpoint['url'],
+        array_merge(array('Content-Type: application/json'), $endpoint['headers']),
+        json_encode($body),
+        $timeout
+    );
+    if ($curlError) {
+        throw new FormulizeAIException('Could not reach the AI provider: ' . $curlError, true);
+    }
+    $data = json_decode(strval($response), true);
+    if ($httpCode >= 400 OR !is_array($data)) {
+        $message = is_array($data) ? ($data['error']['message'] ?? ($data['error'] ?? '')) : '';
+        $message = is_string($message) && $message !== '' ? $message : substr(strval($response), 0, 300);
+        // busy, rate limited, overloaded or a server error: worth trying again later
+        $retryable = ($httpCode == 408 OR $httpCode == 429 OR $httpCode >= 500 OR $httpCode == 0);
+        throw new FormulizeAIException("The AI provider returned an error (HTTP $httpCode): $message", $retryable);
+    }
+
+    $text = '';
+    $stopReason = '';
+    switch ($provider) {
+        case 'claude':
+            foreach ((array) ($data['content'] ?? array()) as $block) {
+                if (($block['type'] ?? '') === 'text') {
+                    $text .= $block['text'];
+                }
+            }
+            $stopReason = $data['stop_reason'] ?? '';
+            break;
+        case 'gemini':
+            foreach ((array) ($data['candidates'][0]['content']['parts'] ?? array()) as $part) {
+                $text .= $part['text'] ?? '';
+            }
+            $stopReason = $data['candidates'][0]['finishReason'] ?? '';
+            break;
+        default:
+            $text = strval($data['choices'][0]['message']['content'] ?? '');
+            $stopReason = $data['choices'][0]['finish_reason'] ?? '';
+    }
+    return array(
+        'text' => $text,
+        'provider' => $provider,
+        'model' => $model,
+        'stop_reason' => $stopReason,
+        'usage' => $data['usage'] ?? ($data['usageMetadata'] ?? array()),
+    );
+}
