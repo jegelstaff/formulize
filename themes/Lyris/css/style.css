@@ -2593,6 +2593,20 @@ body:has(#formulize-masquerade-block) {
   color: var(--fz-value-color);
 }
 
+/* ---------- Callouts in a text element ----------
+   A callout (fz-callout) has no margins of its own, so in a text element's
+   body, where the only space between children is the body's one-step gap
+   above, whatever follows a callout in the same element butts up against it:
+   a paragraph, a heading, another callout (issue #1039). Space it off what
+   follows by four more steps. A callout last in the body needs
+   nothing: the row's own margin spaces it off the next element.
+   The selector weighs what reset.css's `*:not(dialog) { margin: 0 }` does,
+   one element's worth, and wins over it by coming later; any class outweighs
+   it, so a margin utility on the callout (fz-mb-0, say) still wins. */
+:where(.form-row > .fz-field__body > .fz-callout:not(:last-child)):not(dialog) {
+  margin-bottom: calc(var(--fz-spacing) * 4);
+}
+
 /* ---------- Help text ---------- */
 
 /* Long help text is hard to read when it runs the full width of the form on a
