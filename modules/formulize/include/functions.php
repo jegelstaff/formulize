@@ -2738,7 +2738,7 @@ function deleteEntry($entry_id, $frid, $fid, $excludeFids=array()) {
 
     // do notifications
     foreach ($deletedEntries as $thisfid=>$entries) {
-      sendNotifications($thisfid, "delete_entry", $entries);
+      formulize_dispatchEntryEvent($thisfid, "delete_entry", $entries);
     }
 }
 
@@ -5182,20 +5182,8 @@ function sendNotifications($fid, $event, $entries) {
     $mid = getFormulizeModId();
 
     // 1b. get the complete list of all possible users to notify
-    $gperm_handler =& xoops_gethandler('groupperm');
     $member_handler =& xoops_gethandler('member');
-
-    // get uids of all users with global scope (webmasters always have it, via the checkRight override, but getGroupIds only reports explicitly granted groups)
-    $groups_global = array_unique(array_merge((array) $gperm_handler->getGroupIds("view_globalscope", $fid, $mid), array(XOOPS_GROUP_ADMIN)));
-    $global_uids = formulize_getUsersByGroups($groups_global, $member_handler);
-
-    // get uids of all users with group scope who share a group membership with the owner of the entry, **and the shared membership is in a group that has access to the form**
-    // start with users who have groupscope
-    $groups_group = $gperm_handler->getGroupIds("view_groupscope", $fid, $mid);
-    $group_user_ids = formulize_getUsersByGroups($groups_group, $member_handler);
-
-    // get groups with view_form,
-    $groups_view = $gperm_handler->getGroupIds("view_form", $fid, $mid);
+    $notificationScopeFormData = formulize_getNotificationScopeFormData($fid);
 
     // start main loop
 		$data_handler = new formulizeDataHandler($fid);
@@ -5205,44 +5193,7 @@ function sendNotifications($fid, $event, $entries) {
 
 				$notificationTemplateData[$entry] = "";
     		$notificationTemplateRevisionData[$entry] = "";
-        $groups = $data_handler->getEntryOwnerGroups($entry);
-
-        // get the uids of all the users who are members of groups that have a specified groupscope that includes a group that is an owner group of the entry
-        if (!isset($formulize_permHandler)) {
-            $formulize_permHandler = new formulizePermHandler($fid);
-        }
-        $groups_with_specified_scope = $formulize_permHandler->getGroupsHavingSpecificScope($groups);
-        // gets groups that have specific scope that does not include these groups
-        $groups_with_different_specified_scope = $formulize_permHandler->getGroupsHavingDifferentSpecificScope($groups);
-        $specified_group_uids = array();
-        $specified_different_group_uids = array();
-        if ($groups_with_specified_scope !== false) {
-            // array_intersect applied to groups that have groupscope permission, and the groups that have the specified scope over the ownergroups (just in case groups were picked in the perm UI, but groupscope itself was not assigned, or turned off)
-            $specified_group_uids = formulize_getUsersByGroups(array_intersect((array)$groups_with_specified_scope, (array)$groups_group), $member_handler);
-        }
-        if ($groups_with_different_specified_scope !== false) {
-            $specified_different_group_uids = formulize_getUsersByGroups(array_intersect((array)$groups_with_different_specified_scope, (array)$groups_group), $member_handler);
-        }
-
-        // take the intersection of groups with view form perm and the owner's groups (ie: the owner's groups that have view_form perm)
-        $owner_groups_with_view = array_intersect($groups_view, $groups);
-        // get users in the owners-groups-that-have-view_form-perm
-        $owner_groups_user_ids = formulize_getUsersByGroups($owner_groups_with_view, $member_handler);
-        // get the intersection of users in the owners-groups-that-have-view_form-perm and groups with groupscope
-        $group_uids = array_intersect($group_user_ids, $owner_groups_user_ids);
-
-        // remove the users from groups-with-a-specified-scope that doesn't-include-the-owner-groups, from the users that are part of dynamically generated groupscope (if a user has a specified scope, then that should override any dynamically generated scope, and if the specified scope does not include this entry's groups, then they need to be pulled)
-        $group_uids = array_diff((array)$group_uids, (array)$specified_different_group_uids);
-        $group_uids = array_unique(array_merge((array)$specified_group_uids, (array)$group_uids));
-
-        $uids_complete = array(0=>getEntryOwner($entry,$fid));
-        if (count((array) $group_uids) > 0 AND count((array) $global_uids) > 0) {
-            $uids_complete = array_unique(array_merge((array)$group_uids, (array)$global_uids, $uids_complete));
-        } elseif (count((array) $group_uids) > 0) {
-            $uids_complete = array_unique(array_merge((array)$group_uids, $uids_complete));
-        } elseif (count((array) $global_uids) > 0) {
-            $uids_complete = array_unique(array_merge((array)$global_uids, $uids_complete));
-        }
+        $uids_complete = formulize_getUidsInNotificationScope($fid, $entry, $notificationScopeFormData);
 
         $uids_conditions = array();
         $saved_conditions = array();
@@ -5432,6 +5383,97 @@ function sendNotifications($fid, $event, $entries) {
     } // end of each entry
 }
 
+
+
+/**
+ * Gather the form-level information needed to work out who is allowed to be notified about entries in a form: the users
+ * with global scope, and the groups with group scope and with view permission. Gathered once per batch of notifications
+ * and passed to formulize_getUidsInNotificationScope() for each entry.
+ *
+ * @param int $fid The form ID
+ * @return array The form-level scope information
+ */
+function formulize_getNotificationScopeFormData($fid) {
+    $mid = getFormulizeModId();
+    $gperm_handler =& xoops_gethandler('groupperm');
+    $member_handler =& xoops_gethandler('member');
+    $formData = array();
+    // get uids of all users with global scope (webmasters always have it, via the checkRight override, but getGroupIds only reports explicitly granted groups)
+    $groups_global = array_unique(array_merge((array) $gperm_handler->getGroupIds("view_globalscope", $fid, $mid), array(XOOPS_GROUP_ADMIN)));
+    $formData['global_uids'] = formulize_getUsersByGroups($groups_global, $member_handler);
+    // get uids of all users with group scope who share a group membership with the owner of the entry, **and the shared membership is in a group that has access to the form**
+    // start with users who have groupscope
+    $formData['groups_group'] = $gperm_handler->getGroupIds("view_groupscope", $fid, $mid);
+    $formData['group_user_ids'] = formulize_getUsersByGroups($formData['groups_group'], $member_handler);
+    // get groups with view_form,
+    $formData['groups_view'] = $gperm_handler->getGroupIds("view_form", $fid, $mid);
+    return $formData;
+}
+
+/**
+ * Work out which users are allowed to be notified about an entry: the owner, users with global scope, and users with
+ * group scope over the entry's owner groups (respecting any specific group scope settings).
+ *
+ * @param int $fid The form ID
+ * @param int $entry The entry ID
+ * @param array $formData Optional. The result of formulize_getNotificationScopeFormData() for the form, if already gathered
+ * @param array $ownerGroups Optional. The entry's owner groups, when they can't be read from the database (ie: the entry has been deleted)
+ * @param int $owner Optional. The entry's owner, when it can't be read from the database (ie: the entry has been deleted)
+ * @return array The user ids that can be notified about the entry
+ */
+function formulize_getUidsInNotificationScope($fid, $entry, $formData = null, $ownerGroups = null, $owner = null) {
+    $member_handler =& xoops_gethandler('member');
+    if(!$formData) {
+        $formData = formulize_getNotificationScopeFormData($fid);
+    }
+    $global_uids = $formData['global_uids'];
+    $groups_group = $formData['groups_group'];
+    $group_user_ids = $formData['group_user_ids'];
+    $groups_view = $formData['groups_view'];
+
+    if($ownerGroups === null) {
+        $data_handler = new formulizeDataHandler($fid);
+        $groups = $data_handler->getEntryOwnerGroups($entry);
+    } else {
+        $groups = (array) $ownerGroups;
+    }
+
+    // get the uids of all the users who are members of groups that have a specified groupscope that includes a group that is an owner group of the entry
+    $formulize_permHandler = new formulizePermHandler($fid);
+    $groups_with_specified_scope = $formulize_permHandler->getGroupsHavingSpecificScope($groups);
+    // gets groups that have specific scope that does not include these groups
+    $groups_with_different_specified_scope = $formulize_permHandler->getGroupsHavingDifferentSpecificScope($groups);
+    $specified_group_uids = array();
+    $specified_different_group_uids = array();
+    if ($groups_with_specified_scope !== false) {
+        // array_intersect applied to groups that have groupscope permission, and the groups that have the specified scope over the ownergroups (just in case groups were picked in the perm UI, but groupscope itself was not assigned, or turned off)
+        $specified_group_uids = formulize_getUsersByGroups(array_intersect((array)$groups_with_specified_scope, (array)$groups_group), $member_handler);
+    }
+    if ($groups_with_different_specified_scope !== false) {
+        $specified_different_group_uids = formulize_getUsersByGroups(array_intersect((array)$groups_with_different_specified_scope, (array)$groups_group), $member_handler);
+    }
+
+    // take the intersection of groups with view form perm and the owner's groups (ie: the owner's groups that have view_form perm)
+    $owner_groups_with_view = array_intersect((array) $groups_view, $groups);
+    // get users in the owners-groups-that-have-view_form-perm
+    $owner_groups_user_ids = formulize_getUsersByGroups($owner_groups_with_view, $member_handler);
+    // get the intersection of users in the owners-groups-that-have-view_form-perm and groups with groupscope
+    $group_uids = array_intersect($group_user_ids, $owner_groups_user_ids);
+
+    // remove the users from groups-with-a-specified-scope that doesn't-include-the-owner-groups, from the users that are part of dynamically generated groupscope (if a user has a specified scope, then that should override any dynamically generated scope, and if the specified scope does not include this entry's groups, then they need to be pulled)
+    $group_uids = array_diff((array)$group_uids, (array)$specified_different_group_uids);
+    $group_uids = array_unique(array_merge((array)$specified_group_uids, (array)$group_uids));
+
+    $uids_complete = array(0=>($owner === null ? getEntryOwner($entry,$fid) : intval($owner)));
+    if (count((array) $group_uids) > 0 AND count((array) $global_uids) > 0) {
+        $uids_complete = array_unique(array_merge((array)$group_uids, (array)$global_uids, $uids_complete));
+    } elseif (count((array) $group_uids) > 0) {
+        $uids_complete = array_unique(array_merge((array)$group_uids, $uids_complete));
+    } elseif (count((array) $global_uids) > 0) {
+        $uids_complete = array_unique(array_merge((array)$global_uids, $uids_complete));
+    }
+    return $uids_complete;
+}
 
 /**
  * Sends notifications to email addresses directly. This is required in some cases because although a user might have email as their notification method, some notifications are sent to arbitrary addresses and not to users per se.
@@ -6133,11 +6175,11 @@ function writeElementValue($formframe, $elementIdentifier, $entry, $value, $appe
     // get the form ID of the form based on the element id
     switch ($entry) {
         case "new":
-            sendNotifications($element->getVar('id_form'), "new_entry", array(0=>$insertedId));
+            formulize_dispatchEntryEvent($element->getVar('id_form'), "new_entry", array(0=>$insertedId));
             break;
 
       default:
-            sendNotifications($element->getVar('id_form'), "update_entry", array(0=>$entry));
+            formulize_dispatchEntryEvent($element->getVar('id_form'), "update_entry", array(0=>$entry));
             break;
     }
     unset($element);
@@ -14355,4 +14397,7 @@ function formulize_noPermissionMessage($message = '', $loginUrl = '') {
 
 // functions.php is split into files of related functions, in include/functions, which are all
 // required here. They are part of this file, and nothing else should include them directly.
+// progressive web app: stuff for Formulize to be operate as one
 require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions/pwa.php';
+// automations: what happens when entries are created, updated, deleted, or custom buttons are clicked
+include_once XOOPS_ROOT_PATH."/modules/formulize/include/automations.php";

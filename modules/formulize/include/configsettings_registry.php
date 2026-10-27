@@ -336,6 +336,9 @@ return array(
                             'scope' => 'formulize',
                             'showWhen' => array('name' => 'formulizeAIAssistantEnabled', 'value' => 1),
                         ),
+                        // AI in automations. It uses the same provider, model and key settings as the assistant, so
+                        // those show when either is on (the nested 'any' group in their conditions).
+                        array('name' => 'formulizeAIAutomationEnabled', 'scope' => 'formulize'),
 
                         // Site-wide admin control over the embedded assistant. Only makes
                         // sense once it's on, so every condition here is ANDed with
@@ -344,13 +347,19 @@ return array(
                         array(
                             'name' => 'formulizeAIProvider',
                             'scope' => 'formulize',
-                            'showWhen' => array('name' => 'formulizeAIAssistantEnabled', 'value' => 1),
+                            'showWhen' => array(
+                                'op' => 'any',
+                                'conditions' => array(
+                                    array('name' => 'formulizeAIAssistantEnabled', 'value' => 1),
+                                    array('name' => 'formulizeAIAutomationEnabled', 'value' => 1),
+                                ),
+                            ),
                         ),
                         array(
                             'name' => 'formulizeAIApiKey',
                             'scope' => 'formulize',
                             'showWhen' => array(
-                                array('name' => 'formulizeAIAssistantEnabled', 'value' => 1),
+                                array('op' => 'any', 'conditions' => array(array('name' => 'formulizeAIAssistantEnabled', 'value' => 1), array('name' => 'formulizeAIAutomationEnabled', 'value' => 1))),
                                 // Ollama needs no key
                                 array('name' => 'formulizeAIProvider', 'value' => array('claude', 'gemini', 'openai')),
                             ),
@@ -359,7 +368,7 @@ return array(
                             'name' => 'formulizeAIOllamaBaseUrl',
                             'scope' => 'formulize',
                             'showWhen' => array(
-                                array('name' => 'formulizeAIAssistantEnabled', 'value' => 1),
+                                array('op' => 'any', 'conditions' => array(array('name' => 'formulizeAIAssistantEnabled', 'value' => 1), array('name' => 'formulizeAIAutomationEnabled', 'value' => 1))),
                                 array('name' => 'formulizeAIProvider', 'value' => 'ollama'),
                             ),
                         ),
@@ -367,7 +376,7 @@ return array(
                             'name' => 'formulizeAIModel',
                             'scope' => 'formulize',
                             'showWhen' => array(
-                                array('name' => 'formulizeAIAssistantEnabled', 'value' => 1),
+                                array('op' => 'any', 'conditions' => array(array('name' => 'formulizeAIAssistantEnabled', 'value' => 1), array('name' => 'formulizeAIAutomationEnabled', 'value' => 1))),
                                 array('name' => 'formulizeAIProvider', 'op' => '!=', 'value' => 'userspecified'),
                             ),
                         ),

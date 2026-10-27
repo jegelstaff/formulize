@@ -1,0 +1,378 @@
+<{* The editor for one automation: when, which entries, then. Saved by admin/save/automation_save.php *}>
+<{* Fields here have no hyphens in their names, the save handler reads them straight from POST *}>
+
+<form class="formulize-admin-form automation-form">
+<input type="hidden" name="formulize_admin_handler" value="automation">
+<input type="hidden" name="formulize_admin_key" value="<{$content.automation_id}>">
+<input type="hidden" name="formulize_admin_fid" value="<{$content.fid}>">
+<input type="hidden" name="formulize_admin_aid" value="<{$content.aid}>">
+<input type="hidden" name="automation_reload" value="">
+<input type="hidden" name="automation_add_step" value="">
+<input type="hidden" name="automation_remove_step" value="">
+<input type="hidden" name="automation_move_step" value="">
+<input type="hidden" name="automation_add_value" value="">
+<input type="hidden" name="automation_remove_value" value="">
+<input type="hidden" name="automation_test" value="">
+<input type="hidden" name="automationconditionsdelete" value="">
+<{foreach from=$content.steps item=step}>
+<input type="hidden" name="stepcond<{$step.index}>delete" value="">
+<{/foreach}>
+
+<div class="panel-content content automation">
+
+	<fieldset>
+		<legend>Automation</legend>
+		<div class="form-item required">
+			<label for="automation-name">Name</label>
+			<input type="text" id="automation-name" class="required_formulize_element" name="automation_name" value="<{$content.automation.name|escape}>" size="60">
+		</div>
+		<div class="form-item">
+			<label><input type="checkbox" name="automation_active" value="1" <{if $content.automation.active}>checked<{/if}>> This automation is on</label>
+		</div>
+	</fieldset>
+
+	<fieldset>
+		<legend>When</legend>
+		<div class="form-item">
+			<{foreach from=$content.triggerTypes key=triggerKey item=triggerLabel}>
+			<label class="automation-choice"><input type="radio" name="automation_trigger_type" value="<{$triggerKey}>" <{if $content.automation.trigger_type == $triggerKey}>checked<{/if}>> <{$triggerLabel}></label>
+			<{/foreach}>
+		</div>
+		<div class="form-item automation-watch">
+			<label for="automation-watch">Only when one of these elements changes <small>(optional, choose none to run on every update)</small></label>
+			<select name="automation_watch[]" id="automation-watch" multiple="multiple" size="6">
+				<{html_options options=$content.elementOptions selected=$content.automation.watch}>
+			</select>
+		</div>
+		<div class="form-item automation-button">
+			<label for="automation-button">Which button</label>
+			<{if $content.buttonOptions|@count == 0}>
+				<p><i>There are no custom buttons on this form's list screens yet. Add one on the Custom Buttons tab of a list screen. A button doesn't need any effects of its own: it can just set off this automation.</i></p>
+			<{else}>
+			<select name="automation_button" id="automation-button">
+				<{html_options options=$content.buttonOptions selected=$content.automation.button_key}>
+			</select>
+			<div class="description"><p>The automation runs for the entries the button applied to: the selected entries, the entry the button appears beside, or the entries the button created. A button doesn't need any effects of its own: it can just set off this automation.</p></div>
+			<{/if}>
+		</div>
+	</fieldset>
+
+	<fieldset class="automation-before-save-note">
+		<legend>Which entries</legend>
+		<p>Before Save automations run for every entry that is saved in this form, every time it is written. To do something only for some entries, check the values in a Run PHP code step. In the code, <code>return false;</code> stops the save.</p>
+	</fieldset>
+
+	<fieldset class="automation-which-entries">
+		<legend>Which entries</legend>
+		<p>The automation only runs for entries that match these conditions. Leave them empty for all entries. <code>{handle}</code> in a condition refers to another element in the same entry, and <code>{USER}</code>, <code>{TODAY}</code> and <code>{BLANK}</code> work as they do elsewhere. For deleted entries, the conditions are checked just before the entry is deleted.</p>
+		<div id="automation-conditions" class="automation-conditions">
+			<{$content.conditions_ui}>
+		</div>
+	</fieldset>
+
+	<fieldset>
+		<legend>Then, step by step</legend>
+		<{if $content.steps|@count == 0}>
+			<p><i>Nothing happens yet. Add a step below.</i></p>
+		<{else}>
+			<p>The steps run in order. A step can use what an earlier step produced: pick it from the <i>Insert a value</i> menu, or type its name in curly brackets.</p>
+		<{/if}>
+
+		<{foreach from=$content.steps item=step}>
+		<div class="automation-step" data-step-type="<{$step.type}>">
+			<input type="hidden" name="steps[<{$step.index}>][type]" value="<{$step.type}>">
+			<input type="hidden" name="steps[<{$step.index}>][id]" value="<{$step.id|escape}>">
+			<h3><{$step.number}>. <{$step.type_label}>
+				<small>
+					<{if $step.index > 0}><a href="" class="automation-move-step" target="<{$step.index}>">Move up</a>&nbsp;&nbsp;<{/if}>
+					<a href="" class="automation-remove-step" target="<{$step.index}>"><img src="../images/editdelete.gif"> Remove</a>
+				</small>
+			</h3>
+			<{if $step.type != 'code'}>
+			<div class="automation-insert">
+				<select class="automation-insert-token" aria-label="Insert a value into the box you were last typing in">
+					<option value="">Insert a value...</option>
+					<{html_options options=$step.token_groups}>
+				</select>
+			</div>
+			<{/if}>
+
+			<{if $step.type == 'ai'}>
+				<{if !$content.ai_automation_enabled}>
+				<p class="automation-warning">AI in automations is turned off, so this step won't run. Turn it on in Settings, AI, and choose a site-wide provider and key.</p>
+				<{/if}>
+				<div class="form-item">
+					<label for="ai-prompt-<{$step.index}>">What should AI do?</label>
+					<textarea name="steps[<{$step.index}>][prompt]" id="ai-prompt-<{$step.index}>" rows="5" cols="70"><{$step.prompt|escape}></textarea>
+					<div class="description"><p>Write it the way you would ask a person: "Summarize this in two sentences", "Which of these categories fits best: A, B or C? Reply with just the category", "Draft a friendly reply to this message". You can put values in with the Insert menu.</p></div>
+				</div>
+				<div class="form-item">
+					<label><input type="checkbox" name="steps[<{$step.index}>][include_entry]" value="1" <{if $step.include_entry}>checked<{/if}>> Send the entry's values along with the instructions</label>
+					<label><input type="checkbox" name="steps[<{$step.index}>][json]" value="1" <{if $step.json}>checked<{/if}>> Ask for the answer in parts (JSON)</label>
+					<div class="description"><p>Ask for parts when you want several things back, ie: "Give a <code>summary</code> and a <code>category</code>". Then each part can be used on its own, ie: <code>{<{if $step.output}><{$step.output}><{else}>ai_reply<{/if}>.summary}</code>.</p></div>
+					<label for="ai-max-<{$step.index}>">Longest answer, in tokens <small>(a token is about three quarters of a word)</small></label>
+					<input type="text" name="steps[<{$step.index}>][max_tokens]" id="ai-max-<{$step.index}>" value="<{$step.max_tokens}>" size="8">
+					<div class="description"><p>Automations that ask AI run in the background, just after the save that sets them off, so nobody waits for the answer. The entry is sent to the AI provider chosen in Settings, AI.</p></div>
+				</div>
+			<{/if}>
+
+			<{if $step.type == 'code'}>
+				<div class="form-item automation-values-as">
+					<label>In the code, each element's variable holds</label>
+					<label class="automation-choice"><input type="radio" name="steps[<{$step.index}>][values_as]" value="stored" <{if $step.values_as != 'readable'}>checked<{/if}>> The value as it is stored in the database, the same as procedures <small>(ie: a linked element gives the id of the entry it points to)</small></label>
+					<label class="automation-choice"><input type="radio" name="steps[<{$step.index}>][values_as]" value="readable" <{if $step.values_as == 'readable'}>checked<{/if}>> The value as people see it, the same as derived values <small>(ie: a linked element gives the text shown, and an element with several values gives an array)</small></label>
+				</div>
+				<div class="form-item">
+					<textarea name="steps[<{$step.index}>][code]" class="code-textarea canValidate" rows="10"><{$step.code|escape}></textarea>
+					<div class="description"><p>The code has the same variables as procedures: each element's value in a variable named after its handle, <code>$entry_id</code>, <code>$form_id</code>, <code>$currentValues</code> (the values before an update, as stored), <code>$changedElements</code> (the handles of the elements that changed), <code>$newEntry</code>, and the outputs of earlier steps, in <code>$outputs</code> and in variables of their own. <code>$entry</code> is the entry for <code>getValue()</code> and <code>display()</code>, the same as in derived values. Before an entry is saved, the variables always hold the values as stored, changing an element's variable changes the value that is saved, and <code>return false;</code> stops the save. At other times, what the code returns, or puts in <code>$output</code>, is this step's output.</p></div>
+				</div>
+			<{/if}>
+
+			<{if $step.type == 'notify'}>
+				<div class="form-item">
+					<label>Send to</label>
+					<label class="automation-choice"><input type="checkbox" name="steps[<{$step.index}>][recipients][creator]" value="1" <{if $step.creator}>checked<{/if}>> The owner of the entry</label>
+					<label class="automation-choice"><input type="checkbox" name="steps[<{$step.index}>][recipients][curuser]" value="1" <{if $step.curuser}>checked<{/if}>> The user who made the change or clicked the button</label>
+					<label for="notify-groups-<{$step.index}>">Members of these groups</label>
+					<select name="steps[<{$step.index}>][recipients][groups][]" id="notify-groups-<{$step.index}>" multiple="multiple" size="5">
+						<{html_options options=$content.groupOptions selected=$step.groups}>
+					</select>
+					<label for="notify-elementuids-<{$step.index}>">The users chosen in this element</label>
+					<select name="steps[<{$step.index}>][recipients][elementuids]" id="notify-elementuids-<{$step.index}>">
+						<{html_options options=$content.userElementOptions selected=$step.elementuids}>
+					</select>
+					<label for="notify-linkcreator-<{$step.index}>">The creators of the entries chosen in this linked element</label>
+					<select name="steps[<{$step.index}>][recipients][linkcreator]" id="notify-linkcreator-<{$step.index}>">
+						<{html_options options=$content.linkedElementOptions selected=$step.linkcreator}>
+					</select>
+					<label for="notify-elementemail-<{$step.index}>">The email addresses in this element</label>
+					<select name="steps[<{$step.index}>][recipients][elementemail]" id="notify-elementemail-<{$step.index}>">
+						<{html_options options=$content.emailElementOptions selected=$step.elementemail}>
+					</select>
+					<label for="notify-emails-<{$step.index}>">These email addresses <small>(separated by commas)</small></label>
+					<input type="text" name="steps[<{$step.index}>][recipients][emails]" id="notify-emails-<{$step.index}>" value="<{$step.emails|escape}>" size="60">
+					<div class="description"><p>Users are only notified about entries they are allowed to see. They get the notification the way they have chosen in their account (private message or email).</p></div>
+				</div>
+				<div class="form-item">
+					<label for="notify-subject-<{$step.index}>">Subject</label>
+					<input type="text" name="steps[<{$step.index}>][subject]" id="notify-subject-<{$step.index}>" value="<{$step.subject|escape}>" size="60">
+				</div>
+				<div class="form-item">
+					<label for="notify-message-<{$step.index}>">Message</label>
+					<textarea name="steps[<{$step.index}>][message]" id="notify-message-<{$step.index}>" rows="6" cols="60"><{$step.message|escape}></textarea>
+					<div class="description"><p>You can use <code>{element_handle}</code> for the value of an element in the entry, or <code>{ELEMENT_HANDLE}</code>, and <code>{PREVIOUS_ELEMENT_HANDLE}</code> for its value before an update. Also <code>{FORMSINGULAR}</code>, <code>{FORMNAME}</code>, <code>{ENTRYID}</code>, <code>{VIEWURL}</code> (a link to the entry), <code>{ENTRYNAME}</code> (who did it), <code>{SITEURL}</code> and <code>{AUTOMATIONNAME}</code>. Leave the message empty to use the standard message for the event, or the template below.</p></div>
+				</div>
+				<div class="form-item">
+					<label for="notify-template-<{$step.index}>">Template <small>(optional, only used when there's no message)</small></label>
+					<input type="text" name="steps[<{$step.index}>][template]" id="notify-template-<{$step.index}>" value="<{$step.template|escape}>" size="40">
+					<div class="description"><p>The name of a template file in the <code>modules/formulize/language/(language)/mail_template/</code> folder.</p></div>
+				</div>
+			<{/if}>
+
+			<{if $step.type == 'update_entries'}>
+				<div class="form-item">
+					<label>Which entries to update</label>
+					<label class="automation-choice"><input type="radio" class="automation-target" name="steps[<{$step.index}>][target]" value="this" <{if $step.target == 'this'}>checked<{/if}>> The entry the event is about</label>
+					<label class="automation-choice"><input type="radio" class="automation-target" name="steps[<{$step.index}>][target]" value="matching" <{if $step.target == 'matching'}>checked<{/if}>> Entries in a form that match conditions</label>
+				</div>
+				<{if $step.target == 'matching'}>
+				<div class="form-item">
+					<label for="update-fid-<{$step.index}>">Form</label>
+					<select name="steps[<{$step.index}>][target_fid]" id="update-fid-<{$step.index}>" class="automation-reload-on-change">
+						<{html_options options=$content.formOptions selected=$step.target_fid}>
+					</select>
+				</div>
+				<div class="form-item automation-conditions">
+					<label>Conditions</label>
+					<div class="description"><p>Use <code>{handle}</code> for a value from the entry the event is about, and <code>{ID}</code> for its entry id. For example, a linked element in the other form = <code>{ID}</code> finds the entries connected to this one.</p></div>
+					<{$step.target_conditions_ui}>
+				</div>
+				<{/if}>
+				<{include file="db:admin/automation_values.html" step=$step content=$content}>
+			<{/if}>
+
+			<{if $step.type == 'create_entry'}>
+				<div class="form-item">
+					<label for="create-fid-<{$step.index}>">Create an entry in</label>
+					<select name="steps[<{$step.index}>][target_fid]" id="create-fid-<{$step.index}>" class="automation-reload-on-change">
+						<{html_options options=$content.formOptions selected=$step.target_fid}>
+					</select>
+				</div>
+				<div class="form-item">
+					<label for="create-owner-<{$step.index}>">Owner of the new entry</label>
+					<select name="steps[<{$step.index}>][owner]" id="create-owner-<{$step.index}>">
+						<{html_options options=$content.ownerOptions selected=$step.owner}>
+					</select>
+				</div>
+				<{include file="db:admin/automation_values.html" step=$step content=$content}>
+			<{/if}>
+
+			<{if $step.type == 'webhook'}>
+				<div class="form-item">
+					<label for="webhook-url-<{$step.index}>">URL</label>
+					<input type="text" name="steps[<{$step.index}>][url]" id="webhook-url-<{$step.index}>" value="<{$step.url|escape}>" size="70" placeholder="https://example.com/formulize-webhook">
+				</div>
+				<div class="form-item">
+					<label for="webhook-secret-<{$step.index}>">Secret <small>(optional)</small></label>
+					<input type="text" name="steps[<{$step.index}>][secret]" id="webhook-secret-<{$step.index}>" value="<{$step.secret|escape}>" size="40" autocomplete="off">
+					<div class="description"><p>If there is a secret, each request has an <code>X-Formulize-Signature</code> header: <code>sha256=</code> followed by the HMAC-SHA256 of the <code>X-Formulize-Timestamp</code> header, a dot, and the body, using the secret as the key. The receiver can check it to know the request came from this site.</p></div>
+				</div>
+				<div class="form-item">
+					<label><input type="checkbox" name="steps[<{$step.index}>][include_data]" value="1" <{if $step.include_data}>checked<{/if}>> Include the values of the entry</label>
+					<div class="description"><p>The webhook is a POST with a JSON body: <code>event</code> (entry.created, entry.updated, entry.deleted or button.clicked), <code>occurred_at</code>, <code>site</code>, <code>form</code>, <code>entry_id</code>, <code>automation</code>, <code>triggered_by</code>, and with the values: <code>entry</code> (readable values by element handle), <code>entry_raw</code> (values as stored), and for updates <code>changed</code> and <code>previous</code>.</p></div>
+				</div>
+			<{/if}>
+
+			<{if $step.makes_output}>
+			<div class="form-item automation-output">
+				<label for="output-<{$step.index}>">
+					<{if $step.type == 'ai'}>Save the answer as
+					<{elseif $step.type == 'create_entry'}>Save the new entry's id as
+					<{elseif $step.type == 'update_entries'}>Save the ids of the updated entries as
+					<{else}>Save what the code returns as<{/if}>
+					<small>(optional, for later steps to use)</small>
+				</label>
+				{<input type="text" name="steps[<{$step.index}>][output]" id="output-<{$step.index}>" value="<{$step.output|escape}>" size="20" placeholder="a_name">}
+			</div>
+			<{/if}>
+		</div>
+		<{/foreach}>
+
+		<div class="form-item automation-add">
+			<label for="automation-add-type">Add a step</label>
+			<select id="automation-add-type">
+				<{foreach from=$content.stepTypes key=stepKey item=stepLabel}>
+				<option value="<{$stepKey}>" <{if $stepKey == 'ai' AND !$content.ai_automation_enabled}>disabled="disabled"<{/if}>><{$stepLabel}><{if $stepKey == 'ai' AND !$content.ai_automation_enabled}> (turn on AI in automations in Settings, AI)<{/if}></option>
+				<{/foreach}>
+			</select>
+			<input type="button" class="automation-add-step" value="Add">
+		</div>
+	</fieldset>
+
+	<{if $content.automation_id != 'new'}>
+	<fieldset>
+		<legend>Try it</legend>
+		<p>Run this automation now for an entry, as if the event had just happened to it. The conditions are checked, and if the entry matches, <b>the steps really happen</b>: notifications are sent, entries are changed, AI is asked (straight away, not in the background), webhooks are sent. For delete automations, the entry is not deleted. Save your changes first.</p>
+		<div class="form-item">
+			<label for="automation-test-entry">Entry ID</label>
+			<input type="text" id="automation-test-entry" size="8">
+			<input type="button" class="automation-test" value="Run the automation for this entry">
+		</div>
+	</fieldset>
+	<{/if}>
+
+</div>
+</form>
+
+<style>
+	.automation .automation-choice { display: block; font-weight: normal; margin: 0.2em 0; }
+	.automation .automation-step { border: 1px solid rgba(128,128,128,0.35); border-radius: 6px; padding: 0.5em 1em 1em 1em; margin: 0 0 1em 0; }
+	.automation .automation-step h3 small { font-weight: normal; font-size: 0.75em; margin-left: 1em; }
+	.automation .automation-values td { vertical-align: top; padding: 0.2em 0.4em 0.2em 0; }
+	.automation .form-item > label { display: block; margin-top: 0.6em; }
+	.automation .automation-insert { float: right; margin-top: -2.4em; }
+	.automation .automation-warning { padding: 0.5em 0.75em; border-left: 4px solid #c60; background: rgba(204,102,0,0.08); }
+	.automation .automation-output input { font-family: monospace; }
+</style>
+
+<script type="text/javascript">
+var automationBeforeSaveStepTypes = ['code', 'update_entries'];
+function automationShowTriggerSettings() {
+	var trigger = $("input[name=automation_trigger_type]:checked").val();
+	var beforeSave = (trigger == 'before_save');
+	$(".automation-watch").toggle(trigger == 'update_entry' || trigger == 'save_entry');
+	$(".automation-button").toggle(trigger == 'button_click');
+	$(".automation-which-entries").toggle(!beforeSave);
+	$(".automation-before-save-note").toggle(beforeSave);
+	// before an entry is saved the values are always the stored ones, so there's no choice to make
+	$(".automation-values-as").toggle(!beforeSave);
+	// before an entry is saved, there's nothing else to do things to yet, so only some steps make sense
+	$("#automation-add-type option").each(function() {
+		var allowed = !beforeSave || $.inArray($(this).val(), automationBeforeSaveStepTypes) != -1;
+		if(!allowed) {
+			$(this).attr('disabled', 'disabled');
+		} else if(!($(this).val() == 'ai' && <{if $content.ai_automation_enabled}>false<{else}>true<{/if}>)) {
+			$(this).removeAttr('disabled');
+		}
+	});
+	if($("#automation-add-type option:selected").attr('disabled')) {
+		$("#automation-add-type").val(beforeSave ? 'code' : 'notify');
+	}
+}
+// the Insert menu puts a value into the box in the same step that was last typed in
+var automationLastField = null;
+$(".automation-step input[type=text], .automation-step textarea").focus(function() {
+	automationLastField = this;
+});
+$(".automation-insert-token").change(function() {
+	var token = $(this).val();
+	$(this).val('');
+	if(!token) {
+		return;
+	}
+	var step = $(this).parents('.automation-step');
+	var field = (automationLastField && $(automationLastField).parents('.automation-step')[0] == step[0]) ? automationLastField : step.find('textarea, input[type=text]').not('[name$="[output]"]').get(0);
+	if(!field) {
+		return;
+	}
+	var start = field.selectionStart !== undefined ? field.selectionStart : field.value.length;
+	var end = field.selectionEnd !== undefined ? field.selectionEnd : field.value.length;
+	field.value = field.value.substring(0, start) + token + field.value.substring(end);
+	field.focus();
+	if(field.setSelectionRange) {
+		field.setSelectionRange(start + token.length, start + token.length);
+	}
+	setDisplay('savewarning', 'block');
+});
+automationShowTriggerSettings();
+$("input[name=automation_trigger_type]").change(automationShowTriggerSettings);
+
+function automationSaveAndReload() {
+	$("[name=automation_reload]").val(1);
+	$(".savebutton").click();
+	return false;
+}
+$(".automation-form input[name=addcon]").click(automationSaveAndReload);
+$(".automation-form a.conditionsdelete").click(function() {
+	var target = $(this).attr('target');
+	$("[name=" + target.split('_')[0] + "delete]").val(target);
+	return automationSaveAndReload();
+});
+$(".automation-target, .automation-reload-on-change").change(automationSaveAndReload);
+$(".automation-add-step").click(function() {
+	$("[name=automation_add_step]").val($("#automation-add-type").val());
+	return automationSaveAndReload();
+});
+$(".automation-remove-step").click(function() {
+	if(confirm("Remove this step?")) {
+		$("[name=automation_remove_step]").val($(this).attr('target'));
+		automationSaveAndReload();
+	}
+	return false;
+});
+$(".automation-move-step").click(function() {
+	$("[name=automation_move_step]").val($(this).attr('target'));
+	return automationSaveAndReload();
+});
+$(".automation-add-value").click(function() {
+	$("[name=automation_add_value]").val($(this).attr('target'));
+	return automationSaveAndReload();
+});
+$(".automation-remove-value").click(function() {
+	$("[name=automation_remove_value]").val($(this).attr('target'));
+	return automationSaveAndReload();
+});
+$(".automation-test").click(function() {
+	var entryId = parseInt($("#automation-test-entry").val(), 10);
+	if(!entryId) {
+		alert("Type the ID of an entry to run the automation for.");
+		return false;
+	}
+	if(confirm("Run this automation now for entry " + entryId + "? If the entry matches the conditions, the steps really happen.")) {
+		$("[name=automation_test]").val(entryId);
+		$("[name=automation_reload]").val(1);
+		$(".savebutton").click();
+	}
+	return false;
+});
+</script>

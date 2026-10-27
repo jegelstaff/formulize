@@ -6904,7 +6904,7 @@ Do not use foreign key values with linked elements; use the readable value inste
 		// Step 5: send notifications, only for entries whose data actually changed
 		if(!empty($changedEntryIds)) {
 			$event = $operation == 'create' ? 'new_entry' : 'update_entry';
-			sendNotifications($formId, $event, $changedEntryIds);
+			formulize_dispatchEntryEvent($formId, $event, $changedEntryIds);
 		}
 		// EAU post-write: process group memberships for all written entries (direct, connected-form, and fallback)
 		formulizeHandler::processEauGroupMembershipsForWrittenEntries(

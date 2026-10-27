@@ -630,6 +630,10 @@ EOF;
                 }
             }
         }
+
+        // then the Before Save automations on the Automations tab, and any ICMS preloads listening for it (see include/automations.php)
+        $element_values = formulize_automationsBeforeSave($this->getVar('id_form'), $entry_id, $element_values, $existingValues);
+        if($element_values === false) { return array(false, $existingValues); } // an automation or preload stopped the save
         return array($element_values, $existingValues);
     }
 

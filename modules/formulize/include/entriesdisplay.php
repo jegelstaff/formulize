@@ -4910,6 +4910,9 @@ function processClickedCustomButton($clickedElements, $clickedValues, $clickedAc
 				eval(removeOpeningPHPTag($thisCustomCode));
 			}
 		}
+		if($screen) {
+			formulize_dispatchButtonEvent($screen, formulize_clickedCustomButtonHandle($screen), $screen->getVar('fid'), $formulize_entryIds);
+		}
 	} else {
 
 		$caEntries = array(); // click applied entries, ie: which entry does the button affect
@@ -4944,8 +4947,12 @@ function processClickedCustomButton($clickedElements, $clickedValues, $clickedAc
 		global $xoopsUser;
 		$customButtonUid = $xoopsUser ? intval($xoopsUser->getVar('uid')) : 0;
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
-		$elementObject = $element_handler->get($clickedElements[0]);
-		$formId = $elementObject->getVar('id_form');
+		// a button with no effects of its own can still set off automations (see the Automations tab of the form)
+		$buttonHasEffects = ($clickedElements AND $clickedElements[0] AND $elementObject = $element_handler->get($clickedElements[0]));
+		$formId = $buttonHasEffects ? $elementObject->getVar('id_form') : ($screen ? $screen->getVar('fid') : 0);
+		if(!$buttonHasEffects) {
+			$caEntries = array();
+		}
 		$data_handler = new formulizeDataHandler($formId);
 		$config_handler = xoops_gethandler('config');
 		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
@@ -4993,13 +5000,31 @@ function processClickedCustomButton($clickedElements, $clickedValues, $clickedAc
             }
 		}
 		if(!empty($newEntriesToNotifyAbout)) {
-			sendNotifications($formId, 'new_entry', $newEntriesToNotifyAbout);
+			formulize_dispatchEntryEvent($formId, 'new_entry', $newEntriesToNotifyAbout);
 		}
 		if(!empty($updatedEntriesToNotifyAbout)) {
-			sendNotifications($formId, 'update_entry', $updatedEntriesToNotifyAbout);
+			formulize_dispatchEntryEvent($formId, 'update_entry', $updatedEntriesToNotifyAbout);
+		}
+		if($screen) {
+			// the button applied to the entries it created, or else the entries that were selected or that it appeared beside
+			$buttonEventEntries = !empty($newEntriesToNotifyAbout) ? $newEntriesToNotifyAbout : array_filter($csEntries, 'is_numeric');
+			formulize_dispatchButtonEvent($screen, formulize_clickedCustomButtonHandle($screen), $formId, $buttonEventEntries);
 		}
 	}
 	return $clickedMessageText;
+}
+
+/**
+ * The handle of the custom button that was clicked, if any
+ * @param object $screen The list screen the button is on
+ * @return string
+ */
+function formulize_clickedCustomButtonHandle($screen) {
+	$customActions = $screen->getVar('customactions');
+	if(is_numeric($_POST['caid'] ?? '') AND isset($customActions[$_POST['caid']]['handle'])) {
+		return $customActions[$_POST['caid']]['handle'];
+	}
+	return '';
 }
 
 // THIS FUNCTION IS USED ONLY IN LIST OF ENTRIES SCREENS, IN THE VALUES OF CUSTOM BUTTONS

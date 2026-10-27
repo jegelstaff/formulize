@@ -520,3 +520,53 @@ CREATE TABLE formulize_ai_keys (
   PRIMARY KEY (uid, provider)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+
+CREATE TABLE formulize_automations (
+  automation_id int(11) unsigned NOT NULL auto_increment,
+  fid int(11) NOT NULL default 0,
+  name varchar(255) NOT NULL default '',
+  trigger_type varchar(50) NOT NULL default '',
+  trigger_settings text NULL,
+  conditions text NULL,
+  steps mediumtext NULL,
+  active tinyint(1) NOT NULL default 1,
+  weight int(11) NOT NULL default 0,
+  PRIMARY KEY (`automation_id`),
+  INDEX i_fid_trigger (`fid`, `trigger_type`)
+) ENGINE=InnoDB;
+
+CREATE TABLE formulize_automation_outbox (
+  outbox_id int(11) unsigned NOT NULL auto_increment,
+  automation_id int(11) NOT NULL default 0,
+  fid int(11) NOT NULL default 0,
+  entry_id int(11) NOT NULL default 0,
+  event varchar(50) NOT NULL default '',
+  channel varchar(20) NOT NULL default 'webhook',
+  target varchar(2000) NOT NULL default '',
+  payload mediumtext NULL,
+  status varchar(20) NOT NULL default 'pending',
+  attempts int(11) NOT NULL default 0,
+  response_code int(11) NOT NULL default 0,
+  last_error text NULL,
+  created_at datetime NULL default NULL,
+  next_attempt_at datetime NULL default NULL,
+  delivered_at datetime NULL default NULL,
+  PRIMARY KEY (`outbox_id`),
+  INDEX i_status_next (`status`, `next_attempt_at`),
+  INDEX i_automation_id (`automation_id`),
+  INDEX i_fid (`fid`)
+) ENGINE=InnoDB;
+
+CREATE TABLE formulize_automation_log (
+  log_id int(11) unsigned NOT NULL auto_increment,
+  automation_id int(11) NOT NULL default 0,
+  fid int(11) NOT NULL default 0,
+  entry_id int(11) NOT NULL default 0,
+  event varchar(50) NOT NULL default '',
+  uid int(11) NOT NULL default 0,
+  outcome text NULL,
+  created_at datetime NULL default NULL,
+  PRIMARY KEY (`log_id`),
+  INDEX i_automation_id (`automation_id`),
+  INDEX i_created_at (`created_at`)
+) ENGINE=InnoDB;
