@@ -586,8 +586,7 @@ class formulizeScreenHandler {
         }
         $insert_sql .= ")";
         if(!$result = $this->db->query($insert_sql)) {
-            print "error cloning screen: '$title'<br>SQL: $insert_sql<br>".$xoopsDB->error();
-            return false;
+            throw new Exception("Could not clone screen '$newtitle'. SQL: $insert_sql. ".$this->db->error());
         }
         $newsid = $this->db->getInsertId();
         return $newsid;
@@ -621,8 +620,7 @@ class formulizeScreenHandler {
         }
         $insert_sql .= ")";
         if(!$result = $this->db->query($insert_sql)) {
-            print "error cloning screen: '$title'<br>SQL: $insert_sql<br>".$xoopsDB->error();
-            return false;
+            throw new Exception("Could not clone screen '$newtitle' into $tablename. SQL: $insert_sql. ".$this->db->error());
         }
         return $result;
     }
@@ -729,19 +727,44 @@ function formulize_defaultPageWidthForScreenType($type) {
 	return (class_exists($class) AND is_subclass_of($class, 'formulizeScreen') AND $class::defaultPageWidth() == 'full') ? 'full' : 'look';
 }
 
+/**
+ * Where the default template for a type of screen can be found: the theme's own default, which takes
+ * precedence, and the system default that is used when the theme has none. The files may not exist.
+ *
+ * @param string $templateName the name of the template, eg: 'toptemplate'
+ * @param string $type the type of screen, eg: 'listOfEntries'
+ * @param string $theme the theme to look in. Defaults to the site's current theme.
+ * @return array the full path to the theme default, then the full path to the system default
+ */
+function getDefaultTemplatePaths($templateName, $type, $theme="") {
+	global $xoopsConfig;
+	$theme = $theme ? $theme : $xoopsConfig['theme_set'];
+	return array(
+		XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/default/".$type."/".$templateName.".php",
+		XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$type."/".$templateName.".php"
+	);
+}
+
+/**
+ * The contents of the default template for a type of screen: the theme's own default if it has one,
+ * otherwise the system default. Results are cached for the rest of the request.
+ *
+ * @param string $templateName the name of the template, eg: 'toptemplate'
+ * @param string $type the type of screen, eg: 'listOfEntries'
+ * @param string $theme the theme to look in. Defaults to the site's current theme.
+ * @return string the template's contents, or an empty string if neither default template exists
+ */
 function getDefaultTemplate($templateName, $type, $theme="") {
 	global $xoopsConfig;
 	$theme = $theme ? $theme : $xoopsConfig['theme_set'];
 	static $cachedDefaultTemplates = array();
 	if(!isset($cachedDefaultTemplates[$theme][$type][$templateName])) {
-		$themeDefaultPath = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/default/".$type."/".$templateName.".php";
+		list($themeDefaultPath, $systemDefaultPath) = getDefaultTemplatePaths($templateName, $type, $theme);
+		$template = '';
 		if (file_exists($themeDefaultPath)) {
 			$template = file_get_contents($themeDefaultPath);
-		} else {
-			$systemDefaultPath = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$type."/".$templateName.".php";
-			if (file_exists($systemDefaultPath)) {
-				$template = file_get_contents($systemDefaultPath);
-			}
+		} elseif (file_exists($systemDefaultPath)) {
+			$template = file_get_contents($systemDefaultPath);
 		}
 		$cachedDefaultTemplates[$theme][$type][$templateName] = $template;
 	}
@@ -755,6 +778,7 @@ function getTemplateToRender($templateName, $screenOrScreenType="", $theme="") {
 		if(!$template) {
 			$template = $screenOrScreenType->getDefaultTemplate($templateName, $theme);
 			if(!$template) {
+				list($themeDefaultPath, $systemDefaultPath) = getDefaultTemplatePaths($templateName, $screenOrScreenType->getVar('type'), $theme);
 				error_log('Formulize Error: could not locate a '.$templateName.' for screen '.$screenOrScreenType->getVar('sid').'. No screen template set, and no theme default at: '.$themeDefaultPath.'. And no system default at: '.$systemDefaultPath);
 			}
 		}

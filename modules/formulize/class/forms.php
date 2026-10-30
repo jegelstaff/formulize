@@ -949,15 +949,14 @@ class formulizeFormsHandler {
 	}
 
 	function getAllFormTitles($formIds=array(), $includeTableForms=false) {
-		global $xoopsDB;
 		$formLimitClause = $formIds ? " id_form IN (".implode(",",array_filter($formIds, 'is_numeric')).") " : "";
 		$excludeTableFormsClause = $includeTableForms == false ? " tableform = '' " : "";
 		$excludeTableFormsClause = ($formLimitClause AND $excludeTableFormsClause) ? " AND $excludeTableFormsClause " : $excludeTableFormsClause;
 		$whereClause = ($formLimitClause OR $excludeTableFormsClause) ? " WHERE $formLimitClause $excludeTableFormsClause " : "";
-		$allFidsQuery = "SELECT id_form, form_title FROM " . $xoopsDB->prefix("formulize_id") . " AS i $whereClause ORDER BY form_title";
-		$allFidsRes = $xoopsDB->query($allFidsQuery);
+		$allFidsQuery = "SELECT id_form, form_title FROM " . $this->db->prefix("formulize_id") . " AS i $whereClause ORDER BY form_title";
+		$allFidsRes = $this->db->query($allFidsQuery);
 		$foundForms = array();
-		while($allFidsArray = $xoopsDB->fetchArray($allFidsRes)) {
+		while($allFidsArray = $this->db->fetchArray($allFidsRes)) {
 			$foundForms[$allFidsArray['id_form']] = $allFidsArray['form_title'];
 		}
 		return $foundForms;
@@ -973,7 +972,6 @@ class formulizeFormsHandler {
 	 * @return formulizeForm[] Array of form objects keyed by form ID
 	 */
 	function getAllForms($includeAllElements=false, $formIds=array(), $includeTableForms=true, $includeAdHocForms=false) {
-		global $xoopsDB;
 		$conditions = array();
 		if ($formIds) {
 			$conditions[] = "id_form IN (" . implode(",", array_filter($formIds, 'is_numeric')) . ")";
@@ -985,10 +983,10 @@ class formulizeFormsHandler {
 			$conditions[] = "(lockedform IS NULL OR lockedform != " . FORMULIZE_LOCKEDFORM_SYSTEM_MANAGED . ")";
 		}
 		$whereClause = count($conditions) > 0 ? " WHERE " . implode(" AND ", $conditions) : "";
-		$allFidsQuery = "SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " AS i $whereClause ORDER BY form_title";
-		$allFidsRes = $xoopsDB->query($allFidsQuery);
+		$allFidsQuery = "SELECT id_form FROM " . $this->db->prefix("formulize_id") . " AS i $whereClause ORDER BY form_title";
+		$allFidsRes = $this->db->query($allFidsQuery);
 		$foundFormObjects = array();
-		while($allFidsArray = $xoopsDB->fetchArray($allFidsRes)) {
+		while($allFidsArray = $this->db->fetchArray($allFidsRes)) {
 			$foundFormObjects[$allFidsArray['id_form']] = $this->get($allFidsArray['id_form'],$includeAllElements);
 		}
 		return $foundFormObjects;
@@ -1141,8 +1139,7 @@ class formulizeFormsHandler {
 				}
 
 				if( !$result ){
-					print "Error: this form could not be saved in the database.  SQL: $sql<br>".$this->db->error();
-					return false;
+					throw new Exception("Could not save the form in the database. SQL: $sql. ".$this->db->error());
 				}
 				if( empty($id_form) ){
 					$id_form = $this->db->getInsertId();
@@ -1392,9 +1389,8 @@ class formulizeFormsHandler {
 			// Do NOT drop the UID column from the data table — preserve it so that if entries-are-users
 			// is re-enabled later the existing entry-to-user linkages are still intact.
 			// now delete the elements themselves
-			global $xoopsDB;
-			$sql = "DELETE FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id IN (".implode(",", $userAccountElementIds).") AND id_form = ".intval($formObject->getVar('fid'));
-			$xoopsDB->queryF($sql);
+			$sql = "DELETE FROM ".$this->db->prefix("formulize")." WHERE ele_id IN (".implode(",", $userAccountElementIds).") AND id_form = ".intval($formObject->getVar('fid'));
+			$this->db->queryF($sql);
 		}
 	}
 
@@ -1577,9 +1573,8 @@ class formulizeFormsHandler {
 		// called multiple times in one request (e.g. from syncTemplateGroupsForForm), and the
 		// in-memory elementHandles is not updated after the first creation, so the stale cache
 		// would pass this check and create a duplicate element on the second call.
-		global $xoopsDB;
-		$checkResult = $xoopsDB->query("SELECT ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_handle = '" . formulize_db_escape($handle) . "' AND id_form = $fid");
-		if($checkResult && $xoopsDB->fetchArray($checkResult)) {
+		$checkResult = $this->db->query("SELECT ele_id FROM " . $this->db->prefix("formulize") . " WHERE ele_handle = '" . formulize_db_escape($handle) . "' AND id_form = $fid");
+		if($checkResult && $this->db->fetchArray($checkResult)) {
 			return true; // already present
 		}
 
@@ -1623,9 +1618,8 @@ class formulizeFormsHandler {
 		if(!empty($elementIds)) {
 			$screenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 			$screenHandler->removeElementsFromScreens($elementIds, removeEmptyPages: false);
-			global $xoopsDB;
-			$sql = "DELETE FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id IN (" . implode(",", $elementIds) . ") AND id_form = $fid";
-			$xoopsDB->queryF($sql);
+			$sql = "DELETE FROM " . $this->db->prefix("formulize") . " WHERE ele_id IN (" . implode(",", $elementIds) . ") AND id_form = $fid";
+			$this->db->queryF($sql);
 		}
 		return true;
 	}
@@ -1751,12 +1745,11 @@ class formulizeFormsHandler {
 		if(empty($qualifiedUids)) return 0;
 
 		// Find UIDs that already have an entry in this form
-		global $xoopsDB;
 		$formHandle = $formObject->getVar('form_handle');
-		$sql = "SELECT `$uidField` FROM ".$xoopsDB->prefix("formulize_".$formHandle)." WHERE `$uidField` > 0";
+		$sql = "SELECT `$uidField` FROM ".$this->db->prefix("formulize_".$formHandle)." WHERE `$uidField` > 0";
 		$alreadyLinkedUids = array();
-		if($result = $xoopsDB->query($sql)) {
-			while($row = $xoopsDB->fetchRow($result)) {
+		if($result = $this->db->query($sql)) {
+			while($row = $this->db->fetchRow($result)) {
 				$alreadyLinkedUids[] = intval($row[0]);
 			}
 		}
@@ -1790,10 +1783,9 @@ class formulizeFormsHandler {
 	 * Check if a form's Singular or Plural values have changed, and rename any screens and menu links involved if their titles match exactly the changed name
 	 * @param object formObject - The object representation of the form we're working with. Will include the new names as the singular and plural.
 	 * @param array originalFormNames - An array with three keys, singular, plural, form_handle, which contain the old names that potentially need replacing
-	 * @return boolean Returns true if queries succeeded, or false if one or more failed.
+	 * @return boolean|null Returns true if the singular or plural changed, null otherwise. Throws an exception if a rename fails.
 	 */
 	function renameFormResources($formObject, $originalFormNames) {
-		global $xoopsDB;
 		$result = null;
 		$namesNeedingReplacement = array();
 		if($formObject->getPlural() != $originalFormNames['plural']) {
@@ -1811,15 +1803,13 @@ class formulizeFormsHandler {
 			$menuLinkScreenValues[] = 'sid='.$screen->getVar('sid');
 		}
 		foreach($namesNeedingReplacement as $oldName => $newName) {
-			$sql = "UPDATE ".$xoopsDB->prefix('formulize_screen')." SET title = '".formulize_db_escape($newName)."' WHERE title = '".formulize_db_escape($oldName)."' AND fid = ".$formObject->getVar('fid');
-			if(!$res = $xoopsDB->query($sql)) {
-				print "Error: could not rename screens from '".strip_tags(htmlspecialchars($oldName))."' to '".strip_tags(htmlspecialchars($newName))."'";
-				$result = false;
+			$sql = "UPDATE ".$this->db->prefix('formulize_screen')." SET title = '".formulize_db_escape($newName)."' WHERE title = '".formulize_db_escape($oldName)."' AND fid = ".$formObject->getVar('fid');
+			if(!$res = $this->db->query($sql)) {
+				throw new Exception("Could not rename screens from '$oldName' to '$newName'. ".$this->db->error());
 			}
-			$sql = "UPDATE ".$xoopsDB->prefix("formulize_menu_links")." SET link_text = '".formulize_db_escape($newName)."' WHERE link_text = '".formulize_db_escape($oldName)."' AND screen IN ('".implode("','",$menuLinkScreenValues)."')";
-			if(!$res = $xoopsDB->query($sql)) {
-				print "Error: could not rename menu links from '".strip_tags(htmlspecialchars($oldName))."' to '".strip_tags(htmlspecialchars($newName))."'";
-				$result = false;
+			$sql = "UPDATE ".$this->db->prefix("formulize_menu_links")." SET link_text = '".formulize_db_escape($newName)."' WHERE link_text = '".formulize_db_escape($oldName)."' AND screen IN ('".implode("','",$menuLinkScreenValues)."')";
+			if(!$res = $this->db->query($sql)) {
+				throw new Exception("Could not rename menu links from '$oldName' to '$newName'. ".$this->db->error());
 			}
 		}
 		if( $formObject->getVar( "form_handle" ) != $originalFormNames['form_handle'] ) {
@@ -1867,17 +1857,15 @@ class formulizeFormsHandler {
 		}
 		$handleUpdateSQL = "UPDATE ".$this->db->prefix("formulize")." SET ele_handle=ele_id WHERE id_form=".intval($fid);
     if(!$res = $this->db->query($handleUpdateSQL)) {
-      print "Error: could not synchronize handles with element ids for the '".strip_tags(htmlspecialchars($_POST['tablename'])). "' form";
-			return false;
+      throw new Exception("Could not synchronize handles with element ids for the '$targetTableName' form. ".$this->db->error());
     }
 		return true;
 	}
 
 	// lock the form...set the lockedform flag to indicate that no further editing of this form is allowed
 	function lockForm($fid) {
-		global $xoopsDB;
-		$sql = "UPDATE ".$xoopsDB->prefix("formulize_id") . " SET lockedform = 1 WHERE id_form = ". intval($fid);
-		if(!$res = $xoopsDB->queryF($sql)) {
+		$sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET lockedform = 1 WHERE id_form = ". intval($fid);
+		if(!$res = $this->db->queryF($sql)) {
 			return false;
 		} else {
 			return true;
@@ -1908,7 +1896,6 @@ class formulizeFormsHandler {
 		if (!$skipMetadataCheck && isMetaDataField($handle)){
 			return false; // don't allow reserved words that will be used in the main data extraction queries
 		}
-		global $xoopsDB;
 		// validate element id, convert to element id if it was a handle or object
 		if($elementIdentifier) {
 			$elementObject = _getElementObject($elementIdentifier);
@@ -1918,11 +1905,11 @@ class formulizeFormsHandler {
 			$element_id = $elementObject->getVar('ele_id');
 		}
 		$element_id_condition = $element_id ? " AND ele_id != " . intval($element_id) : "";
-		$sql = "SELECT count(ele_handle) FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_handle = '" . formulize_db_escape($handle) . "' $element_id_condition";
-		if(!$res = $xoopsDB->query($sql)) {
-			print "Error: could not verify uniqueness of handle '$handle'";
+		$sql = "SELECT count(ele_handle) FROM " . $this->db->prefix("formulize") . " WHERE ele_handle = '" . formulize_db_escape($handle) . "' $element_id_condition";
+		if(!$res = $this->db->query($sql)) {
+			throw new Exception("Could not verify uniqueness of handle '$handle'. ".$this->db->error());
 		} else {
-			$row = $xoopsDB->fetchRow($res);
+			$row = $this->db->fetchRow($res);
 			if($row[0] == 0) { // zero rows found with that handle in this form
 				return true;
 			} else {
@@ -1934,13 +1921,12 @@ class formulizeFormsHandler {
     	// check to see if a handle is unique (but exclude the given form if any from the query)
 	function isFormHandleUnique($handle, $form_id=null) {
         $handle = formulizeForm::sanitize_handle_name($handle);
-		global $xoopsDB;
         $form_id_condition = $form_id ? " AND id_form != " . intval($form_id) : "";
-		$sql = "SELECT count(form_handle) FROM " . $xoopsDB->prefix("formulize_id") . " WHERE form_handle = '" . formulize_db_escape($handle)."' $form_id_condition";
-		if(!$res = $xoopsDB->query($sql)) {
-			print "Error: could not verify uniqueness of form handle '$handle'";
+		$sql = "SELECT count(form_handle) FROM " . $this->db->prefix("formulize_id") . " WHERE form_handle = '" . formulize_db_escape($handle)."' $form_id_condition";
+		if(!$res = $this->db->query($sql)) {
+			throw new Exception("Could not verify uniqueness of form handle '$handle'. ".$this->db->error());
 		} else {
-			$row = $xoopsDB->fetchRow($res);
+			$row = $this->db->fetchRow($res);
 			if($row[0] == 0) { // zero rows found with that handle in this form
 				return true;
 			} else {
@@ -1953,13 +1939,12 @@ class formulizeFormsHandler {
 	 * Delete any associated data and resources for all elements in a form
 	 * @param object formObject - The object representation of the form we're working with.
 	 * @param string entryScope - 'all' to delete associated data and resources from all entries, an entry ID to delete from a single entry only
-	 * @return boolean Returns true if all deletions succeeded, or false if one or more failed.
+	 * @return boolean Returns true if all deletions succeeded, or false if the parameters were invalid. Throws an exception if a deletion fails.
 	 */
 	function deleteAssociatedDataAndResourcesForAllElements($formObject, $entryScope = null) {
 		if($entryScope === 'null' || !is_a($formObject, 'formulizeForm')) {
 			return false;
 		}
-		$result = true;
 		foreach($formObject->getVar('elements') as $elementId) {
 			$elementObject = _getElementObject($elementId);
 			$elementType = $elementObject->getVar('ele_type');
@@ -1969,11 +1954,10 @@ class formulizeFormsHandler {
 				$typeElementHandler = xoops_getmodulehandler('elements', 'formulize');
 			}
 			if($typeElementHandler->deleteAssociatedDataAndResources($elementObject, $entryScope) === false) {
-				print "Error: pre-delete processing for element ".htmlspecialchars(strip_tags($elementObject->getVar('ele_id')))." for form ".$formObject->getVar('fid')." failed";
-				$result = false;
+				throw new Exception("Pre-delete processing for element ".$elementObject->getVar('ele_id')." for form ".$formObject->getVar('fid')." failed");
 			}
 		}
-		return $result;
+		return true;
 	}
 
 	function delete($fid) {
@@ -1988,22 +1972,18 @@ class formulizeFormsHandler {
 		} elseif(!$formObject = $this->get($fid)) {
 			return false;
 		}
-		$isError = $this->deleteAssociatedDataAndResourcesForAllElements($formObject, entryScope: 'all');
-		global $xoopsDB;
-		$sql = "DELETE FROM ".$xoopsDB->prefix("formulize_id")." WHERE id_form = $fid";
-		if(!$xoopsDB->query($sql)) {
-			print "Error: could not delete form $fid";
-			$isError = true;
+		$this->deleteAssociatedDataAndResourcesForAllElements($formObject, entryScope: 'all');
+		$sql = "DELETE FROM ".$this->db->prefix("formulize_id")." WHERE id_form = $fid";
+		if(!$this->db->query($sql)) {
+			throw new Exception("Could not delete form $fid. ".$this->db->error());
 		}
-		$sql = "DELETE FROM ".$xoopsDB->prefix("formulize")." WHERE id_form = $fid";
-		if(!$xoopsDB->query($sql)) {
-			print "Error: could not delete elements for form $fid";
-			$isError = true;
+		$sql = "DELETE FROM ".$this->db->prefix("formulize")." WHERE id_form = $fid";
+		if(!$this->db->query($sql)) {
+			throw new Exception("Could not delete elements for form $fid. ".$this->db->error());
 		}
-		$sql = "DELETE FROM ".$xoopsDB->prefix("formulize_framework_links"). " WHERE fl_form1_id = $fid OR fl_form2_id = $fid";
-		if(!$xoopsDB->query($sql)) {
-			print "Error: could not delete relationship links for form $fid";
-			$isError = true;
+		$sql = "DELETE FROM ".$this->db->prefix("formulize_framework_links"). " WHERE fl_form1_id = $fid OR fl_form2_id = $fid";
+		if(!$this->db->query($sql)) {
+			throw new Exception("Could not delete relationship links for form $fid. ".$this->db->error());
 		}
 		// permissions: the rights groups have on the form (every Formulize permission is keyed by form id)...
 		// deleteByModule would be tempting, but it ignores the item id unless a permission name is given too, and would delete every Formulize permission for every form
@@ -2012,76 +1992,64 @@ class formulizeFormsHandler {
 		$criteria->add(new Criteria('gperm_modid', getFormulizeModId()), 'AND');
 		$criteria->add(new Criteria('gperm_itemid', $fid), 'AND');
 		if(!$gperm_handler->deleteAll($criteria)) {
-			print "Error: could not delete permissions for form $fid";
-			$isError = true;
+			throw new Exception("Could not delete permissions for form $fid. ".$this->db->error());
 		}
 		// ...the groups each group's members can see entries from...
-		$sql = "DELETE FROM ".$xoopsDB->prefix("formulize_groupscope_settings")." WHERE fid = $fid";
-		if(!$xoopsDB->query($sql)) {
-			print "Error: could not delete groupscope settings for form $fid";
-			$isError = true;
+		$sql = "DELETE FROM ".$this->db->prefix("formulize_groupscope_settings")." WHERE fid = $fid";
+		if(!$this->db->query($sql)) {
+			throw new Exception("Could not delete groupscope settings for form $fid. ".$this->db->error());
 		}
 		// ...the per-group filters on which entries each group can see...
-		$sql = "DELETE FROM ".$xoopsDB->prefix("formulize_group_filters")." WHERE fid = $fid";
-		if(!$xoopsDB->query($sql)) {
-			print "Error: could not delete group filters for form $fid";
-			$isError = true;
+		$sql = "DELETE FROM ".$this->db->prefix("formulize_group_filters")." WHERE fid = $fid";
+		if(!$this->db->query($sql)) {
+			throw new Exception("Could not delete group filters for form $fid. ".$this->db->error());
 		}
 		// ...and inheritance. Inheriting forms hold their own copies of this form's permissions, so they keep those and are simply no longer tied to a form that does not exist (same as clearing the parent in formulizePermHandler::setPermissionParent)
-		$sql = "UPDATE ".$xoopsDB->prefix("formulize_id")." SET parent_perm_fid = 0 WHERE parent_perm_fid = $fid";
-		if(!$xoopsDB->query($sql)) {
-			print "Error: could not detach the forms that inherit permissions from form $fid";
-			$isError = true;
+		$sql = "UPDATE ".$this->db->prefix("formulize_id")." SET parent_perm_fid = 0 WHERE parent_perm_fid = $fid";
+		if(!$this->db->query($sql)) {
+			throw new Exception("Could not detach the forms that inherit permissions from form $fid. ".$this->db->error());
 		}
 		// saved views of the form's entries
 		$savedViews_handler = xoops_getmodulehandler('savedViews', 'formulize');
 		if(!$savedViews_handler->deleteAllForForm($fid)) {
-			print "Error: could not delete saved views for form $fid";
-			$isError = true;
+			throw new Exception("Could not delete saved views for form $fid");
 		}
 		// advanced calculations on the form
 		$advanced_calculation_handler = xoops_getmodulehandler('advancedCalculation', 'formulize');
 		foreach((array) $advanced_calculation_handler->getList($fid) as $advancedCalculation) {
 			if(!$advanced_calculation_handler->delete($advancedCalculation['acid'])) {
-				$isError = true; // delete() prints its own error
+				throw new Exception("Could not delete advanced calculation ".intval($advancedCalculation['acid'])." for form $fid");
 			}
 		}
 		// notification settings for the form (no handler for these, see include/setnot.php)
-		$sql = "DELETE FROM ".$xoopsDB->prefix("formulize_notification_conditions")." WHERE not_cons_fid = $fid";
-		if(!$xoopsDB->query($sql)) {
-			print "Error: could not delete notification settings for form $fid";
-			$isError = true;
+		$sql = "DELETE FROM ".$this->db->prefix("formulize_notification_conditions")." WHERE not_cons_fid = $fid";
+		if(!$this->db->query($sql)) {
+			throw new Exception("Could not delete notification settings for form $fid. ".$this->db->error());
 		}
 		// deliberately kept: formulize_deletion_logs, which may be consulted in audits after the form is gone, and
 		// formulize_digest_data, since digests are experimental and how they intersect with other features is unsettled.
 		// formulize_entry_owner_groups is removed by dropDataTable() below.
-		$sql = "SELECT sid, type FROM ".$xoopsDB->prefix("formulize_screen")." WHERE fid=$fid";
-		if($res = $xoopsDB->query($sql)) {
+		$sql = "SELECT sid, type FROM ".$this->db->prefix("formulize_screen")." WHERE fid=$fid";
+		if($res = $this->db->query($sql)) {
 			$application_handler = xoops_getmodulehandler('applications', 'formulize');
-			while($array = $xoopsDB->fetchArray($res)) {
-				$sql = "DELETE FROM ".$xoopsDB->prefix("formulize_screen_".strtolower($array['type']))." WHERE sid=".intval($array['sid']);
-				if(!$xoopsDB->query($sql)) {
-					print "Error: could not delete screen ".htmlspecialchars(strip_tags($array['sid']))." for form $fid";
-					$isError = true;
+			while($array = $this->db->fetchArray($res)) {
+				$sql = "DELETE FROM ".$this->db->prefix("formulize_screen_".strtolower($array['type']))." WHERE sid=".intval($array['sid']);
+				if(!$this->db->query($sql)) {
+					throw new Exception("Could not delete screen ".intval($array['sid'])." for form $fid. ".$this->db->error());
 				}
 				$application_handler->deleteMenuLinkByScreen("sid=".intval($array['sid']));
 			}
-			$sql = "DELETE FROM ".$xoopsDB->prefix("formulize_screen")." WHERE fid=$fid";
-			if(!$xoopsDB->query($sql)) {
-				print "Error: could not delete screens for form $fid";
-				$isError = true;
+			$sql = "DELETE FROM ".$this->db->prefix("formulize_screen")." WHERE fid=$fid";
+			if(!$this->db->query($sql)) {
+				throw new Exception("Could not delete screens for form $fid. ".$this->db->error());
 			}
 			$application_handler->deleteMenuLinkByScreen("fid=".intval($fid));
 		}
-		$sql = "DELETE FROM ".$xoopsDB->prefix("formulize_application_form_link")." WHERE fid=$fid";
-		if(!$xoopsDB->query($sql)) {
-			print "Error: could not delete form $fid from its applications";
-			$isError = true;
+		$sql = "DELETE FROM ".$this->db->prefix("formulize_application_form_link")." WHERE fid=$fid";
+		if(!$this->db->query($sql)) {
+			throw new Exception("Could not delete form $fid from its applications. ".$this->db->error());
 		}
-		if(!$this->dropDataTable($fid)) {
-			$isError = true;
-		}
-		return $isError ? false : true;
+		return $this->dropDataTable($fid);
 	}
 
 	// this method figures out if the revisions history table for a form exists or not
@@ -2102,22 +2070,20 @@ class formulizeFormsHandler {
 			$form_handle = $fid; // not fid, it's a form handle in this case
 			$formObject = $this->get($form_handle);
 		}
-		global $xoopsDB;
 		$existingTables = array();
 		if(count((array) $existingTables)==0) {
 			$testsql = "SHOW TABLES LIKE '%_revisions'";
-			$resultst = $xoopsDB->queryF($testsql);
-			while($table = $xoopsDB->fetchRow($resultst)) {
+			$resultst = $this->db->queryF($testsql);
+			while($table = $this->db->fetchRow($resultst)) {
 				$existingTables[] = $table[0];
 			}
 		}
-		$foundval = in_array($xoopsDB->prefix("formulize_".$form_handle."_revisions"), $existingTables);
+		$foundval = in_array($this->db->prefix("formulize_".$form_handle."_revisions"), $existingTables);
 		if(!$foundval AND formulizeRevisionsForAllFormsIsOn()) {
 			if(!$this->createDataTable($formObject->getVar('id_form'), revisionsTable: true)) {
-				print "Error: could not create the revision history table for the form";
-			} else {
-				$foundval = true;
+				throw new Exception("Could not create the revision history table for form ".$formObject->getVar('id_form'));
 			}
+			$foundval = true;
 		}
 		return $foundval;
 	}
@@ -2145,9 +2111,8 @@ class formulizeFormsHandler {
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$clonedFormObject = $form_handler->get($clonedForm);
 		$elementTypes = $formObject->getVar('elementTypes');
-		global $xoopsDB;
 		// build SQL for new table
-		$newTableSQL = "CREATE TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle') . $revisionTableName) . " (";
+		$newTableSQL = "CREATE TABLE " . $this->db->prefix("formulize_" . $formObject->getVar('form_handle') . $revisionTableName) . " (";
 		if($revisionsTable) {
 			$newTableSQL .= "`revision_id` bigint(7) unsigned NOT NULL auto_increment,";
 			$newTableSQL .= "`entry_id` int(7) unsigned NOT NULL,";
@@ -2165,14 +2130,13 @@ class formulizeFormsHandler {
 				// we're cloning with data, so base the new field's datatype on the original form's datatype for the corresponding field
 				if(!isset($dataTypeMap)) {
 					$dataTypeMap = array();
-					$dataTypeSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_".$clonedFormObject->getVar('form_handle'));
-					if($dataTypeRes = $xoopsDB->queryF($dataTypeSQL)) {
-						while($dataTypeArray = $xoopsDB->fetchArray($dataTypeRes)) {
+					$dataTypeSQL = "SHOW COLUMNS FROM " . $this->db->prefix("formulize_".$clonedFormObject->getVar('form_handle'));
+					if($dataTypeRes = $this->db->queryF($dataTypeSQL)) {
+						while($dataTypeArray = $this->db->fetchArray($dataTypeRes)) {
 							$dataTypeMap[$dataTypeArray['Field']] = $dataTypeArray['Type'];
 						}
 					} else {
-						print "Error: could not get column datatype information for the source form.<br>$dataTypeSQL<br>";
-						return false;
+						throw new Exception("Could not get column datatype information for the source form. SQL: $dataTypeSQL. ".$this->db->error());
 					}
 				}
 				if($revisionsTable) {
@@ -2206,11 +2170,8 @@ class formulizeFormsHandler {
 		$newTableSQL .= "INDEX i_creation_uid (creation_uid)";
 		$newTableSQL .= ") ENGINE=InnoDB;";
 		// make the table
-		if(!$tableCreationRes = $xoopsDB->queryF($newTableSQL)) {
-			print $xoopsDB->error();
-			print "\n";
-			print $newTableSQL;
-			return false;
+		if(!$tableCreationRes = $this->db->queryF($newTableSQL)) {
+			throw new Exception("Could not create the data table. SQL: $newTableSQL. ".$this->db->error());
 		}
 		return true;
 	}
@@ -2222,8 +2183,8 @@ class formulizeFormsHandler {
 			if(!get_class($fid) == "formulizeForm") {
 				return false;
 			}
-			$fid = $fid->getVar('id_form');
 			$form_handle = $fid->getVar('form_handle');
+			$fid = $fid->getVar('id_form');
 		} elseif(!is_numeric($fid)) {
 			return false;
 		} else {
@@ -2231,22 +2192,21 @@ class formulizeFormsHandler {
 			$formObject = $form_handler->get($fid);
 			$form_handle = $formObject->getVar('form_handle');
 		}
-		global $xoopsDB;
-		$dropSQL = "DROP TABLE " . $xoopsDB->prefix("formulize_" . $form_handle);
-		if(!$dropRes = $xoopsDB->queryF($dropSQL)) {
+		$dropSQL = "DROP TABLE " . $this->db->prefix("formulize_" . $form_handle);
+		if(!$dropRes = $this->db->queryF($dropSQL)) {
 			return false;
 		}
 		// remove the revisions table when the form is deleted, if it is present
 		if($this->revisionsTableExists($fid)) {
-			$dropSQL = "DROP TABLE " . $xoopsDB->prefix("formulize_" . $form_handle."_revisions");
-			if(!$dropRes = $xoopsDB->queryF($dropSQL)) {
-				print "Error: could not remove the revisions table for form $fid";
+			$dropSQL = "DROP TABLE " . $this->db->prefix("formulize_" . $form_handle."_revisions");
+			if(!$dropRes = $this->db->queryF($dropSQL)) {
+				throw new Exception("Could not remove the revisions table for form $fid. ".$this->db->error());
 			}
 		}
 		// remove the entry owner groups info for that form
-		$ownershipSQL = "DELETE FROM " . $xoopsDB->prefix("formulize_entry_owner_groups") . " WHERE fid=$fid";
-		if(!$ownershipSQLRes = $xoopsDB->queryF($ownershipSQL)) {
-			print "error: could not remove entry ownership data for form $fid";
+		$ownershipSQL = "DELETE FROM " . $this->db->prefix("formulize_entry_owner_groups") . " WHERE fid=$fid";
+		if(!$ownershipSQLRes = $this->db->queryF($ownershipSQL)) {
+			throw new Exception("Could not remove entry ownership data for form $fid. ".$this->db->error());
 		}
 		return true;
 	}
@@ -2263,13 +2223,12 @@ class formulizeFormsHandler {
             return false;
         }
 				$revisionsTableSQL = $revisionsTable ? "_revisions" : "";
-        global $xoopsDB;
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
         $formObject = $form_handler->get($element->getVar('id_form'));
         $elementHandle = $elementHandle ? $elementHandle : $element->getVar('ele_handle'); // use the element's current handle, unless we passed in an alternate to validate
-        $fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) .$revisionsTableSQL." LIKE '".formulize_db_escape($elementHandle)."'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
-        if($fieldStateRes = $xoopsDB->queryF($fieldStateSQL)) {
-            if($xoopsDB->getRowsNum($fieldStateRes)==0) {
+        $fieldStateSQL = "SHOW COLUMNS FROM " . $this->db->prefix("formulize_" . $formObject->getVar('form_handle')) .$revisionsTableSQL." LIKE '".formulize_db_escape($elementHandle)."'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
+        if($fieldStateRes = $this->db->queryF($fieldStateSQL)) {
+            if($this->db->getRowsNum($fieldStateRes)==0) {
                 return true;
             }
         }
@@ -2290,7 +2249,6 @@ class formulizeFormsHandler {
 			return false;
 		}
     if($element->hasData) {
-			global $xoopsDB;
 			$form_handler = xoops_getmodulehandler('forms', 'formulize');
 			$formObject = $form_handler->get($element->getVar('id_form'),false,true);
 			$dataType = $dataType ? $dataType : "text";
@@ -2298,13 +2256,13 @@ class formulizeFormsHandler {
 			if(!$this->elementFieldMissing($element)) {
 				return true; // column already exists (e.g. preserved from a prior entries-are-users disable)
 			}
-			$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " ADD `" . $element->getVar('ele_handle') . "` $type_with_default";
-			if(!$insertFieldRes = $xoopsDB->queryF($insertFieldSQL)) {
-				throw new Exception($xoopsDB->error());
+			$insertFieldSQL = "ALTER TABLE " . $this->db->prefix("formulize_" . $formObject->getVar('form_handle')) . " ADD `" . $element->getVar('ele_handle') . "` $type_with_default";
+			if(!$insertFieldRes = $this->db->queryF($insertFieldSQL)) {
+				throw new Exception($this->db->error());
 			}
 			if($this->revisionsTableExists($element->getVar('id_form')) AND $this->elementFieldMissing($element, revisionsTable: true)) {
-				$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " ADD `" . $element->getVar('ele_handle') . "` $dataType NULL default NULL";
-				if(!$insertFieldRes = $xoopsDB->queryF($insertFieldSQL)) {
+				$insertFieldSQL = "ALTER TABLE " . $this->db->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " ADD `" . $element->getVar('ele_handle') . "` $dataType NULL default NULL";
+				if(!$insertFieldRes = $this->db->queryF($insertFieldSQL)) {
 					throw new Exception("Could not add element ".$element->getVar('ele_handle')." to the revisions table for form ". $formObject->getVar('form_handle'));
 				}
 			}
@@ -2329,26 +2287,25 @@ class formulizeFormsHandler {
 			return true;
 		}
 
-		global $xoopsDB;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($element->getVar('id_form'));
 		if(!$dataType) {
 			// first get its current state:
-			$fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) ." LIKE '$oldName'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
-			if(!$fieldStateRes = $xoopsDB->queryF($fieldStateSQL)) {
-        throw new Exception("Could not retrieve field state for $oldName: " . $xoopsDB->error());
+			$fieldStateSQL = "SHOW COLUMNS FROM " . $this->db->prefix("formulize_" . $formObject->getVar('form_handle')) ." LIKE '$oldName'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
+			if(!$fieldStateRes = $this->db->queryF($fieldStateSQL)) {
+        throw new Exception("Could not retrieve field state for $oldName: " . $this->db->error());
 			}
-			$fieldStateData = $xoopsDB->fetchArray($fieldStateRes);
+			$fieldStateData = $this->db->fetchArray($fieldStateRes);
 			$dataType = $fieldStateData['Type'];
 		}
-		$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " CHANGE `$oldName` `$newName` ". $dataType;
-		if(!$updateFieldRes = $xoopsDB->queryF($updateFieldSQL)) {
-      throw new Exception("Could not update field $oldName to $newName: " . $xoopsDB->error());
+		$updateFieldSQL = "ALTER TABLE " . $this->db->prefix("formulize_" . $formObject->getVar('form_handle')) . " CHANGE `$oldName` `$newName` ". $dataType;
+		if(!$updateFieldRes = $this->db->queryF($updateFieldSQL)) {
+      throw new Exception("Could not update field $oldName to $newName: " . $this->db->error());
 		}
 		if($this->revisionsTableExists($element->getVar('id_form')) AND $this->elementFieldPresent($element, $oldName, revisionsTable: true)) {
-			$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " CHANGE `$oldName` `$newName` ". $dataType;
-			if(!$updateFieldRes = $xoopsDB->queryF($updateFieldSQL)) {
-			  throw new Exception("Could not update the field $oldName in form ".$formObject->getVar('form_handle').": " . $xoopsDB->error());
+			$updateFieldSQL = "ALTER TABLE " . $this->db->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " CHANGE `$oldName` `$newName` ". $dataType;
+			if(!$updateFieldRes = $this->db->queryF($updateFieldSQL)) {
+			  throw new Exception("Could not update the field $oldName in form ".$formObject->getVar('form_handle').": " . $this->db->error());
 			}
 		}
 		return true;
@@ -2360,18 +2317,16 @@ class formulizeFormsHandler {
 		if(!$element = _getElementObject($element)) {
 			return false;
 		}
-		global $xoopsDB;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($element->getVar('id_form'),false,true);
-		$deleteFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " DROP `" . $element->getVar('ele_handle') . "`";
-		if(!$deleteFieldRes = $xoopsDB->queryF($deleteFieldSQL)) {
+		$deleteFieldSQL = "ALTER TABLE " . $this->db->prefix("formulize_" . $formObject->getVar('form_handle')) . " DROP `" . $element->getVar('ele_handle') . "`";
+		if(!$deleteFieldRes = $this->db->queryF($deleteFieldSQL)) {
 			return false;
 		}
 		if($this->revisionsTableExists($element->getVar('id_form')) AND $this->elementFieldPresent($element, revisionsTable: true)) {
-			$deleteFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " DROP `" . $element->getVar('ele_handle') . "`";
-			if(!$deleteFieldRes = $xoopsDB->queryF($deleteFieldSQL)) {
-				print "Error: could not remove element ".$element->getVar('ele_handle')." from the revisions table for form ". $formObject->getVar('form_handle');
-				return false;
+			$deleteFieldSQL = "ALTER TABLE " . $this->db->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " DROP `" . $element->getVar('ele_handle') . "`";
+			if(!$deleteFieldRes = $this->db->queryF($deleteFieldSQL)) {
+				throw new Exception("Could not remove element ".$element->getVar('ele_handle')." from the revisions table for form ". $formObject->getVar('form_handle').". ".$this->db->error());
 			}
 		}
 		return true;
@@ -2497,18 +2452,17 @@ class formulizeFormsHandler {
 		if(!is_numeric($fid) OR !is_array($filterSettings)) {
 			return false;
 		}
-		global $xoopsDB;
 		// loop through the settings and make a query to check for what exists and needs updating, vs. inserting
 		$foundGroups = array();
-		$checkSQL = "SELECT groupid FROM ".$xoopsDB->prefix("formulize_group_filters"). " WHERE fid=".$fid;
-		$checkRes = $xoopsDB->query($checkSQL);
-		while($checkArray = $xoopsDB->fetchArray($checkRes)) {
+		$checkSQL = "SELECT groupid FROM ".$this->db->prefix("formulize_group_filters"). " WHERE fid=".$fid;
+		$checkRes = $this->db->query($checkSQL);
+		while($checkArray = $this->db->fetchArray($checkRes)) {
 			$foundGroups[$checkArray['groupid']] = true;
 		}
 
 		$insertStart = true;
-		$insertSQL = "INSERT INTO ".$xoopsDB->prefix("formulize_group_filters")." (`fid`, `groupid`, `filter`) VALUES ";
-		$updateSQL = "UPDATE ".$xoopsDB->prefix("formulize_group_filters")." SET filter = CASE groupid ";
+		$insertSQL = "INSERT INTO ".$this->db->prefix("formulize_group_filters")." (`fid`, `groupid`, `filter`) VALUES ";
+		$updateSQL = "UPDATE ".$this->db->prefix("formulize_group_filters")." SET filter = CASE groupid ";
 		$runUpdate = false;
 		$runInsert = false;
 		foreach($filterSettings as $groupid=>$theseSettings) {
@@ -2527,12 +2481,12 @@ class formulizeFormsHandler {
 		$updateSQL .= " ELSE filter END WHERE fid=".$fid;
 
 		if($runInsert) {
-			if(!$xoopsDB->query($insertSQL)) {
+			if(!$this->db->query($insertSQL)) {
 				return false;
 			}
 		}
 		if($runUpdate) {
-			if(!$xoopsDB->query($updateSQL)) {
+			if(!$this->db->query($updateSQL)) {
 				return false;
 			}
 		}
@@ -2548,9 +2502,8 @@ class formulizeFormsHandler {
 		if(!is_numeric($fid)) {
 			return false;
 		}
-		global $xoopsDB;
-		$deleteSQL = formulize_db_escape("DELETE FROM ".$xoopsDB->prefix("formulize_group_filters")." WHERE fid=$fid AND groupid IN (".implode(", ",$groupids).")");
-		if(!$xoopsDB->query($deleteSQL)) {
+		$deleteSQL = formulize_db_escape("DELETE FROM ".$this->db->prefix("formulize_group_filters")." WHERE fid=$fid AND groupid IN (".implode(", ",$groupids).")");
+		if(!$this->db->query($deleteSQL)) {
 			return false;
 		} else {
 			return true;
@@ -2580,13 +2533,12 @@ class formulizeFormsHandler {
 
 		// get all the filters in effect for the specified groups, the process them all into a variable we can tack onto the end of any query
 		// all filters are always on the mainform only
-		global $xoopsDB;
-		$getFiltersSQL = "SELECT filter FROM ".$xoopsDB->prefix("formulize_group_filters"). " WHERE groupid IN (".implode(",",$groupids).") AND fid=$fid";
-		if(!$getFiltersRes = $xoopsDB->query($getFiltersSQL)) {
+		$getFiltersSQL = "SELECT filter FROM ".$this->db->prefix("formulize_group_filters"). " WHERE groupid IN (".implode(",",$groupids).") AND fid=$fid";
+		if(!$getFiltersRes = $this->db->query($getFiltersSQL)) {
 			return false;
 		}
 		$perGroupFilter = "";
-		while($filters = $xoopsDB->fetchArray($getFiltersRes)) {
+		while($filters = $this->db->fetchArray($getFiltersRes)) {
 			$filterSettings = unserialize($filters['filter']);
 			if(empty($filterSettings)) { continue; }
 			// filterSettings[0] will be the elements
@@ -2602,8 +2554,8 @@ class formulizeFormsHandler {
 				if(!isMetaDataField($filterSettings[0][$i]) AND $elementObject = $element_handler->get($filterSettings[0][$i])) {
 					$filterSettings[0][$i] = $elementObject->getVar('ele_handle');
 				} elseif(!isMetaDataField($filterSettings[0][$i])) {
-					print "Formulize Error: a per-group permission filter on form $fid is referencing an element that does not exist. Was it renamed or deleted?<br>";
-					exit(); // can't invoke intended per-group permissions, must fail out rather than risk showing data user should not have access to :(
+					// can't invoke intended per-group permissions, must fail out rather than risk showing data user should not have access to :(
+					throw new Exception("A per-group permission filter on form $fid is referencing an element that does not exist. Was it renamed or deleted?");
 				}
 				if($filterSettings[3][$i] == "all") {
 					$filterAll[] = $i;
@@ -2741,8 +2693,7 @@ class formulizeFormsHandler {
 		}
 		$insert_sql .= ")";
 		if(!$result = $this->db->query($insert_sql)) {
-			print "error duplicating form: '$oldTitle'<br>SQL: $insert_sql<br>".$this->db->error();
-			return false;
+			throw new Exception("Could not duplicate form '$oldTitle'. SQL: $insert_sql. ".$this->db->error());
 		}
 
 		$newfid = $this->db->getInsertId();
@@ -2750,8 +2701,7 @@ class formulizeFormsHandler {
 		// replace formhandle of the new form
 		$replaceSQL = "UPDATE ". $this->db->prefix("formulize_id") . " SET form_handle='".formulize_db_escape($oldFormHandle."_".$newfid)."' WHERE form_handle=\"replace_with_handle_and_id\"";
 		if(!$result = $this->db->queryF($replaceSQL)) {
-		  print "error setting the form_handle for the new form.<br>".$this->db->error();
-		  return false;
+			throw new Exception("Could not set the form_handle for the new form. ".$this->db->error());
 		}
 
 		$getelements = q("SELECT * FROM " . $this->db->prefix("formulize") . " WHERE id_form = $fid");
@@ -2794,8 +2744,7 @@ class formulizeFormsHandler {
 			}
 			$insert_sql .= ")";
 			if(!$result = $this->db->query($insert_sql)) {
-				print "error duplicating elements in form: '$oldTitle'<br>SQL: $insert_sql<br>".$this->db->error();
-				return false;
+				throw new Exception("Could not duplicate elements in form '$oldTitle'. SQL: $insert_sql. ".$this->db->error());
 			}
 			if($oldNewEleIdMap[$ele['ele_handle']] == "replace_with_ele_id") {
 				$oldNewEleIdMap[$ele['ele_handle']] = $oldFormHandle.'_'.$this->db->getInsertId();
@@ -2805,14 +2754,12 @@ class formulizeFormsHandler {
 		// replace ele_id flags that need replacing
 		$replaceSQL = "UPDATE ". $this->db->prefix("formulize") . " SET ele_handle=CONCAT('".$oldFormHandle."_',ele_id) WHERE ele_handle=\"replace_with_ele_id\"";
 		if(!$result = $this->db->queryF($replaceSQL)) {
-		   print "error setting the ele_handle values for the new form.<br>".$this->db->error();
-		   return false;
+			throw new Exception("Could not set the ele_handle values for the new form. ".$this->db->error());
 		}
 
 	  // Need to create the new data table now -- July 1 2007
     if(!$tableCreationResult = $this->createDataTable($newfid, $fid, $oldNewEleIdMap)) {
-      print "Error: could not make the necessary new datatable for form " . $newfid . ".  Please delete the cloned form and report this error to <a href=\"mailto:info@formulize.org\">info@formulize.org</a>.<br>".$this->db->error();
-      return false;
+      throw new Exception("Could not make the necessary new datatable for form $newfid. Please delete the cloned form and report this error to info@formulize.org.");
     }
 
     if($clonedata) {
@@ -2820,8 +2767,7 @@ class formulizeFormsHandler {
         include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php"; // formulize data handler
         $dataHandler = new formulizeDataHandler($newfid);
         if(!$cloneResult = $dataHandler->cloneData($fid, $oldNewEleIdMap)) {
-        print "Error:  could not clone the data from the old form to the new form.  Please delete the cloned form and report this error to <a href=\"mailto:info@formulize.org\">info@formulize.org</a>.<br>".$xoopsDB->error();
-            return false;
+            throw new Exception("Could not clone the data from the old form to the new form. Please delete the cloned form and report this error to info@formulize.org. ".$this->db->error());
         }
     }
 
@@ -2830,10 +2776,7 @@ class formulizeFormsHandler {
 	$clonedFormObject = $form_handler->get($newfid);
 	if ($clonedFormObject->getVar('store_revisions')) {
 		if (!$tableCreationResult = $this->createDataTable($newfid, revisionsTable: true)) {
-			print "Error: could not create revisions table for form $newfid. ".
-				"Please delete the cloned form and report this error to ".
-				"<a href=\"mailto:info@formulize.org\">info@formulize.org</a>.<br>".$xoopsDB->error();
-			return false;
+			throw new Exception("Could not create revisions table for form $newfid. Please delete the cloned form and report this error to info@formulize.org.");
 		}
 	}
 
@@ -2845,10 +2788,10 @@ class formulizeFormsHandler {
 		$clonedFormObject->setVar('defaultform', $defaultFormScreenId);
 		$clonedFormObject->setVar('defaultlist', $defaultListScreenId);
 		if(!$form_handler->insert($clonedFormObject)) {
-			print "Error: could not update form object with default screen ids: ".$xoopsDB->error();
-    }
+			throw new Exception("Could not update form object with default screen ids. ".$this->db->error());
+		}
 
-		$this->setClonedFormAppId($newfid, $xoopsDB);
+		$this->setClonedFormApplications($fid, $clonedFormObject);
 	}
 
 	/**
@@ -2871,8 +2814,7 @@ class formulizeFormsHandler {
 		$defaultFormScreen = $formScreenHandler->create();
 		$formScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $formObject);
 		if(!$defaultFormScreenId = $formScreenHandler->insert($defaultFormScreen)) {
-			print "Error: could not create default form screen";
-			return $defaultFormScreenId;
+			throw new Exception("Could not create default form screen");
 		}
 		return $defaultFormScreenId;
 	}
@@ -2890,8 +2832,7 @@ class formulizeFormsHandler {
 		$listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $formObject);
 
 		if(!$defaultListScreenId = $listScreenHandler->insert($screen)) {
-			print "Error: could not create default list screen";
-			return $defaultListScreenId;
+			throw new Exception("Could not create default list screen");
 		}
 		return $defaultListScreenId;
 		}
@@ -2918,32 +2859,32 @@ class formulizeFormsHandler {
     }
 
 	/**
-	 * @param $newfid
-	 * @param $xoopsDB
+	 * Put a cloned form in the same applications as the form it was cloned from.
+	 * If the original form is not in any application, the clone isn't either, so it shows under "Forms with no app".
+	 * @param int $fid The id of the form that was cloned
+	 * @param object $clonedFormObject The newly cloned form
 	 */
-	public function setClonedFormAppId($newfid, $xoopsDB)
+	public function setClonedFormApplications($fid, $clonedFormObject)
 	{
-		// set newly cloned form's app to match the app id from the form being cloned
-		$cloned_app_id = $_POST['aid'];
-		$insert_app_form_link_query = "INSERT INTO ".$this->db->prefix("formulize_application_form_link")." (`appid`, `fid`) VALUES ($cloned_app_id, $newfid)";
-		if(!$result = $this->db->query($insert_app_form_link_query)) {
-			print "error adding cloned form to application with id: '$cloned_app_id'<br>SQL: $insert_app_form_link_query<br>".$xoopsDB->error();
+		$application_handler = xoops_getmodulehandler('applications', 'formulize');
+		$applicationIds = array();
+		foreach($application_handler->getApplicationsByForm($fid) as $applicationObject) {
+			$applicationIds[] = $applicationObject->getVar('appid');
 		}
+		FormulizeHandler::assignFormToApplications($clonedFormObject, $applicationIds);
 	}
 
 	function renameDataTable($oldName, $newName, $formObject) {
-		global $xoopsDB;
 
-		$renameSQL = "RENAME TABLE " . $xoopsDB->prefix("formulize_" . $oldName) . " TO " . $xoopsDB->prefix("formulize_" . $newName) . ";";
+		$renameSQL = "RENAME TABLE " . $this->db->prefix("formulize_" . $oldName) . " TO " . $this->db->prefix("formulize_" . $newName) . ";";
     //print $renameSQL;
-		if(!$renameRes = $xoopsDB->queryF($renameSQL)) {
+		if(!$renameRes = $this->db->queryF($renameSQL)) {
 		  return false;
 		}
 		if($this->revisionsTableExists($oldName)) { // check with the fid, which will force the method to get a cached version of the object, that will have the old name, so we can check against that name (form_settings_save.php sends the updated object with the new name)
-			$renameSQL = "RENAME TABLE " . $xoopsDB->prefix("formulize_" . $oldName."_revisions") . " TO " . $xoopsDB->prefix("formulize_" . $newName."_revisions") . ";";
-			if(!$renameRes = $xoopsDB->queryF($renameSQL)) {
-			  print "Error: could not rename the revisions table for form ".$formObject->getVar('form_handle');
-			  return false;
+			$renameSQL = "RENAME TABLE " . $this->db->prefix("formulize_" . $oldName."_revisions") . " TO " . $this->db->prefix("formulize_" . $newName."_revisions") . ";";
+			if(!$renameRes = $this->db->queryF($renameSQL)) {
+				throw new Exception("Could not rename the revisions table for form ".$formObject->getVar('form_handle').". ".$this->db->error());
 			}
 		}
 		return true;
