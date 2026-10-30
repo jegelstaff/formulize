@@ -2316,42 +2316,115 @@ class formulizeFormsHandler {
 
 	// update the field name in the datatable.  $element can be an id or an object.
 	// $newName can be used to override the current ele_handle value.  Introduced for handling the toggling of encryption on/off where we need to rename fields to something other than the ele_handle value.
+	// $oldName is the field as it is named now. It is looked for among the table's actual fields as a handle would be
+	// sanitized (see findDataTableColumn()), so a field still named with the capitals, hyphens or other characters a
+	// handle had before handles lost them is found, and renamed to match, whatever spelling the caller has.
+	// Nothing is done only when the field is already named exactly $newName, in case too, and no data type is given.
+	// Throws an exception if the field cannot be found in the data table, or cannot be renamed.
 	function updateField($element, $oldName, $dataType=false, $newName="") {
 		if(!$element = _getElementObject($element)) {
 			throw new Exception("Could not load element object to update field name");
 		}
-
-		$newName = $newName ? $newName : $element->getVar('ele_handle');
-		$oldName = formulizeElement::sanitize_handle_name($oldName);
-		$newName = formulizeElement::sanitize_handle_name($newName);
-		// if the old name and new name are the same, and no data type is provided, then there's nothing to do
-		if($oldName === $newName AND !$dataType) {
-			return true;
+		if(!$element->hasData) {
+			return true; // nothing in the data table belongs to this element
 		}
+
+		$newName = formulizeElement::sanitize_handle_name($newName ? $newName : $element->getVar('ele_handle'));
 
 		global $xoopsDB;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($element->getVar('id_form'));
-		if(!$dataType) {
-			// first get its current state:
-			$fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) ." LIKE '$oldName'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
-			if(!$fieldStateRes = $xoopsDB->queryF($fieldStateSQL)) {
-        throw new Exception("Could not retrieve field state for $oldName: " . $xoopsDB->error());
+		$dataTable = $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle'));
+		$tables = array($dataTable => true); // table => whether the field has to be there
+		// The revisions table is checked for directly rather than through revisionsTableExists(), which creates it
+		// when revisions are on for every form. One created here would be built from the element definitions, so
+		// could already have the field under the new name while the data table still has the old one.
+		$revisionsTable = $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle') . "_revisions");
+		$revisionsRes = $xoopsDB->queryF("SHOW TABLES LIKE " . $xoopsDB->quoteString($revisionsTable));
+		if($revisionsRes AND $xoopsDB->getRowsNum($revisionsRes) > 0) {
+			$tables[$revisionsTable] = false;
+		}
+
+		foreach($tables as $table => $required) {
+			$columns = $this->dataTableColumns($table);
+			if(!$column = $this->findDataTableColumn($columns, $oldName, $table)) {
+				if(!isset($columns[$newName]) AND $required) {
+					throw new Exception("Could not find the field $oldName in $table");
+				}
+				continue; // already renamed by an earlier run, or never in this table
 			}
-			$fieldStateData = $xoopsDB->fetchArray($fieldStateRes);
-			$dataType = $fieldStateData['Type'];
-		}
-		$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " CHANGE `$oldName` `$newName` ". $dataType;
-		if(!$updateFieldRes = $xoopsDB->queryF($updateFieldSQL)) {
-      throw new Exception("Could not update field $oldName to $newName: " . $xoopsDB->error());
-		}
-		if($this->revisionsTableExists($element->getVar('id_form')) AND $this->elementFieldPresent($element, $oldName, revisionsTable: true)) {
-			$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " CHANGE `$oldName` `$newName` ". $dataType;
-			if(!$updateFieldRes = $xoopsDB->queryF($updateFieldSQL)) {
-			  throw new Exception("Could not update the field $oldName in form ".$formObject->getVar('form_handle').": " . $xoopsDB->error());
+			if($column['Field'] === $newName AND !$dataType) {
+				continue;
+			}
+			// with no data type asked for, the field keeps the one it has, along with whether it can be null and what
+			// its default is, which giving the type alone would lose
+			$definition = $dataType ? $dataType : $this->dataTableColumnDefinition($column);
+			if(!$xoopsDB->queryF("ALTER TABLE `$table` CHANGE `" . $column['Field'] . "` `$newName` $definition")) {
+				throw new Exception("Could not update field " . $column['Field'] . " to $newName in $table: " . $xoopsDB->error());
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * The fields of a table, as SHOW COLUMNS describes them, keyed by their exact names.
+	 * Read in full rather than with SHOW COLUMNS ... LIKE, because the underscores every handle is full of are
+	 * single character wildcards in a LIKE pattern.
+	 * @param string $table The prefixed table name
+	 * @return array field name => the SHOW COLUMNS row for it
+	 */
+	protected function dataTableColumns($table) {
+		global $xoopsDB;
+		// a table that cannot be read must not look like one without the field, or a rename would be skipped as done
+		if(!$res = $xoopsDB->queryF("SHOW COLUMNS FROM `$table`")) {
+			throw new Exception("Could not read the fields of $table: " . $xoopsDB->error());
+		}
+		$columns = array();
+		while($row = $xoopsDB->fetchArray($res)) {
+			$columns[$row['Field']] = $row;
+		}
+		return $columns;
+	}
+
+	/**
+	 * Find the field a name refers to: the field with exactly that name, or else the one field whose name sanitizes
+	 * to the same handle. That covers every spelling a handle has had before it was sanitized the way it is now -
+	 * capitals, hyphens, and in the oldest handles spaces and other characters.
+	 * @param array $columns The table's fields, from dataTableColumns()
+	 * @param string $name The name to look for
+	 * @param string $table The table, for the message if the name is ambiguous
+	 * @return array|false The SHOW COLUMNS row for the field, or false if there is none
+	 */
+	protected function findDataTableColumn($columns, $name, $table) {
+		if(isset($columns[$name])) {
+			return $columns[$name];
+		}
+		$matches = array();
+		foreach($columns as $field => $column) {
+			if(formulizeElement::sanitize_handle_name($field) === formulizeElement::sanitize_handle_name($name)) {
+				$matches[] = $column;
+			}
+		}
+		if(count($matches) > 1) {
+			throw new Exception("$table has more than one field that could be $name; they must be reconciled by hand.");
+		}
+		return $matches ? $matches[0] : false;
+	}
+
+	/**
+	 * The definition to give a field when renaming it without changing it otherwise: its type, whether it can be
+	 * null, and its default.
+	 * @param array $column The SHOW COLUMNS row for the field
+	 * @return string
+	 */
+	protected function dataTableColumnDefinition($column) {
+		global $xoopsDB;
+		$definition = $column['Type'];
+		$definition .= ($column['Null'] == 'YES') ? ' NULL' : ' NOT NULL';
+		if($column['Default'] !== null) {
+			$definition .= ' DEFAULT ' . $xoopsDB->quoteString($column['Default']);
+		}
+		return $definition;
 	}
 
 	// this function deletes an element field from the data table

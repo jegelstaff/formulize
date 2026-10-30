@@ -49,12 +49,12 @@ function formulize_patch_002_always_run($prev_dbversion, $required_dbversion) {
 			return false;
 	}
 
-	// Rename any element handles containing hyphens before running other schema work.
-	// This is idempotent: handles without hyphens are untouched on repeat runs.
-	formulize_migrate_hyphenated_handles();
-	// Sites updated between 2026-07-03 and 2026-09-09 had their handles converted without their data table
-	// columns, which the migration above cannot see any more because the handles no longer have hyphens.
-	formulize_repair_hyphenated_data_columns();
+	// Rename element handles, and the fields and code files named after them, that still have capitals, hyphens or
+	// other characters handles cannot have any more, before running other schema work. Finds nothing to do on
+	// repeat runs once everything is in shape, and tries again whatever it could not do last time.
+	if (!formulize_normalize_element_handles($prev_dbversion)) {
+		return false;
+	}
 
 	// Add to the Primary Relationship any connection between forms that is missing from it.
 	// Runs on every update, because a Primary Relationship can be left incomplete by an earlier
@@ -646,308 +646,278 @@ function formulize_repair_primary_relationship() {
 }
 
 /**
- * Rename every element handle that contains a hyphen (e.g. "my-handle" → "my_handle").
+ * Bring every element handle, and everything named after one, into the shape handles have now.
  *
- * Hyphens are illegal in PHP variable names, so hyphenated handles silently break
- * derived-value formulas, on_before_save, on_after_save, and on_delete code that
- * reference elements as variables. This migration is idempotent: elements whose
- * handles contain no hyphens are left untouched on repeat runs.
+ * What a handle may look like has narrowed over time, and each time the handles already stored, and what was
+ * named after them, were not all brought along:
+ * - until 2024-10, a handle could hold almost anything. Since then it has been limited to letters, numbers,
+ *   underscores and hyphens.
+ * - in 2025-10, handles became lowercase. Every element object has reported a lowercase handle since then,
+ *   because assignVar() runs it through sanitize_handle_name() on loading, while the element table, the
+ *   element's field in its form's data table, its code files and the settings naming it could all still have
+ *   the capitals. A textbox whose field still has them saves and is searchable, but opens empty, because
+ *   loadValue() in formdisplay.php looks its value up by the lowercase handle.
+ * - in 2026-07, hyphens became underscores, and until 2026-09 elements were renamed without their fields.
  *
- * Collision policy: if "my_handle" already exists in the same form, the new name
- * becomes "my_handle_2", "my_handle_3", etc., until a free slot is found.
+ * So an element is misspelled when its stored handle is not what sanitize_handle_name() makes of it, or when
+ * its field or one of its code files is named by a spelling that sanitizes to its handle without being it.
+ * Each is renamed to the sanitized handle - with a suffix, if that is already taken - along with everything
+ * that refers to it under any of the spellings found.
  *
- * All structural updates (captions, screen maps, saved views, code files, cache)
- * are delegated to formulizeElementsHandler::renameElementResources(), which is the
- * same path used when an admin renames a handle through the UI.
+ * Runs on every update, and finds nothing to do once everything is in shape. Whatever could not be renamed is
+ * listed, and tried again on the next update.
  *
- * Userland code that cannot be auto-updated (on_before_save / on_after_save /
- * on_delete / advanced calculations) is reported via an alert if it still contains
- * any of the old handle strings.
+ * References left behind by the earlier changes, to elements whose own handles are already right, are rewritten
+ * once, by the update that brings the database to version 25. Finding them means reading every setting there
+ * is, and nothing has written a stale one since renames started matching every spelling of the old handle.
+ *
+ * @param int $prev_dbversion The database version before this update
+ * @return bool False only if the misspellings could not be looked for at all
  */
-function formulize_migrate_hyphenated_handles() {
+function formulize_normalize_element_handles($prev_dbversion) {
     global $xoopsDB;
 
-    // Find all elements whose handles contain a hyphen
-    $res = $xoopsDB->queryF(
-        "SELECT ele_id, ele_handle, id_form FROM " . $xoopsDB->prefix('formulize') . " WHERE ele_handle LIKE '%-%'"
-    );
-    if (!$res || $xoopsDB->getRowsNum($res) == 0) {
-        return;
+    $found = formulize_find_misspelled_element_handles();
+    if ($found === false) {
+        return false;
     }
-
-    // Build rename map: ele_id => ['old' => ..., 'new' => ..., 'fid' => ...]
-    // 'new' is the name asked for, not necessarily the name granted: what an element can actually be
-    // called is settled per element in the loop below, because the answer depends on what has already
-    // been renamed by the time that element's turn comes.
-    $renameMap = array();
-    while ($row = $xoopsDB->fetchArray($res)) {
-        $renameMap[intval($row['ele_id'])] = array(
-            'old' => $row['ele_handle'],
-            'new' => str_replace('-', '_', $row['ele_handle']),
-            'fid' => intval($row['id_form']),
-        );
-    }
-
-    if (empty($renameMap)) {
-        return;
-    }
-
-    print "<h3>Renaming element handles containing hyphens:</h3>\n";
+    list($misspelled, $problems) = $found;
 
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
-    $oldHandles      = array();
-
-    foreach ($renameMap as $eleId => $rename) {
-        $element = $element_handler->get($eleId);
-        if (!$element) {
-            print "<p>Error: could not load element ele_id=" . intval($eleId) . " for renaming.</p>";
-            continue;
-        }
-        $element->setVar('ele_handle', $rename['new']);
-        // Settle on the final name before anything is renamed to it. insert() runs the handle through
-        // validateElementHandle anyway; running it here first means we know what the element is going to
-        // be called, rather than assuming the hyphens simply became underscores. They may not have:
-        // handles are unique across every form rather than within one (isElementHandleUnique queries
-        // formulize without an id_form condition), the metadata names are reserved as well, and a handle
-        // is truncated to 59 characters - so "creation-uid" or a name another form already uses comes
-        // back suffixed. Running the same check again inside insert() settles on the same answer, since
-        // an element is excluded from its own uniqueness check.
-        $newHandle = $element_handler->validateElementHandle($element);
-        // Move the data table column before the element definition is saved. If it cannot be moved, leave
-        // the handle alone too, so the definition never ends up pointing at a column that did not follow it.
-        $columnError = formulize_rename_hyphenated_data_column($rename['fid'], $rename['old'], $newHandle);
-        if ($columnError !== '') {
-            print "<p>Error renaming the data table field for ele_id=" . intval($eleId) . ": " . htmlspecialchars($columnError) . " The handle has been left as <code>" . htmlspecialchars($rename['old']) . "</code>.</p>";
-            continue;
-        }
-        if (!$element_handler->insert($element, true)) {
-            print "<p>Error renaming ele_id=" . intval($eleId) . ": " . htmlspecialchars($xoopsDB->error()) . "</p>";
-            continue;
-        }
-        print "<p>Renamed: <code>" . htmlspecialchars($rename['old']) . "</code> &rarr; <code>" . htmlspecialchars($newHandle) . "</code> (form_id=" . $rename['fid'] . ")</p>\n";
-        $oldHandles[] = $rename['old'];
-        $element_handler->renameElementResources($element, $rename['old']);
-    }
-
-    // Alert for userland code that cannot be auto-updated.
-    // Scan on_before_save / on_after_save / on_delete and advanced calculations
-    // for any surviving occurrences of the old handle strings.
-    $alertLines = array();
-
-    $formProcRes = $xoopsDB->queryF(
-        "SELECT id_form, on_before_save, on_after_save, on_delete FROM " . $xoopsDB->prefix('formulize_id')
-    );
-    if ($formProcRes) {
-        while ($row = $xoopsDB->fetchArray($formProcRes)) {
-            $code = $row['on_before_save'] . "\n" . $row['on_after_save'] . "\n" . $row['on_delete'];
-            foreach ($oldHandles as $oldH) {
-                if (strpos($code, $oldH) !== false) {
-                    $alertLines[] = "Form ID " . intval($row['id_form']) . ": on_before_save / on_after_save / on_delete code references \"" . $oldH . "\"";
-                    break;
-                }
-            }
-        }
-    }
-
-    $acTableRes = $xoopsDB->queryF("SHOW TABLES LIKE '" . $xoopsDB->prefix('formulize_advanced_calculations') . "'");
-    if ($acTableRes && $xoopsDB->getRowsNum($acTableRes) > 0) {
-        $acRes = $xoopsDB->queryF(
-            "SELECT acid, fid, input, output, steps FROM " . $xoopsDB->prefix('formulize_advanced_calculations')
-        );
-        if ($acRes) {
-            while ($row = $xoopsDB->fetchArray($acRes)) {
-                $allCode = $row['input'] . "\n" . $row['output'] . "\n" . $row['steps'];
-                foreach ($oldHandles as $oldH) {
-                    if (strpos($allCode, $oldH) !== false) {
-                        $alertLines[] = "Form ID " . intval($row['fid']) . " (advanced calculation ID " . intval($row['acid']) . "): calculation code references \"" . $oldH . "\"";
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    if (!empty($alertLines)) {
-        $msg  = "ATTENTION: Element handles containing hyphens were renamed during this update, "
-              . "but the following userland code still references the old handle names. "
-              . "These references must be updated manually before the affected code will work correctly:\n\n"
-              . implode("\n", $alertLines) . "\n\n"
-              . "In each case, replace the old handle (e.g. \$my-handle or {my-handle}) "
-              . "with the new underscore form (e.g. \$my_handle or {my_handle}).";
-        echo '<script>alert(' . json_encode($msg) . ');</script>';
-    }
-}
-
-/**
- * Rename the data table column that belongs to an element whose handle is losing its hyphens.
- *
- * This is the work formulizeFormsHandler::updateField() would normally do, done here directly.
- * updateField cannot be used: it runs both names through sanitize_handle_name(), which turns the
- * hyphenated old name into the new one, so the rename becomes a silent no-op (or, when a data type
- * is supplied to get past the equal-names shortcut, an ALTER against a column that does not exist).
- * The old name has to reach the ALTER verbatim, and that is true only of this migration, so the
- * statement is issued here rather than adding a bypass to the shared method for one caller.
- *
- * Idempotent, and safe on elements that have no column of their own: a column already sitting under
- * the new name, or absent under both names (content elements), is left alone.
- *
- * @param int $fid The form the element belongs to
- * @param string $oldHandle The handle as it stands in the data table, hyphens included
- * @param string $newHandle The handle it is being renamed to
- * @return string Empty string when there is nothing left to do, otherwise what stopped it
- */
-function formulize_rename_hyphenated_data_column($fid, $oldHandle, $newHandle) {
-    global $xoopsDB;
-
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
-    if (!$formObject = $form_handler->get(intval($fid))) {
-        return "could not load form " . intval($fid) . ".";
-    }
-    $formHandle = $formObject->getVar('form_handle');
-    if ($formHandle === '') {
-        // Form handles arrive in 000_schema_migrations, which runs before this file, so by this point
-        // every form should have one. An empty handle here means that step did not do its work for this
-        // form. Nothing is renamed for it: the handle stays hyphenated, matching its column, so the site
-        // is left consistent and the rename can be completed once the form handle is sorted out.
-        return "form " . intval($fid) . " has no form handle, so its data table cannot be located. Its element handles have been left hyphenated. Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
-    }
+    $renamedFrom = array(); // old spelling => the handle it is now
 
-    // A column name is not escapable inside backticks, so filter it instead. Hyphens are kept, which
-    // is the whole point here, and everything outside the character set handles are built from goes.
-    $oldColumn = preg_replace('/[^a-zA-Z0-9_-]/', '', $oldHandle);
-    $newColumn = preg_replace('/[^a-zA-Z0-9_-]/', '', $newHandle);
-    if ($oldColumn === '' OR $newColumn === '' OR $oldColumn === $newColumn) {
-        return '';
-    }
-
-    $tables = array($xoopsDB->prefix("formulize_" . $formHandle));
-    $revisionsTable = $xoopsDB->prefix("formulize_" . $formHandle . "_revisions");
-    // Checked directly rather than through formulizeFormsHandler::revisionsTableExists(), which creates
-    // the revisions table when revisions-for-all-forms is on. A table built mid-migration would be built
-    // from the element definitions, and so would arrive with columns under names the data table does not
-    // have yet. Nothing here needs a revisions table that does not already exist.
-    $revisionsRes = $xoopsDB->queryF("SHOW TABLES LIKE '" . formulize_db_escape($revisionsTable) . "'");
-    if ($revisionsRes AND $xoopsDB->getRowsNum($revisionsRes) > 0) {
-        $tables[] = $revisionsTable;
-    }
-
-    foreach ($tables as $table) {
-        // The whole column list is read, instead of a SHOW COLUMNS ... LIKE for the one name, because
-        // underscores are single character wildcards in a LIKE pattern and every handle is full of them.
-        $columns = array();
-        if (!$colRes = $xoopsDB->queryF("SHOW COLUMNS FROM `$table`")) {
-            return "could not read the columns of $table: " . $xoopsDB->error();
+    // 1. misspelled elements
+    $headingShown = false;
+    foreach ($misspelled as $eleId => $misspelling) {
+        if (!$headingShown) {
+            print "<h3>Renaming element handles to match the way handles are written now:</h3>\n";
+            $headingShown = true;
         }
-        while ($colRow = $xoopsDB->fetchArray($colRes)) {
-            $columns[$colRow['Field']] = $colRow;
+        $stored = $misspelling['stored'];
+        $newHandle = formulizeElement::sanitize_handle_name($stored);
+        try {
+            if ($newHandle !== $stored AND !$form_handler->isElementHandleUnique($newHandle, $eleId, $misspelling['fid'])) {
+                // room is left for the suffix within the 64 characters a field name can have, as validateElementHandle() does
+                $newHandle = formulizeHandler::enforceUniqueElementHandles(substr($newHandle, 0, 59), $eleId, $misspelling['fid']);
+            }
+            // The field first. If it cannot be renamed, nothing else is either, so the element never ends up named
+            // differently from its field. updateField() finds the field under any spelling that sanitizes to the
+            // same handle, and does nothing if it is already right.
+            $form_handler->updateField($eleId, ($misspelling['field'] !== '' ? $misspelling['field'] : $stored), false, $newHandle);
+        } catch (Exception $e) {
+            $problems[] = "ele_id " . intval($eleId) . " (" . $stored . "): " . $e->getMessage();
+            continue;
         }
-        if (!isset($columns[$oldColumn])) {
-            continue; // already renamed on an earlier run, or an element type that stores no data
+        if (!$elementObject = $element_handler->get($eleId)) {
+            $problems[] = "ele_id " . intval($eleId) . " (" . $stored . "): the element could not be loaded.";
+            continue;
         }
-        if (isset($columns[$newColumn])) {
-            return "$table has columns named both `$oldColumn` and `$newColumn`; they must be reconciled by hand.";
+        // in memory only, so renameElementResources() renames to it. assignVar rather than setVar, so it is not
+        // left looking like a change waiting to be saved. It is saved below, by itself.
+        $elementObject->assignVar('ele_handle', $newHandle);
+        // once for each spelling found, since the element table, the data table and the code files can disagree,
+        // and references could have been written from any of them
+        $oldSpellings = array_values(array_filter($misspelling['spellings'], fn($spelling) => $spelling !== $newHandle));
+        foreach ($oldSpellings as $spelling) {
+            $element_handler->renameElementResources($elementObject, $spelling);
+            $renamedFrom[$spelling] = $newHandle;
         }
-        // Rebuild the definition rather than passing the type alone, so that a nullable column does not
-        // come back NOT NULL and a column with a default does not come back without one.
-        $definition = $columns[$oldColumn]['Type'];
-        $definition .= ($columns[$oldColumn]['Null'] == 'YES') ? ' NULL' : ' NOT NULL';
-        if ($columns[$oldColumn]['Default'] !== null) {
-            $definition .= ' DEFAULT ' . $xoopsDB->quoteString($columns[$oldColumn]['Default']);
+        // The handle itself last, written directly rather than through insert(), which would write every other
+        // property of the element back as well. Until this is saved the element is still found as misspelled, so
+        // an update that stops part way through picks it up again next time, and every step above is safe to repeat.
+        // The cache goes first, since it holds the object given the new handle in memory above.
+        $element_handler->clearElementCache();
+        if ($newHandle !== $stored AND !$xoopsDB->queryF("UPDATE " . $xoopsDB->prefix('formulize') . " SET ele_handle = " . $xoopsDB->quoteString($newHandle) . " WHERE ele_id = " . intval($eleId))) {
+            $problems[] = "ele_id " . intval($eleId) . " (" . $stored . "): the new handle " . $newHandle . " could not be saved: " . $xoopsDB->error();
+            continue;
         }
-        if (!$xoopsDB->queryF("ALTER TABLE `$table` CHANGE `$oldColumn` `$newColumn` $definition")) {
-            return "could not rename `$oldColumn` to `$newColumn` in $table: " . $xoopsDB->error();
-        }
+        print "<p>Renamed:<code>" . htmlspecialchars(implode('</code>, <code>', $oldSpellings)) . "</code> &rarr; <code>" . htmlspecialchars($newHandle) . "</code> (ele_id=" . intval($eleId) . ", form_id=" . intval($misspelling['fid']) . ")</p>\n";
     }
 
-    return '';
-}
-
-/**
- * Rename data table columns that were left hyphenated when their element's handle was not.
- *
- * Between 2026-07-03 and 2026-09-09, formulize_migrate_hyphenated_handles() renamed element handles
- * but not the data table columns behind them. Sites updated in that window have elements called
- * "my_handle" whose data still sits in a column called "my-handle". The migration cannot repair them,
- * because it only looks for handles that still contain a hyphen.
- *
- * Hyphens have not been allowed in handles since then (see sanitize_handle_name), so a hyphenated
- * column cannot belong to a current element. A column is renamed only when its own form has an
- * element whose handle is exactly the column name with each hyphen replaced by an underscore.
- * Anything else is left alone. Idempotent: once a column is renamed, it no longer has a hyphen to find.
- */
-function formulize_repair_hyphenated_data_columns() {
-    global $xoopsDB;
-
-    // Every hyphenated column in the database, in one query. A hyphen is not a LIKE wildcard.
-    $colRes = $xoopsDB->queryF(
-        "SELECT TABLE_NAME, COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND COLUMN_NAME LIKE '%-%'"
-    );
-    if (!$colRes) {
-        print "<p>Error: could not look for data table fields with hyphens in their names: " . htmlspecialchars($xoopsDB->error()) . " Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.</p>";
-        return;
-    }
-    if ($xoopsDB->getRowsNum($colRes) == 0) {
-        return;
-    }
-
-    // The underscore version of each hyphenated column name, which is what its element would be called now
-    $hyphenatedColumns = array(); // table name => list of column names
-    $candidateHandles = array();
-    while ($row = $xoopsDB->fetchArray($colRes)) {
-        $hyphenatedColumns[$row['TABLE_NAME']][] = $row['COLUMN_NAME'];
-        $candidateHandles[str_replace('-', '_', $row['COLUMN_NAME'])] = true;
-    }
-
-    // Only the elements that have one of those handles, along with their form's handle, which names their tables
-    $eleRes = $xoopsDB->queryF(
-        "SELECT e.id_form, e.ele_handle, f.form_handle FROM " . $xoopsDB->prefix('formulize') . " AS e"
-        . " INNER JOIN " . $xoopsDB->prefix('formulize_id') . " AS f ON f.id_form = e.id_form"
-        . " WHERE f.form_handle != '' AND e.ele_handle IN (" . implode(',', array_map(array($xoopsDB, 'quoteString'), array_keys($candidateHandles))) . ")"
-    );
-    if (!$eleRes) {
-        print "<p>Error: could not look for the elements that belong to data table fields with hyphens in their names: " . htmlspecialchars($xoopsDB->error()) . " Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.</p>";
-        return;
-    }
-
-    // The columns to rename, per form. Only a column in the element's own form's data table or revisions table
-    // counts, and only on an exact match (IN compares by collation, which may ignore case). A column in both
-    // tables is listed once, since formulize_rename_hyphenated_data_column() renames it in both.
-    $repairs = array(); // fid => list of column names
-    while ($row = $xoopsDB->fetchArray($eleRes)) {
-        $fid = intval($row['id_form']);
-        $tables = array(
-            $xoopsDB->prefix('formulize_' . $row['form_handle']),
-            $xoopsDB->prefix('formulize_' . $row['form_handle'] . '_revisions'),
-        );
-        foreach ($tables as $table) {
-            if (!isset($hyphenatedColumns[$table])) {
+    // 2. references with capitals or hyphens to elements whose handles are already right, once
+    if ($prev_dbversion < 25) {
+        $headingShown = false;
+        foreach ($element_handler->findStaleHandleSpellings() as $handle => $staleSpellings) {
+            if (!$elementObject = _getElementObject($handle)) {
                 continue;
             }
-            foreach ($hyphenatedColumns[$table] as $column) {
-                if (str_replace('-', '_', $column) === $row['ele_handle'] AND (!isset($repairs[$fid]) OR !in_array($column, $repairs[$fid], true))) {
-                    $repairs[$fid][] = $column;
-                }
-            }
-        }
-    }
-
-    $headingShown = false;
-    foreach ($repairs as $fid => $columns) {
-        foreach ($columns as $column) {
-            $newHandle = str_replace('-', '_', $column);
             if (!$headingShown) {
-                print "<h3>Renaming data table fields to match their element handles:</h3>\n";
+                print "<h3>Updating references to element handles that still use capitals or hyphens:</h3>\n";
                 $headingShown = true;
             }
-            $columnError = formulize_rename_hyphenated_data_column($fid, $column, $newHandle);
-            if ($columnError !== '') {
-                print "<p>Error renaming the data table field <code>" . htmlspecialchars($column) . "</code> in form_id=" . intval($fid) . ": " . htmlspecialchars($columnError) . " Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.</p>\n";
-                continue;
+            foreach ($staleSpellings as $spelling) {
+                $element_handler->renameElementResources($elementObject, $spelling);
+                $renamedFrom[$spelling] = $elementObject->getVar('ele_handle');
             }
-            print "<p>Renamed data table field: <code>" . htmlspecialchars($column) . "</code> &rarr; <code>" . htmlspecialchars($newHandle) . "</code> (form_id=" . intval($fid) . ")</p>\n";
+            print "<p>Updated references to <code>" . htmlspecialchars($elementObject->getVar('ele_handle')) . "</code> written as <code>" . htmlspecialchars(implode('</code>, <code>', $staleSpellings)) . "</code></p>\n";
         }
     }
+
+    $alerts = array();
+
+    // 3. what could not be done, which the next update tries again
+    if ($problems) {
+        print "<h3>Element handles that could not be fixed</h3>\n"
+            . "<p><b>Nothing was changed for these elements.</b> Each still has a handle, a data table field or a code file that does not match the way handles are written now, which can stop the element's values from appearing when an entry is opened. The update will try them again each time it runs. Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.</p>\n<ul>\n";
+        foreach ($problems as $problem) {
+            print "<li>" . htmlspecialchars($problem) . "</li>\n";
+        }
+        print "</ul>\n";
+        $alerts[] = "Some element handles could not be fixed during this update, and their values may not appear when entries are opened:\n\n" . implode("\n", $problems);
+    }
+
+    // 4. old spellings left in people's own code, which is theirs to change
+    if ($renamedFrom AND $mentions = $element_handler->findMentionsOfHandles(array_keys($renamedFrom))) {
+        print "<h3>Old element handles still used in custom code</h3>\n"
+            . "<p><b>These were not changed</b>, because they are in code or templates someone wrote, where a name can mean something an update cannot know about. Each should be checked and possibly changed to the new handle:</p>\n<ul>\n";
+        foreach ($renamedFrom as $oldSpelling => $newHandle) {
+            print "<li><code>" . htmlspecialchars($oldSpelling) . "</code> is now <code>" . htmlspecialchars($newHandle) . "</code></li>\n";
+        }
+        print "</ul>\n<p>Found in:</p>\n<ul>\n";
+        foreach ($mentions as $mention) {
+            print "<li>" . htmlspecialchars($mention) . "</li>\n";
+        }
+        print "</ul>\n";
+        $alerts[] = "Element handles were renamed during this update, but custom code still uses the old names. Those places are listed on this page, and must be updated by hand before that code will work correctly.";
+    }
+
+    if ($alerts) {
+        echo '<script>alert(' . json_encode(implode("\n\n", $alerts)) . ');</script>';
+    }
+    return true;
 }
 
+/**
+ * The elements whose handle, data table field or code files are spelled in a way handles are not written now.
+ *
+ * A spelling is wrong when sanitize_handle_name() does not leave it as it is. The stored handle is checked
+ * directly. A field belongs to an element when it sanitizes to the element's handle, within the element's own
+ * form's data table and revisions table. A code file belongs to an element the same way, by the part of its name
+ * after the type.
+ *
+ * Where several elements have handles that sanitize to the same thing - my-handle and my_handle, from before
+ * hyphens were removed - a field or file only goes with an element whose stored handle is spelled exactly like
+ * it. Another one could be either element's, so it is listed for a person instead.
+ *
+ * Elements of forms built on another table (tableform) are left out. Their handles are the names of fields in a
+ * table Formulize does not own, and have to stay what that table calls them.
+ *
+ * Costs one read of the element table, one of the database's list of fields, and one of the code folder, so it
+ * is cheap enough to run on every update. All the work happens only for what it finds.
+ *
+ * @return array|false array(ele_id => array('fid', 'stored', 'field', 'spellings'), list of problems for a person),
+ *   or false if the lookup failed. 'field' is the data table field's spelling when it is wrong, else ''.
+ */
+function formulize_find_misspelled_element_handles() {
+    global $xoopsDB;
 
+    $eleRes = $xoopsDB->queryF(
+        "SELECT e.ele_id, e.id_form, e.ele_handle, f.form_handle FROM " . $xoopsDB->prefix('formulize') . " AS e"
+        . " INNER JOIN " . $xoopsDB->prefix('formulize_id') . " AS f ON f.id_form = e.id_form"
+        . " WHERE f.tableform = '' OR f.tableform IS NULL"
+    );
+    if (!$eleRes) {
+        print "<p>Error: could not look for element handles that need fixing: " . htmlspecialchars($xoopsDB->error()) . " Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.</p>";
+        return false;
+    }
+    $elements = array();
+    $idsByHandle = array(); // sanitized handle => ele_ids, across every form
+    $idsByFormAndHandle = array(); // form id => sanitized handle => ele_ids
+    while ($row = $xoopsDB->fetchArray($eleRes)) {
+        $eleId = intval($row['ele_id']);
+        $handle = formulizeElement::sanitize_handle_name($row['ele_handle']);
+        $elements[$eleId] = $row;
+        $idsByHandle[$handle][] = $eleId;
+        $idsByFormAndHandle[intval($row['id_form'])][$handle][] = $eleId;
+    }
 
+    // every wrongly spelled field in a Formulize table, in one query. The pattern's \_ is a literal underscore.
+    $colRes = $xoopsDB->queryF(
+        "SELECT TABLE_NAME, COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE()"
+        . " AND TABLE_NAME LIKE " . $xoopsDB->quoteString($xoopsDB->prefix('formulize') . '\_%')
+    );
+    if (!$colRes) {
+        print "<p>Error: could not look for data table fields that need renaming: " . htmlspecialchars($xoopsDB->error()) . " Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.</p>";
+        return false;
+    }
+    $wrongFields = array(); // table => sanitized name => field names
+    while ($row = $xoopsDB->fetchArray($colRes)) {
+        $sanitized = formulizeElement::sanitize_handle_name($row['COLUMN_NAME']);
+        if ($sanitized !== $row['COLUMN_NAME']) {
+            $wrongFields[$row['TABLE_NAME']][$sanitized][] = $row['COLUMN_NAME'];
+        }
+    }
+
+    // every wrongly spelled code file, by the part of its name after the type. Longest types first, so that
+    // textarea_ is not read as text_ followed by a handle beginning "area".
+    $types = formulizeElementsHandler::elementCodeFileTypes();
+    usort($types, fn($a, $b) => strlen($b) - strlen($a));
+    $codeFilePattern = '/^(' . implode('|', array_map(fn($type) => preg_quote($type, '/'), $types)) . ')_(.+)\.php$/';
+    $wrongFiles = array(); // sanitized name => names
+    foreach ((array) scandir(XOOPS_ROOT_PATH . '/modules/formulize/code/') as $file) {
+        if (preg_match($codeFilePattern, $file, $match) AND formulizeElement::sanitize_handle_name($match[2]) !== $match[2]) {
+            $wrongFiles[formulizeElement::sanitize_handle_name($match[2])][$match[2]] = $file;
+        }
+    }
+
+    $misspelled = array();
+    $problems = array();
+    $claimedFiles = array();
+    foreach ($elements as $eleId => $row) {
+        $stored = $row['ele_handle'];
+        $fid = intval($row['id_form']);
+        $handle = formulizeElement::sanitize_handle_name($stored);
+        if ($handle === '') {
+            $problems[] = "ele_id $eleId (form_id $fid): the handle \"$stored\" has no characters a handle can keep, so it needs a new handle chosen by hand.";
+            continue;
+        }
+        $spellings = ($stored !== $handle) ? array($stored) : array();
+        $field = '';
+        if ($row['form_handle'] !== '') {
+            $sharedInForm = count($idsByFormAndHandle[$fid][$handle]) > 1;
+            foreach (array('', '_revisions') as $tableSuffix) {
+                $table = $xoopsDB->prefix('formulize_' . $row['form_handle'] . $tableSuffix);
+                if (empty($wrongFields[$table][$handle])) {
+                    continue;
+                }
+                $fields = $wrongFields[$table][$handle];
+                if ($sharedInForm OR count($fields) > 1) {
+                    // only the field spelled exactly like this element's handle is certainly its own
+                    $fields = in_array($stored, $fields, true) ? array($stored) : array();
+                }
+                if ($fields AND $tableSuffix === '') {
+                    $field = $fields[0];
+                }
+                $spellings = array_merge($spellings, $fields);
+            }
+        }
+        if (!empty($wrongFiles[$handle])) {
+            $names = array_keys($wrongFiles[$handle]);
+            if (count($idsByHandle[$handle]) > 1) {
+                $names = in_array($stored, $names, true) ? array($stored) : array();
+            }
+            foreach ($names as $name) {
+                $claimedFiles[$name] = true;
+            }
+            $spellings = array_merge($spellings, $names);
+        }
+        $spellings = array_values(array_unique($spellings));
+        if ($spellings) {
+            $misspelled[$eleId] = array('fid' => $fid, 'stored' => $stored, 'field' => $field, 'spellings' => $spellings);
+        }
+    }
+
+    // code files that could belong to more than one element, and so went with none of them
+    foreach ($wrongFiles as $handle => $names) {
+        if (isset($idsByHandle[$handle]) AND count($idsByHandle[$handle]) > 1) {
+            foreach ($names as $name => $file) {
+                if (!isset($claimedFiles[$name])) {
+                    $problems[] = "the code file $file could belong to any of the elements with ids " . implode(', ', $idsByHandle[$handle]) . ", so it has been left as it is.";
+                }
+            }
+        }
+    }
+
+    return array($misspelled, $problems);
+}
