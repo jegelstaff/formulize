@@ -2807,9 +2807,15 @@ function checkForLinks($frid, $fids, $fid, $entries=null, $unified_display=false
     }
 
     static $cachedCheckForLinks = array();
-    $cacheKey = md5(serialize(func_get_args()));
+    // asynchronously submitted values change which entries are found, so they are part of the key
+    $cacheKey = md5(serialize(array(func_get_args(), $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'] ?? null)));
     if(isset($cachedCheckForLinks[$cacheKey])) {
-       return $cachedCheckForLinks[$cacheKey];
+        $cached = $cachedCheckForLinks[$cacheKey];
+        // results with entries are only good if none of the forms they were read from have been written to since
+        if($cached['dataChangeCounts'] === null OR $cached['dataChangeCounts'] === formulizeDataHandler::getDataChangeCounts(array_keys($cached['dataChangeCounts']))) {
+            $GLOBALS['formulize_checkForLinks_oneToOneMetaData'] = $cached['oneToOneMetaData'];
+            return $cached['result'];
+        }
     }
 
     // by default (ie: when called from formDisplay) only look for unified display relationships
@@ -2913,11 +2919,19 @@ function checkForLinks($frid, $fids, $fid, $entries=null, $unified_display=false
         }
         $to_return['fids'] = $fids;
         $to_return['sub_fids'] = $sub_fids;
-        $cachedCheckForLinks[$cacheKey] = $to_return;
+        // no entry data was read, so writes cannot make this stale
+        $cachedCheckForLinks[$cacheKey] = array('result'=>$to_return, 'oneToOneMetaData'=>$one_to_one, 'dataChangeCounts'=>null);
         return $to_return;
     }
 
     // $entries has been passed so we do need to gather them
+
+    // entries are read from the main form and the forms one hop away, so note how many writes each has had, for validating the cache later
+    $linkedFids = array($fid);
+    foreach(array_merge($one_to_one, $one_to_many, $many_to_one) as $link) {
+        $linkedFids[] = $link['fid'];
+    }
+    $dataChangeCounts = formulizeDataHandler::getDataChangeCounts(array_unique($linkedFids));
 
     // add to entries and fids array if one_to_one exists
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
@@ -3076,7 +3090,7 @@ function checkForLinks($frid, $fids, $fid, $entries=null, $unified_display=false
     $to_return['sub_fids'] = $sub_fids;
     $to_return['sub_entries'] = $sub_entries;
 
-    $cachedCheckForLinks[$cacheKey] = $to_return;
+    $cachedCheckForLinks[$cacheKey] = array('result'=>$to_return, 'oneToOneMetaData'=>$one_to_one, 'dataChangeCounts'=>$dataChangeCounts);
 
     return $to_return;
 }
@@ -6113,6 +6127,7 @@ function writeElementValue($formframe, $elementIdentifier, $entry, $value, $appe
         if (!$res = $xoopsDB->queryF($sql)) {
             exit("Error: unable to execute a \"displayButton\" or writeElementValue call, using the following SQL:<br>$sql<br>" . $xoopsDB->error);
         }
+        formulizeDataHandler::recordDataChange($element->getVar('id_form'));
         $GLOBALS['formulize_writeElementValueWasRun'] = true;
     }
     if ($lockIsOn) { $xoopsDB->query("UNLOCK TABLES"); }

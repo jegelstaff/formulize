@@ -42,6 +42,23 @@ class formulizeDataHandler {
 	var $metadataFields; //
     var $metadataFieldTypes;
     var $dataTypeMap; // an array of field, data type pairs, generated when data is written to the DB
+	static $dataChangeCounts = array(); // how many times each form's data has been written to during this request, keyed by form id
+
+	// record that a form's data has changed, so caches built from that form's entries can tell they are stale
+	static function recordDataChange($fid) {
+		$fid = intval($fid);
+		self::$dataChangeCounts[$fid] = (self::$dataChangeCounts[$fid] ?? 0) + 1;
+	}
+
+	// returns the number of changes recorded for each of the given forms, keyed by form id
+	static function getDataChangeCounts($fids) {
+		$counts = array();
+		foreach($fids as $fid) {
+			$fid = intval($fid);
+			$counts[$fid] = self::$dataChangeCounts[$fid] ?? 0;
+		}
+		return $counts;
+	}
 
 	// $fid must be an id
 	function __construct($fid=null){
@@ -106,6 +123,7 @@ class formulizeDataHandler {
 			if(!$insertResult = $xoopsDB->queryF($insertSQL)) {
 				return false;
 			}
+			self::recordDataChange($this->fid);
 			$oldNewEntryIdMap[$originalEntryId] = $xoopsDB->getInsertId();
 		}
 		// copy the entry_owner_group info from the old form to the new form, for the corresponding entries
@@ -235,6 +253,7 @@ class formulizeDataHandler {
 				if(!$res = $xoopsDB->query($sql)) {
 					return false;
 				}
+				self::recordDataChange($this->fid);
 			}
 		}
 		return true;
@@ -260,6 +279,7 @@ class formulizeDataHandler {
 		if(!$deleteSuccess = $xoopsDB->query($sql)) {
 			return false;
 		}
+		self::recordDataChange($this->fid);
         foreach($ids as $id) {
             $existing_values = $formObject->onDelete($id);
         }
@@ -1001,6 +1021,9 @@ class formulizeDataHandler {
         if($this->getEntryOwnerGroups($entryids)) {
             $update = true;
         }
+		// ownership decides which linked entries users can see, so this is a change to the form's data
+		// nothing below reads linked entries, so recording it before the writes covers every exit
+		self::recordDataChange($this->fid);
 		if($update) { // clear the ownership records for these entries first...
 		  $ownerClearSQL = "DELETE FROM	".$xoopsDB->prefix("formulize_entry_owner_groups") . " WHERE `fid` = ".$this->fid." AND `entry_id` IN (";
 		  $start = true;
@@ -1297,6 +1320,7 @@ class formulizeDataHandler {
 		} elseif(!$res = $xoopsDB->query($sql)) {
 			throw new Exception("Your data could not be saved in the database.  This was the query that failed:<br>$sql<br>".$xoopsDB->error());
 		}
+		self::recordDataChange($this->fid);
 
 		if($entry_to_return) {
       $this->updateCaches($entry_to_return);
@@ -1463,6 +1487,7 @@ class formulizeDataHandler {
 		if(!$res = $xoopsDB->queryF($sql)) {
 			return false;
 		}
+		self::recordDataChange($this->fid);
 		return true;
 	}
 
@@ -1482,6 +1507,7 @@ class formulizeDataHandler {
 		if(!$res = $xoopsDB->queryF($sql)) {
 			return false;
 		}
+		self::recordDataChange($this->fid);
 		return true;
 	}
 
@@ -1517,6 +1543,7 @@ class formulizeDataHandler {
 		if(!$toggleSQLRes = $xoopsDB->queryF($toggleSQL)) {
 			return false;
 		}
+		self::recordDataChange($element->getVar('id_form'));
 		$dropSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " DROP ".$elementHandle."qaz";
 		if(!$dropSQLRes = $xoopsDB->queryF($dropSQL)) {
 			return false;
@@ -1600,6 +1627,7 @@ class formulizeDataHandler {
 				if(!$res = $xoopsDB->query($thisSql)) {
 					return false;
 				}
+				self::recordDataChange($this->fid);
 			}
 		}
 		return true;
@@ -1706,6 +1734,7 @@ function applyDefaultToEntries($element, $conditions = '') {
 			$escapedValue = is_numeric($defaultValue) ? $defaultValue : $xoopsDB->quoteString($defaultValue);
 			$updateSql = "UPDATE `$table` SET `$eleHandle` = $escapedValue WHERE `entry_id` = " . intval($entry_id);
 			if ($xoopsDB->query($updateSql)) {
+				formulizeDataHandler::recordDataChange($fid);
 				$updated++;
 			}
 		}
