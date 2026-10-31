@@ -5,6 +5,9 @@
 // emitted before the buttons so that DOM order, keyboard focus order and
 // visual order all agree — the alignment itself is done in the theme's CSS
 // (`#multipage-controls`), not by reversing the flex direction here.
+//
+// Save comes last, at the far right. Lyris's drawer bottomtemplate puts the
+// drawer's buttons in the same order, so change the two together.
 
 print "
 <div style='clear: both;'></div>
@@ -13,6 +16,6 @@ print "
 </div>
 
 <div id='multipage-controls'>
-$pageIndicator $pageSelector $previousPageButton $savePageButton $closePageButton $nextPageButton
+$pageIndicator $pageSelector $previousPageButton $closePageButton $nextPageButton $savePageButton
 </div>
 ";

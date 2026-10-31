@@ -434,6 +434,37 @@ back button at the left, where people look for it, the logo in the middle, and t
 the right, at the other end from back, with the menu sliding in from that side. See "The header on
 phones" in each theme's `css/style.css`.
 
+## 9. Put the form buttons in your own order (optional)
+
+The buttons at the bottom of a form screen are laid out by your theme's multiPage screen template,
+`modules/formulize/templates/screens/<Theme>/default/multiPage/bottomtemplate.php`. It prints each
+button where you put its variable: `$previousPageButton`, `$savePageButton`, `$closePageButton` and
+`$nextPageButton`. Without a template of your own, the order is previous, save, close, next.
+
+The drawer, where entries open over a list, gets its buttons from your theme's drawer template,
+`modules/formulize/templates/screens/<Theme>/default/drawer/bottomtemplate.php`, in the same way.
+Put the variables inside an element with the class `formulize-drawer-buttons`. The drawer moves the
+buttons from there into its footer, in the order you printed them. Each variable is empty when the
+form doesn't have that button. Lyris puts Save last, at the right:
+
+```php
+print "
+</div>
+<div class='formulize-drawer-buttons'>
+$printableViewButton $saveAndLeaveButton $previousPageButton $closePageButton $nextPageButton $savePageButton
+</div>
+";
+```
+
+The drawer has two buttons that the full screen bar doesn't. `$printableViewButton` opens the
+printable view. `$saveAndLeaveButton` saves the entry and closes the drawer. On the first page of a
+form it takes the place of the previous page button, so the two never appear together.
+
+Without a drawer template of your own, the order is printable view, save and leave, previous, save,
+close, next. Copy `modules/formulize/templates/screens/default/drawer/bottomtemplate.php` to start
+from. If your theme already has a drawer bottom template without `formulize-drawer-buttons` in it,
+the drawer puts the buttons in that default order.
+
 ## Checking your theme
 
 Open a long form in your theme, scroll down, and save it. You should be returned to where you were

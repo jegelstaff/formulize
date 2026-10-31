@@ -432,21 +432,6 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 		if(!$usersCanSave AND isset($navButtonText['leaveButtonText']) AND $navButtonText['leaveButtonText'] == trans(_formulize_SAVE_AND_LEAVE)) {
 			$navButtonText['leaveButtonText'] = trans(_formulize_DONE);
 		}
-		// The page's button set, from the same function that decides the full page bar's
-		// (see the !$elements_only branch above). Published in action bar order as
-		// {slot, text} pairs -- slot being the `name` generatePrevNextButtonMarkup puts
-		// on the full screen button -- so the drawer renders full screen's set rather
-		// than assembling its own from the individual labels. navstyle is NOT applied
-		// here: it is published separately as showNavButtons, and the drawer's one
-		// documented deviation from it (navstyle 3 would strand the user on page one in
-		// a drawer) is applied client side.
-		$navButtonSet = formulize_multipageButtonSet($navButtonText, $usersCanSave, $currentPage, $nextIsThanks);
-		$navButtons = array();
-		foreach($navButtonSet as $navSlot=>$navSlotText) {
-			$navButtons[] = array('slot'=>$navSlot, 'text'=>trans($navSlotText));
-		}
-		$navPreviousButtonText = isset($navButtonSet['prev']) ? trans($navButtonSet['prev']) : '';
-		$navNextButtonText = isset($navButtonSet['next']) ? trans($navButtonSet['next']) : '';
 		// Which navigation affordances the screen is configured to offer. navstyle is a
 		// single setting with four states: 0 buttons, 1 tabs, 2 tabs and buttons, 3 nothing
 		// at all. Full screen reads it at the top of this function to decide what the
@@ -460,7 +445,6 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 		}
 		$navMeta = array(
 			'showTabs'        => ($navStyle == 1 OR $navStyle == 2),
-			'showNavButtons'  => ($navStyle == 0 OR $navStyle == 2),
 			'pages'           => $navPages,
 			'showPageIndicator' => (bool) (is_object($screen) ? $screen->getUIOption("showpageindicator") : false),
 			'showPageSelector'  => (bool) (is_object($screen) ? $screen->getUIOption("showpageselector") : false),
@@ -474,43 +458,74 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 			'screenId'     => (is_object($screen) ? intval($screen->getVar('sid')) : 0),
 			'entryId'      => (is_numeric($entry_id) ? intval($entry_id) : 0),
 			'pageTitle'    => (isset($pageTitles[$currentPage]) ? trans($pageTitles[$currentPage]) : ''),
-			'buttons'            => $navButtons,
-			'previousButtonText' => $navPreviousButtonText,
-			'nextButtonText'     => $navNextButtonText,
 			'pageWord'           => _formulize_DMULTI_PAGE,
 			'ofWord'             => _formulize_DMULTI_OF,
 		);
 		print "\n<script type=\"application/json\" class=\"formulize-multipage-nav\">".json_encode($navMeta)."</script>\n";
 
-		// The form-level buttons the full page rendering shows alongside the paging
-		// controls: the screen's save and close buttons (savePageButton/closePageButton,
-		// on the same terms generatePrevNextButtonMarkup applies to them) and the
-		// printable view button, which the full page gets from displayForm's button tray
-		// and which is resolved here through the same shared function that tray uses.
-		// Recorded rather than printed so the endpoint can publish the entry belonging to
-		// the form it was actually asked to render. Recording it before displayForm runs
-		// is what makes this the version the host sees for a multipage screen.
-		$multipageSaveButtonText = (isset($navButtonText['saveButtonText']) AND $navButtonText['saveButtonText'] AND $usersCanSave) ? trans($navButtonText['saveButtonText']) : null;
-		$multipageCloseButtonText = (isset($navButtonText['closeButtonText']) AND $navButtonText['closeButtonText']) ? trans($navButtonText['closeButtonText']) : null;
+		// The drawer's buttons for this page, recorded for its bottomtemplate (see
+		// formulize_drawerButtonTemplateVariables in formdisplay.php). Recorded rather than
+		// printed so only the form the drawer actually asked for gets them, and recorded
+		// before displayForm runs, which is what makes this the version the drawer sees for
+		// a multipage screen.
+		//
+		// The tab strip is drawn when the screen asks for tabs and more than one page can be
+		// reached, as full screen draws it. Previous/next follow navstyle as they do full
+		// screen: present when it asks for buttons (0) or tabs and buttons (2), absent when it
+		// asks for tabs alone (1), because the strip then provides the navigation. The one
+		// deviation is that they are present whenever the strip is not drawn, including
+		// navstyle 3 (no navigation at all): full screen gets away with that because page URLs
+		// and the jump-to selector remain reachable in a full page, whereas in the drawer it
+		// would strand the user on page one.
+		$navTabsDrawn = (($navStyle == 1 OR $navStyle == 2) AND count((array) $pages) > 1 AND count($navPages) > 1);
+		$navButtonsShown = ($navStyle == 0 OR $navStyle == 2 OR !$navTabsDrawn);
+		// The page's button set comes from the same function that decides the full page bar's
+		// (see the !$elements_only branch above), so on the kitchen sink screen the drawer
+		// offers "Save and Close / Save / Close / Save and Continue" on page one, "Save and Go
+		// Back / Save / Close / Save and Continue" in the middle, and ".../ Save and Finish" on
+		// the last page, as full screen does.
+		$navButtonSet = formulize_multipageButtonSet($navButtonText, $usersCanSave, $currentPage, $nextIsThanks);
+		$drawerButtons = array();
+		if(count((array) $pages) > 1 AND $navButtonsShown AND count($navButtonSet)) {
+			foreach($navButtonSet as $navSlot=>$navSlotText) {
+				// On page one there is no previous page, and full screen's previous button
+				// instead saves and leaves for the thanks page, under the screen's leave text.
+				// In the drawer that is the save and leave button.
+				if($navSlot == 'prev' AND $previousPage === "none") {
+					$navSlot = 'leave';
+				}
+				$drawerButtons[$navSlot] = trans($navSlotText);
+			}
+		} else {
+			// No previous/next to show: a single page form, or a screen asking for tabs alone,
+			// where full screen offers save and leave as the leading tab of its tab strip. The
+			// drawer's strip carries pages only, so that becomes the save and leave button,
+			// named by the same function that names the full screen tab. Save and close are
+			// the screen's own, on the terms generatePrevNextButtonMarkup applies to them.
+			$saveAndLeaveText = ($navStyle == 1 OR $navStyle == 2) ? formulizeMultipageSaveAndLeaveText($saveAndContinueButtonText, $originalDoneDest, $single_result, $view_globalscope, $view_groupscope, $done_dest) : '';
+			if($saveAndLeaveText) {
+				$drawerButtons['leave'] = trans($saveAndLeaveText);
+			}
+			if(isset($navButtonText['saveButtonText']) AND $navButtonText['saveButtonText'] AND $usersCanSave) {
+				$drawerButtons['save'] = trans($navButtonText['saveButtonText']);
+			}
+			if(isset($navButtonText['closeButtonText']) AND $navButtonText['closeButtonText']) {
+				$drawerButtons['close'] = trans($navButtonText['closeButtonText']);
+			}
+		}
+		// the printable view button, which the full page gets from displayForm's button tray,
+		// resolved through the same shared function that tray uses
 		$multipagePrintableViewText = (isset($navButtonText['printableViewButtonText']) AND $navButtonText['printableViewButtonText']) ? $navButtonText['printableViewButtonText'] : "{NOBUTTON}";
 		$multipagePrintableViewButtons = formulize_resolveFormButtons(
 			array(0=>"{NOBUTTON}", 1=>"{NOBUTTON}", 2=>"{NOBUTTON}", 3=>$multipagePrintableViewText),
 			array(), $fid, $uid, $entry_id, false, $printall, '');
 		$multipageButtonMeta = array(
-			'printableView' => isset($multipagePrintableViewButtons['printableview']) ? trans($multipagePrintableViewButtons['printableview']) : null,
-			'save'          => $multipageSaveButtonText,
-			// Full screen, a tabbed multipage screen offers "save and leave" as the leading
-			// tab of its tab strip. The drawer's strip carries pages only, so the control
-			// becomes a footer button here - resolved by the same function that names the
-			// full screen tab. When the screen is not tabbed its previous/finish control
-			// plays that role instead, and the host already has it from the paging
-			// metadata above, so there is nothing extra to offer.
-			'saveAndLeave'  => ($navStyle == 1 OR $navStyle == 2) ? (formulizeMultipageSaveAndLeaveText($saveAndContinueButtonText, $originalDoneDest, $single_result, $view_globalscope, $view_groupscope, $done_dest) ?: null) : null,
-			'done'          => $multipageCloseButtonText,
-			'printAction'   => null,
-			'printFields'   => null,
+			'buttons'     => $drawerButtons,
+			'printAction' => null,
+			'printFields' => null,
 		);
-		if($multipageButtonMeta['printableView']) {
+		if(isset($multipagePrintableViewButtons['printableview'])) {
+			$multipageButtonMeta['buttons']['printbutton'] = trans($multipagePrintableViewButtons['printableview']);
 			$multipageButtonMeta['printAction'] = XOOPS_URL . "/modules/formulize/printview.php";
 			$multipageButtonMeta['printFields'] = formulize_printViewFields(array(), array(0=>$fid), $formframe, $mainform, $entry_id, $forminfo['elements'], $screen, $settings);
 		}
