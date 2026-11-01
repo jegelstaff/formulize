@@ -25,6 +25,11 @@ behaviour. CI runs them *before* the e2e suite, since they have nothing to wait 
   column in a query, a handle put together at runtime. And the declarations themselves, read by
   `formulizeElementParameters` from the real source: each names a real parameter and shape, no other method
   shares a declared method's name, and every function and method known to take elements is declared.
+* `element_handle_normalization_test.php` - what the update patch in `admin/patches/002_always_run.php` takes to
+  be an old spelling of an element handle, before asking `formulizeElementReferences` whether it really is a
+  reference: capitals or hyphens in the shape of a handle, with a saved view's hidden column prefix and
+  `{search_handle}` taken off, leaving out Formulize's own tokens like `{TODAY}` and notification tags that are
+  correct as they are.
 * `blocked_extensions_sync_test.php` - the list of never-executable script extensions, written out in
   `BLOCKED_EXTENSIONS`, `uploads/.htaccess`, the fallback copy in `uploads_execution_probe.php` and the copy
   in `docs/uploads_not_executable.md`, is the same set everywhere. Fails if any copy drifts from the constant.

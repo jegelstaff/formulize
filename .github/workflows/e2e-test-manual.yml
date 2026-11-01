@@ -107,6 +107,9 @@ jobs:
     - name: PHP logic tests (element references - delete, rename, old handles to ids)
       run: docker exec formulize-web-1 php /var/www/html/tests/element_references_test.php
 
+    - name: PHP logic tests (old spellings of element handles, for the update patch)
+      run: docker exec formulize-web-1 php /var/www/html/tests/element_handle_normalization_test.php
+
     - name: Install dependencies
       run: npm ci
       working-directory: tests/e2e
