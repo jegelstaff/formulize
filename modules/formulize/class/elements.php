@@ -1077,8 +1077,12 @@ class formulizeElementsHandler {
 	/**
 	 * Renames all references to an element's handle when the handle is changed.
 	 * Called both from the admin UI save path and from the schema migration patch.
+	 * The element's field in the data table is not renamed here - that is formulizeFormsHandler::updateField().
+	 *
 	 * @param object $elementObject The element object with its new handle already set
-	 * @param string $original_handle The handle before the rename
+	 * @param string $original_handle The handle before the rename, spelled exactly as it is written in the database.
+	 *   Read it from the database rather than from getVar() when it may not be lowercase: assignVar() lowercases
+	 *   every handle on loading, so getVar() can never give back an old spelling with capitals in it.
 	 * @param bool $eleValueWasSavedWithThisChange Whether the save that changed the handle also set ele_value.
 	 *   When it did, setVar has already written or deleted the element's code file under the new handle, and
 	 *   the file under the old handle is a spent copy that is removed rather than renamed over it. Only the
@@ -1090,43 +1094,16 @@ class formulizeElementsHandler {
 			if(!$elementObject = _getElementObject($elementObject)) {
 				throw new Exception("Invalid element object passed to renameElementResources");
 			}
-			global $xoopsDB;
 			$ele_handle = $elementObject->getVar('ele_handle');
 			$fid = $elementObject->getVar('fid');
-			if($ele_handle != $original_handle) {
-				// rewrite references in other elements to this handle (linked selectboxes)
-				$ele_handle_len = strlen($ele_handle) + 5 + strlen($fid);
-				$orig_handle_len = strlen($original_handle) + 5 + strlen($fid);
-				$lsbHandleFormDefSQL = "UPDATE " . $xoopsDB->prefix("formulize") . " SET ele_value = REPLACE(ele_value, 's:$orig_handle_len:\"$fid#*=:*$original_handle', 's:$ele_handle_len:\"$fid#*=:*$ele_handle') WHERE ele_value LIKE '%$fid#*=:*$original_handle%'"; // must include the cap lengths or else the unserialization of this info won't work right later, since ele_value is a serialized array!
-				if(!$res = $xoopsDB->queryF($lsbHandleFormDefSQL)) {
-					print "Error:  update of linked selectbox element definitions failed.";
-				}
+			if($ele_handle !== (string) $original_handle) {
+				// the source of every linked list that takes its options from this element
+				$this->renameLinkedListSources($fid, $original_handle, $ele_handle);
 				// rewrite handle references inside the code files that genuinely hold them - $handle in derived
 				// values and the three save/delete procedures, {handle} in static content and default values.
 				// Files where a matching name is not a reference to this element are left alone; see
 				// codeFilesThatReferenceHandles().
 				$this->renameHandleInCodeFiles($original_handle, $ele_handle);
-				// rewrite {handle} tokens stored in ele_value. Not restricted by element type: a {handle} token is
-				// substituted in static content and in the default value of a text or textarea element, and the
-				// default value key differs between those two, so every string in the array is rewritten rather
-				// than a known index. The token syntax is distinctive enough that this cannot hit anything else.
-				// Note this only reaches content held in the database - content that is PHP lives in a code file
-				// instead (setVar moves it there and blanks ele_value), and renameHandleInCodeFiles covers that.
-				$selectElementsSQL = "SELECT ele_id, ele_value FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_value LIKE " . $xoopsDB->quoteString('%{' . $original_handle . '}%');
-				if($res = $xoopsDB->query($selectElementsSQL)) {
-					while($row = $xoopsDB->fetchRow($res)) {
-						$thisEleId = $row[0];
-						$thisEleValue = unserialize($row[1]);
-						if(!is_array($thisEleValue)) { continue; }
-						foreach($thisEleValue as $valueKey => $valuePart) {
-							if(is_string($valuePart)) {
-								$thisEleValue[$valueKey] = str_replace('{' . $original_handle . '}', '{' . $ele_handle . '}', $valuePart);
-							}
-						}
-						$thisEleValue = serialize($thisEleValue);
-						$xoopsDB->queryF("UPDATE " . $xoopsDB->prefix("formulize") . " SET ele_value = '".formulize_db_escape($thisEleValue)."' WHERE ele_id = $thisEleId");
-					}
-				}
 				// rename element code files (fullWidthContent, captionedContent, text, textarea, number, derived)
 				// and purge stale derived-value cache files so they regenerate with the new handle
 				//
@@ -1147,21 +1124,40 @@ class formulizeElementsHandler {
 				// in the code directory under a handle nothing uses is picked up in full by the next element
 				// created with that handle - the file wins over the stored value on read - which is a worse
 				// outcome than not having it.
+				//
+				// Whether a file exists is read from the directory listing, by exact name, rather than asked of
+				// file_exists(). On a file system that ignores case - Windows, and macOS by default - a rename
+				// that only changes case gives two names for one file, so file_exists() says the new one is
+				// there when it is really the old one, and the old one would be deleted as spent, taking the
+				// element's only copy of its code with it. The listing has the one name it really has.
 				$currentType = $elementObject->getVar('ele_type');
-				$elementTypes = array('fullWidthContent', 'captionedContent', 'text', 'textarea', 'number', 'derived');
-				foreach($elementTypes as $type) {
-					$oldFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$type.'_'.$original_handle.'.php';
-					$newFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$type.'_'.$ele_handle.'.php';
-					if(!file_exists($oldFileName)) { continue; }
+				$codeDir = XOOPS_ROOT_PATH.'/modules/formulize/code/';
+				$codeFilesOnDisk = (array) scandir($codeDir);
+				foreach(self::elementCodeFileTypes() as $type) {
+					$oldName = $type.'_'.$original_handle.'.php';
+					$newName = $type.'_'.$ele_handle.'.php';
+					if(!in_array($oldName, $codeFilesOnDisk, true)) { continue; }
+					$newExists = in_array($newName, $codeFilesOnDisk, true);
+					if(!$newExists AND strtolower($oldName) === strtolower($newName)) {
+						// Only the case is changing, and there is one file. Where case is ignored it is the same
+						// file under either name, already holding whatever setVar wrote on this save, so it is
+						// never deleted - only renamed, in two steps, since a rename to the same name differing
+						// only in case is not reliably carried out in one.
+						$temporaryName = $codeDir.$newName.'.renaming';
+						if(rename($codeDir.$oldName, $temporaryName)) {
+							rename($temporaryName, $codeDir.$newName);
+						}
+						continue;
+					}
 					// This element's own type is the one setVar wrote on this save, so the new-handle file is
 					// already right and the old one is spent. A file named for one of the other types is left
 					// over from a type conversion, which setVar knows nothing about, so that one still moves.
 					// A file already sitting under the new name is the live one either way - the backstop for
 					// callers that do not know whether ele_value was part of the save.
-					if(($eleValueWasSavedWithThisChange AND $type === $currentType) OR file_exists($newFileName)) {
-						unlink($oldFileName);
+					if(($eleValueWasSavedWithThisChange AND $type === $currentType) OR $newExists) {
+						unlink($codeDir.$oldName);
 					} else {
-						rename($oldFileName, $newFileName);
+						rename($codeDir.$oldName, $codeDir.$newName);
 					}
 				}
 				$cacheDir = XOOPS_ROOT_PATH . '/modules/formulize/cache/';
@@ -1170,135 +1166,12 @@ class formulizeElementsHandler {
 						@unlink($cacheFile);
 					}
 				}
-				// update {handle} tokens in ele_caption and ele_desc across all elements
-				$captionRes = $xoopsDB->query(
-					"SELECT ele_id, ele_caption, ele_desc FROM " . $xoopsDB->prefix('formulize')
-					. " WHERE ele_caption LIKE " . $xoopsDB->quoteString('%{' . $original_handle . '}%')
-					. " OR ele_desc LIKE "        . $xoopsDB->quoteString('%{' . $original_handle . '}%')
-				);
-				if($captionRes) {
-					while($row = $xoopsDB->fetchArray($captionRes)) {
-						$newCaption = str_replace('{' . $original_handle . '}', '{' . $ele_handle . '}', $row['ele_caption']);
-						$newDesc    = $row['ele_desc'] !== null
-							? str_replace('{' . $original_handle . '}', '{' . $ele_handle . '}', $row['ele_desc'])
-							: null;
-						$descSql = $newDesc !== null ? ", ele_desc = " . $xoopsDB->quoteString($newDesc) : "";
-						$xoopsDB->queryF(
-							"UPDATE " . $xoopsDB->prefix('formulize')
-							. " SET ele_caption = " . $xoopsDB->quoteString($newCaption) . $descSql
-							. " WHERE ele_id = " . intval($row['ele_id'])
-						);
-					}
-				}
-				// update handle references in formulize_screen_map (varchar columns and serialized columns array)
-				$mapTableRes = $xoopsDB->query("SHOW TABLES LIKE '" . $xoopsDB->prefix('formulize_screen_map') . "'");
-				if($mapTableRes && $xoopsDB->getRowsNum($mapTableRes) > 0) {
-					foreach(array('lat_element', 'lng_element', 'label_element', 'description_element') as $col) {
-						$xoopsDB->queryF(
-							"UPDATE " . $xoopsDB->prefix('formulize_screen_map')
-							. " SET `$col` = " . $xoopsDB->quoteString($ele_handle)
-							. " WHERE `$col` = " . $xoopsDB->quoteString($original_handle)
-						);
-					}
-					// columns is a serialized array of [$handle, $label, $searchtype] entries
-					$mapColsRes = $xoopsDB->query(
-						"SELECT sid, columns FROM " . $xoopsDB->prefix('formulize_screen_map')
-						. " WHERE columns LIKE " . $xoopsDB->quoteString('%' . $original_handle . '%')
-					);
-					if($mapColsRes) {
-						while($row = $xoopsDB->fetchArray($mapColsRes)) {
-							$cols = @unserialize($row['columns']);
-							if(!is_array($cols)) { continue; }
-							$modified = false;
-							foreach($cols as $i => $arr) {
-								if(isset($arr[0]) && $arr[0] === $original_handle) {
-									$cols[$i][0] = $ele_handle;
-									$modified = true;
-								}
-							}
-							if($modified) {
-								$xoopsDB->queryF(
-									"UPDATE " . $xoopsDB->prefix('formulize_screen_map')
-									. " SET columns = " . $xoopsDB->quoteString(serialize($cols))
-									. " WHERE sid = " . intval($row['sid'])
-								);
-							}
-						}
-					}
-				}
-				// update advanceview in formulize_screen_listofentries
-				// LEGACY ONLY. advanceview stores element IDs now, which a rename cannot invalidate, so this
-				// pass exists purely for rows written before that change and not re-saved since. Saving a
-				// screen converts it (formulizeListOfEntriesScreen::setVar), so these rows disappear over
-				// time; a one-time migration of the column would let this block go entirely, along with the
-				// equivalent worry for hiddencolumns and decolumns, which were never maintained here at all
-				// and are ID-based now for the same reason.
-				// format: serialized array of [$handle, $searchValue, $sortDir, $searchType]
-				$advRes = $xoopsDB->query(
-					"SELECT sid, advanceview FROM " . $xoopsDB->prefix('formulize_screen_listofentries')
-					. " WHERE advanceview LIKE " . $xoopsDB->quoteString('%' . $original_handle . '%')
-				);
-				if($advRes) {
-					while($row = $xoopsDB->fetchArray($advRes)) {
-						$av = @unserialize($row['advanceview']);
-						if(!is_array($av)) { continue; }
-						$modified = false;
-						foreach($av as $i => $avEntry) {
-							if(is_array($avEntry) && isset($avEntry[0]) && $avEntry[0] === $original_handle) {
-								$av[$i][0] = $ele_handle;
-								$modified = true;
-							}
-						}
-						if($modified) {
-							$xoopsDB->queryF(
-								"UPDATE " . $xoopsDB->prefix('formulize_screen_listofentries')
-								. " SET advanceview = " . $xoopsDB->quoteString(serialize($av))
-								. " WHERE sid = " . intval($row['sid'])
-							);
-						}
-					}
-				}
-				// update sv_oldcols (comma-separated handles, some with hiddencolumn_ prefix) and sv_sort
-				$svRes = $xoopsDB->query(
-					"SELECT sv_id, sv_oldcols, sv_sort FROM " . $xoopsDB->prefix('formulize_saved_views')
-					. " WHERE sv_oldcols LIKE " . $xoopsDB->quoteString('%' . $original_handle . '%')
-					. " OR sv_sort = "          . $xoopsDB->quoteString($original_handle)
-				);
-				if($svRes) {
-					while($row = $xoopsDB->fetchArray($svRes)) {
-						$svId = intval($row['sv_id']);
-						if($row['sv_oldcols']) {
-							$parts    = explode(',', $row['sv_oldcols']);
-							$modified = false;
-							foreach($parts as $j => $part) {
-								$prefix = '';
-								$handle = $part;
-								if(strpos($part, 'hiddencolumn_') === 0) {
-									$prefix = 'hiddencolumn_';
-									$handle = substr($part, strlen('hiddencolumn_'));
-								}
-								if($handle === $original_handle) {
-									$parts[$j] = $prefix . $ele_handle;
-									$modified   = true;
-								}
-							}
-							if($modified) {
-								$xoopsDB->queryF(
-									"UPDATE " . $xoopsDB->prefix('formulize_saved_views')
-									. " SET sv_oldcols = " . $xoopsDB->quoteString(implode(',', $parts))
-									. " WHERE sv_id = " . $svId
-								);
-							}
-						}
-						if($row['sv_sort'] === $original_handle) {
-							$xoopsDB->queryF(
-								"UPDATE " . $xoopsDB->prefix('formulize_saved_views')
-								. " SET sv_sort = " . $xoopsDB->quoteString($ele_handle)
-								. " WHERE sv_id = " . $svId
-							);
-						}
-					}
-				}
+				// settings that name this element by its handle - screens, saved views, conditions, filters,
+				// custom buttons - found by the same scan that cleans up after a deletion
+				$this->renameElementInSettings($elementObject, $original_handle);
+				// {handle} tokens wherever a person can write one: captions, help text, default values, static
+				// content held in the database, the values of conditions, screen text
+				$this->renameHandleTokens($original_handle, $ele_handle);
 				// Everything above rewrote element rows with SQL that went around the element
 				// objects: ele_value in every element that links to this one or embeds a {handle}
 				// token, and ele_caption and ele_desc wherever that token appears. Any of those
@@ -1349,6 +1222,15 @@ class formulizeElementsHandler {
 			case 'token': return '/'.$token.'/';
 			default: return '/('.$variable.'|'.$token.')/';
 		}
+	}
+
+	/**
+	 * The element types that can keep code in a file of their own, named <type>_<handle>.php in the code folder,
+	 * which is renamed along with the element's handle.
+	 * @return array The type names, as they begin the file names.
+	 */
+	public static function elementCodeFileTypes() {
+		return array('fullWidthContent', 'captionedContent', 'text', 'textarea', 'number', 'derived');
 	}
 
 	/**
@@ -1413,6 +1295,286 @@ class formulizeElementsHandler {
 				formulize_writeCodeToFile($file, $newCode);
 			}
 		}
+	}
+
+	/**
+	 * Rewrite the settings that name an element by its handle, after the handle has changed.
+	 *
+	 * The places are found by findReferencesToElement(), the same scan the usage report and
+	 * removeElementReferences() read, so a rename reaches every setting a deletion would clean up, and a setting
+	 * added to that scan later is renamed as well as cleaned up without anyone coming back here.
+	 *
+	 * The scan is only used to find the rows. What is written is the stored value with the old handle swapped for
+	 * the new one and nothing else changed - a rename does not change the shape of anything, so there is no need
+	 * for each owner to know how to rename as well as how to remove. Wherever a setting stores an id instead,
+	 * the row is found and left as it is, since a rename cannot invalidate an id.
+	 *
+	 * The swap is made on whole values: a string that is the old handle, an entry in a comma separated list that
+	 * is, and the same with the hiddencolumn_ prefix saved views put on some columns. It is not made inside
+	 * other text, so a handle mentioned in prose or code is left alone here. Because it is a swap of whole values
+	 * rather than of the positions each owner knows about, a value in one of those rows that is exactly the old
+	 * handle but means something else - a condition comparing against the literal text of the handle, say - is
+	 * changed as well. Handles are long and distinctive enough for that to be vanishingly rare.
+	 *
+	 * Handles that are numbers are legacy handles that equal their element's id. They are not swapped generally,
+	 * because that would turn references by id into references by handle, in settings that may only hold ids.
+	 * Those settings go on working after the rename anyway, because they resolve what they hold through the
+	 * element handler, where the number is the element's id. Saved views do not - see
+	 * renameNumericHandleInSavedViews().
+	 *
+	 * @param object $elementObject The element, with its new handle already set.
+	 * @param string $originalHandle The handle before the rename, as it is written in the database.
+	 * @return void
+	 */
+	protected function renameElementInSettings($elementObject, $originalHandle) {
+		$newHandle = $elementObject->getVar('ele_handle');
+		if(is_numeric($originalHandle)) {
+			$this->renameNumericHandleInSavedViews($originalHandle, $newHandle);
+			return;
+		}
+		// The scan looks for the element by its handle, and the settings still say the old one, so it is asked
+		// about a copy of the element under that name. The old handle is written straight into the copy, because
+		// assignVar() and setVar() would sanitize it, and an old handle with capitals or a character sanitizing
+		// removes would then be looked for under a name its references do not have. A whole new array goes in,
+		// so nothing is shared with the original element.
+		$elementAsItWas = clone $elementObject;
+		$elementAsItWas->vars['ele_handle'] = array_merge($elementObject->vars['ele_handle'], array('value' => (string) $originalHandle));
+		foreach($this->findReferencesToElement($elementAsItWas) as $reference) {
+			if(!$reference['table']) {
+				continue; // reported only, because it is cleaned up somewhere else - see the scan that found it
+			}
+			$columns = array_keys($reference['updates']);
+			// An element's own type decides what its ele_value means, and a type that cannot rewrite its own
+			// references reports them without proposing an update. So for another element, every column that
+			// can name an element is read, not only the ones a deletion would change, and whether or not the
+			// scan proposed any change at all.
+			if($reference['table'] == 'formulize') {
+				$columns = array_values(array_unique(array_merge($columns, array('ele_value', 'ele_filtersettings', 'ele_disabledconditions', 'ele_dynamicdefault_conditions'))));
+			}
+			if(!$columns) {
+				continue;
+			}
+			$this->rewriteStoredSettings($reference['table'], $reference['key_column'], $reference['key_value'], $columns,
+				fn($text) => self::renameHandleInSettingText($text, $originalHandle, $newHandle));
+		}
+	}
+
+	/**
+	 * Rename a numeric handle in saved views. Their columns and the column they sort by are compared with the
+	 * current handles as text, rather than resolved through the element handler, so a view still naming the
+	 * number after the element is given a readable handle would quietly lose that column. Only those two
+	 * settings, and only where an entry is exactly the number - a number is far too common to swap anywhere
+	 * else, such as in a saved search.
+	 * @param string $originalHandle The numeric handle.
+	 * @param string $newHandle The handle as it is now.
+	 * @return void
+	 */
+	protected function renameNumericHandleInSavedViews($originalHandle, $newHandle) {
+		$sql = "SELECT sv_id FROM ".$this->db->prefix('formulize_saved_views')."
+			WHERE sv_oldcols LIKE ".$this->db->quoteString('%'.$originalHandle.'%')."
+			OR sv_sort = ".$this->db->quoteString($originalHandle);
+		if(!$result = $this->db->query($sql)) {
+			return;
+		}
+		while($row = $this->db->fetchArray($result)) {
+			$this->rewriteStoredSettings('formulize_saved_views', 'sv_id', $row['sv_id'], array('sv_oldcols', 'sv_sort'),
+				fn($text) => self::renameHandleInSettingText($text, $originalHandle, $newHandle));
+		}
+	}
+
+	/**
+	 * Point linked lists that take their options from an element at its new handle. The source is stored in
+	 * the linked list's ele_value as "fid#*=:*handle", which no other setting looks like, so every string of
+	 * that shape in every element's ele_value is checked.
+	 * @param int $fid The form the renamed element belongs to.
+	 * @param string $originalHandle The handle as it was.
+	 * @param string $newHandle The handle as it is now.
+	 * @return void
+	 */
+	protected function renameLinkedListSources($fid, $originalHandle, $newHandle) {
+		$fid = intval($fid);
+		$rewrite = function($text) use ($fid, $originalHandle, $newHandle) {
+			if(preg_match('/^'.$fid.'#\*=:\*(.*)$/s', $text, $source) AND trim($source[1]) === (string) $originalHandle) {
+				return $fid.'#*=:*'.$newHandle;
+			}
+			return $text;
+		};
+		// a coarse filter only - which strings really are this element's source is decided in PHP
+		$sql = "SELECT ele_id FROM ".$this->db->prefix('formulize')." WHERE ele_value LIKE ".$this->db->quoteString('%'.$fid.'#*=:*%');
+		if(!$result = $this->db->query($sql)) {
+			return;
+		}
+		while($row = $this->db->fetchArray($result)) {
+			$this->rewriteStoredSettings('formulize', 'ele_id', $row['ele_id'], array('ele_value'), $rewrite);
+		}
+	}
+
+	/**
+	 * Swap a handle for another in a stored setting's text, where the text is the handle, or is a comma separated
+	 * list with the handle as one of its entries.
+	 * @param string $text The text, which is one string out of a stored value if the value is serialized.
+	 * @param string $originalHandle The handle as it was.
+	 * @param string $newHandle The handle as it is now.
+	 * @return string
+	 */
+	protected static function renameHandleInSettingText($text, $originalHandle, $newHandle) {
+		$hiddenColumnPrefix = 'hiddencolumn_'; // formulizeSavedViewsHandler::HIDDEN_COLUMN_PREFIX, which may not be loaded
+		$entries = explode(',', $text);
+		foreach($entries as $i => $entry) {
+			$prefix = strpos($entry, $hiddenColumnPrefix) === 0 ? $hiddenColumnPrefix : '';
+			$bare = substr($entry, strlen($prefix));
+			if($bare === (string) $originalHandle) {
+				$entries[$i] = $prefix.$newHandle;
+			}
+		}
+		return implode(',', $entries);
+	}
+
+	/**
+	 * Rewrite {handle} tokens after a handle has changed, wherever a person can write one: captions, help text,
+	 * default values, static content held in the database, the values conditions compare against, screen text.
+	 *
+	 * Rather than keep a list of those places, every text column of every table Formulize declares is searched
+	 * (see configurationTables()). The token syntax is distinctive enough that nothing else looks like one, and
+	 * the declared tables are only Formulize's own configuration, never the data tables behind the forms.
+	 *
+	 * Code that lives in files rather than in the database is renameHandleInCodeFiles()'s job.
+	 *
+	 * @param string $originalHandle The handle as it was.
+	 * @param string $newHandle The handle as it is now.
+	 * @return void
+	 */
+	protected function renameHandleTokens($originalHandle, $newHandle) {
+		$rewrite = fn($text) => str_replace('{'.$originalHandle.'}', '{'.$newHandle.'}', $text);
+		// A coarse filter only, to read just the rows that may hold the token: the collation ignores case, and the
+		// underscores in a handle are single character wildcards, so it can catch more rows than it needs to. The
+		// swap itself is exact.
+		$likeToken = $this->db->quoteString('%{'.$originalHandle.'}%');
+		foreach(self::configurationTables() as $table) {
+			list($keyColumn, $textColumns) = $this->tableKeyAndTextColumns($table);
+			if(!$keyColumn OR !$textColumns) {
+				continue;
+			}
+			$where = implode(' OR ', array_map(fn($column) => "`$column` LIKE $likeToken", $textColumns));
+			if(!$result = $this->db->query("SELECT `$keyColumn` FROM ".$this->db->prefix($table)." WHERE $where")) {
+				continue;
+			}
+			while($row = $this->db->fetchArray($result)) {
+				$this->rewriteStoredSettings($table, $keyColumn, $row[$keyColumn], $textColumns, $rewrite);
+			}
+		}
+	}
+
+	/**
+	 * Read some columns of one row, rewrite every string in them, and save the columns that changed.
+	 * @param string $table The unprefixed table name.
+	 * @param string $keyColumn The table's primary key column, which holds an integer.
+	 * @param int $keyValue The row's primary key.
+	 * @param array $columns The columns to rewrite.
+	 * @param callable $rewrite Given one string, returns it rewritten - see rewriteStringsInStoredValue().
+	 * @return void
+	 */
+	protected function rewriteStoredSettings($table, $keyColumn, $keyValue, $columns, $rewrite) {
+		$columnList = implode(', ', array_map(fn($column) => "`$column`", $columns));
+		$where = " WHERE `$keyColumn` = ".intval($keyValue);
+		if(!$result = $this->db->query("SELECT $columnList FROM ".$this->db->prefix($table).$where)
+			OR !$row = $this->db->fetchArray($result)) {
+			return;
+		}
+		$sets = array();
+		foreach($columns as $column) {
+			$rewritten = self::rewriteStringsInStoredValue($row[$column], $rewrite);
+			if($rewritten !== $row[$column]) {
+				$sets[] = "`$column` = ".$this->db->quoteString($rewritten);
+			}
+		}
+		if($sets) {
+			// queryF, the same as the rename has always used, because a rename can be made from a GET request (an
+			// update patch run from a link), which query() refuses to write from
+			$this->db->queryF("UPDATE ".$this->db->prefix($table)." SET ".implode(', ', $sets).$where);
+		}
+	}
+
+	/**
+	 * Apply a change to every string in a stored value, whether the value is plain text or serialized.
+	 *
+	 * A serialized value is changed in place, string by string, with each string's length recomputed - rather
+	 * than unserialized, changed and serialized again. That way a value holding objects, as calendar datasets do,
+	 * can be changed without its classes being loaded, and everything that is not a string comes back exactly as
+	 * it was. If the result would not unserialize, the value is left as it was.
+	 *
+	 * @param mixed $value The stored value. Anything other than a non-empty string is returned as it is.
+	 * @param callable $rewrite Given one string, returns it rewritten.
+	 * @return mixed
+	 */
+	protected static function rewriteStringsInStoredValue($value, $rewrite) {
+		if(!is_string($value) OR $value === '') {
+			return $value;
+		}
+		if(!preg_match('/^(a|O|s):\d+:/', $value) OR @unserialize($value, array('allowed_classes' => false)) === false) {
+			return $rewrite($value);
+		}
+		$rewritten = '';
+		$position = 0;
+		// Each string is s:<length in bytes>:"<that many bytes>"; and is read by its length, so a quote or a
+		// semicolon inside one is never taken for the end of it, and searching resumes after the whole string.
+		while(preg_match('/s:(\d+):"/', $value, $match, PREG_OFFSET_CAPTURE, $position)) {
+			$tokenStart = $match[0][1];
+			$contentStart = $tokenStart + strlen($match[0][0]);
+			$content = substr($value, $contentStart, intval($match[1][0]));
+			$newContent = $rewrite($content);
+			$rewritten .= substr($value, $position, $tokenStart - $position).'s:'.strlen($newContent).':"'.$newContent;
+			$position = $contentStart + strlen($content);
+		}
+		$rewritten .= substr($value, $position);
+		return @unserialize($rewritten, array('allowed_classes' => false)) === false ? $value : $rewritten;
+	}
+
+	/**
+	 * The tables that hold Formulize's configuration: every table the module declares in xoops_version.php,
+	 * except the ones that hold records rather than settings. The data tables behind each form are not
+	 * declared, so they are never among these.
+	 * @return array Unprefixed table names.
+	 */
+	protected static function configurationTables() {
+		static $tables = null;
+		if($tables === null) {
+			$module_handler = xoops_gethandler('module');
+			$formulizeModule = $module_handler->getByDirname('formulize');
+			$declared = $formulizeModule ? (array) $formulizeModule->getInfo('tables') : array();
+			// what happened and to whom, who holds which key or code, who owns which entry, and what people typed
+			// as their "Other" answer. A handle written into one of these is a record or an answer, not a
+			// setting that refers to an element.
+			$records = array('formulize_entry_owner_groups', 'formulize_other', 'formulize_valid_imports', 'formulize_procedure_logs',
+				'formulize_procedure_logs_params', 'formulize_deletion_logs', 'formulize_apikeys', 'formulize_tokens',
+				'formulize_digest_data', 'formulize_passcodes', 'tfa_codes');
+			$tables = array_values(array_diff($declared, $records));
+		}
+		return $tables;
+	}
+
+	/**
+	 * A table's primary key, if it is a single integer column, and its text columns.
+	 * @param string $table The unprefixed table name.
+	 * @return array array(key column or false, list of text columns)
+	 */
+	protected function tableKeyAndTextColumns($table) {
+		static $cache = array();
+		if(!isset($cache[$table])) {
+			$keyColumns = array();
+			$textColumns = array();
+			if($res = $this->db->query("SHOW COLUMNS FROM `".$this->db->prefix($table)."`")) {
+				while($row = $this->db->fetchArray($res)) {
+					if($row['Key'] == 'PRI') {
+						$keyColumns[] = preg_match('/int/i', $row['Type']) ? $row['Field'] : false;
+					} elseif(preg_match('/char|text/i', $row['Type'])) {
+						$textColumns[] = $row['Field'];
+					}
+				}
+			}
+			$cache[$table] = array(count($keyColumns) === 1 ? $keyColumns[0] : false, $textColumns);
+		}
+		return $cache[$table];
 	}
 
 	/**
