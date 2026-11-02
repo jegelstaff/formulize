@@ -81,12 +81,15 @@ file_put_contents($stubRoot.'/modules/formulize/class/calendarScreen.php', "<?ph
 	public \$vars = array(); function setVar(\$k, \$v) { \$this->vars[\$k] = \$v; } function getVar(\$k) { return isset(\$this->vars[\$k]) ? \$this->vars[\$k] : null; } } }\n");
 require $stubRoot.'/modules/formulize/class/calendarScreen.php';
 
-class formulizeElementsHandler {
-	public static function handleReferencePattern($handle, $form = 'either') {
-		$quoted = preg_quote($handle, '/');
-		return '/(\$'.$quoted.'(?![A-Za-z0-9_\x80-\xff])|\{'.$quoted.'\})/';
+// the two patterns, copied out of the real class, which needs too much of Formulize around it to load here
+$elementsSrc = file_get_contents($repo.'/modules/formulize/class/elements.php');
+foreach(array('handleReferencePattern', 'handleMentionPattern') as $method) {
+	if(!preg_match('/\tpublic static function '.$method.'\(.*?\n\t}\n/s', $elementsSrc, $m)) {
+		die("no $method in elements.php\n");
 	}
+	$patternMethods[] = $m[0];
 }
+eval("class formulizeElementsHandler {\n".implode("\n", $patternMethods)."}\n");
 
 // ---- the declaration from xoops_version.php ----
 $xv = file_get_contents($repo.'/modules/formulize/xoops_version.php');
@@ -108,7 +111,12 @@ class FakeDB {
 	function prefix($t) { return 'x_'.$t; }
 	function quoteString($v) { $this->quoted[] = (string) $v; return 'Q#'.(count($this->quoted) - 1).'#'; }
 	function query($sql) {
-		if(preg_match('/^SHOW COLUMNS FROM `x_([a-z_]+)`$/', $sql, $m)) {
+		if(stripos(ltrim($sql), 'select') !== 0 AND stripos(ltrim($sql), 'update') !== 0) {
+			// the usage report is drawn on a GET request, when the real database refuses everything but a SELECT
+			die("query() is given only SELECTs while reading, as the database proxy allows on a GET request: $sql\n");
+		}
+		if(preg_match('/^SELECT COLUMN_NAME AS Field FROM information_schema\.COLUMNS .* TABLE_NAME = Q#(\d+)# /', $sql, $m)) {
+			$m[1] = substr($this->quoted[$m[1]], 2); // the quoted, prefixed table name, without its 'x_'
 			$fields = array();
 			foreach(isset($this->tables[$m[1]]) ? $this->tables[$m[1]] : array() as $row) { $fields += array_flip(array_keys($row)); }
 			return array_map(function($field) { return array('Field' => $field); }, array_keys($fields));
@@ -222,7 +230,7 @@ resetTables(array(
 			'ele_value' => serialize(array(
 				ELE_VALUE_SELECT_LINK_SORT => $id,
 				ELE_VALUE_SELECT_LINK_ALTLISTELEMENTS => array(999991, $id),
-				ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS => array(array('thisForm' => '{'.$handle.'}', 'sourceForm' => '999990'))))),
+				ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS => array(array('thisForm' => $id, 'sourceForm' => 999990), array('thisForm' => '{'.$handle.'}', 'sourceForm' => 999989))))),
 		array('ele_id' => 602, 'ele_type' => 'grid', 'ele_handle' => 'zz_fixture_grid', 'id_form' => $fid, 'ele_caption' => '', 'ele_desc' => '',
 			'ele_filtersettings' => '', 'ele_disabledconditions' => '', 'ele_dynamicdefault_conditions' => '', 'ele_dynamicdefault_source' => 0,
 			'ele_value' => serialize(array(4 => $id))),
@@ -249,7 +257,7 @@ $others = isset($sections[_AM_ELE_USAGE_SECTION_OTHER_ELEMENTS]) ? $sections[_AM
 ok('report mentions the linked list that sorts by it', count(preg_grep('/zz_fixture_linked.*sorted by/', $others)) === 1, implode(' | ', $others));
 ok('report mentions the grid', count(preg_grep('/zz_fixture_grid.*initial values/', $others)) === 1, implode(' | ', $others));
 ok('report mentions the subform', count(preg_grep('/zz_fixture_subform.*one of the elements it shows/', $others)) === 1, implode(' | ', $others));
-ok('report says the source mapping is left alone', count(preg_grep('/left in place for you to sort out/', $others)) === 1, implode(' | ', $others));
+ok('report says the source mapping is removed', count(preg_grep('/a source mapping, which is removed/', $others)) === 1, implode(' | ', $others));
 ok('report does not list the element itself', count(preg_grep("/'$handle'/", $others)) === 0, implode(' | ', $others));
 check('report mentions both saved views', count(isset($sections[_AM_ELE_USAGE_SECTION_SAVED_VIEWS]) ? $sections[_AM_ELE_USAGE_SECTION_SAVED_VIEWS] : array()), 2);
 $formScreens = isset($sections[_AM_ELE_USAGE_SECTION_FORM_SCREENS]) ? $sections[_AM_ELE_USAGE_SECTION_FORM_SCREENS] : array();
@@ -302,7 +310,7 @@ check('dynamic default: conditions go too', unserialize($dependent['ele_dynamicd
 $linked = unserialize($xoopsDB->row('formulize', 'ele_id', 601)['ele_value']);
 check('linked list: sort set to none', $linked[ELE_VALUE_SELECT_LINK_SORT], 'none');
 check('linked list: out of alt list elements', $linked[ELE_VALUE_SELECT_LINK_ALTLISTELEMENTS], array(999991));
-check('linked list: source mapping left exactly', $linked[ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS], array(array('thisForm' => '{'.$handle.'}', 'sourceForm' => '999990')));
+check('linked list: the mapping on the element goes as a whole, a typed value that looks like its handle stays', $linked[ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS], array(1 => array('thisForm' => '{'.$handle.'}', 'sourceForm' => 999989)));
 $grid = unserialize($xoopsDB->row('formulize', 'ele_id', 602)['ele_value']);
 check('grid: cleared', $grid[4], 'none');
 $subform = unserialize($xoopsDB->row('formulize', 'ele_id', 603)['ele_value']);
@@ -354,9 +362,9 @@ check('text default: token renamed, word not', unserialize($notes['ele_value'])[
 check('the element\'s own caption token is renamed too', $xoopsDB->row('formulize', 'ele_id', 700)['ele_caption'], 'Approved {is_approved}');
 $status = unserialize($xoopsDB->row('formulize', 'ele_id', 702)['ele_value']);
 check('linked source: the legacy handle becomes the id', $status[ELE_VALUE_SELECT_OPTIONS], '3#*=:*700');
-check('linked sort: the handle becomes the id', $status[ELE_VALUE_SELECT_LINK_SORT], 700);
+check('linked sort: holds ids only, so a word that is the handle stays', $status[ELE_VALUE_SELECT_LINK_SORT], 'approved');
 check('alt list: the handle becomes the id, the id and other entries kept', $status[ELE_VALUE_SELECT_LINK_ALTLISTELEMENTS], array(700, 700, 'other'));
-check('source mapping: the braced handle becomes the id, the bare word is a literal and stays', $status[ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS], array(array('thisForm' => 700, 'sourceForm' => 'approved')));
+check('source mapping: holds ids only, so values a person typed stay as they are', $status[ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS], array(array('thisForm' => '{approved}', 'sourceForm' => 'approved')));
 $view = $xoopsDB->row('formulize_saved_views', 'sv_id', 3);
 check('view columns: legacy handles become the id, prefix kept, approved_by not touched', $view['sv_oldcols'], '700,hiddencolumn_700,approved_by');
 check('view searches: {search_handle} renamed, the term approved not', $view['sv_quicksearches'], 'approved&*=%4#{search_is_approved}&*=%4#x');
@@ -441,6 +449,78 @@ $view = $xoopsDB->row('formulize_saved_views', 'sv_id', 6);
 check('numeric handle: a number in saved view columns and sort is already the id, and stays', $view['sv_oldcols'].'|'.$view['sv_sort'], '12,13|12');
 check('numeric handle: the calculation, which holds ids, is left', $view['sv_calc_cols'], '12');
 check('numeric handle: an advanceview id stays an id', unserialize($xoopsDB->row('formulize_screen_listofentries', 'sid', 21)['advanceview']), array(array(12, '', '', '')));
+
+echo "== several declarations on one column, and the places a review of the declaration found missing\n";
+resetTables(array(
+	'formulize' => array(
+		array('ele_id' => 900, 'ele_type' => 'text', 'ele_handle' => 'approved', 'id_form' => 3, 'ele_caption' => '', 'ele_desc' => '',
+			'ele_filtersettings' => '', 'ele_disabledconditions' => '', 'ele_dynamicdefault_conditions' => '', 'ele_dynamicdefault_source' => 0, 'ele_value' => 'a:0:{}'),
+		array('ele_id' => 901, 'ele_type' => 'grid', 'ele_handle' => 'g', 'id_form' => 3, 'ele_caption' => '', 'ele_desc' => '',
+			'ele_filtersettings' => '', 'ele_disabledconditions' => '', 'ele_dynamicdefault_conditions' => '', 'ele_dynamicdefault_source' => 0,
+			'ele_value' => serialize(array(1 => 'Row {approved},approved', 2 => 'Column one', 4 => 'none'))),
+	),
+	'formulize_saved_views' => array(
+		array('sv_id' => 7, 'sv_name' => 'v', 'sv_oldcols' => 'x', 'sv_quicksearches' => '', 'sv_sort' => 'x,approved', 'sv_order' => 'SORT_ASC,SORT_DESC',
+			'sv_pubfilters' => 'approved,x', 'sv_calc_cols' => '', 'sv_calc_calcs' => '', 'sv_calc_blanks' => '', 'sv_calc_grouping' => ''),
+	),
+	'formulize_screen_listofentries' => array(
+		array('sid' => 22, 'title' => 'L', 'advanceview' => serialize(array(array('approved', '{approved}', '', 'Box'), array(901, 'approved', '', 'Box'))),
+			'hiddencolumns' => 'a:0:{}', 'decolumns' => 'a:0:{}', 'fundamental_filters' => '',
+			'customactions' => serialize(array(1 => array('name' => 'b', 0 => array('element' => 901, 'value' => '$value = display($entry, \'approved\');'))))),
+	),
+	'formulize_screen_map' => array(
+		array('sid' => 41, 'title' => 'M', 'lat_element' => '', 'lng_element' => '', 'label_element' => '', 'description_element' => '',
+			'columns' => serialize(array(array(901, '{search_approved}', 'Box'))), 'fundamental_filters' => ''),
+	),
+	'formulize_screen_multipage' => array(
+		array('sid' => 23, 'title' => 'P', 'pages' => serialize(array(array('PHP', 'print $approved;'), array(901))), 'conditions' => 'a:0:{}', 'elementdefaults' => 'a:0:{}'),
+		// an HTML page is printed as it is, so an attribute that is the handle is not a mention
+		array('sid' => 25, 'title' => 'H', 'pages' => serialize(array(array('HTML', '<div class="approved">{approved}</div>'))), 'conditions' => 'a:0:{}', 'elementdefaults' => 'a:0:{}'),
+	),
+	'formulize_notification_conditions' => array(
+		array('not_cons_id' => 31, 'not_cons_fid' => 3, 'form_title' => 'F',
+			'not_cons_con' => serialize(array(serialize(array(900)), serialize(array('=')), serialize(array('{approved}')))),
+			'not_cons_elementuids' => 0, 'not_cons_linkcreator' => 0, 'not_cons_elementemail' => 0, 'not_cons_subject' => ''),
+	),
+	'formulize_advanced_calculations' => array(
+		array('acid' => 50, 'name' => 'c', 'input' => '', 'output' => '', 'steps' => serialize(array(array('description' => 'approved', 'sql' => 'SELECT approved_by FROM t', 'calculate' => ''))),
+			'fltr_grps' => serialize(array(0 => array('form' => '900', 'handle' => 'f1'), 1 => array('form' => '901', 'handle' => 'f2')))),
+		array('acid' => 51, 'name' => 'd', 'input' => '', 'output' => '', 'steps' => serialize(array(array('description' => '', 'sql' => 'SELECT SUM(approved) FROM t', 'calculate' => ''))), 'fltr_grps' => ''),
+	),
+));
+$mentions = (new formulizeElementReferences(900, 'approved', 3))->mentions();
+$described = array_map(function($m) { return $m['table'].':'.$m['key_value']; }, $mentions);
+sort($described);
+check('mentions: a list column search token, a map column search token, a PHP custom page, a button value, a grid caption, a bare column in a query - not a notification term, not approved_by, not a step\'s description, not an HTML page',
+	$described, array('formulize:901', 'formulize_advanced_calculations:51', 'formulize_screen_listofentries:22', 'formulize_screen_map:41', 'formulize_screen_multipage:23'));
+(new formulizeElementReferences(900, 'approved', 3))->rename('is_approved');
+$list = $xoopsDB->row('formulize_screen_listofentries', 'sid', 22);
+check('advanceview: the element becomes the id and its search token is renamed, a search that is only the word is not',
+	unserialize($list['advanceview']), array(array(900, '{is_approved}', '', 'Box'), array(901, 'approved', '', 'Box')));
+check('custom button value: code, so left as it is', unserialize($list['customactions'])[1][0]['value'], '$value = display($entry, \'approved\');');
+check('map column search token renamed', unserialize($xoopsDB->row('formulize_screen_map', 'sid', 41)['columns']), array(array(901, '{search_is_approved}', 'Box')));
+check('custom page code left as it is', unserialize($xoopsDB->row('formulize_screen_multipage', 'sid', 23)['pages']), array(array('PHP', 'print $approved;'), array(901)));
+$grid = unserialize($xoopsDB->row('formulize', 'ele_id', 901)['ele_value']);
+check('grid captions: the token is renamed, the word is not', $grid[1].'|'.$grid[2], 'Row {is_approved},approved|Column one');
+$view = $xoopsDB->row('formulize_saved_views', 'sv_id', 7);
+check('view sort with several columns: the legacy handle becomes the id', $view['sv_sort'].'|'.$view['sv_order'], 'x,900|SORT_ASC,SORT_DESC');
+check('view published filters: the legacy handle becomes the id', $view['sv_pubfilters'], '900,x');
+check('notification term: never read for tokens, so never renamed',
+	unserialize(unserialize($xoopsDB->row('formulize_notification_conditions', 'not_cons_id', 31)['not_cons_con'])[2]), array('{approved}'));
+removeReferences(new formulizeElementReferences(900, 'is_approved', 3));
+$view = $xoopsDB->row('formulize_saved_views', 'sv_id', 7);
+check('deleting: the sort column goes, and its direction with it', $view['sv_sort'].'|'.$view['sv_order'], 'x|SORT_ASC');
+check('deleting: the published filter goes', $view['sv_pubfilters'], 'x');
+check('deleting: a calculation filter tied to it is untied, the other kept',
+	unserialize($xoopsDB->row('formulize_advanced_calculations', 'acid', 50)['fltr_grps']), array(0 => array('form' => 'none', 'handle' => 'f1'), 1 => array('form' => '901', 'handle' => 'f2')));
+
+echo "== a custom page marker is not an element\n";
+resetTables(array('formulize_screen_multipage' => array(
+	array('sid' => 24, 'title' => 'P', 'pages' => serialize(array(array('PHP', 'print 1;'))), 'conditions' => 'a:0:{}', 'elementdefaults' => 'a:0:{}'),
+)));
+(new formulizeElementReferences(910, 'PHP', 3))->rename('php_element');
+check('an element whose handle is PHP does not turn a custom page into a list of elements',
+	unserialize($xoopsDB->row('formulize_screen_multipage', 'sid', 24)['pages']), array(array('PHP', 'print 1;')));
 
 printf("\nRESULT: %d passed, %d failed\n", $GLOBALS['__pass'], $GLOBALS['__fail']);
 exit($GLOBALS['__fail'] === 0 ? 0 : 1);

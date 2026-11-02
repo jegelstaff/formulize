@@ -21,16 +21,18 @@ tests/e2e/
     config.js              the admin credentials and base URL for the core suite
     01-setup/              build the museum system, in order, one worker
     02-validate/           interrogate what setup built, in parallel
-    03-appearance/         change the site's look, then put it back, in order, one worker
+    03-validate-sequential/ change what setup built, check it, then put it back, in order, one worker
+    04-appearance/         change the site's look, then put it back, in order, one worker
 ```
 
-Core Formulize tests go in `formulize-core/01-setup/`, `formulize-core/02-validate/` or `formulize-core/03-appearance/`. The folders are numbered in the order they run. Tests for your own site or application go in a directory of their own inside `tests/e2e/`, named for the site.
+Core Formulize tests go in `formulize-core/01-setup/`, `formulize-core/02-validate/`, `formulize-core/03-validate-sequential/` or `formulize-core/04-appearance/`. The folders are numbered in the order they run. Tests for your own site or application go in a directory of their own inside `tests/e2e/`, named for the site.
 
 Which of the core folders a spec belongs in is a question about what it needs, not about what it checks:
 
 * **`01-setup/`** if it builds something later specs depend on — a form, a user, a permission, a menu. These run in file-name order, on a single worker, and each one assumes everything numbered below it has already happened.
 * **`02-validate/`** if it only reads or exercises the finished system. These run four-way parallel in CI, in no guaranteed order.
-* **`03-appearance/`** if it tests the site's look — the Lyris theme, its looks and the appearance editor. These switch the whole site to another theme while they run, which would break any validate spec running at the same moment, so they run in a step of their own, after the validate specs, on a single worker, in file-name order. Each one puts back whatever it changes in an `afterAll`, using the helpers under "Appearance" in `utils.js`.
+* **`03-validate-sequential/`** if it has to change something the museum system shares to test it - renaming an element that screens, saved views and notifications use, say - and check the system still works. A validate spec running at the same moment would see the change, so these run in a step of their own, after the validate specs, on a single worker, in file-name order. Each one puts back what it changes, so the system is left as setup built it.
+* **`04-appearance/`** if it tests the site's look — the Lyris theme, its looks and the appearance editor. These switch the whole site to another theme while they run, which would break any validate spec running at the same moment, so they run in a step of their own, after the validate specs, on a single worker, in file-name order. Each one puts back whatever it changes in an `afterAll`, using the helpers under "Appearance" in `utils.js`.
 
 File names start with a number, and the number is the running order within the folder. Leave gaps — the existing files go up in fives and ones precisely so a new spec can be slotted between two others without renumbering the suite.
 

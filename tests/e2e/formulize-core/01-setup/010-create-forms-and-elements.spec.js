@@ -200,6 +200,22 @@ test.describe('Artifacts Elements', async () => {
 		await saveAdminForm(page);
 		await expect(page.getByRole('heading')).toContainText('Donated to museum');
 	});
+
+	// Where each artifact comes from, which the Artifact origins map screen (015) plots
+	for (const [caption, handle] of [['Latitude', 'artifacts_latitude'], ['Longitude', 'artifacts_longitude']]) {
+		test(`Create ${caption} Element`, async ({ page }) => {
+			await addElementForm(page, ElementType.textNumber);
+			await waitForAdminPageReady(page)
+			await page.locator('input[name="elements-ele_caption"]').fill(caption);
+			await page.locator('input[name="elements-ele_handle"]').fill(handle);
+			await page.locator('textarea[name="elements-ele_desc"]').fill('Of the place the artifact comes from');
+			await page.getByRole('link', { name: 'Options' }).click();
+			await page.getByRole('textbox', { name: 'Number of decimal places:' }).fill('4');
+			await page.getByRole('textbox', { name: 'Separate thousands with this' }).fill('');
+			await saveAdminForm(page);
+			await expect(page.getByRole('heading')).toContainText(caption);
+		});
+	}
 })
 
 test('Create Donors Form', async ({ page }) => {

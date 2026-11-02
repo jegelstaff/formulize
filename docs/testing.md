@@ -25,9 +25,11 @@ The specs in `tests/e2e/formulize-core/01-setup/` run first and in sequence. The
 
 The specs in `tests/e2e/formulize-core/02-validate/` run afterwards, and in parallel. They read and exercise the system the setup specs built: that the data is right, that permissions actually isolate one department from another, that derived values update, that the MCP tools answer, that the Public API reads, that user-supplied content cannot inject script into a list.
 
-The specs in `tests/e2e/formulize-core/03-appearance/` run last, one at a time. They test the Lyris theme's looks and the appearance editor, and they switch the whole site to Lyris while they do, so they can't share the system with anything else that is running. Each one puts the site back as it found it.
+The specs in `tests/e2e/formulize-core/03-validate-sequential/` run next, one at a time. They change things the museum system shares - such as renaming the elements its screens, saved views and notifications use - check that everything that depends on them still works, and put them back.
 
-This is why the three folders are run as three separate steps rather than as one suite. The setup specs depend on each other and on their order; the validate specs depend only on the finished system; the appearance specs need the finished system to themselves. The folders are numbered in the order they run.
+The specs in `tests/e2e/formulize-core/04-appearance/` run last, one at a time. They test the Lyris theme's looks and the appearance editor, and they switch the whole site to Lyris while they do, so they can't share the system with anything else that is running. Each one puts the site back as it found it.
+
+This is why the four folders are run as four separate steps rather than as one suite. The setup specs depend on each other and on their order; the validate specs depend only on the finished system; the sequential validate specs and the appearance specs need the finished system to themselves. The folders are numbered in the order they run.
 
 ## Running the tests locally
 

@@ -1284,7 +1284,7 @@ export function deleteToken(key) {
 // Appearance: the site's theme, and the Lyris theme's looks
 // ----------------------------------------------------------------------------
 // The suite runs on Anari. The specs that test Lyris's looks and the appearance
-// editor (formulize-core/03-appearance) run after the setup and validate specs, one
+// editor (formulize-core/04-appearance) run after the setup and validate specs, one
 // at a time, and the PHP integrity tests run after them, against the built system.
 // So whatever one of those specs changes globally, it puts back in an afterAll,
 // which runs whether its tests passed or failed: the site's theme (getSiteTheme /
@@ -1314,7 +1314,7 @@ export function getSiteTheme() {
  * Show the whole site in a theme, for everyone, webmasters included: what saving
  * Admin > Appearance > Settings with that theme in both of its theme choices does.
  * For the specs' own setup and teardown, where going through the page every time
- * would only add ways to fail; 03-appearance/020-lyris-theme-switch-and-restore goes through it.
+ * would only add ways to fail; 04-appearance/020-lyris-theme-switch-and-restore goes through it.
  * @param {string} theme a theme's folder name, e.g. 'Lyris'
  */
 export function setSiteThemeInDb(theme) {
@@ -1530,4 +1530,129 @@ export async function saveAppearanceEditor(page, name) {
 	await expect(page.locator('.formulize-editor__toast[role="status"]')).toContainText(`Saved ${name}.`);
 	await expect(save).toHaveText('Save');
 	await expect(save).toBeDisabled();
+}
+
+/**
+ * Rename an element's handle in its settings, the way a webmaster does, and wait until the new handle is stored.
+ * The caller must be logged in as a webmaster.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} oldHandle
+ * @param {string} newHandle
+ * @returns {Promise<string>} The element's id, which a rename does not change
+ */
+export async function renameElementHandle(page, oldHandle, newHandle) {
+	const [eleId, fid] = dbQuery(`SELECT ele_id, id_form FROM ${dbPrefix()}_formulize WHERE ele_handle = '${sqlEscape(oldHandle)}'`)[0];
+	const apps = dbQuery(`SELECT appid FROM ${dbPrefix()}_formulize_application_form_link WHERE fid = ${fid}`);
+	await page.goto(`/modules/formulize/admin/ui.php?page=element&ele_id=${eleId}&fid=${fid}&aid=${apps.length ? apps[0][0] : 0}`);
+	await waitForAdminPageReady(page);
+	await page.locator('input[name="elements-ele_handle"]').fill(newHandle);
+	await saveAdminForm(page);
+	await expect.poll(() => dbQuery(`SELECT ele_handle FROM ${dbPrefix()}_formulize WHERE ele_id = ${eleId}`)[0][0], { timeout: 30000 }).toBe(newHandle);
+	return eleId;
+}
+
+/**
+ * An element's id, by its handle.
+ * @param {string} handle
+ * @returns {string}
+ */
+export function elementId(handle) {
+	return dbQuery(`SELECT ele_id FROM ${dbPrefix()}_formulize WHERE ele_handle = '${sqlEscape(handle)}'`)[0][0];
+}
+
+/**
+ * Open the Artifact origins map screen (015), found by its handle, and wait for its pins to stop moving.
+ * @param {import('@playwright/test').Page} page
+ */
+export async function openArtifactOriginsMap(page) {
+	const sid = dbQuery(`SELECT sid FROM ${dbPrefix()}_formulize_screen WHERE screen_handle = 'artifact_origins'`)[0][0];
+	await page.goto(`/modules/formulize/index.php?sid=${sid}`);
+	await waitForMapToSettle(page);
+}
+
+/**
+ * Search the Artifact origins map by short name, the way a person does: type in the box and press Enter, which
+ * reloads the screen.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} term
+ */
+export async function searchArtifactOriginsMap(page, term) {
+	const box = page.locator('input[name^="search_"]').first();
+	await box.fill(term);
+	await Promise.all([page.waitForEvent('load'), box.press('Enter')]);
+	await waitForMapToSettle(page);
+}
+
+/**
+ * The map fits itself to its pins once the page is shown, which moves every pin, so wait until the first pin stays
+ * where it is before anything is clicked.
+ * @param {import('@playwright/test').Page} page
+ */
+async function waitForMapToSettle(page) {
+	await expect(page.locator('.leaflet-container')).toBeVisible();
+	const pin = page.locator('img.leaflet-marker-icon').first();
+	await expect(pin).toBeVisible();
+	let last = null;
+	await expect.poll(async () => {
+		const box = await pin.boundingBox();
+		const where = box ? `${Math.round(box.x)},${Math.round(box.y)}` : '';
+		const settled = where !== '' && where === last;
+		last = where;
+		return settled;
+	}, { intervals: [500], timeout: 20000 }).toBe(true);
+}
+
+// The artifacts 020 gives a place of origin. Validate specs that copy an artifact add pins of their own, so the
+// map is checked for these rather than for a count.
+export const ARTIFACTS_WITH_ORIGINS = ['Roman Coin', 'Persian necklace', 'Chinese Sword', 'Egyptian Chariot', 'Babylonian Spoon',
+	'Florentine Book', 'French Musket', 'Japanese Coin', 'American Bicycle', 'Polynesian Canoe', 'Viking Silver Armband'];
+
+/**
+ * What the Artifact origins map shows: a pin for each of the artifacts 020 gave a place of origin, and the Roman
+ * coin's popup with its name and description.
+ * @param {import('@playwright/test').Page} page
+ */
+export async function expectArtifactOriginsMap(page) {
+	for (const name of ARTIFACTS_WITH_ORIGINS) {
+		await expect(page.locator(`img.leaflet-marker-icon[title="${name}"]`)).toHaveCount(1);
+	}
+	await page.locator('img.leaflet-marker-icon[title="Roman Coin"]').click();
+	await expect(page.locator('.leaflet-popup-content')).toContainText('Roman Coin');
+	await expect(page.locator('.leaflet-popup-content')).toContainText('A very lovely Roman Coin.');
+}
+
+/**
+ * Load one of the current user's saved views from the list's view menu, which reloads the list with it.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} name
+ */
+export async function loadSavedView(page, name) {
+	await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
+	const views = page.locator('select[name="currentview"]');
+	const value = await views.locator('option', { hasText: name }).first().getAttribute('value');
+	await Promise.all([page.waitForEvent('load'), views.selectOption(value)]);
+	await expect(page.locator('select[name="currentview"] option:checked')).toHaveText(new RegExp(name));
+}
+
+/**
+ * What the "Coins by name" saved view (020) shows: the two coins, by name, with its search in the Short name box.
+ * @param {import('@playwright/test').Page} page
+ */
+export async function expectCoinsByName(page) {
+	const rows = page.getByRole('row', { name: 'Check this box to select/unselect this entry.' });
+	await expect(rows).toHaveCount(2);
+	await expect(rows.nth(0)).toContainText('Japanese Coin');
+	await expect(rows.nth(1)).toContainText('Roman Coin');
+	await expect(page.locator('input[name^="search_"]').filter({ has: page.locator('xpath=self::*[@value="coin"]') })).toHaveCount(1);
+}
+
+/**
+ * What the "Artifact origins list" saved view (020) shows: Latitude and Longitude columns, with the Roman coin's
+ * place of origin.
+ * @param {import('@playwright/test').Page} page
+ */
+export async function expectArtifactOriginsList(page) {
+	await expect(page.getByRole('link', { name: 'Latitude' })).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Longitude' })).toBeVisible();
+	await expect(page.getByRole('row', { name: /Roman Coin/ })).toContainText('41.9028');
 }

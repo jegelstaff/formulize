@@ -17,7 +17,8 @@ behaviour. CI runs them *before* the e2e suite, since they have nothing to wait 
   out from the declaration in `xoops_version.php` and each element type's `$eleValueReferences`, against an
   in-memory stand-in for the database. Covers the usage report and the clean up after a deletion, a rename
   changing only the positions declared to hold a reference (never a condition's term or a search value),
-  old handles becoming ids, and tokens and notification tags being renamed.
+  old handles becoming ids, tokens and notification tags being renamed, a column declared more than once
+  (a list screen column's element and the {handle} token in its search), and code that is only reported.
 * `blocked_extensions_sync_test.php` - the list of never-executable script extensions, written out in
   `BLOCKED_EXTENSIONS`, `uploads/.htaccess`, the fallback copy in `uploads_execution_probe.php` and the copy
   in `docs/uploads_not_executable.md`, is the same set everywhere. Fails if any copy drifts from the constant.
@@ -29,8 +30,10 @@ them *after* the e2e suite, when the setup specs have finished building the muse
   actually changes, across every screen, element, saved view and form on the system. Where the museum
   system has no example of a given kind of reference (map screens, calendars, saved views with searches
   and calculations, dynamic default values), it builds fixtures and cleans them up for real, inside a
-  transaction it rolls back. It asserts invariants rather than counts, so adding screens or elements to
-  the setup suite does not break it.
+  transaction it rolls back. Some fixtures are written out by hand rather than from the declaration, so a
+  reference the declaration misses fails here too. It also renames in screens' own template files and the
+  notification mail templates, on files it writes and removes. It asserts invariants rather than counts, so
+  adding screens or elements to the setup suite does not break it.
 * `saved_views_test.php` - a saved view written, read back by id and by name, changed and deleted through
   `formulizeSavedViewsHandler`. Saved views hold several lists tied to each other only by position, and
   names people typed, so the checks are that everything survives the trip verbatim and in step. Also

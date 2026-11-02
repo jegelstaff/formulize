@@ -55,7 +55,7 @@ jobs:
         cache: 'npm'
         cache-dependency-path: tests/e2e/package-lock.json
 
-    # themes/Lyris: the appearance specs (formulize-core/03-appearance) save looks, which the web server writes
+    # themes/Lyris: the appearance specs (formulize-core/04-appearance) save looks, which the web server writes
     # to themes/Lyris/appearance, a folder it makes the first time.
     - name: Set file/directory permissions
       run: |
@@ -119,11 +119,18 @@ jobs:
       run: npx playwright test formulize-core/02-validate --workers=4 --fully-parallel
       working-directory: tests/e2e
 
+    # After the validate specs, and on one worker: these change things the museum system shares - renaming the
+    # elements its screens, views and notifications use - check the system still works, and put them back.
+    - name: Run Playwright validation tests that change the system (sequential)
+      if: ${{ !inputs.test_filter }}
+      run: npx playwright test formulize-core/03-validate-sequential --workers=1
+      working-directory: tests/e2e
+
     # After the validate specs, and on one worker: the appearance specs switch the whole site to Lyris while
     # they run, and put it back when they're done.
     - name: Run Playwright appearance tests (sequential)
       if: ${{ !inputs.test_filter }}
-      run: npx playwright test formulize-core/03-appearance --workers=1
+      run: npx playwright test formulize-core/04-appearance --workers=1
       working-directory: tests/e2e
 
     # This one runs after the suite rather than before it, unlike the PHP tests above: it checks what
