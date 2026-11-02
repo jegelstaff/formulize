@@ -204,7 +204,7 @@ function populatePrimaryRelationship($deleteInvalidLinks) {
 		if(!is_array($ele_value) OR !isset($ele_value[2]) OR !is_string($ele_value[2]) OR !strstr($ele_value[2], "#*=:*")) {
 			continue; // matched the LIKE on some other part of the serialized value, so there is no link here
 		}
-		$boxproperties = explode("#*=:*", $ele_value[2]);
+		$boxproperties = formulize_linkedSourceParts($ele_value[2]);
 		$sourceElementHandle = isset($boxproperties[1]) ? $boxproperties[1] : '';
 		if($sourceElementHandle === '') { continue; }
 		$sourceFormLookup = "SELECT id_form, ele_id FROM ".$xoopsDB->prefix('formulize')." WHERE ele_handle = '".formulize_db_escape($sourceElementHandle)."'";
@@ -591,7 +591,7 @@ function makeNewConnectionElement($type, $fid, $otherElementId) {
 				$element->setVar('ele_value', array(
 					0 => 1,
 					1 => 0,
-					2 => $otherForm->getVar('fid')."#*=:*".$otherElement->getVar('ele_handle'),
+					2 => formulize_linkedSourceString($otherForm->getVar('fid'), $otherElement),
 					8 => 0
 				));
 				$element->setVar('ele_type', 'selectLinked');
@@ -602,7 +602,7 @@ function makeNewConnectionElement($type, $fid, $otherElementId) {
 				$element->setVar('ele_value', array(
 					0 => 1,
 					1 => 0,
-					2 => $otherForm->getVar('fid')."#*=:*".$otherElement->getVar('ele_handle'),
+					2 => formulize_linkedSourceString($otherForm->getVar('fid'), $otherElement),
 					8 => 1
 				));
 				$element->setVar('ele_type', 'autocompleteLinked');
@@ -613,7 +613,7 @@ function makeNewConnectionElement($type, $fid, $otherElementId) {
 				$element->setVar('ele_value', array(
 					0 => 1,
 					1 => 1,
-					2 => $otherForm->getVar('fid')."#*=:*".$otherElement->getVar('ele_handle'),
+					2 => formulize_linkedSourceString($otherForm->getVar('fid'), $otherElement),
 					8 => 1
 				));
 				$element->setVar('ele_type', 'autocompleteLinked');
@@ -621,7 +621,7 @@ function makeNewConnectionElement($type, $fid, $otherElementId) {
 				break;
 			case 'new-linked-checkboxes':
 				$element->isLinked = true;
-				$element->setVar('ele_value', array(2 => $otherForm->getVar('fid')."#*=:*".$otherElement->getVar('ele_handle')));
+				$element->setVar('ele_value', array(2 => formulize_linkedSourceString($otherForm->getVar('fid'), $otherElement)));
 				$element->setVar('ele_type', 'checkboxLinked');
 				$fieldDataType = 'text';
 				break;

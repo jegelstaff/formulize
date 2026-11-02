@@ -3391,7 +3391,7 @@ function convertRawValuesToRealValues($value, $handle, $returnFlat=false) {
 	foreach($value as $thisValue) {
 		if($isLinkedSelectBox) {
 			// convert the pointers for the linked selectbox values, to their source values
-			$sourceMeta = explode("#*=:*", $linkedMetaData[2]);
+			$sourceMeta = formulize_linkedSourceParts($linkedMetaData[2]);
 			$data_handler = new formulizeDataHandler($sourceMeta[0]);
 			$realValues = $data_handler->findAllValuesForEntries($sourceMeta[1], explode(",",trim($thisValue, ",")), true); // trim opening and closing commas and split by comma into an array, final true causes values to be prepped for display to users
 			// findAllValuesForEntries method returns an array, so convert to a single value

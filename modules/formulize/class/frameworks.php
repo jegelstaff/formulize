@@ -272,7 +272,7 @@ class formulizeFrameworkLink extends XoopsObject {
                 // if this is the right element, then proceed and get the source of the link
                 if ($ele_id == $rowlinksq[2]) {
                     $ele_value = $e->getVar('ele_value');
-                    $details = explode("#*=:*", $ele_value[2]);
+                    $details = formulize_linkedSourceParts($ele_value[2]);
                     $source_form_ids[] = $details[0];
 
                     //get the element ID for the source we've just found

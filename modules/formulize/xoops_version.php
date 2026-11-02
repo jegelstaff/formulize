@@ -127,10 +127,14 @@ $modversion['formulize_exportable_tables'] = array(
 // declared on its handler, as a static $eleValueReferences.
 //
 // For each table: its key column, the usage report heading and how a row is named, and each column that can
-// refer to an element - the shape of what is stored, whether it holds an id, a handle or either, and what a
-// deletion does with it. Records are left out even where they mention an element - logs, people's "Other"
-// answers, digest content - since they are a history of what happened rather than settings, and so is anything
-// holding arbitrary values, like tokens and passcodes.
+// refer to an element - the shape of what is stored, what it holds, and what a deletion does with it. 'holds'
+// is 'id' where only ids have ever been stored, 'handle' where Formulize saves handles, and 'either' where it
+// now saves ids but older settings can still hold handles - a rename writes the element's id there, so the
+// setting ends up the way a save would leave it today.
+//
+// Records are left out even where they mention an element - logs, people's "Other" answers, digest content -
+// since they are a history of what happened rather than settings, and so is anything holding arbitrary values,
+// like tokens and passcodes.
 //
 // The tables are listed in the order the usage report reads, screens first.
 $modversion['formulize_element_references'] = array(
@@ -144,8 +148,6 @@ $modversion['formulize_element_references'] = array(
 			'datasets' => array('shape' => 'property', 'class' => 'formulizeCalendarScreenDataset', 'class_file' => 'calendarScreen.php',
 				'property' => 'datehandle', 'holds' => 'either', 'on_delete' => 'set', 'set_to' => '',
 				'describe' => 'the date the entries are placed on, which the screen cannot be drawn without'),
-			'toptemplate' => array('shape' => 'code'),
-			'bottomtemplate' => array('shape' => 'code'),
 		),
 	),
 
@@ -276,9 +278,9 @@ $modversion['formulize_element_references'] = array(
 			// a column can carry the hidden column prefix, when it was only included for a persistent search on it.
 			// The searches line up with the columns by position, so they lose the same positions.
 			'sv_oldcols' => array('shape' => 'list', 'delimiter' => ',', 'prefix' => 'formulizeSavedViewsHandler::HIDDEN_COLUMN_PREFIX',
-				'holds' => 'handle', 'parallel' => array('sv_quicksearches' => 'formulizeSavedViewsHandler::SEARCH_DELIMITER'),
+				'holds' => 'either', 'parallel' => array('sv_quicksearches' => 'formulizeSavedViewsHandler::SEARCH_DELIMITER'),
 				'on_delete' => 'remove', 'describe' => 'a column'),
-			'sv_sort' => array('shape' => 'value', 'holds' => 'handle', 'on_delete' => 'set', 'set_to' => '',
+			'sv_sort' => array('shape' => 'value', 'holds' => 'either', 'on_delete' => 'set', 'set_to' => '',
 				'describe' => 'the column it is sorted by'),
 			// the calculations name their columns by id, and three settings run parallel to them
 			'sv_calc_cols' => array('shape' => 'list', 'delimiter' => 'formulizeSavedViewsHandler::CALCULATION_DELIMITER', 'holds' => 'id',

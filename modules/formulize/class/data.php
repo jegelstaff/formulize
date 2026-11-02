@@ -155,7 +155,7 @@ class formulizeDataHandler {
 				$element_handler = xoops_getmodulehandler('elements', 'formulize');
 				$elementObject = $element_handler->get($elementId); // gets the element from the old form, that the user just clicked on to make a copy of
 				$ele_value = $elementObject->getVar('ele_value');
-				$boxproperties = explode("#*=:*", $ele_value[2]); // split the linked selectbox properties into target fid and target element handle
+				$boxproperties = formulize_linkedSourceParts($ele_value[2]); // split the linked selectbox properties into target fid and target element handle
 				$lines = file_get_contents(XOOPS_ROOT_PATH."/cache/formulize_clonedFormMaps_".$boxproperties[0]."_to_".$targetForm); // read the cached info about the cloning of the target form that happened in the past
         list($targetHandleMap, $targetEntryMap) = explode("\r\n", $lines); // get the mapping info about that cloning
 				$targetHandleMap = unserialize($targetHandleMap);
@@ -163,7 +163,7 @@ class formulizeDataHandler {
 				// get the corresponding element to this linked selectbox, from the form we just created in the cloning process
 				$newElement = $element_handler->get($map[$elementObject->getVar('ele_handle')]);
 				$newEleValue = $newElement->getVar('ele_value');
-				$newEleValue[2] = $targetForm."#*=:*".$targetHandleMap[$boxproperties[1]]; // change the element pointer
+				$newEleValue[2] = formulize_linkedSourceString($targetForm, $targetHandleMap[$boxproperties[1]]); // change the element pointer
 				$newElement->setVar('ele_value', $newEleValue);
 				if(!$element_handler->insert($newElement)) { // update the element properties in the database
 					print "Error: could not relink linked selectbox element ".$map[$elementObject->getVar('ele_handle')]." to the selected new target form.<br>";

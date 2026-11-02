@@ -2148,7 +2148,7 @@ function formulize_resolveEleType($type, $knownTypes) {
 function getSourceFormAndElementForLinkedElement($elementObject) {
 	if(is_a($elementObject, 'formulizeElement') AND $elementObject->isLinked) {
 		$ele_value = $elementObject->getVar('ele_value');
-		list($form_id, $element_handle) = explode("#*=:*", $ele_value[2]);
+		list($form_id, $element_handle) = formulize_linkedSourceParts($ele_value[2]);
 		if($form_id AND $element_handle) {
 			return array(intval($form_id), $element_handle);
 		}

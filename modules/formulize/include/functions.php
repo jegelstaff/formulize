@@ -4021,7 +4021,7 @@ function getLinkedOptionsSourceForm($elementIdentifier) {
 	}
 	if($element->isLinked) {
 		$ele_value = $element->getVar('ele_value');
-		$linkProperties = explode("#*=:*",$ele_value[2]);
+		$linkProperties = formulize_linkedSourceParts($ele_value[2]);
 		return array($linkProperties[0], $linkProperties[1]); // id of the source form for the element's options
 	}
   return false;
@@ -4421,6 +4421,7 @@ function createFieldList($val, $textbox=false, $limitToForm=0, $name="", $firstV
                 // if this is the selected entry
                 if ($val == $totalvaluelist[$captionlistindex] OR
                     $val == $rowformlist[0] . "#*=:*" . $rowfieldnames[2] OR
+                    $val == formulize_linkedSourceString($rowformlist[0], $rowfieldnames[1]) OR
                     (is_numeric($val) AND $val == $rowfieldnames[1])
                     ) {
                     $defaultlinkselection = $captionlistindex;
@@ -4922,7 +4923,7 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
         // linking based on a shared value.  in the case of one to one forms assumption is that the shared value does not appear more than once in either form's field (otherwise this will be a defacto one to many link)
         // else we're looking at a classic "shared value" which is really a linked selectbox
         $startEleValue = $startElement->getVar('ele_value');
-				$startEleValueParts = (is_string($startEleValue[2]) AND strstr($startEleValue[2], "#*=:*")) ? explode("#*=:*", $startEleValue[2]) : array();
+				$startEleValueParts = (is_string($startEleValue[2]) AND strstr($startEleValue[2], "#*=:*")) ? formulize_linkedSourceParts($startEleValue[2]) : array();
         // option 2, start form is the linked selectbox that points to the form in question
         if (count((array) $startEleValueParts)>0 AND $startEleValueParts[0] == $targetForm['fid']) {
             // so look in the startEntry for the values in its linked field and return them.  They will be a comma separated list of entry ids in the target form.
@@ -5614,7 +5615,7 @@ function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $rei
             $element_handler =& xoops_getmodulehandler('elements', 'formulize');
             $elementObject = $element_handler->get(intval($thiscon['not_cons_linkcreator']));
             // key 0 will be the form id that is the source for the values in this linked selectbox
-            $linkProperties = explode("#*=:*", $elementObject->getVar('ele_value'));
+            $linkProperties = formulize_linkedSourceParts($elementObject->getVar('ele_value'));
             $data_handler2 = new formulizeDataHandler($linkProperties[0]);
             $uids_temp = $data_handler2->getAllUsersForEntries($entry_ids);
             if (count((array) $uids_temp) > 0) {
@@ -5985,7 +5986,7 @@ function writeElementValue($formframe, $elementIdentifier, $entry, $value, $appe
 
     if (is_string($ele_value[2]) AND $foundit = strstr($ele_value[2], "#*=:*") AND !$lvoverride AND !$ele_value['snapshot']) {
         // completely rejig things for a linked selectbox
-        $boxproperties = explode("#*=:*", $ele_value[2]);
+        $boxproperties = formulize_linkedSourceParts($ele_value[2]);
         // NOTE:
         // boxproperties[0] is fid, 1 is the handle
         if (!is_array($value)) {
@@ -6012,7 +6013,7 @@ function writeElementValue($formframe, $elementIdentifier, $entry, $value, $appe
         if (is_object($sourceElement)) {
             $sourceEleValue = $sourceElement->getVar('ele_value');
             if (strstr($sourceEleValue[2], "#*=:*") AND !$sourceEleValue['snapshot']) {
-                $sourceParts = explode("#*=:*", $sourceEleValue[2]);
+                $sourceParts = formulize_linkedSourceParts($sourceEleValue[2]);
                 $sourceFormObject = $form_handler->get($sourceParts[0]);
                 $linkQueryResult = q("SELECT `entry_id` FROM " . $xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle')) . " WHERE `".$sourceParts[1]."` = '".implode("' OR `".$sourceParts[1]."` = '", $searchForValues) . "'");
                 unset($searchForValues);
@@ -6332,7 +6333,7 @@ function synchExistingSubformEntries($frid) {
                                     // check to see if the element we're writing to is linked and not snapshot, and pointing to the same form that a dynamic reference belongs to, if so use the mainform entry id
                                     // (only linked elements have link properties - in other list elements, ele_value[2] is the array of options)
                                     $conditionElementEleValue = $conditionElementObject->getVar('ele_value');
-                                    if($conditionElementObject->isLinked AND !($conditionElementEleValue['snapshot'] ?? 0) AND $dynamicRefElement->getVar('id_form') == explode("#*=:*", (string) $conditionElementEleValue[2])[0]) {
+                                    if($conditionElementObject->isLinked AND !($conditionElementEleValue['snapshot'] ?? 0) AND $dynamicRefElement->getVar('id_form') == formulize_linkedSourceParts((string) $conditionElementEleValue[2])[0]) {
                                         $filterValues[$conditionElementObject->getVar('ele_id')] = $entry_id;
                                     } else {
                                         $filterValues[$conditionElementObject->getVar('ele_id')] = prepareLiteralTextForDB($conditionElementObject, $syncCondition['term'], $entry_id);
@@ -6917,7 +6918,7 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
 					// if the $options is from a linked selectbox, then figure that out and gather the possible values
 					// only linked selectboxes have this string in their options field
 					if (is_string($options) AND strstr($options, "#*=:*")) {
-							$boxproperties = explode("#*=:*", $options);
+							$boxproperties = formulize_linkedSourceParts($options);
 							$source_form_id = $boxproperties[0];
 							$source_element_handle = $boxproperties[1];
 
@@ -6935,7 +6936,7 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
 									$linkedSourceElementObject = $element_handler->get($linked_ele_id);
 									$linkedSourceElementEleValue = $linkedSourceElementObject->getVar('ele_value');
 									// first part will be the form id of the source form, second part will be the element handle in that form
-									$linkedSourceElementEleValueParts = explode("#*=:*", $linkedSourceElementEleValue[2]);
+									$linkedSourceElementEleValueParts = formulize_linkedSourceParts($linkedSourceElementEleValue[2]);
 									$linkedFormObject = $form_handler->get($linkedSourceElementEleValueParts[0]);
 									$limitConditionTable = ", ".$xoopsDB->prefix("formulize_".$linkedFormObject->getVar('form_handle'))." as t2 ";
 									$limitConditionWhere = " WHERE t1.`$linked_ele_id` LIKE CONCAT('%',t2.entry_id,'%') AND t2.`".$linkedSourceElementEleValueParts[1]."` LIKE '%".formulize_db_escape($_POST[$linked_data_id])."%'";
@@ -8712,7 +8713,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 		// ie: left side is linked to something else
 		// check for whether the source element is a linked element, and if so, figure out the entry id of the record in the source of that linked selectbox which matches the filter term instead
     } elseif (!isMetaDataField($filterElementIds[$filterId]) AND $targetElementObject->isLinked AND !$targetElementEleValue['snapshot']) {
-				$targetElementEleValueProperties = explode("#*=:*", $targetElementEleValue[2]); // split them up to get the properties of the linked selectbox that the source element is pointing at
+				$targetElementEleValueProperties = formulize_linkedSourceParts($targetElementEleValue[2]); // split them up to get the properties of the linked selectbox that the source element is pointing at
 				$targetSourceFid = $targetElementEleValueProperties[0]; // get the Fid that the source element is point at (the source of the source)
 				$targetSourceFormObject = $form_handler->get($targetSourceFid); // get the form object based on that fid (we'll need the form handle later)
 				$targetSourceHandle = $targetElementEleValueProperties[1]; // get the element handle in the source source form
@@ -8776,7 +8777,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 						$curlyBracketElementObject = $element_handler->get($bareFilterTerm);
 						if ($curlyBracketElementObject->isLinked) {
 								$curlyBracketTargetElementEleValue = $curlyBracketElementObject->getVar('ele_value');
-								$curlyBracketTargetElementEleValueProperties = explode("#*=:*", $curlyBracketTargetElementEleValue[2]);
+								$curlyBracketTargetElementEleValueProperties = formulize_linkedSourceParts($curlyBracketTargetElementEleValue[2]);
 								$curlyBracketTargetSourceFid = $curlyBracketTargetElementEleValueProperties[0];
 								if ($curlyBracketTargetSourceFid == $targetSourceFid) {
 									// a. the right value contains multiple, linked values, that point to the same source as the left side, which accepts multiple values. So we must compare against each possibility, if the match is not exact (ie: if it's LIKE or NOT LIKE)
@@ -8863,7 +8864,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 				$curlyBracketElementObject = $element_handler->get($bareFilterTerm);
 				if ($curlyBracketElementObject->isLinked) {
 					$curlyBracketTargetElementEleValue = $curlyBracketElementObject->getVar('ele_value');
-					$curlyBracketTargetElementEleValueProperties = explode("#*=:*", $curlyBracketTargetElementEleValue[2]);
+					$curlyBracketTargetElementEleValueProperties = formulize_linkedSourceParts($curlyBracketTargetElementEleValue[2]);
 					$curlyBracketTargetElementLinkedSourceElementObject = $element_handler->get($curlyBracketTargetElementEleValueProperties[1]);
 					if($curlyBracketTargetElementLinkedSourceElementObject AND $curlyBracketTargetElementLinkedSourceElementObject->getVar('ele_id') == $filterElementIds[$filterId] AND $curlyBracketTargetElementEleValue['snapshot'] != 1) {
 							$dataHandler = new formulizeDataHandler($curlyBracketTargetElementEleValueProperties[0]);
@@ -9873,7 +9874,7 @@ function formulize_makeOneToOneLinks($frid, $fid) {
                     $element_handler = xoops_getmodulehandler('elements', 'formulize');
                     $linkedElement1 = $element_handler->get($key1);
                     $linkedElement1EleValue = $linkedElement1->getVar('ele_value');
-                    $linkedElement1EleValueParts = strstr($linkedElement1EleValue[2], "#*=:*") ? explode("#*=:*", $linkedElement1EleValue[2]) : array();
+                    $linkedElement1EleValueParts = strstr($linkedElement1EleValue[2], "#*=:*") ? formulize_linkedSourceParts($linkedElement1EleValue[2]) : array();
                     if(count((array) $linkedElement1EleValueParts)>0 AND $linkedElement1EleValueParts[0] == $form2) {
 												// element 1 is the linked selectbox, so get the value of entry id for what we just created in form 2, and put it in element 1
 												$linkedValueToWrite = isset($GLOBALS['formulize_newEntryIds'][$form2][0]) ? $GLOBALS['formulize_newEntryIds'][$form2][0] : "";
@@ -10411,7 +10412,7 @@ function getFilterValuesForEntry($subformConditions, $curlyBracketEntryid=null) 
 									$conditionElementEleValue = $conditionElementObject->getVar('ele_value');
 									if($conditionElementObject->isLinked AND (!isset($conditionElementEleValue['snapshot']) OR !$conditionElementEleValue['snapshot']) AND substr($subformConditions[2][$i],0,1) == "{" AND substr($subformConditions[2][$i],-1)=="}" AND $curlyBracketEntryid) {
 											$ele_value = $conditionElementObject->getVar('ele_value');
-											$linkProperties = explode("#*=:*", $ele_value[2]);
+											$linkProperties = formulize_linkedSourceParts($ele_value[2]);
 											$sourceFid = $linkProperties[0];
 											if($dynamicElement = $element_handler->get($curlyBracketTerm)) {
 													if($dynamicElement->getVar('id_form') == $sourceFid) {
@@ -12784,7 +12785,7 @@ function sourceHandleForElement($elementIdentifier) {
 			AND is_string($ele_value[2])
 			AND strstr($ele_value[2], "#*=:*")
 			AND (!isset($ele_value['snapshot']) OR !$ele_value['snapshot'])) {
-        $boxproperties = explode("#*=:*", $ele_value[2]);
+        $boxproperties = formulize_linkedSourceParts($ele_value[2]);
         $element_handler = xoops_getmodulehandler('elements','formulize');
         if($sourceElement = $element_handler->get($boxproperties[1])) {
         	$sourceHandle = $sourceElement->getVar('ele_handle');
@@ -14371,3 +14372,4 @@ function formulize_noPermissionMessage($message = '', $loginUrl = '') {
 // functions.php is split into files of related functions, in include/functions, which are all
 // required here. They are part of this file, and nothing else should include them directly.
 require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions/pwa.php';
+require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions/linked_sources.php';

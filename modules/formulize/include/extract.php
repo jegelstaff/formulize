@@ -448,7 +448,7 @@ function convertForeignKeysToReadableValuesUncached($value, $handle, $entry_id) 
 					foreach ($sourceColumnHandles as $key => $sourceColumnHandle) {
 						// check if this is a link to a link
 						if ($second_source_ele_value = formulize_isLinkedElement($sourceColumnHandle)) {
-							$secondSourceMeta = explode("#*=:*", $second_source_ele_value[2]);
+							$secondSourceMeta = formulize_linkedSourceParts($second_source_ele_value[2]);
 							$secondFormObject = $form_handler->get($secondSourceMeta[0]);
 							$sql = "SELECT t1.`" . $secondSourceMeta[1] . "`, t1.entry_id FROM " . DBPRE . "formulize_" . $secondFormObject->getVar('form_handle') .
 								" as t1, " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " as t2 WHERE t2.`entry_id` = $value
@@ -623,7 +623,7 @@ function formulize_preresolveForeignKeyValues($handle, $rawValues) {
  */
 function formulize_linkedElementSourceColumns($source_ele_value) {
 
-	$sourceMeta = explode("#*=:*", $source_ele_value[2]); // [0] will be the fid of the form we're after, [1] is the handle of that element
+	$sourceMeta = formulize_linkedSourceParts($source_ele_value[2]); // [0] will be the fid of the form we're after, [1] is the handle of that element
 	if (!isset($sourceMeta[1]) OR !$sourceMeta[1]) {
 		return false;
 	}
@@ -1382,7 +1382,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 					$sortFieldFullValue = "AES_DECRYPT($sortFidAlias.`$sortField`, '" . getAESPassword() . "')"; // sorts as text, which will screw up number fields
 				} elseif (formulize_isLinkedElement($sortField)) {
 					$ele_value = unserialize($sortFieldMetaData['ele_value']);
-					$boxproperties = explode("#*=:*", $ele_value[2]);
+					$boxproperties = formulize_linkedSourceParts($ele_value[2]);
 					$target_fid = $boxproperties[0];
 					$target_element_handle = $boxproperties[1];
 					$form_handler = xoops_getmodulehandler('forms', 'formulize');
@@ -1822,10 +1822,10 @@ function formulize_generateJoinSQL($linkOrdinal, $formAliasId, $linkcommonvalue,
 	$mainBoxProperties = array('', '');
 	$targetBoxProperties = array('', '');
 	if ($main_ele_value = formulize_isLinkedElement($linkselfids[$linkOrdinal])) {
-		$mainBoxProperties = explode("#*=:*", $main_ele_value[2]);
+		$mainBoxProperties = formulize_linkedSourceParts($main_ele_value[2]);
 	}
 	if ($target_ele_value = formulize_isLinkedElement($linktargetids[$linkOrdinal])) {
-		$targetBoxProperties = explode("#*=:*", $target_ele_value[2]);
+		$targetBoxProperties = formulize_linkedSourceParts($target_ele_value[2]);
 	}
 
 	if ($linkcommonvalue[$linkOrdinal]) { // common value
@@ -1912,12 +1912,12 @@ function formulize_generateJoinSQL($linkOrdinal, $formAliasId, $linkcommonvalue,
  */
 function makeJoinTextIfFormLinksToIntermediary($ele_value, $linkSideElementHandle, $otherSideElementHandle, $subQueryAlias,$entryIdAlias) {
 	$subquery = "";
-	$linkEleValueParts = explode("#*=:*", $ele_value[2]);
+	$linkEleValueParts = formulize_linkedSourceParts($ele_value[2]);
 	if($linkEleValueParts[1] != $otherSideElementHandle) { // not pointing directly at other element in connection, so check if it's pointing at an intermediary that is a single value link ultimately pointing to the other element in the connection
 		$twoStepEleValue = formulize_isLinkedElement($linkEleValueParts[1]);
 		$metaData = formulize_getElementMetaData($linkEleValueParts[1], isHandle: true);
 		if($twoStepEleValue AND $metaData['ele_type'] != 'checkboxLinked' AND !$twoStepEleValue[1]) { // it's linked to a linked element, that is not a multiselect (have to check key 1 - select element multiple values allowed - last after checking checkbox type, so we know we're looking at a selectbox type)
-			$twoStepEleValueParts = explode("#*=:*", $twoStepEleValue[2]);
+			$twoStepEleValueParts = formulize_linkedSourceParts($twoStepEleValue[2]);
 			if($otherSideElementObject = _getElementObject($otherSideElementHandle) AND $twoStepEleValueParts[0] == $otherSideElementObject->getVar('fid')) { // it's a two step link, that points back to the other form
 				$form_handler = xoops_getmodulehandler('forms', 'formulize');
 				$intermediaryFormObject = $form_handler->get($linkEleValueParts[0]);
@@ -3380,7 +3380,7 @@ function formulize_resolveLinkedElementCached($elementIdOrHandle) {
 	if (!$linkedEleValue = formulize_isLinkedElement($elementIdOrHandle)) {
 		return false;
 	}
-	list($sourceFormId, $sourceElementHandle) = explode("#*=:*", $linkedEleValue[2]);
+	list($sourceFormId, $sourceElementHandle) = formulize_linkedSourceParts($linkedEleValue[2]);
 	if (!$sourceFormId OR !$sourceElementHandle) {
 		return false;
 	}
@@ -3692,7 +3692,7 @@ function formulize_mapFormFieldFilter($element_id, $formFieldFilterMap)
 		$ele_value = $array['ele_value']; // raw value
 		if (strstr($array['ele_value'], "#*=:*")) {
 			$ele_value = unserialize($array['ele_value']); // in this case we know we need to unserialize
-			$formFieldFilterMap[$array['id_form']][$element_id]['islinked'] = (!isset($ele_value['snapshot']) or !$ele_value['snapshot']) ? explode("#*=:*", $ele_value[2]) : false; // put an array of the source form id and source handle into the "islinked" flag
+			$formFieldFilterMap[$array['id_form']][$element_id]['islinked'] = (!isset($ele_value['snapshot']) or !$ele_value['snapshot']) ? formulize_linkedSourceParts($ele_value[2]) : false; // put an array of the source form id and source handle into the "islinked" flag
 		} else {
 			$formFieldFilterMap[$array['id_form']][$element_id]['islinked'] = false;
 		}

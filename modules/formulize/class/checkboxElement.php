@@ -255,14 +255,14 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 					$sql_link = "SELECT ele_caption, id_form, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . intval($_POST['formlink']);
 					$res_link = $xoopsDB->query($sql_link);
 					$array_link = $xoopsDB->fetchArray($res_link);
-					$ele_value[2] = $array_link['id_form'] . "#*=:*" . $array_link['ele_handle'];
+					$ele_value[2] = formulize_linkedSourceString($array_link['id_form'], intval($_POST['formlink']));
 					// ensure there is a primary relationship link representing this connection / update existing connection
 					// Get existing linked settings, if any
 					$currentLinkedFormId = 0;
 					$currentLinkedElementId = 0;
 					$currentEleValue = $element->getVar('ele_value');
 					if($element->isLinked) {
-							$currentEleValue2Parts = explode('#*=:*', $currentEleValue[2]);
+							$currentEleValue2Parts = formulize_linkedSourceParts($currentEleValue[2]);
 							$currentLinkedFormId = $currentEleValue2Parts[0];
 							$currentLinkedElementId = convertElementHandlesToElementIds(array($currentEleValue2Parts[1]));
 							$currentLinkedElementId = $currentLinkedElementId[0];
@@ -330,7 +330,7 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 			} elseif($element->isLinked) {
 				// SNAPSHOT LOGIC, NOT IN EFFECT FOR CHECKBOXES PRESENTLY
 				// default is the literal value from the source, optionally with separator if multi
-				$linkMeta = explode('#*=:*', $ele_value[2]);
+				$linkMeta = formulize_linkedSourceParts($ele_value[2]);
 				$linkFormId = $linkMeta[0];
 				$linkElementId = $linkMeta[1];
 				$dataHandler = new formulizeDataHandler($linkFormId);
@@ -379,7 +379,7 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 		// we're comparing the output of these two lines against what is stored in the form specification, which does not have HTML escaped characters, and has extra slashes.  Assumption is that lack of HTML filtering is okay since only admins and trusted users have access to form creation.  Not good, but acceptable for now.
 
 		if($value AND !strstr($value, "*=+*:")) { // not a standard checkbox value, so it should be a set of comma separated element ids, represented linked options
-			$boxproperties = $boxproperties = explode("#*=:*", $ele_value[2]);
+			$boxproperties = formulize_linkedSourceParts($ele_value[2]);
 			$sourceFid = $boxproperties[0];
 			$sourceHandle = $boxproperties[1];
 			$ele_value[2] = $boxproperties[0] . "#*=:*" . $boxproperties[1] . "#*=:*" . implode(",",explode("*=+*:",trim($value, "*=+*:"))); // append the selected ids onto the end of the metadata for the linked options
@@ -457,7 +457,7 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 		$isLinked = false;
 		if(!is_array($element_ele_value[2]) AND strstr($element_ele_value[2], "#*=:*")) {
 			$isLinked = true;
-			$boxproperties = explode("#*=:*", $ele_value[2]);
+			$boxproperties = formulize_linkedSourceParts($ele_value[2]);
 			$sourceFid = $boxproperties[0];
 			$sourceHandle = $boxproperties[1];
 			$sourceEntryIds = explode(",", trim($boxproperties[2],","));

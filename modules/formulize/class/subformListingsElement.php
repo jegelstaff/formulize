@@ -929,7 +929,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             if(is_array($optionElementFilterConditions) AND count((array) $optionElementFilterConditions)>1) {
                 // if it's not a curly bracket value, then element name is the id, and value is the term
                 // if it is a curly bracket value, then element name is the curly bracket value, and value is the value that field has in the parent entry to this one we're about to create!
-                $optionElementEleValue2 = explode("#*=:*", $optionElementEleValue[2]);
+                $optionElementEleValue2 = formulize_linkedSourceParts($optionElementEleValue[2]);
                 $optionSourceFid = $optionElementEleValue2[0];
                 $filterElementHandles = convertElementIdsToElementHandles($optionElementFilterConditions[0], $optionSourceFid);
                 $filterElementIds = $optionElementFilterConditions[0];
@@ -1280,7 +1280,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             // if linked, go join to the source element
             if($sortTablePrefix == 'source') {
                 $sortEleValue = $sortElementObject->getVar('ele_value');
-                $sortEleValue2Parts = explode("#*=:*", $sortEleValue[2]);
+                $sortEleValue2Parts = formulize_linkedSourceParts($sortEleValue[2]);
                 $sourceFid = $sortEleValue2Parts[0];
                 $sourceHandle = $sortEleValue2Parts[1];
                 $sourceFormObject = $form_handler->get($sourceFid);

@@ -161,7 +161,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 	 * into an entry, which is a bigger decision than a deletion can make.
 	 */
 	public static $eleValueReferences = array(
-		ELE_VALUE_SELECT_OPTIONS => array('shape' => 'linked_source', 'holds' => 'handle', 'on_delete' => 'report',
+		ELE_VALUE_SELECT_OPTIONS => array('shape' => 'linked_source', 'holds' => 'either', 'on_delete' => 'report',
 			'describe' => 'the element its options come from, which it cannot work without - it needs a new source or it needs deleting'),
 		ELE_VALUE_SELECT_LINK_SORT => array('shape' => 'value', 'holds' => 'either', 'on_delete' => 'set', 'set_to' => 'none',
 			'describe' => 'the element its options are sorted by'),
@@ -302,7 +302,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 		$dependencies = array();
 		foreach($values as $key => $value) {
 			if($key == ELE_VALUE_SELECT_OPTIONS AND is_string($value)) {
-				$linkedMetaDataParts = explode("#*=:*", $value);
+				$linkedMetaDataParts = formulize_linkedSourceParts($value);
 				if(count($linkedMetaDataParts) == 2) {
 					$dependencies[] = trim($linkedMetaDataParts[1]);
 				}
@@ -390,7 +390,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 		$linkedSourceFid = 0;
 		$options['subformInterfaceAdminUrl'] = '';
 		if ($options['islinked']) {
-			$linkedMetaDataParts = explode("#*=:*", $ele_value[ELE_VALUE_SELECT_OPTIONS]);
+			$linkedMetaDataParts = formulize_linkedSourceParts($ele_value[ELE_VALUE_SELECT_OPTIONS]);
 			$linkedSourceFid = $linkedMetaDataParts[0];
 			if ($linkedSourceFid) {
 				// list of elements to display when showing this element in a list
@@ -558,13 +558,13 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 				$sql_link = "SELECT id_form, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . intval($_POST['formlink']);
 				$res_link = $xoopsDB->query($sql_link);
 				$array_link = $xoopsDB->fetchArray($res_link);
-				$ele_value[ELE_VALUE_SELECT_OPTIONS] = $array_link['id_form'] . "#*=:*" . $array_link['ele_handle'];
+				$ele_value[ELE_VALUE_SELECT_OPTIONS] = formulize_linkedSourceString($array_link['id_form'], intval($_POST['formlink']));
 				// ensure there is a primary relationship link representing this connection / update existing connection
 				// Get existing linked settings, if any
 				$currentLinkedFormId = 0;
 				$currentLinkedElementId = 0;
 				if($element->isLinked) {
-					$currentEleValue2Parts = explode('#*=:*', $currentEleValue[ELE_VALUE_SELECT_OPTIONS]);
+					$currentEleValue2Parts = formulize_linkedSourceParts($currentEleValue[ELE_VALUE_SELECT_OPTIONS]);
 					$currentLinkedFormId = $currentEleValue2Parts[0];
 					$currentLinkedElementId = convertElementHandlesToElementIds(array($currentEleValue2Parts[1]));
 					$currentLinkedElementId = $currentLinkedElementId[0];
@@ -673,7 +673,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 			$defaultTextToWrite = (is_array($defaultTextToWrite) AND count($defaultTextToWrite) > 0) ? ','.implode(',',$defaultTextToWrite).',' : $defaultTextToWrite;
 		} elseif($element->isLinked) {
 			// default is the literal value from the source, optionally with separator if multi
-			$linkMeta = explode('#*=:*', $thisDefaultEleValue[ELE_VALUE_SELECT_OPTIONS]);
+			$linkMeta = formulize_linkedSourceParts($thisDefaultEleValue[ELE_VALUE_SELECT_OPTIONS]);
 			$linkFormId = $linkMeta[0];
 			$linkElementId = $linkMeta[1];
 			$dataHandler = new formulizeDataHandler($linkFormId);
@@ -802,7 +802,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 		if(is_string($ele_value[ELE_VALUE_SELECT_OPTIONS]) and strstr($ele_value[ELE_VALUE_SELECT_OPTIONS], "#*=:*")) { // if we've got a link on our hands... -- jwe 7/29/04
 
 			// new process for handling links...May 10 2008...new datastructure for formulize 3.0
-			$boxproperties = explode("#*=:*", $ele_value[ELE_VALUE_SELECT_OPTIONS]);
+			$boxproperties = formulize_linkedSourceParts($ele_value[ELE_VALUE_SELECT_OPTIONS]);
 			$sourceFid = $boxproperties[0];
 			$sourceHandle = $boxproperties[1];
 			$sourceEntryIds = ($ele_value['snapshot'] == 0 AND strlen(trim($boxproperties[2],",")) > 0) ? explode(",", trim($boxproperties[2],",")) : array(); // if we snapshot values, then there are no entry ids
@@ -1538,7 +1538,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 
 				// if the element is linked...
 				if ($element->isLinked) {
-					$boxproperties = explode("#*=:*", $ele_value[ELE_VALUE_SELECT_OPTIONS]);
+					$boxproperties = formulize_linkedSourceParts($ele_value[ELE_VALUE_SELECT_OPTIONS]);
 					$sourceHandle = $boxproperties[1];
 					$needToWriteEntry = false;
 					$dataArrayToWrite[$sourceHandle] = $newValue;
@@ -1582,16 +1582,16 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 								$thisFormMappingElement = _getElementObject($thisMapping['thisForm']);
 								if($thisFormMappingElement->isLinked) {
 										$thisFormMappingElementEleValue = $thisFormMappingElement->getVar('ele_value');
-										$thisFormMappingElementLinkProperties = explode("#*=:*", $thisFormMappingElementEleValue[ELE_VALUE_SELECT_OPTIONS]); // returns array, first key is form id we're linked to, second key is element we're linked to
+										$thisFormMappingElementLinkProperties = formulize_linkedSourceParts($thisFormMappingElementEleValue[ELE_VALUE_SELECT_OPTIONS]); // returns array, first key is form id we're linked to, second key is element we're linked to
 										// and now go figure out if there's a second level link and we'll use that foreign key instead if the other element links directly there
 										if($linkToLinkElement = _getElementObject($thisFormMappingElementLinkProperties[1])) {
 											if($linkToLinkElement->isLinked) {
 												$linkToLinkEleValue = $linkToLinkElement->getVar('ele_value');
-												$linkToLinkProperties = explode("#*=:*", $linkToLinkEleValue[ELE_VALUE_SELECT_OPTIONS]);
+												$linkToLinkProperties = formulize_linkedSourceParts($linkToLinkEleValue[ELE_VALUE_SELECT_OPTIONS]);
 											}
 										}
 								}
-								$linkProperties = explode("#*=:*", $otherElementEleValue[ELE_VALUE_SELECT_OPTIONS]); // returns array, first key is form id we're linked to, second key is element we're linked to
+								$linkProperties = formulize_linkedSourceParts($otherElementEleValue[ELE_VALUE_SELECT_OPTIONS]); // returns array, first key is form id we're linked to, second key is element we're linked to
 								// check what we're supposed to do...use the value we have, lookup the linktolink value, or lookup the value in the source of the other form, based on the value we have
 								if($element->isLinked AND $linkProperties[0] == $thisFormMappingElementLinkProperties[0]) {
 									// two fields are pointing to the same source, so use the value we have...redundant but captured here for readability
@@ -1890,7 +1890,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 
 		// --- link into the source form of a linked selectbox ---
 		if(is_string($ele_value[ELE_VALUE_SELECT_OPTIONS]) AND strstr($ele_value[ELE_VALUE_SELECT_OPTIONS], "#*=:*")) {
-			$boxproperties = explode("#*=:*", $ele_value[ELE_VALUE_SELECT_OPTIONS]);
+			$boxproperties = formulize_linkedSourceParts($ele_value[ELE_VALUE_SELECT_OPTIONS]);
 			$target_fid = intval($boxproperties[0]);
 			if(!security_check($target_fid)) {
 				return $displayText; // no access to the target form -> plain text, no link

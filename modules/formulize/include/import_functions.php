@@ -176,7 +176,7 @@ function importCsvSetup(&$importSet, $pkColumn=false) {
 
                                 if (!is_array($options)) {
                                     if (strstr($options, "#*=:*")) {
-                                        $parts = explode("#*=:*", $options);
+                                        $parts = formulize_linkedSourceParts($options);
 
                                         $sql = "SELECT * FROM " . $xoopsDB->prefix("formulize") .
                                             " WHERE id_form='" . $parts[0] . "'" .

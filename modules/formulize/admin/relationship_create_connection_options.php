@@ -253,7 +253,7 @@ function getLinkedElementsAndSource($elementIdsArray) {
 		if($elementObject = $element_handler->get($elementId)) {
 			if($elementObject->isLinked AND $elementObject->canHaveMultipleValues == false) {
 				$ele_value = $elementObject->getVar('ele_value');
-				$boxproperties = explode("#*=:*", $ele_value[2]);
+				$boxproperties = formulize_linkedSourceParts($ele_value[2]);
       	$sourceFid = $boxproperties[0];
       	$sourceHandle = $boxproperties[1];
       	$linkedElementMetadata[$elementId] = array(

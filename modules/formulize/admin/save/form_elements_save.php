@@ -195,7 +195,7 @@ if($_POST['convertelement']) {
     $old_ele_value = $element->getVar('ele_value');
     if($element->isLinked) {
       // get all the source values, and make an array of those...ignore filters and so on
-      $boxproperties = explode("#*=:*", $old_ele_value[2]);
+      $boxproperties = formulize_linkedSourceParts($old_ele_value[2]);
       $sourceFid = $boxproperties[0];
       $sourceHandle = $boxproperties[1];
       $data_handler = new formulizeDataHandler($sourceFid);

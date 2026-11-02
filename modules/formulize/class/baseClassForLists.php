@@ -149,12 +149,12 @@ class formulizeBaseClassForListsElementHandler extends formulizeElementsHandler 
 		}
 		if(is_string($value) AND strstr($value, "#*=:*")) {
 			// formId#*=:*elementHandle is the format canonical format in DB
-			$linkedMetaDataParts = explode("#*=:*", $value);
+			$linkedMetaDataParts = formulize_linkedSourceParts($value);
 			if(count($linkedMetaDataParts) == 2) {
 				$formHandler = xoops_getmodulehandler('forms', 'formulize');
 				if($sourceFormObject = $formHandler->get($linkedMetaDataParts[0])) {
 					if($direction == 'import' AND !is_numeric($linkedMetaDataParts[0])) {
-						$value = $sourceFormObject->getVar('fid')."#*=:*".$linkedMetaDataParts[1];
+						$value = formulize_linkedSourceString($sourceFormObject->getVar('fid'), $linkedMetaDataParts[1]);
 					} elseif($direction == 'export' AND is_numeric($linkedMetaDataParts[0])) {
 						$value = $sourceFormObject->getVar('form_handle')."#*=:*".$linkedMetaDataParts[1];
 					}

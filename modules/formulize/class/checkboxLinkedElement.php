@@ -75,7 +75,7 @@ class formulizeCheckboxLinkedElementHandler extends formulizeCheckboxElementHand
 	 * since nothing here has ever rewritten them. A rename still reaches them.
 	 */
 	public static $eleValueReferences = array(
-		ELE_VALUE_SELECT_OPTIONS => array('shape' => 'linked_source', 'holds' => 'handle', 'on_delete' => 'report',
+		ELE_VALUE_SELECT_OPTIONS => array('shape' => 'linked_source', 'holds' => 'either', 'on_delete' => 'report',
 			'describe' => 'the element its options come from, which it cannot work without - it needs a new source or it needs deleting'),
 		5 => array('shape' => 'conditions', 'holds' => 'either', 'on_delete' => 'report',
 			'describe' => 'in the conditions that decide which options it offers, which you will need to change yourself'),
@@ -109,7 +109,7 @@ class formulizeCheckboxLinkedElementHandler extends formulizeCheckboxElementHand
 			throw new Exception("You must provide a valid sourceElement property for the linked dropdown list element");
 		}
 		if($sourceElementObject) {
-			$ele_value[ELE_VALUE_SELECT_OPTIONS] = $sourceElementObject->getVar('fid')."#*=:*".$sourceElementObject->getVar('ele_handle'); // by convention all linked elements use ELE_VALUE_SELECT_OPTIONS (2) as the key in ele_value to store the source element reference, so they can all extend this class and use this method
+			$ele_value[ELE_VALUE_SELECT_OPTIONS] = formulize_linkedSourceString($sourceElementObject->getVar('fid'), $sourceElementObject); // by convention all linked elements use ELE_VALUE_SELECT_OPTIONS (2) as the key in ele_value to store the source element reference, so they can all extend this class and use this method
 		}
 		$notes = [];
 		$ele_value = formulizeSelectLinkedElementHandler::applySourceEntryFilter($properties, $ele_value, $elementIdentifier, $formId, $notes);
@@ -195,7 +195,7 @@ class formulizeCheckboxLinkedElementHandler extends formulizeCheckboxElementHand
 		$dependencies = array();
 		foreach($values as $key => $value) {
 			if($key == ELE_VALUE_SELECT_OPTIONS AND is_string($value)) {
-				$linkedMetaDataParts = explode("#*=:*", $value);
+				$linkedMetaDataParts = formulize_linkedSourceParts($value);
 				if(count($linkedMetaDataParts) == 2) {
 					$dependencies[] = trim($linkedMetaDataParts[1]);
 				}
